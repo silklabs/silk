@@ -5,9 +5,11 @@
   "scripts": {
     "start": "node_modules/react-native/packager/packager.sh"
   },
-  "dependencies": {
+    "dependencies": {
+    "events": "^1.0.2",
     "react-native": "^0.5.0",
     "react-native-swift-socketio": "^0.0.5",
-    "react-native-webview-bridge": "^0.2.0"
+    "react-native-webview-bridge": "^0.2.0",
+    "util": "0.10.3"
   }
 }

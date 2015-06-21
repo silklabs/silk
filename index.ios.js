@@ -25,7 +25,7 @@ var Silk = React.createClass({
     return {};
   },
 
-  componentDidMount: function() {
+  componentWillMount: function() {
     this.socket = new SocketIO(SERVER_URL);
     this.socket.connect();
     console.log('Connecting to ...', SERVER_URL);
@@ -45,6 +45,14 @@ var Silk = React.createClass({
       });
       this.socket.emit('join', 'video-streams');
     });
+
+    var DeviceManager = require('./btle/central-device-manager');
+    this.dm = new DeviceManager(require('./btle/scanner'), this);
+      this.dm.on('discover', function(p) {
+        notifications.pending('device-discovered',
+                              { text: 'New Weave device discovered.' });
+      });
+    this.dm.start();
   },
 
   componentWillUnmount: function() {
@@ -78,7 +86,27 @@ var Silk = React.createClass({
         </View>
       </View>
     );
-  }
+  },
+
+  getWifiNetwork: function() {
+    return Promise.resolve({ ssid: 'Hello', secret: 'kitty' });
+    /*
+    var self = this;
+    return secureStorage.get('wifi').then(function(value) {
+      return JSON.parse(value);
+    }, function(err) {
+      console.log('Prompting for wifi because "'+ err +'"');
+      if (!self.wifiPromptPromise) {
+        self.wifiPromptPromise = new Promise(function(resolve, reject) {
+          self.setState({ showWifiPrompt: true });
+          self.resolveWifiPrompt = resolve;
+        });
+      }
+      return self.wifiPromptPromise;
+    });
+     */
+  },
+
 });
 
 var PlaceholderMessage = React.createClass({

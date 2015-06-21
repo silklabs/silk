@@ -9,7 +9,13 @@ var {
   StyleSheet,
   Text,
   View,
+  WebView,
 } = React;
+
+var WebViewBridge = require('react-native-webview-bridge');
+
+var PREVIEW_WIDTH = 305;
+var PREVIEW_HEIGHT = 170;
 
 var MonitorPreview = React.createClass({
   render: function() {
@@ -18,7 +24,8 @@ var MonitorPreview = React.createClass({
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>
-          <MonitorPreviewStream />
+          <MonitorPreviewStream vid={this.props.vid}
+                                serverUrl={this.props.serverUrl}/>
       </View>
     );
   }
@@ -27,9 +34,22 @@ var MonitorPreview = React.createClass({
 // This will become a native-backed (or initially, WebView-backed)
 // widget that streams video in small format.
 var MonitorPreviewStream = React.createClass({
+  componentDidMount: function() {
+    this.refs.webview.send({ id: this.props.vid,
+                             serverUrl: 'http://'+ this.props.serverUrl,
+                             width: PREVIEW_WIDTH,
+                             height: PREVIEW_HEIGHT,
+                             backgroundColor: '#888888' });
+  },
+
   render: function() {
+    // TODO: scrollEnabled={false}
     return (
-        <View style={styles.monitorPreview}></View>
+        <View style={styles.monitorPreview}>
+          <WebViewBridge ref='webview'
+                         url='web/monitor-preview-stream.html'
+                         bounces={false} />
+        </View>
     );
   }
 });
@@ -63,8 +83,8 @@ var styles = StyleSheet.create({
   },
 
   monitorPreview: {
-    width: 305,
-    height: 170,
+    width: PREVIEW_WIDTH,
+    height: PREVIEW_HEIGHT,
     backgroundColor: '#888888',
   },
 });

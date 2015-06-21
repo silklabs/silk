@@ -48,7 +48,8 @@ var Silk = React.createClass({
   render: function() {
     var previewStreams = Object.keys(this.state).map(key => {
       var device = this.state[key];
-      return (<MonitorPreview key={key} label={device.name} />);
+      return (<MonitorPreview key={key} vid={key} label={device.name}
+                              serverUrl={SERVER_URL} />);
     });
     if (0 === previewStreams.length) {
       previewStreams = (<PlaceholderMessage />);

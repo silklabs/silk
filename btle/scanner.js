@@ -3,7 +3,6 @@
 
 var ble = require('./ble');
 var EventEmitter = require('events').EventEmitter;
-var Promise = require('promise');
 var util = require('util');
 
 var normUuid = require('./util').normUuid;

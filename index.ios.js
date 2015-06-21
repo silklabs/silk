@@ -20,9 +20,12 @@ var SERVER_URL = 'localhost:5000';
 
 var MonitorPreview = require('./MonitorPreview');
 
+var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
+                     'disconnect'];
+
 var Silk = React.createClass({
   getInitialState: function() {
-    return {};
+    return { configuring: { }, streaming: { } };
   },
 
   componentWillMount: function() {
@@ -33,40 +36,41 @@ var Silk = React.createClass({
       console.log(' ... connected');
       this.socket.on('video-stream-new', msga => {
         var msg = msga[0];
-        var state = this.state;
-        state[msg.id] = { name: msg.name };
-        this.setState(state);
+        this.state.streaming[msg.id] = { name: msg.name };
+        this.setState(this.state);
       });
       this.socket.on('video-stream-delete', msga => {
         var msg = msga[0];
-        var state = this.state;
-        delete state[msg.id];
-        this.setState(state);
+        delete this.state.streaming[msg.id];
+        this.setState(this.state);
       });
       this.socket.emit('join', 'video-streams');
     });
 
     var DeviceManager = require('./btle/central-device-manager');
     this.dm = new DeviceManager(require('./btle/scanner'), this);
-      this.dm.on('discover', function(p) {
-        notifications.pending('device-discovered',
-                              { text: 'New Weave device discovered.' });
-      });
+    PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
   },
 
   componentWillUnmount: function() {
+    PERIPH_EVENTS.forEach(ev =>
+                          this.dm.removeListener(ev, this.refreshDeviceList));
     this.socket.close();
   },
   
   render: function() {
-    var previewStreams = Object.keys(this.state).map(key => {
-      var device = this.state[key];
+    var configuring = Object.keys(this.state.configuring).map(key => {
+      var device = this.state.configuring[key];
+      return (<Text>Configuring {device.name} rssi {device.rssi}</Text>);
+    });
+    var streaming = Object.keys(this.state.streaming).map(key => {
+      var device = this.state.streaming[key];
       return (<MonitorPreview key={key} vid={key} label={device.name}
                               serverUrl={SERVER_URL} />);
     });
-    if (0 === previewStreams.length) {
-      previewStreams = (<PlaceholderMessage />);
+    if (0 === configuring.length + streaming.length) {
+      configuring = (<PlaceholderMessage />);
     }
     return (
       <View style={styles.container}>
@@ -81,11 +85,21 @@ var Silk = React.createClass({
         </View>
         <View style={styles.content}>
           <ScrollView style={styles.monitors}>
-            {previewStreams}
+            {configuring}
+            {streaming}
           </ScrollView>  
         </View>
       </View>
     );
+  },
+
+  refreshDeviceList: function() {
+    var configuring = this.state.configuring = {};
+    this.dm.enumerateDevices().forEach(p => {
+      configuring[p.id] = { name: p.prettyName, rssi: p.rssi,
+                            state: 'configuring' };
+    });
+    this.setState(this.state);
   },
 
   getWifiNetwork: function() {

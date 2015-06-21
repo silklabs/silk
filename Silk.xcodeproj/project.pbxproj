@@ -28,6 +28,8 @@
 		F949A19F1B365A2900E59D69 /* WebViewExManager.m in Sources */ = {isa = PBXBuildFile; fileRef = F949A19A1B365A2900E59D69 /* WebViewExManager.m */; };
 		F949A1A01B365A2900E59D69 /* WebViewJavascriptBridge.js.txt in Resources */ = {isa = PBXBuildFile; fileRef = F949A19C1B365A2900E59D69 /* WebViewJavascriptBridge.js.txt */; };
 		F949A1A11B365A2900E59D69 /* WebViewJavascriptBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F949A19D1B365A2900E59D69 /* WebViewJavascriptBridge.m */; };
+		F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */; };
+		F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4091B3725DB0081F479 /* NSData+Base64.m */; };
 		F97F49AD1B35FEDE0096D993 /* Socket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F499C1B35FEDD0096D993 /* Socket.swift */; };
 		F97F49AE1B35FEDE0096D993 /* SocketBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F97F499E1B35FEDD0096D993 /* SocketBridge.m */; };
 		F97F49AF1B35FEDE0096D993 /* SocketAckManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49A01B35FEDD0096D993 /* SocketAckManager.swift */; };
@@ -156,6 +158,10 @@
 		F949A19B1B365A2900E59D69 /* WebViewJavascriptBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewJavascriptBridge.h; sourceTree = "<group>"; };
 		F949A19C1B365A2900E59D69 /* WebViewJavascriptBridge.js.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WebViewJavascriptBridge.js.txt; sourceTree = "<group>"; };
 		F949A19D1B365A2900E59D69 /* WebViewJavascriptBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewJavascriptBridge.m; sourceTree = "<group>"; };
+		F954C3FB1B37247E0081F479 /* CBPeripheral+Extensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CBPeripheral+Extensions.h"; sourceTree = "<group>"; };
+		F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CBPeripheral+Extensions.m"; sourceTree = "<group>"; };
+		F954C4081B3725BC0081F479 /* NSData+Base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Base64.h"; sourceTree = "<group>"; };
+		F954C4091B3725DB0081F479 /* NSData+Base64.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Base64.m"; sourceTree = "<group>"; };
 		F97F499C1B35FEDD0096D993 /* Socket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Socket.swift; sourceTree = "<group>"; };
 		F97F499D1B35FEDD0096D993 /* SocketBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketBridge.h; sourceTree = "<group>"; };
 		F97F499E1B35FEDD0096D993 /* SocketBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SocketBridge.m; sourceTree = "<group>"; };
@@ -290,6 +296,10 @@
 				13B07FB71A68108700A75B9A /* main.m */,
 				F9BEA4AA1B3699650093EA0A /* BLECentral.h */,
 				F9BEA4B51B3699810093EA0A /* BLECentral.m */,
+				F954C3FB1B37247E0081F479 /* CBPeripheral+Extensions.h */,
+				F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */,
+				F954C4081B3725BC0081F479 /* NSData+Base64.h */,
+				F954C4091B3725DB0081F479 /* NSData+Base64.m */,
 			);
 			name = Silk;
 			sourceTree = "<group>";
@@ -642,11 +652,13 @@
 				F949A1A11B365A2900E59D69 /* WebViewJavascriptBridge.m in Sources */,
 				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
 				F949A19F1B365A2900E59D69 /* WebViewExManager.m in Sources */,
+				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				F97F49B91B35FEDE0096D993 /* SocketTypes.swift in Sources */,
 				F97F49B71B35FEDE0096D993 /* SocketPacket.swift in Sources */,
 				F97F49B51B35FEDE0096D993 /* SocketIOClient.swift in Sources */,
 				F97F49B01B35FEDE0096D993 /* SocketAnyEvent.swift in Sources */,
 				F97F49B11B35FEDE0096D993 /* SocketEngine.swift in Sources */,
+				F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */,
 				F949A19E1B365A2900E59D69 /* WebViewEx.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				F97F49AD1B35FEDE0096D993 /* Socket.swift in Sources */,

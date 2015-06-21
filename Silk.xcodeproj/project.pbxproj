@@ -43,6 +43,7 @@
 		F97F49B91B35FEDE0096D993 /* SocketTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49AA1B35FEDE0096D993 /* SocketTypes.swift */; };
 		F97F49BA1B35FEDE0096D993 /* SwiftRegex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49AB1B35FEDE0096D993 /* SwiftRegex.swift */; };
 		F97F49BB1B35FEDE0096D993 /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49AC1B35FEDE0096D993 /* WebSocket.swift */; };
+		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -171,6 +172,8 @@
 		F97F49AA1B35FEDE0096D993 /* SocketTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketTypes.swift; sourceTree = "<group>"; };
 		F97F49AB1B35FEDE0096D993 /* SwiftRegex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftRegex.swift; sourceTree = "<group>"; };
 		F97F49AC1B35FEDE0096D993 /* WebSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebSocket.swift; sourceTree = "<group>"; };
+		F9BEA4AA1B3699650093EA0A /* BLECentral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLECentral.h; sourceTree = "<group>"; };
+		F9BEA4B51B3699810093EA0A /* BLECentral.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECentral.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -285,6 +288,8 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB11A68108700A75B9A /* LaunchScreen.xib */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				F9BEA4AA1B3699650093EA0A /* BLECentral.h */,
+				F9BEA4B51B3699810093EA0A /* BLECentral.m */,
 			);
 			name = Silk;
 			sourceTree = "<group>";
@@ -635,6 +640,7 @@
 				F97F49AF1B35FEDE0096D993 /* SocketAckManager.swift in Sources */,
 				F97F49B31B35FEDE0096D993 /* SocketEventHandler.swift in Sources */,
 				F949A1A11B365A2900E59D69 /* WebViewJavascriptBridge.m in Sources */,
+				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
 				F949A19F1B365A2900E59D69 /* WebViewExManager.m in Sources */,
 				F97F49B91B35FEDE0096D993 /* SocketTypes.swift in Sources */,
 				F97F49B71B35FEDE0096D993 /* SocketPacket.swift in Sources */,

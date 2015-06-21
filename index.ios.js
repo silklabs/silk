@@ -13,10 +13,46 @@ var {
   View,
 } = React;
 
+var SocketIO = require('react-native-swift-socketio');
+
+// TODO import weave-api
+var SERVER_URL = 'localhost:5000';
+
 var MonitorPreview = require('./MonitorPreview');
 
 var Silk = React.createClass({
+  getInitialState: function() {
+    return {};
+  },
+
+  componentDidMount: function() {
+    this.socket = new SocketIO(SERVER_URL);
+    this.socket.connect();
+    console.log('Connecting to ...', SERVER_URL);
+    this.socket.on('connect', () => {
+      console.log(' ... connected');
+      this.socket.on('video-stream-new', msga => {
+        var msg = msga[0];
+        var state = this.state;
+        state[msg.id] = { name: msg.name };
+        this.setState(state);
+      });
+      this.socket.emit('join', 'video-streams');
+    });
+  },
+
+  componentWillUnmount: function() {
+    this.socket.close();
+  },
+  
   render: function() {
+    var previewStreams = Object.keys(this.state).map(key => {
+      var device = this.state[key];
+      return (<MonitorPreview key={key} label={device.name} />);
+    });
+    if (0 === previewStreams.length) {
+      previewStreams = (<PlaceholderMessage />);
+    }
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
@@ -30,23 +66,30 @@ var Silk = React.createClass({
         </View>
         <View style={styles.content}>
           <ScrollView style={styles.monitors}>
-            <MonitorPreview label='Living Room' />
-            <MonitorPreview label="Kids' Room" />
-            <MonitorPreview label='Garage' />
+            {previewStreams}
           </ScrollView>  
         </View>
       </View>
     );
   }
 });
-        
+
+var PlaceholderMessage = React.createClass({
+  render: function() {
+    return (
+      <Text>
+        Connect SilkCam to get started
+      </Text>
+    );
+  },
+});
+
 var styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   titleContainer: {
     backgroundColor: 'white',
-    textAlign: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     paddingTop: 30,

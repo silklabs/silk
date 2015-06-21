@@ -37,6 +37,12 @@ var Silk = React.createClass({
         state[msg.id] = { name: msg.name };
         this.setState(state);
       });
+      this.socket.on('video-stream-delete', msga => {
+        var msg = msga[0];
+        var state = this.state;
+        delete state[msg.id];
+        this.setState(state);
+      });
       this.socket.emit('join', 'video-streams');
     });
   },

@@ -89,9 +89,38 @@ function convertYuv420spToR8g8b8(width, height, yuv420sp) {
   return rgbx;
 }
 
+var currentFrameData = null;
+var currentFaces = [];
+
 function renderFrame(msg) {
   var ctx = canvas.getContext('2d');
-  var yuv420sp = new Uint8Array(msg.frame);
-  var rgbx8 = convertYuv420spToR8g8b8(msg.width, msg.height, yuv420sp);
-  ctx.putImageData(new ImageData(rgbx8, msg.width, msg.height), 0, 0);
+  if (msg.frame) {
+    var yuv420sp = new Uint8Array(msg.frame);
+    var rgbx8 = convertYuv420spToR8g8b8(msg.width, msg.height, yuv420sp);
+    currentFrameData = new ImageData(rgbx8, msg.width, msg.height);
+  }
+  if (!currentFrameData) {
+    // Don't bother drawing faces without the video feed.
+    return;
+  }
+  ctx.putImageData(currentFrameData, 0, 0);
+
+  if (msg.faces) {
+    currentFaces = msg.faces;
+  }
+  if (0 === currentFaces.length) {
+    return;
+  }
+  var frameWidth = currentFrameData.width,
+      frameHeight = currentFrameData.height;
+  var fieldWidth = currentFaces[0].fieldWidth,
+      fieldHeight = currentFaces[0].fieldHeight;
+  { ctx.save();
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'blue';
+    ctx.scale(frameWidth / fieldWidth, frameHeight / fieldHeight);
+    currentFaces.forEach(function(face) {
+      ctx.strokeRect(face.x, face.y, face.width, face.height);
+    });
+  } ctx.restore();
 }

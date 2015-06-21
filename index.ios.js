@@ -78,7 +78,7 @@ var Silk = React.createClass({
 var PlaceholderMessage = React.createClass({
   render: function() {
     return (
-      <Text>
+      <Text style={styles.placeholderText}>
         Connect SilkCam to get started
       </Text>
     );
@@ -123,6 +123,12 @@ var styles = StyleSheet.create({
     flex: 1,
   },
 
+  placeholderText: {
+    color: '#bbbbbb',
+    fontSize: 15,
+    fontStyle: 'italic',
+    padding: 5,
+  },
   monitors: {
     paddingTop: 5,
     backgroundColor: '#e5eaec',

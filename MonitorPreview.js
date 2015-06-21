@@ -9,7 +9,6 @@ var {
   StyleSheet,
   Text,
   View,
-  WebView,
 } = React;
 
 var WebViewBridge = require('react-native-webview-bridge');

@@ -123,7 +123,7 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
   NSLog(@"BLECentral:write from %@: %@.%@ <- %@ (%@response)", deviceUuidStr, serviceUuidStr, charcUuidStr, valueB64, awaitResponse ? @"" : @"no ");
 
   // TODO need to check the max length
-  NSData* value = [NSData dataFromBase64String:valueB64];
+  NSData* value = [NSData cdv_dataFromBase64String:valueB64];
   if (!value) {
     callback(@[@{ @"error": @"Invalid value specified to characteristic 'write'",
                   @"uuid": deviceUuidStr,

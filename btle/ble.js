@@ -44,11 +44,6 @@ var notifier = (success, failure) => (err, res) => (err ?
 function writeCharacteristic(device_id, service_uuid, characteristic_uuid,
                              value, awaitResponse, success, failure) {
   var valueB64 = value.toString('base64');
-
-
-  console.log('WRITING CHARC', value, '<-', valueB64);
-
-    
   BLECentral.write(device_id, service_uuid, characteristic_uuid, valueB64,
                    awaitResponse, notifier(success, failure));
 }

@@ -23,6 +23,17 @@ var api = {
       ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
     }
   },
+
+  crypto: {
+    create: () => {
+      return {
+        exportPublic: () => 'key',
+        deriveShared: () => 'shared',
+        encrypt: (text) => Promise.resolve(text),
+        decrypt: (text) => text,
+      };
+    },
+  },
 };
 
 var Buffer = require('buffer').Buffer;
@@ -137,11 +148,11 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
     Promise.all([
       central.encrypt(network.ssid).then(function(ct) {
         return p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
-                                     new Buffer(ct, 'binary'));
+                                     new Buffer(ct, 'utf8'));
       }),
       central.encrypt(network.secret).then(function(ct) {
         return p.writeCharacteristic(decls.uuid.SecretCharacteristic,
-                                     new Buffer(ct, 'binary'));
+                                     new Buffer(ct, 'utf8'));
       })
     ]).then(function() {
       // TODO: get this from state charc notify

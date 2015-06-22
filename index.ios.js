@@ -49,7 +49,7 @@ var Silk = React.createClass({
     });
 
     var DeviceManager = require('./btle/central-device-manager');
-    this.dm = new DeviceManager(require('./btle/scanner'), this);
+    this.dm = new DeviceManager(require('./btle/ble-central'), this);
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
   },

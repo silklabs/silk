@@ -12,7 +12,7 @@ var api = {
       ERROR: 3
     },
     uuid: {
-      ConfigService: 'fb349b5f8000008000100000efbe0000',
+      ConfigService: 'beef',
       StateCharacteristic: '259a43754b8748548ef386be0f6faa68',
       RssiCharacteristic: '803ce13fa50f4370a7e7af45a78788b8',
       CurveCharacteristic: 'b3615a405497431fbf71e7949ff3ad2c',

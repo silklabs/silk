@@ -95,13 +95,15 @@ PeripheralCordova.prototype = {
         return reject('Unknown characteristic "'+ uuid +'"');
       }
       // TODO: check write-able?
-      ble.write(self.id, charc.service, charc.characteristic, data,
-                function() {
-                  resolve();
-                },
-                function(err) {
-                  reject(err);
-                });
+      // TODO: any benefit to using write-with-response?
+      ble./*write*/writeWithoutResponse(
+        self.id, charc.service, charc.characteristic, data,
+        function() {
+          resolve();
+        },
+        function(err) {
+          reject(err);
+        });
     });
   },
 };

@@ -18,6 +18,7 @@ var SocketIO = require('react-native-swift-socketio');
 // TODO import weave-api
 var SERVER_URL = 'localhost:5000';
 
+var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
 
 var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
@@ -62,7 +63,8 @@ var Silk = React.createClass({
   render: function() {
     var configuring = Object.keys(this.state.configuring).map(key => {
       var device = this.state.configuring[key];
-      return (<Text>Configuring {device.name} rssi {device.rssi}</Text>);
+      return (<DeviceSetup key={key}
+                           name={device.name} rssi={device.rssi} />);
     });
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
@@ -126,9 +128,11 @@ var Silk = React.createClass({
 var PlaceholderMessage = React.createClass({
   render: function() {
     return (
-      <Text style={styles.placeholderText}>
-        Connect SilkCam to get started
-      </Text>
+      <View style={styles.placeholderContainer}>
+        <Text style={styles.placeholderText}>
+          Connect SilkCam to get started
+        </Text>
+      </View>
     );
   },
 });
@@ -171,12 +175,15 @@ var styles = StyleSheet.create({
     flex: 1,
   },
 
+  placeholderContainer: {
+    padding: 10,
+  },
   placeholderText: {
     color: '#bbbbbb',
     fontSize: 15,
     fontStyle: 'italic',
-    padding: 5,
   },
+
   monitors: {
     paddingTop: 5,
     backgroundColor: '#e5eaec',

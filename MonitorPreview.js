@@ -55,7 +55,6 @@ var MonitorPreviewStream = React.createClass({
 
 var styles = StyleSheet.create({
   monitorContainer: {
-    // FIXME: drop shadow is broken in current react-native...
     shadowColor: 'black',
     shadowRadius: 2,
     shadowOpacity: 0.5,

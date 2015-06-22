@@ -126,7 +126,7 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
             clearInterval(updateRssiInterval);
             resolve();
           });
-      }, 100);
+      }, 500);
     });
   }).then(function() {
     return p.writeCharacteristic(decls.uuid.CurveCharacteristic,

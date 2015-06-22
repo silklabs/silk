@@ -12,7 +12,7 @@ var api = {
       ERROR: 3
     },
     uuid: {
-      ConfigService: 'f11cddec77ff4935a2eff25bb992437b',
+      ConfigService: 'fb349b5f8000008000100000efbe0000',
       StateCharacteristic: '259a43754b8748548ef386be0f6faa68',
       RssiCharacteristic: '803ce13fa50f4370a7e7af45a78788b8',
       CurveCharacteristic: 'b3615a405497431fbf71e7949ff3ad2c',
@@ -84,7 +84,7 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
   if (!p.advertisement || !p.advertisement.services
       || !p.advertisement.services.some(function(u) {
           return normUuid(u) === normUuid(decls.uuid.ConfigService); })) {
-    console.log('(Ignoring non-configurable peripheral '+ p.id +')');
+    //console.log('(Ignoring non-configurable peripheral '+ p.id +')');
     return;
   }
 

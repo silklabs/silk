@@ -118,6 +118,37 @@ RCT_EXPORT_METHOD(read:(NSString*)deviceUuidStr service:(NSString*)serviceUuidSt
   [pc.peripheral readValueForCharacteristic:pc.characteristic];  // callback sends value
 }
 
+RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidStr characteristic:(NSString*)charcUuidStr value:(NSString*)valueB64
+                  awaitResponse:(BOOL)awaitResponse callback:(RCTResponseSenderBlock)callback) {
+  NSLog(@"BLECentral:write from %@: %@.%@ <- %@ (%@response)", deviceUuidStr, serviceUuidStr, charcUuidStr, valueB64, awaitResponse ? @"" : @"no ");
+
+  // TODO need to check the max length
+  NSData* value = [NSData dataFromBase64String:valueB64];
+  if (!value) {
+    callback(@[@{ @"error": @"Invalid value specified to characteristic 'write'",
+                  @"uuid": deviceUuidStr,
+                  @"characteristicUUID": charcUuidStr },
+               [NSNull null]]);
+    return;
+  }
+  BLEPeriphCharc* pc = [self getPeriphCharc:deviceUuidStr service:serviceUuidStr characteristic:charcUuidStr];
+  if (!pc) {
+    callback(@[@{ @"error": @"Couldn't look up characteristic for peripheral",
+                  @"uuid": deviceUuidStr,
+                  @"characteristicUUID": charcUuidStr },
+               [NSNull null]]);
+    return;
+  }
+  if (awaitResponse) {
+    NSString *key = [self keyForPeripheral: pc.peripheral andCharacteristic:pc.characteristic];
+    [writeCallbacks setObject:callback forKey:key];
+    [pc.peripheral writeValue:value forCharacteristic:pc.characteristic type:CBCharacteristicWriteWithResponse];
+  } else {
+    [pc.peripheral writeValue:value forCharacteristic:pc.characteristic type:CBCharacteristicWriteWithoutResponse];
+    callback(@[[NSNull null], [NSNull null]]);
+  }
+}
+
 #pragma mark - CBCentralManagerDelegate
 
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary *)advertisementData RSSI:(NSNumber *)RSSI {
@@ -206,25 +237,32 @@ RCT_EXPORT_METHOD(read:(NSString*)deviceUuidStr service:(NSString*)serviceUuidSt
   //BLE_LOG(@"didUpdateValueForCharacteristic");
   
   NSString *key = [self keyForPeripheral: peripheral andCharacteristic:characteristic];
-#if 0
-  NSString *notifyCallbackId = [notificationCallbacks objectForKey:key];
-  
-  if (notifyCallbackId) {
-    NSData *data = characteristic.value; // send RAW data to Javascript
-    
-    CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:data];
-    [pluginResult setKeepCallbackAsBool:TRUE]; // keep for notification
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:notifyCallbackId];
-  }
-#endif
-  
   RCTResponseSenderBlock readCallback = [readCallbacks objectForKey:key];
-  if(readCallback) {
-    NSData *data = characteristic.value; // send RAW data to Javascript
-    readCallback(@[[NSNull null], [data base64EncodedString]]);
-    [readCallbacks removeObjectForKey:key];
+  if (!readCallback) {
+    return;
   }
+  if (error) {
+    readCallback(@[[error localizedDescription], [NSNull null]]);
+  } else {
+    NSData *data = characteristic.value;
+    readCallback(@[[NSNull null], [data base64EncodedString]]);
+  }
+  [readCallbacks removeObjectForKey:key];
+}
+
+- (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error {
+  NSString *key = [self keyForPeripheral: peripheral andCharacteristic:characteristic];
+  RCTResponseSenderBlock callback = [writeCallbacks objectForKey:key];
+  if (!callback) {
+    BLE_LOG(@"Warning: unexpected value-write notification for %@", peripheral.uuidAsString);
+    return;
+  }
+  if (error) {
+    callback(@[[error localizedDescription], [NSNull null]]);
+  } else {
+    callback(@[[NSNull null], [NSNull null]]);
+  }
+  [writeCallbacks removeObjectForKey:key];
 }
 
 #pragma mark - internal implemetation

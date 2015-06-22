@@ -30,6 +30,9 @@
 - (void)read:(NSString*)deviceUuidStr service:(NSString*)serviceUuidStr characteristic:(NSString*)charcUuidStr
     callback:(RCTResponseSenderBlock)callback;
 
+- (void)write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidStr characteristic:(NSString*)charcUuidStr value:(NSString*)valueB64
+     awaitResponse:(BOOL)awaitResponse callback:(RCTResponseSenderBlock)callback;
+
 @end
   
 #endif

@@ -40,6 +40,19 @@ function updateScanListener(fn) {
 var notifier = (success, failure) => (err, res) => (err ?
                                                     failure && failure(err)
                                                     : success && success(res));
+
+function writeCharacteristic(device_id, service_uuid, characteristic_uuid,
+                             value, awaitResponse, success, failure) {
+  var valueB64 = value.toString('base64');
+
+
+  console.log('WRITING CHARC', value, '<-', valueB64);
+
+    
+  BLECentral.write(device_id, service_uuid, characteristic_uuid, valueB64,
+                   awaitResponse, notifier(success, failure));
+}
+
 module.exports = {
   scan: function (services, seconds, success, failure) {
     NYI();
@@ -72,18 +85,19 @@ module.exports = {
                     notifier(successBuffer, failure));
   },
 
-  write: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
-    NYI();
+  write: function (device_id, service_uuid, characteristic_uuid, value,
+                   success, failure) {
+    writeCharacteristic(device_id, service_uuid, characteristic_uuid, value,
+                        true/*response*/, success, failure);
   },
 
-  writeWithoutResponse: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
-    NYI();
+  writeWithoutResponse: function (device_id, service_uuid,
+                                  characteristic_uuid, value,
+                                  success, failure) {
+    writeCharacteristic(device_id, service_uuid, characteristic_uuid, value,
+                        false/*no response*/, success, failure);
   },
-
-  writeCommand: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
-    NYI();
-  },
-
+  
   // success callback is called on notification
   startNotification: function (device_id, service_uuid, characteristic_uuid, success, failure) {
     NYI();

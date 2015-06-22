@@ -25,6 +25,7 @@ var api = {
   },
 };
 
+var Buffer = require('buffer').Buffer;
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 

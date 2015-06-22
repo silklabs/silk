@@ -79,7 +79,7 @@ PeripheralCordova.prototype = {
       // TODO: check read-able?
       ble.read(self.id, charc.service, charc.characteristic,
                function(data) {
-                 resolve(new Buffer(new Uint8Array(data), 'binary'));
+                 resolve(data);
                },
                function(err) {
                  reject(err);

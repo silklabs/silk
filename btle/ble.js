@@ -15,42 +15,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-"use strict";
+'use strict';
 
 var { DeviceEventEmitter } = require('react-native');
 var BLECentral = require('NativeModules').BLECentral;
-
-var stringToArrayBuffer = function(str) {
-    var ret = new Uint8Array(str.length);
-    for (var i = 0; i < str.length; i++) {
-        ret[i] = str.charCodeAt(i);
-    }
-    // TODO would it be better to return Uint8Array?
-    return ret.buffer;
-};
-
-var base64ToArrayBuffer = function(b64) {
-    return stringToArrayBuffer(atob(b64));
-};
-
-function massageMessageNativeToJs(message) {
-    if (message.CDVType == 'ArrayBuffer') {
-        message = base64ToArrayBuffer(message.data);
-    }
-    return message;
-}
-
-// Cordova 3.6 doesn't unwrap ArrayBuffers in nested data structures
-// https://github.com/apache/cordova-js/blob/94291706945c42fd47fa632ed30f5eb811080e95/src/ios/exec.js#L107-L122
-function convertToNativeJS(object) {
-    Object.keys(object).forEach(function (key) {
-        var value = object[key];
-        object[key] = massageMessageNativeToJs(value);
-        if (typeof(value) === 'object') {
-            convertToNativeJS(value);
-        }
-    });
-}
+var Buffer = require('buffer').Buffer;
 
 function NYI() {
     throw 'Not yet implemented, sorry!';
@@ -86,10 +55,6 @@ module.exports = {
     BLECentral.stopScan();
   },
 
-  list: function (success, failure) {
-    NYI();
-  },
-
   connect: function (device_id, success, failure) {
     BLECentral.connect(device_id, notifier(success, failure));
   },
@@ -98,74 +63,46 @@ module.exports = {
     BLECentral.disconnect(device_id, notifier(success, failure));
   },
 
-  // Characteristic value comes back as ArrayBuffer in the success callback
+  // Characteristic value comes back as Buffer in the success callback
   read: function (device_id, service_uuid, characteristic_uuid,
                   success, failure) {
+    var successBuffer = (dataB64) =>
+          success && success(new Buffer(dataB64, 'base64'));
+    BLECentral.read(device_id, service_uuid, characteristic_uuid,
+                    notifier(successBuffer, failure));
+  },
+
+  write: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
     NYI();
   },
 
-    // value must be an ArrayBuffer
-    write: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'write', [device_id, service_uuid, characteristic_uuid, value]);
-    },
+  writeWithoutResponse: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
+    NYI();
+  },
 
-    // value must be an ArrayBuffer
-    writeWithoutResponse: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'writeWithoutResponse', [device_id, service_uuid, characteristic_uuid, value]);
-    },
+  writeCommand: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
+    NYI();
+  },
 
-    // value must be an ArrayBuffer
-    writeCommand: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {
-        console.log("WARNING: writeCommand is deprecated, use writeWithoutResponse");
-        cordova.exec(success, failure, 'BLE', 'writeWithoutResponse', [device_id, service_uuid, characteristic_uuid, value]);
-    },
+  // success callback is called on notification
+  startNotification: function (device_id, service_uuid, characteristic_uuid, success, failure) {
+    NYI();
+  },
 
-    // success callback is called on notification
-    notify: function (device_id, service_uuid, characteristic_uuid, success, failure) {
-        console.log("WARNING: notify is deprecated, use startNotification");
-        cordova.exec(success, failure, 'BLE', 'startNotification', [device_id, service_uuid, characteristic_uuid]);
-    },
+  stopNotification: function (device_id, service_uuid, characteristic_uuid, success, failure) {
+    NYI();
+  },
 
-    // success callback is called on notification
-    startNotification: function (device_id, service_uuid, characteristic_uuid, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'startNotification', [device_id, service_uuid, characteristic_uuid]);
-    },
+  // success callback is called on indication.
+  indicate: function (device_id, service_uuid, characteristic_uuid, success, failure) {
+    NYI();
+  },
 
-    // success callback is called when the descriptor 0x2902 is written
-    stopNotification: function (device_id, service_uuid, characteristic_uuid, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'stopNotification', [device_id, service_uuid, characteristic_uuid]);
-    },
+  isConnected: function (device_id, success, failure) {
+    NYI();
+  },
 
-    // success callback is called on indication.
-    indicate: function (device_id, service_uuid, characteristic_uuid, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'indicate', [device_id, service_uuid, characteristic_uuid]);
-    },
-
-    isConnected: function (device_id, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'isConnected', [device_id]);
-    },
-
-    isEnabled: function (success, failure) {
-        cordova.exec(success, failure, 'BLE', 'isEnabled', []);
-    }
-
+  isEnabled: function (success, failure) {
+    NYI();
+  }
 };
-
-var TEST = false;//true;
-if (TEST) {
-  var BLE = module.exports;
-  BLE.startScan([ '00000000-1111-2222-3333-444444444444', ],
-                p => console.log('DISCOVERED', p),
-                err => console.log('SCAN ERROR:', err));
-  setTimeout(() => {
-    BLE.stopScan();
-    BLE.connect('00000000-1111-2222-3333-444444444444',
-                () => console.log('CONNECTED'),
-                err => console.log('CONNECTED ERROR', err));
-    setTimeout(() => {
-      BLE.disconnect('00000000-1111-2222-3333-444444444444',
-                     () => console.log('CONNECTED'),
-                     err => console.log('CONNECTED ERROR', err));
-    }, 1000);
-  }, 1000);
-}

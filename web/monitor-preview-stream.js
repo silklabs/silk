@@ -8,7 +8,7 @@ window.onerror = function(e) {
 };
 
 function log(msg) {
-  document.getElementById('test').textContent += msg +'\n';
+  //document.getElementById('log').textContent += msg +'\n';
 }
 
 function connectBridge(then) {

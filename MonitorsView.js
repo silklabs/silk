@@ -17,7 +17,7 @@ var {
 var SocketIO = require('react-native-swift-socketio');
 
 // TODO import weave-api
-var SERVER_URL = 'localhost:5000';
+var SERVER_URL = '192.168.2.1:5000';
 
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');

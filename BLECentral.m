@@ -10,7 +10,6 @@
 
 @interface BLECentral()
 - (CBPeripheral *)findPeripheralByUUID:(NSString *)uuid;
-- (void)emitConnectionEvent:(NSString*)uuid peripheral:(CBPeripheral*)peripheral type:(NSString*)type msg:(NSString*)msg;
 @end
 
 @implementation BLECentral
@@ -28,6 +27,7 @@ RCT_EXPORT_MODULE();
     
     peripherals = [NSMutableSet set];
     manager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+    connectCallbacks = [NSMutableDictionary new];
     connectCallbackLatches = [NSMutableDictionary new];
   }
   return self;
@@ -56,18 +56,19 @@ RCT_EXPORT_METHOD(stopScan) {
   [manager stopScan];
 }
 
-RCT_EXPORT_METHOD(connect:(NSString*)uuid) {
+RCT_EXPORT_METHOD(connect:(NSString*)uuid callback:(RCTResponseSenderBlock)callback) {
   NSLog(@"BLECentral:connect %@", uuid);
 
   CBPeripheral *peripheral = [self findPeripheralByUUID:uuid];
   if (!peripheral) {
-    [self emitConnectionEvent:uuid peripheral:peripheral type:@"error" msg:@"Unknown peripheral"];
+    callback(@[@{ @"error": @"Unknown peripheral", @"uuid": uuid }, [NSNull null]]);
     return;
   }
+  [connectCallbacks setObject:callback forKey:[peripheral uuidAsString]];
   [manager connectPeripheral:peripheral options:nil];
 }
 
-RCT_EXPORT_METHOD(disconnect:(NSString*)uuid) {
+RCT_EXPORT_METHOD(disconnect:(NSString*)uuid callback:(RCTResponseSenderBlock)callback) {
   NSLog(@"BLECentral:disconnect %@", uuid);
   
   CBPeripheral *peripheral = [self findPeripheralByUUID:uuid];
@@ -78,6 +79,7 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid) {
   if (peripheral.isConnected) {
     [manager cancelPeripheralConnection:peripheral];
   }
+  callback(@[[NSNull null], [NSNull null]]);
 }
 
 #pragma mark - CBCentralManagerDelegate
@@ -108,13 +110,21 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid) {
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
   NSLog(@"BLECentral:didDisconnectPeripheral");
 
-  [self emitConnectionEvent:peripheral.uuidAsString peripheral:peripheral type:@"disconnect" msg:@"Connected"];
+  RCTResponseSenderBlock callback = [connectCallbacks valueForKey:peripheral.uuidAsString];
+  if (callback) {
+    callback(@[@{ @"error": @"Peripheral disconnected", @"uuid": peripheral.uuidAsString }, [NSNull null]]);
+    [connectCallbacks removeObjectForKey:peripheral.uuidAsString];
+  }
 }
 
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
   NSLog(@"BLECentral:didFailToConnectPeripheral");
-  
-  [self emitConnectionEvent:peripheral.uuidAsString peripheral:peripheral type:@"error" msg:@"Failed to connect peripheral"];
+
+  RCTResponseSenderBlock callback = [connectCallbacks valueForKey:peripheral.uuidAsString];
+  if (callback) {
+    callback(@[@{ @"error": @"Peripheral disconnected", @"uuid": peripheral.uuidAsString }, [NSNull null]]);
+    [connectCallbacks removeObjectForKey:peripheral.uuidAsString];
+  }
 }
 
 #pragma mark CBPeripheralDelegate
@@ -125,6 +135,7 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid) {
   // save the services to tell when all characteristics have been discovered
   NSMutableSet *servicesForPeriperal = [NSMutableSet new];
   [servicesForPeriperal addObjectsFromArray:peripheral.services];
+  [connectCallbackLatches setObject:servicesForPeriperal forKey:[peripheral uuidAsString]];
   
   for (CBService *service in peripheral.services) {
     [peripheral discoverCharacteristics:nil forService:service]; // discover all is slow
@@ -144,7 +155,9 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid) {
   [latch removeObject:service];
   if ([latch count] == 0) {
     // Call success callback for connect
-    [self emitConnectionEvent:peripheral.uuidAsString peripheral:peripheral type:@"connect" msg:@"Connected"];
+    RCTResponseSenderBlock callback = [connectCallbacks valueForKey:peripheral.uuidAsString];
+    callback(@[[NSNull null], [peripheral asDictionary]]);
+    [connectCallbacks removeObjectForKey:peripheralUUIDString];
     [connectCallbackLatches removeObjectForKey:peripheralUUIDString];
   }
 }
@@ -159,14 +172,6 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid) {
     }
   }
   return nil;
-}
-
-- (void)emitConnectionEvent:(NSString*)uuid peripheral:(CBPeripheral*)peripheral type:(NSString*)type msg:(NSString*)msg {
-  [self.bridge.eventDispatcher sendDeviceEventWithName:@"ble:peripheralConnectionChange"
-                                                  body:@{@"type": type,
-                                                         @"peripheral": peripheral ? [peripheral asDictionary] : @"",
-                                                         @"uuid": uuid,
-                                                         @"msg": @"Unknown peripheral"}];
 }
 
 #pragma mark - util

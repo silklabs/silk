@@ -64,49 +64,20 @@ function updateScanListener(fn) {
   }
   if (fn) {
     scanListener = DeviceEventEmitter.addListener(
-      'ble:peripheralDiscovered', p => {
-        console.log('DISCOVERED PERIPHERAL');
-        fn(p);
-      });
-  }
-}
-
-var connectionListeners = { };
-function updateConnectionListener(device_id, fn) {
-  if (connectionListeners[device_id]) {
-    connectionListeners[device_id].remove();
-    delete connectionListeners[device_id];
-  }
-  if (fn) {
-    connectionListeners[device_id] = DeviceEventEmitter.addListener(
-      'ble:peripheralConnectionChange', e => {
-        if (e.uuid !== device_id) {
-          return;
-        }
-        updateConnectionListener(device_id, null);
-        switch (e.type) {
-        case 'connect':
-          return fn(null, e.peripheral);
-        default:
-          // If we disconnected while trying to connect, that's an
-          // error.  And errors are always errors.
-          return fn(e, null);
-        }
-      });
+      'ble:peripheralDiscovered', p => fn(null, p));
   }
 }
 
 var notifier = (success, failure) => (err, res) => (err ?
                                                     failure && failure(err)
                                                     : success && success(res));
-
 module.exports = {
   scan: function (services, seconds, success, failure) {
     NYI();
   },
 
   startScan: function (services, success, failure) {
-    updateScanListener(success);
+    updateScanListener(notifier(success, failure));
     BLECentral.startScan(services);
   },
 
@@ -119,23 +90,19 @@ module.exports = {
     NYI();
   },
 
-  // NB: the semantics of these connect/disconnect listeners is a
-  // little weird, but it's intended to match that of the
-  // com.megster.ble plugin.
   connect: function (device_id, success, failure) {
-    updateConnectionListener(device_id, notifier(success, failure));
-    BLECentral.connect(device_id);
+    BLECentral.connect(device_id, notifier(success, failure));
   },
 
   disconnect: function (device_id, success, failure) {
-    updateConnectionListener(device_id, null);
-    BLECentral.disconnect(device_id);
+    BLECentral.disconnect(device_id, notifier(success, failure));
   },
 
-    // Characteristic value comes back as ArrayBuffer in the success callback
-    read: function (device_id, service_uuid, characteristic_uuid, success, failure) {
-        cordova.exec(success, failure, 'BLE', 'read', [device_id, service_uuid, characteristic_uuid]);
-    },
+  // Characteristic value comes back as ArrayBuffer in the success callback
+  read: function (device_id, service_uuid, characteristic_uuid,
+                  success, failure) {
+    NYI();
+  },
 
     // value must be an ArrayBuffer
     write: function (device_id, service_uuid, characteristic_uuid, value, success, failure) {

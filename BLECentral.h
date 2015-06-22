@@ -10,6 +10,10 @@
 @interface BLECentral : NSObject <RCTBridgeModule, CBCentralManagerDelegate, CBPeripheralDelegate> {
   NSMutableDictionary* connectCallbacks;
   NSMutableDictionary* connectCallbackLatches;
+  NSMutableDictionary* readCallbacks;
+  NSMutableDictionary* writeCallbacks;
+  NSMutableDictionary* notificationCallbacks;
+  NSMutableDictionary* stopNotificationCallbacks;
 }
 
 @property (strong, nonatomic) NSMutableSet* peripherals;
@@ -22,6 +26,9 @@
 - (void)connect:(NSString*)uuid callback:(RCTResponseSenderBlock)callback;
 
 - (void)disconnect:(NSString*)uuid callback:(RCTResponseSenderBlock)callback;
+
+- (void)read:(NSString*)deviceUuidStr service:(NSString*)serviceUuidStr characteristic:(NSString*)charcUuidStr
+    callback:(RCTResponseSenderBlock)callback;
 
 @end
   

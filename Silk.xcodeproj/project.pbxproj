@@ -46,6 +46,7 @@
 		F97F49BA1B35FEDE0096D993 /* SwiftRegex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49AB1B35FEDE0096D993 /* SwiftRegex.swift */; };
 		F97F49BB1B35FEDE0096D993 /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49AC1B35FEDE0096D993 /* WebSocket.swift */; };
 		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
+		F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = F9E92CD71B3864A100C10C24 /* SLKUtil.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -180,6 +181,8 @@
 		F97F49AC1B35FEDE0096D993 /* WebSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebSocket.swift; sourceTree = "<group>"; };
 		F9BEA4AA1B3699650093EA0A /* BLECentral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLECentral.h; sourceTree = "<group>"; };
 		F9BEA4B51B3699810093EA0A /* BLECentral.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECentral.m; sourceTree = "<group>"; };
+		F9E92CCC1B38642000C10C24 /* SLKUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKUtil.h; sourceTree = "<group>"; };
+		F9E92CD71B3864A100C10C24 /* SLKUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKUtil.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -300,6 +303,8 @@
 				F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */,
 				F954C4081B3725BC0081F479 /* NSData+Base64.h */,
 				F954C4091B3725DB0081F479 /* NSData+Base64.m */,
+				F9E92CCC1B38642000C10C24 /* SLKUtil.h */,
+				F9E92CD71B3864A100C10C24 /* SLKUtil.m */,
 			);
 			name = Silk;
 			sourceTree = "<group>";
@@ -652,6 +657,7 @@
 				F949A1A11B365A2900E59D69 /* WebViewJavascriptBridge.m in Sources */,
 				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
 				F949A19F1B365A2900E59D69 /* WebViewExManager.m in Sources */,
+				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				F97F49B91B35FEDE0096D993 /* SocketTypes.swift in Sources */,
 				F97F49B71B35FEDE0096D993 /* SocketPacket.swift in Sources */,

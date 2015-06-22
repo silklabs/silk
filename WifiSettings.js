@@ -14,7 +14,7 @@ var {
 
 var WifiSettings = React.createClass({
   getInitialState: function() {
-    return { ssid: 'Hello', secret: '' };
+    return { ssid: '', secret: '' };
   },
   
   render: function() {
@@ -23,7 +23,9 @@ var WifiSettings = React.createClass({
         <Text>Settings</Text>
         <View style={styles.formRow}>
           <Text>Access Point</Text>
-          <TextInput ref='ssid' placeholder={'Hello'} style={styles.input}
+          <TextInput ref='ssid'
+                     value={this.props.ssidHint || ''}
+                     style={styles.input}
                      onChangeText={(text) => this.setState({ssid: text})}>
           </TextInput>
         </View>

@@ -35,6 +35,7 @@ var Silk = React.createClass({
     case 'WifiSettings':
       return (
           <WifiSettings navigator={navigator} name={route.name}
+                        ssidHint={route.ssidHint}
                         resolve={route.resolve} reject={route.reject} />
       );
     };

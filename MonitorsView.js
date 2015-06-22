@@ -117,8 +117,12 @@ var MonitorsView = React.createClass({
       return Promise.resolve(this.state.network);
     }
     return new Promise((resolve, reject) => {
-      this.props.navigator.push({ name: 'WifiSettings', index: 1,
-                                  resolve: resolve, reject: reject });
+      var net = require('./net');
+      net.getInfo().then(info => {
+        this.props.navigator.push({ name: 'WifiSettings', index: 1,
+                                    ssidHint: info.SSID || 'SSID',
+                                    resolve: resolve, reject: reject });
+      });
     }).then(network => {
       this.state.network = network;
       this.setState(this.state);

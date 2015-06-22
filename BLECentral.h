@@ -8,7 +8,8 @@
 #import "RCTBridgeModule.h"
 
 @interface BLECentral : NSObject <RCTBridgeModule, CBCentralManagerDelegate, CBPeripheralDelegate> {
-  NSMutableDictionary *connectCallbackLatches;
+  NSMutableDictionary* connectCallbacks;
+  NSMutableDictionary* connectCallbackLatches;
 }
 
 @property (strong, nonatomic) NSMutableSet* peripherals;
@@ -18,9 +19,9 @@
 
 - (void)stopScan;
 
-- (void)connect:(NSString*)uuid;
+- (void)connect:(NSString*)uuid callback:(RCTResponseSenderBlock)callback;
 
-- (void)disconnect:(NSString*)uuid;
+- (void)disconnect:(NSString*)uuid callback:(RCTResponseSenderBlock)callback;
 
 @end
   

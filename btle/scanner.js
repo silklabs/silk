@@ -95,8 +95,7 @@ PeripheralCordova.prototype = {
         return reject('Unknown characteristic "'+ uuid +'"');
       }
       // TODO: check write-able?
-      ble.write(self.id, charc.service, charc.characteristic,
-                data.toArrayBuffer(),
+      ble.write(self.id, charc.service, charc.characteristic, data,
                 function() {
                   resolve();
                 },

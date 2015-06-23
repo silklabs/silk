@@ -25,7 +25,7 @@ RCT_EXPORT_METHOD(getNetInfo:(RCTResponseSenderBlock)callback) {
       break;
     }
   }
-  NSString* ssid = nil;
+  NSString* ssid = @"";
   if (SSIDInfo) {
     ssid = SSIDInfo[@"SSID"];
   }

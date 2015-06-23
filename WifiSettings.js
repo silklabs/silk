@@ -12,40 +12,73 @@ var {
   View,
 } = React;
 
+var Title = React.createClass({
+  render: function() {
+    return (
+      <View style={styles.titleContainer}>
+        <View style={styles.spacer}>
+        <TouchableOpacity onPress={this.props.onCancel}>
+            <Text style={styles.cancel}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.title}>Wi-Fi Settings</Text>
+        <View style={styles.spacer}>
+          <TouchableOpacity onPress={this.props.onSave}>
+            <Text style={styles.save}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  },
+});
+
 var WifiSettings = React.createClass({
   getInitialState: function() {
-    return { ssid: this.props.ssidHint, secret: 'silkysmooth' };
+    return { ssid: this.props.ssidHint, secret: this.props.pskHint };
   },
   
   render: function() {
     return (
       <View style={styles.container}>
-        <Text>Settings</Text>
-        <View style={styles.formRow}>
-          <Text>Access Point</Text>
-          <TextInput ref='ssid'
-                     value={this.props.ssidHint || ''}
-                     style={styles.input}
-                     onChangeText={(text) => this.setState({ssid: text})}>
-          </TextInput>
+        <Title onSave={this.save} onCancel={this.cancel} />
+        <View style={styles.contentContainer}>
+          <View style={styles.contentSpacer} />
+
+          <View style={styles.formContainer}>        
+            <View style={styles.formLeftSpace} />
+
+            <View style={styles.form}>
+              <View style={styles.formRow}>
+                <View style={styles.formRowLabelContainer}>
+                  <Text style={styles.formRowLabel}>Network</Text>
+                </View>
+                <View style={styles.formInputContainer}>
+                  <TextInput ref='ssid'
+                             value={this.props.ssidHint || ''}
+                             autoCapitalize='none'
+                             autoCorrect={false}
+                             style={styles.formInput}
+                             onChangeText={(text) => this.setState({ssid: text})}>
+                  </TextInput>
+                </View>
+              </View>
+              <View style={styles.formRow}>
+                <View style={styles.formRowLabelContainer}>
+                  <Text style={styles.formRowLabel}>Password</Text>
+                </View>
+                <View style={styles.formInputContainer}>
+                  <TextInput ref='secret' password={true}
+                             value={this.state.secret}
+                             autoFocus={true}
+                             style={styles.formInput}
+                             onChangeText={(text) => this.setState({secret: text})} />
+                </View>
+              </View>
+
+            </View>
+          </View>
         </View>
-        <View style={styles.formRow}>
-          <Text>Password</Text>
-          <TextInput ref='secret' password={true}
-                     value={this.state.secret}
-                     style={styles.input}
-                     onChangeText={(text) => this.setState({secret: text})}>
-          </TextInput>
-        </View>
-        <View style={styles.formRow}>
-          <TouchableOpacity onPress={this.cancel}>
-            <Text>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={this.ok}>
-            <Text>OK</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </View>        
     );
   },
 
@@ -56,7 +89,7 @@ var WifiSettings = React.createClass({
     this.props.navigator.pop();
   },
 
-  ok: function() {
+  save: function() {
     if (this.props.resolve) {
       this.props.resolve(this.state);
     }
@@ -67,19 +100,86 @@ var WifiSettings = React.createClass({
 
 var styles = StyleSheet.create({
   container: {
+    backgroundColor: '#f4f4f6',
     flex: 1,
-    paddingTop: 30,
   },
-  formRow: {
+  titleContainer: {
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingTop: 30,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 10,
+  },
+  spacer: {
+    flex: 1,
+  },
+  title: {
+    color: 'black',
+    fontSize: 15,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  save: {
+    color: '#007aff',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'right',
+  },
+  cancel: {
+    color: '#007aff',
+    fontSize: 15,
+    textAlign: 'left',
+  },
+
+  contentContainer: {
+    backgroundColor: '#efeff4',
+    borderColor: '#a7a7aa',
+    borderTopWidth: 0.5,
+    flex: 1,
+  },
+  contentSpacer: {
+    height: 30,
+  },
+
+  formContainer: {
+    backgroundColor: 'white',
+    borderBottomWidth: 0.5,
+    borderColor: '#c8c7cc',
     flexDirection: 'row',
   },
-  input: {
-    height: 26,
-    borderWidth: 0.5,
-    borderColor: '#0f0f0f',
+  formLeftSpace: {
+    borderColor: '#c8c7cc',
+    borderTopWidth: 0.5,
+    width: 20,
+    height: 39,
+  },
+  form: {
     flex: 1,
-    fontSize: 13,
-    padding: 4,
+  },
+  formRow: {
+    flex: 1,
+    flexDirection: 'row',
+    borderColor: '#c8c7cc',
+    borderTopWidth: 0.5,
+  },
+  formRowLabelContainer: {
+    width: 80,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  formRowLabel: {
+    fontSize: 15,
+    fontWeight: '200',
+  },
+  formInputContainer: {
+    flex: 1,
+  },
+  formInput: {
+    height: 39,
+    fontSize: 15,
+    fontWeight: '200',
+    flex: 1,
   },
 });
 

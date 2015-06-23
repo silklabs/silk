@@ -100,9 +100,31 @@ var MonitorsView = React.createClass({
   },
 
   loadSettings: function() {
-    this.props.navigator.push({ name: 'WifiSettings', index: 1 });
+    return (() => {
+      if (this.state.network) {
+        return this.navigateWifiScene(this.state.network.ssid,
+                                      this.state.network.secret);
+      }
+      var net = require('./net');
+      return net.getInfo().then(info => {
+        return this.navigateWifiScene(info.SSID);
+      });
+    })().then(network => {
+      this.state.network = network;
+      this.setState(this.state);
+      return network;
+    });
   },
-    
+
+  navigateWifiScene: function(ssidHint, pskHint) {
+    return new Promise((resolve, reject) => {
+      this.props.navigator.push({ name: 'WifiSettings', index: 1,
+                                  ssidHint: ssidHint || 'Network Name',
+                                  pskHint: pskHint || 'silkysmooth',
+                                  resolve: resolve, reject: reject });
+    });
+  },
+
   refreshDeviceList: function() {
     var configuring = this.state.configuring = {};
     this.dm.enumerateDevices().forEach(p => {
@@ -116,18 +138,7 @@ var MonitorsView = React.createClass({
     if (this.state.network) {
       return Promise.resolve(this.state.network);
     }
-    return new Promise((resolve, reject) => {
-      var net = require('./net');
-      net.getInfo().then(info => {
-        this.props.navigator.push({ name: 'WifiSettings', index: 1,
-                                    ssidHint: info.SSID || 'SSID',
-                                    resolve: resolve, reject: reject });
-      });
-    }).then(network => {
-      this.state.network = network;
-      this.setState(this.state);
-      return network;
-    });
+    return this.loadSettings();
   },
 });
 
@@ -164,7 +175,7 @@ var styles = StyleSheet.create({
   settings: {
     alignItems: 'flex-end',
     flex: 1,
-    padding: 4,
+    padding: 8,
   },
   icon: {
     // TODO: shouldn't have to specify this?
@@ -176,7 +187,7 @@ var styles = StyleSheet.create({
   },
   content: {
     borderColor: '#c8c7cc',
-    borderTopWidth: 1,
+    borderTopWidth: 0.5,
     backgroundColor: 'white',
     flex: 1,
   },

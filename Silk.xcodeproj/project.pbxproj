@@ -46,6 +46,7 @@
 		F97F49BB1B35FEDE0096D993 /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97F49AC1B35FEDE0096D993 /* WebSocket.swift */; };
 		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
 		F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = F9E92CD71B3864A100C10C24 /* SLKUtil.m */; };
+		F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */ = {isa = PBXBuildFile; fileRef = F9E92CF71B3900C200C10C24 /* main.jsbundle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -181,6 +182,7 @@
 		F9BEA4B51B3699810093EA0A /* BLECentral.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECentral.m; sourceTree = "<group>"; };
 		F9E92CCC1B38642000C10C24 /* SLKUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKUtil.h; sourceTree = "<group>"; };
 		F9E92CD71B3864A100C10C24 /* SLKUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKUtil.m; sourceTree = "<group>"; };
+		F9E92CF71B3900C200C10C24 /* main.jsbundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = main.jsbundle; path = iOS/main.jsbundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -287,6 +289,7 @@
 		13B07FAE1A68108700A75B9A /* Silk */ = {
 			isa = PBXGroup;
 			children = (
+				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
 				F93D9AFF1B36501D00EF5C6A /* web */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.m */,
@@ -621,6 +624,7 @@
 			files = (
 				F949A1A01B365A2900E59D69 /* WebViewJavascriptBridge.js.txt in Resources */,
 				F93D9B001B36501D00EF5C6A /* web in Resources */,
+				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,
 			);

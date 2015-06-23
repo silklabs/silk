@@ -17,7 +17,7 @@ var Title = React.createClass({
     return (
       <View style={styles.titleContainer}>
         <View style={styles.spacer}>
-        <TouchableOpacity onPress={this.props.onCancel}>
+          <TouchableOpacity onPress={this.props.onCancel}>
             <Text style={styles.cancel}>Cancel</Text>
           </TouchableOpacity>
         </View>
@@ -106,7 +106,7 @@ var styles = StyleSheet.create({
   titleContainer: {
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingTop: 30,
+    paddingTop: 32,
     paddingLeft: 10,
     paddingRight: 10,
     paddingBottom: 10,
@@ -116,19 +116,19 @@ var styles = StyleSheet.create({
   },
   title: {
     color: 'black',
-    fontSize: 15,
+    fontSize: 17,
     textAlign: 'center',
     fontWeight: '500',
   },
   save: {
     color: '#007aff',
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '500',
     textAlign: 'right',
   },
   cancel: {
     color: '#007aff',
-    fontSize: 15,
+    fontSize: 18,
     textAlign: 'left',
   },
 
@@ -139,7 +139,7 @@ var styles = StyleSheet.create({
     flex: 1,
   },
   contentSpacer: {
-    height: 30,
+    height: 34,
   },
 
   formContainer: {
@@ -164,21 +164,19 @@ var styles = StyleSheet.create({
     borderTopWidth: 0.5,
   },
   formRowLabelContainer: {
-    width: 80,
+    width: 90,
     paddingTop: 10,
     paddingBottom: 10,
   },
   formRowLabel: {
-    fontSize: 15,
-    fontWeight: '200',
+    fontSize: 17,
   },
   formInputContainer: {
     flex: 1,
   },
   formInput: {
-    height: 39,
-    fontSize: 15,
-    fontWeight: '200',
+    height: 44,
+    fontSize: 17,
     flex: 1,
   },
 });

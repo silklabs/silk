@@ -162,10 +162,10 @@ var styles = StyleSheet.create({
     backgroundColor: 'white',
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingTop: 30,
+    paddingTop: 32,
     paddingLeft: 10,
     paddingRight: 10,
-    paddingBottom: 5,
+    paddingBottom: 10,
   },
   title: {
     fontSize: 20,
@@ -175,12 +175,12 @@ var styles = StyleSheet.create({
   settings: {
     alignItems: 'flex-end',
     flex: 1,
-    padding: 8,
+    padding: 4,
   },
   icon: {
     // TODO: shouldn't have to specify this?
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
   },
   spacer: {
     flex: 1,

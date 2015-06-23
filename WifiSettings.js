@@ -14,7 +14,7 @@ var {
 
 var WifiSettings = React.createClass({
   getInitialState: function() {
-    return { ssid: '', secret: '' };
+    return { ssid: this.props.ssidHint, secret: 'silkysmooth' };
   },
   
   render: function() {
@@ -32,6 +32,7 @@ var WifiSettings = React.createClass({
         <View style={styles.formRow}>
           <Text>Password</Text>
           <TextInput ref='secret' password={true}
+                     value={this.state.secret}
                      style={styles.input}
                      onChangeText={(text) => this.setState({secret: text})}>
           </TextInput>

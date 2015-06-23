@@ -89,7 +89,7 @@ It's also possible to build a full Mako device image from the tree as well:
 
 ```
 $ make clean
-$ make init.mako.l
+$ make init.mako
 $ make
 ```
 

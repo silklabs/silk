@@ -16,7 +16,7 @@ var {
 
 var SocketIO = require('react-native-swift-socketio');
 
-// TODO import weave-api
+// TODO import silk-api
 var SERVER_URL = '192.168.2.1:5000';
 
 var DeviceSetup = require('./DeviceSetup');

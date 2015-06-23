@@ -1,8 +1,8 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-// TODO: import weave-api for real
-//var api = require('weave-api');
+// TODO: import silk-api for real
+//var api = require('silk-api');
 var api = {
   btleConfigService: {
     state: {

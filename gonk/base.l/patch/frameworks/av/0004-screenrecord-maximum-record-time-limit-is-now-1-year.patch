@@ -1,0 +1,25 @@
+From e233222e8a9f473505814345141312098de78f7a Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Tue, 16 Jun 2015 21:29:21 -0700
+Subject: [PATCH 4/4] screenrecord: maximum record time limit is now 1 year
+
+---
+ cmds/screenrecord/screenrecord.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmds/screenrecord/screenrecord.cpp b/cmds/screenrecord/screenrecord.cpp
+index 5771e70..e668b85 100644
+--- a/cmds/screenrecord/screenrecord.cpp
++++ b/cmds/screenrecord/screenrecord.cpp
+@@ -57,7 +57,7 @@ using namespace android;
+ 
+ static const uint32_t kMinBitRate = 100000;         // 0.1Mbps
+ static const uint32_t kMaxBitRate = 200 * 1000000;  // 200Mbps
+-static const uint32_t kMaxTimeLimitSec = 180;       // 3 minutes
++static const uint32_t kMaxTimeLimitSec = 30758400;  // 1 year
+ static const uint32_t kFallbackWidth = 1280;        // 720p
+ static const uint32_t kFallbackHeight = 720;
+ static const char* kMimeTypeAvc = "video/avc";
+-- 
+1.9.1
+

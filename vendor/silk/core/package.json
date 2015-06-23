@@ -1,0 +1,53 @@
+{
+  "name": "silk-core",
+  "version": "0.0.1",
+  "description": "The common control software on each silk node",
+  "main": "dist/lib/main.js",
+  "scripts": {
+    "prepublish": "node_modules/grunt-cli/bin/grunt",
+    "start": "node dist/lib/main.js"
+  },
+  "dependencies": {
+    "node-hue-api": "1.0.5",
+    "socket.io-client": "^1.3.5",
+    "silk-api": "file:server/dist/api"
+  },
+  "devDependencies": {
+    "babel-eslint": "~3.1.15",
+    "browserify": "^10.2.1",
+    "eslint": "~0.22.1",
+    "grunt": "^0.4.5",
+    "grunt-babel": "^5.0.0",
+    "grunt-cli": "^0.1.13",
+    "grunt-eslint": "~14.0.0",
+    "load-grunt-tasks": "^3.1.0"
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "rules": {
+      "brace-style": 2,
+      "default-case": 2,
+      "comma-dangle": 0,
+      "indent": [2, 2],
+      "no-underscore-dangle": 0,
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
+      ],
+      "yoda": 0
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-device.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "private": true
+}

@@ -1,0 +1,29 @@
+/.repo/
+
+# repo projects from base gonk
+/Makefile
+/bionic/
+/build/
+/external/
+/frameworks/av/
+/frameworks/base/
+/frameworks/native/
+/hardware/
+/ndk
+/node_modules/modules/bleno/
+/node_modules/modules/noble/
+/out/
+/prebuilts/clang/
+/prebuilts/gcc/
+/prebuilts/misc/
+/prebuilts/ndk/
+/prebuilts/python/
+/system/core/
+/system/media/
+/vendor/silk/core/server/
+
+# |adb sync| generates this
+/filelist
+
+# vim droppings
+*.swp

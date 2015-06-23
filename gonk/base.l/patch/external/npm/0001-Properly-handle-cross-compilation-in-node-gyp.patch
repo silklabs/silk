@@ -1,0 +1,32 @@
+From 3e4d85feb794f77b64186eb36e6a423c051844f8 Mon Sep 17 00:00:00 2001
+From: Andreas Gal <andreas.gal@gmail.com>
+Date: Tue, 19 May 2015 20:15:24 -0700
+Subject: [PATCH] Properly handle cross compilation in node-gyp.
+
+---
+ node_modules/node-gyp/lib/configure.js | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/node_modules/node-gyp/lib/configure.js b/node_modules/node-gyp/lib/configure.js
+index 68f26d6..452a742 100644
+--- a/node_modules/node-gyp/lib/configure.js
++++ b/node_modules/node-gyp/lib/configure.js
+@@ -265,6 +265,15 @@ function configure (gyp, argv, callback) {
+   function runGyp (err) {
+     if (err) return callback(err)
+ 
++    if (gyp.opts.arch) {
++	argv.push('-D');
++	argv.push('arch=arm');
++	argv.push('-D');
++	argv.push('OS=android');
++	argv.push('-f');
++	argv.push('make-android');
++    }
++
+     if (!~argv.indexOf('-f') && !~argv.indexOf('--format')) {
+       if (win) {
+         log.verbose('gyp', 'gyp format was not specified; forcing "msvs"')
+-- 
+2.3.0
+

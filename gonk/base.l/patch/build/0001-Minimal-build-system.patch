@@ -1,0 +1,309 @@
+From f84451a87b1b851d260b7f45e4b92a8775c98301 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Tue, 16 Jun 2015 17:42:56 -0700
+Subject: [PATCH] Minimal build/ system
+
+---
+ core/base_rules.mk                  |  4 ++
+ core/binary.mk                      | 21 +++++++++
+ core/config.mk                      | 20 ++++-----
+ core/empty.mk                       |  0
+ core/main.mk                        | 88 ++++++++++++++++++++++++++++++++++---
+ core/notice_files.mk                |  2 +-
+ target/board/generic/BoardConfig.mk |  4 +-
+ 7 files changed, 120 insertions(+), 19 deletions(-)
+ create mode 100644 core/empty.mk
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index 8c25897..f2159f0 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -535,6 +535,10 @@ $(my_register_name): $(LOCAL_BUILT_MODULE) $(LOCAL_INSTALLED_MODULE)
+ ## Module installation rule
+ ###########################################################
+ 
++ifneq ($(filter $(DISABLED_USER_MODULES),$(LOCAL_MODULE)),)
++LOCAL_UNINSTALLABLE_MODULE := true
++endif
++
+ # Some hosts do not have ACP; override the LOCAL version if that's the case.
+ ifneq ($(strip $(HOST_ACP_UNAVAILABLE)),)
+   LOCAL_ACP_UNAVAILABLE := $(strip $(HOST_ACP_UNAVAILABLE))
+diff --git a/core/binary.mk b/core/binary.mk
+index 1e313ff..edc67f2 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -9,6 +9,27 @@
+ include $(BUILD_SYSTEM)/base_rules.mk
+ #######################################
+ 
++####################################################
++## Hide NDK libraries declared in LOCAL_SHARED_LIBRARIES
++####################################################
++
++ifdef LOCAL_SDK_VERSION
++
++so_suffix := $($(my_prefix)SHLIB_SUFFIX)
++
++# Search LOCAL_SHARED_LIBRARIES for NDK libs
++PRIVATE_NDK_SHARED_LIBRARIES:=$(notdir $(basename $(wildcard \
++  $(foreach so,$(LOCAL_SHARED_LIBRARIES),$(my_ndk_version_root)/usr/lib/$(so)$(so_suffix)) \
++)))
++
++# Move all NDK libs to LOCAL_SYSTEM_SHARED_LIBRARIES to avoid tripping up the
++# 'import includes' and 'standard library handling' rules below.
++LOCAL_SHARED_LIBRARIES := $(filter-out $(PRIVATE_NDK_SHARED_LIBRARIES),$(LOCAL_SHARED_LIBRARIES))
++installed_shared_library_module_names := $(filter-out $(PRIVATE_NDK_SHARED_LIBRARIES),$(installed_shared_library_module_names))
++LOCAL_SYSTEM_SHARED_LIBRARIES += $(PRIVATE_NDK_SHARED_LIBRARIES)
++endif
++
++
+ my_ndk_sysroot :=
+ my_ndk_sysroot_include :=
+ my_ndk_sysroot_lib :=
+diff --git a/core/config.mk b/core/config.mk
+index bfa5610..78959e4 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -74,18 +74,18 @@ BUILD_SHARED_LIBRARY:= $(BUILD_SYSTEM)/shared_library.mk
+ BUILD_EXECUTABLE:= $(BUILD_SYSTEM)/executable.mk
+ BUILD_RAW_EXECUTABLE:= $(BUILD_SYSTEM)/raw_executable.mk
+ BUILD_HOST_EXECUTABLE:= $(BUILD_SYSTEM)/host_executable.mk
+-BUILD_PACKAGE:= $(BUILD_SYSTEM)/package.mk
++BUILD_PACKAGE:= $(BUILD_SYSTEM)/empty.mk
+ BUILD_PHONY_PACKAGE:= $(BUILD_SYSTEM)/phony_package.mk
+ BUILD_HOST_PREBUILT:= $(BUILD_SYSTEM)/host_prebuilt.mk
+ BUILD_PREBUILT:= $(BUILD_SYSTEM)/prebuilt.mk
+ BUILD_MULTI_PREBUILT:= $(BUILD_SYSTEM)/multi_prebuilt.mk
+-BUILD_JAVA_LIBRARY:= $(BUILD_SYSTEM)/java_library.mk
+-BUILD_STATIC_JAVA_LIBRARY:= $(BUILD_SYSTEM)/static_java_library.mk
+-BUILD_HOST_JAVA_LIBRARY:= $(BUILD_SYSTEM)/host_java_library.mk
+-BUILD_DROIDDOC:= $(BUILD_SYSTEM)/droiddoc.mk
++BUILD_JAVA_LIBRARY:= $(BUILD_SYSTEM)/empty.mk
++BUILD_STATIC_JAVA_LIBRARY:= $(BUILD_SYSTEM)/empty.mk
++BUILD_HOST_JAVA_LIBRARY:= $(BUILD_SYSTEM)/empty.mk
++BUILD_DROIDDOC:= $(BUILD_SYSTEM)/empty.mk
+ BUILD_COPY_HEADERS := $(BUILD_SYSTEM)/copy_headers.mk
+-BUILD_NATIVE_TEST := $(BUILD_SYSTEM)/native_test.mk
+-BUILD_HOST_NATIVE_TEST := $(BUILD_SYSTEM)/host_native_test.mk
++BUILD_NATIVE_TEST := $(BUILD_SYSTEM)/empty.mk
++BUILD_HOST_NATIVE_TEST := $(BUILD_SYSTEM)/empty.mk
+ 
+ BUILD_SHARED_TEST_LIBRARY := $(BUILD_SYSTEM)/shared_test_lib.mk
+ BUILD_HOST_SHARED_TEST_LIBRARY := $(BUILD_SYSTEM)/host_shared_test_lib.mk
+@@ -390,7 +390,7 @@ else
+ MKBOOTIMG := $(BOARD_CUSTOM_MKBOOTIMG)
+ endif
+ MKYAFFS2 := $(HOST_OUT_EXECUTABLES)/mkyaffs2image$(HOST_EXECUTABLE_SUFFIX)
+-APICHECK := $(HOST_OUT_EXECUTABLES)/apicheck$(HOST_EXECUTABLE_SUFFIX)
++APICHECK := true
+ FS_GET_STATS := $(HOST_OUT_EXECUTABLES)/fs_get_stats$(HOST_EXECUTABLE_SUFFIX)
+ MKEXT2IMG := $(HOST_OUT_EXECUTABLES)/genext2fs$(HOST_EXECUTABLE_SUFFIX)
+ MAKE_EXT4FS := $(HOST_OUT_EXECUTABLES)/make_ext4fs$(HOST_EXECUTABLE_SUFFIX)
+@@ -404,7 +404,7 @@ MKTARBALL := build/tools/mktarball.sh
+ TUNE2FS := $(HOST_OUT_EXECUTABLES)/tune2fs$(HOST_EXECUTABLE_SUFFIX)
+ E2FSCK := $(HOST_OUT_EXECUTABLES)/e2fsck$(HOST_EXECUTABLE_SUFFIX)
+ JARJAR := $(HOST_OUT_JAVA_LIBRARIES)/jarjar.jar
+-PROGUARD := external/proguard/bin/proguard.sh
++PROGUARD := true
+ JAVATAGS := build/tools/java-event-log-tags.py
+ LLVM_RS_CC := $(HOST_OUT_EXECUTABLES)/llvm-rs-cc$(HOST_EXECUTABLE_SUFFIX)
+ BCC_COMPAT := $(HOST_OUT_EXECUTABLES)/bcc_compat$(HOST_EXECUTABLE_SUFFIX)
+@@ -451,7 +451,7 @@ endif
+ 
+ ifneq ($(HOST_JDK_TOOLS_JAR),)
+ ifeq ($(wildcard $(HOST_JDK_TOOLS_JAR)),)
+-$(error Error: could not find jdk tools.jar, please check if your JDK was installed correctly)
++#$(error Error: could not find jdk tools.jar, please check if your JDK was installed correctly)
+ endif
+ endif
+ 
+diff --git a/core/empty.mk b/core/empty.mk
+new file mode 100644
+index 0000000..e69de29
+diff --git a/core/main.mk b/core/main.mk
+index 9d6e233..e8af6e8 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -9,6 +9,9 @@ else
+ SHELL := /bin/bash
+ endif
+ 
++# Prevent a host dependency on clang
++export WITHOUT_LIBCOMPILER_RT=1
++
+ # this turns off the suffix rules built into make
+ .SUFFIXES:
+ 
+@@ -61,14 +64,21 @@ TOPDIR :=
+ BUILD_SYSTEM := $(TOPDIR)build/core
+ 
+ # This is the default target.  It must be the first declared target.
+-.PHONY: droid
+-DEFAULT_GOAL := droid
++.PHONY: gonk_modules
++DEFAULT_GOAL := gonk_modules
+ $(DEFAULT_GOAL):
+ 
+ # Used to force goals to build.  Only use for conditionally defined goals.
+ .PHONY: FORCE
+ FORCE:
+ 
++# Inhibit the installation of base system libraries that are already present on
++# the target device
++DISABLED_USER_MODULES := libc libstdc++ libm libdl tzdata  # bionic/
++DISABLED_USER_MODULES += liblog libcutils                  # system/core/
++DISABLED_USER_MODULES += libstlport                        # external/stlport
++
++
+ # These goals don't need to collect and include Android.mks/CleanSpec.mks
+ # in the source tree.
+ dont_bother_goals := clean clobber dataclean installclean \
+@@ -117,7 +127,7 @@ $(warning ************************************************************)
+ $(warning You are building on a case-insensitive filesystem.)
+ $(warning Please move your source tree to a case-sensitive filesystem.)
+ $(warning ************************************************************)
+-$(error Case-insensitive filesystems not supported)
++$(warning Case-insensitive filesystems not supported)
+ endif
+ endif
+ 
+@@ -164,7 +174,7 @@ $(info $(space))
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/initializing.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif
+ 
+ # Check for the current JDK.
+@@ -188,7 +198,7 @@ $(info ************************************************************)
+ $(info You asked for an OpenJDK 7 build but your version is)
+ $(info $(java_version_str).)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif # java version is not OpenJdk
+ else # if requires_openjdk
+ ifneq ($(shell echo '$(java_version_str)' | grep -i openjdk),)
+@@ -199,7 +209,7 @@ $(info You use OpenJDK but only Sun/Oracle JDK is supported.)
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif # java version is not Sun Oracle JDK
+ endif # if requires_openjdk
+ 
+@@ -215,7 +225,7 @@ $(info $(space))
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif
+ 
+ 
+@@ -1071,3 +1081,67 @@ showcommands:
+ .PHONY: nothing
+ nothing:
+ 	@echo Successfully read the makefiles.
++
++
++ifdef GONK
++#
++# Device shared objects may be used for linking against by placing them
++# in prebuilts/device/$(TARGET_PRODUCT), alleviating the need to build them from
++# source.
++#
++DEVICE_PREBUILTS := $(notdir $(wildcard prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/*.so))
++
++# Copy the shared object into the expected location
++$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/%.so
++	@echo Gonk Prebuilt: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) cp -a $< $@
++
++# Forge an export_includes file to keep the rest of the build happy
++$(foreach p,$(DEVICE_PREBUILTS:.so=), \
++  $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(p)_intermediates/export_includes) : $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/%_intermediates/export_includes:
++	@echo Gonk Phony export_includes: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) touch $@
++
++endif
++
++#
++# All the base system modules
++#
++# This list was generated by uncommenting the following command with no
++# additional modules in the workspace:
++#
++#   $(error $(sort $(ALL_MODULES)))
++#
++ALL_MODULES_BASE := \
++  PowerTestHelper acp android-support-test antlr apicheck asm-4.0 atree \
++  bionic-benchmarks bionic-unit-tests bionic-unit-tests-static busybox \
++  check_prereq com.android.uiautomator.platform.common commons-cli-1.2 \
++  cpufeatures ddmlib-prebuilt espresso-core fortify1-tests-clang \
++  fortify1-tests-gcc fortify2-tests-clang fortify2-tests-gcc fs_config \
++  fs_get_stats gdbserver groovy-all-1.7.0 icu4j json-prebuilt jython kxml2-2.3.0 \
++  layoutlib_api-prebuilt libBionicStandardTests libBionicTests libbfd libc \
++  libc_aeabi libc_bionic libc_common libc_cxa libc_dns libc_freebsd libc_gdtoa \
++  libc_malloc libc_malloc_debug_leak libc_malloc_debug_qemu libc_netbsd \
++  libc_nomalloc libc_openbsd libc_stack_protector libc_syscalls libc_tzcode \
++  libdl libdlext_test libdlext_test_fd libdlext_test_fd_zipaligned \
++  libdlext_test_norelro libhost_32 libiberty libintl libm libstdc++ libstlport \
++  libstlport_static libtest_atexit libtest_check_order \
++  libtest_check_order_1_left libtest_check_order_2_right libtest_check_order_3_c \
++  libtest_check_order_a libtest_check_order_b libtest_check_order_d \
++  libtest_dlsym_weak_func libtest_relo_check_dt_needed_order \
++  libtest_relo_check_dt_needed_order_1 libtest_relo_check_dt_needed_order_2 \
++  libtest_simple libtest_with_dependency libtest_with_dependency_loop \
++  libtest_with_dependency_loop_a libtest_with_dependency_loop_b \
++  libtest_with_dependency_loop_b_tmp libtest_with_dependency_loop_c linker \
++  linker-unit-tests ninepatch-prebuilt no-elf-hash-table-library rgb2565 \
++  sdk-common tools-common-prebuilt tradefed-prebuilt tzdata ub-janktesthelper \
++  ub-uiautomator verity_key zipalign tst_str_parms liblog-benchmarks
++
++GONK_MODULES:=$(filter-out $(ALL_MODULES_BASE),$(ALL_MODULES))
++
++ifneq (,$(strip $(GONK_MODULES)))
++gonk_modules: $(GONK_MODULES)
++endif
++
+diff --git a/core/notice_files.mk b/core/notice_files.mk
+index e63cd84..82dcb0e 100644
+--- a/core/notice_files.mk
++++ b/core/notice_files.mk
+@@ -49,7 +49,7 @@ else
+       module_installed_filename := \
+           $(patsubst $(PRODUCT_OUT)%,%,$($(my_prefix)OUT_JAVA_LIBRARIES))/$(module_leaf)
+     else
+-      $(error Cannot determine where to install NOTICE file for $(LOCAL_MODULE))
++      $(warning Cannot determine where to install NOTICE file for $(LOCAL_MODULE))
+     endif # JAVA_LIBRARIES
+   endif # STATIC_LIBRARIES
+ endif
+diff --git a/target/board/generic/BoardConfig.mk b/target/board/generic/BoardConfig.mk
+index 3ae5860..1f90167 100644
+--- a/target/board/generic/BoardConfig.mk
++++ b/target/board/generic/BoardConfig.mk
+@@ -19,7 +19,7 @@ TARGET_ARCH := arm
+ # that are slower to emulate. On the other hand, it is possible to emulate
+ # application code generated with the NDK that uses NEON in the emulator.
+ #
+-TARGET_ARCH_VARIANT := armv7-a
++TARGET_ARCH_VARIANT := armv7-a-neon
+ TARGET_CPU_VARIANT := generic
+ TARGET_CPU_ABI := armeabi-v7a
+ TARGET_CPU_ABI2 := armeabi
+@@ -92,3 +92,5 @@ ifeq ($(TARGET_PRODUCT),sdk)
+   # include an expanded selection of fonts for the SDK.
+   EXTENDED_FONT_FOOTPRINT := true
+ endif
++
++MALLOC_IMPL := dlmalloc
+-- 
+2.0.1
+

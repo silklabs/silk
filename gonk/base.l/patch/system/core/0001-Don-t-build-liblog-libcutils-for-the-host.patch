@@ -1,0 +1,57 @@
+From 51c7d6e12c8896e0de66283eb9d38e0760bcb79d Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Thu, 18 Jun 2015 21:22:28 -0700
+Subject: [PATCH] Don't build liblog/libcutils for the host
+
+---
+ libcutils/Android.mk | 4 ++--
+ liblog/Android.mk    | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/libcutils/Android.mk b/libcutils/Android.mk
+index b016a42..68ed58d 100644
+--- a/libcutils/Android.mk
++++ b/libcutils/Android.mk
+@@ -83,7 +83,7 @@ LOCAL_CFLAGS += -Werror
+ endif
+ LOCAL_MULTILIB := both
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+-include $(BUILD_HOST_STATIC_LIBRARY)
++#include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+ 
+ # Tests for host
+@@ -98,7 +98,7 @@ LOCAL_SRC_FILES := str_parms.c hashmap.c memory.c
+ LOCAL_STATIC_LIBRARIES := liblog
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+-include $(BUILD_HOST_EXECUTABLE)
++#include $(BUILD_HOST_EXECUTABLE)
+ 
+ 
+ # Shared and static library for target
+diff --git a/liblog/Android.mk b/liblog/Android.mk
+index a4e5f5e..e5fcaf3 100644
+--- a/liblog/Android.mk
++++ b/liblog/Android.mk
+@@ -59,7 +59,7 @@ LOCAL_MODULE := liblog
+ LOCAL_SRC_FILES := $(liblog_host_sources)
+ LOCAL_CFLAGS := -DFAKE_LOG_DEVICE=1 -Werror
+ LOCAL_MULTILIB := both
+-include $(BUILD_HOST_STATIC_LIBRARY)
++#include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := liblog
+@@ -68,7 +68,7 @@ ifeq ($(strip $(HOST_OS)),linux)
+ LOCAL_LDLIBS := -lrt
+ endif
+ LOCAL_MULTILIB := both
+-include $(BUILD_HOST_SHARED_LIBRARY)
++#include $(BUILD_HOST_SHARED_LIBRARY)
+ 
+ 
+ # Shared and static library for target
+-- 
+2.0.1
+

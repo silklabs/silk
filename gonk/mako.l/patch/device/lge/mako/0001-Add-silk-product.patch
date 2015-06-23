@@ -1,0 +1,26 @@
+From 7c65f244dc7230f68889672483007dd2b1c8f8d0 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Tue, 9 Jun 2015 20:34:32 -0700
+Subject: [PATCH] Add silk product
+
+---
+ full_mako.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/full_mako.mk b/full_mako.mk
+index 3b40137..ca14cec 100644
+--- a/full_mako.mk
++++ b/full_mako.mk
+@@ -35,7 +35,8 @@ PRODUCT_DEVICE := mako
+ PRODUCT_BRAND := Android
+ PRODUCT_MODEL := AOSP on Mako
+ PRODUCT_MANUFACTURER := LGE
+-PRODUCT_RESTRICT_VENDOR_FILES := true
++
++$(call inherit-product, vendor/silk/gonk/silk.mk)
+ 
+ # Inherit from hardware-specific part of the product configuration
+ $(call inherit-product, device/lge/mako/device.mk)
+-- 
+1.9.1
+

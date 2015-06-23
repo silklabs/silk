@@ -1,0 +1,16 @@
+From ee8053d0e0b6b0f9265514fb4a45ffe01fa42361 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Wed, 20 May 2015 22:25:04 -0700
+Subject: [PATCH] Stub Android.mk
+
+---
+ Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.5 (Apple Git-50.3)
+ 

@@ -8,7 +8,7 @@
 
 //#define SUPER_VERBOSE 1
 #if 0
-#  define BLE_LOG(...) BLE_LOG(__VA_ARGS__)
+#  define BLE_LOG(...) NSLog(__VA_ARGS__)
 #else
 #  define BLE_LOG(...) ((void)0)
 #endif
@@ -324,14 +324,17 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
 
   CBPeripheral *peripheral = [self findPeripheralByUUID:deviceUuidStr];
   if (!peripheral) {
+    NSLog(@"Couldn't find periperal %@", deviceUuidStr);
     return nil;
   }
   CBService *service = [self findServiceFromUUID:serviceUUID p:peripheral];
   if (!service) {
+    NSLog(@"Couldn't find service %@", serviceUuidStr);
     return nil;
   }
   CBCharacteristic *characteristic = [self findCharacteristicFromUUID:characteristicUUID service:service];
   if (!characteristic) {
+    NSLog(@"Couldn't find characteristic %@", charcUuidStr);
     return nil;
   }
   BLEPeriphCharc* pc = [[BLEPeriphCharc alloc] init];

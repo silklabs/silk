@@ -93,62 +93,71 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
   this.devices[p.id] = p;  
   this.emit('discover', p);
 
-  var self = this;
-  var central;
-  p.connect().then(function() {
-    // TODO: listen for disconnect
+  this._ensureConfigured(p);
+};
+
+DeviceManager.prototype._ensureConfigured = function(p) {
+  p.connect().then(() => {
     p.state = 'connected';
-    self.emit('connect', p);
+    this.emit('connect', p);
     // TODO: register for notify on state charc
     return p.readCharacteristic(decls.uuid.StateCharacteristic);
-  }).then(function(data) {
+  }).then(data => {
     var state = data.readUInt8(0);
     p.state = stateToString(state);
-    self.emit('stateChange', p);
+    this.emit('stateChange', p);
     // TODO handle ERROR state?
     if (state !== decls.state.UNREGISTERED) {
-      // TODO disconnect here?
+      // TODO disconnect here?  should we ever get here?
       return Promise.reject('Peripheral not register-able');
     }
-    return new Promise(function(resolve) {
-      // Wait until we're close enough to the peripheral so that we
-      // can be sure it'll accept our connection.
-      // TODO: this should be a notification
-      var updateRssiInterval = setInterval(function() {
-        p.readCharacteristic(decls.uuid.RssiCharacteristic).then(
-          function(data) {
-            var rssi = -data.readUInt8(0);
-            p.rssi = rssi;
-            self.emit('rssi', p);
-            if (rssi < -40) {
-              return;
-            }
-            clearInterval(updateRssiInterval);
-            resolve();
-          });
-      }, 500);
-    });
-  }).then(function() {
-    return self.configureWithoutCrypto(p);
+    return this._waitForProximity(p);
+  }).then(() => {
+    return this._configureWithoutCrypto(p);
   });
 };
 
-DeviceManager.prototype.configureWithoutCrypto = function(p) {
-  var self = this;
-  return self.wifiHelper.getWifiNetwork().then(function(network) {
+/**
+ * Wait until we're close enough to the peripheral so that we
+ * can be sure it'll accept our connection.
+ */
+DeviceManager.prototype._waitForProximity = function(p) {
+  return new Promise(resolve => {
+    // TODO: this should be a notification
+    var updateRssiInterval = setInterval(() => {
+      p.readCharacteristic(decls.uuid.RssiCharacteristic).then(data => {
+        var rssi = -data.readUInt8(0);
+        p.rssi = rssi;
+        this.emit('rssi', p);
+        if (rssi < -40) {
+          return;
+        }
+        clearInterval(updateRssiInterval);
+        resolve();
+      }, err => {
+        console.log('Error reading rssi', err);
+        clearInterval(updateRssiInterval);
+        p.disconnect().then(() => this._ensureConfigured(p));
+      });
+    }, 500);
+  });
+};
+
+DeviceManager.prototype._configureWithoutCrypto = function(p) {
+  return this.wifiHelper.getWifiNetwork().then(network => {
     Promise.all([
       p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
                             new Buffer(network.ssid, 'utf8')),
       p.writeCharacteristic(decls.uuid.SecretCharacteristic,
                             new Buffer(network.secret, 'utf8')),
-    ]).then(function() {
+    ]).then(() => {
       // TODO: get this from state charc notify
       p.state = 'registered';
-      self.emit('stateChange', p);
-      setTimeout(function() {
+      this.emit('stateChange', p);
+      setTimeout(() => {
         p.disconnect();
-        delete self.devices[p.id];
-        self.emit('disconnect', p);
+        delete this.devices[p.id];
+        this.emit('disconnect', p);
       }, 2000);
     });
   });

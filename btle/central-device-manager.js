@@ -129,6 +129,33 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
       }, 500);
     });
   }).then(function() {
+    return self.configureWithoutCrypto(p);
+  });
+};
+
+DeviceManager.prototype.configureWithoutCrypto = function(p) {
+  var self = this;
+  return self.wifiHelper.getWifiNetwork().then(function(network) {
+    Promise.all([
+      p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
+                            new Buffer(network.ssid, 'utf8')),
+      p.writeCharacteristic(decls.uuid.SecretCharacteristic,
+                            new Buffer(network.secret, 'utf8')),
+    ]).then(function() {
+      // TODO: get this from state charc notify
+      p.state = 'registered';
+      self.emit('stateChange', p);
+      setTimeout(function() {
+        p.disconnect();
+        delete self.devices[p.id];
+        self.emit('disconnect', p);
+      }, 2000);
+    });
+  });
+};
+
+/*
+function configureWithCrypto() {
     return p.writeCharacteristic(decls.uuid.CurveCharacteristic,
                                  new Buffer('curve25519', 'utf8'));
   }).then(function() {
@@ -165,6 +192,7 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
       }, 2000);
     });
   });
-};
+}
+*/
 
 module.exports = DeviceManager;

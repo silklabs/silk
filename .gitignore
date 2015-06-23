@@ -1,0 +1,11 @@
+build
+node_modules
+public
+data/
+npm-debug.log
+app/platforms/
+fonts/
+dist/lib/
+dist/test/
+.DS_Store
+*~

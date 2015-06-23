@@ -14,11 +14,11 @@ grunt test
 
 ## Test locally
 
+The following command starts a silk server on localhost:5000 (by default):
 ```
 npm start
 ```
-
-This runs the server on localhost:5000.
+Load http://localhost:5000 in your web browser to ensure that the server is running.  Devices and apps can connect to that server instance.
 
 ## Emacs setup
 

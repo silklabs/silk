@@ -1,4 +1,5 @@
-# Silk Gonk Build [![Build # Status](https://api.travis-ci.com/silklabs/silk-device.svg?branch=master&token=gdyBzz73sa8NmR6zhEKz)](https://api.travis-ci.com/silklabs/silk-device)
+# Silk Gonk Build [![Build Status](https://magnum.travis-ci.com/silklabs/silk-device.svg?token=9zqxLJky1XFHahNndToB)](https://magnum.travis-ci.com/silklabs/silk-device)
+
 
 ## Configuring a device
 

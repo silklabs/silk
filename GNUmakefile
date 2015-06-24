@@ -78,7 +78,7 @@ init.%:
 	./repo sync -j4 --current-branch --no-tags --quiet
 
 .repo/manifest.xml: GONK=base# default gonk manifest
-.repo/manifest.xml: .repo/manifest_upstream
+.repo/manifest.xml: | .repo/manifest_upstream
 	./repo init -u $(PWD)/.repo/manifest_upstream -m $(GONK).xml \
     -g all,-notdefault,-x86,-mips,-linux,-darwin,$(shell uname | tr A-Z a-z)
 

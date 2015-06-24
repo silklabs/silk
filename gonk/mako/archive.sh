@@ -39,9 +39,13 @@ adb reboot-bootloader
 fastboot oem unlock
 fastboot flash boot boot.img
 fastboot flash system system.img
-fastboot flash userdata userdata.img
-fastboot format cache
 fastboot reboot
+
+echo Note: userdata/cache partitions have been preserved.  They may
+echo contain state that you want to clear, and if so run:
+echo $ adb reboot-bootloader
+echo $ fastboot format userdata
+echo $ fastboot format cache
 EOF
 chmod +x $ARCHIVEDIR/mako-${stamp}/flash.sh
 

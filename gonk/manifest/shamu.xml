@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-  <include name="silk.xml"/>
-  <include name="android-5.1.1_r1.xml"/>
+  <include name="mako.xml"/>
+  <remove-project name="device-lge-mako-blobs"/>
   <project groups="device,shamu" name="device-moto-shamu-blobs" path="vendor" remote="silk" revision="android-5.1.1"/>
 </manifest>

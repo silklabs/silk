@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE       := core.js
 LOCAL_MODULE_TAGS  := optional debug
 LOCAL_MODULE_CLASS := DATA
-LOCAL_MODULE_PATH  := $(TARGET_OUT_DATA)/silk
+LOCAL_MODULE_PATH  := $(TARGET_OUT)/silk
 LOCAL_CUSTOM_BUILT_MODULE := true
 
 # Entry point into the silk/core code.

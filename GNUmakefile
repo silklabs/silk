@@ -9,8 +9,6 @@ all: | .repo/.repo_fetchtimes.json
 .PHONY: install
 install: | .repo/.repo_fetchtimes.json
 	$(ENVSETUP) && \
-  mkdir -p $$ANDROID_PRODUCT_OUT/data && \
-  mkdir -p $$ANDROID_PRODUCT_OUT/system && \
   adb root && \
   adb wait-for-device && \
   adb remount && \

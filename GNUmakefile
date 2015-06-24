@@ -27,6 +27,11 @@ zest:
 sync: | .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --quiet
 
+.PHONY: dist
+dist: | .repo/manifest.xml
+	$(ENVSETUP) clean # <-- drop all local patches before archiving
+	$(ENVSETUP) np && ./gonk/archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
+
 # Manipulate the silk service on device:
 #
 #  make silk-start

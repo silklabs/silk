@@ -11,7 +11,7 @@ diff --git a/rootdir/init.rc b/rootdir/init.rc
 index cbcb842..7bcac6b 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -633,3 +633,17 @@ service pre-recovery /system/bin/uncrypt
+@@ -633,3 +633,7 @@ service pre-recovery /system/bin/uncrypt
      class main
      disabled
      oneshot

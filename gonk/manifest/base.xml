@@ -1,12 +1,14 @@
 <?xml version="1.0"?>
 <manifest>
-  <remote name="caf_la" fetch="git://codeaurora.org/quic/la/"/>
-  <remote name="github" fetch="git://github.com/"/>
-  <remote name="silk"  fetch="ssh://git@github.com/silklabs/" />
+  <include name="silk.xml"/>
 
-  <default remote="caf_la" revision="refs/tags/android-5.1.1_r1" sync-j="4"/>
+  <!-- Minimum subset of android-5.1.1_r1.xml required to build silk.xml -->
+  <remote  name="aosp"
+           fetch="https://android.googlesource.com/" />
+  <default revision="refs/tags/android-5.1.1_r1"
+           remote="aosp"
+           sync-j="4" />
 
-  <!-- Gonk Base -->
   <project name="platform/bionic" path="bionic" clone-depth="1"/>
   <project name="platform/build" path="build" clone-depth="1">
     <copyfile src="core/root.mk" dest="Makefile" />
@@ -44,35 +46,7 @@
   <project name="platform/ndk" path="ndk" clone-depth="1"/>
   <project path="prebuilts/misc" name="platform/prebuilts/misc" clone-depth="1"/>
 
-  <!-- Additional Gonk dependencies for the Silk projects -->
   <project name="platform/hardware/libhardware"
            path="hardware/libhardware" clone-depth="1"/>
 
-
-  <!--
-    Silk projects
-
-    PSA: When modifying the Silk project list, ensure the mako gonk manifest at
-         ../mako/default.xml is updated to match.
-    -->
-  <project name="joyent/node"
-           path="external/node"
-           remote="github"
-           revision="refs/tags/v0.12.2" clone-depth="1"/>
-  <project name="npm/npm"
-           path="external/npm"
-           remote="github"
-           revision="refs/tags/v2.10.1" clone-depth="1"/>
-  <project name="silk-server"
-           path="vendor/silk/core/server"
-           remote="silk"
-           revision="master"/>
-  <project name="sandeepmistry/bleno"
-           path="node_modules/modules/bleno"
-           remote="github"
-           revision="refs/tags/0.1.13" clone-depth="1"/>
-  <project name="sandeepmistry/noble"
-           path="node_modules/modules/noble"
-           remote="github"
-           revision="refs/tags/v1.0.1" clone-depth="1"/>
 </manifest>

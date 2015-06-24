@@ -61,7 +61,7 @@ init.$(1):
 endef
 
 $(eval \
-  $(foreach manifest,$(subst /,,$(subst gonk/,,$(dir $(wildcard gonk/*/default.xml)))),\
+  $(foreach manifest,$(subst /,,$(subst gonk/,,$(notdir $(basename $(wildcard gonk/manifest/*.xml))))),\
     $(call __init_rules,$(manifest))) \
 )
 
@@ -77,22 +77,23 @@ init.%:
 .repo/.repo_fetchtimes.json: .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --quiet
 
-.repo/manifest.xml: .repo/manifest_upstream/default.xml
-	./repo init -u $(PWD)/.repo/manifest_upstream -g all,-notdefault,-x86,-mips,-linux,-darwin,$(shell uname | tr A-Z a-z)
+.repo/manifest.xml: GONK=base# default gonk manifest
+.repo/manifest.xml: .repo/manifest_upstream
+	./repo init -u $(PWD)/.repo/manifest_upstream -m $(GONK).xml \
+    -g all,-notdefault,-x86,-mips,-linux,-darwin,$(shell uname | tr A-Z a-z)
 
-.repo/manifest_upstream/default.xml: GONK=base # default gonk manifest
-.repo/manifest_upstream/default.xml:
+.repo/manifest_upstream:
 # Construct a faux 'upstream' manifest project to keep repo content.  Its
-# default.xml redirects to ./default.xml, so that edits directly made to
-# ./defaults.xml will be picked up immediately by a |repo sync|
+# manifest .xml files redirect out to gonk/manifest/* so that edits directly
+# made in gonk/manifest/* will be picked up immediately by a |repo sync|
 	@echo Forging upstream repo manifest for gonk: $(GONK)
 	@{ \
     set -ex ; \
     mkdir -p .repo/manifest_upstream ; \
     cd .repo/manifest_upstream ; \
     git init --quiet . ; \
-    ln -sf ../../gonk/$(strip $(GONK))/default.xml default.xml ; \
-    git add default.xml ; \
+    for f in gonk/manifest/*; do ln -sf ../../$$f .; done; \
+    git add *; \
     git commit -m '301 Moved Permanently' ; \
   }
 

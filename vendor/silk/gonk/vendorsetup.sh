@@ -60,17 +60,23 @@ node_version_check
 npm_version_check
 
 
-export GONK=$(readlink -f .repo/manifest.xml | xargs dirname | xargs basename)
+# Figure the current Gonk from the basename of what .repo/manifest.xml is
+# pointing at.
+GONK=$(readlink -f .repo/manifest.xml)
+GONK=${GONK##*/}
+GONK=${GONK%.xml}
+export GONK
+
 PATCH_TREE=gonk/${GONK}/patch
 
 echo Gonk: ${GONK}
 case $GONK in
-base*)
+base)
   export TARGET_PRODUCT=aosp_arm
   export TARGET_BUILD_VARIANT=eng
   export TARGET_BUILD_TYPE=release
   ;;
-mako*)
+mako)
   export TARGET_PRODUCT=aosp_mako
   export TARGET_BUILD_VARIANT=eng
   export TARGET_BUILD_TYPE=release

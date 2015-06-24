@@ -80,7 +80,7 @@ init.%:
 .repo/manifest.xml: .repo/manifest_upstream/default.xml
 	./repo init -u $(PWD)/.repo/manifest_upstream -g all,-notdefault,-x86,-mips,-linux,-darwin,$(shell uname | tr A-Z a-z)
 
-.repo/manifest_upstream/default.xml: GONK=base.l # default gonk manifest
+.repo/manifest_upstream/default.xml: GONK=base # default gonk manifest
 .repo/manifest_upstream/default.xml:
 # Construct a faux 'upstream' manifest project to keep repo content.  Its
 # default.xml redirects to ./default.xml, so that edits directly made to

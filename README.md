@@ -5,9 +5,9 @@
 
 ### Mako
 
-First load the device with the stock Nexus 4 ROM from
-https://github.com/silklabs/device-lge-mako-manifest/tree/android-5.1.1#stock-511-rom
-and ensure the device is functioning normally.
+First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
+https://dl.google.com/dl/android/aosp/occam-lmy47v-factory-b0c4eb3d.tgz and
+ensure the device is functioning normally.
 
 Then obtain the latest Silk Nexus 4 ROM ("mako-*") from [Google Docs](https://drive.google.com/open?id=0B1uhMYctsSarfllyWXJmZUxKWTk2NnhkLWg0bHhGLXZWVmhyaU9Kbld0Nmo4Q3Y2ZHB6Rzg&authuser=1)
 
@@ -20,7 +20,7 @@ $ ./flash.sh
 
 ### Shamu
 
-First load the device with the stock Nexus 6 ROM from
+First load the device with the stock Nexus 6 (LMY47Z) ROM from
 https://dl.google.com/dl/android/aosp/shamu-lmy47z-factory-33951732.tgz
 and ensure the device is functioning normally.
 
@@ -89,7 +89,7 @@ It's also possible to build a full Mako device image from the tree as well:
 
 ```
 $ make clean
-$ make init.mako.l
+$ make init.mako
 $ make
 ```
 
@@ -139,10 +139,33 @@ If you don't use emacs, ignore this.
 
 JavaScript files are tagged to use js2-mode.  [Follow these instructions to install js2-mode](https://github.com/mooz/js2-mode).
 
-## Development protips
+## Development ProTips
 
 We run eslint on core ES6 files.  It's great for finding bugs but can be annoying during development when it fails builds because of trailing whitespace and so forth.  When iterating during development, you can turn off eslint checking by passing `LAX=1` to make:
 ```bash
 make LAX=1 core.js
 ```
 Remember to run a non-LAX build before sending a pull request though!
+
+## Appendix
+
+
+### Stock device manifest for Nexus 4 ("Mako") 5.1.1
+
+```
+$ repo init -u https://android.googlesource.com/platform/manifest.git -b android-5.1.1
+$ repo sync -j4 --current-branch --no-tags
+$ . build/envsetup
+$ lunch aosp_mako-eng
+$ time make -j8
+```
+
+### Recovery image
+
+A nice recovery image is available at [openrecovery-twrp-2.8.5.2-mako.img](https://drive.google.com/a/weavelabs.net/file/d/0B1uhMYctsSarZ2d1VFFiNmMyeE0/view?usp=sharing)
+
+```
+$ adb reboot-bootloader
+$ fastboot oem unlock
+$ fastboot boot openrecovery-twrp-2.8.5.2-mako.img
+```

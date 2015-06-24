@@ -85,7 +85,7 @@ shamu)
   export TARGET_PRODUCT=aosp_shamu
   export TARGET_BUILD_VARIANT=eng
   export TARGET_BUILD_TYPE=release
-  PATCH_TREE=gonk/mako.l/patch
+  PATCH_TREE=gonk/mako/patch
   ;;
 *)
   poison_their_lunch Unknown gonk: $GONK

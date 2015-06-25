@@ -80,7 +80,8 @@ set -e
 fastboot flash boot boot.img
 fastboot flash system system.img
 fastboot reboot
-
+set +x
+echo
 echo Note: userdata/cache partitions have been preserved.  They may
 echo contain state that you want to clear, and if so run:
 echo $ adb reboot-bootloader

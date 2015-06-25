@@ -7,6 +7,11 @@
            path="vendor/silk/core/server"
            remote="silk"
            revision="master"/>
+  <project name="silk-device-npm-cache"
+           path="npm_cache"
+           remote="silk"
+           revision="master"
+           clone-depth="1"/>
 
   <project name="joyent/node"
            path="external/node"

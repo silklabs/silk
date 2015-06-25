@@ -20,12 +20,12 @@ var ProgressBar = require('./ProgressBar');
 function rssiToHeat(rssi) {
   var value = (rssi + 100.0) / 65.0;
   if (rssi < -70) {
-    return { heat: '#3c4884', value: value };
+    return { heat: '#ce0000', value: value };
   }
   if (rssi < -50) {
-    return { heat: '#e6a45a', value: value };
+    return { heat: '#f7d708', value: value };
   }
-  return { heat: '#8c2212', value: value };
+  return { heat: '#9ccf31', value: value };
 }
 
 var DeviceSetup = React.createClass({

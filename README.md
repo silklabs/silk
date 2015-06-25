@@ -9,7 +9,7 @@ First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
 https://dl.google.com/dl/android/aosp/occam-lmy47v-factory-b0c4eb3d.tgz and
 ensure the device is functioning normally.
 
-Then obtain the latest Silk Nexus 4 ROM ("mako-*") from [Google Docs](https://drive.google.com/open?id=0B1uhMYctsSarfllyWXJmZUxKWTk2NnhkLWg0bHhGLXZWVmhyaU9Kbld0Nmo4Q3Y2ZHB6Rzg&authuser=1)
+Then obtain the latest Silk Nexus 4 ROM ("mako-*") from [Google Docs](https://drive.google.com/a/weavelabs.net/folderview?id=0B1uhMYctsSarfmI3ZnJKNXdaOEtTM3VubHVDcEdIZ05VblNuWU81YkZ6X0NtcUU4MU9CWUE&usp=sharing)
 
 After downloading and uncompressing the image, execute the following to flash
 your device:
@@ -29,7 +29,7 @@ Enable the boot loader to be unlocked by:
 1. Settings -> About phone -> Tap on "Build number" 10 times
 2. Back to Developer options and enable "OEM unlocking"
 
-Then obtain the latest Silk Nexus 6 ROM ("shamu-*") from [Google Docs](https://drive.google.com/open?id=0B1uhMYctsSarfllyWXJmZUxKWTk2NnhkLWg0bHhGLXZWVmhyaU9Kbld0Nmo4Q3Y2ZHB6Rzg&authuser=1)
+Then obtain the latest Silk Nexus 6 ROM ("shamu-*") from [Google Docs](https://drive.google.com/a/weavelabs.net/folderview?id=0B1uhMYctsSarfmI3ZnJKNXdaOEtTM3VubHVDcEdIZ05VblNuWU81YkZ6X0NtcUU4MU9CWUE&usp=sharing)
 
 After downloading and uncompressing the image, execute the following to flash
 your device:

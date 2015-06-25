@@ -72,10 +72,11 @@ if [[ -f $ANDROID_PRODUCT_OUT/boot.img ]]; then
   cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<EOF
 #/bin/sh
 
-set -ex
+set -x
 cd \$(dirname \$0)
 adb reboot-bootloader
 fastboot oem unlock
+set -e
 fastboot flash boot boot.img
 fastboot flash system system.img
 fastboot reboot

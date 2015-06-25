@@ -27,15 +27,24 @@ var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
 
 var MonitorsView = React.createClass({
   getInitialState: function() {
-    return { configuring: { }, streaming: { }, network: null };
+    return {
+      configuring: { },
+      streaming: { },
+      network: null,
+      serverConnection: 'offline',
+    };
   },
 
   componentWillMount: function() {
     this.socket = new SocketIO(SERVER_URL);
     this.socket.connect();
+    this.state.serverConnection = 'connecting';
+    this.setState(this.state);
     console.log('Connecting to ...', SERVER_URL);
     this.socket.on('connect', () => {
       console.log(' ... connected');
+      this.state.serverConnection = 'connected';
+      this.setState(this.state);
       this.socket.on('video-stream-new', msga => {
         var msg = msga[0];
         this.state.streaming[msg.id] = { name: msg.name };
@@ -75,10 +84,13 @@ var MonitorsView = React.createClass({
     if (0 === configuring.length + streaming.length) {
       configuring = (<PlaceholderMessage />);
     }
+    var connectionStyle = this.state.serverConnection + 'Indicator';
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <View style={styles.spacer} />
+          <View style={styles.spacer}>
+            <View style={styles[connectionStyle]} />
+          </View>
           <Text style={styles.title}>Silk</Text>
           <View style={styles.spacer}>
             <TouchableOpacity onPress={this.loadSettings}>
@@ -168,9 +180,33 @@ var styles = StyleSheet.create({
     paddingBottom: 10,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     textAlign: 'center',
     color: '#656569',
+  },
+  offlineIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#c8c7cc',
+    backgroundColor: '#ce0000',
+  },
+  connectingIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#c8c7cc',
+    backgroundColor: '#f7d708',
+  },
+  connectedIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#c8c7cc',
+    backgroundColor: '#9ccf31',
   },
   settings: {
     alignItems: 'flex-end',

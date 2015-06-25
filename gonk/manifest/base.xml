@@ -2,7 +2,17 @@
 <manifest>
   <include name="silk.xml"/>
 
-  <!-- Minimum subset of android-5.1.1_r1.xml required to build silk.xml -->
+  <!--
+    Minimum subset of android-5.1.1_r1.xml required to build silk.xml
+
+    Conceptually this is the same as:
+      <include name="android-5.1.1_r1.xml" />
+    followed by a large number of
+      <remove-project />
+    elements.  All of the projects here also use a clone depth of 1 to keep
+    sync times to a minimum.
+
+   -->
   <remote  name="aosp"
            fetch="https://android.googlesource.com/" />
   <default revision="refs/tags/android-5.1.1_r1"

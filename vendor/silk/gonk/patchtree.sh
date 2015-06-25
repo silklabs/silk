@@ -72,6 +72,7 @@ __abandon_tree()
    local FORCE="$1"
    rm -f out/lastpatch.md5sum
    if [[ -d .repo ]]; then
+     echo Abandoning ephemeral patches...
      if [[ -f out/lastpatch.projects ]]; then
        local projects=$(cat out/lastpatch.projects)
      else
@@ -79,6 +80,7 @@ __abandon_tree()
      fi
 
      for p in $projects; do
+       echo [$p]
        cd $p ; __abandon_branch $p "$FORCE" ; cd $OLDPWD
      done
    fi
@@ -97,11 +99,13 @@ __patch_tree()
         return 0
       fi
 
-      echo "Patch tree: ${PATCH_TREE}/"
-      if [[ ! -d ${PATCH_TREE} ]]; then
-        echo Error: patch tree does not exist
-        return 1
-      fi
+      for TREE in ${PATCH_TREE}; do
+        echo "Patch tree: ${TREE}/"
+        if [[ ! -d ${TREE} ]]; then
+          echo Error: patch tree does not exist
+          return 1
+        fi
+      done
 
       set -e
       local LASTMD5SUM=invalid
@@ -116,7 +120,16 @@ __patch_tree()
       fi
 
       if [[ "$LASTMD5SUM" != "$MD5SUM" || "force" == "$FORCE" ]]; then
+         ROOT_DIR=${PWD}
 
+         # Prepare all the affected projects for patching
+         # * Ensure no local changes are present
+         # * Create the ephemeral branch
+         __abandon_tree "$FORCE"
+         rm -f out/lastpatch.projects
+         mkdir -p out
+
+         echo Preparing projects for patching...
          branch() {
             if [[ ! -d $1 ]]; then
               echo Directory $1 does not exist
@@ -126,7 +139,7 @@ __patch_tree()
             echo $1 >> out/lastpatch.projects
             pushd $1 > /dev/null
             echo
-            echo [entering $1]
+            echo [$1]
             if [[ -d .git ]]; then
                if [[ -d .git/rebase-apply ]]; then
                  git am --abort
@@ -140,47 +153,59 @@ __patch_tree()
             fi
          }
 
-         __abandon_tree "$FORCE"
-         rm -f out/lastpatch.projects
-         mkdir -p out
+         patched_projects()
+         {
+           (
+             for TREE in ${PATCH_TREE}; do
+               PATCHES=$(find $TREE -name \*.patch | sort -fs)
+               for P in ${PATCHES}; do
+                 PRJ=$(dirname ${P#${TREE}})
+                 PRJ=`echo $PRJ | sed -e 's%^/%%'`
+                 echo $PRJ
+               done
+             done
+           ) | sort -fus
+         }
 
-         ROOT_DIR=${PWD}
-         PATCHES=$(find $PATCH_TREE -name \*.patch | sort -fs)
-         OLD_PRJ=
          pushd . > /dev/null
-         for P in ${PATCHES}; do
-            PRJ=$(dirname ${P#${PATCH_TREE}})
-            PRJ=`echo $PRJ | sed -e 's%^/%%'`
-            if [[ ! -d $ROOT_DIR/$PRJ ]]; then
-              echo =============================================================
-              echo "Warning: $PRJ/ does not exist"
-              echo "         Ignoring $P"
-              echo =============================================================
-              continue
-            fi
+         for PRJ in $(patched_projects); do
+           if [[ ! -d $ROOT_DIR/$PRJ ]]; then
+             echo =============================================================
+             echo "Warning: $PRJ/ does not exist"
+             echo =============================================================
+             continue
+           fi
 
-            if [[ "${OLD_PRJ}" != "${PRJ}" ]]; then
-              popd > /dev/null
-              branch $PRJ
-              OLD_PRJ=$PRJ
-              if [[ "$FORCE" != "force" && $(whoami) != "lnxbuild" ]]; then
-                 if [[ -n $(git status --porcelain) ]]; then
-                    echo
-                    echo "ERROR: Uncommitted changes found in ${PRJ}/"
-                    echo "       You may force overwriting these changes"
-                    echo "       with |source build/envsetup.sh force|"
-                    echo
-                    exit 1
-                 fi
-              fi
-              # Ensure the project is clean before applying patches to it
-              git reset --hard HEAD
-              git clean -dfx
-
-            fi
-            ( set -x ; git am ${ROOT_DIR}/$P )
+           popd > /dev/null
+           branch $PRJ
+           if [[ "$FORCE" != "force" && $(whoami) != "lnxbuild" ]]; then
+             if [[ -n $(git status --porcelain) ]]; then
+               echo
+               echo "ERROR: Uncommitted changes found in ${PRJ}/"
+               echo "       You may force overwriting these changes"
+               echo "       with |source build/envsetup.sh force|"
+               echo
+               exit 1
+             fi
+           fi
+           # Ensure the project is clean before applying patches to it
+           git reset --hard HEAD
+           git clean -dfx
          done
          popd > /dev/null
+
+         #
+         # Walk through all the patches and apply them
+         #
+         echo Patching...
+         for TREE in ${PATCH_TREE}; do
+           PATCHES=$(find $TREE -name \*.patch | sort -fs)
+           for P in ${PATCHES}; do
+             PRJ=$(dirname ${P#${TREE}})
+             PRJ=`echo $PRJ | sed -e 's%^/%%'`
+             ( set -x ; cd $PRJ; git am ${ROOT_DIR}/$P )
+           done
+         done
 
          echo $(__tree_md5sum ${PATCH_TREE}) > out/lastpatch.md5sum
       fi

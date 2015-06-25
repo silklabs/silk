@@ -67,7 +67,34 @@ GONK=${GONK##*/}
 GONK=${GONK%.xml}
 export GONK
 
-PATCH_TREE=gonk/${GONK}/patch
+# Traverses a manifest, outputting the name of all included manifests
+find_manifest_names()
+{
+  local name=$1
+  local xml=gonk/manifest/$1.xml
+
+  if [[ ! -f $xml ]]; then
+    echo Error: $xml does does not exist >&2
+    return
+  fi
+  # Notice: this "parser" does not support <include> elements spanning multiple
+  # lines
+  local include_xmls=$(grep '<include .*\/>' $xml | grep -o '[^"]*.xml')
+  for i in $include_xmls; do
+    find_manifest_names ${i%.xml}
+  done
+
+  echo $name
+}
+
+# Build the list of patch trees used by $GONK
+PATCH_TREE=
+for manifest in $(find_manifest_names $GONK | sort -u); do
+  if [[ -d gonk/patch/$manifest ]]; then
+    PATCH_TREE+=" gonk/patch/$manifest "
+  fi
+done
+
 
 echo Gonk: ${GONK}
 case $GONK in
@@ -85,7 +112,6 @@ shamu)
   export TARGET_PRODUCT=aosp_shamu
   export TARGET_BUILD_VARIANT=eng
   export TARGET_BUILD_TYPE=release
-  PATCH_TREE=gonk/mako/patch
   ;;
 *)
   poison_their_lunch Unknown gonk: $GONK

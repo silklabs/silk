@@ -1,10 +1,11 @@
 
 export USE_CCACHE=1 # Yes please!
 
+
+#
+# Ensure the host system has the right tools pre-installed
+#
 if [ $(uname) = "Darwin" ]; then
-  #
-  # GNU/Darwin anybody?
-  #
   PACKAGES="gnu-sed coreutils findutils gnu-tar"
   for package in $PACKAGES; do
     if [ ! -d /usr/local/opt/$package ]; then
@@ -60,6 +61,10 @@ node_version_check
 npm_version_check
 
 
+#
+#  Prepare the Gonk tree
+#
+
 # Figure the current Gonk from the basename of what .repo/manifest.xml is
 # pointing at.
 GONK=$(readlink -f .repo/manifest.xml)
@@ -95,7 +100,6 @@ for manifest in $(find_manifest_names $GONK | sort -u); do
   fi
 done
 
-
 echo Gonk: ${GONK}
 case $GONK in
 base)
@@ -129,3 +133,32 @@ if [[ $? -eq 0 ]]; then
   set_stuff_for_environment
   printconfig
 fi
+
+
+#
+# npm tuning
+#
+
+# Use a local npm package cache
+export NPM_CONFIG_CACHE=$(/bin/pwd)/npm_cache
+
+# Use a local temp area to make the build environment better known and more
+# reproducible. (ie, no magic nuggets in ~/.npm/)
+export NPM_CONFIG_TMP=$(/bin/pwd)/out/npm_tmp
+
+# Try to use the local cache as much as possible (npm default is 10s)
+export NPM_CONFIG_CACHE_MIN=4294967296
+
+# Declare a lock file still sooner since a local cache is being forced
+# (npm default is 60s)
+export NPM_CONFIG_CACHE_LOCAL_STALE=10000
+
+# Fail fetching from the registry sooner (npm default is 60s)
+export NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=10000
+
+# Don't install incompatible things
+export NPM_CONFIG_ENGINE_STRICT=true
+
+# Uncomment when debugging npm issues for helpful logging
+#export NPM_CONFIG_LOGLEVEL=info
+

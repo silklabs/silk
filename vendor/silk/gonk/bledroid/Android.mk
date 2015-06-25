@@ -9,6 +9,6 @@ LOCAL_SHARED_LIBRARIES := liblog libcutils libhardware
 
 LOCAL_C_INCLUDES += hardware/libhardware/include
 
-LOCAL_MODULE_TAGS := optional eng debug
+LOCAL_MODULE_TAGS := optional
 include $(BUILD_EXECUTABLE)
 

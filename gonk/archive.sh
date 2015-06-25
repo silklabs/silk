@@ -86,7 +86,7 @@ echo $ adb reboot-bootloader
 echo $ fastboot format userdata
 echo $ fastboot format cache
 EOF
-  cp -r $ANDROID_PRODUCT_OUT/{*.img,,root/,recovery/} $archiveDir/$TARGET_PRODUCT
+  cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
 
 else
   # This is a base (partial) build

@@ -2,7 +2,7 @@
 
 export NODE_ENV="production"
 export NODE_PATH="/system/node_modules"
-export SILK_HOME="/data/silk"
+export SILK_HOME="/system/silk"
 export SILK_SERVER_URL=$(getprop persist.silk.server.url)
 
 if [ -z $1 ]; then

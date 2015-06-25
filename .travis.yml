@@ -21,10 +21,10 @@ before_script:
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
   - nvm install 0.12
-
-script:
   - make sync
   - cp $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
+
+script:
   - BUILD_HOST_64bit=1 make
 
 after_script:

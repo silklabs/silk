@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-ENVSETUP=source build/envsetup.sh
+ENVSETUP=source build/envsetup.sh && test "$$SILK_ENVSETUP" == "1"
 
 .PHONY: all
 all: | .repo/.repo_fetchtimes.json

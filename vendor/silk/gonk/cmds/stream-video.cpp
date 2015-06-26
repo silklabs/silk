@@ -7,13 +7,13 @@
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/MediaCodec.h>
-#include <media/stagefright/MediaCodecSource.h>
 #include <media/stagefright/OMXCodec.h>
 #include <media/MediaProfiles.h>
 #include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include <include/avc_utils.h>
-#include <setjmp.h>
+#include <utils/Thread.h>
+#include <getopt.h>
 
 #include "MPEG4MemoryWriter.h"
 
@@ -21,26 +21,30 @@ extern "C" {
 #include "jpeglib.h"
 }
 
+// This is an ugly hack. We forked this from libstagefright
+// so we can trigger I-Frame injection.
+#include "MediaCodecSource.h"
+
 using namespace android;
 
 static const char* kMimeTypeAvc = "video/avc";
-static Size kVideoSize(1280, 720);
-static int32_t kVideoBitRate = 2096 * 1024;
-static int32_t kAudioBitRate = 32000;
-static int32_t kFPS = 24;
-static int32_t kIFramesIntervalSec = 1;
-static int32_t kAudioSampleRate = 8000;
-static int32_t kUsPerSample = 1000000 / kAudioSampleRate;
-static int32_t kAudioChannels = 1;
 
 static status_t OK = static_cast<status_t>(android::OK);
 
 static bool sDebug = false;
-static bool sPreview = true;
-static bool sVideo = false;
+static Size sVideoSize(1280, 720);
+static int32_t sVideoBitRateInK = 2048;
+static int32_t sFPS = 24;
+static int32_t sIFrameIntervalSec = 15;
+static int32_t sPreviewScale = 4;
+static int32_t sPreviewSkipCount = 5;
+static int32_t sAudioBitRate = 32000;
+static int32_t sAudioSampleRate = 8000;
+static int32_t sAudioChannels = 1;
 
 #define TAG_VIDEO 0
 #define TAG_PREVIEW 1
+#define TAG_FACES 2
 
 class Channel {
   Mutex mLock;
@@ -71,6 +75,11 @@ void Channel::send(const void *data, size_t size) {
 }
 
 void Channel::send(int32_t tag, const void *data, size_t size) {
+  if (sDebug) {
+    printf("tag: %d size: %d\n", tag, size);
+    return;
+  }
+
   Mutex::Autolock autoLock(mLock);
 
   send(int32_t(size));
@@ -157,8 +166,6 @@ static void jpeg_term_destination(j_compress_ptr cinfo)
   state->buffer.resize(state->buffer.size() - cinfo->dest->free_in_buffer);
 }
 
-static int kPreviewScale = 4;
-
 void PreviewMediaSource::snapshot(MediaBuffer* img) {
   sp<MetaData> meta = mSource->getFormat();
   int32_t width, height, stride, sliceHeight, colorFormat;
@@ -168,8 +175,8 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
   CHECK(meta->findInt32(kKeySliceHeight, &sliceHeight));
   CHECK(meta->findInt32(kKeyColorFormat, &colorFormat));
 
-  int32_t imageWidth = width/kPreviewScale;
-  int32_t imageHeight = height/kPreviewScale;
+  int32_t imageWidth = width/sPreviewScale;
+  int32_t imageHeight = height/sPreviewScale;
 
   jpeg_state state;
   struct jpeg_compress_struct *cinfo = &state.cinfo;
@@ -199,11 +206,11 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
 
   uint8_t buffer[3 * (imageWidth + 1)];
   for (int row = 0; row < imageHeight; row++) {
-    int32_t ycbcr_row = row * kPreviewScale;
+    int32_t ycbcr_row = row * sPreviewScale;
     const uint8_t *y_row = y_plane + ycbcr_row * stride;
     const uint8_t *cbcr_row = cbcr_plane + (ycbcr_row / 2) * stride;
     for (int x = 0; x < imageWidth; x++) {
-      int32_t ycbcr_x = x * kPreviewScale;
+      int32_t ycbcr_x = x * sPreviewScale;
       buffer[x*3+0] = y_row[ycbcr_x];
       buffer[x*3+1] = cbcr_row[(ycbcr_x&(~1))];
       buffer[x*3+2] = cbcr_row[(ycbcr_x&(~1))+1];
@@ -215,12 +222,7 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
   jpeg_finish_compress(cinfo);
   jpeg_destroy_compress(cinfo);
 
-  int32_t size = state.buffer.size();
-  if (sDebug) {
-    printf("jpeg: %d\n", size);
-  } else if (sPreview) {
-    mChannel->send(TAG_PREVIEW, state.buffer.begin(), size);
-  }
+  mChannel->send(TAG_PREVIEW, state.buffer.begin(), state.buffer.size());
 }
 
 class PutBackWrapper : public MediaSource {
@@ -235,8 +237,6 @@ public:
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
 
   void putBack(MediaBuffer **buffer);
-
-  bool reachedEOS() const { return mDone; }
 
 private:
   sp<MediaSource> mSource;
@@ -303,8 +303,6 @@ public:
   virtual sp<MetaData> getFormat();
 
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
-
-  bool reachedEOS() const { return mSource->reachedEOS(); }
 
   void addListener(SliceListener *listener) { mListeners.push(listener); }
 private:
@@ -404,8 +402,6 @@ public:
 
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
 
-  bool reachedEOS() const { return mSource->reachedEOS(); }
-
   virtual void handleProgressEvent(int64_t timeUs, bool slice);
 private:
   sp<PutBackWrapper> mSource;
@@ -470,9 +466,10 @@ status_t SliceAudioSource::read(MediaBuffer **buffer, const ReadOptions *options
   {
     Mutex::Autolock autoLock(mLock);
 
-    // The audio data is kAudioChannels channels, 16-bit PCM with kAudioSampleRate
-    int32_t frames = (*buffer)->range_length() / kAudioChannels / sizeof(int16_t);
-    int32_t durationUs = frames * kUsPerSample;
+    // The audio data is sAudioChannels channels, 16-bit PCM with sAudioSampleRate
+    int32_t usPerSample = 1000000 / sAudioSampleRate;
+    int32_t frames = (*buffer)->range_length() / sAudioChannels / sizeof(int16_t);
+    int32_t durationUs = frames * usPerSample;
     int64_t endUs = timeUs + durationUs;
 
     int64_t sliceTimeUs;
@@ -489,7 +486,7 @@ status_t SliceAudioSource::read(MediaBuffer **buffer, const ReadOptions *options
 
       // Is the slice time is within this buffer?
       if (sliceTimeUs >= timeUs && sliceTimeUs <= endUs) {
-	int32_t prevFrames = (sliceTimeUs - timeUs) / kUsPerSample;
+	int32_t prevFrames = (sliceTimeUs - timeUs) / usPerSample;
 	int32_t nextFrames = frames - prevFrames;
 	if (prevFrames) {
 	  // Split the buffer in two and return the first half. Next iteration will
@@ -498,8 +495,8 @@ status_t SliceAudioSource::read(MediaBuffer **buffer, const ReadOptions *options
 	  MediaBuffer *dup = new MediaBuffer((*buffer)->data(), (*buffer)->size());
 	  dup->meta_data()->setInt64(kKeyTime, sliceTimeUs);
 	  dup->meta_data()->setInt64(kKeyDriftTime, driftTimeUs);
-	  (*buffer)->set_range(0, prevFrames * kAudioChannels * sizeof(int16_t));
-	  dup->set_range((*buffer)->range_length(), nextFrames * kAudioChannels * sizeof(int16_t));
+	  (*buffer)->set_range(0, prevFrames * sAudioChannels * sizeof(int16_t));
+	  dup->set_range((*buffer)->range_length(), nextFrames * sAudioChannels * sizeof(int16_t));
 	  mSource->putBack(&dup);
 	  return ::OK;
 	}
@@ -526,6 +523,23 @@ void SliceAudioSource::handleProgressEvent(int64_t timeUs, bool slice)
     mVideoSliceTimes.push(timeUs);
   mWaitForProgress.signal();
 }
+
+class IFrameRequestMonitor: public Thread {
+  sp<MediaCodecSource> mEncoder;
+public:
+  IFrameRequestMonitor(sp<MediaCodecSource> encoder)
+    : mEncoder(encoder) { }
+
+  virtual bool threadLoop() {
+    while (true) {
+      char b;
+      // Any data from the pipe causes us to inject an I-Frame.
+      read(STDIN_FILENO, &b, 1);
+      mEncoder->requestIDRFrame();
+    }
+    return true;
+  }
+};
 
 class SlicedMP4Encoder {
   Channel *mChannel;
@@ -560,18 +574,20 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
   videoFormat->setInt32("color-format", colorFormat);
 
   videoFormat->setString("mime", kMimeTypeAvc);
-  videoFormat->setInt32("bitrate", kVideoBitRate);
+  videoFormat->setInt32("bitrate", sVideoBitRateInK * 1024);
   videoFormat->setInt32("bitrate-mode", OMX_Video_ControlRateConstant);
-  videoFormat->setFloat("frame-rate", kFPS);
-  videoFormat->setInt32("i-frame-interval", kIFramesIntervalSec);
+  videoFormat->setFloat("frame-rate", sFPS);
+  videoFormat->setInt32("i-frame-interval", sIFrameIntervalSec);
 
   sp<MediaCodecSource> videoEncoder =
     MediaCodecSource::Create(looper, videoFormat, cameraSource);
 
+  (new IFrameRequestMonitor(videoEncoder))->run();
+
   // Setup audio
   sp<MediaSource> audioSource = new AudioSource(AUDIO_SOURCE_MIC,
-						kAudioSampleRate,
-						kAudioChannels);
+						sAudioSampleRate,
+						sAudioChannels);
 
   int32_t maxInputSize, channels, sampleRate, bitrate;
   CHECK(audioSource->getFormat()->findInt32(kKeyMaxInputSize, &maxInputSize));
@@ -584,7 +600,7 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
   audioFormat->setInt32("max-input-size", maxInputSize);
   audioFormat->setInt32("sample-rate", sampleRate);
   audioFormat->setInt32("channel-count", channels);
-  audioFormat->setInt32("bitrate", kAudioBitRate);
+  audioFormat->setInt32("bitrate", sAudioBitRate);
 
   mSlicedVideoSource = new SliceAtEachIDRSource(videoEncoder);
   mSlicedAudioSource = new SliceAudioSource(audioSource);
@@ -594,7 +610,7 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
 }
 
 void SlicedMP4Encoder::run() {
-  while (!mSlicedVideoSource->reachedEOS()) {
+  while (true) {
     sp<MPEG4MemoryWriter> writer = new MPEG4MemoryWriter();
 
     writer->addSource(mSlicedVideoSource);
@@ -617,23 +633,90 @@ void SlicedMP4Encoder::run() {
     CHECK_EQ(writer->stop(), ::OK);
 
     // Write size and .mp4 data to stdout
-    int32_t size = writer->data().size();
-    if (sDebug) {
-      printf("video: %d\n", size);
-    } else if (sVideo) {
-      mChannel->send(TAG_VIDEO, writer->data().array(), size);
-    }
+    mChannel->send(TAG_VIDEO, writer->data().array(), writer->data().size());
 
     writer = NULL;
   }
 }
 
+class FaceDetection : public CameraListener {
+  Channel *mChannel;
+public:
+  FaceDetection(Channel *channel);
+
+  void notify(int32_t msgType, int32_t ext1, int32_t ext2);
+  void postData(int32_t msgType, const sp<IMemory>& dataPtr,
+                camera_frame_metadata_t *metadata);
+  void postDataTimestamp(nsecs_t timestamp, int32_t msgType,
+			 const sp<IMemory>& dataPtr);
+};
+
+FaceDetection::FaceDetection(Channel *channel)
+  : mChannel(channel) { }
+
+void FaceDetection::notify(int32_t msgType, int32_t ext1, int32_t ext2) {
+  (void)msgType;
+  (void)ext1;
+  (void)ext2;
+}
+
+void FaceDetection::postData(int32_t msgType, const sp<IMemory>& dataPtr,
+			     camera_frame_metadata_t *metadata) {
+  (void)dataPtr;
+  if ((CAMERA_MSG_PREVIEW_METADATA & msgType) && metadata) {
+    mChannel->send(TAG_FACES, metadata->faces, sizeof(camera_face_t) * metadata->number_of_faces);
+  }
+}
+
+void FaceDetection::postDataTimestamp(nsecs_t timestamp, int32_t msgType,
+				      const sp<IMemory>& dataPtr)
+{
+  (void)timestamp;
+  (void)msgType;
+  (void)dataPtr;
+}
+
 int main(int argc, char **argv) {
-  for (int i = 1; i < argc; ++i) {
-    if (!strcmp(argv[i], "-d"))
+  int c;
+
+  while ((c = getopt(argc, argv, "w:h:v:f:i:p:k:a:s:c:d")) != -1) {
+    switch (c) {
+    case 'w':
+      sVideoSize.width = atoi(optarg);
+      break;
+    case 'h':
+      sVideoSize.height = atoi(optarg);
+      break;
+    case 'v':
+      sVideoBitRateInK = atoi(optarg);
+      break;
+    case 'f':
+      sFPS = atoi(optarg);
+      break;
+    case 'i':
+      sIFrameIntervalSec = atoi(optarg);
+      break;
+    case 'p':
+      sPreviewScale = atoi(optarg);
+      break;
+    case 'k':
+      sPreviewSkipCount = atoi(optarg);
+      break;
+    case 'a':
+      sAudioBitRate = atoi(optarg);
+      break;
+    case 's':
+      sAudioSampleRate = atoi(optarg);
+      break;
+    case 'c':
+      sAudioChannels = atoi(optarg);
+      break;
+    case 'd':
       sDebug = true;
-    if (!strcmp(argv[i], "-v"))
-      sVideo = true;
+      break;
+    case '?':
+      return -1;
+    }
   }
 
   android::ProcessState::self()->startThreadPool();
@@ -652,7 +735,7 @@ int main(int argc, char **argv) {
   }
   sp<SurfaceControl> sc =
     scc->createSurface(String8(argv[0]),
-		       kVideoSize.width, kVideoSize.height,
+		       sVideoSize.width, sVideoSize.height,
 		       PIXEL_FORMAT_RGBX_8888, 0);
   if (sc.get() == NULL) {
     ALOGE("Unable to create preview surface");
@@ -660,17 +743,28 @@ int main(int argc, char **argv) {
   }
   sp<Surface> previewSurface = sc->getSurface();
 
-  // Setup camera
+  // Setup the camera
   int cameraId = 0;
-  sp<ICamera> camera;
-  sp<ICameraRecordingProxy> proxy;
+  sp<Camera> camera = Camera::connect(cameraId, String16(argv[0]), Camera::USE_CALLING_UID);
+  sp<ICamera> remote = camera->remote();
+  sp<ICameraRecordingProxy> proxy = camera->getRecordingProxy();
+
+  FaceDetection faces(&chan);
+  camera->setListener(&faces);
+
+  CHECK(camera->setPreviewTarget(previewSurface->getIGraphicBufferProducer()) == 0);
+  CHECK(camera->startPreview() == 0);
+  CHECK(camera->previewEnabled());
+  CHECK(camera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
+
+  // Start recording stream
   sp<CameraSource> cameraSource =
-    CameraSource::CreateFromCamera(camera, proxy, cameraId, String16(argv[0], strlen(argv[0])),
-				   Camera::USE_CALLING_UID, kVideoSize, kFPS,
-				   previewSurface->getIGraphicBufferProducer());
+    CameraSource::CreateFromCamera(remote, proxy, cameraId, String16(argv[0], strlen(argv[0])),
+				   Camera::USE_CALLING_UID, sVideoSize, sFPS,
+				   NULL);
   CHECK_EQ(cameraSource->initCheck(), ::OK);
 
-  sp<PreviewMediaSource> preview = new PreviewMediaSource(&chan, cameraSource, 0);
+  sp<PreviewMediaSource> preview = new PreviewMediaSource(&chan, cameraSource, sPreviewSkipCount);
 
   SlicedMP4Encoder mp4(&chan);
   mp4.init(looper, preview);

@@ -1,4 +1,4 @@
-From f84451a87b1b851d260b7f45e4b92a8775c98301 Mon Sep 17 00:00:00 2001
+From 396b3960be8bb0ebc7f430dddad6efe8d8c85be5 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Tue, 16 Jun 2015 17:42:56 -0700
 Subject: [PATCH] Minimal build/ system
@@ -6,16 +6,16 @@ Subject: [PATCH] Minimal build/ system
 ---
  core/base_rules.mk                  |  4 ++
  core/binary.mk                      | 21 +++++++++
- core/config.mk                      | 20 ++++-----
+ core/config.mk                      | 20 ++++----
  core/empty.mk                       |  0
- core/main.mk                        | 88 ++++++++++++++++++++++++++++++++++---
+ core/main.mk                        | 93 ++++++++++++++++++++++++++++++++++---
  core/notice_files.mk                |  2 +-
  target/board/generic/BoardConfig.mk |  4 +-
- 7 files changed, 120 insertions(+), 19 deletions(-)
+ 7 files changed, 125 insertions(+), 19 deletions(-)
  create mode 100644 core/empty.mk
 
 diff --git a/core/base_rules.mk b/core/base_rules.mk
-index 8c25897..f2159f0 100644
+index 496009f..020dc49 100644
 --- a/core/base_rules.mk
 +++ b/core/base_rules.mk
 @@ -535,6 +535,10 @@ $(my_register_name): $(LOCAL_BUILT_MODULE) $(LOCAL_INSTALLED_MODULE)
@@ -122,7 +122,7 @@ diff --git a/core/empty.mk b/core/empty.mk
 new file mode 100644
 index 0000000..e69de29
 diff --git a/core/main.mk b/core/main.mk
-index 9d6e233..e8af6e8 100644
+index 9d6e233..1fd76d9 100644
 --- a/core/main.mk
 +++ b/core/main.mk
 @@ -9,6 +9,9 @@ else
@@ -204,7 +204,7 @@ index 9d6e233..e8af6e8 100644
  endif
  
  
-@@ -1071,3 +1081,67 @@ showcommands:
+@@ -1071,3 +1081,72 @@ showcommands:
  .PHONY: nothing
  nothing:
  	@echo Successfully read the makefiles.
@@ -272,6 +272,11 @@ index 9d6e233..e8af6e8 100644
 +gonk_modules: $(GONK_MODULES)
 +endif
 +
++# Ensure system/ and data/ always exist to avoid |adb sync| complaints
++gonk_modules: | $(TARGET_OUT) $(TARGET_OUT_DATA)
++$(TARGET_OUT) $(TARGET_OUT_DATA):
++	mkdir $@
++
 diff --git a/core/notice_files.mk b/core/notice_files.mk
 index e63cd84..82dcb0e 100644
 --- a/core/notice_files.mk
@@ -305,5 +310,5 @@ index 3ae5860..1f90167 100644
 +
 +MALLOC_IMPL := dlmalloc
 -- 
-2.0.1
+1.9.1
 

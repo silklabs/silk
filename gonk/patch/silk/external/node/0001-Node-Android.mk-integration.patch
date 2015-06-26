@@ -35,8 +35,8 @@ index 0000000..00dd483
 +  $(addprefix -isystem ,$(abspath $(LOCAL_PATH)/../stlport/stlport $(LOCAL_PATH)/../../bionic))
 +
 +LOCAL_LDFLAGS := $(TARGET_GLOBAL_LDFLAGS) -pie \
-+  -B$(abspath $(PRODUCT_OUT)/obj/lib)\
-+  -L$(abspath $(PRODUCT_OUT)/system/lib) -lstlport
++  -B$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
++  -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) -lstlport
 +
 +$(LOCAL_PREBUILT_MODULE_FILE): export CC := $(abspath $(TARGET_CC))
 +$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $(TARGET_CXX))
@@ -50,7 +50,7 @@ index 0000000..00dd483
 +
 +$(LOCAL_PREBUILT_MODULE_FILE): $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk \
 +  $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
-+  $(addprefix $(PRODUCT_OUT)/obj/lib/,libc.so libdl.so liblog.so libstlport.so)
++  $(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,libc.so libdl.so liblog.so libstlport.so)
 +	@echo Building: $@
 +	$(hide) rm -rf $(@D) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
 +	$(hide) mkdir -p $(node_BUILD_DIR)

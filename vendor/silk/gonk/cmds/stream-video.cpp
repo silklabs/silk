@@ -37,10 +37,10 @@ static status_t OK = static_cast<status_t>(android::OK);
 
 static bool sDebug = false;
 static bool sPreview = true;
-static bool sVideo = false;
 
 #define TAG_VIDEO 0
 #define TAG_PREVIEW 1
+#define TAG_FACES 2
 
 class Channel {
   Mutex mLock;
@@ -623,12 +623,47 @@ void SlicedMP4Encoder::run() {
   }
 }
 
+class FaceDetection : public CameraListener {
+  Channel *mChannel;
+public:
+  FaceDetection(Channel *channel);
+
+  void notify(int32_t msgType, int32_t ext1, int32_t ext2);
+  void postData(int32_t msgType, const sp<IMemory>& dataPtr,
+                camera_frame_metadata_t *metadata);
+  void postDataTimestamp(nsecs_t timestamp, int32_t msgType,
+			 const sp<IMemory>& dataPtr);
+};
+
+FaceDetection::FaceDetection(Channel *channel)
+  : mChannel(channel) { }
+
+void FaceDetection::notify(int32_t msgType, int32_t ext1, int32_t ext2) {
+  (void)msgType;
+  (void)ext1;
+  (void)ext2;
+}
+
+void FaceDetection::postData(int32_t msgType, const sp<IMemory>& dataPtr,
+			     camera_frame_metadata_t *metadata) {
+  (void)dataPtr;
+  if ((CAMERA_MSG_PREVIEW_METADATA & msgType) && metadata) {
+    mChannel->send(TAG_FACES, metadata->faces, sizeof(camera_face_t) * metadata->number_of_faces);
+  }
+}
+
+void FaceDetection::postDataTimestamp(nsecs_t timestamp, int32_t msgType,
+				      const sp<IMemory>& dataPtr)
+{
+  (void)timestamp;
+  (void)msgType;
+  (void)dataPtr;
+}
+
 int main(int argc, char **argv) {
   for (int i = 1; i < argc; ++i) {
     if (!strcmp(argv[i], "-d"))
       sDebug = true;
-    if (!strcmp(argv[i], "-v"))
-      sVideo = true;
   }
 
   android::ProcessState::self()->startThreadPool();
@@ -655,15 +690,25 @@ int main(int argc, char **argv) {
   }
   sp<Surface> previewSurface = sc->getSurface();
 
-  // Setup camera
+  // Setup the camera
   int cameraId = 0;
   sp<Camera> camera = Camera::connect(cameraId, String16(argv[0]), Camera::USE_CALLING_UID);
   sp<ICamera> remote = camera->remote();
   sp<ICameraRecordingProxy> proxy = camera->getRecordingProxy();
+
+  FaceDetection faces(&chan);
+  camera->setListener(&faces);
+
+  CHECK(camera->setPreviewTarget(previewSurface->getIGraphicBufferProducer()) == 0);
+  CHECK(camera->startPreview() == 0);
+  CHECK(camera->previewEnabled());
+  CHECK(camera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
+
+  // Start recording stream
   sp<CameraSource> cameraSource =
     CameraSource::CreateFromCamera(remote, proxy, cameraId, String16(argv[0], strlen(argv[0])),
 				   Camera::USE_CALLING_UID, kVideoSize, kFPS,
-				   previewSurface->getIGraphicBufferProducer());
+				   NULL);
   CHECK_EQ(cameraSource->initCheck(), ::OK);
 
   sp<PreviewMediaSource> preview = new PreviewMediaSource(&chan, cameraSource, 0);

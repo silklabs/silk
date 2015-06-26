@@ -47,6 +47,7 @@ RCT_EXPORT_MODULE();
     writeCallbacks = [NSMutableDictionary new];
     notificationCallbacks = [NSMutableDictionary new];
     stopNotificationCallbacks = [NSMutableDictionary new];
+    disconnectCallbacks = [NSMutableDictionary new];
   }
   return self;
 }
@@ -95,9 +96,11 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid callback:(RCTResponseSenderBlock)ca
     return;
   }
   if (peripheral.isConnected) {
+    [disconnectCallbacks setObject:callback forKey:[peripheral uuidAsString]];
     [manager cancelPeripheralConnection:peripheral];
+  } else {
+    callback(@[[NSNull null], [NSNull null]]);
   }
-  callback(@[[NSNull null], [NSNull null]]);
 }
 
 RCT_EXPORT_METHOD(read:(NSString*)deviceUuidStr service:(NSString*)serviceUuidStr characteristic:(NSString*)charcUuidStr
@@ -177,10 +180,15 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
   BLE_LOG(@"BLECentral:didDisconnectPeripheral");
 
-  RCTResponseSenderBlock callback = [connectCallbacks valueForKey:peripheral.uuidAsString];
-  if (callback) {
-    callback(@[@{ @"error": @"Peripheral disconnected", @"uuid": peripheral.uuidAsString }, [NSNull null]]);
+  RCTResponseSenderBlock connectCallback = [connectCallbacks valueForKey:peripheral.uuidAsString];
+  if (connectCallback) {
+    connectCallback(@[@{ @"error": @"Peripheral disconnected", @"uuid": peripheral.uuidAsString }, [NSNull null]]);
     [connectCallbacks removeObjectForKey:peripheral.uuidAsString];
+  }
+  RCTResponseSenderBlock disconnectCallback = [disconnectCallbacks valueForKey:peripheral.uuidAsString];
+  if (disconnectCallback) {
+    disconnectCallback(@[[NSNull null], [NSNull null]]);
+    [disconnectCallbacks removeObjectForKey:peripheral.uuidAsString];
   }
 }
 

@@ -9,6 +9,7 @@
 /frameworks/base/
 /frameworks/native/
 /hardware/
+/npm_cache/
 /ndk
 /node_modules/modules/bleno/
 /node_modules/modules/noble/

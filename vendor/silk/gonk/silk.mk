@@ -1,4 +1,6 @@
 
+PRODUCT_PACKAGES += node node_modules
+
 SILK_CORE := \
   core.js \
   silk \

@@ -11,9 +11,9 @@
 /hardware/
 /npm_cache/
 /ndk
-/node_modules/modules/bleno/
-/node_modules/modules/noble/
-/node_modules/modules/silk-server/
+/vendor/silk/core/modules/bleno/
+/vendor/silk/core/modules/noble/
+/vendor/silk/core/modules/silk-server/
 /out/
 /prebuilts/clang/
 /prebuilts/gcc/

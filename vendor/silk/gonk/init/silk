@@ -1,13 +1,12 @@
 #!/system/bin/sh
 
 export NODE_ENV="production"
-export NODE_PATH="/system/node_modules"
-export SILK_HOME="/system/silk"
+export NODE_PATH="/system/silk"
 export SILK_SERVER_URL=$(getprop persist.silk.server.url)
 
 if [ -z $1 ]; then
   log -p i -t silk-init Starting Silk services
-  exec logwrapper node $SILK_HOME/core.js
+  exec logwrapper node $NODE_PATH/core.js
 fi
 
 exec node "$@"

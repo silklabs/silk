@@ -8,7 +8,11 @@
     "start": "node dist/lib/main.js"
   },
   "dependencies": {
+    "bleno": "file:modules/bleno",
+    "camera": "file:modules/camera",
+    "movie": "file:modules/movie",
     "node-hue-api": "1.0.5",
+    "silk-api": "file:modules/silk-server/dist/api",
     "socket.io-client": "^1.3.5"
   },
   "devDependencies": {
@@ -48,5 +52,8 @@
   "keywords": [
     "iot"
   ],
+  "engines": {
+    "node" : "0.12.2"
+  },
   "private": true
 }

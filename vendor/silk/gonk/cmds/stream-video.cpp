@@ -659,7 +659,7 @@ int main(int argc, char **argv) {
   int cameraId = 0;
   sp<Camera> camera = Camera::connect(cameraId, String16(argv[0]), Camera::USE_CALLING_UID);
   sp<ICamera> remote = camera->remote();
-  sp<ICameraRecordingProxy> proxy;
+  sp<ICameraRecordingProxy> proxy = camera->getRecordingProxy();
   sp<CameraSource> cameraSource =
     CameraSource::CreateFromCamera(remote, proxy, cameraId, String16(argv[0], strlen(argv[0])),
 				   Camera::USE_CALLING_UID, kVideoSize, kFPS,

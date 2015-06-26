@@ -13,6 +13,7 @@
 /ndk
 /node_modules/modules/bleno/
 /node_modules/modules/noble/
+/node_modules/modules/silk-server/
 /out/
 /prebuilts/clang/
 /prebuilts/gcc/
@@ -21,7 +22,6 @@
 /prebuilts/python/
 /system/core/
 /system/media/
-/vendor/silk/core/server/
 
 # |adb sync| generates this
 /filelist

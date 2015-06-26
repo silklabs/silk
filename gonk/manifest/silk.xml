@@ -4,7 +4,7 @@
   <remote name="silk" fetch="ssh://git@github.com/silklabs/" sync-j="4"/>
 
   <project name="silk-server"
-           path="vendor/silk/core/server"
+           path="node_modules/modules/silk-server"
            remote="silk"
            revision="master"/>
   <project name="silk-device-npm-cache"

@@ -71,6 +71,11 @@ void Channel::send(const void *data, size_t size) {
 }
 
 void Channel::send(int32_t tag, const void *data, size_t size) {
+  if (sDebug) {
+    printf("tag: %d size: %d\n", tag, size);
+    return;
+  }
+
   Mutex::Autolock autoLock(mLock);
 
   send(int32_t(size));
@@ -215,12 +220,7 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
   jpeg_finish_compress(cinfo);
   jpeg_destroy_compress(cinfo);
 
-  int32_t size = state.buffer.size();
-  if (sDebug) {
-    printf("jpeg: %d\n", size);
-  } else if (sPreview) {
-    mChannel->send(TAG_PREVIEW, state.buffer.begin(), size);
-  }
+  mChannel->send(TAG_PREVIEW, state.buffer.begin(), state.buffer.size());
 }
 
 class PutBackWrapper : public MediaSource {
@@ -617,12 +617,7 @@ void SlicedMP4Encoder::run() {
     CHECK_EQ(writer->stop(), ::OK);
 
     // Write size and .mp4 data to stdout
-    int32_t size = writer->data().size();
-    if (sDebug) {
-      printf("video: %d\n", size);
-    } else if (sVideo) {
-      mChannel->send(TAG_VIDEO, writer->data().array(), size);
-    }
+    mChannel->send(TAG_VIDEO, writer->data().array(), writer->data().size());
 
     writer = NULL;
   }

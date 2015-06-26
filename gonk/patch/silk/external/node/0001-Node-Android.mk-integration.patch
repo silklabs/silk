@@ -1,75 +1,63 @@
-From 610ca0831c87accf78162917bf37ccd44d6ee949 Mon Sep 17 00:00:00 2001
+From c41715cf8458b1871f7958c4494ff1b84fc6a333 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Node Android.mk integration
 
 ---
- Android.mk                   | 54 ++++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 42 ++++++++++++++++++++++++++++++++++++++++++
  deps/v8/build/toolchain.gypi |  2 +-
  src/stream_wrap.h            |  2 +-
- 3 files changed, 56 insertions(+), 2 deletions(-)
+ 3 files changed, 44 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..7f1a84f
+index 0000000..00dd483
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,42 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE := node
 +LOCAL_MODULE_CLASS := EXECUTABLES
-+LOCAL_MODULE_TAGS := optional debug
++LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT)/bin
 +LOCAL_STRIP_MODULE := true
-+LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/out/Release/node
++node_BUILD_DIR := $(ANDROID_BUILD_TOP)/$(PRODUCT_OUT)/obj/$(LOCAL_MODULE_CLASS)/$(LOCAL_MODULE)_intermediate
++LOCAL_PREBUILT_MODULE_FILE := $(node_BUILD_DIR)/Release/$(LOCAL_MODULE)
 +include $(BUILD_PREBUILT)
 +
-+node_CC := $(abspath $(TARGET_CC))
-+node_CXX := $(abspath $(TARGET_CXX))
-+node_AR := $(abspath $(TARGET_AR))
-+node_RANLIB := $(abspath $(TARGET_RANLIB))
-+node_LINK := $(abspath $(TARGET_CXX))
-+node_CFLAGS := $(TARGET_GLOBAL_CFLAGS) $(addprefix -isystem ,$(abspath . $(TARGET_C_INCLUDES)))
-+node_CXXFLAGS := $(TARGET_GLOBAL_CPPFLAGS) -DV8_ANDROID_LOG_STDOUT $(addprefix -isystem ,$(abspath $(LOCAL_PATH)/../stlport/stlport $(LOCAL_PATH)/../../bionic))
-+node_LDFLAGS := $(TARGET_GLOBAL_LDFLAGS) -pie -B$(abspath $(PRODUCT_OUT)/obj/lib) -L$(abspath $(PRODUCT_OUT)/system/lib) -lstlport
++LOCAL_CFLAGS := $(TARGET_GLOBAL_CFLAGS) \
++  $(addprefix -isystem ,$(abspath . $(TARGET_C_INCLUDES)))
 +
-+node_BUILD_DIR := $(abspath $(PRODUCT_OUT)/node-Release)
++LOCAL_CPPFLAGS := $(TARGET_GLOBAL_CPPFLAGS) -DV8_ANDROID_LOG_STDOUT \
++  $(addprefix -isystem ,$(abspath $(LOCAL_PATH)/../stlport/stlport $(LOCAL_PATH)/../../bionic))
 +
-+with_node_build_env = \
-+	(export CC="$(node_CC)" CXX="$(node_CXX)" AR="$(node_AR)" RANLIB="$(node_RANLIB)" LINK="$(node_LINK)" \
-+        CFLAGS="$(node_CFLAGS)" \
-+        CXXFLAGS="$(node_CFLAGS) $(node_CXXFLAGS)" \
-+        LDFLAGS="$(node_LDFLAGS)"; \
-+	$(1))
++LOCAL_LDFLAGS := $(TARGET_GLOBAL_LDFLAGS) -pie \
++  -B$(abspath $(PRODUCT_OUT)/obj/lib)\
++  -L$(abspath $(PRODUCT_OUT)/system/lib) -lstlport
 +
-+in_local_dir = \
-+	cd $(1) && \
-+	$(2) && \
-+	cd $(TOPDIR)
++$(LOCAL_PREBUILT_MODULE_FILE): export CC := $(abspath $(TARGET_CC))
++$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $(TARGET_CXX))
++$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $(TARGET_CXX))
++$(LOCAL_PREBUILT_MODULE_FILE): export AR := $(abspath $(TARGET_AR))
++$(LOCAL_PREBUILT_MODULE_FILE): export RANLIB := $(abspath $(TARGET_RANLIB))
++$(LOCAL_PREBUILT_MODULE_FILE): export LINK := $(abspath $(TARGET_CXX))
++$(LOCAL_PREBUILT_MODULE_FILE): export CFLAGS := $(LOCAL_CFLAGS)
++$(LOCAL_PREBUILT_MODULE_FILE): export CXXFLAGS := $(LOCAL_CFLAGS) $(LOCAL_CPPFLAGS)
++$(LOCAL_PREBUILT_MODULE_FILE): export LDFLAGS := $(LOCAL_LDFLAGS)
 +
-+ifeq ($(strip $(SHOW_COMMANDS)),)
-+verbose=''
-+else
-+verbose=1
-+endif
-+
-+$(LOCAL_PATH)/out/Release/node: $(LOCAL_PATH)/configure \
-+  $(TARGET_CRTBEGIN_DYNAMIC_O) \
-+  $(TARGET_CRTEND_O) \
++$(LOCAL_PREBUILT_MODULE_FILE): $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk \
++  $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
 +  $(addprefix $(PRODUCT_OUT)/obj/lib/,libc.so libdl.so liblog.so libstlport.so)
 +	@echo Building: $@
-+	$(hide) rm -f $(dir $<)config.mk
-+	$(hide) rm -rf $(dir $<)out
-+	$(hide) rm -rf $(node_BUILD_DIR)
++	$(hide) rm -rf $(@D) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
 +	$(hide) mkdir -p $(node_BUILD_DIR)
-+	$(hide) ln -s $(node_BUILD_DIR) $(dir $<)out
-+	$(hide) $(call with_node_build_env,$(call in_local_dir,$(dir $<),./configure --prefix=/ --without-snapshot --without-npm --dest-cpu=arm --dest-os=android))
-+	$(hide) mv $(dir $<)config.mk $(dir $<)out
-+	$(hide) ln -s $(abspath $(dir $<)out/config.mk) $(dir $<)config.mk
-+	$(hide) $(call with_node_build_env,make -j16 -C $(dir $<) V=$(verbose))
++	$(hide) ln -s $(node_BUILD_DIR) $(<D)/out
++	$(hide) cd $(<D) && ./configure --prefix=/ \
++    --without-snapshot --without-npm --dest-cpu=arm --dest-os=android
++	$(hide) cd $(<D) && $(MAKE) V=$(if $(SHOW_COMMANDS),1)
 diff --git a/deps/v8/build/toolchain.gypi b/deps/v8/build/toolchain.gypi
 index 1d47360..f46f5ca 100644
 --- a/deps/v8/build/toolchain.gypi

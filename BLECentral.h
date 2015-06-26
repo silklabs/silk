@@ -14,6 +14,7 @@
   NSMutableDictionary* writeCallbacks;
   NSMutableDictionary* notificationCallbacks;
   NSMutableDictionary* stopNotificationCallbacks;
+  NSMutableDictionary* disconnectCallbacks;
 }
 
 @property (strong, nonatomic) NSMutableSet* peripherals;

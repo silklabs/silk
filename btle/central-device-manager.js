@@ -87,16 +87,14 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
     //console.log('(Ignoring non-configurable peripheral '+ p.id +')');
     return;
   }
-
-  p.prettyName = p.advertisement.localName;
-  p.state = 'discovered';
-  this.devices[p.id] = p;  
-  this.emit('discover', p);
-
   this._ensureConfigured(p);
 };
 
 DeviceManager.prototype._ensureConfigured = function(p) {
+  p.prettyName = p.advertisement.localName;
+  p.state = 'discovered';
+  this.devices[p.id] = p;  
+  this.emit('discover', p);
   p.connect().then(() => {
     p.state = 'connected';
     this.emit('connect', p);
@@ -137,7 +135,7 @@ DeviceManager.prototype._waitForProximity = function(p) {
       }, err => {
         console.log('Error reading rssi', err);
         clearInterval(updateRssiInterval);
-        p.disconnect().then(() => this._ensureConfigured(p));
+        this._disconnect(p).then(() => this._ensureConfigured(p));
       });
     }, 500);
   });
@@ -154,12 +152,15 @@ DeviceManager.prototype._configureWithoutCrypto = function(p) {
       // TODO: get this from state charc notify
       p.state = 'registered';
       this.emit('stateChange', p);
-      setTimeout(() => {
-        p.disconnect();
-        delete this.devices[p.id];
-        this.emit('disconnect', p);
-      }, 2000);
+      setTimeout(() => this._disconnect(p), 2000);
     });
+  }, () => this._disconnect(p).then(() => this._ensureConfigured(p)));
+};
+
+DeviceManager.prototype._disconnect = function(p) {
+  return p.disconnect().then(() => {
+    delete this.devices[p.id];
+    this.emit('disconnect', p);
   });
 };
 

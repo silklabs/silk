@@ -7,17 +7,13 @@ LOCAL_MODULE_CLASS := DATA
 LOCAL_MODULE_PATH  := $(TARGET_OUT)/silk
 LOCAL_CUSTOM_BUILT_MODULE := true
 
-# Entry point into the silk/core code.
-SILK_CORE_MAIN_JS := dist/lib/main.js
-
-# TODO!
-#SILK_JS_SRCS := $(wildcard $(LOCAL_PATH)/lib/*.js)
-#SILK_JS_SRCS += $(wildcard $(LOCAL_PATH)/lib/btle/*.js)
-#SILK_JS_SRCS += $(wildcard $(LOCAL_PATH)/server/dist/api/*.js)
+LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH)/lib -type f)
+LOCAL_ADDITIONAL_DEPENDENCIES += \
+  $(LOCAL_PATH)/package.json $(LOCAL_PATH)/Android.mk
 
 include $(BUILD_PREBUILT)
 
-$(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js $(SILK_JS_SRCS) $(LOCAL_PATH)/package.json
+$(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js
 	@echo "Build: $@"
 	$(hide) cd $(dir $@) && npm install
 

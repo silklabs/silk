@@ -7,12 +7,12 @@
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/MediaCodec.h>
-#include <media/stagefright/MediaCodecSource.h>
 #include <media/stagefright/OMXCodec.h>
 #include <media/MediaProfiles.h>
 #include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include <include/avc_utils.h>
+#include <utils/Thread.h>
 #include <getopt.h>
 
 #include "MPEG4MemoryWriter.h"
@@ -20,6 +20,10 @@
 extern "C" {
 #include "jpeglib.h"
 }
+
+// This is an ugly hack. We forked this from libstagefright
+// so we can trigger I-Frame injection.
+#include "MediaCodecSource.h"
 
 using namespace android;
 
@@ -234,8 +238,6 @@ public:
 
   void putBack(MediaBuffer **buffer);
 
-  bool reachedEOS() const { return mDone; }
-
 private:
   sp<MediaSource> mSource;
   Vector<MediaBuffer*> mStash;
@@ -301,8 +303,6 @@ public:
   virtual sp<MetaData> getFormat();
 
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
-
-  bool reachedEOS() const { return mSource->reachedEOS(); }
 
   void addListener(SliceListener *listener) { mListeners.push(listener); }
 private:
@@ -401,8 +401,6 @@ public:
   virtual sp<MetaData> getFormat();
 
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
-
-  bool reachedEOS() const { return mSource->reachedEOS(); }
 
   virtual void handleProgressEvent(int64_t timeUs, bool slice);
 private:
@@ -526,6 +524,23 @@ void SliceAudioSource::handleProgressEvent(int64_t timeUs, bool slice)
   mWaitForProgress.signal();
 }
 
+class IFrameRequestMonitor: public Thread {
+  sp<MediaCodecSource> mEncoder;
+public:
+  IFrameRequestMonitor(sp<MediaCodecSource> encoder)
+    : mEncoder(encoder) { }
+
+  virtual bool threadLoop() {
+    while (true) {
+      char b;
+      // Any data from the pipe causes us to inject an I-Frame.
+      read(STDIN_FILENO, &b, 1);
+      mEncoder->requestIDRFrame();
+    }
+    return true;
+  }
+};
+
 class SlicedMP4Encoder {
   Channel *mChannel;
   sp<SliceAtEachIDRSource> mSlicedVideoSource;
@@ -567,6 +582,8 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
   sp<MediaCodecSource> videoEncoder =
     MediaCodecSource::Create(looper, videoFormat, cameraSource);
 
+  (new IFrameRequestMonitor(videoEncoder))->run();
+
   // Setup audio
   sp<MediaSource> audioSource = new AudioSource(AUDIO_SOURCE_MIC,
 						sAudioSampleRate,
@@ -593,7 +610,7 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
 }
 
 void SlicedMP4Encoder::run() {
-  while (!mSlicedVideoSource->reachedEOS()) {
+  while (true) {
     sp<MPEG4MemoryWriter> writer = new MPEG4MemoryWriter();
 
     writer->addSource(mSlicedVideoSource);

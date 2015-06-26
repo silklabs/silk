@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <style>
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: black;
+}
+html {
+  overflow: hidden;
+}
+body {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+#img {
+  width: 540px;
+  height: 300px;
+  -webkit-transform: rotate(90deg) translateX(25px);
+  -webkit-transform-origin: 160px 150px;
+}
+    </style>
+  </head>
+  <body>
+    <img id="img"></img>
+    <!--<pre id="log"></pre>-->
+    <script src="socket.io.js"></script>
+    <script src="monitor-preview-stream.js"></script>
+    <script>
+document.body.addEventListener('click', function(e) {
+  window.WebViewJavascriptBridge.send('done');  
+});
+    </script>
+  </body>
+</html>

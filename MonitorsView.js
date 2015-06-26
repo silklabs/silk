@@ -79,6 +79,7 @@ var MonitorsView = React.createClass({
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
       return (<MonitorPreview key={key} vid={key} label={device.name}
+                              navigator={this.props.navigator}
                               serverUrl={SERVER_URL} />);
     });
     if (0 === configuring.length + streaming.length) {

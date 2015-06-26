@@ -48,39 +48,6 @@ function init(params) {
   });
 }
 
-/**
- * Return the r8g8b8x8 conversion of `yuv420sp` with `width x height`
- * dimensions as a Uint8ClampedArray.
- */
-function convertYuv420spToR8g8b8(width, height, yuv420sp) {
-  var nrPixels = width * height;
-  var nrBytes = nrPixels/*y data*/ + nrPixels / 2/*u and v*/;
-  if (yuv420sp.length !== nrBytes) {
-    throw 'Array is the wrong length';
-  }
-  var rgbx = new Uint8ClampedArray(nrPixels * 4/*r,g,b,x*/);
-  var pixStride = width;
-  var uvStart = nrPixels;
-  for (var row = 0; row < height; ++row) {
-    for (var col = 0; col < width; ++col) {
-      var yOffset = row * pixStride + col;
-      var uOffset = (row >> 1) * (pixStride >> 1) + (col >> 1);
-      uOffset = uvStart + uOffset * 2;
-      var vOffset = uOffset + 1;     
-      var y = yuv420sp[yOffset];
-      var u = yuv420sp[uOffset];
-      var v = yuv420sp[vOffset];
-
-      var bgraOffset = 4 * (pixStride * row + col);
-      rgbx[bgraOffset + 0] = y + 1.732446 * (u - 128);
-      rgbx[bgraOffset + 1] = y - 0.698001 * (v - 128) - 0.337633 * (u - 128);
-      rgbx[bgraOffset + 2] = y + 1.370705 * (v - 128);
-      rgbx[bgraOffset + 3] = 255;
-    }
-  }
-  return rgbx;
-}
-
 function renderFrame(msg) {
   if (!msg.frame) {
     return;

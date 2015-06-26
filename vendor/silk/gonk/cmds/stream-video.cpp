@@ -662,10 +662,11 @@ int main(int argc, char **argv) {
 
   // Setup camera
   int cameraId = 0;
-  sp<ICamera> camera;
+  sp<Camera> camera = Camera::connect(cameraId, String16(argv[0]), Camera::USE_CALLING_UID);
+  sp<ICamera> remote = camera->remote();
   sp<ICameraRecordingProxy> proxy;
   sp<CameraSource> cameraSource =
-    CameraSource::CreateFromCamera(camera, proxy, cameraId, String16(argv[0], strlen(argv[0])),
+    CameraSource::CreateFromCamera(remote, proxy, cameraId, String16(argv[0], strlen(argv[0])),
 				   Camera::USE_CALLING_UID, kVideoSize, kFPS,
 				   previewSurface->getIGraphicBufferProducer());
   CHECK_EQ(cameraSource->initCheck(), ::OK);

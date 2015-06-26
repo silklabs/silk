@@ -14,6 +14,14 @@ install: | .repo/.repo_fetchtimes.json
   adb remount && \
   adb sync
 
+.PHONY: uninstall
+uninstall:
+	$(ENVSETUP) && \
+  adb root && \
+  adb wait-for-device && \
+  adb remount && \
+  adb shell rm -rvf /system/silk /system/node_modules
+
 .PHONY: clean
 clean:
 	rm -rf out

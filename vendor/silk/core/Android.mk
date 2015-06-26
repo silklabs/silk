@@ -21,7 +21,6 @@ $(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js $(SILK_JS_SRCS) 
 	$(hide) # Ensure modifications to server/dist/ are picked up in incremental builds (#106)
 	$(hide) cd $(dir $@) && rm -rf node_modules/silk-api
 	$(hide) cd $(dir $@) && npm install
-	$(hide) cd $(dir $@) && node node_modules/browserify/bin/cmd.js --node --ignore-missing $(SILK_CORE_MAIN_JS) -o $(notdir $@)
 
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: SRCDIR := $(abspath $(LOCAL_PATH))
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: $(LOCAL_PATH)/Gruntfile.js

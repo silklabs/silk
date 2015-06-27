@@ -548,19 +548,16 @@ class SlicedMP4Encoder {
   sp<MediaCodecSource> mVideoEncoder;
 
 public:
-  SlicedMP4Encoder(Channel *channel);
+  SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<MediaSource> cameraSource);
 
   sp<MediaCodecSource> videoEncoder() { return mVideoEncoder; }
 
-  void init(sp<ALooper> looper, sp<MediaSource> cameraSource);
   void run();
 };
 
-SlicedMP4Encoder::SlicedMP4Encoder(Channel *channel)
+SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<MediaSource> cameraSource)
   : mChannel(channel)
-{ }
-
-void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
+{
   // Setup video encoder
   sp<MetaData> meta = cameraSource->getFormat();
   int32_t width, height, stride, sliceHeight, colorFormat;
@@ -767,8 +764,7 @@ int main(int argc, char **argv) {
 
   sp<PreviewMediaSource> preview = new PreviewMediaSource(&chan, cameraSource, sPreviewSkipCount);
 
-  SlicedMP4Encoder mp4(&chan);
-  mp4.init(looper, preview);
+  SlicedMP4Encoder mp4(looper, &chan, preview);
   mp4.run();
 
   IFrameRequestMonitor iframe(mp4.videoEncoder());

@@ -543,9 +543,11 @@ public:
 
 class SlicedMP4Encoder : public Thread {
   Channel *mChannel;
+  sp<ALooper> mLooper;
   sp<SliceAtEachIDRSource> mSlicedVideoSource;
   sp<SliceAudioSource> mSlicedAudioSource;
   sp<MediaCodecSource> mVideoEncoder;
+  sp<AMessage> mAudioFormat;
 
 public:
   SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<MediaSource> cameraSource);
@@ -556,7 +558,7 @@ public:
 };
 
 SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<MediaSource> cameraSource)
-  : mChannel(channel)
+  : mChannel(channel), mLooper(looper)
 {
   // Setup video encoder
   sp<MetaData> meta = cameraSource->getFormat();
@@ -580,7 +582,7 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<Medi
   videoFormat->setFloat("frame-rate", sFPS);
   videoFormat->setInt32("i-frame-interval", sIFrameIntervalSec);
 
-  mVideoEncoder = MediaCodecSource::Create(looper, videoFormat, cameraSource);
+  mVideoEncoder = MediaCodecSource::Create(mLooper, videoFormat, cameraSource);
 
   // Setup audio
   sp<MediaSource> audioSource = new AudioSource(AUDIO_SOURCE_MIC,
@@ -592,13 +594,13 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<Medi
   CHECK(audioSource->getFormat()->findInt32(kKeySampleRate, &sampleRate));
   CHECK(audioSource->getFormat()->findInt32(kKeyChannelCount, &channels));
 
-  sp<AMessage> audioFormat = new AMessage();
-  audioFormat->setString("mime", MEDIA_MIMETYPE_AUDIO_AAC);
-  audioFormat->setInt32("aac-profile", OMX_AUDIO_AACObjectLC);
-  audioFormat->setInt32("max-input-size", maxInputSize);
-  audioFormat->setInt32("sample-rate", sampleRate);
-  audioFormat->setInt32("channel-count", channels);
-  audioFormat->setInt32("bitrate", sAudioBitRate);
+  mAudioFormat = new AMessage();
+  mAudioFormat->setString("mime", MEDIA_MIMETYPE_AUDIO_AAC);
+  mAudioFormat->setInt32("aac-profile", OMX_AUDIO_AACObjectLC);
+  mAudioFormat->setInt32("max-input-size", maxInputSize);
+  mAudioFormat->setInt32("sample-rate", sampleRate);
+  mAudioFormat->setInt32("channel-count", channels);
+  mAudioFormat->setInt32("bitrate", sAudioBitRate);
 
   mSlicedVideoSource = new SliceAtEachIDRSource(mVideoEncoder);
   mSlicedAudioSource = new SliceAudioSource(audioSource);
@@ -613,12 +615,10 @@ bool SlicedMP4Encoder::threadLoop() {
 
     writer->addSource(mSlicedVideoSource);
 
-#if 0 // disable audio
     sp<MediaCodecSource> audioEncoder =
-      MediaCodecSource::Create(looper, audioFormat, slicedAudioSource);
+      MediaCodecSource::Create(mLooper, mAudioFormat, mSlicedAudioSource);
 
     writer->addSource(audioEncoder);
-#endif
 
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);

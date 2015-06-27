@@ -67,6 +67,9 @@ public:
 
     const Vector<char> data() { return mBuffer; }
 
+    void waitForEOS();
+    void signalEOS();
+
 protected:
     virtual ~MPEG4MemoryWriter();
 
@@ -133,6 +136,7 @@ private:
     pthread_t       mThread;                // Thread id for the writer
     List<ChunkInfo> mChunkInfos;            // Chunk infos
     Condition       mChunkReadyCondition;   // Signal that chunks are available
+    Condition       mEOSCondition;          // Signal that we reached the end of a stream
 
     // Writer thread handling
     status_t startWriterThread();

@@ -1417,6 +1417,7 @@ status_t MPEG4MemoryWriter::Track::start(MetaData *params) {
     status_t err = mSource->start(meta.get());
     if (err != OK) {
         mDone = mReachedEOS = true;
+        mOwner->signalEOS();
         return err;
     }
 
@@ -2112,6 +2113,7 @@ status_t MPEG4MemoryWriter::Track::threadEntry() {
 
     mTrackDurationUs += lastDurationUs;
     mReachedEOS = true;
+    mOwner->signalEOS();
 
     sendTrackSummary(hasMultipleTracks);
 
@@ -2778,5 +2780,18 @@ void MPEG4MemoryWriter::write_mem(const void *ptr, size_t size) {
   memcpy(mBuffer.editArray() + mBufferPos, ptr, size);
   mBufferPos = tail;
 }
+
+void MPEG4MemoryWriter::waitForEOS() {
+  Mutex::Autolock autoLock(mLock);
+  while (!reachedEOS()) {
+    mEOSCondition.wait(mLock);
+  }
+}
+
+void MPEG4MemoryWriter::signalEOS() {
+  Mutex::Autolock autoLock(mLock);
+  mEOSCondition.signal();
+}
+
 
 }  // namespace android

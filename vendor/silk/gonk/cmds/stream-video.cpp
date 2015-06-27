@@ -624,10 +624,7 @@ void SlicedMP4Encoder::run() {
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
     params->setInt32(kKeyRealTimeRecording, false);
     CHECK_EQ(writer->start(params.get()), ::OK);
-
-    while (!writer->reachedEOS())
-      ;
-
+    writer->waitForEOS();
     CHECK_EQ(writer->stop(), ::OK);
 
     // Write size and .mp4 data to stdout

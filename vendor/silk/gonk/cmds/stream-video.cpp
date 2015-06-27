@@ -541,7 +541,7 @@ public:
   }
 };
 
-class SlicedMP4Encoder {
+class SlicedMP4Encoder : public Thread {
   Channel *mChannel;
   sp<SliceAtEachIDRSource> mSlicedVideoSource;
   sp<SliceAudioSource> mSlicedAudioSource;
@@ -552,7 +552,7 @@ public:
 
   sp<MediaCodecSource> videoEncoder() { return mVideoEncoder; }
 
-  void run();
+  virtual bool threadLoop();
 };
 
 SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<MediaSource> cameraSource)
@@ -607,7 +607,7 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<Medi
   mSlicedVideoSource->addListener(mSlicedAudioSource.get());
 }
 
-void SlicedMP4Encoder::run() {
+bool SlicedMP4Encoder::threadLoop() {
   while (true) {
     sp<MPEG4MemoryWriter> writer = new MPEG4MemoryWriter();
 
@@ -765,6 +765,8 @@ int main(int argc, char **argv) {
   mp4.run();
 
   IFrameRequestMonitor iframe(mp4.videoEncoder());
+
+  mp4.join();
 
   return 0;
 }

@@ -29,7 +29,7 @@ clean:
 # https://youtu.be/1r_2fNiYkyE
 .PHONY: zest
 zest:
-	git reset --hard HEAD  && git clean -dx -f -f
+	git reset --hard HEAD && git clean -dx -f -f
 
 .PHONY: sync
 sync: | .repo/manifest.xml

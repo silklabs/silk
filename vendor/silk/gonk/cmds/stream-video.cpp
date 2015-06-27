@@ -759,7 +759,7 @@ int main(int argc, char **argv) {
 				   NULL);
   CHECK_EQ(cameraSource->initCheck(), ::OK);
 
-  sp<PreviewMediaSource> preview = new PreviewMediaSource(&chan, cameraSource, sPreviewSkipCount);
+  sp<MediaSource> preview = new PreviewMediaSource(&chan, cameraSource, sPreviewSkipCount);
 
   SlicedMP4Encoder mp4(looper, &chan, preview);
   mp4.run();

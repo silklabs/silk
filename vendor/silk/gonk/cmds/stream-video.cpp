@@ -545,8 +545,12 @@ class SlicedMP4Encoder {
   Channel *mChannel;
   sp<SliceAtEachIDRSource> mSlicedVideoSource;
   sp<SliceAudioSource> mSlicedAudioSource;
+  sp<MediaCodecSource> mVideoEncoder;
+
 public:
   SlicedMP4Encoder(Channel *channel);
+
+  sp<MediaCodecSource> videoEncoder() { return mVideoEncoder; }
 
   void init(sp<ALooper> looper, sp<MediaSource> cameraSource);
   void run();
@@ -579,10 +583,7 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
   videoFormat->setFloat("frame-rate", sFPS);
   videoFormat->setInt32("i-frame-interval", sIFrameIntervalSec);
 
-  sp<MediaCodecSource> videoEncoder =
-    MediaCodecSource::Create(looper, videoFormat, cameraSource);
-
-  (new IFrameRequestMonitor(videoEncoder))->run();
+  mVideoEncoder = MediaCodecSource::Create(looper, videoFormat, cameraSource);
 
   // Setup audio
   sp<MediaSource> audioSource = new AudioSource(AUDIO_SOURCE_MIC,
@@ -602,7 +603,7 @@ void SlicedMP4Encoder::init(sp<ALooper> looper, sp<MediaSource> cameraSource) {
   audioFormat->setInt32("channel-count", channels);
   audioFormat->setInt32("bitrate", sAudioBitRate);
 
-  mSlicedVideoSource = new SliceAtEachIDRSource(videoEncoder);
+  mSlicedVideoSource = new SliceAtEachIDRSource(mVideoEncoder);
   mSlicedAudioSource = new SliceAudioSource(audioSource);
 
   // The video stream drives where the audio stream is sliced
@@ -769,6 +770,8 @@ int main(int argc, char **argv) {
   SlicedMP4Encoder mp4(&chan);
   mp4.init(looper, preview);
   mp4.run();
+
+  IFrameRequestMonitor iframe(mp4.videoEncoder());
 
   return 0;
 }

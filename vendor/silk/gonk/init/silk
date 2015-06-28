@@ -6,6 +6,11 @@ export SILK_SERVER_URL=$(getprop persist.silk.server.url)
 
 if [ -z $1 ]; then
   log -p i -t silk-init Starting Silk services
+
+  # Feign sys.boot_completed for the benefit of other Gonk components that
+  # listen on it.
+  setprop sys.boot_completed 1
+
   exec logwrapper node $NODE_PATH/core.js
 fi
 

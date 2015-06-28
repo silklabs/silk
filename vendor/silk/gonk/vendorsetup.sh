@@ -130,7 +130,7 @@ done
 echo Gonk: ${GONK}
 case $GONK in
 base)
-  export TARGET_PRODUCT=aosp_arm
+  export TARGET_PRODUCT=silk_arm
   export TARGET_BUILD_VARIANT=eng
   export TARGET_BUILD_TYPE=release
   ;;

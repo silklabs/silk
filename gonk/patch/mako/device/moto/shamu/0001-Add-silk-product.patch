@@ -17,7 +17,7 @@ index e5fa301..dc8c55a 100644
  PRODUCT_MANUFACTURER := motorola
 -PRODUCT_RESTRICT_VENDOR_FILES := true
  
-+$(call inherit-product, vendor/silk/gonk/silk.mk)
++$(call inherit-product, vendor/silk/gonk/silk_generic.mk)
  $(call inherit-product, device/moto/shamu/device.mk)
  $(call inherit-product-if-exists, vendor/moto/shamu/device-vendor.mk)
  

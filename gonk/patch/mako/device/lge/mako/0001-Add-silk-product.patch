@@ -17,7 +17,7 @@ index 3b40137..ca14cec 100644
  PRODUCT_MANUFACTURER := LGE
 -PRODUCT_RESTRICT_VENDOR_FILES := true
 +
-+$(call inherit-product, vendor/silk/gonk/silk.mk)
++$(call inherit-product, vendor/silk/gonk/silk_generic.mk)
  
  # Inherit from hardware-specific part of the product configuration
  $(call inherit-product, device/lge/mako/device.mk)

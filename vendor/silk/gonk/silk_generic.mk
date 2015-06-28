@@ -1,3 +1,6 @@
+#
+# Generic Silk platform
+#
 
 PRODUCT_PACKAGES += node node_modules
 
@@ -20,3 +23,6 @@ SILK_UI_PACKAGES := \
   online.zip \
 
 PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
+
+ENABLE_LIBRECOVERY := true
+PRODUCT_PACKAGES += librecovery librecovery_test

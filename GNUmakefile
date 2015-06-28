@@ -91,7 +91,7 @@ init.%:
 .repo/manifest.xml: GONK=base# default gonk manifest
 .repo/manifest.xml: | .repo/manifest_upstream
 	./repo init -u $(PWD)/.repo/manifest_upstream -m $(GONK).xml \
-    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-fugu,-grouper,-hammerhead,-manta,$(shell uname | tr A-Z a-z) \
+    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(shell uname | tr A-Z a-z) \
     $(REPO_INIT_ARGS)
 
 .repo/manifest_upstream:

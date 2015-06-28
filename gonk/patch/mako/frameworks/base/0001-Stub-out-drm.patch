@@ -1,0 +1,16 @@
+From ab5f77040ef9b5cbf02592cb9be250456cba50b0 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 28 Jun 2015 01:18:15 -0700
+Subject: [PATCH] Stub out drm/
+
+---
+ drm/Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 drm/Android.mk
+
+diff --git a/drm/Android.mk b/drm/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

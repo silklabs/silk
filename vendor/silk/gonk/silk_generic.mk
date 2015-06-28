@@ -28,3 +28,7 @@ PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery librecovery_test
+
+# stubs/
+PRODUCT_PACKAGES += fakeappops gonksched
+

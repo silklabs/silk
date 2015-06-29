@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Silk Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+      #toolbar > span {
+        background-color: #888888;
+        color: white;
+        padding: 5px 10px 5px 10px;
+        text-align: center;
+        cursor: pointer;
+        min-width: 9mm;
+        min-height: 9mm;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="silk-api.js"></script>
+    <script type="text/javascript" src="silk.js"></script>
+    <div id='log'>
+    </div>
+    <div id='toolbar'>
+      <span onclick='toggleLog();'>Toggle</span>
+      <span onclick='restart();'>Restart</span>
+      <span onclick='start();'>Start</span>
+      <span onclick='stop();'>Stop</span>
+      <input id="lightIntensity" type="range"
+             value="1.0" min="0.0" max="1.0" step="0.01"></input>
+      <input id="lightOn" type="checkbox"></input>
+      <span onclick='light();'>Light</span>
+    </div>
+  </body>
+</html>

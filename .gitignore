@@ -1,6 +1,6 @@
 build
 node_modules
-public
+public/silk-api.js
 data/
 npm-debug.log
 app/platforms/

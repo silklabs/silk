@@ -1,7 +1,7 @@
 From 01c51a7f2c71969cc122e5f762ab1f7753dc04df Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 23 May 2015 16:20:21 -0700
-Subject: [PATCH] Weave init hook
+Subject: [PATCH] Import init.silk.rc
 
 ---
  rootdir/init.rc | 8 ++++++++
@@ -11,14 +11,13 @@ diff --git a/rootdir/init.rc b/rootdir/init.rc
 index cbcb842..7bcac6b 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -633,3 +633,7 @@ service pre-recovery /system/bin/uncrypt
+@@ -633,3 +633,6 @@ service pre-recovery /system/bin/uncrypt
      class main
      disabled
      oneshot
 +
-+service silk /system/bin/silk
-+    class main
-+    user root
++import /init.silk.rc
++
 -- 
 1.9.1
 

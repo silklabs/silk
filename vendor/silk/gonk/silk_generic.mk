@@ -6,6 +6,7 @@ PRODUCT_PACKAGES += node node_modules
 
 SILK_CORE := \
   core.js \
+  init.silk.rc \
   silk \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
@@ -29,6 +30,5 @@ PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery librecovery_test
 
-# stubs/
+# gonk stubs
 PRODUCT_PACKAGES += fakeappops gonksched
-

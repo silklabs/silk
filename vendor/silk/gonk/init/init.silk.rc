@@ -1,0 +1,13 @@
+
+service gonksched /system/bin/gonksched
+    class main
+    user root
+
+service fakeappops /system/bin/fakeappops
+    class main
+    user root
+
+service silk /system/bin/silk
+    class main
+    user root
+

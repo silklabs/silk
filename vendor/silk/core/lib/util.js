@@ -37,6 +37,12 @@ export function getprop(prop) {
   return result.stdout.toString().replace(/\n$/, '');
 }
 
+export function setprop(prop, value) {
+  let spawnSync = require('child_process').spawnSync;
+  let result = spawnSync('setprop', [prop, value]);
+  return result.error;
+}
+
 export function timeout(ms) {
   return new Promise(resolve => setTimeout(() => resolve(), ms));
 }

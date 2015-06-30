@@ -13,6 +13,7 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 SILK_PROGIES := \
   bledroid \
   stream-video \
+  wpa_monitor \
 
 PRODUCT_PACKAGES += $(SILK_PROGIES)
 

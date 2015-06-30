@@ -1,0 +1,15 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := wpa_monitor
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := main.cpp
+LOCAL_CFLAGS += -Werror -Wextra
+LOCAL_SHARED_LIBRARIES := liblog libhardware_legacy
+
+LOCAL_C_INCLUDES += \
+    hardware/libhardware_legacy/include \
+    system/core/include \
+
+include $(BUILD_EXECUTABLE)

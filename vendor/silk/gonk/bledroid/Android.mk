@@ -5,7 +5,7 @@ LOCAL_MODULE := bledroid
 LOCAL_SRC_FILES := main.cpp
 LOCAL_CFLAGS += -Wall -Wextra -Werror
 LOCAL_CFLAGS += -Wno-unused-parameter
-LOCAL_SHARED_LIBRARIES := liblog libcutils libhardware
+LOCAL_SHARED_LIBRARIES := liblog libhardware
 
 LOCAL_C_INCLUDES += hardware/libhardware/include
 

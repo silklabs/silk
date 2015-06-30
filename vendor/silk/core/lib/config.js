@@ -7,36 +7,12 @@ let api = require('silk-api');
 let bleno = null;
 let fs = require('fs');
 let spawnSync = require('child_process').spawnSync;
-
 let btle = require('./btle');
 let caps = require('./caps');
 let ui = require('./ui');
 
 let PS_ENTRY_RX =
       '^(\\w+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(.+)$';
-
-function loadWifiConfig() {
-  return new Promise((resolve, reject) => {
-    reject();
-  });
-}
-
-function bluetoothPoweredOn() {
-  return btle.prepare().then(() => {
-    console.log('BTLE ready!');
-
-    bleno = require('bleno');
-    return new Promise(resolve => {
-      bleno.on('stateChange', state => {
-        if (state !== 'poweredOn') {
-          console.log('Warning: ignoring BT state', state);
-          return;
-        }
-        resolve();
-      });
-    });
-  });
-}
 
 /**
  *
@@ -96,85 +72,81 @@ network={
   });
 }
 
-function runConfigService(id) { //eslint-disable-line no-unused-vars
+function runConfigService(id, resolve, reject) {
   const STATE = api.btleConfigService.state;
   let configService = btle.configService();
   let updateRssiInterval = null;
-  return new Promise(resolve => {
-    bleno.setServices([configService]);
-    bleno.on('servicesSet', errServicesSet => {
-      if (errServicesSet) {
-        throw new Error(errServicesSet);
-      }
-      console.log('Started BTLE config service');
 
-      // TODO: get name from build config
-      bleno.startAdvertising('Silkcam', [configService.uuid],
-                             err => err && console.log('Error: ' + err));
-      bleno.on('advertisingStart', err => {
+  bleno.setServices([configService]);
+  bleno.on('servicesSet', errServicesSet => {
+    if (errServicesSet) {
+      throw new Error(errServicesSet);
+    }
+    console.log(`Started BTLE config service for device ${id}`);
+
+    // TODO: get name from build config
+    bleno.startAdvertising('Silkcam', [configService.uuid],
+                           err => err && console.log('Error: ' + err));
+    bleno.on('advertisingStart', err => {
+      if (err) {
+        return reject(`runConfigService: ${err}`);
+      }
+      console.log('Started BTLE advertising');
+    });
+  });
+
+  bleno.on('accept', clientAddr => {
+    console.log('Accepted connection from', clientAddr);
+    // TODO: how do we associate the RSSI with a particular
+    // connected central?
+    let updateRssi = () => {
+      bleno.updateRssi((err, rssi) => {
         if (err) {
-          throw new Error(err);
+          return reject(`runConfigService: ${err}`);
         }
-        console.log('Started BTLE advertising');
+        configService.updateRssi(rssi);
       });
-    });
-
-    bleno.on('accept', clientAddr => {
-      console.log('Accepted connection from', clientAddr);
-      // TODO: how do we associate the RSSI with a particular
-      // connected central?
-      let updateRssi = () => {
-        bleno.updateRssi((err, rssi) => {
-          if (err) {
-            throw err;
-          }
-          configService.updateRssi(rssi);
-        });
-      };
-      if (updateRssiInterval) {
-        clearInterval(updateRssiInterval);
-      }
-      updateRssiInterval = setInterval(updateRssi, 500);
-    });
-
-    bleno.on('disconnect', clientAddr => {
-      console.log('Client', clientAddr, 'disconnected');
-      if (updateRssiInterval) {
-        clearInterval(updateRssiInterval);
-      }
-    });
-
-    configService.on('stateChange', state => {
-      console.log('Configuration state is now', state);
-      if (state !== STATE.REGISTERED) {
-        return;
-      }
-      kickWifi(configService.ap,
-               configService.unsecured ? '' : configService.secret);
-      // TODO: write config info to persistent storage
+    };
+    if (updateRssiInterval) {
       clearInterval(updateRssiInterval);
-      bleno.stopAdvertising(() => {
-        console.log('Stopped advertising.');
-        resolve();
-      });
+    }
+    updateRssiInterval = setInterval(updateRssi, 500);
+  });
+
+  bleno.on('disconnect', clientAddr => {
+    console.log('Client', clientAddr, 'disconnected');
+    if (updateRssiInterval) {
+      clearInterval(updateRssiInterval);
+    }
+  });
+
+  configService.on('stateChange', state => {
+    console.log('Configuration state is now', state);
+    if (state !== STATE.REGISTERED) {
+      return;
+    }
+    kickWifi(configService.ap,
+             configService.unsecured ? '' : configService.secret);
+    // TODO: write config info to persistent storage
+    clearInterval(updateRssiInterval);
+    bleno.stopAdvertising(() => {
+      console.log('Stopped advertising.');
+      resolve();
     });
   });
 }
 
 function configureDevice(id) {
-  console.log('Device not configured, launching BTLE config service ...');
-  return bluetoothPoweredOn().then(() => {
+  return new Promise((resolve, reject) => {
+    console.log('Device not configured, launching BTLE config service ...');
     if (!caps.has('btle-peripheral')) {
-      console.log('WARNING: device cannot do BTLE peripheral mode, skipping config service.  You must configure wifi manually.');
-      return Promise.resolve();
+      console.error('Device cannot do BTLE peripheral mode, skipping config service. You must configure wifi manually.');
+      return resolve();
     }
     ui('setup');
-    return runConfigService(id);
+    bleno = btle.bleno;
+    runConfigService(id, resolve, reject);
   });
 }
 
-module.exports = (id) => {
-  return loadWifiConfig().then(
-    () => Promise.reject('No saved wifi config yet'),
-    () => configureDevice(id));
-};
+module.exports = configureDevice;

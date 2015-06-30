@@ -12,6 +12,7 @@ SRCS = [
   'lib/ui.js',
   'lib/util.js',
   'lib/vibrator.js',
+  'lib/wifi.js',
   'lib/btle/config-service.js',
   'lib/btle/ibeacon.js',
   'lib/btle/index.js',

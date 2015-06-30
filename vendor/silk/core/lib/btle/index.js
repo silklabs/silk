@@ -3,30 +3,26 @@
 
 'use strict';
 
-let util = require('../util');
-
 module.exports = {
-  prepare: () => {
+  init: () => {
     return new Promise(resolve => {
-
-      // Wait until the system fully boots before trying to use bluetooth
-      function waitForBoot() {
-        if ('1' === util.getprop('sys.boot_completed')) {
-          console.log('System booted.  Enabling Bluetooth services');
-
-          // Hold off require()ing BT stuff until the interface is up.
-          module.exports.configService = require('./config-service');
-          //module.exports.ibeacon = require('./ibeacon.js');
-          //module.exports.scanner = require('./scanner.js');
-
-          resolve();
-        } else {
-          console.log('Waiting for sys.boot_completed=1');
-          util.timeout(1000).then(waitForBoot);
+      console.log('Init BTLE');
+      let bleno = require('bleno');
+      bleno.on('stateChange', state => {
+        if (state !== 'poweredOn') {
+          console.warn('Ignoring BT stateChange to ', state);
+          return;
         }
-      }
+        console.log(`BTLE: ${state}`);
 
-      waitForBoot();
+        module.exports.configService = require('./config-service');
+        //module.exports.ibeacon = require('./ibeacon.js');
+        //module.exports.scanner = require('./scanner.js');
+        resolve();
+      });
+
+      // The bleno that everybody should use
+      module.exports.bleno = bleno;
     });
-  }
+  },
 };

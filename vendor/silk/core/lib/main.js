@@ -5,10 +5,12 @@
 
 let api = require('silk-api');
 let id = api.id.create();
+let btle = require('./btle');
 let lights = require('./lights')();
-let vib = require('./vibrator')();
-
 let ui = require('./ui');
+let vib = require('./vibrator')();
+let wifi = require('./wifi');
+let util = require('./util');
 
 process.on('uncaughtException', err => {
   console.log('Error:', err, err.stack);
@@ -21,21 +23,38 @@ process.on('uncaughtException', err => {
   );
 });
 
-
-ui('bootanimation');
-
-let camera;
-require('./config')(id).then(() => {
+// Wait for boot up
+new Promise(resolve => {
+  ui('bootanimation');
+  let _waitForBoot = function() {
+    if ('1' === util.getprop('sys.boot_completed')) {
+      resolve();
+    } else {
+      console.log('Waiting for sys.boot_completed=1');
+      util.timeout(1000).then(_waitForBoot);
+    }
+  };
+  _waitForBoot();
+})
+// Initialize hardware
+.then(() => {
+  return Promise.all([wifi.init(), btle.init()]);
+})
+// Load configuration
+.then(() => {
+  return require('./config')(id);
+})
+// Connect to the server and start streaming
+.then(() => {
   ui('connecting');
   let socket = require('socket.io-client')(api.config.server_url);
 
   console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
+
+  let camera = require('./camera')(id.toString());
   socket.on('connect', () => {
     ui('online');
 
-    if (!camera) {
-      camera = require('./camera')(id.toString());
-    }
     camera.start(socket);
 
     socket.on('cmd', cmd => {
@@ -57,9 +76,11 @@ require('./config')(id).then(() => {
   });
   socket.on('disconnect', () => {
     ui('connecting');
-    if (camera) {
-      camera.stop();
-    }
+    camera.stop();
   });
   socket.on('error', err => console.log('Connection error:', err));
+},
+e => {
+  console.error(`Fatal initialization error: ${e}`); // TODO: Recover
 });
+

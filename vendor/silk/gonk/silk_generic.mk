@@ -12,6 +12,7 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 
 SILK_PROGIES := \
   bledroid \
+  dhcputil \
   stream-video \
   wpa_monitor \
 

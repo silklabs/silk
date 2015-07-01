@@ -8,6 +8,7 @@ var {
   Image,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } = React;
 
@@ -19,15 +20,24 @@ var PREVIEW_HEIGHT = 170;
 var MonitorPreview = React.createClass({
   render: function() {
     return (
+      <TouchableOpacity onPress={this.goFullscreen}>
         <View style={styles.monitorContainer}>
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>
           <MonitorPreviewStream vid={this.props.vid}
                                 serverUrl={this.props.serverUrl}/>
-      </View>
+        </View>
+      </TouchableOpacity>
     );
-  }
+  },
+
+  goFullscreen: function() {
+    // XXX: what is index supposed to signify?
+    this.props.navigator.push({ name: 'MonitorFullscreen', index: 2,
+                                vid: this.props.vid,
+                                serverUrl: this.props.serverUrl });
+  },
 });
 
 // This will become a native-backed (or initially, WebView-backed)

@@ -12,6 +12,7 @@ var {
   View,
 } = React;
 
+var MonitorFullscreen = require('./MonitorFullscreen');
 var MonitorsView = require('./MonitorsView');
 var WifiSettings = require('./WifiSettings');
 
@@ -38,16 +39,32 @@ var Silk = React.createClass({
                         ssidHint={route.ssidHint} pskHint={route.pskHint}
                         resolve={route.resolve} reject={route.reject} />
       );
+    case 'MonitorFullscreen':
+      return (
+        <MonitorFullscreen navigator={navigator}
+                           vid={route.vid} serverUrl={route.serverUrl} />
+      );
     };
-    return (<Text>Unknown scene {route.name}</Text>);
-  },   
+    return (
+      <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
+        <Text style={{color: 'yellow', fontSize: 30}}>
+          Unknown scene {route.name}
+        </Text>
+      </View>
+    );
+  },
 
   onForward: function() {
     // --> Settings
   },
   
   configureScene: function(route) {
-    return Navigator.SceneConfigs.FloatFromBottom;
+    switch (route.name) {
+    case 'WifiSettings':
+      return Navigator.SceneConfigs.FloatFromBottom;
+    default:
+      return Navigator.SceneConfigs.PushFromRight;
+    }
   },
 });
 

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <poll.h>
 #include <sys/prctl.h>
 
 #include <cutils/properties.h>
@@ -48,17 +49,8 @@ static void signal_handler(int signal)
 
 static void unload_wifi(void)
 {
-  if (is_wifi_driver_loaded()) {
-    ALOGW("Stopping wifi");
-    int err = wifi_stop_supplicant(false);
-    if (err != 0) {
-      ALOGE("ERROR wifi_stop_supplicant() failed: %d\n", err);
-    }
-    err = wifi_unload_driver();
-    if (err != 0) {
-      ALOGE("wifi_load_driver() failed: %d\n", err);
-    }
-  }
+  wifi_stop_supplicant(false);
+  wifi_unload_driver();
 }
 
 void *event_loop(void *)
@@ -84,7 +76,22 @@ int main(int, char **)
   unload_wifi();
   BAIL_ON_FAIL(wifi_load_driver());
   BAIL_ON_FAIL(wifi_start_supplicant(false));
-  BAIL_ON_FAIL(wifi_connect_to_supplicant());
+
+  // A successful return from wifi_start_supplicant() does not guarantee that
+  // the supplicant's socket is ready to be connected to, so try
+  // wifi_connect_to_supplicant() a couple times before declaring failure.
+  int retry = 1;
+  for (;;) {
+    poll(NULL, 0, 250);
+    if (retry >= 5) {
+      BAIL_ON_FAIL(wifi_connect_to_supplicant());
+      break;
+    }
+    if (0 == wifi_connect_to_supplicant()) {
+      break;
+    }
+    ALOGE("Unable to connect to supplicant, attempt %d\n", retry++);
+  }
 
   BAIL_ON_FAIL(pipe(pipefd));
 

@@ -13,8 +13,11 @@ class WpaMonitor extends events.EventEmitter
 {
   constructor() {
     super();
-    this._init();
     this._ready = false;
+
+    // N4 insists firwmare be 'reloaded' at boot before wlan0 will come up
+    util.exec('ndc', ['softap', 'fwreload', iface, 'AP'])
+    .then(() => this._init());
   }
 
   ready() {

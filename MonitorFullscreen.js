@@ -6,6 +6,7 @@
 var React = require('react-native');
 var {
   Image,
+  StatusBarIOS,
   StyleSheet,
   Text,
   View,
@@ -15,12 +16,16 @@ var WebViewBridge = require('react-native-webview-bridge');
 
 var MonitorFullscreen = React.createClass({
   componentDidMount: function() {
+    var statusBarAnimation = 'slide';
     var webview = this.refs.webview;
+
+    StatusBarIOS.setHidden(true, statusBarAnimation);
     webview.onMessage(msg => {
       if (msg != 'done') {
         console.log('Received unknown message from WebView:', msg);
         return;
       }
+      StatusBarIOS.setHidden(false, statusBarAnimation);
       console.log('Popping out of fullscreen');
       this.props.navigator.pop();
     });

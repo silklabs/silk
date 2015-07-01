@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-ENVSETUP=source build/envsetup.sh && test "$$SILK_ENVSETUP" == "1"
+ENVSETUP=source build/envsetup.sh $(1) && test "$$SILK_ENVSETUP" == "1"
 
 .PHONY: all
 all: | .repo/.repo_fetchtimes.json
@@ -37,8 +37,8 @@ sync: | .repo/manifest.xml
 
 .PHONY: dist
 dist: | .repo/manifest.xml
-	$(ENVSETUP) clean # <-- drop all local patches before archiving
-	$(ENVSETUP) np && ./gonk/archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
+	$(call ENVSETUP,clean) # <-- drop all local patches before archiving
+	$(call ENVSETUP,np) && ./gonk/archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
 
 # Manipulate the silk service on device:
 #

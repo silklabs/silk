@@ -51,8 +51,8 @@ for 10-20 minutes upon your first flash.  You will need to manually reflash
 
 ## Connecting to the server
 
-By default the build will connect to the production server at
-https://silk-server.herokuapp.com/.
+By default the build will connect to the test server at
+https://silk-test-server.herokuapp.com/.
 
 If you would like to use a local server for development purposes or otherwise,
 configure the device with:

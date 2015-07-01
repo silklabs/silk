@@ -32,8 +32,8 @@
   } \
 
 
-int pipefd[2];
-bool exit_signal = false;
+static int pipefd[2];
+static bool exit_signal = false;
 
 static void signal_handler(int signal)
 {
@@ -53,7 +53,7 @@ static void unload_wifi(void)
   wifi_unload_driver();
 }
 
-void *event_loop(void *)
+static void *event_loop(void *)
 {
   while (!exit_signal) {
     char event[255];
@@ -90,7 +90,7 @@ int main(int, char **)
     if (0 == wifi_connect_to_supplicant()) {
       break;
     }
-    ALOGE("Unable to connect to supplicant, attempt %d\n", retry++);
+    ALOGW("Unable to connect to supplicant, attempt %d\n", retry++);
   }
 
   BAIL_ON_FAIL(pipe(pipefd));

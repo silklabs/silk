@@ -88,6 +88,8 @@ int main(int, char **)
 
   BAIL_ON_FAIL(pipe(pipefd));
 
+  printf("02>OK\n");
+
   pthread_t thread;
   pthread_attr_t attr;
 

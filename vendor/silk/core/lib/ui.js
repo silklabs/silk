@@ -137,8 +137,13 @@ function uiState(state) {
 let input = new Input(['event0', 'event1', 'event2']);
 
 let cancelPowerDown = () => {};
+let volumeKeysPressed = 0;
 input.on('up', e => {
   switch(e.keyId) {
+  case 'volumeup':
+  case 'volumedown':
+    volumeKeysPressed--;
+    break;
   case 'power':
     cancelPowerDown();
     if (currentState === 'powerdown') {
@@ -153,6 +158,21 @@ input.on('up', e => {
 input.on('down', e => {
   vib.pattern(50);
   switch(e.keyId) {
+  case 'volumeup':
+  case 'volumedown':
+    volumeKeysPressed++;
+    if (volumeKeysPressed === 2) {
+      require('./wifi').forgetNetwork()
+      .then(() => {
+        // HACK: Return to the reconfigure state by rebooting
+        uiState('powerdown');
+        util.setprop('sys.powerctl', 'reboot');
+      })
+      .catch(err => {
+        console.log(`forgetNetwork failed: ${err}`);
+      });
+    }
+    break;
   case 'power':
     Promise.race([
       util.timeout(1000),

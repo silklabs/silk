@@ -23,8 +23,8 @@ process.on('uncaughtException', err => {
   );
 });
 
-// Wait for boot up
 new Promise(resolve => {
+  console.log('Wait for boot complete');
   ui('bootanimation');
   let _waitForBoot = function() {
     if ('1' === util.getprop('sys.boot_completed')) {
@@ -36,20 +36,20 @@ new Promise(resolve => {
   };
   _waitForBoot();
 })
-// Initialize hardware
 .then(() => {
+  console.log('Initialize hardware');
   return Promise.all([wifi.init(), btle.init()]);
 })
-// Load configuration
 .then(() => {
+  console.log('Load configuration');
   return require('./config')(id);
 })
 // Connect to the server and start streaming
 .then(() => {
+  console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
   ui('connecting');
   let socket = require('socket.io-client')(api.config.server_url);
 
-  console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
 
   let camera = require('./camera')(id.toString());
   socket.on('connect', () => {

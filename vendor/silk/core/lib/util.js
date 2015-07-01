@@ -3,11 +3,11 @@
 
 'use strict';
 
-let childProcessExec = require('child_process').exec;
+let childProcessExecFile = require('child_process').execFile;
 
-export function exec(cmd) {
+export function exec(cmd, args) {
   return new Promise((resolve, reject) => {
-    childProcessExec(cmd, (err, stdout, stderr) => {
+    childProcessExecFile(cmd, args, (err, stdout, stderr) => {
       let code = err ? err.code : 0;
       // 127 is failed exec, which is always wrong.  Otherwise we
       // leave it up to the user.
@@ -19,13 +19,13 @@ export function exec(cmd) {
   });
 }
 
-export function execRetry(cmd, retries, delayMs) {
-  return exec(cmd).then(result => {
+export function execRetry(cmd, args, retries, delayMs) {
+  return exec(cmd, args).then(result => {
     if (0 === result.code) {
       return result;
     }
     if (retries > 0) {
-      return timeout(delayMs).then(() => execRetry(cmd, retries - 1, delayMs));
+      return timeout(delayMs).then(() => execRetry(cmd, args, retries - 1, delayMs));
     }
     return Promise.reject(result);
   });
@@ -56,7 +56,7 @@ if (require.main === module) {
   }).then(result => {
     console.log('  output:\n' + result.stdout);
     console.log('Failing `grep foo bar 5 times ...');
-    return execRetry('grep foo bar', 5, 100);
+    return execRetry('grep', ['foo', 'bar'], 5, 100);
   }).then(
     () => console.log('(should not have succeeded'),
     result => console.log('... done failing with code ' + result.code));

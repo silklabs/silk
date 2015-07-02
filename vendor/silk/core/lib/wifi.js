@@ -9,6 +9,8 @@ let events = require('events');
 let spawn = require('child_process').spawn;
 
 let iface = util.getprop('wifi.interface');
+let monitor;
+let wifi;
 
 class WpaMonitor extends events.EventEmitter
 {
@@ -104,8 +106,6 @@ class WpaMonitor extends events.EventEmitter
   }
 }
 
-let monitor;
-
 function wpaCli(...args) {
   if (!monitor.ready()) {
     console.log('wpaCli: supplicant not ready, waiting');
@@ -169,126 +169,130 @@ function wpaCliRemoveAllNetworks() {
   return wpaCliRemoveNetwork('all');
 }
 
-function networkCleanup() {
-  return util.exec('dhcputil', [iface, 'dhcp_stop'])
-    .then(() => util.exec('ndc', ['network', 'destroy', '100']))
-    .then(() => util.exec('ndc', ['interface', 'clearaddr', iface]))
-    .then(() => {
-      if (caps.has('wifi-needs-fwreload')) {
-        return util.exec('ndc', ['softap', 'fwreload', iface, 'AP']);
-      }
-      return Promise.resolve();
-    })
-    .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
-    .then(r => {
-      console.log(`${iface} state| ${r.stdout}`);
-    })
-    .catch(err => {
-      console.log(`Error: Network cleanup failed: ${err}`);
-    });
-}
 
-function startWpaMonitor() {
+class Wifi extends events.EventEmitter
+{
+  constructor() {
+    super();
+  }
 
-  monitor = new WpaMonitor(iface);
-  monitor.on('connected', () => {
-    console.log('==> Wifi Connected. Issuing DHCP request');
-
-    util.exec('dhcputil', [iface, 'dhcp_request'])
-    .then(() => {
-
-      // dhcpd provides its output in system properties,
-      let dns = [];
-      for (let i = 1; i <= 4; i++) {
-        let dnsN = util.getprop(`dhcp.${iface}.dns${i}`);
-        if (dnsN) {
-          dns.push(dnsN);
+  _networkCleanup() {
+    return util.exec('dhcputil', [iface, 'dhcp_stop'])
+      .then(() => util.exec('ndc', ['network', 'destroy', '100']))
+      .then(() => util.exec('ndc', ['interface', 'clearaddr', iface]))
+      .then(() => {
+        if (caps.has('wifi-needs-fwreload')) {
+          return util.exec('ndc', ['softap', 'fwreload', iface, 'AP']);
         }
-      }
+        return Promise.resolve();
+      })
+      .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
+      .then(r => {
+        console.log(`${iface} state| ${r.stdout}`);
+      })
+      .catch(err => {
+        console.log(`Error: Network cleanup failed: ${err}`);
+      });
+  }
 
-      let ipaddress = util.getprop(`dhcp.${iface}.ipaddress`);
-      let mask = util.getprop(`dhcp.${iface}.mask`);
-      let gateway = util.getprop(`dhcp.${iface}.gateway`);
-      let domain = util.getprop(`dhcp.${iface}.domain`);
-      if (domain === '') {
-        domain = 'localdomain';
-      }
-      console.log(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
-                  `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
+  _startWpaMonitor() {
 
-      // Add basic routing table and DNS
-      return Promise.resolve()
-        .then(() => util.exec('ndc', ['network', 'destroy', '100']))
-        .then(() => util.exec('ndc', ['network', 'create', '100']))
-        .then(() => util.exec('ndc', ['network', 'interface', 'add', '100', iface]))
-        .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
-        .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
-        .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
-        .then(() => util.exec('ndc', ['interface', 'getcfg', iface]));
-    })
-    .then(r => {
-      console.log(`${iface} state| ${r.stdout}`);
-    })
-    .catch(err => {
-      console.log(`Error: DHCP request failed: ${err}`);
-    });
+    monitor = new WpaMonitor(iface);
+    monitor.on('connected', () => {
+      console.log('==> Wifi Connected. Issuing DHCP request');
 
-  });
-  monitor.on('disconnected', () => {
-    console.log('==> Wifi Disconnected');
-    networkCleanup();
-  });
+      util.exec('dhcputil', [iface, 'dhcp_request'])
+      .then(() => {
 
-  return Promise.resolve();
-}
-
-function init() {
-  console.log('WiFi initializing');
-
-  // Set the device hostname to something that is probably unique
-  util.setprop('net.hostname', 'silk-' + util.getprop('ro.serialno'));
-
-  return networkCleanup()
-    .then(startWpaMonitor)
-    .then(() => wpaCli('status'))
-    .then(() => wpaCliExpectOk('log_level', 'excessive'))
-    .then(() => {
-      console.log('WiFi initialization complete');
-      return Promise.resolve();
-    });
-}
-
-function joinNetwork(ssid, psk) {
-  return wpaCliRemoveAllNetworks()
-    .then(wpaCliAddNetwork)
-    .then(id => {
-      return wpaCliExpectOk('set_network', id, 'ssid', `"${ssid}"`)
-        .then(() => wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`))
-        .then(() => wpaCliExpectOk('enable_network', id))
-        .then(() => wpaCliExpectOk('save_config'));
-    });
-}
-
-function networkConfigured() {
-  return wpaCliGetNetworkIds()
-    .then(
-      ids => {
-        if (ids.length > 0) {
-          // If any networks exist then the device is 'configured'
-          return Promise.resolve();
+        // dhcpd provides its output in system properties,
+        let dns = [];
+        for (let i = 1; i <= 4; i++) {
+          let dnsN = util.getprop(`dhcp.${iface}.dns${i}`);
+          if (dnsN) {
+            dns.push(dnsN);
+          }
         }
-        return Promise.reject();
-      }
-    );
+
+        let ipaddress = util.getprop(`dhcp.${iface}.ipaddress`);
+        let mask = util.getprop(`dhcp.${iface}.mask`);
+        let gateway = util.getprop(`dhcp.${iface}.gateway`);
+        let domain = util.getprop(`dhcp.${iface}.domain`);
+        if (domain === '') {
+          domain = 'localdomain';
+        }
+        console.log(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
+                    `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
+
+        // Add basic routing table and DNS
+        return Promise.resolve()
+          .then(() => util.exec('ndc', ['network', 'destroy', '100']))
+          .then(() => util.exec('ndc', ['network', 'create', '100']))
+          .then(() => util.exec('ndc', ['network', 'interface', 'add', '100', iface]))
+          .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
+          .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
+          .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
+          .then(() => util.exec('ndc', ['interface', 'getcfg', iface]));
+      })
+      .then(r => {
+        console.log(`${iface} state| ${r.stdout}`);
+      })
+      .catch(err => {
+        console.log(`Error: DHCP request failed: ${err}`);
+      });
+
+    });
+    monitor.on('disconnected', () => {
+      console.log('==> Wifi Disconnected');
+      this._networkCleanup();
+    });
+
+    return Promise.resolve();
+  }
+
+  init() {
+    console.log('WiFi initializing');
+
+    // Set the device hostname to something that is probably unique
+    util.setprop('net.hostname', 'silk-' + util.getprop('ro.serialno'));
+
+    return this._networkCleanup()
+      .then(() => this._startWpaMonitor())
+      .then(() => wpaCli('status'))
+      .then(() => wpaCliExpectOk('log_level', 'excessive'))
+      .then(() => {
+        console.log('WiFi initialization complete');
+        return Promise.resolve();
+      });
+  }
+
+  joinNetwork(ssid, psk) {
+    return wpaCliRemoveAllNetworks()
+      .then(wpaCliAddNetwork)
+      .then(id => {
+        return wpaCliExpectOk('set_network', id, 'ssid', `"${ssid}"`)
+          .then(() => wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`))
+          .then(() => wpaCliExpectOk('enable_network', id))
+          .then(() => wpaCliExpectOk('save_config'));
+      });
+  }
+
+  networkConfigured() {
+    return wpaCliGetNetworkIds()
+      .then(
+        ids => {
+          if (ids.length > 0) {
+            // If any networks exist then the device is 'configured'
+            return Promise.resolve();
+          }
+          return Promise.reject();
+        }
+      );
+  }
+
+  forgetNetwork() {
+    return wpaCliRemoveAllNetworks();
+  }
 }
 
-function forgetNetwork() {
-  return wpaCliRemoveAllNetworks();
-}
-
-module.exports = {
-  init: init,
-  networkConfigured: networkConfigured,
-  joinNetwork: joinNetwork,
-  forgetNetwork: forgetNetwork,
-};
+wifi = new Wifi();
+module.exports = wifi;

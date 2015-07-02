@@ -4,11 +4,11 @@ export USE_CCACHE=1 # Yes please!
 # Ensure the host system has the right tools pre-installed
 #
 if [ $(uname) = "Darwin" ]; then
-  PACKAGES="gnu-sed coreutils findutils gnu-tar"
+  PACKAGES="gnu-sed coreutils gnu-tar"
   for package in $PACKAGES; do
-    if [ ! -d /usr/local/opt/$package ]; then
+    if [ ! -d /usr/local/opt/$package/libexec/gnubin ]; then
       echo
-      echo Notice: /usr/local/opt/$package does not exist.  Installing $package...
+      echo Notice: /usr/local/opt/$package/libexec/gnubin does not exist.  Installing $package...
       echo
       ( set -x; brew install $package )
     fi

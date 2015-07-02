@@ -114,6 +114,6 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 # so they can be resolved correctly from the browserify-ed silk.js
 	$(hide) mkdir -p $(@D)/Release
 	$(hide) \
-  for binding in `cd $(<D)/node_modules/ && find -mindepth 4 -maxdepth 4 -type f -name *.node`; do \
+  for binding in `cd $(<D)/node_modules/ && find . -mindepth 4 -maxdepth 4 -type f -name *.node`; do \
     cp -f $(<D)/node_modules/$$binding $(@D)/Release/`basename $$binding`; \
   done

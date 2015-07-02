@@ -61,7 +61,7 @@ time:
 	$(ENVSETUP) && \
   adb root && \
   adb wait-for-device && \
-  adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+  adb shell "toolbox date $(shell date +%s) || toolbox date -s $(shell date +%Y%m%d.%H%M%S)"
 
 #
 # Initialize the workspace with gonk/<gonk>/default.xml instead of the default

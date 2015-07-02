@@ -36,7 +36,7 @@ var Silk = React.createClass({
     case 'WifiSettings':
       return (
           <WifiSettings navigator={navigator} name={route.name}
-                        ssidHint={route.ssidHint} pskHint={route.pskHint}
+                        hints={route.hints}
                         resolve={route.resolve} reject={route.reject} />
       );
     case 'MonitorFullscreen':

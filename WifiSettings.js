@@ -5,6 +5,7 @@
 
 var React = require('react-native');
 var {
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -34,13 +35,21 @@ var Title = React.createClass({
 
 var WifiSettings = React.createClass({
   getInitialState: function() {
-    return { ssid: this.props.ssidHint, secret: this.props.pskHint };
+    return {
+      ssid: this.props.hints.ssid || 'Network Name',
+      secret: this.props.hints.psk || 'silkysmooth',
+      serverUrl: this.props.hints.serverUrl
+    };
   },
   
   render: function() {
+    // TODO: remove <ScrollView> and "debug settings" below for
+    // production.
     return (
       <View style={styles.container}>
         <Title onSave={this.save} onCancel={this.cancel} />
+
+        <ScrollView>
         <View style={styles.contentContainer}>
           <View style={styles.contentSpacer} />
 
@@ -54,7 +63,7 @@ var WifiSettings = React.createClass({
                 </View>
                 <View style={styles.formInputContainer}>
                   <TextInput ref='ssid'
-                             value={this.props.ssidHint || ''}
+                             value={this.state.ssid}
                              autoCapitalize='none'
                              autoCorrect={false}
                              style={styles.formInput}
@@ -77,8 +86,34 @@ var WifiSettings = React.createClass({
 
             </View>
           </View>
+
+
+          <View style={styles.debugSettingsSpacer} />
+          <View style={styles.formContainer}>        
+            <View style={styles.formLeftSpace} />
+
+            <View style={styles.form}>
+              <View style={styles.formRow}>
+                <View style={styles.formRowLabelContainer}>
+                  <Text style={styles.formRowLabel}>Server</Text>
+                </View>
+                <View style={styles.formInputContainer}>
+                  <TextInput ref='serverUrl'
+                             value={this.state.serverUrl}
+                             autoCapitalize='none'
+                             autoCorrect={false}
+                             style={styles.formInput}
+                             onChangeText={(text) => this.setState({serverUrl: text})}>
+                  </TextInput>
+                </View>
+              </View>
+            </View>
+          </View>
+
+        
         </View>
-      </View>        
+        </ScrollView>
+      </View>
     );
   },
 
@@ -179,6 +214,10 @@ var styles = StyleSheet.create({
     fontSize: 17,
     flex: 1,
   },
+
+  debugSettingsSpacer: {
+    height: 400,
+  }, 
 });
 
 module.exports = WifiSettings;

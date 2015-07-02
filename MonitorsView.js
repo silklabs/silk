@@ -16,9 +16,6 @@ var {
 
 var SocketIO = require('react-native-swift-socketio');
 
-// TODO import silk-api
-var SERVER_URL = '192.168.2.1:5000';
-
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
 
@@ -32,32 +29,14 @@ var MonitorsView = React.createClass({
       streaming: { },
       network: null,
       serverConnection: 'offline',
+      // TODO import silk-api
+      serverUrl: 'silk-test-server.herokuapp.com',
+      //serverUrl: '192.168.2.1:5000',
     };
   },
 
   componentWillMount: function() {
-    this.socket = new SocketIO(SERVER_URL);
-    this.socket.connect();
-    this.state.serverConnection = 'connecting';
-    this.setState(this.state);
-    console.log('Connecting to ...', SERVER_URL);
-    this.socket.on('connect', () => {
-      console.log(' ... connected');
-      this.state.serverConnection = 'connected';
-      this.setState(this.state);
-      this.socket.on('video-stream-new', msga => {
-        var msg = msga[0];
-        this.state.streaming[msg.id] = { name: msg.name };
-        this.setState(this.state);
-      });
-      this.socket.on('video-stream-delete', msga => {
-        var msg = msga[0];
-        delete this.state.streaming[msg.id];
-        this.setState(this.state);
-      });
-      this.socket.emit('join', 'video-streams');
-    });
-
+    this.connectServer();
     var DeviceManager = require('./btle/central-device-manager');
     this.dm = new DeviceManager(require('./btle/ble-central'), this);
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
@@ -80,7 +59,7 @@ var MonitorsView = React.createClass({
       var device = this.state.streaming[key];
       return (<MonitorPreview key={key} vid={key} label={device.name}
                               navigator={this.props.navigator}
-                              serverUrl={SERVER_URL} />);
+                              serverUrl={this.state.serverUrl} />);
     });
     if (0 === configuring.length + streaming.length) {
       configuring = (<PlaceholderMessage />);
@@ -112,28 +91,69 @@ var MonitorsView = React.createClass({
     );
   },
 
+  connectServer: function() {
+    if (this.socket) {
+      console.log('Closing old socket');
+      // TODO: react-native-swift-socketio has some problems managing
+      // socket instances; it appears to assume one global socket.  So
+      // help it out by clearing out all our old listeners; at least
+      // we won't be double-notified on new events.
+      this.socket.handlers = {};
+      this.socket.close();
+    }
+    this.socket = new SocketIO(this.state.serverUrl);
+    this.socket.connect();
+    this.state.serverConnection = 'connecting';
+    this.setState(this.state);
+    console.log('Connecting to ...', this.state.serverUrl);
+    this.socket.on('connect', () => {
+      console.log(' ... connected');
+      this.state.serverConnection = 'connected';
+      this.setState(this.state);
+      this.socket.on('video-stream-new', msga => {
+        var msg = msga[0];
+        this.state.streaming[msg.id] = { name: msg.name };
+        this.setState(this.state);
+      });
+      this.socket.on('video-stream-delete', msga => {
+        var msg = msga[0];
+        delete this.state.streaming[msg.id];
+        this.setState(this.state);
+      });
+      this.socket.emit('join', 'video-streams');
+    });
+  },
+  
   loadSettings: function() {
     return (() => {
       if (this.state.network) {
-        return this.navigateWifiScene(this.state.network.ssid,
-                                      this.state.network.secret);
+        return this.navigateWifiScene({ ssid: this.state.network.ssid,
+                                        secret: this.state.network.secret,
+                                        serverUrl: this.state.serverUrl });
       }
       var net = require('./net');
       return net.getInfo().then(info => {
-        return this.navigateWifiScene(info.SSID);
+        return this.navigateWifiScene({ ssid: info.SSID,
+                                        secret: '',
+                                        serverUrl: this.state.serverUrl });
       });
     })().then(network => {
       this.state.network = network;
+      if (this.state.serverUrl !== network.serverUrl) {
+        console.log('WARNING: Switching server URL to', network.serverUrl);
+        console.log('  This will break any open monitor streams.');
+        this.state.serverUrl = network.serverUrl;
+        this.connectServer();
+      }
       this.setState(this.state);
       return network;
     });
   },
 
-  navigateWifiScene: function(ssidHint, pskHint) {
+  navigateWifiScene: function(hints) {
     return new Promise((resolve, reject) => {
       this.props.navigator.push({ name: 'WifiSettings', index: 1,
-                                  ssidHint: ssidHint || 'Network Name',
-                                  pskHint: pskHint || 'silkysmooth',
+                                  hints: hints,
                                   resolve: resolve, reject: reject });
     });
   },

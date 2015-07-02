@@ -6,7 +6,7 @@
 module.exports = {
   init: () => {
     return new Promise(resolve => {
-      console.log('Init BTLE');
+      console.log('BTLE initializing');
       let bleno = require('bleno');
       bleno.on('stateChange', state => {
         if (state !== 'poweredOn') {
@@ -18,6 +18,8 @@ module.exports = {
         module.exports.configService = require('./config-service');
         //module.exports.ibeacon = require('./ibeacon.js');
         //module.exports.scanner = require('./scanner.js');
+
+        console.log('BTLE initialization complete');
         resolve();
       });
 

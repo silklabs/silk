@@ -6,7 +6,8 @@
 let getprop = require('./util').getprop;
 
 const ALL = new Set([
-  'btle-peripheral'
+  'btle-peripheral',
+  'wifi-needs-fwreload'
 ]);
 
 function validateCaps(...caps) {
@@ -21,6 +22,7 @@ function validateCaps(...caps) {
 function getDeviceCaps() {
   switch (getprop('ro.boot.hardware')) {
   case 'mako':
+    return validateCaps('btle-peripheral', 'wifi-needs-fwreload');
   case 'shamu':
     return validateCaps('btle-peripheral');
   default:

@@ -81,16 +81,18 @@ $(LOCAL_BUILT_MODULE): export CXX := $(abspath $(TARGET_CXX))
 $(LOCAL_BUILT_MODULE): export AR := $(abspath $(TARGET_AR))
 $(LOCAL_BUILT_MODULE): export RANLIB := $(abspath $(TARGET_RANLIB))
 $(LOCAL_BUILT_MODULE): export LINK := $(abspath $(TARGET_CXX))
-
 $(LOCAL_BUILT_MODULE): export CFLAGS=$(npm_CFLAGS)
 $(LOCAL_BUILT_MODULE): export CXXFLAGS=$(npm_CFLAGS) $(npm_CXXFLAGS)
 $(LOCAL_BUILT_MODULE): export LDFLAGS=$(npm_LDFLAGS)
 $(LOCAL_BUILT_MODULE): ABS_LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE): export NPM_CONFIG_ARCH=arm
+$(LOCAL_BUILT_MODULE): export NPM_CONFIG_PLATFORM=android
 
 $(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js
 	@echo "Build: $@"
 	$(hide) cd $(@D) && \
-    npm_config_arch=arm node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir)
+   node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir)
+
 
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: SRCDIR := $(abspath $(LOCAL_PATH))
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: $(LOCAL_PATH)/Gruntfile.js

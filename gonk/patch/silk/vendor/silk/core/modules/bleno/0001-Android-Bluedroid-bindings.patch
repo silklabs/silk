@@ -1,4 +1,4 @@
-From 1c0b86672544a07e66a48b4a323eb825dbe0be4d Mon Sep 17 00:00:00 2001
+From d4edf5797bc1339d282c084afc2686c631bfb3db Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sun, 21 Jun 2015 22:14:38 -0700
 Subject: [PATCH] Android Bluedroid bindings
@@ -7,8 +7,9 @@ Subject: [PATCH] Android Bluedroid bindings
  binding.gyp             |  38 ----
  lib/android/bindings.js | 504 ++++++++++++++++++++++++++++++++++++++++++++++++
  lib/bleno.js            |   2 +
+ package.json            |   1 +
  test.js                 |   3 +-
- 4 files changed, 508 insertions(+), 39 deletions(-)
+ 5 files changed, 509 insertions(+), 39 deletions(-)
  delete mode 100644 binding.gyp
  create mode 100644 lib/android/bindings.js
 
@@ -579,6 +580,18 @@ index bf8dd6c..61454e8 100644
  } else {
    throw new Error('Unsupported platform');
  }
+diff --git a/package.json b/package.json
+index d951f35..043ec24 100644
+--- a/package.json
++++ b/package.json
+@@ -7,6 +7,7 @@
+     "node": ">=0.8"
+   },
+   "os": [
++    "android",
+     "darwin",
+     "linux"
+   ],
 diff --git a/test.js b/test.js
 index d1c8ea1..9b3284f 100644
 --- a/test.js

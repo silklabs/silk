@@ -6,6 +6,7 @@
   "scripts": {
     "install": "node-gyp rebuild"
   },
+  "os": [ "android" ],
   "author": {
     "name": "Chris Jones",
     "email": "chris@silklabs.com"

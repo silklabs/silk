@@ -162,14 +162,13 @@ input.on('down', e => {
   case 'volumedown':
     volumeKeysPressed++;
     if (volumeKeysPressed === 2) {
-      require('./wifi').forgetNetwork()
-      .then(() => {
-        // HACK: Return to the reconfigure state by rebooting
-        uiState('powerdown');
-        util.setprop('sys.powerctl', 'reboot');
-      })
+      console.log('!! Factory reset !!');
+      uiState('powerdown');
+      util.exec('librecovery_test', ['factoryReset'])
       .catch(err => {
-        console.log(`forgetNetwork failed: ${err}`);
+        console.log(`Factory reset failed: ${err}`);
+        // Ouch, now what? Reboot I guess.
+        util.setprop('sys.powerctl', 'reboot');
       });
     }
     break;

@@ -199,7 +199,7 @@ class Wifi extends events.EventEmitter
 
     monitor = new WpaMonitor(iface);
     monitor.on('connected', () => {
-      console.log('==> Wifi Connected. Issuing DHCP request');
+      console.log('Wifi Connected. Issuing DHCP request');
 
       util.exec('dhcputil', [iface, 'dhcp_request'])
       .then(() => {
@@ -235,6 +235,9 @@ class Wifi extends events.EventEmitter
       })
       .then(r => {
         console.log(`${iface} state| ${r.stdout}`);
+        console.log('==> Wifi online');
+        this._online = true;
+        this.emit('online');
       })
       .catch(err => {
         console.log(`Error: DHCP request failed: ${err}`);
@@ -242,8 +245,10 @@ class Wifi extends events.EventEmitter
 
     });
     monitor.on('disconnected', () => {
-      console.log('==> Wifi Disconnected');
       this._networkCleanup();
+      console.log('==> Wifi offline');
+      this._online = false;
+      this.emit('offline');
     });
 
     return Promise.resolve();
@@ -263,6 +268,15 @@ class Wifi extends events.EventEmitter
         console.log('WiFi initialization complete');
         return Promise.resolve();
       });
+  }
+
+  online() {
+    if (this._online) {
+      return Promise.resolve();
+    }
+    return new Promise(resolve => {
+      this.once('online', resolve);
+    });
   }
 
   joinNetwork(ssid, psk) {

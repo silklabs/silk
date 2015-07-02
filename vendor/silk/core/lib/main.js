@@ -44,10 +44,13 @@ new Promise(resolve => {
   console.log('Load configuration');
   return require('./config')(id);
 })
+.then(() => {
+  ui('connecting');
+  return wifi.online();
+})
 // Connect to the server and start streaming
 .then(() => {
   console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
-  ui('connecting');
   let socket = require('socket.io-client')(api.config.server_url);
 
 
@@ -79,6 +82,10 @@ new Promise(resolve => {
     camera.stop();
   });
   socket.on('error', err => console.log('Connection error:', err));
+
+  socket.on('reconnect_attempt', e => console.log(`reconnect_attempt: ${e}`));
+  socket.on('reconnect_error', e => console.log(`reconnect_error: ${e}`));
+  socket.on('reconnect_failed', e => console.log(`reconnect_failed: ${e}`));
 },
 e => {
   console.error(`Fatal initialization error: ${e}`); // TODO: Recover

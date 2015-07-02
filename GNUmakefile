@@ -53,6 +53,16 @@ $(silk_service_targets):
   adb wait-for-device && \
   adb shell setprop ctl.$(subst silk-,,$@) silk
 
+
+# Set the device time
+.PHONY: time
+time:
+	@echo Setting device time to match host
+	$(ENVSETUP) && \
+  adb root && \
+  adb wait-for-device && \
+  adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+
 #
 # Initialize the workspace with gonk/<gonk>/default.xml instead of the default
 # gonk with:

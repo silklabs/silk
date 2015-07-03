@@ -21,10 +21,12 @@ before_script:
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
   - nvm install 0.12
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.base ; fi
   - make sync
   - cp $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
 
 script:
+  - set
   - BUILD_HOST_64bit=1 make
 
 after_script:
@@ -34,8 +36,14 @@ notifications:
   email:
     - engineering@silklabs.com
 
-addons:
-  artifacts:
-    bucket: silk-device
-    paths:
-      - out/target/product/generic/system
+before_deploy:
+  - echo "before_deploy"
+
+deploy:
+  provider: s3
+  bucket: silk-device
+  skip_cleanup: true
+  acl: public_read
+  local-dir: out/target/product/generic/system
+  upload-dir: $TRAVIS_BRANCH/latest
+

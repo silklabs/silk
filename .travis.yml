@@ -39,4 +39,3 @@ addons:
     bucket: silk-device
     paths:
       - out/target/product/generic/system
-      - out/target/product/generic/symbols

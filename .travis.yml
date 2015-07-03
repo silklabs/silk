@@ -1,5 +1,7 @@
 language: c
 compiler: gcc
+jdk:
+  - openjdk7
 
 cache:
   directories:

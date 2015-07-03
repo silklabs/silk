@@ -21,7 +21,7 @@ before_script:
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
   - nvm install 0.12
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.base; fi
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.mako ; fi
   - make sync
   - cp $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
 

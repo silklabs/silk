@@ -10,6 +10,7 @@ let events = require('events');
 let fs = require('fs');
 
 let currentState;
+let currentMovieName;
 
 //
 // Note: The InputDevice class has been inspired by
@@ -98,36 +99,34 @@ class Input extends events.EventEmitter
 
 
 function uiState(state) {
-  if (state === currentState) {
+  if (state === currentState || currentState === 'powerdown') {
     return;
   }
   currentState = state;
+  console.log(`ui state: ${currentState}`);
 
-  let zipName = state;
+  let movieName = currentState;
   if (currentState === 'connecting') {
-    zipName = 'bootanimation';
+    movieName = 'bootanimation';
   }
 
-  movie.stop();
-  // Hack! movie.run() will fail while the previous movie is shutting down, and
-  // movie.run() is non-blocking.  Add a terrible little delay to compensate...
-  util.timeout(500).then(() => {
+  if (movieName !== currentMovieName) {
+    currentMovieName = movieName;
     try {
-      console.log(`ui state: ${state}`);
-      movie.run(`/system/media/${zipName}.zip`);
-
-      switch (currentState) {
-      case 'online':
-        vib.pattern(500, 250, 500);
-        break;
-      default:
-        vib.pattern(500);
-        break;
-      }
+      movie.run(`/system/media/${movieName}.movie`);
     } catch (e) {
       console.log(e);
     }
-  });
+
+    switch (currentState) {
+    case 'online':
+      vib.pattern(500, 250, 500);
+      break;
+    default:
+      vib.pattern(500);
+      break;
+    }
+  }
 }
 
 

@@ -497,19 +497,24 @@ BootAnimation::~BootAnimation()
 }
 
 
-void BootAnimation::requestStop()
+void BootAnimation::requestStop(bool block)
 {
     if (mAnimationThread != NULL) {
       mAnimationThread->requestExit();
+
+      if (block) {
+        // Spin until BootAnimation::run() sets mAnimationThread to NULL
+        // (yuck, but should be quick)
+        while (mAnimationThread != NULL) {
+          usleep(10000); // 10ms
+        }
+      }
     }
 }
 
 bool BootAnimation::load(char const *zipFile)
 {
-  if (mAnimationThread != NULL) {
-      ALOGE("Can't load while running");
-      return false;
-  }
+  requestStop(true);
 
   if (mFlingerSurfaceControl == NULL) {
       sp<IBinder> dtoken(SurfaceComposerClient::getBuiltInDisplay(

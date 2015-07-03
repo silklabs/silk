@@ -35,7 +35,7 @@ public:
 
     bool load(char const *zipFile);
     void run();
-    void requestStop();
+    void requestStop(bool block = false);
 
 private:
     sp<SurfaceControl> mFlingerSurfaceControl;

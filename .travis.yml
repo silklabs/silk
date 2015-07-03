@@ -4,8 +4,6 @@ compiler: gcc
 cache:
   directories:
     - $HOME/.ccache
-    - .repo/projects
-    - .repo/project-objects
 
 addons:
   apt:

@@ -33,7 +33,7 @@ zest:
 
 .PHONY: sync
 sync: | .repo/manifest.xml
-	./repo sync -j4 --current-branch --no-tags
+	./repo sync -j4 --current-branch --no-tags --quiet
 
 .PHONY: dist
 dist: | .repo/manifest.xml

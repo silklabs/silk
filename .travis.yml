@@ -21,7 +21,7 @@ before_script:
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
   - nvm install 0.12
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.base ; fi
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.base; fi
   - make sync
   - cp $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
 
@@ -36,7 +36,8 @@ notifications:
     - engineering@silklabs.com
 
 before_deploy:
-  - echo "before_deploy"
+  - make dist
+  - mv dist/*.tgz dist/dist.tgz
 
 deploy:
   provider: s3
@@ -46,6 +47,6 @@ deploy:
   region: us-west-2
   skip_cleanup: true
   acl: public_read
-  local-dir: out/target/product/generic/system
+  local-dir: dist/
   upload-dir: $TRAVIS_BRANCH/latest
 

@@ -1,9 +1,16 @@
 export USE_CCACHE=1 # Yes please!
 
-#
-# Ensure the host system has the right tools pre-installed
-#
+
+poison_their_lunch()
+{
+  SILK_ENVSETUP=
+  echo Error: $@ >&2
+  lunch() { echo Error: lunch has been disabled due to an envsetup failure;  return 1; }
+  choosecombo() { lunch; }
+}
+
 if [ $(uname) = "Darwin" ]; then
+  # Ensure the host system has the right tools pre-installed
   PACKAGES="gnu-sed coreutils gnu-tar"
   for package in $PACKAGES; do
     if [ ! -d /usr/local/opt/$package/libexec/gnubin ]; then
@@ -15,15 +22,15 @@ if [ $(uname) = "Darwin" ]; then
     PATH="/usr/local/opt/$package/libexec/gnubin:$PATH"
   done
 
-fi
 
-poison_their_lunch()
-{
-  SILK_ENVSETUP=
-  echo Error: $@ >&2
-  lunch() { echo Error: lunch has been disabled due to an envsetup failure;  return 1; }
-  choosecombo() { lunch; }
-}
+  echo foo > foo
+  echo FOO > FOO
+  if [ "$(cat foo)" = $(cat FOO) ]; then
+    poison_their_lunch Please use a case-senstive file system
+    return
+  fi
+  rm -f foo FOO
+fi
 
 node_version_check()
 {

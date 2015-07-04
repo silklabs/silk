@@ -31,6 +31,8 @@ before_script:
   - make sync
   - cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
   - df -h
+  - du -hs * .repo
+  - du -hs .
 
 script:
   - if $TRAVIS_PULL_REQUEST; then make -j2; else make -j2 otapackage; fi

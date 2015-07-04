@@ -615,10 +615,12 @@ bool SlicedMP4Encoder::threadLoop() {
 
     writer->addSource(mSlicedVideoSource);
 
+#if 0 // disable audio
     sp<MediaCodecSource> audioEncoder =
       MediaCodecSource::Create(mLooper, mAudioFormat, mSlicedAudioSource);
 
     writer->addSource(audioEncoder);
+#endif
 
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);

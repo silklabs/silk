@@ -15,6 +15,10 @@ addons:
       - libstdc++6:i386
       - linux-libc-dev
 
+env:
+  - BUILD_HOST_64bit=1
+  - REPO_INIT_ARGS="--depth=1"
+
 before_script:
   - ccache -s
   - git config --global user.email "engineering@silklabs.com"
@@ -22,12 +26,13 @@ before_script:
   - git config --global color.ui false
   - nvm install 0.12
   - jdk_switcher use openjdk7
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then REPO_INIT_ARGS="--depth=1" make init.mako ; fi
-  - make sync
   - cp $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
+  - $TRAVIS_PULL_REQUEST || make init.mako
+  - make sync
+  - df -h
 
 script:
-  - BUILD_HOST_64bit=1 make
+  - if $TRAVIS_PULL_REQUEST; then make -j2; else make -j2 otapackage; fi
 
 after_script:
   - ccache -s
@@ -37,8 +42,8 @@ notifications:
     - engineering@silklabs.com
 
 before_deploy:
-  - make dist
-  - mv dist/*.tgz dist/dist.tgz
+  - source build/envsetup.sh && ./gonk/archive.sh mako dist
+  - mv --verbose out/target/product/mako/*ota*.zip dist/
 
 deploy:
   provider: s3

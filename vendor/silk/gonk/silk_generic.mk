@@ -14,7 +14,7 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 SILK_PROGIES := \
   bledroid \
   dhcputil \
-  stream-video \
+  capture \
   wpa_monitor \
 
 PRODUCT_PACKAGES += $(SILK_PROGIES)

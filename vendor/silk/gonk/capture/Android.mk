@@ -3,7 +3,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:=        \
-	stream-video.cpp MPEG4MemoryWriter.cpp MediaCodecSource.cpp
+	capture.cpp MPEG4MemoryWriter.cpp MediaCodecSource.cpp
 
 LOCAL_SHARED_LIBRARIES := \
 	libstagefright libstagefright_foundation libutils liblog libbinder \
@@ -19,7 +19,7 @@ LOCAL_CFLAGS += -Wno-multichar
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_MODULE:= stream-video
+LOCAL_MODULE:= capture
 
 include $(BUILD_EXECUTABLE)
 

@@ -717,7 +717,7 @@ int main(int argc, char **argv) {
   android::ProcessState::self()->startThreadPool();
 
   sp<ALooper> looper = new ALooper;
-  looper->setName("stream-video-looper");
+  looper->setName("capture-looper");
   looper->start();
 
   Channel chan;

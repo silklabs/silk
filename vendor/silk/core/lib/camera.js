@@ -94,7 +94,7 @@ if (JPEG_PREVIEW) {
       var buffer;
       let launch = () => {
         let spawn = require('child_process').spawn;
-        let helper = spawn('/system/bin/stream-video', []);
+        let helper = spawn('/system/bin/capture', []);
         buffer = new Buffer(0);
         helper.stdout.on('data', data => {
           buffer = Buffer.concat([buffer, data]);

@@ -1,9 +1,7 @@
 # Silk Gonk Build [![Build Status](https://magnum.travis-ci.com/silklabs/silk-device.svg?token=9zqxLJky1XFHahNndToB)](https://magnum.travis-ci.com/silklabs/silk-device)
 
 
-## Configuring a device
-
-### Mako
+## Configuring Nexus 4 (Mako)
 
 First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
 https://dl.google.com/dl/android/aosp/occam-lmy47v-factory-b0c4eb3d.tgz and
@@ -18,32 +16,7 @@ $ cd aosp_mako/
 $ ./flash.sh
 ```
 
-### Shamu
-
-First load the device with the stock Nexus 6 (LMY47Z) ROM from
-https://dl.google.com/dl/android/aosp/shamu-lmy47z-factory-33951732.tgz
-and ensure the device is functioning normally.
-
-Enable the boot loader to be unlocked by:
-
-1. Settings -> About phone -> Tap on "Build number" 10 times
-2. Back to Developer options and enable "OEM unlocking"
-
-Then obtain the latest Silk Nexus 6 ROM ("shamu-*") from [Google Docs](https://drive.google.com/a/weavelabs.net/folderview?id=0B1uhMYctsSarfmI3ZnJKNXdaOEtTM3VubHVDcEdIZ05VblNuWU81YkZ6X0NtcUU4MU9CWUE&usp=sharing)
-
-After downloading and uncompressing the image, execute the following to flash
-your device:
-```
-$ cd shamu-2015-05-16_194249/  # or whatever the archive is called
-$ ./flash.sh
-```
-
-Expect to be stuck on the [Twiddling Antenna Android
-"Erasing..."](http://www.reddit.com/r/nexus6/comments/2nflmb/my_nexus_6_is_stuck_on_erasing/)
-for 10-20 minutes upon your first flash.  You will need to manually reflash
-`userdata.img` once the Erasing screen is complete (or easier, run `./flash.sh` again)
-
-## Building for Dummies
+## Building 101
 
 NOTE: You _must_ have a case sensitive file system.  To create one,
 
@@ -56,9 +29,21 @@ NOTE: You _must_ have a case sensitive file system.  To create one,
 
 Finally press "Create" and your new disk will mount at `/Volumes/Silk` (or whatever you named it).
 
-0. ```. build/envsetup.sh``` -- not strictly required, but it'll save you ~4 seconds on every incremential build if you elect to run this before ```make```
-1. ```make``` -- downloads and builds the target binaries
-2. ```make install``` -- installs the build products onto a device
+1. ```make``` => downloads (if necessary) and builds the target binaries
+2. ```make install``` => installs the build products onto a device
+
+### Updating your workspace
+
+1.  `git pull --rebase` => updates silk-device proper
+2. `make sync` => updates the workspace to reflect any gonk manifest changes that were pulled in as a part of (1)
+
+### Cleaning your workspace
+
+In most cases all you need to do is `make clean`.  This preserves any manifest
+projects downloaded into the `.repo/` directory by `make sync`
+
+If you really want to restore your workspace back to it's pristine state run
+`make zest`.
 
 ## Connecting to the server
 
@@ -104,23 +89,17 @@ $ make init.mako
 $ make
 ```
 
-Then flash the full image with:
-```
-fastboot flashall
-```
-
-Creating a new device archive is accomplished by running:
+Then flash the full image with
 ```
 $ . build/envsetup.sh
-$ gonk/mako/archive.sh <archive_dir>
+$ fastboot flashall -w  # <-- Only add "-w" if you want to wipe /data and /cache
 ```
 
-The full device manifest is located at
-https://github.com/silklabs/device-lge-mako-manifest.
+Creating a new device archive is accomplished by running `make dist`
 
 ## Building the full Shamu image
 
-Same as Mako, but using `make init.shamu`.
+Same as Mako but use `make init.shamu` instead.
 
 ## Updating a gonk patch
 
@@ -166,7 +145,7 @@ Remember to run a non-LAX build before sending a pull request though!
 ```
 $ repo init -u https://android.googlesource.com/platform/manifest.git -b android-5.1.1
 $ repo sync -j4 --current-branch --no-tags
-$ . build/envsetup
+$ . build/envsetup.sh
 $ lunch aosp_mako-eng
 $ time make -j8
 ```
@@ -180,3 +159,30 @@ $ adb reboot-bootloader
 $ fastboot oem unlock
 $ fastboot boot openrecovery-twrp-2.8.5.2-mako.img
 ```
+
+### Configuring Nexus 6 (Shamu)
+
+First load the device with the stock Nexus 6 (LMY47Z) ROM from
+https://dl.google.com/dl/android/aosp/shamu-lmy47z-factory-33951732.tgz
+and ensure the device is functioning normally.
+
+Enable the boot loader to be unlocked by:
+
+1. Settings -> About phone -> Tap on "Build number" 10 times
+2. Back to Developer options and enable "OEM unlocking"
+
+Then obtain the latest Silk Nexus 6 ROM ("shamu-*") from [Google Docs](https://drive.google.com/a/weavelabs.net/folderview?id=0B1uhMYctsSarfmI3ZnJKNXdaOEtTM3VubHVDcEdIZ05VblNuWU81YkZ6X0NtcUU4MU9CWUE&usp=sharing)
+
+After downloading and uncompressing the image, execute the following to flash
+your device:
+```
+$ cd shamu-2015-05-16_194249/  # or whatever the archive is called
+$ ./flash.sh
+```
+
+Expect to be stuck on the Twiddling Antenna Android "Erasing..." screen for
+10-20 minutes upon your first flash.  You will need to manually reflash
+`userdata.img` once the Erasing screen is complete (or easier, run `./flash.sh`
+again)
+
+

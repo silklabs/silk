@@ -9,12 +9,12 @@ First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
 https://dl.google.com/dl/android/aosp/occam-lmy47v-factory-b0c4eb3d.tgz and
 ensure the device is functioning normally.
 
-Then obtain the latest Silk Nexus 4 ROM ("mako-*") from [Google Docs](https://drive.google.com/a/weavelabs.net/folderview?id=0B1uhMYctsSarfmI3ZnJKNXdaOEtTM3VubHVDcEdIZ05VblNuWU81YkZ6X0NtcUU4MU9CWUE&usp=sharing)
+Then obtain the latest Silk Nexus 4 ROM:
 
-After downloading and uncompressing the image, execute the following to flash
-your device:
 ```
-$ cd mako-2015-05-16_194249/  # or whatever the archive is called
+$ wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
+$ tar zxf mako.tgz
+$ cd aosp_mako/
 $ ./flash.sh
 ```
 

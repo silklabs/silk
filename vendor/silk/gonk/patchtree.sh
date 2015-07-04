@@ -60,9 +60,9 @@ __abandon_branch()
          return 1
       fi
     fi
-    git reset --hard HEAD
+    git reset --quiet --hard HEAD
     git clean -dfx
-    ${REPO} abandon autogen_ephemeral_branch .
+    ${REPO} abandon autogen_ephemeral_branch . 2> /dev/null
   fi
 }
 
@@ -80,7 +80,7 @@ __abandon_tree()
      fi
 
      for p in $projects; do
-       echo [$p]
+       #echo [$p]
        cd $p ; __abandon_branch $p "$FORCE" ; cd $OLDPWD
      done
    fi
@@ -138,8 +138,7 @@ __patch_tree()
 
             echo $1 >> out/lastpatch.projects
             pushd $1 > /dev/null
-            echo
-            echo [$1]
+            echo -n "  $1: "
             if [[ -d .git ]]; then
                if [[ -d .git/rebase-apply ]]; then
                  git am --abort
@@ -203,7 +202,8 @@ __patch_tree()
            for P in ${PATCHES}; do
              PRJ=$(dirname ${P#${TREE}})
              PRJ=`echo $PRJ | sed -e 's%^/%%'`
-             ( set -x ; cd $PRJ; git am ${ROOT_DIR}/$P )
+             echo -n "  "
+             ( set -x ; git -C $PRJ am --quiet ${ROOT_DIR}/$P )
            done
          done
 

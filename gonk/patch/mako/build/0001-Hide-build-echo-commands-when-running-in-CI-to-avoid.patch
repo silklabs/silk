@@ -1,4 +1,4 @@
-From ef7cb7afa6abb9dd88d2558fb7e3ed2de7bb26d5 Mon Sep 17 00:00:00 2001
+From d72bfb83df9aa3629548d4a6c813f82c3f27705e Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 3 Jul 2015 21:19:14 -0700
 Subject: [PATCH] Hide build echo commands when running in CI to avoid log file
@@ -6,9 +6,10 @@ Subject: [PATCH] Hide build echo commands when running in CI to avoid log file
 
 ---
  core/binary.mk         |  4 ++--
- core/definitions.mk    | 24 ++++++++++++++++--------
+ core/definitions.mk    | 30 +++++++++++++++++++-----------
  core/dynamic_binary.mk |  6 +++---
- 3 files changed, 21 insertions(+), 13 deletions(-)
+ core/notice_files.mk   |  2 +-
+ 4 files changed, 25 insertions(+), 17 deletions(-)
 
 diff --git a/core/binary.mk b/core/binary.mk
 index 1e313ff..ada4581 100644
@@ -33,7 +34,7 @@ index 1e313ff..ada4581 100644
  ifdef LOCAL_EXPORT_C_INCLUDE_DIRS
  	$(hide) for d in $(PRIVATE_EXPORT_C_INCLUDE_DIRS); do \
 diff --git a/core/definitions.mk b/core/definitions.mk
-index 38aa720..4baf69f 100644
+index 38aa720..f32cf0e 100644
 --- a/core/definitions.mk
 +++ b/core/definitions.mk
 @@ -771,6 +771,14 @@ endef
@@ -115,6 +116,33 @@ index 38aa720..4baf69f 100644
  $(hide) $(PRIVATE_OBJCOPY) \
      `$(PRIVATE_READELF) -S $< | awk '/.debug_/ {print "-R " $$2}' | xargs` \
      $(TARGET_STRIP_KEEP_SYMBOLS_EXTRA) $< $@
+@@ -1843,7 +1851,7 @@ endef
+ # $(2): destination header
+ define copy-one-header
+ $(2): $(1)
+-	@echo "Header: $$@"
++	$(hideecho) "Header: $$@"
+ 	$$(copy-file-to-new-target-with-cp)
+ endef
+ 
+@@ -1852,7 +1860,7 @@ endef
+ # $(2): destination file
+ define copy-one-file
+ $(2): $(1) | $(ACP)
+-	@echo "Copy: $$@"
++	$(hideecho) "Copy: $$@"
+ 	$$(copy-file-to-target)
+ endef
+ 
+@@ -1988,7 +1996,7 @@ endef
+ ###########################################################
+ 
+ define transform-generated-source
+-@echo "target Generated: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "target Generated: $(PRIVATE_MODULE) <= $<"
+ @mkdir -p $(dir $@)
+ $(hide) $(PRIVATE_CUSTOM_TOOL)
+ endef
 diff --git a/core/dynamic_binary.mk b/core/dynamic_binary.mk
 index 08fb176..d798efe 100644
 --- a/core/dynamic_binary.mk
@@ -142,6 +170,19 @@ index 08fb176..d798efe 100644
  	$(copy-file-to-target-with-cp)
  endif
  endif
+diff --git a/core/notice_files.mk b/core/notice_files.mk
+index e63cd84..c7c6a88 100644
+--- a/core/notice_files.mk
++++ b/core/notice_files.mk
+@@ -62,7 +62,7 @@ installed_notice_file := $($(my_prefix)OUT_NOTICE_FILES)/src/$(module_installed_
+ $(installed_notice_file): PRIVATE_INSTALLED_MODULE := $(module_installed_filename)
+ 
+ $(installed_notice_file): $(notice_file)
+-	@echo Notice file: $< -- $@
++	$(hideecho) Notice file: $< -- $@
+ 	$(hide) mkdir -p $(dir $@)
+ 	$(hide) cat $< > $@
+ 
 -- 
 1.9.1
 

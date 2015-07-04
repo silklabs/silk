@@ -27,7 +27,7 @@ before_script:
   - git config --global color.ui false
   - nvm install 0.12
   - jdk_switcher use openjdk7
-  - $TRAVIS_PULL_REQUEST || make init.mako
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.mako; fi
   - make sync
   - cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
   - df -h
@@ -35,7 +35,7 @@ before_script:
   - du -hs .
 
 script:
-  - if $TRAVIS_PULL_REQUEST; then make -j2; else make -j2 otapackage; fi
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make -j2 otapackage; else make -j2; fi
 
 after_script:
   - ccache -s

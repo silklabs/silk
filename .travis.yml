@@ -16,8 +16,9 @@ addons:
       - linux-libc-dev
 
 env:
-  - BUILD_HOST_64bit=1
-  - REPO_INIT_ARGS="--depth=1"
+  global:
+    - BUILD_HOST_64bit=1
+    - REPO_INIT_ARGS="--depth=1"
 
 before_script:
   - ccache -s
@@ -26,9 +27,9 @@ before_script:
   - git config --global color.ui false
   - nvm install 0.12
   - jdk_switcher use openjdk7
-  - cp $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
   - $TRAVIS_PULL_REQUEST || make init.mako
   - make sync
+  - cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
   - df -h
 
 script:

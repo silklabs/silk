@@ -113,7 +113,7 @@ function uiState(state) {
   if (movieName !== currentMovieName) {
     currentMovieName = movieName;
     try {
-      movie.run(`/system/media/${movieName}.movie`);
+      movie.run(`/system/media/${movieName}.zip`);
     } catch (e) {
       console.log(e);
     }

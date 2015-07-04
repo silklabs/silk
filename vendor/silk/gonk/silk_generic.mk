@@ -21,9 +21,10 @@ PRODUCT_PACKAGES += $(SILK_PROGIES)
 
 SILK_UI_PACKAGES := \
   bootanimation.zip \
-  setup.zip \
   connecting.zip \
   online.zip \
+  powerdown.zip \
+  setup.zip \
 
 PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 

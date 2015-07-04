@@ -7,6 +7,7 @@ var max = 5000;
 var logEnabled = false;
 
 function log(msg) {
+  console.log(msg);
   if (!logEnabled) {
     return;
   }
@@ -19,12 +20,40 @@ function log(msg) {
   e.scrollIntoView();
 }
 
+var monitors = document.getElementById('monitors');
+
 // Register for logging messages and display them.
 var socket = io(document.location.origin);
 socket.on('connect', function () {
   socket.emit('join', 'logging');
   socket.on('log', function (msg) {
     log(msg);
+  });
+  socket.emit('join', 'video-streams');
+  socket.on('video-stream-new', msg => {
+    log('New video stream '+ msg.id);
+    // TODO: when this evolves into a full-blown web app, this should
+    // become component-ized and shared with the native apps if
+    // possible
+    var stream = 'video-' + msg.id;
+    var monitor = document.createElement('img');
+    monitor.setAttribute('id', msg.id);
+    monitors.appendChild(monitor);
+    socket.on(stream, function(msg) {
+      if (!msg) {
+        return;
+      }
+      var view = new Uint8Array(msg.frame);
+      var blob = new Blob([view], { type: 'image/jpg' });
+      var jpeg = URL.createObjectURL(blob);
+      monitor.src = jpeg;
+    });
+    socket.emit('join', stream);
+  });
+  socket.on('video-stream-delete', msg => {
+    log('Dead video stream '+ msg.id);
+    var monitor = document.getElementById(msg.id);
+    monitors.removeChild(monitor);
   });
   socket.on('video', function(msg) {
     log('video message: '+ (('faces' in msg) ? '[faces] ':'') +

@@ -45,6 +45,17 @@ for 10-20 minutes upon your first flash.  You will need to manually reflash
 
 ## Building for Dummies
 
+NOTE: You _must_ have a case sensitive file system.  To create one,
+
+0. Open Disk Utility (Cmd-space then type "disk utility")
+0. Select New -> Blank Disk Image
+0. For "Name", choose "Silk" or something without spaces
+0. For "Size", choose Custom -- 10 GB
+0. "Format": Case-sensitive; Journaled
+0. "Image Format": "sparse disk image"
+
+Finally press "Create" and your new disk will mount at `/Volumes/Silk` (or whatever you named it).
+
 0. ```. build/envsetup.sh``` -- not strictly required, but it'll save you ~4 seconds on every incremential build if you elect to run this before ```make```
 1. ```make``` -- downloads and builds the target binaries
 2. ```make install``` -- installs the build products onto a device

@@ -30,6 +30,13 @@ if [ $(uname) = "Darwin" ]; then
     return
   fi
   rm -f foo FOO
+
+
+  for path in $(pwd); do true; done
+  if [[ "$(pwd)" != "$path" ]]; then
+    poison_their_lunch Source tree path \"$(pwd)\" cannot contain a space.
+    return
+  fi
 fi
 
 node_version_check()

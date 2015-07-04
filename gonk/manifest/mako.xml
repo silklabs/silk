@@ -2,7 +2,9 @@
 <manifest>
   <include name="silk.xml"/>
   <include name="android-5.1.1_r1.xml"/>
-  <project groups="device,mako" name="device-lge-mako-blobs" path="vendor" remote="silk" revision="android-5.1.1"/>
+  <project groups="device,mako" name="vendor-broadcom-mako" path="vendor/broadcom/mako" remote="silk" revision="master"/>
+  <project groups="device,mako" name="vendor-lge-mako" path="vendor/lge/mako" remote="silk" revision="master"/>
+  <project groups="device,mako" name="vendor-qcom-mako" path="vendor/qcom/mako" remote="silk" revision="master"/>
 
   <!-- Remove Android things -->
 

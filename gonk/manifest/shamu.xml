@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <include name="mako.xml"/>
-  <remove-project name="device-lge-mako-blobs"/>
-  <project groups="device,shamu" name="device-moto-shamu-blobs" path="vendor" remote="silk" revision="android-5.1.1"/>
+  <remove-project name="vendor-broadcom-mako"/>
+  <remove-project name="vendor-lge-mako"/>
+  <remove-project name="vendor-qcom-mako"/>
+  <project groups="device,shamu" name="vendor-broadcom-shamu" path="vendor/broadcom/shamu" remote="silk" revision="master"/>
+  <project groups="device,shamu" name="vendor-moto-shamu" path="vendor/moto/shamu" remote="silk" revision="master"/>
+  <project groups="device,shamu" name="vendor-qcom-shamu" path="vendor/qcom/shamu" remote="silk" revision="master"/>
 </manifest>

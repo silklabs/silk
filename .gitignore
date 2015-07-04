@@ -2,26 +2,36 @@
 
 # repo projects from base gonk
 /Makefile
+/abi/
 /bionic/
+/bootable/
 /build/
+/device/
 /external/
+/frameworks/
 /frameworks/av/
 /frameworks/base/
 /frameworks/native/
 /hardware/
-/npm_cache/
+/libnativehelper/
 /ndk
-/vendor/silk/core/modules/bleno/
-/vendor/silk/core/modules/noble/
-/vendor/silk/core/modules/silk-server/
+/npm_cache/
 /out/
 /prebuilts/clang/
 /prebuilts/gcc/
+/prebuilts/libs/
 /prebuilts/misc/
 /prebuilts/ndk/
 /prebuilts/python/
-/system/core/
-/system/media/
+/sdk/
+/system/
+/vendor/broadcom/
+/vendor/lge/
+/vendor/moto/
+/vendor/qcom/
+/vendor/silk/core/modules/bleno/
+/vendor/silk/core/modules/noble/
+/vendor/silk/core/modules/silk-server/
 
 # |adb sync| generates this
 /filelist

@@ -46,7 +46,9 @@ notifications:
 
 before_deploy:
   - source build/envsetup.sh && ./gonk/archive.sh mako dist
-  - mv --verbose out/target/product/mako/*ota*.zip dist/
+  - mv -v out/target/product/mako/*ota*.zip dist/
+  - ./gonk/ota_manifest out/target/product/mako/system/build.prop dist/ota.json
+
 
 deploy:
   provider: s3

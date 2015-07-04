@@ -1,0 +1,16 @@
+From 3b5730c4fa38278b4e3ef2d7f6e4f29de4d6c2a4 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 3 Jul 2015 18:54:53 -0700
+Subject: [PATCH] Stub out hierarchyviewer
+
+---
+ hierarchyviewer/Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 hierarchyviewer/Android.mk
+
+diff --git a/hierarchyviewer/Android.mk b/hierarchyviewer/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

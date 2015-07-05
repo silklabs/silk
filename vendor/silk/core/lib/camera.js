@@ -81,6 +81,12 @@ function normalizeFace(face) {
 var CameraStream;
 
 if (JPEG_PREVIEW) {
+  const HEADER_NR_BYTES = 8;
+  // See stream-video.cpp:45.
+  const TAG_VIDEO = 0;
+  const TAG_PREVIEW = 1;
+  const TAG_FACES = 2;
+
   class JpegCameraStream {
     constructor(id) {
       this.id = id;
@@ -98,20 +104,25 @@ if (JPEG_PREVIEW) {
         buffer = new Buffer(0);
         helper.stdout.on('data', data => {
           buffer = Buffer.concat([buffer, data]);
-          while (buffer.length >= 8) {
+          while (buffer.length >= HEADER_NR_BYTES) {
             let size = buffer.readInt32LE(0);
-            let hdr = buffer.readInt32LE(4);
-            if (buffer.length < 8 + size) {
+            let tag = buffer.readInt32LE(4);
+            if (buffer.length < HEADER_NR_BYTES + size) {
               break;
             }
-            let pkt = buffer.slice(8, 8 + size);
-            if (hdr === 1) {
-              //(hdr === 1) ? 'preview' : 'video',
+            let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
+            switch (tag) {
+            case TAG_PREVIEW:
               this.pushPacket(pkt);
+              break;
+            case TAG_VIDEO:
+            case TAG_FACES:
+            default:
+              break;
             }
             // put the rest of the buffer back
-            let rest = new Buffer(buffer.length - (8 + size));
-            buffer.copy(rest, 0, 8 + size);
+            let rest = new Buffer(buffer.length - (HEADER_NR_BYTES + size));
+            buffer.copy(rest, 0, HEADER_NR_BYTES + size);
             buffer = rest;
           }
         });

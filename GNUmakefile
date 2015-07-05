@@ -33,7 +33,7 @@ zest:
 
 .PHONY: sync
 sync: | .repo/manifest.xml
-	./repo sync -j4 --current-branch --no-tags
+	./repo sync -j4 --current-branch --no-tags --quiet
 
 .PHONY: dist
 dist: | .repo/manifest.xml
@@ -77,8 +77,7 @@ init.$(1): GONK=$(1)
 
 init.$(1):
 	rm -rf .repo/manifest*
-	$(MAKE) .repo/manifest.xml GONK=$(1)
-
+	@+$(MAKE) --no-print-directory .repo/manifest.xml GONK=$(1)
 endef
 
 $(eval \
@@ -100,9 +99,19 @@ init.%:
 
 .repo/manifest.xml: GONK=base# default gonk manifest
 .repo/manifest.xml: | .repo/manifest_upstream
-	./repo init -u $(PWD)/.repo/manifest_upstream -m $(GONK).xml \
-    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(shell uname | tr A-Z a-z) \
-    $(REPO_INIT_ARGS)
+	./repo init -u $(PWD)/.repo/manifest_upstream \
+    -m $(GONK).xml $(REPO_INIT_ARGS) \
+    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(shell uname | tr A-Z a-z)
+	@if [[ -n "$(REPOCACHE_$(GONK))" ]]; then \
+    if [[ ! -d .repo/projects ]]; then \
+      echo Seeding .repo projects from $(REPOCACHE_$(GONK)); \
+      ( set -x; curl "$(REPOCACHE_$(GONK))" | tar zx ); \
+    else \
+      echo ======================================================; \
+      echo Notice: Unable to use repo cache to speed up your sync; \
+      echo ======================================================; \
+    fi; \
+  fi
 
 .repo/manifest_upstream:
 # Construct a faux 'upstream' manifest project to keep repo content.  Its
@@ -110,14 +119,45 @@ init.%:
 # made in gonk/manifest/* will be picked up immediately by a |repo sync|
 	@echo Forging upstream repo manifest for gonk: $(GONK)
 	@{ \
-    set -ex ; \
+    set -e ; \
     mkdir -p .repo/manifest_upstream ; \
     cd .repo/manifest_upstream ; \
     git init --quiet . ; \
     for f in gonk/manifest/*; do ln -sf ../../$$f .; done; \
     git add *; \
-    git commit -m '301 Moved Permanently' ; \
+    git commit -q -m '301 Moved Permanently' ; \
   }
+
+
+# |make repocache| constructs a tarball of the .repo projects from the current
+# workspace.  The tarball is then used to speed up the initial sync a large
+# device workspace, while improving reliability (due to less network
+# connections), by first populating the .repo/ projects from a tarball. A normal
+# |repo sync| then follows to retrieve any additional commits that were added
+# since the creation of the tarball.
+#
+# Example usage:
+#   $ REPO_INIT_ARGS="--depth=1" make init.<gonk>
+#   $ make sync
+#   $ make repocache
+#
+# Upload the resulting repocache-<gonk>.tgz to S3 or some other cloud storage.
+# Make the URL accessible without any authentication (TODO: fix!) and add it to
+# the corresponding REPOCACHE_<gonk> macro below.
+#
+# Periodically the repo cache may need to be re-created as the gonk manifest
+# changes to maintain quicker sync times. A slightly stale repo cache should not
+# cause any correctness issues, the user will just be downloading some
+# unnecessary bits. (TODO: Wrap automation around updating the repo cache.)
+#
+REPOCACHE_mako = https://silk-device.s3.amazonaws.com/repocache/repocache-mako.tgz
+REPOCACHE_base = https://silk-device.s3.amazonaws.com/repocache/repocache-base.tgz
+
+.PHONY: repocache
+repocache:
+	$(ENVSETUP) && \
+  ( set -x; tar zcf repocache-$$GONK.tgz .repo/project-objects .repo/projects/ ) && \
+  ls -l repocache-$$GONK.tgz
 
 
 # Catch-all, redirect to gonk build system

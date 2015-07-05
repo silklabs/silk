@@ -18,7 +18,7 @@ $ ./flash.sh
 
 ## Building 101
 
-NOTE: You _must_ have a case sensitive file system.  To create one,
+NOTE: You _must_ have a case sensitive file system to build on OS X.  To create one,
 
 0. Open Disk Utility (Cmd-space then type "disk utility")
 0. Select New -> Blank Disk Image
@@ -42,7 +42,7 @@ Finally press "Create" and your new disk will mount at `/Volumes/Silk` (or whate
 In most cases all you need to do is `make clean`.  This preserves any manifest
 projects downloaded into the `.repo/` directory by `make sync`
 
-If you really want to restore your workspace back to it's pristine state run
+If you really want to restore your workspace back to its pristine state run
 `make zest`.
 
 ## Connecting to the server
@@ -185,4 +185,9 @@ Expect to be stuck on the Twiddling Antenna Android "Erasing..." screen for
 `userdata.img` once the Erasing screen is complete (or easier, run `./flash.sh`
 again)
 
+### Linux FTW?
+
+Building on Linux is 2x faster, even when running Linux in a VM hosted by OS X.  Travis CI builds your PR on Linux to boot.
+
+TODO: create a docker image that includes all the dependencies needed to setup a Linux machine to build silk-device and link to it here.
 

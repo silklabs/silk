@@ -275,6 +275,8 @@ private:
     int64_t mPreviousTrackTimeUs;
     int64_t mTrackEveryTimeDurationUs;
 
+    int64_t mFirstFrameTimeUs;
+
     // Update the audio track's drift information.
     void updateDriftTime(const sp<MetaData>& meta);
 
@@ -1059,6 +1061,7 @@ MPEG4MemoryWriter::Track::Track(
       mCodecSpecificDataSize(0),
       mGotAllCodecSpecificData(false),
       mReachedEOS(false),
+      mFirstFrameTimeUs(-1),
       mRotation(0) {
     getCodecSpecificDataFromInputFormatIfPossible();
 
@@ -1854,6 +1857,11 @@ status_t MPEG4MemoryWriter::Track::threadEntry() {
         meta_data->findInt32(kKeyIsSyncFrame, &isSync);
         CHECK(meta_data->findInt64(kKeyTime, &timestampUs));
 
+        // Make sure the start time of a track is always 0.
+        if (mFirstFrameTimeUs == -1)
+          mFirstFrameTimeUs = timestampUs;
+        timestampUs -= mFirstFrameTimeUs;
+
 ////////////////////////////////////////////////////////////////////////////////
         if (mStszTableEntries->count() == 0) {
             mFirstSampleTimeRealUs = systemTime() / 1000;
@@ -1893,6 +1901,10 @@ status_t MPEG4MemoryWriter::Track::threadEntry() {
              */
             int64_t decodingTimeUs;
             CHECK(meta_data->findInt64(kKeyDecodingTime, &decodingTimeUs));
+
+            // Zero-bias decoding time
+            decodingTimeUs -= mFirstFrameTimeUs;
+
             decodingTimeUs -= previousPausedDurationUs;
             cttsOffsetTimeUs =
                     timestampUs + kMaxCttsOffsetTimeUs - decodingTimeUs;

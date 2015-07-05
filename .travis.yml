@@ -47,7 +47,7 @@ notifications:
 before_deploy:
   - source build/envsetup.sh && ./gonk/archive.sh mako dist
   - mv -v out/target/product/mako/*ota*.zip dist/
-  - ./gonk/ota_manifest out/target/product/mako/system/build.prop dist/ota.json
+  - ./gonk/ota_manifest.sh out/target/product/mako/system/build.prop dist/ota.json
 
 
 deploy:

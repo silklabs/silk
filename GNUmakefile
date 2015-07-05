@@ -64,7 +64,7 @@ time:
   adb shell "toolbox date $(shell date +%s) || toolbox date -s $(shell date +%Y%m%d.%H%M%S)"
 
 #
-# Initialize the workspace with gonk/<gonk>/default.xml instead of the default
+# Initialize the workspace with gonk/manifest/<gonk>.xml instead of the default
 # gonk with:
 #
 #   $ make init.<gonk>
@@ -72,9 +72,7 @@ time:
 define __init_rules
 
 .PHONY: init.$(1)
-
 init.$(1): GONK=$(1)
-
 init.$(1):
 	rm -rf .repo/manifest*
 	@+$(MAKE) --no-print-directory .repo/manifest.xml GONK=$(1)

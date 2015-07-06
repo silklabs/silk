@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "bleno": "file:modules/bleno",
-    "camera": "file:modules/camera",
     "movie": "file:modules/movie",
     "node-hue-api": "1.0.5",
     "silk-api": "file:modules/silk-server/dist/api",

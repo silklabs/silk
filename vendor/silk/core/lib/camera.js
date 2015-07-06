@@ -11,15 +11,13 @@ const NAME = (util.getprop('persist.silk.displayName')
 //const FRONT = 1;
 const BACK = 0;
 
-// TODO: Remove old preview code once face detect is added to new JPEG code
-const JPEG_PREVIEW = true;
-
 /**
  * Return the object `{ id, x, y, width, height }` representing the
  * `camera_face_t face` rectangle mapped into mako screen space IN THE
  * ORIENTATION WHERE FRONT CAMERA IS BOTTOM RIGHT FACING YOU.
  */
-function normalizeFace(face) {
+function normalizeFace(face) { //eslint-disable-line no-unused-vars
+
   // These params are defined by the long comment just below the
   // declaration of `struct camera_face` in
   // system/core/include/system/camera.h.
@@ -78,122 +76,85 @@ function normalizeFace(face) {
   };
 }
 
-var CameraStream;
 
-if (JPEG_PREVIEW) {
-  const HEADER_NR_BYTES = 8;
-  // See stream-video.cpp:45.
-  const TAG_VIDEO = 0;
-  const TAG_PREVIEW = 1;
-  const TAG_FACES = 2;
+const HEADER_NR_BYTES = 8;
+// See capture.cpp:46.
+const TAG_VIDEO = 0;
+const TAG_PREVIEW = 1;
+const TAG_FACES = 2;
 
-  class JpegCameraStream {
-    constructor(id) {
-      this.id = id;
+class CameraStream {
+  constructor(id) {
+    this.id = id;
+    this.helper = null;
+  }
+
+  start(socket) {
+    if (this.helper) {
+      return;
+    }
+    var buffer;
+    let launch = () => {
+      let spawn = require('child_process').spawn;
+      let helper = spawn('/system/bin/capture', [
+        // Create i-frames every second, to send one-second video
+        // chunks.
+        '-i', 1,
+        // Nominally 720p25 video at 1Mbps vbr.
+        '-w', 1280, '-h', 720, '-f', 25, '-v', 1024,
+        // Emit preview images at 320x180 (i.e. scale down HD720 by
+        // a factor of 4) and emit them nominally 1 per second.
+        '-p', 4, '-k', 25,
+      ]);
+      buffer = new Buffer(0);
+      helper.stdout.on('data', data => {
+        buffer = Buffer.concat([buffer, data]);
+        while (buffer.length >= HEADER_NR_BYTES) {
+          let size = buffer.readInt32LE(0);
+          let tag = buffer.readInt32LE(4);
+          if (buffer.length < HEADER_NR_BYTES + size) {
+            break;
+          }
+          let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
+          switch (tag) {
+          case TAG_PREVIEW:
+            this.pushPacket(pkt, 'jpeg');
+            break;
+          case TAG_VIDEO:
+            this.pushPacket(pkt, 'mp4');
+            break;
+          case TAG_FACES:
+          default:
+            break;
+          }
+          // put the rest of the buffer back
+          let rest = new Buffer(buffer.length - (HEADER_NR_BYTES + size));
+          buffer.copy(rest, 0, HEADER_NR_BYTES + size);
+          buffer = rest;
+        }
+      });
+      helper.on('close', () => {
+        if (this.helper) {
+          launch();
+        }
+      });
+      this.helper = helper;
+      this.socket = socket;
+    };
+    launch();
+  }
+
+  stop() {
+    if (this.helper) {
+      this.helper.kill();
       this.helper = null;
     }
-
-    start(socket) {
-      if (this.helper) {
-        return;
-      }
-      var buffer;
-      let launch = () => {
-        let spawn = require('child_process').spawn;
-        let helper = spawn('/system/bin/capture', [
-          // Create i-frames every second, to send one-second video
-          // chunks.
-          '-i', 1,
-          // Nominally 720p25 video at 1Mbps vbr.
-          '-w', 1280, '-h', 720, '-f', 25, '-v', 1024,
-          // Emit preview images at 320x180 (i.e. scale down HD720 by
-          // a factor of 4) and emit them nominally 1 per second.
-          '-p', 4, '-k', 25,
-        ]);
-        buffer = new Buffer(0);
-        helper.stdout.on('data', data => {
-          buffer = Buffer.concat([buffer, data]);
-          while (buffer.length >= HEADER_NR_BYTES) {
-            let size = buffer.readInt32LE(0);
-            let tag = buffer.readInt32LE(4);
-            if (buffer.length < HEADER_NR_BYTES + size) {
-              break;
-            }
-            let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
-            switch (tag) {
-            case TAG_PREVIEW:
-              this.pushPacket(pkt, 'jpeg');
-              break;
-            case TAG_VIDEO:
-              this.pushPacket(pkt, 'mp4');
-              break;
-            case TAG_FACES:
-            default:
-              break;
-            }
-            // put the rest of the buffer back
-            let rest = new Buffer(buffer.length - (HEADER_NR_BYTES + size));
-            buffer.copy(rest, 0, HEADER_NR_BYTES + size);
-            buffer = rest;
-          }
-        });
-        helper.on('close', () => {
-          if (this.helper) {
-            launch();
-          }
-        });
-        this.helper = helper;
-        this.socket = socket;
-      };
-      launch();
-    }
-
-    stop() {
-      if (this.helper) {
-        this.helper.kill();
-        this.helper = null;
-      }
-    }
-
-    pushPacket(frame, type) {
-      this.socket.emit('video', { id: this.id, name: NAME, frame: frame,
-                                  contents: type, });
-    }
   }
-  CameraStream = JpegCameraStream;
-} else {
-  let camera = require('gonkcamera');
 
-  class OldCameraStream {
-    constructor(id, whichCamera) {
-      this.id = id;
-      this.cam = new camera.Camera(whichCamera);
-      this.faces = [];
-      this.cam.onFaceDetect(fa => {
-        this.faces = fa.map(normalizeFace);
-        this.pushPacket(null);
-      });
-      this.cam.onPreviewFrame(yuv420sp => this.pushPacket(yuv420sp));
-    }
-
-    start(socket) {
-      this.cam.startPreview();
-      this.socket = socket;
-    }
-
-    stop() {
-      this.cam.stopPreview();
-      this.socket = null;
-    }
-
-    pushPacket(buf) {
-      this.socket.emit('video', { id: this.id, name: NAME,
-                                  // TODO: get this from bindings
-                                  width: 320, height: 240,
-                                  frame: buf, faces: this.faces });
-    }
+  pushPacket(frame, type) {
+    this.socket.emit('video', { id: this.id, name: NAME, frame: frame,
+                                contents: type, });
   }
-  CameraStream = OldCameraStream;
 }
 
 module.exports = (id) => new CameraStream(id, BACK);

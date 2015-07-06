@@ -33,7 +33,7 @@ static status_t OK = static_cast<status_t>(android::OK);
 
 static bool sDebug = false;
 static Size sVideoSize(1280, 720);
-static int32_t sVideoBitRateInK = 2048;
+static int32_t sVideoBitRateInK = 1024;
 static int32_t sFPS = 24;
 static int32_t sIFrameIntervalSec = 15;
 static int32_t sPreviewScale = 4;
@@ -578,7 +578,7 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<Medi
 
   videoFormat->setString("mime", kMimeTypeAvc);
   videoFormat->setInt32("bitrate", sVideoBitRateInK * 1024);
-  videoFormat->setInt32("bitrate-mode", OMX_Video_ControlRateConstant);
+  videoFormat->setInt32("bitrate-mode", OMX_Video_ControlRateVariable);
   videoFormat->setFloat("frame-rate", sFPS);
   videoFormat->setInt32("i-frame-interval", sIFrameIntervalSec);
 
@@ -595,8 +595,7 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<Medi
   CHECK(audioSource->getFormat()->findInt32(kKeyChannelCount, &channels));
 
   mAudioFormat = new AMessage();
-  mAudioFormat->setString("mime", MEDIA_MIMETYPE_AUDIO_AAC);
-  mAudioFormat->setInt32("aac-profile", OMX_AUDIO_AACObjectLC);
+  mAudioFormat->setString("mime", MEDIA_MIMETYPE_AUDIO_MPEG);
   mAudioFormat->setInt32("max-input-size", maxInputSize);
   mAudioFormat->setInt32("sample-rate", sampleRate);
   mAudioFormat->setInt32("channel-count", channels);

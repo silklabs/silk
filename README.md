@@ -1,6 +1,5 @@
 # Silk Gonk Build [![Build Status](https://magnum.travis-ci.com/silklabs/silk-device.svg?token=9zqxLJky1XFHahNndToB)](https://magnum.travis-ci.com/silklabs/silk-device)
 
-
 ## Configuring Nexus 4 (Mako)
 
 First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
@@ -64,7 +63,6 @@ production server:
 $ adb shell setprop persist.silk.server.url ""
 $ adb shell setprop ctl.restart silk
 ```
-
 
 ## Activating the full gonk environment
 
@@ -131,14 +129,28 @@ JavaScript files are tagged to use js2-mode.  [Follow these instructions to inst
 
 ## Development ProTips
 
+### Suppressing ESLint
+
 We run eslint on core ES6 files.  It's great for finding bugs but can be annoying during development when it fails builds because of trailing whitespace and so forth.  When iterating during development, you can turn off eslint checking by passing `LAX=1` to make:
 ```bash
 make LAX=1 core.js
 ```
 Remember to run a non-LAX build before sending a pull request though!
 
-## Appendix
+### Tombstones
 
+When a native process crashes bionic (via debuggerd) will engrave a tombstone
+of it in /data/tombstones/, useful for determining what happened if you didn't
+happen to have gdb attached at the time.
+
+To symbolize a tombstone run:
+```
+$ adb pull /data/tombstones/
+$ . build/envsetup.sh
+$ ./development/scripts/stack tombstone_00
+```
+
+## Appendix
 
 ### Stock device manifest for Nexus 4 ("Mako") 5.1.1
 

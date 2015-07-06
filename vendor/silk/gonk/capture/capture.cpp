@@ -595,7 +595,8 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel, sp<Medi
   CHECK(audioSource->getFormat()->findInt32(kKeyChannelCount, &channels));
 
   mAudioFormat = new AMessage();
-  mAudioFormat->setString("mime", MEDIA_MIMETYPE_AUDIO_MPEG);
+  mAudioFormat->setString("mime", MEDIA_MIMETYPE_AUDIO_AAC);
+  mAudioFormat->setInt32("aac-profile", OMX_AUDIO_AACObjectLC);
   mAudioFormat->setInt32("max-input-size", maxInputSize);
   mAudioFormat->setInt32("sample-rate", sampleRate);
   mAudioFormat->setInt32("channel-count", channels);

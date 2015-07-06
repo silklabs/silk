@@ -22,6 +22,34 @@ function log(msg) {
 
 var monitors = document.getElementById('monitors');
 
+function makeObjectUrl(array, mimeType) {
+  var view = new Uint8Array(array);
+  var blob = new Blob([view], { type: mimeType });
+  return URL.createObjectURL(blob);
+}
+
+var video = document.getElementById('video');
+var activeStream = null;
+function showPlayer(stream) {
+  video.style.display = 'block';
+  activeStream = stream;
+  setTimeout(function() { document.body.addEventListener('click', hidePlayer); });
+}
+
+function hidePlayer() {
+  video.style.display = 'none';
+  document.body.removeEventListener('click', hidePlayer);
+}
+
+function maybeFeedPlayer(stream, chunk) {
+  if (stream !== activeStream) {
+    return;
+  }
+  var mp4 = makeObjectUrl(chunk, 'video/mp4');
+  video.src = mp4;
+  return;
+}
+
 // Register for logging messages and display them.
 var socket = io(document.location.origin);
 socket.on('connect', function () {
@@ -38,15 +66,28 @@ socket.on('connect', function () {
     var stream = 'video-' + msg.id;
     var monitor = document.createElement('img');
     monitor.setAttribute('id', msg.id);
-    monitors.appendChild(monitor);
+
+    var a = document.createElement('a');
+    a.addEventListener('click', function() { showPlayer(stream); });
+    a.href = '#';
+    a.appendChild(monitor);
+    monitors.appendChild(a);
+
     socket.on(stream, function(msg) {
       if (!msg) {
         return;
       }
-      var view = new Uint8Array(msg.frame);
-      var blob = new Blob([view], { type: 'image/jpg' });
-      var jpeg = URL.createObjectURL(blob);
-      monitor.src = jpeg;
+      switch (msg.contents) {
+      case 'mp4':
+        maybeFeedPlayer(stream, msg.frame);
+        return;
+      case 'jpeg':
+        var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
+        monitor.src = jpeg;
+        return;
+      default:
+        return;
+      }
     });
     socket.emit('join', stream);
   });

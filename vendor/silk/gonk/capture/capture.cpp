@@ -741,6 +741,10 @@ int main(int argc, char **argv) {
   // Setup the camera
   int cameraId = 0;
   sp<Camera> camera = Camera::connect(cameraId, String16(argv[0]), Camera::USE_CALLING_UID);
+  if (camera == NULL) {
+    ALOGE("Unable to connect to camera");
+    return -1;
+  }
   sp<ICamera> remote = camera->remote();
   sp<ICameraRecordingProxy> proxy = camera->getRecordingProxy();
 

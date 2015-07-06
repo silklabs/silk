@@ -84,7 +84,7 @@ $(eval \
 )
 
 init.%:
-	@echo Error: gonk/$(subst init.,,$@)/default.xml does not exist
+	@echo Error: gonk/manifest/$(subst init.,,$@).xml does not exist
 	@false
 
 

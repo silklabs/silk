@@ -9,6 +9,7 @@ SRCS = [
   'lib/config.js',
   'lib/lights.js',
   'lib/main.js',
+  'lib/ntp.js',
   'lib/ui.js',
   'lib/util.js',
   'lib/vibrator.js',

@@ -50,6 +50,8 @@ new Promise(resolve => {
 })
 // Connect to the server and start streaming
 .then(() => {
+  require('./ntp');
+
   console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
   let socket = require('socket.io-client')(api.config.server_url);
 

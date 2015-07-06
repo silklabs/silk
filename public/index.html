@@ -10,7 +10,11 @@
         width: 100%;
         height: 100%;
       }
-      
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
       #toolbar > span {
         background-color: #888888;
         color: white;
@@ -26,6 +30,13 @@
         width: 100%;
         height: 90%;
       }
+
+      #video {
+        position: absolute;
+        left: 50px;
+        top: 50px;
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -35,6 +46,8 @@
     </div>
     <div id="monitors">
     </div>
+    <video id="video" autoplay>
+    </video>
     <div id='toolbar'>
       <span onclick='toggleLog();'>Toggle</span>
       <span onclick='restart();'>Restart</span>

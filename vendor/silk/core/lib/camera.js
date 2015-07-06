@@ -100,7 +100,16 @@ if (JPEG_PREVIEW) {
       var buffer;
       let launch = () => {
         let spawn = require('child_process').spawn;
-        let helper = spawn('/system/bin/capture', []);
+        let helper = spawn('/system/bin/capture', [
+          // Create i-frames every second, to send one-second video
+          // chunks.
+          '-i', 1,
+          // Nominally 720p25 video at 1Mbps vbr.
+          '-w', 1280, '-h', 720, '-f', 25, '-v', 1024,
+          // Emit preview images at 320x180 (i.e. scale down HD720 by
+          // a factor of 4) and emit them nominally 1 per second.
+          '-p', 4, '-k', 25,
+        ]);
         buffer = new Buffer(0);
         helper.stdout.on('data', data => {
           buffer = Buffer.concat([buffer, data]);
@@ -113,9 +122,11 @@ if (JPEG_PREVIEW) {
             let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
             switch (tag) {
             case TAG_PREVIEW:
-              this.pushPacket(pkt);
+              this.pushPacket(pkt, 'jpeg');
               break;
             case TAG_VIDEO:
+              this.pushPacket(pkt, 'mp4');
+              break;
             case TAG_FACES:
             default:
               break;
@@ -144,9 +155,9 @@ if (JPEG_PREVIEW) {
       }
     }
 
-    pushPacket(jpeg) {
-      this.socket.emit('video', { id: this.id, name: NAME, frame: jpeg,
-                                  contents: 'jpeg', });
+    pushPacket(frame, type) {
+      this.socket.emit('video', { id: this.id, name: NAME, frame: frame,
+                                  contents: type, });
     }
   }
   CameraStream = JpegCameraStream;

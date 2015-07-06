@@ -58,7 +58,7 @@ socket.on('connect', function () {
     log(msg);
   });
   socket.emit('join', 'video-streams');
-  socket.on('video-stream-new', msg => {
+  socket.on('video-stream-new', function(msg) {
     log('New video stream '+ msg.id);
     // TODO: when this evolves into a full-blown web app, this should
     // become component-ized and shared with the native apps if
@@ -91,7 +91,7 @@ socket.on('connect', function () {
     });
     socket.emit('join', stream);
   });
-  socket.on('video-stream-delete', msg => {
+  socket.on('video-stream-delete', function(msg) {
     log('Dead video stream '+ msg.id);
     var monitor = document.getElementById(msg.id);
     monitors.removeChild(monitor);

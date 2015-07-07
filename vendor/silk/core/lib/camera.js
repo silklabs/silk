@@ -12,8 +12,37 @@ const NAME = (util.getprop('persist.silk.displayName')
 const BACK = 0;
 
 /**
- * Return the object `{ id, x, y, width, height }` representing the
- * `camera_face_t face` rectangle mapped into mako screen space IN THE
+ * Return the raw Buffer of bytes `buf` parsed into array of face
+ * objects with fields named after `camera_face_t` in
+ * system/core/include/system/camera.h.
+ */
+function rawFaceArrayToFaces(buf) {
+  const SIZEOF_CAMERA_FACE_T = 12 * 4;
+  if (buf.length % SIZEOF_CAMERA_FACE_T) {
+    throw `Raw face array has invalid length ${buf.length}`;
+  }
+  let nrFaces = buf.length / SIZEOF_CAMERA_FACE_T;
+  let i32a = new Int32Array(new Uint8Array(buf).buffer);
+  let faces = [ ];
+  let faceIndex;
+  let a = offset => i32a[faceIndex + offset];
+  for (var i = 0; i < nrFaces; ++i) {
+    let face = { };
+    faceIndex = i * (SIZEOF_CAMERA_FACE_T / 4);
+    face.rect = [ a(0), a(1), a(2), a(3) ];
+    face.score = a(4);
+    face.id = a(5);
+    face.leftEye = [ a(6), a(7) ];
+    face.rightEye = [ a(8), a(9) ];
+    face.mouth = [ a(10), a(11) ];
+    faces.push(face);
+  }
+  return faces;
+}
+
+/**
+ * Set the fields `{ x, y, width, height }` in `face` representing the
+ * `face.rect` rectangle mapped into mako screen space IN THE
  * ORIENTATION WHERE FRONT CAMERA IS BOTTOM RIGHT FACING YOU.
  */
 function normalizeFace(face) { //eslint-disable-line no-unused-vars
@@ -21,38 +50,7 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   // These params are defined by the long comment just below the
   // declaration of `struct camera_face` in
   // system/core/include/system/camera.h.
-  let [id, left, top, right, bottom ] = face;
-  //
-  // On mako, the values reported are as follows, WHEN THE
-  // FRONT-FACING CAMERA IS HELD SO THAT IT'S ON THE BOTTOM-RIGHT OF
-  // THE SCREEN FROM YOUR PERSPECTIVE.  That is, when you're looking
-  // at the phone like so:
-  //
-  //  +------------------+
-  //  |  a            b  |
-  //  |O                 |
-  //  |  c            d o| <--- front-facing camera
-  //  +------------------+
-  //
-  // The left-right axis is reported as you would expect: the `left`
-  // coord is minimum when your face is on the left, and 'right' is
-  // maximum when your face is on the right.
-  //
-  // The top-bottom axis is inverted, however: `top` is minimum when
-  // your face is at the bottom of the screen, and `bottom` is maximum
-  // when your face is at the top of the screen.
-  //
-  // More concretely, when your face shows up at the points above,
-  // coords are approximately (assuming your face is 100x100 pixels):
-  //
-  //  a: (left: -1000,  top:   900,  right: -900,  bottom: 1000)
-  //  b: (left:   900,  top:   900,  right: 1000,  bottom: 1000)
-  //  c: (left: -1000,  top: -1000,  right: -900,  bottom: -900)
-  //  d: (left:   900,  top: -1000,  right: 1000,  bottom: -900)
-  //
-  // So we translate coords first into the camera-in-bottom-right
-  // abstract space by a y flip.
-  [ top, bottom ] = [ -bottom, -top ];
+  let [left, top, right, bottom ] = face.rect;
   const TARGET_ORIENTATION = 'landscape';
   // Transform the rectangle to what upstream consumers expect.
   switch (TARGET_ORIENTATION) {
@@ -68,12 +66,13 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   const WIDTH = 1280, HEIGHT = 768;
   let normLen = (l, len) => (len * l / 2000.0) | 0;
   let normCoord = (c, len) => normLen(c + 1000.0, len);
-  return {
-    id: id,
-    x: normCoord(left, WIDTH), y: normCoord(top, HEIGHT),
-    width: normLen(right - left, WIDTH), height: normLen(bottom - top, HEIGHT),
-    fieldWidth: WIDTH, fieldHeight: HEIGHT,
-  };
+  face.x = normCoord(left, WIDTH);
+  face.y = normCoord(top, HEIGHT);
+  face.width = normLen(right - left, WIDTH);
+  face.height = normLen(bottom - top, HEIGHT);
+  face.fieldWidth = WIDTH;
+  face.fieldHeight = HEIGHT;
+  return face;
 }
 
 
@@ -86,6 +85,7 @@ const TAG_FACES = 2;
 class CameraStream {
   constructor(id) {
     this.id = id;
+    this.faces = [];
     this.helper = null;
   }
 
@@ -124,6 +124,9 @@ class CameraStream {
             this.pushPacket(pkt, 'mp4');
             break;
           case TAG_FACES:
+            this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+            this.pushPacket();
+            break;
           default:
             break;
           }
@@ -152,8 +155,8 @@ class CameraStream {
   }
 
   pushPacket(frame, type) {
-    this.socket.emit('video', { id: this.id, name: NAME, frame: frame,
-                                contents: type, });
+    this.socket.emit('video', { id: this.id, name: NAME, faces: this.faces,
+                                frame: frame, contents: type, });
   }
 }
 

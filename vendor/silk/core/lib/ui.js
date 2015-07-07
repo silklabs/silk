@@ -150,7 +150,7 @@ if (caps.has('dev-input-hack')) {
   //   triggered - bionic's getaddrinfo() communicates with netd over
   //   /dev/socket/dnsproxyd, which may or may not be related.
   //
-  // So still something of a mystery here...
+  // So still something of a mystery here, more at #144
   //
   switch (util.getprop('ro.boot.hardware')) {
   case 'mako':

@@ -46,10 +46,10 @@ function getNetworkTime() {
   function ntpCallback(err, date) {
     if (err) {
       console.error(`Error: NTP failed: ${err}`);
-      util.timeout(NTP_RETRY_DELAY, getNetworkTime);
+      util.timeout(NTP_RETRY_DELAY).then(getNetworkTime);
     } else {
       setSystemDate(date);
-      util.timeout(NTP_REFRESH_DELAY, getNetworkTime);
+      util.timeout(NTP_REFRESH_DELAY).then(getNetworkTime);
     }
   }
 

@@ -21,13 +21,7 @@ LOCAL_CUSTOM_INSTALLED_MODULE := true
 
 # Base set of libraries for all modules
 npm_GONK_SHARED_LIBRARIES := libc.so libm.so libdl.so libstlport.so
-# Additional libraries for camera module
-npm_GONK_SHARED_LIBRARIES += \
-  libbinder.so \
-  libcamera_client.so \
-  libgui.so \
-  libmedia.so \
-  libutils.so \
+
 # Additional libraries for movie module
 npm_GONK_SHARED_LIBRARIES += \
   libEGL.so \

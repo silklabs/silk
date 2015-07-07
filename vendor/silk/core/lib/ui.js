@@ -3,11 +3,12 @@
 
 'use strict';
 
-let vib = require('./vibrator')();
-let movie = require('movie')();
-let util = require('./util');
+let caps = require('./caps');
 let events = require('events');
 let fs = require('fs');
+let movie = require('movie')();
+let util = require('./util');
+let vib = require('./vibrator')();
 
 let currentState;
 let currentMovieName;
@@ -130,10 +131,42 @@ function uiState(state) {
 }
 
 
-// Only monitor input devices event[0-2], these are the devices that report
-// volumes/power keys on N4/N6. The other input devices are for headset keys and
-// the Input() class currently misbehaves when the headset events are monitored.
-let input = new Input(['event0', 'event1', 'event2']);
+let input;
+if (caps.has('dev-input-hack')) {
+  //
+  // Only monitor the input devices used for the power and volume keys for these
+  // devices (determined by running |adb shell getevent -l| and pressing each
+  // key)
+  //
+  // The way that node/libuv reads from the input devices (blocking read on a
+  // separate thread for each input device) differs from how Android does it
+  // (poll/read on one thread) and one theory is that this exposes a kernel bug
+  // that manifest as:
+  //
+  // * key events from hard key presses and releases are delayed by multiple
+  //   seconds sometimes. Triggering a number of touchscreen events can help get
+  //   them unstuck.
+  // * DNS resolution can be delayed until some touchscreen events are
+  //   triggered - bionic's getaddrinfo() communicates with netd over
+  //   /dev/socket/dnsproxyd, which may or may not be related.
+  //
+  // So still something of a mystery here...
+  //
+  switch (util.getprop('ro.boot.hardware')) {
+  case 'mako':
+    input = new Input(['event0', 'event1']);
+    break;
+  case 'shamu':
+    input = new Input(['event1', 'event2']);
+    break;
+  default:
+    // If/when we need to add a new device to this list, it's probably time to
+    // take a close look into what's actually happening here!
+    throw 'Unknown device';
+  }
+} else {
+  input = new Input();
+}
 
 let cancelPowerDown = () => {};
 let volumeKeysPressed = 0;

@@ -2,8 +2,8 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 SRCS = [
-  // NOTE: If additional source directories are added, update WEAVE_CORE_JS_SRCS
-  // in Android.mk as well
+  // NOTE: Keep all source directories under lib/ to avoid breaking dependency
+  // management in Android.mk
   'lib/camera.js',
   'lib/caps.js',
   'lib/config.js',

@@ -24,7 +24,7 @@
 
   <!-- node modules -->
   <project name="silk-server"
-           path="vendor/silk/core/modules/silk-server"
+           path="vendor/silk/core/modules/silk-api"
            remote="silk"
            revision="master"/>
   <project name="sandeepmistry/bleno"

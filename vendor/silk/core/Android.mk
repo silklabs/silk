@@ -61,10 +61,10 @@ npm_LDFLAGS = $(TARGET_GLOBAL_LDFLAGS) \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
   $(shell find $(LOCAL_PATH)/lib -type f) \
-  $(shell find $(LOCAL_PATH)/modules -type f)
 
+LOCAL_ADDITIONAL_DEPENDENCIES += $(LOCAL_PATH)/Android.mk
 LOCAL_ADDITIONAL_DEPENDENCIES += \
-  $(LOCAL_PATH)/package.json $(LOCAL_PATH)/Android.mk \
+  $(LOCAL_PATH)/package.json \
   $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
   $(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(sort $(npm_GONK_SHARED_LIBRARIES)))
 
@@ -84,8 +84,14 @@ $(LOCAL_BUILT_MODULE): export NPM_CONFIG_PLATFORM=android
 
 $(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js
 	@echo "Build: $@"
+# Remove all node modules marked as stale before running |npm install|
+	$(hide) shopt -s nullglob; \
+  rm -rf $@; \
+  for s in $(@D)/node_modules/*.stale; do \
+    rm -rf $$s $${s%%.stale}; \
+  done
 	$(hide) cd $(@D) && \
-   node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir)
+   node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir) --no-optional
 
 
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: SRCDIR := $(abspath $(LOCAL_PATH))
@@ -111,3 +117,36 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
   for binding in `cd $(<D)/node_modules/ && find . -mindepth 4 -maxdepth 4 -type f -name *.node`; do \
     cp -f $(<D)/node_modules/$$binding $(@D)/Release/`basename $$binding`; \
   done
+
+
+#
+# In-tree node_module dependency management
+#
+# |npm install| assumes if the version number for dependent project has not
+# changed there is no need to reinstall the dependency.  This works great for
+# published packages but causes stale incremental builds for in-tree packages.
+#
+# An in-tree node_module will be marked as stale if its out/.../package.json
+# file is older than any of its source files.  Before running |npm install|, the
+# stale node_modules are then removed so that they can be rebuilt and
+# reinstalled.
+#
+
+# Source in-tree node_modules
+INTREE_NODE_MODULES := $(notdir $(shell find $(LOCAL_PATH)/modules -mindepth 1 -maxdepth 1 -type d))
+
+# Out directories for in-tree node_modules previously built in this workspace
+INTREE_NODE_MODULES_OUT := $(notdir $(wildcard \
+  $(addprefix $(dir $(LOCAL_BUILT_MODULE))node_modules/,$(INTREE_NODE_MODULES)) \
+))
+
+define INTREE_NODE_MODULES_DEPS
+
+$(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))node_modules/$(1)/package.json
+$(dir $(LOCAL_BUILT_MODULE))node_modules/$(1)/package.json: $(shell find $(LOCAL_PATH)/modules/$(1) \( ! -path '*/.*' \) -type f)
+	@echo Stale in-tree node_module: $(1)
+	$(hide) touch $$(@D).stale $$@
+
+endef
+
+$(foreach module,$(INTREE_NODE_MODULES_OUT),$(eval $(call INTREE_NODE_MODULES_DEPS,$(module))))

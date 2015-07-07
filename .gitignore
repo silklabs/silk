@@ -32,7 +32,7 @@
 /vendor/qcom/
 /vendor/silk/core/modules/bleno/
 /vendor/silk/core/modules/noble/
-/vendor/silk/core/modules/silk-server/
+/vendor/silk/core/modules/silk-api/
 
 # |adb sync| generates this
 /filelist

@@ -77,6 +77,11 @@ socket.on('connect', function () {
       if (!msg) {
         return;
       }
+      log('video message: ' +
+        ((msg.faces.length > 0) ? '[faces:' + msg.faces.length + ']' :'') +
+        (('frame' in msg) ? '[frame:' + msg.contents + '] ' : '') +
+        'from: '+ msg.id
+      );
       switch (msg.contents) {
       case 'mp4':
         maybeFeedPlayer(stream, msg.frame);
@@ -95,10 +100,6 @@ socket.on('connect', function () {
     log('Dead video stream '+ msg.id);
     var monitor = document.getElementById(msg.id);
     monitors.removeChild(monitor);
-  });
-  socket.on('video', function(msg) {
-    log('video message: '+ (('faces' in msg) ? '[faces] ':'') +
-        (('frame' in msg) ? '[frame] ' : '') + 'from: '+ msg.id);
   });
 });
 

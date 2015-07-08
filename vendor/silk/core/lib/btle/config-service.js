@@ -221,7 +221,7 @@ ErrorDescriptionCharacteristic.prototype.onReadRequest = function(offset, callba
 function VibratePatternCharacteristic(service) {
   VibratePatternCharacteristic.super_.call(this, {
     uuid: VibratePatternCharacteristic.uuid,
-    properties: ['writeWithoutResponse'],
+    properties: ['write', 'writeWithoutResponse'],
     descriptors: [
       new DescriptionDescriptor('16-bit LE on/off vibrate pattern.'),
     ]

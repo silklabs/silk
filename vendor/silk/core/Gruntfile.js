@@ -11,6 +11,7 @@ SRCS = [
   'lib/main.js',
   'lib/ntp.js',
   'lib/ui.js',
+  'lib/update.js',
   'lib/util.js',
   'lib/vibrator.js',
   'lib/wifi.js',

@@ -11,6 +11,7 @@ let ui = require('./ui');
 let vib = require('./vibrator')();
 let wifi = require('./wifi');
 let util = require('./util');
+let update = require('./update');
 
 process.on('uncaughtException', err => {
   console.log('Error:', err, err.stack);
@@ -48,6 +49,8 @@ new Promise(resolve => {
   ui('connecting');
   return wifi.online();
 })
+// Start polling for updates.
+.then(update.start)
 // Connect to the server and start streaming
 .then(() => {
   require('./ntp');
@@ -88,8 +91,8 @@ new Promise(resolve => {
   socket.on('reconnect_attempt', e => console.log(`reconnect_attempt: ${e}`));
   socket.on('reconnect_error', e => console.log(`reconnect_error: ${e}`));
   socket.on('reconnect_failed', e => console.log(`reconnect_failed: ${e}`));
-},
-e => {
+})
+.catch(e => {
   console.error(`Fatal initialization error: ${e}`); // TODO: Recover
 });
 

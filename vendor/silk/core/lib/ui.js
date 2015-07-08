@@ -179,6 +179,10 @@ input.on('up', e => {
   case 'power':
     cancelPowerDown();
     if (currentState === 'powerdown') {
+      // TODO: Need a real shutdown sequence someday.
+      //
+      // TODO: Call update.stop() here. We don't currently because there is a
+      //       cyclical dependency on ui.js and update.js that breaks stuff.
       util.setprop('sys.powerctl', 'shutdown');
     }
     break;

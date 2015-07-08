@@ -12,8 +12,10 @@
     "movie": "file:modules/movie",
     "node-hue-api": "1.0.5",
     "ntp-client": "0.5.3",
+    "request": "2.58.0",
     "silk-api": "file:modules/silk-api/dist/api",
-    "socket.io-client": "^1.3.5"
+    "socket.io-client": "^1.3.5",
+    "validator": "3.41.2"
   },
   "devDependencies": {
     "babel-eslint": "~3.1.15",

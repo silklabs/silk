@@ -243,8 +243,8 @@ VibratePatternCharacteristic.prototype.onWriteRequest = function(data, offset, w
   for (let i = 0; i < data.length / 2; i++) {
     pattern[i] = data.readUInt16LE(i * 2);
   }
-  console.log('Issuing vibrator pattern: ' + pattern);
-  vibrator.pattern(pattern);
+  console.log(`Issuing vibrator pattern: [${pattern.toString()}]`);
+  vibrator.pattern(...pattern);
   callback(this.RESULT_SUCCESS);
 };
 

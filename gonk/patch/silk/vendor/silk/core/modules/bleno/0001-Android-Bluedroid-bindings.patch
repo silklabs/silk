@@ -1,15 +1,15 @@
-From d4edf5797bc1339d282c084afc2686c631bfb3db Mon Sep 17 00:00:00 2001
+From b0bf865214d6ea26c08b7455df94b7550b9e3bce Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sun, 21 Jun 2015 22:14:38 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
  binding.gyp             |  38 ----
- lib/android/bindings.js | 504 ++++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 503 ++++++++++++++++++++++++++++++++++++++++++++++++
  lib/bleno.js            |   2 +
  package.json            |   1 +
  test.js                 |   3 +-
- 5 files changed, 509 insertions(+), 39 deletions(-)
+ 5 files changed, 508 insertions(+), 39 deletions(-)
  delete mode 100644 binding.gyp
  create mode 100644 lib/android/bindings.js
 
@@ -59,10 +59,10 @@ index 99c8e32..0000000
 -}
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..70f7447
+index 0000000..39048c9
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,504 @@
+@@ -0,0 +1,503 @@
 +/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 +/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 +
@@ -550,7 +550,6 @@ index 0000000..70f7447
 +  var callback = (function(handle, connId, transId) {
 +    return function(result) {
 +      if (needResponse) {
-+        console.log("WARNING: Write with response may not work!");
 +        this._bledroid.command('sendAttributeResponse ' + handle + ' ' + connId +
 +          ' ' + transId + ' ' + result);
 +      }
@@ -607,5 +606,5 @@ index d1c8ea1..9b3284f 100644
      bleno.stopAdvertising();
    }
 -- 
-2.0.1
+1.9.1
 

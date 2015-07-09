@@ -80,7 +80,7 @@ socket.on('connect', function () {
       log('video message: ' +
         ((msg.faces.length > 0) ? '[faces:' + msg.faces.length + ']' :'') +
         (('frame' in msg) ? '[frame:' + msg.contents + '] ' : '') +
-        'from: '+ msg.id
+        'from: '+ msg.id + ' at ' + msg.when
       );
       switch (msg.contents) {
       case 'mp4':

@@ -14,6 +14,7 @@
 #include <include/avc_utils.h>
 #include <utils/Thread.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "MPEG4MemoryWriter.h"
 
@@ -57,6 +58,7 @@ class Channel {
   }
 public:
   void send(int32_t tag, const void *data, size_t size);
+  void send(int32_t tag, timespec &when, const void *data, size_t size);
 };
 
 void Channel::send(const void *data, size_t size) {
@@ -74,9 +76,9 @@ void Channel::send(const void *data, size_t size) {
   fsync(STDOUT_FILENO);
 }
 
-void Channel::send(int32_t tag, const void *data, size_t size) {
+void Channel::send(int32_t tag, timespec &when, const void *data, size_t size) {
   if (sDebug) {
-    printf("tag: %d size: %d\n", tag, size);
+    printf("tag:%d, size: %d, when:%ld.%ld\n", tag, size, when.tv_sec, when.tv_nsec);
     return;
   }
 
@@ -84,8 +86,16 @@ void Channel::send(int32_t tag, const void *data, size_t size) {
 
   send(int32_t(size));
   send(int32_t(tag));
+  send(timespec(when));
   send(data, size);
 }
+
+void Channel::send(int32_t tag, const void *data, size_t size) {
+  timespec when;
+  clock_gettime(CLOCK_MONOTONIC, &when);
+  send(tag, when, data, size);
+}
+
 
 class PreviewMediaSource : public MediaSource {
 public:
@@ -623,12 +633,16 @@ bool SlicedMP4Encoder::threadLoop() {
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
     params->setInt32(kKeyRealTimeRecording, false);
+
+    timespec when;
+    clock_gettime(CLOCK_MONOTONIC, &when);
+
     CHECK_EQ(writer->start(params.get()), ::OK);
     writer->waitForEOS();
     CHECK_EQ(writer->stop(), ::OK);
 
     // Write size and .mp4 data to stdout
-    mChannel->send(TAG_VIDEO, writer->data().array(), writer->data().size());
+    mChannel->send(TAG_VIDEO, when, writer->data().array(), writer->data().size());
 
     writer = NULL;
   }

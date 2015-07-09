@@ -76,7 +76,7 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
 }
 
 
-const HEADER_NR_BYTES = 8;
+const HEADER_NR_BYTES = 16;
 // See capture.cpp:46.
 const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
@@ -111,21 +111,25 @@ class CameraStream {
         buffer = Buffer.concat([buffer, data]);
         while (buffer.length >= HEADER_NR_BYTES) {
           let size = buffer.readInt32LE(0);
-          let tag = buffer.readInt32LE(4);
           if (buffer.length < HEADER_NR_BYTES + size) {
             break;
           }
+          let tag = buffer.readInt32LE(4);
+          let sec = buffer.readInt32LE(8);
+          let msec = Math.round(buffer.readInt32LE(12) / 1e6);
+          let when = sec + (msec / 1000);
+
           let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
           switch (tag) {
           case TAG_PREVIEW:
-            this.pushPacket(pkt, 'jpeg');
+            this.pushPacket(when, pkt, 'jpeg');
             break;
           case TAG_VIDEO:
-            this.pushPacket(pkt, 'mp4');
+            this.pushPacket(when, pkt, 'mp4');
             break;
           case TAG_FACES:
             this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-            this.pushPacket();
+            this.pushPacket(when);
             break;
           default:
             break;
@@ -154,9 +158,9 @@ class CameraStream {
     }
   }
 
-  pushPacket(frame, type) {
+  pushPacket(when, frame, type) {
     this.socket.emit('video', { id: this.id, name: NAME, faces: this.faces,
-                                frame: frame, contents: type, });
+                                frame: frame, contents: type, when: when });
   }
 }
 

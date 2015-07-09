@@ -15,7 +15,7 @@ LOCAL_C_INCLUDES:= \
 	$(TOP)/frameworks/native/include/media/openmax \
 	external/jpeg
 
-LOCAL_CFLAGS += -Wno-multichar
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 
 LOCAL_MODULE_TAGS := optional
 

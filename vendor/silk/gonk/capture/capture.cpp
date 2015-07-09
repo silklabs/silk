@@ -14,6 +14,7 @@
 #include <include/avc_utils.h>
 #include <utils/Thread.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "MPEG4MemoryWriter.h"
 
@@ -75,8 +76,11 @@ void Channel::send(const void *data, size_t size) {
 }
 
 void Channel::send(int32_t tag, const void *data, size_t size) {
+  timespec when;
+  clock_gettime(CLOCK_MONOTONIC, &when);
+
   if (sDebug) {
-    printf("tag: %d size: %d\n", tag, size);
+    printf("tag:%d, size: %d, when:%ld.%ld\n", tag, size, when.tv_sec, when.tv_nsec);
     return;
   }
 
@@ -84,6 +88,7 @@ void Channel::send(int32_t tag, const void *data, size_t size) {
 
   send(int32_t(size));
   send(int32_t(tag));
+  send(timespec(when));
   send(data, size);
 }
 

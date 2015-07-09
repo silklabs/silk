@@ -1,0 +1,53 @@
+{
+  "name": "config",
+  "version": "0.0.1",
+  "description": "Command line interface to the BTLE scanner",
+  "author": {
+    "name": "Michael Vines",
+    "email": "mvines@silklabs.com"
+  },
+  "scripts": {
+    "prepublish": "node_modules/grunt-cli/bin/grunt",
+    "start": "node dist/index.js"
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "rules": {
+      "brace-style": 2,
+      "default-case": 2,
+      "comma-dangle": 0,
+      "indent": [
+        2,
+        2
+      ],
+      "no-underscore-dangle": 0,
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
+      ],
+      "yoda": 0
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    }
+  },
+  "dependencies": {
+    "grunt": "~0.4.5",
+    "grunt-babel": "~5.0.1",
+    "grunt-cli": "~0.1.13",
+    "load-grunt-tasks": "~3.2.0",
+    "noble": "^1.0.1",
+    "promise": "~7.0.1",
+    "silk-api": "file:../../modules/silk-api/dist/api"
+  },
+  "devDependencies": {
+    "babel-eslint": "~3.1.15",
+    "eslint": "~0.22.1",
+    "grunt-eslint": "~14.0.0"
+  },
+  "engines": {
+    "node": "0.12.2"
+  }
+}

@@ -36,4 +36,4 @@ PRODUCT_PACKAGES += fakeappops gonksched
 
 PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/master/latest/ota.json \
-  ro.silk.update.poll_hours=24
+  ro.silk.update.poll_hours=3

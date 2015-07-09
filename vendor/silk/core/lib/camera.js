@@ -115,9 +115,9 @@ class CameraStream {
             break;
           }
           let tag = buffer.readInt32LE(4);
-          let whenSec = buffer.readInt32LE(8);
-          let whenMSec = buffer.readInt32LE(12) / 1000000;
-          let when = parseFloat(`${whenSec}.${whenMSec}`);
+          let sec = buffer.readInt32LE(8);
+          let msec = Math.round(buffer.readInt32LE(12) / 1e6);
+          let when = sec + (msec / 1000);
 
           let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
           switch (tag) {

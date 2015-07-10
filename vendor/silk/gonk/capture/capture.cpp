@@ -1,3 +1,8 @@
+
+#define LOG_NDEBUG 0
+#define LOG_TAG "capture"
+#include <utils/Log.h>
+
 #include <binder/ProcessState.h>
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/AMessage.h>
@@ -639,10 +644,13 @@ bool SlicedMP4Encoder::threadLoop() {
 
     CHECK_EQ(writer->start(params.get()), ::OK);
     writer->waitForEOS();
-    CHECK_EQ(writer->stop(), ::OK);
-
-    // Write size and .mp4 data to stdout
-    mChannel->send(TAG_VIDEO, when, writer->data().array(), writer->data().size());
+    status_t err = writer->stop();
+    if (err == ::OK) {
+      // Write size and .mp4 data to stdout
+      mChannel->send(TAG_VIDEO, when, writer->data().array(), writer->data().size());
+    } else {
+      ALOGW("MPEG4MemoryWriter stop failed with %d. No video data sent", err);
+    }
 
     writer = NULL;
   }

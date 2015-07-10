@@ -40,7 +40,6 @@ public:
 private:
     sp<SurfaceControl> mFlingerSurfaceControl;
     sp<AnimationThread> mAnimationThread;
-    ZipFileRO *mZip;
 };
 
 }; // namespace android

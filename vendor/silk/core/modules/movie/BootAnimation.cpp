@@ -66,7 +66,7 @@ public:
       : mFlingerSurface(aFlingerSurface), mZip(aZip) {}
     virtual ~AnimationThread()
     {
-      mZip = NULL; // no delete
+      delete mZip;
     };
 
 private:
@@ -468,6 +468,10 @@ bool AnimationThread::threadLoop()
                 glDeleteTextures(1, &frame.tid);
             }
         }
+        // free file maps for this part
+        for (size_t j=0 ; j<fcount ; j++) {
+            part.frames[j].map->release();
+        }
     }
 
     // shut down GL
@@ -483,7 +487,7 @@ bool AnimationThread::threadLoop()
 // ---------------------------------------------------------------------------
 
 BootAnimation::BootAnimation()
-    : mAnimationThread(NULL), mZip(NULL)
+    : mAnimationThread(NULL)
 {
 }
 
@@ -491,9 +495,6 @@ BootAnimation::BootAnimation()
 BootAnimation::~BootAnimation()
 {
   mAnimationThread = NULL;
-  if (mZip != NULL) {
-    delete mZip;
-  }
 }
 
 
@@ -537,15 +538,11 @@ bool BootAnimation::load(char const *zipFile)
       mFlingerSurfaceControl = control;
   }
 
-  if (mZip != NULL) {
-    delete mZip;
-    mZip = NULL;
+  ZipFileRO *zip = ZipFileRO::open(zipFile);
+  if (NULL == zip) {
+    return false;
   }
-  mZip = ZipFileRO::open(zipFile);
-  if (NULL == mZip) {
-      return false;
-  }
-  mAnimationThread = new AnimationThread(mFlingerSurfaceControl->getSurface(), mZip);
+  mAnimationThread = new AnimationThread(mFlingerSurfaceControl->getSurface(), zip);
   return true;
 }
 

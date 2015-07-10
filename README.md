@@ -203,3 +203,18 @@ Building on Linux is 2x faster, even when running Linux in a VM hosted by OS X. 
 
 TODO: create a docker image that includes all the dependencies needed to setup a Linux machine to build silk-device and link to it here.
 
+### OTA Updates
+
+OTA updates are disabled by default.
+
+To enable updates:
+```
+$ adb shell setprop persist.silk.update.enabled true
+$ adb reboot
+```
+
+To disable updates:
+```
+$ adb shell rm /data/property/persist.silk.update.enabled
+$ adb reboot
+```

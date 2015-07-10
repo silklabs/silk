@@ -13,6 +13,7 @@ let validator = require('validator');
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
 const POLL_HOURS_PROP = 'ro.silk.update.poll_hours';
 const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
+const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/cache/update.zip';
 
 const DEVICE = getprop('ro.boot.hardware');
@@ -20,6 +21,7 @@ const FINGERPRINT = getprop('ro.build.fingerprint');
 const MANIFEST_URL = getprop(MANIFEST_URL_PROP);
 const POLL_HOURS = getprop(POLL_HOURS_PROP);
 const PREVENT_REBOOT = getprop(PREVENT_REBOOT_PROP) !== '';
+const UPDATE_ENABLED = getprop(UPDATE_ENABLED_PROP) !== '';
 
 // TODO: Set this to false for engineering builds somehow.
 const IGNORE_SAME_FINGERPRINT = true;
@@ -247,10 +249,14 @@ function createSHA1Promise(path) {
   return { promise: promise, cancel: cancel };
 }
 
-function waitForPollTime() {
+function waitForPollTime(runImmediately) {
   // Maybe bail out.
   if (!running) {
     return Promise.reject();
+  }
+
+  if (runImmediately) {
+    return Promise.resolve();
   }
 
   log(`Scheduling update poll in ${POLL_HOURS} hours`);
@@ -514,13 +520,13 @@ function restart() {
   startedDownload = false;
 
   if (running) {
-    poll();
+    poll(/* runImmediately */ false);
   }
 }
 
-function poll() {
+function poll(runImmediately) {
   // Glue everything together into one long promise chain.
-  waitForPollTime()
+  waitForPollTime(runImmediately)
   .then(fetchManifest)
   .then(validateManifest)
   .then(removeOldUpdate)
@@ -562,6 +568,11 @@ function start() {
     return Promise.resolve();
   }
 
+  if (!UPDATE_ENABLED) {
+    log(`'${UPDATE_ENABLED_PROP}' is unset, disabling updates`);
+    return Promise.resolve();
+  }
+
   running = true;
 
   // TODO: Check the status of the last update and report anything fishy.
@@ -578,7 +589,7 @@ function start() {
 
   log(`Update polling started for "${MANIFEST_URL}", fingerprint: "` +
       `${FINGERPRINT}"`);
-  poll();
+  poll(/* runImmediately */ true);
 
   return Promise.resolve();
 }

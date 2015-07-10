@@ -22,7 +22,15 @@ if [[ ! -d $ANDROID_PRODUCT_OUT ]] ; then
 fi
 
 get_pid_by_name() {
-    echo $($ADB shell "toolbox ps '$1' | (read header; read user pid rest; echo -n \$pid)")
+    echo $($ADB shell "toolbox ps '$1' | \
+      ( read header; \
+        while read user pid ppid vsize rrs wchan pc state name _rest; do \
+          if [ \$state != 'Z' ]; then \
+            echo -n \$pid; \
+            return; \
+          fi; \
+        done; \
+      )")
 }
 
 ADB=${ADB:-adb}

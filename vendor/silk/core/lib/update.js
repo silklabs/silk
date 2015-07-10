@@ -249,10 +249,14 @@ function createSHA1Promise(path) {
   return { promise: promise, cancel: cancel };
 }
 
-function waitForPollTime() {
+function waitForPollTime(runImmediately) {
   // Maybe bail out.
   if (!running) {
     return Promise.reject();
+  }
+
+  if (runImmediately) {
+    return Promise.resolve();
   }
 
   log(`Scheduling update poll in ${POLL_HOURS} hours`);
@@ -516,13 +520,13 @@ function restart() {
   startedDownload = false;
 
   if (running) {
-    poll();
+    poll(/* runImmediately */ false);
   }
 }
 
-function poll() {
+function poll(runImmediately) {
   // Glue everything together into one long promise chain.
-  waitForPollTime()
+  waitForPollTime(runImmediately)
   .then(fetchManifest)
   .then(validateManifest)
   .then(removeOldUpdate)
@@ -585,7 +589,7 @@ function start() {
 
   log(`Update polling started for "${MANIFEST_URL}", fingerprint: "` +
       `${FINGERPRINT}"`);
-  poll();
+  poll(/* runImmediately */ true);
 
   return Promise.resolve();
 }

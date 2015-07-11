@@ -1,0 +1,25 @@
+From 1424c86b6fc6a4c4214394dfa0010f3957af8418 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 11 Jul 2015 10:25:16 -0700
+Subject: [PATCH] Disable WVMExtractor
+
+---
+ media/libstagefright/WVMExtractor.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/WVMExtractor.cpp b/media/libstagefright/WVMExtractor.cpp
+index bc48272..b6da89e 100644
+--- a/media/libstagefright/WVMExtractor.cpp
++++ b/media/libstagefright/WVMExtractor.cpp
+@@ -49,7 +49,7 @@ WVMExtractor::WVMExtractor(const sp<DataSource> &source)
+ {
+     Mutex::Autolock autoLock(gWVMutex);
+ 
+-    if (!getVendorLibHandle()) {
++    {
+         return;
+     }
+ 
+-- 
+1.9.1
+

@@ -11,3 +11,8 @@ service silk /system/bin/silk
     class main
     user root
 
+service volume /system/bin/volume
+    class main
+    user media
+    oneshot
+

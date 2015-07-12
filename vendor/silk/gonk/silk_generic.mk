@@ -13,8 +13,10 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 
 SILK_PROGIES := \
   bledroid \
-  dhcputil \
   capture \
+  dhcputil \
+  player \
+  volume \
   wpa_monitor \
 
 PRODUCT_PACKAGES += $(SILK_PROGIES)

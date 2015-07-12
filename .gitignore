@@ -39,3 +39,8 @@
 
 # vim droppings
 *.swp
+
+# eclipse droppings
+.cproject
+.project
+/.settings/

@@ -15,21 +15,28 @@ $ cd aosp_mako/
 $ ./flash.sh
 ```
 
-## Building 101
+## Prerequisites
+0. You _must_ have a case sensitive file system to build on OS X.  To create one,
+  0. Open Disk Utility (Cmd-space then type "disk utility")
+  0. Select New -> Blank Disk Image
+  0. For "Name", choose "Silk" or something without spaces
+  0. For "Size", choose Custom -- 10 GB
+  0. "Format": Case-sensitive; Journaled
+  0. "Image Format": "sparse disk image"
+  0. Finally press "Create" and your new disk will mount at `/Volumes/Silk` (or whatever you named it).
+0. Make sure that your [SSH key](https://help.github.com/articles/generating-ssh-keys/) is added to your github account.
+0. Install Xcode command line tools by going to App Store and installing Xcode
+0. Install [Java SDK 7.x](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+0. Install Node by running |brew install node|
 
-NOTE: You _must_ have a case sensitive file system to build on OS X.  To create one,
+## Syncing
+0. Follow instructions at [fork a repo](https://help.github.com/articles/fork-a-repo/) to fork and clone the git repository.
 
-0. Open Disk Utility (Cmd-space then type "disk utility")
-0. Select New -> Blank Disk Image
-0. For "Name", choose "Silk" or something without spaces
-0. For "Size", choose Custom -- 10 GB
-0. "Format": Case-sensitive; Journaled
-0. "Image Format": "sparse disk image"
-
-Finally press "Create" and your new disk will mount at `/Volumes/Silk` (or whatever you named it).
-
-1. ```make``` => downloads (if necessary) and builds the target binaries
-2. ```make install``` => installs the build products onto a device
+## Building
+```
+  $make # <-- downloads (if necessary) and builds the target binaries
+  $make install # <-- installs the build products onto a device
+```
 
 ### Updating your workspace
 

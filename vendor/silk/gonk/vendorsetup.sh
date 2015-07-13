@@ -1,4 +1,5 @@
 export USE_CCACHE=1 # Yes please!
+export CCACHE_HASHDIR=true
 
 
 poison_their_lunch()

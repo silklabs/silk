@@ -13,6 +13,13 @@ service silk /system/bin/silk
 
 service volume /system/bin/volume
     class main
-    user media
+    user audio
+    group audio
     oneshot
+
+service wpad /system/bin/wpad
+    class main
+    user system
+    group wifi system
+    socket wpad stream 0600 root root
 

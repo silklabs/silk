@@ -3,10 +3,9 @@
 
 'use strict';
 
-let caps = require('./caps');
 let util = require('./util');
 let events = require('events');
-let spawn = require('child_process').spawn;
+let net = require('net');
 
 let iface = util.getprop('wifi.interface');
 let monitor;
@@ -25,51 +24,45 @@ class WpaMonitor extends events.EventEmitter
   }
 
   _restart(why) {
-    if (this._wpaMonitor) {
+    if (this._socket) {
       this._ready = false;
-      this._wpaMonitor.kill();
-      this._wpaMonitor = null;
+      this._socket = null;
 
-      console.log(`wpa_monitor restart: ${why}`);
-      util.timeout(1000).then(() => {
-        this._init();
-      });
+      console.log(`wpad restart: ${why}`);
+      util.timeout(1000).then(() => this._init());
       return;
     }
-
-    console.log(`wpa_monitor restart pending (ignored "${why}")`);
+    console.log(`wpad restart pending (ignored "${why}")`);
   }
 
   _init() {
-    console.log('Starting wpa_monitor');
-    this._buffer = '';
-    this._wpaMonitor = spawn('/system/bin/wpa_monitor');
-    this._wpaMonitor.on('close', err => this._restart(`wpa_monitor process closed: ${err}`) );
-    this._wpaMonitor.on('error', err => this._restart(`wpa_monitor prcess error: ${err}`) );
-    this._wpaMonitor.stdout.on('data', d => this._onStdoutData(d));
+    this._socket = net.createConnection('/dev/socket/wpad', () => {
+      this._buffer = '';
+      this._ready = true;
+    });
+    this._socket.on('data', data => this._onData(data));
+    this._socket.on('error', err => {
+      this._restart(`wpad error, reason=${err}`);
+    });
+    this._socket.on('close', hadError => {
+      if (!hadError) {
+        this._restart(`wpad close`);
+      }
+    });
   }
 
-  _onStdoutData(data) {
+  _onData(data) {
     this._buffer += data.toString();
-    this._ready = true;
 
-    let newLineIndex;
-    while ((newLineIndex = this._buffer.indexOf('\n')) !== -1) {
-      let line = this._buffer.substring(0, newLineIndex);
+    let nullByte;
+    while ((nullByte = this._buffer.indexOf('\0')) !== -1) {
+      let line = this._buffer.substring(0, nullByte);
+      this._buffer = this._buffer.substring(nullByte + 1);
 
-      if (line[line.length - 1] === '\r') {
-        line = line.slice(0, -1);
-      }
-      this._buffer = this._buffer.substring(newLineIndex + 1);
-
-      //console.log(`raw line: ${line}`);
+      //console.log(`raw wpad line: ${line}`);
 
       let found;
-      if ((found = line.match(/^!!>(.*)/))) {
-        this._restart(`wpa_monitor error: ${found[1]}`);
-        return;
-      }
-      if ((found = line.match(/^[0-9a-f]{2}>IFNAME=([^ ]+) ([^ ]+) (.*)/))) {
+      if ((found = line.match(/^200 IFNAME=([^ ]+) ([^ ]+) (.*)/))) {
         let [, _iface, cmd, extra] = found;
         if (iface !== _iface) {
           console.log(`Ignoring command from unknown interface ${_iface}: ${cmd}`);
@@ -101,7 +94,7 @@ class WpaMonitor extends events.EventEmitter
         }
         continue;
       }
-      console.error(`Error: Unknown wpa_monitor output: ${line}`);
+      console.error(`Error: Unknown wpad output: ${line}`);
     }
   }
 }
@@ -180,12 +173,6 @@ class Wifi extends events.EventEmitter
     return util.exec('dhcputil', [iface, 'dhcp_stop'])
       .then(() => util.exec('ndc', ['network', 'destroy', '100']))
       .then(() => util.exec('ndc', ['interface', 'clearaddr', iface]))
-      .then(() => {
-        if (caps.has('wifi-needs-fwreload')) {
-          return util.exec('ndc', ['softap', 'fwreload', iface, 'AP']);
-        }
-        return Promise.resolve();
-      })
       .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
       .then(r => {
         console.log(`${iface} state| ${r.stdout}`);
@@ -231,7 +218,8 @@ class Wifi extends events.EventEmitter
           .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
           .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
           .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
-          .then(() => util.exec('ndc', ['interface', 'getcfg', iface]));
+          .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
+          .catch(util.processthrow);
       })
       .then(r => {
         console.log(`${iface} state| ${r.stdout}`);

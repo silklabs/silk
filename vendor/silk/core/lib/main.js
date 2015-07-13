@@ -14,7 +14,7 @@ let util = require('./util');
 let update = require('./update');
 
 process.on('uncaughtException', err => {
-  console.log('Error:', err, err.stack);
+  console.log('Uncaught Error:', err, err.stack);
   vib.pattern(
     300, 200, 300, 200, 300, // S
     400,
@@ -22,6 +22,7 @@ process.on('uncaughtException', err => {
     400,
     300, 200, 300, 200, 300  // S
   );
+  // TODO: Likely restart node here eventually
 });
 
 new Promise(resolve => {
@@ -93,6 +94,6 @@ new Promise(resolve => {
   socket.on('reconnect_failed', e => console.log(`reconnect_failed: ${e}`));
 })
 .catch(e => {
-  console.error(`Fatal initialization error: ${e}`); // TODO: Recover
+  util.processthrow(`Fatal initialization error: ${e}`);
 });
 

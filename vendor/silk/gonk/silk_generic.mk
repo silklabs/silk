@@ -17,7 +17,7 @@ SILK_PROGIES := \
   dhcputil \
   player \
   volume \
-  wpa_monitor \
+  wpad \
 
 PRODUCT_PACKAGES += $(SILK_PROGIES)
 

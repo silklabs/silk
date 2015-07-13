@@ -5,6 +5,7 @@
 
 let api = require('silk-api');
 let btle = require('./btle');
+let crashreport = require('./crashreport');
 let lights = require('./lights')();
 let ui = require('./ui');
 let vib = require('./vibrator')();
@@ -15,18 +16,6 @@ let update = require('./update');
 const id = api.id.create();
 const name = (util.getprop('persist.silk.displayName')
               || 'Silkcam');
-
-process.on('uncaughtException', err => {
-  console.log('Uncaught Error:', err, err.stack);
-  vib.pattern(
-    300, 200, 300, 200, 300, // S
-    400,
-    600, 200, 600, 200, 600, // O
-    400,
-    300, 200, 300, 200, 300  // S
-  );
-  // TODO: Likely restart node here eventually
-});
 
 new Promise(resolve => {
   console.log('Wait for boot complete');
@@ -72,6 +61,7 @@ new Promise(resolve => {
   let camera = require('./camera')(id.toString());
   socket.on('connect', () => {
     ui('online');
+    crashreport.start(socket);
     emitDeviceInfo();
     camera.start(socket);
 
@@ -95,6 +85,7 @@ new Promise(resolve => {
   socket.on('disconnect', () => {
     ui('connecting');
     camera.stop();
+    crashreport.stop();
   });
   socket.on('error', err => console.log('Connection error:', err));
 

@@ -5,6 +5,12 @@
 
 let childProcessExecFile = require('child_process').execFile;
 
+// Throws an exception to the top level process exception handler, escaping any
+// Promises that might otherwise consume the exception
+export function processthrow(e) {
+  process.emit('uncaughtException', e);
+}
+
 export function exec(cmd, args) {
   return new Promise((resolve, reject) => {
     childProcessExecFile(cmd, args, (err, stdout, stderr) => {

@@ -1,0 +1,28 @@
+From 04871975a84762320b6a37a6581085bb3e7a6fdb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 12 Jul 2015 21:57:23 -0700
+Subject: [PATCH] sdcard: remove /data version check
+
+---
+ sdcard/sdcard.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/sdcard/sdcard.c b/sdcard/sdcard.c
+index 9cfb040..82d0748 100644
+--- a/sdcard/sdcard.c
++++ b/sdcard/sdcard.c
+@@ -1965,11 +1965,6 @@ int main(int argc, char **argv)
+         ERROR("Error setting RLIMIT_NOFILE, errno = %d\n", errno);
+     }
+ 
+-    while ((fs_read_atomic_int("/data/.layout_version", &fs_version) == -1) || (fs_version < 3)) {
+-        ERROR("installd fs upgrade not yet complete. Waiting...\n");
+-        sleep(1);
+-    }
+-
+     res = run(source_path, dest_path, uid, gid, write_gid, num_threads, derive, split_perms);
+     return res < 0 ? 1 : 0;
+ }
+-- 
+1.9.1
+

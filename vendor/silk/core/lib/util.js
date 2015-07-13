@@ -40,6 +40,10 @@ export function execRetry(cmd, args, retries, delayMs) {
 export function getprop(prop) {
   let spawnSync = require('child_process').spawnSync;
   let result = spawnSync('getprop', [prop]);
+  if (result.error) {
+    console.log(`Error: getprop("${prop}"): ${result.error}`);
+    return undefined;
+  }
   return result.stdout.toString().replace(/\n$/, '');
 }
 

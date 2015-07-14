@@ -20,7 +20,8 @@ function connectStream(test, socket, device, name) {
       socket.onNewVideoStream = null;
       return resolve();
     };
-    socket.emit('video', { id: device, name: name });
+    socket.emit('info', { id: device, now: Date.now(), name: name });
+    socket.emit('video', { id: device });
   });
 }
 

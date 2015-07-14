@@ -9,7 +9,7 @@ npm install
 
 To run the test suite:
 ```bash
-grunt test
+npm test
 ```
 
 ## Test locally

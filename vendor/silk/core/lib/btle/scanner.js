@@ -10,6 +10,8 @@ const decls = api.btleConfigService;
 let ssid;
 let psk;
 
+const CURVE = 'curve25519';
+
 function startScanning() {
   console.log(`Scanning for unregistered SilkCams...`);
   noble.startScanning([decls.uuid.ConfigService], true);
@@ -32,6 +34,8 @@ noble.on('warning', msg => console.warning(`Noble Warning: ${msg}`));
 
 noble.on('discover', peripheral => {
   let uuids = peripheral.advertisement.serviceUuids;
+  let stateChar, apChar, secretChar, curveChar, centralKeyChar, peripheralKeyChar;
+  let central;
 
   if (uuids.indexOf(decls.uuid.ConfigService) !== -1) {
     let name = peripheral.advertisement.localName;
@@ -48,6 +52,9 @@ noble.on('discover', peripheral => {
           decls.uuid.StateCharacteristic,
           decls.uuid.AccessPointCharacteristic,
           decls.uuid.SecretCharacteristic,
+          decls.uuid.CurveCharacteristic,
+          decls.uuid.CentralKeyCharacteristic,
+          decls.uuid.PeripheralKeyCharacteristic,
         ],
         (err, services, characteristics) => {
           if (err) {
@@ -57,15 +64,26 @@ noble.on('discover', peripheral => {
           }
           console.log('(peripheral discover)');
 
-          let [stateChar, apChar, secretChar] = characteristics;
+          // Fetch characterstic
+          for (let i in characteristics) {
+            let characteristic = characteristics[i];
+            if (characteristic.uuid === decls.uuid.StateCharacteristic) {
+              stateChar = characteristic;
+            } else if (characteristic.uuid === decls.uuid.AccessPointCharacteristic) {
+              apChar = characteristic;
+            } else if (characteristic.uuid === decls.uuid.SecretCharacteristic) {
+              secretChar = characteristic;
+            } else if (characteristic.uuid === decls.uuid.CurveCharacteristic) {
+              curveChar = characteristic;
+            } else if (characteristic.uuid === decls.uuid.CentralKeyCharacteristic) {
+              centralKeyChar = characteristic;
+            } else if (characteristic.uuid === decls.uuid.PeripheralKeyCharacteristic) {
+              peripheralKeyChar = characteristic;
+            }
+          }
 
           // Read the current device configuration state
-          noble.read(
-            peripheral.uuid,
-            decls.uuid.ConfigService,
-            stateChar.uuid
-          );
-
+          stateChar.read();
           stateChar.on('data', data => {
             if (data.length !== 1) {
               console.error(`Received invalid state from peripheral: ${data.length}`);
@@ -74,13 +92,10 @@ noble.on('discover', peripheral => {
               let state = data.readUInt8(0);
               switch (state) {
               case decls.state.UNREGISTERED:
-                console.log(`Device is unregistered. Sending it SSID/PSK`);
-                noble.write(
-                  peripheral.uuid,
-                  decls.uuid.ConfigService,
-                  apChar.uuid,
-                  new Buffer(ssid)
-                );
+                console.log(`Device is unregistered. Setting up crypto`);
+
+                // Write Curve
+                curveChar.write(new Buffer(CURVE, 'utf8'), true);
                 break;
               case decls.state.REGISTERED:
                 console.log(`Device is registered, disconnecting.`);
@@ -92,29 +107,45 @@ noble.on('discover', peripheral => {
                 break;
               }
             }
-
           });
 
+          // Read peripheral key
+          curveChar.on('write', () => {
+            console.log(`crypto: crypto written succesfully`);
+            peripheralKeyChar.read();
+          });
+
+          // Write central key
+          peripheralKeyChar.on('read', (data) => {
+            console.log(`crypto: peripheral key read succesfully`);
+
+            central = api.crypto.create(CURVE);
+            let key = data.toString('binary');
+            central.deriveShared(key);
+
+            centralKeyChar.write(new Buffer(central.exportPublic(), 'binary'),
+                true);
+          });
+
+          // Write SSID key
+          centralKeyChar.on('write', () => {
+            console.log(`crypto: central key written succesfully`);
+            apChar.write(new Buffer(ssid), true);
+          });
+
+          // Write secret key
           apChar.on('write', () => {
-            noble.write(
-              peripheral.uuid,
-              decls.uuid.ConfigService,
-              secretChar.uuid,
-              new Buffer(psk)
-            );
+            console.log(`AP key written successfully`);
+            secretChar.write(new Buffer(psk), true);
           });
 
           secretChar.on('write', () => {
+            console.log(`secret key written succesfully`);
+
             // Read the current device configuration state again to ensure it's
             // now registered.
-            noble.read(
-              peripheral.uuid,
-              decls.uuid.ConfigService,
-              stateChar.uuid
-            );
-
+            stateChar.read();
           });
-
         }
       );
     });

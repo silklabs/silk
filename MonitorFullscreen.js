@@ -13,32 +13,25 @@ var {
 } = React;
 
 var WebViewBridge = require('react-native-webview-bridge');
+var LiveVideo = require('./LiveVideo');
 
 var MonitorFullscreen = React.createClass({
   componentDidMount: function() {
     var statusBarAnimation = 'slide';
-    var webview = this.refs.webview;
+    var video = this.refs.video;
 
     StatusBarIOS.setHidden(true, statusBarAnimation);
-    webview.onMessage(msg => {
-      if (msg != 'done') {
-        console.log('Received unknown message from WebView:', msg);
-        return;
-      }
-      StatusBarIOS.setHidden(false, statusBarAnimation);
-      console.log('Popping out of fullscreen');
-      this.props.navigator.pop();
-    });
-    webview.send({ id: this.props.vid,
-                   serverUrl: 'http://'+ this.props.serverUrl });
   },
 
   render: function() {
+    var videoStream = {
+      server: `http://${this.props.serverUrl}`,
+      id: this.props.vid
+    };
+
     return (
       <View style={styles.container}>
-        <WebViewBridge ref='webview'
-                       url='web/monitor-stream.html'
-                       bounces={false} />
+        <LiveVideo videoStream={videoStream} ref='video' />
       </View>
     );
   },
@@ -47,6 +40,7 @@ var MonitorFullscreen = React.createClass({
 var styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'stretch'
   },
 });
 

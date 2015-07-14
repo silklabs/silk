@@ -74,6 +74,11 @@ socket.on('connect', function () {
     // possible
     var stream = 'video-' + msg.id;
 
+    var monitor = document.getElementById(msg.id);
+    if (monitor) {
+      monitors.removeChild(monitor);
+    }
+
     var img = document.createElement('img');
     var a = document.createElement('a');
     a.setAttribute('id', msg.id);

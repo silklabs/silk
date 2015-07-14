@@ -7,6 +7,7 @@ SRCS = [
   'lib/camera.js',
   'lib/caps.js',
   'lib/config.js',
+  'lib/crashreport.js',
   'lib/lights.js',
   'lib/main.js',
   'lib/ntp.js',

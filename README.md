@@ -225,3 +225,19 @@ To disable updates:
 $ adb shell rm /data/property/persist.silk.update.enabled
 $ adb reboot
 ```
+
+### Automatic crash reporting
+
+Crash reporting is disabled by default.
+
+To enable reporting:
+```
+$ adb shell setprop persist.silk.crashrprt.enabled true
+$ adb reboot
+```
+
+To disable reporting:
+```
+$ adb shell rm /data/property/persist.silk.crashrprt.enabled
+$ adb reboot
+```

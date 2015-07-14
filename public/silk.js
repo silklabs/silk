@@ -53,6 +53,11 @@ function maybeFeedPlayer(stream, chunk) {
 // Register for logging messages and display them.
 var socket = io(document.location.origin);
 socket.on('connect', function () {
+  while (monitors.firstChild) {
+    log('Removing old child ' + monitors.firstChild);
+    monitors.removeChild(monitors.firstChild);
+  }
+
   socket.emit('join', 'logging');
   socket.on('log', function (msg) {
     log(msg);
@@ -64,13 +69,13 @@ socket.on('connect', function () {
     // become component-ized and shared with the native apps if
     // possible
     var stream = 'video-' + msg.id;
-    var monitor = document.createElement('img');
-    monitor.setAttribute('id', msg.id);
 
+    var img = document.createElement('img');
     var a = document.createElement('a');
+    a.setAttribute('id', msg.id);
     a.addEventListener('click', function() { showPlayer(stream); });
     a.href = '#';
-    a.appendChild(monitor);
+    a.appendChild(img);
     monitors.appendChild(a);
 
     socket.on(stream, function(msg) {
@@ -88,7 +93,9 @@ socket.on('connect', function () {
         return;
       case 'jpeg':
         var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
-        monitor.src = jpeg;
+        var a = document.getElementById(msg.id);
+        var img = a.firstChild;
+        img.src = jpeg;
         return;
       default:
         return;
@@ -99,6 +106,8 @@ socket.on('connect', function () {
   socket.on('video-stream-delete', function(msg) {
     log('Dead video stream '+ msg.id);
     var monitor = document.getElementById(msg.id);
+    var stream = 'video-' + msg.id;
+    socket.emit('leave', stream);
     monitors.removeChild(monitor);
   });
 });

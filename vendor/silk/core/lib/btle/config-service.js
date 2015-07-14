@@ -335,30 +335,27 @@ ConfigService.prototype.useCentralKey = function(key) {
 };
 
 ConfigService.prototype.setAccessPoint = function(apEnc) {
-  // TODO: RESTORE this.crypto
-  //assert(this.crypto);
+  if (this.crypto) {
+    console.log('Decrypting access point ...');
+    this.ap = this.crypto.decrypt(apEnc);
+  } else {
+    this.ap = apEnc;
+  }
 
-  console.log('Decrypting access point ...');
-  //this.ap = this.crypto.decrypt(apEnc);
-  this.ap = apEnc;
-  console.log('  ... AP is "' + this.ap + '"');
   this.checkDone();
 };
 
 ConfigService.prototype.setSecret = function(secretEnc) {
-  // TODO: RESTORE this.crypto
-  //assert(this.crypto);
-
-  console.log('Decrypting secret ...');
-  if (secretEnc.length) {
-    //this.secret = this.crypto.decrypt(secretEnc);
-    this.secret = secretEnc;
-    // TODO XXX FIXME TODO: remove this for production!!!!
-    console.log('  ... secret is "' + this.secret + '"');
-  } else {
+  if (secretEnc.length === 0) {
     console.log('  ... no secret, unsecured network');
     this.unsecured = true;
+  } else if (this.crypto) {
+    console.log('Decrypting secret ...');
+    this.secret = this.crypto.decrypt(secretEnc);
+  } else {
+    this.secret = secretEnc;
   }
+
   this.checkDone();
 };
 

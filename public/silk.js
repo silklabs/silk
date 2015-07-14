@@ -58,7 +58,6 @@ function maybeFeedPlayer(stream, chunk) {
 var socket = io(document.location.origin);
 socket.on('connect', function () {
   while (monitors.firstChild) {
-    log('Removing old child ' + monitors.firstChild);
     monitors.removeChild(monitors.firstChild);
   }
 
@@ -80,6 +79,7 @@ socket.on('connect', function () {
     }
 
     var img = document.createElement('img');
+    img.setAttribute('title', msg.name);
     var a = document.createElement('a');
     a.setAttribute('id', msg.id);
     a.addEventListener('click', function() { showPlayer(stream); });
@@ -92,7 +92,7 @@ socket.on('connect', function () {
         return;
       }
       log('video message: ' +
-        ((msg.faces.length > 0) ? '[faces:' + msg.faces.length + ']' :'') +
+        (('faces' in msg) ? '[faces:' + msg.faces.length + ']' :'') +
         (('frame' in msg) ? '[frame:' + msg.contents + '] ' : '') +
         'from: '+ msg.id + ' at ' + msg.when
       );

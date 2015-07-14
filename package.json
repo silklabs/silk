@@ -4,10 +4,10 @@
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
-    "postinstall": "grunt",
-    "prepublish": "grunt",
+    "postinstall": "./node_modules/.bin/grunt",
+    "prepublish": "./node_modules/.bin/grunt",
     "start": "node dist/lib/main.js",
-    "test": "grunt test"
+    "test": "./node_modules/.bin/grunt test"
   },
   "license": "proprietary",
   "dependencies": {

@@ -4,7 +4,6 @@
 'use strict';
 
 let api = require('silk-api');
-let id = api.id.create();
 let btle = require('./btle');
 let lights = require('./lights')();
 let ui = require('./ui');
@@ -12,6 +11,10 @@ let vib = require('./vibrator')();
 let wifi = require('./wifi');
 let util = require('./util');
 let update = require('./update');
+
+const id = api.id.create();
+const name = (util.getprop('persist.silk.displayName')
+              || 'Silkcam');
 
 process.on('uncaughtException', err => {
   console.log('Uncaught Error:', err, err.stack);
@@ -54,16 +57,22 @@ new Promise(resolve => {
 .then(update.start)
 // Connect to the server and start streaming
 .then(() => {
-  require('./ntp');
-
   console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
   let socket = require('socket.io-client')(api.config.server_url);
 
+  function emitDeviceInfo() {
+    socket.emit('info', { id: id.toString(), name: name, now: Date.now()} );
+  }
+  require('./ntp').on('time', () => {
+    if (socket.connected) {
+      emitDeviceInfo();
+    }
+  });
 
   let camera = require('./camera')(id.toString());
   socket.on('connect', () => {
     ui('online');
-
+    emitDeviceInfo();
     camera.start(socket);
 
     socket.on('cmd', cmd => {

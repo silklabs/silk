@@ -8,7 +8,7 @@ var server_url = process.env.SILK_SERVER_URL;
 if (!server_url) {
   // TODO: how to set non-production in browser ...
   if (process.env.NODE_ENV === 'production' || typeof window === 'object') {
-    server_url = 'http://silk-test-server.herokuapp.com/';
+    server_url = 'https://silk-test-server.herokuapp.com/';
   } else {
     server_url = 'http://localhost:5000/';
   }

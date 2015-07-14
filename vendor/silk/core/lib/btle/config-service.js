@@ -105,14 +105,8 @@ CurveCharacteristic.prototype.onWriteRequest = function(data, offset, withoutRes
   if (offset) {
     return callback(this.RESULT_INVALID_OFFSET);
   }
-  // TODO lock down other characteristics, ensure we've passed the
-  // proximity gate.  There's no real harm that out-of-order
-  // reads/writes can cause, but they might be evidence of
-  // malfeasance.
-  this.service.proximityPromise.then(() => {
-    this.service.useECCurve(data.toString('utf8'));
-    callback(this.RESULT_SUCCESS);
-  });
+  this.service.useECCurve(data.toString('utf8'));
+  callback(this.RESULT_SUCCESS);
 };
 
 function PeripheralKeyCharacteristic(service) {
@@ -132,7 +126,14 @@ PeripheralKeyCharacteristic.prototype.onReadRequest = function(offset, callback)
   if (offset) {
     return callback(this.RESULT_INVALID_OFFSET);
   }
-  callback(this.RESULT_SUCCESS, new Buffer(this.service.getKey(), 'binary'));
+
+  // TODO lock down other characteristics, ensure we've passed the
+  // proximity gate. There's no real harm that out-of-order
+  // reads/writes can cause, but they might be evidence of
+  // malfeasance.
+  this.service.proximityPromise.then(() => {
+    callback(this.RESULT_SUCCESS, new Buffer(this.service.getKey(), 'binary'));
+  });
 };
 
 function CentralKeyCharacteristic(service) {

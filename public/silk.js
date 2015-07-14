@@ -31,6 +31,9 @@ function makeObjectUrl(array, mimeType) {
 var video = document.getElementById('video');
 var activeStream = null;
 function showPlayer(stream) {
+  if (stream === activeStream) {
+    return;
+  }
   video.style.display = 'block';
   activeStream = stream;
   setTimeout(function() { document.body.addEventListener('click', hidePlayer); });
@@ -38,6 +41,7 @@ function showPlayer(stream) {
 
 function hidePlayer() {
   video.style.display = 'none';
+  activeStream = null;
   document.body.removeEventListener('click', hidePlayer);
 }
 

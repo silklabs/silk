@@ -19,7 +19,7 @@
 #include <include/avc_utils.h>
 #include <utils/Thread.h>
 #include <getopt.h>
-#include <time.h>
+#include <sys/time.h>
 
 #include "MPEG4MemoryWriter.h"
 
@@ -63,7 +63,7 @@ class Channel {
   }
 public:
   void send(int32_t tag, const void *data, size_t size);
-  void send(int32_t tag, timespec &when, const void *data, size_t size);
+  void send(int32_t tag, timeval &when, const void *data, size_t size);
 };
 
 void Channel::send(const void *data, size_t size) {
@@ -81,9 +81,9 @@ void Channel::send(const void *data, size_t size) {
   fsync(STDOUT_FILENO);
 }
 
-void Channel::send(int32_t tag, timespec &when, const void *data, size_t size) {
+void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
   if (sDebug) {
-    printf("tag:%d, size: %d, when:%ld.%ld\n", tag, size, when.tv_sec, when.tv_nsec);
+    printf("tag:%d, size: %d, when:%ld.%ld\n", tag, size, when.tv_sec, when.tv_usec);
     return;
   }
 
@@ -91,13 +91,13 @@ void Channel::send(int32_t tag, timespec &when, const void *data, size_t size) {
 
   send(int32_t(size));
   send(int32_t(tag));
-  send(timespec(when));
+  send(timeval(when));
   send(data, size);
 }
 
 void Channel::send(int32_t tag, const void *data, size_t size) {
-  timespec when;
-  clock_gettime(CLOCK_MONOTONIC, &when);
+  timeval when;
+  gettimeofday(&when, NULL);
   send(tag, when, data, size);
 }
 
@@ -639,8 +639,8 @@ bool SlicedMP4Encoder::threadLoop() {
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
     params->setInt32(kKeyRealTimeRecording, false);
 
-    timespec when;
-    clock_gettime(CLOCK_MONOTONIC, &when);
+    timeval when;
+    gettimeofday(&when, NULL);
 
     CHECK_EQ(writer->start(params.get()), ::OK);
     writer->waitForEOS();

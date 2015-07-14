@@ -3,11 +3,6 @@
 
 'use strict';
 
-let util = require('./util');
-
-const NAME = (util.getprop('persist.silk.displayName')
-              || 'Silkcam');
-
 //const FRONT = 1;
 const BACK = 0;
 
@@ -115,9 +110,9 @@ class CameraStream {
             break;
           }
           let tag = buffer.readInt32LE(4);
-          let sec = buffer.readInt32LE(8);
-          let msec = Math.round(buffer.readInt32LE(12) / 1e6);
-          let when = sec + (msec / 1000);
+          let sec = buffer.readInt32LE(8);   // timeval.tv_sec
+          let usec = buffer.readInt32LE(12); // timeval.tv_usec
+          let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
 
           let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
           switch (tag) {
@@ -129,7 +124,7 @@ class CameraStream {
             break;
           case TAG_FACES:
             this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-            this.pushPacket(when);
+            this.pushPacket(when, null, 'faces');
             break;
           default:
             break;
@@ -159,7 +154,8 @@ class CameraStream {
   }
 
   pushPacket(when, frame, type) {
-    this.socket.emit('video', { id: this.id, name: NAME, faces: this.faces,
+    console.log(`packet:${type}: when:${when}ms lag:${Date.now() - when}ms`);
+    this.socket.emit('video', { id: this.id, faces: this.faces,
                                 frame: frame, contents: type, when: when });
   }
 }

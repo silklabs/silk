@@ -37,5 +37,6 @@ PRODUCT_PACKAGES += librecovery librecovery_test
 PRODUCT_PACKAGES += fakeappops gonksched
 
 PRODUCT_PROPERTY_OVERRIDES += \
+  persist.silk.debug=silk-*,-silk-*:debug
   ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/master/latest/ota.json \
   ro.silk.update.poll_hours=3

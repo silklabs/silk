@@ -7,34 +7,42 @@
 //
 //   var log = require('./log')('coolfeature');
 //
-//   log.info('foo');  // outputs to stdout
-//   log.warn('bar');  // outputs to stdout
-//   log.error('baz'); // outputs to stderr
+//   log.debug('useless');  // outputs to stdout
+//   log.info('foo');       // outputs to stdout
+//   log.warn('bar');       // outputs to stdout
+//   log.error('baz');      // outputs to stderr
 //
-// To enable output you set the DEBUG environment variable to something like:
+// To enable output set the 'persist.silk.debug' property:
 //
-//   DEBUG=silk-coolfeature:error
-//   DEBUG=silk-coolfeature:*,-silk-coolfeature:info
-//   DEBUG=silk-coolfeature:*
-//   DEBUG=silk-*
+//   $ setprop persist.silk.debug silk-coolfeature:error
+//   $ setprop persist.silk.debug silk-coolfeature:*,-silk-coolfeature:info
+//   $ setprop persist.silk.debug silk-coolfeature:*
+//   $ setprop persist.silk.debug silk-*
 //
+// By default all info(), warn(), and error() output is enabled. All debug()
+// output is disabled.
 export default function createLog(libraryName) {
   const debug = require('debug');
 
   libraryName = 'silk-' + libraryName;
 
+  let debugFunction = debug(libraryName + ':debug');
   let infoFunction = debug(libraryName + ':info');
 
-  // Redirect infoFunction to stdout only if we're not supposed to be piping
-  // everything to a custom FD.
+  // Redirect to stdout only if we're not supposed to be piping everything to a
+  // custom FD.
   if (!('DEBUG_FD' in process.env)) {
-    infoFunction.log = console.log.bind(console);
+    let stdoutFunction = console.log.bind(console);
+
+    debugFunction.log = stdoutFunction;
+    infoFunction.log = stdoutFunction;
   }
 
   let warnFunction = debug(libraryName + ':warn');
   let errorFunction = debug(libraryName + ':error');
 
   return {
+    debug: debugFunction,
     info: infoFunction,
     warn: warnFunction,
     error: errorFunction

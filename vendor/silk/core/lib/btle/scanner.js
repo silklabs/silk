@@ -130,13 +130,19 @@ noble.on('discover', peripheral => {
           // Write SSID key
           centralKeyChar.on('write', () => {
             console.log(`crypto: central key written succesfully`);
-            apChar.write(new Buffer(ssid), true);
+            central.encrypt(ssid)
+            .then(cipherText => {
+              apChar.write(new Buffer(cipherText, 'utf8'), true);
+            });
           });
 
           // Write secret key
           apChar.on('write', () => {
             console.log(`AP key written successfully`);
-            secretChar.write(new Buffer(psk), true);
+            central.encrypt(psk)
+            .then(cipherText => {
+              secretChar.write(new Buffer(cipherText, 'utf8'), true);
+            });
           });
 
           secretChar.on('write', () => {

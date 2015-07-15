@@ -7,6 +7,7 @@ let api = require('silk-api');
 let btle = require('./btle');
 let crashreport = require('./crashreport');
 let lights = require('./lights')();
+let log = require('./log')('main');
 let ui = require('./ui');
 let vib = require('./vibrator')();
 let wifi = require('./wifi');
@@ -24,18 +25,18 @@ new Promise(resolve => {
     if ('1' === util.getprop('sys.boot_completed')) {
       resolve();
     } else {
-      console.log('Waiting for sys.boot_completed=1');
+      log.info('Waiting for sys.boot_completed=1');
       util.timeout(1000).then(_waitForBoot);
     }
   };
   _waitForBoot();
 })
 .then(() => {
-  console.log('Initialize hardware');
+  log.info('Initialize hardware');
   return Promise.all([wifi.init(), btle.init()]);
 })
 .then(() => {
-  console.log('Load configuration');
+  log.info('Load configuration');
   return require('./config')(id);
 })
 .then(() => {
@@ -46,7 +47,7 @@ new Promise(resolve => {
 .then(update.start)
 // Connect to the server and start streaming
 .then(() => {
-  console.log(`Device ${id} connecting to server ${api.config.server_url} ...`);
+  log.info(`Device ${id} connecting to server ${api.config.server_url} ...`);
   let socket = require('socket.io-client')(api.config.server_url);
 
   function emitDeviceInfo() {
@@ -77,7 +78,7 @@ new Promise(resolve => {
         lights && lights.setState(cmd.state); //eslint-disable-line no-unused-expressions
         return;
       default:
-        console.log('Unhandled command', cmd);
+        log.error('Unhandled command', cmd);
         return;
       }
     });
@@ -87,11 +88,11 @@ new Promise(resolve => {
     camera.stop();
     crashreport.stop();
   });
-  socket.on('error', err => console.log('Connection error:', err));
+  socket.on('error', err => log.warn('Connection error:', err));
 
-  socket.on('reconnect_attempt', e => console.log(`reconnect_attempt: ${e}`));
-  socket.on('reconnect_error', e => console.log(`reconnect_error: ${e}`));
-  socket.on('reconnect_failed', e => console.log(`reconnect_failed: ${e}`));
+  socket.on('reconnect_attempt', e => log.info(`reconnect_attempt: ${e}`));
+  socket.on('reconnect_error', e => log.info(`reconnect_error: ${e}`));
+  socket.on('reconnect_failed', e => log.warn(`reconnect_failed: ${e}`));
 })
 .catch(e => {
   util.processthrow(`Fatal initialization error: ${e}`);

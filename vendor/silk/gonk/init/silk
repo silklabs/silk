@@ -3,6 +3,7 @@
 export NODE_ENV="production"
 export NODE_PATH="/system/silk"
 export SILK_SERVER_URL=$(getprop persist.silk.server.url)
+export DEBUG=$(getprop persist.silk.debug)
 
 if [ -z $1 ]; then
   log -p i -t silk-init Starting Silk services

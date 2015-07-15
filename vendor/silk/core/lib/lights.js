@@ -6,6 +6,7 @@
 let weOwnTty = (require.main === module);
 
 let hue = require('node-hue-api');
+let log = require('./log')('lights');
 let util = require('./util');
 
 class LightsHue {
@@ -24,17 +25,17 @@ class LightsHue {
     // completion-callbacks ad infinitum.  We need to surface the
     // error to the user and ignore the calls that will fail somehow.
     this.initPromise = hue.nupnpSearch().then(bridges => {
-      console.log('Found ' + bridges.length + ' bridge(s)');
+      log.info('Found ' + bridges.length + ' bridge(s)');
       this.bridge = bridges[0];
       this.api = new hue.HueApi(this.bridge.ipaddress, this.user);
       return this.api.config();
     }).then(config => {
       let userIsRegistered = ('whitelist' in config);
       if (!userIsRegistered && !weOwnTty) {
-        console.log('ERROR: hub not configured for user ' + this.user);
-        console.log('ERROR:   To configure the hub, run this file directly');
-        console.log('ERROR:   on your host machine, for example as:');
-        console.log('ERROR:   $ node out/target/product/generic/obj/DATA/core.js_intermediates/dist/lib/lights.js');
+        log.warn('ERROR: hub not configured for user ' + this.user);
+        log.warn('ERROR:   To configure the hub, run this file directly');
+        log.warn('ERROR:   on your host machine, for example as:');
+        log.warn('ERROR:   $ node out/target/product/generic/obj/DATA/core.js_intermediates/dist/lib/lights.js');
         return Promise.reject('Hub not configured');
       }
       let registrationPromise = (userIsRegistered ?
@@ -42,14 +43,14 @@ class LightsHue {
       return registrationPromise.then(() => this.api.lights());
     }).then(result => {
       this.lights = result.lights;
-      console.log('Found ' + this.lights.length + ' attached lights');
+      log.info('Found ' + this.lights.length + ' attached lights');
       this.initPromise = null;
     });
   }
 
   _register() {
-    console.log('User not registered.');
-    console.log('\n\n  *****  Go press the "Link" button!\n\n\n');
+    log.info('User not registered.');
+    log.info('\n\n  *****  Go press the "Link" button!\n\n\n');
     let prompt = require('prompt');
     prompt.start();
     return new Promise((resolve, reject) => {
@@ -61,7 +62,7 @@ class LightsHue {
                    return this.api.registerUser(this.bridge.ipaddress,
                                                 this.user, 'Test user')
                    .then(() => {
-                     console.log('Created user');
+                     log.info('Created user');
                      return this.api.config();
                    }).then(() => resolve());
                  });
@@ -100,16 +101,16 @@ if (weOwnTty) {
   let lights = new LightsHue();
   lights.setWhite(0.0, 0.1)
   .then(() => {
-    console.log('Updated light state to (cool, 10%).');
+    log.info('Updated light state to (cool, 10%).');
     return util.timeout(2000);
   })
   .then(() => lights.setWhite(1.0, 0.5))
   .then(() => {
-    console.log('Updated light state to (warm, 50%).');
+    log.info('Updated light state to (warm, 50%).');
     return util.timeout(2000);
   })
   .then(() => lights.setWhite(0.5, 1.0))
   .then(() => {
-    console.log('Updated light state to (mid, 100%).');
+    log.info('Updated light state to (mid, 100%).');
   });
 }

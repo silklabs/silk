@@ -4,6 +4,7 @@
 'use strict';
 
 let getprop = require('./util').getprop;
+let log = require('./log')('caps');
 
 const ALL = new Set([
   'btle-peripheral',
@@ -14,7 +15,7 @@ const ALL = new Set([
 function validateCaps(...caps) {
   let invalidCaps = caps.filter(cap => !ALL.has(cap));
   if (invalidCaps.length) {
-    invalidCaps.forEach(cap => console.log('Invalid capability', cap));
+    invalidCaps.forEach(cap => log.warn('Invalid capability', cap));
     throw 'Invalid device capability configuration';
   }
   return new Set(caps);

@@ -6,6 +6,7 @@
 let util = require('./util');
 let events = require('events');
 let net = require('net');
+let log = require('./log')('wifi');
 
 let iface = util.getprop('wifi.interface');
 let monitor;
@@ -28,11 +29,11 @@ class WpaMonitor extends events.EventEmitter
       this._ready = false;
       this._socket = null;
 
-      console.log(`wpad restart: ${why}`);
+      log.info(`wpad restart: ${why}`);
       util.timeout(1000).then(() => this._init());
       return;
     }
-    console.log(`wpad restart pending (ignored "${why}")`);
+    log.info(`wpad restart pending (ignored "${why}")`);
   }
 
   _init() {
@@ -59,13 +60,11 @@ class WpaMonitor extends events.EventEmitter
       let line = this._buffer.substring(0, nullByte);
       this._buffer = this._buffer.substring(nullByte + 1);
 
-      //console.log(`raw wpad line: ${line}`);
-
       let found;
       if ((found = line.match(/^200 IFNAME=([^ ]+) ([^ ]+) (.*)/))) {
         let [, _iface, cmd, extra] = found;
         if (iface !== _iface) {
-          console.log(`Ignoring command from unknown interface ${_iface}: ${cmd}`);
+          log.info(`Ignoring command from unknown interface ${_iface}: ${cmd}`);
           continue;
         }
 
@@ -85,23 +84,23 @@ class WpaMonitor extends events.EventEmitter
             let state = ['disconnected', 'disabled', 'inactive', 'scanning',
              'authenticating', 'associating', 'associated', 'four_way_handshake',
              'group_handshake', 'completed'][stateIndex];
-            console.log(`wifi state: ${state}`);
+            log.info(`wifi state: ${state}`);
           }
           break;
         default:
-          console.log(`(ignored) ${cmd} | ${extra}`);
+          log.warn(`(ignored) ${cmd} | ${extra}`);
           break;
         }
         continue;
       }
-      console.error(`Error: Unknown wpad output: ${line}`);
+      log.warn(`Error: Unknown wpad output: ${line}`);
     }
   }
 }
 
 function wpaCli(...args) {
   if (!monitor.ready()) {
-    console.log('wpaCli: supplicant not ready, waiting');
+    log.info('wpaCli: supplicant not ready, waiting');
     return util.timeout(1000).then(() => wpaCli(...args));
   }
 
@@ -175,10 +174,10 @@ class Wifi extends events.EventEmitter
       .then(() => util.exec('ndc', ['interface', 'clearaddr', iface]))
       .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
       .then(r => {
-        console.log(`${iface} state| ${r.stdout}`);
+        log.info(`${iface} state| ${r.stdout}`);
       })
       .catch(err => {
-        console.log(`Error: Network cleanup failed: ${err}`);
+        log.warn(`Error: Network cleanup failed: ${err}`);
       });
   }
 
@@ -186,7 +185,7 @@ class Wifi extends events.EventEmitter
 
     monitor = new WpaMonitor(iface);
     monitor.on('connected', () => {
-      console.log('Wifi Connected. Issuing DHCP request');
+      log.info('Wifi Connected. Issuing DHCP request');
 
       util.exec('dhcputil', [iface, 'dhcp_request'])
       .then(() => {
@@ -207,8 +206,8 @@ class Wifi extends events.EventEmitter
         if (domain === '') {
           domain = 'localdomain';
         }
-        console.log(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
-                    `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
+        log.info(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
+                 `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
 
         // Add basic routing table and DNS
         return Promise.resolve()
@@ -222,19 +221,19 @@ class Wifi extends events.EventEmitter
           .catch(util.processthrow);
       })
       .then(r => {
-        console.log(`${iface} state| ${r.stdout}`);
-        console.log('==> Wifi online');
+        log.info(`${iface} state| ${r.stdout}`);
+        log.info('==> Wifi online');
         this._online = true;
         this.emit('online');
       })
       .catch(err => {
-        console.log(`Error: DHCP request failed: ${err}`);
+        log.warn(`Error: DHCP request failed: ${err}`);
       });
 
     });
     monitor.on('disconnected', () => {
       this._networkCleanup();
-      console.log('==> Wifi offline');
+      log.info('==> Wifi offline');
       this._online = false;
       this.emit('offline');
     });
@@ -243,7 +242,7 @@ class Wifi extends events.EventEmitter
   }
 
   init() {
-    console.log('WiFi initializing');
+    log.info('WiFi initializing');
 
     // Set the device hostname to something that is probably unique
     util.setprop('net.hostname', 'silk-' + util.getprop('ro.serialno'));
@@ -253,7 +252,7 @@ class Wifi extends events.EventEmitter
       .then(() => wpaCli('status'))
       .then(() => wpaCliExpectOk('log_level', 'excessive'))
       .then(() => {
-        console.log('WiFi initialization complete');
+        log.info('WiFi initialization complete');
         return Promise.resolve();
       });
   }

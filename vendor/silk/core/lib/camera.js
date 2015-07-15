@@ -3,6 +3,8 @@
 
 'use strict';
 
+let log = require('./log')('camera');
+
 //const FRONT = 1;
 const BACK = 0;
 
@@ -154,7 +156,7 @@ class CameraStream {
   }
 
   pushPacket(when, frame, type) {
-    console.log(`packet:${type}: when:${when}ms lag:${Date.now() - when}ms`);
+    log.info(`packet:${type}: when:${when}ms lag:${Date.now() - when}ms`);
     this.socket.emit('video', { id: this.id, faces: this.faces,
                                 frame: frame, contents: type, when: when });
   }

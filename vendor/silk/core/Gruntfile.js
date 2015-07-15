@@ -9,6 +9,7 @@ SRCS = [
   'lib/config.js',
   'lib/crashreport.js',
   'lib/lights.js',
+  'lib/log.js',
   'lib/main.js',
   'lib/ntp.js',
   'lib/ui.js',

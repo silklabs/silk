@@ -243,3 +243,33 @@ To disable reporting:
 $ adb shell rm /data/property/persist.silk.crashrprt.enabled
 $ adb reboot
 ```
+
+### Logging
+
+Logging uses the [debug](https://github.com/visionmedia/debug) module. To see all logging:
+```
+$ adb shell setprop persist.silk.debug silk-*
+$ adb shell stop silk
+$ adb shell start silk
+```
+
+To only log specific modules:
+```
+$ adb shell setprop persist.silk.debug silk-update:*,silk-crashreport:*
+$ adb shell stop silk
+$ adb shell start silk
+```
+
+Logging is split into three "levels": 'info', 'warn', and 'error'. To exclude 'info' messages you could do this:
+```
+$ adb shell setprop persist.silk.debug silk-update:*,-silk-update:info
+$ adb shell stop silk
+$ adb shell start silk
+```
+
+To see all logging, even from other node modules:
+```
+$ adb shell setprop 'persist.silk.debug "*"'
+$ adb shell stop silk
+$ adb shell start silk
+```

@@ -110,12 +110,13 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 # Create a fake package.json to declare a "root directory", needed to successfully load native bindings
 	$(hide) touch $(@D)/package.json
 # Locate and copy native bindings from
-#   ../node_modules/<foo>/Release/<foo>.node to /system/silk/Release/<foo>.node
-# so they can be resolved correctly from the browserify-ed silk.js
-	$(hide) mkdir -p $(@D)/Release
+#   ../node_modules/<foo>/Release/<foo>.node to /system/silk/build/<foo>.node
+# so they can be resolved correctly from the browserify-ed silk.js via the
+# /build symlink created from init.silk.rc
+	$(hide) mkdir -p $(@D)/build
 	$(hide) \
   for binding in `cd $(<D)/node_modules/ && find . -mindepth 4 -maxdepth 4 -type f -name *.node`; do \
-    cp -f $(<D)/node_modules/$$binding $(@D)/Release/`basename $$binding`; \
+    cp -f $(<D)/node_modules/$$binding $(@D)/build/`basename $$binding`; \
   done
 
 

@@ -4,9 +4,9 @@
 
 First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
 https://dl.google.com/dl/android/aosp/occam-lmy47v-factory-b0c4eb3d.tgz and
-ensure the device is functioning normally.
+ensure the device is functioning normally.  It's only necessary to perform this step once when you first acquire the device.
 
-Then obtain the latest Silk Nexus 4 ROM:
+Then obtain the latest Silk Nexus 4 ROM and flash it with:
 
 ```
 $ wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
@@ -14,6 +14,8 @@ $ tar zxf mako.tgz
 $ cd aosp_mako/
 $ ./flash.sh
 ```
+Check the latest green build at https://magnum.travis-ci.com/silklabs/silk-device/builds to figure what **mako.tgz** currently contains.
+
 
 ## Prerequisites
 0. You _must_ have a case sensitive file system to build on OS X.  To create one,

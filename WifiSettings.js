@@ -76,7 +76,7 @@ var WifiSettings = React.createClass({
                   <Text style={styles.formRowLabel}>Password</Text>
                 </View>
                 <View style={styles.formInputContainer}>
-                  <TextInput ref='secret' password={true}
+                  <TextInput ref='secret' secureTextEntry={true}
                              value={this.state.secret}
                              autoFocus={true}
                              style={styles.formInput}

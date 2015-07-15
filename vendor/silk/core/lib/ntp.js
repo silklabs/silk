@@ -6,6 +6,7 @@
 let util = require('./util');
 let ntpClient = require('ntp-client');
 let EventEmitter = require('events').EventEmitter;
+let log = require('./log')('ntp');
 let emitter = new EventEmitter();
 
 // Retry every 10 seconds until time is acquired
@@ -15,7 +16,7 @@ const NTP_RETRY_DELAY = 10 * 1000;
 const NTP_REFRESH_DELAY = 24 * 60 * 60 * 1000;
 
 function setSystemDate(date) {
-  console.log(`Setting system time to: ${date}`);
+  log.info(`Setting system time to: ${date}`);
 
   //
   // TODO: Milliseconds are being dropped below.  This is okay for now because
@@ -33,23 +34,23 @@ function setSystemDate(date) {
   .then(
     result => {
       if (result.code !== 0) {
-        console.error(`Error: unable to set system time: ${result.code}: ${result.stderr}`);
+        log.warn(`Error: unable to set system time: ${result.code}: ${result.stderr}`);
       } else {
         emitter.emit('time');
       }
     },
     err => {
-      console.error(`Error: unable to set system time: ${err}`);
+      log.warn(`Error: unable to set system time: ${err}`);
     }
   );
 }
 
 function getNetworkTime() {
-  console.log('Retrieving NTP time');
+  log.info('Retrieving NTP time');
 
   function ntpCallback(err, date) {
     if (err) {
-      console.error(`Error: NTP failed: ${err}`);
+      log.warn(`Error: NTP failed: ${err}`);
       util.timeout(NTP_RETRY_DELAY).then(getNetworkTime);
     } else {
       setSystemDate(date);

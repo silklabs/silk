@@ -6,6 +6,7 @@
 let crypto = require('crypto');
 let fs = require('fs');
 let getprop = require('./util').getprop;
+let log = require('./log')('update');
 let request = require('request');
 let ui = require('./ui');
 let validator = require('validator');
@@ -31,10 +32,6 @@ const isValidUpdateURLOptions = {
   require_protocol: true,                       // eslint-disable-line camelcase
   require_tld: true                             // eslint-disable-line camelcase
 };
-
-function log(str) {
-  console.log(`*** update.js *** ${str}`);
-}
 
 // Whether or not start has been called.
 let running = false;
@@ -62,7 +59,7 @@ function createTimeoutPromise(delay) {
   let promise = new Promise((resolve, reject) => {
     let timeout = setTimeout(resolve, delay);
     cancel = () => {
-      log('Canceling during a timeout');
+      log.info('Canceling during a timeout');
       reject();
       clearTimeout(timeout);
     };
@@ -108,7 +105,7 @@ function createRequestPromise(options) {
     });
 
     cancel = () => {
-      log('Canceling during a requestPromise');
+      log.info('Canceling during a requestPromise');
       reject();
       req.abort();
     };
@@ -157,7 +154,7 @@ function createPipeRequestPromise(options, path) {
     });
 
     cancel = () => {
-      log('Canceling during a pipeRequestPromise');
+      log.info('Canceling during a pipeRequestPromise');
       reject();
       finish();
     };
@@ -173,7 +170,7 @@ function createPipeRequestPromise(options, path) {
 function createStatPromise(path) {
   let cancel = () => {
     // There is no way to really cancel this.
-    log('Canceling during a statPromise');
+    log.info('Canceling during a statPromise');
   };
   let promise = new Promise((resolve, reject) => {
     fs.stat(path, (err, stats) => {
@@ -197,7 +194,7 @@ function createUnlinkPromise(path) {
   // No way to cancel this.
   let cancel = () => {
     // There is no way to really cancel this.
-    log('Canceling during a unlinkPromise');
+    log.info('Canceling during a unlinkPromise');
   };
   let promise = new Promise((resolve, reject) => {
     fs.unlink(path, (err) => {
@@ -241,7 +238,7 @@ function createSHA1Promise(path) {
     });
 
     cancel = () => {
-      log('Canceling during a sha1Promise');
+      log.info('Canceling during a sha1Promise');
       reject();
       canceled = true;
     };
@@ -259,7 +256,7 @@ function waitForPollTime(runImmediately) {
     return Promise.resolve();
   }
 
-  log(`Scheduling update poll in ${POLL_HOURS} hours`);
+  log.info(`Scheduling update poll in ${POLL_HOURS} hours`);
 
   // Set a timer to run the update check.
   let pollMs = parseInt(POLL_HOURS) * 60 * 60 * 1000;
@@ -276,7 +273,7 @@ function fetchManifest() {
   }
 
   // Fetch the fingerprint from the OTA server.
-  log(`Checking "${MANIFEST_URL}" for updates`);
+  log.info(`Checking "${MANIFEST_URL}" for updates`);
 
   let { promise, cancel } = createRequestPromise({ uri: MANIFEST_URL,
                                                    json: true });
@@ -294,14 +291,14 @@ function validateManifest(result) {
   let status = result.response.statusCode;
   if (status !== 200) {
     // Bail out.
-    log(`Update server responded with status ${status}`);
+    log.info(`Update server responded with status ${status}`);
     return Promise.reject();
   }
 
   let metadata = result.body[DEVICE];
   if (!metadata) {
-    log(`Update server responded with nothing available for "${DEVICE}" ` +
-        'device');
+    log.info(`Update server responded with nothing available for "${DEVICE}" ` +
+             'device');
     return Promise.reject();
   }
 
@@ -309,43 +306,43 @@ function validateManifest(result) {
   let fingerprint = metadata.fingerprint;
   if (!fingerprint) {
     // Bail out.
-    log('Update server responded with no fingerprint');
+    log.warn('Update server responded with no fingerprint');
     return Promise.reject();
   }
 
   if (IGNORE_SAME_FINGERPRINT && fingerprint === FINGERPRINT) {
     // Bail out.
-    log('No update available');
+    log.info('No update available');
     return Promise.reject();
   }
 
-  log(`Update server responded with fingerprint "${fingerprint}"`);
+  log.info(`Update server responded with fingerprint "${fingerprint}"`);
 
   // Validate URL.
   let url = metadata.url;
   if (!url) {
     // Bail out.
-    log('Update server responded with no url');
+    log.warn('Update server responded with no url');
     return Promise.reject();
   }
 
   if (!validator.isURL(url, isValidUpdateURLOptions)) {
     // Bail out.
-    log(`Update server responded with an invalid url: "${url}"`);
+    log.warn(`Update server responded with an invalid url: "${url}"`);
     return Promise.reject();
   }
 
   // Validate size.
   if (!metadata.size) {
     // Bail out.
-    log('Update server responded with empty size download');
+    log.warn('Update server responded with empty size download');
     return Promise.reject();
   }
 
   let parsedSize = parseInt(metadata.size);
   if (isNaN(parsedSize)) {
     // Bail out.
-    log(`Update server responded with invalid size ${metadata.size}`);
+    log.warn(`Update server responded with invalid size ${metadata.size}`);
     return Promise.reject();
   }
 
@@ -354,13 +351,14 @@ function validateManifest(result) {
   // Validate sha1.
   if (!metadata.sha1) {
     // Bail out.
-    log('Update server responded with no sha1 hash');
+    log.warn('Update server responded with no sha1 hash');
     return Promise.reject();
   }
 
   if (!validator.isHexadecimal(metadata.sha1)) {
     // Bail out.
-    log(`Update server responded with an invalid sha1: "${metadata.sha1}"`);
+    log.warn('Update server responded with an invalid sha1: ' +
+             `"${metadata.sha1}"`);
     return Promise.reject();
   }
 
@@ -379,7 +377,7 @@ function removeOldUpdate() {
   }
 
   // Remove old update file.
-  log(`Removing "${UPDATE_FILE_PATH}" if it exists`);
+  log.info(`Removing "${UPDATE_FILE_PATH}" if it exists`);
 
   let { promise, cancel } = createUnlinkPromise(UPDATE_FILE_PATH);
   cancelFunction = cancel;
@@ -395,7 +393,7 @@ function fetchUpdate(/* removed */) {
   startedDownload = true;
 
   // Download new update file.
-  log(`Downloading "${currentMetadata.url}" to "${UPDATE_FILE_PATH}"`);
+  log.info(`Downloading "${currentMetadata.url}" to "${UPDATE_FILE_PATH}"`);
 
   let { promise, cancel } =
     createPipeRequestPromise(currentMetadata.url, UPDATE_FILE_PATH);
@@ -411,11 +409,11 @@ function determineUpdateSize(response) {
 
   if (response) {
     // Bail out.
-    log('Update server responded with status ' + response.statusCode);
+    log.info('Update server responded with status ' + response.statusCode);
     return Promise.reject();
   }
 
-  log('Update download completed');
+  log.info('Update download completed');
 
   let { promise, cancel } = createStatPromise(UPDATE_FILE_PATH);
   cancelFunction = cancel;
@@ -430,8 +428,8 @@ function validateUpdateSize(stats) {
 
   if (stats.size !== currentMetadata.size) {
     // Bail out.
-    log(`Update size is incorrect, downloaded ${stats.size} bytes but ` +
-        `expected ${currentMetadata.size} bytes`);
+    log.warn(`Update size is incorrect, downloaded ${stats.size} bytes but ` +
+             `expected ${currentMetadata.size} bytes`);
     return Promise.reject();
   }
 
@@ -444,7 +442,7 @@ function calculateUpdateHash() {
     return Promise.reject();
   }
 
-  log('Computing SHA1 for the file');
+  log.info('Computing SHA1 for the file');
 
   let { promise, cancel } = createSHA1Promise(UPDATE_FILE_PATH);
   cancelFunction = cancel;
@@ -459,25 +457,25 @@ function validateUpdateHash(sha1) {
 
   if (sha1 !== currentMetadata.sha1) {
     // Bail out.
-    log(`Update sha1 is incorrect, got "${sha1}" but expected "` +
-        `${currentMetadata.sha1}"`);
+    log.warn(`Update sha1 is incorrect, got "${sha1}" but expected "` +
+             `${currentMetadata.sha1}"`);
     return Promise.reject();
   }
 
-  log(`Update sha1 matches the expected hash: ${sha1}`);
+  log.info(`Update sha1 matches the expected hash: ${sha1}`);
 
   return Promise.resolve();
 }
 
 function stageUpdateAndReboot() {
   if (PREVENT_REBOOT) {
-    log(`'${PREVENT_REBOOT_PROP}' is set, skipping reboot`);
+    log.info(`'${PREVENT_REBOOT_PROP}' is set, skipping reboot`);
     return Promise.resolve();
   }
 
   // TODO: Make sure nothing else is writing to disk before we call this
   //       because we want our file cache buffers sync'd properly.
-  log(`'${PREVENT_REBOOT_PROP}' is not set, rebooting`);
+  log.info(`'${PREVENT_REBOOT_PROP}' is not set, rebooting`);
 
   ui('powerdown');
 
@@ -498,11 +496,11 @@ function stageUpdateAndReboot() {
 
 function cleanup(err) {
   if (err) {
-    log(`Update poll error: ${err}`);
+    log.warn(`Update poll error: ${err}`);
   }
 
   if (startedDownload) {
-    log(`Removing "${UPDATE_FILE_PATH}" if it exists`);
+    log.info(`Removing "${UPDATE_FILE_PATH}" if it exists`);
 
     // We don't want this to be canceled.
     cancelFunction = null;
@@ -546,30 +544,30 @@ function start() {
   }
 
   if (!MANIFEST_URL) {
-    log(`'${MANIFEST_URL_PROP}' is unset, disabling updates`);
+    log.warn(`'${MANIFEST_URL_PROP}' is unset, disabling updates`);
     return Promise.resolve();
   }
 
   if (!validator.isURL(MANIFEST_URL, isValidUpdateURLOptions)) {
-    log(`'${MANIFEST_URL_PROP}' is set to an invalid url "${MANIFEST_URL}",` +
-        ' disabling updates');
+    log.warn(`'${MANIFEST_URL_PROP}' is set to an invalid url ` +
+             `"${MANIFEST_URL}", disabling updates`);
     return Promise.resolve();
   }
 
   if (!POLL_HOURS) {
-    log(`'${POLL_HOURS_PROP}' is unset, disabling updates`);
+    log.warn(`'${POLL_HOURS_PROP}' is unset, disabling updates`);
     return Promise.resolve();
   }
 
   let pollHours = parseInt(POLL_HOURS);
   if (isNaN(pollHours) || pollHours <= 0) {
-    log(`'${POLL_HOURS_PROP}' is set to an invalid value "${POLL_HOURS}", ` +
-        'disabling updates');
+    log.warn(`'${POLL_HOURS_PROP}' is set to an invalid value ` +
+               `"${POLL_HOURS}", disabling updates`);
     return Promise.resolve();
   }
 
   if (!UPDATE_ENABLED) {
-    log(`'${UPDATE_ENABLED_PROP}' is unset, disabling updates`);
+    log.warn(`'${UPDATE_ENABLED_PROP}' is unset, disabling updates`);
     return Promise.resolve();
   }
 
@@ -580,15 +578,15 @@ function start() {
   // Remove any old update files left over from a previous update.
   createUnlinkPromise(UPDATE_FILE_PATH).promise.then(removed => {
     if (removed) {
-      log(`Removed old "${UPDATE_FILE_PATH}" file`);
+      log.info(`Removed old "${UPDATE_FILE_PATH}" file`);
     }
   })
   .catch(err => {
-    log(`Failed to remove "${UPDATE_FILE_PATH}": ${err}`);
+    log.warn(`Failed to remove "${UPDATE_FILE_PATH}": ${err}`);
   });
 
-  log(`Update polling started for "${MANIFEST_URL}", fingerprint: "` +
-      `${FINGERPRINT}"`);
+  log.info(`Update polling started for "${MANIFEST_URL}", fingerprint: "` +
+           `${FINGERPRINT}"`);
   poll(/* runImmediately */ true);
 
   return Promise.resolve();
@@ -614,7 +612,7 @@ function stop() {
   pollPromise = null;
 
   function done() {
-    log('Update polling stopped');
+    log.info('Update polling stopped');
   }
 
   return promise.then(done, done);

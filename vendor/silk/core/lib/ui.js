@@ -6,6 +6,7 @@
 let caps = require('./caps');
 let events = require('events');
 let fs = require('fs');
+let log = require('./log')('ui');
 let movie = require('movie')();
 let util = require('./util');
 let vib = require('./vibrator')();
@@ -21,13 +22,13 @@ class InputDevice extends events.EventEmitter
 {
   constructor(dev) {
     super();
-    console.log(`InputDevice: ${dev}`);
+    log.info(`InputDevice: ${dev}`);
     this.dev = dev;
     this.bufferSize = 16; // input event size for a 32-bit kernel ONLY
     this.buf = new Buffer(this.bufferSize);
     fs.open(this.dev, 'r', (err, fd) => {
       if (err) {
-        console.error(`Unable to open ${dev}`);
+        log.warn(`Unable to open ${dev}`);
         return;
       }
       this.fd = fd;
@@ -42,10 +43,9 @@ class InputDevice extends events.EventEmitter
 
   _onRead(err, bytesRead, buffer) {
     if (err) {
-      console.error(`Unable to read ${this.dev}: ${err}`);
+      log.warn(`Unable to read ${this.dev}: ${err}`);
       return;
     }
-    //console.log('input_event: ' + buffer.toString('hex'));
     let event;
     if (buffer.readUInt16LE(8) === 1 /*EV_KEY*/ ) {
       event = {
@@ -79,7 +79,7 @@ class Input extends events.EventEmitter
     } else {
       fs.readdir('/dev/input', (err, availDevices) => {
         if (err) {
-          console.error(`Unable to enumerate input devices: ${err}`);
+          log.warn(`Unable to enumerate input devices: ${err}`);
           return;
         }
         this._open(availDevices.filter(i => i.substring(0, 5) === 'event'));
@@ -104,7 +104,7 @@ function uiState(state) {
     return;
   }
   currentState = state;
-  console.log(`ui state: ${currentState}`);
+  log.info(`ui state: ${currentState}`);
 
   let movieName = currentState;
   if (currentState === 'connecting') {
@@ -116,7 +116,7 @@ function uiState(state) {
     try {
       movie.run(`/system/media/${movieName}.zip`);
     } catch (e) {
-      console.log(e);
+      log.warn(e);
     }
 
     switch (currentState) {
@@ -198,11 +198,11 @@ input.on('down', e => {
   case 'volumedown':
     volumeKeysPressed++;
     if (volumeKeysPressed === 2) {
-      console.log('!! Factory reset !!');
+      log.warn('!! Factory reset !!');
       uiState('powerdown');
       util.exec('librecovery_test', ['factoryReset'])
       .catch(err => {
-        console.log(`Factory reset failed: ${err}`);
+        log.warn(`Factory reset failed: ${err}`);
         // Ouch, now what? Reboot I guess.
         util.setprop('sys.powerctl', 'reboot');
       });

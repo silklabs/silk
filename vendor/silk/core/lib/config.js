@@ -7,9 +7,9 @@ let api = require('silk-api');
 let bleno = null;
 let btle = require('./btle');
 let caps = require('./caps');
+let log = require('./log')('config');
 let ui = require('./ui');
 let wifi = require('./wifi');
-
 
 function runConfigService(id, resolve, reject) {
   const STATE = api.btleConfigService.state;
@@ -21,21 +21,21 @@ function runConfigService(id, resolve, reject) {
     if (errServicesSet) {
       throw new Error(errServicesSet);
     }
-    console.log(`Started BTLE config service for device ${id}`);
+    log.info(`Started BTLE config service for device ${id}`);
 
     // TODO: get name from build config
     bleno.startAdvertising('Silkcam', [configService.uuid],
-                           err => err && console.log('Error: ' + err));
+                           err => err && log.warn('Error: ' + err));
     bleno.on('advertisingStart', err => {
       if (err) {
         return reject(`runConfigService: ${err}`);
       }
-      console.log('Started BTLE advertising');
+      log.info('Started BTLE advertising');
     });
   });
 
   bleno.on('accept', clientAddr => {
-    console.log('Accepted GATT connection from', clientAddr);
+    log.info('Accepted GATT connection from', clientAddr);
     // TODO: how do we associate the RSSI with a particular
     // connected central?
     let updateRssi = () => {
@@ -53,21 +53,21 @@ function runConfigService(id, resolve, reject) {
   });
 
   bleno.on('disconnect', clientAddr => {
-    console.log('GATT client', clientAddr, 'disconnected');
+    log.info('GATT client', clientAddr, 'disconnected');
     if (updateRssiInterval) {
       clearInterval(updateRssiInterval);
     }
   });
 
   configService.on('stateChange', state => {
-    console.log('Device configuration state is now', state);
+    log.info('Device configuration state is now', state);
     if (state !== STATE.REGISTERED) {
       return;
     }
 
     clearInterval(updateRssiInterval);
     bleno.stopAdvertising(() => {
-      console.log('Stopped GAP advertising.');
+      log.info('Stopped GAP advertising.');
     });
 
     wifi.forgetNetwork()
@@ -76,7 +76,7 @@ function runConfigService(id, resolve, reject) {
         configService.unsecured ? '' : configService.secret);
     })
     .then(() => {
-      console.log(`Successfully joined the network: ${configService.ap}`);
+      log.info(`Successfully joined the network: ${configService.ap}`);
       // TODO: It might be better to block here until the device successfully
       //       contacts the server for the first time.
       resolve();
@@ -92,9 +92,9 @@ function configureDevice(id) {
     .then(wifi.networkConfigured)
     .then(resolve)
     .catch(() => {
-      console.log('Device not configured, launching BTLE config service ...');
+      log.info('Device not configured, launching BTLE config service ...');
       if (!caps.has('btle-peripheral')) {
-        console.error('Device cannot do BTLE peripheral mode, skipping config service. You must configure wifi manually.');
+        log.warn('Device cannot do BTLE peripheral mode, skipping config service. You must configure wifi manually.');
         return resolve();
       }
       ui('setup');

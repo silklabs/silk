@@ -6,6 +6,7 @@
 let createReadStream = require('fs').createReadStream;
 let fs = require('mz/fs');
 let getprop = require('./util').getprop;
+let log = require('./log')('crashreport');
 let net = require('net');
 let vib = require('./vibrator')();
 
@@ -25,10 +26,6 @@ let serverSocket = null;
 let fileQueue = null;
 let fileSet = null;
 let tombstoneServer = null;
-
-function log(str) {
-  console.log(`*** crashreport.js *** ${str}`);
-}
 
 function formatError(err) {
   return `${err}:\n${err.stack}`;
@@ -56,7 +53,8 @@ function saveExceptionToTombstoneDir(err) {
       // If we have recursed too many times then we should just stop trying to
       // find an unused filename and simply rewrite the oldest.
       if (counter === EXCEPTION_FILE_MAX - 1) {
-        log('Maximum number of exception files exist, replacing the oldest');
+        log.info('Maximum number of exception files exist, replacing the ' +
+                 'oldest');
         return Promise.resolve(oldestFilename);
       }
 
@@ -87,16 +85,16 @@ function saveExceptionToTombstoneDir(err) {
   })
   .then(() => findUnusedFilename())
   .then(filename => {
-    log(`Saving exception to '${filename}'`);
+    log.info(`Saving exception to '${filename}'`);
     return fs.writeFile(filename, formatError(err));
   })
   .catch(writeErr => {
-    log(`Failed to write ${err} to disk: ${writeErr}`);
+    log.warn(`Failed to write ${err} to disk: ${writeErr}`);
   });
 }
 
 process.on('uncaughtException', err => {
-  log(err + ': ' + err.stack);
+  log.error(err + ': ' + err.stack);
 
   if (running) {
     let emitData = {
@@ -126,7 +124,7 @@ function chainToActivePromise(promiseFactory) {
       // No error here means that something was canceled, and there's no reason
       // to log that.
       if (err) {
-        log(err);
+        log.warn(err);
       }
 
       // Always execute the next promise in the chain, even if the previous
@@ -182,7 +180,7 @@ function processNextFile() {
   let filename = fileQueue[0];
   let path = TOMBSTONE_DIR_PATH + filename;
 
-  log(`Processing '${path}'`);
+  log.info(`Processing '${path}'`);
 
   return createCancelableReadStream(path)
   .then(data => {
@@ -190,7 +188,7 @@ function processNextFile() {
       return Promise.reject();
     }
 
-    log(`Uploading ${data.length} byte report`);
+    log.info(`Uploading ${data.length} byte report`);
 
     let emitData = {
       id: nextReportSerialNumber++,
@@ -220,7 +218,7 @@ function processNextFile() {
 }
 
 function scanTombstoneDir() {
-  log(`Scanning '${TOMBSTONE_DIR_PATH}' directory for reportable errors`);
+  log.info(`Scanning '${TOMBSTONE_DIR_PATH}' directory for reportable errors`);
 
   return fs.readdir(TOMBSTONE_DIR_PATH)
   .catch(err => {
@@ -247,7 +245,7 @@ function scanTombstoneDir() {
       }
     }
 
-    log(`Found ${newErrorCount} error files to process`);
+    log.info(`Found ${newErrorCount} error files to process`);
 
     if (newErrorCount) {
       return processNextFile();
@@ -285,7 +283,7 @@ function openTombstoneServer() {
       return Promise.reject();
     }
 
-    log(`Creating server for '${DEBUGGERD_SOCKET_PATH}' socket`);
+    log.info(`Creating server for '${DEBUGGERD_SOCKET_PATH}' socket`);
 
     // Track each connection uniquely for logging purposes.
     let nextConnectionSerialNumber = 0;
@@ -293,11 +291,11 @@ function openTombstoneServer() {
     let server = net.createServer(socket => {
       let connectionSerialNumber = nextConnectionSerialNumber++;
 
-      log(`Connection ${connectionSerialNumber} started`);
+      log.info(`Connection ${connectionSerialNumber} started`);
 
       if (!running) {
-        log(`Connection ${connectionSerialNumber} started during shutdown, ` +
-            'ignoring');
+        log.warn(`Connection ${connectionSerialNumber} started during ` +
+                 'shutdown, ignoring');
         socket.end();
         return;
       }
@@ -306,14 +304,14 @@ function openTombstoneServer() {
       //       node doesn't have a good way to do it short of using libffi and
       //       calling some C functions...
       socket.on('error', (err) => {
-        log(`Connection ${connectionSerialNumber} error: ${err}`);
+        log.warn(`Connection ${connectionSerialNumber} error: ${err}`);
       })
       .on('close', () => {
-        log(`Connection ${connectionSerialNumber} ended`);
+        log.info(`Connection ${connectionSerialNumber} ended`);
 
         if (!running) {
-          log(`Connection ${connectionSerialNumber} ended during shutdown, ` +
-              'ignoring');
+          log.info(`Connection ${connectionSerialNumber} ended during ` +
+                   'shutdown, ignoring');
           return;
         }
 
@@ -323,7 +321,7 @@ function openTombstoneServer() {
       });
     });
 
-    log(`Attempting to listen to '${DEBUGGERD_SOCKET_PATH}' socket`);
+    log.info(`Attempting to listen to '${DEBUGGERD_SOCKET_PATH}' socket`);
 
     return listenPromise(server);
   })
@@ -331,7 +329,7 @@ function openTombstoneServer() {
     fileQueue = [ ];
     fileSet = new Set();
 
-    log(`Listening to '${DEBUGGERD_SOCKET_PATH}' socket`);
+    log.info(`Listening to '${DEBUGGERD_SOCKET_PATH}' socket`);
     tombstoneServer = server;
   });
 }
@@ -343,7 +341,7 @@ function closeTombstoneServer() {
       return;
     }
 
-    log(`Closing server for '${DEBUGGERD_SOCKET_PATH}' socket`);
+    log.info(`Closing server for '${DEBUGGERD_SOCKET_PATH}' socket`);
 
     tombstoneServer.close(err => {
       activePromise = null;
@@ -368,13 +366,14 @@ function start(socket) {
   }
 
   if (!CRASHREPORT_ENABLED) {
-    log(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash reporting`);
+    log.warn(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash ` +
+             'reporting');
     return Promise.resolve();
   }
 
   running = true;
 
-  log('Starting crashreport service');
+  log.info('Starting crashreport service');
 
   serverSocket = socket;
 
@@ -398,7 +397,7 @@ function stop() {
 
   running = false;
 
-  log('Stopping crashreport service');
+  log.info('Stopping crashreport service');
 
   // Always make sure to close the server.
   chainToActivePromise(closeTombstoneServer);

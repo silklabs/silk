@@ -4,6 +4,7 @@
 'use strict';
 
 let childProcessExecFile = require('child_process').execFile;
+let log = require('./log')('util');
 
 // Throws an exception to the top level process exception handler, escaping any
 // Promises that might otherwise consume the exception
@@ -41,7 +42,7 @@ export function getprop(prop) {
   let spawnSync = require('child_process').spawnSync;
   let result = spawnSync('getprop', [prop]);
   if (result.error) {
-    console.log(`Error: getprop("${prop}"): ${result.error}`);
+    log.warn(`Error: getprop("${prop}"): ${result.error}`);
     return undefined;
   }
   return result.stdout.toString().replace(/\n$/, '');
@@ -59,15 +60,15 @@ export function timeout(ms) {
 
 // TODO: find a nodeunit home for me
 if (require.main === module) {
-  console.log('Starting in 1 second ...');
+  log.info('Starting in 1 second ...');
   timeout(1000).then(() => {
-    console.log('Running `ls` ...');
+    log.info('Running `ls` ...');
     return exec('ls');
   }).then(result => {
-    console.log('  output:\n' + result.stdout);
-    console.log('Failing `grep foo bar 5 times ...');
+    log.info('  output:\n' + result.stdout);
+    log.info('Failing `grep foo bar 5 times ...');
     return execRetry('grep', ['foo', 'bar'], 5, 100);
   }).then(
-    () => console.log('(should not have succeeded'),
-    result => console.log('... done failing with code ' + result.code));
+    () => log.warn('(should not have succeeded'),
+    result => log.info('... done failing with code ' + result.code));
 }

@@ -9,6 +9,7 @@ var {
   StatusBarIOS,
   StyleSheet,
   Text,
+  TouchableWithoutFeedback,
   View,
 } = React;
 
@@ -30,17 +31,24 @@ var MonitorFullscreen = React.createClass({
     };
 
     return (
-      <View style={styles.container}>
-        <LiveVideo videoStream={videoStream} ref='video' />
-      </View>
+      <TouchableWithoutFeedback onPress={this.popNav}>
+        <View style={styles.container}>
+          <LiveVideo videoStream={videoStream} ref='video' />
+        </View>
+      </TouchableWithoutFeedback>
     );
+  },
+
+  popNav: function() {
+    this.props.navigator.pop();
   },
 });
 
 var styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'stretch'
+    alignItems: 'stretch',
+    backgroundColor: 'black',
   },
 });
 

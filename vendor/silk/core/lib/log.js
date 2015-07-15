@@ -27,7 +27,7 @@ export default function createLog(libraryName) {
 
   // Redirect infoFunction to stdout only if we're not supposed to be piping
   // everything to a custom FD.
-  if (!('DEBUG_FD' in process.env.DEBUG_FD)) {
+  if (!('DEBUG_FD' in process.env)) {
     infoFunction.log = console.log.bind(console);
   }
 

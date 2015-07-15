@@ -73,6 +73,39 @@ $ adb shell setprop persist.silk.server.url ""
 $ adb shell setprop ctl.restart silk
 ```
 
+## Debugging
+
+### C/C++
+
+The `./rungdb` script will setup a gdb session to the program or process of your
+choice. Some examples:
+
+```
+$ ./rungdb program_name
+$ ./rungdb attach <pid>
+$ ./rungdb attach program_name
+```
+
+### Node
+
+The node debugger is active by default in non-user device builds.  To set
+breakpoints, either first restart the main silk program and tell node to halt at
+the first line:
+```
+$ adb shell stop silk
+$ adb shell silk --debug-brk
+```
+or use the `debugger` Javascript function to manually set a breakpoint.
+
+Once the breakpoint hits, run the following on your machine with the
+device accessible over adb to start the session:
+```
+$ adb forward tcp:5858 tcp:5858
+$ node debug localhost:5858
+```
+
+Ref: https://nodejs.org/api/debugger.html#debugger_info
+
 ## Activating the full gonk environment
 
 ```

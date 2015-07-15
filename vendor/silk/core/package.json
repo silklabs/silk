@@ -34,6 +34,7 @@
     "parser": "babel-eslint",
     "rules": {
       "brace-style": 2,
+      "no-debugger": 1,
       "default-case": 2,
       "comma-dangle": 0,
       "indent": [2, 2],

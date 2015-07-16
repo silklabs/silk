@@ -3,8 +3,11 @@
 
 'use strict';
 
-var React = require('react-native');
-var {
+import React from 'react-native'
+import WebViewBridge from 'react-native-webview-bridge'
+import LiveVideo from './LiveVideo'
+
+let {
   Image,
   StatusBarIOS,
   StyleSheet,
@@ -13,10 +16,7 @@ var {
   View,
 } = React;
 
-var WebViewBridge = require('react-native-webview-bridge');
-var LiveVideo = require('./LiveVideo');
-
-var MonitorFullscreen = React.createClass({
+export default React.createClass({
   componentDidMount: function() {
     var statusBarAnimation = 'slide';
     StatusBarIOS.setHidden(true, statusBarAnimation);
@@ -54,5 +54,3 @@ var styles = StyleSheet.create({
     backgroundColor: 'black',
   },
 });
-
-module.exports = MonitorFullscreen;

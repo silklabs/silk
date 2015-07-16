@@ -123,7 +123,8 @@ RCT_EXPORT_METHOD(read:(NSString*)deviceUuidStr service:(NSString*)serviceUuidSt
 
 RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidStr characteristic:(NSString*)charcUuidStr value:(NSString*)valueB64
                   awaitResponse:(BOOL)awaitResponse callback:(RCTResponseSenderBlock)callback) {
-  NSLog(@"BLECentral:write from %@: %@.%@ <- %@ (%@response)", deviceUuidStr, serviceUuidStr, charcUuidStr, valueB64, awaitResponse ? @"" : @"no ");
+  BLE_LOG(@"BLECentral:write from %@: %@.%@ <- %@ (%@response)", deviceUuidStr, serviceUuidStr,
+          charcUuidStr, valueB64, awaitResponse ? @"" : @"no ");
 
   // TODO need to check the max length
   NSData* value = [NSData cdv_dataFromBase64String:valueB64];

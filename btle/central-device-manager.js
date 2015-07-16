@@ -21,6 +21,7 @@ var api = {
       AccessPointCharacteristic: '8e3ea52bbcbf40d18fdcb40d45dcdd3e',
       SecretCharacteristic: 'cb6def342d794d12886351b17fea3bf1',
       ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
+      VibratePatternCharacteristic: '385a2b58191211e5b60b1697f925ec7b',
     }
   },
 
@@ -128,6 +129,24 @@ DeviceManager.prototype._waitForProximity = function(p) {
         p.rssi = rssi;
         this.emit('rssi', p);
         if (rssi < -40) {
+          // RSSI at or below `min` gets a duty cycle of 0, and at or
+          // above `max` is a duty cycle of 1.0.  The cycle scales
+          // linearly with RSSI in between.
+          var min = -70, max = -40;
+          var scaled = (rssi - min) / (max - min);
+          var duty = Math.min(1.0, Math.max(0.0, scaled));
+          // Set the period to fill 500ms (RSSI poll interval), and be
+          // long enough so that a 0.1 change in duty cycle is
+          // approximately perceptible to the user.
+          var period = 250;
+          var pattern = new Uint16Array([
+            period * duty, period * (1 - duty),
+            period * duty, period * (1 - duty)
+          ]);
+          // TODO: let the UI at the next level up be responsible for
+          // this
+          p.writeCharacteristic(decls.uuid.VibratePatternCharacteristic,
+                                new Buffer(new Uint8Array(pattern.buffer)));
           return;
         }
         clearInterval(updateRssiInterval);

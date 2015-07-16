@@ -630,10 +630,13 @@ bool SlicedMP4Encoder::threadLoop() {
 
     writer->addSource(mSlicedVideoSource);
 
+    // Turn off audio until we sort out timing and performance issues on iOS
+    #if 0
     sp<MediaCodecSource> audioEncoder =
       MediaCodecSource::Create(mLooper, mAudioFormat, mSlicedAudioSource);
 
     writer->addSource(audioEncoder);
+    #endif
 
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);

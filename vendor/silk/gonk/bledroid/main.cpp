@@ -1,16 +1,16 @@
-/*
-Bleno Bluedroid driver
-
-Copyright (c) 2015 Weave Laboratories, Inc.
-All Rights Reserved.
-Confidential and Proprietary - Weave Laboratories, Inc.
-*/
+/**
+ * Bleno Bluedroid driver
+ *
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "bledroid"
+#include <utils/Log.h>
 
 #include <sys/prctl.h>
-#include <utils/Log.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -19,9 +19,73 @@ Confidential and Proprietary - Weave Laboratories, Inc.
 #include <hardware/bt_gatt.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
+#include <sysutils/FrameworkListener.h>
+#include <limits.h>
 
 using namespace android;
 
+#define BLE_SOCKET_NAME "bledroid"
+#define BLE_COMMAND_NAME "BleCommand"
+#define MAX_MSG_SIZE 128
+
+#define BAIL_ON_FAIL(expression) \
+  { \
+    int err = expression; \
+    if (err < 0) { \
+      ALOGE(#expression " failed: %d\n", err); \
+      exit(1); \
+    } \
+  } \
+
+/**
+ * This class provided a method that is run each time a {@code BLE_COMMAND_NAME}
+ * is received from bleno over the socket
+ */
+class BleCommand: public FrameworkCommand {
+public:
+  BleCommand() :
+      FrameworkCommand(BLE_COMMAND_NAME) {
+  }
+
+  virtual ~BleCommand() {}
+  int runCommand(SocketClient *c, int argc, char ** argv);
+};
+
+/**
+ * This class provides a wrapper around bledroid socket to help with
+ * sending and receiving messages to the socket.
+ */
+class BledroidListener: private FrameworkListener {
+public:
+  BledroidListener() :
+      FrameworkListener(BLE_SOCKET_NAME) {
+    FrameworkListener::registerCmd(new BleCommand());
+  }
+
+  int start() {
+    ALOGD("Starting BledroidListener");
+    return FrameworkListener::startListener();
+  }
+
+  /**
+   * Send a bluetooth related event to bleno
+   */
+  void sendEvent(const char *fmt, ...) {
+    char event[MAX_MSG_SIZE];
+
+    va_list argptr;
+    va_start(argptr, fmt);
+    vsnprintf(event, MAX_MSG_SIZE, fmt, argptr);
+    va_end(argptr);
+
+    ALOGD("Broadcasting %s", event);
+    FrameworkListener::sendBroadcast(200, event, false);
+  }
+};
+
+/**
+ *
+ */
 class ThreadWaiter {
 public:
   ThreadWaiter() {}
@@ -59,28 +123,13 @@ int gatt_client_if = -1;
 int gatt_server_if = -1;
 bool gatt_client_listening = false;
 btgatt_interface_t const *gatt;
+hw_device_t *device;
 ThreadWaiter mainThreadWaiter;
+BledroidListener bledroid;
 
 // Track the last connect BT address for RSSI.
 // (TODO: Ask the client for this address instead)
-bt_bdaddr_t lastConnectedAddr = {0,};
-
-bool enteredCommandLoop = false;
-bool exitCommandLoop = false;
-
-static void signalHandler(int signal)
-{
-  if (enteredCommandLoop) {
-    ALOGE("Caught signal %d, requesting clean exit.", signal);
-    exitCommandLoop = true;
-    // forget about the command loop so the next signal will kill
-    enteredCommandLoop = false;
-  } else {
-    ALOGE("Exiting on signal %d", signal);
-    exit(1);
-  }
-}
-
+bt_bdaddr_t lastConnectedAddr = { 0, };
 
 //
 // bt_os_callouts_t
@@ -135,7 +184,8 @@ static bt_os_callouts_t os_callouts = {
 void bt_adapter_state_changed_callback(bt_state_t state)
 {
   adapter_state = state;
-  printf("!adapterState powered%s\n", state == BT_STATE_OFF ? "Off" : "On");
+  bledroid.sendEvent("!adapterState powered%s",
+      state == BT_STATE_OFF ? "Off" : "On");
   mainThreadWaiter.signal();
 }
 
@@ -146,7 +196,7 @@ void bt_adapter_properties_callback(bt_status_t status,
     bt_property_t *prop = &properties[i];
     if (prop->type == BT_PROPERTY_BDADDR) {
       bt_bdaddr_t *addr = (bt_bdaddr_t *) prop->val;
-      printf("!address %02X:%02X:%02X:%02X:%02X:%02X\n",
+      bledroid.sendEvent("!address %02X:%02X:%02X:%02X:%02X:%02X",
         addr->address[0],
         addr->address[1],
         addr->address[2],
@@ -354,12 +404,12 @@ void gatt_client_read_remote_rssi_callback(int client_if, bt_bdaddr_t* bda,
     bda->address[4],
     bda->address[5]);
 
-  printf("!rssiUpdate %d\n", rssi);
+  bledroid.sendEvent("!rssiUpdate %d", rssi);
 }
 
 void gatt_client_listen_callback(int status, int server_if)
 {
-  printf("!listen %d %d\n", gatt_client_listening ? 1 : 0, status);
+  bledroid.sendEvent("!listen %d %d", gatt_client_listening ? 1 : 0, status);
 }
 
 btgatt_client_callbacks_t bt_gatt_client_callbacks = {
@@ -422,7 +472,7 @@ void gatt_server_connection_callback(int conn_id, int server_if, int connected, 
   }
 
   ALOGV("gatt_server_connection_callback. conn_id=%d server_if=%d connected=%d\n", conn_id, server_if, connected);
-  printf("!%s %02X:%02X:%02X:%02X:%02X:%02X\n",
+  bledroid.sendEvent("!%s %02X:%02X:%02X:%02X:%02X:%02X",
     connected ? "accept" : "disconnect",
     bda->address[0],
     bda->address[1],
@@ -440,7 +490,7 @@ void gatt_server_service_added_callback(int status, int server_if,
   ALOGV("gatt_server_service_added_callback: status=%d server_if=%d srvc_handle=%d",
     status, server_if, service_handle);
   if (status == 0 && server_if == gatt_server_if) {
-    printf("!primaryServiceHandle %d\n", service_handle);
+    bledroid.sendEvent("!primaryServiceHandle %d", service_handle);
   }
 }
 
@@ -458,7 +508,7 @@ void gatt_server_characteristic_added_callback(int status, int server_if,
     status, server_if, srvc_handle, char_handle
   );
   if (server_if == gatt_server_if) {
-    printf("!attributeHandle %d\n", status == 0 ? char_handle : -1);
+    bledroid.sendEvent("!attributeHandle %d", status == 0 ? char_handle : -1);
   }
 }
 
@@ -470,7 +520,7 @@ void gatt_server_descriptor_added_callback(int status, int server_if,
     status, server_if, srvc_handle, descr_handle
   );
   if (server_if == gatt_server_if) {
-    printf("!attributeHandle %d\n", status == 0 ? descr_handle : -1);
+    bledroid.sendEvent("!attributeHandle %d", status == 0 ? descr_handle : -1);
   }
 }
 
@@ -480,7 +530,7 @@ void gatt_server_service_started_callback(int status, int server_if, int srvc_ha
   ALOGV("gatt_server_service_started_callback: status=%d server_if=%d srvc_handle=%d",
     status, server_if, srvc_handle);
 
-  printf("!servicesSet %d\n", status);
+  bledroid.sendEvent("!servicesSet %d", status);
 }
 
 /** Callback invoked in response to stop_service */
@@ -504,7 +554,8 @@ void gatt_server_request_read_callback(int conn_id, int trans_id, bt_bdaddr_t *b
 {
   ALOGV("gatt_server_request_read_callback: conn_id=%d trans_id=%d attr_handle=%d offset=%d is_long=%d\n",
     conn_id, trans_id, attr_handle, offset, is_long);
-  printf("!readAttribute %d %d %d %d %d\n", attr_handle, conn_id, trans_id, offset, is_long);
+  bledroid.sendEvent("!readAttribute %d %d %d %d %d", attr_handle, conn_id,
+      trans_id, offset, is_long);
 }
 
 /**
@@ -540,8 +591,7 @@ void gatt_server_request_write_callback(int conn_id, int trans_id, bt_bdaddr_t *
   }
 
   ALOGE(w);
-  printf(w);
-  printf("\n");
+  bledroid.sendEvent(w);
 }
 
 /** Callback invoked when a previously prepared write is to be executed */
@@ -582,7 +632,7 @@ void gatt_server_congestion_callback(int conn_id, bool congested)
 /** Callback invoked when the MTU for a given connection changes */
 void gatt_server_mtu_changed_callback(int conn_id, int mtu)
 {
-  printf("!mtuChange %d\n", mtu);
+  bledroid.sendEvent("!mtuChange %d", mtu);
 }
 
 btgatt_server_callbacks_t bt_gatt_server_callbacks = {
@@ -604,6 +654,11 @@ btgatt_server_callbacks_t bt_gatt_server_callbacks = {
     gatt_server_mtu_changed_callback,
 };
 
+btgatt_callbacks_t gatt_callbacks = {
+  .size = sizeof(btgatt_callbacks_t),
+  .client = &bt_gatt_client_callbacks,
+  .server = &bt_gatt_server_callbacks
+};
 
 // str is expected to be of the form:
 //    fb349b5f800000800010000003000000
@@ -639,22 +694,12 @@ bool str_to_uuid(char const *str, bt_uuid_t &uuid)
   return true;
 }
 
-
-int main(int argc, char *argv[])
-{
-  (void) argc;
-  (void) argv;
-
+/**
+ * Initialize bluetooth subsystem
+ */
+int bt_init() {
   const hw_module_t *module;
   int err;
-
-  setbuf(stdin, NULL);
-  setbuf(stdout, NULL);
-
-  signal(SIGTERM, signalHandler);
-  signal(SIGHUP, signalHandler);
-  signal(SIGPIPE, signalHandler);
-  err = prctl(PR_SET_PDEATHSIG, SIGKILL);
 
   err = hw_get_module(BT_HARDWARE_MODULE_ID, &module);
   if (err) {
@@ -666,7 +711,6 @@ int main(int argc, char *argv[])
   ALOGW("name: %s", module->name);
   ALOGW("author: %s", module->author);
 
-  hw_device_t *device;
   err = module->methods->open(module, BT_HARDWARE_MODULE_ID, &device);
   if (err) {
     ALOGE(BT_HARDWARE_MODULE_ID " open failed: %d", err);
@@ -719,11 +763,6 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  btgatt_callbacks_t gatt_callbacks = {
-    .size = sizeof(btgatt_callbacks_t),
-    .client = &bt_gatt_client_callbacks,
-    .server = &bt_gatt_server_callbacks
-  };
   err = gatt->init(&gatt_callbacks);
   if (err) {
     ALOGE("gatt init() failed: %d", err);
@@ -749,250 +788,265 @@ int main(int argc, char *argv[])
     ALOGE("gatt server register failed: %d", err);
     return 1;
   }
-  while (gatt_server_if == -1) { // Wait for gatt server registration
-  mainThreadWaiter.wait();
+
+  while (gatt_server_if == -1) {  // Wait for gatt server registration
+    mainThreadWaiter.wait();
   }
 
-  enteredCommandLoop = true;
-  while (!exitCommandLoop) {
-    char line[4096];
-    char *saveptr;
-    fgets(line, sizeof(line), stdin);
+  return 0;
+}
 
-    char *cmd = strtok_r(line, " \n", &saveptr);
-    if (!cmd) continue;
-    ALOGW("command: %s", cmd);
+/**
+ *
+ */
+void bt_cleanup() {
+  if (gatt) {
+    (void) gatt->server->unregister_server(gatt_server_if);
+    (void) gatt->client->unregister_client(gatt_client_if);
+    gatt->cleanup();
+  }
 
-    if (0 == strcmp(cmd, "setListen")) {
-      char *onOff = strtok_r(NULL, " \n", &saveptr);
-      if (onOff) {
-        gatt_client_listening = (*onOff == '1');
-        err = gatt->client->listen(gatt_client_if, gatt_client_listening);
-        if (err) {
-          ALOGE("gatt client listen failed: %d", err);
-        }
-        continue;
-      }
+  ALOGV("bt close");
+  if (device) {
+    device->close(device);
+  }
+}
 
-    } else if (0 == strcmp(cmd, "readRssi")) {
-      err = gatt->client->read_remote_rssi(gatt_client_if, &lastConnectedAddr);
+/**
+ * This function is run every time a command is received from bleno
+ */
+int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
+  char *saveptr;
+  int err;
+
+  char *cmd = strtok_r(argv[1], " \n", &saveptr);
+  if (!cmd) {
+    return 1;
+  }
+
+  ALOGD("Received command %s", cmd);
+  if (0 == strcmp(argv[1], "clientReady")) {
+    bt_init();
+  } else if (0 == strcmp(cmd, "setListen")) {
+    char *onOff = strtok_r(NULL, " \n", &saveptr);
+    if (onOff) {
+      gatt_client_listening = (*onOff == '1');
+      err = gatt->client->listen(gatt_client_if, gatt_client_listening);
       if (err) {
-        ALOGE("gatt client read rssi failed: %d", err);
+        ALOGE("gatt client listen failed: %d", err);
       }
-      continue;
-
-    } else if (0 == strcmp(cmd, "advertisingData")) {
-      char *numServicesStr = strtok_r(NULL, " \n", &saveptr);
-      if (numServicesStr != NULL) {
-        int numServices = atoi(numServicesStr);
-        int service_uuid_len = 0;
-        bt_uuid_t service_uuid[numServices];
-
-        for (int i = 0; i < numServices; i++) {
-          char *uuid = strtok_r(NULL, " \n", &saveptr);
-          if (!str_to_uuid(uuid, service_uuid[service_uuid_len])) {
-            ALOGE("Malformed advertisingData (invalid uuid)");
-            continue;
-          }
-          ALOGV("Adding UUID: %s\n", uuid);
-          service_uuid_len += sizeof(bt_uuid_t);
-        }
-
-        err = gatt->client->set_adv_data(gatt_client_if,
-          false, true, true, // set_scan_rsp, include_name, include_txpower,
-          0, 0, 0,           // min_interval, max_interval, appearance
-          0, NULL,           // manufacturer data...
-          0, NULL,           // service data...
-          service_uuid_len, (char *) service_uuid
-        );
-        if (err) {
-          ALOGE("gatt client set_adv_data failed: %d", err);
-        }
-        continue;
-      }
-
-    } else if (0 == strcmp(cmd, "primaryService")) {
-      char *numAttributesStr = strtok_r(NULL, " \n", &saveptr);
-      if (numAttributesStr == NULL) {
-        ALOGE("Malformed primaryService (no numAttributes)");
-        continue;
-      }
-      int numAttributes = atoi(numAttributesStr);
-
-      char *uuid = strtok_r(NULL, " \n", &saveptr);
-      btgatt_srvc_id_t srvc_id;
-      srvc_id.is_primary = 1;
-      srvc_id.id.inst_id = 0; // ???
-      if (!str_to_uuid(uuid, srvc_id.id.uuid)) {
-        ALOGE("Malformed primaryService (no uuid)");
-        continue;
-      }
-
-      ALOGV("primaryService %d %s\n", numAttributes, uuid);
-      err = gatt->server->add_service(gatt_server_if, &srvc_id, numAttributes);
-      if (err) {
-        ALOGE("gatt add_service failed: %d", err);
-      }
-      continue;
-
-    } else if (0 == strcmp(cmd, "addCharacteristic")) {
-      char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
-      if (serviceHandleStr == NULL) {
-        ALOGE("Malformed addCharacteristic (no service)");
-        continue;
-      }
-
-      char *uuid = strtok_r(NULL, " \n", &saveptr);
-      bt_uuid_t desc_uuid;
-      if (!str_to_uuid(uuid, desc_uuid)) {
-        ALOGE("Malformed addCharacteristic *(no uuid)");
-        continue;
-      }
-
-      char *propStr = strtok_r(NULL, " \n", &saveptr);
-      if (propStr == NULL) {
-        ALOGE("Malformed addCharacteristic (no prop)");
-        continue;
-      }
-
-      char *permStr = strtok_r(NULL, " \n", &saveptr);
-      if (permStr == NULL) {
-        ALOGE("Malformed addCharacteristic (no perm)");
-        continue;
-      }
-
-      err = gatt->server->add_characteristic(gatt_server_if, atoi(serviceHandleStr),
-        &desc_uuid, atoi(propStr), atoi(permStr));
-      if (err) {
-        ALOGE("gatt add_characteristic failed: %d", err);
-      }
-      continue;
-
-    } else if (0 == strcmp(cmd, "addDescriptor")) {
-      char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
-      if (serviceHandleStr == NULL) {
-        ALOGE("Malformed addDescriptor (no service)");
-        continue;
-      }
-
-      char *uuid = strtok_r(NULL, " \n", &saveptr);
-      bt_uuid_t desc_uuid;
-      if (!str_to_uuid(uuid, desc_uuid)) {
-        ALOGE("Malformed addDescriptor (no uuiud)");
-        continue;
-      }
-
-      char *permStr = strtok_r(NULL, " \n", &saveptr);
-      if (permStr == NULL) {
-        ALOGE("Malformed addDescriptor (no perm)");
-        continue;
-      }
-
-      err = gatt->server->add_descriptor(gatt_server_if, atoi(serviceHandleStr),
-        &desc_uuid, atoi(permStr));
-      if (err) {
-        ALOGE("gatt add_descriptor failed: %d", err);
-      }
-      continue;
-
-    } else if (0 == strcmp(cmd, "startService")) {
-      char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
-      if (serviceHandleStr == NULL) {
-        ALOGE("Malformed startService");
-        continue;
-      }
-      err = gatt->server->start_service(gatt_server_if, atoi(serviceHandleStr), GATT_TRANSPORT_LE);
-      if (err) {
-        ALOGE("gatt start_service failed: %d", err);
-      }
-      continue;
-
-    } else if (0 == strcmp(cmd, "sendAttributeResponse")) {
-      int attr_handle;
-      int conn_id;
-      int trans_id;
-      int result;
-      int offset;
-      char *hexdata;
-      int length;
-
-      char *token = strtok_r(NULL, " \n", &saveptr);
-      if (token == NULL) {
-        ALOGE("Malformed sendAttributeResponse (no attr_value)");
-        continue;
-      }
-      attr_handle = atoi(token);
-
-      token = strtok_r(NULL, " \n", &saveptr);
-      if (token == NULL) {
-        ALOGE("Malformed sendAttributeResponse (no conn_id)");
-        continue;
-      }
-      conn_id = atoi(token);
-
-      token = strtok_r(NULL, " \n", &saveptr);
-      if (token == NULL) {
-        ALOGE("Malformed sendAttributeResponse (no trans_id)");
-        continue;
-      }
-      trans_id = atoi(token);
-
-      token = strtok_r(NULL, " \n", &saveptr);
-      if (token == NULL) {
-        ALOGE("Malformed sendAttributeResponse (no result)");
-        continue;
-      }
-      result = atoi(token);
-
-      offset = 0;
-      hexdata = NULL;
-      length = 0;
-      if (result == 0) {
-        // <offset> <data> are optional, used only for successful
-        // read responses.
-        token = strtok_r(NULL, " \n", &saveptr);
-        if (token != NULL) {
-          offset = atoi(token);
-
-          hexdata = strtok_r(NULL, " \n", &saveptr);
-          if (hexdata != NULL) {
-            length = strlen(hexdata) / 2;
-          }
-        }
-      }
-
-      btgatt_response_t resp = {};
-      resp.handle = attr_handle;
-      resp.attr_value.handle = attr_handle;
-      resp.attr_value.offset = offset;
-      resp.attr_value.auth_req = 0;
-      resp.attr_value.len = length;
-
-      char b[3] = {};
-      for (int i = 0; i < length; i++) {
-        b[0] = hexdata[i*2];
-        b[1] = hexdata[i*2+1];
-        resp.attr_value.value[i] = strtol(b, NULL, 16);
-      }
-
-      err = gatt->server->send_response(conn_id, trans_id, result, &resp);
-      if (err) {
-        ALOGE("gatt server send_response failed: %d", err);
-      }
-      continue;
-
-    } else if (0 == strcmp(cmd, "exit")) {
-      break;
     }
-    printf("!unknownCommand %s\n", line);
+  } else if (0 == strcmp(cmd, "readRssi")) {
+    err = gatt->client->read_remote_rssi(gatt_client_if, &lastConnectedAddr);
+    if (err) {
+      ALOGE("gatt client read rssi failed: %d", err);
+    }
+  } else if (0 == strcmp(cmd, "advertisingData")) {
+    char *numServicesStr = strtok_r(NULL, " \n", &saveptr);
+    if (numServicesStr != NULL) {
+      int numServices = atoi(numServicesStr);
+      int service_uuid_len = 0;
+      bt_uuid_t service_uuid[numServices];
+
+      for (int i = 0; i < numServices; i++) {
+        char *uuid = strtok_r(NULL, " \n", &saveptr);
+        if (!str_to_uuid(uuid, service_uuid[service_uuid_len])) {
+          ALOGE("Malformed advertisingData (invalid uuid)");
+          return 1;
+        }
+        ALOGV("Adding UUID: %s\n", uuid);
+        service_uuid_len += sizeof(bt_uuid_t);
+      }
+
+      err = gatt->client->set_adv_data(gatt_client_if,
+      false, true, true,  // set_scan_rsp, include_name, include_txpower,
+          0, 0, 0,  // min_interval, max_interval, appearance
+          0, NULL,  // manufacturer data...
+          0, NULL,  // service data...
+          service_uuid_len, (char *) service_uuid);
+      if (err) {
+        ALOGE("gatt client set_adv_data failed: %d", err);
+      }
+    }
+  } else if (0 == strcmp(cmd, "primaryService")) {
+    char *numAttributesStr = strtok_r(NULL, " \n", &saveptr);
+    if (numAttributesStr == NULL) {
+      ALOGE("Malformed primaryService (no numAttributes)");
+      return 1;
+    }
+    int numAttributes = atoi(numAttributesStr);
+
+    char *uuid = strtok_r(NULL, " \n", &saveptr);
+    btgatt_srvc_id_t srvc_id;
+    srvc_id.is_primary = 1;
+    srvc_id.id.inst_id = 0;  // ???
+    if (!str_to_uuid(uuid, srvc_id.id.uuid)) {
+      ALOGE("Malformed primaryService (no uuid)");
+      return 1;
+    }
+
+    ALOGV("primaryService %d %s\n", numAttributes, uuid);
+    err = gatt->server->add_service(gatt_server_if, &srvc_id, numAttributes);
+    if (err) {
+      ALOGE("gatt add_service failed: %d", err);
+    }
+  } else if (0 == strcmp(cmd, "addCharacteristic")) {
+    char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
+    if (serviceHandleStr == NULL) {
+      ALOGE("Malformed addCharacteristic (no service)");
+      return 1;
+    }
+
+    char *uuid = strtok_r(NULL, " \n", &saveptr);
+    bt_uuid_t desc_uuid;
+    if (!str_to_uuid(uuid, desc_uuid)) {
+      ALOGE("Malformed addCharacteristic *(no uuid)");
+      return 1;
+    }
+
+    char *propStr = strtok_r(NULL, " \n", &saveptr);
+    if (propStr == NULL) {
+      ALOGE("Malformed addCharacteristic (no prop)");
+      return 1;
+    }
+
+    char *permStr = strtok_r(NULL, " \n", &saveptr);
+    if (permStr == NULL) {
+      ALOGE("Malformed addCharacteristic (no perm)");
+      return 1;
+    }
+
+    err = gatt->server->add_characteristic(gatt_server_if,
+        atoi(serviceHandleStr), &desc_uuid, atoi(propStr), atoi(permStr));
+    if (err) {
+      ALOGE("gatt add_characteristic failed: %d", err);
+    }
+  } else if (0 == strcmp(cmd, "addDescriptor")) {
+    char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
+    if (serviceHandleStr == NULL) {
+      ALOGE("Malformed addDescriptor (no service)");
+      return 1;
+    }
+
+    char *uuid = strtok_r(NULL, " \n", &saveptr);
+    bt_uuid_t desc_uuid;
+    if (!str_to_uuid(uuid, desc_uuid)) {
+      ALOGE("Malformed addDescriptor (no uuiud)");
+      return 1;
+    }
+
+    char *permStr = strtok_r(NULL, " \n", &saveptr);
+    if (permStr == NULL) {
+      ALOGE("Malformed addDescriptor (no perm)");
+      return 1;
+    }
+
+    err = gatt->server->add_descriptor(gatt_server_if, atoi(serviceHandleStr),
+        &desc_uuid, atoi(permStr));
+    if (err) {
+      ALOGE("gatt add_descriptor failed: %d", err);
+    }
+  } else if (0 == strcmp(cmd, "startService")) {
+    char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
+    if (serviceHandleStr == NULL) {
+      ALOGE("Malformed startService");
+      return 1;
+    }
+    err = gatt->server->start_service(gatt_server_if, atoi(serviceHandleStr),
+        GATT_TRANSPORT_LE);
+    if (err) {
+      ALOGE("gatt start_service failed: %d", err);
+    }
+  } else if (0 == strcmp(cmd, "sendAttributeResponse")) {
+    int attr_handle;
+    int conn_id;
+    int trans_id;
+    int result;
+    int offset;
+    char *hexdata;
+    int length;
+
+    char *token = strtok_r(NULL, " \n", &saveptr);
+    if (token == NULL) {
+      ALOGE("Malformed sendAttributeResponse (no attr_value)");
+      return 1;
+    }
+    attr_handle = atoi(token);
+
+    token = strtok_r(NULL, " \n", &saveptr);
+    if (token == NULL) {
+      ALOGE("Malformed sendAttributeResponse (no conn_id)");
+      return 1;
+    }
+    conn_id = atoi(token);
+
+    token = strtok_r(NULL, " \n", &saveptr);
+    if (token == NULL) {
+      ALOGE("Malformed sendAttributeResponse (no trans_id)");
+      return 1;
+    }
+    trans_id = atoi(token);
+
+    token = strtok_r(NULL, " \n", &saveptr);
+    if (token == NULL) {
+      ALOGE("Malformed sendAttributeResponse (no result)");
+      return 1;
+    }
+    result = atoi(token);
+
+    offset = 0;
+    hexdata = NULL;
+    length = 0;
+    if (result == 0) {
+      // <offset> <data> are optional, used only for successful
+      // read responses.
+      token = strtok_r(NULL, " \n", &saveptr);
+      if (token != NULL) {
+        offset = atoi(token);
+
+        hexdata = strtok_r(NULL, " \n", &saveptr);
+        if (hexdata != NULL) {
+          length = strlen(hexdata) / 2;
+        }
+      }
+    }
+
+    btgatt_response_t resp = { };
+    resp.handle = attr_handle;
+    resp.attr_value.handle = attr_handle;
+    resp.attr_value.offset = offset;
+    resp.attr_value.auth_req = 0;
+    resp.attr_value.len = length;
+
+    char b[3] = { };
+    for (int i = 0; i < length; i++) {
+      b[0] = hexdata[i * 2];
+      b[1] = hexdata[i * 2 + 1];
+      resp.attr_value.value[i] = strtol(b, NULL, 16);
+    }
+
+    err = gatt->server->send_response(conn_id, trans_id, result, &resp);
+    if (err) {
+      ALOGE("gatt server send_response failed: %d", err);
+    }
+  } else if (0 == strcmp(cmd, "exit")) {
+    bt_cleanup();
+  } else {
+    bledroid.sendEvent("!unknownCommand %s", argv[1]);
+  }
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
+  (void) argc;
+  (void) argv;
+
+  // Start the server socket and register for commands from bleno
+  BAIL_ON_FAIL(bledroid.start());
+
+  while (1) {
+    sleep(INT_MAX);
   }
 
-  ALOGV("gatt cleanup\n");
-  (void) gatt->server->unregister_server(gatt_server_if);
-  (void) gatt->client->unregister_client(gatt_client_if);
-  gatt->cleanup();
-
-  ALOGV("bt close\n");
-  device->close(device);
   return 0;
 }

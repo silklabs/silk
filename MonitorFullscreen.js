@@ -19,8 +19,6 @@ var LiveVideo = require('./LiveVideo');
 var MonitorFullscreen = React.createClass({
   componentDidMount: function() {
     var statusBarAnimation = 'slide';
-    var video = this.refs.video;
-
     StatusBarIOS.setHidden(true, statusBarAnimation);
   },
 
@@ -40,7 +38,12 @@ var MonitorFullscreen = React.createClass({
   },
 
   popNav: function() {
+    StatusBarIOS.setHidden(false, 'slide');
     this.props.navigator.pop();
+    var video = this.refs.video;
+    if (video) {
+      video.destroy()
+    }
   },
 });
 

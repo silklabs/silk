@@ -15,8 +15,8 @@ export default class extends React.Component {
     return React.findNodeHandle(this.refs[RCT_NATIVE_REF]);
   }
 
-  doThings() {
-    return LiveVideoManager.doThings(this.getNativeHandle());
+  destroy() {
+    return LiveVideoManager.destroy(this.getNativeHandle());
   }
 
   render() {

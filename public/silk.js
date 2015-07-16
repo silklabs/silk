@@ -66,6 +66,13 @@ socket.on('connect', function () {
     log(msg);
   });
   socket.emit('join', 'video-streams');
+  socket.on('preview', function(msg) {
+    var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
+    var a = document.getElementById(msg.id);
+    var img = a.firstChild;
+    img.src = jpeg;
+    return;
+  });
   socket.on('video-stream-new', function(msg) {
     log('New video stream '+ msg.id);
     // TODO: when this evolves into a full-blown web app, this should
@@ -99,12 +106,6 @@ socket.on('connect', function () {
       switch (msg.contents) {
       case 'mp4':
         maybeFeedPlayer(stream, msg.frame);
-        return;
-      case 'jpeg':
-        var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
-        var a = document.getElementById(msg.id);
-        var img = a.firstChild;
-        img.src = jpeg;
         return;
       default:
         return;

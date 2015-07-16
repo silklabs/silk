@@ -20,5 +20,6 @@
   "devDependencies": {
     "nodeunit": "^0.9.1"
   },
-  "gypfile": true
+  "gypfile": true,
+  "private": true
 }

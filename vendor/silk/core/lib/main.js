@@ -18,8 +18,28 @@ const id = api.id.create();
 const name = (util.getprop('persist.silk.displayName')
               || 'Silkcam');
 
+// Force the garbage collector to run regularly to keep heap usage under a tight
+// leash
+//
+// Note that the values used within this function have been selected based on
+// intuition and *some* observation, and as such will likely need to be tuned in
+// the future.
+function runGC() {
+  let gcStart = Date.now();
+  // Ask the gc to try to run for no more than 250ms
+  let gcDone = require('gc1').idleNotification(250);
+  let gcStop = Date.now();
+
+  log.info(`GC ran for ${gcStop - gcStart}ms | done=${gcDone}`);
+
+  // Look for new garbage in 20s if v8 says it's done, otherwise continue
+  // collection after 5 seconds.
+  setTimeout(runGC, gcDone ? 20 * 1000 : 5 * 1000);
+}
+runGC();
+
 new Promise(resolve => {
-  console.log('Wait for boot complete');
+  log.info('Wait for boot complete');
   ui('bootanimation');
   let _waitForBoot = function() {
     if ('1' === util.getprop('sys.boot_completed')) {

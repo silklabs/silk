@@ -3,8 +3,8 @@
 NAN_METHOD(IdleNotification) {
   NanScope();
 
-  if (args.Length() != 1) {
-    return NanThrowError("Expected only one argument: idle_time_in_ms");
+  if (args.Length() != 1 || !args[0]->IsUint32()) {
+    return NanThrowError("Expected only one uint32 argument: idle_time_in_ms");
   }
   int idle_time_in_ms = args[0]->Uint32Value();
   NanReturnValue(NanIdleNotification(idle_time_in_ms));

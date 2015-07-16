@@ -55,6 +55,13 @@ class LiveVideo : UIView {
     self.player.play()
   }
 
+  func destroy() {
+    if let client = self.socketIOClient {
+      client.disconnect(fast: true)
+      self.socketIOClient = nil
+    }
+  }
+
   // Add video to queue from a url string
   func queueSegment(url: NSURL) {
     var asset = AVURLAsset(URL: url, options: [:])
@@ -65,13 +72,6 @@ class LiveVideo : UIView {
   }
 
   func initializeSocketIO(#server: String, id: String) {
-    // TODO: Run this in another thread...
-
-    if let oldSocket = self.socketIOClient {
-      // XXX: Cleanup old socket
-      println("Has old socket clean me up...")
-    }
-
     self.socketIOClient = SocketIOClient(socketURL: server, options: [
       "log": false
     ])
@@ -83,6 +83,7 @@ class LiveVideo : UIView {
     }
 
     self.socketIOClient!.on(stream) {
+      [unowned self]
       (data, ack) in
 
       let type = data?[0]["contents"] as? String
@@ -99,10 +100,13 @@ class LiveVideo : UIView {
 
     self.socketIOClient!.connect()
     self.player.observeKeyPath("status") {
-      (change) in
+      [unowned self]
+      (kvo, _) in
       if (self.player.status == AVPlayerStatus.ReadyToPlay) {
         dispatch_async(dispatch_get_main_queue()) {
           self.play()
+          // We don't need this listener anymore once we have started listening...
+          self.player.removeKeyPathObserver(kvo)
         }
       }
     }

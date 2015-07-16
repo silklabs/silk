@@ -15,23 +15,15 @@ class LiveVideoManager:  RCTViewManager {
     }
   }
 
-  @objc func play(reactTag: NSNumber) {
+  @objc func destroy(reactTag: NSNumber) {
     self.aquireView(reactTag) {
-      (view) in
-
-      println("initiate play")
+      view in
+      if let currentView = view as? LiveVideo {
+        currentView.destroy()
+      }
     }
 
   }
-
-  @objc func pause(reactTag: NSNumber) {
-    self.aquireView(reactTag) {
-      (view) in
-
-      println("pause video!")
-    }
-  }
-
 
   override func view() -> UIView! {
     return LiveVideo()

@@ -13,11 +13,21 @@ body {
   padding: 0;
   border: 0;
 }
+#img {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+#canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
     </style>
   </head>
   <body>
     <img id="img"></img>
-    <!--<pre id="log"></pre>-->
+    <canvas id="canvas"></canvas>
     <script src="socket.io.js"></script>
     <script src="monitor-preview-stream.js"></script>
   </body>

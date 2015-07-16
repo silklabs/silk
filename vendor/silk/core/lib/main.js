@@ -103,16 +103,26 @@ new Promise(resolve => {
       }
     });
   });
-  socket.on('disconnect', () => {
+  socket.on('disconnect', e => {
+    log.error(`socket disconnect: ${e}`);
     ui('connecting');
     camera.stop();
     crashreport.stop();
-  });
-  socket.on('error', err => log.warn('Connection error:', err));
 
-  socket.on('reconnect_attempt', e => log.info(`reconnect_attempt: ${e}`));
-  socket.on('reconnect_error', e => log.info(`reconnect_error: ${e}`));
-  socket.on('reconnect_failed', e => log.warn(`reconnect_failed: ${e}`));
+    // When the server disconnects, the socket.io retry logic doesn't kick in so
+    // manually attempt a server reconnect
+    if (e === 'io server disconnect') {
+      socket.connect();
+    }
+  });
+
+  socket.on('connect_error', e => log.warn(`socket connect_error: ${e}`));
+  socket.on('connect_timeout', e => log.warn(`socket connect_timeout: ${e}`));
+  socket.on('error', e => log.warn(`socket error:${e}`));
+  socket.on('reconnect_attempt', e => log.warn(`socket reconnect_attempt: ${e}`));
+  socket.on('reconnect_error', e => log.warn(`socket reconnect_error: ${e}`));
+  socket.on('reconnect_failed', e => log.warn(`socket reconnect_failed: ${e}`));
+  socket.on('reconnecting', e => log.warn(`socket reconnecting: ${e}`));
 })
 .catch(e => {
   util.processthrow(`Fatal initialization error: ${e}`);

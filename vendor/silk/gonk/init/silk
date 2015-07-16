@@ -4,6 +4,7 @@ export NODE_ENV="production"
 export NODE_PATH="/system/silk"
 export SILK_SERVER_URL=$(getprop persist.silk.server.url)
 export DEBUG=$(getprop persist.silk.debug)
+export DEBUG_COLORS=$(getprop persist.silk.debug.colors)
 
 NODE_ARGS=
 if [ "$1" = "--debug-brk" ]; then
@@ -21,7 +22,7 @@ if [ -z $1 ]; then
   # Feign sys.boot_completed for the benefit of other Gonk components that
   # listen on it.
   setprop sys.boot_completed 1
-  exec logwrapper node $NODE_ARGS $NODE_PATH/core.js
+  exec node $NODE_ARGS $NODE_PATH/core.js
   exit 1
 fi
 

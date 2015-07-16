@@ -22,24 +22,34 @@
 // By default all info(), warn(), and error() output is enabled. All debug()
 // output is disabled.
 export default function createLog(libraryName) {
+  const alog = require('alog');
   const debug = require('debug');
 
   libraryName = 'silk-' + libraryName;
 
   let debugFunction = debug(libraryName + ':debug');
+  debugFunction.log = msg => {
+    console.debug(msg);
+    alog.debug(libraryName, msg);
+  };
+
   let infoFunction = debug(libraryName + ':info');
-
-  // Redirect to stdout only if we're not supposed to be piping everything to a
-  // custom FD.
-  if (!('DEBUG_FD' in process.env)) {
-    let stdoutFunction = console.log.bind(console);
-
-    debugFunction.log = stdoutFunction;
-    infoFunction.log = stdoutFunction;
-  }
+  infoFunction.log = msg => {
+    console.info(msg);
+    alog.info(libraryName, msg);
+  };
 
   let warnFunction = debug(libraryName + ':warn');
-  let errorFunction = debug(libraryName + ':error');
+  warnFunction.log = msg => {
+    console.warn(msg);
+    alog.warn(libraryName, msg);
+  };
+
+  let errorFunction = debug(libraryName + ':info');
+  errorFunction.log = msg => {
+    console.error(msg);
+    alog.error(libraryName, msg);
+  };
 
   return {
     debug: debugFunction,

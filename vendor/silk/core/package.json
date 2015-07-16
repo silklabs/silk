@@ -8,6 +8,7 @@
     "start": "node dist/lib/main.js"
   },
   "dependencies": {
+    "alog": "file:modules/alog",
     "bleno": "file:modules/bleno",
     "debug": "2.2.0",
     "gc1": "file:modules/gc1",

@@ -7,6 +7,7 @@ Silk app written for react-native.  To install the react-native toolchain, [see 
 
 **BEFORE OPENING THE PROJECT IN XCODE**, install the module dependencies in your clone dir
 ```
+brew install watchman
 npm install
 ```
 

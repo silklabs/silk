@@ -28,30 +28,46 @@ function makeObjectUrl(array, mimeType) {
   return URL.createObjectURL(blob);
 }
 
+function logMsg(tag, msg) {
+  log(tag + ' message: ' +
+      (('faces' in msg) ? '[faces:' + msg.faces.length + ']' :'') +
+      (('frame' in msg) ? '[frame:' + msg.contents + '] ' : '') +
+      'from: '+ msg.id + ' at ' + msg.when
+     );
+}
+
 var video = document.getElementById('video');
-var activeStream = null;
+var activeStream = '';
 function showPlayer(stream) {
   if (stream === activeStream) {
     return;
   }
-  video.style.display = 'block';
+  if (activeStream) {
+    hidePlayer();
+  }
   activeStream = stream;
+  socket.on(activeStream, feedPlayer);
+  socket.emit('join', activeStream);
+
+  video.style.display = 'block';
   setTimeout(function() { document.body.addEventListener('click', hidePlayer); });
 }
 
 function hidePlayer() {
   video.style.display = 'none';
-  activeStream = null;
+  socket.emit('leave', activeStream);
+  socket.removeListener(activeStream, feedPlayer);
+  activeStream = '';
   document.body.removeEventListener('click', hidePlayer);
 }
 
-function maybeFeedPlayer(stream, chunk) {
-  if (stream !== activeStream) {
+function feedPlayer(msg) {
+  logMsg('video', msg);
+  if (!msg.frame) {
     return;
   }
-  var mp4 = makeObjectUrl(chunk, 'video/mp4');
+  var mp4 = makeObjectUrl(msg.frame, 'video/mp4');
   video.src = mp4;
-  return;
 }
 
 // Register for logging messages and display them.
@@ -72,6 +88,7 @@ socket.on('connect', function () {
     // become component-ized and shared with the native apps if
     // possible
     var stream = 'video-' + msg.id;
+    var previewStream = 'video-preview-' + msg.id;
 
     var monitor = document.getElementById(msg.id);
     if (monitor) {
@@ -87,30 +104,17 @@ socket.on('connect', function () {
     a.appendChild(img);
     monitors.appendChild(a);
 
-    socket.on(stream, function(msg) {
+    socket.on(previewStream, function(msg) {
       if (!msg) {
         return;
       }
-      log('video message: ' +
-        (('faces' in msg) ? '[faces:' + msg.faces.length + ']' :'') +
-        (('frame' in msg) ? '[frame:' + msg.contents + '] ' : '') +
-        'from: '+ msg.id + ' at ' + msg.when
-      );
-      switch (msg.contents) {
-      case 'mp4':
-        maybeFeedPlayer(stream, msg.frame);
-        return;
-      case 'jpeg':
-        var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
-        var a = document.getElementById(msg.id);
-        var img = a.firstChild;
-        img.src = jpeg;
-        return;
-      default:
-        return;
-      }
+      logMsg('video preview', msg);
+      var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
+      var a = document.getElementById(msg.id);
+      var img = a.firstChild;
+      img.src = jpeg;
     });
-    socket.emit('join', stream);
+    socket.emit('join', previewStream);
   });
   socket.on('video-stream-delete', function(msg) {
     log('Dead video stream '+ msg.id);

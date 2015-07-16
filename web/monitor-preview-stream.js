@@ -42,7 +42,7 @@ function init(params) {
   socket = io(params.serverUrl);
   socket.on('connect', function() {
     log(' ... connected');
-    var stream = 'video-'+ params.id;
+    var stream = 'video-preview-'+ params.id;
     socket.on(stream, renderFrame);
     socket.emit('join', stream);
   });

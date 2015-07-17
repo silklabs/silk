@@ -494,7 +494,12 @@ public class WebSocket : NSObject, NSStreamDelegate {
             var dataLength = UInt64(payloadLen)
             if dataLength == 127 {
                 let bytes = UnsafePointer<UInt64>((buffer+offset))
-                dataLength = bytes[0].byteSwapped
+                // On ARMv7-A at least, 4-byte alignment is required for
+                // reading UInt64 with LDRD.  We have no guarantees about
+                // alignment here, so memcpy the bytes and then swap them
+                // into host order.
+                memcpy(&dataLength, bytes, sizeof(UInt64))
+                dataLength = dataLength.byteSwapped
                 offset += sizeof(UInt64)
             } else if dataLength == 126 {
                 let bytes = UnsafePointer<UInt16>((buffer+offset))

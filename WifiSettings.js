@@ -19,13 +19,17 @@ var Title = React.createClass({
       <View style={styles.titleContainer}>
         <View style={styles.spacer}>
           <TouchableOpacity onPress={this.props.onCancel}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <View style={styles.titleButton}>
+              <Text style={styles.cancel}>Cancel</Text>
+            </View>
           </TouchableOpacity>
         </View>
         <Text style={styles.title}>Wi-Fi Settings</Text>
         <View style={styles.spacer}>
           <TouchableOpacity onPress={this.props.onSave}>
-            <Text style={styles.save}>Save</Text>
+            <View style={styles.titleButton}>
+              <Text style={styles.save}>Save</Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -141,10 +145,7 @@ var styles = StyleSheet.create({
   titleContainer: {
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingTop: 32,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 10,
+    paddingTop: 22,
   },
   spacer: {
     flex: 1,
@@ -154,6 +155,13 @@ var styles = StyleSheet.create({
     fontSize: 17,
     textAlign: 'center',
     fontWeight: '500',
+    paddingTop: 10,
+  },
+  titleButton: {
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
   save: {
     color: '#007aff',
@@ -163,7 +171,7 @@ var styles = StyleSheet.create({
   },
   cancel: {
     color: '#007aff',
-    fontSize: 18,
+    fontSize: 17,
     textAlign: 'left',
   },
 

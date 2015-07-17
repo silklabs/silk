@@ -69,26 +69,101 @@ cp -r $ANDROID_PRODUCT_OUT/{system/,data/} $archiveDir/$TARGET_PRODUCT
 if [[ -f $ANDROID_PRODUCT_OUT/boot.img ]]; then
   # This is a full device build
 
-  cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<EOF
+  # Create flash script
+  cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<'EOF'
 #/bin/sh
 
 set -x
-cd \$(dirname \$0)
+cd $(dirname $0)
 adb reboot-bootloader
 fastboot oem unlock
 set -e
 fastboot flash boot boot.img
 fastboot flash recovery recovery.img
 fastboot flash system system.img
+
+if [ "$1" = "-w" ]; then
+  echo wipe user data/cache partitions
+  fastboot format userdata
+  fastboot format cache
+else
+  echo
+  echo Note: userdata/cache partitions have been preserved. They may
+  echo contain state that you want to clear, and if so run:
+  echo $ adb reboot-bootloader
+  echo $ fastboot format userdata
+  echo $ fastboot format cache
+fi
+
 fastboot reboot
 set +x
-echo
-echo Note: userdata/cache partitions have been preserved.  They may
-echo contain state that you want to clear, and if so run:
-echo $ adb reboot-bootloader
-echo $ fastboot format userdata
-echo $ fastboot format cache
 EOF
+
+
+  # Create flash_ftu script
+  cat > $archiveDir/$TARGET_PRODUCT/flash_ftu.sh <<'EOF'
+#!/bin/bash
+
+usage () {
+  echo usage: $0 [-d] [-s]
+  echo " "
+  echo Enable easy device provisioning
+  echo d - Display name for the device. Username will be used if not provided.
+  echo s - Server URL. Default server URL will be used if not provided.
+}
+
+while getopts "h?d:s:" opt; do
+    case $opt in
+    h|\?)
+        usage
+        exit 0
+        ;;
+    d)  DISPLAY_NAME="$OPTARG"
+        ;;
+    s)  SERVER_URL=$OPTARG
+        ;;
+    esac
+done
+
+if [[ -z $DISPLAY_NAME ]]; then
+  DISPLAY_NAME=$(whoami)
+fi
+
+if [[ -z $SERVER_URL ]]; then
+  SERVER_URL=""
+fi
+
+# Flash the build and clear userdata/cache partitions
+echo Flashing the device
+cd $(dirname $0)
+./flash.sh -w
+
+adb wait-for-device
+adb root
+adb wait-for-device
+echo Configuring the device
+
+# Enable OTA updates
+adb shell setprop persist.silk.update.enabled true
+
+# Set device name
+adb shell setprop persist.silk.displayName "$DISPLAY_NAME"
+
+# Enable crash reporting
+adb shell setprop persist.silk.crashrprt.enabled true
+
+# Set silk-server URL
+adb shell setprop persist.silk.server.url "$SERVER_URL"
+
+# Restart the device
+echo Waiting to reboot the device to finish provisioning
+adb reboot
+adb wait-for-device
+echo Device provisioning successful
+
+EOF
+
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash_ftu.sh
   cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
 
 else

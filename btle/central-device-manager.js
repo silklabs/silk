@@ -92,14 +92,7 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
 };
 
 DeviceManager.prototype._ensureConfigured = function(p) {
-  p.prettyName = p.advertisement.localName;
-  p.state = 'discovered';
-  this.devices[p.id] = p;  
-  this.emit('discover', p);
-  p.connect().then(() => {
-    p.state = 'connected';
-    this.emit('connect', p);
-    // TODO: register for notify on state charc
+  this._connect(p).then(() => {
     return p.readCharacteristic(decls.uuid.StateCharacteristic);
   }).then(data => {
     var state = data.readUInt8(0);
@@ -110,9 +103,18 @@ DeviceManager.prototype._ensureConfigured = function(p) {
       // TODO disconnect here?  should we ever get here?
       return Promise.reject('Peripheral not register-able');
     }
-    return this._waitForProximity(p);
-  }).then(() => {
-    return this._configureWithoutCrypto(p);
+    return this._passProximityGate(p);
+  }).then(resumeToken => {    
+    return this._configureWithoutCrypto(p, resumeToken);
+  });
+};
+
+DeviceManager.prototype._passProximityGate = function(p) {
+  return this._waitForProximity(p).then(() => {
+    console.log('Passed proximity gate; disconnecting');
+    // TODO: get resume token from config service itself
+    var resumeToken = 'TODO-IMPLEMENT-ME';
+    return resumeToken;
   });
 };
 
@@ -160,20 +162,54 @@ DeviceManager.prototype._waitForProximity = function(p) {
   });
 };
 
-DeviceManager.prototype._configureWithoutCrypto = function(p) {
-  return this.wifiHelper.getWifiNetwork().then(network => {
-    Promise.all([
+DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
+  var network = null;
+  // Disconnect peripheral while we're getting Wi-Fi credentials from
+  // the user.  This works around random timeouts observed while BLE
+  // remains connected.
+  return this._disconnect(p).then(() => {
+    console.log('Disconnecting peripheral before getting wifi info ...');
+    return this.wifiHelper.getWifiNetwork();
+  }).then(net => {
+    console.log('Got network info, reconnecting ...');
+    network = net;
+    return this._connect(p);
+  }).then(() => {
+    return this._resumeSession(p, resumeToken);
+  }).then(() => {
+    console.log('Writing wifi info to peripheral ...');
+    return Promise.all([
       p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
                             new Buffer(network.ssid, 'utf8')),
       p.writeCharacteristic(decls.uuid.SecretCharacteristic,
                             new Buffer(network.secret, 'utf8')),
-    ]).then(() => {
-      // TODO: get this from state charc notify
-      p.state = 'registered';
-      this.emit('stateChange', p);
-      setTimeout(() => this._disconnect(p), 2000);
-    });
-  }, () => this._disconnect(p).then(() => this._ensureConfigured(p)));
+    ]);
+  }).then(() => {
+    // TODO: get this from state charc notify
+    p.state = 'registered';
+    this.emit('stateChange', p);
+    console.log(' ... finished configuring, disconnecting');
+    setTimeout(() => this._disconnect(p), 2000);
+  }).catch(() => this._disconnect(p).then(() => this._ensureConfigured(p)));
+};
+
+DeviceManager.prototype._resumeSession = function(p, token) {
+  console.log(`Resuming session for peripheral with token ${token} ...`);
+  // TODO: use `token` to actually resume the session; on the device
+  // side, config-service sessions persist across reconnects (which is
+  // a bug).
+  return Promise.resolve();
+};
+
+DeviceManager.prototype._connect = function(p) {
+  p.prettyName = p.advertisement.localName;
+  p.state = 'discovered';
+  this.devices[p.id] = p;  
+  this.emit('discover', p);
+  return p.connect().then(() => {
+    p.state = 'connected';
+    this.emit('connect', p);
+  });
 };
 
 DeviceManager.prototype._disconnect = function(p) {

@@ -662,6 +662,7 @@ status_t MPEG4MemoryWriter::reset() {
     status_t err = OK;
     int64_t maxDurationUs = 0;
     int64_t minDurationUs = 0x7fffffffffffffffLL;
+    int i = 0;
     for (List<Track *>::iterator it = mTracks.begin();
          it != mTracks.end(); ++it) {
         status_t status = (*it)->stop();
@@ -670,6 +671,7 @@ status_t MPEG4MemoryWriter::reset() {
         }
 
         int64_t durationUs = (*it)->getDurationUs();
+        ALOGD("Track %d duration: %" PRId64 "us", i++, durationUs);
         if (durationUs > maxDurationUs) {
             maxDurationUs = durationUs;
         }

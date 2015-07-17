@@ -156,7 +156,7 @@ class CameraStream {
   }
 
   pushPacket(when, frame, type) {
-    log.debug(`packet:${type}: when:${when}ms lag:${Date.now() - when}ms`);
+    log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
     this.socket.emit('video', { id: this.id, faces: this.faces,
                                 frame: frame, contents: type, when: when });
   }

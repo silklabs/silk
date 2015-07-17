@@ -62,7 +62,7 @@ __abandon_branch()
     fi
     git reset --quiet --hard HEAD
     git clean -dfx
-    ${REPO} abandon autogen_ephemeral_branch . 2> /dev/null
+    ${REPO} abandon autogen_ephemeral_branch .
   fi
 }
 

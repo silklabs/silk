@@ -12,7 +12,7 @@
   <project name="joyent/node"
            path="external/node"
            remote="github"
-           revision="refs/tags/v0.12.2" clone-depth="1"/>
+           revision="refs/tags/v0.12.6" clone-depth="1"/>
   <project name="npm/npm"
            path="external/npm"
            remote="github"

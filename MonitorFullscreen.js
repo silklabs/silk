@@ -6,6 +6,7 @@
 import React from 'react-native'
 import WebViewBridge from 'react-native-webview-bridge'
 import LiveVideo from './LiveVideo'
+import OverlayModal from './OverlayModal'
 
 let {
   Image,
@@ -17,9 +18,19 @@ let {
 } = React;
 
 export default React.createClass({
-  componentDidMount: function() {
-    var statusBarAnimation = 'slide';
-    StatusBarIOS.setHidden(true, statusBarAnimation);
+  getInitialProps() {
+    return {
+      presented: false,
+      onClose: function() {}
+    }
+  },
+
+  onShowStart() {
+    StatusBarIOS.setHidden(true, 'slide');
+  },
+
+  onDismissEnd() {
+    StatusBarIOS.setHidden(false, 'slide');
   },
 
   render: function() {
@@ -29,21 +40,33 @@ export default React.createClass({
     };
 
     return (
-      <TouchableWithoutFeedback onPress={this.popNav}>
-        <View style={styles.container}>
-          <LiveVideo videoStream={videoStream} ref='video' />
-        </View>
-      </TouchableWithoutFeedback>
-    );
+      <View style={styles.container}>
+        <OverlayModal ref="overlay"
+                      onShowStart={this.onShowStart}
+                      onDismissEnd={this.onDismissEnd}
+                      style={styles.container}
+                      presented={this.props.presented}>
+
+          <TouchableWithoutFeedback onPress={this.close}>
+            <LiveVideo videoStream={videoStream} ref='video' />
+          </TouchableWithoutFeedback>
+
+        </OverlayModal>
+      </View>
+    )
   },
 
-  popNav: function() {
-    StatusBarIOS.setHidden(false, 'slide');
-    this.props.navigator.pop();
+  close() {
+    var overlay = this.refs.overlay;
     var video = this.refs.video;
-    if (video) {
-      video.destroy()
-    }
+
+    // XXX: This is a hack the video should clean itself up.
+    video.destroy()
+    // Signal dismissal of the view (but let it animate closed)
+    overlay.dismiss().then(() => {
+      // After the animation allow any parent views to cleanup..
+      this.props.onClose()
+    });
   },
 });
 
@@ -51,6 +74,6 @@ var styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'stretch',
-    backgroundColor: 'black',
+    backgroundColor: 'black'
   },
 });

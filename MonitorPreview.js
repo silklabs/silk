@@ -3,7 +3,11 @@
 
 'use strict';
 
-var React = require('react-native');
+import React from 'react-native';
+import WebViewBridge from 'react-native-webview-bridge';
+import LiveVideo from './LiveVideo'
+import MonitorFullscreen from './MonitorFullscreen'
+
 var {
   Image,
   StyleSheet,
@@ -12,16 +16,38 @@ var {
   View,
 } = React;
 
-var WebViewBridge = require('react-native-webview-bridge');
 
 var PREVIEW_WIDTH = 305;
 var PREVIEW_HEIGHT = 170;
 
 var MonitorPreview = React.createClass({
-  render: function() {
+  getInitialState() {
+    return {
+      showVideo: false
+    }
+  },
+
+  showVideo() {
+    this.setState({ showVideo: true })
+  },
+
+  onVideoHidden() {
+    this.setState({ showVideo: false })
+  },
+
+  render() {
+    var vid = this.props.vid;
+    var serverUrl = this.props.serverUrl;
+    var fullscreen = this.state.showVideo;
+
     return (
-      <TouchableOpacity onPress={this.goFullscreen}>
+      <TouchableOpacity onPress={this.showVideo}>
         <View style={styles.monitorContainer}>
+          <MonitorFullscreen
+            onClose={this.onVideoHidden}
+            presented={fullscreen}
+            vid={vid}
+            serverUrl={serverUrl} />
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>
@@ -30,14 +56,7 @@ var MonitorPreview = React.createClass({
         </View>
       </TouchableOpacity>
     );
-  },
-
-  goFullscreen: function() {
-    // XXX: what is index supposed to signify?
-    this.props.navigator.push({ name: 'MonitorFullscreen', index: 2,
-                                vid: this.props.vid,
-                                serverUrl: this.props.serverUrl });
-  },
+  }
 });
 
 // This will become a native-backed (or initially, WebView-backed)

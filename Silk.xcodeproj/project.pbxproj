@@ -21,6 +21,10 @@
 		48C6FFE325D1F9D6F480B062 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 899B54A6878BDF1E770A5752 /* libPods.a */; };
 		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
 		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
+		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
+		5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0811B59FC2500F9376C /* OverlayModalManager.m */; };
+		5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0821B59FC2500F9376C /* OverlayModalManager.swift */; };
+		5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */; };
 		57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559E8B1B503BD400929697 /* LiveVideo.swift */; };
 		57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
@@ -151,6 +155,10 @@
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
 		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
+		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
+		5741E0811B59FC2500F9376C /* OverlayModalManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OverlayModalManager.m; sourceTree = "<group>"; };
+		5741E0821B59FC2500F9376C /* OverlayModalManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModalManager.swift; sourceTree = "<group>"; };
+		5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RCTViewManagerExtensions.swift; sourceTree = "<group>"; };
 		57559E8B1B503BD400929697 /* LiveVideo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideo.swift; sourceTree = "<group>"; };
 		57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketIOAVAssetLoaderDelegate.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -356,9 +364,21 @@
 			path = iOS/PropertyObserver;
 			sourceTree = "<group>";
 		};
+		5741E07F1B59FC2500F9376C /* OverlayModal */ = {
+			isa = PBXGroup;
+			children = (
+				5741E0801B59FC2500F9376C /* OverlayModal.swift */,
+				5741E0811B59FC2500F9376C /* OverlayModalManager.m */,
+				5741E0821B59FC2500F9376C /* OverlayModalManager.swift */,
+			);
+			path = OverlayModal;
+			sourceTree = "<group>";
+		};
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */,
+				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
 				57AC68821B4F0DE1009B70A3 /* LiveVideo */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
@@ -742,16 +762,20 @@
 			files = (
 				F9107F271B58DA8D00F02BF4 /* SocketFixUTF8.swift in Sources */,
 				57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */,
+				5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */,
 				F9107F231B58DA8D00F02BF4 /* SocketAnyEvent.swift in Sources */,
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
+				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
 				F949A1A11B365A2900E59D69 /* WebViewJavascriptBridge.m in Sources */,
 				F9107F281B58DA8D00F02BF4 /* SocketIOClient.swift in Sources */,
+				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
 				F9107F251B58DA8D00F02BF4 /* SocketEngineClient.swift in Sources */,
 				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
 				F9107F221B58DA8D00F02BF4 /* SocketAckManager.swift in Sources */,
 				F9107F241B58DA8D00F02BF4 /* SocketEngine.swift in Sources */,
 				F949A19F1B365A2900E59D69 /* WebViewExManager.m in Sources */,
 				F9107F2D1B58DA8D00F02BF4 /* SwiftRegex.swift in Sources */,
+				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,

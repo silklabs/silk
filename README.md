@@ -49,7 +49,7 @@ react-native bundle
 ```
 Then you must rebuild and redeploy the app by pressing Ctrl-r from within Xcode.
 
-However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so,Add `config.local.json` to the root of `silk-app`.
+However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so, add `config.local.json` to the root of `silk-app`.
 
 The most basic version looks like this:
 

@@ -41,6 +41,7 @@ var MonitorsView = React.createClass({
     this.dm = new DeviceManager(require('./btle/ble-central'), this);
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
+    this.getWifiPromise = null;
   },
 
   componentWillUnmount: function() {
@@ -139,6 +140,9 @@ var MonitorsView = React.createClass({
       });
     })().then(network => {
       this.state.network = network;
+      if (this.getWifiPromise) {
+        this.getWifiPromise = null;
+      }
       if (this.state.serverUrl !== network.serverUrl) {
         console.log('WARNING: Switching server URL to', network.serverUrl);
         console.log('  This will break any open monitor streams.');
@@ -171,7 +175,12 @@ var MonitorsView = React.createClass({
     if (this.state.network) {
       return Promise.resolve(this.state.network);
     }
-    return this.loadSettings();
+    if (this.getWifiPromise) {
+      return this.getWifiPromise;
+    }
+    this.getWifiPromise = this.loadSettings()
+    this.getWifiPromise.catch(() => { this.getWifiPromise = null; });
+    return this.getWifiPromise;
   },
 });
 

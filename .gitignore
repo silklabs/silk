@@ -33,3 +33,6 @@ iOS/*.jsbundle
 # Pods
 /Pods/
 Silk.xcworkspace/
+
+# Configs
+/config.local.json

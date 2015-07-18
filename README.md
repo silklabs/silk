@@ -49,28 +49,18 @@ react-native bundle
 ```
 Then you must rebuild and redeploy the app by pressing Ctrl-r from within Xcode.
 
-However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so,
+However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so,Add `config.local.json` to the root of `silk-app`.
 
-* Open `iOS/AppDelegate.swift` in Xcode.
-* Find the lines that look like
-```swift
-    // 1. (Production) use app bundle
-    let url = NSBundle.mainBundle().URLForResource("main", withExtension: "jsbundle")
+The most basic version looks like this:
 
-    // 2. Use localhost
-    //let url = NSURL(string: "http://localhost:8081/index.ios.bundle")
+```js
+{
+  "react-native": {
+    "type": "remote",
+    "url": "http://localhost:8081/index.ios.bundle"
+  }
+}
 ```
-and edit them to look like
-```swift
-    // 1. (Production) use app bundle
-    //let url = NSBundle.mainBundle().URLForResource("main", withExtension: "jsbundle")
-
-    // 2. Use localhost
-    let url = NSURL(string: "http://localhost:8081/index.ios.bundle")
-```
-* Finally, do a full rebuild and redeploy of the app by pressing Ctrl-r from within Xcode.
-
-(Yes, this kind of sucks, and yes, we'll make it better.)
 
 Now, after making a change to a react-native .js file, simply press Ctrl-r in the simlator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
 

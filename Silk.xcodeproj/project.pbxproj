@@ -25,6 +25,8 @@
 		5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0811B59FC2500F9376C /* OverlayModalManager.m */; };
 		5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0821B59FC2500F9376C /* OverlayModalManager.swift */; };
 		5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */; };
+		5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* LoadConfig.swift */; };
+		5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */; };
 		57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559E8B1B503BD400929697 /* LiveVideo.swift */; };
 		57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
@@ -159,6 +161,8 @@
 		5741E0811B59FC2500F9376C /* OverlayModalManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OverlayModalManager.m; sourceTree = "<group>"; };
 		5741E0821B59FC2500F9376C /* OverlayModalManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModalManager.swift; sourceTree = "<group>"; };
 		5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RCTViewManagerExtensions.swift; sourceTree = "<group>"; };
+		5741E0BF1B5A108D00F9376C /* LoadConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfig.swift; sourceTree = "<group>"; };
+		5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfigTest.swift; sourceTree = "<group>"; };
 		57559E8B1B503BD400929697 /* LiveVideo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideo.swift; sourceTree = "<group>"; };
 		57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketIOAVAssetLoaderDelegate.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -382,6 +386,8 @@
 				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
 				57AC68821B4F0DE1009B70A3 /* LiveVideo */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
+				5741E0BF1B5A108D00F9376C /* LoadConfig.swift */,
+				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -530,6 +536,7 @@
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				FA30A4411CE5293BD11D82DC /* Copy Pods Resources */,
+				5741E0BD1B5A04B000F9376C /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -715,6 +722,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		5741E0BD1B5A04B000F9376C /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Copy json config if it's available...\nset -x\nconfig_file=\"$SRCROOT/config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ];\nthen\n  cp $config_file $target_file\nfi";
+		};
 		A4383417B7DC020B6053A851 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -753,6 +774,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */,
+				5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -780,6 +802,7 @@
 				F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
+				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
 				F9107F261B58DA8D00F02BF4 /* SocketEventHandler.swift in Sources */,
 				F9107F201B58DA8D00F02BF4 /* Socket.swift in Sources */,
 				F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */,

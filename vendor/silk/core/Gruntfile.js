@@ -4,6 +4,7 @@
 SRCS = [
   // NOTE: Keep all source directories under lib/ to avoid breaking dependency
   // management in Android.mk
+  'lib/base_version.js',
   'lib/camera.js',
   'lib/caps.js',
   'lib/config.js',

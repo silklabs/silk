@@ -7,6 +7,7 @@ PRODUCT_PACKAGES += node node_modules
 SILK_CORE := \
   core.js \
   init.silk.rc \
+  base_version.js \
   silk \
 
 PRODUCT_PACKAGES += $(SILK_CORE)

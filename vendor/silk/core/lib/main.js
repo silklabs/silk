@@ -3,11 +3,36 @@
 
 'use strict';
 
+//
+// Version check the base device image before doing anything else
+//
+
+let log = require('./log')('main');
+let baseversion = {
+  actual: 'unknown',
+  expected: require('./base_version')
+};
+try {
+  baseversion.actual = require('base_version');
+} catch(e) {
+  // TODO: Use console.log() here instead once #274 is fixed
+  log.error(`Unable to load base_version: ${e}`);
+}
+if (baseversion.actual !== baseversion.expected) { // TODO: use semver
+  // TODO: Use console.log() here instead once #274 is fixed
+  log.error('\n' +
+            '************************************************\n' +
+            ' FATAL ERROR: Device base version mismatch\n' +
+            `   Expected base version: ${baseversion.expected}\n` +
+            `   Actual base version:   ${baseversion.actual}\n` +
+            '************************************************');
+  throw new Error('Fatal error');
+}
+
 let api = require('silk-api');
 let btle = require('./btle');
 let crashreport = require('./crashreport');
 let lights = require('./lights')();
-let log = require('./log')('main');
 let ui = require('./ui');
 let vib = require('./vibrator')();
 let wifi = require('./wifi');

@@ -27,6 +27,7 @@
 		5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */; };
 		5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* LoadConfig.swift */; };
 		5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */; };
+		5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0EB1B5A206F00F9376C /* ViewController.swift */; };
 		57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559E8B1B503BD400929697 /* LiveVideo.swift */; };
 		57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
@@ -163,6 +164,7 @@
 		5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RCTViewManagerExtensions.swift; sourceTree = "<group>"; };
 		5741E0BF1B5A108D00F9376C /* LoadConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfig.swift; sourceTree = "<group>"; };
 		5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfigTest.swift; sourceTree = "<group>"; };
+		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		57559E8B1B503BD400929697 /* LiveVideo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideo.swift; sourceTree = "<group>"; };
 		57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketIOAVAssetLoaderDelegate.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -388,6 +390,7 @@
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
 				5741E0BF1B5A108D00F9376C /* LoadConfig.swift */,
 				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
+				5741E0EB1B5A206F00F9376C /* ViewController.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -808,6 +811,7 @@
 				F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */,
 				F9107F291B58DA8D00F02BF4 /* SocketLogger.swift in Sources */,
 				F949A19E1B365A2900E59D69 /* WebViewEx.m in Sources */,
+				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
 				57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */,
 				573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */,
 				F9107F2B1B58DA8D00F02BF4 /* SocketParser.swift in Sources */,

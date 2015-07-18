@@ -16,6 +16,7 @@ $ ./flash.sh
 ```
 Check the latest green build at https://magnum.travis-ci.com/silklabs/silk-device/builds to figure what **mako.tgz** currently contains.
 
+If the device is intended to be used as a dogfooding device, use `./flash_fut.sh` instead of `./flash.sh` (not recommended for development as updates are enabled in the FUT build).
 
 ## Prerequisites
 0. You _must_ have a case sensitive file system to build on OS X.  To create one,

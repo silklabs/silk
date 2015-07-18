@@ -38,7 +38,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate {
     let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", launchOptions: launchOptions)
 
     // At least for now we don't implement our own specific controller...
-    let rootViewController = UIViewController()
+    let rootViewController = ViewController()
     rootViewController.view = rootView
 
     self.window = UIWindow(frame: UIScreen.mainScreen().bounds)

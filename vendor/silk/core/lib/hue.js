@@ -6,7 +6,7 @@
 let weOwnTty = (require.main === module);
 
 let hue = require('node-hue-api');
-let log = require('./log')('lights');
+let log = require('./log')('hue');
 let util = require('./util');
 
 class LightsHue {

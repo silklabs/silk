@@ -57,6 +57,9 @@ class LiveVideo : UIView {
 
   func destroy() {
     if let client = self.socketIOClient {
+      // Ensure player has no observers anymore...
+      self.player.removeAllKeyPathObservers()
+
       client.disconnect(fast: true)
       self.socketIOClient = nil
     }

@@ -91,4 +91,13 @@ extension NSObject {
     }
     return false
   }
+
+  /**
+  Convience func to remote all property observers.
+  */
+  public func removeAllKeyPathObservers() {
+    for kvo in self.propertyObserverItems {
+      self.removeKeyPathObserver(kvo)
+    }
+  }
 }

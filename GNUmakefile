@@ -14,19 +14,18 @@ install: | .repo/.repo_fetchtimes.json
   adb remount && \
   adb sync
 
-.PHONY: uninstall
-uninstall:
-	$(ENVSETUP) && \
-  adb root && \
-  adb wait-for-device && \
-  adb remount && \
-  adb shell rm -rvf /system/silk /system/node_modules
-
 .PHONY: clean
 clean:
 	rm -rf out
 
+# Kills "99.99%" of bugs.
+# (Be very careful!)
+.PHONY: purell
+purell:
+	rm -rf * && git reset --hard HEAD && ./repo sync -l
+
 # https://youtu.be/1r_2fNiYkyE
+# (Be certain!)
 .PHONY: zest
 zest:
 	git reset --hard HEAD && git clean -dx -f -f

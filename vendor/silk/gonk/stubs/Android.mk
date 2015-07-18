@@ -14,7 +14,7 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-ifneq ($(TARGET_PRODUCT),silk_arm)  # Skip these in the base build
+ifneq ($(TARGET_PRODUCT),silk_arm)  # Skip these in the minimal build
 
 ifneq ($(wildcard frameworks/native/libs/binder/IAppOpsService.cpp),)
 include $(CLEAR_VARS)

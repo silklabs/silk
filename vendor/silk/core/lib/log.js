@@ -24,37 +24,39 @@
 export default function createLog(libraryName) {
   const alog = require('alog');
   const debug = require('debug');
+  const util = require('util');
 
   libraryName = 'silk-' + libraryName;
 
-  let debugFunction = debug(libraryName + ':debug');
-  debugFunction.log = msg => {
-    console.debug(msg);
-    alog.debug(libraryName, msg);
-  };
+  // This matches |libraryName| to remove it from the output in logcat. It also
+  // matches the ANSI color codes that the |debug| module may insert
+  // (e.g. '\u001b[31m').
+  let libraryNameRegExp =
+    new RegExp('^(\\s*(\\u001b\\[3\\d;1m)?)' +
+               libraryName +
+               ':\\w+\\s+(\\u001b\\[0m)?');
 
-  let infoFunction = debug(libraryName + ':info');
-  infoFunction.log = msg => {
-    console.info(msg);
-    alog.info(libraryName, msg);
-  };
+  function makeLogFunction(consoleFuncName, alogFuncName = consoleFuncName) {
+    let func = debug(`${libraryName}:${alogFuncName}`);
+    func.log = function() {
+      let args = arguments;
+      let consoleFunc = console[consoleFuncName];
+      let alogFunc = alog[alogFuncName];
 
-  let warnFunction = debug(libraryName + ':warn');
-  warnFunction.log = msg => {
-    console.warn(msg);
-    alog.warn(libraryName, msg);
-  };
+      consoleFunc.apply(consoleFunc, args);
 
-  let errorFunction = debug(libraryName + ':info');
-  errorFunction.log = msg => {
-    console.error(msg);
-    alog.error(libraryName, msg);
-  };
+      // Mimic console.* functions by treating additional arguments as
+      // printf-style arguments.
+      let msg = util.format.apply(this, args);
+      alogFunc(libraryName, msg.replace(libraryNameRegExp, '$1'));
+    };
+    return func;
+  }
 
   return {
-    debug: debugFunction,
-    info: infoFunction,
-    warn: warnFunction,
-    error: errorFunction
+    debug: makeLogFunction('log', 'debug'),
+    info: makeLogFunction('info'),
+    warn: makeLogFunction('warn'),
+    error: makeLogFunction('error')
   };
 }

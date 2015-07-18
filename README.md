@@ -310,7 +310,7 @@ $ adb shell start silk
 
 Output is colored by default. To disable:
 ```
-$ adb shell rm /data/property/setprop persist.silk.debug.colors
+$ adb shell setprop persist.silk.debug.colors false
 $ adb shell stop silk
 $ adb shell start silk
 ```

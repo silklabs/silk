@@ -100,8 +100,8 @@ set +x
 EOF
 
 
-  # Create flash_ftu script
-  cat > $archiveDir/$TARGET_PRODUCT/flash_ftu.sh <<'EOF'
+  # Create flash_fut script
+  cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
 #!/bin/bash
 
 usage () {
@@ -163,7 +163,7 @@ echo Device provisioning successful
 
 EOF
 
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash_ftu.sh
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash_fut.sh
   cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
 
 else

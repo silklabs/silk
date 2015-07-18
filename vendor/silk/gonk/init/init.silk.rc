@@ -29,3 +29,8 @@ service wpad /system/bin/wpad
     group wifi system
     socket wpad stream 0600 root root
 
+service bledroid /system/bin/bledroid
+    class main
+    user bluetooth
+    group net_bt_stack
+    socket bledroid stream 0600 root root

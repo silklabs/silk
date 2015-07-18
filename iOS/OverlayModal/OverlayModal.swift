@@ -3,7 +3,10 @@ import UIKit
 class OverlayModalController: UIViewController {
   // TODO: Allow this to be configured...
   override func supportedInterfaceOrientations() -> Int {
-    return Int(UIInterfaceOrientationMask.LandscapeLeft.rawValue)
+    return Int(
+      UIInterfaceOrientationMask.LandscapeLeft.rawValue |
+      UIInterfaceOrientationMask.LandscapeRight.rawValue
+    )
   }
 }
 

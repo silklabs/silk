@@ -20,10 +20,6 @@ pod install
 
 To run the app, open `Silk.xcworkspace/` _not Silk.xcodeproj_ in Xcode.  You'll want to do most development in the iOS simulator(s).  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
 
-react-native supports shift-reload development.  After making a change to a react-native .js file, simply press Ctrl-r in the simlator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to reload the entire app, but this rarely needed.
-
-To run react-native on device, [see these instructions](http://facebook.github.io/react-native/docs/runningondevice.html).
-
 ## Provisioning an iDevice
 
 You can do most Silk development using the (excellent!) iOS simulators.  However, for Bluetooth development, performance testing, and touch-tap testing, a physical device is required.  Currently the Silk App is optimized for the iPhone 5s / iPod Touch 5th gen screen resolution.  iPod Touch 5 devices are good for development because they're relatively cheap.  To provision a new device:
@@ -40,6 +36,36 @@ You can do most Silk development using the (excellent!) iOS simulators.  However
 
 Xcode should then set up your device and launch the Silk App on your device.  You're done!
 
-## Editing code
+## Development cycle
 
-When editing the react-native component .js files, for example MonitorPreview.js, you can simply press Ctrl-r in the simulator to "reload" the app.  However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the latter always works.
+react-native supports two development modes:
+
+0. Fetch resources from external server (save-reload mode from host)
+0. Package resources into app package (deploy-to-device mode)
+
+By default, silk-app is configured for deploy-to-device mode.  However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so,
+
+* Open `iOS/AppDelegate.swift` in Xcode.
+* Find the lines that look like
+```swift
+    // 1. (Production) use app bundle
+    let url = NSBundle.mainBundle().URLForResource("main", withExtension: "jsbundle")
+
+    // 2. Use localhost
+    //let url = NSURL(string: "http://localhost:8081/index.ios.bundle")
+```
+and edit them to look like
+```swift
+    // 1. (Production) use app bundle
+    //let url = NSBundle.mainBundle().URLForResource("main", withExtension: "jsbundle")
+
+    // 2. Use localhost
+    let url = NSURL(string: "http://localhost:8081/index.ios.bundle")
+```
+* Finally, do a full rebuild and redeploy of the app by pressing Ctrl-r from within Xcode.
+
+(Yes, this kind of sucks, and yes, we'll make it better.)
+
+Now, after making a change to a react-native .js file, simply press Ctrl-r in the simlator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
+
+However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the full Ctrl-r rebuild/redeploy from within Xcode always works.

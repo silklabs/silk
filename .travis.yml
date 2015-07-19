@@ -60,4 +60,5 @@ deploy:
   acl: public_read
   local-dir: dist/
   upload-dir: $TRAVIS_BRANCH/latest
-
+  on:
+    all_branches: true

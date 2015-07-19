@@ -22,7 +22,13 @@ if [ -z $1 ]; then
   # Feign sys.boot_completed for the benefit of other Gonk components that
   # listen on it.
   setprop sys.boot_completed 1
-  exec node $NODE_ARGS $NODE_PATH/core.js
+
+  LOGWRAPPER=
+  if [ $PPID -eq 1 ]; then
+    LOGWRAPPER=logwrapper
+  fi
+
+  exec $LOGWRAPPER node $NODE_ARGS $NODE_PATH/core.js
   exit 1
 fi
 

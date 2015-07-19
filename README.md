@@ -14,6 +14,11 @@ $ tar zxf mako.tgz
 $ cd aosp_mako/
 $ ./flash.sh
 ```
+or if you already have a workspace simply run:
+```
+$ make update
+```
+
 Check the latest green build at https://magnum.travis-ci.com/silklabs/silk-device/builds to figure what **mako.tgz** currently contains.
 
 If the device is intended to be used as a dogfooding device, use `./flash_fut.sh` instead of `./flash.sh` (not recommended for development as updates are enabled in the FUT build).

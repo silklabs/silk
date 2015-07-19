@@ -168,6 +168,12 @@ esac
 source $(dirname ${BASH_SOURCE[0]})/patchtree.sh $@
 
 if [[ $? -eq 0 ]]; then
+  # Generate manifest dependency file
+  rm -f out/repo_fetchtimes.P
+  for manifest in $(find_manifest_names $GONK | sort -u); do
+    echo .repo/.repo_fetchtimes.json: gonk/manifest/$manifest.xml >> out/repo_fetchtimes.P
+  done
+
   #
   # |lunch| automatically
   #

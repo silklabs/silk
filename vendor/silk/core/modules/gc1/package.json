@@ -1,5 +1,5 @@
 {
-  "name": "gc1",
+  "name": "silk-gc1",
   "version": "0.0.1",
   "description": "gc wrapper",
   "main": "index.js",

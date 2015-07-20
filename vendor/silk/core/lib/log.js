@@ -35,7 +35,7 @@ function formatArgs() {
 // By default all info(), warn(), and error() output is enabled. All debug()
 // output is disabled.
 export default function createLog(libraryName) {
-  const alog = require('alog');
+  const alog = require('silk-alog');
   const util = require('util');
 
   let debug = require('debug');

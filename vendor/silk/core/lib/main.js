@@ -50,7 +50,7 @@ const name = (util.getprop('persist.silk.displayName')
 function runGC() {
   let gcStart = Date.now();
   // Ask the gc to try to run for no more than 250ms
-  let gcDone = require('gc1').idleNotification(250);
+  let gcDone = require('silk-gc1').idleNotification(250);
   let gcStop = Date.now();
 
   log.info(`GC ran for ${gcStop - gcStart}ms | done=${gcDone}`);

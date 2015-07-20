@@ -1,5 +1,5 @@
 {
-  "name": "movie",
+  "name": "silk-movie",
   "version": "0.0.1",
   "description": "Plays movies",
   "main": "index.js",

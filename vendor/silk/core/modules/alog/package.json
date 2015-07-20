@@ -1,5 +1,5 @@
 {
-  "name": "alog",
+  "name": "silk-alog",
   "version": "0.0.1",
   "description": "wrapper for android log",
   "main": "index.js",

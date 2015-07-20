@@ -3,6 +3,19 @@
 
 'use strict';
 
+function formatArgs() {
+  let args = arguments;
+  let name = this.namespace;
+
+  if (this.useColors) {
+    let color = this.color;
+    args[0] = `\u001b[3${color}m${name}\u001b[0m ` + args[0];
+  } else {
+    args[0] = name + ' ' + args[0];
+  }
+  return args;
+}
+
 // Expected use:
 //
 //   var log = require('./log')('coolfeature');
@@ -23,38 +36,44 @@
 // output is disabled.
 export default function createLog(libraryName) {
   const alog = require('alog');
-  const debug = require('debug');
+  const util = require('util');
+
+  let debug = require('debug');
+  debug.formatArgs = formatArgs;
 
   libraryName = 'silk-' + libraryName;
 
-  let debugFunction = debug(libraryName + ':debug');
-  debugFunction.log = msg => {
-    console.debug(msg);
-    alog.debug(libraryName, msg);
-  };
+  // This matches |libraryName| to remove it from the output in logcat. It also
+  // matches the ANSI color codes that the |debug| module may insert
+  // (e.g. '\u001b[31;1m').
+  let libraryNameRegExp =
+    new RegExp('^(\\u001b\\[3\\dm)?' +
+               libraryName +
+               ':\\w+(\\u001b\\[0m)?\\s+(.*)');
 
-  let infoFunction = debug(libraryName + ':info');
-  infoFunction.log = msg => {
-    console.info(msg);
-    alog.info(libraryName, msg);
-  };
+  function makeLogFunction(consoleFuncName, alogFuncName = consoleFuncName) {
+    let func = debug(`${libraryName}:${alogFuncName}`);
+    func.log = function() {
+      let args = arguments;
+      let consoleFunc = console[consoleFuncName];
+      let alogFunc = alog[alogFuncName];
 
-  let warnFunction = debug(libraryName + ':warn');
-  warnFunction.log = msg => {
-    console.warn(msg);
-    alog.warn(libraryName, msg);
-  };
+      consoleFunc.apply(consoleFunc, args);
 
-  let errorFunction = debug(libraryName + ':info');
-  errorFunction.log = msg => {
-    console.error(msg);
-    alog.error(libraryName, msg);
-  };
+      // Mimic console.* functions by treating additional arguments as
+      // printf-style arguments.
+      let msg = util.format.apply(this, args);
+      alogFunc(libraryName, msg.replace(libraryNameRegExp, '$1$3$2'));
+    };
+    return func;
+  }
 
   return {
-    debug: debugFunction,
-    info: infoFunction,
-    warn: warnFunction,
-    error: errorFunction
+    verbose: makeLogFunction('log', 'verbose'),
+    debug: makeLogFunction('log', 'debug'),
+    info: makeLogFunction('info'),
+    warn: makeLogFunction('warn'),
+    error: makeLogFunction('error'),
+    fatal: makeLogFunction('error', 'fatal')
   };
 }

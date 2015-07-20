@@ -27,3 +27,9 @@ service bledroid /system/bin/bledroid
     user bluetooth
     group net_bt_stack
     socket bledroid stream 0600 root root
+
+service silk-sensors /system/bin/silk-sensors
+    class main
+    user root
+    group root
+    socket sensors stream 0600 root root

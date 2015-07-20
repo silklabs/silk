@@ -34,6 +34,14 @@ zest:
 sync: | .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --quiet
 
+.PHONY: update
+update:
+	mkdir -p out
+	cd out/ && rm -rf mako.tgz aosp_mako
+	cd out/ && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
+	cd out/ && tar zxf mako.tgz
+	out/aosp_mako/flash.sh
+
 .PHONY: dist
 dist: | .repo/manifest.xml
 	$(call ENVSETUP,clean) # <-- drop all local patches before archiving

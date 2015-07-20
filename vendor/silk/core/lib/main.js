@@ -7,7 +7,6 @@
 // Version check the base device image before doing anything else
 //
 
-let log = require('./log')('main');
 let baseversion = {
   actual: 'unknown',
   expected: require('./base_version')
@@ -15,17 +14,15 @@ let baseversion = {
 try {
   baseversion.actual = require('base_version');
 } catch(e) {
-  // TODO: Use console.log() here instead once #274 is fixed
-  log.error(`Unable to load base_version: ${e}`);
+  console.error(`Unable to load base_version: ${e}`);
 }
 if (baseversion.actual !== baseversion.expected) { // TODO: use semver
-  // TODO: Use console.log() here instead once #274 is fixed
-  log.error('\n' +
-            '************************************************\n' +
-            ' FATAL ERROR: Device base version mismatch\n' +
-            `   Expected base version: ${baseversion.expected}\n` +
-            `   Actual base version:   ${baseversion.actual}\n` +
-            '************************************************');
+  console.error('\n' +
+                '**********************************\n' +
+                ' Device base version mismatch\n' +
+                `   Expected base version: ${baseversion.expected}\n` +
+                `   Actual base version:   ${baseversion.actual}\n` +
+                '**********************************');
   throw new Error('Fatal error');
 }
 
@@ -34,6 +31,7 @@ let btle = require('./btle');
 let crashreport = require('./crashreport');
 let lights = require('./lights')();
 let ui = require('./ui');
+let log = require('./log')('main');
 let vib = require('./vibrator')();
 let wifi = require('./wifi');
 let util = require('./util');

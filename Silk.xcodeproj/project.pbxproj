@@ -537,9 +537,10 @@
 				A4383417B7DC020B6053A851 /* Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
+				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json) */,
+				5741E1471B5DA53300F9376C /* Conditionally react-native bundle */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				FA30A4411CE5293BD11D82DC /* Copy Pods Resources */,
-				5741E0BD1B5A04B000F9376C /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -725,19 +726,33 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		5741E0BD1B5A04B000F9376C /* Run Script */ = {
+		5741E0BD1B5A04B000F9376C /* Configuration (config.local.json) */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Run Script";
+			name = "Configuration (config.local.json)";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Copy json config if it's available...\nset -x\nconfig_file=\"$SRCROOT/config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ];\nthen\n  cp $config_file $target_file\nfi";
+			shellScript = "# Copy json config if it's available...\nconfig_file=\"$SRCROOT/config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ];\nthen\n  cp $config_file $target_file\nfi";
+		};
+		5741E1471B5DA53300F9376C /* Conditionally react-native bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Conditionally react-native bundle";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if ./tools/should_bundle ;\nthen\n  react-native bundle\nfi\n";
 		};
 		A4383417B7DC020B6053A851 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

@@ -43,11 +43,7 @@ react-native supports two development modes:
 0. Fetch resources from external server (save-reload mode from host)
 0. Package resources into app package (deploy-to-device mode)
 
-By default, silk-app is configured for deploy-to-device mode.  In this mode, whenever you change a react-native .js file, you must rebuild the JS bundle that's built into the app.  To do so, run the following command from your `silk-app` clone:
-```bash
-react-native bundle
-```
-Then you must rebuild and redeploy the app by pressing Ctrl-r from within Xcode.
+By default, silk-app is configured for deploy-to-device mode.  In this mode, whenever you change a react-native .js file, you must rebuild the JS bundle that's built into the app. This is done each time you build and redeploy the app by pressing Ctrl-r from within Xcode.
 
 However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so, add `config.local.json` to the root of `silk-app`.
 

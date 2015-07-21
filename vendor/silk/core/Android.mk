@@ -44,9 +44,6 @@ npm_INCLUDES := \
   bionic/libc/kernel/uapi/asm-arm \
   bionic/libc/kernel/uapi \
 
-ifeq (,$(filter $(TARGET_BUILD_VARIANT),eng))
-npm_production:=--production
-endif
 npm_cli = $(abspath external/npm/cli.js)
 npm_node_dir = $(abspath external/node)
 
@@ -86,13 +83,13 @@ $(LOCAL_BUILT_MODULE):
 	$(hide) rsync -av $(ABS_LOCAL_PATH)/ $(@D)
 	@echo "Build: $@"
 	$(hide) cd $(@D) && \
-   node $(npm_cli) install --ignore-scripts $(npm_production) --nodedir=$(npm_node_dir) --no-optional
+   node $(npm_cli) install --ignore-scripts --nodedir=$(npm_node_dir) --no-optional
 	$(hide) cd $(@D) && \
    node $(npm_cli) dedup
 	$(hide) cd $(@D) && \
-   node $(npm_cli) rebuild $(npm_production) --nodedir=$(npm_node_dir)
+   node $(npm_cli) rebuild --nodedir=$(npm_node_dir)
 	$(hide) cd $(@D) && \
-   node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir)
+   node $(npm_cli) install --nodedir=$(npm_node_dir)
 
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"

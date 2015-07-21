@@ -7,18 +7,10 @@ Silk app written for react-native.  To install the react-native toolchain, [see 
 
 **BEFORE OPENING THE PROJECT IN XCODE**, install the module dependencies in your clone dir
 ```
-brew install watchman
 npm install
 ```
 
-Ensure you have [cocopods](https://cocoapods.org) installed (check
-`which pod`).
-
-```
-pod install
-```
-
-To run the app, open `Silk.xcworkspace/` _not Silk.xcodeproj_ in Xcode.  You'll want to do most development in the iOS simulator(s).  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
+To run the app, open Silk.xcodeproj in Xcode.  You'll want to do most development in the iOS simulator(s).  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
 
 ## Provisioning an iDevice
 
@@ -43,11 +35,7 @@ react-native supports two development modes:
 0. Fetch resources from external server (save-reload mode from host)
 0. Package resources into app package (deploy-to-device mode)
 
-By default, silk-app is configured for deploy-to-device mode.  In this mode, whenever you change a react-native .js file, you must rebuild the JS bundle that's built into the app.  To do so, run the following command from your `silk-app` clone:
-```bash
-react-native bundle
-```
-Then you must rebuild and redeploy the app by pressing Ctrl-r from within Xcode.
+By default, silk-app is configured for deploy-to-device mode.  In this mode, whenever you change a react-native .js file, you must rebuild the JS bundle that's built into the app. This is done each time you build and redeploy the app by pressing Ctrl-r from within Xcode.
 
 However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so, add `config.local.json` to the root of `silk-app`.
 
@@ -61,6 +49,21 @@ The most basic version looks like this:
   }
 }
 ```
+
+In addition to the config file you must ensure you have `watchman`
+installed:
+
+```sh
+brew install watchman
+```
+
+Then run:
+
+```sh
+npm start
+```
+
+From the root of the project.
 
 Now, after making a change to a react-native .js file, simply press Ctrl-r in the simlator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
 

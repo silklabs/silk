@@ -1,0 +1,9 @@
+#! /bin/bash -ex
+
+# NOTE: This hacky script is only intended to be run in CI it will patch
+# react-native to ignore starting the packaging script (which we don't use
+# anyway)
+
+cd node_modules/react-native/
+ls React/React.xcodeproj/project.pbxproj
+patch -p1 < ../../tools/patches/react-native/001-ignore-packager.patch

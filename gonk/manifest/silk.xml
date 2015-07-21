@@ -3,12 +3,6 @@
   <remote name="github" fetch="git://github.com/" sync-j="4"/>
   <remote name="silk" fetch="ssh://git@github.com/silklabs/" sync-j="4"/>
 
-  <project name="silk-device-npm-cache"
-           path="npm_cache"
-           remote="silk"
-           revision="master"
-           clone-depth="1"/>
-
   <project name="joyent/node"
            path="external/node"
            remote="github"

@@ -137,6 +137,6 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 # so they can be resolved correctly from the browserify-ed silk.js node_modules
 	$(hide) mkdir -p $(@D)/build
 	$(hide) \
-  for binding in `cd $(<D)/node_modules/ && find . -type f -name *.node -not -path "*/obj.target/*"`; do \
-    cp -f $(<D)/node_modules/$$binding $(@D)/build/`basename $$binding`; \
+  for binding in `cd $(<D)/node_modules/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
+    cp -vf $(<D)/node_modules/$$binding $(@D)/build/`basename $$binding`; \
   done

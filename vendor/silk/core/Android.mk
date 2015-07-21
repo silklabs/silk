@@ -91,8 +91,13 @@ $(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js
     rm -rf $$s $${s%%.stale}; \
   done
 	$(hide) cd $(@D) && \
-   node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir) --no-optional
-
+   node $(npm_cli) install --ignore-scripts $(npm_production) --nodedir=$(npm_node_dir) --no-optional
+	$(hide) cd $(@D) && \
+   node $(npm_cli) dedup
+	$(hide) cd $(@D) && \
+   node $(npm_cli) build $(npm_production) --nodedir=$(npm_node_dir)
+	$(hide) cd $(@D) && \
+   node $(npm_cli) install $(npm_production) --nodedir=$(npm_node_dir)
 
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: SRCDIR := $(abspath $(LOCAL_PATH))
 $(dir $(LOCAL_BUILT_MODULE))Gruntfile.js: $(LOCAL_PATH)/Gruntfile.js

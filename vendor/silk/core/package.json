@@ -4,7 +4,7 @@
   "description": "The common control software on each silk node",
   "main": "dist/lib/main.js",
   "scripts": {
-    "prepublish": "node_modules/.bin/grunt && echo '[prepublish browserify]' && node_modules/.bin/browserify --node --ignore-missing dist/lib/main.js -o core.js",
+    "install": "node_modules/.bin/grunt && echo '[browserify]' && node_modules/.bin/browserify --node --ignore-missing dist/lib/main.js -o core.js",
     "start": "node dist/lib/main.js"
   },
   "dependencies": {

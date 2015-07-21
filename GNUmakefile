@@ -99,6 +99,8 @@ init.%:
 # Gonk manifest management (internal)
 #
 
+REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
+
 .repo/.repo_fetchtimes.json: .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --quiet
 
@@ -108,7 +110,7 @@ init.%:
 .repo/manifest.xml: | .repo/manifest_upstream
 	./repo init -u $(PWD)/.repo/manifest_upstream \
     -m $(GONK).xml $(REPO_INIT_ARGS) \
-    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(shell uname | tr A-Z a-z)
+    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(REPO_INIT_HOST)
 	@if [[ -n "$(REPOCACHE_$(GONK))" ]]; then \
     if [[ ! -d .repo/projects ]]; then \
       echo Seeding .repo projects from $(REPOCACHE_$(GONK)); \
@@ -136,18 +138,19 @@ init.%:
   }
 
 
-# |make repocache| constructs a tarball of the .repo projects from the current
-# workspace.  The tarball is then used to speed up the initial sync a large
-# device workspace, while improving reliability (due to less network
-# connections), by first populating the .repo/ projects from a tarball. A normal
-# |repo sync| then follows to retrieve any additional commits that were added
-# since the creation of the tarball.
+# |make repocache.<gonk>| constructs a tarball of the .repo projects for the
+# given Gonk.
+#
+#            DANGER: YOUR WORKSPACE CONTENTS WILL BE DESTROYED!!!
+#
+# The repocache tarball is used to speed up the initial sync of a device
+# workspace, while improving reliability (due to less network connections), by
+# first populating the .repo/ projects from the tarball. A normal |repo sync|
+# then follows to retrieve any additional commits that were added since the
+# creation of the tarball.
 #
 # Example usage:
-#   $ make zest
-#   $ REPO_INIT_ARGS="--depth=1" make init.<gonk>
-#   $ make sync
-#   $ make repocache
+#   $ make repocache.base
 #
 # Upload the resulting repocache-<gonk>.tgz to S3 or some other cloud storage.
 # Make the URL accessible without any authentication (TODO: fix!) and add it to
@@ -158,15 +161,28 @@ init.%:
 # cause any correctness issues, the user will just be downloading some
 # unnecessary bits. (TODO: Wrap automation around updating the repo cache.)
 #
-REPOCACHE_mako = https://silk-device.s3.amazonaws.com/repocache/repocache-mako.tgz
-REPOCACHE_base = https://silk-device.s3.amazonaws.com/repocache/repocache-base.tgz
+REPOCACHE_mako := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-mako.tgz
+REPOCACHE_base := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-base.tgz
 
-.PHONY: repocache
-repocache:
-	$(ENVSETUP) && \
-  ( set -x; tar zcf repocache-$$GONK.tgz .repo/project-objects .repo/projects/ ) && \
-  ls -l repocache-$$GONK.tgz
+define __repocache_rules
 
+.PHONY: repocache.$(1)
+repocache.$(1):
+	$(MAKE) zest
+	export REPOCACHE_$(1)="" ; \
+  export REPO_INIT_ARGS="--depth=1" ; \
+  $(MAKE) init.$(1)
+	$(MAKE) sync
+	tar zcf repocache-$(REPO_INIT_HOST)-$(1).tgz .repo/project-objects .repo/projects/
+	@ls -l repocache-$(REPO_INIT_HOST)-$(1).tgz
+	@echo Please upload to:
+	@echo "  $(REPOCACHE_$(1))"
+endef
+
+$(eval \
+  $(foreach gonk,$(subst REPOCACHE_,,$(filter REPOCACHE_%,$(.VARIABLES))),\
+    $(call __repocache_rules,$(gonk))) \
+)
 
 # Catch-all, redirect to gonk build system
 %: | .repo/manifest.xml

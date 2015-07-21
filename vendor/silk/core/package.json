@@ -4,7 +4,7 @@
   "description": "The common control software on each silk node",
   "main": "dist/lib/main.js",
   "scripts": {
-    "install": "node_modules/.bin/grunt && echo '[browserify]' && node_modules/.bin/browserify --node --ignore-missing dist/lib/main.js -o core.js",
+    "install": "node_modules/.bin/grunt",
     "start": "node dist/lib/main.js"
   },
   "dependencies": {
@@ -33,6 +33,7 @@
     "grunt": "^0.4.5",
     "grunt-babel": "^5.0.0",
     "grunt-cli": "^0.1.13",
+    "grunt-contrib-watch": "^0.6.1",
     "grunt-eslint": "~14.0.0",
     "load-grunt-tasks": "^3.1.0"
   },
@@ -43,7 +44,10 @@
       "no-debugger": 1,
       "default-case": 2,
       "comma-dangle": 0,
-      "indent": [2, 2],
+      "indent": [
+        2,
+        2
+      ],
       "no-underscore-dangle": 0,
       "quotes": [
         2,
@@ -65,7 +69,7 @@
     "iot"
   ],
   "engines": {
-    "node" : "0.12.2"
+    "node": "0.12.2"
   },
   "private": true
 }

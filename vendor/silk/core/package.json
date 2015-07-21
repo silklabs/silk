@@ -8,11 +8,11 @@
     "start": "node dist/lib/main.js"
   },
   "dependencies": {
-    "alog": "file:modules/alog",
+    "silk-alog": "file:modules/alog",
     "bleno": "file:modules/bleno",
     "debug": "2.2.0",
-    "gc1": "file:modules/gc1",
-    "movie": "file:modules/movie",
+    "silk-gc1": "file:modules/gc1",
+    "silk-movie": "file:modules/movie",
     "mz": "2.0.0",
     "node-hue-api": "1.0.5",
     "ntp-client": "0.5.3",

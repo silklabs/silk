@@ -7,7 +7,7 @@ let caps = require('./caps');
 let events = require('events');
 let fs = require('fs');
 let log = require('./log')('ui');
-let movie = require('movie')();
+let movie = require('silk-movie')();
 let util = require('./util');
 let vib = require('./vibrator')();
 

@@ -3,4 +3,4 @@
 
 'use strict';
 
-module.exports = require('bindings')('alog');
+module.exports = require('bindings')({bindings: 'alog', module_root: '/system/silk'});

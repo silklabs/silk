@@ -74,35 +74,6 @@ npm_version_check()
 node_version_check
 npm_version_check
 
-
-#
-# npm tuning
-#
-
-# Use a local npm package cache
-export NPM_CONFIG_CACHE=$(/bin/pwd)/npm_cache
-
-# Use a local temp area to make the build environment better known and more
-# reproducible. (ie, no magic nuggets in ~/.npm/)
-export NPM_CONFIG_TMP=$(/bin/pwd)/out/npm_tmp
-
-# Try to use the local cache as much as possible (npm default is 10s)
-export NPM_CONFIG_CACHE_MIN=4294967296
-
-# Declare a lock file still sooner since a local cache is being forced
-# (npm default is 60s)
-export NPM_CONFIG_CACHE_LOCAL_STALE=10000
-
-# Fail fetching from the registry sooner (npm default is 60s)
-export NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=10000
-
-# Don't install incompatible things
-export NPM_CONFIG_ENGINE_STRICT=true
-
-# Uncomment when debugging npm issues for helpful logging
-#export NPM_CONFIG_LOGLEVEL=info
-
-
 #
 #  Prepare the Gonk tree
 #

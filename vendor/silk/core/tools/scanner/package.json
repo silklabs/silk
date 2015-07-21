@@ -40,7 +40,7 @@
     "load-grunt-tasks": "~3.2.0",
     "noble": "^1.0.1",
     "promise": "~7.0.1",
-    "silk-api": "file:../../modules/silk-api/dist/api"
+    "silk-api": "file:../../local_node_modules/silk-api/dist/api"
   },
   "devDependencies": {
     "babel-eslint": "~3.1.15",

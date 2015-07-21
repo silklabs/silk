@@ -3,12 +3,6 @@
   <remote name="github" fetch="git://github.com/" sync-j="4"/>
   <remote name="silk" fetch="ssh://git@github.com/silklabs/" sync-j="4"/>
 
-  <project name="silk-device-npm-cache"
-           path="npm_cache"
-           remote="silk"
-           revision="master"
-           clone-depth="1"/>
-
   <project name="joyent/node"
            path="external/node"
            remote="github"
@@ -24,15 +18,15 @@
 
   <!-- node modules -->
   <project name="silk-server"
-           path="vendor/silk/core/modules/silk-api"
+           path="vendor/silk/core/local_node_modules/silk-api"
            remote="silk"
            revision="master"/>
   <project name="sandeepmistry/bleno"
-           path="vendor/silk/core/modules/bleno"
+           path="vendor/silk/core/local_node_modules/bleno"
            remote="github"
            revision="refs/tags/0.1.13" clone-depth="1"/>
-  <project name="sandeepmistry/noble"
-           path="vendor/silk/core/modules/noble"
+  <!--project name="sandeepmistry/noble"
+           path="vendor/silk/core/local_node_modules/noble"
            remote="github"
-           revision="refs/tags/v1.0.1" clone-depth="1"/>
+           revision="refs/tags/v1.0.1" clone-depth="1"/-->
 </manifest>

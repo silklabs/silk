@@ -104,6 +104,6 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 # /build symlink created from init.silk.rc
 	$(hide) mkdir -p $(@D)/build
 	$(hide) \
-  for binding in `cd $(<D)/node_modules/ && find . -mindepth 4 -maxdepth 4 -type f -name *.node`; do \
+  for binding in `cd $(<D)/node_modules/ && find . -type f -name *.node -not -path "*/obj.target/*"`; do \
     cp -f $(<D)/node_modules/$$binding $(@D)/build/`basename $$binding`; \
   done

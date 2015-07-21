@@ -30,9 +30,9 @@
 /vendor/lge/
 /vendor/moto/
 /vendor/qcom/
-/vendor/silk/core/modules/bleno/
-/vendor/silk/core/modules/noble/
-/vendor/silk/core/modules/silk-api/
+/vendor/silk/core/local_node_modules/bleno/
+/vendor/silk/core/local_node_modules/noble/
+/vendor/silk/core/local_node_modules/silk-api/
 
 # |adb sync| generates this
 /filelist

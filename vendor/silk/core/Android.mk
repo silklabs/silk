@@ -108,7 +108,7 @@ $(LOCAL_BUILT_MODULE):
 	$(hide) mkdir -p $(@D)
 	$(hide) cd $(@D) && \
    rm -rf $(addprefix node_modules/,$(LOCAL_NODE_MODULES))
-	$(hide) rsync -av $(ABS_LOCAL_PATH)/ $(@D)
+	$(hide) rsync -qav $(ABS_LOCAL_PATH)/ $(@D)
 	@echo "Build: $@"
 	$(hide) cd $(@D) && \
    node $(npm_cli) install --ignore-scripts --nodedir=$(npm_node_dir) --no-optional

@@ -69,4 +69,4 @@ function run(test) {
 exports.test = function(test) {
   test.expect(7);
   util.setup(test).then(() => run(test)).then(() => util.finish(test));
-}
+};

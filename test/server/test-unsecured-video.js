@@ -13,7 +13,7 @@ function assertSameBuffer(test, b1, b2) {
 }
 
 function connectStream(test, socket, device, name) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => { //eslint-disable-line no-unused-vars
     socket.onNewVideoStream = (msg) => {
       test.equals(msg.id, device);
       test.equals(msg.name, name);
@@ -28,22 +28,22 @@ function connectStream(test, socket, device, name) {
 function receiveBufferFrom(test, socket, device, name) {
   let frame = new Buffer([0, 1, 2, 3, 4]);
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => { //eslint-disable-line no-unused-vars
     socket.on('video-' + device, msg => {
       test.equals(msg.id, device);
       test.equals(msg.name, name);
       assertSameBuffer(test, msg.frame, frame);
       return resolve(socket);
     });
-    socket.emit('join', 'video-'+ device);
+    socket.emit('join', 'video-' + device);
     socket.emit('video', { id: device, name: name, frame: frame });
   });
 }
 
 function run(test) {
   let socket = null;
-  return new Promise((resolve, reject) => {
-    socket = require('socket.io-client')(util.server_url);
+  return new Promise((resolve, reject) => { //eslint-disable-line no-unused-vars
+    socket = require('socket.io-client')(util.serverUrl);
     socket.on('connect', () => {
       socket.on('video-stream-new', msg => {
         socket.onNewVideoStream(msg);
@@ -62,9 +62,9 @@ function run(test) {
   }).then(() => {
     return receiveBufferFrom(test, socket, 'test1', 'Test Name');
   }).then(() => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => { //eslint-disable-line no-unused-vars
       let rooms = new Set(['test1', 'test2']);
-      let sock = require('socket.io-client')(util.server_url,
+      let sock = require('socket.io-client')(util.serverUrl,
                                              { multiplex: false });
       sock.on('video-stream-new', msg => {
         test.ok(rooms.has(msg.id), 'Notified of known room');

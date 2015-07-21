@@ -1,6 +1,8 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+'use strict';
+
 module.exports = {
   config: require('./config'),
 //  crypto: require('./crypto'),
@@ -46,5 +48,5 @@ module.exports = {
 };
 
 if (typeof window === 'object') {
-  window.silk = module.exports;
+  window.silk = module.exports; //eslint-disable-line no-undef
 }

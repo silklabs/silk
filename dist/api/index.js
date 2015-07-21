@@ -56,5 +56,5 @@ module.exports = {
 };
 
 if (typeof window === 'object') {
-  window.silk = module.exports;
+  window.silk = module.exports; //eslint-disable-line no-undef
 }

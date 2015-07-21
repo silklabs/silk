@@ -8,7 +8,7 @@ let request = require('request');
 let api = require('../../api');
 
 let PORT = 8888;
-export const server_url = 'http://localhost:'+ PORT;
+export const serverUrl = 'http://localhost:' + PORT;
 
 export function sha256(text) {
   var sha1 = crypto.createHash('sha256');
@@ -18,7 +18,7 @@ export function sha256(text) {
 
 function req(params) {
   return new Promise(function(resolve, reject) {
-    request(params, (err, res, body) => {
+    request(params, (err, res, body) => { //eslint-disable-line no-unused-vars
       if (err) {
         return reject(err);
       }
@@ -28,7 +28,7 @@ function req(params) {
 }
 
 export function post(res, json) {
-  return req({ uri: server_url + res, method: 'POST', json: json });
+  return req({ uri: serverUrl + res, method: 'POST', json: json });
 }
 
 export function createAccount(email, name, passphrase) {
@@ -38,7 +38,7 @@ export function createAccount(email, name, passphrase) {
               { id: id.toString(), email: email, name: name,
                 passhash: passhash, sig: id.sign(passhash) }).then(r => {
                   if (201 !== r.statusCode) {
-                    return Promise.reject('Could not create account '+ email);
+                    return Promise.reject('Could not create account ' + email);
                   }
                   return Promise.resolve(id);
                 });
@@ -55,7 +55,7 @@ export function createAccountAndAuth() {
       return Promise.reject('Could not challenge fake account');
     }
     let receipt = r.body.receipt;
-    let sig = id.sign(sha256('passphrase') +' '+ receipt);
+    let sig = id.sign(sha256('passphrase') + ' ' + receipt);
     return post('/account/authenticate',
                 { id: id.toString(), receipt: receipt, sig: sig });
   }).then(r => {
@@ -75,7 +75,7 @@ export function createDevice() {
                   deviceId: id.toString(),
                   sig: id.sign(id.toString()) });
   }).then(r => {
-    if (201 != r.statusCode) {
+    if (201 !== r.statusCode) {
       return Promise.reject('Could not create device');
     }
     return Promise.resolve(id);
@@ -83,7 +83,7 @@ export function createDevice() {
 }
 
 export function setup(test) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => { //eslint-disable-line no-unused-vars
     test.http = require('../../lib/server')(PORT, resolve());
   });
 }

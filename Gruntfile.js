@@ -64,11 +64,15 @@ module.exports = function(grunt) {
       api: ['dist/test/api/test-*.js'],
       server: ['dist/test/server/test-*.js'],
     },
+
+    eslint: {
+      target: process.env.LAX ? [] : SRCS
+    }
   });
 
-  grunt.registerTask('all', ['babel', 'browserify', 'copy', 'nodeunit']);
+  grunt.registerTask('all', ['eslint', 'babel', 'browserify', 'copy', 'nodeunit']);
   grunt.registerTask('test', ['nodeunit']);
 
   // The default tasks to run when you type: grunt
-  grunt.registerTask('default', ['babel', 'browserify', 'copy']);
+  grunt.registerTask('default', ['eslint', 'babel', 'browserify', 'copy']);
 };

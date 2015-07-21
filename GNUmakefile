@@ -144,6 +144,7 @@ init.%:
 # since the creation of the tarball.
 #
 # Example usage:
+#   $ make zest
 #   $ REPO_INIT_ARGS="--depth=1" make init.<gonk>
 #   $ make sync
 #   $ make repocache

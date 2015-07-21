@@ -3,8 +3,16 @@
 ## Javascript Rapid Dev Cycle:
 
 If you are only making JavaScript changes in `lib/`, the following development
-cycle may be used to reduce your build times significantly
+cycles may be used to reduce your build times significantly
 
+
+### Automatic push
+Run `./watch` then edit/save normally. On every save, the new core.js will be
+automatically installed on device and silk-core restarted.
+
+Avoid ESLint by running `LAX=1 ./watch`
+
+### Manual push
 ```sh
 .. edit .js files ..
 $ npm install

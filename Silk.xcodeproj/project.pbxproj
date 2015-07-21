@@ -798,7 +798,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if ./tools/should_bundle ;\nthen\n  react-native bundle\nfi\n";
+			shellScript = "# Hack to ensure /usr/local/bin is laways in path...\nexport PATH=\"$PATH:/usr/local/bin\"\nif ./tools/should_bundle ;\nthen\n  react-native bundle\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

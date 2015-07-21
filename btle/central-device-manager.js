@@ -92,9 +92,11 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
 };
 
 DeviceManager.prototype._ensureConfigured = function(p) {
-  this._connect(p).then(() => {
+  this._connect(p)
+  .then(() => {
     return p.readCharacteristic(decls.uuid.StateCharacteristic);
-  }).then(data => {
+  })
+  .then(data => {
     var state = data.readUInt8(0);
     p.state = stateToString(state);
     this.emit('stateChange', p);
@@ -104,13 +106,15 @@ DeviceManager.prototype._ensureConfigured = function(p) {
       return Promise.reject('Peripheral not register-able');
     }
     return this._passProximityGate(p);
-  }).then(resumeToken => {    
+  })
+  .then(resumeToken => {    
     return this._configureWithoutCrypto(p, resumeToken);
   });
 };
 
 DeviceManager.prototype._passProximityGate = function(p) {
-  return this._waitForProximity(p).then(() => {
+  return this._waitForProximity(p)
+  .then(() => {
     console.log('Passed proximity gate; disconnecting');
     // TODO: get resume token from config service itself
     var resumeToken = 'TODO-IMPLEMENT-ME';
@@ -126,7 +130,8 @@ DeviceManager.prototype._waitForProximity = function(p) {
   return new Promise(resolve => {
     // TODO: this should be a notification
     var updateRssiInterval = setInterval(() => {
-      p.readCharacteristic(decls.uuid.RssiCharacteristic).then(data => {
+      p.readCharacteristic(decls.uuid.RssiCharacteristic)
+      .then(data => {
         var rssi = -data.readUInt8(0);
         p.rssi = rssi;
         this.emit('rssi', p);
@@ -153,10 +158,12 @@ DeviceManager.prototype._waitForProximity = function(p) {
         }
         clearInterval(updateRssiInterval);
         resolve();
-      }, err => {
+      })
+      .catch(err => {
         console.log('Error reading rssi', err);
         clearInterval(updateRssiInterval);
-        this._disconnect(p).then(() => this._ensureConfigured(p));
+        this._disconnect(p)
+        .then(() => this._ensureConfigured(p));
       });
     }, 500);
   });
@@ -167,16 +174,20 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
   // Disconnect peripheral while we're getting Wi-Fi credentials from
   // the user.  This works around random timeouts observed while BLE
   // remains connected.
-  return this._disconnect(p).then(() => {
+  return this._disconnect(p)
+  .then(() => {
     console.log('Disconnecting peripheral before getting wifi info ...');
     return this.wifiHelper.getWifiNetwork();
-  }).then(net => {
+  })
+  .then(net => {
     console.log('Got network info, reconnecting ...');
     network = net;
     return this._connect(p);
-  }).then(() => {
+  })
+  .then(() => {
     return this._resumeSession(p, resumeToken);
-  }).then(() => {
+  })
+  .then(() => {
     console.log('Writing wifi info to peripheral ...');
     return Promise.all([
       p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
@@ -184,13 +195,18 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
       p.writeCharacteristic(decls.uuid.SecretCharacteristic,
                             new Buffer(network.secret, 'utf8')),
     ]);
-  }).then(() => {
+  })
+  .then(() => {
     // TODO: get this from state charc notify
     p.state = 'registered';
     this.emit('stateChange', p);
     console.log(' ... finished configuring, disconnecting');
     setTimeout(() => this._disconnect(p), 2000);
-  }).catch(() => this._disconnect(p).then(() => this._ensureConfigured(p)));
+  })
+  .catch(() => {
+    this._disconnect(p)
+      .then(() => this._ensureConfigured(p));
+  });
 };
 
 DeviceManager.prototype._resumeSession = function(p, token) {
@@ -206,14 +222,16 @@ DeviceManager.prototype._connect = function(p) {
   p.state = 'discovered';
   this.devices[p.id] = p;  
   this.emit('discover', p);
-  return p.connect().then(() => {
+  return p.connect()
+  .then(() => {
     p.state = 'connected';
     this.emit('connect', p);
   });
 };
 
 DeviceManager.prototype._disconnect = function(p) {
-  return p.disconnect().then(() => {
+  return p.disconnect()
+  .then(() => {
     delete this.devices[p.id];
     this.emit('disconnect', p);
   });

@@ -95,10 +95,8 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
 	$(hide) cp -r $< $@
-# Locate and copy native bindings from
-#   ../node_modules/<foo>/Release/<foo>.node to /system/silk/build/<foo>.node
-# so they can be resolved correctly from the browserify-ed silk.js via the
-# /build symlink created from init.silk.rc
+# Locate and copy native bindings from /system/silk/build/<foo>.node
+# so they can be resolved correctly from the browserify-ed silk.js node_modules
 	$(hide) mkdir -p $(@D)/build
 	$(hide) \
   for binding in `cd $(<D)/node_modules/ && find . -type f -name *.node -not -path "*/obj.target/*"`; do \

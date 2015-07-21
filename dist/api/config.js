@@ -3,17 +3,17 @@
 
 'use strict';
 
-var server_url = process.env.SILK_SERVER_URL;
+var serverUrl = process.env.SILK_SERVER_URL;
 
-if (!server_url) {
+if (!serverUrl) {
   // TODO: how to set non-production in browser ...
   if (process.env.NODE_ENV === 'production' || typeof window === 'object') {
-    server_url = 'https://silk-test-server.herokuapp.com/';
+    serverUrl = 'https://silk-test-server.herokuapp.com/';
   } else {
-    server_url = 'http://localhost:5000/';
+    serverUrl = 'http://localhost:5000/';
   }
 }
 
 module.exports = {
-  server_url: server_url
-};
+  server_url: serverUrl };
+//eslint-disable-line camelcase

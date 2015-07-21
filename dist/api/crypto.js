@@ -8,7 +8,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var crypto = require('crypto');
-var elliptic = require('elliptic');
+var EC = require('elliptic').ec;
 var Promise = require('promise');
 
 // TODO make me a util helper
@@ -19,6 +19,7 @@ function sha256(buf) {
 }
 
 function toBase64(data) {
+  //eslint-disable-line no-unused-vars
   return new Buffer(data, 'binary').toString('base64');
 }
 
@@ -28,7 +29,7 @@ var SessionCrypto = (function () {
   function SessionCrypto(curve) {
     _classCallCheck(this, SessionCrypto);
 
-    this.ec = new elliptic.ec(curve);
+    this.ec = new EC(curve);
     this.key = this.ec.genKeyPair();
     this.sharedKey = null;
   }

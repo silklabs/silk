@@ -6,7 +6,6 @@
 let util = require('./util');
 
 function run(test) {
-  let session = null;
   let id = null;
   let receipt = null, receipt2 = null;
 
@@ -89,4 +88,4 @@ function run(test) {
 exports.test = function(test) {
   test.expect(16);
   util.setup(test).then(() => run(test)).then(() => util.finish(test));
-}
+};

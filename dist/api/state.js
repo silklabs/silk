@@ -17,13 +17,13 @@ function localState(name) {
       localStorage.setItem(key, JSON.stringify(data));
     }
   };
-};
+}
 
 // This module can be instantiated with only an idStr if the caller
 // doesn't have the device key.  But if the caller does provide a full
 // key, it must match the idStr.
 module.exports = function (idStr, id) {
-  assert(!id || idStr == id.toString());
+  assert(!id || idStr === id.toString());
 
   // Where we store and retrieve local state for this device.
   var ls = localState(idStr);
@@ -53,8 +53,8 @@ module.exports = function (idStr, id) {
 
   // TODO: add config to this module
   //  var server_host = require('./config.js').server_host;
-  var server_host = 'http://localhost:8888';
-  var socket = require('socket.io-client')(server_host);
+  var serverHost = 'http://localhost:8888';
+  var socket = require('socket.io-client')(serverHost);
 
   // When the socket connects, attach it to the update() method of
   // deviceState and issue a watch request to the server so we get
@@ -75,7 +75,9 @@ module.exports = function (idStr, id) {
 
   // Process incoming updates.
   socket.on('update', function (res) {
-    if (res.id !== idStr) return;
+    if (res.id !== idStr) {
+      return;
+    }
     // Filter redundant state updates.
     if ('state' in deviceState && JSON.stringify(deviceState.state) === JSON.stringify(res.state)) {
       return;

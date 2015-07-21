@@ -1,8 +1,10 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+'use strict';
+
 var crypto = require('crypto');
-var elliptic = require('elliptic');
+var EC = require('elliptic').ec;
 var Promise = require('promise');
 
 // TODO make me a util helper
@@ -12,7 +14,7 @@ function sha256(buf) {
   return hasher.digest();
 }
 
-function toBase64(data) {
+function toBase64(data) { //eslint-disable-line no-unused-vars
   return new Buffer(data, 'binary').toString('base64');
 }
 
@@ -20,7 +22,7 @@ const IV_NUM_BYTES = 16;
 
 class SessionCrypto {
   constructor(curve) {
-    this.ec = new elliptic.ec(curve);
+    this.ec = new EC(curve);
     this.key = this.ec.genKeyPair();
     this.sharedKey = null;
   }
@@ -28,7 +30,7 @@ class SessionCrypto {
   exportPublic() {
     return this.key.getPublic(true, 'binary');
   }
-  
+
   deriveShared(otherPublicKey) {
     otherPublicKey = this.ec.keyFromPublic(otherPublicKey, 'binary').getPublic();
     this.sharedKey = sha256(new Buffer(this.key.derive(otherPublicKey)));

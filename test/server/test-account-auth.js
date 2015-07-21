@@ -6,7 +6,7 @@
 let util = require('./util');
 
 function challengeReply(id, receipt, passphrase) {
-  return id.sign(util.sha256(passphrase) +' '+ receipt);
+  return id.sign(util.sha256(passphrase) + ' ' + receipt);
 }
 
 function run(test) {
@@ -92,4 +92,4 @@ function run(test) {
 exports.test = function(test) {
   test.expect(16);
   util.setup(test).then(() => run(test)).then(() => util.finish(test));
-}
+};

@@ -30,8 +30,8 @@ var _createClass = (function () { function defineProperties(target, props) { for
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var crypto = require('crypto');
-var elliptic = require('elliptic');
-var ec = new elliptic.ec('ed25519');
+var EC = require('elliptic').ec;
+var ec = new EC('ed25519');
 
 function sha256(text) {
   var hasher = crypto.createHash('sha256');
@@ -51,7 +51,9 @@ var Id = (function () {
     key: 'export',
     value: function _export() {
       var obj = { hash: this.hash, pub: this.pub };
-      if (this.priv) obj.priv = this.priv;
+      if (this.priv) {
+        obj.priv = this.priv;
+      }
       return JSON.stringify(obj);
     }
   }, {
@@ -62,14 +64,18 @@ var Id = (function () {
   }, {
     key: 'sign',
     value: function sign(token) {
-      if (!this.priv) throw new Error('no private key for device id ' + this.hash);
+      if (!this.priv) {
+        throw new Error('no private key for device id ' + this.hash);
+      }
       var key = ec.keyFromPrivate(this.priv, 'hex');
       return key.sign(sha256(token), 'hex');
     }
   }, {
     key: 'verify',
     value: function verify(token, signature) {
-      if (!this.pub) throw new Error('no public key for device id ' + this.hash);
+      if (!this.pub) {
+        throw new Error('no public key for device id ' + this.hash);
+      }
       var key = ec.keyFromPublic(this.pub, 'hex');
       // Oddly, |verify()| throws for invalid signatures, instead of
       // returning false.
@@ -84,7 +90,9 @@ var Id = (function () {
     value: function isValid() {
       if (this.priv) {
         var key = ec.keyFromPrivate(this.priv, 'hex');
-        if (key.getPublic(true, 'hex') !== this.pub) return false;
+        if (key.getPublic(true, 'hex') !== this.pub) {
+          return false;
+        }
       }
       return !!this.pub;
     }
@@ -100,7 +108,6 @@ module.exports = {
   },
   'import': function _import(json) {
     var obj = JSON.parse(json);
-    var pub = obj.pub;
     return new Id(obj.pub, obj.priv);
   },
   importPub: function importPub(pubKey) {

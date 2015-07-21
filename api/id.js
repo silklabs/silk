@@ -23,9 +23,11 @@
 // have the private key:
 // var signature = id.sign(token);
 
+'use strict';
+
 var crypto = require('crypto');
-var elliptic = require('elliptic');
-var ec = new elliptic.ec('ed25519');
+var EC = require('elliptic').ec;
+var ec = new EC('ed25519');
 
 function sha256(text) {
   var hasher = crypto.createHash('sha256');
@@ -41,8 +43,9 @@ class Id {
 
   export() {
     var obj = { hash: this.hash, pub: this.pub };
-    if (this.priv)
+    if (this.priv) {
       obj.priv = this.priv;
+    }
     return JSON.stringify(obj);
   }
 
@@ -51,15 +54,17 @@ class Id {
   }
 
   sign(token) {
-    if (!this.priv)
+    if (!this.priv) {
       throw new Error('no private key for device id ' + this.hash);
+    }
     var key = ec.keyFromPrivate(this.priv, 'hex');
     return key.sign(sha256(token), 'hex');
   }
-  
+
   verify(token, signature) {
-    if (!this.pub)
+    if (!this.pub) {
       throw new Error('no public key for device id ' + this.hash);
+    }
     var key = ec.keyFromPublic(this.pub, 'hex');
     // Oddly, |verify()| throws for invalid signatures, instead of
     // returning false.
@@ -73,8 +78,9 @@ class Id {
   isValid() {
     if (this.priv) {
       var key = ec.keyFromPrivate(this.priv, 'hex');
-      if (key.getPublic(true, 'hex') !== this.pub)
+      if (key.getPublic(true, 'hex') !== this.pub) {
         return false;
+      }
     }
     return !!this.pub;
   }
@@ -87,7 +93,6 @@ module.exports = {
   },
   import: function(json) {
     var obj = JSON.parse(json);
-    var pub = obj.pub;
     return new Id(obj.pub, obj.priv);
   },
   importPub: pubKey => {

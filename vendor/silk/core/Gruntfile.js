@@ -27,6 +27,7 @@ SRCS = [
 
 DIST_SRCS = {};
 SRCS.forEach(function(path) { DIST_SRCS['dist/'+ path] = path; });
+TARGET_BUILD_VARIANT = process.env.TARGET_BUILD_VARIANT || 'eng';
 
 module.exports = function(grunt) {
 
@@ -36,7 +37,13 @@ module.exports = function(grunt) {
   }
 
   grunt.registerTask('browserify', '', function() {
-    exec('node_modules/.bin/browserify --node --ignore-missing dist/lib/main.js -o core.js');
+    var debug = '';
+    if (TARGET_BUILD_VARIANT !== 'user') {
+      grunt.log.writeln('  Debug build, including source map');
+      debug = '--debug';
+    }
+    exec('node_modules/.bin/browserify --node --ignore-missing ' + debug +
+           ' dist/lib/main.js --outfile core.js');
   });
   grunt.registerTask('adb_setup', '', function() {
     exec('adb root');

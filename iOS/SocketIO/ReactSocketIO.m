@@ -7,6 +7,8 @@
 
 RCT_EXTERN_METHOD(connect:(NSString*)host config:(NSDictionary*)config)
 RCT_EXTERN_METHOD(emit:event(NSString*) items:(NSArray*)items)
+RCT_EXTERN_METHOD(addListener:event(NSString*))
+RCT_EXTERN_METHOD(removeListener:event(NSString*))
 RCT_EXTERN_METHOD(disconnect)
 
 @end

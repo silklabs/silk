@@ -31,10 +31,12 @@ export default class extends EventEmitter {
   API compatibility layer...
   */
   on(event, listener) {
+    SocketIONative.addListener(event);
     this.addListener(event, listener);
   }
 
   off(event) {
+    SocketIONative.removeListener(event);
     this.removeAllListeners(event);
   }
 

@@ -13,6 +13,7 @@ SRCS = [
   'lib/log.js',
   'lib/main.js',
   'lib/ntp.js',
+  'lib/sensors.js',
   'lib/ui.js',
   'lib/update.js',
   'lib/util.js',

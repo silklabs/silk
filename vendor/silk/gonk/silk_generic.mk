@@ -19,6 +19,7 @@ SILK_PROGIES := \
   player \
   volume \
   wpad \
+  silk-sensors \
 
 PRODUCT_PACKAGES += $(SILK_PROGIES)
 

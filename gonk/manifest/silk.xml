@@ -10,7 +10,7 @@
   <project name="npm/npm"
            path="external/npm"
            remote="github"
-           revision="refs/tags/v2.10.1" clone-depth="1"/>
+           revision="refs/tags/v2.13.1" clone-depth="1"/>
   <project name="mozilla-b2g/librecovery"
            path="external/librecovery"
            remote="github"

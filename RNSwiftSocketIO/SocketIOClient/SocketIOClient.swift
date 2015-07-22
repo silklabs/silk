@@ -262,7 +262,17 @@ public final class SocketIOClient: NSObject, SocketEngineClient, SocketLogClient
     public func disconnect(#fast:Bool) {
         close(fast: fast)
     }
-    
+
+    public func emitArray(event: String, _ items: [AnyObject]) {
+        if !connected {
+            return
+        }
+
+        dispatch_async(emitQueue) {[weak self] in
+            self?._emit(event, items)
+        }
+    }
+
     /**
     Send a message to the server
     */

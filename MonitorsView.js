@@ -15,7 +15,7 @@ var {
 } = React;
 
 var Config = require('./Config')();
-var SocketIO = require('react-native-swift-socketio');
+var SocketIO = require('./SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
 
@@ -102,8 +102,8 @@ var MonitorsView = React.createClass({
       this.socket.handlers = {};
       this.socket.close();
     }
-    this.socket = new SocketIO(this.state.serverUrl);
-    this.socket.connect();
+    this.socket = new SocketIO();
+    this.socket.connect(this.state.serverUrl);
     this.state.serverConnection = 'connecting';
     this.setState(this.state);
     console.log('Connecting to ...', this.state.serverUrl);

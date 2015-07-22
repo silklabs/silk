@@ -37,7 +37,6 @@ var MonitorPreview = React.createClass({
 
   render() {
     var vid = this.props.vid;
-    var serverUrl = this.props.serverUrl;
     var fullscreen = this.state.showVideo;
 
     return (
@@ -46,8 +45,7 @@ var MonitorPreview = React.createClass({
           <MonitorFullscreen
             onClose={this.onVideoHidden}
             presented={fullscreen}
-            vid={vid}
-            serverUrl={serverUrl} />
+            vid={vid} />
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>

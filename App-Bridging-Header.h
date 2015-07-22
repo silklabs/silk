@@ -15,7 +15,6 @@ interface with via swift need to be imported here.
 #import "RCTTouchHandler.h"
 #import "RCTView.h"
 
-// Bridge for socket.io bindings for swift
-#import "node_modules/react-native-swift-socketio/RNSwiftSocketIO/SocketBridge.h"
+#import "RNSwiftSocketIO/SocketBridge.h"
 
 #endif

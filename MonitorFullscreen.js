@@ -4,7 +4,6 @@
 'use strict';
 
 import React from 'react-native'
-import WebViewBridge from 'react-native-webview-bridge'
 import LiveVideo from './LiveVideo'
 import OverlayModal from './OverlayModal'
 
@@ -34,10 +33,7 @@ export default React.createClass({
   },
 
   render: function() {
-    var videoStream = {
-      server: `http://${this.props.serverUrl}`,
-      id: this.props.vid
-    };
+    var videoStream = this.props.vid;
 
     return (
       <View style={styles.container}>

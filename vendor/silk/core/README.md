@@ -21,9 +21,17 @@ $ adb shell setprop ctl.restart silk
 
 ## JavaScript Debugging
 
-The node debugger is activate by default in non-production builds, and the
-built-in node debugger may be invoked by running the following commands on the
-host machine:
+The node debugger is activate by default in non-production builds.  To set
+breakpoints, either first restart the main silk program and tell node to halt at
+the first line:
+```
+$ adb shell stop silk
+$ adb shell silk --debug-brk
+```
+or use the `debugger` Javascript function to manually set a breakpoint.
+
+The (built-in node debugger)[https://nodejs.org/api/debugger.html#debugger_info]
+may be invoked by running the following commands on the host machine:
 ```
 $ adb forward tcp:5858 tcp:5858
 $ node debug localhost:5858

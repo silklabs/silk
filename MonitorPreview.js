@@ -100,8 +100,7 @@ var styles = StyleSheet.create({
 
   monitorPreview: {
     width: PREVIEW_WIDTH,
-    height: PREVIEW_HEIGHT,
-    backgroundColor: '#888888',
+    height: PREVIEW_HEIGHT
   },
 });
 

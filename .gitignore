@@ -36,6 +36,7 @@
 /vendor/silk/core/local_node_modules/noble/
 /vendor/silk/core/local_node_modules/silk-api/
 /vendor/silk/core/npm-debug.log
+/vendor/silk/core/tools/debugger/node_modules/
 
 # |adb sync| generates this
 /filelist

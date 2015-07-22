@@ -121,10 +121,12 @@ socket.on('connect', function () {
   });
   socket.on('video-stream-delete', function(msg) {
     log('Dead video stream '+ msg.id);
-    var monitor = document.getElementById(msg.id);
     var stream = 'video-' + msg.id;
     socket.emit('leave', stream);
-    monitors.removeChild(monitor);
+    var monitor = document.getElementById(msg.id);
+    if (monitor) {
+      monitors.removeChild(monitor);
+    }
   });
 });
 

@@ -97,11 +97,14 @@ socket.on('connect', function () {
 
     var img = document.createElement('img');
     img.setAttribute('title', msg.name);
+    var canvas = document.createElement('canvas');
+    canvas.setAttribute('style', 'position:absolute;left:0;right:0');
     var a = document.createElement('a');
     a.setAttribute('id', msg.id);
     a.addEventListener('click', function() { showPlayer(stream); });
     a.href = '#';
     a.appendChild(img);
+    a.appendChild(canvas);
     monitors.appendChild(a);
 
     socket.on(previewStream, function(msg) {
@@ -109,10 +112,10 @@ socket.on('connect', function () {
         return;
       }
       logMsg('video preview', msg);
-      var jpeg = makeObjectUrl(msg.frame, 'image/jpg');
-      var a = document.getElementById(msg.id);
-      var img = a.firstChild;
-      img.src = jpeg;
+      var img = a.childNodes[0];
+      var canvas = a.childNodes[1];
+
+      renderFrame(msg, img, canvas);
     });
     socket.emit('join', previewStream);
   });
@@ -124,6 +127,42 @@ socket.on('connect', function () {
     monitors.removeChild(monitor);
   });
 });
+
+function renderFrame(msg, img, canvas) {
+  if (msg.frame) {
+    var view = new Uint8Array(msg.frame);
+    var blob = new Blob([view], { type: 'image/jpg' });
+    var jpeg = URL.createObjectURL(blob);
+    // draw face frame after img is loaded and size is valid
+    img.onload = function() {drawFaceBorder(msg, img, canvas)};
+    img.src = jpeg;
+  }
+}
+
+function drawFaceBorder(msg, img, canvas) {
+  canvas.width = img.clientWidth;
+  canvas.height = img.clientHeight;
+
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!('faces' in msg) || msg.faces.length == 0) {
+    return;
+  }
+
+  ctx.save();
+
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'lightblue';
+
+  ctx.scale(canvas.width / msg.faces[0].fieldWidth,
+            canvas.height / msg.faces[0].fieldHeight);
+  for (var i = 0; i < msg.faces.length; ++i) {
+    var face = msg.faces[i];
+    ctx.strokeRect(face.x, face.y, face.width, face.height);
+  }
+
+  ctx.restore();
+}
 
 function toggleLog() {
   logEnabled = !logEnabled;

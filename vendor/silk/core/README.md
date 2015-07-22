@@ -1,10 +1,9 @@
 # silk-core
 
-## Javascript Rapid Dev Cycle:
+## Javascript Rapid Development Cycle
 
-If you are only making JavaScript changes in `lib/`, the following development
-cycles may be used to reduce your build times significantly
-
+If you are only making JavaScript changes in `lib/`, the following may be used
+to reduce your build time significantly:
 
 ### Automatic push
 Run `./watch` then edit/save normally. On every save, the new core.js will be
@@ -20,8 +19,43 @@ $ adb push core.js /system/silk/
 $ adb shell setprop ctl.restart silk
 ```
 
-## Adding new package dependencies
+## JavaScript Debugging
 
+The node debugger is activate by default in non-production builds, and the
+built-in node debugger may be invoked by running the following commands on the
+host machine:
+```
+$ adb forward tcp:5858 tcp:5858
+$ node debug localhost:5858
+```
+
+More sophisticated debugging is available with (node-inspector)[https://github.com/node-inspector/node-inspector/blob/v0.11.1/README.md].
+Run ```./debug``` to (install, patch, and) launch node-inspector.
+
+They are currently a couple of caveats to using node-inspector:
+* It's a little bit unstable in general because we are using it in a way that
+is not officially supported by the upstream project -- specifically the
+node-inspector server runs on the host instead of on device alongside the node
+debugee process.
+* Upon entering the node-inspector web UI, wait until the `"Error: Cannot find module '../../lib/InjectionServer.js'"`
+message is display before starting debugging, as before that time it's still
+initializing.  Note that the error itself is currently nonfatal, node-inspector
+is attempting to inject additional debug hooks into the device debugee and
+failed because it assumes the debugger and debugee share the same filesystem.
+* Execution sometimes needs to be paused before set breakpoints will be
+activated for the first time.
+* The Javascript `debugger;` statement doesn't seem to work consistently
+especially when used very early in the node process, however this is also
+observed with the built-in node debugger.
+
+ProTip: to break execution immediately at the start of the process before launching a
+node debugger, run:
+```
+$ adb shell stop silk
+$ adb shell silk --debug-brk
+```
+
+## Adding new package.json dependencies
 Package dependencies of core need to be managed carefully to ensure reproducible
 builds.
 

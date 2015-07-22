@@ -74,6 +74,11 @@ npm_version_check()
 node_version_check
 npm_version_check
 
+# npm should not be making many (and ideally no) http requests during the build
+# process, so enable http logging so that any unexpected network requests may be
+# easily observed
+export NPM_CONFIG_LOGLEVEL=http
+
 #
 #  Prepare the Gonk tree
 #

@@ -1,0 +1,30 @@
+From eafb3b790430efb329519f1eeb7d785d40240f74 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 22 Jul 2015 13:39:15 -0700
+Subject: [PATCH] Pull .js files off device
+
+---
+ node_modules/node-inspector/lib/ScriptFileStorage.js | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/node_modules/node-inspector/lib/ScriptFileStorage.js b/node_modules/node-inspector/lib/ScriptFileStorage.js
+index 3c4e613..a32921d 100644
+--- a/node_modules/node-inspector/lib/ScriptFileStorage.js
++++ b/node_modules/node-inspector/lib/ScriptFileStorage.js
+@@ -65,6 +65,13 @@ $class.load = function(path, callback) {
+   if (scriptId != null) {
+     this._scriptManager.getScriptSourceById(scriptId, callback);
+   } else {
++    var execSync = require('child_process').execSync;
++    var tmpdir = require('os').tmpdir();
++    var localPath = tmpdir + path
++    var cmd = 'adb pull ' + path + ' ' + localPath;
++    console.log(cmd);
++    execSync(cmd);
++    path = localPath
+     fs.readFile(
+       path,
+       'utf-8',
+-- 
+1.9.1
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+LOCAL_PATH=$(dirname $0)
+
+if [[ ! -d $LOCAL_PATH/tools/debugger/node_modules ]]; then
+  echo Installing debugger.  Your estimated wait time is 5 minutes...
+  ( set -ex; cd $LOCAL_PATH/tools/debugger; time npm install --loglevel http )
+fi
+
+exec $LOCAL_PATH/tools/debugger/debugger $@

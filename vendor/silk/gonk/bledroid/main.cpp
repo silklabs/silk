@@ -24,9 +24,34 @@
 
 using namespace android;
 
+//
+// Constants
+//
 #define BLE_SOCKET_NAME "bledroid"
 #define BLE_COMMAND_NAME "BleCommand"
 #define MAX_MSG_SIZE 128
+
+//
+// Helper macros
+//
+#define CALL_AND_WAIT(expression) \
+  do { \
+    mainThreadWaiter.lock(); \
+    err = expression; \
+    if (err) { \
+      ALOGE("bt operation #expression failed: %d", err); \
+      return 1; \
+    } \
+    mainThreadWaiter.wait(); \
+  } while(0)
+
+#define LOG_ERROR(expression, ...) \
+  do { \
+    if (expression) { \
+      ALOGE(__VA_ARGS__); \
+      return 1; \
+    } \
+  } while(0)
 
 /**
  * This class provided a method that is run each time a {@code BLE_COMMAND_NAME}
@@ -702,25 +727,6 @@ bool str_to_uuid(char const *str, bt_uuid_t &uuid) {
   return true;
 }
 
-#define CALL_AND_WAIT(expression) \
-  do { \
-    mainThreadWaiter.lock(); \
-    err = expression; \
-    if (err) { \
-      ALOGE("bt operation #expression failed: %d", err); \
-      return 1; \
-    } \
-    mainThreadWaiter.wait(); \
-  } while(0)
-
-#define ASSERT(expression, ...) \
-  do { \
-    if (expression) { \
-      ALOGE(__VA_ARGS__); \
-      return 1; \
-    } \
-  } while(0)
-
 /**
  *
  */
@@ -737,10 +743,10 @@ int bt_cleanup() {
   if (device) {
     const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
     const bt_interface_t *bt = bt_device->get_bluetooth_interface();
-    ASSERT(!bt, "bt_device->get_bluetooth_interface failed");
+    LOG_ERROR(!bt, "bt_device->get_bluetooth_interface failed");
 
     CALL_AND_WAIT(bt->disable());
-    ASSERT((adapter_state != BT_STATE_OFF), "failed to disable BT");
+    LOG_ERROR((adapter_state != BT_STATE_OFF), "failed to disable BT");
 
     bt->cleanup();
     device->close(device);
@@ -765,46 +771,46 @@ int bt_init() {
   int err;
 
   err = hw_get_module(BT_HARDWARE_MODULE_ID, &module);
-  ASSERT(err, "hw_get_module for " BT_HARDWARE_MODULE_ID " failed: %d", err);
+  LOG_ERROR(err, "hw_get_module for " BT_HARDWARE_MODULE_ID " failed: %d", err);
 
   ALOGW("id: %s", module->id);
   ALOGW("name: %s", module->name);
   ALOGW("author: %s", module->author);
 
   err = module->methods->open(module, BT_HARDWARE_MODULE_ID, &device);
-  ASSERT(err, BT_HARDWARE_MODULE_ID " open failed: %d", err);
+  LOG_ERROR(err, BT_HARDWARE_MODULE_ID " open failed: %d", err);
 
   const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
   const bt_interface_t *bt = bt_device->get_bluetooth_interface();
-  ASSERT(!bt, "bt_device->get_bluetooth_interface failed");
-  ASSERT((bt->size != sizeof(*bt)), "bt size incorrect, bluetooth.h mismatch?. "
+  LOG_ERROR(!bt, "bt_device->get_bluetooth_interface failed");
+  LOG_ERROR((bt->size != sizeof(*bt)), "bt size incorrect, bluetooth.h mismatch?. "
         "Expected %d, got %d", sizeof(*bt), bt->size);
 
   ALOGV("bt init");
   err = bt->init(&bt_callbacks);
-  ASSERT(err, "bt init() failed: %d", err);
+  LOG_ERROR(err, "bt init() failed: %d", err);
 
   err = bt->set_os_callouts(&os_callouts);
-  ASSERT(err, "bt set_os_callouts() failed: %d", err);
+  LOG_ERROR(err, "bt set_os_callouts() failed: %d", err);
 
   ALOGV("bt enable");
   CALL_AND_WAIT(bt->enable());
-  ASSERT((adapter_state != BT_STATE_ON), "failed to turn on BT");
+  LOG_ERROR((adapter_state != BT_STATE_ON), "failed to turn on BT");
 
   gatt = static_cast<btgatt_interface_t const *>(bt->get_profile_interface(
       BT_PROFILE_GATT_ID));
-  ASSERT(!gatt, "Unable to get " BT_PROFILE_GATT_ID);
+  LOG_ERROR(!gatt, "Unable to get " BT_PROFILE_GATT_ID);
 
   err = gatt->init(&gatt_callbacks);
-  ASSERT(err, "gatt init() failed: %d", err);
+  LOG_ERROR(err, "gatt init() failed: %d", err);
 
   bt_uuid_t client_uuid = { { 0xDE, 0xAD, 0xBE, 0xEF, } };  // TODO: Generate a real UUID?
   CALL_AND_WAIT(gatt->client->register_client(&client_uuid));
-  ASSERT(gatt_client_if == -1, "Failed to register gatt client");
+  LOG_ERROR(gatt_client_if == -1, "Failed to register gatt client");
 
   bt_uuid_t server_uuid = { { 0xBE, 0xEF, } };  // TODO: Generate a real UUID?
   CALL_AND_WAIT(gatt->server->register_server(&server_uuid));
-  ASSERT(gatt_server_if == -1, "Failed to register gatt server");
+  LOG_ERROR(gatt_server_if == -1, "Failed to register gatt server");
 
   return 0;
 }
@@ -829,11 +835,11 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     if (onOff) {
       gatt_client_listening = (*onOff == '1');
       err = gatt->client->listen(gatt_client_if, gatt_client_listening);
-      ASSERT(err, "gatt client listen failed: %d", err);
+      LOG_ERROR(err, "gatt client listen failed: %d", err);
     }
   } else if (0 == strcmp(cmd, "readRssi")) {
     err = gatt->client->read_remote_rssi(gatt_client_if, &lastConnectedAddr);
-    ASSERT(err, "gatt client read rssi failed: %d", err);
+    LOG_ERROR(err, "gatt client read rssi failed: %d", err);
   } else if (0 == strcmp(cmd, "advertisingData")) {
     char *numServicesStr = strtok_r(NULL, " \n", &saveptr);
     if (numServicesStr != NULL) {
@@ -843,7 +849,7 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
 
       for (int i = 0; i < numServices; i++) {
         char *uuid = strtok_r(NULL, " \n", &saveptr);
-        ASSERT(!str_to_uuid(uuid, service_uuid[service_uuid_len]),
+        LOG_ERROR(!str_to_uuid(uuid, service_uuid[service_uuid_len]),
             "Malformed advertisingData (invalid uuid)");
         ALOGV("Adding UUID: %s\n", uuid);
         service_uuid_len += sizeof(bt_uuid_t);
@@ -855,11 +861,11 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
           0, NULL,  // manufacturer data...
           0, NULL,  // service data...
           service_uuid_len, (char *) service_uuid);
-      ASSERT(err, "gatt client set_adv_data failed: %d", err);
+      LOG_ERROR(err, "gatt client set_adv_data failed: %d", err);
     }
   } else if (0 == strcmp(cmd, "primaryService")) {
     char *numAttributesStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((numAttributesStr == NULL),
+    LOG_ERROR((numAttributesStr == NULL),
         "Malformed primaryService (no numAttributes)");
     int numAttributes = atoi(numAttributesStr);
 
@@ -867,52 +873,52 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     btgatt_srvc_id_t srvc_id;
     srvc_id.is_primary = 1;
     srvc_id.id.inst_id = 0;  // ???
-    ASSERT(!str_to_uuid(uuid, srvc_id.id.uuid),
+    LOG_ERROR(!str_to_uuid(uuid, srvc_id.id.uuid),
         "Malformed primaryService (no uuid)");
 
     ALOGV("primaryService %d %s\n", numAttributes, uuid);
     err = gatt->server->add_service(gatt_server_if, &srvc_id, numAttributes);
-    ASSERT(err, "gatt add_service failed: %d", err);
+    LOG_ERROR(err, "gatt add_service failed: %d", err);
   } else if (0 == strcmp(cmd, "addCharacteristic")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((serviceHandleStr == NULL),
+    LOG_ERROR((serviceHandleStr == NULL),
       "Malformed addCharacteristic (no service)");
 
     char *uuid = strtok_r(NULL, " \n", &saveptr);
     bt_uuid_t desc_uuid;
-    ASSERT(!str_to_uuid(uuid, desc_uuid),
+    LOG_ERROR(!str_to_uuid(uuid, desc_uuid),
         "Malformed addCharacteristic *(no uuid)");
 
     char *propStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((propStr == NULL), "Malformed addCharacteristic (no prop)");
+    LOG_ERROR((propStr == NULL), "Malformed addCharacteristic (no prop)");
 
     char *permStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((permStr == NULL), "Malformed addCharacteristic (no perm)");
+    LOG_ERROR((permStr == NULL), "Malformed addCharacteristic (no perm)");
 
     err = gatt->server->add_characteristic(gatt_server_if,
         atoi(serviceHandleStr), &desc_uuid, atoi(propStr), atoi(permStr));
-    ASSERT(err, "gatt add_characteristic failed: %d", err);
+    LOG_ERROR(err, "gatt add_characteristic failed: %d", err);
   } else if (0 == strcmp(cmd, "addDescriptor")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((serviceHandleStr == NULL), "Malformed addDescriptor (no service)");
+    LOG_ERROR((serviceHandleStr == NULL), "Malformed addDescriptor (no service)");
 
     char *uuid = strtok_r(NULL, " \n", &saveptr);
     bt_uuid_t desc_uuid;
-    ASSERT(!str_to_uuid(uuid, desc_uuid), "Malformed addDescriptor (no uuiud)");
+    LOG_ERROR(!str_to_uuid(uuid, desc_uuid), "Malformed addDescriptor (no uuiud)");
 
     char *permStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((permStr == NULL), "Malformed addDescriptor (no perm)");
+    LOG_ERROR((permStr == NULL), "Malformed addDescriptor (no perm)");
 
     err = gatt->server->add_descriptor(gatt_server_if, atoi(serviceHandleStr),
         &desc_uuid, atoi(permStr));
-    ASSERT(err, "gatt add_descriptor failed: %d", err);
+    LOG_ERROR(err, "gatt add_descriptor failed: %d", err);
   } else if (0 == strcmp(cmd, "startService")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((serviceHandleStr == NULL), "Malformed startService");
+    LOG_ERROR((serviceHandleStr == NULL), "Malformed startService");
 
     err = gatt->server->start_service(gatt_server_if, atoi(serviceHandleStr),
         GATT_TRANSPORT_LE);
-    ASSERT(err, "gatt start_service failed: %d", err);
+    LOG_ERROR(err, "gatt start_service failed: %d", err);
   } else if (0 == strcmp(cmd, "sendAttributeResponse")) {
     int attr_handle;
     int conn_id;
@@ -923,19 +929,19 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     int length;
 
     char *token = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((token == NULL), "Malformed sendAttributeResponse (no attr_value)");
+    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no attr_value)");
     attr_handle = atoi(token);
 
     token = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((token == NULL), "Malformed sendAttributeResponse (no conn_id)");
+    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no conn_id)");
     conn_id = atoi(token);
 
     token = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((token == NULL), "Malformed sendAttributeResponse (no trans_id)");
+    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no trans_id)");
     trans_id = atoi(token);
 
     token = strtok_r(NULL, " \n", &saveptr);
-    ASSERT((token == NULL), "Malformed sendAttributeResponse (no result)");
+    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no result)");
     result = atoi(token);
 
     offset = 0;
@@ -970,7 +976,7 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     }
 
     err = gatt->server->send_response(conn_id, trans_id, result, &resp);
-    ASSERT(err, "gatt server send_response failed: %d", err);
+    LOG_ERROR(err, "gatt server send_response failed: %d", err);
   } else if (0 == strcmp(cmd, "exit")) {
     bt_cleanup();
   } else {
@@ -985,7 +991,7 @@ int main(int argc, char *argv[]) {
 
   // Start the server socket and register for commands from bleno
   int err = bledroid.start();
-  ASSERT((err < 0), "Failed to start bledroid socket listener: %d\n", err);
+  LOG_ERROR((err < 0), "Failed to start bledroid socket listener: %d\n", err);
 
   while (1) {
     sleep(INT_MAX);

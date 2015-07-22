@@ -30,14 +30,14 @@ $ adb shell silk --debug-brk
 ```
 or use the `debugger` Javascript function to manually set a breakpoint.
 
-The (built-in node debugger)[https://nodejs.org/api/debugger.html#debugger_info]
+The [built-in node debugger](https://nodejs.org/api/debugger.html#debugger_info)
 may be invoked by running the following commands on the host machine:
 ```
 $ adb forward tcp:5858 tcp:5858
 $ node debug localhost:5858
 ```
 
-More sophisticated debugging is available with (node-inspector)[https://github.com/node-inspector/node-inspector/blob/v0.11.1/README.md].
+More sophisticated debugging is available with [node-inspector](https://github.com/node-inspector/node-inspector/blob/v0.11.1/README.md).
 Run ```./debug``` to (install, patch, and) launch node-inspector.
 
 They are currently a couple of caveats to using node-inspector:

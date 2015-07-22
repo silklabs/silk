@@ -14,6 +14,7 @@
 #include <sysutils/FrameworkListener.h>
 #include <utils/Timers.h>
 #include <hardware/sensors.h>
+#include <json/json.h>
 
 using namespace android;
 
@@ -31,7 +32,9 @@ using namespace android;
   do { \
     if (expression) { \
       ALOGE(__VA_ARGS__); \
-      mSensorsListener->sendEvent("error"); \
+      Json::Value jsonMsg; \
+      jsonMsg["eventName"] = "error"; \
+      mSensorsListener->sendEvent(jsonMsg); \
       return 1; \
     } \
   } while(0)
@@ -91,17 +94,12 @@ public:
   /**
    * Notify the client of a sensors event
    */
-  void sendEvent(const char *fmt, ...) {
-    char* event;
+  void sendEvent(const Json::Value & jsonMsg) {
+    Json::FastWriter fastWriter;
+    std::string jsonMessage = fastWriter.write(jsonMsg);
 
-    va_list argptr;
-    va_start(argptr, fmt);
-    vasprintf(&event, fmt, argptr);
-    va_end(argptr);
-
-    ALOGV("Broadcasting %s", event);
-    FrameworkListener::sendBroadcast(200, event, false);
-    free(event);
+    ALOGV("Broadcasting %s", jsonMessage.c_str());
+    FrameworkListener::sendBroadcast(200, jsonMessage.c_str(), false);
   }
 };
 
@@ -167,7 +165,9 @@ int SensorsCommand::sensors_init() {
         mSensorsList[i].power);
   }
 
-  mSensorsListener->sendEvent("initialized");
+  Json::Value jsonMsg;
+  jsonMsg["eventName"] = "initialized";
+  mSensorsListener->sendEvent(jsonMsg);
   return 0;
 }
 
@@ -227,15 +227,21 @@ int SensorsCommand::sensors_activate(int sensorType, int activate, int rate) {
       sensorType);
 
   int err;
+  Json::Value jsonMsg;
   if (activate) {
     err = mDevice->activate(mDevice, mSensorsList[count].handle, 1);
     LOG_ERROR((err != 0), "Failed to activate the sensor");
     mDevice->setDelay(mDevice, mSensorsList[count].handle, ms2ns(rate));
-    mSensorsListener->sendEvent("activated");
+
+    jsonMsg["eventName"] = "activated";
+    mSensorsListener->sendEvent(jsonMsg);
   } else  {
     err = mDevice->activate(mDevice, mSensorsList[count].handle, 0);
     LOG_ERROR((err != 0), "Failed to deactivate the sensor");
-    mSensorsListener->sendEvent("deactivate");
+
+    Json::Value jsonMsg;
+    jsonMsg["eventName"] = "deactivated";
+    mSensorsListener->sendEvent(jsonMsg);
   }
   return 0;
 }
@@ -256,7 +262,21 @@ int SensorsCommand::sensors_poll() {
       "incorrect event version (version=%d, expected=%d", data.version,
       sizeof(sensors_event_t));
 
+  // Format JSON message
+  Json::Value jsonMsg;
+  Json::Value jsonArray;
+  jsonMsg["eventName"] = "data";
+  jsonMsg["sensorType"] = data.type;
+
   switch (data.type) {
+    case SENSOR_TYPE_LIGHT:
+    case SENSOR_TYPE_PRESSURE:
+    case SENSOR_TYPE_TEMPERATURE:
+    case SENSOR_TYPE_PROXIMITY:
+    case SENSOR_TYPE_RELATIVE_HUMIDITY:
+    case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+      jsonArray.append(data.data[0]);
+      break;
     case SENSOR_TYPE_ACCELEROMETER:
     case SENSOR_TYPE_MAGNETIC_FIELD:
     case SENSOR_TYPE_ORIENTATION:
@@ -264,23 +284,15 @@ int SensorsCommand::sensors_poll() {
     case SENSOR_TYPE_GRAVITY:
     case SENSOR_TYPE_LINEAR_ACCELERATION:
     case SENSOR_TYPE_ROTATION_VECTOR:
-      mSensorsListener->sendEvent("data %d %5.1f %5.1f %5.1f",
-          data.type, data.data[0], data.data[1], data.data[2]);
-      break;
-    case SENSOR_TYPE_LIGHT:
-    case SENSOR_TYPE_PRESSURE:
-    case SENSOR_TYPE_TEMPERATURE:
-    case SENSOR_TYPE_PROXIMITY:
-    case SENSOR_TYPE_RELATIVE_HUMIDITY:
-    case SENSOR_TYPE_AMBIENT_TEMPERATURE:
-      mSensorsListener->sendEvent("data %d %f", data.type,
-          data.data[0]);
-      break;
     default:
-      mSensorsListener->sendEvent("data %d %f %f %f",
-          data.type, data.data[0], data.data[1], data.data[2]);
+      jsonArray.append(data.data[0]);
+      jsonArray.append(data.data[1]);
+      jsonArray.append(data.data[2]);
       break;
   }
+
+  jsonMsg["values"] = jsonArray;
+  mSensorsListener->sendEvent(jsonMsg);
   return 0;
 }
 
@@ -296,7 +308,10 @@ int main(int argc, char *argv[]) {
   int err = sensorsListener.start();
   if (err < 0) {
     ALOGE("Failed to start sensors socket listener: %d\n", err);
-    sensorsListener.sendEvent("error");
+
+    Json::Value jsonMsg; \
+    jsonMsg["eventName"] = "error"; \
+    sensorsListener.sendEvent(jsonMsg); \
     return 1;
   }
 

@@ -98,39 +98,17 @@ class SensorsMonitor extends events.EventEmitter {
         line = found[2];
       }
 
-      if ((found = line.match(/^initialized$/))) {
+      let sensorEvent = JSON.parse(line);
+      if (sensorEvent.eventName === 'initialized') {
         this.emit('initialized');
-      } else if ((found = line.match(/^activated$/))) {
+      } else if (sensorEvent.eventName === 'activated') {
         this.emit('activated');
-      } else if ((found = line.match(/^deactivated$/))) {
+      } else if (sensorEvent.eventName === 'deactivated') {
         this.emit('deactivated');
-      } else if ((found = line.match(/^error$/))) {
+      } else if (sensorEvent.eventName === 'error') {
         this.emit('error');
-      } else if ((found = line.match(/^data (.*) (.*)/))) {
-        let sensorType = parseInt(found[1]);
-        line = found[2];
-
-        switch(sensorType) {
-          case SENSOR_TYPE.LIGHT:
-          case SENSOR_TYPE.PRESSURE:
-          case SENSOR_TYPE.TEMPERATURE:
-          case SENSOR_TYPE.PROXIMITY:
-          case SENSOR_TYPE.RELATIVE_HUMIDITY:
-          case SENSOR_TYPE.AMBIENT_TEMPERATURE:
-            this.emit('data', sensorType, parseFloat(found[2]));
-            break;
-          case SENSOR_TYPE.ACCELEROMETER:
-          case SENSOR_TYPE.MAGNETIC_FIELD:
-          case SENSOR_TYPE.ORIENTATION:
-          case SENSOR_TYPE.GYROSCOPE:
-          case SENSOR_TYPE.GRAVITY:
-          case SENSOR_TYPE.LINEAR_ACCELERATION:
-          case SENSOR_TYPE.ROTATION_VECTOR:
-          default:
-            found = line.match(/^(.*) (.*) (.*)/);
-            this.emit('data', sensorType, found[1], found[2], found[3]);
-            break;
-        }
+      } else if (sensorEvent.eventName === 'data') {
+        this.emit('data', sensorEvent);
       } else {
         log.warn(`Error: Unknown sensors command ${line}`);
       }
@@ -153,7 +131,13 @@ class SensorsMonitor extends events.EventEmitter {
 
 /**
  * This module exposes functionality to activate/deactivate and read sensors
- * data from various sensors avaialble on the device
+ * data from various sensors avaialble on the device.
+ *
+ * The sensor data is returned as a JSON object in the following format
+ *   sensorType: One of the SENSOR_TYPE.* constants
+ *   values: Sensor data as returned by the hardware sensor. The length and
+ *           contents of the values array depends on which sensor type is being
+ *           monitored.
  */
 class Sensors extends events.EventEmitter {
   constructor() {

@@ -82,12 +82,12 @@ new Promise(resolve => {
 .then(() => {
   log.info('Activating ambient light sensor');
 
-  sensors.on('data', (sensorType, data) => {
-    if (sensorType !== sensors.SENSOR_TYPE.LIGHT) {
+  sensors.on('data', sensorEvent => {
+    if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
       return;
     }
 
-    if (data === 0) {
+    if (sensorEvent.values[0] === 0) {
       // TODO: Turn on flash light when light sensors detects no light
       log.info('Turning on night mode');
     }

@@ -5,10 +5,15 @@ SRCS = [
   // NOTE: Keep all source directories under lib/ to avoid breaking dependency
   // management in Android.mk
   'lib/base_version.js',
+  'lib/btle/config-service.js',
+  'lib/btle/ibeacon.js',
+  'lib/btle/index.js',
+  'lib/btle/scanner.js',
   'lib/camera.js',
   'lib/caps.js',
   'lib/config.js',
   'lib/crashreport.js',
+  'lib/index.js',
   'lib/lights.js',
   'lib/log.js',
   'lib/main.js',
@@ -19,10 +24,6 @@ SRCS = [
   'lib/util.js',
   'lib/vibrator.js',
   'lib/wifi.js',
-  'lib/btle/config-service.js',
-  'lib/btle/ibeacon.js',
-  'lib/btle/index.js',
-  'lib/btle/scanner.js',
 ];
 
 DIST_SRCS = {};
@@ -43,7 +44,7 @@ module.exports = function(grunt) {
       debug = '--debug';
     }
     exec('node_modules/.bin/browserify --node --ignore-missing ' + debug +
-           ' dist/lib/main.js --outfile core.js');
+           ' dist/lib/index.js --outfile core.js');
   });
   grunt.registerTask('adb_setup', '', function() {
     exec('adb root');

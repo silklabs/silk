@@ -28,7 +28,8 @@ the first line:
 $ adb shell stop silk
 $ adb shell silk --debug-brk
 ```
-or use the `debugger` Javascript function to manually set a breakpoint.
+or use the `debugger` Javascript function to manually set a breakpoint anywhere
+you'd like.
 
 The [built-in node debugger](https://nodejs.org/api/debugger.html#debugger_info)
 may be invoked by running the following commands on the host machine:
@@ -52,16 +53,6 @@ is attempting to inject additional debug hooks into the device debugee and
 failed because it assumes the debugger and debugee share the same filesystem.
 * Execution sometimes needs to be paused before set breakpoints will be
 activated for the first time.
-* The Javascript `debugger;` statement doesn't seem to work consistently
-especially when used very early in the node process, however this is also
-observed with the built-in node debugger.
-
-ProTip: to break execution immediately at the start of the process before launching a
-node debugger, run:
-```
-$ adb shell stop silk
-$ adb shell silk --debug-brk
-```
 
 ## Adding new package.json dependencies
 Package dependencies of core need to be managed carefully to ensure reproducible

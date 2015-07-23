@@ -32,7 +32,7 @@ if [ -z $1 ]; then
   # listen on it.
   setprop sys.boot_completed 1
 
-  LOGWRAPPER=
+  export LOGWRAPPER=
   if [ $PPID -eq 1 ]; then
     LOGWRAPPER=logwrapper
   fi

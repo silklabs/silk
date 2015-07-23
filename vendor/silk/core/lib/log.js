@@ -3,16 +3,20 @@
 
 'use strict';
 
+let debug = require('debug');
+
 function formatArgs() {
   let args = arguments;
   let name = this.namespace;
+  let diff = debug.humanize(this.diff);
 
   if (this.useColors) {
     let color = this.color;
-    args[0] = `\u001b[3${color}m${name}\u001b[0m ` + args[0];
+    args[0] = `\u001b[3${color}m${name} (+${diff}) ${args[0]}\u001b[0m `;
   } else {
-    args[0] = name + ' ' + args[0];
+    args[0] = `${name} (+${diff}) ` + args[0];
   }
+
   return args;
 }
 
@@ -38,7 +42,6 @@ export default function createLog(libraryName) {
   const alog = require('silk-alog');
   const util = require('util');
 
-  let debug = require('debug');
   debug.formatArgs = formatArgs;
 
   libraryName = 'silk-' + libraryName;
@@ -55,14 +58,16 @@ export default function createLog(libraryName) {
     let func = debug(`${libraryName}:${alogFuncName}`);
     func.log = function() {
       let args = arguments;
-      let consoleFunc = console[consoleFuncName];
-      let alogFunc = alog[alogFuncName];
 
-      consoleFunc.apply(consoleFunc, args);
+      if (!process.env.LOGWRAPPER) {
+        let consoleFunc = console[consoleFuncName];
+        consoleFunc.apply(consoleFunc, args);
+      }
 
       // Mimic console.* functions by treating additional arguments as
       // printf-style arguments.
       let msg = util.format.apply(this, args);
+      let alogFunc = alog[alogFuncName];
       alogFunc(libraryName, msg.replace(libraryNameRegExp, '$1$3$2'));
     };
     return func;

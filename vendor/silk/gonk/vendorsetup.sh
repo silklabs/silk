@@ -51,8 +51,6 @@ node_version_check()
 
     # TODO: Ensure the host node version checked here is consistent with the
     #      target node version at external/$NODE_ENGINE/
-    log -p i -t silk-init Node engine missing
-
     if [[ "$NODE_ENGINE" = "iojs" ]]; then
       [[ $major -eq 2 ]] && [[ $minor -eq 4 ]] && return
     else

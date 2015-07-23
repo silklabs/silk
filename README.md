@@ -48,8 +48,7 @@ The most basic version looks like this:
     "url": "http://localhost:8081/index.ios.bundle"
   },
 
-  // You may also pass a config to override the default
-silk-server instance.
+  // You may also pass a config to override the default silk-server instance.
   "server": {
     "url": "http://localhost:5000"
   }

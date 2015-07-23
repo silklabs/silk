@@ -14,17 +14,13 @@ class LiveVideo : UIView {
   // display raw video...
   var player = AVQueuePlayer()
   var playerLayer: AVPlayerLayer!
-  var videoStream: NSDictionary = [:] {
+  var videoStream: String? {
     didSet {
-      // XXX: This could implode in horrible app crashing ways
-      let id = self.videoStream["id"] as! String
-      let server = self.videoStream["server"] as! String
-
-      self.initializeSocketIO(server: server, id: id)
+      self.initializeSocketIO(self.videoStream!)
     }
   }
 
-  var socketIOClient: SocketIOClient?
+  var listener: SocketIOListener?
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -56,12 +52,14 @@ class LiveVideo : UIView {
   }
 
   func destroy() {
-    if let client = self.socketIOClient {
+    if let client = self.listener {
       // Ensure player has no observers anymore...
       self.player.removeAllKeyPathObservers()
 
-      client.disconnect(fast: true)
-      self.socketIOClient = nil
+      let stream = "video-\(self.videoStream!)"
+      let instance = AppSocketIO.sharedInstance
+      instance.emit("leave", [stream])
+      self.listener = nil
     }
   }
 
@@ -74,18 +72,14 @@ class LiveVideo : UIView {
     self.player.insertItem(item, afterItem: nil)
   }
 
-  func initializeSocketIO(#server: String, id: String) {
-    self.socketIOClient = SocketIOClient(socketURL: server, options: [
-      "log": false
-    ])
+  func initializeSocketIO(id: String) {
+    let instance = AppSocketIO.sharedInstance
+    self.listener = instance.aquireListener()
 
     let stream = "video-\(id)"
+    instance.emit("join", [stream])
 
-    self.socketIOClient!.on("connect") {(data) in
-      self.socketIOClient!.emit("join", stream)
-    }
-
-    self.socketIOClient!.on(stream) {
+    self.listener!.on(stream) {
       [unowned self]
       (data, ack) in
 
@@ -101,7 +95,6 @@ class LiveVideo : UIView {
       }
     }
 
-    self.socketIOClient!.connect()
     self.player.observeKeyPath("status") {
       [unowned self]
       (kvo, _) in

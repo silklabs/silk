@@ -8,9 +8,7 @@
   "dependencies": {
     "buffer": "^3.2.2",
     "events": "^1.0.2",
-    "react-native": "^0.6.0",
-    "react-native-swift-socketio": "^0.0.6",
-    "react-native-webview-bridge": "^0.2.0",
+    "react-native": "^0.8.0-rc.2",
     "util": "0.10.3"
   }
 }

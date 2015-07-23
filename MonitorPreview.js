@@ -4,8 +4,8 @@
 'use strict';
 
 import React from 'react-native';
-import WebViewBridge from 'react-native-webview-bridge';
 import LiveVideo from './LiveVideo'
+import PreviewImage from './PreviewImage'
 import MonitorFullscreen from './MonitorFullscreen'
 
 var {
@@ -37,7 +37,6 @@ var MonitorPreview = React.createClass({
 
   render() {
     var vid = this.props.vid;
-    var serverUrl = this.props.serverUrl;
     var fullscreen = this.state.showVideo;
 
     return (
@@ -46,8 +45,7 @@ var MonitorPreview = React.createClass({
           <MonitorFullscreen
             onClose={this.onVideoHidden}
             presented={fullscreen}
-            vid={vid}
-            serverUrl={serverUrl} />
+            vid={vid} />
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>
@@ -62,22 +60,13 @@ var MonitorPreview = React.createClass({
 // This will become a native-backed (or initially, WebView-backed)
 // widget that streams video in small format.
 var MonitorPreviewStream = React.createClass({
-  componentDidMount: function() {
-    this.refs.webview.send({ id: this.props.vid,
-                             serverUrl: 'http://'+ this.props.serverUrl,
-                             width: PREVIEW_WIDTH,
-                             height: PREVIEW_HEIGHT,
-                             backgroundColor: '#888888' });
-  },
-
   render: function() {
     // TODO: scrollEnabled={false}
+    let stream = `video-preview-${this.props.vid}`
     return (
-        <View style={styles.monitorPreview}>
-          <WebViewBridge ref='webview'
-                         url='web/monitor-preview-stream.html'
-                         bounces={false} />
-        </View>
+      <View style={styles.monitorPreview}>
+        <PreviewImage stream={stream} />
+      </View>
     );
   }
 });
@@ -111,8 +100,7 @@ var styles = StyleSheet.create({
 
   monitorPreview: {
     width: PREVIEW_WIDTH,
-    height: PREVIEW_HEIGHT,
-    backgroundColor: '#888888',
+    height: PREVIEW_HEIGHT
   },
 });
 

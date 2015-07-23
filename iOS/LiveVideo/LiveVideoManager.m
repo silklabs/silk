@@ -8,6 +8,6 @@
 
 
 RCT_EXTERN_METHOD(destroy:(NSNumber *)reactTag)
-RCT_EXPORT_VIEW_PROPERTY(videoStream, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(videoStream, NSString)
 
 @end

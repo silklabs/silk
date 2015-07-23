@@ -14,8 +14,8 @@ var {
   View,
 } = React;
 
-var SocketIO = require('react-native-swift-socketio');
-
+var Config = require('./Config')();
+var SocketIO = require('./SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
 
@@ -30,7 +30,7 @@ var MonitorsView = React.createClass({
       network: null,
       serverConnection: 'offline',
       // TODO import silk-api
-      serverUrl: 'silk-test-server.herokuapp.com',
+      serverUrl: Config.server.url,
       //serverUrl: '192.168.2.1:5000',
     };
   },
@@ -102,8 +102,8 @@ var MonitorsView = React.createClass({
       this.socket.handlers = {};
       this.socket.close();
     }
-    this.socket = new SocketIO(this.state.serverUrl);
-    this.socket.connect();
+    this.socket = new SocketIO();
+    this.socket.connect(this.state.serverUrl);
     this.state.serverConnection = 'connecting';
     this.setState(this.state);
     console.log('Connecting to ...', this.state.serverUrl);

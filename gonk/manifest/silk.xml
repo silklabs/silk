@@ -19,10 +19,6 @@
            path="external/librecovery"
            remote="github"
            revision="v2.2" clone-depth="1"/>
-  <project name="open-source-parsers/jsoncpp"
-           path="external/jsoncpp"
-           remote="github"
-           revision="refs/tags/1.6.2" clone-depth="1"/>
 
   <!-- node modules -->
   <project name="silk-server"

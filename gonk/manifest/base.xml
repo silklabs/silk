@@ -60,5 +60,6 @@
            path="hardware/libhardware" clone-depth="1"/>
   <project name="platform/hardware/libhardware_legacy"
            path="hardware/libhardware_legacy" clone-depth="1"/>
+  <project path="external/jsoncpp" name="platform/external/jsoncpp" clone-depth="1" />
 
 </manifest>

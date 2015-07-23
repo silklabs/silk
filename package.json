@@ -6,16 +6,17 @@
   "scripts": {
     "postinstall": "./node_modules/.bin/grunt",
     "prepublish": "./node_modules/.bin/grunt",
-    "start": "node dist/lib/main.js",
-    "test": "./node_modules/.bin/grunt test"
+    "start": "DEBUG=silk-*,-*:verbose node dist/lib/main.js",
+    "test": "DEBUG=silk-* ./node_modules/.bin/grunt test"
   },
   "license": "proprietary",
   "dependencies": {
     "babel-eslint": "~3.1.15",
     "body-parser": "^1.12.2",
+    "debug": "^2.2.0",
     "elliptic": "^3.0.3",
-    "express": "^4.12.3",
     "eslint": "~0.22.1",
+    "express": "^4.12.3",
     "grunt": "^0.4.5",
     "grunt-babel": "^5.0.0",
     "grunt-browserify": "^3.8.0",
@@ -27,8 +28,8 @@
     "localStorage": "^1.0.3",
     "promise": "^6.1.0",
     "request": "^2.53.0",
-    "socket.io-client": "^1.3.5",
-    "socket.io": "^1.3.5"
+    "socket.io": "^1.3.5",
+    "socket.io-client": "^1.3.5"
   },
   "engines": {
     "node": ">=0.12.x"
@@ -41,7 +42,10 @@
       "no-debugger": 1,
       "default-case": 2,
       "comma-dangle": 0,
-      "indent": [2, 2],
+      "indent": [
+        2,
+        2
+      ],
       "no-underscore-dangle": 0,
       "quotes": [
         2,

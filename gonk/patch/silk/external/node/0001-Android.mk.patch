@@ -1,42 +1,47 @@
-From c41715cf8458b1871f7958c4494ff1b84fc6a333 Mon Sep 17 00:00:00 2001
+From acbb340f92e9a5a47b754e7563895ee626d8e23b Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
-Subject: [PATCH] Node Android.mk integration
+Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 42 ++++++++++++++++++++++++++++++++++++++++++
- deps/v8/build/toolchain.gypi |  2 +-
- src/stream_wrap.h            |  2 +-
- 3 files changed, 44 insertions(+), 2 deletions(-)
+ Android.mk | 53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 53 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..00dd483
+index 0000000..b7c8259
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,53 @@
 +LOCAL_PATH := $(call my-dir)
 +
++LOCAL_NODE_ENGINE=$(notdir $(LOCAL_PATH))
++
++ifneq ($(NODE_ENGINE),$(LOCAL_NODE_ENGINE))
++$(info Not building '$(LOCAL_NODE_ENGINE)' as NODE_ENGINE=$(NODE_ENGINE))
++else
 +include $(CLEAR_VARS)
-+LOCAL_MODULE := node
++LOCAL_MODULE := $(LOCAL_NODE_ENGINE)
 +LOCAL_MODULE_CLASS := EXECUTABLES
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT)/bin
 +LOCAL_STRIP_MODULE := true
-+node_BUILD_DIR := $(ANDROID_BUILD_TOP)/$(PRODUCT_OUT)/obj/$(LOCAL_MODULE_CLASS)/$(LOCAL_MODULE)_intermediate
++node_BUILD_DIR := $(ANDROID_BUILD_TOP)/$(PRODUCT_OUT)/obj/$(LOCAL_MODULE_CLASS)/$(LOCAL_MODULE)_intermediates
 +LOCAL_PREBUILT_MODULE_FILE := $(node_BUILD_DIR)/Release/$(LOCAL_MODULE)
++include external/stlport/libstlport.mk
 +include $(BUILD_PREBUILT)
 +
-+LOCAL_CFLAGS := $(TARGET_GLOBAL_CFLAGS) \
-+  $(addprefix -isystem ,$(abspath . $(TARGET_C_INCLUDES)))
++LOCAL_CFLAGS := \
++  $(addprefix -isystem ,$(abspath . $(LOCAL_C_INCLUDES) $(TARGET_C_INCLUDES))) \
++  $(TARGET_GLOBAL_CFLAGS)
 +
-+LOCAL_CPPFLAGS := $(TARGET_GLOBAL_CPPFLAGS) -DV8_ANDROID_LOG_STDOUT \
-+  $(addprefix -isystem ,$(abspath $(LOCAL_PATH)/../stlport/stlport $(LOCAL_PATH)/../../bionic))
++LOCAL_CPPFLAGS := -DV8_ANDROID_LOG_STDOUT $(TARGET_GLOBAL_CPPFLAGS)
 +
 +LOCAL_LDFLAGS := $(TARGET_GLOBAL_LDFLAGS) -pie \
 +  -B$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
-+  -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) -lstlport
++  -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES))  \
++  $(subst lib,-l,$(LOCAL_SHARED_LIBRARIES))
 +
 +$(LOCAL_PREBUILT_MODULE_FILE): export CC := $(abspath $(TARGET_CC))
 +$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $(TARGET_CXX))
@@ -47,10 +52,12 @@ index 0000000..00dd483
 +$(LOCAL_PREBUILT_MODULE_FILE): export CFLAGS := $(LOCAL_CFLAGS)
 +$(LOCAL_PREBUILT_MODULE_FILE): export CXXFLAGS := $(LOCAL_CFLAGS) $(LOCAL_CPPFLAGS)
 +$(LOCAL_PREBUILT_MODULE_FILE): export LDFLAGS := $(LOCAL_LDFLAGS)
++$(LOCAL_PREBUILT_MODULE_FILE): node_BUILD_DIR := $(node_BUILD_DIR)
 +
 +$(LOCAL_PREBUILT_MODULE_FILE): $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk \
 +  $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
-+  $(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,libc.so libdl.so liblog.so libstlport.so)
++  $(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/, \
++      libc.so libdl.so liblog.so $(addsuffix .so,$(LOCAL_SHARED_LIBRARIES)))
 +	@echo Building: $@
 +	$(hide) rm -rf $(@D) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
 +	$(hide) mkdir -p $(node_BUILD_DIR)
@@ -58,32 +65,8 @@ index 0000000..00dd483
 +	$(hide) cd $(<D) && ./configure --prefix=/ \
 +    --without-snapshot --without-npm --dest-cpu=arm --dest-os=android
 +	$(hide) cd $(<D) && $(MAKE) V=$(if $(SHOW_COMMANDS),1)
-diff --git a/deps/v8/build/toolchain.gypi b/deps/v8/build/toolchain.gypi
-index 1d47360..f46f5ca 100644
---- a/deps/v8/build/toolchain.gypi
-+++ b/deps/v8/build/toolchain.gypi
-@@ -477,7 +477,7 @@
-         },
-       }],
-       ['(OS=="linux" or OS=="freebsd"  or OS=="openbsd" or OS=="solaris" \
--         or OS=="netbsd" or OS=="mac" or OS=="android" or OS=="qnx") and \
-+         or OS=="netbsd" or OS=="mac" or OS=="qnx") and \
-         (v8_target_arch=="arm" or v8_target_arch=="ia32" or \
-          v8_target_arch=="x87" or v8_target_arch=="mips" or \
-          v8_target_arch=="mipsel")', {
-diff --git a/src/stream_wrap.h b/src/stream_wrap.h
-index d993663..ef3891d 100644
---- a/src/stream_wrap.h
-+++ b/src/stream_wrap.h
-@@ -74,7 +74,7 @@ class WriteWrap: public ReqWrap<uv_write_t> {
-  private:
-   // People should not be using the non-placement new and delete operator on a
-   // WriteWrap. Ensure this never happens.
--  void* operator new(size_t size) { assert(0); }
-+  void* operator new(size_t size) { assert(0); return 0; }
-   void operator delete(void* ptr) { assert(0); }
- 
-   StreamWrap* const wrap_;
++
++endif
 -- 
 1.9.1
 

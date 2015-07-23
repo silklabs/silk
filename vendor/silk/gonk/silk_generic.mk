@@ -2,7 +2,8 @@
 # Generic Silk platform
 #
 
-PRODUCT_PACKAGES += node node_modules
+NODE_ENGINE?=node
+PRODUCT_PACKAGES += $(NODE_ENGINE)
 
 SILK_CORE := \
   core.js \

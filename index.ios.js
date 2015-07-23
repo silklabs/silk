@@ -12,9 +12,9 @@ var {
   View,
 } = React;
 
-var MonitorFullscreen = require('./MonitorFullscreen');
-var MonitorsView = require('./MonitorsView');
-var WifiSettings = require('./WifiSettings');
+var MonitorFullscreen = require('./Components/MonitorFullscreen');
+var MonitorsView = require('./Components/MonitorsView');
+var WifiSettings = require('./Components/WifiSettings');
 
 var Silk = React.createClass({
   render: function() {
@@ -57,7 +57,7 @@ var Silk = React.createClass({
   onForward: function() {
     // --> Settings
   },
-  
+
   configureScene: function(route) {
     switch (route.name) {
     case 'WifiSettings':

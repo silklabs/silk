@@ -19,7 +19,7 @@ export default function load() {
   try {
     // Note: that to resolve this path correctly it must be passed as string
     // literal
-    config = require('./config.local.json');
+    config = require('../config.local.json');
   } catch (e) {
     config = DEFAULT;
   }

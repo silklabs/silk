@@ -3,31 +3,16 @@
 
 'use strict';
 
-let debug = require('debug');
-
-function formatArgs() {
-  let args = arguments;
-  let name = this.namespace;
-  let diff = debug.humanize(this.diff);
-
-  if (this.useColors) {
-    let color = this.color;
-    args[0] = `\u001b[3${color}m${name} (+${diff}) ${args[0]}\u001b[0m `;
-  } else {
-    args[0] = `${name} (+${diff}) ` + args[0];
-  }
-
-  return args;
-}
-
 // Expected use:
 //
-//   var log = require('./log')('coolfeature');
+//   let log = require('./log')('coolfeature');
 //
-//   log.debug('useless');  // outputs to stdout
-//   log.info('foo');       // outputs to stdout
-//   log.warn('bar');       // outputs to stdout
-//   log.error('baz');      // outputs to stderr
+//   log.verbose('useless');
+//   log.debug('assert(1+1==3)');
+//   log.info('hi');
+//   log.warn('tsktsk');
+//   log.error('ono');
+//   log.fatal('sos');
 //
 // To enable output set the 'persist.silk.debug' property:
 //
@@ -41,6 +26,23 @@ function formatArgs() {
 export default function createLog(libraryName) {
   const alog = require('silk-alog');
   const util = require('util');
+
+  let debug = require('debug');
+
+  function formatArgs() {
+    let args = arguments;
+    let name = this.namespace;
+    let diff = debug.humanize(this.diff);
+
+    if (this.useColors) {
+      let color = this.color;
+      args[0] = `\u001b[3${color}m${name} (+${diff}) ${args[0]}\u001b[0m `;
+    } else {
+      args[0] = `${name} (+${diff}) ` + args[0];
+    }
+
+    return args;
+  }
 
   debug.formatArgs = formatArgs;
 

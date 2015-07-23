@@ -49,9 +49,17 @@ node_version_check()
     local minor=${BASH_REMATCH[2]}
     local patch=${BASH_REMATCH[3]}
 
-    if [[ $major -eq 0 ]]; then
-      [[ $minor -eq 12 ]] && return
-      [[ $minor -eq 10 ]] && [[ $patch -ge 29 ]] && return
+    # TODO: Ensure the host node version checked here is consistent with the
+    #      target node version at external/$NODE_ENGINE/
+    log -p i -t silk-init Node engine missing
+
+    if [[ "$NODE_ENGINE" = "iojs" ]]; then
+      [[ $major -eq 2 ]] && [[ $minor -eq 4 ]] && return
+    else
+      if [[ $major -eq 0 ]]; then
+        [[ $minor -eq 12 ]] && return
+        [[ $minor -eq 10 ]] && [[ $patch -ge 29 ]] && return
+      fi
     fi
   fi
   poison_their_lunch Bad node version: $v
@@ -70,6 +78,10 @@ npm_version_check()
   fi
   poison_their_lunch Bad npm version: $v
 }
+
+# Uncomment to use iojs instead of node.
+# (clean build is then recommended to ensure native node modules are rebuilt)
+#export NODE_ENGINE=iojs
 
 node_version_check
 npm_version_check

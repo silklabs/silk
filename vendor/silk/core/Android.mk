@@ -45,7 +45,7 @@ npm_INCLUDES := \
   bionic/libc/kernel/uapi \
 
 npm_cli = $(abspath external/npm/cli.js)
-npm_node_dir = $(abspath external/node)
+npm_node_dir = $(abspath external/$(or $(NODE_ENGINE),node))
 
 npm_CFLAGS := $(TARGET_GLOBAL_CFLAGS) \
   $(addprefix -isystem ,$(abspath . $(TARGET_C_INCLUDES))) \
@@ -79,7 +79,9 @@ import_node_modules: export NPM_CONFIG_PLATFORM=android
 import_node_modules: LOCAL_PATH := $(LOCAL_PATH)
 import_node_modules:
 	cd $(LOCAL_PATH) && \
-   node $(npm_cli) install --ignore-scripts --nodedir=$(npm_node_dir) --no-optional
+   rm -rf node_modules
+	cd $(LOCAL_PATH) && \
+   node $(npm_cli) install --ignore-scripts --no-optional
 	cd $(LOCAL_PATH) && \
    node $(npm_cli) dedup
 	cd $(LOCAL_PATH) && \

@@ -79,7 +79,7 @@ import_node_modules: export NPM_CONFIG_PLATFORM=android
 import_node_modules: LOCAL_PATH := $(LOCAL_PATH)
 import_node_modules:
 	cd $(LOCAL_PATH) && \
-   rm -rf node_modules
+   git rm -r node_modules
 	cd $(LOCAL_PATH) && \
    node $(npm_cli) install --ignore-scripts --no-optional
 	cd $(LOCAL_PATH) && \
@@ -92,6 +92,8 @@ import_node_modules:
    echo TODO: Remove silk-api special case... && \
    rm node_modules/silk-api && ln -fs ../local_node_modules/silk-api/dist/api node_modules/silk-api && \
    true
+	cd $(LOCAL_PATH) && \
+   git add node_modules
 
 $(LOCAL_BUILT_MODULE): export CC := $(abspath $(TARGET_CC))
 $(LOCAL_BUILT_MODULE): export CXX := $(abspath $(TARGET_CXX))

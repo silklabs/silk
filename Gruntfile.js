@@ -9,6 +9,7 @@ var SRCS = [
   'api/state.js',
   'lib/accounts.js',
   'lib/challenge.js',
+  'lib/log.js',
   'lib/main.js',
   'lib/routes.js',
   'lib/secrets.js',

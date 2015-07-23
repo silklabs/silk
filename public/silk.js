@@ -98,7 +98,6 @@ socket.on('connect', function () {
     var img = document.createElement('img');
     img.setAttribute('title', msg.name);
     var canvas = document.createElement('canvas');
-    canvas.setAttribute('style', 'position:absolute;left:0;right:0');
     var a = document.createElement('a');
     a.setAttribute('id', msg.id);
     a.addEventListener('click', function() { showPlayer(stream); });
@@ -144,6 +143,8 @@ function renderFrame(msg, img, canvas) {
 function drawFaceBorder(msg, img, canvas) {
   canvas.width = img.clientWidth;
   canvas.height = img.clientHeight;
+  canvas.setAttribute('style', 'position:absolute;left:' +
+    img.offsetLeft + 'px;top:' + img.offsetTop + 'px;');
 
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);

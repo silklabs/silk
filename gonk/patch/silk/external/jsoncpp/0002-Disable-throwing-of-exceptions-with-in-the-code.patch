@@ -1,0 +1,30 @@
+From b3611f55c2b5ae9aa295a62a9f1678df771bbfea Mon Sep 17 00:00:00 2001
+From: Anshul Jain <anshul@silklabs.com>
+Date: Wed, 22 Jul 2015 22:44:17 -0700
+Subject: [PATCH 2/2] Disable throwing of exceptions with in the code
+
+---
+ src/lib_json/json_value.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/lib_json/json_value.cpp b/src/lib_json/json_value.cpp
+index 8fbce54..1bfd062 100644
+--- a/src/lib_json/json_value.cpp
++++ b/src/lib_json/json_value.cpp
+@@ -186,11 +186,11 @@ LogicError::LogicError(std::string const& msg)
+ {}
+ void throwRuntimeError(std::string const& msg)
+ {
+-  throw RuntimeError(msg);
++//  throw RuntimeError(msg);
+ }
+ void throwLogicError(std::string const& msg)
+ {
+-  throw LogicError(msg);
++//  throw LogicError(msg);
+ }
+ 
+ // //////////////////////////////////////////////////////////////////
+-- 
+2.4.5
+

@@ -161,8 +161,10 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 # cause any correctness issues, the user will just be downloading some
 # unnecessary bits. (TODO: Wrap automation around updating the repo cache.)
 #
-REPOCACHE_mako := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-mako.tgz
 REPOCACHE_base := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-base.tgz
+ifeq ($(REPO_INIT_HOST),linux)
+REPOCACHE_mako := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-mako.tgz
+endif
 
 define __repocache_rules
 

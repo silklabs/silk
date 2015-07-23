@@ -36,7 +36,6 @@ let vib = require('./vibrator')();
 let wifi = require('./wifi');
 let util = require('./util');
 let update = require('./update');
-let sensors = require('./sensors');
 
 const id = api.id.create();
 const name = (util.getprop('persist.silk.displayName')
@@ -77,23 +76,7 @@ new Promise(resolve => {
 })
 .then(() => {
   log.info('Initialize hardware');
-  return Promise.all([wifi.init(), btle.init(), sensors.init()]);
-})
-.then(() => {
-  log.info('Activating ambient light sensor');
-
-  sensors.on('data', sensorEvent => {
-    if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
-      return;
-    }
-
-    if (sensorEvent.values[0] === 0) {
-      // TODO: Turn on flash light when light sensors detects no light
-      log.info('Turning on night mode');
-    }
-  });
-
-  return sensors.activate(sensors.SENSOR_TYPE.LIGHT, 1000);
+  return Promise.all([wifi.init(), btle.init()]);
 })
 .then(() => {
   log.info('Load configuration');

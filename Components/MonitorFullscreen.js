@@ -25,8 +25,10 @@ let {
   Group
 } = ReactART;
 
-// Paint faces at 10 frames per second.
-let FACE_DISPPEAR = 1000 / 10;
+/**
+Safeguard if faces does not get a new value within this time reset to no faces.
+*/
+let FACE_DISAPPEAR = 50;
 
 let Faces = React.createClass({
 
@@ -97,9 +99,12 @@ export default React.createClass({
     this.clearTimeout(this.facesTimer);
     this.setState({ faces: facesArray });
 
+    // Safe guard against never getting a message to zero out faces.
+    // This happens infrequently (and may be a bug somewhere in event handling
+    // or device side).
     this.facesTimer = this.setTimeout(() => {
       this.setState({ faces: [] });
-    }, FACE_DISPPEAR);
+    }, FACE_DISAPPEAR);
   },
 
   render: function() {

@@ -6,12 +6,15 @@ extension RCTViewManager  {
   This method is _not_ threadsafe and relies on aquireView to dispatch to right queue.
   */
   internal func aquireViewWithRetries(retries: Int, reactTag: NSNumber, block: (UIView?) -> Void) {
+    let queue = self.bridge.uiManager.methodQueue
     self.bridge.uiManager.addUIBlock() {
       [unowned self]
       (__unused: RCTUIManager!, viewRegistry: RCTSparseArray!) in
       let view = viewRegistry?[reactTag] as? UIView
       if retries > 0 && view == nil {
-        self.aquireViewWithRetries(retries - 1, reactTag: reactTag, block: block)
+        dispatch_async(queue) {
+          self.aquireViewWithRetries(retries - 1, reactTag: reactTag, block: block)
+        }
       } else {
         block(view)
       }

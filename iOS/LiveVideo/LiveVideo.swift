@@ -20,11 +20,17 @@ View for a AvQueuePlayer designed for "live" streaming of video (in small mp4 fi
 */
 class LiveVideo : UIView {
 
+  /**
+  Time in milliseconds between dispatching onTimeChange events.
+  */
+  static let TIME_EVENT_INTERVAL = 100
+
   var loader = SocketIOAVAssetLoaderDelegate()
   var eventDispatcher: RCTEventDispatcher!
 
   let assetLoaderQueue = dispatch_queue_create("video assets", DISPATCH_QUEUE_CONCURRENT)
   let eventQueue = dispatch_queue_create("event queue", DISPATCH_QUEUE_SERIAL)
+
 
   // Note: faces should only be interfaced with on the main thread.
   internal var faces: [Face] = []
@@ -34,6 +40,7 @@ class LiveVideo : UIView {
   private var player = AVQueuePlayer()
   private var playerLayer: AVPlayerLayer!
   private var faceTimeObservers: [AnyObject] = []
+  private var timeChangeObserver: AnyObject?
 
   var videoStream: String? {
     didSet {
@@ -172,6 +179,42 @@ class LiveVideo : UIView {
     }
   }
 
+  /**
+  Emit a time change event back to JS.
+  */
+  func sendTimeChangeEvent(item: LiveVideoItem) {
+    let currentTime = item.start + item.currentTime().milliseconds()
+
+    let eventBody: Dictionary<String, AnyObject> = [
+      "target": self.reactTag,
+      "time":  currentTime
+    ]
+
+    self.eventDispatcher.sendInputEventWithName(
+      "timeChange", body: eventBody
+    )
+  }
+
+  /**
+  Handles dispatching onTimeChange events.
+  */
+  func setupTimeObserver(player: AVPlayer) {
+    let interval = CMTimeMake(Int64(LiveVideo.TIME_EVENT_INTERVAL), 1000)
+    self.timeChangeObserver = player.addPeriodicTimeObserverForInterval(
+      interval,
+      queue: self.eventQueue
+    ) {
+      (_) in
+      let item = self.player.currentItem
+      if item == nil {
+        return
+      }
+
+      let liveItem = item as! LiveVideoItem
+      self.sendTimeChangeEvent(liveItem)
+    }
+  }
+
   func initializeSocketIO(id: String) {
     let instance = AppSocketIO.sharedInstance
     self.listener = instance.aquireListener()
@@ -207,6 +250,8 @@ class LiveVideo : UIView {
 
       }
     }
+
+    self.setupTimeObserver(self.player)
 
     self.player.observeKeyPath("currentItem") {
       (_) in

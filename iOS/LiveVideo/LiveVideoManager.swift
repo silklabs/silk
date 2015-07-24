@@ -3,7 +3,8 @@ class LiveVideoManager:  RCTViewManager {
 
   @objc override func customDirectEventTypes() -> [NSObject : AnyObject]! {
     return [
-      "faces": ["registrationName": "onFaces"]
+      "faces": ["registrationName": "onFaces"],
+      "timeChange": ["registrationName": "onTimeChange"]
     ]
   }
 

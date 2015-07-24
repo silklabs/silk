@@ -1,5 +1,12 @@
 @objc(LiveVideoManager)
 class LiveVideoManager:  RCTViewManager {
+
+  @objc override func customDirectEventTypes() -> [NSObject : AnyObject]! {
+    return [
+      "faces": ["registrationName": "onFaces"]
+    ]
+  }
+
   @objc func destroy(reactTag: NSNumber) {
     self.aquireView(reactTag) {
       view in
@@ -11,6 +18,6 @@ class LiveVideoManager:  RCTViewManager {
   }
 
   override func view() -> UIView! {
-    return LiveVideo()
+    return LiveVideo(eventDispatcher: self.bridge.eventDispatcher)
   }
 }

@@ -14,7 +14,7 @@ var {
   View,
 } = React;
 
-var Config = require('./Config')();
+var Config = require('../Libraries/Config')();
 var SocketIO = require('./SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
@@ -37,8 +37,8 @@ var MonitorsView = React.createClass({
 
   componentWillMount: function() {
     this.connectServer();
-    var DeviceManager = require('./btle/central-device-manager');
-    this.dm = new DeviceManager(require('./btle/ble-central'), this);
+    var DeviceManager = require('../btle/central-device-manager');
+    this.dm = new DeviceManager(require('../btle/ble-central'), this);
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
     this.getWifiPromise = null;
@@ -132,7 +132,7 @@ var MonitorsView = React.createClass({
                                         secret: this.state.network.secret,
                                         serverUrl: this.state.serverUrl });
       }
-      var net = require('./net');
+      var net = require('../Libraries/Net');
       return net.getInfo().then(info => {
         return this.navigateWifiScene({ ssid: info.SSID,
                                         secret: '',

@@ -29,9 +29,7 @@ class OverlayModal : RCTView {
   var orientation = "landscape"
 
   required init(coder aDecoder: NSCoder) {
-    // This initializer is required but we never need it...
-    let e = NSException(name: "Not implemented", reason: "This object cannot except coder initializer", userInfo: nil)
-    NSException.raise("Exception", format:"Error: %@", arguments: getVaList([e]))
+    NOT_IMPLEMENTED()
     super.init(coder: aDecoder)
   }
 

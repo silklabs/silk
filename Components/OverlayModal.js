@@ -1,5 +1,5 @@
 import React from 'react-native';
-import Dimensions from 'Dimensions'
+import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 
 // There are two parts to the native wrapper:
 // 1.Public interface exposed for method calls:
@@ -110,22 +110,9 @@ export default React.createClass({
       flex: 1,
     };
 
-    let deviceWidth = Dimensions.get('window').width
-    let deviceHeight = Dimensions.get('window').height
-
-    // Because the overlay modal is not an actual subview of the react root view
-    // we must manually assign a height and width. For now we always render in
-    // landscape so figure out what that means in height/width regardless of
-    // the current orientation of the device.
-    if (deviceWidth > deviceHeight) {
-      // currently in landscape:
-      style.height = deviceHeight;
-      style.width = deviceWidth;
-    } else {
-      // currently in portrait (flip the values):
-      style.width = deviceHeight;
-      style.height = deviceWidth;
-    }
+    let dimensions = getLandscapeDimensions();
+    style.height = dimensions.height;
+    style.width = dimensions.width ;
 
     return (
       <OverlayModal

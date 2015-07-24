@@ -565,7 +565,10 @@ void gatt_server_service_started_callback(int status, int server_if,
  */
 void gatt_server_service_stopped_callback(int status, int server_if,
     int srvc_handle) {
-  ALOGE("gatt_server_service_stopped_callback");
+  ALOGV("gatt_server_service_stopped_callback: status=%d server_if=%d "
+      "srvc_handle=%d", status, server_if, srvc_handle);
+
+  bledroid.sendEvent("!servicesStop %d", status);
 }
 
 /**
@@ -573,7 +576,10 @@ void gatt_server_service_stopped_callback(int status, int server_if,
  */
 void gatt_server_service_deleted_callback(int status, int server_if,
     int srvc_handle) {
-  ALOGE("gatt_server_service_deleted_callback");
+  ALOGV("gatt_server_service_deleted_callback: status=%d server_if=%d "
+      "srvc_handle=%d", status, server_if, srvc_handle);
+
+  bledroid.sendEvent("!servicesDelete %d", status);
 }
 
 /**
@@ -919,6 +925,18 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     err = gatt->server->start_service(gatt_server_if, atoi(serviceHandleStr),
         GATT_TRANSPORT_LE);
     LOG_ERROR(err, "gatt start_service failed: %d", err);
+  } else if (0 == strcmp(cmd, "stopService")) {
+    char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
+    LOG_ERROR((serviceHandleStr == NULL), "Malformed stopService");
+
+    err = gatt->server->stop_service(gatt_server_if, atoi(serviceHandleStr));
+    LOG_ERROR(err, "gatt stop_service failed: %d", err);
+  } else if (0 == strcmp(cmd, "deleteService")) {
+    char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
+    LOG_ERROR((serviceHandleStr == NULL), "Malformed deleteService");
+
+    err = gatt->server->delete_service(gatt_server_if, atoi(serviceHandleStr));
+    LOG_ERROR(err, "gatt delete_service failed: %d", err);
   } else if (0 == strcmp(cmd, "sendAttributeResponse")) {
     int attr_handle;
     int conn_id;

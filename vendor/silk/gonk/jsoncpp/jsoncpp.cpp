@@ -2523,11 +2523,11 @@ LogicError::LogicError(std::string const& msg)
 {}
 void throwRuntimeError(std::string const& msg)
 {
-  throw RuntimeError(msg);
+//  throw RuntimeError(msg);
 }
 void throwLogicError(std::string const& msg)
 {
-  throw LogicError(msg);
+//  throw LogicError(msg);
 }
 
 // //////////////////////////////////////////////////////////////////

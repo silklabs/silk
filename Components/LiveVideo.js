@@ -11,7 +11,16 @@ const RCT_NATIVE_REF = 'livevideo';
 
 export default React.createClass({
   propTypes: {
-    onFaces: React.PropTypes.func
+    /**
+    Invoked when face(s) appear in the video.
+    */
+    onFaces: React.PropTypes.func,
+
+    /**
+    Invoked every N milliseconds with current time in playback.
+    Time is a UTC value not relative time in playback.
+    */
+    onTimeChange: React.PropTypes.func
   },
 
   getNativeHandle() {

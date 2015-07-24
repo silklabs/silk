@@ -53,9 +53,9 @@ public:
   SensorsCommand(SensorsListener* sensorsListener) :
       FrameworkCommand(SENSORS_COMMAND_NAME),
       mSensorsListener(sensorsListener),
-      mDevice(nullptr),
-      mModule(nullptr),
-      mSensorsList(nullptr),
+      mDevice(NULL),
+      mModule(NULL),
+      mSensorsList(NULL),
       mSensorListCount(0) {
   }
 
@@ -198,12 +198,12 @@ int SensorsCommand::sensors_cleanup() {
     ALOGE("sensors_close() failed (%s)", strerror(-err));
     return 1;
   }
-  mDevice = nullptr;
+  mDevice = NULL;
 
   // Close hardware module
   free(mModule);
-  mModule = nullptr;
-  mSensorsList = nullptr;
+  mModule = NULL;
+  mSensorsList = NULL;
 
   return 0;
 }

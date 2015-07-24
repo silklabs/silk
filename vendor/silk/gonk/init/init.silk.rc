@@ -33,3 +33,10 @@ service silk-sensors /system/bin/silk-sensors
     user root
     group root
     socket sensors stream 0600 root root
+
+service capture /system/bin/capture
+    class main
+    user graphics
+    group camera
+    socket capturectl stream 0600 root root
+    socket captured stream 0600 root root

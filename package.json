@@ -9,6 +9,7 @@
     "art": "^0.10.0",
     "buffer": "^3.2.2",
     "events": "^1.0.2",
+    "moment": "^2.10.3",
     "react-native": "^0.8.0-rc.2",
     "react-timer-mixin": "^0.13.2",
     "util": "0.10.3"

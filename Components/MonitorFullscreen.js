@@ -10,6 +10,7 @@ import OverlayModal from './OverlayModal'
 import Rectangle from './Rectangle';
 import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 import TimerMixin from 'react-timer-mixin';
+import moment from 'moment';
 
 let {
   Image,
@@ -75,7 +76,8 @@ export default React.createClass({
 
   getInitialState() {
     return {
-      faces: []
+      faces: [],
+      time: null
     }
   },
 
@@ -107,6 +109,11 @@ export default React.createClass({
     }, FACE_DISAPPEAR);
   },
 
+  onTimeChange(event) {
+    let time = event.nativeEvent.time;
+    this.setState({ time: time });
+  },
+
   render: function() {
     var videoStream = this.props.vid;
     let { width, height } = getLandscapeDimensions();
@@ -114,8 +121,26 @@ export default React.createClass({
     let faces;
     if (this.state.faces.length) {
       faces = <Faces faces={this.state.faces} />
-    } else {
-      faces = <View />
+    }
+
+    let currentTime;
+    let lag;
+    if (this.state.time) {
+      let format = moment(new Date(this.state.time)).format(
+        'h:mm:ss a'
+      );
+
+      currentTime = (
+        <Text style={styles.timeOverlay}>
+          {format}
+        </Text>
+      );
+
+      lag = (
+        <Text style={styles.lagOverlay}>
+          {Date.now() - this.state.time}
+        </Text>
+      );
     }
 
     return (
@@ -126,9 +151,15 @@ export default React.createClass({
 
         <TouchableWithoutFeedback onPress={this.close}>
           <View style={[styles.container]}>
-            <LiveVideo style={styles.video} onFaces={this.onFaces} videoStream={videoStream} ref='video'>
-            </LiveVideo>
-            <View style={styles.videoOverlay}>
+            <LiveVideo
+              onFaces={this.onFaces}
+              onTimeChange={this.onTimeChange}
+              style={styles.video}
+              videoStream={videoStream}
+              ref='video' />
+            <View style={[styles.videoOverlay, { width, height }]}>
+              {currentTime}
+              {lag}
               {faces}
             </View>
           </View>
@@ -165,10 +196,26 @@ var styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
+  timeOverlay: {
+    fontFamily: 'AppleSDGothicNeo-SemiBold',
+    color: 'white',
+    opacity: 0.3,
+    position: 'absolute',
+    top: 10,
+    left: 10
+  },
+
+  lagOverlay: {
+    fontFamily: 'AppleSDGothicNeo-SemiBold',
+    color: 'red',
+    opacity: 0.3,
+    position: 'absolute',
+    bottom: 10,
+    right: 10
+  },
+
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'black'
   }
 });

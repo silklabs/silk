@@ -35,13 +35,8 @@ class PreviewImage : UIImageView {
   }
 
   func renderImage(data: NSData, faces: Faces?) {
-    dispatch_async(self.queue) {
-      let image = UIImage(data: data)!
-      dispatch_sync(dispatch_get_main_queue()) {
-        // TODO: render me...
-        self.image = self.drawImage(image, faces: faces)
-      }
-    }
+    let image = UIImage(data: data)!
+    self.image = self.drawImage(image, faces: faces)
   }
 
   func drawImage(image: UIImage, faces: Faces?) -> UIImage {

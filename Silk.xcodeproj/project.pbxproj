@@ -33,6 +33,13 @@
 		5758F2601B600AF500C18E5D /* PreviewImageManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5758F25F1B600AF500C18E5D /* PreviewImageManager.m */; };
 		5758F2621B600B0200C18E5D /* PreivewImageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2611B600B0200C18E5D /* PreivewImageManager.swift */; };
 		5758F2641B600B2000C18E5D /* PreviewImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2631B600B2000C18E5D /* PreviewImage.swift */; };
+		5758F3351B609C2000C18E5D /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5758F3321B60989C00C18E5D /* libART.a */; };
+		5758F3361B609C4300C18E5D /* libRCTNetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302DC1ABCB9D200DB3ED1 /* libRCTNetwork.a */; };
+		5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302AC1ABCB8CE00DB3ED1 /* libRCTActionSheet.a */; };
+		5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302BA1ABCB90400DB3ED1 /* libRCTGeolocation.a */; };
+		5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302E41ABCB9EE00DB3ED1 /* libRCTVibration.a */; };
+		5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */; };
+		5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33E1B61681300C18E5D /* NotImplemented.swift */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
 		57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */; };
 		57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */; };
@@ -192,6 +199,20 @@
 			remoteGlobalIDString = 832C817F1AAF6DEF007FA2F7;
 			remoteInfo = RCTVibration;
 		};
+		5758F3311B60989C00C18E5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5758F32D1B60989C00C18E5D /* ART.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0CF68AC11AF0540F00FF9E5C;
+			remoteInfo = ART;
+		};
+		5758F3331B6098AA00C18E5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5758F32D1B60989C00C18E5D /* ART.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 0CF68AC01AF0540F00FF9E5C;
+			remoteInfo = ART;
+		};
 		78C398B81ACF4ADC00677621 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */;
@@ -241,6 +262,9 @@
 		5758F25F1B600AF500C18E5D /* PreviewImageManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PreviewImageManager.m; path = PreviewImage/PreviewImageManager.m; sourceTree = "<group>"; };
 		5758F2611B600B0200C18E5D /* PreivewImageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PreivewImageManager.swift; path = PreviewImage/PreivewImageManager.swift; sourceTree = "<group>"; };
 		5758F2631B600B2000C18E5D /* PreviewImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PreviewImage.swift; path = PreviewImage/PreviewImage.swift; sourceTree = "<group>"; };
+		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
+		5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CMTimeExtensions.swift; sourceTree = "<group>"; };
+		5758F33E1B61681300C18E5D /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LiveVideoManager.m; sourceTree = "<group>"; };
@@ -294,6 +318,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */,
+				5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */,
+				5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */,
+				5758F3361B609C4300C18E5D /* libRCTNetwork.a in Frameworks */,
+				5758F3351B609C2000C18E5D /* libART.a in Frameworks */,
 				5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */,
 				5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */,
 				5758F17D1B5DD52800C18E5D /* libRCTSettings.a in Frameworks */,
@@ -381,6 +410,7 @@
 		13B07FAE1A68108700A75B9A /* Silk */ = {
 			isa = PBXGroup;
 			children = (
+				5758F32D1B60989C00C18E5D /* ART.xcodeproj */,
 				57AC68811B4F0CE6009B70A3 /* iOS */,
 				573C20C51B4EF5C900C40871 /* PropertyObserver */,
 				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
@@ -449,6 +479,14 @@
 			name = PreviewImage;
 			sourceTree = "<group>";
 		};
+		5758F32E1B60989C00C18E5D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5758F3321B60989C00C18E5D /* libART.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -463,6 +501,8 @@
 				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
 				5741E0EB1B5A206F00F9376C /* ViewController.swift */,
 				5758F23A1B5EFE7600C18E5D /* Sync.swift */,
+				5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */,
+				5758F33E1B61681300C18E5D /* NotImplemented.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -613,6 +653,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				5758F3341B6098AA00C18E5D /* PBXTargetDependency */,
 				5758F1611B5DD40D00C18E5D /* PBXTargetDependency */,
 				5758F1631B5DD40D00C18E5D /* PBXTargetDependency */,
 				5758F1651B5DD40D00C18E5D /* PBXTargetDependency */,
@@ -659,6 +700,10 @@
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 5758F32E1B60989C00C18E5D /* Products */;
+					ProjectRef = 5758F32D1B60989C00C18E5D /* ART.xcodeproj */;
+				},
 				{
 					ProductGroup = 00C302A81ABCB8CE00DB3ED1 /* Products */;
 					ProjectRef = 00C302A71ABCB8CE00DB3ED1 /* RCTActionSheet.xcodeproj */;
@@ -765,6 +810,13 @@
 			remoteRef = 146834031AC3E56700842450 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		5758F3321B60989C00C18E5D /* libART.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libART.a;
+			remoteRef = 5758F3311B60989C00C18E5D /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		78C398B91ACF4ADC00677621 /* libRCTLinking.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -855,6 +907,7 @@
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
 				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
 				F9107F281B58DA8D00F02BF4 /* SocketIOClient.swift in Sources */,
+				5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */,
 				5758F23D1B5F4A0100C18E5D /* ReactSocketIO.m in Sources */,
 				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
 				F9107F251B58DA8D00F02BF4 /* SocketEngineClient.swift in Sources */,
@@ -863,6 +916,7 @@
 				F9107F241B58DA8D00F02BF4 /* SocketEngine.swift in Sources */,
 				F9107F2D1B58DA8D00F02BF4 /* SwiftRegex.swift in Sources */,
 				5758F2641B600B2000C18E5D /* PreviewImage.swift in Sources */,
+				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */,
@@ -944,6 +998,11 @@
 			isa = PBXTargetDependency;
 			name = RCTVibration;
 			targetProxy = 5758F16E1B5DD40D00C18E5D /* PBXContainerItemProxy */;
+		};
+		5758F3341B6098AA00C18E5D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ART;
+			targetProxy = 5758F3331B6098AA00C18E5D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

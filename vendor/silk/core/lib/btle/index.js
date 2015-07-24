@@ -3,23 +3,25 @@
 
 'use strict';
 
+let log = require('../log')('btle');
+
 module.exports = {
   init: () => {
     return new Promise(resolve => {
-      console.log('BTLE initializing');
+      log.info('BTLE initializing');
       let bleno = require('bleno');
       bleno.on('stateChange', state => {
         if (state !== 'poweredOn') {
-          console.warn('Ignoring BT stateChange to ', state);
+          log.warn(`Ignoring BT stateChange to ${state}`);
           return;
         }
-        console.log(`BTLE: ${state}`);
+        log.info(`BTLE: ${state}`);
 
         module.exports.configService = require('./config-service');
         //module.exports.ibeacon = require('./ibeacon.js');
         //module.exports.scanner = require('./scanner.js');
 
-        console.log('BTLE initialization complete');
+        log.info('BTLE initialization complete');
         resolve();
       });
 

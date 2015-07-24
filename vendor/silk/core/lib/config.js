@@ -19,6 +19,7 @@ class DeviceConfig extends events.EventEmitter {
 
   _runConfigService(id) {
     return new Promise((resolve, reject) => {
+      log.info('Launching config service ...');
       const STATE = api.btleConfigService.state;
       let configService = btle.configService();
       let updateRssiInterval = null;
@@ -26,25 +27,28 @@ class DeviceConfig extends events.EventEmitter {
       let bleno = btle.bleno;
 
       bleno.setServices([configService]);
-      bleno.on('servicesSet', errServicesSet => {
+      let servicesSetListener = errServicesSet => {
         if (errServicesSet) {
           throw new Error(errServicesSet);
         }
-        log.info(`Started BTLE config service for device ${id}`);
+        log.info(`Started config service for device ${id}`);
 
         // TODO: get name from build config
         bleno.startAdvertising('Silkcam', [configService.uuid],
                                err => err && log.warn('Error: ' + err));
-        bleno.on('advertisingStart', err => {
-          if (err) {
-            return reject(`runConfigService: ${err}`);
-          }
-          log.info('Started BTLE advertising');
-        });
-      });
+      };
+      bleno.once('servicesSet', servicesSetListener);
 
-      bleno.on('accept', clientAddr => {
-        log.info('Accepted GATT connection from', clientAddr);
+      let advertisingStartListener = err => {
+        if (err) {
+          return reject(`runConfigService: ${err}`);
+        }
+        log.info('Started advertising');
+      };
+      bleno.once('advertisingStart', advertisingStartListener);
+
+      let acceptListener = clientAddr => {
+        log.info('Accepted connection from', clientAddr);
         // TODO: how do we associate the RSSI with a particular
         // connected central?
         let updateRssi = () => {
@@ -59,24 +63,33 @@ class DeviceConfig extends events.EventEmitter {
           clearInterval(updateRssiInterval);
         }
         updateRssiInterval = setInterval(updateRssi, 500);
-      });
+      };
+      bleno.on('accept', acceptListener);
 
-      bleno.on('disconnect', clientAddr => {
+      let disconnectListener = clientAddr => {
         log.info('GATT client', clientAddr, 'disconnected');
         if (updateRssiInterval) {
           clearInterval(updateRssiInterval);
         }
-      });
+      };
+      bleno.on('disconnect', disconnectListener);
 
-      configService.on('stateChange', state => {
+      let stateChangeListener = state => {
         log.info('Device configuration state is now', state);
         if (state !== STATE.REGISTERED) {
           return;
         }
 
+        configService.removeListener('stateChange', stateChangeListener);
+        bleno.removeListener('servicesSet', servicesSetListener);
+        bleno.removeListener('advertisingStart', advertisingStartListener);
+        bleno.removeListener('accept', acceptListener);
+        bleno.removeListener('disconnect', disconnectListener);
+
         clearInterval(updateRssiInterval);
         bleno.stopAdvertising(() => {
-          log.info('Stopped GAP advertising.');
+          log.info('Stopped advertising.');
+          bleno.setServices();
         });
 
         wifi.forgetNetwork()
@@ -87,39 +100,49 @@ class DeviceConfig extends events.EventEmitter {
         .then(() => {
           log.info(`Successfully joined the network: ${configService.ap}`);
           // TODO: It might be better to block here until the device successfully
-          //       contacts the server for the first time.
+          //       contacts the server for the first time to confirm a valid
+          //       SSID/PSK was provided.
           resolve();
         })
         .catch(e => util.processthrow(e));
 
-      });
-
+      };
+      configService.on('stateChange', stateChangeListener);
     });
   }
 
-  isConfigured() {
+  _isConfigured() {
     return wifi.networkConfigured();
   }
 
+  init() {
+    return this._isConfigured()
+      .then(() => this.emit('configured'))
+      .catch(() => this.emit('unconfigured'));
+  }
+
   unconfigure() {
-    wifi.forgetNetwork()
+    return this._isConfigured()
     .then(() => {
-      this.emit('unconfigured');
+      return wifi.forgetNetwork().then(() => {
+        return this.emit('unconfigured');
+      });
+    }, () => {
+      log.info('Device already unconfigured');
     });
   }
 
   configure(id) {
-    this.isConfigured()
-    .catch(() => {
-      this.emit('unconfigured');
-      log.info('Device not configured, launching BTLE config service ...');
-      if (!caps.has('btle-peripheral')) {
-        log.warn('Device cannot do BTLE peripheral mode, skipping config service. You must configure wifi manually.');
-        return Promise.resolve();
-      }
-      return this._runConfigService(id);
-    })
-    .then(() => {
+    let p;
+
+    if (!caps.has('btle-peripheral')) {
+      log.warn('Peripheral mode not supported, configure wifi manually');
+      p = Promise.resolve();
+    } else {
+      p = this._runConfigService(id);
+    }
+
+    return p.then(() => {
       this.emit('configured');
     });
   }

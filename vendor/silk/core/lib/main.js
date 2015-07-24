@@ -22,7 +22,7 @@ const name = (util.getprop('persist.silk.displayName') || 'Silkcam');
 // Initialization Promise...
 new Promise(resolve => {
   log.info('Wait for boot complete');
-  ui('bootanimation');
+  ui.goto('bootanimation');
   let _waitForBoot = function() {
     if ('1' === util.getprop('sys.boot_completed')) {
       resolve();
@@ -39,31 +39,62 @@ new Promise(resolve => {
 })
 .then(() => {
   log.info('Load configuration');
-  return config.configure(id);
+  return config.init();
 })
 .catch(e => {
   util.processthrow(`Fatal initialization error: ${e}`);
 });
 
 
+//
 // State observers
+//
 config.on('unconfigured', () => {
-  ui('setup');
-  offline();
+  if (ui.goto('setup')) {
+    offline();
+    config.configure(id).catch(e => util.processthrow(e));
+  }
 });
 config.on('configured', () => {
-  ui('connecting');
-  wifi.online()
-  .then(online)
-  .catch(e => util.processthrow(e));
-});
-ntp.on('time', emitDeviceInfo);
-update.on('apply', () => {
-  // An OTA update is being applied
-  ui('powerdown');
-  offline();
+  if (ui.goto('connecting')) {
+    wifi.online()
+    .then(online)
+    .catch(e => util.processthrow(e));
+  }
 });
 
+ntp.on('time', emitDeviceInfo);
+
+update.on('apply', () => {
+  // An OTA update is being applied
+  if (ui.goto('powerdown')) {
+    offline();
+  }
+});
+
+ui.on('key:setup', () => {
+  config.unconfigure()
+  .catch(e => util.processthrow(e));
+});
+
+ui.on('key:powerdown', () => {
+  if (ui.goto('powerdown')) {
+    offline();
+    util.setprop('sys.powerctl', 'shutdown');
+  }
+});
+
+ui.on('key:factoryreset', () => {
+  if (ui.goto('powerdown')) {
+    log.warn('!! Factory reset !!');
+    util.exec('librecovery_test', ['factoryReset'])
+    .catch(err => {
+      log.warn(`Factory reset failed: ${err}`);
+      // Ouch, now what? Reboot I guess.
+      util.setprop('sys.powerctl', 'reboot');
+    });
+  }
+});
 
 let socket;
 
@@ -74,28 +105,38 @@ function emitDeviceInfo() {
 }
 
 function online() {
-  update.start();
 
   log.info(`Device ${id} connecting to server ${api.config.server_url} ...`);
   socket = require('socket.io-client')(api.config.server_url);
 
   let camera = require('./camera')(id.toString());
   socket.on('connect', () => {
-    ui('online');
-    crashreport.start(socket);
-    emitDeviceInfo();
+    ui.goto('online');
     camera.start(socket);
+    crashreport.start(socket);
+    update.start();
+    emitDeviceInfo();
   });
   socket.on('disconnect', e => {
-    log.error(`socket disconnect: ${e}`);
-    ui('connecting');
-    camera.stop();
+    log.warn(`socket disconnect: ${e}`);
+    update.stop();
     crashreport.stop();
+    camera.stop();
 
-    // When the server disconnects, the socket.io retry logic doesn't kick in so
-    // manually attempt a server reconnect
-    if (e === 'io server disconnect') {
+    switch (e) {
+    case 'io client disconnect':
+      // Device initiated disconnect via offline()
+      break;
+
+    case 'io server disconnect':
+      // When the server disconnects, the socket.io retry logic doesn't kick in
+      // so manually attempt a server reconnect
       socket.connect();
+      // falls through
+
+    default:
+      ui.goto('connecting');
+      break;
     }
   });
   socket.on('cmd', cmd => {
@@ -133,7 +174,6 @@ function offline() {
     socket.disconnect();
     socket = null;
   }
-  update.stop();
 }
 
 

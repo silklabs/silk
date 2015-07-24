@@ -4,8 +4,12 @@
 'use strict';
 
 import React from 'react-native'
+import ReactART from 'ReactNativeART';
 import LiveVideo from './LiveVideo'
 import OverlayModal from './OverlayModal'
+import Rectangle from './Rectangle';
+import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
+import TimerMixin from 'react-timer-mixin';
 
 let {
   Image,
@@ -16,7 +20,63 @@ let {
   View,
 } = React;
 
+let {
+  Surface,
+  Group
+} = ReactART;
+
+// Paint faces at 10 frames per second.
+let FACE_DISPPEAR = 1000 / 10;
+
+let Faces = React.createClass({
+
+  faceGroup(idx, face, ratio) {
+    let x = Math.ceil(face.x * ratio);
+    let y = Math.ceil(face.y * ratio);
+    let width = Math.ceil(face.width * ratio);
+    let height = Math.ceil(face.height * ratio);
+    return (
+      <Group x={x} y={y} key={idx}>
+        <Rectangle
+          stroke="#ADD8E6"
+          height={height}
+          width={width} />
+      </Group>
+    )
+  },
+
+  render() {
+    let firstFace = this.props.faces[0];
+    let { width: deviceWidth, height: deviceHeight } = getLandscapeDimensions();
+
+    // We need to scale the dimensions correctly to the scale of the device.
+    let xRatio = deviceWidth / firstFace.fieldWidth;
+    let yRatio = deviceHeight / firstFace.fieldHeight;
+
+    let ratio = Math.min(xRatio, yRatio);
+    let faces = this.props.faces.map((face, idx) => {
+      return this.faceGroup(idx, face, ratio);
+    });
+
+    return (
+      <Surface
+        width={deviceWidth}
+        height={deviceHeight}>
+        {faces}
+      </Surface>
+    );
+  }
+});
+
 export default React.createClass({
+  mixins: [TimerMixin],
+
+  getInitialState() {
+    return {
+      faces: []
+    }
+  },
+
   getInitialProps() {
     return {
       presented: false,
@@ -32,23 +92,44 @@ export default React.createClass({
     StatusBarIOS.setHidden(false, 'slide');
   },
 
+  onFaces(event) {
+    let facesArray = event.nativeEvent.faces.faces;
+    this.clearTimeout(this.facesTimer);
+    this.setState({ faces: facesArray });
+
+    this.facesTimer = this.setTimeout(() => {
+      this.setState({ faces: [] });
+    }, FACE_DISPPEAR);
+  },
+
   render: function() {
     var videoStream = this.props.vid;
+    let { width, height } = getLandscapeDimensions();
+
+    let faces;
+    if (this.state.faces.length) {
+      faces = <Faces faces={this.state.faces} />
+    } else {
+      faces = <View />
+    }
 
     return (
-      <View style={styles.container}>
-        <OverlayModal ref="overlay"
-                      onShowStart={this.onShowStart}
-                      onDismissEnd={this.onDismissEnd}
-                      style={styles.container}
-                      presented={this.props.presented}>
+      <OverlayModal ref="overlay"
+                    onShowStart={this.onShowStart}
+                    onDismissEnd={this.onDismissEnd}
+                    presented={this.props.presented}>
 
-          <TouchableWithoutFeedback onPress={this.close}>
-            <LiveVideo videoStream={videoStream} ref='video' />
-          </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={this.close}>
+          <View style={[styles.container]}>
+            <LiveVideo style={styles.video} onFaces={this.onFaces} videoStream={videoStream} ref='video'>
+            </LiveVideo>
+            <View style={styles.videoOverlay}>
+              {faces}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
 
-        </OverlayModal>
-      </View>
+      </OverlayModal>
     )
   },
 
@@ -67,9 +148,22 @@ export default React.createClass({
 });
 
 var styles = StyleSheet.create({
+  video: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+
+  videoOverlay: {
+    backgroundColor: 'transparent',
+  },
+
   container: {
     flex: 1,
-    alignItems: 'stretch',
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'black'
-  },
+  }
 });

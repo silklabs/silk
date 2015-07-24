@@ -6,6 +6,7 @@
 let util = require('./util');
 let ntpClient = require('ntp-client');
 let EventEmitter = require('events').EventEmitter;
+let wifi = require('./wifi');
 let log = require('./log')('ntp');
 let emitter = new EventEmitter();
 
@@ -46,7 +47,6 @@ function setSystemDate(date) {
 }
 
 function getNetworkTime() {
-  log.info('Retrieving NTP time');
 
   function ntpCallback(err, date) {
     if (err) {
@@ -58,9 +58,12 @@ function getNetworkTime() {
     }
   }
 
-  // TODO: This is currently using the default NTP time server, make the server
-  // to use configurable?
-  ntpClient.getNetworkTime(undefined, undefined, ntpCallback);
+  // TODO: This is currently using the default NTP time server.
+  //       Make the server to use configurable?
+  wifi.online().then(() => {
+    log.info('Retrieving NTP time');
+    ntpClient.getNetworkTime(undefined, undefined, ntpCallback);
+  });
 }
 
 getNetworkTime();

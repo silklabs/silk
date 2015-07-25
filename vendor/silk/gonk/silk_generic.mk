@@ -17,6 +17,7 @@ SILK_PROGIES := \
   bledroid \
   capture \
   dhcputil \
+  lights \
   player \
   volume \
   wpad \

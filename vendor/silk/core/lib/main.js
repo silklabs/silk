@@ -19,7 +19,10 @@ let config = require('./config');
 const id = api.id.create();
 const name = (util.getprop('persist.silk.displayName') || 'Silkcam');
 
-// Initialization Promise...
+//
+// Initialization...
+//
+let bootCompleted = false;
 new Promise(resolve => {
   log.info('Wait for boot complete');
   ui.goto('bootanimation');
@@ -41,6 +44,9 @@ new Promise(resolve => {
   log.info('Load configuration');
   return config.init();
 })
+.then(() => {
+  bootCompleted = true;
+})
 .catch(e => {
   util.processthrow(`Fatal initialization error: ${e}`);
 });
@@ -49,67 +55,26 @@ new Promise(resolve => {
 //
 // State observers
 //
-config.on('unconfigured', () => {
-  if (ui.goto('setup')) {
-    offline();
-    config.configure(id).catch(e => util.processthrow(e));
-  }
-});
-config.on('configured', () => {
-  if (ui.goto('connecting')) {
-    wifi.online()
-    .then(online)
-    .catch(e => util.processthrow(e));
-  }
-});
 
-ntp.on('time', emitDeviceInfo);
-
-update.on('apply', () => {
-  // An OTA update is being applied
-  if (ui.goto('powerdown')) {
-    offline();
-  }
-});
-
-ui.on('key:setup', () => {
-  config.unconfigure()
-  .catch(e => util.processthrow(e));
-});
-
-ui.on('key:powerdown', () => {
-  if (ui.goto('powerdown')) {
-    offline();
-    util.setprop('sys.powerctl', 'shutdown');
-  }
-});
-
-ui.on('key:factoryreset', () => {
-  if (ui.goto('powerdown')) {
-    log.warn('!! Factory reset !!');
-    util.exec('librecovery_test', ['factoryReset'])
-    .catch(err => {
-      log.warn(`Factory reset failed: ${err}`);
-      // Ouch, now what? Reboot I guess.
-      util.setprop('sys.powerctl', 'reboot');
-    });
-  }
-});
-
-let socket;
+let socket = { __iamastub: true, connected: false, disconnect: () => {} };
+let camera;
 
 function emitDeviceInfo() {
-  if (socket && socket.connected) {
+  if (socket.connected) {
     socket.emit('info', { id: id.toString(), name: name, now: Date.now()} );
   }
 }
+ntp.on('time', emitDeviceInfo);
 
-function online() {
+function maybeCreateSocket() {
+  if (!socket.__iamastub) {
+    return;
+  }
 
-  log.info(`Device ${id} connecting to server ${api.config.server_url} ...`);
-  socket = require('socket.io-client')(api.config.server_url);
+  socket = require('socket.io-client')(api.config.server_url,
+                                       {autoConnect: false});
+  camera = require('./camera')(id.toString());
 
-  let camera = require('./camera')(id.toString());
   socket.on('connect', () => {
     ui.goto('online');
     camera.start(socket);
@@ -125,7 +90,7 @@ function online() {
 
     switch (e) {
     case 'io client disconnect':
-      // Device initiated disconnect via offline()
+      // Device initiated disconnect
       break;
 
     case 'io server disconnect':
@@ -169,15 +134,66 @@ function online() {
   socket.on('reconnecting', e => log.warn(`socket reconnecting: ${e}`));
 }
 
-function offline() {
-  if (socket) {
+
+// Config service...
+config.on('unconfigured', () => {
+  if (ui.goto('setup')) {
     socket.disconnect();
-    socket = null;
+    config.configure(id)
+    .catch(e => util.processthrow(e));
   }
-}
+});
+config.on('configured', () => {
+  if (ui.goto('connecting')) {
+
+    maybeCreateSocket();
+
+    wifi.online()
+    .then(() => {
+      log.info(`Device ${id} connecting to server ${api.config.server_url} ...`);
+      socket.connect();
+    })
+    .catch(e => util.processthrow(e));
+  }
+});
+
+// Update service...
+update.on('apply', () => {
+  // An OTA update is being applied
+  if (ui.goto('powerdown')) {
+    socket.disconnect();
+  }
+});
 
 
-// Force the garbage collector to run regularly to keep heap usage under a tight
+// UI...
+ui.on('key:setup', () => {
+  if (bootCompleted) {
+    config.unconfigure()
+    .catch(e => util.processthrow(e));
+  }
+});
+ui.on('key:powerdown', () => {
+  if (ui.goto('powerdown')) {
+    socket.disconnect();
+    util.setprop('sys.powerctl', 'shutdown');
+  }
+});
+ui.on('key:factoryreset', () => {
+  if (ui.goto('powerdown')) {
+    log.warn('!! Factory reset !!');
+    util.exec('librecovery_test', ['factoryReset'])
+    .catch(err => {
+      log.warn(`Factory reset failed: ${err}`);
+      // Ouch, now what? Reboot I guess.
+      util.setprop('sys.powerctl', 'reboot');
+    });
+  }
+});
+
+
+
+// Force the garbage collector to run regularly to keep the heap on a tight
 // leash
 //
 // Note that the values used within this function have been selected based on

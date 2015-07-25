@@ -49,7 +49,6 @@
         2
       ],
       "no-underscore-dangle": 0,
-      "no-use-before-define": "nofunc",
       "quotes": [
         2,
         "single",

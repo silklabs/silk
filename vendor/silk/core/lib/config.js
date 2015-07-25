@@ -6,7 +6,6 @@
 let api = require('silk-api');
 let events = require('events');
 let btle = require('./btle');
-let caps = require('./caps');
 let log = require('./log')('config');
 let wifi = require('./wifi');
 let util = require('./util');
@@ -27,7 +26,7 @@ class DeviceConfig extends events.EventEmitter {
       let bleno = btle.bleno;
 
       bleno.setServices([configService]);
-      let servicesSetListener = errServicesSet => {
+      bleno.once('servicesSet', errServicesSet => {
         if (errServicesSet) {
           throw new Error(errServicesSet);
         }
@@ -36,8 +35,7 @@ class DeviceConfig extends events.EventEmitter {
         // TODO: get name from build config
         bleno.startAdvertising('Silkcam', [configService.uuid],
                                err => err && log.warn('Error: ' + err));
-      };
-      bleno.once('servicesSet', servicesSetListener);
+      });
 
       let advertisingStartListener = err => {
         if (err) {
@@ -81,14 +79,19 @@ class DeviceConfig extends events.EventEmitter {
         }
 
         configService.removeListener('stateChange', stateChangeListener);
-        bleno.removeListener('servicesSet', servicesSetListener);
         bleno.removeListener('advertisingStart', advertisingStartListener);
         bleno.removeListener('accept', acceptListener);
         bleno.removeListener('disconnect', disconnectListener);
 
         clearInterval(updateRssiInterval);
         bleno.stopAdvertising(() => {
-          log.info('Stopped advertising.');
+          log.info('Stopped advertising');
+          bleno.once('servicesSet', errServicesSet => {
+            if (errServicesSet) {
+              throw new Error(errServicesSet);
+            }
+            log.info(`Stopped config service`);
+          });
           bleno.setServices();
         });
 
@@ -122,8 +125,7 @@ class DeviceConfig extends events.EventEmitter {
   }
 
   unconfigure() {
-    return this._isConfigured()
-    .then(() => {
+    return this._isConfigured().then(() => {
       return wifi.forgetNetwork().then(() => {
         return this.emit('unconfigured');
       });
@@ -133,16 +135,7 @@ class DeviceConfig extends events.EventEmitter {
   }
 
   configure(id) {
-    let p;
-
-    if (!caps.has('btle-peripheral')) {
-      log.warn('Peripheral mode not supported, configure wifi manually');
-      p = Promise.resolve();
-    } else {
-      p = this._runConfigService(id);
-    }
-
-    return p.then(() => {
+    return this._runConfigService(id).then(() => {
       this.emit('configured');
     });
   }

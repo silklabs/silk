@@ -3,9 +3,10 @@
 
 'use strict';
 
-let crypto = require('crypto');
-let request = require('request');
-let api = require('../../api');
+import crypto from 'crypto';
+import request from 'request';
+import api from '../../api';
+import createServer from '../../lib/server';
 
 let PORT = 8888;
 export const serverUrl = 'http://localhost:' + PORT;
@@ -82,13 +83,11 @@ export function createDevice() {
   });
 }
 
-export function setup(test) {
-  return new Promise((resolve, reject) => { //eslint-disable-line no-unused-vars
-    test.http = require('../../lib/server')(PORT, resolve());
-  });
+export async function setup() {
+  let server = await createServer(PORT).then();
+  return { http: server };
 }
 
-export function finish(test) {
-  test.http.close();
-  test.done();
+export function finish(context) {
+  context.http.close();
 }

@@ -61,7 +61,7 @@ export function createAccountAndAuth() {
                 { id: id.toString(), receipt: receipt, sig: sig });
   }).then(r => {
     if (200 !== r.statusCode) {
-      throw new Error('Could not authenticate fake account')
+      throw new Error('Could not authenticate fake account');
     }
     return r.body.session;
   });

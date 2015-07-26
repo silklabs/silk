@@ -38,6 +38,7 @@
   "eslintConfig": {
     "parser": "babel-eslint",
     "rules": {
+      "strict": false,
       "brace-style": 2,
       "no-debugger": 1,
       "default-case": 2,

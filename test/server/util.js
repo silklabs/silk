@@ -38,9 +38,9 @@ export function createAccount(email, name, passphrase) {
               { id: id.toString(), email: email, name: name,
                 passhash: passhash, sig: id.sign(passhash) }).then(r => {
                   if (201 !== r.statusCode) {
-                    return Promise.reject('Could not create account ' + email);
+                    throw new Error('Could not create account ' + email);
                   }
-                  return Promise.resolve(id);
+                  return id;
                 });
 }
 
@@ -52,7 +52,7 @@ export function createAccountAndAuth() {
                 { id: id.toString() });
   }).then(r => {
     if (200 !== r.statusCode) {
-      return Promise.reject('Could not challenge fake account');
+      throw new Error('Could not challenge fake account');
     }
     let receipt = r.body.receipt;
     let sig = id.sign(sha256('passphrase') + ' ' + receipt);
@@ -60,9 +60,9 @@ export function createAccountAndAuth() {
                 { id: id.toString(), receipt: receipt, sig: sig });
   }).then(r => {
     if (200 !== r.statusCode) {
-      return Promise.reject('Could not authenticate fake account');
+      throw new Error('Could not authenticate fake account')
     }
-    return Promise.resolve(r.body.session);
+    return r.body.session;
   });
 }
 
@@ -76,9 +76,9 @@ export function createDevice() {
                   sig: id.sign(id.toString()) });
   }).then(r => {
     if (201 !== r.statusCode) {
-      return Promise.reject('Could not create device');
+      throw new Error('Could not create device');
     }
-    return Promise.resolve(id);
+    return id;
   });
 }
 

@@ -199,10 +199,12 @@ var styles = StyleSheet.create({
   timeOverlay: {
     fontFamily: 'AppleSDGothicNeo-SemiBold',
     color: 'white',
-    opacity: 0.3,
+    opacity: 0.5,
     position: 'absolute',
     top: 10,
-    left: 10
+    left: 10,
+    padding: 1,
+    backgroundColor: 'black'
   },
 
   lagOverlay: {

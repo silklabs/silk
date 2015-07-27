@@ -1,34 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-var SRCS = [
-  'api/config.js',
-  'api/crypto.js',
-  'api/id.js',
-  'api/index.js',
-  'api/state.js',
-  'lib/accounts.js',
-  'lib/challenge.js',
-  'lib/log.js',
-  'lib/main.js',
-  'lib/routes.js',
-  'lib/secrets.js',
-  'lib/server.js',
-  'lib/video.js',
-  'test/api/test-check-key.js',
-  'test/api/test-crypto.js',
-  'test/api/test-id.js',
-  'test/server/test-account-create.js',
-  'test/server/test-account-auth.js',
-  'test/server/test-device-register.js',
-  'test/server/test-device-auth.js',
-  'test/server/test-unsecured-video.js',
-  'test/server/util.js',
-];
-
-var DIST_SRCS = {};
-SRCS.forEach(function(path) { DIST_SRCS['dist/'+ path] = path; });
-
 module.exports = function(grunt) {
   require("load-grunt-tasks")(grunt);
 
@@ -43,7 +15,8 @@ module.exports = function(grunt) {
       },
        */
       dist: {
-        files: DIST_SRCS
+        // We only need to browserify the api folder (rest is done server side)
+        files: ['api/**/*.js']
       }
     },
 
@@ -67,7 +40,7 @@ module.exports = function(grunt) {
     },
 
     eslint: {
-      target: process.env.LAX ? [] : SRCS
+      target: process.env.LAX ? [] : ['lib/**/*.js', 'test/**/*.js', 'api/**/*.js']
     }
   });
 

@@ -2,21 +2,20 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 module.exports = function(grunt) {
-  require("load-grunt-tasks")(grunt);
+  require('load-grunt-tasks')(grunt);
 
   grunt.initConfig({
-    babel: {
-      /*
-       * Source maps break react-native's own babel/browserify-esque
-       * setup (whatever it might be), so we can't generate them for now
-       * since the api/ files are used across the project.
-      options: {
-        sourceMap: true
-      },
-       */
-      dist: {
-        // We only need to browserify the api folder (rest is done server side)
-        files: ['api/**/*.js']
+    shell: {
+      // Use the babel command directly so we can get all the features and
+      // globs.
+      babel: {
+        command: function() {
+          return [
+            './node_modules/.bin/babel',
+            'api/**/*.js',
+            '-d dist'
+          ].join(' ');
+        }
       }
     },
 
@@ -44,9 +43,9 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('all', ['eslint', 'babel', 'browserify', 'copy', 'nodeunit']);
+  grunt.registerTask('all', ['eslint', 'shell:babel', 'browserify', 'copy', 'nodeunit']);
   grunt.registerTask('test', ['nodeunit']);
 
   // The default tasks to run when you type: grunt
-  grunt.registerTask('default', ['eslint', 'babel', 'browserify', 'copy']);
+  grunt.registerTask('default', ['eslint', 'shell:babel', 'browserify', 'copy']);
 };

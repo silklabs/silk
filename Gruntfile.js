@@ -6,6 +6,13 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     shell: {
+      test: {
+        command: function() {
+          // npm test is source of truth!
+          return 'npm test';
+        }
+      },
+
       // Use the babel command directly so we can get all the features and
       // globs.
       babel: {
@@ -44,7 +51,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('all', ['eslint', 'shell:babel', 'browserify', 'copy', 'nodeunit']);
-  grunt.registerTask('test', ['nodeunit']);
+  grunt.registerTask('test', ['shell:test']);
 
   // The default tasks to run when you type: grunt
   grunt.registerTask('default', ['eslint', 'shell:babel', 'browserify', 'copy']);

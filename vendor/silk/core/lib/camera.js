@@ -5,16 +5,20 @@
 
 let log = require('./log')('camera');
 import api from 'silk-api';
-import { getprop } from './util';
 import { EventEmitter } from 'events';
+let util = require('./util');
+let net = require('net');
 
 //const FRONT = 1;
 const BACK = 0;
 const DURATION = 1;
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = getprop(UPLOAD_PROP) !== '';
-// Content type must be set to make clients happy later on.
+const UPLOAD_ENABLED = util.getprop(UPLOAD_PROP) !== '';
+//Content type must be set to make clients happy later on.
 const VIDEO_CONTENT_TYPE = 'video/mp4';
+
+const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
+const CAPTURE_COMMAND_NAME = 'CaptureCommand';
 
 /**
  * Return the raw Buffer of bytes `buf` parsed into array of face
@@ -236,11 +240,11 @@ class VideoUploadQueue extends EventEmitter {
 
 }
 
-class CameraStream {
+class CameraStream extends EventEmitter {
   constructor(id) {
+    super();
     this.id = id;
     this.faces = [];
-    this.helper = null;
     this.videoUploads = new VideoUploadQueue(this.id, DURATION * 1000);
 
     // Keep track of all face packets we send and upload them along with the
@@ -248,10 +252,101 @@ class CameraStream {
     this.facePackets = [];
   }
 
-  start(socket) {
-    if (this.helper) {
+  _restart(why) {
+    if (this._captureCtlSocket) {
+      this._ready = false;
+      this._captureCtlSocket = null;
+
+      log.info(`camera restart: ${why}`);
+      util.timeout(1000)
+      .then(() => this._init());
       return;
     }
+    log.info(`camera restart pending (ignored "${why}")`);
+  }
+
+  _init(cmdData) {
+    log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+    this._captureCtlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
+      log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+      this._buffer = '';
+      this._ready = true;
+      this.command({cmdName: 'init', cmdData: cmdData});
+    });
+    this._captureCtlSocket.on('data', data => this._onCaptureCtlData(data));
+    this._captureCtlSocket.on('error', err => {
+      this._restart(`camera error, reason=${err}`);
+    });
+    this._captureCtlSocket.on('close', hadError => {
+      if (!hadError) {
+        this._restart(`camera close`);
+      }
+    });
+  }
+
+  _onCaptureCtlData(data) {
+    log.verbose(`received data: ${data.toString()}`);
+    this._buffer += data.toString();
+
+    let nullByte;
+    while ((nullByte = this._buffer.indexOf('\0')) !== -1) {
+      let line = this._buffer.substring(0, nullByte);
+      this._buffer = this._buffer.substring(nullByte + 1);
+
+      let found;
+      if ((found = line.match(/^([\d]*) (.*)/))) {
+        line = found[2];
+      }
+
+      let captureEvent = JSON.parse(line);
+      if (captureEvent.eventName === 'error') {
+        this.emit('error');
+      } else {
+        log.warn(`Error: Unknown capture command ${line}`);
+      }
+    }
+  }
+
+  _escape(str) {
+    return str
+    .replace(/[\\]/g, '\\\\')
+    .replace(/[\"]/g, '\\\"')
+    .replace(/[\/]/g, '\\/')
+    .replace(/[\b]/g, '\\b')
+    .replace(/[\f]/g, '\\f')
+    .replace(/[\n]/g, '\\n')
+    .replace(/[\r]/g, '\\r')
+    .replace(/[\t]/g, '\\t');
+  }
+
+  ready() {
+    return this._ready;
+  }
+
+  command(cmd) {
+    if (!this._ready) {
+      log.warn(`camera service not ready, ignoring the command`);
+      return;
+    }
+
+    // camera socket expects the command data in the following format
+    var event = CAPTURE_COMMAND_NAME + ' ' + '\"' + this._escape(JSON.stringify(cmd)) + '\"' + '\0';
+
+    this._captureCtlSocket.write(event);
+    log.verbose(`camera << ${event}`);
+  }
+
+  start(socket) {
+    this.serverSocket = socket;
+    this._init({
+      frameInterval: 1,
+      width: 1280,
+      height: 720,
+      fps: 25,
+      vbr: 1024,
+      previewScale: 4,
+      previewSkipCount: 25
+    });
     var buffer;
     let launch = () => {
       let spawn = require('child_process').spawn;
@@ -305,15 +400,13 @@ class CameraStream {
         }
       });
       this.helper = helper;
-      this.socket = socket;
     };
-    launch();
+//    launch();
   }
 
   stop() {
-    if (this.helper) {
-      this.helper.kill();
-      this.helper = null;
+    if (this.ready()) {
+      this.command({cmdName: 'stop'});
     }
   }
 
@@ -336,7 +429,7 @@ class CameraStream {
 
   pushPacket(when, frame, type) {
     log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
-    this.socket.emit('video', { id: this.id, faces: this.faces,
+    this.serverSocket.emit('video', { id: this.id, faces: this.faces,
                                 frame: frame, contents: type, when: when });
   }
 }

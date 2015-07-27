@@ -1,6 +1,6 @@
 
 #define LOG_NDEBUG 0
-#define LOG_TAG "capture"
+#define LOG_TAG "silk-capture"
 #include <utils/Log.h>
 
 #include <binder/ProcessState.h>
@@ -20,8 +20,9 @@
 #include <utils/Thread.h>
 #include <getopt.h>
 #include <sys/time.h>
-
 #include "MPEG4MemoryWriter.h"
+#include <sysutils/FrameworkListener.h>
+#include <json/json.h>
 
 extern "C" {
 #include "jpeglib.h"
@@ -32,7 +33,11 @@ extern "C" {
 #include "MediaCodecSource.h"
 
 using namespace android;
+using namespace Json;
 
+//
+// Constants
+//
 static const char* kMimeTypeAvc = "video/avc";
 
 static status_t OK = static_cast<status_t>(android::OK);
@@ -51,6 +56,32 @@ static int32_t sAudioChannels = 1;
 #define TAG_VIDEO 0
 #define TAG_PREVIEW 1
 #define TAG_FACES 2
+
+#define CAPTURE_CTL_SOCKET_NAME "capturectl"
+#define CAPTURE_DATA_SOCKET_NAME "captured"
+#define CAPTURE_COMMAND_NAME "CaptureCommand"
+#define MAX_MSG_SIZE 128
+#define CAMERA_NAME "capture"
+
+//
+// Helper macros
+//
+#define LOG_ERROR(expression, ...) \
+  do { \
+    if (expression) { \
+      ALOGE(__VA_ARGS__); \
+      Value jsonMsg; \
+      jsonMsg["eventName"] = "error"; \
+      mCaptureListener->sendEvent(jsonMsg); \
+      return 1; \
+    } \
+  } while(0)
+
+//
+// Forward declarations
+//
+class CaptureListener;
+
 
 class Channel {
   Mutex mLock;
@@ -696,106 +727,296 @@ void FaceDetection::postDataTimestamp(nsecs_t timestamp, int32_t msgType,
   (void)dataPtr;
 }
 
-int main(int argc, char **argv) {
-  int c;
-
-  while ((c = getopt(argc, argv, "w:h:v:f:i:p:k:a:s:c:d")) != -1) {
-    switch (c) {
-    case 'w':
-      sVideoSize.width = atoi(optarg);
-      break;
-    case 'h':
-      sVideoSize.height = atoi(optarg);
-      break;
-    case 'v':
-      sVideoBitRateInK = atoi(optarg);
-      break;
-    case 'f':
-      sFPS = atoi(optarg);
-      break;
-    case 'i':
-      sIFrameIntervalSec = atoi(optarg);
-      break;
-    case 'p':
-      sPreviewScale = atoi(optarg);
-      break;
-    case 'k':
-      sPreviewSkipCount = atoi(optarg);
-      break;
-    case 'a':
-      sAudioBitRate = atoi(optarg);
-      break;
-    case 's':
-      sAudioSampleRate = atoi(optarg);
-      break;
-    case 'c':
-      sAudioChannels = atoi(optarg);
-      break;
-    case 'd':
-      sDebug = true;
-      break;
-    case '?':
-      return -1;
-    }
+/**
+ * This class provided a method that is run each time
+ * {@code CAPTURE_COMMAND_NAME} is received from node over the socket
+ */
+class CaptureCommand: public FrameworkCommand {
+public:
+  CaptureCommand(CaptureListener* captureListener) :
+      FrameworkCommand(CAPTURE_COMMAND_NAME),
+      mCaptureListener(captureListener),
+      mHardwareActive(false) {
   }
 
-  android::ProcessState::self()->startThreadPool();
+  virtual ~CaptureCommand() {}
+  int runCommand(SocketClient *c, int argc, char ** argv);
 
-  sp<ALooper> looper = new ALooper;
-  looper->setName("capture-looper");
-  looper->start();
+private:
+  int capture_init(Value& cmdData);
+  int capture_cleanup();
+  static void* initThreadWrapper(void* me);
+  status_t initThread();
+
+  CaptureListener* mCaptureListener;
+  Reader mJsonReader;
+  pthread_t mThread;
+
+  // Camera related
+  bool mHardwareActive;
+  sp<Camera> mCamera;
+  sp<SurfaceControl> mSurfaceControl;
+  sp<Surface> mPreviewSurface;
+  sp<SurfaceComposerClient> mSCClient;
+  sp<SlicedMP4Encoder> mMp4;
+  sp<MediaSource> mPreview;
+  sp<IFrameRequestMonitor> mIframe;
+  sp<ALooper> mLooper;
+  sp<ICamera> mRemote;
+  sp<ICameraRecordingProxy> mProxy;
+  sp<CameraSource> mCameraSource;
+};
+
+/**
+ * This class provides a wrapper around capture socket to help with
+ * sending and receiving messages using the capture socket.
+ */
+class CaptureListener: private FrameworkListener {
+public:
+  CaptureListener() :
+      FrameworkListener(CAPTURE_CTL_SOCKET_NAME) {
+    FrameworkListener::registerCmd(new CaptureCommand(this));
+  }
+
+  int start() {
+    ALOGD("Starting CaptureListener");
+    return FrameworkListener::startListener();
+  }
+
+  /**
+   * Notify the client of a capture event
+   */
+  void sendEvent(const Value & jsonMsg) {
+    FastWriter fastWriter;
+    std::string jsonMessage = fastWriter.write(jsonMsg);
+
+    ALOGV("Broadcasting %s", jsonMessage.c_str());
+    FrameworkListener::sendBroadcast(200, jsonMessage.c_str(), false);
+  }
+};
+
+/**
+ * This function is run when a capture command is received from the client
+ */
+int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
+  char *saveptr;
+
+  char *cmd = strtok_r(argv[1], " \n", &saveptr);
+  if (!cmd) {
+    return 1;
+  }
+
+  ALOGV("Received command: %s", cmd);
+
+  // Parse JSON command
+  Value cmdJson;
+  bool result = mJsonReader.parse(cmd, cmdJson, false);
+  LOG_ERROR((result != true), "Failed to parse command: %s",
+      mJsonReader.getFormattedErrorMessages().c_str());
+
+  // Get command name
+  Value cmdNameVal = cmdJson["cmdName"];
+  LOG_ERROR((cmdNameVal.isNull()), "cmdName not available");
+
+  std::string cmdName = cmdNameVal.asString();
+  if (cmdName == "init") {
+    capture_init(cmdJson["cmdData"]);
+  } else if (cmdName == "stop") {
+    capture_cleanup();
+  } else {
+    LOG_ERROR(true, "Invalid command %s", cmdName.c_str());
+  }
+
+  return 0;
+}
+
+/**
+ * Initialize camera and start sending frames to node
+ */
+int CaptureCommand::capture_init(Value& cmdData) {
+  ALOGV("%s", __FUNCTION__);
+
+  // Check if hardware is already initialized
+  if (mHardwareActive) {
+    return 0;
+  }
+
+  if (!cmdData["width"].isNull()) {
+    sVideoSize.width = cmdData["width"].asInt();
+    ALOGV("sVideoSize.width %d", sVideoSize.width);
+  }
+  if (!cmdData["height"].isNull()) {
+    sVideoSize.height = cmdData["height"].asInt();
+    ALOGV("sVideoSize.height %d", sVideoSize.height);
+  }
+  if (!cmdData["vbr"].isNull()) {
+    sVideoBitRateInK = cmdData["vbr"].asInt();
+    ALOGV("sVideoBitRateInK %d", sVideoBitRateInK);
+  }
+  if (!cmdData["fps"].isNull()) {
+    sFPS = cmdData["fps"].asInt();
+    ALOGV("sFPS %d", sFPS);
+  }
+  if (!cmdData["frameInterval"].isNull()) {
+    sIFrameIntervalSec = cmdData["frameInterval"].asInt();
+    ALOGV("sIFrameIntervalSec %d", sIFrameIntervalSec);
+  }
+  if (!cmdData["previewScale"].isNull()) {
+    sPreviewScale = cmdData["previewScale"].asInt();
+    ALOGV("sPreviewScale %d", sPreviewScale);
+  }
+  if (!cmdData["previewSkipCount"].isNull()) {
+    sPreviewSkipCount = cmdData["previewSkipCount"].asInt();
+    ALOGV("sFsPreviewSkipCount %d", sPreviewSkipCount);
+  }
+  if (!cmdData["audioBitRate"].isNull()) {
+    sAudioBitRate = cmdData["audioBitRate"].asInt();
+    ALOGV("sAudioBitRate %d", sAudioBitRate);
+  }
+  if (!cmdData["audioSampleRate"].isNull()) {
+    sAudioSampleRate = cmdData["audioSampleRate"].asInt();
+    ALOGV("sAudioSampleRate %d", sAudioSampleRate);
+  }
+  if (!cmdData["audioChannels"].isNull()) {
+    sAudioChannels = cmdData["audioChannels"].asInt();
+    ALOGV("sAudioChannels %d", sAudioChannels);
+  }
+  if (!cmdData["debug"].isNull()) {
+    sDebug = cmdData["debug"].asInt();
+    ALOGV("sDebug %d", sDebug);
+  }
+
+  // Start camera in a separate thread
+  pthread_create(&mThread, NULL, initThreadWrapper, this);
+  return 0;
+}
+
+/**
+ *
+ */
+void* CaptureCommand::initThreadWrapper(void* me) {
+  CaptureCommand* command = static_cast<CaptureCommand *>(me);
+  command->initThread();
+  return NULL;
+}
+
+/**
+ *
+ */
+status_t CaptureCommand::initThread() {
+  mLooper = new ALooper;
+  mLooper->setName("capture-looper");
+  mLooper->start();
 
   Channel chan;
 
   // Create a preview surface
-  sp<SurfaceComposerClient> scc = new SurfaceComposerClient();
-  if (scc.get() == NULL) {
+  mSCClient = new SurfaceComposerClient();
+  if (mSCClient.get() == NULL) {
     ALOGE("Unable to establish connection to Surface Composer");
     return -1;
   }
-  sp<SurfaceControl> sc =
-    scc->createSurface(String8(argv[0]),
-		       sVideoSize.width, sVideoSize.height,
-		       PIXEL_FORMAT_RGBX_8888, 0);
-  if (sc.get() == NULL) {
+  mSurfaceControl = mSCClient->createSurface(String8(CAMERA_NAME), sVideoSize.width,
+      sVideoSize.height, PIXEL_FORMAT_RGBX_8888, 0);
+  if (mSurfaceControl.get() == NULL) {
     ALOGE("Unable to create preview surface");
     return -1;
   }
-  sp<Surface> previewSurface = sc->getSurface();
+  mPreviewSurface = mSurfaceControl->getSurface();
 
   // Setup the camera
   int cameraId = 0;
-  sp<Camera> camera = Camera::connect(cameraId, String16(argv[0]), Camera::USE_CALLING_UID);
-  if (camera == NULL) {
+  mCamera = Camera::connect(cameraId, String16(CAMERA_NAME), Camera::USE_CALLING_UID);
+  if (mCamera == NULL) {
     ALOGE("Unable to connect to camera");
     return -1;
   }
-  sp<ICamera> remote = camera->remote();
-  sp<ICameraRecordingProxy> proxy = camera->getRecordingProxy();
+  mRemote = mCamera->remote();
+  mProxy = mCamera->getRecordingProxy();
 
   FaceDetection faces(&chan);
-  camera->setListener(&faces);
+  mCamera->setListener(&faces);
 
-  CHECK(camera->setPreviewTarget(previewSurface->getIGraphicBufferProducer()) == 0);
-  CHECK(camera->startPreview() == 0);
-  CHECK(camera->previewEnabled());
-  CHECK(camera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
+  CHECK(mCamera->setPreviewTarget(mPreviewSurface->getIGraphicBufferProducer()) == 0);
+  CHECK(mCamera->startPreview() == 0);
+  CHECK(mCamera->previewEnabled());
+  CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
 
   // Start recording stream
-  sp<CameraSource> cameraSource =
-    CameraSource::CreateFromCamera(remote, proxy, cameraId, String16(argv[0], strlen(argv[0])),
-				   Camera::USE_CALLING_UID, sVideoSize, sFPS,
-				   NULL);
-  CHECK_EQ(cameraSource->initCheck(), ::OK);
+  mCameraSource =
+    CameraSource::CreateFromCamera(mRemote, mProxy, cameraId, String16(CAMERA_NAME, strlen(CAMERA_NAME)),
+           Camera::USE_CALLING_UID, sVideoSize, sFPS,
+           NULL);
+  CHECK_EQ(mCameraSource->initCheck(), ::OK);
 
-  sp<MediaSource> preview = new PreviewMediaSource(&chan, cameraSource, sPreviewSkipCount);
+  mHardwareActive = true;
 
-  SlicedMP4Encoder mp4(looper, &chan, preview);
-  mp4.run();
+  sp<ProcessState> proc(ProcessState::self());
+  ProcessState::self()->startThreadPool();
 
-  IFrameRequestMonitor iframe(mp4.videoEncoder());
+  mPreview = new PreviewMediaSource(&chan, mCameraSource, sPreviewSkipCount);
+  mMp4 = new SlicedMP4Encoder(mLooper, &chan, mPreview);
+  mMp4->run();
 
-  mp4.join();
+  mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
+  mMp4->join();
+
+  return 0;
+}
+
+/**
+ * Stop camera preview
+ */
+int CaptureCommand::capture_cleanup() {
+  ALOGV("%s", __FUNCTION__);
+
+  if (mHardwareActive) {
+    mCamera->stopPreview();
+
+    /* Destroy preview surface */
+    if (NULL != mPreviewSurface.get()) {
+      mPreviewSurface.clear();
+    }
+
+    if (NULL != mSurfaceControl.get()) {
+      mSurfaceControl->clear();
+      mSurfaceControl.clear();
+    }
+
+    if (NULL != mSCClient.get()) {
+      mSCClient->dispose();
+      mSCClient.clear();
+    }
+
+    // Close camera
+    if (NULL != mCamera.get() ) {
+      mCamera->disconnect();
+      mCamera.clear();
+    }
+  }
+  mHardwareActive = false;
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  (void) argc;
+  (void) argv;
+
+  // Start the server socket and register for commands from camera node module
+  CaptureListener captureListener;
+  int err = captureListener.start();
+  if (err < 0) {
+    ALOGE("Failed to start capture ctl socket listener: %d\n", err);
+
+    Value jsonMsg; \
+    jsonMsg["eventName"] = "error"; \
+    captureListener.sendEvent(jsonMsg); \
+    return 1;
+  }
+
+  while (1) {
+    sleep(INT_MAX);
+  }
 
   return 0;
 }

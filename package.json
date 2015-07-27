@@ -7,7 +7,7 @@
     "postinstall": "./node_modules/.bin/grunt",
     "prepublish": "./node_modules/.bin/grunt",
     "start": "DEBUG=silk-*,-*:verbose node dist/lib/main.js",
-    "test": "DEBUG=silk-* ./node_modules/.bin/grunt test"
+    "test": "DEBUG=silk-* mocha test/**/*.js"
   },
   "license": "proprietary",
   "dependencies": {

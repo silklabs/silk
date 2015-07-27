@@ -2,7 +2,7 @@ import UIKit
 import AVFoundation
 
 internal typealias FaceData = Dictionary<String, AnyObject>
-internal typealias Face = (utc: Int, json: FaceData)
+internal typealias Face = (utc: Int64, json: FaceData)
 
 /**
 Custom implementation of AVPlayerItem to keep track of some app specific details.
@@ -11,7 +11,7 @@ internal class LiveVideoItem : AVPlayerItem {
   /**
   When this video was taken.
   */
-  var start: Int!
+  var start: Int64!
   internal var faces: [Face] = []
 }
 
@@ -93,7 +93,7 @@ class LiveVideo : UIView {
   
   This method must be called from the main thread.
   */
-  func queueSegment(asset: AVAsset, utcTime: Int) {
+  func queueSegment(asset: AVAsset, utcTime: Int64) {
     // Calculate the duration in milliseconds
     let duration = Int(Float(asset.duration.value) / Float(asset.duration.timescale) * 1000)
 
@@ -187,7 +187,7 @@ class LiveVideo : UIView {
 
     let eventBody: Dictionary<String, AnyObject> = [
       "target": self.reactTag,
-      "time":  currentTime
+      "time":  NSNumber(longLong: currentTime)
     ]
 
     self.eventDispatcher.sendInputEventWithName(
@@ -228,7 +228,11 @@ class LiveVideo : UIView {
 
       let data = value?[0] as! Dictionary<String, AnyObject>
       let type = data["contents"] as? String
-      let when = data["when"] as! Int
+
+      // First cast directly to NSNumber:
+      let nsnumber = data["when"] as! NSNumber
+      // Then to Int64 this works around some crashes when directly casting.
+      let when = nsnumber.longLongValue
 
       if type == "faces" {
         // Keep track of all the faces entries we receive we will later

@@ -144,11 +144,14 @@ class Ui extends events.EventEmitter
     let cancelVolumeKeys = () => {};
     let volumeKeysPressed = 0;
     input.on('up', e => {
+      this._pokeBacklight();
       switch(e.keyId) {
       case 'volumeup':
       case 'volumedown':
-        volumeKeysPressed--;
-        cancelVolumeKeys();
+        if (volumeKeysPressed > 0) {
+          volumeKeysPressed--;
+          cancelVolumeKeys();
+        }
         break;
       case 'power':
         cancelPowerDown();
@@ -160,6 +163,11 @@ class Ui extends events.EventEmitter
 
     input.on('down', e => {
       this.vib.pattern(50);
+      if (this._pokeBacklight()) {
+        // The first key event with the backlight off does nothing but enable
+        // the backlight
+        return;
+      }
       switch(e.keyId) {
       case 'volumeup':
       case 'volumedown':
@@ -184,7 +192,24 @@ class Ui extends events.EventEmitter
         break;
       }
     });
+  }
 
+  _pokeBacklight() {
+    let off = true;
+    let backlight = lights.backlight;
+
+    if (this.backlightTimer) {
+      off = false;
+      clearTimeout(this.backlightTimer);
+    }
+    this.backlightTimer = setTimeout(() => {
+      log.debug('Backlight timeout');
+      backlight.set(backlight.BLACK);
+      this.backlightTimer = null;
+    }, 60 * 1000);
+    backlight.set(backlight.WHITE);
+
+    return off; // return true if the backlight was just enabled
   }
 
   goto(state) {
@@ -194,6 +219,7 @@ class Ui extends events.EventEmitter
     this.currentState = state;
     log.info(`ui state: ${this.currentState}`);
 
+    this._pokeBacklight();
     if (caps.has('notification-light')) {
       let light = lights.notifications;
 

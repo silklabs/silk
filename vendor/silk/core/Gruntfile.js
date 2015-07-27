@@ -15,6 +15,7 @@ SRCS = [
   'lib/crashreport.js',
   'lib/hue.js',
   'lib/index.js',
+  'lib/lights.js',
   'lib/log.js',
   'lib/main.js',
   'lib/ntp.js',

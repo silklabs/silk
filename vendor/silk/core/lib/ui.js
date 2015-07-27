@@ -6,6 +6,7 @@
 let caps = require('./caps');
 let events = require('events');
 let fs = require('fs');
+let lights = require('./lights');
 let log = require('./log')('ui');
 let util = require('./util');
 
@@ -192,6 +193,31 @@ class Ui extends events.EventEmitter
     }
     this.currentState = state;
     log.info(`ui state: ${this.currentState}`);
+
+    if (caps.has('notification-light')) {
+      let light = lights.notifications;
+
+      switch (this.currentState) {
+      case 'bootanimation':
+        light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
+        break;
+      case 'setup':
+        light.set(light.YELLOW, light.FLASH_TIMED, 500, 500);
+        break;
+      case 'connecting':
+        light.set(light.GREEN, light.FLASH_TIMED, 2000, 1000);
+        break;
+      case 'online':
+        light.set(light.GREEN);
+        break;
+      case 'powerdown':
+        light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
+        break;
+      default:
+        light.set(light.BLACK);
+        break;
+      }
+    }
 
     let movieName = this.currentState;
     if (this.currentState === 'connecting') {

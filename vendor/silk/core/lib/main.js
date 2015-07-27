@@ -6,7 +6,7 @@
 let api = require('silk-api');
 let btle = require('./btle');
 let crashreport = require('./crashreport');
-let lights = require('./lights')();
+let hue = require('./hue')();
 let ui = require('./ui');
 let log = require('./log')('main');
 let vib = require('./vibrator')();
@@ -115,8 +115,8 @@ function maybeCreateSocket() {
       log.warn('"stop" command');
       break;
     case 'light':
-      if (lights) {
-        lights.setState(cmd.state);
+      if (hue) {
+        hue.setState(cmd.state);
       }
       break;
     default:

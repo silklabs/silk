@@ -8,6 +8,7 @@ let log = require('./log')('caps');
 
 const ALL = new Set([
   'dev-input-hack',
+  'notification-light',
 ]);
 
 function validateCaps(...caps) {
@@ -22,6 +23,7 @@ function validateCaps(...caps) {
 function getDeviceCaps() {
   switch (getprop('ro.boot.hardware')) {
   case 'mako':
+    return validateCaps('dev-input-hack', 'notification-light');
   case 'shamu':
     return validateCaps('dev-input-hack');
   default:

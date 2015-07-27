@@ -8,8 +8,10 @@ let fs = require('fs');
 let getprop = require('./util').getprop;
 let log = require('./log')('update');
 let request = require('request');
-let ui = require('./ui');
 let validator = require('validator');
+let EventEmitter = require('events').EventEmitter;
+
+let emitter = new EventEmitter();
 
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
 const POLL_HOURS_PROP = 'ro.silk.update.poll_hours';
@@ -477,7 +479,7 @@ function stageUpdateAndReboot() {
   //       because we want our file cache buffers sync'd properly.
   log.info(`'${PREVENT_REBOOT_PROP}' is not set, rebooting`);
 
-  ui('powerdown');
+  emitter.emit('apply');
 
   let spawnSync = require('child_process').spawnSync;
   spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
@@ -618,7 +620,7 @@ function stop() {
   return promise.then(done, done);
 }
 
-module.exports = {
-  start: start,
-  stop: stop
-};
+
+emitter.start = start;
+emitter.stop = stop;
+module.exports = emitter;

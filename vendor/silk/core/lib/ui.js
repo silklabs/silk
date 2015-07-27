@@ -7,12 +7,7 @@ let caps = require('./caps');
 let events = require('events');
 let fs = require('fs');
 let log = require('./log')('ui');
-let movie = require('silk-movie')();
 let util = require('./util');
-let vib = require('./vibrator')();
-
-let currentState;
-let currentMovieName;
 
 //
 // Note: The InputDevice class has been inspired by
@@ -99,125 +94,129 @@ class Input extends events.EventEmitter
 }
 
 
-function uiState(state) {
-  if (state === currentState || currentState === 'powerdown') {
-    return;
-  }
-  currentState = state;
-  log.info(`ui state: ${currentState}`);
+class Ui extends events.EventEmitter
+{
+  constructor() {
+    super();
 
-  let movieName = currentState;
-  if (currentState === 'connecting') {
-    movieName = 'bootanimation';
-  }
+    this.movie = require('silk-movie')();
+    this.vib = require('./vibrator')();
 
-  if (movieName !== currentMovieName) {
-    currentMovieName = movieName;
-    try {
-      movie.run(`/system/media/${movieName}.zip`);
-    } catch (e) {
-      log.warn(e);
-    }
-
-    switch (currentState) {
-    case 'online':
-      vib.pattern(500, 250, 500);
-      break;
-    default:
-      vib.pattern(500);
-      break;
-    }
-  }
-}
-
-
-let input;
-if (caps.has('dev-input-hack')) {
-  //
-  // Only monitor the input devices used for the power and volume keys for these
-  // devices (determined by running |adb shell getevent -l| and pressing each
-  // key)
-  //
-  // The way that node/libuv reads from the input devices (blocking read on a
-  // separate thread for each input device) differs from how Android does it
-  // (poll/read on one thread) and one theory is that this exposes a kernel bug
-  // that manifest as:
-  //
-  // * key events from hard key presses and releases are delayed by multiple
-  //   seconds sometimes. Triggering a number of touchscreen events can help get
-  //   them unstuck.
-  // * DNS resolution can be delayed until some touchscreen events are
-  //   triggered - bionic's getaddrinfo() communicates with netd over
-  //   /dev/socket/dnsproxyd, which may or may not be related.
-  //
-  // So still something of a mystery here, more at #144
-  //
-  switch (util.getprop('ro.boot.hardware')) {
-  case 'mako':
-    input = new Input(['event0', 'event1']);
-    break;
-  case 'shamu':
-    input = new Input(['event1', 'event2']);
-    break;
-  default:
-    // If/when we need to add a new device to this list, it's probably time to
-    // take a close look into what's actually happening here!
-    throw 'Unknown device';
-  }
-} else {
-  input = new Input();
-}
-
-let cancelPowerDown = () => {};
-let volumeKeysPressed = 0;
-input.on('up', e => {
-  switch(e.keyId) {
-  case 'volumeup':
-  case 'volumedown':
-    volumeKeysPressed--;
-    break;
-  case 'power':
-    cancelPowerDown();
-    if (currentState === 'powerdown') {
-      // TODO: Need a real shutdown sequence someday.
+    let input;
+    if (caps.has('dev-input-hack')) {
       //
-      // TODO: Call update.stop() here. We don't currently because there is a
-      //       cyclical dependency on ui.js and update.js that breaks stuff.
-      util.setprop('sys.powerctl', 'shutdown');
+      // Only monitor the input devices used for the power and volume keys for these
+      // devices (determined by running |adb shell getevent -l| and pressing each
+      // key)
+      //
+      // The way that node/libuv reads from the input devices (blocking read on a
+      // separate thread for each input device) differs from how Android does it
+      // (poll/read on one thread) and one theory is that this exposes a kernel bug
+      // that manifest as:
+      //
+      // * key events from hard key presses and releases are delayed by multiple
+      //   seconds sometimes. Triggering a number of touchscreen events can help get
+      //   them unstuck.
+      // * DNS resolution can be delayed until some touchscreen events are
+      //   triggered - bionic's getaddrinfo() communicates with netd over
+      //   /dev/socket/dnsproxyd, which may or may not be related.
+      //
+      // So still something of a mystery here, more at #144
+      //
+      switch (util.getprop('ro.boot.hardware')) {
+      case 'mako':
+        input = new Input(['event0', 'event1']);
+        break;
+      case 'shamu':
+        input = new Input(['event1', 'event2']);
+        break;
+      default:
+        // If/when we need to add a new device to this list, it's probably time to
+        // take a close look into what's actually happening here!
+        throw 'Unknown device';
+      }
+    } else {
+      input = new Input();
     }
-    break;
-  default:
-    break;
-  }
-});
 
-input.on('down', e => {
-  vib.pattern(50);
-  switch(e.keyId) {
-  case 'volumeup':
-  case 'volumedown':
-    volumeKeysPressed++;
-    if (volumeKeysPressed === 2) {
-      log.warn('!! Factory reset !!');
-      uiState('powerdown');
-      util.exec('librecovery_test', ['factoryReset'])
-      .catch(err => {
-        log.warn(`Factory reset failed: ${err}`);
-        // Ouch, now what? Reboot I guess.
-        util.setprop('sys.powerctl', 'reboot');
-      });
+    let cancelPowerDown = () => {};
+    let cancelVolumeKeys = () => {};
+    let volumeKeysPressed = 0;
+    input.on('up', e => {
+      switch(e.keyId) {
+      case 'volumeup':
+      case 'volumedown':
+        volumeKeysPressed--;
+        cancelVolumeKeys();
+        break;
+      case 'power':
+        cancelPowerDown();
+        break;
+      default:
+        break;
+      }
+    });
+
+    input.on('down', e => {
+      this.vib.pattern(50);
+      switch(e.keyId) {
+      case 'volumeup':
+      case 'volumedown':
+        volumeKeysPressed++;
+        if (volumeKeysPressed === 2) {
+          this.emit('key:setup');
+          Promise.race([
+            util.timeout(1000),
+            new Promise((resolve, reject) => cancelVolumeKeys = reject)
+          ])
+          .then(() => this.emit('key:factoryreset'));
+        }
+        break;
+      case 'power':
+        Promise.race([
+          util.timeout(1000),
+          new Promise((resolve, reject) => cancelPowerDown = reject)
+        ])
+        .then(() => this.emit('key:powerdown'));
+        break;
+      default:
+        break;
+      }
+    });
+
+  }
+
+  goto(state) {
+    if (state === this.currentState || this.currentState === 'powerdown') {
+      return false;
     }
-    break;
-  case 'power':
-    Promise.race([
-      util.timeout(1000),
-      new Promise((resolve, reject) => cancelPowerDown = reject)
-    ])
-    .then(() => uiState('powerdown'));
-    break;
-  default:
-    break;
-  }
-});
+    this.currentState = state;
+    log.info(`ui state: ${this.currentState}`);
 
-module.exports = uiState;
+    let movieName = this.currentState;
+    if (this.currentState === 'connecting') {
+      movieName = 'bootanimation';
+    }
+
+    if (movieName !== this.currentMovieName) {
+      this.currentMovieName = movieName;
+      try {
+        this.movie.run(`/system/media/${movieName}.zip`);
+      } catch (e) {
+        log.warn(e);
+      }
+
+      switch (this.currentState) {
+      case 'online':
+        this.vib.pattern(500, 250, 500);
+        break;
+      default:
+        this.vib.pattern(500);
+        break;
+      }
+    }
+    return true;
+  }
+}
+
+module.exports = new Ui();

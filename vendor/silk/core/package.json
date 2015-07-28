@@ -4,7 +4,7 @@
   "description": "The common control software on each silk node",
   "main": "dist/lib/main.js",
   "scripts": {
-    "install": "node_modules/.bin/grunt",
+    "install": "grunt",
     "start": "node dist/lib/main.js"
   },
   "dependencies": {

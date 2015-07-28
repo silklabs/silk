@@ -9,9 +9,6 @@ import createServer from '../../src/server/server';
 import loadConfig from '../../src/server/config';
 import request from 'superagent-promise';
 
-let config = loadConfig('test');
-export const serverUrl = 'http://localhost:' + config.server.port;
-
 export function sha256(context, text) {
   var sha1 = crypto.createHash('sha256');
   sha1.update(text);

@@ -1,7 +1,7 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-export default function main (port) {
+export default function main (config) {
   return new Promise((accept, reject) => {
     let express = require('express');
     let app = express();
@@ -13,12 +13,12 @@ export default function main (port) {
 
     let publicPath = path.join(__dirname, '/../../public');
 
-    log.info('binding to port', port);
+    log.info('binding to port', config.server.port);
     log.info('__dirname is', __dirname);
     log.info('cwd is', process.cwd());
     log.info('serving static files from', publicPath);
 
-    app.set('port', port);
+    app.set('port', config.server.port);
     app.use(express.static(publicPath));
 
     let bodyParser = require('body-parser');

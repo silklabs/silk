@@ -20,6 +20,25 @@ npm start
 ```
 Load http://localhost:5000 in your web browser to ensure that the server is running.  Devices and apps can connect to that server instance.
 
+## Configuration
+
+See [./config/default.js](the default configuration file) for all
+available configuration options. Config files are loaded in this order:
+
+  - 1. [./config/default.js]
+  - 2. ./config/<profile>
+  - 3. config.local.js
+
+Each configuration file is deeply merged into the previous (so profile
+overrides default, etc...).
+
+#### `config.local.js`
+
+This special configuration file lives in the root of your tree and
+allows you to globally override any configuration. This is intended to
+be used for local development only. If you need a new type of
+deployment create a new configuration profile.
+
 ## Emacs setup
 
 If you don't use emacs, ignore this.

@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import { crypto } from '../../api';
+import { crypto } from '../../src/api';
 
 suite('crypto', () => {
   test('encrypt', async () => {

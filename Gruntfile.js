@@ -19,7 +19,7 @@ module.exports = function(grunt) {
         command: function() {
           return [
             './node_modules/.bin/babel',
-            'api/**/*.js',
+            'src/api/**/*.js',
             '-d dist'
           ].join(' ');
         }
@@ -28,7 +28,7 @@ module.exports = function(grunt) {
 
     browserify: {
       browserApi: {
-        src: ['dist/api/index.js'],
+        src: ['dist/src/api/index.js'],
         dest: 'public/silk-api.js',
       },
     },
@@ -36,7 +36,7 @@ module.exports = function(grunt) {
     copy: {
       api: {
         src: 'package.api.json',
-        dest: 'dist/api/package.json',
+        dest: 'dist/src/api/package.json',
       },
     },
 
@@ -46,7 +46,7 @@ module.exports = function(grunt) {
     },
 
     eslint: {
-      target: process.env.LAX ? [] : ['lib/**/*.js', 'test/**/*.js', 'api/**/*.js']
+      target: process.env.LAX ? [] : ['src/**/*.js', 'test/**/*.js']
     }
   });
 

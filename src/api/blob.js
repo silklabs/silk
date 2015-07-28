@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
+import throwError from './fetch_error';
 
 class BufferToStream extends Readable {
   constructor(buffer) {
@@ -18,16 +19,6 @@ class BufferToStream extends Readable {
 
 export default function(config) {
   let baseUrl = config.server_url;  //eslint-disable-line
-
-  async function throwError(response) {
-    let text = await response.text();
-    throw new Error(`
-      ${response.statusText} - ${response.url}
-
-      ${text}
-    `);
-  }
-
   return {
     async signedUrl() {
       let endpoint = `${baseUrl}/blob`;

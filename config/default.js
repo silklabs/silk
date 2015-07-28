@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 5000;
 
 export default {
   server: {
-    publicUrl: process.env.PUBLIC_URL || `http://localhost:${PORT}`,
+    // Will dynamically configure itself if empty...
+    publicUrl: process.env.PUBLIC_URL,
 
     // location where to start the http server.
     port: PORT,

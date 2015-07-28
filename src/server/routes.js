@@ -145,7 +145,7 @@ module.exports = function(opts) {
     });
   }));
 
-  app.get('/blob/{id}', asyncRoute(async (req, res) => {
+  app.get('/blob/:id', asyncRoute(async (req, res) => {
     // XXX: We will eventually want other blob types to go through this url but
     // that should not be an issue as client should use the result of /blob/ack
     // to define their urls not construct them manually.
@@ -153,12 +153,16 @@ module.exports = function(opts) {
       res.status(501);
       return;
     }
+    await blobHandler.read(req.params.id, res);
+    res.status(200).end();
   }));
 
-  app.put('/blob/{id}', asyncRoute(async (req, res) => {
+  app.put('/blob/:id', asyncRoute(async (req, res) => {
     if (config.server.blobType !== 'file') {
       res.status(501);
       return;
     }
+    await blobHandler.write(req.params.id, req);
+    res.status(201).end();
   }));
 };

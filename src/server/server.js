@@ -57,6 +57,12 @@ export default async function main (config) {
     throw err;
   });
   let connected = eventToPromise(http, 'listening').then(() => {
+
+    // XXX: This is sorta a hack and only intended for development/testing...
+    if (!config.server.publicUrl) {
+      config.server.publicUrl = `http://localhost:${http.address().port}`;
+    }
+
     return http;
   });
   return await Promise.race([errorEvent, connected]);

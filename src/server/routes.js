@@ -80,4 +80,16 @@ module.exports = function(app, accounts) {
     }
     return res.status(200).json({ session: session });
   });
+
+  app.post('/device/metadata/', (req, res) => {
+    // create new metadata.
+  });
+
+  app.post('/device/metadata/find/byid', (req, res) => {
+    // find by specific id.
+  });
+
+  app.post('/device/metadata/find/bytime', (req, res) => {
+    // find by a particular time.
+  });
 };

@@ -3,17 +3,19 @@
 
 import assert from 'assert';
 import api from '../../src/api';
-import * as util from './util';
+import createContext from './context';
 
 suite('account creation', () => {
+  let context = createContext();
+
   function makeParams(id, email, name, passphrase) {
-    let passhash = util.sha256(passphrase);
+    let passhash = context.sha256(passphrase);
     return { id: id.toString(), email: email, name: name,
              passhash: passhash, sig: id.sign(passhash) };
   }
 
   function createAccount(id, email) {
-    return util.post(
+    return context.post(
       '/account/create',
       makeParams(id, email, 'Test', 'passphrase')
     );
@@ -22,26 +24,20 @@ suite('account creation', () => {
 
   let email = 'one@example.com';
   let emailTwo = 'two@example.com';
-  let id, idTwo, context;
+  let id, idTwo;
   setup(async () => {
     id = api.id.create();
     idTwo = api.id.create();
-
-    context = await util.setup();
-  });
-
-  teardown(() => {
-    util.finish(context);
   });
 
   test('/account/create - invalid id', async () => {
     let body = {
       id: 'garbage', email: 'test@example.org',
-      name: 'Test', passhash: util.sha256('passphrase'),
-      sig: id.sign(util.sha256('passphrase'))
+      name: 'Test', passhash: context.sha256('passphrase'),
+      sig: id.sign(context.sha256('passphrase'))
     };
 
-    let result = await util.post('/account/create', body);
+    let result = await context.post('/account/create', body);
     assert.notEqual(result.statusCode, 201);
   });
 
@@ -49,21 +45,21 @@ suite('account creation', () => {
     let body = {
       id: id.toString(), email: 'test@example.org',
       name: 'Test', passhash: 'garbage',
-      sig: id.sign(util.sha256('passphrase'))
+      sig: id.sign(context.sha256('passphrase'))
     };
 
-    let result = await util.post('/account/create', body);
+    let result = await context.post('/account/create', body);
     assert.notEqual(result.statusCode, 201);
   });
 
   test('/account/create - invalid signature', async () => {
     let body = {
       id: id.toString(), email: 'test@example.org',
-      name: 'Test', passhash: util.sha256('passphrase'),
+      name: 'Test', passhash: context.sha256('passphrase'),
       sig: 'garbage'
     };
 
-    let result = await util.post('/account/create', body);
+    let result = await context.post('/account/create', body);
     assert.notEqual(result.statusCode, 201);
   });
 

@@ -2,19 +2,21 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import * as util from './util';
+import createContext from './context';
 
 suite('account auth', () => {
+  let context = createContext();
+
   function challengeReply(id, receipt, passphrase) {
-    return id.sign(util.sha256(passphrase) + ' ' + receipt);
+    return id.sign(context.sha256(passphrase) + ' ' + receipt);
   }
 
   async function successfulChallenge(id) {
     if (!id) {
-      id = await util.createAccount('test@example.org', 'Test', 'passphrase');
+      id = await context.createAccount('test@example.org', 'Test', 'passphrase');
     }
 
-    let result = await util.post('/account/challenge', { id: id.toString() });
+    let result = await context.post('/account/challenge', { id: id.toString() });
     assert.equal(result.statusCode, 200);
 
     let receipt = result.body.receipt;
@@ -25,7 +27,7 @@ suite('account auth', () => {
   }
 
   async function successfulAuth(id, receipt) {
-    let authResult = await util.post('/account/authenticate', {
+    let authResult = await context.post('/account/authenticate', {
       id: id.toString(),
       receipt,
       sig: challengeReply(id, receipt, 'passphrase')
@@ -38,22 +40,13 @@ suite('account auth', () => {
     return authResult.body;
   }
 
-  let context;
-  setup(async () => {
-    context = await util.setup();
-  });
-
-  teardown(() => {
-    util.finish(context);
-  });
-
   test('/account/challenge - no id', async () => {
-    let challengeResult = await util.post('/account/challenge', {});
+    let challengeResult = await context.post('/account/challenge', {});
     assert.notEqual(200, challengeResult.statusCode);
   });
 
   test('/account/challenge - invalid id', async () => {
-    let result = await util.post('/account/challenge', { id: 'garbage' });
+    let result = await context.post('/account/challenge', { id: 'garbage' });
     assert.notEqual(result.statusCode, 200);
   });
 
@@ -65,7 +58,7 @@ suite('account auth', () => {
 
   test('/account/authenticate - valid receipt invalid id', async () => {
     let { id, receipt } = await successfulChallenge();
-    let authResult = await util.post('/account/authenticate', {
+    let authResult = await context.post('/account/authenticate', {
       id: 'garbage',
       receipt,
       sig: challengeReply(id, receipt, 'passphrase')
@@ -79,7 +72,7 @@ suite('account auth', () => {
     await successfulAuth(id, receipt);
 
     // Attempt to use same challenge response (replay attack)
-    let authResult = await util.post('/account/authenticate', {
+    let authResult = await context.post('/account/authenticate', {
       id: id.toString(),
       receipt,
       sig: challengeReply(id, receipt, 'passphrase')
@@ -96,7 +89,7 @@ suite('account auth', () => {
     await successfulAuth(idOne, receiptOne);
 
     // Run the second one (this should fail since it is now expired).
-    let authResult = await util.post('/account/authenticate', {
+    let authResult = await context.post('/account/authenticate', {
       id: idTwo.toString(),
       receipt: receiptTwo,
       sig: challengeReply(idTwo, receiptTwo, 'passphrase')

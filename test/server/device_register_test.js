@@ -3,11 +3,13 @@
 
 import assert from 'assert';
 import api from '../../src/api';
-import * as util from './util';
+import createContext from './context';
 
 suite('device register', () => {
+  let context = createContext();
+
   async function registerDevice(session, id) {
-    return await util.post('/account/device/register', {
+    return await context.post('/account/device/register', {
       session: session,
       name: 'Device Name',
       deviceId: id.toString(),
@@ -15,25 +17,20 @@ suite('device register', () => {
     });
   }
 
-  let context, id, idTwo, session;
+  let id, idTwo, session;
   setup(async () => {
-    context = await util.setup();
     id = await api.id.create();
     idTwo = await api.id.create();
-    session = await util.createAccountAndAuth();
-  });
-
-  teardown(() => {
-    util.finish(context);
+    session = await context.createAccountAndAuth();
   });
 
   test('/account/device/register - no params', async () => {
-    let result = await util.post('/account/device/register', {});
+    let result = await context.post('/account/device/register', {});
     assert.notEqual(result.statusCode, 201);
   });
 
   test('/account/device/register - invalid session id', async () => {
-    let result = await util.post('/account/device/register', {
+    let result = await context.post('/account/device/register', {
       session: session,
       name: 'device name',
       deviceId: 'garbage',
@@ -43,7 +40,7 @@ suite('device register', () => {
   });
 
   test('/account/device/register - invalid signature', async () => {
-    let result = await util.post('/account/device/register', {
+    let result = await context.post('/account/device/register', {
       session: session,
       name: 'Device Name',
       deviceId: id.toString(),

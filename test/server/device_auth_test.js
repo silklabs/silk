@@ -2,11 +2,12 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import * as util from './util';
+import createContext from './context';
 
 suite('device authentication', () => {
+  let context = createContext();
   async function successfulChallenge(id) {
-    let result = await util.post('/device/challenge', { id: id.toString() });
+    let result = await context.post('/device/challenge', { id: id.toString() });
     assert.equal(result.statusCode, 200);
     let receipt = result.body.receipt;
     assert.equal('string', typeof receipt);
@@ -15,23 +16,18 @@ suite('device authentication', () => {
   }
 
 
-  let context, id;
+  let id;
   setup(async () => {
-    context = await util.setup();
-    id = await util.createDevice();
-  });
-
-  teardown(() => {
-    util.finish(context);
+    id = await context.createDevice();
   });
 
   test('/device/challenge - empty', async () => {
-    let result = await util.post('/device/challenge', {});
+    let result = await context.post('/device/challenge', {});
     assert.notEqual(result.statusCode, 200);
   });
 
   test('/device/challenge - invalid id', async () => {
-    let result = await util.post('/device/challenge', { id: 'garbage' });
+    let result = await context.post('/device/challenge', { id: 'garbage' });
     assert.notEqual(result.statusCode, 200);
   });
 
@@ -41,7 +37,7 @@ suite('device authentication', () => {
 
   test('/device/authenticate - invalid receipt', async () => {
     let { receipt } = await successfulChallenge(id);
-    let result = util.post('/device/authenticate', {
+    let result = context.post('/device/authenticate', {
       id: id.toString(),
       receipt: 'garbage',
       sig: id.sign(receipt)
@@ -51,7 +47,7 @@ suite('device authentication', () => {
 
   test('/device/authenticate - signature receipt', async () => {
     let { receipt } = await successfulChallenge(id);
-    let result = util.post('/device/authenticate', {
+    let result = context.post('/device/authenticate', {
       id: id.toString(),
       receipt: receipt,
       sig: 'garbage'
@@ -62,7 +58,7 @@ suite('device authentication', () => {
   test('/device/authenticate - success', async () => {
     let { receipt: receiptOne } = await successfulChallenge(id);
     let { receipt: receiptTwo } = await successfulChallenge(id);
-    let result = await util.post('/device/authenticate', {
+    let result = await context.post('/device/authenticate', {
       id: id.toString(),
       receipt: receiptOne,
       sig: id.sign(receiptOne)
@@ -72,7 +68,7 @@ suite('device authentication', () => {
     assert.equal(result.body.session.length, 64);
 
     // Cannot use expired receipt...
-    let expiredReceipt = await util.post('/device/authenticate', {
+    let expiredReceipt = await context.post('/device/authenticate', {
       id: id.toString(),
       receipt: receiptTwo,
       sig: id.sign(receiptTwo)
@@ -80,7 +76,7 @@ suite('device authentication', () => {
     assert.notEqual(expiredReceipt.statusCode, 200);
 
     // Cannot use same receipt twice...
-    let sameReceipt = await util.post('/device/authenticate', {
+    let sameReceipt = await context.post('/device/authenticate', {
       id: id.toString(),
       receipt: receiptOne,
       sig: id.sign(receiptOne)

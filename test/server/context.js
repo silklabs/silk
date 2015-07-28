@@ -9,6 +9,7 @@ import loadConfig from '../../src/server/config';
 import createServer from '../../src/server/server';
 import createDb from '../../src/server/db';
 import request from 'superagent-promise';
+import merge from 'lodash.merge';
 
 export function sha256(context, text) {
   var sha1 = crypto.createHash('sha256');
@@ -89,11 +90,11 @@ export async function createDevice(context) {
 /**
 Main sets up and configures the test context...
 */
-export default function createContext() {
+export default function createContext(overrides = {}) {
   let context = {};
 
   setup(async () => {
-    let config = loadConfig('test');
+    let config = merge({}, loadConfig('test'), overrides);
     let server = await createServer(config);
 
     context.db = await createDb(config);

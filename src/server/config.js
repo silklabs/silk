@@ -7,7 +7,7 @@ import merge from 'lodash.merge';
 
 const LOCAL_CONFIG = 'config.local';
 
-export function loadConfig(profile = 'production', cwd) {
+export default function loadConfig(profile = 'production', cwd) {
   if (!cwd) {
     cwd = path.join(__dirname, '..', '..', '..');
   }

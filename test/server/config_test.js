@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { loadConfig } from '../../src/server/config';
+import loadConfig from '../../src/server/config';
 
 const DEFAULT_CONFIG = require('../../config/default');
 

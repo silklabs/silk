@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import request from 'request';
 import api from '../../src/api';
 import createServer from '../../src/server/server';
-import { loadConfig } from '../../src/server/config';
+import loadConfig from '../../src/server/config';
 
 let config = loadConfig('test');
 export const serverUrl = 'http://localhost:' + config.server.port;

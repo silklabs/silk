@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import createServer from './server';
-import { loadConfig } from './config';
+import loadConfig from './config';
 
 let log = require('./log')('main');
 let profile = process.argv[2];

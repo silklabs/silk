@@ -7,29 +7,34 @@
     "postinstall": "./node_modules/.bin/grunt",
     "prepublish": "./node_modules/.bin/grunt",
     "start": "DEBUG=silk-*,-*:verbose node dist/lib/main.js",
-    "test": "DEBUG=silk-* ./node_modules/.bin/grunt test"
+    "test": "DEBUG=silk-* mocha test/**/*.js"
   },
   "license": "proprietary",
   "dependencies": {
-    "babel-eslint": "~3.1.15",
     "body-parser": "^1.12.2",
     "debug": "^2.2.0",
     "elliptic": "^3.0.3",
     "eslint": "~0.22.1",
+    "event-to-promise": "^0.3.3",
     "express": "^4.12.3",
-    "grunt": "^0.4.5",
-    "grunt-babel": "^5.0.0",
-    "grunt-browserify": "^3.8.0",
-    "grunt-cli": "^0.1.13",
-    "grunt-contrib-copy": "^0.8.0",
-    "grunt-contrib-nodeunit": "^0.4.1",
-    "grunt-eslint": "~14.0.0",
-    "load-grunt-tasks": "^3.1.0",
     "localStorage": "^1.0.3",
     "promise": "^6.1.0",
     "request": "^2.53.0",
     "socket.io": "^1.3.5",
     "socket.io-client": "^1.3.5"
+  },
+  "devDependencies": {
+    "babel": "^5.8.9",
+    "babel-eslint": "~3.1.15",
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^3.8.0",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-copy": "^0.8.0",
+    "grunt-contrib-nodeunit": "^0.4.1",
+    "grunt-eslint": "~14.0.0",
+    "grunt-shell": "^1.1.2",
+    "load-grunt-tasks": "^3.1.0",
+    "mocha": "^2.2.5"
   },
   "engines": {
     "node": ">=0.12.x"
@@ -37,8 +42,18 @@
   "engineStrict": true,
   "eslintConfig": {
     "parser": "babel-eslint",
+    "globals": {
+      "suite": true,
+      "test": true,
+      "setup": true,
+      "teardown": true,
+      "suiteSetup": true,
+      "suiteTeardown": true
+    },
     "rules": {
+      "strict": false,
       "brace-style": 2,
+      "no-shadow": 0,
       "no-debugger": 1,
       "default-case": 2,
       "comma-dangle": 0,

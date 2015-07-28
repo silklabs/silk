@@ -25,7 +25,9 @@ export default function main (config) {
     app.use(bodyParser.json());
 
     // Install the routes.
-    require('./routes')(app, io, accounts);
+    require('./routes')(app, accounts);
+    // Install the socket.io listeners.
+    require('./socketio')(io);
 
     http.on('error', reject);
     http.listen(app.get('port'), () => {

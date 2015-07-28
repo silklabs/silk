@@ -110,8 +110,19 @@ module.exports = function(app, io, accounts) {
     // re-broadcast log msg to everyone who is listening to logging
     socket.on('log', msg => io.to('logging').emit('log', msg));
     socket.on('audio', msg => io.to('logging').emit('audio', msg));
-    // re-broadcast command msg to every connected node
-    socket.on('cmd', msg => io.sockets.emit('cmd', msg));
+    // re-broadcast command msg to directed node or every connected node
+    socket.on('cmd', msg => {
+      if ('id' in msg) {
+        let room = videoRooms.get(msg.id);
+        if (room) {
+          room.socket.emit('cmd', msg);
+        } else {
+          log.debug(`cmd msg sent to bad device io=${socket.id} id=${msg.id}`);
+        }
+      } else {
+        io.sockets.emit('cmd', msg);
+      }
+    });
 
     function resetDeviceTimeout(id) {
       let room = videoRooms.get(id);
@@ -133,6 +144,7 @@ module.exports = function(app, io, accounts) {
       let room = {
         id: id,
         name: msg.name,
+        socket: socket,
         // TODO: Account for device->server transit time and dynamic network
         //       conditions
         timeOffset: Date.now() - msg.now,

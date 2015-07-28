@@ -5,11 +5,12 @@
 
 import crypto from 'crypto';
 import request from 'request';
-import api from '../../api';
-import createServer from '../../lib/server';
+import api from '../../src/api';
+import createServer from '../../src/server/server';
+import { loadConfig } from '../../src/server/config';
 
-let PORT = 8888;
-export const serverUrl = 'http://localhost:' + PORT;
+let config = loadConfig('test');
+export const serverUrl = 'http://localhost:' + config.server.port;
 
 export function sha256(text) {
   var sha1 = crypto.createHash('sha256');
@@ -84,7 +85,7 @@ export function createDevice() {
 }
 
 export async function setup() {
-  let server = await createServer(PORT).then();
+  let server = await createServer(config).then();
   return { http: server };
 }
 

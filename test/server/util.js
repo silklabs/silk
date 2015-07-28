@@ -4,10 +4,10 @@
 'use strict';
 
 import crypto from 'crypto';
-import request from 'request';
 import api from '../../src/api';
 import createServer from '../../src/server/server';
 import loadConfig from '../../src/server/config';
+import request from 'superagent-promise';
 
 let config = loadConfig('test');
 export const serverUrl = 'http://localhost:' + config.server.port;
@@ -18,19 +18,11 @@ export function sha256(text) {
   return sha1.digest('hex');
 }
 
-function req(params) {
-  return new Promise(function(resolve, reject) {
-    request(params, (err, res, body) => { //eslint-disable-line no-unused-vars
-      if (err) {
-        return reject(err);
-      }
-      return resolve(res);
-    });
+export async function post(path, json) {
+  let req = request.post(`${serverUrl}${path}`).send(json);
+  return await req.end().catch(err => {
+    return err.response;
   });
-}
-
-export function post(res, json) {
-  return req({ uri: serverUrl + res, method: 'POST', json: json });
 }
 
 export function createAccount(email, name, passphrase) {

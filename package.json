@@ -4,8 +4,8 @@
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
-    "postinstall": "./node_modules/.bin/grunt",
-    "prepublish": "./node_modules/.bin/grunt",
+    "postinstall": "grunt",
+    "prepublish": "grunt",
     "start": "DEBUG=silk-*,-*:verbose babel-node src/server/main.js production",
     "test": "DEBUG=silk-* mocha test/**/*.js"
   },

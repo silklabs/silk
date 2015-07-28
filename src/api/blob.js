@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
 import throwError from './fetch_error';
+import fetchJson from './fetch_json';
 
 class BufferToStream extends Readable {
   constructor(buffer) {
@@ -20,30 +21,8 @@ class BufferToStream extends Readable {
 export default function(config) {
   let baseUrl = config.server_url;  //eslint-disable-line
   return {
-    async signedUrl() {
-      let endpoint = `${baseUrl}/blob`;
-      let response = await fetch(endpoint, { method: 'POST' });
-      if (!response.ok) {
-        await throwError(response);
-      }
-      return response.json();
-    },
-
-    async ack(url) {
-      let endpoint = `${baseUrl}/blob/ack`;
-      let response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url })
-      });
-      if (!response.ok) {
-        await throwError(response);
-      }
-      return response.json();
-    },
+    signedUrl: fetchJson.bind(null, `${baseUrl}/blob`),
+    ack: fetchJson.bind(null, `${baseUrl}/blob/ack`),
 
     async upload(putUrl, size, bufferOrStream) {
       let stream;
@@ -67,7 +46,7 @@ export default function(config) {
     async uploadAndAck(size, bufferOrStream) {
       let { putUrl } = await this.signedUrl();
       await this.upload(putUrl, size, bufferOrStream);
-      return await this.ack(putUrl);
+      return await this.ack({ url: putUrl });
     }
   };
 }

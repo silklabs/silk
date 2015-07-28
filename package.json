@@ -17,6 +17,7 @@
     "eslint": "~0.22.1",
     "event-to-promise": "^0.3.3",
     "express": "^4.12.3",
+    "joi": "^6.6.1",
     "localStorage": "^1.0.3",
     "lodash.merge": "^3.3.2",
     "promise": "^6.1.0",

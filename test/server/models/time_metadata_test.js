@@ -11,10 +11,6 @@ suite('time metadata', () => {
     subject = new TimeMetadata(db);
   });
 
-  teardown(async () => {
-    await subject.collection.drop();
-  });
-
   test('.insertNext / findNearTime', async () => {
     let deviceId = 'foo';
     let metaType = 'video';

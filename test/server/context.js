@@ -5,8 +5,9 @@
 
 import crypto from 'crypto';
 import api from '../../src/api';
-import createServer from '../../src/server/server';
 import loadConfig from '../../src/server/config';
+import createServer from '../../src/server/server';
+import createDb from '../../src/server/db';
 import request from 'superagent-promise';
 
 export function sha256(context, text) {
@@ -95,6 +96,7 @@ export default function createContext() {
     let config = loadConfig('test');
     let server = await createServer(config);
 
+    context.db = await createDb(config);
     context.config = config;
     context.server = server;
     context.url = `http://localhost:${server.address().port}`;
@@ -110,7 +112,8 @@ export default function createContext() {
     }
   });
 
-  teardown(() => {
+  teardown(async () => {
+    await context.db.dropDatabase();
     context.server.close();
   });
 

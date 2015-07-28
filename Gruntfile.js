@@ -17,10 +17,11 @@ module.exports = function(grunt) {
       // globs.
       babel: {
         command: function() {
+          // Note we cd into src so src/ is not part of the output directory.
           return [
-            './node_modules/.bin/babel',
-            'src/api/**/*.js',
-            '-d dist'
+            'cd src && ../node_modules/.bin/babel',
+            'api/**/*.js',
+            '-d ../dist'
           ].join(' ');
         }
       }
@@ -36,7 +37,7 @@ module.exports = function(grunt) {
     copy: {
       api: {
         src: 'package.api.json',
-        dest: 'dist/src/api/package.json',
+        dest: 'dist/api/package.json',
       },
     },
 

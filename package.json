@@ -7,7 +7,7 @@
     "postinstall": "grunt",
     "prepublish": "grunt",
     "start": "DEBUG=silk-*,-*:verbose babel-node src/server/main.js production",
-    "test": "DEBUG=silk-* mocha test/**/*.js"
+    "test": "DEBUG=silk-* mocha --recursive"
   },
   "license": "proprietary",
   "dependencies": {

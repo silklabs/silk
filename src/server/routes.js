@@ -1,7 +1,22 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-module.exports = function(app, accounts) {
+module.exports = function(app, accounts, timeMeta) {
+
+  /**
+  Wrapper so express can handle promise returning routes.
+  */
+  function asyncRoute(fn) {
+    return (req, res) => {
+      fn(req, res).catch((err) => {
+        res.status(500).json({
+          // err.stack is nice string output useful for debugging...
+          error: err.stack
+        });
+      });
+    };
+  }
+
   // Disable caching.
   app.use((req, res, next) => {
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -81,15 +96,23 @@ module.exports = function(app, accounts) {
     return res.status(200).json({ session: session });
   });
 
-  app.post('/device/metadata/', (req, res) => {
+  app.post('/device/metadata/', asyncRoute(async (req, res) => {
     // create new metadata.
-  });
+    let result = await timeMeta.insertNext(req.body);
+    res.status(201).send(result);
+  }));
 
-  app.post('/device/metadata/find/byid', (req, res) => {
-    // find by specific id.
-  });
+  app.post('/device/metadata/find/byid', asyncRoute(async (req, res) => {
+    // create new metadata.
+    let result = await timeMeta.findById(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
 
-  app.post('/device/metadata/find/bytime', (req, res) => {
-    // find by a particular time.
-  });
+  app.post('/device/metadata/find/bytime', asyncRoute(async (req, res) => {
+    // create new metadata.
+    let result = await timeMeta.findNearTime(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
 };

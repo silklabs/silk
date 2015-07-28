@@ -15,7 +15,9 @@ const SCHEMA = {
     startUTC: Joi.number().required(),
     endUTC: Joi.number().required(),
     // Blob as url associated with this item.
-    url: Joi.string().required()
+    url: Joi.string().required(),
+    // Optional generic data.
+    data: Joi.object().optional()
   }).required(),
 
   findNearTime: Joi.object().keys({

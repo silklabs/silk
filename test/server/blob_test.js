@@ -1,5 +1,7 @@
 import assert from 'assert';
 import createContext from './context';
+import createBlobApi from '../../src/api/blob';
+import fetch from 'node-fetch';
 
 suite('blob', () => {
 
@@ -15,17 +17,18 @@ suite('blob', () => {
       return;
     }
 
-    test('/blob/ - signing', async () => {
-      let result = await context.post('/blob/');
-      assert.equal(result.status, 201);
-      let { putUrl } = result.body;
-      assert.ok(putUrl.indexOf('localhost') === -1, 'returns s3 url');
+    let blob;
+    setup(() => {
+      blob = createBlobApi({ server_url: context.url });  //eslint-disable-line
+    });
 
-      let ack = await context.post('/blob/ack', {
-        url: putUrl
-      });
-      assert.equal(ack.statusCode, 201);
-      assert.equal(ack.body.url, putUrl.split('?')[0]);
+    test('/blob/ - signing', async () => {
+      let input = 'woot bar';
+      let content = new Buffer(input);
+      let { url } = await blob.uploadAndAck(content.length, content);
+      let response = await fetch(url);
+      let text = await response.text();
+      assert.equal(text, input);
     });
   });
 

@@ -58,6 +58,7 @@ new Promise(resolve => {
 
 let socket = { __iamastub: true, connected: false, disconnect: () => {} };
 let camera;
+let diag;
 
 function emitDeviceInfo() {
   if (socket.connected) {
@@ -74,9 +75,11 @@ function maybeCreateSocket() {
   socket = require('socket.io-client')(api.config.server_url,
                                        {autoConnect: false});
   camera = require('./camera')(id.toString());
+  diag = require('./diag')(id.toString());
 
   socket.on('connect', () => {
     ui.goto('online');
+    diag.start(socket);
     camera.start(socket);
     crashreport.start(socket);
     update.start();
@@ -87,6 +90,7 @@ function maybeCreateSocket() {
     update.stop();
     crashreport.stop();
     camera.stop();
+    diag.stop();
 
     switch (e) {
     case 'io client disconnect':
@@ -118,6 +122,9 @@ function maybeCreateSocket() {
       if (hue) {
         hue.setState(cmd.state);
       }
+      break;
+    case 'diag':
+      diag.setConfig(cmd.config);
       break;
     default:
       log.error('Unhandled command', cmd);

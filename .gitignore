@@ -48,3 +48,6 @@
 .cproject
 .project
 /.settings/
+
+# Mac OSX droppings
+.DS_Store

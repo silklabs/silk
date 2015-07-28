@@ -9,3 +9,5 @@ dist/lib/
 dist/test/
 .DS_Store
 *~
+/config.local.js
+/config.local.json

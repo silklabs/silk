@@ -1,10 +1,14 @@
 LOCAL_PATH:= $(call my-dir)
-JSONCPP_PATH := vendor/silk/gonk/jsoncpp
+ROOT := vendor/silk/gonk
 
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:=        \
-	capture.cpp MPEG4MemoryWriter.cpp MediaCodecSource.cpp ../jsoncpp/jsoncpp.cpp
+	../SocketListener/SocketListener1.cpp \
+	../jsoncpp/jsoncpp.cpp \
+	capture.cpp \
+	MPEG4MemoryWriter.cpp \
+	MediaCodecSource.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 	libstagefright libstagefright_foundation libutils liblog libbinder \
@@ -15,7 +19,8 @@ LOCAL_C_INCLUDES:= \
 	frameworks/av/media/libstagefright/include \
 	$(TOP)/frameworks/native/include/media/openmax \
 	external/jpeg
-LOCAL_C_INCLUDES += $(JSONCPP_PATH)
+LOCAL_C_INCLUDES += $(ROOT)/jsoncpp
+LOCAL_C_INCLUDES += $(ROOT)/SocketListener
 
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0

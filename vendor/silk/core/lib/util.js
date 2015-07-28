@@ -72,3 +72,7 @@ if (require.main === module) {
     () => log.warn('(should not have succeeded'),
     result => log.info('... done failing with code ' + result.code));
 }
+
+export function escape(str) {
+  return JSON.stringify(str);
+}

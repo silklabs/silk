@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include "MPEG4MemoryWriter.h"
 #include <sysutils/FrameworkListener.h>
+#include "SocketListener1.h"
 #include <json/json.h>
 
 extern "C" {
@@ -82,35 +83,27 @@ static int32_t sAudioChannels = 1;
 //
 class CaptureListener;
 
+class Channel: public SocketListener1 {
+public:
+  Channel() :
+    SocketListener1(CAPTURE_DATA_SOCKET_NAME, true) {
+  }
+  void send(int32_t tag, const void *data, size_t size);
+  void send(int32_t tag, timeval &when, const void *data, size_t size);
 
-class Channel {
-  Mutex mLock;
+protected:
+  virtual bool onDataAvailable(SocketClient *c) {
+    return true;
+  };
 
+private:
   void send(const void *data, size_t size);
 
   template <typename T>
   void send(T value) {
-    send(&value, sizeof(T));
+    sendData(&value, sizeof(T));
   }
-public:
-  void send(int32_t tag, const void *data, size_t size);
-  void send(int32_t tag, timeval &when, const void *data, size_t size);
 };
-
-void Channel::send(const void *data, size_t size) {
-  // Write data to stdout
-  const char *ptr = static_cast<const char *>(data);
-  ssize_t remaining = size;
-  while (remaining > 0) {
-    ssize_t written = write(STDOUT_FILENO, ptr, remaining);
-    if (written == -EINTR)
-      continue;
-    CHECK(written >= 0);
-    remaining -= written;
-    ptr += written;
-  }
-  fsync(STDOUT_FILENO);
-}
 
 void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
   if (sDebug) {
@@ -118,12 +111,10 @@ void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
     return;
   }
 
-  Mutex::Autolock autoLock(mLock);
-
   send(int32_t(size));
   send(int32_t(tag));
   send(timeval(when));
-  send(data, size);
+  sendData(data, size);
 }
 
 void Channel::send(int32_t tag, const void *data, size_t size) {
@@ -733,10 +724,11 @@ void FaceDetection::postDataTimestamp(nsecs_t timestamp, int32_t msgType,
  */
 class CaptureCommand: public FrameworkCommand {
 public:
-  CaptureCommand(CaptureListener* captureListener) :
+  CaptureCommand(CaptureListener* captureListener, Channel& channel) :
       FrameworkCommand(CAPTURE_COMMAND_NAME),
       mCaptureListener(captureListener),
-      mHardwareActive(false) {
+      mHardwareActive(false),
+      mChannel(channel) {
   }
 
   virtual ~CaptureCommand() {}
@@ -765,7 +757,9 @@ private:
   sp<ICamera> mRemote;
   sp<ICameraRecordingProxy> mProxy;
   sp<CameraSource> mCameraSource;
+  Channel& mChannel;
 };
+
 
 /**
  * This class provides a wrapper around capture socket to help with
@@ -773,9 +767,9 @@ private:
  */
 class CaptureListener: private FrameworkListener {
 public:
-  CaptureListener() :
+  CaptureListener(Channel& channel) :
       FrameworkListener(CAPTURE_CTL_SOCKET_NAME) {
-    FrameworkListener::registerCmd(new CaptureCommand(this));
+    FrameworkListener::registerCmd(new CaptureCommand(this, channel));
   }
 
   int start() {
@@ -908,8 +902,6 @@ status_t CaptureCommand::initThread() {
   mLooper->setName("capture-looper");
   mLooper->start();
 
-  Channel chan;
-
   // Create a preview surface
   mSCClient = new SurfaceComposerClient();
   if (mSCClient.get() == NULL) {
@@ -934,7 +926,7 @@ status_t CaptureCommand::initThread() {
   mRemote = mCamera->remote();
   mProxy = mCamera->getRecordingProxy();
 
-  FaceDetection faces(&chan);
+  FaceDetection faces(&mChannel);
   mCamera->setListener(&faces);
 
   CHECK(mCamera->setPreviewTarget(mPreviewSurface->getIGraphicBufferProducer()) == 0);
@@ -954,8 +946,8 @@ status_t CaptureCommand::initThread() {
   sp<ProcessState> proc(ProcessState::self());
   ProcessState::self()->startThreadPool();
 
-  mPreview = new PreviewMediaSource(&chan, mCameraSource, sPreviewSkipCount);
-  mMp4 = new SlicedMP4Encoder(mLooper, &chan, mPreview);
+  mPreview = new PreviewMediaSource(&mChannel, mCameraSource, sPreviewSkipCount);
+  mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mPreview);
   mMp4->run();
 
   mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
@@ -1002,12 +994,19 @@ int main(int argc, char **argv) {
   (void) argc;
   (void) argv;
 
-  // Start the server socket and register for commands from camera node module
-  CaptureListener captureListener;
-  int err = captureListener.start();
+  // Start the data socket
+  Channel channel;
+  int err = channel.startListener();
+  if (err < 0) {
+    ALOGE("Failed to start capture data socket listener: %d\n", err);
+    return 1;
+  }
+
+  // Start the control socket and register for commands from camera node module
+  CaptureListener captureListener(channel);
+  err = captureListener.start();
   if (err < 0) {
     ALOGE("Failed to start capture ctl socket listener: %d\n", err);
-
     Value jsonMsg; \
     jsonMsg["eventName"] = "error"; \
     captureListener.sendEvent(jsonMsg); \

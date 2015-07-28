@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+//#define LOG_NDEBUG 0
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -351,5 +353,10 @@ void SocketListener1::sendData(const void *data, int len) {
       ALOGW("Error sending data (%s)", strerror(errno));
     }
     c->decRef();
+    // Release socket client on socket disconnect
+    if (errno == EPIPE) {
+      ALOGW("Socket disconnect; closing");
+      release(c, false);
+    }
   }
 }

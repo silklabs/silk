@@ -1,7 +1,20 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-module.exports = function(app, accounts, timeMeta) {
+module.exports = function(opts) {
+  let {
+    app,
+    accounts,
+    timeMeta,
+    config,
+    blobs
+  } = opts;
+
+  // Eventually we will support multiple blob types via one api but not yet...
+  let blobHandler = blobs[config.server.blobType];
+  if (!blobHandler) {
+    throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
+  }
 
   /**
   Wrapper so express can handle promise returning routes.
@@ -114,5 +127,38 @@ module.exports = function(app, accounts, timeMeta) {
     let result = await timeMeta.findNearTime(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
+  }));
+
+  app.post('/blob/', asyncRoute(async (req, res) => {
+    // Sign a blob upload....
+    let putUrl = await blobHandler.sign();
+    res.status(201).send({ putUrl });
+  }));
+
+  checkArgs('/blob/ack', ['url']);
+  app.post('/blob/ack', asyncRoute(async (req, res) => {
+    // This looks sketchy because it is in the short term we simply snip off the
+    // signature details from our urls if they exist allowing this api to
+    // function (providing a long term url or token for a blob).
+    res.status(201).send({
+      url: req.body.url.split('?')[0]
+    });
+  }));
+
+  app.get('/blob/{id}', asyncRoute(async (req, res) => {
+    // XXX: We will eventually want other blob types to go through this url but
+    // that should not be an issue as client should use the result of /blob/ack
+    // to define their urls not construct them manually.
+    if (config.server.blobType !== 'file') {
+      res.status(501);
+      return;
+    }
+  }));
+
+  app.put('/blob/{id}', asyncRoute(async (req, res) => {
+    if (config.server.blobType !== 'file') {
+      res.status(501);
+      return;
+    }
   }));
 };

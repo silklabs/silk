@@ -2,8 +2,11 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import createDb from './db';
-import TimeMetadata from './models/time_metadata';
 import eventToPromise from 'event-to-promise';
+import createS3Blob from './blobs/s3';
+import createFileBlob from './blobs/file';
+
+import TimeMetadata from './models/time_metadata';
 
 export default async function main (config) {
   let express = require('express');
@@ -29,9 +32,23 @@ export default async function main (config) {
 
   let db = await createDb(config);
   let timeMeta = new TimeMetadata(db);
+  let blobs = {
+    file: await createFileBlob(config)
+  };
+
+  if (config.server.blobType === 's3') {
+    blobs.s3 = await createS3Blob(config);
+  }
 
   // Install the routes.
-  require('./routes')(app, accounts, timeMeta);
+  require('./routes')({
+    app,
+    accounts,
+    timeMeta,
+    config,
+    blobs
+  });
+
   // Install the socket.io listeners.
   require('./socketio')(io);
 

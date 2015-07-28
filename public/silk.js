@@ -70,17 +70,12 @@ function feedPlayer(msg) {
   video.src = mp4;
 }
 
-// Register for logging messages and display them.
 var socket = io(document.location.origin);
 socket.on('connect', function () {
   while (monitors.firstChild) {
     monitors.removeChild(monitors.firstChild);
   }
 
-  socket.emit('join', 'logging');
-  socket.on('log', function (msg) {
-    log(msg);
-  });
   socket.emit('join', 'video-streams');
   socket.on('video-stream-new', function(msg) {
     log('New video stream '+ msg.id);

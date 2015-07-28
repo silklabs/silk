@@ -11,6 +11,7 @@
   },
   "license": "proprietary",
   "dependencies": {
+    "aws-sdk-promise": "0.0.2",
     "body-parser": "^1.12.2",
     "debug": "^2.2.0",
     "elliptic": "^3.0.3",

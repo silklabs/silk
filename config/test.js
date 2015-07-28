@@ -11,6 +11,12 @@ export default {
     port: 0
   },
 
+  blobs: {
+    s3: {
+      bucket: 'silk-blobs-test-us-west-2'
+    }
+  },
+
   // Specify a database in addition to the default connection string...
   db: {
     connectionString: `${defaultConfig.db.connectionString}/silk-app-testing`

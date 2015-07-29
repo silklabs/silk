@@ -188,8 +188,14 @@ class Wifi extends events.EventEmitter
 
   _requestDhcp() {
     log.info('Issuing DHCP request');
-    util.exec('dhcputil', [iface, 'dhcp_request'])
-    .then((result) => {
+    util.exec('dhcputil', [iface, 'dhcp_stop'])
+    .then(result => {
+      if (result.code !== 0) {
+        log.warn(`dhcp_stop failed: ret=${result.code}: ${result.stdout}`);
+      }
+      return util.exec('dhcputil', [iface, 'dhcp_request']);
+    })
+    .then(result => {
       if (result.code !== 0) {
         let err = new Error(result.stdout);
         throw err;

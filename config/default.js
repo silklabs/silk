@@ -17,7 +17,7 @@ export default {
     port: PORT,
 
     // Type of blob to use (see .blobs).
-    blobType: 'file'
+    blobType: process.env.BLOB_TYPE || 'file'
   },
 
   blobs: {

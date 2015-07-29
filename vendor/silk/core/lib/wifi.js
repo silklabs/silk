@@ -166,9 +166,14 @@ class Wifi extends events.EventEmitter
 {
   constructor() {
     super();
+    this.dhcpRetryTimer = null;
   }
 
   _networkCleanup() {
+    if (this.dhcpRetryTimer) {
+      clearTimeout(this.dhcpRetryTimer);
+      this.dhcpRetryTimer = null;
+    }
     return util.exec('dhcputil', [iface, 'dhcp_stop'])
       .then(() => util.exec('ndc', ['network', 'destroy', '100']))
       .then(() => util.exec('ndc', ['interface', 'clearaddr', iface]))
@@ -181,55 +186,66 @@ class Wifi extends events.EventEmitter
       });
   }
 
+  _requestDhcp() {
+    log.info('Issuing DHCP request');
+    util.exec('dhcputil', [iface, 'dhcp_request'])
+    .then((result) => {
+      if (result.code !== 0) {
+        let err = new Error(result.stdout);
+        throw err;
+      }
+
+      // dhcpd provides its output in system properties,
+      let dns = [];
+      for (let i = 1; i <= 4; i++) {
+        let dnsN = util.getprop(`dhcp.${iface}.dns${i}`);
+        if (dnsN) {
+          dns.push(dnsN);
+        }
+      }
+
+      let ipaddress = util.getprop(`dhcp.${iface}.ipaddress`);
+      let mask = util.getprop(`dhcp.${iface}.mask`);
+      let gateway = util.getprop(`dhcp.${iface}.gateway`);
+      let domain = util.getprop(`dhcp.${iface}.domain`);
+      if (domain === '') {
+        domain = 'localdomain';
+      }
+      log.info(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
+               `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
+
+      // Add basic routing table and DNS
+      return Promise.resolve()
+        .then(() => util.exec('ndc', ['network', 'destroy', '100']))
+        .then(() => util.exec('ndc', ['network', 'create', '100']))
+        .then(() => util.exec('ndc', ['network', 'interface', 'add', '100', iface]))
+        .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
+        .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
+        .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
+        .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
+        .catch(util.processthrow);
+    })
+    .then(r => {
+      log.info(`${iface} state| ${r.stdout}`);
+      log.info('==> Wifi online');
+      this._online = true;
+      this.emit('online');
+    })
+    .catch(err => {
+      log.warn(`Error: DHCP request failed: ${err}, retrying...`);
+      this.dhcpRetryTimer = setTimeout(() => {
+        this._requestDhcp();
+        this.dhcpRetryTimer = null;
+      }, 2000);
+    });
+  }
+
   _startWpaMonitor() {
 
     monitor = new WpaMonitor(iface);
     monitor.on('connected', () => {
-      log.info('Wifi Connected. Issuing DHCP request');
-
-      util.exec('dhcputil', [iface, 'dhcp_request'])
-      .then(() => {
-
-        // dhcpd provides its output in system properties,
-        let dns = [];
-        for (let i = 1; i <= 4; i++) {
-          let dnsN = util.getprop(`dhcp.${iface}.dns${i}`);
-          if (dnsN) {
-            dns.push(dnsN);
-          }
-        }
-
-        let ipaddress = util.getprop(`dhcp.${iface}.ipaddress`);
-        let mask = util.getprop(`dhcp.${iface}.mask`);
-        let gateway = util.getprop(`dhcp.${iface}.gateway`);
-        let domain = util.getprop(`dhcp.${iface}.domain`);
-        if (domain === '') {
-          domain = 'localdomain';
-        }
-        log.info(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
-                 `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
-
-        // Add basic routing table and DNS
-        return Promise.resolve()
-          .then(() => util.exec('ndc', ['network', 'destroy', '100']))
-          .then(() => util.exec('ndc', ['network', 'create', '100']))
-          .then(() => util.exec('ndc', ['network', 'interface', 'add', '100', iface]))
-          .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
-          .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
-          .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
-          .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
-          .catch(util.processthrow);
-      })
-      .then(r => {
-        log.info(`${iface} state| ${r.stdout}`);
-        log.info('==> Wifi online');
-        this._online = true;
-        this.emit('online');
-      })
-      .catch(err => {
-        log.warn(`Error: DHCP request failed: ${err}`);
-      });
-
+      log.info('Wifi Connected.');
+      this._requestDhcp();
     });
     monitor.on('disconnected', () => {
       this._networkCleanup();

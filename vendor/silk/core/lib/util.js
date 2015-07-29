@@ -68,7 +68,7 @@ export function setprop(prop, value) {
 }
 
 export function timeout(ms) {
-  return new Promise(resolve => setTimeout(() => resolve(), ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // TODO: find a nodeunit home for me

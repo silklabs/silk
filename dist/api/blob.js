@@ -59,31 +59,39 @@ exports['default'] = function (config) {
     signedUrl: _fetch_json2['default'].bind(null, baseUrl + '/blob'),
     ack: _fetch_json2['default'].bind(null, baseUrl + '/blob/ack'),
 
-    upload: _asyncToGenerator(function* (putUrl, size, bufferOrStream) {
+    upload: _asyncToGenerator(function* (putUrl, size, bufferOrStream, contentType) {
       var stream = undefined;
       if (bufferOrStream instanceof Buffer) {
         bufferOrStream = new BufferToStream(bufferOrStream);
       }
       stream = bufferOrStream;
-      var response = yield (0, _nodeFetch2['default'])(putUrl, {
+      var request = {
         method: 'put',
         body: stream,
         headers: {
           'Content-Length': size
         }
-      });
+      };
+
+      if (contentType) {
+        request.headers['content-type'] = contentType;
+      }
+
+      var response = yield (0, _nodeFetch2['default'])(putUrl, request);
 
       if (!response.ok) {
         yield (0, _fetch_error2['default'])(response);
       }
     }),
 
-    uploadAndAck: _asyncToGenerator(function* (size, bufferOrStream) {
-      var _ref = yield this.signedUrl();
+    uploadAndAck: _asyncToGenerator(function* (size, bufferOrStream, contentType) {
+      var _ref = yield this.signedUrl({
+        contentType: contentType
+      });
 
       var putUrl = _ref.putUrl;
 
-      yield this.upload(putUrl, size, bufferOrStream);
+      yield this.upload(putUrl, size, bufferOrStream, contentType);
       return yield this.ack({ url: putUrl });
     })
   };

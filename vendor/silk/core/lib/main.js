@@ -75,6 +75,9 @@ function maybeCreateSocket() {
   socket = require('socket.io-client')(api.config.server_url,
                                        {autoConnect: false});
   camera = require('./camera')(id.toString());
+  camera.on('error', () => {
+    log.warn('Camera command errored out');
+  });
   diag = require('./diag')(id.toString());
 
   socket.on('connect', () => {

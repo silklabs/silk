@@ -5,16 +5,29 @@
 
 let log = require('./log')('camera');
 import api from 'silk-api';
-import { getprop } from './util';
 import { EventEmitter } from 'events';
+let util = require('./util');
+let net = require('net');
 
 //const FRONT = 1;
 const BACK = 0;
 const DURATION = 1;
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = getprop(UPLOAD_PROP) !== '';
-// Content type must be set to make clients happy later on.
+const UPLOAD_ENABLED = util.getprop(UPLOAD_PROP) !== '';
+//Content type must be set to make clients happy later on.
 const VIDEO_CONTENT_TYPE = 'video/mp4';
+
+//
+// Constants
+//
+const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
+const CAPTURE_DATA_SOCKET_NAME = '/dev/socket/captured';
+const CAPTURE_COMMAND_NAME = 'CaptureCommand';
+
+const HEADER_NR_BYTES = 16;
+const TAG_VIDEO = 0;
+const TAG_PREVIEW = 1;
+const TAG_FACES = 2;
 
 /**
  * Return the raw Buffer of bytes `buf` parsed into array of face
@@ -31,7 +44,7 @@ function rawFaceArrayToFaces(buf) {
   let faces = [ ];
   let faceIndex;
   let a = offset => i32a[faceIndex + offset];
-  for (var i = 0; i < nrFaces; ++i) {
+  for (let i = 0; i < nrFaces; ++i) {
     let face = { };
     faceIndex = i * (SIZEOF_CAMERA_FACE_T / 4);
     face.rect = [ a(0), a(1), a(2), a(3) ];
@@ -80,17 +93,10 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   return face;
 }
 
-
-const HEADER_NR_BYTES = 16;
-// See capture.cpp:46.
-const TAG_VIDEO = 0;
-const TAG_PREVIEW = 1;
-const TAG_FACES = 2;
-
 class VideoUploadQueue extends EventEmitter {
   /**
-  @param {String} id device id.
-  @param {Number} duration in milliseconds.
+  * @param {String} id device id.
+  * @param {Number} duration in milliseconds.
   */
   constructor(id, duration) {
     super();
@@ -236,11 +242,16 @@ class VideoUploadQueue extends EventEmitter {
 
 }
 
-class CameraStream {
+/**
+ * Class that talks to capture service to receive camera frames and send to the
+ * server on the provided server socket
+ */
+class CameraStream extends EventEmitter {
   constructor(id) {
+    super();
     this.id = id;
+    this._ready = false;
     this.faces = [];
-    this.helper = null;
     this.videoUploads = new VideoUploadQueue(this.id, DURATION * 1000);
 
     // Keep track of all face packets we send and upload them along with the
@@ -248,96 +259,182 @@ class CameraStream {
     this.facePackets = [];
   }
 
-  start(socket) {
-    if (this.helper) {
+  _restart(why) {
+    if (!this._ready) {
+      log.info(`camera restart pending (ignored "${why}")`);
       return;
     }
-    var buffer;
-    let launch = () => {
-      let spawn = require('child_process').spawn;
-      let helper = spawn('/system/bin/capture', [
-        // Create i-frames every second, to send one-second video
-        // chunks.
-        '-i', DURATION,
-        // Nominally 720p25 video at 1Mbps vbr.
-        '-w', 1280, '-h', 720, '-f', 25, '-v', 1024,
-        // Emit preview images at 320x180 (i.e. scale down HD720 by
-        // a factor of 4) and emit them nominally 1 per second.
-        '-p', 4, '-k', 25,
-      ]);
-      buffer = new Buffer(0);
-      helper.stdout.on('data', data => {
-        buffer = Buffer.concat([buffer, data]);
-        while (buffer.length >= HEADER_NR_BYTES) {
-          let size = buffer.readInt32LE(0);
-          if (buffer.length < HEADER_NR_BYTES + size) {
-            break;
-          }
-          let tag = buffer.readInt32LE(4);
-          let sec = buffer.readInt32LE(8);   // timeval.tv_sec
-          let usec = buffer.readInt32LE(12); // timeval.tv_usec
-          let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
+    this._ready = false;
+    this._ctlSocket = null;
+    this._dataSocket = null;
 
-          let pkt = buffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
-          switch (tag) {
-          case TAG_PREVIEW:
-            this.pushPreview(when, pkt);
-            break;
-          case TAG_VIDEO:
-            this.pushVideo(when, pkt);
-            break;
-          case TAG_FACES:
-            this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-            this.pushFace(when);
-            break;
-          default:
-            break;
-          }
-          // put the rest of the buffer back
-          let rest = new Buffer(buffer.length - (HEADER_NR_BYTES + size));
-          buffer.copy(rest, 0, HEADER_NR_BYTES + size);
-          buffer = rest;
-        }
-      });
-      helper.on('close', () => {
-        if (this.helper) {
-          launch();
-        }
-      });
-      this.helper = helper;
-      this.socket = socket;
-    };
-    launch();
+    log.info(`camera restart: ${why}`);
+    util.timeout(1000)
+    .then(() => this._init());
   }
 
-  stop() {
-    if (this.helper) {
-      this.helper.kill();
-      this.helper = null;
+  _init(cmdData) {
+    if (this._ready) {
+      log.info(`camera already initialized`);
+      return;
+    }
+
+    // Connecting to data socket
+    this._dataBuffer = new Buffer(0);
+    log.verbose(`connecting to ${CAPTURE_DATA_SOCKET_NAME} socket`);
+    this._dataSocket = net.createConnection(CAPTURE_DATA_SOCKET_NAME, () => {
+      log.verbose(`connected to ${CAPTURE_DATA_SOCKET_NAME} socket`);
+    });
+    this._dataSocket.on('data', data => this._onDataSocketRead(data));
+    this._dataSocket.on('error', err => {
+      this._restart(`camera data socke error, reason=${err}`);
+    });
+    this._dataSocket.on('close', hadError => {
+      if (!hadError) {
+        this._restart(`camera data socket close`);
+      }
+    });
+
+    // Connecting to control socket
+    log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+    this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
+      log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+      this._buffer = '';
+      this._ready = true;
+      this._command({cmdName: 'init', cmdData: cmdData});
+    });
+    this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
+    this._ctlSocket.on('error', err => {
+      this._restart(`camera control socket error, reason=${err}`);
+    });
+    this._ctlSocket.on('close', hadError => {
+      if (!hadError) {
+        this._restart(`camera control socket close`);
+      }
+    });
+  }
+
+  _onCtlSocketRead(data) {
+    log.verbose(`received ctl data: ${data.toString()}`);
+    this._buffer += data.toString();
+
+    let nullByte;
+    while ((nullByte = this._buffer.indexOf('\0')) !== -1) {
+      let line = this._buffer.substring(0, nullByte);
+      this._buffer = this._buffer.substring(nullByte + 1);
+
+      let found;
+      if ((found = line.match(/^([\d]*) (.*)/))) {
+        line = found[2];
+      }
+
+      let captureEvent = JSON.parse(line);
+      if (captureEvent.eventName === 'error') {
+        this.emit('error');
+      } else {
+        log.warn(`Error: Unknown capture command ${line}`);
+      }
     }
   }
 
-  pushPreview(when, frame) {
-    this.pushPacket(when, frame, 'jpeg');
+  _onDataSocketRead(data) {
+    this._dataBuffer = Buffer.concat([this._dataBuffer, data]);
+    while (this._dataBuffer.length >= HEADER_NR_BYTES) {
+      let size = this._dataBuffer.readInt32LE(0);
+      if (this._dataBuffer.length < HEADER_NR_BYTES + size) {
+        break;
+      }
+      let tag = this._dataBuffer.readInt32LE(4);
+      let sec = this._dataBuffer.readInt32LE(8);   // timeval.tv_sec
+      let usec = this._dataBuffer.readInt32LE(12); // timeval.tv_usec
+      let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
+
+      let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
+      switch (tag) {
+        case TAG_PREVIEW:
+          this._pushPreview(when, pkt);
+          break;
+        case TAG_VIDEO:
+          this._pushVideo(when, pkt);
+          break;
+        case TAG_FACES:
+          this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+          this._pushFace(when);
+          break;
+        default:
+          break;
+      }
+      // put the rest of the buffer back
+      let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));
+      this._dataBuffer.copy(rest, 0, HEADER_NR_BYTES + size);
+      this._dataBuffer = rest;
+    }
   }
 
-  pushFace(when) {
-    this.pushPacket(when, null, 'face');
+  _pushPreview(when, frame) {
+    this._pushPacket(when, frame, 'jpeg');
+  }
+
+  _pushFace(when) {
+    this._pushPacket(when, null, 'face');
     this.facePackets.push({ when, face: this.faces });
   }
 
-  pushVideo(when, frame) {
-    this.pushPacket(when, frame, 'mp4');
+  _pushVideo(when, frame) {
+    this._pushPacket(when, frame, 'mp4');
     if (UPLOAD_ENABLED) {
       this.videoUploads.add(when, frame, this.facePackets);
     }
     this.facePackets = [];
   }
 
-  pushPacket(when, frame, type) {
+  _pushPacket(when, frame, type) {
     log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
-    this.socket.emit('video', { id: this.id, faces: this.faces,
-                                frame: frame, contents: type, when: when });
+    this.serverSocket.emit('video', { id: this.id, faces: this.faces,
+                                      frame: frame, contents: type, when: when });
+  }
+
+  _command(cmd) {
+    if (!this._ready) {
+      log.warn(`camera service not ready, ignoring the command`);
+      return;
+    }
+
+    // Camera socket expects the command data in the following format
+    let event = CAPTURE_COMMAND_NAME + ' ' + '\"' + util.escape(JSON.stringify(cmd)) + '\"' + '\0';
+
+    this._ctlSocket.write(event);
+    log.verbose(`camera << ${event}`);
+  }
+
+  ready() {
+    return this._ready;
+  }
+
+  /**
+   * Initialize camera and start sending camera data to the server
+   */
+  start(socket) {
+    this.serverSocket = socket;
+    this._init({
+      frameInterval: DURATION,
+      width: 1280,
+      height: 720,
+      fps: 25,
+      vbr: 1024,
+      previewScale: 4,
+      previewSkipCount: 25
+    });
+  }
+
+  /**
+   * Stop the camera stream
+   */
+  stop() {
+    // Ignore this command for now so that camera is still running and is
+    // receiving the frames that could eventually be buffered and sent to the
+    // server when server comes back online
+    log.info(`command not supported`);
   }
 }
 

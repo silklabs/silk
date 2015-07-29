@@ -1,1 +1,1 @@
-web: node dist/lib/main.js
+web: npm start

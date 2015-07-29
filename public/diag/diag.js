@@ -3,33 +3,30 @@
 
 'use strict';
 
-class Procrank {
-  constructor() {
-    this.procrank = document.getElementById('procrank');
-    this.enableElem = document.getElementById('procrankEnable');
-  }
-  log(msg) {
-    this.procrank.innerText = msg;
-  }
-  clear() {
-    this.procrank.innerText = "";
-  }
-  getEnable() { 
-    return this.enableElem.checked; 
-  }
-}
-var procrank = new Procrank();
+var procrank = new function() {
+  this.procrank = document.getElementById('procrank');
+  this.enableElem = document.getElementById('procrankEnable');
 
-class Logcat {
-  constructor() {
-    this.maxLines = 10000;
-    this.logcat = document.getElementById('logcat');
-    this.enableElem = document.getElementById('logcatEnable');
-    this.pauseUpdate = false;
-    this.newLogs = document.createDocumentFragment();
-    this.updateTimer = null;
-  }
-  log(msg) {
+  this.log = function(msg) {
+    this.procrank.innerText = msg;
+  };
+  this.clear = function() {
+    this.procrank.innerText = "";
+  };
+  this.getEnable = function() { 
+    return this.enableElem.checked; 
+  };
+}
+
+var logcat = new function() {
+  this.maxLines = 10000;
+  this.logcat = document.getElementById('logcat');
+  this.enableElem = document.getElementById('logcatEnable');
+  this.pauseUpdate = false;
+  this.newLogs = document.createDocumentFragment();
+  this.updateTimer = null;
+
+  this.log = function(msg) {
     var frag = this.newLogs;
     msg.split(/\r?\n/).map(function(line) {
       // TODO: need to escape HTML characters
@@ -46,8 +43,8 @@ class Logcat {
         self.updateTimer = null;
       }, 20);
     }
-  }
-  updateView() {
+  },
+  this.updateView = function() {
     if (!this.pauseUpdate) {
       this.logcat.appendChild(this.newLogs);
       this.newLogs = document.createDocumentFragment();
@@ -58,16 +55,15 @@ class Logcat {
       this.logcat.lastChild && this.logcat.lastChild.scrollIntoView();
     }
   }
-  clear() {
+  this.clear = function() {
     while (this.logcat.firstChild) {
       this.logcat.removeChild(this.logcat.firstChild);
     }
   }
-  getEnable() {
+  this.getEnable = function() {
     return this.enableElem.checked;
   }
 }
-var logcat = new Logcat();
 
 var logs = {
   'logcat': logcat,
@@ -98,30 +94,26 @@ document.body.onkeyup = function(event) {
   }
 }
 
-class Cameras {
-  constructor() {
-    this.cameras = document.getElementById('cameras');
-    this.init();
-  }
-  init() {
+var cameras = new function() {
+  this.init = function() {
     this.selected = null;
     while (this.cameras.firstChild) {
       this.cameras.removeChild(this.cameras.firstChild);
     }
     this.add('none', 'None');
     this.updateActive();
-  }
-  add(id, name) {
+  };
+  this.add = function(id, name) {
     var e = document.createElement('option');
     e.value = e.id = id;
     e.innerText = e.name = name;
     this.cameras.appendChild(e);
-  }
-  remove(id) {
+  };
+  this.remove = function(id) {
     var camera = document.getElementById(id);
     camera && this.cameras.removeChild(camera);
-  }
-  updateActive() {
+  };
+  this.updateActive = function() {
     // when swithing to new camera, disable diag from previously selected
     // camera, before enabling diag on newly selected camera
     if (this.selected && this.selected.id !== 'none') {
@@ -134,9 +126,11 @@ class Cameras {
     if (this.selected.id !== 'none') {
       emitLogEnable(this.selected.id, 'update-all');
     }
-  }
+  };
+
+  this.cameras = document.getElementById('cameras');
+  this.init();
 }
-var cameras = new Cameras();
 
 var socket = io(document.location.origin);
 socket.on('connect', function () {

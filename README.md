@@ -235,6 +235,22 @@ Building on Linux is 2x faster, even when running Linux in a VM hosted by OS X. 
 
 TODO: create a docker image that includes all the dependencies needed to setup a Linux machine to build silk-device and link to it here.
 
+### Video uploading
+
+Video and metadata uploading are disabled by default.
+
+To enable uploads:
+```sh
+adb shell setprop persist.silk.vidupload.enabled 1
+adb shell setprop ctl.restart silk
+```
+
+To disable uploads:
+```sh
+adb shell rm /data/property/persist.silk.vidupload.enabled
+adb shell setprop ctl.restart silk
+```
+
 ### OTA Updates
 
 OTA updates are disabled by default.

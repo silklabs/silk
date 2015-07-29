@@ -500,3 +500,33 @@ test('getCiphers works', function (t) {
   t.plan(1)
   t.ok(crypto.getCiphers().length, 'get some ciphers')
 })
+
+test('correctly handle incremental base64 output', function (t) {
+  t.plan(2)
+  var encoding = 'base64'
+  function encrypt (data, key, algorithm) {
+    algorithm = algorithm || 'aes256'
+    var cipher = crypto.createCipher(algorithm, key)
+    var part1 = cipher.update(data, 'utf8', encoding)
+    var part2 = cipher.final(encoding)
+    return part1 + part2
+  }
+  function encryptNode (data, key, algorithm) {
+    algorithm = algorithm || 'aes256'
+    var cipher = _crypto.createCipher(algorithm, key)
+    var part1 = cipher.update(data, 'utf8', encoding)
+    var part2 = cipher.final(encoding)
+    return part1 + part2
+  }
+  function decrypt (data, key, algorithm) {
+    algorithm = algorithm || 'aes256'
+    var decipher = crypto.createDecipher(algorithm, key)
+    return decipher.update(data, encoding, 'utf8') + decipher.final('utf8')
+  }
+  var key = 'this is a very secure key'
+  var data = 'The quick brown fox jumps over the lazy dog.'
+  var encrypted = encrypt(data, key)
+  t.equals(encrypted, encryptNode(data, key), 'encrypt correctly')
+  var decrypted = decrypt(encrypted, key)
+  t.equals(data, decrypted, 'round trips')
+})

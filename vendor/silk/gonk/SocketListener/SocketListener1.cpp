@@ -326,3 +326,30 @@ void SocketListener1::runOnEachSocket(SocketClientCommand *command) {
         c->decRef();
     }
 }
+
+void SocketListener1::sendData(const void *data, int len) {
+  SocketClientCollection safeList;
+
+  /* Add all active clients to the safe list first */
+  safeList.clear();
+  pthread_mutex_lock(&mClientsLock);
+  SocketClientCollection::iterator i;
+
+  for (i = mClients->begin(); i != mClients->end(); ++i) {
+    SocketClient* c = *i;
+    c->incRef();
+    safeList.push_back(c);
+  }
+  pthread_mutex_unlock(&mClientsLock);
+
+  while (!safeList.empty()) {
+    /* Pop the first item from the list */
+    i = safeList.begin();
+    SocketClient* c = *i;
+    safeList.erase(i);
+    if (c->sendData(data, len)) {
+      ALOGW("Error sending data (%s)", strerror(errno));
+    }
+    c->decRef();
+  }
+}

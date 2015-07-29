@@ -42,7 +42,7 @@ public:
     int stopListener();
 
     void sendBroadcast(int code, const char *msg, bool addErrno);
-
+    void sendData(const void *data, int len);
     void runOnEachSocket(SocketClientCommand *command);
 
     bool release(SocketClient *c) { return release(c, true); }

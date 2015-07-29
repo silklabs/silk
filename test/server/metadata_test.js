@@ -1,12 +1,15 @@
 import assert from 'assert';
 import createContext from './context';
+import createMetadataApi from '../../src/api/time_metadata';
 
 suite('metadata apis', () => {
   let context = createContext();
   let id;
+  let api;
   setup(async () => {
     let device = await context.createDevice();
     id = device.toString();
+    api = createMetadataApi({ server_url: context.url }); //eslint-disable-line 
   });
 
   suite('/device/metadata/*', () => {
@@ -30,12 +33,8 @@ suite('metadata apis', () => {
     });
 
     test('find/byid - found', async () => {
-      let findById = await context.post('/device/metadata/find/byid', {
-        id: first.id
-      });
-
-      assert.equal(findById.statusCode, 200, 'found record');
-      assert.deepEqual(findById.body.data, first.data);
+      let findById = await api.findById({ id: first.id });
+      assert.deepEqual(findById.data, first.data);
     });
 
     test('find/byid - missing', async () => {
@@ -67,14 +66,12 @@ suite('metadata apis', () => {
     });
 
     test('find/bytime - found', async () => {
-      let findByTime = await context.post('/device/metadata/find/bytime', {
+      let findByTime = await api.findByTime({
         metaType: first.metaType,
         deviceId: id,
         time: first.endUTC - 2
       });
-
-      assert.equal(findByTime.statusCode, 200);
-      assert.deepEqual(findByTime.body.data, first.data);
+      assert.deepEqual(findByTime.data, first.data);
     });
 
     test('find next', async () => {
@@ -85,8 +82,7 @@ suite('metadata apis', () => {
       });
       delete next.id;
       next.previousId = first.id;
-      let insert = await context.post('/device/metadata/', next);
-      assert.equal(insert.statusCode, 201);
+      await api.create(next);
 
       let findFirst = await context.post('/device/metadata/find/byid', {
         id: first.id

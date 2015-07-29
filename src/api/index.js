@@ -45,7 +45,8 @@ export default {
       };
     },
   },
-  blob: require('./blob')(config)
+  blob: require('./blob')(config),
+  timeMeta: require('./time_metadata')(config)
 };
 
 if (typeof window === 'object') {

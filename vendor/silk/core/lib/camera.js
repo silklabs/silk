@@ -17,9 +17,17 @@ const UPLOAD_ENABLED = util.getprop(UPLOAD_PROP) !== '';
 //Content type must be set to make clients happy later on.
 const VIDEO_CONTENT_TYPE = 'video/mp4';
 
+//
+// Constants
+//
 const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
 const CAPTURE_DATA_SOCKET_NAME = '/dev/socket/captured';
 const CAPTURE_COMMAND_NAME = 'CaptureCommand';
+
+const HEADER_NR_BYTES = 16;
+const TAG_VIDEO = 0;
+const TAG_PREVIEW = 1;
+const TAG_FACES = 2;
 
 /**
  * Return the raw Buffer of bytes `buf` parsed into array of face
@@ -36,7 +44,7 @@ function rawFaceArrayToFaces(buf) {
   let faces = [ ];
   let faceIndex;
   let a = offset => i32a[faceIndex + offset];
-  for (var i = 0; i < nrFaces; ++i) {
+  for (let i = 0; i < nrFaces; ++i) {
     let face = { };
     faceIndex = i * (SIZEOF_CAMERA_FACE_T / 4);
     face.rect = [ a(0), a(1), a(2), a(3) ];
@@ -85,16 +93,10 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   return face;
 }
 
-
-const HEADER_NR_BYTES = 16;
-const TAG_VIDEO = 0;
-const TAG_PREVIEW = 1;
-const TAG_FACES = 2;
-
 class VideoUploadQueue extends EventEmitter {
   /**
-  @param {String} id device id.
-  @param {Number} duration in milliseconds.
+  * @param {String} id device id.
+  * @param {Number} duration in milliseconds.
   */
   constructor(id, duration) {
     super();
@@ -240,6 +242,10 @@ class VideoUploadQueue extends EventEmitter {
 
 }
 
+/**
+ * Class that talks to capture service to receive camera frames and send to the
+ * server on the provided server socket
+ */
 class CameraStream extends EventEmitter {
   constructor(id) {
     super();
@@ -295,7 +301,7 @@ class CameraStream extends EventEmitter {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
-      this.command({cmdName: 'init', cmdData: cmdData});
+      this._command({cmdName: 'init', cmdData: cmdData});
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
     this._ctlSocket.on('error', err => {
@@ -346,14 +352,14 @@ class CameraStream extends EventEmitter {
       let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
       switch (tag) {
         case TAG_PREVIEW:
-          this.pushPreview(when, pkt);
+          this._pushPreview(when, pkt);
           break;
         case TAG_VIDEO:
-          this.pushVideo(when, pkt);
+          this._pushVideo(when, pkt);
           break;
         case TAG_FACES:
           this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-          this.pushFace(when);
+          this._pushFace(when);
           break;
         default:
           break;
@@ -365,23 +371,49 @@ class CameraStream extends EventEmitter {
     }
   }
 
-  ready() {
-    return this._ready;
+  _pushPreview(when, frame) {
+    this._pushPacket(when, frame, 'jpeg');
   }
 
-  command(cmd) {
+  _pushFace(when) {
+    this._pushPacket(when, null, 'face');
+    this.facePackets.push({ when, face: this.faces });
+  }
+
+  _pushVideo(when, frame) {
+    this._pushPacket(when, frame, 'mp4');
+    if (UPLOAD_ENABLED) {
+      this.videoUploads.add(when, frame, this.facePackets);
+    }
+    this.facePackets = [];
+  }
+
+  _pushPacket(when, frame, type) {
+    log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
+    this.serverSocket.emit('video', { id: this.id, faces: this.faces,
+                                      frame: frame, contents: type, when: when });
+  }
+
+  _command(cmd) {
     if (!this._ready) {
       log.warn(`camera service not ready, ignoring the command`);
       return;
     }
 
-    // camera socket expects the command data in the following format
-    var event = CAPTURE_COMMAND_NAME + ' ' + '\"' + util.escape(JSON.stringify(cmd)) + '\"' + '\0';
+    // Camera socket expects the command data in the following format
+    let event = CAPTURE_COMMAND_NAME + ' ' + '\"' + util.escape(JSON.stringify(cmd)) + '\"' + '\0';
 
     this._ctlSocket.write(event);
     log.verbose(`camera << ${event}`);
   }
 
+  ready() {
+    return this._ready;
+  }
+
+  /**
+   * Initialize camera and start sending camera data to the server
+   */
   start(socket) {
     this.serverSocket = socket;
     this._init({
@@ -395,34 +427,14 @@ class CameraStream extends EventEmitter {
     });
   }
 
+  /**
+   * Stop the camera stream
+   */
   stop() {
     // Ignore this command for now so that camera is still running and is
     // receiving the frames that could eventually be buffered and sent to the
     // server when server comes back online
     log.info(`command not supported`);
-  }
-
-  pushPreview(when, frame) {
-    this.pushPacket(when, frame, 'jpeg');
-  }
-
-  pushFace(when) {
-    this.pushPacket(when, null, 'face');
-    this.facePackets.push({ when, face: this.faces });
-  }
-
-  pushVideo(when, frame) {
-    this.pushPacket(when, frame, 'mp4');
-    if (UPLOAD_ENABLED) {
-      this.videoUploads.add(when, frame, this.facePackets);
-    }
-    this.facePackets = [];
-  }
-
-  pushPacket(when, frame, type) {
-    log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
-    this.serverSocket.emit('video', { id: this.id, faces: this.faces,
-                                frame: frame, contents: type, when: when });
   }
 }
 

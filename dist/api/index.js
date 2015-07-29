@@ -2,9 +2,18 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 'use strict';
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 
-module.exports = {
-  config: require('./config'),
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _config = require('./config');
+
+var _config2 = _interopRequireDefault(_config);
+
+exports['default'] = {
+  config: _config2['default'],
   //  crypto: require('./crypto'),
   id: require('./id'),
   // These are the components of the service protocol that must be
@@ -51,10 +60,12 @@ module.exports = {
         }
       };
     }
-  }
-
+  },
+  blob: require('./blob')(_config2['default']),
+  timeMeta: require('./time_metadata')(_config2['default'])
 };
 
 if (typeof window === 'object') {
   window.silk = module.exports; //eslint-disable-line no-undef
 }
+module.exports = exports['default'];

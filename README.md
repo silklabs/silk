@@ -248,7 +248,7 @@ adb shell setprop ctl.restart silk
 To disable uploads:
 ```sh
 adb shell rm /data/property/persist.silk.vidupload.enabled
-adb shell setprop ctl.restart silk
+adb reboot
 ```
 
 ### OTA Updates

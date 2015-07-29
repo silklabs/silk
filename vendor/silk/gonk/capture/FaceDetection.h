@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
 #ifndef FACE_DETECTION_H_
 #define FACE_DETECTION_H_
 

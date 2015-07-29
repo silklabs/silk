@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
 #include "PreviewMediaSource.h"
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/MediaBuffer.h>

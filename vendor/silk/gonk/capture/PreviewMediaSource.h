@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
 #ifndef PREVIEW_MEDIA_SOURCE_H_
 #define PREVIEW_MEDIA_SOURCE_H_
 

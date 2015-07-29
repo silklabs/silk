@@ -24,10 +24,8 @@
 // By default all info(), warn(), and error() output is enabled. All debug()
 // output is disabled.
 export default function createLog(libraryName) {
-  const alog = require('silk-alog');
-  const util = require('util');
-
   let debug = require('debug');
+  let os = require('os');
 
   function formatArgs() {
     let args = arguments;
@@ -57,21 +55,34 @@ export default function createLog(libraryName) {
                ':\\w+(\\u001b\\[0m)?\\s+(.*)');
 
   function makeLogFunction(consoleFuncName, alogFuncName = consoleFuncName) {
-    let func = debug(`${libraryName}:${alogFuncName}`);
-    func.log = function() {
-      let args = arguments;
+    let func;
+    let prefix = `${libraryName}:${alogFuncName}`;
+    if (os.platform() === 'android') {
+      const alog = require('silk-alog');
+      const util = require('util');
 
-      if (!process.env.LOGWRAPPER) {
+      func = debug(prefix);
+      func.log = function() {
+        let args = arguments;
+
+        if (!process.env.LOGWRAPPER) {
+          let consoleFunc = console[consoleFuncName];
+          consoleFunc.apply(consoleFunc, args);
+        }
+
+        // Mimic console.* functions by treating additional arguments as
+        // printf-style arguments.
+        let msg = util.format.apply(this, args);
+        let alogFunc = alog[alogFuncName];
+        alogFunc(libraryName, msg.replace(libraryNameRegExp, '$1$3$2'));
+      };
+    } else {
+      func = function(...args) {
         let consoleFunc = console[consoleFuncName];
-        consoleFunc.apply(consoleFunc, args);
-      }
-
-      // Mimic console.* functions by treating additional arguments as
-      // printf-style arguments.
-      let msg = util.format.apply(this, args);
-      let alogFunc = alog[alogFuncName];
-      alogFunc(libraryName, msg.replace(libraryNameRegExp, '$1$3$2'));
-    };
+        consoleFunc.apply(consoleFunc,
+            [prefix, ':'].concat(args));
+      };
+    }
     return func;
   }
 

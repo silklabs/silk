@@ -376,7 +376,7 @@ class CameraStream extends EventEmitter {
   }
 
   _pushFace(when) {
-    this._pushPacket(when, null, 'face');
+    this._pushPacket(when, null, 'faces');
     this.facePackets.push({ when, face: this.faces });
   }
 

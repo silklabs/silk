@@ -1,6 +1,9 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+
+import * as Joi from 'joi';
+
 module.exports = function(opts) {
   let {
     app,
@@ -42,7 +45,7 @@ module.exports = function(opts) {
   function checkArgs(path, args) {
     app.use(path, (req, res, next) => {
       if (args.some(a => !(a in req.body))) {
-        next('missing argument');
+        next(new Error('Missing fields in body'));
         return;
       }
       next();
@@ -130,13 +133,18 @@ module.exports = function(opts) {
   }));
 
   app.post('/blob/', asyncRoute(async (req, res) => {
+    Joi.assert(req.body, Joi.object().keys({
+      contentType: Joi.string()
+    }).required());
     // Sign a blob upload....
-    let putUrl = await blobHandler.sign();
+    let putUrl = await blobHandler.sign(null, req.body.contentType);
     res.status(201).send({ putUrl });
   }));
 
-  checkArgs('/blob/ack', ['url']);
   app.post('/blob/ack', asyncRoute(async (req, res) => {
+    Joi.assert(req.body, Joi.object().keys({
+      url: Joi.string().required()
+    }).required());
     // This looks sketchy because it is in the short term we simply snip off the
     // signature details from our urls if they exist allowing this api to
     // function (providing a long term url or token for a blob).
@@ -153,8 +161,7 @@ module.exports = function(opts) {
       res.status(501);
       return;
     }
-    await blobHandler.read(req.params.id, res);
-    res.status(200).end();
+    await blobHandler.respond(req.params.id, res);
   }));
 
   app.put('/blob/:id', asyncRoute(async (req, res) => {
@@ -162,7 +169,7 @@ module.exports = function(opts) {
       res.status(501);
       return;
     }
-    await blobHandler.write(req.params.id, req);
+    await blobHandler.write(req.headers, req.params.id, req);
     res.status(201).end();
   }));
 };

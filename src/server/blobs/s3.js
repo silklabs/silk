@@ -7,11 +7,12 @@ class S3Blobs {
     this.bucket = bucket;
   }
 
-  async sign(key) {
+  async sign(key, contentType) {
     key = key || uuid.v4();
     return this.s3.getSignedUrl('putObject', {
       Bucket: this.bucket,
-      Key: key
+      Key: key,
+      ContentType: contentType
     });
   }
 }

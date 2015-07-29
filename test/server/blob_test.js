@@ -27,13 +27,21 @@ suite('blob', () => {
       blob = createBlobApi({ server_url: context.url });  //eslint-disable-line
     });
 
-    test('/blob/ - signing', async () => {
-      let input = 'woot bar';
+    test.only('/blob/ - signing', async () => {
+      let object = { foo: 'bar' };
+      let input = JSON.stringify(object);
       let content = new Buffer(input);
-      let { url } = await blob.uploadAndAck(content.length, content);
+      let { url } = await blob.uploadAndAck(
+        content.length,
+        content,
+        // intentionally just json otherwise we will hit the body parser and
+        // upload will fail.
+        'json'
+      );
       let response = await fetch(url);
       let text = await response.text();
       assert.equal(text, input);
+      assert.equal(response.headers.get('Content-Type'), 'json');
     });
   });
 
@@ -56,10 +64,16 @@ suite('blob', () => {
     });
 
     test('/blob/ - signing', async () => {
-      let input = 'woot bar';
+      let object = { foo: 'bar' };
+      let input = JSON.stringify(object);
       let content = new Buffer(input);
-      let { url } = await blob.uploadAndAck(content.length, content);
+      let { url } = await blob.uploadAndAck(
+        content.length,
+        content,
+        'application/json'
+      );
       let response = await fetch(url);
+      assert.equal(response.headers.get('Content-Type'), 'application/json');
       let text = await response.text();
       assert.equal(text, input);
     });

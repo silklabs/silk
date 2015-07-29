@@ -24,28 +24,36 @@ export default function(config) {
     signedUrl: fetchJson.bind(null, `${baseUrl}/blob`),
     ack: fetchJson.bind(null, `${baseUrl}/blob/ack`),
 
-    async upload(putUrl, size, bufferOrStream) {
+    async upload(putUrl, size, bufferOrStream, contentType) {
       let stream;
       if (bufferOrStream instanceof Buffer) {
         bufferOrStream = new BufferToStream(bufferOrStream);
       }
       stream = bufferOrStream;
-      let response = await fetch(putUrl, {
+      let request = {
         method: 'put',
         body: stream,
         headers: {
           'Content-Length': size
         }
-      });
+      };
+
+      if (contentType) {
+        request.headers['content-type'] = contentType;
+      }
+
+      let response = await fetch(putUrl, request);
 
       if (!response.ok) {
         await throwError(response);
       }
     },
 
-    async uploadAndAck(size, bufferOrStream) {
-      let { putUrl } = await this.signedUrl();
-      await this.upload(putUrl, size, bufferOrStream);
+    async uploadAndAck(size, bufferOrStream, contentType) {
+      let { putUrl } = await this.signedUrl({
+        contentType
+      });
+      await this.upload(putUrl, size, bufferOrStream, contentType);
       return await this.ack({ url: putUrl });
     }
   };

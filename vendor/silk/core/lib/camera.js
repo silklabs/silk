@@ -13,6 +13,8 @@ const BACK = 0;
 const DURATION = 1;
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const UPLOAD_ENABLED = getprop(UPLOAD_PROP) !== '';
+// Content type must be set to make clients happy later on.
+const VIDEO_CONTENT_TYPE = 'video/mp4';
 
 /**
  * Return the raw Buffer of bytes `buf` parsed into array of face
@@ -170,7 +172,7 @@ class VideoUploadQueue extends EventEmitter {
     }
 
     // step 1 is to upload the data...
-    return api.blob.uploadAndAck(frame.length, frame).then((result) => {
+    return api.blob.uploadAndAck(frame.length, frame, VIDEO_CONTENT_TYPE).then((result) => {
       // step 2. upload the metadata...
       metadataPayload.url = result.url;
       return api.timeMeta.create(metadataPayload);

@@ -29,6 +29,10 @@
            path="vendor/silk/core/local_node_modules/bleno"
            remote="github"
            revision="refs/tags/0.1.13" clone-depth="1"/>
+  <project name="mvines/node-ntp-client"
+           path="vendor/silk/core/local_node_modules/ntp-client"
+           remote="github"
+           revision="master" clone-depth="1"/>
   <!--project name="sandeepmistry/noble"
            path="vendor/silk/core/local_node_modules/noble"
            remote="github"

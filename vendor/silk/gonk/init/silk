@@ -15,7 +15,7 @@ if [ ! -x $NODE ]; then
   fi
 fi
 
-NODE_ARGS=
+NODE_ARGS="--harmony"
 if [ "$1" = "--debug-brk" ]; then
   NODE_ARGS="$NODE_ARGS $1"
   shift

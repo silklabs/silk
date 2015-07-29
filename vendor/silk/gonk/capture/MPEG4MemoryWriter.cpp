@@ -570,7 +570,7 @@ status_t MPEG4MemoryWriter::pause() {
 }
 
 void MPEG4MemoryWriter::stopWriterThread() {
-    ALOGD("Stopping writer thread");
+    ALOGV("Stopping writer thread");
     if (!mWriterThreadStarted) {
         return;
     }
@@ -585,7 +585,7 @@ void MPEG4MemoryWriter::stopWriterThread() {
     void *dummy;
     pthread_join(mThread, &dummy);
     mWriterThreadStarted = false;
-    ALOGD("Writer thread stopped");
+    ALOGV("Writer thread stopped");
 }
 
 /*
@@ -1018,12 +1018,12 @@ bool MPEG4MemoryWriter::reachedEOS() {
 }
 
 void MPEG4MemoryWriter::setStartTimestampUs(int64_t timeUs) {
-    ALOGI("setStartTimestampUs: %" PRId64, timeUs);
+    ALOGV("setStartTimestampUs: %" PRId64, timeUs);
     CHECK_GE(timeUs, 0ll);
     Mutex::Autolock autoLock(mLock);
     if (mStartTimestampUs < 0 || mStartTimestampUs > timeUs) {
         mStartTimestampUs = timeUs;
-        ALOGI("Earliest track starting time: %" PRId64, mStartTimestampUs);
+        ALOGV("Earliest track starting time: %" PRId64, mStartTimestampUs);
     }
 }
 
@@ -1273,7 +1273,7 @@ void MPEG4MemoryWriter::writeAllChunks() {
     sendSessionSummary();
 
     mChunkInfos.clear();
-    ALOGD("%zu chunks are written in the last batch", outstandingChunks);
+    ALOGV("%zu chunks are written in the last batch", outstandingChunks);
 }
 
 bool MPEG4MemoryWriter::findChunkToWrite(Chunk *chunk) {
@@ -1450,7 +1450,7 @@ status_t MPEG4MemoryWriter::Track::pause() {
 }
 
 status_t MPEG4MemoryWriter::Track::stop() {
-    ALOGD("%s track stopping", mIsAudio? "Audio": "Video");
+    ALOGV("%s track stopping", mIsAudio? "Audio": "Video");
     if (!mStarted) {
         ALOGE("Stop() called but track is not started");
         return ERROR_END_OF_STREAM;
@@ -1461,15 +1461,15 @@ status_t MPEG4MemoryWriter::Track::stop() {
     }
     mDone = true;
 
-    ALOGD("%s track source stopping", mIsAudio? "Audio": "Video");
+    ALOGV("%s track source stopping", mIsAudio? "Audio": "Video");
     mSource->stop();
-    ALOGD("%s track source stopped", mIsAudio? "Audio": "Video");
+    ALOGV("%s track source stopped", mIsAudio? "Audio": "Video");
 
     void *dummy;
     pthread_join(mThread, &dummy);
     status_t err = static_cast<status_t>(reinterpret_cast<uintptr_t>(dummy));
 
-    ALOGD("%s track stopped", mIsAudio? "Audio": "Video");
+    ALOGV("%s track stopped", mIsAudio? "Audio": "Video");
     return err;
 }
 

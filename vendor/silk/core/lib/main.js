@@ -14,6 +14,7 @@ let ntp = require('./ntp');
 let util = require('./util');
 let update = require('./update');
 let config = require('./config');
+let sensors = require('./sensors');
 
 const id = api.id.create();
 const name = (util.getprop('persist.silk.displayName') || 'Silkcam');
@@ -37,11 +38,15 @@ new Promise(resolve => {
 })
 .then(() => {
   log.info('Initialize hardware');
-  return Promise.all([wifi.init(), btle.init()]);
+  return Promise.all([wifi.init(), btle.init(), sensors.init()]);
 })
 .then(() => {
   log.info('Load configuration');
   return config.init();
+})
+.then(() => {
+  log.info('Activating ambient light sensor');
+  return sensors.activate(sensors.SENSOR_TYPE.LIGHT, 1000);
 })
 .then(() => {
   bootCompleted = true;
@@ -204,6 +209,17 @@ ui.on('key:factoryreset', () => {
   }
 });
 
+// Sensors
+sensors.on('data', sensorEvent => {
+  if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
+    return;
+  }
+
+  if (sensorEvent.values[0] === 0) {
+    // TODO: Turn on flash light when light sensors detects no light
+    log.info('Turning on night mode');
+  }
+});
 
 
 // Force the garbage collector to run regularly to keep the heap on a tight

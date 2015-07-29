@@ -30,6 +30,17 @@ const TAG_PREVIEW = 1;
 const TAG_FACES = 2;
 
 /**
+ * Flash modes as defined in <camera/CameraParameters.cpp>
+ */
+let FLASH_MODE = {
+  OFF: 'off',
+  AUTO: 'auto',
+  ON: 'on',
+  RED_EYE: 'red-eye',
+  TORCH: 'torch'
+};
+
+/**
  * Return the raw Buffer of bytes `buf` parsed into array of face
  * objects with fields named after `camera_face_t` in
  * system/core/include/system/camera.h.
@@ -436,6 +447,14 @@ class CameraStream extends EventEmitter {
     // server when server comes back online
     log.info(`command not supported`);
   }
+
+  /**
+   * Set flash mode as specified by flashMode parameter
+   */
+  flash(flashMode) {
+    this._command({cmdName: 'flash', flashMode: flashMode});
+  }
 }
 
+CameraStream.prototype.FLASH_MODE = FLASH_MODE;
 module.exports = (id) => new CameraStream(id, BACK);

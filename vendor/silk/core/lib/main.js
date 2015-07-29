@@ -210,14 +210,25 @@ ui.on('key:factoryreset', () => {
 });
 
 // Sensors
+let nightModeOn = false;
 sensors.on('data', sensorEvent => {
   if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
     return;
   }
 
-  if (sensorEvent.values[0] === 0) {
-    // TODO: Turn on flash light when light sensors detects no light
+  // Turn on flash when the sensors detect low light
+  if ((sensorEvent.values[0] <= 10) && (!nightModeOn)) {
     log.info('Turning on night mode');
+    nightModeOn = true;
+    if (camera) {
+      camera.flash(camera.FLASH_MODE.TORCH);
+    }
+  } else if ((sensorEvent.values[0] > 10) && (nightModeOn)) {
+    log.info('Turning off night mode');
+    nightModeOn = false;
+    if (camera) {
+      camera.flash(camera.FLASH_MODE.OFF);
+    }
   }
 });
 

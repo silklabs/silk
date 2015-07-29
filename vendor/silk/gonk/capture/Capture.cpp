@@ -104,6 +104,7 @@ public:
 private:
   int capture_init(Value& cmdData);
   int capture_cleanup();
+  int capture_flash(Value& flashMode);
   static void* initThreadWrapper(void* me);
   status_t initThread();
 
@@ -183,6 +184,8 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     capture_init(cmdJson["cmdData"]);
   } else if (cmdName == "stop") {
     capture_cleanup();
+  } else if (cmdName == "flash") {
+    capture_flash(cmdJson["flashMode"]);
   } else {
     LOG_ERROR(true, "Invalid command %s", cmdName.c_str());
   }
@@ -200,6 +203,8 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (mHardwareActive) {
     return 0;
   }
+
+  LOG_ERROR((cmdData.isNull()), "init command data is null");
 
   if (!cmdData["width"].isNull()) {
     sVideoSize.width = cmdData["width"].asInt();
@@ -354,6 +359,20 @@ int CaptureCommand::capture_cleanup() {
     }
   }
   mHardwareActive = false;
+  return 0;
+}
+
+/**
+ * Set flash mode as specified by flashMode parameter
+ */
+int CaptureCommand::capture_flash(Value& flashMode) {
+  LOG_ERROR((flashMode.isNull()), "flashMode not specified");
+
+  ALOGD("Turn flash mode: %s", flashMode.asCString());
+  CameraParameters params = mCamera->getParameters();
+  params.set(CameraParameters::KEY_FLASH_MODE, flashMode.asCString());
+  mCamera->setParameters(params.flatten());
+
   return 0;
 }
 

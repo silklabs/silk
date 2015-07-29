@@ -37,7 +37,7 @@ public class NSDataBridge {
     objSync(self) {
       self.blobs[id] = blob
       result["id"] = id;
-      result["type"] = "NSData"
+      result["__native_type"] = "NSData"
     }
     return result
   }

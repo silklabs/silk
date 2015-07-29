@@ -1,5 +1,7 @@
 import Foundation
 
+internal typealias JSONObj = Dictionary<String, AnyObject>
+
 @objc(ReactSocketIO)
 class ReactSocketIO : NSObject {
   // We implictly recieve a bridge by being registered as an exported module.
@@ -28,13 +30,13 @@ class ReactSocketIO : NSObject {
 
       // XXX: We use the original socket.io name which may conflict if for reason
       // we used both.
-      var body: Dictionary<String, AnyObject> = [
+      var body: JSONObj = [
         "name": event.event,
         "items": []
       ]
 
       if let items = event.items {
-        body["items"] = items
+        body["items"] = TypeTransfer.convert(items)
       }
 
       self.bridge.eventDispatcher.sendDeviceEventWithName("socketEvent", body: body)

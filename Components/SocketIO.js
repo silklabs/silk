@@ -7,6 +7,56 @@ let {
 import EventEmitter from 'EventEmitter';
 
 let SocketIONative = NativeModules.SocketIO;
+let NativeBlobBridge = NativeModules.BlobBridge;
+
+class NativeBlob {
+  constructor(data) {
+    this.data = data;
+  }
+
+  release() {
+    NativeBlobBridge.release(this.data.id);
+  }
+
+  toJSON() {
+    return this.data;
+  }
+}
+
+/**
+Construct one of our custom types given the name of the type and a payload.
+*/
+function createNativeType(type, payload) {
+  switch (type) {
+    case 'NSData':
+      return new NativeBlob(payload)
+    default:
+      throw new Error(`Unknown custom native type: ${type}`)
+  }
+}
+
+/**
+Helper to convert specialized native types.
+*/
+function convertTypes(items) {
+  if (Array.isArray(items)) {
+    return items.map(convertTypes);
+  }
+
+  if (items && typeof items === 'object') {
+    if (items['__native_type']) {
+      return createNativeType(items['__native_type'], items);
+    }
+
+    let result = {};
+    for (var key in items) {
+      result[key] = convertTypes(items[key]);
+    }
+    return result;
+  }
+
+  return items;
+}
 
 /*
 Our custom implementation of the react-native-socket.io interface. The API
@@ -24,7 +74,7 @@ export default class extends EventEmitter {
 
   handleEvent(event) {
     let items = event.items || []
-    super.emit(event.name, items);
+    super.emit(event.name, ...convertTypes(items));
   }
 
   /**

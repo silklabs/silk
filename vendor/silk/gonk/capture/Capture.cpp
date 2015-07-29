@@ -52,9 +52,7 @@ int32_t sAudioChannels = 1;
   do { \
     if (expression) { \
       ALOGE(__VA_ARGS__); \
-      Value jsonMsg; \
-      jsonMsg["eventName"] = "error"; \
-      mCaptureListener->sendEvent(jsonMsg); \
+      notifyCameraEvent("error"); \
       return 1; \
     } \
   } while(0)
@@ -107,6 +105,7 @@ private:
   int capture_flash(Value& flashMode);
   static void* initThreadWrapper(void* me);
   status_t initThread();
+  void notifyCameraEvent(const char* eventName);
 
   CaptureListener* mCaptureListener;
   Reader mJsonReader;
@@ -201,6 +200,7 @@ int CaptureCommand::capture_init(Value& cmdData) {
 
   // Check if hardware is already initialized
   if (mHardwareActive) {
+    notifyCameraEvent("initialized");
     return 0;
   }
 
@@ -322,6 +322,8 @@ status_t CaptureCommand::initThread() {
 
   mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
 
+  // Notify node that camera is initialized
+  notifyCameraEvent("initialized");
   mHardwareActive = true;
 
   // Block this thread while camera is running
@@ -359,6 +361,8 @@ int CaptureCommand::capture_cleanup() {
     }
   }
   mHardwareActive = false;
+  notifyCameraEvent("stopped");
+
   return 0;
 }
 
@@ -367,6 +371,7 @@ int CaptureCommand::capture_cleanup() {
  */
 int CaptureCommand::capture_flash(Value& flashMode) {
   LOG_ERROR((flashMode.isNull()), "flashMode not specified");
+  LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
 
   ALOGD("Turn flash mode: %s", flashMode.asCString());
   CameraParameters params = mCamera->getParameters();
@@ -374,6 +379,15 @@ int CaptureCommand::capture_flash(Value& flashMode) {
   mCamera->setParameters(params.flatten());
 
   return 0;
+}
+
+/**
+ * Notify camera node module of the requested event specified by eventName
+ */
+void CaptureCommand::notifyCameraEvent(const char* eventName) {
+  Value jsonMsg;
+  jsonMsg["eventName"] = eventName;
+  mCaptureListener->sendEvent(jsonMsg);
 }
 
 /**

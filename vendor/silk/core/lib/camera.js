@@ -342,6 +342,10 @@ class CameraStream extends EventEmitter {
       let captureEvent = JSON.parse(line);
       if (captureEvent.eventName === 'error') {
         this.emit('error');
+      } else if (captureEvent.eventName === 'initialized') {
+        this.emit('start');
+      } else if (captureEvent.eventName === 'stopped') {
+        this.emit('stop');
       } else {
         log.warn(`Error: Unknown capture command ${line}`);
       }

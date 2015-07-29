@@ -6,9 +6,13 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES:=        \
 	../SocketListener/SocketListener1.cpp \
 	../jsoncpp/jsoncpp.cpp \
-	capture.cpp \
+	Capture.cpp \
+	Channel.cpp \
+	FaceDetection.cpp \
 	MPEG4MemoryWriter.cpp \
 	MediaCodecSource.cpp \
+	PreviewMediaSource.cpp \
+	SlicedMP4Encoder.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 	libstagefright libstagefright_foundation libutils liblog libbinder \

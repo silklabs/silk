@@ -2,6 +2,28 @@
 
 This is the main silk server.
 
+## Install
+
+You need the following:
+
+  - node 0.12
+  - mongodb
+
+### Installing mongodb
+
+On OSX:
+
+```sh
+brew install mongodb
+# ... follow instructions
+```
+
+On Linux:
+
+It's usually a mongodb package or mongodb-server package.
+
+## Usage
+
 To translate the source files:
 ```bash
 npm install
@@ -12,7 +34,12 @@ To run the test suite:
 npm test
 ```
 
-## Test locally
+Run single test file:
+```bash
+./node_modules/.bin/mocha <test>
+```
+
+### Test locally
 
 The following command starts a silk server on localhost:5000 (by default):
 ```

@@ -3,6 +3,9 @@
 
 'use strict';
 
+// This file can be run on device as a normal module, or standalone via |node|
+// as a way to register a Hue light bridge connected to the local network.
+// Stand alone mode is detected by testing "weOwnTty".
 let weOwnTty = (require.main === module);
 
 let hue = require('node-hue-api');
@@ -20,13 +23,11 @@ class LightsHue {
     // before we're configured, we simply stick the deferred operation
     // onto the end of this initPromise chain.  See |_applyHueState()|
     // below for an example of this technique.
-    //
-    // TODO: if this setup fails, initPromise will acculumate
-    // completion-callbacks ad infinitum.  We need to surface the
-    // error to the user and ignore the calls that will fail somehow.
+    log.info('Searching for bridges');
     this.initPromise = hue.nupnpSearch().then(bridges => {
       log.info('Found ' + bridges.length + ' bridge(s)');
       this.bridge = bridges[0];
+      log.info(`IP address of first bridge: ${this.bridge.ipaddress}`);
       this.api = new hue.HueApi(this.bridge.ipaddress, this.user);
       return this.api.config();
     }).then(config => {
@@ -35,37 +36,35 @@ class LightsHue {
         log.warn('ERROR: hub not configured for user ' + this.user);
         log.warn('ERROR:   To configure the hub, run this file directly');
         log.warn('ERROR:   on your host machine, for example as:');
-        log.warn('ERROR:   $ node out/target/product/generic/obj/DATA/core.js_intermediates/dist/lib/lights.js');
+        log.warn('ERROR:   $ node dist/lib/hue.js');
         return Promise.reject('Hub not configured');
       }
       let registrationPromise = (userIsRegistered ?
                                  Promise.resolve() : this._register());
-      return registrationPromise.then(() => this.api.lights());
+      return registrationPromise
+      .then(() => this.api.lights())
+      .catch(err => Promise.reject(err));
     }).then(result => {
       this.lights = result.lights;
       log.info('Found ' + this.lights.length + ' attached lights');
       this.initPromise = null;
+    })
+    .catch(err => {
+      log.info('Error initializing LightsHue:', err);
+      throw err;
     });
   }
 
   _register() {
-    log.info('User not registered.');
-    log.info('\n\n  *****  Go press the "Link" button!\n\n\n');
-    let prompt = require('prompt');
-    prompt.start();
+    log.info('\n\n  *****  Please press and hold the "Link" button on the bridge!\n\n\n');
     return new Promise((resolve, reject) => {
-      prompt.get(["Press Enter when you've finished."],
-                 err => {
-                   if (err) {
-                     return reject(err);
-                   }
-                   return this.api.registerUser(this.bridge.ipaddress,
-                                                this.user, 'Test user')
-                   .then(() => {
-                     log.info('Created user');
-                     return this.api.config();
-                   }).then(() => resolve());
-                 });
+      return this.api.registerUser(this.bridge.ipaddress,
+                                   this.user, 'Test user')
+      .then(() => {
+        log.info('Created user');
+        return this.api.config();
+      }).then(() => resolve())
+      .catch(err => reject(err));
     });
   }
 

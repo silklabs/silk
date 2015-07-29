@@ -6,7 +6,6 @@
 let api = require('silk-api');
 let btle = require('./btle');
 let crashreport = require('./crashreport');
-let hue = require('./hue')();
 let ui = require('./ui');
 let log = require('./log')('main');
 let vib = require('./vibrator')();
@@ -59,6 +58,7 @@ new Promise(resolve => {
 let socket = { __iamastub: true, connected: false, disconnect: () => {} };
 let camera;
 let diag;
+let hue;
 
 function emitDeviceInfo() {
   if (socket.connected) {
@@ -83,6 +83,9 @@ function maybeCreateSocket() {
     camera.start(socket);
     crashreport.start(socket);
     update.start();
+    if (!hue) {
+      hue = require('./hue')();
+    }
     emitDeviceInfo();
   });
   socket.on('disconnect', e => {

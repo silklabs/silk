@@ -2,9 +2,10 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 'use strict';
+import config from './config';
 
-module.exports = {
-  config: require('./config'),
+export default {
+  config,
 //  crypto: require('./crypto'),
   id: require('./id'),
   // These are the components of the service protocol that must be
@@ -44,7 +45,8 @@ module.exports = {
       };
     },
   },
-
+  blob: require('./blob')(config),
+  timeMeta: require('./time_metadata')(config)
 };
 
 if (typeof window === 'object') {

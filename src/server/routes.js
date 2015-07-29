@@ -1,10 +1,35 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-'use strict';
-let log = require('./log')('routes');
+module.exports = function(opts) {
+  let {
+    app,
+    accounts,
+    timeMeta,
+    config,
+    blobs
+  } = opts;
 
-module.exports = function(app, io, accounts) {
+  // Eventually we will support multiple blob types via one api but not yet...
+  let blobHandler = blobs[config.server.blobType];
+  if (!blobHandler) {
+    throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
+  }
+
+  /**
+  Wrapper so express can handle promise returning routes.
+  */
+  function asyncRoute(fn) {
+    return (req, res) => {
+      fn(req, res).catch((err) => {
+        res.status(500).json({
+          // err.stack is nice string output useful for debugging...
+          error: err.stack
+        });
+      });
+    };
+  }
+
   // Disable caching.
   app.use((req, res, next) => {
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -84,115 +109,60 @@ module.exports = function(app, io, accounts) {
     return res.status(200).json({ session: session });
   });
 
-  // Real time event stream.
-  const VIDEO_IDLE_TIMEOUT_MS = 5000;
-  let videoRooms = new Map();
-  let roomInfo = room => ({ id: room.id, name: room.name });
-  io.on('connection', socket => {
-    log.debug(`New connection. io=${socket.id}`);
-    socket.on('join', room => {
-      log.debug(`Join room. io=${socket.id} room=${room}`);
-      socket.join(room);
-      if ('video-streams' === room) {
-        for (let [id, videoRoom] of videoRooms) { //eslint-disable-line no-unused-vars
-          socket.emit('video-stream-new', roomInfo(videoRoom));
-        }
-      }
-    });
-    socket.on('error', err => {
-      log.error(`Client socket error: io=${socket.id} ${err}`);
-      // TODO: Do something more here?
-    });
-    socket.on('leave', room => {
-      log.debug(`Leave room. io=${socket.id} room=${room}`);
-      socket.leave(room);
-    });
-    // re-broadcast log msg to everyone who is listening to logging
-    socket.on('log', msg => io.to('logging').emit('log', msg));
-    socket.on('audio', msg => io.to('logging').emit('audio', msg));
-    // re-broadcast command msg to directed node or every connected node
-    socket.on('cmd', msg => {
-      if ('id' in msg) {
-        let room = videoRooms.get(msg.id);
-        if (room) {
-          room.socket.emit('cmd', msg);
-        } else {
-          log.debug(`cmd msg sent to bad device io=${socket.id} id=${msg.id}`);
-        }
-      } else {
-        io.sockets.emit('cmd', msg);
-      }
-    });
+  app.post('/device/metadata/', asyncRoute(async (req, res) => {
+    // create new metadata.
+    let result = await timeMeta.insertNext(req.body);
+    res.status(201).send(result);
+  }));
 
-    function resetDeviceTimeout(id) {
-      let room = videoRooms.get(id);
-      if (room.timeout) {
-        clearTimeout(room.timeout);
-      }
+  app.post('/device/metadata/find/byid', asyncRoute(async (req, res) => {
+    // create new metadata.
+    let result = await timeMeta.findById(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
 
-      room.timeout = setTimeout(() => {
-        io.to('video-streams').emit('video-stream-delete', roomInfo(room));
-        log.debug(`Device packet timeout. Deleting id=${id}`);
-        videoRooms.delete(id);
-      }, VIDEO_IDLE_TIMEOUT_MS);
+  app.post('/device/metadata/find/bytime', asyncRoute(async (req, res) => {
+    // create new metadata.
+    let result = await timeMeta.findNearTime(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
+
+  app.post('/blob/', asyncRoute(async (req, res) => {
+    // Sign a blob upload....
+    let putUrl = await blobHandler.sign();
+    res.status(201).send({ putUrl });
+  }));
+
+  checkArgs('/blob/ack', ['url']);
+  app.post('/blob/ack', asyncRoute(async (req, res) => {
+    // This looks sketchy because it is in the short term we simply snip off the
+    // signature details from our urls if they exist allowing this api to
+    // function (providing a long term url or token for a blob).
+    res.status(201).send({
+      url: req.body.url.split('?')[0]
+    });
+  }));
+
+  app.get('/blob/:id', asyncRoute(async (req, res) => {
+    // XXX: We will eventually want other blob types to go through this url but
+    // that should not be an issue as client should use the result of /blob/ack
+    // to define their urls not construct them manually.
+    if (config.server.blobType !== 'file') {
+      res.status(501);
+      return;
     }
+    await blobHandler.read(req.params.id, res);
+    res.status(200).end();
+  }));
 
-    // Device info
-    socket.on('info', msg => {
-      let id = msg.id;
-      let newRoom = !videoRooms.has(id);
-      let room = {
-        id: id,
-        name: msg.name,
-        socket: socket,
-        // TODO: Account for device->server transit time and dynamic network
-        //       conditions
-        timeOffset: Date.now() - msg.now,
-      };
-
-      if (newRoom) {
-        videoRooms.set(id, room);
-        io.to('video-streams').emit('video-stream-new', roomInfo(room));
-      }
-
-      log.info(`Device info. io=${socket.id} name=${room.name} ` +
-                `timeOffset=${room.timeOffset}ms id=${id} new=${newRoom}`);
-      resetDeviceTimeout(id);
-    });
-
-    // Video streams
-    socket.on('video', msg => {
-      let id = msg.id;
-      let room = videoRooms.get(id);
-
-      if (!room) {
-        log.error(`Disconnecting bad client ("info" packet expected first): ` +
-                  `io=${socket.id} id=${id}`);
-        socket.disconnect();
-        return;
-      }
-
-      log.verbose(`io=${socket.id} packet:${msg.contents} ` +
-                  `lag=${Date.now() - msg.when - room.timeOffset}ms`);
-
-      resetDeviceTimeout(id);
-      switch (msg.contents) {
-      case 'jpeg':
-        // Send preview frames to a special video-preview- room, to
-        // allow clients to watch preview streams for multiple videos
-        // without having to consume full-bitrate video streams from
-        // all cameras.
-        //
-        // TODO: send preview chunks to the main 'video-streams' room
-        // to simplify clients.
-        io.to('video-preview-' + id).emit('video-preview-' + id, msg);
-        break;
-      default:
-        // Send all other packets (mp4 chunks and detected-face-data
-        // only updates) to the dedicated video channel.
-        io.to('video-' + id).emit('video-' + id, msg);
-        break;
-      }
-    });
-  });
+  app.put('/blob/:id', asyncRoute(async (req, res) => {
+    if (config.server.blobType !== 'file') {
+      res.status(501);
+      return;
+    }
+    await blobHandler.write(req.params.id, req);
+    res.status(201).end();
+  }));
 };

@@ -2,12 +2,13 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import * as util from './util';
+import createContext from './context';
 import eventToPromise from 'event-to-promise';
 import { EventEmitter } from 'events';
 import createSocketIO from 'socket.io-client';
 
 suite('unsecured video', () => {
+  let context = createContext();
 
   function consumeEvents(emitter, event, count = 1) {
     // XXX: This never will error out so is only safe in test enviornment
@@ -52,22 +53,17 @@ suite('unsecured video', () => {
     assertSameBuffer(msg.frame, frame);
   }
 
-  let context, socket, videoEvents;
+  let socket, videoEvents;
   setup(async () => {
     videoEvents = new EventEmitter();
-    context = await util.setup();
 
-    socket = createSocketIO(util.serverUrl);
+    socket = createSocketIO(context.url);
     // Ensure we are connected to socket first...
     await eventToPromise(socket, 'connect');
     socket.on('video-stream-new', (msg) => {
       videoEvents.emit('new', msg);
     });
     socket.emit('join', 'video-streams');
-  });
-
-  teardown(() => {
-    util.finish(context);
   });
 
   test('room echoing /w interleaved communication', async () => {
@@ -79,7 +75,7 @@ suite('unsecured video', () => {
 
     // validate the set of rooms...
     let rooms = ['test1', 'test2'];
-    let newSocket = createSocketIO(util.serverUrl, {
+    let newSocket = createSocketIO(context.url, {
       multiplex: false
     });
 

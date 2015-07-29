@@ -2,12 +2,26 @@
 Configuration profile used in tests.
 */
 
+import defaultConfig from './default';
+
 export default {
   server: {
-    // XXX: This should be using 0 and then passing back the on-demand port
-    // instead.
-    port: 8888
+    // Test profiles start the server themselves and can find out which port
+    // it started on so it is both safe and sane to use 0 (find an open port).
+    port: 0
   },
+
+  blobs: {
+    s3: {
+      bucket: 'silk-blobs-test-us-west-2'
+    }
+  },
+
+  // Specify a database in addition to the default connection string...
+  db: {
+    connectionString: `${defaultConfig.db.connectionString}/silk-app-testing`
+  },
+
   testing: {
     value: true
   }

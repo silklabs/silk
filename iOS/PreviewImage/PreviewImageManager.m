@@ -3,5 +3,5 @@
 #import "RCTViewManager.h"
 
 @interface RCT_EXTERN_MODULE(PreviewImageManager, RCTViewManager)
-RCT_EXPORT_VIEW_PROPERTY(stream, NSString)
+RCT_EXPORT_VIEW_PROPERTY(blob, NSData)
 @end

@@ -43,35 +43,33 @@ let SENSOR_TYPE = {
 };
 
 /**
+ * This module exposes functionality to activate/deactivate and read sensors
+ * data from various sensors avaialble on the device.
  *
+ * The sensor data is returned as a JSON object in the following format
+ *   sensorType: One of the SENSOR_TYPE.* constants
+ *   values: Sensor data as returned by the hardware sensor. The length and
+ *           contents of the values array depends on which sensor type is being
+ *           monitored.
  */
-class SensorsMonitor extends events.EventEmitter {
+class Sensors extends events.EventEmitter {
   constructor() {
     super();
     this._ready = false;
-    this._init();
+    this._pollInterval = null;
+    this._active = false;
   }
 
-  _restart(why) {
-    if (this._socket) {
-      this._ready = false;
-      this._socket = null;
-
-      log.info(`sensors restart: ${why}`);
-      util.timeout(1000)
-      .then(() => this._init());
-      return;
-    }
-    log.info(`sensors restart pending (ignored "${why}")`);
-  }
-
-  _init() {
+  /**
+   * Initialize the {@code Sensors} module
+   */
+  init() {
     log.verbose(`connecting to ${SENSORS_SOCKET_NAME} socket`);
     this._socket = net.createConnection(SENSORS_SOCKET_NAME, () => {
       log.verbose(`connected to ${SENSORS_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
-      this.command('ready');
+      this._command('ready');
     });
     this._socket.on('data', data => this._onData(data));
     this._socket.on('error', err => {
@@ -82,6 +80,46 @@ class SensorsMonitor extends events.EventEmitter {
         this._restart(`sensors close`);
       }
     });
+  }
+
+  /**
+   * Activate a given sensor
+   *
+   * @param sensorType string SENSOR_TYPE.* constant
+   * @param rate int sensor polling rate in milliseconds
+   */
+  activate(sensorType, rate) {
+    this._pollRate = rate;
+    this._active = true;
+    this._command('activate ' + sensorType + ' ' + rate);
+  }
+
+  /**
+   * Dectivate a given sensor
+   *
+   * @param sensorType string SENSOR_TYPE.* constant
+   */
+  deactivate(sensorType) {
+    // Stop polling sensor data
+    if (this._pollInterval) {
+      clearTimeout(this._pollInterval);
+    }
+
+    this._active = false;
+    this._command('deactivate ' + sensorType);
+  }
+
+  _restart(why) {
+    if (this._socket) {
+      this._ready = false;
+      this._socket = null;
+
+      log.info(`sensors restart: ${why}`);
+      util.timeout(1000)
+      .then(() => this.init());
+      return;
+    }
+    log.info(`sensors restart pending (ignored "${why}")`);
   }
 
   _onData(data) {
@@ -100,22 +138,24 @@ class SensorsMonitor extends events.EventEmitter {
 
       let sensorEvent = JSON.parse(line);
       if (sensorEvent.eventName === 'initialized') {
-        this.emit('initialized');
+        this.emit('initialize');
       } else if (sensorEvent.eventName === 'activated') {
-        this.emit('activated');
+        this.emit('activate');
+        this._poll();
       } else if (sensorEvent.eventName === 'deactivated') {
-        this.emit('deactivated');
+        this.emit('deactivate');
       } else if (sensorEvent.eventName === 'error') {
         this.emit('error');
       } else if (sensorEvent.eventName === 'data') {
         this.emit('data', sensorEvent);
+        this._poll();
       } else {
         log.warn(`Error: Unknown sensors command ${line}`);
       }
     }
   }
 
-  command(cmd) {
+  _command(cmd) {
     if (!this._ready) {
       log.warn(`sensors service not ready, ignoring the command`);
       return;
@@ -127,95 +167,16 @@ class SensorsMonitor extends events.EventEmitter {
     this._socket.write(event);
     log.verbose(`sensors << ${cmd}`);
   }
-}
 
-/**
- * This module exposes functionality to activate/deactivate and read sensors
- * data from various sensors avaialble on the device.
- *
- * The sensor data is returned as a JSON object in the following format
- *   sensorType: One of the SENSOR_TYPE.* constants
- *   values: Sensor data as returned by the hardware sensor. The length and
- *           contents of the values array depends on which sensor type is being
- *           monitored.
- */
-class Sensors extends events.EventEmitter {
-  constructor() {
-    super();
-    this._pollInterval = null;
-  }
-
-  /**
-   * Initialize the {@code Sensors} module
-   */
-  init() {
-    this._monitor = new SensorsMonitor();
-    return new Promise((resolve, reject) => {
-      this._monitor.on('initialized', () => {
-        resolve();
-      });
-      this._monitor.on('error', () => {
-        reject(new Error('Failed to initialize sensors hardware'));
-      });
-    });
-  }
-
-  _poll(rate) {
-    this._monitor.command('poll');
-    this._monitor.on('data', (sensor, data) => {
-      this.emit('data', sensor, data);
-      if (this._pollInterval) {
-        clearTimeout(this._pollInterval);
-        this._pollInterval = setTimeout(() => this._poll(rate), rate);
-        this._monitor.removeAllListeners('data');
-      }
-    });
-  }
-
-  /**
-   * Activates a given sensor
-   *
-   * @param sensorType string SENSOR_TYPE.* constant
-   * @param rate int sensor polling rate in milliseconds
-   * @return Promise that resolved when the sensor is activated
-   */
-  activate(sensorType, rate) {
-    this._monitor.command('activate ' + sensorType + ' ' + rate);
-    return new Promise((resolve, reject) => {
-      this._monitor.on('activated', () => {
-        // Start polling
-        if (this._pollInterval) {
-          clearTimeout(this._pollInterval);
-        }
-        this._pollInterval = setTimeout(() => this._poll(rate), rate);
-        resolve();
-      });
-      this._monitor.on('error', () => {
-        reject(new Error('Failed to activate sensor'));
-      });
-    });
-  }
-
-  /**
-   * Dectivates a given sensor
-   *
-   * @param sensorType string SENSOR_TYPE.* constant
-   * @return Promise that resolved when the sensor is deactivated
-   */
-  deactivate(sensorType) {
-    // Stop polling sensor data
+  _poll() {
     if (this._pollInterval) {
       clearTimeout(this._pollInterval);
       this._pollInterval = null;
     }
-
-    this._monitor.command('deactivate ' + sensorType);
-    return new Promise((resolve, reject) => {
-      this._monitor.on('deactivated', resolve);
-      this._monitor.on('error', () => {
-        reject(new Error('Failed to deactivate sensor'));
-      });
-    });
+    if (this._active) {
+      this._pollInterval = setTimeout(() => this._command('poll'),
+                                      this._pollRate);
+    }
   }
 }
 

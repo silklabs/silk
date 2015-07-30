@@ -1,0 +1,5 @@
+#import "RCTBridgeModule.h"
+
+@interface RCT_EXTERN_REMAP_MODULE(BlobBridge, BlobBridge, NSObject)
+RCT_EXTERN_METHOD(release:value(NSString*))
+@end

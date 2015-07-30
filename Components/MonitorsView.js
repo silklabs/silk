@@ -49,7 +49,7 @@ var MonitorsView = React.createClass({
                           this.dm.removeListener(ev, this.refreshDeviceList));
     this.socket.close();
   },
-  
+
   render: function() {
     var configuring = Object.keys(this.state.configuring).map(key => {
       var device = this.state.configuring[key];
@@ -58,7 +58,8 @@ var MonitorsView = React.createClass({
     });
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
-      return (<MonitorPreview key={key} vid={key} label={device.name}
+      return (<MonitorPreview key={key} id={key} label={device.name}
+                              socket={this.socket}
                               navigator={this.props.navigator}
                               serverUrl={this.state.serverUrl} />);
     });
@@ -86,7 +87,7 @@ var MonitorsView = React.createClass({
           <ScrollView style={styles.monitors}>
             {configuring}
             {streaming}
-          </ScrollView>  
+          </ScrollView>
         </View>
       </View>
     );
@@ -111,20 +112,18 @@ var MonitorsView = React.createClass({
       console.log(' ... connected');
       this.state.serverConnection = 'connected';
       this.setState(this.state);
-      this.socket.on('video-stream-new', msga => {
-        var msg = msga[0];
+      this.socket.on('video-stream-new', msg => {
         this.state.streaming[msg.id] = { name: msg.name };
         this.setState(this.state);
       });
-      this.socket.on('video-stream-delete', msga => {
-        var msg = msga[0];
+      this.socket.on('video-stream-delete', msg => {
         delete this.state.streaming[msg.id];
         this.setState(this.state);
       });
       this.socket.emit('join', 'video-streams');
     });
   },
-  
+
   loadSettings: function() {
     return (() => {
       if (this.state.network) {

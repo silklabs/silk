@@ -17,10 +17,7 @@ export default class extends React.Component {
 
   render() {
     let nativeProps = Object.assign({}, this.props, {
-      ref: RCT_NATIVE_REF,
-      style: {
-        flex: 1
-      }
+      ref: RCT_NATIVE_REF
     });
 
     return (

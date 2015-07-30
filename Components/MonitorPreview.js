@@ -1,12 +1,11 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-'use strict';
-
 import React from 'react-native';
 import LiveVideo from './LiveVideo'
 import PreviewImage from './PreviewImage'
 import MonitorFullscreen from './MonitorFullscreen'
+import FaceBoxes from './FaceBoxes';
 
 var {
   Image,
@@ -21,9 +20,18 @@ var PREVIEW_WIDTH = 305;
 var PREVIEW_HEIGHT = 170;
 
 var MonitorPreview = React.createClass({
+  propTypes: {
+    id: React.PropTypes.string.isRequired,
+    label: React.PropTypes.string.isRequired,
+    serverUrl: React.PropTypes.string.isRequired,
+    navigator: React.PropTypes.object.isRequired,
+    socket: React.PropTypes.object.isRequired
+  },
+
   getInitialState() {
     return {
-      showVideo: false
+      showVideo: false,
+      faces: []
     }
   },
 
@@ -35,9 +43,39 @@ var MonitorPreview = React.createClass({
     this.setState({ showVideo: false })
   },
 
+  onPreviewFrame(message) {
+    this.setState({
+      blob: message.frame,
+      faces: message.faces || []
+    });
+  },
+
+  componentWillMount() {
+    let { socket, id } = this.props;
+    let stream = `video-preview-${id}`;
+    socket.on(stream, this.onPreviewFrame);
+    socket.emit('join', stream);
+  },
+
+  componentWillUnmount() {
+    let { socket, id } = this.props;
+    let stream = `video-preview-${id}`;
+    socket.off(stream, this.onPreviewFrame);
+    socket.emit('leave', stream);
+  },
+
   render() {
-    var vid = this.props.vid;
-    var fullscreen = this.state.showVideo;
+    let id = this.props.id;
+    let fullscreen = this.state.showVideo;
+    let faces;
+    if (this.state.faces.length) {
+      faces = (
+        <FaceBoxes
+          width={PREVIEW_WIDTH}
+          height={PREVIEW_HEIGHT}
+          faces={this.state.faces} />
+      );
+    }
 
     return (
       <TouchableOpacity onPress={this.showVideo}>
@@ -45,28 +83,18 @@ var MonitorPreview = React.createClass({
           <MonitorFullscreen
             onClose={this.onVideoHidden}
             presented={fullscreen}
-            vid={vid} />
+            vid={id} />
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>
-          <MonitorPreviewStream vid={this.props.vid}
-                                serverUrl={this.props.serverUrl}/>
+          <View style={styles.monitorPreviewContainer}>
+            <PreviewImage style={styles.preview} blob={this.state.blob} />
+            <View style={styles.monitorPreviewOverlay}>
+              {faces}
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
-    );
-  }
-});
-
-// This will become a native-backed (or initially, WebView-backed)
-// widget that streams video in small format.
-var MonitorPreviewStream = React.createClass({
-  render: function() {
-    // TODO: scrollEnabled={false}
-    let stream = `video-preview-${this.props.vid}`
-    return (
-      <View style={styles.monitorPreview}>
-        <PreviewImage stream={stream} />
-      </View>
     );
   }
 });
@@ -98,9 +126,23 @@ var styles = StyleSheet.create({
     textAlign: 'left',
   },
 
-  monitorPreview: {
+  monitorPreviewContainer: {
     width: PREVIEW_WIDTH,
-    height: PREVIEW_HEIGHT
+    height: PREVIEW_HEIGHT,
+    backgroundColor: 'white',
+    flex: 1
+  },
+
+  preview: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+
+  monitorPreviewOverlay: {
+    backgroundColor: 'transparent'
   },
 });
 

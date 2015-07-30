@@ -387,25 +387,27 @@ class CameraStream extends EventEmitter {
   }
 
   _pushPreview(when, frame) {
-    this._pushPacket(when, frame, 'jpeg');
+    this._pushPacket(when, frame, this.faces, 'jpeg');
   }
 
   _pushFace(when) {
-    this._pushPacket(when, null, 'faces');
+    this._pushPacket(when, null, this.faces, 'faces');
     this.facePackets.push({ when, faces: this.faces });
   }
 
   _pushVideo(when, frame) {
-    this._pushPacket(when, frame, 'mp4');
+    // For video we group all related face packets to make it easier on the
+    // client.
+    this._pushPacket(when, frame, this.facePackets, 'mp4');
     if (UPLOAD_ENABLED) {
       this.videoUploads.add(when, frame, this.facePackets);
     }
     this.facePackets = [];
   }
 
-  _pushPacket(when, frame, type) {
+  _pushPacket(when, frame, faces, type) {
     log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
-    this.serverSocket.emit('video', { id: this.id, faces: this.faces,
+    this.serverSocket.emit('video', { id: this.id, faces: faces,
                                       frame: frame, contents: type, when: when });
   }
 

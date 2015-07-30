@@ -14,9 +14,12 @@ let ntp = require('./ntp');
 let util = require('./util');
 let update = require('./update');
 let config = require('./config');
+let sensors = require('./sensors');
 
 const id = api.id.create();
 const name = (util.getprop('persist.silk.displayName') || 'Silkcam');
+const LOW_LIGHT_SI_LUX = 5; // light sensor value in SI lux units
+const LIGHT_SENSOR_POLL_INTERVAL_MS = 1000;
 
 //
 // Initialization...
@@ -37,7 +40,7 @@ new Promise(resolve => {
 })
 .then(() => {
   log.info('Initialize hardware');
-  return Promise.all([wifi.init(), btle.init()]);
+  return Promise.all([wifi.init(), btle.init(), sensors.init()]);
 })
 .then(() => {
   log.info('Load configuration');
@@ -49,7 +52,6 @@ new Promise(resolve => {
 .catch(e => {
   util.processthrow(`Fatal initialization error: ${e}`);
 });
-
 
 //
 // State observers
@@ -72,14 +74,18 @@ function maybeCreateSocket() {
     return;
   }
 
-  socket = require('socket.io-client')(api.config.server_url,
-                                       {autoConnect: false});
   camera = require('./camera')(id.toString());
   camera.on('error', () => {
     log.warn('Camera command errored out');
   });
+  camera.on('start', () => sensors.activate(sensors.SENSOR_TYPE.LIGHT,
+                                            LIGHT_SENSOR_POLL_INTERVAL_MS));
+  camera.on('stop', () => sensors.deactivate(sensors.SENSOR_TYPE.LIGHT));
+
   diag = require('./diag')(id.toString());
 
+  socket = require('socket.io-client')(api.config.server_url,
+      {autoConnect: false});
   socket.on('connect', () => {
     ui.goto('online');
     diag.start(socket);
@@ -178,7 +184,6 @@ update.on('apply', () => {
   }
 });
 
-
 // UI...
 ui.on('key:setup', () => {
   if (bootCompleted) {
@@ -204,7 +209,26 @@ ui.on('key:factoryreset', () => {
   }
 });
 
+//
+//Sensors service
+//
+let nightModeOn = false;
+sensors.on('data', sensorEvent => {
+  if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
+    return;
+  }
 
+  //Turn on flash when the sensors detect low light
+  if ((sensorEvent.values[0] <= LOW_LIGHT_SI_LUX) && (!nightModeOn)) {
+    log.info(`Turning on night mode`);
+    nightModeOn = true;
+    camera.flash(camera.FLASH_MODE.TORCH);
+  } else if ((sensorEvent.values[0] > LOW_LIGHT_SI_LUX) && (nightModeOn)) {
+    log.info(`Turning off night mode`);
+    nightModeOn = false;
+    camera.flash(camera.FLASH_MODE.OFF);
+  }
+});
 
 // Force the garbage collector to run regularly to keep the heap on a tight
 // leash

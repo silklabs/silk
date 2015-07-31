@@ -42,8 +42,7 @@ after_script:
   - ccache -s
 
 notifications:
-  email:
-    - engineering@silklabs.com
+  slack: silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
 
 before_deploy:
   - source build/envsetup.sh && ./gonk/archive.sh mako dist

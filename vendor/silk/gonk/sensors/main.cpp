@@ -54,7 +54,6 @@ public:
       FrameworkCommand(SENSORS_COMMAND_NAME),
       mSensorsListener(sensorsListener),
       mDevice(NULL),
-      mModule(NULL),
       mSensorsList(NULL),
       mSensorListCount(0) {
   }
@@ -64,13 +63,11 @@ public:
 
 private:
   int sensors_init();
-  int sensors_cleanup();
   int sensors_activate(int sensorType, int activate, int rate);
   int sensors_poll();
 
   SensorsListener* mSensorsListener;
   struct sensors_poll_device_t* mDevice;
-  struct sensors_module_t* mModule;
   struct sensor_t const* mSensorsList;
   int mSensorListCount;
 };
@@ -140,71 +137,45 @@ int SensorsCommand::runCommand(SocketClient *c, int argc, char ** argv) {
  * Initialize sensors HAL
  */
 int SensorsCommand::sensors_init() {
-  // Cleanup sensors if initialized already
-  sensors_cleanup();
 
-  int err = hw_get_module(SENSORS_HARDWARE_MODULE_ID,
-      (hw_module_t const**) &mModule);
-  LOG_ERROR((err < 0), "hw_get_module() failed (%s)", strerror(-err));
+  if (mDevice == NULL) {
+    struct sensors_module_t *mModule = NULL;
+    int err = hw_get_module(SENSORS_HARDWARE_MODULE_ID,
+        (hw_module_t const**) &mModule);
+    LOG_ERROR((err < 0), "hw_get_module() failed (%s)", strerror(-err));
 
-  err = sensors_open(&mModule->common, &mDevice);
-  LOG_ERROR((err != 0), "sensors_open() failed (%s)", strerror(-err));
+    err = sensors_open(&mModule->common, &mDevice);
+    LOG_ERROR((err != 0), "sensors_open() failed (%s)", strerror(-err));
 
-  mSensorListCount = mModule->get_sensors_list(mModule, &mSensorsList);
-  ALOGD("%d sensors found:\n", mSensorListCount);
+    mSensorListCount = mModule->get_sensors_list(mModule, &mSensorsList);
+    ALOGD("%d sensors found:\n", mSensorListCount);
+    for (int i = 0; i < mSensorListCount; i++) {
+      ALOGV("%s\n"
+            "\tvendor: %s\n"
+            "\tversion: %d\n"
+            "\thandle: %d\n"
+            "\ttype: %d\n"
+            "\tmaxRange: %f\n"
+            "\tresolution: %f\n"
+            "\tpower: %f mA\n",
+          mSensorsList[i].name, mSensorsList[i].vendor,
+          mSensorsList[i].version, mSensorsList[i].handle,
+          mSensorsList[i].type, mSensorsList[i].maxRange,
+          mSensorsList[i].resolution, mSensorsList[i].power);
+    }
+  }
+
+  // Deactivate all the sensors
   for (int i = 0; i < mSensorListCount; i++) {
-    ALOGV("%s\n"
-        "\tvendor: %s\n"
-        "\tversion: %d\n"
-        "\thandle: %d\n"
-        "\ttype: %d\n"
-        "\tmaxRange: %f\n"
-        "\tresolution: %f\n"
-        "\tpower: %f mA\n", mSensorsList[i].name, mSensorsList[i].vendor, mSensorsList[i].version,
-        mSensorsList[i].handle, mSensorsList[i].type, mSensorsList[i].maxRange, mSensorsList[i].resolution,
-        mSensorsList[i].power);
+    int err = mDevice->activate(mDevice, mSensorsList[i].handle, 0);
+    if (err != 0) {
+      ALOGE("deactivate(%s) failed: %d", mSensorsList[i].name, err);
+    }
   }
 
   Json::Value jsonMsg;
   jsonMsg["eventName"] = "initialized";
   mSensorsListener->sendEvent(jsonMsg);
-  return 0;
-}
-
-/**
- * Clean up sensors HAL
- */
-int SensorsCommand::sensors_cleanup() {
-  ALOGV("sensors cleanup");
-  int err = 0;
-
-  if (!mModule || !mDevice) {
-    return 0;
-  }
-
-  // Deactivate all the sensors
-  for (int i = 0; i < mSensorListCount; i++) {
-    err = mDevice->activate(mDevice, mSensorsList[i].handle, 0);
-    if (err != 0) {
-      ALOGE("deactivate() for '%s'failed (%s)", mSensorsList[i].name,
-          strerror(-err));
-      return 1;
-    }
-  }
-
-  // Close sensors module
-  err = sensors_close(mDevice);
-  if (err != 0) {
-    ALOGE("sensors_close() failed (%s)", strerror(-err));
-    return 1;
-  }
-  mDevice = NULL;
-
-  // Close hardware module
-  free(mModule);
-  mModule = NULL;
-  mSensorsList = NULL;
-
   return 0;
 }
 

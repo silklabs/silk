@@ -88,6 +88,13 @@ class OverlayModal : RCTView {
 
   func show(callback: RCTResponseSenderBlock) {
     let controller = self.getRootController()
+
+    // Do not attempt to show the controller if it is already displaying...
+    if controller.presentedViewController == self.overlayController {
+      callback([])
+      return
+    }
+
     controller.presentViewController(self.overlayController!, animated: false, completion: {
       () in
       callback([])

@@ -111,6 +111,9 @@ The default gonk environment is 'base', which is a minimal environment for
 building just the Silk userspace components.  This setup requires a configured
 device (only Mako at the moment, maybe the emulator soon) to work against.
 
+IMPORTANT: The full Mako image is not currently supported on OS X.  Use a Linux
+VM instead.  Instructions for setting up your VM are at https://github.com/silklabs/silk-device/wiki/Prerequisites--for-full-Mako-build
+
 It's also possible to build a full Mako device image from the tree as well:
 
 ```
@@ -149,9 +152,9 @@ cp *.patch ../../gonk/base/patch/external/node
 
 Builds and tests run on travis-ci.  See current status [here](https://magnum.travis-ci.com/silklabs/silk-device), and also in pull requests that you open.
 
-Travis-ci builds run on linux, Ubuntu 12.04 amd64 machines.  If a build burns only there, you'll usually want to start diagnosing by reproducing on a VM image with similar config:
-
-https://drive.google.com/a/silklabs.net/folderview?id=0B5U_FixPxut_flpZT2ZuOWV6U3ExZUVwMEZqdGZzazcyNHRSU2pJRWJHRFRYQ0dCSEQ2aXM&usp=sharing
+Travis-ci builds run on linux, Ubuntu 12.04 amd64 machines.  If a build burns
+only there (very rare), you'll usually want to start diagnosing by reproducing in your Linux
+VM image.
 
 ## Emacs setup
 
@@ -233,7 +236,6 @@ again)
 
 Building on Linux is 2x faster, even when running Linux in a VM hosted by OS X.  Travis CI builds your PR on Linux to boot.
 
-TODO: create a docker image that includes all the dependencies needed to setup a Linux machine to build silk-device and link to it here.
 
 ### Video uploading
 

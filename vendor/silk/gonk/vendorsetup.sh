@@ -1,6 +1,10 @@
 export USE_CCACHE=1 # Yes please!
 export CCACHE_HASHDIR=true
 
+if [ $(uname) = "Linux" ]; then
+# Avoid the nightmare of 32-bit compatibility libraries
+export BUILD_HOST_64bit=1
+fi
 
 poison_their_lunch()
 {

@@ -8,14 +8,14 @@ class LiveVideoManager:  RCTViewManager {
     ]
   }
 
-  @objc func destroy(reactTag: NSNumber) {
+  @objc func append(reactTag: NSNumber, data: NSData, when: NSNumber, faces: AnyObject) {
     self.aquireView(reactTag) {
       view in
       if let currentView = view as? LiveVideo {
-        currentView.destroy()
+        let faceList = FaceEvent.fromJSONList(faces)
+        currentView.append(data, when: when, faces: faceList)
       }
     }
-
   }
 
   override func view() -> UIView! {

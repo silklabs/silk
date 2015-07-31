@@ -83,7 +83,8 @@ var MonitorPreview = React.createClass({
           <MonitorFullscreen
             onClose={this.onVideoHidden}
             presented={fullscreen}
-            vid={id} />
+            socket={this.props.socket}
+            id={id} />
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>

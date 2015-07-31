@@ -30,6 +30,10 @@ var _fetch_json = require('./fetch_json');
 
 var _fetch_json2 = _interopRequireDefault(_fetch_json);
 
+var _url = require('url');
+
+var _url2 = _interopRequireDefault(_url);
+
 var BufferToStream = (function (_Readable) {
   _inherits(BufferToStream, _Readable);
 
@@ -56,8 +60,8 @@ var BufferToStream = (function (_Readable) {
 exports['default'] = function (config) {
   var baseUrl = config.server_url; //eslint-disable-line
   return {
-    signedUrl: _fetch_json2['default'].bind(null, baseUrl + '/blob'),
-    ack: _fetch_json2['default'].bind(null, baseUrl + '/blob/ack'),
+    signedUrl: _fetch_json2['default'].bind(null, _url2['default'].resolve(baseUrl, 'blob')),
+    ack: _fetch_json2['default'].bind(null, _url2['default'].resolve(baseUrl, 'blob/ack')),
 
     upload: _asyncToGenerator(function* (putUrl, size, bufferOrStream, contentType) {
       var stream = undefined;

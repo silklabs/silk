@@ -2,6 +2,7 @@ import uuid from 'uuid';
 import path from 'path';
 import fs from 'mz/fs';
 import eventToPromise from 'event-to-promise';
+import url from 'url';
 
 function waitForPipe(writer) {
   return Promise.race([
@@ -20,7 +21,7 @@ class FileBlobs {
 
   async sign(key) {
     key = key || uuid.v4();
-    return `${this.config.server.publicUrl}/blob/${key}`;
+    return url.resolve(this.config.server.publicUrl, `blob/${key}`);
   }
 
   async write(headers, key, reader) {

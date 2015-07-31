@@ -4,10 +4,13 @@
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
-    "postinstall": "grunt",
-    "prepublish": "grunt",
+    "postinstall": "./build.sh",
+    "prepublish": "./build.sh",
+    "build": "./build.sh",
+    "lint": "eslint test src",
+    "mocha": "DEBUG=silk-* mocha --recursive",
     "start": "DEBUG=silk-*,-*:verbose babel-node --harmony src/server/main.js production",
-    "test": "DEBUG=silk-* mocha --harmony --recursive"
+    "test": "npm run-script lint && npm run-script mocha"
   },
   "license": "proprietary",
   "dependencies": {
@@ -29,18 +32,13 @@
     "superagent": "^1.2.0",
     "superagent-promise": "^0.2.0",
     "uuid": "^2.0.1",
-    "uuid": "^2.0.1",
     "babel": "^5.8.9",
     "babel-eslint": "~3.1.15",
-    "grunt": "^0.4.5",
-    "grunt-browserify": "^3.8.0",
-    "grunt-cli": "^0.1.13",
-    "grunt-contrib-copy": "^0.8.0",
-    "grunt-contrib-nodeunit": "^0.4.1",
-    "grunt-eslint": "~14.0.0",
-    "grunt-shell": "^1.1.2",
     "mz": "^2.0.0",
-    "load-grunt-tasks": "^3.1.0"
+    "babel-runtime": "^5.8.20",
+    "babelify": "^6.1.3",
+    "browserify": "^11.0.1",
+    "eslint": "^0.22.1"
   },
   "devDependencies": {
     "mocha": "^2.2.5"

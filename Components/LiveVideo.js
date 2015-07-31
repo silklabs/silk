@@ -27,8 +27,8 @@ export default React.createClass({
     return React.findNodeHandle(this.refs[RCT_NATIVE_REF]);
   },
 
-  destroy() {
-    return LiveVideoManager.destroy(this.getNativeHandle());
+  append(data, when, faces) {
+    return LiveVideoManager.append(this.getNativeHandle(), data, when, faces);
   },
 
   render() {

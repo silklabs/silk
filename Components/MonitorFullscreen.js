@@ -21,7 +21,7 @@ let {
 /**
 Safeguard if faces does not get a new value within this time reset to no faces.
 */
-let FACE_DISAPPEAR = 50;
+const FACE_DISAPPEAR = 50;
 
 export default React.createClass({
   mixins: [TimerMixin],
@@ -40,8 +40,28 @@ export default React.createClass({
     }
   },
 
+  onVideoFrame(message) {
+    if (message.contents !== 'mp4') {
+      return
+    }
+    let video = this.refs.video
+    video.append(message.frame, message.when, message.faces);
+  },
+
   onShowStart() {
     StatusBarIOS.setHidden(true, 'slide');
+
+    let { socket, id } = this.props;
+    let stream = `video-${id}`;
+    socket.on(stream, this.onVideoFrame);
+    socket.emit('join', stream);
+  },
+
+  onDismissStart() {
+    let { socket, id } = this.props;
+    let stream = `video-${id}`;
+    socket.off(stream, this.onVideoFrame);
+    socket.emit('leave', stream);
   },
 
   onDismissEnd() {
@@ -49,7 +69,7 @@ export default React.createClass({
   },
 
   onFaces(event) {
-    let facesArray = event.nativeEvent.faces.faces;
+    let facesArray = event.nativeEvent.faces;
     this.clearTimeout(this.facesTimer);
     this.setState({ faces: facesArray });
 
@@ -67,7 +87,7 @@ export default React.createClass({
   },
 
   render: function() {
-    var videoStream = this.props.vid;
+    var videoStream = this.props.id;
     let { width, height } = getLandscapeDimensions();
 
     let faces;
@@ -98,6 +118,7 @@ export default React.createClass({
     return (
       <OverlayModal ref="overlay"
                     onShowStart={this.onShowStart}
+                    onDismissStart={this.onDismissStart}
                     onDismissEnd={this.onDismissEnd}
                     presented={this.props.presented}>
 
@@ -107,8 +128,7 @@ export default React.createClass({
               onFaces={this.onFaces}
               onTimeChange={this.onTimeChange}
               style={styles.video}
-              videoStream={videoStream}
-              ref='video' />
+              ref="video" />
             <View style={[styles.videoOverlay, { width, height }]}>
               {currentTime}
               {lag}
@@ -125,8 +145,6 @@ export default React.createClass({
     var overlay = this.refs.overlay;
     var video = this.refs.video;
 
-    // XXX: This is a hack the video should clean itself up.
-    video.destroy()
     // Signal dismissal of the view (but let it animate closed)
     overlay.dismiss().then(() => {
       // After the animation allow any parent views to cleanup..

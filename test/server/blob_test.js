@@ -27,7 +27,7 @@ suite('blob', () => {
       blob = createBlobApi({ server_url: context.url });  //eslint-disable-line
     });
 
-    test.only('/blob/ - signing', async () => {
+    test('/blob/ - signing', async () => {
       let object = { foo: 'bar' };
       let input = JSON.stringify(object);
       let content = new Buffer(input);

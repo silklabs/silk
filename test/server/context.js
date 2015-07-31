@@ -4,12 +4,13 @@
 'use strict';
 
 import crypto from 'crypto';
-import api from '../../src/api';
 import loadConfig from '../../src/server/config';
 import createServer from '../../src/server/server';
 import createDb from '../../src/server/db';
 import request from 'superagent-promise';
 import merge from 'lodash.merge';
+
+let api = require('../../src/api')();
 
 export function sha256(context, text) {
   var sha1 = crypto.createHash('sha256');

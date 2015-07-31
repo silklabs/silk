@@ -24,7 +24,7 @@ suite('blob', () => {
 
     let blob;
     setup(() => {
-      blob = createBlobApi({ server_url: context.url });  //eslint-disable-line
+      blob = createBlobApi({ serverUrl: context.url });  //eslint-disable-line
     });
 
     test('/blob/ - signing', async () => {
@@ -60,7 +60,7 @@ suite('blob', () => {
 
     let blob;
     setup(() => {
-      blob = createBlobApi({ server_url: context.url });  //eslint-disable-line
+      blob = createBlobApi({ serverUrl: context.url });  //eslint-disable-line
     });
 
     test('/blob/ - signing', async () => {

@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import api from '../../src/api';
+import createApi from '../../src/api';
 import createContext from './context';
 
 suite('account creation', () => {
@@ -24,8 +24,9 @@ suite('account creation', () => {
 
   let email = 'one@example.com';
   let emailTwo = 'two@example.com';
-  let id, idTwo;
+  let id, idTwo, api;
   setup(async () => {
+    api = createApi({ serverUrl: context.url });
     id = api.id.create();
     idTwo = api.id.create();
   });

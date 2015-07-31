@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import { id as Id } from '../../src/api';
+import Id from '../../src/api/id';
 
 suite('check key', () => {
 

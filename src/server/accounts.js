@@ -7,7 +7,7 @@ let log = require('./log')('server');
 let assert = require('assert');
 let crypto = require('crypto');
 
-let api = require('../api');
+let api = require('../api')();
 let challenge = require('./challenge');
 
 // Return the sha256 hex hash of a string.

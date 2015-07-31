@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import api from '../../src/api';
+import createApi from '../../src/api';
 import createContext from './context';
 
 suite('device register', () => {
@@ -17,8 +17,9 @@ suite('device register', () => {
     });
   }
 
-  let id, idTwo, session;
+  let id, idTwo, session, api;
   setup(async () => {
+    api = createApi({ serverUrl: context.url });
     id = await api.id.create();
     idTwo = await api.id.create();
     session = await context.createAccountAndAuth();

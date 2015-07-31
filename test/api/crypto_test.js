@@ -2,9 +2,11 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import assert from 'assert';
-import { crypto } from '../../src/api';
+import createApi from '../../src/api';
 
 suite('crypto', () => {
+  let { crypto } = createApi();
+
   test('encrypt', async () => {
     let a = crypto.create('curve25519');
     let aPublic = a.exportPublic();

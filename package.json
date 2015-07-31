@@ -5,7 +5,6 @@
   "main": "dist/lib/main.js",
   "scripts": {
     "postinstall": "./build.sh",
-    "prepublish": "./build.sh",
     "build": "./build.sh",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --recursive",

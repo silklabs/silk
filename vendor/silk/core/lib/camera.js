@@ -374,6 +374,7 @@ class CameraStream extends EventEmitter {
           break;
         case TAG_FACES:
           this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+          this.emit('face', this.faces);
           this._pushFace(when);
           break;
         default:

@@ -73,6 +73,13 @@ suite('time metadata', () => {
     assert.equal(one.nextId, two.id);
     assert.equal(two.nextId, three.id);
     assert.equal(three.nextId, null);
+
+    let outOfBounds = await subject.findNearTime({
+      deviceId,
+      metaType,
+      time: 400
+    });
+    assert.equal(outOfBounds.url, 'three');
   });
 
 });

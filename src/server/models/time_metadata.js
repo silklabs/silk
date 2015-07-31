@@ -23,7 +23,8 @@ const SCHEMA = {
   findNearTime: Joi.object().keys({
     deviceId: Joi.string().required(),
     metaType: TYPES,
-    time: Joi.number().required()
+    time: Joi.number().required(),
+    strict: Joi.bool()
   }).required(),
 
   findById: Joi.object().keys({
@@ -61,7 +62,11 @@ export default class TimeMetadata {
 
   async findNearTime(payload) {
     Joi.assert(payload, SCHEMA.findNearTime);
+
+    // First try to find one in the appropriate range...
     let result = await this.collection.findOne({
+      deviceId: payload.deviceId,
+      metaType: payload.metaType,
       startUTC: {
         $lte: payload.time
       },
@@ -69,6 +74,15 @@ export default class TimeMetadata {
         $gt: payload.time
       }
     });
+
+    // If that does not work try to find the most recent one.
+    if (!result && !payload.strict) {
+      result = (await this.collection.find({
+        deviceId: payload.deviceId,
+        metaType: payload.metaType,
+      }).sort({ startUTC: -1 }).limit(1).toArray())[0];
+    }
+
     return formatOutput(result);
   }
 

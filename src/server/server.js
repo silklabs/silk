@@ -6,6 +6,7 @@ import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
 import createFileBlob from './blobs/file';
 
+import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
 
 export default async function main (config) {
@@ -31,6 +32,7 @@ export default async function main (config) {
   app.use(bodyParser.json());
 
   let db = await createDb(config);
+  let crashMeta = new CrashMetadata(config, db);
   let timeMeta = new TimeMetadata(db);
   let blobs = {
     file: await createFileBlob(config)
@@ -44,6 +46,7 @@ export default async function main (config) {
   require('./routes')({
     app,
     accounts,
+    crashMeta,
     timeMeta,
     config,
     blobs

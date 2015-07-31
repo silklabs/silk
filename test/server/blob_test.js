@@ -17,26 +17,38 @@ suite('blob', () => {
 
       blobs: {
         file: {
-          path: `${__dirname}/fixtures/blobs/`
+          video: {
+            path: `${__dirname}/fixtures/blobs/video/`
+          },
+          crashreport: {
+            path: `${__dirname}/fixtures/blobs/crashreport/`
+          },
+          log: {
+            path: `${__dirname}/fixtures/blobs/log/`
+          },
+          metrics: {
+            path: `${__dirname}/fixtures/blobs/metrics/`
+          }
         }
       }
     });
 
     let blob;
     setup(() => {
-      blob = createBlobApi({ serverUrl: context.url });  //eslint-disable-line
+      blob = createBlobApi({ serverUrl: context.url });
     });
 
     test('/blob/ - signing', async () => {
       let object = { foo: 'bar' };
       let input = JSON.stringify(object);
       let content = new Buffer(input);
-      let { url } = await blob.uploadAndAck(
+      let url = await blob.upload(
+        'video',
         content.length,
-        content,
-        // intentionally just json otherwise we will hit the body parser and
-        // upload will fail.
-        'json'
+        // intentionally just 'json' otherwise we will hit the body parser and
+        // content upload will fail.
+        'json',
+        content
       );
       let response = await fetch(url);
       let text = await response.text();
@@ -60,17 +72,18 @@ suite('blob', () => {
 
     let blob;
     setup(() => {
-      blob = createBlobApi({ serverUrl: context.url });  //eslint-disable-line
+      blob = createBlobApi({ serverUrl: context.url });
     });
 
     test('/blob/ - signing', async () => {
       let object = { foo: 'bar' };
       let input = JSON.stringify(object);
       let content = new Buffer(input);
-      let { url } = await blob.uploadAndAck(
+      let url = await blob.upload(
+        'video',
         content.length,
+        'application/json',
         content,
-        'application/json'
       );
       let response = await fetch(url);
       assert.equal(response.headers.get('Content-Type'), 'application/json');
@@ -78,5 +91,4 @@ suite('blob', () => {
       assert.equal(text, input);
     });
   });
-
 });

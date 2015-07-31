@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import fetch from './fetch';
 import { Readable } from 'stream';
 import throwError from './fetch_error';
 import fetchJson from './fetch_json';
@@ -20,7 +20,7 @@ class BufferToStream extends Readable {
 
 
 export default function(config) {
-  let baseUrl = config.server_url;  //eslint-disable-line
+  let baseUrl = config.serverUrl;
   return {
     signedUrl: fetchJson.bind(null, url.resolve(baseUrl, 'blob')),
     ack: fetchJson.bind(null, url.resolve(baseUrl, 'blob/ack')),

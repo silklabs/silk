@@ -5,7 +5,7 @@
 
 let crypto = require('crypto');
 let fs = require('fs');
-let getprop = require('./util').getprop;
+let util = require('./util');
 let log = require('./log')('update');
 let request = require('request');
 let validator = require('validator');
@@ -19,12 +19,12 @@ const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/cache/update.zip';
 
-const DEVICE = getprop('ro.boot.hardware');
-const FINGERPRINT = getprop('ro.build.fingerprint');
-const MANIFEST_URL = getprop(MANIFEST_URL_PROP);
-const POLL_HOURS = getprop(POLL_HOURS_PROP);
-const PREVENT_REBOOT = getprop(PREVENT_REBOOT_PROP) !== '';
-const UPDATE_ENABLED = getprop(UPDATE_ENABLED_PROP) !== '';
+const DEVICE = util.getprop('ro.boot.hardware');
+const FINGERPRINT = util.getprop('ro.build.fingerprint');
+const MANIFEST_URL = util.getprop(MANIFEST_URL_PROP);
+const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
+const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
+const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP);
 
 // TODO: Set this to false for engineering builds somehow.
 const IGNORE_SAME_FINGERPRINT = true;

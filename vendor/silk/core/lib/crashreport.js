@@ -5,14 +5,14 @@
 
 let createReadStream = require('fs').createReadStream;
 let fs = require('mz/fs');
-let getprop = require('./util').getprop;
+let getboolprop = require('./util').getboolprop;
 let log = require('./log')('crashreport');
 let net = require('net');
 let vib = require('./vibrator')();
 
 const CRASHREPORT_ENABLED_PROP = 'persist.silk.crashrprt.enabled';
 
-const CRASHREPORT_ENABLED = getprop(CRASHREPORT_ENABLED_PROP) !== '';
+const CRASHREPORT_ENABLED = getboolprop(CRASHREPORT_ENABLED_PROP);
 const DEBUGGERD_SOCKET_PATH = '/data/system/ndebugsocket';
 const EXCEPTION_FILE_MAX = 100;
 const EXCEPTION_FILE_REGEXP = new RegExp(/^exception_\d+$/); // 'exception_02'

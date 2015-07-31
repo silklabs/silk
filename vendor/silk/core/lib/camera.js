@@ -13,7 +13,7 @@ let net = require('net');
 const BACK = 0;
 const DURATION = 1;
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = util.getprop(UPLOAD_PROP) !== '';
+const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 //Content type must be set to make clients happy later on.
 const VIDEO_CONTENT_TYPE = 'video/mp4';
 

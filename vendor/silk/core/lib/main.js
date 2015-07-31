@@ -17,7 +17,7 @@ let config = require('./config');
 let sensors = require('./sensors');
 
 const id = api.id.create();
-const name = (util.getprop('persist.silk.displayName') || 'Silkcam');
+const name = util.getprop('persist.silk.displayName', 'Silkcam');
 
 //
 // Initialization...

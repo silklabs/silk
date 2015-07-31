@@ -58,16 +58,18 @@ export default React.createClass({
 
   dismiss() {
     return new Promise((accept, reject) => {
-      if (!this._showing) {
+      if (!this._showing || this._dismissing) {
         accept();
         return
       }
 
+      this._dismissing = true;
       this.props.onDismissStart && this.props.onDismissStart();
       return OverlayModalManager.dismiss(this.getNativeHandle(), () => {
         // Animation has ended mark the view as hidden now...
-        this.props.onDismissEnd && this.props.onDismissEnd();
         this._showing = false;
+        this._dismissing = false;
+        this.props.onDismissEnd && this.props.onDismissEnd();
         accept();
       });
     });

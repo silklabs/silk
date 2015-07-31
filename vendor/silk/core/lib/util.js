@@ -38,14 +38,29 @@ export function execRetry(cmd, args, retries, delayMs) {
   });
 }
 
-export function getprop(prop) {
+export function getprop(prop, defaultValue) {
   let spawnSync = require('child_process').spawnSync;
   let result = spawnSync('getprop', [prop]);
   if (result.error) {
     log.warn(`Error: getprop("${prop}"): ${result.error}`);
     return undefined;
   }
-  return result.stdout.toString().replace(/\n$/, '');
+  let value = result.stdout.toString().replace(/\n$/, '');
+  if (defaultValue) {
+    return (value === '') ? defaultValue : value;
+  } else {
+    return value;
+  }
+}
+
+export function getboolprop(prop, defaultValue = false) {
+  let value = getprop(prop, defaultValue);
+  if ((value === 'true') || (value === true) ||
+      (value === '1') || (value === 1)) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 export function setprop(prop, value) {

@@ -12,8 +12,12 @@ let net = require('net');
 //const FRONT = 1;
 const BACK = 0;
 const DURATION = 1;
+
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = util.getprop(UPLOAD_PROP) !== '';
+const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
+const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
+const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
+
 //Content type must be set to make clients happy later on.
 const VIDEO_CONTENT_TYPE = 'video/mp4';
 
@@ -459,6 +463,10 @@ class CameraStream extends EventEmitter {
    * Set flash mode as specified by flashMode parameter
    */
   flash(flashMode) {
+    if (!FLASH_LIGHT_ENABLED) {
+      log.warn(`flash light is not enabled`);
+      return;
+    }
     this._command({cmdName: 'flash', flashMode: flashMode});
   }
 }

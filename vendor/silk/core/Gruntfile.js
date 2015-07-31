@@ -45,7 +45,8 @@ module.exports = function(grunt) {
       grunt.log.writeln('  Debug build, including source map');
       debug = '--debug';
     }
-    exec('node_modules/.bin/browserify --node --ignore-missing ' + debug +
+    exec('node_modules/.bin/browserify ' +
+           '--node --exclude **/*.node --ignore-missing ' + debug +
            ' dist/lib/index.js --outfile core.js');
   });
   grunt.registerTask('adb_setup', '', function() {

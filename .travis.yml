@@ -17,7 +17,6 @@ addons:
 
 env:
   global:
-    - BUILD_HOST_64bit=1
     - REPO_INIT_ARGS="--depth=1"
 
 before_script:

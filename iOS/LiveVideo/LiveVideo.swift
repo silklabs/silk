@@ -1,9 +1,6 @@
 import UIKit
 import AVFoundation
 
-internal typealias FaceData = Dictionary<String, AnyObject>
-internal typealias Face = (utc: Int64, json: FaceData)
-
 /**
 Custom implementation of AVPlayerItem to keep track of some app specific details.
 */
@@ -12,7 +9,7 @@ internal class LiveVideoItem : AVPlayerItem {
   When this video was taken.
   */
   var start: Int64!
-  internal var faces: [Face] = []
+  internal var faces: [FaceEvent] = []
 }
 
 /**
@@ -25,37 +22,29 @@ class LiveVideo : UIView {
   */
   static let TIME_EVENT_INTERVAL = 100
 
-  var loader = SocketIOAVAssetLoaderDelegate()
+  var loader: SocketIOAVAssetLoaderDelegate! = SocketIOAVAssetLoaderDelegate()
   var eventDispatcher: RCTEventDispatcher!
 
   let assetLoaderQueue = dispatch_queue_create("video assets", DISPATCH_QUEUE_CONCURRENT)
   let eventQueue = dispatch_queue_create("event queue", DISPATCH_QUEUE_SERIAL)
 
 
-  // Note: faces should only be interfaced with on the main thread.
-  internal var faces: [Face] = []
-
   // The player manages all video assets and outputs the "layers" which we use to
   // display raw video...
-  private var player = AVQueuePlayer()
+  private var player: AVQueuePlayer!
   private var playerLayer: AVPlayerLayer!
   private var faceTimeObservers: [AnyObject] = []
   private var timeChangeObserver: AnyObject?
 
-  var videoStream: String? {
-    didSet {
-      self.initializeSocketIO(self.videoStream!)
-    }
-  }
-
-  var listener: SocketIOListener?
-
   init(eventDispatcher: RCTEventDispatcher) {
     super.init(frame: CGRectZero)
+    self.player = AVQueuePlayer()
     self.eventDispatcher = eventDispatcher
     self.playerLayer = AVPlayerLayer(player: self.player)
     self.playerLayer.frame = self.bounds
     self.layer.addSublayer(self.playerLayer)
+
+    self.initObservers()
   }
 
   override init(frame: CGRect) {
@@ -77,15 +66,24 @@ class LiveVideo : UIView {
   }
 
   func destroy() {
-    if let client = self.listener {
-      // Ensure player has no observers anymore...
-      self.player.removeAllKeyPathObservers()
+    // Ensure player has no observers anymore...
+    self.player.removeAllKeyPathObservers()
+    self.player.removeTimeObserver(self.timeChangeObserver)
 
-      let stream = "video-\(self.videoStream!)"
-      let instance = AppSocketIO.sharedInstance
-      instance.emit("leave", [stream])
-      self.listener = nil
+    for observer in self.faceTimeObservers {
+      self.player.removeTimeObserver(observer)
     }
+
+    // Note: This is an intentional pattern to catch any subtle leaks these should
+    // always be available unless something in our logic is broken or not cleaned up.
+    self.eventDispatcher = nil
+    self.player = nil
+    self.playerLayer = nil
+    self.loader = nil
+  }
+
+  deinit {
+    self.destroy()
   }
 
   /**
@@ -93,36 +91,15 @@ class LiveVideo : UIView {
   
   This method must be called from the main thread.
   */
-  func queueSegment(asset: AVAsset, utcTime: Int64) {
+  func append(frame: NSData, when: NSNumber, faces: [FaceEvent]) {
+    let utcTime = when.longLongValue
+    let (_, url) = self.loader.add(frame)
+    let asset = AVURLAsset(URL: url, options: [:])
+
+    asset.resourceLoader.setDelegate(self.loader, queue: self.assetLoaderQueue)
+
     // Calculate the duration in milliseconds
     let duration = Int(Float(asset.duration.value) / Float(asset.duration.timescale) * 1000)
-
-    var faces: [Face] = []
-    if self.faces.count > 0 {
-      var sliceIdx = 0
-      for face in self.faces {
-        sliceIdx += 1
-
-        // For whatever reason we have a face which does not correlate to any known
-        // video fragement so just ignore it.
-        if utcTime > face.utc {
-          continue
-        }
-
-        // Face occurs somewhere in this asset.
-        if face.utc >= utcTime && face.utc < utcTime + duration {
-          faces.append(utc: face.utc, json: face.json)
-          continue
-        }
-
-        // Face is somewhere past our asset...
-        break
-      }
-
-      // Update faces list to only contain what we have not yet pushed into an item.
-      self.faces.removeRange(Range(start: 0, end: sliceIdx))
-    }
-
 
     let item = LiveVideoItem(asset: asset)
     item.start = utcTime
@@ -131,11 +108,11 @@ class LiveVideo : UIView {
     self.player.insertItem(item, afterItem: nil)
   }
 
-  func sendFaceEvent(item: LiveVideoItem, face: Face) {
+  func sendFaceEvent(item: LiveVideoItem, event: FaceEvent) {
     // It's important to remember this offset is relative to the current item not global playback.
     let eventBody: Dictionary<String, AnyObject> = [
       "target": self.reactTag,
-      "faces": face.json
+      "faces": event.faces
     ]
     self.eventDispatcher.sendInputEventWithName(
       "faces", body: eventBody
@@ -164,15 +141,15 @@ class LiveVideo : UIView {
       return
     }
 
-    for face in item.faces {
+    for event in item.faces {
       let observerTime = NSValue(CMTime: CMTimeMake(
         // Times are in milliseconds so timescale is of 1000 (ms / 1000 = second)
-        Int64((face.utc) - item.start),
+        Int64((event.when) - item.start),
         Int32(1000)
       ))
 
       let handle: AnyObject = self.player.addBoundaryTimeObserverForTimes([observerTime], queue: self.eventQueue) {
-        self.sendFaceEvent(item, face: face)
+        self.sendFaceEvent(item, event: event)
       }
 
       self.faceTimeObservers.append(handle)
@@ -198,12 +175,13 @@ class LiveVideo : UIView {
   /**
   Handles dispatching onTimeChange events.
   */
-  func setupTimeObserver(player: AVPlayer) {
+  func setupTimeObserver() {
     let interval = CMTimeMake(Int64(LiveVideo.TIME_EVENT_INTERVAL), 1000)
-    self.timeChangeObserver = player.addPeriodicTimeObserverForInterval(
+    self.timeChangeObserver = self.player.addPeriodicTimeObserverForInterval(
       interval,
       queue: self.eventQueue
     ) {
+      [unowned self]
       (_) in
       let item = self.player.currentItem
       if item == nil {
@@ -215,49 +193,10 @@ class LiveVideo : UIView {
     }
   }
 
-  func initializeSocketIO(id: String) {
-    let instance = AppSocketIO.sharedInstance
-    self.listener = instance.aquireListener()
-
-    let stream = "video-\(id)"
-    instance.emit("join", [stream])
-
-    self.listener!.on(stream) {
-      [unowned self]
-      (value, ack) in
-
-      let data = value?[0] as! Dictionary<String, AnyObject>
-      let type = data["contents"] as? String
-
-      // First cast directly to NSNumber:
-      let nsnumber = data["when"] as! NSNumber
-      // Then to Int64 this works around some crashes when directly casting.
-      let when = nsnumber.longLongValue
-
-      if type == "faces" {
-        // Keep track of all the faces entries we receive we will later
-        // associate them with a LiveVideoItem.
-        self.faces.append(utc: when, json: data)
-        return
-      }
-
-      if let frame = data["frame"] as? NSData {
-        let (_, url) = self.loader.add(frame)
-        let asset = AVURLAsset(URL: url, options: [:])
-        asset.resourceLoader.setDelegate(self.loader, queue: self.assetLoaderQueue)
-
-        asset.loadValuesAsynchronouslyForKeys(["readable"]) {
-          dispatch_async(dispatch_get_main_queue()) {
-            self.queueSegment(asset, utcTime: when)
-          }
-        }
-
-      }
-    }
-
-    self.setupTimeObserver(self.player)
-
+  func initObservers() {
+    self.setupTimeObserver()
     self.player.observeKeyPath("currentItem") {
+      [unowned self]
       (_) in
       let item = self.player.currentItem
       if item == nil {
@@ -285,5 +224,9 @@ class LiveVideo : UIView {
     self.playerLayer.frame = self.bounds
   }
 
+
+  override func removeFromSuperview() {
+    super.removeFromSuperview()
+  }
 
 }

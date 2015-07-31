@@ -11,12 +11,12 @@ class OverlayModalController: UIViewController {
 }
 
 internal func iterateViews(view: RCTViewNodeProtocol!, block: (RCTViewNodeProtocol) -> Void) {
-  if view.reactTag != nil {
-    block(view)
-  }
-
   for subview in view.reactSubviews() {
     iterateViews(subview as! RCTViewNodeProtocol, block)
+  }
+
+  if view.reactTag != nil {
+    block(view)
   }
 }
 
@@ -51,20 +51,21 @@ class OverlayModal : RCTView {
     self.overlayView!.insertReactSubview(subview, atIndex: atIndex)
   }
 
-  override func removeFromSuperview() {
-    // Since technically the views are in our overlay view when we get the message to remove
-    // ourselves we need to remove everything in the overlay view too.
-    for view in self.overlayView!.subviews {
-      if view.respondsToSelector(Selector("removeFromSuperview")) {
-        view.removeFromSuperview()
-      }
-    }
+  /**
+  Note this is critically important to expose as React cannot properly remove subviews without knowing
+  where they are!
+  */
+  override func reactSubviews() -> NSMutableArray! {
+    return self.overlayView!.reactSubviews()
+  }
 
+  override func removeFromSuperview() {
     // Ensure we always have dismissed the controller when removing this view...
     self.dismiss() {(_) in}
 
+    // Note: we intentionally remove anything that references self.overlayView but not
+    // self.overlayView itself (it will be release along with this view)
     self.overlayController = nil
-    self.overlayView = nil
     self.touchHandler = nil
     super.removeFromSuperview()
   }
@@ -72,7 +73,6 @@ class OverlayModal : RCTView {
   // Because our views are not part of the root react view 
   // we must propigate the message across to our subviews.
   override func reactBridgeDidFinishTransaction() {
-    var subviews = 0;
     iterateViews(self.overlayView!) {
       (view) in
       if view.respondsToSelector(Selector("reactBridgeDidFinishTransaction")) {

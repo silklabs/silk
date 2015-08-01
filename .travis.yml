@@ -41,7 +41,11 @@ after_script:
   - ccache -s
 
 notifications:
-  slack: silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
+  slack: 
+    on_success: change
+    on_failure: always
+    rooms:
+      - silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
 
 before_deploy:
   - source build/envsetup.sh && ./gonk/archive.sh mako dist

@@ -41,6 +41,11 @@ Run single test file:
 
 ### Test locally
 
+Ensure that mongodb is [configured](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/#run-mongodb).  Start the daemon with
+```
+mongod
+```
+
 The following command starts a silk server on localhost:5000 (by default):
 ```
 npm start

@@ -382,7 +382,7 @@ class CameraStream extends EventEmitter {
           this._pushFace(when);
           break;
         default:
-          break;
+          throw new Error(`Invalid capture tag: ${tag}`);
       }
       // put the rest of the buffer back
       let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));

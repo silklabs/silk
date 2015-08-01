@@ -219,10 +219,10 @@ index 9d6e233..1fd76d9 100644
 +DEVICE_PREBUILTS := $(notdir $(wildcard prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/*.so))
 +
 +# Copy the shared object into the expected location
-+$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/%.so
++$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/%.so | $(ACP)
 +	@echo Gonk Prebuilt: $@
 +	$(hide) mkdir -p $(@D)
-+	$(hide) cp -a $< $@
++	$(hide) $(ACP) $< $@
 +
 +# Forge an export_includes file to keep the rest of the build happy
 +$(foreach p,$(DEVICE_PREBUILTS:.so=), \

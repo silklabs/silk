@@ -9,17 +9,28 @@ let fs = require('fs');
 let enabled = !util.getprop('persist.silk.quiet');
 
 class Vibrator {
+
+  constructor() {
+    this._active = false;
+  }
+
   _vib(duration) {
     if (enabled) {
       fs.writeFileSync('/sys/class/timed_output/vibrator/enable', duration);
     }
   }
 
+  get active() {
+    return this._active;
+  }
+
   on(duration) {
+    this._active = true;
     this._vib(duration);
   }
 
   off() {
+    this._active = false;
     this._vib(0);
   }
 
@@ -27,9 +38,9 @@ class Vibrator {
   pattern(onDuration, offDuration, ...more) {
     if (onDuration) {
       this.on(onDuration);
-      if (offDuration) {
-        util.timeout(onDuration + offDuration).then(() => this.pattern(...more));
-      }
+      util.timeout(onDuration + offDuration).then(() => this.pattern(...more));
+    } else {
+      this.off();
     }
   }
 }

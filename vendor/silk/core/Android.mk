@@ -8,31 +8,20 @@ LOCAL_MODULE_PATH  := $(TARGET_OUT)/silk
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
 
-#
-# TODO: The gonk shared libraries list is a union of the shared libraries
-#       required by node modules.
-#
-#       This is required because although additional gonk shared library
-#       dependencies can be expressed in node-gyp these dependencies are not
-#       currently surfaced to the gonk build system.
-#
-#       There is surely a better way to do this...
-#
-
 # Base set of libraries for all modules
-npm_GONK_SHARED_LIBRARIES := libc.so libm.so libdl.so libstlport.so
+LOCAL_SHARED_LIBRARIES := libc libm libdl libstlport
 
 # Additional libraries for movie module
-npm_GONK_SHARED_LIBRARIES += \
-  libEGL.so \
-  libGLESv1_CM.so \
-  libandroidfw.so \
-  libbinder.so \
-  libgui.so \
-  liblog.so \
-  libskia.so \
-  libui.so \
-  libutils.so \
+LOCAL_SHARED_LIBRARIES += \
+  libEGL \
+  libGLESv1_CM \
+  libandroidfw \
+  libbinder \
+  libgui \
+  liblog \
+  libskia \
+  libui \
+  libutils \
 
 npm_INCLUDES := \
   bionic \
@@ -58,10 +47,7 @@ npm_LDFLAGS = $(TARGET_GLOBAL_LDFLAGS) \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := \
   $(shell find $(LOCAL_PATH) -type f) \
-
-LOCAL_ADDITIONAL_DEPENDENCIES += \
   $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
-  $(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(sort $(npm_GONK_SHARED_LIBRARIES)))
 
 include $(BUILD_PREBUILT)
 

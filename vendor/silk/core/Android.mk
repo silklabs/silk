@@ -8,9 +8,6 @@ LOCAL_MODULE_PATH  := $(TARGET_OUT)/silk
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
 
-# Base set of libraries for all modules
-LOCAL_SHARED_LIBRARIES := libc libm libdl libstlport
-
 # Additional libraries for movie module
 LOCAL_SHARED_LIBRARIES += \
   libEGL \
@@ -23,31 +20,21 @@ LOCAL_SHARED_LIBRARIES += \
   libui \
   libutils \
 
-npm_INCLUDES := \
-  bionic \
-  bionic/libc/arch-arm/include \
-  bionic/libc/include \
-  bionic/libm/include \
-  bionic/libstdc++/include  \
-  external/stlport/stlport \
-  bionic/libc/kernel/uapi/asm-arm \
-  bionic/libc/kernel/uapi \
+include external/stlport/libstlport.mk
 
 npm_cli = $(abspath external/npm/cli.js)
 npm_node_dir = $(abspath external/$(or $(NODE_ENGINE),node))
 
 npm_CFLAGS := $(TARGET_GLOBAL_CFLAGS) \
   $(addprefix -isystem ,$(abspath . $(TARGET_C_INCLUDES))) \
-  $(foreach inc,$(npm_INCLUDES),-isystem $(abspath $(inc))) \
+  $(foreach inc,$(LOCAL_C_INCLUDES),-isystem $(abspath $(inc))) \
 
 npm_CPPFLAGS := $(TARGET_GLOBAL_CPPFLAGS)
 npm_LDFLAGS = $(TARGET_GLOBAL_LDFLAGS) \
   -B$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
   -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) -lstlport
 
-LOCAL_ADDITIONAL_DEPENDENCIES := \
-  $(shell find $(LOCAL_PATH) -type f) \
-  $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
+LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
 
 include $(BUILD_PREBUILT)
 

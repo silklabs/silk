@@ -30,12 +30,40 @@ export function start(_ssid, _psk) {
   });
 }
 
+class ReadRssi {
+  constructor(_peripheral) {
+    this.peripheral = _peripheral;
+    this.updateRssiInterval = setTimeout(() => this._start(), 500);
+  }
+
+  _start() {
+    this.peripheral.once('rssiUpdate', (rssi) => {
+      console.log('rssi: ' + rssi);
+
+      if (this.updateRssiInterval) {
+        clearInterval(this.updateRssiInterval);
+        this.updateRssiInterval = setTimeout(() => this._start(), 500);
+      }
+    });
+    this.peripheral.updateRssi();
+  }
+
+  stop() {
+    if (this.updateRssiInterval) {
+      clearInterval(this.updateRssiInterval);
+      this.updateRssiInterval = null;
+      this.peripheral.removeAllListeners('rssiUpdate');
+    }
+  }
+}
+
 noble.on('warning', msg => console.warning(`Noble Warning: ${msg}`));
 
 noble.on('discover', peripheral => {
   let uuids = peripheral.advertisement.serviceUuids;
   let stateChar, apChar, secretChar, curveChar, centralKeyChar, peripheralKeyChar;
   let central;
+  let readRssi;
 
   if (uuids.indexOf(decls.uuid.ConfigService) !== -1) {
     let name = peripheral.advertisement.localName;
@@ -82,6 +110,9 @@ noble.on('discover', peripheral => {
             }
           }
 
+          // Read rssi at regular intervals
+          readRssi = new ReadRssi(peripheral);
+
           // Read the current device configuration state
           stateChar.read();
           stateChar.on('data', data => {
@@ -99,6 +130,13 @@ noble.on('discover', peripheral => {
                 break;
               case decls.state.REGISTERED:
                 console.log(`Device is registered, disconnecting.`);
+
+                // Stop reading rssi
+                if (readRssi) {
+                  readRssi.stop();
+                  readRssi = null;
+                }
+
                 peripheral.disconnect();
                 break;
               default:
@@ -112,6 +150,8 @@ noble.on('discover', peripheral => {
           // Read peripheral key
           curveChar.on('write', () => {
             console.log(`crypto: crypto written succesfully`);
+            console.log(`Waiting for proximity sensor to trigger`);
+            console.log(`***Bring the device closer to this machine`);
             peripheralKeyChar.read();
           });
 
@@ -165,7 +205,6 @@ noble.on('discover', peripheral => {
     peripheral.connect();
   }
 });
-
 
 if (require.main === module) {
   if (process.argv.length !== 4) {

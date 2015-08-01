@@ -108,13 +108,16 @@ process.on('uncaughtException', err => {
     saveExceptionToTombstoneDir(err);
   }
 
-  vib.pattern(
-    300, 200, 300, 200, 300, // S
-    400,
-    600, 200, 600, 200, 600, // O
-    400,
-    300, 200, 300, 200, 300  // S
-  );
+  if (!vib.active) {
+    vib.pattern(
+      300, 200, 300, 200, 300, // S
+      400,
+      600, 200, 600, 200, 600, // O
+      400,
+      300, 200, 300, 200, 300, // S
+      1000
+    );
+  }
   // TODO: Likely restart node here eventually
 });
 

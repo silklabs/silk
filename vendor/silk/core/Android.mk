@@ -67,11 +67,16 @@ include $(BUILD_PREBUILT)
 
 LOCAL_NODE_MODULES:=$(notdir $(wildcard $(LOCAL_PATH)/local_node_modules/*))
 
+ifneq ($(ONE_SHOT_MAKEFILE),)
+#
+# Usage:
+#   $ mm import_node_modules
 #
 # This target should be run any time a new package is added to package.json,
 # to ensure that the package is also added to node_modules/.  This is necessary
 # to avoid the npm registry at build time as well as locking down exact package
 # versions used to avoid unexpected source changes
+#
 #
 .PHONY import_node_modules:
 import_node_modules: export NPM_CONFIG_ARCH=arm
@@ -94,6 +99,8 @@ import_node_modules:
    true
 	cd $(LOCAL_PATH) && \
    git add node_modules
+
+endif # ONE_SHOT_MAKEFILE
 
 $(LOCAL_BUILT_MODULE): export CC := $(abspath $(TARGET_CC))
 $(LOCAL_BUILT_MODULE): export CXX := $(abspath $(TARGET_CXX))

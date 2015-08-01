@@ -130,10 +130,14 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
 	$(hide) cp -r $< $@
-# Locate and copy native bindings from /system/silk/build/<foo>.node
-# so they can be resolved correctly from the browserify-ed silk.js node_modules
+# Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
+# so they can be resolved correctly from the browserify-ed module
 	$(hide) mkdir -p $(@D)/build
 	$(hide) \
   for binding in `cd $(<D)/node_modules/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
     cp -vf $(<D)/node_modules/$$binding $(@D)/build/`basename $$binding`; \
   done
+# <LOCAL_MODULE_PATH>/build/Release/<foo>.node is also a popular location for
+# native modules so forge a symlink to redirect such a require() back to
+# <LOCAL_MODULE_PATH>/build/<foo>.node
+	$(hide) ln -fsT . $(@D)/build/Release;

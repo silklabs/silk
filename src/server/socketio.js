@@ -1,4 +1,4 @@
-let log = require('./log')('routes');
+let log = require('./log')('socketio');
 
 export default function(io) {
   // Real time event stream.

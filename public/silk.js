@@ -75,53 +75,60 @@ socket.on('connect', function () {
   while (monitors.firstChild) {
     monitors.removeChild(monitors.firstChild);
   }
-
+  log('Connected, joining video-streams');
   socket.emit('join', 'video-streams');
-  socket.on('video-stream-new', function(msg) {
-    log('New video stream '+ msg.id);
-    // TODO: when this evolves into a full-blown web app, this should
-    // become component-ized and shared with the native apps if
-    // possible
-    var stream = 'video-' + msg.id;
-    var previewStream = 'video-preview-' + msg.id;
+});
 
-    var monitor = document.getElementById(msg.id);
-    if (monitor) {
-      monitors.removeChild(monitor);
-    }
+socket.on('video-stream-new', function(msg) {
+  log('New video stream '+ msg.id);
+  // TODO: when this evolves into a full-blown web app, this should
+  // become component-ized and shared with the native apps if
+  // possible
+  var stream = 'video-' + msg.id;
+  var previewStream = 'video-preview-' + msg.id;
 
-    var img = document.createElement('img');
-    img.setAttribute('title', msg.name);
-    var canvas = document.createElement('canvas');
-    var a = document.createElement('a');
-    a.setAttribute('id', msg.id);
-    a.addEventListener('click', function() { showPlayer(stream); });
-    a.href = '#';
-    a.appendChild(img);
-    a.appendChild(canvas);
-    monitors.appendChild(a);
-
-    socket.on(previewStream, function(msg) {
-      if (!msg) {
-        return;
-      }
-      logMsg('video preview', msg);
-      var img = a.childNodes[0];
-      var canvas = a.childNodes[1];
-
-      renderFrame(msg, img, canvas);
-    });
-    socket.emit('join', previewStream);
-  });
-  socket.on('video-stream-delete', function(msg) {
-    log('Dead video stream '+ msg.id);
-    var stream = 'video-' + msg.id;
+  var monitor = document.getElementById(msg.id);
+  if (monitor) {
     socket.emit('leave', stream);
-    var monitor = document.getElementById(msg.id);
-    if (monitor) {
-      monitors.removeChild(monitor);
+    socket.emit('leave', previewStream);
+    monitors.removeChild(monitor);
+  }
+
+  var img = document.createElement('img');
+  img.setAttribute('title', msg.name);
+  var canvas = document.createElement('canvas');
+  var a = document.createElement('a');
+  a.setAttribute('id', msg.id);
+  a.addEventListener('click', function() { showPlayer(stream); });
+  a.href = '#';
+  a.appendChild(img);
+  a.appendChild(canvas);
+  monitors.appendChild(a);
+
+  socket.on(previewStream, function(msg) {
+    if (!msg) {
+      return;
     }
+    logMsg('video preview', msg);
+    var img = a.childNodes[0];
+    var canvas = a.childNodes[1];
+
+    renderFrame(msg, img, canvas);
   });
+  log('Joining preview stream ' + previewStream);
+  socket.emit('join', previewStream);
+});
+
+socket.on('video-stream-delete', function(msg) {
+  log('Dead video stream '+ msg.id);
+  var stream = 'video-' + msg.id;
+  var previewStream = 'video-preview-' + msg.id;
+  socket.emit('leave', stream);
+  socket.emit('leave', previewStream);
+  var monitor = document.getElementById(msg.id);
+  if (monitor) {
+    monitors.removeChild(monitor);
+  }
 });
 
 function renderFrame(msg, img, canvas) {

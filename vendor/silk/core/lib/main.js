@@ -171,6 +171,11 @@ function maybeCreateSocket() {
     camera.stop();
     diag.stop();
 
+    // On disconnect flush any unsent buffers.
+    //
+    // Unfortunately there seems to be no "public" socket.io API for this...
+    socket.sendBuffer = [];
+
     switch (e) {
     case 'io client disconnect':
       // Device initiated disconnect

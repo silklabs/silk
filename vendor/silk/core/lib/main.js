@@ -171,6 +171,11 @@ function maybeCreateSocket() {
     camera.stop();
     diag.stop();
 
+    // On disconnect flush any unsent buffers.
+    //
+    // Unfortunately there seems to be no "public" socket.io API for this...
+    socket.sendBuffer = [];
+
     switch (e) {
     case 'io client disconnect':
       // Device initiated disconnect
@@ -282,13 +287,23 @@ ui.on('key:factoryreset', () => {
 // Note that the values used within this function have been selected based on
 // intuition and *some* observation, and as such will likely need to be tuned in
 // the future.
+const GC_MAX_RUN_TIME = 200;
+const gc1 = require('silk-gc1');
 function runGC() {
-  let gcStart = Date.now();
-  // Ask the gc to try to run for no more than 250ms
-  let gcDone = require('silk-gc1').idleNotification(250);
-  let gcStop = Date.now();
+  // Try to run the gc for less than this number of milliseconds
 
-  log.info(`GC ran for ${gcStop - gcStart}ms | done=${gcDone}`);
+  let gcStart = Date.now();
+  let gcDone;
+  let gcStop = gcStart;
+  let gcIterations = 0;
+  do {
+    gcDone = gc1.idleNotification(GC_MAX_RUN_TIME);
+    gcIterations++;
+    gcStop = Date.now();
+  } while (!gcDone && (gcStop - gcStart < GC_MAX_RUN_TIME));
+
+  log.info(`GC ran for ${gcStop - gcStart}ms | ` +
+           `iterations=${gcIterations} done=${gcDone}`);
 
   // Look for new garbage in 20s if v8 says it's done, otherwise continue
   // collection after 5 seconds.

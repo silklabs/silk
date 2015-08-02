@@ -411,9 +411,14 @@ class CameraStream extends EventEmitter {
   }
 
   _pushPacket(when, frame, faces, type) {
-    log.debug(`packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`);
-    this.serverSocket.emit('video', { id: this.id, faces: faces,
-                                      frame: frame, contents: type, when: when });
+    let str = `packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
+    if (this.serverSocket.connected) {
+      log.debug(str);
+      this.serverSocket.emit('video', { id: this.id, faces: faces,
+                                        frame: frame, contents: type, when: when });
+    } else {
+      log.warn(`dropped ${str}`);
+    }
   }
 
   _command(cmd) {

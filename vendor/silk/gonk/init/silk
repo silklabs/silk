@@ -2,7 +2,6 @@
 
 export NODE_ENV="production"
 export NODE_PATH="/system/silk"
-export SILK_SERVER_URL=$(getprop persist.silk.server.url)
 export DEBUG=$(getprop persist.silk.debug)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors)
 

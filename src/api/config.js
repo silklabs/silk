@@ -3,7 +3,7 @@
 
 export default function configure(input = {}) {
   var defaults = {
-    serverUrl: 'https://silk-test-server.herokuapp.com:5000'
+    serverUrl: 'http://silk-test-server.herokuapp.com:5000'
   };
 
   for (var key in input) {

@@ -1,3 +1,5 @@
-module.exports = require('silk-api')({
-  serverUrl: process.env.SILK_SERVER_URL
-});
+var config = {};
+if (process.env.SILK_SERVER_URL) {
+  config.serverUrl = process.env.SILK_SERVER_URL;
+}
+module.exports = require('silk-api')(config);

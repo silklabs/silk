@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepublish": "node_modules/grunt-cli/bin/grunt",
-    "start": "node dist/index.js"
+    "start": "node --harmony dist/index.js"
   },
   "eslintConfig": {
     "parser": "babel-eslint",

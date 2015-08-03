@@ -8,9 +8,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { var callNext = step.bind(null, 'next'); var callThrow = step.bind(null, 'throw'); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(callNext, callThrow); } } callNext(); }); }; }
 
-var _nodeFetch = require('node-fetch');
+var _fetch = require('./fetch');
 
-var _nodeFetch2 = _interopRequireDefault(_nodeFetch);
+var _fetch2 = _interopRequireDefault(_fetch);
 
 var _fetch_error = require('./fetch_error');
 
@@ -30,7 +30,7 @@ exports['default'] = _asyncToGenerator(function* (url, body) {
     request.body = JSON.stringify(body);
   }
 
-  var response = yield (0, _nodeFetch2['default'])(url, request);
+  var response = yield (0, _fetch2['default'])(url, request);
   if (!response.ok) {
     yield (0, _fetch_error2['default'])(response);
   }

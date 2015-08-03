@@ -36,7 +36,7 @@ npm test
 
 Run single test file:
 ```bash
-./node_modules/.bin/mocha --harmony <test>
+./node_modules/.bin/mocha <test>
 ```
 
 ### Test locally

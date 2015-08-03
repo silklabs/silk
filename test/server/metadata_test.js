@@ -9,7 +9,7 @@ suite('metadata apis', () => {
   setup(async () => {
     let device = await context.createDevice();
     id = device.toString();
-    api = createMetadataApi({ server_url: context.url }); //eslint-disable-line 
+    api = createMetadataApi({ serverUrl: context.url }); //eslint-disable-line 
   });
 
   suite('/device/metadata/*', () => {
@@ -49,6 +49,7 @@ suite('metadata apis', () => {
       let findById = await context.post('/device/metadata/find/bytime', {
         metaType: 'video',
         deviceId: id,
+        strict: true,
         time: first.endUTC
       });
       assert.equal(findById.statusCode, 404, 'record not found');
@@ -61,8 +62,7 @@ suite('metadata apis', () => {
         time: first.endUTC - 2
       });
 
-      assert.equal(findByTime.statusCode, 200);
-      assert.deepEqual(findByTime.body.data, first.data);
+      assert.equal(findByTime.statusCode, 404);
     });
 
     test('find/bytime - found', async () => {

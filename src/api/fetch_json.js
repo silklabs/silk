@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import fetch from './fetch';
 import throwError from './fetch_error';
 
 export default async function(url, body, method = 'POST') {

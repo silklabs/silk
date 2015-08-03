@@ -14,7 +14,6 @@
   },
   "license": "Proprietary",
   "dependencies": {
-    "bindings": "^1.2.1",
     "nan": "^1.2.0"
   },
   "devDependencies": {

@@ -100,7 +100,7 @@ class Ui extends events.EventEmitter
   constructor() {
     super();
 
-    this.movie = require('silk-movie')();
+    this.movie = new (require('silk-movie').Movie)();
     this.vib = require('./vibrator')();
 
     let input;

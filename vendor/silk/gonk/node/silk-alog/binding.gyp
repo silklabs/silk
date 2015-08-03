@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "alog",
+      "target_name": "silk-alog",
       "sources": [
         "bindings.cpp",
       ],
@@ -11,6 +11,17 @@
       ],
       "libraries": [
         "-llog"
+      ]
+    },
+    {
+      "target_name": "action_after_build",
+      "type": "none",
+      "dependencies": [ "silk-alog" ],
+      "copies": [
+        {
+          "files": [ "<(PRODUCT_DIR)/silk-alog.node" ],
+          "destination": "."
+        }
       ]
     }
   ]

@@ -2,7 +2,7 @@
   "name": "silk-alog",
   "version": "0.0.1",
   "description": "wrapper for android log",
-  "main": "index.js",
+  "main": "silk-alog.node",
   "scripts": {
     "install": "node-gyp rebuild"
   },
@@ -12,7 +12,6 @@
   },
   "license": "Proprietary",
   "dependencies": {
-    "bindings": "^1.2.1",
     "nan": "^1.2.0"
   },
   "gypfile": true,

@@ -241,7 +241,7 @@ config.on('configured', () => {
 
     wifi.online()
     .then(() => {
-      log.info(`Device ${id} connecting to server ${api.config.server_url} ...`);
+      log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
       socket.connect();
     })
     .catch(e => util.processthrow(e));

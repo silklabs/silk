@@ -3,23 +3,38 @@
 #
 # Currently the following assumptions are made about the node module:
 #
-# 1. The module will consist of a single .js file (perhaps browserified)
-#    identified by LOCAL_MODULE as a part of |npm install|.
+# 1. The module may be either a file or folder module. If the module name ends
+#    in .js, .node, or .json then it's assumed to be a file module, otherwise a
+#    folder module.  To override define LOCAL_NODE_MODULE_TYPE to be either
+#    "file" or "folder".
 #
 # 2. Any external shared objects required by node-gyp should be listed in
 #    LOCAL_SHARED_LIBRARIES to ensure Make can managed dependencies probably.
 #
-# 3. A node_modules/ may exist containing some/all of the npm dependencies for
-#    the module.  Run |mm import_node_modules| to refresh the node_modules/
-#    directory based on the current package.json contents.
-#
-# TODO: The local_node_modules/ subdirectory support should be cleanup/removed
-#
 
 LOCAL_MODULE_CLASS := NPM
 
-LOCAL_CUSTOM_BUILT_MODULE := true
-LOCAL_CUSTOM_INSTALLED_MODULE := true
+# If the node module type is not specified, attempt to infer the type based on
+# the module name
+ifeq ($(strip $(LOCAL_NODE_MODULE_TYPE)),)
+ifneq (,$(filter .js .node .json,$(suffix $(LOCAL_MODULE))))
+LOCAL_NODE_MODULE_TYPE := file
+else
+LOCAL_NODE_MODULE_TYPE := folder
+endif
+endif
+
+ifneq (,$(strip $(filter-out file folder,$(LOCAL_NODE_MODULE_TYPE))))
+$(error Error: Invalid LOCAL_NODE_MODULE_TYPE: $(LOCAL_NODE_MODULE_TYPE))
+endif
+
+ifeq ($(strip $(LOCAL_MODULE_PATH)),)
+# Global node module by default
+LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/node
+ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
+LOCAL_MODULE_PATH := $(LOCAL_MODULE_PATH)/$(LOCAL_MODULE)
+endif
+endif
 
 include external/stlport/libstlport.mk
 
@@ -40,44 +55,13 @@ npm_LDFLAGS = $(TARGET_GLOBAL_LDFLAGS) \
 # Make.
 LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
 
+LOCAL_CUSTOM_BUILT_MODULE := true
+LOCAL_CUSTOM_INSTALLED_MODULE := true
+ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
+LOCAL_BUILT_MODULE_STEM := package.json
+LOCAL_INSTALLED_MODULE_STEM := package.json
+endif
 include $(BUILD_PREBUILT)
-
-LOCAL_NODE_MODULES:=$(notdir $(wildcard $(LOCAL_PATH)/local_node_modules/*))
-
-ifneq ($(ONE_SHOT_MAKEFILE),)
-#
-# Usage:
-#   $ mm import_node_modules
-#
-# This target should be run any time a new package is added to package.json,
-# to ensure that the package is also added to node_modules/.  This is necessary
-# to avoid the npm registry at build time as well as locking down exact package
-# versions used to avoid unexpected source changes
-#
-#
-.PHONY import_node_modules:
-import_node_modules: export NPM_CONFIG_ARCH=arm
-import_node_modules: export NPM_CONFIG_PLATFORM=android
-import_node_modules: LOCAL_PATH := $(LOCAL_PATH)
-import_node_modules:
-	cd $(LOCAL_PATH) && \
-   git rm -r node_modules
-	cd $(LOCAL_PATH) && \
-   node $(npm_cli) install --ignore-scripts --no-optional
-	cd $(LOCAL_PATH) && \
-   node $(npm_cli) dedup
-	cd $(LOCAL_PATH) && \
-   $(foreach n,$(LOCAL_NODE_MODULES),\
-      rm -rf node_modules/$(n) && \
-      ln -s ../local_node_modules/$(n) node_modules/ && \
-    ) \
-   echo TODO: Remove silk-api special case... && \
-   rm node_modules/silk-api && ln -fs ../local_node_modules/silk-api/dist/node node_modules/silk-api && \
-   true
-	cd $(LOCAL_PATH) && \
-   git add node_modules
-
-endif # ONE_SHOT_MAKEFILE
 
 $(LOCAL_BUILT_MODULE): export CC := $(abspath $(TARGET_CC))
 $(LOCAL_BUILT_MODULE): export CXX := $(abspath $(TARGET_CXX))
@@ -92,43 +76,35 @@ $(LOCAL_BUILT_MODULE): export NPM_CONFIG_ARCH=arm
 $(LOCAL_BUILT_MODULE): export NPM_CONFIG_PLATFORM=android
 
 $(LOCAL_BUILT_MODULE):
-	@echo "Mirror source: $@"
+	@echo "Mirror module to: $(@D)"
 	$(hide) mkdir -p $(@D)
-	$(hide) cd $(@D) && \
-   rm -rf $(addprefix node_modules/,$(LOCAL_NODE_MODULES))
 	$(hide) rsync -qav $(LOCAL_PATH)/ $(@D)
+	$(hide) cd $(@D) && $(FETCH_LOCKED_NODE_MODULES)
 	@echo "Build: $@"
 	$(hide) cd $(@D) && \
-   node $(npm_cli) install --ignore-scripts --nodedir=$(npm_node_dir) --no-optional
-	$(hide) cd $(@D) && \
-   node $(npm_cli) rebuild --nodedir=$(npm_node_dir)
-	$(hide) cd $(@D) && \
    node $(npm_cli) install --nodedir=$(npm_node_dir)
-	$(hide) cd $(@D) && \
-   $(foreach n,$(LOCAL_NODE_MODULES),\
-      if [ -d node_modules/$(n)/node_modules ]; then \
-        echo ; \
-        echo Error: $(n) may not have any unique package dependencies; \
-        echo Please add all dependencies to $(LOCAL_PATH)/package.json instead; \
-        echo as package dependencies of local_node_modules are currently ignored; \
-        echo ; \
-        exit 1; \
-      fi && \
-    ) \
-   true
+ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
+	$(hide) touch $@
+endif
 
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
+ifeq (file,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 	$(hide) cp -r $< $@
 # Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
 # so they can be resolved correctly from the browserify-ed module
-	$(hide) mkdir -p $(@D)/build
 	$(hide) \
   for binding in `cd $(<D)/node_modules/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
+    mkdir -p $(@D)/build; \
     cp -vf $(<D)/node_modules/$$binding $(@D)/build/`basename $$binding`; \
   done
 # <LOCAL_MODULE_PATH>/build/Release/<foo>.node is also a popular location for
 # native modules so forge a symlink to redirect such a require() back to
 # <LOCAL_MODULE_PATH>/build/<foo>.node
-	$(hide) ln -fsT . $(@D)/build/Release;
+	$(hide) if [[ -d $(@D)/build ]]; then ln -fsT . $(@D)/build/Release; fi;
+else
+	$(hide) cp -r $(<D)/* $(@D)
+	$(hide) touch $@
+endif
+

@@ -12,7 +12,7 @@ function configure() {
   var input = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
   var defaults = {
-    serverUrl: 'https://silk-test-server.herokuapp.com:5000'
+    serverUrl: 'https://silk-test-server.herokuapp.com'
   };
 
   for (var key in input) {

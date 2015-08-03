@@ -3,7 +3,7 @@
 
 'use strict';
 
-let api = require('silk-api');
+let api = require('./api');
 let btle = require('./btle');
 let crashreport = require('./crashreport');
 let ui = require('./ui');
@@ -151,7 +151,7 @@ function maybeCreateSocket() {
 
   diag = require('./diag')(id.toString());
 
-  socket = require('socket.io-client')(api.config.server_url,
+  socket = require('socket.io-client')(api.config.serverUrl,
       {autoConnect: false});
   socket.on('connect', () => {
     ui.goto('online');

@@ -3,7 +3,7 @@
 
 'use strict';
 
-let api = require('silk-api');
+let api = require('./api');
 let events = require('events');
 let btle = require('./btle');
 let log = require('./log')('config');

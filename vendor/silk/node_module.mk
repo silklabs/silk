@@ -72,7 +72,7 @@ import_node_modules:
       ln -s ../local_node_modules/$(n) node_modules/ && \
     ) \
    echo TODO: Remove silk-api special case... && \
-   rm node_modules/silk-api && ln -fs ../local_node_modules/silk-api/dist/api node_modules/silk-api && \
+   rm node_modules/silk-api && ln -fs ../local_node_modules/silk-api/dist/node node_modules/silk-api && \
    true
 	cd $(LOCAL_PATH) && \
    git add node_modules

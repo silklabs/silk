@@ -37,4 +37,11 @@
            path="vendor/silk/core/local_node_modules/noble"
            remote="github"
            revision="refs/tags/v1.0.1" clone-depth="1"/-->
+
+  <!-- External npm dependencies -->
+  <project name="silk-device-locked-node-modules"
+           path="vendor/silk/build/locked_node_modules/node_modules"
+           remote="silk"
+           revision="master"/>
+
 </manifest>

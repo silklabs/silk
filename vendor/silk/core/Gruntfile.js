@@ -9,6 +9,7 @@ SRCS = [
   'lib/btle/ibeacon.js',
   'lib/btle/index.js',
   'lib/btle/scanner.js',
+  'lib/api.js',
   'lib/camera.js',
   'lib/caps.js',
   'lib/config.js',

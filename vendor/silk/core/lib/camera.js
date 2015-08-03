@@ -4,7 +4,7 @@
 'use strict';
 
 let log = require('./log')('camera');
-import api from 'silk-api';
+import api from './api';
 import { EventEmitter } from 'events';
 let util = require('./util');
 let net = require('net');

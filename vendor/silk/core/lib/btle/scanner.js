@@ -4,7 +4,7 @@
 'use strict';
 
 let noble = require('noble');
-let api = require('silk-api');
+let api = require('../api');
 const decls = api.btleConfigService;
 
 let ssid;

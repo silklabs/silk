@@ -10,6 +10,9 @@ SILK_CORE := \
   init.silk.rc \
   base_version.js \
   silk \
+  silk-alog.node \
+  silk-gc1.node \
+  silk-movie.node \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
 

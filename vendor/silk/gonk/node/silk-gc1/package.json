@@ -1,0 +1,19 @@
+{
+  "name": "silk-gc1",
+  "version": "0.0.1",
+  "description": "gc wrapper",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "author": {
+    "name": "Michael Vines",
+    "email": "mvines@silklabs.com"
+  },
+  "license": "Proprietary",
+  "dependencies": {
+    "nan": "^1.2.0"
+  },
+  "gypfile": true,
+  "private": true
+}

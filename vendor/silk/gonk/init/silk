@@ -1,7 +1,6 @@
 #!/system/bin/sh
 
 export NODE_ENV="production"
-export NODE_PATH="/system/silk"
 export DEBUG=$(getprop persist.silk.debug)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors)
 
@@ -36,7 +35,7 @@ if [ -z $1 ]; then
     LOGWRAPPER=logwrapper
   fi
 
-  exec $LOGWRAPPER $NODE $NODE_ARGS $NODE_PATH/core.js
+  exec $LOGWRAPPER $NODE $NODE_ARGS /system/silk/core.js
   exit 1
 fi
 

@@ -4,7 +4,7 @@
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
-    "postinstall": "./build.sh",
+    "postinstall": "./build/browser/build.sh public/silk-api.js",
     "build": "./build.sh",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha $(find test -name '*_test.js')",

@@ -73,3 +73,42 @@ From the root of the project.
 Now, after making a change to a react-native .js file, simply press Ctrl-r in the simlator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
 
 However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the full Ctrl-r rebuild/redeploy from within Xcode always works.
+
+## Producing a release (by hand)
+
+This functionality should move to CI.  Until it does, here are the steps for manually producing release packages:
+
+0. Close Xcode
+0. Close any react-native package servers that might be running
+0. Create a fresh clone of `silk-app`
+0. `cd` into your fresh clone and then `npm install`
+0. Open Xcode
+0. Set the build/run target to "iPhone 5s" simulator
+0. Press Ctrl-r to build and launch the Silk app.  Perform quick sanity test by ensuring it connects to the silk-test-server and can show video previews and streams.
+0. Switch the Xcode build/run target back to your real iOS device
+0. Repeat the install and sanity check steps above
+0. Select Product -> Archive to produce a clean build of the app package
+0. From the app archive window that pops up, choose Export -> Save for Ad Hoc Deployment.  Use your "Weave Laboraties Inc" signing cert.
+0. Put the Silk.ipa package artifact in a new directory along with the following `flash.sh` script:
+  ```bash
+#!/bin/bash
+
+mkdir node_modules
+npm install ios-deploy
+node_modules/ios-deploy/ios-deploy -b Silk.ipa --nostart
+```
+0. Run `tar czf Silk-app-demo3.tgz Silk-app-demo3/` to produce a package for deployment
+0. For a final QA step, unpack the `.tgz` into a test dir and run `./flash.sh` to verify successful deployment to device
+
+To build a democonfig app package set up to run off an OS X local server over softap:
+
+0. Create a file `config.local.json` in your app clone dir with the following contents:
+  ```
+{
+  "server": {
+    "url": "192.168.2.1:5000"
+  }
+}
+```
+0. Follow the steps above to build, QA, and package the app.
+0. Take special care to verify that the server URL is set correctly and that it can connect to the demo server over softap.

@@ -10,13 +10,17 @@ const log = require('debug')('publish');
 
 let pendingProcesses = [];
 
-async function run(cmd) {
+async function run(cmd, output = true) {
   log('run', cmd);
   let proc = spawn('/bin/bash', ['-c', cmd]);
   // Keep track of anything we spawned to ensure they get cleaned up....
   pendingProcesses.push(proc);
-  proc.stdout.pipe(process.stdout);
-  proc.stderr.pipe(process.stderr);
+
+  // By default pipe stdin/stderr from whatever we run right back.
+  if (output) {
+    proc.stdout.pipe(process.stdout);
+    proc.stderr.pipe(process.stderr);
+  }
 
   let [code] = await eventToPromise(proc, 'exit');
   log('run end', cmd, code);
@@ -31,16 +35,21 @@ async function run(cmd) {
   return code;
 }
 
-async function gitcmd(user, pass, cmd) {
+async function gitcmd(cmd, options = {}) {
+  let { user, pass, cwd } = options;
+
   // wrap the git command in credential helper so we don't get prompted...
   let git = `git -c "credential.helper=${__dirname}/git-pass ${user} ${pass}"`;
+  if (cwd) {
+    git = `${git} -C ${cwd}`;
+  }
   git = `${git} ${cmd}`;
   return await run(git);
 }
 
 async function gitHasChanged(dir) {
   try {
-    await run(`git -C ${dir} diff --exit-code`);
+    await run(`git -C ${dir} diff --cached --exit-code`, false);
   } catch (e) {
     return true;
   }
@@ -76,38 +85,55 @@ parser.addArgument(['-m', '--message'], {
   help: 'Commit message'
 });
 
+parser.addArgument(['--diff'], {
+  defaultValue: false,
+  action: 'storeTrue',
+  help: 'Output the diff of the project'
+});
+
+parser.addArgument(['-n', '--dry-run'], {
+  action: 'storeTrue',
+  help: 'Output the diff but do not push',
+});
+
 async function main() {
   let args = parser.parseArgs();
   let dir = await temp.mkdir({ affix: 'publish' });
-  let gitdir = `${dir}/source/`;
+  let cwd = `${dir}/source/`;
 
-  let githubToken = args.gh_token;
-  let githubUser = args.gh_user;
+  let pass = args.gh_token;
+  let user = args.gh_user;
+  let isDryRun = args.dry_run;
 
-  if (!githubToken) {
+  let gitOpts = { user, pass, cwd };
+
+  if (!pass) {
     throw new Error('You must pass a github token (--gh-token)');
   }
 
-  if (!githubUser) {
+  if (!user) {
     throw new Error('You must pass a github user (--gh-user)');
   }
 
-  await gitcmd(
-    githubUser, githubToken, `clone ${args.repo} ${gitdir}`
-  );
+  // Clone does not take a cwd since we pass an absolute path...
+  await gitcmd(`clone ${args.repo} ${cwd}`, {
+    user,
+    pass
+  });
 
-  await run(
-    `./build/${args.build}/build.sh ${gitdir}`
-  );
+  await run(`./build/${args.build}/build.sh ${cwd}`);
+  await gitcmd('add --all', gitOpts);
 
-  if (await gitHasChanged(gitdir)) {
+  if (args.diff) {
+    await gitcmd('diff --cached', gitOpts);
+  }
+
+  if (!isDryRun && await gitHasChanged(cwd)) {
     console.log('~~~ Change detected in build pushing ~~~');
-    await gitcmd(githubUser, githubToken, `-C ${gitdir} add --all`);
-    await gitcmd(githubUser, githubToken, `-C ${gitdir} commit -m "${args.message}"`);
+    await gitcmd(`commit -m "${args.message}"`, gitOpts);
 
-    await run(`ls -lah ${gitdir}`);
-    await gitcmd(githubUser, githubToken, `-C ${gitdir} log`);
-    await gitcmd(githubUser, githubToken, `-C ${gitdir} push`);
+    await gitcmd('log', gitOpts);
+    await gitcmd('push', gitOpts);
   }
 }
 

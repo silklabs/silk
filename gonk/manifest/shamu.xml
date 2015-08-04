@@ -7,4 +7,22 @@
   <project groups="device,shamu" name="vendor-broadcom-shamu" path="vendor/broadcom/shamu" remote="silk" revision="master"/>
   <project groups="device,shamu" name="vendor-moto-shamu" path="vendor/moto/shamu" remote="silk" revision="master"/>
   <project groups="device,shamu" name="vendor-qcom-shamu" path="vendor/qcom/shamu" remote="silk" revision="master"/>
+
+  <!-- Example USB HID stuff -->
+  <project name="libusb/libusb"
+           path="external/libusb1.0"
+           revision="refs/tags/v1.0.19"
+           remote="github" clone-depth="1" />
+  <project name="mvines/node-hid"
+           path="external/node-hid"
+           revision="master"
+           remote="github" clone-depth="1" />
+  <project name="signal11/hidapi"
+           path="external/node-hid/hidapi"
+           revision="master"
+           remote="github" clone-depth="1" />
+  <project name="mvines/relay"
+           path="external/relay"
+           revision="master"
+           remote="github" clone-depth="1" />
 </manifest>

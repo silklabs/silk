@@ -71,6 +71,38 @@ allows you to globally override any configuration. This is intended to
 be used for local development only. If you need a new type of
 deployment create a new configuration profile.
 
+## Silk API Automation
+
+As part of our build process (when you push to master) we automatically
+generate repositories for the api (or client) portion of silk-server:
+
+  - https://github.com/silklabs/silk-api-react-native
+  - https://github.com/silklabs/silk-api-node
+
+These are generated from the build steps for each (see
+[./build](./build/)) and the automation lives in
+[./bin/publish-api](./bin/publish-api) the intention is to allow server
+to control the source code and build process but make it easy to use
+package.json to setup the api libraries in node/etc...
+
+### Manually publishing
+
+Running `./node_modules/.bin/babel-node ./bin/publish-api -h` will show
+you all the help options and here is a quick example of publishing
+react-native:
+
+```sh
+./bin/publish-api https://github.com/silklabs/silk-api-react-native react-native --gh-user lightsofapollo --gh-token "your-github-oauth-token"
+```
+
+When doing this manually it is also worthwhile looking at the diff
+before pushing:
+
+```sh
+# Show the diff but do not push
+./bin/publish-api https://github.com/silklabs/silk-api-react-native react-native --gh-user lightsofapollo --gh-token "your-github-oauth-token" --diff --dry-run
+```
+
 ## Emacs setup
 
 If you don't use emacs, ignore this.

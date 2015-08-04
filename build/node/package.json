@@ -1,0 +1,26 @@
+{
+  "name": "silk-api",
+  "version": "0.0.1",
+  "description": "Silk client API for node js",
+  "main": "src/index.js",
+  "license": "proprietary",
+  "dependencies": {
+    "elliptic": "^3.0.3",
+    "localStorage": "^1.0.3",
+    "promise": "^6.1.0",
+    "node-fetch": "^1.3.2"
+  },
+  "engines": {
+    "node": "0.12.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-api.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "private": true
+}
+
+

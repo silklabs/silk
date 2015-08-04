@@ -4,6 +4,10 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
+//#define LOG_NDEBUG 0
+#define LOG_TAG "silk-Channel"
+#include <utils/Log.h>
+
 #include "Channel.h"
 #include <sys/time.h>
 
@@ -17,10 +21,19 @@ void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
     return;
   }
 
-  send(int32_t(size));
-  send(int32_t(tag));
-  send(timeval(when));
-  sendData(data, size);
+  if (size <= 0) {
+    ALOGV("Ignoring zero length data");
+    return;
+  }
+
+  if (isSocketAvailable()) {
+    send(int32_t(size));
+    send(int32_t(tag));
+    send(timeval(when));
+    sendData(data, size);
+  } else {
+    ALOGV("Socket not available; ignoring data");
+  }
 }
 
 /**

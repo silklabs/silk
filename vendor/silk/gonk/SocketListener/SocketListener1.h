@@ -49,6 +49,7 @@ public:
 
 protected:
     virtual bool onDataAvailable(SocketClient *c) = 0;
+    bool isSocketAvailable();
 
 private:
     bool release(SocketClient *c, bool wakeup);

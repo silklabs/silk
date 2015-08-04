@@ -280,7 +280,9 @@ class CameraStream extends EventEmitter {
       return;
     }
     this._ready = false;
+    this._ctlSocket.destroy();
     this._ctlSocket = null;
+    this._dataSocket.destroy();
     this._dataSocket = null;
 
     log.info(`camera restart: ${why}`);
@@ -299,10 +301,11 @@ class CameraStream extends EventEmitter {
     log.verbose(`connecting to ${CAPTURE_DATA_SOCKET_NAME} socket`);
     this._dataSocket = net.createConnection(CAPTURE_DATA_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_DATA_SOCKET_NAME} socket`);
+      this._dataBuffer = new Buffer(0);
     });
     this._dataSocket.on('data', data => this._onDataSocketRead(data));
     this._dataSocket.on('error', err => {
-      this._restart(`camera data socke error, reason=${err}`);
+      this._restart(`camera data socket error, reason=${err}`);
     });
     this._dataSocket.on('close', hadError => {
       if (!hadError) {
@@ -382,6 +385,9 @@ class CameraStream extends EventEmitter {
           this._pushFace(when);
           break;
         default:
+          // Flush the buffer and restart the socket
+          this._dataBuffer = new Buffer(0);
+          this._restart('Invalid capture tag');
           throw new Error(`Invalid capture tag: ${tag}`);
       }
       // put the rest of the buffer back

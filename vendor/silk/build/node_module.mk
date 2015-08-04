@@ -43,10 +43,10 @@ npm_node_dir = $(abspath external/$(or $(NODE_ENGINE),node))
 
 npm_CFLAGS := $(TARGET_GLOBAL_CFLAGS) \
   $(addprefix -isystem ,$(abspath . $(TARGET_C_INCLUDES))) \
-  $(foreach inc,$(LOCAL_C_INCLUDES),-isystem $(abspath $(inc))) \
+  $(foreach inc,$(LOCAL_C_INCLUDES),-isystem $(abspath $(inc)))
 
 npm_CPPFLAGS := $(TARGET_GLOBAL_CPPFLAGS)
-npm_LDFLAGS = $(TARGET_GLOBAL_LDFLAGS) \
+npm_LDFLAGS := $(TARGET_GLOBAL_LDFLAGS) \
   -B$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
   -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) -lstlport
 
@@ -63,14 +63,11 @@ LOCAL_INSTALLED_MODULE_STEM := package.json
 endif
 include $(BUILD_PREBUILT)
 
-$(LOCAL_BUILT_MODULE): export CC := $(abspath $(TARGET_CC))
-$(LOCAL_BUILT_MODULE): export CXX := $(abspath $(TARGET_CXX))
+$(LOCAL_BUILT_MODULE): export CC := $(abspath $(TARGET_CC)) $(npm_CFLAGS)
+$(LOCAL_BUILT_MODULE): export CXX := $(abspath $(TARGET_CXX)) $(npm_CFLAGS) $(npm_CPPFLAGS)
 $(LOCAL_BUILT_MODULE): export AR := $(abspath $(TARGET_AR))
 $(LOCAL_BUILT_MODULE): export RANLIB := $(abspath $(TARGET_RANLIB))
-$(LOCAL_BUILT_MODULE): export LINK := $(abspath $(TARGET_CXX))
-$(LOCAL_BUILT_MODULE): export CFLAGS=$(npm_CFLAGS)
-$(LOCAL_BUILT_MODULE): export CXXFLAGS=$(npm_CFLAGS) $(npm_CXXFLAGS)
-$(LOCAL_BUILT_MODULE): export LDFLAGS=$(npm_LDFLAGS)
+$(LOCAL_BUILT_MODULE): export LINK := $(abspath $(TARGET_CXX)) $(npm_LDFLAGS)
 $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
 $(LOCAL_BUILT_MODULE): export NPM_CONFIG_ARCH=arm
 $(LOCAL_BUILT_MODULE): export NPM_CONFIG_PLATFORM=android

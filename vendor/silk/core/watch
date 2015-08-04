@@ -1,11 +1,7 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 cd $(dirname $0)
 
-source ../build/vendorsetup.sh
-if [[ -x $FETCH_LOCKED_NODE_MODULES ]]; then
-  $FETCH_LOCKED_NODE_MODULES
-fi
-
+../locked_node_modules/fetch.sh
 npm install --loglevel http
 exec node_modules/.bin/grunt watch

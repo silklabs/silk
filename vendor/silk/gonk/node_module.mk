@@ -14,6 +14,7 @@
 
 LOCAL_MODULE_CLASS := NPM
 
+
 # If the node module type is not specified, attempt to infer the type based on
 # the module name
 ifeq ($(strip $(LOCAL_NODE_MODULE_TYPE)),)
@@ -76,7 +77,7 @@ $(LOCAL_BUILT_MODULE):
 	@echo "Mirror module to: $(@D)"
 	$(hide) mkdir -p $(@D)
 	$(hide) rsync -qav $(LOCAL_PATH)/ $(@D)
-	$(hide) cd $(@D) && $(FETCH_LOCKED_NODE_MODULES)
+	$(hide) cd $(@D) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
 	@echo "Build: $@"
 	$(hide) cd $(@D) && \
    node $(npm_cli) install --nodedir=$(npm_node_dir)

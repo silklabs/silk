@@ -40,6 +40,11 @@ async function gitcmd(cmd, options = {}) {
 
   // wrap the git command in credential helper so we don't get prompted...
   let git = `git -c "credential.helper=${__dirname}/git-pass ${user} ${pass}"`;
+
+  // Ensure email/name are setup so git is happy
+  git = `${git} -c "user.email=${user}@silklabs.com"`;
+  git = `${git} -c "user.name=${user}"`;
+
   if (cwd) {
     git = `${git} -C ${cwd}`;
   }

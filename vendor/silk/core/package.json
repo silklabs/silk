@@ -10,7 +10,7 @@
   "dependencies": {
     "bleno": "file:local_node_modules/bleno",
     "ntp-client": "file:local_node_modules/ntp-client",
-    "silk-api": "file:local_node_modules/silk-api/dist/node",
+    "silk-api": "file:local_node_modules/silk-api",
     "debug": "2.2.0",
     "mz": "2.0.0",
     "node-hue-api": "1.0.5",

@@ -1,0 +1,158 @@
+#! ./node_modules/.bin/babel-node --harmony
+
+import { ArgumentParser } from 'argparse';
+import { readdirSync } from 'fs';
+import createTemp from 'promised-temp';
+import { spawn } from 'mz/child_process';
+import eventToPromise from 'event-to-promise';
+
+const log = require('debug')('publish');
+
+let pendingProcesses = [];
+
+async function run(cmd, output = true) {
+  log('run', cmd);
+  let proc = spawn('/bin/bash', ['-c', cmd]);
+  // Keep track of anything we spawned to ensure they get cleaned up....
+  pendingProcesses.push(proc);
+
+  // By default pipe stdin/stderr from whatever we run right back.
+  if (output) {
+    proc.stdout.pipe(process.stdout);
+    proc.stderr.pipe(process.stderr);
+  }
+
+  let [code] = await eventToPromise(proc, 'exit');
+  log('run end', cmd, code);
+
+  if (code !== 0) {
+    throw new Error('Error in running command see above log^');
+  }
+
+  // Remove whatever is left when we are done...
+  let idx = pendingProcesses.indexOf(proc);
+  pendingProcesses.splice(idx, 1);
+  return code;
+}
+
+async function gitcmd(cmd, options = {}) {
+  let { user, pass, cwd } = options;
+
+  // wrap the git command in credential helper so we don't get prompted...
+  let git = `git -c "credential.helper=${__dirname}/git-pass ${user} ${pass}"`;
+
+  // Ensure email/name are setup so git is happy
+  git = `${git} -c "user.email=${user}@silklabs.com"`;
+  git = `${git} -c "user.name=${user}"`;
+
+  if (cwd) {
+    git = `${git} -C ${cwd}`;
+  }
+  git = `${git} ${cmd}`;
+  return await run(git);
+}
+
+async function gitHasChanged(dir) {
+  try {
+    await run(`git -C ${dir} diff --cached --exit-code`, false);
+  } catch (e) {
+    return true;
+  }
+  return false;
+}
+
+const TARGETS = readdirSync(`${__dirname}/../build`);
+
+let parser = new ArgumentParser();
+let temp = createTemp.track();
+
+parser.addArgument(['repo'], {
+  help: 'Source of the repo'
+});
+
+parser.addArgument(['build'], {
+  choices: TARGETS,
+  help: 'Type of build to stage in repo'
+});
+
+parser.addArgument(['--gh-user', '-gu'], {
+  defaultValue: process.env.GITHUB_USER,
+  help: 'Github token to use to publish the api'
+});
+
+parser.addArgument(['--gh-token', '-gt'], {
+  defaultValue: process.env.GITHUB_TOKEN,
+  help: 'Github token to use to publish the api'
+});
+
+parser.addArgument(['-m', '--message'], {
+  defaultValue: 'Automatically generated commit',
+  help: 'Commit message'
+});
+
+parser.addArgument(['--diff'], {
+  defaultValue: false,
+  action: 'storeTrue',
+  help: 'Output the diff of the project'
+});
+
+parser.addArgument(['-n', '--dry-run'], {
+  action: 'storeTrue',
+  help: 'Output the diff but do not push',
+});
+
+async function main() {
+  let args = parser.parseArgs();
+  let dir = await temp.mkdir({ affix: 'publish' });
+  let cwd = `${dir}/source/`;
+
+  let pass = args.gh_token;
+  let user = args.gh_user;
+  let isDryRun = args.dry_run;
+
+  let gitOpts = { user, pass, cwd };
+
+  if (!pass) {
+    throw new Error('You must pass a github token (--gh-token)');
+  }
+
+  if (!user) {
+    throw new Error('You must pass a github user (--gh-user)');
+  }
+
+  // Clone does not take a cwd since we pass an absolute path...
+  await gitcmd(`clone ${args.repo} ${cwd}`, {
+    user,
+    pass
+  });
+
+  await run(`./build/${args.build}/build.sh ${cwd}`);
+  await gitcmd('add --all', gitOpts);
+
+  if (args.diff) {
+    await gitcmd('diff --cached', gitOpts);
+  }
+
+  if (!isDryRun && await gitHasChanged(cwd)) {
+    console.log('~~~ Change detected in build pushing ~~~');
+    await gitcmd(`commit -m "${args.message}"`, gitOpts);
+
+    await gitcmd('log', gitOpts);
+    await gitcmd('push', gitOpts);
+  }
+}
+
+async function cleanup() {
+  // Cleanup any processes that may be dangling...
+  await Promise.all(pendingProcesses.map(async (proc) => {
+    await eventToPromise(proc, 'exit');
+  }));
+  await temp.cleanup();
+}
+
+main().then(cleanup).catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});
+process.on('SIGINT', cleanup);

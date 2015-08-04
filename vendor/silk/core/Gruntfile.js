@@ -40,16 +40,6 @@ module.exports = function(grunt) {
     grunt.log.writeln(execSync(cmd, opts));
   }
 
-  grunt.registerTask('browserify', '', function() {
-    var debug = '';
-    if (TARGET_BUILD_VARIANT !== 'user') {
-      grunt.log.writeln('  Debug build, including source map');
-      debug = '--debug';
-    }
-    exec('node_modules/.bin/browserify ' +
-           '--node --exclude **/*.node --ignore-missing ' + debug +
-           ' dist/lib/index.js --outfile core.js');
-  });
   grunt.registerTask('adb_setup', '', function() {
     exec('adb root');
     exec('adb wait-for-device', { timeout: 2000 });
@@ -75,6 +65,28 @@ module.exports = function(grunt) {
     },
     eslint: {
       target: process.env.LAX ? [] : SRCS
+    },
+    browserify: {
+      dist: {
+        files: {
+          'core.js': ['dist/lib/index.js']
+        },
+        options: {
+          browserifyOptions: {
+            // start "--node"
+            bare: true,
+            browserField: false,
+            buildins: false,
+            commondir: false,
+            detectGlobals: false,
+            // end "--node"
+
+            ignoreMissing: true,
+            debug: TARGET_BUILD_VARIANT !== 'user',
+            exclude: '**/*.node',
+          },
+        }
+      }
     },
     watch: {
       scripts: {

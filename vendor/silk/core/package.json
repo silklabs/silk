@@ -2,10 +2,9 @@
   "name": "silk-core",
   "version": "0.0.1",
   "description": "The common control software on each silk node",
-  "main": "dist/lib/main.js",
+  "main": "core.js",
   "scripts": {
-    "install": "grunt",
-    "start": "node dist/lib/main.js"
+    "install": "grunt"
   },
   "dependencies": {
     "bleno": "file:local_node_modules/bleno",
@@ -24,6 +23,7 @@
     "eslint": "~0.22.1",
     "grunt": "^0.4.5",
     "grunt-babel": "^5.0.0",
+    "grunt-browserify": "^4.0.0",
     "grunt-cli": "^0.1.13",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-eslint": "~14.0.0",

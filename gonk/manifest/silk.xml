@@ -21,7 +21,7 @@
            revision="v2.2" clone-depth="1"/>
 
   <!-- node modules -->
-  <project name="silk-server"
+  <project name="silk-api-node"
            path="vendor/silk/core/local_node_modules/silk-api"
            remote="silk"
            revision="master"/>

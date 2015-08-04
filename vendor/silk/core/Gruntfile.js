@@ -8,15 +8,13 @@ module.exports = function(grunt) {
     grunt.log.writeln(execSync(cmd, opts));
   }
 
-  grunt.registerTask('adb_setup', '', function() {
+  grunt.registerTask('adb_push', '', function() {
     exec('adb root');
     exec('adb wait-for-device', { timeout: 2000 });
     exec('adb remount');
+    exec(grunt.config.process('adb push <%= pkg.main %> /system/silk/'));
   });
-  grunt.registerTask('adb_push_core', '', function() {
-    exec('adb push core.js /system/silk/');
-  });
-  grunt.registerTask('adb_restart_silk', '', function() {
+  grunt.registerTask('adb_restart', '', function() {
     exec('adb shell setprop ctl.restart silk');
   });
 
@@ -24,6 +22,8 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    defaultTaskList: ['eslint', 'babel', 'browserify'],
+
     babel: {
       options: {
         sourceMap: true
@@ -67,7 +67,7 @@ module.exports = function(grunt) {
       scripts: {
         forever: false,
         files: ['lib/**/*.js', 'Gruntfile.js', 'package.json'],
-        tasks: ['adb_setup', 'eslint', 'babel', 'browserify', 'adb_push_core', 'adb_restart_silk'],
+        tasks: [].concat(grunt.config('defaultTaskList'), 'adb_push', 'adb_restart'),
         options: {
           spawn: false,
         },
@@ -75,6 +75,5 @@ module.exports = function(grunt) {
     },
   });
 
-  // The default tasks to run when you type: grunt
-  grunt.registerTask('default', ['eslint', 'babel', 'browserify']);
+  grunt.registerTask('default', grunt.config('defaultTaskList'));
 };

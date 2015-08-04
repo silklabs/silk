@@ -26,10 +26,14 @@ void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
     return;
   }
 
-  send(int32_t(size));
-  send(int32_t(tag));
-  send(timeval(when));
-  sendData(data, size);
+  if (isSocketAvailable()) {
+    send(int32_t(size));
+    send(int32_t(tag));
+    send(timeval(when));
+    sendData(data, size);
+  } else {
+    ALOGV("Socket not available; ignoring data");
+  }
 }
 
 /**

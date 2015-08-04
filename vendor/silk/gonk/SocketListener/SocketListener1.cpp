@@ -360,3 +360,11 @@ void SocketListener1::sendData(const void *data, int len) {
     }
   }
 }
+
+bool SocketListener1::isSocketAvailable() {
+  if (mClients) {
+    return (mClients->size() > 0);
+  } else {
+    return false;
+  }
+}

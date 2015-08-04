@@ -1,38 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-SRCS = [
-  // NOTE: Keep all source directories under lib/ to avoid breaking dependency
-  // management in Android.mk
-  'lib/base_version.js',
-  'lib/btle/config-service.js',
-  'lib/btle/ibeacon.js',
-  'lib/btle/index.js',
-  'lib/btle/scanner.js',
-  'lib/api.js',
-  'lib/camera.js',
-  'lib/caps.js',
-  'lib/config.js',
-  'lib/crashreport.js',
-  'lib/diag.js',
-  'lib/hue.js',
-  'lib/index.js',
-  'lib/lights.js',
-  'lib/log.js',
-  'lib/main.js',
-  'lib/ntp.js',
-  'lib/sensors.js',
-  'lib/ui.js',
-  'lib/update.js',
-  'lib/util.js',
-  'lib/vibrator.js',
-  'lib/wifi.js',
-];
-
-DIST_SRCS = {};
-SRCS.forEach(function(path) { DIST_SRCS['dist/'+ path] = path; });
-TARGET_BUILD_VARIANT = process.env.TARGET_BUILD_VARIANT || 'eng';
-
 module.exports = function(grunt) {
 
   function exec(cmd, opts) {
@@ -55,21 +23,28 @@ module.exports = function(grunt) {
   require("load-grunt-tasks")(grunt);
 
   grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
     babel: {
       options: {
         sourceMap: true
       },
       dist: {
-        files: DIST_SRCS
+        files: [
+          {
+            expand: true,
+            src: ['lib/**/*.js'],
+            dest: 'dist/'
+          }
+        ],
       }
     },
     eslint: {
-      target: process.env.LAX ? [] : SRCS
+      dist: process.env.LAX ? [] : ['lib/**/*.js']
     },
     browserify: {
       dist: {
         files: {
-          'core.js': ['dist/lib/index.js']
+          '<%= pkg.main %>': ['dist/lib/<%= pkg.main %>']
         },
         options: {
           browserifyOptions: {
@@ -82,7 +57,7 @@ module.exports = function(grunt) {
             // end "--node"
 
             ignoreMissing: true,
-            debug: TARGET_BUILD_VARIANT !== 'user',
+            debug: process.env.TARGET_BUILD_VARIANT !== 'user',
             exclude: '**/*.node',
           },
         }
@@ -91,7 +66,7 @@ module.exports = function(grunt) {
     watch: {
       scripts: {
         forever: false,
-        files: SRCS.concat(['Gruntfile.js', 'package.json']),
+        files: ['lib/**/*.js', 'Gruntfile.js', 'package.json'],
         tasks: ['adb_setup', 'eslint', 'babel', 'browserify', 'adb_push_core', 'adb_restart_silk'],
         options: {
           spawn: false,

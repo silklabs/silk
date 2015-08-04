@@ -19,7 +19,8 @@ build() {
   echo "[ building $2: $1 ] start"
   ./node_modules/.bin/babel-node --harmony ./bin/publish-api \
     $source $build \
-    --gh-user $GITHUB_USER
+    --gh-user $GITHUB_USER \
+    --message "Commit for $TRAVIS_BRANCH ($TRAVIS_COMMIT_RANGE)"
   echo "[ building $2: $1 ] done"
 }
 

@@ -20,7 +20,7 @@ class DeviceConfig extends events.EventEmitter {
     return new Promise((resolve, reject) => {
       log.info('Launching config service ...');
       const STATE = api.btleConfigService.state;
-      let configService = btle.configService();
+      let configService = btle.configService(id.pub);
       let updateRssiInterval = null;
 
       let bleno = btle.bleno;

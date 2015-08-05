@@ -199,6 +199,26 @@ SecretCharacteristic.prototype.onWriteRequest = function(data, offset, withoutRe
   callback(this.RESULT_SUCCESS);
 };
 
+function DeviceIdCharacteristic(service) {
+  DeviceIdCharacteristic.super_.call(this, {
+    uuid: DeviceIdCharacteristic.uuid,
+    properties: ['read'],
+    descriptors: [
+      new DescriptionDescriptor('Device ID.')
+    ]
+  });
+  this.service = service;
+}
+util.inherits(DeviceIdCharacteristic, bleno.Characteristic);
+DeviceIdCharacteristic.uuid = decls.uuid.DeviceIdCharacteristic;
+
+DeviceIdCharacteristic.prototype.onReadRequest = function(offset, callback) {
+  if (offset) {
+    return callback(this.RESULT_INVALID_OFFSET);
+  }
+  callback(this.RESULT_SUCCESS, new Buffer(this.service.deviceId, 'hex'));
+};
+
 function ErrorDescriptionCharacteristic(service) {
   ErrorDescriptionCharacteristic.super_.call(this, {
     uuid: ErrorDescriptionCharacteristic.uuid,
@@ -250,7 +270,7 @@ VibratePatternCharacteristic.prototype.onWriteRequest = function(data, offset, w
 };
 
 
-function ConfigService() {
+function ConfigService(id) {
   bleno.PrimaryService.call(this, {
     uuid: ConfigService.uuid,
     characteristics: [
@@ -261,11 +281,13 @@ function ConfigService() {
       new CentralKeyCharacteristic(this),
       new AccessPointCharacteristic(this),
       new SecretCharacteristic(this),
+      new DeviceIdCharacteristic(this),
       new ErrorDescriptionCharacteristic(this),
       new VibratePatternCharacteristic(this),
     ],
   });
   events.EventEmitter.call(this);
+  this.deviceId = id;
   this.ap = null;
   this.crypto = null;
   this.errorMessage = '';
@@ -294,6 +316,7 @@ ConfigService.characteristicUuidToName[PeripheralKeyCharacteristic.uuid] = 'peri
 ConfigService.characteristicUuidToName[CentralKeyCharacteristic.uuid] = 'centralKey';
 ConfigService.characteristicUuidToName[AccessPointCharacteristic.uuid] = 'accessPoint';
 ConfigService.characteristicUuidToName[SecretCharacteristic.uuid] = 'secret';
+ConfigService.characteristicUuidToName[DeviceIdCharacteristic.uuid] = 'deviceId';
 ConfigService.characteristicUuidToName[ErrorDescriptionCharacteristic.uuid] = 'errorDescription';
 ConfigService.characteristicUuidToName[VibratePatternCharacteristic.uuid] = 'vibratePattern';
 
@@ -369,4 +392,4 @@ ConfigService.prototype.checkDone = function() {
   // TODO notify to stop BLE service
 };
 
-module.exports = () => new ConfigService();
+module.exports = id => new ConfigService(id);

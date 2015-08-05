@@ -7,15 +7,26 @@ module.exports = function(grunt) {
         sourceMap: true
       },
       dist: {
-       files: {
-         'dist/index.js': '../../lib/btle/scanner.js'
-       }
+        files: [
+          {
+            expand: true,
+            src: ['lib/**/*.js'],
+            dest: 'dist/'
+          }
+        ],
       }
     },
-    eslint: {
-      target: ['../../lib/btle/scanner.js']
+    copy: {
+      dist: {
+        files: {
+          'lib/btle/scanner.js': '../../lib/btle/scanner.js',
+          'lib/api.js': '../../lib/api.js',
+          'lib/util.js': '../../lib/util.js',
+          'lib/log.js': '../../lib/log.js',
+        }
+      }
     }
   });
 
-  grunt.registerTask('default', ['babel', 'eslint']);
+  grunt.registerTask('default', ['copy', 'babel']);
 }

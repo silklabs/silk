@@ -1,7 +1,1 @@
-#!/bin/bash -ex
-
-cd $(dirname $0)
-
-../locked_node_modules/fetch.sh
-npm install --loglevel http
-exec node_modules/.bin/grunt watch
+node_modules/silk-sdk-glue/watch

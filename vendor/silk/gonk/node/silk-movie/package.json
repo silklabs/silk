@@ -2,7 +2,7 @@
   "name": "silk-movie",
   "version": "0.0.1",
   "description": "Plays movies",
-  "main": "index.js",
+  "main": "build/Release/silk-movie.node",
   "scripts": {
     "test": "./node_modules/nodeunit/bin/nodeunit test.js",
     "install": "node-gyp rebuild"

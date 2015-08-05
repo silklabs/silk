@@ -12,17 +12,6 @@
       "libraries": [
         "-llog"
       ]
-    },
-    {
-      "target_name": "action_after_build",
-      "type": "none",
-      "dependencies": [ "silk-alog" ],
-      "copies": [
-        {
-          "files": [ "<(PRODUCT_DIR)/silk-alog.node" ],
-          "destination": "."
-        }
-      ]
     }
   ]
 }

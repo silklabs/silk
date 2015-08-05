@@ -1,0 +1,9 @@
+{
+  "name": "silk-sdk-glue",
+  "version": "0.0.1",
+  "description": "Glue for Silk development",
+  "bin": {
+    "silk-setup": "./setup"
+  },
+  "private": true
+}

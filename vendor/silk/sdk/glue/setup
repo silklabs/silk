@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Prepares a module to use the glue
+#
+
+GLUEDIR=node_modules/silk-sdk-glue
+
+for f in debug watch .eslintrc Gruntfile.js; do
+  ln -fsv $GLUEDIR/$f $f
+done

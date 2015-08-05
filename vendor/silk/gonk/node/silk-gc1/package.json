@@ -2,7 +2,7 @@
   "name": "silk-gc1",
   "version": "0.0.1",
   "description": "gc wrapper",
-  "main": "index.js",
+  "main": "build/Release/silk-gc1.node",
   "scripts": {
     "install": "node-gyp rebuild"
   },

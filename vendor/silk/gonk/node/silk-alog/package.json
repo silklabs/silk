@@ -2,7 +2,7 @@
   "name": "silk-alog",
   "version": "0.0.1",
   "description": "wrapper for android log",
-  "main": "silk-alog.node",
+  "main": "build/Release/silk-alog.node",
   "scripts": {
     "install": "node-gyp rebuild"
   },

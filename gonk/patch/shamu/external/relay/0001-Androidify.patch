@@ -14,11 +14,10 @@ new file mode 100644
 index 0000000..682e31f
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,5 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
-+LOCAL_MODULE       := relay
 +LOCAL_MODULE_TAGS  := optional debug eng
 +include $(BUILD_NODE_MODULE)
 diff --git a/package.json b/package.json

@@ -16,7 +16,6 @@
 /hardware/
 /libnativehelper/
 /ndk
-/npm_cache/
 /out/
 /prebuilts/clang/
 /prebuilts/gcc/
@@ -30,7 +29,7 @@
 /vendor/lge/
 /vendor/moto/
 /vendor/qcom/
-/vendor/silk/core/core.js
+/vendor/silk/core/index.js
 /vendor/silk/core/dist/
 /vendor/silk/core/local_node_modules/bleno/
 /vendor/silk/core/local_node_modules/noble/

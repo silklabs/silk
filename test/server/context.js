@@ -101,7 +101,7 @@ export default function createContext(overrides = {}) {
     context.db = await createDb(config);
     context.config = config;
     context.server = server;
-    context.url = `http://localhost:${server.address().port}`;
+    context.url = `http://localhost:${server.port}`;
 
     // assign methods for convenience...
     for (let name in module.exports) {
@@ -117,7 +117,7 @@ export default function createContext(overrides = {}) {
   teardown(async () => {
     await context.db.dropDatabase();
     await context.db.close();
-    context.server.close();
+    await context.server.close();
   });
 
   return context;

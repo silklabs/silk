@@ -19,7 +19,7 @@ module.exports = function(grunt) {
     grunt.log.writeln(adb_push);
     exec(adb_push);
   });
-  grunt.registerTask('adb_restart', '', function() {
+  grunt.registerTask('silk_restart', '', function() {
     exec('adb shell setprop ctl.restart silk');
   });
 
@@ -72,7 +72,7 @@ module.exports = function(grunt) {
       scripts: {
         forever: false,
         files: ['lib/**/*.js', 'Gruntfile.js', 'package.json'],
-        tasks: [].concat(grunt.config('defaultTaskList'), 'adb_push', 'adb_restart'),
+        tasks: [].concat(grunt.config('defaultTaskList'), 'adb_push', 'silk_restart'),
         options: {
           spawn: false,
         },

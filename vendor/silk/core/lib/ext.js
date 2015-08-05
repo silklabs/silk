@@ -9,33 +9,37 @@ let path = require('path');
 
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
-let extEnv = {};
-
-function load(file) {
-  let ext = path.extname(file);
-  let moduleName = ext.length > 0 ? file.slice(0, -ext.length) : file;
-  try {
-    log.info(`Loading ${moduleName}`);
-    require(moduleName)(extEnv);
-  } catch (e) {
-    log.error(`Extension failed to load: ${moduleName}`);
-    log.error(e);
-  }
-}
-
-function loadAll(dir) {
-  fs.readdir(dir, (err, list) => {
-    if (err) {
-      log.error(`Unable to read ${dir}: ${err}`);
-      return;
-    }
-    list.forEach(file => load(path.join(dir, file)));
-  });
-}
-
-export default function loadExtensions(env = {}) {
+export default function loadExtensions(extraObjects = {}) {
   log.info('Loading extensions');
-  extEnv = env;
+
+  function load(file) {
+    let ext = path.extname(file);
+    let modulePath = ext.length > 0 ? file.slice(0, -ext.length) : file;
+    try {
+      log.info(`Loading ${modulePath}`);
+      let env = {
+        log: require('./log')(path.basename(modulePath)),
+        extraObjects: extraObjects   // TODO: Remove extraObjects
+      };
+      require(modulePath)(env);
+    } catch (e) {
+      log.error(`Extension failed to load: ${modulePath}`);
+      log.error(e);
+    }
+  }
+
+  function loadAll(dir) {
+    fs.readdir(dir, (err, list) => {
+      if (err) {
+        if (err.code !== 'ENOENT') {
+          log.error(`Unable to read ${dir}: ${err}`);
+        }
+        return;
+      }
+      list.forEach(file => load(path.join(dir, file)));
+    });
+  }
+
   extDirs.forEach(loadAll);
 }
 

@@ -12,7 +12,12 @@ module.exports = function(grunt) {
     exec('adb root');
     exec('adb wait-for-device', { timeout: 2000 });
     exec('adb remount');
-    exec(grunt.config.process('adb push <%= pkg.main %> /system/silk/<%= pkg.name %>.js'));
+
+    var srcFile = grunt.config('pkg.main');
+    var destFile = grunt.config.process('/system/silk/<%= pkg.name %>.js');
+    var adb_push ='adb push ' + srcFile + ' ' + destFile;
+    grunt.log.writeln(adb_push);
+    exec(adb_push);
   });
   grunt.registerTask('adb_restart', '', function() {
     exec('adb shell setprop ctl.restart silk');

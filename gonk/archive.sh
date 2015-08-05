@@ -155,6 +155,9 @@ adb shell setprop persist.silk.crashrprt.enabled true
 # Set silk-server URL
 adb shell setprop persist.silk.server.url "$SERVER_URL"
 
+# Activate uploads to cloud storage
+adb shell setprop persist.silk.vidupload.enabled 1
+
 # Restart the device
 echo Waiting to reboot the device to finish provisioning
 adb reboot

@@ -60,7 +60,7 @@ class DeviceConfig extends events.EventEmitter {
         if (updateRssiInterval) {
           clearInterval(updateRssiInterval);
         }
-        updateRssiInterval = setInterval(updateRssi, 500);
+        updateRssiInterval = setInterval(updateRssi, 100);
       };
       bleno.on('accept', acceptListener);
 

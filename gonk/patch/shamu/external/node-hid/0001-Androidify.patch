@@ -16,11 +16,10 @@ new file mode 100644
 index 0000000..024cb0d
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,6 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
-+LOCAL_MODULE       := node-hid
 +LOCAL_MODULE_TAGS  := optional debug eng
 +LOCAL_SHARED_LIBRARIES += libusb1.0
 +include $(BUILD_NODE_MODULE)

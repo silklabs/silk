@@ -3,26 +3,36 @@
 #
 # Currently the following assumptions are made about the node module:
 #
-# 1. The module may be either a file or folder module. If the module name ends
-#    in .js, .node, or .json then it's assumed to be a file module, otherwise a
-#    folder module.  To override define LOCAL_NODE_MODULE_TYPE to be either
-#    "file" or "folder".
+# 1. A package.json file exists in LOCAL_PATH
 #
-# 2. Any external shared objects required by node-gyp should be listed in
+# 2. The LOCAL_MODULE variable is derived from the package.json "name" attribute
+#
+# 3. If LOCAL_NODE_MODULE_TYPE is defined to "file", the module is assumed to
+#    be a "file module" and only the file (native or script) identified by the
+#    package.json's "main" attribute will be installed.
+#
+# 4. LOCAL_MODULE_PATH maybe specified to control the installation location.
+#    If unspecified the module will be installed as a system node module
+#
+# 5. Any external shared objects required by node-gyp should be listed in
 #    LOCAL_SHARED_LIBRARIES to ensure Make can managed dependencies probably.
 #
 
 LOCAL_MODULE_CLASS := NPM
 
+define GET_PACKAGE_NAME_MAIN_JS
+var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
+console.log('LOCAL_MODULE=' + pkg.name);
+console.log('LOCAL_NODE_MODULE_MAIN=' + (pkg.main || ''));
+endef
+$(foreach stmt,$(shell node -e "$(GET_PACKAGE_NAME_MAIN_JS)"),$(eval $(stmt)))
 
-# If the node module type is not specified, attempt to infer the type based on
-# the module name
-ifeq ($(strip $(LOCAL_NODE_MODULE_TYPE)),)
-ifneq (,$(filter .js .node .json,$(suffix $(LOCAL_MODULE))))
-LOCAL_NODE_MODULE_TYPE := file
-else
-LOCAL_NODE_MODULE_TYPE := folder
+ifeq (,$(strip $(LOCAL_MODULE_TAGS)))
+LOCAL_MODULE_TAGS := optional
 endif
+
+ifeq (,$(strip $(LOCAL_NODE_MODULE_TYPE)))
+LOCAL_NODE_MODULE_TYPE := folder
 endif
 
 ifneq (,$(strip $(filter-out file folder,$(LOCAL_NODE_MODULE_TYPE))))
@@ -32,8 +42,13 @@ endif
 ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 # Global node module by default
 LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/node
+endif
+
 ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 LOCAL_MODULE_PATH := $(LOCAL_MODULE_PATH)/$(LOCAL_MODULE)
+else
+ifeq (,$(strip $(LOCAL_NODE_MODULE_MAIN)))
+$(error $(LOCAL_PATH)/package.json is missing a "main" attribute)
 endif
 endif
 
@@ -58,9 +73,11 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
 
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
-ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 LOCAL_BUILT_MODULE_STEM := package.json
+ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 LOCAL_INSTALLED_MODULE_STEM := package.json
+else
+LOCAL_MODULE_SUFFIX := $(suffix $(LOCAL_NODE_MODULE_MAIN))
 endif
 include $(BUILD_PREBUILT)
 
@@ -81,15 +98,15 @@ $(LOCAL_BUILT_MODULE):
 	@echo "Build: $@"
 	$(hide) cd $(@D) && \
    node $(npm_cli) install --nodedir=$(npm_node_dir)
-ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 	$(hide) touch $@
-endif
 
+$(LOCAL_INSTALLED_MODULE): LOCAL_NODE_MODULE_MAIN := $(LOCAL_NODE_MODULE_MAIN)
+$(LOCAL_INSTALLED_MODULE): LOCAL_NODE_MODULE_TYPE := $(LOCAL_NODE_MODULE_TYPE)
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
 ifeq (file,$(strip $(LOCAL_NODE_MODULE_TYPE)))
-	$(hide) cp -r $< $@
+	$(hide) cp $(<D)/$(LOCAL_NODE_MODULE_MAIN) $@
 # Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
 # so they can be resolved correctly from the browserify-ed module
 	$(hide) \

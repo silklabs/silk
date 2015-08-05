@@ -1,8 +1,8 @@
 {
-  "name": "silk-core",
+  "name": "core",
   "version": "0.0.1",
   "description": "The common control software on each silk node",
-  "main": "core.js",
+  "main": "index.js",
   "scripts": {
     "install": "grunt"
   },

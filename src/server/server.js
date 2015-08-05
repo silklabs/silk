@@ -56,14 +56,29 @@ export default async function main (config) {
   let errorEvent = eventToPromise(http, 'error').then(err => {
     throw err;
   });
-  let connected = eventToPromise(http, 'listening').then(() => {
 
+  let connected = eventToPromise(http, 'listening').then(() => {
     // XXX: This is sorta a hack and only intended for development/testing...
     if (!config.server.publicUrl) {
       config.server.publicUrl = `http://localhost:${http.address().port}`;
     }
-
-    return http;
   });
-  return await Promise.race([errorEvent, connected]);
+
+  // await to be connected correctly...
+  await Promise.race([errorEvent, connected]);
+
+  // This interface is only ever supposed to be used from tests.
+  return {
+    // Useful because tests bind on 0 we don't know which port we are using
+    // until this is done.
+    port: http.address().port,
+
+    // Do any cleanup here that would normally happen because of the server
+    // process being killed. We do this instead of closing the process mostly
+    // for performance.
+    close: async() => {
+      await db.close();
+      http.close();
+    }
+  };
 }

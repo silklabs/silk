@@ -143,12 +143,11 @@ DeviceManager.prototype._waitForProximity = function(p) {
           var min = -70, max = -40;
           var scaled = (rssi - min) / (max - min);
           var duty = Math.min(1.0, Math.max(0.0, scaled));
-          // Set the period to fill 500ms (RSSI poll interval), and be
+          // Set the period to fill 100ms (RSSI poll interval), and be
           // long enough so that a 0.1 change in duty cycle is
           // approximately perceptible to the user.
-          var period = 250;
+          var period = 100;
           var pattern = new Uint16Array([
-            period * duty, period * (1 - duty),
             period * duty, period * (1 - duty)
           ]);
           // TODO: let the UI at the next level up be responsible for
@@ -166,7 +165,7 @@ DeviceManager.prototype._waitForProximity = function(p) {
         this._disconnect(p)
         .then(() => this._ensureConfigured(p));
       });
-    }, 500);
+    }, 100);
   });
 };
 

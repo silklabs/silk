@@ -7,6 +7,11 @@ export default function configure(input = {}) {
   };
 
   for (var key in input) {
+    // Do not allow accidental override of defaults if you want to "null" a
+    // config property set it to null.
+    if (input[key] === undefined) {
+      continue;
+    }
     defaults[key] = input[key];
   }
   return defaults;

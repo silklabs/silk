@@ -1,5 +1,1 @@
-#!/bin/bash -ex
-
-cd $(dirname $0)
-time npm install --loglevel http
-exec node_modules/.bin/grunt watch
+node_modules/silk-sdk-glue/watch

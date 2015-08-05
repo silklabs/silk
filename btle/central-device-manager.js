@@ -20,6 +20,7 @@ var api = {
       CentralKeyCharacteristic: '6e1de318302b4e90b0d4232b8cda3c67',
       AccessPointCharacteristic: '8e3ea52bbcbf40d18fdcb40d45dcdd3e',
       SecretCharacteristic: 'cb6def342d794d12886351b17fea3bf1',
+      DeviceIdCharacteristic: '3f0497ec81b24850a2579237bcf8591a',
       ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
       VibratePatternCharacteristic: '385a2b58191211e5b60b1697f925ec7b',
     }
@@ -188,6 +189,13 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
     return this._resumeSession(p, resumeToken);
   })
   .then(() => {
+    console.log('Reading device ID ...');
+    return p.readCharacteristic(decls.uuid.DeviceIdCharacteristic);
+  })
+  .then(id => {
+    p.deviceId = id.toString('hex');
+    console.log(` ... got device ID ${p.deviceId}`);
+
     console.log('Writing wifi info to peripheral ...');
     return Promise.all([
       p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,

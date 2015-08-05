@@ -163,9 +163,22 @@ var MonitorsView = React.createClass({
 
   refreshDeviceList: function() {
     var configuring = this.state.configuring = {};
+    var streaming = this.state.streaming;
     this.dm.enumerateDevices().forEach(p => {
-      configuring[p.id] = { name: p.prettyName, rssi: p.rssi,
-                            state: 'configuring' };
+      if ('registered' !== p.state) {
+        // Device hasn't finished configuring yet.
+        configuring[p.id] = { name: p.prettyName, rssi: p.rssi,
+                              state: 'configuring' };
+        return;
+      }
+      if (!(p.deviceId in streaming)) {
+        // Device has sent us its ID, but we haven't observed a
+        // server-sent event from the device yet.  Create a
+        // starting-up placeholder widget for it that will be swapped
+        // out once we get the device info from the server.
+        streaming[p.deviceId] = { name: 'New Device' };
+        return;
+      }
     });
     this.setState(this.state);
   },

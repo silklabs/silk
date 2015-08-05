@@ -116,6 +116,7 @@ export default function createContext(overrides = {}) {
 
   teardown(async () => {
     await context.db.dropDatabase();
+    await context.db.close();
     context.server.close();
   });
 

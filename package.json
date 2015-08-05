@@ -7,7 +7,7 @@
     "postinstall": "./build/browser/build.sh public/silk-api.js",
     "build": "./build.sh",
     "lint": "eslint test src",
-    "mocha": "DEBUG=silk-* mocha $(find test -name '*_test.js')",
+    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
     "start": "DEBUG=silk-*,-*:verbose babel-node --harmony src/server/main.js production",
     "test": "npm run-script lint && npm run-script mocha"
   },

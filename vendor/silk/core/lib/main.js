@@ -148,6 +148,7 @@ function maybeCreateSocket() {
   });
 
   nightVisionExampleBehaviour();
+  require('./ext')();
 
   diag = require('./diag')(id.toString());
 

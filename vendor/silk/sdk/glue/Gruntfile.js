@@ -65,6 +65,7 @@ module.exports = function(grunt) {
             commondir: false,
             detectGlobals: false,
             // end "--node"
+            standalone: '__unused',
 
             ignoreMissing: true,
             debug: process.env.TARGET_BUILD_VARIANT !== 'user',

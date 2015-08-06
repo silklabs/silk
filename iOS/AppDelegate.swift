@@ -60,23 +60,34 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     return true
   }
 
-  func regionStateChanged(entered: Bool) {
-    if self.entered != entered {
-      self.entered = entered;
-      let alert = UIAlertController(title: "Info", message: "Region entered: \(entered)", preferredStyle: UIAlertControllerStyle.Alert)
-      let alertAction = UIAlertAction(title: "OK!", style: UIAlertActionStyle.Default) { (UIAlertAction) -> Void in }
-      alert.addAction(alertAction)
-      self.window?.rootViewController?.presentViewController(alert, animated: true, completion: nil)
+  // Display region enter/exit notifications to the user
+  func notifyUser(notificationText: String) {
+    // Ask user permission for user notifications
+    let registerUserNotificationSettings = UIApplication.instancesRespondToSelector("registerUserNotificationSettings:")
+    if registerUserNotificationSettings {
+      var types: UIUserNotificationType = UIUserNotificationType.Alert | UIUserNotificationType.Sound | UIUserNotificationType.Badge
+      UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(forTypes: types, categories: nil))
     }
 
+    var notification = UILocalNotification()
+    notification.alertBody = notificationText
+    notification.fireDate = NSDate()
+    notification.soundName = UILocalNotificationDefaultSoundName
+    UIApplication.sharedApplication().scheduleLocalNotification(notification)
+  }
+
+  func regionStateChanged(entered: Bool) {
+    notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
     self.homeBeacon!.setIsEnabled(entered)
   }
 
   func applicationWillResignActive(application: UIApplication) {
+    NSLog("applicationWillResignActive");
     self.regionMonitor!.applicationWillResignActive()
   }
 
   func applicationDidBecomeActive(application: UIApplication) {
+    NSLog("applicationDidBecomeActive");
     self.regionMonitor!.applicationDidBecomeActive()
   }
 }

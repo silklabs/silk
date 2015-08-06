@@ -1,9 +1,18 @@
 # silk-core
 
+
+## Prerequisites
+
+Set up the environment first by running a local install before anything else discussed below:
+```
+cd vendor/silk/core
+npm install
+```
+
 ## Javascript Rapid Development Cycle
 
 If you are only making JavaScript changes in `lib/`, the following may be used
-to reduce your build time significantly:
+to reduce your build time significantly.
 
 ### Automatic push
 Run `./watch` then edit/save normally. On every save, the new core.js will be

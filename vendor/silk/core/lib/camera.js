@@ -19,6 +19,8 @@ const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
 //Content type must be set to make clients happy later on.
 const VIDEO_CONTENT_TYPE = 'video/mp4';
 
+const VIDEO_BLOB_TYPE = 'video';
+
 //
 // Constants
 //
@@ -191,9 +193,9 @@ class VideoUploadQueue extends EventEmitter {
     }
 
     // step 1 is to upload the data...
-    return api.blob.uploadAndAck(frame.length, frame, VIDEO_CONTENT_TYPE).then((result) => {
+    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, VIDEO_CONTENT_TYPE, frame).then(blobUrl => {
       // step 2. upload the metadata...
-      metadataPayload.url = result.url;
+      metadataPayload.url = blobUrl;
       return api.timeMeta.create(metadataPayload);
     }).then((result) => {
       this.previousId = result.id;

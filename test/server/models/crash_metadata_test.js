@@ -1,14 +1,13 @@
 import assert from 'assert';
 import CrashMetadata from '../../../src/server/models/crash_metadata';
-import createDb from '../../../src/server/db';
+import createContext from '../context';
 
 suite('metadata', () => {
-  let config = require('../../../src/server/config')('test');
+  let context = createContext();
 
-  let subject, db;
+  let subject;
   setup(async () => {
-    db = await createDb(config);
-    subject = new CrashMetadata(config, db);
+    subject = new CrashMetadata(context.config, context.db);
   });
 
   test('put / get / find', async () => {

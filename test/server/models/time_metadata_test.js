@@ -1,14 +1,13 @@
 import assert from 'assert';
 import TimeMetadata from '../../../src/server/models/time_metadata';
-import createDb from '../../../src/server/db';
+import createContext from '../context';
 
 suite('time metadata', () => {
-  let config = require('../../../src/server/config')('test');
+  let context = createContext();
 
-  let subject, db;
+  let subject;
   setup(async () => {
-    db = await createDb(config);
-    subject = new TimeMetadata(db);
+    subject = new TimeMetadata(context.db);
   });
 
   test('.insertNext / findNearTime', async () => {

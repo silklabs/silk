@@ -18,6 +18,13 @@ export function sha256(context, text) {
   return sha1.digest('hex');
 }
 
+export async function get(context, path) {
+  let req = request.get(`${context.url}${path}`);
+  return await req.end().catch(err => {
+    return err.response;
+  });
+}
+
 export async function post(context, path, json) {
   let req = request.post(`${context.url}${path}`).send(json);
   return await req.end().catch(err => {

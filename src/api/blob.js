@@ -1,8 +1,8 @@
 import fetch from './fetch';
+import fetchJson from './fetch_json';
 import { Readable } from 'stream';
 import throwError from './fetch_error';
-import fetchJson from './fetch_json';
-import url from 'url';
+import { resolve } from 'url';
 
 class BufferToStream extends Readable {
   constructor(buffer) {
@@ -18,44 +18,55 @@ class BufferToStream extends Readable {
   }
 }
 
+async function getPutUrl(baseUrl, blobType, contentLength, contentType) {
+  const postUrl = resolve(baseUrl, `blob/${blobType.toLowerCase()}`);
+  const body = {
+    contentLength,
+    contentType: contentType.toLowerCase(),
+  };
+  let { putUrl } = await fetchJson(postUrl, body);
+  return putUrl;
+}
+
+async function put(putUrl, contentLength, contentType, bufferOrStream) {
+  let stream;
+  if (bufferOrStream instanceof Buffer) {
+    stream = new BufferToStream(bufferOrStream);
+  } else {
+    stream = bufferOrStream;
+  }
+
+  const request = {
+    method: 'PUT',
+    headers: {
+      'Content-Length': contentLength,
+      'Content-Type': contentType.toLowerCase()
+    },
+    body: stream
+  };
+
+  const response = await fetch(putUrl, request);
+  if (!response.ok) {
+    await throwError(response);
+  }
+}
+
+async function ack(postUrl, putUrl) {
+  const { url } = await fetchJson(postUrl, { url: putUrl });
+  return url;
+}
 
 export default function(config) {
-  let baseUrl = config.serverUrl;
+  const baseUrl = config.serverUrl;
   return {
-    signedUrl: fetchJson.bind(null, url.resolve(baseUrl, 'blob')),
-    ack: fetchJson.bind(null, url.resolve(baseUrl, 'blob/ack')),
+    getPutUrl: getPutUrl.bind(null, baseUrl),
+    put,
+    ack: ack.bind(null, resolve(baseUrl, 'blob/ack')),
 
-    async upload(putUrl, size, bufferOrStream, contentType) {
-      let stream;
-      if (bufferOrStream instanceof Buffer) {
-        bufferOrStream = new BufferToStream(bufferOrStream);
-      }
-      stream = bufferOrStream;
-      let request = {
-        method: 'put',
-        body: stream,
-        headers: {
-          'Content-Length': size
-        }
-      };
-
-      if (contentType) {
-        request.headers['content-type'] = contentType;
-      }
-
-      let response = await fetch(putUrl, request);
-
-      if (!response.ok) {
-        await throwError(response);
-      }
-    },
-
-    async uploadAndAck(size, bufferOrStream, contentType) {
-      let { putUrl } = await this.signedUrl({
-        contentType
-      });
-      await this.upload(putUrl, size, bufferOrStream, contentType);
-      return await this.ack({ url: putUrl });
+    async upload(blobType, contentLength, contentType, bufferOrStream) {
+      let putUrl = await this.getPutUrl(blobType, contentLength, contentType);
+      await this.put(putUrl, contentLength, contentType, bufferOrStream);
+      return await this.ack(putUrl);
     }
   };
 }

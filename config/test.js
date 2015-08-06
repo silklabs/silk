@@ -13,7 +13,18 @@ export default {
 
   blobs: {
     s3: {
-      bucket: 'silk-blobs-test-us-west-2'
+      video: {
+        bucket: 'silk-blobs-test-us-west-2'
+      },
+      crashreport: {
+        bucket: 'silk-blobs-test-us-west-2'
+      },
+      log: {
+        bucket: 'silk-blobs-test-us-west-2'
+      },
+      metrics: {
+        bucket: 'silk-blobs-test-us-west-2'
+      }
     }
   },
 

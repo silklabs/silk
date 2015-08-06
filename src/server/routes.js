@@ -1,19 +1,18 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-
-import * as Joi from 'joi';
+import { resolve } from 'url';
 
 module.exports = function(opts) {
   let {
     app,
     accounts,
+    crashMeta,
     timeMeta,
     config,
     blobs
   } = opts;
 
-  // Eventually we will support multiple blob types via one api but not yet...
   let blobHandler = blobs[config.server.blobType];
   if (!blobHandler) {
     throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
@@ -112,64 +111,94 @@ module.exports = function(opts) {
     return res.status(200).json({ session: session });
   });
 
-  app.post('/device/metadata/', asyncRoute(async (req, res) => {
+  app.post('/device/metadata/time', asyncRoute(async (req, res) => {
     // create new metadata.
     let result = await timeMeta.insertNext(req.body);
     res.status(201).send(result);
   }));
 
-  app.post('/device/metadata/find/byid', asyncRoute(async (req, res) => {
+  app.post('/device/metadata/time/find/byid', asyncRoute(async (req, res) => {
     // create new metadata.
     let result = await timeMeta.findById(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
   }));
 
-  app.post('/device/metadata/find/bytime', asyncRoute(async (req, res) => {
+  app.post('/device/metadata/time/find/bytime', asyncRoute(async (req, res) => {
     // create new metadata.
     let result = await timeMeta.findNearTime(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
   }));
 
-  app.post('/blob/', asyncRoute(async (req, res) => {
-    Joi.assert(req.body, Joi.object().keys({
-      contentType: Joi.string()
-    }).required());
-    // Sign a blob upload....
-    let putUrl = await blobHandler.sign(null, req.body.contentType);
-    res.status(201).send({ putUrl });
+  app.post('/device/metadata/crashreport', asyncRoute(async (req, res) => {
+    let id;
+    try {
+      id = await crashMeta.put(req.body);
+    } catch(e) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const getUrl = resolve(config.server.publicUrl,
+                           `/device/metadata/crashreport/${id}`);
+    res.append('Location', getUrl);
+    res.status(201).send({ id });
+  }));
+
+  app.get('/device/metadata/crashreport/:id', asyncRoute(async (req, res) => {
+    let result;
+    try {
+      result = await crashMeta.get(req.params.id);
+    } catch(e) {
+      res.sendStatus(404);
+      return;
+    }
+
+    if (result) {
+      res.status(200).send(result);
+    } else {
+      res.sendStatus(404);
+    }
+  }));
+
+  app.post('/device/metadata/crashreport/find', asyncRoute(async (req, res) => {
+    let result;
+    try {
+      result = await crashMeta.find(req.body);
+    } catch(e) {
+      res.sendStatus(400);
+      return;
+    }
+
+    if (result) {
+      res.status(200).send(result);
+    } else {
+      res.sendStatus(404);
+    }
   }));
 
   app.post('/blob/ack', asyncRoute(async (req, res) => {
-    Joi.assert(req.body, Joi.object().keys({
-      url: Joi.string().required()
-    }).required());
-    // This looks sketchy because it is in the short term we simply snip off the
-    // signature details from our urls if they exist allowing this api to
-    // function (providing a long term url or token for a blob).
-    res.status(201).send({
-      url: req.body.url.split('?')[0]
-    });
+    await blobHandler.postAck(req, res);
   }));
 
-  app.get('/blob/:id', asyncRoute(async (req, res) => {
-    // XXX: We will eventually want other blob types to go through this url but
-    // that should not be an issue as client should use the result of /blob/ack
-    // to define their urls not construct them manually.
-    if (config.server.blobType !== 'file') {
-      res.status(501);
-      return;
-    }
-    await blobHandler.respond(req.params.id, res);
+  app.post('/blob/:type', asyncRoute(async (req, res) => {
+    await blobHandler.postBlob(req, res);
   }));
 
-  app.put('/blob/:id', asyncRoute(async (req, res) => {
+  app.put('/blob/:type/:id', asyncRoute(async (req, res) => {
     if (config.server.blobType !== 'file') {
-      res.status(501);
+      res.sendStatus(501);
       return;
     }
-    await blobHandler.write(req.headers, req.params.id, req);
-    res.status(201).end();
+    await blobHandler.putBlob(req, res);
+  }));
+
+  app.get('/blob/:type/:id', asyncRoute(async (req, res) => {
+    if (config.server.blobType !== 'file') {
+      res.sendStatus(501);
+      return;
+    }
+    await blobHandler.getBlob(req, res);
   }));
 };

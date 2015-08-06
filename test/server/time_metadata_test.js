@@ -2,7 +2,9 @@ import assert from 'assert';
 import createContext from './context';
 import createMetadataApi from '../../src/api/time_metadata';
 
-suite('metadata apis', () => {
+const SERVER_PATH_PREFIX = '/device/metadata/time';
+
+suite('time metadata apis', () => {
   let context = createContext();
   let id;
   let api;
@@ -12,7 +14,7 @@ suite('metadata apis', () => {
     api = createMetadataApi({ serverUrl: context.url }); //eslint-disable-line 
   });
 
-  suite('/device/metadata/*', () => {
+  suite(`${SERVER_PATH_PREFIX}/*`, () => {
     let first;
     setup(async () => {
       first = {
@@ -26,7 +28,7 @@ suite('metadata apis', () => {
         }
       };
 
-      let insert = await context.post('/device/metadata/', first);
+      let insert = await context.post(SERVER_PATH_PREFIX, first);
       assert.equal(insert.statusCode, 201, 'creates record');
       assert.ok(insert.body.id, 'has id');
       first.id = insert.body.id;
@@ -38,7 +40,7 @@ suite('metadata apis', () => {
     });
 
     test('find/byid - missing', async () => {
-      let findById = await context.post('/device/metadata/find/byid', {
+      let findById = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
         // must be 12 byte string to make mongodb accept the value
         id: 'aaaaaaaaaaaa'
       });
@@ -46,7 +48,7 @@ suite('metadata apis', () => {
     });
 
     test('find/bytime - missing (outside of time)', async () => {
-      let findById = await context.post('/device/metadata/find/bytime', {
+      let findById = await context.post(`${SERVER_PATH_PREFIX}/find/bytime`, {
         metaType: 'video',
         deviceId: id,
         strict: true,
@@ -56,7 +58,7 @@ suite('metadata apis', () => {
     });
 
     test('find/bytime - missing wrong type', async () => {
-      let findByTime = await context.post('/device/metadata/find/bytime', {
+      let findByTime = await context.post(`${SERVER_PATH_PREFIX}/find/bytime`, {
         metaType: 'log',
         deviceId: id,
         time: first.endUTC - 2
@@ -84,11 +86,11 @@ suite('metadata apis', () => {
       next.previousId = first.id;
       await api.create(next);
 
-      let findFirst = await context.post('/device/metadata/find/byid', {
+      let findFirst = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
         id: first.id
       });
 
-      let findSecond = await context.post('/device/metadata/find/byid', {
+      let findSecond = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
         id: findFirst.body.nextId
       });
       assert.equal(findSecond.statusCode, 200);

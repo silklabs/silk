@@ -8,6 +8,7 @@
     "install": "grunt"
   },
   "dependencies": {
+    "babel-runtime": "^5.8.20",
     "silk-sdk-glue": "0.0.1",
     "bleno": "file:local_node_modules/bleno",
     "ntp-client": "file:local_node_modules/ntp-client",

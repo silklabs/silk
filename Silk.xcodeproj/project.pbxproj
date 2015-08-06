@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
+		3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */; };
 		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
 		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
 		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
@@ -251,6 +253,8 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = iOS/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = iOS/Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
+		3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeBeacon.swift; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
 		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
@@ -454,6 +458,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		3D85672F1B72DF64000C8BE1 /* iBeacon */ = {
+			isa = PBXGroup;
+			children = (
+				3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */,
+				3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */,
+			);
+			path = iBeacon;
+			sourceTree = "<group>";
+		};
 		573C20C51B4EF5C900C40871 /* PropertyObserver */ = {
 			isa = PBXGroup;
 			children = (
@@ -505,6 +518,7 @@
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				3D85672F1B72DF64000C8BE1 /* iBeacon */,
 				57BCE10B1B69910C0047088B /* NSDataBridge */,
 				57BCE0F51B695FB10047088B /* RCTConvert */,
 				5758F25E1B600AD300C18E5D /* PreviewImage */,
@@ -724,6 +738,11 @@
 					};
 					13B07F861A680F5B00A75B9A = {
 						DevelopmentTeam = V2B5P6TR7E;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -956,11 +975,13 @@
 				F9107F221B58DA8D00F02BF4 /* SocketAckManager.swift in Sources */,
 				F9107F241B58DA8D00F02BF4 /* SocketEngine.swift in Sources */,
 				F9107F2D1B58DA8D00F02BF4 /* SwiftRegex.swift in Sources */,
+				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				5758F2641B600B2000C18E5D /* PreviewImage.swift in Sources */,
 				576CA1B41B6AB3A2006C7C3C /* FaceEvent.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
+				3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */,
 				F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */,
 				5758F23F1B5F4A1200C18E5D /* ReactSocketIO.swift in Sources */,
 				57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */,

@@ -103,6 +103,19 @@ before pushing:
 ./bin/publish-api https://github.com/silklabs/silk-api-react-native react-native --gh-user lightsofapollo --gh-token "your-github-oauth-token" --diff --dry-run
 ```
 
+### Testing API changes locally in device/app
+
+#### React-Native
+
+When testing changes in react-native run:
+
+```sh
+# Builds the react-native api and overrides the current install in node_modules
+./build/react-native/build.sh $WHERE_SILK_APP_LIVES/node_modules/silk-api-react-native
+```
+
+You will have to remove node_modules/silk-api-react-native to run npm install after this.
+
 ## Emacs setup
 
 If you don't use emacs, ignore this.

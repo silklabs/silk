@@ -1,8 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-'use strict';
-
 // This file can be run on device as a normal module, or standalone via |node|
 // as a way to register a Hue light bridge connected to the local network.
 // Stand alone mode is detected by testing "weOwnTty".

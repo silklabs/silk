@@ -3,8 +3,6 @@
 
 // TODO: rewrite me, and share bluetooth-init logic with scanner
 
-'use strict';
-
 var config = {
   uuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
   major: 0,

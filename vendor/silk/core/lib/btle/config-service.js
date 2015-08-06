@@ -18,8 +18,6 @@
 //   Secret to indicate open network.
 //
 
-'use strict';
-
 let api = require('../api');
 let assert = require('assert');
 let bleno = require('bleno');

@@ -4,7 +4,8 @@
 
 First load the device with the stock Nexus 4 5.1.1 (LMY47V) ROM from
 https://dl.google.com/dl/android/aosp/occam-lmy47v-factory-b0c4eb3d.tgz and
-ensure the device is functioning normally.  It's only necessary to perform this step once when you first acquire the device.
+ensure the device is functioning normally.  It's only necessary to perform this
+step once when you first acquire the device.
 
 Then obtain the latest Silk Nexus 4 ROM and flash it with:
 
@@ -19,9 +20,13 @@ or if you already have a workspace simply run:
 $ make update
 ```
 
-Check the latest green build at https://magnum.travis-ci.com/silklabs/silk-device/builds to figure what **mako.tgz** currently contains.
+Check the latest green build at
+https://magnum.travis-ci.com/silklabs/silk-device/builds to figure what
+**mako.tgz** currently contains.
 
-If the device is intended to be used as a dogfooding device, use `./flash_fut.sh` instead of `./flash.sh` (not recommended for development as updates are enabled in the FUT build).
+If the device is intended to be used as a dogfooding device, use
+`./flash_fut.sh` instead of `./flash.sh` (not recommended for development as
+updates are enabled in the FUT build).
 
 ## Prerequisites
 0. You _must_ have a case sensitive file system to build on OS X.  To create one,
@@ -112,7 +117,8 @@ building just the Silk userspace components.  This setup requires a configured
 device (only Mako at the moment, maybe the emulator soon) to work against.
 
 IMPORTANT: The full Mako image is not currently supported on OS X.  Use a Linux
-VM instead.  Instructions for setting up your VM are at https://github.com/silklabs/silk-device/wiki/Prerequisites--for-full-Mako-build
+VM instead.  Instructions for setting up your VM are at
+https://github.com/silklabs/silk-device/wiki/Prerequisites--for-full-Mako-build
 
 It's also possible to build a full Mako device image from the tree as well:
 
@@ -150,7 +156,9 @@ cp *.patch ../../gonk/base/patch/external/node
 
 ## Automated build and test
 
-Builds and tests run on travis-ci.  See current status [here](https://magnum.travis-ci.com/silklabs/silk-device), and also in pull requests that you open.
+Builds and tests run on travis-ci.  See current status
+[here](https://magnum.travis-ci.com/silklabs/silk-device), and also in pull
+requests that you open.
 
 Travis-ci builds run on linux, Ubuntu 12.04 amd64 machines.  If a build burns
 only there (very rare), you'll usually want to start diagnosing by reproducing in your Linux
@@ -166,10 +174,14 @@ JavaScript files are tagged to use js2-mode.  [Follow these instructions to inst
 
 ### Suppressing ESLint
 
-We run eslint on core ES6 files.  It's great for finding bugs but can be annoying during development when it fails builds because of trailing whitespace and so forth.  When iterating during development, you can turn off eslint checking by passing `LAX=1` to make:
+We run eslint on core ES6 files.  It's great for finding bugs but can be
+annoying during development when it fails builds because of trailing whitespace
+and so forth.  When iterating during development, you can turn off eslint
+checking by passing `LAX=1` to make:
 ```bash
-make LAX=1 core.js
+make LAX=1 core
 ```
+
 Remember to run a non-LAX build before sending a pull request though!
 
 ### Tombstones
@@ -206,6 +218,9 @@ $ adb reboot-bootloader
 $ fastboot oem unlock
 $ fastboot boot openrecovery-twrp-2.8.5.2-mako.img
 ```
+
+This recovery image is not required for the normal dev workflow.
+
 
 ### Configuring Nexus 6 (Shamu)
 

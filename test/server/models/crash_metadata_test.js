@@ -36,14 +36,14 @@ suite('metadata', () => {
       },
     ];
 
-    records.forEach(async record => {
+    await Promise.all(records.map(async record => {
       record.id = await subject.put(record);
-    });
+    }));
 
-    records.forEach(async record => {
+    await Promise.all(records.map(async record => {
       let find = await subject.get(record.id);
       assert.deepEqual(find, record);
-    });
+    }));
 
     let results = await subject.find({
       deviceId,

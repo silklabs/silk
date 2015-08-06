@@ -114,7 +114,18 @@ When testing changes in react-native run:
 ./build/react-native/build.sh $WHERE_SILK_APP_LIVES/node_modules/silk-api-react-native
 ```
 
-You will have to remove node_modules/silk-api-react-native to run npm install after this.
+You will have to remove node_modules/silk-api-react-native to run `npm install` after this.
+
+#### Device
+
+```sh
+# Builds the node api and overrides the current install in node_modules
+./build/node/build.sh $WHERE_SILK_DEVICE_LIVES/vendor/silk/core/node_modules/silk-api
+```
+
+You will have to remove node_modules/silk-api-react-native to run `make sync` after this.
+
+Note: You will need to rebuild core.js after running the above.
 
 ## Emacs setup
 

@@ -1,5 +1,3 @@
-'use strict';
-
 let camera;
 let hue;
 let log;

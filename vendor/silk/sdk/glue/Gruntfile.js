@@ -65,6 +65,10 @@ module.exports = function(grunt) {
             commondir: false,
             detectGlobals: false,
             // end "--node"
+
+            // Without the 'standalone' option, browserify stubs out the module
+            // object and the resulting .js file can't be used as a normal node
+            // module.
             standalone: '__unused',
 
             ignoreMissing: true,

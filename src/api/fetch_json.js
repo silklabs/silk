@@ -3,12 +3,13 @@ import throwError from './fetch_error';
 
 const CONTENT_TYPE_JSON = 'application/json';
 
-export default async function(url, body, method = 'POST') {
+export default async function(url, body, method = 'POST', timeout = 30000) {
   let request = {
     method,
     headers: {
       'Accept': CONTENT_TYPE_JSON,
-    }
+    },
+    timeout,
   };
 
   if (body) {

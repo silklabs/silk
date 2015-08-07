@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "license": "proprietary",
   "dependencies": {
+    "babel-runtime": "^5.8.20",
     "elliptic": "^3.0.3",
     "localStorage": "^1.0.3",
     "promise": "^6.1.0",

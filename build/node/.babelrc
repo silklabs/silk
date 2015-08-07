@@ -2,6 +2,7 @@
   "breakConfig": true,
   "stage": "1",
   "optional": [
-    "asyncToGenerator"
+    "asyncToGenerator",
+    "runtime"
   ]
 }

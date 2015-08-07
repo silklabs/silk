@@ -1,15 +1,28 @@
 import React from 'react-native';
-
-// There are two parts to the native wrapper:
-// 1.Public interface exposed for method calls:
 import { LiveVideoManager} from 'NativeModules';
-// 2: Component interface exposed for UI:
-var LiveVideo = React.requireNativeComponent('LiveVideo');
+
+var LiveVideoNative = React.requireNativeComponent('LiveVideo');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'livevideo';
 
-export default React.createClass({
+const Segment = {
+  fromURL(object) {
+    // TODO: typechecks.
+    return Object.assign({}, object, {
+      type: 'url'
+    });
+  },
+
+  fromFrame(object) {
+    // TODO: typechecks.
+    return Object.assign({}, object, {
+      type: 'data'
+    });
+  },
+};
+
+let LiveVideo = React.createClass({
   propTypes: {
     /**
     Invoked when face(s) appear in the video.
@@ -20,15 +33,26 @@ export default React.createClass({
     Invoked every N milliseconds with current time in playback.
     Time is a UTC value not relative time in playback.
     */
-    onTimeChange: React.PropTypes.func
+    onTimeChange: React.PropTypes.func,
+
+    /**
+    Invoked when the segment starts.
+    */
+    onSegmentStart: React.PropTypes.func,
+
+    /**
+    Invoked when the segment has reached its end time.
+    */
+    onSegmentEnd: React.PropTypes.func,
+
+    /**
+    Array of segments used to control playback and buffering.
+    */
+    segments: React.PropTypes.array
   },
 
   getNativeHandle() {
     return React.findNodeHandle(this.refs[RCT_NATIVE_REF]);
-  },
-
-  append(data, when, faces) {
-    return LiveVideoManager.append(this.getNativeHandle(), data, when, faces);
   },
 
   render() {
@@ -37,7 +61,10 @@ export default React.createClass({
     });
 
     return (
-      <LiveVideo {... nativeProps} />
+      <LiveVideoNative {... nativeProps} />
     );
   }
 });
+
+LiveVideo.Segment = Segment;
+export default LiveVideo;

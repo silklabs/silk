@@ -22,6 +22,10 @@ var MonitorPreview = require('./MonitorPreview');
 var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
                      'disconnect'];
 
+var api = require('silk-api-react-native')({
+  serverUrl: Config.server.url
+});
+
 var MonitorsView = React.createClass({
   getInitialState: function() {
     return {
@@ -29,9 +33,7 @@ var MonitorsView = React.createClass({
       streaming: { },
       network: null,
       serverConnection: 'offline',
-      // TODO import silk-api
-      serverUrl: Config.server.url,
-      //serverUrl: '192.168.2.1:5000',
+      serverUrl: api.config.serverUrl
     };
   },
 
@@ -59,6 +61,7 @@ var MonitorsView = React.createClass({
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
       return (<MonitorPreview key={key} id={key} label={device.name}
+                              api={api}
                               socket={this.socket}
                               navigator={this.props.navigator}
                               serverUrl={this.state.serverUrl} />);

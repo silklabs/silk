@@ -3,14 +3,13 @@
 
 var ble = require('./ble');
 var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-
 var normUuid = require('./util').normUuid;
 
 function BLECentral() {
   EventEmitter.call(this);
 }
-util.inherits(BLECentral, EventEmitter);
+
+BLECentral.prototype = Object.create(EventEmitter.prototype);
 
 BLECentral.prototype.startScanning = function() {
   var self = this;

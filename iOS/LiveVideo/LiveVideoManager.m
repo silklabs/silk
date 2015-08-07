@@ -6,7 +6,11 @@
 
 @interface RCT_EXTERN_MODULE(LiveVideoManager, RCTViewManager)
 
-RCT_EXTERN_METHOD(append:(NSNumber *)reactTag data:(NSData*)data when:(NSNumber*)when faces:(NSArray*)faces)
-RCT_EXPORT_VIEW_PROPERTY(videoStream, NSString)
+RCT_EXTERN_METHOD(play:(NSNumber*)reactTag)
+RCT_EXTERN_METHOD(pause:(NSNumber*)reactTag)
+
+RCT_EXPORT_VIEW_PROPERTY(shouldPlay, BOOL)
+// VideoSegmentArray is defined by the RCTConversion category for VideoSegment.
+RCT_EXPORT_VIEW_PROPERTY(segments, VideoSegmentArray)
 
 @end

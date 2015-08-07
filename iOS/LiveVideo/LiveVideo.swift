@@ -6,6 +6,16 @@ Custom implementation of AVPlayerItem to keep track of some app specific details
 */
 internal class LiveVideoItem : AVPlayerItem {
   /**
+  identifier for this item.
+  */
+  var id: String!
+
+  /**
+  identifier for the next item (useful for ensuring we playback in sane order).
+  */
+  var nextId: String!
+
+  /**
   When this video was taken.
   */
   var start: Int64!
@@ -35,6 +45,32 @@ class LiveVideo : UIView {
   private var playerLayer: AVPlayerLayer!
   private var faceTimeObservers: [AnyObject] = []
   private var timeChangeObserver: AnyObject?
+  private var itemPlayedToEndObserver: AnyObject?
+
+  // This property is used to indicate changes in playing states from react-native but does not
+  // actually indicate we _are_ playing just hints to the internals what to do.
+  var shouldPlay = false {
+    didSet {
+      if (self.shouldPlay) {
+        self.play()
+      } else {
+        self.pause()
+      }
+    }
+  }
+
+  var segments: [VideoSegment] = [] {
+    willSet(newSegments) {
+      self.reconcileSegmentChange(previous: self.segments, new: newSegments)
+    }
+  }
+
+  /**
+   * Indiates if we are actively playing video this is only true if the player 
+   * is ready and video is running.
+   */
+  private var playing = false
+  private var pendingPlay: PropertyObserverKey?
 
   init(eventDispatcher: RCTEventDispatcher) {
     super.init(frame: CGRectZero)
@@ -57,55 +93,203 @@ class LiveVideo : UIView {
     super.init(coder: aDecoder)
   }
 
-  func pause() {
-    self.player.pause()
-  }
-
-  func play() {
-    self.player.play()
-  }
-
-  func destroy() {
-    // Ensure player has no observers anymore...
-    self.player.removeAllKeyPathObservers()
-    self.player.removeTimeObserver(self.timeChangeObserver)
-
-    for observer in self.faceTimeObservers {
-      self.player.removeTimeObserver(observer)
+  /**
+   * Video Segments are represented as an array of VideoSegment objects these are sent from JS
+   * and indicate when we should buffer/replace/append particular media assets. Because of the
+   * races between the main and JS thread we must be somewhat careful how we reconcile these.
+   *
+   * Some examples of how we reconcile state. To make this easier to read the values below are just
+   * ids rather then the full objects.
+   *
+   * # No changes:
+   *
+   *   new: [1]
+   *   old: [1]
+   *   = ()
+   *
+   * # Append a new segment
+   *   new: [1, 2]
+   *   old: [1]
+   *   = append([2])
+   *
+   * # Append a new segment with disjoint state
+   *   new: [7]
+   *   old: [6]
+   *   = append([7])
+   *
+   * #  Replace state
+   *   new: [100, 101]
+   *   old: [90, 91]
+   *   = replace([100, 101])
+   */
+  private func reconcileSegmentChange(#previous: [VideoSegment], new: [VideoSegment]) {
+    AssertMainThread()
+    // When new count is 0 empty out anything we may have seen before.
+    if (new.count == 0) {
+      self.replaceSegments([])
+      return
     }
 
-    // Note: This is an intentional pattern to catch any subtle leaks these should
-    // always be available unless something in our logic is broken or not cleaned up.
-    self.eventDispatcher = nil
-    self.player = nil
-    self.playerLayer = nil
-    self.loader = nil
+    var boundary = 0
+    for prevValue in previous {
+      let newValue = new[boundary]
+
+      // The previous value is before next value so do not move the bounary.
+      if newValue.previousId == prevValue.id {
+        continue
+      }
+
+      // The id of the previous and next match so move the boundary.
+      if newValue.id == prevValue.id {
+        boundary += 1
+        continue
+      }
+    }
+
+    // None of the previous segments match up with the new ones replace it.
+    if boundary == 0 {
+      self.replaceSegments(new)
+      return
+    }
+
+    for (; boundary < new.count; boundary += 1) {
+      self.appendVideoSegment(new[boundary])
+    }
   }
 
-  deinit {
-    self.destroy()
+  func replaceSegments(segments: [VideoSegment]) {
+    self.pause()
+    self.player.removeAllItems()
+    NSLog("Replacing segments: \(segments.count)")
+    for segment in segments {
+      self.appendVideoSegment(segment)
+    }
   }
 
   /**
-  Add a segement to the AVPlayerQueue.
+   * Pause playback of the video.
+   *
+   * This method should only be called from the main thread.
+   */
+  func pause() {
+    if (self.playing) {
+      // If we are already playing a simple pause works...
+      self.player.pause()
+      self.playing = false
+    } else if (self.pendingPlay != nil) {
+      // if we are waiting to play remove the callback.
+      self.player.removeKeyPathObserver(self.pendingPlay!)
+      self.pendingPlay = nil
+    }
+  }
+
+  /**
+   * Start playback of the video or wait until we can start playing and start it.
+   *
+   * This method should only be called from the main thread.
+   */
+  func play() {
+    AssertMainThread()
+    if (!self.playing) {
+      // If the player is immediately ready then just start it up.
+      if self.player.status == AVPlayerStatus.ReadyToPlay {
+        self.player.play()
+        self.playing = true
+        self.pendingPlay = nil
+        return
+      }
+
+      // Do not listen more then once for the player to become ready.
+      if self.pendingPlay != nil {
+        return
+      }
+
+      // If the player is not ready yet we must wait for it to be in a ready state.
+      self.pendingPlay = self.player.observeKeyPath("status") {
+        [unowned self]
+        (kvo, _) in
+        if (self.player.status == AVPlayerStatus.ReadyToPlay) {
+          dispatch_async(dispatch_get_main_queue()) {
+            // Call play again so we don't race to set self.playing = nil
+            self.play()
+            // We don't need this listener anymore once we have started listening...
+            self.player.removeKeyPathObserver(kvo)
+          }
+        }
+      }
+    }
+  }
+
+  func appendVideoSegment(segment: VideoSegment) {
+    switch(segment.type) {
+    case "url":
+      self.appendURL(segment)
+    case "data":
+      self.appendData(segment)
+    default:
+      println("Unknown segment type \(segment.type) this should be impossible!");
+    }
+  }
+
+  /**
+  Add a segement which is a url to the AVPlayerQueue.
   
   This method must be called from the main thread.
   */
-  func append(frame: NSData, when: NSNumber, faces: [FaceEvent]) {
-    let utcTime = when.longLongValue
-    let (_, url) = self.loader.add(frame)
+  func appendURL(segment: VideoSegment) {
+    dispatch_async(self.assetLoaderQueue) {
+      let asset = AVURLAsset(URL: segment.url!, options: [:])
+      dispatch_async(dispatch_get_main_queue()) {
+        self.append(asset, segment: segment)
+      }
+    }
+  }
+
+  /**
+  Add a segement which is NSData to the AVPlayerQueue.
+  
+  This method must be called from the main thread.
+  */
+  func appendData(segment: VideoSegment) {
+    AssertMainThread()
+    if segment.data == nil {
+      NSLog("Attmpted to use null data for segment: \(segment.id)")
+      return
+    }
+
+    // Consume segment data and ensure the container does not keep a reference to it.
+    let data = segment.data!
+    segment.data = nil
+
+    let (_, url) = self.loader.add(data)
     let asset = AVURLAsset(URL: url, options: [:])
 
     asset.resourceLoader.setDelegate(self.loader, queue: self.assetLoaderQueue)
+    self.append(asset, segment: segment)
+  }
 
+  private func append(asset: AVAsset, segment: VideoSegment) {
+    AssertMainThread()
     // Calculate the duration in milliseconds
     let duration = Int(Float(asset.duration.value) / Float(asset.duration.timescale) * 1000)
 
     let item = LiveVideoItem(asset: asset)
-    item.start = utcTime
-    item.faces = faces
+
+    // Segment is a wrapper for the data values too so we don't just copy it over.
+    item.start = segment.when
+    item.faces = segment.faces
+    item.id = segment.id
+    item.nextId = segment.nextId
 
     self.player.insertItem(item, afterItem: nil)
+  }
+
+  func sendSegmentEvent(type: String, item: LiveVideoItem) {
+    let eventBody: Dictionary<String, AnyObject> = [
+      "target": self.reactTag,
+      "id": item.id
+    ]
+    self.eventDispatcher.sendInputEventWithName(type, body: eventBody)
   }
 
   func sendFaceEvent(item: LiveVideoItem, event: FaceEvent) {
@@ -116,6 +300,26 @@ class LiveVideo : UIView {
     ]
     self.eventDispatcher.sendInputEventWithName(
       "faces", body: eventBody
+    )
+  }
+
+  func setupSegmentObserver(item: LiveVideoItem) {
+    let center = NSNotificationCenter.defaultCenter()
+    if let previousObserver: AnyObject = self.itemPlayedToEndObserver {
+      center.removeObserver(previousObserver)
+      self.itemPlayedToEndObserver = nil
+    }
+
+    // Send the start event as this is called only when we have begun listening to a new event.
+    self.sendSegmentEvent("segmentStart", item: item)
+    self.itemPlayedToEndObserver = center.addObserverForName(
+      AVPlayerItemDidPlayToEndTimeNotification,
+      object: item,
+      queue: nil, // TODO: Use our own queue
+      usingBlock: {
+        (_) in
+        self.sendSegmentEvent("segmentEnd", item: item)
+      }
     )
   }
 
@@ -195,26 +399,22 @@ class LiveVideo : UIView {
 
   func initObservers() {
     self.setupTimeObserver()
+
     self.player.observeKeyPath("currentItem") {
       [unowned self]
       (_) in
-      let item = self.player.currentItem
+      let item = self.player.currentItem as? LiveVideoItem
       if item == nil {
         return
       }
 
-      self.setupFaceObserver(item as! LiveVideoItem)
-    }
+      self.setupFaceObserver(item!)
+      self.setupSegmentObserver(item!)
 
-    self.player.observeKeyPath("status") {
-      [unowned self]
-      (kvo, _) in
-      if (self.player.status == AVPlayerStatus.ReadyToPlay) {
-        dispatch_async(dispatch_get_main_queue()) {
-          self.play()
-          // We don't need this listener anymore once we have started listening...
-          self.player.removeKeyPathObserver(kvo)
-        }
+      // When current item is set if we should be playing but are in a paused state start playback.
+      if (self.shouldPlay) {
+        // This is safe to call multiple times or if we are already playing.
+        self.play()
       }
     }
   }
@@ -227,6 +427,30 @@ class LiveVideo : UIView {
 
   override func removeFromSuperview() {
     super.removeFromSuperview()
+    self.destroy()
   }
 
+  func destroy() {
+    let center = NSNotificationCenter.defaultCenter()
+
+    // Ensure player has no observers anymore...
+    self.player.removeAllKeyPathObservers()
+    self.player.removeTimeObserver(self.timeChangeObserver)
+
+    for observer in self.faceTimeObservers {
+      self.player.removeTimeObserver(observer)
+    }
+
+    if let previousObserver: AnyObject = self.itemPlayedToEndObserver {
+      center.removeObserver(previousObserver)
+    }
+
+    // Note: This is an intentional pattern to catch any subtle leaks these should
+    // always be available unless something in our logic is broken or not cleaned up.
+    self.itemPlayedToEndObserver = nil
+    self.eventDispatcher = nil
+    self.player = nil
+    self.playerLayer = nil
+    self.loader = nil
+  }
 }

@@ -40,7 +40,6 @@ var api = {
 
 var Buffer = require('buffer').Buffer;
 var EventEmitter = require('events').EventEmitter;
-var util = require('util');
 
 var decls = api.btleConfigService;
 var normUuid = require('./util').normUuid;
@@ -67,7 +66,7 @@ function DeviceManager(scanner, wifiHelper) {
   this.wifiHelper = wifiHelper;
   this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
 }
-util.inherits(DeviceManager, EventEmitter);
+DeviceManager.prototype = Object.create(EventEmitter.prototype);
 
 DeviceManager.prototype.start = function() {
   this.scanner.startScanning();

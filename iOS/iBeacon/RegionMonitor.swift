@@ -47,7 +47,12 @@ class RegionMonitor: NSObject, CLLocationManagerDelegate {
   // the enter/exit notifications
   func locationManager(manager: CLLocationManager!, didRangeBeacons beacons: [AnyObject]!, inRegion region: CLBeaconRegion!) {
     if self.region.identifier == region.identifier && beacons.count > 0 {
-      self.delegate?.regionStateChanged(true)
+      let nearestBeacon = beacons[0] as! CLBeacon
+      if nearestBeacon.proximity != CLProximity.Unknown {
+        self.delegate?.regionStateChanged(true)
+      } else {
+        self.delegate?.regionStateChanged(false)
+      }
     }
   }
 

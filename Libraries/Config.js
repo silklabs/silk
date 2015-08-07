@@ -1,9 +1,7 @@
 // Default configuration...
 let DEFAULT = {
   'react-native': {},
-  'server': {
-    'url': 'silk-test-server.herokuapp.com'
-  }
+  'server': {}
 };
 
 export default function load() {

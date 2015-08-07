@@ -2,8 +2,7 @@
 
 @implementation RCTConvert (AppRCTConvertVideoSegment)
 
-+ (VideoSegment *)VideoSegment:(id)json
-{
++ (VideoSegment *)VideoSegment:(id)json {
   // When NSData is a dictionary it is one of our special objects that JS references.
   if ([json isKindOfClass:[NSDictionary class]]) {
     return [VideoSegment fromJSON:json];

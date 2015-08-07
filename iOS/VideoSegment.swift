@@ -1,14 +1,15 @@
 /**
-Video Segments are a transport mechanism for sending the details
-of a video segement to our video classes which convert them into
-AVPlayerItem subclasses they are intended to be short lived.
+ * Video Segments are a transport mechanism for sending the details
+ * of a video segement to our video classes which convert them into
+ * AVPlayerItem subclasses that are intended to be short lived.
 */
 @objc(VideoSegment)
 class VideoSegment {
 
   /**
-  Convert an AnyObject type into VideoSegment this is intended to be
-  called by a RCTConvert category.
+   * Convert an AnyObject type into VideoSegment this is intended to be
+   * called by a RCTConvert category. Because of it's intended caller this method
+   * makes use of more aggressive casting (JS should return the right values in all cases).
   */
   class func fromJSON(json: AnyObject) -> VideoSegment! {
     let dict = json as! Dictionary<String, AnyObject>
@@ -29,7 +30,9 @@ class VideoSegment {
         when: when,
         faces: faces
       )
-    } else if type == "data" {
+    }
+
+    if type == "data" {
       let bridgedData = dict["data"] as! Dictionary<String, AnyObject>
       let data = NSDataBridge.release(bridgedData["id"] as! String)
       return VideoSegment(
@@ -40,17 +43,17 @@ class VideoSegment {
         when: when,
         faces: faces
       )
-    } else {
-
-      // Either RCTConvert will catch this or we will crash horribly.
-      let error = NSException(
-        name: "Invalid type",
-        reason: "VideoSegment type must be 'data' or 'url'",
-        userInfo: ["type": type]
-      )
-      error.raise()
     }
-    // unreachable...
+
+    // Either RCTConvert will catch this or we will crash horribly.
+    let error = NSException(
+      name: "Invalid type",
+      reason: "VideoSegment type must be 'data' or 'url'",
+      userInfo: ["type": type]
+    )
+    error.raise()
+
+    // Return is unreachable but required to make swift typechecker happy.
     return nil
   }
 

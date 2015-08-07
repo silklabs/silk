@@ -3,8 +3,7 @@
 
 @implementation RCTConvert (AppRCTConvertNSData)
 
-+ (NSData *)NSData:(id)json
-{
++ (NSData *)NSData:(id)json {
 
   // When NSData is a dictionary it is one of our special objects that JS references.
   if ([json isKindOfClass:[NSDictionary class]]) {

@@ -7,6 +7,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
   var window: UIWindow?
   var regionMonitor: RegionMonitor?
   var homeBeacon: HomeBeacon?
+  var entered = false
 
   // This is the unique UUID of silk-device
   let homeRegionUuid = "E0F3A744-FB2F-46F1-B45A-F2B398F2A424"
@@ -77,8 +78,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
   }
 
   func regionStateChanged(entered: Bool) {
-    notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
-    self.homeBeacon!.setIsEnabled(entered)
+    if self.entered != entered {
+      self.entered = entered
+      notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
+      self.homeBeacon!.setIsEnabled(entered)
+    }
   }
 
   func applicationWillResignActive(application: UIApplication) {

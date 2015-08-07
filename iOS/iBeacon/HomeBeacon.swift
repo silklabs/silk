@@ -23,7 +23,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
 
   func updateState() {
     NSLog("updateState() peripheralState: \(self.peripheral.state.rawValue) enabled: \(self.enabled)")
-    if self.enabled && self.peripheral.state == .PoweredOn {
+    if self.enabled && !self.advertising && self.peripheral.state == .PoweredOn {
       // Note that in the background iBeacon is not allowed by iOS so
       // we are sending the BLE peripheral data instead
       NSLog("start advertising home beacon")

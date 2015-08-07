@@ -25,7 +25,8 @@ var MonitorPreview = React.createClass({
     label: React.PropTypes.string.isRequired,
     serverUrl: React.PropTypes.string.isRequired,
     navigator: React.PropTypes.object.isRequired,
-    socket: React.PropTypes.object.isRequired
+    socket: React.PropTypes.object.isRequired,
+    api: React.PropTypes.object.isRequired
   },
 
   getInitialState() {
@@ -81,6 +82,7 @@ var MonitorPreview = React.createClass({
       <TouchableOpacity onPress={this.showVideo}>
         <View style={styles.monitorContainer}>
           <MonitorFullscreen
+            api={this.props.api}
             onClose={this.onVideoHidden}
             presented={fullscreen}
             socket={this.props.socket}
@@ -117,10 +119,12 @@ var styles = StyleSheet.create({
     marginRight: 7,
     flex: 1,
   },
+
   monitorLabelContainer: {
     paddingLeft: 10,
     paddingBottom: 10,
   },
+
   monitorLabel: {
     color: '#656569',
     fontSize: 15,

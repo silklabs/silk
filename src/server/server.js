@@ -28,6 +28,19 @@ export default async function main (config) {
   app.set('port', config.server.port);
   app.use(express.static(publicPath));
 
+  // We want JSON parsing to happen for almost all requests, except when we are
+  // uploading a blob to the file blob handler. This should only happen during
+  // tests or while running local builds so the fact that this is a major hack
+  // can hopefully be overlooked...
+  if (config.server.blobType === 'file') {
+    app.put('/blob/:type/:id', (req, res, next) => {
+      // Setting this flag will make the body parser skip this request and leave
+      // the request stream untouched.
+      req._body = true;
+      next();
+    });
+  }
+
   let bodyParser = require('body-parser');
   app.use(bodyParser.json());
 

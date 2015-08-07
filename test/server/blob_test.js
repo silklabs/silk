@@ -45,15 +45,13 @@ suite('blob', () => {
       let url = await blob.upload(
         'video',
         content.length,
-        // intentionally just 'json' otherwise we will hit the body parser and
-        // content upload will fail.
-        'json',
+        'application/json',
         content
       );
       let response = await fetch(url);
       let text = await response.text();
       assert.equal(text, input);
-      assert.equal(response.headers.get('Content-Type'), 'json');
+      assert.equal(response.headers.get('Content-Type'), 'application/json');
     });
   });
 

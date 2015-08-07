@@ -90,6 +90,7 @@
   <remove-project name="platform/external/noto-fonts" />
   <remove-project name="platform/external/objenesis" />
   <remove-project name="platform/external/okhttp" />
+  <remove-project name="platform/external/opencv" />
   <remove-project name="platform/external/pdfium" />
   <remove-project name="platform/external/qemu" />
   <remove-project name="platform/external/qemu-pc-bios" />

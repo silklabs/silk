@@ -1,0 +1,144 @@
+From 9e3045fa8f1b334625fefe171227ebacd8915796 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 7 Aug 2015 12:00:23 -0700
+Subject: [PATCH] Android.mk
+
+---
+ Android.mk | 82 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ opencv.mk  | 35 +++++++++++++++++++++++++++
+ 2 files changed, 117 insertions(+)
+ create mode 100644 Android.mk
+ create mode 100644 opencv.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..1e47d68
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,82 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE := libopencv_core
++LOCAL_MODULE_TAGS := optional
++LOCAL_MODULE_CLASS := STATIC_LIBRARIES
++LOCAL_MODULE_SUFFIX := .a
++LOCAL_UNINSTALLABLE_MODULE := true
++LOCAL_CUSTOM_BUILT_MODULE := true
++
++include $(LOCAL_PATH)/opencv.mk
++LOCAL_EXPORT_C_INCLUDE_DIRS := \
++  $(LOCAL_PATH)/include \
++  $(LOCAL_PATH)/include/opencv \
++  $(foreach m,$(OPENCV_MODULE_NAMES),$(LOCAL_PATH)/modules/$(m)/include)
++
++include $(BUILD_PREBUILT)
++
++define __FAKE_OPENCV_NOTICE_RULES
++  .PHONY: NOTICE-TARGET-$(LOCAL_MODULE_CLASS)-$(1)
++  NOTICE-TARGET-$(LOCAL_MODULE_CLASS)-$(1):
++
++endef
++
++__FAKE_OPENCV_NOTICE_TARGETS := \
++$(foreach l, $(filter-out $(LOCAL_MODULE),$(OPENCV_MODULES)) $(OPENCV_3RDPARTY_COMPONENTS), \
++   $(eval $(call __FAKE_OPENCV_NOTICE_RULES,$(l))) \
++ )
++
++__FAKE_OPENCV_EXPORT_INCLUDES := $(foreach l, $(filter-out $(LOCAL_MODULE),$(OPENCV_MODULES)) $(OPENCV_3RDPARTY_COMPONENTS), \
++  $(call intermediates-dir-for,STATIC_LIBRARIES,$(l),,,)/export_includes)
++
++__FAKE_OPENCV_MODULES_A := $(foreach l, $(filter-out $(LOCAL_MODULE),$(OPENCV_MODULES)), \
++  $(call intermediates-dir-for,STATIC_LIBRARIES,$(l),,,)/$(l).a)
++
++__FAKE_OPENCV_3RDPARTY_COMPONENTS_A := $(foreach l, $(OPENCV_3RDPARTY_COMPONENTS), \
++  $(call intermediates-dir-for,STATIC_LIBRARIES,$(l),,,)/$(l).a)
++
++$(__FAKE_OPENCV_EXPORT_INCLUDES):
++	@echo Stub export_includes: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) touch $@
++
++$(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A):
++	@echo Symlink: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) ln -sf ../libopencv_core_intermediates/install/sdk/native/3rdparty/libs/$(TARGET_CPU_ABI)/$(subst libopencv_,lib,$(notdir $@)) $@
++
++$(__FAKE_OPENCV_MODULES_A):
++	@echo Symlink: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) ln -sf ../libopencv_core_intermediates/install/sdk/native/libs/$(TARGET_CPU_ABI)/$(notdir $@) $@
++
++
++OPENCV_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
++$(OPENCV_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(OPENCV_MAKEFILE): $(LOCAL_PATH)/Android.mk
++	@echo Configure: $@
++	$(hide) mkdir -p $(@D)
++	cd $(@D) && cmake \
++ -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
++ -DBUILD_TESTS=false \
++ -DWITH_TIFF=false \
++ -DBUILD_ANDROID_EXAMPLES=false \
++ -DWITH_OPENEXR=false \
++ -DBUILD_PERF_TESTS=false \
++ -DBUILD_opencv_androidcamera=false \
++ -DBUILD_opencv_java=false \
++ -DANDROID_NATIVE_API_LEVEL=21 \
++ -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
++ -DANDROID_NDK=$(abspath prebuilts/ndk/current) \
++ -DANDROID_NDK_LAYOUT=ANDROID \
++ $(LOCAL_PATH)
++
++$(LOCAL_BUILT_MODULE): $(OPENCV_MAKEFILE) \
++  $(__FAKE_OPENCV_EXPORT_INCLUDES) \
++  $(__FAKE_OPENCV_MODULES_A) $(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A)
++	@echo Build: $@
++	$(hide) $(MAKE) -C $(@D) install
++	$(hide) cp $(dir $@)install/sdk/native/libs/$(TARGET_CPU_ABI)/$(notdir $@) $@
++
+diff --git a/opencv.mk b/opencv.mk
+new file mode 100644
+index 0000000..3f2a773
+--- /dev/null
++++ b/opencv.mk
+@@ -0,0 +1,35 @@
++# Include from your Android.mk to link with OpenCV, after defining LOCAL_MODULE
++OPENCV_MODULE_NAMES := \
++  core \
++  calib3d \
++  contrib \
++  features2d \
++  flann \
++  highgui \
++  imgproc \
++  legacy \
++  ml \
++  objdetect \
++  ocl \
++  photo \
++  stitching \
++  superres \
++  ts \
++  video \
++  videostab \
++
++OPENCV_3RDPARTY_COMPONENTS := \
++ libopencv_libjasper \
++ libopencv_libjpeg \
++ libopencv_libpng \
++
++OPENCV_MODULES := $(addprefix libopencv_,$(OPENCV_MODULE_NAMES))
++
++ifneq ($(LOCAL_MODULE),libopencv_core)
++LOCAL_CFLAGS += -Wno-non-virtual-dtor # Bug in include/opencv2/core/core.hpp?
++LOCAL_CFLAGS += -frtti -fexceptions
++LOCAL_NDK_STL_VARIANT := gnustl_static
++LOCAL_SDK_VERSION := 21
++LOCAL_STATIC_LIBRARIES += $(OPENCV_MODULES) $(OPENCV_3RDPARTY_COMPONENTS)
++LOCAL_SHARED_LIBRARIES += liblog libz
++endif
+-- 
+1.9.1
+

@@ -1,0 +1,92 @@
+/**
+Video Segments are a transport mechanism for sending the details
+of a video segement to our video classes which convert them into
+AVPlayerItem subclasses they are intended to be short lived.
+*/
+@objc(VideoSegment)
+class VideoSegment {
+
+  /**
+  Convert an AnyObject type into VideoSegment this is intended to be
+  called by a RCTConvert category.
+  */
+  class func fromJSON(json: AnyObject) -> VideoSegment! {
+    let dict = json as! Dictionary<String, AnyObject>
+    let type = dict["type"] as! String
+    let when = (dict["when"] as! NSNumber).longLongValue
+    let faces = FaceEvent.fromJSONList(dict["faces"]!)
+    let id = dict["id"] as! String
+    let nextId = dict["nextId"] as? String
+    let previousId = dict["previousId"] as? String
+
+    if type == "url" {
+      let url = NSURL(string: dict["url"] as! String)!
+      return VideoSegment(
+        url: url,
+        id: id,
+        nextId: nextId,
+        previousId: previousId,
+        when: when,
+        faces: faces
+      )
+    } else if type == "data" {
+      let bridgedData = dict["data"] as! Dictionary<String, AnyObject>
+      let data = NSDataBridge.release(bridgedData["id"] as! String)
+      return VideoSegment(
+        data: data,
+        id: id,
+        nextId: nextId,
+        previousId: previousId,
+        when: when,
+        faces: faces
+      )
+    } else {
+
+      // Either RCTConvert will catch this or we will crash horribly.
+      let error = NSException(
+        name: "Invalid type",
+        reason: "VideoSegment type must be 'data' or 'url'",
+        userInfo: ["type": type]
+      )
+      error.raise()
+    }
+    // unreachable...
+    return nil
+  }
+
+  /**
+  type of the video segement should be "url" or "data".
+  */
+  var type: String
+  var url: NSURL?
+  var data: NSData?
+  var id: String
+  var nextId: String?
+  var previousId: String?
+
+  /**
+  UTC time when the video segment started value in milliseconds.
+  */
+  var when: Int64
+  var faces: [FaceEvent]
+
+  init(url: NSURL, id: String, nextId: String?, previousId: String?, when: Int64, faces: [FaceEvent]) {
+    self.type = "url"
+    self.id = id
+    self.nextId = nextId
+    self.previousId = previousId
+    self.url = url
+    self.when = when
+    self.faces = faces
+  }
+
+  init(data: NSData?, id: String, nextId: String?, previousId: String?, when: Int64, faces: [FaceEvent]) {
+    self.type = "data"
+    self.id = id
+    self.nextId = nextId
+    self.previousId = previousId
+    self.data = data
+    self.when = when
+    self.faces = faces
+  }
+}

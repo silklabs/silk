@@ -8,6 +8,7 @@ class PreviewImage : UIImageView {
   }
 
   func renderImage(data: NSData) {
+    AssertMainThread()
     self.image = UIImage(data: data)!
   }
 }

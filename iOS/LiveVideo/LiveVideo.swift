@@ -123,6 +123,7 @@ class LiveVideo : UIView {
    *   = replace([100, 101])
    */
   private func reconcileSegmentChange(#previous: [VideoSegment], new: [VideoSegment]) {
+    AssertMainThread()
     // When new count is 0 empty out anything we may have seen before.
     if (new.count == 0) {
       self.replaceSegments([])
@@ -188,6 +189,7 @@ class LiveVideo : UIView {
    * This method should only be called from the main thread.
    */
   func play() {
+    AssertMainThread()
     if (!self.playing) {
       // If the player is immediately ready then just start it up.
       if self.player.status == AVPlayerStatus.ReadyToPlay {
@@ -249,6 +251,7 @@ class LiveVideo : UIView {
   This method must be called from the main thread.
   */
   func appendData(segment: VideoSegment) {
+    AssertMainThread()
     if segment.data == nil {
       NSLog("Attmpted to use null data for segment: \(segment.id)")
       return
@@ -266,6 +269,7 @@ class LiveVideo : UIView {
   }
 
   private func append(asset: AVAsset, segment: VideoSegment) {
+    AssertMainThread()
     // Calculate the duration in milliseconds
     let duration = Int(Float(asset.duration.value) / Float(asset.duration.timescale) * 1000)
 

@@ -11,6 +11,9 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
 		3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */; };
+		5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0641B734C4A00B0630C /* VideoSegment.swift */; };
+		5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */; };
+		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
 		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
 		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
 		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
@@ -255,6 +258,10 @@
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
 		3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeBeacon.swift; sourceTree = "<group>"; };
+		5714A0641B734C4A00B0630C /* VideoSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoSegment.swift; sourceTree = "<group>"; };
+		5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTConvertVideoSegment.h; sourceTree = "<group>"; };
+		5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTConvertVideoSegment.m; sourceTree = "<group>"; };
+		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
 		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
@@ -537,6 +544,8 @@
 				57BCE0FB1B6984360047088B /* TypeTransfer.swift */,
 				57BCE1081B69867F0047088B /* TypeTransferTest.swift */,
 				576CA1B31B6AB3A2006C7C3C /* FaceEvent.swift */,
+				5714A0641B734C4A00B0630C /* VideoSegment.swift */,
+				5714A0AB1B756B0900B0630C /* Assertions.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -556,6 +565,8 @@
 			children = (
 				57BCE0F61B695FDC0047088B /* AppRCTConvert+NSData.h */,
 				57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */,
+				5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */,
+				5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */,
 			);
 			path = RCTConvert;
 			sourceTree = "<group>";
@@ -970,6 +981,7 @@
 				5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */,
 				5758F23D1B5F4A0100C18E5D /* ReactSocketIO.m in Sources */,
 				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
+				5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */,
 				F9107F251B58DA8D00F02BF4 /* SocketEngineClient.swift in Sources */,
 				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
 				F9107F221B58DA8D00F02BF4 /* SocketAckManager.swift in Sources */,
@@ -978,12 +990,14 @@
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				5758F2641B600B2000C18E5D /* PreviewImage.swift in Sources */,
 				576CA1B41B6AB3A2006C7C3C /* FaceEvent.swift in Sources */,
+				5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */,
 				F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */,
 				5758F23F1B5F4A1200C18E5D /* ReactSocketIO.swift in Sources */,
+				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */,
 				5758F2391B5EEBD400C18E5D /* AppSocketIOManager.swift in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
@@ -1210,6 +1224,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "-D DEBUG";
 				SDKROOT = iphoneos;
 			};
 			name = Debug;
@@ -1250,6 +1265,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				SWIFT_WHOLE_MODULE_OPTIMIZATION = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

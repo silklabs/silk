@@ -9,9 +9,12 @@
     "art": "^0.10.0",
     "buffer": "^3.2.2",
     "events": "^1.0.2",
+    "joi": "^5.1.0",
     "moment": "^2.10.3",
-    "react-native": "^0.8.0-rc.2",
+    "react-native": "^0.9.0-rc",
+    "react-native-button": "^1.2.0",
     "react-timer-mixin": "^0.13.2",
-    "util": "0.10.3"
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git",
+    "uuid": "^2.0.1"
   }
 }

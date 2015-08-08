@@ -32,6 +32,9 @@ before_script:
   - df -h
   - du -hs * .repo
   - du -hs .
+  - make nothing  # Applies patches as a side effect of doing nothing...
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then rm -rf .repo/project-objects/ .repo/projects; fi
+  
 
 script:
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make -j2 otapackage; else make -j2; fi

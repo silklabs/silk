@@ -20,6 +20,11 @@
            remote="github"
            revision="v2.2" clone-depth="1"/>
 
+  <project name="Itseez/opencv"
+           path="external/opencv2"
+           remote="github"
+           revision="refs/tags/2.4.12" clone-depth="1"/>
+
   <!-- node modules -->
   <project name="silk-api-node"
            path="vendor/silk/core/local_node_modules/silk-api"

@@ -70,12 +70,29 @@ npm_version_check()
   poison_their_lunch Bad npm version: $v
 }
 
+cmake_version_check()
+{
+  local v=$(cmake --version | head -n1)
+
+  if [[ $v =~ ^cmake\ version\ ([0-9]*)\.([0-9]*).([0-9]*) ]]; then
+    local major=${BASH_REMATCH[1]}
+    local minor=${BASH_REMATCH[2]}
+    local patch=${BASH_REMATCH[3]}
+
+    [[ $major -eq 3 ]] && return
+    [[ $major -eq 2 ]] && [[ $minor -ge 8 ]] && return
+  fi
+  poison_their_lunch Unsupported cmake version: $v
+}
+
+
 # Uncomment to use iojs instead of node.
 # (clean build is then recommended to ensure native node modules are rebuilt)
 #export NODE_ENGINE=iojs
 
 node_version_check
 npm_version_check
+cmake_version_check
 
 # npm should not be making many (and ideally no) http requests during the build
 # process, so enable http logging so that any unexpected network requests may be

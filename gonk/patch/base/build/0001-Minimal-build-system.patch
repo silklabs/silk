@@ -1,17 +1,17 @@
-From 396b3960be8bb0ebc7f430dddad6efe8d8c85be5 Mon Sep 17 00:00:00 2001
+From b7130cd57286e3a0c0bfdbac120226a764646a89 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Tue, 16 Jun 2015 17:42:56 -0700
 Subject: [PATCH] Minimal build/ system
 
 ---
  core/base_rules.mk                  |  4 ++
- core/binary.mk                      | 21 +++++++++
+ core/binary.mk                      | 22 +++++++++
  core/config.mk                      | 20 ++++----
  core/empty.mk                       |  0
  core/main.mk                        | 93 ++++++++++++++++++++++++++++++++++---
  core/notice_files.mk                |  2 +-
  target/board/generic/BoardConfig.mk |  4 +-
- 7 files changed, 125 insertions(+), 19 deletions(-)
+ 7 files changed, 126 insertions(+), 19 deletions(-)
  create mode 100644 core/empty.mk
 
 diff --git a/core/base_rules.mk b/core/base_rules.mk
@@ -30,7 +30,7 @@ index 496009f..020dc49 100644
  ifneq ($(strip $(HOST_ACP_UNAVAILABLE)),)
    LOCAL_ACP_UNAVAILABLE := $(strip $(HOST_ACP_UNAVAILABLE))
 diff --git a/core/binary.mk b/core/binary.mk
-index 1e313ff..edc67f2 100644
+index 1e313ff..d1b5dbb 100644
 --- a/core/binary.mk
 +++ b/core/binary.mk
 @@ -9,6 +9,27 @@
@@ -41,26 +41,34 @@ index 1e313ff..edc67f2 100644
 +## Hide NDK libraries declared in LOCAL_SHARED_LIBRARIES
 +####################################################
 +
++PRIVATE_NDK_SHARED_LIBRARIES:=
 +ifdef LOCAL_SDK_VERSION
-+
 +so_suffix := $($(my_prefix)SHLIB_SUFFIX)
 +
 +# Search LOCAL_SHARED_LIBRARIES for NDK libs
-+PRIVATE_NDK_SHARED_LIBRARIES:=$(notdir $(basename $(wildcard \
-+  $(foreach so,$(LOCAL_SHARED_LIBRARIES),$(my_ndk_version_root)/usr/lib/$(so)$(so_suffix)) \
++my_ndk_sysroot := $(HISTORICAL_NDK_VERSIONS_ROOT)/current/platforms/android-$(LOCAL_SDK_VERSION)/arch-$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)ARCH)
++PRIVATE_NDK_SHARED_LIBRARIES := $(notdir $(basename $(wildcard \
++  $(foreach so,$(LOCAL_SHARED_LIBRARIES),$(my_ndk_sysroot)/usr/lib/$(so)$(so_suffix)) \
 +)))
 +
 +# Move all NDK libs to LOCAL_SYSTEM_SHARED_LIBRARIES to avoid tripping up the
 +# 'import includes' and 'standard library handling' rules below.
 +LOCAL_SHARED_LIBRARIES := $(filter-out $(PRIVATE_NDK_SHARED_LIBRARIES),$(LOCAL_SHARED_LIBRARIES))
 +installed_shared_library_module_names := $(filter-out $(PRIVATE_NDK_SHARED_LIBRARIES),$(installed_shared_library_module_names))
-+LOCAL_SYSTEM_SHARED_LIBRARIES += $(PRIVATE_NDK_SHARED_LIBRARIES)
 +endif
 +
 +
  my_ndk_sysroot :=
  my_ndk_sysroot_include :=
  my_ndk_sysroot_lib :=
+@@ -95,6 +116,7 @@ else
+   else
+       my_system_shared_libraries := $(LOCAL_SYSTEM_SHARED_LIBRARIES)
+   endif
++  my_system_shared_libraries += $(PRIVATE_NDK_SHARED_LIBRARIES)
+ endif
+ 
+ # The following LOCAL_ variables will be modified in this file.
 diff --git a/core/config.mk b/core/config.mk
 index bfa5610..78959e4 100644
 --- a/core/config.mk
@@ -122,7 +130,7 @@ diff --git a/core/empty.mk b/core/empty.mk
 new file mode 100644
 index 0000000..e69de29
 diff --git a/core/main.mk b/core/main.mk
-index 9d6e233..1fd76d9 100644
+index a56cd97..784c9d1 100644
 --- a/core/main.mk
 +++ b/core/main.mk
 @@ -9,6 +9,9 @@ else

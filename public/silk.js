@@ -80,7 +80,7 @@ socket.on('connect', function () {
 });
 
 socket.on('video-stream-new', function(msg) {
-  log('New video stream '+ msg.id + ' name: ' + msg.name +  ' msg.logo ' + msg.logo.toString());
+  log('New video stream '+ msg.id);
   // TODO: when this evolves into a full-blown web app, this should
   // become component-ized and shared with the native apps if
   // possible

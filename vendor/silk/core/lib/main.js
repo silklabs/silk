@@ -13,9 +13,12 @@ let util = require('./util');
 let update = require('./update');
 let config = require('./config');
 let sensors = require('./sensors');
+let fs = require('mz/fs');
 
 const id = api.id.create();
 const name = util.getprop('persist.silk.displayName', 'Silkcam');
+const logoFilePath = '/system/media/logo.png';
+let logo = null;
 
 //
 // Initialization...
@@ -58,13 +61,35 @@ let camera;
 let diag;
 let hue;
 
-function emitDeviceInfo() {
-  if (socket.connected) {
-    socket.emit('info', { id: id.toString(), name: name, now: Date.now()} );
+/**
+ * Read vendor specific logo
+ */
+function readLogo() {
+  if (logo) {
+    return Promise.resolve();
   }
+
+  return fs.readFile(logoFilePath)
+  .then(data => {
+    logo = data;
+    return Promise.resolve();
+  })
+  .catch(err => {
+    log.warn(`No vendor logo available at ${logoFilePath} err: ${err}`);
+    logo = [];
+    return Promise.resolve();
+  });
+}
+
+function emitDeviceInfo() {
+  readLogo()
+  .then(() => {
+    if (socket.connected) {
+      socket.emit('info', { id: id.toString(), name: name, now: Date.now(), logo: logo} );
+    }
+  });
 }
 ntp.on('time', emitDeviceInfo);
-
 
 function maybeCreateSocket() {
   if (!socket.__iamastub) {

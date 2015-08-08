@@ -75,7 +75,7 @@ export default function(io) {
       }
 
       log.info(`Device info. io=${socket.id} name=${room.name} ` +
-                `timeOffset=${room.timeOffset}ms id=${id} logo=${room.logo.length} new=${newRoom}`);
+                `timeOffset=${room.timeOffset}ms id=${id} new=${newRoom}`);
       resetDeviceTimeout(id);
     });
 

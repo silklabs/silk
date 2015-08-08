@@ -39,6 +39,9 @@ script:
 
 after_script:
   - ccache -s
+  - df -h
+  - du -hs * .repo
+  - du -hs .
 
 notifications:
   slack: 

@@ -80,7 +80,7 @@ socket.on('connect', function () {
 });
 
 socket.on('video-stream-new', function(msg) {
-  log('New video stream '+ msg.id);
+  log('New video stream '+ msg.id + ' name: ' + msg.name +  ' msg.logo ' + msg.logo.toString());
   // TODO: when this evolves into a full-blown web app, this should
   // become component-ized and shared with the native apps if
   // possible
@@ -96,6 +96,11 @@ socket.on('video-stream-new', function(msg) {
 
   var img = document.createElement('img');
   img.setAttribute('title', msg.name);
+
+  var logo = document.createElement('img');
+  logo.setAttribute('title', 'logo');
+  renderLogo(msg, img, logo);
+
   var canvas = document.createElement('canvas');
   var a = document.createElement('a');
   a.setAttribute('id', msg.id);
@@ -103,6 +108,7 @@ socket.on('video-stream-new', function(msg) {
   a.href = '#';
   a.appendChild(img);
   a.appendChild(canvas);
+  a.appendChild(logo);
   monitors.appendChild(a);
 
   socket.on(previewStream, function(msg) {
@@ -130,6 +136,22 @@ socket.on('video-stream-delete', function(msg) {
     monitors.removeChild(monitor);
   }
 });
+
+function renderLogo(msg, img, logo) {
+  var view = new Uint8Array(msg.logo);
+  if (view.length > 0) {
+    logo.setAttribute('style', 'position:absolute;left:' +
+        img.offsetLeft + 'px;top:' + img.offsetTop + 'px;' + 'opacity:0.5');
+    logo.setAttribute('width',  '30px');
+    logo.setAttribute('height', 'auto');
+
+    var blob = new Blob([view], { type: 'image/png' });
+    var png = URL.createObjectURL(blob);
+    logo.src = png;
+  } else {
+    logo.style.display = 'none';
+  }
+}
 
 function renderFrame(msg, img, canvas) {
   if (msg.frame) {

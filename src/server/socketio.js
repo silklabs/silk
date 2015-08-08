@@ -4,7 +4,7 @@ export default function(io) {
   // Real time event stream.
   const VIDEO_IDLE_TIMEOUT_MS = 5000;
   let videoRooms = new Map();
-  let roomInfo = room => ({ id: room.id, name: room.name });
+  let roomInfo = room => ({ id: room.id, name: room.name, logo: room.logo });
   io.on('connection', socket => {
     log.debug(`New connection. io=${socket.id}`);
     socket.on('join', room => {
@@ -62,6 +62,8 @@ export default function(io) {
         id: id,
         name: msg.name,
         socket: socket,
+        logo: msg.logo,
+
         // TODO: Account for device->server transit time and dynamic network
         //       conditions
         timeOffset: Date.now() - msg.now,
@@ -73,7 +75,7 @@ export default function(io) {
       }
 
       log.info(`Device info. io=${socket.id} name=${room.name} ` +
-                `timeOffset=${room.timeOffset}ms id=${id} new=${newRoom}`);
+                `timeOffset=${room.timeOffset}ms id=${id} logo=${room.logo.length} new=${newRoom}`);
       resetDeviceTimeout(id);
     });
 

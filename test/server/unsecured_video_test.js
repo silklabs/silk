@@ -35,7 +35,7 @@ suite('unsecured video', () => {
   }
 
   async function connectStream(emitter, socket, device, name) {
-    socket.emit('info', { id: device, now: Date.now(), name: name });
+    socket.emit('info', { id: device, now: Date.now(), name: name, logo: [] });
     socket.emit('video', { id: device });
     let msg = await eventToPromise(emitter, 'new');
     assert.equal(msg.id, device);

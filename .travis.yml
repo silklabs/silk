@@ -29,12 +29,11 @@ before_script:
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.mako; fi
   - make sync
   - cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
+  - make nothing  # Applies patches as a side effect of doing nothing...
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then rm -rf .repo/project-objects .repo/projects; fi
   - df -h
   - du -hs * .repo
-  - du -hs .
-  - make nothing  # Applies patches as a side effect of doing nothing...
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then rm -rf .repo/project-objects/ .repo/projects; fi
-  
+  - du -hs .  
 
 script:
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make -j2 otapackage; else make -j2; fi

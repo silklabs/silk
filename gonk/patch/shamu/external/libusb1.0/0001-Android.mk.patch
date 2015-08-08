@@ -1,11 +1,12 @@
-From 0e4871dcbdc3f64aef86a1f4638bcf316c32e410 Mon Sep 17 00:00:00 2001
+From 08c6aeda4549f4ec8bf9a2cee92efc9fe4bc8b79 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 24 Jul 2015 23:43:43 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 2 ++
- 1 file changed, 2 insertions(+)
+ Android.mk            | 2 ++
+ android/jni/libusb.mk | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
@@ -16,6 +17,19 @@ index 0000000..475f905
 @@ -0,0 +1,2 @@
 +LOCAL_PATH := $(call my-dir)
 +include $(LOCAL_PATH)/android/jni/libusb.mk
+diff --git a/android/jni/libusb.mk b/android/jni/libusb.mk
+index f4896b2..fe40836 100644
+--- a/android/jni/libusb.mk
++++ b/android/jni/libusb.mk
+@@ -47,7 +47,7 @@ LOCAL_C_INCLUDES += \
+ LOCAL_EXPORT_C_INCLUDES := \
+   $(LIBUSB_ROOT_ABS)/libusb
+ 
+-LOCAL_LDLIBS := -llog
++LOCAL_SHARED_LIBRARIES := liblog
+ 
+ LOCAL_MODULE := libusb1.0
+ 
 -- 
 1.9.1
 

@@ -119,7 +119,12 @@ ifeq (file,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 # <LOCAL_MODULE_PATH>/build/<foo>.node
 	$(hide) if [[ -d $(@D)/build ]]; then ln -fsT . $(@D)/build/Release; fi;
 else
-	$(hide) cp -r $(<D)/* $(@D)
+# For now just assume that all device node_module dependencies are already
+# present somehow, so don't install all of node_modules/ (which likely also
+# contains a bunch of development only tools).
+# TODO: Maybe a better way would be to use the package.json's "files" section to
+# determine what to install on device?
+	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
 	$(hide) touch $@
 endif
 

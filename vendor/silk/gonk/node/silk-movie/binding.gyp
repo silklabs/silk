@@ -13,15 +13,7 @@
         [
           "OS=='android'", {
             "libraries" : [
-              "-lEGL",
-              "-lGLESv1_CM",
-              "-landroidfw",
-              "-lbinder",
-              "-lgui",
-              "-llog",
-              "-lskia",
-              "-lui",
-              "-lutils"
+              "<!(echo $Android_mk__LIBRARIES)"
             ],
             "cflags" : [
               "-DGL_GLEXT_PROTOTYPES",

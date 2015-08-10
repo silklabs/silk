@@ -13,43 +13,110 @@ let util = require('./util');
 let update = require('./update');
 let config = require('./config');
 let sensors = require('./sensors');
+let path = require('path');
 let fs = require('mz/fs');
+let deferred = require('./deferred');
+let mkdirp = require('mkdirp-promise');
 
-const id = api.id.create();
+// Wait for 60 seconds for boot before issuing a warning.
+const BOOT_TIMEOUT = 60 * 1000;
+// How frequently (in ms) we check if the boot prop has been set.
+const BOOT_CHECK_INTERVAL = 1000;
+// Where the ID export for this device lives.
+const ID_DIR = '/data/silk/config/';
+const ID_PATH = path.join(ID_DIR, 'id.json');
+
 const name = util.getprop('persist.silk.displayName', 'Silkcam');
 const logoFilePath = '/system/media/logo.png';
-let logo = null;
 
-//
-// Initialization...
-//
+let id = null;
+let logo = null;
 let bootCompleted = false;
-new Promise(resolve => {
+
+/**
+ * Read or create a new device id this will be persisted between boots.
+ *
+ * Note: This current pattern of storing to disk may not be secure enough for
+ * production.
+ */
+function readOrCreateID() {
+
+  function createID() {
+    let newId = api.id.create();
+    return mkdirp(ID_DIR)
+      .then(() => fs.writeFile(ID_PATH, newId.export()))
+      .then(newId);
+  }
+
+  function getID() {
+    return fs.readFile(ID_PATH, 'utf8')
+      .then(contents => {
+        return api.id.import(contents);
+      });
+  }
+
+  // check if the id exists already...
+  return fs.exists(ID_PATH)
+   .then(getID)
+   .catch(createID);
+}
+
+/**
+ * Wait until system has been booted.
+ */
+function _waitForBoot(startTime, defer) {
+  // Don't use an arbitrarily long promise chain if one is passed use it.
+  startTime = startTime || Date.now();
+  defer = defer || deferred();
+
+  // If we have waited a long time to boot log an error but keep trying.
+  if (Date.now() - startTime > BOOT_TIMEOUT) {
+    log.error(`Boot took over ${BOOT_TIMEOUT} ms something might be broken`);
+  }
+
+  if ('1' === util.getprop('sys.boot_completed')) {
+    defer.accept();
+  } else {
+    log.info('Waiting for sys.boot_completed=1');
+    setTimeout(_waitForBoot.bind(this, startTime, defer), BOOT_CHECK_INTERVAL);
+  }
+
+  return defer.promise;
+}
+
+function boot() {
   log.info('Wait for boot complete');
   ui.goto('bootanimation');
-  let _waitForBoot = function() {
-    if ('1' === util.getprop('sys.boot_completed')) {
-      resolve();
-    } else {
-      log.info('Waiting for sys.boot_completed=1');
-      util.timeout(1000).then(_waitForBoot);
-    }
-  };
-  _waitForBoot();
-})
-.then(() => {
-  log.info('Initialize hardware');
-  return Promise.all([wifi.init(), btle.init(), sensors.init()]);
-})
-.then(() => {
-  log.info('Load configuration');
-  return config.init();
-})
-.then(() => {
-  bootCompleted = true;
-})
-.catch(e => {
-  util.processthrow(`Fatal initialization error: ${e}`);
+  return _waitForBoot().
+    then(() => {
+      log.info('Initialize hardware');
+      return Promise.all([wifi.init(), btle.init(), sensors.init()]);
+    }).
+    then(() => {
+      log.info('Load configuration');
+      return config.init();
+    });
+}
+
+/**
+ * Wait for bootup and initialize the device.
+ */
+function main() {
+  return readOrCreateID()
+    .then(fetchedId => {
+      id = fetchedId;
+      log.info('device id:', id.toString());
+      return boot();
+    })
+    .then(() => {
+      // Set global state up.
+      bootCompleted = true;
+      log.info('main completed device has been booted.');
+    });
+}
+
+main().catch(err => {
+  util.processthrow(`Fatal initialization error: ${err}`);
 });
 
 //

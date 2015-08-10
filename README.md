@@ -26,7 +26,11 @@ https://magnum.travis-ci.com/silklabs/silk-device/builds to figure what
 
 If the device is intended to be used as a dogfooding device, use
 `./flash_fut.sh` instead of `./flash.sh` (not recommended for development as
-updates are enabled in the FUT build).
+updates are enabled in the FUT build), shortcut for this:
+
+```
+$ make fut
+```
 
 ## Prerequisites
 0. You _must_ have a case sensitive file system to build on OS X.  To create one,

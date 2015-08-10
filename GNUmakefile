@@ -40,7 +40,11 @@ update:
 	cd out/ && rm -rf mako.tgz aosp_mako
 	cd out/ && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
 	cd out/ && tar zxf mako.tgz
-	out/aosp_mako/flash.sh
+	out/aosp_mako/$(or $(FLASH_SCRIPT),flash.sh)
+
+.PHONY: fut
+fut: FLASH_SCRIPT=flash_fut.sh
+fut: update
 
 .PHONY: dist
 dist: | .repo/manifest.xml

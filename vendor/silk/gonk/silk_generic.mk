@@ -44,6 +44,7 @@ SILK_GONK_PROGIES := \
   silk-sensors \
 
 SILK_UI_PACKAGES := \
+  logo.png \
   bootanimation.zip \
   connecting.zip \
   online.zip \

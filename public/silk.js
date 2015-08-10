@@ -97,9 +97,10 @@ socket.on('video-stream-new', function(msg) {
   var img = document.createElement('img');
   img.setAttribute('title', msg.name);
 
-  var logo = document.createElement('img');
-  logo.setAttribute('title', 'logo');
-  renderLogo(msg, img, logo);
+  var logoImg = document.createElement('img');
+  logoImg.setAttribute('title', 'logo');
+  logoImg.style.display = 'none'
+  var logo = msg.logo;
 
   var canvas = document.createElement('canvas');
   var a = document.createElement('a');
@@ -108,7 +109,7 @@ socket.on('video-stream-new', function(msg) {
   a.href = '#';
   a.appendChild(img);
   a.appendChild(canvas);
-  a.appendChild(logo);
+  a.appendChild(logoImg);
   monitors.appendChild(a);
 
   socket.on(previewStream, function(msg) {
@@ -119,7 +120,7 @@ socket.on('video-stream-new', function(msg) {
     var img = a.childNodes[0];
     var canvas = a.childNodes[1];
 
-    renderFrame(msg, img, canvas);
+    renderFrame(msg, img, canvas, logoImg, logo);
   });
   log('Joining preview stream ' + previewStream);
   socket.emit('join', previewStream);
@@ -137,29 +138,34 @@ socket.on('video-stream-delete', function(msg) {
   }
 });
 
-function renderLogo(msg, img, logo) {
-  var view = new Uint8Array(msg.logo);
-  if (view.length > 0) {
-    logo.setAttribute('style', 'position:absolute;left:' +
+function renderLogo(logoImg, img, logo) {
+  var view = new Uint8Array(logo);
+
+  // Draw logo only once
+  if ((view.length > 0) && (logoImg.style.display === 'none')) {
+    logoImg.setAttribute('style', 'position:absolute;left:' +
         img.offsetLeft + 'px;top:' + img.offsetTop + 'px;' + 'opacity:0.5');
-    logo.setAttribute('width',  '30px');
-    logo.setAttribute('height', 'auto');
+    logoImg.setAttribute('width',  '30px');
+    logoImg.setAttribute('height', 'auto');
 
     var blob = new Blob([view], { type: 'image/png' });
     var png = URL.createObjectURL(blob);
-    logo.src = png;
-  } else {
-    logo.style.display = 'none';
+    logoImg.src = png;
+    logoImg.style.display = 'inline';
   }
 }
 
-function renderFrame(msg, img, canvas) {
+function renderFrame(msg, img, canvas, logoImg, logo) {
   if (msg.frame) {
     var view = new Uint8Array(msg.frame);
     var blob = new Blob([view], { type: 'image/jpg' });
     var jpeg = URL.createObjectURL(blob);
-    // draw face frame after img is loaded and size is valid
-    img.onload = function() {drawFaceBorder(msg, img, canvas)};
+
+    // Draw face frame and logo after img is loaded and size is valid
+    img.onload = function() {
+      drawFaceBorder(msg, img, canvas);
+      renderLogo(logoImg, img, logo);
+    };
     img.src = jpeg;
   }
 }

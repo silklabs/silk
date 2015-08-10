@@ -10,6 +10,7 @@ import VideoControls from './VideoControls';
 import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 import TimerMixin from 'react-timer-mixin';
 import uuid from 'uuid';
+import * as DateUtils from '../Libraries/DateUtil';
 
 let {
   SliderIOS,
@@ -97,6 +98,7 @@ export default React.createClass({
       seekTime: Date.now(),
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
+      minTime: DateUtils.startOfDay(),
       videoSegments: [],
       liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment)
     }
@@ -114,6 +116,20 @@ export default React.createClass({
     // happen in our private variable to maintain consistent state and to avoid
     // extra updates in some cases.
     this._videoSegments = [];
+
+    // Figure out start time for video:
+    let startTime = DateUtils.startOfDay();
+
+    let api = this.props.api;
+    api.timeMeta.findOneAfterTime({
+      deviceId: this.props.id,
+      time: startTime.valueOf(),
+      metaType: 'video'
+    }).then(result => {
+      this.setState({ minTime: result.startUTC });
+    }).catch(err => {
+      console.log('Could not fetch initial time: ', err);
+    });
   },
 
   /**
@@ -342,6 +358,7 @@ export default React.createClass({
           onSeek={this.onSeek}
           onSeekEnd={this.onSeekEnd}
           currentTime={this.state.currentTime}
+          startTime={this.state.minTime}
           endTime={this.state.maxTime}
           onDone={this.close}
           width={width}

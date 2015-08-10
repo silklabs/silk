@@ -110,6 +110,7 @@ export default React.createClass({
       this.state.seekTime || this.props.currentTime
     );
 
+    let minimumValue = this.daySeconds(this.props.startTime);
     let maximumTime = this.daySeconds(this.props.endTime);
     let lag;
     if (this.props.live) {
@@ -126,7 +127,7 @@ export default React.createClass({
             onValueChange={this.onSeek}
             onSlidingComplete={this.onSeekEnd}
             value={progress}
-            minimumValue={0}
+            minimumValue={minimumValue}
             maximumValue={maximumTime}
             style={styles.seekSlider} />
           {endTime}

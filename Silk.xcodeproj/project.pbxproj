@@ -69,7 +69,6 @@
 		F9107F2C1B58DA8D00F02BF4 /* SocketTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9107F1D1B58DA8D00F02BF4 /* SocketTypes.swift */; };
 		F9107F2D1B58DA8D00F02BF4 /* SwiftRegex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9107F1E1B58DA8D00F02BF4 /* SwiftRegex.swift */; };
 		F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9107F1F1B58DA8D00F02BF4 /* WebSocket.swift */; };
-		F93D9B001B36501D00EF5C6A /* web in Resources */ = {isa = PBXBuildFile; fileRef = F93D9AFF1B36501D00EF5C6A /* web */; };
 		F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */; };
 		F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4091B3725DB0081F479 /* NSData+Base64.m */; };
 		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
@@ -313,7 +312,6 @@
 		F9107F1D1B58DA8D00F02BF4 /* SocketTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketTypes.swift; sourceTree = "<group>"; };
 		F9107F1E1B58DA8D00F02BF4 /* SwiftRegex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftRegex.swift; sourceTree = "<group>"; };
 		F9107F1F1B58DA8D00F02BF4 /* WebSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebSocket.swift; sourceTree = "<group>"; };
-		F93D9AFF1B36501D00EF5C6A /* web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = web; sourceTree = "<group>"; };
 		F949A1971B365A2900E59D69 /* WebViewEx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewEx.h; sourceTree = "<group>"; };
 		F949A1981B365A2900E59D69 /* WebViewEx.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewEx.m; sourceTree = "<group>"; };
 		F949A1991B365A2900E59D69 /* WebViewExManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewExManager.h; sourceTree = "<group>"; };
@@ -440,7 +438,6 @@
 				57AC68811B4F0CE6009B70A3 /* iOS */,
 				573C20C51B4EF5C900C40871 /* PropertyObserver */,
 				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
-				F93D9AFF1B36501D00EF5C6A /* web */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB11A68108700A75B9A /* LaunchScreen.xib */,
@@ -914,7 +911,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F93D9B001B36501D00EF5C6A /* web in Resources */,
 				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,

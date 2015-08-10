@@ -34,24 +34,36 @@ suite('blob', () => {
     });
 
     let blob;
-    setup(() => {
+    let object = { foo: 'bar' };
+    let input = JSON.stringify(object);
+    let content = new Buffer(input);
+    let url;
+    setup(async () => {
       blob = createBlobApi({ serverUrl: context.url });
-    });
-
-    test('/blob/ - signing', async () => {
-      let object = { foo: 'bar' };
-      let input = JSON.stringify(object);
-      let content = new Buffer(input);
-      let url = await blob.upload(
+      url = await blob.upload(
         'video',
         content.length,
         'application/json',
         content
       );
+    });
+
+    test('/blob/ - signing full content', async () => {
       let response = await fetch(url);
       let text = await response.text();
       assert.equal(text, input);
       assert.equal(response.headers.get('Content-Type'), 'application/json');
+    });
+
+    test('/blob/ - byte range', async () => {
+      // byte range:
+      let response = await fetch(url, {
+        headers: {
+          Range: 'bytes=0-1'
+        }
+      });
+      let text = await response.text();
+      assert.equal('{"', text);
     });
   });
 

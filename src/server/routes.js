@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import { resolve } from 'url';
+let log = require('./log')('routes');
 
 module.exports = function(opts) {
   let {
@@ -24,6 +25,7 @@ module.exports = function(opts) {
   function asyncRoute(fn) {
     return (req, res) => {
       fn(req, res).catch((err) => {
+        log.error('Error responding to route:', req.path, err.stack);
         res.status(500).json({
           // err.stack is nice string output useful for debugging...
           error: err.stack

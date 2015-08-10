@@ -8,7 +8,8 @@
     "build": "./build.sh",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
-    "start": "DEBUG=silk-*,-*:verbose babel-node --harmony src/server/main.js production",
+    "start": "babel-node --harmony src/server/main.js production",
+    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "test": "npm run-script lint && npm run-script mocha"
   },
   "license": "proprietary",
@@ -34,6 +35,7 @@
     "promise": "^6.1.0",
     "promised-mongo": "^1.2.0",
     "promised-temp": "^0.1.0",
+    "range-parser": "^1.0.2",
     "socket.io": "^1.3.5",
     "socket.io-client": "^1.3.5",
     "superagent": "^1.2.0",

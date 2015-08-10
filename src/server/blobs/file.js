@@ -6,6 +6,7 @@ import fs from 'mz/fs';
 import path from 'path';
 import url from 'url';
 import uuid from 'uuid';
+import assert from 'assert';
 
 let log = require('../log')('blob-file');
 
@@ -38,6 +39,68 @@ function waitForPipe(writer) {
     }),
     eventToPromise(writer, 'finish')
   ]);
+}
+
+function getByteRange(maxSize, range) {
+  let [start, end] = range.split('bytes=').pop().split('-');
+
+  // bytes=-1 case
+  if (start && !end) {
+    end = start;
+    start = '0';
+  }
+
+  start = parseInt(start, 10);
+  end = parseInt(end, 10);
+
+  assert(!isNaN(start), 'byte range.start NaN');
+  assert(!isNaN(end), 'byte range.end NaN');
+
+  return { start, end };
+}
+
+/**
+ * Helper for serving byte range assets. This is designed against iOS _only_ and
+ * is not intended for production.
+ */
+async function serveStatic(absolutePath, details, req, res) {
+  let isRange = !!req.headers.range;
+  let range;
+  if (!isRange) {
+    range = { start: 0, end: details.contentLength };
+  } else {
+    range = getByteRange(details.contentLength, req.headers.range);
+  }
+
+  let headers = {
+    'Accept-Ranges': 'bytes',
+    'Content-Type': details.contentType,
+  };
+
+  let length;
+  if (isRange) {
+    let rangeStr = `bytes ${range.start}-${range.end}/${details.contentLength}`;
+    // Http byte range is inclusive so length will always be +1.
+    length = (range.end - range.start) + 1;
+    Object.assign(headers, {
+      'Content-Range': rangeStr,
+      'Content-Length': length
+    });
+  } else {
+    length = details.contentLength;
+    headers['Content-Length'] = length;
+  }
+
+  log.info('static', absolutePath, headers);
+
+  res.set(headers);
+  res.status(isRange ? 206 : 200);
+  let stream = fs.createReadStream(absolutePath, {
+    start: range.start,
+    end: range.start + length
+  });
+  stream.pipe(res);
+  await waitForPipe(res);
 }
 
 class FileBlobHandler {
@@ -214,17 +277,11 @@ class FileBlobHandler {
     }
 
     const headersPath = path.join(this.blobPaths[blobType], `${key}.json`);
-    const headers = JSON.parse(await fs.readFile(headersPath));
 
-    res.set({
-      'Content-Type': headers.contentType,
-      'Content-Length': headers.contentLength
-    });
-    res.status(200);
-
-    log.info(`Responding with '${headers.contentType}' ` +
-             `(${headers.contentLength})`);
-    fs.createReadStream(blobPath).pipe(res);
+    let headers = JSON.parse(await fs.readFile(headersPath));
+    await serveStatic(
+      path.join(this.blobPaths[blobType], key), headers, req, res
+    );
   }
 }
 

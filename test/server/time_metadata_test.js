@@ -20,8 +20,8 @@ suite('time metadata apis', () => {
       first = {
         deviceId: id,
         metaType: 'video',
-        startUTC: 0,
-        endUTC: 10,
+        startUTC: 100,
+        endUTC: 200,
         url: 'xfoo',
         data: {
           blob: true
@@ -32,6 +32,43 @@ suite('time metadata apis', () => {
       assert.equal(insert.statusCode, 201, 'creates record');
       assert.ok(insert.body.id, 'has id');
       first.id = insert.body.id;
+    });
+
+    test('find/bytime/after - found', async () => {
+      let findAfterTime = await api.findOneAfterTime({
+        deviceId: id,
+        metaType: 'video',
+        time: first.startUTC - 1
+      });
+      assert.deepEqual(findAfterTime.data, first.data);
+    });
+
+    test('find/bytime/after - wrong type', async () => {
+      try {
+        await api.findOneAfterTime({
+          deviceId: id,
+          metaType: 'log',
+          time: first.startUTC - 1
+        });
+      } catch (err) {
+        assert.equal(err.code, 404);
+        return;
+      }
+      throw new Error('should throw');
+    });
+
+    test('find/bytime/after - after time', async () => {
+      try {
+        await api.findOneAfterTime({
+          deviceId: id,
+          metaType: 'video',
+          time: first.startUTC + 1
+        });
+      } catch (err) {
+        assert.equal(err.code, 404);
+        return;
+      }
+      throw new Error('should throw');
     });
 
     test('find/byid - found', async () => {

@@ -12,6 +12,7 @@ poison_their_lunch()
   echo Error: $@ >&2
   lunch() { echo Error: lunch has been disabled due to an envsetup failure;  return 1; }
   choosecombo() { lunch; }
+  return 1
 }
 
 if [ $(uname) = "Darwin" ]; then
@@ -91,8 +92,11 @@ cmake_version_check()
 #export NODE_ENGINE=iojs
 
 node_version_check
+[[ $? -eq 0 ]] || return
 npm_version_check
+[[ $? -eq 0 ]] || return
 cmake_version_check
+[[ $? -eq 0 ]] || return
 
 # npm should not be making many (and ideally no) http requests during the build
 # process, so enable http logging so that any unexpected network requests may be

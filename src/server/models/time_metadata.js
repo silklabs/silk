@@ -27,6 +27,12 @@ const SCHEMA = {
     strict: Joi.bool()
   }).required(),
 
+  findOneAfterTime: Joi.object().keys({
+    deviceId: Joi.string().required(),
+    metaType: TYPES,
+    time: Joi.number().required()
+  }).required(),
+
   findById: Joi.object().keys({
     id: Joi.string().required()
   }).required()
@@ -83,6 +89,18 @@ export default class TimeMetadata {
       }).sort({ startUTC: -1 }).limit(1).toArray())[0];
     }
 
+    return formatOutput(result);
+  }
+
+  async findOneAfterTime(payload) {
+    Joi.assert(payload, SCHEMA.findOneAfterTime);
+    let result = (await this.collection.find({
+      deviceId: payload.deviceId,
+      metaType: payload.metaType,
+      startUTC: {
+        $gt: payload.time
+      }
+    }).sort({ startUTC: 1 }).limit(1).toArray())[0];
     return formatOutput(result);
   }
 

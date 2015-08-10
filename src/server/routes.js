@@ -133,6 +133,13 @@ module.exports = function(opts) {
     res.status(status).send(result);
   }));
 
+  app.post('/device/metadata/time/find/bytime/after', asyncRoute(async (req, res) => {
+    // create new metadata.
+    let result = await timeMeta.findOneAfterTime(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
+
   app.post('/device/metadata/crashreport', asyncRoute(async (req, res) => {
     let id;
     try {

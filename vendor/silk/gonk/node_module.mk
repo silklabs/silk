@@ -3,16 +3,17 @@
 #
 # Currently the following assumptions are made about the node module:
 #
-# 1. A package.json file exists in LOCAL_PATH
+# 1. A package.json file exists in LOCAL_PATH.
 #
 # 2. The LOCAL_MODULE variable is derived from the package.json "name" attribute
+#    if it is not explicitly defined.
 #
 # 3. If LOCAL_NODE_MODULE_TYPE is defined to "file", the module is assumed to
 #    be a "file module" and only the file (native or script) identified by the
 #    package.json's "main" attribute will be installed.
 #
 # 4. LOCAL_MODULE_PATH maybe specified to control the installation location.
-#    If unspecified the module will be installed as a system node module
+#    If unspecified the module will be installed as a system node module.
 #
 # 5. Any external static/shared objects required by node-gyp-based bindings
 #    should be listed in LOCAL_STATIC_LIBRARIES/LOCAL_SHARED_LIBRARIES to ensure
@@ -30,7 +31,7 @@ my_prefix := TARGET_
 
 define GET_PACKAGE_NAME_MAIN_JS
 var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
-console.log('LOCAL_MODULE=' + pkg.name);
+console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
 console.log('LOCAL_NODE_MODULE_MAIN=' + (pkg.main || ''));
 endef
 $(foreach stmt,$(shell node -e "$(GET_PACKAGE_NAME_MAIN_JS)"),$(eval $(stmt)))

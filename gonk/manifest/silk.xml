@@ -38,6 +38,10 @@
            path="vendor/silk/core/local_node_modules/ntp-client"
            remote="github"
            revision="master" clone-depth="1"/>
+  <project name="peterbraden/node-opencv"
+           path="external/node-opencv"
+           remote="github"
+           revision="master" clone-depth="1"/>
   <!--project name="sandeepmistry/noble"
            path="vendor/silk/core/local_node_modules/noble"
            remote="github"

@@ -61,6 +61,8 @@ PRODUCT_PACKAGES += librecovery librecovery_test
 # gonk stubs
 PRODUCT_PACKAGES += fakeappops gonksched
 
-# external/node-opencv/
-PRODUCT_PACKAGES += opencv
+# external/...
+PRODUCT_PACKAGES += \
+  bleno \
+  opencv \
 

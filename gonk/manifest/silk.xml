@@ -31,7 +31,7 @@
            remote="silk"
            revision="master"/>
   <project name="sandeepmistry/bleno"
-           path="vendor/silk/core/local_node_modules/bleno"
+           path="external/bleno"
            remote="github"
            revision="refs/tags/0.1.13" clone-depth="1"/>
   <project name="mvines/node-ntp-client"

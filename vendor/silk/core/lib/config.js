@@ -119,7 +119,10 @@ class DeviceConfig extends events.EventEmitter {
   init() {
     return this._isConfigured()
       .then(() => this.emit('configured'))
-      .catch(() => this.emit('unconfigured'));
+      .catch(err => {
+        log.error(err);
+        this.emit('unconfigured');
+      });
   }
 
   unconfigure() {

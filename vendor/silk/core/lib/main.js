@@ -18,6 +18,8 @@ let fs = require('mz/fs');
 let deferred = require('./deferred');
 let mkdirp = require('mkdirp-promise');
 
+import makeOutbox from './outbox';
+
 // Wait for 60 seconds for boot before issuing a warning.
 const BOOT_TIMEOUT = 60 * 1000;
 // How frequently (in ms) we check if the boot prop has been set.
@@ -25,6 +27,8 @@ const BOOT_CHECK_INTERVAL = 1000;
 // Where the ID export for this device lives.
 const ID_DIR = '/data/silk/config/';
 const ID_PATH = path.join(ID_DIR, 'id.json');
+// Amount of time to wait for async shutdown before forcing power status change.
+const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
 const name = util.getprop('persist.silk.displayName', 'Silkcam');
 const logoFilePath = '/system/media/logo.png';
@@ -32,6 +36,7 @@ const logoFilePath = '/system/media/logo.png';
 let id = null;
 let logo = null;
 let bootCompleted = false;
+let shutdownPromise = null;
 
 /**
  * Read or create a new device id this will be persisted between boots.
@@ -128,6 +133,7 @@ let socket = { __iamastub: true, connected: false, disconnect: () => {} };
 let camera;
 let diag;
 let hue;
+let outbox;
 
 /**
  * Read vendor specific logo
@@ -249,8 +255,9 @@ function maybeCreateSocket() {
   socket.on('reconnect_error', e => log.warn(`socket reconnect_error: ${e}`));
   socket.on('reconnect_failed', e => log.warn(`socket reconnect_failed: ${e}`));
   socket.on('reconnecting', e => log.warn(`socket reconnecting: ${e}`));
-}
 
+  outbox.hintSocket = socket;
+}
 
 // Config service...
 config.on('unconfigured', () => {
@@ -263,6 +270,8 @@ config.on('unconfigured', () => {
 config.on('configured', () => {
   if (ui.goto('connecting')) {
 
+    outbox = outbox || makeOutbox(wifi);
+
     wifi.online()
     .then(() => {
       maybeCreateSocket();
@@ -274,12 +283,77 @@ config.on('configured', () => {
   }
 });
 
-// Update service...
-update.on('apply', () => {
-  // An OTA update is being applied
-  if (ui.goto('powerdown')) {
-    socket.disconnect();
+function shutdown(finalPromiseFactory) {
+  if (shutdownPromise) {
+    log.warn('Shutdown caller more than once');
+    return shutdownPromise;
   }
+
+  const STATUS_COMPLETE = 'complete';
+  const STATUS_EXCEPTION = 'exception';
+  const STATUS_TIMEOUT = 'timeout';
+
+  log.info('Shutdown started');
+
+  // Do all async shutdown work here.
+  let asyncWorkPromise = Promise.resolve(ui.goto('powerdown'))
+    .then(uiStateWasSet => {
+      if (!uiStateWasSet) {
+        log.warn(`ui state was set to 'powerdown' more than once`);
+      }
+      return outbox ? outbox.shutdown() : undefined;
+    })
+    .then(() => {
+      if (socket) {
+        log.debug('Disconnecting socket');
+        socket.disconnect();
+        socket = null;
+      }
+    })
+    .then(() => {
+      // Always make sure this one is last.
+      return STATUS_COMPLETE;
+    });
+
+  let timeoutPromise = util.timeout(SHUTDOWN_TIMEOUT_MS)
+    .then(() => {
+      return STATUS_TIMEOUT;
+    });
+
+  shutdownPromise = Promise.race([ timeoutPromise, asyncWorkPromise ])
+    .catch(err => {
+      log.error('Shutdown error: %s', err);
+      return 'exception';
+    })
+    .then(status => {
+      switch (status) {
+        case STATUS_COMPLETE:
+          log.info('Shutdown completed normally');
+          break;
+        case STATUS_EXCEPTION:
+          break;
+        case STATUS_TIMEOUT:
+          log.error('Shutdown timed out!');
+          break;
+        default:
+          log.warn('Unknown status: %s', status);
+      }
+
+      if (finalPromiseFactory) {
+        return finalPromiseFactory();
+      }
+
+      log.info('Powering off');
+      util.setprop('sys.powerctl', 'shutdown');
+    });
+
+  return shutdownPromise;
+}
+
+// Update service...
+update.on('staged', () => {
+  // An OTA update is ready to be applied.
+  shutdown(update.apply.bind(update));
 });
 
 // UI...
@@ -289,22 +363,20 @@ ui.on('key:setup', () => {
     .catch(e => util.processthrow(e));
   }
 });
-ui.on('key:powerdown', () => {
-  if (ui.goto('powerdown')) {
-    socket.disconnect();
-    util.setprop('sys.powerctl', 'shutdown');
-  }
-});
+ui.on('key:powerdown', shutdown);
 ui.on('key:factoryreset', () => {
-  if (ui.goto('powerdown')) {
-    log.warn('!! Factory reset !!');
-    util.exec('librecovery_test', ['factoryReset'])
-    .catch(err => {
-      log.warn(`Factory reset failed: ${err}`);
-      // Ouch, now what? Reboot I guess.
-      util.setprop('sys.powerctl', 'reboot');
-    });
-  }
+  log.warn('!! Factory reset !!');
+
+  let finalPromiseFactory = () => {
+    return util.exec('librecovery_test', ['factoryReset'])
+      .catch(err => {
+        log.warn(`Factory reset failed: ${err}`);
+        // Ouch, now what? Reboot I guess.
+        util.setprop('sys.powerctl', 'reboot');
+      });
+  };
+
+  shutdown(finalPromiseFactory);
 });
 
 // Force the garbage collector to run regularly to keep the heap on a tight

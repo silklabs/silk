@@ -467,31 +467,18 @@ function validateUpdateHash(sha1) {
   return Promise.resolve();
 }
 
-function stageUpdateAndReboot() {
+function stageUpdate() {
   if (PREVENT_REBOOT) {
-    log.info(`'${PREVENT_REBOOT_PROP}' is set, skipping reboot`);
+    log.info(`'${PREVENT_REBOOT_PROP}' is set, skipping staged event`);
     return Promise.resolve();
   }
 
   // TODO: Make sure nothing else is writing to disk before we call this
   //       because we want our file cache buffers sync'd properly.
-  log.info(`'${PREVENT_REBOOT_PROP}' is not set, rebooting`);
+  log.info(`'${PREVENT_REBOOT_PROP}' is not set, staging update`);
 
-  emitter.emit('apply');
-
-  let spawnSync = require('child_process').spawnSync;
-  spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
-
-  // This is paranoid, but if spawnSync() returns before we reboot then we don't
-  // want to attempt normal cleanup to remove the zip file. Setting these flags
-  // and then calling stop() should prevent normal cleanup and bail out of our
-  // poll loop.
-  cancelFunction = null;
-  startedDownload = false;
-
-  let promise = stop();              // eslint-disable-line no-use-before-define
-  promise.then(Promise.reject);
-  return promise;
+  emitter.emit('staged');
+  return Promise.resolve();
 }
 
 function cleanup(err) {
@@ -533,7 +520,7 @@ function poll(runImmediately) {
   .then(validateUpdateSize)
   .then(calculateUpdateHash)
   .then(validateUpdateHash)
-  .then(stageUpdateAndReboot)
+  .then(stageUpdate)
   .catch(cleanup)
   .then(restart);
 }
@@ -618,7 +605,23 @@ function stop() {
   return promise.then(done, done);
 }
 
+function apply() {
+  let spawnSync = require('child_process').spawnSync;
+  spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
+
+  // This is paranoid, but if spawnSync() returns before we reboot then we don't
+  // want to attempt normal cleanup to remove the zip file. Setting these flags
+  // and then calling stop() should prevent normal cleanup and bail out of our
+  // poll loop.
+  cancelFunction = null;
+  startedDownload = false;
+
+  let promise = stop();
+  promise.then(Promise.reject);
+  return promise;
+}
 
 emitter.start = start;
 emitter.stop = stop;
+emitter.apply = apply;
 module.exports = emitter;

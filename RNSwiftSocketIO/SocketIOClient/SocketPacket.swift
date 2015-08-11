@@ -40,6 +40,7 @@ final class SocketPacket: Printable {
         return better
     }
     var id:Int?
+    var event: String?
     var justAck = false
     var nsp = ""
     var placeholders:Int?
@@ -71,9 +72,18 @@ final class SocketPacket: Printable {
             self.placeholders = placeholders
             self.id = id
     }
-    
+
     func getEvent() -> String {
-        return data?.removeAtIndex(0) as! String
+        // If we have already calculated event keep it around.
+        if (self.event == nil) {
+            if let event = data?.removeAtIndex(0) as? String? {
+                self.event = event
+            } else {
+                let err = NSException(name: "Expected event", reason: "No event", userInfo: nil)
+                err.raise()
+            }
+        }
+        return self.event!
     }
     
     func addData(data:NSData) -> Bool {

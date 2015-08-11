@@ -1,6 +1,26 @@
 import UIKit
 import AVFoundation
 
+internal class GetAVAssetURLOperation : NSOperation {
+  var value: AVURLAsset?
+  let url: NSURL
+
+  init(url: NSURL) {
+    self.url = url
+  }
+
+  /**
+   * For now this is intentionally very simple in the future we may want to extend this with
+   * better support for buffering and fetching (bypassing AVPLayer(s) defaults)
+   */
+  override func main() {
+    if self.cancelled {
+      return
+    }
+    self.value = AVURLAsset(URL: self.url, options: [:])
+  }
+}
+
 /**
 Custom implementation of AVPlayerItem to keep track of some app specific details.
 */
@@ -38,6 +58,7 @@ class LiveVideo : UIView {
   let assetLoaderQueue = dispatch_queue_create("video assets", DISPATCH_QUEUE_CONCURRENT)
   let eventQueue = dispatch_queue_create("event queue", DISPATCH_QUEUE_SERIAL)
 
+  var videoResourceQueue: NSOperationQueue?
 
   // The player manages all video assets and outputs the "layers" which we use to
   // display raw video...
@@ -91,6 +112,26 @@ class LiveVideo : UIView {
   required init(coder aDecoder: NSCoder) {
     NOT_IMPLEMENTED()
     super.init(coder: aDecoder)
+  }
+
+  /**
+   * Gets or creates the underlying NSOperation queue we use to load video from urls.
+   * We may reset the queue in the cases where we don't care about the pending operations
+   * inside of it (such as in the case of seeking).
+   */
+  private func getOrCreateVideoQueue() -> NSOperationQueue  {
+    AssertMainThread()
+
+    if self.videoResourceQueue == nil {
+      self.videoResourceQueue = NSOperationQueue()
+      self.videoResourceQueue!.name = "Video URL resource loader"
+      // NSOperation queue returned is serial.
+      self.videoResourceQueue!.maxConcurrentOperationCount = 1
+      // However we use a concurrent underlying queue so multiple NSOpreationQueues can exist.
+      self.videoResourceQueue!.underlyingQueue = self.assetLoaderQueue
+    }
+
+    return self.videoResourceQueue!
   }
 
   /**
@@ -169,6 +210,13 @@ class LiveVideo : UIView {
   func replaceSegments(segments: [VideoSegment]) {
     self.pause()
     self.player.removeAllItems()
+
+    // When we replace segments cancel all previous load requests.
+    if let operations = self.videoResourceQueue {
+      self.videoResourceQueue?.cancelAllOperations()
+      self.videoResourceQueue = nil
+    }
+
     NSLog("Replacing segments: \(segments.count)")
     for segment in segments {
       self.appendVideoSegment(segment)
@@ -246,10 +294,20 @@ class LiveVideo : UIView {
   This method must be called from the main thread.
   */
   func appendURL(segment: VideoSegment) {
-    dispatch_async(self.assetLoaderQueue) {
-      let asset = AVURLAsset(URL: segment.url!, options: [:])
-      dispatch_async(dispatch_get_main_queue()) {
-        self.append(asset, segment: segment)
+    let queue = self.getOrCreateVideoQueue()
+    let operation = GetAVAssetURLOperation(url: segment.url!)
+    queue.addOperation(operation)
+
+    // The ordering of the queue should ensure this always is called in the right order.
+    operation.completionBlock = {
+      [unowned self] in
+
+      // This block will be invoked both when the operation was finished _and_ cancelled
+      // so value is optional if it is not present then the operation was cancelled.
+      if let value = operation.value {
+        dispatch_async(dispatch_get_main_queue()) {
+          self.append(value, segment: segment)
+        }
       }
     }
   }

@@ -61,6 +61,14 @@ export function getboolprop(prop, defaultValue = false) {
   }
 }
 
+export function getintprop(prop, defaultValue = '0') {
+  let value = parseInt(getprop(prop, defaultValue), 10);
+  if (isNaN(value)) {
+    throw new Error(`Expected ${prop} to be an integer`);
+  }
+  return value;
+}
+
 export function setprop(prop, value) {
   let spawnSync = require('child_process').spawnSync;
   let result = spawnSync('setprop', [prop, value]);

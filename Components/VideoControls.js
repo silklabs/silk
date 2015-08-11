@@ -130,7 +130,7 @@ export default React.createClass({
     if (this.props.live) {
       endTime = (<Text style={styles.seekEnd}>Live</Text>)
     } else {
-      let endTimeValue = this.formatUTCTime(this.props.maximumValue);
+      let endTimeValue = this.formatUTCTime(this.props.endTime);
       endTime = (<Text style={styles.seekEnd}>{endTimeValue}</Text>)
     }
 

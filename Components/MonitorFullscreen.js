@@ -386,7 +386,7 @@ export default React.createClass({
     if (this.state.showingControls) {
       controls = (
         <VideoControls
-          live={true}
+          live={this.state.mode === MODES.live}
           onSeekStart={this.onSeekStart}
           onSeekChange={this.onSeekChange}
           onSeekEnd={this.onSeekEnd}

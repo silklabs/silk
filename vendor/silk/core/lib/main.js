@@ -3,7 +3,6 @@
 
 let api = require('./api');
 let btle = require('./btle');
-let crashreport = require('./crashreport');
 let ui = require('./ui');
 let log = require('./log')('main');
 let vib = require('./vibrator')();
@@ -18,6 +17,7 @@ let fs = require('mz/fs');
 let deferred = require('./deferred');
 let mkdirp = require('mkdirp-promise');
 
+import makeCrashReporter from './crashreport';
 import makeOutbox from './outbox';
 
 // Wait for 60 seconds for boot before issuing a warning.
@@ -37,6 +37,8 @@ let id = null;
 let logo = null;
 let bootCompleted = false;
 let shutdownPromise = null;
+let crashreporter;
+let outbox;
 
 /**
  * Read or create a new device id this will be persisted between boots.
@@ -91,7 +93,6 @@ function _waitForBoot(startTime, defer) {
 
 function boot() {
   log.info('Wait for boot complete');
-  ui.goto('bootanimation');
   return _waitForBoot().
     then(() => {
       log.info('Initialize hardware');
@@ -107,10 +108,18 @@ function boot() {
  * Wait for bootup and initialize the device.
  */
 function main() {
+  ui.goto('bootanimation');
+
+  // Start these ASAP so that unhandled exceptions in the boot sequence will
+  // be properly recorded.
+  outbox = makeOutbox(wifi);
+  crashreporter = makeCrashReporter(outbox);
+
   return readOrCreateID()
     .then(fetchedId => {
       id = fetchedId;
       log.info('device id:', id.toString());
+      crashreporter.deviceId = id.toString();
       return boot();
     })
     .then(() => {
@@ -133,7 +142,6 @@ let socket = { __iamastub: true, connected: false, disconnect: () => {} };
 let camera;
 let diag;
 let hue;
-let outbox;
 
 /**
  * Read vendor specific logo
@@ -192,14 +200,12 @@ function maybeCreateSocket() {
     ui.goto('online');
     diag.start(socket);
     camera.start(socket);
-    crashreport.start(socket);
     update.start();
     emitDeviceInfo();
   });
   socket.on('disconnect', e => {
     log.warn(`socket disconnect: ${e}`);
     update.stop();
-    crashreport.stop();
     camera.stop();
     diag.stop();
 
@@ -270,8 +276,6 @@ config.on('unconfigured', () => {
 config.on('configured', () => {
   if (ui.goto('connecting')) {
 
-    outbox = outbox || makeOutbox(wifi);
-
     wifi.online()
     .then(() => {
       maybeCreateSocket();
@@ -301,15 +305,17 @@ function shutdown(finalPromiseFactory) {
       if (!uiStateWasSet) {
         log.warn(`ui state was set to 'powerdown' more than once`);
       }
-      return outbox ? outbox.shutdown() : undefined;
+      return crashreporter.shutdown();
     })
     .then(() => {
       if (socket) {
         log.debug('Disconnecting socket');
         socket.disconnect();
+        outbox.hintSocket = null;
         socket = null;
       }
     })
+    .then(outbox.shutdown)
     .then(() => {
       // Always make sure this one is last.
       return STATUS_COMPLETE;

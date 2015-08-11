@@ -27,7 +27,7 @@ const SCHEMA = {
     strict: Joi.bool()
   }).required(),
 
-  findOneAfterTime: Joi.object().keys({
+  findOneByTime: Joi.object().keys({
     deviceId: Joi.string().required(),
     metaType: TYPES,
     time: Joi.number().required()
@@ -83,17 +83,26 @@ export default class TimeMetadata {
 
     // If that does not work try to find the most recent one.
     if (!result && !payload.strict) {
-      result = (await this.collection.find({
-        deviceId: payload.deviceId,
-        metaType: payload.metaType,
-      }).sort({ startUTC: -1 }).limit(1).toArray())[0];
+      return this.findOneBeforeTime(payload);
     }
 
     return formatOutput(result);
   }
 
+  async findOneBeforeTime(payload) {
+    Joi.assert(payload, SCHEMA.findOneByTime);
+    let result = (await this.collection.find({
+      deviceId: payload.deviceId,
+      metaType: payload.metaType,
+      startUTC: {
+        $lt: payload.time
+      }
+    }).sort({ startUTC: -1 }).limit(1).toArray())[0];
+    return formatOutput(result);
+  }
+
   async findOneAfterTime(payload) {
-    Joi.assert(payload, SCHEMA.findOneAfterTime);
+    Joi.assert(payload, SCHEMA.findOneByTime);
     let result = (await this.collection.find({
       deviceId: payload.deviceId,
       metaType: payload.metaType,

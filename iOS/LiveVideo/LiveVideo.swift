@@ -132,6 +132,15 @@ class LiveVideo : UIView {
 
     var boundary = 0
     for prevValue in previous {
+      // During seeking we may have previous which shares some with the new list but the
+      // new list is shorter. Even though we could potentially optimize and assume the user
+      // wants the same queued items (since they share previous tracks) we do what JS tells us
+      // and instead reset the tracks.
+      if boundary >= new.count {
+        boundary = 0
+        break
+      }
+
       let newValue = new[boundary]
 
       // The previous value is before next value so do not move the bounary.

@@ -9,7 +9,9 @@ let net = require('net');
 
 //const FRONT = 1;
 const BACK = 0;
-const DURATION = 1;
+
+const DURATION_PROP = 'persist.silk.vidduration';
+const DURATION = util.getintprop(DURATION_PROP, 1);
 
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);

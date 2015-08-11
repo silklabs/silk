@@ -272,6 +272,15 @@ adb shell rm /data/property/persist.silk.vidupload.enabled
 adb reboot
 ```
 
+### Configuring Video Duration
+
+To change video duration:
+```sh
+# 5 second videos
+adb shell setprop persist.silk.vidduration 5
+adb reboot
+```
+
 ### OTA Updates
 
 OTA updates are disabled by default.

@@ -172,10 +172,6 @@ ifeq (file,$(strip $(LOCAL_NODE_MODULE_TYPE)))
     mkdir -p $(@D)/build; \
     cp -vf $(<D)/$$binding $(@D)/build/`basename $$binding`; \
   done
-# <LOCAL_MODULE_PATH>/build/Release/<foo>.node is also a popular location for
-# native modules so forge a symlink to redirect such a require() back to
-# <LOCAL_MODULE_PATH>/build/<foo>.node
-	$(hide) if [[ -d $(@D)/build ]]; then ln -fsT . $(@D)/build/Release; fi;
 else
 # For now just assume that all device node_module dependencies are already
 # present somehow, so don't install all of node_modules/ (which likely also

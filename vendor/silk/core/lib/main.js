@@ -45,7 +45,7 @@ function readOrCreateID() {
     let newId = api.id.create();
     return mkdirp(ID_DIR)
       .then(() => fs.writeFile(ID_PATH, newId.export()))
-      .then(newId);
+      .then(() => newId);
   }
 
   function getID() {
@@ -116,7 +116,8 @@ function main() {
 }
 
 main().catch(err => {
-  util.processthrow(`Fatal initialization error: ${err}`);
+  log.fatal(`Initialization error: ${err}`);
+  util.processthrow(err);
 });
 
 //

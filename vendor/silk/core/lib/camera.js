@@ -80,6 +80,8 @@ function rawFaceArrayToFaces(buf) {
  * `face.rect` rectangle mapped into mako screen space IN THE
  * ORIENTATION WHERE FRONT CAMERA IS BOTTOM RIGHT FACING YOU.
  */
+let PREVIEW_WIDTH = 0;
+let PREVIEW_HEIGHT = 0;
 function normalizeFace(face) { //eslint-disable-line no-unused-vars
 
   // These params are defined by the long comment just below the
@@ -98,15 +100,12 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   }
   // And finally, we transform the abstract "face space" coords into
   // mako device-pixel space with top-left as (0,0)
-  const WIDTH = 1280, HEIGHT = 768;
   let normLen = (l, len) => (len * l / 2000.0) | 0;
   let normCoord = (c, len) => normLen(c + 1000.0, len);
-  face.x = normCoord(left, WIDTH);
-  face.y = normCoord(top, HEIGHT);
-  face.width = normLen(right - left, WIDTH);
-  face.height = normLen(bottom - top, HEIGHT);
-  face.fieldWidth = WIDTH;
-  face.fieldHeight = HEIGHT;
+  face.x = normCoord(left, PREVIEW_WIDTH);
+  face.y = normCoord(top, PREVIEW_HEIGHT);
+  face.width = normLen(right - left, PREVIEW_WIDTH);
+  face.height = normLen(bottom - top, PREVIEW_HEIGHT);
   return face;
 }
 
@@ -137,11 +136,11 @@ class VideoUploadQueue extends EventEmitter {
   @param {Number} when utc time when the frame was created.
   @param {}
   */
-  add(when, frame, faces) {
+  add(when, frame, objects) {
     this.queue.push({
       when,
       frame,
-      faces
+      objects
     });
     this.start();
   }
@@ -179,14 +178,16 @@ class VideoUploadQueue extends EventEmitter {
 
   _uploadItem(previousId, item) {
     let start = Date.now();
-    let { when, frame, faces } = item;
+    let { when, frame, objects } = item;
     let metadataPayload = {
       metaType: this.type,
       deviceId: this.id,
       startUTC: when,
       endUTC: when + this.duration,
       data: {
-        faces
+        frameWidth: PREVIEW_WIDTH,
+        frameHeight: PREVIEW_HEIGHT,
+        objects
       }
     };
 
@@ -268,12 +269,15 @@ class CameraStream extends EventEmitter {
     super();
     this.id = id;
     this._ready = false;
-    this.faces = [];
     this.videoUploads = new VideoUploadQueue(this.id, DURATION * 1000);
 
     // Keep track of all face packets we send and upload them along with the
     // metadata for video segments.
-    this.facePackets = [];
+    this.videoObjects = [];
+
+    // previewObjects is like videoObjects, but for the preview images
+    this.previewObjects = [];
+    this.previewHalFaces = false;
   }
 
   _restart(why) {
@@ -297,6 +301,8 @@ class CameraStream extends EventEmitter {
       log.info(`camera already initialized`);
       return;
     }
+    PREVIEW_WIDTH = cmdData.width / cmdData.previewScale;
+    PREVIEW_HEIGHT = cmdData.height / cmdData.previewScale;
 
     // Connecting to data socket
     this._dataBuffer = new Buffer(0);
@@ -377,14 +383,15 @@ class CameraStream extends EventEmitter {
       switch (tag) {
         case TAG_PREVIEW:
           this._pushPreview(when, pkt);
+          this.emit('preview', when, pkt);
           break;
         case TAG_VIDEO:
           this._pushVideo(when, pkt);
           break;
         case TAG_FACES:
-          this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-          this.emit('face', this.faces);
-          this._pushFace(when);
+          let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+          this.emit('face', faces);
+          this._pushFace(when, faces);
           break;
         default:
           // Flush the buffer and restart the socket
@@ -400,29 +407,53 @@ class CameraStream extends EventEmitter {
   }
 
   _pushPreview(when, frame) {
-    this._pushPacket(when, frame, this.faces, 'jpeg');
+    // Intentionally delay the preview image by one cycle (~1 second) to ensure
+    // that the previewObjects are transmitted with their corresponding image.
+    //
+    // previewObjects are computed after the preview frame is received, so if
+    // the preview frame is transmitted as quickly as possible and then a naïve
+    // client will end up displaying the previewObjects for last frame.
+    //
+    // However the `when` timestamp is transmitted to the client for both the
+    // preview image and objects so this little workaround can be removed in the
+    // future if desired, once the appropriate client changes are made.
+    //
+    if (this.lastPreviewFrame) {
+      this._pushPacket(when, this.lastPreviewFrame, this.previewObjects, 'jpeg');
+    }
+    this.lastPreviewFrame = frame;
+    this.previewObjects = [];
+    this.previewHalFaces = false;
   }
 
-  _pushFace(when) {
-    this._pushPacket(when, null, this.faces, 'faces');
-    this.facePackets.push({ when, faces: this.faces });
+  _pushFace(when, faces) {
+    let object = {tag: 'hal', when: when, rects: faces};
+
+    // Only add the first set of HAL-detected faces to the preview object set
+    // (the HAL can return multiple faces a second, but it's not helpful to show
+    //  them all on the preview)
+    if (!this.previewHalFaces) {
+      this.previewHalFaces = true;
+      this.previewObjects.push(object);
+    }
+    this.videoObjects.push(object);
   }
 
   _pushVideo(when, frame) {
     // For video we group all related face packets to make it easier on the
     // client.
-    this._pushPacket(when, frame, this.facePackets, 'mp4');
+    this._pushPacket(when, frame, this.videoObjects, 'mp4');
     if (UPLOAD_ENABLED) {
-      this.videoUploads.add(when, frame, this.facePackets);
+      this.videoUploads.add(when, frame, this.videoObjects);
     }
-    this.facePackets = [];
+    this.videoObjects = [];
   }
 
-  _pushPacket(when, frame, faces, type) {
-    let str = `packet:${type}: size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
+  _pushPacket(when, frame, objects, type) {
+    let str = `packet:${type} size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
     if (this.serverSocket.connected) {
       log.debug(str);
-      this.serverSocket.emit('video', { id: this.id, faces: faces,
+      this.serverSocket.emit('video', { id: this.id, objects: objects,
                                         frame: frame, contents: type, when: when });
     } else {
       log.warn(`dropped ${str}`);
@@ -481,6 +512,29 @@ class CameraStream extends EventEmitter {
       return;
     }
     this._command({cmdName: 'flash', flashMode: flashMode});
+  }
+
+  /**
+   * Inject objects into the video stream.
+   *
+   * Each object in the provided array should contain the following fields:
+   *   tag: object type (string)
+   *   when: timestamp the object(s) manifested in the stream
+   *   rects: one or more bounding rectangles for where the object appeared:
+   *            {x, y, width, height}.
+   *          The video preview image dimensions are used as the scale for
+   *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
+   */
+  addObjects(objects) {
+    this.previewObjects.push(...objects);
+    this.videoObjects.push(...objects);
+  }
+
+  /**
+   *
+   */
+  get previewSize() {
+    return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 }
 

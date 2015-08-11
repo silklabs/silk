@@ -174,7 +174,13 @@ function emitDeviceInfo() {
   readLogo()
   .then(() => {
     if (socket.connected) {
-      socket.emit('info', { id: id.toString(), name: name, now: Date.now(), logo: logo} );
+      socket.emit('info', {
+        id: id.toString(),
+        name: name,
+        now: Date.now(),
+        logo: logo,
+        previewSize: camera.previewSize,
+      });
     }
   });
 }

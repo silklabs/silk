@@ -591,8 +591,8 @@ class Outbox {
   send(reportType,
        blob,
        metadata,
-       contentLength = 0,
-       contentType = CONTENT_TYPE_UNKNOWN) {
+       contentType = CONTENT_TYPE_UNKNOWN,
+       contentLength = 0) {
     assert(this.running, 'Cannot send data after shutdown');
     assert(blob, 'No blob passed');
     assert(metadata, 'No metadata passed');
@@ -711,7 +711,7 @@ class Outbox {
     let promiseFactory = () => {
       return Promise.resolve()
         .then(() => {
-          log.info('Completed shutdown');
+          log.info('Shutdown complete');
         });
     };
 

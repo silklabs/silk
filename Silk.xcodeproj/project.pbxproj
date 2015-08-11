@@ -35,9 +35,9 @@
 		5758F23B1B5EFE7600C18E5D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23A1B5EFE7600C18E5D /* Sync.swift */; };
 		5758F23D1B5F4A0100C18E5D /* ReactSocketIO.m in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23C1B5F4A0100C18E5D /* ReactSocketIO.m */; };
 		5758F23F1B5F4A1200C18E5D /* ReactSocketIO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23E1B5F4A1200C18E5D /* ReactSocketIO.swift */; };
-		5758F2601B600AF500C18E5D /* PreviewImageManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5758F25F1B600AF500C18E5D /* PreviewImageManager.m */; };
-		5758F2621B600B0200C18E5D /* PreivewImageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2611B600B0200C18E5D /* PreivewImageManager.swift */; };
-		5758F2641B600B2000C18E5D /* PreviewImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2631B600B2000C18E5D /* PreviewImage.swift */; };
+		5758F2601B600AF500C18E5D /* ImageViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5758F25F1B600AF500C18E5D /* ImageViewManager.m */; };
+		5758F2621B600B0200C18E5D /* ImageViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2611B600B0200C18E5D /* ImageViewManager.swift */; };
+		5758F2641B600B2000C18E5D /* ImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2631B600B2000C18E5D /* ImageView.swift */; };
 		5758F3351B609C2000C18E5D /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5758F3321B60989C00C18E5D /* libART.a */; };
 		5758F3361B609C4300C18E5D /* libRCTNetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302DC1ABCB9D200DB3ED1 /* libRCTNetwork.a */; };
 		5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302AC1ABCB8CE00DB3ED1 /* libRCTActionSheet.a */; };
@@ -276,9 +276,9 @@
 		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		5758F23C1B5F4A0100C18E5D /* ReactSocketIO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ReactSocketIO.m; path = SocketIO/ReactSocketIO.m; sourceTree = "<group>"; };
 		5758F23E1B5F4A1200C18E5D /* ReactSocketIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ReactSocketIO.swift; path = SocketIO/ReactSocketIO.swift; sourceTree = "<group>"; };
-		5758F25F1B600AF500C18E5D /* PreviewImageManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PreviewImageManager.m; path = PreviewImage/PreviewImageManager.m; sourceTree = "<group>"; };
-		5758F2611B600B0200C18E5D /* PreivewImageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PreivewImageManager.swift; path = PreviewImage/PreivewImageManager.swift; sourceTree = "<group>"; };
-		5758F2631B600B2000C18E5D /* PreviewImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PreviewImage.swift; path = PreviewImage/PreviewImage.swift; sourceTree = "<group>"; };
+		5758F25F1B600AF500C18E5D /* ImageViewManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ImageViewManager.m; path = PreviewImage/ImageViewManager.m; sourceTree = "<group>"; };
+		5758F2611B600B0200C18E5D /* ImageViewManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImageViewManager.swift; path = PreviewImage/ImageViewManager.swift; sourceTree = "<group>"; };
+		5758F2631B600B2000C18E5D /* ImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImageView.swift; path = PreviewImage/ImageView.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CMTimeExtensions.swift; sourceTree = "<group>"; };
 		5758F33E1B61681300C18E5D /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
@@ -504,9 +504,9 @@
 		5758F25E1B600AD300C18E5D /* PreviewImage */ = {
 			isa = PBXGroup;
 			children = (
-				5758F25F1B600AF500C18E5D /* PreviewImageManager.m */,
-				5758F2611B600B0200C18E5D /* PreivewImageManager.swift */,
-				5758F2631B600B2000C18E5D /* PreviewImage.swift */,
+				5758F25F1B600AF500C18E5D /* ImageViewManager.m */,
+				5758F2611B600B0200C18E5D /* ImageViewManager.swift */,
+				5758F2631B600B2000C18E5D /* ImageView.swift */,
 			);
 			name = PreviewImage;
 			sourceTree = "<group>";
@@ -984,7 +984,7 @@
 				F9107F241B58DA8D00F02BF4 /* SocketEngine.swift in Sources */,
 				F9107F2D1B58DA8D00F02BF4 /* SwiftRegex.swift in Sources */,
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
-				5758F2641B600B2000C18E5D /* PreviewImage.swift in Sources */,
+				5758F2641B600B2000C18E5D /* ImageView.swift in Sources */,
 				576CA1B41B6AB3A2006C7C3C /* FaceEvent.swift in Sources */,
 				5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
@@ -999,11 +999,11 @@
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
-				5758F2601B600AF500C18E5D /* PreviewImageManager.m in Sources */,
+				5758F2601B600AF500C18E5D /* ImageViewManager.m in Sources */,
 				57BCE0FA1B6962ED0047088B /* NSDataBridge.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
 				F9107F261B58DA8D00F02BF4 /* SocketEventHandler.swift in Sources */,
-				5758F2621B600B0200C18E5D /* PreivewImageManager.swift in Sources */,
+				5758F2621B600B0200C18E5D /* ImageViewManager.swift in Sources */,
 				F9107F201B58DA8D00F02BF4 /* Socket.swift in Sources */,
 				F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */,
 				F9107F291B58DA8D00F02BF4 /* SocketLogger.swift in Sources */,

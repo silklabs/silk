@@ -64,7 +64,8 @@ var MonitorsView = React.createClass({
                               api={api}
                               socket={this.socket}
                               navigator={this.props.navigator}
-                              serverUrl={this.state.serverUrl} />);
+                              serverUrl={this.state.serverUrl}
+                              logo={device.logo} />);
     });
     if (0 === configuring.length + streaming.length) {
       configuring = (<PlaceholderMessage />);
@@ -116,7 +117,7 @@ var MonitorsView = React.createClass({
       this.state.serverConnection = 'connected';
       this.setState(this.state);
       this.socket.on('video-stream-new', msg => {
-        this.state.streaming[msg.id] = { name: msg.name };
+        this.state.streaming[msg.id] = { name: msg.name, logo: msg.logo };
         this.setState(this.state);
       });
       this.socket.on('video-stream-delete', msg => {

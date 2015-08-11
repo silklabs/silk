@@ -1,6 +1,6 @@
 import UIKit
 
-class PreviewImage : UIImageView {
+class ImageView : UIImageView {
   var blob: NSData? {
     didSet {
       self.renderImage(self.blob!)

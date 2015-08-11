@@ -17,8 +17,8 @@
 #
 # 5. Any external static/shared objects required by node-gyp-based bindings
 #    should be listed in LOCAL_STATIC_LIBRARIES/LOCAL_SHARED_LIBRARIES to ensure
-#    Make can managed dependencies probably.  These libraries will be passed to
-#    bindings.gyp via environment variable Android_mk__LIBRARIES.
+#    Make can manage dependencies properly.  These libraries will be passed to
+#    bindings.gyp via the environment variable Android_mk__LIBRARIES.
 #
 # 6. external/stlport/libstlport.mk is activated if an alternate STL is not
 #    selected via Android.mk in the usage manner:

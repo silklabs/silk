@@ -61,7 +61,7 @@ module.exports = function(grunt) {
             // start "--node"
             bare: true,
             browserField: false,
-            buildins: false,
+            builtins: false,
             commondir: false,
             detectGlobals: false,
             // end "--node"

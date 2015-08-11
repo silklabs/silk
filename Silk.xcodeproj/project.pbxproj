@@ -9,6 +9,19 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		3D4D1CC81B7AB51E0047A020 /* DeviceSetup.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CBB1B7AB51E0047A020 /* DeviceSetup.js */; };
+		3D4D1CC91B7AB51E0047A020 /* FaceBoxes.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CBC1B7AB51E0047A020 /* FaceBoxes.js */; };
+		3D4D1CCA1B7AB51E0047A020 /* ImageView.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CBD1B7AB51E0047A020 /* ImageView.js */; };
+		3D4D1CCB1B7AB51E0047A020 /* LiveVideo.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CBE1B7AB51E0047A020 /* LiveVideo.js */; };
+		3D4D1CCC1B7AB51E0047A020 /* MonitorFullscreen.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CBF1B7AB51E0047A020 /* MonitorFullscreen.js */; };
+		3D4D1CCD1B7AB51E0047A020 /* MonitorPreview.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC01B7AB51E0047A020 /* MonitorPreview.js */; };
+		3D4D1CCE1B7AB51E0047A020 /* MonitorsView.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */; };
+		3D4D1CCF1B7AB51E0047A020 /* OverlayModal.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */; };
+		3D4D1CD01B7AB51E0047A020 /* ProgressBar.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */; };
+		3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC41B7AB51E0047A020 /* Rectangle.js */; };
+		3D4D1CD21B7AB51E0047A020 /* SocketIO.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC51B7AB51E0047A020 /* SocketIO.js */; };
+		3D4D1CD31B7AB51E0047A020 /* VideoControls.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC61B7AB51E0047A020 /* VideoControls.js */; };
+		3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
 		3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */; };
 		5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0641B734C4A00B0630C /* VideoSegment.swift */; };
@@ -255,6 +268,19 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = iOS/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = iOS/Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		3D4D1CBB1B7AB51E0047A020 /* DeviceSetup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = DeviceSetup.js; path = Components/DeviceSetup.js; sourceTree = "<group>"; };
+		3D4D1CBC1B7AB51E0047A020 /* FaceBoxes.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = FaceBoxes.js; path = Components/FaceBoxes.js; sourceTree = "<group>"; };
+		3D4D1CBD1B7AB51E0047A020 /* ImageView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ImageView.js; path = Components/ImageView.js; sourceTree = "<group>"; };
+		3D4D1CBE1B7AB51E0047A020 /* LiveVideo.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = LiveVideo.js; path = Components/LiveVideo.js; sourceTree = "<group>"; };
+		3D4D1CBF1B7AB51E0047A020 /* MonitorFullscreen.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorFullscreen.js; path = Components/MonitorFullscreen.js; sourceTree = "<group>"; };
+		3D4D1CC01B7AB51E0047A020 /* MonitorPreview.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorPreview.js; path = Components/MonitorPreview.js; sourceTree = "<group>"; };
+		3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorsView.js; path = Components/MonitorsView.js; sourceTree = "<group>"; };
+		3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = OverlayModal.js; path = Components/OverlayModal.js; sourceTree = "<group>"; };
+		3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ProgressBar.js; path = Components/ProgressBar.js; sourceTree = "<group>"; };
+		3D4D1CC41B7AB51E0047A020 /* Rectangle.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Rectangle.js; path = Components/Rectangle.js; sourceTree = "<group>"; };
+		3D4D1CC51B7AB51E0047A020 /* SocketIO.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = SocketIO.js; path = Components/SocketIO.js; sourceTree = "<group>"; };
+		3D4D1CC61B7AB51E0047A020 /* VideoControls.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = VideoControls.js; path = Components/VideoControls.js; sourceTree = "<group>"; };
+		3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = WifiSettings.js; path = Components/WifiSettings.js; sourceTree = "<group>"; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
 		3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeBeacon.swift; sourceTree = "<group>"; };
 		5714A0641B734C4A00B0630C /* VideoSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoSegment.swift; sourceTree = "<group>"; };
@@ -462,6 +488,26 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		3D4D1CBA1B7AB4F50047A020 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				3D4D1CBB1B7AB51E0047A020 /* DeviceSetup.js */,
+				3D4D1CBC1B7AB51E0047A020 /* FaceBoxes.js */,
+				3D4D1CBD1B7AB51E0047A020 /* ImageView.js */,
+				3D4D1CBE1B7AB51E0047A020 /* LiveVideo.js */,
+				3D4D1CBF1B7AB51E0047A020 /* MonitorFullscreen.js */,
+				3D4D1CC01B7AB51E0047A020 /* MonitorPreview.js */,
+				3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */,
+				3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */,
+				3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */,
+				3D4D1CC41B7AB51E0047A020 /* Rectangle.js */,
+				3D4D1CC51B7AB51E0047A020 /* SocketIO.js */,
+				3D4D1CC61B7AB51E0047A020 /* VideoControls.js */,
+				3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */,
+			);
+			name = Components;
+			sourceTree = "<group>";
+		};
 		3D85672F1B72DF64000C8BE1 /* iBeacon */ = {
 			isa = PBXGroup;
 			children = (
@@ -615,6 +661,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				3D4D1CBA1B7AB4F50047A020 /* Components */,
 				F9107F0E1B58DA8D00F02BF4 /* RNSwiftSocketIO */,
 				13B07FAE1A68108700A75B9A /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
@@ -911,9 +958,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D4D1CCD1B7AB51E0047A020 /* MonitorPreview.js in Resources */,
 				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				3D4D1CCC1B7AB51E0047A020 /* MonitorFullscreen.js in Resources */,
+				3D4D1CCF1B7AB51E0047A020 /* OverlayModal.js in Resources */,
+				3D4D1CD21B7AB51E0047A020 /* SocketIO.js in Resources */,
+				3D4D1CC81B7AB51E0047A020 /* DeviceSetup.js in Resources */,
+				3D4D1CC91B7AB51E0047A020 /* FaceBoxes.js in Resources */,
+				3D4D1CD01B7AB51E0047A020 /* ProgressBar.js in Resources */,
+				3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */,
+				3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */,
+				3D4D1CD31B7AB51E0047A020 /* VideoControls.js in Resources */,
+				3D4D1CCE1B7AB51E0047A020 /* MonitorsView.js in Resources */,
+				3D4D1CCB1B7AB51E0047A020 /* LiveVideo.js in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,
+				3D4D1CCA1B7AB51E0047A020 /* ImageView.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "babel-runtime": "^5.8.20",
-    "bleno": "file:local_node_modules/bleno",
     "debug": "2.2.0",
     "mkdirp-promise": "^1.0.2",
     "mz": "2.0.0",

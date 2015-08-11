@@ -1,67 +1,58 @@
-From 8853f75e197e278d1b51706a084be985503b25b9 Mon Sep 17 00:00:00 2001
+From 804e8404300c05a5ed6b2086d6192800443477e3 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 3 Aug 2015 18:40:58 -0700
 Subject: [PATCH] Androidify
 
 ---
- Android.mk   |  7 +++++++
- binding.gyp  | 19 +++++++++++++------
+ Android.mk   |  9 +++++++++
+ binding.gyp  | 10 +++++++++-
  package.json |  3 ---
- src/HID.cc   | 39 ++++++++++++---------------------------
- 4 files changed, 32 insertions(+), 36 deletions(-)
+ 3 files changed, 18 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..024cb0d
+index 0000000..76bba3a
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,9 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS  := optional debug eng
-+LOCAL_SHARED_LIBRARIES += libusb1.0
++LOCAL_SHARED_LIBRARIES := libusb1.0
++LOCAL_SDK_VERSION := 21
++LOCAL_NDK_STL_VARIANT := gnustl_static
++LOCAL_CPPFLAGS += -fexceptions -Wno-sign-promo
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp
-index 7bfcbdd..24335ae 100644
+index 7bfcbdd..543f77a 100644
 --- a/binding.gyp
 +++ b/binding.gyp
-@@ -13,6 +13,12 @@
+@@ -13,6 +13,9 @@
              '/usr/include/libusb-1.0/'
            ]
          }],
 +        [ 'OS=="android"', {
-+            'sources': [ 'hidapi/libusb/hid.c' ],
-+            'include_dirs+': [
-+              '<!(echo $ANDROID_BUILD_TOP/external/libusb1.0/libusb)'
-+            ]
++            'sources': [ 'hidapi/libusb/hid.c' ]
 +        }],
          [ 'OS=="linux"', {
            'conditions': [
              [ 'driver=="libusb"', {
-@@ -77,6 +83,11 @@
-             ],    
-           }
-         }],
+@@ -64,6 +67,11 @@
+         '_FILE_OFFSET_BITS=64',
+       ],
+       'conditions': [
 +        [ 'OS=="android"', {
-+            'libraries': [
-+              '-lusb1.0'
-+            ]
++          'libraries': [
++            '<!(echo $Android_mk__LIBRARIES)'
++          ],
 +        }],
-         [ 'OS=="linux"', {
-           'conditions': [
-             [ 'driver=="libusb"', {
-@@ -101,11 +112,7 @@
-             }
-           }
-         }]
--      ],
--      'cflags!': ['-ansi', '-fno-exceptions' ],
--      'cflags_cc!': [ '-fno-exceptions' ],
--      'cflags': ['-g', '-exceptions'],
--      'cflags_cc': ['-g', '-exceptions']
-+      ]
+         [ 'OS=="mac"', {
+               'LDFLAGS': [
+             '-framework IOKit',
+@@ -108,4 +116,4 @@
+       'cflags_cc': ['-g', '-exceptions']
      }
    ]
 -}
@@ -81,155 +72,6 @@ index 3a9eec5..43fe7b1 100644
    "main": "./index.js",
    "engines": {
      "node": ">=0.8.0"
-diff --git a/src/HID.cc b/src/HID.cc
-index 6372c2e..44be6f1 100644
---- a/src/HID.cc
-+++ b/src/HID.cc
-@@ -120,7 +120,7 @@ HID::HID(unsigned short vendorId, unsigned short productId, wchar_t* serialNumbe
-   if (!_hidHandle) {
-     ostringstream os;
-     os << "cannot open device with vendor id 0x" << hex << vendorId << " and product id 0x" << productId;
--    throw JSException(os.str());
-+    return; //throw JSException(os.str());
-   }
- }
- 
-@@ -131,7 +131,7 @@ HID::HID(const char* path)
-   if (!_hidHandle) {
-     ostringstream os;
-     os << "cannot open device with path " << path;
--    throw JSException(os.str());
-+    return; //throw JSException(os.str());
-   }
- }  
- 
-@@ -151,7 +151,7 @@ HID::setNonBlocking(int message)
-   int res;
-   res = hid_set_nonblocking(_hidHandle, message);
-   if (res < 0) {
--    throw JSException("Error setting non-blocking mode.");
-+    return; //throw JSException("Error setting non-blocking mode.");
-   }
- }
- 
-@@ -169,7 +169,7 @@ HID::write(const databuf_t& message)
-   res = hid_write(_hidHandle, buf, message.size());
-   delete[] buf;
-   if (res < 0) {
--    throw JSException("Cannot write to HID device");
-+    return; //throw JSException("Cannot write to HID device");
-   }
- }
- 
-@@ -302,7 +302,7 @@ NAN_METHOD(HID::sendFeatureReport)
-   Local<Array> messageArray = Local<Array>::Cast(args[0]);
-   for (unsigned i = 0; i < messageArray->Length(); i++) {
-     if (!messageArray->Get(i)->IsNumber()) {
--      throw JSException("unexpected array element in array to send, expecting only integers");
-+      return;//throw JSException("unexpected array element in array to send, expecting only integers");
-     }
-     message.push_back((unsigned char) messageArray->Get(i)->Int32Value());
-   }
-@@ -339,7 +339,7 @@ NAN_METHOD(HID::New)
-     NanThrowError("HID constructor requires at least one argument");
-   }
- 
--  try {
-+  {
-     HID* hid;
-     if (args.Length() == 1) {
-       // open by path
-@@ -357,23 +357,17 @@ NAN_METHOD(HID::New)
-     hid->Wrap(args.This());
-     NanReturnValue(args.This());
-   }
--  catch (const JSException& e) {
--    e.asV8Exception();
--  }
- }
- 
- NAN_METHOD(HID::close)
- {
-   NanScope();
- 
--  try {
-+  {
-     HID* hid = ObjectWrap::Unwrap<HID>(args.This());
-     hid->close();
-     NanReturnUndefined();
-   }
--  catch (const JSException& e) {
--    e.asV8Exception();
--  }
- }
- 
- NAN_METHOD(HID::setNonBlocking)
-@@ -385,14 +379,11 @@ NAN_METHOD(HID::setNonBlocking)
-   }
-   int blockStatus = 0;
-   blockStatus = args[0]->Int32Value();
--  try {
-+  {
-     HID* hid = ObjectWrap::Unwrap<HID>(args.This());
-     hid->setNonBlocking(blockStatus);
-     NanReturnUndefined();
-   }
--  catch (const JSException& e) {
--    e.asV8Exception();
--  }
- }
- 
- NAN_METHOD(HID::write)
-@@ -403,14 +394,14 @@ NAN_METHOD(HID::write)
-     NanThrowError("HID write requires one argument");
-   }
- 
--  try {
-+  {
-     HID* hid = ObjectWrap::Unwrap<HID>(args.This());
- 
-     vector<unsigned char> message;
-     Local<Array> messageArray = Local<Array>::Cast(args[0]);
-     for (unsigned i = 0; i < messageArray->Length(); i++) {
-       if (!messageArray->Get(i)->IsNumber()) {
--        throw JSException("unexpected array element in array to send, expecting only integers");
-+        return;//throw JSException("unexpected array element in array to send, expecting only integers");
-       }
-       message.push_back((unsigned char) messageArray->Get(i)->Int32Value());
-     }
-@@ -418,9 +409,6 @@ NAN_METHOD(HID::write)
- 
-     NanReturnUndefined();
-   }
--  catch (const JSException& e) {
--    e.asV8Exception();
--  }
- }
- 
- static string
-@@ -441,7 +429,7 @@ NAN_METHOD(HID::devices)
-   int vendorId = 0;
-   int productId = 0;
- 
--  try {
-+  {
-     switch (args.Length()) {
-     case 0:
-       break;
-@@ -450,12 +438,9 @@ NAN_METHOD(HID::devices)
-       productId = args[1]->Int32Value();
-       break;
-     default:
--      throw JSException("unexpected number of arguments to HID.devices() call, expecting either no arguments or vendor and product ID");
-+      return;//throw JSException("unexpected number of arguments to HID.devices() call, expecting either no arguments or vendor and product ID");
-     }
-   }
--  catch (JSException& e) {
--    e.asV8Exception();
--  }
-   
-   hid_device_info* devs = hid_enumerate(vendorId, productId);
-   Local<Array> retval = NanNew<Array>();
 -- 
 1.9.1
 

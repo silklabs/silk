@@ -10,7 +10,7 @@
         "<!(echo $ANDROID_BUILD_TOP/system/core/include)"
       ],
       "libraries": [
-        "-llog"
+        "<!(echo $Android_mk__LIBRARIES)"
       ]
     }
   ]

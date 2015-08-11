@@ -4,7 +4,13 @@ export default function(io) {
   // Real time event stream.
   const VIDEO_IDLE_TIMEOUT_MS = 5000;
   let videoRooms = new Map();
-  let roomInfo = room => ({ id: room.id, name: room.name, logo: room.logo });
+  let roomInfo = function(room) {
+    if (room.logo.length > 0) {
+      return { id: room.id, name: room.name, logo: room.logo };
+    } else {
+      return { id: room.id, name: room.name};
+    }
+  };
   io.on('connection', socket => {
     log.debug(`New connection. io=${socket.id}`);
     socket.on('join', room => {

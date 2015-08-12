@@ -4,4 +4,8 @@
 export default function init(env) {
   let log = env.log;
   log.info('Hello from the example extension');
+
+  env.clapDetector.on('clap', cnt => {
+    log.info('*********************** clap detected ***************', cnt);
+  });
 }

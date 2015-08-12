@@ -33,9 +33,8 @@ function detectObjects(im, when, cb) {
 
 export default function init(env) {
   log = env.log;
-  let camera = env.extraObjects.camera;
 
-  camera.on('preview', (when, jpeg) => {
+  env.camera.on('preview', (when, jpeg) => {
     let start = Date.now();
     cv.readImage(jpeg, (err, im) => {
       if (err) {
@@ -52,7 +51,7 @@ export default function init(env) {
         if (objs.length > 0) {
           let what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
           log.info(`Detected objects:${what}`);
-          camera.addObjects(objs);
+          env.camera.addObjects(objs);
         }
       });
     });

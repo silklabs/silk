@@ -494,6 +494,9 @@ class LiveVideo : UIView {
 
   override func removeFromSuperview() {
     super.removeFromSuperview()
+  }
+
+  deinit {
     self.destroy()
   }
 

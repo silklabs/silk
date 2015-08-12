@@ -94,7 +94,23 @@ export default React.createClass({
       pendingSeekMode: null,
 
       mode: null, // initial unspecified mode
-      shouldPlay: true,
+
+      /**
+       * Represents the UX state of playing/paused in some cases we may not be
+       * actively playing video (such as seeking) when this is true.
+       */
+      playing: true,
+
+      /**
+       * Indicates to native layer if we should immediately begin playback of
+       * segments as it receives them. This value may not match the value of
+       * .playing in the case where we are seeking playing will be true if the
+       * controls are not paused (and the video will begin playback after the
+       * seek) and willPlay will be false to indicate to native not to begin
+       * playback as we are actively seeking.
+       */
+      willPlay: true,
+
       showingControls: true,
       faces: [],
       // Current time in the day we are viewing.
@@ -302,7 +318,7 @@ export default React.createClass({
       // Used to signify what mode to enter after seeking is done.
       pendingSeekMode: DEFAULT_MODE,
       // Playback is paused while we seek.
-      shouldPlay: false
+      willPlay: false
     });
   },
 
@@ -357,7 +373,8 @@ export default React.createClass({
     console.log('on seek end', this.state.pendingSeekMode);
     this.transitionModes(this.state.pendingSeekMode, {
       pendingSeekMode: null,
-      shouldPlay: true,
+      // Resume playback mode (paying/paused).
+      willPlay: this.state.playing,
       // Pass video segments explicitly so we do not reset them.
       videoSegments: this._videoSegments
     });
@@ -370,6 +387,20 @@ export default React.createClass({
 
   toggleControls() {
     this.setState({ showingControls: !this.state.showingControls });
+  },
+
+  onPlay() {
+    this.setState({
+      playing: true,
+      willPlay: true
+    });
+  },
+
+  onPause() {
+    this.setState({
+      playing: false,
+      willPlay: false
+    });
   },
 
   render: function() {
@@ -388,9 +419,12 @@ export default React.createClass({
       controls = (
         <VideoControls
           live={this.state.mode === MODES.live}
+          playing={this.state.playing}
           onSeekStart={this.onSeekStart}
           onSeekChange={this.onSeekChange}
           onSeekEnd={this.onSeekEnd}
+          onPlay={this.onPlay}
+          onPause={this.onPause}
           currentTime={this.state.currentTime}
           startTime={this.state.minTime}
           endTime={this.state.maxTime}
@@ -411,7 +445,7 @@ export default React.createClass({
             <TouchableWithoutFeedback onPress={this.toggleControls}>
               <LiveVideo
                 segments={this.state.videoSegments}
-                shouldPlay={this.state.shouldPlay}
+                willPlay={this.state.willPlay}
                 onFaces={this.onFaces}
                 onTimeChange={this.onTimeChange}
                 onSegmentStart={this.onSegmentStart}

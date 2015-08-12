@@ -21,13 +21,7 @@ function formatError(err) {
 
 class CrashReporter {
   constructor(outbox) {
-    if (!CRASHREPORT_ENABLED) {
-      log.info(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash ` +
-               'reporting');
-      return;
-    }
 
-    log.info('Starting');
 
     this.activePromise = null;
     this.fileQueue = null;
@@ -35,10 +29,18 @@ class CrashReporter {
     this.hasDeviceId = false;
     this.nextReportSerialNumber = 0;
     this.outbox = outbox;
-    this.running = true;
+    this.running = CRASHREPORT_ENABLED;
     this.tombstoneServer = null;
 
     process.on('uncaughtException', this.uncaughtExceptionHandler.bind(this));
+
+    if (!CRASHREPORT_ENABLED) {
+      log.info(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash ` +
+               'reporting');
+      return;
+    }
+
+    log.info('Starting');
 
     // Start the server.
     this.chainToActivePromise(this.openTombstoneServer.bind(this));
@@ -49,7 +51,7 @@ class CrashReporter {
   }
 
   uncaughtExceptionHandler(err) {
-    log.error(err + ': ' + err.stack);
+    log.error(formatError(err));
 
     if (this.running) {
       const metadata = {
@@ -277,13 +279,14 @@ class CrashReporter {
   }
 
   get deviceId() {
-    log.warn('Using 0-padded deviceId');
+    if (this.running) {
+      log.warn('Using 0-padded deviceId');
+    }
+
     return new Array(67).join('0');
   }
 
   set deviceId(val) {
-    log.debug('Setting deviceId: %s', val);
-
     delete this.deviceId;
 
     Object.defineProperty(this, 'deviceId', {
@@ -294,7 +297,12 @@ class CrashReporter {
     });
 
     this.hasDeviceId = true;
-    this.chainToActivePromise(this.processNextFile.bind(this));
+
+    if (this.running) {
+      log.debug('Setting deviceId: %s', val);
+
+      this.chainToActivePromise(this.processNextFile.bind(this));
+    }
   }
 
   shutdown() {

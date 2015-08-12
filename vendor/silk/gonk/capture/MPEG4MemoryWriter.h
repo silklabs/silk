@@ -70,6 +70,22 @@ public:
     void waitForEOS();
     void signalEOS();
 
+    /**
+     * Return durations of all tracks in us.
+     */
+    Vector<int64_t> trackDurationsUs();
+
+    /**
+     * Force / get the track duration limit.  If this is set, all
+     * tracks will claim to be this duration in their metadata, and
+     * the mp4 segment itself will also claim this duration.
+     *
+     * Must be called after end-of-stream and before stop() on the
+     * thread owning this.
+     */
+    void forceTrackDurationLimitUs(int64_t durationUs);
+    int64_t trackDurationLimitUs() const;
+
 protected:
     virtual ~MPEG4MemoryWriter();
 
@@ -94,6 +110,7 @@ private:
     int mLongitudex10000;
     bool mAreGeoTagsAvailable;
     int32_t mStartTimeOffsetMs;
+    int64_t mTrackDurationLimitUs;
 
     Mutex mLock;
 

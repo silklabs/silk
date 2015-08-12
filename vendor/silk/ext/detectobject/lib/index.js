@@ -31,7 +31,7 @@ function detectObjects(im, when, cb) {
   });
 }
 
-module.exports = env => {
+export default function init(env) {
   log = env.log;
   let camera = env.extraObjects.camera;
 
@@ -57,4 +57,4 @@ module.exports = env => {
       });
     });
   });
-};
+}

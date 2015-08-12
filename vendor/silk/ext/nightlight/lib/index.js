@@ -1,7 +1,6 @@
-let camera;
-let hue;
-let log;
-let sensors;
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
 
 // Example nightlight behaviour
 //
@@ -11,7 +10,11 @@ let sensors;
 //    Turn off the Hue lights if a face is then not observed for an amount of
 //    time.
 //
-function init() {
+export default function init(env) {
+  let log = env.log;
+  let camera = env.extraObjects.camera;
+  let hue = env.extraObjects.hue;
+  let sensors = env.extraObjects.sensors;
 
   const NIGHT_LIGHT_SI_LUX = 3; // light sensor value in SI lux units
   const DAY_LIGHT_SI_LUX = 5;   // light sensor value in SI lux units
@@ -72,14 +75,3 @@ function init() {
   });
   log.info('initialized');
 }
-
-module.exports = env => {
-  log = env.log;
-
-  camera = env.extraObjects.camera;
-  hue = env.extraObjects.hue;
-  sensors = env.extraObjects.sensors;
-  init();
-};
-
-

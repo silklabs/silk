@@ -1,5 +1,6 @@
-import UIKit
+import AVFoundation
 import CoreLocation
+import UIKit
 
 @UIApplicationMain
 class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
@@ -57,6 +58,9 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     self.regionMonitor = RegionMonitor(uuid: homeRegionUuid)
     self.regionMonitor!.delegate = self
     self.homeBeacon = HomeBeacon()
+
+    // Allow audio playback even when user has enabled mute switch.
+    AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback, error: nil)
 
     return true
   }

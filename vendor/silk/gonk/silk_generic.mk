@@ -38,6 +38,7 @@ SILK_GONK_PROGIES := \
   capture \
   dhcputil \
   lights \
+  mic \
   player \
   volume \
   wpad \

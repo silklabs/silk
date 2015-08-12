@@ -4,7 +4,8 @@ import Rectangle from './Rectangle';
 
 let {
   Surface,
-  Group
+  Group,
+  Text,
 } = ReactART;
 
 let FaceBoxes = React.createClass({
@@ -32,6 +33,13 @@ let FaceBoxes = React.createClass({
           stroke={this.props.faceColor}
           height={height}
           width={width} />
+        <Text
+          x={0}
+          y={height}
+          alignment='middle'
+          fill='#000'
+          font='10px "AppleSDGothicNeo-SemiBold"'>face
+        </Text>
       </Group>
     )
   },

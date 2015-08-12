@@ -90,6 +90,9 @@ export default React.createClass({
 
   getInitialState() {
     return {
+      // Mode entered after seek is finished.
+      pendingSeekMode: null,
+
       mode: null, // initial unspecified mode
       shouldPlay: true,
       showingControls: true,
@@ -155,8 +158,10 @@ export default React.createClass({
   */
   transitionModes(newMode, state = {}) {
     this.setState(function(previous) {
-      if (previous.mode == MODES.live) {
-        this._exitLiveMode();
+      switch (previous.mode) {
+        case MODES.live:
+          this._exitLiveMode();
+          break;
       }
 
       if (newMode == MODES.live) {
@@ -228,17 +233,21 @@ export default React.createClass({
   /**
   Invoked when any type of segment has begun playback.
   */
-  onSegmentStart(event) {
+  onSegmentStart() {
     switch (this.state.mode) {
       // When a recorded segment starts we should begin buffering the next
       // segment.
       case MODES.recorded:
-        this.onRecordedSegmentStart(event);
+        this.bufferNextRecordedSegment(event);
+        break;
+      case MODES.seeking:
+        // Intentionally left blank when we seek we should not be running
+        // additional buffering operations/etc...
         break;
     }
   },
 
-  onRecordedSegmentStart(event) {
+  bufferNextRecordedSegment() {
     // new segment has started lets queue up the next one.
     let { api, id } = this.props;
     let video = this.refs.video;
@@ -250,6 +259,7 @@ export default React.createClass({
 
     if (!segment || !segment.nextId) {
       // We have reached the end of playable segments switch back to live.
+      console.log('No next playable segments resuming live');
       this.transitionModes(MODES.live);
       return;
     }
@@ -260,6 +270,9 @@ export default React.createClass({
       let newSegment = this.createSegment(result);
       // Reconcile internal and video playback state.
       this.appendSegment(newSegment);
+      console.log(
+        'queueing next segment', result.startUTC - segment.when , newSegment
+      );
     });
   },
 
@@ -285,17 +298,15 @@ export default React.createClass({
   },
 
   onSeekStart() {
-    this._seeking = true;
     this.transitionModes(MODES.seeking, {
+      // Used to signify what mode to enter after seeking is done.
+      pendingSeekMode: DEFAULT_MODE,
+      // Playback is paused while we seek.
       shouldPlay: false
     });
   },
 
-  onSeek(value) {},
-
-  onSeekEnd(value) {
-    this.setState({ shouldPlay: true });
-
+  onSeekChange(value) {
     let api = this.props.api;
     let video = this.refs.video;
 
@@ -323,15 +334,37 @@ export default React.createClass({
         console.warn(`Segment ${segment.id} has no next id!`);
       }
 
+      // Load segment and show preview:
       this._videoSegments = [segment];
-      // transition to recorded mode...
-      this.transitionModes(MODES.recorded, {
+      this.setState({
+        pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });
     }).catch(err => {
-      console.log('ERR switching to live video:', err);
-      this.transitionModes(MODES.live);
+      console.log('Could not find segment in seek time', err);
+      // Fallback if we cannot find a recorded segment to start playback at we
+      // will resume this mode after seeking is done.
+      this._videoSegments = []
+      this.setState({
+        videoSegments: this._videoSegments,
+        pendingSeekMode: DEFAULT_MODE
+      });
     });
+  },
+
+  onSeekEnd(value) {
+    console.log('on seek end', this.state.pendingSeekMode);
+    this.transitionModes(this.state.pendingSeekMode, {
+      pendingSeekMode: null,
+      shouldPlay: true,
+      // Pass video segments explicitly so we do not reset them.
+      videoSegments: this._videoSegments
+    });
+
+    // If we are now in recorded mode start buffering next segment.
+    if (this.state.pendingSeekMode === MODES.recorded) {
+      this.bufferNextRecordedSegment();
+    }
   },
 
   toggleControls() {
@@ -353,9 +386,9 @@ export default React.createClass({
     if (this.state.showingControls) {
       controls = (
         <VideoControls
-          live={true}
+          live={this.state.mode === MODES.live}
           onSeekStart={this.onSeekStart}
-          onSeek={this.onSeek}
+          onSeekChange={this.onSeekChange}
           onSeekEnd={this.onSeekEnd}
           currentTime={this.state.currentTime}
           startTime={this.state.minTime}

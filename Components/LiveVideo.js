@@ -1,26 +1,50 @@
 import React from 'react-native';
 import { LiveVideoManager} from 'NativeModules';
+import EventEmitter from 'EventEmitter';
 
 var LiveVideoNative = React.requireNativeComponent('LiveVideo');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'livevideo';
 
-const Segment = {
-  fromURL(object) {
-    // TODO: typechecks.
-    return Object.assign({}, object, {
-      type: 'url'
-    });
-  },
+const SegmentProps = [
+  'type',
+  'data',
+  'url',
+  'startUTC',
+  'endUTC',
+  'faces',
+  'id',
+  'nextId',
+  'previousId'
+];
 
-  fromFrame(object) {
-    // TODO: typechecks.
-    return Object.assign({}, object, {
-      type: 'data'
-    });
-  },
-};
+class Segment extends EventEmitter {
+  constructor(options = {}) {
+    super()
+
+    // TODO: type checks.
+    for (var prop of SegmentProps) {
+      this[prop] = options[prop];
+    }
+  }
+
+  sendStart() {
+    this.emit('start');
+  }
+
+  /**
+   * Only transmit specific properties used by the segment.
+   */
+  toJSON() {
+    let result = {};
+    for (var prop of SegmentProps) {
+      result[prop] = this[prop];
+    }
+    return result;
+  }
+}
+
 
 let LiveVideo = React.createClass({
   propTypes: {

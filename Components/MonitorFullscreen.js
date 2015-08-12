@@ -67,12 +67,15 @@ class LiveSegmentProvider {
 
     // Create the segment from the frame.
     let id = uuid.v1();
-    let segment = LiveVideo.Segment.fromFrame({
+    let segment = new LiveVideo.Segment({
+      type: 'data',
       data: message.frame,
       id,
       nextId: null,
       previousId: this.lastId,
-      when: message.when,
+      startUTC: message.when,
+      // XXX: We should really send real duration in message.
+      endUTC: message.when,
       faces: message.objects
     });
 
@@ -182,7 +185,7 @@ export default React.createClass({
 
   onLiveSegment(segment) {
     this.appendSegment(segment);
-    this.setState({ maxTime: segment.when });
+    this.setState({ maxTime: segment.startUTC });
   },
 
   /**
@@ -235,9 +238,11 @@ export default React.createClass({
   },
 
   createSegment(result) {
-   return LiveVideo.Segment.fromURL({
+   return new LiveVideo.Segment({
+      type: 'url',
       url: result.url,
-      when: result.startUTC,
+      startUTC: result.startUTC,
+      endUTC: result.endUTC,
       faces: result.data.faces,
       id: result.id,
       nextId: result.nextId,
@@ -306,7 +311,7 @@ export default React.createClass({
       // Reconcile internal and video playback state.
       this.appendSegment(newSegment);
       console.log(
-        'queueing next segment', result.startUTC - segment.when , newSegment
+        'queueing next segment', result.startUTC - segment.startUTC, newSegment
       );
     });
   },
@@ -360,7 +365,7 @@ export default React.createClass({
           Seeking to new time segment:
 
             Wanted: ${new Date(value)}
-            Got: ${new Date(segment.when)}
+            Got: ${new Date(segment.startUTC)}
             ID: ${segment.id}
             NextID: ${segment.nextId}
         `
@@ -373,7 +378,7 @@ export default React.createClass({
       // Load segment and show preview:
       this._videoSegments = [segment];
       this.setState({
-        currentTime: segment.when,
+        currentTime: segment.startUTC,
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });

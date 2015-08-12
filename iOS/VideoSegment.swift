@@ -14,7 +14,8 @@ class VideoSegment {
   class func fromJSON(json: AnyObject) -> VideoSegment! {
     let dict = json as! Dictionary<String, AnyObject>
     let type = dict["type"] as! String
-    let when = (dict["when"] as! NSNumber).longLongValue
+    let startUTC = (dict["startUTC"] as! NSNumber).longLongValue
+    let endUTC = (dict["endUTC"] as! NSNumber).longLongValue
     let faces = FaceEvent.fromJSONList(dict["faces"]!)
     let id = dict["id"] as! String
     let nextId = dict["nextId"] as? String
@@ -27,7 +28,8 @@ class VideoSegment {
         id: id,
         nextId: nextId,
         previousId: previousId,
-        when: when,
+        startUTC: startUTC,
+        endUTC: endUTC,
         faces: faces
       )
     }
@@ -40,7 +42,8 @@ class VideoSegment {
         id: id,
         nextId: nextId,
         previousId: previousId,
-        when: when,
+        startUTC: startUTC,
+        endUTC: endUTC,
         faces: faces
       )
     }
@@ -70,26 +73,34 @@ class VideoSegment {
   /**
   UTC time when the video segment started value in milliseconds.
   */
-  var when: Int64
+  var startUTC: Int64
+
+  /**
+  UTC time when the video segment ended value in milliseconds.
+  */
+  var endUTC: Int64
+
   var faces: [FaceEvent]
 
-  init(url: NSURL, id: String, nextId: String?, previousId: String?, when: Int64, faces: [FaceEvent]) {
+  init(url: NSURL, id: String, nextId: String?, previousId: String?, startUTC: Int64, endUTC: Int64, faces: [FaceEvent]) {
     self.type = "url"
     self.id = id
     self.nextId = nextId
     self.previousId = previousId
     self.url = url
-    self.when = when
+    self.startUTC = startUTC
+    self.endUTC = endUTC
     self.faces = faces
   }
 
-  init(data: NSData?, id: String, nextId: String?, previousId: String?, when: Int64, faces: [FaceEvent]) {
+  init(data: NSData?, id: String, nextId: String?, previousId: String?, startUTC: Int64, endUTC: Int64, faces: [FaceEvent]) {
     self.type = "data"
     self.id = id
     self.nextId = nextId
     self.previousId = previousId
     self.data = data
-    self.when = when
+    self.startUTC = startUTC
+    self.endUTC = endUTC
     self.faces = faces
   }
 }

@@ -364,7 +364,7 @@ class LiveVideo : UIView {
     let item = LiveVideoItem(asset: asset)
 
     // Segment is a wrapper for the data values too so we don't just copy it over.
-    item.start = segment.when
+    item.start = segment.startUTC
     item.faces = segment.faces
     item.id = segment.id
     item.nextId = segment.nextId

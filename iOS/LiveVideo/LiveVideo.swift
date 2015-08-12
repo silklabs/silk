@@ -70,9 +70,9 @@ class LiveVideo : UIView {
 
   // This property is used to indicate changes in playing states from react-native but does not
   // actually indicate we _are_ playing just hints to the internals what to do.
-  var shouldPlay = false {
+  var willPlay = false {
     didSet {
-      if (self.shouldPlay) {
+      if (self.willPlay) {
         self.play()
       } else {
         self.pause()
@@ -479,7 +479,7 @@ class LiveVideo : UIView {
       self.setupSegmentObserver(item!)
 
       // When current item is set if we should be playing but are in a paused state start playback.
-      if (self.shouldPlay) {
+      if (self.willPlay) {
         // This is safe to call multiple times or if we are already playing.
         self.play()
       }

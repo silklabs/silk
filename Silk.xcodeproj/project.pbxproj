@@ -36,6 +36,9 @@
 		5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* LoadConfig.swift */; };
 		5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */; };
 		5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0EB1B5A206F00F9376C /* ViewController.swift */; };
+		574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */; };
+		574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */; };
+		574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB41B7B3043004FBC27 /* SystemButton.swift */; };
 		57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559E8B1B503BD400929697 /* LiveVideo.swift */; };
 		57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */; };
 		5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
@@ -296,6 +299,9 @@
 		5741E0BF1B5A108D00F9376C /* LoadConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfig.swift; sourceTree = "<group>"; };
 		5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfigTest.swift; sourceTree = "<group>"; };
 		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SystemButtonManger.m; sourceTree = "<group>"; };
+		574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButtonManager.swift; sourceTree = "<group>"; };
+		574A5DB41B7B3043004FBC27 /* SystemButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButton.swift; sourceTree = "<group>"; };
 		57559E8B1B503BD400929697 /* LiveVideo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideo.swift; sourceTree = "<group>"; };
 		57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketIOAVAssetLoaderDelegate.swift; sourceTree = "<group>"; };
 		5758F2381B5EEBD400C18E5D /* AppSocketIOManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppSocketIOManager.swift; path = SocketIO/AppSocketIOManager.swift; sourceTree = "<group>"; };
@@ -537,6 +543,17 @@
 			path = OverlayModal;
 			sourceTree = "<group>";
 		};
+		574A5DAF1B7B2F66004FBC27 /* SystemButton */ = {
+			isa = PBXGroup;
+			children = (
+				574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */,
+				574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */,
+				574A5DB41B7B3043004FBC27 /* SystemButton.swift */,
+			);
+			name = SystemButton;
+			path = iOS/SystemButton;
+			sourceTree = SOURCE_ROOT;
+		};
 		5758F2371B5EEBA600C18E5D /* SocketIO */ = {
 			isa = PBXGroup;
 			children = (
@@ -568,6 +585,7 @@
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
 				3D85672F1B72DF64000C8BE1 /* iBeacon */,
 				57BCE10B1B69910C0047088B /* NSDataBridge */,
 				57BCE0F51B695FB10047088B /* RCTConvert */,
@@ -1053,8 +1071,10 @@
 				3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */,
 				F9107F2E1B58DA8D00F02BF4 /* WebSocket.swift in Sources */,
 				5758F23F1B5F4A1200C18E5D /* ReactSocketIO.swift in Sources */,
+				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */,
+				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
 				5758F2391B5EEBD400C18E5D /* AppSocketIOManager.swift in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
@@ -1073,6 +1093,7 @@
 				F9107F2B1B58DA8D00F02BF4 /* SocketParser.swift in Sources */,
 				F9107F2C1B58DA8D00F02BF4 /* SocketTypes.swift in Sources */,
 				F9107F2A1B58DA8D00F02BF4 /* SocketPacket.swift in Sources */,
+				574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */,
 				57BCE0F81B6960270047088B /* AppRCTConvert+NSData.m in Sources */,
 				57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */,
 			);

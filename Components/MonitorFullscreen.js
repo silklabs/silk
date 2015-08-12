@@ -21,6 +21,11 @@ let {
   View,
 } = React;
 
+/**
+Safeguard if faces does not get a new value within this time reset to no faces.
+*/
+const FACE_DISAPPEAR = 50;
+
 const MODES = {
   live: 'live',
   recorded: 'recorded',
@@ -28,6 +33,19 @@ const MODES = {
 };
 
 const DEFAULT_MODE = MODES.live;
+
+/**
+ * Playback speed steps.
+ */
+const PLAYBACK_STEPS = [
+  // TODO: Add rewind (it is not yet supported in native layer).
+  1.0,
+  1.5,
+  2.0,
+  4.0
+];
+
+const DEFAULT_PLAYBACK_STEP = 1.0;
 
 class LiveSegmentProvider {
   constructor(onSegment) {
@@ -81,10 +99,6 @@ class LiveSegmentProvider {
   }
 }
 
-/**
-Safeguard if faces does not get a new value within this time reset to no faces.
-*/
-const FACE_DISAPPEAR = 50;
 export default React.createClass({
   mixins: [TimerMixin],
 
@@ -94,6 +108,11 @@ export default React.createClass({
       pendingSeekMode: null,
 
       mode: null, // initial unspecified mode
+
+      /**
+       * Playback rate 1.0 is playing 0.0 is paused (2.0 is 2x).
+       */
+      rate: DEFAULT_PLAYBACK_STEP,
 
       /**
        * Represents the UX state of playing/paused in some cases we may not be
@@ -315,6 +334,8 @@ export default React.createClass({
 
   onSeekStart() {
     this.transitionModes(MODES.seeking, {
+      // Reset playback speed when we start seeking.
+      rate: DEFAULT_PLAYBACK_STEP,
       // Used to signify what mode to enter after seeking is done.
       pendingSeekMode: DEFAULT_MODE,
       // Playback is paused while we seek.
@@ -389,8 +410,42 @@ export default React.createClass({
     this.setState({ showingControls: !this.state.showingControls });
   },
 
+  /**
+   * Calculate the playback rate based on current value + increment.
+   */
+  getPlaybackStep(increment) {
+    let currentIdx = PLAYBACK_STEPS.indexOf(this.state.rate);
+    if (currentIdx === -1) {
+      throw new Error(`Invalid rate was used: ${this.state.rate}`);
+    }
+
+    let nextId = currentIdx + increment;
+
+    if (nextId < 0) {
+      return PLAYBACK_STEPS[0]
+    }
+
+    if (nextId >= PLAYBACK_STEPS.length) {
+      return PLAYBACK_STEPS[PLAYBACK_STEPS.length - 1];
+    }
+
+    return PLAYBACK_STEPS[nextId];
+  },
+
+  onFastForward() {
+    let rate = this.getPlaybackStep(1);
+    this.setState({ rate: rate })
+    console.log('fast forward', rate);
+  },
+
+  onRewind() {
+    let rate = this.getPlaybackStep(-1);
+    this.setState({ rate: rate })
+  },
+
   onPlay() {
     this.setState({
+      rate: DEFAULT_PLAYBACK_STEP,
       playing: true,
       willPlay: true
     });
@@ -398,9 +453,33 @@ export default React.createClass({
 
   onPause() {
     this.setState({
+      // Reset rate when we pause.
+      rate: DEFAULT_PLAYBACK_STEP,
       playing: false,
       willPlay: false
     });
+  },
+
+  buildControls(dimensions) {
+    return (
+      <VideoControls
+        live={this.state.mode === MODES.live}
+        rate={this.state.rate}
+        playing={this.state.playing}
+        onSeekStart={this.onSeekStart}
+        onSeekChange={this.onSeekChange}
+        onSeekEnd={this.onSeekEnd}
+        onPlay={this.onPlay}
+        onPause={this.onPause}
+        onFastForward={this.onFastForward}
+        onRewind={this.onRewind}
+        currentTime={this.state.currentTime}
+        startTime={this.state.minTime}
+        endTime={this.state.maxTime}
+        onDone={this.close}
+        width={dimensions.width}
+        height={dimensions.height} />
+    );
   },
 
   render: function() {
@@ -416,22 +495,7 @@ export default React.createClass({
     let controls;
 
     if (this.state.showingControls) {
-      controls = (
-        <VideoControls
-          live={this.state.mode === MODES.live}
-          playing={this.state.playing}
-          onSeekStart={this.onSeekStart}
-          onSeekChange={this.onSeekChange}
-          onSeekEnd={this.onSeekEnd}
-          onPlay={this.onPlay}
-          onPause={this.onPause}
-          currentTime={this.state.currentTime}
-          startTime={this.state.minTime}
-          endTime={this.state.maxTime}
-          onDone={this.close}
-          width={width}
-          height={height} />
-      );
+      controls = this.buildControls(dimensions);
     }
 
     return (
@@ -444,6 +508,7 @@ export default React.createClass({
           <View style={[styles.container]}>
             <TouchableWithoutFeedback onPress={this.toggleControls}>
               <LiveVideo
+                rate={this.state.rate}
                 segments={this.state.videoSegments}
                 willPlay={this.state.willPlay}
                 onFaces={this.onFaces}

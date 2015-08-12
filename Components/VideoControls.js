@@ -34,6 +34,8 @@ export default React.createClass({
       onSeekStart: noop,
       onPlay: noop,
       onPause: noop,
+      onFastForward: noop,
+      onRewind: noop,
       startTime: 0,
       endTime: 0,
       currentTime: 0
@@ -54,6 +56,8 @@ export default React.createClass({
     onSeekEnd: React.PropTypes.func,
     onPlay: React.PropTypes.func,
     onPause: React.PropTypes.func,
+    onFastForward: React.PropTypes.func,
+    onRewind: React.PropTypes.func,
     live: React.PropTypes.bool
   },
 
@@ -140,11 +144,23 @@ export default React.createClass({
       );
     }
 
+
+    // XXX: Until we are fully ready to support rewinding disallow it unless
+    // we are simply slowing down fast forward.
+    let canRewind = this.props.rate > 1.0;
+
     return (
       <View style={styles.controlToolbar}>
-        <SystemButton style={styles.rewind} type={SystemButton.Rewind} />
+        <SystemButton
+          enabled={canRewind}
+          onPress={this.props.onRewind}
+          style={styles.rewind}
+          type={SystemButton.Rewind} />
         {playOrPause}
-        <SystemButton style={styles.fastforward} type={SystemButton.FastForward} />
+        <SystemButton
+          onPress={this.props.onFastForward}
+          style={styles.fastforward}
+          type={SystemButton.FastForward} />
       </View>
     );
   },
@@ -153,6 +169,32 @@ export default React.createClass({
     let lagValue = Date.now() - this.props.currentTime;
     return (
       <Text style={styles.lag}>{lagValue}</Text>
+    );
+  },
+
+  buildForwardRate() {
+    let content;
+    if (this.props.rate > 1.0) {
+      content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
+    }
+
+    return (
+      <View style={styles.rateForward}>
+        {content}
+      </View>
+    );
+  },
+
+  buildReverseRate() {
+    let content;
+    if (this.props.rate < 1.0) {
+      content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
+    }
+
+    return (
+      <View style={styles.rateReverse}>
+        {content}
+      </View>
     );
   },
 
@@ -206,9 +248,14 @@ export default React.createClass({
     let bottomContent =
       this.props.live ? this.buildLiveControls() : this.buildControls();
 
+    let rateReverse = this.buildReverseRate();
+    let rateForward = this.buildForwardRate();
+
     let bottom = (
       <View style={[styles.bottom]}>
+        {rateReverse}
         {bottomContent}
+        {rateForward}
       </View>
     );
 
@@ -273,13 +320,8 @@ var styles = StyleSheet.create({
   },
 
   controlToolbar: {
-    flexDirection: 'row', alignItems: 'center'
-  },
-
-  rewind: {
-    color: 'black',
-    height: 35,
-    width: 50,
+    flexDirection: 'row',
+    alignItems: 'center'
   },
 
   pause: {
@@ -298,5 +340,26 @@ var styles = StyleSheet.create({
     color: 'black',
     height: 35,
     width: 50,
-  }
+  },
+
+  rate: {
+    fontSize: 15,
+    padding: 4,
+  },
+
+  rateReverse: {
+    flex: 0.1,
+    alignItems: 'flex-start'
+  },
+
+  rateForward: {
+    flex: 0.1,
+    alignItems: 'flex-end'
+  },
+
+  rewind: {
+    color: 'black',
+    height: 35,
+    width: 50,
+  },
 });

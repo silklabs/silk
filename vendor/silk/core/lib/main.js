@@ -201,8 +201,26 @@ function maybeCreateSocket() {
 
   diag = require('./diag')(id.toString());
 
-  socket = require('socket.io-client')(api.config.serverUrl,
-      {autoConnect: false});
+  socket = require('socket.io-client')(
+    api.config.serverUrl,
+    {
+      // Require explicit connections.
+      autoConnect: false,
+      /**
+       * Only use websockets this is important for the following reasons:
+       *
+       *   - it's faster by bypassing the upgrade check
+       *
+       *   - works around various bugs where we send base64 via polling which
+       *     native does not decode correctly.
+       *
+       *   - More deterministic behavior since we don't sometimes use polling
+       *     and sometimes use websockets.
+       */
+      transports: ['websocket']
+    }
+  );
+
   socket.on('connect', () => {
     ui.goto('online');
     diag.start(socket);

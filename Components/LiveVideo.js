@@ -1,6 +1,5 @@
 import React from 'react-native';
 import { LiveVideoManager} from 'NativeModules';
-import EventEmitter from 'EventEmitter';
 
 var LiveVideoNative = React.requireNativeComponent('LiveVideo');
 
@@ -19,18 +18,26 @@ const SegmentProps = [
   'previousId'
 ];
 
-class Segment extends EventEmitter {
+class Segment {
   constructor(options = {}) {
-    super()
-
     // TODO: type checks.
     for (var prop of SegmentProps) {
       this[prop] = options[prop];
     }
+
+    /**
+     * We provide custom functions for managing state here since we _must_ not
+     * mutate any properties after this object is setup to make react happy.
+     */
+    this._onStart = [];
   }
 
-  sendStart() {
-    this.emit('start');
+  addStartCallback(fn) {
+    this._onStart.push(fn)
+  }
+
+  fireStartCallbacks() {
+    this._onStart.map(fn => fn());
   }
 
   /**

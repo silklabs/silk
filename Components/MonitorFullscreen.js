@@ -11,8 +11,10 @@ import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 import TimerMixin from 'react-timer-mixin';
 import uuid from 'uuid';
 import * as DateUtils from '../Libraries/DateUtil';
+import DateOverlay from './DateOverlay'
 
 let {
+  Animated,
   SliderIOS,
   StatusBarIOS,
   StyleSheet,
@@ -46,6 +48,12 @@ const PLAYBACK_STEPS = [
 ];
 
 const DEFAULT_PLAYBACK_STEP = 1.0;
+
+/**
+ * The factor we use to determine if we have "jumped" a significant amount in
+ * video playback.
+ */
+const JUMP_FACTOR = 2;
 
 class LiveSegmentProvider {
   constructor(onSegment) {
@@ -113,6 +121,12 @@ export default React.createClass({
       mode: null, // initial unspecified mode
 
       /**
+       * When time jump is true we display a view showing the current time (it
+       * will slowly fade away and we will reset this to false).
+       */
+      showTimeJump: false,
+
+      /**
        * Playback rate 1.0 is playing 0.0 is paused (2.0 is 2x).
        */
       rate: DEFAULT_PLAYBACK_STEP,
@@ -135,8 +149,7 @@ export default React.createClass({
 
       showingControls: true,
       faces: [],
-      // Current time in the day we are viewing.
-      seekTime: Date.now(),
+      currenTime: Date.now(),
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
       minTime: DateUtils.startOfDay(),
@@ -274,11 +287,19 @@ export default React.createClass({
   Invoked when any type of segment has begun playback.
   */
   onSegmentStart() {
+    let segment = this._videoSegments[0];
+
+    // Emit a segment start event so we can do processing based on segment
+    // specific events.
+    if (segment) {
+      segment.fireStartCallbacks();
+    }
+
     switch (this.state.mode) {
       // When a recorded segment starts we should begin buffering the next
       // segment.
       case MODES.recorded:
-        this.bufferNextRecordedSegment(event);
+        this.bufferNextRecordedSegment(segment);
         break;
       case MODES.seeking:
         // Intentionally left blank when we seek we should not be running
@@ -289,9 +310,9 @@ export default React.createClass({
 
   bufferNextRecordedSegment() {
     // new segment has started lets queue up the next one.
+    let segment = this._videoSegments[0];
     let { api, id } = this.props;
     let video = this.refs.video;
-    let segment = this._videoSegments[0];
 
     if (segment.type !== 'url') {
       throw new Error('Previous segment type _must_ be recorded');
@@ -308,10 +329,19 @@ export default React.createClass({
       id: segment.nextId
     }).then(result => {
       let newSegment = this.createSegment(result);
+      let delta = result.startUTC - segment.startUTC;
+      let previousDuration = segment.endUTC - segment.startUTC;
+
+      if (delta > previousDuration * JUMP_FACTOR) {
+        newSegment.addStartCallback(() => {
+          this.setState({ showTimeJump: true });
+        });
+      }
+
       // Reconcile internal and video playback state.
       this.appendSegment(newSegment);
       console.log(
-        'queueing next segment', result.startUTC - segment.startUTC, newSegment
+        'queueing next segment', delta, newSegment
       );
     });
   },
@@ -464,6 +494,10 @@ export default React.createClass({
     });
   },
 
+  hideTimeJump() {
+    this.setState({ showTimeJump: false });
+  },
+
   buildControls(dimensions) {
     return (
       <VideoControls
@@ -506,6 +540,22 @@ export default React.createClass({
       controls = this.buildControls(dimensions);
     }
 
+    let showTimeJump;
+    if (this.state.showTimeJump) {
+      showTimeJump = (
+        <DateOverlay
+          onDone={this.hideTimeJump}
+          style={styles.dateOverlay}
+          date={new Date(this.state.currentTime)} />
+      );
+    }
+
+    let date = (
+      <DateOverlay
+        style={styles.dateOverlay}
+        date={new Date(this.state.currentTime)} />
+    );
+
     return (
       <OverlayModal ref="overlay"
                     onShowStart={this.onShowStart}
@@ -528,6 +578,7 @@ export default React.createClass({
             </TouchableWithoutFeedback>
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
               {faces}
+              {showTimeJump}
               {controls}
             </View>
           </View>
@@ -560,15 +611,14 @@ var styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  timeOverlay: {
-    fontFamily: 'AppleSDGothicNeo-SemiBold',
-    color: 'white',
-    opacity: 0.5,
+  dateOverlay: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    padding: 1,
-    backgroundColor: 'black'
+    top: 45,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 20,
+    flex: 1
   },
 
   container: {

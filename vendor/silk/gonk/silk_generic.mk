@@ -65,4 +65,5 @@ PRODUCT_PACKAGES += fakeappops gonksched
 PRODUCT_PACKAGES += \
   bleno \
   opencv \
+  kissfft \
 

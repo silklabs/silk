@@ -5,6 +5,14 @@ class SystemButton : UIToolbar {
   var eventDispatcher: RCTEventDispatcher!
   var button: UIBarButtonItem?
 
+  var enabled = true {
+    didSet {
+      if let button = self.button {
+        button.enabled = self.enabled
+      }
+    }
+  }
+
   var color: UIColor? {
     didSet {
       if let button = self.button {
@@ -41,12 +49,15 @@ class SystemButton : UIToolbar {
   }
 
   func setButtonType(type: UIBarButtonSystemItem) {
-    self.button = UIBarButtonItem(barButtonSystemItem: type, target: self, action: Selector("onPress"))
-    if self.color != nil {
-      self.button!.tintColor = self.color
-    }
+    let button = UIBarButtonItem(barButtonSystemItem: type, target: self, action: Selector("onPress"))
 
-    self.setItems([self.button!], animated: false)
+    if self.color != nil {
+      button.tintColor = self.color
+    }
+    button.enabled = self.enabled
+
+    self.button = button
+    self.setItems([button], animated: false)
   }
 
   func onPress() {

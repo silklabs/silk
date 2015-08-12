@@ -1,9 +1,11 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+let ui = require('./ui');
+ui.goto('bootanimation');
+
 let api = require('./api');
 let btle = require('./btle');
-let ui = require('./ui');
 let log = require('./log')('main');
 let vib = require('./vibrator')();
 let wifi = require('./wifi');
@@ -36,6 +38,7 @@ const name = util.getprop('persist.silk.displayName', 'Silkcam');
 const logoFilePath = '/system/media/logo.png';
 
 let id = null;
+let camera;
 let logo = null;
 let bootCompleted = false;
 let shutdownPromise = null;
@@ -93,6 +96,7 @@ function _waitForBoot(startTime, defer) {
   return defer.promise;
 }
 
+
 function boot() {
   log.info('Wait for boot complete');
   return _waitForBoot().
@@ -106,6 +110,12 @@ function boot() {
       ]);
     }).
     then(() => {
+      camera = require('./camera')(id.toString());
+      camera.on('error', () => {
+        log.warn('Camera command errored out');
+      });
+      camera.start();
+
       log.info('Load configuration');
       return config.init();
     });
@@ -115,8 +125,6 @@ function boot() {
  * Wait for bootup and initialize the device.
  */
 function main() {
-  ui.goto('bootanimation');
-
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
   outbox = makeOutbox(wifi);
@@ -146,7 +154,6 @@ main().catch(err => {
 //
 
 let socket = { __iamastub: true, connected: false, disconnect: () => {} };
-let camera;
 let diag;
 let hue;
 
@@ -171,7 +178,7 @@ function readLogo() {
 }
 
 function emitDeviceInfo() {
-  readLogo()
+  return readLogo()
   .then(() => {
     if (socket.connected) {
       socket.emit('info', {
@@ -190,11 +197,6 @@ function maybeCreateSocket() {
   if (!socket.__iamastub) {
     return;
   }
-
-  camera = require('./camera')(id.toString());
-  camera.on('error', () => {
-    log.warn('Camera command errored out');
-  });
 
   hue = require('./hue')();
 
@@ -229,15 +231,16 @@ function maybeCreateSocket() {
 
   socket.on('connect', () => {
     ui.goto('online');
-    diag.start(socket);
-    camera.start(socket);
-    update.start();
-    emitDeviceInfo();
+    emitDeviceInfo()
+    .then(() => {
+      diag.start(socket);
+      update.start();
+      camera.socket = socket;
+    });
   });
   socket.on('disconnect', e => {
     log.warn(`socket disconnect: ${e}`);
     update.stop();
-    camera.stop();
     diag.stop();
 
     // On disconnect flush any unsent buffers.

@@ -102,7 +102,7 @@ public:
 private:
   int capture_init(Value& cmdData);
   int capture_cleanup();
-  int capture_flash(Value& flashMode);
+  int capture_setParameter(Value& name, Value& value);
   static void* initThreadWrapper(void* me);
   status_t initThread();
   void notifyCameraEvent(const char* eventName);
@@ -183,8 +183,8 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     capture_init(cmdJson["cmdData"]);
   } else if (cmdName == "stop") {
     capture_cleanup();
-  } else if (cmdName == "flash") {
-    capture_flash(cmdJson["flashMode"]);
+  } else if (cmdName == "setParameter") {
+    capture_setParameter(cmdJson["name"], cmdJson["value"]);
   } else {
     LOG_ERROR(true, "Invalid command %s", cmdName.c_str());
   }
@@ -367,17 +367,20 @@ int CaptureCommand::capture_cleanup() {
 }
 
 /**
- * Set flash mode as specified by flashMode parameter
+ * Set a camera parameter
  */
-int CaptureCommand::capture_flash(Value& flashMode) {
-  LOG_ERROR((flashMode.isNull()), "flashMode not specified");
+int CaptureCommand::capture_setParameter(Value& name, Value& value) {
+  LOG_ERROR((name.isNull()), "name not specified");
+  LOG_ERROR((value.isNull()), "value not specified");
   LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
 
-  ALOGD("Turn flash mode: %s", flashMode.asCString());
   CameraParameters params = mCamera->getParameters();
-  params.set(CameraParameters::KEY_FLASH_MODE, flashMode.asCString());
-  mCamera->setParameters(params.flatten());
-
+  params.set(name.asCString(), value.asCString());
+  status_t err = mCamera->setParameters(params.flatten());
+  if (err != ::OK) {
+    ALOGW("Error %d: Failed to set '%s' to '%s'", err,
+      name.asCString(), value.asCString());
+  }
   return 0;
 }
 

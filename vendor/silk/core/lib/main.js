@@ -1,9 +1,11 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+let ui = require('./ui');
+ui.goto('bootanimation');
+
 let api = require('./api');
 let btle = require('./btle');
-let ui = require('./ui');
 let log = require('./log')('main');
 let vib = require('./vibrator')();
 let wifi = require('./wifi');
@@ -123,8 +125,6 @@ function boot() {
  * Wait for bootup and initialize the device.
  */
 function main() {
-  ui.goto('bootanimation');
-
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
   outbox = makeOutbox(wifi);

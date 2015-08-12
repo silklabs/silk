@@ -30,7 +30,7 @@ function makeObjectUrl(array, mimeType) {
 
 function logMsg(tag, msg) {
   log(tag + ' message: ' +
-      (('faces' in msg) ? '[faces:' + msg.faces.length + ']' :'') +
+      (('objects' in msg) ? '[objects:' + msg.objects.length + ']' :'') +
       (('frame' in msg) ? '[frame:' + msg.contents + '] ' : '') +
       'from: '+ msg.id + ' at ' + msg.when
      );
@@ -101,6 +101,7 @@ socket.on('video-stream-new', function(msg) {
   logoImg.setAttribute('title', 'logo');
   logoImg.style.display = 'none'
   var logo = msg.logo;
+  var previewSize = msg.previewSize;
 
   var canvas = document.createElement('canvas');
   var a = document.createElement('a');
@@ -120,7 +121,7 @@ socket.on('video-stream-new', function(msg) {
     var img = a.childNodes[0];
     var canvas = a.childNodes[1];
 
-    renderFrame(msg, img, canvas, logoImg, logo);
+    renderFrame(msg, previewSize, img, canvas, logoImg, logo);
   });
   log('Joining preview stream ' + previewStream);
   socket.emit('join', previewStream);
@@ -155,22 +156,23 @@ function renderLogo(logoImg, img, logo) {
   }
 }
 
-function renderFrame(msg, img, canvas, logoImg, logo) {
+function renderFrame(msg, previewSize, img, canvas, logoImg, logo) {
   if (msg.frame) {
     var view = new Uint8Array(msg.frame);
     var blob = new Blob([view], { type: 'image/jpg' });
     var jpeg = URL.createObjectURL(blob);
 
-    // Draw face frame and logo after img is loaded and size is valid
+    // Draw objects and logo after img is loaded and size is valid
     img.onload = function() {
-      drawFaceBorder(msg, img, canvas);
+      drawObjectBorder(msg, previewSize, img, canvas);
       renderLogo(logoImg, img, logo);
     };
     img.src = jpeg;
   }
 }
 
-function drawFaceBorder(msg, img, canvas) {
+
+function drawObjectBorder(msg, previewSize, img, canvas) {
   canvas.width = img.clientWidth;
   canvas.height = img.clientHeight;
   canvas.setAttribute('style', 'position:absolute;left:' +
@@ -178,23 +180,39 @@ function drawFaceBorder(msg, img, canvas) {
 
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (!('faces' in msg) || msg.faces.length == 0) {
-    return;
+
+  if (msg.objects) {
+    var objects = msg.objects;
+    var objectColors = [
+      'red',
+      'lightgreen',
+      'lightblue',
+      'purple',
+      'black',
+      'orange',
+    ];
+
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.font = "10px sans-serif";
+    ctx.scale(canvas.width / previewSize.width,
+      canvas.height / previewSize.height);
+
+    for (var i = 0; i < objects.length; ++i) {
+      ctx.fillStyle = ctx.strokeStyle = objectColors[i % objectColors.length];
+      ctx.fillStyle = 'black';
+
+      var tag = objects[i].tag;
+      var rects = objects[i].rects;
+      for (var j = 0; j < rects.length; ++j) {
+        var rect = rects[j];
+        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fillText(tag, rect.x, rect.y + rect.height + 10);
+      }
+    }
+
+    ctx.restore();
   }
-
-  ctx.save();
-
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = 'lightblue';
-
-  ctx.scale(canvas.width / msg.faces[0].fieldWidth,
-            canvas.height / msg.faces[0].fieldHeight);
-  for (var i = 0; i < msg.faces.length; ++i) {
-    var face = msg.faces[i];
-    ctx.strokeRect(face.x, face.y, face.width, face.height);
-  }
-
-  ctx.restore();
 }
 
 function toggleLog() {

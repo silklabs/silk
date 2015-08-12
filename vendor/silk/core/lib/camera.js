@@ -420,9 +420,10 @@ class CameraStream extends EventEmitter {
     // future if desired, once the appropriate client changes are made.
     //
     if (this.lastPreviewFrame) {
-      this._pushPacket(when, this.lastPreviewFrame, this.previewObjects, 'jpeg');
+      this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame, this.previewObjects, 'jpeg');
     }
     this.lastPreviewFrame = frame;
+    this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
     this.previewHalFaces = false;
   }
@@ -481,8 +482,8 @@ class CameraStream extends EventEmitter {
   /**
    * Initialize camera and start sending camera data to the server
    */
-  start(socket) {
-    this.serverSocket = socket;
+  start() {
+    this.serverSocket = { connected: false };
     this._init({
       frameInterval: DURATION,
       width: 1280,
@@ -495,13 +496,16 @@ class CameraStream extends EventEmitter {
   }
 
   /**
-   * Stop the camera stream
+   * Provide the camera with a socket to use
    */
-  stop() {
-    // Ignore this command for now so that camera is still running and is
-    // receiving the frames that could eventually be buffered and sent to the
-    // server when server comes back online
-    log.info(`command not supported`);
+  set socket(socket) {
+    this.serverSocket = socket;
+    if (this.ready()) {
+      // Force the last preview image to be transmitted immediately, to provide
+      // the client with a preview image as quick as possible when the camera
+      // first connects.
+      this._pushPreview(null, null);
+    }
   }
 
   /**

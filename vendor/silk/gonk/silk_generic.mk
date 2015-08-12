@@ -38,6 +38,7 @@ SILK_GONK_PROGIES := \
   capture \
   dhcputil \
   lights \
+  mic \
   player \
   volume \
   wpad \
@@ -65,4 +66,5 @@ PRODUCT_PACKAGES += fakeappops gonksched
 PRODUCT_PACKAGES += \
   bleno \
   opencv \
+  kissfft \
 

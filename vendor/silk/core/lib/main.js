@@ -16,6 +16,8 @@ let path = require('path');
 let fs = require('mz/fs');
 let deferred = require('./deferred');
 let mkdirp = require('mkdirp-promise');
+let mic = require('./mic');
+let clapper = require('./clapper');
 
 import makeCrashReporter from './crashreport';
 import makeOutbox from './outbox';
@@ -96,7 +98,12 @@ function boot() {
   return _waitForBoot().
     then(() => {
       log.info('Initialize hardware');
-      return Promise.all([wifi.init(), btle.init(), sensors.init()]);
+      return Promise.all([
+        wifi.init(),
+        btle.init(),
+        sensors.init(),
+        mic.start()
+      ]);
     }).
     then(() => {
       log.info('Load configuration');
@@ -286,6 +293,19 @@ config.on('configured', () => {
     .catch(e => util.processthrow(e));
   }
 });
+
+// Mic service....
+mic.on('start', () => log.info('Mic started'));
+mic.on('stop', () => log.info('Mic stopped'));
+mic.on('error', () => log.warn('Mic command errored out'));
+
+// Clap detector....
+let clapDetector = new clapper.ClapDetector();
+
+clapDetector.on('clap', cnt => {
+  log.info('*********************** clap detected ***************', cnt);
+});
+mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
 function shutdown(finalPromiseFactory) {
   if (shutdownPromise) {

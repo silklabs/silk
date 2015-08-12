@@ -13,7 +13,7 @@ class SystemButton : UIToolbar {
     }
   }
 
-  // public (react exposed) property for button type (maps to .style)
+  // public (react exposed) property for button type (maps to system item)
   var type: NSNumber = 0 {
     didSet {
       self.setButtonType(UIBarButtonSystemItem(rawValue: self.type as Int)!)

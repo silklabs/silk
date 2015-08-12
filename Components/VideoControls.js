@@ -1,5 +1,6 @@
 import React from 'react-native'
 import Button from 'react-native-button';
+import SystemButton from './SystemButton';
 import TimerMixin from 'react-timer-mixin';
 
 import moment from 'moment';
@@ -150,7 +151,10 @@ export default React.createClass({
     let top = (
       <View style={[styles.top, { width: dimensions.width }]}>
         <View style={styles.seekRow}>
-          <Button onPress={this.props.onDone} style={styles.done}>Done</Button>
+          <SystemButton
+            style={styles.done}
+            onPress={this.props.onDone}
+            type={SystemButton.Done} />
           <Text style={styles.seekCurrent}>{currentTime}</Text>
           <SliderIOS
             onValueChange={this.onSeek}
@@ -195,6 +199,7 @@ var styles = StyleSheet.create({
   done: {
     color: 'black',
     flex: 0.1,
+    height: 35
   },
 
   seekCurrent: {

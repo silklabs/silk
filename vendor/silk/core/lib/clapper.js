@@ -92,7 +92,9 @@ class WindowHistory {
 // stream of PCM samples to detect if the average energy in the frequency
 // domain spikes up very quickly. A clap sound results in a sharp rise in
 // all frequencies. Talking is more gradual, and even then, not across all
-// frequencies.
+// frequencies. Additionally, we check that the energy is maintained for
+// ~120ms to filter out other sounds (like knocks) that don't maintain
+// energy like a clap.
 //
 // In more detail, we perform a FFT on a set of samples. The number of samples
 // is _fftWindowSize, and we do this ever time we receive another
@@ -115,6 +117,9 @@ class WindowHistory {
 // _deltaThreshold is the value we'll have to tune the most as it depends on
 // the mic sensitivity.
 //
+// To filter out other sounds with a quick rise, we check that the AWE is
+// maintained above a certain threshold for a specifc duration.
+//
 export class ClapDetector extends events.EventEmitter {
   constructor(cfg = {}) {
     super();
@@ -125,16 +130,22 @@ export class ClapDetector extends events.EventEmitter {
     // parameters to tune
     this._maxClapIntervalMs = 600;// max time in ms between 2 claps to be 'repeated'
     this._minDistance = 8;        // min dist. between 2 claps (units of fftWindowStep)
-    this._deltaThreshold = 23000; // consider a clap if avg freq energy between
+    this._deltaThreshold = 25000; // consider a clap if avg freq energy between
                                   // 2 windows is above this threshold.
-    this._deltaDistance = 2;      // the previous window's energy to compare against.
+    this._deltaDistance = 3;      // the previous window's energy to compare against.
                                   // (units of fftWindowStep, must be < minDistance)
     this._fftWindowSize = 256;    // 320ms - in units of samples
     this._fftWindowStep = 16;     // 2ms - in units of samples
 
+    this._minEnergyThreshold = 40000; // min energy for duration of clap
+    this._minEnergyDuration = 55;     // clap must maintain energy for this
+                                      // duration, units of fftWindowStep
+
     this._windowHistory = new WindowHistory(this._minDistance);
     this._inputBuffer = new Buffer(0);
 
+    this._energyDuration = 0;
+    this._matchWindowCnt = 0;
     this._windowCnt = 0;
     this._lastClapTime = 0;
     this._repeatedClapCnt = 0;
@@ -170,21 +181,34 @@ export class ClapDetector extends events.EventEmitter {
         let prev = this._windowHistory.getNode(this._deltaDistance);
 
         if ((cur.data - prev.data) > this._deltaThreshold) {
-          this.totalClapCnt++;
+          // found initial large rise in energy, now need to maintain energy
           cur.match = true;
+          this._matchWindowCnt = cur.windowCnt;
+          this._energyDuration = 0;
+        }
+        if (cur.data > this._minEnergyThreshold) {
+          // energy level met threshold, need to maintain for a little bit
+          this._energyDuration++;
 
-          let now = Date.now();
-          if (now - this._lastClapTime < this._maxClapIntervalMs) {
-            this._repeatedClapCnt++;
-          } else {
-            this._repeatedClapCnt = 1;
+          if (this._energyDuration === this._minEnergyDuration) {
+            // energy level stayed above threshold long enough, we have a clap!
+            // consider a clap only when we first cross this threshold. the
+            // energy may continue for more time, but that is part of this clap
+            this.totalClapCnt++;
+
+            let now = Date.now();
+            if (now - this._lastClapTime < this._maxClapIntervalMs) {
+              this._repeatedClapCnt++;
+            } else {
+              this._repeatedClapCnt = 1;
+            }
+            this._lastClapTime = now;
+
+            this.emit('clap', { cnt: this._repeatedClapCnt });
+            log.debug('clap detected', this.totalClapCnt,
+              this._matchWindowCnt * this._fftWindowStep / this._sampleRate,
+              this._matchWindowCnt, prev.data, cur.data);
           }
-          this._lastClapTime = now;
-
-          this.emit('clap', { cnt: this._repeatedClapCnt });
-          log.debug('clap detected', this.totalClapCnt,
-            cur._windowCnt * this._fftWindowStep / this._sampleRate,
-            cur._windowCnt, prev.data, cur.data);
         }
       }
       this._windowHistory.advance();

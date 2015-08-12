@@ -337,6 +337,7 @@ export default React.createClass({
       // Load segment and show preview:
       this._videoSegments = [segment];
       this.setState({
+        currentTime: segment.when,
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });

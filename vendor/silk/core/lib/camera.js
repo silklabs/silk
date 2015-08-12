@@ -328,6 +328,7 @@ class CameraStream extends EventEmitter {
       this._buffer = '';
       this._ready = true;
       this._command({cmdName: 'init', cmdData: cmdData});
+      this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
     this._ctlSocket.on('error', err => {
@@ -511,7 +512,7 @@ class CameraStream extends EventEmitter {
       log.warn(`flash light is not enabled`);
       return;
     }
-    this._command({cmdName: 'flash', flashMode: flashMode});
+    this._command({cmdName: 'setParameter', name: 'flash-mode', value: flashMode});
   }
 
   /**

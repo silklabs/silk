@@ -21,6 +21,11 @@ let {
   View,
 } = React;
 
+/**
+Safeguard if faces does not get a new value within this time reset to no faces.
+*/
+const FACE_DISAPPEAR = 50;
+
 const MODES = {
   live: 'live',
   recorded: 'recorded',
@@ -28,6 +33,19 @@ const MODES = {
 };
 
 const DEFAULT_MODE = MODES.live;
+
+/**
+ * Playback speed steps.
+ */
+const PLAYBACK_STEPS = [
+  // TODO: Add rewind (it is not yet supported in native layer).
+  1.0,
+  1.5,
+  2.0,
+  4.0
+];
+
+const DEFAULT_PLAYBACK_STEP = 1.0;
 
 class LiveSegmentProvider {
   constructor(onSegment) {
@@ -81,10 +99,6 @@ class LiveSegmentProvider {
   }
 }
 
-/**
-Safeguard if faces does not get a new value within this time reset to no faces.
-*/
-const FACE_DISAPPEAR = 50;
 export default React.createClass({
   mixins: [TimerMixin],
 
@@ -94,7 +108,28 @@ export default React.createClass({
       pendingSeekMode: null,
 
       mode: null, // initial unspecified mode
-      shouldPlay: true,
+
+      /**
+       * Playback rate 1.0 is playing 0.0 is paused (2.0 is 2x).
+       */
+      rate: DEFAULT_PLAYBACK_STEP,
+
+      /**
+       * Represents the UX state of playing/paused in some cases we may not be
+       * actively playing video (such as seeking) when this is true.
+       */
+      playing: true,
+
+      /**
+       * Indicates to native layer if we should immediately begin playback of
+       * segments as it receives them. This value may not match the value of
+       * .playing in the case where we are seeking playing will be true if the
+       * controls are not paused (and the video will begin playback after the
+       * seek) and willPlay will be false to indicate to native not to begin
+       * playback as we are actively seeking.
+       */
+      willPlay: true,
+
       showingControls: true,
       faces: [],
       // Current time in the day we are viewing.
@@ -299,10 +334,12 @@ export default React.createClass({
 
   onSeekStart() {
     this.transitionModes(MODES.seeking, {
+      // Reset playback speed when we start seeking.
+      rate: DEFAULT_PLAYBACK_STEP,
       // Used to signify what mode to enter after seeking is done.
       pendingSeekMode: DEFAULT_MODE,
       // Playback is paused while we seek.
-      shouldPlay: false
+      willPlay: false
     });
   },
 
@@ -337,6 +374,7 @@ export default React.createClass({
       // Load segment and show preview:
       this._videoSegments = [segment];
       this.setState({
+        currentTime: segment.when,
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });
@@ -356,7 +394,8 @@ export default React.createClass({
     console.log('on seek end', this.state.pendingSeekMode);
     this.transitionModes(this.state.pendingSeekMode, {
       pendingSeekMode: null,
-      shouldPlay: true,
+      // Resume playback mode (paying/paused).
+      willPlay: this.state.playing,
       // Pass video segments explicitly so we do not reset them.
       videoSegments: this._videoSegments
     });
@@ -369,6 +408,78 @@ export default React.createClass({
 
   toggleControls() {
     this.setState({ showingControls: !this.state.showingControls });
+  },
+
+  /**
+   * Calculate the playback rate based on current value + increment.
+   */
+  getPlaybackStep(increment) {
+    let currentIdx = PLAYBACK_STEPS.indexOf(this.state.rate);
+    if (currentIdx === -1) {
+      throw new Error(`Invalid rate was used: ${this.state.rate}`);
+    }
+
+    let nextId = currentIdx + increment;
+
+    if (nextId < 0) {
+      return PLAYBACK_STEPS[0]
+    }
+
+    if (nextId >= PLAYBACK_STEPS.length) {
+      return PLAYBACK_STEPS[PLAYBACK_STEPS.length - 1];
+    }
+
+    return PLAYBACK_STEPS[nextId];
+  },
+
+  onFastForward() {
+    let rate = this.getPlaybackStep(1);
+    this.setState({ rate: rate })
+    console.log('fast forward', rate);
+  },
+
+  onRewind() {
+    let rate = this.getPlaybackStep(-1);
+    this.setState({ rate: rate })
+  },
+
+  onPlay() {
+    this.setState({
+      rate: DEFAULT_PLAYBACK_STEP,
+      playing: true,
+      willPlay: true
+    });
+  },
+
+  onPause() {
+    this.setState({
+      // Reset rate when we pause.
+      rate: DEFAULT_PLAYBACK_STEP,
+      playing: false,
+      willPlay: false
+    });
+  },
+
+  buildControls(dimensions) {
+    return (
+      <VideoControls
+        live={this.state.mode === MODES.live}
+        rate={this.state.rate}
+        playing={this.state.playing}
+        onSeekStart={this.onSeekStart}
+        onSeekChange={this.onSeekChange}
+        onSeekEnd={this.onSeekEnd}
+        onPlay={this.onPlay}
+        onPause={this.onPause}
+        onFastForward={this.onFastForward}
+        onRewind={this.onRewind}
+        currentTime={this.state.currentTime}
+        startTime={this.state.minTime}
+        endTime={this.state.maxTime}
+        onDone={this.close}
+        width={dimensions.width}
+        height={dimensions.height} />
+    );
   },
 
   render: function() {
@@ -384,19 +495,7 @@ export default React.createClass({
     let controls;
 
     if (this.state.showingControls) {
-      controls = (
-        <VideoControls
-          live={this.state.mode === MODES.live}
-          onSeekStart={this.onSeekStart}
-          onSeekChange={this.onSeekChange}
-          onSeekEnd={this.onSeekEnd}
-          currentTime={this.state.currentTime}
-          startTime={this.state.minTime}
-          endTime={this.state.maxTime}
-          onDone={this.close}
-          width={width}
-          height={height} />
-      );
+      controls = this.buildControls(dimensions);
     }
 
     return (
@@ -409,8 +508,9 @@ export default React.createClass({
           <View style={[styles.container]}>
             <TouchableWithoutFeedback onPress={this.toggleControls}>
               <LiveVideo
+                rate={this.state.rate}
                 segments={this.state.videoSegments}
-                shouldPlay={this.state.shouldPlay}
+                willPlay={this.state.willPlay}
                 onFaces={this.onFaces}
                 onTimeChange={this.onTimeChange}
                 onSegmentStart={this.onSegmentStart}

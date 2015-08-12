@@ -55,6 +55,12 @@ class LiveVideo : UIView {
   var loader: SocketIOAVAssetLoaderDelegate! = SocketIOAVAssetLoaderDelegate()
   var eventDispatcher: RCTEventDispatcher!
 
+  var rate: NSNumber = 1.0 {
+    didSet {
+      self.setRate()
+    }
+  }
+
   let assetLoaderQueue = dispatch_queue_create("video assets", DISPATCH_QUEUE_CONCURRENT)
   let eventQueue = dispatch_queue_create("event queue", DISPATCH_QUEUE_SERIAL)
 
@@ -70,9 +76,9 @@ class LiveVideo : UIView {
 
   // This property is used to indicate changes in playing states from react-native but does not
   // actually indicate we _are_ playing just hints to the internals what to do.
-  var shouldPlay = false {
+  var willPlay = false {
     didSet {
-      if (self.shouldPlay) {
+      if (self.willPlay) {
         self.play()
       } else {
         self.pause()
@@ -223,6 +229,17 @@ class LiveVideo : UIView {
     }
   }
 
+  func setRate() {
+    AssertMainThread()
+    if self.playing {
+      let rate = self.rate as Float
+      if self.player.rate != rate {
+        self.player.rate = rate
+        NSLog("Set playback rate: \(rate) \(self.player.rate)")
+      }
+    }
+  }
+
   /**
    * Pause playback of the video.
    *
@@ -233,6 +250,8 @@ class LiveVideo : UIView {
       // If we are already playing a simple pause works...
       self.player.pause()
       self.playing = false
+      // Note: we _could_ reset playback rate here but that would defeat the purpose of trying
+      // to give JS as much control as possible.
     } else if (self.pendingPlay != nil) {
       // if we are waiting to play remove the callback.
       self.player.removeKeyPathObserver(self.pendingPlay!)
@@ -250,9 +269,11 @@ class LiveVideo : UIView {
     if (!self.playing) {
       // If the player is immediately ready then just start it up.
       if self.player.status == AVPlayerStatus.ReadyToPlay {
-        self.player.play()
         self.playing = true
         self.pendingPlay = nil
+
+        // Update playback rate.
+        self.setRate()
         return
       }
 
@@ -479,7 +500,7 @@ class LiveVideo : UIView {
       self.setupSegmentObserver(item!)
 
       // When current item is set if we should be playing but are in a paused state start playback.
-      if (self.shouldPlay) {
+      if (self.willPlay) {
         // This is safe to call multiple times or if we are already playing.
         self.play()
       }
@@ -494,6 +515,9 @@ class LiveVideo : UIView {
 
   override func removeFromSuperview() {
     super.removeFromSuperview()
+  }
+
+  deinit {
     self.destroy()
   }
 

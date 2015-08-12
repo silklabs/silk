@@ -24,6 +24,7 @@ const Segment = {
 
 let LiveVideo = React.createClass({
   propTypes: {
+    rate: React.PropTypes.number,
     /**
     Invoked when face(s) appear in the video.
     */

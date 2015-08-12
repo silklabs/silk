@@ -25,12 +25,17 @@ export default React.createClass({
   getDefaultProps() {
     let noop = function(){};
     return {
+      playing: false,
       seekChangeThreshold: 100,
       live: false,
       onDone: noop,
       onSeekEnd: noop,
       onSeekChange: noop,
       onSeekStart: noop,
+      onPlay: noop,
+      onPause: noop,
+      onFastForward: noop,
+      onRewind: noop,
       startTime: 0,
       endTime: 0,
       currentTime: 0
@@ -40,6 +45,7 @@ export default React.createClass({
   propTypes: {
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
+    playing: React.PropTypes.bool,
     seekChangeThreshold: React.PropTypes.number,
     startTime: React.PropTypes.number.isRequired,
     currentTime: React.PropTypes.number.isRequired,
@@ -48,6 +54,10 @@ export default React.createClass({
     onSeekStart: React.PropTypes.func,
     onSeek: React.PropTypes.func,
     onSeekEnd: React.PropTypes.func,
+    onPlay: React.PropTypes.func,
+    onPause: React.PropTypes.func,
+    onFastForward: React.PropTypes.func,
+    onRewind: React.PropTypes.func,
     live: React.PropTypes.bool
   },
 
@@ -116,6 +126,78 @@ export default React.createClass({
     this.props.onSeekEnd(finalValue);
   },
 
+  buildControls() {
+    let playOrPause;
+    if (this.props.playing) {
+      playOrPause = (
+        <SystemButton
+          onPress={this.props.onPause}
+          style={styles.pause}
+          type={SystemButton.Pause} />
+      );
+    } else {
+      playOrPause = (
+        <SystemButton
+          onPress={this.props.onPlay}
+          style={styles.play}
+          type={SystemButton.Play} />
+      );
+    }
+
+
+    // XXX: Until we are fully ready to support rewinding disallow it unless
+    // we are simply slowing down fast forward.
+    let canRewind = this.props.rate > 1.0;
+
+    return (
+      <View style={styles.controlToolbar}>
+        <SystemButton
+          enabled={canRewind}
+          onPress={this.props.onRewind}
+          style={styles.rewind}
+          type={SystemButton.Rewind} />
+        {playOrPause}
+        <SystemButton
+          onPress={this.props.onFastForward}
+          style={styles.fastforward}
+          type={SystemButton.FastForward} />
+      </View>
+    );
+  },
+
+  buildLiveControls() {
+    let lagValue = Date.now() - this.props.currentTime;
+    return (
+      <Text style={styles.lag}>{lagValue}</Text>
+    );
+  },
+
+  buildForwardRate() {
+    let content;
+    if (this.props.rate > 1.0) {
+      content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
+    }
+
+    return (
+      <View style={styles.rateForward}>
+        {content}
+      </View>
+    );
+  },
+
+  buildReverseRate() {
+    let content;
+    if (this.props.rate < 1.0) {
+      content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
+    }
+
+    return (
+      <View style={styles.rateReverse}>
+        {content}
+      </View>
+    );
+  },
+
   render() {
     // XXX: This is a hack to ensure width is 100%
     let dimensions = {
@@ -142,14 +224,9 @@ export default React.createClass({
 
     let minimumValue = this.daySeconds(this.props.startTime);
     let maximumTime = this.daySeconds(this.props.endTime);
-    let lag;
-    if (this.props.live) {
-      let lagValue = Date.now() - this.props.currentTime;
-      lag = <Text style={styles.lag}>{lagValue}</Text>
-    }
 
     let top = (
-      <View style={[styles.top, { width: dimensions.width }]}>
+      <View style={[styles.top]}>
         <View style={styles.seekRow}>
           <SystemButton
             style={styles.done}
@@ -168,9 +245,17 @@ export default React.createClass({
       </View>
     );
 
+    let bottomContent =
+      this.props.live ? this.buildLiveControls() : this.buildControls();
+
+    let rateReverse = this.buildReverseRate();
+    let rateForward = this.buildForwardRate();
+
     let bottom = (
-      <View style={[styles.bottom, { width: dimensions.width }]}>
-        {lag}
+      <View style={[styles.bottom]}>
+        {rateReverse}
+        {bottomContent}
+        {rateForward}
       </View>
     );
 
@@ -217,11 +302,14 @@ var styles = StyleSheet.create({
   },
 
   bottom: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 3,
     position: 'absolute',
     backgroundColor: 'gray',
     opacity: 0.5,
+    right: 0,
     bottom: 0,
     left: 0,
   },
@@ -229,5 +317,49 @@ var styles = StyleSheet.create({
   lag: {
     fontFamily: 'AppleSDGothicNeo-SemiBold',
     color: 'red',
-  }
+  },
+
+  controlToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+
+  pause: {
+    color: 'black',
+    height: 35,
+    width: 50,
+  },
+
+  play: {
+    color: 'black',
+    height: 35,
+    width: 50,
+  },
+
+  fastforward: {
+    color: 'black',
+    height: 35,
+    width: 50,
+  },
+
+  rate: {
+    fontSize: 15,
+    padding: 4,
+  },
+
+  rateReverse: {
+    flex: 0.1,
+    alignItems: 'flex-start'
+  },
+
+  rateForward: {
+    flex: 0.1,
+    alignItems: 'flex-end'
+  },
+
+  rewind: {
+    color: 'black',
+    height: 35,
+    width: 50,
+  },
 });

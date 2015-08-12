@@ -9,6 +9,7 @@ let SystemButton = React.createClass({
   propTypes: {
     // Configuration
     type: React.PropTypes.string,
+    enabled: React.PropTypes.bool,
     onPress: React.PropTypes.func,
     color: React.PropTypes.string,
   },

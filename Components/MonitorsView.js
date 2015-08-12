@@ -3,6 +3,7 @@
 
 'use strict';
 
+import SystemButton from './SystemButton';
 var React = require('react-native');
 var {
   AppRegistry,

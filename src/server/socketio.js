@@ -6,7 +6,7 @@ export default function(io) {
   let videoRooms = new Map();
   let roomInfo = function(room) {
     if (room.logo.length > 0) {
-      return { id: room.id, name: room.name, logo: room.logo };
+      return { id: room.id, name: room.name, logo: room.logo, previewSize: room.previewSize };
     } else {
       return { id: room.id, name: room.name};
     }
@@ -69,6 +69,7 @@ export default function(io) {
         name: msg.name,
         socket: socket,
         logo: msg.logo,
+        previewSize: msg.previewSize,
 
         // TODO: Account for device->server transit time and dynamic network
         //       conditions

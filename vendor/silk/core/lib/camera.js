@@ -536,6 +536,36 @@ class CameraStream extends EventEmitter {
   }
 
   /**
+   * Inject an object into the video stream.
+   *
+   *   tag: object type (string)
+   *   when: optional timestamp
+   *   rect: optional rectangle
+   *
+   */
+  addObject(tag, when, rect) {
+    if (!when) {
+      when = this.lastPreviewFrameWhen; // best guess
+    }
+
+    if (!rect) {
+      const borderPad = 20;
+      rect = {
+        x: borderPad,
+        y: borderPad,
+        width: PREVIEW_WIDTH - borderPad * 2,
+        height: PREVIEW_HEIGHT - borderPad * 2,
+      };
+    }
+
+    this.addObjects([{
+      tag: tag,
+      when: when,
+      rects: [rect]
+    }]);
+  }
+
+  /**
    *
    */
   get previewSize() {

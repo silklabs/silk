@@ -51,6 +51,9 @@ class Env extends events.EventEmitter {
     let camera = deviceObjects.camera;
     if (camera) {
       this.camera = new events.EventEmitter();
+      this.camera.addObject = (tag, when, rect) => {
+        camera.addObject(tag, when, rect);
+      };
       this.camera.addObjects = objs => {
         camera.addObjects(objs);
       };

@@ -204,10 +204,19 @@ export class ClapDetector extends events.EventEmitter {
             }
             this._lastClapTime = now;
 
-            this.emit('clap', { cnt: this._repeatedClapCnt });
-            log.debug('clap detected', this.totalClapCnt,
-              this._matchWindowCnt * this._fftWindowStep / this._sampleRate,
-              this._matchWindowCnt, prev.data, cur.data);
+            // don't send the event until the number of claps is confirmed
+            if (this._nextClapTimeout) {
+              clearTimeout(this._nextClapTimeout);
+            }
+            this._nextClapTimeout = setTimeout(
+              () => {                       // eslint-disable-line no-loop-func
+                this.emit('clap', this._repeatedClapCnt);
+                log.debug('clap detected', this.totalClapCnt,
+                  this._matchWindowCnt * this._fftWindowStep / this._sampleRate,
+                  this._matchWindowCnt, prev.data, cur.data);
+              },
+              this._maxClapIntervalMs
+            );
           }
         }
       }

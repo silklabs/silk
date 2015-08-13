@@ -8,9 +8,6 @@ let {
   Text,
 } = ReactART;
 
-var FIELD_WIDTH = 320;
-var FIELD_HEIGHT = 180;
-
 let ObjectBoxes = React.createClass({
   propTypes: {
     width: React.PropTypes.number.isRequired,
@@ -50,11 +47,11 @@ let ObjectBoxes = React.createClass({
   },
 
   render() {
-    let { objects, width, height } = this.props;
+    let { objects, width, height, previewSize } = this.props;
 
     // We need to scale the dimensions correctly to the scale of the device.
-    let xRatio = width / FIELD_WIDTH;
-    let yRatio = height / FIELD_HEIGHT;
+    let xRatio = width / previewSize.width;
+    let yRatio = height / previewSize.height;
 
     let ratio = Math.min(xRatio, yRatio);
 

@@ -384,7 +384,8 @@ class LiveVideo : UIView {
     // It's important to remember this offset is relative to the current item not global playback.
     let eventBody: Dictionary<String, AnyObject> = [
       "target": self.reactTag,
-      "faces": event.faces
+      "rects": event.rects,
+      "tag": event.tag
     ]
     self.eventDispatcher.sendInputEventWithName(
       "faces", body: eventBody

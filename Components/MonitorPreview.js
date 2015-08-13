@@ -5,7 +5,7 @@ import React from 'react-native';
 import LiveVideo from './LiveVideo'
 import ImageView from './ImageView'
 import MonitorFullscreen from './MonitorFullscreen'
-import FaceBoxes from './FaceBoxes';
+import ObjectBoxes from './ObjectBoxes';
 
 var {
   Image,
@@ -33,7 +33,7 @@ var MonitorPreview = React.createClass({
   getInitialState() {
     return {
       showVideo: false,
-      faces: []
+      objects: []
     }
   },
 
@@ -48,7 +48,7 @@ var MonitorPreview = React.createClass({
   onPreviewFrame(message) {
     this.setState({
       blob: message.frame,
-      faces: message.faces || []
+      objects: message.objects || []
     });
   },
 
@@ -69,14 +69,14 @@ var MonitorPreview = React.createClass({
   render() {
     let id = this.props.id;
     let fullscreen = this.state.showVideo;
-    let faces = null;
+    let objects = null;
 
-    if (this.state.faces.length) {
-      faces = (
-        <FaceBoxes
+    if (this.state.objects.length) {
+      objects = (
+        <ObjectBoxes
           width={PREVIEW_WIDTH}
           height={PREVIEW_HEIGHT}
-          faces={this.state.faces} />
+          objects={this.state.objects} />
       );
     }
 
@@ -105,7 +105,7 @@ var MonitorPreview = React.createClass({
             <ImageView style={styles.preview} blob={this.state.blob} />
             {logo}
             <View style={styles.monitorPreviewOverlay}>
-              {faces}
+              {objects}
             </View>
           </View>
         </View>

@@ -76,7 +76,8 @@ var MonitorPreview = React.createClass({
         <ObjectBoxes
           width={PREVIEW_WIDTH}
           height={PREVIEW_HEIGHT}
-          objects={this.state.objects} />
+          objects={this.state.objects}
+          previewSize={this.props.previewSize}/>
       );
     }
 
@@ -97,7 +98,8 @@ var MonitorPreview = React.createClass({
             onClose={this.onVideoHidden}
             presented={fullscreen}
             socket={this.props.socket}
-            id={id} />
+            id={id}
+            previewSize={this.props.previewSize} />
           <View style={styles.monitorLabelContainer}>
             <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>

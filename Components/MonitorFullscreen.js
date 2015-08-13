@@ -487,7 +487,11 @@ export default React.createClass({
 
     let faces;
     if (this.state.faces.length) {
-      faces = <ObjectBoxes width={width} height={height} objects={this.state.faces} />
+      faces = <ObjectBoxes
+                width={width}
+                height={height}
+                objects={this.state.faces}
+                previewSize={this.props.previewSize} />
     }
 
     let dimensions = { width, height };

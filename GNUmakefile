@@ -32,7 +32,7 @@ zest:
 
 .PHONY: sync
 sync: | .repo/manifest.xml
-	./repo sync -j4 --current-branch --no-tags --quiet
+	./repo sync -j4 --current-branch --no-tags --force-sync --quiet
 
 .PHONY: update
 update:

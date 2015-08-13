@@ -4,6 +4,10 @@
 let ui = require('./ui');
 ui.goto('bootanimation');
 
+// Activate source map support to exception stack traces as early as practical
+// in the boot sequence
+require('source-map-support').install();
+
 let api = require('./api');
 let btle = require('./btle');
 let log = require('./log')('main');

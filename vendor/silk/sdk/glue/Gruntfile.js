@@ -1,6 +1,8 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+var debug = process.env.TARGET_BUILD_VARIANT !== 'user';
+
 module.exports = function(grunt) {
 
   function exec(cmd, opts) {
@@ -36,7 +38,7 @@ module.exports = function(grunt) {
 
     babel: {
       options: {
-        sourceMap: true
+        sourceMap: debug ? 'inline' : false
       },
       dist: {
         files: [
@@ -72,9 +74,21 @@ module.exports = function(grunt) {
             standalone: '__unused',
 
             ignoreMissing: true,
-            debug: process.env.TARGET_BUILD_VARIANT !== 'user',
+            debug: debug,
             exclude: '**/*.node',
           },
+          transform: [
+            // Adjust source map filenames to exclude the 'dist/lib' prefix
+            // added to the transpiled source
+            function() {
+              var mold = require('mold-source-map');
+              return mold.transformSources(
+                function(file) {
+                  return '../../' + file;
+                }
+              );
+            },
+          ],
         }
       }
     },

@@ -383,7 +383,7 @@ PadAudioWrapper::accumulateFrames(MediaBuffer** buffer)
   }
   int32_t newFrames = (*buffer)->range_length() / sizeof(int16_t);
   mFrameCount = (mFrameCount + newFrames) % mFrameBoundary;
-  ALOGI("%s: %d new frames; count %d (%d boundary)", __FUNCTION__,
+  ALOGV("%s: %d new frames; count %d (%d boundary)", __FUNCTION__,
         newFrames, mFrameCount, mFrameBoundary);
 
   int64_t timeUs, driftTimeUs;

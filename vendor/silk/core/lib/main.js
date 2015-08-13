@@ -200,11 +200,14 @@ function maybeCreateSocket() {
 
   hue = require('./hue')();
 
+  let clapDetector = new clapper.ClapDetector();
+  mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));
+
   require('./ext')({
     camera: camera,
     hue: hue,
     sensors: sensors,
-    vib: vib,
+    clapDetector: clapDetector,
   });
 
   diag = require('./diag')(id.toString());
@@ -325,14 +328,6 @@ config.on('configured', () => {
 mic.on('start', () => log.info('Mic started'));
 mic.on('stop', () => log.info('Mic stopped'));
 mic.on('error', () => log.warn('Mic command errored out'));
-
-// Clap detector....
-let clapDetector = new clapper.ClapDetector();
-
-clapDetector.on('clap', cnt => {
-  log.info('*********************** clap detected ***************', cnt);
-});
-mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
 function shutdown(finalPromiseFactory) {
   if (shutdownPromise) {

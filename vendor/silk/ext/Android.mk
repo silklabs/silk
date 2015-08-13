@@ -9,5 +9,7 @@ $(foreach ext,$(dir $(wildcard $(LOCAL_PATH)/*/package.json)), \
   $(eval $(call RENDER_EXTENSION_MK,$(ext))) \
  )
 
-# Permit extensions to include an optional Andriod.mk (not needed normally)
+ifeq ($(ONE_SHOT_MAKEFILE),)
+# Permit extensions to include an optional Android.mk (not needed normally)
 include $(EXT_ANDROID_MKS)
+endif

@@ -4,37 +4,121 @@
 let log = require('./log')('ext');
 let fs = require('mz/fs');
 let path = require('path');
+let events = require('events');
 
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
-export default function loadExtensions(extraObjects = {}) {
-  function load(file) {
+class Env extends events.EventEmitter {
+
+  constructor(name, deviceObjects) {
+    super();
+    this._name = name;
+    this._addDeviceAPIs(deviceObjects);
+  }
+
+  /**
+   * Builds the interface into the device functions that are available to
+   * extensions.
+   */
+  _addDeviceAPIs(deviceObjects) {
+
+    let clapDetector = deviceObjects.clapDetector;
+    if (clapDetector) {
+      this.clapDetector = new events.EventEmitter();
+      clapDetector.on('clap', count => {
+        this.clapDetector.emit('clap', count);
+      });
+    }
+
+    let sensors = deviceObjects.sensors;
+    if (sensors) {
+      this.sensors = new events.EventEmitter();
+      this.sensors.light = pollInterval => {
+        if (!pollInterval) {
+          sensors.deactivate(sensors.SENSOR_TYPE.LIGHT);
+        } else {
+          sensors.activate(sensors.SENSOR_TYPE.LIGHT, pollInterval);
+        }
+      };
+      sensors.on('data', sensorEvent => {
+        if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
+          return;
+        }
+        this.sensors.emit('light', sensorEvent.values[0]);
+      });
+    }
+
+    let camera = deviceObjects.camera;
+    if (camera) {
+      this.camera = new events.EventEmitter();
+      this.camera.addObjects = objs => {
+        camera.addObjects(objs);
+      };
+      this.camera.torch = state => {
+        camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
+      };
+
+      camera.on('preview', (when, jpeg) => {
+        this.camera.emit('preview', when, jpeg);
+      });
+      camera.on('face', faces => {
+        this.camera.emit('face', faces);
+      });
+    }
+
+    let hue = deviceObjects.hue;
+    if (hue) {
+      this.hue = {
+        setState: state => {
+          hue.setState(state);
+        },
+      };
+    }
+  }
+
+  get log() {
+    if (!this._log) {
+      this._log = require('./log')(this._name);
+    }
+    return this._log;
+  }
+}
+
+
+class Extensions {
+
+  constructor(deviceObjects = {}) {
+    this.loaded = [];
+    this.deviceObjects = deviceObjects;
+
+    extDirs.forEach(dir => {
+      fs.readdir(dir)
+      .catch(err => {
+        if (err && err.code === 'ENOENT') {
+          return;
+        }
+        log.error(`Unable to read ${dir}: ${err}`);
+      })
+      .then(files => files.forEach(file => this._loadExtension(path.join(dir, file))));
+    });
+  }
+
+
+  _loadExtension(file) {
     let ext = path.extname(file);
     let modulePath = ext.length > 0 ? file.slice(0, -ext.length) : file;
     try {
       log.info(`Loading ${modulePath}`);
-      let env = {
-        log: require('./log')(path.basename(modulePath)),
-        extraObjects: extraObjects   // TODO: Remove extraObjects
-      };
-      require(modulePath)(env);
+      let env = new Env(path.basename(modulePath), this.deviceObjects);
+      this.loaded.push({ env: env, mod: require(modulePath)(env)});
+
     } catch (e) {
       log.error(`Extension failed to load: ${modulePath}`);
       log.error(e);
     }
   }
-
-  function loadAll(dir) {
-    fs.readdir(dir)
-    .catch(err => {
-      if (err && err.code === 'ENOENT') {
-        return;
-      }
-      log.error(`Unable to read ${dir}: ${err}`);
-    })
-    .then(files => files.forEach(file => load(path.join(dir, file))));
-  }
-
-  extDirs.forEach(loadAll);
 }
 
+export default function makeExtensions(deviceObjects) {
+  return new Extensions(deviceObjects);
+}

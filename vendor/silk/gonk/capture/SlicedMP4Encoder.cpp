@@ -4,8 +4,12 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
+//#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture"
 #include <utils/Log.h>
+
+// See comment where this is used.
+#define SLEEP_HACK_US 20000
 
 #include "SlicedMP4Encoder.h"
 #include "Capturedefs.h"
@@ -21,7 +25,12 @@
 #include <include/avc_utils.h>
 #include <media/stagefright/OMXCodec.h>
 
+// Normally "exported" from AACEncoder.h, but we can't include that here.
+enum { kNumSamplesPerFrame = 1024 };
+
 using namespace android;
+
+static bool isAudioEnabled = false;
 
 //
 // Implementation of class PutBackWrapper
@@ -263,6 +272,133 @@ void SliceAtEachIDRSource::notifyListeners(int64_t timeUs, bool slice) {
     mListeners[n]->handleProgressEvent(timeUs, slice);
 }
 
+class PadAudioWrapper : public MediaSource {
+public:
+  /**
+   * Given an `source`, ensure that `read()` always returns a multiple
+   * of `frameBoundary` samples (16-bit).  If not enough samples are
+   * pulled from `source`, then "silence" (0 samples) is used to pad
+   * the empty space.
+   */
+  PadAudioWrapper(const sp<MediaSource> &source, int32_t frameBoundary)
+    : mSource(source)
+    , mLastEndTimeUs()
+    , mLastEndDriftTimeUs()
+    , mFrameBoundary(frameBoundary)
+    , mFrameCount()
+    , mDone()
+  {}
+  virtual ~PadAudioWrapper() {}
+
+  virtual status_t start(MetaData *params = NULL) {
+    return mSource->start(params);
+  }
+  virtual status_t stop() {
+    return mSource->stop();
+  }
+  virtual sp<MetaData> getFormat() {
+    return mSource->getFormat();
+  }
+
+  virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
+    
+private:
+  void accumulateFrames(MediaBuffer** buffer);
+
+  sp<MediaSource> mSource;
+  int64_t mLastEndTimeUs;
+  int64_t mLastEndDriftTimeUs;
+  const int32_t mFrameBoundary;
+  int32_t mFrameCount;
+  // Done reading from `mSource`; some padding may still be required.
+  bool mDone;
+
+  DISALLOW_EVIL_CONSTRUCTORS(PadAudioWrapper);
+};
+
+status_t
+PadAudioWrapper::read(MediaBuffer **buffer, const ReadOptions *options)
+{
+  if (mDone && mFrameCount) {
+    int32_t paddingFrames = mFrameBoundary - mFrameCount;
+    *buffer = new MediaBuffer(paddingFrames * sizeof(uint16_t));
+    memset((*buffer)->data(), 0, (*buffer)->size());
+
+    (*buffer)->meta_data()->setInt64(kKeyTime, mLastEndTimeUs);
+    (*buffer)->meta_data()->setInt64(kKeyDriftTime, mLastEndDriftTimeUs);
+
+    ALOGV("%s: returning padding buffer with %d frames at time %lld", __FUNCTION__,
+          paddingFrames, mLastEndTimeUs);
+    accumulateFrames(buffer);
+    
+    return ::OK;
+  } else if (mDone) {
+    ALOGV("%s: just padded buffer; now returning real EOS", __FUNCTION__);
+#ifdef SLEEP_HACK_US
+    // At least the AAC encoders don't shut down audio sources in a
+    // clean way; apparently the encoder / source thread just gets
+    // killed.  To ensure that we return samples that align on the
+    // frame boundary, we have to ensure that the last buffer from us
+    // actually makes it to the encoder.  To do so, we have this gross
+    // usleep() here.  The duration is set based on experimentation,
+    // ensuring that the encoder actually received our last buffer.
+    ALOGV("%s:    sleeping for %d us ...", __FUNCTION__, SLEEP_HACK_US);
+    usleep(SLEEP_HACK_US);
+    ALOGV("%s:    wha wha? awake from sleep", __FUNCTION__);
+#endif
+    return ERROR_END_OF_STREAM;
+  }
+
+  status_t err = mSource->read(buffer, options);
+  accumulateFrames(buffer);
+  if (err == ::OK) {
+      return err;
+  }
+  mDone = true;
+  if (err != ERROR_END_OF_STREAM) {
+      ALOGV("%s: non-EOS error, done", __FUNCTION__);
+    return err;
+  }
+
+  // We're at the end of stream for the "real" source and may need to
+  // return some padding.  However, if we don't return a buffer at all
+  // here, our downstream encoder takes that as an end-of-stream
+  // signal and stops encoding.
+  ALOGV("%s: returning dummy 0-sized buffer", __FUNCTION__);
+  *buffer = new MediaBuffer(0);
+  (*buffer)->meta_data()->setInt64(kKeyTime, mLastEndTimeUs);
+  (*buffer)->meta_data()->setInt64(kKeyDriftTime, mLastEndDriftTimeUs);
+
+  ALOGV("%s: end of stream with %d left (%d boundary)", __FUNCTION__,
+        mFrameBoundary - mFrameCount, mFrameBoundary);
+  return ::OK;
+}
+
+void
+PadAudioWrapper::accumulateFrames(MediaBuffer** buffer)
+{
+  if (!buffer || !*buffer) {
+    ALOGV("%s: no buffer?", __FUNCTION__);
+    return;
+  }
+  int32_t newFrames = (*buffer)->range_length() / sizeof(int16_t);
+  mFrameCount = (mFrameCount + newFrames) % mFrameBoundary;
+  ALOGI("%s: %d new frames; count %d (%d boundary)", __FUNCTION__,
+        newFrames, mFrameCount, mFrameBoundary);
+
+  int64_t timeUs, driftTimeUs;
+  if (!(*buffer)->meta_data()->findInt64(kKeyTime, &timeUs))
+    timeUs = 0;
+  if (!(*buffer)->meta_data()->findInt64(kKeyDriftTime, &driftTimeUs))
+    driftTimeUs = 0;
+  // Make an educated guess at the end time for the buffer we just
+  // returned.  We'll use that guess as the start time for a padding
+  // buffer we return, if that's what we're returning next.
+  int32_t usPerSample = 1000000 / sAudioSampleRate;
+  mLastEndTimeUs = timeUs + newFrames * usPerSample;
+  mLastEndDriftTimeUs = driftTimeUs + newFrames * usPerSample;
+}
+
 //
 // Implementation of class SlicedMP4Encoder
 //
@@ -324,13 +460,15 @@ bool SlicedMP4Encoder::threadLoop() {
 
     writer->addSource(mSlicedVideoSource);
 
-    // Turn off audio until we sort out timing and performance issues on iOS
-#if 0
-    sp<MediaCodecSource> audioEncoder =
-    MediaCodecSource::Create(mLooper, mAudioFormat, mSlicedAudioSource);
-
-    writer->addSource(audioEncoder);
-#endif
+    if (isAudioEnabled) {
+      // See long comment below.
+      sp<MediaSource> paddedAudio(
+        new PadAudioWrapper(mSlicedAudioSource,
+                            sAudioChannels * kNumSamplesPerFrame));
+      sp<MediaCodecSource> audioEncoder =
+        MediaCodecSource::Create(mLooper, mAudioFormat, paddedAudio);
+      writer->addSource(audioEncoder);
+    }
 
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
@@ -341,6 +479,33 @@ bool SlicedMP4Encoder::threadLoop() {
 
     CHECK_EQ(writer->start(params.get()), ::OK);
     writer->waitForEOS();
+
+    // Here we attempt to maintain AV sync between chunks by ensuring
+    // that audio and video end at the same time.  The problem we're
+    // working around is that the AAC encoder has to be fed a fixed
+    // number of samples before encoding an audio frame.  That frame
+    // can cover a duration of audio up to 250ms.  Those frames are
+    // completely indepedent of the h264 encoder's IDR frames, though.
+    // So our video track might end at time X, but we may not have
+    // sent enough buffer to the AAC encoder to fill a frame yet, and
+    // the audio track may be stuck up to X - 250ms behind video.
+    //
+    // To work around this constraint, we wrap the audio source in a
+    // "padder" that ensure that the audio data always aligns on a
+    // frame boundary.  If the audio stream ends before a frame
+    // boundary, we pad it "silence".  So with this we ensure that the
+    // audio track is always as long as or longer than the video
+    // track.
+    //
+    // Then finally, we tell the mp4 encoder to fudge all the track
+    // and segment durations to claim to be the length of the video
+    // track.  This effectively "ignores" the silence padding at the
+    // end of the audio track.  Problem is, some players (like ffmpeg)
+    // seem to ignore the track metadata!  iOS honors it, however.
+    int64_t videoDurationUs = writer->trackDurationsUs()[0];
+    writer->forceTrackDurationLimitUs(videoDurationUs);
+    ALOGV("Forcing mp4 segment duration to %lld us", videoDurationUs);
+
     status_t err = writer->stop();
     if (err == ::OK) {
       // Write size and .mp4 data

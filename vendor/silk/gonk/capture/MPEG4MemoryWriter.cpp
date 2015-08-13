@@ -362,7 +362,8 @@ MPEG4MemoryWriter::MPEG4MemoryWriter()
       mLatitudex10000(0),
       mLongitudex10000(0),
       mAreGeoTagsAvailable(false),
-      mStartTimeOffsetMs(-1) {
+      mStartTimeOffsetMs(-1),
+      mTrackDurationLimitUs() {
     mInitCheck = OK;
 }
 
@@ -683,6 +684,11 @@ status_t MPEG4MemoryWriter::reset() {
     if (mTracks.size() > 1) {
         ALOGD("Duration from tracks range is [%" PRId64 ", %" PRId64 "] us",
             minDurationUs, maxDurationUs);
+        if (int64_t durationLimitUs = trackDurationLimitUs()) {
+            ALOGV("Force-overriding segment duration to %" PRId64,
+                  durationLimitUs);
+            maxDurationUs = minDurationUs = durationLimitUs;
+        }
     }
 
     stopWriterThread();
@@ -2539,6 +2545,11 @@ void MPEG4MemoryWriter::Track::writeTkhdBox(uint32_t now) {
     mOwner->writeInt32(mTrackId);      // track id starts with 1
     mOwner->writeInt32(0);             // reserved
     int64_t trakDurationUs = getDurationUs();
+    if (int64_t durationLimitUs = mOwner->trackDurationLimitUs()) {
+        ALOGV("Force-overriding track tkhd duration to %" PRId64,
+              durationLimitUs);
+        trakDurationUs = durationLimitUs;
+    }
     int32_t mvhdTimeScale = mOwner->getTimeScale();
     int32_t tkhdDuration =
         (trakDurationUs * mvhdTimeScale + 5E5) / 1E6;
@@ -2600,6 +2611,11 @@ void MPEG4MemoryWriter::Track::writeHdlrBox() {
 
 void MPEG4MemoryWriter::Track::writeMdhdBox(uint32_t now) {
     int64_t trakDurationUs = getDurationUs();
+    if (int64_t durationLimitUs = mOwner->trackDurationLimitUs()) {
+        ALOGV("Force-overriding track mdhd duration to %" PRId64,
+              durationLimitUs);
+        trakDurationUs = durationLimitUs;
+    }
     mOwner->beginBox("mdhd");
     mOwner->writeInt32(0);             // version=0, flags=0
     mOwner->writeInt32(now);           // creation time
@@ -2807,5 +2823,26 @@ void MPEG4MemoryWriter::signalEOS() {
   mEOSCondition.signal();
 }
 
+Vector<int64_t> MPEG4MemoryWriter::trackDurationsUs() {
+    Vector<int64_t> durations;
+    for (List<Track *>::iterator it = mTracks.begin();
+         it != mTracks.end(); ++it) {
+        Track* track = *it;
+        if (!track->reachedEOS()) {
+            ALOGE("%s track is not at EOS!",
+                  track->isAudio() ? "Audio" : "Video");
+        }
+        durations.push_back(track->getDurationUs());
+    }
+    return durations;
+}
+
+void MPEG4MemoryWriter::forceTrackDurationLimitUs(int64_t durationUs) {
+    mTrackDurationLimitUs = durationUs;
+}
+
+int64_t MPEG4MemoryWriter::trackDurationLimitUs() const {
+    return mTrackDurationLimitUs;
+}
 
 }  // namespace android

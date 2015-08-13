@@ -498,9 +498,10 @@ export default React.createClass({
     this.setState({ showTimeJump: false });
   },
 
-  buildControls(dimensions) {
+  buildControls() {
     return (
       <VideoControls
+        style={styles.videoControls}
         live={this.state.mode === MODES.live}
         rate={this.state.rate}
         playing={this.state.playing}
@@ -514,9 +515,8 @@ export default React.createClass({
         currentTime={this.state.currentTime}
         startTime={this.state.minTime}
         endTime={this.state.maxTime}
-        onDone={this.close}
-        width={dimensions.width}
-        height={dimensions.height} />
+        onDone={this.close} />
+
     );
   },
 
@@ -537,7 +537,7 @@ export default React.createClass({
     let controls;
 
     if (this.state.showingControls) {
-      controls = this.buildControls(dimensions);
+      controls = this.buildControls();
     }
 
     let showTimeJump;
@@ -577,9 +577,9 @@ export default React.createClass({
                 ref="video" />
             </TouchableWithoutFeedback>
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
-              {faces}
               {showTimeJump}
               {controls}
+              {faces}
             </View>
           </View>
       </OverlayModal>
@@ -609,6 +609,14 @@ var styles = StyleSheet.create({
 
   videoOverlay: {
     backgroundColor: 'transparent',
+  },
+
+  videoControls: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
   },
 
   dateOverlay: {

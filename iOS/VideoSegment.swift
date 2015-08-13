@@ -16,7 +16,15 @@ class VideoSegment {
     let type = dict["type"] as! String
     let startUTC = (dict["startUTC"] as! NSNumber).longLongValue
     let endUTC = (dict["endUTC"] as! NSNumber).longLongValue
-    let faces = FaceEvent.fromJSONList(dict["faces"]!)
+
+    // We may not always have faces so paper over that.
+    let faces: [FaceEvent]
+    if dict["faces"] != nil {
+      faces = FaceEvent.fromJSONList(dict["faces"]!)
+    } else {
+      faces = []
+    }
+
     let id = dict["id"] as! String
     let nextId = dict["nextId"] as? String
     let previousId = dict["previousId"] as? String

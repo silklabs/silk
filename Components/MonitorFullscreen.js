@@ -5,7 +5,7 @@ import React from 'react-native'
 import LiveVideo from './LiveVideo'
 import OverlayModal from './OverlayModal'
 import Rectangle from './Rectangle';
-import FaceBoxes from './FaceBoxes';
+import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 import TimerMixin from 'react-timer-mixin';
@@ -73,7 +73,7 @@ class LiveSegmentProvider {
       nextId: null,
       previousId: this.lastId,
       when: message.when,
-      faces: message.faces
+      faces: message.objects
     });
 
     // Keep track of the previous id (required for state tracking).
@@ -312,9 +312,8 @@ export default React.createClass({
   },
 
   onFaces(event) {
-    let facesArray = event.nativeEvent.faces;
     this.clearTimeout(this.facesTimer);
-    this.setState({ faces: facesArray });
+    this.setState({ faces: [event.nativeEvent]});
 
     // Safe guard against never getting a message to zero out faces.
     // This happens infrequently (and may be a bug somewhere in event handling
@@ -488,7 +487,7 @@ export default React.createClass({
 
     let faces;
     if (this.state.faces.length) {
-      faces = <FaceBoxes width={width} height={height} faces={this.state.faces} />
+      faces = <ObjectBoxes width={width} height={height} objects={this.state.faces} />
     }
 
     let dimensions = { width, height };

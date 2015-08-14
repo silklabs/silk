@@ -171,27 +171,14 @@ export default React.createClass({
     );
   },
 
-  buildForwardRate() {
+  buildRate() {
     let content;
-    if (this.props.rate > 1.0) {
+    if (!this.props.live && this.props.rate > 1.0) {
       content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
     }
 
     return (
-      <View style={styles.rateForward}>
-        {content}
-      </View>
-    );
-  },
-
-  buildReverseRate() {
-    let content;
-    if (this.props.rate < 1.0) {
-      content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
-    }
-
-    return (
-      <View style={styles.rateReverse}>
+      <View style={styles.rateContainer}>
         {content}
       </View>
     );
@@ -242,14 +229,13 @@ export default React.createClass({
     let bottomContent =
       this.props.live ? this.buildLiveControls() : this.buildControls();
 
-    let rateReverse = this.buildReverseRate();
-    let rateForward = this.buildForwardRate();
+    let rate = this.buildRate();
 
     let bottom = (
       <View style={[styles.bottom]}>
-        {rateReverse}
+        <View style={styles.placeholder} />
         {bottomContent}
-        {rateForward}
+        {rate}
       </View>
     );
 
@@ -341,12 +327,7 @@ var styles = StyleSheet.create({
     padding: 4,
   },
 
-  rateReverse: {
-    flex: 0.1,
-    alignItems: 'flex-start'
-  },
-
-  rateForward: {
+  rateContainer: {
     flex: 0.1,
     alignItems: 'flex-end'
   },
@@ -356,4 +337,9 @@ var styles = StyleSheet.create({
     height: 35,
     width: 50,
   },
+
+  placeholder: {
+    flex: 0.1,
+    alignItems: 'flex-start'
+  }
 });

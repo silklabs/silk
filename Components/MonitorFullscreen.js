@@ -197,6 +197,11 @@ export default React.createClass({
   },
 
   onLiveSegment(segment) {
+    if (this._videoSegments.length === 0) {
+      console.log('set lag');
+      this.liveVideoLag = Date.now() - segment.startUTC;
+    }
+
     this.appendSegment(segment);
     this.setState({ maxTime: segment.startUTC });
   },
@@ -299,7 +304,7 @@ export default React.createClass({
       // When a recorded segment starts we should begin buffering the next
       // segment.
       case MODES.recorded:
-        this.bufferNextRecordedSegment(segment);
+        this.bufferNextRecordedSegment();
         break;
       case MODES.seeking:
         // Intentionally left blank when we seek we should not be running
@@ -358,12 +363,31 @@ export default React.createClass({
     }, FACE_DISAPPEAR);
   },
 
-  onTimeChange(event) {
-    // Do not emit any time events while we are seeking...
-    if (this.state.mode !== MODES.seeking) {
-      let time = event.nativeEvent.time;
-      this.setState({ currentTime: time });
+  modifyLiveRate(segment, time) {
+    let currentLag = Date.now() - time - this.liveVideoLag;
+
+    if (this._videoSegments.length > 1 && currentLag > 0) {
+      let rate = 1 + currentLag / 1000
+      this.setState({ rate: rate });
+      console.log('new rate:', rate);
     }
+  },
+
+  onTimeChange(event) {
+    // Let seek bar manage it's own state in video controls.
+    if (this.state.mode === MODES.seeking) {
+      // Do not emit any time events while we are seeking...
+      return
+    }
+
+    let time = event.nativeEvent.time;
+    let segment = this._videoSegments[0];
+
+    if (this.state.mode == MODES.live) {
+      this.modifyLiveRate(segment, time);
+    }
+
+    this.setState({ currentTime: time });
   },
 
   onSeekStart() {

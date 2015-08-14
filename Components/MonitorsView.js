@@ -110,7 +110,9 @@ var MonitorsView = React.createClass({
       this.socket.close();
     }
     this.socket = new SocketIO();
-    this.socket.connect(this.state.serverUrl);
+    this.socket.connect(this.state.serverUrl, {
+      forceWebsockets: true
+    });
     this.state.serverConnection = 'connecting';
     this.setState(this.state);
     console.log('Connecting to ...', this.state.serverUrl);

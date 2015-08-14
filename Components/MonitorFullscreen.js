@@ -11,8 +11,10 @@ import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 import TimerMixin from 'react-timer-mixin';
 import uuid from 'uuid';
 import * as DateUtils from '../Libraries/DateUtil';
+import DateOverlay from './DateOverlay'
 
 let {
+  Animated,
   SliderIOS,
   StatusBarIOS,
   StyleSheet,
@@ -47,6 +49,12 @@ const PLAYBACK_STEPS = [
 
 const DEFAULT_PLAYBACK_STEP = 1.0;
 
+/**
+ * The factor we use to determine if we have "jumped" a significant amount in
+ * video playback.
+ */
+const JUMP_FACTOR = 2;
+
 class LiveSegmentProvider {
   constructor(onSegment) {
     this.socket = null;
@@ -67,12 +75,15 @@ class LiveSegmentProvider {
 
     // Create the segment from the frame.
     let id = uuid.v1();
-    let segment = LiveVideo.Segment.fromFrame({
+    let segment = new LiveVideo.Segment({
+      type: 'data',
       data: message.frame,
       id,
       nextId: null,
       previousId: this.lastId,
-      when: message.when,
+      startUTC: message.when,
+      // XXX: We should really send real duration in message.
+      endUTC: message.when,
       faces: message.objects
     });
 
@@ -110,6 +121,12 @@ export default React.createClass({
       mode: null, // initial unspecified mode
 
       /**
+       * When time jump is true we display a view showing the current time (it
+       * will slowly fade away and we will reset this to false).
+       */
+      showTimeJump: false,
+
+      /**
        * Playback rate 1.0 is playing 0.0 is paused (2.0 is 2x).
        */
       rate: DEFAULT_PLAYBACK_STEP,
@@ -132,8 +149,7 @@ export default React.createClass({
 
       showingControls: true,
       faces: [],
-      // Current time in the day we are viewing.
-      seekTime: Date.now(),
+      currenTime: Date.now(),
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
       minTime: DateUtils.startOfDay(),
@@ -182,7 +198,7 @@ export default React.createClass({
 
   onLiveSegment(segment) {
     this.appendSegment(segment);
-    this.setState({ maxTime: segment.when });
+    this.setState({ maxTime: segment.startUTC });
   },
 
   /**
@@ -235,9 +251,11 @@ export default React.createClass({
   },
 
   createSegment(result) {
-   return LiveVideo.Segment.fromURL({
+   return new LiveVideo.Segment({
+      type: 'url',
       url: result.url,
-      when: result.startUTC,
+      startUTC: result.startUTC,
+      endUTC: result.endUTC,
       faces: result.data.faces,
       id: result.id,
       nextId: result.nextId,
@@ -269,11 +287,19 @@ export default React.createClass({
   Invoked when any type of segment has begun playback.
   */
   onSegmentStart() {
+    let segment = this._videoSegments[0];
+
+    // Emit a segment start event so we can do processing based on segment
+    // specific events.
+    if (segment) {
+      segment.fireStartCallbacks();
+    }
+
     switch (this.state.mode) {
       // When a recorded segment starts we should begin buffering the next
       // segment.
       case MODES.recorded:
-        this.bufferNextRecordedSegment(event);
+        this.bufferNextRecordedSegment(segment);
         break;
       case MODES.seeking:
         // Intentionally left blank when we seek we should not be running
@@ -284,9 +310,9 @@ export default React.createClass({
 
   bufferNextRecordedSegment() {
     // new segment has started lets queue up the next one.
+    let segment = this._videoSegments[0];
     let { api, id } = this.props;
     let video = this.refs.video;
-    let segment = this._videoSegments[0];
 
     if (segment.type !== 'url') {
       throw new Error('Previous segment type _must_ be recorded');
@@ -303,10 +329,19 @@ export default React.createClass({
       id: segment.nextId
     }).then(result => {
       let newSegment = this.createSegment(result);
+      let delta = result.startUTC - segment.startUTC;
+      let previousDuration = segment.endUTC - segment.startUTC;
+
+      if (delta > previousDuration * JUMP_FACTOR) {
+        newSegment.addStartCallback(() => {
+          this.setState({ showTimeJump: true });
+        });
+      }
+
       // Reconcile internal and video playback state.
       this.appendSegment(newSegment);
       console.log(
-        'queueing next segment', result.startUTC - segment.when , newSegment
+        'queueing next segment', delta, newSegment
       );
     });
   },
@@ -360,7 +395,7 @@ export default React.createClass({
           Seeking to new time segment:
 
             Wanted: ${new Date(value)}
-            Got: ${new Date(segment.when)}
+            Got: ${new Date(segment.startUTC)}
             ID: ${segment.id}
             NextID: ${segment.nextId}
         `
@@ -373,7 +408,7 @@ export default React.createClass({
       // Load segment and show preview:
       this._videoSegments = [segment];
       this.setState({
-        currentTime: segment.when,
+        currentTime: segment.startUTC,
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });
@@ -459,9 +494,14 @@ export default React.createClass({
     });
   },
 
-  buildControls(dimensions) {
+  hideTimeJump() {
+    this.setState({ showTimeJump: false });
+  },
+
+  buildControls() {
     return (
       <VideoControls
+        style={styles.videoControls}
         live={this.state.mode === MODES.live}
         rate={this.state.rate}
         playing={this.state.playing}
@@ -475,9 +515,8 @@ export default React.createClass({
         currentTime={this.state.currentTime}
         startTime={this.state.minTime}
         endTime={this.state.maxTime}
-        onDone={this.close}
-        width={dimensions.width}
-        height={dimensions.height} />
+        onDone={this.close} />
+
     );
   },
 
@@ -498,8 +537,24 @@ export default React.createClass({
     let controls;
 
     if (this.state.showingControls) {
-      controls = this.buildControls(dimensions);
+      controls = this.buildControls();
     }
+
+    let showTimeJump;
+    if (this.state.showTimeJump) {
+      showTimeJump = (
+        <DateOverlay
+          onDone={this.hideTimeJump}
+          style={styles.dateOverlay}
+          date={new Date(this.state.currentTime)} />
+      );
+    }
+
+    let date = (
+      <DateOverlay
+        style={styles.dateOverlay}
+        date={new Date(this.state.currentTime)} />
+    );
 
     return (
       <OverlayModal ref="overlay"
@@ -522,8 +577,9 @@ export default React.createClass({
                 ref="video" />
             </TouchableWithoutFeedback>
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
-              {faces}
+              {showTimeJump}
               {controls}
+              {faces}
             </View>
           </View>
       </OverlayModal>
@@ -555,15 +611,22 @@ var styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  timeOverlay: {
-    fontFamily: 'AppleSDGothicNeo-SemiBold',
-    color: 'white',
-    opacity: 0.5,
+  videoControls: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    padding: 1,
-    backgroundColor: 'black'
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
+  },
+
+  dateOverlay: {
+    position: 'absolute',
+    top: 45,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 20,
+    flex: 1
   },
 
   container: {

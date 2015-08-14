@@ -6,21 +6,52 @@ var LiveVideoNative = React.requireNativeComponent('LiveVideo');
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'livevideo';
 
-const Segment = {
-  fromURL(object) {
-    // TODO: typechecks.
-    return Object.assign({}, object, {
-      type: 'url'
-    });
-  },
+const SegmentProps = [
+  'type',
+  'data',
+  'url',
+  'startUTC',
+  'endUTC',
+  'faces',
+  'id',
+  'nextId',
+  'previousId'
+];
 
-  fromFrame(object) {
-    // TODO: typechecks.
-    return Object.assign({}, object, {
-      type: 'data'
-    });
-  },
-};
+class Segment {
+  constructor(options = {}) {
+    // TODO: type checks.
+    for (var prop of SegmentProps) {
+      this[prop] = options[prop];
+    }
+
+    /**
+     * We provide custom functions for managing state here since we _must_ not
+     * mutate any properties after this object is setup to make react happy.
+     */
+    this._onStart = [];
+  }
+
+  addStartCallback(fn) {
+    this._onStart.push(fn)
+  }
+
+  fireStartCallbacks() {
+    this._onStart.map(fn => fn());
+  }
+
+  /**
+   * Only transmit specific properties used by the segment.
+   */
+  toJSON() {
+    let result = {};
+    for (var prop of SegmentProps) {
+      result[prop] = this[prop];
+    }
+    return result;
+  }
+}
+
 
 let LiveVideo = React.createClass({
   propTypes: {

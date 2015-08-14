@@ -43,8 +43,7 @@ export default React.createClass({
   },
 
   propTypes: {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
+    style: React.PropTypes.object,
     playing: React.PropTypes.bool,
     seekChangeThreshold: React.PropTypes.number,
     startTime: React.PropTypes.number.isRequired,
@@ -200,11 +199,6 @@ export default React.createClass({
 
   render() {
     // XXX: This is a hack to ensure width is 100%
-    let dimensions = {
-      width: this.props.width,
-      height: this.props.height
-    };
-
     let currentTime = this.formatUTCTime(
       this.state.seekTime || this.props.currentTime
     );
@@ -260,7 +254,7 @@ export default React.createClass({
     );
 
     return (
-      <View pointerEvents="box-none" style={dimensions}>
+      <View pointerEvents="box-none" style={this.props.style}>
         {top}
         {bottom}
       </View>

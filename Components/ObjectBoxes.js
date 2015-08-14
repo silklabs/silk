@@ -10,6 +10,7 @@ let {
 
 let ObjectBoxes = React.createClass({
   propTypes: {
+    style: React.PropTypes.object,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
     objects: React.PropTypes.array.isRequired,
@@ -68,11 +69,13 @@ let ObjectBoxes = React.createClass({
      }
 
     return (
-      <Surface
-        width={width}
-        height={height}>
-        {groups}
-      </Surface>
+      <View pointerEvents="none" style={this.props.style}>
+        <Surface
+          width={width}
+          height={height}>
+          {groups}
+        </Surface>
+      </View>
     );
   }
 });

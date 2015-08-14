@@ -13,7 +13,10 @@ export default async function main (config) {
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);
-  let io = require('socket.io')(http);
+  let io = require('socket.io')(http, {
+    // XXX: Only accept websocket clients for now to work around app issues.
+    transports: ['websocket']
+  });
   let accounts = require('./accounts')();
   let path = require('path');
   let log = require('./log')('server');

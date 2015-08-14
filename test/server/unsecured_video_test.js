@@ -56,8 +56,10 @@ suite('unsecured video', () => {
   let socket, videoEvents;
   setup(async () => {
     videoEvents = new EventEmitter();
+    socket = createSocketIO(context.url, {
+      transports: ['websocket']
+    });
 
-    socket = createSocketIO(context.url);
     // Ensure we are connected to socket first...
     await eventToPromise(socket, 'connect');
     socket.on('video-stream-new', (msg) => {
@@ -76,7 +78,7 @@ suite('unsecured video', () => {
     // validate the set of rooms...
     let rooms = ['test1', 'test2'];
     let newSocket = createSocketIO(context.url, {
-      multiplex: false
+      transports: ['websocket']
     });
 
     newSocket.emit('join', 'video-streams');

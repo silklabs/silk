@@ -8,6 +8,10 @@ let {
   Text,
 } = ReactART;
 
+let {
+  View
+} = React;
+
 let ObjectBoxes = React.createClass({
   propTypes: {
     style: React.PropTypes.object,

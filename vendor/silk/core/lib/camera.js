@@ -35,6 +35,8 @@ const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
 const TAG_FACES = 2;
 
+const OBJECT_POLL_RATE = 1000;
+
 /**
  * Flash modes as defined in <camera/CameraParameters.cpp>
  */
@@ -288,6 +290,10 @@ class CameraStream extends EventEmitter {
     // previewObjects is like videoObjects, but for the preview images
     this.previewObjects = [];
     this.previewHalFaces = false;
+
+    // Hold all the video frames with the timestamps until the next poll interval
+    this.videoFrames = [];
+    this.objectPollInterval = null;
   }
 
   _restart(why) {
@@ -319,6 +325,10 @@ class CameraStream extends EventEmitter {
     this._dataSocket = net.createConnection(CAPTURE_DATA_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_DATA_SOCKET_NAME} socket`);
       this._dataBuffer = new Buffer(0);
+
+      // Start polling for objects
+      this.objectPollInterval = setInterval(() => this._waitForObjects(),
+          OBJECT_POLL_RATE);
     });
     this._dataSocket.on('data', data => this._onDataSocketRead(data));
     this._dataSocket.on('error', err => {
@@ -396,11 +406,13 @@ class CameraStream extends EventEmitter {
       let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
       switch (tag) {
         case TAG_PREVIEW:
+          log.debug(`TAG_PREVIEW ${when}`);
           this._pushPreview(when, pkt);
           this.emit('preview', when, pkt);
           break;
         case TAG_VIDEO:
-          this._pushVideo(when, pkt);
+          log.debug(`TAG_VIDEO ${when}`);
+          this.videoFrames.push({when: when, pkt: pkt});
           break;
         case TAG_FACES:
           let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
@@ -417,6 +429,44 @@ class CameraStream extends EventEmitter {
       let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));
       this._dataBuffer.copy(rest, 0, HEADER_NR_BYTES + size);
       this._dataBuffer = rest;
+    }
+  }
+
+  /**
+   * Associate objects received so far from HAL and open CV with the video frames
+   * received from HAL and push them together. This function is run after every
+   * {@code OBJECT_POLL_RATE}
+   */
+  _waitForObjects() {
+    if (this.objectPollInterval) {
+      for (let i = 0; i < this.videoFrames.length; i++) {
+        let objects = [];
+
+        // Find all video objects that belong to this video frame
+        for (let j = 0; j < this.videoObjects.length; j++) {
+          if ((i === (this.videoFrames.length - 1)) &&
+              (this.videoFrames[i].when <= this.videoObjects[j].when)) {
+            // If it is the last video packet then this object must belong to
+            // this video frame
+            objects.push(this.videoObjects[j]);
+          } else if ((i + 1 <= (this.videoFrames.length - 1)) &&
+              ((this.videoFrames[i].when <= this.videoObjects[j].when) &&
+               (this.videoFrames[i + 1].when > this.videoObjects[j].when))) {
+            // Find the object that is within the boundary of this frame and
+            // the next frame
+            objects.push(this.videoObjects[j]);
+          }
+        }
+        this._pushVideo(this.videoFrames[i].when, this.videoFrames[i].pkt,
+                        objects);
+      }
+
+      // Drop all the leftover video objects as the corresponding video pkts
+      // have already been sent
+      this.videoObjects = [];
+
+      // All the video frames are already sent so clear the queue
+      this.videoFrames = [];
     }
   }
 
@@ -454,18 +504,17 @@ class CameraStream extends EventEmitter {
     this.videoObjects.push(object);
   }
 
-  _pushVideo(when, frame) {
+  _pushVideo(when, frame, objects) {
     // For video we group all related face packets to make it easier on the
     // client.
-    this._pushPacket(when, frame, this.videoObjects, 'mp4');
+    this._pushPacket(when, frame, objects, 'mp4');
     if (UPLOAD_ENABLED) {
-      this.videoUploads.add(when, frame, this.videoObjects);
+      this.videoUploads.add(when, frame, objects);
     }
-    this.videoObjects = [];
   }
 
   _pushPacket(when, frame, objects, type) {
-    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
+    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms objects:${(objects ? objects.length : 0)}`;
     if (this.serverSocket.connected) {
       log.verbose(str);
       this.serverSocket.emit('video', { id: this.id, objects: objects,

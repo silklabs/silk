@@ -70,7 +70,10 @@ function feedPlayer(msg) {
   video.src = mp4;
 }
 
-var socket = io(document.location.origin);
+var socket = io(document.location.origin, {
+  transports: ['websocket']
+});
+
 socket.on('connect', function () {
   while (monitors.firstChild) {
     monitors.removeChild(monitors.firstChild);

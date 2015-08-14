@@ -24,7 +24,13 @@ function detectObjects(im, when, cb) {
       }
       if (--pendingCallbacks <= 0) {
         let diff = Date.now() - start;
-        log.verbose(`Cascades ran for ${diff}ms`);
+        let msg = `Cascades ran for ${diff}ms`;
+        if (diff > 500) {
+          // Time to optimize?
+          log.warn(msg);
+        } else {
+          log.verbose(msg);
+        }
         cb(objs);
       }
     });
@@ -34,13 +40,22 @@ function detectObjects(im, when, cb) {
 export default function init(env) {
   log = env.log;
 
+  let working = false;
   env.camera.on('preview', (when, jpeg) => {
+    if (working) {
+      log.error('Still busy, unable to process next preview image');
+      return;
+    }
+    working = true;
+
     let start = Date.now();
     cv.readImage(jpeg, (err, im) => {
       if (err) {
+        working = false;
         throw err;
       }
       if (im.width() < 1 || im.height() < 1) {
+        working = false;
         throw new Error('Invalid image');
       }
 
@@ -53,6 +68,7 @@ export default function init(env) {
           log.info(`Detected objects:${what}`);
           env.camera.addObjects(objs);
         }
+        working = false;
       });
     });
   });

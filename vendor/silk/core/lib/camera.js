@@ -285,24 +285,22 @@ class CameraStream extends EventEmitter {
       log.info(`camera restart pending (ignored "${why}")`);
       return;
     }
+    log.info(`camera restart: ${why}`);
     this._ready = false;
     this._ctlSocket.destroy();
     this._ctlSocket = null;
     this._dataSocket.destroy();
     this._dataSocket = null;
 
-    log.info(`camera restart: ${why}`);
     util.timeout(1000)
     .then(() => this._init());
   }
 
-  _init(cmdData) {
+  _init(cmdData = null /*null expected on reconnect*/) {
     if (this._ready) {
       log.info(`camera already initialized`);
       return;
     }
-    PREVIEW_WIDTH = cmdData.width / cmdData.previewScale;
-    PREVIEW_HEIGHT = cmdData.height / cmdData.previewScale;
 
     // Connecting to data socket
     this._dataBuffer = new Buffer(0);
@@ -327,8 +325,12 @@ class CameraStream extends EventEmitter {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
-      this._command({cmdName: 'init', cmdData: cmdData});
-      this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+      if (cmdData) {
+        PREVIEW_WIDTH = cmdData.width / cmdData.previewScale;
+        PREVIEW_HEIGHT = cmdData.height / cmdData.previewScale;
+        this._command({cmdName: 'init', cmdData: cmdData});
+        this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+      }
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
     this._ctlSocket.on('error', err => {
@@ -452,9 +454,9 @@ class CameraStream extends EventEmitter {
   }
 
   _pushPacket(when, frame, objects, type) {
-    let str = `packet:${type} size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
+    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
     if (this.serverSocket.connected) {
-      log.debug(str);
+      log.verbose(str);
       this.serverSocket.emit('video', { id: this.id, objects: objects,
                                         frame: frame, contents: type, when: when });
     } else {
@@ -464,7 +466,7 @@ class CameraStream extends EventEmitter {
 
   _command(cmd) {
     if (!this._ready) {
-      log.warn(`camera service not ready, ignoring the command`);
+      log.error(`camera service not ready, ignoring the command ${cmd.cmdName}`);
       return;
     }
 

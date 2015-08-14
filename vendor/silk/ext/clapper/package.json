@@ -1,7 +1,7 @@
 {
-  "name": "example",
+  "name": "clapper",
   "version": "0.0.1",
-  "description": "Example extension",
+  "description": "Clap sample extension",
   "main": "index.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",

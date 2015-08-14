@@ -49,6 +49,10 @@ let bootCompleted = false;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
+let clapDetector;
+let ext;
+let diag;
+let hue;
 
 /**
  * Read or create a new device id this will be persisted between boots.
@@ -115,11 +119,18 @@ function boot() {
       ]);
     }).
     then(() => {
+      log.info('Initialize framework');
+
       camera = require('./camera')(id.toString());
       camera.on('error', () => {
         log.warn('Camera command errored out');
       });
       camera.start();
+
+      diag = require('./diag')(id.toString());
+
+      clapDetector = new clapper.ClapDetector();
+      mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
       log.info('Load configuration');
       return config.init();
@@ -159,8 +170,6 @@ main().catch(err => {
 //
 
 let socket = { __iamastub: true, connected: false, disconnect: () => {} };
-let diag;
-let hue;
 
 /**
  * Read vendor specific logo
@@ -202,38 +211,6 @@ function maybeCreateSocket() {
   if (!socket.__iamastub) {
     return;
   }
-
-  // Initialize hue module, which is special in the following ways:
-  //
-  // 1. It will fail to initialize if there's no wifi connection.
-  //
-  // 2. Deep within the hue initialization, the q module throws/catches an error
-  //    to check if an Error object contains stack traces (e.stack).  However
-  //    throwing this Error() triggers the loading of source maps unnecessarily,
-  //    delaying startup and consuming memory. As a workaround for this (and in
-  //    lieu of patching the q module), temporary remove the prepareStackTrace
-  //    implementation provided by the 'source-map-support' module.
-  //
-  try {
-    let prepareStackTrace = Error.prepareStackTrace;
-    Error.prepareStackTrace = v8PrepareStackTrace;
-    hue = require('./hue')();
-    Error.prepareStackTrace = prepareStackTrace;
-  } catch (e) {
-    log.warn(`Error: hue module failed to init: ${e}: ${e.stack}`);
-  }
-
-  let clapDetector = new clapper.ClapDetector();
-  mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));
-
-  require('./ext')({
-    camera: camera,
-    hue: hue,
-    sensors: sensors,
-    clapDetector: clapDetector,
-  });
-
-  diag = require('./diag')(id.toString());
 
   socket = require('socket.io-client')(
     api.config.serverUrl,
@@ -343,6 +320,43 @@ config.on('configured', () => {
       log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
       socket.connect();
     })
+    .then(util.timeout) // 0ms timer to enable others to run if needed.
+    .then(() => {
+
+      if (!hue) {
+        // Initialize hue module, which is special in the following ways:
+        //
+        // 1. It will fail to initialize if there's no wifi connection.
+        //
+        // 2. Deep within the hue initialization, the q module throws/catches an error
+        //    to check if an Error object contains stack traces (e.stack).  However
+        //    throwing this Error() triggers the loading of source maps unnecessarily,
+        //    delaying startup and consuming memory. As a workaround for this (and in
+        //    lieu of patching the q module), temporary remove the prepareStackTrace
+        //    implementation provided by the 'source-map-support' module.
+        //
+        try {
+          let prepareStackTrace = Error.prepareStackTrace;
+          Error.prepareStackTrace = v8PrepareStackTrace;
+          hue = require('./hue')();
+          Error.prepareStackTrace = prepareStackTrace;
+        } catch (e) {
+          log.warn(`Error: hue module failed to init: ${e}: ${e.stack}`);
+        }
+      }
+
+      // Load extensions
+      // (currently need to wait for hue to initialize, otherwise this could be
+      //  done much sooner)
+      if (!ext) {
+        require('./ext')({
+          camera: camera,
+          hue: hue,
+          sensors: sensors,
+          clapDetector: clapDetector,
+        });
+      }
+    })
     .catch(util.processthrow);
   }
 });
@@ -450,13 +464,36 @@ ui.on('key:factoryreset', () => {
   shutdown(finalPromiseFactory);
 });
 
+
+
+//
+// Monitor responsiveness of the main thread.
+//
+// Emit warnings when it looks like some processing is taking to long and thus
+// potentially starving others.
+//
+const WATCHDOG_MS = 250;
+const BOGGED_DOWN_MS = WATCHDOG_MS * 2;
+let lastDogTick = Date.now();
+function watchdog() {
+  let diff = Date.now() - lastDogTick;
+  //log.debug('tick');
+  if (diff > BOGGED_DOWN_MS) {
+    log.warn(`====[ Main thread was bogged down for ${diff - WATCHDOG_MS}ms ]====`);
+  }
+  lastDogTick = Date.now();
+  setTimeout(watchdog, WATCHDOG_MS);
+}
+watchdog();
+
+
 // Force the garbage collector to run regularly to keep the heap on a tight
 // leash
 //
 // Note that the values used within this function have been selected based on
 // intuition and *some* observation, and as such will likely need to be tuned in
 // the future.
-const GC_MAX_RUN_TIME = 200;
+const GC_MAX_RUN_TIME = 100;
 const gc1 = require('silk-gc1');
 function runGC() {
   // Try to run the gc for less than this number of milliseconds

@@ -98,7 +98,7 @@ class LiveSegmentProvider {
 
     let stream = `video-${id}`;
     socket.on(stream, this._provideSegment);
-    socket.emit('join', stream);
+    socket.join(stream);
   }
 
   stop() {
@@ -106,7 +106,7 @@ class LiveSegmentProvider {
     let socket = this.socket;
     let stream = `video-${id}`;
     socket.off(stream, this._provideSegment);
-    socket.emit('leave', stream);
+    socket.leave(stream);
   }
 }
 

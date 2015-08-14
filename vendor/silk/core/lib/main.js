@@ -6,6 +6,7 @@ ui.goto('bootanimation');
 
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
+let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
 
 let api = require('./api');
@@ -202,7 +203,25 @@ function maybeCreateSocket() {
     return;
   }
 
-  hue = require('./hue')();
+  // Initialize hue module, which is special in the following ways:
+  //
+  // 1. It will fail to initialize if there's no wifi connection.
+  //
+  // 2. Deep within the hue initialization, the q module throws/catches an error
+  //    to check if an Error object contains stack traces (e.stack).  However
+  //    throwing this Error() triggers the loading of source maps unnecessarily,
+  //    delaying startup and consuming memory. As a workaround for this (and in
+  //    lieu of patching the q module), temporary remove the prepareStackTrace
+  //    implementation provided by the 'source-map-support' module.
+  //
+  try {
+    let prepareStackTrace = Error.prepareStackTrace;
+    Error.prepareStackTrace = v8PrepareStackTrace;
+    hue = require('./hue')();
+    Error.prepareStackTrace = prepareStackTrace;
+  } catch (e) {
+    log.warn(`Error: hue module failed to init: ${e}: ${e.stack}`);
+  }
 
   let clapDetector = new clapper.ClapDetector();
   mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));

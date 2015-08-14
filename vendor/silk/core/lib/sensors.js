@@ -114,7 +114,8 @@ class Sensors extends events.EventEmitter {
 
       log.info(`sensors restart: ${why}`);
       util.timeout(1000)
-      .then(() => this.init());
+      .then(() => this.init())
+      .catch(util.processthrow);
       return;
     }
     log.info(`sensors restart pending (ignored "${why}")`);

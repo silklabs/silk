@@ -49,10 +49,14 @@ function getNetworkTime() {
   function ntpCallback(err, date) {
     if (err) {
       log.warn(`Error: NTP failed: ${err}`);
-      util.timeout(NTP_RETRY_DELAY).then(getNetworkTime);
+      util.timeout(NTP_RETRY_DELAY)
+      .then(getNetworkTime)
+      .catch(util.processthrow);
     } else {
       setSystemDate(date);
-      util.timeout(NTP_REFRESH_DELAY).then(getNetworkTime);
+      util.timeout(NTP_REFRESH_DELAY)
+      .then(getNetworkTime)
+      .catch(util.processthrow);
     }
   }
 

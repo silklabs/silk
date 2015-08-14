@@ -293,7 +293,8 @@ class CameraStream extends EventEmitter {
     this._dataSocket = null;
 
     util.timeout(1000)
-    .then(() => this._init());
+    .then(() => this._init())
+    .catch(util.processthrow);
   }
 
   _init(cmdData = null /*null expected on reconnect*/) {

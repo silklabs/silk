@@ -167,7 +167,7 @@ ifeq (file,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 	$(hide) cp $(<D)/$(LOCAL_NODE_MODULE_MAIN) $@
 # Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
 # so they can be resolved correctly from the browserify-ed module
-	$(_hide) \
+	$(hide) \
   for binding in `cd $(<D)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
     mkdir -p $(@D)/build; \
     cp -vf $(<D)/$$binding $(@D)/build/`basename $$binding`; \

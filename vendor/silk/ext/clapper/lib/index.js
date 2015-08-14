@@ -2,10 +2,9 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 export default function init(env) {
-  let log = env.log;
-  log.info('Hello from the example extension');
-
   env.clapDetector.on('clap', cnt => {
-    log.info('*********************** clap detected ***************', cnt);
+    let tag = cnt === 1 ? 'clap' : `${cnt} claps`;
+    env.log.info(tag);
+    env.camera.addObject(tag);
   });
 }

@@ -278,6 +278,13 @@ export default React.createClass({
 
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
+      console.log(`
+        Unexpected end event:
+
+          current: ${current}
+          notification to remove: ${event.nativeEvent.id}
+          ids: ${segments.map(v => v.id)}
+      `);
       throw new Error("Unexpected end event!");
       return;
     }

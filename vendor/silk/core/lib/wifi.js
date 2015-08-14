@@ -28,7 +28,9 @@ class WpaMonitor extends events.EventEmitter
       this._socket = null;
 
       log.info(`wpad restart: ${why}`);
-      util.timeout(1000).then(() => this._init());
+      util.timeout(1000)
+      .then(() => this._init())
+      .catch(util.processthrow);
       return;
     }
     log.info(`wpad restart pending (ignored "${why}")`);

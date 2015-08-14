@@ -311,7 +311,7 @@ config.on('unconfigured', () => {
   if (ui.goto('setup')) {
     socket.disconnect();
     config.configure(id)
-    .catch(e => util.processthrow(e));
+    .catch(util.processthrow);
   }
 });
 config.on('configured', () => {
@@ -324,7 +324,7 @@ config.on('configured', () => {
       log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
       socket.connect();
     })
-    .catch(e => util.processthrow(e));
+    .catch(util.processthrow);
   }
 });
 
@@ -412,7 +412,7 @@ update.on('staged', () => {
 ui.on('key:setup', () => {
   if (bootCompleted) {
     config.unconfigure()
-    .catch(e => util.processthrow(e));
+    .catch(util.processthrow);
   }
 });
 ui.on('key:powerdown', shutdown);

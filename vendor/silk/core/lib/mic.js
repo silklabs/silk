@@ -35,7 +35,9 @@ class Mic extends EventEmitter {
 
   _restart(why) {
     log.info(`mic restart: ${why}`);
-    util.timeout(1000).then(() => this._init(this.initCmdData));
+    util.timeout(1000)
+    .then(() => this._init())
+    .catch(util.processthrow);
   }
 
   _init() {

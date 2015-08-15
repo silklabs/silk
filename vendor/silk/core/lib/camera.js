@@ -212,6 +212,11 @@ class VideoUploadQueue extends EventEmitter {
   }
 
   _work() {
+    if (!this.serverSocket.connected) {
+      log.warn(`server socket not ready, not uploading`);
+      return this.stop();
+    }
+
     // Shift an  item off first thing so we don't get stuck in a loop.
     let item = this.queue.shift();
     log.info('uploading item size: %d, time: %d', item.frame.length, item.when);
@@ -258,6 +263,11 @@ class VideoUploadQueue extends EventEmitter {
     this.emit('stopping');
   }
 
+  /** Update this's handle to the master server socket. */
+  set socket(socket) {
+    this.serverSocket = socket;
+    this.start();
+  }
 }
 
 /**
@@ -486,7 +496,7 @@ class CameraStream extends EventEmitter {
    * Initialize camera and start sending camera data to the server
    */
   start() {
-    this.serverSocket = { connected: false };
+    this.socket = { connected: false };
     this._init({
       frameInterval: DURATION,
       width: 1280,
@@ -509,6 +519,7 @@ class CameraStream extends EventEmitter {
       // first connects.
       this._pushPreview(null, null);
     }
+    this.videoUploads.socket = socket;
   }
 
   /**

@@ -51,22 +51,26 @@ class Env extends events.EventEmitter {
     let camera = deviceObjects.camera;
     if (camera) {
       this.camera = new events.EventEmitter();
-      this.camera.addObject = (tag, when, rect) => {
-        camera.addObject(tag, when, rect);
-      };
-      this.camera.addObjects = objs => {
-        camera.addObjects(objs);
-      };
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
+    }
 
-      camera.on('preview', (when, jpeg) => {
-        this.camera.emit('preview', when, jpeg);
+    let timeline = deviceObjects.timeline;
+    if (timeline) {
+      this.timeline = new events.EventEmitter();
+      timeline.on('preview', (when, jpeg) => {
+        this.timeline.emit('preview', when, jpeg);
       });
-      camera.on('face', faces => {
-        this.camera.emit('face', faces);
+      timeline.on('face', faces => {
+        this.timeline.emit('face', faces);
       });
+      this.timeline.addObject = (tag, when, rect) => {
+        timeline.addObject(tag, when, rect);
+      };
+      this.timeline.addObjects = objs => {
+        timeline.addObjects(objs);
+      };
     }
 
     let hue = deviceObjects.hue;

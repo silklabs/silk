@@ -41,7 +41,7 @@ export default function init(env) {
   log = env.log;
 
   let working = false;
-  env.camera.on('preview', (when, jpeg) => {
+  env.timeline.on('preview', (when, jpeg) => {
     if (working) {
       log.error('Still busy, unable to process next preview image');
       return;
@@ -66,7 +66,7 @@ export default function init(env) {
         if (objs.length > 0) {
           let what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
           log.info(`Detected objects:${what}`);
-          env.camera.addObjects(objs);
+          env.timeline.addObjects(objs);
         }
         working = false;
       });

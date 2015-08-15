@@ -25,6 +25,7 @@ let deferred = require('./deferred');
 let mkdirp = require('mkdirp-promise');
 let mic = require('./mic');
 let clapper = require('./clapper');
+let timeline = require('./timeline');
 
 import makeCrashReporter from './crashreport';
 import makeOutbox from './outbox';
@@ -121,7 +122,7 @@ function boot() {
     then(() => {
       log.info('Initialize framework');
 
-      camera = require('./camera')(id.toString());
+      camera = require('./camera')(id.toString(), timeline);
       camera.on('error', () => {
         log.warn('Camera command errored out');
       });
@@ -354,6 +355,7 @@ config.on('configured', () => {
           hue: hue,
           sensors: sensors,
           clapDetector: clapDetector,
+          timeline: timeline,
         });
       }
     })

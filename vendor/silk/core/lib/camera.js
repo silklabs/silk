@@ -8,7 +8,7 @@ let util = require('./util');
 let net = require('net');
 
 //const FRONT = 1;
-const BACK = 0;
+// const BACK = 0;
 
 const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION = util.getintprop(DURATION_PROP, 1);
@@ -277,9 +277,10 @@ class VideoUploadQueue extends EventEmitter {
  * server on the provided server socket
  */
 class CameraStream extends EventEmitter {
-  constructor(id) {
+  constructor(id, timeline) {
     super();
     this.id = id;
+    this.timeline = timeline;
     this._ready = false;
     this.videoUploads = new VideoUploadQueue(this.id, DURATION * 1000);
 
@@ -408,15 +409,16 @@ class CameraStream extends EventEmitter {
         case TAG_PREVIEW:
           log.debug(`TAG_PREVIEW ${when}`);
           this._pushPreview(when, pkt);
-          this.emit('preview', when, pkt);
+          this.timeline.addPreview(when, pkt);
           break;
         case TAG_VIDEO:
           log.debug(`TAG_VIDEO ${when}`);
           this.videoFrames.push({when: when, pkt: pkt});
+          this.timeline.addVideo(when, pkt);
           break;
         case TAG_FACES:
           let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-          this.emit('face', faces);
+          this.timeline.addFace(faces);
           this._pushFace(when, faces);
           break;
         default:
@@ -637,4 +639,4 @@ class CameraStream extends EventEmitter {
 }
 
 CameraStream.prototype.FLASH_MODE = FLASH_MODE;
-module.exports = (id) => new CameraStream(id, BACK);
+module.exports = (id, timeline) => new CameraStream(id, timeline);

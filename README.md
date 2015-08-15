@@ -57,8 +57,8 @@ Load http://localhost:5000 in your web browser to ensure that the server is runn
 Note if your testing from a device the server needs to know how it can be accessed from your network for video uploads. The simplest way of doing this is like this:
 
 ```sh
-# 0.0.0.0 would instead be an ip reacahble by your device/browser/etc..
-PUBLIC_URL=0.0.0.0:5000 npm start
+# 192.168.0.3 would instead be an IP reachable by your device/browser/etc..
+PUBLIC_URL=http://192.168.0.3:5000 npm start
 ```
 
 Alternatively you can set this value in configuration (see: https://github.com/silklabs/silk-server/blob/master/config/default.js#L14)

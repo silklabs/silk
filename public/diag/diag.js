@@ -132,7 +132,9 @@ var cameras = new function() {
   this.init();
 }
 
-var socket = io(document.location.origin);
+var socket = io(document.location.origin, {
+  transports: ['websocket']
+});
 socket.on('connect', function () {
   console.log('connected to server');
   socket.emit('join', 'logging');

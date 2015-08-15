@@ -35,7 +35,7 @@ const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
 const TAG_FACES = 2;
 
-const OBJECT_POLL_RATE = 1000;
+const OBJECT_POLL_RATE = DURATION * 1000;
 
 /**
  * Flash modes as defined in <camera/CameraParameters.cpp>

@@ -1,0 +1,4 @@
+[submodule "socket.io-client-swift"]
+	path = socket.io-client-swift
+	url = git@github.com:silklabs/socket.io-client-swift.git
+	branch = silk

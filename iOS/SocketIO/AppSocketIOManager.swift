@@ -8,6 +8,8 @@ connection (performance) for the entire application or allowing removal
 of specific event handlers based on their callback.
 */
 
+import SocketIO
+
 // Container to hold weakly held values in arrays
 internal class ListenerContainer {
   weak var listener: SocketIOListener?
@@ -130,7 +132,7 @@ class AppSocketIO {
   */
   func emit(event:String, _ items: [AnyObject]) {
     if self.connected {
-      self.client!.emitArray(event, items)
+      self.client!.emit(event, withItems: items)
       return
     }
     objSync(self.pendingEmits) {

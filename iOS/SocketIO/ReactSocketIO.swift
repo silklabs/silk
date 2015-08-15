@@ -1,4 +1,5 @@
 import Foundation
+import SocketIO
 
 internal typealias JSONObj = Dictionary<String, AnyObject>
 

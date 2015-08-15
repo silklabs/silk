@@ -52,7 +52,7 @@ npm start
 ```
 Load http://localhost:5000 in your web browser to ensure that the server is running.  Devices and apps can connect to that server instance.
 
-### `PUBLIC_URL`
+#### `PUBLIC_URL`
 
 Note if your testing from a device the server needs to know how it can be accessed from your network for video uploads. The simplest way of doing this is like this:
 

@@ -88,6 +88,14 @@ class AppSocketIO {
   private var pendingEmits: [OutgoingEvent] = []
 
   /**
+   * Custom queue to use instead of main thread when dispatching events.
+   *
+   * It's potentially important to use SERIAL here instead of CONCURRENT so dispatched events
+   * occur in the order we receive them from the server.
+   */
+  private var dispatchQueue = dispatch_queue_create("app socket.io dispatch", DISPATCH_QUEUE_SERIAL)
+
+  /**
   Returned listener is not strongly held by this instance and must have
   another strong reference to it for the duration you require it.
 
@@ -177,9 +185,20 @@ class AppSocketIO {
   This method can be called from any thread but is not thread-safe.
   */
   func connect(socketURL: String, options: [String: AnyObject]?) {
+    // Define here instead of a constant so we don't need to copy it later.
+    var configuration: [String: AnyObject] = [
+      "handleQueue": self.dispatchQueue
+    ]
+
+    if options != nil {
+      for (key, value) in options! {
+        configuration[key] = value
+      }
+    }
+
     // Disconnect if we had a previous client...
     self.disconnect()
-    self.client = SocketIOClient(socketURL: socketURL, options: options)
+    self.client = SocketIOClient(socketURL: socketURL, options: configuration)
 
     // Keep track of disconnections....
     self.client!.on("disconnect") {

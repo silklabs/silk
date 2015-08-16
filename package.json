@@ -15,6 +15,7 @@
     "react-native-button": "^1.2.0",
     "react-timer-mixin": "^0.13.2",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git",
+    "silk-socket.io-swift": "git@github.com:silklabs/socket.io-client-swift#611369ef352e998a53c4744c91812b46906cf327",
     "uuid": "^2.0.1"
   }
 }

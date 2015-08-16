@@ -25,7 +25,6 @@ let deferred = require('./deferred');
 let mkdirp = require('mkdirp-promise');
 let mic = require('./mic');
 let clapper = require('./clapper');
-let timeline = require('./timeline');
 
 import makeCrashReporter from './crashreport';
 import makeOutbox from './outbox';
@@ -44,6 +43,7 @@ const name = util.getprop('persist.silk.displayName', 'Silkcam');
 const logoFilePath = '/system/media/logo.png';
 
 let id = null;
+let timeline;
 let camera;
 let logo = null;
 let bootCompleted = false;
@@ -122,7 +122,8 @@ function boot() {
     then(() => {
       log.info('Initialize framework');
 
-      camera = require('./camera')(id.toString(), timeline);
+      timeline = require('./timeline')(id.toString());
+      camera = require('./camera')(timeline);
       camera.on('error', () => {
         log.warn('Camera command errored out');
       });
@@ -237,13 +238,15 @@ function maybeCreateSocket() {
     ui.goto('online');
     emitDeviceInfo()
     .then(() => {
+      log.warn(`server socket connected`);
       diag.start(socket);
       update.start();
-      camera.socket = socket;
-    });
+      timeline.socket = socket;
+    })
+    .catch(util.processthrow);
   });
   socket.on('disconnect', e => {
-    log.warn(`socket disconnect: ${e}`);
+    log.warn(`server socket disconnect: ${e}`);
     update.stop();
     diag.stop();
 

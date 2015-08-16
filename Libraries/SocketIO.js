@@ -70,6 +70,31 @@ export default class extends EventEmitter {
     DeviceEventEmitter.addListener('socketEvent', (event) => {
       this.handleEvent(event);
     });
+
+    this.rooms = new Set();
+    this._needsRoomReconnect = false;
+
+    /**
+     * To reduce complexity we do not persist room settings on the server side
+     * so we must reconnect manually here.
+     */
+    this.on('reconnect', () => {
+      console.log('Disconnect detected will need to rejoin rooms.');
+      this._needsRoomReconnect = true;
+    });
+
+    this.on('connect', () => {
+      if (!this._needsRoomReconnect) {
+        return;
+      }
+
+      console.log('Reconnected to server rejoining rooms');
+      for (let room of this.rooms) {
+        console.log('rejoining', room);
+        this.emit('join', room);
+      }
+      this._needsRoomReconnect = false;
+    });
   }
 
   handleEvent(event) {
@@ -92,6 +117,9 @@ export default class extends EventEmitter {
 
   /**
   Overrides superclass emit interface for one that emits on the server.
+
+  Note: it is safe to call this when disconnected the native side will buffer
+  events and send them on reconnect.
   */
   emit(event, ...data) {
     SocketIONative.emit(event, data);
@@ -108,5 +136,23 @@ export default class extends EventEmitter {
   */
   connect(host, config) {
     SocketIONative.connect(host, config);
+  }
+
+  /**
+   * Silk-server specific join room.
+   *
+   * Automatically will rejoin this room on server reconnection.
+   */
+  join(room) {
+    this.rooms.add(room);
+    this.emit('join', room);
+  }
+
+  /**
+   * Silk-server specific leave room.
+   */
+  leave(room) {
+    this.rooms.delete(room)
+    this.emit('leave', room);
   }
 }

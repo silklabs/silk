@@ -98,7 +98,7 @@ class LiveSegmentProvider {
 
     let stream = `video-${id}`;
     socket.on(stream, this._provideSegment);
-    socket.emit('join', stream);
+    socket.join(stream);
   }
 
   stop() {
@@ -106,7 +106,7 @@ class LiveSegmentProvider {
     let socket = this.socket;
     let stream = `video-${id}`;
     socket.off(stream, this._provideSegment);
-    socket.emit('leave', stream);
+    socket.leave(stream);
   }
 }
 
@@ -197,6 +197,11 @@ export default React.createClass({
   },
 
   onLiveSegment(segment) {
+    if (this._videoSegments.length === 0) {
+      console.log('set lag');
+      this.liveVideoLag = Date.now() - segment.startUTC;
+    }
+
     this.appendSegment(segment);
     this.setState({ maxTime: segment.startUTC });
   },
@@ -273,6 +278,13 @@ export default React.createClass({
 
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
+      console.log(`
+        Unexpected end event:
+
+          current: ${current}
+          notification to remove: ${event.nativeEvent.id}
+          ids: ${segments.map(v => v.id)}
+      `);
       throw new Error("Unexpected end event!");
       return;
     }
@@ -299,7 +311,7 @@ export default React.createClass({
       // When a recorded segment starts we should begin buffering the next
       // segment.
       case MODES.recorded:
-        this.bufferNextRecordedSegment(segment);
+        this.bufferNextRecordedSegment();
         break;
       case MODES.seeking:
         // Intentionally left blank when we seek we should not be running
@@ -358,12 +370,31 @@ export default React.createClass({
     }, FACE_DISAPPEAR);
   },
 
-  onTimeChange(event) {
-    // Do not emit any time events while we are seeking...
-    if (this.state.mode !== MODES.seeking) {
-      let time = event.nativeEvent.time;
-      this.setState({ currentTime: time });
+  modifyLiveRate(segment, time) {
+    let currentLag = Date.now() - time - this.liveVideoLag;
+
+    if (this._videoSegments.length > 1 && currentLag > 0) {
+      let rate = 1 + currentLag / 1000
+      this.setState({ rate: rate });
+      console.log('new rate:', rate);
     }
+  },
+
+  onTimeChange(event) {
+    // Let seek bar manage it's own state in video controls.
+    if (this.state.mode === MODES.seeking) {
+      // Do not emit any time events while we are seeking...
+      return
+    }
+
+    let time = event.nativeEvent.time;
+    let segment = this._videoSegments[0];
+
+    if (this.state.mode == MODES.live) {
+      this.modifyLiveRate(segment, time);
+    }
+
+    this.setState({ currentTime: time });
   },
 
   onSeekStart() {

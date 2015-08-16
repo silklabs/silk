@@ -56,14 +56,14 @@ var MonitorPreview = React.createClass({
     let { socket, id } = this.props;
     let stream = `video-preview-${id}`;
     socket.on(stream, this.onPreviewFrame);
-    socket.emit('join', stream);
+    socket.join(stream);
   },
 
   componentWillUnmount() {
     let { socket, id } = this.props;
     let stream = `video-preview-${id}`;
     socket.off(stream, this.onPreviewFrame);
-    socket.emit('leave', stream);
+    socket.leave(stream);
   },
 
   render() {

@@ -16,7 +16,7 @@ var {
 } = React;
 
 var Config = require('../Libraries/Config')();
-var SocketIO = require('./SocketIO');
+var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
 

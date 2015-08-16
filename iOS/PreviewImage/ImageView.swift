@@ -3,12 +3,20 @@ import UIKit
 class ImageView : UIImageView {
   var blob: NSData? {
     didSet {
-      self.renderImage(self.blob!)
+      if let blob = self.blob {
+        self.renderImage(blob)
+      } else {
+        NSLog("ImageView: nil blob value set (ignoring)")
+      }
     }
   }
 
   func renderImage(data: NSData) {
     AssertMainThread()
-    self.image = UIImage(data: data)!
+    if let image =  UIImage(data: data) {
+      self.image = image
+    } else {
+      NSLog("ImageView: Image could not be created for unknown reasons (ignoring).")
+    }
   }
 }

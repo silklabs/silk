@@ -72,6 +72,8 @@
 		57BCE10D1B6991520047088B /* BlobBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* BlobBridge.m */; };
 		57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10E1B69919A0047088B /* BlobBridge.swift */; };
 		57D3A2011B7EC767006E488F /* SocketIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57D3A1F81B7EC5FF006E488F /* SocketIO.framework */; };
+		57D3A29B1B810DE0006E488F /* SocketIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57D3A1F81B7EC5FF006E488F /* SocketIO.framework */; };
+		57D3A29C1B810DE0006E488F /* SocketIO.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 57D3A1F81B7EC5FF006E488F /* SocketIO.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */; };
 		F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4091B3725DB0081F479 /* NSData+Base64.m */; };
 		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
@@ -262,6 +264,13 @@
 			remoteGlobalIDString = 572EF2181B51F16C00EEBB58;
 			remoteInfo = "SocketIO-iOS";
 		};
+		57D3A29D1B810DE0006E488F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 57D3A1F01B7EC5FF006E488F /* Socket.IO-Client-Swift.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 572EF2181B51F16C00EEBB58;
+			remoteInfo = "SocketIO-iOS";
+		};
 		78C398B81ACF4ADC00677621 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */;
@@ -277,6 +286,20 @@
 			remoteInfo = RCTText;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		57D3A29F1B810DE1006E488F /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				57D3A29C1B810DE0006E488F /* SocketIO.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00C302A71ABCB8CE00DB3ED1 /* RCTActionSheet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTActionSheet.xcodeproj; path = "node_modules/react-native/Libraries/ActionSheetIOS/RCTActionSheet.xcodeproj"; sourceTree = "<group>"; };
@@ -389,6 +412,7 @@
 				5758F3351B609C2000C18E5D /* libART.a in Frameworks */,
 				5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */,
 				5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */,
+				57D3A29B1B810DE0006E488F /* SocketIO.framework in Frameworks */,
 				5758F17D1B5DD52800C18E5D /* libRCTSettings.a in Frameworks */,
 				5758F17E1B5DD52800C18E5D /* libRCTText.a in Frameworks */,
 				5758F17F1B5DD52800C18E5D /* libRCTWebSocket.a in Frameworks */,
@@ -763,6 +787,7 @@
 				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json) */,
 				5741E1471B5DA53300F9376C /* Conditionally react-native bundle */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				57D3A29F1B810DE1006E488F /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -779,6 +804,7 @@
 				5758F16F1B5DD40D00C18E5D /* PBXTargetDependency */,
 				5758F15F1B5DD39200C18E5D /* PBXTargetDependency */,
 				5758F15D1B5DD38D00C18E5D /* PBXTargetDependency */,
+				57D3A29E1B810DE0006E488F /* PBXTargetDependency */,
 			);
 			name = Silk;
 			productName = "Hello World";
@@ -1173,6 +1199,11 @@
 			isa = PBXTargetDependency;
 			name = "SocketIO-iOS";
 			targetProxy = 57D3A1FF1B7EC61D006E488F /* PBXContainerItemProxy */;
+		};
+		57D3A29E1B810DE0006E488F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "SocketIO-iOS";
+			targetProxy = 57D3A29D1B810DE0006E488F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

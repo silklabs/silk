@@ -2,7 +2,7 @@ let log = require('./log')('socketio');
 
 export default function(io) {
   // Real time event stream.
-  const VIDEO_IDLE_TIMEOUT_MS = 5000;
+  const VIDEO_IDLE_TIMEOUT_MS = 10000;
   let videoRooms = new Map();
   let roomInfo = function(room) {
     if (room.logo.length > 0) {
@@ -55,7 +55,7 @@ export default function(io) {
 
       room.timeout = setTimeout(() => {
         io.to('video-streams').emit('video-stream-delete', roomInfo(room));
-        log.debug(`Device packet timeout. Deleting id=${id}`);
+        log.info(`Device packet timeout. Deleting id=${id}`);
         videoRooms.delete(id);
       }, VIDEO_IDLE_TIMEOUT_MS);
     }

@@ -121,6 +121,7 @@ socket.on('video-stream-new', function(msg) {
 
       var view = new Uint8Array(msg.frame);
       var blob = new Blob([view], { type: 'image/jpg' });
+      URL.revokeObjectURL(previewImage.src);
       previewImage.src = URL.createObjectURL(blob);
       previewImage.onload = function() {
         renderPreview(canvas, name, when, previewImage, logoImage, msg.objects);

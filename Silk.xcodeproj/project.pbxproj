@@ -489,7 +489,6 @@
 		13B07FAE1A68108700A75B9A /* Silk */ = {
 			isa = PBXGroup;
 			children = (
-				5758F32D1B60989C00C18E5D /* ART.xcodeproj */,
 				57AC68811B4F0CE6009B70A3 /* iOS */,
 				573C20C51B4EF5C900C40871 /* PropertyObserver */,
 				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
@@ -687,6 +686,8 @@
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */,
+				5758F32D1B60989C00C18E5D /* ART.xcodeproj */,
 				F949A1961B365A2900E59D69 /* WebViewBridge */,
 				146833FF1AC3E56700842450 /* React.xcodeproj */,
 				00C302A71ABCB8CE00DB3ED1 /* RCTActionSheet.xcodeproj */,
@@ -713,7 +714,6 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */,
 				3D4D1CBA1B7AB4F50047A020 /* Components */,
 				13B07FAE1A68108700A75B9A /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,

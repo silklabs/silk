@@ -1,23 +1,70 @@
 import UIKit
 import AVFoundation
 
-internal class GetAVAssetURLOperation : NSOperation {
+internal class GetAVAssetURLOperation : ConcurrentOperation {
+  static let DESIRED_KEYS = ["duration"]
+
   var value: AVURLAsset?
+  var loader: AVAssetResourceLoaderDelegate?
+  var loaderQueue: dispatch_queue_t?
+
   let url: NSURL
 
-  init(url: NSURL) {
+  // Private reference to the asset before it has finished.
+  private var asset: AVAsset?
+
+
+  init(url: NSURL, loader: AVAssetResourceLoaderDelegate?, queue: dispatch_queue_t?) {
     self.url = url
+    self.loader = loader
+    self.loaderQueue = queue
+    super.init()
+  }
+
+  convenience init(url: NSURL) {
+    self.init(url: url, loader: nil, queue: nil)
   }
 
   /**
-   * For now this is intentionally very simple in the future we may want to extend this with
-   * better support for buffering and fetching (bypassing AVPLayer(s) defaults)
+   * Begin fetching the AVAsset and keys defined by DESIRED_KEYS.
    */
-  override func main() {
+  override func start() {
     if self.cancelled {
       return
     }
-    self.value = AVURLAsset(URL: self.url, options: [:])
+
+    let asset = AVURLAsset(URL: self.url, options: [:])
+
+    if let loader = self.loader {
+      asset.resourceLoader.setDelegate(self.loader, queue: self.loaderQueue)
+    }
+
+    asset.loadValuesAsynchronouslyForKeys(GetAVAssetURLOperation.DESIRED_KEYS) {
+      [unowned self] in
+
+      Assertion(
+        {
+          asset.duration.milliseconds() > 0
+        },
+        "Asset should fully load before firing event"
+      )
+
+      self.value = asset
+      self.state = .Finished
+    }
+
+    self.state = .Executing
+    self.asset = asset
+  }
+
+  override func cancel() {
+    super.cancel()
+
+    // Cancel the loading of the asset if we have not yet finished.
+    if let asset = self.asset {
+      asset.cancelLoading()
+      self.state = .Finished
+    }
   }
 }
 
@@ -39,6 +86,7 @@ internal class LiveVideoItem : AVPlayerItem {
   When this video was taken.
   */
   var start: Int64!
+
   internal var faces: [FaceEvent] = []
 }
 
@@ -46,6 +94,12 @@ internal class LiveVideoItem : AVPlayerItem {
 View for a AvQueuePlayer designed for "live" streaming of video (in small mp4 files).
 */
 class LiveVideo : UIView {
+
+  /**
+   * Do not let all items in the AVPlayerQueue finish. 
+   * The last one will pause this number of MS before it finishes.
+   */
+  static let LAST_ITEM_PAUSE = 25
 
   /**
   Time in milliseconds between dispatching onTimeChange events.
@@ -73,6 +127,12 @@ class LiveVideo : UIView {
   private var faceTimeObservers: [AnyObject] = []
   private var timeChangeObserver: AnyObject?
   private var itemPlayedToEndObserver: AnyObject?
+  private var lastItemEndObserver: AnyObject?
+
+  /**
+   * Used to log out the duration of the last item pause.
+   */
+  private var lastItemPauseDate: NSDate?
 
   // This property is used to indicate changes in playing states from react-native but does not
   // actually indicate we _are_ playing just hints to the internals what to do.
@@ -94,7 +154,7 @@ class LiveVideo : UIView {
 
   /**
    * Indiates if we are actively playing video this is only true if the player 
-   * is ready and video is running.
+   Indicates* is ready and video is running.
    */
   private var playing = false
   private var pendingPlay: PropertyObserverKey?
@@ -215,7 +275,10 @@ class LiveVideo : UIView {
 
   func replaceSegments(segments: [VideoSegment]) {
     self.pause()
-    self.player.removeAllItems()
+
+    if self.player.items().count > 0 {
+      self.player.removeAllItems()
+    }
 
     // When we replace segments cancel all previous load requests.
     if let operations = self.videoResourceQueue {
@@ -235,7 +298,6 @@ class LiveVideo : UIView {
       let rate = self.rate as Float
       if self.player.rate != rate {
         self.player.rate = rate
-        NSLog("Set playback rate: \(rate) \(self.player.rate)")
       }
     }
   }
@@ -266,57 +328,67 @@ class LiveVideo : UIView {
    */
   func play() {
     AssertMainThread()
-    if (!self.playing) {
-      // If the player is immediately ready then just start it up.
-      if self.player.status == AVPlayerStatus.ReadyToPlay {
-        self.playing = true
-        self.pendingPlay = nil
+    if self.player.currentItem == nil || self.playing {
+      return
+    }
 
-        // Update playback rate.
-        self.setRate()
+    let item = self.player.currentItem as! LiveVideoItem
+    // If the player is immediately ready then just start it up.
+    if item.status == AVPlayerItemStatus.ReadyToPlay {
+      self.playing = true
+      self.pendingPlay = nil
+
+      // Log out time we have been paused while buffering.
+      if let lastItemPaused = self.lastItemPauseDate {
+        let time = NSDate().timeIntervalSinceDate(lastItemPaused) * 1000
+        self.lastItemPauseDate = nil
+        NSLog("Resumed after last item pause: \(time) ms")
+      }
+
+      // Update playback rate.
+      self.setRate()
+      return
+    }
+
+    // Do not listen more then once for the player to become ready.
+    if self.pendingPlay != nil {
+      return
+    }
+
+    // If the player is not ready yet we must wait for it to be in a ready state.
+    self.pendingPlay = item.observeKeyPath("status") {
+      [unowned self]
+      (kvo, _) in
+
+      if item.status != AVPlayerItemStatus.ReadyToPlay {
         return
       }
 
-      // Do not listen more then once for the player to become ready.
-      if self.pendingPlay != nil {
-        return
-      }
-
-      // If the player is not ready yet we must wait for it to be in a ready state.
-      self.pendingPlay = self.player.observeKeyPath("status") {
-        [unowned self]
-        (kvo, _) in
-        if (self.player.status == AVPlayerStatus.ReadyToPlay) {
-          dispatch_async(dispatch_get_main_queue()) {
-            // Call play again so we don't race to set self.playing = nil
-            self.play()
-            // We don't need this listener anymore once we have started listening...
-            self.player.removeKeyPathObserver(kvo)
-          }
-        }
+      dispatch_async(dispatch_get_main_queue()) {
+        // Call play again so we don't race to set self.playing = nil
+        self.play()
+        // We don't need this listener anymore once we have started listening...
+        item.removeKeyPathObserver(kvo)
       }
     }
   }
 
-  func appendVideoSegment(segment: VideoSegment) {
+  private func appendVideoSegment(segment: VideoSegment) {
+    AssertMainThread()
+
+    var operation: GetAVAssetURLOperation
+
     switch(segment.type) {
     case "url":
-      self.appendURL(segment)
+      operation = GetAVAssetURLOperation(url: segment.url!)
     case "data":
-      self.appendData(segment)
+      operation = self.buildVideoDataOperation(segment)
     default:
-      println("Unknown segment type \(segment.type) this should be impossible!");
+      NSLog("Unknown segment type \(segment.type) this should be impossible!");
+      return
     }
-  }
 
-  /**
-  Add a segement which is a url to the AVPlayerQueue.
-  
-  This method must be called from the main thread.
-  */
-  func appendURL(segment: VideoSegment) {
     let queue = self.getOrCreateVideoQueue()
-    let operation = GetAVAssetURLOperation(url: segment.url!)
     queue.addOperation(operation)
 
     // The ordering of the queue should ensure this always is called in the right order.
@@ -334,32 +406,68 @@ class LiveVideo : UIView {
   }
 
   /**
-  Add a segement which is NSData to the AVPlayerQueue.
-  
-  This method must be called from the main thread.
+  Creates an operation capable of loading video media from NSData
   */
-  func appendData(segment: VideoSegment) {
-    AssertMainThread()
-    if segment.data == nil {
-      NSLog("Attmpted to use null data for segment: \(segment.id)")
-      return
-    }
+  private func buildVideoDataOperation(segment: VideoSegment) -> GetAVAssetURLOperation {
+    Assertion({
+        segment.data != nil
+      },
+      "Attmpted to use null data for segment: \(segment.id)"
+    )
 
     // Consume segment data and ensure the container does not keep a reference to it.
     let data = segment.data!
     segment.data = nil
 
     let (_, url) = self.loader.add(data)
-    let asset = AVURLAsset(URL: url, options: [:])
+    return GetAVAssetURLOperation(url: url, loader: self.loader, queue: self.assetLoaderQueue)
+  }
 
-    asset.resourceLoader.setDelegate(self.loader, queue: self.assetLoaderQueue)
-    self.append(asset, segment: segment)
+  private func clearLastItemObserver() {
+    if let lastObserver: AnyObject = self.lastItemEndObserver {
+      self.player.removeTimeObserver(lastObserver)
+      self.lastItemEndObserver = nil
+    }
+  }
+
+  private func setupLastItemObserver(item: LiveVideoItem) {
+    self.clearLastItemObserver()
+    let duration = item.duration.milliseconds()
+
+    Assertion(
+      {
+        let isGreater = duration > LiveVideo.LAST_ITEM_PAUSE
+        if !isGreater {
+          println("item: \(item) meta: \(item.asset.metadata)")
+        }
+        return isGreater
+      },
+      "Duration is less than LAST_ITEM_PAUSE \(duration)"
+    )
+
+    let endObserveTime = NSValue(CMTime: CMTimeMake(
+      Int64((duration) - LiveVideo.LAST_ITEM_PAUSE),
+      Int32(1000)
+    ))
+
+    let endTimeObserver : AnyObject = self.player.addBoundaryTimeObserverForTimes(
+      [endObserveTime],
+      queue: dispatch_get_main_queue(),
+      usingBlock: {
+        let items = self.player.items()
+        if items.count == 1 {
+          self.lastItemPauseDate = NSDate()
+          self.pause()
+        }
+      }
+    )
+    self.lastItemEndObserver = endTimeObserver
   }
 
   private func append(asset: AVAsset, segment: VideoSegment) {
     AssertMainThread()
     // Calculate the duration in milliseconds
-    let duration = Int(Float(asset.duration.value) / Float(asset.duration.timescale) * 1000)
+    let duration = asset.duration.milliseconds()
 
     let item = LiveVideoItem(asset: asset)
 
@@ -370,6 +478,11 @@ class LiveVideo : UIView {
     item.nextId = segment.nextId
 
     self.player.insertItem(item, afterItem: nil)
+
+    // If we should be playing video start it with play()
+    if (self.willPlay) {
+      self.play()
+    }
   }
 
   func sendSegmentEvent(type: String, item: LiveVideoItem) {
@@ -408,6 +521,10 @@ class LiveVideo : UIView {
       usingBlock: {
         (_) in
         self.sendSegmentEvent("segmentEnd", item: item)
+        self.playing = false
+        if (self.player.items().count > 0) {
+          self.player.advanceToNextItem()
+        }
       }
     )
   }
@@ -497,8 +614,12 @@ class LiveVideo : UIView {
         return
       }
 
+      let asset = item!.asset
+      let log = item!.accessLog()
+
       self.setupFaceObserver(item!)
       self.setupSegmentObserver(item!)
+      self.setupLastItemObserver(item!)
 
       // When current item is set if we should be playing but are in a paused state start playback.
       if (self.willPlay) {
@@ -536,6 +657,8 @@ class LiveVideo : UIView {
     if let previousObserver: AnyObject = self.itemPlayedToEndObserver {
       center.removeObserver(previousObserver)
     }
+
+    self.clearLastItemObserver()
 
     // Note: This is an intentional pattern to catch any subtle leaks these should
     // always be available unless something in our logic is broken or not cleaned up.

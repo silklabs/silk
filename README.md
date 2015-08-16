@@ -10,12 +10,6 @@ Silk app written for react-native.  To install the react-native toolchain, [see 
 npm install
 ```
 
-Ensure submodules are initialized:
-
-```
-git submodule init && git submodule update
-```
-
 To run the app, open Silk.xcodeproj in Xcode.  You'll want to do most development in the iOS simulator(s).  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
 
 ## Provisioning an iDevice

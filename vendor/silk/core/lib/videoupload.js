@@ -4,11 +4,15 @@
 let log = require('./log')('videoupload');
 import { EventEmitter } from 'events';
 import api from './api';
+let util = require('./util');
 
 // Content type must be set to make clients happy later on
 const VIDEO_CONTENT_TYPE = 'video/mp4';
 
 const VIDEO_BLOB_TYPE = 'video';
+
+const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
+const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 
 class VideoUploadQueue extends EventEmitter {
   /**
@@ -47,6 +51,9 @@ class VideoUploadQueue extends EventEmitter {
    * @param {}
    */
   add(when, frame, objects) {
+    if (!UPLOAD_ENABLED) {
+      return;
+    }
     this.queue.push({
       when,
       frame,
@@ -154,7 +161,7 @@ class VideoUploadQueue extends EventEmitter {
    */
   start() {
     // Already working...
-    if (this.running) {
+    if (this.running || !UPLOAD_ENABLED) {
       return;
     }
     this.running = true;

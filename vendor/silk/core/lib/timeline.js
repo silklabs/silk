@@ -9,9 +9,6 @@ const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION = util.getintprop(DURATION_PROP, 1);
 const EVENT_POLL_RATE_MS = DURATION * 1000;
 
-const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
-
 /**
  * Class that receives events from various components synchronizes them and send
  * to the server
@@ -176,9 +173,7 @@ class Timeline extends EventEmitter {
     // For video we group all related face packets to make it easier on the
     // client.
     this._pushPacket(when, frame, objects, 'mp4');
-    if (UPLOAD_ENABLED) {
-      this.videoUpload.add(when, frame, this.videoObjects);
-    }
+    this.videoUpload.add(when, frame, this.videoObjects);
   }
 
   _pushPacket(when, frame, objects, type) {

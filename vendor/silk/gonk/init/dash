@@ -1,0 +1,20 @@
+#!/system/bin/sh
+#
+# Brief system state dashboard.
+#
+
+echo -n "   Date: "; date
+uptime
+echo -n "  Build: "; getprop ro.build.fingerprint
+echo
+echo Battery:
+echo "       Capacity: $(cat /sys/class/power_supply/battery/capacity)%"
+echo "         Status: $(cat /sys/class/power_supply/battery/status) $(cat /sys/class/power_supply/battery/charge_type)"
+echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
+echo "USB Max Current: $(cat /sys/class/power_supply/usb/current_max)mA"
+echo
+echo System Properties:
+getprop | grep ro.silk
+getprop | grep persist.silk
+echo
+df

@@ -9,7 +9,8 @@
     "build": "./build.sh",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
-    "start": "babel-node --harmony src/server/main.js production",
+    "start-server": "babel-node --harmony src/server/main.js production",
+    "start-socketio": "babel-node --harmony src/socketio/main.js production",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "test": "npm run-script lint && npm run-script mocha"
   },

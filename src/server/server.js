@@ -5,6 +5,7 @@ import createDb from './db';
 import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
 import createFileBlob from './blobs/file';
+import url from 'url';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
@@ -73,6 +74,15 @@ export default async function main (config) {
     // XXX: This is sorta a hack and only intended for development/testing...
     if (!config.server.publicUrl) {
       config.server.publicUrl = `http://localhost:${http.address().port}`;
+    }
+
+    // Configure socket.io public url for local development.
+    if (!config.socketio.publicUrl) {
+      let basePublicUrl = url.parse(config.server.publicUrl);
+      basePublicUrl.port = config.socketio.port;
+      // Delete host so port override will be used.
+      delete basePublicUrl.host;
+      config.socketio.publicUrl = url.format(basePublicUrl);
     }
   });
 

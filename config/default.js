@@ -9,12 +9,21 @@ const DEFAULT_MONGO = 'mongodb://localhost:27017';
 const PORT = process.env.PORT || 5000;
 
 export default {
+
+  socketio: {
+    // Used by the server to return the address where socket.io server lives.
+    publicUrl: process.env.SOCKETIO_PUBLIC_URL,
+
+    // Where to bind socket.io
+    port: 5001
+  },
+
   server: {
     // Will dynamically configure itself if empty...
     publicUrl: process.env.PUBLIC_URL,
 
     // location where to start the http server.
-    port: PORT,
+    port: 5000,
 
     // Type of blob to use (see .blobs).
     blobType: process.env.BLOB_TYPE || 'file'

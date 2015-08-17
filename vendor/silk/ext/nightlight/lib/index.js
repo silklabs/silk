@@ -42,7 +42,8 @@ export default function init(env) {
 
   let hueLightsOn = false;
   let faceLostTimeout;
-  env.camera.on('face', faces => {
+  env.timeline.on('face', faces => {
+    log.info('Face detected.');
     if (faceLostTimeout) {
       clearTimeout(faceLostTimeout);
     }

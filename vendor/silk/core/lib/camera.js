@@ -2,26 +2,18 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 let log = require('./log')('camera');
-import api from './api';
 import { EventEmitter } from 'events';
 let util = require('./util');
 let net = require('net');
 
 //const FRONT = 1;
-const BACK = 0;
+//const BACK = 0;
 
 const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION = util.getintprop(DURATION_PROP, 1);
 
-const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
-
-//Content type must be set to make clients happy later on.
-const VIDEO_CONTENT_TYPE = 'video/mp4';
-
-const VIDEO_BLOB_TYPE = 'video';
 
 //
 // Constants
@@ -109,185 +101,14 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   return face;
 }
 
-class VideoUploadQueue extends EventEmitter {
-  /**
-  * @param {String} id device id.
-  * @param {Number} duration in milliseconds.
-  */
-  constructor(id, duration) {
-    super();
-    this.id = id;
-
-    // We could later make this more generic and do logging.
-    this.type = 'video';
-
-    // XXX: This is a hack until we have percise timing info on when the
-    // segment has ended (in utc).
-    this.duration = duration;
-
-    this.previousId = undefined;
-    this.running = false;
-    this.queue = [];
-  }
-
-  /**
-  Add a new item to the queue to be uploaded.
-
-  @param {Number} when utc time when the frame was created.
-  @param {}
-  */
-  add(when, frame, objects) {
-    this.queue.push({
-      when,
-      frame,
-      objects
-    });
-    this.start();
-  }
-
-  /**
-  To make it easy on the consumer we define metadata as an ordered list... To
-  do this we need to know the previous id we uploaded.
-  */
-  _resolveLastId() {
-    // Specifically checking for undefined so we only run this logic once.
-    if (this.previousId !== undefined) {
-      return Promise.resolve(this.previousId);
-    }
-
-    return Promise.resolve().then(() => {
-      // XXX: The below does do much right now since device is is unique each
-      // boot currently.
-      //
-      // We don't have a previous id so attempt to find the closest segment.
-      return api.timeMeta.findByTime({
-        metaType: this.type,
-        deviceId: this.id,
-        time: Date.now()
-      });
-    }).then((result) => {
-      return result.id;
-    }).catch((err) => {
-      log.warn('Could not find previous metadata item', err);
-      // TODO: In the future an error finding the last id should be fatal or
-      // something we need to resolve when we come back online for now we just
-      // assume the server messed up and we start again from no previous item.
-      return null;
-    });
-  }
-
-  _uploadItem(previousId, item) {
-    let start = Date.now();
-    let { when, frame, objects } = item;
-    let metadataPayload = {
-      metaType: this.type,
-      deviceId: this.id,
-      startUTC: when,
-      endUTC: when + this.duration,
-      data: {
-        frameWidth: PREVIEW_WIDTH,
-        frameHeight: PREVIEW_HEIGHT,
-        objects
-      }
-    };
-
-    if (previousId) {
-      metadataPayload.previousId = previousId;
-    }
-
-    // step 1 is to upload the data...
-    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, VIDEO_CONTENT_TYPE, frame).then(blobUrl => {
-      // step 2. upload the metadata...
-      metadataPayload.url = blobUrl;
-      return api.timeMeta.create(metadataPayload);
-    }).then((result) => {
-      this.previousId = result.id;
-      log.info(
-        'uploaded item id: %s, url: %s took %d ms',
-        result.id,
-        metadataPayload.url,
-        Date.now() - start
-      );
-    });
-  }
-
-  _work() {
-    if (!this.serverSocket.connected) {
-      log.warn(`server socket not ready, not uploading`);
-      return this.stop();
-    }
-
-    // Shift an  item off first thing so we don't get stuck in a loop.
-    let item = this.queue.shift();
-    log.info('uploading item size: %d, time: %d', item.frame.length, item.when);
-
-    this._resolveLastId().then((previousId) => {
-      return this._uploadItem(previousId, item);
-    }).catch(err => {
-      // XXX: In some cases we may want to retry an upload not now though.
-      log.error('Error working item off video upload queue', err);
-    }).then(() => {
-      if (this.queue.length) {
-        // A little trick continue to work but don't use one huge promise chain.
-        process.nextTick(() => {
-          this._work();
-        });
-      } else {
-        // No more work signal a stop.
-        this.stop();
-      }
-    });
-  }
-
-  /**
-  Start working the queue (it is safe to call this multiple times)
-  */
-  start() {
-    // Already working...
-    if (this.running) {
-      return;
-    }
-    this.running = true;
-    this.emit('starting');
-    this._work();
-  }
-
-  /**
-  Stop working the queue (will not abort any running work).
-  */
-  stop() {
-    if (!this.running) {
-      return;
-    }
-    this.running = false;
-    this.emit('stopping');
-  }
-
-  /** Update this's handle to the master server socket. */
-  set socket(socket) {
-    this.serverSocket = socket;
-    this.start();
-  }
-}
-
 /**
- * Class that talks to capture service to receive camera frames and send to the
- * server on the provided server socket
+ * Class that talks to capture service to receive camera frames
  */
 class CameraStream extends EventEmitter {
-  constructor(id) {
+  constructor(timeline) {
     super();
-    this.id = id;
+    this.timeline = timeline;
     this._ready = false;
-    this.videoUploads = new VideoUploadQueue(this.id, DURATION * 1000);
-
-    // Keep track of all face packets we send and upload them along with the
-    // metadata for video segments.
-    this.videoObjects = [];
-
-    // previewObjects is like videoObjects, but for the preview images
-    this.previewObjects = [];
-    this.previewHalFaces = false;
   }
 
   _restart(why) {
@@ -339,6 +160,7 @@ class CameraStream extends EventEmitter {
       if (cmdData) {
         PREVIEW_WIDTH = cmdData.width / cmdData.previewScale;
         PREVIEW_HEIGHT = cmdData.height / cmdData.previewScale;
+        this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
         this._command({cmdName: 'init', cmdData: cmdData});
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
       }
@@ -396,16 +218,17 @@ class CameraStream extends EventEmitter {
       let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
       switch (tag) {
         case TAG_PREVIEW:
-          this._pushPreview(when, pkt);
-          this.emit('preview', when, pkt);
+          log.debug(`TAG_PREVIEW ${when}`);
+          this.timeline.addPreview(when, pkt);
           break;
         case TAG_VIDEO:
-          this._pushVideo(when, pkt);
+          log.debug(`TAG_VIDEO ${when}`);
+          this.timeline.addVideo(when, pkt);
           break;
         case TAG_FACES:
+          log.debug(`TAG_FACES ${when}`);
           let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-          this.emit('face', faces);
-          this._pushFace(when, faces);
+          this.timeline.addFace(when, faces);
           break;
         default:
           // Flush the buffer and restart the socket
@@ -417,61 +240,6 @@ class CameraStream extends EventEmitter {
       let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));
       this._dataBuffer.copy(rest, 0, HEADER_NR_BYTES + size);
       this._dataBuffer = rest;
-    }
-  }
-
-  _pushPreview(when, frame) {
-    // Intentionally delay the preview image by one cycle (~1 second) to ensure
-    // that the previewObjects are transmitted with their corresponding image.
-    //
-    // previewObjects are computed after the preview frame is received, so if
-    // the preview frame is transmitted as quickly as possible and then a naïve
-    // client will end up displaying the previewObjects for last frame.
-    //
-    // However the `when` timestamp is transmitted to the client for both the
-    // preview image and objects so this little workaround can be removed in the
-    // future if desired, once the appropriate client changes are made.
-    //
-    if (this.lastPreviewFrame) {
-      this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame, this.previewObjects, 'jpeg');
-    }
-    this.lastPreviewFrame = frame;
-    this.lastPreviewFrameWhen = when;
-    this.previewObjects = [];
-    this.previewHalFaces = false;
-  }
-
-  _pushFace(when, faces) {
-    let object = {tag: 'hal', when: when, rects: faces};
-
-    // Only add the first set of HAL-detected faces to the preview object set
-    // (the HAL can return multiple faces a second, but it's not helpful to show
-    //  them all on the preview)
-    if (!this.previewHalFaces) {
-      this.previewHalFaces = true;
-      this.previewObjects.push(object);
-    }
-    this.videoObjects.push(object);
-  }
-
-  _pushVideo(when, frame) {
-    // For video we group all related face packets to make it easier on the
-    // client.
-    this._pushPacket(when, frame, this.videoObjects, 'mp4');
-    if (UPLOAD_ENABLED) {
-      this.videoUploads.add(when, frame, this.videoObjects);
-    }
-    this.videoObjects = [];
-  }
-
-  _pushPacket(when, frame, objects, type) {
-    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms lag:${Date.now() - when}ms`;
-    if (this.serverSocket.connected) {
-      log.verbose(str);
-      this.serverSocket.emit('video', { id: this.id, objects: objects,
-                                        frame: frame, contents: type, when: when });
-    } else {
-      log.verbose(`dropped ${str}`);
     }
   }
 
@@ -493,10 +261,9 @@ class CameraStream extends EventEmitter {
   }
 
   /**
-   * Initialize camera and start sending camera data to the server
+   * Initialize camera
    */
   start() {
-    this.socket = { connected: false };
     this._init({
       frameInterval: DURATION,
       width: 1280,
@@ -506,20 +273,6 @@ class CameraStream extends EventEmitter {
       previewScale: 4,
       previewSkipCount: 25
     });
-  }
-
-  /**
-   * Provide the camera with a socket to use
-   */
-  set socket(socket) {
-    this.serverSocket = socket;
-    if (this.ready()) {
-      // Force the last preview image to be transmitted immediately, to provide
-      // the client with a preview image as quick as possible when the camera
-      // first connects.
-      this._pushPreview(null, null);
-    }
-    this.videoUploads.socket = socket;
   }
 
   /**
@@ -534,52 +287,6 @@ class CameraStream extends EventEmitter {
   }
 
   /**
-   * Inject objects into the video stream.
-   *
-   * Each object in the provided array should contain the following fields:
-   *   tag: object type (string)
-   *   when: timestamp the object(s) manifested in the stream
-   *   rects: one or more bounding rectangles for where the object appeared:
-   *            {x, y, width, height}.
-   *          The video preview image dimensions are used as the scale for
-   *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
-   */
-  addObjects(objects) {
-    this.previewObjects.push(...objects);
-    this.videoObjects.push(...objects);
-  }
-
-  /**
-   * Inject an object into the video stream.
-   *
-   *   tag: object type (string)
-   *   when: optional timestamp
-   *   rect: optional rectangle
-   *
-   */
-  addObject(tag, when, rect) {
-    if (!when) {
-      when = this.lastPreviewFrameWhen; // best guess
-    }
-
-    if (!rect) {
-      const borderPad = 20;
-      rect = {
-        x: borderPad,
-        y: borderPad,
-        width: PREVIEW_WIDTH - borderPad * 2,
-        height: PREVIEW_HEIGHT - borderPad * 2,
-      };
-    }
-
-    this.addObjects([{
-      tag: tag,
-      when: when,
-      rects: [rect]
-    }]);
-  }
-
-  /**
    *
    */
   get previewSize() {
@@ -588,4 +295,4 @@ class CameraStream extends EventEmitter {
 }
 
 CameraStream.prototype.FLASH_MODE = FLASH_MODE;
-module.exports = (id) => new CameraStream(id, BACK);
+module.exports = (timeline) => new CameraStream(timeline);

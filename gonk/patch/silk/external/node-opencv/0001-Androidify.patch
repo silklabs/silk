@@ -152,7 +152,7 @@ index f74011b..21b7cdd 100644
 -    "node-pre-gyp": "^0.6.4"
 +    "nan": "^1.7.0"
    },
-   "version": "3.0.1",
+   "version": "3.1.0",
 -  "devDependencies": {
 +  "__devDependencies": {
      "tape": "^3.0.0",

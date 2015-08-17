@@ -3,20 +3,31 @@
 
 'use strict';
 
-var procrank = new function() {
-  this.procrank = document.getElementById('procrank');
-  this.enableElem = document.getElementById('procrankEnable');
 
+function GenericLog(name) {
+  this.element = document.getElementById(name);
+  if (!this.element) {
+    console.error('GenericLog: getElementById() failed for id=' + name);
+    return;
+  }
+
+  this.enableElem = document.getElementById(name + 'Enable');
   this.log = function(msg) {
-    this.procrank.innerText = msg;
+    this.element.innerText = msg;
   };
   this.clear = function() {
-    this.procrank.innerText = "";
+    this.element.innerText = "";
   };
   this.getEnable = function() { 
-    return this.enableElem.checked; 
+    if (this.enableElem) {
+      return this.enableElem.checked;
+    }
+    return 1;
   };
 }
+
+var dash = new GenericLog('dash');
+var procrank = new GenericLog('procrank');
 
 var logcat = new function() {
   this.maxLines = 10000;
@@ -144,11 +155,17 @@ socket.on('connect', function () {
 socket.on('log', function (msg) {
   if (cameras.selected && msg.id === cameras.selected.id) {
     switch (msg.type) {
+    case 'dash':
+      dash.log(msg.log);
+      break;
     case 'procrank':
       procrank.log(msg.log);
       break;
-    default:
+    case 'logcat':
       logcat.log(msg.log);
+      break;
+    default:
+      console.error('Unknown log type', msg.type);
       break;
     }
   }
@@ -174,6 +191,7 @@ function emitLogEnable(id, type) {
   var force = (type === 'update-all' || type === 'disable-all');
   var forceDisable = (type === 'disable-all');
 
+  config.dash = 1;
   if (force || type === 'logcat') {
     config.logcat = !forceDisable && logcat.getEnable() ? 1 : 0;
   }

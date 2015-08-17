@@ -34,7 +34,8 @@ PRODUCT_PACKAGES += $(SILK_EXT)
 # vendor/silk/gonk/...
 SILK_INIT := \
   init.silk.rc \
-  silk \
+  silk-service \
+  silk-dashboard \
 
 SILK_GONK_PROGIES := \
   bledroid \

@@ -4,14 +4,16 @@
 let log = require('./log')('diag');
 
 class DiagLogger {
-  // respawnDelay specifies amount of time to wait after process
-  // dies before running the command again. Use null for one-shot.
+  // respawnDelay specifies amount of time to wait after process dies before
+  // running the command again. Use null for "streaming logs" that should be
+  // running at all times.
   constructor(id, type, cmd, params, respawnDelaySecs) {
     this.id = id;
     this.type = type;
     this.respawnTimer = null;
     this.helper = null;
     this.socket = null;
+    this.data = '';
     this.config(cmd, params, respawnDelaySecs);
   }
 
@@ -20,18 +22,37 @@ class DiagLogger {
     let spawn = require('child_process').spawn;
     let helper = spawn(this.cmd, this.params);
 
-    helper.stdout.on('data', data => {
-      if (this.socket) {
-        this.socket.emit('log', {
-          id: this.id,
-          type: this.type,
-          log: data.toString()
-        });
-      }
-    });
+    if (!this.respawnDelaySecs) {
+      // For a streaming log (eg, logcat) send data as fast as it arrives
+      helper.stdout.on('data', data => {
+        if (this.socket) {
+          this.socket.emit('log', {
+            id: this.id,
+            type: this.type,
+            log: data.toString()
+          });
+        }
+      });
+    } else {
+      // For a non-streaming log (eg, procrank) collect all the data and send it
+      // in one shot once the process exits.
+      helper.stdout.on('data', data => {
+        this.data += data.toString();
+      });
+    }
 
     helper.on('close', () => {
-      if (this.respawnDelaySecs !== null) {
+      if (this.data.length > 0) {
+        if (this.socket) {
+          this.socket.emit('log', {
+            id: this.id,
+            type: this.type,
+            log: this.data
+          });
+        }
+        this.data = '';
+      }
+      if (this.respawnDelaySecs) {
         this.respawnTimer = setTimeout( () => {
           this._launch();
           this.respawnTimer = null;
@@ -76,10 +97,13 @@ class Diag {
 
     this.loggers = [
       new DiagLogger(this.id, 'logcat',
-        '/system/bin/logcat', ['-v', 'threadtime'], 0),
+        '/system/bin/logcat', ['-v', 'threadtime']),
 
       new DiagLogger(this.id, 'procrank',
-        '/system/xbin/procrank', [], 10)
+        '/system/xbin/procrank', [], 10),
+
+      new DiagLogger(this.id, 'dash',
+        '/system/bin/dash', [], 10),
     ];
   }
 

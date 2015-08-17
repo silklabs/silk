@@ -37,11 +37,14 @@
         border-color: #D3D3D3;
         border-width: 2px;
       }
+      #dash {
+        height: 150px;
+      }
       #procrank {
         height: 200px;
       }
       #logcat {
-        height: calc(100% - 255px);
+        height: calc(100% - 455px);
       }
     </style>
   </head>
@@ -60,6 +63,7 @@
     <label><input type='checkbox' id='pauseLogcat'
       onclick='updatePauseLogcat();'>pause logcat (press t to toggle)</label>
 
+    <pre id='dash' class='log'></pre>
     <pre id='procrank' class='log'></pre>
     <div id='logcat' class='log'></div>
 

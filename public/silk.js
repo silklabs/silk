@@ -97,34 +97,36 @@ socket.on('video-stream-new', function(msg) {
     monitors.removeChild(monitor);
   }
 
-  var img = document.createElement('img');
-  img.setAttribute('title', msg.name);
+  var name = msg.name;
+  var previewImage = document.createElement('img');
 
-  var logoImg = document.createElement('img');
-  logoImg.setAttribute('title', 'logo');
-  logoImg.style.display = 'none'
-  var logo = msg.logo;
-  var previewSize = msg.previewSize;
+  var logoImage = document.createElement('img');
+  var logoArray = new Uint8Array(msg.logo);
+  if (logoArray.length > 0) {
+    var blob = new Blob([logoArray], { type: 'image/png' });
+    logoImage.src = URL.createObjectURL(blob);
+  }
 
   var canvas = document.createElement('canvas');
-  var a = document.createElement('a');
-  a.setAttribute('id', msg.id);
-  a.addEventListener('click', function() { showPlayer(stream); });
-  a.href = '#';
-  a.appendChild(img);
-  a.appendChild(canvas);
-  a.appendChild(logoImg);
-  monitors.appendChild(a);
+  canvas.width = msg.previewSize.width;
+  canvas.height = msg.previewSize.height;
+  canvas.setAttribute('id', msg.id);
+  canvas.addEventListener('click', function() { showPlayer(stream); });
+  monitors.appendChild(canvas);
 
   socket.on(previewStream, function(msg) {
-    if (!msg) {
-      return;
-    }
-    logMsg('video preview', msg);
-    var img = a.childNodes[0];
-    var canvas = a.childNodes[1];
+    if (msg && msg.frame) {
+      logMsg('video preview', msg);
+      var when = new Date(msg.when);
 
-    renderFrame(msg, previewSize, img, canvas, logoImg, logo);
+      var view = new Uint8Array(msg.frame);
+      var blob = new Blob([view], { type: 'image/jpg' });
+      URL.revokeObjectURL(previewImage.src);
+      previewImage.src = URL.createObjectURL(blob);
+      previewImage.onload = function() {
+        renderPreview(canvas, name, when, previewImage, logoImage, msg.objects);
+      };
+    }
   });
   log('Joining preview stream ' + previewStream);
   socket.emit('join', previewStream);
@@ -142,50 +144,13 @@ socket.on('video-stream-delete', function(msg) {
   }
 });
 
-function renderLogo(logoImg, img, logo) {
-  var view = new Uint8Array(logo);
 
-  // Draw logo only once
-  if ((view.length > 0) && (logoImg.style.display === 'none')) {
-    logoImg.setAttribute('style', 'position:absolute;left:' +
-        img.offsetLeft + 'px;top:' + img.offsetTop + 'px;' + 'opacity:0.5');
-    logoImg.setAttribute('width',  '30px');
-    logoImg.setAttribute('height', 'auto');
-
-    var blob = new Blob([view], { type: 'image/png' });
-    var png = URL.createObjectURL(blob);
-    logoImg.src = png;
-    logoImg.style.display = 'inline';
-  }
-}
-
-function renderFrame(msg, previewSize, img, canvas, logoImg, logo) {
-  if (msg.frame) {
-    var view = new Uint8Array(msg.frame);
-    var blob = new Blob([view], { type: 'image/jpg' });
-    var jpeg = URL.createObjectURL(blob);
-
-    // Draw objects and logo after img is loaded and size is valid
-    img.onload = function() {
-      drawObjectBorder(msg, previewSize, img, canvas);
-      renderLogo(logoImg, img, logo);
-    };
-    img.src = jpeg;
-  }
-}
-
-
-function drawObjectBorder(msg, previewSize, img, canvas) {
-  canvas.width = img.clientWidth;
-  canvas.height = img.clientHeight;
-  canvas.setAttribute('style', 'position:absolute;left:' +
-    img.offsetLeft + 'px;top:' + img.offsetTop + 'px;');
+function renderPreview(canvas, name, when, previewImage, logoImage, objects) {
 
   var ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(previewImage, 0, 0);
 
-  if (msg.objects) {
-    var objects = msg.objects;
+  if (objects) {
     var objectColors = [
       'red',
       'lightgreen',
@@ -198,8 +163,6 @@ function drawObjectBorder(msg, previewSize, img, canvas) {
     ctx.save();
     ctx.lineWidth = 1;
     ctx.font = "10px sans-serif";
-    ctx.scale(canvas.width / previewSize.width,
-      canvas.height / previewSize.height);
 
     for (var i = 0; i < objects.length; ++i) {
       ctx.fillStyle = ctx.strokeStyle = objectColors[i % objectColors.length];
@@ -213,9 +176,22 @@ function drawObjectBorder(msg, previewSize, img, canvas) {
         ctx.fillText(tag, rect.x, rect.y + rect.height + 10);
       }
     }
-
-    ctx.restore();
   }
+
+  ctx.globalAlpha = 0.25;
+  ctx.font = "12px serif";
+  ctx.fillStyle = 'white';
+  // Camera name
+  ctx.textAlign = "end";
+  ctx.fillText(name, canvas.width - 5, canvas.height - 5);
+
+  // Timestamp
+  ctx.textAlign = "start";
+  ctx.fillText(when.toLocaleDateString() + ' ' + when.toLocaleTimeString(),
+    5, canvas.height - 5);
+
+  ctx.drawImage(logoImage, 0, 0);
+  ctx.restore();
 }
 
 function toggleLog() {

@@ -471,7 +471,7 @@ class CameraStream extends EventEmitter {
       this.serverSocket.emit('video', { id: this.id, objects: objects,
                                         frame: frame, contents: type, when: when });
     } else {
-      log.warn(`dropped ${str}`);
+      log.verbose(`dropped ${str}`);
     }
   }
 

@@ -34,7 +34,6 @@ using namespace std;
 //
 const char* kMimeTypeAvc = "video/avc";
 status_t OK = static_cast<status_t>(android::OK);
-bool sDebug = false;
 Size sVideoSize(1280, 720);
 int32_t sVideoBitRateInK = 1024;
 int32_t sFPS = 24;
@@ -246,11 +245,6 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
   }
-  if (!cmdData["debug"].isNull()) {
-    sDebug = cmdData["debug"].asInt();
-    ALOGV("sDebug %d", sDebug);
-  }
-
   // Start camera in a separate thread
   pthread_create(&mThread, NULL, initThreadWrapper, this);
   return 0;

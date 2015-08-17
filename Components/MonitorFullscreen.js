@@ -383,10 +383,9 @@ export default React.createClass({
   modifyLiveRate(segment, time) {
     let currentLag = Date.now() - time - this.liveVideoLag;
 
-    if (this._videoSegments.length > 1 && currentLag > 0) {
+    if (currentLag > 0) {
       let rate = 1 + currentLag / 1000
       this.setState({ rate: rate });
-      console.log('new rate:', rate);
     }
   },
 

@@ -11,6 +11,7 @@
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
     "start-server": "babel-node --harmony src/server/main.js production",
     "start-socketio": "babel-node --harmony src/socketio/main.js production",
+    "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "test": "npm run-script lint && npm run-script mocha"
   },

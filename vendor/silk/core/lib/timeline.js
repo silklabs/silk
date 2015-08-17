@@ -9,6 +9,9 @@ const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION = util.getintprop(DURATION_PROP, 1);
 const EVENT_POLL_RATE_MS = DURATION * 1000;
 
+const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
+const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
+
 /**
  * Class that receives events from various components synchronizes them and send
  * to the server
@@ -32,6 +35,8 @@ class Timeline extends EventEmitter {
     // Hold all the video frames with the timestamps until the next poll interval
     this.videoFrames = [];
     this.eventsPollInterval = null;
+
+    this.videoUpload = require('./videoupload')(this.id, DURATION * 1000);
   }
 
   /**
@@ -45,6 +50,8 @@ class Timeline extends EventEmitter {
     // the client with a preview image as quick as possible when the camera
     // first connects.
     this._pushPreview(null, null);
+
+    this.videoUpload.socket = socket;
   }
 
   /**
@@ -52,6 +59,7 @@ class Timeline extends EventEmitter {
    */
   set previewSize(size) {
     this._previewSize = size;
+    this.videoUpload.previewSize = size;
   }
 
   /**
@@ -168,6 +176,9 @@ class Timeline extends EventEmitter {
     // For video we group all related face packets to make it easier on the
     // client.
     this._pushPacket(when, frame, objects, 'mp4');
+    if (UPLOAD_ENABLED) {
+      this.videoUpload.add(when, frame, this.videoObjects);
+    }
   }
 
   _pushPacket(when, frame, objects, type) {

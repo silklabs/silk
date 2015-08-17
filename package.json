@@ -4,6 +4,7 @@
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
+    "preinstall": "./bin/pre_compile",
     "postinstall": "./build/browser/build.sh public/silk-api.js",
     "build": "./build.sh",
     "lint": "eslint test src",

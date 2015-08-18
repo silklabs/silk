@@ -49,5 +49,6 @@ module.exports = function create(options) {
     blob: require('./blob')(config),
     timeMeta: require('./time_metadata')(config),
     crashMeta: require('./crash_metadata')(config),
+    socketio: require('./socketio')(config)
   };
 };

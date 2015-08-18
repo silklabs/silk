@@ -4,11 +4,14 @@
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
+    "preinstall": "./bin/pre_compile",
     "postinstall": "./build/browser/build.sh public/silk-api.js",
     "build": "./build.sh",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
-    "start": "babel-node --harmony src/server/main.js production",
+    "start-server": "babel-node --harmony src/server/main.js production",
+    "start-socketio": "babel-node --harmony src/socketio/main.js production",
+    "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "test": "npm run-script lint && npm run-script mocha"
   },

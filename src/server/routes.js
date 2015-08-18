@@ -53,6 +53,10 @@ module.exports = function(opts) {
     });
   }
 
+  app.get('/socketio/address', (req, res) => {
+    return res.send({ url: config.socketio.publicUrl });
+  });
+
   checkArgs('/account/create', ['email', 'name', 'id', 'passhash', 'sig']);
   app.post('/account/create', (req, res) => {
     let { email, name, id, passhash, sig } = req.body;

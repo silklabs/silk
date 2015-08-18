@@ -1,4 +1,4 @@
-let log = require('./log')('socketio');
+let log = require('../server/log')('socketio');
 
 export default function(io) {
   // Real time event stream.

@@ -5,6 +5,7 @@ import createDb from './db';
 import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
 import createFileBlob from './blobs/file';
+import url from 'url';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
@@ -13,10 +14,6 @@ export default async function main (config) {
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);
-  let io = require('socket.io')(http, {
-    // XXX: Only accept websocket clients for now to work around app issues.
-    transports: ['websocket']
-  });
   let accounts = require('./accounts')();
   let path = require('path');
   let log = require('./log')('server');
@@ -68,9 +65,6 @@ export default async function main (config) {
     blobs
   });
 
-  // Install the socket.io listeners.
-  require('./socketio')(io);
-
   http.listen(config.server.port);
   let errorEvent = eventToPromise(http, 'error').then(err => {
     throw err;
@@ -80,6 +74,15 @@ export default async function main (config) {
     // XXX: This is sorta a hack and only intended for development/testing...
     if (!config.server.publicUrl) {
       config.server.publicUrl = `http://localhost:${http.address().port}`;
+    }
+
+    // Configure socket.io public url for local development.
+    if (!config.socketio.publicUrl) {
+      let basePublicUrl = url.parse(config.server.publicUrl);
+      basePublicUrl.port = config.socketio.port;
+      // Delete host so port override will be used.
+      delete basePublicUrl.host;
+      config.socketio.publicUrl = url.format(basePublicUrl);
     }
   });
 

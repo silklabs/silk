@@ -10,3 +10,4 @@ dist/test/
 *~
 /config.local.js
 /config.local.json
+/Procfile

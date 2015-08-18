@@ -49,10 +49,10 @@
            path="external/node-kissfft"
            remote="github"
            revision="refs/tags/0.0.8" clone-depth="1"/>
-  <!--project name="sandeepmistry/noble"
-           path="vendor/silk/core/local_node_modules/noble"
+  <project name="sandeepmistry/noble"
+           path="external/noble"
            remote="github"
-           revision="refs/tags/v1.0.1" clone-depth="1"/-->
+           revision="refs/tags/v1.1.0" clone-depth="1"/>
 
   <!-- Locked npm dependencies -->
   <project name="silk-device-locked-node-modules"

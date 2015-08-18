@@ -4,29 +4,53 @@
 let log = require('../log')('btle');
 let caps = require('../caps');
 
+const expectedState = caps.has('qemu') ? 'poweredOff' : 'poweredOn';
+
 module.exports = {
   init: () => {
     return new Promise(resolve => {
       log.info('BTLE initializing');
-      let bleno = require('bleno');
-      bleno.on('stateChange', state => {
-        let expectedState = caps.has('qemu') ? 'poweredOff' : 'poweredOn';
-        if (state !== expectedState) {
-          log.warn(`Ignoring BT stateChange to ${state}`);
-          return;
-        }
-        log.info(`BTLE: ${state}`);
 
+      let bleno = require('bleno');
+      let noble = require('noble');
+
+      let done = () => {
         module.exports.configService = require('./config-service');
         //module.exports.ibeacon = require('./ibeacon.js');
         //module.exports.scanner = require('./scanner.js');
+        module.exports.bleno = bleno;
+        module.exports.noble = noble;
 
         log.info('BTLE initialization complete');
         resolve();
+      };
+
+      let blenoConnected = false;
+      let nobleConnected = false;
+
+      bleno.on('stateChange', function blenoListener(state) {
+        log.debug(`bleno 'stateChange': '${state}'`);
+        if (state !== expectedState) {
+          return;
+        }
+        bleno.removeListener('stateChange', blenoListener);
+        blenoConnected = true;
+        if (nobleConnected) {
+          done();
+        }
       });
 
-      // The bleno that everybody should use
-      module.exports.bleno = bleno;
+      noble.on('stateChange', function nobleListener(state) {
+        log.debug(`noble 'stateChange': '${state}'`);
+        if (state !== expectedState) {
+          return;
+        }
+        noble.removeListener('stateChange', nobleListener);
+        nobleConnected = true;
+        if (blenoConnected) {
+          done();
+        }
+      });
     });
   },
 };

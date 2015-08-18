@@ -103,6 +103,8 @@ class Timeline extends EventEmitter {
   addObjects(objects) {
     this.previewObjects.push(...objects);
     this.videoObjects.push(...objects);
+
+    this._emitEvents(objects);
   }
 
   /**
@@ -133,6 +135,14 @@ class Timeline extends EventEmitter {
       when: when,
       rects: [rect]
     }]);
+  }
+
+  _emitEvents(objects) {
+    objects.forEach(object => {
+      if (object.tag === 'face') {
+        this.emit('face', object.rects);
+      }
+    });
   }
 
   _pushPreview(when, frame) {

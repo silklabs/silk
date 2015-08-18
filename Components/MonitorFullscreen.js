@@ -113,6 +113,16 @@ class LiveSegmentProvider {
 export default React.createClass({
   mixins: [TimerMixin],
 
+  /**
+   * Used to hold the promise of a pending seek operation.
+   */
+  _pendingSeekOperation: null,
+
+  /**
+   * Holds list of video segments to be played.
+   */
+  _videoSegments: null,
+
   getInitialState() {
     return {
       // Mode entered after seek is finished.
@@ -373,10 +383,9 @@ export default React.createClass({
   modifyLiveRate(segment, time) {
     let currentLag = Date.now() - time - this.liveVideoLag;
 
-    if (this._videoSegments.length > 1 && currentLag > 0) {
+    if (currentLag > 0) {
       let rate = 1 + currentLag / 1000
       this.setState({ rate: rate });
-      console.log('new rate:', rate);
     }
   },
 
@@ -412,7 +421,7 @@ export default React.createClass({
     let api = this.props.api;
     let video = this.refs.video;
 
-    api.timeMeta.findByTime({
+    this._pendingSeekOperation = api.timeMeta.findByTime({
       metaType: 'video',
       time: value,
       deviceId: this.props.id
@@ -443,6 +452,7 @@ export default React.createClass({
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });
+      return true
     }).catch(err => {
       console.log('Could not find segment in seek time', err);
       // Fallback if we cannot find a recorded segment to start playback at we
@@ -452,11 +462,21 @@ export default React.createClass({
         videoSegments: this._videoSegments,
         pendingSeekMode: DEFAULT_MODE
       });
+      return false
+    }).then(result => {
+      this._pendingSeekOperation = null;
+      return result;
     });
   },
 
   onSeekEnd(value) {
-    console.log('on seek end', this.state.pendingSeekMode);
+    // XXX: We should not be waiting here for the seek operation but it is
+    // needed until we know which periods of time have video.
+    if (this._pendingSeekOperation) {
+      this._pendingSeekOperation.then(this.onSeekEnd);
+      return;
+    }
+
     this.transitionModes(this.state.pendingSeekMode, {
       pendingSeekMode: null,
       // Resume playback mode (paying/paused).

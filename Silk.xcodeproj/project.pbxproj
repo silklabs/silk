@@ -29,6 +29,7 @@
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
 		571B2F4B1B813045005A4460 /* SocketIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571B2F431B813026005A4460 /* SocketIO.framework */; };
 		571B2F4C1B813045005A4460 /* SocketIO.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 571B2F431B813026005A4460 /* SocketIO.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571B2F801B813641005A4460 /* ConcurrentOperation.swift */; };
 		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
 		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
 		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
@@ -328,6 +329,7 @@
 		5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTConvertVideoSegment.m; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
 		571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Socket.IO-Client-Swift.xcodeproj"; path = "node_modules/socket.io-client-swift/Socket.IO-Client-Swift.xcodeproj"; sourceTree = "<group>"; };
+		571B2F801B813641005A4460 /* ConcurrentOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConcurrentOperation.swift; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
 		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
@@ -618,6 +620,7 @@
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
 				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
 				3D85672F1B72DF64000C8BE1 /* iBeacon */,
 				57BCE10B1B69910C0047088B /* NSDataBridge */,
@@ -1112,6 +1115,7 @@
 				57BCE0FA1B6962ED0047088B /* NSDataBridge.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
 				5758F2621B600B0200C18E5D /* ImageViewManager.swift in Sources */,
+				571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */,
 				F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */,
 				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
 				57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */,

@@ -122,10 +122,13 @@ else
 fi
 
 
+NODE_SEARCH_PATH=$SYMDIR/system/silk/node_modules:$SYMDIR/system/silk/node_modules/build
+NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/system/lib/node:$SYMDIR/system/lib/node/build
+
 sleep 1
 echo "set solib-absolute-prefix $SYMDIR" > $GDBINIT
 echo "handle SIGPIPE nostop" >> $GDBINIT
-echo "set solib-search-path $SYMDIR/system/lib/:$ANDROID_PRODUCT_OUT/system/lib/:$SYMDIR/system/vendor/lib/:$ANDROID_PRODUCT_OUT/system/vendor/lib/:$SYMDIR/system/lib/hw:$ANDROID_PRODUCT_OUT/system/lib/hw" >> $GDBINIT
+echo "set solib-search-path $SYMDIR/system/lib/:$ANDROID_PRODUCT_OUT/system/lib/:$SYMDIR/system/vendor/lib/:$ANDROID_PRODUCT_OUT/system/vendor/lib/:$SYMDIR/system/lib/hw:$ANDROID_PRODUCT_OUT/system/lib/hw:$NODE_SEARCH_PATH" >> $GDBINIT
 echo "target extended-remote :$GDB_PORT" >> $GDBINIT
 
 

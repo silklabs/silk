@@ -43,6 +43,7 @@ endif
 ifeq (,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 LOCAL_NODE_MODULE_TYPE := folder
 endif
+LOCAL_NODE_MODULE_TYPE := $(strip $(LOCAL_NODE_MODULE_TYPE))
 
 ifneq (1,$(words $(filter file folder,$(LOCAL_NODE_MODULE_TYPE))))
 $(error Error: Invalid LOCAL_NODE_MODULE_TYPE: $(LOCAL_NODE_MODULE_TYPE))
@@ -53,7 +54,7 @@ ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/node
 endif
 
-ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
+ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
 LOCAL_MODULE_PATH := $(LOCAL_MODULE_PATH)/$(LOCAL_MODULE)
 else
 ifeq (,$(strip $(LOCAL_NODE_MODULE_MAIN)))
@@ -72,11 +73,12 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
 
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
+ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
 LOCAL_BUILT_MODULE_STEM := package.json
-ifeq (folder,$(strip $(LOCAL_NODE_MODULE_TYPE)))
 LOCAL_INSTALLED_MODULE_STEM := package.json
 else
-LOCAL_MODULE_SUFFIX := $(suffix $(LOCAL_NODE_MODULE_MAIN))
+LOCAL_BUILT_MODULE_STEM := $(LOCAL_NODE_MODULE_MAIN)
+LOCAL_INSTALLED_MODULE_STEM := $(notdir $(LOCAL_MODULE))$(suffix $(LOCAL_NODE_MODULE_MAIN))
 endif
 
 # LOCAL_ALLOW_UNDEFINED_SYMBOLS is needed to avoid unresolved v8/libuv/node
@@ -87,6 +89,7 @@ LOCAL_ALLOW_UNDEFINED_SYMBOLS=true
 
 include $(BUILD_SYSTEM)/binary.mk
 
+$(LOCAL_BUILT_MODULE): built_module_path := $(built_module_path)
 $(LOCAL_BUILT_MODULE): $(LOCAL_ADDITIONAL_DEPENDENCIES)
 $(LOCAL_BUILT_MODULE): $(all_libraries)
 
@@ -98,12 +101,12 @@ define abs_import_includes
 endef
 $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
 $(LOCAL_BUILT_MODULE): $(import_includes)
-	@echo "Mirror module to: $(@D)"
-	$(hide) mkdir -p $(@D)
-	$(hide) rsync -qav $(LOCAL_PATH)/ $(@D)
-	$(hide) cd $(@D) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
-	@echo "Build: $@"
-	$(hide) cd $(@D) &&  \
+	@echo "Mirror module to: $(built_module_path)"
+	$(hide) mkdir -p $(built_module_path)
+	$(hide) rsync -qav $(LOCAL_PATH)/ $(built_module_path)
+	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
+	@echo "Build: $(built_module_path)"
+	$(hide) cd $(built_module_path) &&  \
     C_INCLUDES="\
       $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
       $(call abs_import_includes,$(shell cat $(PRIVATE_IMPORT_INCLUDES))) \
@@ -156,29 +159,64 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
       ) \
       -Wl,--end-group" && \
     node $(npm_cli) install --nodedir=$(npm_node_dir) #--loglevel silly
-	$(hide) touch $@
-
-$(LOCAL_INSTALLED_MODULE): LOCAL_NODE_MODULE_MAIN := $(LOCAL_NODE_MODULE_MAIN)
-$(LOCAL_INSTALLED_MODULE): LOCAL_NODE_MODULE_TYPE := $(LOCAL_NODE_MODULE_TYPE)
-$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
-	@echo "Install: $@"
-	$(hide) mkdir -p $(@D)
-ifeq (file,$(strip $(LOCAL_NODE_MODULE_TYPE)))
-	$(hide) cp $(<D)/$(LOCAL_NODE_MODULE_MAIN) $@
-# Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
-# so they can be resolved correctly from the browserify-ed module
-	$(hide) \
-  for binding in `cd $(<D)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
-    mkdir -p $(@D)/build; \
-    cp -vf $(<D)/$$binding $(@D)/build/`basename $$binding`; \
-  done
-else
-# For now just assume that all device node_module dependencies are already
-# present somehow, so don't install all of node_modules/ (which likely also
-# contains a bunch of development only tools).
-# TODO: Maybe a better way would be to use the package.json's "files" section to
-# determine what to install on device?
-	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
+ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
 	$(hide) touch $@
 endif
 
+ifeq (file,$(LOCAL_NODE_MODULE_TYPE))
+
+$(LOCAL_INSTALLED_MODULE): PRIVATE_STRIP := $(TARGET_STRIP)
+$(LOCAL_INSTALLED_MODULE): PRIVATE_OBJCOPY := $(TARGET_OBJCOPY)
+$(LOCAL_INSTALLED_MODULE): built_module_path := $(built_module_path)
+
+# Binary file module
+ifeq ($(suffix $(LOCAL_NODE_MODULE_MAIN)),.node)
+
+$(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_MODULE := \
+  $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(LOCAL_INSTALLED_MODULE))
+
+$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(TARGET_STRIP)
+	$(transform-to-stripped)
+	@echo target Symbolic: $(PRIVATE_UNSTRIPPED_MODULE)
+	$(hide) mkdir -p $(dir $(PRIVATE_UNSTRIPPED_MODULE))
+	$(hide) cp $< $(PRIVATE_UNSTRIPPED_MODULE)
+
+
+# Javascript file module (that may include binary submodules)
+else
+
+$(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_PATH := \
+  $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(dir $(LOCAL_INSTALLED_MODULE)))
+$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $(TARGET_STRIP)
+	$(copy-file-to-target)
+# Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
+# so they can be resolved correctly from the browserify-ed module
+	$(hide) \
+  for binding in `cd $(built_module_path)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
+    mkdir -p $(@D)/build; \
+    SRC=$(built_module_path)/$$binding ; \
+    DST=$(@D)/build/`basename $$binding` ; \
+    $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST ; \
+    $(and $(TARGET_STRIP_EXTRA), $(PRIVATE_OBJCOPY) --add-gnu-debuglink=$$SRC $$DST ; ) \
+    mkdir -p $(PRIVATE_UNSTRIPPED_PATH)/build ; \
+    cp $$SRC $(PRIVATE_UNSTRIPPED_PATH)/build/`basename $$binding` ; \
+  done
+
+endif # .js module
+
+else # LOCAL_NODE_MODULE_TYPE == folder
+
+# For now just assume that all device node_module dependencies are already
+# present somehow, so don't install all of node_modules/ (which likely also
+# contains a bunch of development only tools).
+#
+# TODO: Any binaries within the folder module are not stripped
+#
+# TODO: Maybe a better way would be to use the package.json's "files" section to
+# determine what to install on device?
+$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
+	@echo "Install: $@"
+	$(hide) mkdir -p $(@D)
+	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
+	$(hide) touch $@
+endif

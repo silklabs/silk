@@ -27,13 +27,13 @@ export default function init(env) {
     // Turn on flash when the sensors detect low light
     if (level <= NIGHT_LIGHT_SI_LUX) {
       if (!nightModeOn) {
-        log.info("It's dark out. Turning on night mode");
+        log.info(`It's dark out. Turning on night mode`);
         nightModeOn = true;
         env.camera.torch(true);
       }
     } else if (level >= DAY_LIGHT_SI_LUX) {
       if (nightModeOn) {
-        log.info("It's light out. Turning off night mode");
+        log.info(`It's light out. Turning off night mode`);
         nightModeOn = false;
         env.camera.torch(false);
       }
@@ -43,27 +43,26 @@ export default function init(env) {
   let hueLightsOn = false;
   let faceLostTimeout;
   env.timeline.on('face', faces => {
-    log.info('Face detected.');
+    if ((faces.length <= 0) || (!nightModeOn)) {
+      return;
+    }
+
+    if (!hueLightsOn) {
+      log.info(`Lights on. Face detected`);
+      hueLightsOn = true;
+      env.hue.setState({on: true, intensity: 1.0});
+    }
+
+    // Turn off hue light if no face is detected within {@code HUE_LIGHTS_OFF_TIMEOUT_MS}
     if (faceLostTimeout) {
       clearTimeout(faceLostTimeout);
     }
-    if (!nightModeOn) {
-      return;
-    }
-    if (faces.length >= 1) {
-      if (!hueLightsOn) {
-        log.info('Lights on. Face detected.');
-        hueLightsOn = true;
-        env.hue.setState({on: true, intensity: 1.0});
-      }
-    } else {
-      faceLostTimeout = setTimeout(() => {
-        log.info(`Lights out. No face observed for ${HUE_LIGHTS_OFF_TIMEOUT_MS / 1000} seconds`);
-        env.hue.setState({on: false});
-        hueLightsOn = false;
-        faceLostTimeout = null;
-      }, HUE_LIGHTS_OFF_TIMEOUT_MS);
-    }
+    faceLostTimeout = setTimeout(() => {
+      log.info(`Lights out. No face observed for ${HUE_LIGHTS_OFF_TIMEOUT_MS / 1000} seconds`);
+      env.hue.setState({on: false});
+      hueLightsOn = false;
+      faceLostTimeout = null;
+    }, HUE_LIGHTS_OFF_TIMEOUT_MS);
   });
-  log.info('initialized');
+  log.info(`initialized`);
 }

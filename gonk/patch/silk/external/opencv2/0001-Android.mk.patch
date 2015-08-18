@@ -1,21 +1,21 @@
-From 9e3045fa8f1b334625fefe171227ebacd8915796 Mon Sep 17 00:00:00 2001
+From 2ebf175dcdd239d8358b0d518493a23b2ff74135 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 82 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- opencv.mk  | 35 +++++++++++++++++++++++++++
- 2 files changed, 117 insertions(+)
+ Android.mk | 83 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ opencv.mk  | 35 ++++++++++++++++++++++++++
+ 2 files changed, 118 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..1e47d68
+index 0000000..143bf55
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,83 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -78,6 +78,7 @@ index 0000000..1e47d68
 +	$(hide) mkdir -p $(@D)
 +	cd $(@D) && cmake \
 + -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
++ -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 + -DBUILD_TESTS=false \
 + -DWITH_TIFF=false \
 + -DBUILD_ANDROID_EXAMPLES=false \

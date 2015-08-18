@@ -21,15 +21,6 @@ class Env extends events.EventEmitter {
    * extensions.
    */
   _addDeviceAPIs(deviceObjects) {
-
-    let clapDetector = deviceObjects.clapDetector;
-    if (clapDetector) {
-      this.clapDetector = new events.EventEmitter();
-      clapDetector.on('clap', count => {
-        this.clapDetector.emit('clap', count);
-      });
-    }
-
     let sensors = deviceObjects.sensors;
     if (sensors) {
       this.sensors = new events.EventEmitter();
@@ -64,6 +55,9 @@ class Env extends events.EventEmitter {
       });
       timeline.on('face', faces => {
         this.timeline.emit('face', faces);
+      });
+      timeline.on('clap', count => {
+        this.timeline.emit('clap', count);
       });
       this.timeline.addObject = (tag, when, rect) => {
         timeline.addObject(tag, when, rect);

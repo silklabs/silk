@@ -5,7 +5,7 @@ export default function init(env) {
 
   let hueLightsOn = false;
 
-  env.clapDetector.on('clap', count => {
+  env.timeline.on('clap', count => {
     let tag = count === 1 ? 'clap' : `${count} claps`;
     env.log.info(tag);
     env.timeline.addObject(tag);

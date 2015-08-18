@@ -131,7 +131,7 @@ function boot() {
 
       diag = require('./diag')(id.toString());
 
-      clapDetector = new clapper.ClapDetector();
+      clapDetector = new clapper.ClapDetector({}, timeline);
       mic.on('data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
       log.info('Load configuration');
@@ -357,7 +357,6 @@ config.on('configured', () => {
           camera: camera,
           hue: hue,
           sensors: sensors,
-          clapDetector: clapDetector,
           timeline: timeline,
         });
       }

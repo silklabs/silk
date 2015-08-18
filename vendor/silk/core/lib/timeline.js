@@ -83,6 +83,13 @@ class Timeline extends EventEmitter {
   };
 
   /**
+   *
+   */
+  addClap(count) {
+    this.emit('clap', count);
+  };
+
+  /**
    * Inject objects into the video stream.
    *
    * Each object in the provided array should contain the following fields:

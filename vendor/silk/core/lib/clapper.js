@@ -121,8 +121,11 @@ class WindowHistory {
 // maintained above a certain threshold for a specifc duration.
 //
 export class ClapDetector extends events.EventEmitter {
-  constructor(cfg = {}) {
+  constructor(cfg = {}, timeline) {
     super();
+
+    this.timeline = timeline;
+
     // TODO: hard coded constants assumed
     this._sampleRate = 8000;      // assumes 8000 samples / second
     this._bytesPerFrame = 2;      // assumes samples are signed 16 bit
@@ -210,7 +213,7 @@ export class ClapDetector extends events.EventEmitter {
             }
             this._nextClapTimeout = setTimeout(
               () => {                       // eslint-disable-line no-loop-func
-                this.emit('clap', this._repeatedClapCnt);
+                this.timeline.addClap(this._repeatedClapCnt);
                 log.debug('clap detected', this.totalClapCnt,
                   this._matchWindowCnt * this._fftWindowStep / this._sampleRate,
                   this._matchWindowCnt, prev.data, cur.data);

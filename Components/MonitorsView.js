@@ -34,17 +34,21 @@ var MonitorsView = React.createClass({
       streaming: { },
       network: null,
       serverConnection: 'offline',
-      serverUrl: api.config.serverUrl
+      serverUrl: null
     };
   },
 
   componentWillMount: function() {
-    this.connectServer();
     var DeviceManager = require('../btle/central-device-manager');
     this.dm = new DeviceManager(require('../btle/ble-central'), this);
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
     this.getWifiPromise = null;
+
+    api.socketio.address().then(result => {
+      this.state.serverUrl = result.url;
+      this.connectServer();
+    });
   },
 
   componentWillUnmount: function() {
@@ -109,8 +113,15 @@ var MonitorsView = React.createClass({
       this.socket.handlers = {};
       this.socket.close();
     }
+
+    // XXX: Hack to ensure we make the server happy (remove trailing slash).
+    let serverUrl = this.state.serverUrl;
+    if (serverUrl[serverUrl.length - 1] === '/') {
+      serverUrl = this.state.serverUrl.slice(0, -1);
+    }
+
     this.socket = new SocketIO();
-    this.socket.connect(this.state.serverUrl, {
+    this.socket.connect(serverUrl, {
       forceWebsockets: true
     });
     this.state.serverConnection = 'connecting';

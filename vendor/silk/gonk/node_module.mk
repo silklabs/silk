@@ -22,7 +22,7 @@
 #
 # 6. external/stlport/libstlport.mk is activated if an alternate STL is not
 #    selected via Android.mk in the usage manner:
-#              LOCAL_SDK_VERSION := 21
+#              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
 

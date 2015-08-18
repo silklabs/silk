@@ -1,19 +1,19 @@
-From acbb340f92e9a5a47b754e7563895ee626d8e23b Mon Sep 17 00:00:00 2001
+From edb04babcee8d7e329489ae4592b09dcf3ba99f3 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 53 insertions(+)
+ Android.mk | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..b7c8259
+index 0000000..198d3c2
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,63 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +LOCAL_NODE_ENGINE=$(notdir $(LOCAL_PATH))
@@ -27,39 +27,47 @@ index 0000000..b7c8259
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT)/bin
 +LOCAL_STRIP_MODULE := true
-+node_BUILD_DIR := $(ANDROID_BUILD_TOP)/$(PRODUCT_OUT)/obj/$(LOCAL_MODULE_CLASS)/$(LOCAL_MODULE)_intermediates
-+LOCAL_PREBUILT_MODULE_FILE := $(node_BUILD_DIR)/Release/$(LOCAL_MODULE)
++LOCAL_32_BIT_ONLY := true
++LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/out/Release/$(LOCAL_MODULE)
++
 +include external/stlport/libstlport.mk
 +include $(BUILD_PREBUILT)
 +
++# If the 2nd arch exists assume it's 32bit and select it
++ifdef TARGET_2ND_ARCH
++LOCAL_2ND_ARCH_VAR_PREFIX := $(TARGET_2ND_ARCH_VAR_PREFIX)
++endif
++
 +LOCAL_CFLAGS := \
-+  $(addprefix -isystem ,$(abspath . $(LOCAL_C_INCLUDES) $(TARGET_C_INCLUDES))) \
-+  $(TARGET_GLOBAL_CFLAGS)
++  $(addprefix -isystem ,$(abspath . $(LOCAL_C_INCLUDES) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_C_INCLUDES))) \
++  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_CFLAGS)
 +
-+LOCAL_CPPFLAGS := -DV8_ANDROID_LOG_STDOUT $(TARGET_GLOBAL_CPPFLAGS)
++LOCAL_CPPFLAGS := -DV8_ANDROID_LOG_STDOUT $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_CPPFLAGS)
 +
-+LOCAL_LDFLAGS := $(TARGET_GLOBAL_LDFLAGS) -pie \
-+  -B$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
-+  -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES))  \
++LOCAL_LDFLAGS := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) -pie \
++  -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
++  -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES))  \
 +  $(subst lib,-l,$(LOCAL_SHARED_LIBRARIES))
 +
-+$(LOCAL_PREBUILT_MODULE_FILE): export CC := $(abspath $(TARGET_CC))
-+$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $(TARGET_CXX))
-+$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $(TARGET_CXX))
-+$(LOCAL_PREBUILT_MODULE_FILE): export AR := $(abspath $(TARGET_AR))
-+$(LOCAL_PREBUILT_MODULE_FILE): export RANLIB := $(abspath $(TARGET_RANLIB))
-+$(LOCAL_PREBUILT_MODULE_FILE): export LINK := $(abspath $(TARGET_CXX))
++$(LOCAL_PREBUILT_MODULE_FILE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
++$(LOCAL_PREBUILT_MODULE_FILE): export CC := $(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC))
++$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX))
++$(LOCAL_PREBUILT_MODULE_FILE): export CXX := $(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX))
++$(LOCAL_PREBUILT_MODULE_FILE): export AR := $(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))
++$(LOCAL_PREBUILT_MODULE_FILE): export RANLIB := $(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))
++$(LOCAL_PREBUILT_MODULE_FILE): export LINK := $(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX))
 +$(LOCAL_PREBUILT_MODULE_FILE): export CFLAGS := $(LOCAL_CFLAGS)
 +$(LOCAL_PREBUILT_MODULE_FILE): export CXXFLAGS := $(LOCAL_CFLAGS) $(LOCAL_CPPFLAGS)
 +$(LOCAL_PREBUILT_MODULE_FILE): export LDFLAGS := $(LOCAL_LDFLAGS)
-+$(LOCAL_PREBUILT_MODULE_FILE): node_BUILD_DIR := $(node_BUILD_DIR)
++$(LOCAL_PREBUILT_MODULE_FILE): node_BUILD_DIR := $(abspath $(dir $(LOCAL_BUILT_MODULE)))
 +
 +$(LOCAL_PREBUILT_MODULE_FILE): $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk \
-+  $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) \
-+  $(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/, \
++  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTBEGIN_DYNAMIC_O) \
++  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTEND_O) \
++  $(addprefix $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)/, \
 +      libc.so libdl.so liblog.so $(addsuffix .so,$(LOCAL_SHARED_LIBRARIES)))
 +	@echo Building: $@
-+	$(hide) rm -rf $(@D) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
++	$(hide) rm -rf $(node_BUILD_DIR) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
 +	$(hide) mkdir -p $(node_BUILD_DIR)
 +	$(hide) ln -s $(node_BUILD_DIR) $(<D)/out
 +	$(hide) cd $(<D) && ./configure --prefix=/ \
@@ -67,6 +75,8 @@ index 0000000..b7c8259
 +	$(hide) cd $(<D) && $(MAKE) V=$(if $(SHOW_COMMANDS),1)
 +
 +endif
++
++LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
 1.9.1
 

@@ -71,6 +71,7 @@ endif
 # Make.
 LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
 
+LOCAL_32_BIT_ONLY := true
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
 ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
@@ -87,6 +88,11 @@ endif
 # TODO: Ideally this would be removed, as it will also obscure legit missing symbols
 LOCAL_ALLOW_UNDEFINED_SYMBOLS=true
 
+# If the 2nd arch exists assume it's 32bit and select it
+ifdef TARGET_2ND_ARCH
+LOCAL_2ND_ARCH_VAR_PREFIX := $(TARGET_2ND_ARCH_VAR_PREFIX)
+endif
+
 include $(BUILD_SYSTEM)/binary.mk
 
 $(LOCAL_BUILT_MODULE): built_module_path := $(built_module_path)
@@ -99,6 +105,7 @@ npm_node_dir = $(abspath external/$(or $(NODE_ENGINE),node))
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef
+$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
 $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
@@ -140,17 +147,17 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
     LD_FLAGS="\
       $(PRIVATE_LDFLAGS) \
       $(PRIVATE_LDLIBS) \
-      $(TARGET_GLOBAL_LDFLAGS) \
-      -B$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
-      -L$(abspath $(TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
+      $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
+      -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
+      -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       "\ && \
     export NPM_CONFIG_ARCH=arm &&  \
     export NPM_CONFIG_PLATFORM=android && \
-    export CC="$(abspath $(TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
-    export CXX="$(abspath $(TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
-    export LINK="$(abspath $(TARGET_CXX)) $$LD_FLAGS" && \
-    export AR="$(abspath $(TARGET_AR))" && \
-    export RANLIB="$(abspath $(TARGET_RANLIB))" && \
+    export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
+    export CXX="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
+    export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$LD_FLAGS" && \
+    export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
+    export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \
     export Android_mk__LIBRARIES="-Wl,--start-group \
       $(abspath \
         $(PRIVATE_ALL_WHOLE_STATIC_LIBRARIES) \
@@ -165,8 +172,8 @@ endif
 
 ifeq (file,$(LOCAL_NODE_MODULE_TYPE))
 
-$(LOCAL_INSTALLED_MODULE): PRIVATE_STRIP := $(TARGET_STRIP)
-$(LOCAL_INSTALLED_MODULE): PRIVATE_OBJCOPY := $(TARGET_OBJCOPY)
+$(LOCAL_INSTALLED_MODULE): PRIVATE_STRIP := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
+$(LOCAL_INSTALLED_MODULE): PRIVATE_OBJCOPY := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY)
 $(LOCAL_INSTALLED_MODULE): built_module_path := $(built_module_path)
 
 # Binary file module
@@ -175,7 +182,7 @@ ifeq ($(suffix $(LOCAL_NODE_MODULE_MAIN)),.node)
 $(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_MODULE := \
   $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(LOCAL_INSTALLED_MODULE))
 
-$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(TARGET_STRIP)
+$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
 	$(transform-to-stripped)
 	@echo target Symbolic: $(PRIVATE_UNSTRIPPED_MODULE)
 	$(hide) mkdir -p $(dir $(PRIVATE_UNSTRIPPED_MODULE))
@@ -187,7 +194,7 @@ else
 
 $(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_PATH := \
   $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(dir $(LOCAL_INSTALLED_MODULE)))
-$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $(TARGET_STRIP)
+$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
 	$(copy-file-to-target)
 # Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
 # so they can be resolved correctly from the browserify-ed module
@@ -220,3 +227,5 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
 	$(hide) touch $@
 endif
+
+LOCAL_2ND_ARCH_VAR_PREFIX :=

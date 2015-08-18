@@ -35,6 +35,7 @@ LOCAL_MODULE:= capture
 
 include external/stlport/libstlport.mk
 
+LOCAL_32_BIT_ONLY := true
 include $(BUILD_EXECUTABLE)
 
 ################################################################################

@@ -3,6 +3,9 @@ ROOT := vendor/silk/gonk
 
 include $(CLEAR_VARS)
 
+LOCAL_MODULE:= mic
+LOCAL_MODULE_TAGS := optional
+
 LOCAL_SRC_FILES:=        \
 	../SocketListener/SocketListener1.cpp \
 	../jsoncpp/jsoncpp.cpp \
@@ -24,9 +27,7 @@ LOCAL_C_INCLUDES += $(ROOT)/jsoncpp $(ROOT)/SocketListener
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
 
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE:= mic
+LOCAL_32_BIT_ONLY := true
 
 include external/stlport/libstlport.mk
 

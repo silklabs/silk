@@ -3,6 +3,12 @@
 
 'use strict';
 
+// Uninitialized socket.io connection.
+var socket = null;
+// Silk api
+var api = silk({
+  serverUrl: document.location.origin
+});
 
 function GenericLog(name) {
   this.element = document.getElementById(name);
@@ -143,48 +149,47 @@ var cameras = new function() {
   this.init();
 }
 
-var socket = io(document.location.origin, {
-  transports: ['websocket']
-});
-socket.on('connect', function () {
-  console.log('connected to server');
-  socket.emit('join', 'logging');
-  socket.emit('join', 'video-streams');
-});
+function listen(socket) {
+  socket.on('connect', function () {
+    console.log('connected to server');
+    socket.emit('join', 'logging');
+    socket.emit('join', 'video-streams');
+  });
 
-socket.on('log', function (msg) {
-  if (cameras.selected && msg.id === cameras.selected.id) {
-    switch (msg.type) {
-    case 'dash':
-      dash.log(msg.log);
-      break;
-    case 'procrank':
-      procrank.log(msg.log);
-      break;
-    case 'logcat':
-      logcat.log(msg.log);
-      break;
-    default:
-      console.error('Unknown log type', msg.type);
-      break;
+  socket.on('log', function (msg) {
+    if (cameras.selected && msg.id === cameras.selected.id) {
+      switch (msg.type) {
+      case 'dash':
+        dash.log(msg.log);
+        break;
+      case 'procrank':
+        procrank.log(msg.log);
+        break;
+      case 'logcat':
+        logcat.log(msg.log);
+        break;
+      default:
+        console.error('Unknown log type', msg.type);
+        break;
+      }
     }
-  }
-});
+  });
 
-socket.on('video-stream-new', function(msg) {
-  console.log('New  camera', msg.name, msg.id);
-  cameras.add(msg.id, msg.name);
-});
+  socket.on('video-stream-new', function(msg) {
+    console.log('New  camera', msg.name, msg.id);
+    cameras.add(msg.id, msg.name);
+  });
 
-socket.on('video-stream-delete', function(msg) {
-  console.log('Lost camera', msg.name, msg.id);
-  cameras.remove(msg.id);
-});
+  socket.on('video-stream-delete', function(msg) {
+    console.log('Lost camera', msg.name, msg.id);
+    cameras.remove(msg.id);
+  });
 
-socket.on('disconnect', function(e) {
-  console.log('lost connection to server');
-  cameras.init();
-});
+  socket.on('disconnect', function(e) {
+    console.log('lost connection to server');
+    cameras.init();
+  });
+}
 
 function emitLogEnable(id, type) {
   var config = {}
@@ -205,3 +210,13 @@ function emitLogEnable(id, type) {
     config: config
   });
 }
+
+api.socketio.address().then(function(result) {
+  socket = io(result.url, {
+    transports: ['websocket']
+  });
+  listen(socket);
+}).catch(function (err) {
+  console.error('Could not get socket.io address', err);
+});
+

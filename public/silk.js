@@ -1,10 +1,16 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+// Uninitialized socket.io connection.
+var socket = null;
 // Keep the last 5000 messages visible in the window.
 var max = 5000;
 // Whether to log pings or not.
 var logEnabled = false;
+// Silk api
+var api = silk({
+  serverUrl: document.location.origin
+});
 
 function log(msg) {
   console.log(msg);
@@ -70,80 +76,77 @@ function feedPlayer(msg) {
   video.src = mp4;
 }
 
-var socket = io(document.location.origin, {
-  transports: ['websocket']
-});
+function listen(socket) {
+  socket.on('connect', function () {
+    while (monitors.firstChild) {
+      monitors.removeChild(monitors.firstChild);
+    }
+    log('Connected, joining video-streams');
+    socket.emit('join', 'video-streams');
+  });
 
-socket.on('connect', function () {
-  while (monitors.firstChild) {
-    monitors.removeChild(monitors.firstChild);
-  }
-  log('Connected, joining video-streams');
-  socket.emit('join', 'video-streams');
-});
+  socket.on('video-stream-new', function(msg) {
+    log('New video stream '+ msg.id);
+    // TODO: when this evolves into a full-blown web app, this should
+    // become component-ized and shared with the native apps if
+    // possible
+    var stream = 'video-' + msg.id;
+    var previewStream = 'video-preview-' + msg.id;
 
-socket.on('video-stream-new', function(msg) {
-  log('New video stream '+ msg.id);
-  // TODO: when this evolves into a full-blown web app, this should
-  // become component-ized and shared with the native apps if
-  // possible
-  var stream = 'video-' + msg.id;
-  var previewStream = 'video-preview-' + msg.id;
+    var monitor = document.getElementById(msg.id);
+    if (monitor) {
+      socket.emit('leave', stream);
+      socket.emit('leave', previewStream);
+      monitors.removeChild(monitor);
+    }
 
-  var monitor = document.getElementById(msg.id);
-  if (monitor) {
+    var name = msg.name;
+    var previewImage = document.createElement('img');
+
+    var logoImage = document.createElement('img');
+    var logoArray = new Uint8Array(msg.logo);
+    if (logoArray.length > 0) {
+      var blob = new Blob([logoArray], { type: 'image/png' });
+      logoImage.src = URL.createObjectURL(blob);
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = msg.previewSize.width;
+    canvas.height = msg.previewSize.height;
+    canvas.setAttribute('id', msg.id);
+    canvas.addEventListener('click', function() { showPlayer(stream); });
+    monitors.appendChild(canvas);
+
+    socket.on(previewStream, function(msg) {
+      if (msg && msg.frame) {
+        logMsg('video preview', msg);
+        var when = new Date(msg.when);
+
+        var view = new Uint8Array(msg.frame);
+        var blob = new Blob([view], { type: 'image/jpg' });
+        URL.revokeObjectURL(previewImage.src);
+        previewImage.src = URL.createObjectURL(blob);
+        previewImage.onload = function() {
+          renderPreview(canvas, name, when, previewImage, logoImage, msg.objects);
+        };
+      }
+    });
+    log('Joining preview stream ' + previewStream);
+    socket.emit('join', previewStream);
+  });
+
+  socket.on('video-stream-delete', function(msg) {
+    log('Dead video stream '+ msg.id);
+    var stream = 'video-' + msg.id;
+    var previewStream = 'video-preview-' + msg.id;
     socket.emit('leave', stream);
     socket.emit('leave', previewStream);
-    monitors.removeChild(monitor);
-  }
-
-  var name = msg.name;
-  var previewImage = document.createElement('img');
-
-  var logoImage = document.createElement('img');
-  var logoArray = new Uint8Array(msg.logo);
-  if (logoArray.length > 0) {
-    var blob = new Blob([logoArray], { type: 'image/png' });
-    logoImage.src = URL.createObjectURL(blob);
-  }
-
-  var canvas = document.createElement('canvas');
-  canvas.width = msg.previewSize.width;
-  canvas.height = msg.previewSize.height;
-  canvas.setAttribute('id', msg.id);
-  canvas.addEventListener('click', function() { showPlayer(stream); });
-  monitors.appendChild(canvas);
-
-  socket.on(previewStream, function(msg) {
-    if (msg && msg.frame) {
-      logMsg('video preview', msg);
-      var when = new Date(msg.when);
-
-      var view = new Uint8Array(msg.frame);
-      var blob = new Blob([view], { type: 'image/jpg' });
-      URL.revokeObjectURL(previewImage.src);
-      previewImage.src = URL.createObjectURL(blob);
-      previewImage.onload = function() {
-        renderPreview(canvas, name, when, previewImage, logoImage, msg.objects);
-      };
+    var monitor = document.getElementById(msg.id);
+    if (monitor) {
+      monitors.removeChild(monitor);
     }
   });
-  log('Joining preview stream ' + previewStream);
-  socket.emit('join', previewStream);
-});
-
-socket.on('video-stream-delete', function(msg) {
-  log('Dead video stream '+ msg.id);
-  var stream = 'video-' + msg.id;
-  var previewStream = 'video-preview-' + msg.id;
-  socket.emit('leave', stream);
-  socket.emit('leave', previewStream);
-  var monitor = document.getElementById(msg.id);
-  if (monitor) {
-    monitors.removeChild(monitor);
-  }
-});
-
+}
 
 function renderPreview(canvas, name, when, previewImage, logoImage, objects) {
 
@@ -216,3 +219,13 @@ function light() {
   socket.emit('cmd', { msg: 'light',
                        state: { on: on, intensity: intensity } });
 }
+
+api.socketio.address().then(function(result) {
+  socket = io(result.url, {
+    transports: ['websocket']
+  });
+  listen(socket);
+}).catch(function (err) {
+  console.error('Could not get socket.io address', err);
+});
+

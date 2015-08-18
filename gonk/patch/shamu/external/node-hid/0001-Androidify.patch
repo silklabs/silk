@@ -21,7 +21,7 @@ index 0000000..76bba3a
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS  := optional debug eng
 +LOCAL_SHARED_LIBRARIES := libusb1.0
-+LOCAL_SDK_VERSION := 21
++LOCAL_SDK_VERSION := 19
 +LOCAL_NDK_STL_VARIANT := gnustl_static
 +LOCAL_CPPFLAGS += -fexceptions -Wno-sign-promo
 +include $(BUILD_NODE_MODULE)

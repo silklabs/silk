@@ -267,14 +267,15 @@ status_t CaptureCommand::initThread() {
   mLooper->setName("capture-looper");
   mLooper->start();
 
-  // Create a preview surface
+  // Use an empty hidden window to keep CameraSource happy.
+  // TODO: Avoid using surfaceflinger entirely
   mSCClient = new SurfaceComposerClient();
   if (mSCClient.get() == NULL) {
     ALOGE("Unable to establish connection to Surface Composer");
     return -1;
   }
   mSurfaceControl = mSCClient->createSurface(String8(CAMERA_NAME),
-      sVideoSize.width, sVideoSize.height, PIXEL_FORMAT_RGBX_8888, 0);
+      0, 0, PIXEL_FORMAT_RGBX_8888, ISurfaceComposerClient::eHidden);
   if (mSurfaceControl.get() == NULL) {
     ALOGE("Unable to create preview surface");
     return -1;

@@ -15,9 +15,6 @@ using namespace android;
 //
 // Constants
 //
-#define TAG_VIDEO 0
-#define TAG_PREVIEW 1
-#define TAG_FACES 2
 
 #define CAPTURE_CTL_SOCKET_NAME "capturectl"
 #define CAPTURE_DATA_SOCKET_NAME "captured"

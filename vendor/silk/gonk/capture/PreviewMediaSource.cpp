@@ -4,11 +4,15 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
+//#define LOG_NDEBUG 0
+#define LOG_TAG "PreviewMediaSource"
+
 #include "PreviewMediaSource.h"
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/MediaBuffer.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include "Capturedefs.h"
+#include <media/openmax/OMX_IVCommon.h>
 
 extern "C" {
 #include "jpeglib.h"
@@ -85,6 +89,11 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
   CHECK(meta->findInt32(kKeyStride, &stride));
   CHECK(meta->findInt32(kKeySliceHeight, &sliceHeight));
   CHECK(meta->findInt32(kKeyColorFormat, &colorFormat));
+
+  if (colorFormat != (int) OMX_COLOR_FormatYUV420SemiPlanar) {
+    ALOGE("Warning: kKeyColorFormat is unsupported: %d", colorFormat);
+    return;
+  }
 
   int32_t imageWidth = width / sPreviewScale;
   int32_t imageHeight = height / sPreviewScale;

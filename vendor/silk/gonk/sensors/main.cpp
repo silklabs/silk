@@ -16,6 +16,7 @@
 #include <hardware/sensors.h>
 #include <json/json.h>
 #include <utils/Thread.h>
+#include <utils/KeyedVector.h>
 
 using namespace android;
 
@@ -75,7 +76,9 @@ public:
       mDevice(NULL),
       mSensorsList(NULL),
       mSensorListCount(0),
-      mSensorsPoll(NULL) {
+      mSensorsPoll(NULL),
+      mActiveSensorCount(0),
+      mActiveSensors(false) {
   }
 
   virtual ~SensorsCommand() {}
@@ -91,6 +94,8 @@ private:
   struct sensor_t const* mSensorsList;
   int mSensorListCount;
   sp<SensorsPoll> mSensorsPoll;
+  int mActiveSensorCount;
+  DefaultKeyedVector<int, bool> mActiveSensors;
 };
 
 /**
@@ -146,6 +151,7 @@ public:
    */
   void stop() {
     requestExitAndWait();
+    ALOGV("Thread exited");
   }
 
 private:
@@ -268,29 +274,43 @@ int SensorsCommand::sensors_activate(int sensorType, int activate, int rate) {
   int err;
   Json::Value jsonMsg;
   if (activate) {
-    err = mDevice->activate(
-        reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
-        mSensorsList[count].handle, 1);
-    LOG_ERROR((err != 0), "Failed to activate the sensor");
-
-    if (mDevice->common.version >= SENSORS_DEVICE_API_VERSION_1_1) {
-      mDevice->batch(mDevice, mSensorsList[count].handle, 0, ms2ns(rate),
-          ms2ns(rate));
-    } else {
-      mDevice->setDelay(
+    // Only activate if not already active
+    if (!mActiveSensors.valueFor(mSensorsList[count].handle)) {
+      err = mDevice->activate(
           reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
-          mSensorsList[count].handle, ms2ns(rate));
-    }
+          mSensorsList[count].handle, 1);
+      LOG_ERROR((err != 0), "Failed to activate the sensor");
 
+      if (mDevice->common.version >= SENSORS_DEVICE_API_VERSION_1_1) {
+        mDevice->batch(mDevice, mSensorsList[count].handle, 0, ms2ns(rate),
+            ms2ns(rate));
+      } else {
+        mDevice->setDelay(
+            reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
+            mSensorsList[count].handle, ms2ns(rate));
+      }
+      mActiveSensorCount++;
+      mActiveSensors.add(mSensorsList[count].handle, true);
+    }
     jsonMsg["eventName"] = "activated";
     mSensorsListener->sendEvent(jsonMsg);
   } else  {
-    err = mDevice->activate(
-        reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
-        mSensorsList[count].handle, 0);
-    LOG_ERROR((err != 0), "Failed to deactivate the sensor");
+    if (mActiveSensors.valueFor(mSensorsList[count].handle)) {
+      mActiveSensorCount--;
+      mActiveSensors.removeItem(mSensorsList[count].handle);
 
-    Json::Value jsonMsg;
+      // If no more active sensors then stop polling
+      if (mActiveSensorCount <= 0) {
+        mSensorsPoll->stop();
+        mSensorsPoll = NULL;
+      }
+
+      err = mDevice->activate(
+          reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
+          mSensorsList[count].handle, 0);
+      LOG_ERROR((err != 0), "Failed to deactivate the sensor");
+    }
+
     jsonMsg["eventName"] = "deactivated";
     mSensorsListener->sendEvent(jsonMsg);
   }

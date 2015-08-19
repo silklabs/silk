@@ -22,7 +22,7 @@ export default function init(env) {
 
   env.sensors.light(LIGHT_SENSOR_POLL_INTERVAL_MS);
   env.sensors.on('light', level => {
-    log.verbose(`Light sensor level: ${level}`);
+    log.debug(`Light sensor level: ${level}`);
 
     // Turn on flash when the sensors detect low light
     if (level <= NIGHT_LIGHT_SI_LUX) {

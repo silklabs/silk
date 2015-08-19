@@ -143,5 +143,5 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
   jpeg_finish_compress(cinfo);
   jpeg_destroy_compress(cinfo);
 
-  mChannel->send(TAG_PREVIEW, state.buffer.begin(), state.buffer.size());
+  mChannel->send(Channel::TAG_PREVIEW, state.buffer.begin(), state.buffer.size());
 }

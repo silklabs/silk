@@ -509,7 +509,7 @@ bool SlicedMP4Encoder::threadLoop() {
     status_t err = writer->stop();
     if (err == ::OK) {
       // Write size and .mp4 data
-      mChannel->send(TAG_VIDEO, when, writer->data().array(),
+      mChannel->send(Channel::TAG_VIDEO, when, writer->data().array(),
           writer->data().size());
     } else {
       ALOGW("MPEG4MemoryWriter stop failed with %d. No video data sent", err);

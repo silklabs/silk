@@ -22,7 +22,9 @@ const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
 const CAPTURE_DATA_SOCKET_NAME = '/dev/socket/captured';
 const CAPTURE_COMMAND_NAME = 'CaptureCommand';
 
-const HEADER_NR_BYTES = 16;
+
+// These constants must match those in Channel.h
+const HEADER_NR_BYTES = 16; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
 const TAG_FACES = 2;

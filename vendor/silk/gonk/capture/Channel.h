@@ -16,24 +16,27 @@
  */
 class Channel: public SocketListener1 {
 public:
+  enum Tag {
+    TAG_VIDEO = 0,
+    TAG_PREVIEW,
+    TAG_FACES,
+  };
+  struct Header {
+    size_t size; // size of the packet, excluding this header
+    int32_t tag; // of type Tag
+    timeval when;
+  };
+
   Channel() :
       SocketListener1(CAPTURE_DATA_SOCKET_NAME, true) {
   }
-  void send(int32_t tag, const void *data, size_t size);
-  void send(int32_t tag, timeval &when, const void *data, size_t size);
+  void send(Tag tag, const void *data, size_t size);
+  void send(Tag tag, timeval &when, const void *data, size_t size);
 
 protected:
   virtual bool onDataAvailable(SocketClient *c) {
     return true;
   };
-
-private:
-  void send(const void *data, size_t size);
-
-  template<typename T>
-  void send(T value) {
-    sendData(&value, sizeof(T));
-  }
 };
 
 #endif

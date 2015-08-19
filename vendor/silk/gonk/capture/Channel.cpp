@@ -14,13 +14,12 @@
 /**
  *
  */
-void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
+void Channel::send(Tag tag, timeval &when, const void *data, size_t size) {
   ALOGV("tag:%d, size: %d, when:%ld.%ld\n", tag, size, when.tv_sec, when.tv_usec);
 
   if (isSocketAvailable()) {
-    send(int32_t(size));
-    send(int32_t(tag));
-    send(timeval(when));
+    Header header = { size, tag, when };
+    sendData(&header, sizeof(header));
     if (size > 0) {
       sendData(data, size);
     }
@@ -32,7 +31,7 @@ void Channel::send(int32_t tag, timeval &when, const void *data, size_t size) {
 /**
  *
  */
-void Channel::send(int32_t tag, const void *data, size_t size) {
+void Channel::send(Tag tag, const void *data, size_t size) {
   timeval when;
   gettimeofday(&when, NULL);
   send(tag, when, data, size);

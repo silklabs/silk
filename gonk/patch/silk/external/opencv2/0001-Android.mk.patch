@@ -1,4 +1,4 @@
-From 1568e80d1e4558d6fadd0e7d77b742cec10571d2 Mon Sep 17 00:00:00 2001
+From 9df597f8daed249fdf8231b84e9aece3c1dbe125 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
@@ -12,7 +12,7 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..c10c17b
+index 0000000..46110d1
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,91 @@
@@ -70,7 +70,6 @@ index 0000000..c10c17b
 +	$(hide) mkdir -p $(@D)
 +	$(hide) ln -sf ../libopencv_core_intermediates/install/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
 +
-+
 +OPENCV_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(OPENCV_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
 +$(OPENCV_MAKEFILE): $(LOCAL_PATH)/Android.mk
@@ -86,6 +85,7 @@ index 0000000..c10c17b
 + -DBUILD_PERF_TESTS=false \
 + -DBUILD_opencv_androidcamera=false \
 + -DBUILD_opencv_java=false \
++ -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-4.8 \
 + -DANDROID_ABI="armeabi-v7a with NEON" \
 + -DANDROID_NATIVE_API_LEVEL=19 \
 + -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
@@ -150,5 +150,5 @@ index 0000000..ca3897f
 +LOCAL_SHARED_LIBRARIES += liblog libz
 +endif
 -- 
-1.9.1
+2.5.0
 

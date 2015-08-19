@@ -54,7 +54,6 @@ class Sensors extends events.EventEmitter {
   constructor() {
     super();
     this._ready = false;
-    this._pollInterval = null;
     this._active = false;
   }
 
@@ -87,7 +86,6 @@ class Sensors extends events.EventEmitter {
    * @param rate int sensor polling rate in milliseconds
    */
   activate(sensorType, rate) {
-    this._pollRate = rate;
     this._active = true;
     this._command('activate ' + sensorType + ' ' + rate);
   }
@@ -98,11 +96,6 @@ class Sensors extends events.EventEmitter {
    * @param sensorType string SENSOR_TYPE.* constant
    */
   deactivate(sensorType) {
-    // Stop polling sensor data
-    if (this._pollInterval) {
-      clearTimeout(this._pollInterval);
-    }
-
     this._active = false;
     this._command('deactivate ' + sensorType);
   }
@@ -122,7 +115,7 @@ class Sensors extends events.EventEmitter {
   }
 
   _onData(data) {
-    log.verbose(`received data: ${data.toString()}`);
+    log.debug(`received data: ${data.toString()}`);
     this._buffer += data.toString();
 
     let nullByte;
@@ -140,14 +133,13 @@ class Sensors extends events.EventEmitter {
         this.emit('initialize');
       } else if (sensorEvent.eventName === 'activated') {
         this.emit('activate');
-        this._poll();
+        this._command('poll'); // Start polling
       } else if (sensorEvent.eventName === 'deactivated') {
         this.emit('deactivate');
       } else if (sensorEvent.eventName === 'error') {
         this.emit('error');
       } else if (sensorEvent.eventName === 'data') {
         this.emit('data', sensorEvent);
-        this._poll();
       } else {
         log.warn(`Error: Unknown sensors command ${line}`);
       }
@@ -165,17 +157,6 @@ class Sensors extends events.EventEmitter {
 
     this._socket.write(event);
     log.verbose(`sensors << ${cmd}`);
-  }
-
-  _poll() {
-    if (this._pollInterval) {
-      clearTimeout(this._pollInterval);
-      this._pollInterval = null;
-    }
-    if (this._active) {
-      this._pollInterval = setTimeout(() => this._command('poll'),
-                                      this._pollRate);
-    }
   }
 }
 

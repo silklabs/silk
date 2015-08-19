@@ -8,6 +8,7 @@ LOCAL_SRC_FILES    := player.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_SHARED_LIBRARIES := libbinder liblog libutils libmedia
 LOCAL_C_INCLUDES := frameworks/av/include
+LOCAL_32_BIT_ONLY := true
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -18,4 +19,5 @@ LOCAL_SRC_FILES    := volume.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_SHARED_LIBRARIES := liblog libmedia
 LOCAL_C_INCLUDES := frameworks/av/include
+LOCAL_32_BIT_ONLY := true
 include $(BUILD_EXECUTABLE)

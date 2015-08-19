@@ -9,5 +9,5 @@ LOCAL_SHARED_LIBRARIES := liblog libhardware libsysutils
 LOCAL_C_INCLUDES += hardware/libhardware/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_REQUIRED_MODULES := bluetooth.default
-
+LOCAL_32_BIT_ONLY := true
 include $(BUILD_EXECUTABLE)

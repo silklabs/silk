@@ -11,6 +11,7 @@ LOCAL_SHARED_LIBRARIES := liblog libhardware libsysutils
 LOCAL_C_INCLUDES += hardware/libhardware/include
 LOCAL_C_INCLUDES += $(JSONCPP_PATH)
 LOCAL_MODULE_TAGS := optional
+LOCAL_32_BIT_ONLY := true
 
 include external/stlport/libstlport.mk
 

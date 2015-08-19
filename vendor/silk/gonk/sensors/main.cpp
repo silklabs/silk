@@ -46,6 +46,23 @@ using namespace android;
 class SensorsListener;
 class SensorsPoll;
 
+const char *apiNumToStr(int version) {
+  switch(version) {
+    case SENSORS_DEVICE_API_VERSION_0_1:
+      return "SENSORS_DEVICE_API_VERSION_0_1";
+    case SENSORS_DEVICE_API_VERSION_1_0:
+      return "SENSORS_DEVICE_API_VERSION_1_0";
+    case SENSORS_DEVICE_API_VERSION_1_1:
+      return "SENSORS_DEVICE_API_VERSION_1_1";
+    case SENSORS_DEVICE_API_VERSION_1_2:
+      return "SENSORS_DEVICE_API_VERSION_1_2";
+    case SENSORS_DEVICE_API_VERSION_1_3:
+      return "SENSORS_DEVICE_API_VERSION_1_3";
+    default:
+      return "UNKNOWN";
+  }
+}
+
 /**
  * This class provided a method that is run each time
  * {@code SENSORS_COMMAND_NAME} is received from node over the socket
@@ -70,7 +87,7 @@ private:
   int sensors_poll();
 
   sp<SensorsListener> mSensorsListener;
-  struct sensors_poll_device_t* mDevice;
+  sensors_poll_device_1_t* mDevice;
   struct sensor_t const* mSensorsList;
   int mSensorListCount;
   sp<SensorsPoll> mSensorsPoll;
@@ -110,7 +127,7 @@ public:
  */
 class SensorsPoll: public Thread {
 public:
-  SensorsPoll(sensors_poll_device_t* device,
+  SensorsPoll(sensors_poll_device_1_t* device,
       sp<SensorsListener> sensorsListener) :
       mDevice(device),
       mSensorsListener(sensorsListener) {
@@ -132,7 +149,7 @@ public:
   }
 
 private:
-  sensors_poll_device_t* mDevice; // SensorsCommand is the owner of mDevice
+  sensors_poll_device_1_t* mDevice; // SensorsCommand is the owner of mDevice
   sp<SensorsListener> mSensorsListener;
 };
 
@@ -187,8 +204,9 @@ int SensorsCommand::sensors_init() {
         (hw_module_t const**) &mModule);
     LOG_ERROR((err < 0), "hw_get_module() failed (%s)", strerror(-err));
 
-    err = sensors_open(&mModule->common, &mDevice);
+    err = sensors_open_1(&mModule->common, &mDevice);
     LOG_ERROR((err != 0), "sensors_open() failed (%s)", strerror(-err));
+    ALOGD("HAL version:%s", apiNumToStr(mDevice->common.version));
 
     mSensorListCount = mModule->get_sensors_list(mModule, &mSensorsList);
     ALOGD("%d sensors found:", mSensorListCount);
@@ -200,17 +218,24 @@ int SensorsCommand::sensors_init() {
             "\ttype: %d\n"
             "\tmaxRange: %f\n"
             "\tresolution: %f\n"
-            "\tpower: %f mA\n",
+            "\tpower: %f mA\n"
+            "\tmax_delay: %dms\n"
+            "\tfifoReservedEventCount: %u\n"
+            "\tfifoMaxEventCount: %u\n",
           mSensorsList[i].name, mSensorsList[i].vendor,
           mSensorsList[i].version, mSensorsList[i].handle,
           mSensorsList[i].type, mSensorsList[i].maxRange,
-          mSensorsList[i].resolution, mSensorsList[i].power);
+          mSensorsList[i].resolution, mSensorsList[i].power,
+          mSensorsList[i].maxDelay, mSensorsList[i].fifoReservedEventCount,
+          mSensorsList[i].fifoMaxEventCount);
     }
   }
 
   // Deactivate all the sensors
   for (int i = 0; i < mSensorListCount; i++) {
-    int err = mDevice->activate(mDevice, mSensorsList[i].handle, 0);
+    int err = mDevice->activate(
+        reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
+        mSensorsList[i].handle, 0);
     if (err != 0) {
       ALOGE("deactivate(%s) failed: %d", mSensorsList[i].name, err);
     }
@@ -243,14 +268,26 @@ int SensorsCommand::sensors_activate(int sensorType, int activate, int rate) {
   int err;
   Json::Value jsonMsg;
   if (activate) {
-    err = mDevice->activate(mDevice, mSensorsList[count].handle, 1);
+    err = mDevice->activate(
+        reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
+        mSensorsList[count].handle, 1);
     LOG_ERROR((err != 0), "Failed to activate the sensor");
-    mDevice->setDelay(mDevice, mSensorsList[count].handle, ms2ns(rate));
+
+    if (mDevice->common.version >= SENSORS_DEVICE_API_VERSION_1_1) {
+      mDevice->batch(mDevice, mSensorsList[count].handle, 0, ms2ns(rate),
+          ms2ns(rate));
+    } else {
+      mDevice->setDelay(
+          reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
+          mSensorsList[count].handle, ms2ns(rate));
+    }
 
     jsonMsg["eventName"] = "activated";
     mSensorsListener->sendEvent(jsonMsg);
   } else  {
-    err = mDevice->activate(mDevice, mSensorsList[count].handle, 0);
+    err = mDevice->activate(
+        reinterpret_cast<struct sensors_poll_device_t *>(mDevice),
+        mSensorsList[count].handle, 0);
     LOG_ERROR((err != 0), "Failed to deactivate the sensor");
 
     Json::Value jsonMsg;

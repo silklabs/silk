@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := ../jsoncpp/jsoncpp.cpp main.cpp
 LOCAL_CFLAGS += -Wall -Wextra
 LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
-LOCAL_SHARED_LIBRARIES := liblog libhardware libsysutils
+LOCAL_SHARED_LIBRARIES := liblog libhardware libsysutils libutils
 LOCAL_C_INCLUDES += hardware/libhardware/include
 LOCAL_C_INCLUDES += $(JSONCPP_PATH)
 LOCAL_MODULE_TAGS := optional

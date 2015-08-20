@@ -41,6 +41,7 @@ SILK_INIT := \
 SILK_GONK_PROGIES := \
   bledroid \
   capture \
+  libnative_camera_capture \
   dhcputil \
   lights \
   mic \

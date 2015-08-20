@@ -25,6 +25,7 @@
 #include "PreviewMediaSource.h"
 #include "SlicedMP4Encoder.h"
 #include "FaceDetection.h"
+#include "OpenCVCameraRecordingProxy.h"
 
 using namespace android;
 using namespace Json;
@@ -84,6 +85,7 @@ public:
     return true;
   }
 };
+
 
 /**
  * This class provided a method that is run each time
@@ -294,7 +296,8 @@ status_t CaptureCommand::initThread() {
     return -1;
   }
   mRemote = mCamera->remote();
-  mProxy = mCamera->getRecordingProxy();
+
+  mProxy = new OpenCVCameraRecordingProxy(mCamera->getRecordingProxy());
 
   FaceDetection faces(&mChannel);
   mCamera->setListener(&faces);

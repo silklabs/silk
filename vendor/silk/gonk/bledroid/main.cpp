@@ -237,7 +237,11 @@ void bt_discovery_state_changed_cb(bt_discovery_state_t state) {
  * Bluetooth Legacy PinKey Request callback
  */
 void bt_pin_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
-    uint32_t cod) {
+    uint32_t cod
+#ifdef QBLUETOOTH
+    , uint8_t secure
+#endif
+  ) {
   ALOGE("bt_pin_request_callback");
 }
 
@@ -314,6 +318,39 @@ void bt_energy_info_callback(bt_activity_energy_info *energy_info) {
   ALOGE("bt_energy_info_callback");
 }
 
+#ifdef QBLUETOOTH
+/**
+ *  Callback invoked when write rssi threshold command complete
+ */
+void bt_le_lpp_write_rssi_thresh_callback(bt_bdaddr_t *bda, int status) {
+  ALOGE("bt_le_lpp_write_rssi_thresh_callback");
+}
+
+/**
+ * Callback invoked when read rssi threshold command complete
+ */
+void bt_le_lpp_read_rssi_thresh_callback(bt_bdaddr_t *bda, int low, int upper,
+    int alert, int status) {
+  ALOGE("bt_le_lpp_read_rssi_thresh_callback");
+}
+
+/**
+ * Callback invoked when enable or disable rssi monitor command complete
+ */
+void bt_le_lpp_enable_rssi_monitor_callback(bt_bdaddr_t *bda,
+    int enable, int status) {
+  ALOGE("bt_le_lpp_enable_rssi_monitor_callback");
+}
+
+/**
+ * Callback triggered when rssi threshold event reported
+ */
+void bt_le_lpp_rssi_threshold_evt_callback(bt_bdaddr_t *bda,
+    int evt_type, int rssi) {
+  ALOGE("bt_le_lpp_rssi_threshold_evt_callback");
+}
+#endif
+
 bt_callbacks_t bt_callbacks = {
   sizeof(bt_callbacks_t),
   bt_adapter_state_changed_callback,
@@ -328,7 +365,13 @@ bt_callbacks_t bt_callbacks = {
   bt_callback_thread_event,
   bt_dut_mode_recv_callback,
   bt_le_test_mode_callback,
-  bt_energy_info_callback
+  bt_energy_info_callback,
+#ifdef QBLUETOOTH
+  bt_le_lpp_write_rssi_thresh_callback,
+  bt_le_lpp_read_rssi_thresh_callback,
+  bt_le_lpp_enable_rssi_monitor_callback,
+  bt_le_lpp_rssi_threshold_evt_callback,
+#endif
 };
 
 //
@@ -691,7 +734,9 @@ btgatt_server_callbacks_t bt_gatt_server_callbacks = {
     gatt_server_response_confirmation_callback,
     gatt_server_indication_sent_callback,
     gatt_server_congestion_callback,
+#ifndef QBLUETOOTH
     gatt_server_mtu_changed_callback,
+#endif
 };
 
 btgatt_callbacks_t gatt_callbacks = {

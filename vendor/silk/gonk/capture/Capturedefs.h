@@ -29,6 +29,7 @@ using namespace android;
 extern const char* kMimeTypeAvc;
 extern status_t OK;
 extern Size sVideoSize;
+extern int32_t sStride, sSliceHeight;
 extern int32_t sVideoBitRateInK;
 extern int32_t sFPS;
 extern int32_t sIFrameIntervalSec;

@@ -83,20 +83,9 @@ static void jpeg_term_destination(j_compress_ptr cinfo) {
 
 void PreviewMediaSource::snapshot(MediaBuffer* img) {
   sp<MetaData> meta = mSource->getFormat();
-  int32_t width, height, stride, sliceHeight, colorFormat;
-  CHECK(meta->findInt32(kKeyWidth, &width));
-  CHECK(meta->findInt32(kKeyHeight, &height));
-  CHECK(meta->findInt32(kKeyStride, &stride));
-  CHECK(meta->findInt32(kKeySliceHeight, &sliceHeight));
-  CHECK(meta->findInt32(kKeyColorFormat, &colorFormat));
 
-  if (colorFormat != (int) OMX_COLOR_FormatYUV420SemiPlanar) {
-    ALOGE("Warning: kKeyColorFormat is unsupported: %d", colorFormat);
-    return;
-  }
-
-  int32_t imageWidth = width / sPreviewScale;
-  int32_t imageHeight = height / sPreviewScale;
+  int32_t imageWidth = sVideoSize.width / sPreviewScale;
+  int32_t imageHeight = sVideoSize.height / sPreviewScale;
 
   jpeg_state state;
   struct jpeg_compress_struct *cinfo = &state.cinfo;
@@ -123,13 +112,13 @@ void PreviewMediaSource::snapshot(MediaBuffer* img) {
   const uint8_t *frame = reinterpret_cast<uint8_t*>(img->data())
       + img->range_offset();
   const uint8_t *y_plane = frame;
-  const uint8_t *cbcr_plane = frame + sliceHeight * stride;
+  const uint8_t *cbcr_plane = frame + sSliceHeight * sStride;
 
   uint8_t buffer[3 * (imageWidth + 1)];
   for (int row = 0; row < imageHeight; row++) {
     int32_t ycbcr_row = row * sPreviewScale;
-    const uint8_t *y_row = y_plane + ycbcr_row * stride;
-    const uint8_t *cbcr_row = cbcr_plane + (ycbcr_row / 2) * stride;
+    const uint8_t *y_row = y_plane + ycbcr_row * sStride;
+    const uint8_t *cbcr_row = cbcr_plane + (ycbcr_row / 2) * sStride;
     for (int x = 0; x < imageWidth; x++) {
       int32_t ycbcr_x = x * sPreviewScale;
       buffer[x * 3 + 0] = y_row[ycbcr_x];

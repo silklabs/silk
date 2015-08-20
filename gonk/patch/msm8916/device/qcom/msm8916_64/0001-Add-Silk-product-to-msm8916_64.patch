@@ -1,0 +1,24 @@
+From 1b31a679fd685af14ee37299aaa756dfa9071cf9 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Tue, 18 Aug 2015 13:18:04 -0700
+Subject: [PATCH] Add Silk product to msm8916_64
+
+Change-Id: Ic7eb9d23f9b5270abbea52e06c1b2fbc78260fb4
+---
+ msm8916_64.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/msm8916_64.mk b/msm8916_64.mk
+index d9af73a..0ce1174 100644
+--- a/msm8916_64.mk
++++ b/msm8916_64.mk
+@@ -115,3 +115,6 @@ PRODUCT_COPY_FILES += \
+         frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
+         frameworks/native/data/etc/android.hardware.nfc.hce.xml:system/etc/permissions/android.hardware.nfc.hce.xml
+ endif # TARGET_USES_QCA_NFC
++
++$(call inherit-product, vendor/silk/gonk/silk_generic.mk)
++
+-- 
+2.5.0
+

@@ -1,0 +1,43 @@
+From a89c7051fab7f9da4141a2040ff4a63d0b3f1812 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Sun, 16 Aug 2015 23:03:03 -0700
+Subject: [PATCH] Disable
+
+Change-Id: Ic2d9e4f0e0d1dd24796ca197261400feebbd4357
+---
+ uiautomator/Android.mk | 25 -------------------------
+ 1 file changed, 25 deletions(-)
+
+diff --git a/uiautomator/Android.mk b/uiautomator/Android.mk
+index 5391305..e69de29 100644
+--- a/uiautomator/Android.mk
++++ b/uiautomator/Android.mk
+@@ -1,25 +0,0 @@
+-#
+-# Copyright (C) 2012 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-
+-# don't build uiautomator in unbundled env
+-ifndef TARGET_BUILD_APPS
+-include $(call all-subdir-makefiles)
+-else
+-ifneq ($(filter uiautomator,$(TARGET_BUILD_APPS)),)
+-# used by the platform apps build.
+-include $(call all-subdir-makefiles)
+-endif
+-endif
+-- 
+2.5.0
+

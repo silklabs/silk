@@ -1,0 +1,24 @@
+From 56cd266350e16eaf4e3fcdbe2bd71a61ad077495 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Mon, 17 Aug 2015 16:52:42 -0700
+Subject: [PATCH] Add silk product
+
+Change-Id: I374322d5b098eb5b1a83885e9253ac20870bb9bb
+---
+ msm8916_32.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/msm8916_32.mk b/msm8916_32.mk
+index c887743..79386b4 100644
+--- a/msm8916_32.mk
++++ b/msm8916_32.mk
+@@ -130,3 +130,6 @@ PRODUCT_PACKAGES += \
+ AntHalService \
+ libantradio \
+ antradio_app
++
++$(call inherit-product, vendor/silk/gonk/silk_generic.mk)
++
+-- 
+2.5.0
+

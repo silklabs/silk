@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <include name="silk.xml"/>
+
+  <!--
+    Minimum subset of LA.BR.1.1.2-01610-8x16.0.xml required to build Silk
+      <include name="android-5.1.1_r1.xml" />
+   -->
+
+  <remote fetch="git://codeaurora.org/" name="caf" review="codeaurora.org"/>
+  <default remote="caf" revision="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="device/asus/deb" revision="a7321cc75efaab316e0d18cc9865b29078d6602d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/asus/flo" revision="6821cba3adac8ba009a84ec39bf348d29eeb829f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/asus/flo-kernel" revision="04b400f624e1570a015a4b6cdbff877ace55b36c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/asus/fugu" revision="3fed6ea7fcea89d7ede06520fbb6599527dc80af" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/asus/fugu-kernel" revision="7195226acf6e3da5aa7587ba27bd7eb306fae850" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/asus/grouper" revision="2a4b22a710c10bf94dbfe519e388c356e60cbc3e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/asus/tilapia" revision="d109f103f2f93febafa33e91a2c389c502bc5785" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="device/common" revision="b143878e855aff96d089c26e99f02879062bdc1b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/arm64" revision="39249053f37b7f9633eb406af3dbedfea7bf8b3e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/armv7-a-neon" revision="2a96372d80c693fc28b29328b3e86b65cab9189b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/common" revision="11c092a6cbfcf6207f07a9a8e3398e747e7f5461" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="device/generic/goldfish" revision="82a4dc7a20c827032fcc5a5092b81f708c87908b" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="device/generic/mini-emulator-arm64" revision="743dd408af5c662761bafc05eacdb18ade88cf3a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/mini-emulator-armv7-a-neon" revision="85c600cfc91b788b564a0be1c64487398df23eda" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/mini-emulator-mips" revision="3fdb24de40ca27da9a86f10f31314f2a13259db5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/mini-emulator-x86" revision="65d59e2be2cfd713513a05d80a0f75794ab60579" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/mini-emulator-x86_64" revision="673aae8bd65d9708821c4062f6a0364a859e7ae4" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/mips" revision="7caf8d5796ec0f59b2e1be865b76c5a5ad5707e6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="device/generic/qemu" revision="bd2543e810f3fa56e9dcfe301b893832534c85db" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/x86" revision="17657b831b0903f148a4392d88d83dde1dddab47" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/generic/x86_64" revision="138339be1da9b0f34befe3751b0bae874d7253db" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/google/accessory/arduino" revision="abc5159a3ca9dbb5c7e364a1eab99901a4440ac5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/google/accessory/demokit" revision="7dfe7f89a3b174709c773fe319531006e46440d9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/google/atv" revision="9606abe9aa167eab2e6b5c75bda6793ca72e3adf" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/htc/flounder" revision="01aaaed0b66bbad06031711d9485589657edffec" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/htc/flounder-kernel" revision="a3d27b64e305a59e5731c264d47d2eaad6bcfe95" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/lge/hammerhead" revision="398250d5ce7a33dcabdb981ecd7d79a0355eeba4" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/lge/hammerhead-kernel" revision="1e969b6cd5cd5eb4b753b46b96aec6c147d7a7d5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/lge/mako" revision="444f9dfed2e0f46758ba95a3a11accbd45768735" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/lge/mako-kernel" revision="71d66206bc405ef651ba657385d5fb29f7d6402d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/moto/shamu" revision="fd45a5a0e3e2ac4c8f3eaa61a46f9110798fb53a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="device/moto/shamu-kernel" revision="7b0976bab73acb85962419ffa71bd70f46f63c12" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="device/qcom/common" revision="c1227262842283196c80a98bd9975f83ff68b06f" upstream="LA.BR.1.1.2_rb1.9">
+    <copyfile dest="build.sh" src="build.sh"/>
+    <copyfile dest="vendor/qcom/build/tasks/generate_extra_images.mk" src="generate_extra_images.mk"/>
+  </project>
+  <project name="device/qcom/sepolicy" revision="f5c476b7d13f3e583e7c070d6bb97121bfd00967" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="device/sample" revision="a9f4dc7e1f8391090907d2fb13ad3a0297e51dc6" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="device/samsung/manta" revision="22c87ca7f47b681ff739a285d40369631e746d04" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="kernel/lk" path="bootable/bootloader/lk" revision="ba22814f933935c53e06ccfd7fa0beb1d5d1673a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="kernel/msm-3.10" path="kernel" revision="400b31f43fbe009fb1f47a1e4c88ddfb12baaa51" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/abi/cpp" path="abi/cpp" revision="a0f99286d0909f7a30b0bee742bec2a0b62c4dd0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/art" path="art" revision="d5b3abe520fb7c543fb25fc65182df96f5bf3653" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/bionic" path="bionic" revision="7b93f5af2fd5ee9bca6bee5f5bbb2cc33cb56deb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/bootable/bootloader/legacy" path="bootable/bootloader/legacy" revision="3c491d6efb8ff2534a6934702760a6273f197918" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/bootable/recovery" path="bootable/recovery" revision="65e24318bd2a2c336dc59e107cffd6e95b0cd827" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/build" path="build" revision="40bdf3798380cc00d37205adcee22b0f357f963d" upstream="LA.BR.1.1.2_rb1.9">
+    <copyfile dest="Makefile" src="core/root.mk"/>
+  </project>
+  <!-- <project groups="cts,pdk-cw-fs" name="platform/cts" path="cts" revision="9efbb6096fdb6eae29c69f8c6126bde79f2ae2a9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/dalvik" path="dalvik" revision="443ca72ad4d47625e606a2c15e0a3bc0175b327a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/developers/build" path="developers/build" revision="951bf762d76dffb97d9976d98f6c47c236c38c7a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/developers/demos" path="developers/demos" revision="7c700e80b902c8f7778ffd63c287ac5710fd69ef" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/developers/docs" path="developers/docs" revision="c0b835ddd9acc27176dc9a0f7d1aa2faf5d51806" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/developers/samples/android" path="developers/samples/android" revision="48242cd9e0456ab1722ceb7c00a3e689d705b57e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/development" path="development" revision="b2c3ecaa9c84556c143a14c973f6990e03db1fb3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/docs/source.android.com" path="docs/source.android.com" revision="b3aee88c344a2824ec7e155ebb55329a2ec73456" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/aac" path="external/aac" revision="6792cf6361ff339e336287affb0bfe54bf6957a9" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/android-clat" path="external/android-clat" revision="0ec5dfa1da6a97532dc8cca825bae4edfb7d3dce" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/ant-glob" path="external/ant-glob" revision="0f189400fd2a36bf11bfb058e7f3917eb7ed163a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/external/ant-wireless/ant_native" path="external/ant-wireless/ant_native" revision="fa74a2f8531d1840db7b22f35120d3e9cb41cf56" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/ant-wireless/ant_service" path="external/ant-wireless/ant_service" revision="d1cd68eca1bbcfe523b365edc9808fe79cc20c90" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/antlr" path="external/antlr" revision="47997265eeb7d954a32ece693bbe6dab740872dd" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/apache-harmony" path="external/apache-harmony" revision="c102e3160d2d600b5afef1f84e4ec9b286f621e0" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/apache-http" path="external/apache-http" revision="561294bc6c97b77003b5c8cf5575beec884dbc1a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/apache-qp" path="external/apache-qp" revision="64ea622b23e6612eb8e7dcae6bfd4314beb022a8" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/apache-xml" path="external/apache-xml" revision="650a6cfd4d6b2d38b88ada03694ae19cc448d07b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/arduino" path="external/arduino" revision="d06daf9bbc46838400461eb8e15842974e38d82a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/bison" path="external/bison" revision="c2418b886165add7f5a31fc5609f0ce2d004a90e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/blktrace" path="external/blktrace" revision="d345431f16b8f76f30a58193ff2b26d5853e1109" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/bluetooth/bluedroid" path="external/bluetooth/bluedroid" revision="5f8affc304222b251a42861ebf36e745d18bfb81" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/bouncycastle" path="external/bouncycastle" revision="dac964172756e29cbcfc8636a4722967decbea55" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/brctl" path="external/brctl" revision="751603bafb3787692188a881440b3dc61bb38e15" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/bsdiff" path="external/bsdiff" revision="6f503758fad2cbcf8359e8f0af32e4d79a2a48ae" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/bson" path="external/bson" revision="ad6fc5dbb5f4369e08f7543b1517c225281900c0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/bzip2" path="external/bzip2" revision="1cb636bd8e9e5cdfd5d5b2909a122f6e80db62de" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/ceres-solver" path="external/ceres-solver" revision="79397c21138f54fcff6ec067b44b847f1f7e0e98" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/checkpolicy" path="external/checkpolicy" revision="5d95bb5a518b2786c19b9cc1e1e4c15169a42a26" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/external/chromium-libpac" path="external/chromium-libpac" revision="e19e051cc1dae295dfb24a494f4f3a66d1ee4186" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/external/chromium-trace" path="external/chromium-trace" revision="a4c64913fc7e0930ad3aa40415c5d467e2cc3b8b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org" path="external/chromium_org" revision="7ca6821ce39a69aa816c60ba117592d2eb3c50f6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/sdch/open-vcdiff" path="external/chromium_org/sdch/open-vcdiff" revision="6d634da5463d9bc5fc88f86aec1d2ac4fe6f612e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/testing/gtest" path="external/chromium_org/testing/gtest" revision="65df883d09205766c521f2e6c126f4070a423141" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/WebKit" path="external/chromium_org/third_party/WebKit" revision="20e637e67a0c272870ae4d78466a68bcb77af041" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/angle" path="external/chromium_org/third_party/angle" revision="8eee38bd4151448e67a1aff3d7c8d9214df6de83" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/brotli/src" path="external/chromium_org/third_party/brotli/src" revision="96f298ac43a9216b251d6c3264d8f5ada89e107f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/eyesfree/src/android/java/src/com/googlecode/eyesfree/braille" path="external/chromium_org/third_party/eyesfree/src/android/java/src/com/googlecode/eyesfree/braille" revision="bb4c72f1deb0b8b2b0468b0bf1050462ebcf6135" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/freetype" path="external/chromium_org/third_party/freetype" revision="8651496036bd7a5c973222bebc1bfb8257e29e2f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/icu" path="external/chromium_org/third_party/icu" revision="528be20f9807646e71c6d5bdec71d0ab1bafa96d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/leveldatabase/src" path="external/chromium_org/third_party/leveldatabase/src" revision="d4e10f2a91f5de7bd17adcdbd80c54b19ab336fe" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libaddressinput/src" path="external/chromium_org/third_party/libaddressinput/src" revision="6ce3a9ad00160cd58574b6bca6d2220c4dbfc83e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libjingle/source/talk" path="external/chromium_org/third_party/libjingle/source/talk" revision="a77a80167b9acf91dfcd6c13fb76c0be2718030a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libjpeg_turbo" path="external/chromium_org/third_party/libjpeg_turbo" revision="9c15248d337eabb9355f5fa77cf63988bf23b4e2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libphonenumber/src/phonenumbers" path="external/chromium_org/third_party/libphonenumber/src/phonenumbers" revision="de6af28b9f9f34a31ffb7772b7510fd215a0814e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libphonenumber/src/resources" path="external/chromium_org/third_party/libphonenumber/src/resources" revision="8f194ead1ebd76ebb28b7e2dfc0a7baddc62bb22" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libsrtp" path="external/chromium_org/third_party/libsrtp" revision="38458a3a4ff2a6082f921257787bb7dac82c2443" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libvpx" path="external/chromium_org/third_party/libvpx" revision="d148f805100deaa0ecf8056e96a15bd5239e98dc" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/libyuv" path="external/chromium_org/third_party/libyuv" revision="866b9f96c27bcc0fc989ea1c303dab374fd7ec88" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/mesa/src" path="external/chromium_org/third_party/mesa/src" revision="e70a8ff30d20e1bf6bb5c06b5cd7bd4ea9ae20e1" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/openmax_dl" path="external/chromium_org/third_party/openmax_dl" revision="a10b50a448597e010a148e7f883c04ca88ab52e6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/openssl" path="external/chromium_org/third_party/openssl" revision="cc2cd4790cd85023341988efac0ec88b9f630f73" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/opus/src" path="external/chromium_org/third_party/opus/src" revision="e383b38591b010ab08ebddf1fd8d821796bd961a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/ots" path="external/chromium_org/third_party/ots" revision="ac9861b1e86791daa3728a7d285e4b84cfd16959" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/sfntly/cpp/src" path="external/chromium_org/third_party/sfntly/cpp/src" revision="2bac2ec7167835b214bfe42e762cd2ce6cf8cf1a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/skia" path="external/chromium_org/third_party/skia" revision="90b3f9b82dbad266f960601d2120082bb841fb97" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/smhasher/src" path="external/chromium_org/third_party/smhasher/src" revision="09e3094b8ab52bb1ad9ab8c8351d99df50327b67" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/usrsctp/usrsctplib" path="external/chromium_org/third_party/usrsctp/usrsctplib" revision="46100e9a86ac58447f99ee8ed55a9d7eb01d101a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/webrtc" path="external/chromium_org/third_party/webrtc" revision="2dc33605704d570ebd2ab5f0428ea94672ce6a7e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/third_party/yasm/source/patched-yasm" path="external/chromium_org/third_party/yasm/source/patched-yasm" revision="0f308c9bc9aa3258a0e90285b9d4e69bbb5b0a73" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/tools/grit" path="external/chromium_org/tools/grit" revision="a1ebf82ac03b9641e9afef57cfe2d2ce10f6933f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/tools/gyp" path="external/chromium_org/tools/gyp" revision="2e66f5c3106fa1c85694ebc07a52089301dfa2ee" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/external/chromium_org/v8" path="external/chromium_org/v8" revision="50090a7ee442d5372ec7f2b1e52eaab5114c74e7" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/external/clang" path="external/clang" revision="f44ab7a24a6199246673c39dc4204750fc74ed3f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/external/cmockery" path="external/cmockery" revision="bdd62c531bbdea115a3a7e71bba91c19dd319cc4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/compiler-rt" path="external/compiler-rt" revision="11f8ffed1d651dcafcb4f85ffc561a9eac13f844" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/connectivity" path="external/connectivity" revision="67c32f79eb2f4e3c9ae0110baaa9a5bf14fb0827" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/conntrack-tools" path="external/conntrack-tools" revision="92246dcc1fdcf222302a42926e0e95af2c30463e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/conscrypt" path="external/conscrypt" revision="d5512c283eba35e6b1fcf979fa1270b2295131c3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/external/curl" path="external/curl" revision="3a9b88f8f255c3b21cdac6432cf675dacfdf4371" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/deqp" path="external/deqp" revision="e4431d8ede14b6b3c1f538a1dfbcfa054a568fc9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/dexmaker" path="external/dexmaker" revision="00bf6870ff223dec90d9fac39e5dfb464a59f6de" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/dhcpcd" path="external/dhcpcd" revision="cad098daf58b2661992decdb51e81a49fd9d6c44" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/dnsmasq" path="external/dnsmasq" revision="6c20a7ae65a626813ec9d7a8a2887193c2343e07" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/doclava" path="external/doclava" revision="9b18a2a50ad71ce25648553c6471858f6b359f1d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/droiddriver" path="external/droiddriver" revision="d22fedf52b8cbf700142a4448b3f59254b37851e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/e2fsprogs" path="external/e2fsprogs" revision="8b6dd78abe0f9811cf8870198992860ffe2d9f11" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/easymock" path="external/easymock" revision="c9a234086537e5fd820b110bbd99e3cdc695004c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/ebtables" path="external/ebtables" revision="b070104dcb72b99825d645e9e41a5362bd4ff735" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/eclipse-basebuilder" path="external/eclipse-basebuilder" revision="6134da6347cc997e0cf2921aaadfb46f21c05d85" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/eclipse-windowbuilder" path="external/eclipse-windowbuilder" revision="a5f3ee137e94737538ec3bdf9b3716765d178c17" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/eigen" path="external/eigen" revision="7faaa9f3f0df9d23790277834d426c3d992ac3ba" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/elfutils" path="external/elfutils" revision="e8f2790fbf876f4a996d56ad0ddddfa40025a92a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/emma" path="external/emma" revision="daacd02a6b9f7a3e82bdf1cc5b84db85ed59edb1" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/esd" path="external/esd" revision="224a67f2683a7ee997179fc5dd16115e39987b0f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/expat" path="external/expat" revision="907ec055718996baf36961e7f47f8447e49b3865" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/eyes-free" path="external/eyes-free" revision="16bd4c7a4d1bfe229068b637614dad7c48dd2ceb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/f2fs-tools" path="external/f2fs-tools" revision="fc24ac8347630a14d62ffafa93a27ec3b81cc44b" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/fdlibm" path="external/fdlibm" revision="a418ed7226f330c2506ff420274a8a289fd2f73c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/fio" path="external/fio" revision="6f4e805b805f1ab3025482e471147bb51efa99bd" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/flac" path="external/flac" revision="457fe12432caac0de0e430bb976dab681b3ae1a2" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/fonttools" path="external/fonttools" revision="111462a9aae8a91c57249e93b9c269e933ee56c0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/freetype" path="external/freetype" revision="9c745321260bb728ab1cd1c8fd5f075854b2ad49" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/fsck_msdos" path="external/fsck_msdos" revision="bebe9b75709ab8897e33565fb4f5e42fd675fec6" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/gcc-demangle" path="external/gcc-demangle" revision="9241386b62c353302c2f9eccda0672685b252b4d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/genext2fs" path="external/genext2fs" revision="e11a9c7fe6f1cef99aad2f25afaea37b72fe9f93" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/giflib" path="external/giflib" revision="b5a8e44648685070f146ff8456d36013c502f7a1" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/glide" path="external/glide" revision="3dddc8773c50852bc592b8bc32d92eb153ce8dba" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/google-diff-match-patch" path="external/google-diff-match-patch" revision="cecbe12841337860291c2d6a5728b681ec5fca2a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/google-fonts/carrois-gothic-sc" path="external/google-fonts/carrois-gothic-sc" revision="0062a10458d4c357f3082d66bcb129d11913aaae" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/google-fonts/coming-soon" path="external/google-fonts/coming-soon" revision="2c5cb418c690815545bbb0316eae5fd33b9fc859" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/google-fonts/cutive-mono" path="external/google-fonts/cutive-mono" revision="bce2136662854076023066602526ba299e6556b2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/google-fonts/dancing-script" path="external/google-fonts/dancing-script" revision="7b6623bd54cee3e48ae8a4f477f616366643cc78" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/external/google-tv-pairing-protocol" path="external/google-tv-pairing-protocol" revision="8e47158fabd5bad4282644c6e9ed9ac99c603e33" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/gtest" path="external/gtest" revision="fa3c26b862ca17c0d2db67606226b49d1648b4bf" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/guava" path="external/guava" revision="5e6db342fc75b1945298142530f2d1d1861bce73" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/hamcrest" path="external/hamcrest" revision="15e01a79e1b28255229f4d3aefc4b030c261afd1" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/harfbuzz_ng" path="external/harfbuzz_ng" revision="b6f5a05cd719668405ec29e587f16d3d59ebd4f4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/icu" path="external/icu" revision="56cb912f50415a428c1417e5c5042a6057a770c3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/iproute2" path="external/iproute2" revision="03dadbe66e8536b5682c1e20d327ea29556450d0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/ipsec-tools" path="external/ipsec-tools" revision="f4cb1ee4b00abbfb6f968dc25818c23b4b47e584" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/iptables" path="external/iptables" revision="6fb74479d3b76983dff50724e501f12d0b046522" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/iputils" path="external/iputils" revision="1c7c426ab377c3a005a36d612ebbb16de86fb7d4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/jack" path="external/jack" revision="5ceb2025ac5d25ed48183ac2d3dac4691fe761fb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/external/jarjar" path="external/jarjar" revision="cf3bfee8d2c739d13142b7151ca3a59c3a2b4c21" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/javasqlite" path="external/javasqlite" revision="9f4bd3c5c946dcedfad76df812cb24a2829e4193" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/javassist" path="external/javassist" revision="9566207cff5871c672fac1f0d4332d93292036d7" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/jdiff" path="external/jdiff" revision="e4694302d6a3786c64d954e0b3cf42786283bd3c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/jemalloc" path="external/jemalloc" revision="3f4f871a68c0b8150fcb66a0c4466bb595bc583a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/jhead" path="external/jhead" revision="afe9f55ee6ba3eaee02e7b13809a534ebe98d34a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/jline" path="external/jline" revision="cad954e739ba001fe3531c31202a7d726c00357e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/jmdns" path="external/jmdns" revision="f4eb7466d5c09098f9dc54137ed3235e3c43fc9f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/jpeg" path="external/jpeg" revision="711decc3b667beb767bdc29b21da8fcfe69078a7" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/jsilver" path="external/jsilver" revision="739060b01245f1dc5f1800949b3c30c291253cff" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/external/jsmn" path="external/jsmn" revision="27b5a35db0630b86791fa037a12da7b37c2aab49" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/jsoncpp" path="external/jsoncpp" revision="2d3fd6b0a51d41d79af1a9cee2d548bc7c830cf4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/jsr305" path="external/jsr305" revision="a82868820d6350811b9ddfde4bf8ed5016084269" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/junit" path="external/junit" revision="191f8c8707a105d683fa0fa3ff6f645633f1d463" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/kernel-headers" path="external/kernel-headers" revision="a4e85bb34a308060893b248d2b13d7fe02a131f1" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/ksoap2" path="external/ksoap2" revision="deba639927618694aa92b987654f0279b7c7d3fa" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libcap-ng" path="external/libcap-ng" revision="1d1011a3c5049a7f9eef99d22f3704e4367579cc" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libcxx" path="external/libcxx" revision="4b8f3fcd3196ba291f82321cd5d1bd688b52d2ba" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libcxxabi" path="external/libcxxabi" revision="605f03260ce43ec564cd0ec80ea21514e82eeeb3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/libedit" path="external/libedit" revision="92d2359bcffabfcca85c64eb4908556aa69ef96a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libexif" path="external/libexif" revision="fa0c1e7d954230cd29d896e6015314b2f68ad7bd" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libgsm" path="external/libgsm" revision="50761abed8f4734970874165b386cfd4d9599db4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/libhevc" path="external/libhevc" revision="a90d9a91923f2980c49ec34b805e7a910979f96a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/liblzf" path="external/liblzf" revision="6946aa575b0949d045722794850896099d937cbb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libmtp" path="external/libmtp" revision="7075348937f6a8c9d9211942fcb6c376f4227776" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/libnetfilter_conntrack" path="external/libnetfilter_conntrack" revision="3d35db80e12107a9ab6e3eaadd47959d87e1bda3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libnfc-nci" path="external/libnfc-nci" revision="8f630e0f8ccb3fc2a35d493ff40c886036efcd4d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libnfc-nxp" path="external/libnfc-nxp" revision="76f8fa7177767cb377f9212e207e3ac16f9b8d48" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/libnfnetlink" path="external/libnfnetlink" revision="80ba60f6a117f73fb4497615511dac44870eacdb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libnl" path="external/libnl" revision="f6c30c401b0a9608bbf8c88a4408f3d94b8f7e51" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libogg" path="external/libogg" revision="ec0b24fb1468abe37be4164a6feb16568e036bde" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libopus" path="external/libopus" revision="1391dbf0ccd121ce7a49d30e2142d36c8d404990" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libpcap" path="external/libpcap" revision="9dab0cd7430a4d23e0a7752fb13b941692171c3d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/libphonenumber" path="external/libphonenumber" revision="9ecee8b74bf330f20a902e4b974eddb7abedd627" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/libpng" path="external/libpng" revision="8594e1a8521b2cbdd941719b929b15ba943b1d4a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libseccomp-helper" path="external/libseccomp-helper" revision="e87019943a8b5a7cd0880910f671c37b240d5754" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libselinux" path="external/libselinux" revision="abfa21f71541e1d542d5c54ceae2ea8fa0a2a691" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libsepol" path="external/libsepol" revision="2066a66a2ab0c1b7d691d5a180b0ec1e47b0fb12" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libssh2" path="external/libssh2" revision="2bb40f2445cab3ba588efb29e1835cdba2b27248" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libunwind" path="external/libunwind" revision="3ef85bbda0ce5eaadb6161744264f305b04d552e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libusb" path="external/libusb" revision="2801917fe150393d4f4a354165fe89550ae22613" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libusb-compat" path="external/libusb-compat" revision="94867ba54eb7faa8efca81cf2214d00bb9143d27" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libutf" path="external/libutf" revision="9d00b26b4a6fbdf65f4adcd841e9d885d9102b94" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libvorbis" path="external/libvorbis" revision="de559619fd4dd0d2d9608436696fd44bdf74eba8" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/libvpx" path="external/libvpx" revision="04839626ed859623901ebd3a5fd483982186b59d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/libxml2" path="external/libxml2" revision="a049e3fec0192cd4d3898b098c44afee6eda5318" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="libyuv,pdk-cw-fs" name="platform/external/libyuv" path="external/libyuv" revision="482a582884351288fb701532359652970b1ba7c0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/linux-tools-perf" path="external/linux-tools-perf" revision="20f6b4bde1e6b6c7518a1ad23e07a44027ba1a88" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/littlemock" path="external/littlemock" revision="a3ea6bf9e6fcf63b69f5635b2ecc1fbd9a9a4dfc" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/lldb" path="external/lldb" revision="8aaa52329ade20107fe28af7085b0a1f395816a8" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/external/llvm" path="external/llvm" revision="eee7809beacbc23b5ea2e73fe4a455565fdfc169" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/ltrace" path="external/ltrace" revision="82ae18484c7b6a8af05354caf6de3a7f1ac5fcf9" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/lzma" path="external/lzma" revision="b473eaa2840cccf2fef15d53f00bccf92c41b615" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/markdown" path="external/markdown" revision="6f2e3554ae38cc90518d32e02cb57d05988270a6" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/mdnsresponder" path="external/mdnsresponder" revision="a413bce2d767d5b0810016f9b49a69c1e4be2b2f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/mesa3d" path="external/mesa3d" revision="97d3f36a59ea448fa77e47a90bf04f1254670542" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/messageformat" path="external/messageformat" revision="180a28770171075aa484729a69d14c7cf0c93fcf" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/mksh" path="external/mksh" revision="c6476acc334422683928da3cbb069aa2e979a1c5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/mm-dash" path="external/mm-dash" revision="871172c845ff5bdd81ad56e027f62bb24ed6d881" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/mockito" path="external/mockito" revision="c7d7be3cdbefd99229903414cf71308f47973aa5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/mockwebserver" path="external/mockwebserver" revision="2f7659c426de53122ee7922b0981058a900124a7" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/mp4parser" path="external/mp4parser" revision="16051e950485c6b62127c0446a760111de1a0cb9" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/mtpd" path="external/mtpd" revision="5ea8006691664b7e6d46d6a6dc889eac91b7fe37" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/external/nanohttpd" path="external/nanohttpd" revision="8d6a97830abf9685bc0724c24766c8f9704aacd2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/external/nanopb-c" path="external/nanopb-c" revision="7ef855e462b9a18b7d330e4b40f350164a6ad9da" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/naver-fonts" path="external/naver-fonts" revision="d5210212745194f3a2661fb65e0675ce9665b9b1" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/netcat" path="external/netcat" revision="444644cfa9a2f3002863caa168fb2d6b34dfd1e8" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/netperf" path="external/netperf" revision="38e47cd883738cb84bdb47a7d263f14f14062d7b" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/neven" path="external/neven" revision="af6e0b0c0cb946a4222d7f5bacc7bea11c33d814" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/nfacct" path="external/nfacct" revision="6f7aae0264821b44e9fe80fb5596c525d3e2f475" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/nist-pkits" path="external/nist-pkits" revision="b7a53ad5a587926cb880d9bb6f3d51657596474c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/nist-sip" path="external/nist-sip" revision="b23dbfce7ea84c39cea75b612868a5832cb9af2b" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/noto-fonts" path="external/noto-fonts" revision="78761552abbb1092a443cfb9a6706f36c50da96c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/oauth" path="external/oauth" revision="bc170f58de82000ed6460f111686a850a1890c07" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/objenesis" path="external/objenesis" revision="2a7655c0d503fcf5989098f65bf89eae78c32e5a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/okhttp" path="external/okhttp" revision="a70e2fac97527956f108044dcecf151e320189a4" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/opencv" path="external/opencv" revision="4a99e243b42afcb885d036bb451eb3c2739275b6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/openssl" path="external/openssl" revision="44c9a306812f5d7069c93b4b8d6e894374f11dec" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/oprofile" path="external/oprofile" revision="3722f1053f4cab90c4daf61451713a2d61d79c71" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/owasp/sanitizer" path="external/owasp/sanitizer" revision="bbfb25464ff30c5a62dce351d719a8c533afb2a3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/pcre" path="external/pcre" revision="cc866355c71cd4369f7aee5272c96b9c7c2fd5c5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/external/pdfium" path="external/pdfium" revision="86957661fc29ce82c3101107f95a11d1f9e59932" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/pixman" path="external/pixman" revision="0df1724cbd2a9155d34c4ce5739ea29e18b33b52" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/ppp" path="external/ppp" revision="8b58d9bd02e2c55f547fafbe9ba55b1160665761" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-java" name="platform/external/proguard" path="external/proguard" revision="9961286c06c25cd03464d3e2b00bd9b9dedf96ba" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/protobuf" path="external/protobuf" revision="c6d612ac7b18ba758c9067136c1217589aa5796f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/external/protobuf-c" path="external/protobuf-c" revision="f5acb16b4e8b57f5be4083960023982443bddbca" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/qemu" path="external/qemu" revision="006a174244e336c578f45bf78a9dbdbd890c217d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/external/qemu-pc-bios" path="external/qemu-pc-bios" revision="20349dae98d7de09a7e390d4a706c64f1db6edc2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/external/qrngd" path="external/qrngd" revision="070aa45a7f3fdb5ffe18c3b8aff03e276a4900f7" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/regex-re2" path="external/regex-re2" revision="0d4c52358a1af421705c54bd8a9fdd8a30558a2e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/replicaisland" path="external/replicaisland" revision="99e2e54c5d036048caf09bb05eea0969de093104" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/robolectric" path="external/robolectric" revision="d9d53068f24c9af1a332986dd196c163b3ca897c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/safe-iop" path="external/safe-iop" revision="aa0725fb1da35e47676b6da30009322eb5ed59be" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/scrypt" path="external/scrypt" revision="dde037b82e5cd6215244e3240dbaad417928eafa" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/sepolicy" path="external/sepolicy" revision="0bd6d82beb937a514038d4585962dbaccd097ba5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/sfntly" path="external/sfntly" revision="6723e5241a45c6de224c96384a595a1bf5bc5449" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/skia" path="external/skia" revision="adf6b1c367129d1e23cf93ef9f63b642a5d025bc" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/smack" path="external/smack" revision="d7955ce24d294fb2014c59d11fca184471056f44" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/smali" path="external/smali" revision="5fd395796e215a80c722815bf180728948868f18" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/sonivox" path="external/sonivox" revision="c9668ea85f992ae6dd231b26bce7f1d00e596037" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/speex" path="external/speex" revision="ff03110e77ec7fe716c5be11783746f59c814e30" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/sqlite" path="external/sqlite" revision="3f8fe414895cd42b17964d3044c2ecb1d5f2dae2" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/srec" path="external/srec" revision="fe5ffaffe727941fe1ea3581be2eab63d228e6c4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/srtp" path="external/srtp" revision="cd2c0b6ce2e39a9ab13c802c5b8dfeb1ab0d1db5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/stlport" path="external/stlport" revision="d0388a36b67665be55162388337055ee21a43206" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/strace" path="external/strace" revision="a2adbed6e2d3ce85ebb167e16ae370681a8b5188" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/stressapptest" path="external/stressapptest" revision="0956427aa995561acb4471764158ae057a36dad5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/svox" path="external/svox" revision="ddacd6acc2dea20dc83d502674bd07896b7bec92" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/tagsoup" path="external/tagsoup" revision="a97828cb3f8f3a1af8470e55d3c5cd62d6a7cb4c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/external/tcpdump" path="external/tcpdump" revision="121deb8f8f32f19e0f017d303f7b31e5dbc46157" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/timezonepicker-support" path="external/timezonepicker-support" revision="99e91a76fd74bad10266623d67cdb98d011f709e" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/tinyalsa" path="external/tinyalsa" revision="b8b375adf8b220d03c2cdd72fefd2d371b72d854" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/tinycompress" path="external/tinycompress" revision="90a32e39c1bd6376cb6d65b53e30e8fc94cba359" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/tinyxml" path="external/tinyxml" revision="f065a8058659c0e6c5a5ccddcdb4faf0fe645cd0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/tinyxml2" path="external/tinyxml2" revision="c74b546f5af36968ffa56d7fd4529f4273b96f48" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/tremolo" path="external/tremolo" revision="4955bfb4caeb9b0b03b85a1e886674ddbccdb44f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/external/valgrind" path="external/valgrind" revision="5ddeb576ce582b81842a97d836f6a28cd419f7b3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/vixl" path="external/vixl" revision="29d04c1f6d91ab8336f419bd854e5badcccbc706" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/webp" path="external/webp" revision="af51b94a435132e9014c324e25fb686b3d07a8c8" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/webrtc" path="external/webrtc" revision="96907bb2db8383d06970a5d23163bfcbc50f8089" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/wpa_supplicant_8" path="external/wpa_supplicant_8" revision="d0fbdbdcece9a99779604cb5110fb7db276b75d3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/xmlwriter" path="external/xmlwriter" revision="e95d92246ee35273dde2bee8b00485cc14c12be5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/external/xmp_toolkit" path="external/xmp_toolkit" revision="42ea4dc6d1fc2206a7778029070ed9213e3b0fbf" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/yaffs2" path="external/yaffs2" revision="a2cff2275e1b501ff478b03757d6e4f05fddc2db" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/zlib" path="external/zlib" revision="8d977782c1cfe9d75cc9a464439c2ff1e27e1665" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/zopfli" path="external/zopfli" revision="bb96afe13a50bfc17259dcf56f44e997923c705c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/external/zxing" path="external/zxing" revision="2b56cc1c1442ba598ed1ee9c23e8e9eade076e77" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/frameworks/av" path="frameworks/av" revision="afa2ed4eeb6b18aad42c2837bce92e90c631debb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/base" path="frameworks/base" revision="2353c2f6df7a4f3b82d43c51fd3ddb68aaa4c3b5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/frameworks/compile/libbcc" path="frameworks/compile/libbcc" revision="42d8fa171ac4389986c9c0127bad0ba62a4eea1e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/frameworks/compile/mclinker" path="frameworks/compile/mclinker" revision="48b4262286b854f4fa36d2af98cf8d75e87d4dcb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/frameworks/compile/slang" path="frameworks/compile/slang" revision="10c6da64c54c308ee965860aed2458f31f69f9a2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/frameworks/ex" path="frameworks/ex" revision="f3fddec61b49fbcf94191867f0999e2e3abff27a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/mff" path="frameworks/mff" revision="b9669b8540a1e5c953374d53b115514335e23c27" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/minikin" path="frameworks/minikin" revision="d5804e3937a961736e5cef0e8a70eacf91ee00bb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/frameworks/ml" path="frameworks/ml" revision="c7a7e058e83dde47089502933de4e7b65aa47734" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/multidex" path="frameworks/multidex" revision="58f5bb5e72221b538fbcc55eb6c2a2499f8c2488" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/frameworks/native" path="frameworks/native" revision="93d35069a5dee24f96c280b01209b70bc88cc4e3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/frameworks/opt/bitmap" path="frameworks/opt/bitmap" revision="5c102db5a1a16a2adcc7728693a6e65a981f91ae" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/bluetooth" path="frameworks/opt/bluetooth" revision="bcfe90b09c3604c7c0ae7c7f1f9c2c8441ee57d2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/calendar" path="frameworks/opt/calendar" revision="03b18577f8f8f799e87a62b8e03889ddacf6daa2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/carddav" path="frameworks/opt/carddav" revision="f08aa2df132dd8dc32a0013d3750137d9dd9280a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/chips" path="frameworks/opt/chips" revision="966b35006b2865b50bb7cc880cc5eb9f26c27a36" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/colorpicker" path="frameworks/opt/colorpicker" revision="2cfd2cdd9a83da99a043b0668852900982243e2b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/datetimepicker" path="frameworks/opt/datetimepicker" revision="68f5d54b9b8e672bbee9ba24a19d9c92506d57fb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/emoji" path="frameworks/opt/emoji" revision="709f713ebcd62c61defc270d945810efca179621" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/inputmethodcommon" path="frameworks/opt/inputmethodcommon" revision="990fcb1a6dbb5d1204cc8ec86e4bc3f691f4aeeb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/mms" path="frameworks/opt/mms" revision="4a5bba9cfefb96706390307b7cf06271b7f9f5e2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/frameworks/opt/net/ethernet" path="frameworks/opt/net/ethernet" revision="74d270d167ed6c3a6fa28e426da80d51a44a2af0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="frameworks_ims,pdk-cw-fs" name="platform/frameworks/opt/net/ims" path="frameworks/opt/net/ims" revision="333ac1b5ed89140e0f410e9aceda3f7062625111" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/net/voip" path="frameworks/opt/net/voip" revision="cf38b8464007ebf626fc0d61a646491fc3d794cd" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/frameworks/opt/net/wifi" path="frameworks/opt/net/wifi" revision="d47a1b5433faf288551b504e6c8f1d0e305699f4" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/photoviewer" path="frameworks/opt/photoviewer" revision="21d212bb974b586fbdb8213914213e93735466f6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/setupwizard" path="frameworks/opt/setupwizard" revision="01444335f44050f00403989b6e218a4f143bfc88" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/frameworks/opt/telephony" path="frameworks/opt/telephony" revision="3bea1fcab1ba05c60dda85984d1093e2556fadd3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/timezonepicker" path="frameworks/opt/timezonepicker" revision="66c0bba118a9d42e84f8abf84c3be57a02960d65" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/vcard" path="frameworks/opt/vcard" revision="c6009ad171d2525d81918970ed4fd5581b625f2f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/opt/widget" path="frameworks/opt/widget" revision="466e0e0307b3f6aa4f4be3d9419b5996bd389da5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/frameworks/rs" path="frameworks/rs" revision="b0a4a7f403287d16ade9451722a50b4cb00723f1" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/support" path="frameworks/support" revision="65efeeb62f0339a90f1d8412c9cf2b0348d45c78" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/frameworks/testing" path="frameworks/testing" revision="2b6d1da16a4e38a9704c2c67b33aadf44a85b1d2" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/volley" path="frameworks/volley" revision="b3b7e68078c4579f11c1c559f027f4edde70bdc9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/frameworks/webview" path="frameworks/webview" revision="09c75bb3a98ed4bef37312ba9172b873ff510e86" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/frameworks/wilhelm" path="frameworks/wilhelm" revision="460bdad43aaec3c6ffe7f259719e00807742ad6d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/hardware/akm" path="hardware/akm" revision="068a97a299a8e0d837b8ac67635a96b59595c582" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/broadcom/libbt" path="hardware/broadcom/libbt" revision="4d82911c797c26d077fa1f84e8ec889b67829ff5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/broadcom/wlan" path="hardware/broadcom/wlan" revision="b541d355f9e7887d926b729f4fe510c6a2332a7e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/audio_media" path="hardware/intel/audio_media" revision="0ce92df294da2b05fd06c7da49ac5324e68c7a14" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/bootstub" path="hardware/intel/bootstub" revision="5c7a8157fa42a19793602f75b9fa06c860c2a5db" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/bd_prov" path="hardware/intel/common/bd_prov" revision="8af329f2d2b54dfcfa84051d3ce1fae95f79011a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/libmix" path="hardware/intel/common/libmix" revision="e0bb19e3658ea872e917cc4c4a8430492e8f16ef" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/libstagefrighthw" path="hardware/intel/common/libstagefrighthw" revision="419d34016dceec65ea137490668984eb80119df4" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/libva" path="hardware/intel/common/libva" revision="e43de50cbef479ea618af992ec5da3f17ed33b5f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/libwsbm" path="hardware/intel/common/libwsbm" revision="77bfea2e6a3dc1e30a17780b48b7b231eef77255" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/omx-components" path="hardware/intel/common/omx-components" revision="8dab298d1fb1cfff579e819e8cd79f998d3aa715" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/utils" path="hardware/intel/common/utils" revision="9d7a792711ec5e4fb3474ceff21bdd14547d0981" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/common/wrs_omxil_core" path="hardware/intel/common/wrs_omxil_core" revision="aba5931866f6b482539b82cb42ab108d291bba57" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/img/hwcomposer" path="hardware/intel/img/hwcomposer" revision="f969fb5a3096a98701e5b09bd1c46f9af6c11ba9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/img/libdrm" path="hardware/intel/img/libdrm" revision="20e32a079154bb3a36ccb43a4dd8e25bd1ef01de" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/img/psb_headers" path="hardware/intel/img/psb_headers" revision="58ab4ceb5ea3d2733f108cacfcccb93e0c8d84da" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/intel/img/psb_video" path="hardware/intel/img/psb_video" revision="0db033672d6b6b3fd069af9e5209365f6668367a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/invensense" path="hardware/invensense" revision="670dfdf96e62446e763f60c7c315fd7e25461242" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/hardware/libhardware" path="hardware/libhardware" revision="11e969e50dce300ee6dcb6f8827269d09db3b313" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/hardware/libhardware_legacy" path="hardware/libhardware_legacy" revision="b5340ef4c2b27259fcb03bc6ee98b73012a2d772" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/hardware/nvidia/audio" path="hardware/nvidia/audio" revision="3134b055c05e3681c1f71eed23bd0bd8e57ddfa7" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/nvidia/tegra124" path="hardware/nvidia/tegra124" revision="77d1e2a4bb07d97a7f140f0fa8ddb8b6d52327f6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="qcom,default" name="platform/hardware/qcom/audio" path="hardware/qcom/audio" revision="716d2d4611de4c203d8e7053a94f4fe6757439ad" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/bt" path="hardware/qcom/bt" revision="9a7ff1d3b21d3f211f6535bedbe2e58d01779e1c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/camera" path="hardware/qcom/camera" revision="0870d576f18907773056ef1643fd5c6ebb404306" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/display" path="hardware/qcom/display" revision="3f2e91e8f09c8787bd91b2e79ef266f6b4b5f839" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/gps" path="hardware/qcom/gps" revision="b8ffe662f723ea0a53eaa2ecf7bb897c861fc33d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom" name="platform/hardware/qcom/keymaster" path="hardware/qcom/keymaster" revision="5d3fec3d4a776cd023b10e0b05e361cc8e877359" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/media" path="hardware/qcom/media" revision="788842e468c332e9e1772062c8cf14067e6fed72" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/sensors" path="hardware/qcom/sensors" revision="25b5e7e805fbcb2bb39d61191ed8693ca86b9605" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/wlan" path="hardware/qcom/wlan" revision="7c01beca65e603a48c35700e9704dbf4f4ff11b4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/hardware/ril" path="hardware/ril" revision="36c6d70ec09da6d54979cb2ea232c2b5a8e9abeb" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/hardware/samsung_slsi/exynos5" path="hardware/samsung_slsi/exynos5" revision="88c954f60ea8c74f305942bc55c32bc30f6aa9ef" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/ti/omap3" path="hardware/ti/omap3" revision="0546008a51b3a9e40d7ab5d2c6c0d6e064a345a2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/ti/omap4-aah" path="hardware/ti/omap4-aah" revision="ce711bd57caf8e9d06941d00cc75e216bb24fd9b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/hardware/ti/omap4xxx" path="hardware/ti/omap4xxx" revision="fe94a195639921ae99e5a286a735b2deb18b4a09" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/libcore" path="libcore" revision="8d01d47f03d5dd7308ad1294c3230690c764a2c6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/libnativehelper" path="libnativehelper" revision="b05d350ba042e911c69bfa92cb31dbdf6fd5fdef" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/ndk" path="ndk" revision="e4b362d6b023e419d595938154c6093d1c6f0d9b" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/packages/apps/BasicSmsReceiver" path="packages/apps/BasicSmsReceiver" revision="1ccd7637a9db6b46bd2afe2314ee53e03020a748" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/packages/apps/Bluetooth" path="packages/apps/Bluetooth" revision="e38b36ade10a96a07a48686d4a50b20a95860375" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Calculator" path="packages/apps/Calculator" revision="2cde2c7337af0c38f17544c89bed9f996e619700" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Calendar" path="packages/apps/Calendar" revision="4f365804d4ad4535e2090665716621edadf82057" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Camera" path="packages/apps/Camera" revision="85f328a8676ce6f774746fb5311ca7374f010bf6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Camera2" path="packages/apps/Camera2" revision="b2004bc7af3311e7dedf7ed42f820a5e08a4bd99" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/CellBroadcastReceiver" path="packages/apps/CellBroadcastReceiver" revision="15f14dfa290989a12178f289e5d1753b2fc32aec" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/packages/apps/CertInstaller" path="packages/apps/CertInstaller" revision="af2aaf4331dfda37a27a5aca43a4920e3054d4ab" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Contacts" path="packages/apps/Contacts" revision="c8db1b8936fe6827922a68e66fcbfe814f6459c1" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/ContactsCommon" path="packages/apps/ContactsCommon" revision="64f38d3dd05b37a89dfb6df167be8e6683754f8e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/DeskClock" path="packages/apps/DeskClock" revision="964ef3cbb65e41e008dbba02f6040481f39e11c7" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Dialer" path="packages/apps/Dialer" revision="b17b4c4678e0c3c1454d3b5b325c87a9379446a4" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Email" path="packages/apps/Email" revision="a2b8e5edcc8ae623dba3bc75a80f243539e287c5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Exchange" path="packages/apps/Exchange" revision="b34702557068ad30be2271cbac510e249da65426" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Gallery" path="packages/apps/Gallery" revision="c159c3acf8247a06b2d8c5ab5d9f887257450d46" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Gallery2" path="packages/apps/Gallery2" revision="9d6bd148d1b10c7a51bdb112ceb46b4c09aed9bd" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/HTMLViewer" path="packages/apps/HTMLViewer" revision="2e368f6d87eb82691f855e93f85599b75b489731" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/InCallUI" path="packages/apps/InCallUI" revision="7f2b759362dda2c146025d9b964bedbca6c4a66c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/KeyChain" path="packages/apps/KeyChain" revision="250c621d61859fe9db6338a7b5c42bff5c3e2d92" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Launcher2" path="packages/apps/Launcher2" revision="13f0cafa9b50543f74e68a1d16ec2c47f674ce81" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Launcher3" path="packages/apps/Launcher3" revision="ae5f7ce8ed2e385cba8d65a67d9b108c9c3590e8" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/LegacyCamera" path="packages/apps/LegacyCamera" revision="090283cfff2a09f1ea960fd2ef87564099027ab0" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/ManagedProvisioning" path="packages/apps/ManagedProvisioning" revision="4198826bbc75d79ab5bf545a3ef020139b193119" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Mms" path="packages/apps/Mms" revision="10b0c71b092b3f90830f447ca330f4d0d368868c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Music" path="packages/apps/Music" revision="13810b70a130f7905c37939bd1f8008cd7653d42" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/MusicFX" path="packages/apps/MusicFX" revision="54c8960a058c112cbdf86fb744b36f26c8709645" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Nfc" path="packages/apps/Nfc" revision="24881104df969c442893089fe1c73c3862b06484" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/OneTimeInitializer" path="packages/apps/OneTimeInitializer" revision="01e429c08e51291315890de9677151a7e0b6ad35" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/PackageInstaller" path="packages/apps/PackageInstaller" revision="bf93b300f8ff639b9abbb4ce72375a78a28ebafe" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Phone" path="packages/apps/Phone" revision="79731f02b7009206a01182d2cca15dfc8491da09" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/PhoneCommon" path="packages/apps/PhoneCommon" revision="6f2d2680734348b28ad21a1056740d20c41ce657" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Protips" path="packages/apps/Protips" revision="9b6836aabee945b6c7a54796a4e6a7ae735f423c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Provision" path="packages/apps/Provision" revision="78ca0db658fe6253d506916e36319e620476f809" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/QuickSearchBox" path="packages/apps/QuickSearchBox" revision="e6f88007fe20f246c54ed835f5467255dc2c610a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Settings" path="packages/apps/Settings" revision="6a98ebbce302665a67c0a791d747fc78c6111eea" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/SmartCardService" path="packages/apps/SmartCardService" revision="8f3bbe0efaf32a2e909a5f8c1c78531ef088f6a3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/SnapdragonCamera" path="packages/apps/SnapdragonCamera" revision="45edf4a2fab183eea0ceec64c7be75029d6c5933" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/SoundRecorder" path="packages/apps/SoundRecorder" revision="fc3531acc0703979fa05c233d9d1387767855ce3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/SpareParts" path="packages/apps/SpareParts" revision="4db997871e3f4c3f84660815096e5276b47c5c91" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/SpeechRecorder" path="packages/apps/SpeechRecorder" revision="536aa74ff3a77186bef29dc9333a34688fa59d13" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Stk" path="packages/apps/Stk" revision="9cce1d47b3ef2ea117c4e4954d675d893f80ca82" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/Tag" path="packages/apps/Tag" revision="4802efe18bcb1a758433f552f53ae2c0759b45f5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/TvSettings" path="packages/apps/TvSettings" revision="3e84bf0ab19410391e5be70908743dec7ce06a0a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/UnifiedEmail" path="packages/apps/UnifiedEmail" revision="ca608406d2321b3a19f6c3a109743a67454d6075" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/apps/VoiceDialer" path="packages/apps/VoiceDialer" revision="d234d161c60e8674e853ae91bb280d129ce5192e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/experimental" path="packages/experimental" revision="b51d8293434234bf39a6b551cf82ba170577c3b3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/inputmethods/LatinIME" path="packages/inputmethods/LatinIME" revision="2258f19d08ac2dd2c394e4c631465d0d4b7f2e31" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/inputmethods/OpenWnn" path="packages/inputmethods/OpenWnn" revision="7050190250e1a9de60847c3975323da38c99dec3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/ApplicationsProvider" path="packages/providers/ApplicationsProvider" revision="8268a4c790c65bd281ccddc05d272594e4194431" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/CalendarProvider" path="packages/providers/CalendarProvider" revision="b78250d067b12b97e4f0f32f0b5ee0f7f3fab48f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/ContactsProvider" path="packages/providers/ContactsProvider" revision="6dabb579cc2f88ba4c9697483fad6b85fe20ce8d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/packages/providers/DownloadProvider" path="packages/providers/DownloadProvider" revision="7a1c801909778e005a264d9b35926e31922fd732" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/MediaProvider" path="packages/providers/MediaProvider" revision="bc97ec6aa71804ade9b5432b9e2e1dcfa3b7844c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/PartnerBookmarksProvider" path="packages/providers/PartnerBookmarksProvider" revision="96d0a80af45923767baf449fc8c735c2f71d64ae" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/TelephonyProvider" path="packages/providers/TelephonyProvider" revision="cefb4542234ab90ed6b89aa9c040e3f8efca33cd" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/TvProvider" path="packages/providers/TvProvider" revision="5462b213ed14735289692cf525a46aa27fc3ba26" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/providers/UserDictionaryProvider" path="packages/providers/UserDictionaryProvider" revision="311c6f50d34e6dab9d3c3b60b209d889071c8165" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/screensavers/Basic" path="packages/screensavers/Basic" revision="d6c3368646bdb95245d5e2df8bd189ede86fc97d" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/screensavers/PhotoTable" path="packages/screensavers/PhotoTable" revision="76556a1ba5cd0e36d610eaa3e88922e4ad654c98" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/screensavers/WebView" path="packages/screensavers/WebView" revision="6e0a80f6faed6191acc8ce1b6c79eada09e9e042" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/services/Mms" path="packages/services/Mms" revision="fcb751a97ba88c349c41a28d9d65ad2d912d43f9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/services/Telecomm" path="packages/services/Telecomm" revision="cdbc720a3cf3a795c02e55970e334abc2a3d4d29" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/services/Telephony" path="packages/services/Telephony" revision="33f9db8aba517873ea42a97ac2320b232e0eb695" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/Basic" path="packages/wallpapers/Basic" revision="7aa40c19f5a1a5770742251e53d7f2496f7ef27a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/Galaxy4" path="packages/wallpapers/Galaxy4" revision="ff357f9d009f98348f7290da29ac0125ba8bf6d8" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/HoloSpiral" path="packages/wallpapers/HoloSpiral" revision="7c5af822e2f2ac51c5eb2888b41e8c836423b0d5" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/LivePicker" path="packages/wallpapers/LivePicker" revision="37327a1ffcdc3eaa8fe7b32dd9fec0a319c411ee" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/MagicSmoke" path="packages/wallpapers/MagicSmoke" revision="d136fd84d47915fad33511cbab72f0c3fcc01136" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/MusicVisualization" path="packages/wallpapers/MusicVisualization" revision="f02cea2e8aaac73e29d628e236640b5382f49b20" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/NoiseField" path="packages/wallpapers/NoiseField" revision="ab1cb5bb92f8f940a5f73a3057ad1ddf7aa8a356" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/packages/wallpapers/PhaseBeam" path="packages/wallpapers/PhaseBeam" revision="1427c1423fe496079df086699267a5a4d4f0521e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/pdk" path="pdk" revision="9db7ba1942d0c88170b9f79e9654503d66f3ebfe" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/android-emulator" path="prebuilts/android-emulator" revision="adf3d1bd694f69bd92850a906a5beb870eab1394" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/3.1" path="prebuilts/clang/darwin-x86/3.1" revision="426233405bef3c7c825095ab14256c3773894b9b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/3.2" path="prebuilts/clang/darwin-x86/3.2" revision="af856d77b3cbb1f6afccdc531bee991403c28907" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="arm,darwin,pdk-cw-fs" name="platform/prebuilts/clang/darwin-x86/arm/3.3" path="prebuilts/clang/darwin-x86/arm/3.3" revision="54acc51e28850485e380b55916868a4e1ff17998" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/host/3.4" path="prebuilts/clang/darwin-x86/host/3.4" revision="a798fe00dbd92ad4e5f7123a2e2bc1d805db04f6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/host/3.5" path="prebuilts/clang/darwin-x86/host/3.5" revision="c2963ad8cadadb93f5b8276ee8be985b48528357" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="darwin,mips,pdk-cw-fs" name="platform/prebuilts/clang/darwin-x86/mips/3.3" path="prebuilts/clang/darwin-x86/mips/3.3" revision="da3dad928542362835082b2eda44e4dc315d65bb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="darwin,pdk-cw-fs,x86" name="platform/prebuilts/clang/darwin-x86/x86/3.3" path="prebuilts/clang/darwin-x86/x86/3.3" revision="f67a83f35e30f92b312fbee852184c3f6dc38f34" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/3.1" path="prebuilts/clang/linux-x86/3.1" revision="e95b4ce22c825da44d14299e1190ea39a5260bde" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/3.2" path="prebuilts/clang/linux-x86/3.2" revision="471afab478649078ad7c75ec6b252481a59e19b8" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="arm,linux,pdk-cw-fs" name="platform/prebuilts/clang/linux-x86/arm/3.3" path="prebuilts/clang/linux-x86/arm/3.3" revision="2f6d2db9e2af3507d132cf5d286a42fe1d47f7bc" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/host/3.4" path="prebuilts/clang/linux-x86/host/3.4" revision="fae26a039f79d780ddedcad07f164d9e6c05fc87" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/host/3.5" path="prebuilts/clang/linux-x86/host/3.5" revision="d98925c2528314e7db318d19d661a481d61e2c9c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="linux,mips,pdk-cw-fs" name="platform/prebuilts/clang/linux-x86/mips/3.3" path="prebuilts/clang/linux-x86/mips/3.3" revision="51f8e2760628588fe268438d612d942c30d13fb2" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="linux,pdk-cw-fs,x86" name="platform/prebuilts/clang/linux-x86/x86/3.3" path="prebuilts/clang/linux-x86/x86/3.3" revision="017a8a67f92a66b29ab17772e50642a7b9d0f8e6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/devtools" path="prebuilts/devtools" revision="aae70fb82af9760dad63eb0b2cc153a63841152f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/prebuilts/eclipse" path="prebuilts/eclipse" revision="f5064dad5753c51329cf57b678205e977b053094" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/prebuilts/eclipse-build-deps" path="prebuilts/eclipse-build-deps" revision="ceb739d6a7c10f5fb5a6cf6e1f702453b1361ad3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/prebuilts/eclipse-build-deps-sources" path="prebuilts/eclipse-build-deps-sources" revision="8b7d8f6033ffe2d22905d10cf6d57d5bdcbe519b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.8" revision="a261d38eaebb7ff406a6bb60237b36fc61714d46" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.9" revision="ae3d78471cce3b3ee80fe7b0b51fd49ed2e02f28" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" revision="6d08ca9f45ff685648fd13c75bf5cac4b11c19bb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" revision="264394c23b2686ce52cd4ffb116ced127aa7f8fc" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/headers" path="prebuilts/gcc/darwin-x86/host/headers" revision="4ac4f7cc41cf3c9e36fc3d6cf37fd1cfa9587a68" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" path="prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" revision="8834958755acc291d126ba7ee38ac731d04f9c9e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,mips" name="platform/prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.8" path="prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.8" revision="3b5bef47de8017ff39ef5bfbe801e3fa6b272fab" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.9" path="prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.9" revision="d9f79e99f044d85048e75ba5161877c0999c161b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,mips" name="platform/prebuilts/gcc/darwin-x86/mips/mipsel-linux-android-4.8" path="prebuilts/gcc/darwin-x86/mips/mipsel-linux-android-4.8" revision="98557ce83fc57736cc373c8065354b16db6a1c44" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,darwin,x86" name="platform/prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.8" path="prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.8" revision="c3c37a54f07d51a50e17d63dbf1d92da343f45ce" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.9" path="prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.9" revision="7467b16ed1f7c1938dffda0518328952f33ba5f6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" revision="7334f0a7a872700d0aaf00bea75917c077c45530" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux,arm" name="platform/prebuilts/x86_64-linux-glibc2.11-4.8/linux-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" revision="c90639ed43dab87c7b54b451fb62cbd972c06b64" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" revision="26e93f6af47f7bd3a9beb5c102a5f45e19bfa38a" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" revision="d9735fc81434f2af2c44d86ca57740c673c8d9bc" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" revision="760ff3483e3774e00370105c2dcffa0c0106c234" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" revision="1b0544da652fda90a41a1f69889d6b137ce20fb9" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" revision="bb1b0b00a64606868b820c219a0e94059c2cd42c" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux,mips" name="platform/prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.8" path="prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.8" revision="38586de6b44714b4adcf21119fe6b267e33f3ca6" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.9" path="prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.9" revision="6972e93079cbbd3d25854a9864f728004c0fde2b" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux,mips" name="platform/prebuilts/gcc/linux-x86/mips/mipsel-linux-android-4.8" path="prebuilts/gcc/linux-x86/mips/mipsel-linux-android-4.8" revision="83ebfef0964d38431938a0e626e6d659c4c7c053" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,linux,x86" name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.8" path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.8" revision="e08fa7e57a573a9baa5ccd8d4b8d73cc871f9b48" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" revision="69cb72cbf200634691d59c916724c2dd5dc13b76" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/prebuilts/gradle-plugin" path="prebuilts/gradle-plugin" revision="c528a451023d3bf8c93d0d87f70d1b4127b729eb" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk-cw-fs" name="platform/prebuilts/libs/libedit" path="prebuilts/libs/libedit" revision="d32685dba4011664b590b94ad156bc734c2c9bb5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk-cw-fs" name="platform/prebuilts/maven_repo/android" path="prebuilts/maven_repo/android" revision="12a24bf4124f5a9fb2f21950568502ef7f8a55e3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/prebuilts/misc" path="prebuilts/misc" revision="522821b01226841baa165dbc5416cd0f29652353" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="43c795dbce01fabbf15c8239b0cf8389f02a1fb4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="darwin,pdk-cw-fs" name="platform/prebuilts/python/darwin-x86/2.7.5" path="prebuilts/python/darwin-x86/2.7.5" revision="2bdd4fd418614c7c0101147d02199d0e47c4980e" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="linux,pdk-cw-fs" name="platform/prebuilts/python/linux-x86/2.7.5" path="prebuilts/python/linux-x86/2.7.5" revision="6fbc8802b3b68d24a4ee83f164b22490cf702ff2" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/prebuilts/qemu-kernel" path="prebuilts/qemu-kernel" revision="1dffc580d656397f0ffca65820aac524a7ba6f77" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/prebuilts/sdk" path="prebuilts/sdk" revision="fa3508275cf7b1c3ee27b3c24a2ac3072155bfc8" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk,tools" name="platform/prebuilts/tools" path="prebuilts/tools" revision="a2e5b13d9abb47aa2168da9737ba3bf0f7de633a" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk-cw-fs" name="platform/sdk" path="sdk" revision="d4ce15e340fda96219f1dbe76f36d3fa4c6bb954" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/system/core" path="system/core" revision="cd710500985f2b16c97ba615f7c5d377f682c977" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/system/extras" path="system/extras" revision="9f207a65c0d1bf17ce996691b710e04acabf17ad" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/system/keymaster" path="system/keymaster" revision="d87dc18f1380d2925c46ab4780fe1543d3b09c44" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/system/media" path="system/media" revision="a6ec737fff364477e7e93543d18f51bb17bd8799" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/system/netd" path="system/netd" revision="25aabbc047ff96b88573b6ea353f666ad068f8af" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/system/qcom" path="system/qcom" revision="4643862a0bf7e4247ccadaf6f56750f1dcd6d8f0" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/system/security" path="system/security" revision="b0b4317cf871c40b3e346643de7a76f19c448c50" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/system/vold" path="system/vold" revision="8afd880761950ee7586968acc4bc30246028e328" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project groups="pdk" name="platform/tools/build" path="tools/build" revision="69c4b95102b4b9862bfba68b3eaf5b7537a705ee" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/tools/external/fat32lib" path="tools/external/fat32lib" revision="3880776e41ff7def06e351720f2d162f88b58a03" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/tools/external/gradle" path="tools/external/gradle" revision="d1450838759d6c9f61a736cd9c455fe4437f4a56" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project groups="pdk" name="platform/tools/swt" path="tools/swt" revision="9315defea1c5786f06e3d246340d1c9718f249bc" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/vendor/qcom-opensource/bluetooth" path="vendor/qcom/opensource/bluetooth" revision="62ba67d631a0f7b0e5d753a60e0fc693274ed983" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/data-ipa-cfg-mgr" path="vendor/qcom/opensource/data-ipa-cfg-mgr" revision="0969219a1f713f9f986f71edf15cc62047b008fc" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/dataservices" path="vendor/qcom/opensource/dataservices" revision="13e2ba0044d356385108b031bfa3fcfbf7c20c6d" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/dpm" path="vendor/qcom/opensource/dpm" revision="a41aebd62d9051272e642522475db686ab134dd3" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/fm" path="vendor/qcom/opensource/fm" revision="4f04cf7c27fad35189ad38feab5dea786e7013a7" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/vendor/qcom-opensource/kernel/kernel-tests" path="vendor/qcom/opensource/kernel-tests" revision="6489f305f7fbf7c69c46acba438c8174f54ae653" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/vendor/qcom-opensource/location" path="vendor/qcom/opensource/location" revision="69e016580600e195131e079ecf379e4528856b5b" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/time-services" path="vendor/qcom/opensource/time-services" revision="6efa6a5100fb0401a02f4df40b98c495a240ce33" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/wlan/prima" path="vendor/qcom/opensource/wlan/prima" revision="fe17805f1092c29fa8e524dbb1f842431b0b4468" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom-opensource/wlan/qcacld-2.0" path="vendor/qcom/opensource/wlan/qcacld-2.0" revision="e6075b10e7ce876ba4fd86601fe58aa5791831bd" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/vendor/qcom/ferrum" path="device/qcom/msm8909" revision="7594fc17a0ebc5153bbf4de7927f0965219ca88f" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <!-- <project name="platform/vendor/qcom/ferrum_512" path="device/qcom/msm8909_512" revision="e0c00f19d57321e1fcb41f71703a715e26e16a03" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project name="platform/vendor/qcom/msm8916" path="device/qcom/msm8916" revision="6847d9243dc76d16877e463f8d60af239309950c" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom/msm8916_32" path="device/qcom/msm8916_32" revision="25f485f7114091a73feabc75db3b5bca4d1768a5" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom/msm8916_32_512" path="device/qcom/msm8916_32_512" revision="27eb369918ae260508e01aa48699ce060b0f51ac" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom/msm8916_32_k64" path="device/qcom/msm8916_32_k64" revision="63a70fd6a17035e8218fe4867de0ede170eddd30" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project name="platform/vendor/qcom/msm8916_64" path="device/qcom/msm8916_64" revision="6ca30ef19feb467888d67b823a01afde247a46a2" upstream="LA.BR.1.1.2_rb1.9"/>
+  <!-- <project name="platform/vendor/qcom/plutonium" path="device/qcom/msm8994" revision="71326d6e49d7fa34be150789b7d831486a746cef" upstream="LA.BR.1.1.2_rb1.9"/> -->
+</manifest>

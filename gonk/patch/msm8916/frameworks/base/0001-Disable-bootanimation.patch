@@ -1,0 +1,53 @@
+From 070a512e0528644d576e37deb6f1755b2747b290 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Sun, 16 Aug 2015 22:57:17 -0700
+Subject: [PATCH] Disable bootanimation
+
+Change-Id: I9b871faf107e62ff238cef6dd6e4ee7ddc8934d6
+---
+ cmds/bootanimation/Android.mk | 33 ---------------------------------
+ 1 file changed, 33 deletions(-)
+ delete mode 100644 cmds/bootanimation/Android.mk
+
+diff --git a/cmds/bootanimation/Android.mk b/cmds/bootanimation/Android.mk
+deleted file mode 100644
+index 863515c..0000000
+--- a/cmds/bootanimation/Android.mk
++++ /dev/null
+@@ -1,33 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-	bootanimation_main.cpp \
+-	AudioPlayer.cpp \
+-	BootAnimation.cpp
+-
+-LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
+-
+-LOCAL_C_INCLUDES += external/tinyalsa/include
+-
+-LOCAL_SHARED_LIBRARIES := \
+-	libcutils \
+-	liblog \
+-	libandroidfw \
+-	libutils \
+-	libbinder \
+-    libui \
+-	libskia \
+-    libEGL \
+-    libGLESv1_CM \
+-    libgui \
+-    libtinyalsa \
+-    libmedia
+-
+-LOCAL_MODULE:= bootanimation
+-
+-ifdef TARGET_32_BIT_SURFACEFLINGER
+-LOCAL_32_BIT_ONLY := true
+-endif
+-
+-include $(BUILD_EXECUTABLE)
+-- 
+2.5.0
+

@@ -36,6 +36,10 @@
 /vendor/silk/core/npm-debug.log
 /vendor/silk/**/node_modules/
 
+# repo projects from msm8916 gonk
+/build.sh
+/kernel/
+
 # |adb sync| generates this
 /filelist
 

@@ -1,0 +1,25 @@
+From f774f0a46679508dd21c077a09badeac00902e37 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Thu, 20 Aug 2015 00:04:06 -0700
+Subject: [PATCH] Add missing AUDIO_STREAM_PUBLIC_CNT
+
+Change-Id: I9851ab89244b0f1c7f4991029458cec036bca134
+---
+ include/system/audio.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/system/audio.h b/include/system/audio.h
+index 891ecc0..ab508d9 100644
+--- a/include/system/audio.h
++++ b/include/system/audio.h
+@@ -68,6 +68,7 @@ typedef enum {
+     AUDIO_STREAM_INCALL_MUSIC     = 10,
+ 
+     AUDIO_STREAM_CNT,
++    AUDIO_STREAM_PUBLIC_CNT       = AUDIO_STREAM_CNT,
+     AUDIO_STREAM_MAX              = AUDIO_STREAM_CNT - 1,
+ } audio_stream_type_t;
+ 
+-- 
+2.5.0
+

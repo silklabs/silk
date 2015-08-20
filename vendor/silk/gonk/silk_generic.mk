@@ -29,6 +29,7 @@ SILK_EXT := \
   detectobject-cascade-cars \
   clapper \
   nightlight \
+  trackobject \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

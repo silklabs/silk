@@ -32,6 +32,8 @@ void Channel::send(Tag tag, timeval &when, const void *data, size_t size) {
  *
  */
 void Channel::send(Tag tag, const void *data, size_t size) {
+  Mutex::Autolock autoLock(mLock);
+
   timeval when;
   gettimeofday(&when, NULL);
   send(tag, when, data, size);

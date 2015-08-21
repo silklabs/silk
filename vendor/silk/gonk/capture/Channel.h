@@ -9,6 +9,7 @@
 
 #include "Capturedefs.h"
 #include "SocketListener1.h"
+#include <utils/Mutex.h>
 
 /**
  * This class implements the data socket listener and sends the data to node
@@ -37,6 +38,8 @@ protected:
   virtual bool onDataAvailable(SocketClient *c) {
     return true;
   };
+private:
+  Mutex mLock;
 };
 
 #endif

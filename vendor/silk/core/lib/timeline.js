@@ -60,12 +60,27 @@ class Timeline extends EventEmitter {
   }
 
   /**
-   *
+   * JPEG-encoded preview image
    */
-  addPreview(when, pkt) {
-    this.emit('preview', when, pkt);
-    this._pushPreview(when, pkt);
+  addPreviewJPEG(when, jpeg) {
+    this._pushPreview(when, jpeg);
   };
+
+  /**
+   * OpenCV preview frame
+   *
+   * retrieveFunc(cb, channel) - Invoke this function to obtain the preview frame
+   *
+   *    cb       - the callback that receives an error object and then the image
+   *               as an OpenCV matrix
+   *    channel  - 0 (default) for color (CV_CAP_ANDROID_COLOR_FRAME_BGR)
+   *               1 for grayscale       (CV_CAP_ANDROID_GREY_FRAME)
+   *               2 for RGB             (CV_CAP_ANDROID_COLOR_FRAME_RGB)
+   */
+  addPreviewFrame(when, retrieveFunc) {
+    this.emit('preview', when, retrieveFunc);
+  };
+
 
   /**
    *

@@ -50,8 +50,8 @@ class Env extends events.EventEmitter {
     let timeline = deviceObjects.timeline;
     if (timeline) {
       this.timeline = new events.EventEmitter();
-      timeline.on('preview', (when, jpeg) => {
-        this.timeline.emit('preview', when, jpeg);
+      timeline.on('preview', (when, retrieveFunc) => {
+        this.timeline.emit('preview', when, retrieveFunc);
       });
       timeline.on('face', faces => {
         this.timeline.emit('face', faces);

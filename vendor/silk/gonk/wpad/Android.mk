@@ -12,5 +12,4 @@ LOCAL_C_INCLUDES += \
     hardware/libhardware_legacy/include \
     system/core/include \
 
-LOCAL_32_BIT_ONLY := true
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SILK_EXECUTABLE)

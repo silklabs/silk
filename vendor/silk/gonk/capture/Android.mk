@@ -4,7 +4,6 @@ ROOT := vendor/silk/gonk
 include $(CLEAR_VARS)
 LOCAL_MODULE := capture
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
 
 LOCAL_SRC_FILES := \
 	../SocketListener/SocketListener1.cpp \
@@ -39,13 +38,12 @@ LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
 
 include external/stlport/libstlport.mk
 
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SILK_EXECUTABLE)
 
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libnative_camera_capture
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
 LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)/build #<-- where OpenCV looks for "libnative_camera" shared objects
 
 LOCAL_SRC_FILES := \
@@ -62,4 +60,4 @@ LOCAL_C_INCLUDES := .
 
 LOCAL_CFLAGS += -Wextra -Werror
 
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_SILK_SHARED_LIBRARY)

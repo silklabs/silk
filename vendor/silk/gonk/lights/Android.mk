@@ -7,5 +7,4 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := main.cpp
 LOCAL_CFLAGS += -Wall -Werror -Wextra -Wno-unused-parameter
 LOCAL_SHARED_LIBRARIES := libhardware liblog
-LOCAL_32_BIT_ONLY := true
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SILK_EXECUTABLE)

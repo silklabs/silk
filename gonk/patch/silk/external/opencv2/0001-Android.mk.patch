@@ -1,21 +1,21 @@
-From 9df597f8daed249fdf8231b84e9aece3c1dbe125 Mon Sep 17 00:00:00 2001
+From 5ab702e0b0349c64c13a82874d949734a59b7e91 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 91 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- opencv.mk  | 36 +++++++++++++++++++++++++
+ Android.mk | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ opencv.mk  | 37 ++++++++++++++++++++++++++
  2 files changed, 127 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..46110d1
+index 0000000..725f37f
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,90 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -83,7 +83,6 @@ index 0000000..46110d1
 + -DBUILD_ANDROID_EXAMPLES=false \
 + -DWITH_OPENEXR=false \
 + -DBUILD_PERF_TESTS=false \
-+ -DBUILD_opencv_androidcamera=false \
 + -DBUILD_opencv_java=false \
 + -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-4.8 \
 + -DANDROID_ABI="armeabi-v7a with NEON" \
@@ -109,12 +108,13 @@ index 0000000..46110d1
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..ca3897f
+index 0000000..3df72a7
 --- /dev/null
 +++ b/opencv.mk
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,37 @@
 +# Include from your Android.mk to link with OpenCV, after defining LOCAL_MODULE
 +OPENCV_MODULE_NAMES := \
++  androidcamera \
 +  core \
 +  calib3d \
 +  contrib \

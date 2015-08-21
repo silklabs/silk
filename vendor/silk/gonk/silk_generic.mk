@@ -27,7 +27,7 @@ SILK_EXT := \
   detectobject \
   detectobject-cascade-frontalface \
   detectobject-cascade-cars \
-  example \
+  clapper \
   nightlight \
 
 PRODUCT_PACKAGES += $(SILK_EXT)

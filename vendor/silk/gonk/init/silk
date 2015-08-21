@@ -4,9 +4,9 @@ export NODE_ENV="production"
 export DEBUG=$(getprop persist.silk.debug)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors)
 
-NODE=/system/bin/node
+NODE=/system/silk/bin/node
 if [ ! -x $NODE ]; then
-  NODE=/system/bin/iojs
+  NODE=/system/silk/bin/iojs
   if [ ! -x $NODE ]; then
     log -p i -t silk-init Node engine not found.
     exit 1

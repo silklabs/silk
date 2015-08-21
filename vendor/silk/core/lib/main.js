@@ -40,7 +40,7 @@ const ID_PATH = path.join(ID_DIR, 'id.json');
 const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
 const name = util.getprop('persist.silk.displayName', 'Silkcam');
-const logoFilePath = '/system/media/logo.png';
+const logoFilePath = '/system/silk/media/logo.png';
 
 let id = null;
 let timeline;

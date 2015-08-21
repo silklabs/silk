@@ -1,4 +1,4 @@
-From edb04babcee8d7e329489ae4592b09dcf3ba99f3 Mon Sep 17 00:00:00 2001
+From 99eb8a80bd6e9f13e19ef17a9c607945cdc292a9 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
@@ -10,7 +10,7 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..198d3c2
+index 0000000..2403665
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,63 @@
@@ -25,7 +25,7 @@ index 0000000..198d3c2
 +LOCAL_MODULE := $(LOCAL_NODE_ENGINE)
 +LOCAL_MODULE_CLASS := EXECUTABLES
 +LOCAL_MODULE_TAGS := optional
-+LOCAL_MODULE_PATH := $(TARGET_OUT)/bin
++LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_EXECUTABLES)
 +LOCAL_STRIP_MODULE := true
 +LOCAL_32_BIT_ONLY := true
 +LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/out/Release/$(LOCAL_MODULE)
@@ -78,5 +78,5 @@ index 0000000..198d3c2
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-1.9.1
+2.5.0
 

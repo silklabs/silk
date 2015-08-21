@@ -5,8 +5,8 @@ let cv = require('opencv');
 let log;
 
 const cascades = [
-  { tag: 'car', file: '/system/media/opencv/hogcascade_cars_sideview.xml'},
-  { tag: 'face', file: '/system/media/opencv/haarcascade_frontalface_alt2.xml'}
+  { tag: 'car', file: '/system/silk/media/opencv/hogcascade_cars_sideview.xml'},
+  { tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml'}
 ];
 
 function detectObjects(im, when, cb) {

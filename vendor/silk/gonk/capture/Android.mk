@@ -46,7 +46,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libnative_camera_capture
 LOCAL_MODULE_TAGS := optional
 LOCAL_32_BIT_ONLY := true
-LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/node/build #<-- where OpenCV looks for "libnative_camera" shared objects
+LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)/build #<-- where OpenCV looks for "libnative_camera" shared objects
 
 LOCAL_SRC_FILES := \
   libnative_camera_capture.cpp \

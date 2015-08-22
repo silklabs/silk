@@ -7,7 +7,6 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := main.cpp
 LOCAL_CFLAGS += -Werror -Wextra
 LOCAL_C_INCLUDES += system/core/include
-LOCAL_32_BIT_ONLY := true
 LOCAL_SHARED_LIBRARIES := libnetutils
 
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SILK_EXECUTABLE)

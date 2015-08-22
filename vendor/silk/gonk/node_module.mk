@@ -51,7 +51,7 @@ endif
 
 ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 # Global node module by default
-LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/node
+LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)
 endif
 
 ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))

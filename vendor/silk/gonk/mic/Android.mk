@@ -27,10 +27,6 @@ LOCAL_C_INCLUDES += $(ROOT)/jsoncpp $(ROOT)/SocketListener
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
 
-LOCAL_32_BIT_ONLY := true
-
 include external/stlport/libstlport.mk
 
-include $(BUILD_EXECUTABLE)
-
-################################################################################
+include $(BUILD_SILK_EXECUTABLE)

@@ -1,47 +1,53 @@
-service gonksched /system/bin/gonksched
+on init
+    # Can't augment existing env vars, so set everything here
+    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin:/system/silk/bin
+    export LD_LIBRARY_PATH /system/lib:/system/silk/lib
+    export NODE_PATH /system/silk/node_modules
+
+service gonksched /system/silk/bin/gonksched
     class main
     user root
 
-service fakeappops /system/bin/fakeappops
+service fakeappops /system/silk/bin/fakeappops
     class main
     user root
 
-service silk /system/bin/silk
+service silk /system/silk/bin/silk
     class main
     user root
 
-service volume /system/bin/volume
+service volume /system/silk/bin/volume
     class main
     user audio
     group audio
     oneshot
 
-service wpad /system/bin/wpad
+service wpad /system/silk/bin/wpad
     class main
     user system
     group wifi system
     socket wpad stream 0600 root root
 
-service bledroid /system/bin/bledroid
+service bledroid /system/silk/bin/bledroid
     class main
     user bluetooth
     group net_bt_stack
     socket bledroid stream 0600 root root
 
-service silk-sensors /system/bin/silk-sensors
+service silk-sensors /system/silk/bin/silk-sensors
     class main
     user root
     group root
     socket sensors stream 0600 root root
 
-service capture /system/bin/capture
+service capture /system/silk/bin/capture
     class main
     user graphics
     group camera
     socket capturectl stream 0600 root root
     socket captured stream 0600 root root
 
-service mic /system/bin/mic
+service mic /system/silk/bin/mic
     class main
     user audio
     group audio

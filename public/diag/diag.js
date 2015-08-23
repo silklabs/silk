@@ -83,6 +83,7 @@ var logcat = new function() {
 }
 
 var logs = {
+  'dash': dash,
   'logcat': logcat,
   'procrank': procrank
 };
@@ -176,7 +177,7 @@ function listen(socket) {
   });
 
   socket.on('video-stream-new', function(msg) {
-    console.log('New  camera', msg.name, msg.id);
+    console.log('New camera', msg.name, msg.id);
     cameras.add(msg.id, msg.name);
   });
 

@@ -83,6 +83,7 @@ var logcat = new function() {
 }
 
 var logs = {
+  'dash': dash,
   'logcat': logcat,
   'procrank': procrank
 };
@@ -125,6 +126,12 @@ var cameras = new function() {
     e.value = e.id = id;
     e.innerText = e.name = name;
     this.cameras.appendChild(e);
+
+    // Reconnect to the previously selected device if necessary
+    if (this.lastSelectedId === id) {
+      this.cameras.selectedIndex = this.cameras.length - 1;
+      this.updateActive();
+    }
   };
   this.remove = function(id) {
     var camera = document.getElementById(id);
@@ -143,9 +150,11 @@ var cameras = new function() {
     if (this.selected.id !== 'none') {
       emitLogEnable(this.selected.id, 'update-all');
     }
+    this.lastSelectedId = this.selected.id;
   };
 
   this.cameras = document.getElementById('cameras');
+  this.lastSelectedId = null;
   this.init();
 }
 
@@ -176,7 +185,7 @@ function listen(socket) {
   });
 
   socket.on('video-stream-new', function(msg) {
-    console.log('New  camera', msg.name, msg.id);
+    console.log('New camera', msg.name, msg.id);
     cameras.add(msg.id, msg.name);
   });
 

@@ -122,6 +122,10 @@ function boot() {
     then(() => {
       log.info('Initialize framework');
 
+      // It's preferable to kill this process over system daemons
+      // (usually running as -17) in out of memory situations.
+      fs.writeFile('/proc/self/oom_adj', 0);
+
       timeline = require('./timeline')(id.toString());
       camera = require('./camera')(timeline);
       camera.on('error', () => {

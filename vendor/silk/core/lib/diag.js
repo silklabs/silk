@@ -103,7 +103,7 @@ class Diag {
         '/system/xbin/procrank', [], 10),
 
       new DiagLogger(this.id, 'dash',
-        '/system/bin/dash', [], 10),
+        '/system/silk/bin/dash', [], 10),
     ];
   }
 

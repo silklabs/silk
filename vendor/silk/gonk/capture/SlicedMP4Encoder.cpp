@@ -14,6 +14,7 @@
 #include "SlicedMP4Encoder.h"
 #include "Capturedefs.h"
 #include "MPEG4MemoryWriter.h"
+#include "AudioSourceEmitter.h"
 
 #include <media/mediarecorder.h>
 #include <media/stagefright/AudioSource.h>
@@ -447,8 +448,11 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
   mAudioFormat->setInt32("channel-count", channels);
   mAudioFormat->setInt32("bitrate", sAudioBitRate);
 
+  sp<MediaSource> audioSourceEmitter =
+    new AudioSourceEmitter(mChannel, audioSource);
+
   mSlicedVideoSource = new SliceAtEachIDRSource(mVideoEncoder);
-  mSlicedAudioSource = new SliceAudioSource(audioSource);
+  mSlicedAudioSource = new SliceAudioSource(audioSourceEmitter);
 
   // The video stream drives where the audio stream is sliced
   mSlicedVideoSource->addListener(mSlicedAudioSource.get());

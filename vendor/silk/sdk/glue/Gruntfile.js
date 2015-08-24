@@ -10,6 +10,32 @@ module.exports = function(grunt) {
     grunt.log.writeln(execSync(cmd, opts));
   }
 
+  // Ensure there are no node_modules/ directories lower in the tree (even
+  // outside the root directory of the workspace) that could inadvertently be
+  // pulled into the browersify output and unexpectedly alter the resulting
+  // program.
+  grunt.registerTask('ban_parent_node_modules', '', function() {
+    function ban_parent_node_modules(dir) {
+      if (!dir) {
+        dir = process.cwd();
+      }
+
+      var path = require('path');
+      var fs = require('fs');
+
+      var dir = path.dirname(dir);
+      var nm = path.join(dir, 'node_modules');
+      if (fs.existsSync(nm)) {
+        grunt.fail.fatal('Please remove "' + nm + '" to continue');
+        return;
+      }
+      if (dir !== '/') {
+        ban_parent_node_modules(dir);
+      }
+    }
+    ban_parent_node_modules();
+  });
+
   grunt.registerTask('adb_push', '', function() {
     exec('adb root');
     exec('adb wait-for-device', { timeout: 2000 });
@@ -32,7 +58,7 @@ module.exports = function(grunt) {
 
   require("load-grunt-tasks")(grunt);
 
-  var defaultTaskList = ['eslint', 'babel', 'browserify'];
+  var defaultTaskList = ['eslint', 'babel', 'ban_parent_node_modules', 'browserify'];
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 

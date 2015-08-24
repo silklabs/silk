@@ -7,6 +7,8 @@ var React = require('react-native');
 var {
   ScrollView,
   StyleSheet,
+  // NB: wifi settings dialog uses its own iOS "system" style, not the
+  // common Silk style.
   Text,
   TextInput,
   TouchableOpacity,

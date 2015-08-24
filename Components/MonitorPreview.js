@@ -6,15 +6,14 @@ import LiveVideo from './LiveVideo'
 import ImageView from './ImageView'
 import MonitorFullscreen from './MonitorFullscreen'
 import ObjectBoxes from './ObjectBoxes';
+import { LabelText, Text } from './Text';
 
 var {
   Image,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } = React;
-
 
 var PREVIEW_WIDTH = 305;
 var PREVIEW_HEIGHT = 170;
@@ -101,7 +100,7 @@ var MonitorPreview = React.createClass({
             id={id}
             previewSize={this.props.previewSize} />
           <View style={styles.monitorLabelContainer}>
-            <Text style={styles.monitorLabel}>{this.props.label}</Text>
+            <LabelText>{this.props.label}</LabelText>
           </View>
           <View style={styles.monitorPreviewContainer}>
             <ImageView style={styles.preview} blob={this.state.blob} />
@@ -137,12 +136,6 @@ var styles = StyleSheet.create({
   monitorLabelContainer: {
     paddingLeft: 10,
     paddingBottom: 10,
-  },
-
-  monitorLabel: {
-    color: '#656569',
-    fontSize: 15,
-    textAlign: 'left',
   },
 
   monitorPreviewContainer: {

@@ -1,12 +1,25 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-let cv = require('opencv');
 let log;
 
 const cascades = [
-  { tag: 'car', file: '/system/silk/media/opencv/hogcascade_cars_sideview.xml'},
-  { tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml'}
+  {
+    tag: 'car', file: '/system/silk/media/opencv/hogcascade_cars_sideview.xml',
+    opts: {
+      scale: 1.2,
+      neighbors: 2,
+      min: [40, 80],
+    },
+  },
+  {
+    tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
+    opts: {
+      scale: 1.2,
+      neighbors: 2,
+      min: [25, 25],
+    },
+  }
 ];
 
 function detectObjects(im, when, cb) {
@@ -41,7 +54,8 @@ export default function init(env) {
   log = env.log;
 
   let working = false;
-  env.timeline.on('preview', (when, jpeg) => {
+
+  env.timeline.on('preview', (when, retrieveFunc) => {
     if (working) {
       log.error('Still busy, unable to process next preview image');
       return;
@@ -49,18 +63,14 @@ export default function init(env) {
     working = true;
 
     let start = Date.now();
-    cv.readImage(jpeg, (err, im) => {
+    retrieveFunc((err, im) => {
       if (err) {
+        log.warning(`Unable to fetch frame: ${err}`);
         working = false;
-        throw err;
+        return;
       }
-      if (im.width() < 1 || im.height() < 1) {
-        working = false;
-        throw new Error('Invalid image');
-      }
-
       let diff = Date.now() - start;
-      log.debug(`Loaded preview image in ${diff}ms`);
+      log.verbose(`Acquired preview image in ${diff}ms`);
 
       detectObjects(im, when, objs => {
         if (objs.length > 0) {
@@ -70,6 +80,7 @@ export default function init(env) {
         }
         working = false;
       });
-    });
+    }, 1 /* == 1 channel image (RGB not required) */);
   });
 }
+

@@ -5,6 +5,7 @@ let log = require('./log')('camera');
 import { EventEmitter } from 'events';
 let util = require('./util');
 let net = require('net');
+let cv = require('opencv');
 
 //const FRONT = 1;
 //const BACK = 0;
@@ -111,6 +112,7 @@ class CameraStream extends EventEmitter {
     super();
     this.timeline = timeline;
     this._ready = false;
+    this._cvVideoCapture = null;
   }
 
   _restart(why) {
@@ -120,6 +122,10 @@ class CameraStream extends EventEmitter {
     }
     log.info(`camera restart: ${why}`);
     this._ready = false;
+    if (this._cvVideoCapture) {
+      this._cvVideoCapture.close();
+      this._cvVideoCapture = null;
+    }
     this._ctlSocket.destroy();
     this._ctlSocket = null;
     this._dataSocket.destroy();
@@ -165,6 +171,10 @@ class CameraStream extends EventEmitter {
         this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
         this._command({cmdName: 'init', cmdData: cmdData});
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+
+        this._cvVideoCapture = new cv.VideoCapture(0);
+        this._cvVideoCapture.setWidth(cmdData.width);
+        this._cvVideoCapture.setHeight(cmdData.height);
       }
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
@@ -205,6 +215,63 @@ class CameraStream extends EventEmitter {
     }
   }
 
+  _grabPreviewFrame(when) {
+    let busy = false;
+    let queue = []; // Queue of pending preview frame requests
+    let imagecache = []; // Cache to avoid resizing a frame multiple times
+
+    let retrieveNextFrame = () => {
+      if (busy || queue.length === 0) {
+        return;
+      }
+
+      // Dequeue the next frame request
+      let [userCb, channel] = queue.shift();
+
+      if (imagecache[channel]) {
+        // Frame is cached!
+        userCb(false, imagecache[channel]);
+        retrieveNextFrame();
+        return;
+      }
+
+      busy = true;
+
+      // Fetch the frame from the camera
+      this._cvVideoCapture.retrieve(
+        (err, im) => {
+          if (!err) {
+            im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+            imagecache[channel] = im;
+          }
+          busy = false;
+          userCb(err, im);
+          retrieveNextFrame();
+        },
+        channel
+      );
+    };
+
+    // Grab the next frame
+    this._cvVideoCapture.grab(() => {
+      let now = Date.now();
+      log.info(`Preview frame grabbed. lag=${now - when}ms`);
+
+      imagecache = []; // Flush the image cache
+      if (queue.length > 0) {
+        log.warn(`Unable to keep up with preview. backlog=${queue.length}`);
+      }
+
+      // Add the frame to the timeline
+      this.timeline.addPreviewFrame(now,
+        (userCb, channel = 0) => {
+          queue.push([userCb, channel]); // Enqueue the frame request
+          retrieveNextFrame();
+        }
+      );
+    });
+  }
+
   _onDataSocketRead(data) {
     this._dataBuffer = Buffer.concat([this._dataBuffer, data]);
     while (this._dataBuffer.length >= HEADER_NR_BYTES) {
@@ -221,7 +288,11 @@ class CameraStream extends EventEmitter {
       switch (tag) {
         case TAG_PREVIEW:
           log.debug(`TAG_PREVIEW ${when}`);
-          this.timeline.addPreview(when, pkt);
+          this.timeline.addPreviewJPEG(when, pkt);
+          // TODO: Currently the OpenCV preview frames are tied to the capture
+          //       preview frames for simplicity, however there's no reason why
+          //       they couldn't be independent.
+          this._grabPreviewFrame(when);
           break;
         case TAG_VIDEO:
           log.debug(`TAG_VIDEO ${when}`);

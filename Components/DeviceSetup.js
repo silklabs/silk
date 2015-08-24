@@ -6,10 +6,10 @@
 var React = require('react-native');
 var {
   StyleSheet,
-  Text,
   View,
 } = React;
 var ProgressBar = require('./ProgressBar');
+import { LabelText } from './Text';
 
 /**
  * Return |{ heat, value }| where heat represents { cold, warm, hot }
@@ -34,8 +34,7 @@ var DeviceSetup = React.createClass({
     return (
       <View style={styles.container}>
         <View style={styles.labelContainer}>
-          <Text style={styles.label}>
-            Move phone close to new device ...</Text>
+          <LabelText>Move phone close to new device ...</LabelText>
         </View>
         <View style={styles.progressContainer}>
           <ProgressBar completePercentage={100.0 * heat.value}
@@ -69,12 +68,6 @@ var styles = StyleSheet.create({
   labelContainer: {
     paddingLeft: 10,
     paddingBottom: 10,
-  },
-  label: {
-    color: '#656569',
-    fontSize: 15,
-    fontStyle: 'italic',
-    textAlign: 'left',
   },
   progressContainer: {
     paddingLeft: 5,

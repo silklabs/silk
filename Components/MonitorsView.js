@@ -10,7 +10,6 @@ var {
   Image,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } = React;
@@ -19,6 +18,8 @@ var Config = require('../Libraries/Config')();
 var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
+import { HeaderText, PlaceholderText, Text } from './Text';
+//import HeaderText from './Text';
 
 var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
                      'disconnect'];
@@ -83,7 +84,7 @@ var MonitorsView = React.createClass({
           <View style={styles.spacer}>
             <View style={styles[connectionStyle]} />
           </View>
-          <Text style={styles.title}>Silk</Text>
+          <HeaderText>Silk</HeaderText>
           <View style={styles.spacer}>
             <TouchableOpacity onPress={this.loadSettings}>
               <View style={styles.settings}>
@@ -219,9 +220,9 @@ var PlaceholderMessage = React.createClass({
   render: function() {
     return (
       <View style={styles.placeholderContainer}>
-        <Text style={styles.placeholderText}>
-          Connect SilkCam to get started
-        </Text>
+        <PlaceholderText>
+          Connect Silk Cam to get started
+        </PlaceholderText>
       </View>
     );
   },
@@ -239,11 +240,6 @@ var styles = StyleSheet.create({
     paddingLeft: 10,
     paddingRight: 10,
     paddingBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    textAlign: 'center',
-    color: '#656569',
   },
   offlineIndicator: {
     width: 10,
@@ -291,11 +287,6 @@ var styles = StyleSheet.create({
 
   placeholderContainer: {
     padding: 10,
-  },
-  placeholderText: {
-    color: '#bbbbbb',
-    fontSize: 15,
-    fontStyle: 'italic',
   },
 
   monitors: {

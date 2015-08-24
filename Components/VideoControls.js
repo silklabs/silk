@@ -165,6 +165,7 @@ export default React.createClass({
   },
 
   buildLiveControls() {
+    // TODO: remove me in production builds
     let lagValue = Date.now() - this.props.currentTime;
     return (
       <Text style={styles.lag}>{lagValue}</Text>

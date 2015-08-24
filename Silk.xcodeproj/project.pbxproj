@@ -74,6 +74,16 @@
 		57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE1081B69867F0047088B /* TypeTransferTest.swift */; };
 		57BCE10D1B6991520047088B /* BlobBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* BlobBridge.m */; };
 		57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10E1B69919A0047088B /* BlobBridge.swift */; };
+		F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */; };
+		F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */; };
+		F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */; };
+		F91A54F81B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EE1B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf */; };
+		F91A54F91B8B9D48009C75C9 /* OpenSans-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EF1B8B9D48009C75C9 /* OpenSans-Italic.ttf */; };
+		F91A54FA1B8B9D48009C75C9 /* OpenSans-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F01B8B9D48009C75C9 /* OpenSans-Light.ttf */; };
+		F91A54FB1B8B9D48009C75C9 /* OpenSans-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F11B8B9D48009C75C9 /* OpenSans-LightItalic.ttf */; };
+		F91A54FC1B8B9D48009C75C9 /* OpenSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */; };
+		F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */; };
+		F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */; };
 		F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */; };
 		F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4091B3725DB0081F479 /* NSData+Base64.m */; };
 		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
@@ -368,6 +378,16 @@
 		57BCE10E1B69919A0047088B /* BlobBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlobBridge.swift; sourceTree = "<group>"; };
 		78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTLinking.xcodeproj; path = "node_modules/react-native/Libraries/LinkingIOS/RCTLinking.xcodeproj"; sourceTree = "<group>"; };
 		832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTText.xcodeproj; path = "node_modules/react-native/Libraries/Text/RCTText.xcodeproj"; sourceTree = "<group>"; };
+		F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Bold.ttf"; sourceTree = "<group>"; };
+		F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-BoldItalic.ttf"; sourceTree = "<group>"; };
+		F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-ExtraBold.ttf"; sourceTree = "<group>"; };
+		F91A54EE1B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
+		F91A54EF1B8B9D48009C75C9 /* OpenSans-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Italic.ttf"; sourceTree = "<group>"; };
+		F91A54F01B8B9D48009C75C9 /* OpenSans-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Light.ttf"; sourceTree = "<group>"; };
+		F91A54F11B8B9D48009C75C9 /* OpenSans-LightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-LightItalic.ttf"; sourceTree = "<group>"; };
+		F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Regular.ttf"; sourceTree = "<group>"; };
+		F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Semibold.ttf"; sourceTree = "<group>"; };
+		F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-SemiboldItalic.ttf"; sourceTree = "<group>"; };
 		F949A1971B365A2900E59D69 /* WebViewEx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewEx.h; sourceTree = "<group>"; };
 		F949A1981B365A2900E59D69 /* WebViewEx.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewEx.m; sourceTree = "<group>"; };
 		F949A1991B365A2900E59D69 /* WebViewExManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewExManager.h; sourceTree = "<group>"; };
@@ -717,6 +737,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				F91A54EA1B8B9D48009C75C9 /* Resources */,
 				3D4D1CBA1B7AB4F50047A020 /* Components */,
 				13B07FAE1A68108700A75B9A /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
@@ -734,6 +755,23 @@
 				00E356EE1AD99517003FC87E /* SilkTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		F91A54EA1B8B9D48009C75C9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */,
+				F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */,
+				F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */,
+				F91A54EE1B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf */,
+				F91A54EF1B8B9D48009C75C9 /* OpenSans-Italic.ttf */,
+				F91A54F01B8B9D48009C75C9 /* OpenSans-Light.ttf */,
+				F91A54F11B8B9D48009C75C9 /* OpenSans-LightItalic.ttf */,
+				F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */,
+				F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */,
+				F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		F949A1961B365A2900E59D69 /* WebViewBridge */ = {
@@ -1017,20 +1055,30 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D4D1CCD1B7AB51E0047A020 /* MonitorPreview.js in Resources */,
+				F91A54FB1B8B9D48009C75C9 /* OpenSans-LightItalic.ttf in Resources */,
 				3DEBC1381B7C19870062FF19 /* ObjectBoxes.js in Resources */,
 				3DEBC1391B7C19870062FF19 /* SystemButton.js in Resources */,
+				F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */,
 				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				F91A54F91B8B9D48009C75C9 /* OpenSans-Italic.ttf in Resources */,
+				F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */,
+				F91A54F81B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf in Resources */,
 				3D4D1CCC1B7AB51E0047A020 /* MonitorFullscreen.js in Resources */,
 				3D4D1CCF1B7AB51E0047A020 /* OverlayModal.js in Resources */,
 				3D4D1CC81B7AB51E0047A020 /* DeviceSetup.js in Resources */,
+				F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */,
+				F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */,
 				3D4D1CD01B7AB51E0047A020 /* ProgressBar.js in Resources */,
 				3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */,
 				3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */,
 				3D4D1CD31B7AB51E0047A020 /* VideoControls.js in Resources */,
 				3D4D1CCE1B7AB51E0047A020 /* MonitorsView.js in Resources */,
+				F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */,
 				3D4D1CCB1B7AB51E0047A020 /* LiveVideo.js in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,
+				F91A54FA1B8B9D48009C75C9 /* OpenSans-Light.ttf in Resources */,
+				F91A54FC1B8B9D48009C75C9 /* OpenSans-Regular.ttf in Resources */,
 				3D4D1CCA1B7AB51E0047A020 /* ImageView.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

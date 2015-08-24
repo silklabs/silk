@@ -31,7 +31,7 @@ enum { kNumSamplesPerFrame = 1024 };
 
 using namespace android;
 
-static bool isAudioEnabled = false;
+static bool isAudioEnabled = true;
 
 //
 // Implementation of class PutBackWrapper

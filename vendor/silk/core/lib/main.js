@@ -10,6 +10,7 @@ let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
 
 let api = require('./api');
+let battery = require('./battery');
 let btle = require('./btle');
 let log = require('./log')('main');
 let vib = require('./vibrator')();
@@ -86,7 +87,7 @@ function readOrCreateID() {
 /**
  * Wait until system has been booted.
  */
-function _waitForBoot(startTime, defer) {
+function _waitForSysBoot(startTime, defer) {
   // Don't use an arbitrarily long promise chain if one is passed use it.
   startTime = startTime || Date.now();
   defer = defer || deferred();
@@ -100,7 +101,7 @@ function _waitForBoot(startTime, defer) {
     defer.accept();
   } else {
     log.info('Waiting for sys.boot_completed=1');
-    setTimeout(_waitForBoot.bind(this, startTime, defer), BOOT_CHECK_INTERVAL);
+    setTimeout(_waitForSysBoot.bind(this, startTime, defer), BOOT_CHECK_INTERVAL);
   }
 
   return defer.promise;
@@ -108,8 +109,13 @@ function _waitForBoot(startTime, defer) {
 
 
 function boot() {
-  log.info('Wait for boot complete');
-  return _waitForBoot().
+
+  return _waitForSysBoot().
+    then(() => {
+      // Wait for the battery to initialize and block until there's enough
+      // capacity to fully boot.
+      return battery.init();
+    }).
     then(() => {
       log.info('Initialize hardware');
       return Promise.all([
@@ -472,7 +478,9 @@ ui.on('key:factoryreset', () => {
   shutdown(finalPromiseFactory);
 });
 
-
+// Battery monitoring
+battery.on('needs-to-charge', () => ui.goto('charging'));
+battery.on('out-of-power', shutdown);
 
 //
 // Monitor responsiveness of the main thread.

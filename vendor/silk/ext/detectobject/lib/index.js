@@ -27,7 +27,16 @@ const cascades = [
   }
 ];
 
-function detectObjects(im, when, cb) {
+/**
+ * Call opencv methods to detect objects as defined by {@code cascades}
+ *
+ * @param im image representing region of interest
+ * @param when timestamp of the preview image
+ * @param motionx x-coord of im within the original preview image
+ * @param motiony y-coord of im within the original preview image
+ * @param cb user callback
+ */
+function detectObjects(im, motionx, motiony, when, cb) {
   let start = Date.now();
   let objs = [];
   let pendingCallbacks = cascades.length;
@@ -38,7 +47,14 @@ function detectObjects(im, when, cb) {
         throw err;
       }
       if (rects.length > 0) {
-        objs.push({tag: c.tag, when: when, rects: rects});
+        // Adjust rectangle's position within the original preview image
+        let newRects = rects.map(rect => {
+          let newRect = rect;
+          newRect.x += motionx;
+          newRect.y += motiony;
+          return newRect;
+        });
+        objs.push({tag: c.tag, when: when, rects: newRects});
       }
       if (--pendingCallbacks <= 0) {
         let diff = Date.now() - start;
@@ -77,7 +93,14 @@ export default function init(env) {
       let diff = Date.now() - start;
       log.verbose(`Acquired preview image in ${diff}ms`);
 
-      detectObjects(im, when, objs => {
+      // Restrict object detection to a section of the image that shows motion
+      if (rects.length > 1) {
+        log.warn(`More than one (${rects.length}) motion rectangles received`);
+      }
+      let motionRect = rects[0]; // Only one motion rectangle is supported right now
+      let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
+
+      detectObjects(motion, motionRect.x, motionRect.y, when, objs => {
         if (objs.length > 0) {
           let what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
           log.info(`Detected objects:${what}`);

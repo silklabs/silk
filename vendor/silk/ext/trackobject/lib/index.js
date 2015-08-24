@@ -117,7 +117,7 @@ function _detectMotion(image, callback) {
       if ((maxy + 10) < (image.rows - 1)) {
         maxy += 10;
       }
-      log.debug(`rect: [${minx}, ${miny}, ${maxx}, ${maxy}]`);
+      log.debug(`rect: [${minx}, ${miny}, ${maxx - minx}, ${maxy - miny}]`);
     }
     callback(numChanges, {x: minx, y: miny, width: maxx - minx, height: maxy - miny});
   } else {

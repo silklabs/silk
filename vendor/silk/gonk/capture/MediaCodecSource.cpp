@@ -287,9 +287,9 @@ status_t MediaCodecSource::stop() {
     // to process them.
 
     if (mPuller != NULL) {
-        ALOGI("puller (%s) stopping", mIsVideo ? "video" : "audio");
+        ALOGV("puller (%s) stopping", mIsVideo ? "video" : "audio");
         mPuller->stop();
-        ALOGI("puller (%s) stopped", mIsVideo ? "video" : "audio");
+        ALOGV("puller (%s) stopped", mIsVideo ? "video" : "audio");
     }
 
     return err;
@@ -492,7 +492,7 @@ void MediaCodecSource::signalEOS(status_t err) {
         releaseEncoder();
     }
     if (mStopping && mEncoderReachedEOS) {
-        ALOGI("encoder (%s) stopped", mIsVideo ? "video" : "audio");
+        ALOGV("encoder (%s) stopped", mIsVideo ? "video" : "audio");
         // posting reply to everyone that's waiting
         List<uint32_t>::iterator it;
         for (it = mStopReplyIDQueue.begin();
@@ -610,7 +610,7 @@ status_t MediaCodecSource::onStart(MetaData *params) {
         return OK;
     }
 
-    ALOGI("MediaCodecSource (%s) starting", mIsVideo ? "video" : "audio");
+    ALOGV("MediaCodecSource (%s) starting", mIsVideo ? "video" : "audio");
 
     status_t err = OK;
 
@@ -630,7 +630,7 @@ status_t MediaCodecSource::onStart(MetaData *params) {
         }
     }
 
-    ALOGI("MediaCodecSource (%s) started", mIsVideo ? "video" : "audio");
+    ALOGV("MediaCodecSource (%s) started", mIsVideo ? "video" : "audio");
 
     mStarted = true;
     return OK;
@@ -784,14 +784,14 @@ void MediaCodecSource::onMessageReceived(const sp<AMessage> &msg) {
     }
     case kWhatStop:
     {
-        ALOGI("encoder (%s) stopping", mIsVideo ? "video" : "audio");
+        ALOGV("encoder (%s) stopping", mIsVideo ? "video" : "audio");
 
         uint32_t replyID;
         CHECK(msg->senderAwaitsResponse(&replyID));
 
         if (mEncoderReachedEOS) {
             // if we already reached EOS, reply and return now
-            ALOGI("encoder (%s) already stopped",
+            ALOGV("encoder (%s) already stopped",
                     mIsVideo ? "video" : "audio");
             (new AMessage)->postReply(replyID);
             break;

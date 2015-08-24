@@ -60,9 +60,9 @@ export default function init(env) {
 
   let working = false;
 
-  env.timeline.on('preview', when => {
+  env.timeline.on('motion', (when, rects) => {
     if (working) {
-      log.error('Still busy, unable to process next preview image');
+      log.error(`Still busy, unable to process next preview image`);
       return;
     }
     working = true;

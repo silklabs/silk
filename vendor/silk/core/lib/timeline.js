@@ -153,6 +153,8 @@ class Timeline extends EventEmitter {
     objects.forEach(object => {
       if (object.tag === 'face') {
         this.emit('face', object.rects);
+      } else if (object.tag === 'motion') {
+        this.emit('motion', object.when, object.rects);
       }
     });
   }

@@ -50,6 +50,9 @@ class Env extends events.EventEmitter {
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
+      this.camera.getPreviewFrame = (userCb, channel) => {
+        camera.getPreviewFrame(userCb, channel);
+      };
     }
 
     let timeline = deviceObjects.timeline;

@@ -60,7 +60,7 @@ export default function init(env) {
 
   let working = false;
 
-  env.timeline.on('preview', (when, retrieveFunc) => {
+  env.timeline.on('preview', when => {
     if (working) {
       log.error('Still busy, unable to process next preview image');
       return;
@@ -68,7 +68,7 @@ export default function init(env) {
     working = true;
 
     let start = Date.now();
-    retrieveFunc((err, im) => {
+    env.camera.getPreviewFrame((err, im) => {
       if (err) {
         log.warning(`Unable to fetch frame: ${err}`);
         working = false;

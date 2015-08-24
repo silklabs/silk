@@ -47,10 +47,3 @@ service capture /system/silk/bin/capture
     socket capturectl stream 0600 root root
     socket captured stream 0600 root root
 
-service mic /system/silk/bin/mic
-    class main
-    user audio
-    group audio
-    socket micctl stream 0600 root root
-    socket micd stream 0600 root root
-

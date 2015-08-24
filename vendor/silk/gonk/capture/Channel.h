@@ -21,6 +21,7 @@ public:
     TAG_VIDEO = 0,
     TAG_PREVIEW,
     TAG_FACES,
+    TAG_MIC,
   };
   struct Header {
     size_t size; // size of the packet, excluding this header

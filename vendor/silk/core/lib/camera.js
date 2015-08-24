@@ -29,6 +29,7 @@ const HEADER_NR_BYTES = 16; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
 const TAG_FACES = 2;
+const TAG_MIC = 3;
 
 /**
  * Flash modes as defined in <camera/CameraParameters.cpp>
@@ -302,6 +303,10 @@ class CameraStream extends EventEmitter {
           log.debug(`TAG_FACES ${when}`);
           let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
           this.timeline.addFace(when, faces);
+          break;
+        case TAG_MIC:
+          log.debug(`TAG_MIC ${when}`);
+          this.emit('mic-data', {when: when, frame: pkt});
           break;
         default:
           // Flush the buffer and restart the socket

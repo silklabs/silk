@@ -200,11 +200,18 @@ class Ui extends events.EventEmitter
       off = false;
       clearTimeout(this.backlightTimer);
     }
+
+
+    let timeout = 60 * 1000;
+    if (this.currentState === 'charging') {
+      timeout = 3 * 1000;
+    }
+
     this.backlightTimer = setTimeout(() => {
       log.debug('Backlight timeout');
       backlight.set(backlight.BLACK);
       this.backlightTimer = null;
-    }, 60 * 1000);
+    }, timeout);
     backlight.set(backlight.WHITE);
 
     return off; // return true if the backlight was just enabled
@@ -217,7 +224,6 @@ class Ui extends events.EventEmitter
     this.currentState = state;
     log.info(`ui state: ${this.currentState}`);
 
-    this._pokeBacklight();
     if (caps.has('notification-light')) {
       let light = lights.notifications;
 
@@ -244,8 +250,15 @@ class Ui extends events.EventEmitter
     }
 
     let movieName = this.currentState;
-    if (this.currentState === 'connecting') {
+    switch (this.currentState) {
+    case 'connecting':
       movieName = 'bootanimation';
+      break;
+    case 'charging':
+      movieName = 'powerdown';
+      break;
+    default:
+      break;
     }
 
     if (movieName !== this.currentMovieName) {
@@ -260,11 +273,15 @@ class Ui extends events.EventEmitter
       case 'online':
         this.vib.pattern(500, 250, 500);
         break;
+      case 'charging':
+        // Don't waste more battery vibrating when in the charging state
+        break;
       default:
         this.vib.pattern(500);
         break;
       }
     }
+    this._pokeBacklight();
     return true;
   }
 }

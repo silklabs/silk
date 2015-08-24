@@ -26,7 +26,7 @@ class Battery extends events.EventEmitter
   _peroidicBatteryCapacityCheck(resolveInitPromise) {
     this._readCapacity()
     .then(capacity => {
-      log.info(`Current battery capacity: ${capacity}`);
+      log.info(`Battery capacity: ${capacity}%`);
       if (resolveInitPromise) {
         if (capacity >= BATTERY_OK_TO_BOOT_LEVEL) {
           resolveInitPromise();

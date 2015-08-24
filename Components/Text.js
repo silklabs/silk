@@ -43,22 +43,27 @@ let PlaceholderText = React.createClass({
 
 let styles = StyleSheet.create({
   default: {
+    fontFamily: 'Open Sans',
     color: '#656569',
   },
 
   header: {
+    fontFamily: 'Open Sans',
+    fontWeight: 'bold',
     fontSize: 24,
     textAlign: 'center',
     color: '#656569',
   },
 
   label: {
+    fontFamily: 'Open Sans',
     color: '#656569',
     fontSize: 15,
     textAlign: 'left',
   },
   
   placeholder: {
+    fontFamily: 'Open Sans',
     fontSize: 15,
     fontStyle: 'italic',
     color: '#bbbbbb',

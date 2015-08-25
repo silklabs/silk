@@ -10,6 +10,7 @@ var {
   Image,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
   View,
 } = React;
@@ -18,8 +19,7 @@ var Config = require('../Libraries/Config')();
 var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
-import { HeaderText, PlaceholderText, Text } from './Text';
-//import HeaderText from './Text';
+import { CameraMarkText, PlaceholderText } from './Text';
 
 var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
                      'disconnect'];
@@ -80,18 +80,21 @@ var MonitorsView = React.createClass({
     var connectionStyle = this.state.serverConnection + 'Indicator';
     return (
       <View style={styles.container}>
+        <View style={styles.statusBarUnderlay} />
         <View style={styles.titleContainer}>
-          <View style={styles.spacer}>
-            <View style={styles[connectionStyle]} />
-          </View>
-          <HeaderText>Silk</HeaderText>
           <View style={styles.spacer}>
             <TouchableOpacity onPress={this.loadSettings}>
               <View style={styles.settings}>
-                <Image source={require('image!Settings')}
+                <Image source={require('image!Menu')}
                        style={styles.icon} />
               </View>
             </TouchableOpacity>
+          </View>
+          <CameraMarkText />
+          <View style={styles.spacer}>
+            <View style={styles.indicatorContainer}>
+              <View style={styles[connectionStyle]} />
+            </View>
           </View>
         </View>
         <View style={styles.content}>
@@ -232,14 +235,21 @@ var styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  statusBarUnderlay: {
+    height: 20,
+    backgroundColor: '#404e55',
+  },
   titleContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#2b3a42',
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingTop: 32,
+    paddingTop: 10,
     paddingLeft: 10,
     paddingRight: 10,
-    paddingBottom: 10,
+    paddingBottom: 5,
+  },
+  indicatorContainer: {
+    alignItems: 'flex-end',
   },
   offlineIndicator: {
     width: 10,
@@ -265,8 +275,8 @@ var styles = StyleSheet.create({
     borderColor: '#c8c7cc',
     backgroundColor: '#9ccf31',
   },
+
   settings: {
-    alignItems: 'flex-end',
     flex: 1,
     padding: 4,
   },
@@ -291,7 +301,7 @@ var styles = StyleSheet.create({
 
   monitors: {
     paddingTop: 5,
-    backgroundColor: '#e5eaec',
+    backgroundColor: '#efefef',
     flex: 1,
   },
 });

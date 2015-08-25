@@ -10,18 +10,21 @@ let {
   View,
 } = React;
 
+class CameraMarkText extends React.Component {
+  render() {
+    return (
+      <View style={styles.camMarkContainer}>
+        <Text style={styles.silkText}>SILK</Text>
+        <Text style={styles.camText}>CAM</Text>
+      </View>
+    );
+  }
+}
+
 let DefaultText = React.createClass({
   render: function() {
     return (
         <Text style={styles.default}>{this.props.children}</Text>
-    );
-  }
-});
-
-let HeaderText = React.createClass({
-  render: function() {
-    return (
-        <Text style={styles.header}>{this.props.children}</Text>
     );
   }
 });
@@ -54,16 +57,19 @@ let WordMarkText = React.createClass({
 });
 
 let styles = StyleSheet.create({
-  default: {
+
+  camMarkContainer: {
+    flexDirection: 'row',
+  },
+  camText: {
     fontFamily: 'Open Sans',
-    color: '#656569',
+    fontSize: 18,
+    color: 'white',
   },
 
-  header: {
+
+  default: {
     fontFamily: 'Open Sans',
-    fontWeight: 'bold',
-    fontSize: 24,
-    textAlign: 'center',
     color: '#656569',
   },
 
@@ -100,8 +106,8 @@ let styles = StyleSheet.create({
 });
 
 module.exports = {
+  CameraMarkText: CameraMarkText,
   Text: DefaultText,
-  HeaderText: HeaderText,
   LabelText: LabelText,
   PlaceholderText: PlaceholderText,
   WordMarkText: WordMarkText,

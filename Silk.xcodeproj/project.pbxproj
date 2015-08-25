@@ -783,7 +783,7 @@
 				F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */,
 			);
 			path = Resources;
-                	sourceTree = "<group>";
+			sourceTree = "<group>";
 		};
 		F91A553C1B8BB8E9009C75C9 /* Products */ = {
 			isa = PBXGroup;

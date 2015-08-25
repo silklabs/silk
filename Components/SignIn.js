@@ -4,8 +4,9 @@
 'use strict';
 
 import React from 'react-native';
-
 import LinearGradient from 'react-native-linear-gradient';
+
+import { WordMarkText } from './Text';
 
 let {
   ScrollView,
@@ -28,10 +29,7 @@ class LogoView extends React.Component {
       <View style={styles.logoEltsContainer}>
         <Spacer />
         <View style={styles.logo}/>
-        <View style={styles.markContainer}>
-          <Text style={styles.silkText}>SILK</Text>
-          <Text style={styles.labsText}>LABS</Text>
-        </View>
+        <WordMarkText />
       </View>
     );
   }
@@ -62,7 +60,7 @@ class StyledTextInput extends React.Component {
                    placeholderTextColor={'#999999'}
                    secureTextEntry={this.props.secure}
                    style={styles.textInput}
-      onChangeText={this.onChangeText.bind(this)} />
+                   onChangeText={this.onChangeText.bind(this)} />
     );
   }
 };
@@ -208,21 +206,6 @@ var styles = StyleSheet.create({
     borderColor: '#979797',
     backgroundColor: '#d8d8d8',
     padding: 20,
-  },
-  markContainer: {
-    flexDirection: 'row',
-    margin: 10,
-  },
-  silkText: {
-    fontFamily: 'Open Sans',
-    fontSize: 18,
-    fontWeight: '900',
-    color: 'white',
-  },
-  labsText: {
-    fontFamily: 'Open Sans',
-    fontSize: 18,
-    color: 'white',
   },
   
   controlsContainer: {

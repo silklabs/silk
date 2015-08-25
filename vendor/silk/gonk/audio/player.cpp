@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
 #define LOG_NDEBUG 0
 #define LOG_TAG "player"
 #include <utils/Log.h>

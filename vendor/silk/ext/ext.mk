@@ -1,3 +1,7 @@
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
 define RENDER_EXTENSION_MK
 LOCAL_PATH:=$(1)
 include $(CLEAR_VARS)

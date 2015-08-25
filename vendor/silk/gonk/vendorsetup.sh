@@ -1,3 +1,7 @@
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
 export USE_CCACHE=1 # Yes please!
 export CCACHE_HASHDIR=true
 

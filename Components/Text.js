@@ -7,6 +7,7 @@ let React = require('react-native');
 let {
   StyleSheet,
   Text,
+  View,
 } = React;
 
 let DefaultText = React.createClass({
@@ -41,6 +42,17 @@ let PlaceholderText = React.createClass({
   }
 });
 
+let WordMarkText = React.createClass({
+  render: function() {
+    return (
+        <View style={styles.markContainer}>
+          <Text style={styles.silkText}>SILK</Text>
+          <Text style={styles.labsText}>LABS</Text>
+        </View>
+    );
+  },
+});
+
 let styles = StyleSheet.create({
   default: {
     fontFamily: 'Open Sans',
@@ -68,6 +80,23 @@ let styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#bbbbbb',
   },
+
+  markContainer: {
+    flexDirection: 'row',
+    margin: 10,
+  },
+  silkText: {
+    fontFamily: 'Open Sans',
+    fontSize: 18,
+    fontWeight: '900',
+    color: 'white',
+  },
+  labsText: {
+    fontFamily: 'Open Sans',
+    fontSize: 18,
+    color: 'white',
+  },
+
 });
 
 module.exports = {
@@ -75,4 +104,5 @@ module.exports = {
   HeaderText: HeaderText,
   LabelText: LabelText,
   PlaceholderText: PlaceholderText,
+  WordMarkText: WordMarkText,
 };

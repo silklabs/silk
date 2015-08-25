@@ -84,6 +84,7 @@
 		F91A54FC1B8B9D48009C75C9 /* OpenSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */; };
 		F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */; };
 		F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */; };
+		F91A55441B8BB93A009C75C9 /* libBVLinearGradient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F91A55401B8BB8E9009C75C9 /* libBVLinearGradient.a */; };
 		F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */; };
 		F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4091B3725DB0081F479 /* NSData+Base64.m */; };
 		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
@@ -288,6 +289,13 @@
 			remoteGlobalIDString = 58B5119B1A9E6C1200147676;
 			remoteInfo = RCTText;
 		};
+		F91A553F1B8BB8E9009C75C9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F91A553B1B8BB8E9009C75C9 /* BVLinearGradient.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 134814201AA4EA6300B7C361;
+			remoteInfo = BVLinearGradient;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -388,6 +396,7 @@
 		F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Regular.ttf"; sourceTree = "<group>"; };
 		F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Semibold.ttf"; sourceTree = "<group>"; };
 		F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-SemiboldItalic.ttf"; sourceTree = "<group>"; };
+		F91A553B1B8BB8E9009C75C9 /* BVLinearGradient.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = BVLinearGradient.xcodeproj; path = "node_modules/react-native-linear-gradient/BVLinearGradient.xcodeproj"; sourceTree = "<group>"; };
 		F949A1971B365A2900E59D69 /* WebViewEx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewEx.h; sourceTree = "<group>"; };
 		F949A1981B365A2900E59D69 /* WebViewEx.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewEx.m; sourceTree = "<group>"; };
 		F949A1991B365A2900E59D69 /* WebViewExManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewExManager.h; sourceTree = "<group>"; };
@@ -418,6 +427,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F91A55441B8BB93A009C75C9 /* libBVLinearGradient.a in Frameworks */,
 				5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */,
 				5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */,
 				5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */,
@@ -709,6 +719,7 @@
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				F91A553B1B8BB8E9009C75C9 /* BVLinearGradient.xcodeproj */,
 				571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */,
 				5758F32D1B60989C00C18E5D /* ART.xcodeproj */,
 				F949A1961B365A2900E59D69 /* WebViewBridge */,
@@ -772,6 +783,14 @@
 				F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */,
 			);
 			path = Resources;
+                	sourceTree = "<group>";
+		};
+		F91A553C1B8BB8E9009C75C9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F91A55401B8BB8E9009C75C9 /* libBVLinearGradient.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		F949A1961B365A2900E59D69 /* WebViewBridge */ = {
@@ -880,6 +899,10 @@
 				{
 					ProductGroup = 5758F32E1B60989C00C18E5D /* Products */;
 					ProjectRef = 5758F32D1B60989C00C18E5D /* ART.xcodeproj */;
+				},
+				{
+					ProductGroup = F91A553C1B8BB8E9009C75C9 /* Products */;
+					ProjectRef = F91A553B1B8BB8E9009C75C9 /* BVLinearGradient.xcodeproj */;
 				},
 				{
 					ProductGroup = 00C302A81ABCB8CE00DB3ED1 /* Products */;
@@ -1038,6 +1061,13 @@
 			fileType = archive.ar;
 			path = libRCTText.a;
 			remoteRef = 832341B41AAA6A8300B99B32 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F91A55401B8BB8E9009C75C9 /* libBVLinearGradient.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libBVLinearGradient.a;
+			remoteRef = F91A553F1B8BB8E9009C75C9 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */

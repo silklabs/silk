@@ -14,12 +14,13 @@ var {
 
 var MonitorFullscreen = require('./Components/MonitorFullscreen');
 var MonitorsView = require('./Components/MonitorsView');
+var SignIn = require('./Components/SignIn');
 var WifiSettings = require('./Components/WifiSettings');
 
 var Silk = React.createClass({
   render: function() {
     return (
-        <Navigator initialRoute={{name: 'Monitors', index: 0}}
+        <Navigator initialRoute={{name: 'SignIn', index: 0}}
                    onForward={this.onForward}
                    configureScene={this.configureScene}
                    renderScene={this.renderScene}
@@ -29,6 +30,10 @@ var Silk = React.createClass({
 
   renderScene: function(route, navigator) {
     switch (route.name) {
+    case 'SignIn':
+      return (
+        <SignIn navigator={navigator} name={route.name} />
+      );
     case 'Monitors':
       return (
         <MonitorsView navigator={navigator} name={route.name} />

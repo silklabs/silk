@@ -100,7 +100,7 @@ var MonitorPreview = React.createClass({
             id={id}
             previewSize={this.props.previewSize} />
           <View style={styles.monitorLabelContainer}>
-            <Text style={styles.monitorLabel}>Cam Name</Text>
+            <Text style={styles.monitorLabel}>{this.props.label}</Text>
           </View>
           <View style={styles.monitorPreviewContainer}>
             <ImageView style={styles.preview} blob={this.state.blob} />

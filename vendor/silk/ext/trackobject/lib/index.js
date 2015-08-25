@@ -25,6 +25,7 @@ const MAX_THRESHOLD_VAL = 255;
 let MOTION_THRESHOLD = 10;
 
 const NUM_ITERATIONS_ERODE = 1;
+const PADDING = 50;
 
 
 /**
@@ -102,20 +103,21 @@ function _detectMotion(image, callback) {
       }
     }
 
-    // Remove this code once silk-server#150 is resolved
+    // Add padding around the rectangle to help object detection algorithms
+    // by providing more data surrounding the object
     if (numChanges) {
       // Check if not out of bounds
-      if ((minx - 10) > 0) {
-        minx -= 10;
+      if ((minx - PADDING) > 0) {
+        minx -= PADDING;
       }
-      if ((miny - 10) > 0) {
-        miny -= 10;
+      if ((miny - PADDING) > 0) {
+        miny -= PADDING;
       }
-      if ((maxx + 10) < (image.cols - 1)) {
-        maxx += 10;
+      if ((maxx + PADDING) < (image.cols - 1)) {
+        maxx += PADDING;
       }
-      if ((maxy + 10) < (image.rows - 1)) {
-        maxy += 10;
+      if ((maxy + PADDING) < (image.rows - 1)) {
+        maxy += PADDING;
       }
       log.debug(`rect: [${minx}, ${miny}, ${maxx - minx}, ${maxy - miny}]`);
     }

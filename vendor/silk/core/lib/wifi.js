@@ -5,10 +5,10 @@ let util = require('./util');
 let events = require('events');
 let net = require('net');
 let log = require('./log')('wifi');
+let caps = require('./caps');
 
 let iface = util.getprop('wifi.interface');
 let monitor;
-let wifi;
 
 class WpaMonitor extends events.EventEmitter
 {
@@ -317,5 +317,32 @@ class Wifi extends events.EventEmitter
   }
 }
 
-wifi = new Wifi();
-module.exports = wifi;
+
+class QEmuWifi extends events.EventEmitter
+{
+  constructor() {
+    super();
+  }
+
+  init() {
+    return Promise.resolve();
+  }
+
+  online() {
+    return Promise.resolve();
+  }
+
+  joinNetwork(ssid, psk) { //eslint-disable-line
+    log.error('joinNetwork not implemented');
+  }
+
+  networkConfigured() {
+    return Promise.resolve();
+  }
+
+  forgetNetwork() {
+    log.error('forgetNetwork not implemented');
+  }
+}
+
+module.exports = caps.has('qemu') ? new QEmuWifi() : new Wifi();

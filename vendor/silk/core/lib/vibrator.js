@@ -19,7 +19,15 @@ class Vibrator {
 
   _vib(duration) {
     if (enabled) {
-      fs.writeFileSync('/sys/class/timed_output/vibrator/enable', duration);
+      try {
+        fs.writeFileSync('/sys/class/timed_output/vibrator/enable', duration);
+      } catch (err) {
+        if (err.code === 'ENOENT') {
+          enabled = false;
+        } else {
+          throw err;
+        }
+      }
     }
   }
 

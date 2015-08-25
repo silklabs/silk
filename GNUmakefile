@@ -34,6 +34,13 @@ zest:
 sync: | .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --force-sync --quiet
 
+.PHONY: emu
+emu:
+	$(ENVSETUP) && \
+  emulator -verbose -show-kernel $(EXTRA_EMULATOR_OPTS)
+.PHONY: qemu
+qemu: emu
+
 .PHONY: update
 update:
 	mkdir -p out

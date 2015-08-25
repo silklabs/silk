@@ -153,6 +153,11 @@ base)
   export TARGET_BUILD_VARIANT=eng
   export TARGET_BUILD_TYPE=release
   ;;
+qemu)
+  export TARGET_PRODUCT=aosp_arm
+  export TARGET_BUILD_VARIANT=eng
+  export TARGET_BUILD_TYPE=release
+  ;;
 mako)
   export TARGET_PRODUCT=aosp_mako
   export TARGET_BUILD_VARIANT=eng

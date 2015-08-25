@@ -5,12 +5,18 @@
 # Confidential and Proprietary - Silk Laboratories, Inc.
 
 set -e
-BUILD_PROP=$1
-OTA_MANIFEST=$2
+BRANCH=$1
+BUILD_PROP=$2
+OTA_MANIFEST=$3
 
-SERVER_PATH="https://silk-device.s3.amazonaws.com/master/latest/"
+SERVER_PATH="https://silk-device.s3.amazonaws.com/$BRANCH/latest/"
 
 DIST_PATH=`dirname "${OTA_MANIFEST}"`
+
+if [[ -z "$BRANCH" ]]; then
+  echo Error: branch not specified >&2
+  exit 1
+fi
 
 if [[ -z "$BUILD_PROP" ]]; then
   echo Error: build.prop file not specified >&2

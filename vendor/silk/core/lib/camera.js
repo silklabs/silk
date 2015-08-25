@@ -9,6 +9,7 @@
 let log = require('./log')('camera');
 import { EventEmitter } from 'events';
 let util = require('./util');
+let caps = require('./caps');
 let net = require('net');
 let cv = require('opencv');
 
@@ -341,15 +342,30 @@ class CameraStream extends EventEmitter {
    * Initialize camera
    */
   start() {
-    this._init({
-      frameInterval: DURATION,
-      width: 1280,
-      height: 720,
-      fps: 25,
-      vbr: 1024,
-      previewScale: 4,
-      previewSkipCount: 25
-    });
+    let initargs;
+    if (caps.has('qemu')) {
+      initargs = {
+        frameInterval: DURATION,
+        width: 640,
+        height: 480,
+        fps: 10,
+        vbr: 1024,
+        previewScale: 4,
+        previewSkipCount: 25
+      };
+    } else {
+      initargs = {
+        frameInterval: DURATION,
+        width: 1280,
+        height: 720,
+        fps: 25,
+        vbr: 1024,
+        previewScale: 4,
+        previewSkipCount: 25
+      };
+    }
+
+    this._init(initargs);
   }
 
   /**

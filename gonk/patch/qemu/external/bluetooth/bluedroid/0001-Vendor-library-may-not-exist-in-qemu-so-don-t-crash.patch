@@ -1,0 +1,28 @@
+From 84c06a90c8fe9e41b2839eeab49a169f39a77b4e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 25 Aug 2015 09:01:38 -0700
+Subject: [PATCH] Vendor library may not exist in qemu so don't crash
+
+---
+ hci/src/vendor.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/hci/src/vendor.c b/hci/src/vendor.c
+index 4bad100..d2ae532 100644
+--- a/hci/src/vendor.c
++++ b/hci/src/vendor.c
+@@ -104,6 +104,11 @@ void vendor_close(void) {
+ int vendor_send_command(bt_vendor_opcode_t opcode, void *param) {
+   assert(vendor_interface != NULL);
+ 
++  if (vendor_interface == NULL) {
++    ALOGE("vendor_send_command: null vendor library");
++    return -1;
++  }
++
+   return vendor_interface->op(opcode, param);
+ }
+ 
+-- 
+1.9.1
+

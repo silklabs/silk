@@ -2,6 +2,9 @@
 #
 # Prepares a module to use the glue
 #
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
 
 GLUEDIR=node_modules/silk-sdk-glue
 

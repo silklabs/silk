@@ -1,3 +1,7 @@
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
 LOCAL_PATH := $(call my-dir)
 
 EXT_ANDROID_MKS := $(call all-makefiles-under,$(LOCAL_PATH))

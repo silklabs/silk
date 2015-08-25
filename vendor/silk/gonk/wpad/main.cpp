@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
 /*
   This program initializes wifi and the wpa_supplicant, and reports all
   wpa_supplicant events to /dev/socket/wpad

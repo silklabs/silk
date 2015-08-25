@@ -1,3 +1,7 @@
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
 if [ $(uname) = "Darwin" ]; then
   # Ensure the host system has the right tools pre-installed
   PACKAGES="gnu-sed coreutils gnu-tar"

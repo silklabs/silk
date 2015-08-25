@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
 
 set -e
 __readlink() {

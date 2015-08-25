@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
 #
 # Builds a node-based npm module.
 #

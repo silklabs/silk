@@ -1,8 +1,8 @@
-/*
-Copyright (c) 2015 Weave Laboratories, Inc.
-All Rights Reserved.
-Confidential and Proprietary - Weave Laboratories, Inc.
-*/
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "gonkmovie"

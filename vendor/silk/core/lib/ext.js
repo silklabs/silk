@@ -50,6 +50,9 @@ class Env extends events.EventEmitter {
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
+      this.camera.getPreviewFrame = (userCb, channel) => {
+        camera.getPreviewFrame(userCb, channel);
+      };
     }
 
     let timeline = deviceObjects.timeline;
@@ -63,6 +66,9 @@ class Env extends events.EventEmitter {
       });
       timeline.on('clap', count => {
         this.timeline.emit('clap', count);
+      });
+      timeline.on('motion', (when, rects) => {
+        this.timeline.emit('motion', when, rects);
       });
       this.timeline.addObject = (tag, when, rect) => {
         timeline.addObject(tag, when, rect);

@@ -119,6 +119,9 @@ class CameraStream extends EventEmitter {
     this.timeline = timeline;
     this._ready = false;
     this._cvVideoCapture = null;
+    this._busy = false;
+    this._queue = []; // Queue of pending preview frame requests
+    this._imagecache = []; // Cache to avoid resizing a frame multiple times
   }
 
   _restart(why) {
@@ -221,60 +224,51 @@ class CameraStream extends EventEmitter {
     }
   }
 
+  _retrieveNextFrame() {
+    if (this._busy || this._queue.length === 0) {
+      return;
+    }
+
+    // Dequeue the next frame request
+    let [userCb, channel] = this._queue.shift();
+
+    if (this._imagecache[channel]) {
+      // Frame is cached!
+      userCb(false, this._imagecache[channel]);
+      this._retrieveNextFrame();
+      return;
+    }
+
+    this._busy = true;
+
+    // Fetch the frame from the camera
+    this._cvVideoCapture.retrieve(
+      (err, im) => {
+        if (!err) {
+          im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+          this._imagecache[channel] = im;
+        }
+        this._busy = false;
+        userCb(err, im);
+        this._retrieveNextFrame();
+      },
+      channel
+    );
+  };
+
   _grabPreviewFrame(when) {
-    let busy = false;
-    let queue = []; // Queue of pending preview frame requests
-    let imagecache = []; // Cache to avoid resizing a frame multiple times
-
-    let retrieveNextFrame = () => {
-      if (busy || queue.length === 0) {
-        return;
-      }
-
-      // Dequeue the next frame request
-      let [userCb, channel] = queue.shift();
-
-      if (imagecache[channel]) {
-        // Frame is cached!
-        userCb(false, imagecache[channel]);
-        retrieveNextFrame();
-        return;
-      }
-
-      busy = true;
-
-      // Fetch the frame from the camera
-      this._cvVideoCapture.retrieve(
-        (err, im) => {
-          if (!err) {
-            im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-            imagecache[channel] = im;
-          }
-          busy = false;
-          userCb(err, im);
-          retrieveNextFrame();
-        },
-        channel
-      );
-    };
-
     // Grab the next frame
     this._cvVideoCapture.grab(() => {
       let now = Date.now();
       log.info(`Preview frame grabbed. lag=${now - when}ms`);
 
-      imagecache = []; // Flush the image cache
-      if (queue.length > 0) {
-        log.warn(`Unable to keep up with preview. backlog=${queue.length}`);
+      this._imagecache = []; // Flush the image cache
+      if (this._queue.length > 0) {
+        log.warn(`Unable to keep up with preview. backlog=${this._queue.length}`);
       }
 
       // Add the frame to the timeline
-      this.timeline.addPreviewFrame(now,
-        (userCb, channel = 0) => {
-          queue.push([userCb, channel]); // Enqueue the frame request
-          retrieveNextFrame();
-        }
-      );
+      this.timeline.addPreviewFrame(now);
     });
   }
 
@@ -374,6 +368,19 @@ class CameraStream extends EventEmitter {
    */
   get previewSize() {
     return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
+  }
+
+  /**
+   * Invoke this function to obtain the preview frame
+   *    userCb   - the callback that receives an error object and then the image
+   *               as an OpenCV matrix
+   *    channel  - 0 (default) for color (CV_CAP_ANDROID_COLOR_FRAME_BGR)
+   *               1 for grayscale       (CV_CAP_ANDROID_GREY_FRAME)
+   *               2 for RGB             (CV_CAP_ANDROID_COLOR_FRAME_RGB)
+   */
+  getPreviewFrame(userCb, channel = 0) {
+    this._queue.push([userCb, channel]); // Enqueue the frame request
+    this._retrieveNextFrame();
   }
 }
 

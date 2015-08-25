@@ -8,6 +8,7 @@
 let cv = require('opencv');
 
 let log;
+let util;
 let prevFrame = null, currentFrame = null, nextFrame = null;
 
 /**
@@ -27,6 +28,9 @@ let MOTION_THRESHOLD = 10;
 const NUM_ITERATIONS_ERODE = 1;
 const PADDING = 50;
 
+// Enable sound when motion is detected
+const MOTION_PLAY_SOUND_PROP = 'persist.silk.motion.sound';
+let soundEnabled = false;
 
 /**
  * Compare three consecutive frames by diffing them and find out how many pixels
@@ -128,11 +132,24 @@ function _detectMotion(image, callback) {
 }
 
 /**
+ * Play a sound when motion is detected
+ */
+function _playSound() {
+  const FILE_NAME = 'motion_detected.mp3';
+  if (soundEnabled) {
+    util.playSound(FILE_NAME);
+  }
+}
+
+
+/**
  * Entry point into this module
  */
 export default function init(env) {
   log = env.log;
+  util = env.util;
   let working = false;
+  soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 
   env.timeline.on('preview', when => {
     if (working) {
@@ -157,6 +174,7 @@ export default function init(env) {
         // If a lot of changes happened, we assume something changed.
         if (numChanges >= MOTION_THRESHOLD) {
           env.timeline.addObject('motion', when, rect);
+          _playSound();
         }
         working = false;
       });

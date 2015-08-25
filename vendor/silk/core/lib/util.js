@@ -9,6 +9,8 @@
 let childProcessExecFile = require('child_process').execFile;
 let log = require('./log')('util');
 
+const SOUND_DIR = '/system/silk/media/sound/';
+
 // Throws an exception to the top level process exception handler, escaping any
 // Promises that might otherwise consume the exception
 export function processthrow(e) {
@@ -101,4 +103,23 @@ if (require.main === module) {
 
 export function escape(str) {
   return JSON.stringify(str);
+}
+
+export function playSound(fileName) {
+  const BINARY = 'player';
+
+  return exec(BINARY, [SOUND_DIR + fileName])
+  .catch(err => {
+    let msg = `Failed to exec '${BINARY}': ${err}`;
+    log.error(msg);
+    throw new Error(msg);
+  })
+  .then(result => {
+    if (result.code !== 0) {
+      let msg = `'${BINARY}' returned error code ${result.code}: ` +
+      result.stderr;
+      log.error(msg);
+      throw new Error(msg);
+    }
+  });
 }

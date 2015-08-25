@@ -33,6 +33,7 @@ SILK_EXT := \
   clapper \
   nightlight \
   trackobject \
+  trackobject-sound \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

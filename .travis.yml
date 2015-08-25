@@ -15,48 +15,36 @@ addons:
       - libstdc++6:i386
       - linux-libc-dev
 
-env:
-  global:
-    - REPO_INIT_ARGS="--depth=1"
-
-before_script:
-  - ccache -s
-  - git config --global user.email "engineering@silklabs.com"
-  - git config --global user.name "Travis CI"
-  - git config --global color.ui false
-  - nvm install 0.12
-  - jdk_switcher use openjdk7
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make init.mako; fi
-  - make sync
-  - cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
-  - make nothing  # Applies patches as a side effect of doing nothing...
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then rm -rf .repo/project-objects .repo/projects; fi
-  - df -h
-  - du -hs * .repo
-  - du -hs .  
-
-script:
-  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then make -j2 otapackage; else make -j2; fi
-  - if [[ $TRAVIS_PULL_REQUEST != false ]]; then echo "Validating mako manifest"; make init.mako; fi
-
-after_script:
-  - ccache -s
-  - df -h
-  - du -hs * .repo
-  - du -hs .
-
 notifications:
-  slack: 
+  slack:
     on_success: change
     on_failure: always
     rooms:
       - silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
 
+env:
+  global:
+    - REPO_INIT_ARGS="--depth=1"
+  matrix:
+    - GONK=mako
+    - GONK=qemu
+
+before_script:
+  - git config --global user.email "engineering@silklabs.com"
+  - git config --global user.name "Travis CI"
+  - git config --global color.ui false
+  - nvm install 0.12
+  - jdk_switcher use openjdk7
+  - .travis/before_script
+
+script:
+  - .travis/script
+
+after_script:
+  - .travis/after_script
+
 before_deploy:
-  - rm -rf out/target/product/mako/obj/
-  - source build/envsetup.sh && ./gonk/archive.sh mako dist
-  - mv -v out/target/product/mako/*ota*.zip dist/
-  - ./gonk/ota_manifest.sh out/target/product/mako/system/build.prop dist/ota.json
+  - .travis/before_deploy
 
 deploy:
   provider: s3

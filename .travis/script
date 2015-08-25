@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != mako ]]; then
+  echo Nothing to do. If Travis CI PRs could have a different matrix than
+  echo builds then you would not be reading this message.
+  exit 0
+fi
+
+set -ex
+if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+  if [[ $GONK == qemu ]]; then
+    make -j2
+  else
+    make -j2 otapackage
+  fi
+else
+  make -j2
+  echo Validating Mako manifest
+  make init.mako
+fi

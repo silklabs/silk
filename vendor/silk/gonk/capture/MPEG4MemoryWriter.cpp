@@ -672,7 +672,7 @@ status_t MPEG4MemoryWriter::reset() {
         }
 
         int64_t durationUs = (*it)->getDurationUs();
-        ALOGD("Track %d duration: %" PRId64 "us", i++, durationUs);
+        ALOGV("Track %d duration: %" PRId64 "us", i++, durationUs);
         if (durationUs > maxDurationUs) {
             maxDurationUs = durationUs;
         }
@@ -682,7 +682,7 @@ status_t MPEG4MemoryWriter::reset() {
     }
 
     if (mTracks.size() > 1) {
-        ALOGD("Duration from tracks range is [%" PRId64 ", %" PRId64 "] us",
+        ALOGV("Duration from tracks range is [%" PRId64 ", %" PRId64 "] us",
             minDurationUs, maxDurationUs);
         if (int64_t durationLimitUs = trackDurationLimitUs()) {
             ALOGV("Force-overriding segment duration to %" PRId64,
@@ -2137,10 +2137,10 @@ status_t MPEG4MemoryWriter::Track::threadEntry() {
 
     sendTrackSummary(hasMultipleTracks);
 
-    ALOGI("Received total/0-length (%d/%d) buffers and encoded %d frames. - %s",
+    ALOGV("Received total/0-length (%d/%d) buffers and encoded %d frames. - %s",
             count, nZeroLengthFrames, mStszTableEntries->count(), trackName);
     if (mIsAudio) {
-        ALOGI("Audio track drift time: %" PRId64 " us", mOwner->getDriftTimeUs());
+        ALOGV("Audio track drift time: %" PRId64 " us", mOwner->getDriftTimeUs());
     }
 
     if (err == ERROR_END_OF_STREAM) {

@@ -102,7 +102,7 @@ fi
 fastboot reboot
 set +x
 EOF
-
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
   # Create flash_fut script
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
@@ -171,7 +171,22 @@ echo Device provisioning successful
 EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_fut.sh
+
   cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
+
+elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then
+  # This is a qemu full device build
+
+  cp -r $ANDROID_PRODUCT_OUT/{*.img,root/} $archiveDir/$TARGET_PRODUCT
+
+  cat > $archiveDir/$TARGET_PRODUCT/run.sh <<'EOF'
+#/bin/sh
+
+set -x
+export ANDROID_PRODUCT_OUT=$(dirname $0)
+emulator -verbose -show-kernel
+EOF
+  chmod +x $archiveDir/$TARGET_PRODUCT/run.sh
 
 else
   # This is a base (partial) build
@@ -185,15 +200,16 @@ adb wait-for-device
 adb root
 adb wait-for-device
 adb remount
-adb shell stop silk
-adb shell rm -rf /system/silk /system/node_modules
+adb shell stop
+adb shell rm -rf /system/silk
 adb push system /system
-adb shell start silk
+adb shell start
 EOF
+
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
 fi
 
-chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
 cd $archiveDir
 tar zvcf $archiveName.tgz $TARGET_PRODUCT

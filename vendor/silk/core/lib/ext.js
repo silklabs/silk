@@ -10,6 +10,7 @@ let log = require('./log')('ext');
 let fs = require('mz/fs');
 let path = require('path');
 let events = require('events');
+let util = require('./util');
 
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
@@ -86,6 +87,15 @@ class Env extends events.EventEmitter {
         },
       };
     }
+
+    this.util = {
+      playSound: fileName => {
+        util.playSound(fileName);
+      },
+      getboolprop: (prop, defaultValue) => {
+        return util.getboolprop(prop, defaultValue);
+      },
+    };
   }
 
   get log() {

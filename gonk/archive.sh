@@ -162,6 +162,9 @@ adb shell setprop persist.silk.server.url "$SERVER_URL"
 # Activate uploads to cloud storage
 adb shell setprop persist.silk.vidupload.enabled 1
 
+# Enable sound on motion detection
+adb shell setprop persist.silk.motion.sound true
+
 # Restart the device
 echo Waiting to reboot the device to finish provisioning
 adb reboot

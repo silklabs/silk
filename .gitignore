@@ -17,12 +17,14 @@
 /libnativehelper/
 /ndk
 /out/
+/prebuilts/android-emulator/
 /prebuilts/clang/
 /prebuilts/gcc/
 /prebuilts/libs/
 /prebuilts/misc/
 /prebuilts/ndk/
 /prebuilts/python/
+/prebuilts/qemu-kernel/
 /sdk/
 /system/
 /vendor/broadcom/

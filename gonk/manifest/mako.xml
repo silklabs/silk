@@ -226,7 +226,6 @@
   <remove-project name="platform/packages/wallpapers/NoiseField" />
   <remove-project name="platform/packages/wallpapers/PhaseBeam" />
   <remove-project name="platform/pdk" />
-  <remove-project name="platform/prebuilts/android-emulator" />
   <remove-project name="platform/prebuilts/clang/darwin-x86/3.1" />
   <remove-project name="platform/prebuilts/clang/darwin-x86/3.2" />
   <remove-project name="platform/prebuilts/clang/darwin-x86/arm/3.3" />
@@ -263,7 +262,6 @@
   <remove-project name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" />
   <remove-project name="platform/prebuilts/gradle-plugin" />
   <remove-project name="platform/prebuilts/maven_repo/android" />
-  <remove-project name="platform/prebuilts/qemu-kernel" />
   <remove-project name="platform/prebuilts/sdk" />
   <remove-project name="platform/prebuilts/tools" />
   <remove-project name="platform/tools/external/fat32lib" />

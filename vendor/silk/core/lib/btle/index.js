@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 let log = require('../log')('btle');
+let caps = require('../caps');
 
 module.exports = {
   init: () => {
@@ -9,7 +10,8 @@ module.exports = {
       log.info('BTLE initializing');
       let bleno = require('bleno');
       bleno.on('stateChange', state => {
-        if (state !== 'poweredOn') {
+        let expectedState = caps.has('qemu') ? 'poweredOff' : 'poweredOn';
+        if (state !== expectedState) {
           log.warn(`Ignoring BT stateChange to ${state}`);
           return;
         }

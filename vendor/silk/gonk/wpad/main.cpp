@@ -44,16 +44,24 @@ public:
 
 int main(int, char **)
 {
+  char hardware[PROPERTY_VALUE_MAX] = {0};
+  property_get("ro.hardware", hardware, NULL);
+  if (!strcmp(hardware, "goldfish")) {
+    ALOGW("Goldfish has no wifi");
+    for (;;) {
+      sleep(INT_MAX);
+    }
+    return 1;
+  }
+
   wifi_stop_supplicant(false);
   wifi_unload_driver();
+
   // Mako wants its firmware reloaded, all other devices don't seem to need this.
-  {
-    char value[PROPERTY_VALUE_MAX] = {0};
-    property_get("ro.hardware", value, NULL);
-    if (!strcmp(value, "mako")) {
-      BAIL_ON_FAIL(system("/system/bin/logwrapper /system/bin/ndc softap fwreload wlan0 AP"));
-    }
+  if (!strcmp(hardware, "mako")) {
+    BAIL_ON_FAIL(system("/system/bin/logwrapper /system/bin/ndc softap fwreload wlan0 AP"));
   }
+
   BAIL_ON_FAIL(wifi_load_driver());
   BAIL_ON_FAIL(wifi_start_supplicant(false));
 

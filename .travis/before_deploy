@@ -7,7 +7,7 @@ if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != mako ]]; then
 fi
 
 set -ex
-rm -rf out/target/product/$GONK/obj/
+rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will error out
 source build/envsetup.sh
 ./gonk/archive.sh $GONK dist
 
@@ -15,4 +15,3 @@ if [[ $GONK != qemu ]]; then
   mv -v $ANDROID_PRODUCT_OUT/*ota*.zip dist/
   ./gonk/ota_manifest.sh $TRAVIS_BRANCH $ANDROID_PRODUCT_OUT/system/build.prop dist/ota.json
 fi
-

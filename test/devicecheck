@@ -1,0 +1,159 @@
+#!/bin/bash
+#
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
+usage()
+{
+  echo "Usage: $0 (-h)"
+  echo
+  echo "Blocks until the device is in a stable state"
+  echo
+  echo " -h        Display this message"
+  exit 1
+}
+
+if [ -z $ANDROID_BUILD_TOP ]; then
+  echo ANDROID_BUILD_TOP is not defined.  Please envsetup first
+  exit 1
+fi
+
+while getopts "h" opt; do
+  case $opt in
+    h) usage;;
+   \?) echo "Error: Invalid option -$OPTARG"; exit 1;;
+  esac
+done
+
+exitstatus=1
+function cleanup {
+  local pids="$(jobs -p)"
+  for pid in $pids; do
+    echo $0: cleanup: killing: $pid
+    kill $pid
+    echo $0: cleanup: waiting: $pid
+    wait $pid
+  done
+  if [[ $exitstatus -ne 0 ]]; then
+    if [[ -f main.log ]]; then
+      echo
+      echo main.log tail of failure:
+      echo =============================================================================
+      test -f main.log && tail -n20 main.log
+    fi
+  fi
+  exit $exitstatus
+}
+trap cleanup SIGINT SIGTERM SIGHUP
+
+
+slumber()
+{
+  local seconds=1
+  # Sleep by monitoring the top processes on the device for the
+  # requested duration to augment visibility into what's happening on device
+  # while waiting.
+  timeout -s KILL 10s adb shell top -d $seconds -n 1 -m 3 -s cpu
+}
+
+findprocess()
+{
+  local program=$1  # executable
+  local retpid=$2   # Bash variable to store PID on success
+  local maxRetries=$3
+
+  echo Looking for $program.
+  local attempt=0
+  while [[ true ]]; do
+    declare -a info
+
+    info=( $(timeout -s KILL 10s adb shell ps | grep ".*$program") )
+    local pid=${info[1]}
+
+    if [[ -n $pid ]]; then
+      echo \($program running with pid $pid\)
+      eval "$retpid=$pid"
+      return 0
+    fi
+
+    attempt=$(( $attempt + 1 ))
+    echo \($program not running. $attempt of $maxRetries\)
+
+    if [[ $attempt -ge $maxRetries ]]; then
+      echo Error: $process not found.
+      cleanup
+    fi
+    slumber
+  done
+}
+
+waitforprop()
+{
+  local name=$1  # System property name
+  local value=$2  # value
+  local timeout=$3 # timeout in seconds
+
+  echo Waiting for $name=$value
+  local attempts=0
+  while true; do
+    local currvalue=$(timeout -s KILL 10s adb shell getprop $name | sed -e "s/\r//")
+
+    if [[ "$currvalue" == "$value" ]]; then
+      return 0
+    fi
+
+    attempts=$(( $attempts + 1 ))
+    echo "($name = '$currvalue'. $attempts of $timeout)"
+
+    if [[ $attempts -ge $timeout ]]; then
+      echo Error: Timeout waiting for property
+      cleanup
+    fi
+    slumber
+  done
+}
+
+echo Waiting for device...
+timeout -s KILL 60s adb wait-for-device
+if [[ $? -ne "0" ]] ; then
+  echo Timed out waiting for device
+  cleanup
+fi
+
+echo Device serial number: $(timeout -s KILL 10s adb get-serialno)
+echo Device path: $(timeout -s KILL 10s adb get-devpath)
+echo
+echo logcat =\> main.log
+adb logcat > main.log &
+echo
+
+nodepid=0
+findprocess /system/silk/bin/node nodepid 45
+
+waitforprop sys.boot_completed 1 60
+
+attempt=0
+STABILITY_RETRIES=10
+while [[ $attempt -lt $STABILITY_RETRIES ]]; do
+  echo
+  echo "Device stability check. $attempt/$STABILITY_RETRIES"
+  echo -----------------------------------------------------------------------------
+  newnodepid=0
+  findprocess /system/silk/bin/node newnodepid 45
+  if [[ "$nodepid" != "$newnodepid" ]]; then
+    echo pid changed from $nodepid to $newnodepid.  Crash?
+    cleanup
+  fi
+
+  attempt=$(( $attempt + 1 ))
+  slumber
+done
+
+echo
+echo =============================================================================
+echo Device looks good. See main.log for logcat
+echo =============================================================================
+echo
+exitstatus=0
+cleanup

@@ -202,6 +202,9 @@ __patch_tree()
            for P in ${PATCHES}; do
              PRJ=$(dirname ${P#${TREE}})
              PRJ=`echo $PRJ | sed -e 's%^/%%'`
+             if [[ ! -d $PRJ ]]; then
+               continue
+             fi
              echo -n "  "
              ( set -x ; git -C $PRJ am --quiet ${ROOT_DIR}/$P )
            done

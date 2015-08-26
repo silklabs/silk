@@ -13,6 +13,8 @@ let lights = require('./lights');
 let log = require('./log')('ui');
 let util = require('./util');
 
+const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
+
 //
 // Note: The InputDevice class has been inspired by
 // https://github.com/Bornholm/node-keyboard (MIT)
@@ -177,6 +179,10 @@ class Ui extends events.EventEmitter
         volumeKeysPressed++;
         if (volumeKeysPressed === 2) {
           this.emit('key:setup');
+          if (FACTORY_RESET_DISABLED) {
+            log.verbose('Factory reset disabled');
+            break;
+          }
           Promise.race([
             util.timeout(1000),
             new Promise((resolve, reject) => cancelVolumeKeys = reject)

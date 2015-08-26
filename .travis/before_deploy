@@ -7,8 +7,8 @@ if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != mako ]]; then
 fi
 
 set -ex
-rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will error out
 source build/envsetup.sh
+rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will error out
 ./gonk/archive.sh $GONK dist
 
 if [[ $GONK != qemu ]]; then

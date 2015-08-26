@@ -7,11 +7,9 @@
 set -e
 BRANCH=$1
 BUILD_PROP=$2
-OTA_MANIFEST=$3
+OTA_DIR=$3
 
 SERVER_PATH="https://silk-device.s3.amazonaws.com/$BRANCH/latest/"
-
-DIST_PATH=`dirname "${OTA_MANIFEST}"`
 
 if [[ -z "$BRANCH" ]]; then
   echo Error: branch not specified >&2
@@ -29,6 +27,8 @@ if [ -z "$DEVICE_VALUE" ]; then
   exit 1
 fi
 
+OTA_MANIFEST="${OTA_DIR}/${DEVICE_VALUE}_ota.json"
+
 FINGERPRINT_VALUE=`sed -ne 's/^ro.build.fingerprint=\(.*\)$/\1/p' $BUILD_PROP`
 if [ -z "$FINGERPRINT_VALUE" ]; then
   echo Error: ro.build.fingerprint not found in $BUILD_PROP >&2
@@ -36,6 +36,8 @@ if [ -z "$FINGERPRINT_VALUE" ]; then
 fi
 
 ZIP_FILENAME="aosp_${DEVICE_VALUE}-ota-eng.travis.zip"
+
+DIST_PATH=`dirname "${OTA_MANIFEST}"`
 
 ZIP_PATH="${DIST_PATH}/${ZIP_FILENAME}"
 if [ ! -f "$ZIP_PATH" ]; then

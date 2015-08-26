@@ -17,14 +17,17 @@ let EventEmitter = require('events').EventEmitter;
 let emitter = new EventEmitter();
 
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
+const CHANNEL_PROP = 'persist.silk.update.channel';
+const DEVICE_PROP = 'ro.boot.hardware';
 const POLL_HOURS_PROP = 'ro.silk.update.poll_hours';
 const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/cache/update.zip';
 
-const DEVICE = util.getprop('ro.boot.hardware');
+const DEVICE = util.getprop(DEVICE_PROP);
 const FINGERPRINT = util.getprop('ro.build.fingerprint');
-const MANIFEST_URL = util.getprop(MANIFEST_URL_PROP);
+const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
+const CHANNEL = util.getprop(CHANNEL_PROP);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP);
@@ -53,6 +56,8 @@ let currentMetadata = null;
 // Whether or not a zip file download has been attempted during the current
 // promise chain.
 let startedDownload = false;
+
+let manifestURL = null;
 
 // Resolves with:
 //   null: when the timeout elapses.
@@ -278,9 +283,9 @@ function fetchManifest() {
   }
 
   // Fetch the fingerprint from the OTA server.
-  log.info(`Checking "${MANIFEST_URL}" for updates`);
+  log.info(`Checking "${manifestURL}" for updates`);
 
-  let { promise, cancel } = createRequestPromise({ uri: MANIFEST_URL,
+  let { promise, cancel } = createRequestPromise({ uri: manifestURL,
                                                    json: true });
   cancelFunction = cancel;
   return promise;
@@ -530,19 +535,25 @@ function poll(runImmediately) {
   .then(restart);
 }
 
+function _expandManifestUrlVars() {
+  manifestURL = MANIFEST_URL_TEMPLATE.replace('\${channel}', CHANNEL);
+  manifestURL = manifestURL.replace('\${device}', DEVICE);
+}
+
 function start() {
   if (running) {
     return Promise.resolve();
   }
 
-  if (!MANIFEST_URL) {
+  if (!MANIFEST_URL_TEMPLATE) {
     log.warn(`'${MANIFEST_URL_PROP}' is unset, disabling updates`);
     return Promise.resolve();
   }
 
-  if (!validator.isURL(MANIFEST_URL, isValidUpdateURLOptions)) {
-    log.warn(`'${MANIFEST_URL_PROP}' is set to an invalid url ` +
-             `"${MANIFEST_URL}", disabling updates`);
+  _expandManifestUrlVars();
+
+  if (!validator.isURL(manifestURL, isValidUpdateURLOptions)) {
+    log.warn(`invalid url "${manifestURL}", disabling updates`);
     return Promise.resolve();
   }
 
@@ -577,7 +588,7 @@ function start() {
     log.warn(`Failed to remove "${UPDATE_FILE_PATH}": ${err}`);
   });
 
-  log.info(`Update polling started for "${MANIFEST_URL}", fingerprint: "` +
+  log.info(`Update polling started for "${manifestURL}", fingerprint: "` +
            `${FINGERPRINT}"`);
   poll(/* runImmediately */ true);
 

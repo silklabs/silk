@@ -9,7 +9,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
   persist.silk.debug=silk-*,-silk-*:debug \
   persist.silk.debug.colors=true \
   ro.silk.services=bledroid,silk-sensors,capture,silk \
-  ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/master/latest/ota.json \
+  ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/${channel}/latest/${device}_ota.json \
   ro.silk.update.poll_hours=3
 
 NODE_ENGINE?=node

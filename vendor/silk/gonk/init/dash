@@ -10,40 +10,49 @@ echo
 
 echo Battery:
 echo "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%"
-echo "  Status: $(cat /sys/class/power_supply/battery/status) $(cat /sys/class/power_supply/battery/charge_type)"
-echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
-echo "  USB Max Current: $(cat /sys/class/power_supply/usb/current_max)mA"
+echo "  Status: $(cat /sys/class/power_supply/battery/status) $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null)"
+if [ -f /sys/class/power_supply/battery/current_now ]; then
+  echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
+fi
+if [ -f /sys/class/power_supply/usb/current_max ]; then
+  echo "  USB Max Current: $(cat /sys/class/power_supply/usb/current_max)mA"
+fi
 echo
 
-echo CPU Info:
-cd /sys/devices/system/cpu/
-for cpu in cpu[0-8]; do
-  online=$(cat $cpu/online)
-  if [ $online == 1 ]; then
-    currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
-    maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
-    echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
-  else
-    echo "  $cpu: offline"
-  fi
-done
-echo
-
-echo Thermal Info:
-cd /sys/class/thermal/
-for zone in thermal_zone*; do
-  type=$(cat $zone/type)
-  temp=$(cat $zone/temp)
-  mode=$(cat $zone/mode 2> /dev/null || echo enabled)
-  if [ $mode == enabled ]; then
-    if [ $temp -gt 200 ]; then
-      echo "  $type: $temp m°C"
+if [ -d /sys/devices/system/cpu/0/online ]; then
+  echo CPU Info:
+  cd /sys/devices/system/cpu/
+  for cpu in cpu[0-8]; do
+    online=$(cat $cpu/online 2> /dev/null || echo 1)
+    if [ $online == 1 ]; then
+      currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
+      maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
+      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
+      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
     else
-      echo "  $type: $temp °C"
+      echo "  $cpu: offline"
     fi
-  fi
-done
-echo
+  done
+  echo
+fi
+
+if [ -d /sys/class/thermal ]; then
+  echo Thermal Info:
+  cd /sys/class/thermal/
+  for zone in thermal_zone*; do
+    type=$(cat $zone/type)
+    temp=$(cat $zone/temp)
+    mode=$(cat $zone/mode 2> /dev/null || echo enabled)
+    if [ $mode == enabled ]; then
+      if [ $temp -gt 200 ]; then
+        echo "  $type: $temp m°C"
+      else
+        echo "  $type: $temp °C"
+      fi
+    fi
+  done
+  echo
+fi
 
 echo "Procrank (top 5 Pss)":
 procrank 2> /dev/null | (

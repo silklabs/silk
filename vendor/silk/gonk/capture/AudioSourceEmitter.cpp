@@ -40,7 +40,7 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
     const ReadOptions *options) {
   status_t err = mSource->read(buffer, options);
 
-  if (err == ::OK) {
+  if (err == ::OK && (*buffer) && (*buffer)->range_length()) {
     mChannel->send(Channel::TAG_MIC,
         (const uint8_t *) (*buffer)->data() + (*buffer)->range_offset(),
         (*buffer)->range_length()

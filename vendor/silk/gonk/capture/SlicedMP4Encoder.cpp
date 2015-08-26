@@ -15,6 +15,7 @@
 #include "Capturedefs.h"
 #include "MPEG4MemoryWriter.h"
 #include "AudioSourceEmitter.h"
+#include "AudioLooper.h"
 
 #include <media/mediarecorder.h>
 #include <media/stagefright/AudioSource.h>
@@ -31,7 +32,7 @@ enum { kNumSamplesPerFrame = 1024 };
 
 using namespace android;
 
-static bool isAudioEnabled = true;
+static bool isAudioEncodeEnabled = false;
 
 //
 // Implementation of class PutBackWrapper
@@ -456,6 +457,13 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
 
   // The video stream drives where the audio stream is sliced
   mSlicedVideoSource->addListener(mSlicedAudioSource.get());
+
+  // HACK. Until we fix video w audio, read audio in separate thread
+  if (!isAudioEncodeEnabled) {
+    sp<AudioLooper> mAudioLooper;
+    mAudioLooper = new AudioLooper(audioSourceEmitter);
+    mAudioLooper->run();
+  }
 }
 
 bool SlicedMP4Encoder::threadLoop() {
@@ -464,7 +472,7 @@ bool SlicedMP4Encoder::threadLoop() {
 
     writer->addSource(mSlicedVideoSource);
 
-    if (isAudioEnabled) {
+    if (isAudioEncodeEnabled) {
       // See long comment below.
       sp<MediaSource> paddedAudio(
         new PadAudioWrapper(mSlicedAudioSource,

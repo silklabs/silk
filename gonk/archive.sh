@@ -8,10 +8,11 @@ usage()
 {
   [[ -n $1 ]] && echo "$@"
   cat <<EOF
-usage: $0 <buildId> <archiveDir>
+usage: $0 <branch> <buildId> <archiveDir>
 
 Archives gonk build products.
 
+branch     - Branch for this build
 buildId    - Identifier for this build
 archiveDir - Where to store the archive
 
@@ -24,12 +25,18 @@ EOF
 [[ -n $1 ]] || usage
 
 
-buildId="$1"
+branch="$1"
+if [[ -z "$branch" ]]; then
+  usage "Error: branch not specified"
+fi
+
+
+buildId="$2"
 if [[ -z $buildId ]]; then
   usage "Error: buildId unspecified"
 fi
 
-archiveDir=$2
+archiveDir=$3
 if [[ -z $archiveDir ]]; then
   usage "Error: archiveDir unspecified"
 fi

@@ -9,7 +9,7 @@ fi
 set -ex
 source build/envsetup.sh
 rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will error out
-./gonk/archive.sh $GONK dist
+./gonk/archive.sh $TRAVIS_BRANCH $GONK dist
 
 if [[ $GONK != qemu ]]; then
   mv -v $ANDROID_PRODUCT_OUT/*ota*.zip dist/

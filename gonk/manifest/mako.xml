@@ -6,8 +6,10 @@
   <project groups="device,mako" name="vendor-lge-mako" path="vendor/lge/mako" remote="silk" revision="master"/>
   <project groups="device,mako" name="vendor-qcom-mako" path="vendor/qcom/mako" remote="silk" revision="master"/>
 
-  <!-- Remove Android things -->
+  <!-- Remove iojs to reduce disk usage on Travis -->
+  <remove-project name="nodejs/io.js" />
 
+  <!-- Remove Android things -->
   <remove-project name="platform/art" />
   <remove-project name="platform/cts" />
   <remove-project name="platform/dalvik" />
@@ -83,6 +85,7 @@
   <remove-project name="platform/external/libphonenumber" />
   <remove-project name="platform/external/llvm" />
   <remove-project name="platform/external/lohit-fonts" />
+  <remove-project name="platform/external/mesa3d" />
   <remove-project name="platform/external/mockito" />
   <remove-project name="platform/external/mockwebserver" />
   <remove-project name="platform/external/nanohttpd" />

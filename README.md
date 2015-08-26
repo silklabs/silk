@@ -288,6 +288,7 @@ OTA updates are disabled by default.
 To enable updates:
 ```
 $ adb shell setprop persist.silk.update.enabled true
+$ adb shell setprop persist.silk.update.channel master (set it to appropriate branch name)
 $ adb reboot
 ```
 

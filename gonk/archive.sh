@@ -172,6 +172,9 @@ adb shell setprop persist.silk.vidupload.enabled 1
 # Enable sound on motion detection
 adb shell setprop persist.silk.motion.sound true
 
+# Set ota manifest channel
+adb shell setprop persist.silk.update.channel "$branch"
+
 # Restart the device
 echo Waiting to reboot the device to finish provisioning
 adb reboot

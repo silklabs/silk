@@ -1,3 +1,7 @@
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
 SHELL=/bin/bash
 
 ENVSETUP=source build/envsetup.sh $(1) && test "$$SILK_ENVSETUP" == "1"
@@ -12,7 +16,8 @@ install: | .repo/.repo_fetchtimes.json
   adb root && \
   adb wait-for-device && \
   adb remount && \
-  adb sync
+  adb sync && \
+  adb shell sync
 
 .PHONY: clean
 clean:
@@ -34,25 +39,57 @@ zest:
 sync: | .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --force-sync --quiet
 
-.PHONY: emu
-emu:
-	$(ENVSETUP) && \
-  emulator -verbose -show-kernel $(EXTRA_EMULATOR_OPTS)
-.PHONY: qemu
-qemu: emu
 
+# Update the currently attached Mako device with the latest prebuilt dev build
 .PHONY: update
 update:
-	mkdir -p out
-	cd out/ && rm -rf mako.tgz aosp_mako
-	cd out/ && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
-	cd out/ && tar zxf mako.tgz
-	out/aosp_mako/$(or $(FLASH_SCRIPT),flash.sh)
+	rm -rf out/prebuilt/mako
+	$(MAKE) update.mako
+	out/prebuilt/mako/aosp_mako/$(or $(FLASH_SCRIPT),flash.sh)
 
+# Update the currently attached Mako device with the latest prebuilt FUT build
 .PHONY: fut
 fut: FLASH_SCRIPT=flash_fut.sh
 fut: update
 
+
+# Run the emulator
+EMULATOR=emulator -verbose -show-kernel $(EXTRA_EMULATOR_OPTS)
+.PHONY: qemu
+qemu:
+# The 'qemu' gonk represents a full emulator build and it usable directly. \
+# However for all other gonks, the latest emulator build is downloaded from \
+# storage.
+	@$(ENVSETUP); \
+  if [[ $$GONK != qemu ]]; then \
+    $(MAKE) --no-print-directory update.qemu; \
+    export ANDROID_PRODUCT_OUT=out/prebuilt/qemu/aosp_arm; \
+  fi; \
+  if [[ ! -f $$ANDROID_PRODUCT_OUT/system-qemu.img ]]; then \
+    echo "(Without system-qemu.img, changes to /system will not persist)"; \
+    cp -v $$ANDROID_PRODUCT_OUT/system{,-qemu}.img; \
+  fi; \
+  exec $(EMULATOR)
+
+.PHONY: emu
+emu: qemu
+
+# Fetch the latest prebuilt mako distribution
+update.mako: | out/prebuilt/mako ;
+out/prebuilt/mako:
+	mkdir -p out/prebuilt/mako
+	cd out/prebuilt/mako && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
+	cd out/prebuilt/mako && tar zxf mako.tgz
+
+# Fetch the latest prebuilt qemu distribution
+update.qemu: | out/prebuilt/qemu ;
+out/prebuilt/qemu:
+	mkdir -p out/prebuilt/qemu
+	cd out/prebuilt/qemu && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/qemu.tgz
+	cd out/prebuilt/qemu && tar zxf qemu.tgz
+
+
+# Builds a distribution archive from the current build products
 .PHONY: dist
 dist: | .repo/manifest.xml
 	$(call ENVSETUP,clean) # <-- drop all local patches before archiving

@@ -19,7 +19,7 @@ if [ -f /sys/class/power_supply/usb/current_max ]; then
 fi
 echo
 
-if [ -d /sys/devices/system/cpu/0/online ]; then
+if [ -f /sys/devices/system/cpu/0/online ]; then
   echo CPU Info:
   cd /sys/devices/system/cpu/
   for cpu in cpu[0-8]; do

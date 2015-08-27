@@ -55,6 +55,9 @@ $ make fut
   $make install # <-- installs the build products onto a device
 ```
 
+If you'd like to use the emulator instead of a real device, start the emulator
+with `make qemu` before running `make install`.
+
 ### Updating your workspace
 
 1.  `git pull --rebase` => updates silk-device proper
@@ -139,6 +142,10 @@ $ fastboot flashall -w  # <-- Only add "-w" if you want to wipe /data and /cache
 ```
 
 Creating a new device archive is accomplished by running `make dist`
+
+## Building the full Emulator image
+
+Same as Mako but use `make init.qemu` instead.
 
 ## Building the full Shamu image
 

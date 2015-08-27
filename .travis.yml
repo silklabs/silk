@@ -1,7 +1,11 @@
-language: c
+language: android
 compiler: gcc
 jdk:
   - openjdk7
+
+android:
+  components:
+    - platform-tools
 
 cache:
   directories:

@@ -6,15 +6,33 @@ if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != mako ]]; then
   exit 0
 fi
 
-set -ex
+set -e
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
   if [[ $GONK == qemu ]]; then
     make -j2
+
+    echo "******************************************************************"
+    echo Does the emulator even boot?
+    echo "******************************************************************"
+    source build/envsetup.sh ; test/emulator_boottest
   else
     make -j2 otapackage
   fi
 else
+  echo "******************************************************************"
+  echo Build the PR
+  echo "******************************************************************"
   make -j2
+
+  echo "******************************************************************"
+  echo Check if the PR boots on the emulator
+  echo "******************************************************************"
+  source build/envsetup.sh
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
+  test/emulator_boottest
+
+  echo "******************************************************************"
   echo Validating Mako manifest
+  echo "******************************************************************"
   make init.mako
 fi

@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
+
+LOCAL_PATH=$(dirname $0)
+DEVICECHECK=$LOCAL_PATH/devicecheck
+
+usage()
+{
+  echo "Usage: $0 (-h)"
+  echo
+  echo "Checks if the emulator boots with the local build products"
+  echo
+  echo " -h        Display this message"
+  exit 1
+}
+
+if [ -z $ANDROID_BUILD_TOP ]; then
+  echo ANDROID_BUILD_TOP is not defined.  Please envsetup first
+  exit 1
+fi
+
+
+while getopts "hc:" opt; do
+  case $opt in
+    h) usage;;
+   \?) echo "Error: Invalid option -$OPTARG"; exit 1;;
+  esac
+done
+
+exitstatus=1
+function cleanup {
+  local pids="$(jobs -p)"
+  for pid in $pids; do
+    echo $0: cleanup: killing: $pid
+    kill $pid
+    echo $0: cleanup: waiting: $pid
+    wait $pid
+  done
+  exit $exitstatus
+}
+trap cleanup SIGINT SIGTERM SIGHUP EXIT
+
+
+runqemu() {
+  echo "Starting emulator"
+  EXTRA_EMULATOR_OPTS="-no-skin -no-audio -no-window" make -C $ANDROID_BUILD_TOP qemu &
+  EMU_PID=$!
+}
+
+set -e
+
+# Fetch the emulator
+make -C $ANDROID_BUILD_TOP update.qemu
+
+# Start it, and ensure that it boots
+runqemu
+$DEVICECHECK
+
+# Swap in the current /system/silk build products
+echo
+echo "Installing local build into emulator at pid=$EMU_PID"
+echo
+(
+  set -ex
+  adb remount
+  adb wait-for-device
+  adb shell stop
+  adb shell rm -rv /system/silk
+  make -C $ANDROID_BUILD_TOP install
+)
+echo
+echo Killing emulator at pid=$EMU_PID
+kill $EMU_PID
+wait $EMU_PID || true
+
+
+# Restart the emulator, does it still boot?
+runqemu
+$DEVICECHECK
+
+echo
+echo PASS
+exitstatus=0
+cleanup

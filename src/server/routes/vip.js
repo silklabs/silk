@@ -8,7 +8,6 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import bodyParser from 'body-parser';
 import jwtMiddleware from '../jwt';
 
 let log = require('../log')('routes:vip');

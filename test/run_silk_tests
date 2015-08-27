@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
+
+TEST_DIR=/system/silk/silk-test
+MOCHA_ARGS="--ui tdd"
+MOCHA_ARGS="$MOCHA_ARGS --reporter json"
+MOCHA_ARGS="$MOCHA_ARGS --harmony"
+
+result=$(adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha $MOCHA_ARGS $TEST_DIR/dist/lib/*_test.js)
+echo "$result"
+
+resultCode=$(echo "$result" | grep -Eo "\"failures\"\: (\d*)"| cut -d: -f2)
+echo "result code: $resultCode"
+echo
+echo "**************"
+if [[ (-n $resultCode) && ($resultCode -eq 0) ]]; then
+  echo Tests completed successfully
+else
+  echo Tests failed
+fi;
+echo "**************"

@@ -16,7 +16,7 @@ let middleware = bodyParser.json({
   verify: (req, res, buf) => {
     // sha1 was chosen since it was fast we are not trying to obscure data
     // simplify verify it against a signed signature which contains the hash.
-    req.bodyHash = crypto.createHash('sha1').update(buf).digest('hex');
+    req.bodyHash = crypto.createHash('sha256').update(buf).digest('hex');
   }
 });
 

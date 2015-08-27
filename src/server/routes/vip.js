@@ -61,6 +61,7 @@ export default function (ctx) {
     });
 
     if (!account.error) {
+      log.info('sign in', account.id);
       res.respond({ id: account.id });
       return;
     }
@@ -85,6 +86,7 @@ export default function (ctx) {
     });
 
     if (!result.error) {
+      log.info('authenticate', result.id);
       res.respond({ id: result.id });
       return;
     }

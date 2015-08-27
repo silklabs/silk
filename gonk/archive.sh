@@ -175,6 +175,9 @@ adb shell setprop persist.silk.motion.sound true
 # Set ota manifest channel
 adb shell setprop persist.silk.update.channel "$branch"
 
+# Disable factory reset on pressing volume keys
+adb shell setprop persist.silk.ui.reset.disabled true
+
 # Restart the device
 echo Waiting to reboot the device to finish provisioning
 adb reboot

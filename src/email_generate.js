@@ -19,6 +19,7 @@ let log = require('./server/log')('email_generate');
 
 const SRC = path.join(__dirname, '../assets/emails');
 const DEST = path.join(__dirname, '/server/emails');
+const ALLOWED_SUFFIXES = new Set(['.txt', '.html']);
 
 const inline = denodeify(cssInline);
 
@@ -38,8 +39,8 @@ module.exports = new Template(${string});
  */
 async function inlineAssets(baseUrl) {
   // Only inline email assets.
-  let inputs = (await fs.readdir(SRC)).filter(path => {
-    return path.indexOf('.html') !== -1;
+  let inputs = (await fs.readdir(SRC)).filter(input => {
+    return ALLOWED_SUFFIXES.has(path.extname(input));
   });
 
   // Ensure destination exists...
@@ -49,17 +50,21 @@ async function inlineAssets(baseUrl) {
 
   // Run all operations in parallel.
   await Promise.all(inputs.map(async (file) => {
-    let name = file.split('.')[0];
+    let type = path.extname(file);
     let source = path.join(SRC, file);
-    let dest = path.join(DEST, name + '.js');
+    let dest = path.join(DEST, file + '.js');
 
     log.info('compile:', source, dest);
-    let content = await fs.readFile(source);
+    let content = await fs.readFile(source, 'utf8');
 
-    // Strip all external css file references for maximum email compat.
-    let inlined = await inline(content, {
-      url: baseUrl
-    });
+    let inlined = content;
+    // We save some small time by not processing text files through css inline.
+    if (type === '.html') {
+      // Strip all external css file references for maximum email compat.
+      inlined = await inline(content, {
+        url: baseUrl
+      });
+    }
 
     // Inline to a hogan module so server side can easily render the contents.
     let compiled = hogan.compile(inlined, { asString: true });

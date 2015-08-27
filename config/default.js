@@ -29,6 +29,17 @@ export default {
     blobType: process.env.BLOB_TYPE || 'file'
   },
 
+  emails: {
+    // XXX: Obviously once our domains are verified we should use real
+    // addresses!
+    sender: 'james@silklabs.com',
+    reciever: 'james@silklabs.com'
+  },
+
+  ses: {
+    region: 'us-west-2'
+  },
+
   blobs: {
     // Local file storage blob.
     file: {

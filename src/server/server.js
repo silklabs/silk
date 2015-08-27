@@ -11,6 +11,7 @@ import jsonParser from './json';
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
 import AccountsModel from './models/accounts';
+import EmailSender from './email_sender';
 
 export default async function main (config) {
   let express = require('express');
@@ -51,6 +52,7 @@ export default async function main (config) {
   let timeMeta = new TimeMetadata(db);
   // XXX: Rename once we phase out old account interface.
   let accountsModel = new AccountsModel(db);
+  let emailSender = new EmailSender(config);
   let blobs = {
     file: await createFileBlob(config)
   };
@@ -64,6 +66,7 @@ export default async function main (config) {
     app,
     accounts,
     accountsModel,
+    emailSender,
     crashMeta,
     timeMeta,
     config,

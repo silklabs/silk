@@ -63,6 +63,25 @@ PUBLIC_URL=http://192.168.0.3:5000 npm start
 
 Alternatively you can set this value in configuration (see: https://github.com/silklabs/silk-server/blob/master/config/default.js#L14)
 
+### Emails
+
+Sometimes it's useful (for testing/etc...) to send yourself an email
+from one of the [apps templates](./assets/emails) there is a CLI tool to
+help you do this:
+
+Note: You _must_ have your AWS credentials setup for this SES is used to
+send emails.
+
+```sh
+# Send an email with production credentials to james@silklabs.com
+./bin/send-email production james@silklabs.com validation ./assets/fixtures/validation.json
+```
+
+```sh
+# Show help options including all of the email templates available.
+./bin/send-email -h
+```
+
 ## Configuration
 
 See [./config/default.js](the default configuration file) for all

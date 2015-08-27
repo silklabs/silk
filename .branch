@@ -2,4 +2,4 @@
 #
 # All instances of the string "master" are taken to mean the name of the
 # current branch.
-BRANCH=master
+BRANCH=next

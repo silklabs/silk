@@ -1,0 +1,76 @@
+#! ./node_modules/.bin/babel-node --harmony
+/**
+Helper utility for sending emails because of the #! above this may only work on
+OSX and some more common versions of linux.
+*/
+
+import EmailSender from '../src/server/email_sender';
+import { ArgumentParser } from 'argparse';
+import { readdirSync } from 'fs';
+import path from 'path';
+import loadConfig from '../src/server/config';
+import generateEmails from '../src/email_generate';
+
+const SRC = path.join(__dirname, '../assets/emails');
+
+// Hack to create a unique set of email names.
+let emails = new Set(readdirSync(SRC).filter(name => {
+  // Only allow html/txt
+  let suffix = path.extname(name);
+  return ['.html', '.txt'].indexOf(suffix) !== -1;
+}).map(name => {
+  // strip suffix
+  return path.basename(name, path.extname(name));
+}));
+
+let parser = new ArgumentParser();
+
+parser.addArgument(['profile'], {
+  help: 'Configuration profile',
+  type: (value) => {
+    return loadConfig(value);
+  }
+});
+
+parser.addArgument(['recipient'], {
+  help: 'Email address where to send email to'
+});
+
+parser.addArgument(['template'], {
+  choices: Array.from(emails)
+});
+
+parser.addArgument(['json'], {
+  help: 'JSON File',
+  type: (v) => {
+    return require(path.resolve(v));
+  }
+});
+
+parser.addArgument(['--subject'], {
+  defaultValue: 'Test email',
+  help: 'Subject to use in email'
+});
+
+async function main() {
+  let start = Date.now();
+  console.log('Re-generating email templates...');
+  await generateEmails();
+
+  let args = parser.parseArgs(process.argv.slice(2));
+  let emailSender = new EmailSender(args.profile);
+  let sendOpts = {
+    recipient: args.recipient,
+    subject: args.subject,
+    body: emailSender.renderTemplate(args.template, args.json)
+  };
+
+  let result = await emailSender.send(sendOpts);
+  console.log('Email sent!', result.data, Date.now() - start, 'ms');
+}
+
+main().catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});

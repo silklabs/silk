@@ -9,7 +9,10 @@ let DEFAULT = {
    * Development preferences intended to be overriden in config.local.json
    */
   'preferences': {
-    showLiveLag: false
+    showLiveLag: false,
+
+    // Very verbose socket.io logging!
+    socketioLogs: false
   }
 };
 

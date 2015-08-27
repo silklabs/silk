@@ -18,7 +18,14 @@ make nothing  # Applies patches as a side effect of doing nothing...
 
 # Reduce the disk space usage to avoid failures later on
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
-  rm -rf .repo/project-objects .repo/projects
+  rm -rf \
+    .repo/project-objects \
+    .repo/projects \
+    frameworks/base/docs \
+    frameworks/base/media/tests \
+    prebuilts/qemu-kernel/x86 \
+    prebuilts/qemu-kernel/x86_64 \
+
 fi
 
 df -h

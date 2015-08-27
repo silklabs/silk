@@ -1,5 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab */
+
 /**
  * Copyright (c) 2015 Silk Laboratories, Inc.
  * All Rights Reserved.
@@ -134,25 +135,26 @@ export class ClapDetector extends events.EventEmitter {
     this._bytesPerFrame = 2;      // assumes samples are signed 16 bit
 
     // parameters to tune
-    this._maxClapIntervalMs = 600;// max time in ms between 2 claps to be 'repeated'
+    this._maxClapIntervalMs = 450;// max time in ms between 2 claps to be 'repeated'
     this._minDistance = 8;        // min dist. between 2 claps (units of fftWindowStep)
-    this._deltaThreshold = 25000; // consider a clap if avg freq energy between
+    this._deltaThreshold = 30000; // consider a clap if avg freq energy between
                                   // 2 windows is above this threshold.
-    this._deltaDistance = 3;      // the previous window's energy to compare against.
+    this._deltaDistance = 4;      // the previous window's energy to compare against.
                                   // (units of fftWindowStep, must be < minDistance)
     this._fftWindowSize = 256;    // 320ms - in units of samples
     this._fftWindowStep = 16;     // 2ms - in units of samples
 
-    this._minEnergyThreshold = 40000; // min energy for duration of clap
-    this._minEnergyDuration = 55;     // clap must maintain energy for this
+    this._minEnergyThreshold = 45000; // min energy for duration of clap
+    this._minEnergyDuration = 35;     // clap must maintain energy for this
+                                      // duration, units of fftWindowStep
+    this._maxEnergyDuration = 150;    // clap energy must not exceed this
                                       // duration, units of fftWindowStep
 
     this._windowHistory = new WindowHistory(this._minDistance);
     this._inputBuffer = new Buffer(0);
 
-    this._energyDuration = 0;
-    this._matchWindowCnt = 0;
-    this._windowCnt = 0;
+    this._highEnergyCnt = 0;
+    this._highEnergyStart = null;
     this._lastClapTime = 0;
     this._repeatedClapCnt = 0;
 
@@ -180,26 +182,25 @@ export class ClapDetector extends events.EventEmitter {
     // only process if all histroy is valid
     // note fft processing is threaded and results can come in out of order
     while (this._windowHistory.isValid()) {
-      // only consider match if last 'depth' number of windows did not match
-      if (!this._windowHistory.hasMatch()) {
-        // compare with deltaDistance windows back
-        let cur = this._windowHistory.getNode(0);
-        let prev = this._windowHistory.getNode(this._deltaDistance);
+      // compare with deltaDistance windows back
+      let cur = this._windowHistory.getNode(0);
+      let prev = this._windowHistory.getNode(this._deltaDistance);
 
-        if ((cur.data - prev.data) > this._deltaThreshold) {
-          // found initial large rise in energy, now need to maintain energy
-          cur.match = true;
-          this._matchWindowCnt = cur.windowCnt;
-          this._energyDuration = 0;
-        }
+      if ((cur.data - prev.data) > this._deltaThreshold) {
+        // found initial large rise in energy, now need to maintain energy
+        cur.match = true;
+        this._highEnergyStart = cur.windowCnt;
+        this._highEnergyCnt = 0;
+      }
+      if (this._highEnergyStart !== null) {
+        // we detected high energy, now need to see its duration
         if (cur.data > this._minEnergyThreshold) {
           // energy level met threshold, need to maintain for a little bit
-          this._energyDuration++;
-
-          if (this._energyDuration === this._minEnergyDuration) {
-            // energy level stayed above threshold long enough, we have a clap!
-            // consider a clap only when we first cross this threshold. the
-            // energy may continue for more time, but that is part of this clap
+          this._highEnergyCnt++;
+        } else {
+          if (this._highEnergyCnt >= this._minEnergyDuration &&
+              this._highEnergyCnt < this._maxEnergyDuration) {
+            // energy is not too short or long, consider this a clap
             this.totalClapCnt++;
 
             let now = Date.now();
@@ -210,6 +211,10 @@ export class ClapDetector extends events.EventEmitter {
             }
             this._lastClapTime = now;
 
+            log.debug('clap detected', this.totalClapCnt,
+              this._highEnergyStart * this._fftWindowStep / this._sampleRate,
+              this._highEnergyCnt);
+
             // don't send the event until the number of claps is confirmed
             if (this._nextClapTimeout) {
               clearTimeout(this._nextClapTimeout);
@@ -217,13 +222,16 @@ export class ClapDetector extends events.EventEmitter {
             this._nextClapTimeout = setTimeout(
               () => {                       // eslint-disable-line no-loop-func
                 this.timeline.addClap(this._repeatedClapCnt);
-                log.debug('clap detected', this.totalClapCnt,
-                  this._matchWindowCnt * this._fftWindowStep / this._sampleRate,
-                  this._matchWindowCnt, prev.data, cur.data);
               },
               this._maxClapIntervalMs
             );
+          } else {
+            log.debug('  no clap:',
+                this._highEnergyStart,
+                this._highEnergyStart * this._fftWindowStep / this._sampleRate,
+                this._highEnergyCnt);
           }
+          this._highEnergyStart = null;
         }
       }
       this._windowHistory.advance();
@@ -306,7 +314,7 @@ export class ClapDetector extends events.EventEmitter {
   }
 
   _debugSaveToFile(samples) {
-    if (this._pcmSamples.length < 8000 * 2 * 10) {
+    if (this._pcmSamples.length < 8000 * 2 * 20) {
       this._pcmSamples = Buffer.concat([this._pcmSamples, samples]);
     } else if (!this._fileSaved) {
       let dataSize = this._pcmSamples.length;

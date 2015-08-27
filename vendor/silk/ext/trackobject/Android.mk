@@ -6,7 +6,7 @@ LOCAL_INSTALLED_MODULE_STEM := motion_detected.mp3
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/sound
-LOCAL_PREBUILT_MODULE_FILE := vendor/silk/ext/trackobject/motion_detected.mp3
+LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/motion_detected.mp3
 include $(BUILD_PREBUILT)
 
 ifneq ($(ONE_SHOT_MAKEFILE),)

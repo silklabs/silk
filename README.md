@@ -281,6 +281,21 @@ adb shell setprop persist.silk.vidduration 5
 adb reboot
 ```
 
+### Intelligent Detection
+
+To enable audio ding when two or more claps are detected:
+
+```sh
+adb shell setprop persist.silk.clapper.sound true
+adb shell setprop ctl.restart silk
+```
+
+To enable audio dings when motion is detected:
+```sh
+adb shell setprop persist.silk.motion.sound true
+adb shell setprop ctl.restart silk
+```
+
 ### OTA Updates
 
 OTA updates are disabled by default.

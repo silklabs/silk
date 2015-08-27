@@ -136,7 +136,9 @@ class VideoUploadQueue extends EventEmitter {
 
     // Shift an  item off first thing so we don't get stuck in a loop.
     let item = this.queue.shift();
-    log.info('uploading item size: %d, time: %d', item.frame.length, item.when);
+    if (item) {
+      log.info('uploading item size: %d, time: %d', item.frame.length, item.when);
+    }
 
     this._resolveLastId().then((previousId) => {
       return this._uploadItem(previousId, item);

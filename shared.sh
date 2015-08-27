@@ -26,11 +26,11 @@ GITS="\
 
 # Fetch all the silk projects
 clone() {
-  local basedir=$1
+  local origin=$1
   for g in $GITS; do
     (
       set -x
-      git clone git@github.com:silklabs/$g.git $g
+      git clone -b $origin git@github.com:silklabs/$g.git $g
       git -C $g config --local user.email "shipit@silklabs.com"
       git -C $g config --local user.name "Release Engineering"
     )
@@ -65,22 +65,71 @@ updatebranch__silk_device() {
   popd
 }
 
-# Recreate a branch, history is destroyed
-recreate() {
-  local branch=$1
-  local origin=$2
+# Replace the contents of a branch. History is destroyed.
+replace() {
+  local from=$1
+  local to=$2
   for g in $GITS; do
     pushd $g
     (
       set -x
       git reset --hard HEAD
       git clean -dfx
-      git checkout $origin
-      git branch -D $branch || true
-      git branch $branch origin/$origin
-      git checkout $branch
+      git checkout $from
+      git branch -D $to || true
+      git branch $to origin/$from
+      git checkout $to
     )
     popd
+  done
+}
+
+# Merge one branch into another, overwriting what was in the destination branch.
+# History is preserved.
+mergerelease() {
+  local from=$1
+  local to=$2
+  for g in $GITS; do
+    pushd $g
+    (
+      set -x
+
+      #
+      # http://stackoverflow.com/questions/173919/is-there-a-theirs-version-of-git-merge-s-ours
+      #
+      git checkout $to || git branch $to  #<!-- TODO: Remove this line after first release is made
+      git checkout $to
+      git merge -s ours $from -m "Automated release"
+      git branch -D tmp || true
+      git branch tmp
+      git reset --hard $from
+      git reset --soft tmp
+      git commit --amend -C HEAD
+      git branch -D tmp
+      git diff HEAD $from
+
+      # Fix release commit message
+      echo "Automated release" > msg
+      echo >> msg 
+      git shortlog ${to}~1..${to} >> msg
+      git commit --amend -F msg
+    )
+    popd
+  done
+}
+
+
+# Push a branch
+push() {
+  local branch=$1
+
+  for g in $GITS; do
+    (
+      set -x
+      pushd $g
+      git push -f origin $branch
+      popd > /dev/null
+    )
   done
 }
 
@@ -96,7 +145,7 @@ pushf() {
   fi
 
   for g in $GITS; do
-    ( 
+    (
       set -x
       pushd $g
       git push -f origin $branch

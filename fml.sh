@@ -16,8 +16,8 @@ rm -rf $BRANCH
 mkdir -p $BRANCH
 cd $BRANCH
 
-clone
-recreate $BRANCH $ORIGIN_BRANCH
+clone $ORIGIN_BRANCH
+replace $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_app $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH
 pushf $BRANCH

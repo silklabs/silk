@@ -53,9 +53,6 @@ runqemu() {
 
 set -e
 
-# Fetch the emulator
-make -C $ANDROID_BUILD_TOP update.qemu
-
 # Start it, and ensure that it boots
 runqemu
 $DEVICECHECK

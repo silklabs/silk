@@ -14,7 +14,10 @@ if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     echo "******************************************************************"
     echo Does the emulator even boot?
     echo "******************************************************************"
-    source build/envsetup.sh ; test/emulator_boottest
+    source build/envsetup.sh
+    rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
+    test/emulator_boottest || true
+
   else
     make -j2 otapackage
   fi
@@ -29,6 +32,7 @@ else
   echo "******************************************************************"
   source build/envsetup.sh
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
+  make update.qemu # Fetch the emulator
   test/emulator_boottest || true
 
   echo "******************************************************************"

@@ -4,6 +4,7 @@
 
 SHELL=/bin/bash
 
+include .branch
 ENVSETUP=source build/envsetup.sh $(1) && test "$$SILK_ENVSETUP" == "1"
 
 .PHONY: all
@@ -78,14 +79,14 @@ emu: qemu
 update.mako: | out/prebuilt/mako ;
 out/prebuilt/mako:
 	mkdir -p out/prebuilt/mako
-	cd out/prebuilt/mako && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz
+	cd out/prebuilt/mako && wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/mako.tgz
 	cd out/prebuilt/mako && tar zxf mako.tgz
 
 # Fetch the latest prebuilt qemu distribution
 update.qemu: | out/prebuilt/qemu ;
 out/prebuilt/qemu:
 	mkdir -p out/prebuilt/qemu
-	cd out/prebuilt/qemu && wget https://s3-us-west-2.amazonaws.com/silk-device/master/latest/qemu.tgz
+	cd out/prebuilt/qemu && wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/qemu.tgz
 	cd out/prebuilt/qemu && tar zxf qemu.tgz
 
 
@@ -157,7 +158,7 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 .repo/manifest.xml: GONK=base# default gonk manifest
 .repo/manifest.xml: | .repo/manifest_upstream
 	./repo init -u $(PWD)/.repo/manifest_upstream \
-    -m $(GONK).xml $(REPO_INIT_ARGS) \
+    -m $(GONK).xml -b $(BRANCH) $(REPO_INIT_ARGS) \
     -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(REPO_INIT_HOST)
 	@if [[ -n "$(REPOCACHE_$(GONK))" ]]; then \
     if [[ ! -d .repo/projects ]]; then \
@@ -182,7 +183,8 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
     git init --quiet . ; \
     for f in gonk/manifest/*; do ln -sf ../../$$f .; done; \
     git add *; \
-    git commit -q -m '301 Moved Permanently' ; \
+    git commit -q -m '301 Moved Permanently'; \
+    test $(BRANCH) = master || git branch $(BRANCH); \
   }
 
 

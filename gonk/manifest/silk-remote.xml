@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<manifest>
+  <!--
+    Notice: This file is processed by branch management scripts.
+
+    All instances of the string "master" are taken to mean the name of the
+    current branch.
+  -->
+  <notice>Active Silk branch: master</notice>
+  <remote name="silk"
+          fetch="ssh://git@github.com/silklabs/"
+          revision="master"
+          sync-j="4"/>
+</manifest>

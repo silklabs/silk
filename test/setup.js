@@ -1,6 +1,7 @@
 import loadConfig from '../src/server/config';
 import mongo from 'promised-mongo';
 import gen from '../src/api_generate';
+import emailGen from '../src/email_generate';
 
 // Ensure we have recently auto-generated files. Must happen before mocha runs
 // otherwise we may have required old versions of the files.
@@ -19,6 +20,8 @@ suiteSetup(async function() {
 
   let config = loadConfig('test');
   let db = mongo(config.db.connectionString);
+
+  await emailGen();
 
   await Promise.race([
     db.stats(),

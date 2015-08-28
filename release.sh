@@ -20,7 +20,7 @@ updatebranch__silk_app $ORIGIN_BRANCH release
 updatebranch__silk_device $ORIGIN_BRANCH release
 mergerelease $ORIGIN_BRANCH release
 
-# Turn $ORIGIN_BRANCH to something mergable back to the branch
+# Turn $ORIGIN_BRANCH to something mergable back to the master branch
 updatebranch__silk_app release master
 updatebranch__silk_device release master
 

@@ -29,6 +29,9 @@ class LightsHue {
     log.info('Searching for bridges');
     this.initPromise = hue.nupnpSearch().then(bridges => {
       log.info('Found ' + bridges.length + ' bridge(s)');
+      if (bridges.length === 0) {
+        return Promise.reject('Hue bridge not found');
+      }
       this.bridge = bridges[0];
       log.info(`IP address of first bridge: ${this.bridge.ipaddress}`);
       this.api = new hue.HueApi(this.bridge.ipaddress, this.user);

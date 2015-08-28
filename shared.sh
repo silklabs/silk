@@ -7,10 +7,8 @@
 # MERGE_GITS: Subset of GITS that need commits merged back to master
 #
 # Note that these projects are sorted by the order in which the branch changes
-# should be pushed
-#
-# Projects that depend on the branches of other projects should be listed after
-# their dependant project
+# should be pushed.  That is, projects that depend on the branches of other
+# projects should be listed after their dependant project.
 #
 MERGE_GITS="\
   silk-server \
@@ -37,7 +35,7 @@ clone() {
   done
 }
 
-# Update the "current" branch references within silk-app
+# Update branch references within silk-app
 updatebranch__silk_app() {
   local from=$1
   local to=$2
@@ -51,7 +49,7 @@ updatebranch__silk_app() {
   popd
 }
 
-# Update the "current" branch references within silk-device
+# Update branch references within silk-device
 updatebranch__silk_device() {
   local from=$1
   local to=$2
@@ -84,7 +82,7 @@ replace() {
   done
 }
 
-# Merge one branch into another, overwriting what was in the destination branch.
+# Merge one branch into another overwriting what was in the destination branch.
 # History is preserved.
 mergerelease() {
   local from=$1

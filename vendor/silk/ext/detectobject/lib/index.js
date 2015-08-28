@@ -76,7 +76,7 @@ export default function init(env) {
 
   let working = false;
 
-  env.timeline.on('motion', (when, rects) => {
+  env.timeline.on('preview', when => {
     if (working) {
       log.error(`Still busy, unable to process next preview image`);
       return;
@@ -92,6 +92,12 @@ export default function init(env) {
       }
       let diff = Date.now() - start;
       log.verbose(`Acquired preview image in ${diff}ms`);
+
+      // Fake a "motion" rectangle since the "preview" timeline event is being
+      // used at the moment.
+      let rects = [
+        { x: 0, y: 0, width: im.width(), height: im.height() }
+      ];
 
       // Restrict object detection to a section of the image that shows motion
       if (rects.length > 1) {

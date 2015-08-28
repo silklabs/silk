@@ -99,6 +99,7 @@ class Diag {
   constructor(id) {
     this.id = id;
     this.socket = null;
+    this.cfg = [];
 
     this.loggers = [
       new DiagLogger(this.id, 'logcat',
@@ -115,6 +116,7 @@ class Diag {
   start(socket) {
     log.info('Starting diag service');
     this.socket = socket;
+    this._applyConfig();
   }
 
   stop() {
@@ -124,10 +126,20 @@ class Diag {
   }
 
   setConfig(cfg) {
-    this.loggers.map( logger => {
+    if (JSON.stringify(cfg) === JSON.stringify(this.cfg)) {
+      // No config change, nothing do to.
+      return;
+    }
+    log.info(`config: ${JSON.stringify(cfg)}`);
+    this.cfg = cfg;
+    this._applyConfig();
+  }
+
+  _applyConfig() {
+    this.loggers.map(logger => {
       let type = logger.type;
-      if (type in cfg) {
-        if (cfg[type] === 1) {
+      if (type in this.cfg) {
+        if (this.cfg[type] === 1) {
           log.info('Enabling', type);
           logger.start(this.socket);
         } else {

@@ -536,8 +536,8 @@ function poll(runImmediately) {
 }
 
 function _expandManifestUrlVars() {
-  manifestURL = MANIFEST_URL_TEMPLATE.replace('\${channel}', CHANNEL);
-  manifestURL = manifestURL.replace('\${device}', DEVICE);
+  manifestURL = MANIFEST_URL_TEMPLATE.replace('{channel}', CHANNEL);
+  manifestURL = manifestURL.replace('{device}', DEVICE);
 }
 
 function start() {

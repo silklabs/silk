@@ -8,6 +8,15 @@ echo -n "   Date: "; date
 echo -n "  Build: "; getprop ro.build.fingerprint
 echo
 
+if [ -d /data/tombstones ]; then
+  tombstones=$(ls /data/tombstones)
+  if [ "$tombstones" != "" ]; then
+    echo "TOMBSTONES (/data/tombstones):"
+    ls -l /data/tombstones
+    echo
+  fi
+fi
+
 echo Battery:
 echo "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%"
 echo "  Status: $(cat /sys/class/power_supply/battery/status) $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null)"

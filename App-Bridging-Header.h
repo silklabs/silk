@@ -17,6 +17,5 @@ interface with via swift need to be imported here.
 #import "RCTTouchHandler.h"
 #import "RCTView.h"
 
-
-
+#import <RCTWebSocketManager.h>
 #endif

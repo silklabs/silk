@@ -5,6 +5,7 @@ ReactNative itself deals with turning values into strings but it does not
 provide any advanced utilities for extending the types we can send so this
 class provides a number of utilities for converting types.
 */
+@objc(TypeTransfer)
 public class TypeTransfer {
   internal typealias JSONObj = Dictionary<String, AnyObject>
   internal typealias List = [AnyObject]

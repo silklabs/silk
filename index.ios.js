@@ -1,8 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-'use strict';
-
 var React = require('react-native');
 var {
   AppRegistry,
@@ -11,6 +9,10 @@ var {
   Text,
   View,
 } = React;
+
+// Include our own browser shim goop but after react-native has loaded for the
+// first time and created it's own shims.
+require('./Libraries/BrowserShims');
 
 var MonitorFullscreen = require('./Components/MonitorFullscreen');
 var MonitorsView = require('./Components/MonitorsView');

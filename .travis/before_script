@@ -8,13 +8,14 @@ fi
 
 set -ex
 ccache -s
+git --version
 
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
-  make init.$GONK
+  time make init.$GONK
 fi
-make sync
+time make sync
 cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
-make nothing  # Applies patches as a side effect of doing nothing...
+time make nothing  # Applies patches as a side effect of doing nothing...
 
 # Reduce the disk space usage to avoid failures later on
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then

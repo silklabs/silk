@@ -55,6 +55,16 @@ const DEFAULT_PLAYBACK_STEP = 1.0;
  */
 const JUMP_FACTOR = 2;
 
+/**
+ * If `true`, continuously adjust the playback rate to try to catch up
+ * to real-time.  In theory, the rate adjustments should be subtle
+ * enough that users won't notice, and can hide small bubbles in the
+ * playback pipeline.
+ *
+ * Unfortunately, see https://github.com/silklabs/silk-app/issues/298
+ */
+const ENABLE_CONTINUOUS_RATE_ADJUSTMENT = false;
+
 class LiveSegmentProvider {
   constructor(onSegment) {
     this.socket = null;
@@ -381,10 +391,14 @@ export default React.createClass({
   },
 
   modifyLiveRate(segment, time) {
+    if (!ENABLE_CONTINUOUS_RATE_ADJUSTMENT) {
+      return this.setState({ rate: 1.0 });
+    }
+
     let currentLag = Date.now() - time - this.liveVideoLag;
 
     if (currentLag > 0) {
-      let rate = 1 + currentLag / 1000
+      let rate = 1 + currentLag / 1000;
       this.setState({ rate: rate });
     }
   },

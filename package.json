@@ -18,6 +18,7 @@
     "react-native-linear-gradient": "^0.3.2",
     "react-timer-mixin": "^0.13.2",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
+    "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"
   }
 }

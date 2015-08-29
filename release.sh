@@ -17,7 +17,7 @@ clone $ORIGIN_BRANCH
 
 ok=true
 for g in $MERGE_GITS; do
-  if [[ $(git cherry origin/master $ORIGIN_BRANCH | wc -l) -ne 0 ]]; then
+  if [[ $(git -C $g cherry origin/master $ORIGIN_BRANCH | wc -l) -ne 0 ]]; then
     echo Error: Unable to continue with release until all commits from
     echo $ORIGIN_BRANCH have been merged back into master:
     echo

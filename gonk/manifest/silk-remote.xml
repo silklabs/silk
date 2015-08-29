@@ -3,12 +3,12 @@
   <!--
     Notice: This file is processed by branch management scripts.
 
-    All instances of the string "next" are taken to mean the name of the
+    All instances of the string "master" are taken to mean the name of the
     current branch.
   -->
-  <notice>Active Silk branch: next</notice>
+  <notice>Active Silk branch: master</notice>
   <remote name="silk"
           fetch="ssh://git@github.com/silklabs/"
-          revision="next"
+          revision="master"
           sync-j="4"/>
 </manifest>

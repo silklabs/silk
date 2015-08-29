@@ -46,7 +46,7 @@ Github milestones are created in all the affected projects to collect issues:
 
 All our projects use the same branch names:
 * **master** - always open for new development
-* **release** - where releases are merged to from next or chemspill.
+* **release** - where releases are merged to from *next* or *chemspill*
 * **next** - stabilization branch for the current milestone
 * **chemspill** - used to resolve critical bugs in release that can't wait for the next milestone
 

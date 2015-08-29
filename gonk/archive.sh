@@ -8,11 +8,10 @@ usage()
 {
   [[ -n $1 ]] && echo "$@"
   cat <<EOF
-usage: $0 <branch> <buildId> <archiveDir>
+usage: $0 <buildId> <archiveDir>
 
 Archives gonk build products.
 
-branch     - Branch for this build
 buildId    - Identifier for this build
 archiveDir - Where to store the archive
 
@@ -24,19 +23,12 @@ EOF
 
 [[ -n $1 ]] || usage
 
-
-branch="$1"
-if [[ -z "$branch" ]]; then
-  usage "Error: branch not specified"
-fi
-
-
-buildId="$2"
+buildId="$1"
 if [[ -z $buildId ]]; then
   usage "Error: buildId unspecified"
 fi
 
-archiveDir=$3
+archiveDir=$2
 if [[ -z $archiveDir ]]; then
   usage "Error: archiveDir unspecified"
 fi
@@ -111,6 +103,9 @@ set +x
 EOF
   chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
+  # Copy .branch file
+  cp .branch $archiveDir/$TARGET_PRODUCT
+
   # Create flash_fut script
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
 #!/bin/bash
@@ -154,6 +149,8 @@ adb root
 adb wait-for-device
 echo Configuring the device
 
+source .branch
+
 # Enable OTA updates
 adb shell setprop persist.silk.update.enabled true
 
@@ -173,7 +170,7 @@ adb shell setprop persist.silk.vidupload.enabled 1
 adb shell setprop persist.silk.motion.sound true
 
 # Set ota manifest channel
-adb shell setprop persist.silk.update.channel "$branch"
+adb shell setprop persist.silk.update.channel $BRANCH
 
 # Disable factory reset on pressing volume keys
 adb shell setprop persist.silk.ui.reset.disabled true

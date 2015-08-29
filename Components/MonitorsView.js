@@ -15,7 +15,7 @@ var {
   View,
 } = React;
 
-var Config = require('../Libraries/Config')();
+var Config = require('../Libraries/Config');
 var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
@@ -126,7 +126,8 @@ var MonitorsView = React.createClass({
 
     this.socket = new SocketIO();
     this.socket.connect(serverUrl, {
-      forceWebsockets: true
+      forceWebsockets: true,
+      log: Config.preferences.socketioLogs
     });
     this.state.serverConnection = 'connecting';
     this.setState(this.state);

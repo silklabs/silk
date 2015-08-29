@@ -1,10 +1,22 @@
+import merge from 'lodash.merge';
+
 // Default configuration...
 let DEFAULT = {
   'react-native': {},
-  'server': {}
+  'server': {},
+
+  /**
+   * Development preferences intended to be overriden in config.local.json
+   */
+  'preferences': {
+    showLiveLag: false,
+
+    // Very verbose socket.io logging!
+    socketioLogs: false
+  }
 };
 
-export default function load() {
+function load() {
   // XXX: This implementation is strictly tied to react 0.8 if the underlying
   // behavior of error handling changes this may break.
   //
@@ -13,16 +25,19 @@ export default function load() {
   let globalErr = global.ErrorUtils;
   global.ErrorUtils = null;
 
-  let config;
+  let config = {};
   try {
     // Note: that to resolve this path correctly it must be passed as string
     // literal
     config = require('../config.local.json');
   } catch (e) {
-    config = DEFAULT;
+    // No action required...
   }
 
-  config.server = config.server || DEFAULT.server;
+  config = merge({}, DEFAULT, config);
   global.ErrorUtils = globalErr;
   return config;
 }
+
+let config = load();
+export default config

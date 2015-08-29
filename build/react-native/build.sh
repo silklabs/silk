@@ -8,10 +8,10 @@ dest=$1
 # Create and clean destination directory....
 rm -rf $dest/src/
 mkdir -p $dest/src/
-node ./build/overrides.js > $target/overrides.json
 
 # Compile the JS assets...
 cp -R $src $target
+node ./build/overrides.js > $target/overrides.json
 ./node_modules/.bin/browserify \
   --ignore node-fetch \
   -s silk \

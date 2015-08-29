@@ -2,6 +2,7 @@ import React from 'react-native'
 import Button from 'react-native-button';
 import SystemButton from './SystemButton';
 import TimerMixin from 'react-timer-mixin';
+import Config from '../Libraries/Config';
 
 import moment from 'moment';
 
@@ -165,6 +166,10 @@ export default React.createClass({
   },
 
   buildLiveControls() {
+    if (!Config.preferences.showLiveLag) {
+      return;
+    }
+
     // TODO: remove me in production builds
     let lagValue = Date.now() - this.props.currentTime;
     return (

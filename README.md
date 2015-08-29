@@ -55,6 +55,8 @@ The most basic version looks like this:
 }
 ```
 
+See: [The config file](./Libraries/Config) for all options.
+
 In addition to the config file you must ensure you have `watchman`
 installed:
 

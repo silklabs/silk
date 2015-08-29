@@ -7,10 +7,19 @@ then
 fi
 
 
-if [ "$TRAVIS_BRANCH" != "master" ];
+ok=false
+for branch in master next chemspill; do
+  if [ "$TRAVIS_BRANCH" = "$branch" ];
+  then
+    ok=true
+    break
+  fi
+done
+
+if ! $ok;
 then
-  echo "Not setup to handle non master branches"
-  exit 0
+  echo "Not setup to handle branch: $TRAVIS_BRANCH"
+  exit 1
 fi
 
 build() {
@@ -19,6 +28,7 @@ build() {
   echo "[ building $2: $1 ] start"
   ./node_modules/.bin/babel-node --harmony ./bin/publish-api \
     $source $build \
+    --branch $TRAVIS_BRANCH \
     --gh-user $GITHUB_USER \
     --message "Commit for $TRAVIS_BRANCH ($TRAVIS_COMMIT_RANGE)"
   echo "[ building $2: $1 ] done"

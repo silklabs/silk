@@ -90,6 +90,11 @@ parser.addArgument(['-m', '--message'], {
   help: 'Commit message'
 });
 
+parser.addArgument(['-b', '--branch'], {
+  defaultValue: process.env.TRAVIS_BRANCH,
+  help: 'Branch'
+});
+
 parser.addArgument(['--diff'], {
   defaultValue: false,
   action: 'storeTrue',
@@ -121,7 +126,7 @@ async function main() {
   }
 
   // Clone does not take a cwd since we pass an absolute path...
-  await gitcmd(`clone ${args.repo} ${cwd}`, {
+  await gitcmd(`clone -b ${args.branch} ${args.repo} ${cwd}`, {
     user,
     pass
   });

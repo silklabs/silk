@@ -1,5 +1,5 @@
 --- /Users/sahajalal/workspace/react-native/Libraries/WebSocket/WebSocket.ios.js	2015-07-06 01:16:07.000000000 -0700
-+++ node_modules/react-native/Libraries/WebSocket/WebSocket.ios.js	2015-08-29 16:01:32.000000000 -0700
++++ node_modules/react-native/Libraries/WebSocket/WebSocket.ios.js	2015-08-29 16:22:53.000000000 -0700
 @@ -12,7 +12,7 @@
  'use strict';
  

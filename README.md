@@ -119,7 +119,7 @@ back to *master*.
 
 These links display the commits on *master* that are not in the current *next*
 branch.  Some of these commits may need to be manually cherry picked into *next*
-if they resolve issues target for the next release.
+if they resolve issues targeted for the next release.
 
 [silk-app](https://github.com/silklabs/silk-app/compare/next...master)
 | [silk-device](https://github.com/silklabs/silk-device/compare/next...master)

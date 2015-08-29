@@ -15,14 +15,24 @@ cd $ORIGIN_BRANCH
 
 clone $ORIGIN_BRANCH
 
+ok=true
+for g in $MERGE_GITS; do
+  if [[ $(git cherry origin/master $ORIGIN_BRANCH | wc -l) -ne 0 ]]; then
+    echo Error: Unable to continue with release until all commits from
+    echo $ORIGIN_BRANCH have been merged back into master:
+    echo
+    git -C $g cherry -v origin/master $ORIGIN_BRANCH
+    echo
+    ok=false
+  fi
+done
+
+$ok || exit 1
+
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
 updatebranch__silk_app $ORIGIN_BRANCH release
 updatebranch__silk_device $ORIGIN_BRANCH release
 mergerelease $ORIGIN_BRANCH release
-
-# Turn $ORIGIN_BRANCH to something mergable back to the master branch
-updatebranch__silk_app release master
-updatebranch__silk_device release master
 
 read -n 1 -p "Push new release?  BE SURE!!! [Ny]: "
 echo
@@ -31,17 +41,10 @@ if [[ "$REPLY" != "y" ]]; then
   exit
 fi
 
-#!!!!!!! UNCOMMENT NEXT TWO LINES FOR A REAL RELEASE !!!!!!!
-#push release
-#push $ORIGIN_BRANCH
+push release
 
-echo
-echo IMPORTANT:
-echo Manual steps are now required to merge $ORIGIN_BRANCH back to master for
-echo the following projects: $MERGE_GITS
-echo
+echo Notice: $ORIGIN_BRANCH is now defunct and should be deleted from the
+echo following projects to avoid confusion:
 for g in $MERGE_GITS; do
-  echo
-  echo Log for $g:
-  git -C $g --no-pager log --graph --oneline --decorate --boundary $ORIGIN_BRANCH...origin/master
+  echo "  https://github.com/silklabs/$g/branches"
 done

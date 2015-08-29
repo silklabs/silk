@@ -35,16 +35,27 @@ clone() {
   done
 }
 
+ignoreHEADOnMaster() {
+  local SHA1=$(git rev-parse --short HEAD)
+  git checkout master
+  git merge $SHA1 -s ours -m "Ignore $SHA1 (Automated branch update from ${from} to ${to})"
+  git checkout $from
+}
+
 # Update branch references within silk-app
 updatebranch__silk_app() {
   local from=$1
   local to=$2
+  local ignoreOnMaster=$3
   pushd silk-app
   (
     set -x
     sed -i package.json -e s/#${from}/#${to}/g
     git add package.json
     git commit -m "Automated branch update from ${from} to ${to}"
+    if [[ -n $ignoreOnMaster ]]; then
+      ignoreHEADOnMaster
+    fi
   )
   popd
 }
@@ -53,12 +64,16 @@ updatebranch__silk_app() {
 updatebranch__silk_device() {
   local from=$1
   local to=$2
+  local ignoreOnMaster=$3
   pushd silk-device
   (
     set -x
     sed -i .branch -e s/${from}/${to}/g
     sed -i gonk/manifest/silk-remote.xml -e s/${from}/${to}/g
     git commit --all -m "Automated branch update from ${from} to ${to}"
+    if [[ -n $ignoreOnMaster ]]; then
+      ignoreHEADOnMaster
+    fi
   )
   popd
 }
@@ -120,27 +135,6 @@ mergerelease() {
 # Push a branch
 push() {
   local branch=$1
-
-  for g in $GITS; do
-    (
-      set -x
-      pushd $g
-      git push -f origin $branch
-      popd > /dev/null
-    )
-  done
-}
-
-# Force push a branch
-pushf() {
-  local branch=$1
-
-  read -n 1 -p "Force push $branch?  BE SURE!!! [Ny]: "
-  echo
-  if [[ "$REPLY" != "y" ]]; then
-    echo Aborted.
-    exit
-  fi
 
   for g in $GITS; do
     (

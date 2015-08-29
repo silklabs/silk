@@ -1,6 +1,6 @@
 
 We run two and a half week sprints, with the stabilization period of the
-previous print overlapping with the start of the next.  At the conclusion of
+previous sprint overlapping with the start of the next by 3 days.  At the conclusion of
 every sprint a release is made to complete that milestone.
 
 Quick "chemspill" branches may also occur on demand to resolve critical issues

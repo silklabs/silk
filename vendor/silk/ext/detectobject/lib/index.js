@@ -107,11 +107,14 @@ export default function init(env) {
       let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
       detectObjects(motion, motionRect.x, motionRect.y, when, objs => {
+        let what;
         if (objs.length > 0) {
-          let what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
-          log.info(`Detected objects:${what}`);
+          what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
           env.timeline.addObjects(objs);
+        } else {
+          what = ' -';
         }
+        log.info(`Detected objects:${what}`);
         working = false;
       });
     }, 1 /* == 1 channel image (RGB not required) */);

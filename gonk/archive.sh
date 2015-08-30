@@ -167,7 +167,7 @@ adb shell setprop persist.silk.server.url "$SERVER_URL"
 adb shell setprop persist.silk.vidupload.enabled 1
 
 # Enable sound on motion detection
-adb shell setprop persist.silk.motion.sound true
+#adb shell setprop persist.silk.motion.sound true
 
 # Set ota manifest channel
 adb shell setprop persist.silk.update.channel $BRANCH

@@ -19,7 +19,7 @@ fi
 
 echo Battery:
 echo "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%"
-echo "  Status: $(cat /sys/class/power_supply/battery/status) $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null)"
+echo "  Status: $(cat /sys/class/power_supply/battery/status), $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null), $(cat /sys/class/power_supply/battery/health 2> /dev/null)"
 if [ -f /sys/class/power_supply/battery/current_now ]; then
   echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
 fi

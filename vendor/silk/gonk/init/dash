@@ -28,7 +28,7 @@ if [ -f /sys/class/power_supply/usb/current_max ]; then
 fi
 echo
 
-if [ -f /sys/devices/system/cpu/0/online ]; then
+if [ -f /sys/devices/system/cpu/cpu0/online ]; then
   echo CPU Info:
   cd /sys/devices/system/cpu/
   for cpu in cpu[0-8]; do
@@ -36,7 +36,6 @@ if [ -f /sys/devices/system/cpu/0/online ]; then
     if [ $online == 1 ]; then
       currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
       maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
-      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
       echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
     else
       echo "  $cpu: offline"

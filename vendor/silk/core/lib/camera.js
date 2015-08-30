@@ -247,6 +247,12 @@ class CameraStream extends EventEmitter {
       (err, im) => {
         if (!err) {
           im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+          if (1 === channel) {
+            // TODO: Running equalizeHist() on the full resolution image
+            // could produce a better result than running it here on the
+            // downscaled image at the expense of time.  Is it worth it?
+            im.equalizeHist();
+          }
           this._imagecache[channel] = im;
         }
         this._busy = false;
@@ -390,9 +396,9 @@ class CameraStream extends EventEmitter {
    * Invoke this function to obtain the preview frame
    *    userCb   - the callback that receives an error object and then the image
    *               as an OpenCV matrix
-   *    channel  - 0 (default) for color (CV_CAP_ANDROID_COLOR_FRAME_BGR)
-   *               1 for grayscale       (CV_CAP_ANDROID_GREY_FRAME)
-   *               2 for RGB             (CV_CAP_ANDROID_COLOR_FRAME_RGB)
+   *    channel  - 0 (default) for color     (CV_CAP_ANDROID_COLOR_FRAME_BGR)
+   *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)
+   *               2 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    */
   getPreviewFrame(userCb, channel = 0) {
     this._queue.push([userCb, channel]); // Enqueue the frame request

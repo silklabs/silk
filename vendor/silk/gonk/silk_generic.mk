@@ -31,6 +31,7 @@ SILK_EXT := \
   detectobject-cascade-frontalface \
   detectobject-cascade-cars \
   clapper \
+  clapper-sound \
   nightlight \
   trackobject \
   trackobject-sound \

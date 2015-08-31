@@ -6,7 +6,9 @@
     "setup": true,
     "teardown": true,
     "suiteSetup": true,
-    "suiteTeardown": true
+    "suiteTeardown": true,
+    "it": true,
+    "describe": true,
   },
   "rules": {
     "brace-style": 2,

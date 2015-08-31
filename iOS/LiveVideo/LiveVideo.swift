@@ -432,7 +432,7 @@ class LiveVideo : UIView {
 
   private func setupLastItemObserver(item: LiveVideoItem) {
     self.clearLastItemObserver()
-    let duration = item.duration.milliseconds()
+    let duration = item.asset.duration.milliseconds()
 
     Assertion(
       {

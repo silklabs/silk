@@ -5,6 +5,9 @@
 # Generic Silk platform
 #
 
+# Add branch name to ro.build.fingerprint
+BUILD_VERSION_TAGS += $(BRANCH)
+
 PRODUCT_PROPERTY_OVERRIDES += \
   persist.silk.debug=silk-*,-silk-*:debug \
   persist.silk.debug.colors=true \

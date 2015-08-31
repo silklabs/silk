@@ -6,7 +6,6 @@ let {
 // React-Native event emitter...
 import EventEmitter from 'EventEmitter';
 
-let SocketIONative = NativeModules.SocketIO;
 let NativeBlobBridge = NativeModules.BlobBridge;
 
 class NativeBlob {
@@ -29,6 +28,10 @@ Construct one of our custom types given the name of the type and a payload.
 function createNativeType(type, payload) {
   switch (type) {
     case 'NSData':
+      // SocketIO pads the first byte of all binary data to indicate what type
+      // of data it is... This is only useful internally to socket.io so we
+      // strip the byte.
+      payload.offset = 1;
       return new NativeBlob(payload)
     default:
       throw new Error(`Unknown custom native type: ${type}`)
@@ -58,32 +61,35 @@ function convertTypes(items) {
   return items;
 }
 
+function wrapEvent(method) {
+  return (...items) => {
+    method(...convertTypes(items));
+  }
+}
+
 /*
 Our custom implementation of the react-native-socket.io interface. The API
 closely follows the original but uses our SocketIO native manager classes.
 */
 export default class extends EventEmitter {
-  constructor() {
+  constructor(socket) {
     super()
-    // XXX: In the future we could allow multiple socket.io connections
-    // by returning the event listener name in "connect".
-    DeviceEventEmitter.addListener('socketEvent', (event) => {
-      this.handleEvent(event);
-    });
 
+    this.socket = socket;
     this.rooms = new Set();
+
     this._needsRoomReconnect = false;
 
     /**
      * To reduce complexity we do not persist room settings on the server side
      * so we must reconnect manually here.
      */
-    this.on('reconnect', () => {
+    this.socket.on('reconnect', () => {
       console.log('Disconnect detected will need to rejoin rooms.');
       this._needsRoomReconnect = true;
     });
 
-    this.on('connect', () => {
+    this.socket.on('connect', () => {
       if (!this._needsRoomReconnect) {
         return;
       }
@@ -97,22 +103,14 @@ export default class extends EventEmitter {
     });
   }
 
-  handleEvent(event) {
-    let items = event.items || []
-    super.emit(event.name, ...convertTypes(items));
-  }
-
-  /**
-  API compatibility layer...
-  */
   on(event, listener) {
-    SocketIONative.addListener(event);
-    this.addListener(event, listener);
+    // Wrap the object and keep a reference for 'off'.
+    let fn = wrapEvent(listener);
+    this.socket.on(event, fn);
   }
 
   off(event) {
-    SocketIONative.removeListener(event);
-    this.removeAllListeners(event);
+    this.socket.off(event);
   }
 
   /**
@@ -122,20 +120,7 @@ export default class extends EventEmitter {
   events and send them on reconnect.
   */
   emit(event, ...data) {
-    SocketIONative.emit(event, data);
-  }
-
-  disconnect() {
-    SocketIONative.disconnect();
-  }
-
-  /**
-  Connect to the socket.io server note that for now you can only maintain
-  _one_ connection to _one_ socket.io server. Multiple calls to connect will
-  result in disconnection from the existing server and connecting to the new one.
-  */
-  connect(host, config) {
-    SocketIONative.connect(host, config);
+    this.socket.emit(event, ...data);
   }
 
   /**

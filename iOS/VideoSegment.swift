@@ -44,7 +44,10 @@ class VideoSegment {
 
     if type == "data" {
       let bridgedData = dict["data"] as! Dictionary<String, AnyObject>
-      let data = NSDataBridge.release(bridgedData["id"] as! String)
+      let dataId = bridgedData["id"] as! String
+      let offset = bridgedData["offset"] as! NSNumber
+      let data = NSDataBridge.releaseWithOffset(dataId, offset: offset)
+
       return VideoSegment(
         data: data,
         id: id,

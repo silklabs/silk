@@ -6,4 +6,4 @@
 
 cd node_modules/react-native/
 ls React/React.xcodeproj/project.pbxproj
-patch -p1 < ../../tools/patches/react-native/001-ignore-packager.patch
+patch -p1 < ../../tools/patches/ci/001-ignore-packager.patch

@@ -27,8 +27,6 @@
 		5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0641B734C4A00B0630C /* VideoSegment.swift */; };
 		5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
-		571B2F4B1B813045005A4460 /* SocketIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571B2F431B813026005A4460 /* SocketIO.framework */; };
-		571B2F4C1B813045005A4460 /* SocketIO.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 571B2F431B813026005A4460 /* SocketIO.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571B2F801B813641005A4460 /* ConcurrentOperation.swift */; };
 		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
 		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
@@ -49,11 +47,7 @@
 		5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 78C398B91ACF4ADC00677621 /* libRCTLinking.a */; };
 		5758F17D1B5DD52800C18E5D /* libRCTSettings.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139105C11AF99BAD00B5F7CC /* libRCTSettings.a */; };
 		5758F17E1B5DD52800C18E5D /* libRCTText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 832341B51AAA6A8300B99B32 /* libRCTText.a */; };
-		5758F17F1B5DD52800C18E5D /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
-		5758F2391B5EEBD400C18E5D /* AppSocketIOManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2381B5EEBD400C18E5D /* AppSocketIOManager.swift */; };
 		5758F23B1B5EFE7600C18E5D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23A1B5EFE7600C18E5D /* Sync.swift */; };
-		5758F23D1B5F4A0100C18E5D /* ReactSocketIO.m in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23C1B5F4A0100C18E5D /* ReactSocketIO.m */; };
-		5758F23F1B5F4A1200C18E5D /* ReactSocketIO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23E1B5F4A1200C18E5D /* ReactSocketIO.swift */; };
 		5758F2601B600AF500C18E5D /* ImageViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5758F25F1B600AF500C18E5D /* ImageViewManager.m */; };
 		5758F2621B600B0200C18E5D /* ImageViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2611B600B0200C18E5D /* ImageViewManager.swift */; };
 		5758F2641B600B2000C18E5D /* ImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F2631B600B2000C18E5D /* ImageView.swift */; };
@@ -65,6 +59,8 @@
 		5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */; };
 		5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33E1B61681300C18E5D /* NotImplemented.swift */; };
 		576CA1B41B6AB3A2006C7C3C /* FaceEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576CA1B31B6AB3A2006C7C3C /* FaceEvent.swift */; };
+		5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */; };
+		5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
 		57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */; };
 		57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */; };
@@ -73,7 +69,6 @@
 		57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0FB1B6984360047088B /* TypeTransfer.swift */; };
 		57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE1081B69867F0047088B /* TypeTransferTest.swift */; };
 		57BCE10D1B6991520047088B /* BlobBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* BlobBridge.m */; };
-		57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10E1B69919A0047088B /* BlobBridge.swift */; };
 		F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */; };
 		F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */; };
 		F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */; };
@@ -155,41 +150,6 @@
 			proxyType = 2;
 			remoteGlobalIDString = 83CBBA2E1A601D0E00E9B192;
 			remoteInfo = React;
-		};
-		571B2F421B813026005A4460 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 572EF2191B51F16C00EEBB58;
-			remoteInfo = "SocketIO-iOS";
-		};
-		571B2F441B813026005A4460 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 572EF2241B51F16C00EEBB58;
-			remoteInfo = "SocketIO-iOSTests";
-		};
-		571B2F461B813026005A4460 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 572EF2381B51F18A00EEBB58;
-			remoteInfo = "SocketIO-Mac";
-		};
-		571B2F481B813026005A4460 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 572EF2421B51F18A00EEBB58;
-			remoteInfo = "SocketIO-MacTests";
-		};
-		571B2F4D1B813045005A4460 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 572EF2181B51F16C00EEBB58;
-			remoteInfo = "SocketIO-iOS";
 		};
 		5758F15C1B5DD38D00C18E5D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -305,7 +265,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				571B2F4C1B813045005A4460 /* SocketIO.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -346,8 +305,8 @@
 		5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTConvertVideoSegment.h; sourceTree = "<group>"; };
 		5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTConvertVideoSegment.m; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
-		571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Socket.IO-Client-Swift.xcodeproj"; path = "node_modules/socket.io-client-swift/Socket.IO-Client-Swift.xcodeproj"; sourceTree = "<group>"; };
 		571B2F801B813641005A4460 /* ConcurrentOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConcurrentOperation.swift; sourceTree = "<group>"; };
+		57297F6C1B90E55000CBC04D /* AppRCTWebSocketManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTWebSocketManager.h; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
 		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
@@ -362,10 +321,7 @@
 		574A5DB41B7B3043004FBC27 /* SystemButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButton.swift; sourceTree = "<group>"; };
 		57559E8B1B503BD400929697 /* LiveVideo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideo.swift; sourceTree = "<group>"; };
 		57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketIOAVAssetLoaderDelegate.swift; sourceTree = "<group>"; };
-		5758F2381B5EEBD400C18E5D /* AppSocketIOManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppSocketIOManager.swift; path = SocketIO/AppSocketIOManager.swift; sourceTree = "<group>"; };
 		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
-		5758F23C1B5F4A0100C18E5D /* ReactSocketIO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ReactSocketIO.m; path = SocketIO/ReactSocketIO.m; sourceTree = "<group>"; };
-		5758F23E1B5F4A1200C18E5D /* ReactSocketIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ReactSocketIO.swift; path = SocketIO/ReactSocketIO.swift; sourceTree = "<group>"; };
 		5758F25F1B600AF500C18E5D /* ImageViewManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ImageViewManager.m; path = PreviewImage/ImageViewManager.m; sourceTree = "<group>"; };
 		5758F2611B600B0200C18E5D /* ImageViewManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImageViewManager.swift; path = PreviewImage/ImageViewManager.swift; sourceTree = "<group>"; };
 		5758F2631B600B2000C18E5D /* ImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImageView.swift; path = PreviewImage/ImageView.swift; sourceTree = "<group>"; };
@@ -373,6 +329,7 @@
 		5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CMTimeExtensions.swift; sourceTree = "<group>"; };
 		5758F33E1B61681300C18E5D /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
 		576CA1B31B6AB3A2006C7C3C /* FaceEvent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceEvent.swift; sourceTree = "<group>"; };
+		5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTWebSocketManager.m; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LiveVideoManager.m; sourceTree = "<group>"; };
@@ -383,7 +340,6 @@
 		57BCE0FB1B6984360047088B /* TypeTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransfer.swift; sourceTree = "<group>"; };
 		57BCE1081B69867F0047088B /* TypeTransferTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransferTest.swift; sourceTree = "<group>"; };
 		57BCE10C1B6991520047088B /* BlobBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BlobBridge.m; sourceTree = "<group>"; };
-		57BCE10E1B69919A0047088B /* BlobBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlobBridge.swift; sourceTree = "<group>"; };
 		78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTLinking.xcodeproj; path = "node_modules/react-native/Libraries/LinkingIOS/RCTLinking.xcodeproj"; sourceTree = "<group>"; };
 		832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTText.xcodeproj; path = "node_modules/react-native/Libraries/Text/RCTText.xcodeproj"; sourceTree = "<group>"; };
 		F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Bold.ttf"; sourceTree = "<group>"; };
@@ -427,18 +383,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */,
 				F91A55441B8BB93A009C75C9 /* libBVLinearGradient.a in Frameworks */,
 				5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */,
 				5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */,
 				5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */,
-				571B2F4B1B813045005A4460 /* SocketIO.framework in Frameworks */,
 				5758F3361B609C4300C18E5D /* libRCTNetwork.a in Frameworks */,
 				5758F3351B609C2000C18E5D /* libART.a in Frameworks */,
 				5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */,
 				5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */,
 				5758F17D1B5DD52800C18E5D /* libRCTSettings.a in Frameworks */,
 				5758F17E1B5DD52800C18E5D /* libRCTText.a in Frameworks */,
-				5758F17F1B5DD52800C18E5D /* libRCTWebSocket.a in Frameworks */,
 				5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -577,17 +532,6 @@
 			path = iBeacon;
 			sourceTree = "<group>";
 		};
-		571B2F3C1B813026005A4460 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				571B2F431B813026005A4460 /* SocketIO.framework */,
-				571B2F451B813026005A4460 /* SocketIO-iOSTests.xctest */,
-				571B2F471B813026005A4460 /* SocketIO.framework */,
-				571B2F491B813026005A4460 /* SocketIO-MacTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		573C20C51B4EF5C900C40871 /* PropertyObserver */ = {
 			isa = PBXGroup;
 			children = (
@@ -619,16 +563,6 @@
 			path = iOS/SystemButton;
 			sourceTree = SOURCE_ROOT;
 		};
-		5758F2371B5EEBA600C18E5D /* SocketIO */ = {
-			isa = PBXGroup;
-			children = (
-				5758F2381B5EEBD400C18E5D /* AppSocketIOManager.swift */,
-				5758F23C1B5F4A0100C18E5D /* ReactSocketIO.m */,
-				5758F23E1B5F4A1200C18E5D /* ReactSocketIO.swift */,
-			);
-			name = SocketIO;
-			sourceTree = "<group>";
-		};
 		5758F25E1B600AD300C18E5D /* PreviewImage */ = {
 			isa = PBXGroup;
 			children = (
@@ -647,16 +581,25 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		5774D75C1B90D6050071F187 /* WebSocket */ = {
+			isa = PBXGroup;
+			children = (
+				5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */,
+				57297F6C1B90E55000CBC04D /* AppRCTWebSocketManager.h */,
+			);
+			path = WebSocket;
+			sourceTree = "<group>";
+		};
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				5774D75C1B90D6050071F187 /* WebSocket */,
 				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
 				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
 				3D85672F1B72DF64000C8BE1 /* iBeacon */,
 				57BCE10B1B69910C0047088B /* NSDataBridge */,
 				57BCE0F51B695FB10047088B /* RCTConvert */,
 				5758F25E1B600AD300C18E5D /* PreviewImage */,
-				5758F2371B5EEBA600C18E5D /* SocketIO */,
 				5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
@@ -703,7 +646,6 @@
 			children = (
 				57BCE0F91B6962ED0047088B /* NSDataBridge.swift */,
 				57BCE10C1B6991520047088B /* BlobBridge.m */,
-				57BCE10E1B69919A0047088B /* BlobBridge.swift */,
 			);
 			path = NSDataBridge;
 			sourceTree = "<group>";
@@ -720,7 +662,6 @@
 			isa = PBXGroup;
 			children = (
 				F91A553B1B8BB8E9009C75C9 /* BVLinearGradient.xcodeproj */,
-				571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */,
 				5758F32D1B60989C00C18E5D /* ART.xcodeproj */,
 				F949A1961B365A2900E59D69 /* WebViewBridge */,
 				146833FF1AC3E56700842450 /* React.xcodeproj */,
@@ -854,7 +795,6 @@
 				5758F16F1B5DD40D00C18E5D /* PBXTargetDependency */,
 				5758F15F1B5DD39200C18E5D /* PBXTargetDependency */,
 				5758F15D1B5DD38D00C18E5D /* PBXTargetDependency */,
-				571B2F4E1B813045005A4460 /* PBXTargetDependency */,
 			);
 			name = Silk;
 			productName = "Hello World";
@@ -944,10 +884,6 @@
 					ProductGroup = 146834001AC3E56700842450 /* Products */;
 					ProjectRef = 146833FF1AC3E56700842450 /* React.xcodeproj */;
 				},
-				{
-					ProductGroup = 571B2F3C1B813026005A4460 /* Products */;
-					ProjectRef = 571B2F3B1B813026005A4460 /* Socket.IO-Client-Swift.xcodeproj */;
-				},
 			);
 			projectRoot = "";
 			targets = (
@@ -1012,34 +948,6 @@
 			fileType = archive.ar;
 			path = libReact.a;
 			remoteRef = 146834031AC3E56700842450 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		571B2F431B813026005A4460 /* SocketIO.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = SocketIO.framework;
-			remoteRef = 571B2F421B813026005A4460 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		571B2F451B813026005A4460 /* SocketIO-iOSTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "SocketIO-iOSTests.xctest";
-			remoteRef = 571B2F441B813026005A4460 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		571B2F471B813026005A4460 /* SocketIO.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = SocketIO.framework;
-			remoteRef = 571B2F461B813026005A4460 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		571B2F491B813026005A4460 /* SocketIO-MacTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "SocketIO-MacTests.xctest";
-			remoteRef = 571B2F481B813026005A4460 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		5758F3321B60989C00C18E5D /* libART.a */ = {
@@ -1168,7 +1076,6 @@
 				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
 				57BCE10D1B6991520047088B /* BlobBridge.m in Sources */,
 				5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */,
-				5758F23D1B5F4A0100C18E5D /* ReactSocketIO.m in Sources */,
 				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
 				5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */,
 				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
@@ -1178,14 +1085,12 @@
 				5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
+				5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */,
-				5758F23F1B5F4A1200C18E5D /* ReactSocketIO.swift in Sources */,
 				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
-				57BCE10F1B69919A0047088B /* BlobBridge.swift in Sources */,
 				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
-				5758F2391B5EEBD400C18E5D /* AppSocketIOManager.swift in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
@@ -1211,11 +1116,6 @@
 			isa = PBXTargetDependency;
 			target = 13B07F861A680F5B00A75B9A /* Silk */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
-		};
-		571B2F4E1B813045005A4460 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "SocketIO-iOS";
-			targetProxy = 571B2F4D1B813045005A4460 /* PBXContainerItemProxy */;
 		};
 		5758F15D1B5DD38D00C18E5D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1337,12 +1237,14 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/node_modules/react-native/React/**",
+					"$(SRCROOT)/node_modules/react-native/Libraries/WebSocket/**",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = Silk;
 				PROVISIONING_PROFILE = "";
+				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "App-Bridging-Header.h";
 			};
@@ -1358,12 +1260,14 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/node_modules/react-native/React/**",
+					"$(SRCROOT)/node_modules/react-native/Libraries/WebSocket/**",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = Silk;
 				PROVISIONING_PROFILE = "";
+				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "App-Bridging-Header.h";
 			};
@@ -1407,12 +1311,14 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/node_modules/react-native/React/**",
+					"$(SRCROOT)/node_modules/react-native/Libraries/WebSocket/**",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-D DEBUG";
 				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
 			};
 			name = Debug;
 		};
@@ -1448,10 +1354,12 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/node_modules/react-native/React/**",
+					"$(SRCROOT)/node_modules/react-native/Libraries/WebSocket/**",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_WHOLE_MODULE_OPTIMIZATION = YES;
 				VALIDATE_PRODUCT = YES;
 			};

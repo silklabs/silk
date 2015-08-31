@@ -1,8 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-'use strict';
-
 import SystemButton from './SystemButton';
 var React = require('react-native');
 var {
@@ -19,6 +17,8 @@ var Config = require('../Libraries/Config')();
 var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
+var io = require('socket.io-client-react-native');
+
 import { CameraMarkText, PlaceholderText } from './Text';
 
 var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
@@ -124,10 +124,10 @@ var MonitorsView = React.createClass({
       serverUrl = this.state.serverUrl.slice(0, -1);
     }
 
-    this.socket = new SocketIO();
-    this.socket.connect(serverUrl, {
-      forceWebsockets: true
-    });
+    this.socket = new SocketIO(io(serverUrl, {
+      transports: ['websocket']
+    }));
+
     this.state.serverConnection = 'connecting';
     this.setState(this.state);
     console.log('Connecting to ...', this.state.serverUrl);

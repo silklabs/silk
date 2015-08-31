@@ -1,0 +1,15 @@
+--- /Users/sahajalal/workspace/react-native/Libraries/WebSocket/RCTWebSocketManager.h	2015-07-06 01:16:07.000000000 -0700
++++ node_modules/react-native/Libraries/WebSocket/RCTWebSocketManager.h	2015-08-29 15:43:58.000000000 -0700
+@@ -8,7 +8,12 @@
+  */
+ 
+ #import "RCTBridgeModule.h"
++#import "RCTSRWebSocket.h"
+ 
+ @interface RCTWebSocketManager : NSObject <RCTBridgeModule>
+ 
+ @end
++
++@interface RCTWebSocketManager () <RCTSRWebSocketDelegate>
++
++@end

@@ -371,10 +371,10 @@ export default React.createClass({
       }
 
       // Reconcile internal and video playback state.
-      this.appendSegment(newSegment);
       console.log(
         'queueing next segment', delta, newSegment
       );
+      this.appendSegment(newSegment);
     });
   },
 

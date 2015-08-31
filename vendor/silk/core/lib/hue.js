@@ -27,7 +27,7 @@ class LightsHue {
     // onto the end of this initPromise chain.  See |_applyHueState()|
     // below for an example of this technique.
     log.info('Searching for bridges');
-    this.initPromise = hue.nupnpSearch().then(bridges => {
+    this.initPromise = hue.upnpSearch().then(bridges => {
       log.info('Found ' + bridges.length + ' bridge(s)');
       if (bridges.length === 0) {
         return Promise.reject('Hue bridge not found');

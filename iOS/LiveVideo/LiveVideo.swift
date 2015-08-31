@@ -486,10 +486,27 @@ class LiveVideo : UIView {
   }
 
   func sendSegmentEvent(type: String, item: LiveVideoItem) {
+    var validEvent = false
+    for segment in self.segments {
+      if segment.id == item.id {
+        validEvent = true
+        break
+      }
+    }
+
+    // XXX: This works around races in when items are added/removed from the segements list however this is
+    // largely a hack around the fact that resetting the list does not always cleanly remove observers and other
+    // events which may be currently running on other threads.
+    if !validEvent {
+      NSLog("Skipping event: \(type) for \(item.id) this item is no longer part of segments")
+      return
+    }
+
     let eventBody: Dictionary<String, AnyObject> = [
       "target": self.reactTag,
       "id": item.id
     ]
+
     self.eventDispatcher.sendInputEventWithName(type, body: eventBody)
   }
 
@@ -652,10 +669,6 @@ class LiveVideo : UIView {
 
     for observer in self.faceTimeObservers {
       self.player.removeTimeObserver(observer)
-    }
-
-    if let previousObserver: AnyObject = self.itemPlayedToEndObserver {
-      center.removeObserver(previousObserver)
     }
 
     self.clearLastItemObserver()

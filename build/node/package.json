@@ -6,14 +6,10 @@
   "license": "proprietary",
   "dependencies": {
     "babel-runtime": "^5.8.20",
-    "base64url": "^1.0.4",
-    "elliptic": "^5.1.0",
-    "hash.js": "^1.0.3",
-    "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
+    "elliptic": "^3.0.3",
     "localStorage": "^1.0.3",
-    "node-fetch": "^1.3.2",
-    "pbkdf2": "^3.0.4",
-    "promise": "^6.1.0"
+    "promise": "^6.1.0",
+    "node-fetch": "^1.3.2"
   },
   "engines": {
     "node": "0.12.x"
@@ -27,3 +23,5 @@
   ],
   "private": true
 }
+
+

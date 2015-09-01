@@ -3,8 +3,6 @@
 
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
-import formatOutput from './format_output';
-import Base from './base';
 
 let log = require('../log')('models-crashreport');
 
@@ -15,41 +13,56 @@ const TYPE_ALL = Joi.string().only([
   'tombstone',
 ]);
 
-export default class CrashMetadata extends Base {
+const SCHEMA = {
+  // Schema for all documents in the database.
+  record: Joi.object().keys({
+    // The device that generated the report.
+    deviceId: TYPE_DEVICEID.required(),
 
-  static SCHEMA = {
-    // Schema for all documents in the database.
-    record: Joi.object().keys({
-      // The device that generated the report.
-      deviceId: TYPE_DEVICEID.required(),
+    // The time at which the report was generated.
+    timeStamp: Joi.date().iso().required(),
 
-      // The time at which the report was generated.
-      timeStamp: Joi.date().iso().required(),
+    // The type of report.
+    type: TYPE_ALL.required(),
 
-      // The type of report.
-      type: TYPE_ALL.required(),
+    // The url where the report can be accessed.
+    url: Joi.string().trim().uri().required(),
+  }).required(),
 
-      // The url where the report can be accessed.
-      url: Joi.string().trim().uri().required(),
-    }).required(),
+  // Arguments for the find() function.
+  find: Joi.object().keys({
+    deviceId: TYPE_DEVICEID.optional(),
+    type: TYPE_ALL.optional(),
+    startTimeStamp: Joi.date().iso().optional(),
+    endTimeStamp: Joi.date().iso().optional(),
+    limit: Joi.number().integer().positive().optional(),
+  }).required(),
+};
 
-    // Arguments for the find() function.
-    find: Joi.object().keys({
-      deviceId: TYPE_DEVICEID.optional(),
-      type: TYPE_ALL.optional(),
-      startTimeStamp: Joi.date().iso().optional(),
-      endTimeStamp: Joi.date().iso().optional(),
-      limit: Joi.number().integer().positive().optional(),
-    }).required(),
-
+function formatOutput(record) {
+  if (record && ('_id' in record)) {
+    let id = record._id;
+    delete record._id;
+    record.id = id.toString();
   }
+  return record;
+}
 
-  get collectionName() {
-    return 'crash_metadata';
+export default class CrashMetadata {
+  constructor(config, db) {
+    log.debug('Created');
+    this.config = config;
+    this.collection = db.collection('crash_metadata');
   }
 
   async put(payload) {
-    payload = this.validate(payload, 'record');
+    try {
+      Joi.assert(payload, SCHEMA.record);
+    } catch(e) {
+      log.warn(`${e}: %j`, payload);
+      throw e;
+    }
+
     log.info(`Saving new crash report for device '` +
              `${payload.deviceId}'`);
 
@@ -92,7 +105,13 @@ export default class CrashMetadata extends Base {
   }
 
   async find(payload) {
-    payload = this.validate(payload, 'find');
+    try {
+      Joi.assert(payload, SCHEMA.find);
+    } catch(e) {
+      log.warn(`${e}: %j`, payload);
+      throw e;
+    }
+
     log.info('Finding metadata: ' + JSON.stringify(payload));
 
     let query = { };

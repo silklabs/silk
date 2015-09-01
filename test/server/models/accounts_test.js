@@ -40,11 +40,6 @@ suite('accounts', () => {
       passwordHash: input.passwordHash
     });
     assert.equal(successfulAuth.id, account.id);
-    assert.ok(
-      successfulAuth.expires > Date.now() + 60 * 1000 * 10,
-      'expires at least 10 minutes from now'
-    );
-
     let unsuccessfulAuth = await subject.authenticate({
       publicKey: input.publicKey,
       email: input.email,

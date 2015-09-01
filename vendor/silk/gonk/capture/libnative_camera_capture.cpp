@@ -13,6 +13,7 @@
 #include <camera/ICameraRecordingProxyListener.h>
 #include <external/opencv2/modules/androidcamera/camera_wrapper/camera_wrapper.h>
 #include <external/opencv2/modules/androidcamera/include/camera_properties.h>
+#include <media/openmax/OMX_IVCommon.h>
 #include <system/camera.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
@@ -91,14 +92,6 @@ double getCameraPropertyC(void* camera, int id)
 {
   IOpenCVCameraCapture* wrapper = (IOpenCVCameraCapture *) camera;
 
-  // Handle the scary string hidden within the double locally
-  // (NV21 is the only supported format anyway)
-  if (id == ANDROID_CAMERA_PROPERTY_PREVIEW_FORMAT_STRING) {
-    union {double d; const char *str;} hack;
-    hack.str = "yvu420sp";
-    return hack.d;
-  }
-
   double value = 0;
   if (wrapper != NULL) {
     value = wrapper->getProperty(id);
@@ -111,6 +104,30 @@ double getCameraPropertyC(void* camera, int id)
   case ANDROID_CAMERA_PROPERTY_FRAMEHEIGHT:
     frameheight = value;
     break;
+  case ANDROID_CAMERA_PROPERTY_PREVIEW_FORMAT_STRING:
+  {
+    // String within a double!
+    union {double d; const char *str;} hack;
+
+    switch ((int) value) {
+    case (int) OMX_COLOR_FormatYUV420SemiPlanar:
+      hack.str = "yuv420sp";
+      break;
+
+    // TODO: Enable this block once OpenCV's cap_android.cpp supports "yuv420p"
+#if 0
+    case (int) OMX_COLOR_FormatYUV420Planar:
+      hack.str = "yuv420p";
+      break;
+#endif
+
+    default:
+      ALOGW("Unsupported preview format: %d", value);
+      hack.str = "unknown";
+      break;
+    }
+    return hack.d;
+  }
   default:
     break;
   }

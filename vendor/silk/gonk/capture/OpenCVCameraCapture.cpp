@@ -64,6 +64,8 @@ double OpenCVCameraCapture::getProperty(int id)
     return sVideoSize.width;
   case ANDROID_CAMERA_PROPERTY_FRAMEHEIGHT:
     return sVideoSize.height;
+  case ANDROID_CAMERA_PROPERTY_PREVIEW_FORMAT_STRING:
+    return sColorFormat;
   default:
     ALOGW("getProperty: unsupported property: id=%d", id);
     return 0;

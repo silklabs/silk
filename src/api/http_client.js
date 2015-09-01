@@ -8,6 +8,7 @@ import URL from 'url';
 import throwError from './fetch_error';
 import jwa from './jwa';
 import jwt from 'jsonwebtoken';
+import { sha } from 'hash.js';
 
 export default class HttpClient {
   constructor(baseUrl) {
@@ -43,9 +44,13 @@ export default class HttpClient {
    */
   async requestWithBody(method, url, body) {
     body = JSON.stringify(body);
+    let jwtPayload = {
+      // sha1 of the json body...
+      sha256: sha.sha256().update(body).digest('hex')
+    };
 
     // TODO: Add hash of body to payload...
-    let signature = jwt.sign({}, this.key.priv, {
+    let signature = jwt.sign(jwtPayload, this.key.priv, {
       algorithm: 'ed25519',
       jwa: jwa
     });

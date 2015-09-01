@@ -6,6 +6,7 @@ import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
 import createFileBlob from './blobs/file';
 import url from 'url';
+import jsonParser from './json';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
@@ -42,8 +43,8 @@ export default async function main (config) {
     });
   }
 
-  let bodyParser = require('body-parser');
-  app.use(bodyParser.json());
+  // TODO: Explicitly use middleware in prefixed paths.
+  app.use(jsonParser);
 
   let db = await createDb(config);
   let crashMeta = new CrashMetadata(db);

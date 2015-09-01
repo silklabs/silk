@@ -8,58 +8,18 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import bodyParser from 'body-parser';
-import jwa from '../../api/jwa';
-import jwt from 'jsonwebtoken';
+import jwtMiddleware from '../jwt';
 
 let log = require('../log')('routes:vip');
 const PREFIX = '/v1/vip/';
 
 export default function (ctx) {
   let routes = new Router();
-  routes.use(PREFIX, bodyParser.json());
-  routes.use(PREFIX, (req, res, next) => {
-    // Authorization header is required.
-    let { authorization } = req.headers;
-    if (!authorization) {
-      log.error('Missing authorization header', req.path, req.method);
-      // 401 = no header sent.
-      res.sendStatus(401);
-      return;
-    }
-
-    // Must be a scheme we understand.
-    let [scheme, signature] = authorization.split(' ');
-    if (scheme.toLowerCase() !== 'bearer') {
-      log.error('Unknown authorization header type', req.path, req.method, scheme);
-      res.sendStatus(400);
-      return;
-    }
-
+  routes.use(PREFIX, jwtMiddleware(async (req) => {
     // Must include public key in the payload for these methods.
     let { publicKey } = req.body;
-    if (!publicKey) {
-      log.error('Missing public key', req.path, req.method, scheme);
-      res.sendStatus(400);
-      return;
-    }
-
-    let verified;
-    try {
-      verified = jwt.verify(signature, publicKey, {
-        algorithms: ['ed25519'],
-        jwa
-      });
-    } catch (err) {
-      log.error('JWT validation fail', req.path, req.method, err);
-      // XXX: Should we send this error to the client?
-      res.sendStatus(403);
-      return;
-    }
-
-    req.signed = verified;
-    next();
-  });
+    return publicKey;
+  }));
 
   let api = expressApi(routes, {
     name: 'auth',
@@ -101,6 +61,7 @@ export default function (ctx) {
     });
 
     if (!account.error) {
+      log.info('sign in', account.id);
       res.respond({ id: account.id });
       return;
     }
@@ -125,6 +86,7 @@ export default function (ctx) {
     });
 
     if (!result.error) {
+      log.info('authenticate', result.id);
       res.respond({ id: result.id });
       return;
     }

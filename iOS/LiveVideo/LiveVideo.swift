@@ -5,6 +5,8 @@ internal class GetAVAssetURLOperation : ConcurrentOperation {
   static let DESIRED_KEYS = ["duration"]
 
   var value: AVURLAsset?
+  var error: NSError?
+
   var loader: AVAssetResourceLoaderDelegate?
   var loaderQueue: dispatch_queue_t?
 
@@ -12,7 +14,7 @@ internal class GetAVAssetURLOperation : ConcurrentOperation {
 
   // Private reference to the asset before it has finished.
   private var asset: AVAsset?
-
+  private var retriesRemaining = 3
 
   init(url: NSURL, loader: AVAssetResourceLoaderDelegate?, queue: dispatch_queue_t?) {
     self.url = url
@@ -25,13 +27,15 @@ internal class GetAVAssetURLOperation : ConcurrentOperation {
     self.init(url: url, loader: nil, queue: nil)
   }
 
-  /**
-   * Begin fetching the AVAsset and keys defined by DESIRED_KEYS.
-   */
-  override func start() {
-    if self.cancelled {
+  private func download() {
+    if (self.retriesRemaining <= 0) {
+      self.error = NSError(domain: ErrorDomain, code: 0, userInfo: [
+        NSLocalizedDescriptionKey: "No more retries while downloading: \(self.url)"
+      ])
+      self.state = .Finished
       return
     }
+    self.retriesRemaining = self.retriesRemaining - 1
 
     let asset = AVURLAsset(URL: self.url, options: [:])
 
@@ -42,19 +46,28 @@ internal class GetAVAssetURLOperation : ConcurrentOperation {
     asset.loadValuesAsynchronouslyForKeys(GetAVAssetURLOperation.DESIRED_KEYS) {
       [unowned self] in
 
-      Assertion(
-        {
-          asset.duration.milliseconds() > 0
-        },
-        "Asset should fully load before firing event"
-      )
-
-      self.value = asset
-      self.state = .Finished
+      if (asset.duration.milliseconds() <= 0) {
+        NSLog("[Asset Loader] Error asset has zero duration retrying: \(self.retriesRemaining) %@", asset)
+        // Retry the download...
+        self.asset = nil
+        self.download()
+      } else {
+        self.value = asset
+        self.state = .Finished
+      }
     }
-
-    self.state = .Executing
     self.asset = asset
+  }
+
+  /**
+   * Begin fetching the AVAsset and keys defined by DESIRED_KEYS.
+   */
+  override func start() {
+    if self.cancelled {
+      return
+    }
+    self.download()
+    self.state = .Executing
   }
 
   override func cancel() {
@@ -395,6 +408,11 @@ class LiveVideo : UIView {
     operation.completionBlock = {
       [unowned self] in
 
+      if let error = operation.error {
+        self.sendSegmentErrorEvent(segment, error: error)
+        return
+      }
+
       // This block will be invoked both when the operation was finished _and_ cancelled
       // so value is optional if it is not present then the operation was cancelled.
       if let value = operation.value {
@@ -508,6 +526,17 @@ class LiveVideo : UIView {
     ]
 
     self.eventDispatcher.sendInputEventWithName(type, body: eventBody)
+  }
+
+  func sendSegmentErrorEvent(item: VideoSegment, error: NSError) {
+    let eventBody: Dictionary<String, AnyObject> = [
+      "target": self.reactTag,
+      "message": error.localizedDescription,
+      "id": item.id
+    ]
+
+    self.eventDispatcher.sendInputEventWithName("segmentError", body: eventBody)
+
   }
 
   func sendFaceEvent(item: LiveVideoItem, event: FaceEvent) {

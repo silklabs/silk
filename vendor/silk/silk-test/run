@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
+usage()
+{
+  echo "Usage: $0 (-h)"
+  echo
+  echo "Run silk tests on the connected device"
+  echo " -h        Display this message"
+  exit 1
+}
+
+while getopts "h?e?" opt; do
+    case $opt in
+    h|\?)
+        usage
+        exit 0
+        ;;
+    esac
+done
+
+TEST_DIR=/system/silk/silk-test
+MOCHA_ARGS="--ui tdd"
+MOCHA_ARGS="$MOCHA_ARGS --reporter spec"
+MOCHA_ARGS="$MOCHA_ARGS --harmony"
+
+exitstatus=1
+function cleanup {
+  exit $exitstatus
+}
+trap cleanup SIGINT SIGTERM SIGHUP
+
+# Wait for device to bootup
+timeout -s KILL 60s adb wait-for-device
+if [[ $? -ne "0" ]] ; then
+  echo Timed out waiting for device
+  cleanup
+fi
+
+# Run tests and store the restult
+result=$(timeout -s KILL 300s adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha $MOCHA_ARGS $TEST_DIR/dist/lib/test)
+echo "$result"
+
+# We are relying on a specific output format for mocha reporter
+# In case of successful tests the failure count of 0 isn't reported
+# In case of an exception pass/failure count isn't reported
+regexSuccess="([0-9]+) passing"
+[[ $result =~ $regexSuccess ]]
+numSuccess=${BASH_REMATCH[1]}
+
+regexFailure="([0-9]+) failing"
+[[ $result =~ $regexFailure ]]
+numFailures=${BASH_REMATCH[1]}
+echo numSuccess: $numSuccess
+echo numFailures: $numFailures
+
+if [[ (-n $numSuccess) && (-z $numFailures) ]]; then
+  echo
+  echo =========================================================================
+  echo Tests completed successfully
+  echo =========================================================================
+  echo
+  exitstatus=0
+else
+  echo
+  echo =========================================================================
+  echo Tests failed
+  echo =========================================================================
+  echo
+  exit 1
+fi
+
+cleanup

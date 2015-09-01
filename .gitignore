@@ -12,3 +12,4 @@ dist/test/
 /config.local.json
 /Procfile
 /src/api/gen
+/src/server/emails

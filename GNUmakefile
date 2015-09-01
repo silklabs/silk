@@ -4,7 +4,10 @@
 
 SHELL=/bin/bash
 
-include .branch
+-include .branch
+BRANCH ?= unknown
+export BRANCH
+
 ENVSETUP=source build/envsetup.sh $(1) && test "$$SILK_ENVSETUP" == "1"
 
 .PHONY: all

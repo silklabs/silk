@@ -5,6 +5,9 @@
 # Generic Silk platform
 #
 
+# Add branch name to ro.build.fingerprint
+BUILD_VERSION_TAGS += $(BRANCH)
+
 PRODUCT_PROPERTY_OVERRIDES += \
   persist.silk.debug=silk-*,-silk-*:debug \
   persist.silk.debug.colors=true \
@@ -31,6 +34,7 @@ SILK_EXT := \
   detectobject-cascade-frontalface \
   detectobject-cascade-cars \
   clapper \
+  clapper-sound \
   nightlight \
   trackobject \
   trackobject-sound \

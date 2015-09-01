@@ -86,7 +86,7 @@ export default function init(env) {
     let start = Date.now();
     env.camera.getPreviewFrame((err, im) => {
       if (err) {
-        log.warning(`Unable to fetch frame: ${err}`);
+        log.warn(`Unable to fetch frame: ${err}`);
         working = false;
         return;
       }

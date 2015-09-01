@@ -1,0 +1,21 @@
+{
+  "name": "debug-log",
+  "version": "1.0.0",
+  "description": "Loggger conventions built around debug",
+  "main": "index.js",
+  "scripts": {
+    "test": "DEBUG=* node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silklabs/debug-log.git"
+  },
+  "author": "Ben Turner",
+  "bugs": {
+    "url": "https://github.com/silklabs/debug-log/issues"
+  },
+  "homepage": "https://github.com/silklabs/debug-log#readme",
+  "dependencies": {
+    "debug": "^2.2.0"
+  }
+}

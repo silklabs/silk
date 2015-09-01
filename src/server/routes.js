@@ -2,8 +2,6 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import { resolve } from 'url';
-import vipRoutes from './routes/vip';
-
 let log = require('./log')('routes');
 
 module.exports = function(opts) {
@@ -59,10 +57,10 @@ module.exports = function(opts) {
     return res.send({ url: config.socketio.publicUrl });
   });
 
-  checkArgs('/account/create', ['email', 'name', 'id', 'passwordHash', 'sig']);
+  checkArgs('/account/create', ['email', 'name', 'id', 'passhash', 'sig']);
   app.post('/account/create', (req, res) => {
-    let { email, name, id, passwordHash, sig } = req.body;
-    if (!accounts.create(email, name, passwordHash, id, sig)) {
+    let { email, name, id, passhash, sig } = req.body;
+    if (!accounts.create(email, name, passhash, id, sig)) {
       // TODO: send back error message
       return res.status(409).json({});
     }
@@ -216,7 +214,4 @@ module.exports = function(opts) {
     }
     await blobHandler.getBlob(req, res);
   }));
-
-  let auth = vipRoutes({ accounts: opts.accountsModel });
-  app.use(auth.app);
 };

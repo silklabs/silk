@@ -9,15 +9,8 @@ import createServer from '../../src/server/server';
 import createDb from '../../src/server/db';
 import request from 'superagent-promise';
 import merge from 'lodash.merge';
-import pbkdf2 from 'pbkdf2';
 
 let api = require('../../src/api')();
-
-export function passwordHash(context, text) {
-  // The assumption here is this will be much stronger when sent from the
-  // client!
-  return pbkdf2.pbkdf2Sync(text, 'salt', 1, 32, 'sha256').toString('hex');
-}
 
 export function sha256(context, text) {
   var sha1 = crypto.createHash('sha256');
@@ -41,14 +34,14 @@ export async function post(context, path, json) {
 
 export async function createAccount(context, email, name, passphrase) {
   let id = api.id.create();
-  let passwordHash = sha256(context, passphrase);
+  let passhash = sha256(context, passphrase);
 
   let result = await post(context, '/account/create', {
     id: id.toString(),
     email: email,
     name: name,
-    passwordHash: passwordHash,
-    sig: id.sign(passwordHash)
+    passhash: passhash,
+    sig: id.sign(passhash)
   });
 
   if (201 !== result.statusCode) {

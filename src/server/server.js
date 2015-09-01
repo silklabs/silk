@@ -9,7 +9,6 @@ import url from 'url';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
-import AccountsModel from './models/accounts';
 
 export default async function main (config) {
   let express = require('express');
@@ -46,10 +45,8 @@ export default async function main (config) {
   app.use(bodyParser.json());
 
   let db = await createDb(config);
-  let crashMeta = new CrashMetadata(db);
+  let crashMeta = new CrashMetadata(config, db);
   let timeMeta = new TimeMetadata(db);
-  // XXX: Rename once we phase out old account interface.
-  let accountsModel = new AccountsModel(db);
   let blobs = {
     file: await createFileBlob(config)
   };
@@ -62,7 +59,6 @@ export default async function main (config) {
   require('./routes')({
     app,
     accounts,
-    accountsModel,
     crashMeta,
     timeMeta,
     config,

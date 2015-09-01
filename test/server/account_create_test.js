@@ -9,9 +9,9 @@ suite('account creation', () => {
   let context = createContext();
 
   function makeParams(id, email, name, passphrase) {
-    let passwordHash = context.sha256(passphrase);
+    let passhash = context.sha256(passphrase);
     return { id: id.toString(), email: email, name: name,
-             passwordHash: passwordHash, sig: id.sign(passwordHash) };
+             passhash: passhash, sig: id.sign(passhash) };
   }
 
   function createAccount(id, email) {
@@ -34,7 +34,7 @@ suite('account creation', () => {
   test('/account/create - invalid id', async () => {
     let body = {
       id: 'garbage', email: 'test@example.org',
-      name: 'Test', passwordHash: context.sha256('passphrase'),
+      name: 'Test', passhash: context.sha256('passphrase'),
       sig: id.sign(context.sha256('passphrase'))
     };
 
@@ -42,10 +42,10 @@ suite('account creation', () => {
     assert.notEqual(result.statusCode, 201);
   });
 
-  test('/account/create - invalid passwordHash', async () => {
+  test('/account/create - invalid passhash', async () => {
     let body = {
       id: id.toString(), email: 'test@example.org',
-      name: 'Test', passwordHash: 'garbage',
+      name: 'Test', passhash: 'garbage',
       sig: id.sign(context.sha256('passphrase'))
     };
 
@@ -56,7 +56,7 @@ suite('account creation', () => {
   test('/account/create - invalid signature', async () => {
     let body = {
       id: id.toString(), email: 'test@example.org',
-      name: 'Test', passwordHash: context.sha256('passphrase'),
+      name: 'Test', passhash: context.sha256('passphrase'),
       sig: 'garbage'
     };
 

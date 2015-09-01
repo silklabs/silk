@@ -1,3 +1,0 @@
-#! /bin/bash -e
-./node_modules/.bin/babel-node --harmony src/api_generate
-./build/browser/build.sh public/silk-api.js

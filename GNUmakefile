@@ -116,11 +116,14 @@ $(silk_service_targets):
 # Set the device time
 .PHONY: time
 time:
-	@echo Setting device time to match host
-	$(ENVSETUP) && \
-  adb root && \
-  adb wait-for-device && \
-  adb shell "toolbox date $(shell date +%s) || toolbox date -s $(shell date +%Y%m%d.%H%M%S)"
+	@+$(ENVSETUP) ; \
+  set -ex ; \
+  adb root ; \
+  adb wait-for-device ; \
+  adb shell setprop persist.sys.timezone $(shell date +%Z%:::z|tr +- -+) ; \
+  adb shell "toolbox date $(shell date +%s) || toolbox date -s $(shell date +%Y%m%d.%H%M%S)" ; \
+  adb shell date
+
 
 #
 # Initialize the workspace with gonk/manifest/<gonk>.xml instead of the default

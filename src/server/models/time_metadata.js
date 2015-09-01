@@ -3,63 +3,51 @@ Time metadata store.
 */
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
+import Base from './base';
+import formatOutput from './format_output';
 
 const TYPES = Joi.string().only(['log', 'video']).required();
-const SCHEMA = {
-  metadata: Joi.object().keys({
-    deviceId: Joi.string().required(),
-    previousId: Joi.string().optional(),
-    metaType: TYPES,
-    // XXX: Long term these should be more complex types MS is not enough to
-    // convey timezone details, etc...
-    startUTC: Joi.number().required(),
-    endUTC: Joi.number().required(),
-    // Blob as url associated with this item.
-    url: Joi.string().required(),
-    // Optional generic data.
-    data: Joi.object().optional()
-  }).required(),
 
-  findNearTime: Joi.object().keys({
-    deviceId: Joi.string().required(),
-    metaType: TYPES,
-    time: Joi.number().required(),
-    strict: Joi.bool()
-  }).required(),
+export default class TimeMetadata extends Base {
+  static SCHEMA = {
+    metadata: Joi.object().keys({
+      deviceId: Joi.string().required(),
+      previousId: Joi.string().optional(),
+      metaType: TYPES,
+      // XXX: Long term these should be more complex types MS is not enough to
+      // convey timezone details, etc...
+      startUTC: Joi.number().required(),
+      endUTC: Joi.number().required(),
+      // Blob as url associated with this item.
+      url: Joi.string().required(),
+      // Optional generic data.
+      data: Joi.object().optional()
+    }).required(),
 
-  findOneByTime: Joi.object().keys({
-    deviceId: Joi.string().required(),
-    metaType: TYPES,
-    time: Joi.number().required()
-  }).required(),
+    findNearTime: Joi.object().keys({
+      deviceId: Joi.string().required(),
+      metaType: TYPES,
+      time: Joi.number().required(),
+      strict: Joi.bool()
+    }).required(),
 
-  findById: Joi.object().keys({
-    id: Joi.string().required()
-  }).required()
-};
+    findOneByTime: Joi.object().keys({
+      deviceId: Joi.string().required(),
+      metaType: TYPES,
+      time: Joi.number().required()
+    }).required(),
 
-function formatOutput(record) {
-  if (!record) {
-    return record;
-  }
-  if (!('_id' in record)) {
-    return record;
+    findById: Joi.object().keys({
+      id: Joi.string().required()
+    }).required()
   }
 
-  let id = record._id;
-  delete record._id;
-  record.id = id.toString();
-  return record;
-}
-
-export default class TimeMetadata {
-  constructor(db) {
-    this.db = db;
-    this.collection = db.collection('time_metadata');
+  get collectionName() {
+    return 'time_metadata';
   }
 
   async findById(payload) {
-    Joi.assert(payload, SCHEMA.findById);
+    payload = this.validate(payload, 'findById');
     let result = await this.collection.findOne({
       _id: mongo.ObjectId(payload.id), // eslint-disable-line new-cap
     });
@@ -67,7 +55,7 @@ export default class TimeMetadata {
   }
 
   async findNearTime(payload) {
-    Joi.assert(payload, SCHEMA.findNearTime);
+    payload = this.validate(payload, 'findNearTime');
 
     // First try to find one in the appropriate range...
     let result = await this.collection.findOne({
@@ -90,7 +78,7 @@ export default class TimeMetadata {
   }
 
   async findOneBeforeTime(payload) {
-    Joi.assert(payload, SCHEMA.findOneByTime);
+    payload = this.validate(payload, 'findOneByTime');
     let result = (await this.collection.find({
       deviceId: payload.deviceId,
       metaType: payload.metaType,
@@ -102,7 +90,7 @@ export default class TimeMetadata {
   }
 
   async findOneAfterTime(payload) {
-    Joi.assert(payload, SCHEMA.findOneByTime);
+    payload = this.validate(payload, 'findOneByTime');
     let result = (await this.collection.find({
       deviceId: payload.deviceId,
       metaType: payload.metaType,
@@ -117,7 +105,7 @@ export default class TimeMetadata {
   Insert the next item in the time series.
   */
   async insertNext(payload) {
-    Joi.assert(payload, SCHEMA.metadata);
+    payload = this.validate(payload, 'metadata');
     let newItem = await this.collection.insert(payload);
 
     if (payload.previousId) {

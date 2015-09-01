@@ -139,44 +139,47 @@ if [[ -z $SERVER_URL ]]; then
   SERVER_URL=""
 fi
 
-# Flash the build and clear userdata/cache partitions
-echo Flashing the device
 cd $(dirname $0)
+
+echo Flash the build and clear userdata/cache partitions
 ./flash.sh -w
 
 adb wait-for-device
+
+echo Configuring the device:
 adb root
 adb wait-for-device
-echo Configuring the device
 
-source .branch
-
-# Enable OTA updates
+echo OTA updates enabled.
 adb shell setprop persist.silk.update.enabled true
 
-# Set device name
+echo Set device name to $DISPLAY_NAME
 adb shell setprop persist.silk.displayName "$DISPLAY_NAME"
 
-# Enable crash reporting
+echo Enable crash reporting
 adb shell setprop persist.silk.crashrprt.enabled true
 
-# Set silk-server URL
+echo Set silk-server URL to $SERVER_URL
 adb shell setprop persist.silk.server.url "$SERVER_URL"
 
-# Activate uploads to cloud storage
+echo Activated uploads to cloud storage
 adb shell setprop persist.silk.vidupload.enabled 1
 
-# Enable sound on motion detection
+#echo Enabled sound on motion detection
 #adb shell setprop persist.silk.motion.sound true
 
-# Set ota manifest channel
+echo Set ota manifest channel
+source .branch
 adb shell setprop persist.silk.update.channel $BRANCH
 
-# Disable factory reset on pressing volume keys
+echo Disabled factory reset on pressing volume keys
 adb shell setprop persist.silk.ui.reset.disabled true
 
-# Restart the device
-echo Waiting to reboot the device to finish provisioning
+HOST_TZ=$(date +%Z%:::z|tr +- -+)
+echo Set device time zone to match host: $HOST_TZ
+adb shell setprop persist.sys.timezone $HOST_TZ
+
+echo Rebooting...
 adb reboot
 adb wait-for-device
 echo Device provisioning successful

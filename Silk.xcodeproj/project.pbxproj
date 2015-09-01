@@ -69,6 +69,8 @@
 		57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0FB1B6984360047088B /* TypeTransfer.swift */; };
 		57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE1081B69867F0047088B /* TypeTransferTest.swift */; };
 		57BCE10D1B6991520047088B /* BlobBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* BlobBridge.m */; };
+		57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C2F1B92CE01003F9EFF /* DebugLog.swift */; };
+		57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C311B92CE10003F9EFF /* DebugLogTest.swift */; };
 		F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */; };
 		F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */; };
 		F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */; };
@@ -340,6 +342,8 @@
 		57BCE0FB1B6984360047088B /* TypeTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransfer.swift; sourceTree = "<group>"; };
 		57BCE1081B69867F0047088B /* TypeTransferTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransferTest.swift; sourceTree = "<group>"; };
 		57BCE10C1B6991520047088B /* BlobBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BlobBridge.m; sourceTree = "<group>"; };
+		57C30C2F1B92CE01003F9EFF /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		57C30C311B92CE10003F9EFF /* DebugLogTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLogTest.swift; sourceTree = "<group>"; };
 		78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTLinking.xcodeproj; path = "node_modules/react-native/Libraries/LinkingIOS/RCTLinking.xcodeproj"; sourceTree = "<group>"; };
 		832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTText.xcodeproj; path = "node_modules/react-native/Libraries/Text/RCTText.xcodeproj"; sourceTree = "<group>"; };
 		F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Bold.ttf"; sourceTree = "<group>"; };
@@ -593,6 +597,7 @@
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
 				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
@@ -648,6 +653,15 @@
 				57BCE10C1B6991520047088B /* BlobBridge.m */,
 			);
 			path = NSDataBridge;
+			sourceTree = "<group>";
+		};
+		57C30C2D1B92CDF4003F9EFF /* DebugLog */ = {
+			isa = PBXGroup;
+			children = (
+				57C30C2F1B92CE01003F9EFF /* DebugLog.swift */,
+				57C30C311B92CE10003F9EFF /* DebugLogTest.swift */,
+			);
+			path = DebugLog;
 			sourceTree = "<group>";
 		};
 		78C398B11ACF4ADC00677621 /* Products */ = {
@@ -1061,6 +1075,7 @@
 			files = (
 				57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */,
 				573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */,
+				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
 				5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1069,6 +1084,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */,
 				5758F23B1B5EFE7600C18E5D /* Sync.swift in Sources */,
 				57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */,
 				5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */,

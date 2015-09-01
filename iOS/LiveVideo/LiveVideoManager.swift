@@ -5,6 +5,7 @@ class LiveVideoManager:  RCTViewManager {
     return [
       "faces": ["registrationName": "onFaces"],
       "timeChange": ["registrationName": "onTimeChange"],
+      "segmentError": ["registrationName": "onSegmentError"],
       "segmentEnd": ["registrationName": "onSegmentEnd"],
       "segmentStart": ["registrationName": "onSegmentStart"],
     ]

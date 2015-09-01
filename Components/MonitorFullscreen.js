@@ -288,6 +288,10 @@ export default React.createClass({
     });
   },
 
+  onSegmentError(event) {
+    console.log('Segment error encountered!', event.nativeEvent);
+  },
+
   /**
   Called when any type of segment has ended. This is the same process for both
   live and recorded segment modes.
@@ -638,6 +642,7 @@ export default React.createClass({
                 onTimeChange={this.onTimeChange}
                 onSegmentStart={this.onSegmentStart}
                 onSegmentEnd={this.onSegmentEnd}
+                onSegmentError={this.onSegmentError}
                 style={styles.video}
                 ref="video" />
             </TouchableWithoutFeedback>

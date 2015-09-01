@@ -10,10 +10,11 @@ DEVICECHECK=$LOCAL_PATH/devicecheck
 
 usage()
 {
-  echo "Usage: $0 (-h)"
+  echo "Usage: $0 [-r|-h]"
   echo
   echo "Checks if the emulator boots with the local build products"
   echo
+  echo " -r        Additionally run the specified script"
   echo " -h        Display this message"
   exit 1
 }
@@ -24,9 +25,12 @@ if [ -z $ANDROID_BUILD_TOP ]; then
 fi
 
 
-while getopts "hc:" opt; do
+while getopts "hr:" opt; do
   case $opt in
-    h) usage;;
+    h)
+        usage;;
+    r)  RUN_SCRIPT="$LOCAL_PATH/$OPTARG"
+        ;;
    \?) echo "Error: Invalid option -$OPTARG"; exit 1;;
   esac
 done
@@ -78,6 +82,12 @@ wait $EMU_PID || true
 # Restart the emulator, does it still boot?
 runqemu
 $DEVICECHECK
+
+# Run additional script
+if [[ -n $RUN_SCRIPT ]]; then
+  echo running script $RUN_SCRIPT
+  $RUN_SCRIPT
+fi
 
 echo
 echo PASS

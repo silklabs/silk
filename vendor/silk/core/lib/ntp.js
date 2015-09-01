@@ -22,6 +22,10 @@ const NTP_REFRESH_DELAY = 24 * 60 * 60 * 1000;
 function setSystemDate(date) {
   log.info(`Setting system time to: ${date}`);
 
+  // Adjust date by the timezone offset so that date.toISOString() returns local
+  // time, as there's no toISOString() equivalent for local time
+  let localdate = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
+
   //
   // TODO: Milliseconds are being dropped below.  This is okay for now because
   // a super accurate time is not required, it just needs to be accurate enough
@@ -31,10 +35,10 @@ function setSystemDate(date) {
   // for the various firmware components (Geolocation/Modem) would be nice.
   // More at https://bugzilla.mozilla.org/show_bug.cgi?id=1110010#c21
 
-  let iso = date.toISOString();
+  let iso = localdate.toISOString();
   let YYMMDD_HHMMSS = (iso.substring(0, 10) + '.' + iso.substring(11, 19)).replace(/[-:]/g, '');
 
-  util.exec('date', ['-s', YYMMDD_HHMMSS ])
+  util.exec('date', ['-s', YYMMDD_HHMMSS ]) // date expects local time, not UTC
   .then(
     result => {
       if (result.code !== 0) {

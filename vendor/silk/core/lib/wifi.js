@@ -217,8 +217,14 @@ class Wifi extends events.EventEmitter
       if (domain === '') {
         domain = 'localdomain';
       }
+
+      let Netmask = require('netmask').Netmask;
+      let block = new Netmask(ipaddress + '/' + mask);
+      let baseMask = block.base + '/' + block.bitmask;
+
       log.info(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
-               `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n`);
+               `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n` +
+               `base: ${baseMask}`);
 
       // Add basic routing table and DNS
       return Promise.resolve()
@@ -226,6 +232,7 @@ class Wifi extends events.EventEmitter
         .then(() => util.exec('ndc', ['network', 'create', '100']))
         .then(() => util.exec('ndc', ['network', 'interface', 'add', '100', iface]))
         .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
+        .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, baseMask, '0.0.0.0']))
         .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
         .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
         .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))

@@ -13,6 +13,7 @@
     "mkdirp-promise": "^1.0.2",
     "mold-source-map": "^0.4.0",
     "mz": "2.0.0",
+    "netmask": "^1.0.5",
     "node-hue-api": "1.0.5",
     "ntp-client": "file:local_node_modules/ntp-client",
     "request": "2.58.0",

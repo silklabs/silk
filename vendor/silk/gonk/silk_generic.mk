@@ -23,6 +23,7 @@ SILK_CORE := \
   core \
   base_version.js \
   silk-alog \
+  silk-bledroid \
   silk-gc1 \
   silk-movie \
 
@@ -79,6 +80,7 @@ PRODUCT_PACKAGES += fakeappops gonksched
 # external/...
 PRODUCT_PACKAGES += \
   bleno \
+  noble \
   opencv \
   kissfft \
 

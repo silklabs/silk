@@ -8,10 +8,17 @@ endif
 
 LOCAL_MODULE := bledroid
 LOCAL_SRC_FILES := main.cpp
-LOCAL_CFLAGS += -Wall -Wextra -Werror
-LOCAL_CFLAGS += -Wno-unused-parameter
-LOCAL_SHARED_LIBRARIES := liblog libhardware libsysutils
+LOCAL_CFLAGS += -Wall -Wextra -Werror -Wno-unused-parameter
+LOCAL_SHARED_LIBRARIES := \
+  liblog \
+  libhardware \
+  libhardware_legacy \
+  libsysutils
 LOCAL_C_INCLUDES += hardware/libhardware/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_REQUIRED_MODULES := bluetooth.default
+
+include external/stlport/libstlport.mk
+LOCAL_CFLAGS += -std=c++11
+
 include $(BUILD_SILK_EXECUTABLE)

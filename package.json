@@ -9,6 +9,7 @@
   "dependencies": {
     "art": "^0.10.0",
     "buffer": "^3.2.2",
+    "debug": "^2.2.0",
     "events": "^1.0.2",
     "joi": "^5.1.0",
     "lodash.merge": "^3.3.2",

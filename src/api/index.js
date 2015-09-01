@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import loadConfig from './config';
+import VIP from './vip';
 
 module.exports = function create(options) {
   let config = loadConfig(options);
@@ -49,6 +50,7 @@ module.exports = function create(options) {
     blob: require('./blob')(config),
     timeMeta: require('./time_metadata')(config),
     crashMeta: require('./crash_metadata')(config),
-    socketio: require('./socketio')(config)
+    socketio: require('./socketio')(config),
+    vip: new VIP(config.serverUrl)
   };
 };

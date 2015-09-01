@@ -1,0 +1,73 @@
+/**
+ * Basic http client which provides shared functionality (including JWT) for all
+ * our api calls
+ */
+
+import fetch from './fetch';
+import URL from 'url';
+import throwError from './fetch_error';
+import jwa from './jwa';
+import jwt from 'jsonwebtoken';
+
+export default class HttpClient {
+  constructor(baseUrl) {
+    if (!baseUrl) {
+      throw new Error('baseUrl is required');
+    }
+    this.baseUrl = baseUrl;
+  }
+
+  set key(value) {
+    if (!value.pub) {
+      throw new Error('Invalid key (missing .pub)');
+    }
+    if (!value.priv) {
+      throw new Error('Invalid key (missing .priv)');
+    }
+    this._key = value;
+  }
+
+  get key() {
+    if (!this._key) {
+      throw new Error('client.key is missing please set it.');
+    }
+    return this._key;
+  }
+
+  /**
+   * Issue a JWT signed request to the server.
+   *
+   * TODO:
+   *  - cross platform timeouts
+   *  - retires
+   */
+  async requestWithBody(method, url, body) {
+    body = JSON.stringify(body);
+
+    // TODO: Add hash of body to payload...
+    let signature = jwt.sign({}, this.key.priv, {
+      algorithm: 'ed25519',
+      jwa: jwa
+    });
+
+    let headers = {
+      'authorization': `Bearer ${signature}`,
+      'content-type': 'application/json'
+      // NOTE: content-length is intentionally omitted the underlying http layer
+      // can provide it if it desires so we don't need to worry about cross
+      // platform byte length issues.
+    };
+
+    let res = await fetch(URL.resolve(this.baseUrl, url), {
+      method,
+      body: body,
+      headers: headers
+    });
+
+    if (!res.ok) {
+      await throwError(res);
+    }
+
+    return await res.json();
+  }
+}

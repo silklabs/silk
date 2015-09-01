@@ -65,14 +65,14 @@ class Id {
     if (!this.pub) {
       throw new Error('no public key for device id ' + this.hash);
     }
-    var key = ec.keyFromPublic(this.pub, 'hex');
-    // Oddly, |verify()| throws for invalid signatures, instead of
-    // returning false.
+
+    let key;
     try {
-      return key.verify(sha256(token), signature, 'hex');
+      key = ec.keyFromPublic(this.pub, 'hex');
     } catch(e) {
       return false;
     }
+    return key.verify(sha256(token), signature, 'hex');
   }
 
   isValid() {

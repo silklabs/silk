@@ -17,7 +17,7 @@ function sha256(text) {
   return sha1.digest('hex');
 }
 
-function isPassHash(obj) {
+function ispasswordHash(obj) {
   return ('string' === typeof obj) && obj.length === 64;
 }
 
@@ -51,12 +51,12 @@ class Auth {
 }
 
 class Account extends Auth {
-  constructor(id, email, name, passhash) {
+  constructor(id, email, name, passwordHash) {
     super();
     this.id = api.id.importPub(id);
     this.email = email;
     this.name = name;
-    this.passhash = passhash;
+    this.passwordHash = passwordHash;
     this.devices = new Set();
   }
 
@@ -65,7 +65,7 @@ class Account extends Auth {
   }
 
   verifyChallenge(receipt, sig) {
-    return this.id.verify(this.passhash + ' ' + receipt, sig);
+    return this.id.verify(this.passwordHash + ' ' + receipt, sig);
   }
 }
 
@@ -91,7 +91,7 @@ class Accounts {
     this.deviceSessions = { };
   }
 
-  create(email, name, passhash, id, sig) {
+  create(email, name, passwordHash, id, sig) {
     if (email in this.emails) {
       log.warn('Email', email, 'already registered');
       return false;
@@ -101,16 +101,16 @@ class Accounts {
       log.warn('ID', id, 'already registered ... suspicious');
       return false;
     }
-    if (!isPassHash(passhash)) {
-      log.warn('Invalid passhash for', email);
+    if (!ispasswordHash(passwordHash)) {
+      log.warn('Invalid passwordHash for', email);
       return false;
     }
     let key = api.id.importPub(id);
-    if (!key.verify(passhash, sig)) {
+    if (!key.verify(passwordHash, sig)) {
       log.warn('Failed to verify ID of', email);
       return false;
     }
-    this.accounts[id] = new Account(id, email, name, passhash);
+    this.accounts[id] = new Account(id, email, name, passwordHash);
     this.emails[email] = id;
     return true;
   }

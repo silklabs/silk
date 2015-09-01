@@ -1,3 +1,5 @@
+let DEBUG_DEFAULT = "silk*"
+
 public struct ConfigReactNative {
   public var url: String? = "main.jsbundle"
   public var type: String? = "bundle"
@@ -12,6 +14,7 @@ public struct ConfigReactNative {
 
 public struct Config {
   public var reactNative = ConfigReactNative(nil)
+  public var debug = DEBUG_DEFAULT
 }
 
 
@@ -30,10 +33,16 @@ public class LoadConfig {
     }
 
     if let jsonDict = result {
+      var debug = DEBUG_DEFAULT
       let reactNative = ConfigReactNative(
         jsonDict["react-native"] as? Dictionary<String, String>
       )
-      let config = Config(reactNative: reactNative)
+
+      if let debugStr = jsonDict["debug"] as? String {
+        debug = debugStr
+      }
+
+      let config = Config(reactNative: reactNative, debug: debug)
       return (config, nil)
     }
 

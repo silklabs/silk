@@ -74,6 +74,19 @@ Now, after making a change to a react-native .js file, simply press Ctrl-r in th
 
 However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the full Ctrl-r rebuild/redeploy from within Xcode always works.
 
+### Logging
+
+Logging is configured via `config.local.json` currently logging is based
+on the `debug` module...
+
+For example to enable all logs possible (socket.io, etc..):
+
+```json
+{
+  "debug": "*"
+}
+```
+
 ## Producing a release (by hand)
 
 This functionality should move to CI.  Until it does, here are the steps for manually producing release packages:

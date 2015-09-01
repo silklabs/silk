@@ -1,5 +1,6 @@
 // Default configuration...
 let DEFAULT = {
+  'debug': 'silk:*',
   'react-native': {},
   'server': {}
 };

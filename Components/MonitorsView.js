@@ -18,6 +18,7 @@ var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
 var MonitorPreview = require('./MonitorPreview');
 var io = require('socket.io-client-react-native');
+var debug = require('debug')('silk:MonitorPreview');
 
 import { CameraMarkText, PlaceholderText } from './Text';
 
@@ -109,7 +110,7 @@ var MonitorsView = React.createClass({
 
   connectServer: function() {
     if (this.socket) {
-      console.log('Closing old socket');
+      debug('Closing old socket');
       // TODO: react-native-swift-socketio has some problems managing
       // socket instances; it appears to assume one global socket.  So
       // help it out by clearing out all our old listeners; at least
@@ -130,9 +131,9 @@ var MonitorsView = React.createClass({
 
     this.state.serverConnection = 'connecting';
     this.setState(this.state);
-    console.log('Connecting to ...', this.state.serverUrl);
+    debug('Connecting to ...', this.state.serverUrl);
     this.socket.on('connect', () => {
-      console.log(' ... connected');
+      debug(' ... connected');
       this.state.serverConnection = 'connected';
       this.setState(this.state);
       this.socket.on('video-stream-new', msg => {
@@ -166,8 +167,8 @@ var MonitorsView = React.createClass({
         this.getWifiPromise = null;
       }
       if (this.state.serverUrl !== network.serverUrl) {
-        console.log('WARNING: Switching server URL to', network.serverUrl);
-        console.log('  This will break any open monitor streams.');
+        debug('WARNING: Switching server URL to', network.serverUrl);
+        debug('  This will break any open monitor streams.');
         this.state.serverUrl = network.serverUrl;
         this.connectServer();
       }

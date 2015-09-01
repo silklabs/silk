@@ -366,7 +366,7 @@ config.on('configured', () => {
       // (currently need to wait for hue to initialize, otherwise this could be
       //  done much sooner)
       if (!ext) {
-        require('./ext')({
+        ext = require('./ext')({
           camera: camera,
           hue: hue,
           sensors: sensors,

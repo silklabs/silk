@@ -68,6 +68,11 @@ let LiveVideo = React.createClass({
     onTimeChange: React.PropTypes.func,
 
     /**
+    Invoked on segment errors.
+    */
+    onSegmentError: React.PropTypes.func,
+
+    /**
     Invoked when the segment starts.
     */
     onSegmentStart: React.PropTypes.func,

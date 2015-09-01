@@ -28,6 +28,9 @@
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
+# 7. LOCAL_INSTALL_NODE_MODULES space separated list of node_modules to be copied
+#    on the device. This is only relevant for LOCAL_NODE_MODULE_TYPE == folder
+#
 
 LOCAL_MODULE_CLASS := NPM
 my_prefix := TARGET_
@@ -215,19 +218,24 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR
 endif # .js module
 
 else # LOCAL_NODE_MODULE_TYPE == folder
-
-# For now just assume that all device node_module dependencies are already
+# Assume that all device node_module dependencies are already
 # present somehow, so don't install all of node_modules/ (which likely also
-# contains a bunch of development only tools).
+# contains a bunch of development only tools) unless explicitly requested by
+# LOCAL_INSTALL_NODE_MODULES
 #
 # TODO: Any binaries within the folder module are not stripped
 #
 # TODO: Maybe a better way would be to use the package.json's "files" section to
 # determine what to install on device?
+$(LOCAL_INSTALLED_MODULE): LOCAL_INSTALL_NODE_MODULES:= $(LOCAL_INSTALL_NODE_MODULES)
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
 	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
+ifdef LOCAL_INSTALL_NODE_MODULES
+	$(hide) mkdir -p $(@D)/node_modules
+	rsync -qavL $(addprefix $(<D)/node_modules/,$(LOCAL_INSTALL_NODE_MODULES)) $(@D)/node_modules
+endif
 	$(hide) touch $@
 endif
 

@@ -1,5 +1,10 @@
 import loadConfig from '../src/server/config';
 import mongo from 'promised-mongo';
+import gen from '../src/api_generate';
+
+// Ensure we have recently auto-generated files. Must happen before mocha runs
+// otherwise we may have required old versions of the files.
+gen();
 
 const DB_TIMEOUT = 1500;
 
@@ -11,6 +16,7 @@ function timeout(time) {
 
 // Run a one time check to ensure mongodb has been started.
 suiteSetup(async function() {
+
   let config = loadConfig('test');
   let db = mongo(config.db.connectionString);
 

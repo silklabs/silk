@@ -11,7 +11,7 @@ suite('accounts', () => {
     subject = new Accounts(context.db);
   });
 
-  test('#create / #authenticate', async () => {
+  test('#create / #checkPassword', async () => {
     let key = id.create();
     let input = {
       publicKey: key.toString(),
@@ -20,12 +20,12 @@ suite('accounts', () => {
       userAgent: 'nodejs'
     };
 
-    let authBeforeCreate = await subject.authenticate({
+    let authBeforeCreate = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,
       passwordHash: input.passwordHash
     });
-    assert.ok(authBeforeCreate.error, 'fails to authenticate');
+    assert.ok(authBeforeCreate.error, 'fails to checkPassword');
 
     let account = await subject.create(input);
     assert.ok(account.id, 'Creates account and returns id');
@@ -34,13 +34,13 @@ suite('accounts', () => {
     let duplicate = await subject.create(input);
     assert.ok(duplicate.error, 'has errors');
 
-    let successfulAuth = await subject.authenticate({
+    let successfulAuth = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,
       passwordHash: input.passwordHash
     });
     assert.equal(successfulAuth.id, account.id);
-    let unsuccessfulAuth = await subject.authenticate({
+    let unsuccessfulAuth = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,
       passwordHash: context.passwordHash('other')

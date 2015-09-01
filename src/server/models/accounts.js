@@ -14,10 +14,11 @@ const passwordHash = Joi.string().required().min(64).max(256);
 const AUTHENTICATED_DURATION = 60 * 1000 * 15;
 
 export default class Accounts extends Base {
+  static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION
 
   static ERROR = {
     duplicateEmail: 'DuplicateEmail',
-    authenticationFailure: 'AuthenticationFailure'
+    checkPasswordFailure: 'CheckPasswordFailure'
   }
 
   static SCHEMA = {
@@ -28,7 +29,7 @@ export default class Accounts extends Base {
       userAgent: Joi.string().required()
     }).required(),
 
-    authenticate: Joi.object().keys({
+    checkPassword: Joi.object().keys({
       publicKey: Joi.string().required(),
       email: EMAIL,
       passwordHash: passwordHash
@@ -151,7 +152,12 @@ export default class Accounts extends Base {
     // Insert the document but do not override any other accounts with the same
     // email address!
     let insert = await this.collection.update(
-      { email: payload.email },
+      {
+        $or: [
+          { email: payload.email },
+          { 'accountTokens.publicKey': payload.publicKey }
+        ]
+      },
       { $setOnInsert: account },
       { upsert: true }
     );
@@ -164,15 +170,20 @@ export default class Accounts extends Base {
     return this.error('duplicateEmail');
   }
 
-  async authenticate(payload) {
-    payload = this.validate(payload, 'authenticate');
+  /**
+   * Check the users password this is run in cases where the accessToken has not
+   * been checked against the users password in some time and we want to perform
+   * a sensitive operation.
+   */
+  async checkPassword(payload) {
+    payload = this.validate(payload, 'checkPassword');
 
     let account = await this.collection.findOne({
       email: payload.email
     });
 
     if (!account) {
-      return this.error('authenticationFailure');
+      return this.error('checkPasswordFailure');
     }
 
     let validate = this.scryptVerify(account.password.hash, payload.passwordHash);
@@ -186,7 +197,7 @@ export default class Accounts extends Base {
 
       if (update.n !== 1) {
         throw new Error(
-          `Authentication update failed for unknown reasons: ${
+          `checkPassword update failed for unknown reasons: ${
             JSON.stringify(update)
           }`
         );
@@ -195,7 +206,7 @@ export default class Accounts extends Base {
       return { id: account._id.toString() };
     }
 
-    return this.error('authenticationFailure');
+    return this.error('checkPasswordFailure');
   }
 }
 

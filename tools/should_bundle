@@ -14,7 +14,7 @@ try {
   var config = require('../config.local.json')
 } catch(e) {}
 
-if (config["react-native"].type === "bundle") {
+if (!config['react-native'] || config["react-native"].type === "bundle") {
   process.exit(0);
 } else {
   process.exit(1);

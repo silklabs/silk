@@ -7,7 +7,7 @@ suite('metadata', () => {
 
   let subject;
   setup(async () => {
-    subject = new CrashMetadata(context.config, context.db);
+    subject = new CrashMetadata(context.db);
   });
 
   test('put / get / find', async () => {

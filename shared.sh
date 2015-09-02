@@ -2,6 +2,8 @@
 # |source| me
 #
 
+set -o pipefail
+
 #
 # GITS: List of projects that are branched.
 # MERGE_GITS: Subset of GITS that need commits merged back to master
@@ -35,6 +37,23 @@ clone() {
   done
 }
 
+nostragglers() {
+  local branch=$1
+  ok=true
+  for g in $MERGE_GITS; do
+    if [[ $(git -C $g cherry origin/master $branch | wc -l) -ne 0 ]]; then
+      echo Error: Refusing to continue until all commits from
+      echo $branch have been merged back into master:
+      echo
+      git -C $g cherry -v origin/master $branch
+      echo
+      ok=false
+    fi
+  done
+
+  $ok || exit 1
+}
+
 ignoreHEADOnMaster() {
   local SHA1=$(git rev-parse --short HEAD)
   git checkout master
@@ -47,6 +66,7 @@ updatebranch__silk_app() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
+  echo "Updating branch for silk-app: $from => $to"
   pushd silk-app
   (
     set -x
@@ -60,11 +80,45 @@ updatebranch__silk_app() {
   popd
 }
 
+# Bumps the version of silk-app for given branch
+semver_inc__silk_app() {
+  local branch=$1
+  local level=$2
+  local ignoreOnMaster=$3
+  pushd silk-app
+  (
+    set -x
+    git checkout $branch
+
+    local ver=$(cat iOS/Info.plist | \
+      sed -n -e 's#\t<string>\([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*\)</string>#\1#p' | \
+      head -n1)
+
+    if [[ "$ver" == "" ]]; then
+      echo Error: unable to determine app version
+      exit
+    fi
+
+    mkdir -p node_modules
+    npm install semver --loglevel http
+    local nextver=$(./node_modules/.bin/semver $ver -i $level)
+
+    sed -e "s/$ver/$nextver/" -i iOS/Info.plist
+    git add iOS/Info.plist
+    git commit -m "Automated version update from ${ver} to ${nextver}"
+    if [[ $branch != master ]]; then
+      ignoreHEADOnMaster
+    fi
+  )
+  popd
+}
+
 # Update branch references within silk-device
 updatebranch__silk_device() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
+  echo "Updating branch for silk-device: $from => $to"
   pushd silk-device
   (
     set -x
@@ -123,7 +177,7 @@ mergerelease() {
 
       # Fix release commit message
       echo "Automated release" > msg
-      echo >> msg 
+      echo >> msg
       git shortlog ${to}~1..${to} >> msg
       git commit --amend -F msg
     )
@@ -140,7 +194,7 @@ push() {
     (
       set -x
       pushd $g
-      git push -f origin $branch
+      git push origin $branch
       popd > /dev/null
     )
   done

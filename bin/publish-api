@@ -144,13 +144,23 @@ async function main() {
     await gitcmd('diff --cached', gitOpts);
   }
 
-  if (!isDryRun && await gitHasChanged(cwd)) {
-    console.log('~~~ Change detected in build pushing ~~~');
-    await gitcmd(`commit -m "${args.message}"`, gitOpts);
+  let needsPush = await gitHasChanged(cwd);
 
-    await gitcmd('log', gitOpts);
-    await gitcmd('push', gitOpts);
+  if (!needsPush) {
+    console.log('[publish api] No push required');
+    return;
   }
+
+  if (isDryRun) {
+    console.log('[publish api] Dry run skipping push');
+    return;
+  }
+
+  console.log('[publish api] Changes detected pushing!');
+  await gitcmd(`commit -m "${args.message}"`, gitOpts);
+
+  await gitcmd('log', gitOpts);
+  await gitcmd('push', gitOpts);
 }
 
 async function cleanup() {

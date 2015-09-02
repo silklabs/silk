@@ -1,25 +1,31 @@
 #! /bin/bash -ex
 
+# Assign defaults for easier running
+TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST:-"false"}
+TRAVIS_BRANCH=${TRAVIS_BRANCH:-"master"}
+GITHUB_USER=${GITHUB_USER:-"autogenbot"}
+TRAVIS_COMMIT_RANGE=${TRAVIS_COMMIT_RANGE:-"testing"}
+
+publish_opts="--dry-run"
+push_branch=false
+
 if [ "$TRAVIS_PULL_REQUEST" != "false" ];
 then
-  echo "Cannot run on pull requests."
-  exit 0
-fi
+  echo "Will not push on pull request..."
+else
+  for branch in master next chemspill; do
+    if [ "$TRAVIS_BRANCH" = "$branch" ];
+    then
+      publish_opts=""
+      push_branch=true
+      break
+    fi
+  done
 
-
-ok=false
-for branch in master next chemspill; do
-  if [ "$TRAVIS_BRANCH" = "$branch" ];
+  if ! $push_branch;
   then
-    ok=true
-    break
+    echo "Will not push on branch $TRAVIS_BRANCH"
   fi
-done
-
-if ! $ok;
-then
-  echo "Not setup to handle branch: $TRAVIS_BRANCH"
-  exit 1
 fi
 
 build() {
@@ -30,7 +36,8 @@ build() {
     $source $build \
     --branch $TRAVIS_BRANCH \
     --gh-user $GITHUB_USER \
-    --message "Commit for $TRAVIS_BRANCH ($TRAVIS_COMMIT_RANGE)"
+    --message "Commit for $TRAVIS_BRANCH ($TRAVIS_COMMIT_RANGE)" \
+    $publish_opts
   echo "[ building $2: $1 ] done"
 }
 

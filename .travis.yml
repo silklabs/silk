@@ -5,5 +5,4 @@ notifications:
   email:
     - engineering@silklabs.com
 
-after_success:
-  ./build/ci.sh
+script: npm test && ./build/ci.sh

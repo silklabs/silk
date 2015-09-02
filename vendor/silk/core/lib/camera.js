@@ -176,15 +176,12 @@ class CameraStream extends EventEmitter {
       this._buffer = '';
       this._ready = true;
       if (cmdData) {
+        this._videoWidth = cmdData.width;
+        this._videoHeight = cmdData.height;
         PREVIEW_WIDTH = cmdData.width / cmdData.previewScale;
         PREVIEW_HEIGHT = cmdData.height / cmdData.previewScale;
         this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
         this._command({cmdName: 'init', cmdData: cmdData});
-        this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-
-        this._cvVideoCapture = new cv.VideoCapture(0);
-        this._cvVideoCapture.setWidth(cmdData.width);
-        this._cvVideoCapture.setHeight(cmdData.height);
       }
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
@@ -216,6 +213,11 @@ class CameraStream extends EventEmitter {
       if (captureEvent.eventName === 'error') {
         this.emit('error');
       } else if (captureEvent.eventName === 'initialized') {
+        this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+
+        this._cvVideoCapture = new cv.VideoCapture(0);
+        this._cvVideoCapture.setWidth(this._videoWidth);
+        this._cvVideoCapture.setHeight(this._videoHeight);
         this.emit('start');
       } else if (captureEvent.eventName === 'stopped') {
         this.emit('stop');
@@ -265,6 +267,9 @@ class CameraStream extends EventEmitter {
 
   _grabPreviewFrame(when) {
     // Grab the next frame
+    if (!this._cvVideoCapture) {
+      return;
+    }
     this._cvVideoCapture.grab(() => {
       let now = Date.now();
       log.info(`Preview frame grabbed. lag=${now - when}ms`);
@@ -352,12 +357,12 @@ class CameraStream extends EventEmitter {
     if (caps.has('qemu')) {
       initargs = {
         frameInterval: DURATION,
-        width: 640,
-        height: 480,
-        fps: 10,
+        width: 320,
+        height: 240,
+        fps: 5,
         vbr: 1024,
-        previewScale: 4,
-        previewSkipCount: 25
+        previewScale: 1,
+        previewSkipCount: 5
       };
     } else {
       initargs = {

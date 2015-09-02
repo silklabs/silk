@@ -66,10 +66,10 @@ updatebranch__silk_app() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
+  echo "Updating branch for silk-app: $from => $to"
   pushd silk-app
   (
     set -x
-    git checkout $to
     sed -i package.json -e s/#${from}/#${to}/g
     git add package.json
     git commit -m "Automated branch update from ${from} to ${to}"
@@ -118,10 +118,10 @@ updatebranch__silk_device() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
+  echo "Updating branch for silk-device: $from => $to"
   pushd silk-device
   (
     set -x
-    git checkout $to
     sed -i .branch -e s/${from}/${to}/g
     sed -i gonk/manifest/silk-remote.xml -e s/${from}/${to}/g
     git commit --all -m "Automated branch update from ${from} to ${to}"
@@ -177,7 +177,7 @@ mergerelease() {
 
       # Fix release commit message
       echo "Automated release" > msg
-      echo >> msg 
+      echo >> msg
       git shortlog ${to}~1..${to} >> msg
       git commit --amend -F msg
     )

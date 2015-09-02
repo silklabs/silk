@@ -23,6 +23,7 @@
 #include <sysutils/FrameworkListener.h>
 #include <limits.h>
 #include <memory>
+#include <cctype>
 
 using namespace android;
 
@@ -241,6 +242,28 @@ private:
   bool waiting;
 };
 
+bool hexstr_to_buffer(const char *str, char *buffer, size_t length) {
+  if (!str) {
+    return false;
+  }
+
+  char b[3] = { };
+  b[2] = '\0';
+
+  for (size_t index = 0; index < length; index++) {
+    b[0] = str[index * 2];
+    b[1] = str[(index * 2) + 1];
+
+    if (!isxdigit(b[0]) || !isxdigit(b[1])) {
+      return false;
+    }
+
+    buffer[index] = strtol(b, nullptr, 16);
+  }
+
+  return true;
+}
+
 // |str| is expected to be of the form:
 //   - '0000abcd00001000800000805f9b34fb' (128-bit uuid)
 //   - '0000abcd' (32-bit uuid)
@@ -289,20 +312,10 @@ bool str_to_uuid(char const *str, bt_uuid_t &uuid) {
 
 // str is expected to be of the form: 60030894929B
 bool str_to_addr(char const *str, bt_bdaddr_t &addr) {
-  if (!str) {
-    return false;
-  }
+  auto* buffer = reinterpret_cast<char*>(&addr.address);
+  const size_t bufferLength = sizeof(addr.address);
 
-  char b[3] = { };
-  b[2] = '\0';
-
-  for (int i = 0; i < 6; i++) {
-    b[0] = str[i * 2];
-    b[1] = str[i * 2 + 1];
-    addr.address[i] = strtol(b, NULL, 16);
-  }
-
-  return true;
+  return hexstr_to_buffer(str, buffer, bufferLength);
 }
 
 bool addr_to_str(const bt_bdaddr_t &addr, char *str, size_t strLength) {
@@ -325,7 +338,7 @@ bool addr_to_str(const bt_bdaddr_t &addr, char *str, size_t strLength) {
 }
 
 int str_to_uuids(char *&saveptr,
-                 int numServices,
+                 int &numServices,
                  std::auto_ptr<bt_uuid_t> &serviceUuids) {
   const char *numServicesStr = strtok_r(NULL, " \n", &saveptr);
   LOG_ERROR(!numServicesStr, "Malformed uuid string (no numServices)");
@@ -347,7 +360,7 @@ int str_to_uuids(char *&saveptr,
   }
 
   serviceUuids = uuids;
-  return 0;
+  return BT_STATUS_SUCCESS;
 }
 
 bool uuid_to_str(const bt_uuid_t &uuid, char *str, size_t strLength) {
@@ -1852,6 +1865,95 @@ int bt_init() {
 
   return 0;
 }
+int bt_set_advertising_data(char *&saveptr) {
+  char manufacturer_buffer[31];
+  char service_data_buffer[31];
+
+  const char *token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No set_scan_rsp");
+  LOG_ERROR(*token != '0' && *token != '1', "Invalid set_scan_rsp");
+  const bool set_scan_rsp = *token == '1';
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No include_name");
+  LOG_ERROR(*token != '0' && *token != '1', "Invalid include_name");
+  const bool include_name = *token == '1';
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No include_txpower");
+  LOG_ERROR(*token != '0' && *token != '1', "Invalid include_txpower");
+  const bool include_txpower = *token == '1';
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No min_interval");
+  const int min_interval = atoi(token);
+  LOG_ERROR(min_interval < 0, "Invalid min_interval");
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No max_interval");
+  const int max_interval = atoi(token);
+  LOG_ERROR(max_interval < min_interval, "Invalid max_interval");
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No appearance");
+  const int appearance = atoi(token);
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No manufacturer_len");
+  const int manufacturer_len = atoi(token);
+  LOG_ERROR(manufacturer_len < 0 ||
+            size_t(manufacturer_len) > sizeof(manufacturer_buffer),
+            "Invalid manufacturer_len");
+
+  char *manufacturer_data = nullptr;
+  if (manufacturer_len) {
+    token = strtok_r(nullptr, " ", &saveptr);
+    LOG_ERROR(!hexstr_to_buffer(token, manufacturer_buffer, manufacturer_len),
+              "Couldn't convert manufacturer_data");
+    manufacturer_data = manufacturer_buffer;
+  }
+
+  token = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!token, "No service_data_len");
+  const int service_data_len = atoi(token);
+  LOG_ERROR(service_data_len < 0 ||
+            size_t(service_data_len) > sizeof(service_data_buffer),
+            "Invalid service_data_len");
+
+  char *service_data = nullptr;
+  if (service_data_len) {
+    token = strtok_r(nullptr, " ", &saveptr);
+    LOG_ERROR(!hexstr_to_buffer(token, service_data_buffer, service_data_len),
+              "Couldn't convert service_data");
+    service_data = service_data_buffer;
+  }
+
+  int service_uuid_count;
+  std::auto_ptr<bt_uuid_t> service_uuids;
+  LOG_ERROR(str_to_uuids(saveptr, service_uuid_count, service_uuids),
+            "Failed to convert string of uuids");
+
+  const int service_uuid_len = service_uuid_count * sizeof(*(service_uuids.get()));
+  auto* service_uuid = reinterpret_cast<char*>(service_uuids.get());
+
+  // XXX Figure out how to wait for this?
+  int err = gatt->client->set_adv_data(gatt_client_if,
+                                       set_scan_rsp,
+                                       include_name,
+                                       include_txpower,
+                                       min_interval,
+                                       max_interval,
+                                       appearance,
+                                       manufacturer_len,
+                                       manufacturer_data,
+                                       service_data_len,
+                                       service_data,
+                                       service_uuid_len,
+                                       service_uuid);
+  LOG_ERROR(err, "gatt client set_adv_data failed: %d", err);
+
+  return BT_STATUS_SUCCESS;
+}
 
 int bt_start_scan(char *&saveptr) {
   const char *allowDuplicatesStr = strtok_r(NULL, " \n", &saveptr);
@@ -1860,7 +1962,7 @@ int bt_start_scan(char *&saveptr) {
             "Malformed startScanning (duplicates not 0 or 1)");
   const bool allowDuplicates = *allowDuplicatesStr == '0' ? false : true;
 
-  int numServices = 0;
+  int numServices;
   std::auto_ptr<bt_uuid_t> service_uuids;
   LOG_ERROR(str_to_uuids(saveptr, numServices, service_uuids),
             "Failed to convert string of uuids");
@@ -1964,7 +2066,7 @@ int bt_discover_services(char *&saveptr) {
 
   const int connectionId = atoi(connIdString);
 
-  int numServices = 0;
+  int numServices;
   std::auto_ptr<bt_uuid_t> serviceUuids;
   LOG_ERROR(str_to_uuids(saveptr, numServices, serviceUuids),
             "Failed to convert string of uuids");
@@ -2066,16 +2168,8 @@ int bt_write_characteristic(char *&saveptr) {
 
   if (dataLength) {
     token = strtok_r(NULL, " \n", &saveptr);
-    LOG_ERROR(!token, "Malformed (no data)");
-
-    char b[3] = { };
-    b[2] = '\0';
-
-    for (int index = 0; index < dataLength; index++) {
-      b[0] = token[index * 2];
-      b[1] = token[(index * 2) + 1];
-      data[index] = strtol(b, nullptr, 16);
-    }
+    LOG_ERROR(!hexstr_to_buffer(token, data, dataLength),
+              "Could not convert data");
   }
 
   CALL_AND_WAIT(gatt->client->write_characteristic(connectionId,
@@ -2175,16 +2269,8 @@ int bt_write_descriptor(char *&saveptr) {
 
   if (dataLength) {
     token = strtok_r(NULL, " \n", &saveptr);
-    LOG_ERROR(!token, "Malformed (no data)");
-
-    char b[3] = { };
-    b[2] = '\0';
-
-    for (int index = 0; index < dataLength; index++) {
-      b[0] = token[index * 2];
-      b[1] = token[(index * 2) + 1];
-      data[index] = strtol(b, nullptr, 16);
-    }
+    LOG_ERROR(!hexstr_to_buffer(token, data, dataLength),
+              "Could not convert data");
   }
 
   CALL_AND_WAIT(gatt->client->write_descriptor(connectionId,
@@ -2230,29 +2316,8 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     CALL_AND_WAIT(gatt->client->read_remote_rssi(gatt_client_if,
                                                  &lastConnectedAddr));
   } else if (0 == strcmp(cmd, "advertisingData")) {
-    char *numServicesStr = strtok_r(NULL, " \n", &saveptr);
-    if (numServicesStr != NULL) {
-      int numServices = atoi(numServicesStr);
-      int service_uuid_len = 0;
-      bt_uuid_t service_uuid[numServices];
-
-      for (int i = 0; i < numServices; i++) {
-        char *uuid = strtok_r(NULL, " \n", &saveptr);
-        LOG_ERROR(!str_to_uuid(uuid, service_uuid[service_uuid_len]),
-            "Malformed advertisingData (invalid uuid)");
-        ALOGV("Adding UUID: %s\n", uuid);
-        service_uuid_len += sizeof(bt_uuid_t);
-      }
-
-      // XXX Figure out how to wait for this?
-      err = gatt->client->set_adv_data(gatt_client_if,
-      false, true, true,  // set_scan_rsp, include_name, include_txpower,
-          0, 0, 0,  // min_interval, max_interval, appearance
-          0, NULL,  // manufacturer data...
-          0, NULL,  // service data...
-          service_uuid_len, (char *) service_uuid);
-      LOG_ERROR(err, "gatt client set_adv_data failed: %d", err);
-    }
+    err = bt_set_advertising_data(saveptr);
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to set advertising data");
   } else if (0 == strcmp(cmd, "primaryService")) {
     char *numAttributesStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((numAttributesStr == NULL),

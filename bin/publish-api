@@ -42,14 +42,14 @@ async function run(cmd, output = true) {
 }
 
 async function gitcmd(cmd, options = {}) {
-  let { user, pass, cwd } = options;
-
-  // wrap the git command in credential helper so we don't get prompted...
-  let git = `git -c "credential.helper=${__dirname}/git-pass ${user} ${pass}"`;
-
-  // Ensure email/name are setup so git is happy
-  git = `${git} -c "user.email=${user}@silklabs.com"`;
-  git = `${git} -c "user.name=${user}"`;
+  let { user, pass, auth, cwd } = options;
+  let git = 'git';
+  if (auth) {
+    // wrap the git command in credential helper so we don't get prompted...
+    git = `${git} -c "credential.helper=${__dirname}/git-pass ${user} ${pass}"`;
+    // Ensure email/name are setup so git is happy
+    git = `${git} -c "user.name=${user}"`;
+  }
 
   if (cwd) {
     git = `${git} -C ${cwd}`;
@@ -79,6 +79,12 @@ parser.addArgument(['repo'], {
 parser.addArgument(['build'], {
   choices: TARGETS,
   help: 'Type of build to stage in repo'
+});
+
+
+parser.addArgument(['--no-auth'], {
+  action: 'storeTrue',
+  help: 'Skip github user token auth and fallback to ssh keys'
 });
 
 parser.addArgument(['--gh-user', '-gu'], {
@@ -119,20 +125,24 @@ async function main() {
 
   let pass = args.gh_token;
   let user = args.gh_user;
+  let auth = !args.no_auth;
   let isDryRun = args.dry_run;
 
-  let gitOpts = { user, pass, cwd };
+  let gitOpts = { user, pass, auth, cwd };
 
-  if (!pass) {
-    throw new Error('You must pass a github token (--gh-token)');
-  }
+  if (auth) {
+    if (!pass) {
+      throw new Error('You must pass a github token (--gh-token)');
+    }
 
-  if (!user) {
-    throw new Error('You must pass a github user (--gh-user)');
+    if (!user) {
+      throw new Error('You must pass a github user (--gh-user)');
+    }
   }
 
   // Clone does not take a cwd since we pass an absolute path...
   await gitcmd(`clone -b ${args.branch} ${args.repo} ${cwd}`, {
+    auth,
     user,
     pass
   });

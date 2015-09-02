@@ -3,10 +3,12 @@
 # Assign defaults for easier running
 TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST:-"false"}
 TRAVIS_BRANCH=${TRAVIS_BRANCH:-"master"}
-GITHUB_USER=${GITHUB_USER:-"autogenbot"}
 TRAVIS_COMMIT_RANGE=${TRAVIS_COMMIT_RANGE:-"testing"}
 
-publish_opts="--dry-run"
+# What type of github url to construct...
+repo_url_type="ssh"
+
+publish_opts="--dry-run --no-auth"
 push_branch=false
 
 if [ "$TRAVIS_PULL_REQUEST" != "false" ];
@@ -16,7 +18,9 @@ else
   for branch in master next chemspill; do
     if [ "$TRAVIS_BRANCH" = "$branch" ];
     then
-      publish_opts=""
+      # Override previous opts with ones specific to pushing...
+      publish_opts="--gh-user $GITHUB_USER"
+      repo_url_type="https"
       push_branch=true
       break
     fi
@@ -29,17 +33,25 @@ else
 fi
 
 build() {
-  local source=$1
+  local repo_url=$1
   local build=$2
+
+  if [ "$repo_url_type" == "ssh" ];
+  then
+    repo_url="git@github.com:/$repo_url"
+  elif [ "$repo_url_type" == "https" ];
+  then
+    repo_url="https://github.com/$repo_url"
+  fi
+
   echo "[ building $2: $1 ] start"
   ./node_modules/.bin/babel-node --harmony ./bin/publish-api \
-    $source $build \
+    $repo_url $build \
     --branch $TRAVIS_BRANCH \
-    --gh-user $GITHUB_USER \
     --message "Commit for $TRAVIS_BRANCH ($TRAVIS_COMMIT_RANGE)" \
     $publish_opts
   echo "[ building $2: $1 ] done"
 }
 
-build https://github.com/silklabs/silk-api-react-native react-native
-build https://github.com/silklabs/silk-api-node node
+build silklabs/silk-api-react-native react-native
+build silklabs/silk-api-node node

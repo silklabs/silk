@@ -57,7 +57,8 @@ LOCAL_SHARED_LIBRARIES := \
   liblog \
   libutils \
 
-LOCAL_C_INCLUDES := .
+LOCAL_C_INCLUDES := . \
+  frameworks/native/include/media/openmax \
 
 LOCAL_CFLAGS += -Wextra -Werror
 

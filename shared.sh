@@ -2,6 +2,8 @@
 # |source| me
 #
 
+set -o pipefail
+
 #
 # GITS: List of projects that are branched.
 # MERGE_GITS: Subset of GITS that need commits merged back to master
@@ -67,10 +69,44 @@ updatebranch__silk_app() {
   pushd silk-app
   (
     set -x
+    git checkout $to
     sed -i package.json -e s/#${from}/#${to}/g
     git add package.json
     git commit -m "Automated branch update from ${from} to ${to}"
     if [[ -n $ignoreOnMaster ]]; then
+      ignoreHEADOnMaster
+    fi
+  )
+  popd
+}
+
+# Bumps the version of silk-app for given branch
+semver_inc__silk_app() {
+  local branch=$1
+  local level=$2
+  local ignoreOnMaster=$3
+  pushd silk-app
+  (
+    set -x
+    git checkout $branch
+
+    local ver=$(cat iOS/Info.plist | \
+      sed -n -e 's#\t<string>\([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*\)</string>#\1#p' | \
+      head -n1)
+
+    if [[ "$ver" == "" ]]; then
+      echo Error: unable to determine app version
+      exit
+    fi
+
+    mkdir -p node_modules
+    npm install semver --loglevel http
+    local nextver=$(./node_modules/.bin/semver $ver -i $level)
+
+    sed -e "s/$ver/$nextver/" -i iOS/Info.plist
+    git add iOS/Info.plist
+    git commit -m "Automated version update from ${ver} to ${nextver}"
+    if [[ $branch != master ]]; then
       ignoreHEADOnMaster
     fi
   )
@@ -85,6 +121,7 @@ updatebranch__silk_device() {
   pushd silk-device
   (
     set -x
+    git checkout $to
     sed -i .branch -e s/${from}/${to}/g
     sed -i gonk/manifest/silk-remote.xml -e s/${from}/${to}/g
     git commit --all -m "Automated branch update from ${from} to ${to}"
@@ -157,7 +194,7 @@ push() {
     (
       set -x
       pushd $g
-      git push -f origin $branch
+      git push origin $branch
       popd > /dev/null
     )
   done

@@ -3,12 +3,29 @@
 # Performs Feature Midweek Landing branching
 #
 
+usage () {
+  echo "usage: $0 [-c]"
+  echo
+  echo Populates the next or chemspill branch
+  echo c - This is chemspill, not a Feature Midweek Landing.
+  echo
+}
+
+# "Feature Midweek Landing" is the default
 BRANCH=next
 ORIGIN_BRANCH=master
 
-# Uncomment the next two lines if you are dealing with a chemspill
-#BRANCH=chemspill
-#ORIGIN_BRANCH=release
+while getopts "h?c" opt; do
+    case $opt in
+    h|\?)
+        usage
+        exit 0
+        ;;
+    c)  BRANCH=chemspill
+        ORIGIN_BRANCH=release
+        ;;
+    esac
+done
 
 source shared.sh
 
@@ -19,10 +36,18 @@ cd $BRANCH
 clone $ORIGIN_BRANCH
 nostragglers $BRANCH
 replace $ORIGIN_BRANCH $BRANCH
+
 updatebranch__silk_app $ORIGIN_BRANCH $BRANCH true
+if [[ $ORIGIN_BRANCH == master ]]; then
+  # Bump the master minor version when creating a next branch
+  semver_inc__silk_app master minor
+else
+  # Bump the chemspill patch version when branching from release
+  semver_inc__silk_app chemspill patch
+fi
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH true
 
-read -n 1 -p "Rewrite history on the branch $BRANCH?  BE SURE!!! [Ny]: "
+read -n 1 -p "Rewrite history on the branch $BRANCH for '$MILESTONE'?  BE SURE!!! [Ny]: "
 echo
 if [[ "$REPLY" != "y" ]]; then
   echo Aborted.
@@ -38,3 +63,4 @@ for g in $GITS; do
     popd > /dev/null
   )
 done
+

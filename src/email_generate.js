@@ -73,7 +73,7 @@ async function inlineAssets(baseUrl) {
   }));
 }
 
-export default async function main() {
+async function main() {
   var fileServer = new Static(SRC);
   let server = http.createServer((req, res) => {
     req.addListener('end', function () {
@@ -88,6 +88,8 @@ export default async function main() {
   await inlineAssets(url);
   server.close();
 }
+
+export default main;
 
 if (process.mainModule === module) {
   console.log('Building email templates...');

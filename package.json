@@ -58,6 +58,7 @@
     "uuid": "^2.0.1"
   },
   "devDependencies": {
+    "dev-null": "^0.1.1",
     "mkdirp": "^0.5.1",
     "mocha": "^2.2.5"
   },

@@ -35,6 +35,23 @@ clone() {
   done
 }
 
+nostragglers() {
+  local branch=$1
+  ok=true
+  for g in $MERGE_GITS; do
+    if [[ $(git -C $g cherry origin/master $branch | wc -l) -ne 0 ]]; then
+      echo Error: Refusing to continue until all commits from
+      echo $branch have been merged back into master:
+      echo
+      git -C $g cherry -v origin/master $branch
+      echo
+      ok=false
+    fi
+  done
+
+  $ok || exit 1
+}
+
 ignoreHEADOnMaster() {
   local SHA1=$(git rev-parse --short HEAD)
   git checkout master

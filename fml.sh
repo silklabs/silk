@@ -17,6 +17,7 @@ mkdir -p $BRANCH
 cd $BRANCH
 
 clone $ORIGIN_BRANCH
+nostragglers $BRANCH
 replace $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_app $ORIGIN_BRANCH $BRANCH true
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH true

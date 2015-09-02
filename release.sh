@@ -14,20 +14,7 @@ mkdir -p $ORIGIN_BRANCH
 cd $ORIGIN_BRANCH
 
 clone $ORIGIN_BRANCH
-
-ok=true
-for g in $MERGE_GITS; do
-  if [[ $(git -C $g cherry origin/master $ORIGIN_BRANCH | wc -l) -ne 0 ]]; then
-    echo Error: Unable to continue with release until all commits from
-    echo $ORIGIN_BRANCH have been merged back into master:
-    echo
-    git -C $g cherry -v origin/master $ORIGIN_BRANCH
-    echo
-    ok=false
-  fi
-done
-
-$ok || exit 1
+nostragglers $ORIGIN_BRANCH
 
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
 updatebranch__silk_app $ORIGIN_BRANCH release

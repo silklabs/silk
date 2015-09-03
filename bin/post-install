@@ -1,6 +1,4 @@
 #! /bin/bash -e
-./node_modules/.bin/babel-node --harmony src/api_generate &
-./node_modules/.bin/babel-node --harmony src/email_generate &
-./build/browser/build.sh public/silk-api.js &
-
-wait
+./node_modules/.bin/babel-node --harmony src/api_generate
+./node_modules/.bin/babel-node --harmony src/email_generate
+./build/browser/build.sh public/silk-api.js

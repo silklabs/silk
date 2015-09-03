@@ -8,17 +8,68 @@ import fs from 'mz/fs';
 
 suite('express', () => {
 
-  let app, subject, url;
+  let app, url;
   setup(async () => {
     app = require('express')();
     app.use(require('body-parser').json());
-    subject = createApi(app, {
-      description: 'Testing app'
-    });
 
     let http = app.listen(0);
     await eventToPromise(http, 'listening');
     url = `http://localhost:${http.address().port}`;
+  });
+
+  suite('prefixed params', () => {
+    let subject;
+    let clientPath = `${__dirname}/api_global_params_client.js`;
+
+    async function clear() {
+      if (await fs.exists(clientPath)) {
+        await fs.unlink(clientPath);
+      }
+    }
+
+    setup(clear);
+    teardown(clear);
+
+    let client;
+    setup(async () => {
+      subject = createApi(app, {
+        prefix: '/woot/:id/',
+        description: 'Prefixed route',
+        params: [
+          {
+            name: 'id',
+            description: 'id'
+          }
+        ]
+      });
+
+      subject.define(
+        {
+          name: 'bar',
+          path: 'bar',
+        },
+        async (req, res) => {
+          assert.equal(req.params.id, 'idparam');
+          res.respond({
+            yay: true
+          });
+        }
+      );
+
+      let generated = gen(subject.api.toJSON(), {
+        baseClassPath: `${__dirname}/client`
+      });
+      await fs.writeFile(clientPath, generated);
+      let Client = require(clientPath);
+      client = new Client(url);
+    });
+
+    test('using api global params', async () => {
+      let response = await client.bar('idparam');
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, { yay: true });
+    });
   });
 
   suite('define and client usage', () => {
@@ -33,8 +84,12 @@ suite('express', () => {
     setup(clear);
     teardown(clear);
 
-    let client;
+    let client, subject;
     setup(async () => {
+      subject = createApi(app, {
+        description: 'Testing app'
+      });
+
       subject.define(
         {
           name: 'doFoo',
@@ -84,7 +139,6 @@ suite('express', () => {
           });
         }
       );
-
 
 
       let generated = gen(subject.api.toJSON(), {

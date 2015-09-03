@@ -16,12 +16,11 @@ class ExpressRoutes {
     this.api = new HttpApi(api);
   }
 
-  define(options, method) {
-    let action = new HttpAction(options);
-    assert(typeof method === 'function', 'must pass method function');
+  define(options, methodFn) {
+    assert(typeof methodFn === 'function', 'must pass method function');
+    let action = this.api.add(options);
 
-    let path = this.api.url(action);
-    this.app[action.method.toLowerCase()](path, (req, res, next) => {
+    this.app[action.method.toLowerCase()](action.path, (req, res, next) => {
       try {
         let body = req.body;
         if (action.input) {
@@ -70,7 +69,7 @@ class ExpressRoutes {
 
         // Leave it up to the routing middleware to figure out what to do with the
         // errors simply allow promises to safely exist with express.
-        method(req, res).catch(err => {
+        methodFn(req, res).catch(err => {
           next(err);
         });
       } catch (e) {
@@ -89,8 +88,6 @@ class ExpressRoutes {
         return res;
       }
     });
-
-    this.api.add(action);
   }
 }
 

@@ -24,7 +24,7 @@ function GenericLog(name) {
   this.clear = function() {
     this.element.innerText = "";
   };
-  this.getEnable = function() { 
+  this.getEnable = function() {
     if (this.enableElem) {
       return this.enableElem.checked;
     }

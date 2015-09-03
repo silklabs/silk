@@ -7,6 +7,7 @@
     "preinstall": "./bin/pre-install",
     "postinstall": "./bin/post-install",
     "build": "./build.sh",
+    "wwwdev": "./build/browser/build.sh -w",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
     "start-server": "babel-node --harmony src/server/main.js production",

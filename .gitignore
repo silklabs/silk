@@ -1,5 +1,5 @@
 node_modules
-public/silk-api.js
+public/js/
 data/
 npm-debug.log
 app/platforms/

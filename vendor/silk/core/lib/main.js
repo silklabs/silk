@@ -337,7 +337,7 @@ config.on('configured', () => {
       maybeCreateSocket();
       log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
     })
-    .then(util.timeout) // 0ms timer to enable others to run if needed.
+    .then(() => util.timeout) // 0ms timer to enable others to run if needed.
     .then(() => {
 
       if (!hue) {

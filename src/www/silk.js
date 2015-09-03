@@ -56,7 +56,7 @@ function showPlayer(stream) {
   socket.emit('join', activeStream);
 
   video.style.display = 'block';
-  setTimeout(function() { document.body.addEventListener('click', hidePlayer); });
+  setTimeout(() => document.body.addEventListener('click', hidePlayer));
 }
 
 function hidePlayer() {
@@ -77,7 +77,7 @@ function feedPlayer(msg) {
 }
 
 function listen(socket) {
-  socket.on('connect', function () {
+  socket.on('connect', () => {
     while (monitors.firstChild) {
       monitors.removeChild(monitors.firstChild);
     }
@@ -85,7 +85,7 @@ function listen(socket) {
     socket.emit('join', 'video-streams');
   });
 
-  socket.on('video-stream-new', function(msg) {
+  socket.on('video-stream-new', msg=> {
     log('New video stream '+ msg.id);
     // TODO: when this evolves into a full-blown web app, this should
     // become component-ized and shared with the native apps if
@@ -114,10 +114,10 @@ function listen(socket) {
     canvas.width = msg.previewSize.width;
     canvas.height = msg.previewSize.height;
     canvas.setAttribute('id', msg.id);
-    canvas.addEventListener('click', function() { showPlayer(stream); });
+    canvas.addEventListener('click', () => showPlayer(stream));
     monitors.appendChild(canvas);
 
-    socket.on(previewStream, function(msg) {
+    socket.on(previewStream, msg => {
       if (msg && msg.frame) {
         logMsg('video preview', msg);
         var when = new Date(msg.when);
@@ -126,16 +126,14 @@ function listen(socket) {
         var blob = new Blob([view], { type: 'image/jpg' });
         URL.revokeObjectURL(previewImage.src);
         previewImage.src = URL.createObjectURL(blob);
-        previewImage.onload = function() {
-          renderPreview(canvas, name, when, previewImage, logoImage, msg.objects);
-        };
+        previewImage.onload = () => renderPreview(canvas, name, when, previewImage, logoImage, msg.objects);
       }
     });
     log('Joining preview stream ' + previewStream);
     socket.emit('join', previewStream);
   });
 
-  socket.on('video-stream-delete', function(msg) {
+  socket.on('video-stream-delete', msg => {
     log('Dead video stream '+ msg.id);
     var stream = 'video-' + msg.id;
     var previewStream = 'video-preview-' + msg.id;
@@ -220,12 +218,12 @@ function light() {
                        state: { on: on, intensity: intensity } });
 }
 
-api.socketio.address().then(function(result) {
+api.socketio.address().then(result => {
   socket = io(result.url, {
     transports: ['websocket']
   });
   listen(socket);
-}).catch(function (err) {
+}).catch(err => {
   console.error('Could not get socket.io address', err);
 });
 

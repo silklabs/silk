@@ -89,9 +89,21 @@ For example to enable all logs possible (socket.io, etc..):
 }
 ```
 
-## Producing a release (by hand)
+## Bitrise CI binaries
 
-This functionality should move to CI.  Until it does, here are the steps for manually producing release packages:
+The bundles created by the Bitrise CI system are directly loadable on iOS
+devices that have been registered with our Apple Developer account.
+
+Find the desired build from https://www.bitrise.io/app/d9e00c0d5873d177, and
+either:
+
+* Download the Silk.ipa file and install using iTunes
+
+or
+
+* Find the "Public install page" and open it on your iOS device to initiate an install
+
+## Producing a release by hand (Avoid at all cost)
 
 0. Close Xcode
 0. Close any react-native package servers that might be running

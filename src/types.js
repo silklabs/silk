@@ -10,6 +10,11 @@ import joiToJSONSchema from 'joi-to-json-schema';
 
 const PARAM = /:[^/]+/g;
 
+const PARAMS = Joi.array().items(Joi.object().keys({
+  name: Joi.string().required(),
+  description: Joi.string()
+}).unknown(false))
+
 /**
  * A representation of a single http action:
  */
@@ -22,10 +27,7 @@ export class HttpAction {
     path: Joi.string().required(),
     input: Joi.object().description('Joi instance'),
     output: Joi.object().description('Joi instance'),
-    params: Joi.array().items(Joi.object().keys({
-      name: Joi.string().required(),
-      description: Joi.string()
-    }).unknown(false))
+    params: PARAMS
   }).required()
 
   /**
@@ -105,7 +107,8 @@ export class HttpApi {
   static OPTIONS = Joi.object({
     name: Joi.string(),
     description: Joi.string(),
-    prefix: Joi.string()
+    prefix: Joi.string(),
+    params: PARAMS
   }).required()
 
   /**
@@ -119,9 +122,18 @@ export class HttpApi {
   description = ''
 
   /**
-   * The prefix path which this http api operates under.
+   * The prefix path which this http api operates under. This may include
+   * params.
    */
   prefix = '/'
+
+  /**
+   * Global param values for this api (see http action).
+   *
+   * Note: Whoever creates the actions _must_ prepend these values to the
+   * individual actions...
+   */
+  params = []
 
   // list of actions
   actions = []
@@ -134,18 +146,25 @@ export class HttpApi {
   /**
    * Add a http route to this api.
    */
-  add(action) {
-    assert(action instanceof HttpAction, 'route must be an HttpAction');
-    this.actions.push(action);
-  }
+  add(actionParams) {
+    assert(!(action instanceof HttpAction), 'must not be an existing action')
 
-  url(action) {
-    assert(action instanceof HttpAction, 'route must be an HttpAction');
-    return URL.resolve(this.prefix, action.path);
+    let action = Object.assign({}, actionParams);
+    action.path = URL.resolve(this.prefix, action.path);
+    action.params = this.params.concat(action.params || []);
+
+    let instance = new HttpAction(action);
+    this.actions.push(instance);
+    return instance;
   }
 
   toJSON() {
     let result = Object.assign({}, this);
+
+    // Top level params are just for convenience they should be down to
+    // the individual actions.
+    delete result.params;
+
     result.actions = result.actions.map(action => action.toJSON());
     return result;
   }

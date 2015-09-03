@@ -22,6 +22,10 @@ export default class Accounts extends Base {
   }
 
   static SCHEMA = {
+    findByPublicKey: Joi.object().keys({
+      publicKey: Joi.string().hex().required()
+    }),
+
     create: Joi.object().keys({
       email: EMAIL,
       passwordHash: passwordHash,
@@ -120,6 +124,18 @@ export default class Accounts extends Base {
 
   scryptVerify(hash, key) {
     return scrypt.verify(new Buffer(hash, 'hex'), new Buffer(key));
+  }
+
+  /**
+   * Find an account by its mongodb id.
+   */
+  async findByPublicKey(payload) {
+    payload = this.validate(payload, 'findByPublicKey');
+    let { publicKey } = payload;
+
+    return await this.collection.findOne({
+      'accountTokens.publicKey': publicKey
+    });
   }
 
   /**

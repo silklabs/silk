@@ -23,9 +23,6 @@ while getopts "h?e?" opt; do
 done
 
 TEST_DIR=/system/silk/silk-test
-MOCHA_ARGS="--ui tdd"
-MOCHA_ARGS="$MOCHA_ARGS --reporter spec"
-MOCHA_ARGS="$MOCHA_ARGS --harmony"
 
 exitstatus=1
 function cleanup {
@@ -40,8 +37,8 @@ if [[ $? -ne "0" ]] ; then
   cleanup
 fi
 
-# Run tests and store the restult
-result=$(timeout -s KILL 300s adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha $MOCHA_ARGS $TEST_DIR/dist/lib/test)
+# Run tests and store the results
+result=$(timeout -s KILL 300s adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha --opts $TEST_DIR/mocha.opts $TEST_DIR/dist/lib/test)
 echo "$result"
 
 # We are relying on a specific output format for mocha reporter

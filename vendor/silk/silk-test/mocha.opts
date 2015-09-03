@@ -1,0 +1,4 @@
+--ui tdd
+--reporter spec
+--harmony
+--timeout 5000

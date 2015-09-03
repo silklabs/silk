@@ -12,13 +12,31 @@ import jwtMiddleware from '../jwt';
 
 let log = require('../log')('routes:vip');
 const PREFIX = '/v1/vip/';
+const ID = Joi.string().hex().required();
 
 export default function (ctx) {
   let routes = new Router();
+
+  /**
+   * Simplified JWT for "vip" routes which deal with accounts and other
+   * endpoints which may not have completely initialized accounts.
+   *
+   * This will _not_ check against known public key values.
+   */
   routes.use(PREFIX, jwtMiddleware(async (req) => {
-    // Must include public key in the payload for these methods.
-    let { publicKey } = req.body;
-    return publicKey;
+    let unsafe = req.unsafeJwt;
+    if (!unsafe) {
+      throw new Error('Missing unsafe JWT');
+    }
+
+    let headers = unsafe.header;
+    if (!headers) {
+      throw new Error('Missing unsafe JWT headers');
+    }
+
+    let { id } = headers;
+    Joi.assert(id, ID);
+    return id;
   }));
 
   let api = expressApi(routes, {
@@ -33,9 +51,7 @@ export default function (ctx) {
     email: Joi.string().email().required().
       description('Users email address'),
     passwordHash: Joi.string().hex().min(64).required().
-      description('Password hash'),
-    publicKey: Joi.string().hex().required().
-      description('ed25519 public key in hex')
+      description('Password hash')
   };
 
   api.define({
@@ -45,7 +61,7 @@ export default function (ctx) {
     name: 'createAccount',
     description: 'Create a user account',
     output: Joi.object().keys({
-      id: Joi.string().required().description('Account id')
+      success: Joi.boolean().required()
     }),
     input: Joi.object().keys(Object.assign({}, COMMON_SCHEMA, {
       userAgent: Joi.string().required(),
@@ -56,16 +72,21 @@ export default function (ctx) {
       // XXX: Should we infer this with another method?
       userAgent: req.body.userAgent,
       email: req.body.email,
-      publicKey: req.body.publicKey,
+      /**
+       * We validate this above for all routes so we know it has been sent in
+       * the correct format. At this point the publicKey has only been verified
+       * to belong to the privateKey which signed the JWT.
+       */
+      publicKey: req.unsafeJwt.header.id,
       passwordHash: req.body.passwordHash
     });
 
     if (!account.error) {
-      log.info('sign in', account.id);
-      res.respond({ id: account.id });
+      log.info('create account', account.id);
+      res.respond({ success: true });
       return;
     }
-    res.status(400).send(account.error);
+    res.respond({ success: false });
   });
 
   api.define({
@@ -75,22 +96,22 @@ export default function (ctx) {
     name: 'checkPassword',
     description: 'Authenticate with an existing account',
     output: Joi.object().keys({
-      id: Joi.string().required().description('Account id')
+      success: Joi.boolean().required()
     }),
     input: Joi.object().keys(COMMON_SCHEMA),
   }, async (req, res) => {
+    let publicKey = req.unsafeJwt.header.id;
     let result = await ctx.accounts.checkPassword({
       email: req.body.email,
-      publicKey: req.body.publicKey,
+      publicKey: publicKey,
       passwordHash: req.body.passwordHash
     });
-
     if (!result.error) {
       log.info('authenticate', result.id);
-      res.respond({ id: result.id });
+      res.respond({ success: true });
       return;
     }
-    res.status(400).send(result.error);
+    res.respond({ success: false });
   });
 
 

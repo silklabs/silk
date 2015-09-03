@@ -195,7 +195,8 @@ export default class Accounts extends Base {
     payload = this.validate(payload, 'checkPassword');
 
     let account = await this.collection.findOne({
-      email: payload.email
+      email: payload.email,
+      'accountTokens.publicKey': payload.publicKey
     });
 
     if (!account) {

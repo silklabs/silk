@@ -28,6 +28,15 @@ export default function (method) {
       return;
     }
 
+    /**
+     * Unsafely decode the JWT signature as the name states you must not trust
+     * any values here and is used only in the process of looking up the "id" of
+     * the client.
+     */
+    req.unsafeJwt = jwt.decode(signature, {
+      complete: true
+    });
+
     let publicKey = await method(req, res);
     if (!publicKey) {
       log.error('Missing public key', req.path, req.method, scheme);
@@ -64,7 +73,7 @@ export default function (method) {
       return;
     }
 
-    req.auth = verified;
+    req.signed = verified;
     next();
   }
 

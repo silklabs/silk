@@ -51,6 +51,22 @@ export default class HttpClient {
 
     // TODO: Add hash of body to payload...
     let signature = jwt.sign(jwtPayload, this.key.priv, {
+      /**
+       * Remember headers are _not_ signed do not trust them and do not put
+       * values in here that are implicitly assumed to be verified.
+       */
+      headers: {
+        /**
+         * The server will identify us based on the public key we send it is
+         * sent in the clear here as an "id" the server _must_ validate this
+         * against known public keys.
+         *
+         * XXX: An alternative design would be to use an opaque id which is
+         * assigned to us by the server but that was deemed to add complexity
+         * without much value.
+         */
+        id: this.key.pub
+      },
       algorithm: 'ed25519',
       jwa: jwa
     });

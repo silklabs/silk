@@ -2,5 +2,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE_PATH  := $(TARGET_OUT)/silk
-LOCAL_INSTALL_NODE_MODULES := mocha
+LOCAL_INSTALL_NODE_MODULES := \
+  mocha \
+  event-to-promise
 include $(BUILD_NODE_MODULE)

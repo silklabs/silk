@@ -1,24 +1,25 @@
 #!/bin/bash
 
-if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != qemu ]]; then
-  echo Nothing to do. If Travis CI PRs could have a different matrix than
-  echo builds then you would not be reading this message.
-  exit 0
-fi
-
 set -ex
 ccache -s
 git --version
 
-if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+case $GONK in
+base)
+  # No initialization needed for "base" builds.
+  ;;
+*)
   time make init.$GONK
-fi
+  ;;
+esac
+
 time make sync
 cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
 time make nothing  # Applies patches as a side effect of doing nothing...
 
-# Reduce the disk space usage to avoid failures later on
-if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+# Reduce the disk space usage to avoid failures later on during full
+# builds
+if [[ $GONK != base ]]; then
   rm -rf \
     .repo/project-objects \
     .repo/projects \

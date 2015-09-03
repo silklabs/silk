@@ -102,7 +102,7 @@ index 0000000..725f37f
 +  $(__FAKE_OPENCV_EXPORT_INCLUDES) \
 +  $(__FAKE_OPENCV_MODULES_A) $(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A)
 +	@echo Build: $@
-+	$(hide) $(MAKE) -C $(@D) install
++	$(hide) time $(MAKE) -C $(@D) install
 +	$(hide) cp $(dir $@)install/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=

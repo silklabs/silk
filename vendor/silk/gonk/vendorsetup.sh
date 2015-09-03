@@ -25,8 +25,11 @@ if [ $(uname) = "Darwin" ]; then
   echo foo > foo
   echo FOO > FOO
   if [ "$(cat foo)" = $(cat FOO) ]; then
-    poison_their_lunch Please use a case-senstive file system
-    return
+    if [ -z "$CI_FORCE_BAD_THINGS" ]; then
+      poison_their_lunch Please use a case-sensitive file system
+      return
+    fi
+    echo WARNING: Forcing build on case-insensitive file system
   fi
   rm -f foo FOO
 

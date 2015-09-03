@@ -4,6 +4,9 @@
 # All Rights Reserved.
 # Confidential and Proprietary - Silk Laboratories, Inc.
 
+LOCAL_PATH=$(dirname $0)
+RESULT_FILE=$LOCAL_PATH/test_results.txt
+
 usage()
 {
   echo "Usage: $0 (-h)"
@@ -37,9 +40,14 @@ if [[ $? -ne "0" ]] ; then
   cleanup
 fi
 
-# Run tests and store the results
-result=$(timeout -s KILL 300s adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha --opts $TEST_DIR/mocha.opts $TEST_DIR/dist/lib/test)
-echo "$result"
+# Run tests
+timeout -s KILL 300s adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha --opts $TEST_DIR/mocha.opts $TEST_DIR/dist/lib/test | tee $RESULT_FILE
+result=$(<$RESULT_FILE)
+
+# Delete results file
+if [[ -e $RESULT_FILE ]]; then
+  rm $RESULT_FILE
+fi
 
 # We are relying on a specific output format for mocha reporter
 # In case of successful tests the failure count of 0 isn't reported

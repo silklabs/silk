@@ -4,8 +4,8 @@ import Joi from 'joi';
 const MUTATE_OUT = Joi.object().keys({
   headers: Joi.object().required(),
   body: Joi.object().required(),
-  sig: Joi.string().required()
-}).required()
+  sig: Joi.any().required(),
+}).required();
 
 export default function (token, mutateFn) {
   // Reminder of the JWT format:

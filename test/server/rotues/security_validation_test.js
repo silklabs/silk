@@ -173,6 +173,86 @@ suite('security validation tests', () => {
     assert.equal(canonicalReply.res.status, 403);
   });
 
+  /**
+   * Simple "attack" null out a vital field (id)
+   */
+  test('null jwt.headers.id', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    let auth = req.headers.authorization;
+    let originalJWT = auth.split('Bearer ').pop();
+
+    let modifiedJWT = mutateJWT(originalJWT, (headers, body, sig) => {
+      delete headers.id;
+      return { headers, body, sig };
+    });
+
+    req.headers.authorization = `Bearer ${modifiedJWT}`;
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.ok(canonicalReply.res.status >= 400);
+  });
+
+  /**
+   * Simple "attack" null out a vital field (sig)
+   */
+  test('null jwt.headers.sig', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    let auth = req.headers.authorization;
+    let originalJWT = auth.split('Bearer ').pop();
+
+    let modifiedJWT = mutateJWT(originalJWT, (headers, body, sig) => {
+      sig = '';
+      return { headers, body, sig };
+    });
+
+    req.headers.authorization = `Bearer ${modifiedJWT}`;
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.ok(canonicalReply.res.status >= 400);
+  });
+
+  /**
+   * Wrong JWT algo (none)
+   */
+  test('jwt.headers.algo == none', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    let auth = req.headers.authorization;
+    let originalJWT = auth.split('Bearer ').pop();
+
+    let modifiedJWT = mutateJWT(originalJWT, (headers, body, sig) => {
+      headers.algo = 'none';
+      return { headers, body, sig };
+    });
+
+    req.headers.authorization = `Bearer ${modifiedJWT}`;
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.ok(canonicalReply.res.status >= 400);
+  });
+
+  /**
+   * Wrong JWT algo (foobar)
+   */
+  test('jwt.headers.algo == foobar', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    let auth = req.headers.authorization;
+    let originalJWT = auth.split('Bearer ').pop();
+
+    let modifiedJWT = mutateJWT(originalJWT, (headers, body, sig) => {
+      headers.algo = 'foobar';
+      return { headers, body, sig };
+    });
+
+    req.headers.authorization = `Bearer ${modifiedJWT}`;
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.ok(canonicalReply.res.status >= 400);
+  });
+
 });
 
 

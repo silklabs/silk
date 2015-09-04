@@ -10,6 +10,10 @@ import jwa from './jwa';
 import jwt from 'jsonwebtoken';
 import { sha } from 'hash.js';
 
+function sha256(str) {
+  return sha.sha256().update(str).digest('hex');
+}
+
 export default class HttpClient {
   constructor(baseUrl) {
     if (!baseUrl) {
@@ -44,9 +48,10 @@ export default class HttpClient {
    */
   async requestWithBody(method, url, body) {
     body = JSON.stringify(body);
+    let canonicalReq = `${url}\n${method.toLowerCase()}\n${sha256(body)}`;
     let jwtPayload = {
       // sha1 of the json body...
-      sha256: sha.sha256().update(body).digest('hex')
+      requestHash: sha256(canonicalReq)
     };
 
     // TODO: Add hash of body to payload...

@@ -57,17 +57,17 @@ export default function (method) {
       return;
     }
 
-    if (!req.bodyHash) {
-      throw new Error('All requests must contain bodyHash value');
+    if (!req.requestHash) {
+      throw new Error('All requests must contain requestHash value');
     }
 
-    if (req.bodyHash !== verified.sha256) {
+    if (req.requestHash !== verified.requestHash) {
       log.error(
         'Hash of body does not match signed value',
         req.path,
         req.method,
-        req.bodyHash,
-        verified.sha1
+        req.requestHash,
+        verified.requestHash
       );
       res.sendStatus(400);
       return;

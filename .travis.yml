@@ -1,10 +1,5 @@
 language: c
 compiler: gcc
-
-os:
-  - linux
-  - osx
-
 jdk:
   - openjdk7
 
@@ -30,27 +25,16 @@ notifications:
 env:
   global:
     - REPO_INIT_ARGS="--depth=1"
-    - CI_FORCE_BAD_THINGS=force
   matrix:
-    - GONK_SPEC=mako
-    - GONK_SPEC=qemu
+    - GONK=mako
+    - GONK=qemu
 
 before_script:
-  - source .travis/shared
-  - if [[ $GONK == nop ]]; then
-        echo Nothing to do;
-        exit 0;
-    fi
   - git config --global user.email "engineering@silklabs.com"
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
-  - if [ $TRAVIS_OS_NAME == osx ]; then
-        brew install ccache nvm;
-        source $(brew --prefix nvm)/nvm.sh;
-    else
-        jdk_switcher use openjdk7;
-    fi
   - nvm install 0.12
+  - jdk_switcher use openjdk7
   - .travis/before_script
 
 script:

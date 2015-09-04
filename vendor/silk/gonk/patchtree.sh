@@ -114,7 +114,7 @@ __patch_tree()
          LASTMD5SUM=$(cat out/lastpatch.md5sum)
          MD5SUM=$(__tree_md5sum ${PATCH_TREE})
       fi
-      FORCE="$CI_FORCE_BAD_THINGS"
+      FORCE=
       if [[ $1 == "force" ]]; then
         FORCE=force
       fi

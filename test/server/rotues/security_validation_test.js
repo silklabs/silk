@@ -10,6 +10,7 @@ import createIntercept from '../intercept';
 import express from 'express';
 import testRoutes from '../../../src/server/routes/security_validation';
 import eventToPromise from 'event-to-promise';
+import mutateJWT from '../mutate_jwt';
 
 import Accounts from '../../../src/server/models/accounts';
 import SecurityAPI from '../../../src/api/gen/security_validation';
@@ -40,21 +41,41 @@ suite('security validation tests', () => {
 
   // Setup the user and api which the user will use to interact with the
   // server...
-  let api, secApi, id;
-  let userInput = {
-    userAgent: 'woot',
-    email: 'user@example.com',
-    password: 'passwordsogood'
+  let api, secApi;
+
+  let users = {
+    one: {
+      id: null, // will be assigned later
+      input: {
+        userAgent: 'woot',
+        email: 'one@example.com',
+        password: 'passwordsogood'
+      }
+    },
+
+    two: {
+      id: null, // will be assigned later
+      input: {
+        userAgent: 'woot',
+        email: 'two@example.com',
+        password: 'passwordsogood'
+      }
+    }
   };
+
   setup(async () => {
     // Setup public api...
     api = createApi({ serverUrl: context.url });
-    id = api.id.create();
-    api.vip.key = id;
 
-    // Create our test user...
-    let create = await api.vip.createAccountWithPassword(userInput);
-    assert.ok(create.success);
+    for (var userKey in users) {
+      let user = users[userKey];
+      user.id = api.id.create();
+      api.vip.key = user.id;
+
+      // Create test users...
+      let create = await api.vip.createAccountWithPassword(user.input);
+      assert.ok(create.success);
+    }
   });
 
   // Setup security api and MITM.
@@ -65,7 +86,7 @@ suite('security validation tests', () => {
     interceptURL = mitm.url;
     // Setup security testing api
     secApi = new SecurityAPI(interceptURL);
-    secApi.key = id;
+    secApi.key = users.one.id;
   });
 
   /**
@@ -126,6 +147,30 @@ suite('security validation tests', () => {
 
     let canonicalReply = await req.send(canonicalURL);
     assert.equal(canonicalReply.res.status, 400);
+  });
+
+  /**
+   * The request will be validly signed but attempting to use another users id.
+   */
+  test('use a valid public key belonging to someone else', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    let auth = req.headers.authorization;
+    let originalJWT = auth.split('Bearer ').pop();
+
+    let modifiedJWT = mutateJWT(originalJWT, (headers, body, sig) => {
+      // Sanity check ensure we are using the expected initial user so we set it
+      // to a different one...
+      assert.equal(users.one.id.pub, headers.id);
+      // Change id to another valid user...
+      headers.id = users.two.id.pub;
+      return { headers, body, sig };
+    });
+
+    req.headers.authorization = `Bearer ${modifiedJWT}`;
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.equal(canonicalReply.res.status, 403);
   });
 
 });

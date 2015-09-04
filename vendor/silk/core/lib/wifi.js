@@ -332,7 +332,18 @@ class QEmuWifi extends events.EventEmitter
   }
 
   init() {
-    return Promise.resolve();
+    log.info('QEmu "WiFi" initializing on eth0');
+    // Most of the emulator eth0 networking is setup automatically.  The only
+    // thing missing is to instruct netd to use the DNS servers for the
+    // hardcoded netId == 0
+    let dns = [];
+    for (let i = 1; i <= 4; i++) {
+      let dnsN = util.getprop(`net.eth0.dns${i}`);
+      if (dnsN) {
+        dns.push(dnsN);
+      }
+    }
+    return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns]);
   }
 
   online() {

@@ -16,6 +16,7 @@ MERGE_GITS="\
   silk-server \
   silk-app \
   silk-device \
+  silk-webapp \
 "
 GITS="\
   silk-api-node \

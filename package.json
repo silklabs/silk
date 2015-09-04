@@ -18,7 +18,7 @@
   },
   "license": "proprietary",
   "dependencies": {
-    "api-schema": "git@github.com:silklabs/api-schema.git#f23a9c7fd3cf68d4262cef1297543e26519a48af",
+    "api-schema": "git@github.com:silklabs/api-schema.git#76867d3486d8d53314073f8d7956692ec2f54524",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",
     "babel": "^5.8.9",

@@ -248,7 +248,7 @@ var styles = StyleSheet.create({
     paddingTop: 10,
     paddingLeft: 10,
     paddingRight: 10,
-    paddingBottom: 5,
+    paddingBottom: 10,
   },
   indicatorContainer: {
     // For some reason cjones was unable to make this `flex` fill
@@ -288,7 +288,7 @@ var styles = StyleSheet.create({
 
   settings: {
     flex: 1,
-    padding: 4,
+    paddingLeft: 4,
   },
   icon: {
     // TODO: shouldn't have to specify this?

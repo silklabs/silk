@@ -9,4 +9,5 @@ LOCAL_MODULE_PATH  := $(TARGET_OUT)/silk
 LOCAL_INSTALL_NODE_MODULES := \
   mocha \
   event-to-promise
+LOCAL_MODULE_TAGS := eng debug
 include $(BUILD_NODE_MODULE)

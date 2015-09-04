@@ -137,7 +137,7 @@ define __init_rules
 init.$(1): GONK=$(1)
 init.$(1):
 	rm -rf .repo/manifest* .repo/.repo_fetchtimes.json out/repo_fetchtimes.P
-	@+$(MAKE) --no-print-directory .repo/manifest.xml GONK=$(1)
+	+$(MAKE) --no-print-directory .repo/manifest.xml GONK=$(1)
 endef
 
 $(eval \

@@ -69,7 +69,7 @@ export default function (method) {
         req.bodyHash,
         verified.sha1
       );
-      res.send(403);
+      res.sendStatus(400);
       return;
     }
 

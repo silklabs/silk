@@ -63,6 +63,11 @@ suite('security validation tests', () => {
     secApi.key = id;
   });
 
+  /**
+   * Our JWT tokens may be used in non-ssl situations while we use the http
+   * protocol below primarily we are verifying our implementation of how we
+   * check the JWT tokens.
+   */
   test('unmodified request replay attack...', async () => {
     // Initiate the request but do not wait for it to be completed...
     secApi.aPut();
@@ -81,6 +86,20 @@ suite('security validation tests', () => {
     // This should fail since the server has seen this particular request
     // before.
     assert.notEqual(canonicalReplayReply.res.status, 200);
+  });
+
+  /**
+   * JWT is signed but http body is not (by default) this test verifies our
+   * implementation of body signing will ensure the http body has not been
+   * mutated.
+   */
+  test('unauthorized body mutations', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    req.body = JSON.stringify({ hacked: true });
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.equal(canonicalReply.res.status, 400);
   });
 
 });

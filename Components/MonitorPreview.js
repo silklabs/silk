@@ -135,7 +135,7 @@ var styles = StyleSheet.create({
 
   monitorLabelContainer: {
     paddingLeft: 10,
-    paddingBottom: 10,
+    paddingBottom: 5,
   },
   monitorLabel: {
     fontFamily: 'Open Sans',

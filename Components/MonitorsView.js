@@ -99,7 +99,8 @@ var MonitorsView = React.createClass({
           </View>
         </View>
         <View style={styles.content}>
-          <ScrollView style={styles.monitors}>
+          <ScrollView style={styles.monitors}
+                      automaticallyAdjustContentInsets={false}>
             {configuring}
             {streaming}
           </ScrollView>
@@ -250,7 +251,15 @@ var styles = StyleSheet.create({
     paddingBottom: 5,
   },
   indicatorContainer: {
+    // For some reason cjones was unable to make this `flex` fill
+    // available vertical space inside the title container (when
+    // changing the flex direction back to col).  So hack around that
+    // by hard-coding a fixed height.
+    //
+    //flex: 1,
+    height: 25,
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   offlineIndicator: {
     width: 10,

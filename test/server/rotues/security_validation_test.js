@@ -14,6 +14,11 @@ import eventToPromise from 'event-to-promise';
 import Accounts from '../../../src/server/models/accounts';
 import SecurityAPI from '../../../src/api/gen/security_validation';
 
+/**
+ * Basic suite of security validation tests... These are intended to be a
+ * collection of very high level tests against our http servers. Lower level
+ * testing (such as on the API of jwt) should be done elsewhere.
+ */
 suite('security validation tests', () => {
   let context = createContext();
 
@@ -96,7 +101,28 @@ suite('security validation tests', () => {
   test('unauthorized body mutations', async () => {
     secApi.aPut();
     let req = await eventToPromise(intercept, 'request');
+    // Send a different body...
     req.body = JSON.stringify({ hacked: true });
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.equal(canonicalReply.res.status, 400);
+  });
+
+  test('send unmodified body/headers/path to different method', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    // Send different method
+    req.method = 'post';
+
+    let canonicalReply = await req.send(canonicalURL);
+    assert.equal(canonicalReply.res.status, 400);
+  });
+
+  test('send unmodified body/headers/method to different path', async () => {
+    secApi.aPut();
+    let req = await eventToPromise(intercept, 'request');
+    // Send different path.
+    req.path = '/v1/test/b';
 
     let canonicalReply = await req.send(canonicalURL);
     assert.equal(canonicalReply.res.status, 400);

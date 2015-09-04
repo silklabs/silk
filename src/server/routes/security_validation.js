@@ -69,6 +69,18 @@ export default function (ctx) {
     res.respond({});
   });
 
+  api.define({
+    path: 'b',
+    method: 'put',
+    params: [],
+    name: 'bPut',
+    input: Joi.object().required()
+  }, async (req, res) => {
+    res.respond({});
+  });
+
+
+
 
   return api;
 }

@@ -24,7 +24,7 @@ class DeviceConfig extends events.EventEmitter {
       log.info('Launching config service ...');
       const STATE = api.btleConfigService.state;
       let configService = btle.configService(id.pub);
-      let updateRssiInterval = null;
+      let updateRssiTimeout = null;
 
       let bleno = btle.bleno;
 
@@ -58,19 +58,20 @@ class DeviceConfig extends events.EventEmitter {
               return reject(`runConfigService: ${err}`);
             }
             configService.updateRssi(rssi);
+            updateRssiTimeout = setTimeout(updateRssi, 100);
           });
         };
-        if (updateRssiInterval) {
-          clearInterval(updateRssiInterval);
+        if (updateRssiTimeout) {
+          clearTimeout(updateRssiTimeout);
         }
-        updateRssiInterval = setInterval(updateRssi, 100);
+        updateRssiTimeout = setTimeout(updateRssi, 100);
       };
       bleno.on('accept', acceptListener);
 
       let disconnectListener = clientAddr => {
         log.info('GATT client', clientAddr, 'disconnected');
-        if (updateRssiInterval) {
-          clearInterval(updateRssiInterval);
+        if (updateRssiTimeout) {
+          clearTimeout(updateRssiTimeout);
         }
       };
       bleno.on('disconnect', disconnectListener);
@@ -86,7 +87,7 @@ class DeviceConfig extends events.EventEmitter {
         bleno.removeListener('accept', acceptListener);
         bleno.removeListener('disconnect', disconnectListener);
 
-        clearInterval(updateRssiInterval);
+        clearTimeout(updateRssiTimeout);
         bleno.stopAdvertising(() => {
           log.info('Stopped advertising');
           bleno.once('servicesSet', errServicesSet => {

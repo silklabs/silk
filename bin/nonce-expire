@@ -1,0 +1,43 @@
+#! ./node_modules/.bin/babel-node --harmony
+/**
+Helper utility for sending emails because of the #! above this may only work on
+OSX and some more common versions of linux.
+*/
+
+import loadConfig from '../src/server/config';
+import createDb from '../src/server/db';
+
+import { ArgumentParser } from 'argparse';
+import Nonce from '../src/server/models/nonce';
+
+let parser = new ArgumentParser();
+
+parser.addArgument(['profile'], {
+  help: 'Configuration profile',
+  type: (value) => {
+    return loadConfig(value);
+  }
+});
+
+async function main() {
+  let args = parser.parseArgs(process.argv.slice(2));
+  console.log('Purging expired nonce values...');
+
+  let db = await createDb(args.profile);
+  let nonce = new Nonce(db);
+
+  let expired = await nonce.expireAll();
+  console.log(
+    `Finished purge of nonce values. Purged: ${expired && expired.n}`
+  );
+
+  // Cleanly close the database so the process can exit...
+  await db.close();
+}
+
+main().catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});
+

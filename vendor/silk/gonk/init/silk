@@ -19,12 +19,12 @@ if [ "$1" = "--debug-brk" ]; then
   shift
 fi
 
-if [ "$(getprop ro.debuggable)" = "1" ]; then
-  NODE_ARGS="$NODE_ARGS --debug"
-fi
-
 if [ -z $1 ]; then
   log -p i -t silk-init Starting Silk services
+
+  if [ "$(getprop ro.debuggable)" = "1" ]; then
+    NODE_ARGS="$NODE_ARGS --debug"
+  fi
 
   # Feign sys.boot_completed for the benefit of other Gonk components that
   # listen on it.

@@ -16,7 +16,7 @@ if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     echo "******************************************************************"
     source build/envsetup.sh
     rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
-    test/emulator_boottest
+    test/start_emulator -r run_tests
 
   else
     make -j2 otapackage
@@ -40,7 +40,7 @@ else
   export PATH=$PATH:$(readlink -f platform-tools)
   which adb
 
-  test/emulator_boottest
+  test/start_emulator -r run_tests
 
   echo "******************************************************************"
   echo Validating Mako manifest

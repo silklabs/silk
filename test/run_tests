@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# Copyright (c) 2015 Silk Laboratories, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Laboratories, Inc.
+
+LOCAL_PATH=$(dirname $0)
+SILKTEST=$LOCAL_PATH/../vendor/silk/test/run
+
+# Run silk tests
+echo "Running silk tests"
+$SILKTEST

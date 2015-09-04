@@ -155,6 +155,8 @@ class Timeline extends EventEmitter {
         this.emit('face', object.rects);
       } else if (object.tag === 'motion') {
         this.emit('motion', object.when, object.rects);
+      } else if (object.tag === 'car') {
+        this.emit('car', object.when, object.rects);
       }
     });
   }

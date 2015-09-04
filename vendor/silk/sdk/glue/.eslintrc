@@ -1,5 +1,15 @@
 {
   "parser": "babel-eslint",
+  "globals": {
+    "suite": true,
+    "test": true,
+    "setup": true,
+    "teardown": true,
+    "suiteSetup": true,
+    "suiteTeardown": true,
+    "it": true,
+    "describe": true,
+  },
   "rules": {
     "brace-style": 2,
     "no-debugger": 1,

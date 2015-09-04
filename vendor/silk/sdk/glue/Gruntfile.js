@@ -69,7 +69,11 @@ module.exports = function(grunt) {
 
     babel: {
       options: {
-        sourceMap: debug ? 'inline' : false
+        sourceMap: debug ? 'inline' : false,
+        stage: 0,
+        optional: [
+          "asyncToGenerator"
+        ],
       },
       dist: {
         files: [

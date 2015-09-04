@@ -1,7 +1,8 @@
 #!/bin/bash
 
-if [[ $TRAVIS_OS_NAME == osx ]]; then
-  echo Skipping deploy step on OS X.
+if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != qemu ]]; then
+  echo Nothing to do. If Travis CI PRs could have a different matrix than
+  echo builds then you would not be reading this message.
   exit 0
 fi
 

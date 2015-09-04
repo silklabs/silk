@@ -1,7 +1,13 @@
 #!/bin/bash
 
+if [[ $TRAVIS_PULL_REQUEST != false ]] && [[ $GONK != qemu ]]; then
+  echo Nothing to do. If Travis CI PRs could have a different matrix than
+  echo builds then you would not be reading this message.
+  exit 0
+fi
+
 set -e
-if [[ $GONK != base ]]; then
+if [[ $TRAVIS_PULL_REQUEST == false ]]; then
   if [[ $GONK == qemu ]]; then
     make -j2
 
@@ -24,21 +30,17 @@ else
   echo "******************************************************************"
   echo Check if the PR boots on the emulator
   echo "******************************************************************"
-  if [[ $TRAVIS_OS_NAME == linux ]]; then
-    source build/envsetup.sh
-    rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
-    make update.qemu # Fetch the emulator
+  source build/envsetup.sh
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
+  make update.qemu # Fetch the emulator
 
-    # Fetch host adb since it's not built as a part of the base build
-    wget https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip
-    unzip platform-tools_r23-linux.zip
-    export PATH=$PATH:$(readlink -f platform-tools)
-    which adb
+  # Fetch host adb since it's not built as a part of the base build
+  wget https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip
+  unzip platform-tools_r23-linux.zip
+  export PATH=$PATH:$(readlink -f platform-tools)
+  which adb
 
-    test/start_emulator -r run_tests
-  else
-    echo Warning: Skipping emulator boot check on OS X for now
-  fi
+  test/start_emulator -r run_tests
 
   echo "******************************************************************"
   echo Validating Mako manifest

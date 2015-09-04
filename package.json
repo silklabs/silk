@@ -1,0 +1,70 @@
+{
+  "name": "silk-webapp",
+  "version": "0.0.1",
+  "description": "Silk web app",
+  "scripts": {
+    "start-server": "babel-node --harmony src/server/main.js production",
+    "start": "DEBUG=silk-*,-*:verbose ./bin/start.sh",
+    "lint": "eslint src",
+    "test": "npm run-script lint"
+  },
+  "license": "proprietary",
+  "dependencies": {
+    "babel": "^5.8.9",
+    "babel-eslint": "~3.1.15",
+    "babel-runtime": "^5.8.20",
+    "babelify": "^6.1.3",
+    "browserify": "^11.0.1",
+    "debug": "^2.2.0",
+    "eslint": "^0.22.1",
+    "event-to-promise": "^0.4.0",
+    "express": "^4.12.3",
+    "lodash.merge": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=0.12.x"
+  },
+  "engineStrict": true,
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "globals": {
+      "suite": true,
+      "test": true,
+      "setup": true,
+      "teardown": true,
+      "suiteSetup": true,
+      "suiteTeardown": true
+    },
+    "rules": {
+      "strict": false,
+      "brace-style": 2,
+      "no-shadow": 0,
+      "no-debugger": 1,
+      "default-case": 2,
+      "comma-dangle": 0,
+      "indent": [
+        2,
+        2
+      ],
+      "no-underscore-dangle": 0,
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
+      ],
+      "yoda": 0
+    },
+    "env": {
+     "node": true,
+     "es6": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-webapp.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "private": true
+}

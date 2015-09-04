@@ -1,0 +1,10 @@
+{
+  "name":"silk-webapp",
+  "scripts":{},
+  "env":{
+    "DEBUG":{
+      "required":true
+    }
+  },
+  "addons":[]
+}

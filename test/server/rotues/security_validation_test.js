@@ -6,7 +6,7 @@ import createContext from '../context';
 import createApi from '../../../src/api';
 import launchApp from '../launch_app';
 import createIntercept from '../intercept';
-
+import timekeeper from 'timekeeper';
 import express from 'express';
 import testRoutes from '../../../src/server/routes/security_validation';
 import eventToPromise from 'event-to-promise';
@@ -92,6 +92,11 @@ suite('security validation tests', () => {
     secApi.key = users.one.id;
   });
 
+  teardown(() => {
+    // Ensure timekeeper is reset so not to break other things.
+    timekeeper.reset();
+  });
+
   /**
    * Our JWT tokens may be used in non-ssl situations while we use the http
    * protocol below primarily we are verifying our implementation of how we
@@ -115,6 +120,22 @@ suite('security validation tests', () => {
     // This should fail since the server has seen this particular request
     // before.
     assert.notEqual(canonicalReplayReply.res.status, 200);
+
+    // Purge all nonce(s) to simulate expired nonce values...
+    let del = await nonce.collection.remove({});
+    assert.ok(del.ok, 'deleted all nonce');
+
+    // Move internal time into the future to simulate a replay attack after the
+    // token has expired.
+    let future = new Date(Date.now() + 60 * 1000 * 2);
+    timekeeper.freeze(future);
+
+    // Now attempt to replay the captured request.
+    let canonicalReplayReplyExpired = await req.send(canonicalURL);
+
+    // Even though the server no longer remembers the token it should still fail
+    // because the token is now expired.
+    assert.notEqual(canonicalReplayReplyExpired.res.status, 200);
   });
 
   /**
@@ -257,5 +278,3 @@ suite('security validation tests', () => {
   });
 
 });
-
-

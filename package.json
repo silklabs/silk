@@ -61,7 +61,8 @@
   },
   "devDependencies": {
     "dev-null": "^0.1.1",
-    "mocha": "^2.2.5"
+    "mocha": "^2.2.5",
+    "timekeeper": "0.0.5"
   },
   "engines": {
     "node": ">=0.12.x"

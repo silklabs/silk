@@ -37,7 +37,7 @@ function validateClaim(jwt) {
     throw new Error(`
       Attmpted to use expired JWT token: ${jti}
 
-        Now: ${now}
+        Now: ${new Date(now)}
         Issued: ${issued}
     `);
   }

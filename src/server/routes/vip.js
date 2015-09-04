@@ -12,7 +12,14 @@ import jwtMiddleware from '../jwt';
 
 let log = require('../log')('routes:vip');
 const PREFIX = '/v1/vip/';
-const ID = Joi.string().hex().required();
+
+const REQUEST_SCHEMA = Joi.object().keys({
+  unsafeJwt: Joi.object().required().keys({
+    header: Joi.object().required().keys({
+      id: Joi.string().hex().required()
+    }).unknown(true)
+  }).unknown(true)
+}).unknown(true).required();
 
 export default function (ctx) {
   let routes = new Router();
@@ -23,20 +30,9 @@ export default function (ctx) {
    *
    * This will _not_ check against known public key values.
    */
-  routes.use(PREFIX, jwtMiddleware(async (req) => {
-    let unsafe = req.unsafeJwt;
-    if (!unsafe) {
-      throw new Error('Missing unsafe JWT');
-    }
-
-    let headers = unsafe.header;
-    if (!headers) {
-      throw new Error('Missing unsafe JWT headers');
-    }
-
-    let { id } = headers;
-    Joi.assert(id, ID);
-    return id;
+  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (req) => {
+    Joi.assert(req, REQUEST_SCHEMA);
+    return req.unsafeJwt.header.id;
   }));
 
   let api = expressApi(routes, {

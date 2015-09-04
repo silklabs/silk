@@ -19,7 +19,7 @@ export default function (ctx) {
     `,
   });
 
-  routes.use(PREFIX, jwtMiddleware(async (req) => {
+  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (req) => {
     // All interactions require an account...
     // XXX: Factor this into it's own module.
     let id = req.unsafeJwt.header.id;

@@ -9,7 +9,8 @@
     "elliptic": "^5.1.0",
     "hash.js": "^1.0.3",
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
-    "pbkdf2": "^3.0.4"
+    "pbkdf2": "^3.0.4",
+    "uuid": "^2.0.1"
   },
   "engines": {
     "node": "0.12.x"

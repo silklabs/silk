@@ -219,6 +219,10 @@ module.exports = function(opts) {
     await blobHandler.getBlob(req, res);
   }));
 
-  let auth = vipRoutes({ accounts: opts.accountsModel });
+  let auth = vipRoutes({
+    accounts: opts.accountsModel,
+    nonce: opts.nonce
+  });
+
   app.use(auth.app);
 };

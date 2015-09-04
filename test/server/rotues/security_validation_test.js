@@ -13,6 +13,7 @@ import eventToPromise from 'event-to-promise';
 import mutateJWT from '../mutate_jwt';
 
 import Accounts from '../../../src/server/models/accounts';
+import Nonce from '../../../src/server/models/nonce';
 import SecurityAPI from '../../../src/api/gen/security_validation';
 
 /**
@@ -27,13 +28,15 @@ suite('security validation tests', () => {
   let canonicalURL;
 
   // Setup the canonical server resources...
-  let accounts, app;
+  let accounts, app, nonce;
   setup(async () => {
+    nonce = new Nonce(context.db);
     accounts = new Accounts(context.db);
     app = express();
     app.use(require('../../../src/server/json'));
     app.use(testRoutes({
-      accounts
+      accounts,
+      nonce
     }).app);
 
     canonicalURL = await launchApp(app);

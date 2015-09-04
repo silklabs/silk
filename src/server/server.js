@@ -11,6 +11,7 @@ import jsonParser from './json';
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
 import AccountsModel from './models/accounts';
+import Nonce from './models/nonce';
 import EmailSender from './email_sender';
 
 export default async function main (config) {
@@ -50,6 +51,7 @@ export default async function main (config) {
   let db = await createDb(config);
   let crashMeta = new CrashMetadata(db);
   let timeMeta = new TimeMetadata(db);
+  let nonce = new Nonce(db);
   // XXX: Rename once we phase out old account interface.
   let accountsModel = new AccountsModel(db);
   let emailSender = new EmailSender(config);
@@ -64,6 +66,7 @@ export default async function main (config) {
   // Install the routes.
   require('./routes')({
     app,
+    nonce,
     accounts,
     accountsModel,
     emailSender,

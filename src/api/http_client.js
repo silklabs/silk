@@ -9,6 +9,7 @@ import throwError from './fetch_error';
 import jwa from './jwa';
 import jwt from 'jsonwebtoken';
 import { sha } from 'hash.js';
+import uuid from 'uuid';
 
 function sha256(str) {
   return sha.sha256().update(str).digest('hex');
@@ -50,6 +51,10 @@ export default class HttpClient {
     body = JSON.stringify(body);
     let canonicalReq = `${url}\n${method.toLowerCase()}\n${sha256(body)}`;
     let jwtPayload = {
+      // Unique id for this request.
+      jti: uuid.v1(),
+      // JSON representation of a string...
+      iat: new Date().toJSON(),
       // sha1 of the json body...
       requestHash: sha256(canonicalReq)
     };
@@ -62,8 +67,8 @@ export default class HttpClient {
        */
       headers: {
         /**
-         * The server will identify us based on the public key we send it is
-         * sent in the clear here as an "id" the server _must_ validate this
+         * The server will identify us based on the public key. We send it is
+         * sent in the clear here as an "id" then server _must_ validate this
          * against known public keys.
          *
          * XXX: An alternative design would be to use an opaque id which is

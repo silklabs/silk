@@ -23,7 +23,7 @@ export default class Accounts extends Base {
 
   static SCHEMA = {
     findByPublicKey: Joi.object().keys({
-      publicKey: Joi.string().hex().required()
+      publicKey: Joi.string().hex().required().min(32)
     }),
 
     create: Joi.object().keys({

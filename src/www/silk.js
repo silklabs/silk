@@ -7,10 +7,13 @@ var socket = null;
 var max = 5000;
 // Whether to log pings or not.
 var logEnabled = false;
+
 // Silk api
-var api = silk({
-  serverUrl: document.location.origin
-});
+let opts = {}
+if (typeof config === "object") {
+  opts.serverUrl = config.server.url;
+}
+let api = silk(opts);
 
 function log(msg) {
   console.log(msg);

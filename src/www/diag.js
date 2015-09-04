@@ -5,10 +5,12 @@
 
 // Uninitialized socket.io connection.
 var socket = null;
-// Silk api
-var api = silk({
-  serverUrl: document.location.origin
-});
+
+let opts = {}
+if (typeof config === "object") {
+  opts.serverUrl = config.server.url;
+}
+let api = silk(opts);
 
 function GenericLog(name) {
   this.element = document.getElementById(name);

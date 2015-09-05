@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [[ $TRAVIS_OS_NAME == osx ]]; then
-  echo Skipping deploy step on OS X.
-  exit 0
-fi
-
 set -ex
 source build/envsetup.sh
 rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will error out

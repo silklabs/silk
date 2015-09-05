@@ -114,7 +114,14 @@ __patch_tree()
          LASTMD5SUM=$(cat out/lastpatch.md5sum)
          MD5SUM=$(__tree_md5sum ${PATCH_TREE})
       fi
-      FORCE=
+      # We usually require building on a case-sensitive file system,
+      # but as of 2015 our OS X CI doesn't use case-sensitive file
+      # systems.  This results in git thinking there are changes in
+      # bionic/ when in actuality git is confused by two files `FOO`
+      # and `foo` not being distinguished.  So CI can pass this env
+      # var to force applying patches, which is known to otherwise
+      # work in its setup.
+      FORCE="$CI_PATCHTREE_FORCE"
       if [[ $1 == "force" ]]; then
         FORCE=force
       fi

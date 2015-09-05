@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Heroku needs help fetching private Silk Labs projects.
+#
+
+# The HEROKU environment variable must be explicitly defined for each affected
+# dyno
+[[ -n $HEROKU ]] || exit 0
+
+echo Heroku environment detected.
+
+if [[ -d ~/.ssh ]]; then
+  echo "Failsafe! ~/.ssh is not expected to exist in the Heroku environment."
+  exit 1
+fi
+
+set -ex
+mkdir -p ~/.ssh
+
+# This private key was created by running |ssh-keygen|, and the matching public
+# key was then added as a Deploy Key into:
+#   * https://github.com/silklabs/silk-api-react-native/settings/keys
+#
+# Therefore this key ONLY has read-only access to:
+#   * silklabs/silk-api-react-native
+# and if you are reading this file then odds are very good that so do you.
+
+cat > ~/.ssh/id_rsa <<-EOF
+-----BEGIN RSA PRIVATE KEY-----
+IIEowIBAAKCAQEAmx2DcRYmmkc/R791zTEifCYr+XRc51m587zvryk6O9DiNzTe
+u6+WGevOxnNHb2q9eFrl3S+HAXOPM6eYMxnmZNQ+hx4HjYJ7/IsN5k0KrM/DfmcP
+598keMqTv6iB8ewJdausclP+0BZC7VdpEzki4gmaRXP3jkHfUlDYNwtLRq+NOlL8
+U6P09UttPnlUs97zeWi8NPXL84zAfQYqRieAx7XRFmf1/Qq1U7JCd5c1bJiyigkw
+F7xoEUyWFJARpkg2zh9bHj5vRDm0QQpsADoOP7pEVzbysI35eZqt0AP5Xi9s+m1A
+c6Zt2aSWnGe6i2b2+D85rLJ6903b1CKh3cL6KwIDAQABAoIBAE6jWsTVLwLeBfXQ
+2d8J/uqjy31vAb6EHaK08WqC4zP6BQVp91V9ggJoKu8u+FNC8QV4R7qn4rDYrgvI
+9n9JrSUG+SA1GC0krsjskkJkYnoT5o9JnqW12d6nDNqIikBkorMWMpnPfYpvDsUW
+oH2PZODlb2Gwlht3x8kKlWLqheIySa0mB/SJ6SCmKEkD1LTh7SyCkf1qpRsL0XlK
+ze1rpnOtBi1DlkTufhBH7FCXExvbgwGKXaTw+jmfeAQjnNv5/nl3M5G2EfE7WRhj
+/SeHILwzHi/SOM2+oXNe8exdZI5P1D4xaNjU7tk7O8+dv/718j1fPtxXeidPMOAL
+ljekXLECgYEAzNZ7w1rOapsvO6jy9tU6sS0Comhi0p80oSbQgyUqb4BaH/OnBmQv
+E2vAFJ3uG7tutFLYIk9Nasr9keUKveOIqDcjjYJeU3Dl3p3U+UaArnfqdNpdY97i
+UTCRjmbCfdJ2gyFOIvu6ts9vFBOJZ2afz0UW8e2S5eQcmBORIWRCQRkCgYEAwdu5
+x+F3PbKrcElQO7M2Dad7arHHXzU5YgvQtRirnFwkiF280Tw42RtQzNUE5JD5rP8Q
+su4w8HrKQOl+F5hhHtr9pPco6pKSc2xjAvW6kvhkp0x1gsTC4PyXQ1ZeSN87+sqV
+tfb6hNMp3/2Ax+Z/oKyatL7KGUmUZXPGv9bQaeMCgYAwmIHsKtLlv8NI6CAcJyIx
+fngth45KYbLeuJKnSl3y7gRzqB5sCcCRXvLG8WDX+3OcHDtiiGXZfCcEQc52llCJ
+d+tbWx59tT8TvWYVbYCB47kf195oHyyaDme53O8vYorzOSeMbSQy0quLm8bxXQt0
+5PM4miBLof6Wpa28ukhtoQKBgQCZHigbTGaWgO0Qf5ezz9U96697knfbJ3rvik2K
+/LVvhwgD/aYJzftI4F5tq0N2FVxf3AcgjSpyh0oBA2vozx7G9EmrZt0WijbKnC2I
+RPbc5vz5d1bJtwgGFPyU3z8RZ+FEMYcWdsFg8Dj/BogVXGYqTqrTYG7Ykll32H5/
+P/jV6QKBgAvgBmXzkD+DbSHziPMjw2Jwpl24kgWuNek5N2fAJneEf3AC9aGIXF84
+rq8TbxOnTNCCFXdI8u72KEf6gjrSJWg6CQERsAjI3cFJvxqf85c1vdPwapD1Jmkx
+w3Fx1lDJy1gg4wxoRwEDzH1/qrxD4FKXQ/tRGICZgngdh8KUW3fy
+-----END RSA PRIVATE KEY-----
+EOF

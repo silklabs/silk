@@ -13,11 +13,11 @@
   },
   "license": "proprietary",
   "dependencies": {
-    "silk-sdk-glue": "0.0.1",
+    "mocha": "^2.3.0",
     "event-to-promise": "^0.3.3"
   },
   "devDependencies": {
-    "mocha": "^2.3.0",
+    "silk-sdk-glue": "0.0.1",
     "babel-eslint": "~3.1.15",
     "grunt": "^0.4.5",
     "grunt-babel": "^5.0.0",

@@ -19,6 +19,11 @@ export default {
   },
 
   server: {
+    cors: {
+      origin: '*',
+      methods: '*'
+    },
+
     // Will dynamically configure itself if empty...
     publicUrl: process.env.PUBLIC_URL,
 

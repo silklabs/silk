@@ -7,7 +7,21 @@ Silk app written for the web.
 npm install
 ```
 
-then to run,
+then run the following to start the server:
 ```
 npm start
 ```
+
+If working with a local server, add `config.local.js` to the root of
+`silk-webapp` to override the serverUrl then run `npm install` again:
+```js
+config = {
+  server: {
+    url: 'http://localhost:5000'
+  }
+}
+```
+
+* The static content in `public/` maybe edited in place with the server running.
+* If you are editing the js in `src/www`, run `bin/postinstall -w` in a separate
+  console to watch and automatically deploy changes into `public/js`.

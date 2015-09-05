@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+if [[ "$1" == "-w" ]]; then
+  maybeWatch=--watch
+fi
+
+set -x
+cd $(dirname $0)/..
+
+mkdir -p public/js
+
+# Fetch silk-api
+cp -fa node_modules/silk-api-react-native/src/index.js public/js/silk-api.js
+
+# Local config if present
+if [[ -f config.local.js ]]; then
+  cp -fa config.local.js public/js
+fi
+
+# www js
+./node_modules/.bin/babel $maybeWatch -d public/js src/www

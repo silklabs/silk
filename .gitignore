@@ -1,5 +1,7 @@
-node_modules/
-*~
 *.sw?
+*~
 .DS_Store
-npm-debug.log
+/config.local.js
+/node_modules/
+/npm-debug.log
+/public/js/

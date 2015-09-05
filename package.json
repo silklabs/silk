@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "description": "Silk web app",
   "scripts": {
-    "start-server": "babel-node --harmony src/server/main.js production",
-    "start": "DEBUG=silk-*,-*:verbose ./bin/start.sh",
+    "postinstall": "./bin/postinstall",
+    "start-prod": "babel-node --harmony src/server/main.js production",
+    "start": "DEBUG=silk-*,-*:verbose babel-node --harmony src/server/main.js development",
     "lint": "eslint src",
     "test": "npm run-script lint"
   },
@@ -19,7 +20,8 @@
     "eslint": "^0.22.1",
     "event-to-promise": "^0.4.0",
     "express": "^4.12.3",
-    "lodash.merge": "^3.3.2"
+    "lodash.merge": "^3.3.2",
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#3eb7959e7e7a72dbd0bea982ab7e7d349489a005"
   },
   "engines": {
     "node": ">=0.12.x"

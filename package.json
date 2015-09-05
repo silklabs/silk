@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Silk web app",
   "scripts": {
+    "preinstall": "./bin/preinstall",
     "postinstall": "./bin/postinstall",
     "start-prod": "babel-node --harmony src/server/main.js production",
     "start": "DEBUG=silk-*,-*:verbose babel-node --harmony src/server/main.js development",

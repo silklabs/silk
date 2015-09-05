@@ -224,6 +224,9 @@ ntp.on('time', emitDeviceInfo);
 
 function maybeCreateSocket() {
   if (!socket.__iamastub) {
+    if(!socket.connected) {
+      socket.connect();
+    }
     return;
   }
 

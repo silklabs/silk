@@ -28,8 +28,9 @@
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
-# 7. LOCAL_INSTALL_NODE_MODULES space separated list of node_modules to be copied
-#    on the device. This is only relevant for LOCAL_NODE_MODULE_TYPE == folder
+# 7. LOCAL_INSTALL_NODE_MODULES may be set to true to copy node_modules as
+#    listed in dependencies section of package.json on the device. This is only
+#    relevant for LOCAL_NODE_MODULE_TYPE == folder
 #
 
 LOCAL_MODULE_CLASS := NPM
@@ -39,6 +40,7 @@ define GET_PACKAGE_NAME_MAIN_JS
 var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
 console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
 console.log('LOCAL_NODE_MODULE_MAIN=' + (pkg.main || ''));
+console.log('LOCAL_INSTALL_NODE_MODULES_LIST=' + (Object.keys(pkg.dependencies) || ''));
 endef
 $(foreach stmt,$(shell node -e "$(GET_PACKAGE_NAME_MAIN_JS)"),$(eval $(stmt)))
 
@@ -228,13 +230,16 @@ else # LOCAL_NODE_MODULE_TYPE == folder
 # TODO: Maybe a better way would be to use the package.json's "files" section to
 # determine what to install on device?
 $(LOCAL_INSTALLED_MODULE): LOCAL_INSTALL_NODE_MODULES:= $(LOCAL_INSTALL_NODE_MODULES)
+$(LOCAL_INSTALLED_MODULE): LOCAL_INSTALL_NODE_MODULES_LIST:= $(LOCAL_INSTALL_NODE_MODULES_LIST)
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
 	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
-ifdef LOCAL_INSTALL_NODE_MODULES
+ifneq (,$(strip $(LOCAL_INSTALL_NODE_MODULES)))
+ifneq (,$(strip $(LOCAL_INSTALL_NODE_MODULES_LIST)))
 	$(hide) mkdir -p $(@D)/node_modules
-	rsync -qavL $(addprefix $(<D)/node_modules/,$(LOCAL_INSTALL_NODE_MODULES)) $(@D)/node_modules
+	rsync -qavL $(<D)/node_modules/{$(LOCAL_INSTALL_NODE_MODULES_LIST)} $(@D)/node_modules
+endif
 endif
 	$(hide) touch $@
 endif

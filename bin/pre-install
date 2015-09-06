@@ -13,3 +13,5 @@ fi
 rm -f "$proc"
 cp "$proc.$type" "$proc"
 echo "Ready to deploy: $type"
+
+$(dirname $0)/pre-install-heroku

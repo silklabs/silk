@@ -4,6 +4,9 @@
   "env":{
     "DEBUG":{
       "required":true
+    },
+    "HEROKU_PRIVATE_KEY":{
+      "required":true
     }
   },
   "addons":[]

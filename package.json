@@ -43,6 +43,7 @@
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
     "localStorage": "^1.0.3",
     "lodash.merge": "^3.3.2",
+    "mkdirp": "^0.5.1",
     "mz": "^2.0.0",
     "node-fetch": "^1.3.2",
     "node-static": "^0.7.7",
@@ -60,7 +61,6 @@
   },
   "devDependencies": {
     "dev-null": "^0.1.1",
-    "mkdirp": "^0.5.1",
     "mocha": "^2.2.5"
   },
   "engines": {

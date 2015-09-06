@@ -1,75 +1,31 @@
 #!/bin/bash
 #
-# Heroku needs help fetching private Silk Labs projects.
+# Heroku needs help fetching private projects over SSH.  This is accomplished by
+# defining the HEROKU_PRIVATE_KEY environment variable in the Config Variables
+# section of the affected dynos, which is then set up by the script as the SSH
+# identity.
 #
 
-# The HEROKU environment variable must be explicitly defined for each affected
-# dyno
-[[ -n $HEROKU ]] || exit 0
-
-echo Heroku environment detected.
+[[ -n $HEROKU_PRIVATE_KEY ]] || exit 0
 
 if [[ -d ~/.ssh ]]; then
-  echo "Failsafe! ~/.ssh is not expected to exist in the Heroku environment."
+  echo Failsafe! ~/.ssh is not expected to exist in the Heroku environment
   exit 1
 fi
+
+echo Using HEROKU_PRIVATE_KEY
 
 set -e
 mkdir -p ~/.ssh
 
-# This private key was created by running |ssh-keygen -f id_rsa| (empty
-# passphrase), and the matching public key was then added as a Deploy Key into:
-#   * https://github.com/silklabs/silk-api-react-native/settings/keys
-#
-# Therefore this key ONLY has read-only access to:
-#   * silklabs/silk-api-react-native
-# and if you are reading this file then odds are very good that so do you.
-
-cat > ~/.ssh/github_silk_id_rsa <<-EOF
------BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAsGmOY0cYqo5aIiJ5RacscHJeuOWy2UYCRoEv1wMt226V3w5L
-5Yzr2CTxEKpm0shOOScQlGmk8KA+Su2sx4iS/x3Npk2flXk/AUo08+XvvwdL7TmY
-wM0IZ7Dyt+kFg/9tAqa1sIh6mtnX8sVxqbyOa1QuzmpwzEOXwUeC+ig8v8Oyy/jG
-dXZvRnvqyZIVHRFYWJaXgWZZKVT+KPhgjQWx+Y+XMuBO0crBMCY/4lcxZ31qTA7V
-4PKFnQCOk1F9BiXha5+hYWGB2GCsfj1U3oUEX3WEuVgoxb0L2N18f2WEE609XKsN
-b6ZWArvRCONUQ39sb20HuRCF08L/b9qkwDq83wIDAQABAoIBAHe3upxe9DtSjZJa
-qMf/EiZhRyzdHMlcPFESfJ/ClY0zd9u+vPzT7H1rXHj92veyXXtlqle9deSiKoP4
-1Wc3pOIinJv+U41BkeNTM6pM4a1Wy0z66FH3Enwj1iO+rDKO1bCV5/kcNW/+5BDp
-syAISPJHV9hW3aORP1w4JoeTZN6RVGXkaCY1BjknBEh2pvVWJ+JcyK2fA/HCRmih
-MFci2lnGPd6Brn0oawDSyjc6r8rhpXyO220Y6FXUe7p8k/XeicXYv+7/VQ45OGKZ
-VTewQSoW4W/L2xCyFskoRKoCQdVr39SvSwKCYjY/JQ70PeotixOcBpFM2YNWDZFi
-nUkeIGkCgYEA36ebW7AOtdiFGuMIb+fAGVGnHJrqpJquP/qQueL/2xraOyDTV0Uu
-BHdbFGyRqgAW2kTWyV6SMxyuaWkJEXhYeFA2zK5owsg7yf2TUwx0EWXxEA4pFlog
-VBe8Qu6fuatr7L9hShUXG4rU3rRIi9puEgIhGPljZJ2ZkbN3myt20tsCgYEAyezj
-qMWMTqjhr1dy1mTK5KSJrymxSnIlakggDUILZxKOMpUYZgUpXi7nLyfCsOnIs3YS
-lTcu4wrx1+boGgjFiFlBUpjDS6DQm2etwV66yyQQ2S1DVAk8GY9GwVrPZ3Z0/EYN
-+hJjUTCJYtlawN4aTuQVXryGfBe4enc6GjNKQ00CgYAOXuOhoY9gadgroRjir95t
-Ag0dzmpzRykZHU19VDOibXhGQlayDdTmHpEwn8VASh8tySyP5c65EAe46DHX+Iae
-vHC4+B/tHBaTZQK5XFx83bL+mBpVwFbBcID9P/3tXTFjFez3aKGCeIozARyEN/XI
-nHBp/WRAi8vZS9HMm59X7wKBgQCYT4Fh2rD83FJvykyq/xgz4xCf+ZjriLJEOudC
-WOD0/IAaE3B188rCaiqj3R/0BkQHajaWKyvIwoatzlSg3qDxOjIVtXkKYOE5d7kO
-tP+9HxU+W+//QX/9358FVhQ//JA9gjIkwR39LdlToJPeCypY+55K+XWPwOy8I5bG
-EI4huQKBgQCDHqJXynu0rFutmyXanSySP2XbmHZ63Ih3qkjIIm2bbGObs8tsTNQk
-Hkbr4YqlDx1eezeIN54LtO8OWjht2DFicJZ4MoHRq2Wc2SReaNn4k2ZLaaHiNdOF
-icmDo8352sMfdjQzAHIekI5ujyoSsdo6Eu5TV581K1nTDeyy7M6tMw==
------END RSA PRIVATE KEY-----
-EOF
-
-cat > ~/.ssh/github_silk_id_rsa.pub <<-EOF
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwaY5jRxiqjloiInlFpyxwcl645bLZRgJGgS/XAy3b
-bpXfDkvljOvYJPEQqmbSyE45JxCUaaTwoD5K7azHiJL/Hc2mTZ+VeT8BSjTz5e+/B0vtOZjAzQhnsPK3
-6QWD/20CprWwiHqa2dfyxXGpvI5rVC7OanDMQ5fBR4L6KDy/w7LL+MZ1dm9Ge+rJkhUdEVhYlpeBZlkp
-VP4o+GCNBbH5j5cy4E7RysEwJj/iVzFnfWpMDtXg8oWdAI6TUX0GJeFrn6FhYYHYYKx+PVTehQRfdYS5
-WCjFvQvY3Xx/ZYQTrT1cqw1vplYCu9EI41RDf2xvbQe5EIXTwv9v2qTAOrzf mvines@tardis
-EOF
+echo "$HEROKU_PRIVATE_KEY" > ~/.ssh/heroku_private_key
 
 cat >> ~/.ssh/config <<-EOF
 
-Host github.com
+Host *
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/github_silk_id_rsa
+  IdentityFile ~/.ssh/heroku_private_key
 EOF
 
 chmod 0700 ~/.ssh
 chmod 0600 ~/.ssh/*
-

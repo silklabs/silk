@@ -1,19 +1,22 @@
 # Silk Web App [![Build Status](https://magnum.travis-ci.com/silklabs/silk-webapp.svg?token=j54FanpWeLbC7r1NyfJA)](https://magnum.travis-ci.com/silklabs/silk-webapp)
 Silk app written for the web.
 
-## Setting up a development environment
+## Development environment
+
+1. `npm` is used to manage source dependencies.
+2. [webpack](https://webpack.github.io/) is used to bundle the application.
+3. Locally host the application using either the [webpack dev
+server](http://webpack.github.io/docs/webpack-dev-server.html) or the standalone
+express HTTP server.
+
+### Setup
 
 ```
 npm install
 ```
 
-then run the following to start the server:
-```
-npm start
-```
-
-If working with a local server, add `config.local.js` to the root of
-`silk-webapp` to override the serverUrl then run `npm install` again:
+If working with a local server create the file `public/config.local.js`
+to override the default server URL:
 ```js
 config = {
   server: {
@@ -22,9 +25,22 @@ config = {
 }
 ```
 
-* The static content in `public/` maybe edited in place with the server running.
-* If you are editing the js in `src/www`, run `bin/postinstall -w` in a separate
-  console to watch and automatically deploy changes into `public/js`.
+### Iterative development
+
+To start the webpack development server running on
+[http://localhost:8080/](http://localhost:8080/) run
+```
+npm start
+```
+Any edits to `src/www` should then be picked up automatically and rebuilt.  The
+static content in `public/` maybe edited in place.
+
+### Stand-alone HTTP server
+
+A standalone express-based HTTP server is also provided at `src/server`.  This
+is used when hosting the app with Heroku.  It can be invoked locally as well by
+running `npm run-script start-prod`.  Typically using the webpack development
+server will be more dev-friendly though.
 
 ## S3 Deployment
 

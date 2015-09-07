@@ -2,6 +2,6 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import createServer from './server';
-import bootstrap from '../bootstrap';
+import bootstrap from './bootstrap';
 
 bootstrap(createServer);

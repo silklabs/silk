@@ -32,12 +32,12 @@ To start the webpack development server running on
 ```
 npm start
 ```
-Any edits to `src/www` should then be picked up automatically and rebuilt.  The
+Any edits to `src/` should then be picked up automatically and rebuilt.  The
 static content in `public/` maybe edited in place.
 
 ### Stand-alone HTTP server
 
-A standalone express-based HTTP server is also provided at `src/server`.  This
+A standalone express-based HTTP server is also provided at `server/`.  This
 is used when hosting the app with Heroku.  It can be invoked locally as well by
 running `npm run-script start-server`.  Typically using the webpack development
 server will be more dev-friendly though.

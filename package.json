@@ -5,7 +5,7 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "postinstall": "webpack --progress --colors",
-    "start-prod": "babel-node --harmony src/server/main.js production",
+    "start-server": "babel-node --harmony server/main.js production",
     "start": "webpack-dev-server --progress --colors --content-base public/",
     "lint": "eslint src",
     "test": "npm run-script lint"
@@ -35,6 +35,7 @@
   "eslintConfig": {
     "parser": "babel-eslint",
     "globals": {
+      "document": true,
       "suite": true,
       "test": true,
       "setup": true,

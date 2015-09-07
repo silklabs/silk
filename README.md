@@ -39,7 +39,7 @@ static content in `public/` maybe edited in place.
 
 A standalone express-based HTTP server is also provided at `src/server`.  This
 is used when hosting the app with Heroku.  It can be invoked locally as well by
-running `npm run-script start-prod`.  Typically using the webpack development
+running `npm run-script start-server`.  Typically using the webpack development
 server will be more dev-friendly though.
 
 ## S3 Deployment

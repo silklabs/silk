@@ -16,8 +16,8 @@ export default function loadConfig(profile = 'production', cwd) {
   // 1. default
   // 2. <profile>
   // 3. $cwd/config.local.json
-  let defaultConfig = require('../../config/default');
-  let profileConfig = require(`../../config/${profile}`);
+  let defaultConfig = require('./config/default');
+  let profileConfig = require(`./config/${profile}`);
   let localConfig;
   try {
     localConfig = require(`${path.join(cwd, LOCAL_CONFIG)}`);

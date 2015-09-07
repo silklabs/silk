@@ -35,6 +35,7 @@
   "eslintConfig": {
     "parser": "babel-eslint",
     "globals": {
+      "document": true,
       "suite": true,
       "test": true,
       "setup": true,

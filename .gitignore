@@ -1,7 +1,7 @@
 *.sw?
 *~
 .DS_Store
-/config.local.js
+/public/config.local.js
 /node_modules/
 /npm-debug.log
 /public/js/

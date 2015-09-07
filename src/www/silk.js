@@ -13,6 +13,7 @@ let opts = {}
 if (typeof config === "object") {
   opts.serverUrl = config.server.url;
 }
+let silk = require('silk-api-react-native');
 let api = silk(opts);
 
 function log(msg) {

@@ -3,6 +3,9 @@
 
 'use strict';
 
+let silk = require('silk-api-react-native');
+let ansi_up = require('ansi_up');
+
 // Uninitialized socket.io connection.
 var socket = null;
 
@@ -202,6 +205,8 @@ function listen(socket) {
   });
 }
 
+window.cameras = cameras;
+
 function emitLogEnable(id, type) {
   var config = {}
   var force = (type === 'update-all' || type === 'disable-all');
@@ -215,9 +220,9 @@ function emitLogEnable(id, type) {
     config.procrank = !forceDisable && procrank.getEnable() ? 1 : 0;
   }
 
-  socket.emit('cmd', { 
+  socket.emit('cmd', {
     id: id,
-    msg: 'diag', 
+    msg: 'diag',
     config: config
   });
 }

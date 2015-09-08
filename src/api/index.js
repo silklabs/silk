@@ -20,6 +20,7 @@ module.exports = function create(options) {
       uuid: {
         ConfigService: 'beef',
         StateCharacteristic: '259a43754b8748548ef386be0f6faa68',
+        ServerConnectionStatusCharacteristic: '595d664ac5314245a7a89aeae6883cfe',
         RssiCharacteristic: '803ce13fa50f4370a7e7af45a78788b8',
         CurveCharacteristic: 'b3615a405497431fbf71e7949ff3ad2c',
         PeripheralKeyCharacteristic: 'cebebab40e874de988b4cacaa0af6dfb',

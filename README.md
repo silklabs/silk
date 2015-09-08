@@ -19,9 +19,7 @@ If working with a local server create the file `public/config.local.js`
 to override the default server URL:
 ```js
 config = {
-  server: {
-    url: 'http://localhost:5000'
-  }
+  serverUrl: 'http://localhost:5000'
 }
 ```
 

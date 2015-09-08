@@ -9,11 +9,12 @@ let ansi_up = require('ansi_up');
 // Uninitialized socket.io connection.
 var socket = null;
 
-let opts = {}
-if (typeof config === "object") {
-  opts.serverUrl = config.server.url;
+if (typeof config !== "object") {
+  // config.local.js doesn't exist
+  var config = {};
 }
-let api = silk(opts);
+
+let api = silk({serverUrl: config.serverUrl});
 
 function GenericLog(name) {
   this.element = document.getElementById(name);

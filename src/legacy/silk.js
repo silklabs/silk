@@ -8,13 +8,14 @@ var max = 5000;
 // Whether to log pings or not.
 var logEnabled = false;
 
-// Silk api
-let opts = {}
-if (typeof config === "object") {
-  opts.serverUrl = config.server.url;
+if (typeof config !== "object") {
+  // config.local.js doesn't exist
+  var config = {};
 }
+
+// Silk api
 let silk = require('silk-api-react-native');
-let api = silk(opts);
+let api = silk({serverUrl: config.serverUrl});
 
 function log(msg) {
   console.log(msg);

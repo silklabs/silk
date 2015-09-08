@@ -6,7 +6,9 @@ import Base from './base';
 import scrypt from 'scrypt';
 
 const EMAIL = Joi.string().trim().email().lowercase().required();
-const passwordHash = Joi.string().required().min(64).max(256);
+const PASSWORD_HASH = Joi.string().required().min(64).max(256);
+
+const log = require('../log')('models:accounts');
 
 /**
  * The time in MS which a password check is valid.
@@ -48,9 +50,15 @@ export default class Accounts extends Base {
       publicKey: Joi.string().hex().required().min(32)
     }),
 
+    ensureDevAccount: Joi.object().keys({
+      email: EMAIL,
+      passwordHash: PASSWORD_HASH,
+      publicKey: Joi.string().hex().required(),
+    }).unknown(true).required(),
+
     create: Joi.object().keys({
       email: EMAIL,
-      passwordHash: passwordHash,
+      passwordHash: PASSWORD_HASH,
       publicKey: Joi.string().required(),
       userAgent: Joi.string().required()
     }).required(),
@@ -58,7 +66,7 @@ export default class Accounts extends Base {
     checkPassword: Joi.object().keys({
       publicKey: Joi.string().required(),
       email: EMAIL,
-      passwordHash: passwordHash
+      passwordHash: PASSWORD_HASH
     }),
 
     /**
@@ -204,6 +212,25 @@ export default class Accounts extends Base {
     }
 
     return this.error('duplicateEmail');
+  }
+
+  async ensureDevAccount(payload) {
+    payload = this.validate(payload, 'ensureDevAccount');
+    let { email, passwordHash, publicKey } = payload;
+
+    // We don't care if there is a duplicate or not...
+    let create = await this.create({
+      userAgent: 'developer account',
+      email,
+      passwordHash,
+      publicKey,
+    });
+
+    if (create.id) {
+      log.info('Created developer account', email);
+    } else {
+      log.info('Developer account probably exists already', email, create);
+    }
   }
 
   /**

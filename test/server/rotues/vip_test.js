@@ -103,5 +103,18 @@ suite('account auth', () => {
     });
     assert.ok(auth.success);
   });
+
+  test('developer account login', async () => {
+    let { publicKey, privateKey, email, password } = api.devAccount;
+    let id = new api.id(publicKey, privateKey); //eslint-disable-line new-cap
+    api.vip.key = id;
+
+    let auth = await api.vip.checkPasswordWithPassword({
+      email,
+      password
+    });
+
+    assert.ok(auth.success, 'dev account login works');
+  });
 });
 

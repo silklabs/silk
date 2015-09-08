@@ -73,18 +73,41 @@ class WpaMonitor extends events.EventEmitter
           this._restart(cmd);
           break;
         case 'CTRL-EVENT-DISCONNECTED':
-          this.emit('disconnected');
+          let reason = '';
+          if ((found = extra.match(/ reason=([0-9]+)/))) {
+            // ref: external/wpa_supplicant_8/src/common/ieee802_11_defs.h
+            let reasonIndex = found[1];
+            reason = ['invalid_0', 'unspecified', 'prev_auth_not_valid',
+                'deauth_leaving', 'disassoc_due_to_inactivity',
+                'disassoc_ap_busy', 'class2_frame_from_nonauth_sta',
+                'class3_frame_from_nonassoc_sta', 'disassoc_sta_has_left',
+                'sta_req_assoc_without_auth', 'pwr_capability_not_valid',
+                'supported_channel_not_valid', 'invalid_12', 'invalid_ie',
+                'michael_mic_failure', '4way_handshake_timeout',
+                'group_key_update_timeout', 'ie_in_4way_differs',
+                'group_cipher_not_valid', 'pairwise_cipher_not_valid',
+                'akmp_not_valid', 'unsupported_rsn_ie_version',
+                'invalid_rsn_ie_capab', 'ieee_802_1x_auth_failed',
+                'cipher_suite_rejected', 'tdls_teardown_unreachable',
+                'tdls_teardown_unspecified', 'invalid_27', 'invalid_28',
+                'invalid_29', 'invalid_30', 'invalid_31', 'invalid_32',
+                'invalid_33', 'disassoc_low_ack'][reasonIndex];
+            log.info(`wifi disconnect reason: ${reason}`);
+          }
+          this.emit('disconnected', reason);
           break;
         case 'CTRL-EVENT-CONNECTED':
           this.emit('connected');
           break;
         case 'CTRL-EVENT-STATE-CHANGE':
           if ((found = extra.match(/ state=([0-9]) /))) {
+            // ref: external/wpa_supplicant_8/src/common/defs.h
             let stateIndex = found[1];
             let state = ['disconnected', 'disabled', 'inactive', 'scanning',
              'authenticating', 'associating', 'associated', 'four_way_handshake',
              'group_handshake', 'completed'][stateIndex];
             log.info(`wifi state: ${state}`);
+            this.emit('stateChange', state);
           }
           break;
         default:
@@ -188,6 +211,9 @@ class Wifi extends events.EventEmitter
 
   _requestDhcp() {
     log.info('Issuing DHCP request');
+
+    this.emit('stateChange', 'dhcping');
+
     util.exec('dhcputil', [iface, 'dhcp_stop'])
     .then(result => {
       if (result.code !== 0) {
@@ -260,11 +286,18 @@ class Wifi extends events.EventEmitter
       log.info('Wifi Connected.');
       this._requestDhcp();
     });
-    monitor.on('disconnected', () => {
+    monitor.on('disconnected', (reason) => {
+      // Send error unless leaving under normal circumstances
+      if (reason !== 'deauth_leaving') {
+        this.emit('error', reason); // fyi: node throws if no 'error' listeners
+      }
       this._networkCleanup();
-      log.info('==> Wifi offline');
+      log.info(`==> Wifi offline (${reason})`);
       this._online = false;
       this.emit('offline');
+    });
+    monitor.on('stateChange', state => {
+      this.emit('stateChange', state);
     });
 
     return Promise.resolve();

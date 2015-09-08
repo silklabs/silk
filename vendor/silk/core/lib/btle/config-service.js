@@ -60,7 +60,27 @@ StateCharacteristic.prototype.onReadRequest = function(offset, callback) {
   callback(this.RESULT_SUCCESS, data);
 };
 
-// value: enum { Unregistered, Registering, Registered, Error }
+function ServerConnectionStatusCharacteristic(service) {
+  ServerConnectionStatusCharacteristic.super_.call(this, {
+    uuid: ServerConnectionStatusCharacteristic.uuid,
+    properties: ['notify', 'read'],
+    descriptors: [
+      new DescriptionDescriptor('Connection Status')
+    ]
+  });
+  this.service = service;
+}
+util.inherits(ServerConnectionStatusCharacteristic, bleno.Characteristic);
+ServerConnectionStatusCharacteristic.uuid = decls.uuid.ServerConnectionStatusCharacteristic;
+
+ServerConnectionStatusCharacteristic.prototype.onReadRequest = function(offset, callback) {
+  if (offset) {
+    return callback(this.RESULT_INVALID_OFFSET);
+  }
+  let data = new Buffer(this.service.serverConnectionStatus, 'utf8');
+  callback(this.RESULT_SUCCESS, data);
+};
+
 function RssiCharacteristic(service) {
   RssiCharacteristic.super_.call(this, {
     uuid: RssiCharacteristic.uuid,
@@ -273,6 +293,7 @@ function ConfigService(id) {
     uuid: ConfigService.uuid,
     characteristics: [
       new StateCharacteristic(this),
+      new ServerConnectionStatusCharacteristic(this),
       new RssiCharacteristic(this),
       new CurveCharacteristic(this),
       new PeripheralKeyCharacteristic(this),
@@ -286,17 +307,11 @@ function ConfigService(id) {
   });
   events.EventEmitter.call(this);
   this.deviceId = id;
-  this.ap = null;
-  this.crypto = null;
-  this.errorMessage = '';
-  this.secret = null;
-  this.unsecured = false;
-  this.state = ConfigService.STATE_UNREGISTERED;
-  this.rssi = -80;
-  this.resolveProximityPromise = null;
   this.proximityPromise = new Promise(resolve => {
     this.resolveProximityPromise = resolve;
   });
+
+  this.clearState();
 }
 util.inherits(ConfigService, bleno.PrimaryService);
 util.inherits(ConfigService, events.EventEmitter);
@@ -308,6 +323,7 @@ ConfigService.STATE_ERROR = decls.state.ERROR;
 ConfigService.uuid = decls.uuid.ConfigService;
 ConfigService.characteristicUuidToName = { };
 ConfigService.characteristicUuidToName[StateCharacteristic.uuid] = 'state';
+ConfigService.characteristicUuidToName[ServerConnectionStatusCharacteristic.uuid] = 'serverConnectionStatus';
 ConfigService.characteristicUuidToName[RssiCharacteristic.uuid] = 'rssi';
 ConfigService.characteristicUuidToName[CurveCharacteristic.uuid] = 'curve';
 ConfigService.characteristicUuidToName[PeripheralKeyCharacteristic.uuid] = 'peripheralKey';
@@ -317,6 +333,20 @@ ConfigService.characteristicUuidToName[SecretCharacteristic.uuid] = 'secret';
 ConfigService.characteristicUuidToName[DeviceIdCharacteristic.uuid] = 'deviceId';
 ConfigService.characteristicUuidToName[ErrorDescriptionCharacteristic.uuid] = 'errorDescription';
 ConfigService.characteristicUuidToName[VibratePatternCharacteristic.uuid] = 'vibratePattern';
+
+ConfigService.prototype.clearState = function() {
+  console.log('Clearing state');
+
+  this.ap = null;
+  this.serverConnectionStatus = '';
+  this.crypto = null;
+  this.errorMessage = '';
+  this.secret = null;
+  this.unsecured = false;
+  this.rssi = -80;
+  this.resolveProximityPromise = null;
+  this.changeState(ConfigService.STATE_UNREGISTERED);
+};
 
 ConfigService.prototype.changeState = function(state) {
   console.log('Changing state to ' + state);

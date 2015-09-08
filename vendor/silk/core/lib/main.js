@@ -149,7 +149,8 @@ function boot() {
       camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
       log.info('Load configuration');
-      return config.init();
+      config.init(id);
+      return config.start();
     });
 }
 
@@ -220,6 +221,7 @@ ntp.on('time', emitDeviceInfo);
 // Server related...
 server.on('connect', () => {
   ui.goto('online');
+  config.stop();
   emitDeviceInfo()
   .then(() => {
     diag.start(server.socket);
@@ -231,6 +233,7 @@ server.on('connect', () => {
 });
 
 server.on('disconnect', () => {
+  config.start();
   update.stop();
   diag.stop();
   outbox.hintSocket = null;
@@ -266,8 +269,7 @@ server.on('cmd', cmd => {
 config.on('unconfigured', () => {
   if (ui.goto('setup')) {
     server.disconnect();
-    config.configure(id)
-    .catch(util.processthrow);
+    config.configure();
   }
 });
 config.on('configured', () => {

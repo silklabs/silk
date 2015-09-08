@@ -34,12 +34,12 @@ suite('accounts', () => {
       farFuture: {
         value: uuid.v1(),
         created: new Date(),
-        expires: new Date(3000)
+        expires: new Date(3000, 1)
       },
       farPast: {
         value: uuid.v1(),
         created: new Date(),
-        expires: new Date(1980)
+        expires: new Date(1980, 1)
       },
       notExpired: {
         value: uuid.v1(),
@@ -59,7 +59,13 @@ suite('accounts', () => {
 
     let remainder = await subject.collection.find().toArray();
     remainder = remainder.map(v => v.value);
-    assert.deepEqual(remainder, [records.notExpired.value]);
+    assert.deepEqual(
+      remainder,
+      [
+        records.farFuture.value,
+        records.notExpired.value,
+      ]
+    );
   });
 
 });

@@ -33,6 +33,9 @@ npm start
 Any edits to `src/` should then be picked up automatically and rebuilt.  The
 static content in `public/` maybe edited in place.
 
+Note that the webpack development server compiles and serves directly from
+memory.
+
 ### Stand-alone HTTP server
 
 A standalone express-based HTTP server is also provided at `server/`.  This

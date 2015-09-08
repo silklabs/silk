@@ -22,6 +22,7 @@ var MonitorPreview = React.createClass({
   propTypes: {
     id: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
+    status: React.PropTypes.string.isRequired,
     serverUrl: React.PropTypes.string.isRequired,
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
@@ -89,6 +90,8 @@ var MonitorPreview = React.createClass({
       );
     }
 
+    let status = this.props.status === '' ? '' : `(${this.props.status})`;
+
     return (
       <TouchableOpacity onPress={this.showVideo}>
         <View style={styles.monitorContainer}>
@@ -100,7 +103,7 @@ var MonitorPreview = React.createClass({
             id={id}
             previewSize={this.props.previewSize} />
           <View style={styles.monitorLabelContainer}>
-            <Text style={styles.monitorLabel}>{this.props.label}</Text>
+            <Text style={styles.monitorLabel}>{this.props.label} {status}</Text>
           </View>
           <View style={styles.monitorPreviewContainer}>
             <ImageView style={styles.preview} blob={this.state.blob} />

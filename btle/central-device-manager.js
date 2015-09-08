@@ -1,6 +1,13 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+const debug = require('debug');
+const log = {
+  debug: debug('silk:central-device-manager:debug'),
+  info: debug('silk:central-device-manager:info'),
+  warn: debug('silk:central-device-manager:warn'),
+};
+
 // TODO: import silk-api for real
 //var api = require('silk-api');
 var api = {
@@ -14,6 +21,7 @@ var api = {
     uuid: {
       ConfigService: 'beef',
       StateCharacteristic: '259a43754b8748548ef386be0f6faa68',
+      ServerConnectionStatusCharacteristic: '595d664ac5314245a7a89aeae6883cfe',
       RssiCharacteristic: '803ce13fa50f4370a7e7af45a78788b8',
       CurveCharacteristic: 'b3615a405497431fbf71e7949ff3ad2c',
       PeripheralKeyCharacteristic: 'cebebab40e874de988b4cacaa0af6dfb',
@@ -48,7 +56,7 @@ function stateToString(state) {
   switch (state) {
   case decls.state.UNREGISTERED:
     return 'unregistered';
-  case decls.state.REGISTERNIG:
+  case decls.state.REGISTERING:
     return 'registering';
   case decls.state.REGISTERED:
     return 'registered';
@@ -69,10 +77,12 @@ function DeviceManager(scanner, wifiHelper) {
 DeviceManager.prototype = Object.create(EventEmitter.prototype);
 
 DeviceManager.prototype.start = function() {
+  log.info('startScanning');
   this.scanner.startScanning();
 };
 
 DeviceManager.prototype.stop = function() {
+  log.info('stopScanning');
   this.scanner.stopScanning();
 };
 
@@ -85,37 +95,105 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
   if (!p.advertisement || !p.advertisement.services
       || !p.advertisement.services.some(function(u) {
           return normUuid(u) === normUuid(decls.uuid.ConfigService); })) {
-    //console.log('(Ignoring non-configurable peripheral '+ p.id +')');
+    //log.debug('(Ignoring non-configurable peripheral '+ p.id +')');
     return;
   }
-  this._ensureConfigured(p);
+  if (p.id in this.devices) {
+    log.debug('already discovered peripheral, no-op', p.id);
+    return;
+  }
+
+  log.info('discovered Silk peripheral:', p.id);
+  p.prettyName = p.advertisement.localName;
+  p.serverConnectionStatus = '';
+  p.error = '';
+  p.state = 'discovered';
+  this.devices[p.id] = p;
+  this.emit('discover', p);
+
+  this._connect(p)
+  .catch(err => {
+    // unable to connect to peripheral. disconnect to force rescan
+    // so that we can try again if the peripheral is still there
+    log.warn(`connect to ${p.id} failed. disconnect and retry`);
+    this._disconnect(p);
+  });
 };
 
-DeviceManager.prototype._ensureConfigured = function(p) {
-  this._connect(p)
-  .then(() => {
-    return p.readCharacteristic(decls.uuid.StateCharacteristic);
-  })
+DeviceManager.prototype._readStateCharacteristic = function(p) {
+  return p.readCharacteristic(decls.uuid.StateCharacteristic)
   .then(data => {
-    var state = data.readUInt8(0);
-    p.state = stateToString(state);
-    this.emit('stateChange', p);
-    // TODO handle ERROR state?
-    if (state !== decls.state.UNREGISTERED) {
-      // TODO disconnect here?  should we ever get here?
-      return Promise.reject('Peripheral not register-able');
+    var state = stateToString(data.readUInt8(0));
+
+    if (p.state !== state) {
+      log.debug('new peripheral state:', p.id, state);
+      p.state = state;
+      this.emit('stateChange', p);
+
+      if (p.state === 'unregistered') {
+        this._configureDevice(p);
+      }
     }
-    return this._passProximityGate(p);
-  })
-  .then(resumeToken => {    
-    return this._configureWithoutCrypto(p, resumeToken);
+    return state;
+  });
+};
+
+DeviceManager.prototype._readServerConnectionStatusCharacteristic = function(p) {
+  return p.readCharacteristic(decls.uuid.ServerConnectionStatusCharacteristic)
+  .then(data => {
+    var serverConnectionStatus = data.toString('utf8');
+
+    if (p.serverConnectionStatus !== serverConnectionStatus) {
+      log.debug('new connection status', p.id, serverConnectionStatus);
+      p.serverConnectionStatus = serverConnectionStatus;
+      this.emit('statusChange', p);
+    }
+    return serverConnectionStatus;
+  });
+};
+
+DeviceManager.prototype._readErrorDescriptionCharacteristic = function(p) {
+  return p.readCharacteristic(decls.uuid.ErrorDescriptionCharacteristic)
+  .then(data => {
+    var error = data.toString('utf8');
+
+    if (p.error !== error) {
+      log.debug('new peripheral error', p.id, error);
+      p.error = error;
+      this.emit('errorChange', p);
+    }
+    return error;
+  });
+};
+
+DeviceManager.prototype._pollStatus = function(p) {
+  clearInterval(p._pollStatusTimer);
+  p._pollStatusTimer = setInterval(() => {
+    this._readStateCharacteristic(p)
+    .then(() => this._readServerConnectionStatusCharacteristic(p))
+    .then(() => this._readErrorDescriptionCharacteristic(p))
+    .catch(() => {
+      log.warn('error reading from device, disconnect');
+      this._disconnect(p);
+    });
+  }, 500);
+  return Promise.resolve();
+};
+
+DeviceManager.prototype._configureDevice = function(p) {
+  return this._passProximityGate(p)
+  .then(resumeToken => this._configureWithoutCrypto(p, resumeToken))
+  .catch(() => {
+    log.warn('error configuring, disconnect and retry');
+    this._disconnect(p);
+    return Promise.reject();
   });
 };
 
 DeviceManager.prototype._passProximityGate = function(p) {
   return this._waitForProximity(p)
   .then(() => {
-    console.log('Passed proximity gate; disconnecting');
+    log.debug('Passed proximity gate');
     // TODO: get resume token from config service itself
     var resumeToken = 'TODO-IMPLEMENT-ME';
     return resumeToken;
@@ -127,7 +205,7 @@ DeviceManager.prototype._passProximityGate = function(p) {
  * can be sure it'll accept our connection.
  */
 DeviceManager.prototype._waitForProximity = function(p) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     // TODO: this should be a notification
     var updateRssiInterval = setInterval(() => {
       p.readCharacteristic(decls.uuid.RssiCharacteristic)
@@ -159,10 +237,9 @@ DeviceManager.prototype._waitForProximity = function(p) {
         resolve();
       })
       .catch(err => {
-        console.log('Error reading rssi', err);
+        log.warn('Error reading rssi', err);
         clearInterval(updateRssiInterval);
-        this._disconnect(p)
-        .then(() => this._ensureConfigured(p));
+        reject();
       });
     }, 100);
   });
@@ -170,31 +247,22 @@ DeviceManager.prototype._waitForProximity = function(p) {
 
 DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
   var network = null;
-  // Disconnect peripheral while we're getting Wi-Fi credentials from
-  // the user.  This works around random timeouts observed while BLE
-  // remains connected.
-  return this._disconnect(p)
-  .then(() => {
-    console.log('Disconnecting peripheral before getting wifi info ...');
-    return this.wifiHelper.getWifiNetwork();
-  })
+  return this.wifiHelper.getWifiNetwork()
   .then(net => {
-    console.log('Got network info, reconnecting ...');
+    log.debug('Got network info');
     network = net;
-    return this._connect(p);
+    return this._readStateCharacteristic(p);
   })
-  .then(() => {
-    return this._resumeSession(p, resumeToken);
-  })
-  .then(() => {
-    console.log('Reading device ID ...');
-    return p.readCharacteristic(decls.uuid.DeviceIdCharacteristic);
-  })
-  .then(id => {
-    p.deviceId = id.toString('hex');
-    console.log(` ... got device ID ${p.deviceId}`);
+  .then(state => {
+    if (state === 'registered') {
+      // Some time may have passed since getting network info. Don't proceed
+      // if we are now registered (or can't read state cause we are longer
+      // connected to device)
+      log.debug('Device is registered, bailing on configuration');
+      return Promise.reject();
+    }
 
-    console.log('Writing wifi info to peripheral ...');
+    log.debug('Writing wifi info to peripheral ...');
     return Promise.all([
       p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
                             new Buffer(network.ssid, 'utf8')),
@@ -203,20 +271,12 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
     ]);
   })
   .then(() => {
-    // TODO: get this from state charc notify
-    p.state = 'registered';
-    this.emit('stateChange', p);
-    console.log(' ... finished configuring, disconnecting');
-    setTimeout(() => this._disconnect(p), 2000);
+    log.info('finished configuring');
   })
-  .catch(() => {
-    this._disconnect(p)
-      .then(() => this._ensureConfigured(p));
-  });
 };
 
 DeviceManager.prototype._resumeSession = function(p, token) {
-  console.log(`Resuming session for peripheral with token ${token} ...`);
+  log.debug(`Resuming session for peripheral with token ${token} ...`);
   // TODO: use `token` to actually resume the session; on the device
   // side, config-service sessions persist across reconnects (which is
   // a bug).
@@ -224,12 +284,15 @@ DeviceManager.prototype._resumeSession = function(p, token) {
 };
 
 DeviceManager.prototype._connect = function(p) {
-  p.prettyName = p.advertisement.localName;
-  p.state = 'discovered';
-  this.devices[p.id] = p;  
-  this.emit('discover', p);
   return p.connect()
+  .then(() => p.readCharacteristic(decls.uuid.DeviceIdCharacteristic))
+  .then(id => {
+    p.deviceId = id.toString('hex');
+    log.info(`read device ID ${p.deviceId}`);
+  })
+  .then(() => this._pollStatus(p)) // TODO: change to notify
   .then(() => {
+    log.info('connected to peripheral:', p.id);
     p.state = 'connected';
     this.emit('connect', p);
   });
@@ -238,12 +301,20 @@ DeviceManager.prototype._connect = function(p) {
 DeviceManager.prototype._disconnect = function(p) {
   return p.disconnect()
   .then(() => {
+    log.info('disconnected from peripheral:', p.id);
+    clearInterval(p._pollStatusTimer);
     delete this.devices[p.id];
     this.emit('disconnect', p);
+
+    // Subsequent advertisements are not received after disconnecting from
+    // the peripheral. Workaround this by restarting scanning.
+    this.stop();
+    this.start();
   });
 };
 
 /*
+TODO: this probably will not work post configure refactor
 function configureWithCrypto() {
     return p.writeCharacteristic(decls.uuid.CurveCharacteristic,
                                  new Buffer('curve25519', 'utf8'));

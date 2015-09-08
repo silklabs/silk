@@ -23,7 +23,7 @@ var debug = require('debug')('silk:MonitorPreview');
 import { CameraMarkText, PlaceholderText } from './Text';
 
 var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
-                     'disconnect'];
+                     'disconnect', 'errorChange', 'statusChange'];
 
 var api = require('silk-api-react-native')({
   serverUrl: Config.server.url
@@ -68,6 +68,7 @@ var MonitorsView = React.createClass({
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
       return (<MonitorPreview key={key} id={key} label={device.name}
+                              status={device.status}
                               api={api}
                               socket={this.socket}
                               navigator={this.props.navigator}
@@ -137,11 +138,21 @@ var MonitorsView = React.createClass({
       debug(' ... connected');
       this.state.serverConnection = 'connected';
       this.setState(this.state);
+
       this.socket.on('video-stream-new', msg => {
-        this.state.streaming[msg.id] = { name: msg.name, logo: msg.logo, previewSize: msg.previewSize };
+        debug('new video stream', msg.id);
+
+        // use device status from discovered peripheral if available
+        let device = this.state.streaming[msg.id];
+        let status = (device && device.status) ? device.status : '';
+ 
+        this.state.streaming[msg.id] = { name: msg.name, logo: msg.logo,
+            previewSize: msg.previewSize, status: status };
+
         this.setState(this.state);
       });
       this.socket.on('video-stream-delete', msg => {
+        debug('deleted video stream', msg.id);
         delete this.state.streaming[msg.id];
         this.setState(this.state);
       });
@@ -190,21 +201,46 @@ var MonitorsView = React.createClass({
     var configuring = this.state.configuring = {};
     var streaming = this.state.streaming;
     this.dm.enumerateDevices().forEach(p => {
-      if ('registered' !== p.state) {
-        // Device hasn't finished configuring yet.
+      if ('unregistered' === p.state || 'registering' === p.state) {
+        // Show configuring widget when we are registering
         configuring[p.id] = { name: p.prettyName, rssi: p.rssi,
-                              state: 'configuring' };
+                              state: p.state, error: p.error };
         return;
-      }
-      if (!(p.deviceId in streaming)) {
-        // Device has sent us its ID, but we haven't observed a
-        // server-sent event from the device yet.  Create a
-        // starting-up placeholder widget for it that will be swapped
-        // out once we get the device info from the server.
-        streaming[p.deviceId] = { name: 'New Device' };
-        return;
+      } else if ('registered' === p.state) {
+        // Device is registered...
+        if (!(p.deviceId in streaming)) {
+          // Device has sent us its ID, but we haven't observed a
+          // server-sent event from the device yet. Create a
+          // starting-up placeholder widget for it that will be swapped
+          // out once we get the device info from the server. Will need
+          // remove if server-sent event never received.
+          streaming[p.deviceId] = { name: 'New Device', placeholder: true };
+        }
+
+        // update status, use error message if exists
+        streaming[p.deviceId].status = 
+            p.error ? p.error : p.serverConnectionStatus;
       }
     });
+
+    
+    for (id in streaming) {
+      if (!this.dm.enumerateDevices().some(p => p.deviceId === id)) {
+        // Streaming widget still exists, but we are no longer connected
+        // to the peripheral. Let's do some cleanup...
+
+        // No longer receiving status update (over BLE), so clear status to not
+        // show potentially stale data
+        streaming[id].status = '';
+
+        // We have not received a server-sent event. Delete placeholder widget,
+        // less, it will linger indefinitely. If/when the server sends the 
+        // event, it will get added back in.
+        if (streaming[id].placeholder) {
+          delete streaming[id];
+        }
+      }
+    }
     this.setState(this.state);
   },
 

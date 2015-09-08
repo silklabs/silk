@@ -42,9 +42,7 @@ export default class TimeMetadata extends Base {
     }).required()
   }
 
-  get collectionName() {
-    return 'time_metadata';
-  }
+  static COLLECTION = 'time_metadata';
 
   async findById(payload) {
     payload = this.validate(payload, 'findById');

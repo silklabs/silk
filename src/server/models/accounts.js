@@ -21,6 +21,28 @@ export default class Accounts extends Base {
     checkPasswordFailure: 'CheckPasswordFailure'
   }
 
+  static INDEX = [
+    /**
+     * Public key must be unique...
+     */
+    {
+      props: {
+        'accountTokens.publicKey': 1
+      },
+      options: { unique: true }
+    },
+
+    /**
+     * Email must be unique...
+     */
+    {
+      props: {
+        email: 1
+      },
+      options: { unique: true }
+    }
+  ]
+
   static SCHEMA = {
     findByPublicKey: Joi.object().keys({
       publicKey: Joi.string().hex().required().min(32)
@@ -105,9 +127,7 @@ export default class Accounts extends Base {
     }).required()
   }
 
-  get collectionName() {
-    return 'accounts';
-  }
+  static COLLECTION = 'accounts';
 
   scryptHash(value) {
     // These values are taken from http://www.tarsnap.com/scrypt/scrypt-slides.pdf

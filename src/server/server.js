@@ -54,6 +54,15 @@ export default async function main (config) {
   let nonce = new Nonce(db);
   // XXX: Rename once we phase out old account interface.
   let accountsModel = new AccountsModel(db);
+
+
+  // Ensure we have indexed models...
+  let index = [crashMeta, timeMeta, nonce, accountsModel].map(async model => {
+    await model.ensureIndexes();
+  });
+  // It is safe to run these concurrently:
+  await Promise.all(index);
+
   let emailSender = new EmailSender(config);
   let blobs = {
     file: await createFileBlob(config)

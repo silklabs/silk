@@ -7,14 +7,40 @@ let log = require('../log')('models-base');
  */
 export default class Base {
 
-  get collectionName() {
-    throw new Error('Subclass must define a collection name');
-  }
-
   constructor(db) {
-    let name = this.collectionName;
+    let name = this.constructor.COLLECTION;
+    if (!name) {
+      throw new Error('Must set "COLLECTION" as static variable.');
+    }
+
     this.db = db;
     this.collection = db.collection(name);
+  }
+
+  /**
+   * Ensures indexes have been initialized for this particular collection.
+   *
+   * Index fields are defined as a class static `INDEX`.
+   */
+  async ensureIndexes() {
+    let indexes = this.constructor.INDEX;
+    let name = this.constructor.name;
+    let collectionName = this.constructor.COLLECTION;
+    let desc = `${name} (${collectionName})`;
+
+    if (!indexes) {
+      log.info(`Skipping indexing ${desc} no indexes`);
+      return null;
+    }
+
+    return await Promise.all(indexes.map(async (idx) => {
+      log.info(`Adding index to ${desc}`, idx);
+      let { props, options } = idx;
+      if (!props) {
+        throw new Error(`Error adding index to ${desc} you must have .props`);
+      }
+      await this.collection.ensureIndex(props, options || []);
+    }));
   }
 
   /**

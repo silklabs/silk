@@ -228,6 +228,7 @@ function emitLogEnable(id, type) {
 }
 
 api.socketio.address().then(function(result) {
+  let io = require('socket.io-client');
   socket = io(result.url, {
     transports: ['websocket']
   });

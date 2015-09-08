@@ -223,6 +223,7 @@ function light() {
 }
 
 api.socketio.address().then(result => {
+  let io = require('socket.io-client');
   socket = io(result.url, {
     transports: ['websocket']
   });

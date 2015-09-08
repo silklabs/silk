@@ -22,6 +22,7 @@ let api = require('../api');
 let assert = require('assert');
 let bleno = require('bleno');
 let events = require('events');
+let log = require('../log')('config-service');
 let util = require('util');
 let vibrator = require('../vibrator')();
 const decls = api.btleConfigService;
@@ -282,7 +283,7 @@ VibratePatternCharacteristic.prototype.onWriteRequest = function(data, offset, w
   for (let i = 0; i < data.length / 2; i++) {
     pattern[i] = data.readUInt16LE(i * 2);
   }
-  console.log(`Issuing vibrator pattern: [${pattern.toString()}]`);
+  log.debug(`Issuing vibrator pattern: [${pattern.toString()}]`);
   vibrator.pattern(...pattern);
   callback(this.RESULT_SUCCESS);
 };
@@ -335,7 +336,7 @@ ConfigService.characteristicUuidToName[ErrorDescriptionCharacteristic.uuid] = 'e
 ConfigService.characteristicUuidToName[VibratePatternCharacteristic.uuid] = 'vibratePattern';
 
 ConfigService.prototype.clearState = function() {
-  console.log('Clearing state');
+  log.info('Clearing state');
 
   this.ap = null;
   this.serverConnectionStatus = '';
@@ -349,7 +350,7 @@ ConfigService.prototype.clearState = function() {
 };
 
 ConfigService.prototype.changeState = function(state) {
-  console.log('Changing state to ' + state);
+  log.info('Changing state to ' + state);
   // TODO: notify
   this.state = state;
   this.emit('stateChange', state);
@@ -373,7 +374,7 @@ ConfigService.prototype.getKey = function() {
 ConfigService.prototype.useECCurve = function(curve) {
   assert(!this.crypto);
 
-  console.log('Using elliptic curve "' + curve + '"');
+  log.info('Using elliptic curve "' + curve + '"');
   this.crypto = api.crypto.create(curve);
   this.changeState(ConfigService.STATE_REGISTERING);
 };
@@ -381,13 +382,13 @@ ConfigService.prototype.useECCurve = function(curve) {
 ConfigService.prototype.useCentralKey = function(key) {
   assert(this.crypto);
 
-  console.log('Deriving session key from central key');
+  log.info('Deriving session key from central key');
   this.crypto.deriveShared(key);
 };
 
 ConfigService.prototype.setAccessPoint = function(apEnc) {
   if (this.crypto) {
-    console.log('Decrypting access point ...');
+    log.info('Decrypting access point ...');
     this.ap = this.crypto.decrypt(apEnc);
   } else {
     this.ap = apEnc;
@@ -398,10 +399,10 @@ ConfigService.prototype.setAccessPoint = function(apEnc) {
 
 ConfigService.prototype.setSecret = function(secretEnc) {
   if (secretEnc.length === 0) {
-    console.log('  ... no secret, unsecured network');
+    log.info('  ... no secret, unsecured network');
     this.unsecured = true;
   } else if (this.crypto) {
-    console.log('Decrypting secret ...');
+    log.info('Decrypting secret ...');
     this.secret = this.crypto.decrypt(secretEnc);
   } else {
     this.secret = secretEnc;
@@ -414,7 +415,7 @@ ConfigService.prototype.checkDone = function() {
   if (!(this.ap && (this.secret || this.unsecured))) {
     return;
   }
-  console.log('Finished registering wifi!');
+  log.info('Finished registering wifi!');
   // TODO persist
   this.changeState(ConfigService.STATE_REGISTERED);
   // TODO notify to stop BLE service

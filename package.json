@@ -6,7 +6,7 @@
     "preinstall": "./bin/preinstall",
     "postinstall": "webpack --progress",
     "start-server": "babel-node --harmony server/main.js production",
-    "start": "webpack-dev-server --progress",
+    "start": "webpack-dev-server --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "lint": "eslint src",
     "test": "npm run-script lint"
   },
@@ -25,6 +25,7 @@
     "express": "^4.12.3",
     "lodash.merge": "^3.3.2",
     "ms": "^0.7.1",
+    "react": "^0.13.3",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#3eb7959e7e7a72dbd0bea982ab7e7d349489a005",
     "socket.io-client": "^1.3.6",
     "webpack": "^1.12.1"
@@ -77,6 +78,7 @@
   ],
   "private": true,
   "devDependencies": {
-    "webpack-dev-server": "^1.10.1"
+    "webpack-dev-server": "^1.10.1",
+    "webpack-hot-middleware": "^2.0.0"
   }
 }

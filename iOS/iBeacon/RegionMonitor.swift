@@ -11,47 +11,43 @@ class RegionMonitor: NSObject, CLLocationManagerDelegate {
   var locationManager: CLLocationManager!
   var region: CLBeaconRegion
   var delegate: RegionUpdatesDelegate?
+  var initialUpdate: Bool
 
   init(uuid: String) {
     self.region = CLBeaconRegion(proximityUUID: NSUUID(UUIDString:uuid), identifier: uuid)
-
+    self.initialUpdate = false
+    
     super.init()
 
     self.locationManager = CLLocationManager()
-    if self.locationManager.respondsToSelector("requestAlwaysAuthorization") {
-      self.locationManager.requestAlwaysAuthorization()
-    }
-    self.locationManager.delegate = self
-    self.locationManager.pausesLocationUpdatesAutomatically = false
-
     // Request for auhthorization to access location
     if (CLLocationManager.authorizationStatus() != CLAuthorizationStatus.AuthorizedAlways) {
       NSLog("Not authorized to use, requesting permission");
       self.locationManager.requestAlwaysAuthorization()
     }
+    self.locationManager.delegate = self
+    self.locationManager.pausesLocationUpdatesAutomatically = false
+
     self.locationManager.startMonitoringForRegion(self.region)
-    self.locationManager.startUpdatingLocation()
+
+    // Make sure we always get at least one notification, regardless of whether we are currently
+    // in the region or not.
+    self.initialUpdate = true
+    self.locationManager.requestStateForRegion(self.region)
 
     NSLog("init RegionMonitor \(self.region.identifier)");
   }
 
-  func applicationDidBecomeActive() {
-    self.locationManager.startRangingBeaconsInRegion(self.region)
-  }
-
-  func applicationWillResignActive() {
-    self.locationManager.stopRangingBeaconsInRegion(self.region)
-  }
-
   // When we launch this will read the current state of the region since we might have missed
   // the enter/exit notifications
-  func locationManager(manager: CLLocationManager!, didRangeBeacons beacons: [AnyObject]!, inRegion region: CLBeaconRegion!) {
-    if self.region.identifier == region.identifier && beacons.count > 0 {
-      let nearestBeacon = beacons[0] as! CLBeacon
-      if nearestBeacon.proximity != CLProximity.Unknown {
-        self.delegate?.regionStateChanged(true)
-      } else {
-        self.delegate?.regionStateChanged(false)
+  func locationManager(manager: CLLocationManager!, didDetermineState state: CLRegionState, forRegion region: CLRegion!) {
+    if self.initialUpdate {
+      NSLog("didDetermineState \(region.identifier) \(state.rawValue)")
+      if self.region.identifier == region.identifier {
+        if state != .Unknown {
+          self.initialUpdate = false
+          self.delegate?.regionStateChanged(state == .Inside)
+        }
       }
     }
   }

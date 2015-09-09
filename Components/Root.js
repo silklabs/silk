@@ -1,7 +1,7 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-var Config = require('./Libraries/Config');
+var Config = require('../Libraries/Config');
 var React = require('react-native');
 var {
   AppRegistry,
@@ -13,14 +13,14 @@ var {
 
 // Include our own browser shim goop but after react-native has loaded for the
 // first time and created it's own shims.
-require('./Libraries/BrowserShims');
+require('../Libraries/BrowserShims');
 // Configure debug module...
 require('debug').enable(Config.debug);
 
-var MonitorFullscreen = require('./Components/MonitorFullscreen');
-var MonitorsView = require('./Components/MonitorsView');
-var SignIn = require('./Components/SignIn');
-var WifiSettings = require('./Components/WifiSettings');
+var MonitorFullscreen = require('./MonitorFullscreen');
+var MonitorsView = require('./MonitorsView');
+var SignIn = require('./SignIn');
+var WifiSettings = require('./WifiSettings');
 
 var Silk = React.createClass({
   render: function() {

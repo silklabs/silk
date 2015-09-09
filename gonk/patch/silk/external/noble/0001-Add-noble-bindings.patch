@@ -1,14 +1,14 @@
-From 2bcb2175dfd980d3903d9c2c4cdf78b4985dfb1a Mon Sep 17 00:00:00 2001
+From cb7acc83306f096ba26e6aa673341cd661dbedab Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2762 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2774 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2779 insertions(+), 4 deletions(-)
+ 4 files changed, 2791 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..e9e99af
+index 0000000..a5334fb
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2762 @@
+@@ -0,0 +1,2774 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -459,7 +459,7 @@ index 0000000..e9e99af
 +
 +  const filterString = filter ? filter.length + ' ' + filter.join(' ') : '0';
 +  this.bledroid.command('startScanning ' +
-+                        (this.allowDuplicates ? '1' : '0') + ' ' +
++                        (allowDuplicates ? '1' : '0') + ' ' +
 +                        filterString);
 +  this.scanState = {
 +    stopRequested: false
@@ -782,6 +782,11 @@ index 0000000..e9e99af
 +    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
 +  }
 +
++  if (!peripheralInfo.connectionId) {
++    throw new Error('Cannot update rssi for peripheral uuid \'' + deviceUuid +
++                    '\' because it is not connected');
++  }
++
 +  this.queueCommand(this._updateRssi.bind(this, deviceUuid));
 +};
 +
@@ -792,6 +797,13 @@ index 0000000..e9e99af
 +  if (!peripheralInfo) {
 +    log.warn('Cannot connect to unknown peripheral uuid \'%s\'',
 +             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot update rssi for peripheral uuid \'%s\' because it is' +
++             'no longer connected',
++             peripheralInfo.uuid);
 +    return true;
 +  }
 +

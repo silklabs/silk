@@ -1,66 +1,87 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
 
-// TODO: rewrite me, and share bluetooth-init logic with scanner
+import EventEmitter from 'events';
+import makeLog from '../log';
 
-var config = {
-  uuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
-  major: 0,
-  minor: 0,
-  measuredPower: -73, // -128 - 127
-  enabled: false,
-  state: 'poweredOff',
-};
+const log = makeLog('beacon');
 
-var bleno = require('bleno');
+// TODO: This should be unique to the user's account and generated during config.
+const DEFAULT_UUID = 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424';
 
-function adjustBeaconState() {
-  if (config.state === 'unsupported') {
-    throw 'ERROR: bluetooth adapter state is "unsupported", which seems to indicate a bleno or bluez bug.  Cowardly exiting.';
+// TODO: This needs to be measured and customized for each type of device we
+//       ship.
+// This is the transmit power measured against a Nexus 4 at 1 meter distance.
+const DEFAULT_POWER = -60;
+
+export default class Beacon extends EventEmitter {
+  constructor(bleno, major = 0, minor = 0) {
+    super();
+
+    this.bleno = bleno;
+    this.uuid = DEFAULT_UUID;
+    this.measuredPower = DEFAULT_POWER;
+    this.state = bleno.state;
+    this.major = major;
+    this.minor = minor;
+    this.enabled = false;
+
+    bleno.on('stateChange', state => {
+      log.debug('stateChange: %s', state);
+      this.state = state;
+      this.adjustBeaconState();
+    });
+
+    bleno.on('advertisingStart', error => {
+      if (error) {
+        log.error('Error starting advertising: %j', error);
+      } else {
+        log.info('Started advertising');
+      }
+      this.emit('start', error);
+    });
+
+    bleno.on('advertisingStop', () => {
+      log.info('Stopped advertising');
+      this.emit('stop');
+    });
   }
-  if (config.state === 'poweredOn' && config.enabled) {
-    bleno.startAdvertisingIBeacon(config.uuid, config.major, config.minor, config.measuredPower,
-                                  function(err) {
-                                    if (err) {
-                                      console.log('Error: ' + err);
-                                    }
-                                  });
-  } else {
-    bleno.stopAdvertising();
+
+  adjustBeaconState() {
+    if (this.state === 'poweredOn' && this.enabled) {
+      log.info('Starting advertising %j',
+               { uuid: this.uuid,
+                 major: this.major,
+                 minor: this.minor,
+                 measuredPower: this.measuredPower });
+      this.bleno.startAdvertisingIBeacon(this.uuid,
+                                         this.major,
+                                         this.minor,
+                                         this.measuredPower);
+    } else {
+      log.info('Stopping advertising');
+      this.bleno.stopAdvertising();
+    }
+  }
+
+  start() {
+    log.debug('start()');
+    if (!this.enabled) {
+      this.enabled = true;
+      this.adjustBeaconState();
+    }
+  }
+
+  stop() {
+    log.debug('stop()');
+    if (this.enabled) {
+      this.enabled = false;
+      this.adjustBeaconState();
+    }
   }
 }
-
-bleno.on('stateChange', function(state) {
-  console.log('bleno: Bluetooth state changed to "' + state + '"');
-  config.state = state;
-  adjustBeaconState();
-});
-
-bleno.on('advertisingStart', function(err) {
-  if (err) {
-    console.log(err);
-    return;
-  }
-  console.log('Started advertising');
-});
-
-function start() {
-  config.enabled = true;
-  adjustBeaconState();
-}
-
-function stop() {
-  config.enabled = false;
-  adjustBeaconState();
-}
-
-module.exports = function(uuid, major, minor, measuredPower) {
-  config.uuid = uuid || config.uuid;
-  config.major = major || config.major;
-  config.minor = minor || config.minor;
-  config.measuredPower = measuredPower || config.measuredPower;
-  return {
-    start: start,
-    stop: stop,
-  };
-};

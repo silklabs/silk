@@ -4,6 +4,9 @@
 let log = require('../log')('btle');
 let caps = require('../caps');
 
+import Beacon from './ibeacon.js';
+import Ranger from './ranger.js';
+
 const expectedState = caps.has('qemu') ? 'poweredOff' : 'poweredOn';
 
 module.exports = {
@@ -16,8 +19,10 @@ module.exports = {
 
       let done = () => {
         module.exports.configService = require('./config-service');
-        //module.exports.ibeacon = require('./ibeacon.js');
-        //module.exports.scanner = require('./scanner.js');
+
+        module.exports.beacon = new Beacon(bleno);
+        module.exports.ranger = new Ranger(noble);
+
         module.exports.bleno = bleno;
         module.exports.noble = noble;
 

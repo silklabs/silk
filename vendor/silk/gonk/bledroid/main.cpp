@@ -20,12 +20,43 @@
 #include <hardware_legacy/power.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
+#include <utils/Timers.h>
 #include <sysutils/FrameworkListener.h>
 #include <limits.h>
 #include <memory>
 #include <cctype>
 
 using namespace android;
+
+enum WaitType {
+  WaitNone = 0,
+  WaitEnableDisable,
+  WaitRegisterClient,
+  WaitRegisterServer,
+  WaitScanFilterEnable,
+  WaitScanFilterParamSetup,
+  WaitScanFilterConfig,
+  WaitSearchService,
+  WaitGetIncludedService,
+  WaitGetCharacteristic,
+  WaitGetDescriptor,
+  WaitReadCharacteristic,
+  WaitWriteCharacteristic,
+  WaitRegisterForNotification,
+  WaitDeregisterForNotification,
+  WaitReadDescriptor,
+  WaitWriteDescriptor,
+  WaitListen,
+  WaitReadRemoteRssi,
+  WaitAddService,
+  WaitAddCharacteristic,
+  WaitAddDescriptor,
+  WaitStartService,
+  WaitStopService,
+  WaitDeleteService,
+  WaitConnect,
+  WaitDisconnect
+};
 
 enum {
   ScanDeliveryModeImmediate = 0,
@@ -71,15 +102,21 @@ enum {
 #define BLE_COMMAND_NAME "BleCommand"
 #define MAX_MSG_SIZE 256
 
-#define BT_UNITS_PER_MS (10 / 16)
+#define BT_UNITS_PER_MS 1000 / 625
 
-static const int kScanModeWindow = 2000 * BT_UNITS_PER_MS;
+static const nsecs_t kDefaultWaitTimeout = seconds_to_nanoseconds(15);
+
+static const int kScanModeWindow = 5000 * BT_UNITS_PER_MS;
 static const int kScanModeInterval = 5000 * BT_UNITS_PER_MS;
-static const int kScanLostFoundTimeout = 1000;
+static const int kScanLostFoundTimeout = 0;
 static const int kScanFoundSightings = 2;
 static const int kScanFilterIndex = 1;
 
 static const char kWakeLockId[] = "BledroidWakeLock";
+
+static const bt_bdaddr_t kInvalidAddr = {{
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+}};
 
 static const bt_uuid_t kBluetoothBaseUuid = {{
   0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,
@@ -89,7 +126,7 @@ static const bt_uuid_t kBluetoothBaseUuid = {{
 //
 // Helper macros
 //
-#define CALL_AND_WAIT(_expression) \
+#define CALL_AND_WAIT(_expression, _waitType) \
   do { \
     auto _lock = mainThreadWaiter.autoLock(); \
     int _err = (_expression); \
@@ -97,7 +134,7 @@ static const bt_uuid_t kBluetoothBaseUuid = {{
       ALOGE("bt operation " #_expression " failed: %d", _err); \
       return 1; \
     } \
-    mainThreadWaiter.wait(); \
+    mainThreadWaiter.wait((_waitType)); \
   } while(0)
 
 #define LOG_ERROR(expression, ...) \
@@ -175,24 +212,29 @@ class ThreadWaiter {
 public:
   class AutoSignal {
   public:
-    AutoSignal(ThreadWaiter *threadWaiter, bool abortIfNotWaiting)
+    AutoSignal(ThreadWaiter *threadWaiter,
+               WaitType waitType,
+               bool abortIfNotWaiting)
       : waiter(threadWaiter)
+      , targetWaitType(waitType)
       , abort(abortIfNotWaiting)
     { }
 
-    ~AutoSignal() { if (waiter) { waiter->signal(abort); } }
+    ~AutoSignal() { if (waiter) { waiter->signal(targetWaitType, abort); } }
+
   private:
     ThreadWaiter *const waiter;
+    const WaitType targetWaitType;
     const bool abort;
   };
 
   ThreadWaiter()
     : mainThreadMutex("ThreadWaiter::mainThreadMutex")
-    , waiting(false)
+    , currentWaitType(WaitNone)
   {}
 
   ~ThreadWaiter() {
-    if (waiting) {
+    if (currentWaitType != WaitNone) {
       ALOGE("Waiting at shutdown!");
       abort();
     }
@@ -202,36 +244,52 @@ public:
     return Mutex::Autolock(mainThreadMutex);
   }
 
-  AutoSignal autoSignal(bool condition = true,
+  AutoSignal autoSignal(WaitType waitType,
+                        bool condition = true,
                         bool abortIfNotWaiting = true) {
-    return AutoSignal(condition ? this : nullptr, abortIfNotWaiting);
+    return AutoSignal(condition ? this : nullptr, waitType, abortIfNotWaiting);
   }
 
-  void wait() {
+  void wait(WaitType waitType) {
     // Must be locked here, but no way to assert it...
 
-    if (waiting) {
+    if (currentWaitType != WaitNone) {
       ALOGE("Waiting more than once!");
       abort();
     }
 
-    waiting = true;
+    currentWaitType = waitType;
 
-    while (waiting) {
-      mainThreadCondition.wait(mainThreadMutex);
+    while (currentWaitType != WaitNone) {
+      int err = mainThreadCondition.waitRelative(mainThreadMutex,
+                                                 kDefaultWaitTimeout);
+      if (err) {
+        ALOGE("Waiting failed: %d", err);
+      }
     }
   }
 
 private:
-  void signal(bool abortIfNotWaiting) {
+  void signal(WaitType waitType, bool abortIfNotWaiting) {
     auto lock = autoLock();
 
-    if (!waiting && abortIfNotWaiting) {
-      ALOGE("Not waiting!");
-      abort();
+    if (currentWaitType != waitType) {
+      if (abortIfNotWaiting) {
+        if (currentWaitType == WaitNone) {
+          ALOGE("Not waiting!");
+        } else {
+          ALOGE("Not waiting on the right type!");
+        }
+        abort();
+      }
+
+      if (currentWaitType != WaitNone) {
+        ALOGW("Not signaling because type is mismatched");
+      }
+      return;
     }
 
-    waiting = false;
+    currentWaitType = WaitNone;
 
     mainThreadCondition.signal();
   }
@@ -239,7 +297,7 @@ private:
 private:
   Mutex mainThreadMutex;
   Condition mainThreadCondition;
-  bool waiting;
+  WaitType currentWaitType;
 };
 
 bool hexstr_to_buffer(const char *str, char *buffer, size_t length) {
@@ -318,15 +376,9 @@ bool str_to_addr(char const *str, bt_bdaddr_t &addr) {
   return hexstr_to_buffer(str, buffer, bufferLength);
 }
 
-bool addr_to_str(const bt_bdaddr_t &addr, char *str, size_t strLength) {
-  constexpr size_t kPrintLength = 18;
-  if (strLength < kPrintLength) {
-    ALOGE("Buffer too small!");
-    return false;
-  }
-
+void addr_to_str(const bt_bdaddr_t &addr, char (&str)[18]) {
   snprintf(str,
-           kPrintLength,
+           sizeof(str),
            "%02X:%02X:%02X:%02X:%02X:%02X",
            addr.address[0],
            addr.address[1],
@@ -334,7 +386,6 @@ bool addr_to_str(const bt_bdaddr_t &addr, char *str, size_t strLength) {
            addr.address[3],
            addr.address[4],
            addr.address[5]);
-  return true;
 }
 
 int str_to_uuids(char *&saveptr,
@@ -433,13 +484,17 @@ hw_device_t *device;
 ThreadWaiter mainThreadWaiter;
 BledroidListener bledroid;
 
-// Track the last connect BT address for RSSI.
-// (TODO: Ask the client for this address instead)
-bt_bdaddr_t lastConnectedAddr = { 0, };
-
 // HORRIBLE but looks like the callback for register_for_notification gets a
 // garbage value for the connection_id paramater...
 int connection_id_during_register_for_notification = -1;
+
+// HORRIBLE but if readRemoteRssi fails sometimes it hands out a garbage address
+// and we can't tell higher up that the callback should be routed to the object
+// that requested it...
+bt_bdaddr_t address_during_rssi_update = kInvalidAddr;
+
+// Must hold mainThreadWaiter's mutex to access this!
+int gatt_client_connection_count = 0;
 
 //
 // bt_os_callouts_t
@@ -493,7 +548,7 @@ static bt_os_callouts_t os_callouts = {
 //
 
 void bt_adapter_state_changed_callback(bt_state_t state) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitEnableDisable);
 
   adapter_state = state;
   bledroid.sendEvent("!adapterState powered%s",
@@ -576,10 +631,6 @@ void bt_acl_state_changed_callback(bt_status_t status,
     bda->address[3],
     bda->address[4],
     bda->address[5]);
-
-  if (state == BT_ACL_STATE_CONNECTED) {
-    lastConnectedAddr = *remote_bd_addr;
-  }
 }
 
 void bt_callback_thread_event(bt_cb_thread_evt evt) {
@@ -680,7 +731,7 @@ bt_callbacks_t bt_callbacks = {
 
 void gatt_register_client_callback(int status, int client_if,
     bt_uuid_t *app_uuid) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitRegisterClient);
 
   (void) app_uuid;
   if (status != 0) {
@@ -693,10 +744,7 @@ void gatt_register_client_callback(int status, int client_if,
 void gatt_client_scan_result_callback(bt_bdaddr_t* bda, int rssi,
     uint8_t* adv_data) {
   char address[18];
-  if (!addr_to_str(*bda, address, sizeof(address))) {
-    ALOGE("Failed to convert!");
-    return;
-  }
+  addr_to_str(*bda, address);
 
   ALOGV("gatt_client_scan_result_callback. %s rssi=%d", address, rssi);
 
@@ -756,13 +804,16 @@ void gatt_client_connect_callback(int conn_id,
                                   int status,
                                   int client_if,
                                   bt_bdaddr_t* bda) {
-  auto signal = mainThreadWaiter.autoSignal(true, false);
+  {
+    auto lock = mainThreadWaiter.autoLock();
+
+    gatt_client_connection_count++;
+  }
+
+  auto signal = mainThreadWaiter.autoSignal(WaitConnect, true, false);
 
   char address[18];
-  if (!addr_to_str(*bda, address, sizeof(address))) {
-    ALOGE("Failed to convert!");
-    return;
-  }
+  addr_to_str(*bda, address);
 
   ALOGV("gatt_client_connect_callback: conn_id=%d status=%d client_if=%d "
         "remote=%s",
@@ -781,13 +832,25 @@ void gatt_client_disconnect_callback(int conn_id,
                                      int status,
                                      int client_if,
                                      bt_bdaddr_t* bda) {
-  auto signal = mainThreadWaiter.autoSignal(true, false);
+  bool mismatch = false;
+  {
+    auto lock = mainThreadWaiter.autoLock();
+
+    if (gatt_client_connection_count) {
+      gatt_client_connection_count--;
+    } else {
+      mismatch = true;
+    }
+  }
+
+  if (mismatch) {
+    ALOGE("Mismatched connect/disconnect callbacks!");
+  }
+
+  auto signal = mainThreadWaiter.autoSignal(WaitDisconnect, true, false);
 
   char address[18];
-  if (!addr_to_str(*bda, address, sizeof(address))) {
-    ALOGE("Failed to convert!");
-    return;
-  }
+  addr_to_str(*bda, address);
 
   ALOGV("gatt_client_disconnect_callback: conn_id=%d status=%d client_if=%d "
         "remote=%s",
@@ -800,7 +863,7 @@ void gatt_client_disconnect_callback(int conn_id,
 }
 
 void gatt_client_search_complete_callback(int conn_id, int status) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitSearchService);
 
   ALOGV("gatt_client_search_complete_callback: conn_id=%d status=%d",
         conn_id,
@@ -836,7 +899,7 @@ void gatt_client_get_characteristic_callback(int conn_id,
                                              btgatt_srvc_id_t *srvc_id,
                                              btgatt_gatt_id_t *char_id,
                                              int char_prop) {
-  auto signal = mainThreadWaiter.autoSignal(status);
+  auto signal = mainThreadWaiter.autoSignal(WaitGetCharacteristic, status);
 
   char serviceUuid[33];
   if (!uuid_to_str(srvc_id->id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -894,7 +957,7 @@ void gatt_client_get_descriptor_callback(int conn_id,
                                          btgatt_srvc_id_t *srvc_id,
                                          btgatt_gatt_id_t *char_id,
                                          btgatt_gatt_id_t *descr_id) {
-  auto signal = mainThreadWaiter.autoSignal(status);
+  auto signal = mainThreadWaiter.autoSignal(WaitGetDescriptor, status);
 
   char serviceUuid[33];
   if (!uuid_to_str(srvc_id->id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -961,7 +1024,7 @@ void gatt_client_get_included_service_callback(int conn_id,
                                                int status,
                                                btgatt_srvc_id_t *srvc_id,
                                                btgatt_srvc_id_t *incl_srvc_id) {
-  auto signal = mainThreadWaiter.autoSignal(status);
+  auto signal = mainThreadWaiter.autoSignal(WaitGetIncludedService, status);
 
   char parentUuid[33];
   if (!uuid_to_str(srvc_id->id.uuid, parentUuid, sizeof(parentUuid))) {
@@ -1013,7 +1076,7 @@ void gatt_client_register_for_notification_callback(int /* conn_id */,
                                                     int status,
                                                     btgatt_srvc_id_t *srvc_id,
                                                     btgatt_gatt_id_t *char_id) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitRegisterForNotification);
 
   char serviceUuid[33];
   if (!uuid_to_str(srvc_id->id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -1117,7 +1180,7 @@ void gatt_client_notify_callback(int conn_id, btgatt_notify_params_t *p_data) {
 void gatt_client_read_characteristic_callback(int conn_id,
                                               int status,
                                               btgatt_read_params_t *p_data) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitReadCharacteristic);
 
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -1170,7 +1233,7 @@ void gatt_client_read_characteristic_callback(int conn_id,
 void gatt_client_write_characteristic_callback(int conn_id,
                                                int status,
                                                btgatt_write_params_t *p_data) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitWriteCharacteristic);
 
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -1204,7 +1267,7 @@ void gatt_client_write_characteristic_callback(int conn_id,
 void gatt_client_read_descriptor_callback(int conn_id,
                                           int status,
                                           btgatt_read_params_t *p_data) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitReadDescriptor);
 
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -1268,7 +1331,7 @@ void gatt_client_read_descriptor_callback(int conn_id,
 void gatt_client_write_descriptor_callback(int conn_id,
                                            int status,
                                            btgatt_write_params_t *p_data) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitWriteDescriptor);
 
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
@@ -1312,13 +1375,11 @@ void gatt_client_read_remote_rssi_callback(int client_if,
                                            bt_bdaddr_t* bda,
                                            int rssi,
                                            int status) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitReadRemoteRssi);
 
   char address[18];
-  if (!addr_to_str(*bda, address, sizeof(address))) {
-    ALOGE("Failed to convert!");
-    return;
-  }
+  const bt_bdaddr_t &addr = status ? address_during_rssi_update : *bda;
+  addr_to_str(addr, address);
 
   ALOGV("gatt_client_read_remote_rssi_callback: client_if=%d bda=%s rssi=%d "
         "status=%d",
@@ -1331,11 +1392,18 @@ void gatt_client_read_remote_rssi_callback(int client_if,
 }
 
 void gatt_client_listen_callback(int status, int server_if) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitListen);
 
   ALOGV("gatt_client_listen_callback: status=%d server_if=%d",
         status, server_if);
   bledroid.sendEvent("!listen %u %d", gatt_client_listening ? 1 : 0, status);
+}
+
+void gatt_client_configure_mtu_callback(int conn_id, int status, int mtu) {
+  ALOGV("gatt_client_configure_mtu_callback: conn_id=%d status=%d mtu=%d",
+        conn_id,
+        status,
+        mtu);
 }
 
 /**
@@ -1346,7 +1414,7 @@ void gatt_client_scan_filter_cfg_callback(int action,
                                           int status,
                                           int filt_type,
                                           int avbl_space) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitScanFilterConfig);
 
   ALOGV("gatt_client_scan_filter_cfg_callback: action=%d client_if=%d "
         "status=%d filt_type=%d avbl_space=%d",
@@ -1360,7 +1428,7 @@ void gatt_client_scan_filter_param_callback(int action,
                                             int client_if,
                                             int status,
                                             int avbl_space) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitScanFilterParamSetup);
 
   ALOGV("gatt_client_scan_filter_param_callback: action=%d client_if=%d "
         "status=%d avbl_space=%d",
@@ -1373,11 +1441,17 @@ void gatt_client_scan_filter_param_callback(int action,
 void gatt_client_scan_filter_status_callback(int enable,
                                              int client_if,
                                              int status) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitScanFilterEnable);
 
   ALOGV("gatt_client_scan_filter_status_callback: enable=%d client_if=%d "
         "status=%d",
         enable, client_if, status);
+}
+
+void gatt_client_congestion_callback(int conn_id, bool congested) {
+  ALOGV("gatt_client_congestion_callback: conn_id=%d congested=%s",
+        conn_id,
+        congested ? "true" : "false");
 }
 
 btgatt_client_callbacks_t bt_gatt_client_callbacks = {
@@ -1399,7 +1473,7 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   NULL, // execute_write_callback
   gatt_client_read_remote_rssi_callback,
   gatt_client_listen_callback,
-  NULL, // configure_mtu_callback
+  gatt_client_configure_mtu_callback,
   gatt_client_scan_filter_cfg_callback,
   gatt_client_scan_filter_param_callback,
   gatt_client_scan_filter_status_callback,
@@ -1407,7 +1481,7 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   NULL, // multi_adv_update_callback
   NULL, // multi_adv_data_callback
   NULL, // multi_adv_disable_callback
-  NULL, // congestion_callback
+  gatt_client_congestion_callback,
   NULL, // batchscan_cfg_storage_callback
   NULL, // batchscan_enable_disable_callback
   NULL, // batchscan_reports_callback
@@ -1422,7 +1496,7 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
 
 void gatt_server_register_server_callback(int status, int server_if,
     bt_uuid_t *app_uuid) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitRegisterServer);
 
   (void) app_uuid;
   if (status != 0) {
@@ -1460,7 +1534,7 @@ void gatt_server_connection_callback(int conn_id, int server_if, int connected,
  */
 void gatt_server_service_added_callback(int status, int server_if,
     btgatt_srvc_id_t *srvc_id, int service_handle) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitAddService);
 
   ALOGV("gatt_server_service_added_callback: status=%d server_if=%d srvc_handle=%d",
     status, server_if, service_handle);
@@ -1482,7 +1556,7 @@ void gatt_server_included_service_added_callback(int status, int server_if,
  */
 void gatt_server_characteristic_added_callback(int status, int server_if,
     bt_uuid_t *uuid, int srvc_handle, int char_handle) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitAddCharacteristic);
 
   ALOGV("gatt_server_characteristic_added_callback. status=%d server_if=%d "
       "srvc_handle=%d char_handle=%d",
@@ -1497,7 +1571,7 @@ void gatt_server_characteristic_added_callback(int status, int server_if,
  */
 void gatt_server_descriptor_added_callback(int status, int server_if,
     bt_uuid_t *uuid, int srvc_handle, int descr_handle) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitAddDescriptor);
 
   ALOGV("gatt_server_descriptor_added_callback. status=%d server_if=%d "
       "srvc_handle=%d descr_handle=%d",
@@ -1512,7 +1586,7 @@ void gatt_server_descriptor_added_callback(int status, int server_if,
  */
 void gatt_server_service_started_callback(int status, int server_if,
     int srvc_handle) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitStartService);
 
   ALOGV("gatt_server_service_started_callback: status=%d server_if=%d "
       "srvc_handle=%d", status, server_if, srvc_handle);
@@ -1525,7 +1599,7 @@ void gatt_server_service_started_callback(int status, int server_if,
  */
 void gatt_server_service_stopped_callback(int status, int server_if,
     int srvc_handle) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitStopService);
 
   ALOGV("gatt_server_service_stopped_callback: status=%d server_if=%d "
       "srvc_handle=%d", status, server_if, srvc_handle);
@@ -1538,7 +1612,7 @@ void gatt_server_service_stopped_callback(int status, int server_if,
  */
 void gatt_server_service_deleted_callback(int status, int server_if,
     int srvc_handle) {
-  auto signal = mainThreadWaiter.autoSignal();
+  auto signal = mainThreadWaiter.autoSignal(WaitDeleteService);
 
   ALOGV("gatt_server_service_deleted_callback: status=%d server_if=%d "
       "srvc_handle=%d", status, server_if, srvc_handle);
@@ -1617,7 +1691,7 @@ void gatt_server_response_confirmation_callback(int status, int handle) {
  * to a remote device.
  */
 void gatt_server_indication_sent_callback(int conn_id, int status) {
-  ALOGE("gatt_server_request_exec_write_callback");
+  ALOGE("gatt_server_indication_sent_callback");
 }
 
 /**
@@ -1627,7 +1701,7 @@ void gatt_server_indication_sent_callback(int conn_id, int status) {
  * congestion status has been cleared.
  */
 void gatt_server_congestion_callback(int conn_id, bool congested) {
-  ALOGE("gatt_server_request_exec_write_callback");
+  ALOGE("gatt_server_congestion_callback");
 }
 
 /**
@@ -1796,7 +1870,7 @@ int bt_cleanup() {
     const bt_interface_t *bt = bt_device->get_bluetooth_interface();
     LOG_ERROR(!bt, "bt_device->get_bluetooth_interface failed");
 
-    CALL_AND_WAIT(bt->disable());
+    CALL_AND_WAIT(bt->disable(), WaitEnableDisable);
     LOG_ERROR((adapter_state != BT_STATE_OFF), "failed to disable BT");
 
     bt->cleanup();
@@ -1845,7 +1919,7 @@ int bt_init() {
   LOG_ERROR(err, "bt set_os_callouts() failed: %d", err);
 
   ALOGV("bt enable");
-  CALL_AND_WAIT(bt->enable());
+  CALL_AND_WAIT(bt->enable(), WaitEnableDisable);
   LOG_ERROR((adapter_state != BT_STATE_ON), "failed to turn on BT");
 
   gatt = static_cast<btgatt_interface_t const *>(bt->get_profile_interface(
@@ -1856,11 +1930,13 @@ int bt_init() {
   LOG_ERROR(err, "gatt init() failed: %d", err);
 
   bt_uuid_t client_uuid = { { 0xDE, 0xAD, 0xBE, 0xEF, } };  // TODO: Generate a real UUID?
-  CALL_AND_WAIT(gatt->client->register_client(&client_uuid));
+  CALL_AND_WAIT(gatt->client->register_client(&client_uuid),
+                WaitRegisterClient);
   LOG_ERROR(gatt_client_if == -1, "Failed to register gatt client");
 
   bt_uuid_t server_uuid = { { 0xBE, 0xEF, } };  // TODO: Generate a real UUID?
-  CALL_AND_WAIT(gatt->server->register_server(&server_uuid));
+  CALL_AND_WAIT(gatt->server->register_server(&server_uuid),
+                WaitRegisterServer);
   LOG_ERROR(gatt_server_if == -1, "Failed to register gatt server");
 
   return 0;
@@ -1985,11 +2061,12 @@ int bt_start_scan(char *&saveptr) {
                                             kScanModeInterval);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to set scan parameters");
 
-    CALL_AND_WAIT(gatt->client->scan_filter_enable(gatt_client_if, true));
+    CALL_AND_WAIT(gatt->client->scan_filter_enable(gatt_client_if, true),
+                  WaitScanFilterEnable);
 
     static const int kListLogicType = 0x1111111;
     static const int kFilterLogicType = 1;
-    static const int kRssiThreshold = INT_MIN;
+    static const int kRssiThreshold = -127;
 
     CALL_AND_WAIT(
       gatt->client->scan_filter_param_setup(gatt_client_if,
@@ -2003,7 +2080,8 @@ int bt_start_scan(char *&saveptr) {
                                             ScanDeliveryModeImmediate,
                                             kScanLostFoundTimeout,
                                             kScanLostFoundTimeout,
-                                            kScanFoundSightings));
+                                            kScanFoundSightings),
+      WaitScanFilterParamSetup);
 
     scanFilterSetup = true;
   }
@@ -2037,7 +2115,8 @@ int bt_start_scan(char *&saveptr) {
                                              dataLength,
                                              const_cast<char *>(data),
                                              maskLength,
-                                             const_cast<char *>(mask)));
+                                             const_cast<char *>(mask)),
+        WaitScanFilterConfig);
       ALOGV("Added service UUID filter: "
             "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
             uuid.uu[15], uuid.uu[14], uuid.uu[13], uuid.uu[12],
@@ -2046,7 +2125,9 @@ int bt_start_scan(char *&saveptr) {
             uuid.uu[3], uuid.uu[2], uuid.uu[1], uuid.uu[0]);
     }
   } else {
-    CALL_AND_WAIT(gatt->client->scan_filter_clear(gatt_client_if, kScanFilterIndex));
+    CALL_AND_WAIT(gatt->client->scan_filter_clear(gatt_client_if,
+                                                  kScanFilterIndex),
+                  WaitScanFilterConfig);
   }
 
   // Start scan.
@@ -2075,7 +2156,8 @@ int bt_discover_services(char *&saveptr) {
   // then we just have to scan for all and filter later.
   bt_uuid_t* searchUuid = numServices == 1 ? serviceUuids.get() : nullptr;
 
-  CALL_AND_WAIT(gatt->client->search_service(connectionId, searchUuid));
+  CALL_AND_WAIT(gatt->client->search_service(connectionId, searchUuid),
+                WaitSearchService);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2088,7 +2170,8 @@ int bt_discover_included_services(char *&saveptr) {
 
   CALL_AND_WAIT(gatt->client->get_included_service(connectionId,
                                                    &parentService,
-                                                   nullptr));
+                                                   nullptr),
+                WaitGetIncludedService);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2101,7 +2184,8 @@ int bt_discover_characteristics(char *&saveptr) {
 
   CALL_AND_WAIT(gatt->client->get_characteristic(connectionId,
                                                  &service,
-                                                 nullptr));
+                                                 nullptr),
+                WaitGetCharacteristic);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2116,7 +2200,8 @@ int bt_discover_descriptors(char *&saveptr) {
   CALL_AND_WAIT(gatt->client->get_descriptor(connectionId,
                                              &service,
                                              &characteristic,
-                                             nullptr));
+                                             nullptr),
+                WaitGetDescriptor);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2136,7 +2221,8 @@ int bt_read_characteristic(char *&saveptr) {
   CALL_AND_WAIT(gatt->client->read_characteristic(connectionId,
                                                   &service,
                                                   &characteristic,
-                                                  authenticationRequested));
+                                                  authenticationRequested),
+                WaitReadCharacteristic);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2178,7 +2264,8 @@ int bt_write_characteristic(char *&saveptr) {
                                                    writeType,
                                                    dataLength,
                                                    authenticationRequested,
-                                                   data));
+                                                   data),
+                WaitWriteCharacteristic);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2208,12 +2295,14 @@ int bt_enable_notify(char *&saveptr) {
     CALL_AND_WAIT(gatt->client->register_for_notification(gatt_client_if,
                                                           &addr,
                                                           &service,
-                                                          &characteristic));
+                                                          &characteristic),
+                  WaitRegisterForNotification);
   } else {
     CALL_AND_WAIT(gatt->client->deregister_for_notification(gatt_client_if,
                                                             &addr,
                                                             &service,
-                                                            &characteristic));
+                                                            &characteristic),
+                  WaitDeregisterForNotification);
   }
 
   connection_id_during_register_for_notification = -1;
@@ -2240,7 +2329,8 @@ int bt_read_descriptor(char *&saveptr) {
                                               &service,
                                               &characteristic,
                                               &descriptor,
-                                              authenticationRequested));
+                                              authenticationRequested),
+                WaitReadDescriptor);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2280,7 +2370,8 @@ int bt_write_descriptor(char *&saveptr) {
                                                WriteTypeDefault,
                                                dataLength,
                                                authenticationRequested,
-                                               data));
+                                               data),
+                WaitWriteDescriptor);
   return BT_STATUS_SUCCESS;
 }
 
@@ -2310,11 +2401,9 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     if (onOff) {
       gatt_client_listening = (*onOff == '1');
       CALL_AND_WAIT(gatt->client->listen(gatt_client_if,
-                                         gatt_client_listening));
+                                         gatt_client_listening),
+                    WaitListen);
     }
-  } else if (0 == strcmp(cmd, "readRssi")) {
-    CALL_AND_WAIT(gatt->client->read_remote_rssi(gatt_client_if,
-                                                 &lastConnectedAddr));
   } else if (0 == strcmp(cmd, "advertisingData")) {
     err = bt_set_advertising_data(saveptr);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to set advertising data");
@@ -2334,7 +2423,8 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     ALOGV("primaryService %d %s\n", numAttributes, uuid);
     CALL_AND_WAIT(gatt->server->add_service(gatt_server_if,
                                             &srvc_id,
-                                            numAttributes));
+                                            numAttributes),
+                  WaitAddService);
   } else if (0 == strcmp(cmd, "addCharacteristic")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((serviceHandleStr == NULL),
@@ -2355,7 +2445,8 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
                                                    atoi(serviceHandleStr),
                                                    &desc_uuid,
                                                    atoi(propStr),
-                                                   atoi(permStr)));
+                                                   atoi(permStr)),
+                  WaitAddCharacteristic);
   } else if (0 == strcmp(cmd, "addDescriptor")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((serviceHandleStr == NULL), "Malformed addDescriptor (no service)");
@@ -2370,26 +2461,30 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     CALL_AND_WAIT(gatt->server->add_descriptor(gatt_server_if,
                                                atoi(serviceHandleStr),
                                                &desc_uuid,
-                                               atoi(permStr)));
+                                               atoi(permStr)),
+                  WaitAddDescriptor);
   } else if (0 == strcmp(cmd, "startService")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((serviceHandleStr == NULL), "Malformed startService");
 
     CALL_AND_WAIT(gatt->server->start_service(gatt_server_if,
                                               atoi(serviceHandleStr),
-                                              GATT_TRANSPORT_LE));
+                                              GATT_TRANSPORT_LE),
+                  WaitStartService);
   } else if (0 == strcmp(cmd, "stopService")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((serviceHandleStr == NULL), "Malformed stopService");
 
     CALL_AND_WAIT(gatt->server->stop_service(gatt_server_if,
-                                             atoi(serviceHandleStr)));
+                                             atoi(serviceHandleStr)),
+                  WaitStopService);
   } else if (0 == strcmp(cmd, "deleteService")) {
     char *serviceHandleStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((serviceHandleStr == NULL), "Malformed deleteService");
 
     CALL_AND_WAIT(gatt->server->delete_service(gatt_server_if,
-                                               atoi(serviceHandleStr)));
+                                               atoi(serviceHandleStr)),
+                  WaitDeleteService);
   } else if (0 == strcmp(cmd, "sendAttributeResponse")) {
     int attr_handle;
     int conn_id;
@@ -2473,7 +2568,8 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     CALL_AND_WAIT(gatt->client->connect(gatt_client_if,
                                         &addr,
                                         isDirect,
-                                        ConnectTransportLE));
+                                        ConnectTransportLE),
+                  WaitConnect);
   } else if (0 == strcmp(cmd, "disconnect")) {
     char *addrString = strtok_r(NULL, " \n", &saveptr);
     bt_bdaddr_t addr;
@@ -2483,14 +2579,39 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     char *connIdString = strtok_r(NULL, " \n", &saveptr);
     int connId = atoi(connIdString);
 
-    CALL_AND_WAIT(gatt->client->disconnect(gatt_client_if, &addr, connId));
+    CALL_AND_WAIT(gatt->client->disconnect(gatt_client_if, &addr, connId),
+                  WaitDisconnect);
   } else if (0 == strcmp(cmd, "updateRssi")) {
     char *addrString = strtok_r(NULL, " \n", &saveptr);
     bt_bdaddr_t addr;
     LOG_ERROR(!str_to_addr(addrString, addr),
               "Malformed updateRssi (bad address)");
 
-    CALL_AND_WAIT(gatt->client->read_remote_rssi(gatt_client_if, &addr));
+    address_during_rssi_update = addr;
+
+    do {
+      auto lock = mainThreadWaiter.autoLock();
+
+      if (!gatt_client_connection_count) {
+        ALOGW("No clients connected, ignoring command");
+        err = 1;
+        break;
+      }
+
+      err = gatt->client->read_remote_rssi(gatt_client_if, &addr);
+      if (err != BT_STATUS_SUCCESS) {
+        ALOGE("read_remote_rssi() failed: %d", err);
+        break;
+      }
+
+      mainThreadWaiter.wait(WaitReadRemoteRssi);
+    } while (false);
+
+    address_during_rssi_update = kInvalidAddr;
+
+    if (err != BT_STATUS_SUCCESS) {
+      return 1;
+    }
   } else if (0 == strcmp(cmd, "discoverServices")) {
     err = bt_discover_services(saveptr);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to discover services");

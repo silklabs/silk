@@ -148,6 +148,16 @@ function boot() {
       clapDetector = new clapper.ClapDetector({}, timeline);
       camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
+      btle.ranger.on('entered', (uuid, rssi) => {
+        log.info('Device \'%s\' entered range %d', uuid, rssi);
+      });
+      btle.ranger.on('range', (uuid, rssi) => {
+        log.info('Device \'%s\' range %d', uuid, rssi);
+      });
+      btle.ranger.on('exited', uuid => {
+        log.info('Device \'%s\' exited range', uuid);
+      });
+
       log.info('Load configuration');
       config.init(id);
       return config.start();
@@ -222,6 +232,10 @@ ntp.on('time', emitDeviceInfo);
 server.on('connect', () => {
   ui.goto('online');
   config.stop();
+
+  btle.beacon.start();
+  btle.ranger.start();
+
   emitDeviceInfo()
   .then(() => {
     diag.start(server.socket);
@@ -233,6 +247,8 @@ server.on('connect', () => {
 });
 
 server.on('disconnect', () => {
+  btle.beacon.stop();
+  btle.ranger.stop();
   config.start();
   update.stop();
   diag.stop();

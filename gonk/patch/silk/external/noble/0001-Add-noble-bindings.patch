@@ -1,14 +1,14 @@
-From cb7acc83306f096ba26e6aa673341cd661dbedab Mon Sep 17 00:00:00 2001
+From 9f9b2a210c33e9c824e8a8d87f2a56b3c4ac8498 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2774 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2766 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2791 insertions(+), 4 deletions(-)
+ 4 files changed, 2783 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..a5334fb
+index 0000000..c50d83e
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2774 @@
+@@ -0,0 +1,2766 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -511,7 +511,7 @@ index 0000000..a5334fb
 +        txPowerLevel = packet.data;
 +        break;
 +      case 'manufacturer-data':
-+        manufacturerData = packet.buffer;
++        manufacturerData = packet.data.buffer;
 +        break;
 +      case 'service-uuids':
 +        packet.data.forEach(function(serviceUuid) {
@@ -816,7 +816,7 @@ index 0000000..a5334fb
 +    address: peripheralInfo.address
 +  };
 +
-+  return false;
++  return true;
 +};
 +
 +/**
@@ -825,22 +825,15 @@ index 0000000..a5334fb
 +NobleBindings.prototype.onRssiUpdate = function(address, rssi, status) {
 +  log.debug('onRssiUpdate(%s, %d, %d)', address, rssi, status);
 +
-+  // This event can happen any time, even when we're not waiting for it, so we
-+  // have to make sure that we were actually waiting for this event before
-+  // running the next command.
-+  if (this.currentCommandInfo &&
-+      this.currentCommandInfo.type === 'updateRssi' &&
-+      this.currentCommandInfo.address === address) {
-+    this.scheduleNextCommand();
-+  }
-+
 +  const peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
 +    log.warn('Unknown peripheral \'%s\', ignoring', address);
 +    return;
 +  }
 +
-+  this.emit('rssiUpdate', peripheralInfo.uuid, rssi);
++  if (!status) {
++    this.emit('rssiUpdate', peripheralInfo.uuid, rssi);
++  }
 +};
 +
 +/**
@@ -857,17 +850,16 @@ index 0000000..a5334fb
 +    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
 +  }
 +
-+  var filter;
-+  const packedUuids = packUuids(serviceUuids);
-+  if (packedUuids.length) {
-+    filter = packedUuids.map(expandUuid);
++  var packedUuids = packUuids(serviceUuids);
++  if (!packedUuids.length) {
++    packedUuids = null;
 +  }
 +
-+  this.queueCommand(this._discoverServices.bind(this, deviceUuid, filter));
++  this.queueCommand(this._discoverServices.bind(this, deviceUuid, packedUuids));
 +};
 +
-+NobleBindings.prototype._discoverServices = function(deviceUuid, filter) {
-+  log.debug('_discoverServices(%s, %j)', deviceUuid, filter);
++NobleBindings.prototype._discoverServices = function(deviceUuid, packedUuids) {
++  log.debug('_discoverServices(%s, %j)', deviceUuid, packedUuids);
 +
 +  const peripheralInfo = this.peripheralMap.get(deviceUuid);
 +  if (!peripheralInfo) {
@@ -885,14 +877,14 @@ index 0000000..a5334fb
 +
 +  this.bledroid.command('discoverServices ' +
 +                        peripheralInfo.connectionId + ' ' +
-+                        (filter ?
-+                           filter.length + ' ' + filter.join(' ') :
++                        (packedUuids ?
++                           packedUuids.length + ' ' + packedUuids.join(' ') :
 +                           '0'));
 +
 +  assert(!this.currentCommandInfo);
 +  this.currentCommandInfo = {
 +    type: 'discoverServices',
-+    filter: filter,
++    filter: packedUuids,
 +    found: new Set()
 +  };
 +

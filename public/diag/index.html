@@ -24,48 +24,10 @@
         margin: 0;
         padding: 0;
       }
-      #cameras {
-        min-width: 150px;
-      }
-      .log {
-        font-family: monospace;
-        overflow-y: scroll;
-        overflow-x: hidden;
-        margin: 2px;
-        padding: 5px;
-        border-style: solid;
-        border-color: #D3D3D3;
-        border-width: 2px;
-      }
-      #dash {
-        height: 150px;
-      }
-      #procrank {
-        height: 200px;
-      }
-      #logcat {
-        height: calc(100% - 455px);
-      }
     </style>
   </head>
   <body>
     <script type="text/javascript" src="../config.local.js"></script>
-
-    <select id='cameras' onChange='cameras.updateActive();'></select>
-
-    <label><input type='checkbox' id='procrankEnable' checked
-      onclick='updateLogEnable("procrank");'>procrank</label>
-
-    <label><input type='checkbox' id='logcatEnable' checked
-      onclick='updateLogEnable("logcat");'>logcat</label>
-
-    <label><input type='checkbox' id='pauseLogcat'
-      onclick='updatePauseLogcat();'>pause logcat (press t to toggle)</label>
-
-    <pre id='dash' class='log'></pre>
-    <pre id='procrank' class='log'></pre>
-    <div id='logcat' class='log'></div>
-
     <script type="text/javascript" src="../js/bundle.js"></script>
   </body>
 </html>

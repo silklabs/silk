@@ -56,6 +56,30 @@ module.exports = function(grunt) {
     var adb_push ='adb push ' + srcFile + ' ' + destFile;
     grunt.log.writeln(adb_push);
     exec(adb_push);
+
+    // If ANDROID_PRODUCT_OUT is defined ensure that the file that was just
+    // built is removed from within there.  This is intended to prevent
+    // unexpected behavior when using the |watch| command in conjunction with
+    // |adb sync| -- |watch| will not populate ANDROID_PRODUCT_OUT with the
+    // modified file and subsequently running |adb sync| can cause an older
+    // version of the file to be copied onto the device.  Confusion ensues.
+    //
+    // The contents of ANDROID_PRODUCT_OUT should be considered ephemeral so
+    // the potential of lost data by this strategy appears to be unlikely.
+    //
+    // Note that this problem is only specific to running |watch| within a
+    // full build tree and would likely not manifest in an SDK-like
+    // environment.
+    if (process.env.ANDROID_PRODUCT_OUT) {
+      var fs = require('fs');
+      var outFile = process.env.ANDROID_PRODUCT_OUT + destFile;
+      fs.unlink(outFile, function (err) {
+        if (!err) {
+          grunt.log.writeln('(Removed ' + outFile + ')');
+        }
+      });
+    }
+
   });
   grunt.registerTask('silk_restart', '', function() {
     exec('adb shell setprop ctl.restart silk');

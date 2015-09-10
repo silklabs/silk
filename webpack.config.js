@@ -37,7 +37,9 @@ var config = {
           path.resolve(__dirname, 'node_modules/react-native-button'),
           path.resolve(__dirname, 'node_modules/react-native/Libraries/ART'),
         ],
-        loaders: ['babel-loader?stage=0&blacklist=validation.react']
+        loaders: [
+          'babel-loader?stage=0&blacklist=validation.react&optional=runtime'
+        ]
       },
     ],
   },

@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "art": "^0.10.0",
+    "babel-runtime": "^5.8.20",
     "buffer": "^3.2.2",
     "debug": "^2.2.0",
+    "deep-equal": "^1.0.1",
     "events": "^1.0.2",
     "joi": "^5.1.0",
     "lodash.merge": "^3.3.2",
@@ -18,10 +20,10 @@
     "react-native": "^0.9.0",
     "react-native-button": "^1.2.0",
     "react-native-linear-gradient": "^0.3.2",
-    "react-timer-mixin": "^0.13.2",
-    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#ea9f926d308446856956e974e8b9a9d86c8eb332",
-    "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#604912be54a6b1ff7e7d9ea87a912a20a907680f",
+    "react-timer-mixin": "^0.13.2",
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#a4ca658e5fc77fe9488b4043f107c1c94e1b4e23",
+    "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"
   },
   "devDependencies": {

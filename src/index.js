@@ -7,8 +7,13 @@ import io from 'socket.io-client';
 import mklog from './log'; const log = mklog('index');
 import { EventEmitter } from 'events';
 
-if (typeof config !== 'object') {
-  var config = {}; // config.local.js doesn't exist
+let config = {};
+try {
+  config = require('../config.local.json');
+} catch (e) {
+  if (e.code !== 'MODULE_NOT_FOUND') {
+    throw e;
+  }
 }
 
 class Camera extends EventEmitter {
@@ -119,8 +124,6 @@ class Camera extends EventEmitter {
   }
 
   set preview(enabled) {
-    log.warn(`preview: ${enabled}`);
-
     let previewStream = 'video-preview-' + this._id;
 
     if (this._previewImage) {
@@ -129,10 +132,8 @@ class Camera extends EventEmitter {
     }
 
     if (enabled) {
-      this._previewImage = document.createElement('img');
-
       log.info('Joining preview stream ' + previewStream);
-
+      this._previewImage = document.createElement('img');
       this._socket.on(previewStream, this._onPreviewStream);
       this._socket.emit('join', previewStream);
 
@@ -173,6 +174,7 @@ class Camera extends EventEmitter {
   }
 }
 
+
 class ServerConnection extends React.Component {
 
   static propTypes = {
@@ -181,10 +183,9 @@ class ServerConnection extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {connectionStatus: 'Initializing...', cameras: {}};
+    this.state = {connectionStatus: `Connecting... ${props.serverUrl}`, cameras: {}};
 
     this.socket = null;
-
     this.api = require('silk-api-react-native')({serverUrl: props.serverUrl});
     this.api.socketio.address().then(result => {
       this.setState({
@@ -253,16 +254,6 @@ class ServerConnection extends React.Component {
 
   }
 
-  onSetLogging = (id, enabled) => {
-    if (!this.socket) {
-      throw new Error('null socket');
-    }
-    if (!id) {
-      return;
-    }
-    this.state.cameras[id].logging(enabled);
-  }
-
   render() {
     return <Diag {...this.state}/>;
   }
@@ -271,7 +262,7 @@ class ServerConnection extends React.Component {
 
 // TODO: Remove "legacy" webapp as soon as possible
 if (document.title === 'Silk Diag') {
-  React.render(<ServerConnection />, document.body);
+  React.render(<ServerConnection serverUrl={config.serverUrl}/>, document.body);
 } else if (document.title === 'Silk Server') {
   require('./legacy/silk');
 }

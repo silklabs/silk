@@ -15,12 +15,13 @@ express HTTP server.
 npm install
 ```
 
-If working with a local server create the file `public/config.local.js`
-to override the default server URL:
+If working with a local server create the file `config.local.json` at the root
+of the project to override the default server URL:
 ```js
-config = {
-  serverUrl: 'http://localhost:5000'
+{
+  "serverUrl": "http://localhost:5000"
 }
+
 ```
 
 ### Iterative development

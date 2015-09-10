@@ -5,7 +5,18 @@ import React from 'react';
 
 export default class CameraPreview extends React.Component {
   static propTypes = {
-    camera: React.PropTypes.object
+    camera: React.PropTypes.object,
+    onClick: React.PropTypes.func,
+  }
+
+  componentDidMount() {
+    let camera = this.props.camera;
+    if (camera) {
+      camera.on('previewImage', this.onPreviewImage);
+    }
+    this._shouldComponentUpdate = true;
+    this._canvas = React.findDOMNode(this);
+    this._context = this._canvas.getContext('2d');
   }
 
   componentWillReceiveProps(nextProps) {
@@ -27,10 +38,25 @@ export default class CameraPreview extends React.Component {
     this._shouldComponentUpdate = true;
   }
 
+  componentWillUnmount() {
+    let camera = this.props.camera;
+    if (camera) {
+      camera.removeListener('previewImage', this.onPreviewImage);
+    }
+    this._shouldComponentUpdate = true;
+  }
+
   shouldComponentUpdate() {
     let shouldComponentUpdate = this._shouldComponentUpdate;
     this._shouldComponentUpdate = false;
     return shouldComponentUpdate;
+  }
+
+  onClick = () => {
+    let {camera, onClick} = this.props;
+    if (camera && onClick) {
+      onClick(camera.id);
+    }
   }
 
   render() {
@@ -39,12 +65,10 @@ export default class CameraPreview extends React.Component {
       return <canvas />;
     }
     let {width, height} = camera.previewSize;
-    return <canvas style={{width, height, backgroundColor: 'lightgrey'}}/>;
+    return <canvas onClick={this.onClick} style={{width, height, backgroundColor: 'lightgray'}} />;
   }
 
   componentDidUpdate() {
-    this._canvas = React.findDOMNode(this);
-    this._context = this._canvas.getContext('2d');
     this.renderPreview();
   }
 
@@ -64,7 +88,9 @@ export default class CameraPreview extends React.Component {
     let camera = this.props.camera;
     if (camera) {
       // Preview image
-      context.drawImage(camera.previewImage, 0, 0);
+      if (camera.previewImage) {
+        context.drawImage(camera.previewImage, 0, 0);
+      }
 
       // Objects
       let objects = camera.previewObjects;

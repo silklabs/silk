@@ -19,17 +19,17 @@ try {
 class Camera extends EventEmitter {
   constructor(name, id, logo, previewSize, socket) {
     super();
-    this._name = name;
-    this._id = id;
-    this._previewSize = previewSize;
+    this.name = name;
+    this.id = id;
+    this.previewSize = previewSize;
+    this.logs = {};
     this._socket = socket;
-    this._logs = {};
 
-    this._logoImage = document.createElement('img');
+    this.logoImage = document.createElement('img');
     let logoArray = new Uint8Array(logo);
     if (logoArray.length > 0) {
       let blob = new Blob([logoArray], { type: 'image/png' });
-      this._logoImage.src = URL.createObjectURL(blob);
+      this.logoImage.src = URL.createObjectURL(blob);
     }
   }
 
@@ -37,39 +37,7 @@ class Camera extends EventEmitter {
     this.logging = false;
     this.preview = false;
     this.video = false;
-    URL.revokeObjectURL(this._logoImage.src);
-  }
-
-  get name() {
-    return this._name;
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get logoImage() {
-    return this._logoImage;
-  }
-
-  get logs() {
-    return this._logs;
-  }
-
-  get previewSize() {
-    return this._previewSize;
-  }
-
-  get previewImage() {
-    return this._previewImage;
-  }
-
-  get previewObjects() {
-    return this._previewObjects;
-  }
-
-  get previewTimestamp() {
-    return this._previewTimestamp;
+    URL.revokeObjectURL(this.logoImage.src);
   }
 
   feedNewLog(type, data) {
@@ -117,23 +85,23 @@ class Camera extends EventEmitter {
     };
 
     this._socket.emit('cmd', {
-      id: this._id,
+      id: this.id,
       msg: 'diag',
       config
     });
   }
 
   set preview(enabled) {
-    let previewStream = 'video-preview-' + this._id;
+    let previewStream = 'video-preview-' + this.id;
 
-    if (this._previewImage) {
-      URL.revokeObjectURL(this._previewImage.src);
-      this._previewImage = null;
+    if (this.previewImage) {
+      URL.revokeObjectURL(this.previewImage.src);
+      this.previewImage = null;
     }
 
     if (enabled) {
       log.info('Joining preview stream ' + previewStream);
-      this._previewImage = document.createElement('img');
+      this.previewImage = document.createElement('img');
       this._socket.on(previewStream, this._onPreviewStream);
       this._socket.emit('join', previewStream);
 
@@ -153,20 +121,20 @@ class Camera extends EventEmitter {
       log.warning('_onPreviewStream: null msg.frame');
       return;
     }
-    if (this._id !== msg.id) {
+    if (this.id !== msg.id) {
       log.warning('Video preview from unknown camera:', msg);
       return;
     }
 
     log.debug('video preview', msg);
-    this._previewTimestamp = new Date(msg.when);
-    this._previewObjects = msg.objects;
+    this.previewTimestamp = new Date(msg.when);
+    this.previewObjects = msg.objects;
 
     let view = new Uint8Array(msg.frame);
     let blob = new Blob([view], { type: 'image/jpg' });
-    URL.revokeObjectURL(this._previewImage.src);
-    this._previewImage.onload = () => this.emit('previewImage');
-    this._previewImage.src = URL.createObjectURL(blob);
+    URL.revokeObjectURL(this.previewImage.src);
+    this.previewImage.onload = () => this.emit('previewImage');
+    this.previewImage.src = URL.createObjectURL(blob);
   }
 
   set video(enabled) {

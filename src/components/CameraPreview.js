@@ -8,10 +8,6 @@ export default class CameraPreview extends React.Component {
     camera: React.PropTypes.object
   }
 
-  constructor(props) {
-    super(props);
-  }
-
   componentWillReceiveProps(nextProps) {
     let prevCamera = this.props.camera;
     let nextCamera = nextProps.camera;

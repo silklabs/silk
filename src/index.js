@@ -3,6 +3,7 @@
 
 import React from 'react';
 import OnlineCameras from './components/OnlineCameras';
+import 'whatwg-fetch'; // window.fetch() polyfill for iOS
 
 let config = {};
 try {

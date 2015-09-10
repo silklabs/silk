@@ -3,6 +3,7 @@
 
 let noble = require('noble');
 let api = require('../api');
+let log = require('../log')('scanner');
 const decls = api.btleConfigService;
 
 let ssid;
@@ -11,7 +12,7 @@ let psk;
 const CURVE = 'curve25519';
 
 function startScanning() {
-  console.log(`Scanning for unregistered SilkCams...`);
+  log.info(`Scanning for unregistered SilkCams...`);
   noble.startScanning([decls.uuid.ConfigService], true);
 }
 
@@ -36,7 +37,7 @@ class ReadRssi {
 
   _start() {
     this.peripheral.once('rssiUpdate', (rssi) => {
-      console.log('rssi: ' + rssi);
+      log.info('rssi: ' + rssi);
 
       if (this.updateRssiInterval) {
         clearInterval(this.updateRssiInterval);
@@ -55,7 +56,7 @@ class ReadRssi {
   }
 }
 
-noble.on('warning', msg => console.warning(`Noble Warning: ${msg}`));
+noble.on('warning', msg => log.warn(`Noble Warning: ${msg}`));
 
 noble.on('discover', peripheral => {
   let uuids = peripheral.advertisement.serviceUuids;
@@ -67,10 +68,10 @@ noble.on('discover', peripheral => {
     let name = peripheral.advertisement.localName;
     let rssi = peripheral.rssi;
 
-    console.log(`discover: ${name} with [${uuids}] (rssi: ${rssi})`);
+    log.debug(`discover: ${name} with [${uuids}] (rssi: ${rssi})`);
 
     peripheral.on('connect', function() {
-      console.log('(peripheral connect)');
+      log.debug('(peripheral connect)');
 
       peripheral.discoverSomeServicesAndCharacteristics(
         [ decls.uuid.ConfigService ],
@@ -84,11 +85,11 @@ noble.on('discover', peripheral => {
         ],
         (err, services, characteristics) => {
           if (err) {
-            console.log(`discover failed: ${err}`);
+            log.debug(`discover failed: ${err}`);
             peripheral.disconnect();
             return;
           }
-          console.log('(peripheral discover)');
+          log.debug('(peripheral discover)');
 
           // Fetch characterstic
           for (let i in characteristics) {
@@ -115,19 +116,19 @@ noble.on('discover', peripheral => {
           stateChar.read();
           stateChar.on('data', data => {
             if (data.length !== 1) {
-              console.error(`Received invalid state from peripheral: ${data.length}`);
+              log.error(`Received invalid state from peripheral: ${data.length}`);
               peripheral.disconnect();
             } else {
               let state = data.readUInt8(0);
               switch (state) {
               case decls.state.UNREGISTERED:
-                console.log(`Device is unregistered. Setting up crypto`);
+                log.info(`Device is unregistered. Setting up crypto`);
 
                 // Write Curve
                 curveChar.write(new Buffer(CURVE, 'utf8'), true);
                 break;
               case decls.state.REGISTERED:
-                console.log(`Device is registered, disconnecting.`);
+                log.info(`Device is registered, disconnecting.`);
 
                 // Stop reading rssi
                 if (readRssi) {
@@ -138,7 +139,7 @@ noble.on('discover', peripheral => {
                 peripheral.disconnect();
                 break;
               default:
-                console.error(`Error: device is in state ${state}, disconnecting.`);
+                log.error(`Error: device is in state ${state}, disconnecting.`);
                 peripheral.disconnect();
                 break;
               }
@@ -147,15 +148,15 @@ noble.on('discover', peripheral => {
 
           // Read peripheral key
           curveChar.on('write', () => {
-            console.log(`crypto: crypto written succesfully`);
-            console.log(`Waiting for proximity sensor to trigger`);
-            console.log(`***Bring the device closer to this machine`);
+            log.info(`crypto: crypto written succesfully`);
+            log.info(`Waiting for proximity sensor to trigger`);
+            log.info(`***Bring the device closer to this machine`);
             peripheralKeyChar.read();
           });
 
           // Write central key
           peripheralKeyChar.on('read', (data) => {
-            console.log(`crypto: peripheral key read succesfully`);
+            log.info(`crypto: peripheral key read succesfully`);
 
             central = api.crypto.create(CURVE);
             let key = data.toString('binary');
@@ -167,7 +168,7 @@ noble.on('discover', peripheral => {
 
           // Write SSID key
           centralKeyChar.on('write', () => {
-            console.log(`crypto: central key written succesfully`);
+            log.info(`crypto: central key written succesfully`);
             central.encrypt(ssid)
             .then(cipherText => {
               apChar.write(new Buffer(cipherText, 'utf8'), true);
@@ -176,7 +177,7 @@ noble.on('discover', peripheral => {
 
           // Write secret key
           apChar.on('write', () => {
-            console.log(`AP key written successfully`);
+            log.info(`AP key written successfully`);
             central.encrypt(psk)
             .then(cipherText => {
               secretChar.write(new Buffer(cipherText, 'utf8'), true);
@@ -184,7 +185,7 @@ noble.on('discover', peripheral => {
           });
 
           secretChar.on('write', () => {
-            console.log(`secret key written succesfully`);
+            log.info(`secret key written succesfully`);
 
             // Read the current device configuration state again to ensure it's
             // now registered.
@@ -195,7 +196,7 @@ noble.on('discover', peripheral => {
     });
 
     peripheral.on('disconnect', function() {
-      console.log('(peripheral disconnect)');
+      log.info('(peripheral disconnect)');
       startScanning();
     });
 
@@ -206,7 +207,7 @@ noble.on('discover', peripheral => {
 
 if (require.main === module) {
   if (process.argv.length !== 4) {
-    console.error('Wifi SSID and PSK not provided');
+    log.error('Wifi SSID and PSK not provided');
     process.exit(1); //eslint-disable-line no-process-exit
   }
   let [,, _ssid, _psk] = process.argv;

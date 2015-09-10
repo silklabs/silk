@@ -9,7 +9,13 @@ import assert from 'assert';
 import EventEmitter from 'events';
 import net from 'net';
 
-const log = require('debug')('silk-bledroid');
+const debug = require('debug');
+
+const log = {
+  debug: debug('silk-bledroid:debug'),
+  info: debug('silk-bledroid:info'),
+  warn: debug('silk-bledroid:warn'),
+};
 
 const BLE_SOCKET_PATH = '/dev/socket/bledroid';
 const BLE_COMMAND_NAME = 'BleCommand';
@@ -33,14 +39,14 @@ function hexStringToUuid(hexString) {
       return hexString;
 
     default:
-      log(`Invalid uuid: '${hexString}'`);
+      log.warn(`Invalid uuid: '${hexString}'`);
       return undefined;
   }
 }
 
 class Bledroid extends EventEmitter {
   constructor() {
-    log('Created');
+    log.debug('Created');
 
     super();
 
@@ -71,13 +77,13 @@ class Bledroid extends EventEmitter {
   }
 
   init() {
-    log('Initializing');
+    log.debug('Initializing');
 
     this.socket = null;
     this.socketEventListenersInstalled = null;
     this.commandBuffer = { data: '' };
 
-    log(`Connecting to '${BLE_SOCKET_PATH}' socket`);
+    log.info(`Connecting to '${BLE_SOCKET_PATH}' socket`);
     const socket = net.createConnection(BLE_SOCKET_PATH, err => {
       if (err) {
         this.onSocketConnectionError(err);
@@ -91,7 +97,7 @@ class Bledroid extends EventEmitter {
     assert(!this.socket);
     assert(!this.socketEventListenersInstalled);
 
-    log(`Failed to connect to '${BLE_SOCKET_PATH}' socket: ${err}`);
+    log.warn(`Failed to connect to '${BLE_SOCKET_PATH}' socket: ${err}`);
 
     setTimeout(() => this.init(), SOCKET_RETRY_DELAY_MS);
   }
@@ -100,7 +106,7 @@ class Bledroid extends EventEmitter {
     assert(!this.socket);
     assert(!this.socketEventListenersInstalled);
 
-    log(`Connected to '${BLE_SOCKET_PATH}' socket`);
+    log.info(`Connected to '${BLE_SOCKET_PATH}' socket`);
 
     this.socket = socket;
 
@@ -120,10 +126,10 @@ class Bledroid extends EventEmitter {
     this.command('initialize');
 
     if (bufferedCommandData) {
-      log('Sending buffered commands');
+      log.debug('Sending buffered commands');
       if (!this.socket.write(bufferedCommandData)) {
         // TODO: Someday need to start buffering if the socket gets full.
-        log('Socket full');
+        log.warn('Socket full');
       }
     }
   }
@@ -141,7 +147,7 @@ class Bledroid extends EventEmitter {
   }
 
   onSocketError(err) {
-    log(`Socket 'error' event: ${err}`);
+    log.warn(`Socket 'error' event: ${err}`);
 
     // Buffer any further commands while we wait for the socket to close.
     this.commandBuffer = { data: '' };
@@ -152,7 +158,7 @@ class Bledroid extends EventEmitter {
   }
 
   onSocketClose(hadError) {
-    log(`Socket 'close' event: ${hadError}`);
+    log.info(`Socket 'close' event: ${hadError}`);
 
     // Remove all socket event listeners to make sure we don't get additional
     // events from the closed socket.
@@ -168,7 +174,7 @@ class Bledroid extends EventEmitter {
 
   onSocketData(messageBuffer, data) {
     data = data.toString();
-    log(`Socket 'data' event: '${data}'`);
+    log.debug(`Socket 'data' event: '${data}'`);
 
     let messages = data.split('\0');
 
@@ -204,7 +210,7 @@ class Bledroid extends EventEmitter {
     }
 
     if (!message) {
-      log('Empty message');
+      log.debug('Empty message');
       return;
     }
 
@@ -238,14 +244,14 @@ class Bledroid extends EventEmitter {
         this.emit.apply(this, [ map.emit ].concat(args));
         handled = true;
       } else {
-        log(`No 'method' or 'function' or emit' in message map: %j`, map);
+        log.warn(`No 'method' or 'function' or emit' in message map: %j`, map);
       }
 
       break;
     }
 
     if (!handled) {
-      log(`Unhandled bledroid message: '${message}'`);
+      log.warn(`Unhandled bledroid message: '${message}'`);
     }
   }
 
@@ -254,15 +260,15 @@ class Bledroid extends EventEmitter {
     let data = `${BLE_COMMAND_NAME} "${commandStr}"\0`;
 
     if (this.commandBuffer) {
-      log(`Not connected, buffering command: '${commandStr}'`);
+      log.debug(`Not connected, buffering command: '${commandStr}'`);
       this.commandBuffer.data += data;
       return;
     }
 
-    log(`Sending command: '${commandStr}'`);
+    log.debug(`Sending command: '${commandStr}'`);
     if (!this.socket.write(data)) {
       // TODO: Someday need to start buffering if the socket gets full.
-      log('Socket full');
+      log.warn('Socket full');
     }
   }
 
@@ -283,7 +289,7 @@ class Bledroid extends EventEmitter {
   }
 
   onUnknownCommand(command) {
-    log(`Unknown command '${command}'`);
+    log.warn(`Unknown command '${command}'`);
   }
 }
 

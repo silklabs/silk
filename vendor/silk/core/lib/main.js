@@ -25,6 +25,7 @@ let util = require('./util');
 let update = require('./update');
 let config = require('./config');
 let sensors = require('./sensors');
+let server = require('./server');
 let path = require('path');
 let fs = require('mz/fs');
 let deferred = require('./deferred');
@@ -148,7 +149,8 @@ function boot() {
       camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
       log.info('Load configuration');
-      return config.init();
+      config.init(id);
+      return config.start();
     });
 }
 
@@ -180,12 +182,6 @@ main().catch(err => {
   util.processthrow(err);
 });
 
-//
-// State observers
-//
-
-let socket = { __iamastub: true, connected: false, disconnect: () => {} };
-
 /**
  * Read vendor specific logo
  */
@@ -209,8 +205,8 @@ function readLogo() {
 function emitDeviceInfo() {
   return readLogo()
   .then(() => {
-    if (socket.connected) {
-      socket.emit('info', {
+    if (server.connected) {
+      server.socket.emit('info', {
         id: id.toString(),
         name: name,
         now: Date.now(),
@@ -222,111 +218,58 @@ function emitDeviceInfo() {
 }
 ntp.on('time', emitDeviceInfo);
 
-function maybeCreateSocket() {
-  if (!socket.__iamastub) {
-    return;
+// Server related...
+server.on('connect', () => {
+  ui.goto('online');
+  config.stop();
+  emitDeviceInfo()
+  .then(() => {
+    diag.start(server.socket);
+    update.start();
+    timeline.socket = server.socket;
+    outbox.hintSocket = server.socket;
+  })
+  .catch(util.processthrow);
+});
+
+server.on('disconnect', () => {
+  config.start();
+  update.stop();
+  diag.stop();
+  outbox.hintSocket = null;
+});
+
+server.on('reconnecting', () => ui.goto('connecting'));
+
+server.on('cmd', cmd => {
+  let msg = cmd.msg;
+  vib.on(500);
+  switch (msg) {
+  case 'start':
+    log.warn('"start" command');
+    break;
+  case 'stop':
+    log.warn('"stop" command');
+    break;
+  case 'light':
+    if (hue) {
+      hue.setState(cmd.state);
+    }
+    break;
+  case 'diag':
+    diag.setConfig(cmd.config);
+    break;
+  default:
+    log.error('Unhandled command', cmd);
+    break;
   }
-
-  api.socketio.address().then(result => {
-    socket = require('socket.io-client')(
-      result.url,
-      {
-        // Require explicit connections.
-        autoConnect: true,
-        /**
-         * Only use websockets this is important for the following reasons:
-         *
-         *   - it's faster by bypassing the upgrade check
-         *
-         *   - works around various bugs where we send base64 via polling which
-         *     native does not decode correctly.
-         *
-         *   - More deterministic behavior since we don't sometimes use polling
-         *     and sometimes use websockets.
-         */
-        transports: ['websocket']
-      }
-    );
-
-    socket.on('connect', () => {
-      ui.goto('online');
-      emitDeviceInfo()
-      .then(() => {
-        log.warn(`server socket connected`);
-        diag.start(socket);
-        update.start();
-        timeline.socket = socket;
-      })
-      .catch(util.processthrow);
-    });
-    socket.on('disconnect', e => {
-      log.warn(`server socket disconnect: ${e}`);
-      update.stop();
-      diag.stop();
-
-      // On disconnect flush any unsent buffers.
-      //
-      // Unfortunately there seems to be no "public" socket.io API for this...
-      socket.sendBuffer = [];
-
-      switch (e) {
-      case 'io client disconnect':
-        // Device initiated disconnect
-        break;
-
-      case 'io server disconnect':
-        // When the server disconnects, the socket.io retry logic doesn't kick in
-        // so manually attempt a server reconnect
-        socket.connect();
-        // falls through
-
-      default:
-        ui.goto('connecting');
-        break;
-      }
-    });
-    socket.on('cmd', cmd => {
-      let msg = cmd.msg;
-      vib.on(500);
-      switch (msg) {
-      case 'start':
-        log.warn('"start" command');
-        break;
-      case 'stop':
-        log.warn('"stop" command');
-        break;
-      case 'light':
-        if (hue) {
-          hue.setState(cmd.state);
-        }
-        break;
-      case 'diag':
-        diag.setConfig(cmd.config);
-        break;
-      default:
-        log.error('Unhandled command', cmd);
-        break;
-      }
-    });
-
-    socket.on('connect_error', e => log.warn(`socket connect_error: ${e}`));
-    socket.on('connect_timeout', e => log.warn(`socket connect_timeout: ${e}`));
-    socket.on('error', e => log.warn(`socket error:${e}`));
-    socket.on('reconnect_attempt', e => log.warn(`socket reconnect_attempt: ${e}`));
-    socket.on('reconnect_error', e => log.warn(`socket reconnect_error: ${e}`));
-    socket.on('reconnect_failed', e => log.warn(`socket reconnect_failed: ${e}`));
-    socket.on('reconnecting', e => log.warn(`socket reconnecting: ${e}`));
-
-    outbox.hintSocket = socket;
-  }).catch(util.processthrow);
-}
+});
 
 // Config service...
 config.on('unconfigured', () => {
   if (ui.goto('setup')) {
-    socket.disconnect();
-    config.configure(id)
-    .catch(util.processthrow);
+    server.disconnect();
+    config.configure();
   }
 });
 config.on('configured', () => {
@@ -334,10 +277,10 @@ config.on('configured', () => {
 
     wifi.online()
     .then(() => {
-      maybeCreateSocket();
       log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
+      server.connect();
     })
-    .then(util.timeout) // 0ms timer to enable others to run if needed.
+    .then(() => util.timeout) // 0ms timer to enable others to run if needed.
     .then(() => {
 
       if (!hue) {
@@ -399,12 +342,7 @@ function shutdown(finalPromiseFactory) {
       return crashreporter.shutdown();
     })
     .then(() => {
-      if (socket) {
-        log.debug('Disconnecting socket');
-        socket.disconnect();
-        outbox.hintSocket = null;
-        socket = null;
-      }
+      server.disconnect();
     })
     .then(outbox.shutdown)
     .then(() => {

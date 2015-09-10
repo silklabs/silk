@@ -22,6 +22,7 @@ let api = require('../api');
 let assert = require('assert');
 let bleno = require('bleno');
 let events = require('events');
+let log = require('../log')('config-service');
 let util = require('util');
 let vibrator = require('../vibrator')();
 const decls = api.btleConfigService;
@@ -60,7 +61,27 @@ StateCharacteristic.prototype.onReadRequest = function(offset, callback) {
   callback(this.RESULT_SUCCESS, data);
 };
 
-// value: enum { Unregistered, Registering, Registered, Error }
+function ServerConnectionStatusCharacteristic(service) {
+  ServerConnectionStatusCharacteristic.super_.call(this, {
+    uuid: ServerConnectionStatusCharacteristic.uuid,
+    properties: ['notify', 'read'],
+    descriptors: [
+      new DescriptionDescriptor('Connection Status')
+    ]
+  });
+  this.service = service;
+}
+util.inherits(ServerConnectionStatusCharacteristic, bleno.Characteristic);
+ServerConnectionStatusCharacteristic.uuid = decls.uuid.ServerConnectionStatusCharacteristic;
+
+ServerConnectionStatusCharacteristic.prototype.onReadRequest = function(offset, callback) {
+  if (offset) {
+    return callback(this.RESULT_INVALID_OFFSET);
+  }
+  let data = new Buffer(this.service.serverConnectionStatus, 'utf8');
+  callback(this.RESULT_SUCCESS, data);
+};
+
 function RssiCharacteristic(service) {
   RssiCharacteristic.super_.call(this, {
     uuid: RssiCharacteristic.uuid,
@@ -262,7 +283,7 @@ VibratePatternCharacteristic.prototype.onWriteRequest = function(data, offset, w
   for (let i = 0; i < data.length / 2; i++) {
     pattern[i] = data.readUInt16LE(i * 2);
   }
-  console.log(`Issuing vibrator pattern: [${pattern.toString()}]`);
+  log.debug(`Issuing vibrator pattern: [${pattern.toString()}]`);
   vibrator.pattern(...pattern);
   callback(this.RESULT_SUCCESS);
 };
@@ -273,6 +294,7 @@ function ConfigService(id) {
     uuid: ConfigService.uuid,
     characteristics: [
       new StateCharacteristic(this),
+      new ServerConnectionStatusCharacteristic(this),
       new RssiCharacteristic(this),
       new CurveCharacteristic(this),
       new PeripheralKeyCharacteristic(this),
@@ -286,17 +308,11 @@ function ConfigService(id) {
   });
   events.EventEmitter.call(this);
   this.deviceId = id;
-  this.ap = null;
-  this.crypto = null;
-  this.errorMessage = '';
-  this.secret = null;
-  this.unsecured = false;
-  this.state = ConfigService.STATE_UNREGISTERED;
-  this.rssi = -80;
-  this.resolveProximityPromise = null;
   this.proximityPromise = new Promise(resolve => {
     this.resolveProximityPromise = resolve;
   });
+
+  this.clearState();
 }
 util.inherits(ConfigService, bleno.PrimaryService);
 util.inherits(ConfigService, events.EventEmitter);
@@ -308,6 +324,7 @@ ConfigService.STATE_ERROR = decls.state.ERROR;
 ConfigService.uuid = decls.uuid.ConfigService;
 ConfigService.characteristicUuidToName = { };
 ConfigService.characteristicUuidToName[StateCharacteristic.uuid] = 'state';
+ConfigService.characteristicUuidToName[ServerConnectionStatusCharacteristic.uuid] = 'serverConnectionStatus';
 ConfigService.characteristicUuidToName[RssiCharacteristic.uuid] = 'rssi';
 ConfigService.characteristicUuidToName[CurveCharacteristic.uuid] = 'curve';
 ConfigService.characteristicUuidToName[PeripheralKeyCharacteristic.uuid] = 'peripheralKey';
@@ -318,8 +335,22 @@ ConfigService.characteristicUuidToName[DeviceIdCharacteristic.uuid] = 'deviceId'
 ConfigService.characteristicUuidToName[ErrorDescriptionCharacteristic.uuid] = 'errorDescription';
 ConfigService.characteristicUuidToName[VibratePatternCharacteristic.uuid] = 'vibratePattern';
 
+ConfigService.prototype.clearState = function() {
+  log.info('Clearing state');
+
+  this.ap = null;
+  this.serverConnectionStatus = '';
+  this.crypto = null;
+  this.errorMessage = '';
+  this.secret = null;
+  this.unsecured = false;
+  this.rssi = -80;
+  this.resolveProximityPromise = null;
+  this.changeState(ConfigService.STATE_UNREGISTERED);
+};
+
 ConfigService.prototype.changeState = function(state) {
-  console.log('Changing state to ' + state);
+  log.info('Changing state to ' + state);
   // TODO: notify
   this.state = state;
   this.emit('stateChange', state);
@@ -343,7 +374,7 @@ ConfigService.prototype.getKey = function() {
 ConfigService.prototype.useECCurve = function(curve) {
   assert(!this.crypto);
 
-  console.log('Using elliptic curve "' + curve + '"');
+  log.info('Using elliptic curve "' + curve + '"');
   this.crypto = api.crypto.create(curve);
   this.changeState(ConfigService.STATE_REGISTERING);
 };
@@ -351,13 +382,13 @@ ConfigService.prototype.useECCurve = function(curve) {
 ConfigService.prototype.useCentralKey = function(key) {
   assert(this.crypto);
 
-  console.log('Deriving session key from central key');
+  log.info('Deriving session key from central key');
   this.crypto.deriveShared(key);
 };
 
 ConfigService.prototype.setAccessPoint = function(apEnc) {
   if (this.crypto) {
-    console.log('Decrypting access point ...');
+    log.info('Decrypting access point ...');
     this.ap = this.crypto.decrypt(apEnc);
   } else {
     this.ap = apEnc;
@@ -368,10 +399,10 @@ ConfigService.prototype.setAccessPoint = function(apEnc) {
 
 ConfigService.prototype.setSecret = function(secretEnc) {
   if (secretEnc.length === 0) {
-    console.log('  ... no secret, unsecured network');
+    log.info('  ... no secret, unsecured network');
     this.unsecured = true;
   } else if (this.crypto) {
-    console.log('Decrypting secret ...');
+    log.info('Decrypting secret ...');
     this.secret = this.crypto.decrypt(secretEnc);
   } else {
     this.secret = secretEnc;
@@ -384,7 +415,7 @@ ConfigService.prototype.checkDone = function() {
   if (!(this.ap && (this.secret || this.unsecured))) {
     return;
   }
-  console.log('Finished registering wifi!');
+  log.info('Finished registering wifi!');
   // TODO persist
   this.changeState(ConfigService.STATE_REGISTERED);
   // TODO notify to stop BLE service

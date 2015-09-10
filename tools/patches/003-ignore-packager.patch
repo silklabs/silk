@@ -1,5 +1,5 @@
---- ./React/React.xcodeproj/project.pbxproj
-+++ ./React/React.xcodeproj/project.pbxproj
+--- ./node_modules/react-native/React/React.xcodeproj/project.pbxproj
++++ ./node_modules/react-native/React/React.xcodeproj/project.pbxproj
 @@ -504,7 +504,7 @@
  			);
  			runOnlyForDeploymentPostprocessing = 0;

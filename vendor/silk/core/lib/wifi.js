@@ -199,7 +199,7 @@ class Wifi extends events.EventEmitter
     }
     return util.exec('dhcputil', [iface, 'dhcp_stop'])
       .then(() => util.exec('ndc', ['network', 'destroy', '100']))
-      .then(() => util.exec('ndc', ['interface', 'clearaddr', iface]))
+      .then(() => util.exec('ndc', ['interface', 'clearaddrs', iface]))
       .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
       .then(r => {
         log.info(`${iface} state| ${r.stdout}`);
@@ -353,7 +353,8 @@ class Wifi extends events.EventEmitter
   }
 
   forgetNetwork() {
-    return wpaCliRemoveAllNetworks();
+    return wpaCliRemoveAllNetworks()
+      .then(() => wpaCliExpectOk('disconnect'));
   }
 }
 

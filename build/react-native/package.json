@@ -22,8 +22,5 @@
   "keywords": [
     "iot"
   ],
-  "private": true,
-  "browser": {
-    "./id": false
-  }
+  "private": true
 }

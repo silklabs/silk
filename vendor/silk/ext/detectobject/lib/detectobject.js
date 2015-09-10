@@ -7,6 +7,8 @@
  */
 
 let log;
+let timeline;
+let prevObjs = null;
 
 const cascades = [
   {
@@ -71,12 +73,44 @@ function detectObjects(im, motionx, motiony, when, cb) {
   });
 }
 
+/**
+ * Notify timeline of the new objects detected
+ * @param objs
+ */
+function notifyObjs(objs) {
+  let what;
+  if (objs && objs.length > 0) {
+    what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
+    timeline.addObjects(objs);
+    prevObjs = objs;
+  } else {
+    what = ' -';
+    prevObjs = null;
+  }
+  log.info(`Detected objects:${what}`);
+}
+
 export default function init(env) {
   log = env.log;
-
+  timeline = env.timeline;
   let working = false;
 
-  env.timeline.on('preview', when => {
+  timeline.on('no-motion', when => {
+    log.info(`no motion detected`);
+
+    // Adjust the timestamp of the objects
+    let objs = null;
+    if (prevObjs) {
+      objs = prevObjs.map(obj => {
+        let newObj = obj;
+        newObj.when = when;
+        return newObj;
+      });
+    }
+    notifyObjs(objs);
+  });
+
+  timeline.on('motion', when => {
     if (working) {
       log.error(`Still busy, unable to process next preview image`);
       return;
@@ -107,14 +141,7 @@ export default function init(env) {
       let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
       detectObjects(motion, motionRect.x, motionRect.y, when, objs => {
-        let what;
-        if (objs.length > 0) {
-          what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
-          env.timeline.addObjects(objs);
-        } else {
-          what = ' -';
-        }
-        log.info(`Detected objects:${what}`);
+        notifyObjs(objs);
         working = false;
       });
     }, 1 /* == 1 channel image (RGB not required) */);

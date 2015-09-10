@@ -71,11 +71,17 @@ class Env extends events.EventEmitter {
       timeline.on('motion', (when, rects) => {
         this.timeline.emit('motion', when, rects);
       });
+      timeline.on('no-motion', when => {
+        this.timeline.emit('no-motion', when);
+      });
       this.timeline.addObject = (tag, when, rect) => {
         timeline.addObject(tag, when, rect);
       };
       this.timeline.addObjects = objs => {
         timeline.addObjects(objs);
+      };
+      this.timeline.noMotion = when => {
+        timeline.noMotion(when);
       };
     }
 

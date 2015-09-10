@@ -149,6 +149,14 @@ class Timeline extends EventEmitter {
     }]);
   }
 
+  /**
+   * Notify timeline that there is no motion in the image as compared to the
+   * previous image.
+   */
+  noMotion(when) {
+    this.emit('no-motion', when);
+  }
+
   _emitEvents(objects) {
     objects.forEach(object => {
       if (object.tag === 'face') {

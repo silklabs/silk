@@ -46,6 +46,36 @@ class FakeCamera {
   }
 }
 
+class FakeUtil {
+  getprop(prop, defaultValue) {
+    log.debug(`getprop ${prop}`);
+    return defaultValue;
+  }
+
+  getboolprop(prop, defaultValue = false) {
+    log.debug(`getboolprop ${prop}`);
+    return defaultValue;
+  }
+
+  getintprop(prop, defaultValue = '0') {
+    log.debug(`getintprop ${prop}`);
+    return defaultValue;
+  }
+
+  setprop(prop, value) {
+    log.debug(`setprop ${prop}: ${value}`);
+    return true;
+  }
+
+  playSound(fileName) {
+    log.debug(`playSound ${fileName}`);
+  }
+
+  timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
 class TestFramework {
   constructor() {
     log.verbose('TestFramework constructor');
@@ -54,7 +84,10 @@ class TestFramework {
     this.timeline = require('timeline')('test_id');
     this.camera = new FakeCamera();
     this.opencv = opencv;
-    require('detectobject')({log: require('log')('detectobject'), timeline: this.timeline, camera: this.camera});
+    this.rootDir = __dirname;
+    this.util = new FakeUtil();
+    require('detectobject')({log: require('log')('detectobject'), timeline: this.timeline, camera: this.camera, util: this.util});
+    require('trackobject')({log: require('log')('trackobject'), timeline: this.timeline, camera: this.camera, util: this.util});
   }
 }
 

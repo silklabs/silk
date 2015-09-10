@@ -5,6 +5,13 @@ var ble = require('./ble');
 var EventEmitter = require('events').EventEmitter;
 var normUuid = require('./util').normUuid;
 
+const debug = require('debug');
+const log = {
+  debug: debug('silk:ble-central:debug'),
+  info: debug('silk:ble-central:info'),
+  warn: debug('silk:ble-central:warn'),
+};
+
 function BLECentral() {
   EventEmitter.call(this);
 }
@@ -19,7 +26,7 @@ BLECentral.prototype.startScanning = function() {
       self.emit('discover', new PeripheralCordova(p));
     },
     function(err) {
-      console.log('Error: '+ err);
+      log.warn('startScanning error: ' + err);
     });
 };
 
@@ -39,6 +46,8 @@ function PeripheralCordova(p) {
                 || '???'),
   };
   this._charcs = { };
+  this._pendingReads = { };
+  this._pendingWrites = { };
 }
 
 PeripheralCordova.prototype = {
@@ -75,13 +84,24 @@ PeripheralCordova.prototype = {
       if (!charc) {
         return reject('Unknown characteristic "'+ uuid +'"');
       }
+
+      // ble doesn't handle multiple reads to same peripheral/uuid combo
+      // grrrr... save and issue all resolves/rejects when promise is fulfilled
+      if (!(uuid in self._pendingReads)) {
+        self._pendingReads[uuid] = [];
+      }
+      var pendingRead = self._pendingReads[uuid];
+      pendingRead.push({resolve: resolve, reject: reject});
+
       // TODO: check read-able?
       ble.read(self.id, charc.service, charc.characteristic,
                function(data) {
-                 resolve(data);
+                 pendingRead.forEach(function(pr) { pr.resolve(data) });
+                 self._pendingReads[uuid] = [];
                },
                function(err) {
-                 reject(err);
+                 pendingRead.forEach(function(pr) { pr.reject(err) });
+                 self._pendingReads[uuid] = [];
                });
     });
   },
@@ -93,14 +113,24 @@ PeripheralCordova.prototype = {
       if (!charc) {
         return reject('Unknown characteristic "'+ uuid +'"');
       }
+
+      // ble doesn't handle multiple write to same peripheral/uuid combo,
+      // show warning.
+      if (uuid in self._pendingWrites) {
+        log.warn('multiple pending writes not supported', self.id, uuid);
+      }
+      self._pendingWrites[uuid] = true; // note pending write
+
       // TODO: check write-able?
       // TODO: any benefit to using write-with-response?
       ble./*write*/writeWithoutResponse(
         self.id, charc.service, charc.characteristic, data,
         function() {
-          resolve();
+          delete self._pendingWrites[uuid];
+          resolve(data);
         },
         function(err) {
+          delete self._pendingWrites[uuid];
           reject(err);
         });
     });

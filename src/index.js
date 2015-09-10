@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import Diag from './components/diag';
+import Diag from './components/Diag';
 import io from 'socket.io-client';
 import mklog from './log'; const log = mklog('index');
 import { EventEmitter } from 'events';

@@ -9,7 +9,7 @@ export default function(config) {
     create: fetchJson.bind(null, resolve(baseUrl, SERVER_PATH_PREFIX)),
     findById: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/byid`)),
     findByTime: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/bytime`)),
-    findOneAfterTime: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/bytime/after`))
+    findOneAfterTime: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/bytime/after`)),
+    findBeforeTime: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/bytime/before`))
   };
 }
-

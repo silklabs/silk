@@ -15,6 +15,8 @@ suite('time metadata apis', () => {
   });
 
   suite(`${SERVER_PATH_PREFIX}/*`, () => {
+    // NB: this is re-created for each test() in the setup() call
+    // below, and the new object is bound to the `first` local here.
     let first;
     setup(async () => {
       first = {
@@ -33,6 +35,18 @@ suite('time metadata apis', () => {
       assert.ok(insert.body.id, 'has id');
       first.id = insert.body.id;
     });
+
+    async function insertNext() {
+      let next = Object.assign({}, first, {
+        startUTC: 201,
+        endUTC: 300,
+        data: { woot: true }
+      });
+      delete next.id;
+      next.previousId = first.id;
+      await api.create(next);
+      return next;
+    }
 
     test('find/bytime/after - found', async () => {
       let findAfterTime = await api.findOneAfterTime({
@@ -69,6 +83,37 @@ suite('time metadata apis', () => {
         return;
       }
       throw new Error('should throw');
+    });
+
+    test('find/bytime/before - found', async () => {
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'video',
+        time: first.endUTC + 1,
+        maxCount: 1
+      });
+      assert.equal(items.length, 1);
+      assert.deepEqual(items[0].data, first.data);
+    });
+
+    test('find/bytime/before - wrong type', async () => {
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'log',
+        time: first.endUTC + 1,
+        maxCount: 1
+      });
+      assert.equal(items.length, 0);
+    });
+
+    test('find/bytime/before - before time', async () => {
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'video',
+        time: first.startUTC - 1,
+        maxCount: 1
+      });
+      assert.equal(items.length, 0);
     });
 
     test('find/byid - found', async () => {
@@ -114,18 +159,12 @@ suite('time metadata apis', () => {
     });
 
     test('find next', async () => {
-      let next = Object.assign({}, first, {
-        startUTC: 10,
-        endUTC: 20,
-        data: { woot: true }
-      });
-      delete next.id;
-      next.previousId = first.id;
-      await api.create(next);
+      let next = await insertNext();
 
       let findFirst = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
         id: first.id
       });
+      assert.deepEqual(findFirst.body.data, first.data);
 
       let findSecond = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
         id: findFirst.body.nextId
@@ -133,6 +172,53 @@ suite('time metadata apis', () => {
       assert.equal(findSecond.statusCode, 200);
       assert.deepEqual(findSecond.body.data, next.data);
     });
-  });
 
+    test('find/bytime/before - found next', async () => {
+      let next = await insertNext();
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'video',
+        time: next.endUTC + 1,
+        maxCount: 1
+      });
+      assert.equal(items.length, 1);
+      assert.deepEqual(items[0].data, next.data);
+    });
+
+    test('find/bytime/before - found both', async () => {
+      let next = await insertNext();
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'video',
+        time: next.endUTC + 1,
+        maxCount: 2
+      });
+      assert.equal(items.length, 2);
+      assert.deepEqual(items[0].data, next.data);
+      assert.deepEqual(items[1].data, first.data);
+    });
+
+    test('find/bytime/before - found first', async () => {
+      let next = await insertNext();
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'video',
+        time: next.startUTC - 1,
+        maxCount: 2
+      });
+      assert.equal(items.length, 1);
+      assert.deepEqual(items[0].data, first.data);
+    });
+
+    test('find/bytime/before - found none', async () => {
+      let next = await insertNext();  // eslint-disable-line
+      let items = await api.findBeforeTime({
+        deviceId: id,
+        metaType: 'video',
+        time: first.startUTC - 1,
+        maxCount: 2
+      });
+      assert.equal(items.length, 0);
+    });
+  });
 });

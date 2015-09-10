@@ -13,7 +13,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
   var entered = false
 
   // This is the unique UUID of silk-device
-  let homeRegionUuid = "E0F3A744-FB2F-46F1-B45A-F2B398F2A424"
+  let homeRegionUuid = "e0f3a744-fb2f-46f1-b45a-f2b398f2a424"
 
   func loadConfig() -> Config {
     let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
@@ -94,15 +94,5 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
       notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
       self.homeBeacon!.setIsEnabled(entered)
     }
-  }
-
-  func applicationWillResignActive(application: UIApplication) {
-    NSLog("applicationWillResignActive");
-    self.regionMonitor!.applicationWillResignActive()
-  }
-
-  func applicationDidBecomeActive(application: UIApplication) {
-    NSLog("applicationDidBecomeActive");
-    self.regionMonitor!.applicationDidBecomeActive()
   }
 }

@@ -353,7 +353,8 @@ class Wifi extends events.EventEmitter
   }
 
   forgetNetwork() {
-    return wpaCliRemoveAllNetworks();
+    return wpaCliRemoveAllNetworks()
+      .then(() => wpaCliExpectOk('disconnect'));
   }
 }
 

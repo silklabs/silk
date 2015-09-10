@@ -245,7 +245,7 @@ class ServerConnection extends React.Component {
     if (this.state.diagVisible) {
       return <Diag onClose={this.onCloseDiag} {...this.state}/>;
     }
-    return
+    return (
       <div>
         <div>
           {
@@ -255,7 +255,8 @@ class ServerConnection extends React.Component {
           }
         </div>
         <Button onClick={this.onOpenDiag}>Diag</Button>
-      </div>;
+      </div>
+    );
   }
 }
 

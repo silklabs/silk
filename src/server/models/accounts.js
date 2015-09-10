@@ -22,6 +22,10 @@ export default class Accounts extends Base {
   }
 
   static SCHEMA = {
+    findByPublicKey: Joi.object().keys({
+      publicKey: Joi.string().hex().required().min(32)
+    }),
+
     create: Joi.object().keys({
       email: EMAIL,
       passwordHash: passwordHash,
@@ -123,6 +127,18 @@ export default class Accounts extends Base {
   }
 
   /**
+   * Find an account by its mongodb id.
+   */
+  async findByPublicKey(payload) {
+    payload = this.validate(payload, 'findByPublicKey');
+    let { publicKey } = payload;
+
+    return await this.collection.findOne({
+      'accountTokens.publicKey': publicKey
+    });
+  }
+
+  /**
    * Create an initial account this in no way grants the user permissions but
    * allows them to use their public/private key pair to make further requests
    * to authenticate their account.
@@ -179,7 +195,8 @@ export default class Accounts extends Base {
     payload = this.validate(payload, 'checkPassword');
 
     let account = await this.collection.findOne({
-      email: payload.email
+      email: payload.email,
+      'accountTokens.publicKey': payload.publicKey
     });
 
     if (!account) {

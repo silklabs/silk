@@ -9,6 +9,11 @@ import throwError from './fetch_error';
 import jwa from './jwa';
 import jwt from 'jsonwebtoken';
 import { sha } from 'hash.js';
+import uuid from 'uuid';
+
+function sha256(str) {
+  return sha.sha256().update(str).digest('hex');
+}
 
 export default class HttpClient {
   constructor(baseUrl) {
@@ -44,13 +49,34 @@ export default class HttpClient {
    */
   async requestWithBody(method, url, body) {
     body = JSON.stringify(body);
+    let canonicalReq = `${url}\n${method.toLowerCase()}\n${sha256(body)}`;
     let jwtPayload = {
+      // Unique id for this request.
+      jti: uuid.v1(),
+      // JSON representation of a string...
+      iat: new Date().toJSON(),
       // sha1 of the json body...
-      sha256: sha.sha256().update(body).digest('hex')
+      requestHash: sha256(canonicalReq)
     };
 
     // TODO: Add hash of body to payload...
     let signature = jwt.sign(jwtPayload, this.key.priv, {
+      /**
+       * Remember headers are _not_ signed do not trust them and do not put
+       * values in here that are implicitly assumed to be verified.
+       */
+      headers: {
+        /**
+         * The server will identify us based on the public key. We send it is
+         * sent in the clear here as an "id" then server _must_ validate this
+         * against known public keys.
+         *
+         * XXX: An alternative design would be to use an opaque id which is
+         * assigned to us by the server but that was deemed to add complexity
+         * without much value.
+         */
+        id: this.key.pub
+      },
       algorithm: 'ed25519',
       jwa: jwa
     });

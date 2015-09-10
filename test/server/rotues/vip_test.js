@@ -4,13 +4,15 @@
 import assert from 'assert';
 import createContext from '../context';
 import createApi from '../../../src/api';
+import Account from '../../../src/server/models/accounts';
 
 suite('account auth', () => {
   let context = createContext();
 
   let email = 'one@example.com';
-  let id, api;
+  let id, api, account;
   setup(async () => {
+    account = new Account(context.db);
     api = createApi({ serverUrl: context.url });
     id = api.id.create();
     api.vip.key = id;
@@ -21,9 +23,7 @@ suite('account auth', () => {
     let fakeId = api.id.create();
     id.priv = fakeId.priv;
     try {
-      await api.vip.createAccount({
-        publicKey: id.toString()
-      });
+      await api.vip.createAccount({});
     } catch (err) {
       assert.equal(err.code, 403);
       return;
@@ -38,19 +38,15 @@ suite('account auth', () => {
       password: 'password'
     };
     let create = await api.vip.createAccountWithPassword(input);
-    assert.ok(create.id);
+    assert.ok(create.success);
+    let record = await account.findByPublicKey({ publicKey: id.pub });
+    assert.equal(record.email, input.email);
 
     // Ensure we use a new key so we don't hit key duplicate errors...
     api.vip.key = api.id.create();
 
-    try {
-      await api.vip.createAccountWithPassword(input);
-    } catch (err) {
-      assert.ok(err.message.indexOf('Duplicate') !== -1);
-      assert.equal(err.code, 400);
-      return;
-    }
-    throw new Error('expected an error');
+    let dup = await api.vip.createAccountWithPassword(input);
+    assert.ok(!dup.success);
   });
 
   test('#createAccount - duplicate public key', async () => {
@@ -60,16 +56,11 @@ suite('account auth', () => {
       password: 'password'
     };
     let create = await api.vip.createAccountWithPassword(input);
-    assert.ok(create.id);
-    try {
-      input.email = 'another@example.com';
-      await api.vip.createAccountWithPassword(input);
-    } catch (err) {
-      assert.ok(err.message.indexOf('Duplicate') !== -1);
-      assert.equal(err.code, 400);
-      return;
-    }
-    throw new Error('expected an error');
+    assert.ok(create.success);
+
+    input.email = 'another@example.com';
+    let dup = await api.vip.createAccountWithPassword(input);
+    assert.ok(!dup.success);
   });
 
   test('#createAccount - success', async () => {
@@ -78,7 +69,9 @@ suite('account auth', () => {
       email: email,
       password: 'password'
     });
-    assert.ok(create.id);
+    assert.ok(create.success);
+    let record = await account.findByPublicKey({ publicKey: id.pub });
+    assert.equal(record.email, email);
 
     let auth = await api.vip.checkPasswordWithPassword({
       email: email,
@@ -86,16 +79,11 @@ suite('account auth', () => {
     });
     assert.equal(auth.id, create.id);
 
-    try {
-      await api.vip.checkPasswordWithPassword({
-        email: email,
-        password: 'fail'
-      });
-    } catch (err) {
-      assert.equal(err.status, 400);
-      return;
-    }
-    throw new Error('expected error...');
+    let passCheckFail = await api.vip.checkPasswordWithPassword({
+      email: email,
+      password: 'fail'
+    });
+    assert.ok(!passCheckFail.success);
   });
 
   test('#createAccount - mixed case email', async () => {
@@ -107,13 +95,13 @@ suite('account auth', () => {
       email: email,
       password: 'password'
     });
-    assert.ok(create.id);
+    assert.ok(create.success);
 
     let auth = await api.vip.checkPasswordWithPassword({
       email: emailMixed,
       password: 'password'
     });
-    assert.equal(auth.id, create.id);
+    assert.ok(auth.success);
   });
 });
 

@@ -33,7 +33,6 @@ export default class Auth extends VIPBase {
     // Do not mutate old payload...
     let newPayload = Object.assign({}, payload);
     newPayload.passwordHash = this.hashPassword(payload.email, payload.password);
-    newPayload.publicKey = this.key.pub;
 
     delete newPayload.password;
     return newPayload;

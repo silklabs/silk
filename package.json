@@ -9,7 +9,7 @@
     "build": "./build.sh",
     "wwwdev": "./build/browser/build.sh -w",
     "lint": "eslint test src",
-    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test -name '*_test.js')",
+    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
     "start-server": "babel-node --harmony src/server/main.js production",
     "start-socketio": "babel-node --harmony src/socketio/main.js production",
     "start": "./bin/start.sh",
@@ -19,7 +19,7 @@
   },
   "license": "proprietary",
   "dependencies": {
-    "api-schema": "git@github.com:silklabs/api-schema.git#f23a9c7fd3cf68d4262cef1297543e26519a48af",
+    "api-schema": "git@github.com:silklabs/api-schema.git#76867d3486d8d53314073f8d7956692ec2f54524",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",
     "babel": "^5.8.9",
@@ -62,7 +62,8 @@
   },
   "devDependencies": {
     "dev-null": "^0.1.1",
-    "mocha": "^2.2.5"
+    "mocha": "^2.2.5",
+    "timekeeper": "0.0.5"
   },
   "engines": {
     "node": ">=0.12.x"

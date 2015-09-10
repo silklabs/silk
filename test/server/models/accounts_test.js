@@ -11,6 +11,23 @@ suite('accounts', () => {
     subject = new Accounts(context.db);
   });
 
+  test('#findByPublicKey', async () => {
+    let key = id.create();
+    let input = {
+      publicKey: key.toString(),
+      email: 'user@example.com',
+      passwordHash: context.passwordHash('password'),
+      userAgent: 'nodejs'
+    };
+
+    let account = await subject.create(input);
+    let byPublicKey = await subject.findByPublicKey({
+      publicKey: input.publicKey
+    });
+    assert.ok(account.id);
+    assert.equal(byPublicKey._id, account.id);
+  });
+
   test('#create / #checkPassword', async () => {
     let key = id.create();
     let input = {
@@ -40,6 +57,7 @@ suite('accounts', () => {
       passwordHash: input.passwordHash
     });
     assert.equal(successfulAuth.id, account.id);
+
     let unsuccessfulAuth = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,

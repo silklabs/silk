@@ -58,7 +58,6 @@
 		5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302E41ABCB9EE00DB3ED1 /* libRCTVibration.a */; };
 		5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */; };
 		5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33E1B61681300C18E5D /* NotImplemented.swift */; };
-		576CA1B41B6AB3A2006C7C3C /* FaceEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576CA1B31B6AB3A2006C7C3C /* FaceEvent.swift */; };
 		5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */; };
 		5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
 		579422381B963F1B0068569E /* ErrorDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579422371B963F1B0068569E /* ErrorDomain.swift */; };
@@ -331,7 +330,6 @@
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CMTimeExtensions.swift; sourceTree = "<group>"; };
 		5758F33E1B61681300C18E5D /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
-		576CA1B31B6AB3A2006C7C3C /* FaceEvent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceEvent.swift; sourceTree = "<group>"; };
 		5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTWebSocketManager.m; sourceTree = "<group>"; };
 		579422371B963F1B0068569E /* ErrorDomain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorDomain.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -620,7 +618,6 @@
 				5758F33E1B61681300C18E5D /* NotImplemented.swift */,
 				57BCE0FB1B6984360047088B /* TypeTransfer.swift */,
 				57BCE1081B69867F0047088B /* TypeTransferTest.swift */,
-				576CA1B31B6AB3A2006C7C3C /* FaceEvent.swift */,
 				5714A0641B734C4A00B0630C /* VideoSegment.swift */,
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
 				579422371B963F1B0068569E /* ErrorDomain.swift */,
@@ -1101,7 +1098,6 @@
 				579422381B963F1B0068569E /* ErrorDomain.swift in Sources */,
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				5758F2641B600B2000C18E5D /* ImageView.swift in Sources */,
-				576CA1B41B6AB3A2006C7C3C /* FaceEvent.swift in Sources */,
 				5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,

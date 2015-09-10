@@ -23,11 +23,6 @@ let {
   View,
 } = React;
 
-/**
-Safeguard if faces does not get a new value within this time reset to no faces.
-*/
-const FACE_DISAPPEAR = 50;
-
 const MODES = {
   live: 'live',
   recorded: 'recorded',
@@ -93,8 +88,7 @@ class LiveSegmentProvider {
       previousId: this.lastId,
       startUTC: message.when,
       // XXX: We should really send real duration in message.
-      endUTC: message.when,
-      faces: message.objects
+      endUTC: message.when
     });
 
     // Keep track of the previous id (required for state tracking).
@@ -168,7 +162,6 @@ export default React.createClass({
       willPlay: true,
 
       showingControls: true,
-      faces: [],
       currenTime: Date.now(),
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
@@ -281,7 +274,6 @@ export default React.createClass({
       url: result.url,
       startUTC: result.startUTC,
       endUTC: result.endUTC,
-      faces: result.data.faces,
       id: result.id,
       nextId: result.nextId,
       previousId: result.previousId
@@ -380,18 +372,6 @@ export default React.createClass({
       );
       this.appendSegment(newSegment);
     });
-  },
-
-  onFaces(event) {
-    this.clearTimeout(this.facesTimer);
-    this.setState({ faces: [event.nativeEvent]});
-
-    // Safe guard against never getting a message to zero out faces.
-    // This happens infrequently (and may be a bug somewhere in event handling
-    // or device side).
-    this.facesTimer = this.setTimeout(() => {
-      this.setState({ faces: [] });
-    }, FACE_DISAPPEAR);
   },
 
   modifyLiveRate(segment, time) {
@@ -592,16 +572,6 @@ export default React.createClass({
   render: function() {
     var videoStream = this.props.id;
     let { width, height } = getLandscapeDimensions();
-
-    let faces;
-    if (this.state.faces.length) {
-      faces = <ObjectBoxes
-                width={width}
-                height={height}
-                objects={this.state.faces}
-                previewSize={this.props.previewSize} />
-    }
-
     let dimensions = { width, height };
     let controls;
 
@@ -638,7 +608,6 @@ export default React.createClass({
                 rate={this.state.rate}
                 segments={this.state.videoSegments}
                 willPlay={this.state.willPlay}
-                onFaces={this.onFaces}
                 onTimeChange={this.onTimeChange}
                 onSegmentStart={this.onSegmentStart}
                 onSegmentEnd={this.onSegmentEnd}
@@ -649,7 +618,6 @@ export default React.createClass({
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
               {showTimeJump}
               {controls}
-              {faces}
             </View>
           </View>
       </OverlayModal>

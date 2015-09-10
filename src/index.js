@@ -4,6 +4,7 @@
 import React from 'react';
 import Diag from './components/Diag';
 import CameraPreview from './components/CameraPreview';
+import CameraVideo from './components/CameraVideo';
 import { Button } from 'react-bootstrap';
 
 import io from 'socket.io-client';
@@ -38,8 +39,9 @@ class Camera extends EventEmitter {
 
   deinit() {
     this.logging = false;
-    this.preview = false;
-    this.video = false;
+    this._previewImageStream(false);
+    this._videoClipStream(false);
+
     URL.revokeObjectURL(this.logoImage.src);
   }
 
@@ -94,7 +96,35 @@ class Camera extends EventEmitter {
     });
   }
 
-  set preview(enabled) {
+  on(event, listener) {
+    let ret = super.on(event, listener);
+    this._adjustRooms(event);
+    return ret;
+  }
+
+  removeListener(event, listener) {
+    let ret = super.removeListener(event, listener);
+    this._adjustRooms(event);
+    return ret;
+  }
+
+  _adjustRooms(event) {
+    let count = super.listeners(event).length;
+    let enabled = count > 0;
+
+    switch (event) {
+    case 'previewImage':
+      this._previewImageStream(enabled);
+      break;
+    case 'videoClip':
+      this._videoClipStream(enabled);
+      break;
+    default:
+      log.verbose(`Unhandled event: ${event}`);
+    }
+  }
+
+  _previewImageStream(enabled) {
     let previewStream = 'video-preview-' + this.id;
 
     if (this.previewImage) {
@@ -128,7 +158,7 @@ class Camera extends EventEmitter {
       return;
     }
 
-    log.debug('video preview', msg);
+    log.debug('preview', msg);
     this.previewTimestamp = new Date(msg.when);
     this.previewObjects = msg.objects;
 
@@ -141,9 +171,51 @@ class Camera extends EventEmitter {
     this.previewImage.src = URL.createObjectURL(blob);
   }
 
-  set video(enabled) {
-    log.warn(`video: ${enabled}`);
+  _videoClipStream(enabled) {
+    let videoStream = 'video-' + this.id;
+
+    if (this.videoClip) {
+      URL.revokeObjectURL(this.videoClip);
+      this.videoClip = null;
+    }
+
+    if (enabled) {
+      log.info('Joining video stream ' + videoStream);
+      this._socket.on(videoStream, this._onVideoStream);
+      this._socket.emit('join', videoStream);
+
+    } else {
+      log.info('Leaving video stream ' + videoStream);
+      this._socket.removeListener(videoStream, this._onVideoStream);
+      this._socket.emit('leave', videoStream);
+    }
   }
+
+  _onVideoStream = msg => {
+    if (!msg) {
+      log.warning('_onVideoStream: null msg');
+      return;
+    }
+    if (!msg.frame) {
+      log.warning('_onVideoStream: null msg.frame');
+      return;
+    }
+    if (this.id !== msg.id) {
+      log.warning('Video preview from unknown camera:', msg);
+      return;
+    }
+
+    log.debug('video', msg);
+
+    let view = new Uint8Array(msg.frame);
+    let blob = new Blob([view], { type: 'video/mp4' });
+    if (this.videoClip) {
+      URL.revokeObjectURL(this.videoClip);
+    }
+    this.videoClip = URL.createObjectURL(blob);
+    this.emit('videoClip', this.videoClip);
+  }
+
 }
 
 
@@ -238,12 +310,22 @@ class ServerConnection extends React.Component {
   }
 
   onCameraClick = (id) => {
-    log.info('Video goes here for', id);
+    this.setState({videoId: id});
+  }
+  onVideoClick = () => {
+    this.setState({videoId: null});
   }
 
   render() {
     if (this.state.diagVisible) {
       return <Diag onClose={this.onCloseDiag} {...this.state}/>;
+    }
+    if (this.state.videoId) {
+      let id = this.state.videoId;
+      let camera = this.state.cameras[id];
+      if (camera) {
+        return <CameraVideo key={id} onClick={this.onVideoClick} camera={camera} />;
+      }
     }
     return (
       <div>

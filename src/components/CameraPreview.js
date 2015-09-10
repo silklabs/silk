@@ -12,10 +12,11 @@ export default class CameraPreview extends React.Component {
   componentDidMount() {
     let camera = this.props.camera;
     if (camera) {
-      camera.preview = true;
       camera.on('previewImage', this.onPreviewImage);
     }
     this._shouldComponentUpdate = true;
+    this._canvas = React.findDOMNode(this);
+    this._context = this._canvas.getContext('2d');
   }
 
   componentWillReceiveProps(nextProps) {
@@ -29,11 +30,9 @@ export default class CameraPreview extends React.Component {
     }
 
     if (prevCamera) {
-      prevCamera.preview = false;
       prevCamera.removeListener('previewImage', this.onPreviewImage);
     }
     if (nextCamera) {
-      nextCamera.preview = true;
       nextCamera.on('previewImage', this.onPreviewImage);
     }
     this._shouldComponentUpdate = true;
@@ -42,7 +41,6 @@ export default class CameraPreview extends React.Component {
   componentWillUnmount() {
     let camera = this.props.camera;
     if (camera) {
-      camera.preview = false;
       camera.removeListener('previewImage', this.onPreviewImage);
     }
     this._shouldComponentUpdate = true;
@@ -67,12 +65,10 @@ export default class CameraPreview extends React.Component {
       return <canvas />;
     }
     let {width, height} = camera.previewSize;
-    return <canvas onClick={this.onClick} style={{width, height, backgroundColor: 'lightgrey'}}/>;
+    return <canvas onClick={this.onClick} style={{width, height, backgroundColor: 'lightgray'}} />;
   }
 
   componentDidUpdate() {
-    this._canvas = React.findDOMNode(this);
-    this._context = this._canvas.getContext('2d');
     this.renderPreview();
   }
 

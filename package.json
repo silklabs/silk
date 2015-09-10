@@ -28,6 +28,7 @@
     "lodash.merge": "^3.3.2",
     "ms": "^0.7.1",
     "react": "^0.13.3",
+    "react-bootstrap": "^0.25.1",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#3eb7959e7e7a72dbd0bea982ab7e7d349489a005",
     "socket.io-client": "^1.3.6",
     "webpack": "^1.12.1"

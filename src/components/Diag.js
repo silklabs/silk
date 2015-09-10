@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
+import { Button, ButtonGroup, Label } from 'react-bootstrap';
 import mklog from '../log'; const log = mklog('diag');
 import ansiUp from 'ansi_up';
 import CameraPreview from './CameraPreview';
@@ -10,6 +11,7 @@ class Diag extends React.Component {
   static propTypes = {
     connectionStatus: React.PropTypes.string.isRequired,
     cameras: React.PropTypes.object.isRequired,
+    onClose: React.PropTypes.func,
   }
 
   constructor(props) {
@@ -25,11 +27,9 @@ class Diag extends React.Component {
 
     if (prevCamera) {
       prevCamera.logging = false;
-      prevCamera.preview = false;
     }
     if (nextCamera) {
       nextCamera.logging = true;
-      nextCamera.preview = true;
     }
     this.setState({cameraId: id});
     this.reconnectCameraId = null;
@@ -62,7 +62,6 @@ class Diag extends React.Component {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: 'lightgrey'
     };
     if (this.state.cameraId) {
       style.backgroundColor = this.state.paused ? 'papayawhip' : 'white';
@@ -81,6 +80,7 @@ class Diag extends React.Component {
                     cameras={this.props.cameras}
                     cameraId={this.state.cameraId}
                     onPause={this.onPause}
+                    onClose={this.props.onClose}
                     connectionStatus={this.props.connectionStatus} />
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
           <DiagLog logName='dash' log={logs.dash} paused={this.state.paused}/>
@@ -173,6 +173,7 @@ class DiagNavBar extends React.Component {
     cameraId: React.PropTypes.string,
     onCameraSelect: React.PropTypes.func.isRequired,
     onPause: React.PropTypes.func.isRequired,
+    onClose: React.PropTypes.func.isRequired,
   }
 
   constructor(props) {
@@ -184,23 +185,20 @@ class DiagNavBar extends React.Component {
   }
 
   render() {
-    let style = {
-      margin: 2,
-      padding: 5,
-      backgroundColor: 'lightblue',
-    };
-
-    return <div style={style}>
-      <DiagNavCameraSelect onCameraSelect={this.onCameraSelect}
-                           cameras={this.props.cameras}/>
-      &nbsp;
-      <DiagNavPause onPause={this.props.onPause} cameraId={this.props.cameraId} />
-      &nbsp; | &nbsp;
-      <i>{this.props.connectionStatus}</i>
-    </div>;
+    return <div>
+        &nbsp;
+        <DiagNavCameraSelect onCameraSelect={this.onCameraSelect}
+                             cameras={this.props.cameras}/>
+        &nbsp;
+        <ButtonGroup>
+          <DiagNavPause onPause={this.props.onPause} cameraId={this.props.cameraId} />
+          {this.props.onClose && <Button bsStyle='warning' onClick={this.props.onClose}>Close</Button>}
+        </ButtonGroup>
+        &nbsp;
+        <Label>{this.props.connectionStatus}</Label>
+      </div>;
   }
 }
-
 
 class DiagNavPause extends React.Component {
   static propTypes = {
@@ -220,17 +218,9 @@ class DiagNavPause extends React.Component {
   }
 
   render() {
-    let style = {
-      cursor: 'pointer',
-      backgroundColor: this.state.paused ? 'lightgreen' : 'orange',
-      padding: 4,
-      display: this.props.cameraId ? 'inline' : 'none'
-    };
-
-    return <span style={style} onClick={this.handleClick}>{this.state.paused ? 'Unpause' : 'Pause'}</span>;
+    return <Button disabled={!this.props.cameraId} onClick={this.handleClick} > Pause </Button>;
   }
 }
-
 
 class DiagNavCameraSelect extends React.Component {
   static propTypes = {
@@ -256,16 +246,14 @@ class DiagNavCameraSelect extends React.Component {
     };
 
     let cameras = this.props.cameras || {};
-    return <span>Camera: &nbsp;
-      <select style={style} onChange={this.handleChange} value={this.state.value}>
+    return <select style={style} onChange={this.handleChange} value={this.state.value}>
         <option value=''>(None)</option>
         {
           Object.keys(cameras).map(id=> {
             return <option key={id} value={id}>{cameras[id].name}</option>;
           })
         }
-      </select>
-    </span>;
+      </select>;
   }
 }
 

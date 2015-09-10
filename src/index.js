@@ -3,6 +3,9 @@
 
 import React from 'react';
 import Diag from './components/Diag';
+import CameraPreview from './components/CameraPreview';
+import { Button } from 'react-bootstrap';
+
 import io from 'socket.io-client';
 import mklog from './log'; const log = mklog('index');
 import { EventEmitter } from 'events';
@@ -96,7 +99,6 @@ class Camera extends EventEmitter {
 
     if (this.previewImage) {
       URL.revokeObjectURL(this.previewImage.src);
-      this.previewImage = null;
     }
 
     if (enabled) {
@@ -132,7 +134,9 @@ class Camera extends EventEmitter {
 
     let view = new Uint8Array(msg.frame);
     let blob = new Blob([view], { type: 'image/jpg' });
-    URL.revokeObjectURL(this.previewImage.src);
+    if (this.previewImage) {
+      URL.revokeObjectURL(this.previewImage.src);
+    }
     this.previewImage.onload = () => this.emit('previewImage');
     this.previewImage.src = URL.createObjectURL(blob);
   }
@@ -151,7 +155,11 @@ class ServerConnection extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {connectionStatus: `Connecting... ${props.serverUrl}`, cameras: {}};
+    this.state = {
+      connectionStatus: `Connecting... ${props.serverUrl}`,
+      cameras: {},
+      diagVisible: false,
+    };
 
     this.socket = null;
     this.api = require('silk-api-react-native')({serverUrl: props.serverUrl});
@@ -219,18 +227,36 @@ class ServerConnection extends React.Component {
     }).catch(err => {
       this.setState({status: `Could not get socket.io address: ${err}`});
     });
+  }
 
+  onCloseDiag = () => {
+    this.setState({diagVisible: false});
+  }
+
+  onOpenDiag = () => {
+    this.setState({diagVisible: true});
+  }
+
+  onCameraClick = (id) => {
+    log.info('Video goes here for', id);
   }
 
   render() {
-    return <Diag {...this.state}/>;
+    if (this.state.diagVisible) {
+      return <Diag onClose={this.onCloseDiag} {...this.state}/>;
+    }
+    return
+      <div>
+        <div>
+          {
+            Object.keys(this.state.cameras).map(id=> {
+              return <CameraPreview key={id} onClick={this.onCameraClick} camera={this.state.cameras[id]} />;
+            })
+          }
+        </div>
+        <Button onClick={this.onOpenDiag}>Diag</Button>
+      </div>;
   }
 }
 
-
-// TODO: Remove "legacy" webapp as soon as possible
-if (document.title === 'Silk Diag') {
-  React.render(<ServerConnection serverUrl={config.serverUrl}/>, document.body);
-} else if (document.title === 'Silk Server') {
-  require('./legacy/silk');
-}
+React.render(<ServerConnection serverUrl={config.serverUrl}/>, document.body);

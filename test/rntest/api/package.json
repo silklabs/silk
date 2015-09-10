@@ -1,0 +1,28 @@
+{
+  "name": "silk-api-react-native",
+  "version": "0.0.1",
+  "description": "Silk client API for react-native",
+  "main": "src/index.js",
+  "license": "proprietary",
+  "dependencies": {
+    "base64url": "^1.0.4",
+    "elliptic": "^5.1.0",
+    "hash.js": "^1.0.3",
+    "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
+    "pbkdf2": "^3.0.4"
+  },
+  "engines": {
+    "node": "0.12.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-api-react-native.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "private": true,
+  "browser": {
+    "./id": false
+  }
+}

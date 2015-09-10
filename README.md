@@ -63,6 +63,14 @@ PUBLIC_URL=http://192.168.0.3:5000 npm start
 
 Alternatively you can set this value in configuration (see: https://github.com/silklabs/silk-server/blob/master/config/default.js#L14)
 
+#### API Tests for specific environments:
+
+##### React Native
+
+```sh
+npm run-script test-react-native-api
+```
+
 ### Emails
 
 Sometimes it's useful (for testing/etc...) to send yourself an email

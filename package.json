@@ -14,7 +14,8 @@
     "start-socketio": "babel-node --harmony src/socketio/main.js production",
     "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
-    "test": "npm run-script lint && npm run-script mocha"
+    "test": "npm run-script lint && npm run-script mocha",
+    "test-react-native-api": "./bin/test-react-native-api"
   },
   "license": "proprietary",
   "dependencies": {

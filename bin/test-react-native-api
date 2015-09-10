@@ -1,0 +1,7 @@
+#! /bin/bash -e
+./build/react-native/build.sh test/rntest/api/
+cd test/rntest
+npm install
+npm run-script bundle
+xctool -project iOS/rntest.xcodeproj -scheme rntest test -sdk iphonesimulator
+cd -

@@ -14,7 +14,7 @@
 //
 import debug from 'debug';
 
-debug.enable('silk*'); // TODO: Make more configurable
+debug.enable('silk-*,-silk-*:debug'); // TODO: Make more configurable
 
 export default function createLog(libraryName) {
 

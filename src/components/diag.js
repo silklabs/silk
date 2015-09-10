@@ -4,13 +4,12 @@
 import React from 'react';
 import mklog from '../log'; const log = mklog('diag');
 import ansiUp from 'ansi_up';
-
+import CameraPreview from './CameraPreview';
 
 class Diag extends React.Component {
   static propTypes = {
     connectionStatus: React.PropTypes.string.isRequired,
     cameras: React.PropTypes.object.isRequired,
-    onSetLogging: React.PropTypes.func.isRequired
   }
 
   constructor(props) {
@@ -19,10 +18,20 @@ class Diag extends React.Component {
   }
 
   onCameraSelect = id => {
-    log.info(`Selected camera ${id}`);
-    this.props.onSetLogging(this.state.id, false);
+    log.info(`Selected camera: ${id}`);
+
+    let prevCamera = this.props.cameras[this.state.cameraId];
+    let nextCamera = this.props.cameras[id];
+
+    if (prevCamera) {
+      prevCamera.logging = false;
+      prevCamera.preview = false;
+    }
+    if (nextCamera) {
+      nextCamera.logging = true;
+      nextCamera.preview = true;
+    }
     this.setState({cameraId: id});
-    this.props.onSetLogging(id, true);
     this.reconnectCameraId = null;
   }
 
@@ -59,9 +68,11 @@ class Diag extends React.Component {
       style.backgroundColor = this.state.paused ? 'papayawhip' : 'white';
     }
 
+    let camera = null;
     let logs = {};
     if (this.state.cameraId) {
-      logs = this.props.cameras[this.state.cameraId].logs;
+      camera = this.props.cameras[this.state.cameraId];
+      logs = camera.logs;
     }
 
     return (
@@ -71,7 +82,10 @@ class Diag extends React.Component {
                     cameraId={this.state.cameraId}
                     onPause={this.onPause}
                     connectionStatus={this.props.connectionStatus} />
-        <DiagLog logName='dash' log={logs.dash} paused={this.state.paused}/>
+        <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
+          <DiagLog logName='dash' log={logs.dash} paused={this.state.paused}/>
+          <CameraPreview camera={camera}/>
+        </div>
         <DiagLog logName='procrank' log={logs.procrank} paused={this.state.paused}/>
         <DiagLogcat logName='logcat' log={logs.logcat} paused={this.state.paused}/>
       </div>

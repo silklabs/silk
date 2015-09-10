@@ -7,6 +7,7 @@ import createS3Blob from './blobs/s3';
 import createFileBlob from './blobs/file';
 import url from 'url';
 import jsonParser from './json';
+import devAccount from '../api/dev_account';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
@@ -54,6 +55,18 @@ export default async function main (config) {
   let nonce = new Nonce(db);
   // XXX: Rename once we phase out old account interface.
   let accountsModel = new AccountsModel(db);
+
+
+  // Ensure we have indexed models...
+  let index = [crashMeta, timeMeta, nonce, accountsModel].map(async model => {
+    await model.ensureIndexes();
+  });
+  // It is safe to run these concurrently:
+  await Promise.all(index);
+
+  // Create the developer account...
+  await accountsModel.ensureDevAccount(devAccount);
+
   let emailSender = new EmailSender(config);
   let blobs = {
     file: await createFileBlob(config)

@@ -44,9 +44,7 @@ export default class CrashMetadata extends Base {
 
   }
 
-  get collectionName() {
-    return 'crash_metadata';
-  }
+  static COLLECTION = 'crash_metadata';
 
   async put(payload) {
     payload = this.validate(payload, 'record');

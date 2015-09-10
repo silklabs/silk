@@ -13,6 +13,28 @@ export default class Nonce extends Base {
     duplicateValue: 'DuplicateUUIDValue',
   }
 
+
+  static INDEX = [
+    /**
+     * Nonce value must be unique...
+     */
+    {
+      props: {
+        value: 1
+      },
+      options: { unique: true }
+    },
+
+    /**
+     * Index dates for fast expiry.
+     */
+    {
+      props: {
+        expires: 1
+      }
+    }
+  ]
+
   static SCHEMA = {
     record: Joi.object().keys({
       // XXX: A UUID is pretty long what else can we use?
@@ -29,9 +51,7 @@ export default class Nonce extends Base {
     }).required()
   }
 
-  get collectionName() {
-    return 'nonce';
-  }
+  static COLLECTION = 'nonce'
 
   /**
    * Create a nonce value.

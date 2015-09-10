@@ -15,15 +15,22 @@ suite('base model', () => {
       foo: 'FOO'
     }
 
+    static INDEX = [
+      {
+        props: {
+          'models.foo': 1
+        },
+        options: { unique: true }
+      }
+    ]
+
     static SCHEMA = {
       model: Joi.object({
         foo: Joi.boolean().required(),
       })
     }
 
-    get collectionName() {
-      return 'sub';
-    }
+    static COLLECTION = 'sub';
   }
 
   let subject;
@@ -32,7 +39,7 @@ suite('base model', () => {
   });
 
   test('constructor', () => {
-    assert.equal(subject.collection.collectionName, 'sub');
+    assert.equal(subject.collection.collectionName, Sub.COLLECTION);
   });
 
   test('error', () => {
@@ -41,6 +48,14 @@ suite('base model', () => {
         type: 'FOO'
       }
     });
+  });
+
+  test('.ensureIndexes', async () => {
+    await subject.ensureIndexes();
+    let indexes = await subject.collection.getIndexes();
+    let last = indexes.pop();
+    assert.deepEqual(last.key, { 'models.foo': 1 });
+    assert.ok(last.unique, 'is unique');
   });
 
   test('.validate - valid', () => {

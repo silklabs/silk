@@ -23,8 +23,6 @@
 // have the private key:
 // var signature = id.sign(token);
 
-'use strict';
-
 var crypto = require('crypto');
 var EC = require('elliptic').ec;
 var ec = new EC('ed25519');
@@ -35,7 +33,22 @@ function sha256(text) {
   return hasher.digest('hex');
 }
 
-class Id {
+export default class Id {
+
+  static create() {
+    var key = ec.genKeyPair();
+    return new Id(key.getPublic(true, 'hex'), key.getPrivate('hex'));
+  }
+
+  static import(json) {
+    var obj = JSON.parse(json);
+    return new Id(obj.pub, obj.priv);
+  }
+
+  static importPub(pubKey) {
+    return new Id(pubKey);
+  }
+
   constructor(pub, priv) {
     this.pub = pub;
     this.priv = priv;
@@ -85,17 +98,3 @@ class Id {
     return !!this.pub;
   }
 }
-
-module.exports = {
-  create: function() {
-    var key = ec.genKeyPair();
-    return new Id(key.getPublic(true, 'hex'), key.getPrivate('hex'));
-  },
-  import: function(json) {
-    var obj = JSON.parse(json);
-    return new Id(obj.pub, obj.priv);
-  },
-  importPub: pubKey => {
-    return new Id(pubKey);
-  },
-};

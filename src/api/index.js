@@ -34,6 +34,10 @@ module.exports = function create(options) {
       }
     },
 
+    // Export the developer account
+    // TODO: Remove prior to production!
+    devAccount: require('./dev_account'),
+
     // TODO: crypto has been working fine for a long time, but
     // react-native JS environment is unable to load the 'elliptic'
     // module, which otherwise works in both browser and node

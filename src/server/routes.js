@@ -128,24 +128,26 @@ module.exports = function(opts) {
   }));
 
   app.post('/device/metadata/time/find/byid', asyncRoute(async (req, res) => {
-    // create new metadata.
     let result = await timeMeta.findById(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
   }));
 
   app.post('/device/metadata/time/find/bytime', asyncRoute(async (req, res) => {
-    // create new metadata.
     let result = await timeMeta.findNearTime(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
   }));
 
   app.post('/device/metadata/time/find/bytime/after', asyncRoute(async (req, res) => {
-    // create new metadata.
     let result = await timeMeta.findOneAfterTime(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
+  }));
+
+  app.post('/device/metadata/time/find/bytime/before', asyncRoute(async (req, res) => {
+    let result = await timeMeta.findBeforeTime(req.body);
+    res.status(200).send(result);
   }));
 
   app.post('/device/metadata/crashreport', asyncRoute(async (req, res) => {

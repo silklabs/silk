@@ -1,3 +1,6 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
 /**
 Time metadata store.
 */
@@ -35,6 +38,13 @@ export default class TimeMetadata extends Base {
       deviceId: Joi.string().required(),
       metaType: TYPES,
       time: Joi.number().required()
+    }).required(),
+
+    findBeforeTime: Joi.object().keys({
+      deviceId: Joi.string().required(),
+      metaType: TYPES,
+      time: Joi.number().required(),
+      maxCount: Joi.number().required()
     }).required(),
 
     findById: Joi.object().keys({
@@ -97,6 +107,18 @@ export default class TimeMetadata extends Base {
       }
     }).sort({ startUTC: 1 }).limit(1).toArray())[0];
     return formatOutput(result);
+  }
+
+  async findBeforeTime(payload) {
+    payload = this.validate(payload, 'findBeforeTime');
+    let result = (await this.collection.find({
+      deviceId: payload.deviceId,
+      metaType: payload.metaType,
+      startUTC: {
+        $lte: payload.time
+      }
+    }).sort({ endUTC: -1 }).limit(payload.maxCount).toArray());
+    return result.map(formatOutput);
   }
 
   /**

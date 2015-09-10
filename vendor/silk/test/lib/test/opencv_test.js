@@ -19,7 +19,7 @@ suite('test opencv', () => {
     camera.setPreviewFrame('car1.jpg');
 
     let timestamp = Date.now();
-    let rectsExp = [{'x': 26, 'y': 22, 'width': 253, 'height': 126}];
+    let rectsExp = [{'x': 30, 'y': 27, 'width': 240, 'height': 120}];
     let iters = 10;
 
     // Tests take a long time on emulator so increase the test level timeout

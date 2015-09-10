@@ -36,6 +36,10 @@ class FakeCamera {
         userCb(true, null);
         return;
       }
+      if (1 === channel) {
+        im.convertGrayscale();
+        im.equalizeHist();
+      }
       im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
       userCb(err, im);
     });

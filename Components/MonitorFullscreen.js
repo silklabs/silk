@@ -88,7 +88,8 @@ class LiveSegmentProvider {
       previousId: this.lastId,
       startUTC: message.when,
       // XXX: We should really send real duration in message.
-      endUTC: message.when
+      endUTC: message.when,
+      objects: message.objects
     });
 
     // Keep track of the previous id (required for state tracking).
@@ -167,7 +168,14 @@ export default React.createClass({
       maxTime: Date.now(),
       minTime: DateUtils.startOfDay(),
       videoSegments: [],
-      liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment)
+      liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment),
+
+      /**
+       * Set of detected objects (faces, cars, motion, etc) that have
+       * been detected for the currently-playing segment at the
+       * current time point (give or take some milliseconds).
+       */
+      objects: []
     }
   },
 
@@ -276,7 +284,8 @@ export default React.createClass({
       endUTC: result.endUTC,
       id: result.id,
       nextId: result.nextId,
-      previousId: result.previousId
+      previousId: result.previousId,
+      objects: result.data.objects
     });
   },
 
@@ -334,6 +343,8 @@ export default React.createClass({
         // additional buffering operations/etc...
         break;
     }
+
+    this.setState({ objects: this.getActiveObjects(segment, segment.startUTC) });
   },
 
   bufferNextRecordedSegment() {
@@ -401,7 +412,8 @@ export default React.createClass({
       this.modifyLiveRate(segment, time);
     }
 
-    this.setState({ currentTime: time });
+    this.setState({ currentTime: time,
+                    objects: this.getActiveObjects(segment, time) });
   },
 
   onSeekStart() {
@@ -515,6 +527,31 @@ export default React.createClass({
     return PLAYBACK_STEPS[nextId];
   },
 
+  getActiveObjects(segment, timeUTC) {
+    if (!segment || !segment.objects) {
+      return [];
+    }
+    return segment.objects.filter(obj => {
+      // TODO/FIXME: it's super gross that we're guessing this
+      // information on the client side.  When we track a real event
+      // timeline and have start/end for each event, this code should
+      // diaf.
+      switch (obj.tag) {
+      case 'hal':
+        // hal-detected faces can happen multiple times per frame.  We
+        // guess that any given detection event is about 75ms, but of
+        // course in reality it's far more variable.  (See above.)
+        const HAL_PERIOD_MS = 75;
+        return (obj.when <= timeUTC
+                && timeUTC <= (obj.when + HAL_PERIOD_MS));
+      default:
+        // Assume other events occur just once per frame.  (See
+        // above.)
+        return true;
+      }
+    });
+  },
+  
   onFastForward() {
     let rate = this.getPlaybackStep(1);
     this.setState({ rate: rate })
@@ -579,6 +616,15 @@ export default React.createClass({
       controls = this.buildControls();
     }
 
+    let objects = null;
+    if (this.state.objects.length) {
+      objects = <ObjectBoxes
+                  width={width}
+                  height={height}
+                  objects={this.state.objects}
+                  previewSize={this.props.previewSize} />;
+    }
+
     let showTimeJump;
     if (this.state.showTimeJump) {
       showTimeJump = (
@@ -618,6 +664,7 @@ export default React.createClass({
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
               {showTimeJump}
               {controls}
+              {objects}
             </View>
           </View>
       </OverlayModal>

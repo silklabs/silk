@@ -14,7 +14,8 @@ const SegmentProps = [
   'endUTC',
   'id',
   'nextId',
-  'previousId'
+  'previousId',
+  'objects'
 ];
 
 class Segment {

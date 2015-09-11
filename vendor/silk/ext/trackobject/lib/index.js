@@ -19,11 +19,11 @@ let prevFrame = null, currentFrame = null, nextFrame = null;
 const MAX_DEVIATION = 75;
 
 // Low differences are ignored (ex. contrast change due to sunlight)
-const THRESHOLD = 45;
+const THRESHOLD = 25;
 const MAX_THRESHOLD_VAL = 255;
 
 // If more than 'MOTION_THRESHOLD' pixels are changed, we say there is motion
-let MOTION_THRESHOLD = 10;
+let MOTION_THRESHOLD = 1;
 
 const NUM_ITERATIONS_ERODE = 1;
 const PADDING = 50;

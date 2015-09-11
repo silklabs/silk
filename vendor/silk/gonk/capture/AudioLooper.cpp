@@ -25,6 +25,10 @@ bool AudioLooper::threadLoop() {
     status_t err = mSource->read(&buffer);
 
     if (err == ::OK && buffer) {
+      // When this loop is running, we're pulling audio samples purely
+      // for the side effect of AudioSourceEmitter (our `mSource`
+      // here) sending audio samples back to the audio analysis code.
+      // So the buffers aren't needed.
       buffer->release();
       buffer = NULL;
     }

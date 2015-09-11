@@ -23,11 +23,6 @@ let {
   View,
 } = React;
 
-/**
-Safeguard if faces does not get a new value within this time reset to no faces.
-*/
-const FACE_DISAPPEAR = 50;
-
 const MODES = {
   live: 'live',
   recorded: 'recorded',
@@ -94,7 +89,7 @@ class LiveSegmentProvider {
       startUTC: message.when,
       // XXX: We should really send real duration in message.
       endUTC: message.when,
-      faces: message.objects
+      objects: message.objects
     });
 
     // Keep track of the previous id (required for state tracking).
@@ -168,13 +163,19 @@ export default React.createClass({
       willPlay: true,
 
       showingControls: true,
-      faces: [],
       currenTime: Date.now(),
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
       minTime: DateUtils.startOfDay(),
       videoSegments: [],
-      liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment)
+      liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment),
+
+      /**
+       * Set of detected objects (faces, cars, motion, etc) that have
+       * been detected for the currently-playing segment at the
+       * current time point (give or take some milliseconds).
+       */
+      objects: []
     }
   },
 
@@ -281,10 +282,10 @@ export default React.createClass({
       url: result.url,
       startUTC: result.startUTC,
       endUTC: result.endUTC,
-      faces: result.data.faces,
       id: result.id,
       nextId: result.nextId,
-      previousId: result.previousId
+      previousId: result.previousId,
+      objects: result.data.objects
     });
   },
 
@@ -342,6 +343,8 @@ export default React.createClass({
         // additional buffering operations/etc...
         break;
     }
+
+    this.setState({ objects: this.getActiveObjects(segment, segment.startUTC) });
   },
 
   bufferNextRecordedSegment() {
@@ -382,18 +385,6 @@ export default React.createClass({
     });
   },
 
-  onFaces(event) {
-    this.clearTimeout(this.facesTimer);
-    this.setState({ faces: [event.nativeEvent]});
-
-    // Safe guard against never getting a message to zero out faces.
-    // This happens infrequently (and may be a bug somewhere in event handling
-    // or device side).
-    this.facesTimer = this.setTimeout(() => {
-      this.setState({ faces: [] });
-    }, FACE_DISAPPEAR);
-  },
-
   modifyLiveRate(segment, time) {
     if (!ENABLE_CONTINUOUS_RATE_ADJUSTMENT) {
       return this.setState({ rate: 1.0 });
@@ -421,7 +412,8 @@ export default React.createClass({
       this.modifyLiveRate(segment, time);
     }
 
-    this.setState({ currentTime: time });
+    this.setState({ currentTime: time,
+                    objects: this.getActiveObjects(segment, time) });
   },
 
   onSeekStart() {
@@ -535,6 +527,31 @@ export default React.createClass({
     return PLAYBACK_STEPS[nextId];
   },
 
+  getActiveObjects(segment, timeUTC) {
+    if (!segment || !segment.objects) {
+      return [];
+    }
+    return segment.objects.filter(obj => {
+      // TODO/FIXME: it's super gross that we're guessing this
+      // information on the client side.  When we track a real event
+      // timeline and have start/end for each event, this code should
+      // diaf.
+      switch (obj.tag) {
+      case 'hal':
+        // hal-detected faces can happen multiple times per frame.  We
+        // guess that any given detection event is about 75ms, but of
+        // course in reality it's far more variable.  (See above.)
+        const HAL_PERIOD_MS = 75;
+        return (obj.when <= timeUTC
+                && timeUTC <= (obj.when + HAL_PERIOD_MS));
+      default:
+        // Assume other events occur just once per frame.  (See
+        // above.)
+        return true;
+      }
+    });
+  },
+  
   onFastForward() {
     let rate = this.getPlaybackStep(1);
     this.setState({ rate: rate })
@@ -592,21 +609,20 @@ export default React.createClass({
   render: function() {
     var videoStream = this.props.id;
     let { width, height } = getLandscapeDimensions();
-
-    let faces;
-    if (this.state.faces.length) {
-      faces = <ObjectBoxes
-                width={width}
-                height={height}
-                objects={this.state.faces}
-                previewSize={this.props.previewSize} />
-    }
-
     let dimensions = { width, height };
     let controls;
 
     if (this.state.showingControls) {
       controls = this.buildControls();
+    }
+
+    let objects = null;
+    if (this.state.objects.length) {
+      objects = <ObjectBoxes
+                  width={width}
+                  height={height}
+                  objects={this.state.objects}
+                  previewSize={this.props.previewSize} />;
     }
 
     let showTimeJump;
@@ -638,7 +654,6 @@ export default React.createClass({
                 rate={this.state.rate}
                 segments={this.state.videoSegments}
                 willPlay={this.state.willPlay}
-                onFaces={this.onFaces}
                 onTimeChange={this.onTimeChange}
                 onSegmentStart={this.onSegmentStart}
                 onSegmentEnd={this.onSegmentEnd}
@@ -649,7 +664,7 @@ export default React.createClass({
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
               {showTimeJump}
               {controls}
-              {faces}
+              {objects}
             </View>
           </View>
       </OverlayModal>

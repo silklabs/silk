@@ -12,10 +12,10 @@ const SegmentProps = [
   'url',
   'startUTC',
   'endUTC',
-  'faces',
   'id',
   'nextId',
-  'previousId'
+  'previousId',
+  'objects'
 ];
 
 class Segment {
@@ -56,11 +56,6 @@ class Segment {
 let LiveVideo = React.createClass({
   propTypes: {
     rate: React.PropTypes.number,
-    /**
-    Invoked when face(s) appear in the video.
-    */
-    onFaces: React.PropTypes.func,
-
     /**
     Invoked every N milliseconds with current time in playback.
     Time is a UTC value not relative time in playback.

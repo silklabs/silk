@@ -99,8 +99,6 @@ internal class LiveVideoItem : AVPlayerItem {
   When this video was taken.
   */
   var start: Int64!
-
-  internal var faces: [FaceEvent] = []
 }
 
 /**
@@ -137,7 +135,6 @@ class LiveVideo : UIView {
   // display raw video...
   private var player: AVQueuePlayer!
   private var playerLayer: AVPlayerLayer!
-  private var faceTimeObservers: [AnyObject] = []
   private var timeChangeObserver: AnyObject?
   private var itemPlayedToEndObserver: AnyObject?
   private var lastItemEndObserver: AnyObject?
@@ -491,7 +488,6 @@ class LiveVideo : UIView {
 
     // Segment is a wrapper for the data values too so we don't just copy it over.
     item.start = segment.startUTC
-    item.faces = segment.faces
     item.id = segment.id
     item.nextId = segment.nextId
 
@@ -539,18 +535,6 @@ class LiveVideo : UIView {
 
   }
 
-  func sendFaceEvent(item: LiveVideoItem, event: FaceEvent) {
-    // It's important to remember this offset is relative to the current item not global playback.
-    let eventBody: Dictionary<String, AnyObject> = [
-      "target": self.reactTag,
-      "rects": event.rects,
-      "tag": event.tag
-    ]
-    self.eventDispatcher.sendInputEventWithName(
-      "faces", body: eventBody
-    )
-  }
-
   func setupSegmentObserver(item: LiveVideoItem) {
     let center = NSNotificationCenter.defaultCenter()
     if let previousObserver: AnyObject = self.itemPlayedToEndObserver {
@@ -573,43 +557,6 @@ class LiveVideo : UIView {
         }
       }
     )
-  }
-
-  /**
-  Configures observers to signal the JS thread when faces appear in the video.
-
-  This method is only safe to call from the main thread.
-  */
-  func setupFaceObserver(item: LiveVideoItem) {
-    // Remove any previous observers because timing is only local to individual items
-    // any previous events would be wrong anyhow.
-    if self.faceTimeObservers.count > 0 {
-      // We remove all events when the current item changes rather then when specific events
-      // are sent so seeking is handled without adding/removing extra observers.
-      for observer in self.faceTimeObservers {
-        self.player.removeTimeObserver(observer)
-      }
-      self.faceTimeObservers.removeAll()
-    }
-
-    // Only setup new observers if we have face data...
-    if item.faces.count < 1 {
-      return
-    }
-
-    for event in item.faces {
-      let observerTime = NSValue(CMTime: CMTimeMake(
-        // Times are in milliseconds so timescale is of 1000 (ms / 1000 = second)
-        Int64((event.when) - item.start),
-        Int32(1000)
-      ))
-
-      let handle: AnyObject = self.player.addBoundaryTimeObserverForTimes([observerTime], queue: self.eventQueue) {
-        self.sendFaceEvent(item, event: event)
-      }
-
-      self.faceTimeObservers.append(handle)
-    }
   }
 
   /**
@@ -663,7 +610,6 @@ class LiveVideo : UIView {
       let asset = item!.asset
       let log = item!.accessLog()
 
-      self.setupFaceObserver(item!)
       self.setupSegmentObserver(item!)
       self.setupLastItemObserver(item!)
 
@@ -695,10 +641,6 @@ class LiveVideo : UIView {
     // Ensure player has no observers anymore...
     self.player.removeAllKeyPathObservers()
     self.player.removeTimeObserver(self.timeChangeObserver)
-
-    for observer in self.faceTimeObservers {
-      self.player.removeTimeObserver(observer)
-    }
 
     self.clearLastItemObserver()
 

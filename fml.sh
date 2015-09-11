@@ -47,7 +47,7 @@ else
 fi
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH true
 
-read -n 1 -p "Rewrite history on the branch $BRANCH for '$MILESTONE'?  BE SURE!!! [Ny]: "
+read -n 1 -p "Rewrite history on the branch $BRANCH for $GITS?  BE SURE!!! [Ny]: "
 echo
 if [[ "$REPLY" != "y" ]]; then
   echo Aborted.

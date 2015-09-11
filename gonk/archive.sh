@@ -156,8 +156,8 @@ adb shell setprop persist.silk.update.enabled true
 echo Set device name to $DISPLAY_NAME
 adb shell setprop persist.silk.displayName "$DISPLAY_NAME"
 
-echo Enable crash reporting
-adb shell setprop persist.silk.crashrprt.enabled true
+#echo Enable crash reporting
+#adb shell setprop persist.silk.crashrprt.enabled true
 
 echo Set silk-server URL to $SERVER_URL
 adb shell setprop persist.silk.server.url "$SERVER_URL"

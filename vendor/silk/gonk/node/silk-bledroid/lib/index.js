@@ -332,7 +332,7 @@ Bledroid.prototype.messageMap = [
     regex: /^!address ([\dA-F:]{17})$/,
     emit: 'addressChange',
   }, {
-    regex: /^!rssiUpdate ([\dA-F:]{17}) (-\d+) (\d+)$/,
+    regex: /^!rssiUpdate ([\dA-F:]{17}) (-?\d+) (\d+)$/,
     emit: 'rssiUpdate',
     transform: [ undefined, parseInt, parseInt ],
   }, {

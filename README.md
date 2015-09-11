@@ -34,6 +34,7 @@ Github milestones are created in all the affected projects to collect issues:
 [silk-app](https://github.com/silklabs/silk-app/milestones)
 | [silk-device](https://github.com/silklabs/silk-device/milestones)
 | [silk-server](https://github.com/silklabs/silk-server/milestones)
+| [silk-webapp](https://github.com/silklabs/silk-webapp/milestones)
 
 * If you are working on an issue or plan to work on an issue soon, please assign it to yourself.
 * Provide regular updates on progress or blockers in your assigned issues every 1-3 days at least.
@@ -108,6 +109,7 @@ finishing the release.
 [silk-app](https://github.com/silklabs/silk-app/compare/master...next)
 | [silk-device](https://github.com/silklabs/silk-device/compare/master...next)
 | [silk-server](https://github.com/silklabs/silk-server/compare/master...next)
+| [silk-webapp](https://github.com/silklabs/silk-webapp/compare/master...next)
 
 If no merge conflicts exist a github PR may be created directly from these
 links.  If merge conflicts do exist, manual resolution is required on the
@@ -124,6 +126,7 @@ if they resolve issues targeted for the next release.
 [silk-app](https://github.com/silklabs/silk-app/compare/next...master)
 | [silk-device](https://github.com/silklabs/silk-device/compare/next...master)
 | [silk-server](https://github.com/silklabs/silk-server/compare/next...master)
+| [silk-webapp](https://github.com/silklabs/silk-webapp/compare/next...master)
 
 ##  Release Engineering Tools
 

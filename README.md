@@ -17,7 +17,7 @@ with the current release, and run completely independent to the normal sprint ca
 
 Milestone Name      |Start  |FML    |FC     |CC
 --------------------|-------|-------|-------|-------
-Adventus8           |Aug 31 |Sept 9 |Sept 11|Sept 17
+Adventus8           |Aug 31 |Sept 10|Sept 14|Sept 17
 Adventus7           |Sept 14|Sept 23|Sept 25|Oct 1
 Adventus6           |Sept 28|Oct 7  |Oct 9  |Oct 15
 Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29

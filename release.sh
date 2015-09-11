@@ -36,7 +36,7 @@ clone $ORIGIN_BRANCH
 nostragglers $ORIGIN_BRANCH
 
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
-updatebranch__silk_app $ORIGIN_BRANCH release
+#updatebranch__silk_app $ORIGIN_BRANCH release
 updatebranch__silk_device $ORIGIN_BRANCH release
 mergerelease $ORIGIN_BRANCH release
 

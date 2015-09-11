@@ -35,8 +35,8 @@ function sha256(text) {
 
 export default class Id {
 
-  static create() {
-    var key = ec.genKeyPair();
+  static create(options = {}) {
+    var key = ec.genKeyPair(options);
     return new Id(key.getPublic(true, 'hex'), key.getPrivate('hex'));
   }
 

@@ -224,7 +224,7 @@ var MonitorsView = React.createClass({
     });
 
     
-    for (id in streaming) {
+    for (let id in streaming) {
       if (!this.dm.enumerateDevices().some(p => p.deviceId === id)) {
         // Streaming widget still exists, but we are no longer connected
         // to the peripheral. Let's do some cleanup...

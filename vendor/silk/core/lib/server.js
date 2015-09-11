@@ -93,9 +93,12 @@ class Server extends events.EventEmitter {
       errors.forEach(error => {
         this.socket.on(error, e => {
           log.warn(`socket ${error}: ${e}`);
-          this.emit('error', error); // fyi: node throws if no 'error' listeners
+          this.emit('error', error);
         });
       });
+
+      // add 'error' listener in case no one else is, else node throws exception
+      this.on('error', () => {});
     });
   }
 

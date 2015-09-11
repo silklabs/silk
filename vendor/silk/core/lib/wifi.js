@@ -289,7 +289,7 @@ class Wifi extends events.EventEmitter
     monitor.on('disconnected', (reason) => {
       // Send error unless leaving under normal circumstances
       if (reason !== 'deauth_leaving') {
-        this.emit('error', reason); // fyi: node throws if no 'error' listeners
+        this.emit('error', reason);
       }
       this._networkCleanup();
       log.info(`==> Wifi offline (${reason})`);
@@ -308,6 +308,9 @@ class Wifi extends events.EventEmitter
 
     // Set the device hostname to something that is probably unique
     util.setprop('net.hostname', 'silk-' + util.getprop('ro.serialno'));
+
+    // add 'error' listener in case no one else is, else node throws exception
+    this.on('error', () => {});
 
     return this._networkCleanup()
       .then(() => this._startWpaMonitor())

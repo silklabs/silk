@@ -256,7 +256,9 @@ export default class Accounts extends Base {
         _id: account._id,
         'accountTokens.publicKey': payload.publicKey
       }, {
-        passwordCheck: { date: new Date() }
+        $set: {
+          passwordCheck: { date: new Date() }
+        }
       });
 
       if (update.n !== 1) {

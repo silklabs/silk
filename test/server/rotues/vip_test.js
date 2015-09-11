@@ -77,7 +77,13 @@ suite('account auth', () => {
       email: email,
       password: 'password'
     });
-    assert.equal(auth.id, create.id);
+    assert.ok(auth.success);
+
+    let authAgain = await api.vip.checkPasswordWithPassword({
+      email: email,
+      password: 'password'
+    });
+    assert.ok(authAgain.success);
 
     let passCheckFail = await api.vip.checkPasswordWithPassword({
       email: email,

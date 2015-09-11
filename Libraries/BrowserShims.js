@@ -1,7 +1,13 @@
 /**
+ * Configure debug prior to entrypoint so it is ready for other modules.
+ */
+import Config from './Config';
+import debug from 'debug';
+debug.enable(Config.debug);
+
+/**
  * Collection of browser shims to make various JS libraries happy.
  */
-
 // socket.io does some detection based on userAgent for ios/gecko so we assign a
 // dummy string which nobody cares about.
 if (!('userAgent' in navigator)) {  //eslint-disable-line

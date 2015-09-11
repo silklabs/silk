@@ -338,7 +338,8 @@ class Wifi extends events.EventEmitter
         return wpaCliExpectOk('set_network', id, 'ssid', `"${ssid}"`)
           .then(() => wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`))
           .then(() => wpaCliExpectOk('enable_network', id))
-          .then(() => wpaCliExpectOk('save_config'));
+          .then(() => wpaCliExpectOk('save_config'))
+          .then(() => wpaCliExpectOk('reconnect'));
       });
   }
 

@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button, ButtonGroup, Label } from 'react-bootstrap';
+import { Button, ButtonGroup, Input, Label } from 'react-bootstrap';
 import mklog from '../log'; const log = mklog('diag');
 import ansiUp from 'ansi_up';
 import CameraPreview from './CameraPreview';
@@ -136,7 +136,12 @@ class DiagLogcat extends DiagLog {
 
   constructor(props) {
     super(props);
+    this.state = { filter: '' };
     this.style.flex = 2;
+  }
+
+  onFilterChange = e => {
+    this.setState({ filter: e.target.value });
   }
 
   render() {
@@ -145,16 +150,28 @@ class DiagLogcat extends DiagLog {
     }
 
     let log = this.props.log;
+    // The empty pattern is found in any text.  'i' means case
+    // insensitive.
+    let filterRx;
+    try {
+      filterRx = new RegExp(this.state.filter, 'i');
+    } catch(e) {
+      filterRx = /INVALID/;
+    }
     return (
       <div style={this.style}>
         {
-          log.map(line => {
-            let html = ansiUp.ansi_to_html(line);
-            // NOTE: ansi_to_html() will also escape HTML characters (&, <) so
-            // using "dangerouslySetInnerHTML" should be safe
-            return <div dangerouslySetInnerHTML={{__html: html}} />;
-          })
+          log.filter(line => 0 <= line.search(filterRx))
+             .map(line => {
+               let html = ansiUp.ansi_to_html(line);
+               // NOTE: ansi_to_html() will also escape HTML
+               // characters (&, <) so using "dangerouslySetInnerHTML"
+               // should be safe
+               return <div dangerouslySetInnerHTML={{__html: html}} />;
+             })
         }
+        <Input ref='filter' type='text' placeholder='Filter regexp'
+               onChange={this.onFilterChange} />
       </div>
     );
   }

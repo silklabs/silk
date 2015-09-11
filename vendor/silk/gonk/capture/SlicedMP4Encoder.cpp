@@ -15,7 +15,9 @@
 #include "Capturedefs.h"
 #include "MPEG4MemoryWriter.h"
 #include "AudioSourceEmitter.h"
+#include "AudioLooper.h"
 
+#include <cutils/properties.h>
 #include <media/mediarecorder.h>
 #include <media/stagefright/AudioSource.h>
 #include <media/stagefright/foundation/ADebug.h>
@@ -31,7 +33,7 @@ enum { kNumSamplesPerFrame = 1024 };
 
 using namespace android;
 
-static bool isAudioEnabled = true;
+static bool isAudioEncodeEnabled;
 
 //
 // Implementation of class PutBackWrapper
@@ -456,6 +458,18 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
 
   // The video stream drives where the audio stream is sliced
   mSlicedVideoSource->addListener(mSlicedAudioSource.get());
+
+
+  isAudioEncodeEnabled = !property_get_bool("persist.silk.capture.mute",
+                                            false);
+  ALOGI("Audio capture is%s muted", isAudioEncodeEnabled ? " not" : "");
+  // When audio capture is disabled, we spawn an extra thread to read
+  // microphone samples so that audio analyses continue working.
+  if (!isAudioEncodeEnabled) {
+    sp<AudioLooper> mAudioLooper;
+    mAudioLooper = new AudioLooper(audioSourceEmitter);
+    mAudioLooper->run();
+  }
 }
 
 bool SlicedMP4Encoder::threadLoop() {
@@ -464,7 +478,7 @@ bool SlicedMP4Encoder::threadLoop() {
 
     writer->addSource(mSlicedVideoSource);
 
-    if (isAudioEnabled) {
+    if (isAudioEncodeEnabled) {
       // See long comment below.
       sp<MediaSource> paddedAudio(
         new PadAudioWrapper(mSlicedAudioSource,

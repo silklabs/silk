@@ -8,6 +8,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
 	../SocketListener/SocketListener1.cpp \
 	../jsoncpp/jsoncpp.cpp \
+	AudioLooper.cpp \
 	AudioSourceEmitter.cpp \
 	Capture.cpp \
 	Channel.cpp \

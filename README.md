@@ -74,7 +74,8 @@ If you really want to restore your workspace back to its pristine state run
 ## Connecting to the server
 
 By default the build will connect to the test server at
-https://silk-test-server.herokuapp.com/.
+https://silk-server-master.herokuapp.com/.  You can view live cameras in your
+desktop browser by navigating to https://silk-webapp-master.herokuapp.com.
 
 If you would like to use a local server for development purposes or otherwise,
 configure the device with:

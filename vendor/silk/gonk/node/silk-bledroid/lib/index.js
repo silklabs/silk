@@ -4,10 +4,10 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
-import parseAdvertising from './advertisingDataParser';
 import assert from 'assert';
 import EventEmitter from 'events';
 import net from 'net';
+import parseAdvertising from './advertisingDataParser';
 
 const debug = require('debug');
 
@@ -82,6 +82,7 @@ class Bledroid extends EventEmitter {
     this.socket = null;
     this.socketEventListenersInstalled = null;
     this.commandBuffer = { data: '' };
+    this.nobleConnections = new Set();
 
     log.info(`Connecting to '${BLE_SOCKET_PATH}' socket`);
     const socket = net.createConnection(BLE_SOCKET_PATH, err => {
@@ -272,6 +273,11 @@ class Bledroid extends EventEmitter {
     }
   }
 
+  noteNobleConnectionRequest(address) {
+    assert(!this.nobleConnections.has(address));
+    this.nobleConnections.add(address);
+  }
+
   onListen(state, error) {
     if (state === '1') {
       this.emit('advertisingStart', parseInt(error));
@@ -286,6 +292,16 @@ class Bledroid extends EventEmitter {
     advertisingData = parseAdvertising(hexStringToBuffer(advertisingData));
 
     this.emit('discover', address, rssi, advertisingData);
+  }
+
+  onServerConnect(address) {
+    if (!this.nobleConnections.has(address)) {
+      this.emit('serverConnect', address);
+    }
+  }
+
+  onClientDisconnect(address) {
+    this.nobleConnections.delete(address);
   }
 
   onUnknownCommand(command) {
@@ -338,20 +354,20 @@ Bledroid.prototype.messageMap = [
   }, {
     regex: /^!listen (0|1) (\d+)$/,
     method: 'onListen',
+    transform: [ val => val === '1' ? true : false, parseInt ],
   }, {
     regex: /^!serverConnect ([\dA-F:]{17})$/,
-    emit: 'serverConnect',
+    method: 'onServerConnect',
   }, {
     regex: /^!serverDisconnect ([\dA-F:]{17})$/,
     emit: 'serverDisconnect',
-    transform: [ undefined, parseInt, parseInt ],
   }, {
     regex: /^!clientConnect ([\dA-F:]{17}) (\d+) (\d+)$/,
     emit: 'clientConnect',
     transform: [ undefined, parseInt, parseInt ],
   }, {
     regex: /^!clientDisconnect ([\dA-F:]{17}) (\d+) (\d+)$/,
-    emit: 'clientDisconnect',
+    method: 'onClientDisconnect',
     transform: [ undefined, parseInt, parseInt ],
   }, {
     regex: /^!mtuChange (\d+)$/,
@@ -559,6 +575,10 @@ export default function() {
   bledroid = bledroid || new Bledroid();
 
   let connection = new BledroidConnection();
+
   connection.command = bledroid.command.bind(bledroid);
+  connection.noteNobleConnectionRequest =
+    bledroid.noteNobleConnectionRequest.bind(bledroid);
+
   return connection;
 }

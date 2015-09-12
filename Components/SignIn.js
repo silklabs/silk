@@ -15,6 +15,7 @@ let {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicatorIOS
 } = React;
 
 class LogoView extends React.Component {
@@ -82,6 +83,16 @@ class StyledButton extends React.Component {
   }
 };
 
+class LoginSpinner extends React.Component {
+  render() {
+    return (
+      <View style={styles.loginSpinner}>
+        <ActivityIndicatorIOS />
+      </View>
+    )
+  }
+}
+
 class TextLink extends React.Component {
   static propTypes = {
     label: React.PropTypes.string,
@@ -147,15 +158,25 @@ class SignInControls extends React.Component {
   }
 
   render() {
+
+    let signInOrLoading;
+    if (this.state.loginInProgress) {
+      signInOrLoading = (<LoginSpinner/>);
+    } else {
+      signInOrLoading = (
+        <StyledButton label='SIGN IN'
+                      onClick={this.onSignIn} />
+      );
+    }
+
     return (
       <View style={styles.signInContainer}>
         <StyledTextInput placeholder='Email Address'
                          onChange={this.onEmailChange} />
         <StyledTextInput placeholder='Password'
                          secure={true}
-                         onChange={this.onPasswordChange.bind(this)} />
-        <StyledButton label='SIGN IN'
-                      onClick={this.onSignIn.bind(this)} />
+                         onChange={this.onPasswordChange} />
+        {signInOrLoading}
         <View style={styles.bottomLinks}>
           <TextLink label='SIGN UP'
                     onClick={this.onSignUp} />
@@ -170,6 +191,12 @@ class SignInControls extends React.Component {
 }
 
 export default class extends React.Component {
+
+  static propTypes = {
+    navigator: React.PropTypes.object,
+    userState: React.PropTypes.userState
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -180,7 +207,9 @@ export default class extends React.Component {
             <LogoView />
           </View>
           <View style={styles.controlsContainer}>
-            <SignInControls navigator={this.props.navigator} />
+            <SignInControls
+              userState={this.props.userState}
+              navigator={this.props.navigator} />
           </View>
         </LinearGradient>
       </View>

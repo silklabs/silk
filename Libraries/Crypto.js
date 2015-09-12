@@ -13,11 +13,21 @@ const DEFAULT_ROUNDS = 64000;
 
 /**
  * Requests a number of random bytes from the native layer.
+ *
+ * This is most useful when a function typically expects a Buffer or TypedArray
+ * to provide entropy (window.crypto.getRandomValues).
+ *
+ * @return {UInt8Array}
  */
 export function getRandomBytes(numberOfBytes) {
   return new Promise((accept) => {
     let start = Date.now();
     AppCrypto.getRandomBytes(numberOfBytes, function(bytes) {
+      /**
+       * The native side cannot send typed arrays so it instead sends an array
+       * of numbers (which are enforced as UInt8 on the native side) which we
+       * can then properly convert into a typed array.
+       */
       let result = new Uint8Array(numberOfBytes);
       for (let i = 0; i < numberOfBytes; i++) {
         result[i] = bytes[i];

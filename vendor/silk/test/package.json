@@ -9,7 +9,7 @@
   },
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
-    "install": "NODE_PATH=$NODE_PATH:../core_intermediates/dist/lib:../detectobject_intermediates/dist/lib/ grunt"
+    "install": "NODE_PATH=$NODE_PATH:../core_intermediates/dist/:../detectobject_intermediates/dist/ grunt"
   },
   "license": "proprietary",
   "dependencies": {

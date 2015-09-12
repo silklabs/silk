@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
-let testEnv = require('../../../framework');
+let testEnv = require('../../framework');
 let assert = require('assert');
 
 suite('test environment', () => {

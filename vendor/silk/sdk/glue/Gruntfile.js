@@ -103,7 +103,8 @@ module.exports = function(grunt) {
         files: [
           {
             expand: true,
-            src: ['lib/**/*.js'],
+            cwd: 'lib/',
+            src: ['**/*.js'],
             dest: 'dist/'
           }
         ],
@@ -115,7 +116,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          '<%= pkg.main %>': ['dist/lib/<%= pkg.main %>']
+          '<%= pkg.main %>': ['dist/<%= pkg.main %>']
         },
         options: {
           browserifyOptions: {

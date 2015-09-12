@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
-let testFramework = require('../../../framework');
+let testFramework = require('../../framework');
 let assert = require('assert');
 let eventToPromise = require('event-to-promise');
 

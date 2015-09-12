@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <manifest>
   <remote name="github" fetch="git://github.com/" sync-j="4"/>
-  <include name="silk-remote.xml" />
+  <remote name="silk"
+          fetch="ssh://git@github.com/silklabs/"
+          revision="Always invalid.  Contact releng for more details"
+          sync-j="4"/>
 
   <project name="joyent/node"
            path="external/node"
@@ -28,7 +31,8 @@
   <!-- node modules -->
   <project name="silk-api-node"
            path="vendor/silk/core/local_node_modules/silk-api"
-           remote="silk" />
+           remote="silk"
+           revision="master"/>
   <project name="sandeepmistry/bleno"
            path="external/bleno"
            remote="github"
@@ -58,6 +62,7 @@
   <project name="silk-device-locked-node-modules"
            path="vendor/silk/locked_node_modules/node_modules"
            clone-depth="1"
-           remote="silk" />
+           remote="silk"
+           revision="master" />
 
 </manifest>

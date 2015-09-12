@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
-let testFramework = require('../../framework');
+let testFramework = require('../../framework')('opencv_test');
 let assert = require('assert');
 let fs = require('mz/fs');
 

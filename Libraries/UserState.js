@@ -34,7 +34,6 @@ export default class UserState extends EventEmitter {
    * API Client
    */
   api = null
-  user = null
   _accessToken = null
 
   constructor(api) {

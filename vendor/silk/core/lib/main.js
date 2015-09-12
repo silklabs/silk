@@ -231,12 +231,13 @@ ntp.on('time', emitDeviceInfo);
 // Server related...
 server.on('connect', () => {
   ui.goto('online');
-  config.stop();
+  config.stop()
+  .then(() => {
+    btle.beacon.start();
+    btle.ranger.start();
 
-  btle.beacon.start();
-  btle.ranger.start();
-
-  emitDeviceInfo()
+    return emitDeviceInfo();
+  })
   .then(() => {
     diag.start(server.socket);
     update.start();

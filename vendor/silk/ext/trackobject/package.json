@@ -2,7 +2,7 @@
   "name": "trackobject",
   "version": "0.0.1",
   "description": "OpenCV extension to track objects",
-  "main": "index.js",
+  "main": "trackobject.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "install": "grunt"

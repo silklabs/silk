@@ -10,9 +10,11 @@
 
 import EventEmitter from 'EventEmitter';
 import { AsyncStorage } from 'react-native';
-import serialCalls from './dedupeCalls';
-import { getRandomBytes } from './Crypto';
+import dedupeCalls from './dedupeCalls';
+import { getRandomBytes, PBKDF2KeyDerivation } from './Crypto';
+import createDebug from 'debug';
 
+const log = createDebug('UserState');
 const ACCESS_TOKEN_KEY = 'user.accessToken';
 
 /**
@@ -40,15 +42,29 @@ export default class UserState extends EventEmitter {
     // Initialized api client.
     this.api = api;
 
-    serialCalls(this, 'getAccessToken');
+    dedupeCalls(
+      this,
+      'getAccessToken',
+      'attemptDeveloperLogin',
+      'signedIn'
+    );
   }
 
-  async setAccessToken(id) {
+  async setAccessToken(accessToken) {
+    log('Set access token', accessToken);
     let json = JSON.stringify({
-      publicKey: id.pub,
-      privateKey: id.priv
+      publicKey: accessToken.pub,
+      privateKey: accessToken.priv
     });
     await AsyncStorage.setItem(ACCESS_TOKEN_KEY, json);
+  }
+
+  async createAccessToken() {
+    // See above comment for SHA256_HMAC_STRENGTH to understand what this is
+    // doing.
+    let entropy = await getRandomBytes(SHA256_HMAC_STRENGTH);
+    let accessToken = this.api.id.create({ entropy });
+    return accessToken;
   }
 
   /**
@@ -60,20 +76,53 @@ export default class UserState extends EventEmitter {
       return this._accessToken;
     }
 
-    // Load from storage...
     let accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
     if (!accessToken) {
-      // See above comment for SHA256_HMAC_STRENGTH to understand what this is
-      // doing.
-      let entropy = await getRandomBytes(SHA256_HMAC_STRENGTH);
-      let id = this.api.id.create({ entropy });
-      await this.setAccessToken(id);
-      return id;
+      log('No access token set....');
+      return accessToken;
     }
 
     let parsed = JSON.parse(accessToken);
     this._accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
+    log('Using existing access token', this._accessToken);
     return this._accessToken;
+  }
+
+  async checkPassword(email, password) {
+    let vip = this.api.vip;
+    let passwordHash = await PBKDF2KeyDerivation(
+      password, /* input */
+      email /* salt */
+    );
+
+    return await vip.checkPassword({
+      email,
+      passwordHash
+    });
+  }
+
+   /**
+   * Attempt logging in with the developer credentials...
+   */
+  async attemptDeveloperLogin() {
+    log('Logging in via developer account');
+    let account = this.api.devAccount;
+    let vip = this.api.vip;
+    let accessToken = new this.api.id(account.publicKey, account.privateKey);
+
+    // Use given developer account access token.
+    vip.key = accessToken;
+
+    let check = await this.checkPassword(account.email, account.password);
+    if (check.success) {
+      log('Successfully logged in as', account.email);
+      await this.setAccessToken(accessToken);
+      return true;
+    }
+    // Reset to current access token...
+    vip.key = await this.getAccessToken();
+    log('Failed to logged in as', account.email);
+    return false;
   }
 
 }

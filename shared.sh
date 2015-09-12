@@ -124,13 +124,27 @@ updatebranch__silk_device() {
   (
     set -x
     sed -i .branch -e s/${from}/${to}/g
-    sed -i gonk/manifest/silk-remote.xml -e s/${from}/${to}/g
+
+    # Update the revision attribute for the following projects in
+    # gonk/manifest/silk.xml
+    for p in silk-device-locked-node-modules silk-api-node; do
+      pushd ../$p
+      local HEAD=$to
+      if [[ $to == release ]]; then
+        # Lock to SHA1 for release branch
+        HEAD=$(git rev-parse HEAD)
+      fi
+      popd > /dev/null
+
+      xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" gonk/manifest/silk.xml
+      xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD gonk/manifest/silk.xml
+    done
     git commit --all -m "Automated branch update from ${from} to ${to}"
     if [[ -n $ignoreOnMaster ]]; then
       ignoreHEADOnMaster
     fi
   )
-  popd
+  popd > /dev/null
 }
 
 # Replace the contents of a branch. History is destroyed.

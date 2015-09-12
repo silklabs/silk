@@ -428,9 +428,25 @@ export default React.createClass({
   },
 
   onSeekChange(value) {
+    // For now we don't change the video display during seek events.
+  },
+
+  onSeekEnd(value) {
     let api = this.props.api;
     let video = this.refs.video;
 
+    // Clear the segment queue and update the time to the seek target
+    // while we figure out where we're actually going to end up below.
+    this._videoSegments = [];
+    this.setState({
+      currentTime: value,
+      pendingSeekMode: MODES.recorded,
+      videoSegments: this._videoSegments
+    });
+
+    // TODO: what should we do here if there's a previous seek
+    // operation still pending?  For now we assume these don't
+    // overlap.
     this._pendingSeekOperation = api.timeMeta.findByTime({
       metaType: 'video',
       time: value,
@@ -462,43 +478,35 @@ export default React.createClass({
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments
       });
-      return true
+      return true;
     }).catch(err => {
       console.log('Could not find segment in seek time', err);
       // Fallback if we cannot find a recorded segment to start playback at we
       // will resume this mode after seeking is done.
-      this._videoSegments = []
+      this._videoSegments = [];
       this.setState({
         videoSegments: this._videoSegments,
         pendingSeekMode: DEFAULT_MODE
       });
-      return false
+      return false;
     }).then(result => {
       this._pendingSeekOperation = null;
+
+      this.transitionModes(this.state.pendingSeekMode, {
+        pendingSeekMode: null,
+        // Resume playback mode (paying/paused).
+        willPlay: this.state.playing,
+        // Pass video segments explicitly so we do not reset them.
+        videoSegments: this._videoSegments
+      });
+
+      // If we are now in recorded mode start buffering next segment.
+      if (this.state.pendingSeekMode === MODES.recorded) {
+        this.bufferNextRecordedSegment();
+      }
+
       return result;
-    });
-  },
-
-  onSeekEnd(value) {
-    // XXX: We should not be waiting here for the seek operation but it is
-    // needed until we know which periods of time have video.
-    if (this._pendingSeekOperation) {
-      this._pendingSeekOperation.then(this.onSeekEnd);
-      return;
-    }
-
-    this.transitionModes(this.state.pendingSeekMode, {
-      pendingSeekMode: null,
-      // Resume playback mode (paying/paused).
-      willPlay: this.state.playing,
-      // Pass video segments explicitly so we do not reset them.
-      videoSegments: this._videoSegments
-    });
-
-    // If we are now in recorded mode start buffering next segment.
-    if (this.state.pendingSeekMode === MODES.recorded) {
-      this.bufferNextRecordedSegment();
-    }
+    });    
   },
 
   toggleControls() {

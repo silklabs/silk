@@ -27,6 +27,7 @@
 		5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0641B734C4A00B0630C /* VideoSegment.swift */; };
 		5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
+		5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714F47C1BA373DC0087A138 /* NSDataExtension.swift */; };
 		571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571B2F801B813641005A4460 /* ConcurrentOperation.swift */; };
 		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
 		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
@@ -58,6 +59,9 @@
 		5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302E41ABCB9EE00DB3ED1 /* libRCTVibration.a */; };
 		5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */; };
 		5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33E1B61681300C18E5D /* NotImplemented.swift */; };
+		577396151BA2914C00F900C6 /* AppCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 577396141BA2914C00F900C6 /* AppCrypto.m */; };
+		577396171BA2921400F900C6 /* AppCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396161BA2921400F900C6 /* AppCrypto.swift */; };
+		5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396181BA29F8F00F900C6 /* AppCryptoTest.swift */; };
 		5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */; };
 		5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
 		579422381B963F1B0068569E /* ErrorDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579422371B963F1B0068569E /* ErrorDomain.swift */; };
@@ -307,6 +311,7 @@
 		5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTConvertVideoSegment.h; sourceTree = "<group>"; };
 		5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTConvertVideoSegment.m; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
+		5714F47C1BA373DC0087A138 /* NSDataExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDataExtension.swift; sourceTree = "<group>"; };
 		571B2F801B813641005A4460 /* ConcurrentOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConcurrentOperation.swift; sourceTree = "<group>"; };
 		57297F6C1B90E55000CBC04D /* AppRCTWebSocketManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTWebSocketManager.h; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
@@ -330,6 +335,9 @@
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CMTimeExtensions.swift; sourceTree = "<group>"; };
 		5758F33E1B61681300C18E5D /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
+		577396141BA2914C00F900C6 /* AppCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCrypto.m; sourceTree = "<group>"; };
+		577396161BA2921400F900C6 /* AppCrypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCrypto.swift; sourceTree = "<group>"; };
+		577396181BA29F8F00F900C6 /* AppCryptoTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCryptoTest.swift; sourceTree = "<group>"; };
 		5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTWebSocketManager.m; sourceTree = "<group>"; };
 		579422371B963F1B0068569E /* ErrorDomain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorDomain.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -585,6 +593,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		577396131BA28FCC00F900C6 /* AppCrypto */ = {
+			isa = PBXGroup;
+			children = (
+				577396141BA2914C00F900C6 /* AppCrypto.m */,
+				577396181BA29F8F00F900C6 /* AppCryptoTest.swift */,
+				577396161BA2921400F900C6 /* AppCrypto.swift */,
+			);
+			path = AppCrypto;
+			sourceTree = "<group>";
+		};
 		5774D75C1B90D6050071F187 /* WebSocket */ = {
 			isa = PBXGroup;
 			children = (
@@ -597,6 +615,7 @@
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
@@ -621,6 +640,7 @@
 				5714A0641B734C4A00B0630C /* VideoSegment.swift */,
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
 				579422371B963F1B0068569E /* ErrorDomain.swift */,
+				5714F47C1BA373DC0087A138 /* NSDataExtension.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -1077,6 +1097,7 @@
 				573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */,
 				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
 				5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */,
+				5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1107,6 +1128,7 @@
 				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
+				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
 				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
@@ -1114,8 +1136,10 @@
 				57BCE0FA1B6962ED0047088B /* NSDataBridge.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
 				5758F2621B600B0200C18E5D /* ImageViewManager.swift in Sources */,
+				5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */,
 				571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */,
 				F954C40A1B3725DB0081F479 /* NSData+Base64.m in Sources */,
+				577396171BA2921400F900C6 /* AppCrypto.swift in Sources */,
 				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
 				57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */,
 				573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */,

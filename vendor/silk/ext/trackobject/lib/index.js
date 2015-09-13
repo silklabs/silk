@@ -61,11 +61,11 @@ function _detectMotion(image, callback) {
   }
 
   // Calc differences between the images and do AND-operation
-  d1 = new cv.Matrix(xStop, yStop);
+  d1 = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
   d1.absDiff(prevFrame, nextFrame);
-  d2 = new cv.Matrix(xStop, yStop);
+  d2 = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
   d2.absDiff(nextFrame, currentFrame);
-  motion = new cv.Matrix(xStop, yStop);
+  motion = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
   motion.bitwiseAnd(d1, d2);
 
   // Threshold the image, low differences are ignored (ex. contrast change due

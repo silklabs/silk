@@ -6,9 +6,9 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
-let createReadStream = require('fs').createReadStream;
-let fs = require('mz/fs');
-let getboolprop = require('./util').getboolprop;
+import { createReadStream } from 'fs';
+import fs from 'mz/fs';
+import { getboolprop, getprop } from './util';
 let log = require('./log')('crashreport');
 let net = require('net');
 let vib = require('./vibrator')();
@@ -24,10 +24,69 @@ function formatError(err) {
   return `${err}:\n${err.stack}`;
 }
 
+function exceptionToTombstoneSync(exception) {
+
+  let tombstone = `*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: '${getprop('ro.build.fingerprint')}'
+Type: 'Unhandled Exception'
+When: '${new Date()}'
+
+${formatError(exception)}
+`;
+
+  // Find a free tombstone filename to use.
+  //
+  // The file range /data/tombstone/tombstone_20 to /data/tombstone/tombstone_39
+  // is used to avoid conflicting with debuggerd's range of 00 to 09.
+  //
+  // If all slots are used up the oldest tombstone is overwritten.
+  //
+  // This code is synchronous to avoid having to worry about engraving tombstones
+  // concurrently.
+  let oldfs = require('fs');
+  try {
+    oldfs.mkdirSync(TOMBSTONE_DIR_PATH);
+  } catch (err) {
+    if (err.code !== 'EEXIST') {
+      log.error(err);
+    }
+    // Not much to do here but soldier on...
+  }
+
+  let file;
+  let oldestStat;
+  for (let i = 20; i < 40; i++) {
+    file = 'tombstone_' + i;
+    try {
+      let stat = fs.statSync(TOMBSTONE_DIR_PATH + file);
+      stat.file = file;
+      file = null;
+      if (!oldestStat || stat.birthtime < oldestStat.birthtime) {
+        oldestStat = stat;
+      }
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        break;
+      }
+      log.error(err);
+    }
+  }
+
+  if (!file) {
+    file = oldestStat.file;
+  }
+  log.info(`Engraving exception tombstone: ${file}`);
+  try {
+    oldfs.writeFileSync(TOMBSTONE_DIR_PATH + file, tombstone);
+  } catch (err) {
+    log.error(err);
+  }
+  return file;
+}
+
+
 class CrashReporter {
   constructor(outbox) {
-
-
     this.activePromise = null;
     this.fileQueue = null;
     this.fileSet = null;
@@ -39,7 +98,7 @@ class CrashReporter {
 
     process.on('uncaughtException', this.uncaughtExceptionHandler.bind(this));
 
-    if (!CRASHREPORT_ENABLED) {
+    if (!this.running) {
       log.info(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash ` +
                'reporting');
       return;
@@ -58,14 +117,18 @@ class CrashReporter {
   uncaughtExceptionHandler(err) {
     log.error(formatError(err));
 
+    let file = exceptionToTombstoneSync(err);
     if (this.running) {
-      const metadata = {
-        deviceId: this.deviceId,
-        timeStamp: new Date(),
-        type: 'exception'
-      };
-
-      this.outbox.sendCrash(formatError(err), metadata, 'text/plain');
+      this.chainToActivePromise(() => {
+        if (!this.fileSet.has(file)) {
+          this.fileSet.add(file);
+          this.fileQueue.push(file);
+          if (this.hasDeviceId) {
+            return this.processNextFile();
+          }
+        }
+        return Promise.resolve();
+      });
     }
 
     if (!vib.active) {

@@ -80,6 +80,11 @@ npm_version_check()
 
 cmake_version_check()
 {
+  if ! which cmake; then
+    poison_their_lunch cmake not installed
+    return
+  fi
+
   local v=$(cmake --version | head -n1)
 
   if [[ $v =~ ^cmake\ version\ ([0-9]*)\.([0-9]*).([0-9]*) ]]; then

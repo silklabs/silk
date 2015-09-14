@@ -4,7 +4,7 @@
   "description": "The common control software on each silk node",
   "main": "index.js",
   "scripts": {
-    "preinstall": "if [ -d ../locked_node_modules ]; then ../locked_node_modules/fetch.sh; fi",
+    "preinstall": "rm -rf node_modules/ntp-client node_modules/silk-api; if [ -d ../locked_node_modules ]; then ../locked_node_modules/fetch.sh; fi",
     "install": "grunt"
   },
   "dependencies": {

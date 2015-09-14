@@ -13,9 +13,11 @@ let path = require('path');
 let PREVIEW_WIDTH = 320;
 let PREVIEW_HEIGHT = 180;
 
+/**
+ *
+ */
 class FakeCamera {
   constructor() {
-    log.verbose(`starting fake camera`);
     this._imgPath = path.resolve(__dirname, 'files');
     this._imgSrc = 'car1.jpg';
   }
@@ -36,23 +38,84 @@ class FakeCamera {
         userCb(true, null);
         return;
       }
+      if (1 === channel) {
+        im.convertGrayscale();
+        im.equalizeHist();
+      }
       im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
       userCb(err, im);
     });
   }
 }
 
+/**
+ *
+ */
+class FakeUtil {
+  getprop(prop, defaultValue) {
+    log.debug(`getprop ${prop}`);
+    return defaultValue;
+  }
+
+  getboolprop(prop, defaultValue = false) {
+    log.debug(`getboolprop ${prop}`);
+    return defaultValue;
+  }
+
+  getintprop(prop, defaultValue = '0') {
+    log.debug(`getintprop ${prop}`);
+    return defaultValue;
+  }
+
+  setprop(prop, value) {
+    log.debug(`setprop ${prop}: ${value}`);
+    return true;
+  }
+
+  playSound(fileName) {
+    log.debug(`playSound ${fileName}`);
+  }
+
+  timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+/**
+ *
+ */
+class Env {
+  constructor(name, framework) {
+    this._name = name;
+    this.timeline = framework.timeline;
+    this.camera = framework.camera;
+    this.util = framework.util;
+    this.log = require('log')(name);
+  }
+}
+
+/**
+ *
+ */
 class TestFramework {
-  constructor() {
-    log.verbose('TestFramework constructor');
-    this.log = log;
+  constructor(name) {
+    this.rootDir = __dirname;
+    this._name = name;
     this.battery = require('battery');
     this.timeline = require('timeline')('test_id');
     this.camera = new FakeCamera();
     this.opencv = opencv;
-    require('detectobject')({log: require('log')('detectobject'), timeline: this.timeline, camera: this.camera});
+    this.util = new FakeUtil();
+    require('detectobject')(new Env('detectobject', this));
+    require('trackobject')(new Env('trackobject', this));
+  }
+
+  get log() {
+    if (!this._log) {
+      this._log = require('log')(this._name);
+    }
+    return this._log;
   }
 }
 
-var testFramework = new TestFramework();
-module.exports = testFramework;
+module.exports = (name) => new TestFramework(name);

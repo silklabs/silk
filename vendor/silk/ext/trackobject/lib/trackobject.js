@@ -19,11 +19,11 @@ let prevFrame = null, currentFrame = null, nextFrame = null;
 const MAX_DEVIATION = 75;
 
 // Low differences are ignored (ex. contrast change due to sunlight)
-const THRESHOLD = 45;
+const THRESHOLD = 25;
 const MAX_THRESHOLD_VAL = 255;
 
 // If more than 'MOTION_THRESHOLD' pixels are changed, we say there is motion
-let MOTION_THRESHOLD = 10;
+let MOTION_THRESHOLD = 1;
 
 const NUM_ITERATIONS_ERODE = 1;
 const PADDING = 50;
@@ -149,11 +149,13 @@ export default function init(env) {
   log = env.log;
   util = env.util;
   let working = false;
+  let timeline = env.timeline;
   soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 
-  env.timeline.on('preview', when => {
+  timeline.on('preview', when => {
     if (working) {
       log.error('Still busy, unable to process next preview image');
+      timeline.noMotion(when);
       return;
     }
 
@@ -162,6 +164,7 @@ export default function init(env) {
       if (err) {
         log.warning(`Unable to fetch frame: ${err}`);
         working = false;
+        timeline.noMotion(when);
         return;
       }
 
@@ -173,8 +176,10 @@ export default function init(env) {
 
         // If a lot of changes happened, we assume something changed.
         if (numChanges >= MOTION_THRESHOLD) {
-          env.timeline.addObject('motion', when, rect);
+          timeline.addObject('motion', when, rect);
           _playSound();
+        } else {
+          timeline.noMotion(when);
         }
         working = false;
       });

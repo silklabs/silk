@@ -30,7 +30,7 @@
     "pbkdf2": "^3.0.4",
     "react": "^0.13.3",
     "react-bootstrap": "^0.25.1",
-    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#d0c2c6fee14cca12fa33e1f370d4afc216832c2b",
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
     "socket.io-client": "^1.3.6",
     "text-encoding": "^0.5.2",
     "webpack": "^1.12.1",

@@ -1,0 +1,253 @@
+From 2f7f6ec5b59c3748219e1967e0f788e425d14d89 Mon Sep 17 00:00:00 2001
+From: Adam Farden <adam@farden.cz>
+Date: Fri, 29 Jul 2016 15:20:14 +0200
+Subject: [PATCH 4/5] Add some missing parts for suzu
+
+* Enable ultra-low-latency and afe-proxy-playback
+07-30 20:52:09.854: D/audio_hw_primary(956): adev_open_output_stream: Stream (0xf52435c0) picks up usecase (low-latency-playback)
+07-30 20:52:09.864: D/audio_hw_primary(956): out_standby: enter: stream (0xf52435c0) usecase(1: low-latency-playback)
+07-30 20:52:09.865: D/audio_hw_primary(956): out_set_parameters: enter: usecase(1: low-latency-playback) kvpairs: routing=2
+
+07-30 20:52:09.865: D/audio_hw_primary(956): adev_open_output_stream: Stream (0xf5243700) picks up usecase (audio-ull-playback)
+07-30 20:52:09.866: D/audio_hw_primary(956): out_set_parameters: enter: usecase(4: audio-ull-playback) kvpairs: routing=2
+07-30 20:52:09.866: D/audio_hw_primary(956): out_standby: enter: stream (0xf5243700) usecase(4: audio-ull-playback)
+
+07-30 20:52:09.868: D/audio_hw_primary(956): adev_open_output_stream: Stream (0xf5243840) picks up usecase (afe-proxy-playback)
+07-30 20:52:09.869: D/audio_hw_primary(956): out_set_parameters: enter: usecase(30: afe-proxy-playback) kvpairs: routing=65536
+07-30 20:52:09.869: D/audio_hw_primary(956): out_standby: enter: stream (0xf5243840) usecase(30: afe-proxy-playback)
+
+* Force correct pcm_ids, taken from stock
+[USECASE_VOICEMMODE1_CALL] = {35, 35},
+[USECASE_VOICEMMODE2_CALL] = {36, 36},
+
+Change-Id: I4d64e32e403399f0da0b46072e65da151c8a67d1
+---
+ msm8909/hal/audio_hw.c              |  8 ++++++++
+ msm8909/hal/audio_hw.h              |  3 +++
+ msm8909/hal/msm8916/platform.c      | 11 +++++++++++
+ msm8909/hal/msm8916/platform.h      |  4 ++++
+ msm8909/hal/voice.h                 |  2 +-
+ msm8909/hal/voice_extn/voice_extn.c | 34 +++++++++++++++++++++++++++++-----
+ 6 files changed, 56 insertions(+), 6 deletions(-)
+
+diff --git a/msm8909/hal/audio_hw.c b/msm8909/hal/audio_hw.c
+index 1c177fc..80a0256 100644
+--- a/msm8909/hal/audio_hw.c
++++ b/msm8909/hal/audio_hw.c
+@@ -153,6 +153,8 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
+     [USECASE_AUDIO_PLAYBACK_OFFLOAD8] = "compress-offload-playback8",
+     [USECASE_AUDIO_PLAYBACK_OFFLOAD9] = "compress-offload-playback9",
+ #endif
++    [USECASE_AUDIO_PLAYBACK_ULL] = "audio-ull-playback",
++
+     [USECASE_AUDIO_RECORD] = "audio-record",
+     [USECASE_AUDIO_RECORD_COMPRESS] = "audio-record-compress",
+     [USECASE_AUDIO_RECORD_LOW_LATENCY] = "low-latency-record",
+@@ -166,6 +168,8 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
+     [USECASE_VOLTE_CALL] = "volte-call",
+     [USECASE_QCHAT_CALL] = "qchat-call",
+     [USECASE_VOWLAN_CALL] = "vowlan-call",
++    [USECASE_VOICEMMODE1_CALL] = "voicemmode1-call",
++    [USECASE_VOICEMMODE2_CALL] = "voicemmode2-call",
+     [USECASE_COMPRESS_VOIP_CALL] = "compress-voip-call",
+     [USECASE_INCALL_REC_UPLINK] = "incall-rec-uplink",
+     [USECASE_INCALL_REC_DOWNLINK] = "incall-rec-downlink",
+@@ -2789,6 +2793,10 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
+         out->usecase = USECASE_AUDIO_PLAYBACK_AFE_PROXY;
+         out->config = pcm_config_afe_proxy_playback;
+         adev->voice_tx_output = out;
++    } else if (out->flags & AUDIO_OUTPUT_FLAG_RAW) {
++        out->usecase = USECASE_AUDIO_PLAYBACK_ULL;
++        out->config = pcm_config_low_latency;
++        out->sample_rate = out->config.rate;
+     } else if (out->flags & AUDIO_OUTPUT_FLAG_FAST) {
+         format = AUDIO_FORMAT_PCM_16_BIT;
+         out->usecase = USECASE_AUDIO_PLAYBACK_LOW_LATENCY;
+diff --git a/msm8909/hal/audio_hw.h b/msm8909/hal/audio_hw.h
+index d05f743..a2ccc43 100644
+--- a/msm8909/hal/audio_hw.h
++++ b/msm8909/hal/audio_hw.h
+@@ -75,6 +75,7 @@ enum {
+     USECASE_AUDIO_PLAYBACK_OFFLOAD8,
+     USECASE_AUDIO_PLAYBACK_OFFLOAD9,
+ #endif
++    USECASE_AUDIO_PLAYBACK_ULL,
+ 
+     /* FM usecase */
+     USECASE_AUDIO_PLAYBACK_FM,
+@@ -97,6 +98,8 @@ enum {
+     USECASE_VOLTE_CALL,
+     USECASE_QCHAT_CALL,
+     USECASE_VOWLAN_CALL,
++    USECASE_VOICEMMODE1_CALL,
++    USECASE_VOICEMMODE2_CALL,
+     USECASE_COMPRESS_VOIP_CALL,
+ 
+     USECASE_INCALL_REC_UPLINK,
+diff --git a/msm8909/hal/msm8916/platform.c b/msm8909/hal/msm8916/platform.c
+index 405fb2f..1a4689a 100644
+--- a/msm8909/hal/msm8916/platform.c
++++ b/msm8909/hal/msm8916/platform.c
+@@ -197,6 +197,7 @@ static const int pcm_device_table[AUDIO_USECASE_MAX][2] = {
+                                         MULTIMEDIA2_PCM_DEVICE},
+     [USECASE_AUDIO_PLAYBACK_OFFLOAD] =
+                      {PLAYBACK_OFFLOAD_DEVICE, PLAYBACK_OFFLOAD_DEVICE},
++    [USECASE_AUDIO_PLAYBACK_ULL] = {MULTIMEDIA3_PCM_DEVICE, MULTIMEDIA3_PCM_DEVICE},
+     [USECASE_AUDIO_RECORD] = {AUDIO_RECORD_PCM_DEVICE, AUDIO_RECORD_PCM_DEVICE},
+     [USECASE_AUDIO_RECORD_COMPRESS] = {COMPRESS_CAPTURE_DEVICE, COMPRESS_CAPTURE_DEVICE},
+     [USECASE_AUDIO_RECORD_LOW_LATENCY] = {LOWLATENCY_PCM_DEVICE,
+@@ -211,6 +212,8 @@ static const int pcm_device_table[AUDIO_USECASE_MAX][2] = {
+     [USECASE_VOLTE_CALL] = {VOLTE_CALL_PCM_DEVICE, VOLTE_CALL_PCM_DEVICE},
+     [USECASE_QCHAT_CALL] = {QCHAT_CALL_PCM_DEVICE, QCHAT_CALL_PCM_DEVICE},
+     [USECASE_VOWLAN_CALL] = {VOWLAN_CALL_PCM_DEVICE, VOWLAN_CALL_PCM_DEVICE},
++    [USECASE_VOICEMMODE1_CALL] = {35, 35}, /* pcm ids updated from platform info file */
++    [USECASE_VOICEMMODE2_CALL] = {36, 36}, /* pcm ids updated from platform info file */
+     [USECASE_COMPRESS_VOIP_CALL] = {COMPRESS_VOIP_CALL_PCM_DEVICE, COMPRESS_VOIP_CALL_PCM_DEVICE},
+     [USECASE_INCALL_REC_UPLINK] = {AUDIO_RECORD_PCM_DEVICE,
+                                    AUDIO_RECORD_PCM_DEVICE},
+@@ -230,6 +233,10 @@ static const int pcm_device_table[AUDIO_USECASE_MAX][2] = {
+                                       INCALL_MUSIC_UPLINK2_PCM_DEVICE},
+     [USECASE_AUDIO_SPKR_CALIB_RX] = {SPKR_PROT_CALIB_RX_PCM_DEVICE, -1},
+     [USECASE_AUDIO_SPKR_CALIB_TX] = {-1, SPKR_PROT_CALIB_TX_PCM_DEVICE},
++    [USECASE_AUDIO_PLAYBACK_AFE_PROXY] = {AFE_PROXY_PLAYBACK_PCM_DEVICE,
++                                          AFE_PROXY_RECORD_PCM_DEVICE},
++    [USECASE_AUDIO_RECORD_AFE_PROXY] = {AFE_PROXY_PLAYBACK_PCM_DEVICE,
++                                        AFE_PROXY_RECORD_PCM_DEVICE},
+ };
+ 
+ /* Array to store sound devices */
+@@ -2791,6 +2798,8 @@ bool platform_listen_usecase_needs_event(audio_usecase_t uc_id)
+     *  USECASE_VOLTE_CALL:
+     *  USECASE_QCHAT_CALL:
+     *  USECASE_VOWLAN_CALL:
++    *  USECASE_VOICEMMODE1_CALL:
++    *  USECASE_VOICEMMODE2_CALL:
+     *  USECASE_COMPRESS_VOIP_CALL:
+     *  USECASE_AUDIO_RECORD_FM_VIRTUAL:
+     *  USECASE_INCALL_REC_UPLINK:
+@@ -2852,6 +2861,8 @@ bool platform_sound_trigger_usecase_needs_event(audio_usecase_t uc_id)
+     *  USECASE_VOLTE_CALL:
+     *  USECASE_QCHAT_CALL:
+     *  USECASE_VOWLAN_CALL:
++    *  USECASE_VOICEMMODE1_CALL:
++    *  USECASE_VOICEMMODE2_CALL:
+     *  USECASE_COMPRESS_VOIP_CALL:
+     *  USECASE_AUDIO_RECORD_FM_VIRTUAL:
+     *  USECASE_INCALL_REC_UPLINK:
+diff --git a/msm8909/hal/msm8916/platform.h b/msm8909/hal/msm8916/platform.h
+index 80852b5..260d3dc 100644
+--- a/msm8909/hal/msm8916/platform.h
++++ b/msm8909/hal/msm8916/platform.h
+@@ -198,6 +198,7 @@ enum {
+ #define DEEP_BUFFER_PCM_DEVICE 0
+ #define AUDIO_RECORD_PCM_DEVICE 0
+ #define MULTIMEDIA2_PCM_DEVICE 1
++#define MULTIMEDIA3_PCM_DEVICE 4
+ #define FM_PLAYBACK_PCM_DEVICE 5
+ #define FM_CAPTURE_PCM_DEVICE  6
+ #define HFP_PCM_RX 5
+@@ -225,6 +226,9 @@ enum {
+ #define QCHAT_CALL_PCM_DEVICE_OF_EXT_CODEC 28
+ #define VOWLAN_CALL_PCM_DEVICE 16
+ 
++#define AFE_PROXY_PLAYBACK_PCM_DEVICE 7
++#define AFE_PROXY_RECORD_PCM_DEVICE 8
++
+ #define LIB_CSD_CLIENT "libcsd-client.so"
+ /* CSD-CLIENT related functions */
+ typedef int (*init_t)();
+diff --git a/msm8909/hal/voice.h b/msm8909/hal/voice.h
+index 9be8443..f4bfcdf 100644
+--- a/msm8909/hal/voice.h
++++ b/msm8909/hal/voice.h
+@@ -24,7 +24,7 @@
+ #define VOICE_SESS_IDX     (BASE_SESS_IDX)
+ 
+ #ifdef MULTI_VOICE_SESSION_ENABLED
+-#define MAX_VOICE_SESSIONS 5
++#define MAX_VOICE_SESSIONS 7
+ #else
+ #define MAX_VOICE_SESSIONS 1
+ #endif
+diff --git a/msm8909/hal/voice_extn/voice_extn.c b/msm8909/hal/voice_extn/voice_extn.c
+index 13a98b3..4e4e875 100644
+--- a/msm8909/hal/voice_extn/voice_extn.c
++++ b/msm8909/hal/voice_extn/voice_extn.c
+@@ -45,17 +45,21 @@
+ 
+ #define VOICE_EXTN_PARAMETER_VALUE_MAX_LEN 256
+ 
+-#define VOICE2_VSID 0x10DC1000
+-#define VOLTE_VSID  0x10C02000
+-#define QCHAT_VSID  0x10803000
+-#define VOWLAN_VSID 0x10002000
+-#define ALL_VSID    0xFFFFFFFF
++#define VOICE2_VSID      0x10DC1000
++#define VOLTE_VSID       0x10C02000
++#define QCHAT_VSID       0x10803000
++#define VOWLAN_VSID      0x10002000
++#define VOICEMMODE1_VSID 0x11C05000
++#define VOICEMMODE2_VSID 0x11DC5000
++#define ALL_VSID         0xFFFFFFFF
+ 
+ /* Voice Session Indices */
+ #define VOICE2_SESS_IDX    (VOICE_SESS_IDX + 1)
+ #define VOLTE_SESS_IDX     (VOICE_SESS_IDX + 2)
+ #define QCHAT_SESS_IDX     (VOICE_SESS_IDX + 3)
+ #define VOWLAN_SESS_IDX    (VOICE_SESS_IDX + 4)
++#define MMODE1_SESS_IDX    (VOICE_SESS_IDX + 5)
++#define MMODE2_SESS_IDX    (VOICE_SESS_IDX + 6)
+ 
+ /* Call States */
+ #define CALL_HOLD           (BASE_CALL_STATE + 2)
+@@ -88,6 +92,8 @@ static bool is_valid_vsid(uint32_t vsid)
+         vsid == VOICE2_VSID ||
+         vsid == VOLTE_VSID ||
+         vsid == QCHAT_VSID ||
++        vsid == VOICEMMODE1_VSID ||
++        vsid == VOICEMMODE2_VSID ||
+         vsid == VOWLAN_VSID)
+         return true;
+     else
+@@ -119,6 +125,14 @@ static audio_usecase_t voice_extn_get_usecase_for_session_idx(const int index)
+         usecase_id = USECASE_VOWLAN_CALL;
+         break;
+ 
++    case MMODE1_SESS_IDX:
++        usecase_id = USECASE_VOICEMMODE1_CALL;
++        break;
++
++    case MMODE2_SESS_IDX:
++        usecase_id = USECASE_VOICEMMODE2_CALL;
++        break;
++
+     default:
+         ALOGE("%s: Invalid voice session index\n", __func__);
+     }
+@@ -360,6 +374,8 @@ void voice_extn_init(struct audio_device *adev)
+     adev->voice.session[VOLTE_SESS_IDX].vsid =  VOLTE_VSID;
+     adev->voice.session[QCHAT_SESS_IDX].vsid =  QCHAT_VSID;
+     adev->voice.session[VOWLAN_SESS_IDX].vsid = VOWLAN_VSID;
++    adev->voice.session[MMODE1_SESS_IDX].vsid = VOICEMMODE1_VSID;
++    adev->voice.session[MMODE2_SESS_IDX].vsid = VOICEMMODE2_VSID;
+ }
+ 
+ int voice_extn_get_session_from_use_case(struct audio_device *adev,
+@@ -389,6 +405,14 @@ int voice_extn_get_session_from_use_case(struct audio_device *adev,
+         *session = &adev->voice.session[VOWLAN_SESS_IDX];
+         break;
+ 
++    case USECASE_VOICEMMODE1_CALL:
++        *session = &adev->voice.session[MMODE1_SESS_IDX];
++        break;
++
++    case USECASE_VOICEMMODE2_CALL:
++        *session = &adev->voice.session[MMODE2_SESS_IDX];
++        break;
++
+     default:
+         ALOGE("%s: Invalid usecase_id:%d\n", __func__, usecase_id);
+         *session = NULL;
+-- 
+2.8.4 (Apple Git-73)
+

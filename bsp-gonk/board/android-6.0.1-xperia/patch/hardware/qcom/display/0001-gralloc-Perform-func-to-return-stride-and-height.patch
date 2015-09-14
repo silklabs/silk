@@ -1,0 +1,59 @@
+From 6faf93db13bdeaee54d441dd064c435619a21654 Mon Sep 17 00:00:00 2001
+From: Raj Kamal <rkamal@codeaurora.org>
+Date: Sat, 11 Jun 2016 15:29:09 +0200
+Subject: [PATCH 1/6] gralloc: Perform func to return stride and height
+
+The custom stride and height can be set by video
+decoder for smooth streaming. Return this in
+perform so that graphics can use it
+
+Change-Id: I38d066b82ae800e52f88a01e0cf7bb04d74c448d
+---
+ msm8974/libgralloc/gralloc_priv.h |  1 +
+ msm8974/libgralloc/mapper.cpp     | 18 ++++++++++++++++++
+ 2 files changed, 19 insertions(+)
+
+diff --git a/msm8974/libgralloc/gralloc_priv.h b/msm8974/libgralloc/gralloc_priv.h
+index 94d4334..ef1273e 100644
+--- a/msm8974/libgralloc/gralloc_priv.h
++++ b/msm8974/libgralloc/gralloc_priv.h
+@@ -75,6 +75,7 @@ enum {
+     GRALLOC_MODULE_PERFORM_CREATE_HANDLE_FROM_BUFFER = 1,
+     GRALLOC_MODULE_PERFORM_GET_STRIDE,
+     GRALLOC_MODULE_PERFORM_GET_CUSTOM_STRIDE_FROM_HANDLE,
++    GRALLOC_MODULE_PERFORM_GET_CUSTOM_STRIDE_AND_HEIGHT_FROM_HANDLE,
+ };
+ 
+ #define GRALLOC_HEAP_MASK   (GRALLOC_USAGE_PRIVATE_UI_CONTIG_HEAP |\
+diff --git a/msm8974/libgralloc/mapper.cpp b/msm8974/libgralloc/mapper.cpp
+index 4f43d40..a4cfb7e 100644
+--- a/msm8974/libgralloc/mapper.cpp
++++ b/msm8974/libgralloc/mapper.cpp
+@@ -403,6 +403,24 @@ int gralloc_perform(struct gralloc_module_t const* module,
+                 }
+                 res = 0;
+             } break;
++        case GRALLOC_MODULE_PERFORM_GET_CUSTOM_STRIDE_AND_HEIGHT_FROM_HANDLE:
++            {
++                private_handle_t* hnd =  va_arg(args, private_handle_t*);
++                int *stride = va_arg(args, int *);
++                int *height = va_arg(args, int *);
++                if (private_handle_t::validate(hnd)) {
++                    return res;
++                }
++                MetaData_t *metadata = (MetaData_t *)hnd->base_metadata;
++                if(metadata && metadata->operation & UPDATE_BUFFER_GEOMETRY) {
++                    *stride = metadata->bufferDim.sliceWidth;
++                    *height = metadata->bufferDim.sliceHeight;
++                } else {
++                    *stride = hnd->width;
++                    *height = hnd->height;
++                }
++                res = 0;
++            } break;
+         default:
+             break;
+     }
+-- 
+2.8.4 (Apple Git-73)
+

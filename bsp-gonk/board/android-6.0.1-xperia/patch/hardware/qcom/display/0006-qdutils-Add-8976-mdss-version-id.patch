@@ -1,0 +1,113 @@
+From e7440fb29588cd6018c758ac76333f3d65968cd4 Mon Sep 17 00:00:00 2001
+From: Raj Kamal <rkamal@codeaurora.org>
+Date: Mon, 8 Jun 2015 12:38:36 +0530
+Subject: [PATCH 6/6] qdutils: Add 8976 mdss version id
+
+Add support for 8976 hardware version check
+to handle any hw specific resources or checks.
+
+Change-Id: I0257d117706b5ffb3268b83fb59bf079ad02fe31
+---
+ msm8994/libhwcomposer/hwc_mdpcomp.cpp | 3 ++-
+ msm8994/liboverlay/overlay.cpp        | 8 ++++++++
+ msm8994/liboverlay/overlay.h          | 1 +
+ msm8994/libqdutils/mdp_version.cpp    | 9 +++++++--
+ msm8994/libqdutils/mdp_version.h      | 1 +
+ 5 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/msm8994/libhwcomposer/hwc_mdpcomp.cpp b/msm8994/libhwcomposer/hwc_mdpcomp.cpp
+index abb6f59..958a67e 100644
+--- a/msm8994/libhwcomposer/hwc_mdpcomp.cpp
++++ b/msm8994/libhwcomposer/hwc_mdpcomp.cpp
+@@ -180,7 +180,8 @@ bool MDPComp::init(hwc_context_t *ctx) {
+     if((property_get("persist.hwc.ptor.enable", property, NULL) <= 0) &&
+             (qdutils::MDPVersion::getInstance().is8x16() ||
+              qdutils::MDPVersion::getInstance().is8x39() ||
+-             qdutils::MDPVersion::getInstance().is8x52())) {
++             qdutils::MDPVersion::getInstance().is8x52() ||
++             qdutils::MDPVersion::getInstance().is8976())) {
+         defaultPTOR = true;
+     }
+ 
+diff --git a/msm8994/liboverlay/overlay.cpp b/msm8994/liboverlay/overlay.cpp
+index da24382..8d4d1fb 100644
+--- a/msm8994/liboverlay/overlay.cpp
++++ b/msm8994/liboverlay/overlay.cpp
+@@ -151,6 +151,8 @@ utils::eDest Overlay::getPipe(const PipeSpecs& pipeSpecs) {
+         return getPipe_8x39(pipeSpecs);
+     } else if(MDPVersion::getInstance().is8x52()) {
+         return getPipe_8x52(pipeSpecs);
++    } else if(MDPVersion::getInstance().is8976()) {
++        return getPipe_8976(pipeSpecs);
+     } else if(MDPVersion::getInstance().is8994()) {
+         return getPipe_8994(pipeSpecs);
+     }
+@@ -253,6 +255,12 @@ utils::eDest Overlay::getPipe_8x52(const PipeSpecs& pipeSpecs) {
+     return getPipe_8x16(pipeSpecs);
+ }
+ 
++utils::eDest Overlay::getPipe_8976(const PipeSpecs& pipeSpecs) {
++    /* TODO: Have a separate func to make use of one extra VG pipe available
++       in 8976 in comparision to 8x16 */
++    return getPipe_8x16(pipeSpecs);
++}
++
+ utils::eDest Overlay::getPipe_8994(const PipeSpecs& pipeSpecs) {
+     //If DMA pipes need to be used in block mode for downscale, there could be
+     //cases where consecutive rounds need separate modes, which cannot be
+diff --git a/msm8994/liboverlay/overlay.h b/msm8994/liboverlay/overlay.h
+index affb4db..a0c1aaf 100644
+--- a/msm8994/liboverlay/overlay.h
++++ b/msm8994/liboverlay/overlay.h
+@@ -178,6 +178,7 @@ private:
+     utils::eDest getPipe_8x16(const PipeSpecs& pipeSpecs);
+     utils::eDest getPipe_8x39(const PipeSpecs& pipeSpecs);
+     utils::eDest getPipe_8x52(const PipeSpecs& pipeSpecs);
++    utils::eDest getPipe_8976(const PipeSpecs& pipeSpecs);
+     utils::eDest getPipe_8994(const PipeSpecs& pipeSpecs);
+ 
+     /* Returns the handle to libscale.so's programScale function */
+diff --git a/msm8994/libqdutils/mdp_version.cpp b/msm8994/libqdutils/mdp_version.cpp
+index e326386..43c631b 100644
+--- a/msm8994/libqdutils/mdp_version.cpp
++++ b/msm8994/libqdutils/mdp_version.cpp
+@@ -78,10 +78,10 @@ namespace qdutils {
+ #define MDSS_MDP_HW_REV_110 0x100a0000 //8992
+ #endif
+ #ifndef MDSS_MDP_HW_REV_111
+-#define MDSS_MDP_HW_REV_111 0x100b0000 //Unused or Next version
++#define MDSS_MDP_HW_REV_111 0x100b0000 //8976
+ #endif
+ #ifndef MDSS_MDP_HW_REV_112
+-#define MDSS_MDP_HW_REV_112 0x100c0000 // 8x52
++#define MDSS_MDP_HW_REV_112 0x100c0000 //8x52
+ #endif
+ #ifndef MDSS_MDP_HW_REV_113
+ #define MDSS_MDP_HW_REV_113 0x100d0000 //Unused Next version
+@@ -512,6 +512,11 @@ bool MDPVersion::is8x39() {
+ }
+ 
+ 
++bool MDPVersion::is8976() {
++    return (mMdpRev >= MDSS_MDP_HW_REV_111 and
++            mMdpRev < MDSS_MDP_HW_REV_112);
++}
++
+ bool MDPVersion::is8x52() {
+     return (mMdpRev >= MDSS_MDP_HW_REV_112 and
+             mMdpRev < MDSS_MDP_HW_REV_113);
+diff --git a/msm8994/libqdutils/mdp_version.h b/msm8994/libqdutils/mdp_version.h
+index 294dab9..2c822a4 100644
+--- a/msm8994/libqdutils/mdp_version.h
++++ b/msm8994/libqdutils/mdp_version.h
+@@ -152,6 +152,7 @@ public:
+     bool is8x16();
+     bool is8x39();
+     bool is8x52();
++    bool is8976();
+ 
+ private:
+     bool updateSysFsInfo();
+-- 
+2.8.4 (Apple Git-73)
+

@@ -1,0 +1,28 @@
+From c8b9901317f046109916d62af3fe2f3d95682021 Mon Sep 17 00:00:00 2001
+From: Christian Oder <myself5@carbonrom.org>
+Date: Sun, 3 Apr 2016 14:06:22 +0200
+Subject: [PATCH 3/5] keymaster: add msm8994 to filter
+
+ac89535 adds support for arm64 devices, so keymaster is now buildable
+for msm8994 too.
+
+Change-Id: I895355e90c5112ce8092cea5bc92bdf126a3a609
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 0010581..38b086b 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,6 +1,6 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+-ifneq ($(filter msm8960 msm8974 msm8084,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8960 msm8974 msm8084 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ 
+ keymaster-def := -fvisibility=hidden -Wall
+ ifeq ($(TARGET_BOARD_PLATFORM),msm8084)
+-- 
+2.8.4 (Apple Git-73)
+

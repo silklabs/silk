@@ -1,0 +1,47 @@
+From 0fd2fc57d5f410cb5733824261d37a0ec24c7497 Mon Sep 17 00:00:00 2001
+From: Ruchi Kandoi <kandoiruchi@google.com>
+Date: Mon, 29 Feb 2016 13:13:39 -0800
+Subject: [PATCH 1/2] healthd: Check if battery device exists instead of
+ charger drivers before setting fake properties.
+
+healthd used to check for registered charger drivers to determine if the
+device is an always-plugged device with no battery. This patch changes
+it to check for battery instead.
+
+Change-Id: Ie4ff5d3f21dc1a83a780a41eb0c929f66b86d631
+Signed-off-by: Ruchi Kandoi <kandoiruchi@google.com>
+(cherry picked from commit fabd490f58df73711a56478c9777f397fca733f6)
+---
+ healthd/BatteryMonitor.cpp | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
+
+diff --git a/healthd/BatteryMonitor.cpp b/healthd/BatteryMonitor.cpp
+index 396dfef..577ff2b 100644
+--- a/healthd/BatteryMonitor.cpp
++++ b/healthd/BatteryMonitor.cpp
+@@ -552,19 +552,15 @@ void BatteryMonitor::init(struct healthd_config *hc) {
+         closedir(dir);
+     }
+ 
+-    // This indicates that there is no charger driver registered.
+     // Typically the case for devices which do not have a battery and
+     // and are always plugged into AC mains.
+-    if (!mChargerNames.size()) {
+-        KLOG_ERROR(LOG_TAG, "No charger supplies found\n");
+-        mBatteryFixedCapacity = ALWAYS_PLUGGED_CAPACITY;
+-        mBatteryFixedTemperature = FAKE_BATTERY_TEMPERATURE;
+-        mAlwaysPluggedDevice = true;
+-    }
+     if (!mBatteryDevicePresent) {
+         KLOG_WARNING(LOG_TAG, "No battery devices found\n");
+         hc->periodic_chores_interval_fast = -1;
+         hc->periodic_chores_interval_slow = -1;
++        mBatteryFixedCapacity = ALWAYS_PLUGGED_CAPACITY;
++        mBatteryFixedTemperature = FAKE_BATTERY_TEMPERATURE;
++        mAlwaysPluggedDevice = true;
+     } else {
+         if (mHealthdConfig->batteryStatusPath.isEmpty())
+             KLOG_WARNING(LOG_TAG, "BatteryStatusPath not found\n");
+-- 
+2.8.4 (Apple Git-73)
+

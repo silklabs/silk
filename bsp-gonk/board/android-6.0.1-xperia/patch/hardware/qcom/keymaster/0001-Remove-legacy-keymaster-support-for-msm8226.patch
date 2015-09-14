@@ -1,0 +1,26 @@
+From 593af4702ff5a8634e46db399b84cfd1bac2f8d5 Mon Sep 17 00:00:00 2001
+From: Uday Kishore Pasupuleti <upasupul@codeaurora.org>
+Date: Sat, 12 Sep 2015 14:45:14 -0700
+Subject: [PATCH 1/5] Remove legacy keymaster support for msm8226
+
+Change-Id: I733a6b15d1b9c2cb163a6f65eb3fe64e3fced516
+Signed-off-by: Uday Kishore Pasupuleti <upasupul@codeaurora.org>
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index bf13a45..04f6e74 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,6 +1,6 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+-ifneq ($(filter msm8960 msm8974 msm8226 msm8084,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8960 msm8974 msm8084,$(TARGET_BOARD_PLATFORM)),)
+ 
+ keymaster-def := -fvisibility=hidden -Wall
+ ifeq ($(TARGET_BOARD_PLATFORM),msm8084)
+-- 
+2.8.4 (Apple Git-73)
+

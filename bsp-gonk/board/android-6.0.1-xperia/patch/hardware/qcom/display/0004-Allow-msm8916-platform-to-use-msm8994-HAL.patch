@@ -1,0 +1,29 @@
+From 2853e47cdd954e38894997690ec390cf509837c4 Mon Sep 17 00:00:00 2001
+From: Adam Farden <adam@farden.cz>
+Date: Sat, 27 Aug 2016 11:42:58 +0200
+Subject: [PATCH 4/6] Allow msm8916 platform to use msm8994 HAL
+
+Our msm8916 platform devices work fine with the msm8994 HAL.
+
+Change-Id: Ic19455f2f631607d4366687c91388c6500aa3805
+Signed-off-by: Adam Farden <adam@farden.cz>
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index c48f1c2..9484a9e 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -8,7 +8,7 @@ else
+ ifneq ($(filter msm8960,$(TARGET_BOARD_PLATFORM)),)
+     include $(call all-named-subdir-makefiles,msm8960)
+ else
+-ifneq ($(filter msm8974 msm8952 msm8994 msm8992,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8916 msm8974 msm8952 msm8994 msm8992,$(TARGET_BOARD_PLATFORM)),)
+     include $(call all-named-subdir-makefiles,msm8994)
+ endif
+ endif
+-- 
+2.8.4 (Apple Git-73)
+

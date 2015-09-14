@@ -279,7 +279,7 @@ class Bledroid extends EventEmitter {
   }
 
   onListen(state, error) {
-    if (state === '1') {
+    if (state) {
       this.emit('advertisingStart', parseInt(error));
     } else {
       this.emit('advertisingStop');

@@ -37,11 +37,25 @@ let util = require('./util');
 
 const STATE = api.btleConfigService.state;
 
-class DeviceConfig extends events.EventEmitter {
+function promisify(func, ...args) {
+  return new Promise((resolve, reject) => {
+    func(...args, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 
+class DeviceConfig extends events.EventEmitter {
   constructor() {
     super();
+    this._cancelStopTimer = null;
     this._started = false;
+    this._statePromise = Promise.resolve();
+    this._updateRssiTimeout = null;
   }
 
  _onAccept(clientAddr) {
@@ -142,60 +156,69 @@ class DeviceConfig extends events.EventEmitter {
   }
 
   _start() {
-    return new Promise(resolve => {
-      clearTimeout(this._stopTimer);
-
+    return Promise.resolve()
+    .then(() => {
       if (this._started) {
         log.info('Config service already started');
-        return resolve();
+        return Promise.resolve();
       }
 
-      this._started = true;
       log.info('Starting config service ...');
-      this._bleno.once('servicesSet', errServicesSet => {
-        if (errServicesSet) {
-          throw new Error(errServicesSet);
-        }
-        // TODO: get name from build config
-        this._bleno.startAdvertising('Silkcam', [this._configService.uuid],
-            err => err && log.warn('Error: ' + err));
-      });
 
-      this._bleno.once('advertisingStart', err => {
-        if (err) {
-          throw `runConfigService: ${err}`;
-        }
-        log.info('Started advertising');
+      log.debug('Setting services');
+      return promisify(this._bleno.setServices.bind(this._bleno),
+                      [this._configService])
+      .then(() => {
+        log.debug('Starting advertising');
+        return promisify(this._bleno.startAdvertising.bind(this._bleno),
+                         'Silkcam',
+                         [this._configService.uuid]);
+      })
+      .then(() => {
         log.info('Started config service');
-        return resolve();
+        this._started = true;
       });
-
-      this._bleno.setServices([this._configService]);
     });
   }
 
   _stop() {
-    return new Promise(resolve => {
+    return Promise.resolve()
+    .then(() => {
       clearTimeout(this._updateRssiTimeout);
 
       if (!this._started) {
         log.info('Config service already stopped');
-        return resolve();
+        return Promise.resolve();
       }
 
-      this._started = false;
-      log.info('Stopping config service ...');
-      this._bleno.stopAdvertising(() => {
-        log.info('Stopped advertising');
+      log.debug('Setting stop timeout');
+      return new Promise(resolve => {
+        // Keep config service up for a bit to allow the app to get final state
+        // info.
+        let timeout = setTimeout(resolve, 3000);
 
-        this._bleno.once('servicesSet', errServicesSet => {
-          if (errServicesSet) {
-            throw new Error(errServicesSet);
-          }
-          log.info('Stopped config service');
-          return resolve();
-        });
-        this._bleno.setServices();
+        // Allow this timeout to be skipped if we need to change state again
+        // before it has elapsed.
+        this._cancelStopTimer = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+      })
+      .then(() => {
+        this._cancelStopTimer = null;
+
+        log.info('Stopping config service ...');
+
+        log.debug('Stopping advertising');
+        return promisify(this._bleno.stopAdvertising.bind(this._bleno));
+      })
+      .then(() => {
+        log.debug('Clearing services');
+        return promisify(this._bleno.setServices.bind(this._bleno), []);
+      })
+      .then(() => {
+        log.info('Stopped config service');
+        this._started = false;
       });
     });
   }
@@ -231,20 +254,35 @@ class DeviceConfig extends events.EventEmitter {
         this.emit('configured');
       })
       .catch(err => {
-        log.error(err);
+        if (err) {
+          log.error(err);
+        }
         this._configService.state = STATE.UNREGISTERED;
         this.emit('unconfigured');
       });
   }
 
+  _changeState(start) {
+    if (this._cancelStopTimer) {
+      this._cancelStopTimer();
+      this._cancelStopTimer = null;
+    }
+
+    this._statePromise =
+      this._statePromise
+          .catch(() => { })
+          .then(() => start ? this._start() : this._stop());
+    return this._statePromise;
+  }
+
   start() {
-    return this._start();
+    log.debug('Start requested');
+    return this._changeState(/* start */ true);
   }
 
   stop() {
-    // Keep config service up for a bit to allow the app to get final state info
-    clearTimeout(this._stopTimer);
-    this._stopTimer = setTimeout(() => this._stop(), 3000);
+    log.debug('Stop requested');
+    return this._changeState(/* start */ false);
   }
 
   configure() {

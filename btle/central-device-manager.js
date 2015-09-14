@@ -73,6 +73,7 @@ function DeviceManager(scanner, wifiHelper) {
   this.scanner = scanner;
   this.wifiHelper = wifiHelper;
   this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
+  this.scanner.on('disconnect', this._onPeripheralDisconnected.bind(this));
 }
 DeviceManager.prototype = Object.create(EventEmitter.prototype);
 
@@ -119,6 +120,24 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
     this._disconnect(p);
   });
 };
+
+DeviceManager.prototype._onPeripheralDisconnected = function(id) {
+  if (!(id in this.devices)) {
+    log.debug('unknown peripheral disconnected:', id);
+    return;
+  }
+  let p = this.devices[id];
+
+  log.info('disconnected from peripheral:', p.id);
+  clearInterval(p._pollStatusTimer);
+  delete this.devices[p.id];
+  this.emit('disconnect', p);
+
+  // Subsequent advertisements are not received after disconnecting from
+  // the peripheral. Workaround this by restarting scanning.
+  this.stop();
+  this.start();
+}
 
 DeviceManager.prototype._readStateCharacteristic = function(p) {
   return p.readCharacteristic(decls.uuid.StateCharacteristic)
@@ -299,18 +318,7 @@ DeviceManager.prototype._connect = function(p) {
 };
 
 DeviceManager.prototype._disconnect = function(p) {
-  return p.disconnect()
-  .then(() => {
-    log.info('disconnected from peripheral:', p.id);
-    clearInterval(p._pollStatusTimer);
-    delete this.devices[p.id];
-    this.emit('disconnect', p);
-
-    // Subsequent advertisements are not received after disconnecting from
-    // the peripheral. Workaround this by restarting scanning.
-    this.stop();
-    this.start();
-  });
+  return p.disconnect();
 };
 
 /*

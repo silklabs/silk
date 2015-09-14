@@ -37,6 +37,18 @@ function updateScanListener(fn) {
   }
 }
 
+var disconnectListener = null;
+function updateDisconnectListener(fn) {
+  if (disconnectListener) {
+    disconnectListener.remove();
+    disconnectListener = null;
+  }
+  if (fn) {
+    disconnectListener = DeviceEventEmitter.addListener(
+      'ble:peripheralDisconnected', p => fn(null, p));
+  }
+}
+
 var notifier = (success, failure) => (err, res) => (err ?
                                                     failure && failure(err)
                                                     : success && success(res));
@@ -61,6 +73,14 @@ module.exports = {
   stopScan: function (success, failure) {
     updateScanListener(null);
     BLECentral.stopScan();
+  },
+
+  registerDisconnectListener: function (success, failure) {
+    updateDisconnectListener(notifier(success, failure));
+  },
+
+  unregisterDisconnectListener: function (success, failure) {
+    updateDisconnectListener(null);
   },
 
   connect: function (device_id, success, failure) {

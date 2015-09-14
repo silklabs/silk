@@ -1,0 +1,33 @@
+From 6ebd77db85b0f05434d46ecdcc5dc6a4fee0f373 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 1 Oct 2016 21:47:12 -0700
+Subject: [PATCH] Revert "Do not build GPS HAL for msm8916"
+
+This reverts commit 5c7552e789e4f039bebb09b972425a6cb47fc8e8.
+---
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 7b7c8d5..a1707a0 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -12,13 +12,13 @@ else ifneq ($(filter msm8974 ,$(TARGET_BOARD_PLATFORM)),)
+ else ifneq ($(filter msm8084 ,$(TARGET_BOARD_PLATFORM)),)
+     #For msm8084 target
+     include $(call all-named-subdir-makefiles,msm8084)
+-else ifeq ($(filter msm8916,$(TARGET_BOARD_PLATFORM)),)
++else
+     #For all other targets
+     GPS_DIRS=core utils loc_api platform_lib_abstractions etc
+     include $(call all-named-subdir-makefiles,$(GPS_DIRS))
+ endif #TARGET_BOARD_PLATFORM
+ 
+-else ifeq ($(filter msm8916,$(TARGET_BOARD_PLATFORM)),)
++else
+     GPS_DIRS=core utils loc_api platform_lib_abstractions etc
+     include $(call all-named-subdir-makefiles,$(GPS_DIRS))
+ endif #BOARD_VENDOR_QCOM_LOC_PDK_FEATURE_SET
+-- 
+2.8.4 (Apple Git-73)
+

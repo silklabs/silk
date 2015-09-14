@@ -1,0 +1,32 @@
+From 1150b2a2128e48c9e7d127564418cc4f7ad851a6 Mon Sep 17 00:00:00 2001
+From: Laurent FERT <laurent.fert@intel.com>
+Date: Wed, 17 Sep 2014 17:51:41 +0200
+Subject: [PATCH] [BT] Allow custom bt configuration file handling
+
+Alow to add new custom configuration file w/o any AOSP change
+
+Change-Id: I1c52cc45de0c9e8451fbb3503f999b18aa099f93
+Signed-off-by: Laurent FERT <laurent.fert@intel.com>
+---
+ vnd_buildcfg.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/vnd_buildcfg.mk b/vnd_buildcfg.mk
+index 42349ba..eaa4fd3 100644
+--- a/vnd_buildcfg.mk
++++ b/vnd_buildcfg.mk
+@@ -1,6 +1,11 @@
+ generated_sources := $(local-generated-sources-dir)
+ 
++# Allow external configuration file
++ifneq (,$(BOARD_CUSTOM_BT_CONFIG))
++SRC := $(BOARD_CUSTOM_BT_CONFIG)
++else
+ SRC := $(call my-dir)/include/$(addprefix vnd_, $(addsuffix .txt,$(basename $(TARGET_DEVICE))))
++endif
+ ifeq (,$(wildcard $(SRC)))
+ # configuration file does not exist. Use default one
+ SRC := $(call my-dir)/include/vnd_generic.txt
+-- 
+2.8.4 (Apple Git-73)
+

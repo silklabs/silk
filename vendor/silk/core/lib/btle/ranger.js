@@ -8,9 +8,13 @@
 
 import assert from 'assert';
 import EventEmitter from 'events';
+import { getboolprop } from '../util';
 import makeLog from '../log';
 
 const log = makeLog('ranger');
+
+const ENABLED_PROP = 'persist.silk.ranger.enabled';
+const ENABLED = getboolprop(ENABLED_PROP);
 
 // TODO: This should be unique to the each user's phone to enable individual
 //       tracking.
@@ -52,6 +56,10 @@ export default class Ranger extends EventEmitter {
     super();
 
     log.debug('Ranger()');
+
+    if (!ENABLED) {
+      return;
+    }
 
     this.noble = noble;
     this.uuid = uuid.toLocaleLowerCase();
@@ -352,6 +360,10 @@ export default class Ranger extends EventEmitter {
 
   start() {
     log.debug('start()');
+    if (!ENABLED) {
+      log.info(`Not starting because '${ENABLED_PROP}' property is not set'`);
+      return;
+    }
     if (!this.enabled) {
       assert(!this.peripherals.size);
       this.enabled = true;
@@ -361,6 +373,9 @@ export default class Ranger extends EventEmitter {
 
   stop() {
     log.debug('stop()');
+    if (!ENABLED) {
+      return;
+    }
     if (this.enabled) {
       this.enabled = false;
       this.adjustScanState();

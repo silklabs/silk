@@ -205,7 +205,10 @@ class DeviceConfig extends events.EventEmitter {
         };
       })
       .then(() => {
+        this._cancelStopTimer = null;
+
         log.info('Stopping config service ...');
+
         log.debug('Stopping advertising');
         return promisify(this._bleno.stopAdvertising.bind(this._bleno));
       })
@@ -215,6 +218,7 @@ class DeviceConfig extends events.EventEmitter {
       })
       .then(() => {
         log.info('Stopped config service');
+        this._started = false;
       });
     });
   }
@@ -264,11 +268,10 @@ class DeviceConfig extends events.EventEmitter {
       this._cancelStopTimer = null;
     }
 
-    let func = start ? this._start : this._stop;
-    func = func.bind(this);
-
     this._statePromise =
-      this._statePromise.catch(() => undefined).then(func);
+      this._statePromise
+          .catch(() => { })
+          .then(() => start ? this._start() : this._stop());
     return this._statePromise;
   }
 

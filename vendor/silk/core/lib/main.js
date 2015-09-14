@@ -231,18 +231,17 @@ ntp.on('time', emitDeviceInfo);
 // Server related...
 server.on('connect', () => {
   ui.goto('online');
-  config.stop()
-  .then(() => {
-    btle.beacon.start();
-    btle.ranger.start();
-
-    return emitDeviceInfo();
-  })
+  emitDeviceInfo()
   .then(() => {
     diag.start(server.socket);
     update.start();
     timeline.socket = server.socket;
     outbox.hintSocket = server.socket;
+  })
+  .then(() => config.stop())
+  .then(() => {
+    btle.beacon.start();
+    btle.ranger.start();
   })
   .catch(util.processthrow);
 });

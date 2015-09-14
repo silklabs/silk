@@ -1,14 +1,14 @@
-From eac68f1d532141070b7e34f305dcd43381d76a0d Mon Sep 17 00:00:00 2001
+From 1c79aed72f215e5d09677e63c8627f852dd3a958 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2765 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2772 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2782 insertions(+), 4 deletions(-)
+ 4 files changed, 2789 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..7660d17
+index 0000000..9378b42
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2765 @@
+@@ -0,0 +1,2772 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -631,6 +631,7 @@ index 0000000..7660d17
 +    return true;
 +  }
 +
++  this.bledroid.noteNobleConnectionRequest(peripheralInfo.address);
 +  this.bledroid.command('connect ' + peripheralInfo.address.replace(/:/g, ''));
 +
 +  assert(!this.currentCommandInfo);
@@ -661,7 +662,7 @@ index 0000000..7660d17
 +
 +  var peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
-+    log.warn('Unknown peripheral \'%s\', ignoring', address);
++    log.debug('Unknown peripheral \'%s\', ignoring', address);
 +    return;
 +  }
 +
@@ -748,7 +749,13 @@ index 0000000..7660d17
 +
 +  var peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
-+    log.warn('Unknown peripheral \'%s\', ignoring', address);
++    log.debug('Unknown peripheral \'%s\', ignoring', address);
++    return;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.debug('Peripheral \'%s\' is not currently connected',
++              peripheralInfo.uuid);
 +    return;
 +  }
 +
@@ -827,7 +834,7 @@ index 0000000..7660d17
 +
 +  const peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
-+    log.warn('Unknown peripheral \'%s\', ignoring', address);
++    log.debug('Unknown peripheral \'%s\', ignoring', address);
 +    return;
 +  }
 +

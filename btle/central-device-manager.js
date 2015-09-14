@@ -129,7 +129,7 @@ DeviceManager.prototype._onPeripheralDisconnected = function(id) {
   let p = this.devices[id];
 
   log.info('disconnected from peripheral:', p.id);
-  clearInterval(p._pollStatusTimer);
+  clearTimeout(p._pollStatusTimer);
   delete this.devices[p.id];
   this.emit('disconnect', p);
 
@@ -186,11 +186,12 @@ DeviceManager.prototype._readErrorDescriptionCharacteristic = function(p) {
 };
 
 DeviceManager.prototype._pollStatus = function(p) {
-  clearInterval(p._pollStatusTimer);
-  p._pollStatusTimer = setInterval(() => {
+  clearTimeout(p._pollStatusTimer);
+  p._pollStatusTimer = setTimeout(() => {
     this._readStateCharacteristic(p)
     .then(() => this._readServerConnectionStatusCharacteristic(p))
     .then(() => this._readErrorDescriptionCharacteristic(p))
+    .then(() => this._pollStatus(p))
     .catch(() => {
       log.warn('error reading from device, disconnect');
       this._disconnect(p);

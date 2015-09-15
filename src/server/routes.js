@@ -13,7 +13,8 @@ module.exports = function(opts) {
     crashMeta,
     timeMeta,
     config,
-    blobs
+    blobs,
+    nonce,
   } = opts;
 
   let blobHandler = blobs[config.server.blobType];
@@ -46,79 +47,8 @@ module.exports = function(opts) {
     next();
   });
 
-  // Make sure we have the right arguments in place.
-  function checkArgs(path, args) {
-    app.use(path, (req, res, next) => {
-      if (args.some(a => !(a in req.body))) {
-        next(new Error('Missing fields in body'));
-        return;
-      }
-      next();
-    });
-  }
-
   app.get('/socketio/address', (req, res) => {
     return res.send({ url: config.socketio.publicUrl });
-  });
-
-  checkArgs('/account/create', ['email', 'name', 'id', 'passwordHash', 'sig']);
-  app.post('/account/create', (req, res) => {
-    let { email, name, id, passwordHash, sig } = req.body;
-    if (!accounts.create(email, name, passwordHash, id, sig)) {
-      // TODO: send back error message
-      return res.status(409).json({});
-    }
-    return res.status(201).json({});
-  });
-
-  checkArgs('/account/challenge', ['id']);
-  app.post('/account/challenge', (req, res) => {
-    let { id } = req.body;
-    let receipt = accounts.challengeAccount(id);
-    if (!receipt) {
-      return res.status(403).json({});
-    }
-    return res.status(200).json({ receipt: receipt });
-  });
-
-  checkArgs('/account/authenticate', ['id', 'receipt', 'sig']);
-  app.post('/account/authenticate', (req, res) => {
-    let { id, receipt, sig } = req.body;
-    let session = accounts.authenticateAccount(id, receipt, sig);
-    if (!session) {
-      return res.status(401).json({});
-    }
-    return res.status(200).json({ session: session });
-  });
-
-  checkArgs('/account/device/register', ['session', 'name', 'deviceId', 'sig']);
-  app.post('/account/device/register', (req, res) => {
-    let { session, name, deviceId, sig } = req.body;
-    if (!accounts.registerDevice(session, name, deviceId, sig)) {
-      // TODO: send back error message
-      return res.status(409).json({});
-    }
-    return res.status(201).json({});
-  });
-
-  checkArgs('/device/challenge', ['id']);
-  app.post('/device/challenge', (req, res) => {
-    let { id } = req.body;
-    let receipt = accounts.challengeDevice(id);
-    if (!receipt) {
-      return res.status(403).json({});
-    }
-    return res.status(200).json({ receipt: receipt });
-  });
-
-  checkArgs('/device/authenticate', ['id', 'receipt', 'sig']);
-  app.post('/device/authenticate', (req, res) => {
-    let { id, receipt, sig } = req.body;
-    let session = accounts.authenticateDevice(id, receipt, sig);
-    if (!session) {
-      return res.status(401).json({});
-    }
-    return res.status(200).json({ session: session });
   });
 
   app.post('/device/metadata/time', asyncRoute(async (req, res) => {
@@ -222,8 +152,8 @@ module.exports = function(opts) {
   }));
 
   let auth = vipRoutes({
-    accounts: opts.accountsModel,
-    nonce: opts.nonce
+    accounts,
+    nonce
   });
 
   app.use(auth.app);

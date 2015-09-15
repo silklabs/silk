@@ -19,7 +19,6 @@ export default async function main (config) {
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);
-  let accounts = require('./accounts')();
   let path = require('path');
   let log = require('./log')('server');
 
@@ -54,18 +53,18 @@ export default async function main (config) {
   let timeMeta = new TimeMetadata(db);
   let nonce = new Nonce(db);
   // XXX: Rename once we phase out old account interface.
-  let accountsModel = new AccountsModel(db);
+  let accounts = new AccountsModel(db);
 
 
   // Ensure we have indexed models...
-  let index = [crashMeta, timeMeta, nonce, accountsModel].map(async model => {
+  let index = [crashMeta, timeMeta, nonce, accounts].map(async model => {
     await model.ensureIndexes();
   });
   // It is safe to run these concurrently:
   await Promise.all(index);
 
   // Create the developer account...
-  await accountsModel.ensureDevAccount(devAccount);
+  await accounts.ensureDevAccount(devAccount);
 
   let emailSender = new EmailSender(config);
   let blobs = {
@@ -81,7 +80,6 @@ export default async function main (config) {
     app,
     nonce,
     accounts,
-    accountsModel,
     emailSender,
     crashMeta,
     timeMeta,

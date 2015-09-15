@@ -67,12 +67,17 @@ function stateToString(state) {
   };
 }
 
+function rejectFwd(e) {
+  return Promise.reject(e);
+}
+
 function DeviceManager(scanner, wifiHelper) {
   EventEmitter.call(this);
   this.devices = { };
   this.scanner = scanner;
   this.wifiHelper = wifiHelper;
   this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
+  this.scanner.on('disconnect', this._onPeripheralDisconnected.bind(this));
 }
 DeviceManager.prototype = Object.create(EventEmitter.prototype);
 
@@ -120,6 +125,24 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
   });
 };
 
+DeviceManager.prototype._onPeripheralDisconnected = function(id) {
+  if (!(id in this.devices)) {
+    log.debug('unknown peripheral disconnected:', id);
+    return;
+  }
+  let p = this.devices[id];
+
+  log.info('disconnected from peripheral:', p.id);
+  clearTimeout(p._pollStatusTimer);
+  delete this.devices[p.id];
+  this.emit('disconnect', p);
+
+  // Subsequent advertisements are not received after disconnecting from
+  // the peripheral. Workaround this by restarting scanning.
+  this.stop();
+  this.start();
+}
+
 DeviceManager.prototype._readStateCharacteristic = function(p) {
   return p.readCharacteristic(decls.uuid.StateCharacteristic)
   .then(data => {
@@ -131,11 +154,11 @@ DeviceManager.prototype._readStateCharacteristic = function(p) {
       this.emit('stateChange', p);
 
       if (p.state === 'unregistered') {
-        this._configureDevice(p);
+        this._configureDevice(p).catch(() => {});
       }
     }
     return state;
-  });
+  }, rejectFwd);
 };
 
 DeviceManager.prototype._readServerConnectionStatusCharacteristic = function(p) {
@@ -149,7 +172,7 @@ DeviceManager.prototype._readServerConnectionStatusCharacteristic = function(p) 
       this.emit('statusChange', p);
     }
     return serverConnectionStatus;
-  });
+  }, rejectFwd);
 };
 
 DeviceManager.prototype._readErrorDescriptionCharacteristic = function(p) {
@@ -163,17 +186,18 @@ DeviceManager.prototype._readErrorDescriptionCharacteristic = function(p) {
       this.emit('errorChange', p);
     }
     return error;
-  });
+  }, rejectFwd);
 };
 
 DeviceManager.prototype._pollStatus = function(p) {
-  clearInterval(p._pollStatusTimer);
-  p._pollStatusTimer = setInterval(() => {
+  clearTimeout(p._pollStatusTimer);
+  p._pollStatusTimer = setTimeout(() => {
     this._readStateCharacteristic(p)
-    .then(() => this._readServerConnectionStatusCharacteristic(p))
-    .then(() => this._readErrorDescriptionCharacteristic(p))
-    .catch(() => {
-      log.warn('error reading from device, disconnect');
+    .then(() => this._readServerConnectionStatusCharacteristic(p), rejectFwd)
+    .then(() => this._readErrorDescriptionCharacteristic(p), rejectFwd)
+    .then(() => this._pollStatus(p), rejectFwd)
+    .catch(e => {
+      log.debug('cant read from device, likely not there, disconnect', e);
       this._disconnect(p);
     });
   }, 500);
@@ -182,11 +206,11 @@ DeviceManager.prototype._pollStatus = function(p) {
 
 DeviceManager.prototype._configureDevice = function(p) {
   return this._passProximityGate(p)
-  .then(resumeToken => this._configureWithoutCrypto(p, resumeToken))
+  .then(resumeToken => this._configureWithoutCrypto(p, resumeToken), rejectFwd)
   .catch(() => {
     log.warn('error configuring, disconnect and retry');
     this._disconnect(p);
-    return Promise.reject();
+    return Promise.reject(new Error('error configuring'));
   });
 };
 
@@ -197,7 +221,7 @@ DeviceManager.prototype._passProximityGate = function(p) {
     // TODO: get resume token from config service itself
     var resumeToken = 'TODO-IMPLEMENT-ME';
     return resumeToken;
-  });
+  }, rejectFwd);
 };
 
 /**
@@ -230,16 +254,21 @@ DeviceManager.prototype._waitForProximity = function(p) {
           // TODO: let the UI at the next level up be responsible for
           // this
           p.writeCharacteristic(decls.uuid.VibratePatternCharacteristic,
-                                new Buffer(new Uint8Array(pattern.buffer)));
+                                new Buffer(new Uint8Array(pattern.buffer)))
+          .then(() => {}, () => {
+            clearInterval(updateRssiInterval);
+            log.debug('error writing vibrate pattern', p.id)
+            reject(new Error('error writting vibrate pattern'));
+          });
           return;
         }
         clearInterval(updateRssiInterval);
         resolve();
-      })
+      }, rejectFwd)
       .catch(err => {
-        log.warn('Error reading rssi', err);
         clearInterval(updateRssiInterval);
-        reject();
+        log.debug('Error reading rssi', err, p.id);
+        reject(new Error('Error reading rssi'));
       });
     }, 100);
   });
@@ -259,7 +288,7 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
       // if we are now registered (or can't read state cause we are longer
       // connected to device)
       log.debug('Device is registered, bailing on configuration');
-      return Promise.reject();
+      return Promise.reject(Error('Device is registered'));
     }
 
     log.debug('Writing wifi info to peripheral ...');
@@ -285,32 +314,21 @@ DeviceManager.prototype._resumeSession = function(p, token) {
 
 DeviceManager.prototype._connect = function(p) {
   return p.connect()
-  .then(() => p.readCharacteristic(decls.uuid.DeviceIdCharacteristic))
+  .then(() => p.readCharacteristic(decls.uuid.DeviceIdCharacteristic), rejectFwd)
   .then(id => {
     p.deviceId = id.toString('hex');
     log.info(`read device ID ${p.deviceId}`);
-  })
-  .then(() => this._pollStatus(p)) // TODO: change to notify
+  }, rejectFwd)
+  .then(() => this._pollStatus(p), rejectFwd) // TODO: change to notify
   .then(() => {
     log.info('connected to peripheral:', p.id);
     p.state = 'connected';
     this.emit('connect', p);
-  });
+  }, rejectFwd);
 };
 
 DeviceManager.prototype._disconnect = function(p) {
-  return p.disconnect()
-  .then(() => {
-    log.info('disconnected from peripheral:', p.id);
-    clearInterval(p._pollStatusTimer);
-    delete this.devices[p.id];
-    this.emit('disconnect', p);
-
-    // Subsequent advertisements are not received after disconnecting from
-    // the peripheral. Workaround this by restarting scanning.
-    this.stop();
-    this.start();
-  });
+  return p.disconnect();
 };
 
 /*

@@ -14,7 +14,17 @@ const log = {
 
 function BLECentral() {
   EventEmitter.call(this);
-}
+
+  var self = this;
+  ble.registerDisconnectListener(
+    function(p) {
+      self.emit('disconnect', p.id);
+    },
+    function(err) {
+      log.warn('disconnect listener error: ' + err);
+    }
+  );
+} 
 
 BLECentral.prototype = Object.create(EventEmitter.prototype);
 

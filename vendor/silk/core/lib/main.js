@@ -26,12 +26,11 @@ let update = require('./update');
 let config = require('./config');
 let sensors = require('./sensors');
 let server = require('./server');
-let path = require('path');
 let fs = require('mz/fs');
 let deferred = require('./deferred');
-let mkdirp = require('mkdirp-promise');
 let clapper = require('./clapper');
 
+import getDeviceId from './deviceid';
 import makeCrashReporter from './crashreport';
 import makeOutbox from './outbox';
 
@@ -39,9 +38,6 @@ import makeOutbox from './outbox';
 const BOOT_TIMEOUT = 60 * 1000;
 // How frequently (in ms) we check if the boot prop has been set.
 const BOOT_CHECK_INTERVAL = 1000;
-// Where the ID export for this device lives.
-const ID_DIR = '/data/silk/config/';
-const ID_PATH = path.join(ID_DIR, 'id.json');
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
@@ -60,34 +56,6 @@ let clapDetector;
 let ext;
 let diag;
 let hue;
-
-/**
- * Read or create a new device id this will be persisted between boots.
- *
- * Note: This current pattern of storing to disk may not be secure enough for
- * production.
- */
-function readOrCreateID() {
-
-  function createID() {
-    let newId = api.id.create();
-    return mkdirp(ID_DIR)
-      .then(() => fs.writeFile(ID_PATH, newId.export()))
-      .then(() => newId);
-  }
-
-  function getID() {
-    return fs.readFile(ID_PATH, 'utf8')
-      .then(contents => {
-        return api.id.import(contents);
-      });
-  }
-
-  // check if the id exists already...
-  return fs.exists(ID_PATH)
-   .then(getID)
-   .catch(createID);
-}
 
 /**
  * Wait until system has been booted.
@@ -173,10 +141,9 @@ function main() {
   outbox = makeOutbox(wifi);
   crashreporter = makeCrashReporter(outbox);
 
-  return readOrCreateID()
+  return getDeviceId()
     .then(fetchedId => {
       id = fetchedId;
-      log.info('device id:', id.toString());
       crashreporter.deviceId = id.toString();
       return boot();
     })

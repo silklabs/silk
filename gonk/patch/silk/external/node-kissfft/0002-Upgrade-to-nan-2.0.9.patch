@@ -1,0 +1,127 @@
+From b10518d27ef2d912009ea2677546e4deab5cda3c Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 15 Sep 2015 14:24:05 -0700
+Subject: [PATCH] Port to nan 2.0.9
+
+---
+ package.json     |  2 +-
+ src/bindings.cpp | 44 ++++++++++++++++++++++----------------------
+ 2 files changed, 23 insertions(+), 23 deletions(-)
+
+diff --git a/package.json b/package.json
+index 848eef0..3fbc13a 100644
+--- a/package.json
++++ b/package.json
+@@ -22,7 +22,7 @@
+   },
+   "license": "BSD",
+   "dependencies": {
+-    "nan": "^1.2.0"
++    "nan": "^2.0.9"
+   },
+   "__devDependencies": {
+     "fft": "^0.2.1",
+diff --git a/src/bindings.cpp b/src/bindings.cpp
+index b5e95e7..fa00210 100644
+--- a/src/bindings.cpp
++++ b/src/bindings.cpp
+@@ -17,12 +17,12 @@ using namespace v8;
+ typedef fft::kiss_fft_cpx kiss_fft_cpx;
+ 
+ template <typename cfg_type, typename in_type, typename out_type>
+-class Worker : public NanAsyncWorker {
++class Worker : public Nan::AsyncWorker {
+ public:
+   void HandleOKCallback();
+   void Execute();
+ 
+-  Worker(NanCallback* callback, Local<Object> input, Local<Object> output);
++  Worker(Nan::Callback* callback, Local<Object> input, Local<Object> output);
+   ~Worker();
+ 
+ private:
+@@ -57,8 +57,8 @@ static void FFT(fftr::kiss_fftr_cfg cfg, const kiss_fft_scalar* in, kiss_fft_cpx
+ }
+ 
+ template <typename cfg_type, typename in_type, typename out_type>
+-Worker<cfg_type, in_type, out_type>::Worker(NanCallback *callback, Local<Object> input, Local<Object> output)
+-  : NanAsyncWorker(callback) {
++Worker<cfg_type, in_type, out_type>::Worker(Nan::Callback *callback, Local<Object> input, Local<Object> output)
++  : Nan::AsyncWorker(callback) {
+   int nfft = input->GetIndexedPropertiesExternalArrayDataLength();
+   if (nfft == output->GetIndexedPropertiesExternalArrayDataLength())
+     nfft /= 2;
+@@ -76,10 +76,10 @@ Worker<cfg_type, in_type, out_type>::~Worker() {
+ 
+ template <typename cfg_type, typename in_type, typename out_type>
+ void Worker<cfg_type, in_type, out_type>::HandleOKCallback() {
+-  NanScope();
++  Nan::HandleScope scope;
+ 
+-  Local<Object> output = GetFromPersistent("output");
+-  Handle<Value> argv[2] = { NanNull(), output };
++  Local<Value> output = GetFromPersistent("output");
++  Local<Value> argv[2] = { Nan::Null(), output };
+   callback->Call(2, argv);
+ }
+ 
+@@ -89,41 +89,41 @@ void Worker<cfg_type, in_type, out_type>::Execute() {
+ }
+ 
+ NAN_METHOD(_fft) {
+-  NanScope();
++  Nan::HandleScope scope;
+ 
+-  Local<Object> input = args[0].As<Object>();
+-  Local<Object> output = args[1].As<Object>();
+-  Local<Function> callback = args[2].As<Function>();
++  Local<Object> input = info[0].As<Object>();
++  Local<Object> output = info[1].As<Object>();
++  Local<Function> callback = info[2].As<Function>();
+ 
+-  NanCallback* nanCallback = new NanCallback(callback);
++  Nan::Callback* nanCallback = new Nan::Callback(callback);
+ 
+   if (!input->HasIndexedPropertiesInExternalArrayData() ||
+       input->GetIndexedPropertiesExternalArrayDataType() != kExternalFloatArray ||
+       !output->HasIndexedPropertiesInExternalArrayData() ||
+       output->GetIndexedPropertiesExternalArrayDataType() != kExternalFloatArray) {
+-    NanThrowTypeError("Float32Array expected");
+-    NanReturnUndefined();
++    Nan::ThrowTypeError("Float32Array expected");
++    return;
+   }
+   int input_len = input->GetIndexedPropertiesExternalArrayDataLength();
+   int output_len = output->GetIndexedPropertiesExternalArrayDataLength();
+   if (input_len != output_len && input_len + 2 != output_len) {
+-    NanThrowTypeError("Mismatch of array length for input and output");
+-    NanReturnUndefined();
++    Nan::ThrowTypeError("Mismatch of array length for input and output");
++    return;
+   }
+   if (output_len & 1) {
+-    NanThrowTypeError("Output array must have an even number of elements");
+-    NanReturnUndefined();
++    Nan::ThrowTypeError("Output array must have an even number of elements");
++    return;
+   }
+   if (input_len == output_len) {
+-    NanAsyncQueueWorker(new Worker<fft::kiss_fft_cfg, kiss_fft_cpx, kiss_fft_cpx>(nanCallback, input, output));
++    Nan::AsyncQueueWorker(new Worker<fft::kiss_fft_cfg, kiss_fft_cpx, kiss_fft_cpx>(nanCallback, input, output));
+   } else {
+-    NanAsyncQueueWorker(new Worker<fftr::kiss_fftr_cfg, kiss_fft_scalar, kiss_fft_cpx>(nanCallback, input, output));
++    Nan::AsyncQueueWorker(new Worker<fftr::kiss_fftr_cfg, kiss_fft_scalar, kiss_fft_cpx>(nanCallback, input, output));
+   }
+-  NanReturnUndefined();
++  return;
+ }
+ 
+ void Init(Handle<Object> exports) {
+-  exports->Set(NanNew("fft"), NanNew<FunctionTemplate>(_fft)->GetFunction());
++  exports->Set(Nan::New("fft").ToLocalChecked(), Nan::New<FunctionTemplate>(_fft)->GetFunction());
+ }
+ 
+ NODE_MODULE(kissfft, Init)
+-- 
+2.3.2 (Apple Git-55)
+

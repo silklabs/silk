@@ -344,7 +344,10 @@ export default React.createClass({
         break;
     }
 
-    this.setState({ objects: this.getActiveObjects(segment, segment.startUTC) });
+    if (segment) {
+      this.setState({ objects: this.getActiveObjects(segment,
+                                                     segment.startUTC) });
+    }
   },
 
   bufferNextRecordedSegment() {

@@ -30,26 +30,13 @@ export default class Beacon extends EventEmitter {
     this.major = major;
     this.minor = minor;
     this.enabled = false;
+    this.advertising = false;
+  }
 
-    bleno.on('stateChange', state => {
-      log.debug('stateChange: %s', state);
-      this.state = state;
-      this.adjustBeaconState();
-    });
-
-    bleno.on('advertisingStart', error => {
-      if (error) {
-        log.error('Error starting advertising: %j', error);
-      } else {
-        log.info('Started advertising');
-      }
-      this.emit('start', error);
-    });
-
-    bleno.on('advertisingStop', () => {
-      log.info('Stopped advertising');
-      this.emit('stop');
-    });
+  onStateChange(state) {
+    log.debug('stateChange: %s', state);
+    this.state = state;
+    this.adjustBeaconState();
   }
 
   adjustBeaconState() {
@@ -63,9 +50,31 @@ export default class Beacon extends EventEmitter {
                                          this.major,
                                          this.minor,
                                          this.measuredPower);
-    } else {
+      this.bleno.once('advertisingStart', error => {
+        if (error) {
+          log.error('Error starting advertising: %j', error);
+        } else {
+          log.info('Started advertising');
+          this.advertising = true;
+        }
+
+        this.emit('start', error);
+
+        // It's possible that we raced here. Check necessary conditions again
+        // and maybe stop advertising now.
+        if (this.state !== 'poweredOn' || !this.enabled) {
+          this.adjustBeaconState();
+        }
+      });
+    } else if (this.advertising) {
       log.info('Stopping advertising');
+      this.advertising = false;
+
       this.bleno.stopAdvertising();
+      this.bleno.once('advertisingStop', () => {
+        log.info('Stopped advertising');
+        this.emit('stop');
+      });
     }
   }
 
@@ -73,6 +82,9 @@ export default class Beacon extends EventEmitter {
     log.debug('start()');
     if (!this.enabled) {
       this.enabled = true;
+
+      this.bleno.on('stateChange', this.onStateChange.bind(this));
+
       this.adjustBeaconState();
     }
   }
@@ -81,6 +93,9 @@ export default class Beacon extends EventEmitter {
     log.debug('stop()');
     if (this.enabled) {
       this.enabled = false;
+
+      this.bleno.removeListener('stateChange', this.onStateChange.bind(this));
+
       this.adjustBeaconState();
     }
   }

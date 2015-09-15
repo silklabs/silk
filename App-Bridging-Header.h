@@ -6,6 +6,8 @@ This file allows Swift to interface directly with objc all interfaces that you w
 interface with via swift need to be imported here.
 */
 
+#import <CommonCrypto/CommonKeyDerivation.h>
+#import <CommonCrypto/CommonCryptor.h>
 #import "RCTEventDispatcher.h"
 #import "RCTBridge.h"
 #import "RCTRootView.h"

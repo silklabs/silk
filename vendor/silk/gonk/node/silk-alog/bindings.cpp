@@ -10,26 +10,26 @@ namespace {
 
 using namespace v8;
 
-_NAN_METHOD_RETURN_TYPE
-RealLog(_NAN_METHOD_ARGS, android_LogPriority priority)
+Nan::NAN_METHOD_RETURN_TYPE
+RealLog(Nan::NAN_METHOD_ARGS_TYPE info, android_LogPriority priority)
 {
-  const int argc = args.Length();
+  const int argc = info.Length();
   if (!argc) {
-    NanReturnUndefined();
+    return;
   }
 
-  NanScope();
+  Nan::HandleScope scope;
 
-  String::Utf8Value arg0(args[0]);
+  String::Utf8Value arg0(info[0]);
   if (!arg0.length()) {
-    return NanThrowTypeError("Argument 1 failed to convert to string");
+    return Nan::ThrowTypeError("Argument 1 failed to convert to string");
   }
 
   if (argc > 1) {
-    String::Utf8Value arg1(args[1]);
+    String::Utf8Value arg1(info[1]);
 
     if (!arg1.length()) {
-      return NanThrowTypeError("Argument 2 failed to convert to string");
+      return Nan::ThrowTypeError("Argument 2 failed to convert to string");
     }
 
     __android_log_print(priority, *arg0, *arg1);
@@ -37,22 +37,22 @@ RealLog(_NAN_METHOD_ARGS, android_LogPriority priority)
     __android_log_print(priority, "node", *arg0);
   }
 
-  NanReturnUndefined();
+  return;
 }
 
 template <android_LogPriority priority>
 inline NAN_METHOD(Log) {
-  return RealLog(args, priority);
+  return RealLog(info, priority);
 }
 
 void init(Handle<Object> exports)
 {
-  NODE_SET_METHOD(exports, "verbose", Log<ANDROID_LOG_VERBOSE>);
-  NODE_SET_METHOD(exports, "debug", Log<ANDROID_LOG_DEBUG>);
-  NODE_SET_METHOD(exports, "info", Log<ANDROID_LOG_INFO>);
-  NODE_SET_METHOD(exports, "warn", Log<ANDROID_LOG_WARN>);
-  NODE_SET_METHOD(exports, "error", Log<ANDROID_LOG_ERROR>);
-  NODE_SET_METHOD(exports, "fatal", Log<ANDROID_LOG_FATAL>);
+  Nan::SetMethod(exports, "verbose", Log<ANDROID_LOG_VERBOSE>);
+  Nan::SetMethod(exports, "debug", Log<ANDROID_LOG_DEBUG>);
+  Nan::SetMethod(exports, "info", Log<ANDROID_LOG_INFO>);
+  Nan::SetMethod(exports, "warn", Log<ANDROID_LOG_WARN>);
+  Nan::SetMethod(exports, "error", Log<ANDROID_LOG_ERROR>);
+  Nan::SetMethod(exports, "fatal", Log<ANDROID_LOG_FATAL>);
 }
 
 } // anonymous namespace

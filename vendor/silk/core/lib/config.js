@@ -293,7 +293,7 @@ class DeviceConfig extends events.EventEmitter {
     return this._isConfigured().then(() => {
       return wifi.forgetNetwork().then(() => {
         this._configService.clearState();
-        return this._stop()
+        return this.stop()
           .then(() => this.emit('unconfigured'));
       });
     }, () => {

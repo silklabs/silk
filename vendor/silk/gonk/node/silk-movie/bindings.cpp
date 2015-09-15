@@ -17,11 +17,11 @@ using namespace v8;
 using namespace android;
 
 
-class MovieWorker : public NanAsyncWorker
+class MovieWorker : public Nan::AsyncWorker
 {
 public:
-  MovieWorker(NanCallback *callback, sp<BootAnimation> aAnim)
-    : NanAsyncWorker(callback), mAnim(aAnim) {}
+  MovieWorker(Nan::Callback *callback, sp<BootAnimation> aAnim)
+    : Nan::AsyncWorker(callback), mAnim(aAnim) {}
 
   virtual ~MovieWorker() {}
 
@@ -35,21 +35,21 @@ private:
 };
 
 
-class Movie : public node::ObjectWrap
+class Movie : public Nan::ObjectWrap
 {
 public:
   static void Init(v8::Handle<v8::Object> exports) {
-    NanScope();
-    v8::Local<v8::FunctionTemplate> tpl = NanNew<v8::FunctionTemplate>(New);
-    tpl->SetClassName(NanNew("Movie"));
+    Nan::HandleScope scope;
+    v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
+    tpl->SetClassName(Nan::New("Movie").ToLocalChecked());
     tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-    NODE_SET_PROTOTYPE_METHOD(tpl, "hide", Hide);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "run", Run);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "stop", Stop);
+    Nan::SetPrototypeMethod(tpl, "hide", Hide);
+    Nan::SetPrototypeMethod(tpl, "run", Run);
+    Nan::SetPrototypeMethod(tpl, "stop", Stop);
 
-    NanAssignPersistent(constructor, tpl->GetFunction());
-    exports->Set(NanNew("Movie"), tpl->GetFunction());
+    constructor.Reset(tpl->GetFunction());
+    exports->Set(Nan::New("Movie").ToLocalChecked(), tpl->GetFunction());
   }
 
 private:
@@ -65,69 +65,69 @@ private:
 
   static NAN_METHOD(New)
   {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (args.IsConstructCall()) {
+    if (info.IsConstructCall()) {
       Movie *obj = new Movie();
-      obj->Wrap(args.This());
-      NanReturnThis();
+      obj->Wrap(info.This());
+      info.GetReturnValue().Set(info.This());
     } else {
       const int argc = 1;
-      v8::Local<v8::Value> argv[argc] = {args[0]};
-      v8::Local<v8::Function> cons = NanNew(constructor);
-      NanReturnValue(cons->NewInstance(argc, argv));
+      v8::Local<v8::Value> argv[argc] = {info[0]};
+      v8::Local<v8::Function> cons = Nan::New(constructor);
+      info.GetReturnValue().Set(cons->NewInstance(argc, argv));
     }
   }
 
   static NAN_METHOD(Run)
   {
-    NanScope();
-    Movie *me = ObjectWrap::Unwrap<Movie>(args.Holder());
+    Nan::HandleScope scope;
+    Movie *me = Nan::ObjectWrap::Unwrap<Movie>(info.Holder());
 
-    std::string movieFile(*v8::String::Utf8Value(args[0]->ToString()));
-    NanCallback *callback = new NanCallback(args[1].As<Function>());
+    std::string movieFile(*v8::String::Utf8Value(info[0]->ToString()));
+    Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
 
     if (me->mAnim == NULL) {
       me->mAnim = new BootAnimation();
     }
 
     if (!me->mAnim->load(movieFile.data())) {
-      NanThrowError("Movie: Unable to load movie");
+      Nan::ThrowError("Movie: Unable to load movie");
       return;
     }
 
-    NanAsyncQueueWorker(new MovieWorker(callback, me->mAnim));
-    NanReturnUndefined();
+    Nan::AsyncQueueWorker(new MovieWorker(callback, me->mAnim));
+    return;
   }
 
   static NAN_METHOD(Stop)
   {
-    NanScope();
-    Movie *me = ObjectWrap::Unwrap<Movie>(args.Holder());
+    Nan::HandleScope scope;
+    Movie *me = Nan::ObjectWrap::Unwrap<Movie>(info.Holder());
     if (me->mAnim != NULL) {
       me->mAnim->requestStop();
     }
-    NanReturnUndefined();
+    return;
   }
 
   static NAN_METHOD(Hide)
   {
-    NanScope();
-    Movie *me = ObjectWrap::Unwrap<Movie>(args.Holder());
+    Nan::HandleScope scope;
+    Movie *me = Nan::ObjectWrap::Unwrap<Movie>(info.Holder());
     if (me->mAnim != NULL) {
       me->mAnim->requestStop();
     }
     me->mAnim = NULL;
-    NanReturnUndefined();
+    return;
   }
 
   sp<BootAnimation> mAnim;
-  NanCallback *movieDoneCallback;
+  Nan::Callback *movieDoneCallback;
 
-  static v8::Persistent<v8::Function> constructor;
+  static Nan::Persistent<v8::Function> constructor;
 };
 
-v8::Persistent<v8::Function> Movie::constructor;
+Nan::Persistent<v8::Function> Movie::constructor;
 
 
 void init(Handle<Object> exports)

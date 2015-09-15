@@ -14,7 +14,7 @@
   },
   "license": "Proprietary",
   "dependencies": {
-    "nan": "^1.2.0"
+    "nan": "^2.0.9"
   },
   "devDependencies": {
     "nodeunit": "^0.9.1"

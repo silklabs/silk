@@ -50,13 +50,15 @@ var MonitorsView = React.createClass({
     api.socketio.address().then(result => {
       this.state.serverUrl = result.url;
       this.connectServer();
-    });
+    }, err => debug('Unable to get server socketio address', err));
   },
 
   componentWillUnmount: function() {
     PERIPH_EVENTS.forEach(ev =>
                           this.dm.removeListener(ev, this.refreshDeviceList));
-    this.socket.close();
+    if (this.socket) {
+      this.socket.close();
+    }
   },
 
   render: function() {

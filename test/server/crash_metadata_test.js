@@ -1,14 +1,14 @@
 import assert from 'assert';
 import createContext from './context';
+import { create as createId } from '../../src/api/id';
 
 const SERVER_PATH_PREFIX = '/device/metadata/crashreport';
 
 suite('crash metadata apis', () => {
   const context = createContext();
   let id;
-  setup(async () => {
-    let device = await context.createDevice();
-    id = device.toString();
+  setup(() => {
+    id = createId().toString();
   });
 
   suite(`${SERVER_PATH_PREFIX}/*`, () => {

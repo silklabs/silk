@@ -1,6 +1,7 @@
 import assert from 'assert';
 import createContext from './context';
 import createMetadataApi from '../../src/api/time_metadata';
+import { create as createId } from '../../src/api/id';
 
 const SERVER_PATH_PREFIX = '/device/metadata/time';
 
@@ -9,8 +10,7 @@ suite('time metadata apis', () => {
   let id;
   let api;
   setup(async () => {
-    let device = await context.createDevice();
-    id = device.toString();
+    id = createId().toString();
     api = createMetadataApi({ serverUrl: context.url }); //eslint-disable-line 
   });
 

@@ -11,8 +11,6 @@ import request from 'superagent-promise';
 import merge from 'lodash.merge';
 import pbkdf2 from 'pbkdf2';
 
-let api = require('../../src/api')();
-
 export function passwordHash(context, text) {
   // The assumption here is this will be much stronger when sent from the
   // client!
@@ -37,69 +35,6 @@ export async function post(context, path, json) {
   return await req.end().catch(err => {
     return err.response;
   });
-}
-
-export async function createAccount(context, email, name, passphrase) {
-  let id = api.id.create();
-  let passwordHash = sha256(context, passphrase);
-
-  let result = await post(context, '/account/create', {
-    id: id.toString(),
-    email: email,
-    name: name,
-    passwordHash: passwordHash,
-    sig: id.sign(passwordHash)
-  });
-
-  if (201 !== result.statusCode) {
-    throw new Error('Could not create account ' + email);
-  }
-  return id;
-}
-
-export async function createAccountAndAuth(context) {
-  let id = await createAccount(
-    context, 'test@example.org', 'Test', 'passphrase'
-  );
-
-  let challenge = await post(
-    context, '/account/challenge', { id: id.toString() }
-  );
-
-  if (200 !== challenge.statusCode) {
-    throw new Error('Could not challenge fake account');
-  }
-
-  let receipt = challenge.body.receipt;
-  let sig = id.sign(sha256(context, 'passphrase') + ' ' + receipt);
-
-  let auth = await post(context, '/account/authenticate', {
-    id: id.toString(),
-    receipt,
-    sig
-  });
-
-  if (200 !== auth.statusCode) {
-    throw new Error('Could not authenticate fake account');
-  }
-
-  return auth.body.session;
-}
-
-export async function createDevice(context) {
-  let id = api.id.create();
-  let session = await createAccountAndAuth(context);
-  let register = await post(context, '/account/device/register', {
-    session: session,
-    name: 'Test device',
-    deviceId: id.toString(),
-    sig: id.sign(id.toString())
-  });
-
-  if (201 !== register.statusCode) {
-    throw new Error('Could not create device');
-  }
-  return id;
 }
 
 /**

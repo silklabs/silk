@@ -186,7 +186,7 @@ var MonitorsView = React.createClass({
       }
       this.setState(this.state);
       return network;
-    });
+    }).catch(() => undefined); // Cancel button = promise rejection = ignore.
   },
 
   navigateWifiScene: function(hints) {

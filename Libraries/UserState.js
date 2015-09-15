@@ -10,7 +10,6 @@
 
 import EventEmitter from 'EventEmitter';
 import { AsyncStorage } from 'react-native';
-import dedupeCalls from './dedupeCalls';
 import { getRandomBytes, PBKDF2KeyDerivation } from './Crypto';
 import createDebug from 'debug';
 
@@ -40,13 +39,6 @@ export default class UserState extends EventEmitter {
     super()
     // Initialized api client.
     this.api = api;
-
-    dedupeCalls(
-      this,
-      'getAccessToken',
-      'attemptDeveloperLogin',
-      'signedIn'
-    );
   }
 
   async setAccessToken(accessToken) {

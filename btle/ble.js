@@ -17,8 +17,8 @@
 
 'use strict';
 
-var { DeviceEventEmitter } = require('react-native');
-var BLECentral = require('NativeModules').BLECentral;
+var { DeviceEventEmitter, NativeModules } = require('react-native');
+var BLECentral = NativeModules.BLECentral;
 var Buffer = require('buffer').Buffer;
 
 function NYI() {

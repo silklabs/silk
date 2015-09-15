@@ -3,9 +3,9 @@
 
 'use strict';
 
-var { DeviceEventEmitter } = require('react-native');
-var Buffer = require('buffer').Buffer;
-var SLKUtil = require('NativeModules').SLKUtil;
+let { DeviceEventEmitter, NativeModules } = require('react-native');
+let { SLKUtil } = NativeModules;
+let { Buffer } = require('buffer');
 
 module.exports = {
   getInfo: function() {

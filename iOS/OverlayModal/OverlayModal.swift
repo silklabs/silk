@@ -10,9 +10,9 @@ class OverlayModalController: UIViewController {
   }
 }
 
-internal func iterateViews(view: RCTViewNodeProtocol!, block: (RCTViewNodeProtocol) -> Void) {
+internal func iterateViews(view: RCTComponent!, block: (RCTComponent) -> Void) {
   for subview in view.reactSubviews() {
-    iterateViews(subview as! RCTViewNodeProtocol, block)
+    iterateViews(subview as! RCTComponent, block)
   }
 
   if view.reactTag != nil {
@@ -47,7 +47,7 @@ class OverlayModal : RCTView {
     self.overlayController!.view = self.overlayView
   }
 
-  override func insertReactSubview(subview: RCTViewNodeProtocol!, atIndex: Int) {
+  override func insertReactSubview(subview: RCTComponent!, atIndex: Int) {
     self.overlayView!.insertReactSubview(subview, atIndex: atIndex)
   }
 
@@ -55,7 +55,7 @@ class OverlayModal : RCTView {
   Note this is critically important to expose as React cannot properly remove subviews without knowing
   where they are!
   */
-  override func reactSubviews() -> NSMutableArray! {
+  override func reactSubviews() -> [AnyObject] {
     return self.overlayView!.reactSubviews()
   }
 

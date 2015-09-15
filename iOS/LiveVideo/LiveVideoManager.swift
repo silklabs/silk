@@ -1,12 +1,12 @@
 @objc(LiveVideoManager)
 class LiveVideoManager:  RCTViewManager {
 
-  @objc override func customDirectEventTypes() -> [NSObject : AnyObject]! {
+  @objc override func customDirectEventTypes() -> [AnyObject]! {
     return [
-      "timeChange": ["registrationName": "onTimeChange"],
-      "segmentError": ["registrationName": "onSegmentError"],
-      "segmentEnd": ["registrationName": "onSegmentEnd"],
-      "segmentStart": ["registrationName": "onSegmentStart"],
+      "timeChange",
+      "segmentError",
+      "segmentEnd",
+      "segmentStart",
     ]
   }
 

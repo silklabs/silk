@@ -1,8 +1,12 @@
 import React from 'react-native';
-import { SystemButtonManager } from 'NativeModules';
-import StyleSheetRegistry from 'StyleSheetRegistry';
+let { NativeModules } = React;
+let { SystemButtonManager } = NativeModules;
 
+// TODO: either expose `StyleSheetRegistry` in the `react-native`
+// module upstream, or don't use styles to tweak the button color
+// (a prop would do just as well.)
 //let { StyleSheetRegistry } = React;
+import StyleSheetRegistry from 'StyleSheetRegistry';
 
 let SystemButtonNative = React.requireNativeComponent('SystemButton');
 let SystemButton = React.createClass({

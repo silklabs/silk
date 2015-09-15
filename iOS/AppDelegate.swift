@@ -50,7 +50,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
       NSLog("Starting react-native with remote url: \(reactNativeUrl)")
     }
 
-    let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", launchOptions: launchOptions)
+    let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", initialProperties: nil, launchOptions: launchOptions)
 
     // At least for now we don't implement our own specific controller...
     let rootViewController = ViewController()

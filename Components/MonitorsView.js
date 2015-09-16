@@ -115,7 +115,7 @@ var MonitorsView = React.createClass({
         <View style={styles.statusBarUnderlay} />
         <View style={styles.titleContainer}>
           <View style={styles.spacer}>
-            <TouchableOpacity onPress={this.loadSettings}>
+            <TouchableOpacity onPress={() => this.loadSettings().catch(() => {})}>
               <View style={styles.settings}>
                 <Image source={require('image!Menu')}
                        style={styles.icon} />
@@ -219,7 +219,7 @@ var MonitorsView = React.createClass({
       }
       this.setState(this.state);
       return network;
-    }).catch(() => undefined); // Cancel button = promise rejection = ignore.
+    });
   },
 
   navigateWifiScene: function(hints) {

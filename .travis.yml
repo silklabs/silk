@@ -22,34 +22,7 @@ env:
     - PROJECT=Silk
 
 script:
-- |
-  if [ "$TEST_TYPE" = objc-test ]
-  then
-    xctool \
-      -project $PROJECT.xcodeproj \
-      -scheme $PROJECT \
-      -sdk iphonesimulator \
-      -destination 'platform=iOS Simulator,name=iPhone 5,OS=8.4' \
-      test
-  elif [ "$TEST_TYPE" = build-dist ]
-  then
-    mkdir build
-    xctool \
-      -project $PROJECT.xcodeproj \
-      -scheme $PROJECT \
-      -sdk iphoneos \
-      archive -archivePath build/$PROJECT.xcarchive
-    mkdir dist
-    xcodebuild \
-      -exportArchive \
-      -archivePath build/$PROJECT.xcarchive \
-      -exportPath dist/$PROJECT.ipa \
-      -exportFormat ipa \
-      -exportProvisioningProfile "iOSTeam Provisioning Profile: *"
-  else
-    echo "Unknown test type: $TEST_TYPE"
-    exit 1
-  fi
+  - .travis/script
 
 deploy:
   provider: s3

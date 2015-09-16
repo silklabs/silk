@@ -15,7 +15,7 @@ interface with via swift need to be imported here.
 #import "RCTSparseArray.h"
 #import "RCTUIManager.h"
 #import "UIView+React.h"
-#import "RCTViewNodeProtocol.h"
+#import "RCTComponent.h"
 #import "RCTTouchHandler.h"
 #import "RCTView.h"
 

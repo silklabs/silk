@@ -1,5 +1,4 @@
-import React from 'react-native';
-import Dimensions from 'Dimensions';
+import { Dimensions } from 'react-native';
 
 export function getLandscapeDimensions() {
   let deviceWidth = Dimensions.get('window').width

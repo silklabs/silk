@@ -3,9 +3,10 @@ import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 
 // There are two parts to the native wrapper:
 // 1.Public interface exposed for method calls:
-import { OverlayModalManager } from 'NativeModules';
+let { NativeModules } = React;
+let { OverlayModalManager } = NativeModules;
 // 2: Component interface exposed for UI:
-var OverlayModal = React.requireNativeComponent('OverlayModal');
+let OverlayModal = React.requireNativeComponent('OverlayModal');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'overlaymodal';

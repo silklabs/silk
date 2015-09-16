@@ -1,9 +1,13 @@
 let {
   DeviceEventEmitter,
-  NativeModules
-} = require('react-native')
+  NativeModules,
+  //EventEmitter,
+} = require('react-native');
 
-// React-Native event emitter...
+// TODO: `EventEmitter` is not exposed by the `react-native` npm
+// module, so we're cheating here by grabbing it directly from the Haste
+// module. We should consider exporting it upstream or vendor-importing
+// EventEmitter.js.
 import EventEmitter from 'EventEmitter';
 
 let NativeBlobBridge = NativeModules.BlobBridge;
@@ -73,7 +77,7 @@ closely follows the original but uses our SocketIO native manager classes.
 */
 export default class extends EventEmitter {
   constructor(socket) {
-    super()
+    super();
 
     this.socket = socket;
     this.rooms = new Set();

@@ -5,10 +5,10 @@ class SystemButtonManager : RCTViewManager {
     return SystemButton(eventDispatcher: self.bridge.eventDispatcher)
   }
 
-  @objc override func customDirectEventTypes() -> [NSObject : AnyObject]! {
+  @objc override func customDirectEventTypes() -> [AnyObject]! {
     return [
       // XXX: Figure out why we can't name this onPress (results in conflict error).
-      "press": ["registrationName": "onSystemButtonPress"]
+      "press",
     ]
   }
 

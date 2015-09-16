@@ -1,10 +1,5 @@
 import React from 'react-native';
-
-// There are two parts to the native wrapper:
-// 1.Public interface exposed for method calls:
-import { ImageViewManager } from 'NativeModules';
-// 2: Component interface exposed for UI:
-var ImageView = React.requireNativeComponent('ImageView');
+let ImageView = React.requireNativeComponent('ImageView');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'imageview';

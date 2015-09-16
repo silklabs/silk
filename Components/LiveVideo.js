@@ -1,7 +1,7 @@
 import React from 'react-native';
-import { LiveVideoManager} from 'NativeModules';
+let { LiveVideoManager} = React;
 
-var LiveVideoNative = React.requireNativeComponent('LiveVideo');
+let LiveVideoNative = React.requireNativeComponent('LiveVideo');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'livevideo';

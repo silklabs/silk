@@ -65,5 +65,59 @@ suite('accounts', () => {
     });
     assert.ok(unsuccessfulAuth.error, 'fails to auth');
   });
+
+  test('#signIn', async () => {
+    let key = id.create();
+    let input = {
+      publicKey: key.toString(),
+      email: 'user@example.com',
+      passwordHash: context.passwordHash('password'),
+      userAgent: 'nodejs'
+    };
+
+    let account = await subject.create(input);
+    assert.ok(account.id, 'Creates account and returns id');
+    let newKey = id.create();
+
+    let signIn = await subject.signIn(Object.assign(
+      {},
+      input,
+      { publicKey: newKey.toString() }
+    ));
+    assert.equal(signIn.id, account.id);
+
+    let duplicateErr;
+    try {
+      let duplicateKeySignIn = await subject.signIn(Object.assign(
+        {},
+        input,
+        { publicKey: newKey.toString() }
+      ));
+    } catch (err) {
+      duplicateErr = err;
+    }
+    assert.ok(duplicateErr, 'cannot create duplicate keys within document');
+
+    let unknownSignIn = await subject.signIn(Object.assign(
+      {},
+      input,
+      { email: 'user2@example.com' }
+    ));
+    assert.equal(unknownSignIn.error.type, 'UnknownAccount');
+
+    let badPass = await subject.signIn(Object.assign(
+      {},
+      input,
+      { passwordHash: context.passwordHash('foobar') }
+    ));
+    assert.equal(badPass.error.type, 'CheckPasswordFailure');
+
+    let accountDetails = await subject.collection.findOne({
+      'accountTokens.publicKey': newKey.toString()
+    });
+    assert.equal(accountDetails._id, signIn.id);
+    let publicKeys = accountDetails.accountTokens.map(v => v.publicKey);
+    assert.deepEqual(publicKeys, [key.toString(), newKey.toString()]);
+  });
 });
 

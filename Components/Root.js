@@ -45,7 +45,6 @@ class Silk extends React.Component {
   }
 
   async componentDidMount() {
-    let start = Date.now();
     // If a token is set great then skip login screen...
     let loggedIn = await userState.getAccessToken();
     if (loggedIn) {
@@ -106,14 +105,15 @@ class Silk extends React.Component {
         <MonitorFullscreen navigator={navigator}
                            vid={route.vid} serverUrl={route.serverUrl} />
       );
-    };
-    return (
-      <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
-        <Text style={{color: 'yellow', fontSize: 30}}>
-          Unknown scene {route.name}
-        </Text>
-      </View>
-    );
+    default:
+      return (
+        <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
+          <Text style={{color: 'yellow', fontSize: 30}}>
+            Unknown scene {route.name}
+          </Text>
+        </View>
+      );
+    }
   }
 
   onForward() {

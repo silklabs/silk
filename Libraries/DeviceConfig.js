@@ -1,8 +1,8 @@
 import { Dimensions } from 'react-native';
 
 export function getLandscapeDimensions() {
-  let deviceWidth = Dimensions.get('window').width
-  let deviceHeight = Dimensions.get('window').height
+  let deviceWidth = Dimensions.get('window').width;
+  let deviceHeight = Dimensions.get('window').height;
   let dimensions = {};
 
   // Because the overlay modal is not an actual subview of the react root view

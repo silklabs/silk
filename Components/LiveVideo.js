@@ -1,6 +1,4 @@
 import React from 'react-native';
-let { LiveVideoManager} = React;
-
 let LiveVideoNative = React.requireNativeComponent('LiveVideo');
 
 // Reference to the native component we are wrapping.
@@ -33,7 +31,7 @@ class Segment {
   }
 
   addStartCallback(fn) {
-    this._onStart.push(fn)
+    this._onStart.push(fn);
   }
 
   fireStartCallbacks() {

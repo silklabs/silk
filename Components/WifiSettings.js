@@ -47,7 +47,7 @@ var WifiSettings = React.createClass({
       serverUrl: this.props.hints.serverUrl
     };
   },
-  
+
   render: function() {
     // TODO: remove <ScrollView> and "debug settings" below for
     // production.
@@ -59,7 +59,7 @@ var WifiSettings = React.createClass({
         <View style={styles.contentContainer}>
           <View style={styles.contentSpacer} />
 
-          <View style={styles.formContainer}>        
+          <View style={styles.formContainer}>
             <View style={styles.formLeftSpace} />
 
             <View style={styles.form}>
@@ -95,7 +95,7 @@ var WifiSettings = React.createClass({
 
 
           <View style={styles.debugSettingsSpacer} />
-          <View style={styles.formContainer}>        
+          <View style={styles.formContainer}>
             <View style={styles.formLeftSpace} />
 
             <View style={styles.form}>
@@ -116,7 +116,7 @@ var WifiSettings = React.createClass({
             </View>
           </View>
 
-        
+
         </View>
         </ScrollView>
       </View>
@@ -227,7 +227,7 @@ var styles = StyleSheet.create({
 
   debugSettingsSpacer: {
     height: 400,
-  }, 
+  },
 });
 
 module.exports = WifiSettings;

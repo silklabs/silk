@@ -112,7 +112,7 @@ module.exports = {
     writeCharacteristic(device_id, service_uuid, characteristic_uuid, value,
                         false/*no response*/, success, failure);
   },
-  
+
   // success callback is called on notification
   startNotification: function (device_id, service_uuid, characteristic_uuid, success, failure) {
     NYI();

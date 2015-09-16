@@ -11,13 +11,8 @@ import TextLink from './TextLink';
 import { WordMarkText } from './Text';
 
 let {
-  ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
-  ActivityIndicatorIOS
 } = React;
 
 class LogoView extends React.Component {
@@ -29,7 +24,7 @@ class LogoView extends React.Component {
       </View>
     );
   }
-};
+}
 
 class SignInControls extends React.Component {
 
@@ -113,7 +108,7 @@ export default class extends React.Component {
       </View>
     );
   }
-};
+}
 
 var styles = StyleSheet.create({
   container: {

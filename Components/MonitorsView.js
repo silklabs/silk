@@ -1,15 +1,12 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-import SystemButton from './SystemButton';
-import TextLink from './TextLink'
-var React = require('react-native');
+import React from 'react-native';
+import TextLink from './TextLink';
 var {
-  AppRegistry,
   Image,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } = React;
@@ -53,15 +50,15 @@ class SignOut extends React.Component {
       <View style={{ alignItems: 'center' }}>
         <TextLink label='Sign Out' onClick={this.signOut} />
       </View>
-    )
+    );
   }
 }
 
 var MonitorsView = React.createClass({
   getInitialState: function() {
     return {
-      configuring: { },
-      streaming: { },
+      configuring: {},
+      streaming: {},
       network: null,
       serverConnection: 'offline',
       serverUrl: null
@@ -178,7 +175,7 @@ var MonitorsView = React.createClass({
         // use device status from discovered peripheral if available
         let device = this.state.streaming[msg.id];
         let status = (device && device.status) ? device.status : '';
- 
+
         this.state.streaming[msg.id] = { name: msg.name, logo: msg.logo,
             previewSize: msg.previewSize, status: status };
 
@@ -251,13 +248,13 @@ var MonitorsView = React.createClass({
         }
 
         // update status, use error message if exists
-        streaming[p.deviceId].status = 
+        streaming[p.deviceId].status =
             p.error ? p.error : p.serverConnectionStatus;
       }
     });
 
-    
-    for (let id in streaming) {
+
+    Object.keys(streaming).forEach(id => {
       if (!this.dm.enumerateDevices().some(
           p => p.deviceId === id && p.state !== 'disconnected')) {
         // Streaming widget still exists, but we are no longer connected
@@ -268,13 +265,13 @@ var MonitorsView = React.createClass({
         streaming[id].status = '';
 
         // We have not received a server-sent event. Delete placeholder widget,
-        // less, it will linger indefinitely. If/when the server sends the 
+        // less, it will linger indefinitely. If/when the server sends the
         // event, it will get added back in.
         if (streaming[id].placeholder) {
           delete streaming[id];
         }
       }
-    }
+    });
     this.setState(this.state);
   },
 
@@ -285,8 +282,8 @@ var MonitorsView = React.createClass({
     if (this.getWifiPromise) {
       return this.getWifiPromise;
     }
-    this.getWifiPromise = this.loadSettings()
-    this.getWifiPromise.catch(() => { this.getWifiPromise = null; });
+    this.getWifiPromise = this.loadSettings();
+    this.getWifiPromise.catch(() => this.getWifiPromise = null);
     return this.getWifiPromise;
   },
 });

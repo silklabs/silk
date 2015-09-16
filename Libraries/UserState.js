@@ -8,6 +8,9 @@
  *  - accessToken
  */
 
+// The API violates this rule, so disable it for the whole file.
+/* eslint new-cap:0 */
+
 import EventEmitter from 'EventEmitter';
 import { AsyncStorage } from 'react-native';
 import { getRandomBytes, PBKDF2KeyDerivation } from './Crypto';
@@ -36,7 +39,7 @@ export default class UserState extends EventEmitter {
   _accessToken = null
 
   constructor(api) {
-    super()
+    super();
     // Initialized api client.
     this.api = api;
   }

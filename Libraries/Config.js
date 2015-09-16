@@ -24,6 +24,7 @@ function load() {
     // literal
     config = require('../config.local.json');
   } catch (e) {
+    /* eslint no-empty:0 */
     // No action required...
   }
   config = merge({}, DEFAULT, config);
@@ -31,4 +32,4 @@ function load() {
 }
 
 let config = load();
-export default config
+export default config;

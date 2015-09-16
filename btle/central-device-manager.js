@@ -64,7 +64,7 @@ function stateToString(state) {
     return 'error';
   default:
     return '???';
-  };
+  }
 }
 
 function rejectFwd(e) {
@@ -92,8 +92,7 @@ DeviceManager.prototype.stop = function() {
 };
 
 DeviceManager.prototype.enumerateDevices = function() {
-  var devs = this.devices;
-  return Object.keys(devs).map(function(id) { return devs[id]; });
+  return Object.keys(this.devices).map((id) => this.devices[id]);
 };
 
 DeviceManager.prototype._onPeripheralDiscovered = function(p) {
@@ -124,7 +123,7 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
     .catch(err => {
       // unable to connect to peripheral. disconnect to force rescan
       // so that we can try again if the peripheral is still there
-      log.warn(`connect to ${p.id} failed. disconnect and retry`);
+      log.warn(`connect to ${p.id} failed. disconnect and retry`, err);
       this._disconnect(p);
     });
   }
@@ -147,7 +146,7 @@ DeviceManager.prototype._onPeripheralDisconnected = function(id) {
   // the peripheral. Workaround this by restarting scanning.
   this.stop();
   this.start();
-}
+};
 
 DeviceManager.prototype._readStateCharacteristic = function(p) {
   return p.readCharacteristic(decls.uuid.StateCharacteristic)
@@ -266,7 +265,7 @@ DeviceManager.prototype._waitForProximity = function(p) {
                                 new Buffer(new Uint8Array(pattern.buffer)))
           .then(() => {}, () => {
             clearInterval(updateRssiInterval);
-            log.debug('error writing vibrate pattern', p.id)
+            log.debug('error writing vibrate pattern', p.id);
             reject(new Error('error writting vibrate pattern'));
           });
           return;

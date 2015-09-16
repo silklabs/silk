@@ -73,7 +73,7 @@ export default class extends React.Component {
       </View>
     );
   }
-};
+}
 
 var styles = StyleSheet.create({
   container: {

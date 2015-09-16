@@ -1,24 +1,19 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-import React from 'react-native'
-import LiveVideo from './LiveVideo'
-import OverlayModal from './OverlayModal'
-import Rectangle from './Rectangle';
+import React from 'react-native';
+import LiveVideo from './LiveVideo';
+import OverlayModal from './OverlayModal';
 import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
 import TimerMixin from 'react-timer-mixin';
 import uuid from 'uuid';
 import * as DateUtils from '../Libraries/DateUtil';
-import DateOverlay from './DateOverlay'
+import DateOverlay from './DateOverlay';
 
 let {
-  Animated,
-  SliderIOS,
-  StatusBarIOS,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } = React;
@@ -175,15 +170,15 @@ export default React.createClass({
        * been detected for the currently-playing segment at the
        * current time point (give or take some milliseconds).
        */
-      objects: []
-    }
+      objects: [],
+    };
   },
 
   getInitialProps() {
     return {
       presented: false,
-      onClose: function() {}
-    }
+      onClose: function() {},
+    };
   },
 
   componentWillMount() {
@@ -239,13 +234,16 @@ export default React.createClass({
         case MODES.live:
           this._exitLiveMode();
           break;
+        default:
+          // Ignore
+          break;
       }
 
-      if (newMode == MODES.live) {
+      if (newMode === MODES.live) {
         this._enterLiveMode();
       }
 
-      let newState = {  mode: newMode };
+      let newState = { mode: newMode };
       // If we transitioned to a non-seeking mode.
       if (newMode !== MODES.seeking && !('videoSegments' in state)) {
         this._videoSegments = [];
@@ -277,7 +275,7 @@ export default React.createClass({
   },
 
   createSegment(result) {
-   return new LiveVideo.Segment({
+    return new LiveVideo.Segment({
       type: 'url',
       url: result.url,
       startUTC: result.startUTC,
@@ -310,8 +308,7 @@ export default React.createClass({
           notification to remove: ${event.nativeEvent.id}
           ids: ${segments.map(v => v.id)}
       `);
-      throw new Error("Unexpected end event!");
-      return;
+      throw new Error('Unexpected end event!');
     }
 
     // shift the finished segment off... Note we do not invoke setState here
@@ -342,6 +339,9 @@ export default React.createClass({
         // Intentionally left blank when we seek we should not be running
         // additional buffering operations/etc...
         break;
+      default:
+        // Ignore
+        break;
     }
 
     if (segment) {
@@ -353,8 +353,7 @@ export default React.createClass({
   bufferNextRecordedSegment() {
     // new segment has started lets queue up the next one.
     let segment = this._videoSegments[0];
-    let { api, id } = this.props;
-    let video = this.refs.video;
+    let { api } = this.props;
 
     if (segment.type !== 'url') {
       throw new Error('Previous segment type _must_ be recorded');
@@ -405,13 +404,13 @@ export default React.createClass({
     // Let seek bar manage it's own state in video controls.
     if (this.state.mode === MODES.seeking) {
       // Do not emit any time events while we are seeking...
-      return
+      return;
     }
 
     let time = event.nativeEvent.time;
     let segment = this._videoSegments[0];
 
-    if (this.state.mode == MODES.live) {
+    if (this.state.mode === MODES.live) {
       this.modifyLiveRate(segment, time);
     }
 
@@ -436,7 +435,6 @@ export default React.createClass({
 
   onSeekEnd(value) {
     let api = this.props.api;
-    let video = this.refs.video;
 
     // Clear the segment queue and update the time to the seek target
     // while we figure out where we're actually going to end up below.
@@ -509,7 +507,7 @@ export default React.createClass({
       }
 
       return result;
-    });    
+    });
   },
 
   toggleControls() {
@@ -528,7 +526,7 @@ export default React.createClass({
     let nextId = currentIdx + increment;
 
     if (nextId < 0) {
-      return PLAYBACK_STEPS[0]
+      return PLAYBACK_STEPS[0];
     }
 
     if (nextId >= PLAYBACK_STEPS.length) {
@@ -562,16 +560,16 @@ export default React.createClass({
       }
     });
   },
-  
+
   onFastForward() {
     let rate = this.getPlaybackStep(1);
-    this.setState({ rate: rate })
+    this.setState({ rate });
     console.log('fast forward', rate);
   },
 
   onRewind() {
     let rate = this.getPlaybackStep(-1);
-    this.setState({ rate: rate })
+    this.setState({ rate });
   },
 
   onPlay() {
@@ -618,7 +616,6 @@ export default React.createClass({
   },
 
   render: function() {
-    var videoStream = this.props.id;
     let { width, height } = getLandscapeDimensions();
     let dimensions = { width, height };
     let controls;
@@ -645,12 +642,6 @@ export default React.createClass({
           date={new Date(this.state.currentTime)} />
       );
     }
-
-    let date = (
-      <DateOverlay
-        style={styles.dateOverlay}
-        date={new Date(this.state.currentTime)} />
-    );
 
     return (
       <OverlayModal ref="overlay"
@@ -679,18 +670,14 @@ export default React.createClass({
             </View>
           </View>
       </OverlayModal>
-    )
+    );
   },
 
   close() {
     var overlay = this.refs.overlay;
-    var video = this.refs.video;
-
-    // Signal dismissal of the view (but let it animate closed)
-    overlay.dismiss().then(() => {
-      // After the animation allow any parent views to cleanup..
-      this.props.onClose()
-    });
+    // Signal dismissal of the view (but let it animate closed).
+    // After the animation allow any parent views to cleanup.
+    overlay.dismiss().then(() => this.props.onClose());
   },
 });
 

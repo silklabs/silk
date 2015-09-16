@@ -27,7 +27,7 @@ class LoginSpinner extends React.Component {
       <View style={loginSpinnerStyles.spinner}>
         <ActivityIndicatorIOS />
       </View>
-    )
+    );
   }
 }
 
@@ -79,7 +79,7 @@ class StyledTextInput extends React.Component {
                    onChangeText={this.onChangeText} />
     );
   }
-};
+}
 
 const buttonStyles = StyleSheet.create({
   button: {
@@ -104,7 +104,7 @@ class StyledButton extends React.Component {
     style: React.PropTypes.object,
   };
 
-  onPress = () =>  {
+  onPress = () => {
     if (this.props.onClick) {
       this.props.onClick();
     }
@@ -119,7 +119,7 @@ class StyledButton extends React.Component {
         </TouchableOpacity>
     );
   }
-};
+}
 
 export default class UserForm extends React.Component {
 

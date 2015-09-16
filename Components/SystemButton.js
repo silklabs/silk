@@ -24,7 +24,7 @@ let SystemButton = React.createClass({
 
   getStyleProperty(objectOrID, property) {
     if (!objectOrID) {
-      return;
+      return null;
     }
 
     if (typeof objectOrID === 'number') {
@@ -57,7 +57,7 @@ let SystemButton = React.createClass({
 
 // Re-export constants...
 for (var key in SystemButtonManager) {
-  SystemButton[key] = SystemButtonManager[key]
+  SystemButton[key] = SystemButtonManager[key];
 }
 
 export default SystemButton;

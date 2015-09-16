@@ -24,7 +24,7 @@ function BLECentral() {
       log.warn('disconnect listener error: ' + err);
     }
   );
-} 
+}
 
 BLECentral.prototype = Object.create(EventEmitter.prototype);
 
@@ -81,9 +81,7 @@ PeripheralCordova.prototype = {
   disconnect: function() {
     var self = this;
     return new Promise(function(resolve, reject) {
-      ble.disconnect(self.id,
-                     function() { resolve(); },
-                     function(err) { reject(err); });
+      ble.disconnect(self.id, resolve, reject);
     });
   },
 
@@ -92,7 +90,7 @@ PeripheralCordova.prototype = {
     return new Promise(function(resolve, reject) {
       var charc = self._charcs[uuid];
       if (!charc) {
-        return reject('Unknown characteristic "'+ uuid +'"');
+        return reject('Unknown characteristic "' + uuid + '"');
       }
 
       // ble doesn't handle multiple reads to same peripheral/uuid combo
@@ -104,15 +102,19 @@ PeripheralCordova.prototype = {
       pendingRead.push({resolve: resolve, reject: reject});
 
       // TODO: check read-able?
-      ble.read(self.id, charc.service, charc.characteristic,
-               function(data) {
-                 pendingRead.forEach(function(pr) { pr.resolve(data) });
-                 self._pendingReads[uuid] = [];
-               },
-               function(err) {
-                 pendingRead.forEach(function(pr) { pr.reject(err) });
-                 self._pendingReads[uuid] = [];
-               });
+      ble.read(
+        self.id,
+        charc.service,
+        charc.characteristic,
+        (data) => {
+          pendingRead.forEach((pr) => pr.resolve(data));
+          self._pendingReads[uuid] = [];
+        },
+        (err) => {
+          pendingRead.forEach((pr) => pr.reject(err));
+          self._pendingReads[uuid] = [];
+        }
+      );
     });
   },
 
@@ -121,7 +123,7 @@ PeripheralCordova.prototype = {
     return new Promise(function(resolve, reject) {
       var charc = self._charcs[uuid];
       if (!charc) {
-        return reject('Unknown characteristic "'+ uuid +'"');
+        return reject('Unknown characteristic "' + uuid + '"');
       }
 
       // ble doesn't handle multiple write to same peripheral/uuid combo,
@@ -134,7 +136,10 @@ PeripheralCordova.prototype = {
       // TODO: check write-able?
       // TODO: any benefit to using write-with-response?
       ble./*write*/writeWithoutResponse(
-        self.id, charc.service, charc.characteristic, data,
+        self.id,
+        charc.service,
+        charc.characteristic,
+        data,
         function() {
           delete self._pendingWrites[uuid];
           resolve(data);
@@ -142,7 +147,8 @@ PeripheralCordova.prototype = {
         function(err) {
           delete self._pendingWrites[uuid];
           reject(err);
-        });
+        }
+      );
     });
   },
 };

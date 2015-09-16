@@ -34,16 +34,17 @@ export function getRandomBytes(numberOfBytes) {
       }
       log(`Got ${numberOfBytes} random bytes in ${Date.now() - start} ms`);
       accept(result);
-    })
+    });
   });
 }
 
 export function PBKDF2KeyDerivation(input, salt, rounds = DEFAULT_ROUNDS) {
   return new Promise((accept) => {
     let start = Date.now();
+    /* eslint new-cap:0 */
     AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, function(hexString) {
       log(`Generated PBKDF2KeyDerivation (${rounds}) in ${Date.now() - start} ms`);
       accept(hexString);
-    })
+    });
   });
 }

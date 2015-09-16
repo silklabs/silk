@@ -6,7 +6,6 @@
 var React = require('react-native');
 var {
   StyleSheet,
-  Text,
   View,
   PropTypes,
   } = React;
@@ -22,16 +21,15 @@ var ProgressBar = React.createClass({
 
   getDefaultProps: function () {
     return {
-      color: "blue",
-      backgroundColor: "#ffffff",
-      borderColor: "#ffffff",
+      color: 'blue',
+      backgroundColor: '#ffffff',
+      borderColor: '#ffffff',
       styles: {},
-      completePercentage: 50
+      completePercentage: 50,
     };
   },
 
   render: function () {
-
     var props = this.props,
       progressColor = props.color,
       borderColor = props.borderColor,
@@ -45,7 +43,6 @@ var ProgressBar = React.createClass({
         <View style={[styles.incomplete, {flex: incompletePerc, backgroundColor}]}></View>
       </View>
     );
-
   }
 });
 
@@ -55,14 +52,14 @@ var styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#ffffff",
+    borderColor: '#ffffff',
     marginBottom: 3
   },
 
   complete: {},
 
   incomplete: {
-    backgroundColor: "#ffffff"
+    backgroundColor: '#ffffff',
   }
 });
 

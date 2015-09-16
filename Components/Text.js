@@ -79,7 +79,7 @@ let styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'left',
   },
-  
+
   placeholder: {
     fontFamily: 'Open Sans',
     fontSize: 15,

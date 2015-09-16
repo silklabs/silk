@@ -32,7 +32,7 @@ export default React.createClass({
       onShowEnd: function() {},
       onDismissStart: function() {},
       onDismissEnd: function() {},
-    }
+    };
   },
 
   getNativeHandle() {
@@ -42,31 +42,31 @@ export default React.createClass({
   show() {
     return new Promise((accept, reject) => {
       if (this._showing) {
-        accept()
+        accept();
         return;
       }
 
       this._showing = true;
       this.props.onShowStart && this.props.onShowStart();
       // XXX: Use promises after react-native 0.7.1 upgrade
-      return OverlayModalManager.show(this.getNativeHandle(), () => {
+      OverlayModalManager.show(this.getNativeHandle(), () => {
         // Signal animation end (the view is still showing)
         this.props.onShowEnd && this.props.onShowEnd();
-        accept()
+        accept();
       });
-    })
+    });
   },
 
   dismiss() {
     return new Promise((accept, reject) => {
       if (!this._showing || this._dismissing) {
         accept();
-        return
+        return;
       }
 
       this._dismissing = true;
       this.props.onDismissStart && this.props.onDismissStart();
-      return OverlayModalManager.dismiss(this.getNativeHandle(), () => {
+      OverlayModalManager.dismiss(this.getNativeHandle(), () => {
         // Animation has ended mark the view as hidden now...
         this._showing = false;
         this._dismissing = false;
@@ -79,8 +79,8 @@ export default React.createClass({
   getDefaultProps() {
     return {
       orientation: 'landscape',
-      presented: false
-    }
+      presented: false,
+    };
   },
 
   componentDidUpdate() {
@@ -104,7 +104,7 @@ export default React.createClass({
   render() {
     // If we are not presenting anything don't render contents...
     if (!this.props.presented) {
-      return <React.View />
+      return <React.View />;
     }
 
     let style = {
@@ -115,7 +115,7 @@ export default React.createClass({
 
     let dimensions = getLandscapeDimensions();
     style.height = dimensions.height;
-    style.width = dimensions.width ;
+    style.width = dimensions.width;
 
     return (
       <OverlayModal
@@ -124,6 +124,6 @@ export default React.createClass({
         orientation={this.props.orientation}>
         {React.Children.map(this.props.children, React.addons.cloneWithProps)}
       </OverlayModal>
-    )
+    );
   }
 });

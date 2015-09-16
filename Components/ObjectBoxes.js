@@ -48,7 +48,7 @@ let ObjectBoxes = React.createClass({
          font='10px "AppleSDGothicNeo-SemiBold"'>{tag}
         </Text>
       </Group>
-    )
+    );
   },
 
   render() {
@@ -70,7 +70,7 @@ let ObjectBoxes = React.createClass({
         groups.push(this.objectBox(count, tag, rects[j], ratio));
         count++;
       }
-     }
+    }
 
     return (
       <View pointerEvents="none" style={this.props.style}>

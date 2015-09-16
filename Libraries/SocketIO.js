@@ -1,5 +1,4 @@
 let {
-  DeviceEventEmitter,
   NativeModules,
   //EventEmitter,
 } = require('react-native');
@@ -36,9 +35,9 @@ function createNativeType(type, payload) {
       // of data it is... This is only useful internally to socket.io so we
       // strip the byte.
       payload.offset = 1;
-      return new NativeBlob(payload)
+      return new NativeBlob(payload);
     default:
-      throw new Error(`Unknown custom native type: ${type}`)
+      throw new Error(`Unknown custom native type: ${type}`);
   }
 }
 
@@ -51,6 +50,8 @@ function convertTypes(items) {
   }
 
   if (items && typeof items === 'object') {
+    // Don't use dot notation to prevent name mangling.
+    /* eslint dot-notation:0 */
     if (items['__native_type']) {
       return createNativeType(items['__native_type'], items);
     }
@@ -68,7 +69,7 @@ function convertTypes(items) {
 function wrapEvent(method) {
   return (...items) => {
     method(...convertTypes(items));
-  }
+  };
 }
 
 /*
@@ -141,7 +142,7 @@ export default class extends EventEmitter {
    * Silk-server specific leave room.
    */
   leave(room) {
-    this.rooms.delete(room)
+    this.rooms.delete(room);
     this.emit('leave', room);
   }
 }

@@ -38,6 +38,6 @@ export default class TextLink extends React.Component {
       </TouchableOpacity>
     );
   }
-};
+}
 
 

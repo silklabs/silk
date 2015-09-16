@@ -2,13 +2,11 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-import LiveVideo from './LiveVideo'
-import ImageView from './ImageView'
-import MonitorFullscreen from './MonitorFullscreen'
+import ImageView from './ImageView';
+import MonitorFullscreen from './MonitorFullscreen';
 import ObjectBoxes from './ObjectBoxes';
 
 var {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -33,16 +31,16 @@ var MonitorPreview = React.createClass({
   getInitialState() {
     return {
       showVideo: false,
-      objects: []
-    }
+      objects: [],
+    };
   },
 
   showVideo() {
-    this.setState({ showVideo: true })
+    this.setState({ showVideo: true });
   },
 
   onVideoHidden() {
-    this.setState({ showVideo: false })
+    this.setState({ showVideo: false });
   },
 
   onPreviewFrame(message) {
@@ -147,7 +145,7 @@ var styles = StyleSheet.create({
     color: '#3a3a48',
     textAlign: 'left',
   },
-  
+
   monitorPreviewContainer: {
     width: PREVIEW_WIDTH,
     height: PREVIEW_HEIGHT,

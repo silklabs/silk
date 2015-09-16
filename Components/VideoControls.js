@@ -1,5 +1,4 @@
-import React from 'react-native'
-import Button from 'react-native-button';
+import React from 'react-native';
 import SystemButton from './SystemButton';
 import TimerMixin from 'react-timer-mixin';
 import Config from '../Libraries/Config';
@@ -39,8 +38,8 @@ export default React.createClass({
       onRewind: noop,
       startTime: 0,
       endTime: 0,
-      currentTime: 0
-    }
+      currentTime: 0,
+    };
   },
 
   propTypes: {
@@ -65,7 +64,7 @@ export default React.createClass({
   _lastChangeEventValue: null,
 
   formatUTCTime(time) {
-    return  moment(new Date(time)).format(
+    return moment(new Date(time)).format(
       'h:mm:ss a'
     );
   },
@@ -76,7 +75,7 @@ export default React.createClass({
   },
 
   daySeconds(time) {
-    let date = new Date(time)
+    let date = new Date(time);
     let start = this.dayStart();
     // Number of elapsed seconds in the given day.
     return Math.ceil((date.valueOf() - start.valueOf()) / 1000);
@@ -167,7 +166,7 @@ export default React.createClass({
 
   buildLiveControls() {
     if (!Config.preferences.showLiveLag) {
-      return;
+      return null;
     }
 
     // TODO: remove me in production builds
@@ -198,10 +197,10 @@ export default React.createClass({
 
     let endTime;
     if (this.props.live) {
-      endTime = (<Text style={styles.seekEnd}>Live</Text>)
+      endTime = (<Text style={styles.seekEnd}>Live</Text>);
     } else {
       let endTimeValue = this.formatUTCTime(this.props.endTime);
-      endTime = (<Text style={styles.seekEnd}>{endTimeValue}</Text>)
+      endTime = (<Text style={styles.seekEnd}>{endTimeValue}</Text>);
     }
 
     // The status bar value is represented as seconds in a given day.

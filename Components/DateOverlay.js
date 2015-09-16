@@ -1,4 +1,4 @@
-import React from 'react-native'
+import React from 'react-native';
 import moment from 'moment';
 
 let {
@@ -23,10 +23,10 @@ export default class extends React.Component {
   }
 
   constructor() {
-    super()
+    super();
     this.state = {
       opacity: new Animated.Value(1)
-    }
+    };
   }
 
   componentDidMount() {
@@ -37,7 +37,6 @@ export default class extends React.Component {
   }
 
   render() {
-
     let formatted = moment(this.props.date).format(
       'MMMM Do YYYY, h:mm:ss a'
     );
@@ -56,10 +55,10 @@ export default class extends React.Component {
         <Text style={styles.text}>{formatted}</Text>
 
       </Animated.View>
-    )
+    );
   }
 
-};
+}
 
 var styles = StyleSheet.create({
   text: {

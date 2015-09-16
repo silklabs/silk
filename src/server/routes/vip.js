@@ -82,6 +82,7 @@ export default function (ctx) {
       res.respond({ success: true });
       return;
     }
+    log.verbose('Failed to create account', account);
     res.respond({ success: false });
   });
 

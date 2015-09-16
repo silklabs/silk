@@ -46,11 +46,12 @@ export default class Auth extends VIPBase {
     return this.createAccount(this.fromPassword(payload));
   }
 
-  /**
-   * Wrapper for the underlying createAccount functionality which expects a
-   * passwordHash to be generated.
-   */
   checkPasswordWithPassword(payload) {
     return this.checkPassword(this.fromPassword(payload));
   }
+
+  signInWithPassword(payload) {
+    return this.signIn(this.fromPassword(payload));
+  }
+
 }

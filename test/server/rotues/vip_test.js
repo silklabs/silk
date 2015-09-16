@@ -110,6 +110,43 @@ suite('account auth', () => {
     assert.ok(auth.success);
   });
 
+  suite('#signIn', () => {
+    let account = {
+      userAgent: 'woot',
+      email: email,
+      password: 'password'
+    };
+
+    setup(async () => {
+      let create = await api.vip.createAccountWithPassword(account);
+      assert.ok(create.success);
+    });
+
+    test('sign in - success', async () => {
+      let newKey = api.id.create();
+      api.vip.key = newKey;
+      let result = await api.vip.signInWithPassword(Object.assign(
+        {},
+        account
+      ));
+      assert.ok(result.success);
+    });
+
+    test('sign in - wrong password', async () => {
+      let newKey = api.id.create();
+      api.vip.key = newKey;
+      let result = await api.vip.signInWithPassword(Object.assign(
+        {},
+        account,
+        {
+          password: 'yousuck'
+        }
+      ));
+      assert.ok(!result.success);
+    });
+  });
+
+
   test('developer account login', async () => {
     let { publicKey, privateKey, email, password } = api.devAccount;
     let id = new api.id(publicKey, privateKey); //eslint-disable-line new-cap

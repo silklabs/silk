@@ -1,0 +1,36 @@
+language: objective-c
+
+osx_image: xcode6.4
+
+before_install:
+  # Update brew twice because the first run can fail: https://github.com/Homebrew/homebrew/issues/42553
+  - brew update; brew update
+ 
+install:
+  - brew reinstall gradle flow watchman xctool
+  - npm install
+
+branches:
+  only:
+    - master
+
+env:
+  matrix:
+    - TEST_TYPE=objc-test
+  global:
+    - PROJECT=Silk
+
+script:
+- |
+  if [ "$TEST_TYPE" = objc-test ]
+  then
+    xctool \
+      -project $PROJECT.xcodeproj \
+      -scheme $PROJECT \
+      -sdk iphonesimulator \
+      -destination 'platform=iOS Simulator,name=iPhone 5,OS=8.4' \
+      test
+  else
+    echo "Unknown test type: $TEST_TYPE"
+    exit 1
+  fi

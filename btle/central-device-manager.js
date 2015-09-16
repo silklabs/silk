@@ -103,26 +103,31 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
     //log.debug('(Ignoring non-configurable peripheral '+ p.id +')');
     return;
   }
+
   if (p.id in this.devices) {
-    log.debug('already discovered peripheral, no-op', p.id);
-    return;
+    log.debug('already discovered peripheral', p.id);
+    p = this.devices[p.id];
+  } else {
+    log.info('discovered Silk peripheral:', p.id);
+    p.prettyName = p.advertisement.localName;
+    p.serverConnectionStatus = '';
+    p.error = '';
+    p.state = 'discovered';
+    p.connected = false;
+    p.configuring = false;
+    this.devices[p.id] = p;
+    this.emit('discover', p);
   }
 
-  log.info('discovered Silk peripheral:', p.id);
-  p.prettyName = p.advertisement.localName;
-  p.serverConnectionStatus = '';
-  p.error = '';
-  p.state = 'discovered';
-  this.devices[p.id] = p;
-  this.emit('discover', p);
-
-  this._connect(p)
-  .catch(err => {
-    // unable to connect to peripheral. disconnect to force rescan
-    // so that we can try again if the peripheral is still there
-    log.warn(`connect to ${p.id} failed. disconnect and retry`);
-    this._disconnect(p);
-  });
+  if (!p.connected) {
+    this._connect(p)
+    .catch(err => {
+      // unable to connect to peripheral. disconnect to force rescan
+      // so that we can try again if the peripheral is still there
+      log.warn(`connect to ${p.id} failed. disconnect and retry`);
+      this._disconnect(p);
+    });
+  }
 };
 
 DeviceManager.prototype._onPeripheralDisconnected = function(id) {
@@ -134,7 +139,8 @@ DeviceManager.prototype._onPeripheralDisconnected = function(id) {
 
   log.info('disconnected from peripheral:', p.id);
   clearTimeout(p._pollStatusTimer);
-  delete this.devices[p.id];
+  p.state = 'disconnected';
+  p.connected = false;
   this.emit('disconnect', p);
 
   // Subsequent advertisements are not received after disconnecting from
@@ -153,7 +159,7 @@ DeviceManager.prototype._readStateCharacteristic = function(p) {
       p.state = state;
       this.emit('stateChange', p);
 
-      if (p.state === 'unregistered') {
+      if (p.state === 'unregistered' && !p.configuring) {
         this._configureDevice(p).catch(() => {});
       }
     }
@@ -205,9 +211,12 @@ DeviceManager.prototype._pollStatus = function(p) {
 };
 
 DeviceManager.prototype._configureDevice = function(p) {
+  p.configuring = true;
   return this._passProximityGate(p)
   .then(resumeToken => this._configureWithoutCrypto(p, resumeToken), rejectFwd)
+  .then(() => p.configuring = false, rejectFwd)
   .catch(() => {
+    p.configuring = false;
     log.warn('error configuring, disconnect and retry');
     this._disconnect(p);
     return Promise.reject(new Error('error configuring'));
@@ -281,7 +290,7 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
     log.debug('Got network info');
     network = net;
     return this._readStateCharacteristic(p);
-  })
+  }, rejectFwd)
   .then(state => {
     if (state === 'registered') {
       // Some time may have passed since getting network info. Don't proceed
@@ -298,10 +307,10 @@ DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
       p.writeCharacteristic(decls.uuid.SecretCharacteristic,
                             new Buffer(network.secret, 'utf8')),
     ]);
-  })
+  }, rejectFwd)
   .then(() => {
     log.info('finished configuring');
-  })
+  }, rejectFwd);
 };
 
 DeviceManager.prototype._resumeSession = function(p, token) {
@@ -313,6 +322,7 @@ DeviceManager.prototype._resumeSession = function(p, token) {
 };
 
 DeviceManager.prototype._connect = function(p) {
+  log.info('connecting to peripheral:', p.id);
   return p.connect()
   .then(() => p.readCharacteristic(decls.uuid.DeviceIdCharacteristic), rejectFwd)
   .then(id => {
@@ -323,6 +333,7 @@ DeviceManager.prototype._connect = function(p) {
   .then(() => {
     log.info('connected to peripheral:', p.id);
     p.state = 'connected';
+    p.connected = true;
     this.emit('connect', p);
   }, rejectFwd);
 };

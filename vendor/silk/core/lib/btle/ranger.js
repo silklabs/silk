@@ -68,6 +68,7 @@ export default class Ranger extends EventEmitter {
     this.localName = DEFAULT_LOCALNAME;
     this.state = noble.state;
     this.enabled = false;
+    this.scanning = false;
     this.toggleScanTimeout = null;
     this.togglingScan = false;
 
@@ -75,63 +76,63 @@ export default class Ranger extends EventEmitter {
 
     this.blacklist = new Set();
     this.whitelist = new Set();
+  }
 
-    noble.on('stateChange', state => {
-      log.debug('StateChange: %s', state);
-      this.state = state;
-      this.adjustScanState();
-    });
+  onStateChange(state) {
+    log.debug('StateChange: %s', state);
+    this.state = state;
+    this.adjustScanState();
+  }
 
-    noble.on('discover', peripheral => {
-      log.debug(`Discovered '%s'`, peripheral.uuid);
+  onDiscover(peripheral) {
+    log.debug(`Discovered '%s'`, peripheral.uuid);
 
-      let peripheralInfo = this.peripherals.get(peripheral.uuid);
-      if (peripheralInfo) {
-        this.updateRssi(peripheralInfo, peripheral.rssi);
-        return;
-      }
+    let peripheralInfo = this.peripherals.get(peripheral.uuid);
+    if (peripheralInfo) {
+      this.updateRssi(peripheralInfo, peripheral.rssi);
+      return;
+    }
 
-      if (this.blacklist.has(peripheral.uuid)) {
-        log.debug(`Ignoring '%s' because it is blacklisted`,
-                  peripheral.uuid);
-        return;
-      }
+    if (this.blacklist.has(peripheral.uuid)) {
+      log.debug(`Ignoring '%s' because it is blacklisted`,
+                peripheral.uuid);
+      return;
+    }
 
-      if (this.whitelist.has(peripheral.uuid)) {
-        log.debug(`Skipping connection to '%s' because it is whitelisted`,
-                  peripheral.uuid);
-        peripheralInfo = this.createPeripheralInfo(peripheral);
-        this.updateRssi(peripheralInfo, peripheral.rssi);
-        return;
-      }
+    if (this.whitelist.has(peripheral.uuid)) {
+      log.debug(`Skipping connection to '%s' because it is whitelisted`,
+                peripheral.uuid);
+      peripheralInfo = this.createPeripheralInfo(peripheral);
+      this.updateRssi(peripheralInfo, peripheral.rssi);
+      return;
+    }
 
-      if (peripheral.state === 'connecting' ||
-          peripheral.state === 'connected') {
-        log.debug(`Skipping connection to '%s' because it is already %s`,
-                  peripheral.uuid,
-                  peripheral.state);
-        return;
-      }
+    if (peripheral.state === 'connecting' ||
+        peripheral.state === 'connected') {
+      log.debug(`Skipping connection to '%s' because it is already %s`,
+                peripheral.uuid,
+                peripheral.state);
+      return;
+    }
 
-      const localName = peripheral.advertisement.localName;
-      const manufacturerData = peripheral.advertisement.manufacturerData;
-      const serviceUuids = peripheral.advertisement.serviceUuids;
+    const localName = peripheral.advertisement.localName;
+    const manufacturerData = peripheral.advertisement.manufacturerData;
+    const serviceUuids = peripheral.advertisement.serviceUuids;
 
-      if (localName !== this.localName &&
-          serviceUuids.indexOf(this.uuid) === -1 &&
-          !(manufacturerData &&
-            manufacturerData.length > 3 &&
-            manufacturerData[0] === 0x4c /* Apple LSB */ &&
-            manufacturerData[1] === 0x00 /* Apple MSB */ &&
-            manufacturerData[2] === 0x01 /* iPhone */)) {
-        log.debug(`Blacklisting '%s' due to advertisement mismatch`,
-                  peripheral.uuid);
-        this.blacklist.add(peripheral.uuid);
-        return;
-      }
+    if (localName !== this.localName &&
+        serviceUuids.indexOf(this.uuid) === -1 &&
+        !(manufacturerData &&
+          manufacturerData.length > 3 &&
+          manufacturerData[0] === 0x4c /* Apple LSB */ &&
+          manufacturerData[1] === 0x00 /* Apple MSB */ &&
+          manufacturerData[2] === 0x01 /* iPhone */)) {
+      log.debug(`Blacklisting '%s' due to advertisement mismatch`,
+                peripheral.uuid);
+      this.blacklist.add(peripheral.uuid);
+      return;
+    }
 
-      this.connect(peripheral);
-    });
+    this.connect(peripheral);
   }
 
   adjustScanState() {
@@ -166,19 +167,31 @@ export default class Ranger extends EventEmitter {
       this.noble.once('scanStart', error => {
         if (error) {
           log.error('Error starting scan: %s', error);
-          this.enabled = false;
         } else {
           log.info('Started scanning');
+          this.scanning = true;
+          this.noble.on('discover', this.onDiscover.bind(this));
           this.toggleScanTimeout =
             setTimeout(toggle, DEFAULT_TOGGLE_SCAN_INTERVAL_MS);
         }
+
         this.emit('start', error);
+
+        // It's possible that we raced here. Check necessary conditions again
+        // and maybe stop scanning now.
+        if (this.state !== 'poweredOn' || !this.enabled) {
+          this.adjustScanState();
+        }
       });
-    } else {
+    } else if (this.scanning) {
       log.info('Stopping scan');
+
+      this.scanning = false;
 
       clearInterval(this.toggleScanTimeout);
       this.toggleScanTimeout = null;
+
+      this.noble.removeListener('discover', this.onDiscover.bind(this));
 
       this.noble.stopScanning();
       this.noble.once('scanStop', () => {
@@ -299,7 +312,6 @@ export default class Ranger extends EventEmitter {
 
   resetOutOfRangeTimer(peripheralInfo) {
     const peripheral = peripheralInfo.peripheral;
-    log.debug('resetOutOfRangeTimer(%s)', peripheral.uuid);
 
     if (peripheralInfo.outOfRangeTimeout) {
       log.debug(`Resetting out-of-range timeout for peripheral '%s'`,
@@ -311,7 +323,7 @@ export default class Ranger extends EventEmitter {
     }
 
     peripheralInfo.outOfRangeTimeout = setTimeout(() => {
-      log.debug(`Out-of-range elapsed for peripheral '%s'`,
+      log.debug(`Out-of-range timeout elapsed for peripheral '%s'`,
                 peripheralInfo.peripheral.uuid);
       assert(this.peripherals.has(peripheral.uuid));
       assert(!peripheralInfo.eventTimeout);
@@ -360,24 +372,34 @@ export default class Ranger extends EventEmitter {
 
   start() {
     log.debug('start()');
+
     if (!ENABLED) {
       log.info(`Not starting because '${ENABLED_PROP}' property is not set'`);
       return;
     }
+
     if (!this.enabled) {
       assert(!this.peripherals.size);
       this.enabled = true;
+
+      this.noble.on('stateChange', this.onStateChange.bind(this));
+
       this.adjustScanState();
     }
   }
 
   stop() {
     log.debug('stop()');
+
     if (!ENABLED) {
       return;
     }
+
     if (this.enabled) {
       this.enabled = false;
+
+      this.noble.removeListener('stateChange', this.onStateChange.bind(this));
+
       this.adjustScanState();
 
       if (this.peripherals.size) {

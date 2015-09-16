@@ -81,8 +81,11 @@ class Bledroid extends EventEmitter {
 
     this.socket = null;
     this.socketEventListenersInstalled = null;
-    this.commandBuffer = { data: '' };
+    this.commandBuffer = null;
     this.nobleConnections = new Set();
+    this.adapterState = 'unknown';
+
+    this.startBufferingCommands();
 
     log.info(`Connecting to '${BLE_SOCKET_PATH}' socket`);
     const socket = net.createConnection(BLE_SOCKET_PATH, err => {
@@ -92,6 +95,21 @@ class Bledroid extends EventEmitter {
         this.onSocketConnected(socket);
       }
     });
+  }
+
+  startBufferingCommands() {
+    if (!this.commandBuffer) {
+      this.commandBuffer = { data: '' };
+    }
+  }
+
+  stopBufferingCommands() {
+    if (this.commandBuffer) {
+      const bufferedCommandData = this.commandBuffer.data;
+      this.commandBuffer = null;
+      return bufferedCommandData;
+    }
+    return null;
   }
 
   onSocketConnectionError(err) {
@@ -118,11 +136,7 @@ class Bledroid extends EventEmitter {
     this.addSocketEventListener('data',
                                 this.onSocketData.bind(this, messageBuffer));
 
-    let bufferedCommandData;
-    if (this.commandBuffer) {
-      bufferedCommandData = this.commandBuffer.data;
-      this.commandBuffer = null;
-    }
+    const bufferedCommandData = this.stopBufferingCommands();
 
     this.command('initialize');
 
@@ -151,7 +165,7 @@ class Bledroid extends EventEmitter {
     log.warn(`Socket 'error' event: ${err}`);
 
     // Buffer any further commands while we wait for the socket to close.
-    this.commandBuffer = { data: '' };
+    this.startBufferingCommands();
 
     // Ending the socket should trigger a 'close' event that will reopen the
     // socket.
@@ -169,6 +183,11 @@ class Bledroid extends EventEmitter {
 
     this.socket = null;
     this.socketEventListenersInstalled = null;
+
+    // Buffer any further commands while we wait for bledroid to restart.
+    this.startBufferingCommands();
+
+    this.onStateChange('resetting');
 
     setTimeout(() => this.init(), SOCKET_RETRY_DELAY_MS);
   }
@@ -278,6 +297,15 @@ class Bledroid extends EventEmitter {
     this.nobleConnections.add(address);
   }
 
+  onStateChange(state) {
+    if (this.adapterState !== state) {
+      log.debug(`onStateChange(${state})`);
+      this.adapterState = state;
+
+      this.emit('stateChange', state);
+    }
+  }
+
   onListen(state, error) {
     if (state) {
       this.emit('advertisingStart', parseInt(error));
@@ -343,7 +371,7 @@ class Bledroid extends EventEmitter {
 Bledroid.prototype.messageMap = [
   {
     regex: /^!adapterState (\w+)$/,
-    emit: 'stateChange',
+    method: 'onStateChange',
   }, {
     regex: /^!address ([\dA-F:]{17})$/,
     emit: 'addressChange',
@@ -539,27 +567,17 @@ class BledroidConnection extends EventEmitter {
     // Forward events directly from our single bledroid instance to this
     // connection.
     this.on('newListener', (event, listener) => {
-      if (event !== 'stateChange') {
-        bledroid.addListener(event, listener);
-      }
+      bledroid.addListener(event, listener);
     });
 
     this.on('removeListener', (event, listener) => {
       bledroid.removeListener(event, listener);
     });
 
-    let adapterState = 'unknown';
-    bledroid.addListener('stateChange', state => {
-      if (state !== adapterState) {
-        adapterState = state;
-        this.emit('stateChange', state);
-      }
-    });
-
     // Add a getter for the current adapter state.
     Object.defineProperty(this, 'adapterState', {
       get: function() {
-        return adapterState;
+        return bledroid.adapterState;
       },
       configurable: true,
       enumerable: true

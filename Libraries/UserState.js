@@ -79,6 +79,12 @@ export default class UserState extends EventEmitter {
     return this._accessToken;
   }
 
+  async signOut() {
+    // Clear out any previous state...
+    this._accessToken = null;
+    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+
   async checkPassword(email, password) {
     let vip = this.api.vip;
     let passwordHash = await PBKDF2KeyDerivation(

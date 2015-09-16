@@ -5,6 +5,8 @@
 
 import React from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import UserForm from './UserForm';
+import TextLink from './TextLink';
 
 import { WordMarkText } from './Text';
 
@@ -29,108 +31,10 @@ class LogoView extends React.Component {
   }
 };
 
-class StyledTextInput extends React.Component {
-  static defaultProps = {
-    secure: false,
-  };
-
-  static propTypes = {
-    onChange: React.PropTypes.func,
-    placeholder: React.PropTypes.string,
-    style: React.PropTypes.object,
-  };
-
-  onChangeText = text => {
-    if (this.props.onChange) {
-      this.props.onChange(text);
-    }
-  }
-
-  render() {
-    return (
-        <TextInput autoCapitalize='none'
-                   autoCorrect={false}
-                   placeholder={this.props.placeholder}
-                   placeholderTextColor={'#999999'}
-                   secureTextEntry={this.props.secure}
-                   style={styles.textInput}
-                   onChangeText={this.onChangeText} />
-    );
-  }
-};
-
-class StyledButton extends React.Component {
-  static propTypes = {
-    label: React.PropTypes.string,
-    onClick: React.PropTypes.func,
-    style: React.PropTypes.object,
-  };
-
-  onPress = () =>  {
-    if (this.props.onClick) {
-      this.props.onClick();
-    }
-  }
-
-  render() {
-    return (
-        <TouchableOpacity onPress={this.onPress}>
-          <View style={styles.button}>
-            <Text style={styles.buttonLabel}>{this.props.label}</Text>
-          </View>
-        </TouchableOpacity>
-    );
-  }
-};
-
-class LoginSpinner extends React.Component {
-  render() {
-    return (
-      <View style={styles.loginSpinner}>
-        <ActivityIndicatorIOS />
-      </View>
-    )
-  }
-}
-
-class TextLink extends React.Component {
-  static propTypes = {
-    label: React.PropTypes.string,
-    onClick: React.PropTypes.func,
-    style: React.PropTypes.object,
-  };
-
-  onPress = () => {
-    if (this.props.onClick) {
-      this.props.onClick();
-    }
-  }
-
-  render() {
-    return (
-      <TouchableOpacity onPress={this.onPress}>
-        <Text style={styles.linkLabel}>{this.props.label}</Text>
-      </TouchableOpacity>
-    );
-  }
-};
-
 class SignInControls extends React.Component {
 
   static propTypes = {
     userState: React.PropTypes.object
-  }
-
-  state = {
-    loginInProgress: false
-  }
-
-  onEmailChange = text => {
-    console.log('Email changed to', text);
-  }
-
-  onPasswordChange = text => {
-    console.log('Password changed to [redacted]', text.length);
   }
 
   onSignIn = () => {
@@ -150,7 +54,7 @@ class SignInControls extends React.Component {
   }
 
   onSignUp = () => {
-    console.log('Sign Up');
+    this.props.navigator.push({ name: 'SignUp', index: 0 });
   }
 
   onLearnMore = () => {
@@ -158,34 +62,21 @@ class SignInControls extends React.Component {
   }
 
   render() {
-
-    let signInOrLoading;
-    if (this.state.loginInProgress) {
-      signInOrLoading = (<LoginSpinner/>);
-    } else {
-      signInOrLoading = (
-        <StyledButton label='SIGN IN'
-                      onClick={this.onSignIn} />
-      );
-    }
-
     return (
-      <View style={styles.signInContainer}>
-        <StyledTextInput placeholder='Email Address'
-                         onChange={this.onEmailChange} />
-        <StyledTextInput placeholder='Password'
-                         secure={true}
-                         onChange={this.onPasswordChange} />
-        {signInOrLoading}
+      <UserForm
+        onSubmit={this.onSignUp}
+        submitText='Sign In'
+        style={styles.signInContainer}>
+
         <View style={styles.bottomLinks}>
           <TextLink label='SIGN UP'
-                    onClick={this.onSignUp} />
+                    onClick={this.onSignIn} />
           <TextLink label='DEVELOPER'
                      onClick={this.onDeveloperSignIn} />
           <TextLink label='LEARN MORE'
                     onClick={this.onLearnMore}/>
         </View>
-      </View>
+      </UserForm>
     );
   }
 }
@@ -254,49 +145,10 @@ var styles = StyleSheet.create({
     paddingRight: 30,
     paddingTop: 40,
   },
-  textInput: {
-    fontFamily: 'Open Sans',
-    fontSize: 12,
-    backgroundColor: 'white',
-    borderRadius: 2,
-    height: 40,
-    marginBottom: 15,
-    paddingLeft: 20,
-  },
-  loginSpinner: {
-    height: 35,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  button: {
-    backgroundColor: '#ff530d',
-    height: 35,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 2,
-  },
-  buttonLabel: {
-    fontFamily: 'Open Sans',
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: 'white',
-  },
   bottomLinks: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-  },
-  linksRow: {
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  linkLabel: {
-    fontFamily: 'Open Sans',
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#99a0a4',
   },
 });

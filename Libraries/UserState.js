@@ -92,6 +92,38 @@ export default class UserState extends EventEmitter {
     });
   }
 
+  /**
+   * Attempt a user signup with the server.
+   */
+  async attemptSignup(email, password) {
+    log('Attempting user sign up');
+    // Always create a new token when we attempt a sign up...
+    let vip = this.api.vip;
+    let accessToken = await this.createAccessToken();
+    vip.key = accessToken;
+
+    let passwordHash = await PBKDF2KeyDerivation(
+      password, /* input */
+      email /* salt */
+    );
+
+    // XXX: Put some more useful information here...
+    let userAgent = 'iOS';
+
+    let result = await vip.createAccount({
+      email,
+      passwordHash,
+      userAgent
+    });
+
+    if (result.success) {
+      log('Successfully created account');
+      await this.setAccessToken(accessToken);
+      return true;
+    }
+    return false;
+  }
+
    /**
    * Attempt logging in with the developer credentials...
    */

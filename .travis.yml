@@ -17,6 +17,7 @@ branches:
 env:
   matrix:
     - TEST_TYPE=objc-test
+    - TEST_TYPE=build-dist
   global:
     - PROJECT=Silk
 
@@ -30,7 +31,35 @@ script:
       -sdk iphonesimulator \
       -destination 'platform=iOS Simulator,name=iPhone 5,OS=8.4' \
       test
+  elif [ "$TEST_TYPE" = build-dist ]
+  then
+    mkdir build
+    xctool \
+      -project $PROJECT.xcodeproj \
+      -scheme $PROJECT \
+      -sdk iphoneos \
+      archive -archivePath build/$PROJECT.xcarchive
+    mkdir dist
+    xcodebuild \
+      -exportArchive \
+      -archivePath build/$PROJECT.xcarchive \
+      -exportPath dist/$PROJECT.ipa \
+      -exportFormat ipa \
+      -exportProvisioningProfile "iOSTeam Provisioning Profile: *"
   else
     echo "Unknown test type: $TEST_TYPE"
     exit 1
   fi
+
+deploy:
+  provider: s3
+  access_key_id: "AKIAIASNJWAY2EBXDKRA"
+  secret_access_key: "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"
+  bucket: "silk-app"
+  region: us-west-2
+  skip_cleanup: true
+  acl: public_read
+  local-dir: dist/
+  upload-dir: $TRAVIS_BRANCH/latest
+  on:
+    all_branches: true

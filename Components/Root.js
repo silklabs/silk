@@ -19,6 +19,7 @@ import Config from '../Libraries/Config';
 import MonitorFullscreen from './MonitorFullscreen';
 import MonitorsView from './MonitorsView';
 import SignIn from './SignIn';
+import SignUp from './SignUp';
 import WifiSettings from './WifiSettings';
 import UserState from '../Libraries/UserState';
 
@@ -76,6 +77,10 @@ class Silk extends React.Component {
     case 'SignIn':
       return (
         <SignIn userState={userState} navigator={navigator} name={route.name} />
+      );
+    case 'SignUp':
+      return (
+        <SignUp userState={userState} navigator={navigator} name={route.name} />
       );
     case 'Monitors':
       return (

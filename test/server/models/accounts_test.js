@@ -88,7 +88,7 @@ suite('accounts', () => {
 
     let duplicateErr;
     try {
-      let duplicateKeySignIn = await subject.signIn(Object.assign(
+      await subject.signIn(Object.assign(
         {},
         input,
         { publicKey: newKey.toString() }

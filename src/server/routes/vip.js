@@ -50,6 +50,10 @@ export default function (ctx) {
       description('Password hash')
   };
 
+  const ACCESS_TOKEN_SCHEMA = Object.assign({}, COMMON_SCHEMA, {
+    userAgent: Joi.string().required(),
+  });
+
   api.define({
     path: 'create',
     method: 'post',
@@ -59,9 +63,7 @@ export default function (ctx) {
     output: Joi.object().keys({
       success: Joi.boolean().required()
     }),
-    input: Joi.object().keys(Object.assign({}, COMMON_SCHEMA, {
-      userAgent: Joi.string().required(),
-    }))
+    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA)
   }, async (req, res) => {
     let account = await ctx.accounts.create({
       // Where this key was created (i.e. iPhone 5s ...)
@@ -83,6 +85,34 @@ export default function (ctx) {
       return;
     }
     log.verbose('Failed to create account', account);
+    res.respond({ success: false });
+  });
+
+  api.define({
+    path: 'sign_in',
+    method: 'post',
+    params: [],
+    name: 'signIn',
+    description: 'Sign into an account',
+    output: Joi.object().keys({
+      success: Joi.boolean().required()
+    }),
+    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA)
+  }, async (req, res) => {
+    let account = await ctx.accounts.signIn({
+      userAgent: req.body.userAgent,
+      email: req.body.email,
+      publicKey: req.unsafeJwt.header.id,
+      passwordHash: req.body.passwordHash
+    });
+
+    if (!account.error) {
+      // TODO: Notify user of new sign in
+      log.info('sign in', account.id);
+      res.respond({ success: true });
+      return;
+    }
+    log.verbose('sign in failure', account);
     res.respond({ success: false });
   });
 

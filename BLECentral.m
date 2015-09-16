@@ -191,6 +191,7 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
     disconnectCallback(@[[NSNull null], [NSNull null]]);
     [disconnectCallbacks removeObjectForKey:peripheral.uuidAsString];
   }
+  [self.bridge.eventDispatcher sendDeviceEventWithName:@"ble:peripheralDisconnected" body:[peripheral asDictionary]];
 }
 
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {

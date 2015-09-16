@@ -78,13 +78,15 @@ var MonitorsView = React.createClass({
     api.socketio.address().then(result => {
       this.state.serverUrl = result.url;
       this.connectServer();
-    });
+    }, err => debug('Unable to get server socketio address', err));
   },
 
   componentWillUnmount: function() {
     PERIPH_EVENTS.forEach(ev =>
                           this.dm.removeListener(ev, this.refreshDeviceList));
-    this.socket.close();
+    if (this.socket) {
+      this.socket.close();
+    }
   },
 
   render: function() {
@@ -256,7 +258,8 @@ var MonitorsView = React.createClass({
 
     
     for (let id in streaming) {
-      if (!this.dm.enumerateDevices().some(p => p.deviceId === id)) {
+      if (!this.dm.enumerateDevices().some(
+          p => p.deviceId === id && p.state !== 'disconnected')) {
         // Streaming widget still exists, but we are no longer connected
         // to the peripheral. Let's do some cleanup...
 

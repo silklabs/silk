@@ -79,6 +79,12 @@ export default class UserState extends EventEmitter {
     return this._accessToken;
   }
 
+  async signOut() {
+    // Clear out any previous state...
+    this._accessToken = null;
+    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+
   async checkPassword(email, password) {
     let vip = this.api.vip;
     let passwordHash = await PBKDF2KeyDerivation(
@@ -90,6 +96,39 @@ export default class UserState extends EventEmitter {
       email,
       passwordHash
     });
+  }
+
+   /**
+   * Attempt to sign into the server... Note: this looks pretty similar to sign
+   * up right now this will diverge over time.
+   */
+  async attemptSignIn(email, password) {
+    log('Attempting user sign in');
+    // Always create a new token when we attempt a sign up...
+    let vip = this.api.vip;
+    let accessToken = await this.createAccessToken();
+    vip.key = accessToken;
+
+    let passwordHash = await PBKDF2KeyDerivation(
+      password, /* input */
+      email /* salt */
+    );
+
+    // XXX: Put some more useful information here...
+    let userAgent = 'iOS';
+
+    let result = await vip.signIn({
+      email,
+      passwordHash,
+      userAgent
+    });
+
+    if (result.success) {
+      log('Successfully signed into account', email);
+      await this.setAccessToken(accessToken);
+      return true;
+    }
+    return false;
   }
 
   /**

@@ -76,15 +76,24 @@ class Silk extends React.Component {
     switch (route.name) {
     case 'SignIn':
       return (
-        <SignIn userState={userState} navigator={navigator} name={route.name} />
+        <SignIn
+          userState={userState}
+          navigator={navigator}
+          name={route.name} />
       );
     case 'SignUp':
       return (
-        <SignUp userState={userState} navigator={navigator} name={route.name} />
+        <SignUp
+          userState={userState}
+          navigator={navigator}
+          name={route.name} />
       );
     case 'Monitors':
       return (
-        <MonitorsView navigator={navigator} name={route.name} />
+        <MonitorsView
+          userState={userState}
+          navigator={navigator}
+          name={route.name} />
       );
     case 'WifiSettings':
       return (

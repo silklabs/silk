@@ -37,9 +37,16 @@ class SignInControls extends React.Component {
     userState: React.PropTypes.object
   }
 
-  onSignIn = () => {
-    // TODO: proper sign-in flow
-    this.props.navigator.push({ name: 'Monitors', index: 0 });
+  onSignIn = async (props) => {
+    try {
+      let { userState } = this.props;
+      let success = await userState.attemptSignIn(props.email, props.password);
+      if (success) {
+        this.props.navigator.push({ name: 'Monitors', index: 0 });
+      }
+    } catch (err) {
+      console.log('Failed to sign in', err);
+    }
   }
 
   onDeveloperSignIn = async () => {
@@ -64,13 +71,13 @@ class SignInControls extends React.Component {
   render() {
     return (
       <UserForm
-        onSubmit={this.onSignUp}
+        onSubmit={this.onSignIn}
         submitText='Sign In'
         style={styles.signInContainer}>
 
         <View style={styles.bottomLinks}>
           <TextLink label='SIGN UP'
-                    onClick={this.onSignIn} />
+                    onClick={this.onSignUp} />
           <TextLink label='DEVELOPER'
                      onClick={this.onDeveloperSignIn} />
           <TextLink label='LEARN MORE'

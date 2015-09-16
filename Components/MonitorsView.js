@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import SystemButton from './SystemButton';
+import TextLink from './TextLink'
 var React = require('react-native');
 var {
   AppRegistry,
@@ -28,6 +29,33 @@ var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
 var api = require('silk-api-react-native')({
   serverUrl: Config.server.url
 });
+
+
+/**
+ * TODO: Move me to somewhere else!
+ * TODO: Make not ugly!
+ */
+class SignOut extends React.Component {
+
+  static propTypes = {
+    userState: React.PropTypes.object,
+    navigator: React.PropTypes.object
+  }
+
+  signOut = async () => {
+    let { userState, navigator } = this.props;
+    await userState.signOut();
+    navigator.push({ name: 'SignIn', index: 0 });
+  }
+
+  render() {
+    return (
+      <View style={{ alignItems: 'center' }}>
+        <TextLink label='Sign Out' onClick={this.signOut} />
+      </View>
+    )
+  }
+}
 
 var MonitorsView = React.createClass({
   getInitialState: function() {
@@ -106,6 +134,9 @@ var MonitorsView = React.createClass({
             {streaming}
           </ScrollView>
         </View>
+        <SignOut
+          navigator={this.props.navigator}
+          userState={this.props.userState} />
       </View>
     );
   },

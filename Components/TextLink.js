@@ -23,7 +23,6 @@ export default class TextLink extends React.Component {
   static propTypes = {
     label: React.PropTypes.string,
     onClick: React.PropTypes.func,
-    style: React.PropTypes.object,
   };
 
   onPress = () => {

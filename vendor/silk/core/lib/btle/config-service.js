@@ -24,6 +24,7 @@ let bleno = require('bleno');
 let events = require('events');
 let log = require('../log')('config-service');
 let util = require('util');
+import { processthrow } from '../util';
 let vibrator = require('../vibrator')();
 const decls = api.btleConfigService;
 
@@ -152,7 +153,8 @@ PeripheralKeyCharacteristic.prototype.onReadRequest = function(offset, callback)
   // malfeasance.
   this.service.proximityPromise.then(() => {
     callback(this.RESULT_SUCCESS, new Buffer(this.service.getKey(), 'binary'));
-  });
+  })
+  .catch(processthrow);
 };
 
 function CentralKeyCharacteristic(service) {
@@ -308,10 +310,6 @@ function ConfigService(id) {
   });
   events.EventEmitter.call(this);
   this.deviceId = id;
-  this.proximityPromise = new Promise(resolve => {
-    this.resolveProximityPromise = resolve;
-  });
-
   this.clearState();
 }
 util.inherits(ConfigService, bleno.PrimaryService);
@@ -346,6 +344,10 @@ ConfigService.prototype.clearState = function() {
   this.unsecured = false;
   this.rssi = -80;
   this.resolveProximityPromise = null;
+  this.proximityPromise = new Promise(resolve => {
+    this.resolveProximityPromise = resolve;
+  });
+
   this.changeState(ConfigService.STATE_UNREGISTERED);
 };
 

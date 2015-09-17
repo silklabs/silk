@@ -1,5 +1,5 @@
 {
   "breakConfig": true,
   "stage": "1",
-  "optional": ["runtime"]
+  "optional": ["runtime", "es7.classProperties"]
 }

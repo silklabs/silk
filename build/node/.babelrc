@@ -3,6 +3,7 @@
   "stage": "1",
   "optional": [
     "asyncToGenerator",
-    "runtime"
+    "runtime",
+    "es7.classProperties"
   ]
 }

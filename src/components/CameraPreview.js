@@ -65,7 +65,7 @@ export default class CameraPreview extends React.Component {
       return <canvas />;
     }
     let {width, height} = camera.previewSize;
-    return <canvas onClick={this.onClick} style={{width, height, backgroundColor: 'lightgray'}} />;
+    return <canvas width={width} height={height} onClick={this.onClick} style={{backgroundColor: 'lightgray'}} />;
   }
 
   componentDidUpdate() {

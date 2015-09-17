@@ -22,7 +22,8 @@ env:
     - PROJECT=Silk
     # Debug or Release
     - CONFIGURATION=Debug
-    - DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"
+    # Single quotes needed so that YAML doesn't escape the colon
+    - 'DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"'
     - PROFILE_NAME="iOSTeam_Provisioning_Profile_"
     # Passphrase for .travis/certs/stooge.p12, created via
     # `travis encrypt 'KEY_PASSWORD=...' add`

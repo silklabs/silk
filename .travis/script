@@ -1,6 +1,9 @@
 #!/bin/bash
 
-if [ "$TEST_TYPE" = objc-test ]; then
+if [ "$TEST_TYPE" = lint ]; then
+  npm run-script lint
+
+elif [ "$TEST_TYPE" = objc-test ]; then
   xctool \
     -project $PROJECT.xcodeproj \
     -scheme $PROJECT \

@@ -16,6 +16,7 @@ branches:
 
 env:
   matrix:
+    - TEST_TYPE=lint
     - TEST_TYPE=objc-test
     - TEST_TYPE=build-dist
   global:

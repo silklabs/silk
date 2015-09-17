@@ -15,7 +15,7 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ];
 then
   echo "Will not push on pull request..."
 else
-  for branch in master next chemspill release; do
+  for branch in master next chemspill; do
     if [ "$TRAVIS_BRANCH" = "$branch" ];
     then
       # Override previous opts with ones specific to pushing...

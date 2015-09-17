@@ -14,7 +14,15 @@ PRODUCT_PROPERTY_OVERRIDES += \
   persist.silk.ranger.enabled=true \
   ro.silk.services=bledroid,silk-sensors,capture,silk \
   ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json \
-  ro.silk.update.poll_hours=3
+  ro.silk.update.poll_hours=3 \
+
+# Properties only for debug builds
+ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
+PRODUCT_PROPERTY_OVERRIDES += \
+  persist.logd.size=16M \
+
+endif
+
 
 NODE_ENGINE?=node
 PRODUCT_PACKAGES += $(NODE_ENGINE)

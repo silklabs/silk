@@ -95,7 +95,7 @@ RCT_EXPORT_METHOD(disconnect:(NSString*)uuid callback:(RCTResponseSenderBlock)ca
 
     return;
   }
-  if (peripheral.isConnected) {
+  if (peripheral.state == CBPeripheralStateConnected) {
     [disconnectCallbacks setObject:callback forKey:[peripheral uuidAsString]];
     [manager cancelPeripheralConnection:peripheral];
   } else {
@@ -279,8 +279,7 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
 
 - (CBPeripheral*)findPeripheralByUUID:(NSString*)uuid {
   for (CBPeripheral *p in peripherals) {
-    NSString* other = CFBridgingRelease(CFUUIDCreateString(nil, p.UUID));
-    if ([uuid isEqualToString:other]) {
+    if ([uuid isEqualToString:p.identifier.UUIDString]) {
       return p;
     }
   }

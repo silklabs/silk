@@ -95,7 +95,7 @@ updatebranch__silk_api() {
       for js in $(find . -name \*.js -o -name \*.json); do
         (
           set -x;
-          sed -i $js -e "s/silk-server-[a-zA-Z0-9]*.herokuapp.com/silk-server-${to}.herokupapp.com/g"
+          sed -i $js -e "s/silk-server-[a-zA-Z0-9]*.herokuapp.com/silk-server-${to}.herokuapp.com/g"
         )
         git add $js
       done
@@ -194,6 +194,13 @@ updatebranch__silk_device() {
 
       xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" gonk/manifest/silk.xml
       xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD gonk/manifest/silk.xml
+
+      if [[ $to == release ]]; then
+        # When locking to a SHA1, ensure the "clone-depth" attribute is removed,
+        # as github does not support fetching a shallow clone of a SHA1 it seems
+        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@clone-depth" gonk/manifest/silk.xml
+      fi
+
     done
     git commit --all -m "Automated branch update from ${from} to ${to}"
     if [[ -n $ignoreOnMaster ]]; then

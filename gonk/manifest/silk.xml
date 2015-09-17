@@ -42,13 +42,13 @@
            remote="github"
            revision="c9c4d65c2cf9c3dff1612ff80dc542a270bbdb4a"
            upstream="master"
-           clone-depth_DOESNT_WORK_FOR_SHA1s="1"/>
+           clone-depth="1"/>
   <project name="peterbraden/node-opencv"
            path="external/node-opencv"
            remote="github"
            revision="110fc740b1b8b1fa401e842122d2763f10ada20f"
            upstream="master"
-           clone-depth_DOESNT_WORK_FOR_SHA1s="1"/>
+           clone-depth="1"/>
   <project name="andreasgal/node-kissfft"
            path="external/node-kissfft"
            remote="github"

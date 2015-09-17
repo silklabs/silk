@@ -24,7 +24,7 @@ env:
     - CONFIGURATION=Debug
     # Single quotes needed so that YAML doesn't escape the colon
     - 'DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"'
-    - PROFILE_NAME="iOSTeam_Provisioning_Profile_"
+    - PROFILE_NAME="CI_Build_Profile"
     # Passphrase for .travis/certs/stooge.p12, created via
     # `travis encrypt 'KEY_PASSWORD=...' add`
     # The passphrase is set when exporting the private key from Keychain.

@@ -36,7 +36,8 @@ clone $ORIGIN_BRANCH
 nostragglers $ORIGIN_BRANCH
 
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
-#updatebranch__silk_app $ORIGIN_BRANCH release
+updatebranch__silk_api $ORIGIN_BRANCH release
+updatebranch__silk_app $ORIGIN_BRANCH release
 updatebranch__silk_device $ORIGIN_BRANCH release
 mergerelease $ORIGIN_BRANCH release
 
@@ -49,8 +50,11 @@ fi
 
 push release
 
-echo Notice: $ORIGIN_BRANCH is now defunct and could be deleted from the
-echo following projects to avoid confusion:
+set +x
+echo
+echo Released to:
 for g in $MERGE_GITS; do
-  echo "  https://github.com/silklabs/$g/branches"
+  echo "https://github.com/silklabs/$g/commit/$(git -C $g rev-parse --short HEAD)"
 done
+
+exit 0

@@ -4,6 +4,17 @@
 
 set -o pipefail
 
+# Check for tools first
+TOOLS="jq xmlstarlet"
+for tool in $TOOLS; do
+  if ! which $tool > /dev/null; then
+    echo "Please install '$tool' to continue, maybe"
+    echo "|apt-get install $tool| or |brew install $tool|"
+    exit 1
+  fi
+done
+
+
 #
 # GITS: List of projects that are branched.
 # MERGE_GITS: Subset of GITS that need commits merged back to master
@@ -62,23 +73,70 @@ ignoreHEADOnMaster() {
   git checkout $from
 }
 
-# Update branch references within silk-app
+update_package_git_version() {
+  local name=$1
+  local version=$2
+  jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1
+  local version_git=$(jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1)
+  jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r package.json > package.json.new
+  mv package.json.new package.json
+}
+
+
+# Update branch references within the silk apis
+updatebranch__silk_api() {
+  local from=$1
+  local to=$2
+  local ignoreOnMaster=$3
+  for api in silk-api-node silk-api-react-native; do
+    echo "Updating branch for $api: $from => $to"
+    pushd $api
+    (
+      for js in $(find . -name \*.js -o -name \*.json); do
+        (
+          set -x;
+          sed -i $js -e "s/silk-server-[a-zA-Z0-9]*.herokuapp.com/silk-server-${to}.herokupapp.com/g"
+        )
+        git add $js
+      done
+
+      git commit -m "Automated branch update from ${from} to ${to}"
+      git --no-pager show
+    )
+    popd
+  done
+}
+
+
+# Update branch references within the silk apps
 updatebranch__silk_app() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
-  echo "Updating branch for silk-app: $from => $to"
-  pushd silk-app
-  (
-    set -x
-    sed -i package.json -e s/#${from}/#${to}/g
-    git add package.json
-    git commit -m "Automated branch update from ${from} to ${to}"
-    if [[ -n $ignoreOnMaster ]]; then
-      ignoreHEADOnMaster
-    fi
-  )
-  popd
+  for app in silk-app silk-webapp; do
+    echo "Updating branch for $app: $from => $to"
+    pushd $app
+    (
+      set -x
+
+      for p in silk-api-react-native ; do
+        local HEAD=$to
+        if [[ $to == release ]]; then
+          # Lock to SHA1 for release branch
+          HEAD=$(git -C ../$p rev-parse HEAD)
+        fi
+        update_package_git_version $p $HEAD
+      done
+
+      git add package.json
+
+      git commit -m "Automated branch update from ${from} to ${to}"
+      if [[ -n $ignoreOnMaster ]]; then
+        ignoreHEADOnMaster
+      fi
+    )
+    popd
+  done
 }
 
 # Bumps the version of silk-app for given branch
@@ -128,13 +186,11 @@ updatebranch__silk_device() {
     # Update the revision attribute for the following projects in
     # gonk/manifest/silk.xml
     for p in silk-device-locked-node-modules silk-api-node; do
-      pushd ../$p
       local HEAD=$to
       if [[ $to == release ]]; then
         # Lock to SHA1 for release branch
-        HEAD=$(git rev-parse HEAD)
+        HEAD=$(git -C ../$p rev-parse HEAD)
       fi
-      popd > /dev/null
 
       xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" gonk/manifest/silk.xml
       xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD gonk/manifest/silk.xml
@@ -205,12 +261,8 @@ mergerelease() {
 push() {
   local branch=$1
 
+  set -x
   for g in $GITS; do
-    (
-      set -x
-      pushd $g
-      git push origin $branch
-      popd > /dev/null
-    )
+    git -C $g push origin $branch
   done
 }

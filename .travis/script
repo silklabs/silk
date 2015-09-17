@@ -28,7 +28,7 @@ elif [ "$TEST_TYPE" = build-dist ]; then
     "$PWD/build/$CONFIGURATION-iphoneos/$PROJECT.app" \
     -o "$PWD/dist/$PROJECT.ipa" \
     -sign "$DEVELOPER_NAME" \
-    -embed "~/Library/MobileDevice/Provisioning Profiles/$PROFILE_NAME.mobileprovision"
+    -embed "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_NAME.mobileprovision"
 
 else
   echo "Unknown test type: $TEST_TYPE"

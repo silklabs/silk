@@ -20,9 +20,23 @@ env:
     - TEST_TYPE=build-dist
   global:
     - PROJECT=Silk
+    # Debug or Release
+    - CONFIGURATION=Debug
+    - DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"
+    - PROFILE_NAME="iOSTeam_Provisioning_Profile_"
+    # Passphrase for .travis/certs/stooge.p12, created via
+    # `travis encrypt 'KEY_PASSWORD=...' add`
+    # The passphrase is set when exporting the private key from Keychain.
+    - secure: txbE60MJK8jQAubVtVIbuPkZjjCtQG0eTg6+bm7OPLucqIPqI0KcYcUIt9jdkxUaTU0dQIcg6LMPpHynSnWQmdYHSQYWIlB8ydNHEqd0eQgP8ancTGTYoT1bPUVqCWd4j5D59kTGO4ideLbQ/F1N2kDv2O0/vb8S/gv2eb9UXSDwXgYNaDQ1lryv2+HKqx/o7b9W8eRlsjfsXnrYKjfZ8QrUAi6BnEbbD8+fOenP6wzlYOIoorCpzErG1I0KSf1O2wzsJjwFYPcTZ4A6NLoBWDvcY0cxddVGG6rXbCQDDhfhcqQhYN6RkLDYxpwViNnSsQ/QnRydJVYHkDbPJQX3DcYY+CSgUKJBVT543LbR7CpLz7GKDvY9qCrEBmKeHVu7q9xvwhRkCwogh+n1l32BGZVSHY53PjTmT0AkzPyVqSu9v+bgQh7TRcyrgV61pcXCoNj1wXH/76w+JRhHDi0ilBZNyHqpajfzBnc44+NoIbJyhUX0nYRKk9MqBhd7q68FV8KFOZCb+R7RHQK/gAnKA67TmTp+TWT5DkNwq2Fj5TY8pDPfndh4qs/ADHCw8gngo07fn7ROmmvJ/YHnka/5pjLM21Bn2LV1LTRpW0ggi9o/r2gnCTuww56JRrrzD0uzaBi+waWOcB7cSii8AE4S0pQJyacvKoxAq0sDoG+Rx+I=
+
+before_script:
+  - .travis/add-key.sh
 
 script:
   - .travis/script
+
+after_script:
+  - .travis/remove-key.sh
 
 deploy:
   provider: s3

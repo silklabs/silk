@@ -23,7 +23,7 @@
     "react-native-linear-gradient": "^0.3.2",
     "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#046a2f6a4353079e3376ebf340ec410986689144",
     "react-timer-mixin": "^0.13.2",
-    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#6aeed4d47a53bbfeff686e85f4d7d2739ff04e0a",
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
     "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"
   },

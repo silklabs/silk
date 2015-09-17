@@ -17,7 +17,9 @@ elif [ "$TEST_TYPE" = build-dist ]; then
     OBJROOT=$PWD/build \
     SYMROOT=$PWD/build \
     ONLY_ACTIVE_ARCH=NO \
-    'CODE_SIGN_RESOURCE_RULES_PATH=$(SDKROOT)/ResourceRules.plist'
+    'CODE_SIGN_RESOURCE_RULES_PATH=$(SDKROOT)/ResourceRules.plist' \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO
   mkdir dist
   xcrun \
     -log \

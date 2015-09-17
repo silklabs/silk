@@ -199,6 +199,10 @@ updatebranch__silk_device() {
         # When locking to a SHA1, ensure the "clone-depth" attribute is removed,
         # as github does not support fetching a shallow clone of a SHA1 it seems
         xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@clone-depth" gonk/manifest/silk.xml
+
+        # Add upstream attribute as a convenience to help decode the SHA1
+        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@upstream" gonk/manifest/silk.xml
+        xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n upstream -v $to gonk/manifest/silk.xml
       fi
 
     done

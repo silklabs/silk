@@ -18,409 +18,447 @@
 //   Secret to indicate open network.
 //
 
-let api = require('../api');
-let assert = require('assert');
-let bleno = require('bleno');
-let events = require('events');
-let log = require('../log')('config-service');
-let util = require('util');
+import assert from 'assert';
+import { btleConfigService as decls, crypto } from '../api';
+import { Descriptor, Characteristic, PrimaryService } from 'bleno';
+import makeLog from '../log';
+import makeVibrator from '../vibrator';
 import { processthrow } from '../util';
-let vibrator = require('../vibrator')();
-const decls = api.btleConfigService;
 
-// TODO: can we use ES6 class sugar and still interoperate with bleno
-// super-classes?
-function DescriptionDescriptor(text) {
-  bleno.Descriptor.call(this, {
-    uuid: '2901',
-    value: text
-  });
+const log = makeLog('config-service');
+const vibrator = makeVibrator();
+
+class DescriptionDescriptor extends Descriptor {
+  constructor(text) {
+    super({
+      uuid: '2901',
+      value: text,
+    });
+  }
 }
 
 // value: enum { Unregistered, Registering, Registered, Error }
-function StateCharacteristic(service) {
-  StateCharacteristic.super_.call(this, {
-    uuid: StateCharacteristic.uuid,
-    properties: ['notify', 'read'],
-    descriptors: [
-      new DescriptionDescriptor('State of registration.')
-    ]
-  });
-  this.service = service;
+class StateCharacteristic extends Characteristic {
+  static uuid = decls.uuid.StateCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: StateCharacteristic.uuid,
+      properties: ['notify', 'read'],
+      descriptors: [
+        new DescriptionDescriptor('State of registration.'),
+      ],
+    });
+  }
+
+  onReadRequest(offset, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    // It's OK for clients to request our state without passing through
+    // the proximity gate.
+    let data = new Buffer(1);
+    data.writeUInt8(this.service.state, 0);
+    callback(this.RESULT_SUCCESS, data);
+  }
 }
-util.inherits(StateCharacteristic, bleno.Characteristic);
-StateCharacteristic.uuid = decls.uuid.StateCharacteristic;
 
-StateCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
+class ServerConnectionStatusCharacteristic extends Characteristic {
+  static uuid = decls.uuid.ServerConnectionStatusCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: ServerConnectionStatusCharacteristic.uuid,
+      properties: ['notify', 'read'],
+      descriptors: [
+        new DescriptionDescriptor('Connection Status'),
+      ],
+    });
   }
-  // It's OK for clients to request our state without passing through
-  // the proximity gate.
-  let data = new Buffer(1);
-  data.writeUInt8(this.service.state, 0);
-  callback(this.RESULT_SUCCESS, data);
-};
 
-function ServerConnectionStatusCharacteristic(service) {
-  ServerConnectionStatusCharacteristic.super_.call(this, {
-    uuid: ServerConnectionStatusCharacteristic.uuid,
-    properties: ['notify', 'read'],
-    descriptors: [
-      new DescriptionDescriptor('Connection Status')
-    ]
-  });
-  this.service = service;
+  onReadRequest(offset, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    let data = new Buffer(this.service.serverConnectionStatus, 'utf8');
+    callback(this.RESULT_SUCCESS, data);
+  }
 }
-util.inherits(ServerConnectionStatusCharacteristic, bleno.Characteristic);
-ServerConnectionStatusCharacteristic.uuid = decls.uuid.ServerConnectionStatusCharacteristic;
 
-ServerConnectionStatusCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  let data = new Buffer(this.service.serverConnectionStatus, 'utf8');
-  callback(this.RESULT_SUCCESS, data);
-};
+class RssiCharacteristic extends Characteristic {
+  static uuid = decls.uuid.RssiCharacteristic
 
-function RssiCharacteristic(service) {
-  RssiCharacteristic.super_.call(this, {
-    uuid: RssiCharacteristic.uuid,
-    properties: ['notify', 'read'],
-    descriptors: [
-      new DescriptionDescriptor('Rssi at device <-- client.')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(RssiCharacteristic, bleno.Characteristic);
-RssiCharacteristic.uuid = decls.uuid.RssiCharacteristic;
+  service = null
 
-RssiCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  // It's OK for clients to request our rssi without passing through
-  // the proximity gate.
-  let data = new Buffer(1);
-  data.writeUInt8(-this.service.rssi, 0);
-  callback(this.RESULT_SUCCESS, data);
-};
-// TODO: notify
-
-function CurveCharacteristic(service) {
-  CurveCharacteristic.super_.call(this, {
-    uuid: CurveCharacteristic.uuid,
-    properties: ['write', 'writeWithoutResponse'],
-    descriptors: [
-      new DescriptionDescriptor('Elliptic curve to use for crypto.'),
-    ]
-  });
-  this.service = service;
-}
-util.inherits(CurveCharacteristic, bleno.Characteristic);
-CurveCharacteristic.uuid = decls.uuid.CurveCharacteristic;
-
-CurveCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  this.service.useECCurve(data.toString('utf8'));
-  callback(this.RESULT_SUCCESS);
-};
-
-function PeripheralKeyCharacteristic(service) {
-  PeripheralKeyCharacteristic.super_.call(this, {
-    uuid: PeripheralKeyCharacteristic.uuid,
-    properties: ['notify', 'read'],
-    descriptors: [
-      new DescriptionDescriptor('Session key of peripheral device.')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(PeripheralKeyCharacteristic, bleno.Characteristic);
-PeripheralKeyCharacteristic.uuid = decls.uuid.PeripheralKeyCharacteristic;
-
-PeripheralKeyCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
+  constructor() {
+    super({
+      uuid: RssiCharacteristic.uuid,
+      properties: ['notify', 'read'],
+      descriptors: [
+        new DescriptionDescriptor('Rssi at device <-- client.'),
+      ],
+    });
   }
 
-  // TODO lock down other characteristics, ensure we've passed the
-  // proximity gate. There's no real harm that out-of-order
-  // reads/writes can cause, but they might be evidence of
-  // malfeasance.
-  this.service.proximityPromise.then(() => {
-    callback(this.RESULT_SUCCESS, new Buffer(this.service.getKey(), 'binary'));
-  })
-  .catch(processthrow);
-};
-
-function CentralKeyCharacteristic(service) {
-  CentralKeyCharacteristic.super_.call(this, {
-    uuid: CentralKeyCharacteristic.uuid,
-    properties: ['write', 'writeWithoutResponse'],
-    descriptors: [
-      new DescriptionDescriptor('Session key of central device.')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(CentralKeyCharacteristic, bleno.Characteristic);
-CentralKeyCharacteristic.uuid = decls.uuid.CentralKeyCharacteristic;
-
-CentralKeyCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  this.service.useCentralKey(data.toString('binary'));
-  callback(this.RESULT_SUCCESS);
-};
-
-function AccessPointCharacteristic(service) {
-  AccessPointCharacteristic.super_.call(this, {
-    uuid: AccessPointCharacteristic.uuid,
-    properties: ['write', 'writeWithoutResponse'],
-    descriptors: [
-      new DescriptionDescriptor('Access point to register (encrypted).')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(AccessPointCharacteristic, bleno.Characteristic);
-AccessPointCharacteristic.uuid = decls.uuid.AccessPointCharacteristic;
-
-AccessPointCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  this.service.setAccessPoint(data.toString('binary'));
-  callback(this.RESULT_SUCCESS);
-};
-
-function SecretCharacteristic(service) {
-  SecretCharacteristic.super_.call(this, {
-    uuid: SecretCharacteristic.uuid,
-    properties: ['write', 'writeWithoutResponse'],
-    descriptors: [
-      new DescriptionDescriptor('Secret of access point (encrypted).')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(SecretCharacteristic, bleno.Characteristic);
-SecretCharacteristic.uuid = decls.uuid.SecretCharacteristic;
-
-SecretCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  this.service.setSecret(data.toString('binary'));
-  callback(this.RESULT_SUCCESS);
-};
-
-function DeviceIdCharacteristic(service) {
-  DeviceIdCharacteristic.super_.call(this, {
-    uuid: DeviceIdCharacteristic.uuid,
-    properties: ['read'],
-    descriptors: [
-      new DescriptionDescriptor('Device ID.')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(DeviceIdCharacteristic, bleno.Characteristic);
-DeviceIdCharacteristic.uuid = decls.uuid.DeviceIdCharacteristic;
-
-DeviceIdCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  callback(this.RESULT_SUCCESS, new Buffer(this.service.deviceId, 'hex'));
-};
-
-function ErrorDescriptionCharacteristic(service) {
-  ErrorDescriptionCharacteristic.super_.call(this, {
-    uuid: ErrorDescriptionCharacteristic.uuid,
-    properties: ['notify', 'read'],
-    descriptors: [
-      new DescriptionDescriptor('Description of most recent error.')
-    ]
-  });
-  this.service = service;
-}
-util.inherits(ErrorDescriptionCharacteristic, bleno.Characteristic);
-ErrorDescriptionCharacteristic.uuid = decls.uuid.ErrorDescriptionCharacteristic;
-
-ErrorDescriptionCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_OFFSET);
-  }
-  callback(this.RESULT_SUCCESS, new Buffer(this.service.errorMessage, 'utf8'));
-};
-
-function VibratePatternCharacteristic(service) {
-  VibratePatternCharacteristic.super_.call(this, {
-    uuid: VibratePatternCharacteristic.uuid,
-    properties: ['write', 'writeWithoutResponse'],
-    descriptors: [
-      new DescriptionDescriptor('16-bit LE on/off vibrate pattern.'),
-    ]
-  });
-  this.service = service;
-}
-util.inherits(VibratePatternCharacteristic, bleno.Characteristic);
-VibratePatternCharacteristic.uuid = decls.uuid.VibratePatternCharacteristic;
-
-VibratePatternCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-  if (offset) {
-    return callback(this.RESULT_INVALID_ATTRIBUTE_LENGTH);
-  }
-  if (data.length % 2 === 1) {
-    return callback(this.RESULT_INVALID_ATTRIBUTE_LENGTH);
+  onReadRequest(offset, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    // It's OK for clients to request our rssi without passing through
+    // the proximity gate.
+    let data = new Buffer(1);
+    data.writeUInt8(-this.service.rssi, 0);
+    callback(this.RESULT_SUCCESS, data);
   }
 
-  let pattern = [];
-  for (let i = 0; i < data.length / 2; i++) {
-    pattern[i] = data.readUInt16LE(i * 2);
-  }
-  log.debug(`Issuing vibrator pattern: [${pattern.toString()}]`);
-  vibrator.pattern(...pattern);
-  callback(this.RESULT_SUCCESS);
-};
-
-
-function ConfigService(id) {
-  bleno.PrimaryService.call(this, {
-    uuid: ConfigService.uuid,
-    characteristics: [
-      new StateCharacteristic(this),
-      new ServerConnectionStatusCharacteristic(this),
-      new RssiCharacteristic(this),
-      new CurveCharacteristic(this),
-      new PeripheralKeyCharacteristic(this),
-      new CentralKeyCharacteristic(this),
-      new AccessPointCharacteristic(this),
-      new SecretCharacteristic(this),
-      new DeviceIdCharacteristic(this),
-      new ErrorDescriptionCharacteristic(this),
-      new VibratePatternCharacteristic(this),
-    ],
-  });
-  events.EventEmitter.call(this);
-  this.deviceId = id;
-  this.clearState();
-}
-util.inherits(ConfigService, bleno.PrimaryService);
-util.inherits(ConfigService, events.EventEmitter);
-
-ConfigService.STATE_UNREGISTERED = decls.state.UNREGISTERED;
-ConfigService.STATE_REGISTERING = decls.state.REGISTERING;
-ConfigService.STATE_REGISTERED = decls.state.REGISTERED;
-ConfigService.STATE_ERROR = decls.state.ERROR;
-ConfigService.uuid = decls.uuid.ConfigService;
-ConfigService.characteristicUuidToName = { };
-ConfigService.characteristicUuidToName[StateCharacteristic.uuid] = 'state';
-ConfigService.characteristicUuidToName[ServerConnectionStatusCharacteristic.uuid] = 'serverConnectionStatus';
-ConfigService.characteristicUuidToName[RssiCharacteristic.uuid] = 'rssi';
-ConfigService.characteristicUuidToName[CurveCharacteristic.uuid] = 'curve';
-ConfigService.characteristicUuidToName[PeripheralKeyCharacteristic.uuid] = 'peripheralKey';
-ConfigService.characteristicUuidToName[CentralKeyCharacteristic.uuid] = 'centralKey';
-ConfigService.characteristicUuidToName[AccessPointCharacteristic.uuid] = 'accessPoint';
-ConfigService.characteristicUuidToName[SecretCharacteristic.uuid] = 'secret';
-ConfigService.characteristicUuidToName[DeviceIdCharacteristic.uuid] = 'deviceId';
-ConfigService.characteristicUuidToName[ErrorDescriptionCharacteristic.uuid] = 'errorDescription';
-ConfigService.characteristicUuidToName[VibratePatternCharacteristic.uuid] = 'vibratePattern';
-
-ConfigService.prototype.clearState = function() {
-  log.info('Clearing state');
-
-  this.ap = null;
-  this.serverConnectionStatus = '';
-  this.crypto = null;
-  this.errorMessage = '';
-  this.secret = null;
-  this.unsecured = false;
-  this.rssi = -80;
-  this.resolveProximityPromise = null;
-  this.proximityPromise = new Promise(resolve => {
-    this.resolveProximityPromise = resolve;
-  });
-
-  this.changeState(ConfigService.STATE_UNREGISTERED);
-};
-
-ConfigService.prototype.changeState = function(state) {
-  log.info('Changing state to ' + state);
   // TODO: notify
-  this.state = state;
-  this.emit('stateChange', state);
-};
+}
 
-ConfigService.prototype.updateRssi = function(rssi) {
-  this.rssi = rssi;
-  if (rssi < -40) {
-    return;
+class CurveCharacteristic extends Characteristic {
+  static uuid = decls.uuid.CurveCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: CurveCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('Elliptic curve to use for crypto.'),
+      ],
+    });
   }
-  if (this.resolveProximityPromise) {
-    this.resolveProximityPromise.call(null);
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    this.service.useECCurve(data.toString('utf8'));
+    callback(this.RESULT_SUCCESS);
+  }
+}
+
+class PeripheralKeyCharacteristic extends Characteristic {
+  static uuid = decls.uuid.PeripheralKeyCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: PeripheralKeyCharacteristic.uuid,
+      properties: ['notify', 'read'],
+      descriptors: [
+        new DescriptionDescriptor('Session key of peripheral device.'),
+      ],
+    });
+  }
+
+  onReadRequest(offset, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+
+    // TODO lock down other characteristics, ensure we've passed the
+    // proximity gate. There's no real harm that out-of-order
+    // reads/writes can cause, but they might be evidence of
+    // malfeasance.
+    this.service.proximityPromise.then(() => {
+      callback(this.RESULT_SUCCESS,
+               new Buffer(this.service.getKey(), 'binary'));
+    })
+    .catch(processthrow);
+  }
+}
+
+class CentralKeyCharacteristic extends Characteristic {
+  static uuid = decls.uuid.CentralKeyCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: CentralKeyCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('Session key of central device.'),
+      ],
+    });
+  }
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    this.service.useCentralKey(data.toString('binary'));
+    callback(this.RESULT_SUCCESS);
+  }
+}
+
+class AccessPointCharacteristic extends Characteristic {
+  static uuid = decls.uuid.AccessPointCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: AccessPointCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('Access point to register (encrypted).'),
+      ],
+    });
+  }
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    this.service.setAccessPoint(data.toString('binary'));
+    callback(this.RESULT_SUCCESS);
+  }
+}
+
+class SecretCharacteristic extends Characteristic {
+  static uuid = decls.uuid.SecretCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: SecretCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('Secret of access point (encrypted).'),
+      ],
+    });
+  }
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    this.service.setSecret(data.toString('binary'));
+    callback(this.RESULT_SUCCESS);
+  }
+}
+
+class DeviceIdCharacteristic extends Characteristic {
+  static uuid = decls.uuid.DeviceIdCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: DeviceIdCharacteristic.uuid,
+      properties: ['read'],
+      descriptors: [
+        new DescriptionDescriptor('Device ID.'),
+      ],
+    });
+  }
+
+  onReadRequest(offset, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    callback(this.RESULT_SUCCESS, new Buffer(this.service.deviceId, 'hex'));
+  }
+}
+
+class ErrorDescriptionCharacteristic extends Characteristic {
+  static uuid = decls.uuid.ErrorDescriptionCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: ErrorDescriptionCharacteristic.uuid,
+      properties: ['notify', 'read'],
+      descriptors: [
+        new DescriptionDescriptor('Description of most recent error.')
+      ]
+    });
+  }
+
+  onReadRequest(offset, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+    callback(this.RESULT_SUCCESS, new Buffer(this.service.errorMessage, 'utf8'));
+  }
+}
+
+class VibratePatternCharacteristic extends Characteristic {
+  static uuid = decls.uuid.VibratePatternCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: VibratePatternCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('16-bit LE on/off vibrate pattern.'),
+      ]
+    });
+  }
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    if (offset) {
+      return callback(this.RESULT_INVALID_ATTRIBUTE_LENGTH);
+    }
+    if (data.length % 2 === 1) {
+      return callback(this.RESULT_INVALID_ATTRIBUTE_LENGTH);
+    }
+
+    let pattern = [];
+    for (let i = 0; i < data.length / 2; i++) {
+      pattern[i] = data.readUInt16LE(i * 2);
+    }
+    log.debug(`Issuing vibrator pattern: [${pattern.toString()}]`);
+    vibrator.pattern(...pattern);
+    callback(this.RESULT_SUCCESS);
+  }
+}
+
+class ConfigService extends PrimaryService {
+  static uuid = decls.uuid.ConfigService
+
+  static STATE_UNREGISTERED = decls.state.UNREGISTERED
+  static STATE_REGISTERING = decls.state.REGISTERING
+  static STATE_REGISTERED = decls.state.REGISTERED
+  static STATE_ERROR = decls.state.ERROR
+
+  ap = null
+  serverConnectionStatus = ''
+  crypto = null
+  errorMessage = ''
+  secret = null
+  unsecured = false
+  rssi = -80
+  resolveProximityPromise = null
+  proximityPromise = null
+  state = ConfigService.STATE_UNREGISTERED
+
+  constructor(id) {
+    super({
+      uuid: ConfigService.uuid,
+      characteristics: [
+        new StateCharacteristic(),
+        new ServerConnectionStatusCharacteristic(),
+        new RssiCharacteristic(),
+        new CurveCharacteristic(),
+        new PeripheralKeyCharacteristic(),
+        new CentralKeyCharacteristic(),
+        new AccessPointCharacteristic(),
+        new SecretCharacteristic(),
+        new DeviceIdCharacteristic(),
+        new ErrorDescriptionCharacteristic(),
+        new VibratePatternCharacteristic(),
+      ],
+    });
+    this.characteristics.forEach(characteristic => {
+      characteristic.service = this;
+    });
+    this.deviceId = id;
+    this.clearState();
+  }
+
+  clearState() {
+    log.info('Clearing state');
+
+    this.ap = null;
+    this.serverConnectionStatus = '';
+    this.crypto = null;
+    this.errorMessage = '';
+    this.secret = null;
+    this.unsecured = false;
+    this.rssi = -80;
     this.resolveProximityPromise = null;
-  }
-};
+    this.proximityPromise = new Promise(resolve => {
+      this.resolveProximityPromise = resolve;
+    });
 
-ConfigService.prototype.getKey = function() {
-  return this.crypto ? this.crypto.exportPublic() : '';
-};
-
-ConfigService.prototype.useECCurve = function(curve) {
-  assert(!this.crypto);
-
-  log.info('Using elliptic curve "' + curve + '"');
-  this.crypto = api.crypto.create(curve);
-  this.changeState(ConfigService.STATE_REGISTERING);
-};
-
-ConfigService.prototype.useCentralKey = function(key) {
-  assert(this.crypto);
-
-  log.info('Deriving session key from central key');
-  this.crypto.deriveShared(key);
-};
-
-ConfigService.prototype.setAccessPoint = function(apEnc) {
-  if (this.crypto) {
-    log.info('Decrypting access point ...');
-    this.ap = this.crypto.decrypt(apEnc);
-  } else {
-    this.ap = apEnc;
+    this.changeState(ConfigService.STATE_UNREGISTERED);
   }
 
-  this.checkDone();
-};
-
-ConfigService.prototype.setSecret = function(secretEnc) {
-  if (secretEnc.length === 0) {
-    log.info('  ... no secret, unsecured network');
-    this.unsecured = true;
-  } else if (this.crypto) {
-    log.info('Decrypting secret ...');
-    this.secret = this.crypto.decrypt(secretEnc);
-  } else {
-    this.secret = secretEnc;
+  changeState(state) {
+    log.info('Changing state to ' + state);
+    // TODO: notify
+    this.state = state;
+    this.emit('stateChange', state);
   }
 
-  this.checkDone();
-};
-
-ConfigService.prototype.checkDone = function() {
-  if (!(this.ap && (this.secret || this.unsecured))) {
-    return;
+  updateRssi(rssi) {
+    this.rssi = rssi;
+    if (rssi < -40) {
+      return;
+    }
+    if (this.resolveProximityPromise) {
+      this.resolveProximityPromise.call(null);
+      this.resolveProximityPromise = null;
+    }
   }
-  log.info('Finished registering wifi!');
-  // TODO persist
-  this.changeState(ConfigService.STATE_REGISTERED);
-  // TODO notify to stop BLE service
-};
 
-module.exports = id => new ConfigService(id);
+  getKey() {
+    return this.crypto ? this.crypto.exportPublic() : '';
+  }
+
+  useECCurve(curve) {
+    assert(!this.crypto);
+
+    log.info('Using elliptic curve "' + curve + '"');
+    this.crypto = crypto.create(curve);
+    this.changeState(ConfigService.STATE_REGISTERING);
+  }
+
+  useCentralKey(key) {
+    assert(this.crypto);
+
+    log.info('Deriving session key from central key');
+    this.crypto.deriveShared(key);
+  }
+
+  setAccessPoint(apEnc) {
+    if (this.crypto) {
+      log.info('Decrypting access point ...');
+      this.ap = this.crypto.decrypt(apEnc);
+    } else {
+      this.ap = apEnc;
+    }
+
+    this.checkDone();
+  }
+
+  setSecret(secretEnc) {
+    if (secretEnc.length === 0) {
+      log.info('  ... no secret, unsecured network');
+      this.unsecured = true;
+    } else if (this.crypto) {
+      log.info('Decrypting secret ...');
+      this.secret = this.crypto.decrypt(secretEnc);
+    } else {
+      this.secret = secretEnc;
+    }
+
+    this.checkDone();
+  }
+
+  checkDone() {
+    if (!(this.ap && (this.secret || this.unsecured))) {
+      return;
+    }
+    log.info('Finished registering wifi!');
+    // TODO persist
+    this.changeState(ConfigService.STATE_REGISTERED);
+    // TODO notify to stop BLE service
+  }
+}
+
+export default function(id) {
+  return new ConfigService(id);
+}

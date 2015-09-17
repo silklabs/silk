@@ -254,3 +254,4 @@ $(eval \
 # gonk build system
 GNUmakefile: ;
 out/repo_fetchtimes.P: ;
+.branch: ;

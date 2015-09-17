@@ -20,6 +20,13 @@
 		3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC41B7AB51E0047A020 /* Rectangle.js */; };
 		3D4D1CD31B7AB51E0047A020 /* VideoControls.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC61B7AB51E0047A020 /* VideoControls.js */; };
 		3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */; };
+		3D83E42E1BAB7B5200CBB1D8 /* DateOverlay.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E4271BAB7B5200CBB1D8 /* DateOverlay.js */; };
+		3D83E42F1BAB7B5200CBB1D8 /* Root.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E4281BAB7B5200CBB1D8 /* Root.js */; };
+		3D83E4301BAB7B5200CBB1D8 /* SignIn.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E4291BAB7B5200CBB1D8 /* SignIn.js */; };
+		3D83E4311BAB7B5200CBB1D8 /* SignUp.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E42A1BAB7B5200CBB1D8 /* SignUp.js */; };
+		3D83E4321BAB7B5200CBB1D8 /* Text.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E42B1BAB7B5200CBB1D8 /* Text.js */; };
+		3D83E4331BAB7B5200CBB1D8 /* TextLink.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E42C1BAB7B5200CBB1D8 /* TextLink.js */; };
+		3D83E4341BAB7B5200CBB1D8 /* UserForm.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E42D1BAB7B5200CBB1D8 /* UserForm.js */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
 		3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */; };
 		3DEBC1381B7C19870062FF19 /* ObjectBoxes.js in Resources */ = {isa = PBXBuildFile; fileRef = 3DEBC1361B7C19870062FF19 /* ObjectBoxes.js */; };
@@ -292,20 +299,27 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = iOS/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = iOS/Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
-		3D4D1CBB1B7AB51E0047A020 /* DeviceSetup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = DeviceSetup.js; path = Components/DeviceSetup.js; sourceTree = "<group>"; };
-		3D4D1CBD1B7AB51E0047A020 /* ImageView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ImageView.js; path = Components/ImageView.js; sourceTree = "<group>"; };
-		3D4D1CBE1B7AB51E0047A020 /* LiveVideo.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = LiveVideo.js; path = Components/LiveVideo.js; sourceTree = "<group>"; };
-		3D4D1CBF1B7AB51E0047A020 /* MonitorFullscreen.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorFullscreen.js; path = Components/MonitorFullscreen.js; sourceTree = "<group>"; };
-		3D4D1CC01B7AB51E0047A020 /* MonitorPreview.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorPreview.js; path = Components/MonitorPreview.js; sourceTree = "<group>"; };
-		3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorsView.js; path = Components/MonitorsView.js; sourceTree = "<group>"; };
-		3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = OverlayModal.js; path = Components/OverlayModal.js; sourceTree = "<group>"; };
-		3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ProgressBar.js; path = Components/ProgressBar.js; sourceTree = "<group>"; };
-		3D4D1CC41B7AB51E0047A020 /* Rectangle.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Rectangle.js; path = Components/Rectangle.js; sourceTree = "<group>"; };
-		3D4D1CC61B7AB51E0047A020 /* VideoControls.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = VideoControls.js; path = Components/VideoControls.js; sourceTree = "<group>"; };
-		3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = WifiSettings.js; path = Components/WifiSettings.js; sourceTree = "<group>"; };
+		3D4D1CBB1B7AB51E0047A020 /* DeviceSetup.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = DeviceSetup.js; path = Components/DeviceSetup.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CBD1B7AB51E0047A020 /* ImageView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ImageView.js; path = Components/ImageView.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CBE1B7AB51E0047A020 /* LiveVideo.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = LiveVideo.js; path = Components/LiveVideo.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CBF1B7AB51E0047A020 /* MonitorFullscreen.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorFullscreen.js; path = Components/MonitorFullscreen.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC01B7AB51E0047A020 /* MonitorPreview.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorPreview.js; path = Components/MonitorPreview.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorsView.js; path = Components/MonitorsView.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = OverlayModal.js; path = Components/OverlayModal.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ProgressBar.js; path = Components/ProgressBar.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC41B7AB51E0047A020 /* Rectangle.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Rectangle.js; path = Components/Rectangle.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC61B7AB51E0047A020 /* VideoControls.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = VideoControls.js; path = Components/VideoControls.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = WifiSettings.js; path = Components/WifiSettings.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E4271BAB7B5200CBB1D8 /* DateOverlay.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = DateOverlay.js; path = Components/DateOverlay.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E4281BAB7B5200CBB1D8 /* Root.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Root.js; path = Components/Root.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E4291BAB7B5200CBB1D8 /* SignIn.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = SignIn.js; path = Components/SignIn.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E42A1BAB7B5200CBB1D8 /* SignUp.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = SignUp.js; path = Components/SignUp.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E42B1BAB7B5200CBB1D8 /* Text.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Text.js; path = Components/Text.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E42C1BAB7B5200CBB1D8 /* TextLink.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = TextLink.js; path = Components/TextLink.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		3D83E42D1BAB7B5200CBB1D8 /* UserForm.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = UserForm.js; path = Components/UserForm.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
 		3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeBeacon.swift; sourceTree = "<group>"; };
-		3DEBC1361B7C19870062FF19 /* ObjectBoxes.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ObjectBoxes.js; path = Components/ObjectBoxes.js; sourceTree = "<group>"; };
+		3DEBC1361B7C19870062FF19 /* ObjectBoxes.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ObjectBoxes.js; path = Components/ObjectBoxes.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3DEBC1371B7C19870062FF19 /* SystemButton.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = SystemButton.js; path = Components/SystemButton.js; sourceTree = "<group>"; };
 		5714A0641B734C4A00B0630C /* VideoSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoSegment.swift; sourceTree = "<group>"; };
 		5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTConvertVideoSegment.h; sourceTree = "<group>"; };
@@ -518,6 +532,13 @@
 		3D4D1CBA1B7AB4F50047A020 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				3D83E4271BAB7B5200CBB1D8 /* DateOverlay.js */,
+				3D83E4281BAB7B5200CBB1D8 /* Root.js */,
+				3D83E4291BAB7B5200CBB1D8 /* SignIn.js */,
+				3D83E42A1BAB7B5200CBB1D8 /* SignUp.js */,
+				3D83E42B1BAB7B5200CBB1D8 /* Text.js */,
+				3D83E42C1BAB7B5200CBB1D8 /* TextLink.js */,
+				3D83E42D1BAB7B5200CBB1D8 /* UserForm.js */,
 				3DEBC1361B7C19870062FF19 /* ObjectBoxes.js */,
 				3DEBC1371B7C19870062FF19 /* SystemButton.js */,
 				3D4D1CBB1B7AB51E0047A020 /* DeviceSetup.js */,
@@ -1030,19 +1051,26 @@
 				F91A54FB1B8B9D48009C75C9 /* OpenSans-LightItalic.ttf in Resources */,
 				3DEBC1381B7C19870062FF19 /* ObjectBoxes.js in Resources */,
 				3DEBC1391B7C19870062FF19 /* SystemButton.js in Resources */,
+				3D83E42E1BAB7B5200CBB1D8 /* DateOverlay.js in Resources */,
 				F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */,
+				3D83E4301BAB7B5200CBB1D8 /* SignIn.js in Resources */,
 				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				3D83E4331BAB7B5200CBB1D8 /* TextLink.js in Resources */,
 				F91A54F91B8B9D48009C75C9 /* OpenSans-Italic.ttf in Resources */,
 				F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */,
 				F91A54F81B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf in Resources */,
 				3D4D1CCC1B7AB51E0047A020 /* MonitorFullscreen.js in Resources */,
+				3D83E4341BAB7B5200CBB1D8 /* UserForm.js in Resources */,
 				3D4D1CCF1B7AB51E0047A020 /* OverlayModal.js in Resources */,
 				3D4D1CC81B7AB51E0047A020 /* DeviceSetup.js in Resources */,
 				F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */,
+				3D83E4321BAB7B5200CBB1D8 /* Text.js in Resources */,
 				F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */,
 				3D4D1CD01B7AB51E0047A020 /* ProgressBar.js in Resources */,
 				3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */,
+				3D83E42F1BAB7B5200CBB1D8 /* Root.js in Resources */,
+				3D83E4311BAB7B5200CBB1D8 /* SignUp.js in Resources */,
 				3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */,
 				3D4D1CD31B7AB51E0047A020 /* VideoControls.js in Resources */,
 				3D4D1CCE1B7AB51E0047A020 /* MonitorsView.js in Resources */,

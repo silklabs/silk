@@ -37,7 +37,8 @@ clone $ORIGIN_BRANCH
 nostragglers $BRANCH
 replace $ORIGIN_BRANCH $BRANCH
 
-#updatebranch__silk_app $ORIGIN_BRANCH $BRANCH true
+updatebranch__silk_api $ORIGIN_BRANCH $BRANCH
+updatebranch__silk_app $ORIGIN_BRANCH $BRANCH true
 if [[ $ORIGIN_BRANCH == master ]]; then
   # Bump the master minor version when creating a next branch
   semver_inc__silk_app master minor
@@ -63,4 +64,6 @@ for g in $GITS; do
     popd > /dev/null
   )
 done
+
+exit 0
 

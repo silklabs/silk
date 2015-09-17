@@ -28,8 +28,6 @@ notifications:
       - silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
 
 env:
-  global:
-    - REPO_INIT_ARGS="--depth=1"
   matrix:
     - GONK_SPEC=mako
     - GONK_SPEC=qemu

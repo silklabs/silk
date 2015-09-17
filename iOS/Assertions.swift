@@ -21,6 +21,6 @@ public func AssertMainThread() {
     {
       NSThread.isMainThread()
     },
-    "Must be called on the main thread"
+    message: "Must be called on the main thread"
   )
 }

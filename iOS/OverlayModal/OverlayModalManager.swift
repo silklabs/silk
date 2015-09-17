@@ -11,7 +11,7 @@ class OverlayModalManager: RCTViewManager {
       if let currentView = view as? OverlayModal {
         currentView.show(callback)
       } else {
-        println("Warning: Could not get OverlayModal")
+        print("Warning: Could not get OverlayModal")
       }
     }
   }
@@ -22,7 +22,7 @@ class OverlayModalManager: RCTViewManager {
       if let currentView = view as? OverlayModal {
         currentView.dismiss(callback)
       } else {
-        println("Warning: Could not get OverlayModal")
+        print("Warning: Could not get OverlayModal")
       }
     }
   }

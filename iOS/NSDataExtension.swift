@@ -12,7 +12,7 @@ extension NSData {
       return (i > 9) ? (charA + i - 10) : (char0 + i)
     }
 
-    var p = UnsafeMutablePointer<UInt8>.alloc(length * 2)
+    let p = UnsafeMutablePointer<UInt8>.alloc(length * 2)
 
     for i in 0..<length {
       p[i*2] = itoh((buf[i] >> 4) & 0xF)

@@ -2,7 +2,7 @@
 class SystemButtonManager : RCTViewManager {
 
   override func view() -> UIView! {
-    return SystemButton(eventDispatcher: self.bridge.eventDispatcher)
+    return SystemButton(eventDispatcher: self.bridge!.eventDispatcher)
   }
 
   @objc override func customDirectEventTypes() -> [AnyObject]! {

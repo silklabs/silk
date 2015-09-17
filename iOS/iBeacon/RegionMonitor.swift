@@ -14,7 +14,7 @@ class RegionMonitor: NSObject, CLLocationManagerDelegate {
   var initialUpdate: Bool
 
   init(uuid: String) {
-    self.region = CLBeaconRegion(proximityUUID: NSUUID(UUIDString:uuid), identifier: uuid)
+    self.region = CLBeaconRegion(proximityUUID: NSUUID(UUIDString:uuid)!, identifier: uuid)
     self.initialUpdate = false
     
     super.init()
@@ -40,7 +40,7 @@ class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   // When we launch this will read the current state of the region since we might have missed
   // the enter/exit notifications
-  func locationManager(manager: CLLocationManager!, didDetermineState state: CLRegionState, forRegion region: CLRegion!) {
+  func locationManager(manager: CLLocationManager, didDetermineState state: CLRegionState, forRegion region: CLRegion) {
     if self.initialUpdate {
       NSLog("didDetermineState \(region.identifier) \(state.rawValue)")
       if self.region.identifier == region.identifier {
@@ -53,7 +53,7 @@ class RegionMonitor: NSObject, CLLocationManagerDelegate {
   }
 
   // Entering the region is immediate and re-launches the app if we aren't currently running
-  func locationManager(manager: CLLocationManager!, didEnterRegion region: CLRegion!) {
+  func locationManager(manager: CLLocationManager, didEnterRegion region: CLRegion) {
     NSLog("didEnterRegion \(region.identifier)")
     if self.region.identifier == region.identifier {
       self.delegate?.regionStateChanged(true)
@@ -62,7 +62,7 @@ class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   // Leaving the region occurs after a timeout when the last beacon in the region goes out of
   // range
-  func locationManager(manager: CLLocationManager!, didExitRegion region: CLRegion!) {
+  func locationManager(manager: CLLocationManager, didExitRegion region: CLRegion) {
     NSLog("didExitRegion \(region.identifier)")
     if self.region.identifier == region.identifier {
       self.delegate?.regionStateChanged(false)

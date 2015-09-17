@@ -81,14 +81,14 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
     }
   }
 
-  func peripheralManagerDidUpdateState(peripheral: CBPeripheralManager!){
+  func peripheralManagerDidUpdateState(peripheral: CBPeripheralManager){
     NSLog("State changed: \(peripheral.state.rawValue)")
     updateState()
   }
 
-  func peripheralManager(peripheral: CBPeripheralManager!,
-                         didAddService service: CBService!,
-                         error: NSError!) {
+  func peripheralManager(peripheral: CBPeripheralManager,
+                         didAddService service: CBService,
+                         error: NSError?) {
     if error == nil {
       NSLog("Added service")
     } else {
@@ -96,7 +96,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
     }
   }
 
-  func peripheralManagerDidStartAdvertising(peripheral: CBPeripheralManager!,
+  func peripheralManagerDidStartAdvertising(peripheral: CBPeripheralManager,
                                             error: NSError?) {
     if error == nil {
       NSLog("Started advertising")

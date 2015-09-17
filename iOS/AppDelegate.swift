@@ -66,8 +66,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     self.regionMonitor!.delegate = self
     self.homeBeacon = HomeBeacon()
 
-    // Allow audio playback even when user has enabled mute switch.
-    AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback, error: nil)
+    do {
+      // Allow audio playback even when user has enabled mute switch.
+      try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
+    } catch _ {
+    }
 
     return true
   }
@@ -77,11 +80,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     // Ask user permission for user notifications
     let registerUserNotificationSettings = UIApplication.instancesRespondToSelector("registerUserNotificationSettings:")
     if registerUserNotificationSettings {
-      var types: UIUserNotificationType = UIUserNotificationType.Alert | UIUserNotificationType.Sound | UIUserNotificationType.Badge
+      let types: UIUserNotificationType = [UIUserNotificationType.Alert, UIUserNotificationType.Sound, UIUserNotificationType.Badge]
       UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(forTypes: types, categories: nil))
     }
 
-    var notification = UILocalNotification()
+    let notification = UILocalNotification()
     notification.alertBody = notificationText
     notification.fireDate = NSDate()
     notification.soundName = UILocalNotificationDefaultSoundName

@@ -7,7 +7,7 @@ Marked final to ensure we don't need to deal with weird potential subclassing ca
 */
 public final class PropertyObserverKey: NSObject {
   // Represents the lambda callback given to this object...
-  public typealias Callback = (kvo: PropertyObserverKey, change: [NSObject: AnyObject?]) -> Void
+  public typealias Callback = (kvo: PropertyObserverKey, change: [NSObject: AnyObject]?) -> Void
   
   // All NSObject(s) are observable...
   unowned var observable: NSObject
@@ -33,10 +33,10 @@ public final class PropertyObserverKey: NSObject {
     self.observable.addObserver(self, forKeyPath: self.keyPath, options: NSKeyValueObservingOptions.New,
       context: &context)
   }
-  
-  override public func observeValueForKeyPath(keyPath: String, ofObject: AnyObject, change: [NSObject: AnyObject], context: UnsafeMutablePointer<Void>) {
+
+  override public func observeValueForKeyPath(keyPath: String?, ofObject: AnyObject?, change: [String: AnyObject]?, context: UnsafeMutablePointer<Void>) {
     if (keyPath != self.keyPath) {
-      println("Unknown call into observeValueForKeyPath \(keyPath)")
+      print("Unknown call into observeValueForKeyPath \(keyPath)")
       return
     }
     self.callback(kvo: self, change: change)
@@ -55,7 +55,7 @@ extension NSObject {
   // Extensions cannot use stored properties so we need some magic...
   public var propertyObserverItems: Set<PropertyObserverKey>! {
     get {
-      var items = objc_getAssociatedObject(self, &objectAssociationKey) as? Set<PropertyObserverKey>
+      let items = objc_getAssociatedObject(self, &objectAssociationKey) as? Set<PropertyObserverKey>
       if items == nil {
         self.propertyObserverItems = Set<PropertyObserverKey>([])
         return self.propertyObserverItems
@@ -63,7 +63,7 @@ extension NSObject {
       return items
     }
     set(newValue) {
-      objc_setAssociatedObject(self, &objectAssociationKey, newValue, objc_AssociationPolicy(OBJC_ASSOCIATION_RETAIN))
+      objc_setAssociatedObject(self, &objectAssociationKey, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
     }
   }
 
@@ -71,7 +71,7 @@ extension NSObject {
   Fire callback when a value changes in given key path
   */
   public func observeKeyPath(keyPath: String, callback: PropertyObserverKey.Callback) -> PropertyObserverKey {
-    var kvo = PropertyObserverKey(self, keyPath: keyPath, callback: callback)
+    let kvo = PropertyObserverKey(self, keyPath: keyPath, callback: callback)
     self.propertyObserverItems.insert(kvo)
     // Begin observing only after we track the item...
     kvo.beginObserve()

@@ -34,8 +34,8 @@ class SystemButton : UIToolbar {
     self.eventDispatcher = eventDispatcher
 
     // Create transparent background.
-    self.setBackgroundImage(UIImage.new(), forToolbarPosition: UIBarPosition.Any, barMetrics: UIBarMetrics.Default)
-    self.setShadowImage(UIImage.new(), forToolbarPosition: UIBarPosition.Any)
+    self.setBackgroundImage(UIImage(), forToolbarPosition: UIBarPosition.Any, barMetrics: UIBarMetrics.Default)
+    self.setShadowImage(UIImage(), forToolbarPosition: UIBarPosition.Any)
   }
 
   override init(frame: CGRect) {
@@ -43,7 +43,7 @@ class SystemButton : UIToolbar {
     super.init(frame: frame)
   }
 
-  required init(coder aDecoder: NSCoder) {
+  required init?(coder aDecoder: NSCoder) {
     NOT_IMPLEMENTED()
     super.init(coder: aDecoder)
   }

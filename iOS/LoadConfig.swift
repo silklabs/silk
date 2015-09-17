@@ -21,14 +21,13 @@ public struct Config {
 public class LoadConfig {
 
   static public func load(data: NSData) -> (result: Config?, err: NSError?) {
-    var error: NSError?
-    let result: AnyObject? = NSJSONSerialization.JSONObjectWithData(
-      data,
-      options: nil,
-      error: &error
-    )
-
-    if error != nil {
+    let result: AnyObject?
+    do {
+      result = try NSJSONSerialization.JSONObjectWithData(
+        data,
+        options: []
+      )
+    } catch let error as NSError {
       return (nil, error)
     }
 

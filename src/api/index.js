@@ -19,6 +19,7 @@ module.exports = function create(options) {
         ERROR: 3
       },
       uuid: {
+        Beacon: 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424',
         ConfigService: 'beef',
         StateCharacteristic: '259a43754b8748548ef386be0f6faa68',
         ServerConnectionStatusCharacteristic: '595d664ac5314245a7a89aeae6883cfe',

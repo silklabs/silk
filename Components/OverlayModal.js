@@ -83,9 +83,12 @@ export default React.createClass({
     };
   },
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     // When the "presented" value changes we hide/show the underlying
     // controller.
+    if (prevProps.presented === this.props.presented) {
+      return;
+    }
     if (this.props.presented) {
       this.show();
     } else {
@@ -94,7 +97,7 @@ export default React.createClass({
   },
 
   componentDidMount() {
-    // This method is invoked when the view  is mounted so this handles the case
+    // This method is invoked when the view is mounted so this handles the case
     // where the view is shown by default...
     if (this.props.presented) {
       this.show();

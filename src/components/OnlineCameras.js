@@ -5,11 +5,32 @@ import React from 'react';
 import Diag from './Diag';
 import CameraPreview from './CameraPreview';
 import CameraVideo from './CameraVideo';
-import { Button } from 'react-bootstrap';
+import { Button, Glyphicon } from 'react-bootstrap';
 
 import io from 'socket.io-client';
 import mklog from '../log'; const log = mklog('OnlineCameras');
 import { EventEmitter } from 'events';
+
+const styles = {
+  center: {
+    marginLeft: 'auto',
+    marginRight: 'auto'
+  },
+  flexRow: {
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  glyphicon: {
+    fontSize: '25px'
+  },
+  onlineCamera: {
+    padding: '10px 0 10px 10px',
+  },
+  toolbar: {
+    border: '1px solid gray',
+    borderRadius: '5px',
+  },
+};
 
 class Camera extends EventEmitter {
   constructor(name, id, logo, previewSize, socket) {
@@ -209,6 +230,35 @@ class Camera extends EventEmitter {
 
 }
 
+class OnlineCamera extends React.Component {
+  static propTypes = {
+    camera: React.PropTypes.object,
+    onClick: React.PropTypes.func,
+    onOpenDiag: React.PropTypes.func,
+  };
+
+  onOpenDiag = () => {
+    return this.props.onOpenDiag(this.props.camera.id);
+  }
+
+  render() {
+    return (
+      <div style={styles.onlineCamera}>
+        <CameraPreview camera={this.props.camera}
+          onClick={this.props.onClick} />
+        <div style={styles.toolbar}>
+          <div style={styles.flexRow}>
+            <div style={styles.center}>
+              <Button bsSize="large" bsStyle="info" onClick={this.onOpenDiag}>
+                <Glyphicon glyph="info-sign" style={styles.glyphicon} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
 
 export default class OnlineCameras extends React.Component {
 
@@ -293,11 +343,11 @@ export default class OnlineCameras extends React.Component {
   }
 
   onCloseDiag = () => {
-    this.setState({diagVisible: false});
+    this.setState({diagId: null, diagVisible: false});
   }
 
-  onOpenDiag = () => {
-    this.setState({diagVisible: true});
+  onOpenDiag = (id) => {
+    this.setState({diagId: id, diagVisible: true});
   }
 
   onCameraClick = (id) => {
@@ -318,17 +368,11 @@ export default class OnlineCameras extends React.Component {
         return <CameraVideo key={id} onClick={this.onVideoClick} camera={camera} />;
       }
     }
-    return (
-      <div>
-        <div>
-          {
-            Object.keys(this.state.cameras).map(id=> {
-              return <CameraPreview key={id} onClick={this.onCameraClick} camera={this.state.cameras[id]} />;
-            })
-          }
-        </div>
-        <Button onClick={this.onOpenDiag}>Diag</Button>
-      </div>
-    );
+    let cameras = Object.keys(this.state.cameras).map(
+      id => <OnlineCamera key={id}
+                          camera={this.state.cameras[id]}
+                          onClick={this.onCameraClick}
+                          onOpenDiag={this.onOpenDiag} />);
+    return (<div style={styles.flexRow}>{cameras}</div>);
   }
 }

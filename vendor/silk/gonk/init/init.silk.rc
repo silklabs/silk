@@ -15,6 +15,13 @@ service fakeappops /system/silk/bin/fakeappops
 service silk /system/silk/bin/silk
     class main
     user root
+    # The bledroid and silk-sensors services are useless without the
+    # silk service, so we don't bother keeping them running reliably
+    # on their own.  The capture service, on the other hand, must be
+    # strictly more stable than silk, so we ensure that either silk or
+    # capture can die and the other can recover gracefully.
+    onrestart restart bledroid
+    onrestart restart silk-sensors
 
 service volume /system/silk/bin/volume
     class main

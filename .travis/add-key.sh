@@ -10,4 +10,4 @@ security import .travis/certs/stooge.p12 -k ios-build.keychain -P knucklehead -T
 security list-keychains -s ios-build.keychain
 
 mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-cp .travis/certs/*.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles
+cp .travis/certs/$PROFILE_FILE_NAME ~/Library/MobileDevice/Provisioning\ Profiles

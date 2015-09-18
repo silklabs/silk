@@ -17,7 +17,6 @@
 		3D4D1CCE1B7AB51E0047A020 /* MonitorsView.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */; };
 		3D4D1CCF1B7AB51E0047A020 /* OverlayModal.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */; };
 		3D4D1CD01B7AB51E0047A020 /* ProgressBar.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */; };
-		3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC41B7AB51E0047A020 /* Rectangle.js */; };
 		3D4D1CD31B7AB51E0047A020 /* VideoControls.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC61B7AB51E0047A020 /* VideoControls.js */; };
 		3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */; };
 		3D83E42E1BAB7B5200CBB1D8 /* DateOverlay.js in Resources */ = {isa = PBXBuildFile; fileRef = 3D83E4271BAB7B5200CBB1D8 /* DateOverlay.js */; };
@@ -307,7 +306,6 @@
 		3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = MonitorsView.js; path = Components/MonitorsView.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = OverlayModal.js; path = Components/OverlayModal.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ProgressBar.js; path = Components/ProgressBar.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
-		3D4D1CC41B7AB51E0047A020 /* Rectangle.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Rectangle.js; path = Components/Rectangle.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3D4D1CC61B7AB51E0047A020 /* VideoControls.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = VideoControls.js; path = Components/VideoControls.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = WifiSettings.js; path = Components/WifiSettings.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		3D83E4271BAB7B5200CBB1D8 /* DateOverlay.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = DateOverlay.js; path = Components/DateOverlay.js; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
@@ -549,7 +547,6 @@
 				3D4D1CC11B7AB51E0047A020 /* MonitorsView.js */,
 				3D4D1CC21B7AB51E0047A020 /* OverlayModal.js */,
 				3D4D1CC31B7AB51E0047A020 /* ProgressBar.js */,
-				3D4D1CC41B7AB51E0047A020 /* Rectangle.js */,
 				3D4D1CC61B7AB51E0047A020 /* VideoControls.js */,
 				3D4D1CC71B7AB51E0047A020 /* WifiSettings.js */,
 			);
@@ -1068,7 +1065,6 @@
 				3D83E4321BAB7B5200CBB1D8 /* Text.js in Resources */,
 				F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */,
 				3D4D1CD01B7AB51E0047A020 /* ProgressBar.js in Resources */,
-				3D4D1CD11B7AB51E0047A020 /* Rectangle.js in Resources */,
 				3D83E42F1BAB7B5200CBB1D8 /* Root.js in Resources */,
 				3D83E4311BAB7B5200CBB1D8 /* SignUp.js in Resources */,
 				3D4D1CD41B7AB51E0047A020 /* WifiSettings.js in Resources */,

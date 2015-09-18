@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DOWNLOAD_URL=https://s3-us-west-2.amazonaws.com/silk-app/master/latest/Silk.ipa
+TEMP_DIR=`mktemp -d -t silk-app`
+mkdir -p $TEMP_DIR
+wget -O $TEMP_DIR/Silk.ipa $DOWNLOAD_URL
+ios-deploy -b $TEMP_DIR/Silk.ipa --nostart

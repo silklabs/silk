@@ -97,6 +97,14 @@ Now, after making a change to a react-native .js file, simply press Ctrl-r in th
 
 However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the full Ctrl-r rebuild/redeploy from within Xcode always works.
 
+### Lint
+
+Coding style is enforced by Travis CI. You can run the linter locally with the following command:
+
+```sh
+npm run lint
+```
+
 ### Logging
 
 Logging is configured via `config.local.json` currently logging is based
@@ -109,20 +117,6 @@ For example to enable all logs possible (socket.io, etc..):
   "debug": "*"
 }
 ```
-
-## Bitrise CI binaries
-
-The bundles created by the Bitrise CI system are directly loadable on iOS
-devices that have been registered with our Apple Developer account.
-
-Find the desired build from https://www.bitrise.io/app/d9e00c0d5873d177, and
-either:
-
-* Download the Silk.ipa file and install using iTunes
-
-or
-
-* Find the "Public install page" and open it on your iOS device to initiate an install
 
 ## Producing a release by hand (Avoid at all cost)
 

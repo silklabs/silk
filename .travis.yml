@@ -47,3 +47,4 @@ deploy:
   upload-dir: $TRAVIS_BRANCH/latest
   on:
     all_branches: true
+    condition: $TEST_TYPE = build-dist

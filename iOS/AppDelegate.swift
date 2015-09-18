@@ -66,11 +66,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     self.regionMonitor!.delegate = self
     self.homeBeacon = HomeBeacon()
 
-    do {
-      // Allow audio playback even when user has enabled mute switch.
-      try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
-    } catch _ {
-    }
+    // Allow audio playback even when user has enabled mute switch.
+    let _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
 
     return true
   }

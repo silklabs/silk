@@ -25,10 +25,6 @@ env:
     # Single quotes needed so that YAML doesn't escape the colon
     - 'DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"'
     - PROFILE_NAME="CI_Build_Profile"
-    # Passphrase for .travis/certs/stooge.p12, created via
-    # `travis encrypt 'KEY_PASSWORD=...' add`
-    # The passphrase is set when exporting the private key from Keychain.
-    - secure: t90OCgjv9/tLvoGv8ME+XhfNDNFHffB1yeSmFq/tA2zNbvMkMwesrh53m4v8UOKGZBAGGPSaUcVOI5VXLA7p5qC+9QYBz+vYsP1Wti63LJ+KdyiPc4x/uIVVUdBXOO1M/nSvr/AFwOjrx/lHqYW22XEj8fp+JQxIEdYEuTblgB8WEnoXjiRyf8+aS8qVexLF8wjqmoqbeDHwNPSjiIvATErTd4uRIvPELo/P5a5Iq4YESyfQv1ikacv7xZouQDjO3U8T+UiYAdQlwKQB7D4vXPPA/KEVVe3Tu8In4rZ4ctyRXaG5rsxVQfToHOw6YhRSR7Vs1Mh3JT2kIXnJKzaNyRfceN+MQ6xfrBJXPpmUINnfySbfU+NaUzEF08hDsOkWkmEW5CDMdyS/hjZiLNOvCWLlgmIg2Ervv7NmmpD5mx5cYRmRYaV0eJstkmZrD1CjhUasr1hWYukOkQUXDVZxkq2FX1WYNc4FsfqkVGTLle2McG+FeDAbLWbNVXQX4ai/xG77gsBwLSh+HmTcUIqYd2Oo5usPDGkFzjBKBBr2KCBdzBTiX0V9E1RWJw4qOufWZ4oIuZ8nCjA0XvAPaJGrjuVQ7hPtIpEu2zD0RIPjko6xDmFSx7z9QTRlQE2VxJiMY4/kjYDLcU1M1g67EbydbEiU29b/tKQ0pp23G3gwSqk=
 
 before_script:
   - .travis/add-key.sh

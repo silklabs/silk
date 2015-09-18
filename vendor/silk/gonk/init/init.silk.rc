@@ -54,3 +54,10 @@ service capture /system/silk/bin/capture
     socket capturectl stream 0600 root root
     socket captured stream 0600 root root
 
+
+# Tee kernel logs to logcat main
+service silk-kmsg /system/bin/logwrapper /system/silk/bin/kmsg
+    class main
+    user root
+    group system
+

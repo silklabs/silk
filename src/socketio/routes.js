@@ -22,6 +22,18 @@ export default function(io) {
         }
       }
     });
+    socket.on('disconnect', err => {
+      log.error(`Client disconnect. io=${socket.id} err=${err}`);
+      videoRooms.forEach(room => {
+        if (room.socket.id === socket.id) {
+          if (room.timeout) {
+            clearTimeout(room.timeout);
+          }
+          io.to('video-streams').emit('video-stream-delete', roomInfo(room));
+          videoRooms.delete(room.id);
+        }
+      });
+    });
     socket.on('error', err => {
       log.error(`Client socket error: io=${socket.id} ${err}`);
       // TODO: Do something more here?
@@ -47,15 +59,19 @@ export default function(io) {
       }
     });
 
-    function resetDeviceTimeout(id) {
+    function resetDeviceTimeout(socket, id) {
       let room = videoRooms.get(id);
       if (room.timeout) {
         clearTimeout(room.timeout);
       }
 
       room.timeout = setTimeout(() => {
+        if (!videoRooms.has(id)) {
+          log.error(`Zombie room. io=${socket.id} id=${id}`);
+          return;
+        }
         io.to('video-streams').emit('video-stream-delete', roomInfo(room));
-        log.info(`Device packet timeout. Deleting id=${id}`);
+        log.info(`Device packet timeout. Deleting io=${socket.id} id=${id}`);
         videoRooms.delete(id);
       }, VIDEO_IDLE_TIMEOUT_MS);
     }
@@ -83,7 +99,7 @@ export default function(io) {
 
       log.info(`Device info. io=${socket.id} name=${room.name} ` +
                 `timeOffset=${room.timeOffset}ms id=${id} new=${newRoom}`);
-      resetDeviceTimeout(id);
+      resetDeviceTimeout(socket, id);
     });
 
     // Video streams
@@ -101,7 +117,7 @@ export default function(io) {
       log.verbose(`io=${socket.id} packet:${msg.contents} ` +
                   `lag=${Date.now() - msg.when - room.timeOffset}ms`);
 
-      resetDeviceTimeout(id);
+      resetDeviceTimeout(socket, id);
       switch (msg.contents) {
       case 'jpeg':
         // Send preview frames to a special video-preview- room, to

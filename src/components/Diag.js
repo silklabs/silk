@@ -2,21 +2,21 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button, ButtonGroup, Input, Label } from 'react-bootstrap';
+import { Button, ButtonGroup, Input } from 'react-bootstrap';
 import mklog from '../log'; const log = mklog('diag');
 import ansiUp from 'ansi_up';
 import CameraPreview from './CameraPreview';
 
 class Diag extends React.Component {
   static propTypes = {
-    connectionStatus: React.PropTypes.string.isRequired,
     cameras: React.PropTypes.object.isRequired,
     onClose: React.PropTypes.func,
   }
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { cameraId: this.props.diagId };
+    this.onCameraSelect(this.state.cameraId);
   }
 
   onCameraSelect = id => {
@@ -76,12 +76,10 @@ class Diag extends React.Component {
 
     return (
       <div style={style}>
-        <DiagNavBar onCameraSelect={this.onCameraSelect}
-                    cameras={this.props.cameras}
+        <DiagNavBar cameras={this.props.cameras}
                     cameraId={this.state.cameraId}
                     onPause={this.onPause}
-                    onClose={this.props.onClose}
-                    connectionStatus={this.props.connectionStatus} />
+                    onClose={this.props.onClose} />
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
           <DiagLog logName='dash' log={logs.dash} paused={this.state.paused}/>
           <CameraPreview camera={camera}/>
@@ -185,10 +183,8 @@ class DiagLogcat extends DiagLog {
 
 class DiagNavBar extends React.Component {
   static propTypes = {
-    connectionStatus: React.PropTypes.string.isRequired,
     cameras: React.PropTypes.object, // same shape as what Diag expects
     cameraId: React.PropTypes.string,
-    onCameraSelect: React.PropTypes.func.isRequired,
     onPause: React.PropTypes.func.isRequired,
     onClose: React.PropTypes.func.isRequired,
   }
@@ -204,15 +200,11 @@ class DiagNavBar extends React.Component {
   render() {
     return <div>
         &nbsp;
-        <DiagNavCameraSelect onCameraSelect={this.onCameraSelect}
-                             cameras={this.props.cameras}/>
-        &nbsp;
         <ButtonGroup>
-          <DiagNavPause onPause={this.props.onPause} cameraId={this.props.cameraId} />
           {this.props.onClose && <Button bsStyle='warning' onClick={this.props.onClose}>Close</Button>}
+          <DiagNavPause onPause={this.props.onPause} cameraId={this.props.cameraId} />
         </ButtonGroup>
         &nbsp;
-        <Label>{this.props.connectionStatus}</Label>
       </div>;
   }
 }
@@ -236,41 +228,6 @@ class DiagNavPause extends React.Component {
 
   render() {
     return <Button disabled={!this.props.cameraId} onClick={this.handleClick} > Pause </Button>;
-  }
-}
-
-class DiagNavCameraSelect extends React.Component {
-  static propTypes = {
-    onCameraSelect: React.PropTypes.func.isRequired,
-    cameras: React.PropTypes.object, // same shape as what Diag expects
-  }
-
-  constructor(props) {
-    super(props);
-    this.state = {value: null};
-  }
-
-  handleChange = e => {
-    let newValue = e.target.value;
-    this.setState({value: newValue});
-    this.props.onCameraSelect(newValue);
-  }
-
-  render() {
-    let style = {
-      cursor: 'pointer',
-      padding: 4,
-    };
-
-    let cameras = this.props.cameras || {};
-    return <select style={style} onChange={this.handleChange} value={this.state.value}>
-        <option value=''>(None)</option>
-        {
-          Object.keys(cameras).map(id=> {
-            return <option key={id} value={id}>{cameras[id].name}</option>;
-          })
-        }
-      </select>;
   }
 }
 

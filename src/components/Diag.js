@@ -54,6 +54,13 @@ class Diag extends React.Component {
     }
   }
 
+  componentWillUnmount() {
+    let camera = this.props.cameras[this.state.cameraId];
+    if (camera) {
+      camera.logging = false;
+    }
+  }
+
   render() {
     let style = {
       margin: 0,

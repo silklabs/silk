@@ -2,6 +2,43 @@
 
 Silk app written for react-native.  To install the react-native toolchain, [see these instructions](http://facebook.github.io/react-native/docs/getting-started.html#content).
 
+## Installing and running the app
+
+First install the module dependencies:
+```
+npm install
+```
+
+With a provisioned device (see below) connected to the computer via USB, you can download and install the latest build of the app via the following command:
+```
+npm run update
+```
+
+It is also possible to specify a branch, e.g.:
+```
+npm run update -- next
+```
+
+## Provisioning an iDevice
+
+Currently the Silk App is optimized for the iPhone 5s / iPod Touch 5th gen screen resolution.  iPod Touch 5 devices are good for development because they're relatively cheap.  To provision a new device:
+
+0. Connect the device to iTunes and ensure it's updated to latest iOS.
+0. Sign in to https://developer.apple.com with an Apple ID that's a member of the Silk Labs development team.
+0. Navigate to "Certificates, Identifiers & Profiles" -> iOS section -> Devices.
+0. Click "+" icon at top-right to add a new device.
+0. Open iTunes and find the "Serial Number" list for your device.  Click this once to switch the disply to "UDID".  Right-click the UDID and copy it.
+0. Paste the UDID you copied into the developer.apple.com add-device UI.  Give your device a memorable name and click "Continue", then "Register".
+
+If you're planning to develop on this device:
+
+0. Open Xcode.  Ensure your Apple ID account has been set up in Xcode.
+0. In the top-left of Xcode UI, choose your iDevice in the drop-down menu to set it as the build/run target.
+0. Press Ctrl-r to run Silk App on your iDevice.  In the 'Failed to code sign "Silk"' dialog box that pops up, press the "Fix Issue" button.
+
+Xcode should then set up your device and launch the Silk App on your device.  You're done!
+
+In order to be able to install builds from Travis on the new device, the provisioning profile called "CI Build Profile" needs to be updated to include the new device. This can be done through [Apple's Developer center](https://developer.apple.com/account/ios/profile/profileList.action). Once updated, download the provisioning profile, place it in `.travis/certs`, and check in the new profile so that Travis builds will include it from there on out.
 
 ## Setting up a development environment
 
@@ -10,23 +47,7 @@ Silk app written for react-native.  To install the react-native toolchain, [see 
 npm install
 ```
 
-To run the app, open Silk.xcodeproj in Xcode.  You'll want to do most development in the iOS simulator(s).  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
-
-## Provisioning an iDevice
-
-You can do most Silk development using the (excellent!) iOS simulators.  However, for Bluetooth development, performance testing, and touch-tap testing, a physical device is required.  Currently the Silk App is optimized for the iPhone 5s / iPod Touch 5th gen screen resolution.  iPod Touch 5 devices are good for development because they're relatively cheap.  To provision a new device:
-
-0. Connect the device to iTunes and ensure it's updated to latest iOS.
-0. Sign in to https://developer.apple.com with an Apple ID that's a member of the Silk Labs development team.
-0. Navigate to "Certificates, Identifiers & Profiles" -> iOS section -> Devices.
-0. Click "+" icon at top-right to add a new device.
-0. Open iTunes and find the "Serial Number" list for your device.  Click this once to switch the disply to "UDID".  Right-click the UDID and copy it.
-0. Paste the UDID you copied into the developer.apple.com add-device UI.  Give your device a memorable name and click "Continue", then "Register".
-0. Open Xcode.  Ensure your Apple ID account has been set up in Xcode.
-0. In the top-left of Xcode UI, choose your iDevice in the drop-down menu to set it as the build/run target.
-0. Press Ctrl-r to run Silk App on your iDevice.  In the 'Failed to code sign "Silk"' dialog box that pops up, press the "Fix Issue" button.
-
-Xcode should then set up your device and launch the Silk App on your device.  You're done!
+To develop the app, open `Silk.xcodeproj` in Xcode.  You'll want to do most development in the (excellent!) iOS simulator(s).  Only for Bluetooth development, performance testing, and touch-tap testing, a physical device is required.  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
 
 ## Development cycle
 

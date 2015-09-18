@@ -2,7 +2,7 @@
 
 set -e
 
-source .branch
+source $(dirname $0)/../.branch
 BRANCH_ARG=$1
 BRANCH_TO_DOWNLOAD=${BRANCH_ARG:-$BRANCH}
 

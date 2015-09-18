@@ -185,7 +185,7 @@ class LiveVideo : UIView {
     super.init(frame: frame)
   }
 
-  required init(coder aDecoder: NSCoder) {
+  required init?(coder aDecoder: NSCoder) {
     NOT_IMPLEMENTED()
     super.init(coder: aDecoder)
   }
@@ -239,7 +239,7 @@ class LiveVideo : UIView {
    *   old: [90, 91]
    *   = replace([100, 101])
    */
-  private func reconcileSegmentChange(#previous: [VideoSegment], new: [VideoSegment]) {
+  private func reconcileSegmentChange(previous previous: [VideoSegment], new: [VideoSegment]) {
     AssertMainThread()
     // When new count is 0 empty out anything we may have seen before.
     if (new.count == 0) {
@@ -427,7 +427,7 @@ class LiveVideo : UIView {
     Assertion({
         segment.data != nil
       },
-      "Attmpted to use null data for segment: \(segment.id)"
+      message: "Attempted to use null data for segment: \(segment.id)"
     )
 
     // Consume segment data and ensure the container does not keep a reference to it.
@@ -453,11 +453,11 @@ class LiveVideo : UIView {
       {
         let isGreater = duration > LiveVideo.LAST_ITEM_PAUSE
         if !isGreater {
-          println("item: \(item) meta: \(item.asset.metadata)")
+          print("item: \(item) meta: \(item.asset.metadata)")
         }
         return isGreater
       },
-      "Duration is less than LAST_ITEM_PAUSE \(duration)"
+      message: "Duration is less than LAST_ITEM_PAUSE \(duration)"
     )
 
     let endObserveTime = NSValue(CMTime: CMTimeMake(
@@ -640,7 +640,9 @@ class LiveVideo : UIView {
 
     // Ensure player has no observers anymore...
     self.player.removeAllKeyPathObservers()
-    self.player.removeTimeObserver(self.timeChangeObserver)
+    if self.timeChangeObserver != nil {
+      self.player.removeTimeObserver(self.timeChangeObserver!)
+    }
 
     self.clearLastItemObserver()
 

@@ -39,8 +39,8 @@ public final class SocketIOAVAssetLoaderDelegate: NSObject, AVAssetResourceLoade
     return removed
   }
 
-  public func resourceLoader(resourceLoader: AVAssetResourceLoader!,
-    shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest!) -> Bool {
+  public func resourceLoader(resourceLoader: AVAssetResourceLoader,
+    shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
       let url = loadingRequest.request.URL!
       let id = url.host!
 

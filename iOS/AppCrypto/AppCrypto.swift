@@ -25,7 +25,7 @@ public class AppCrypto : NSObject {
     let saltLength = size_t(salt.length)
     let inputPointer = UnsafePointer<Int8>(input.cStringUsingEncoding(NSUTF8StringEncoding))
     let inputLength  = size_t(input.lengthOfBytesUsingEncoding(NSUTF8StringEncoding))
-    var derivedKeyPointer = UnsafeMutablePointer<UInt8>(derivedKey!.mutableBytes)
+    let derivedKeyPointer = UnsafeMutablePointer<UInt8>(derivedKey!.mutableBytes)
     let derivedKeyLength = size_t(derivedKey!.length)
 
     let kdfStatus = CCKeyDerivationPBKDF(
@@ -42,7 +42,7 @@ public class AppCrypto : NSObject {
 
     Assertion({
       kdfStatus == 0
-    }, "CCKeyDerivationPBKDF failed")
+    }, message: "CCKeyDerivationPBKDF failed")
 
     callback([derivedKey!.hexString])
   }
@@ -53,7 +53,7 @@ public class AppCrypto : NSObject {
 
     Assertion({
       result == 0
-    }, "Failed to create random bytes!")
+    }, message: "Failed to create random bytes!")
 
     // We need to send back something JS can easily understand so we convert the bytes into UInt8
     var bytes: [NSNumber] = []

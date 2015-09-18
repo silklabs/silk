@@ -4,7 +4,7 @@
  * AVPlayerItem subclasses that are intended to be short lived.
 */
 @objc(VideoSegment)
-class VideoSegment {
+class VideoSegment: NSObject {
 
   /**
    * Convert an AnyObject type into VideoSegment this is intended to be

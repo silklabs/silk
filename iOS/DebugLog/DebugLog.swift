@@ -9,7 +9,7 @@ public class DebugLog {
   }
 
   private class func addRegex(pattern: String, inout target: [NSRegularExpression]) {
-    let regex = NSRegularExpression(pattern: "^\(pattern)$", options: nil, error: nil)
+    let regex = try? NSRegularExpression(pattern: "^\(pattern)$", options: [])
     if regex != nil {
       target.append(regex!)
     } else {
@@ -26,7 +26,7 @@ public class DebugLog {
    */
   public static func enable(name: String) {
     // Convert the string into a regex expression...
-    let namespaces = split(name) { $0 == " " || $0 == "," }
+    let namespaces = name.characters.split { $0 == " " || $0 == "," }.map { String($0) }
 
     for namespace in namespaces {
       var pattern = namespace.stringByReplacingOccurrencesOfString(
@@ -35,7 +35,7 @@ public class DebugLog {
 
       if pattern.hasPrefix("-") {
         // Skip pattern
-        pattern = pattern.substringFromIndex(advance(pattern.startIndex, 1))
+        pattern = pattern.substringFromIndex(pattern.startIndex.advancedBy(1))
         self.addRegex(pattern, target: &self.skips)
       } else {
         // Enable pattern
@@ -46,8 +46,8 @@ public class DebugLog {
 
   private static func matches(name: String, list: [NSRegularExpression]) -> Bool {
     for regex in list {
-      let range = NSMakeRange(0, count(name))
-      let matches = regex.matchesInString(name, options: nil, range: range)
+      let range = NSMakeRange(0, name.characters.count)
+      let matches = regex.matchesInString(name, options: [], range: range)
       if matches.count > 0 {
         return true
       }

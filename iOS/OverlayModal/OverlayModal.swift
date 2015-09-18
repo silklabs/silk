@@ -2,17 +2,17 @@ import UIKit
 
 class OverlayModalController: UIViewController {
   // TODO: Allow this to be configured...
-  override func supportedInterfaceOrientations() -> Int {
-    return Int(
-      UIInterfaceOrientationMask.LandscapeLeft.rawValue |
-      UIInterfaceOrientationMask.LandscapeRight.rawValue
+  override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
+    return UIInterfaceOrientationMask(
+      rawValue: UIInterfaceOrientationMask.LandscapeLeft.rawValue |
+        UIInterfaceOrientationMask.LandscapeRight.rawValue
     )
   }
 }
 
 internal func iterateViews(view: RCTComponent!, block: (RCTComponent) -> Void) {
   for subview in view.reactSubviews() {
-    iterateViews(subview as! RCTComponent, block)
+    iterateViews(subview as! RCTComponent, block: block)
   }
 
   if view.reactTag != nil {
@@ -28,7 +28,7 @@ class OverlayModal : RCTView {
 
   var orientation = "landscape"
 
-  required init(coder aDecoder: NSCoder) {
+  required init?(coder aDecoder: NSCoder) {
     NOT_IMPLEMENTED()
     super.init(coder: aDecoder)
   }

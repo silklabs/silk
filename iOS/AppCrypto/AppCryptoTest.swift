@@ -36,7 +36,7 @@ class AppCryptoTest: XCTestCase {
 
     let end = NSDate()
     let interval = end.timeIntervalSinceDate(start) * 1000
-    println("took: \(interval) ms")
+    print("took: \(interval) ms")
   }
   
 }

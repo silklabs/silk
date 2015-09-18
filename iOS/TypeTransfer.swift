@@ -6,7 +6,7 @@ provide any advanced utilities for extending the types we can send so this
 class provides a number of utilities for converting types.
 */
 @objc(TypeTransfer)
-public class TypeTransfer {
+public class TypeTransfer: NSObject {
   internal typealias JSONObj = Dictionary<String, AnyObject>
   internal typealias List = [AnyObject]
 

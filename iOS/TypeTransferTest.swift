@@ -10,11 +10,15 @@ class TypeTransferTest: XCTestCase {
         "blob": bin
       ]
     ]
-
     let transfer: AnyObject = TypeTransfer.convert(input)
-    let hasWootbar = transfer["wootbar"] is Dictionary<String, AnyObject>
+
+    let isDict = transfer is Dictionary<String, AnyObject>
+    XCTAssert(isDict, "is dict")
+    let transferDict = transfer as! Dictionary<String, AnyObject>
+
+    let hasWootbar = transferDict["wootbar"] is Dictionary<String, AnyObject>
     XCTAssert(hasWootbar, "has nested dict")
-    let wootbar = transfer["wootbar"] as! Dictionary<String, AnyObject>
+    let wootbar = transferDict["wootbar"] as! Dictionary<String, AnyObject>
 
     var blob = wootbar["blob"] as! Dictionary<String, AnyObject>
     var blobValue = NSDataBridge.release(blob["id"] as! String)

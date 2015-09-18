@@ -21,7 +21,7 @@ public class NSDataBridge : NSObject {
    */
   public class func releaseWithOffset(id: String, offset: NSNumber) -> NSData? {
     if let data = self.release(id) {
-      Assertion({ data.length > offset.integerValue }, "data offset < length")
+      Assertion({ data.length > offset.integerValue }, message: "data offset < length")
       let range = NSMakeRange(offset.integerValue, data.length - offset.integerValue)
       return data.subdataWithRange(range)
     }

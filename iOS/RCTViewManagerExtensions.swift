@@ -6,8 +6,8 @@ extension RCTViewManager  {
   This method is _not_ threadsafe and relies on aquireView to dispatch to right queue.
   */
   internal func aquireViewWithRetries(retries: Int, reactTag: NSNumber, block: (UIView?) -> Void) {
-    let queue = self.bridge.uiManager.methodQueue
-    self.bridge.uiManager.addUIBlock() {
+    let queue = self.bridge!.uiManager.methodQueue
+    self.bridge!.uiManager.addUIBlock() {
       [unowned self]
       (__unused: RCTUIManager!, viewRegistry: RCTSparseArray!) in
       let view = viewRegistry?[reactTag] as? UIView
@@ -29,7 +29,7 @@ extension RCTViewManager  {
   func aquireView(reactTag: NSNumber, block: (UIView?) -> Void) {
     // Note: As of react 0.7 and greater there is a good chance if you just recently created the
     // view it will not be available in viewRegistry yet so we must retry the operation.
-    let queue = self.bridge.uiManager.methodQueue
+    let queue = self.bridge!.uiManager.methodQueue
     dispatch_async(queue) {
       self.aquireViewWithRetries(AQUIRE_VIEW_MAX_RETRIES, reactTag: reactTag, block: block)
     }

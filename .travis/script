@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [ "$TEST_TYPE" = objc-test ]; then
+  xctool \
+    -project $PROJECT.xcodeproj \
+    -scheme $PROJECT \
+    -sdk iphonesimulator \
+    -destination 'platform=iOS Simulator,name=iPhone 5,OS=8.4' \
+    test
+
+elif [ "$TEST_TYPE" = build-dist ]; then
+  xctool \
+    -project $PROJECT.xcodeproj \
+    -scheme $PROJECT \
+    -sdk iphoneos \
+    -configuration $CONFIGURATION \
+    OBJROOT=$PWD/build \
+    SYMROOT=$PWD/build \
+    ONLY_ACTIVE_ARCH=NO \
+    'CODE_SIGN_RESOURCE_RULES_PATH=$(SDKROOT)/ResourceRules.plist' \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO
+
+  # Stupid hack to make PackageApplication work. With
+  # CODE_SIGN_RESOURCE_RULES_PATH in place above, this shouldn't be necessary.
+  # The funny thing is that ResourceRules.plist is actually deprecated now.
+  # So we should figure out how to fix this in the long run.
+  if [ ! -e "$PWD/build/$CONFIGURATION-iphoneos/$PROJECT.app/ResourceRules.plist" ]; then
+    cp /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/ResourceRules.plist $PWD/build/$CONFIGURATION-iphoneos/$PROJECT.app
+  fi
+
+  mkdir dist
+  xcrun \
+    -log \
+    -sdk iphoneos \
+    PackageApplication \
+    "$PWD/build/$CONFIGURATION-iphoneos/$PROJECT.app" \
+    -o "$PWD/dist/$PROJECT.ipa" \
+    -sign "$DEVELOPER_NAME" \
+    -embed "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_NAME.mobileprovision"
+
+else
+  echo "Unknown test type: $TEST_TYPE"
+  exit 1
+fi

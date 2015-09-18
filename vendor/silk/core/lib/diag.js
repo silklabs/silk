@@ -31,7 +31,7 @@ class DiagLogger {
       // For a streaming log (eg, logcat) send data as fast as it arrives
       helper.stdout.on('data', data => {
         if (this.socket) {
-          this.socket.emit('log', {
+          this.socket.emit('diag', {
             id: this.id,
             type: this.type,
             log: data.toString()
@@ -49,7 +49,7 @@ class DiagLogger {
     helper.on('close', () => {
       if (this.data.length > 0) {
         if (this.socket) {
-          this.socket.emit('log', {
+          this.socket.emit('diag', {
             id: this.id,
             type: this.type,
             log: this.data

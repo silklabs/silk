@@ -18,7 +18,6 @@ let api = require('./api');
 let battery = require('./battery');
 let btle = require('./btle');
 let log = require('./log')('main');
-let vib = require('./vibrator')();
 let wifi = require('./wifi');
 let ntp = require('./ntp');
 let util = require('./util');
@@ -225,25 +224,28 @@ server.on('disconnect', () => {
 server.on('reconnecting', () => ui.goto('connecting'));
 
 server.on('cmd', cmd => {
-  let msg = cmd.msg;
-  vib.on(500);
-  switch (msg) {
-  case 'start':
-    log.warn('"start" command');
-    break;
-  case 'stop':
-    log.warn('"stop" command');
-    break;
+  switch (cmd.msg) {
   case 'light':
-    if (hue) {
+    if (hue) { // TODO: This command is no longer used by clients
       hue.setState(cmd.state);
     }
     break;
-  case 'diag':
+  case 'diag': // TODO: This command is no longer used by clients
     diag.setConfig(cmd.config);
     break;
+
+  // The 'livestream' command is sent by the server to request live streaming
+  // data from this device.  Supported streams: preview, video, logging
+  //
+  case 'livestream':
+    log.info('livestream command:', JSON.stringify(cmd));
+    let flag = cmd.diag ? 1 : 0;
+    diag.setConfig({dash: flag, logcat: flag, procrank: flag, });
+
+    timeline.configLiveStream(!!cmd.preview, !!cmd.video);
+    break;
   default:
-    log.error('Unhandled command', cmd);
+    log.error('Unknown command:', JSON.stringify(cmd));
     break;
   }
 });

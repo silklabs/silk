@@ -20,6 +20,15 @@ elif [ "$TEST_TYPE" = build-dist ]; then
     'CODE_SIGN_RESOURCE_RULES_PATH=$(SDKROOT)/ResourceRules.plist' \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO
+
+  # Stupid hack to make PackageApplication work. With
+  # CODE_SIGN_RESOURCE_RULES_PATH in place above, this shouldn't be necessary.
+  # The funny thing is that ResourceRules.plist is actually deprecated now.
+  # So we should figure out how to fix this in the long run.
+  if [ ! -e "$PWD/build/$CONFIGURATION-iphoneos/$PROJECT.app/ResourceRules.plist" ]; then
+    cp /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/ResourceRules.plist $PWD/build/$CONFIGURATION-iphoneos/$PROJECT.app
+  fi
+
   mkdir dist
   xcrun \
     -log \

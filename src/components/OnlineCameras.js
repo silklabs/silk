@@ -57,7 +57,7 @@ class Camera extends EventEmitter {
     URL.revokeObjectURL(this.logoImage.src);
   }
 
-  feedNewLog(type, data) {
+  _feedNewLog(type, data) {
     switch (type) {
     case 'dash':
     case 'procrank':
@@ -84,28 +84,23 @@ class Camera extends EventEmitter {
   }
 
   set logging(enabled) {
-    if (!enabled) {
-      // FIX ME!
-      log.warn(`
-        TODO: The logging state is currently GLOBAL (stored on the device and
-              common to all clients.  This is very broken, but for now this means
-              that logging is never really disabled to avoid unduly disturbing
-              others.
-      `);
+    let diagStream = 'diag-' + this.id;
+
+    if (enabled) {
+      log.info('Joining diag stream ' + diagStream);
+      this._socket.on(diagStream, this._onDiagStream);
+      this._socket.emit('join', diagStream);
+
+    } else {
+      log.info('Leaving diag stream ' + diagStream);
+      this._socket.removeListener(diagStream, this._onDiagStream);
+      this._socket.emit('leave', diagStream);
     }
+  }
 
-    let flag = enabled ? 1 : 0;
-    let config = {
-      dash: flag,
-      logcat: flag,
-      procrank: flag,
-    };
-
-    this._socket.emit('cmd', {
-      id: this.id,
-      msg: 'diag',
-      config
-    });
+  _onDiagStream = msg => {
+    this._feedNewLog(msg.type, msg.log);
+    this.emit('diag');
   }
 
   on(event, listener) {
@@ -137,7 +132,7 @@ class Camera extends EventEmitter {
   }
 
   _previewImageStream(enabled) {
-    let previewStream = 'video-preview-' + this.id;
+    let previewStream = 'preview-' + this.id;
 
     if (this.previewImage) {
       URL.revokeObjectURL(this.previewImage.src);
@@ -289,16 +284,7 @@ export default class OnlineCameras extends React.Component {
         this.setState({
           connectionStatus: `Connected to server`,
         });
-        this.socket.emit('join', 'logging');
         this.socket.emit('join', 'video-streams');
-      });
-
-      this.socket.on('log', msg => {
-        let camera = this.state.cameras[msg.id];
-        if (camera) {
-          camera.feedNewLog(msg.type, msg.log);
-          this.forceUpdate(); // TODO: log data is updated as a state side-effect. Naughty
-        }
       });
 
       this.socket.on('disconnect', e => {
@@ -314,8 +300,12 @@ export default class OnlineCameras extends React.Component {
 
       this.socket.on('video-stream-new', msg => {
         log.info('New camera', msg.name, msg.id);
-        this.state.cameras[msg.id] = new Camera(msg.name, msg.id, msg.logo,
+        let camera = new Camera(msg.name, msg.id, msg.logo,
           msg.previewSize, this.socket);
+        camera.on('diag', () => {
+          this.forceUpdate(); // TODO: log data is updated as a state side-effect. Naughty
+        });
+        this.state.cameras[msg.id] = camera;
         this.setState({
           connectionStatus: `${Object.keys(this.state.cameras).length} cameras connected`,
           cameras: this.state.cameras,

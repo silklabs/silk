@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+source $(dirname $0)/../.branch
+BRANCH_ARG=$1
+BRANCH_TO_DOWNLOAD=${BRANCH_ARG:-$BRANCH}
+
+DOWNLOAD_URL=https://s3-us-west-2.amazonaws.com/silk-app/$BRANCH_TO_DOWNLOAD/latest/Silk.ipa
+TEMP_DIR=`mktemp -d -t silk-app`
+mkdir -p $TEMP_DIR
+wget -O $TEMP_DIR/Silk.ipa $DOWNLOAD_URL
+ios-deploy -b $TEMP_DIR/Silk.ipa --nostart

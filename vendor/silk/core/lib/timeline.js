@@ -47,13 +47,24 @@ class Timeline extends EventEmitter {
   set socket(socket) {
     log.warn(`server socket connected`);
     this.serverSocket = socket;
-
-    // Force the last preview image to be transmitted immediately, to provide
-    // the client with a preview image as quick as possible when the camera
-    // first connects.
-    this._pushPreview(null, null);
-
     this.videoUpload.socket = socket;
+  }
+
+  /**
+   * Selects if transition of the live preview images and/or video should be
+   * enabled or not.
+   */
+  configLiveStream(preview, video) {
+    if (this.livePreview !== preview) {
+      this.livePreview = preview;
+      if (this.livePreview) {
+        // Force the last preview image to be transmitted immediately, to provide
+        // the client with a preview image as quick as possible when the camera
+        // first connects.
+        this._pushPreview(null, null);
+      }
+    }
+    this.liveVideo = video;
   }
 
   /**
@@ -218,9 +229,21 @@ class Timeline extends EventEmitter {
   }
 
   _pushPacket(when, frame, objects, type) {
+    let transmit;
+    switch (type) {
+    case 'jpeg':
+      transmit = this.livePreview && this.serverSocket.connected;
+      break;
+    case 'mp4':
+      transmit = this.liveVideo && this.serverSocket.connected;
+      break;
+    default:
+      util.processthrow(`Unknown packet type: ${type}`);
+    }
+
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms` +
               ` lag:${Date.now() - when}ms objects:${(objects ? objects.length : 0)}`;
-    if (this.serverSocket.connected) {
+    if (transmit) {
       log.verbose(str);
       this.serverSocket.emit('video', { id: this.id, objects: objects,
                                         frame: frame, contents: type, when: when });

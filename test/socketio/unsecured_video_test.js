@@ -36,7 +36,8 @@ suite('unsecured video', () => {
 
   async function connectStream(emitter, socket, device, name) {
     socket.emit('info', { id: device, now: Date.now(), name: name, logo: [] });
-    socket.emit('video', { id: device });
+    socket.emit('video', { id: device, contents: 'preview' });
+    socket.emit('diag', { id: device, type: 'logdog', log: 'WOOF!' });
     let msg = await eventToPromise(emitter, 'new');
     assert.equal(msg.id, device);
     assert.equal(msg.name, name);
@@ -45,7 +46,7 @@ suite('unsecured video', () => {
   async function receiveBufferFrom(socket, device, name) {
     let frame = new Buffer([0, 1, 2, 3, 4]);
     socket.emit('join', 'video-' + device);
-    socket.emit('video', { id: device, name: name, frame: frame });
+    socket.emit('video', { id: device, contents: 'mp4', name: name, frame: frame });
 
     let msg = await eventToPromise(socket, `video-${device}`);
     assert.equal(msg.id, device);

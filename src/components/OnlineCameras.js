@@ -18,7 +18,7 @@ const styles = {
     flexDirection: 'row'
   },
   glyphicon: {
-    fontSize: '25px'
+    fontSize: '20px'
   },
   onlineCamera: {
     padding: '10px 0 10px 10px',
@@ -46,6 +46,11 @@ export class OnlineCamera extends React.Component {
               <Link to={`/diag/${this.deviceId()}`}>
                 <Button bsSize="large" bsStyle="info">
                   <Glyphicon glyph="info-sign" style={styles.glyphicon} />
+                </Button>
+              </Link>
+              <Link to={`/crashes/${this.props.camera.id}`}>
+                <Button bsSize="large" bsStyle="danger" onClick={this.onOpenDiag}>
+                  <Glyphicon glyph="fire" style={styles.glyphicon} />
                 </Button>
               </Link>
             </div>

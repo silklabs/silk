@@ -31,8 +31,7 @@ class DebugLogTest: XCTestCase {
   // This test is sorta lame it's purpose is so we can visually inspect output.
   func testDebugLog() {
     DebugLog.enable("*")
-
-    var log = DebugLog.create("silk-foo");
+    let log = DebugLog.create("silk-foo");
     log.debug("log %@", "value")
     log.info("log %@", "value")
     log.error("log %@", "value")

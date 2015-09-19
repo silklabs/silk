@@ -21,7 +21,7 @@ class AppCryptoTest: XCTestCase {
     let start = NSDate()
     let subject = AppCrypto()
 
-    var password = "silklabs"
+    let password = "silklabs"
     let salt: NSString = "engineering@silklabs.com"
     let rounds = 64000
     var out: String = ""

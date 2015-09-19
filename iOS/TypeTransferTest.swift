@@ -20,8 +20,8 @@ class TypeTransferTest: XCTestCase {
     XCTAssert(hasWootbar, "has nested dict")
     let wootbar = transferDict["wootbar"] as! Dictionary<String, AnyObject>
 
-    var blob = wootbar["blob"] as! Dictionary<String, AnyObject>
-    var blobValue = NSDataBridge.release(blob["id"] as! String)
+    let blob = wootbar["blob"] as! Dictionary<String, AnyObject>
+    let blobValue = NSDataBridge.release(blob["id"] as! String)
     XCTAssert(bin === blobValue, "returns equal blob")
   }
   

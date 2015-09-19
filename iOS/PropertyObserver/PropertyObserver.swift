@@ -82,7 +82,6 @@ extension NSObject {
   Remove KVO object from observers (will ensure no more callbacks are fired)
   */
   public func removeKeyPathObserver(kvo: PropertyObserverKey) -> Bool {
-    let contains = self.propertyObserverItems.contains(kvo)
     if self.propertyObserverItems.contains(kvo) {
       // Ensure it is no longer listening for changes...
       kvo.remove();

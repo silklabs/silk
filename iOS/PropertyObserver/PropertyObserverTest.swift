@@ -10,8 +10,8 @@ class PropertyObserverTests: XCTestCase {
   }
   
   func testSimplePropertyUpdate() {
-    var obj = TestObj()
-    var expectation = expectationWithDescription("property change")
+    let obj = TestObj()
+    let expectation = expectationWithDescription("property change")
 
     obj.observeKeyPath("xfoo") {
       kvo, change in

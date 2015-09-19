@@ -54,6 +54,7 @@ PRODUCT_PACKAGES += $(SILK_EXT)
 # vendor/silk/gonk/...
 SILK_INIT := \
   init.silk.rc \
+  silk-kmsg \
   silk-service \
   silk-dashboard \
 

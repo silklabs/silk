@@ -7,8 +7,6 @@ import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
-import CameraVideo from './CameraVideo';
-import mklog from '../log'; const log = mklog('OnlineCameras');
 
 const styles = {
   center: {
@@ -65,11 +63,11 @@ export default class OnlineCameras extends React.Component {
     Cameras.on('stateChanged', this.onCamerasStateChanged);
     this.onCamerasStateChanged(Cameras);
   }
-  
+
   componentWillUnmount() {
     Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
   }
-  
+
   onCamerasStateChanged = state => {
     this.setState({ cameras: state.cameras, status: state.status });
   }

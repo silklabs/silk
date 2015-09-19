@@ -16,7 +16,7 @@ class Diag extends React.Component {
   deviceId() {
     return this.props.params.deviceId;
   }
-  
+
   componentWillMount() {
     Cameras.on('stateChanged', this.onCamerasStateChanged);
     this.onCamerasStateChanged(Cameras);
@@ -48,7 +48,7 @@ class Diag extends React.Component {
     }
     this.setState({ camera: newCamera });
   }
-    
+
   onDiag = () => {
     this.forceUpdate(); // TODO: log data is updated as a state side-effect. Naughty
   }
@@ -83,7 +83,7 @@ class Diag extends React.Component {
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
           <Button onClick={this.onPause}>
-            <Glyphicon glyph={ paused ? "play" : "pause" } />
+            <Glyphicon glyph={ paused ? 'play' : 'pause' } />
           </Button>
         </ButtonGroup>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>

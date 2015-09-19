@@ -2,16 +2,17 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import OnlineCameras from './components/OnlineCameras';
+import { Router, Route } from 'react-router';
 import 'whatwg-fetch'; // window.fetch() polyfill for iOS
 
-let config = {};
-try {
-  config = require('../config.local.json');
-} catch (e) {
-  if (e.code !== 'MODULE_NOT_FOUND') {
-    throw e;
-  }
-}
+import CameraVideo from './components/CameraVideo';
+import Diag from './components/Diag';
+import OnlineCameras from './components/OnlineCameras';
 
-React.render(<OnlineCameras serverUrl={config.serverUrl}/>, document.body);
+React.render((
+  <Router>
+    <Route path="/" component={OnlineCameras} />
+    <Route path="/diag/:deviceId" component={Diag} />
+    <Route path="/video/:deviceId" component={CameraVideo} />
+  </Router>
+), document.body);

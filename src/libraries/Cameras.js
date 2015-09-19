@@ -4,7 +4,7 @@
 import { EventEmitter } from 'events';
 import io from 'socket.io-client';
 
-import Config from './Config';
+import Api from './Api';
 import mklog from '../log'; const log = mklog('Cameras');
 
 class Camera extends EventEmitter {
@@ -205,8 +205,7 @@ class Cameras extends EventEmitter {
     this.cameras = {};
     this.socket = null;
     this.status = `Offline`;
-    this.api = require('silk-api-react-native')({serverUrl: Config.serverUrl});
-    this.api.socketio.address().then(result => {
+    Api.socketio.address().then(result => {
       this._changeState(`Connecting to ${result.url}...`);
 
       this.socket = io(result.url, {

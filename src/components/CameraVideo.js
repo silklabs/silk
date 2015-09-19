@@ -2,45 +2,48 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, ButtonGroup, Glyphicon } from 'react-bootstrap';
+import { Link } from 'react-router';
+
+import Cameras from '../libraries/Cameras';
 
 export default class CameraVideo extends React.Component {
-  static propTypes = {
-    camera: React.PropTypes.object,
-    onClick: React.PropTypes.func,
+  state = { camera: null };
+
+  deviceId() {
+    return this.props.params.deviceId;
+  }
+
+  componentWillMount() {
+    Cameras.on('stateChanged', this.onCamerasStateChanged);
+    this.onCamerasStateChanged(Cameras);
   }
 
   componentDidMount() {
-    let camera = this.props.camera;
-    if (camera) {
-      camera.on('videoClip', this.onVideoClip);
-    }
     this.video = React.findDOMNode(this.refs.video);
   }
 
-  componentWillReceiveProps(nextProps) {
-    let prevCamera = this.props.camera;
-    let nextCamera = nextProps.camera;
-
-    if (prevCamera && nextCamera) {
-      if (prevCamera.id === nextCamera.id) {
-        return; // Camera ID is unchanged, nothing to do
-      }
-    }
-
-    if (prevCamera) {
-      prevCamera.removeListener('videoClip', this.onVideoClip);
-    }
-    if (nextCamera) {
-      nextCamera.on('videoClip', this.onVideoClip);
-    }
-  }
-
   componentWillUnmount() {
-    let camera = this.props.camera;
+    let camera = this.state.camera;
     if (camera) {
       camera.removeListener('videoClip', this.onVideoClip);
     }
+  }
+
+  onCamerasStateChanged = state => {
+    let oldCamera = this.state.camera;
+    let newCamera = state.cameras[this.deviceId()];
+
+    if (oldCamera === newCamera) {
+      return;
+    }
+    if (oldCamera) {
+      oldCamera.removeListener('videoClip', this.onVideoClip);
+    }
+    if (newCamera) {
+      newCamera.on('videoClip', this.onVideoClip);
+    }
+    this.setState({ camera: newCamera });
   }
 
   onVideoClip = clip => {
@@ -52,8 +55,12 @@ export default class CameraVideo extends React.Component {
   render() {
     return (
       <div>
-        <video ref='video' onClick={this.props.onClick} autoPlay/>
-        <Button bsStyle='primary' block onClick={this.props.onClick}>Close</Button>
+        <ButtonGroup>
+          <Button bsStyle="warning">
+            <Link to="/"><Glyphicon glyph="home" /></Link>
+          </Button>
+        </ButtonGroup>
+        <video ref='video' autoPlay />
       </div>
     );
   }

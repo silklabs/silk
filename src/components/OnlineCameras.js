@@ -33,15 +33,15 @@ const styles = {
 
 class OnlineCamera extends React.Component {
   static propTypes = {
-    camera: React.PropTypes.object,
-    onClick: React.PropTypes.func
+    camera: React.PropTypes.object
   };
 
   render() {
     return (
       <div style={styles.onlineCamera}>
-        <CameraPreview camera={this.props.camera}
-          onClick={this.props.onClick} />
+        <Link to={`/video/${this.props.camera.id}`}>
+          <CameraPreview camera={this.props.camera} />
+        </Link>
         <div style={styles.toolbar}>
           <div style={styles.flexRow}>
             <div style={styles.center}>
@@ -61,10 +61,6 @@ class OnlineCamera extends React.Component {
 export default class OnlineCameras extends React.Component {
   state = { cameras: {}, status: '' };
 
-  constructor(props) {
-    super(props);
-  }
-
   componentWillMount() {
     Cameras.on('stateChanged', this.onCamerasStateChanged);
     this.onCamerasStateChanged(Cameras);
@@ -77,26 +73,11 @@ export default class OnlineCameras extends React.Component {
   onCamerasStateChanged = state => {
     this.setState({ cameras: state.cameras, status: state.status });
   }
-  
-  onCameraClick = (id) => {
-    this.setState({videoId: id});
-  }
-  onVideoClick = () => {
-    this.setState({videoId: null});
-  }
 
   render() {
-    if (this.state.videoId) {
-      let id = this.state.videoId;
-      let camera = this.state.cameras[id];
-      if (camera) {
-        return <CameraVideo key={id} onClick={this.onVideoClick} camera={camera} />;
-      }
-    }
     let cameras = Object.keys(this.state.cameras).map(
       id => <OnlineCamera key={id}
-                          camera={this.state.cameras[id]}
-                          onClick={this.onCameraClick} />);
+                          camera={this.state.cameras[id]} />);
     return (<div style={styles.flexRow}>{cameras}</div>);
   }
 }

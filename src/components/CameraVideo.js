@@ -28,6 +28,7 @@ export default class CameraVideo extends React.Component {
     if (camera) {
       camera.removeListener('videoClip', this.onVideoClip);
     }
+    Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
   }
 
   onCamerasStateChanged = state => {

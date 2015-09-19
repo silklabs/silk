@@ -318,8 +318,8 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
 {
   char b1[16];
   char b2[16];
-  [UUID1.data getBytes:b1];
-  [UUID2.data getBytes:b2];
+  [UUID1.data getBytes:b1 length:16];
+  [UUID2.data getBytes:b2 length:16];
   
   if (memcmp(b1, b2, UUID1.data.length) == 0)
     return 1;

@@ -1,16 +1,29 @@
 import React from 'react-native';
-import ReactART from 'ReactNativeART';
-import Rectangle from './Rectangle';
 
 let {
-  Surface,
-  Group,
+  View,
   Text,
-} = ReactART;
-
-let {
-  View
 } = React;
+
+let Square = React.createClass({
+  render: function() {
+    let {top, left, width, height, stroke} = this.props;
+
+    let style = {
+      position: 'absolute',
+      top: top,
+      left: left,
+      width: width,
+      height: height,
+      borderWidth: 2,
+      borderColor: stroke
+    };
+
+    return (
+      <View style={style} />
+    );
+  }
+});
 
 let ObjectBoxes = React.createClass({
   propTypes: {
@@ -27,27 +40,33 @@ let ObjectBoxes = React.createClass({
     };
   },
 
-
   objectBox(idx, tag, rect, ratio) {
-    let x = Math.ceil(rect.x * ratio);
-    let y = Math.ceil(rect.y * ratio);
+    let left = Math.ceil(rect.x * ratio);
+    let top = Math.ceil(rect.y * ratio);
     let width = Math.ceil(rect.width * ratio);
     let height = Math.ceil(rect.height * ratio);
 
+    let objectLabelStyle = {
+      position: 'absolute',
+      top: (top + height),
+      left: left,
+      fontFamily: 'Open Sans',
+      color: 'black',
+      fontSize: 10,
+      textAlign: 'left'
+    };
+
+    let objectContainerStyle = {
+      position: 'absolute',
+    };
+
     return (
-      <Group x={x} y={y} key={idx}>
-        <Rectangle
-          stroke={this.props.objectColor}
-          height={height}
-          width={width} />
-        <Text
-         x={0}
-         y={height}
-         alignment='middle'
-         fill='#000'
-         font='10px "AppleSDGothicNeo-SemiBold"'>{tag}
+      <View style={objectContainerStyle} key={idx}>
+        <Square top={top} left={left} width={width} height={height} stroke={this.props.objectColor}/>
+        <Text style={objectLabelStyle}>
+          {tag}
         </Text>
-      </Group>
+      </View>
     );
   },
 
@@ -60,25 +79,21 @@ let ObjectBoxes = React.createClass({
 
     let ratio = Math.min(xRatio, yRatio);
 
-    let groups = [];
+    let boxes = [];
     let count = 0;
     for (let i = 0; i < objects.length; ++i) {
-      var tag = objects[i].tag;
-      var rects = objects[i].rects;
+      let tag = objects[i].tag;
+      let rects = objects[i].rects;
 
       for (let j = 0; j < rects.length; ++j) {
-        groups.push(this.objectBox(count, tag, rects[j], ratio));
+        boxes.push(this.objectBox(count, tag, rects[j], ratio));
         count++;
       }
     }
 
     return (
       <View pointerEvents="none" style={this.props.style}>
-        <Surface
-          width={width}
-          height={height}>
-          {groups}
-        </Surface>
+        {boxes}
       </View>
     );
   }

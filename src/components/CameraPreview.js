@@ -2,75 +2,79 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
+import Cameras from '../libraries/Cameras';
 
 export default class CameraPreview extends React.Component {
   static propTypes = {
-    camera: React.PropTypes.object,
-    onClick: React.PropTypes.func,
+    deviceId: React.PropTypes.string,
+  }
+
+  state = { camera: null }
+
+  deviceId() {
+    return this.props.deviceId;
+  }
+
+  componentWillMount() {
+    Cameras.on('stateChanged', this.onCamerasStateChanged);
+    this.onCamerasStateChanged(Cameras);
   }
 
   componentDidMount() {
-    let camera = this.props.camera;
+    let camera = this.state.camera;
     if (camera) {
       camera.on('previewImage', this.onPreviewImage);
     }
-    this._shouldComponentUpdate = true;
     this._canvas = React.findDOMNode(this);
     this._context = this._canvas.getContext('2d');
   }
 
-  componentWillReceiveProps(nextProps) {
-    let prevCamera = this.props.camera;
-    let nextCamera = nextProps.camera;
-
-    if (prevCamera && nextCamera) {
-      if (prevCamera.id === nextCamera.id) {
-        return; // Camera ID is unchanged, nothing to do
-      }
-    }
-
-    if (prevCamera) {
-      prevCamera.removeListener('previewImage', this.onPreviewImage);
-    }
-    if (nextCamera) {
-      nextCamera.on('previewImage', this.onPreviewImage);
-    }
-    this._shouldComponentUpdate = true;
-  }
-
   componentWillUnmount() {
-    let camera = this.props.camera;
+    let camera = this.state.camera;
     if (camera) {
       camera.removeListener('previewImage', this.onPreviewImage);
     }
-    this._shouldComponentUpdate = true;
+    Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
   }
 
   shouldComponentUpdate() {
+    // render() only if the camera has changed.  For normal state updates, the
+    // onPreviewImage() listener manages updating the canvas outside of React.
     let shouldComponentUpdate = this._shouldComponentUpdate;
     this._shouldComponentUpdate = false;
     return shouldComponentUpdate;
   }
 
-  onClick = () => {
-    let {camera, onClick} = this.props;
-    if (camera && onClick) {
-      onClick(camera.id);
-    }
-  }
-
   render() {
-    let camera = this.props.camera;
+    let camera = this.state.camera;
     if (!camera) {
       return <canvas />;
     }
     let {width, height} = camera.previewSize;
-    return <canvas width={width} height={height} onClick={this.onClick} style={{backgroundColor: 'lightgray'}} />;
+    return <canvas width={width} height={height} style={{backgroundColor: 'lightgray'}} />;
   }
 
   componentDidUpdate() {
     this.renderPreview();
   }
+
+  onCamerasStateChanged = state => {
+    let oldCamera = this.state.camera;
+    let newCamera = state.cameras[this.deviceId()];
+
+    if (oldCamera === newCamera) {
+      return;
+    }
+    if (oldCamera) {
+      oldCamera.removeListener('previewImage', this.onPreviewImage);
+    }
+    if (newCamera) {
+      newCamera.on('previewImage', this.onPreviewImage);
+    }
+    this._shouldComponentUpdate = true;
+    this.setState({ camera: newCamera });
+  }
+
 
   onPreviewImage = () => this.renderPreview()
 
@@ -85,7 +89,7 @@ export default class CameraPreview extends React.Component {
     context.globalAlpha = 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    let camera = this.props.camera;
+    let camera = this.state.camera;
     if (camera) {
       // Preview image
       if (camera.previewImage) {

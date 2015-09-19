@@ -88,7 +88,7 @@ class Diag extends React.Component {
         </ButtonGroup>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
           <DiagLog logName='dash' log={logs.dash} paused={paused}/>
-          <CameraPreview camera={camera}/>
+          <CameraPreview deviceId={this.deviceId()}/>
         </div>
         <DiagLog logName='procrank' log={logs.procrank} paused={paused}/>
         <DiagLogcat logName='logcat' log={logs.logcat} paused={paused}/>

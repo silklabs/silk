@@ -29,21 +29,21 @@ const styles = {
   },
 };
 
-class OnlineCamera extends React.Component {
-  static propTypes = {
-    camera: React.PropTypes.object
-  };
+export class OnlineCamera extends React.Component {
+  deviceId() {
+    return this.props.params.deviceId;
+  }
 
   render() {
     return (
       <div style={styles.onlineCamera}>
-        <Link to={`/video/${this.props.camera.id}`}>
-          <CameraPreview camera={this.props.camera} />
+        <Link to={`/video/${this.deviceId()}`}>
+          <CameraPreview deviceId={this.deviceId()} />
         </Link>
         <div style={styles.toolbar}>
           <div style={styles.flexRow}>
             <div style={styles.center}>
-              <Link to={`/diag/${this.props.camera.id}`}>
+              <Link to={`/diag/${this.deviceId()}`}>
                 <Button bsSize="large" bsStyle="info">
                   <Glyphicon glyph="info-sign" style={styles.glyphicon} />
                 </Button>
@@ -56,7 +56,7 @@ class OnlineCamera extends React.Component {
   }
 }
 
-export default class OnlineCameras extends React.Component {
+export class OnlineCameras extends React.Component {
   state = { cameras: {}, status: '' };
 
   componentWillMount() {
@@ -75,7 +75,7 @@ export default class OnlineCameras extends React.Component {
   render() {
     let cameras = Object.keys(this.state.cameras).map(
       id => <OnlineCamera key={id}
-                          camera={this.state.cameras[id]} />);
+                          params={{deviceId: id}} />);
     return (<div style={styles.flexRow}>{cameras}</div>);
   }
 }

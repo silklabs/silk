@@ -2,14 +2,13 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import Diag from './Diag';
+import { Button, Glyphicon } from 'react-bootstrap';
+import { Link } from 'react-router';
+
+import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
 import CameraVideo from './CameraVideo';
-import { Button, Glyphicon } from 'react-bootstrap';
-
-import io from 'socket.io-client';
 import mklog from '../log'; const log = mklog('OnlineCameras');
-import { EventEmitter } from 'events';
 
 const styles = {
   center: {
@@ -32,209 +31,11 @@ const styles = {
   },
 };
 
-class Camera extends EventEmitter {
-  constructor(name, id, logo, previewSize, socket) {
-    super();
-    this.name = name;
-    this.id = id;
-    this.previewSize = previewSize;
-    this.logs = {};
-    this._socket = socket;
-
-    this.logoImage = document.createElement('img');
-    let logoArray = new Uint8Array(logo);
-    if (logoArray.length > 0) {
-      let blob = new Blob([logoArray], { type: 'image/png' });
-      this.logoImage.src = URL.createObjectURL(blob);
-    }
-  }
-
-  deinit() {
-    this.logging = false;
-    this._previewImageStream(false);
-    this._videoClipStream(false);
-
-    URL.revokeObjectURL(this.logoImage.src);
-  }
-
-  _feedNewLog(type, data) {
-    switch (type) {
-    case 'dash':
-    case 'procrank':
-      this.logs[type] = data;
-      break;
-    case 'logcat':
-      const maxLines = 500;
-
-      let logcat = this.logs.logcat || [];
-      data.split(/\r?\n/).map(line => {
-        if (line.length > 0) {
-          logcat.push(line);
-        }
-      });
-      while (logcat.length > maxLines) {
-        logcat.shift();
-      }
-      this.logs.logcat = logcat;
-      break;
-    default:
-      log.error('Unknown log type', type);
-      break;
-    }
-  }
-
-  set logging(enabled) {
-    let diagStream = 'diag-' + this.id;
-
-    if (enabled) {
-      log.info('Joining diag stream ' + diagStream);
-      this._socket.on(diagStream, this._onDiagStream);
-      this._socket.emit('join', diagStream);
-
-    } else {
-      log.info('Leaving diag stream ' + diagStream);
-      this._socket.removeListener(diagStream, this._onDiagStream);
-      this._socket.emit('leave', diagStream);
-    }
-  }
-
-  _onDiagStream = msg => {
-    this._feedNewLog(msg.type, msg.log);
-    this.emit('diag');
-  }
-
-  on(event, listener) {
-    let ret = super.on(event, listener);
-    this._adjustRooms(event);
-    return ret;
-  }
-
-  removeListener(event, listener) {
-    let ret = super.removeListener(event, listener);
-    this._adjustRooms(event);
-    return ret;
-  }
-
-  _adjustRooms(event) {
-    let count = super.listeners(event).length;
-    let enabled = count > 0;
-
-    switch (event) {
-    case 'previewImage':
-      this._previewImageStream(enabled);
-      break;
-    case 'videoClip':
-      this._videoClipStream(enabled);
-      break;
-    default:
-      log.verbose(`Unhandled event: ${event}`);
-    }
-  }
-
-  _previewImageStream(enabled) {
-    let previewStream = 'preview-' + this.id;
-
-    if (this.previewImage) {
-      URL.revokeObjectURL(this.previewImage.src);
-    }
-
-    if (enabled) {
-      log.info('Joining preview stream ' + previewStream);
-      this.previewImage = document.createElement('img');
-      this._socket.on(previewStream, this._onPreviewStream);
-      this._socket.emit('join', previewStream);
-
-    } else {
-      log.info('Leaving preview stream ' + previewStream);
-      this._socket.removeListener(previewStream, this._onPreviewStream);
-      this._socket.emit('leave', previewStream);
-    }
-  }
-
-  _onPreviewStream = msg => {
-    if (!msg) {
-      log.warning('_onPreviewStream: null msg');
-      return;
-    }
-    if (!msg.frame) {
-      log.warning('_onPreviewStream: null msg.frame');
-      return;
-    }
-    if (this.id !== msg.id) {
-      log.warning('Video preview from unknown camera:', msg);
-      return;
-    }
-
-    log.debug('preview', msg);
-    this.previewTimestamp = new Date(msg.when);
-    this.previewObjects = msg.objects;
-
-    let view = new Uint8Array(msg.frame);
-    let blob = new Blob([view], { type: 'image/jpg' });
-    if (this.previewImage) {
-      URL.revokeObjectURL(this.previewImage.src);
-    }
-    this.previewImage.onload = () => this.emit('previewImage');
-    this.previewImage.src = URL.createObjectURL(blob);
-  }
-
-  _videoClipStream(enabled) {
-    let videoStream = 'video-' + this.id;
-
-    if (this.videoClip) {
-      URL.revokeObjectURL(this.videoClip);
-      this.videoClip = null;
-    }
-
-    if (enabled) {
-      log.info('Joining video stream ' + videoStream);
-      this._socket.on(videoStream, this._onVideoStream);
-      this._socket.emit('join', videoStream);
-
-    } else {
-      log.info('Leaving video stream ' + videoStream);
-      this._socket.removeListener(videoStream, this._onVideoStream);
-      this._socket.emit('leave', videoStream);
-    }
-  }
-
-  _onVideoStream = msg => {
-    if (!msg) {
-      log.warning('_onVideoStream: null msg');
-      return;
-    }
-    if (!msg.frame) {
-      log.warning('_onVideoStream: null msg.frame');
-      return;
-    }
-    if (this.id !== msg.id) {
-      log.warning('Video preview from unknown camera:', msg);
-      return;
-    }
-
-    log.debug('video', msg);
-
-    let view = new Uint8Array(msg.frame);
-    let blob = new Blob([view], { type: 'video/mp4' });
-    if (this.videoClip) {
-      URL.revokeObjectURL(this.videoClip);
-    }
-    this.videoClip = URL.createObjectURL(blob);
-    this.emit('videoClip', this.videoClip);
-  }
-
-}
-
 class OnlineCamera extends React.Component {
   static propTypes = {
     camera: React.PropTypes.object,
-    onClick: React.PropTypes.func,
-    onOpenDiag: React.PropTypes.func,
+    onClick: React.PropTypes.func
   };
-
-  onOpenDiag = () => {
-    return this.props.onOpenDiag(this.props.camera.id);
-  }
 
   render() {
     return (
@@ -244,9 +45,11 @@ class OnlineCamera extends React.Component {
         <div style={styles.toolbar}>
           <div style={styles.flexRow}>
             <div style={styles.center}>
-              <Button bsSize="large" bsStyle="info" onClick={this.onOpenDiag}>
-                <Glyphicon glyph="info-sign" style={styles.glyphicon} />
-              </Button>
+              <Link to={`/diag/${this.props.camera.id}`}>
+                <Button bsSize="large" bsStyle="info">
+                  <Glyphicon glyph="info-sign" style={styles.glyphicon} />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -256,90 +59,25 @@ class OnlineCamera extends React.Component {
 }
 
 export default class OnlineCameras extends React.Component {
-
-  static propTypes = {
-    serverUrl: React.PropTypes.string,
-  }
+  state = { cameras: {}, status: '' };
 
   constructor(props) {
     super(props);
-    this.state = {
-      connectionStatus: `Connecting... ${props.serverUrl}`,
-      cameras: {},
-      diagVisible: false,
-    };
-
-    this.socket = null;
-    this.api = require('silk-api-react-native')({serverUrl: props.serverUrl});
-    this.api.socketio.address().then(result => {
-      this.setState({
-        connectionStatus: `Connecting to ${result.url}...`,
-      });
-
-      this.socket = io(result.url, {
-        transports: ['websocket']
-      });
-
-      this.socket.on('connect', () => {
-        this.setState({
-          connectionStatus: `Connected to server`,
-        });
-        this.socket.emit('join', 'video-streams');
-      });
-
-      this.socket.on('disconnect', e => {
-        let cameras = this.state.cameras;
-        Object.keys(cameras).forEach(id => cameras[id].deinit());
-
-        this.setState({
-          connectionStatus: `Disconnected from server: ${e}. Reload?`,
-          cameras: {}
-        });
-        log.error('Server disconnected');
-      });
-
-      this.socket.on('video-stream-new', msg => {
-        log.info('New camera', msg.name, msg.id);
-        let camera = new Camera(msg.name, msg.id, msg.logo,
-          msg.previewSize, this.socket);
-        camera.on('diag', () => {
-          this.forceUpdate(); // TODO: log data is updated as a state side-effect. Naughty
-        });
-        this.state.cameras[msg.id] = camera;
-        this.setState({
-          connectionStatus: `${Object.keys(this.state.cameras).length} cameras connected`,
-          cameras: this.state.cameras,
-        });
-      });
-
-      this.socket.on('video-stream-delete', msg => {
-        log.info('Lost camera', msg.name, msg.id);
-
-        let camera = this.state.cameras[msg.id];
-        if (camera) {
-          camera.deinit();
-          delete this.state.cameras[msg.id];
-
-          this.setState({
-            connectionStatus: `${Object.keys(this.state.cameras).length} cameras connected`,
-            cameras: this.state.cameras,
-          });
-        }
-      });
-
-    }).catch(err => {
-      this.setState({status: `Could not get socket.io address: ${err}`});
-    });
   }
 
-  onCloseDiag = () => {
-    this.setState({diagId: null, diagVisible: false});
+  componentWillMount() {
+    Cameras.on('stateChanged', this.onCamerasStateChanged);
+    this.onCamerasStateChanged(Cameras);
   }
-
-  onOpenDiag = (id) => {
-    this.setState({diagId: id, diagVisible: true});
+  
+  componentWillUnmount() {
+    Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
   }
-
+  
+  onCamerasStateChanged = state => {
+    this.setState({ cameras: state.cameras, status: state.status });
+  }
+  
   onCameraClick = (id) => {
     this.setState({videoId: id});
   }
@@ -348,9 +86,6 @@ export default class OnlineCameras extends React.Component {
   }
 
   render() {
-    if (this.state.diagVisible) {
-      return <Diag onClose={this.onCloseDiag} {...this.state}/>;
-    }
     if (this.state.videoId) {
       let id = this.state.videoId;
       let camera = this.state.cameras[id];
@@ -361,8 +96,7 @@ export default class OnlineCameras extends React.Component {
     let cameras = Object.keys(this.state.cameras).map(
       id => <OnlineCamera key={id}
                           camera={this.state.cameras[id]}
-                          onClick={this.onCameraClick}
-                          onOpenDiag={this.onOpenDiag} />);
+                          onClick={this.onCameraClick} />);
     return (<div style={styles.flexRow}>{cameras}</div>);
   }
 }

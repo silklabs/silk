@@ -1,64 +1,62 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-import React from 'react';
-import { Button, ButtonGroup, Input } from 'react-bootstrap';
-import mklog from '../log'; const log = mklog('diag');
 import ansiUp from 'ansi_up';
+import React from 'react';
+import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
+import { Link } from 'react-router';
+
+import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
+import mklog from '../log'; const log = mklog('diag');
 
 class Diag extends React.Component {
-  static propTypes = {
-    cameras: React.PropTypes.object.isRequired,
-    onClose: React.PropTypes.func,
+  state = { camera: null, paused: false };
+
+  deviceId() {
+    return this.props.params.deviceId;
   }
-
-  constructor(props) {
-    super(props);
-    this.state = { cameraId: this.props.diagId };
-    this.onCameraSelect(this.state.cameraId);
-  }
-
-  onCameraSelect = id => {
-    log.info(`Selected camera: ${id}`);
-
-    let prevCamera = this.props.cameras[this.state.cameraId];
-    let nextCamera = this.props.cameras[id];
-
-    if (prevCamera) {
-      prevCamera.logging = false;
-    }
-    if (nextCamera) {
-      nextCamera.logging = true;
-    }
-    this.setState({cameraId: id});
-    this.reconnectCameraId = null;
-  }
-
-  onPause = paused => {
-    log.info(`paused=${paused}`);
-    this.setState({paused});
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (this.state.cameraId) {
-      if (!nextProps.cameras[this.state.cameraId]) {
-        this.reconnectCameraId = this.state.cameraId;
-        this.setState({cameraId: null});
-      }
-    } else {
-      if (nextProps.cameras[this.reconnectCameraId]) {
-        log.info(`Reconnecting to ${this.reconnectCameraId}`);
-        this.onCameraSelect(this.reconnectCameraId);
-      }
-    }
+  
+  componentWillMount() {
+    Cameras.on('stateChanged', this.onCamerasStateChanged);
+    this.onCamerasStateChanged(Cameras);
   }
 
   componentWillUnmount() {
-    let camera = this.props.cameras[this.state.cameraId];
+    Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
+    let camera = this.state.camera;
     if (camera) {
       camera.logging = false;
+      camera.removeListener('diag', this.onDiag);
     }
+  }
+
+  onCamerasStateChanged = state => {
+    let oldCamera = this.state.camera;
+    let newCamera = state.cameras[this.deviceId()];
+
+    if (oldCamera === newCamera) {
+      return;
+    }
+    if (oldCamera) {
+      oldCamera.logging = false;
+      oldCamera.removeListener('diag', this.onDiag);
+    }
+    if (newCamera) {
+      newCamera.logging = true;
+      newCamera.on('diag', this.onDiag);
+    }
+    this.setState({ camera: newCamera });
+  }
+    
+  onDiag = () => {
+    this.forceUpdate(); // TODO: log data is updated as a state side-effect. Naughty
+  }
+
+  onPause = () => {
+    let paused = !this.state.paused;
+    log.info(`paused=${paused}`);
+    this.setState({paused});
   }
 
   render() {
@@ -69,30 +67,31 @@ class Diag extends React.Component {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      backgroundColor: this.state.paused ? 'papayawhip' : 'white'
     };
-    if (this.state.cameraId) {
-      style.backgroundColor = this.state.paused ? 'papayawhip' : 'white';
+
+    let { camera, paused } = this.state;
+    if (!camera) {
+      return (<div>Waiting for camera {this.deviceId()} to connect ...</div>);
     }
 
-    let camera = null;
-    let logs = {};
-    if (this.state.cameraId) {
-      camera = this.props.cameras[this.state.cameraId];
-      logs = camera.logs;
-    }
-
+    let logs = camera.logs;
     return (
       <div style={style}>
-        <DiagNavBar cameras={this.props.cameras}
-                    cameraId={this.state.cameraId}
-                    onPause={this.onPause}
-                    onClose={this.props.onClose} />
+        <ButtonGroup>
+          <Button bsStyle='warning'>
+            <Link to="/"><Glyphicon glyph="home" /></Link>
+          </Button>
+          <Button onClick={this.onPause}>
+            <Glyphicon glyph={ paused ? "play" : "pause" } />
+          </Button>
+        </ButtonGroup>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
-          <DiagLog logName='dash' log={logs.dash} paused={this.state.paused}/>
+          <DiagLog logName='dash' log={logs.dash} paused={paused}/>
           <CameraPreview camera={camera}/>
         </div>
-        <DiagLog logName='procrank' log={logs.procrank} paused={this.state.paused}/>
-        <DiagLogcat logName='logcat' log={logs.logcat} paused={this.state.paused}/>
+        <DiagLog logName='procrank' log={logs.procrank} paused={paused}/>
+        <DiagLogcat logName='logcat' log={logs.logcat} paused={paused}/>
       </div>
     );
   }
@@ -184,57 +183,6 @@ class DiagLogcat extends DiagLog {
   componentDidUpdate() {
     let dom = React.findDOMNode(this);
     dom.scrollTop = dom.scrollHeight;
-  }
-}
-
-
-class DiagNavBar extends React.Component {
-  static propTypes = {
-    cameras: React.PropTypes.object, // same shape as what Diag expects
-    cameraId: React.PropTypes.string,
-    onPause: React.PropTypes.func.isRequired,
-    onClose: React.PropTypes.func.isRequired,
-  }
-
-  constructor(props) {
-    super(props);
-  }
-
-  onCameraSelect = id => {
-    this.props.onCameraSelect(id);
-  }
-
-  render() {
-    return <div>
-        &nbsp;
-        <ButtonGroup>
-          {this.props.onClose && <Button bsStyle='warning' onClick={this.props.onClose}>Close</Button>}
-          <DiagNavPause onPause={this.props.onPause} cameraId={this.props.cameraId} />
-        </ButtonGroup>
-        &nbsp;
-      </div>;
-  }
-}
-
-class DiagNavPause extends React.Component {
-  static propTypes = {
-    onPause: React.PropTypes.func.isRequired,
-    cameraId: React.PropTypes.string,
-  }
-
-  constructor(props) {
-    super(props);
-    this.state = {};
-  }
-
-  handleClick = () => {
-    let paused = !this.state.paused;
-    this.setState({paused});
-    this.props.onPause(paused);
-  }
-
-  render() {
-    return <Button disabled={!this.props.cameraId} onClick={this.handleClick} > Pause </Button>;
   }
 }
 

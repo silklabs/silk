@@ -41,8 +41,6 @@ module.exports = function(opts) {
   app.use((req, res, next) => {
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.header('Pragma', 'no-cache');
-    res.header('Access-Control-Allow-Origin', config.server.cors.origin);
-    res.header('Access-Control-Allow-Methods', config.server.cors.methods);
     res.header('Expires', 0);
     next();
   });

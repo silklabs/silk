@@ -1,6 +1,7 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+import cors from 'cors';
 import createDb from './db';
 import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
@@ -30,6 +31,10 @@ export default async function main (config) {
   log.info('serving static files from', publicPath);
 
   app.set('port', config.server.port);
+
+  let corsOptions = Object.assign({ }, config.server.cors);
+  app.use(cors(corsOptions));
+
   app.use(express.static(publicPath));
 
   // We want JSON parsing to happen for almost all requests, except when we are

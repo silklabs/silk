@@ -30,6 +30,7 @@
     "base64url": "^1.0.4",
     "body-parser": "^1.12.2",
     "browserify": "^11.0.1",
+    "cors": "^2.7.1",
     "debug": "^2.2.0",
     "denodeify": "^1.2.1",
     "elliptic": "^5.1.0",

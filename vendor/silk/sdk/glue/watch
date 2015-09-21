@@ -21,4 +21,4 @@ while true; do
 done
 
 cd $orgpwd
-( set -x; exec ./node_modules/.bin/grunt watch )
+( set -x; exec ./node_modules/.bin/grunt watch $@)

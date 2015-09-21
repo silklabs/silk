@@ -72,6 +72,8 @@ var MonitorPreview = React.createClass({
     if (this.state.objects.length) {
       objects = (
         <ObjectBoxes
+          id={this.props.id}
+          socket={this.props.socket}
           width={PREVIEW_WIDTH}
           height={PREVIEW_HEIGHT}
           objects={this.state.objects}

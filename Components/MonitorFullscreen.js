@@ -627,6 +627,8 @@ export default React.createClass({
     let objects = null;
     if (this.state.objects.length) {
       objects = <ObjectBoxes
+                  id={this.props.id}
+                  socket={this.props.socket}
                   width={width}
                   height={height}
                   objects={this.state.objects}

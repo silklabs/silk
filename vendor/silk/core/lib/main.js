@@ -222,6 +222,14 @@ server.on('disconnect', () => {
 server.on('reconnecting', () => ui.goto('connecting'));
 
 server.on('cmd', cmd => {
+  // Check if the command is intended for extensions
+  if (cmd.msgTarget === 'extensions') {
+    if (ext) {
+      ext.onCommand(cmd);
+    }
+    return;
+  }
+
   switch (cmd.msg) {
   case 'light':
     if (hue) { // TODO: This command is no longer used by clients

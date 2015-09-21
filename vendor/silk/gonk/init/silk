@@ -32,7 +32,7 @@ if [ -z $1 ]; then
 
   export LOGWRAPPER=
   if [ $PPID -eq 1 ]; then
-    LOGWRAPPER=logwrapper
+    LOGWRAPPER="logwrapper -d"
   fi
 
   exec $LOGWRAPPER $NODE $NODE_ARGS /system/silk/core.js

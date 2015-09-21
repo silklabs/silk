@@ -80,7 +80,7 @@ npm_version_check()
 
 cmake_version_check()
 {
-  if ! which cmake; then
+  if ! which cmake > /dev/null; then
     poison_their_lunch cmake not installed
     return
   fi

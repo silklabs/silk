@@ -200,7 +200,6 @@ server.on('connect', () => {
   emitDeviceInfo()
   .then(() => {
     diag.start(server.socket);
-    update.start();
     timeline.socket = server.socket;
     outbox.hintSocket = server.socket;
   })
@@ -216,7 +215,6 @@ server.on('disconnect', () => {
   btle.beacon.stop();
   btle.ranger.stop();
   config.start();
-  update.stop();
   diag.stop();
   outbox.hintSocket = null;
 });
@@ -262,6 +260,7 @@ config.on('configured', () => {
 
     wifi.online()
     .then(() => {
+      update.start();
       log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
       server.connect();
     })
@@ -327,6 +326,7 @@ function shutdown(finalPromiseFactory) {
     })
     .then(() => {
       server.disconnect();
+      update.stop();
     })
     .then(outbox.shutdown)
     .then(() => {

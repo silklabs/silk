@@ -76,6 +76,21 @@ export function getintprop(prop, defaultValue = '0') {
   return value;
 }
 
+export function watchprop(prop, onPropChanged) {
+  let spawn = require('child_process').spawn;
+  let spawnWatchprops = () => {
+    let cmd = spawn('watchprops', []);
+    cmd.stderr.on('data', data => {
+      let match = data.toString().match(/^\d+ ([^ ]+) /);
+      if (match && match[1] && match[1] === prop) {
+        onPropChanged();
+      }
+    });
+    cmd.on('close', () => spawnWatchprops()); // respawn if dies for some reason
+  };
+  spawnWatchprops();
+}
+
 export function setprop(prop, value) {
   let spawnSync = require('child_process').spawnSync;
   let result = spawnSync('setprop', [prop, value]);

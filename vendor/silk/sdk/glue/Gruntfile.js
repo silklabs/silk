@@ -15,6 +15,20 @@ module.exports = function(grunt) {
     grunt.log.writeln(execSync(cmd, opts));
   }
 
+  function getOption(name, defaultValue) {
+    var value = grunt.option(name);
+    return (value === undefined) ? defaultValue : value;
+  }
+
+  function getDestFile() {
+    var destDir = '/system/silk/ext/';
+    if (grunt.config('pkg.name') === 'core') {
+      // TODO: Remove this "core" module hack
+      destDir = '/system/silk/';
+    }
+    return grunt.config.process(destDir + '<%= pkg.name %>.js');
+  }
+ 
   // Ensure there are no node_modules/ directories lower in the tree (even
   // outside the root directory of the workspace) that could inadvertently be
   // pulled into the browersify output and unexpectedly alter the resulting
@@ -47,12 +61,7 @@ module.exports = function(grunt) {
     exec('adb remount');
 
     var srcFile = grunt.config('pkg.main');
-    var destDir = '/system/silk/ext/';
-    if (grunt.config('pkg.name') === 'core') {
-      // TODO: Remove this "core" module hack
-      destDir = '/system/silk/';
-    }
-    var destFile = grunt.config.process(destDir + '<%= pkg.name %>.js');
+    var destFile = getDestFile();
     var adb_push ='adb push ' + srcFile + ' ' + destFile;
     grunt.log.writeln(adb_push);
     exec(adb_push);
@@ -83,6 +92,10 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('silk_restart', '', function() {
     exec('adb shell setprop ctl.restart silk');
+  });
+
+  grunt.registerTask('reload_ext', '', function() {
+    exec('adb shell setprop silk.reload-ext ' + getDestFile());
   });
 
   require("load-grunt-tasks")(grunt);
@@ -156,7 +169,16 @@ module.exports = function(grunt) {
       scripts: {
         forever: false,
         files: ['lib/**/*.js', 'Gruntfile.js', 'package.json'],
-        tasks: [].concat(defaultTaskList, 'adb_push', 'silk_restart'),
+
+        tasks: function() {
+          var tasks = [].concat(defaultTaskList, 'adb_push');
+          if (getOption('reload-ext', false)) {
+            tasks.push('reload_ext');
+          } else if (getOption('restart', true)) {
+            tasks.push('silk_restart');
+          }
+          return tasks;
+        }.apply(),
         options: {
           spawn: false,
         },

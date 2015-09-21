@@ -9,16 +9,18 @@
 let log = require('./log')('ext');
 let fs = require('mz/fs');
 let path = require('path');
-let events = require('events');
+let EventEmitter = require('events').EventEmitter;
 let util = require('./util');
 
+const RELOAD_EXT_PROP = 'silk.reload-ext';
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
-class Env extends events.EventEmitter {
+class Env extends EventEmitter {
 
   constructor(name, deviceObjects) {
     super();
     this._name = name;
+    this._listeners = {};
     this._addDeviceAPIs(deviceObjects);
   }
 
@@ -29,7 +31,7 @@ class Env extends events.EventEmitter {
   _addDeviceAPIs(deviceObjects) {
     let sensors = deviceObjects.sensors;
     if (sensors) {
-      this.sensors = new events.EventEmitter();
+      this.sensors = new EventEmitter();
       this.sensors.light = pollInterval => {
         if (!pollInterval) {
           sensors.deactivate(sensors.SENSOR_TYPE.LIGHT);
@@ -37,17 +39,21 @@ class Env extends events.EventEmitter {
           sensors.activate(sensors.SENSOR_TYPE.LIGHT, pollInterval);
         }
       };
-      sensors.on('data', sensorEvent => {
+      this._listeners.sensors = {};
+      let listener = sensorEvent => {
         if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
           return;
         }
         this.sensors.emit('light', sensorEvent.values[0]);
-      });
+      };
+      sensors.on('data', listener);
+      this._listeners.sensors['data'] = // eslint-disable-line dot-notation
+          listener;
     }
 
     let camera = deviceObjects.camera;
     if (camera) {
-      this.camera = new events.EventEmitter();
+      this.camera = new EventEmitter();
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
@@ -58,22 +64,18 @@ class Env extends events.EventEmitter {
 
     let timeline = deviceObjects.timeline;
     if (timeline) {
-      this.timeline = new events.EventEmitter();
-      timeline.on('preview', (when, retrieveFunc) => {
-        this.timeline.emit('preview', when, retrieveFunc);
+      this.timeline = new EventEmitter();
+
+      let events = ['preview', 'face', 'clap', 'motion', 'no-motion'];
+      this._listeners.timeline = {};
+
+      events.forEach(event => {
+        this._listeners.timeline[event] = (...args) => {
+          this.timeline.emit(event, ...args);
+        };
+        timeline.on(event, this._listeners.timeline[event]);
       });
-      timeline.on('face', faces => {
-        this.timeline.emit('face', faces);
-      });
-      timeline.on('clap', count => {
-        this.timeline.emit('clap', count);
-      });
-      timeline.on('motion', (when, rects) => {
-        this.timeline.emit('motion', when, rects);
-      });
-      timeline.on('no-motion', when => {
-        this.timeline.emit('no-motion', when);
-      });
+
       this.timeline.addObject = (tag, when, rect) => {
         timeline.addObject(tag, when, rect);
       };
@@ -104,6 +106,22 @@ class Env extends events.EventEmitter {
     };
   }
 
+  /**
+   * Env will be destroyed. Remove listeners.
+   */
+  cleanup(deviceObjects) {
+    let devices = ['sensors', 'timeline'];
+
+    devices.forEach(device => {
+      let deviceListeners = this._listeners[device];
+      if (deviceListeners) {
+        for (let event in deviceListeners) {
+          deviceObjects[device].removeListener(event, deviceListeners[event]);
+        }
+      }
+    });
+  }
+
   get log() {
     if (!this._log) {
       this._log = require('./log')(this._name);
@@ -116,8 +134,11 @@ class Env extends events.EventEmitter {
 class Extensions {
 
   constructor(deviceObjects = {}) {
-    this.loaded = [];
-    this.deviceObjects = deviceObjects;
+    this._loaded = {};
+    this._watchers = [];
+    this._deviceObjects = deviceObjects;
+
+    util.watchprop(RELOAD_EXT_PROP, () => this._onReloadRequested());
 
     extDirs.forEach(dir => {
       fs.readdir(dir)
@@ -131,18 +152,91 @@ class Extensions {
     });
   }
 
+  _onReloadRequested() {
+    // When reload prop changes to non empty string, reload module file
+    // specified by prop. When done, clear prop to empty string to indicate done
+    let clearReloadProp = () => util.setprop(RELOAD_EXT_PROP, '');
+    let file = util.getprop(RELOAD_EXT_PROP);
+    if (file) {
+      fs.stat(file)
+      .then(() => {
+        log.info(`Reload requsted ${file}`);
+        this._reloadExtension(file);
+      }, () => log.info(`Reload requsted, file does not exist ${file}`))
+      .then(() => clearReloadProp())
+      .catch(() => clearReloadProp());
+    }
+  }
+
+  _reloadExtension(file) {
+    fs.stat(file)
+    .then(() => {
+      log.info('Extension changed', file);
+      this._unloadExtension(file)
+      .then(() => this._loadExtension(file),
+          () => log.warn('Not reloading', file));
+    }, err => {
+      if (err.code === 'ENOENT') {
+        log.info('Extension removed', file);
+        this._unloadExtension(file);
+      } else {
+        log.warn('Unexpected file error', file, err.code);
+      }
+    })
+    .catch(util.processthrow);
+  }
+
+  _getModulePath(file) {
+    let ext = path.extname(file);
+    return ext.length > 0 ? file.slice(0, -ext.length) : file;
+  }
 
   _loadExtension(file) {
-    let ext = path.extname(file);
-    let modulePath = ext.length > 0 ? file.slice(0, -ext.length) : file;
+    let modulePath = this._getModulePath(file);
     try {
-      log.info(`Loading ${modulePath}`);
-      let env = new Env(path.basename(modulePath), this.deviceObjects);
-      this.loaded.push({ env: env, mod: require(modulePath)(env)});
-
+      if (modulePath in this._loaded) {
+        log.warn(`Already loaded, skipping ${modulePath}`);
+      } else {
+        log.info(`Loading ${modulePath}`);
+        let env = new Env(path.basename(modulePath), this._deviceObjects);
+        this._loaded[modulePath] = { env: env, mod: require(modulePath)(env) };
+      }
     } catch (e) {
       log.error(`Extension failed to load: ${modulePath}`);
       log.error(e);
+    }
+  }
+
+  _unloadExtension(file) {
+    let modulePath = this._getModulePath(file);
+    let module = this._loaded[modulePath];
+
+    if (!module) {
+      log.info(`Nothing to unload, module not loaded: ${modulePath}`);
+      return Promise.resolve();
+    } else if (!module.mod || !module.mod.willUnload) {
+      log.warn(`Cannot unload, prepareUnload() not supported ${modulePath}`);
+      return Promise.reject();
+    } else {
+      log.info(`Unloading ${modulePath}`);
+
+      return Promise.resolve()
+      .then(() => module.mod.willUnload())
+      .then(() => module.env.cleanup(this._deviceObjects))
+      .then(() => {
+        if (require.cache === undefined) {
+          // require.cache alias not present for some reason, let's add it
+          require.cache = require('module')._cache;
+        }
+        delete require.cache[file]; // cache is indexed by full file name
+        delete this._loaded[modulePath];
+        return Promise.resolve();
+      })
+      .catch(e => {
+        log.error(`Extension failed to unload: ${modulePath}`);
+        log.error(e);
+        return Promise.reject();
+      });
     }
   }
 }

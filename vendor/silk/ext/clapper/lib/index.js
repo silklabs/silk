@@ -11,24 +11,35 @@ const CLAPPER_PLAY_SOUND_PROP = 'persist.silk.clapper.sound';
 
 const TWO_CLAPS_FILENAME = 'two_claps_detected.mp3';
 
-export default function init(env) {
-  let hueLightsOn = false;
-  let soundEnabled = env.util.getboolprop(CLAPPER_PLAY_SOUND_PROP);
+class Clapper {
+  constructor(env) {
+    this._env = env;
 
-  env.timeline.on('clap', count => {
-    let tag = count === 1 ? 'clap' : `${count} claps`;
+    this._onClap = count => {
+      let hueLightsOn = false;
+      let soundEnabled = env.util.getboolprop(CLAPPER_PLAY_SOUND_PROP);
+      let tag = count === 1 ? 'clap' : `${count} claps`;
 
-    if (count >= 2) {
-      env.log.info(tag);
-      if (soundEnabled) {
-        env.util.playSound(TWO_CLAPS_FILENAME);
+      if (count >= 2) {
+        env.log.info(tag);
+        if (soundEnabled) {
+          env.util.playSound(TWO_CLAPS_FILENAME);
+        }
+        env.timeline.addObject(tag);
       }
-      env.timeline.addObject(tag);
-    }
 
-    if (count === 2) {
-      hueLightsOn = !hueLightsOn;
-      env.hue.setState({on: hueLightsOn, intensity: 1.0});
-    }
-  });
+      if (count === 2) {
+        hueLightsOn = !hueLightsOn;
+        env.hue.setState({on: hueLightsOn, intensity: 1.0});
+      }
+    };
+
+    this._env.timeline.on('clap', this._onClap);
+  }
+
+  willUnload() {
+    this._env.timeline.removeListener('clap', this._onClap);
+  }
 }
+
+module.exports = env => new Clapper(env);

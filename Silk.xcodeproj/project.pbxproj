@@ -1203,7 +1203,7 @@
 				PROVISIONING_PROFILE = "";
 				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_INSTALL_OBJC_HEADER = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "App-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "iOS/App-Bridging-Header.h";
 			};
 			name = Debug;
 		};
@@ -1226,7 +1226,7 @@
 				PROVISIONING_PROFILE = "";
 				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_INSTALL_OBJC_HEADER = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "App-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "iOS/App-Bridging-Header.h";
 			};
 			name = Release;
 		};

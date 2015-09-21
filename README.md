@@ -170,3 +170,15 @@ Note: You will need to rebuild core.js after running the above.
 If you don't use emacs, ignore this.
 
 JavaScript files are tagged to use js2-mode.  [Follow these instructions to install js2-mode](https://github.com/mooz/js2-mode).
+
+## Heroku logging
+
+To see live logging from the Heroku deployment, run
+```
+$ heroku logs --app silk-server-master --tail
+```
+or
+```
+$ heroku logs --app silk-socketio-master --tail
+```
+depending on which server you want.  Replace `master` with `next` or `release` if necessary.

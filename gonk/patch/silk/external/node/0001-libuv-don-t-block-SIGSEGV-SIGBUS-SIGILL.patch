@@ -1,0 +1,69 @@
+From c6322b60668b7b12e73298edac591a9c8f9d07ef Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 21 Sep 2015 15:57:37 -0700
+Subject: [PATCH] libuv: don't block "tombstone" signals
+
+Blocking these signals will cause the process to exit without invoking the
+bionic signal handler that produces a debuggerd tombstone if they signal.
+---
+ deps/uv/src/unix/signal.c | 34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/deps/uv/src/unix/signal.c b/deps/uv/src/unix/signal.c
+index 0b7a405..8dd9b1f 100644
+--- a/deps/uv/src/unix/signal.c
++++ b/deps/uv/src/unix/signal.c
+@@ -99,9 +99,26 @@ static void uv__signal_block_and_lock(sigset_t* saved_sigmask) {
+   if (sigfillset(&new_mask))
+     abort();
+ 
++  // Keep the signals that debuggerd_init() cares about unmasked to correctly
++  // generate tombstones if any are set
++  //
++  // Ref: http://androidxref.com/5.1.0_r1/xref/bionic/linker/debugger.cpp#299
++  sigdelset(&new_mask, SIGABRT);
++  sigdelset(&new_mask, SIGBUS);
++  sigdelset(&new_mask, SIGILL);
++  sigdelset(&new_mask, SIGPIPE);
++  sigdelset(&new_mask, SIGSEGV);
++#if defined(SIGSTKFLT)
++  sigdelset(&new_mask, SIGSTKFLT);
++#endif
++  sigdelset(&new_mask, SIGTRAP);
++
+   if (pthread_sigmask(SIG_SETMASK, &new_mask, saved_sigmask))
+     abort();
+ 
++  // TEST CASE: The next line should produce a debuggerd tombstone.
++  //*(char *) 0 = 0;
++
+   if (uv__signal_lock())
+     abort();
+ }
+@@ -178,6 +195,23 @@ static int uv__signal_register_handler(int signum) {
+   /* When this function is called, the signal lock must be held. */
+   struct sigaction sa;
+ 
++  // Never permit registration of "debuggerd managed" signals
++  switch (signum) {
++  case SIGABRT:
++  case SIGBUS:
++  case SIGILL:
++  case SIGPIPE:
++  case SIGSEGV:
++#if defined(SIGSTKFLT)
++  case SIGSTKFLT:
++#endif
++  case SIGTRAP:
++    abort();
++  default:
++    break;
++  }
++
++
+   /* XXX use a separate signal stack? */
+   memset(&sa, 0, sizeof(sa));
+   if (sigfillset(&sa.sa_mask))
+-- 
+1.9.1
+

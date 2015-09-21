@@ -12,7 +12,8 @@ let SystemButtonNative = React.requireNativeComponent('SystemButton');
 let SystemButton = React.createClass({
   propTypes: {
     // Configuration
-    type: React.PropTypes.string,
+    type: React.PropTypes.oneOf(
+      Object.keys(SystemButtonManager).map(key => SystemButtonManager[key])),
     enabled: React.PropTypes.bool,
     onPress: React.PropTypes.func,
     color: React.PropTypes.string,

@@ -43,7 +43,7 @@ export default React.createClass({
   },
 
   propTypes: {
-    style: React.PropTypes.object,
+    style: View.propTypes.style,
     playing: React.PropTypes.bool,
     seekChangeThreshold: React.PropTypes.number,
     startTime: React.PropTypes.number.isRequired,

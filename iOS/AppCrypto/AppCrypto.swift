@@ -57,8 +57,6 @@ public class AppCrypto : NSObject {
 
     // We need to send back something JS can easily understand so we convert the bytes into UInt8
     var bytes: [NSNumber] = []
-    var array = NSMutableArray()
-
     for (var i = 0; i < length.integerValue; i++) {
       let range = NSMakeRange(i, 1)
       var byte: UInt8 = 0

@@ -40,7 +40,7 @@ internal class GetAVAssetURLOperation : ConcurrentOperation {
     let asset = AVURLAsset(URL: self.url, options: [:])
 
     if let loader = self.loader {
-      asset.resourceLoader.setDelegate(self.loader, queue: self.loaderQueue)
+      asset.resourceLoader.setDelegate(loader, queue: self.loaderQueue)
     }
 
     asset.loadValuesAsynchronouslyForKeys(GetAVAssetURLOperation.DESIRED_KEYS) {
@@ -291,7 +291,7 @@ class LiveVideo : UIView {
     }
 
     // When we replace segments cancel all previous load requests.
-    if let operations = self.videoResourceQueue {
+    if let _ = self.videoResourceQueue {
       self.videoResourceQueue?.cancelAllOperations()
       self.videoResourceQueue = nil
     }
@@ -481,9 +481,6 @@ class LiveVideo : UIView {
 
   private func append(asset: AVAsset, segment: VideoSegment) {
     AssertMainThread()
-    // Calculate the duration in milliseconds
-    let duration = asset.duration.milliseconds()
-
     let item = LiveVideoItem(asset: asset)
 
     // Segment is a wrapper for the data values too so we don't just copy it over.
@@ -607,9 +604,6 @@ class LiveVideo : UIView {
         return
       }
 
-      let asset = item!.asset
-      let log = item!.accessLog()
-
       self.setupSegmentObserver(item!)
       self.setupLastItemObserver(item!)
 
@@ -636,8 +630,6 @@ class LiveVideo : UIView {
   }
 
   func destroy() {
-    let center = NSNotificationCenter.defaultCenter()
-
     // Ensure player has no observers anymore...
     self.player.removeAllKeyPathObservers()
     if self.timeChangeObserver != nil {

@@ -161,7 +161,7 @@ export default React.createClass({
       currenTime: Date.now(),
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
-      minTime: DateUtils.startOfDay(),
+      minTime: DateUtils.startOfDay().getTime(),
       videoSegments: [],
       liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment),
 

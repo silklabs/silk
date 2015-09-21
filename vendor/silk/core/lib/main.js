@@ -265,7 +265,6 @@ config.on('configured', () => {
       log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
       server.connect();
     })
-    .then(() => util.timeout) // 0ms timer to enable others to run if needed.
     .then(() => {
 
       if (!hue) {

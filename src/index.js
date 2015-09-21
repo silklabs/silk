@@ -6,14 +6,16 @@ import { Router, Route } from 'react-router';
 import 'whatwg-fetch'; // window.fetch() polyfill for iOS
 
 import CameraVideo from './components/CameraVideo';
+import CrashReports from './components/CrashReports';
 import Diag from './components/Diag';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 
 React.render((
   <Router>
     <Route path="/" component={OnlineCameras} />
-    <Route path="/preview/:deviceId" component={OnlineCamera} />
+    <Route path="/crashes/:deviceId" component={CrashReports} />
     <Route path="/diag/:deviceId" component={Diag} />
+    <Route path="/preview/:deviceId" component={OnlineCamera} />
     <Route path="/video/:deviceId" component={CameraVideo} />
   </Router>
 ), document.body);

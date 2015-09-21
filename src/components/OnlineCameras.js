@@ -48,7 +48,7 @@ export class OnlineCamera extends React.Component {
                   <Glyphicon glyph="info-sign" style={styles.glyphicon} />
                 </Button>
               </Link>
-              <Link to={`/crashes/${this.props.camera.id}`}>
+              <Link to={`/crashes/${this.deviceId()}`}>
                 <Button bsSize="large" bsStyle="danger" onClick={this.onOpenDiag}>
                   <Glyphicon glyph="fire" style={styles.glyphicon} />
                 </Button>

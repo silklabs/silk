@@ -3,6 +3,7 @@
 export NODE_ENV="production"
 export DEBUG=$(getprop persist.silk.debug)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors)
+export UV_THREADPOOL_SIZE=32
 
 NODE=/system/silk/bin/node
 if [ ! -x $NODE ]; then

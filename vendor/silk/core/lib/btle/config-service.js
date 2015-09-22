@@ -325,7 +325,7 @@ class VibratePatternCharacteristic extends Characteristic {
   }
 }
 
-class ConfigService extends PrimaryService {
+export default class ConfigService extends PrimaryService {
   static uuid = decls.uuid.ConfigService
 
   static STATE_UNREGISTERED = decls.state.UNREGISTERED
@@ -333,6 +333,8 @@ class ConfigService extends PrimaryService {
   static STATE_REGISTERED = decls.state.REGISTERED
   static STATE_ERROR = decls.state.ERROR
 
+  deviceId = null
+  advertising = false
   ap = null
   serverConnectionStatus = ''
   crypto = null
@@ -344,7 +346,7 @@ class ConfigService extends PrimaryService {
   proximityPromise = null
   state = ConfigService.STATE_UNREGISTERED
 
-  constructor(id) {
+  constructor(deviceId) {
     super({
       uuid: ConfigService.uuid,
       characteristics: [
@@ -364,7 +366,7 @@ class ConfigService extends PrimaryService {
     this.characteristics.forEach(characteristic => {
       characteristic.service = this;
     });
-    this.deviceId = id;
+    this.deviceId = deviceId;
     this.clearState();
   }
 
@@ -457,8 +459,4 @@ class ConfigService extends PrimaryService {
     this.changeState(ConfigService.STATE_REGISTERED);
     // TODO notify to stop BLE service
   }
-}
-
-export default function(id) {
-  return new ConfigService(id);
 }

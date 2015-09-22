@@ -20,11 +20,11 @@ const DEFAULT_UUID = 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424';
 const DEFAULT_POWER = -60;
 
 export default class Beacon extends EventEmitter {
-  constructor(bleno, major = 0, minor = 0) {
+  constructor(bleno, uuid = DEFAULT_UUID, major = 0, minor = 0) {
     super();
 
     this.bleno = bleno;
-    this.uuid = DEFAULT_UUID;
+    this.uuid = uuid;
     this.measuredPower = DEFAULT_POWER;
     this.state = bleno.state;
     this.major = major;

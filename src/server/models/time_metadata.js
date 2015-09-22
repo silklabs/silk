@@ -9,7 +9,7 @@ import mongo from 'promised-mongo';
 import Base from './base';
 import formatOutput from './format_output';
 
-const TYPES = Joi.string().only(['log', 'video']).required();
+const TYPES = Joi.string().only(['log', 'video', 'event']).required();
 
 export default class TimeMetadata extends Base {
   static SCHEMA = {
@@ -20,11 +20,17 @@ export default class TimeMetadata extends Base {
       // XXX: Long term these should be more complex types MS is not enough to
       // convey timezone details, etc...
       startUTC: Joi.number().required(),
-      endUTC: Joi.number().required(),
+      endUTC: Joi.number().optional(),
       // Blob as url associated with this item.
-      url: Joi.string().required(),
+      url: Joi.string().optional(),
       // Optional generic data.
       data: Joi.object().optional()
+    }).required(),
+
+    update: Joi.object().keys({
+      // So far we only support updating the end time.
+      endUTC: Joi.number().optional(),
+      data: Joi.object().optional(),
     }).required(),
 
     findNearTime: Joi.object().keys({
@@ -50,7 +56,7 @@ export default class TimeMetadata extends Base {
     findById: Joi.object().keys({
       id: Joi.string().required()
     }).required()
-  }
+  };
 
   static COLLECTION = 'time_metadata';
 
@@ -122,8 +128,8 @@ export default class TimeMetadata extends Base {
   }
 
   /**
-  Insert the next item in the time series.
-  */
+   * Insert the next item in the time series.
+   */
   async insertNext(payload) {
     payload = this.validate(payload, 'metadata');
     let newItem = await this.collection.insert(payload);
@@ -141,5 +147,18 @@ export default class TimeMetadata extends Base {
     }
 
     return { id: newItem._id.toString() };
+  }
+
+  async update(id, payload) {
+    payload = this.validate(payload, 'update');
+    await this.collection.update(
+      {
+        _id: mongo.ObjectId(id), // eslint-disable-line new-cap
+      },
+      {
+        $set: payload,
+      }
+    );
+    return { id };
   }
 }

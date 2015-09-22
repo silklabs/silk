@@ -81,4 +81,29 @@ suite('time metadata', () => {
     assert.equal(outOfBounds.url, 'three');
   });
 
+  test('.update', async () => {
+    let payload = {
+      deviceId: 'bar',
+      metaType: 'event',
+      startUTC: 123,
+    };
+    let {id} = await subject.insertNext(payload);
+    let record = await subject.findById({id});
+    assert.equal(record.deviceId, payload.deviceId);
+    assert.equal(record.metaType, payload.metaType);
+    assert.equal(record.startUTC, payload.startUTC);
+    assert.equal(record.endUTC, undefined);
+
+    let endUTC = 456;
+    await subject.update(id, {endUTC});
+    record = await subject.findById({id});
+    // These fields are unchanged.
+    assert.equal(record.id, id);
+    assert.equal(record.deviceId, payload.deviceId);
+    assert.equal(record.metaType, payload.metaType);
+    assert.equal(record.startUTC, payload.startUTC);
+    // This one's been updated/set.
+    assert.equal(record.endUTC, endUTC);
+  });
+
 });

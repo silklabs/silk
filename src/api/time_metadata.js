@@ -7,6 +7,7 @@ export default function(config) {
   let baseUrl = config.serverUrl;  //eslint-disable-line
   return {
     create: fetchJson.bind(null, resolve(baseUrl, SERVER_PATH_PREFIX)),
+    update: (id, payload) => fetchJson(resolve(baseUrl, `${SERVER_PATH_PREFIX}/${id}`), payload),
     findById: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/byid`)),
     findByTime: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/bytime`)),
     findOneAfterTime: fetchJson.bind(null, resolve(baseUrl, `${SERVER_PATH_PREFIX}/find/bytime/after`)),

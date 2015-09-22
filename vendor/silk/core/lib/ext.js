@@ -128,11 +128,14 @@ class Env extends EventEmitter {
     }
     return this._log;
   }
+
+  get name() {
+    return this._name;
+  }
 }
 
 
 class Extensions {
-
   constructor(deviceObjects = {}) {
     this._loaded = {};
     this._watchers = [];
@@ -165,6 +168,23 @@ class Extensions {
       }, () => log.info(`Reload requsted, file does not exist ${file}`))
       .then(() => clearReloadProp())
       .catch(() => clearReloadProp());
+    }
+  }
+
+  /**
+   * Send the received command to the loaded extensions. Called when a command
+   * intended for extensions is received by the device
+   */
+  onCommand(cmd) {
+    for (let key in this._loaded) {
+      let extension = this._loaded[key];
+      if (extension.env.name === cmd.targetName) {
+        try {
+          extension.mod.onCommand(cmd);
+        } catch (e) {
+          log.warn(`Error sending command to ${extension.env.name}, error: ${e}`);
+        }
+      }
     }
   }
 

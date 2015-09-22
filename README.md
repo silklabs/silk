@@ -125,9 +125,8 @@ package.json to setup the api libraries in node/etc...
 
 ### Manually publishing
 
-Running `./node_modules/.bin/babel-node ./bin/publish-api -h` will show
-you all the help options and here is a quick example of publishing
-react-native:
+Running `./bin/publish-api -h` will show you all the help options and
+here is a quick example of publishing react-native:
 
 ```sh
 ./bin/publish-api https://github.com/silklabs/silk-api-react-native react-native --gh-user lightsofapollo --gh-token "your-github-oauth-token"

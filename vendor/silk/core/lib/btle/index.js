@@ -9,6 +9,7 @@ import EventEmitter from 'events';
 import getDeviceId from '../deviceid';
 import makeLog from '../log';
 import noble from 'noble';
+import Ranger from './ranger';
 
 /**
  * Config Service
@@ -35,6 +36,10 @@ const MODE_OFF = 'off';
 const MODE_CONFIGURE = 'configure';
 const MODE_NORMAL = 'normal';
 
+const ADVERTISING_OFF = 0;
+const ADVERTISING_BEACON = 1;
+const ADVERTISING_CONFIG = 2;
+
 // TODO: Pull from silk-api
 const DEFAULT_BEACON_UUID = 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424';
 
@@ -54,8 +59,7 @@ class BluetoothLE extends EventEmitter {
   _mode = MODE_OFF
   _changeStatePromise = Promise.resolve()
   _adapterState = ''
-  _advertisingBeacon = false
-  _advertisingConfigService = false
+  _advertisingMode = ADVERTISING_OFF
   _configState = ConfigService.STATE_UNREGISTERED
   _services = [ ]
   _configuringDeviceAddress = null
@@ -100,6 +104,10 @@ class BluetoothLE extends EventEmitter {
     return this._configService;
   }
 
+  get ranger() {
+    return this._ranger;
+  }
+
   get beaconUuid() {
     return this._beaconInfo.uuid;
   }
@@ -131,9 +139,9 @@ class BluetoothLE extends EventEmitter {
     }
 
     // TODO: Save this beacon to disk.
-    const advertising = this._advertisingBeacon;
+    const advertising = this._advertisingMode === ADVERTISING_BEACON;
 
-    await this._stopAdvertising();
+    await this._off();
 
     this._beaconInfo.uuid = uuid;
 
@@ -145,42 +153,54 @@ class BluetoothLE extends EventEmitter {
   async _changeMode(mode) {
     log.debug(`_changeMode('${mode}')`);
 
-    if (this._mode === mode) {
-      return this._configService;
+    if (this._mode !== mode) {
+      await this._off();
+
+      switch (mode) {
+        case MODE_OFF: {
+          await this._uninstallConfigService();
+          break;
+        }
+
+        case MODE_CONFIGURE: {
+          await this._installConfigService();
+          await this._startAdvertisingConfigService();
+          break;
+        }
+
+        case MODE_NORMAL: {
+          await this._uninstallConfigService();
+          await this._startAdvertisingBeacon();
+          await this._startRanger();
+          break;
+        }
+
+        default:
+          throw new Error(`Invalid mode: '${mode}'`);
+      }
+
+      this._mode = mode;
     }
 
-    await this._stopAdvertising();
-
     switch (mode) {
-      case MODE_OFF: {
-        await this._uninstallConfigService();
-        break;
-      }
+      case MODE_OFF:
+        return null;
 
-      case MODE_CONFIGURE: {
-        await this._installConfigService();
-        await this._startAdvertisingConfigService();
-        break;
-      }
+      case MODE_CONFIGURE:
+        return this._configService;
 
-      case MODE_NORMAL: {
-        await this._uninstallConfigService();
-        await this._startAdvertisingBeacon();
-        break;
-      }
+      case MODE_NORMAL:
+        return this._ranger;
 
       default:
         throw new Error(`Invalid mode: '${mode}'`);
     }
-
-    this._mode = mode;
-    return this._configService;
   }
 
     async _startAdvertisingConfigService() {
       log.debug('_startAdvertisingConfigService()');
 
-      if (this._advertisingConfigService) {
+      if (this._advertisingMode === ADVERTISING_CONFIG) {
         return;
       }
 
@@ -195,14 +215,19 @@ class BluetoothLE extends EventEmitter {
         bleno.startAdvertising('Silkcam', [ ConfigService.uuid ], callback);
       });
 
-      this._advertisingConfigService = true;
+      this._advertisingMode = ADVERTISING_CONFIG;
     }
 
   async _startAdvertisingBeacon() {
     log.debug('_startAdvertisingBeacon()');
-    assert(this._adapterState === 'poweredOn');
 
-    if (this._advertisingBeacon) {
+    if (this._advertisingMode === ADVERTISING_BEACON) {
+      return;
+    }
+
+    if (this._adapterState !== 'poweredOn') {
+      log.warn('Ignoring _startAdvertisingBeacon() because adapter state is ' +
+               `'${this._adapterState}'`);
       return;
     }
 
@@ -221,22 +246,36 @@ class BluetoothLE extends EventEmitter {
                                     callback);
     });
 
-    this._advertisingBeacon = true;
+    this._advertisingMode = ADVERTISING_BEACON;
   }
 
-  async _stopAdvertising() {
-    log.debug('_stopAdvertising()');
+  async _off() {
+    log.debug('_off()');
 
-    if (!this._advertisingBeacon && !this._advertisingConfigService) {
+    if (this._adapterState !== 'poweredOn') {
+      log.warn('Ignoring _off() because adapter state is ' +
+               `'${this._adapterState}'`);
       return;
     }
 
-    await new Promise(resolve => {
-      bleno.stopAdvertising(resolve);
-    });
+    let promises = [ ];
 
-    this._advertisingBeacon = false;
-    this._advertisingConfigService = false;
+    if (this._ranger) {
+      promises.push(this._ranger.stop());
+    }
+
+    if (this._advertisingMode !== ADVERTISING_OFF) {
+      promises.push(new Promise(resolve => {
+        bleno.stopAdvertising(resolve);
+      }));
+    }
+
+    if (promises.length) {
+      await Promise.all(promises);
+    }
+
+    this._advertisingMode = ADVERTISING_OFF;
+    this._ranger = null;
   }
 
   async _installConfigService() {
@@ -246,9 +285,15 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
+    if (this._adapterState !== 'poweredOn') {
+      log.warn('Ignoring _installConfigService() because adapter state is ' +
+               `'${this._adapterState}'`);
+      return;
+    }
+
     let services = this._services.slice();
 
-    let configService = new ConfigService(this._deviceId);
+    const configService = new ConfigService(this._deviceId);
     services.push(configService);
 
     await new Promise((resolve, reject) => {
@@ -262,7 +307,6 @@ class BluetoothLE extends EventEmitter {
       bleno.setServices(services, callback);
     });
 
-    this._updateRssiTimeoutMap = new Map();
     bleno.addListener('accept', this._onBlenoAccept);
     bleno.addListener('disconnect', this._onBlenoDisconnect);
 
@@ -274,6 +318,12 @@ class BluetoothLE extends EventEmitter {
     log.debug('_uninstallConfigService()');
 
     if (!this._configService) {
+      return;
+    }
+
+    if (this._adapterState !== 'poweredOn') {
+      log.warn('Ignoring _uninstallConfigService() because adapter state is ' +
+               `'${this._adapterState}'`);
       return;
     }
 
@@ -303,15 +353,42 @@ class BluetoothLE extends EventEmitter {
     this._configService = null;
   }
 
+  async _startRanger() {
+    log.debug('_startRanger()');
+
+    if (this._ranger) {
+      return;
+    }
+
+    if (this._adapterState !== 'poweredOn') {
+      log.warn('Ignoring _startRanger() because adapter state is ' +
+               `'${this._adapterState}'`);
+      return;
+    }
+
+    const ranger = new Ranger(noble);
+    await ranger.start();
+
+    this._ranger = ranger;
+  }
+
   // Event handlers. These are pre-bound so that I can remove them.
 
   _onAdapterStateChange = adapterState => {
     log.debug(`onAdapterStateChange('${adapterState}')`);
 
-    if (this._adapterState !== adapterState) {
-      // TODO: Handle restart
-      this._adapterState = adapterState;
+    if (this._adapterState === adapterState) {
+      return;
     }
+
+    if (adapterState === 'poweredOn') {
+      // TODO: Handle restart
+      log.info(`Adapter state is now '${adapterState}'`);
+    } else {
+      this._changeMode(MODE_OFF);
+    }
+
+    this._adapterState = adapterState;
   }
 
   _onBlenoAccept = addr => {
@@ -356,8 +433,6 @@ class BluetoothLE extends EventEmitter {
     if (this._configuringDeviceAddress !== addr) {
       return;
     }
-
-    assert(this._updateRssiTimeout);
 
     this._configuringDeviceAddress = null;
 

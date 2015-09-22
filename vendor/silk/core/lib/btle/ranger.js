@@ -376,7 +376,7 @@ export default class Ranger extends EventEmitter {
     }
   }
 
-  start() {
+  async start() {
     log.debug('start()');
 
     if (!ENABLED) {
@@ -391,10 +391,20 @@ export default class Ranger extends EventEmitter {
       this.noble.on('stateChange', this.onStateChange.bind(this));
 
       this.adjustScanState();
+
+      await new Promise((resolve, reject) => {
+        this.once('start', err => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
     }
   }
 
-  stop() {
+  async stop() {
     log.debug('stop()');
 
     if (!ENABLED) {
@@ -407,6 +417,10 @@ export default class Ranger extends EventEmitter {
       this.noble.removeListener('stateChange', this.onStateChange.bind(this));
 
       this.adjustScanState();
+
+      await new Promise(resolve => {
+        this.once('stop', resolve);
+      });
 
       if (this.peripherals.size) {
         this.peripherals.forEach(peripheralInfo => {

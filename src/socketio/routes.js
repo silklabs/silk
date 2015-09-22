@@ -151,7 +151,7 @@ export default io => {
     });
 
     // Device info message
-    socket.on('info', msg => {
+    socket.on('info', (msg, ack) => {
       let device;
 
       if ('id' in msg) {
@@ -169,6 +169,10 @@ export default io => {
       log.info(`Device info. io=${socket.id} name=${device.name} ` +
                `timeOffset=${device.timeOffset}ms id=${device.id}`);
       device.resetTimeout();
+
+      if (ack) {
+        ack();
+      }
     });
 
 
@@ -203,7 +207,7 @@ export default io => {
     }
 
     // Live preview image or video from a device
-    socket.on('video', msg => {
+    socket.on('video', (msg, ack) => {
       switch (msg.contents) {
       case 'jpeg':
         sendToDeviceRoom(msg, 'preview');
@@ -213,11 +217,19 @@ export default io => {
         break;
       default:
         log.error(`Invalid content type: ${msg.contents}`);
-        break;
+        return;
+      }
+      if (ack) {
+        ack();
       }
     });
 
     // Live diag from a device
-    socket.on('diag', msg => sendToDeviceRoom(msg, 'diag'));
+    socket.on('diag', (msg, ack) => {
+      sendToDeviceRoom(msg, 'diag');
+      if (ack) {
+        ack();
+      }
+    });
   });
 };

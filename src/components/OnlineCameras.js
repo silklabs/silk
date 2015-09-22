@@ -49,8 +49,13 @@ export class OnlineCamera extends React.Component {
                 </Button>
               </Link>
               <Link to={`/crashes/${this.deviceId()}`}>
-                <Button bsSize="large" bsStyle="danger" onClick={this.onOpenDiag}>
+                <Button bsSize="large" bsStyle="danger">
                   <Glyphicon glyph="fire" style={styles.glyphicon} />
+                </Button>
+              </Link>
+              <Link to={`/chunks/${this.deviceId()}`}>
+                <Button bsSize="large">
+                  <Glyphicon glyph="list" style={styles.glyphicon} />
                 </Button>
               </Link>
             </div>

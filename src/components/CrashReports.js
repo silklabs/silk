@@ -20,7 +20,8 @@ const styles = {
 export default class CrashReports extends React.Component {
   state = {
     crashes: null,
-    crashUrl: ''
+    crashUrl: '',
+    useIframe: true,
   };
 
   constructor(props) {
@@ -38,13 +39,21 @@ export default class CrashReports extends React.Component {
   }
 
   onShowCrash = url => {
-    this.setState({ crashUrl: url });
+    if (this.state.useIframe) {
+      this.setState({ crashUrl: url });
+    } else {
+      window.open(url);
+    }
     return false;
   };
 
   onHideCrash = () => {
     this.setState({ crashUrl: '' });
   };
+
+  onToggleIframe = () => {
+    this.setState({ useIframe: !this.state.useIframe });
+  }
 
   render() {
     let content;
@@ -68,7 +77,10 @@ export default class CrashReports extends React.Component {
       <div>
         <ButtonGroup>
           <Button bsStyle='warning'>
-            <Link to="/"><Glyphicon glyph="home" /></Link>
+            <Link to='/'><Glyphicon glyph='home' /></Link>
+          </Button>
+          <Button bsStyle='info' onClick={this.onToggleIframe}>
+            Open in {this.state.useIframe ? 'Window' : 'Frame'}
           </Button>
         </ButtonGroup>
         <ListGroup>

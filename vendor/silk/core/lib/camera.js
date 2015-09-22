@@ -369,10 +369,10 @@ class CameraStream extends EventEmitter {
         frameInterval: DURATION,
         width: 1280,
         height: 720,
-        fps: 25,
+        fps: 24,
         vbr: 1024,
         previewScale: 4,
-        previewSkipCount: 25
+        previewSkipCount: 6
       };
     }
 

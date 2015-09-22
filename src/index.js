@@ -9,10 +9,12 @@ import CameraVideo from './components/CameraVideo';
 import CrashReports from './components/CrashReports';
 import Diag from './components/Diag';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
+import VideoChunks from './components/VideoChunks';
 
 React.render((
   <Router>
     <Route path="/" component={OnlineCameras} />
+    <Route path="/chunks/:deviceId" component={VideoChunks} />
     <Route path="/crashes/:deviceId" component={CrashReports} />
     <Route path="/diag/:deviceId" component={Diag} />
     <Route path="/preview/:deviceId" component={OnlineCamera} />

@@ -1,4 +1,4 @@
-#! ./node_modules/.bin/babel-node --harmony
+#!/usr/bin/env ./node_modules/.bin/babel-node --harmony
 
 import { ArgumentParser } from 'argparse';
 import { readdirSync } from 'fs';

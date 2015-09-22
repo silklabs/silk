@@ -89,7 +89,11 @@ export default class Ranger extends EventEmitter {
 
     let peripheralInfo = this.peripherals.get(peripheral.uuid);
     if (peripheralInfo) {
-      this.updateRssi(peripheralInfo, peripheral.rssi);
+      if (this.whitelist.has(peripheral.uuid)) {
+        this.updateRssi(peripheralInfo, peripheral.rssi);
+      } else {
+        peripheralInfo.rssiValues.push(peripheral.rssi);
+      }
       return;
     }
 
@@ -324,7 +328,7 @@ export default class Ranger extends EventEmitter {
 
     peripheralInfo.outOfRangeTimeout = setTimeout(() => {
       log.debug(`Out-of-range timeout elapsed for peripheral '%s'`,
-                peripheralInfo.peripheral.uuid);
+                peripheral.uuid);
       assert(this.peripherals.has(peripheral.uuid));
       assert(!peripheralInfo.eventTimeout);
       assert(!peripheralInfo.rssiValues.length);
@@ -340,6 +344,8 @@ export default class Ranger extends EventEmitter {
   updateRssi(peripheralInfo, rssi) {
     const peripheral = peripheralInfo.peripheral;
     log.debug('updateRssi(%s, %d)', peripheral.uuid, rssi);
+
+    assert(this.whitelist.has(peripheral.uuid));
 
     peripheralInfo.rssiValues.push(rssi);
     this.resetOutOfRangeTimer(peripheralInfo);

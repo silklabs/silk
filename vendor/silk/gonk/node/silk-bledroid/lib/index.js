@@ -328,8 +328,11 @@ class Bledroid extends EventEmitter {
     }
   }
 
-  onClientDisconnect(address) {
-    this.nobleConnections.delete(address);
+  onClientDisconnect(address, status, connectionId) {
+    if (this.nobleConnections.has(address)) {
+      this.nobleConnections.delete(address);
+      this.emit('clientDisconnect', address, status, connectionId);
+    }
   }
 
   onUnknownCommand(command) {

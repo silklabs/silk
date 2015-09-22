@@ -127,10 +127,15 @@ function wpaCli(...args) {
     return util.timeout(1000).then(() => wpaCli(...args));
   }
 
-  return util.exec('wpa_cli', [`-i${iface}`, `IFNAME=${iface}`, ...args])
+  const bin = 'wpa_cli';
+  const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
+
+  return util.exec(bin, fullArgs)
     .then(r => {
       if (r.code !== 0) {
-        return Promise.reject(r.stdout);
+        return Promise.reject(new Error(`'${bin} ${fullArgs.join(' ')}' ` +
+                                        `returned ${r.code}: ` +
+                                        `'${r.stdout.replace(/\n/g, '')}'`));
       }
       return Promise.resolve(r.stdout);
     });
@@ -142,7 +147,12 @@ function wpaCliExpectOk(...args) {
       if (ok.match(/^OK/)) {
         return Promise.resolve();
       }
-      return Promise.reject(ok);
+
+      const bin = 'wpa_cli';
+      const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
+
+      return Promise.reject(new Error(`'${bin} ${fullArgs.join(' ')}': ` +
+                                      `'${ok.replace(/\n/g, '')}'`));
     }
   );
 }
@@ -170,7 +180,12 @@ function wpaCliAddNetwork() {
       if ((found = id.match(/^([0-9]+)/))) {
         return Promise.resolve(found[1]);
       }
-      return Promise.reject(id);
+
+      const bin = 'wpa_cli';
+      const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, `add_network`];
+
+      return Promise.reject(new Error(`'${bin} ${fullArgs.join(' ')}': ` +
+                                      `'${id.replace(/\n/g, '')}'`));
     }
   );
 }

@@ -15,7 +15,8 @@ const styles = {
   },
   flexRow: {
     display: 'flex',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    flexWrap: 'wrap'
   },
   glyphicon: {
     fontSize: '20px'

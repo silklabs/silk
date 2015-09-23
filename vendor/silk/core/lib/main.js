@@ -16,7 +16,6 @@ require('source-map-support').install();
 
 let api = require('./api');
 let battery = require('./battery');
-let btle = require('./btle');
 let log = require('./log')('main');
 let wifi = require('./wifi');
 let ntp = require('./ntp');
@@ -29,6 +28,7 @@ let fs = require('mz/fs');
 let deferred = require('./deferred');
 let clapper = require('./clapper');
 
+import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crashreport';
 import makeOutbox from './outbox';
@@ -44,6 +44,7 @@ const name = util.getprop('persist.silk.displayName', 'Silkcam');
 const logoFilePath = '/system/silk/media/logo.png';
 
 let id = null;
+let btle = null;
 let timeline;
 let camera;
 let logo = null;
@@ -92,7 +93,9 @@ function boot() {
       log.info('Initialize hardware');
       return Promise.all([
         wifi.init(),
-        btle.init(),
+        getBTLE().then(btleInstance => {
+          btle = btleInstance;
+        }),
         sensors.init(),
       ]);
     }).
@@ -115,19 +118,22 @@ function boot() {
       clapDetector = new clapper.ClapDetector({}, timeline);
       camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
-      btle.ranger.on('entered', (uuid, rssi) => {
-        log.info('Device \'%s\' entered range %d', uuid, rssi);
-      });
-      btle.ranger.on('range', (uuid, rssi) => {
-        log.info('Device \'%s\' range %d', uuid, rssi);
-      });
-      btle.ranger.on('exited', uuid => {
-        log.info('Device \'%s\' exited range', uuid);
+      btle.on('modeChange', mode => {
+        if (mode === 'normal') {
+          btle.ranger.on('entered', (uuid, rssi) => {
+            log.info('Device \'%s\' entered range %d', uuid, rssi);
+          });
+          btle.ranger.on('range', (uuid, rssi) => {
+            log.info('Device \'%s\' range %d', uuid, rssi);
+          });
+          btle.ranger.on('exited', uuid => {
+            log.info('Device \'%s\' exited range', uuid);
+          });
+        }
       });
 
       log.info('Load configuration');
-      config.init(id);
-      return config.start();
+      return config.init();
     });
 }
 
@@ -203,18 +209,10 @@ server.on('connect', () => {
     timeline.socket = server.socket;
     outbox.hintSocket = server.socket;
   })
-  .then(() => config.stop())
-  .then(() => {
-    btle.beacon.start();
-    btle.ranger.start();
-  })
   .catch(util.processthrow);
 });
 
 server.on('disconnect', () => {
-  btle.beacon.stop();
-  btle.ranger.stop();
-  config.start();
   diag.stop();
   timeline.socket = null;
   outbox.hintSocket = null;
@@ -261,7 +259,6 @@ server.on('cmd', cmd => {
 config.on('unconfigured', () => {
   if (ui.goto('setup')) {
     server.disconnect();
-    config.configure();
   }
 });
 config.on('configured', () => {

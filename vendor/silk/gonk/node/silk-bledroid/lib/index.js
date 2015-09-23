@@ -50,6 +50,10 @@ class Bledroid extends EventEmitter {
 
     super();
 
+    this.socket = null;
+    this.socketEventListenersInstalled = null;
+    this.commandBuffer = null;
+
     // Do this only once at startup just to make sure the message map is sane.
     for (const mapEntry of this.messageMap) {
       assert(mapEntry.regex);
@@ -79,9 +83,6 @@ class Bledroid extends EventEmitter {
   init() {
     log.debug('Initializing');
 
-    this.socket = null;
-    this.socketEventListenersInstalled = null;
-    this.commandBuffer = null;
     this.nobleConnections = new Set();
     this.adapterState = 'unknown';
 
@@ -280,8 +281,13 @@ class Bledroid extends EventEmitter {
     let data = `${BLE_COMMAND_NAME} "${commandStr}"\0`;
 
     if (this.commandBuffer) {
-      log.debug(`Not connected, buffering command: '${commandStr}'`);
-      this.commandBuffer.data += data;
+      const whitelist = /^(?:getAdapterState)/;
+      if (whitelist.test(commandStr)) {
+        log.debug(`Not connected, buffering command: '${commandStr}'`);
+        this.commandBuffer.data += data;
+      } else {
+        log.warn(`Not connected, ignoring command: '${commandStr}'`);
+      }
       return;
     }
 

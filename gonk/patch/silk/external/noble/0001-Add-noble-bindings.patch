@@ -1,14 +1,14 @@
-From 1c79aed72f215e5d09677e63c8627f852dd3a958 Mon Sep 17 00:00:00 2001
+From aea27f1e8fba6955bf57d4d3cce6d6b5797df420 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2772 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2784 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2789 insertions(+), 4 deletions(-)
+ 4 files changed, 2801 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..9378b42
+index 0000000..4151bdd
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2772 @@
+@@ -0,0 +1,2784 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -221,6 +221,7 @@ index 0000000..9378b42
 +  // These events will trigger callbacks here instead of simply being forwarded
 +  // to the main noble objects.
 +  const hookedEvents = [
++    'stateChange',
 +    'discover',
 +    'clientConnect',
 +    'clientDisconnect',
@@ -427,6 +428,17 @@ index 0000000..9378b42
 +
 +  descriptorInfo = new DescriptorInfo(descriptorUuid, instanceId);
 +  characteristicInfo.descriptors.set(descriptorUuid, descriptorInfo);
++}
++
++NobleBindings.prototype.onStateChange = function(state) {
++  log.debug('onStateChange(%s)', state);
++
++  if (state !== 'poweredOn' && this.commandQueue.length) {
++    log.warn('Adapter state changed to \'%s\', clearing command queue', state);
++    this.commandQueue = [ ];
++  }
++
++  this.emit('stateChange', state);
 +}
 +
 +/**
@@ -1587,7 +1599,7 @@ index 0000000..9378b42
 +    return true;
 +  }
 +
-+  const commandStringPrefix = 'readCharacteristic ' + 
++  const commandStringPrefix = 'readCharacteristic ' +
 +                              peripheralInfo.connectionId + ' ' +
 +                              serviceInfo.uuid + ' ' +
 +                              serviceInfo.instanceId + ' ' +
@@ -2330,7 +2342,7 @@ index 0000000..9378b42
 +               characteristicUuid);
 +      return;
 +    }
-+  
++
 +    characteristicInfo.notifying = notify;
 +
 +    this.emit('notify',
@@ -2486,7 +2498,7 @@ index 0000000..9378b42
 +    return true;
 +  }
 +
-+  const commandStringPrefix = 'readDescriptor ' + 
++  const commandStringPrefix = 'readDescriptor ' +
 +                              peripheralInfo.connectionId + ' ' +
 +                              serviceInfo.uuid + ' ' +
 +                              serviceInfo.instanceId + ' ' +
@@ -2865,5 +2877,5 @@ index 42cfdb6..9cdbc67 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.5.1
+2.5.3
 

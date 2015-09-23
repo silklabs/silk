@@ -16,7 +16,31 @@ var {
 var PREVIEW_WIDTH = 305;
 var PREVIEW_HEIGHT = 170;
 
-var MonitorPreview = React.createClass({
+class MonitorLabel extends React.Component {
+  render() {
+    return (
+      <View style={styles.monitorLabelContainer}>
+        <Text style={styles.monitorLabel}>{this.props.children}</Text>
+      </View>
+    );
+  }
+}
+
+export class MonitorConnecting extends React.Component {
+  render() {
+    let status = this.props.status === '' ? '' : `(${this.props.status})`;
+    return (
+      <View style={styles.monitorContainer}>
+        <MonitorLabel>Connecting device ... {status}</MonitorLabel>
+        <View style={styles.monitorPreviewContainer}>
+          <View style={styles.placeholderPreview} />
+        </View>
+      </View>
+    );
+  }
+}
+
+export var MonitorPreview = React.createClass({
   propTypes: {
     id: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
@@ -102,9 +126,7 @@ var MonitorPreview = React.createClass({
             socket={this.props.socket}
             id={id}
             previewSize={this.props.previewSize} />
-          <View style={styles.monitorLabelContainer}>
-            <Text style={styles.monitorLabel}>{this.props.label} {status}</Text>
-          </View>
+          <MonitorLabel>{this.props.label} {status}</MonitorLabel>
           <View style={styles.monitorPreviewContainer}>
             <ImageView style={styles.preview} blob={this.state.blob} />
             {logo}
@@ -163,6 +185,11 @@ var styles = StyleSheet.create({
     right: 0,
   },
 
+  placeholderPreview: {
+    flex: 1,
+    backgroundColor: 'gray',
+  },
+
   logo: {
     position: 'absolute',
     top: 0,
@@ -176,5 +203,3 @@ var styles = StyleSheet.create({
     backgroundColor: 'transparent'
   },
 });
-
-module.exports = MonitorPreview;

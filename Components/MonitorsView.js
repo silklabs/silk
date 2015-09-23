@@ -14,7 +14,7 @@ var {
 var Config = require('../Libraries/Config');
 var SocketIO = require('../Libraries/SocketIO');
 var DeviceSetup = require('./DeviceSetup');
-var MonitorPreview = require('./MonitorPreview');
+import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
 var io = require('socket.io-client-react-native');
 var debug = require('debug')('silk:MonitorPreview');
 
@@ -94,6 +94,9 @@ var MonitorsView = React.createClass({
     });
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
+      if (device.placeholder) {
+        return (<MonitorConnecting key={key} status={device.status} />);
+      }
       return (<MonitorPreview key={key} id={key} label={device.name}
                               status={device.status}
                               api={api}
@@ -370,10 +373,6 @@ var styles = StyleSheet.create({
     borderTopWidth: 0.5,
     backgroundColor: 'white',
     flex: 1,
-  },
-
-  placeholderContainer: {
-    padding: 10,
   },
 
   monitors: {

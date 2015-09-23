@@ -44,7 +44,17 @@ class Timeline extends EventEmitter {
    * Provide the timeline with a socket to use
    */
   set socket(socket) {
-    log.warn(`server socket connected`);
+    if (!socket) {
+      socket = { connected: false };
+    } else {
+      log.warn(`server socket connected`);
+      this.acks = {
+        pending: { jpeg: 0, mp4: 0 },
+        // Number of acks that can be pending before starting to drop live
+        // preview images/video chunks.
+        maxPending: { jpeg: 4, mp4: 2 },
+      };
+    }
     this.serverSocket = socket;
     this.videoUpload.socket = socket;
   }
@@ -240,13 +250,31 @@ class Timeline extends EventEmitter {
     default:
       util.processthrow(`Unknown packet type: ${type}`);
     }
-
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms` +
-              ` lag:${Date.now() - when}ms objects:${(objects ? objects.length : 0)}`;
+              ` lag:${Date.now() - when}ms ` +
+              ` objects:${(objects ? objects.length : 0)}`;
+
+    if (transmit) {
+      if (this.acks.pending[type] >= this.acks.maxPending[type]) {
+        log.warn(`Too many pending acks for ${type}`);
+        transmit = false;
+      }
+      str = str + ` acks:${this.acks.pending[type]}`;
+    }
     if (transmit) {
       log.verbose(str);
-      this.serverSocket.emit('video', { id: this.id, objects: objects,
-                                        frame: frame, contents: type, when: when });
+      let queued = Date.now();
+      this.serverSocket.emit('video',
+        { id: this.id, objects: objects, frame: frame, contents: type, when: when },
+        () => {
+          this.acks.pending[type] = this.acks.pending[type] - 1;
+          if (this.acks.pending[type] < 0) {
+            throw new Error(`pending acks for ${type} < 0`);
+          }
+          log.info(`ack in ${Date.now() - queued}ms for ${str}`);
+        }
+      );
+      this.acks.pending[type] = this.acks.pending[type] + 1;
     } else {
       log.verbose(`dropped ${str}`);
     }

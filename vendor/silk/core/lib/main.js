@@ -216,6 +216,7 @@ server.on('disconnect', () => {
   btle.ranger.stop();
   config.start();
   diag.stop();
+  timeline.socket = null;
   outbox.hintSocket = null;
 });
 

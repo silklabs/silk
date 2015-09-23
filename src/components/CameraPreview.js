@@ -21,10 +21,6 @@ export default class CameraPreview extends React.Component {
   }
 
   componentDidMount() {
-    let camera = this.state.camera;
-    if (camera) {
-      camera.on('previewImage', this.onPreviewImage);
-    }
     this._canvas = React.findDOMNode(this);
     this._context = this._canvas.getContext('2d');
   }

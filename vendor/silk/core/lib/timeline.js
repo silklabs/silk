@@ -10,9 +10,6 @@ let log = require('./log')('timeline');
 import { EventEmitter } from 'events';
 let util = require('./util');
 
-const DURATION_PROP = 'persist.silk.vidduration';
-const DURATION = util.getintprop(DURATION_PROP, 1);
-
 // Amount of time to wait for objects to be associated with a video chunk before
 // uploading it and any objects that were detected.
 const VIDEO_COLLECTOBJECT_DELAY_MS = 500;
@@ -40,7 +37,7 @@ class Timeline extends EventEmitter {
     // Hold all the video frames with the timestamps until the next poll interval
     this.videoFrames = [];
 
-    this.videoUpload = require('./videoupload')(this.id, DURATION * 1000);
+    this.videoUpload = require('./videoupload')(this.id);
   }
 
   /**

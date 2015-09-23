@@ -54,6 +54,8 @@ export default class VideoChunks extends React.Component {
         if (this.state.mostRecentTime - this.state.queryTime
             < TWELVE_HOURS_MS) {
           this.findGaps();
+        } else {
+          console.log('DONE, examined all chunks in time range');
         }
       })
       .catch(err => console.error('Failed to fetch video chunks', err));

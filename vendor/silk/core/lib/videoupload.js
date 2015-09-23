@@ -147,7 +147,7 @@ class VideoUploadQueue extends EventEmitter {
       return this._uploadItem(previousId, item);
     }).catch(err => {
       // XXX: In some cases we may want to retry an upload not now though.
-      log.error('Error working item off video upload queue', err);
+      log.error('Error working item off video upload queue', err.stack);
     }).then(() => {
       if (this.queue.length) {
         // A little trick continue to work but don't use one huge promise chain.
@@ -158,7 +158,8 @@ class VideoUploadQueue extends EventEmitter {
         // No more work signal a stop.
         this.stop();
       }
-    });
+    })
+    .catch(util.processthrow);
   }
 
   /**

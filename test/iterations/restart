@@ -1,0 +1,33 @@
+#!/bin/bash -e
+#
+# Restarts the framework N times looking for tombstones
+#
+
+N=500
+
+LOCAL_PATH=$(dirname $0)
+
+adb="timeout -s KILL 10s adb"
+
+$adb shell setprop persist.silk.quiet true # <-- the vibrations do get annoying
+$adb shell rm -rf /data/tombstones
+$adb shell mkdir /data/tombstones
+i=0
+while [[ $i -le $N ]]; do
+  $adb shell ls -l /data/tombstones
+  count=$($adb shell ls /data/tombstones | wc -l)
+  if [[ $count -gt 0 ]]; then
+    echo "****************** TOMBSTONE IN $i ITERATIONS ******************"
+    $adb pull /data/tombstones/
+    exit 1
+  fi
+
+  echo "****************** ITERATION $i ******************"
+  $adb shell stop
+  $adb shell start
+
+  i=$(($i + 1))
+  $LOCAL_PATH/../devicecheck
+done
+
+exit 0

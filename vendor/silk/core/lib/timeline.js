@@ -44,15 +44,19 @@ class Timeline extends EventEmitter {
    * Provide the timeline with a socket to use
    */
   set socket(socket) {
-    log.warn(`server socket connected`);
+    if (!socket) {
+      socket = { connected: false };
+    } else {
+      log.warn(`server socket connected`);
+      this.acks = {
+        pending: { jpeg: 0, mp4: 0 },
+        // Number of acks that can be pending before starting to drop live
+        // preview images/video chunks.
+        maxPending: { jpeg: 4, mp4: 2 },
+      };
+    }
     this.serverSocket = socket;
     this.videoUpload.socket = socket;
-    this.acks = {
-      pending: { jpeg: 0, mp4: 0 },
-      // Number of acks that can be pending before starting to drop live
-      // preview images/video chunks.
-      maxPending: { jpeg: 4, mp4: 2 },
-    };
   }
 
   /**

@@ -61,8 +61,9 @@ class Server extends events.EventEmitter {
     this.socket = require('socket.io-client')(
       url,
       {
-        // Require explicit connections.
         autoConnect: true,
+        forceNew: true,
+
         /**
          * Only use websockets this is important for the following reasons:
          *
@@ -79,7 +80,7 @@ class Server extends events.EventEmitter {
     );
 
     this.socket.on('connect', () => {
-      log.warn(`server socket connected`);
+      log.info(`server socket connected`);
       this.emit('connect');
     });
 
@@ -87,19 +88,16 @@ class Server extends events.EventEmitter {
       log.warn(`server socket disconnect: ${e}`);
       this.emit('disconnect');
 
-      // On disconnect flush any unsent buffers.
-      //
-      // Unfortunately there seems to be no "public" socket.io API for this...
-      this.socket.sendBuffer = [];
-
       switch (e) {
       case 'io client disconnect':
         // Device initiated disconnect
         break;
       case 'io server disconnect':
-        // When the server disconnects, the socket.io retry logic doesn't
-        // kick in so manually attempt a server reconnect
-        this.socket.connect();
+        // When the server disconnects, the socket.io retry logic doesn't kick
+        // in. Create a new socket (to ensure a clean slate) and try to connect
+        // again.
+        this.socket = null;
+        this.connect();
         // falls through
       default:
         this.emit('reconnecting');

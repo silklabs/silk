@@ -66,22 +66,15 @@ export default class Ranger extends EventEmitter {
     this.emitInterval = DEFAULT_EMIT_TIMEOUT_MS;
     this.outOfRangeInterval = DEFAULT_OUT_OF_RANGE_TIMEOUT_MS;
     this.localName = DEFAULT_LOCALNAME;
-    this.state = noble.state;
     this.enabled = false;
     this.scanning = false;
     this.toggleScanTimeout = null;
-    this.togglingScan = false;
+    this.togglingScanListener = null;
 
     this.peripherals = new Map();
 
     this.blacklist = new Set();
     this.whitelist = new Set();
-  }
-
-  onStateChange(state) {
-    log.debug('StateChange: %s', state);
-    this.state = state;
-    this.adjustScanState();
   }
 
   onDiscover(peripheral) {
@@ -141,7 +134,7 @@ export default class Ranger extends EventEmitter {
 
   adjustScanState() {
     log.debug('adjustScanState()');
-    if (this.state === 'poweredOn' && this.enabled) {
+    if (this.enabled) {
       log.info('Starting scan');
 
       const startScan = () => {
@@ -151,20 +144,20 @@ export default class Ranger extends EventEmitter {
       const toggle = () => {
         log.verbose('Toggling scan');
 
-        this.togglingScan = true;
-
-        this.noble.stopScanning();
-        startScan();
-
-        this.noble.once('scanStart', () => {
+        this.togglingScanListener = () => {
           log.verbose('Toggling scan complete');
-          this.togglingScan = false;
+          this.togglingScanListener = null;
 
           if (this.enabled) {
             this.toggleScanTimeout =
               setTimeout(toggle, DEFAULT_TOGGLE_SCAN_INTERVAL_MS);
           }
-        });
+        };
+
+        this.noble.stopScanning();
+        startScan();
+
+        this.noble.once('scanStart', this.togglingScanListener);
       };
 
       startScan();
@@ -179,11 +172,12 @@ export default class Ranger extends EventEmitter {
             setTimeout(toggle, DEFAULT_TOGGLE_SCAN_INTERVAL_MS);
         }
 
+        log.debug(`Emitting 'start' event: '${error}'`);
         this.emit('start', error);
 
         // It's possible that we raced here. Check necessary conditions again
         // and maybe stop scanning now.
-        if (this.state !== 'poweredOn' || !this.enabled) {
+        if (!this.enabled) {
           this.adjustScanState();
         }
       });
@@ -200,7 +194,8 @@ export default class Ranger extends EventEmitter {
       this.noble.stopScanning();
       this.noble.once('scanStop', () => {
         log.debug('Stopped scanning');
-        if (!this.togglingScan) {
+        if (!this.togglingScanListener) {
+          log.debug(`Emitting 'stop' event`);
           this.emit('stop');
         }
       });
@@ -236,7 +231,7 @@ export default class Ranger extends EventEmitter {
       }
 
       // We have to be really careful here about removing all the listeners that
-      // are added because noble keeps its periperal objects alive forever. If
+      // are added because noble keeps its peripheral objects alive forever. If
       // we don't clean up here then we will add new listeners each time an
       // advertisement packet is received and we will get multiple callbacks.
       peripheral.removeListener('connect', connectHandler); // eslint-disable-line no-use-before-define
@@ -337,6 +332,7 @@ export default class Ranger extends EventEmitter {
 
       this.peripherals.delete(peripheral.uuid);
 
+      log.debug(`Emitting 'exited' event: '${peripheral.uuid}'`);
       this.emit('exited', peripheral.uuid);
     }, DEFAULT_OUT_OF_RANGE_TIMEOUT_MS);
   }
@@ -368,9 +364,12 @@ export default class Ranger extends EventEmitter {
 
         if (!peripheralInfo.inRange) {
           peripheralInfo.inRange = true;
+          log.debug(`Emitting 'entered' event: '${peripheral.uuid}', ` +
+                    average);
           this.emit('entered', peripheral.uuid, average);
         }
 
+        log.debug(`Emitting 'range' event: '${peripheral.uuid}', ${average}`);
         this.emit('range', peripheral.uuid, average);
       }, this.emitInterval);
     }
@@ -387,8 +386,6 @@ export default class Ranger extends EventEmitter {
     if (!this.enabled) {
       assert(!this.peripherals.size);
       this.enabled = true;
-
-      this.noble.on('stateChange', this.onStateChange.bind(this));
 
       this.adjustScanState();
 
@@ -414,22 +411,39 @@ export default class Ranger extends EventEmitter {
     if (this.enabled) {
       this.enabled = false;
 
-      this.noble.removeListener('stateChange', this.onStateChange.bind(this));
+      const wasScanning = this.scanning;
+      if (wasScanning) {
+        if (this.togglingScanListener) {
+          this.noble.removeListener('scanStart', this.togglingScanListener);
+          this.togglingScanListener = null;
+        }
 
-      this.adjustScanState();
-
-      await new Promise(resolve => {
-        this.once('stop', resolve);
-      });
+        this.adjustScanState();
+      }
 
       if (this.peripherals.size) {
         this.peripherals.forEach(peripheralInfo => {
-          peripheralInfo.peripheral.disconnect();
           clearTimeout(peripheralInfo.connectTimeout);
           clearTimeout(peripheralInfo.eventTimeout);
           clearTimeout(peripheralInfo.outOfRangeTimeout);
+
+          const peripheral = peripheralInfo.peripheral;
+          peripheral.disconnect();
+
+          if (peripheralInfo.inRange) {
+            log.debug(`Emitting 'exited' event: '${peripheral.uuid}'`);
+            this.emit('exited', peripheral.uuid);
+          }
         });
         this.peripherals.clear();
+      }
+
+      if (wasScanning) {
+        await new Promise(resolve => {
+          this.once('stop', () => {
+            resolve();
+          });
+        });
       }
     }
   }

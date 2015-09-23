@@ -7,6 +7,7 @@ import ConfigService from './config-service';
 import caps from '../caps';
 import EventEmitter from 'events';
 import getDeviceId from '../deviceid';
+import makeDeferred from '../deferred';
 import makeLog from '../log';
 import noble from 'noble';
 import Ranger from './ranger';
@@ -38,7 +39,7 @@ const MODE_NORMAL = 'normal';
 
 const ADVERTISING_OFF = 0;
 const ADVERTISING_BEACON = 1;
-const ADVERTISING_CONFIG = 2;
+const ADVERTISING_SERVICES = 2;
 
 // TODO: Pull from silk-api
 const DEFAULT_BEACON_UUID = 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424';
@@ -64,6 +65,8 @@ class BluetoothLE extends EventEmitter {
   _services = [ ]
   _configuringDeviceAddress = null
   _updateRssiTimeout = null
+  _modeAtPowerOff = MODE_OFF
+  _adapterStateResolve = null
 
   _configService = null
   _ranger = null
@@ -89,7 +92,7 @@ class BluetoothLE extends EventEmitter {
     assert(bleno.state === noble.state);
     this._adapterState = bleno.state;
 
-    noble.on('stateChange', state => this._onAdapterStateChange(state));
+    noble.on('stateChange', this._onAdapterStateChange);
   }
 
   get deviceId() {
@@ -125,7 +128,11 @@ class BluetoothLE extends EventEmitter {
   async changeMode(mode) {
     log.debug(`changeMode('${mode}')`);
 
-    await this._changeStatePromise;
+    try {
+      await this._changeStatePromise;
+    } catch(e) {                                 // eslint-disable-line no-empty
+      // Any error should have been logged by now.
+    }
 
     this._changeStatePromise = this._changeMode(mode);
     return await this._changeStatePromise;
@@ -197,26 +204,32 @@ class BluetoothLE extends EventEmitter {
     }
   }
 
-    async _startAdvertisingConfigService() {
-      log.debug('_startAdvertisingConfigService()');
+  async _startAdvertisingConfigService() {
+    log.debug('_startAdvertisingConfigService()');
 
-      if (this._advertisingMode === ADVERTISING_CONFIG) {
-        return;
-      }
-
-      await new Promise((resolve, reject) => {
-        const callback = err => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        };
-        bleno.startAdvertising('Silkcam', [ ConfigService.uuid ], callback);
-      });
-
-      this._advertisingMode = ADVERTISING_CONFIG;
+    if (this._advertisingMode === ADVERTISING_SERVICES) {
+      return;
     }
+
+    if (this._adapterState !== 'poweredOn') {
+      log.warn('Ignoring _startAdvertisingConfigService() because adapter ' +
+               `state is '${this._adapterState}'`);
+      return;
+    }
+
+    await new Promise((resolve, reject) => {
+      const callback = err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      };
+      bleno.startAdvertising('Silkcam', [ ConfigService.uuid ], callback);
+    });
+
+    this._advertisingMode = ADVERTISING_SERVICES;
+  }
 
   async _startAdvertisingBeacon() {
     log.debug('_startAdvertisingBeacon()');
@@ -252,21 +265,18 @@ class BluetoothLE extends EventEmitter {
   async _off() {
     log.debug('_off()');
 
-    if (this._adapterState !== 'poweredOn') {
-      log.warn('Ignoring _off() because adapter state is ' +
-               `'${this._adapterState}'`);
-      return;
-    }
-
     let promises = [ ];
 
     if (this._ranger) {
       promises.push(this._ranger.stop());
     }
 
-    if (this._advertisingMode !== ADVERTISING_OFF) {
+    if (this._advertisingMode !== ADVERTISING_OFF &&
+        this._adapterState === 'poweredOn') {
       promises.push(new Promise(resolve => {
-        bleno.stopAdvertising(resolve);
+        bleno.stopAdvertising(() => {
+          resolve();
+        });
       }));
     }
 
@@ -321,27 +331,23 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
-    if (this._adapterState !== 'poweredOn') {
-      log.warn('Ignoring _uninstallConfigService() because adapter state is ' +
-               `'${this._adapterState}'`);
-      return;
-    }
-
     assert(this._services.indexOf(this._configService) !== -1);
 
     let services = this._services.filter(service => {
       return service !== this._configService;
     });
 
-    await new Promise((resolve, reject) => {
-      bleno.setServices(services, err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
+    if (this._adapterState === 'poweredOn') {
+      await new Promise((resolve, reject) => {
+        bleno.setServices(services, err => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
       });
-    });
+    }
 
     clearTimeout(this._updateRssiTimeout);
     this._updateRssiTimeout = null;
@@ -381,14 +387,46 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
+    this._adapterState = adapterState;
+
     if (adapterState === 'poweredOn') {
-      // TODO: Handle restart
-      log.info(`Adapter state is now '${adapterState}'`);
-    } else {
-      this._changeMode(MODE_OFF);
+      const modeAtPowerOff = this._modeAtPowerOff;
+      this._modeAtPowerOff = MODE_OFF;
+
+      this._changeStatePromise =
+        this._changeStatePromise
+          .catch(err => undefined)                        // eslint-disable-line
+          .then(() => this._changeMode(modeAtPowerOff));
+
+      if (this._adapterStateResolve) {
+        this._adapterStateResolve();
+        this._adapterStateResolve = null;
+      }
+
+      return;
     }
 
-    this._adapterState = adapterState;
+    if (this._adapterStateResolve) {
+      return;
+    }
+
+    this._modeAtPowerOff = this._mode;
+
+    // Make futher calls to changeState() wait for the power to come back on.
+    let deferred = makeDeferred();
+
+    this._changeStatePromise =
+      this._changeStatePromise
+        .catch(err => undefined)                          // eslint-disable-line
+        .then(() => this._changeMode(MODE_OFF))
+        .then(() => {
+          assert(this._mode === MODE_OFF);
+          assert(this._advertisingMode === ADVERTISING_OFF);
+          assert(!this._configService);
+          assert(!this._ranger);
+          return deferred.promise;
+        });
+    this._adapterStateResolve = deferred.accept;
   }
 
   _onBlenoAccept = addr => {

@@ -1,16 +1,16 @@
-From fda9ab7acf9dcd5ee3eb6f2f9d084d5efca9982e Mon Sep 17 00:00:00 2001
+From 3823d5129db60d6deddca7cb7006b884211af3ae Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sun, 21 Jun 2015 22:14:38 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
  Android.mk              |   7 +
- binding.gyp             |  38 ------
- lib/android/bindings.js | 352 ++++++++++++++++++++++++++++++++++++++++++++++++
+ binding.gyp             |  38 -----
+ lib/android/bindings.js | 366 ++++++++++++++++++++++++++++++++++++++++++++++++
  lib/bleno.js            |   2 +
  package.json            |  13 +-
  test.js                 |   3 +-
- 6 files changed, 369 insertions(+), 46 deletions(-)
+ 6 files changed, 383 insertions(+), 46 deletions(-)
  create mode 100644 Android.mk
  delete mode 100644 binding.gyp
  create mode 100644 lib/android/bindings.js
@@ -74,10 +74,10 @@ index 99c8e32..0000000
 -}
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..175c582
+index 0000000..8e26d8a
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,352 @@
+@@ -0,0 +1,366 @@
 +/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 +/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 +
@@ -110,6 +110,17 @@ index 0000000..175c582
 +  this._bledroid.on('writeAttribute', this.onWriteAttribute.bind(this));
 +
 +  this.acceptedAddress = null;
++};
++
++blenoBindings.reset = function() {
++  this.acceptedAddress = null;
++  this._attributes = null;
++  this._attributeMap = null;
++  this._newAttributes = null;
++  this._pendingSetServices = null;
++  this._pendingServiceAttributes = null;
++  this._currentAttribute = null;
++  this._serviceHandle = null;
 +};
 +
 +blenoBindings.startAdvertising = function(name, serviceUuids) {
@@ -230,6 +241,9 @@ index 0000000..175c582
 +};
 +
 +blenoBindings.onStateChange = function(state) {
++  if (state !== 'poweredOn') {
++    this.reset();
++  }
 +  this.emit('stateChange', state);
 +};
 +

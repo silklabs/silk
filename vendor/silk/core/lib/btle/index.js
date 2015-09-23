@@ -187,6 +187,10 @@ class BluetoothLE extends EventEmitter {
       }
 
       this._mode = mode;
+
+      process.nextTick(() => {
+        this.emit('modeChange', mode);
+      });
     }
 
     switch (mode) {
@@ -396,7 +400,8 @@ class BluetoothLE extends EventEmitter {
       this._changeStatePromise =
         this._changeStatePromise
           .catch(err => undefined)                        // eslint-disable-line
-          .then(() => this._changeMode(modeAtPowerOff));
+          .then(() => this._changeMode(modeAtPowerOff))
+          .catch(log.warn);
 
       if (this._adapterStateResolve) {
         this._adapterStateResolve();
@@ -425,7 +430,8 @@ class BluetoothLE extends EventEmitter {
           assert(!this._configService);
           assert(!this._ranger);
           return deferred.promise;
-        });
+        })
+        .catch(log.warn);
     this._adapterStateResolve = deferred.accept;
   }
 

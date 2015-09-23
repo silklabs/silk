@@ -44,7 +44,7 @@ const name = util.getprop('persist.silk.displayName', 'Silkcam');
 const logoFilePath = '/system/silk/media/logo.png';
 
 let id = null;
-//let btle = null;
+let btle = null;
 let timeline;
 let camera;
 let logo = null;
@@ -93,9 +93,9 @@ function boot() {
       log.info('Initialize hardware');
       return Promise.all([
         wifi.init(),
-        getBTLE(),/*.then(instance => {
-          btle = instance;
-        }),*/
+        getBTLE().then(btleInstance => {
+          btle = btleInstance;
+        }),
         sensors.init(),
       ]);
     }).
@@ -117,17 +117,21 @@ function boot() {
 
       clapDetector = new clapper.ClapDetector({}, timeline);
       camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
-/*
-      btle.ranger.on('entered', (uuid, rssi) => {
-        log.info('Device \'%s\' entered range %d', uuid, rssi);
+
+      btle.on('modeChange', mode => {
+        if (mode === 'normal') {
+          btle.ranger.on('entered', (uuid, rssi) => {
+            log.info('Device \'%s\' entered range %d', uuid, rssi);
+          });
+          btle.ranger.on('range', (uuid, rssi) => {
+            log.info('Device \'%s\' range %d', uuid, rssi);
+          });
+          btle.ranger.on('exited', uuid => {
+            log.info('Device \'%s\' exited range', uuid);
+          });
+        }
       });
-      btle.ranger.on('range', (uuid, rssi) => {
-        log.info('Device \'%s\' range %d', uuid, rssi);
-      });
-      btle.ranger.on('exited', uuid => {
-        log.info('Device \'%s\' exited range', uuid);
-      });
-*/
+
       log.info('Load configuration');
       return config.init();
     });

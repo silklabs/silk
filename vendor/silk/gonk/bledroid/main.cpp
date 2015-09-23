@@ -58,6 +58,11 @@ enum WaitType {
   WaitDisconnect
 };
 
+// These wait types won't abort if waiting fails.
+static const WaitType kToleratedWaitFailures[] = {
+  WaitReadRemoteRssi
+};
+
 enum {
   ScanDeliveryModeImmediate = 0,
   ScanDeliveryModeFoundLost = 1,
@@ -235,7 +240,7 @@ public:
 
   ~ThreadWaiter() {
     if (currentWaitType != WaitNone) {
-      ALOGE("Waiting at shutdown!");
+      ALOGE("Waiting for type %d at shutdown", currentWaitType);
       abort();
     }
   }
@@ -254,7 +259,9 @@ public:
     // Must be locked here, but no way to assert it...
 
     if (currentWaitType != WaitNone) {
-      ALOGE("Waiting more than once!");
+      ALOGE("Cannot wait for type %d, already waiting on type %d",
+            waitType,
+            currentWaitType);
       abort();
     }
 
@@ -264,7 +271,16 @@ public:
       int err = mainThreadCondition.waitRelative(mainThreadMutex,
                                                  kDefaultWaitTimeout);
       if (err) {
-        ALOGE("Waiting failed: %d", err);
+        ALOGE("Waiting for type %d failed: %d", currentWaitType, err);
+
+        // If this wait type is whitelisted then we can ignore it.
+        for (const auto& toleratedWaitType : kToleratedWaitFailures) {
+          if (toleratedWaitType == currentWaitType) {
+            ALOGD("Wait type is whitelisted, not aborting");
+            return;
+          }
+        }
+        abort();
       }
     }
   }
@@ -274,18 +290,18 @@ private:
     auto lock = autoLock();
 
     if (currentWaitType != waitType) {
+      if (currentWaitType == WaitNone) {
+        ALOGE("Cannot signal, not waiting");
+      } else {
+        ALOGE("Cannot signal for type %d, waiting on type %d",
+              waitType,
+              currentWaitType);
+      }
+
       if (abortIfNotWaiting) {
-        if (currentWaitType == WaitNone) {
-          ALOGE("Not waiting!");
-        } else {
-          ALOGE("Not waiting on the right type!");
-        }
         abort();
       }
 
-      if (currentWaitType != WaitNone) {
-        ALOGW("Not signaling because type is mismatched");
-      }
       return;
     }
 
@@ -1486,7 +1502,7 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   NULL, // batchscan_enable_disable_callback
   NULL, // batchscan_reports_callback
   NULL, // batchscan_threshold_callback
-  NULL  // track_adv_event_callback 
+  NULL  // track_adv_event_callback
 };
 
 

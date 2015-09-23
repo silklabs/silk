@@ -209,6 +209,18 @@ $ . build/envsetup.sh
 $ ./development/scripts/stack tombstone_00
 ```
 
+### Core dumps
+
+To enable core dumps for the main silk process,
+run `adb shell setprop persist.silk.coredump 1` and then restart.
+The dumps will be placed in /data/core.
+
+```
+$ adb pull /data/core/
+$ . build/envsetup.sh
+$ ./rungdb node node.12205.1443030071.core #<-- "12205.1443030071" will vary
+```
+
 ## Appendix
 
 ### Stock device manifest for Nexus 4 ("Mako") 5.1.1

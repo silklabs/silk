@@ -64,6 +64,8 @@ SYMDIR=$ANDROID_PRODUCT_OUT/symbols
 GDBSERVER_PID=$(get_pid_by_name gdbserver)
 
 GDB_PORT=$((10000 + $(id -u) % 50000))
+
+CORE_FILE=
 if [ "$1" = "attach" ] ; then
    DEBUG_PID=$2
    if [ -z "$DEBUG_PID" ]; then
@@ -89,15 +91,25 @@ else
       exit 1
    fi
    DEBUG_BIN=$1
+   if [ -n "$2" ]; then
+      CORE_FILE=$2
+      if [ ! -f $CORE_FILE ]; then
+        echo "Error: Core file does not exist: $CORE_FILE"
+        exit 1
+      fi
+   fi
 fi
 
 PROG=${SYMDIR}${DEBUG_BIN}
 if [ ! -f $PROG ]; then
-  PROG=${SYMDIR}/system/bin/${DEBUG_BIN}
+  PROG=${SYMDIR}/system/silk/bin/${DEBUG_BIN}
   if [ ! -f $PROG ]; then
-    # TODO: Make this search smarter
-    echo Error: Unable to find symbols for $DEBUG_BIN
-    exit 1
+    PROG=${SYMDIR}/system/bin/${DEBUG_BIN}
+    if [ ! -f $PROG ]; then
+      # TODO: Make this search smarter
+      echo Error: Unable to find symbols for $DEBUG_BIN
+      exit 1
+    fi
   fi
 fi
 
@@ -123,7 +135,7 @@ fi
 
 
 NODE_SEARCH_PATH=$SYMDIR/system/silk/node_modules:$SYMDIR/system/silk/node_modules/build
-NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/system/lib/node:$SYMDIR/system/lib/node/build
+NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/system/silk/lib
 
 sleep 1
 echo "set solib-absolute-prefix $SYMDIR" > $GDBINIT
@@ -148,5 +160,5 @@ cd $ANDROID_BUILD_TOP
 
 #    echo "ddd --debugger \"$GDB -x $GDBINIT\" $PROG"
 #    ddd --debugger "$GDB -x $GDBINIT" $PROG
-echo $GDB -x $GDBINIT $PROG
-$GDB -x $GDBINIT $PROG
+echo $GDB -x $GDBINIT $PROG $CORE_FILE
+$GDB -x $GDBINIT $PROG $CORE_FILE

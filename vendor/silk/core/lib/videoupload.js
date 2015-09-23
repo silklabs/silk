@@ -15,7 +15,7 @@ const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 
 const DURATION_PROP = 'persist.silk.vidduration';
-const DURATION = util.getintprop(DURATION_PROP, 1);
+const DURATION_SECONDS = util.getintprop(DURATION_PROP, 1);
 
 class VideoUploadQueue extends EventEmitter {
   /**
@@ -194,4 +194,4 @@ class VideoUploadQueue extends EventEmitter {
   }
 }
 
-module.exports = id => new VideoUploadQueue(id, DURATION);
+module.exports = id => new VideoUploadQueue(id, DURATION_SECONDS * 1000);

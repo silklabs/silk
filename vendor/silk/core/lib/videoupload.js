@@ -14,6 +14,9 @@ const VIDEO_BLOB_TYPE = 'video';
 const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 
+const DURATION_PROP = 'persist.silk.vidduration';
+const DURATION = util.getintprop(DURATION_PROP, 1);
+
 class VideoUploadQueue extends EventEmitter {
   /**
    * @param {String} id device id.
@@ -28,7 +31,7 @@ class VideoUploadQueue extends EventEmitter {
     // We could later make this more generic and do logging.
     this.type = 'video';
 
-    // XXX: This is a hack until we have percise timing info on when the
+    // XXX: This is a hack until we have precise timing info on when the
     // segment has ended (in utc).
     this.duration = duration;
 
@@ -191,4 +194,4 @@ class VideoUploadQueue extends EventEmitter {
   }
 }
 
-module.exports = (id, duration) => new VideoUploadQueue(id, duration);
+module.exports = id => new VideoUploadQueue(id, DURATION);

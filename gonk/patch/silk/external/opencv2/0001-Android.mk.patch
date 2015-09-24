@@ -1,21 +1,27 @@
-From 5ab702e0b0349c64c13a82874d949734a59b7e91 Mon Sep 17 00:00:00 2001
+From bca84da6435a0085037227b0455b1ad40dea4ef1 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- opencv.mk  | 37 ++++++++++++++++++++++++++
- 2 files changed, 127 insertions(+)
+ Android.mk                   | 92 ++++++++++++++++++++++++++++++++++++++++++++
+ apps/Android.mk              |  1 +
+ apps/haartraining/Android.mk | 16 ++++++++
+ apps/traincascade/Android.mk | 19 +++++++++
+ opencv.mk                    | 37 ++++++++++++++++++
+ 5 files changed, 165 insertions(+)
  create mode 100644 Android.mk
+ create mode 100644 apps/Android.mk
+ create mode 100644 apps/haartraining/Android.mk
+ create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..725f37f
+index 0000000..45dceda
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,92 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -106,6 +112,62 @@ index 0000000..725f37f
 +	$(hide) cp $(dir $@)install/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
++
++include $(call all-makefiles-under,$(LOCAL_PATH))
+diff --git a/apps/Android.mk b/apps/Android.mk
+new file mode 100644
+index 0000000..5053e7d
+--- /dev/null
++++ b/apps/Android.mk
+@@ -0,0 +1 @@
++include $(call all-subdir-makefiles)
+diff --git a/apps/haartraining/Android.mk b/apps/haartraining/Android.mk
+new file mode 100644
+index 0000000..0b3ad27
+--- /dev/null
++++ b/apps/haartraining/Android.mk
+@@ -0,0 +1,16 @@
++LOCAL_PATH := $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE := opencv_createsamples
++
++LOCAL_SRC_FILES := \
++  createsamples.cpp \
++  cvhaartraining.cpp \
++  cvcommon.cpp \
++  cvsamples.cpp \
++  cvsamplesoutput.cpp \
++
++LOCAL_MODULE_TAGS := optional
++include external/opencv2/opencv.mk
++include $(BUILD_SILK_EXECUTABLE)
++
+diff --git a/apps/traincascade/Android.mk b/apps/traincascade/Android.mk
+new file mode 100644
+index 0000000..689ee6c
+--- /dev/null
++++ b/apps/traincascade/Android.mk
+@@ -0,0 +1,19 @@
++LOCAL_PATH := $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE := opencv_traincascade
++
++LOCAL_SRC_FILES := \
++  traincascade.cpp \
++  cascadeclassifier.cpp \
++  boost.cpp \
++  features.cpp \
++  haarfeatures.cpp \
++  lbpfeatures.cpp \
++  HOGfeatures.cpp \
++  imagestorage.cpp \
++
++LOCAL_MODULE_TAGS := optional
++include external/opencv2/opencv.mk
++include $(BUILD_SILK_EXECUTABLE)
++
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
 index 0000000..3df72a7
@@ -150,5 +212,5 @@ index 0000000..3df72a7
 +LOCAL_SHARED_LIBRARIES += liblog libz
 +endif
 -- 
-2.5.0
+2.4.5
 

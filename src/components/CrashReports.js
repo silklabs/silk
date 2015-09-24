@@ -6,8 +6,7 @@ import { Button, ButtonGroup, Glyphicon,
          ListGroup, ListGroupItem, Modal } from 'react-bootstrap';
 import Iframe from 'react-iframe';
 import { Link } from 'react-router';
-
-import Api from '../libraries/Api';
+import Reports from '../libraries/CrashReports';
 
 const styles = {
   crashReport: {
@@ -26,15 +25,8 @@ export default class CrashReports extends React.Component {
 
   constructor(props) {
     super(props);
-    let id = this.props.params.deviceId;
-    Api.crashMeta.find({ deviceId: id })
-      .then(crashes => {
-        // TODO: crashes list seems to be returned in reverse
-        // chronological order ... that's what we want, but not clear
-        // if we can rely on that.  Add some .sort()-fu if we can't
-        // rely on it.
-        this.setState({ crashes });
-      })
+    Reports.findByDeviceId(this.props.params.deviceId)
+      .then(crashes => this.setState({ crashes }))
       .catch(err => console.error('Failed to fetch crash reports:', err));
   }
 

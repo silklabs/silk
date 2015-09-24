@@ -53,7 +53,10 @@ All our projects use the same branch names:
 
 ### Master branch:
 * Default location for merging commits
-* It is not necessary to double-land next or chemspill commits on both the next/chemspill branch and master, but doing so is no problem.  For example if you want to let your commit rest on master for a time.  However it is always necessary to land your fix in the next/chemspill branch if it is applicable to the branch (ie, we have no integration team for commit propagation yet).
+* It is not necessary to double-land next or chemspill commits on both the next/chemspill branch and master, but doing so is no problem.  For example if you want to let your commit rest on master for a time.  However it is always necessary to land your fix in the next/chemspill branch if it is applicable to the branch (ie, we have no integration team for commit propagation yet).   To uplift a commit from *master* to *next*: 
+  1. Create a new topic branch based off *next* in your project fork
+  1. `git cherry-pick` the commit(s) from *master*
+  1. Send the PR to the *next* branch
 
 ### Next branch:
 * The next branch is created at Feature Midweek Landing from the current HEAD of the master branch.

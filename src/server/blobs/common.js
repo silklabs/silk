@@ -5,7 +5,7 @@ import * as Joi from 'joi';
 
 let log = require('../log')('blob-common');
 
-const BLOB_SIZE_MAX = 1024 * 1024 * 10; // 10MB
+const BLOB_SIZE_MAX = 1024 * 1024 * 30; // 30MB
 const CONTENT_TYPE_JSON = 'application/json';
 
 const SCHEMA = {

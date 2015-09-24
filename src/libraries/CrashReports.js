@@ -1,6 +1,11 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+// XXX: Nasty hack to load localforage it does not load as a normal
+// es6 module sadly with webpack...
+require('script!localforage');
+const localforage = window.localforage;
+
 import Api from '../libraries/Api';
 
 class CrashReports {
@@ -8,8 +13,10 @@ class CrashReports {
 
   constructor() {
     this.deviceCrashesPromises = { }; // deviceId -> Promise
-    this.oldReports =
-      JSON.parse(localStorage.getItem(CrashReports.STORAGE_KEY) || '{}');
+    this.oldReportsPromise = localforage.getItem(CrashReports.STORAGE_KEY)
+      .then(oldReports => {
+        this.oldReports = oldReports || {};
+      });
   }
 
   ensureDeviceCrashReports(deviceId) {
@@ -20,7 +27,8 @@ class CrashReports {
   }
 
   findByDeviceId(deviceId) {
-    return this.ensureDeviceCrashReports(deviceId)
+    return this.oldReportsPromise
+      .then(() => this.ensureDeviceCrashReports(deviceId))
       .then(crashes => {
         crashes.forEach(crash => crash.old = (crash.id in this.oldReports));
         return crashes;
@@ -28,15 +36,17 @@ class CrashReports {
   }
 
   setCrashesState(old, crashes) {
-    crashes.forEach(crash => {
-      if (old) {
-        this.oldReports[crash.id] = 1;
-      } else {
-        delete this.oldReports[crash.id];
-      }
-    });
-    localStorage.setItem(CrashReports.STORAGE_KEY,
-                         JSON.stringify(this.oldReports));
+    return this.oldReportsPromise
+      .then(() => {
+        crashes.forEach(crash => {
+          if (old) {
+            this.oldReports[crash.id] = 1;
+          } else {
+            delete this.oldReports[crash.id];
+          }
+        });
+        return localforage.setItem(CrashReports.STORAGE_KEY, this.oldReports);
+      });
   }
 }
 

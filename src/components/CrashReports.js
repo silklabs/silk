@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button, ButtonToolbar, DropdownButton, Glyphicon,
+import { Button, ButtonToolbar, DropdownButton, Glyphicon, Label,
          ListGroup, ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
 import Iframe from 'react-iframe';
 import { Link } from 'react-router';
@@ -109,6 +109,7 @@ class CrashReport extends React.Component {
 export default class CrashReports extends React.Component {
   state = {
     crashes: null,
+    error: '',
     modal: true,
   };
 
@@ -120,7 +121,7 @@ export default class CrashReports extends React.Component {
   refreshCrashReports() {
     Reports.findByDeviceId(this.props.params.deviceId)
       .then(crashes => this.setState({ crashes }))
-      .catch(err => console.error('Failed to fetch crash reports:', err));
+      .catch(err => this.setState({ error: err.toString() }));
   }
 
   onToggleModal = () => {
@@ -144,6 +145,16 @@ export default class CrashReports extends React.Component {
   };
 
   render() {
+    let error = null;
+    if (this.state.error) {
+      error = (
+        <h2>
+          <Label bsStyle='danger'>
+            Failed to fetch crash reports: {this.state.error}
+          </Label>
+        </h2>
+      );
+    }
     let content;
     if (null === this.state.crashes) {
       content = (<div>Loading crash reports ...</div>);
@@ -176,6 +187,7 @@ export default class CrashReports extends React.Component {
             Open in {this.state.modal ? 'Window' : 'Frame'}
           </Button>
         </ButtonToolbar>
+        {error}
         <ListGroup>
           {content}
         </ListGroup>

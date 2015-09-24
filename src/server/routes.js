@@ -73,6 +73,12 @@ module.exports = function(opts) {
     res.status(status).send(result);
   }));
 
+  app.post('/device/metadata/time/find/ininterval', asyncRoute(async (req, res) => {
+    let result = await timeMeta.findInTimeInterval(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
+
   app.post('/device/metadata/time/find/bytime/after', asyncRoute(async (req, res) => {
     let result = await timeMeta.findOneAfterTime(req.body);
     let status = result ? 200 : 404;

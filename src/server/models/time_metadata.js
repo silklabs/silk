@@ -40,6 +40,14 @@ export default class TimeMetadata extends Base {
       strict: Joi.bool()
     }).required(),
 
+    findInTimeInterval: Joi.object().keys({
+      deviceId: Joi.string().required(),
+      metaType: TYPES,
+      startTime: Joi.number().required(),
+      endTime: Joi.number().required(),
+      maxCount: Joi.number().required()
+    }).required(),
+
     findOneByTime: Joi.object().keys({
       deviceId: Joi.string().required(),
       metaType: TYPES,
@@ -89,6 +97,25 @@ export default class TimeMetadata extends Base {
     }
 
     return formatOutput(result);
+  }
+
+  async findInTimeInterval(payload) {
+    payload = this.validate(payload, 'findInTimeInterval');
+
+    // First try to find one in the appropriate range...
+    // TODO: support paging in some way
+    let result = await this.collection.find({
+      deviceId: payload.deviceId,
+      metaType: payload.metaType,
+      startUTC: {
+        $lte: payload.endTime,
+      },
+      endUTC: {
+        $gte: payload.startTime,
+      }
+    }).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
+
+    return result.map(formatOutput);
   }
 
   async findOneBeforeTime(payload) {

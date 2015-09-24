@@ -1,4 +1,4 @@
-# Silk App [![Build Status](https://www.bitrise.io/app/d9e00c0d5873d177.svg?token=xZR_r_tSrDeJ5E2jGkjlkg&branch=master)](https://www.bitrise.io/app/d9e00c0d5873d177)
+# Silk App [![Build Status](https://magnum.travis-ci.com/silklabs/silk-app.svg?token=j54FanpWeLbC7r1NyfJA)](https://magnum.travis-ci.com/silklabs/silk-app)
 
 Silk app written for react-native.  To install the react-native toolchain, [see these instructions](http://facebook.github.io/react-native/docs/getting-started.html#content).
 

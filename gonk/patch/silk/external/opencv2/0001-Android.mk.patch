@@ -1,15 +1,15 @@
-From bca84da6435a0085037227b0455b1ad40dea4ef1 Mon Sep 17 00:00:00 2001
+From 1c011a36fd5e9a0104472dd67623c35ce6957972 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 92 ++++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 93 ++++++++++++++++++++++++++++++++++++++++++++
  apps/Android.mk              |  1 +
  apps/haartraining/Android.mk | 16 ++++++++
  apps/traincascade/Android.mk | 19 +++++++++
- opencv.mk                    | 37 ++++++++++++++++++
- 5 files changed, 165 insertions(+)
+ opencv.mk                    | 38 ++++++++++++++++++
+ 5 files changed, 167 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/Android.mk
  create mode 100644 apps/haartraining/Android.mk
@@ -18,10 +18,10 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..45dceda
+index 0000000..8a11d53
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,93 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -96,6 +96,7 @@ index 0000000..45dceda
 + -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
 + -DANDROID_NDK=$(abspath prebuilts/ndk/current) \
 + -DANDROID_NDK_LAYOUT=ANDROID \
++ -DWITH_TBB=true \
 + $(LOCAL_PATH)
 +
 +# If the 2nd arch exists assume it's 32bit and select it
@@ -170,10 +171,10 @@ index 0000000..689ee6c
 +
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..3df72a7
+index 0000000..ba22e54
 --- /dev/null
 +++ b/opencv.mk
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,38 @@
 +# Include from your Android.mk to link with OpenCV, after defining LOCAL_MODULE
 +OPENCV_MODULE_NAMES := \
 +  androidcamera \
@@ -199,6 +200,7 @@ index 0000000..3df72a7
 + libopencv_libjasper \
 + libopencv_libjpeg \
 + libopencv_libpng \
++ libopencv_tbb \
 +
 +OPENCV_MODULES := $(addprefix libopencv_,$(OPENCV_MODULE_NAMES))
 +

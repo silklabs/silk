@@ -24,8 +24,6 @@ const MODES = {
   seeking: 'seeking'
 };
 
-const DEFAULT_MODE = MODES.live;
-
 /**
  * Playback speed steps.
  */
@@ -158,12 +156,11 @@ export default React.createClass({
       willPlay: true,
 
       showingControls: true,
-      currenTime: Date.now(),
+      currentTime: null,
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
       minTime: DateUtils.startOfDay().getTime(),
       videoSegments: [],
-      liveSegmentProvider: new LiveSegmentProvider(this.onLiveSegment),
 
       /**
        * Set of detected objects (faces, cars, motion, etc) that have
@@ -176,12 +173,18 @@ export default React.createClass({
 
   getInitialProps() {
     return {
-      presented: false,
       onClose: function() {},
     };
   },
 
   componentWillMount() {
+    this._liveSegmentProvider = new LiveSegmentProvider(this.onLiveSegment);
+    if (this.props.startAtTime) {
+      this._playRecorded(this.props.startAtTime);
+    } else {
+      this.transitionModes(MODES.live);
+    }
+
     // List of video segments all mutations to state.videoSegments should first
     // happen in our private variable to maintain consistent state and to avoid
     // extra updates in some cases.
@@ -200,6 +203,10 @@ export default React.createClass({
     }).catch(err => {
       console.log('Could not fetch initial time: ', err);
     });
+  },
+
+  componentWillUnmount() {
+    this.transitionModes(null);
   },
 
   /**
@@ -256,22 +263,12 @@ export default React.createClass({
 
   _enterLiveMode() {
     let { socket, id } = this.props;
-    this.state.liveSegmentProvider.start(socket, id);
+    this._liveSegmentProvider.start(socket, id);
   },
 
   _exitLiveMode() {
     let { socket, id } = this.props;
-    this.state.liveSegmentProvider.stop(socket, id);
-  },
-
-  onShowStart() {
-    // As we begin to display the overlay enter the default mode.
-    this.transitionModes(DEFAULT_MODE);
-  },
-
-  onDismissStart() {
-    // Run the same transition logic but to null (no new state).
-    this.transitionModes(null);
+    this._liveSegmentProvider.stop(socket, id);
   },
 
   createSegment(result) {
@@ -423,7 +420,7 @@ export default React.createClass({
       // Reset playback speed when we start seeking.
       rate: DEFAULT_PLAYBACK_STEP,
       // Used to signify what mode to enter after seeking is done.
-      pendingSeekMode: DEFAULT_MODE,
+      pendingSeekMode: MODES.live,
       // Playback is paused while we seek.
       willPlay: false
     });
@@ -434,13 +431,17 @@ export default React.createClass({
   },
 
   onSeekEnd(value) {
+    this._playRecorded(value);
+  },
+
+  _playRecorded(startTime) {
     let api = this.props.api;
 
     // Clear the segment queue and update the time to the seek target
     // while we figure out where we're actually going to end up below.
     this._videoSegments = [];
     this.setState({
-      currentTime: value,
+      currentTime: startTime,
       pendingSeekMode: MODES.recorded,
       videoSegments: this._videoSegments
     });
@@ -450,7 +451,7 @@ export default React.createClass({
     // overlap.
     this._pendingSeekOperation = api.timeMeta.findByTime({
       metaType: 'video',
-      time: value,
+      time: startTime,
       deviceId: this.props.id
     }).then(result => {
       // Override current pending segments.
@@ -461,7 +462,7 @@ export default React.createClass({
         `
           Seeking to new time segment:
 
-            Wanted: ${new Date(value)}
+            Wanted: ${new Date(startTime)}
             Got: ${new Date(segment.startUTC)}
             ID: ${segment.id}
             NextID: ${segment.nextId}
@@ -487,7 +488,7 @@ export default React.createClass({
       this._videoSegments = [];
       this.setState({
         videoSegments: this._videoSegments,
-        pendingSeekMode: DEFAULT_MODE
+        pendingSeekMode: MODES.live,
       });
       return false;
     }).then(result => {
@@ -646,12 +647,7 @@ export default React.createClass({
     }
 
     return (
-      <OverlayModal ref="overlay"
-                    onShowStart={this.onShowStart}
-                    onDismissStart={this.onDismissStart}
-                    onDismissEnd={this.onDismissEnd}
-                    presented={this.props.presented}>
-
+      <OverlayModal ref="overlay" presented={true}>
           <View style={[styles.container]}>
             <TouchableWithoutFeedback onPress={this.toggleControls}>
               <LiveVideo

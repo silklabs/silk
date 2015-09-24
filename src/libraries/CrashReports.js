@@ -18,7 +18,7 @@ class CrashReports {
     }
     return this.deviceCrashesPromises[deviceId];
   }
- 
+
   findByDeviceId(deviceId) {
     return this.ensureDeviceCrashReports(deviceId)
       .then(crashes => {

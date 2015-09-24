@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button, ButtonToolbar, DropdownButton, Glyphicon, Input,
+import { Button, ButtonToolbar, DropdownButton, Glyphicon,
          ListGroup, ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
 import Iframe from 'react-iframe';
 import { Link } from 'react-router';

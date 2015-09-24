@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
+
 import { exec } from 'mz/child_process';
 import path from 'path';
 import { createOutbox } from '../../lib/outbox_stream';

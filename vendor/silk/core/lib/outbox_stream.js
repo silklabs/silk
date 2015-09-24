@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
 /*eslint no-loop-func:0*/
 
 import assert from 'assert';

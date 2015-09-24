@@ -1,4 +1,10 @@
 /**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
+/**
  * Helper for testing stream based retries. Will simulate various network
  * conditions shallowly.
  */

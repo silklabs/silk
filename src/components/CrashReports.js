@@ -14,6 +14,8 @@ const styles = {
     flexDirection: 'row',
   },
   oldReport: {
+    display: 'flex',
+    flexDirection: 'row',
     backgroundColor: 'gray'
   },
   checkbox: {

@@ -35,6 +35,7 @@ else
     export PATH=$PATH:$(readlink -f platform-tools)
     which adb
 
+    test/unit
     test/start_emulator -r run_tests
   else
     echo Warning: Skipping emulator boot check on OS X for now

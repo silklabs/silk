@@ -1,0 +1,7 @@
+#! /bin/bash -e
+
+echo "## Running unit tests ##"
+cd vendor/silk/core
+npm install
+npm test
+

@@ -1,4 +1,4 @@
-From c6322b60668b7b12e73298edac591a9c8f9d07ef Mon Sep 17 00:00:00 2001
+From dc3d33b37e0fc49f3e11ddef494382f0c6f079bd Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 21 Sep 2015 15:57:37 -0700
 Subject: [PATCH] libuv: don't block "tombstone" signals
@@ -6,11 +6,12 @@ Subject: [PATCH] libuv: don't block "tombstone" signals
 Blocking these signals will cause the process to exit without invoking the
 bionic signal handler that produces a debuggerd tombstone if they signal.
 ---
- deps/uv/src/unix/signal.c | 34 ++++++++++++++++++++++++++++++++++
- 1 file changed, 34 insertions(+)
+ deps/uv/src/unix/signal.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+ src/node.cc               |  9 +++++++++
+ 2 files changed, 55 insertions(+)
 
 diff --git a/deps/uv/src/unix/signal.c b/deps/uv/src/unix/signal.c
-index 0b7a405..8dd9b1f 100644
+index 0b7a405..564cd58 100644
 --- a/deps/uv/src/unix/signal.c
 +++ b/deps/uv/src/unix/signal.c
 @@ -99,9 +99,26 @@ static void uv__signal_block_and_lock(sigset_t* saved_sigmask) {
@@ -40,7 +41,17 @@ index 0b7a405..8dd9b1f 100644
    if (uv__signal_lock())
      abort();
  }
-@@ -178,6 +195,23 @@ static int uv__signal_register_handler(int signum) {
+@@ -146,6 +163,9 @@ static void uv__signal_handler(int signum) {
+     return;
+   }
+ 
++  // TEST CASE: The next line should produce a debuggerd tombstone.
++  // *(char *) 0 = 0;
++
+   for (handle = uv__signal_first_handle(signum);
+        handle != NULL && handle->signum == signum;
+        handle = RB_NEXT(uv__signal_tree_s, &uv__signal_tree, handle)) {
+@@ -178,11 +198,37 @@ static int uv__signal_register_handler(int signum) {
    /* When this function is called, the signal lock must be held. */
    struct sigaction sa;
  
@@ -64,6 +75,40 @@ index 0b7a405..8dd9b1f 100644
    /* XXX use a separate signal stack? */
    memset(&sa, 0, sizeof(sa));
    if (sigfillset(&sa.sa_mask))
+     abort();
+   sa.sa_handler = uv__signal_handler;
++  sigdelset(&sa.sa_mask, SIGABRT);
++  sigdelset(&sa.sa_mask, SIGBUS);
++  sigdelset(&sa.sa_mask, SIGILL);
++  sigdelset(&sa.sa_mask, SIGPIPE);
++  sigdelset(&sa.sa_mask, SIGSEGV);
++#if defined(SIGSTKFLT)
++  sigdelset(&sa.sa_mask, SIGSTKFLT);
++#endif
++  sigdelset(&sa.sa_mask, SIGTRAP);
+ 
+   /* XXX save old action so we can restore it later on? */
+   if (sigaction(signum, &sa, NULL))
+diff --git a/src/node.cc b/src/node.cc
+index e669706..0f98ac2 100644
+--- a/src/node.cc
++++ b/src/node.cc
+@@ -3177,6 +3177,15 @@ static void RegisterSignalHandler(int signal,
+   sa.sa_flags = reset_handler ? SA_RESETHAND : 0;
+ #endif
+   sigfillset(&sa.sa_mask);
++  sigdelset(&sa.sa_mask, SIGABRT);
++  sigdelset(&sa.sa_mask, SIGBUS);
++  sigdelset(&sa.sa_mask, SIGILL);
++  sigdelset(&sa.sa_mask, SIGPIPE);
++  sigdelset(&sa.sa_mask, SIGSEGV);
++#if defined(SIGSTKFLT)
++  sigdelset(&sa.sa_mask, SIGSTKFLT);
++#endif
++  sigdelset(&sa.sa_mask, SIGTRAP);
+   CHECK_EQ(sigaction(signal, &sa, NULL), 0);
+ }
+ 
 -- 
 1.9.1
 

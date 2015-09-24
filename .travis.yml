@@ -11,10 +11,6 @@ install:
   - brew reinstall gradle flow watchman
   - npm install
 
-branches:
-  only:
-    - master
-
 env:
   matrix:
     - TEST_TYPE=lint

@@ -1,0 +1,171 @@
+/**
+ * Base class for our "operations" this deals with cleaning up and persisting
+ * state to disk when operations fail... Individual subclasses must implement
+ * the important bits of actually writing to streams.
+ *
+ *
+ * ```js
+ *
+ * // bare minimum implementation
+ * class MyOperation extends Operation {
+ *   static NAME = 'my-example-operation'
+ *
+ *   async getMetadata() {
+ *     return { name: this.constructor.NAME }
+ *   }
+ *
+ *   async write(readable) {
+ *     // ... do stuff to readable stream
+ *     return { done: true, remainder: ReadableStream };
+ *   }
+ * }
+ *
+ * ```
+ */
+import createLog from '../log';
+import fs from 'mz/fs';
+import path from 'path';
+import eventToPromise from 'event-to-promise';
+import mkdirp from 'mkdirp-promise';
+
+const log = createLog('outbox:operation');
+
+export default class Operation {
+
+  static BLOB_NAME = 'blob';
+  static METATADATA_NAME = 'metadata.json';
+
+  // We must name our operations so we know which class to use when loading from
+  // disk...
+  static NAME = '';
+
+ /**
+   * Cleanup the left overs in the retry operation.
+   *
+   * This method intentionally is a little verbose and does some extra sanity
+   * checks these could potentially be simplified to something closer to what
+   * `rm -rf` does.
+   */
+  static async removeFromDisk(directory) {
+    if (!(await fs.exists(directory))) {
+      return;
+    }
+
+    let blobPath = path.join(directory, this.BLOB_NAME);
+    let metadataPath = path.join(directory, this.METATADATA_NAME);
+
+    try {
+      let [blob, metadata] = await Promise.all([
+        fs.exists(blobPath),
+        fs.exists(metadataPath),
+      ]);
+
+      if (blob) {
+        await fs.unlink(blobPath);
+      }
+
+      if (metadata) {
+        await fs.unlink(metadataPath);
+      }
+
+      await fs.rmdir(directory);
+
+    } catch (err) {
+      log.error(`
+        Could not clean up ${directory} correctly this likely will result in an
+        accumulation of disk space (very bad)
+
+        ${err.stack}
+      `);
+    }
+  }
+
+  constructor() {
+    if (!this.constructor.NAME) {
+      throw new Error('.NAME static property must be defined');
+    }
+  }
+
+  /**
+   * Must return an object the .getMetadata must include `.name` property.
+   */
+  getMetadata(overrides = {}) {  //eslint-disable-line no-unused-vars
+    throw new Error('Must implement .getMetadata');
+  }
+
+  /**
+   * Should resolve with a promise that returns :
+   *
+   *    {
+   *      done: true, // If true we know we do not need to persist to disk
+   *      remainder: <stream.Readable> // Remainder to persist (done = false)
+   *    }
+   *
+   */
+  async write(readable) { //eslint-disable-line no-unused-vars
+    throw new Error('Must implement .write');
+  }
+
+  async writeMetadata(directory, overrides) {
+    let metadata = this.getMetadata(overrides);
+    if (!metadata.name) {
+      throw new Error(`
+        getMetadata call must include a .name property to indicate which
+        Operation class is in use!
+      `);
+    }
+
+    let metadataPath = path.join(directory, this.constructor.METATADATA_NAME);
+
+    // We assume whoever calls this is going to handle any write errors.
+    await fs.writeFile(metadataPath, JSON.stringify(metadata));
+  }
+
+  /**
+   * Save the readable stream and metadata to the given directory.
+   *
+   * The operation does not make any assumptions about the directory itself but
+   * callers should use this in conjunction with the methods to properly queue
+   * disk writes.
+   *
+   * Format on disk:
+   *
+   *    <directory>/blob - Contents of the readable stream
+   *    <directory>/metadata.json - Description of the operation.
+   *
+   */
+  async saveToDisk(readable, directory) {
+    let blobPath = path.join(directory, this.constructor.BLOB_NAME);
+
+    log.verbose(`Preparing to save to disk`, {
+      directory,
+      metadata: this.getMetadata()
+    });
+
+    try {
+      // Ensure the directory exists in full...
+      await mkdirp(directory);
+
+      // Pipe the remainder stream to disk.
+      let blobWritableStream = fs.createWriteStream(blobPath);
+      readable.pipe(blobWritableStream);
+      await Promise.all([
+        this.writeMetadata(directory, {
+          createdAt: Date.now()
+        }),
+        eventToPromise(blobWritableStream, 'finish')
+      ]);
+    } catch (err) {
+      log.error(`
+        Could not successfully persist all information required to retry an
+        operation for ${this.name}
+      `, this.arguments);
+
+      await this.constructor.removeFromDisk(directory);
+
+      // Allow this error to bubble up to consumers as we know for sure this has
+      // failed.
+      throw err;
+    }
+  }
+}

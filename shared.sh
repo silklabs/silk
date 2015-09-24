@@ -120,6 +120,7 @@ updatebranch__silk_app() {
       set -x
       if [[ -f .branch ]]; then
         sed -i .branch -e s/${from}/${to}/g
+        git add .branch
       fi
 
       for p in silk-api-react-native ; do

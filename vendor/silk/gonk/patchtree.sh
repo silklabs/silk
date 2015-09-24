@@ -115,7 +115,7 @@ __patch_tree()
          MD5SUM=$(__tree_md5sum ${PATCH_TREE})
       fi
       # We usually require building on a case-sensitive file system,
-      # but as of 2015 our OS X CI doesn't use case-sensitive file
+      # but as of 2015 our OS X CI does not use case-sensitive file
       # systems.  This results in git thinking there are changes in
       # bionic/ when in actuality git is confused by two files `FOO`
       # and `foo` not being distinguished.  So CI can pass this env
@@ -200,21 +200,38 @@ __patch_tree()
          done
          popd > /dev/null
 
+         # Generate list of patches, skip if patch already exists
+         # Store list of patches like this: "patch_tree:remaining_patch_path"
+         PATCH_LIST=
+         echo Finding patches...
+         for TREE in ${PATCH_TREE}; do
+           PATCHES=$(find $TREE -name \*.patch | sort -fs)
+           for PATCH in ${PATCHES}; do
+             PATCH_WO_TREE=${PATCH#${TREE}}
+             if [[ $PATCH_LIST =~ ([^ ]*):$PATCH_WO_TREE ]]; then
+               echo "  skipping $PATCH, exists already in ${BASH_REMATCH[1]}"
+             else
+               PATCH_LIST+=" ${TREE}:${PATCH_WO_TREE} "
+             fi
+           done  
+         done
+
          #
          # Walk through all the patches and apply them
          #
          echo Patching...
-         for TREE in ${PATCH_TREE}; do
-           PATCHES=$(find $TREE -name \*.patch | sort -fs)
-           for P in ${PATCHES}; do
-             PRJ=$(dirname ${P#${TREE}})
-             PRJ=`echo $PRJ | sed -e 's%^/%%'`
-             if [[ ! -d $PRJ ]]; then
-               continue
-             fi
-             echo -n "  "
-             ( set -x ; git -C $PRJ am --quiet ${ROOT_DIR}/$P )
-           done
+         for P in ${PATCH_LIST}; do
+           TREE=`echo $P | cut -d \: -f 1`
+           PATCH_WO_TREE=`echo $P | cut -d \: -f 2`
+           PATCH=$TREE$PATCH_WO_TREE
+
+           PRJ=$(dirname ${PATCH#${TREE}})
+           PRJ=`echo $PRJ | sed -e 's%^/%%'`
+           if [[ ! -d $PRJ ]]; then
+             continue
+           fi
+           echo -n "  "
+           ( set -x ; git -C $PRJ am --quiet ${ROOT_DIR}/$PATCH )
          done
 
          echo $(__tree_md5sum ${PATCH_TREE}) > out/lastpatch.md5sum

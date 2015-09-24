@@ -118,7 +118,9 @@ updatebranch__silk_app() {
     pushd $app
     (
       set -x
-      sed -i .branch -e s/${from}/${to}/g
+      if [[ -f .branch ]]; then
+        sed -i .branch -e s/${from}/${to}/g
+      fi
 
       for p in silk-api-react-native ; do
         local HEAD=$to

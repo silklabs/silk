@@ -32,6 +32,10 @@ const PADDING = 50;
 const MOTION_PLAY_SOUND_PROP = 'persist.silk.motion.sound';
 let soundEnabled = false;
 
+// Minimum rectangle size for motion
+const MIN_WIDTH = 10;
+const MIN_HEIGHT = 10;
+
 /**
  * Compare three consecutive frames by diffing them and find out how many pixels
  * have changed. Also calculate the biggest rectangle representing the changed
@@ -110,6 +114,13 @@ function _detectMotion(image, callback) {
     // Add padding around the rectangle to help object detection algorithms
     // by providing more data surrounding the object
     if (numChanges) {
+      // Check if the motion rectangle size is bigger than the minimum required
+      if (((maxx - minx) < MIN_WIDTH) || ((maxy - miny) < MIN_HEIGHT)) {
+        log.debug(`Ignoring motion: ${maxx} - ${minx} x ${maxy} - ${miny}`);
+        callback(0);
+        return;
+      }
+
       // Check if not out of bounds
       if ((minx - PADDING) > 0) {
         minx -= PADDING;

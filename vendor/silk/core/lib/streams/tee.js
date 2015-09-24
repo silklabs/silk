@@ -39,7 +39,7 @@ export default class TeeStream extends Writable {
             return;
           }
 
-          // Otherwise we are error out in some unknown state (outside of a
+          // Otherwise we error out in some unknown state (outside of a
           // write). This can happen with network errors/etc... Remove stream
           // from the tee.
           this._removeHandle(handle);

@@ -22,6 +22,7 @@
  *
  * ```
  */
+import assert from 'assert';
 import createLog from '../log';
 import fs from 'mz/fs';
 import path from 'path';
@@ -48,6 +49,7 @@ export default class Operation {
    */
   static async removeFromDisk(directory) {
     if (!(await fs.exists(directory))) {
+      log.info(`(removeFromDisk) directory not found ${directory}`);
       return;
     }
 
@@ -89,12 +91,25 @@ export default class Operation {
   /**
    * Must return an object the .getMetadata must include `.name` property.
    */
-  getMetadata(overrides = {}) {  //eslint-disable-line no-unused-vars
-    throw new Error('Must implement .getMetadata');
+  getMetadata(overrides = {}) {
+    let metadata = this._getMetadata();
+    assert(typeof metadata === 'object');
+
+    return Object.assign(
+      {},
+      // Ensure we include .name so implementors don't need to...
+      { name: this.constructor.NAME },
+      metadata,
+      overrides
+    );
+  }
+
+  _getMetadata(overrides) { //eslint-disable-line no-unused-vars
+    throw new Error('._getMetadata must be implemented');
   }
 
   /**
-   * Should resolve with a promise that returns :
+   * Should return a promise that resolves with :
    *
    *    {
    *      done: true, // If true we know we do not need to persist to disk
@@ -102,8 +117,25 @@ export default class Operation {
    *    }
    *
    */
-  async write(readable) { //eslint-disable-line no-unused-vars
-    throw new Error('Must implement .write');
+  async write(readable) {
+    // instanceof is not good choice since other node modules may use different
+    // versions of the stream libary.
+    assert(typeof readable === 'object', 'must pass readable');
+    let result = await this._write(readable);
+    assert(('done' in result), '._write result must contain .done');
+
+    if (!result.done) {
+      assert(
+        result.remainder,
+        '._write result with done=false must include remainder'
+      );
+    }
+
+    return result;
+  }
+
+  async _write(readable) { //eslint-disable-line no-unused-vars
+    throw new Error('Must implement ._write');
   }
 
   async writeMetadata(directory, overrides) {
@@ -161,7 +193,16 @@ export default class Operation {
         operation for ${this.name}
       `, this.arguments);
 
-      await this.constructor.removeFromDisk(directory);
+      try {
+        await this.constructor.removeFromDisk(directory);
+      } catch (errRemoveDisk) {
+        log.error(`
+          Unexpected error removing files from disk
+
+          ${errRemoveDisk.stack}
+        `);
+        throw errRemoveDisk;
+      }
 
       // Allow this error to bubble up to consumers as we know for sure this has
       // failed.

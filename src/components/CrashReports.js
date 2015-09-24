@@ -16,22 +16,11 @@ const styles = {
   }
 };
 
-export default class CrashReports extends React.Component {
-  state = {
-    crashes: null,
-    crashUrl: '',
-    useIframe: true,
-  };
-
-  constructor(props) {
-    super(props);
-    Reports.findByDeviceId(this.props.params.deviceId)
-      .then(crashes => this.setState({ crashes }))
-      .catch(err => console.error('Failed to fetch crash reports:', err));
-  }
+class CrashReport extends React.Component {
+  state = { crashUrl: '' };
 
   onShowCrash = url => {
-    if (this.state.useIframe) {
+    if (this.props.modal) {
       this.setState({ crashUrl: url });
     } else {
       window.open(url);
@@ -43,8 +32,41 @@ export default class CrashReports extends React.Component {
     this.setState({ crashUrl: '' });
   };
 
-  onToggleIframe = () => {
-    this.setState({ useIframe: !this.state.useIframe });
+  render() {
+    let crash = this.props.crash;
+    let datetime = new Date(Date.parse(crash.timeStamp));
+    return (
+      <div>
+        <Link onClick={() => this.onShowCrash(crash.url)}>
+          <ListGroupItem>{datetime.toString()}</ListGroupItem>
+        </Link>
+
+        <Modal show={!!this.state.crashUrl.length}
+             onHide={this.onHideCrash}>
+          <div style={styles.crashReport}>
+            <Iframe url={this.state.crashUrl} />
+          </div>
+        </Modal>
+      </div>
+    );
+  }
+}
+
+export default class CrashReports extends React.Component {
+  state = {
+    crashes: null,
+    modal: true,
+  };
+
+  constructor(props) {
+    super(props);
+    Reports.findByDeviceId(this.props.params.deviceId)
+      .then(crashes => this.setState({ crashes }))
+      .catch(err => console.error('Failed to fetch crash reports:', err));
+  }
+
+  onToggleModal = () => {
+    this.setState({ modal: !this.state.modal });
   }
 
   render() {
@@ -54,16 +76,9 @@ export default class CrashReports extends React.Component {
     } else if (0 === this.state.crashes.length) {
       content = (<div>No crashes!!</div>);
     } else {
-      content = this.state.crashes.map(crash => {
-        let datetime = new Date(Date.parse(crash.timeStamp));
-        return (
-          <Link onClick={() => this.onShowCrash(crash.url)}>
-            <ListGroupItem>
-              {datetime.toString()}
-            </ListGroupItem>
-          </Link>
-        );
-      });
+      content = this.state.crashes.map(crash => (
+        <CrashReport crash={crash} modal={this.state.modal}/>
+      ));
     }
     return (
       <div>
@@ -71,20 +86,13 @@ export default class CrashReports extends React.Component {
           <Button bsStyle='warning'>
             <Link to='/'><Glyphicon glyph='home' /></Link>
           </Button>
-          <Button bsStyle='info' onClick={this.onToggleIframe}>
-            Open in {this.state.useIframe ? 'Window' : 'Frame'}
+          <Button bsStyle='info' onClick={this.onToggleModal}>
+            Open in {this.state.modal ? 'Window' : 'Frame'}
           </Button>
         </ButtonGroup>
         <ListGroup>
           {content}
         </ListGroup>
-
-        <Modal show={!!this.state.crashUrl.length}
-               onHide={this.onHideCrash}>
-          <div style={styles.crashReport}>
-            <Iframe url={this.state.crashUrl} />
-          </div>
-        </Modal>
       </div>
     );
   }

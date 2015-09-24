@@ -7,7 +7,7 @@ class CrashReports {
   constructor() {
     this.deviceCrashesPromises = { }; // deviceId -> Promise
   }
-  
+
   findByDeviceId(deviceId) {
     if (!(deviceId in this.deviceCrashesPromises)) {
       this.deviceCrashesPromises[deviceId] = Api.crashMeta.find({ deviceId });

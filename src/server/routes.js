@@ -55,6 +55,12 @@ module.exports = function(opts) {
     res.status(201).send(result);
   }));
 
+  app.post('/device/metadata/time/:id', asyncRoute(async (req, res) => {
+    // update a metadata record
+    let result = await timeMeta.update(req.params.id, req.body);
+    res.status(201).send(result);
+  }));
+
   app.post('/device/metadata/time/find/byid', asyncRoute(async (req, res) => {
     let result = await timeMeta.findById(req.body);
     let status = result ? 200 : 404;
@@ -63,6 +69,12 @@ module.exports = function(opts) {
 
   app.post('/device/metadata/time/find/bytime', asyncRoute(async (req, res) => {
     let result = await timeMeta.findNearTime(req.body);
+    let status = result ? 200 : 404;
+    res.status(status).send(result);
+  }));
+
+  app.post('/device/metadata/time/find/ininterval', asyncRoute(async (req, res) => {
+    let result = await timeMeta.findInTimeInterval(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
   }));

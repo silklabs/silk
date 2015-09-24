@@ -81,4 +81,79 @@ suite('time metadata', () => {
     assert.equal(outOfBounds.url, 'three');
   });
 
+  test('.findInTimeInterval', async () => {
+    let deviceId = 'baz';
+    let metaType = 'event';
+    let records = [{
+      deviceId,
+      metaType,
+      startUTC: 80,
+      endUTC: 95,
+    }, {
+      deviceId,
+      metaType,
+      startUTC: 90,
+      endUTC: 110,
+      data: {tag: 'face'},
+    }, {
+      deviceId,
+      metaType,
+      startUTC: 123,
+      endUTC: 145,
+      data: {tag: 'car'},
+    }, {
+      deviceId,
+      metaType,
+      startUTC: 180,
+      endUTC: 234,
+      data: {tag: 'motion'},
+    }, {
+      deviceId,
+      metaType,
+      startUTC: 234,
+      endUTC: 267,
+    }];
+    for (let record of records) {
+      let {id} = await subject.insertNext(record);
+      record.id = id;
+    }
+    let results = await subject.findInTimeInterval({
+      deviceId,
+      metaType,
+      startTime: 100,
+      endTime: 200,
+      maxCount: 10,
+    });
+    assert.equal(results.length, 3);
+    // Results are returned in descending (time) order.
+    assert.equal(results[0].data.tag, 'motion');
+    assert.equal(results[1].data.tag, 'car');
+    assert.equal(results[2].data.tag, 'face');
+  });
+
+  test('.update', async () => {
+    let payload = {
+      deviceId: 'bar',
+      metaType: 'event',
+      startUTC: 123,
+    };
+    let {id} = await subject.insertNext(payload);
+    let record = await subject.findById({id});
+    assert.equal(record.deviceId, payload.deviceId);
+    assert.equal(record.metaType, payload.metaType);
+    assert.equal(record.startUTC, payload.startUTC);
+    assert.equal(record.endUTC, undefined);
+
+    let endUTC = 456;
+    await subject.update(id, {endUTC});
+    record = await subject.findById({id});
+    // These fields are unchanged.
+    assert.equal(record.id, id);
+    assert.equal(record.deviceId, payload.deviceId);
+    assert.equal(record.metaType, payload.metaType);
+    assert.equal(record.startUTC, payload.startUTC);
+    // This one's been updated/set.
+    assert.equal(record.endUTC, endUTC);
+  });
+
 });

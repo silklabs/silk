@@ -68,13 +68,14 @@ var WifiSettings = React.createClass({
                   <Text style={styles.formRowLabel}>Network</Text>
                 </View>
                 <View style={styles.formInputContainer}>
-                  <TextInput ref='ssid'
-                             value={this.state.ssid}
-                             autoCapitalize='none'
-                             autoCorrect={false}
-                             style={styles.formInput}
-                             onChangeText={(text) => this.setState({ssid: text})}>
-                  </TextInput>
+                  <TextInput
+                    ref="ssid"
+                    value={this.state.ssid}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={styles.formInput}
+                    onChangeText={(text) => this.setState({ssid: text})}
+                  />
                 </View>
               </View>
               <View style={styles.formRow}>
@@ -82,11 +83,14 @@ var WifiSettings = React.createClass({
                   <Text style={styles.formRowLabel}>Password</Text>
                 </View>
                 <View style={styles.formInputContainer}>
-                  <TextInput ref='secret' secureTextEntry={true}
-                             value={this.state.secret}
-                             autoFocus={true}
-                             style={styles.formInput}
-                             onChangeText={(text) => this.setState({secret: text})} />
+                  <TextInput
+                    ref="secret"
+                    secureTextEntry={true}
+                    value={this.state.secret}
+                    autoFocus={true}
+                    style={styles.formInput}
+                    onChangeText={(text) => this.setState({secret: text})}
+                  />
                 </View>
               </View>
 
@@ -104,18 +108,18 @@ var WifiSettings = React.createClass({
                   <Text style={styles.formRowLabel}>Server</Text>
                 </View>
                 <View style={styles.formInputContainer}>
-                  <TextInput ref='serverUrl'
-                             value={this.state.serverUrl}
-                             autoCapitalize='none'
-                             autoCorrect={false}
-                             style={styles.formInput}
-                             onChangeText={(text) => this.setState({serverUrl: text})}>
-                  </TextInput>
+                  <TextInput
+                    ref="serverUrl"
+                    value={this.state.serverUrl}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={styles.formInput}
+                    onChangeText={(text) => this.setState({serverUrl: text})}
+                  />
                 </View>
               </View>
             </View>
           </View>
-
 
         </View>
         </ScrollView>

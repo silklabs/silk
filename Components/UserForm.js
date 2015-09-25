@@ -63,20 +63,22 @@ class StyledTextInput extends React.Component {
     if (this.props.onChange) {
       this.props.onChange(text);
     }
-  }
+  };
 
   render() {
     return (
-        <TextInput autoCapitalize='none'
-                   autoCorrect={false}
-                   keyboardType={this.props.keyboardType}
-                   returnKeyType={this.props.returnKeyType}
-                   placeholder={this.props.placeholder}
-                   placeholderTextColor={'#999999'}
-                   secureTextEntry={this.props.secure}
-                   onSubmitEditing={this.props.onSubmit}
-                   style={inputStyles.text}
-                   onChangeText={this.onChangeText} />
+      <TextInput
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType={this.props.keyboardType}
+        returnKeyType={this.props.returnKeyType}
+        placeholder={this.props.placeholder}
+        placeholderTextColor="#999999"
+        secureTextEntry={this.props.secure}
+        onSubmitEditing={this.props.onSubmit}
+        style={inputStyles.text}
+        onChangeText={this.onChangeText}
+      />
     );
   }
 }
@@ -133,22 +135,22 @@ export default class UserForm extends React.Component {
      * Should be an async function.
      */
     onSubmit: React.PropTypes.func
-  }
+  };
 
   state = {
     submitInProgres: false
-  }
+  };
 
   email = ''
   password = ''
 
   onEmailChange = (email) => {
     this.email = email;
-  }
+  };
 
   onPasswordChange = (password) => {
     this.password = password;
-  }
+  };
 
   handleSubmit = async () => {
     this.setState({ submitInProgress: true });
@@ -157,29 +159,35 @@ export default class UserForm extends React.Component {
       password: this.password
     });
     this.setState({ submitInProgress: false });
-  }
+  };
 
   render() {
     let submitOrLoading;
     if (this.state.submitInProgress) {
-      submitOrLoading = (<LoginSpinner/>);
+      submitOrLoading = <LoginSpinner/>;
     } else {
       submitOrLoading = (
-        <StyledButton label={this.props.submitText}
-                      onClick={this.handleSubmit} />
+        <StyledButton
+          label={this.props.submitText}
+          onClick={this.handleSubmit}
+        />
       );
     }
 
     return (
       <View style={this.props.style}>
-        <StyledTextInput placeholder='Email Address'
-                         keyboardType='email-address'
-                         onSubmit={this.handleSubmit}
-                         onChange={this.onEmailChange} />
-        <StyledTextInput placeholder='Password'
-                         secure={true}
-                         onSubmit={this.handleSubmit}
-                         onChange={this.onPasswordChange} />
+        <StyledTextInput
+          placeholder="Email Address"
+          keyboardType="email-address"
+          onSubmit={this.handleSubmit}
+          onChange={this.onEmailChange}
+        />
+        <StyledTextInput
+          placeholder="Password"
+          secure={true}
+          onSubmit={this.handleSubmit}
+          onChange={this.onPasswordChange}
+        />
         {submitOrLoading}
         {this.props.children}
       </View>

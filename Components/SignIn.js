@@ -67,16 +67,21 @@ class SignInControls extends React.Component {
     return (
       <UserForm
         onSubmit={this.onSignIn}
-        submitText='Sign In'
+        submitText="Sign In"
         style={styles.signInContainer}>
-
         <View style={styles.bottomLinks}>
-          <TextLink label='SIGN UP'
-                    onClick={this.onSignUp} />
-          <TextLink label='DEVELOPER'
-                     onClick={this.onDeveloperSignIn} />
-          <TextLink label='LEARN MORE'
-                    onClick={this.onLearnMore}/>
+          <TextLink
+            label="SIGN UP"
+            onClick={this.onSignUp}
+          />
+          <TextLink
+            label="DEVELOPER"
+            onClick={this.onDeveloperSignIn}
+          />
+          <TextLink
+            label="LEARN MORE"
+            onClick={this.onLearnMore}
+          />
         </View>
       </UserForm>
     );
@@ -88,21 +93,23 @@ export default class extends React.Component {
   static propTypes = {
     navigator: React.PropTypes.object,
     userState: React.PropTypes.userState
-  }
+  };
 
   render() {
     return (
       <View style={styles.container}>
         <View style={styles.statusBar} />
-        <LinearGradient colors={['#efefef', '#1d292f']}
-                        style={styles.container}>
+        <LinearGradient
+          colors={['#efefef', '#1d292f']}
+          style={styles.container}>
           <View style={styles.logoContainer}>
             <LogoView />
           </View>
           <View style={styles.controlsContainer}>
             <SignInControls
               userState={this.props.userState}
-              navigator={this.props.navigator} />
+              navigator={this.props.navigator}
+            />
           </View>
         </LinearGradient>
       </View>

@@ -113,7 +113,8 @@ export var MonitorPreview = React.createClass({
           width={PREVIEW_WIDTH}
           height={PREVIEW_HEIGHT}
           objects={this.state.objects}
-          previewSize={this.props.previewSize}/>
+          previewSize={this.props.previewSize}
+        />
       );
     }
 
@@ -122,7 +123,8 @@ export var MonitorPreview = React.createClass({
       logo = (
         <ImageView
           style={styles.logo}
-          blob={this.props.logo} />
+          blob={this.props.logo}
+        />
       );
     }
 

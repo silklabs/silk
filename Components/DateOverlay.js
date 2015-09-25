@@ -43,17 +43,8 @@ export default class extends React.Component {
 
     return (
       <Animated.View
-        style={
-          [
-            this.props.style,
-            {
-              opacity: this.state.opacity
-            }
-          ]
-        }>
-
+        style={[this.props.style, {opacity: this.state.opacity}]}>
         <Text style={styles.text}>{formatted}</Text>
-
       </Animated.View>
     );
   }

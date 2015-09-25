@@ -18,14 +18,19 @@ $adb shell setprop persist.silk.quiet true # <-- the vibrations do get annoying
 $adb shell rm -rf /data/tombstones
 $adb shell mkdir /data/tombstones
 
+$adb shell setprop persist.silk.coredump 1
+$adb shell rm -rf /data/core
+
 pulltombstones() {
   local count=$($adb shell ls /data/tombstones | wc -l)
   if [[ $count -gt 0 ]]; then
     echo "****************** TOMBSTONES ******************"
     $adb pull /data/tombstones/
+    echo "****************** CORES ******************"
+    $adb pull /data/core
     exit 1
   fi
-  echo No tombstones observed after $N iterations
+  echo No tombstones observed after $i iterations
 }
 trap pulltombstones EXIT
 
@@ -42,8 +47,8 @@ while [[ $i -le $N ]]; do
   $adb shell stop
   $adb shell start
 
-  i=$(($i + 1))
   $LOCAL_PATH/../devicecheck
+  i=$(($i + 1))
 done
 
 exit 0

@@ -82,7 +82,6 @@ function _waitForSysBoot(startTime, defer) {
 
 
 function boot() {
-
   return _waitForSysBoot().
     then(() => {
       // Wait for the battery to initialize and block until there's enough

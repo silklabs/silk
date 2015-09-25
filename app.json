@@ -1,0 +1,10 @@
+{
+  "name":"releng",
+  "scripts":{},
+  "env":{
+    "DEBUG":{
+      "required":true
+    }
+  },
+  "addons":[]
+}

@@ -208,7 +208,7 @@ export class Queue extends EventEmitter {
     }
 
     this.emit('failed operation', operation);
-    log.warn(`Error while running operation`, operation.error);
+    log.warn(`Error while running operation`, result.error);
     await this._appendToDisk(operation, result.remainder);
   }
 

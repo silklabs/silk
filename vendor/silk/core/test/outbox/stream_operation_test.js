@@ -7,7 +7,7 @@
 
 import { exec } from 'mz/child_process';
 import path from 'path';
-import { createOutbox } from '../../lib/outbox_stream';
+import createOutbox from '../../lib/outbox_stream';
 import StreamOperation from '../../lib/outbox/stream_operation';
 import streams from 'stream';
 import randomStream from '../random_stream';
@@ -91,7 +91,7 @@ suite('outbox stream', () => {
 
     let writePromise = operation.write(stream);
     let result = await writePromise;
-    assert.ok(operation.error, 'operation has failed');
+    assert.ok(result.error, 'operation has failed');
     assert.ok(!result.done, 'did fail to write');
 
     let directory = path.join(FIXTURE_DIR, 'stuff/v1/');

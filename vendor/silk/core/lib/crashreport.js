@@ -9,9 +9,14 @@
 import { createReadStream } from 'fs';
 import fs from 'mz/fs';
 import { getboolprop, getprop } from './util';
-let log = require('./log')('crashreport');
-let net = require('net');
-let vib = require('./vibrator')();
+import net from 'net';
+import createLog from './log';
+import createVib from './vibrator';
+
+import CrashReportOp from './outbox/crash_report_operation';
+
+const vib = createVib();
+const log = createLog('crashreport');
 
 const CRASHREPORT_ENABLED_PROP = 'persist.silk.crashrprt.enabled';
 
@@ -179,16 +184,19 @@ class CrashReporter {
 
     return fs.stat(path)
       .then(stats => {
-        const metadata = {
-          deviceId: this.deviceId,
-          timeStamp: stats.birthtime,
-          type: 'tombstone'
-        };
+        const operation = new CrashReportOp({
+          size: stats.size,
+          metadata: {
+            deviceId: this.deviceId,
+            timeStamp: stats.birthtime,
+            type: 'tombstone'
+          }
+        });
 
-        return this.outbox.sendCrash(createReadStream(path),
-                                     metadata,
-                                     'text/plain',
-                                     stats.size);
+        return this.outbox.addToQueue(
+          operation,
+          createReadStream(path)
+        );
       })
       .then(() => {
         log.debug(`Unlinking '${path}'`);

@@ -144,7 +144,6 @@ function main() {
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
   outbox = initOutbox(wifi);
-
   crashreporter = makeCrashReporter(outbox);
 
   return getDeviceId()

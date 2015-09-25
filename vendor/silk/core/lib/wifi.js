@@ -202,6 +202,10 @@ function wpaCliRemoveAllNetworks() {
 
 class Wifi extends events.EventEmitter
 {
+
+  // Always start as offline until proven otherwise...
+  _online = false
+
   constructor() {
     super();
     this.dhcpRetryTimer = null;
@@ -335,6 +339,10 @@ class Wifi extends events.EventEmitter
         log.info('WiFi initialization complete');
         return Promise.resolve();
       });
+  }
+
+  isOnline() {
+    return this._online;
   }
 
   online() {

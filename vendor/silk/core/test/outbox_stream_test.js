@@ -6,13 +6,13 @@
 
 import { exec } from 'mz/child_process';
 import path from 'path';
-import { createOutbox, Queue } from '../lib/outbox_stream';
+import { default as createOutbox, Queue } from '../lib/outbox_stream';
 import StreamOperation from '../lib/outbox/stream_operation';
 import fs from 'mz/fs';
 import assert from 'assert';
 import mkdirp from 'mkdirp-promise';
 import createStreamServer from './stream_server';
-import httpRequest from './http_request';
+import httpStream from '../lib/streams/http';
 import eventToPromise from 'event-to-promise';
 import randomStream from './random_stream';
 
@@ -22,7 +22,9 @@ suite('outbox stream', () => {
 
   class HttpOp extends StreamOperation {
     static NAME = 'http';
-    static StreamClass = httpRequest
+    static StreamClass = (url) => {
+      return httpStream(url, { method: 'post' });
+    }
   }
 
   async function cleanup() {

@@ -158,37 +158,15 @@ for manifest in $(find_manifest_names $GONK); do
 done
 
 echo Gonk: ${GONK}
-case $GONK in
-base)
-  export TARGET_PRODUCT=silk_arm
-  export TARGET_BUILD_VARIANT=eng
-  export TARGET_BUILD_TYPE=release
-  ;;
-qemu)
-  export TARGET_PRODUCT=aosp_arm
-  export TARGET_BUILD_VARIANT=eng
-  export TARGET_BUILD_TYPE=release
-  ;;
-mako)
-  export TARGET_PRODUCT=aosp_mako
-  export TARGET_BUILD_VARIANT=eng
-  export TARGET_BUILD_TYPE=release
-  ;;
-shamu)
-  export TARGET_PRODUCT=aosp_shamu
-  export TARGET_BUILD_VARIANT=eng
-  export TARGET_BUILD_TYPE=release
-  ;;
-msm8916)
-  export TARGET_PRODUCT=msm8916_32
-  export TARGET_BUILD_VARIANT=eng
-  export TARGET_BUILD_TYPE=release
-  ;;
-*)
+if [[ ! -d gonk/${GONK} ]]; then
   poison_their_lunch Unknown gonk: $GONK
   return
-  ;;
-esac
+elif [[ ! -f gonk/${GONK}/gonk.sh ]]; then
+  poison_their_lunch gonk/${GONK} missing gonk.sh
+  return
+else
+  source gonk/${GONK}/gonk.sh
+fi
 
 source $(dirname ${BASH_SOURCE[0]})/patchtree.sh $@
 

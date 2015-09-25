@@ -7,6 +7,7 @@ import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
+import Reports from '../libraries/CrashReports';
 
 const styles = {
   center: {
@@ -31,6 +32,17 @@ const styles = {
 };
 
 export class OnlineCamera extends React.Component {
+  state = { crashesState: 'default' };
+
+  componentWillMount() {
+    Reports.findByDeviceId(this.deviceId())
+      .then(crashes => {
+        let crashesState = crashes.some(c => !c.old) ? 'danger' : 'info';
+        this.setState({ crashesState });
+      })
+      .catch(err => console.error('Failed to fetch crash reports:', err));
+  }
+
   deviceId() {
     return this.props.params.deviceId;
   }
@@ -50,7 +62,7 @@ export class OnlineCamera extends React.Component {
                 </Button>
               </Link>
               <Link to={`/crashes/${this.deviceId()}`}>
-                <Button bsSize="large" bsStyle="danger">
+                <Button bsSize="large" bsStyle={this.state.crashesState}>
                   <Glyphicon glyph="fire" style={styles.glyphicon} />
                 </Button>
               </Link>

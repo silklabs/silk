@@ -38,6 +38,7 @@ class Timeline extends EventEmitter {
     this.videoFrames = [];
 
     this.videoUpload = require('./videoupload')(this.id);
+    this.eventTracker = require('./eventtracker')(this.id);
   }
 
   /**
@@ -57,6 +58,7 @@ class Timeline extends EventEmitter {
     }
     this.serverSocket = socket;
     this.videoUpload.socket = socket;
+    this.eventTracker.socket = socket;
   }
 
   /**
@@ -89,15 +91,14 @@ class Timeline extends EventEmitter {
    */
   addPreviewJPEG(when, jpeg) {
     this._pushPreview(when, jpeg);
-  };
+  }
 
   /**
    * OpenCV preview frame
    */
   addPreviewFrame(when) {
     this.emit('preview', when);
-  };
-
+  }
 
   /**
    *
@@ -105,7 +106,7 @@ class Timeline extends EventEmitter {
   addVideo(when, pkt) {
     this.videoFrames.push({when: when, pkt: pkt});
     setTimeout(this._sendVideoWithObjects.bind(this), VIDEO_COLLECTOBJECT_DELAY_MS);
-  };
+  }
 
   /**
    *
@@ -113,14 +114,24 @@ class Timeline extends EventEmitter {
   addFace(when, faces) {
     this.emit('face', faces);
     this._pushFace(when, faces);
-  };
+    this.eventTracker.record({
+      tag: 'face',
+      when,
+      faces,
+    });
+  }
 
   /**
    *
    */
   addClap(count) {
     this.emit('clap', count);
-  };
+    this.eventTracker.record({
+      tag: 'clap',
+      when: Date.now(),
+      count,
+    });
+  }
 
   /**
    * Inject objects into the video stream.
@@ -138,6 +149,7 @@ class Timeline extends EventEmitter {
     this.videoObjects.push(...objects);
 
     this._emitEvents(objects);
+    objects.forEach((record) => this.eventTracker.record(record));
   }
 
   /**

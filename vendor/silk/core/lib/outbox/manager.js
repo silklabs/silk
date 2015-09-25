@@ -422,9 +422,11 @@ export class Queue extends EventEmitter {
     }
 
     let operation = new OperationClass(metadata);
-    let readable = fs.createReadStream(blobPath);
 
-    let result = await operation.write(readable);
+    // We pass the _path_ to the file rather then the stream so readers do not
+    // buffer the remainder.
+    let result = await operation.write(blobPath);
+
     if (result.done) {
       log.info(`Successfully finished operation ${handle.path}`);
       await StreamOperation.removeFromDisk(handle.path);

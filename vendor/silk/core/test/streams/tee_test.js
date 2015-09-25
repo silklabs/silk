@@ -56,7 +56,34 @@ suite('tee stream', () => {
     }
   }
 
-  test('single dest throws error', async () => {
+  test('single stream with error', async () => {
+    let source = new streams.PassThrough();
+    let error = new ErrorEmitStream({ highWaterMark: 0 });
+
+    // Do not care about these right now...
+    error.on('error', () => {});
+
+    let writer = new TeeStream(error);
+    let errorPromise = eventToPromise(writer, 'error');
+
+    source.pipe(writer);
+
+    async function write() {
+      return new Promise(accept => {
+        source.write(new Buffer(1024), () => {
+          accept();
+        });
+      });
+    }
+
+    for (let i = 0; i < 10; i++) {
+      await write();
+    }
+    source.end();
+    await errorPromise;
+  });
+
+  test('both streams throw an error', async () => {
     let source = new streams.PassThrough();
     let error = new ErrorEmitStream({ highWaterMark: 0 });
     let errorTwo = new ErrorCbStream({ highWaterMark: 0 });

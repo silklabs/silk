@@ -9,10 +9,10 @@
 import assert from 'assert';
 import fs from 'mz/fs';
 import path from 'path';
-import createLog from './log';
+import createLog from '../log';
 
 import { EventEmitter } from 'events';
-import StreamOperation from './outbox/operation';
+import StreamOperation from './operation';
 
 const log = createLog('outbox-stream');
 
@@ -208,7 +208,7 @@ export class Queue extends EventEmitter {
     }
 
     this.emit('failed operation', operation);
-    log.warn(`Error while running operation`, operation.error);
+    log.warn(`Error while running operation`, result.error);
     await this._appendToDisk(operation, result.remainder);
   }
 
@@ -351,6 +351,9 @@ export class Queue extends EventEmitter {
     clearInterval(this.diskCheckHandle);
     this.diskCheckRunning = false;
     this.diskCheckHandle = null;
+    log.info(`Stopped checking for pending operations...`, {
+      online: this.online
+    });
   }
 
   /**
@@ -456,6 +459,7 @@ export class Outbox {
   queue = null
 
   set online(value) {
+    log.info(`status online = ${value}`);
     this.queue.online = value;
   }
 
@@ -528,7 +532,7 @@ export class Outbox {
   }
 }
 
-export function createOutbox(options) {
+export default function createOutbox(options) {
   // Find the storage path where pending operations are being held.
   let storagePath = options.storagePath || DEFAULT_STORAGE_PATH;
   let queueStoragePath = path.join(storagePath, DEFUALT_QUEUE_NAME);

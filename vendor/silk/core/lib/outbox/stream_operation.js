@@ -60,6 +60,8 @@ export default class StreamOperation extends Operation {
     this.writing = true;
 
     let failedOperation = false;
+    let error;
+
     let bufferStream = new StoringStream();
     let writer = new TeeStream(bufferStream, this.destination);
 
@@ -69,7 +71,8 @@ export default class StreamOperation extends Operation {
     this.destination.on('error', err => {
       // bad stuff happened oh noes...
       failedOperation = true;
-      this.error = err;
+      error = err;
+
       log.warn(
         `(${this.constructor.NAME}) Error attmping to write will retry`,
         this.arguments,
@@ -97,7 +100,7 @@ export default class StreamOperation extends Operation {
       return { done: true };
     }
 
-    return { done: false, remainder: bufferStream };
+    return { done: false, remainder: bufferStream, error };
   }
 
   _getMetadata() {

@@ -7,7 +7,7 @@
 import createStreamServer from './stream_server';
 import eventToPromise from 'event-to-promise';
 import assert from 'assert';
-import httpReq from './http_request';
+import httpStream from '../lib/streams/http';
 import randomStream from './random_stream';
 import streams from 'stream';
 
@@ -23,7 +23,7 @@ suite('stream server', () => {
     let handle = server.registerStream(1);
     let { buffer, stream } = randomStream();
 
-    let writable = httpReq(handle.url);
+    let writable = httpStream(handle.url, { method: 'post' });
     let close = eventToPromise(writable, 'close');
     stream.pipe(writable);
 
@@ -38,7 +38,7 @@ suite('stream server', () => {
     handle.forceAbort = true;
 
     let { stream } = randomStream();
-    let writable = httpReq(handle.url);
+    let writable = httpStream(handle.url, { method: 'post' });
     let close = eventToPromise(writable, 'close');
     stream.pipe(writable);
 
@@ -55,7 +55,7 @@ suite('stream server', () => {
     let handle = server.registerStream(1);
 
     let readable = new streams.PassThrough();
-    let writable = httpReq(handle.url);
+    let writable = httpStream(handle.url, { method: 'post' });
     let close = eventToPromise(writable, 'close');
 
     readable.pipe(writable);

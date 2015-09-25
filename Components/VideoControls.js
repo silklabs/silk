@@ -132,14 +132,16 @@ export default React.createClass({
         <SystemButton
           onPress={this.props.onPause}
           style={styles.pause}
-          type={SystemButton.Pause} />
+          type={SystemButton.Pause}
+        />
       );
     } else {
       playOrPause = (
         <SystemButton
           onPress={this.props.onPlay}
           style={styles.play}
-          type={SystemButton.Play} />
+          type={SystemButton.Play}
+        />
       );
     }
 
@@ -154,12 +156,14 @@ export default React.createClass({
           enabled={canRewind}
           onPress={this.props.onRewind}
           style={styles.rewind}
-          type={SystemButton.Rewind} />
+          type={SystemButton.Rewind}
+        />
         {playOrPause}
         <SystemButton
           onPress={this.props.onFastForward}
           style={styles.fastforward}
-          type={SystemButton.FastForward} />
+          type={SystemButton.FastForward}
+        />
       </View>
     );
   },
@@ -217,7 +221,8 @@ export default React.createClass({
           <SystemButton
             style={styles.done}
             onPress={this.props.onDone}
-            type={SystemButton.Done} />
+            type={SystemButton.Done}
+          />
           <Text style={styles.seekCurrent}>{currentTime}</Text>
           <SliderIOS
             onValueChange={this.onSeek}
@@ -225,7 +230,8 @@ export default React.createClass({
             value={progress}
             minimumValue={minimumValue}
             maximumValue={maximumTime}
-            style={styles.seekSlider} />
+            style={styles.seekSlider}
+          />
           {endTime}
         </View>
       </View>

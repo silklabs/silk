@@ -48,7 +48,7 @@ class SignOut extends React.Component {
   render() {
     return (
       <View style={{ alignItems: 'center' }}>
-        <TextLink label='Sign Out' onClick={this.signOut} />
+        <TextLink label="Sign Out" onClick={this.signOut} />
       </View>
     );
   }
@@ -89,25 +89,30 @@ var MonitorsView = React.createClass({
   render: function() {
     var configuring = Object.keys(this.state.configuring).map(key => {
       var device = this.state.configuring[key];
-      return (<DeviceSetup key={key}
-                           name={device.name} rssi={device.rssi} />);
+      return <DeviceSetup key={key} name={device.name} rssi={device.rssi} />;
     });
     var streaming = Object.keys(this.state.streaming).map(key => {
       var device = this.state.streaming[key];
       if (device.placeholder) {
-        return (<MonitorConnecting key={key} status={device.status} />);
+        return <MonitorConnecting key={key} status={device.status} />;
       }
-      return (<MonitorPreview key={key} id={key} label={device.name}
-                              status={device.status}
-                              api={api}
-                              socket={this.socket}
-                              navigator={this.props.navigator}
-                              serverUrl={this.state.serverUrl}
-                              logo={device.logo}
-                              previewSize = {device.previewSize}/>);
+      return (
+        <MonitorPreview
+          key={key}
+          id={key}
+          label={device.name}
+          status={device.status}
+          api={api}
+          socket={this.socket}
+          navigator={this.props.navigator}
+          serverUrl={this.state.serverUrl}
+          logo={device.logo}
+          previewSize = {device.previewSize}
+        />
+      );
     });
     if (0 === configuring.length + streaming.length) {
-      configuring = (<PlaceholderMessage />);
+      configuring = <PlaceholderMessage />;
     }
     var connectionStyle = this.state.serverConnection + 'Indicator';
     return (
@@ -117,8 +122,10 @@ var MonitorsView = React.createClass({
           <View style={styles.spacer}>
             <TouchableOpacity onPress={() => this.loadSettings().catch(() => {})}>
               <View style={styles.settings}>
-                <Image source={require('image!Menu')}
-                       style={styles.icon} />
+                <Image
+                  source={require('image!Menu')}
+                  style={styles.icon}
+                />
               </View>
             </TouchableOpacity>
           </View>
@@ -130,15 +137,17 @@ var MonitorsView = React.createClass({
           </View>
         </View>
         <View style={styles.content}>
-          <ScrollView style={styles.monitors}
-                      automaticallyAdjustContentInsets={false}>
+          <ScrollView
+            style={styles.monitors}
+            automaticallyAdjustContentInsets={false}>
             {configuring}
             {streaming}
           </ScrollView>
         </View>
         <SignOut
           navigator={this.props.navigator}
-          userState={this.props.userState} />
+          userState={this.props.userState}
+        />
       </View>
     );
   },

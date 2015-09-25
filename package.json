@@ -33,7 +33,7 @@
     "babel-eslint": "~3.1.15",
     "babel-loader": "^5.3.2",
     "eslint": "^0.22.1",
-    "eslint-plugin-react": "^3.3.1",
+    "eslint-plugin-react": "^3.4.2",
     "ios-deploy": "^1.7.0",
     "json-loader": "^0.5.2",
     "webpack": "^1.12.1"
@@ -43,6 +43,9 @@
     "plugins": [
       "react"
     ],
+    "ecmaFeatures": {
+      "jsx": true
+    },
     "globals": {
     },
     "rules": {
@@ -58,7 +61,10 @@
       "no-unused-expressions": 0,
       "no-unused-vars": [2, {"vars": "all", "args": "none"}],
       "quotes": [2, "single", "avoid-escape"],
-      "yoda": 0
+      "yoda": 0,
+      "react/jsx-closing-bracket-location": [1, {"selfClosing": "tag-aligned", "nonEmpty": "after-props"}],
+      "react/jsx-indent-props": [2, 2],
+      "react/jsx-quotes": [2, "double"]
     },
     "env": {
       "node": true,

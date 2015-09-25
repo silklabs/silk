@@ -611,8 +611,8 @@ export default React.createClass({
         currentTime={this.state.currentTime}
         startTime={this.state.minTime}
         endTime={this.state.maxTime}
-        onDone={this.close} />
-
+        onDone={this.close}
+      />
     );
   },
 
@@ -627,13 +627,16 @@ export default React.createClass({
 
     let objects = null;
     if (this.state.objects.length) {
-      objects = <ObjectBoxes
-                  id={this.props.id}
-                  socket={this.props.socket}
-                  width={width}
-                  height={height}
-                  objects={this.state.objects}
-                  previewSize={this.props.previewSize} />;
+      objects = (
+        <ObjectBoxes
+          id={this.props.id}
+          socket={this.props.socket}
+          width={width}
+          height={height}
+          objects={this.state.objects}
+          previewSize={this.props.previewSize}
+        />
+      );
     }
 
     let showTimeJump;
@@ -642,7 +645,8 @@ export default React.createClass({
         <DateOverlay
           onDone={this.hideTimeJump}
           style={styles.dateOverlay}
-          date={new Date(this.state.currentTime)} />
+          date={new Date(this.state.currentTime)}
+        />
       );
     }
 
@@ -659,7 +663,8 @@ export default React.createClass({
                 onSegmentEnd={this.onSegmentEnd}
                 onSegmentError={this.onSegmentError}
                 style={styles.video}
-                ref="video" />
+                ref="video"
+              />
             </TouchableWithoutFeedback>
             <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
               {showTimeJump}

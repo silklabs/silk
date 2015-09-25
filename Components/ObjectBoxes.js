@@ -77,7 +77,7 @@ let ObjectBoxes = React.createClass({
     return (
       <View style={styles.objectContainerStyle} key={idx}>
         <TouchableOpacity onPress={objectClick}>
-          <Square top={top} left={left} width={width} height={height} stroke={this.props.objectColor}/>
+        <Square top={top} left={left} width={width} height={height} stroke={this.props.objectColor} />
         </TouchableOpacity>
         <Text style={objectLabelStyle}>
           {tag}

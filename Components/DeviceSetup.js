@@ -37,10 +37,12 @@ var DeviceSetup = React.createClass({
           <LabelText>Move phone close to new device ...</LabelText>
         </View>
         <View style={styles.progressContainer}>
-          <ProgressBar completePercentage={100.0 * heat.value}
-                       color={heat.heat}
-                       backgroundColor='#b7b6b5'
-                       style={styles.progress} />
+          <ProgressBar
+            completePercentage={100.0 * heat.value}
+            color={heat.heat}
+            backgroundColor="#b7b6b5"
+            style={styles.progress}
+          />
         </View>
       </View>
     );

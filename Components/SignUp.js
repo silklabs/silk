@@ -37,12 +37,14 @@ class SignUpControls extends React.Component {
     return (
       <UserForm
         onSubmit={this.onSignUp}
-        submitText='Sign Up'
+        submitText="Sign Up"
         style={styles.signInContainer}>
 
         <View style={styles.bottomLinks}>
-          <TextLink label='Terms & Conditions'
-                    onClick={this.onTermsAndConditions} />
+          <TextLink
+            label="Terms & Conditions"
+            onClick={this.onTermsAndConditions}
+          />
         </View>
 
       </UserForm>
@@ -61,13 +63,15 @@ export default class extends React.Component {
     return (
       <View style={styles.container}>
         <View style={styles.statusBar} />
-        <LinearGradient colors={['#efefef', '#1d292f']}
-                        style={styles.container}>
+        <LinearGradient
+          colors={['#efefef', '#1d292f']}
+          style={styles.container}>
           <View style={styles.logoContainer} />
           <View style={styles.controlsContainer}>
             <SignUpControls
               userState={this.props.userState}
-              navigator={this.props.navigator} />
+              navigator={this.props.navigator}
+            />
           </View>
         </LinearGradient>
       </View>

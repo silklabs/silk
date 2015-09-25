@@ -31,13 +31,6 @@ const api = require('silk-api-react-native')({
 // global instance of user state.
 const userState = new UserState(api);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-});
-
 class Silk extends React.Component {
 
   state = {
@@ -63,11 +56,13 @@ class Silk extends React.Component {
     }
 
     return (
-        <Navigator initialRoute={{name: this.state.initialRoute, index: 0}}
-                   onForward={this.onForward}
-                   configureScene={this.configureScene}
-                   renderScene={this.renderScene}
-                   style={styles.container} />
+      <Navigator
+        initialRoute={{name: this.state.initialRoute, index: 0}}
+        onForward={this.onForward}
+        configureScene={this.configureScene}
+        renderScene={this.renderScene}
+        style={styles.container}
+      />
     );
   }
 
@@ -78,32 +73,42 @@ class Silk extends React.Component {
         <SignIn
           userState={userState}
           navigator={navigator}
-          name={route.name} />
+          name={route.name}
+        />
       );
     case 'SignUp':
       return (
         <SignUp
           userState={userState}
           navigator={navigator}
-          name={route.name} />
+          name={route.name}
+        />
       );
     case 'Monitors':
       return (
         <MonitorsView
           userState={userState}
           navigator={navigator}
-          name={route.name} />
+          name={route.name}
+        />
       );
     case 'WifiSettings':
       return (
-          <WifiSettings navigator={navigator} name={route.name}
-                        hints={route.hints}
-                        resolve={route.resolve} reject={route.reject} />
+        <WifiSettings
+          navigator={navigator}
+          name={route.name}
+          hints={route.hints}
+          resolve={route.resolve}
+          reject={route.reject}
+        />
       );
     case 'MonitorFullscreen':
       return (
-        <MonitorFullscreen navigator={navigator}
-                           vid={route.vid} serverUrl={route.serverUrl} />
+        <MonitorFullscreen
+          navigator={navigator}
+          vid={route.vid}
+          serverUrl={route.serverUrl}
+        />
       );
     default:
       return (
@@ -129,5 +134,12 @@ class Silk extends React.Component {
     }
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+});
 
 AppRegistry.registerComponent('Silk', () => Silk);

@@ -32,6 +32,7 @@ import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crashreport';
 import initOutbox from './outbox';
+import Logcat from './logcat';
 
 // Wait for 60 seconds for boot before issuing a warning.
 const BOOT_TIMEOUT = 60 * 1000;
@@ -52,6 +53,7 @@ let bootCompleted = false;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
+let logcat;
 let clapDetector;
 let ext;
 let diag;
@@ -146,9 +148,12 @@ function main() {
   crashreporter = makeCrashReporter(outbox);
 
   return getDeviceId()
-    .then(fetchedId => {
-      id = fetchedId;
-      crashreporter.deviceId = id.toString();
+    .then(deviceId => {
+      id = deviceId;
+      crashreporter.deviceId = deviceId.toString();
+      logcat = new Logcat(deviceId.toString(), outbox);
+      logcat.start();
+
       return boot();
     })
     .then(() => {

@@ -23,6 +23,7 @@
     "silk-sdk-glue": "0.0.1",
     "socket.io-client": "^1.3.5",
     "source-map-support": "^0.3.2",
+    "split": "^1.0.0",
     "validator": "3.41.2"
   },
   "devDependencies": {

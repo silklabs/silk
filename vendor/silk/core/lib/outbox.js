@@ -11,6 +11,7 @@ import path from 'path';
 import createOutbox from './outbox/manager';
 
 import CrashReportOp from './outbox/crash_report_operation';
+import PapertrailOp from './outbox/papertrail_operation';
 
 const STORAGE_PATH = path.join('/data', 'outbox');
 
@@ -23,6 +24,7 @@ export default function(wifi) {
    * Register all known operations so we can create them from disk as needed...
    */
   outbox.registerOperation(CrashReportOp);
+  outbox.registerOperation(PapertrailOp);
 
   // Optimistically start running pending operations...
   let online = wifi.isOnline();

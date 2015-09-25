@@ -6,7 +6,6 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  */
 
-import { createReadStream } from 'fs';
 import fs from 'mz/fs';
 import { getboolprop, getprop } from './util';
 import net from 'net';
@@ -192,15 +191,7 @@ class CrashReporter {
             type: 'tombstone'
           }
         });
-
-        return this.outbox.addToQueue(
-          operation,
-          createReadStream(path)
-        );
-      })
-      .then(() => {
-        log.debug(`Unlinking '${path}'`);
-        return fs.unlink(path);
+        return this.outbox.addToQueue(operation, path);
       })
       .catch(err => {
         if (err) {

@@ -6,15 +6,15 @@
 
 import { exec } from 'mz/child_process';
 import path from 'path';
-import { default as createOutbox, Queue } from '../lib/outbox_stream';
-import StreamOperation from '../lib/outbox/stream_operation';
+import { default as createOutbox, Queue } from '../../lib/outbox/manager';
+import StreamOperation from '../../lib/outbox/stream_operation';
 import fs from 'mz/fs';
 import assert from 'assert';
 import mkdirp from 'mkdirp-promise';
-import createStreamServer from './stream_server';
-import httpStream from '../lib/streams/http';
+import createStreamServer from '../stream_server';
+import httpStream from '../../lib/streams/http';
 import eventToPromise from 'event-to-promise';
-import randomStream from './random_stream';
+import randomStream from '../random_stream';
 
 const FIXTURE_DIR = path.join(__dirname, '/outbox_fixture');
 

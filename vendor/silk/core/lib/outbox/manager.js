@@ -9,10 +9,10 @@
 import assert from 'assert';
 import fs from 'mz/fs';
 import path from 'path';
-import createLog from './log';
+import createLog from '../log';
 
 import { EventEmitter } from 'events';
-import StreamOperation from './outbox/operation';
+import StreamOperation from './operation';
 
 const log = createLog('outbox-stream');
 

@@ -8,7 +8,7 @@
  * Helper to initialize outbox and various operations...
  */
 import path from 'path';
-import createOutbox from './outbox_stream';
+import createOutbox from './outbox/manager';
 
 import CrashReportOp from './outbox/crash_report_operation';
 

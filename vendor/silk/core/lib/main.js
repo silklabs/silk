@@ -31,7 +31,7 @@ let clapper = require('./clapper');
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crashreport';
-import initOutbox from './outbox_init';
+import initOutbox from './outbox';
 
 // Wait for 60 seconds for boot before issuing a warning.
 const BOOT_TIMEOUT = 60 * 1000;

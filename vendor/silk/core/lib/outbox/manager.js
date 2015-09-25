@@ -116,7 +116,7 @@ export class Queue extends EventEmitter {
         log.warn(`Skipping over path which is not a directory: ${absPath}`);
         return result;
       }
-      result.push(paths[idx]);
+      result.push(parseInt(paths[idx], 10));
       return result;
     }, []);
   }
@@ -257,6 +257,7 @@ export class Queue extends EventEmitter {
     if (!lastId) {
       lastId = 0;
     }
+    assert(typeof lastId === 'number');
     let id = lastId + 1;
     this.diskQueue.push(id);
     let handle = {

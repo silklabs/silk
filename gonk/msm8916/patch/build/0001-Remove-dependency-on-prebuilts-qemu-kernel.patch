@@ -1,0 +1,26 @@
+From 6916a3bf0cd99568024f3dc9f9ce89ce6442fca0 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Mon, 31 Aug 2015 22:44:11 -0700
+Subject: [PATCH] Remove dependency on prebuilts/qemu-kernel
+
+Change-Id: If6164e12f8c9db7a1452950cc439260c417a15b0
+---
+ core/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 7401344..2c80272 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -607,7 +607,7 @@ $(eval $(call combine-notice-files, \
+ 			$(target_notice_file_html), \
+ 			"Notices for files contained in the filesystem images in this directory:", \
+ 			$(TARGET_OUT_NOTICE_FILES), \
+-			$(ALL_DEFAULT_INSTALLED_MODULES) $(kernel_notice_file) $(pdk_fusion_notice_files)))
++			$(ALL_DEFAULT_INSTALLED_MODULES) $(pdk_fusion_notice_files)))
+ 
+ $(eval $(call combine-notice-files, \
+ 			$(tools_notice_file_txt), \
+-- 
+2.5.0
+

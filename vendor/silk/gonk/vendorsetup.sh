@@ -132,6 +132,8 @@ find_manifest_names()
   local name=$1
   local xml=gonk/manifest/$1.xml
 
+  echo $name
+
   if [[ ! -f $xml ]]; then
     echo Error: $xml does does not exist >&2
     return
@@ -142,15 +144,16 @@ find_manifest_names()
   for i in $include_xmls; do
     find_manifest_names ${i%.xml}
   done
-
-  echo $name
 }
 
-# Build the list of patch trees used by $GONK
+# Build the list of patch trees used by $GONK. Order matters here. Manifests
+# listed first will take higher precedence, and its patches will replace
+# patches of the same path/name of manifests lower down the list.
 PATCH_TREE=
-for manifest in $(find_manifest_names $GONK | sort -u); do
-  if [[ -d gonk/patch/$manifest ]]; then
-    PATCH_TREE+=" gonk/patch/$manifest "
+for manifest in $(find_manifest_names $GONK); do
+  tree="gonk/patch/$manifest"
+  if [[ -d $tree ]] && [[ ! $PATCH_TREE =~ $tree ]]; then
+    PATCH_TREE+=" $tree "
   fi
 done
 

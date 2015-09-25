@@ -76,15 +76,32 @@ ignoreUpToHEADOnMaster() {
   git checkout $currentBranch
 }
 
-update_package_git_version() {
+normalizePackageJson() {
+  local from=$1
+  local to=$2
+
+  # Normalize package.json first
+  git checkout $from
+  jq "" -r package.json > package.json.new
+  mv package.json.new package.json
+  git add package.json
+  if git commit -m "Normalize package.json"; then
+    local SHA1=$(git rev-parse --short HEAD)
+    git checkout $to
+    git cherry-pick $SHA1
+  fi
+  git checkout $to
+}
+
+updatePackageVersion() {
   local name=$1
   local version=$2
+
   jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1
   local version_git=$(jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1)
   jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r package.json > package.json.new
   mv package.json.new package.json
 }
-
 
 # Update branch references within the silk apis
 updatebranch__silk_api() {
@@ -121,6 +138,9 @@ updatebranch__silk_app() {
     pushd $app
     (
       set -x
+
+      normalizePackageJson $from $to
+
       if [[ -f .branch ]]; then
         sed -i .branch -e s/${from}/${to}/g
         git add .branch
@@ -132,7 +152,7 @@ updatebranch__silk_app() {
           # Lock to SHA1 for release branch
           HEAD=$(git -C ../$p rev-parse HEAD)
         fi
-        update_package_git_version $p $HEAD
+        updatePackageVersion $p $HEAD
       done
 
       git add package.json

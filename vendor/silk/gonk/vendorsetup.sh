@@ -130,7 +130,7 @@ export GONK
 find_manifest_names()
 {
   local name=$1
-  local xml=gonk/manifest/$1.xml
+  local xml=gonk/$1/$1.xml
 
   echo $name
 
@@ -151,7 +151,7 @@ find_manifest_names()
 # patches of the same path/name of manifests lower down the list.
 PATCH_TREE=
 for manifest in $(find_manifest_names $GONK); do
-  tree="gonk/patch/$manifest"
+  tree="gonk/$manifest/patch"
   if [[ -d $tree ]] && [[ ! $PATCH_TREE =~ $tree ]]; then
     PATCH_TREE+=" $tree "
   fi
@@ -196,7 +196,7 @@ if [[ $? -eq 0 ]]; then
   # Generate manifest dependency file
   rm -f out/repo_fetchtimes.P
   for manifest in $(find_manifest_names $GONK | sort -u); do
-    echo .repo/.repo_fetchtimes.json: gonk/manifest/$manifest.xml >> out/repo_fetchtimes.P
+    echo .repo/.repo_fetchtimes.json: gonk/$manifest/$manifest.xml >> out/repo_fetchtimes.P
   done
 
   #

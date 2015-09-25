@@ -24,7 +24,7 @@ let Square = React.createClass({
     return (
       <View style={style} />
     );
-  }
+  },
 });
 
 let ObjectBoxes = React.createClass({
@@ -40,7 +40,7 @@ let ObjectBoxes = React.createClass({
 
   getDefaultProps: function() {
     return {
-      objectColor: '#ADD8E6'
+      objectColor: '#ADD8E6',
     };
   },
 
@@ -113,7 +113,7 @@ let ObjectBoxes = React.createClass({
         {boxes}
       </View>
     );
-  }
+  },
 });
 
 var styles = StyleSheet.create({

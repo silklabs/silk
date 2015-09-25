@@ -50,7 +50,7 @@ export var MonitorPreview = React.createClass({
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
     api: React.PropTypes.object.isRequired,
-    logo: React.PropTypes.object.isRequired
+    logo: React.PropTypes.object.isRequired,
   },
 
   getInitialState() {
@@ -73,7 +73,7 @@ export var MonitorPreview = React.createClass({
   onPreviewFrame(message) {
     this.setState({
       blob: message.frame,
-      objects: message.objects || []
+      objects: message.objects || [],
     });
   },
 
@@ -232,7 +232,7 @@ var styles = StyleSheet.create({
     width: PREVIEW_WIDTH,
     height: PREVIEW_HEIGHT,
     backgroundColor: 'white',
-    flex: 1
+    flex: 1,
   },
 
   preview: {
@@ -254,11 +254,11 @@ var styles = StyleSheet.create({
     left: 0,
     width: 30,
     height: 15,
-    opacity: 0.5
+    opacity: 0.5,
   },
 
   monitorPreviewOverlay: {
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   },
 
   eventRow: {

@@ -75,7 +75,7 @@ var styles = StyleSheet.create({
     paddingLeft: 5,
     paddingRight: 5,
     paddingBottom: 1,
-  }
+  },
 });
 
 module.exports = DeviceSetup;

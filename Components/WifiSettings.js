@@ -44,7 +44,7 @@ var WifiSettings = React.createClass({
     return {
       ssid: this.props.hints.ssid || 'Network Name',
       secret: this.props.hints.secret || 'silkysmooth',
-      serverUrl: this.props.hints.serverUrl
+      serverUrl: this.props.hints.serverUrl,
     };
   },
 

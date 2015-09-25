@@ -128,5 +128,5 @@ export default React.createClass({
         {React.Children.map(this.props.children, React.addons.cloneWithProps)}
       </OverlayModal>
     );
-  }
+  },
 });

@@ -14,12 +14,12 @@ let {
 class SignUpControls extends React.Component {
 
   static propTypes = {
-    userState: React.PropTypes.object
-  }
+    userState: React.PropTypes.object,
+  };
 
   onTermsAndConditions = () => {
     console.log('TODO: ToC');
-  }
+  };
 
   onSignUp = async (props) => {
     try {
@@ -31,7 +31,7 @@ class SignUpControls extends React.Component {
     } catch (err) {
       console.log('Failed to sign up', err);
     }
-  }
+  };
 
   render() {
     return (
@@ -56,8 +56,8 @@ export default class extends React.Component {
 
   static propTypes = {
     navigator: React.PropTypes.object,
-    userState: React.PropTypes.userState
-  }
+    userState: React.PropTypes.userState,
+  };
 
   render() {
     return (
@@ -107,6 +107,6 @@ var styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-  }
+  },
 });
 

@@ -21,40 +21,40 @@ class CameraMarkText extends React.Component {
   }
 }
 
-let DefaultText = React.createClass({
-  render: function() {
+class DefaultText extends React.Component {
+  render() {
     return (
         <Text style={styles.default}>{this.props.children}</Text>
     );
   }
-});
+}
 
-let LabelText = React.createClass({
-  render: function() {
+class LabelText extends React.Component {
+  render() {
     return (
         <Text style={styles.label}>{this.props.children}</Text>
     );
   }
-});
+}
 
-let PlaceholderText = React.createClass({
-  render: function() {
+class PlaceholderText extends React.Component {
+  render() {
     return (
         <Text style={styles.placeholder}>{this.props.children}</Text>
     );
   }
-});
+}
 
-let WordMarkText = React.createClass({
-  render: function() {
+class WordMarkText extends React.Component {
+  render() {
     return (
         <View style={styles.markContainer}>
           <Text style={styles.silkText}>SILK</Text>
           <Text style={styles.labsText}>LABS</Text>
         </View>
     );
-  },
-});
+  }
+}
 
 let styles = StyleSheet.create({
 

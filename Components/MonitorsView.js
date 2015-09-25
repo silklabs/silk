@@ -20,11 +20,18 @@ var debug = require('debug')('silk:MonitorPreview');
 
 import { CameraMarkText, PlaceholderText } from './Text';
 
-var PERIPH_EVENTS = ['discover', 'connect', 'rssi', 'stateChange',
-                     'disconnect', 'errorChange', 'statusChange'];
+var PERIPH_EVENTS = [
+  'discover',
+  'connect',
+  'rssi',
+  'stateChange',
+  'disconnect',
+  'errorChange',
+  'statusChange',
+];
 
 var api = require('silk-api-react-native')({
-  serverUrl: Config.server.url
+  serverUrl: Config.server.url,
 });
 
 
@@ -36,7 +43,7 @@ class SignOut extends React.Component {
 
   static propTypes = {
     userState: React.PropTypes.object,
-    navigator: React.PropTypes.object
+    navigator: React.PropTypes.object,
   }
 
   signOut = async () => {
@@ -61,7 +68,7 @@ var MonitorsView = React.createClass({
       streaming: {},
       network: null,
       serverConnection: 'offline',
-      serverUrl: null
+      serverUrl: null,
     };
   },
 
@@ -170,7 +177,7 @@ var MonitorsView = React.createClass({
     }
 
     this.socket = new SocketIO(io(serverUrl, {
-      transports: ['websocket']
+      transports: ['websocket'],
     }));
 
     this.state.serverConnection = 'connecting';
@@ -188,8 +195,12 @@ var MonitorsView = React.createClass({
         let device = this.state.streaming[msg.id];
         let status = (device && device.status) ? device.status : '';
 
-        this.state.streaming[msg.id] = { name: msg.name, logo: msg.logo,
-            previewSize: msg.previewSize, status: status };
+        this.state.streaming[msg.id] = {
+          name: msg.name,
+          logo: msg.logo,
+          previewSize: msg.previewSize,
+          status: status,
+        };
 
         this.setState(this.state);
       });
@@ -205,15 +216,19 @@ var MonitorsView = React.createClass({
   loadSettings: function() {
     return (() => {
       if (this.state.network) {
-        return this.navigateWifiScene({ ssid: this.state.network.ssid,
-                                        secret: this.state.network.secret,
-                                        serverUrl: this.state.serverUrl });
+        return this.navigateWifiScene({
+          ssid: this.state.network.ssid,
+          secret: this.state.network.secret,
+          serverUrl: this.state.serverUrl,
+        });
       }
       var net = require('../Libraries/Net');
       return net.getInfo().then(info => {
-        return this.navigateWifiScene({ ssid: info.SSID,
-                                        secret: '',
-                                        serverUrl: this.state.serverUrl });
+        return this.navigateWifiScene({
+          ssid: info.SSID,
+          secret: '',
+          serverUrl: this.state.serverUrl,
+        });
       });
     })().then(network => {
       this.state.network = network;
@@ -233,9 +248,13 @@ var MonitorsView = React.createClass({
 
   navigateWifiScene: function(hints) {
     return new Promise((resolve, reject) => {
-      this.props.navigator.push({ name: 'WifiSettings', index: 1,
-                                  hints: hints,
-                                  resolve: resolve, reject: reject });
+      this.props.navigator.push({
+        name: 'WifiSettings',
+        index: 1,
+        hints: hints,
+        resolve: resolve,
+        reject: reject,
+      });
     });
   },
 
@@ -245,8 +264,12 @@ var MonitorsView = React.createClass({
     this.dm.enumerateDevices().forEach(p => {
       if ('unregistered' === p.state || 'registering' === p.state) {
         // Show configuring widget when we are registering
-        configuring[p.id] = { name: p.prettyName, rssi: p.rssi,
-                              state: p.state, error: p.error };
+        configuring[p.id] = {
+          name: p.prettyName,
+          rssi: p.rssi,
+          state: p.state,
+          error: p.error,
+        };
         return;
       } else if ('registered' === p.state) {
         // Device is registered...
@@ -256,7 +279,10 @@ var MonitorsView = React.createClass({
           // starting-up placeholder widget for it that will be swapped
           // out once we get the device info from the server. Will need
           // remove if server-sent event never received.
-          streaming[p.deviceId] = { name: 'New Device', placeholder: true };
+          streaming[p.deviceId] = {
+            name: 'New Device',
+            placeholder: true,
+          };
         }
 
         // update status, use error message if exists

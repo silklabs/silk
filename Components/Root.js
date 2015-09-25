@@ -25,7 +25,7 @@ import UserState from '../Libraries/UserState';
 
 // global instance of the silk api
 const api = require('silk-api-react-native')({
-  serverUrl: Config.server.url
+  serverUrl: Config.server.url,
 });
 
 // global instance of user state.

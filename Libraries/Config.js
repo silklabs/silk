@@ -13,8 +13,8 @@ let DEFAULT = {
     showLiveLag: false,
 
     // Very verbose socket.io logging!
-    socketioLogs: false
-  }
+    socketioLogs: false,
+  },
 };
 
 function load() {

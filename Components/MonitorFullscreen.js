@@ -21,7 +21,7 @@ let {
 const MODES = {
   live: 'live',
   recorded: 'recorded',
-  seeking: 'seeking'
+  seeking: 'seeking',
 };
 
 /**
@@ -32,7 +32,7 @@ const PLAYBACK_STEPS = [
   1.0,
   1.5,
   2.0,
-  4.0
+  4.0,
 ];
 
 const DEFAULT_PLAYBACK_STEP = 1.0;
@@ -82,7 +82,7 @@ class LiveSegmentProvider {
       startUTC: message.when,
       // XXX: We should really send real duration in message.
       endUTC: message.when,
-      objects: message.objects
+      objects: message.objects,
     });
 
     // Keep track of the previous id (required for state tracking).
@@ -197,7 +197,7 @@ export default React.createClass({
     api.timeMeta.findOneAfterTime({
       deviceId: this.props.id,
       time: startTime.valueOf(),
-      metaType: 'video'
+      metaType: 'video',
     }).then(result => {
       this.setState({ minTime: result.startUTC });
     }).catch(err => {
@@ -215,7 +215,7 @@ export default React.createClass({
   appendSegment(segment) {
     this._videoSegments = this._videoSegments.concat([segment]);
     this.setState({
-      videoSegments: this._videoSegments
+      videoSegments: this._videoSegments,
     });
   },
 
@@ -280,7 +280,7 @@ export default React.createClass({
       id: result.id,
       nextId: result.nextId,
       previousId: result.previousId,
-      objects: result.data.objects
+      objects: result.data.objects,
     });
   },
 
@@ -342,8 +342,9 @@ export default React.createClass({
     }
 
     if (segment) {
-      this.setState({ objects: this.getActiveObjects(segment,
-                                                     segment.startUTC) });
+      this.setState({
+        objects: this.getActiveObjects(segment, segment.startUTC),
+      });
     }
   },
 
@@ -364,7 +365,7 @@ export default React.createClass({
     }
 
     api.timeMeta.findById({
-      id: segment.nextId
+      id: segment.nextId,
     }).then(result => {
       let newSegment = this.createSegment(result);
       let delta = result.startUTC - segment.startUTC;
@@ -411,8 +412,10 @@ export default React.createClass({
       this.modifyLiveRate(segment, time);
     }
 
-    this.setState({ currentTime: time,
-                    objects: this.getActiveObjects(segment, time) });
+    this.setState({
+      currentTime: time,
+      objects: this.getActiveObjects(segment, time),
+    });
   },
 
   onSeekStart() {
@@ -422,7 +425,7 @@ export default React.createClass({
       // Used to signify what mode to enter after seeking is done.
       pendingSeekMode: MODES.live,
       // Playback is paused while we seek.
-      willPlay: false
+      willPlay: false,
     });
   },
 
@@ -443,7 +446,7 @@ export default React.createClass({
     this.setState({
       currentTime: startTime,
       pendingSeekMode: MODES.recorded,
-      videoSegments: this._videoSegments
+      videoSegments: this._videoSegments,
     });
 
     // TODO: what should we do here if there's a previous seek
@@ -452,7 +455,7 @@ export default React.createClass({
     this._pendingSeekOperation = api.timeMeta.findByTime({
       metaType: 'video',
       time: startTime,
-      deviceId: this.props.id
+      deviceId: this.props.id,
     }).then(result => {
       // Override current pending segments.
       let segment = this.createSegment(result);
@@ -478,7 +481,7 @@ export default React.createClass({
       this.setState({
         currentTime: segment.startUTC,
         pendingSeekMode: MODES.recorded,
-        videoSegments: this._videoSegments
+        videoSegments: this._videoSegments,
       });
       return true;
     }).catch(err => {
@@ -499,7 +502,7 @@ export default React.createClass({
         // Resume playback mode (paying/paused).
         willPlay: this.state.playing,
         // Pass video segments explicitly so we do not reset them.
-        videoSegments: this._videoSegments
+        videoSegments: this._videoSegments,
       });
 
       // If we are now in recorded mode start buffering next segment.
@@ -577,7 +580,7 @@ export default React.createClass({
     this.setState({
       rate: DEFAULT_PLAYBACK_STEP,
       playing: true,
-      willPlay: true
+      willPlay: true,
     });
   },
 
@@ -586,7 +589,7 @@ export default React.createClass({
       // Reset rate when we pause.
       rate: DEFAULT_PLAYBACK_STEP,
       playing: false,
-      willPlay: false
+      willPlay: false,
     });
   },
 
@@ -702,7 +705,7 @@ var styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0
+    bottom: 0,
   },
 
   dateOverlay: {
@@ -712,11 +715,11 @@ var styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 20,
-    flex: 1
+    flex: 1,
   },
 
   container: {
     flex: 1,
-    backgroundColor: 'black'
+    backgroundColor: 'black',
   },
 });

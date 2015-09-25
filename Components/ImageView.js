@@ -12,7 +12,7 @@ export default class extends React.Component {
 
   render() {
     let nativeProps = Object.assign({}, this.props, {
-      ref: RCT_NATIVE_REF
+      ref: RCT_NATIVE_REF,
     });
 
     return (

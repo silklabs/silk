@@ -54,7 +54,7 @@
       "no-shadow": 0,
       "no-debugger": 1,
       "default-case": 2,
-      "comma-dangle": 0,
+      "comma-dangle": [1, "always-multiline"],
       "indent": [2, 2],
       "no-underscore-dangle": 0,
       "no-use-before-define": 0,

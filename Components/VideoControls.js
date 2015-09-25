@@ -18,7 +18,7 @@ export default React.createClass({
   getInitialState() {
     return {
       // null when we are not seeking a number otherwise.
-      seekTime: null
+      seekTime: null,
     };
   },
 
@@ -57,7 +57,7 @@ export default React.createClass({
     onPause: React.PropTypes.func,
     onFastForward: React.PropTypes.func,
     onRewind: React.PropTypes.func,
-    live: React.PropTypes.bool
+    live: React.PropTypes.bool,
   },
 
   _seeking: false,
@@ -256,7 +256,7 @@ export default React.createClass({
         {bottom}
       </View>
     );
-  }
+  },
 });
 
 var styles = StyleSheet.create({
@@ -269,27 +269,28 @@ var styles = StyleSheet.create({
   },
 
   seekRow: {
-    flexDirection: 'row', alignItems: 'center'
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   done: {
     color: 'black',
     flex: 0.1,
-    height: 35
+    height: 35,
   },
 
   seekCurrent: {
     textAlign: 'center',
-    flex: 0.15
+    flex: 0.15,
   },
 
   seekSlider: {
-    flex: 0.60
+    flex: 0.60,
   },
 
   seekEnd: {
     textAlign: 'center',
-    flex: 0.15
+    flex: 0.15,
   },
 
   bottom: {
@@ -312,7 +313,7 @@ var styles = StyleSheet.create({
 
   controlToolbar: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
 
   pause: {
@@ -340,7 +341,7 @@ var styles = StyleSheet.create({
 
   rateContainer: {
     flex: 0.1,
-    alignItems: 'flex-end'
+    alignItems: 'flex-end',
   },
 
   rewind: {
@@ -351,6 +352,6 @@ var styles = StyleSheet.create({
 
   placeholder: {
     flex: 0.1,
-    alignItems: 'flex-start'
-  }
+    alignItems: 'flex-start',
+  },
 });

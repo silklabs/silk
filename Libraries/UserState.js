@@ -35,8 +35,8 @@ export default class UserState extends EventEmitter {
   /**
    * API Client
    */
-  api = null
-  _accessToken = null
+  api = null;
+  _accessToken = null;
 
   constructor(api) {
     super();
@@ -48,7 +48,7 @@ export default class UserState extends EventEmitter {
     log('Set access token', accessToken);
     let json = JSON.stringify({
       publicKey: accessToken.pub,
-      privateKey: accessToken.priv
+      privateKey: accessToken.priv,
     });
     await AsyncStorage.setItem(ACCESS_TOKEN_KEY, json);
   }
@@ -97,7 +97,7 @@ export default class UserState extends EventEmitter {
 
     return await vip.checkPassword({
       email,
-      passwordHash
+      passwordHash,
     });
   }
 
@@ -123,7 +123,7 @@ export default class UserState extends EventEmitter {
     let result = await vip.signIn({
       email,
       passwordHash,
-      userAgent
+      userAgent,
     });
 
     if (result.success) {
@@ -155,7 +155,7 @@ export default class UserState extends EventEmitter {
     let result = await vip.createAccount({
       email,
       passwordHash,
-      userAgent
+      userAgent,
     });
 
     if (result.success) {

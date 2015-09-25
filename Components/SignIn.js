@@ -29,8 +29,8 @@ class LogoView extends React.Component {
 class SignInControls extends React.Component {
 
   static propTypes = {
-    userState: React.PropTypes.object
-  }
+    userState: React.PropTypes.object,
+  };
 
   onSignIn = async (props) => {
     try {
@@ -42,7 +42,7 @@ class SignInControls extends React.Component {
     } catch (err) {
       console.log('Failed to sign in', err);
     }
-  }
+  };
 
   onDeveloperSignIn = async () => {
     let { userState } = this.props;
@@ -53,15 +53,15 @@ class SignInControls extends React.Component {
     if (success) {
       this.props.navigator.push({ name: 'Monitors', index: 0 });
     }
-  }
+  };
 
   onSignUp = () => {
     this.props.navigator.push({ name: 'SignUp', index: 0 });
-  }
+  };
 
   onLearnMore = () => {
     console.log('Learn More');
-  }
+  };
 
   render() {
     return (
@@ -92,7 +92,7 @@ export default class extends React.Component {
 
   static propTypes = {
     navigator: React.PropTypes.object,
-    userState: React.PropTypes.userState
+    userState: React.PropTypes.userState,
   };
 
   render() {

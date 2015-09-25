@@ -52,7 +52,7 @@ let SystemButton = React.createClass({
     return (
       <SystemButtonNative {... nativeProps} />
     );
-  }
+  },
 });
 
 

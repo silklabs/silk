@@ -10,15 +10,6 @@ let {
 } = React;
 
 
-const styles = StyleSheet.create({
-  label: {
-    fontFamily: 'Open Sans',
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#99a0a4',
-  }
-});
-
 export default class TextLink extends React.Component {
   static propTypes = {
     label: React.PropTypes.string,
@@ -40,4 +31,11 @@ export default class TextLink extends React.Component {
   }
 }
 
-
+const styles = StyleSheet.create({
+  label: {
+    fontFamily: 'Open Sans',
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#99a0a4',
+  },
+});

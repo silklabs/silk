@@ -18,7 +18,7 @@ const loginSpinnerStyles = StyleSheet.create({
     height: 35,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
 });
 
 class LoginSpinner extends React.Component {
@@ -40,14 +40,14 @@ const inputStyles = StyleSheet.create({
     height: 40,
     marginBottom: 15,
     paddingLeft: 20,
-  }
+  },
 });
 
 class StyledTextInput extends React.Component {
   static defaultProps = {
     secure: false,
     keyboardType: 'default',
-    returnKeyType: 'done'
+    returnKeyType: 'done',
   };
 
   static propTypes = {
@@ -56,7 +56,7 @@ class StyledTextInput extends React.Component {
     onSubmit: React.PropTypes.func,
     placeholder: React.PropTypes.string,
     style: React.PropTypes.object,
-    returnKeyType: React.PropTypes.string
+    returnKeyType: React.PropTypes.string,
   };
 
   onChangeText = text => {
@@ -134,15 +134,15 @@ export default class UserForm extends React.Component {
     /**
      * Should be an async function.
      */
-    onSubmit: React.PropTypes.func
+    onSubmit: React.PropTypes.func,
   };
 
   state = {
-    submitInProgres: false
+    submitInProgres: false,
   };
 
-  email = ''
-  password = ''
+  email = '';
+  password = '';
 
   onEmailChange = (email) => {
     this.email = email;
@@ -156,7 +156,7 @@ export default class UserForm extends React.Component {
     this.setState({ submitInProgress: true });
     await this.props.onSubmit({
       email: this.email,
-      password: this.password
+      password: this.password,
     });
     this.setState({ submitInProgress: false });
   };

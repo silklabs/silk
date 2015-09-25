@@ -13,7 +13,7 @@ const SegmentProps = [
   'id',
   'nextId',
   'previousId',
-  'objects'
+  'objects',
 ];
 
 class Segment {
@@ -78,7 +78,7 @@ let LiveVideo = React.createClass({
     /**
     Array of segments used to control playback and buffering.
     */
-    segments: React.PropTypes.array
+    segments: React.PropTypes.array,
   },
 
   getNativeHandle() {
@@ -87,13 +87,13 @@ let LiveVideo = React.createClass({
 
   render() {
     let nativeProps = Object.assign({}, this.props, {
-      ref: RCT_NATIVE_REF
+      ref: RCT_NATIVE_REF,
     });
 
     return (
       <LiveVideoNative {... nativeProps} />
     );
-  }
+  },
 });
 
 LiveVideo.Segment = Segment;

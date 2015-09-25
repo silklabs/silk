@@ -12,27 +12,27 @@ export default class extends React.Component {
 
   static defaultProps = {
     fadeDuration: 1500,
-    onDone: () => {}
-  }
+    onDone: () => {},
+  };
 
   static propTypes = {
     date: React.PropTypes.instanceOf(Date).isRequired,
     style: React.PropTypes.object,
     fadeDuration: React.PropTypes.number,
-    onDone: React.PropTypes.func
-  }
+    onDone: React.PropTypes.func,
+  };
 
   constructor() {
     super();
     this.state = {
-      opacity: new Animated.Value(1)
+      opacity: new Animated.Value(1),
     };
   }
 
   componentDidMount() {
     Animated.timing(this.state.opacity, {
       toValue: 0,
-      duration: this.props.fadeDuration
+      duration: this.props.fadeDuration,
     }).start(this.props.onDone);
   }
 
@@ -55,6 +55,6 @@ var styles = StyleSheet.create({
   text: {
     opacity: 0.8,
     textAlign: 'center',
-    fontSize: 14
-  }
+    fontSize: 14,
+  },
 });

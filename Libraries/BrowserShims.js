@@ -18,7 +18,7 @@ if (!('userAgent' in navigator)) {  //eslint-disable-line
 if (typeof GLOBAL.document === 'undefined') {
   GLOBAL.document = {
     documentElement: {
-      style: {}
-    }
+      style: {},
+    },
   };
 }

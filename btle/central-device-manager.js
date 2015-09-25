@@ -16,7 +16,7 @@ var api = {
       UNREGISTERED: 0,
       REGISTERING: 1,
       REGISTERED: 2,
-      ERROR: 3
+      ERROR: 3,
     },
     uuid: {
       ConfigService: 'beef',
@@ -31,7 +31,7 @@ var api = {
       DeviceIdCharacteristic: '3f0497ec81b24850a2579237bcf8591a',
       ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
       VibratePatternCharacteristic: '385a2b58191211e5b60b1697f925ec7b',
-    }
+    },
   },
 
   crypto: {
@@ -256,9 +256,7 @@ DeviceManager.prototype._waitForProximity = function(p) {
           // long enough so that a 0.1 change in duty cycle is
           // approximately perceptible to the user.
           var period = 100;
-          var pattern = new Uint16Array([
-            period * duty, period * (1 - duty)
-          ]);
+          var pattern = new Uint16Array([period * duty, period * (1 - duty)]);
           // TODO: let the UI at the next level up be responsible for
           // this
           p.writeCharacteristic(decls.uuid.VibratePatternCharacteristic,

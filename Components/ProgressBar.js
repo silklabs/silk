@@ -16,7 +16,7 @@ var ProgressBar = React.createClass({
     color: PropTypes.string,
     backgroundColor: PropTypes.string,
     styles: PropTypes.object,
-    completePercentage: PropTypes.number.isRequired
+    completePercentage: PropTypes.number.isRequired,
   },
 
   getDefaultProps: function () {
@@ -43,7 +43,7 @@ var ProgressBar = React.createClass({
         <View style={[styles.incomplete, {flex: incompletePerc, backgroundColor}]}></View>
       </View>
     );
-  }
+  },
 });
 
 var styles = StyleSheet.create({
@@ -53,14 +53,14 @@ var styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: '#ffffff',
-    marginBottom: 3
+    marginBottom: 3,
   },
 
   complete: {},
 
   incomplete: {
     backgroundColor: '#ffffff',
-  }
+  },
 });
 
 module.exports = ProgressBar;

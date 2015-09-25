@@ -67,11 +67,13 @@ nostragglers() {
   $ok || exit 1
 }
 
-ignoreHEADOnMaster() {
+ignoreUpToHEADOnMaster() {
+  local msg="$1"
   local SHA1=$(git rev-parse --short HEAD)
+  local currentBranch=$(git rev-parse --abbrev-ref HEAD)
   git checkout master
-  git merge $SHA1 -s ours -m "Ignore $SHA1 (Automated branch update from ${from} to ${to})"
-  git checkout $from
+  git merge $SHA1 -s ours -m "Ignoring on master: $msg"
+  git checkout $currentBranch
 }
 
 update_package_git_version() {
@@ -135,9 +137,10 @@ updatebranch__silk_app() {
 
       git add package.json
 
-      git commit -m "Automated branch update from ${from} to ${to}"
+      local msg="Automated branch update from ${from} to ${to}"
+      git commit -m "$msg"
       if [[ -n $ignoreOnMaster ]]; then
-        ignoreHEADOnMaster
+        ignoreUpToHEADOnMaster "$msg"
       fi
     )
     popd
@@ -169,9 +172,11 @@ semver_inc__silk_app() {
 
     sed -e "s/$ver/$nextver/" -i iOS/Info.plist
     git add iOS/Info.plist
-    git commit -m "Automated version update from ${ver} to ${nextver}"
+
+    local msg="Automated version update from ${ver} to ${nextver}"
+    git commit -m "$msg"
     if [[ $branch != master ]]; then
-      ignoreHEADOnMaster
+      ignoreUpToHEADOnMaster "$msg"
     fi
   )
   popd
@@ -211,9 +216,11 @@ updatebranch__silk_device() {
       fi
 
     done
-    git commit --all -m "Automated branch update from ${from} to ${to}"
+
+    local msg="Automated branch update from ${from} to ${to}"
+    git commit --all -m "$msg"
     if [[ -n $ignoreOnMaster ]]; then
-      ignoreHEADOnMaster
+      ignoreUpToHEADOnMaster "$msg"
     fi
   )
   popd > /dev/null

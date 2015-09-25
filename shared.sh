@@ -18,6 +18,7 @@ done
 #
 # GITS: List of projects that are branched.
 # MERGE_GITS: Subset of GITS that need commits merged back to master
+#             (TODO: Merge this with lib/repos.js)
 #
 # Note that these projects are sorted by the order in which the branch changes
 # should be pushed.  That is, projects that depend on the branches of other

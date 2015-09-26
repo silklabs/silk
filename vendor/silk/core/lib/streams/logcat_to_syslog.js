@@ -40,11 +40,15 @@ export default class LogcatToSyslog extends Transform {
     let line = `<${PRIORITY}>1 ${date} ${this.host} ${log.tag} - - - `;
 
     if (log.pid) {
-      line += ` (pid=${log.pid})`;
+      line += ` pid=${log.pid}`;
     }
 
     if (log.tid) {
-      line += ` (tid=${log.tid})`;
+      line += ` tid=${log.tid}`;
+    }
+
+    if (log.priority) {
+      line += ` pri=${log.priority}`;
     }
 
     line += ` ${log.message}`;

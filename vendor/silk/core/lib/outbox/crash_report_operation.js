@@ -15,7 +15,7 @@ import httpStream from '../streams/http';
 import assert from 'assert';
 
 const CONTENT_TYPE = 'text/plain';
-const log = createLog('operation:crash-report');
+const log = createLog('operation:crash_report_operation');
 
 export default class CrashReportOperation extends Operation {
   static NAME = 'crash-report';

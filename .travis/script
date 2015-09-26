@@ -21,12 +21,13 @@ else
   echo "******************************************************************"
   make -j2
 
+  source build/envsetup.sh
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
+
   echo "******************************************************************"
   echo Check if the PR boots on the emulator
   echo "******************************************************************"
   if [[ $TRAVIS_OS_NAME == linux ]]; then
-    source build/envsetup.sh
-    rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
     make update.qemu # Fetch the emulator
 
     # Fetch host adb since it's not built as a part of the base build

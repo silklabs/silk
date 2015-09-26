@@ -83,7 +83,25 @@ export default class TeeStream extends Writable {
   /**
    * Wrapper to ensure we correctly capture any possible type of stream error.
    */
-  _writeStream(handle, chunk, encoding, cb) {
+  _writeStream(handle, chunk, encoding, callback) {
+    /**
+     * Error handling here is tricky since the underlying writer may throw
+     * .onerror for two different reasons
+     *
+     *  1. Unrelated error (like network failure)
+     *  2. Explicit error in write
+     *
+     *  In the first case we _only_ get the error event but in the second we get
+     *  both the callback and the error event.
+     */
+    let cb = (err) => {
+      if (!callback) {
+        return;
+      }
+      callback(err);
+      callback = null;
+    };
+
     function onError(err) {
       handle.stream.removeListener('error', onError);
       cb(err);

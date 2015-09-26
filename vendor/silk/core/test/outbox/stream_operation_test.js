@@ -52,8 +52,10 @@ suite('outbox stream', () => {
 
     _write(buffer, encoding, cb) {
       if (this.nth++ >= this.failOnNth) {
-        cb(new Error('failed'));
-        return false;
+        process.nextTick(() => {
+          cb(new Error('failed'));
+        });
+        return null;
       }
       return super._write(buffer, encoding, cb);
     }

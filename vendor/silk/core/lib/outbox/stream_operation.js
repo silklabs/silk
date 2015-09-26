@@ -23,6 +23,7 @@ import Operation from './operation';
 
 import createLog from '../log';
 import eventToPromise from 'event-to-promise';
+import fs from 'fs';
 
 const log = createLog('outbox:stream_operation');
 
@@ -59,20 +60,28 @@ export default class StreamOperation extends Operation {
     }
     this.writing = true;
 
-    let failedOperation = false;
-    let error;
+    let isReadingPath = typeof readable === 'string';
+    readable = (isReadingPath) ?
+      fs.createReadStream(readable) :
+      readable;
 
-    let bufferStream = new StoringStream();
-    let writer = new TeeStream(bufferStream, this.destination);
+    let error;
+    let remainder = readable;
+    let writer;
+
+    if (!isReadingPath) {
+      remainder = new StoringStream();
+      writer = new TeeStream(remainder, this.destination);
+    } else {
+      writer = this.destination;
+    }
 
     readable.pipe(writer);
     log.info(`(${this.constructor.name}) beginning write operation`);
 
     this.destination.on('error', err => {
       // bad stuff happened oh noes...
-      failedOperation = true;
       error = err;
-
       log.warn(
         `(${this.constructor.NAME}) Error attmping to write will retry`,
         this.arguments,
@@ -89,18 +98,24 @@ export default class StreamOperation extends Operation {
      * consumed from the readable side but unless "close" has been emitted there
      * still may be network errors/etc..
      */
-    await eventToPromise(writer, 'close');
+    try {
+      await eventToPromise(writer, 'close');
+    } catch (err) {
+      // We have completely failed to write the stream for one reason or
+      // another...
+      error = err;
+    }
 
     log.info(`(${this.constructor.name}) finished write operation`, {
-      failed: failedOperation
+      error
     });
 
     // Successfully uploaded everything hooray...
-    if (!failedOperation) {
+    if (!error) {
       return { done: true };
     }
 
-    return { done: false, remainder: bufferStream, error };
+    return { done: false, remainder, error };
   }
 
   _getMetadata() {

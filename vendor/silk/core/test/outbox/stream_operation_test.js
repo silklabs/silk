@@ -52,8 +52,10 @@ suite('outbox stream', () => {
 
     _write(buffer, encoding, cb) {
       if (this.nth++ >= this.failOnNth) {
-        cb(new Error('failed'));
-        return false;
+        process.nextTick(() => {
+          cb(new Error('failed'));
+        });
+        return null;
       }
       return super._write(buffer, encoding, cb);
     }
@@ -112,7 +114,6 @@ suite('outbox stream', () => {
     // Re-hydrate from disk...
     metadata = JSON.parse(metadata);
     assert.equal(blob.toString(), buffer.toString());
-
     metadata.arguments.failOnNth = 10000;
 
     let readableStream = fs.createReadStream(blobPath);
@@ -120,6 +121,36 @@ suite('outbox stream', () => {
 
     let res = await retryOp.write(readableStream);
     assert.ok(res.done, 'successfully writes');
+  });
+
+  test('.saveToDisk - passing file path', async () => {
+    await fs.mkdir(FIXTURE_DIR);
+    let { buffer } = randomStream();
+    let operation = new FailableOp({
+      arguments: {
+        failOnNth: 3
+      }
+    });
+
+    // Write some bytes to the file...
+    let originalFile = path.join(FIXTURE_DIR, 'original_blob');
+    await fs.writeFile(originalFile, buffer);
+
+    let directory = path.join(FIXTURE_DIR, 'stuff/v1/');
+
+    // Persist the operation on disk but pass a path instead of readable stream
+    // as the remainder...
+    await operation.saveToDisk(
+      originalFile,
+      directory
+    );
+
+    let blobPath = path.join(directory, 'blob');
+
+    // The original file should now be moved to the blob path.
+    assert.ok(!await fs.exists(originalFile));
+    let blob = await fs.readFile(blobPath, 'utf8');
+    assert.equal(blob, buffer.toString());
   });
 
   test('.write', async () => {

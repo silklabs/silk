@@ -5,10 +5,9 @@
  */
 
 import Operation from './operation';
-import StoringStream from '../streams/store';
-import TeeStream from '../streams/tee';
 
 import api from '../api';
+import fs from 'mz/fs';
 import createLog from '../log';
 import eventToPromise from 'event-to-promise';
 import httpStream from '../streams/http';
@@ -33,7 +32,19 @@ export default class CrashReportOperation extends Operation {
     assert(typeof this.metadata === 'object', 'must pass metadata');
   }
 
-  async _write(readable) {
+  /**
+   * Unlike most operations this accepts a _path_ to a file on disk so we can
+   * avoid buffering the contents into memory...
+   */
+  async _write(path) {
+    // backwards compatibility if we are asked to write a stream.
+    if (typeof path === 'object') {
+      log.warn(`Uploading old crash report (stream given)`, path);
+      path = path.path;
+    }
+
+    assert(typeof path === 'string', 'crash reporter only accepts paths');
+
     let putUrl;
     try {
       putUrl = await api.blob.getPutUrl(
@@ -55,20 +66,18 @@ export default class CrashReportOperation extends Operation {
     });
 
     // TODO: https://github.com/silklabs/silk-device/issues/760
-    let store = new StoringStream();
-    let tee = new TeeStream(store, writer);
-
+    let readable = fs.createReadStream(path);
     let failErr;
 
     writer.on('error', (err) => {
       failErr = err;
       log.error('Failed to put blob for crash report', err);
     });
-    readable.pipe(tee);
-    await eventToPromise(tee, 'close');
+    readable.pipe(writer);
+    await eventToPromise(writer, 'close');
 
     if (failErr) {
-      return { done: false, remainder: store, error: failErr };
+      return { done: false, remainder: path, error: failErr };
     }
 
     try {
@@ -80,7 +89,19 @@ export default class CrashReportOperation extends Operation {
       ));
     } catch (err) {
       log.error(`Failed to upload crash metadata`, err);
-      return { done: false, remainder: store, error: err };
+      return { done: false, remainder: path, error: err };
+    }
+
+    try {
+      await fs.unlink(path);
+    } catch (err) {
+      log.error(`
+        Failed to unlink underlying crash report at ${path}.
+
+        This will result in the crash being uploaded multiple times.
+
+        ${err.stack}
+      `);
     }
 
     return { done: true };

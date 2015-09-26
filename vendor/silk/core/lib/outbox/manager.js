@@ -116,7 +116,7 @@ export class Queue extends EventEmitter {
         log.warn(`Skipping over path which is not a directory: ${absPath}`);
         return result;
       }
-      result.push(paths[idx]);
+      result.push(parseInt(paths[idx], 10));
       return result;
     }, []);
   }
@@ -257,6 +257,7 @@ export class Queue extends EventEmitter {
     if (!lastId) {
       lastId = 0;
     }
+    assert(typeof lastId === 'number');
     let id = lastId + 1;
     this.diskQueue.push(id);
     let handle = {
@@ -422,9 +423,11 @@ export class Queue extends EventEmitter {
     }
 
     let operation = new OperationClass(metadata);
-    let readable = fs.createReadStream(blobPath);
 
-    let result = await operation.write(readable);
+    // We pass the _path_ to the file rather then the stream so readers do not
+    // buffer the remainder.
+    let result = await operation.write(blobPath);
+
     if (result.done) {
       log.info(`Successfully finished operation ${handle.path}`);
       await StreamOperation.removeFromDisk(handle.path);

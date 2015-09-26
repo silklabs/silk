@@ -118,9 +118,7 @@ export default class Operation {
    *
    */
   async write(readable) {
-    // instanceof is not good choice since other node modules may use different
-    // versions of the stream libary.
-    assert(typeof readable === 'object', 'must pass readable');
+    assert(readable, 'must pass readable');
     let result = await this._write(readable);
     assert(('done' in result), '._write result must contain .done');
 
@@ -138,7 +136,7 @@ export default class Operation {
     throw new Error('Must implement ._write');
   }
 
-  async writeMetadata(directory, overrides) {
+  async _writeMetadata(directory, overrides) {
     let metadata = this.getMetadata(overrides);
     if (!metadata.name) {
       throw new Error(`
@@ -151,6 +149,37 @@ export default class Operation {
 
     // We assume whoever calls this is going to handle any write errors.
     await fs.writeFile(metadataPath, JSON.stringify(metadata));
+  }
+
+  async _writeBlob(directory, readable) {
+    let blobPath = path.join(directory, this.constructor.BLOB_NAME);
+
+    if (typeof readable === 'string') {
+      // treat readable as a path to a file...
+
+      if (!await fs.exists(readable)) {
+        throw new Error(
+          `Cannot move ${readable} to ${blobPath} does not exist.`
+        );
+      }
+
+      if (await fs.exists(blobPath)) {
+        throw new Error(
+          `Will not move ${readable} to ${blobPath} it already exists...`
+        );
+      }
+
+      log.info(`Moving ${readable} to ${blobPath}`);
+
+      // Simply move the file to be the blob so we don't have to load it in
+      // memory at all...
+      await fs.rename(readable, blobPath);
+    } else {
+      log.info(`Draining readable to ${blobPath}`);
+      let blobWritableStream = fs.createWriteStream(blobPath);
+      readable.pipe(blobWritableStream);
+      await eventToPromise(blobWritableStream, 'close');
+    }
   }
 
   /**
@@ -167,8 +196,6 @@ export default class Operation {
    *
    */
   async saveToDisk(readable, directory) {
-    let blobPath = path.join(directory, this.constructor.BLOB_NAME);
-
     log.verbose(`Preparing to save to disk`, {
       directory,
       metadata: this.getMetadata()
@@ -179,13 +206,11 @@ export default class Operation {
       await mkdirp(directory);
 
       // Pipe the remainder stream to disk.
-      let blobWritableStream = fs.createWriteStream(blobPath);
-      readable.pipe(blobWritableStream);
       await Promise.all([
-        this.writeMetadata(directory, {
+        this._writeMetadata(directory, {
           createdAt: Date.now()
         }),
-        eventToPromise(blobWritableStream, 'finish')
+        this._writeBlob(directory, readable)
       ]);
     } catch (err) {
       log.error(`

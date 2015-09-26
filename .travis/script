@@ -41,8 +41,10 @@ else
     echo Warning: Skipping emulator boot check on OS X for now
   fi
 
-  echo "******************************************************************"
-  echo Validating Mako manifest
-  echo "******************************************************************"
-  make init.mako
+  if [[ $TRAVIS_OS_NAME == linux ]]; then  # We only support building Mako on Linux
+    echo "******************************************************************"
+    echo Validating Mako manifest
+    echo "******************************************************************"
+    make init.mako
+  fi
 fi

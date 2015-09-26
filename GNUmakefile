@@ -126,7 +126,7 @@ time:
 
 
 #
-# Initialize the workspace with gonk/manifest/<gonk>.xml instead of the default
+# Initialize the workspace with gonk/<gonk>/<gonk>.xml instead of the default
 # gonk with:
 #
 #   $ make init.<gonk>
@@ -141,12 +141,12 @@ init.$(1):
 endef
 
 $(eval \
-  $(foreach manifest,$(subst /,,$(subst gonk/,,$(notdir $(basename $(wildcard gonk/manifest/*.xml))))),\
+  $(foreach manifest,$(subst /,,$(subst gonk/,,$(notdir $(basename $(wildcard gonk/*/*.xml))))),\
     $(call __init_rules,$(manifest))) \
 )
 
 init.%:
-	@echo Error: gonk/manifest/$(subst init.,,$@).xml does not exist
+	@echo Error: gonk/*/$(subst init.,,$@).xml does not exist
 	@false
 
 
@@ -179,15 +179,15 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 
 .repo/manifest_upstream:
 # Construct a faux 'upstream' manifest project to keep repo content.  Its
-# manifest .xml files redirect out to gonk/manifest/* so that edits directly
-# made in gonk/manifest/* will be picked up immediately by a |repo sync|
+# manifest .xml files redirect out to gonk/*/*.xml so that edits directly
+# made in gonk/*/manifest/* will be picked up immediately by a |repo sync|
 	@echo Forging upstream repo manifest for gonk: $(GONK)
 	@{ \
     set -e ; \
     mkdir -p .repo/manifest_upstream ; \
     cd .repo/manifest_upstream ; \
     git init --quiet . ; \
-    for f in gonk/manifest/*; do ln -sf ../../$$f .; done; \
+    for f in gonk/*/*.xml; do ln -sf ../../$$f .; done; \
     git add *; \
     git commit -q -m '301 Moved Permanently'; \
     test $(BRANCH) = master || git branch $(BRANCH); \

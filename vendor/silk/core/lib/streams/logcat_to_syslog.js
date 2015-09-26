@@ -1,8 +1,13 @@
 /**
+ * Copyright (c) 2015 Silk Laboratories, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Laboratories, Inc.
+ */
+
+/**
  * The closely linked partner to the "Logcat" stream will format the output of
  * that stream into a syslog friendly format.
  */
-
 
 import { Transform } from 'stream';
 import assert from 'assert';

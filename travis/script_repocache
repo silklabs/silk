@@ -14,7 +14,7 @@ fi
 
 set -x
 rm -rf silk-device
-git clone git@github.com:silklabs/silk-device.git
+git clone ssh://git@github.com/silklabs/silk-device.git
 make -C silk-device repocache.$GONK
 
 mkdir -p deploy/repocache

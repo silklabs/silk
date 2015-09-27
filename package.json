@@ -5,6 +5,7 @@
   "scripts": {
     "start": "DEBUG=* babel-node --harmony lib/server/main.js production",
     "next2master": "babel-node --harmony lib/github-tool.js",
+    "triggertravis": "babel-node --harmony lib/trigger-travis.js",
     "lint": "eslint lib",
     "test": "npm run-script lint"
   },
@@ -22,7 +23,10 @@
     "express": "^4.12.3",
     "github-webhook-middleware": "0.0.2",
     "lodash.merge": "^3.3.2",
-    "octokat": "^0.4.12"
+    "octokat": "^0.4.12",
+    "promise-callback": "^3.0.3",
+    "request-promise": "^0.4.3",
+    "travis-ci": "^2.0.3"
   },
   "engines": {
     "node": ">=0.12.x"

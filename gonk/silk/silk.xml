@@ -48,7 +48,7 @@
            remote="github"
            revision="97b896331c3da078c302f5ed64e530072ca5c01f"
            upstream="master"
-           clone-depth="1"/>
+           clone-depth="42"/>
   <project name="andreasgal/node-kissfft"
            path="external/node-kissfft"
            remote="github"

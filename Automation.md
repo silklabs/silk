@@ -1,5 +1,17 @@
 
-Releng runs a Github webhook for branch management automation.
+## Releng Services
+
+### Github WebHook
+
+Releng runs a Github webhook, implemented on a Heroku server, that provides its customers with:
+* automated merging of `next` commits back to `master` branches
+* a convenient **automerge** label that enables PRs to be merged immediately upon a successfully CI result
+
+### Repocache
+
+Nightly automation updates the "repocache" tarballs used to speed up
+silk-device developer sync times.  To trigger an update manually, run `npm run
+repocache`.
 
 ## Status
 

@@ -67,6 +67,22 @@ static char ADVERTISEMENT_RSSI_IDENTIFER;
   
 }
 
+- (void) replaceCBUUIDArrayWithStringsArray: (NSString *)key dict:(NSMutableDictionary *)dict {
+  NSMutableArray *uuids = [dict objectForKey:key];
+  if (!uuids) {
+    return;
+  }
+
+  NSMutableArray *uuidStrings = [[NSMutableArray alloc] initWithCapacity:uuids.count];
+  for (CBUUID *uuid in uuids) {
+    [uuidStrings addObject:[uuid UUIDString]];
+  }
+
+  // replace the UUID list with list of strings
+  [dict removeObjectForKey:key];
+  [dict setObject:uuidStrings forKey:key];
+}
+
 // Translates the Advertisement Data from didDiscoverPeripheral into a structure that can be serialized as JSON
 //
 // This version keeps the iOS constants for keys, future versions could create more friendly keys
@@ -90,6 +106,9 @@ static char ADVERTISEMENT_RSSI_IDENTIFER;
 //     kCBAdvDataServiceUUIDs = (
 //         FED8
 //     );
+//     kCBAdvDataSolicitedServiceUUIDs = (
+//         "Apple Notification Center"
+//     );
 //     kCBAdvDataTxPowerLevel = 32;
 //};
 - (NSDictionary *) serializableAdvertisementData: (NSDictionary *) advertisementData {
@@ -109,21 +128,10 @@ static char ADVERTISEMENT_RSSI_IDENTIFER;
   }
   
   // Create a new list of Service UUIDs as Strings instead of CBUUIDs
-  NSMutableArray *serviceUUIDs = [dict objectForKey:CBAdvertisementDataServiceUUIDsKey];
-  NSMutableArray *serviceUUIDStrings;
-  if (serviceUUIDs) {
-    serviceUUIDStrings = [[NSMutableArray alloc] initWithCapacity:serviceUUIDs.count];
-    
-    for (CBUUID *uuid in serviceUUIDs) {
-      [serviceUUIDStrings addObject:[uuid UUIDString]];
-    }
-    
-    // replace the UUID list with list of strings
-    [dict removeObjectForKey:CBAdvertisementDataServiceUUIDsKey];
-    [dict setObject:serviceUUIDStrings forKey:CBAdvertisementDataServiceUUIDsKey];
-    
-  }
-  
+  [self replaceCBUUIDArrayWithStringsArray:CBAdvertisementDataServiceUUIDsKey dict:dict];
+  [self replaceCBUUIDArrayWithStringsArray:CBAdvertisementDataOverflowServiceUUIDsKey dict:dict];
+  [self replaceCBUUIDArrayWithStringsArray:CBAdvertisementDataSolicitedServiceUUIDsKey dict:dict];
+
   // Convert the manufacturer data
   NSData *mfgData = [dict objectForKey:CBAdvertisementDataManufacturerDataKey];
   if (mfgData) {

@@ -232,6 +232,7 @@ define __repocache_rules
 repocache.$(1):
 	$(MAKE) zest
 	export NO_REPOCACHE=1 ; \
+  export REPO_INIT_ARGS="--depth=1" ; \
   $(MAKE) init.$(1)
 	$(MAKE) sync
 	tar zcf repocache-$(REPO_INIT_HOST)-$(1).tgz .repo/project-objects .repo/projects/

@@ -7,6 +7,9 @@ every sprint a release is made to complete that milestone.
 Quick "chemspill" branches may also occur on demand to resolve critical issues
 with the current release, and run completely independent to the normal sprint cadence.
 
+For details on Releng automation, please refer to [Automation.md](Automation.md).
+
+
 ## Glossary
 
 * **Code complete (CC)** - all blocking issues resolved, projects labeled, final binaries uploaded, setup documented.  The *release* branch is created upon the completion of CC.

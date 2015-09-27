@@ -16,6 +16,9 @@ before_install:
 script:
   - npm test
 
+before_deploy:
+  - mkdir -p deploy/
+
 deploy:
   provider: s3
   access_key_id: "AKIAIASNJWAY2EBXDKRA"

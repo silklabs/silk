@@ -19,17 +19,17 @@ For details on Releng automation, please refer to [Automation.md](Automation.md)
 
 ## Fall Release Calendar
 
-Milestone Name      |Start  |FML    |FC     |CC
---------------------|-------|-------|-------|-------
-Adventus8           |Aug 31 |Sept 10|Sept 14|Sept 17
-Adventus7           |Sept 14|Sept 23|Sept 25|Oct 1
-Adventus6           |Sept 28|Oct 7  |Oct 9  |Oct 15
-Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29
-Adventus4           |Oct 26 |Nov 4  |Nov 6  |Nov 12
-Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26
-Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10
-Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18
-*Happy Holidays!!!* |Dec 21 |-      |-      |Jan 1
+Milestone Name      |Start  |FML    |FC     |CC     |Issues
+--------------------|-------|-------|-------|-------|------
+Adventus8           |Aug 31 |Sept 10|Sept 14|Sept 17| -
+Adventus7           |Sept 14|Sept 23|Sept 25|Oct 1  | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus7)
+Adventus6           |Sept 28|Oct 7  |Oct 9  |Oct 15 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus6)
+Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus5)
+Adventus4           |Oct 26 |Nov 4  |Nov 6  |Nov 12 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus4)
+Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus3)
+Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2)
+Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1)
+*Happy Holidays!!!* |Dec 21 |-      |-      |Jan 1  | -
 
 ## Issue Tracking
 

@@ -1,16 +1,17 @@
-language: node_js
-node_js: 0.12
-
 os:
   - linux
   - osx
 
 before_install:
   - if [ $TRAVIS_OS_NAME == osx ]; then
-      brew update
+      brew update;
       brew install nvm;
       source $(brew --prefix nvm)/nvm.sh;
     fi
+  - npm install
+
+script:
+  - npm test
 
 deploy:
   provider: s3
@@ -24,3 +25,4 @@ deploy:
   upload-dir: $TRAVIS_BRANCH
   on:
     all_branches: true
+    condition: $DEPLOY = true

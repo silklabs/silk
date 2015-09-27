@@ -21,9 +21,10 @@ Heroku server logs can be viewed:
 
 Heroku configuration is at https://dashboard.heroku.com/apps/silk-releng
 
-To examine state from the github side, view the **Recent Deliveries** at
+To examine recent Github Webhook deliveries, view the **Recent Deliveries** section of
 https://github.com/organizations/silklabs/settings/hooks/5939271
 
+The nightly repocache builds are visible at https://magnum.travis-ci.com/silklabs/releng/builds and are the builds named " Updating repocache for *xxx* gonk".
 
 ## Setup
 

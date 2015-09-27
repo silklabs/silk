@@ -169,7 +169,7 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 	@if [[ -n "$(REPOCACHE_$(GONK))" ]]; then \
     if [[ ! -d .repo/projects ]]; then \
       echo Seeding .repo projects from $(REPOCACHE_$(GONK)); \
-      ( set -x; curl "$(REPOCACHE_$(GONK))" | tar zx ); \
+      ( set -x; curl -L "$(REPOCACHE_$(GONK))" | tar zx ); \
     else \
       echo ======================================================; \
       echo Notice: Unable to use repo cache to speed up your sync; \
@@ -212,17 +212,15 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 # Make the URL accessible without any authentication (TODO: fix!) and add it to
 # the corresponding REPOCACHE_<gonk> macro below.
 #
-# Periodically the repo cache may need to be re-created as the gonk manifest
-# changes to maintain quicker sync times. A slightly stale repo cache should not
-# cause any correctness issues, the user will just be downloading some
-# unnecessary bits. (TODO: Wrap automation around updating the repo cache.)
-#
+
 
 ifndef NO_REPOCACHE
-REPOCACHE_base := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-base.tgz
+REPOCACHE_URLPREFIX := https://silk-releng.s3.amazonaws.com/master/repocache/repocache-
+
+REPOCACHE_base := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-base.tgz
 ifeq ($(REPO_INIT_HOST),linux)
-REPOCACHE_mako := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-mako.tgz
-REPOCACHE_qemu := https://silk-device.s3.amazonaws.com/repocache/repocache-$(REPO_INIT_HOST)-qemu.tgz
+REPOCACHE_mako := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-mako.tgz
+REPOCACHE_qemu := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-qemu.tgz
 endif
 endif # NO_REPOCACHE
 

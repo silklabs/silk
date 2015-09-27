@@ -5,7 +5,7 @@
   "scripts": {
     "start": "DEBUG=* babel-node --harmony lib/server/main.js production",
     "next2master": "babel-node --harmony lib/github-tool.js",
-    "triggertravis": "babel-node --harmony lib/trigger-travis.js",
+    "repocache": "babel-node --harmony lib/trigger_repocache_update.js",
     "lint": "eslint lib",
     "test": "npm run-script lint"
   },

@@ -18,5 +18,5 @@ git clone ssh://git@github.com/silklabs/silk-device.git
 make -C silk-device repocache.$GONK
 
 mkdir -p deploy/repocache
-mv repocache*tgz deploy/repocache
+mv silk-device/repocache*tgz deploy/repocache
 exit 0

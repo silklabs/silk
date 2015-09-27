@@ -27,6 +27,7 @@ https://github.com/organizations/silklabs/settings/hooks/5939271
 * Resources Tab -> Add-ons:
   * Add 'Heroku Scheduler'
   * Configure the scheduler to run `npm run next2master` every hour
+  * Configure the scheduler to run `npm run repocache` every day
 
 ### Github WebHook
 

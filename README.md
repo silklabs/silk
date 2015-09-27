@@ -44,6 +44,7 @@ Github milestones are created in all the affected projects to collect issues:
 * Provide regular updates on progress or blockers in your assigned issues every 1-3 days at least.
 * Unassigned issues are available for anybody to pick up, and if you see somebody who appears to be overloaded please proactively offer assistance if you have bandwidth.
 * Please feel free to help assign the appropriate priority label for an issue, and file new issues as appropriate.
+* [Issues without a milestone](https://github.com/issues?utf8=%E2%9C%93&q=is%3Aissue+user%3Asilklabs+is%3Aopen+no%3Amilestone).
 
 ## Branching Details
 

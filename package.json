@@ -19,7 +19,7 @@
     "joi": "^5.1.0",
     "lodash.merge": "^3.3.2",
     "moment": "^2.10.3",
-    "react-native": "^0.11.0",
+    "react-native": "0.11.2",
     "react-native-button": "^1.2.0",
     "react-native-linear-gradient": "^0.3.2",
     "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#046a2f6a4353079e3376ebf340ec410986689144",

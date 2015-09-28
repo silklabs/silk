@@ -22,13 +22,13 @@ For details on Releng automation, please refer to [Automation.md](Automation.md)
 Milestone Name      |Start  |FML    |FC     |CC     |Issues
 --------------------|-------|-------|-------|-------|------
 Adventus8           |Aug 31 |Sept 10|Sept 14|Sept 17| -
-Adventus7           |Sept 14|Sept 23|Sept 25|Oct 1  | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus7)
-Adventus6           |Sept 28|Oct 7  |Oct 9  |Oct 15 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus6)
-Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus5)
-Adventus4           |Oct 26 |Nov 4  |Nov 6  |Nov 12 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus4)
-Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus3)
-Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2)
-Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [All Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1)
+Adventus7           |Sept 14|Sept 23|Sept 25|Oct 1  | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus7) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus7+no%3Aassignee)
+Adventus6           |Sept 28|Oct 7  |Oct 9  |Oct 15 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus6) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus6+no%3Aassignee)
+Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus5) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus5+no%3Aassignee)
+Adventus4           |Oct 26 |Nov 4  |Nov 6  |Nov 12 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus4) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus4+no%3Aassignee)
+Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus3) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus3+no%3Aassignee)
+Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2+no%3Aassignee)
+Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+no%3Aassignee)
 *Happy Holidays!!!* |Dec 21 |-      |-      |Jan 1  | -
 
 ## Issue Tracking

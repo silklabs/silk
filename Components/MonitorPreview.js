@@ -46,7 +46,6 @@ export var MonitorPreview = React.createClass({
     id: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
     status: React.PropTypes.string.isRequired,
-    serverUrl: React.PropTypes.string.isRequired,
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
     api: React.PropTypes.object.isRequired,

@@ -112,7 +112,6 @@ var MonitorsView = React.createClass({
           api={api}
           socket={this.socket}
           navigator={this.props.navigator}
-          serverUrl={this.state.serverUrl}
           logo={device.logo}
           previewSize = {device.previewSize}
         />

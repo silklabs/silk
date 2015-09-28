@@ -339,7 +339,7 @@ const MAPS = Object.defineProperties({ }, {
                   parse: bufferToUUIDArray.bind(null, 2) } ],
         [ 0x15, { description: 'List of 128-bit Service Solicitation UUIDs',
                   type: 'service-uuids',
-                  parse: bufferToUUIDArray.bind(null, 8) } ],
+                  parse: bufferToUUIDArray.bind(null, 16) } ],
         [ 0x16, { description: 'Service Data - 16-bit UUID',
                   type: 'service-data',
                   parse: parseServiceData.bind(null, 2) } ],

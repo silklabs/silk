@@ -32,6 +32,7 @@ import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crashreport';
 import initOutbox from './outbox';
+import NetworkStatus from './network_status';
 import Logcat from './logcat';
 
 // Wait for 60 seconds for boot before issuing a warning.
@@ -53,6 +54,7 @@ let bootCompleted = false;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
+let networkStatus;
 let logcat;
 let clapDetector;
 let ext;
@@ -144,7 +146,10 @@ function boot() {
 function main() {
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
-  outbox = initOutbox(wifi);
+  networkStatus = new NetworkStatus(wifi);
+  networkStatus.hintSocket = server;
+
+  outbox = initOutbox(networkStatus);
   crashreporter = makeCrashReporter(outbox);
 
   return getDeviceId()
@@ -211,7 +216,6 @@ server.on('connect', () => {
   .then(() => {
     diag.start(server.socket);
     timeline.socket = server.socket;
-    outbox.hintSocket = server.socket;
   })
   .catch(util.processthrow);
 });
@@ -219,7 +223,6 @@ server.on('connect', () => {
 server.on('disconnect', () => {
   diag.stop();
   timeline.socket = null;
-  outbox.hintSocket = null;
 });
 
 server.on('reconnecting', () => ui.goto('connecting'));

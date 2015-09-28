@@ -14,7 +14,7 @@ import createLog from '../log';
 import { EventEmitter } from 'events';
 import StreamOperation from './operation';
 
-const log = createLog('outbox-stream');
+const log = createLog('outbox:manager');
 
 const DEFAULT_STORAGE_PATH = path.join(process.cwd(), '/.outbox');
 const DEFUALT_QUEUE_NAME = 'default-queue';
@@ -472,24 +472,6 @@ export class Outbox {
    */
   get online() {
     return this.queue.online;
-  }
-
-  _hintSocket = null
-
-  get hintSocket() {
-    return this._hintSocket;
-  }
-
-  set hintSocket(socket) {
-    if (this._hintSocket) {
-      this._hintSocket.removeListener('connect', this.resetBackOff);
-    }
-
-    if (socket) {
-      socket.on('connect', this.resetBackOff);
-    }
-
-    this._hintSocket = socket;
   }
 
   /**

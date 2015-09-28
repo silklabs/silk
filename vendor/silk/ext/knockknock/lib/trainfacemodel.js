@@ -110,8 +110,8 @@ class TrainFaces {
       }
     });
 
-    this._onFace = (faces) => {
-      if (faces.length <= 0) {
+    this._onFace = (when, faces, source) => {
+      if ((faces.length <= 0) || (source === 'hal')) {
         log.warn(`No faces; ignoring`);
         return;
       }

@@ -111,8 +111,8 @@ class Timeline extends EventEmitter {
   /**
    *
    */
-  addFace(when, faces) {
-    this.emit('face', when, faces);
+  addFace(when, faces, source) {
+    this.emit('face', when, faces, source);
     this._pushFace(when, faces);
     this.eventTracker.record({
       tag: 'face',
@@ -197,7 +197,7 @@ class Timeline extends EventEmitter {
   _emitEvents(objects) {
     objects.forEach(object => {
       if (object.tag === 'face') {
-        this.emit('face', object.when, object.rects);
+        this.emit('face', object.when, object.rects, object.source);
       } else if (object.tag === 'motion') {
         this.emit('motion', object.when, object.rects);
       } else if (object.tag === 'car') {

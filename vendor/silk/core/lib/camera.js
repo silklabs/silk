@@ -313,7 +313,7 @@ class CameraStream extends EventEmitter {
         case TAG_FACES:
           log.debug(`TAG_FACES ${when}`);
           let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-          this.timeline.addFace(when, faces);
+          this.timeline.addFace(when, faces, 'hal');
           break;
         case TAG_MIC:
           log.debug(`TAG_MIC ${when}`);

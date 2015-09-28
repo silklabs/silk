@@ -95,8 +95,8 @@ class FindFace {
    */
   _start() {
     log.info(`Starting face recognition`);
-    this._onFace = (when, faces) => {
-      if (faces.length <= 0) {
+    this._onFace = (when, faces, source) => {
+      if ((faces.length <= 0) || (source === 'hal')) {
         return;
       }
 

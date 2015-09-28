@@ -333,6 +333,7 @@ class Wifi extends events.EventEmitter
 
     return this._networkCleanup()
       .then(() => this._startWpaMonitor())
+      .then(() => wpaCli('scan'))
       .then(() => wpaCli('status'))
       .then(() => wpaCliExpectOk('log_level', 'excessive'))
       .then(() => {

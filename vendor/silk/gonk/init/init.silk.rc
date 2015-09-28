@@ -31,8 +31,10 @@ service volume /system/silk/bin/volume
 
 service wpad /system/silk/bin/wpad
     class main
-    user system
-    group wifi system
+    user root
+    group root
+    # wpad will switch itself to the wifi user after loading the wifi .ko
+    # driver, which requires root
     socket wpad stream 0600 root root
 
 service bledroid /system/silk/bin/bledroid

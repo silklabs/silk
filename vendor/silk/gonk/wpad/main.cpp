@@ -17,6 +17,7 @@
 #include <poll.h>
 #include <stdlib.h>
 #include <sysutils/FrameworkListener.h>
+#include <private/android_filesystem_config.h>  // for AID_WIFI
 
 class WpaListener : private FrameworkListener {
 public:
@@ -64,6 +65,10 @@ int main(int, char **)
 
   BAIL_ON_FAIL(wifi_load_driver());
   BAIL_ON_FAIL(wifi_start_supplicant(false));
+
+  // wifi driver (including .ko) loaded, can run as user wifi instead of root
+  BAIL_ON_FAIL(setgid(AID_WIFI));
+  BAIL_ON_FAIL(setuid(AID_WIFI));
 
   // A successful return from wifi_start_supplicant() does not guarantee that
   // the supplicant's socket is ready to be connected to so try

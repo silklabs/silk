@@ -2,8 +2,8 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-ifeq ($(TARGET_PRODUCT), msm8916_32)
-LOCAL_CFLAGS += -DQBLUETOOTH
+ifeq ($(TARGET_USES_QCOM_BSP), true)
+  LOCAL_CFLAGS += -DQBLUETOOTH
 endif
 
 LOCAL_MODULE := bledroid

@@ -5,6 +5,7 @@
 
 var React = require('react-native');
 var {
+  PixelRatio,
   ScrollView,
   StyleSheet,
   // NB: wifi settings dialog uses its own iOS "system" style, not the
@@ -55,73 +56,60 @@ var WifiSettings = React.createClass({
       <View style={styles.container}>
         <Title onSave={this.save} onCancel={this.cancel} />
 
-        <ScrollView>
-        <View style={styles.contentContainer}>
-          <View style={styles.contentSpacer} />
-
-          <View style={styles.formContainer}>
-            <View style={styles.formLeftSpace} />
-
-            <View style={styles.form}>
-              <View style={styles.formRow}>
-                <View style={styles.formRowLabelContainer}>
-                  <Text style={styles.formRowLabel}>Network</Text>
-                </View>
-                <View style={styles.formInputContainer}>
-                  <TextInput
-                    ref="ssid"
-                    value={this.state.ssid}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={styles.formInput}
-                    onChangeText={(text) => this.setState({ssid: text})}
-                  />
-                </View>
+        <ScrollView style={styles.contentContainer}>
+          <Text style={styles.formHeader}>WIFI</Text>
+          <View style={styles.form}>
+            <View style={[styles.formRow, styles.formRowFirst]}>
+              <View style={styles.formRowLabelContainer}>
+                <Text style={styles.formRowLabel}>Network</Text>
               </View>
-              <View style={styles.formRow}>
-                <View style={styles.formRowLabelContainer}>
-                  <Text style={styles.formRowLabel}>Password</Text>
-                </View>
-                <View style={styles.formInputContainer}>
-                  <TextInput
-                    ref="secret"
-                    secureTextEntry={true}
-                    value={this.state.secret}
-                    autoFocus={true}
-                    style={styles.formInput}
-                    onChangeText={(text) => this.setState({secret: text})}
-                  />
-                </View>
+              <View style={styles.formInputContainer}>
+                <TextInput
+                  ref="ssid"
+                  value={this.state.ssid}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.formInput}
+                  onChangeText={(text) => this.setState({ssid: text})}
+                />
               </View>
-
             </View>
-          </View>
-
-
-          <View style={styles.debugSettingsSpacer} />
-          <View style={styles.formContainer}>
-            <View style={styles.formLeftSpace} />
-
-            <View style={styles.form}>
-              <View style={styles.formRow}>
-                <View style={styles.formRowLabelContainer}>
-                  <Text style={styles.formRowLabel}>Server</Text>
-                </View>
-                <View style={styles.formInputContainer}>
-                  <TextInput
-                    ref="serverUrl"
-                    value={this.state.serverUrl}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={styles.formInput}
-                    onChangeText={(text) => this.setState({serverUrl: text})}
-                  />
-                </View>
+            <View style={styles.formRow}>
+              <View style={styles.formRowLabelContainer}>
+                <Text style={styles.formRowLabel}>Password</Text>
+              </View>
+              <View style={styles.formInputContainer}>
+                <TextInput
+                  ref="secret"
+                  secureTextEntry={true}
+                  value={this.state.secret}
+                  autoFocus={true}
+                  style={styles.formInput}
+                  onChangeText={(text) => this.setState({secret: text})}
+                />
               </View>
             </View>
           </View>
 
-        </View>
+          <Text style={styles.formHeader}>SERVER</Text>
+          <View style={styles.form}>
+            <View style={[styles.formRow, styles.formRowFirst]}>
+              <View style={styles.formRowLabelContainer}>
+                <Text style={styles.formRowLabel}>URL</Text>
+              </View>
+              <View style={styles.formInputContainer}>
+                <TextInput
+                  ref="serverUrl"
+                  value={this.state.serverUrl}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.formInput}
+                  onChangeText={(text) => this.setState({serverUrl: text})}
+                />
+              </View>
+            </View>
+          </View>
+
         </ScrollView>
       </View>
     );
@@ -191,26 +179,29 @@ var styles = StyleSheet.create({
     height: 34,
   },
 
-  formContainer: {
-    backgroundColor: 'white',
-    borderBottomWidth: 0.5,
-    borderColor: '#c8c7cc',
-    flexDirection: 'row',
-  },
-  formLeftSpace: {
-    borderColor: '#c8c7cc',
-    borderTopWidth: 0.5,
-    width: 20,
-    height: 39,
+  formHeader: {
+    fontWeight: '500',
+    color: '#404e55',
+    marginTop: 16,
+    marginLeft: 8,
+    marginBottom: 4,
   },
   form: {
+    backgroundColor: 'white',
+    borderTopWidth: 1 / PixelRatio.get(),
+    borderBottomWidth: 1 / PixelRatio.get(),
+    borderColor: '#c8c7cc',
+    paddingLeft: 20,
     flex: 1,
   },
   formRow: {
     flex: 1,
     flexDirection: 'row',
     borderColor: '#c8c7cc',
-    borderTopWidth: 0.5,
+    borderTopWidth: 1 / PixelRatio.get(),
+  },
+  formRowFirst: {
+    borderTopWidth: 0,
   },
   formRowLabelContainer: {
     width: 90,
@@ -227,10 +218,6 @@ var styles = StyleSheet.create({
     height: 44,
     fontSize: 17,
     flex: 1,
-  },
-
-  debugSettingsSpacer: {
-    height: 400,
   },
 });
 

@@ -95,7 +95,7 @@ class FindFace {
    */
   _start() {
     log.info(`Starting face recognition`);
-    this._onFace = (faces) => {
+    this._onFace = (when, faces) => {
       if (faces.length <= 0) {
         return;
       }
@@ -126,7 +126,7 @@ class FindFace {
             log.info(`face detected ${JSON.stringify(result)}`);
 
             // Add the person to timeline
-            this._env.timeline.addObject(this._matchIdWithName(result.id), Date.now(), face);
+            this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);
           }
         });
         this._working = false;

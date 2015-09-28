@@ -86,8 +86,7 @@ var MonitorsView = React.createClass({
   },
 
   componentWillUnmount: function() {
-    PERIPH_EVENTS.forEach(ev =>
-                          this.dm.removeListener(ev, this.refreshDeviceList));
+    PERIPH_EVENTS.forEach(ev => this.dm.removeListener(ev, this.refreshDeviceList));
     if (this.socket) {
       this.socket.close();
     }
@@ -213,23 +212,24 @@ var MonitorsView = React.createClass({
   },
 
   loadSettings: function() {
-    return (() => {
-      if (this.state.network) {
-        return this.navigateWifiScene({
-          ssid: this.state.network.ssid,
-          secret: this.state.network.secret,
-          serverUrl: this.state.serverUrl,
-        });
-      }
-      var net = require('../Libraries/Net');
-      return net.getInfo().then(info => {
+    let promise;
+    if (this.state.network) {
+      promise = this.navigateWifiScene({
+        ssid: this.state.network.ssid,
+        secret: this.state.network.secret,
+        serverUrl: this.state.serverUrl,
+      });
+    } else {
+      const net = require('../Libraries/Net');
+      promise = net.getInfo().then(info => {
         return this.navigateWifiScene({
           ssid: info.SSID,
           secret: '',
           serverUrl: this.state.serverUrl,
         });
       });
-    })().then(network => {
+    }
+    return promise.then(network => {
       this.state.network = network;
       if (this.getWifiPromise) {
         this.getWifiPromise = null;
@@ -270,7 +270,8 @@ var MonitorsView = React.createClass({
           error: p.error,
         };
         return;
-      } else if ('registered' === p.state) {
+      }
+      if ('registered' === p.state) {
         // Device is registered...
         if (!(p.deviceId in streaming)) {
           // Device has sent us its ID, but we haven't observed a
@@ -289,7 +290,6 @@ var MonitorsView = React.createClass({
             p.error ? p.error : p.serverConnectionStatus;
       }
     });
-
 
     Object.keys(streaming).forEach(id => {
       if (!this.dm.enumerateDevices().some(

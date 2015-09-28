@@ -145,11 +145,15 @@ class Timeline extends EventEmitter {
    *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
    */
   addObjects(objects) {
-    this.previewObjects.push(...objects);
-    this.videoObjects.push(...objects);
-
+    objects.forEach((object) => {
+      // Run facial recognition on the detected faces before adding them
+      if (object.tag !== 'face') {
+        this.previewObjects.push(object);
+        this.videoObjects.push(object);
+        this.eventTracker.record(object);
+      }
+    });
     this._emitEvents(objects);
-    objects.forEach((record) => this.eventTracker.record(record));
   }
 
   /**

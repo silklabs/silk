@@ -16,7 +16,7 @@ const GRID_X = 8;
 const GRID_Y = 8;
 const THRESHOLD = 80;
 
-const TRAIN_FACES_YML = '/data/silk/opencv/trained_faces.yml';
+const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
 
 let log;
@@ -106,7 +106,7 @@ class FindFace {
       }
 
       if (this._working) {
-        log.error(`Still busy, unable to process next preview image`);
+        log.debug(`Still busy, unable to process next preview image`);
         return;
       }
 
@@ -119,6 +119,7 @@ class FindFace {
         }
 
         // Run facial recognition on each of the detected faces
+        let start = Date.now();
         faces.forEach(face => {
           let faceim = image.roi(face.x, face.y, face.width, face.height);
           let result = this._model.predictSync(faceim);
@@ -127,8 +128,14 @@ class FindFace {
 
             // Add the person to timeline
             this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);
+          } else {
+            // Unknown face
+            log.debug(`Unknown face detected`);
+            this._env.timeline.addObject('elvis', when, face);
           }
         });
+        let diff = Date.now() - start;
+        log.verbose(`Face recognition finished in ${diff}ms`);
         this._working = false;
       });
     };

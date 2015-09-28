@@ -10,7 +10,7 @@ let fs = require('mz/fs');
 let path = require('path');
 
 const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
-const TRAIN_FACES_YML = '/data/silk/opencv/trained_faces.yml';
+const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
 const FACE_COUNT = 50;
 

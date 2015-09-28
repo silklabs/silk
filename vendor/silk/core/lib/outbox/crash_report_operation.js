@@ -54,7 +54,7 @@ export default class CrashReportOperation extends Operation {
       );
     } catch (err) {
       log.error('Failed to get put url for crash report', err);
-      return { done: false, remainder: readable, error: err };
+      return { done: false, remainder: path, error: err };
     }
 
     let writer = httpStream(putUrl, {

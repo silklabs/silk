@@ -299,8 +299,9 @@ class Bledroid extends EventEmitter {
   }
 
   noteNobleConnectionRequest(address) {
-    assert(!this.nobleConnections.has(address));
-    this.nobleConnections.add(address);
+    if (!this.nobleConnections.has(address)) {
+      this.nobleConnections.add(address);
+    }
   }
 
   onStateChange(state) {

@@ -6,8 +6,10 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let childProcessExecFile = require('child_process').execFile;
-let log = require('./log')('util');
+import { execFile as childProcessExecFile } from 'child_process';
+import createLog from './log';
+
+const log = createLog('util');
 
 const SOUND_DIR = '/system/silk/media/sound/';
 

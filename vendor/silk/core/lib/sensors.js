@@ -6,10 +6,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let util = require('./util');
-let events = require('events');
-let net = require('net');
-let log = require('./log')('sensors');
+import * as util from './util';
+import events from 'events';
+import net from 'net';
+import createLog from './log';
+
+const log = createLog('sensors');
 
 const SENSORS_SOCKET_NAME = '/dev/socket/sensors';
 const SENSORS_COMMAND_NAME = 'SensorsCommand';

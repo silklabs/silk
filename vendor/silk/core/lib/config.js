@@ -6,16 +6,18 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let api = require('./api');
-let events = require('events');
-let log = require('./log')('config');
-let server = require('./server');
-let wifi = require('./wifi');
-let util = require('./util');
+import api from './api';
+import events from 'events';
+import createLog from './log';
+
+import server from './server';
+import wifi from './wifi';
+import * as util from './util';
 
 import assert from 'assert';
 import getBTLE from './btle';
 
+const log = createLog('config');
 const STATE = api.btleConfigService.state;
 
 class DeviceConfig extends events.EventEmitter {

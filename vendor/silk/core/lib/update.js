@@ -6,13 +6,16 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let crypto = require('crypto');
-let fs = require('fs');
-let util = require('./util');
-let log = require('./log')('update');
-let request = require('request');
-let validator = require('validator');
-let EventEmitter = require('events').EventEmitter;
+import crypto from 'crypto';
+import fs from 'fs';
+import * as util from './util';
+import createLog from './log';
+import request from 'request';
+import validator from 'validator';
+
+import { EventEmitter } from 'events';
+
+const log = createLog('update');
 
 let emitter = new EventEmitter();
 

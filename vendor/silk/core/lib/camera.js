@@ -6,15 +6,17 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let log = require('./log')('camera');
+import createLog from './log';
 import { EventEmitter } from 'events';
-let util = require('./util');
-let net = require('net');
-let cv = require('opencv');
+import * as util from './util';
+import net from 'net';
+import cv from 'opencv';
 import CBuffer from 'CBuffer';
 
 //const FRONT = 1;
 //const BACK = 0;
+
+const log = createLog('camera');
 
 const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION = util.getintprop(DURATION_PROP, 1);

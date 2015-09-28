@@ -71,11 +71,11 @@ function rejectFwd(e) {
   return Promise.reject(e);
 }
 
-function DeviceManager(scanner, wifiHelper) {
+function DeviceManager(scanner, getWifiConfig) {
   EventEmitter.call(this);
   this.devices = { };
   this.scanner = scanner;
-  this.wifiHelper = wifiHelper;
+  this.getWifiConfig = getWifiConfig;
   this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
   this.scanner.on('disconnect', this._onPeripheralDisconnected.bind(this));
 }
@@ -282,7 +282,7 @@ DeviceManager.prototype._waitForProximity = function(p) {
 
 DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
   var network = null;
-  return this.wifiHelper.getWifiNetwork()
+  return this.getWifiConfig()
   .then(net => {
     log.debug('Got network info');
     network = net;

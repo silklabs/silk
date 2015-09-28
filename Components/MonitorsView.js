@@ -20,6 +20,9 @@ var debug = require('debug')('silk:MonitorPreview');
 
 import { CameraMarkText, PlaceholderText } from './Text';
 
+const DeviceManager = require('../btle/central-device-manager');
+const ble_scanner = require('../btle/ble-central');
+
 var PERIPH_EVENTS = [
   'discover',
   'connect',
@@ -73,11 +76,24 @@ var MonitorsView = React.createClass({
   },
 
   componentWillMount: function() {
-    var DeviceManager = require('../btle/central-device-manager');
-    this.dm = new DeviceManager(require('../btle/ble-central'), this);
+    this.dm = new DeviceManager(
+      ble_scanner,
+      () => {
+        if (this.state.network) {
+          return Promise.resolve(this.state.network);
+        }
+        if (this._wifiSettingsPromise) {
+          return this._wifiSettingsPromise;
+        }
+        this._wifiSettingsPromise = this.loadSettings();
+        this._wifiSettingsPromise.catch(() => this._wifiSettingsPromise = null);
+        return this._wifiSettingsPromise;
+      }
+    );
+
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
-    this.getWifiPromise = null;
+    this._wifiSettingsPromise = null;
 
     api.socketio.address().then(result => {
       this.state.serverUrl = result.url;
@@ -231,8 +247,8 @@ var MonitorsView = React.createClass({
     }
     return promise.then(network => {
       this.state.network = network;
-      if (this.getWifiPromise) {
-        this.getWifiPromise = null;
+      if (this._wifiSettingsPromise) {
+        this._wifiSettingsPromise = null;
       }
       if (this.state.serverUrl !== network.serverUrl) {
         debug('WARNING: Switching server URL to', network.serverUrl);
@@ -312,17 +328,6 @@ var MonitorsView = React.createClass({
     this.setState(this.state);
   },
 
-  getWifiNetwork: function() {
-    if (this.state.network) {
-      return Promise.resolve(this.state.network);
-    }
-    if (this.getWifiPromise) {
-      return this.getWifiPromise;
-    }
-    this.getWifiPromise = this.loadSettings();
-    this.getWifiPromise.catch(() => this.getWifiPromise = null);
-    return this.getWifiPromise;
-  },
 });
 
 var PlaceholderMessage = React.createClass({

@@ -63,7 +63,7 @@ RCT_EXPORT_METHOD(startScan:(NSArray*)services) {
   NSMutableArray *serviceUUIDs = [NSMutableArray new];
   for (id service in services) {
     BLE_LOG(@"  service: %@", service);
-    CBUUID *serviceUUID =[CBUUID UUIDWithString:service];
+    CBUUID *serviceUUID = [CBUUID UUIDWithString:service];
     [serviceUUIDs addObject:serviceUUID];
   }
   [manager scanForPeripheralsWithServices:serviceUUIDs options:nil];

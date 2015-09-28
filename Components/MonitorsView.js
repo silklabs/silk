@@ -18,7 +18,8 @@ import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
 var io = require('socket.io-client-react-native');
 var debug = require('debug')('silk:MonitorPreview');
 
-import { CameraMarkText, PlaceholderText } from './Text';
+import { PlaceholderText } from './Text';
+import TopBar from './TopBar';
 
 const DeviceManager = require('../btle/central-device-manager');
 const ble_scanner = require('../btle/ble-central');
@@ -53,7 +54,7 @@ class SignOut extends React.Component {
     let { userState, navigator } = this.props;
     await userState.signOut();
     navigator.push({ name: 'SignIn', index: 0 });
-  }
+  };
 
   render() {
     return (
@@ -135,28 +136,12 @@ var MonitorsView = React.createClass({
     if (0 === configuring.length + streaming.length) {
       configuring = <PlaceholderMessage />;
     }
-    var connectionStyle = this.state.serverConnection + 'Indicator';
     return (
       <View style={styles.container}>
-        <View style={styles.statusBarUnderlay} />
-        <View style={styles.titleContainer}>
-          <View style={styles.spacer}>
-            <TouchableOpacity onPress={() => this.loadSettings().catch(() => {})}>
-              <View style={styles.settings}>
-                <Image
-                  source={require('image!Menu')}
-                  style={styles.icon}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-          <CameraMarkText />
-          <View style={styles.spacer}>
-            <View style={styles.indicatorContainer}>
-              <View style={styles[connectionStyle]} />
-            </View>
-          </View>
-        </View>
+        <TopBar
+          serverConnectionState={this.state.serverConnection}
+          openSettings={() => this.loadSettings().catch(() => {})}
+        />
         <View style={styles.content}>
           <ScrollView
             style={styles.monitors}
@@ -342,69 +327,8 @@ var PlaceholderMessage = React.createClass({
   },
 });
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  statusBarUnderlay: {
-    height: 20,
-    backgroundColor: '#404e55',
-  },
-  titleContainer: {
-    backgroundColor: '#2b3a42',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    paddingTop: 10,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 10,
-  },
-  indicatorContainer: {
-    // For some reason cjones was unable to make this `flex` fill
-    // available vertical space inside the title container (when
-    // changing the flex direction back to col).  So hack around that
-    // by hard-coding a fixed height.
-    //
-    //flex: 1,
-    height: 25,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  offlineIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
-    backgroundColor: '#ce0000',
-  },
-  connectingIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
-    backgroundColor: '#f7d708',
-  },
-  connectedIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
-    backgroundColor: '#9ccf31',
-  },
-
-  settings: {
-    flex: 1,
-    paddingLeft: 4,
-  },
-  icon: {
-    // TODO: shouldn't have to specify this?
-    width: 24,
-    height: 24,
-  },
-  spacer: {
     flex: 1,
   },
   content: {

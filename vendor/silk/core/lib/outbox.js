@@ -15,7 +15,7 @@ import PapertrailOp from './outbox/papertrail_operation';
 
 const STORAGE_PATH = path.join('/data', 'outbox');
 
-export default function(wifi) {
+export default function(networkStatus) {
   let outbox = createOutbox({
     storagePath: STORAGE_PATH
   });
@@ -27,20 +27,19 @@ export default function(wifi) {
   outbox.registerOperation(PapertrailOp);
 
   // Optimistically start running pending operations...
-  let online = wifi.isOnline();
-  outbox.online = online;
+  outbox.online = networkStatus.online;
 
   // Do not poll for work unless we are actively online...
-  if (online) {
+  if (outbox.online) {
     outbox.start();
   }
 
-  wifi.on('online', () => {
+  networkStatus.on('online', () => {
     outbox.online = true;
     outbox.start();
   });
 
-  wifi.on('offline', () => {
+  networkStatus.on('offline', () => {
     outbox.online = false;
     outbox.stop();
   });

@@ -36,6 +36,11 @@
            remote="silk"
            revision="master"/>
 
+  <project name="node-inspector/v8-profiler"
+           path="external/v8-profiler"
+           remote="github"
+           revision="refs/tags/v5.3.2" clone-depth="1"/>
+
   <!-- node modules -->
   <project name="silk-api-node"
            path="vendor/silk/core/local_node_modules/silk-api"

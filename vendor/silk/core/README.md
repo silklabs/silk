@@ -88,14 +88,10 @@ Generally whenever a new dependency is added to a *package.json* in the source
 tree (such as `vendor/silk/core/...`, `vendor/silk/ext/...`, or
 `external/<upstream_npm_package>`), please also follow these additional steps:
 
-1. Also add the new dependency to `vendor/silk/locked_node_modules/package.json`, and merge this commit at the
-same time.
-2. Run `$ cd vendor/silk/locked_node_modules/node_modules && git fetch --unshallow silk && repo start master`.
-3. Run `$ vendor/silk/locked_node_modules/update.sh` (expect this to take around 20 minutes)
-4. Send a PR for the resulting commit in
+1. Run `$ cd vendor/silk/locked_node_modules/node_modules && git fetch --unshallow silk && repo start master`.
+2. Run `$ vendor/silk/locked_node_modules/update.sh`
+3. Send a PR for the resulting commit in
 `vendor/silk/locked_node_modules/node_modules` to
-https://github.com/silklabs/silk-device-locked-node-modules.  Note that you will
-also often pick up newer versions of other random packages in addition to the
-new dependency that was added, and this is normally fine.
+https://github.com/silklabs/silk-device-locked-node-modules.
 
 TODO: automate all these steps!

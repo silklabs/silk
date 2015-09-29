@@ -6,6 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+let cv = require('opencv');
 let fs = require('mz/fs');
 let path = require('path');
 
@@ -13,6 +14,7 @@ const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
 const FACE_COUNT = 50;
+const FACE_PADDING = 5;
 
 let log;
 
@@ -97,8 +99,8 @@ class TrainFaces {
    *
    * @param person String name of the person to train
    */
-  collectFaces(person) {
-    log.info(`Collecting faces for ${person}`);
+  addPerson(person) {
+    log.info(`Adding faces for ${person}`);
     let faceCount = 1;
     let facePath = path.join(TRAIN_FACES_PATH, person);
 
@@ -132,7 +134,8 @@ class TrainFaces {
         // Save the face
         this._working = false;
         faces.forEach(face => {
-          let faceim = image.roi(face.x, face.y, face.width, face.height);
+          let faceim = new cv.Matrix(image, face.x, face.y, face.width, face.height);
+          faceim.adjustROI(FACE_PADDING, FACE_PADDING, FACE_PADDING, FACE_PADDING);
           log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
           faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
           faceCount++;
@@ -143,7 +146,7 @@ class TrainFaces {
           this._env.timeline.removeListener('face', this._onFace);
           return;
         }
-      });
+      }, 1 /* == 1 channel image (RGB not required) */);
     };
 
     this._env.timeline.on('face', this._onFace);

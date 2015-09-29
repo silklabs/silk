@@ -121,6 +121,18 @@ class CrashReport extends React.Component {
     let crash = this.props.crash;
     let datetime = new Date(Date.parse(crash.timeStamp));
     let bgStyle = crash.old ? styles.oldReport : styles.newReport;
+    let modal = null;
+    if (this.state.modalUrl) {
+      modal = (
+        <Modal
+          show={!!this.state.modalUrl}
+          onHide={this.onHideModal}>
+          <div style={styles.crashReport}>
+            <Iframe url={this.state.modalUrl} />
+          </div>
+        </Modal>
+      );
+    }
     return (
       <ListGroupItem style={bgStyle}>
         <Checkbox
@@ -129,17 +141,11 @@ class CrashReport extends React.Component {
         />
         <Link
           style={styles.link}
+          to="#"
           onClick={() => this.onShowCrash(crash.url)}>
           {datetime.toString()}
         </Link>
-
-        <Modal
-          show={!!this.state.modalUrl}
-          onHide={this.onHideModal}>
-          <div style={styles.crashReport}>
-            <Iframe url={this.state.modalUrl} />
-          </div>
-        </Modal>
+        {modal}
       </ListGroupItem>
     );
   }
@@ -260,12 +266,12 @@ export default class CrashReports extends React.Component {
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
 
-          <DropdownButton title="Select" onSelect={this.onSelect}>
+          <DropdownButton id="select" title="Select" onSelect={this.onSelect}>
             <MenuItem eventKey="all">All</MenuItem>
             <MenuItem eventKey="none">None</MenuItem>
           </DropdownButton>
 
-          <DropdownButton title="Mark as" onSelect={this.onMarkAs}>
+          <DropdownButton id="mark" title="Mark as" onSelect={this.onMarkAs}>
             <MenuItem eventKey="old">Old</MenuItem>
             <MenuItem eventKey="new">New</MenuItem>
           </DropdownButton>

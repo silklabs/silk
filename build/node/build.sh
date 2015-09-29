@@ -16,3 +16,9 @@ node ./build/overrides.js > $dest/src/overrides.json
 rm -f $dest/package.json
 cp $target/../package.json $dest/package.json
 rm -Rf $target
+
+# Install all dependencies for the client as not all dependencies may be easily
+# accessible (eg, private git URLs such as silklabs/node-jsonwebtoken and
+# silklabs/node-jws)
+cd $dest
+npm install --loglevel http

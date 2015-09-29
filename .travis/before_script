@@ -30,7 +30,7 @@ if [[ $GONK != base ]]; then
     .repo/projects \
 
   rm -rf \
-    frameworks/base/core \
+    frameworks/base/core/{java,res,tests} \
     frameworks/base/data/fonts \
     frameworks/base/data/sounds \
     frameworks/base/data/videos \

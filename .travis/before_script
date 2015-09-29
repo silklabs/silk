@@ -28,10 +28,23 @@ if [[ $GONK != base ]]; then
   rm -rf \
     .repo/project-objects \
     .repo/projects \
+
+  rm -rf \
+    frameworks/base/core \
+    frameworks/base/data/fonts \
+    frameworks/base/data/sounds \
+    frameworks/base/data/videos \
     frameworks/base/docs \
+    frameworks/base/media/java \
+    frameworks/base/media/mca \
     frameworks/base/media/tests \
-    prebuilts/qemu-kernel/x86 \
-    prebuilts/qemu-kernel/x86_64 \
+    frameworks/base/packages \
+    frameworks/base/tests \
+    prebuilts/android-emulator/windows \
+    prebuilts/qemu-kernel/{mips,x86,x86_64} \
+    prebuilts/misc/{android-mips,android-mips64,android-x86,android-x86_64,darwin-x86,windows} \
+
+  find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
 
   if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
     mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules

@@ -18,6 +18,12 @@ if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     linux)
         # Do a full build of the requested GONK.
         export GONK=$GONK_SPEC
+
+        # Only update locked_node_modules for one build in the entire OS/GONK
+        # build matrix.  It doesn't matter which one, "mako" seems nice
+        if [[ $GONK_SPEC == mako ]]; then
+          UPDATE_LOCKED_NODE_MODULES=true
+        fi
         ;;
     esac
 else

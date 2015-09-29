@@ -1,12 +1,15 @@
-#!/bin/bash
+#!/bin/bash -ex
 
-set -e
+# Update locked_node_modules if needed before starting the build
+./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
+vendor/silk/locked_node_modules/update.sh
+
 if [[ $GONK != base ]]; then
   if [[ $GONK == qemu ]]; then
     make -j2
 
     echo "******************************************************************"
-    echo Does the emulator even boot?
+    echo Emulator tests
     echo "******************************************************************"
     source build/envsetup.sh
     rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
@@ -16,18 +19,15 @@ if [[ $GONK != base ]]; then
     make -j2 otapackage
   fi
 else
-  echo "******************************************************************"
-  echo Build the PR with the "base" build
-  echo "******************************************************************"
   make -j2
 
   source build/envsetup.sh
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will probably fail
 
-  echo "******************************************************************"
-  echo Check if the PR boots on the emulator
-  echo "******************************************************************"
   if [[ $TRAVIS_OS_NAME == linux ]]; then
+    echo "******************************************************************"
+    echo Emulator tests
+    echo "******************************************************************"
     make update.qemu # Fetch the emulator
 
     # Fetch host adb since it's not built as a part of the base build
@@ -36,7 +36,6 @@ else
     export PATH=$PATH:$(readlink -f platform-tools)
     which adb
 
-    test/unit
     test/start_emulator -r run_tests
   else
     echo Warning: Skipping emulator boot check on OS X for now
@@ -49,3 +48,32 @@ else
     make init.mako
   fi
 fi
+
+echo "******************************************************************"
+echo Unit tests
+echo "******************************************************************"
+test/unit
+
+
+if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
+  echo "******************************************************************"
+  echo Update locked_node_modules
+  echo "******************************************************************"
+  push_branch=false
+  for branch in master next chemspill; do
+    if [ "$TRAVIS_BRANCH" = "$branch" ]; then
+      push_branch=true
+      break
+    fi
+  done
+
+  if $push_branch; then
+    pushd vendor/silk/locked_node_modules/node_modules
+    git push silk $TRAVIS_BRANCH
+    popd
+  else
+    echo "Will not push locked_node_modules for branch $TRAVIS_BRANCH"
+  fi
+fi
+
+exit 0

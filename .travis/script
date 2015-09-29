@@ -54,4 +54,26 @@ echo Unit tests
 echo "******************************************************************"
 test/unit
 
+
+if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
+  echo "******************************************************************"
+  echo Update locked_node_modules
+  echo "******************************************************************"
+  push_branch=false
+  for branch in master next chemspill; do
+    if [ "$TRAVIS_BRANCH" = "$branch" ]; then
+      push_branch=true
+      break
+    fi
+  done
+
+  if $push_branch; then
+    pushd vendor/silk/locked_node_modules/node_modules
+    git push silk $TRAVIS_BRANCH
+    popd
+  else
+    echo "Will not push locked_node_modules for branch $TRAVIS_BRANCH"
+  fi
+fi
+
 exit 0

@@ -10,7 +10,7 @@ import Cameras from '../libraries/Cameras';
 export default class CameraVideo extends React.Component {
   state = { camera: null };
 
-  deviceId() {
+  get deviceId() {
     return this.props.params.deviceId;
   }
 
@@ -33,7 +33,7 @@ export default class CameraVideo extends React.Component {
 
   onCamerasStateChanged = state => {
     let oldCamera = this.state.camera;
-    let newCamera = state.cameras[this.deviceId()];
+    let newCamera = state.cameras[this.deviceId];
 
     if (oldCamera === newCamera) {
       return;
@@ -45,13 +45,13 @@ export default class CameraVideo extends React.Component {
       newCamera.on('videoClip', this.onVideoClip);
     }
     this.setState({ camera: newCamera });
-  }
+  };
 
   onVideoClip = clip => {
     if (this.video) {
       this.video.src = clip;
     }
-  }
+  };
 
   render() {
     return (

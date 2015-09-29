@@ -35,7 +35,7 @@ export class OnlineCamera extends React.Component {
   state = { crashesState: 'default' };
 
   componentWillMount() {
-    Reports.findByDeviceId(this.deviceId())
+    Reports.findByDeviceId(this.deviceId)
       .then(crashes => {
         let crashesState = crashes.some(c => !c.old) ? 'danger' : 'info';
         this.setState({ crashesState });
@@ -43,30 +43,30 @@ export class OnlineCamera extends React.Component {
       .catch(err => console.error('Failed to fetch crash reports:', err));
   }
 
-  deviceId() {
+  get deviceId() {
     return this.props.params.deviceId;
   }
 
   render() {
     return (
       <div style={styles.onlineCamera}>
-        <Link to={`/video/${this.deviceId()}`}>
-          <CameraPreview deviceId={this.deviceId()} />
+        <Link to={`/video/${this.deviceId}`}>
+          <CameraPreview deviceId={this.deviceId} />
         </Link>
         <div style={styles.toolbar}>
           <div style={styles.flexRow}>
             <div style={styles.center}>
-              <Link to={`/diag/${this.deviceId()}`}>
+              <Link to={`/diag/${this.deviceId}`}>
                 <Button bsSize="large" bsStyle="info">
                   <Glyphicon glyph="info-sign" style={styles.glyphicon} />
                 </Button>
               </Link>
-              <Link to={`/crashes/${this.deviceId()}`}>
+              <Link to={`/crashes/${this.deviceId}`}>
                 <Button bsSize="large" bsStyle={this.state.crashesState}>
                   <Glyphicon glyph="fire" style={styles.glyphicon} />
                 </Button>
               </Link>
-              <Link to={`/chunks/${this.deviceId()}`}>
+              <Link to={`/chunks/${this.deviceId}`}>
                 <Button bsSize="large">
                   <Glyphicon glyph="list" style={styles.glyphicon} />
                 </Button>
@@ -93,7 +93,7 @@ export class OnlineCameras extends React.Component {
 
   onCamerasStateChanged = state => {
     this.setState({ cameras: state.cameras, status: state.status });
-  }
+  };
 
   render() {
     let cameras = Object.keys(this.state.cameras).map(

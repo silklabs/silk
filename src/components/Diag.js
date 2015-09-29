@@ -10,10 +10,10 @@ import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
 import mklog from '../log'; const log = mklog('diag');
 
-class Diag extends React.Component {
+export default class Diag extends React.Component {
   state = { camera: null, paused: false };
 
-  deviceId() {
+  get deviceId() {
     return this.props.params.deviceId;
   }
 
@@ -33,7 +33,7 @@ class Diag extends React.Component {
 
   onCamerasStateChanged = state => {
     let oldCamera = this.state.camera;
-    let newCamera = state.cameras[this.deviceId()];
+    let newCamera = state.cameras[this.deviceId];
 
     if (oldCamera === newCamera) {
       return;
@@ -47,17 +47,17 @@ class Diag extends React.Component {
       newCamera.on('diag', this.onDiag);
     }
     this.setState({ camera: newCamera });
-  }
+  };
 
   onDiag = () => {
     this.forceUpdate(); // TODO: log data is updated as a state side-effect. Naughty
-  }
+  };
 
   onPause = () => {
     let paused = !this.state.paused;
     log.info(`paused=${paused}`);
     this.setState({paused});
-  }
+  };
 
   render() {
     let style = {
@@ -72,7 +72,7 @@ class Diag extends React.Component {
 
     let { camera, paused } = this.state;
     if (!camera) {
-      return (<div>Waiting for camera {this.deviceId()} to connect ...</div>);
+      return (<div>Waiting for camera {this.deviceId} to connect ...</div>);
     }
 
     let logs = camera.logs;
@@ -88,7 +88,7 @@ class Diag extends React.Component {
         </ButtonGroup>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
           <DiagLog logName='dash' log={logs.dash} paused={paused}/>
-          <CameraPreview deviceId={this.deviceId()}/>
+          <CameraPreview deviceId={this.deviceId}/>
         </div>
         <DiagLog logName='procrank' log={logs.procrank} paused={paused}/>
         <DiagLogcat logName='logcat' log={logs.logcat} paused={paused}/>
@@ -103,23 +103,19 @@ class DiagLog extends React.Component {
     logName: React.PropTypes.string.isRequired,
     log: React.PropTypes.string,
     paused: React.PropTypes.bool,
-  }
+  };
 
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this.style = {
-      flex: 1,
-      fontFamily: 'monospace',
-      overflowY: 'scroll',
-      overflowX: 'hidden',
-      margin: 2,
-      padding: 5,
-      borderStyle: 'solid',
-      borderColor: '#D3D3D3',
-      borderWidth: 2
-    };
-  }
+  style = {
+    flex: 1,
+    fontFamily: 'monospace',
+    overflowY: 'scroll',
+    overflowX: 'hidden',
+    margin: 2,
+    padding: 5,
+    borderStyle: 'solid',
+    borderColor: '#D3D3D3',
+    borderWidth: 2
+  };
 
   shouldComponentUpdate() {
     return !this.props.paused;
@@ -146,7 +142,7 @@ class DiagLogcat extends DiagLog {
 
   onFilterChange = e => {
     this.setState({ filter: e.target.value });
-  }
+  };
 
   render() {
     if (!this.props.log) {
@@ -185,5 +181,3 @@ class DiagLogcat extends DiagLog {
     dom.scrollTop = dom.scrollHeight;
   }
 }
-
-export default Diag;

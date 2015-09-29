@@ -14,23 +14,23 @@ function errorHandler(err) {
 }
 
 class CrashReports {
-  static STORAGE_PREFIX = 'crashreports-'
-  static DEVICE_CACHE_METADATA = 'crashreports-metadata'
+  static STORAGE_PREFIX = 'crashreports-';
+  static DEVICE_CACHE_METADATA = 'crashreports-metadata';
 
-  metadata = null
-  initPromise = null
+  metadata = null;
+  initPromise = null;
 
   // This gets serialized to disk.
-  reports = { } // deviceId -> Array of crash reports
+  reports = {}; // deviceId -> Array of crash reports
 
   // This is just an in-memory map to update properties on the reports from the
   // UI.
-  reportIdMap = { } // deviceId -> { reportId: report }
+  reportIdMap = {}; // deviceId -> { reportId: report }
 
   // Properties that get added to all new reports.
   newFetchedReportProperties = {
     old: false,
-  }
+  };
 
   constructor() {
     this.initPromise = localforage.getItem(CrashReports.DEVICE_CACHE_METADATA)
@@ -43,7 +43,7 @@ class CrashReports {
           }
           this.metadata = metadata;
         } else {
-          this.metadata = { };
+          this.metadata = {};
         }
       });
   }
@@ -56,17 +56,17 @@ class CrashReports {
       return Promise.resolve(this.reports[deviceId]);
     }
 
-    this.reports[deviceId] = [ ];
-    this.reportIdMap[deviceId] = { };
+    this.reports[deviceId] = [];
+    this.reportIdMap[deviceId] = {};
 
     // If this deviceId has an entry in our metadata then we know there should
     // be an entry in storage for its reports.
     if (deviceId in this.metadata) {
       return localforage.getItem(CrashReports.STORAGE_PREFIX + deviceId)
         .then(reports => {
-          reports = reports || [ ];
+          reports = reports || [];
 
-          let idMap = { };
+          let idMap = {};
           reports.forEach(report => {
             idMap[report.id] = report;
           });
@@ -188,7 +188,7 @@ class CrashReports {
         if (!crashes) {
           return Promise.resolve();
         }
-        let idMap = this.reportIdMap[deviceId] || { };
+        let idMap = this.reportIdMap[deviceId] || {};
         crashes.forEach(crash => {
           let report = idMap[crash.id];
           if (report) {

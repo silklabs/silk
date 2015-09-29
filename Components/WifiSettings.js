@@ -12,16 +12,28 @@ var {
   // common Silk style.
   Text,
   TextInput,
+  TouchableHighlight,
   TouchableOpacity,
   View,
 } = React;
 
-var Title = React.createClass({
-  render: function() {
+export default class WifiSettings extends React.Component {
+
+  constructor(props) {
+    super(props);
+    let hints = props.route.hints;
+    this.state = {
+      ssid: hints.ssid || 'Network Name',
+      secret: hints.secret || 'silkysmooth',
+      serverUrl: hints.serverUrl,
+    };
+  }
+
+  _renderTitle() {
     return (
       <View style={styles.titleContainer}>
         <View style={styles.spacer}>
-          <TouchableOpacity onPress={this.props.onCancel}>
+          <TouchableOpacity onPress={this.cancel}>
             <View style={styles.titleButton}>
               <Text style={styles.cancel}>Cancel</Text>
             </View>
@@ -29,7 +41,7 @@ var Title = React.createClass({
         </View>
         <Text style={styles.title}>Wi-Fi Settings</Text>
         <View style={styles.spacer}>
-          <TouchableOpacity onPress={this.props.onSave}>
+          <TouchableOpacity onPress={this.save}>
             <View style={styles.titleButton}>
               <Text style={styles.save}>Save</Text>
             </View>
@@ -37,102 +49,119 @@ var Title = React.createClass({
         </View>
       </View>
     );
-  },
-});
+  }
 
-var WifiSettings = React.createClass({
-  getInitialState: function() {
-    let hints = this.props.route.hints;
-    return {
-      ssid: hints.ssid || 'Network Name',
-      secret: hints.secret || 'silkysmooth',
-      serverUrl: hints.serverUrl,
-    };
-  },
+  _renderWifiSettings() {
+    return (
+      <View style={styles.form}>
+        <View style={[styles.formRow, styles.formRowFirst]}>
+          <View style={styles.formRowLabelContainer}>
+            <Text style={styles.formRowLabel}>Network</Text>
+          </View>
+          <View style={styles.formInputContainer}>
+            <TextInput
+              ref="ssid"
+              value={this.state.ssid}
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.formInput}
+              onChangeText={(text) => this.setState({ssid: text})}
+            />
+          </View>
+        </View>
+        <View style={styles.formRow}>
+          <View style={styles.formRowLabelContainer}>
+            <Text style={styles.formRowLabel}>Password</Text>
+          </View>
+          <View style={styles.formInputContainer}>
+            <TextInput
+              ref="secret"
+              secureTextEntry={true}
+              value={this.state.secret}
+              autoFocus={true}
+              style={styles.formInput}
+              onChangeText={(text) => this.setState({secret: text})}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
-  render: function() {
-    // TODO: remove <ScrollView> and "debug settings" below for
-    // production.
+  _renderAccountSettings() {
+    return (
+      <TouchableHighlight
+        style={styles.signOutButton}
+        onPress={this.signOut}>
+        <Text style={styles.signOutButtonLabel}>Sign Out</Text>
+      </TouchableHighlight>
+    );
+  }
+
+  _renderServerSettings() {
+    return (
+      <View style={styles.form}>
+        <View style={[styles.formRow, styles.formRowFirst]}>
+          <View style={styles.formRowLabelContainer}>
+            <Text style={styles.formRowLabel}>URL</Text>
+          </View>
+          <View style={styles.formInputContainer}>
+            <TextInput
+              ref="serverUrl"
+              value={this.state.serverUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.formInput}
+              onChangeText={(text) => this.setState({serverUrl: text})}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  render() {
+    // TODO: clean this up for production (remove server setting).
     return (
       <View style={styles.container}>
-        <Title onSave={this.save} onCancel={this.cancel} />
+        {this._renderTitle()}
 
         <ScrollView style={styles.contentContainer}>
           <Text style={styles.formHeader}>WIFI</Text>
-          <View style={styles.form}>
-            <View style={[styles.formRow, styles.formRowFirst]}>
-              <View style={styles.formRowLabelContainer}>
-                <Text style={styles.formRowLabel}>Network</Text>
-              </View>
-              <View style={styles.formInputContainer}>
-                <TextInput
-                  ref="ssid"
-                  value={this.state.ssid}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.formInput}
-                  onChangeText={(text) => this.setState({ssid: text})}
-                />
-              </View>
-            </View>
-            <View style={styles.formRow}>
-              <View style={styles.formRowLabelContainer}>
-                <Text style={styles.formRowLabel}>Password</Text>
-              </View>
-              <View style={styles.formInputContainer}>
-                <TextInput
-                  ref="secret"
-                  secureTextEntry={true}
-                  value={this.state.secret}
-                  autoFocus={true}
-                  style={styles.formInput}
-                  onChangeText={(text) => this.setState({secret: text})}
-                />
-              </View>
-            </View>
-          </View>
-
+          {this._renderWifiSettings()}
+          <Text style={styles.formHeader}>ACCOUNT</Text>
+          {this._renderAccountSettings()}
           <Text style={styles.formHeader}>SERVER</Text>
-          <View style={styles.form}>
-            <View style={[styles.formRow, styles.formRowFirst]}>
-              <View style={styles.formRowLabelContainer}>
-                <Text style={styles.formRowLabel}>URL</Text>
-              </View>
-              <View style={styles.formInputContainer}>
-                <TextInput
-                  ref="serverUrl"
-                  value={this.state.serverUrl}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.formInput}
-                  onChangeText={(text) => this.setState({serverUrl: text})}
-                />
-              </View>
-            </View>
-          </View>
-
+          {this._renderServerSettings()}
         </ScrollView>
       </View>
     );
-  },
+  }
 
-  cancel: function() {
+  cancel = () => {
     if (this.props.route.reject) {
       this.props.route.reject();
     }
     this.props.navigator.pop();
-  },
+  };
 
-  save: function() {
+  save = () => {
     if (this.props.route.resolve) {
       this.props.route.resolve(this.state);
     }
     // TODO save wifi to persistent DB --- here or elsewhere?
     this.props.navigator.pop();
-  },
-});
+  };
 
-var styles = StyleSheet.create({
+  signOut = async () => {
+    let { userState, navigator } = this.props;
+    await userState.signOut();
+    navigator.push({ name: 'SignIn', index: 0 });
+  };
+
+}
+
+const styles = StyleSheet.create({
   container: {
     backgroundColor: '#f4f4f6',
     flex: 1,
@@ -220,6 +249,17 @@ var styles = StyleSheet.create({
     fontSize: 17,
     flex: 1,
   },
-});
 
-module.exports = WifiSettings;
+  signOutButton: {
+    flex: 1,
+    backgroundColor: 'blue',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  signOutButtonLabel: {
+    color: 'white',
+    fontSize: 17,
+  },
+});

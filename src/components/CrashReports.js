@@ -217,14 +217,20 @@ export default class CrashReports extends React.Component {
   onSelect = (e, what) => {
     let value = (what === 'all');
     this.state.crashes.forEach(crash => {
-      this.refs[crash.id].select(value);
+      let el = this.refs[crash.id];
+      if (el) {
+        el.select(value);
+      }
     });
   };
 
   onMarkAs = (e, what) => {
     Reports.setCrashesState(
       this.props.params.deviceId,
-      this.state.crashes.filter(crash => this.refs[crash.id].isSelected()),
+      this.state.crashes.filter(crash => {
+        let el = this.refs[crash.id];
+        return el && el.isSelected();
+      }),
       what === 'old'
     );
     this.onSelect(null, 'none');

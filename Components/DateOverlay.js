@@ -22,8 +22,8 @@ export default class extends React.Component {
     onDone: React.PropTypes.func,
   };
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       opacity: new Animated.Value(1),
     };

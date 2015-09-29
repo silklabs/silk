@@ -2,12 +2,9 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-import TextLink from './TextLink';
 var {
-  Image,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   View,
 } = React;
 
@@ -18,7 +15,11 @@ import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
 var io = require('socket.io-client-react-native');
 var debug = require('debug')('silk:MonitorPreview');
 
-import { CameraMarkText, PlaceholderText } from './Text';
+import { PlaceholderText } from './Text';
+import TopBar from './TopBar';
+
+import DeviceManager from '../btle/central-device-manager';
+import bleScanner from '../btle/ble-central';
 
 var PERIPH_EVENTS = [
   'discover',
@@ -35,32 +36,6 @@ var api = require('silk-api-react-native')({
 });
 
 
-/**
- * TODO: Move me to somewhere else!
- * TODO: Make not ugly!
- */
-class SignOut extends React.Component {
-
-  static propTypes = {
-    userState: React.PropTypes.object,
-    navigator: React.PropTypes.object,
-  }
-
-  signOut = async () => {
-    let { userState, navigator } = this.props;
-    await userState.signOut();
-    navigator.push({ name: 'SignIn', index: 0 });
-  }
-
-  render() {
-    return (
-      <View style={{ alignItems: 'center' }}>
-        <TextLink label="Sign Out" onClick={this.signOut} />
-      </View>
-    );
-  }
-}
-
 var MonitorsView = React.createClass({
   getInitialState: function() {
     return {
@@ -73,11 +48,24 @@ var MonitorsView = React.createClass({
   },
 
   componentWillMount: function() {
-    var DeviceManager = require('../btle/central-device-manager');
-    this.dm = new DeviceManager(require('../btle/ble-central'), this);
+    this.dm = new DeviceManager(
+      bleScanner,
+      () => {
+        if (this.state.network) {
+          return Promise.resolve(this.state.network);
+        }
+        if (this._wifiSettingsPromise) {
+          return this._wifiSettingsPromise;
+        }
+        this._wifiSettingsPromise = this.loadSettings();
+        this._wifiSettingsPromise.catch(() => this._wifiSettingsPromise = null);
+        return this._wifiSettingsPromise;
+      }
+    );
+
     PERIPH_EVENTS.forEach(ev => this.dm.on(ev, this.refreshDeviceList));
     this.dm.start();
-    this.getWifiPromise = null;
+    this._wifiSettingsPromise = null;
 
     api.socketio.address().then(result => {
       this.state.serverUrl = result.url;
@@ -86,8 +74,7 @@ var MonitorsView = React.createClass({
   },
 
   componentWillUnmount: function() {
-    PERIPH_EVENTS.forEach(ev =>
-                          this.dm.removeListener(ev, this.refreshDeviceList));
+    PERIPH_EVENTS.forEach(ev => this.dm.removeListener(ev, this.refreshDeviceList));
     if (this.socket) {
       this.socket.close();
     }
@@ -112,7 +99,6 @@ var MonitorsView = React.createClass({
           api={api}
           socket={this.socket}
           navigator={this.props.navigator}
-          serverUrl={this.state.serverUrl}
           logo={device.logo}
           previewSize = {device.previewSize}
         />
@@ -121,28 +107,12 @@ var MonitorsView = React.createClass({
     if (0 === configuring.length + streaming.length) {
       configuring = <PlaceholderMessage />;
     }
-    var connectionStyle = this.state.serverConnection + 'Indicator';
     return (
       <View style={styles.container}>
-        <View style={styles.statusBarUnderlay} />
-        <View style={styles.titleContainer}>
-          <View style={styles.spacer}>
-            <TouchableOpacity onPress={() => this.loadSettings().catch(() => {})}>
-              <View style={styles.settings}>
-                <Image
-                  source={require('image!Menu')}
-                  style={styles.icon}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-          <CameraMarkText />
-          <View style={styles.spacer}>
-            <View style={styles.indicatorContainer}>
-              <View style={styles[connectionStyle]} />
-            </View>
-          </View>
-        </View>
+        <TopBar
+          serverConnectionState={this.state.serverConnection}
+          openSettings={() => this.loadSettings().catch(() => {})}
+        />
         <View style={styles.content}>
           <ScrollView
             style={styles.monitors}
@@ -151,10 +121,6 @@ var MonitorsView = React.createClass({
             {streaming}
           </ScrollView>
         </View>
-        <SignOut
-          navigator={this.props.navigator}
-          userState={this.props.userState}
-        />
       </View>
     );
   },
@@ -214,26 +180,27 @@ var MonitorsView = React.createClass({
   },
 
   loadSettings: function() {
-    return (() => {
-      if (this.state.network) {
-        return this.navigateWifiScene({
-          ssid: this.state.network.ssid,
-          secret: this.state.network.secret,
-          serverUrl: this.state.serverUrl,
-        });
-      }
-      var net = require('../Libraries/Net');
-      return net.getInfo().then(info => {
+    let promise;
+    if (this.state.network) {
+      promise = this.navigateWifiScene({
+        ssid: this.state.network.ssid,
+        secret: this.state.network.secret,
+        serverUrl: this.state.serverUrl,
+      });
+    } else {
+      const net = require('../Libraries/Net');
+      promise = net.getInfo().then(info => {
         return this.navigateWifiScene({
           ssid: info.SSID,
           secret: '',
           serverUrl: this.state.serverUrl,
         });
       });
-    })().then(network => {
+    }
+    return promise.then(network => {
       this.state.network = network;
-      if (this.getWifiPromise) {
-        this.getWifiPromise = null;
+      if (this._wifiSettingsPromise) {
+        this._wifiSettingsPromise = null;
       }
       if (this.state.serverUrl !== network.serverUrl) {
         debug('WARNING: Switching server URL to', network.serverUrl);
@@ -271,7 +238,8 @@ var MonitorsView = React.createClass({
           error: p.error,
         };
         return;
-      } else if ('registered' === p.state) {
+      }
+      if ('registered' === p.state) {
         // Device is registered...
         if (!(p.deviceId in streaming)) {
           // Device has sent us its ID, but we haven't observed a
@@ -290,7 +258,6 @@ var MonitorsView = React.createClass({
             p.error ? p.error : p.serverConnectionStatus;
       }
     });
-
 
     Object.keys(streaming).forEach(id => {
       if (!this.dm.enumerateDevices().some(
@@ -313,17 +280,6 @@ var MonitorsView = React.createClass({
     this.setState(this.state);
   },
 
-  getWifiNetwork: function() {
-    if (this.state.network) {
-      return Promise.resolve(this.state.network);
-    }
-    if (this.getWifiPromise) {
-      return this.getWifiPromise;
-    }
-    this.getWifiPromise = this.loadSettings();
-    this.getWifiPromise.catch(() => this.getWifiPromise = null);
-    return this.getWifiPromise;
-  },
 });
 
 var PlaceholderMessage = React.createClass({
@@ -338,69 +294,8 @@ var PlaceholderMessage = React.createClass({
   },
 });
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  statusBarUnderlay: {
-    height: 20,
-    backgroundColor: '#404e55',
-  },
-  titleContainer: {
-    backgroundColor: '#2b3a42',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    paddingTop: 10,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 10,
-  },
-  indicatorContainer: {
-    // For some reason cjones was unable to make this `flex` fill
-    // available vertical space inside the title container (when
-    // changing the flex direction back to col).  So hack around that
-    // by hard-coding a fixed height.
-    //
-    //flex: 1,
-    height: 25,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  offlineIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
-    backgroundColor: '#ce0000',
-  },
-  connectingIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
-    backgroundColor: '#f7d708',
-  },
-  connectedIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
-    backgroundColor: '#9ccf31',
-  },
-
-  settings: {
-    flex: 1,
-    paddingLeft: 4,
-  },
-  icon: {
-    // TODO: shouldn't have to specify this?
-    width: 24,
-    height: 24,
-  },
-  spacer: {
     flex: 1,
   },
   content: {

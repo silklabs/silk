@@ -104,52 +104,52 @@ class TrainFaces {
     let faceCount = 1;
     let facePath = path.join(TRAIN_FACES_PATH, person);
 
-    fs.mkdir(facePath)
-    .catch(e => {
-      if (e.code !== 'EEXIST') {
-        log.error(`Failed to create ${facePath}, error: ${e}`);
-        return;
-      }
-    });
+    return new Promise((resolve, reject) => {
+      fs.mkdir(facePath)
+      .catch(e => {
+        if (e.code !== 'EEXIST') {
+          log.error(`Failed to create ${facePath}, error: ${e}`);
+          reject();
+        }
+      });
 
-    this._onFace = (when, faces, source) => {
-      if ((faces.length <= 0) || (source === 'hal')) {
-        log.warn(`No faces; ignoring`);
-        return;
-      }
+      this._onFace = (when, faces, source) => {
+        if ((faces.length <= 0) || (source === 'hal')) {
+          return;
+        }
 
-      if (this._working) {
-        log.error(`Still busy, unable to process next preview image`);
-        return;
-      }
+        if (this._working) {
+          log.error(`Still busy, unable to process next preview image`);
+          return;
+        }
 
-      this._working = true;
-      this._env.camera.getPreviewFrame((err, image) => {
-        if (err) {
-          log.warning(`Unable to fetch frame: ${err}`);
+        this._working = true;
+        this._env.camera.getPreviewFrame((err, image) => {
+          if (err) {
+            log.warning(`Unable to fetch frame: ${err}`);
+            this._working = false;
+            return;
+          }
+
+          // Save the face
           this._working = false;
-          return;
-        }
+          faces.forEach(face => {
+            let faceim = new cv.Matrix(image, face.x, face.y, face.width, face.height);
+            faceim.adjustROI(FACE_PADDING, FACE_PADDING, FACE_PADDING, FACE_PADDING);
+            log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
+            faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
+            faceCount++;
+          });
 
-        // Save the face
-        this._working = false;
-        faces.forEach(face => {
-          let faceim = new cv.Matrix(image, face.x, face.y, face.width, face.height);
-          faceim.adjustROI(FACE_PADDING, FACE_PADDING, FACE_PADDING, FACE_PADDING);
-          log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
-          faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
-          faceCount++;
-        });
+          if (faceCount >= FACE_COUNT) {
+            this._env.timeline.removeListener('face', this._onFace);
+            resolve();
+          }
+        }, 1 /* == 1 channel image (RGB not required) */);
+      };
 
-        if (faceCount >= FACE_COUNT) {
-          log.info(`Done collecting faces`);
-          this._env.timeline.removeListener('face', this._onFace);
-          return;
-        }
-      }, 1 /* == 1 channel image (RGB not required) */);
-    };
-
-    this._env.timeline.on('face', this._onFace);
+      this._env.timeline.on('face', this._onFace);
+    });
   }
 }
 

@@ -9,12 +9,23 @@
 import cv from 'opencv';
 import fs from 'mz/fs';
 
-// Face recognition parameters
+/* Face recognition parameters */
 const RADIUS = 1;
-const NEIGHBORS = 8;
+
+// Higher the value, more time it takes to train the recognizer. With value higher
+// values 8 model is not recognizing faces at all. With values lower than 4 model
+// is returning lot of false positives
+const NEIGHBORS = 4;
+
 const GRID_X = 8;
 const GRID_Y = 8;
-const THRESHOLD = 80;
+
+// Represents the threshold for the confidence value returned by the model. If
+// the confidence is more than the threshold, model returns an unknown person.
+// Higher the threshold more false postives the model returns. Lower the threshold
+// bigger the face rectangle required for succesful recognition. So faces that
+// are far in the view are not recognized.
+const THRESHOLD = 60;
 
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
@@ -145,7 +156,9 @@ class FindFace {
           let faceim = image.roi(face.x, face.y, face.width, face.height);
           let result = this._model.predictSync(faceim);
           if (result.id !== -1) {
-            log.info(`face detected ${JSON.stringify(result)}`);
+            log.info(`face detected id:${result.id} ` +
+                `${this._matchIdWithName(result.id)} ` +
+                `confidence: ${result.confidence}`);
 
             // Add the person to timeline
             this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);

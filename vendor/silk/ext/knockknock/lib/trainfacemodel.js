@@ -13,7 +13,7 @@ import path from 'path';
 const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
-const FACE_COUNT = 50;
+const FACE_COUNT = 100;
 const FACE_PADDING = 5;
 
 let log;

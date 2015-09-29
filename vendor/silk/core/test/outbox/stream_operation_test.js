@@ -66,6 +66,17 @@ suite('outbox stream', () => {
     static StreamClass = FailableWriter
   }
 
+  class ImmediateFail extends StreamOperation {
+    static NAME = 'failable';
+    static StreamClass = () => {
+      let stream = new streams.PassThrough();
+      process.nextTick(() => {
+        stream.emit('error', new Error('throw!'));
+      });
+      return stream;
+    }
+  }
+
   async function cleanup() {
     await exec(`rm -rf ${FIXTURE_DIR}`);
   }
@@ -81,6 +92,7 @@ suite('outbox stream', () => {
 
     subject.registerOperation(TestOp);
     subject.registerOperation(FailableOp);
+    subject.registerOperation(ImmediateFail);
   });
 
   test('.saveToDisk', async () => {
@@ -161,13 +173,28 @@ suite('outbox stream', () => {
       }
     });
 
-    let destination = operation.destination;
     let writePromise = operation.write(stream);
-
     await writePromise;
+    let destination = operation.destination;
 
     assert.deepEqual(destination.arguments, { woot: true });
     assert.equal(destination.result.toString(), buffer.toString());
+  });
+
+  test('.write - with immediately thrown error', async () => {
+    let { stream } = randomStream();
+    let operation = new ImmediateFail({
+      arguments: {}
+    });
+
+    // Run some async operation after creating the operation... This will
+    // simulate the case where the exception is thrown in the next tick while we
+    // are busy doing something else..
+    await fs.readdir(__dirname);
+
+    let result = await operation.write(stream);
+    assert.ok(!result.ok);
+    assert.ok(result.error.message.indexOf('throw') !== -1);
   });
 
 });

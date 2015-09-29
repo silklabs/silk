@@ -42,8 +42,6 @@ export default class StreamOperation extends Operation {
       throw new Error('StreamClass static property is required...');
     }
 
-    let stream = new this.constructor.StreamClass(this.arguments);
-    this.destination = stream;
   }
 
   /**
@@ -64,6 +62,8 @@ export default class StreamOperation extends Operation {
     readable = (isReadingPath) ?
       fs.createReadStream(readable) :
       readable;
+
+    this.destination = new this.constructor.StreamClass(this.arguments);
 
     let error;
     let remainder = readable;

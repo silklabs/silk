@@ -15,6 +15,8 @@ let hue = require('node-hue-api');
 let log = require('./log')('hue');
 let util = require('./util');
 
+let enabled = !util.getboolprop('persist.silk.lights.disabled');
+
 class LightsHue {
   constructor(user = '28f60800e16636f125ebc50201d5b5f') {
     this.user = user;
@@ -75,6 +77,10 @@ class LightsHue {
   }
 
   _applyHueState(state) {
+    if (!enabled) {
+      log.info('(Lights control disabled, not applying lights state)');
+      return Promise.resolve();
+    }
     if (this.initPromise) {
       return this.initPromise.then(() => this._applyHueState(state));
     }

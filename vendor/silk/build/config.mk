@@ -1,6 +1,6 @@
-# Copyright (c) 2015 Silk Laboratories, Inc.
+# Copyright (c) 2015 Silk Labs, Inc.
 # All Rights Reserved.
-# Confidential and Proprietary - Silk Laboratories, Inc.
+# Confidential and Proprietary - Silk Labs, Inc.
 
 CLEAR_VARS += vendor/silk/gonk/node_module_clear_vars.mk
 BUILD_NODE_MODULE := vendor/silk/gonk/node_module.mk

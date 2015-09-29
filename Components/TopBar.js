@@ -6,7 +6,6 @@ let {
   TouchableOpacity,
   View,
 } = React;
-import * as DeviceManager from '../btle/central-device-manager';
 import { CameraMarkText } from './Text';
 
 const CONNECTION_STATES = ['connecting', 'connected', 'offline'];

@@ -16,7 +16,6 @@ let {
 import '../Libraries/BrowserShims';
 
 import Config from '../Libraries/Config';
-import MonitorFullscreen from './MonitorFullscreen';
 import MonitorsView from './MonitorsView';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
@@ -77,13 +76,13 @@ class Silk extends React.Component {
     let Component = routeToComponentMap[route.name];
     console.log('Component', Component);
     if (!Component) {
-        return (
-          <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
-            <Text style={{color: 'yellow', fontSize: 30}}>
-              Unknown scene {route.name}
-            </Text>
-          </View>
-        );
+      return (
+        <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
+          <Text style={{color: 'yellow', fontSize: 30}}>
+            Unknown scene {route.name}
+          </Text>
+        </View>
+      );
     }
     let props = {
       userState,

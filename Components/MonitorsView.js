@@ -2,12 +2,9 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-import TextLink from './TextLink';
 var {
-  Image,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   View,
 } = React;
 
@@ -22,7 +19,7 @@ import { PlaceholderText } from './Text';
 import TopBar from './TopBar';
 
 const DeviceManager = require('../btle/central-device-manager');
-const ble_scanner = require('../btle/ble-central');
+const bleScanner = require('../btle/ble-central');
 
 var PERIPH_EVENTS = [
   'discover',
@@ -52,7 +49,7 @@ var MonitorsView = React.createClass({
 
   componentWillMount: function() {
     this.dm = new DeviceManager(
-      ble_scanner,
+      bleScanner,
       () => {
         if (this.state.network) {
           return Promise.resolve(this.state.network);

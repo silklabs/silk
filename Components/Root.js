@@ -74,7 +74,6 @@ class Silk extends React.Component {
 
   renderScene(route, navigator) {
     let Component = routeToComponentMap[route.name];
-    console.log('Component', Component);
     if (!Component) {
       return (
         <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>

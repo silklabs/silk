@@ -70,7 +70,7 @@ export class Queue extends EventEmitter {
   // How long to wait between checks to do more operations (in ms)
   backoffInterval = 0
   // Maximum number of allowed concurrent operations in the queue.
-  concurrency = 20
+  concurrency = 2
   // Number of running operations in the queue (should always be < than
   // concurrency)
   running = 0

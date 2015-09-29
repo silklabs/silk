@@ -12,15 +12,15 @@ import Reports from '../libraries/CrashReports';
 const styles = {
   center: {
     marginLeft: 'auto',
-    marginRight: 'auto'
+    marginRight: 'auto',
   },
   flexRow: {
     display: 'flex',
     flexDirection: 'row',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
   },
   glyphicon: {
-    fontSize: '20px'
+    fontSize: '20px',
   },
   onlineCamera: {
     padding: '10px 0 10px 10px',
@@ -96,9 +96,12 @@ export class OnlineCameras extends React.Component {
   };
 
   render() {
-    let cameras = Object.keys(this.state.cameras).map(
-      id => <OnlineCamera key={id}
-                          params={{deviceId: id}} />);
-    return (<div style={styles.flexRow}>{cameras}</div>);
+    let cameras = Object.keys(this.state.cameras).map(id => (
+      <OnlineCamera
+        key={id}
+        params={{deviceId: id}}
+      />
+    ));
+    return <div style={styles.flexRow}>{cameras}</div>;
   }
 }

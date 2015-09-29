@@ -61,7 +61,7 @@ export default class CameraVideo extends React.Component {
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
         </ButtonGroup>
-        <video ref='video' autoPlay />
+        <video ref="video" autoPlay />
       </div>
     );
   }

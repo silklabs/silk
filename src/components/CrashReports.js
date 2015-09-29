@@ -21,7 +21,7 @@ const styles = {
   oldReport: {
     display: 'flex',
     flexDirection: 'row',
-    backgroundColor: 'gray'
+    backgroundColor: 'gray',
   },
   checkbox: {
     margin: '6px',
@@ -32,13 +32,13 @@ const styles = {
 
   labelButton: {
     backgroundColor: 'gray',
-    color: 'white'
+    color: 'white',
   },
   crashReport: {
     backgroundColor: 'white',
     width: '800ps',
     height: '600px',
-  }
+  },
 };
 
 class Checkbox extends React.Component {
@@ -62,8 +62,12 @@ class Checkbox extends React.Component {
 
   render() {
     return (
-      <input type='checkbox' checked={this.state.checked}
-             onChange={this.onChange} style={this.props.style} />
+      <input
+        type="checkbox"
+        checked={this.state.checked}
+        onChange={this.onChange}
+        style={this.props.style}
+      />
     );
   }
 }
@@ -119,13 +123,19 @@ class CrashReport extends React.Component {
     let bgStyle = crash.old ? styles.oldReport : styles.newReport;
     return (
       <ListGroupItem style={bgStyle}>
-        <Checkbox ref='checkbox' style={styles.checkbox} />
-        <Link style={styles.link} onClick={() => this.onShowCrash(crash.url)}>
+        <Checkbox
+          ref="checkbox"
+          style={styles.checkbox}
+        />
+        <Link
+          style={styles.link}
+          onClick={() => this.onShowCrash(crash.url)}>
           {datetime.toString()}
         </Link>
 
-        <Modal show={!!this.state.modalUrl}
-             onHide={this.onHideModal}>
+        <Modal
+          show={!!this.state.modalUrl}
+          onHide={this.onHideModal}>
           <div style={styles.crashReport}>
             <Iframe url={this.state.modalUrl} />
           </div>
@@ -220,7 +230,7 @@ export default class CrashReports extends React.Component {
     if (this.state.error) {
       error = (
         <h2>
-          <Label bsStyle='danger'>
+          <Label bsStyle="danger">
             Failed to fetch crash reports: {this.state.error}
           </Label>
         </h2>
@@ -228,35 +238,39 @@ export default class CrashReports extends React.Component {
     }
     let content;
     if (null === this.state.crashes) {
-      content = (<div>Loading crash reports ...</div>);
+      content = <div>Loading crash reports ...</div>;
     } else if (0 === this.state.crashes.length) {
-      content = (<div>No crashes!!</div>);
+      content = <div>No crashes!!</div>;
     } else {
       content = this.state.crashes
         .slice(0, this.state.numberOfReportsToShow)
         .map(crash => (
-          <CrashReport key={crash.id} ref={crash.id} crash={crash}
-                       shouldOpenInModal={this.state.shouldOpenInModal}/>
+          <CrashReport
+            key={crash.id}
+            ref={crash.id}
+            crash={crash}
+            shouldOpenInModal={this.state.shouldOpenInModal}
+          />
         ));
     }
     return (
       <div>
         <ButtonToolbar>
-          <Button bsStyle='warning'>
-            <Link to='/'><Glyphicon glyph='home' /></Link>
+          <Button bsStyle="warning">
+            <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
 
-          <DropdownButton title='Select' onSelect={this.onSelect}>
-            <MenuItem eventKey='all'>All</MenuItem>
-            <MenuItem eventKey='none'>None</MenuItem>
+          <DropdownButton title="Select" onSelect={this.onSelect}>
+            <MenuItem eventKey="all">All</MenuItem>
+            <MenuItem eventKey="none">None</MenuItem>
           </DropdownButton>
 
-          <DropdownButton title='Mark as' onSelect={this.onMarkAs}>
-            <MenuItem eventKey='old'>Old</MenuItem>
-            <MenuItem eventKey='new'>New</MenuItem>
+          <DropdownButton title="Mark as" onSelect={this.onMarkAs}>
+            <MenuItem eventKey="old">Old</MenuItem>
+            <MenuItem eventKey="new">New</MenuItem>
           </DropdownButton>
 
-          <Button bsStyle='info' onClick={this.onToggleModal}>
+          <Button bsStyle="info" onClick={this.onToggleModal}>
             Open in {this.state.shouldOpenInModal ? 'Window' : 'Frame'}
           </Button>
         </ButtonToolbar>

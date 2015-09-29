@@ -28,6 +28,6 @@ export default function createLog(libraryName) {
     info: makeLogFunction('info'),
     warn: makeLogFunction('warn'),
     error: makeLogFunction('error'),
-    fatal: makeLogFunction('fatal')
+    fatal: makeLogFunction('fatal'),
   };
 }

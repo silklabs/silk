@@ -20,6 +20,11 @@ time CI_PATCHTREE_FORCE=force make nothing # Applies patches as a side effect of
 # Reduce the disk space usage to avoid failures later on during full
 # builds
 if [[ $GONK != base ]]; then
+  if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
+    mv .repo/project-objects/silk-device-locked-node-modules.git .repo/
+    mv .repo/projects/vendor/silk/locked_node_modules/node_modules.git .repo/
+  fi
+
   rm -rf \
     .repo/project-objects \
     .repo/projects \
@@ -28,6 +33,11 @@ if [[ $GONK != base ]]; then
     prebuilts/qemu-kernel/x86 \
     prebuilts/qemu-kernel/x86_64 \
 
+  if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
+    mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules
+    mv .repo/silk-device-locked-node-modules.git .repo/project-objects/
+    mv .repo/node_modules.git .repo/projects/vendor/silk/locked_node_modules/
+  fi
 fi
 
 df -h

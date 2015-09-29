@@ -1,8 +1,10 @@
 #!/bin/bash -ex
 
-# Update locked_node_modules if needed before starting the build
-./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
-vendor/silk/locked_node_modules/update.sh
+if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
+  # Update locked_node_modules if needed before starting the build
+  ./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
+  vendor/silk/locked_node_modules/update.sh
+fi
 
 if [[ $GONK != base ]]; then
   if [[ $GONK == qemu ]]; then
@@ -60,12 +62,14 @@ if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
   echo Update locked_node_modules
   echo "******************************************************************"
   push_branch=false
-  for branch in master next chemspill; do
-    if [ "$TRAVIS_BRANCH" = "$branch" ]; then
-      push_branch=true
-      break
-    fi
-  done
+  if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+    for branch in master next chemspill; do
+      if [ "$TRAVIS_BRANCH" = "$branch" ]; then
+        push_branch=true
+        break
+      fi
+    done
+  fi
 
   if $push_branch; then
     pushd vendor/silk/locked_node_modules/node_modules

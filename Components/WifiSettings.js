@@ -10,6 +10,7 @@ var {
   StyleSheet,
   // NB: wifi settings dialog uses its own iOS "system" style, not the
   // common Silk style.
+  SwitchIOS,
   Text,
   TextInput,
   TouchableHighlight,
@@ -26,6 +27,7 @@ export default class WifiSettings extends React.Component {
       ssid: hints.ssid || 'Network Name',
       secret: hints.secret || 'silkysmooth',
       serverUrl: hints.serverUrl,
+      showSecret: false,
     };
   }
 
@@ -39,7 +41,7 @@ export default class WifiSettings extends React.Component {
             </View>
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Wi-Fi Settings</Text>
+        <Text style={styles.title}>Settings</Text>
         <View style={styles.spacer}>
           <TouchableOpacity onPress={this.save}>
             <View style={styles.titleButton}>
@@ -65,7 +67,7 @@ export default class WifiSettings extends React.Component {
               autoCapitalize="none"
               autoCorrect={false}
               style={styles.formInput}
-              onChangeText={(text) => this.setState({ssid: text})}
+              onChangeText={ssid => this.setState({ssid})}
             />
           </View>
         </View>
@@ -76,11 +78,11 @@ export default class WifiSettings extends React.Component {
           <View style={styles.formInputContainer}>
             <TextInput
               ref="secret"
-              secureTextEntry={true}
+              secureTextEntry={!this.state.showSecret}
               value={this.state.secret}
               autoFocus={true}
               style={styles.formInput}
-              onChangeText={(text) => this.setState({secret: text})}
+              onChangeText={secret => this.setState({secret})}
             />
           </View>
         </View>
@@ -91,19 +93,35 @@ export default class WifiSettings extends React.Component {
   _renderAccountSettings() {
     return (
       <TouchableHighlight
-        style={styles.signOutButton}
+        underlayColor="lightgrey"
+        style={styles.form}
         onPress={this.signOut}>
-        <Text style={styles.signOutButtonLabel}>Sign Out</Text>
+        <View style={[styles.formRow, styles.formRowFirst]}>
+          <Text style={styles.signOutButtonLabel}>
+            Sign Out
+          </Text>
+        </View>
       </TouchableHighlight>
     );
   }
 
-  _renderServerSettings() {
+  _renderDebugSettings() {
     return (
       <View style={styles.form}>
         <View style={[styles.formRow, styles.formRowFirst]}>
+          <View style={styles.switchLabelContainer}>
+            <Text style={styles.formRowLabel}>
+              Show WiFi password
+            </Text>
+          </View>
+          <SwitchIOS
+            value={this.state.showSecret}
+            onValueChange={showSecret => this.setState({showSecret})}
+          />
+        </View>
+        <View style={styles.formRow}>
           <View style={styles.formRowLabelContainer}>
-            <Text style={styles.formRowLabel}>URL</Text>
+            <Text style={styles.formRowLabel}>Server</Text>
           </View>
           <View style={styles.formInputContainer}>
             <TextInput
@@ -112,7 +130,7 @@ export default class WifiSettings extends React.Component {
               autoCapitalize="none"
               autoCorrect={false}
               style={styles.formInput}
-              onChangeText={(text) => this.setState({serverUrl: text})}
+              onChangeText={serverUrl => this.setState({serverUrl})}
             />
           </View>
         </View>
@@ -126,13 +144,15 @@ export default class WifiSettings extends React.Component {
       <View style={styles.container}>
         {this._renderTitle()}
 
-        <ScrollView style={styles.contentContainer}>
+        <ScrollView
+          keyboardShouldPersistTaps={false}
+          style={styles.scrollView}>
           <Text style={styles.formHeader}>WIFI</Text>
           {this._renderWifiSettings()}
           <Text style={styles.formHeader}>ACCOUNT</Text>
           {this._renderAccountSettings()}
-          <Text style={styles.formHeader}>SERVER</Text>
-          {this._renderServerSettings()}
+          <Text style={styles.formHeader}>DEBUG</Text>
+          {this._renderDebugSettings()}
         </ScrollView>
       </View>
     );
@@ -147,7 +167,11 @@ export default class WifiSettings extends React.Component {
 
   save = () => {
     if (this.props.route.resolve) {
-      this.props.route.resolve(this.state);
+      this.props.route.resolve({
+        ssid: this.state.ssid,
+        secret: this.state.secret,
+        serverUrl: this.state.serverUrl,
+      });
     }
     // TODO save wifi to persistent DB --- here or elsewhere?
     this.props.navigator.pop();
@@ -179,13 +203,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     textAlign: 'center',
     fontWeight: '500',
-    paddingTop: 10,
+    paddingTop: 8,
   },
   titleButton: {
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingTop: 10,
-    paddingBottom: 10,
+    padding: 8,
   },
   save: {
     color: '#007aff',
@@ -199,7 +220,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
 
-  contentContainer: {
+  scrollView: {
     backgroundColor: '#efeff4',
     borderColor: '#a7a7aa',
     borderTopWidth: 0.5,
@@ -221,22 +242,23 @@ const styles = StyleSheet.create({
     borderTopWidth: 1 / PixelRatio.get(),
     borderBottomWidth: 1 / PixelRatio.get(),
     borderColor: '#c8c7cc',
-    paddingLeft: 20,
+    paddingLeft: 16,
+    paddingRight: 8,
     flex: 1,
   },
   formRow: {
     flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
     borderColor: '#c8c7cc',
     borderTopWidth: 1 / PixelRatio.get(),
+    height: 46,
   },
   formRowFirst: {
     borderTopWidth: 0,
   },
   formRowLabelContainer: {
     width: 90,
-    paddingTop: 10,
-    paddingBottom: 10,
   },
   formRowLabel: {
     fontSize: 17,
@@ -250,16 +272,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  signOutButton: {
-    flex: 1,
-    backgroundColor: 'blue',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginHorizontal: 20,
-  },
   signOutButtonLabel: {
-    color: 'white',
+    color: '#007aff',
     fontSize: 17,
   },
+
+  switchLabelContainer: {
+    flex: 1,
+  },
+
 });

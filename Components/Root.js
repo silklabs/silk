@@ -31,6 +31,13 @@ const api = require('silk-api-react-native')({
 // global instance of user state.
 const userState = new UserState(api);
 
+const routeToComponentMap = {
+  SignIn,
+  SignUp,
+  Monitors: MonitorsView,
+  WifiSettings,
+};
+
 class Silk extends React.Component {
 
   state = {
@@ -67,58 +74,22 @@ class Silk extends React.Component {
   }
 
   renderScene(route, navigator) {
-    switch (route.name) {
-    case 'SignIn':
-      return (
-        <SignIn
-          userState={userState}
-          navigator={navigator}
-          name={route.name}
-        />
-      );
-    case 'SignUp':
-      return (
-        <SignUp
-          userState={userState}
-          navigator={navigator}
-          name={route.name}
-        />
-      );
-    case 'Monitors':
-      return (
-        <MonitorsView
-          userState={userState}
-          navigator={navigator}
-          name={route.name}
-        />
-      );
-    case 'WifiSettings':
-      return (
-        <WifiSettings
-          navigator={navigator}
-          name={route.name}
-          hints={route.hints}
-          resolve={route.resolve}
-          reject={route.reject}
-        />
-      );
-    case 'MonitorFullscreen':
-      return (
-        <MonitorFullscreen
-          navigator={navigator}
-          vid={route.vid}
-          serverUrl={route.serverUrl}
-        />
-      );
-    default:
-      return (
-        <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
-          <Text style={{color: 'yellow', fontSize: 30}}>
-            Unknown scene {route.name}
-          </Text>
-        </View>
-      );
+    let Component = routeToComponentMap[route.name];
+    if (!Component) {
+        return (
+          <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
+            <Text style={{color: 'yellow', fontSize: 30}}>
+              Unknown scene {route.name}
+            </Text>
+          </View>
+        );
     }
+    let props = {
+      userState,
+      navigator,
+      route,
+    };
+    return <Component {...props} />;
   }
 
   onForward() {

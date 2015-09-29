@@ -42,10 +42,11 @@ var Title = React.createClass({
 
 var WifiSettings = React.createClass({
   getInitialState: function() {
+    let hints = this.props.route.hints;
     return {
-      ssid: this.props.hints.ssid || 'Network Name',
-      secret: this.props.hints.secret || 'silkysmooth',
-      serverUrl: this.props.hints.serverUrl,
+      ssid: hints.ssid || 'Network Name',
+      secret: hints.secret || 'silkysmooth',
+      serverUrl: hints.serverUrl,
     };
   },
 
@@ -116,15 +117,15 @@ var WifiSettings = React.createClass({
   },
 
   cancel: function() {
-    if (this.props.reject) {
-      this.props.reject();
+    if (this.props.route.reject) {
+      this.props.route.reject();
     }
     this.props.navigator.pop();
   },
 
   save: function() {
-    if (this.props.resolve) {
-      this.props.resolve(this.state);
+    if (this.props.route.resolve) {
+      this.props.route.resolve(this.state);
     }
     // TODO save wifi to persistent DB --- here or elsewhere?
     this.props.navigator.pop();

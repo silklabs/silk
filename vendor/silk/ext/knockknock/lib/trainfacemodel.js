@@ -6,9 +6,9 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let cv = require('opencv');
-let fs = require('mz/fs');
-let path = require('path');
+import cv from 'opencv';
+import fs from 'mz/fs';
+import path from 'path';
 
 const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';

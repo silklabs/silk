@@ -6,8 +6,8 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let cv = require('opencv');
-let fs = require('mz/fs');
+import cv from 'opencv';
+import fs from 'mz/fs';
 
 // Face recognition parameters
 const RADIUS = 1;

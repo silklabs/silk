@@ -139,8 +139,9 @@ export default class CrashReports extends React.Component {
 
   onMarkAs = (e, what) => {
     Reports.setCrashesState(
-      what === 'old',
-      this.state.crashes.filter(crash => this.refs[crash.id].isSelected())
+      this.props.params.deviceId,
+      this.state.crashes.filter(crash => this.refs[crash.id].isSelected()),
+      what === 'old'
     );
     this.onSelect(null, 'none');
     this.refreshCrashReports();

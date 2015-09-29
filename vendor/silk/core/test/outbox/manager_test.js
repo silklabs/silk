@@ -40,6 +40,7 @@ suite('outbox stream', () => {
     subject = createOutbox({
       storagePath: FIXTURE_DIR
     });
+    subject.queue.concurrency = 20;
     subject.registerOperation(HttpOp);
   });
 

@@ -79,19 +79,3 @@ is attempting to inject additional debug hooks into the device debugee and
 failed because it assumes the debugger and debugee share the same filesystem.
 * Execution sometimes needs to be paused before set breakpoints will be
 activated for the first time.
-
-## Adding new package.json dependencies
-Package dependencies of core need to be managed carefully to ensure reproducible
-builds.
-
-Generally whenever a new dependency is added to a *package.json* in the source
-tree (such as `vendor/silk/core/...`, `vendor/silk/ext/...`, or
-`external/<upstream_npm_package>`), please also follow these additional steps:
-
-1. Run `$ cd vendor/silk/locked_node_modules/node_modules && git fetch --unshallow silk && repo start master`.
-2. Run `$ vendor/silk/locked_node_modules/update.sh`
-3. Send a PR for the resulting commit in
-`vendor/silk/locked_node_modules/node_modules` to
-https://github.com/silklabs/silk-device-locked-node-modules.
-
-TODO: automate all these steps!

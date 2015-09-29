@@ -51,7 +51,8 @@ before_script:
   - nvm install 0.12
   - if [ $TRAVIS_OS_NAME == osx ]; then
         echo Reclaim disk space after building node from source;
-        rm -rf /usr/local/Cellar/nvm/0.17.2/src/node-v0.12.*;
+        du -hs /usr/local/Cellar/nvm/0.17.2/src/node-v0.12.*;
+        rm -rvf /usr/local/Cellar/nvm/0.17.2/src/node-v0.12.*;
     fi
   - .travis/before_script
 

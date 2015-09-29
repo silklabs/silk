@@ -64,7 +64,15 @@ class Checkbox extends React.Component {
 }
 
 class CrashReport extends React.Component {
-  state = { crashUrl: '' };
+  static propTypes = {
+    crash: React.PropTypes.object.isRequired,
+    shouldOpenInModal: React.PropTypes.bool.isRequired,
+  };
+
+  state = {
+    modalUrl: null,
+    isMarkedOld: this.props.crash.old,
+  };
 
   isSelected() {
     return this.refs.checkbox.state.checked;
@@ -74,17 +82,31 @@ class CrashReport extends React.Component {
   }
 
   onShowCrash = url => {
-    if (this.props.modal) {
-      this.setState({ crashUrl: url });
+    if (this.props.shouldOpenInModal) {
+      this.setState({ modalUrl: url });
     } else {
       window.open(url);
     }
     return false;
   };
 
-  onHideCrash = () => {
-    this.setState({ crashUrl: '' });
+  onHideModal = () => {
+    this.setState({ modalUrl: null });
   };
+
+  // Hooks to ensure that we don't re-render every single CrashReport
+  // item when the entire list gets re-rendered (which happens any
+  // time a report gets marked as old, for instance). Because crash
+  // objects are mutated, we can't simply compare old props to new
+  // props, so we need to copy the flag that changes to our internal
+  // state first.
+  componentWillReceiveProps(nextProps) {
+    this.setState({isMarkedOld: nextProps.crash.old});
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.state.modalUrl !== nextState.modalUrl ||
+      this.state.isMarkedOld !== nextState.isMarkedOld;
+  }
 
   render() {
     let crash = this.props.crash;
@@ -97,10 +119,10 @@ class CrashReport extends React.Component {
           {datetime.toString()}
         </Link>
 
-        <Modal show={!!this.state.crashUrl.length}
-             onHide={this.onHideCrash}>
+        <Modal show={!!this.state.modalUrl}
+             onHide={this.onHideModal}>
           <div style={styles.crashReport}>
-            <Iframe url={this.state.crashUrl} />
+            <Iframe url={this.state.modalUrl} />
           </div>
         </Modal>
       </ListGroupItem>
@@ -112,7 +134,7 @@ export default class CrashReports extends React.Component {
   state = {
     crashes: null,
     error: '',
-    modal: true,
+    shouldOpenInModal: true,
   };
 
   constructor(props) {
@@ -127,7 +149,7 @@ export default class CrashReports extends React.Component {
   }
 
   onToggleModal = () => {
-    this.setState({ modal: !this.state.modal });
+    this.setState({ shouldOpenInModal: !this.state.shouldOpenInModal });
   };
 
   onSelect = (e, what) => {
@@ -166,7 +188,7 @@ export default class CrashReports extends React.Component {
     } else {
       content = this.state.crashes.map(crash => (
         <CrashReport key={crash.id} ref={crash.id} crash={crash}
-                     modal={this.state.modal}/>
+                     shouldOpenInModal={this.state.shouldOpenInModal}/>
       ));
     }
     return (
@@ -187,7 +209,7 @@ export default class CrashReports extends React.Component {
           </DropdownButton>
 
           <Button bsStyle='info' onClick={this.onToggleModal}>
-            Open in {this.state.modal ? 'Window' : 'Frame'}
+            Open in {this.state.shouldOpenInModal ? 'Window' : 'Frame'}
           </Button>
         </ButtonToolbar>
         {error}

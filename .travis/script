@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/bin/bash -ex
 
-set -e
+# Update locked_node_modules if needed before starting the build
+./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
+vendor/silk/locked_node_modules/update.sh
+
 if [[ $GONK != base ]]; then
   if [[ $GONK == qemu ]]; then
     make -j2

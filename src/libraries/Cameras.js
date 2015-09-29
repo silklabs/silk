@@ -209,7 +209,7 @@ class Cameras extends EventEmitter {
       this._changeState(`Connecting to ${result.url}...`);
 
       this.socket = io(result.url, {
-        transports: ['websocket']
+        transports: ['websocket'],
       });
 
       this.socket.on('connect', () => {

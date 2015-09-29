@@ -123,57 +123,58 @@ class CrashReports {
     let timeStamp = new Date();
 
     // Disk and network can run in parallel.
-    return Promise.all([ this.loadReportsFromStorage(deviceId),
-                         this.fetchReportsFromServer(deviceId) ])
-      .then(reports => {
-        let savedReports = reports[0];
-        let fetchedReports = reports[1];
+    return Promise.all([
+      this.loadReportsFromStorage(deviceId),
+      this.fetchReportsFromServer(deviceId),
+    ]).then(reports => {
+      let savedReports = reports[0];
+      let fetchedReports = reports[1];
 
-        // Record the sync time.
-        if (deviceId in this.metadata) {
-          this.metadata[deviceId].lastSyncTime = timeStamp;
-        } else {
-          this.metadata[deviceId] = {
-            lastSyncTime: timeStamp,
-          };
-        }
+      // Record the sync time.
+      if (deviceId in this.metadata) {
+        this.metadata[deviceId].lastSyncTime = timeStamp;
+      } else {
+        this.metadata[deviceId] = {
+          lastSyncTime: timeStamp,
+        };
+      }
 
-        if (fetchedReports.length) {
-          if (savedReports.length) {
-            // If we had some reports already then we have to handle the
-            // possibility that we received a few duplicate reports.
-            let oldestFetchedReport = fetchedReports[fetchedReports.length - 1];
-            for (let index = 0; index < savedReports.length; index++) {
-              // Cut out any duplicate reports that the server just sent us.
-              if (oldestFetchedReport.id === savedReports[index].id) {
-                savedReports = savedReports.slice(index + 1);
-                break;
-              }
-              // Stop iterating if the oldest report we just fetched is newer
-              // than this saved report.
-              if (oldestFetchedReport.timeStamp > savedReports[index].timeStamp) {
-                break;
-              }
+      if (fetchedReports.length) {
+        if (savedReports.length) {
+          // If we had some reports already then we have to handle the
+          // possibility that we received a few duplicate reports.
+          let oldestFetchedReport = fetchedReports[fetchedReports.length - 1];
+          for (let index = 0; index < savedReports.length; index++) {
+            // Cut out any duplicate reports that the server just sent us.
+            if (oldestFetchedReport.id === savedReports[index].id) {
+              savedReports = savedReports.slice(index + 1);
+              break;
+            }
+            // Stop iterating if the oldest report we just fetched is newer
+            // than this saved report.
+            if (oldestFetchedReport.timeStamp > savedReports[index].timeStamp) {
+              break;
             }
           }
-
-          let idMap = this.reportIdMap[deviceId];
-          fetchedReports.forEach(report => {
-            idMap[report.id] = report;
-          });
-
-          savedReports = fetchedReports.concat(savedReports);
-
-          // Save new reports to disk.
-          this.saveMetadata(deviceId, savedReports).catch(errorHandler);
-        } else {
-          // Just update timestamp.
-          this.saveMetadata(deviceId).catch(errorHandler);
         }
 
-        this.reports[deviceId] = savedReports;
-        return this.reports[deviceId];
-      });
+        let idMap = this.reportIdMap[deviceId];
+        fetchedReports.forEach(report => {
+          idMap[report.id] = report;
+        });
+
+        savedReports = fetchedReports.concat(savedReports);
+
+        // Save new reports to disk.
+        this.saveMetadata(deviceId, savedReports).catch(errorHandler);
+      } else {
+        // Just update timestamp.
+        this.saveMetadata(deviceId).catch(errorHandler);
+      }
+
+      this.reports[deviceId] = savedReports;
+      return this.reports[deviceId];
+    });
   }
 
   findByDeviceId(deviceId) {

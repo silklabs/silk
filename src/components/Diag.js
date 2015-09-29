@@ -67,19 +67,19 @@ export default class Diag extends React.Component {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: this.state.paused ? 'papayawhip' : 'white'
+      backgroundColor: this.state.paused ? 'papayawhip' : 'white',
     };
 
     let { camera, paused } = this.state;
     if (!camera) {
-      return (<div>Waiting for camera {this.deviceId} to connect ...</div>);
+      return <div>Waiting for camera {this.deviceId} to connect ...</div>;
     }
 
     let logs = camera.logs;
     return (
       <div style={style}>
         <ButtonGroup>
-          <Button bsStyle='warning'>
+          <Button bsStyle="warning">
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
           <Button onClick={this.onPause}>
@@ -87,11 +87,11 @@ export default class Diag extends React.Component {
           </Button>
         </ButtonGroup>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
-          <DiagLog logName='dash' log={logs.dash} paused={paused}/>
+          <DiagLog logName="dash" log={logs.dash} paused={paused}/>
           <CameraPreview deviceId={this.deviceId}/>
         </div>
-        <DiagLog logName='procrank' log={logs.procrank} paused={paused}/>
-        <DiagLogcat logName='logcat' log={logs.logcat} paused={paused}/>
+        <DiagLog logName="procrank" log={logs.procrank} paused={paused}/>
+        <DiagLogcat logName="logcat" log={logs.logcat} paused={paused}/>
       </div>
     );
   }
@@ -114,7 +114,7 @@ class DiagLog extends React.Component {
     padding: 5,
     borderStyle: 'solid',
     borderColor: '#D3D3D3',
-    borderWidth: 2
+    borderWidth: 2,
   };
 
   shouldComponentUpdate() {
@@ -170,8 +170,12 @@ class DiagLogcat extends DiagLog {
                return <div dangerouslySetInnerHTML={{__html: html}} />;
              })
         }
-        <Input ref='filter' type='text' placeholder='Filter regexp'
-               onChange={this.onFilterChange} />
+        <Input
+          ref="filter"
+          type="text"
+          placeholder="Filter regexp"
+          onChange={this.onFilterChange}
+        />
       </div>
     );
   }

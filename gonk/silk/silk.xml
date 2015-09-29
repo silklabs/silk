@@ -63,6 +63,6 @@
            path="vendor/silk/locked_node_modules/node_modules"
            clone-depth="1"
            remote="silk"
-           revision="master" />
+           revision="newmaster" />
 
 </manifest>

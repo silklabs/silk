@@ -18,8 +18,8 @@ var debug = require('debug')('silk:MonitorPreview');
 import { PlaceholderText } from './Text';
 import TopBar from './TopBar';
 
-const DeviceManager = require('../btle/central-device-manager');
-const bleScanner = require('../btle/ble-central');
+import DeviceManager from '../btle/central-device-manager';
+import bleScanner from '../btle/ble-central';
 
 var PERIPH_EVENTS = [
   'discover',

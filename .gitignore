@@ -39,6 +39,7 @@
 /vendor/silk/**/node_modules/
 /vendor/silk/ext/**/dist/
 /vendor/silk/ext/**/*.js
+/vendor/silk/trainingset/
 
 # repo projects from msm8916 gonk
 /build.sh

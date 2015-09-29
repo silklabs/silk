@@ -28,6 +28,11 @@
            remote="github"
            revision="refs/tags/2.4.12" clone-depth="1"/>
 
+  <project name="silk-trainingset"
+           path="vendor/silk/trainingset"
+           remote="silk"
+           revision="master"/>
+
   <!-- node modules -->
   <project name="silk-api-node"
            path="vendor/silk/core/local_node_modules/silk-api"

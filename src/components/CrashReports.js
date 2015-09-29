@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Button, ButtonToolbar, DropdownButton, Glyphicon, Label,
-         ListGroup, ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
+         ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
 import Iframe from 'react-iframe';
 import { Link } from 'react-router';
 import Reports from '../libraries/CrashReports';
@@ -261,7 +261,7 @@ export default class CrashReports extends React.Component {
           </Button>
         </ButtonToolbar>
         {error}
-        <div>
+        <div className="list-group">
           {content}
         </div>
       </div>

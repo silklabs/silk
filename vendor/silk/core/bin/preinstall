@@ -1,0 +1,9 @@
+#!/bin/bash -ex
+
+# Copy "local" node modules into node_modules/
+rsync -a local_node_modules/* node_modules
+
+# Fetch locked node_modules if present
+if [[ -d ../locked_node_modules ]]; then 
+  ../locked_node_modules/fetch.sh
+fi

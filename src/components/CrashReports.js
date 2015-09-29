@@ -37,7 +37,7 @@ const styles = {
 };
 
 class Checkbox extends React.Component {
-  state = { checked: false }
+  state = { checked: false };
 
   constructor(props) {
     super(props);

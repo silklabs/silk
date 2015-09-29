@@ -7,11 +7,11 @@ import Cameras from '../libraries/Cameras';
 export default class CameraPreview extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string,
-  }
+  };
 
-  state = { camera: null }
+  state = { camera: null };
 
-  deviceId() {
+  get deviceId() {
     return this.props.deviceId;
   }
 
@@ -56,7 +56,7 @@ export default class CameraPreview extends React.Component {
 
   onCamerasStateChanged = state => {
     let oldCamera = this.state.camera;
-    let newCamera = state.cameras[this.deviceId()];
+    let newCamera = state.cameras[this.deviceId];
 
     if (oldCamera === newCamera) {
       return;
@@ -69,10 +69,9 @@ export default class CameraPreview extends React.Component {
     }
     this._shouldComponentUpdate = true;
     this.setState({ camera: newCamera });
-  }
+  };
 
-
-  onPreviewImage = () => this.renderPreview()
+  onPreviewImage = () => this.renderPreview();
 
   renderPreview() {
     let canvas = this._canvas;

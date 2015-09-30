@@ -42,7 +42,9 @@ before_script:
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
   - if [ $TRAVIS_OS_NAME == osx ]; then
-        brew install ccache nvm;
+        brew uninstall coreutils;
+        brew update;
+        brew install ccache coreutils nvm;
         source $(brew --prefix nvm)/nvm.sh;
         export CI_IGNORE_CASE_INSENSITIVE_FS=please;
     else

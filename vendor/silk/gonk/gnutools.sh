@@ -14,4 +14,9 @@ if [ $(uname) = "Darwin" ]; then
     fi
     PATH="/usr/local/opt/$package/libexec/gnubin:$PATH"
   done
+
+  if ! cp --version | grep -q GNU; then
+    echo "Error: GNU cp not found at $(which cp)"
+    exit 1
+  fi
 fi

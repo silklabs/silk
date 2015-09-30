@@ -10,6 +10,24 @@ var debug = process.env.TARGET_BUILD_VARIANT !== 'user';
 
 module.exports = function(grunt) {
 
+  var browserifyTransforms = [];
+
+  // Adjust source map filenames to exclude the 'dist/lib' prefix
+  // added to the transpiled source
+  function adjustSourceMaps() {
+    var mold = require('mold-source-map');
+    return mold.transformSources(
+      function(file) {
+        return '../../' + file;
+      }
+    );
+  }
+
+  if (debug) {
+    // Only run source map adjustment in debug where we generate them.
+    browserifyTransforms.push(adjustSourceMaps);
+  }
+
   function exec(cmd, opts) {
     var execSync = require('child_process').execSync;
     grunt.log.writeln(execSync(cmd, opts));
@@ -150,18 +168,7 @@ module.exports = function(grunt) {
             debug: debug,
             exclude: '**/*.node',
           },
-          transform: [
-            // Adjust source map filenames to exclude the 'dist/lib' prefix
-            // added to the transpiled source
-            function() {
-              var mold = require('mold-source-map');
-              return mold.transformSources(
-                function(file) {
-                  return '../../' + file;
-                }
-              );
-            },
-          ],
+          transform: browserifyTransforms,
         }
       }
     },
@@ -188,3 +195,4 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', defaultTaskList);
 };
+

@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button, ButtonToolbar, DropdownButton, Glyphicon, Label,
+import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon, Label,
          ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
 import Iframe from 'react-iframe';
 import { Link } from 'react-router';
@@ -224,17 +224,21 @@ export default class CrashReports extends React.Component {
     });
   };
 
-  onMarkAs = (e, what) => {
+  onMarkAs = (e, what, force) => {
     Reports.setCrashesState(
       this.props.params.deviceId,
       this.state.crashes.filter(crash => {
         let el = this.refs[crash.id];
-        return el && el.isSelected();
+        return !!force || (el && el.isSelected());
       }),
       what === 'old'
     );
     this.onSelect(null, 'none');
     this.refreshCrashReports();
+  };
+
+  onMarkEverythingOld = (e, what) => {
+    return this.onMarkAs(e, 'old', 'force');
   };
 
   render() {
@@ -272,15 +276,23 @@ export default class CrashReports extends React.Component {
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
 
-          <DropdownButton id="select" title="Select" onSelect={this.onSelect}>
-            <MenuItem eventKey="all">All</MenuItem>
-            <MenuItem eventKey="none">None</MenuItem>
-          </DropdownButton>
+          <ButtonGroup>
+            <DropdownButton
+              id="select" title="Select" onSelect={this.onSelect}>
+              <MenuItem eventKey="all">All</MenuItem>
+              <MenuItem eventKey="none">None</MenuItem>
+            </DropdownButton>
 
-          <DropdownButton id="mark" title="Mark as" onSelect={this.onMarkAs}>
-            <MenuItem eventKey="old">Old</MenuItem>
-            <MenuItem eventKey="new">New</MenuItem>
-          </DropdownButton>
+            <DropdownButton
+              id="mark" title="Mark as" onSelect={this.onMarkAs}>
+              <MenuItem eventKey="old">Old</MenuItem>
+              <MenuItem eventKey="new">New</MenuItem>
+            </DropdownButton>
+
+            <Button onClick={this.onMarkEverythingOld}>
+              Mark Everything As Old
+            </Button>
+          </ButtonGroup>
 
           <Button bsStyle="info" onClick={this.onToggleModal}>
             Open in {this.state.shouldOpenInModal ? 'Window' : 'Frame'}

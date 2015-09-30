@@ -1,6 +1,6 @@
-# Copyright (c) 2015 Silk Laboratories, Inc.
+# Copyright (c) 2015 Silk Labs, Inc.
 # All Rights Reserved.
-# Confidential and Proprietary - Silk Laboratories, Inc.
+# Confidential and Proprietary - Silk Labs, Inc.
 
 if [ $(uname) = "Darwin" ]; then
   # Ensure the host system has the right tools pre-installed

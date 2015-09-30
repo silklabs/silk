@@ -6,6 +6,7 @@ import ImageView from './ImageView';
 import MonitorFullscreen from './MonitorFullscreen';
 import ObjectBoxes from './ObjectBoxes';
 import moment from 'moment';
+import PreviewQueue from '../Libraries/PreviewQueue';
 
 var {
   StyleSheet,
@@ -70,14 +71,19 @@ export var MonitorPreview = React.createClass({
   },
 
   onPreviewFrame(message) {
-    this.setState({
-      blob: message.frame,
-      objects: message.objects || [],
-    });
+    this._queue.push(message);
   },
 
   componentWillMount() {
     let { socket, id } = this.props;
+
+    this._queue = new PreviewQueue(this.props.label, message => {
+      this.setState({
+        blob: message.frame,
+        objects: message.objects || [],
+      });
+    });
+
     let stream = `preview-${id}`;
     socket.on(stream, this.onPreviewFrame);
     socket.join(stream);
@@ -98,6 +104,10 @@ export var MonitorPreview = React.createClass({
     let stream = `preview-${id}`;
     socket.off(stream, this.onPreviewFrame);
     socket.leave(stream);
+    if (this._queue) {
+      this._queue.deinit();
+      this._queue = null;
+    }
   },
 
   render() {

@@ -214,10 +214,6 @@ class BluetoothLE extends EventEmitter {
     return this._configService;
   }
 
-  get ranger() {
-    return this._ranger;
-  }
-
   get beaconUuid() {
     return this._beaconInfo.uuid;
   }
@@ -483,7 +479,7 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
-    const ranger = new Ranger(noble);
+    const ranger = new Ranger(this, noble);
     await ranger.start();
 
     this._ranger = ranger;

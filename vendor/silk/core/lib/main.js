@@ -121,18 +121,14 @@ function boot() {
       clapDetector = new clapper.ClapDetector({}, timeline);
       camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
-      btle.on('modeChange', mode => {
-        if (mode === 'normal') {
-          btle.ranger.on('entered', (uuid, rssi) => {
-            log.info('Device \'%s\' entered range %d', uuid, rssi);
-          });
-          btle.ranger.on('range', (uuid, rssi) => {
-            log.info('Device \'%s\' range %d', uuid, rssi);
-          });
-          btle.ranger.on('exited', uuid => {
-            log.info('Device \'%s\' exited range', uuid);
-          });
-        }
+      btle.on('region-entered', (uuid, rssi) => {
+        log.info('Device \'%s\' entered range %d', uuid, rssi);
+      });
+      btle.on('region-range', (uuid, rssi) => {
+        log.info('Device \'%s\' range %d', uuid, rssi);
+      });
+      btle.on('region-exited', uuid => {
+        log.info('Device \'%s\' exited range', uuid);
       });
 
       log.info('Load configuration');

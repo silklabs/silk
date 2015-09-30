@@ -7,7 +7,6 @@
  */
 
 import assert from 'assert';
-import EventEmitter from 'events';
 import { getboolprop } from '../util';
 import makeLog from '../log';
 
@@ -51,16 +50,15 @@ const DEFAULT_TOGGLE_SCAN_INTERVAL_MS = 500;
 // Unfortunately some devices (e.g. Nexus 4) don't report advertisement packets
 // for the same device more than once. To get around this we toggle the scan on
 // and off periodically...
-export default class Ranger extends EventEmitter {
-  constructor(noble, uuid = DEFAULT_SERVICE_UUID) {
-    super();
-
+export default class Ranger {
+  constructor(events, noble, uuid = DEFAULT_SERVICE_UUID) {
     log.debug('Ranger()');
 
     if (!ENABLED) {
       return;
     }
 
+    this.events = events;
     this.noble = noble;
     this.uuid = uuid.toLocaleLowerCase();
     this.emitInterval = DEFAULT_EMIT_TIMEOUT_MS;
@@ -172,8 +170,8 @@ export default class Ranger extends EventEmitter {
             setTimeout(toggle, DEFAULT_TOGGLE_SCAN_INTERVAL_MS);
         }
 
-        log.debug(`Emitting 'start' event: '${error}'`);
-        this.emit('start', error);
+        log.debug(`Emitting 'region-start' event: '${error}'`);
+        this.events.emit('region-start', error);
 
         // It's possible that we raced here. Check necessary conditions again
         // and maybe stop scanning now.
@@ -195,8 +193,8 @@ export default class Ranger extends EventEmitter {
       this.noble.once('scanStop', () => {
         log.debug('Stopped scanning');
         if (!this.togglingScanListener) {
-          log.debug(`Emitting 'stop' event`);
-          this.emit('stop');
+          log.debug(`Emitting 'region-stop' event`);
+          this.events.emit('region-stop');
         }
       });
     }
@@ -333,7 +331,7 @@ export default class Ranger extends EventEmitter {
       this.peripherals.delete(peripheral.uuid);
 
       log.debug(`Emitting 'exited' event: '${peripheral.uuid}'`);
-      this.emit('exited', peripheral.uuid);
+      this.events.emit('region-exited', peripheral.uuid);
     }, DEFAULT_OUT_OF_RANGE_TIMEOUT_MS);
   }
 
@@ -364,13 +362,13 @@ export default class Ranger extends EventEmitter {
 
         if (!peripheralInfo.inRange) {
           peripheralInfo.inRange = true;
-          log.debug(`Emitting 'entered' event: '${peripheral.uuid}', ` +
+          log.debug(`Emitting 'region-entered' event: '${peripheral.uuid}', ` +
                     average);
-          this.emit('entered', peripheral.uuid, average);
+          this.events.emit('region-entered', peripheral.uuid, average);
         }
 
-        log.debug(`Emitting 'range' event: '${peripheral.uuid}', ${average}`);
-        this.emit('range', peripheral.uuid, average);
+        log.debug(`Emitting 'region-range' event: '${peripheral.uuid}', ${average}`);
+        this.events.emit('region-range', peripheral.uuid, average);
       }, this.emitInterval);
     }
   }
@@ -390,7 +388,7 @@ export default class Ranger extends EventEmitter {
       this.adjustScanState();
 
       await new Promise((resolve, reject) => {
-        this.once('start', err => {
+        this.events.once('region-start', err => {
           if (err) {
             reject(err);
           } else {
@@ -431,8 +429,8 @@ export default class Ranger extends EventEmitter {
           peripheral.disconnect();
 
           if (peripheralInfo.inRange) {
-            log.debug(`Emitting 'exited' event: '${peripheral.uuid}'`);
-            this.emit('exited', peripheral.uuid);
+            log.debug(`Emitting 'region-exited' event: '${peripheral.uuid}'`);
+            this.events.emit('region-exited', peripheral.uuid);
           }
         });
         this.peripherals.clear();
@@ -440,7 +438,7 @@ export default class Ranger extends EventEmitter {
 
       if (wasScanning) {
         await new Promise(resolve => {
-          this.once('stop', () => {
+          this.events.once('region-stop', () => {
             resolve();
           });
         });

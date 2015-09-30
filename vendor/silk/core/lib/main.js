@@ -302,6 +302,7 @@ config.on('configured', () => {
       //  done much sooner)
       if (!ext) {
         ext = require('./ext')({
+          btle: btle,
           camera: camera,
           hue: hue,
           sensors: sensors,

@@ -96,6 +96,18 @@ class Env extends EventEmitter {
       };
     }
 
+    let btle = deviceObjects.btle;
+    if (btle) {
+      this.ranger = new EventEmitter();
+      this._listeners.ranger = {};
+      ['start', 'entered', 'range', 'exited', 'stop'].forEach(event => {
+        let listener = this._listeners.ranger[event] = (...args) => {
+          this.ranger.emit(event, ...args);
+        };
+        btle.on('region-' + event, listener);
+      });
+    }
+
     this.util = {
       playSound: fileName => {
         util.playSound(fileName);
@@ -110,13 +122,19 @@ class Env extends EventEmitter {
    * Env will be destroyed. Remove listeners.
    */
   cleanup(deviceObjects) {
-    let devices = ['sensors', 'timeline'];
+    let devices = [
+      { name: 'btle', eventPrefix: 'ranger-' },
+      { name: 'sensors', eventPrefix: '' },
+      { name: 'timeline', eventPrefix: '' }
+    ];
 
     devices.forEach(device => {
-      let deviceListeners = this._listeners[device];
+      let deviceObject = deviceObjects[device.name];
+      let deviceListeners = this._listeners[device.name];
       if (deviceListeners) {
         for (let event in deviceListeners) {
-          deviceObjects[device].removeListener(event, deviceListeners[event]);
+          deviceObject.removeListener(device.eventPrefix + event,
+                                      deviceListeners[event]);
         }
       }
     });

@@ -24,6 +24,16 @@ export default function init(env) {
 
   let nightModeOn = false;
 
+  env.ranger.on('entered', (uuid, rssi) => {
+    log.debug(`Entrance of new user ${uuid} rssi ${rssi}`);
+  });
+  env.ranger.on('range', (uuid, rssi) => {
+    log.debug(`Existing user ${uuid} now with rssi ${rssi}`);
+  });
+  env.ranger.on('exited', uuid => {
+    log.debug(`Exit of user ${uuid}`);
+  });
+
   env.sensors.light(LIGHT_SENSOR_POLL_INTERVAL_MS);
   env.sensors.on('light', level => {
     log.debug(`Light sensor level: ${level}`);

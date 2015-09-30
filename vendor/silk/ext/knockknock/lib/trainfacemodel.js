@@ -19,6 +19,16 @@ const FACE_PADDING = 5;
 let log;
 
 /**
+ * Checks whether a path starts with or contains a hidden file or a folder
+ *
+ * @param {string} source - The path of the file that needs to be validated
+ * returns {boolean} - `true` if the source is blacklisted and otherwise `false`
+ */
+let isHiddenPath = function (file) {
+  return (/(^|\/)\.[^\/\.]/g).test(file);
+};
+
+/**
  * This class prepares the training data needed for face recognition and them
  * trains the face recognizer using the training data
  */
@@ -43,6 +53,11 @@ class TrainFaces {
     people = await fs.readdir(TRAIN_FACES_PATH);
     log.debug(`Done reading ${TRAIN_FACES_PATH} and found ${people.length} people`);
     for (let count = 0; count < people.length; count++) {
+      if (isHiddenPath(people[count])) {
+        log.info(`Ignoring directory ${people[count]}`);
+        continue;
+      }
+
       // For each person find all faces and to the training set
       await this._findFaces(count, path.join(TRAIN_FACES_PATH, people[count]));
 
@@ -51,8 +66,7 @@ class TrainFaces {
     }
 
     if (this._trainingData.length <= 0) {
-      log.warn(`No faces available to train; skipping face training`);
-      return;
+      throw new Error(`No faces available to train; skipping face training`);
     }
 
     // Train the model using the collected training data
@@ -66,7 +80,7 @@ class TrainFaces {
     // Save face map in a file
     let err = await fs.writeFile(TRAIN_FACES_MAP, JSON.stringify(this._faceMap));
     if (err) {
-      log.errror(`Failed to save ${TRAIN_FACES_MAP}`);
+      throw new Error(`Failed to save ${TRAIN_FACES_MAP}`);
     }
 
     let diff = Date.now() - start;
@@ -84,6 +98,10 @@ class TrainFaces {
       let files = await fs.readdir(faceDir);
       for (let count = 0; count < files.length; count++) {
         let file = files[count];
+        if (isHiddenPath(file)) {
+          log.info(`Ignoring file ${file}`);
+          continue;
+        }
         log.debug(`Adding file ${path.join(faceDir, file)}`);
         this._trainingData.push([id, path.join(faceDir, file)]);
       }

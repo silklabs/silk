@@ -19,4 +19,9 @@ if [ $(uname) = "Darwin" ]; then
     echo "Error: GNU cp not found at $(which cp)"
     exit 1
   fi
+
+  if cp --version | grep -q 8.23; then
+    echo "Error: cp from GNU coreutils 8.23 has hardlink bugs, please upgrade to >= 8.24"
+    exit 1
+  fi
 fi

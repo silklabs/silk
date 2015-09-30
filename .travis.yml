@@ -42,7 +42,6 @@ before_script:
   - git config --global user.name "Travis CI"
   - git config --global color.ui false
   - if [ $TRAVIS_OS_NAME == osx ]; then
-        brew uninstall coreutils;
         brew update;
         brew install ccache coreutils nvm;
         source $(brew --prefix nvm)/nvm.sh;
@@ -51,11 +50,6 @@ before_script:
         jdk_switcher use openjdk7;
     fi
   - nvm install 0.12
-  - if [ $TRAVIS_OS_NAME == osx ]; then
-        echo Reclaim disk space after building node from source;
-        du -hs /usr/local/Cellar/nvm/0.17.2/src/node-v0.12.*;
-        rm -rvf /usr/local/Cellar/nvm/0.17.2/src/node-v0.12.*;
-    fi
   - .travis/before_script
 
 script:

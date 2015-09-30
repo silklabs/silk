@@ -51,7 +51,7 @@
   <project name="peterbraden/node-opencv"
            path="external/node-opencv"
            remote="github"
-           revision="97b896331c3da078c302f5ed64e530072ca5c01f"
+           revision="709df98d834578d18512c06f64c4d113a265627f"
            upstream="master"
            clone-depth="42"/>
   <project name="andreasgal/node-kissfft"

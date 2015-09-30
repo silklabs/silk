@@ -158,7 +158,7 @@ class FindFace {
         let diff = Date.now() - start;
         log.verbose(`Face recognition finished in ${diff}ms`);
         this._working = false;
-      });
+      }, 1 /* == 1 channel image (RGB not required) */);
     };
 
     this._env.timeline.on('face', this._onFace);

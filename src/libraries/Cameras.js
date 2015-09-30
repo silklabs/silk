@@ -3,6 +3,7 @@
 
 import { EventEmitter } from 'events';
 import io from 'socket.io-client';
+import PreviewQueue from './PreviewQueue';
 
 import Api from './Api';
 import mklog from '../log'; const log = mklog('Cameras');
@@ -119,10 +120,28 @@ class Camera extends EventEmitter {
       this._socket.on(previewStream, this._onPreviewStream);
       this._socket.emit('join', previewStream);
 
+      this._queue = new PreviewQueue(this.name, msg => {
+        this.previewTimestamp = new Date(msg.when);
+        this.previewObjects = msg.objects;
+
+        let view = new Uint8Array(msg.frame);
+        let blob = new Blob([view], { type: 'image/jpg' });
+
+        if (this.previewImage) {
+          URL.revokeObjectURL(this.previewImage.src);
+        }
+        this.previewImage.onload = () => this.emit('previewImage');
+        this.previewImage.src = URL.createObjectURL(blob);
+      });
+
     } else {
       log.info('Leaving preview stream ' + previewStream);
       this._socket.removeListener(previewStream, this._onPreviewStream);
       this._socket.emit('leave', previewStream);
+      if (this._queue) {
+        this._queue.deinit();
+        this._queue = null;
+      }
     }
   }
 
@@ -141,16 +160,7 @@ class Camera extends EventEmitter {
     }
 
     log.debug('preview', msg);
-    this.previewTimestamp = new Date(msg.when);
-    this.previewObjects = msg.objects;
-
-    let view = new Uint8Array(msg.frame);
-    let blob = new Blob([view], { type: 'image/jpg' });
-    if (this.previewImage) {
-      URL.revokeObjectURL(this.previewImage.src);
-    }
-    this.previewImage.onload = () => this.emit('previewImage');
-    this.previewImage.src = URL.createObjectURL(blob);
+    this._queue.push(msg);
   }
 
   _videoClipStream(enabled) {

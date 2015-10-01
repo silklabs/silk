@@ -148,6 +148,7 @@ suite('security validation tests', () => {
     let req = await eventToPromise(intercept, 'request');
     // Send a different body...
     req.body = JSON.stringify({ hacked: true });
+    req.headers['content-length'] = Buffer.byteLength(req.body);
 
     let canonicalReply = await req.send(canonicalURL);
     assert.equal(canonicalReply.res.status, 400);

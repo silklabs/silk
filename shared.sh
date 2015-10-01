@@ -34,6 +34,7 @@ GITS="\
   silk-api-node \
   silk-api-react-native \
   silk-device-locked-node-modules \
+  silk-trainingset \
   $MERGE_GITS \
 "
 

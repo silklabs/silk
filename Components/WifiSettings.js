@@ -26,7 +26,7 @@ export default class WifiSettings extends React.Component {
     this.state = {
       ssid: hints.ssid || 'Network Name',
       secret: hints.secret || 'silkysmooth',
-      serverUrl: hints.serverUrl,
+      socketUrl: hints.socketUrl,
       showSecret: false,
     };
   }
@@ -125,12 +125,12 @@ export default class WifiSettings extends React.Component {
           </View>
           <View style={styles.formInputContainer}>
             <TextInput
-              ref="serverUrl"
-              value={this.state.serverUrl}
+              ref="socketUrl"
+              value={this.state.socketUrl}
               autoCapitalize="none"
               autoCorrect={false}
               style={styles.formInput}
-              onChangeText={serverUrl => this.setState({serverUrl})}
+              onChangeText={socketUrl => this.setState({socketUrl})}
             />
           </View>
         </View>
@@ -170,7 +170,7 @@ export default class WifiSettings extends React.Component {
       this.props.route.resolve({
         ssid: this.state.ssid,
         secret: this.state.secret,
-        serverUrl: this.state.serverUrl,
+        socketUrl: this.state.socketUrl,
       });
     }
     // TODO save wifi to persistent DB --- here or elsewhere?

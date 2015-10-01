@@ -118,6 +118,14 @@ export default class extends EventEmitter {
     this.socket.off(event);
   }
 
+  close() {
+    this.socket.close();
+  }
+
+  get connected() {
+    return this.socket.connected;
+  }
+
   /**
   Overrides superclass emit interface for one that emits on the server.
 

@@ -13,12 +13,12 @@ const CONNECTION_STATES = ['connecting', 'connected', 'offline'];
 export default class TopBar extends React.Component {
 
   static propTypes = {
-    serverConnectionState: React.PropTypes.oneOf(CONNECTION_STATES).isRequired,
+    socketConnectionState: React.PropTypes.oneOf(CONNECTION_STATES).isRequired,
     openSettings: React.PropTypes.func.isRequired,
   };
 
   render() {
-    let connectionStyle = styles[this.props.serverConnectionState];
+    let connectionStyle = styles[this.props.socketConnectionState];
     return (
       <View>
         <View style={styles.statusBarUnderlay} />

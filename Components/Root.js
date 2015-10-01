@@ -16,7 +16,7 @@ let {
 import '../Libraries/BrowserShims';
 
 import Config from '../Libraries/Config';
-import MonitorsView from './MonitorsView';
+import TabsView from './TabsView';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
 import WifiSettings from './WifiSettings';
@@ -33,7 +33,7 @@ const userState = new UserState(api);
 const routeToComponentMap = {
   SignIn,
   SignUp,
-  Monitors: MonitorsView,
+  Tabs: TabsView,
   WifiSettings,
 };
 
@@ -41,13 +41,13 @@ class Silk extends React.Component {
 
   state = {
     initialRoute: null,
-  }
+  };
 
   async componentDidMount() {
     // If a token is set great then skip login screen...
     let loggedIn = await userState.getAccessToken();
     if (loggedIn) {
-      this.setState({ initialRoute: 'Monitors' });
+      this.setState({ initialRoute: 'Tabs' });
     } else {
       this.setState({ initialRoute: 'SignIn' });
     }
@@ -84,6 +84,7 @@ class Silk extends React.Component {
       );
     }
     let props = {
+      api,
       userState,
       navigator,
       route,

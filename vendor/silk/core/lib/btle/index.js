@@ -267,26 +267,26 @@ class BluetoothLE extends EventEmitter {
       await this._off();
 
       switch (mode) {
-        case MODE_OFF: {
-          await this._uninstallConfigService();
-          break;
-        }
+      case MODE_OFF: {
+        await this._uninstallConfigService();
+        break;
+      }
 
-        case MODE_CONFIGURE: {
-          await this._installConfigService();
-          await this._startAdvertisingConfigService();
-          break;
-        }
+      case MODE_CONFIGURE: {
+        await this._installConfigService();
+        await this._startAdvertisingConfigService();
+        break;
+      }
 
-        case MODE_NORMAL: {
-          await this._uninstallConfigService();
-          await this._startAdvertisingBeacon();
-          await this._startRanger();
-          break;
-        }
+      case MODE_NORMAL: {
+        await this._uninstallConfigService();
+        await this._startAdvertisingBeacon();
+        await this._startRanger();
+        break;
+      }
 
-        default:
-          throw new Error(`Invalid mode: '${mode}'`);
+      default:
+        throw new Error(`Invalid mode: '${mode}'`);
       }
 
       this._mode = mode;
@@ -297,17 +297,17 @@ class BluetoothLE extends EventEmitter {
     }
 
     switch (mode) {
-      case MODE_OFF:
-        return null;
+    case MODE_OFF:
+      return null;
 
-      case MODE_CONFIGURE:
-        return this._configService;
+    case MODE_CONFIGURE:
+      return this._configService;
 
-      case MODE_NORMAL:
-        return this._ranger;
+    case MODE_NORMAL:
+      return this._ranger;
 
-      default:
-        throw new Error(`Invalid mode: '${mode}'`);
+    default:
+      throw new Error(`Invalid mode: '${mode}'`);
     }
   }
 

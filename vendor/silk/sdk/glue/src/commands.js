@@ -64,9 +64,13 @@ export default function(baseDirectory = process.env.BASEDIR) {
   }
 
   function createBrowserifyStream(options = {}) {
+    let main = pkg.main;
+    if (!path.extname(main)) {
+      main += '.js';
+    }
 
     let base = {
-      entries: path.join(baseDirectory, 'lib/index.js'), // start "--node"
+      entries: path.join(baseDirectory, `lib/${main}`), // start "--node"
       bare: true,
       browserField: false,
       builtins: false,

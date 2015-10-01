@@ -29,6 +29,7 @@ const THRESHOLD = 60;
 
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
+const ADD_COMMAND_PROP = 'silk.addperson';
 
 let log;
 
@@ -104,10 +105,22 @@ class FindFace {
   }
 
   /**
+   * Add a person if {@code ADD_COMMAND_PROP} is set
+   */
+  _addCommandProp() {
+    let person = this._env.util.getprop(ADD_COMMAND_PROP);
+    log.info(`Property ${ADD_COMMAND_PROP} changed to ${person}`);
+    setTimeout(() => this.onCommand({msg: 'addPerson', person: person}));
+  }
+
+  /**
    * Check if training data and face map is available
    * If not train for available faces
    */
   async _init() {
+    this._watchprop = this._env.util.watchprop(ADD_COMMAND_PROP,
+      () => this._addCommandProp());
+
     let existsYml = await fs.exists(TRAIN_FACES_YML);
     let existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
     if (existsYml && existsFaceMap) {
@@ -183,6 +196,9 @@ class FindFace {
   willUnload() {
     if (this._onFace) {
       this._env.timeline.removeListener('face', this._onFace);
+    }
+    if (this._watchprop) {
+      this._watchprop.kill();
     }
   }
 }

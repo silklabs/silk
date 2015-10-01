@@ -86,9 +86,14 @@ export function watchprop(prop, onPropChanged) {
         onPropChanged();
       }
     });
-    cmd.on('close', () => spawnWatchprops()); // respawn if dies for some reason
+    cmd.on('close', (code, signal) => {
+      if (signal !== 'SIGTERM') { // Not explicitly killed
+        spawnWatchprops();
+      }
+    }); // respawn if dies for some reason
+    return cmd;
   };
-  spawnWatchprops();
+  return spawnWatchprops();
 }
 
 export function setprop(prop, value) {

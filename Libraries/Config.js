@@ -2,7 +2,7 @@ import merge from 'lodash.merge';
 
 // Default configuration...
 let DEFAULT = {
-  'debug': 'silk:*',
+  'debug': 'silk-*,-silk-*:debug',
   'react-native': {},
   'server': {},
 

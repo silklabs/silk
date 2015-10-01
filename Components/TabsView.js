@@ -11,7 +11,7 @@ import DeviceManager from '../btle/central-device-manager';
 import bleScanner from '../btle/ble-central';
 
 import socketIOClient from 'socket.io-client-react-native';
-import mkdebug from 'debug'; const debug = mkdebug('silk:TabsView');
+import mklog from 'log'; const log = mklog('TabsView');
 
 export default class TabsView extends React.Component {
 
@@ -44,7 +44,7 @@ export default class TabsView extends React.Component {
 
     this.props.api.socketio.address()
       .then(result => this.setSocketUrlAndConnect(result.url))
-      .catch(err => debug('Unable to get server socketio address', err));
+      .catch(err => log.info('Unable to get server socketio address', err));
   }
 
   componentWillUnmount() {
@@ -55,11 +55,11 @@ export default class TabsView extends React.Component {
 
   setSocketUrlAndConnect(socketUrl) {
     if (this.state.socket) {
-      debug('Closing old socket');
+      log.info('Closing old socket');
       this.state.socket.off();
       this.state.socket.close();
     }
-    debug('Going to connect to', socketUrl);
+    log.info('Going to connect to', socketUrl);
     this.setState({
       socketUrl,
       socket: null,
@@ -79,9 +79,9 @@ export default class TabsView extends React.Component {
         socketConnectionState: socket.connected ? 'connected' : 'connecting',
       });
       if (!socket.connected) {
-        debug('Connecting to ...', socketUrl);
+        log.info('Connecting to ...', socketUrl);
         socket.on('connect', () => {
-          debug(' ... connected');
+          log.info(' ... connected');
           this.setState({socketConnectionState: 'connected'});
         });
       }
@@ -107,10 +107,10 @@ export default class TabsView extends React.Component {
       });
     }
     return promise.then(settings => {
-      debug('Settings saved', settings);
+      log.info('Settings saved', settings);
       if (this.state.socketUrl !== settings.socketUrl) {
-        debug('WARNING: Switching socket URL to', settings.socketUrl);
-        debug('  This will break any open monitor streams.');
+        log.info('WARNING: Switching socket URL to', settings.socketUrl);
+        log.info('  This will break any open monitor streams.');
         this.setSocketUrlAndConnect(settings.socketUrl);
       }
       let wifi = {

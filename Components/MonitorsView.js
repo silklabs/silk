@@ -10,7 +10,7 @@ var {
 
 var DeviceSetup = require('./DeviceSetup');
 import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
-var debug = require('debug')('silk:MonitorPreview');
+import mklog from 'log'; const log = mklog('MonitorPreview');
 
 import { PlaceholderText } from './Text';
 
@@ -108,14 +108,14 @@ class MonitorsView extends React.Component {
     }
 
     if (!this.props.socket.connected) {
-      debug('socket not connected yet.');
+      log.info('socket not connected yet.');
       this.props.socket.on('connect', this.subscribeToSocket);
       return;
     }
 
-    debug('socket connected, listening for video streams');
+    log.info('socket connected, listening for video streams');
     this.props.socket.on('video-stream-new', msg => {
-      debug('new video stream', msg.id);
+      log.info('new video stream', msg.id);
 
       // use device status from discovered peripheral if available
       let device = this.state.streaming[msg.id];
@@ -131,7 +131,7 @@ class MonitorsView extends React.Component {
       this.setState(this.state);
     });
     this.props.socket.on('video-stream-delete', msg => {
-      debug('deleted video stream', msg.id);
+      log.info('deleted video stream', msg.id);
       delete this.state.streaming[msg.id];
       this.setState(this.state);
     });

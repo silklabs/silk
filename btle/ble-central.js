@@ -5,12 +5,7 @@ var ble = require('./ble');
 var EventEmitter = require('events').EventEmitter;
 var normUuid = require('./util').normUuid;
 
-const debug = require('debug');
-const log = {
-  debug: debug('silk:ble-central:debug'),
-  info: debug('silk:ble-central:info'),
-  warn: debug('silk:ble-central:warn'),
-};
+import mklog from 'log'; const log = mklog('ble-central');
 
 function BLECentral() {
   EventEmitter.call(this);

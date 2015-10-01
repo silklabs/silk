@@ -14,9 +14,8 @@
 import EventEmitter from 'EventEmitter';
 import { AsyncStorage } from 'react-native';
 import { getRandomBytes, PBKDF2KeyDerivation } from './Crypto';
-import createDebug from 'debug';
 
-const log = createDebug('UserState');
+import mklog from 'log'; const log = mklog('UserState');
 const ACCESS_TOKEN_KEY = 'user.accessToken';
 
 /**
@@ -45,7 +44,7 @@ export default class UserState extends EventEmitter {
   }
 
   async setAccessToken(accessToken) {
-    log('Set access token', accessToken);
+    log.info('Set access token', accessToken);
     let json = JSON.stringify({
       publicKey: accessToken.pub,
       privateKey: accessToken.priv,
@@ -72,13 +71,13 @@ export default class UserState extends EventEmitter {
 
     let accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
     if (!accessToken) {
-      log('No access token set....');
+      log.info('No access token set....');
       return accessToken;
     }
 
     let parsed = JSON.parse(accessToken);
     this._accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
-    log('Using existing access token', this._accessToken);
+    log.info('Using existing access token', this._accessToken);
     return this._accessToken;
   }
 
@@ -106,7 +105,7 @@ export default class UserState extends EventEmitter {
    * up right now this will diverge over time.
    */
   async attemptSignIn(email, password) {
-    log('Attempting user sign in');
+    log.info('Attempting user sign in');
     // Always create a new token when we attempt a sign up...
     let vip = this.api.vip;
     let accessToken = await this.createAccessToken();
@@ -127,7 +126,7 @@ export default class UserState extends EventEmitter {
     });
 
     if (result.success) {
-      log('Successfully signed into account', email);
+      log.info('Successfully signed into account', email);
       await this.setAccessToken(accessToken);
       return true;
     }
@@ -138,7 +137,7 @@ export default class UserState extends EventEmitter {
    * Attempt a user signup with the server.
    */
   async attemptSignup(email, password) {
-    log('Attempting user sign up');
+    log.info('Attempting user sign up');
     // Always create a new token when we attempt a sign up...
     let vip = this.api.vip;
     let accessToken = await this.createAccessToken();
@@ -159,7 +158,7 @@ export default class UserState extends EventEmitter {
     });
 
     if (result.success) {
-      log('Successfully created account');
+      log.info('Successfully created account');
       await this.setAccessToken(accessToken);
       return true;
     }
@@ -170,7 +169,7 @@ export default class UserState extends EventEmitter {
    * Attempt logging in with the developer credentials...
    */
   async attemptDeveloperLogin() {
-    log('Logging in via developer account');
+    log.info('Logging in via developer account');
     let account = this.api.devAccount;
     let vip = this.api.vip;
     let accessToken = new this.api.id(account.publicKey, account.privateKey);
@@ -180,13 +179,13 @@ export default class UserState extends EventEmitter {
 
     let check = await this.checkPassword(account.email, account.password);
     if (check.success) {
-      log('Successfully logged in as', account.email);
+      log.info('Successfully logged in as', account.email);
       await this.setAccessToken(accessToken);
       return true;
     }
     // Reset to current access token...
     vip.key = await this.getAccessToken();
-    log('Failed to logged in as', account.email);
+    log.info('Failed to logged in as', account.email);
     return false;
   }
 

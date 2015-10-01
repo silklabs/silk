@@ -2,7 +2,7 @@ import jwa from '../api/jwa';
 import jwt from 'jsonwebtoken';
 import * as Joi from 'joi';
 
-let log = require('./log')('routes:jwt');
+let log = require('log')('routes:jwt');
 
 /**
  * The "lifetime" of a token this value must be plus or minus within this amount

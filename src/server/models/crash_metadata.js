@@ -6,7 +6,7 @@ import mongo from 'promised-mongo';
 import formatOutput from './format_output';
 import Base from './base';
 
-let log = require('../log')('models-crashreport');
+let log = require('log')('models-crashreport');
 
 const TYPE_DEVICEID = Joi.string().lowercase().trim().length(66).hex();
 

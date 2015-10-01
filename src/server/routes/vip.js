@@ -10,7 +10,7 @@ import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
 
-let log = require('../log')('routes:vip');
+let log = require('log')('routes:vip');
 const PREFIX = '/v1/vip/';
 
 const REQUEST_SCHEMA = Joi.object().keys({

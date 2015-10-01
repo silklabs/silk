@@ -218,7 +218,7 @@ updatebranch__silk_device() {
 
     # Update the revision attribute for the all silk.xml projects on the $from
     # branch
-    local silk_xml=gonk/manifest/silk.xml
+    local silk_xml=gonk/silk/silk.xml
     if [[ ! -f $silk_xml ]]; then
       echo Error: $silk_xml does not exist.
       exit 1

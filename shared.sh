@@ -213,26 +213,31 @@ updatebranch__silk_device() {
     set -x
     sed -i .branch -e s/${from}/${to}/g
 
-    # Update the revision attribute for the following projects in
-    # gonk/manifest/silk.xml
-    for p in silk-device-locked-node-modules silk-api-node; do
+    # Update the revision attribute for the all silk.xml projects on the $from
+    # branch
+    local silk_xml=gonk/manifest/silk.xml
+    if [[ ! -f $silk_xml ]]; then
+      echo Error: $silk_xml does not exist.
+      exit 1
+    fi
+    for p in $(xmlstarlet sel -t -v "//project[@revision='$from']/@name" $silk_xml); do
       local HEAD=$to
       if [[ $to == release ]]; then
         # Lock to SHA1 for release branch
         HEAD=$(git -C ../$p rev-parse HEAD)
       fi
 
-      xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" gonk/manifest/silk.xml
-      xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD gonk/manifest/silk.xml
+      xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" $silk_xml
+      xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD $silk_xml
 
       if [[ $to == release ]]; then
         # When locking to a SHA1, ensure the "clone-depth" attribute is removed,
         # as github does not support fetching a shallow clone of a SHA1 it seems
-        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@clone-depth" gonk/manifest/silk.xml
+        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@clone-depth" $silk_xml
 
         # Add upstream attribute as a convenience to help decode the SHA1
-        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@upstream" gonk/manifest/silk.xml
-        xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n upstream -v $to gonk/manifest/silk.xml
+        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@upstream" $silk_xml
+        xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n upstream -v $to $silk_xml
       fi
 
     done

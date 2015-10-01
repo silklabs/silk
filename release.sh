@@ -33,7 +33,7 @@ mkdir -p release
 cd release
 
 clone $ORIGIN_BRANCH
-nostragglers $ORIGIN_BRANCH
+#nostragglers $ORIGIN_BRANCH
 
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
 updatebranch__silk_api $ORIGIN_BRANCH release
@@ -48,13 +48,19 @@ if [[ "$REPLY" != "y" ]]; then
   exit
 fi
 
-push release
+#push release
 
 set +x
 echo
 echo Released to:
 for g in $MERGE_GITS; do
   echo "https://github.com/silklabs/$g/commit/$(git -C $g rev-parse --short HEAD)"
+done
+echo
+echo To reproduce this release:
+for g in $MERGE_GITS; do
+  echo "git clone --no-checkout git@github.com:silklabs/$g.git"
+  echo "git -C $g checkout $(git -C $g rev-parse --short HEAD)"
 done
 
 exit 0

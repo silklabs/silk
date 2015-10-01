@@ -6,7 +6,7 @@ import io from 'socket.io-client';
 import PreviewQueue from './PreviewQueue';
 
 import Api from './Api';
-import mklog from '../log'; const log = mklog('Cameras');
+import mklog from 'log'; const log = mklog('Cameras');
 
 class Camera extends EventEmitter {
   constructor(name, id, logo, previewSize, socket) {

@@ -11,7 +11,7 @@
 //
 
 
-import mklog from '../log'; const log = mklog('PreviewQueue');
+import mklog from 'log'; const log = mklog('PreviewQueue');
 
 // How long to delay the live preview image to allow for new frames to arrive
 // before they must be displayed to the user. This can help give a smoother

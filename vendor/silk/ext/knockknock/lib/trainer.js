@@ -32,7 +32,7 @@ let isHiddenPath = function (file) {
  * This class prepares the training data needed for face recognition and them
  * trains the face recognizer using the training data
  */
-class TrainFaces {
+export default class Trainer {
   constructor(env) {
     this._env = env;
     log = env.log;
@@ -170,5 +170,3 @@ class TrainFaces {
     });
   }
 }
-
-module.exports = env => new TrainFaces(env);

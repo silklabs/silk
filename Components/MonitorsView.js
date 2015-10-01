@@ -94,7 +94,7 @@ class MonitorsView extends React.Component {
       <View style={styles.content}>
         <ScrollView
           style={styles.monitors}
-          automaticallyAdjustContentInsets={false}>
+          automaticallyAdjustContentInsets={true}>
           {configuring}
           {streaming}
         </ScrollView>

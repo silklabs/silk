@@ -20,7 +20,7 @@
       2
     ],
     "no-underscore-dangle": 0,
-    "strict": false,
+    "strict": 0,
     "quotes": [
       2,
       "single",

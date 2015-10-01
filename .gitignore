@@ -40,6 +40,8 @@
 /vendor/silk/ext/**/dist/
 /vendor/silk/ext/**/*.js
 /vendor/silk/trainingset/
+/vendor/silk/**/*.js.map
+.gulpcache
 
 # repo projects from msm8916 gonk
 /build.sh

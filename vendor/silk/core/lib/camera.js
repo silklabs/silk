@@ -298,32 +298,32 @@ class CameraStream extends EventEmitter {
 
       let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
       switch (tag) {
-        case TAG_PREVIEW:
-          log.debug(`TAG_PREVIEW ${when}`);
-          this.timeline.addPreviewJPEG(when, pkt);
-          // TODO: Currently the OpenCV preview frames are tied to the capture
-          //       preview frames for simplicity, however there's no reason why
-          //       they couldn't be independent.
-          this._grabPreviewFrame(when);
-          break;
-        case TAG_VIDEO:
-          log.debug(`TAG_VIDEO ${when}`);
-          this.timeline.addVideo(when, pkt);
-          break;
-        case TAG_FACES:
-          log.debug(`TAG_FACES ${when}`);
-          let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-          this.timeline.addFace(when, faces, 'hal');
-          break;
-        case TAG_MIC:
-          log.debug(`TAG_MIC ${when}`);
-          this.emit('mic-data', {when: when, frame: pkt});
-          break;
-        default:
-          // Flush the buffer and restart the socket
-          this._dataBuffer = new Buffer(0);
-          this._restart('Invalid capture tag');
-          throw new Error(`Invalid capture tag: ${tag}`);
+      case TAG_PREVIEW:
+        log.debug(`TAG_PREVIEW ${when}`);
+        this.timeline.addPreviewJPEG(when, pkt);
+        // TODO: Currently the OpenCV preview frames are tied to the capture
+        //       preview frames for simplicity, however there's no reason why
+        //       they couldn't be independent.
+        this._grabPreviewFrame(when);
+        break;
+      case TAG_VIDEO:
+        log.debug(`TAG_VIDEO ${when}`);
+        this.timeline.addVideo(when, pkt);
+        break;
+      case TAG_FACES:
+        log.debug(`TAG_FACES ${when}`);
+        let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+        this.timeline.addFace(when, faces, 'hal');
+        break;
+      case TAG_MIC:
+        log.debug(`TAG_MIC ${when}`);
+        this.emit('mic-data', {when: when, frame: pkt});
+        break;
+      default:
+        // Flush the buffer and restart the socket
+        this._dataBuffer = new Buffer(0);
+        this._restart('Invalid capture tag');
+        throw new Error(`Invalid capture tag: ${tag}`);
       }
       // put the rest of the buffer back
       let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));

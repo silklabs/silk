@@ -356,16 +356,16 @@ function shutdown(finalPromiseFactory) {
     })
     .then(status => {
       switch (status) {
-        case STATUS_COMPLETE:
-          log.info('Shutdown completed normally');
-          break;
-        case STATUS_EXCEPTION:
-          break;
-        case STATUS_TIMEOUT:
-          log.error('Shutdown timed out!');
-          break;
-        default:
-          log.warn('Unknown status: %s', status);
+      case STATUS_COMPLETE:
+        log.info('Shutdown completed normally');
+        break;
+      case STATUS_EXCEPTION:
+        break;
+      case STATUS_TIMEOUT:
+        log.error('Shutdown timed out!');
+        break;
+      default:
+        log.warn('Unknown status: %s', status);
       }
 
       if (finalPromiseFactory) {

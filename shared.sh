@@ -139,7 +139,9 @@ updatebranch__silk_app() {
     (
       set -x
 
-      normalizePackageJson $from $to
+      if [[ $to != release ]]; then
+        normalizePackageJson $from $to
+      fi
 
       if [[ -f .branch ]]; then
         sed -i .branch -e s/${from}/${to}/g

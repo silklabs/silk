@@ -33,7 +33,7 @@ mkdir -p release
 cd release
 
 clone $ORIGIN_BRANCH
-#nostragglers $ORIGIN_BRANCH
+nostragglers $ORIGIN_BRANCH
 
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
 updatebranch__silk_api $ORIGIN_BRANCH release
@@ -48,7 +48,7 @@ if [[ "$REPLY" != "y" ]]; then
   exit
 fi
 
-#push release
+push release
 
 set +x
 echo

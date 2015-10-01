@@ -15,7 +15,8 @@
   "dependencies": {
     "mocha": "^2.3.0",
     "event-to-promise": "^0.3.3",
-    "mz": "2.0.0"
+    "mz": "2.0.0",
+    "babel-runtime": "^5.8.20"
   },
   "devDependencies": {
     "silk-sdk-glue": "0.0.1"

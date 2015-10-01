@@ -8,7 +8,8 @@
     "install": "./build"
   },
   "dependencies": {
-    "silk-sdk-glue": "0.0.1"
+    "silk-sdk-glue": "0.0.1",
+    "babel-runtime": "^5.8.20"
   },
   "private": true
 }

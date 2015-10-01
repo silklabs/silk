@@ -4,7 +4,7 @@
 import loadConfig from './server/config';
 
 export default function(createServer) {
-  let log = require('./server/log')('main');
+  let log = require('log')('main');
   let profile = process.argv[2];
   let config = loadConfig(profile);
 

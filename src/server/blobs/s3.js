@@ -5,7 +5,7 @@ import { S3 } from 'aws-sdk-promise';
 import url from 'url';
 import uuid from 'uuid';
 
-let log = require('../log')('blob-s3');
+let log = require('log')('blob-s3');
 
 class S3Blobs {
   constructor(config) {

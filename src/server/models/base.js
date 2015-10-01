@@ -1,6 +1,6 @@
 import * as Joi from 'joi';
 
-let log = require('../log')('models:base');
+let log = require('log')('models:base');
 
 /**
  * Provides basic structure for classes which deal with our datastore.

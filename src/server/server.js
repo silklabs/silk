@@ -21,7 +21,7 @@ export default async function main (config) {
   let app = express();
   let http = require('http').createServer(app);
   let path = require('path');
-  let log = require('./log')('server');
+  let log = require('log')('server');
 
   let publicPath = path.join(__dirname, '/../../public');
 

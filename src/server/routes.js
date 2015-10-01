@@ -4,7 +4,7 @@
 import { resolve } from 'url';
 import vipRoutes from './routes/vip';
 
-let log = require('./log')('routes');
+let log = require('log')('routes');
 
 module.exports = function(opts) {
   let {

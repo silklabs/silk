@@ -1,4 +1,4 @@
-let log = require('../server/log')('socketio');
+let log = require('log')('socketio');
 
 // How long a device has to send a livestream message when the server is
 // expecting one before it will be disconnected on

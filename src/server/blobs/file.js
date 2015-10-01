@@ -8,7 +8,7 @@ import url from 'url';
 import uuid from 'uuid';
 import assert from 'assert';
 
-let log = require('../log')('blob-file');
+let log = require('log')('blob-file');
 
 const KEY_GENERATOR_ATTEMPTS_MAX = 10;
 

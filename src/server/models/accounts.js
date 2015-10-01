@@ -62,7 +62,7 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
   })
 });
 
-const log = require('../log')('models:accounts');
+const log = require('log')('models:accounts');
 
 /**
  * The time in MS which a password check is valid.

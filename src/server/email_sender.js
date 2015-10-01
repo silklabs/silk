@@ -3,7 +3,7 @@ import { readdirSync } from 'fs';
 import path from 'path';
 import * as Joi from 'joi';
 
-let log = require('./log')('email-sender');
+let log = require('log')('email-sender');
 
 const TEMPLATE_SRC = path.join(__dirname, 'emails');
 const ASSET_SRC = path.join(__dirname, '../../assets/emails/');

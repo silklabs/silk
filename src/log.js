@@ -14,8 +14,6 @@
 //
 import debug from 'debug';
 
-debug.enable('silk-*,-silk-*:debug'); // TODO: Make more configurable
-
 export default function createLog(libraryName) {
 
   function makeLogFunction(level) {

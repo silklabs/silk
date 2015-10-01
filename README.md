@@ -44,6 +44,19 @@ is used when hosting the app with Heroku.  It can be invoked locally as well by
 running `npm run-script start-server`.  Typically using the webpack development
 server will be more dev-friendly though.
 
+### Logging
+
+Logging is configured via `config.local.json` currently logging is based
+on the `debug` module...
+
+For example to enable all logs possible (socket.io, etc..):
+
+```json
+{
+  "debug": "*"
+}
+```
+
 ## S3 Deployment
 
 Upon merging a change Travis CI will deploy the application (`public/`) to the silk-webapp

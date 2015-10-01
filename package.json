@@ -27,6 +27,7 @@
     "json-loader": "^0.5.2",
     "localforage": "^1.2.10",
     "lodash.merge": "^3.3.2",
+    "log": "git@github.com:silklabs/log.git#master",
     "ms": "^0.7.1",
     "pbkdf2": "^3.0.4",
     "react": "^0.13.3",
@@ -64,17 +65,45 @@
       "no-shadow": 0,
       "no-debugger": 1,
       "default-case": 2,
-      "comma-dangle": [1, "always-multiline"],
-      "indent": [2, 2],
+      "comma-dangle": [
+        1,
+        "always-multiline"
+      ],
+      "indent": [
+        2,
+        2
+      ],
       "no-underscore-dangle": 0,
       "no-use-before-define": 0,
       "no-unused-expressions": 0,
-      "no-unused-vars": [2, {"vars": "all", "args": "none"}],
-      "quotes": [2, "single", "avoid-escape"],
+      "no-unused-vars": [
+        2,
+        {
+          "vars": "all",
+          "args": "none"
+        }
+      ],
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
+      ],
       "yoda": 0,
-      "react/jsx-closing-bracket-location": [1, {"selfClosing": "tag-aligned", "nonEmpty": "after-props"}],
-      "react/jsx-indent-props": [2, 2],
-      "react/jsx-quotes": [2, "double"]
+      "react/jsx-closing-bracket-location": [
+        1,
+        {
+          "selfClosing": "tag-aligned",
+          "nonEmpty": "after-props"
+        }
+      ],
+      "react/jsx-indent-props": [
+        2,
+        2
+      ],
+      "react/jsx-quotes": [
+        2,
+        "double"
+      ]
     },
     "env": {
       "browser": true,

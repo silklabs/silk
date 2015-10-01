@@ -8,7 +8,7 @@ import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
-import mklog from '../log'; const log = mklog('diag');
+import mklog from 'log'; const log = mklog('diag');
 
 export default class Diag extends React.Component {
   state = { camera: null, paused: false };

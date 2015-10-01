@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 #
 # Prepares a module to use the glue
 #
@@ -7,7 +7,10 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 GLUEDIR=node_modules/silk-sdk-glue
+cd $1
 
-for f in debug watch .eslintrc Gruntfile.js; do
+for f in debug watch build
+do
+  rm -f $f
   ln -fsv $GLUEDIR/$f $f
 done

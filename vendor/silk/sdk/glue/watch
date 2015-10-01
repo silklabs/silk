@@ -1,24 +1,8 @@
-#!/bin/bash -e
+#! /bin/bash -e
 
-cd $(dirname $0)
-orgpwd=$PWD
-
-# Try to source build/envsetup.sh to figure ANDROID_PRODUCT_OUT
-# (The Silk source setup is assumed where |lunch| is run automatically as a
-# part of build/envsetup.sh)
-#
-# TODO: Maybe skip if ANDROID_PRODUCT_OUT is already defined but what if the
-#       ANDROID_PRODUCT_OUT is for a different tree?
-while true; do
-  if [[ -f build/envsetup.sh ]]; then
-    source build/envsetup.sh np
-    break;
-  fi
-  if [[ "$PWD" = "/" ]]; then
-    break;
-  fi
-  cd ..
-done
-
-cd $orgpwd
-( set -x; exec ./node_modules/.bin/grunt watch $@)
+# current module...
+MOD=$PWD
+# path to the sdk...
+SDK=$MOD/node_modules/silk-sdk-glue
+export BASEDIR=$MOD
+exec node --harmony $SDK/dist/watch.js $@

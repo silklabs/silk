@@ -135,7 +135,7 @@ index dc043a0..f746093 100755
  var Matrix = cv.Matrix
    , VideoCapture = cv.VideoCapture
 diff --git a/package.json b/package.json
-index f74011b..21b7cdd 100644
+index 226053a..2daf91b 100644
 --- a/package.json
 +++ b/package.json
 @@ -2,26 +2,24 @@
@@ -183,7 +183,7 @@ index f74011b..21b7cdd 100644
      "url": "https://github.com/peterbraden/node-opencv.git"
 @@ -37,11 +35,5 @@
    "engines": {
-     "node": ">=0.10"
+     "node": ">=0.12"
    },
 -  "binary": {
 -    "module_name": "opencv",
@@ -195,5 +195,5 @@ index f74011b..21b7cdd 100644
 +  "gypfile": true
  }
 -- 
-1.9.1
+2.4.5
 

@@ -56,7 +56,7 @@ export default function init(env) {
 
   let hueLightsOn = false;
   let faceLostTimeout;
-  env.timeline.on('face', faces => {
+  env.timeline.on('face', (when, faces) => {
     if ((faces.length <= 0) || (!nightModeOn)) {
       return;
     }

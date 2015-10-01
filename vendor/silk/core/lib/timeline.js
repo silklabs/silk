@@ -111,8 +111,8 @@ class Timeline extends EventEmitter {
   /**
    *
    */
-  addFace(when, faces) {
-    this.emit('face', faces);
+  addFace(when, faces, source) {
+    this.emit('face', when, faces, source);
     this._pushFace(when, faces);
     this.eventTracker.record({
       tag: 'face',
@@ -145,11 +145,15 @@ class Timeline extends EventEmitter {
    *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
    */
   addObjects(objects) {
-    this.previewObjects.push(...objects);
-    this.videoObjects.push(...objects);
-
+    objects.forEach((object) => {
+      // Run facial recognition on the detected faces before adding them
+      if (object.tag !== 'face') {
+        this.previewObjects.push(object);
+        this.videoObjects.push(object);
+        this.eventTracker.record(object);
+      }
+    });
     this._emitEvents(objects);
-    objects.forEach((record) => this.eventTracker.record(record));
   }
 
   /**
@@ -193,7 +197,7 @@ class Timeline extends EventEmitter {
   _emitEvents(objects) {
     objects.forEach(object => {
       if (object.tag === 'face') {
-        this.emit('face', object.rects);
+        this.emit('face', object.when, object.rects, object.source);
       } else if (object.tag === 'motion') {
         this.emit('motion', object.when, object.rects);
       } else if (object.tag === 'car') {

@@ -25,14 +25,6 @@ const cascades = [
       min: [40, 80],
     },
   },
-  {
-    tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
-    opts: {
-      scale: 1.2,
-      neighbors: 2,
-      min: [25, 25],
-    },
-  }
 ];
 
 /**

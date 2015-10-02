@@ -176,6 +176,16 @@ Travis-ci builds run on linux, Ubuntu 12.04 amd64 machines.  If a build burns
 only there (very rare), you'll usually want to start diagnosing by reproducing in your Linux
 VM image.
 
+### Artifacts
+
+In addition to the traditional artifacts travis produces (the log) you
+can find addition logs by searching for the "artifacts url" line in your travis
+build. This url will show you additional artifacts available for
+debugging (full log, etc...).
+
+To add additional artifacts add files to the `.artifacts` directory from
+the travis build.
+
 ## Emacs setup
 
 If you don't use emacs, ignore this.

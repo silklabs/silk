@@ -214,7 +214,7 @@ class Cameras extends EventEmitter {
     super();
     this.cameras = {};
     this.socket = null;
-    this.status = `Offline`;
+    this.status = `Initializing`;
     Api.socketio.address().then(result => {
       this._changeState(`Connecting to ${result.url}...`);
 
@@ -232,7 +232,7 @@ class Cameras extends EventEmitter {
         Object.keys(cameras).forEach(id => cameras[id].deinit());
 
         this.cameras = {};
-        this._changeState(`Disconnected from server: ${e}. Reload?`);
+        this._changeState(`Disconnected from server: ${e}. Reload page!`);
         log.error('Server disconnected');
       });
 
@@ -256,7 +256,8 @@ class Cameras extends EventEmitter {
       });
 
     }).catch(err => {
-      this.setState({status: `Could not get socket.io address: ${err}`});
+      this._changeState(`Server connection failure: ${err}`);
+      log.error(err.stack);
     });
   }
 

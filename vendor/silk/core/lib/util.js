@@ -76,6 +76,11 @@ export function getintprop(prop, defaultValue = 0) {
   return value;
 }
 
+export function getlistprop(prop, defaultValue = []) {
+  let value = getprop(prop, '');
+  return (value === '') ? defaultValue : value.split(',');
+}
+
 export function watchprop(prop, onPropChanged) {
   let spawn = require('child_process').spawn;
   let spawnWatchprops = () => {

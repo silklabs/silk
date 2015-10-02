@@ -23,7 +23,7 @@
     "react-native": "^0.11.4",
     "react-native-button": "^1.2.0",
     "react-native-linear-gradient": "^0.3.2",
-    "react-native-webpack-server": "0.5.1",
+    "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#v0.5.1-silk",
     "react-timer-mixin": "^0.13.2",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
     "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",

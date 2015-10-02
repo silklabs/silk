@@ -9,7 +9,7 @@
 GLUEDIR=node_modules/silk-sdk-glue
 cd $1
 
-for f in debug watch build
+for f in debug watch build .eslintrc
 do
   rm -f $f
   ln -fsv $GLUEDIR/$f $f

@@ -29,6 +29,12 @@ export default function(baseDirectory = process.env.BASEDIR) {
   // add custom browserify options here
   let browserifyStream = browserify();
 
+  // Needed so gulp always operates on the base directory.
+  function src(glob) {
+    // XXX: The "base" option does not work so we use the whole baseDirectory.
+    return gulp.src(path.join(baseDirectory, glob));
+  }
+
   function getDestFile() {
     let destDir = '/system/silk/ext/';
     if (pkg.name === 'core') {
@@ -141,13 +147,11 @@ export default function(baseDirectory = process.env.BASEDIR) {
   }
 
   function lint() {
-    let eslintrc = fs.readFileSync(path.join(__dirname, '../eslint.json'));
+    let eslintrc = fs.readFileSync(path.join(__dirname, '../.eslintrc'));
     let cacheProps = [pkgSource, eslintrc];
 
-    return gulp.src('lib/**/*.js')
-      .pipe(cache(eslint({
-        configFile: path.join(__dirname, '../eslint.json'),
-      }), {
+    return src('lib/**/*.js')
+      .pipe(cache(eslint(), {
         fileCache: getCache(),
         key: (file) => {
           return [file.contents].concat(cacheProps).join('');

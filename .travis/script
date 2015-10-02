@@ -12,6 +12,8 @@ elif [ "$TEST_TYPE" = objc-test ]; then
     test
 
 elif [ "$TEST_TYPE" = build-dist ]; then
+    export NODE_DEBUG=http
+
     mkdir build
     xctool \
       -project $PROJECT.xcodeproj \

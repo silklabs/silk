@@ -12,13 +12,15 @@ const commands = createCommands(process.env.BASEDIR);
 let browserifyStream = commands.createBrowserifyStream(watchify.args);
 let bundle = watchify(browserifyStream);
 
-let restartType = process.argv[2] === '--restart-ext' ?
+let restartType = process.argv[2] === '--reload-ext' ?
   'restartExt' :
   'restart';
 
 if (process.argv[2] === '--no-restart') {
   restartType = false;
 }
+
+gutil.log(`Watching with restart: ${restartType}`);
 
 function printTable(title, times) {
   let table = new AsciiTable(`watch: ${commands.pkg.name} (${title})`);

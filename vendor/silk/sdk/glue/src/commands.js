@@ -189,12 +189,14 @@ export default function(baseDirectory = process.env.BASEDIR) {
 
     // This intentionally assumes you have a device plugged in and working for
     // speed...
-    return Promise.all([
-      `adb push ${src} ${dest}`,
-      `adb push ${src}.map ${dest}.map`
-    ].map((cmd) => {
-      return printExec(cmd);
-    }));
+    return printExec(`adb remount`).then(() => {
+      return Promise.all([
+        `adb push ${src} ${dest}`,
+        `adb push ${src}.map ${dest}.map`
+      ].map((cmd) => {
+        return printExec(cmd);
+      }));
+    });
   }
 
   return {

@@ -16,19 +16,12 @@ let {
 import '../Libraries/BrowserShims';
 
 import Config from '../Libraries/Config';
+import API from 'silk-api-react-native';
 import TabsView from './TabsView';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
 import WifiSettings from './WifiSettings';
 import UserState from '../Libraries/UserState';
-
-// global instance of the silk api
-const api = require('silk-api-react-native')({
-  serverUrl: Config.server.url,
-});
-
-// global instance of user state.
-const userState = new UserState(api);
 
 const routeToComponentMap = {
   SignIn,
@@ -41,17 +34,26 @@ class Silk extends React.Component {
 
   state = {
     initialRoute: null,
+    api: null,
+    userState: null,
   };
 
-  async componentDidMount() {
+  componentDidMount() {
+    Config.init();
+    Config.on('change', this.onConfigChange);
+  }
+
+  onConfigChange = async (config) => {
+    let api = API({
+      serverUrl: config.server.url,
+    });
+    let userState = new UserState(api);
+
     // If a token is set great then skip login screen...
     let loggedIn = await userState.getAccessToken();
-    if (loggedIn) {
-      this.setState({ initialRoute: 'Tabs' });
-    } else {
-      this.setState({ initialRoute: 'SignIn' });
-    }
-  }
+    let initialRoute = loggedIn ? 'Tabs' : 'SignIn';
+    this.setState({initialRoute, api, userState});
+  };
 
   render() {
     // Do not create a navigator until we have loaded initial state from
@@ -72,7 +74,7 @@ class Silk extends React.Component {
     );
   }
 
-  renderScene(route, navigator) {
+  renderScene = (route, navigator) => {
     let Component = routeToComponentMap[route.name];
     if (!Component) {
       return (
@@ -84,13 +86,13 @@ class Silk extends React.Component {
       );
     }
     let props = {
-      api,
-      userState,
+      api: this.state.api,
+      userState: this.state.userState,
       navigator,
       route,
     };
     return <Component {...props} />;
-  }
+  };
 
   onForward() {
     // --> Settings

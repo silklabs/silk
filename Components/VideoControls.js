@@ -169,7 +169,7 @@ export default React.createClass({
   },
 
   buildLiveControls() {
-    if (!Config.preferences.showLiveLag) {
+    if (!Config.get().preferences.showLiveLag) {
       return null;
     }
 

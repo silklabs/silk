@@ -1,0 +1,142 @@
+#! /usr/bin/env ../node_modules/.bin/babel-node
+
+import assert from 'assert';
+import fs from 'mz/fs';
+import _readdir from 'recursive-readdir';
+import mime from 'mime';
+import path from 'path';
+import log from 'fancy-log';
+
+import { ArgumentParser } from 'argparse';
+import { S3 } from 'aws-sdk-promise';
+
+const readdir = (path) => {
+  return new Promise((accept, reject) => {
+    _readdir(path, (err, value) => {
+      if (err) return reject(err);
+      return accept(value);
+    });
+  });
+};
+
+const parser = new ArgumentParser({
+  description: 'Upload files to s3'
+});
+
+parser.addArgument(
+  ['bucket'],
+  {
+    help: 'S3 bucket to upload to'
+  }
+);
+
+parser.addArgument(
+  ['prefix'],
+  {
+    help: 'Prefix under bucket where to upload things...'
+  }
+);
+
+parser.addArgument(
+  ['directory'],
+  {
+    help: 'Directory to upload'
+  }
+);
+
+/**
+ * Builds the tree to be uploaded...
+ */
+async function buildTree(dest, directory) {
+  directory = path.resolve(directory)
+  let files = await readdir(directory);
+
+  return Promise.all(files.map(async (src) => {
+    let contentType = mime.lookup(src);
+    let contentSize = (await fs.stat(src)).size;
+    let relative = src.replace(directory + '/', '')
+    let target = path.join(dest, relative);
+
+    return {
+      relative,
+      name: relative,
+      target,
+      src,
+      contentType,
+      contentSize
+    };
+  }));
+}
+
+/**
+ * Create an index.html page so we can actually find the artifacts...
+ */
+function createIndex(dest, tree) {
+  let links = tree.map((item) => {
+    return `
+      <li><a href="${item.relative}">${item.relative} [size: ${item.contentSize}]</a></li>
+    `;
+  });
+
+  // Like it's 1999...
+  let content = `
+  <html>
+  <body>
+    <h3> Artifacts </h3>
+    <ul>
+      ${links.join('\n')}
+    </ul>
+  </body>
+  </html>
+`.trim();
+
+  return {
+    target: path.join(dest, 'index.html'),
+    name: 'index',
+    content,
+    contentType: 'text/html',
+    contentSize: Buffer.byteLength(content)
+  };
+}
+
+async function main() {
+  console.log(process.argv)
+  let { directory, bucket, prefix } = parser.parseArgs();
+  assert(await fs.exists(directory), 'directory must exist...');
+
+  let s3 = new S3({ bucket, logger: process.stdout });
+  let tree = await buildTree(prefix, directory);
+  tree.push(createIndex(prefix, tree));
+
+  log(`Uploading files from ${directory} to s3 bucket ${bucket}/${prefix}`);
+
+  let start = Date.now();
+  await Promise.all(tree.map(async (item) => {
+    let uploadStart = Date.now();
+    log(`${item.name} [${item.contentType}] bytes ${item.contentSize} -> ${item.dest}`);
+    let uploadParams = {
+      Bucket: bucket,
+      Key: item.target,
+      Body: item.content || fs.createReadStream(item.src),
+      ContentType: item.contentType,
+      ContentLength: item.contentSize,
+      // This data is for development if we lose it somehow in the > 99.9% case 
+      // we will live...
+      StorageClass: 'REDUCED_REDUNDANCY'
+    };
+    await new Promise((accept, reject) => {
+      s3.upload(uploadParams, (err, value) => {
+        if (err) return reject(err);
+        return accept(value);
+      });
+    });
+    log(`Finished uploading: ${item.name} in ${(Date.now() - start) / 1000} s`);
+  }));
+  log(`Done uploading in ${(Date.now() - start) / 1000} s`);
+}
+
+main().catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});

@@ -58,17 +58,17 @@ class FindFace {
    */
   async onCommand(cmd) {
     switch (cmd.msg) {
-      case 'addPerson':
-        log.info(`addPerson command: ${JSON.stringify(cmd)}`);
-        let trainfacemodel = require('./trainfacemodel')(this._env);
-        await trainfacemodel.addPerson(cmd.person);
+    case 'addPerson':
+      log.info(`addPerson command: ${JSON.stringify(cmd)}`);
+      let trainfacemodel = require('./trainfacemodel')(this._env);
+      await trainfacemodel.addPerson(cmd.person);
 
-        // Finished adding the person; re-train face model
-        log.info(`Finished adding person ${cmd.person}`);
-        this._trainModel();
-        break;
-      default:
-        break;
+      // Finished adding the person; re-train face model
+      log.info(`Finished adding person ${cmd.person}`);
+      this._trainModel();
+      break;
+    default:
+      break;
     }
   }
 

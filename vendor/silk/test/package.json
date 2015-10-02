@@ -10,7 +10,8 @@
   "scripts": {
     "preinstall": "if [ -d ../locked_node_modules ]; then ../locked_node_modules/fetch.sh; fi",
     "dist": "babel -d dist lib --optional asyncToGenerator --level 0",
-    "install": "npm run dist && NODE_PATH=$NODE_PATH:$PWD/../core_intermediates/lib/:$PWD/../detectobject_intermediates/lib/:$PWD/../trackobject_intermediates/lib/ ./build"
+    "install": "npm run dist && NODE_PATH=$NODE_PATH:$PWD/../core_intermediates/lib/:$PWD/../detectobject_intermediates/lib/:$PWD/../trackobject_intermediates/lib/ ./build",
+    "postinstall": "rm -rf node_modules/babel/test/"
   },
   "license": "proprietary",
   "dependencies": {

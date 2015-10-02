@@ -10,7 +10,13 @@
     "it": true,
     "describe": true,
   },
+  "extends": "eslint:recommended",
   "rules": {
+    // Turn off 1.0 rules we are violating for now...
+    "no-extra-semi": 0,
+    "no-console": 0,
+    // Our extra rules...
+    "semi": 1,
     "brace-style": 2,
     "no-debugger": 1,
     "default-case": 2,
@@ -31,6 +37,10 @@
   "env": {
     "node": true,
     "es6": true
+  },
+  "ecmaFeatures": {
+    // We need to explicitly enable modules...
+    modules: true
   }
 }
 

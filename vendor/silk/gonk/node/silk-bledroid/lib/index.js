@@ -33,14 +33,14 @@ function hexStringToBuffer(hexString) {
 
 function hexStringToUuid(hexString) {
   switch (hexString.length) {
-    case 4:
-    case 8:
-    case 32:
-      return hexString;
+  case 4:
+  case 8:
+  case 32:
+    return hexString;
 
-    default:
-      log.warn(`Invalid uuid: '${hexString}'`);
-      return undefined;
+  default:
+    log.warn(`Invalid uuid: '${hexString}'`);
+    return undefined;
   }
 }
 
@@ -490,7 +490,7 @@ Bledroid.prototype.messageMap = [
     regex: /^!characteristicDiscoverComplete (\d+) ([\da-f]+)$/,
     emit: 'characteristicDiscoverComplete',
     transform: [ parseInt, hexStringToUuid ],
- }, {
+  }, {
     regex: /^!descriptorDiscover (\d+) ([\da-f]+) ([\da-f]+) ([\da-f]+) (\d+)$/,
     emit: 'descriptorDiscover',
     transform: [

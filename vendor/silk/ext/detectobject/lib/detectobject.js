@@ -87,12 +87,12 @@ class DetectObject {
 
   onCommand(cmd) {
     switch (cmd.msg) {
-      case 'reportobject':
-        log.info('reportobject command:', JSON.stringify(cmd));
-        this._reportObject(cmd);
-        break;
-      default:
-        break;
+    case 'reportobject':
+      log.info('reportobject command:', JSON.stringify(cmd));
+      this._reportObject(cmd);
+      break;
+    default:
+      break;
     }
   }
 
@@ -108,8 +108,7 @@ class DetectObject {
 
         // Create directory if it doesn't exist
         let dir = `/data/silk/opencv/no-${cmd.tag}`;
-        fs.mkdir(dir)
-        .catch(e => {
+        fs.mkdir(dir).catch(e => {
           if (e.code !== 'EEXIST') {
             log.error(`Failed to create ${dir}, error: ${e}`);
           }
@@ -162,8 +161,8 @@ class DetectObject {
         // Fake a "motion" rectangle since the "preview" timeline event is being
         // used at the moment.
         let rects = [
-                     { x: 0, y: 0, width: im.width(), height: im.height() }
-                     ];
+          { x: 0, y: 0, width: im.width(), height: im.height() }
+        ];
 
         // Restrict object detection to a section of the image that shows motion
         if (rects.length > 1) {

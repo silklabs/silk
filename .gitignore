@@ -39,6 +39,13 @@
 /vendor/silk/trainingset/
 /vendor/silk/**/*.js.map
 .gulpcache
+/vendor/silk/ext/**/npm-debug.log
+vendor/silk/ext/clapper/clapper.js
+vendor/silk/ext/detectface/detectface.js
+vendor/silk/ext/detectobject/detectobject.js
+vendor/silk/ext/knockknock/knockknock.js
+vendor/silk/ext/nightlight/nightlight.js
+vendor/silk/ext/trackobject/trackobject.js
 
 # repo projects from msm8916 gonk
 /build.sh

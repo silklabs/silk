@@ -48,6 +48,7 @@ int32_t sPreviewSkipCount = 5;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
+int32_t sYuvPlanePadBytes = 0; // bytes of padding between YUV y and cbcr planes
 
 //
 // Helper macros
@@ -250,6 +251,10 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (!cmdData["audioChannels"].isNull()) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
+  }
+  if (!cmdData["yuvPlanePadBytes"].isNull()) {
+    sYuvPlanePadBytes = cmdData["yuvPlanePadBytes"].asInt();
+    ALOGV("sYuvPlanePadBytes %d", sYuvPlanePadBytes);
   }
   // Start camera in a separate thread
   pthread_create(&mThread, NULL, initThreadWrapper, this);

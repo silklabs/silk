@@ -48,6 +48,17 @@ status_t PreviewMediaSource::read(MediaBuffer **buffer,
   status_t err = mSource->read(buffer, options);
   if (err != ::OK)
     return err;
+
+  // Some platforms put the cbcr plane data some number of padding byes after
+  // the y-plane. Not sure why. Let's workaround by copying the cbcr data to
+  // where the rest of the world expects it to be.
+  if (sYuvPlanePadBytes) {
+    uint8_t *frame = reinterpret_cast<uint8_t*>((*buffer)->data())
+        + (*buffer)->range_offset();
+    uint8_t *cbcr = frame + (sSliceHeight * sStride);
+    memmove(cbcr, cbcr + sYuvPlanePadBytes, sSliceHeight * sStride / 2);
+  }
+
   if (mCounter++ >= mSkipCount) {
     snapshot(*buffer);
     mCounter = 0;

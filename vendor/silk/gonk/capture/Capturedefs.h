@@ -39,5 +39,6 @@ extern int32_t sPreviewSkipCount;
 extern int32_t sAudioBitRate;
 extern int32_t sAudioSampleRate;
 extern int32_t sAudioChannels;
+extern int32_t sYuvPlanePadBytes;
 
 #endif

@@ -51,7 +51,7 @@ export function getprop(prop, defaultValue) {
     return undefined;
   }
   let value = result.stdout.toString().replace(/\n$/, '');
-  if (defaultValue) {
+  if (defaultValue !== undefined) {
     return (value === '') ? defaultValue : value;
   } else {
     return value;
@@ -68,12 +68,17 @@ export function getboolprop(prop, defaultValue = false) {
   }
 }
 
-export function getintprop(prop, defaultValue = '0') {
+export function getintprop(prop, defaultValue = 0) {
   let value = parseInt(getprop(prop, defaultValue), 10);
   if (isNaN(value)) {
     throw new Error(`Expected ${prop} to be an integer`);
   }
   return value;
+}
+
+export function getlistprop(prop, defaultValue = []) {
+  let value = getprop(prop, '');
+  return (value === '') ? defaultValue : value.split(',');
 }
 
 export function watchprop(prop, onPropChanged) {

@@ -100,3 +100,7 @@ PRODUCT_PACKAGES += \
   noble \
   opencv \
   kissfft \
+
+# include platform-specific silk makefile, if exists
+-include gonk/${GONK}/silk_${GONK}.mk
+

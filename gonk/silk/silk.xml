@@ -1,4 +1,11 @@
 <?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2015 Silk Labs, Inc.
+  All Rights Reserved.
+  Confidential and Proprietary - Silk Labs, Inc.
+-->
+
 <manifest>
   <remote name="github" fetch="git://github.com/" sync-j="4"/>
   <remote name="silk"

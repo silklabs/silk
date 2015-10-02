@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
-import { Button, Glyphicon } from 'react-bootstrap';
+import { Alert, Button, Glyphicon } from 'react-bootstrap';
 import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
@@ -102,6 +102,11 @@ export class OnlineCameras extends React.Component {
         params={{deviceId: id}}
       />
     ));
-    return <div style={styles.flexRow}>{cameras}</div>;
+    return (
+      <div>
+        <Alert bsStyle="info">{this.state.status}</Alert>
+        <div style={styles.flexRow}>{cameras}</div>
+      </div>
+    );
   }
 }

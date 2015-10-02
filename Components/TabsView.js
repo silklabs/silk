@@ -74,6 +74,8 @@ export default class TabsView extends React.Component {
       }
 
       let socket = new SocketIO(socketIOClient(socketUrl, {
+        autoConnect: true,
+        forceNew: true,
         transports: ['websocket'],
       }));
 

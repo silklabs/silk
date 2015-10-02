@@ -409,6 +409,10 @@ class QEmuWifi extends events.EventEmitter
     return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns]);
   }
 
+  isOnline() {
+    return true;
+  }
+
   online() {
     return Promise.resolve();
   }

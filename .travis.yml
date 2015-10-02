@@ -33,6 +33,8 @@ env:
     - GONK_SPEC=qemu
 
 before_script:
+  - source .travis/artifacts
+  - echo "artifacts url $ARTIFACT_HOST/$ARTIFACT_REMOTE_PATH"
   - source .travis/shared
   - if [[ $GONK == nop ]]; then
         echo Nothing to do;
@@ -53,7 +55,7 @@ before_script:
   - .travis/before_script
 
 script:
-  - .travis/script
+  - .travis/script | tee .artifacts/log.txt
 
 after_script:
   - .travis/after_script

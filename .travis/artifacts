@@ -1,0 +1,4 @@
+export ARTIFACT_HOST="http://silk-travis-artifacts.s3-website-us-west-2.amazonaws.com"
+export ARTIFACT_REMOTE_PATH="$TRAVIS_REPO_SLUG/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
+export ARTIFACT_DIR=.artifacts/
+mkdir -p $ARTIFACT_DIR

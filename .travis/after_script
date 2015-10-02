@@ -5,3 +5,11 @@ ccache -s
 df -h
 du -hs * .repo
 du -hs .
+
+# Upload artifacts...
+# XXX: These credentials can only upload to this one bucket but this is still
+# potentially sketchy!
+export AWS_ACCESS_KEY_ID=AKIAJZCE7JU4GWU4JISQ
+export AWS_SECRET_ACCESS_KEY=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
+npm install -g silklabs/s3-artifacts
+silk-artifacts silk-travis-artifacts $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR

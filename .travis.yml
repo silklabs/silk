@@ -27,6 +27,7 @@ env:
     - PROFILE_NAME="CI Build Profile"
     - PROFILE_FILE_NAME="CI_Build_Profile.mobileprovision"
     - PROFILE_UUID="de7173d9-e0dc-4dc3-8656-bed090ce8720"
+    - NODE_DEBUG=http
 
 before_script:
   - .travis/add-key.sh

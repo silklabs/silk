@@ -57,9 +57,12 @@ class MonitorsView extends React.Component {
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.socket !== this.props.socket) {
       if (prevProps.socket) {
-        // In case we were still waiting for the old socket ot
+        // In case we were still waiting for the old socket to
         // connect, unsubscribe ourselves from it.
         prevProps.socket.off('connect', this.subscribeToSocket);
+        // Also be diligent about cleaning up after our other subscriptions.
+        prevProps.socket.off('video-stream-new', this.onVideoStreamNew);
+        prevProps.socket.off('video-stream-delete', this.onVideoStreamDelete);
       }
       this.subscribeToSocket();
     }
@@ -114,28 +117,32 @@ class MonitorsView extends React.Component {
     }
 
     log.info('socket connected, listening for video streams');
-    this.props.socket.on('video-stream-new', msg => {
-      log.info('new video stream', msg.id);
-
-      // use device status from discovered peripheral if available
-      let device = this.state.streaming[msg.id];
-      let status = (device && device.status) ? device.status : '';
-
-      this.state.streaming[msg.id] = {
-        name: msg.name,
-        logo: msg.logo,
-        previewSize: msg.previewSize,
-        status: status,
-      };
-
-      this.setState(this.state);
-    });
-    this.props.socket.on('video-stream-delete', msg => {
-      log.info('deleted video stream', msg.id);
-      delete this.state.streaming[msg.id];
-      this.setState(this.state);
-    });
+    this.props.socket.on('video-stream-new', this.onVideoStreamNew);
+    this.props.socket.on('video-stream-delete', this.onVideoStreamDelete);
     this.props.socket.emit('join', 'video-streams');
+  };
+
+  onVideoStreamNew = (msg) => {
+    log.info('new video stream', msg.id);
+
+    // use device status from discovered peripheral if available
+    let device = this.state.streaming[msg.id];
+    let status = (device && device.status) ? device.status : '';
+
+    this.state.streaming[msg.id] = {
+      name: msg.name,
+      logo: msg.logo,
+      previewSize: msg.previewSize,
+      status: status,
+    };
+
+    this.setState(this.state);
+  };
+
+  onVideoStreamDelete = (msg) => {
+    log.info('deleted video stream', msg.id);
+    delete this.state.streaming[msg.id];
+    this.setState(this.state);
   };
 
   refreshDeviceList = () => {

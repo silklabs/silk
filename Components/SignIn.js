@@ -37,7 +37,7 @@ class SignInControls extends React.Component {
       let { userState } = this.props;
       let success = await userState.attemptSignIn(props.email, props.password);
       if (success) {
-        this.props.navigator.push({ name: 'Monitors', index: 0 });
+        this.props.navigator.push({ name: 'Tabs', index: 0 });
       }
     } catch (err) {
       console.log('Failed to sign in', err);
@@ -51,7 +51,7 @@ class SignInControls extends React.Component {
     let success = await userState.attemptDeveloperLogin();
     this.setState({ loginInProgress: false });
     if (success) {
-      this.props.navigator.push({ name: 'Monitors', index: 0 });
+      this.props.navigator.push({ name: 'Tabs', index: 0 });
     }
   };
 

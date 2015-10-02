@@ -5,7 +5,8 @@ let util = require('./util');
 let events = require('events');
 let net = require('net');
 let log = require('./log')('wifi');
-let caps = require('./caps');
+
+const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu', false);
 
 let iface = util.getprop('wifi.interface');
 let monitor;
@@ -425,4 +426,4 @@ class QEmuWifi extends events.EventEmitter
   }
 }
 
-module.exports = caps.has('qemu') ? new QEmuWifi() : new Wifi();
+module.exports = USE_QEMU_WIFI ? new QEmuWifi() : new Wifi();

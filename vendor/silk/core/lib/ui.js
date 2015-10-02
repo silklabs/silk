@@ -6,7 +6,6 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let caps = require('./caps');
 let events = require('events');
 let fs = require('fs');
 let lights = require('./lights');
@@ -14,6 +13,8 @@ let log = require('./log')('ui');
 let util = require('./util');
 
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
+const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
+const EVENTS = util.getlistprop('ro.silk.ui.inputevents', []);
 
 //
 // Note: The InputDevice class has been inspired by
@@ -108,42 +109,10 @@ class Ui extends events.EventEmitter
     this.movie = new (require('silk-movie').Movie)();
     this.vib = require('./vibrator')();
 
-    let input;
-    if (caps.has('dev-input-hack')) {
-      //
-      // Only monitor the input devices used for the power and volume keys for these
-      // devices (determined by running |adb shell getevent -l| and pressing each
-      // key)
-      //
-      // The way that node/libuv reads from the input devices (blocking read on a
-      // separate thread for each input device) differs from how Android does it
-      // (poll/read on one thread) and one theory is that this exposes a kernel bug
-      // that manifest as:
-      //
-      // * key events from hard key presses and releases are delayed by multiple
-      //   seconds sometimes. Triggering a number of touchscreen events can help get
-      //   them unstuck.
-      // * DNS resolution can be delayed until some touchscreen events are
-      //   triggered - bionic's getaddrinfo() communicates with netd over
-      //   /dev/socket/dnsproxyd, which may or may not be related.
-      //
-      // So still something of a mystery here, more at #144
-      //
-      switch (util.getprop('ro.boot.hardware')) {
-      case 'mako':
-        input = new Input(['event0', 'event1']);
-        break;
-      case 'shamu':
-        input = new Input(['event1', 'event2']);
-        break;
-      default:
-        // If/when we need to add a new device to this list, it's probably time to
-        // take a close look into what's actually happening here!
-        throw 'Unknown device';
-      }
-    } else {
-      input = new Input();
-    }
+    // Only monitor the input devices used for the power and volume keys for these
+    // devices (determined by running |adb shell getevent -l| and pressing each
+    // key)
+    let input = (EVENTS.length) ? new Input(EVENTS) : new Input();
 
     let cancelPowerDown = () => {};
     let cancelVolumeKeys = () => {};
@@ -235,7 +204,7 @@ class Ui extends events.EventEmitter
     this.currentState = state;
     log.info(`ui state: ${this.currentState}`);
 
-    if (caps.has('notification-light')) {
+    if (NOTIF_LIGHT_ENABLED) {
       let light = lights.notifications;
 
       switch (this.currentState) {

@@ -37,7 +37,7 @@ class MonitorsView extends React.Component {
   }
 
   componentWillUnmount() {
-    PERIPH_EVENTS.forEach(ev => this.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
+    PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
   }
 
   componentWillReceiveProps(nextProps) {
@@ -148,7 +148,7 @@ class MonitorsView extends React.Component {
   refreshDeviceList = () => {
     var configuring = this.state.configuring = {};
     var streaming = this.state.streaming;
-    this.bleDeviceManager.enumerateDevices().forEach(p => {
+    this.props.bleDeviceManager.enumerateDevices().forEach(p => {
       if ('unregistered' === p.state || 'registering' === p.state) {
         // Show configuring widget when we are registering
         configuring[p.id] = {
@@ -180,7 +180,7 @@ class MonitorsView extends React.Component {
     });
 
     Object.keys(streaming).forEach(id => {
-      if (!this.bleDeviceManager.enumerateDevices().some(
+      if (!this.props.bleDeviceManager.enumerateDevices().some(
           p => p.deviceId === id && p.state !== 'disconnected')) {
         // Streaming widget still exists, but we are no longer connected
         // to the peripheral. Let's do some cleanup...

@@ -33,6 +33,7 @@ const routeToComponentMap = {
 class Silk extends React.Component {
 
   state = {
+    serverUrl: null,
     initialRoute: null,
     api: null,
     userState: null,
@@ -44,15 +45,20 @@ class Silk extends React.Component {
   }
 
   onConfigChange = async (config) => {
-    let api = API({
-      serverUrl: config.server.url,
-    });
-    let userState = new UserState(api);
+    let serverUrl = config.server.url;
+    if (serverUrl === null) {
+      serverUrl = Config.getDefault().server.url;
+    }
 
-    // If a token is set great then skip login screen...
+    if (this.state.serverUrl !== serverUrl && this.state.userState !== null) {
+      await this.state.userState.signOut();
+    }
+
+    let api = API({serverUrl}); /* eslint new-cap: 0 */
+    let userState = new UserState(api);
     let loggedIn = await userState.getAccessToken();
     let initialRoute = loggedIn ? 'Tabs' : 'SignIn';
-    this.setState({initialRoute, api, userState});
+    this.setState({serverUrl, initialRoute, api, userState});
   };
 
   render() {
@@ -65,6 +71,9 @@ class Silk extends React.Component {
 
     return (
       <Navigator
+        // By keying the Navigator on the serverUrl, a change will
+        // trigger a complete re-render of the app.
+        key={this.state.serverUrl}
         initialRoute={{name: this.state.initialRoute, index: 0}}
         onForward={this.onForward}
         configureScene={this.configureScene}

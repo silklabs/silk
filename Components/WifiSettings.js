@@ -5,6 +5,7 @@
 
 var React = require('react-native');
 var {
+  Image,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -18,6 +19,14 @@ var {
   View,
 } = React;
 
+const SERVERS = [
+  {name: 'default', value: null},
+  {name: 'master', value: 'https://silk-server-master.herokuapp.com'},
+  {name: 'next', value: 'https://silk-server-next.herokuapp.com'},
+  {name: 'release', value: 'https://silk-server-release.herokuapp.com'},
+  {name: 'localhost', value: 'http://localhost:5000'},
+];
+
 export default class WifiSettings extends React.Component {
 
   constructor(props) {
@@ -26,7 +35,7 @@ export default class WifiSettings extends React.Component {
     this.state = {
       ssid: hints.ssid || 'Network Name',
       secret: hints.secret || 'silkysmooth',
-      socketUrl: hints.socketUrl,
+      serverUrl: hints.serverUrl,
       showSecret: false,
     };
   }
@@ -86,30 +95,8 @@ export default class WifiSettings extends React.Component {
             />
           </View>
         </View>
-      </View>
-    );
-  }
-
-  _renderAccountSettings() {
-    return (
-      <TouchableHighlight
-        underlayColor="lightgrey"
-        style={styles.form}
-        onPress={this.signOut}>
-        <View style={[styles.formRow, styles.formRowFirst]}>
-          <Text style={styles.signOutButtonLabel}>
-            Sign Out
-          </Text>
-        </View>
-      </TouchableHighlight>
-    );
-  }
-
-  _renderDebugSettings() {
-    return (
-      <View style={styles.form}>
-        <View style={[styles.formRow, styles.formRowFirst]}>
-          <View style={styles.switchLabelContainer}>
+        <View style={styles.formRow}>
+          <View style={styles.fullRowLabelContainer}>
             <Text style={styles.formRowLabel}>
               Show WiFi password
             </Text>
@@ -119,20 +106,88 @@ export default class WifiSettings extends React.Component {
             onValueChange={showSecret => this.setState({showSecret})}
           />
         </View>
-        <View style={styles.formRow}>
-          <View style={styles.formRowLabelContainer}>
-            <Text style={styles.formRowLabel}>Server</Text>
+      </View>
+    );
+  }
+
+  _renderAccountSettings() {
+    return (
+      <View
+        style={styles.form}>
+        <TouchableHighlight
+          underlayColor="lightgrey"
+          onPress={this.signOut}
+          style={[styles.formRow, styles.formRowFirst]}>
+          <Text style={styles.signOutButtonLabel}>
+            Sign Out
+          </Text>
+        </TouchableHighlight>
+      </View>
+    );
+  }
+
+  _renderServerSettings() {
+    let haveCustomServer = true;
+    let servers = SERVERS.map((server, index) => {
+      let checkmark = null;
+      if (server.value === this.state.serverUrl) {
+        checkmark = (
+          <Image
+            source={require('image!Checkmark')}
+            style={styles.checkmark}
+          />
+        );
+        haveCustomServer = false;
+      }
+      let style = index === 0 ? [styles.formRow, styles.formRowFirst] : styles.formRow;
+      return (
+        <TouchableHighlight
+          underlayColor="lightgrey"
+          onPress={() => this.setState({serverUrl: server.value})}>
+        <View
+          style={style}
+          key={server.name}>
+          <View style={styles.fullRowLabelContainer}>
+            <Text style={styles.formRowLabel}>{server.name}</Text>
           </View>
-          <View style={styles.formInputContainer}>
+          {checkmark}
+        </View></TouchableHighlight>
+      );
+    });
+
+    let customCheckmark = null;
+    if (haveCustomServer) {
+      customCheckmark = (
+        <Image
+          source={require('image!Checkmark')}
+          style={styles.checkmark}
+        />
+      );
+    }
+    return (
+      <View style={styles.form}>
+        {servers}
+        <View style={styles.formRow}>
+          <View style={styles.fullRowLabelContainer}>
             <TextInput
-              ref="socketUrl"
-              value={this.state.socketUrl}
+              ref="serverUrl"
+              value={haveCustomServer ? this.state.serverUrl : null}
+              placeholder="Enter a custom URL"
               autoCapitalize="none"
               autoCorrect={false}
               style={styles.formInput}
-              onChangeText={socketUrl => this.setState({socketUrl})}
+              onChangeText={serverUrl => this.setState({serverUrl})}
+              onFocus={() => {
+                let scrollResponder = this.refs.scrollView.getScrollResponder();
+                scrollResponder.scrollResponderScrollNativeHandleToKeyboard(
+                  React.findNodeHandle(this.refs.serverUrl),
+                  20, // additionalOffset
+                  true // preventNegativeScrollOffset
+                );
+              }}
             />
           </View>
+          {customCheckmark}
         </View>
       </View>
     );
@@ -145,14 +200,16 @@ export default class WifiSettings extends React.Component {
         {this._renderTitle()}
 
         <ScrollView
+          ref="scrollView"
           keyboardShouldPersistTaps={false}
+          contentInset={{bottom: 20}}
           style={styles.scrollView}>
           <Text style={styles.formHeader}>WIFI</Text>
           {this._renderWifiSettings()}
           <Text style={styles.formHeader}>ACCOUNT</Text>
           {this._renderAccountSettings()}
-          <Text style={styles.formHeader}>DEBUG</Text>
-          {this._renderDebugSettings()}
+          <Text style={styles.formHeader}>SERVER</Text>
+          {this._renderServerSettings()}
         </ScrollView>
       </View>
     );
@@ -170,7 +227,7 @@ export default class WifiSettings extends React.Component {
       this.props.route.resolve({
         ssid: this.state.ssid,
         secret: this.state.secret,
-        socketUrl: this.state.socketUrl,
+        serverUrl: this.state.serverUrl,
       });
     }
     // TODO save wifi to persistent DB --- here or elsewhere?
@@ -242,8 +299,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1 / PixelRatio.get(),
     borderBottomWidth: 1 / PixelRatio.get(),
     borderColor: '#c8c7cc',
-    paddingLeft: 16,
-    paddingRight: 8,
     flex: 1,
   },
   formRow: {
@@ -253,6 +308,8 @@ const styles = StyleSheet.create({
     borderColor: '#c8c7cc',
     borderTopWidth: 1 / PixelRatio.get(),
     height: 46,
+    paddingLeft: 16,
+    paddingRight: 8,
   },
   formRowFirst: {
     borderTopWidth: 0,
@@ -277,8 +334,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
 
-  switchLabelContainer: {
+  fullRowLabelContainer: {
     flex: 1,
   },
 
+  checkmark: {
+    width: 16,
+    height: 16,
+  },
 });

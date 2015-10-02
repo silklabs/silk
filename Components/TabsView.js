@@ -1,6 +1,8 @@
 import React from 'react-native';
 let {
   View,
+  StyleSheet,
+  TabBarIOS,
 } = React;
 
 import MonitorsView from './MonitorsView';
@@ -16,10 +18,11 @@ import mklog from 'log'; const log = mklog('TabsView');
 export default class TabsView extends React.Component {
 
   state = {
-    wifi: null,
+    selectedTab: 'monitors',
     socketConnectionState: 'offline',
     socketUrl: null,
     socket: null,
+    wifi: null,
   };
   bleDeviceManager = null;
   socket = null;
@@ -134,20 +137,61 @@ export default class TabsView extends React.Component {
     });
   }
 
+
+  _renderTabs() {
+    return (
+      <TabBarIOS
+        tintColor="white"
+        barTintColor="#404e55">
+
+        <TabBarIOS.Item
+          title="Overview"
+          icon={require('image!Tab.png')}
+          selected={this.state.selectedTab === 'monitors'}
+          onPress={() => this.setState({ selectedTab: 'monitors' })}>
+          <MonitorsView
+            socket={this.state.socket}
+            bleDeviceManager={this.bleDeviceManager}
+            {...this.props}
+          />
+        </TabBarIOS.Item>
+
+        <TabBarIOS.Item
+          title="Activity"
+          icon={require('image!Tab.png')}
+          selected={this.state.selectedTab === 'activity'}
+          onPress={() => this.setState({ selectedTab: 'activity' })}>
+          <View />
+        </TabBarIOS.Item>
+
+        <TabBarIOS.Item
+          title="Profile"
+          icon={require('image!Tab.png')}
+          selected={this.state.selectedTab === 'profile'}
+          onPress={() => this.setState({ selectedTab: 'profile' })}>
+          <View />
+        </TabBarIOS.Item>
+
+      </TabBarIOS>
+    );
+  }
+
   render() {
     return (
-      <View>
+      <View style={styles.container}>
         <TopBar
           socketConnectionState={this.state.socketConnectionState}
           openSettings={() => this.loadSettings().catch(() => {})}
         />
-        <MonitorsView
-          socket={this.state.socket}
-          bleDeviceManager={this.bleDeviceManager}
-          {...this.props}
-        />
+        {this._renderTabs()}
      </View>
     );
   }
 
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

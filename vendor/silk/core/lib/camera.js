@@ -9,7 +9,6 @@
 let log = require('./log')('camera');
 import { EventEmitter } from 'events';
 let util = require('./util');
-let caps = require('./caps');
 let net = require('net');
 let cv = require('opencv');
 
@@ -18,6 +17,13 @@ let cv = require('opencv');
 
 const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION = util.getintprop(DURATION_PROP, 1);
+
+const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
+const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
+const FPS = util.getintprop('ro.silk.camera.fps', 24);
+const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
+const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
+const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 6);
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -353,29 +359,15 @@ class CameraStream extends EventEmitter {
    * Initialize camera
    */
   start() {
-    let initargs;
-    if (caps.has('qemu')) {
-      initargs = {
-        frameInterval: DURATION,
-        width: 320,
-        height: 240,
-        fps: 5,
-        vbr: 1024,
-        previewScale: 1,
-        previewSkipCount: 5
-      };
-    } else {
-      initargs = {
-        frameInterval: DURATION,
-        width: 1280,
-        height: 720,
-        fps: 24,
-        vbr: 1024,
-        previewScale: 4,
-        previewSkipCount: 6
-      };
-    }
-
+    let initargs = {
+      frameInterval: DURATION,
+      width: WIDTH,
+      height: HEIGHT,
+      fps: FPS,
+      vbr: VBR,
+      previewScale: PREVIEW_SCALE,
+      previewSkipCount: PREVIEW_SKIP_COUNT,
+    };
     this._init(initargs);
   }
 

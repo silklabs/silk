@@ -4,13 +4,13 @@
 import assert from 'assert';
 import bleno from 'bleno';
 import ConfigService from './config-service';
-import caps from '../caps';
 import EventEmitter from 'events';
 import getDeviceId from '../deviceid';
 import makeDeferred from '../deferred';
 import makeLog from '../log';
 import noble from 'noble';
 import Ranger from './ranger';
+import * as util from '../util';
 
 /**
  * Config Service
@@ -32,6 +32,8 @@ import Ranger from './ranger';
  *   6) BLE Config Service updates state to configured
  *   7) Config connects to new Wi-Fi network received from BLE Config Service
  */
+
+const BT_ENABLED = util.getboolprop('ro.silk.bt.enabled', true);
 
 const MODE_OFF = 'off';
 const MODE_CONFIGURE = 'configure';
@@ -593,7 +595,7 @@ async function init() {
   assert(!initPromiseComplete);
 
   const stateChange = 'stateChange';
-  const expectedState = caps.has('qemu') ? 'poweredOff' : 'poweredOn';
+  const expectedState = BT_ENABLED ? 'poweredOn' : 'poweredOff';
 
   function waitForState(api, apiName) {
     return new Promise(resolve => {

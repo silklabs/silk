@@ -41,6 +41,10 @@ function cleanup {
       echo main.log tail of failure:
       echo =============================================================================
       test -f main.log && tail -n20 main.log
+      # If we have an artifacts directory upload the full log there...
+      if [[ -d .artifacts ]]; then
+        cp main.log .artifacts/devicecheck.log
+      fi
     fi
   fi
   exit $exitstatus

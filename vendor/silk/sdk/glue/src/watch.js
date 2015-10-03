@@ -10,7 +10,9 @@ import createCommands from './commands';
 const commands = createCommands(process.env.BASEDIR);
 
 let browserifyStream = commands.createBrowserifyStream(watchify.args);
-let bundle = watchify(browserifyStream);
+let bundle = watchify(browserifyStream,
+    { poll:true } /* poll needed to work within VMs (not horrible otherwise) */
+);
 
 let restartType = process.argv[2] === '--reload-ext' ?
   'restartExt' :
@@ -93,5 +95,6 @@ async function update() {
 
 // Listen for bundle updates...
 bundle.on('update', update);
-// Kick off the first build... Required to get update events.
-update();
+
+// Voodoo magic to start getting update events.
+bundle.bundle().on('data', () => {});

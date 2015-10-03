@@ -173,7 +173,7 @@ export default class CameraVideo extends React.Component {
     inactiveVideo.play();
     this.setState({
       buffering: false,
-      activeVideoIndex: this.state.activeVideoIndex === 0 ? 1 : 0
+      activeVideoIndex: this.state.activeVideoIndex === 0 ? 1 : 0,
     });
   }
 

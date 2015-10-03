@@ -36,7 +36,7 @@ const cascades = [
  * @param motiony y-coord of im within the original preview image
  * @param cb user callback
  */
-function detectObjects(im, motionx, motiony, when, name, cb) {
+function detectObjects(im, motionx, motiony, when, cb) {
   let start = Date.now();
   let objs = [];
   let pendingCallbacks = cascades.length;
@@ -54,7 +54,7 @@ function detectObjects(im, motionx, motiony, when, name, cb) {
           newRect.y += motiony;
           return newRect;
         });
-        objs.push({tag: c.tag, when: when, rects: newRects, source: name});
+        objs.push({tag: c.tag, when: when, rects: newRects});
       }
       if (--pendingCallbacks <= 0) {
         let diff = Date.now() - start;
@@ -163,7 +163,7 @@ class DetectObject {
         let motionRect = rects[0]; // Only one motion rectangle is supported right now
         let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
-        detectObjects(motion, motionRect.x, motionRect.y, when, env.name, objs => {
+        detectObjects(motion, motionRect.x, motionRect.y, when, objs => {
           this._notifyObjs(objs, when, im);
           working = false;
         });

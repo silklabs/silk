@@ -113,7 +113,7 @@ class Timeline extends EventEmitter {
    */
   addFace(when, faces, source) {
     this.emit('face', when, faces, source);
-    this._pushFace(when, faces);
+    this._pushFace(when, faces, source);
     this.eventTracker.record({
       tag: 'face',
       when,
@@ -182,7 +182,8 @@ class Timeline extends EventEmitter {
     this.addObjects([{
       tag: tag,
       when: when,
-      rects: [rect]
+      rects: [rect],
+      source: source
     }]);
   }
 
@@ -234,8 +235,8 @@ class Timeline extends EventEmitter {
     this.previewHalFaces = false;
   }
 
-  _pushFace(when, faces) {
-    let object = {tag: 'hal', when: when, rects: faces};
+  _pushFace(when, faces, source) {
+    let object = {tag: 'hal', when: when, rects: faces, source: source};
 
     // Only add the first set of HAL-detected faces to the preview object set
     // (the HAL can return multiple faces a second, but it's not helpful to show

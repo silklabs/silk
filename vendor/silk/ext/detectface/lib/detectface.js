@@ -27,7 +27,7 @@ const facecascade = {
  * @param when timestamp of the preview image
  * @param cb user callback
  */
-function detectFaces(im, motionx, motiony, when, name, cb) {
+function detectFaces(im, motionx, motiony, when, cb) {
   let start = Date.now();
   let faces = [];
 
@@ -43,7 +43,7 @@ function detectFaces(im, motionx, motiony, when, name, cb) {
         newRect.y += motiony;
         return newRect;
       });
-      faces.push({tag: facecascade.tag, when: when, rects: newRects, source: name});
+      faces.push({tag: facecascade.tag, when: when, rects: newRects});
     }
     let diff = Date.now() - start;
     let msg = `Cascade ran for ${diff}ms`;
@@ -97,7 +97,7 @@ class DetectFace {
         let motionRect = rects[0]; // Only one motion rectangle is supported right now
         let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
-        detectFaces(motion, motionRect.x, motionRect.y, when, env.name, faces => {
+        detectFaces(motion, motionRect.x, motionRect.y, when, faces => {
           this._notifyObjs(faces);
           working = false;
         });

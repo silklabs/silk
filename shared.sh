@@ -129,12 +129,12 @@ updatebranch__silk_api() {
 }
 
 
-# Update branch references within the silk apps
-updatebranch__silk_app() {
+# Update branch references for silk "npm projects" (app/server)
+updatebranch__silk_npms() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
-  for app in silk-app silk-webapp; do
+  for app in silk-app silk-server silk-webapp; do
     echo "Updating branch for $app: $from => $to"
     pushd $app
     (
@@ -149,7 +149,7 @@ updatebranch__silk_app() {
         git add .branch
       fi
 
-      for p in silk-api-react-native ; do
+      for p in log silk-api-react-native; do
         local HEAD=$to
         if [[ $to == release ]]; then
           # Lock to SHA1 for release branch

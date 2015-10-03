@@ -205,7 +205,7 @@ class Camera extends EventEmitter {
       URL.revokeObjectURL(this.videoClip);
     }
     this.videoClip = URL.createObjectURL(blob);
-    this.emit('videoClip', this.videoClip);
+    this.emit('videoClip', this.videoClip, new Date(msg.when));
   }
 }
 

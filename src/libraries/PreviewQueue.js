@@ -55,7 +55,7 @@ export default class PreviewQueue {
           (previewArrival.when - this._previewQueue[0].when) + 'ms';
       }
 
-      log.verbose(`preview ${this._name}:` +
+      log.debug(`preview ${this._name}:` +
        ' queueDepth=' + this._previewQueue.length +
        ', device elapsed=' + // Elapsed time on device since last preview
           (previewArrival.when - this._lastPreviewArrival.when) + 'ms' +

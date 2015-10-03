@@ -34,6 +34,9 @@ class Timeline extends EventEmitter {
     this.previewObjects = [];
     this.previewHalFaces = false;
 
+    // Keeps a copy of previous objects to be sent when there is no motion detected
+    this.cachedObjs = [];
+
     // Hold all the video frames with the timestamps until the next poll interval
     this.videoFrames = [];
 
@@ -145,9 +148,19 @@ class Timeline extends EventEmitter {
    *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
    */
   addObjects(objects) {
+    if (!objects) {
+      throw new Error('Invalid objects');
+    }
+
     objects.forEach((object) => {
       // Run facial recognition on the detected faces before adding them
       if (object.tag !== 'face') {
+        // Store objects to be used later when there is no motion. Following
+        // objects are agnostic to motion so ignore them
+        if ((object.source !== 'hal') && (object.source !== 'clapper') &&
+            (object.source !== 'trackobject')) {
+          this.cachedObjs.push(object);
+        }
         this.previewObjects.push(object);
         this.videoObjects.push(object);
         this.eventTracker.record(object);
@@ -164,7 +177,7 @@ class Timeline extends EventEmitter {
    *   rect: optional rectangle
    *
    */
-  addObject(tag, when, rect) {
+  addObject(tag, when, rect, source) {
     if (!when) {
       when = this.lastPreviewFrameWhen; // best guess
     }
@@ -195,11 +208,38 @@ class Timeline extends EventEmitter {
     this.emit('no-motion', when);
   }
 
+  /**
+   * Add the last cached objects to the provided list of objects
+   *
+   * @return original objects + cached objects if any
+   */
+  _addCachedObjects(origObjects, when) {
+    // Adjust the timestamp of the last cached objects
+    let objs = null;
+    if (this.cachedObjs.length > 0) {
+      objs = this.cachedObjs.map(obj => {
+        let newObj = obj;
+        newObj.when = when;
+        return newObj;
+      });
+    }
+
+    if (origObjects && objs) {
+      return origObjects.concat(objs);
+    } else if (objs) {
+      return objs;
+    } else {
+      return origObjects;
+    }
+  }
+
   _emitEvents(objects) {
     objects.forEach(object => {
       if (object.tag === 'face') {
         this.emit('face', object.when, object.rects, object.source);
       } else if (object.tag === 'motion') {
+        // Clear the cached object list as new objects would be received
+        this.cachedObjs = [];
         this.emit('motion', object.when, object.rects);
       } else if (object.tag === 'car') {
         this.emit('car', object.when, object.rects);
@@ -267,6 +307,7 @@ class Timeline extends EventEmitter {
     default:
       util.processthrow(`Unknown packet type: ${type}`);
     }
+    let allObjects = this._addCachedObjects(objects, when);
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms` +
               ` lag:${Date.now() - when}ms ` +
               ` objects:${(objects ? objects.length : 0)}`;
@@ -282,7 +323,7 @@ class Timeline extends EventEmitter {
       log.verbose(str);
       let queued = Date.now();
       this.serverSocket.emit('video',
-        { id: this.id, objects: objects, frame: frame, contents: type, when: when },
+        { id: this.id, objects: allObjects, frame: frame, contents: type, when: when },
         () => {
           this.acks.pending[type] = this.acks.pending[type] - 1;
           if (this.acks.pending[type] < 0) {

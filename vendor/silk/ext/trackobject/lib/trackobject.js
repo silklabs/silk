@@ -166,7 +166,6 @@ export default function init(env) {
   timeline.on('preview', when => {
     if (working) {
       log.error('Still busy, unable to process next preview image');
-      timeline.noMotion(when);
       return;
     }
 
@@ -175,7 +174,6 @@ export default function init(env) {
       if (err) {
         log.warning(`Unable to fetch frame: ${err}`);
         working = false;
-        timeline.noMotion(when);
         return;
       }
 

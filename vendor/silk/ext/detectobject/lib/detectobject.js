@@ -11,7 +11,6 @@ let CBuffer = require('CBuffer');
 
 let log;
 let timeline;
-let prevObjs = null;
 let prevImg = null;
 
 const NUM_IMAGES_TO_CACHE = 10;
@@ -119,18 +118,7 @@ class DetectObject {
     let working = false;
 
     timeline.on('no-motion', when => {
-      log.info(`no motion detected`);
-
-      // Adjust the timestamp of the objects
-      let objs = null;
-      if (prevObjs) {
-        objs = prevObjs.map(obj => {
-          let newObj = obj;
-          newObj.when = when;
-          return newObj;
-        });
-      }
-      this._notifyObjs(objs, when, prevImg);
+      this._cacheImage(when, prevImg);
     });
 
     timeline.on('motion', when => {
@@ -180,18 +168,20 @@ class DetectObject {
     if (objs && objs.length > 0) {
       what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
       timeline.addObjects(objs);
-      prevObjs = objs;
       prevImg = im;
 
-      // Cache the image to be later used by reportObject command
-      // Ony cache the images that have objects in them
-      this._imageCache.push({when: when, image: im});
+      this._cacheImage(when, im);
     } else {
       what = ' -';
-      prevObjs = null;
       prevImg = null;
     }
     log.info(`Detected objects:${what}`);
+  }
+
+  _cacheImage(when, im) {
+    // Cache the image to be later used by reportObject command
+    // Ony cache the images that have objects in them
+    this._imageCache.push({when: when, image: im});
   }
 }
 

@@ -16,7 +16,7 @@ extensions (`silk/ext/*/lib`) , the following may be used to reduce your build t
 
 ### Automatic push
 
-Run `./watch`, then edit/save normally. On every save, the new `index.js` will be
+Run `./watch`, then edit/save normally. On every save, the new `core.js` will be
 automatically installed on device, and silk core restarted.
 
 `./watch` options:
@@ -28,7 +28,7 @@ automatically installed on device, and silk core restarted.
 ```sh
 .. edit .js files ..
 $ npm install
-$ adb push index.js /system/silk/core.js
+$ adb push core.js /system/silk/core.js
 $ adb shell setprop ctl.restart silk
 ```
 
@@ -37,7 +37,7 @@ $ adb shell setprop ctl.restart silk
 ```sh
 .. edit .js files ..
 $ npm install
-$ adb push index.js /system/silk/ext/<extension-name>.js
+$ adb push <extension-name>.js /system/silk/ext/<extension-name>.js
 $ adb shell setprop silk.reload-ext "/system/silk/ext/<extension-name>.js"
 ```
 

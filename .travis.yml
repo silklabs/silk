@@ -55,7 +55,7 @@ before_script:
   - .travis/before_script
 
 script:
-  - .travis/script | tee .artifacts/log.txt
+  .travis/log .travis/script;
 
 after_script:
   - .travis/after_script

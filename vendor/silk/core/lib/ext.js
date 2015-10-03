@@ -20,23 +20,27 @@ class Env extends EventEmitter {
   constructor(name, deviceObjects) {
     super();
     this._name = name;
-    this._listeners = {};
+    this._listenerObjects = [];
     this._addDeviceAPIs(deviceObjects);
   }
 
   /**
    * Helper routine to register for device events and emit them to the
-   * extension device, and properly save listeners off to this._listeners.
+   * extension device, and properly save listeners.
    */
   _addEvents(deviceName, device, extDevice, events) {
-    this._listeners[deviceName] = {};
-
     events.forEach(event => {
-      let listener = this._listeners[deviceName][event] = (...args) => {
-        extDevice.emit(event, ...args);
-      };
+      let listener = (...args) => extDevice.emit(event, ...args);
       device.on(event, listener);
+      this._saveListener(device, event, listener);
     });
+  }
+
+  /**
+   * Save enough event listener info so that we can remove during cleanup
+   */
+  _saveListener(device, event, listener) {
+    this._listenerObjects.push({device, event, listener});
   }
  
   /**
@@ -54,7 +58,6 @@ class Env extends EventEmitter {
           sensors.activate(sensors.SENSOR_TYPE.LIGHT, pollInterval);
         }
       };
-      this._listeners.sensors = {};
       let listener = sensorEvent => {
         if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
           return;
@@ -62,8 +65,7 @@ class Env extends EventEmitter {
         this.sensors.emit('light', sensorEvent.values[0]);
       };
       sensors.on('data', listener);
-      this._listeners.sensors['data'] = // eslint-disable-line dot-notation
-          listener;
+      this._saveListener(sensors, 'data', listener);
     }
 
     let camera = deviceObjects.camera;
@@ -110,12 +112,11 @@ class Env extends EventEmitter {
     let btle = deviceObjects.btle;
     if (btle) {
       this.ranger = new EventEmitter();
-      this._listeners.btle = {};
       ['start', 'entered', 'range', 'exited', 'stop'].forEach(event => {
-        let listener = this._listeners.btle[event] = (...args) => {
-          this.ranger.emit(event, ...args);
-        };
-        btle.on('region-' + event, listener);
+        let listener = (...args) => this.ranger.emit(event, ...args);
+        let eventName = 'region-' + event;
+        btle.on(eventName, listener);
+        this._saveListener(btle, eventName, listener);
       });
     }
 
@@ -141,23 +142,9 @@ class Env extends EventEmitter {
   /**
    * Env will be destroyed. Remove listeners.
    */
-  cleanup(deviceObjects) {
-    let devices = [
-      { name: 'btle', eventPrefix: 'region-' },
-      { name: 'camera', eventPrefix: '' },
-      { name: 'sensors', eventPrefix: '' },
-      { name: 'timeline', eventPrefix: '' }
-    ];
-
-    devices.forEach(device => {
-      let deviceObject = deviceObjects[device.name];
-      let deviceListeners = this._listeners[device.name];
-      if (deviceListeners) {
-        for (let event in deviceListeners) {
-          deviceObject.removeListener(device.eventPrefix + event,
-                                      deviceListeners[event]);
-        }
-      }
+  cleanup() {
+    this._listenerObjects.forEach(listenerObj => {
+      listenerObj.device.removeListener(listenerObj.event, listenerObj.listener);
     });
   }
 
@@ -295,7 +282,7 @@ class Extensions {
 
       return Promise.resolve()
       .then(() => module.mod.willUnload())
-      .then(() => module.env.cleanup(this._deviceObjects))
+      .then(() => module.env.cleanup())
       .then(() => {
         if (require.cache === undefined) {
           // require.cache alias not present for some reason, let's add it

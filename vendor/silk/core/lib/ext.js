@@ -25,6 +25,21 @@ class Env extends EventEmitter {
   }
 
   /**
+   * Helper routine to register for device events and emit them to the
+   * extension device, and properly save listeners off to this._listeners.
+   */
+  _addEvents(deviceName, device, extDevice, events) {
+    this._listeners[deviceName] = {};
+
+    events.forEach(event => {
+      let listener = this._listeners[deviceName][event] = (...args) => {
+        extDevice.emit(event, ...args);
+      };
+      device.on(event, listener);
+    });
+  }
+ 
+  /**
    * Builds the interface into the device functions that are available to
    * extensions.
    */
@@ -54,6 +69,9 @@ class Env extends EventEmitter {
     let camera = deviceObjects.camera;
     if (camera) {
       this.camera = new EventEmitter();
+
+      this._addEvents('camera', camera, this.camera, ['mic-data']);
+
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
@@ -66,15 +84,8 @@ class Env extends EventEmitter {
     if (timeline) {
       this.timeline = new EventEmitter();
 
-      let events = ['preview', 'face', 'clap', 'motion', 'no-motion'];
-      this._listeners.timeline = {};
-
-      events.forEach(event => {
-        this._listeners.timeline[event] = (...args) => {
-          this.timeline.emit(event, ...args);
-        };
-        timeline.on(event, this._listeners.timeline[event]);
-      });
+      this._addEvents('timeline', timeline, this.timeline,
+          ['preview', 'face', 'clap', 'motion', 'no-motion']);
 
       this.timeline.addObject = (tag, when, rect) => {
         timeline.addObject(tag, when, rect);
@@ -133,6 +144,7 @@ class Env extends EventEmitter {
   cleanup(deviceObjects) {
     let devices = [
       { name: 'btle', eventPrefix: 'region-' },
+      { name: 'camera', eventPrefix: '' },
       { name: 'sensors', eventPrefix: '' },
       { name: 'timeline', eventPrefix: '' }
     ];

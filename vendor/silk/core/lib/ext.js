@@ -178,8 +178,22 @@ class Extensions {
         }
         log.error(`Unable to read ${dir}: ${err}`);
       })
-      .then(files => files.forEach(file => this._loadExtension(path.join(dir, file))));
+      .then(files => files.forEach(file => {
+        if (this._isModuleNameValid(file)) {
+          this._loadExtension(path.join(dir, file));
+        }
+      }));
     });
+  }
+
+  _isModuleNameValid(file) {
+    // module names must end in .js, .json, .node or nothing
+    let ext = path.extname(file);
+    if (!ext.length || ext === '.js' || ext ===  '.json' || ext === '.node') {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   _onReloadRequested() {

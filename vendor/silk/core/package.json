@@ -2,7 +2,7 @@
   "name": "core",
   "version": "0.0.1",
   "description": "The common control software on each silk node",
-  "main": "index.js",
+  "main": "core.js",
   "scripts": {
     "preinstall": "./bin/preinstall",
     "install": "rm -rf node_modules/babel/test/ && ./build",

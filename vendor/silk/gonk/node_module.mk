@@ -202,8 +202,11 @@ else
 
 $(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_PATH := \
   $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(dir $(LOCAL_INSTALLED_MODULE)))
+
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
 	$(copy-file-to-target)
+# Install source maps if they where generated...
+	$(hide) test $(TARGET_BUILD_VARIANT) -ne user -a -f $<.map && $(ACP) $<.map $@.map || echo "Skip sourcemap $@.map"
 # Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
 # so they can be resolved correctly from the browserify-ed module
 	$(hide) \

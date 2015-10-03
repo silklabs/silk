@@ -24,6 +24,7 @@ const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
 const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 6);
+const YUV_PLANE_PAD_BYTES = util.getintprop('ro.silk.camera.yuv_pad_bytes', 0);
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -367,6 +368,7 @@ class CameraStream extends EventEmitter {
       vbr: VBR,
       previewScale: PREVIEW_SCALE,
       previewSkipCount: PREVIEW_SKIP_COUNT,
+      yuvPlanePadBytes: YUV_PLANE_PAD_BYTES
     };
     this._init(initargs);
   }

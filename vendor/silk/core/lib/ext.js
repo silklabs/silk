@@ -99,9 +99,9 @@ class Env extends EventEmitter {
     let btle = deviceObjects.btle;
     if (btle) {
       this.ranger = new EventEmitter();
-      this._listeners.ranger = {};
+      this._listeners.btle = {};
       ['start', 'entered', 'range', 'exited', 'stop'].forEach(event => {
-        let listener = this._listeners.ranger[event] = (...args) => {
+        let listener = this._listeners.btle[event] = (...args) => {
           this.ranger.emit(event, ...args);
         };
         btle.on('region-' + event, listener);
@@ -132,7 +132,7 @@ class Env extends EventEmitter {
    */
   cleanup(deviceObjects) {
     let devices = [
-      { name: 'btle', eventPrefix: 'ranger-' },
+      { name: 'btle', eventPrefix: 'region-' },
       { name: 'sensors', eventPrefix: '' },
       { name: 'timeline', eventPrefix: '' }
     ];

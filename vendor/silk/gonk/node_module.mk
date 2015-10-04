@@ -118,7 +118,7 @@ $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
 $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
 	$(hide) mkdir -p $(built_module_path)
-	$(hide) rsync -qav $(LOCAL_PATH)/ $(built_module_path)
+	$(hide) rsync -qav --exclude='/node_modules' $(LOCAL_PATH)/ $(built_module_path)
 	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
 	@echo "Build: $(built_module_path)"
 	$(hide) cd $(built_module_path) &&  \

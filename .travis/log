@@ -15,10 +15,15 @@ exit_code=$?
 kill $keep_alive_pid
 wait $keep_alive_pid 2>/dev/null
 
+echo
+echo For full build log and other artifacts, please see:
+echo $ARTIFACT_HOST/$ARTIFACT_REMOTE_PATH
+
 if [[ $exit_code -ne 0 ]]; then
-  echo "The run has failed... Outputting log"
-  echo "Also see: $ARTIFACT_HOST/$ARTIFACT_REMOTE_PATH"
-  tail -n 2000 .artifacts/log
+  echo
+  echo Error $exit_code: Build failed
+  echo
+  ( set -x; tail -n 2000 .artifacts/log )
 fi
 
 exit $exit_code

@@ -262,9 +262,19 @@ class Extensions {
         this._loaded[modulePath] = { env: env, mod: require(modulePath)(env) };
       }
     } catch (e) {
+      // Failed to load, delete from cache to force next load from disk
+      this._removeExtensionFromCache(file);
       log.error(`Extension failed to load: ${modulePath}`);
       log.error(e);
     }
+  }
+
+  _removeExtensionFromCache(file) {
+    if (require.cache === undefined) {
+      // require.cache alias not present for some reason, let's add it
+      require.cache = require('module')._cache;
+    }
+    delete require.cache[file];
   }
 
   _unloadExtension(file) {
@@ -284,11 +294,7 @@ class Extensions {
       .then(() => module.mod.willUnload())
       .then(() => module.env.cleanup())
       .then(() => {
-        if (require.cache === undefined) {
-          // require.cache alias not present for some reason, let's add it
-          require.cache = require('module')._cache;
-        }
-        delete require.cache[file]; // cache is indexed by full file name
+        this._removeExtensionFromCache(file);
         delete this._loaded[modulePath];
         return Promise.resolve();
       })

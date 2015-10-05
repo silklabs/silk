@@ -205,10 +205,6 @@ export default React.createClass({
     });
   },
 
-  componentWillUnmount() {
-    this.transitionModes(null);
-  },
-
   /**
   Appends a new video segment.
   */
@@ -683,7 +679,10 @@ export default React.createClass({
     var overlay = this.refs.overlay;
     // Signal dismissal of the view (but let it animate closed).
     // After the animation allow any parent views to cleanup.
-    overlay.dismiss().then(() => this.props.onClose());
+    overlay.dismiss().then(() => {
+      this.transitionModes(null);
+      this.props.onClose();
+    });
   },
 });
 

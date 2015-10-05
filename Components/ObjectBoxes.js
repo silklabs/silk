@@ -31,7 +31,7 @@ let ObjectBoxes = React.createClass({
   propTypes: {
     id: React.PropTypes.string.isRequired,
     socket: React.PropTypes.object.isRequired,
-    style: React.PropTypes.object,
+    style: View.propTypes.style,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
     objects: React.PropTypes.array.isRequired,

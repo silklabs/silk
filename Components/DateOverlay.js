@@ -17,7 +17,7 @@ export default class extends React.Component {
 
   static propTypes = {
     date: React.PropTypes.instanceOf(Date).isRequired,
-    style: React.PropTypes.object,
+    style: View.propTypes.style,
     fadeDuration: React.PropTypes.number,
     onDone: React.PropTypes.func,
   };

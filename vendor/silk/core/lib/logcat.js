@@ -1,3 +1,5 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -22,8 +24,11 @@ import createLog from './log';
 import LogcatStream from './streams/logcat';
 import LogcatToSyslog from './streams/logcat_to_syslog';
 import PapertrailOp from './outbox/papertrail_operation';
+import { getboolprop } from './util';
 
 const log = createLog('logcat');
+
+const ENABLED = getboolprop('persist.silk.logupload.enabled');
 
 export default class LogcatManager {
 
@@ -84,6 +89,12 @@ export default class LogcatManager {
 
   start() {
     log.info('starting to read from logcat...');
+    
+    if (!ENABLED) {
+      log.info(' ... disabled, not starting.');
+      return;
+    }
+
     this._spawn();
     let stream = this.process.stdout;
 

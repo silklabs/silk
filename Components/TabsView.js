@@ -8,6 +8,7 @@ let {
 import MonitorsView from './MonitorsView';
 import TopBar from './TopBar';
 import SocketIO from '../Libraries/SocketIO';
+import Config from '../Libraries/Config';
 
 import DeviceManager from '../btle/central-device-manager';
 import bleScanner from '../btle/ble-central';
@@ -74,6 +75,8 @@ export default class TabsView extends React.Component {
       }
 
       let socket = new SocketIO(socketIOClient(socketUrl, {
+        autoConnect: true,
+        forceNew: true,
         transports: ['websocket'],
       }));
 
@@ -93,11 +96,12 @@ export default class TabsView extends React.Component {
 
   loadSettings() {
     let promise;
+    let serverUrl = Config.get().server.url || null;
     if (this.state.wifi) {
       promise = this.navigateWifiScene({
         ssid: this.state.wifi.ssid,
         secret: this.state.wifi.secret,
-        socketUrl: this.state.socketUrl,
+        serverUrl,
       });
     } else {
       const net = require('../Libraries/Net');
@@ -105,16 +109,15 @@ export default class TabsView extends React.Component {
         return this.navigateWifiScene({
           ssid: info.SSID,
           secret: '',
-          socketUrl: this.state.socketUrl,
+          serverUrl,
         });
       });
     }
     return promise.then(settings => {
-      log.info('Settings saved', settings);
-      if (this.state.socketUrl !== settings.socketUrl) {
-        log.info('WARNING: Switching socket URL to', settings.socketUrl);
-        log.info('  This will break any open monitor streams.');
-        this.setSocketUrlAndConnect(settings.socketUrl);
+      log.info('Saving settings', settings);
+
+      if (serverUrl !== settings.serverUrl) {
+        Config.set({server: {url: settings.serverUrl}});
       }
       let wifi = {
         ssid: settings.ssid,

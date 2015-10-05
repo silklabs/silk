@@ -11,7 +11,7 @@
 // The API violates this rule, so disable it for the whole file.
 /* eslint new-cap:0 */
 
-import EventEmitter from 'EventEmitter';
+import { EventEmitter} from 'events';
 import { AsyncStorage } from 'react-native';
 import { getRandomBytes, PBKDF2KeyDerivation } from './Crypto';
 

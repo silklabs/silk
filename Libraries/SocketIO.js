@@ -1,15 +1,10 @@
-let {
+import {
   NativeModules,
-  //EventEmitter,
-} = require('react-native');
+} from 'react-native';
 
-// TODO: `EventEmitter` is not exposed by the `react-native` npm
-// module, so we're cheating here by grabbing it directly from the Haste
-// module. We should consider exporting it upstream or vendor-importing
-// EventEmitter.js.
-import EventEmitter from 'EventEmitter';
-
-let NativeBlobBridge = NativeModules.BlobBridge;
+import {
+  EventEmitter,
+} from 'events';
 
 class NativeBlob {
   constructor(data) {
@@ -17,7 +12,7 @@ class NativeBlob {
   }
 
   release() {
-    NativeBlobBridge.release(this.data.id);
+    NativeModules.BlobBridge.release(this.data.id);
   }
 
   toJSON() {

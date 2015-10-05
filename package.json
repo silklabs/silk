@@ -1,50 +1,4 @@
 {
-  "private": true,
-  "keywords": [
-    "iot"
-  ],
-  "repository": {
-    "url": "git@github.com:silklabs/silk-server.git",
-    "type": "git"
-  },
-  "eslintConfig": {
-    "env": {
-      "es6": true,
-      "node": true
-    },
-    "rules": {
-      "yoda": 0,
-      "quotes": [
-        2,
-        "single",
-        "avoid-escape"
-      ],
-      "strict": false,
-      "brace-style": 2,
-      "no-shadow": 0,
-      "no-debugger": 1,
-      "default-case": 2,
-      "comma-dangle": 0,
-      "indent": [
-        2,
-        2
-      ],
-      "no-underscore-dangle": 0
-    },
-    "globals": {
-      "suiteTeardown": true,
-      "suiteSetup": true,
-      "teardown": true,
-      "setup": true,
-      "test": true,
-      "suite": true
-    },
-    "parser": "babel-eslint"
-  },
-  "engineStrict": true,
-  "engines": {
-    "node": "^0.12.0"
-  },
   "name": "silk-server",
   "version": "1.0.0",
   "description": "Silk server and client API",
@@ -75,7 +29,6 @@
     "promised-temp": "^0.1.0",
     "promised-mongo": "^1.2.0",
     "promise": "^6.1.0",
-    "eslint": "^0.22.1",
     "elliptic": "^5.1.0",
     "denodeify": "^1.2.1",
     "debug": "^2.2.0",
@@ -112,5 +65,17 @@
     "timekeeper": "0.0.5",
     "mocha": "^2.2.5",
     "dev-null": "^0.1.1"
-  }
+  },
+  "engines": {
+    "node": "^0.12.0"
+  },
+  "engineStrict": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-server.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "private": true
 }

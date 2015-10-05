@@ -3,10 +3,19 @@
 
 import loadConfig from './config';
 import VIP from './vip';
+import Account from './gen/account';
+import Device from './gen/device';
 
 module.exports = function create(options) {
-  let config = loadConfig(options);
-  return {
+  const config = loadConfig(options);
+  let accessToken = null;
+  const services = {
+    vip: new VIP(config.serverUrl),
+    account: new Account(config.serverUrl),
+    device: new Device(config.serverUrl)
+  };
+
+  let exports = {
     config: config,
     id: require('./id'),
     // These are the components of the service protocol that must be
@@ -57,6 +66,26 @@ module.exports = function create(options) {
     timeMeta: require('./time_metadata')(config),
     crashMeta: require('./crash_metadata')(config),
     socketio: require('./socketio')(config),
-    vip: new VIP(config.serverUrl)
+
+    set accessToken(token) {
+      accessToken = token;
+      for (let key in services) {
+        // TODO: Rename .key once consumers are using this new way of setting
+        // the accessToken.
+        //
+        // .key = accessToken...
+        services[key].key = token;
+      }
+    },
+
+    get accessToken() {
+      return accessToken;
+    }
   };
+
+  for (let key in services) {
+    exports[key] = services[key];
+  }
+
+  return exports;
 };

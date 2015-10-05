@@ -340,4 +340,3 @@ export default class Accounts extends Base {
     return this.error('checkPasswordFailure');
   }
 }
-

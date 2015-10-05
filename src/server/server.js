@@ -12,7 +12,8 @@ import devAccount from '../api/dev_account';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
-import AccountsModel from './models/accounts';
+import Accounts from './models/accounts';
+import Devices from './models/devices';
 import Nonce from './models/nonce';
 import EmailSender from './email_sender';
 
@@ -57,9 +58,8 @@ export default async function main (config) {
   let crashMeta = new CrashMetadata(db);
   let timeMeta = new TimeMetadata(db);
   let nonce = new Nonce(db);
-  // XXX: Rename once we phase out old account interface.
-  let accounts = new AccountsModel(db);
-
+  let accounts = new Accounts(db);
+  let devices = new Devices(db);
 
   // Ensure we have indexed models...
   let index = [crashMeta, timeMeta, nonce, accounts].map(async model => {
@@ -85,6 +85,7 @@ export default async function main (config) {
     app,
     nonce,
     accounts,
+    devices,
     emailSender,
     crashMeta,
     timeMeta,

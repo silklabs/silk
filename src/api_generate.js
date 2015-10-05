@@ -5,12 +5,22 @@ import fs from 'fs';
 
 // import all the routes
 import vipRoutes from './server/routes/vip';
+import accountRoutes from './server/routes/account';
+import deviceRoutes from './server/routes/device';
 import securityRoutes from './server/routes/security_validation';
 
 const AUTOGEN_ROOT = path.join(__dirname, '/api/gen');
 const GENERATE = {
   vip: {
     routes: vipRoutes,
+    base: '../http_client'
+  },
+  account: {
+    routes: accountRoutes,
+    base: '../http_client'
+  },
+  device: {
+    routes: deviceRoutes,
     base: '../http_client'
   },
   'security_validation': {

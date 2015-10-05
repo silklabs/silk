@@ -36,7 +36,6 @@ export default class HttpClient {
   }
 
   get accessToken() {
-    console.log(this._accessToken);
     // Allow the key to be undefined or null but throw an error if we attempt to
     // use it in that state.
     if (!this._accessToken || !this._accessToken.priv) {

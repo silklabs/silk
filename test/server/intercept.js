@@ -88,7 +88,7 @@ class Intercept extends EventEmitter {
   }
 }
 
-export default async function(canonicalURL) {
+export default async function() {
   // XXX: Express is good place to start but it might be better to devise an
   // even lower level api for some types of testing...
   let app = express();

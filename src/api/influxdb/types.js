@@ -68,14 +68,14 @@ export class Bool {
 
   static parse(value) {
     switch (value.toLowerCase()) {
-      case 't':
-      case 'true':
-        return true;
-      case 'f':
-      case 'false':
-        return false;
-      default:
-        throw new Error(`Cannot convert ${value} into a boolean`);
+    case 't':
+    case 'true':
+      return true;
+    case 'f':
+    case 'false':
+      return false;
+    default:
+      throw new Error(`Cannot convert ${value} into a boolean`);
     }
   }
 }

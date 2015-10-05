@@ -3,18 +3,18 @@
 
 import { resolve } from 'url';
 import vipRoutes from './routes/vip';
+import accountRoutes from './routes/account';
+import deviceRoute from './routes/device';
 
 let log = require('log')('routes');
 
 module.exports = function(opts) {
   let {
     app,
-    accounts,
     crashMeta,
     timeMeta,
     config,
     blobs,
-    nonce,
   } = opts;
 
   let blobHandler = blobs[config.server.blobType];
@@ -161,10 +161,7 @@ module.exports = function(opts) {
     await blobHandler.getBlob(req, res);
   }));
 
-  let auth = vipRoutes({
-    accounts,
-    nonce
-  });
-
-  app.use(auth.app);
+  app.use(vipRoutes(opts).app);
+  app.use(accountRoutes(opts).app);
+  app.use(deviceRoute(opts).app);
 };

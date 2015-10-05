@@ -24,6 +24,11 @@ RCT_EXTERN_METHOD(close:(nonnull NSNumber *)socketID)
 
 - (void)webSocket:(RCTSRWebSocket *)webSocket didReceiveMessage:(id)message
 {
+  #if RCT_DEV
+  if ([webSocket.url.absoluteString hasPrefix:@"ws://localhost:8081/"]) {
+    [super webSocket:webSocket didReceiveMessage:message];
+  }
+  #endif
   id data;
   data = [TypeTransfer convert:message];
   [super webSocket:webSocket didReceiveMessage:data];

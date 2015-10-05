@@ -18,6 +18,7 @@ var {
   TouchableOpacity,
   View,
 } = React;
+import AsyncComponent from './AsyncComponent';
 
 const SERVERS = [
   {name: 'default', value: null},
@@ -27,7 +28,7 @@ const SERVERS = [
   {name: 'localhost', value: 'http://localhost:5000'},
 ];
 
-export default class WifiSettings extends React.Component {
+export default class WifiSettings extends AsyncComponent {
 
   constructor(props) {
     super(props);
@@ -219,7 +220,7 @@ export default class WifiSettings extends React.Component {
     if (this.props.route.reject) {
       this.props.route.reject();
     }
-    this.props.navigator.pop();
+    this.props.navigator.popAsync();
   };
 
   save = () => {
@@ -231,13 +232,13 @@ export default class WifiSettings extends React.Component {
       });
     }
     // TODO save wifi to persistent DB --- here or elsewhere?
-    this.props.navigator.pop();
+    this.props.navigator.popAsync();
   };
 
   signOut = async () => {
     let { userState, navigator } = this.props;
     await userState.signOut();
-    navigator.push({ name: 'SignIn', index: 0 });
+    navigator.pushAsync({ name: 'SignIn', index: 0 });
   };
 
 }

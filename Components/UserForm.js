@@ -13,6 +13,8 @@ let {
   Text,
 } = React;
 
+import AsyncComponent from './AsyncComponent';
+
 const loginSpinnerStyles = StyleSheet.create({
   spinner: {
     height: 35,
@@ -21,7 +23,7 @@ const loginSpinnerStyles = StyleSheet.create({
   },
 });
 
-class LoginSpinner extends React.Component {
+class LoginSpinner extends AsyncComponent {
   render() {
     return (
       <View style={loginSpinnerStyles.spinner}>
@@ -121,7 +123,7 @@ class StyledButton extends React.Component {
   }
 }
 
-export default class UserForm extends React.Component {
+export default class UserForm extends AsyncComponent {
 
   static propTypes = {
     // Explicitly pass through styles...
@@ -151,12 +153,12 @@ export default class UserForm extends React.Component {
   };
 
   handleSubmit = async () => {
-    this.setState({ submitInProgress: true });
+    this.setStateAsync({ submitInProgress: true });
     await this.props.onSubmit({
       email: this.email,
       password: this.password,
     });
-    this.setState({ submitInProgress: false });
+    this.setStateAsync({ submitInProgress: false });
   };
 
   render() {

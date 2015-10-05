@@ -14,6 +14,7 @@ let {
 class SignUpControls extends React.Component {
 
   static propTypes = {
+    navigator: React.PropTypes.object,
     userState: React.PropTypes.object,
   };
 
@@ -56,7 +57,7 @@ export default class extends React.Component {
 
   static propTypes = {
     navigator: React.PropTypes.object,
-    userState: React.PropTypes.userState,
+    userState: React.PropTypes.object,
   };
 
   render() {

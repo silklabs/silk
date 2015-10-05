@@ -55,7 +55,6 @@ class StyledTextInput extends React.Component {
     onChange: React.PropTypes.func,
     onSubmit: React.PropTypes.func,
     placeholder: React.PropTypes.string,
-    style: React.PropTypes.object,
     returnKeyType: React.PropTypes.string,
   };
 
@@ -103,7 +102,6 @@ class StyledButton extends React.Component {
   static propTypes = {
     label: React.PropTypes.string,
     onClick: React.PropTypes.func,
-    style: React.PropTypes.object,
   };
 
   onPress = () => {
@@ -114,11 +112,11 @@ class StyledButton extends React.Component {
 
   render() {
     return (
-        <TouchableOpacity onPress={this.onPress}>
-          <View style={buttonStyles.button}>
-            <Text style={buttonStyles.buttonLabel}>{this.props.label}</Text>
-          </View>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={this.onPress}>
+        <View style={buttonStyles.button}>
+          <Text style={buttonStyles.buttonLabel}>{this.props.label}</Text>
+        </View>
+      </TouchableOpacity>
     );
   }
 }
@@ -127,7 +125,7 @@ export default class UserForm extends React.Component {
 
   static propTypes = {
     // Explicitly pass through styles...
-    style: React.PropTypes.object,
+    style: View.propTypes.style,
 
     submitText: React.PropTypes.string,
 

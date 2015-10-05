@@ -33,6 +33,11 @@ class Config extends EventEmitter {
   _buildConfig = null;
   _userConfig = null;
 
+  constructor() {
+    super();
+    this._loadBuildConfig();
+  }
+
   _loadBuildConfig() {
     let config;
     try {
@@ -42,7 +47,7 @@ class Config extends EventEmitter {
     } catch (e) {
       config = {};
     }
-    return merge({}, DEFAULT, config);
+    this._buildConfig = merge({}, DEFAULT, config);
   }
 
   async _loadUserConfig() {
@@ -57,15 +62,14 @@ class Config extends EventEmitter {
       log.warn('Could not JSON parse config:', ex);
       config = {};
     }
-    return config;
+    this._userConfig = config;
   }
 
   async init() {
     if (this._initialized) {
       return;
     }
-    this._buildConfig = this._loadBuildConfig();
-    this._userConfig = await this._loadUserConfig();
+    await this._loadUserConfig();
     this.config = merge({}, this._buildConfig, this._userConfig);
 
     this._initialized = true;
@@ -78,6 +82,9 @@ class Config extends EventEmitter {
   }
 
   get() {
+    if (!this._initialized) {
+      throw new Error('Need to initialize before accessing config!');
+    }
     return this.config;
   }
 

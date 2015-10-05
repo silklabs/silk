@@ -3,7 +3,7 @@
  */
 import Config from './Config';
 import debug from 'debug';
-debug.enable(Config.debug);
+debug.enable(Config.getDefault().debug);
 
 /**
  * Collection of browser shims to make various JS libraries happy.

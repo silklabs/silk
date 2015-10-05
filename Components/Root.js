@@ -5,7 +5,6 @@ import React from 'react-native';
 
 let {
   AppRegistry,
-  Navigator,
   StyleSheet,
   Text,
   View,
@@ -17,6 +16,8 @@ import '../Libraries/BrowserShims';
 
 import Config from '../Libraries/Config';
 import API from 'silk-api-react-native';
+import AsyncComponent from './AsyncComponent';
+import AsyncNavigator from './AsyncNavigator';
 import TabsView from './TabsView';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
@@ -30,7 +31,7 @@ const routeToComponentMap = {
   WifiSettings,
 };
 
-class Silk extends React.Component {
+class Silk extends AsyncComponent {
 
   state = {
     serverUrl: null,
@@ -58,7 +59,7 @@ class Silk extends React.Component {
     let userState = new UserState(api);
     let loggedIn = await userState.getAccessToken();
     let initialRoute = loggedIn ? 'Tabs' : 'SignIn';
-    this.setState({serverUrl, initialRoute, api, userState});
+    this.setStateAsync({serverUrl, initialRoute, api, userState});
   };
 
   render() {
@@ -70,7 +71,7 @@ class Silk extends React.Component {
     }
 
     return (
-      <Navigator
+      <AsyncNavigator
         // By keying the Navigator on the serverUrl, a change will
         // trigger a complete re-render of the app.
         key={this.state.serverUrl}
@@ -110,9 +111,9 @@ class Silk extends React.Component {
   configureScene(route) {
     switch (route.name) {
     case 'WifiSettings':
-      return Navigator.SceneConfigs.FloatFromBottom;
+      return AsyncNavigator.SceneConfigs.FloatFromBottom;
     default:
-      return Navigator.SceneConfigs.PushFromRight;
+      return AsyncNavigator.SceneConfigs.PushFromRight;
     }
   }
 }

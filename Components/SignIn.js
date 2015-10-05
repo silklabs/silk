@@ -5,6 +5,7 @@
 
 import React from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncComponent from './AsyncComponent';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
 
@@ -26,7 +27,7 @@ class LogoView extends React.Component {
   }
 }
 
-class SignInControls extends React.Component {
+class SignInControls extends AsyncComponent {
 
   static propTypes = {
     userState: React.PropTypes.object,
@@ -37,7 +38,7 @@ class SignInControls extends React.Component {
       let { userState } = this.props;
       let success = await userState.attemptSignIn(props.email, props.password);
       if (success) {
-        this.props.navigator.push({ name: 'Tabs', index: 0 });
+        this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
       }
     } catch (err) {
       console.log('Failed to sign in', err);
@@ -47,16 +48,16 @@ class SignInControls extends React.Component {
   onDeveloperSignIn = async () => {
     let { userState } = this.props;
 
-    this.setState({ loginInProgress: true });
+    this.setStateAsync({ loginInProgress: true });
     let success = await userState.attemptDeveloperLogin();
-    this.setState({ loginInProgress: false });
+    this.setStateAsync({ loginInProgress: false });
     if (success) {
-      this.props.navigator.push({ name: 'Tabs', index: 0 });
+      this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
     }
   };
 
   onSignUp = () => {
-    this.props.navigator.push({ name: 'SignUp', index: 0 });
+    this.props.navigator.pushAsync({ name: 'SignUp', index: 0 });
   };
 
   onLearnMore = () => {

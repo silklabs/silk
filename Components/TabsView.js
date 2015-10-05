@@ -130,7 +130,7 @@ export default class TabsView extends React.Component {
 
   navigateWifiScene(hints) {
     return new Promise((resolve, reject) => {
-      this.props.navigator.push({
+      this.props.navigator.pushAsync({
         name: 'WifiSettings',
         index: 1,
         hints: hints,

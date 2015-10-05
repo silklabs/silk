@@ -3,6 +3,7 @@
 
 import React from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncComponent from './AsyncComponent';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
 
@@ -11,7 +12,7 @@ let {
   View,
 } = React;
 
-class SignUpControls extends React.Component {
+class SignUpControls extends AsyncComponent {
 
   static propTypes = {
     navigator: React.PropTypes.object,
@@ -27,7 +28,7 @@ class SignUpControls extends React.Component {
       let { userState } = this.props;
       let success = await userState.attemptSignup(props.email, props.password);
       if (success) {
-        this.props.navigator.push({ name: 'Monitors', index: 0 });
+        this.props.navigator.pushAsync({ name: 'Monitors', index: 0 });
       }
     } catch (err) {
       console.log('Failed to sign up', err);

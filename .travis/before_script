@@ -20,10 +20,9 @@ time CI_PATCHTREE_FORCE=force make nothing # Applies patches as a side effect of
 # Reduce the disk space usage to avoid failures later on during full
 # builds
 if [[ $GONK != base ]]; then
-  if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
-    mv .repo/project-objects/silk-device-locked-node-modules.git .repo/
-    mv .repo/projects/vendor/silk/locked_node_modules/node_modules.git .repo/
-  fi
+  # Save silk-device-locked-node-modules before other .repo git projects are removed
+  mv .repo/project-objects/silk-device-locked-node-modules.git .repo/
+  mv .repo/projects/vendor/silk/locked_node_modules/node_modules.git .repo/
 
   rm -rf \
     .repo/project-objects \
@@ -46,11 +45,10 @@ if [[ $GONK != base ]]; then
 
   find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
 
-  if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
-    mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules
-    mv .repo/silk-device-locked-node-modules.git .repo/project-objects/
-    mv .repo/node_modules.git .repo/projects/vendor/silk/locked_node_modules/
-  fi
+  # Restore silk-device-locked-node-modules
+  mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules
+  mv .repo/silk-device-locked-node-modules.git .repo/project-objects/
+  mv .repo/node_modules.git .repo/projects/vendor/silk/locked_node_modules/
 fi
 
 df -h

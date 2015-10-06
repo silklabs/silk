@@ -12,4 +12,12 @@ du -hs .
 export AWS_ACCESS_KEY_ID=AKIAJZCE7JU4GWU4JISQ
 export AWS_SECRET_ACCESS_KEY=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
 npm install -g silklabs/s3-artifacts
+
+# Deploy our per build artifacts...
 silk-artifacts silk-travis-artifacts $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR
+
+# Deploy our ccache bundle updates...
+cd $HOME/.ccache/
+mkdir -p $HOME/ccache_dist/
+tar -czf $HOME/ccache_dist/ccache.tar.gz *
+silk-artifacts silk-travis-artifacts $CCACHE_ARTIFACT_PATH $HOME/ccache_dist

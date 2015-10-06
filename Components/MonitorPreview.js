@@ -15,9 +15,6 @@ var {
   View,
 } = React;
 
-var PREVIEW_WIDTH = 305;
-var PREVIEW_HEIGHT = 170;
-
 class MonitorLabel extends React.Component {
   render() {
     return (

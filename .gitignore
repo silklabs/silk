@@ -31,14 +31,11 @@
 /vendor/lge/
 /vendor/moto/
 /vendor/qcom/
-/vendor/silk/core/index.js
-/vendor/silk/core/dist/
+/vendor/silk/core/core.js
 /vendor/silk/core/local_node_modules/ntp-client/
 /vendor/silk/core/local_node_modules/silk-api/
 /vendor/silk/core/npm-debug.log
 /vendor/silk/**/node_modules/
-/vendor/silk/ext/**/dist/
-/vendor/silk/ext/**/*.js
 /vendor/silk/trainingset/
 /vendor/silk/**/*.js.map
 .gulpcache

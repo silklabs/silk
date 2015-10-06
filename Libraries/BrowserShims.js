@@ -12,6 +12,14 @@ debug.enable(Config.getDefault().debug);
 // dummy string which nobody cares about.
 if (!('userAgent' in navigator)) {  //eslint-disable-line
   navigator.userAgent = 'react-native';  //eslint-disable-line
+} else {
+  // We're in a browser environment, e.g. Chrome, for debugging
+  // purposes. Spin the JS event loop along. This is not necessary
+  // when running the JS in-process.
+  if (__DEV__) { //eslint-disable-line
+    let tick = () => requestAnimationFrame(tick); //eslint-disable-line
+    tick();
+  }
 }
 
 // XXX: Hack to make debug module happy.

@@ -1,19 +1,19 @@
-From 99eb8a80bd6e9f13e19ef17a9c607945cdc292a9 Mon Sep 17 00:00:00 2001
+From 1e6a956544dc85d15ce6a79588912b364d62503e Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 63 insertions(+)
+ Android.mk | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 70 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..2403665
+index 0000000..c3edf46
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,70 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +LOCAL_NODE_ENGINE=$(notdir $(LOCAL_PATH))
@@ -61,6 +61,13 @@ index 0000000..2403665
 +$(LOCAL_PREBUILT_MODULE_FILE): export LDFLAGS := $(LOCAL_LDFLAGS)
 +$(LOCAL_PREBUILT_MODULE_FILE): node_BUILD_DIR := $(abspath $(dir $(LOCAL_BUILT_MODULE)))
 +
++# Node's ./out/Makefile assumes builddir_name is a relative path.  Due to the
++# symlink of ./out to the absolute path of $(node_BUILD_DIR), ./configure ends
++# up generating ./out/Makefile with an absolute builddir_name.  An absolute
++# builddir_name trips up the fixup_dep macro in ./out/Makefile producing
++# invalid dependency files in ./out/Release/.deps/
++$(LOCAL_PREBUILT_MODULE_FILE): export builddir_name=.
++
 +$(LOCAL_PREBUILT_MODULE_FILE): $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk \
 +  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTBEGIN_DYNAMIC_O) \
 +  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTEND_O) \
@@ -78,5 +85,5 @@ index 0000000..2403665
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-2.5.0
+1.9.1
 

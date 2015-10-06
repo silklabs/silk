@@ -7,7 +7,6 @@
   },
   "scripts": {
     "preinstall": "./preinstall",
-    "install": "babel -d dist src -e 1 --optional asyncToGenerator",
     "postinstall": "rm -rf node_modules/babel/test/"
   },
   "private": true,

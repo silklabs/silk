@@ -18,6 +18,8 @@ import path from 'path';
 import { spawn } from 'mz/child_process';
 import fs from 'fs';
 
+// Note: this relies on the location of the silk sdk on disk.
+
 export default function(baseDirectory = process.env.BASEDIR) {
   // Base directory which we are operating on ... All assets should be loaded and
   // stored there.
@@ -35,17 +37,42 @@ export default function(baseDirectory = process.env.BASEDIR) {
     return gulp.src(path.join(baseDirectory, glob));
   }
 
+  function trimSlash(str) {
+    if (str[str.length - 1] === '/') {
+      return str.slice(0, -1);
+    }
+    return str;
+  }
+
+  /**
+   * It's important to remember that this is not the canonical way to push files
+   * but a convenience wrapper so we need to be careful to match what the
+   * Android build system does.
+   *
+   * This will figure out where to put the JS files for example:
+   *
+   *  - vendor/silk/core -> /system/silk/core.js
+   *  - vendor/silk/profiler -> /system/silk/profiler.js
+   *  - vendor/silk/ext/foo -> /system/ext/foo/index.js
+   */
   function getDestFile() {
-    let destDir = '/system/silk/ext/';
-    if (pkg.name === 'core') {
-      // TODO: Remove this "core" module hack
-      destDir = '/system/silk/';
+    // XXX: Nasty hack since we don't know where we are in the silk tree...
+    let search = 'vendor/silk';
+    let startingPoint = path.resolve(__dirname);
+    let vendorStart = startingPoint.lastIndexOf(search);
+    let vendorSegment = startingPoint.slice(vendorStart + search.length + 1);
+
+    // Everything before the node_modules directory is the path to the
+    // component.
+    let relativePath = trimSlash(vendorSegment.split('node_modules')[0]);
+    // Pop the first part of the path off (silk/core goes into silk/core.js)
+    let destDir = path.join(relativePath, '..');
+
+    let dest = path.join(destDir, pkg.main);
+    if (!path.extname(dest)) {
+      dest += '.js';
     }
-    let result = path.join(destDir, pkg.name);
-    if (!path.extname(result)) {
-      result += '.js';
-    }
-    return result;
+    return `/system/silk/${dest}`;
   }
 
   let _cache;

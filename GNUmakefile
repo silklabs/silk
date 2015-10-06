@@ -170,7 +170,7 @@ REPO_VERSION=--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-st
 .repo/manifest.xml: | .repo/manifest_upstream
 	./repo init -u $(PWD)/.repo/manifest_upstream \
     -m $(GONK).xml -b $(BRANCH) $(REPO_INIT_ARGS) \
-    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-hammerhead,-manta,$(REPO_INIT_HOST) \
+    -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-manta,$(REPO_INIT_HOST) \
     $(REPO_VERSION) --quiet
 	@if [[ -n "$(REPOCACHE_$(GONK))" ]]; then \
     if [[ ! -d .repo/projects ]]; then \

@@ -15,6 +15,10 @@ import Cameras from '../libraries/Cameras';
 
 const StackedBarChart = createChartClass('StackedBar', ['getBarsAtEvent']);
 
+// How many rows (segments) we display in the chart.  This number is
+// picked arbitrarily because it fits well on cjones's monitor.  A
+// better approach might be to compute the number dynamically from
+// available window width/height based on some heuristics.
 const MAX_NR_SEGMENTS = 40;
 
 // Don't animate when the chart redraws.
@@ -86,11 +90,15 @@ export default class AVPipeline extends React.Component {
   // TODO: ^^^
   //--------------------------------------------------
 
-  onDiag = msg => {
+  onDiag = msg => {    // msg : { id : String, type : String, log : Any }
     if ('avpipeline' !== msg.type) {
       return;
     }
     let segments = this.state.segments;
+    // We know that |msg| is an 'avpipeline' message, so we know that
+    // `msg.log` is the narrower type
+    //
+    //   event : { what : String, whenMs : Number, Optional<id : String> }
     let event = msg.log;
     if ('exit' === event.what) {
       // Defer clearing the old segment data until playback resumes,
@@ -102,6 +110,9 @@ export default class AVPipeline extends React.Component {
       this.playbackExited = false;
       segments = {};
     }
+    // We know that `event` isn't an 'exit' event, so the `id`
+    // property isn't optional --- though it might be the empty
+    // string.
     let id = event.id;
     if (!(id in segments)) {
       segments[id] = { id };
@@ -116,7 +127,8 @@ export default class AVPipeline extends React.Component {
   };
 
   filterSegments(segments, nrKeep) {
-    let ids = Object.keys(segments)
+    let ids =
+          Object.keys(segments)
           .filter(id => 'arriveAppMs' in segments[id])
           .sort((a, b) => segments[b].arriveAppMs - segments[a].arriveAppMs)
           .slice(0, nrKeep);
@@ -191,8 +203,9 @@ export default class AVPipeline extends React.Component {
 
   render() {
     let segments = this.state.segments;
-    let sortedSegments = Object.keys(segments)
-          // Sort descending by timestamp
+    // Sort descending by timestamp
+    let sortedSegments =
+          Object.keys(segments)
           .sort((a, b) => segments[b].arriveAppMs - segments[a].arriveAppMs)
           .map(id => segments[id]);
     let content = (sortedSegments.length ?

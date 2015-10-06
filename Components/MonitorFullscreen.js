@@ -53,6 +53,33 @@ const JUMP_FACTOR = 2;
  */
 const ENABLE_CONTINUOUS_RATE_ADJUSTMENT = false;
 
+class Meter {
+  constructor(tag, socket, deviceId) {
+    this.tag = tag;
+    this.socket = socket;
+    this.deviceId = deviceId;
+  }
+
+  meter(what, id = '', whenMs = Date.now()) {
+    this.socket.emit('diag', {
+      id: this.deviceId,
+      type: this.tag,
+      log: { id, what, whenMs },
+    });
+  }
+
+  stop() {
+    this.socket.emit('diag', {
+      id: this.deviceId,
+      type: this.tag,
+      log: {
+        what: 'exit',
+        whenMs: Date.now(),
+      },
+    });
+  }
+}
+
 class LiveSegmentProvider {
   constructor(onSegment) {
     this.socket = null;
@@ -223,6 +250,8 @@ export default React.createClass({
 
     this.appendSegment(segment);
     this.setState({ maxTime: segment.startUTC });
+
+    this.meter.meter('arriveApp', segment.id);
   },
 
   /**
@@ -260,11 +289,17 @@ export default React.createClass({
   _enterLiveMode() {
     let { socket, id } = this.props;
     this._liveSegmentProvider.start(socket, id);
+
+    this.meter = new Meter('avpipeline', socket, id);
   },
 
   _exitLiveMode() {
     let { socket, id } = this.props;
     this._liveSegmentProvider.stop(socket, id);
+    if (this.meter) {
+      this.meter.stop();
+      this.meter = null;
+    }
   },
 
   createSegment(result) {
@@ -292,6 +327,9 @@ export default React.createClass({
     let segments = this._videoSegments;
     let current = segments[0];
 
+    if (current && this.meter) {
+      this.meter.meter('playbackEnd', current.id);
+    }
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
       console.log(`
@@ -316,6 +354,9 @@ export default React.createClass({
   onSegmentStart() {
     let segment = this._videoSegments[0];
 
+    if (segment && this.meter) {
+      this.meter.meter('playbackStart', segment.id);
+    }
     // Emit a segment start event so we can do processing based on segment
     // specific events.
     if (segment) {

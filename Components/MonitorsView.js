@@ -85,7 +85,7 @@ class MonitorsView extends React.Component {
           label={device.name}
           status={device.status}
           logo={device.logo}
-          previewSize = {device.previewSize}
+          previewSize={device.previewSize}
           {...this.props}
         />
       );

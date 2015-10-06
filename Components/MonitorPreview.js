@@ -59,6 +59,7 @@ export var MonitorPreview = React.createClass({
       videoStartTime: null,
       objects: [],
       events: null,
+      previewWidth: null,
     };
   },
 
@@ -112,31 +113,6 @@ export var MonitorPreview = React.createClass({
 
   render() {
     let id = this.props.id;
-    let objects = null;
-
-    if (this.state.objects.length) {
-      objects = (
-        <ObjectBoxes
-          id={this.props.id}
-          socket={this.props.socket}
-          width={PREVIEW_WIDTH}
-          height={PREVIEW_HEIGHT}
-          objects={this.state.objects}
-          previewSize={this.props.previewSize}
-        />
-      );
-    }
-
-    let logo = null;
-    if (this.props.logo) {
-      logo = (
-        <ImageView
-          style={styles.logo}
-          blob={this.props.logo}
-        />
-      );
-    }
-
     let status = this.props.status === '' ? '' : `(${this.props.status})`;
 
     let fullScreenMonitor = null;
@@ -157,18 +133,66 @@ export var MonitorPreview = React.createClass({
       <View style={styles.monitorContainer}>
         {fullScreenMonitor}
         <MonitorLabel>{this.props.label} {status}</MonitorLabel>
-        <TouchableOpacity onPress={this.showVideo} style={styles.monitorPreviewContainer}>
-          <ImageView style={styles.preview} blob={this.state.blob} />
-          {logo}
-          <View style={styles.monitorPreviewOverlay}>
-            {objects}
-          </View>
-        </TouchableOpacity>
+        {this._renderPreview()}
         <View>
           <Text>Recent Events:</Text>
           {this._renderEvents()}
         </View>
       </View>
+    );
+  },
+
+  _renderPreview() {
+    if (this.state.previewWidth === null) {
+      // Measure layout so we know how large to display the preview images.
+      return (
+        <View
+          onLayout={(event) => this.setState({previewWidth: event.nativeEvent.layout.width})}
+          style={styles.monitorPreviewPlaceholder}
+        />
+      );
+    }
+
+    let { previewSize } = this.props;
+    let previewStyle = {
+      width: this.state.previewWidth,
+      height: previewSize.height * this.state.previewWidth / previewSize.width,
+    };
+
+    let logo = null;
+    if (this.props.logo) {
+      logo = (
+        <ImageView
+          style={styles.logo}
+          blob={this.props.logo}
+        />
+      );
+    }
+
+    let objects = null;
+    if (this.state.objects.length) {
+      objects = (
+        <ObjectBoxes
+          id={this.props.id}
+          socket={this.props.socket}
+          width={previewStyle.width}
+          height={previewStyle.height}
+          objects={this.state.objects}
+          previewSize={previewSize}
+        />
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        onPress={this.showVideo}
+        style={[styles.monitorPreviewContainer, previewStyle]}>
+        <ImageView style={styles.preview} blob={this.state.blob} />
+        {logo}
+        <View style={styles.monitorPreviewOverlay}>
+          {objects}
+        </View>
+      </TouchableOpacity>
     );
   },
 
@@ -237,9 +261,11 @@ var styles = StyleSheet.create({
     textAlign: 'left',
   },
 
+  monitorPreviewPlaceholder: {
+    flex: 1,
+  },
+
   monitorPreviewContainer: {
-    width: PREVIEW_WIDTH,
-    height: PREVIEW_HEIGHT,
     backgroundColor: 'white',
     flex: 1,
   },

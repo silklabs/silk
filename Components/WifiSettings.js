@@ -6,6 +6,7 @@
 var React = require('react-native');
 var {
   Image,
+  DeviceEventEmitter,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -28,6 +29,9 @@ const SERVERS = [
   {name: 'localhost', value: 'http://localhost:5000'},
 ];
 
+const MIN_CONTENT_INSET_BOTTOM = 20;
+const ADDITIONAL_SCROLL_OFFSET = 100;
+
 export default class WifiSettings extends AsyncComponent {
 
   constructor(props) {
@@ -38,8 +42,28 @@ export default class WifiSettings extends AsyncComponent {
       secret: hints.secret || 'silkysmooth',
       serverUrl: hints.serverUrl,
       showSecret: false,
+      contentInsetBottom: 0,
     };
   }
+
+  componentWillMount() {
+    this._subscriptions = [
+      DeviceEventEmitter.addListener('keyboardWillShow', this.onKeyboardShow),
+      DeviceEventEmitter.addListener('keyboardWillHide', this.onKeyboardHide),
+    ];
+  }
+
+  componentWillUnmount() {
+    this._subscriptions.forEach(sub => sub.remove());
+  }
+
+  onKeyboardShow = (event) => {
+    this.setState({contentInsetBottom: event.endCoordinates.height});
+  };
+
+  onKeyboardHide = (event) => {
+    this.setState({contentInsetBottom: 0});
+  };
 
   _renderTitle() {
     return (
@@ -182,7 +206,7 @@ export default class WifiSettings extends AsyncComponent {
                 let scrollResponder = this.refs.scrollView.getScrollResponder();
                 scrollResponder.scrollResponderScrollNativeHandleToKeyboard(
                   React.findNodeHandle(this.refs.serverUrl),
-                  20, // additionalOffset
+                  ADDITIONAL_SCROLL_OFFSET, // additionalOffset
                   true // preventNegativeScrollOffset
                 );
               }}
@@ -196,6 +220,7 @@ export default class WifiSettings extends AsyncComponent {
 
   render() {
     // TODO: clean this up for production (remove server setting).
+    let contentInsetBottom = MIN_CONTENT_INSET_BOTTOM + this.state.contentInsetBottom;
     return (
       <View style={styles.container}>
         {this._renderTitle()}
@@ -203,7 +228,7 @@ export default class WifiSettings extends AsyncComponent {
         <ScrollView
           ref="scrollView"
           keyboardShouldPersistTaps={false}
-          contentInset={{bottom: 20}}
+          contentInset={{bottom: contentInsetBottom}}
           style={styles.scrollView}>
           <Text style={styles.formHeader}>WIFI</Text>
           {this._renderWifiSettings()}

@@ -121,7 +121,7 @@ export default class WifiSettings extends AsyncComponent {
           </View>
         </View>
         <View style={styles.formRow}>
-          <View style={styles.fullRowLabelContainer}>
+          <View style={styles.formRowLabelContainer}>
             <Text style={styles.formRowLabel}>
               Show WiFi password
             </Text>
@@ -172,7 +172,7 @@ export default class WifiSettings extends AsyncComponent {
         <View
           style={style}
           key={server.name}>
-          <View style={styles.fullRowLabelContainer}>
+          <View style={styles.formRowLabelContainer}>
             <Text style={styles.formRowLabel}>{server.name}</Text>
           </View>
           {checkmark}
@@ -193,7 +193,7 @@ export default class WifiSettings extends AsyncComponent {
       <View style={styles.form}>
         {servers}
         <View style={styles.formRow}>
-          <View style={styles.fullRowLabelContainer}>
+          <View style={styles.formInputContainer}>
             <TextInput
               ref="serverUrl"
               value={haveCustomServer ? this.state.serverUrl : null}
@@ -341,13 +341,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   formRowLabelContainer: {
-    width: 90,
+    flex: 1,
   },
   formRowLabel: {
     fontSize: 17,
   },
   formInputContainer: {
-    flex: 1,
+    flex: 2,
   },
   formInput: {
     height: 44,
@@ -360,12 +360,9 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
 
-  fullRowLabelContainer: {
-    flex: 1,
-  },
-
   checkmark: {
     width: 16,
     height: 16,
+    marginRight: 8,
   },
 });

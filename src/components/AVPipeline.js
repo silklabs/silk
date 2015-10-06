@@ -8,20 +8,14 @@ import chartjs from 'chart.js';
 import 'Chart.StackedBar.js';
 import React from 'react';
 import { createClass as createChartClass } from 'react-chartjs';
-import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon, Label,
-         ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
-import Iframe from 'react-iframe';
+import { Button, ButtonToolbar, Glyphicon } from 'react-bootstrap';
 import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
-import mklog from 'log'; const log = mklog('avpipeline');
 
 const StackedBarChart = createChartClass('StackedBar', ['getBarsAtEvent']);
 
 const MAX_NR_SEGMENTS = 40;
-
-const styles = {
-};
 
 // Don't animate when the chart redraws.
 chartjs.defaults.global.animation = false;
@@ -49,7 +43,7 @@ export default class AVPipeline extends React.Component {
   state = {
     camera: null,
     paused: false,
-    segments: {}
+    segments: {},
   };
 
   get deviceId() {
@@ -114,11 +108,11 @@ export default class AVPipeline extends React.Component {
     }
     segments[id][event.what + 'Ms'] = event.whenMs;
     this.setState({ segments: this.filterSegments(segments,
-                                                  MAX_NR_SEGMENTS) });
+                                                  MAX_NR_SEGMENTS), });
   };
 
   onPause = () => {
-    alert('NYI: real pause');
+    alert('NYI: real pause');   // eslint-disable-line
   };
 
   filterSegments(segments, nrKeep) {
@@ -162,25 +156,25 @@ export default class AVPipeline extends React.Component {
       datasets: [
         {
           label: 'playing',
-          fillColor: "green",
-          data: playingSeries
+          fillColor: 'green',
+          data: playingSeries,
         },
         {
           label: 'queued',
-          fillColor: "yellow",
-          data: queuedSeries
+          fillColor: 'yellow',
+          data: queuedSeries,
         },
         {
           label: '',
-          fillColor: "rgba(0,0,0,0)",
-          strokeColor: "rgba(0,0,0,0)",
-          pointColor: "rgba(0,0,0,0)",
-          pointStrokeColor: "rgba(0,0,0,0)",
-          pointHighlightFill: "rgba(0,0,0,0)",
-          pointHighlightStroke: "rgba(0,0,0,0)",
-          data: nullSeries
-        }
-      ]
+          fillColor: 'rgba(0,0,0,0)',
+          strokeColor: 'rgba(0,0,0,0)',
+          pointColor: 'rgba(0,0,0,0)',
+          pointStrokeColor: 'rgba(0,0,0,0)',
+          pointHighlightFill: 'rgba(0,0,0,0)',
+          pointHighlightStroke: 'rgba(0,0,0,0)',
+          data: nullSeries,
+        },
+      ],
     };
     // TODO: listen for SIGWINCH and redraw
     let width = window.innerWidth;
@@ -190,7 +184,8 @@ export default class AVPipeline extends React.Component {
     // added / removed bars.
     return (
       <HorizontalStackedBarChart
-        data={data} width={width} height={height} redraw={true} />
+        data={data} width={width} height={height} redraw={true}
+      />
     );
   }
 
@@ -210,7 +205,7 @@ export default class AVPipeline extends React.Component {
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
           <Button onClick={this.onPause}>
-            <Glyphicon glyph='pause' />
+            <Glyphicon glyph="pause" />
           </Button>
         </ButtonToolbar>
         {content}

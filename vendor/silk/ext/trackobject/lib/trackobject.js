@@ -164,6 +164,7 @@ export default function init(env) {
   soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 
   timeline.on('preview', when => {
+    log.info(`Retrieving frame ${when}`);
     if (working) {
       log.error('Still busy, unable to process next preview image');
       return;
@@ -172,7 +173,7 @@ export default function init(env) {
     working = true;
     env.camera.getPreviewFrame((err, image) => {
       if (err) {
-        log.warning(`Unable to fetch frame: ${err}`);
+        log.warn(`Unable to fetch frame: ${err}`);
         working = false;
         return;
       }
@@ -192,6 +193,6 @@ export default function init(env) {
         }
         working = false;
       });
-    }, 1 /* == 1 channel image (RGB not required) */);
+    }, when, 1 /* == 1 channel image (RGB not required) */);
   });
 }

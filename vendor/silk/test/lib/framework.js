@@ -30,7 +30,7 @@ class FakeCamera {
     this._imgSrc = imgSrc;
   }
 
-  getPreviewFrame(userCb, channel = 0) {
+  getPreviewFrame(userCb, when, channel = 0) {
     let imgFullPath = path.join(this._imgPath, this._imgSrc);
     log.info(`getPreviewFrame ${imgFullPath} ${channel}`);
     opencv.readImage(imgFullPath, (err, im) => {

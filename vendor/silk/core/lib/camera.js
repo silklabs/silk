@@ -11,6 +11,7 @@ import { EventEmitter } from 'events';
 let util = require('./util');
 let net = require('net');
 let cv = require('opencv');
+import CBuffer from 'CBuffer';
 
 //const FRONT = 1;
 //const BACK = 0;
@@ -43,6 +44,8 @@ const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
 const TAG_FACES = 2;
 const TAG_MIC = 3;
+
+const NUM_IMAGES_TO_CACHE = 10;
 
 /**
  * Flash modes as defined in <camera/CameraParameters.cpp>
@@ -129,7 +132,15 @@ class CameraStream extends EventEmitter {
     this._cvVideoCapture = null;
     this._busy = false;
     this._queue = []; // Queue of pending preview frame requests
-    this._imagecache = []; // Cache to avoid resizing a frame multiple times
+
+    // Cache last few images to guarantee the consumers get the image they are
+    // expecting and not the latest camera frame. Also helps prevent resizing a
+    // frame multiple times. Image cache object has the following fields
+    //   when:    timestamp
+    //   default: default image // CV_CAP_ANDROID_COLOR_FRAME_BGR
+    //   gray:    grayscale image // CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist
+    //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB
+    this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
   }
 
   _restart(why) {
@@ -240,54 +251,75 @@ class CameraStream extends EventEmitter {
     }
 
     // Dequeue the next frame request
-    let [userCb, channel] = this._queue.shift();
+    let [userCb, when, channel] = this._queue.shift();
 
-    if (this._imagecache[channel]) {
-      // Frame is cached!
-      userCb(false, this._imagecache[channel]);
-      this._retrieveNextFrame();
-      return;
-    }
+    // Search the image in the cache
+    let index = 0;
+    for (index = 0; index < this._imagecache.size; index++) {
+      let image = this._imagecache.get(index);
+      if (image.when !== when) {
+        continue;
+      }
 
-    this._busy = true;
+      switch(channel) {
+      case 0:
+        userCb(false, image.default);
+        return;
+      case 1:
+        if (image.gray) {
+          userCb(false, image.gray);
+        } else {
+          let grayImage = image.default.copy();
+          grayImage.convertGrayscale();
 
-    // Fetch the frame from the camera
-    this._cvVideoCapture.retrieve(
-      (err, im) => {
-        if (!err) {
-          im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-          if (1 === channel) {
-            // TODO: Running equalizeHist() on the full resolution image
-            // could produce a better result than running it here on the
-            // downscaled image at the expense of time.  Is it worth it?
-            im.equalizeHist();
-          }
-          this._imagecache[channel] = im;
+          // TODO: Running equalizeHist() on the full resolution image
+          // could produce a better result than running it here on the
+          // downscaled image at the expense of time.  Is it worth it?
+          grayImage.equalizeHist();
+
+          image.gray = grayImage;
+          userCb(false, image.gray);
         }
-        this._busy = false;
-        userCb(err, im);
-        this._retrieveNextFrame();
-      },
-      channel
-    );
-  };
+        return;
+      case 2:
+        if (image.rgb) {
+          userCb(false, image.rgb);
+        } else {
+          let rgbImage = image.default.copy();
+          rgbImage.cvtColor('CV_BGR2RGB');
+          image.rgb = rgbImage;
+          userCb(false, image.rgb);
+        }
+        return;
+      default:
+        userCb('unsupported channel', null);
+        return;
+      }
+    }
+    userCb('image not available in the cache', null);
+  }
 
-  _grabPreviewFrame(when) {
-    // Grab the next frame
+  /**
+   * Read the next frame
+   */
+  _readPreviewFrame(when) {
     if (!this._cvVideoCapture) {
       return;
     }
-    this._cvVideoCapture.grab(() => {
-      let now = Date.now();
-      log.info(`Preview frame grabbed. lag=${now - when}ms`);
-
-      this._imagecache = []; // Flush the image cache
-      if (this._queue.length > 0) {
-        log.warn(`Unable to keep up with preview. backlog=${this._queue.length}`);
+    this._cvVideoCapture.read((err, im) => {
+      if (err || (im.width() <= 0) || (im.height() <= 0)) {
+        log.error(`Unable to fetch frame: ${err}`);
+        return;
       }
+      let now = Date.now();
+      log.info(`Preview frame read. lag=${now - when}ms`);
+
+      // Store the preview frame
+      im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+      this._imagecache.push({when: when, default: im});
 
       // Add the frame to the timeline
-      this.timeline.addPreviewFrame(now);
+      this.timeline.addPreviewFrame(when);
     });
   }
 
@@ -308,10 +340,7 @@ class CameraStream extends EventEmitter {
       case TAG_PREVIEW:
         log.debug(`TAG_PREVIEW ${when}`);
         this.timeline.addPreviewJPEG(when, pkt);
-        // TODO: Currently the OpenCV preview frames are tied to the capture
-        //       preview frames for simplicity, however there's no reason why
-        //       they couldn't be independent.
-        this._grabPreviewFrame(when);
+        this._readPreviewFrame(when);
         break;
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`);
@@ -395,12 +424,13 @@ class CameraStream extends EventEmitter {
    * Invoke this function to obtain the preview frame
    *    userCb   - the callback that receives an error object and then the image
    *               as an OpenCV matrix
+   *    when     - timestamp of the frame to get
    *    channel  - 0 (default) for color     (CV_CAP_ANDROID_COLOR_FRAME_BGR)
    *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)
    *               2 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    */
-  getPreviewFrame(userCb, channel = 0) {
-    this._queue.push([userCb, channel]); // Enqueue the frame request
+  getPreviewFrame(userCb, when, channel = 0) {
+    this._queue.push([userCb, when, channel]); // Enqueue the frame request
     this._retrieveNextFrame();
   }
 }

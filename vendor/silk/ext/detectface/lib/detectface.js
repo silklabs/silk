@@ -101,7 +101,7 @@ class DetectFace {
           this._notifyObjs(faces);
           working = false;
         });
-      }, 1 /* == 1 channel image (RGB not required) */);
+      }, when, 1 /* == 1 channel image (RGB not required) */);
     });
   }
 

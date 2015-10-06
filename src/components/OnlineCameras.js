@@ -66,6 +66,11 @@ export class OnlineCamera extends React.Component {
                   <Glyphicon glyph="fire" style={styles.glyphicon} />
                 </Button>
               </Link>
+              <Link to={`/avpipeline/${this.deviceId}`}>
+                <Button bsSize="large">
+                  <Glyphicon glyph="indent-left" style={styles.glyphicon} />
+                </Button>
+              </Link>
               <Link to={`/chunks/${this.deviceId}`}>
                 <Button bsSize="large">
                   <Glyphicon glyph="list" style={styles.glyphicon} />

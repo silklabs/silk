@@ -54,7 +54,6 @@ class Camera extends EventEmitter {
       this.logs.logcat = logcat;
       break;
     default:
-      log.error('Unknown log type', type);
       break;
     }
   }
@@ -76,7 +75,7 @@ class Camera extends EventEmitter {
 
   _onDiagStream = msg => {
     this._feedNewLog(msg.type, msg.log);
-    this.emit('diag');
+    this.emit('diag', msg);
   }
 
   on(event, listener) {

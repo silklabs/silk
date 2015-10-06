@@ -20,7 +20,6 @@ const cascades = [
     opts: {
       scale: 1.2,
       neighbors: 2,
-      min: [40, 80],
     },
   },
 ];
@@ -40,7 +39,7 @@ function detectObjects(im, motionx, motiony, when, cb) {
   let pendingCallbacks = cascades.length;
 
   cascades.forEach(c => {
-    im.detectObject(c.file, {}, (err, rects) => {
+    im.detectObject(c.file, c.opts, (err, rects) => {
       if (err) {
         throw err;
       }

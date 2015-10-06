@@ -14,7 +14,6 @@ const facecascade = {
   opts: {
     scale: 1.2,
     neighbors: 2,
-    min: [25, 25],
   },
 };
 
@@ -31,7 +30,7 @@ function detectFaces(im, motionx, motiony, when, cb) {
   let start = Date.now();
   let faces = [];
 
-  im.detectObject(facecascade.file, {}, (err, rects) => {
+  im.detectObject(facecascade.file, facecascade.opts, (err, rects) => {
     if (err) {
       throw err;
     }

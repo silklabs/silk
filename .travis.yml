@@ -8,10 +8,6 @@ os:
 jdk:
   - openjdk7
 
-cache:
-  directories:
-    - $HOME/.ccache
-
 addons:
   apt:
     packages:

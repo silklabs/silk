@@ -7,6 +7,7 @@ vendor/silk/locked_node_modules/update.sh
 # With locked_node_modules primed there should be no npm registry activity
 # during the build.
 export NPM_CONFIG_REGISTRY=http://0.42.42.42.24/no/registry/for/you
+export CCACHE_LOGFILE=$PWD/.artifacts/ccache.log
 
 if [[ $GONK != base ]]; then
   if [[ $GONK == qemu ]]; then

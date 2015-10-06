@@ -1,5 +1,2 @@
 # Vendor stuff
-btle/ble.js
-
-# Configuration
-webpack.config.js
+src/libraries/btle/ble.js

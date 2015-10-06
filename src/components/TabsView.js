@@ -5,16 +5,16 @@ let {
   TabBarIOS,
 } = React;
 
-import MonitorsView from './MonitorsView';
-import TopBar from './TopBar';
-import SocketIO from '../Libraries/SocketIO';
-import Config from '../Libraries/Config';
-
-import DeviceManager from '../btle/central-device-manager';
-import bleScanner from '../btle/ble-central';
-
 import socketIOClient from 'socket.io-client-react-native';
 import mklog from 'log'; const log = mklog('TabsView');
+
+import SocketIO from '../libraries/SocketIO';
+import Config from '../libraries/Config';
+import DeviceManager from '../libraries/btle/DeviceManager';
+import BLECentral from '../libraries/btle/BLECentral';
+
+import MonitorsView from './MonitorsView';
+import TopBar from './TopBar';
 
 export default class TabsView extends React.Component {
 
@@ -31,7 +31,7 @@ export default class TabsView extends React.Component {
 
   componentWillMount() {
     this.bleDeviceManager = new DeviceManager(
-      bleScanner,
+      BLECentral,
       () => {
         if (this.state.wifi) {
           return Promise.resolve(this.state.wifi);
@@ -104,7 +104,7 @@ export default class TabsView extends React.Component {
         serverUrl,
       });
     } else {
-      const net = require('../Libraries/Net');
+      const net = require('../libraries/Net');
       promise = net.getInfo().then(info => {
         return this.navigateWifiScene({
           ssid: info.SSID,

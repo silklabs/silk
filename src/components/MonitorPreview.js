@@ -2,11 +2,13 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
+import moment from 'moment';
+
+import PreviewQueue from '../libraries/PreviewQueue';
+
 import ImageView from './ImageView';
 import MonitorFullscreen from './MonitorFullscreen';
 import ObjectBoxes from './ObjectBoxes';
-import moment from 'moment';
-import PreviewQueue from '../Libraries/PreviewQueue';
 
 var {
   StyleSheet,

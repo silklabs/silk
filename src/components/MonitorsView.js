@@ -8,10 +8,10 @@ var {
   View,
 } = React;
 
-var DeviceSetup = require('./DeviceSetup');
-import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
 import mklog from 'log'; const log = mklog('MonitorPreview');
 
+import DeviceSetup from './DeviceSetup';
+import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
 import { PlaceholderText } from './Text';
 
 const PERIPH_EVENTS = [

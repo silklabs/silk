@@ -35,7 +35,7 @@ else
     make update.qemu # Fetch the emulator
 
     # Fetch host adb since it's not built as a part of the base build
-    wget https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip
+    wget --retry-connrefused https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip
     unzip platform-tools_r23-linux.zip
     export PATH=$PATH:$(readlink -f platform-tools)
     which adb

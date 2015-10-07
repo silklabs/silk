@@ -11,6 +11,7 @@
 #include <utils/Log.h>
 
 #include <sys/prctl.h>
+#include <sys/capability.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -25,6 +26,7 @@
 #include <limits.h>
 #include <memory>
 #include <cctype>
+#include <private/android_filesystem_config.h>
 
 using namespace android;
 
@@ -2667,6 +2669,32 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
 int main(int argc, char *argv[]) {
   (void) argc;
   (void) argv;
+
+  // Switch to the bluetooth user:group, and additionally keep CAP_NET_ADMIN
+  // as the rfkill kernel module, used to enable the bluetooth radio, requires
+  // the caller have this capability.
+  //
+  // See <kernel>/net/rfkill/core.c:rfkill_state_store()
+  {
+    prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
+
+    setuid(AID_BLUETOOTH);
+    setgid(AID_BLUETOOTH);
+
+    __user_cap_header_struct header = {
+      .version = _LINUX_CAPABILITY_VERSION,
+      .pid = 0
+    };
+
+    __user_cap_data_struct cap;
+    cap.effective = cap.permitted = cap.inheritable = 1 << CAP_NET_ADMIN;
+    int err = capset(&header, &cap);
+    if (err) {
+      ALOGE("capset failed: %d", err);
+      return 1;
+    }
+  }
+
 
   // Start the server socket and register for commands from bleno
   int err = bledroid.start();

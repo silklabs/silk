@@ -39,8 +39,9 @@ service wpad /system/silk/bin/wpad
 
 service bledroid /system/silk/bin/bledroid
     class main
-    user bluetooth
-    group net_bt_stack
+    user root
+    group root
+    # bledroid will switch to the bluetooth user
     socket bledroid stream 0600 root root
 
 service silk-sensors /system/silk/bin/silk-sensors

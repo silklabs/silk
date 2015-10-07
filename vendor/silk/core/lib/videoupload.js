@@ -1,3 +1,4 @@
+/* @flow */
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
@@ -17,16 +18,41 @@ const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION_SECONDS = util.getintprop(DURATION_PROP, 1);
 
+import type { Socket } from 'socket.io-client';
+
+// This should be moved to timeline.js once that gets flowified.
+export type TimelineEventObject = {
+  tag: string;
+  when: number;
+  [arbitraryKeys: string]: any;
+};
+
+type QueueItem = {
+  when: number;
+  frame: Buffer;
+  objects: Array<TimelineEventObject>;
+};
+
+type Size = {
+  width: number;
+  height: number;
+};
+
 class VideoUploadQueue extends EventEmitter {
-  /**
-   * @param {String} id device id.
-   * @param {Number} duration in milliseconds.
-   */
-  constructor(id, duration) {
+  id: string;
+  serverSocket: Socket;
+  _previewSize: Size;
+  type: string;
+  duration: number;
+  previousId: ?string;
+  running: boolean;
+  queue: Array<QueueItem>;
+
+  constructor(deviceId: string, duration: number) {
     super();
-    this.id = id;
+    this.id = deviceId;
     this.serverSocket = { connected: false };
-    this._previewSize = {width: 0, height: 0};
+    this._previewSize = { width: 0, height: 0 };
 
     // We could later make this more generic and do logging.
     this.type = 'video';
@@ -43,24 +69,21 @@ class VideoUploadQueue extends EventEmitter {
   /**
    *
    */
-  set previewSize(size) {
+  set previewSize(size: Size) {
     this._previewSize = size;
   }
 
   /**
    * Add a new item to the queue to be uploaded.
-   *
-   * @param {Number} when utc time when the frame was created.
-   * @param {}
    */
-  add(when, frame, objects) {
+  add(when: number, frame: Buffer, objects: Array<TimelineEventObject>) {
     if (!UPLOAD_ENABLED) {
       return;
     }
     this.queue.push({
       when,
       frame,
-      objects
+      objects,
     });
     this.start();
   }
@@ -69,9 +92,8 @@ class VideoUploadQueue extends EventEmitter {
    * To make it easy on the consumer we define metadata as an ordered list... To
    * do this we need to know the previous id we uploaded.
    */
-  _resolveLastId() {
-    // Specifically checking for undefined so we only run this logic once.
-    if (this.previousId !== undefined) {
+  _resolveLastId(): Promise<?string> {
+    if (this.previousId) {
       return Promise.resolve(this.previousId);
     }
 
@@ -96,7 +118,7 @@ class VideoUploadQueue extends EventEmitter {
     });
   }
 
-  _uploadItem(previousId, item) {
+  _uploadItem(previousId: ?string, item: QueueItem): Promise<void> {
     let start = Date.now();
     let { when, frame, objects } = item;
     let metadataPayload = {
@@ -108,15 +130,14 @@ class VideoUploadQueue extends EventEmitter {
         frameWidth: this._previewSize.width,
         frameHeight: this._previewSize.height,
         objects
-      }
+      },
+      url: undefined,
+      previousId: previousId ? previousId : undefined,
     };
 
-    if (previousId) {
-      metadataPayload.previousId = previousId;
-    }
-
     // step 1 is to upload the data...
-    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, VIDEO_CONTENT_TYPE, frame).then(blobUrl => {
+    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, VIDEO_CONTENT_TYPE, frame)
+    .then(blobUrl => {
       // step 2. upload the metadata...
       metadataPayload.url = blobUrl;
       return api.timeMeta.create(metadataPayload);
@@ -134,7 +155,8 @@ class VideoUploadQueue extends EventEmitter {
   _work() {
     if (!this.serverSocket.connected) {
       log.warn(`server socket not ready, not uploading`);
-      return this.stop();
+      this.stop();
+      return;
     }
 
     // Shift an  item off first thing so we don't get stuck in a loop.
@@ -143,17 +165,15 @@ class VideoUploadQueue extends EventEmitter {
       log.info('uploading item size: %d, time: %d', item.frame.length, item.when);
     }
 
-    this._resolveLastId().then((previousId) => {
-      return this._uploadItem(previousId, item);
-    }).catch(err => {
+    this._resolveLastId()
+    .then(previousId => this._uploadItem(previousId, item))
+    .catch(err => {
       // XXX: In some cases we may want to retry an upload not now though.
       log.error('Error working item off video upload queue', err.stack);
     }).then(() => {
       if (this.queue.length) {
         // A little trick continue to work but don't use one huge promise chain.
-        process.nextTick(() => {
-          this._work();
-        });
+        process.nextTick(() => this._work());
       } else {
         // No more work signal a stop.
         this.stop();
@@ -195,4 +215,5 @@ class VideoUploadQueue extends EventEmitter {
   }
 }
 
-module.exports = id => new VideoUploadQueue(id, DURATION_SECONDS * 1000);
+module.exports = (deviceId: string): VideoUploadQueue =>
+  new VideoUploadQueue(deviceId, DURATION_SECONDS * 1000);

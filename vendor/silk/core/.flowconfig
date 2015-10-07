@@ -1,6 +1,9 @@
 [include]
 lib
 
+[libs]
+interface/
+
 [ignore]
 .*/dist/.*
 

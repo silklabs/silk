@@ -158,7 +158,7 @@ class FindFace {
       this._working = true;
       this._env.camera.getPreviewFrame((err, image) => {
         if (err) {
-          log.warning(`Unable to fetch frame: ${err}`);
+          log.warn(`Unable to fetch frame: ${err}`);
           this._working = false;
           return;
         }
@@ -184,7 +184,7 @@ class FindFace {
         let diff = Date.now() - start;
         log.verbose(`Face recognition finished in ${diff}ms`);
         this._working = false;
-      }, 1 /* == 1 channel image (RGB not required) */);
+      }, when, 1 /* == 1 channel image (RGB not required) */);
     };
 
     this._env.timeline.on('face', this._onFace);

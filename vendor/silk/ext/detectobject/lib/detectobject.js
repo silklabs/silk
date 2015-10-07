@@ -6,15 +6,13 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let fs = require('mz/fs');
-let CBuffer = require('CBuffer');
+import fs from 'mz/fs';
+import path from 'path';
 
 let log;
 let timeline;
-let prevObjs = null;
-let prevImg = null;
 
-const NUM_IMAGES_TO_CACHE = 10;
+const REPORT_OBJECT_DIR = '/data/silk/opencv/';
 
 const cascades = [
   {
@@ -22,17 +20,8 @@ const cascades = [
     opts: {
       scale: 1.2,
       neighbors: 2,
-      min: [40, 80],
     },
   },
-  {
-    tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
-    opts: {
-      scale: 1.2,
-      neighbors: 2,
-      min: [25, 25],
-    },
-  }
 ];
 
 /**
@@ -44,13 +33,13 @@ const cascades = [
  * @param motiony y-coord of im within the original preview image
  * @param cb user callback
  */
-function detectObjects(im, motionx, motiony, when, name, cb) {
+function detectObjects(im, motionx, motiony, when, cb) {
   let start = Date.now();
   let objs = [];
   let pendingCallbacks = cascades.length;
 
   cascades.forEach(c => {
-    im.detectObject(c.file, {}, (err, rects) => {
+    im.detectObject(c.file, c.opts, (err, rects) => {
       if (err) {
         throw err;
       }
@@ -62,7 +51,7 @@ function detectObjects(im, motionx, motiony, when, name, cb) {
           newRect.y += motiony;
           return newRect;
         });
-        objs.push({tag: c.tag, when: when, rects: newRects, source: name});
+        objs.push({tag: c.tag, when: when, rects: newRects});
       }
       if (--pendingCallbacks <= 0) {
         let diff = Date.now() - start;
@@ -81,8 +70,8 @@ function detectObjects(im, motionx, motiony, when, name, cb) {
 
 class DetectObject {
   constructor(env) {
-    this._init(env);
-    this._imageCache = new CBuffer(NUM_IMAGES_TO_CACHE);
+    this._env = env;
+    this._init();
   }
 
   onCommand(cmd) {
@@ -101,45 +90,30 @@ class DetectObject {
    * to be later used for opencv training
    */
   _reportObject(cmd) {
-    // Search the image in the cache
-    this._imageCache.forEach((data) => {
-      if (data.when === cmd.when) {
-        log.info(`Found image in cache, saving...`);
-
-        // Create directory if it doesn't exist
-        let dir = `/data/silk/opencv/no-${cmd.tag}`;
-        fs.mkdir(dir).catch(e => {
-          if (e.code !== 'EEXIST') {
-            log.error(`Failed to create ${dir}, error: ${e}`);
-          }
-        });
-
-        // Save the image
-        data.image.save(`${dir}/no-${cmd.tag}-${cmd.when}.jpg`);
+    this._env.camera.getPreviewFrame((err, im) => {
+      if (err) {
+        log.warn(`Unable to fetch frame: ${err}`);
         return;
       }
-    });
+      log.info(`Found image in cache, saving...`);
+
+      // Create directory if it doesn't exist
+      let dir = path.join(REPORT_OBJECT_DIR, cmd.tag);
+      fs.mkdir(dir).catch(e => {
+        if (e.code !== 'EEXIST') {
+          log.error(`Failed to create ${dir}, error: ${e}`);
+        }
+      });
+
+      // Save the image
+      im.save(`${dir}/no-${cmd.tag}-${cmd.when}.jpg`);
+    }, cmd.when, 1);
   }
 
-  _init(env) {
-    log = env.log;
-    timeline = env.timeline;
+  _init() {
+    log = this._env.log;
+    timeline = this._env.timeline;
     let working = false;
-
-    timeline.on('no-motion', when => {
-      log.info(`no motion detected`);
-
-      // Adjust the timestamp of the objects
-      let objs = null;
-      if (prevObjs) {
-        objs = prevObjs.map(obj => {
-          let newObj = obj;
-          newObj.when = when;
-          return newObj;
-        });
-      }
-      this._notifyObjs(objs, when, prevImg);
-    });
 
     timeline.on('motion', when => {
       if (working) {
@@ -149,7 +123,7 @@ class DetectObject {
       working = true;
 
       let start = Date.now();
-      env.camera.getPreviewFrame((err, im) => {
+      this._env.camera.getPreviewFrame((err, im) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
@@ -171,11 +145,11 @@ class DetectObject {
         let motionRect = rects[0]; // Only one motion rectangle is supported right now
         let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
-        detectObjects(motion, motionRect.x, motionRect.y, when, env.name, objs => {
-          this._notifyObjs(objs, when, im);
+        detectObjects(motion, motionRect.x, motionRect.y, when, objs => {
+          this._notifyObjs(objs);
           working = false;
         });
-      }, 1 /* == 1 channel image (RGB not required) */);
+      }, when, 1 /* == 1 channel image (RGB not required) */);
     });
   }
 
@@ -183,21 +157,13 @@ class DetectObject {
    * Notify timeline of the new objects detected
    * @param objs
    */
-  _notifyObjs(objs, when, im) {
+  _notifyObjs(objs) {
     let what;
     if (objs && objs.length > 0) {
       what = objs.reduce((s, o) => `${s} ${o.tag}=${o.rects.length}`, '');
       timeline.addObjects(objs);
-      prevObjs = objs;
-      prevImg = im;
-
-      // Cache the image to be later used by reportObject command
-      // Ony cache the images that have objects in them
-      this._imageCache.push({when: when, image: im});
     } else {
       what = ' -';
-      prevObjs = null;
-      prevImg = null;
     }
     log.info(`Detected objects:${what}`);
   }

@@ -77,8 +77,8 @@ class Env extends EventEmitter {
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
-      this.camera.getPreviewFrame = (userCb, channel) => {
-        camera.getPreviewFrame(userCb, channel);
+      this.camera.getPreviewFrame = (userCb, when, channel) => {
+        camera.getPreviewFrame(userCb, when, channel);
       };
     }
 
@@ -90,10 +90,19 @@ class Env extends EventEmitter {
           ['preview', 'face', 'clap', 'motion', 'no-motion']);
 
       this.timeline.addObject = (tag, when, rect) => {
-        timeline.addObject(tag, when, rect);
+        timeline.addObject(tag, when, rect, this._name);
       };
       this.timeline.addObjects = objs => {
-        timeline.addObjects(objs);
+        let newObjs = null;
+        if (objs && (objs.length > 0)) {
+          newObjs = objs.map(obj => {
+            let newObj = obj;
+            newObj.source = this._name;
+            return newObj;
+          });
+        }
+
+        timeline.addObjects(newObjs);
       };
       this.timeline.noMotion = when => {
         timeline.noMotion(when);

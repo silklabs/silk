@@ -50,6 +50,7 @@ export default class UserState extends EventEmitter {
       privateKey: accessToken.priv,
     });
     await AsyncStorage.setItem(ACCESS_TOKEN_KEY, json);
+    this.emit('authenticated', accessToken);
   }
 
   async createAccessToken() {
@@ -85,6 +86,7 @@ export default class UserState extends EventEmitter {
     // Clear out any previous state...
     this._accessToken = null;
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+    this.emit('unauthenticated');
   }
 
   async checkPassword(email, password) {

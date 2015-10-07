@@ -26,10 +26,7 @@ class SignUpControls extends AsyncComponent {
   onSignUp = async (props) => {
     try {
       let { userState } = this.props;
-      let success = await userState.attemptSignup(props.email, props.password);
-      if (success) {
-        this.props.navigator.pushAsync({ name: 'Monitors', index: 0 });
-      }
+      await userState.attemptSignup(props.email, props.password);
     } catch (err) {
       console.log('Failed to sign up', err);
     }

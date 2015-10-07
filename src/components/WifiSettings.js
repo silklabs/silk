@@ -263,9 +263,7 @@ export default class WifiSettings extends AsyncComponent {
   };
 
   signOut = async () => {
-    let { userState, navigator } = this.props;
-    await userState.signOut();
-    navigator.pushAsync({ name: 'SignIn', index: 0 });
+    await this.props.userState.signOut();
   };
 
 }

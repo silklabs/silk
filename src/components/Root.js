@@ -33,10 +33,11 @@ const routeToComponentMap = {
 export default class extends AsyncComponent {
 
   state = {
+    initialized: false,
     serverUrl: null,
-    initialRoute: null,
     api: null,
     userState: null,
+    accessToken: null,
   };
 
   componentDidMount() {
@@ -51,30 +52,52 @@ export default class extends AsyncComponent {
     }
 
     if (this.state.serverUrl !== serverUrl && this.state.userState !== null) {
-      await this.state.userState.signOut();
+      let { userState } = this.state;
+      await userState.signOut();
+      userState.off('authenticated', this.onAuthenticated);
+      userState.off('unauthenticated', this.onUnauthenticated);
     }
 
     let api = API({serverUrl}); /* eslint new-cap: 0 */
     let userState = new UserState(api);
-    let loggedIn = await userState.getAccessToken();
-    let initialRoute = loggedIn ? 'Tabs' : 'SignIn';
-    this.setStateAsync({serverUrl, initialRoute, api, userState});
+    let accessToken = await userState.getAccessToken();
+
+    userState.on('authenticated', this.onAuthenticated);
+    userState.on('unauthenticated', this.onUnauthenticated);
+    this.setStateAsync({
+      initialized: true,
+      serverUrl,
+      api,
+      userState,
+      accessToken,
+    });
+  };
+
+  onAuthenticated = (accessToken) => {
+    this.setState({accessToken});
+  };
+
+  onUnauthenticated = () => {
+    this.setState({accessToken: null});
   };
 
   render() {
     // Do not create a navigator until we have loaded initial state from
     // disk... That process is fast enough that we do not need to do do any
     // loading/splash screen.
-    if (!this.state.initialRoute) {
+    if (!this.state.initialized) {
       return <View />;
     }
 
+    let initialRoute = this.state.accessToken ? 'Tabs' : 'SignIn';
+    // By keying the navigator on the serverUrl and accessToken, a
+    // change in either (e.g. logging in or changing the server
+    // config) will trigger a complete re-render of the app.
+    let key = this.state.serverUrl + ':' + this.state.accessToken;
     return (
       <AsyncNavigator
-        // By keying the Navigator on the serverUrl, a change will
-        // trigger a complete re-render of the app.
-        key={this.state.serverUrl}
-        initialRoute={{name: this.state.initialRoute, index: 0}}
+        key={key}
+        initialRoute={{name: initialRoute, index: 0}}
         onForward={this.onForward}
         configureScene={this.configureScene}
         renderScene={this.renderScene}

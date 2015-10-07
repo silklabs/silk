@@ -353,7 +353,7 @@ class CameraStream extends EventEmitter {
         break;
       case TAG_MIC:
         log.debug(`TAG_MIC ${when}`);
-        this.emit('mic-data', {when: when, frame: pkt});
+        this.emit('mic-data', {when: when, frames: pkt});
         break;
       default:
         // Flush the buffer and restart the socket

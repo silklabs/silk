@@ -15,11 +15,21 @@ import Cameras from '../libraries/Cameras';
 
 const StackedBarChart = createChartClass('StackedBar', ['getBarsAtEvent']);
 
+const EVENT_SEQUENCE = [
+  'recordStartMs',
+  'recordEndMs',
+  'arriveAppMs',
+  'playbackStartMs',
+  'playbackEndMs',
+];
+const FIRST_EVENT = EVENT_SEQUENCE[0];
+
+
 // How many rows (segments) we display in the chart.  This number is
 // picked arbitrarily because it fits well on cjones's monitor.  A
 // better approach might be to compute the number dynamically from
 // available window width/height based on some heuristics.
-const MAX_NR_SEGMENTS = 40;
+const MAX_NR_SEGMENTS = 20;
 
 // Don't animate when the chart redraws.
 chartjs.defaults.global.animation = false;
@@ -46,6 +56,7 @@ export default class AVPipeline extends React.Component {
   playbackExited = false;
   state = {
     camera: null,
+    lastNowMs: null,
     paused: false,
     segments: {},
   };
@@ -98,7 +109,8 @@ export default class AVPipeline extends React.Component {
     // We know that |msg| is an 'avpipeline' message, so we know that
     // `msg.log` is the narrower type
     //
-    //   event : { what : String, whenMs : Number, Optional<id : String> }
+    //   event : { what : String, whenMs : Number,
+    //             Optional<id : String>, Optional<nowMs : Number> }
     let event = msg.log;
     if ('exit' === event.what) {
       // Defer clearing the old segment data until playback resumes,
@@ -110,16 +122,19 @@ export default class AVPipeline extends React.Component {
       this.playbackExited = false;
       segments = {};
     }
-    // We know that `event` isn't an 'exit' event, so the `id`
-    // property isn't optional --- though it might be the empty
-    // string.
+    // We know that `event` isn't an 'exit' event, so the `id` and
+    // `nowMs` properties aren't optional.  For segment events, the
+    // `id` field is the stringified timestamp for the start of video
+    // recording.
     let id = event.id;
     if (!(id in segments)) {
       segments[id] = { id };
     }
     segments[id][event.what + 'Ms'] = event.whenMs;
-    this.setState({ segments: this.filterSegments(segments,
-                                                  MAX_NR_SEGMENTS), });
+    this.setState({
+      lastNowMs: event.nowMs,
+      segments: this.filterSegments(segments, MAX_NR_SEGMENTS),
+    });
   };
 
   onPause = () => {
@@ -129,8 +144,8 @@ export default class AVPipeline extends React.Component {
   filterSegments(segments, nrKeep) {
     let ids =
           Object.keys(segments)
-          .filter(id => 'arriveAppMs' in segments[id])
-          .sort((a, b) => segments[b].arriveAppMs - segments[a].arriveAppMs)
+          .filter(id => FIRST_EVENT in segments[id])
+          .sort((a, b) => segments[b][FIRST_EVENT] - segments[a][FIRST_EVENT])
           .slice(0, nrKeep);
     let filtered = {};
     ids.forEach(id => filtered[id] = segments[id]);
@@ -138,31 +153,39 @@ export default class AVPipeline extends React.Component {
   }
 
   renderChart(sortedSegments) {
-    let zeroMs = sortedSegments[sortedSegments.length - 1].arriveAppMs;
-    let nowMs = Date.now() - zeroMs;
-    let labels = sortedSegments.map(events => events.id.substring(0, 4));
+    // "Zero" time point is the first event from the oldest segment.
+    let zeroMs = sortedSegments[sortedSegments.length - 1][FIRST_EVENT];
+    let nowMs = this.state.lastNowMs;
+    let labels = sortedSegments.map(events => events.id.slice(-5));
     // Empty "bar" that represents the time before the first event we
-    // received
-    let nullSeries = sortedSegments.map(events => events.arriveAppMs - zeroMs);
-    // Bar segment representing the time this segment spent queued
-    let queuedSeries = sortedSegments.map((events, idx) => {
-      let queueStartMs = nullSeries[idx];
-      if ('playbackStartMs' in events) {
-        return events.playbackStartMs - zeroMs - queueStartMs;
-      }
-      return nowMs - queueStartMs;
+    // received.  We filter out segment data that doesn't include this
+    // first event, so it's guaranteed to be present.
+    let nullSeries = sortedSegments.map(events => events[FIRST_EVENT] - zeroMs);
+    // The data series we generate as time deltas between successive
+    // events.  The series starts with the "null timestamp", which
+    // marks when the first event was recorded for a given chunk.
+    // Then with each iteration of the forEach below, we tack on a new
+    // series that's the delta from the last.
+    let series = [ nullSeries ];
+    EVENT_SEQUENCE.slice(1).forEach((eventName, eventIdx) => {
+      let lastEventName = EVENT_SEQUENCE[eventIdx];
+      series.push(sortedSegments.map((segmentEvents, segmentIdx) => {
+        if (!(lastEventName in segmentEvents)) {
+          return 0;
+        }
+        let lastEventMs = segmentEvents[lastEventName];
+        if (!(eventName in segmentEvents)) {
+          return nowMs - lastEventMs;
+        }
+        return segmentEvents[eventName] - lastEventMs;
+      }));
     });
-    // Bar segment repsenting the time this segment was/is playing
-    let playingSeries = sortedSegments.map((events, idx) => {
-      if (!('playbackStartMs' in events)) {
-        return 0;
-      }
-      let playStartMs = events.playbackStartMs;
-      if (!('playbackEndMs' in events)) {
-        return nowMs - (playStartMs - zeroMs);
-      }
-      return events.playbackEndMs - playStartMs;
-    });
+    // The `darkMatterSeries` covers what happens between stopping
+    // recording up to receiving the mp4 segment in the app.  This
+    // time is unassigned, hence "dark matter".
+    let [/*nullSeries*/,
+      recordingSeries, darkMatterSeries, queuedSeries, playingSeries
+    ] = series;
     let data = {
       labels,
       datasets: [
@@ -175,6 +198,16 @@ export default class AVPipeline extends React.Component {
           label: 'queued',
           fillColor: 'yellow',
           data: queuedSeries,
+        },
+        {
+          label: 'darkMatter',
+          fillColor: 'black',
+          data: darkMatterSeries,
+        },
+        {
+          label: 'recording',
+          fillColor: 'red',
+          data: recordingSeries,
         },
         {
           label: '',

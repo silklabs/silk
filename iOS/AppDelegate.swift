@@ -2,7 +2,7 @@ import AVFoundation
 import CoreLocation
 import UIKit
 
-let debug = DebugLog.create("silk:app")
+private let log = DebugLog.create("silk-app")
 
 @UIApplicationMain
 class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
@@ -36,7 +36,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
 
     // Configuring logging
     DebugLog.enable(config.debug)
-    debug.info("Logging level %@", config.debug)
+    log.info("Logging level %@", config.debug)
 
     var reactViewURL: NSURL
     let reactNativeType = config.reactNative.type

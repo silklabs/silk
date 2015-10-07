@@ -2,9 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-
 let {
-  AppRegistry,
   StyleSheet,
   Text,
   View,
@@ -12,17 +10,18 @@ let {
 
 // Include our own browser shim goop but after react-native has loaded for the
 // first time and created it's own shims.
-import '../Libraries/BrowserShims';
+import '../libraries/BrowserShims';
+import Config from '../libraries/Config';
+import UserState from '../libraries/UserState';
 
-import Config from '../Libraries/Config';
 import API from 'silk-api-react-native';
+
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';
 import TabsView from './TabsView';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
 import WifiSettings from './WifiSettings';
-import UserState from '../Libraries/UserState';
 
 const routeToComponentMap = {
   SignIn,
@@ -31,7 +30,7 @@ const routeToComponentMap = {
   WifiSettings,
 };
 
-class Silk extends AsyncComponent {
+export default class extends AsyncComponent {
 
   state = {
     serverUrl: null,
@@ -124,5 +123,3 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
 });
-
-AppRegistry.registerComponent('Silk', () => Silk);

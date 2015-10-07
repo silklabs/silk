@@ -8,7 +8,7 @@ var {
   StyleSheet,
   View,
 } = React;
-var ProgressBar = require('./ProgressBar');
+import ProgressBar from './ProgressBar';
 import { LabelText } from './Text';
 
 /**

@@ -1,5 +1,5 @@
 import React from 'react-native';
-import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
+import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 // There are two parts to the native wrapper:
 // 1.Public interface exposed for method calls:

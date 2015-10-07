@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint src",
     "postinstall": "./tools/patch",
     "start": "react-native-webpack-server start --port 8082 --packagerPort 8081 --webpackPort 60046",
     "bundle": "react-native-webpack-server bundle --port 60050 --packagerPort 60051 --webpackPort 60052",

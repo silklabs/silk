@@ -1,9 +1,9 @@
 import React from 'react-native';
-import SystemButton from './SystemButton';
 import TimerMixin from 'react-timer-mixin';
-import Config from '../Libraries/Config';
-
 import moment from 'moment';
+
+import Config from '../libraries/Config';
+import SystemButton from './SystemButton';
 
 let {
   StyleSheet,

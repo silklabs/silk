@@ -2,14 +2,16 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
+import TimerMixin from 'react-timer-mixin';
+import uuid from 'uuid';
+
+import { getLandscapeDimensions } from '../libraries/DeviceConfig';
+import * as DateUtil from '../libraries/DateUtil';
+
 import LiveVideo from './LiveVideo';
 import OverlayModal from './OverlayModal';
 import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
-import { getLandscapeDimensions } from '../Libraries/DeviceConfig';
-import TimerMixin from 'react-timer-mixin';
-import uuid from 'uuid';
-import * as DateUtils from '../Libraries/DateUtil';
 import DateOverlay from './DateOverlay';
 
 let {
@@ -186,7 +188,7 @@ export default React.createClass({
       currentTime: null,
       // Maximum time we have recorded for today.
       maxTime: Date.now(),
-      minTime: DateUtils.startOfDay().getTime(),
+      minTime: DateUtil.startOfDay().getTime(),
       videoSegments: [],
 
       /**
@@ -218,7 +220,7 @@ export default React.createClass({
     this._videoSegments = [];
 
     // Figure out start time for video:
-    let startTime = DateUtils.startOfDay();
+    let startTime = DateUtil.startOfDay();
 
     let api = this.props.api;
     api.timeMeta.findOneAfterTime({

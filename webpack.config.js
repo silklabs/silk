@@ -9,7 +9,7 @@ var config = {
   devtool: 'source-map',
 
   entry: {
-    'index.ios': ['./Components/Root.js']
+    'index.ios': ['./src/index.ios.js']
   },
 
   watch: true,
@@ -26,9 +26,7 @@ var config = {
         test: /\.js$/,
         include: [
           /** Our Modules */
-          path.resolve(__dirname, 'Components'),
-          path.resolve(__dirname, 'Libraries'),
-          path.resolve(__dirname, 'btle'),
+          path.resolve(__dirname, 'src'),
           path.resolve(__dirname, 'config.local.json'),
 
           /** react-native node_modules */

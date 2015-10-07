@@ -175,6 +175,9 @@ adb shell setprop persist.silk.update.channel $BRANCH
 echo Disabled factory reset on pressing volume keys
 adb shell setprop persist.silk.ui.reset.disabled true
 
+echo Disable SOS vibrate
+adb shell setprop persist.silk.quiet true
+
 TZ_OFFSET=$(date +%z)
 TZ_OFFSET=${TZ_OFFSET:0:3}
 HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)

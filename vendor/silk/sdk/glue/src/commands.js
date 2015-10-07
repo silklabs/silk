@@ -15,8 +15,8 @@ import sourcemaps from 'gulp-sourcemaps';
 import cache from 'gulp-cache';
 import eslint from 'gulp-eslint';
 import path from 'path';
-import { spawn } from 'mz/child_process';
 import fs from 'fs';
+import printExec from './print_exec';
 
 // Note: this relies on the location of the silk sdk on disk.
 
@@ -152,25 +152,6 @@ export default function(baseDirectory = process.env.BASEDIR) {
       .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
       .pipe(sourcemaps.write('.')) // writes .map file
       .pipe(gulp.dest(baseDirectory));
-  }
-
-  function printExec(cmd) {
-    return new Promise((accept, reject) => {
-      let proc = spawn('/bin/bash', ['-c', cmd], {
-        stdio: 'inherit'
-      });
-      gutil.log('$ ', cmd);
-      proc.once('error', reject);
-      proc.once('exit', (code) => {
-        if (code !== 0) {
-          proc.emit('error', new Error(`
-            ${cmd} did not exit with zero
-          `));
-          return;
-        }
-        accept();
-      });
-    });
   }
 
   function lint() {

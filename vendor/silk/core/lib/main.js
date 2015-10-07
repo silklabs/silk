@@ -32,10 +32,13 @@ import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crashreport';
 import initOutbox from './outbox';
+import initProfiler from './profiler/server';
 import NetworkStatus from './network_status';
 import Logcat from './logcat';
 
 const log = createLog('main');
+// Start the profile server ASAP.
+initProfiler();
 
 // Wait for 60 seconds for boot before issuing a warning.
 const BOOT_TIMEOUT = 60 * 1000;
@@ -159,7 +162,7 @@ function main() {
       // Set global state up.
       bootCompleted = true;
       log.info('main completed device has been booted.');
-    });
+    })
 }
 
 main().catch(err => {

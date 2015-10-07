@@ -1,0 +1,9 @@
+#! /bin/bash -e
+
+# current module...
+MOD=$PWD
+# path to the sdk...
+SDK=$MOD/node_modules/silk-sdk-glue
+export BASEDIR=$MOD
+cd $SDK
+exec ./node_modules/.bin/babel-node --harmony $SDK/profiler.js $@

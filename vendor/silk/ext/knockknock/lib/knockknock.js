@@ -8,6 +8,7 @@
 
 import cv from 'opencv';
 import fs from 'mz/fs';
+import Trainer from './trainer';
 
 /* Face recognition parameters */
 const RADIUS = 1;
@@ -46,6 +47,7 @@ class FindFace {
 
     this._trainingInProgress = false;
     this._working = false;
+    this._trainer = new Trainer(env);
 
     // Not calling await on purpose so as not to block the constructor
     this._init();
@@ -60,8 +62,7 @@ class FindFace {
     switch (cmd.msg) {
     case 'addPerson':
       log.info(`addPerson command: ${JSON.stringify(cmd)}`);
-      let trainfacemodel = require('./trainfacemodel')(this._env);
-      await trainfacemodel.addPerson(cmd.person);
+      await this._trainer.addPerson(cmd.person);
 
       // Finished adding the person; re-train face model
       log.info(`Finished adding person ${cmd.person}`);
@@ -69,6 +70,18 @@ class FindFace {
       break;
     default:
       break;
+    }
+  }
+
+  /**
+   *
+   */
+  willUnload() {
+    if (this._onFace) {
+      this._env.timeline.removeListener('face', this._onFace);
+    }
+    if (this._watchprop) {
+      this._watchprop.kill();
     }
   }
 
@@ -99,8 +112,7 @@ class FindFace {
    */
   async _trainModel() {
     this._trainingInProgress = true;
-    let trainfacemodel = require('./trainfacemodel')(this._env);
-    await trainfacemodel.start(this._model);
+    await this._trainer.start(this._model);
     this._trainingInProgress = false;
   }
 
@@ -188,18 +200,6 @@ class FindFace {
     };
 
     this._env.timeline.on('face', this._onFace);
-  }
-
-  /**
-   *
-   */
-  willUnload() {
-    if (this._onFace) {
-      this._env.timeline.removeListener('face', this._onFace);
-    }
-    if (this._watchprop) {
-      this._watchprop.kill();
-    }
   }
 }
 

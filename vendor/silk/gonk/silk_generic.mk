@@ -49,6 +49,7 @@ SILK_EXT := \
   trackobject-sound \
   detectface \
   detectface-cascade-frontalface \
+  knockknock \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

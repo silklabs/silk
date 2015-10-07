@@ -118,6 +118,19 @@ For example to enable all logs possible (socket.io, etc..):
 }
 ```
 
+### WiFi presets
+
+To avoid having to re-enter WiFi credentials every time the app was restarted (not great for demos), the WiFi SSID and password can be preconfigured in `config.local.json`:
+
+```json
+{
+  "wifi": {
+    "ssid": "SilkLabs",
+    "secret": "silkysmooth"
+  }
+}
+```
+
 ## Producing a release by hand (Avoid at all cost)
 
 0. Close Xcode

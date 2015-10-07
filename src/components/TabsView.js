@@ -23,7 +23,7 @@ export default class TabsView extends React.Component {
     socketConnectionState: 'offline',
     socketUrl: null,
     socket: null,
-    wifi: null,
+    wifi: Config.getDefault().wifi || null,
   };
   bleDeviceManager = null;
   socket = null;

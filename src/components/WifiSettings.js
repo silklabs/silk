@@ -38,8 +38,8 @@ export default class WifiSettings extends AsyncComponent {
     super(props);
     let hints = props.route.hints;
     this.state = {
-      ssid: hints.ssid || 'Network Name',
-      secret: hints.secret || 'silkysmooth',
+      ssid: hints.ssid,
+      secret: hints.secret,
       serverUrl: hints.serverUrl,
       showSecret: false,
       contentInsetBottom: 0,
@@ -97,6 +97,7 @@ export default class WifiSettings extends AsyncComponent {
           <View style={styles.formInputContainer}>
             <TextInput
               ref="ssid"
+              placeholder="Enter WiFi network name"
               value={this.state.ssid}
               autoCapitalize="none"
               autoCorrect={false}
@@ -113,6 +114,7 @@ export default class WifiSettings extends AsyncComponent {
             <TextInput
               ref="secret"
               secureTextEntry={!this.state.showSecret}
+              placeholder="Enter WiFi password"
               value={this.state.secret}
               autoFocus={true}
               style={styles.formInput}

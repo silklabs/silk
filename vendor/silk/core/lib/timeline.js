@@ -163,8 +163,14 @@ class Timeline extends EventEmitter {
         }
         this.previewObjects.push(object);
         this.videoObjects.push(object);
-        this.eventTracker.record(object);
       }
+    });
+    this._processEvents(objects);
+  }
+
+  _processEvents(objects) {
+    objects.forEach((object) => {
+      this.eventTracker.record(object);
     });
     this._emitEvents(objects);
   }
@@ -222,6 +228,7 @@ class Timeline extends EventEmitter {
         newObj.when = when;
         return newObj;
       });
+      this._processEvents(objs);
     }
 
     if (origObjects && objs) {
@@ -310,7 +317,7 @@ class Timeline extends EventEmitter {
     let allObjects = this._addCachedObjects(objects, when);
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms` +
               ` lag:${Date.now() - when}ms ` +
-              ` objects:${(objects ? objects.length : 0)}`;
+              ` objects:${(allObjects ? allObjects.length : 0)}`;
 
     if (transmit) {
       if (this.acks.pending[type] >= this.acks.maxPending[type]) {

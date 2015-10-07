@@ -35,15 +35,24 @@ suite('test opencv', function () {
   test('find similar cars', async function () {
     let dirPath = testFramework.rootDir + '/files/cars';
     let files = await fs.readdir(dirPath);
-    let rectsExp = [{'x': 124, 'y': 31, 'width': 157, 'height': 78}];
+    let rectsExp = [{'x': 123, 'y': 30, 'width': 163, 'height': 82}];
+
+    let addPreviewFrame = function(timestamp) {
+      // This should result in no additional car objects being added
+      // as trackobject should consider this image similar to the previous one
+      timeline.addPreviewFrame(timestamp);
+
+      // Force timeline to add the cached objects
+      timeline.addPreviewJPEG(timestamp, {});
+    };
 
     // Motion detection requires at least two images to run so load it with two
     // images before starting the test
     try {
       camera.setPreviewFrame(`cars/${files[0]}`);
-      process.nextTick(() => timeline.addPreviewFrame(Date.now()));
+      process.nextTick(addPreviewFrame.bind(this, Date.now()));
       await waitForEvent('no-motion', 10000);
-      process.nextTick(() => timeline.addPreviewFrame(Date.now()));
+      process.nextTick(addPreviewFrame.bind(this, Date.now()));
       await waitForEvent('no-motion', 10000);
 
       // Force detectobject to find the new car object
@@ -53,10 +62,6 @@ suite('test opencv', function () {
       log.error(`Error: ${err}`);
       assert(false);
     }
-
-    let addPreviewFrame = function(timestamp) {
-      timeline.addPreviewFrame(timestamp);
-    };
 
     for (let count = 0; count < files.length; count++) {
       log.info(`read file ${files[count]}`);
@@ -68,7 +73,6 @@ suite('test opencv', function () {
       try {
         let [when, rects] = await waitForEvent('car', 10000);
         log.info(`when: ${when} rects: ${JSON.stringify(rects)}`);
-        assert.equal(when, timestamp, 'car timestamp');
         assert.deepEqual(rects, rectsExp, 'car rects');
       } catch (err) {
         log.error(`Error: ${err}`);
@@ -79,7 +83,7 @@ suite('test opencv', function () {
   test('detect car', async () => {
     camera.setPreviewFrame('car1.jpg');
 
-    let rectsExp = [{'x': 30, 'y': 27, 'width': 240, 'height': 120}];
+    let rectsExp = [{'x': 35, 'y': 32, 'width': 227, 'height': 114}];
     let iters = 10;
 
     for (let count = 1; count <= iters; count++) {

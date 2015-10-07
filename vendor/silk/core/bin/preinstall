@@ -1,5 +1,9 @@
 #!/bin/bash -ex
 
+if [[ -f ../gonk/gnutools.sh ]]; then
+  source ../gonk/gnutools.sh
+fi
+
 # Copy "local" node modules into node_modules/
 mkdir -p node_modules
 cp -al local_node_modules/* node_modules

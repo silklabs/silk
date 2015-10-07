@@ -11,8 +11,7 @@ npm install
 
 ## Javascript Rapid Development Cycle
 
-If you are only making JavaScript changes to silk core (`silk/core/lib/`), or to the
-extensions (`silk/ext/*/lib`) , the following may be used to reduce your build time significantly.
+If you are only making JavaScript changes to silk core (`silk/core/lib/`), the following may be used to reduce your build time significantly.
 
 ### Automatic push
 
@@ -22,7 +21,6 @@ automatically installed on device, and silk core restarted.
 `./watch` options:
   * `LAX=1 ./watch` - to skip running ESLint
   * `./watch --no-restart` - to skip restarting silk core.
-  * `./watch --reload-ext` - to tell silk core to reload the extension instead of restarting silk core (see [Extensions Reloading](#extensions-reloading))
 
 ### Manual push of silk core
 ```sh
@@ -31,19 +29,6 @@ $ npm install
 $ adb push core.js /system/silk/core.js
 $ adb shell setprop ctl.restart silk
 ```
-
-### Manual push and reload of extensions
-
-```sh
-.. edit .js files ..
-$ npm install
-$ adb push <extension-name>.js /system/silk/ext/<extension-name>.js
-$ adb shell setprop silk.reload-ext "/system/silk/ext/<extension-name>.js"
-```
-
-### Extensions Reloading
-
-Note: extension module reloading only works if the extension has implemented `willUnload()`
 
 ## JavaScript Debugging
 

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -ex
-ccache -s
 git --version
 
 function get_http_status() {
@@ -22,6 +21,11 @@ then
 else
   echo "Failed to find ccache bundle at $CCACHE_URL"
 fi
+
+# Clear the stats before this build...
+ccache -z
+# Dump info about ccache (how much is in the cache/etc...)
+ccache -s
 
 case $GONK in
 base)

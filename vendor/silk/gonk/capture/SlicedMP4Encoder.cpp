@@ -526,9 +526,12 @@ bool SlicedMP4Encoder::threadLoop() {
 
     status_t err = writer->stop();
     if (err == ::OK) {
+      // (We won't overflow 31 bits unless the video duration is
+      // > 35,000 hours ~= 4 years.)
+      int32_t videoDurationMs = int32_t(videoDurationUs / 1000LL);
       // Write size and .mp4 data
-      mChannel->send(Channel::TAG_VIDEO, when, writer->data().array(),
-          writer->data().size());
+      mChannel->send(Channel::TAG_VIDEO, when, videoDurationMs,
+                     writer->data().array(), writer->data().size());
     } else {
       ALOGW("MPEG4MemoryWriter stop failed with %d. No video data sent", err);
     }

@@ -6,11 +6,14 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let util = require('./util');
-let ntpClient = require('ntp-client');
-let EventEmitter = require('events').EventEmitter;
-let wifi = require('./wifi');
-let log = require('./log')('ntp');
+import * as util from './util';
+import ntpClient from 'ntp-client';
+import { EventEmitter } from 'events';
+import wifi from './wifi';
+import createLog from './log';
+
+const log = createLog('ntp');
+
 let emitter = new EventEmitter();
 
 // Retry every 10 seconds until time is acquired

@@ -6,9 +6,11 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let events = require('events');
-let exec = require('./util').exec;
-let log = require('./log')('lights');
+import events from 'events';
+import { exec } from './util';
+import createLog from './log';
+
+const log = createLog('lights');
 
 // From hardware/libhardware/include/hardware/lights.h
 const LIGHT_ID_BACKLIGHT = 'backlight';

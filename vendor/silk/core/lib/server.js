@@ -6,10 +6,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let api = require('./api');
-let events = require('events');
-let log = require('./log')('server');
-let util = require('./util');
+import api from './api';
+import events from 'events';
+import createLog from './log';
+import * as util from './util';
+
+const log = createLog('server');
 
 class Server extends events.EventEmitter {
   constructor() {

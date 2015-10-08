@@ -5,7 +5,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
-let cv = require('opencv');
+import cv from 'opencv';
 
 let log;
 let util;

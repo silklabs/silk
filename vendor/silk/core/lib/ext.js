@@ -6,14 +6,17 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let log = require('./log')('ext');
-let fs = require('mz/fs');
-let path = require('path');
-let EventEmitter = require('events').EventEmitter;
-let util = require('./util');
+import createLog from './log';
+
+import fs from 'mz/fs';
+import path from 'path';
+import { EventEmitter } from 'events';
+import * as util from './util';
+
+const log = createLog('ext');
+const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
 const RELOAD_EXT_PROP = 'silk.reload-ext';
-const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
 class Env extends EventEmitter {
 
@@ -159,7 +162,7 @@ class Env extends EventEmitter {
 
   get log() {
     if (!this._log) {
-      this._log = require('./log')(this._name);
+      this._log = createLog(this._name);
     }
     return this._log;
   }

@@ -11,9 +11,11 @@
 // Stand alone mode is detected by testing "weOwnTty".
 let weOwnTty = (require.main === module);
 
-let hue = require('node-hue-api');
-let log = require('./log')('hue');
-let util = require('./util');
+import hue from 'node-hue-api';
+import createLog from './log';
+import * as util from './util';
+
+const log = createLog('hue');
 
 let enabled = !util.getboolprop('persist.silk.lights.disabled');
 

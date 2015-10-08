@@ -6,7 +6,9 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let log = require('./log')('diag');
+import createLog from './log';
+const log = createLog('diag');
+
 
 class DiagLogger {
   // respawnDelay specifies amount of time to wait after process dies before

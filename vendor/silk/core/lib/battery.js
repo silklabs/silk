@@ -6,10 +6,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let events = require('events');
-let fs = require('mz/fs');
-let log = require('./log')('battery');
-let util = require('./util');
+import events from 'events';
+import fs from 'mz/fs';
+import createLog from './log';
+import * as util from './util';
+
+const log = createLog('battery');
 
 // Hold off boot when the battery is below this level
 const BATTERY_OK_TO_BOOT_LEVEL = 10;

@@ -2,10 +2,12 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-let log = require('./log')('videoupload');
+import createLog from './log';
+const log = createLog('videoupload');
+
 import { EventEmitter } from 'events';
 import api from './api';
-let util = require('./util');
+import * as util from './util';
 
 // Content type must be set to make clients happy later on
 const VIDEO_CONTENT_TYPE = 'video/mp4';

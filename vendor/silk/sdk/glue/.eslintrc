@@ -1,5 +1,8 @@
 {
   "parser": "babel-eslint",
+  "plugins": [
+    "import"
+  ],
   "globals": {
     "suite": true,
     "test": true,
@@ -21,6 +24,13 @@
     "no-debugger": 1,
     "default-case": 2,
     "comma-dangle": 0,
+    "import/no-require": 1,
+    // we do some non standard module loading so the below import lints need to
+    // be off for now!
+    "import/no-unresolved": 0,
+    "import/named": 0,
+    "import/default": 0,
+    "import/no-duplicates": 0,
     "indent": [
       2,
       2

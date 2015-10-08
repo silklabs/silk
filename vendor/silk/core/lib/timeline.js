@@ -6,9 +6,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let log = require('./log')('timeline');
+import createLog from './log';
+import * as util from './util';
+
 import { EventEmitter } from 'events';
-let util = require('./util');
+
+const log = createLog('timeline');
 
 // Amount of time to wait for objects to be associated with a video chunk before
 // uploading it and any objects that were detected.

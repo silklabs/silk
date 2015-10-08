@@ -8,7 +8,9 @@
 
 // Expected use:
 //
-//   let log = require('./log')('coolfeature');
+//   import createLog from './log';
+//   const log = createLog('coolfeature');
+
 //
 //   log.verbose('useless');
 //   log.debug('assert(1+1==3)');

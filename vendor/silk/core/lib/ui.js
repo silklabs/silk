@@ -6,12 +6,13 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let events = require('events');
-let fs = require('fs');
-let lights = require('./lights');
-let log = require('./log')('ui');
-let util = require('./util');
+import events from 'events';
+import fs from 'fs';
+import lights from './lights';
+import createLog from './log';
+import * as util from './util';
 
+const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
 const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
 const EVENTS = util.getlistprop('ro.silk.ui.inputevents', []);

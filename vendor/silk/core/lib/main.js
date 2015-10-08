@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let ui = require('./ui');
+import ui from './ui';
 ui.goto('bootanimation');
 
 // Activate source map support to exception stack traces as early as practical
@@ -14,18 +14,19 @@ ui.goto('bootanimation');
 let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
 
-let api = require('./api');
-let battery = require('./battery');
-let log = require('./log')('main');
-let wifi = require('./wifi');
-let ntp = require('./ntp');
-let util = require('./util');
-let update = require('./update');
-let config = require('./config');
-let sensors = require('./sensors');
-let server = require('./server');
-let fs = require('mz/fs');
-let deferred = require('./deferred');
+import api from './api';
+import battery from './battery';
+import createLog from './log';
+
+import wifi from './wifi';
+import ntp from './ntp';
+import * as util from './util';
+import update from './update';
+import config from './config';
+import sensors from './sensors';
+import server from './server';
+import fs from 'mz/fs';
+import deferred from './deferred';
 
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
@@ -33,6 +34,8 @@ import makeCrashReporter from './crashreport';
 import initOutbox from './outbox';
 import NetworkStatus from './network_status';
 import Logcat from './logcat';
+
+const log = createLog('main');
 
 // Wait for 60 seconds for boot before issuing a warning.
 const BOOT_TIMEOUT = 60 * 1000;
@@ -296,7 +299,7 @@ config.on('configured', () => {
       // (currently need to wait for hue to initialize, otherwise this could be
       //  done much sooner)
       if (!ext) {
-        ext = require('./ext')({
+        ext = require('./ext')({ // eslint-disable-line
           btle: btle,
           camera: camera,
           hue: hue,

@@ -1,11 +1,12 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-let util = require('./util');
-let events = require('events');
-let net = require('net');
-let log = require('./log')('wifi');
+import * as util from './util';
+import events from 'events';
+import net from 'net';
+import createLog from './log';
 
+const log = createLog('wifi');
 const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu', false);
 
 let iface = util.getprop('wifi.interface');

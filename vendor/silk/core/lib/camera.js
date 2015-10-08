@@ -39,7 +39,7 @@ const CAPTURE_COMMAND_NAME = 'CaptureCommand';
 
 
 // These constants must match those in Channel.h
-const HEADER_NR_BYTES = 16; // sizeof(Channel::Header)
+const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
 const TAG_PREVIEW = 1;
 const TAG_FACES = 2;
@@ -333,6 +333,7 @@ class CameraStream extends EventEmitter {
       let tag = this._dataBuffer.readInt32LE(4);
       let sec = this._dataBuffer.readInt32LE(8);   // timeval.tv_sec
       let usec = this._dataBuffer.readInt32LE(12); // timeval.tv_usec
+      let durationMs = this._dataBuffer.readInt32LE(16);
       let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
 
       let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
@@ -344,7 +345,7 @@ class CameraStream extends EventEmitter {
         break;
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`);
-        this.timeline.addVideo(when, pkt);
+        this.timeline.addVideo(when, durationMs, pkt);
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`);

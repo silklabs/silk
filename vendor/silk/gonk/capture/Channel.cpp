@@ -14,13 +14,15 @@
 /**
  *
  */
-void Channel::send(Tag tag, timeval &when, const void *data, size_t size) {
-  ALOGV("tag:%d, size: %d, when:%ld.%ld\n", tag, size, when.tv_sec, when.tv_usec);
+void Channel::send(Tag tag, timeval &when, int32_t durationMs,
+    const void *data, size_t size) {
+  ALOGV("tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
+        tag, size, when.tv_sec, when.tv_usec, durationMs);
 
   if (isSocketAvailable()) {
     Mutex::Autolock autoLock(mLock);
 
-    Header header = { size, tag, when };
+    Header header = { size, tag, when, durationMs };
     sendData(&header, sizeof(header));
     if (size > 0) {
       sendData(data, size);
@@ -36,5 +38,5 @@ void Channel::send(Tag tag, timeval &when, const void *data, size_t size) {
 void Channel::send(Tag tag, const void *data, size_t size) {
   timeval when;
   gettimeofday(&when, NULL);
-  send(tag, when, data, size);
+  send(tag, when, 0, data, size);
 }

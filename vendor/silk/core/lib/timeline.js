@@ -106,8 +106,8 @@ class Timeline extends EventEmitter {
   /**
    *
    */
-  addVideo(when, pkt) {
-    this.videoFrames.push({when: when, pkt: pkt});
+  addVideo(when, durationMs, pkt) {
+    this.videoFrames.push({when: when, durationMs: durationMs, pkt: pkt});
     setTimeout(this._sendVideoWithObjects.bind(this), VIDEO_COLLECTOBJECT_DELAY_MS);
   }
 
@@ -295,14 +295,14 @@ class Timeline extends EventEmitter {
     this.videoObjects.push(object);
   }
 
-  _pushVideo(when, frame, objects) {
+  _pushVideo(when, durationMs, frame, objects) {
     // For video we group all related face packets to make it easier on the
     // client.
-    this._pushPacket(when, frame, objects, 'mp4');
+    this._pushPacket(when, frame, objects, 'mp4', durationMs);
     this.videoUpload.add(when, frame, this.videoObjects);
   }
 
-  _pushPacket(when, frame, objects, type) {
+  _pushPacket(when, frame, objects, type, durationMs = 0) {
     let transmit;
     switch (type) {
     case 'jpeg':
@@ -315,9 +315,12 @@ class Timeline extends EventEmitter {
       util.processthrow(`Unknown packet type: ${type}`);
     }
     let allObjects = this._addCachedObjects(objects, when);
-    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms` +
-              ` lag:${Date.now() - when}ms ` +
-              ` objects:${(allObjects ? allObjects.length : 0)}`;
+    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms`;
+    if (durationMs) {
+      str += ` durationMs:${durationMs}`;
+    }
+    str += ` lag:${Date.now() - when}ms ` +
+           ` objects:${(allObjects ? allObjects.length : 0)}`;
 
     if (transmit) {
       if (this.acks.pending[type] >= this.acks.maxPending[type]) {
@@ -330,7 +333,8 @@ class Timeline extends EventEmitter {
       log.verbose(str);
       let queued = Date.now();
       this.serverSocket.emit('video',
-        { id: this.id, objects: allObjects, frame: frame, contents: type, when: when },
+        { id: this.id, objects: allObjects, frame, contents: type, when,
+          durationMs, deviceEmitMs: queued },
         () => {
           this.acks.pending[type] = this.acks.pending[type] - 1;
           if (this.acks.pending[type] < 0) {
@@ -371,8 +375,8 @@ class Timeline extends EventEmitter {
           objects.push(this.videoObjects[j]);
         }
       }
-      this._pushVideo(this.videoFrames[i].when, this.videoFrames[i].pkt,
-                      objects);
+      this._pushVideo(this.videoFrames[i].when, this.videoFrames[i].durationMs,
+                      this.videoFrames[i].pkt, objects);
     }
 
     // Drop all the leftover video objects as the corresponding video packets

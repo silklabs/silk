@@ -27,13 +27,15 @@ public:
     size_t size; // size of the packet, excluding this header
     int32_t tag; // of type Tag
     timeval when;
+    int32_t durationMs;
   };
 
   Channel() :
       SocketListener1(CAPTURE_DATA_SOCKET_NAME, true) {
   }
   void send(Tag tag, const void *data, size_t size);
-  void send(Tag tag, timeval &when, const void *data, size_t size);
+  void send(Tag tag, timeval &when, int32_t durationMs,
+            const void *data, size_t size);
 
 protected:
   virtual bool onDataAvailable(SocketClient *c) {

@@ -62,6 +62,14 @@ if [ -d /sys/class/thermal ]; then
   echo
 fi
 
+echo "Open File Descriptors:"
+nodepid=$(ps node | busybox tail -n1 | busybox cut -c11-15)
+if [ $nodepid -gt 1 ]; then
+  echo -n "  node: "; lsof $nodepid | busybox wc -l
+fi
+echo -n "     *: "; lsof | busybox wc -l
+echo
+
 echo "Procrank (top 5 Pss)":
 procrank 2> /dev/null | (
   i=0

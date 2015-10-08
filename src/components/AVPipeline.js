@@ -19,6 +19,7 @@ const EVENT_SEQUENCE = [
   'recordStartMs',
   'recordEndMs',
   'deviceEmitMs',
+  'serverEmitMs',
   'arriveAppMs',
   'playbackStartMs',
   'playbackEndMs',
@@ -185,9 +186,12 @@ export default class AVPipeline extends React.Component {
     // recording up to receiving the mp4 segment in the app.  This
     // time is unassigned, hence "dark matter".
     let [/*nullSeries*/,
-      recordingSeries, deviceQueuedSeries,
-      darkMatterSeries,
-      appQueuedSeries, playingSeries
+      recordingSeries,
+      deviceQueuedSeries,
+      darkMatterUploadSeries,
+      darkMatterDownloadSeries,
+      appQueuedSeries,
+      playingSeries,
     ] = series;
     let data = {
       labels,
@@ -203,9 +207,14 @@ export default class AVPipeline extends React.Component {
           data: appQueuedSeries,
         },
         {
-          label: 'darkMatter',
+          label: 'darkMatterUpload',
           fillColor: 'black',
-          data: darkMatterSeries,
+          data: darkMatterUploadSeries,
+        },
+        {
+          label: 'darkMatterDownload',
+          fillColor: 'blue',
+          data: darkMatterDownloadSeries,
         },
         {
           label: 'deviceQueued',

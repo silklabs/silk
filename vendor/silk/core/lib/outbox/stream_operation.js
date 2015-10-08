@@ -83,10 +83,14 @@ export default class StreamOperation extends Operation {
       // bad stuff happened oh noes...
       error = err;
       log.warn(
-        `(${this.constructor.NAME}) Error attmping to write will retry`,
+        `(${this.constructor.NAME}) Error attemping to write will retry`,
         this.arguments,
         err.stack,
       );
+      log.info(`(${this.constructor.NAME}) Need readable.destroy()?`, isReadingPath);
+      if (isReadingPath) {
+        readable.destroy(); // Avoid leaking a file descriptor
+      }
     });
 
     /**

@@ -12,11 +12,8 @@ import { EventEmitter } from 'events';
 import createLog from './log';
 let log = createLog('events');
 
-type TimelineEvent = {
-  tag: string;
-  when: number;
-  [arbitraryKeys: string]: any;
-};
+import type { Socket } from 'socket.io-client';
+import type { TimelineEventObject } from './videoupload';
 
 type LocalEventRecord = {
   serverId?: string;
@@ -24,12 +21,6 @@ type LocalEventRecord = {
   startUTC: number;
   endUTC: number;
   data: {[arbitraryKeys: string]: any};
-};
-
-// Incomplete. We should really create an interface file for socket.io-client.
-// See also https://github.com/silklabs/silk-device/issues/758.
-type SocketIOSocket = {
-  connected: boolean;
 };
 
 const DEFAULT_DEBOUNCE_MS = 5000;
@@ -52,7 +43,7 @@ log.info(`Upload enabled: ${ENABLED}`);
  */
 class EventTracker extends EventEmitter {
   deviceId: string;
-  _serverSocket: ?SocketIOSocket;
+  _serverSocket: ?Socket;
   _eventRecords: {[key: string]: LocalEventRecord};
   _queue: Array<LocalEventRecord>;
   _expirationTimer: ?number;
@@ -66,7 +57,7 @@ class EventTracker extends EventEmitter {
     this._queue = [];
   }
 
-  eventDiscriminator(event: TimelineEvent): string {
+  eventDiscriminator(event: TimelineEventObject): string {
     // For now we throw all 'motion', 'car', etc. events into one basket.
     // Later one we could use additional info to discriminate one 'face'
     // event from another 'face' event.
@@ -76,7 +67,7 @@ class EventTracker extends EventEmitter {
     return event.tag;
   }
 
-  record(event: TimelineEvent) {
+  record(event: TimelineEventObject) {
     let discriminator = this.eventDiscriminator(event);
     let record = this._eventRecords[discriminator];
     if (record) {

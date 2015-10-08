@@ -9,6 +9,8 @@
 let log;
 let timeline;
 
+let previewScale = 0;
+
 const facecascade = {
   tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
   opts: {
@@ -17,7 +19,14 @@ const facecascade = {
   },
 };
 
-// Find both eyes in roughly 40% of detected faces
+// For eye detection, it is important to crop the input image to just show the
+// approximate eye region. If we just do eye detection on a whole face or whole
+// photo then it will be much slower and less reliable. Different eye detectors
+// are better suited to different regions of the face, for example, the
+// haarcascade_eye.xml detector works best if it only searches in a very tight
+// region around the actual eye.
+// Reference: http://image2measure.net/files/Mastering_OpenCV.pdf Chapter 8
+// (Eye search regions)
 const EYE_SX = 0.16;
 const EYE_SY = 0.26;
 const EYE_SW = 0.30;
@@ -81,7 +90,15 @@ function _runEyeCascasde(face, cascade) {
  *
  * Reference: http://image2measure.net/files/Mastering_OpenCV.pdf
  */
-function _detectBothEyes(face, eyeCascade1, eyeCascade2) {
+function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
+  // Eye detection requires fullsize image for better detection
+  // Adjust face rectangle to scale up to the original size as face detection
+  // was run on scaled image
+  let face = orig.roi(faceRect.x * previewScale, faceRect.y * previewScale,
+      faceRect.width * previewScale, faceRect.height * previewScale);
+  face.convertGrayscale();
+  face.equalizeHist();
+
   let cols = face.width();
   let rows = face.height();
   let leftX = Math.round(cols * EYE_SX);
@@ -92,6 +109,7 @@ function _detectBothEyes(face, eyeCascade1, eyeCascade2) {
 
   let topLeftOfFace = face.roi(leftX, topY, widthX, heightY);
   let topRightOfFace = face.roi(rightX, topY, widthX, heightY);
+
   let leftEyeRect = null;
   let rightEyeRect = null;
 
@@ -110,14 +128,25 @@ function _detectBothEyes(face, eyeCascade1, eyeCascade2) {
       }
 
       // Adjust the eye rectangles because the face border was removed
+      // Also scaled down the eye rectangles to preview size
       if (leftEyeRect) {
         leftEyeRect.x += leftX;
         leftEyeRect.y += topY;
+
+        leftEyeRect.x = leftEyeRect.x / previewScale;
+        leftEyeRect.y = leftEyeRect.y / previewScale;
+        leftEyeRect.width = leftEyeRect.width / previewScale;
+        leftEyeRect.height = leftEyeRect.height / previewScale;
       }
 
       if (rightEyeRect) {
         rightEyeRect.x += rightX;
         rightEyeRect.y += topY;
+
+        rightEyeRect.x = rightEyeRect.x / previewScale;
+        rightEyeRect.y = rightEyeRect.y / previewScale;
+        rightEyeRect.width = rightEyeRect.width / previewScale;
+        rightEyeRect.height = rightEyeRect.height / previewScale;
       }
 
       log.debug(`eyes: ${JSON.stringify(leftEyeRect)} ${JSON.stringify(rightEyeRect)}`);
@@ -159,7 +188,7 @@ class DetectFace {
       working = true;
 
       let start = Date.now();
-      this._env.camera.getPreviewFrame(async (err, im) => {
+      this._env.camera.getPreviewFrame(async (err, im, orig) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
@@ -167,6 +196,9 @@ class DetectFace {
         }
         let diff = Date.now() - start;
         log.verbose(`Acquired preview image in ${diff}ms`);
+
+        // Calculate preview scale
+        previewScale = orig.width() / im.width();
 
         // Fake a "motion" rectangle since the "preview" timeline event is being
         // used at the moment.
@@ -190,9 +222,8 @@ class DetectFace {
             let faceRect = faceRects[i];
 
             // Detect both eyes
-            let faceim = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-            let [leftEye, rightEye] = await _detectBothEyes(faceim, EYE_CASCADE1,
-                EYE_CASCADE2);
+            let [leftEye, rightEye] = await _detectBothEyes(orig, faceRect,
+                EYE_CASCADE1, EYE_CASCADE2);
 
             // Only if both the eyes are visible is when we say it is a face
             if (leftEye && rightEye) {

@@ -139,9 +139,10 @@ class CameraStream extends EventEmitter {
     // expecting and not the latest camera frame. Also helps prevent resizing a
     // frame multiple times. Image cache object has the following fields
     //   when:    timestamp
-    //   default: default image // CV_CAP_ANDROID_COLOR_FRAME_BGR
-    //   gray:    grayscale image // CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist
-    //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB
+    //   orig:    original unmodified frame from camera
+    //   default: default image // CV_CAP_ANDROID_COLOR_FRAME_BGR resized
+    //   gray:    grayscale image // CV_CAP_ANDROID_GREY_FRAME resized
+    //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB resized
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
   }
 
@@ -265,11 +266,11 @@ class CameraStream extends EventEmitter {
 
       switch(channel) {
       case 0:
-        userCb(false, image.default);
+        userCb(false, image.default, image.orig);
         return;
       case 1:
         if (image.gray) {
-          userCb(false, image.gray);
+          userCb(false, image.gray, image.orig);
         } else {
           let grayImage = image.default.copy();
           grayImage.convertGrayscale();
@@ -280,17 +281,17 @@ class CameraStream extends EventEmitter {
           grayImage.equalizeHist();
 
           image.gray = grayImage;
-          userCb(false, image.gray);
+          userCb(false, image.gray, image.orig);
         }
         return;
       case 2:
         if (image.rgb) {
-          userCb(false, image.rgb);
+          userCb(false, image.rgb, image.orig);
         } else {
           let rgbImage = image.default.copy();
           rgbImage.cvtColor('CV_BGR2RGB');
           image.rgb = rgbImage;
-          userCb(false, image.rgb);
+          userCb(false, image.rgb, image.orig);
         }
         return;
       default:
@@ -316,9 +317,10 @@ class CameraStream extends EventEmitter {
       let now = Date.now();
       log.info(`Preview frame read. lag=${now - when}ms`);
 
-      // Store the preview frame
-      im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-      this._imagecache.push({when: when, default: im});
+      // Store the preview frames (orig and resized)
+      let imScaled = im.copy();
+      imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+      this._imagecache.push({when: when, orig: im, default: imScaled});
 
       // Add the frame to the timeline
       this.timeline.addPreviewFrame(when);
@@ -425,8 +427,8 @@ class CameraStream extends EventEmitter {
 
   /**
    * Invoke this function to obtain the preview frame
-   *    userCb   - the callback that receives an error object and then the image
-   *               as an OpenCV matrix
+   *    userCb   - the callback that receives an error object, scaled image
+   *               as an OpenCV matrix and the original image
    *    when     - timestamp of the frame to get
    *    channel  - 0 (default) for color     (CV_CAP_ANDROID_COLOR_FRAME_BGR)
    *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)

@@ -201,6 +201,7 @@ export default io => {
         device.livestream[roomType] = false;
         device.updateLiveStream();
       } else {
+        msg.serverEmitMs = Date.now();
         io.to(deviceRoom).emit(deviceRoom, msg);
         device.resetTimeout();
       }

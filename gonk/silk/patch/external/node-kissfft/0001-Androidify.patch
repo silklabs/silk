@@ -1,6 +1,6 @@
-From 363f7030b30522ac6f5fe68eb8aa0f63c53e9ddb Mon Sep 17 00:00:00 2001
-From: Wayne Lee <wayne@silklabs.com>
-Date: Tue, 11 Aug 2015 14:23:57 -0700
+From bf25588470868013097e35f1d069f1b4fea0a425 Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Thu, 8 Oct 2015 10:42:54 -0700
 Subject: [PATCH] Androidify
 
 ---
@@ -30,7 +30,7 @@ index 83b484b..ee91ea8 100644
 -module.exports = require('bindings')('kissfft');
 +module.exports = require('build/kissfft.node');
 diff --git a/package.json b/package.json
-index c1ab280..848eef0 100644
+index 747454d..4f568ff 100644
 --- a/package.json
 +++ b/package.json
 @@ -2,10 +2,11 @@
@@ -53,7 +53,7 @@ index c1ab280..848eef0 100644
    "license": "BSD",
    "dependencies": {
 -    "bindings": "^1.2.1",
-     "nan": "^1.2.0"
+     "nan": "^2.0.9"
    },
 -  "devDependencies": {
 +  "__devDependencies": {
@@ -61,5 +61,5 @@ index c1ab280..848eef0 100644
      "nodeunit": "^0.9.1"
    },
 -- 
-2.5.0
+2.4.5
 

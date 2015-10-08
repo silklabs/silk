@@ -1,18 +1,23 @@
 {
-  "private": true,
-  "keywords": [
-    "iot"
-  ],
-  "repository": {
-    "url": "git@github.com:silklabs/silk-server.git",
-    "type": "git"
+  "version": "1.0.0",
+  "name": "silk-server",
+  "engines": {
+    "node": "^0.12.0"
   },
+  "engineStrict": true,
   "eslintConfig": {
     "env": {
       "es6": true,
       "node": true
     },
     "rules": {
+      "comma-dangle": 0,
+      "default-case": 2,
+      "no-underscore-dangle": 0,
+      "indent": [
+        2,
+        2
+      ],
       "yoda": 0,
       "quotes": [
         2,
@@ -22,14 +27,7 @@
       "strict": false,
       "brace-style": 2,
       "no-shadow": 0,
-      "no-debugger": 1,
-      "default-case": 2,
-      "comma-dangle": 0,
-      "indent": [
-        2,
-        2
-      ],
-      "no-underscore-dangle": 0
+      "no-debugger": 1
     },
     "globals": {
       "suiteTeardown": true,
@@ -41,30 +39,45 @@
     },
     "parser": "babel-eslint"
   },
-  "engineStrict": true,
-  "engines": {
-    "node": "^0.12.0"
+  "repository": {
+    "url": "git@github.com:silklabs/silk-server.git",
+    "type": "git"
   },
-  "name": "silk-server",
-  "version": "1.0.0",
-  "description": "Silk server and client API",
-  "main": "dist/lib/main.js",
-  "scripts": {
-    "test-react-native-api": "./bin/test-react-native-api",
-    "test": "npm run-script lint && npm run-script mocha",
-    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
-    "start": "./bin/start.sh",
-    "preinstall": "./bin/pre-install",
-    "postinstall": "./bin/post-install",
-    "build": "./build.sh",
-    "wwwdev": "./build/browser/build.sh -w",
-    "lint": "eslint test src",
-    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
-    "start-server": "babel-node --harmony src/server/main.js production",
-    "start-socketio": "babel-node --harmony src/socketio/main.js production"
+  "devDependencies": {
+    "timekeeper": "0.0.5",
+    "mocha": "^2.2.5",
+    "dev-null": "^0.1.1"
   },
-  "license": "proprietary",
   "dependencies": {
+    "silk-api-react-native": "null#next",
+    "joi": "^6.6.1",
+    "inline-css": "^1.0.5",
+    "hogan.js": "^3.0.2",
+    "hash.js": "^1.0.3",
+    "express": "^4.12.3",
+    "event-to-promise": "^0.3.3",
+    "base64-js": "0.0.8",
+    "babelify": "^6.3.0",
+    "babel-runtime": "^5.8.23",
+    "babel-eslint": "~3.1.15",
+    "eslint": "^0.22.1",
+    "elliptic": "^5.1.0",
+    "denodeify": "^1.2.1",
+    "debug": "^2.2.0",
+    "cors": "^2.7.1",
+    "browserify": "^11.0.1",
+    "js-base64": "^2.1.9",
+    "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
+    "pbkdf2": "^3.0.4",
+    "node-static": "^0.7.7",
+    "node-fetch": "^1.3.2",
+    "mz": "^2.0.0",
+    "mkdirp": "^0.5.1",
+    "log": "git@github.com:silklabs/log.git#next",
+    "lodash.merge": "^3.3.2",
+    "localStorage": "^1.0.3",
+    "promise": "^6.1.0",
+    "promised-mongo": "^1.2.0",
     "uuid": "^2.0.1",
     "superagent-promise": "^0.2.0",
     "superagent": "^1.2.0",
@@ -73,44 +86,32 @@
     "scrypt": "^4.0.7",
     "range-parser": "^1.0.2",
     "promised-temp": "^0.1.0",
-    "promised-mongo": "^1.2.0",
-    "promise": "^6.1.0",
-    "eslint": "^0.22.1",
-    "elliptic": "^5.1.0",
-    "denodeify": "^1.2.1",
-    "debug": "^2.2.0",
-    "cors": "^2.7.1",
-    "browserify": "^11.0.1",
     "body-parser": "^1.12.2",
     "base64url": "^1.0.4",
     "api-schema": "git@github.com:silklabs/api-schema.git#76867d3486d8d53314073f8d7956692ec2f54524",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",
-    "babel": "^5.8.23",
-    "babel-eslint": "~3.1.15",
-    "babel-runtime": "^5.8.23",
-    "babelify": "^6.3.0",
-    "base64-js": "0.0.8",
-    "event-to-promise": "^0.3.3",
-    "express": "^4.12.3",
-    "hash.js": "^1.0.3",
-    "hogan.js": "^3.0.2",
-    "inline-css": "^1.0.5",
-    "joi": "^6.6.1",
-    "js-base64": "^2.1.9",
-    "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
-    "localStorage": "^1.0.3",
-    "lodash.merge": "^3.3.2",
-    "log": "git@github.com:silklabs/log.git#master",
-    "mkdirp": "^0.5.1",
-    "mz": "^2.0.0",
-    "node-fetch": "^1.3.2",
-    "node-static": "^0.7.7",
-    "pbkdf2": "^3.0.4"
+    "babel": "^5.8.23"
   },
-  "devDependencies": {
-    "timekeeper": "0.0.5",
-    "mocha": "^2.2.5",
-    "dev-null": "^0.1.1"
-  }
+  "license": "proprietary",
+  "scripts": {
+    "wwwdev": "./build/browser/build.sh -w",
+    "build": "./build.sh",
+    "postinstall": "./bin/post-install",
+    "preinstall": "./bin/pre-install",
+    "start-socketio": "babel-node --harmony src/socketio/main.js production",
+    "start-server": "babel-node --harmony src/server/main.js production",
+    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
+    "lint": "eslint test src",
+    "test-react-native-api": "./bin/test-react-native-api",
+    "test": "npm run-script lint && npm run-script mocha",
+    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
+    "start": "./bin/start.sh"
+  },
+  "main": "dist/lib/main.js",
+  "description": "Silk server and client API",
+  "private": true,
+  "keywords": [
+    "iot"
+  ]
 }

@@ -26,7 +26,7 @@ env:
     # http://stackoverflow.com/questions/21860632/archive-distribute-ios-app-to-app-store-via-command-line
     - PROFILE_NAME="CI Build Profile"
     - PROFILE_FILE_NAME="CI_Build_Profile.mobileprovision"
-    - PROFILE_UUID="de7173d9-e0dc-4dc3-8656-bed090ce8720"
+    - PROFILE_UUID="d6f599df-2a83-40fa-89c3-fd40df2f3bc4"
 
 before_script:
   - .travis/add-key.sh

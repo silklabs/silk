@@ -71,7 +71,7 @@ export default class Id {
       throw new Error('no private key for device id ' + this.hash);
     }
     var key = ec.keyFromPrivate(this.priv, 'hex');
-    return key.sign(sha256(token), 'hex');
+    return key.sign(sha256(token)).toDER('hex');
   }
 
   verify(token, signature) {
@@ -85,7 +85,7 @@ export default class Id {
     } catch(e) {
       return false;
     }
-    return key.verify(sha256(token), signature, 'hex');
+    return key.verify(sha256(token), signature);
   }
 
   isValid() {

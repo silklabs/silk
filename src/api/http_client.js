@@ -23,21 +23,25 @@ export default class HttpClient {
     this.baseUrl = baseUrl;
   }
 
-  set key(value) {
-    if (!value.pub) {
-      throw new Error('Invalid key (missing .pub)');
-    }
-    if (!value.priv) {
-      throw new Error('Invalid key (missing .priv)');
-    }
-    this._key = value;
+  get key() {
+    return this.accessToken;
   }
 
-  get key() {
-    if (!this._key) {
+  set key(value) {
+    return this.accessToken = value;
+  }
+
+  set accessToken(value) {
+    this._accessToken = value;
+  }
+
+  get accessToken() {
+    // Allow the key to be undefined or null but throw an error if we attempt to
+    // use it in that state.
+    if (!this._accessToken || !this._accessToken.priv) {
       throw new Error('client.key is missing please set it.');
     }
-    return this._key;
+    return this._accessToken;
   }
 
   /**

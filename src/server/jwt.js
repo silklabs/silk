@@ -80,7 +80,14 @@ export default function (nonce, method) {
       complete: true
     });
 
-    let publicKey = await method(req, res);
+    let jwtHeader = req.unsafeJwt.header;
+    if (!jwtHeader || !jwtHeader.id) {
+      log.error('Invalid jwt header missing .header or .header.id');
+      res.sendStatus(400);
+      return;
+    }
+
+    let publicKey = await method(jwtHeader.id, req, res);
     if (!publicKey) {
       log.error('Missing public key', req.path, req.method, scheme);
       res.sendStatus(403);

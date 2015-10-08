@@ -19,14 +19,10 @@ export default function (ctx) {
     `,
   });
 
-  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (req) => {
-    // All interactions require an account...
-    // XXX: Factor this into it's own module.
-    let id = req.unsafeJwt.header.id;
-
+  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (publicKey) => {
     // Attempt to find an account with this id...
     let account = await ctx.accounts.findByPublicKey({
-      publicKey: id
+      publicKey: publicKey
     });
 
     if (!account) {
@@ -34,7 +30,7 @@ export default function (ctx) {
     }
 
     let accessToken = account.accountTokens.find(v => {
-      return v.publicKey === id;
+      return v.publicKey === publicKey;
     });
 
     if (accessToken) {

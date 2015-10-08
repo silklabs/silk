@@ -49,7 +49,6 @@
     "dev-null": "^0.1.1"
   },
   "dependencies": {
-    "silk-api-react-native": "null#next",
     "joi": "^6.6.1",
     "inline-css": "^1.0.5",
     "hogan.js": "^3.0.2",

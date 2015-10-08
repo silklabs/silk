@@ -26,7 +26,6 @@ let sensors = require('./sensors');
 let server = require('./server');
 let fs = require('mz/fs');
 let deferred = require('./deferred');
-let clapper = require('./clapper');
 
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
@@ -56,7 +55,6 @@ let crashreporter;
 let outbox;
 let networkStatus;
 let logcat;
-let clapDetector;
 let ext;
 let diag;
 let hue;
@@ -117,9 +115,6 @@ function boot() {
       camera.start();
 
       diag = require('./diag')(id.toString());
-
-      clapDetector = new clapper.ClapDetector({}, timeline);
-      camera.on('mic-data', pkt => clapDetector.processPcmFrames(pkt.frame));
 
       btle.on('region-entered', (uuid, rssi) => {
         log.info('Device \'%s\' entered range %d', uuid, rssi);

@@ -113,7 +113,7 @@ updatebranch__silk_api() {
     echo "Updating branch for $api: $from => $to"
     pushd $api
     (
-      for js in $(find . -name \*.js -o -name \*.json); do
+      for js in $(find . -type f -name \*.js -o -name \*.json); do
         (
           set -x;
           sed -i $js -e "s/silk-server-[a-zA-Z0-9]*.herokuapp.com/silk-server-${to}.herokuapp.com/g"

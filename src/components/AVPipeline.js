@@ -18,6 +18,7 @@ const StackedBarChart = createChartClass('StackedBar', ['getBarsAtEvent']);
 const EVENT_SEQUENCE = [
   'recordStartMs',
   'recordEndMs',
+  'deviceEmitMs',
   'arriveAppMs',
   'playbackStartMs',
   'playbackEndMs',
@@ -184,7 +185,9 @@ export default class AVPipeline extends React.Component {
     // recording up to receiving the mp4 segment in the app.  This
     // time is unassigned, hence "dark matter".
     let [/*nullSeries*/,
-      recordingSeries, darkMatterSeries, queuedSeries, playingSeries
+      recordingSeries, deviceQueuedSeries,
+      darkMatterSeries,
+      appQueuedSeries, playingSeries
     ] = series;
     let data = {
       labels,
@@ -195,14 +198,19 @@ export default class AVPipeline extends React.Component {
           data: playingSeries,
         },
         {
-          label: 'queued',
+          label: 'appQueued',
           fillColor: 'yellow',
-          data: queuedSeries,
+          data: appQueuedSeries,
         },
         {
           label: 'darkMatter',
           fillColor: 'black',
           data: darkMatterSeries,
+        },
+        {
+          label: 'deviceQueued',
+          fillColor: 'gray',
+          data: deviceQueuedSeries,
         },
         {
           label: 'recording',

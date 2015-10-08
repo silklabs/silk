@@ -156,4 +156,24 @@ suite('time metadata', () => {
     assert.equal(record.endUTC, endUTC);
   });
 
+  test('.insertOrUpdate', async () => {
+    let record = {
+      id: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+      deviceId: 'foo',
+      metaType: 'event',
+      startUTC: 1,
+      endUTC: 2,
+    };
+
+    let result = await subject.insertOrUpdate(record);
+    assert.equal(record.id, result.id);
+
+    record.endUTC = 3;
+    let result2 = await subject.insertOrUpdate(record);
+    assert.equal(result.id, result2.id);
+
+    let dbRecord = await subject.findById({id: record.id});
+    assert.equal(dbRecord.endUTC, record.endUTC);
+  });
+
 });

@@ -5,27 +5,8 @@
       "node": true
     },
     "rules": {
-      "react/jsx-quotes": [
-        2,
-        "double"
-      ],
-      "react/jsx-indent-props": [
-        2,
-        2
-      ],
-      "react/jsx-closing-bracket-location": [
-        1,
-        {
-          "nonEmpty": "after-props",
-          "selfClosing": "tag-aligned"
-        }
-      ],
-      "yoda": 0,
-      "quotes": [
-        2,
-        "single",
-        "avoid-escape"
-      ],
+      "no-use-before-define": 0,
+      "no-unused-expressions": 0,
       "no-unused-vars": [
         2,
         {
@@ -33,22 +14,41 @@
           "vars": "all"
         }
       ],
-      "no-unused-expressions": 0,
-      "no-use-before-define": 0,
-      "strict": 0,
-      "brace-style": 2,
-      "no-shadow": 0,
-      "no-debugger": 1,
-      "default-case": 2,
-      "comma-dangle": [
-        1,
-        "always-multiline"
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
       ],
+      "yoda": 0,
+      "react/jsx-closing-bracket-location": [
+        1,
+        {
+          "nonEmpty": "after-props",
+          "selfClosing": "tag-aligned"
+        }
+      ],
+      "react/jsx-indent-props": [
+        2,
+        2
+      ],
+      "react/jsx-quotes": [
+        2,
+        "double"
+      ],
+      "no-underscore-dangle": 0,
       "indent": [
         2,
         2
       ],
-      "no-underscore-dangle": 0
+      "comma-dangle": [
+        1,
+        "always-multiline"
+      ],
+      "default-case": 2,
+      "no-debugger": 1,
+      "no-shadow": 0,
+      "brace-style": 2,
+      "strict": 0
     },
     "globals": {},
     "ecmaFeatures": {
@@ -70,24 +70,24 @@
     "babel-core": "^5.8.23"
   },
   "dependencies": {
-    "uuid": "^2.0.1",
-    "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
+    "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#v0.5.1-silk",
+    "react-native-linear-gradient": "^0.3.2",
     "lodash.merge": "^3.3.2",
     "joi": "^5.1.0",
     "events": "^1.0.2",
     "deep-equal": "^1.0.1",
     "debug": "^2.2.0",
     "buffer": "^3.2.2",
+    "react-timer-mixin": "^0.13.2",
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#next",
+    "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
+    "uuid": "^2.0.1",
     "babel-runtime": "^5.8.20",
     "art": "^0.10.0",
-    "log": "git@github.com:silklabs/log.git#master",
+    "log": "git@github.com:silklabs/log.git#next",
     "moment": "^2.10.3",
     "react-native": "^0.11.4",
-    "react-native-button": "^1.2.0",
-    "react-native-linear-gradient": "^0.3.2",
-    "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#v0.5.1-silk",
-    "react-timer-mixin": "^0.13.2",
-    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master"
+    "react-native-button": "^1.2.0"
   },
   "scripts": {
     "update": "./tools/update",

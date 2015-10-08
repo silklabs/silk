@@ -55,6 +55,13 @@ const JUMP_FACTOR = 2;
  */
 const ENABLE_CONTINUOUS_RATE_ADJUSTMENT = false;
 
+function segmentMeterId(segment) {
+  // Use the segment's start timestamp as its meter ID, because
+  // device, server, and app always see this same value tagged on
+  // the segment metadata.
+  return '' + segment.startUTC;
+}
+
 class Meter {
   constructor(tag, socket, deviceId) {
     this.tag = tag;
@@ -66,7 +73,7 @@ class Meter {
     this.socket.emit('diag', {
       id: this.deviceId,
       type: this.tag,
-      log: { id, what, whenMs },
+      log: { id, what, whenMs, nowMs: Date.now() },
     });
   }
 
@@ -253,7 +260,12 @@ export default React.createClass({
     this.appendSegment(segment);
     this.setState({ maxTime: segment.startUTC });
 
-    this.meter.meter('arriveApp', segment.id);
+    let meterId = segmentMeterId(segment);
+    // TODO: we could batch meters if it's more efficient
+    this.meter.meter('recordStart', meterId, segment.startUTC);
+    // TODO: get real video duration
+    this.meter.meter('recordEnd', meterId, segment.startUTC + 1000);
+    this.meter.meter('arriveApp', meterId);
   },
 
   /**
@@ -330,7 +342,7 @@ export default React.createClass({
     let current = segments[0];
 
     if (current && this.meter) {
-      this.meter.meter('playbackEnd', current.id);
+      this.meter.meter('playbackEnd', segmentMeterId(current));
     }
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
@@ -357,7 +369,7 @@ export default React.createClass({
     let segment = this._videoSegments[0];
 
     if (segment && this.meter) {
-      this.meter.meter('playbackStart', segment.id);
+      this.meter.meter('playbackStart', segmentMeterId(segment));
     }
     // Emit a segment start event so we can do processing based on segment
     // specific events.

@@ -11,9 +11,20 @@ import formatOutput from './format_output';
 
 const TYPES = Joi.string().only(['log', 'video', 'event']).required();
 
+// Mongo IDs are 12 bytes long, 24 hex chars.
+const MONGO_ID_REGEX = /[0-9a-f]{24}/;
+
+function idQuery(id) {
+  if (id.match(MONGO_ID_REGEX)) {
+    return {_id: mongo.ObjectId(id)}; // eslint-disable-line new-cap
+  }
+  return {id};
+}
+
 export default class TimeMetadata extends Base {
   static SCHEMA = {
     metadata: Joi.object().keys({
+      id: Joi.string().optional(), // Optional for now so we don't break existing clients
       deviceId: Joi.string().required(),
       previousId: Joi.string().optional(),
       metaType: TYPES,
@@ -70,9 +81,7 @@ export default class TimeMetadata extends Base {
 
   async findById(payload) {
     payload = this.validate(payload, 'findById');
-    let result = await this.collection.findOne({
-      _id: mongo.ObjectId(payload.id), // eslint-disable-line new-cap
-    });
+    let result = await this.collection.findOne(idQuery(payload.id));
     return formatOutput(result);
   }
 
@@ -154,38 +163,55 @@ export default class TimeMetadata extends Base {
     return result.map(formatOutput);
   }
 
+  async _setPrevious(previousId, id) {
+    if (!previousId) {
+      return;
+    }
+    // XXX: This part is sketchy and should be part of one transaction later.
+    await this.collection.update(
+      idQuery(previousId),
+      {
+        $set: { nextId: id }
+      }
+    );
+  }
+
   /**
    * Insert the next item in the time series.
    */
   async insertNext(payload) {
     payload = this.validate(payload, 'metadata');
-    let newItem = await this.collection.insert(payload);
-
-    if (payload.previousId) {
-      // XXX: This part is sketchy and should be part of one transaction later.
-      await this.collection.update(
-        {
-          _id: mongo.ObjectId(payload.previousId), // eslint-disable-line new-cap
-        },
-        {
-          $set: { nextId: newItem._id }
-        }
-      );
+    if (payload.id) {
+      return await this.insertOrUpdate(payload);
     }
-
+    let newItem = await this.collection.insert(payload);
+    await this._setPrevious(payload.previousId, newItem._id);
     return { id: newItem._id.toString() };
   }
 
   async update(id, payload) {
     payload = this.validate(payload, 'update');
-    await this.collection.update(
-      {
-        _id: mongo.ObjectId(id), // eslint-disable-line new-cap
-      },
-      {
-        $set: payload,
-      }
-    );
+    await this.collection.update(idQuery(id), {$set: payload});
+    return { id };
+  }
+
+  async insertOrUpdate(payload) {
+    payload = this.validate(payload, 'metadata');
+    let { id } = payload;
+    if (typeof id !== 'string') {
+      throw new Error(`'id' property required.`);
+    }
+
+    let existing = await this.collection.findOne({id});
+    if (existing) {
+      await this.collection.update(
+        { _id: mongo.ObjectId(existing._id) },
+        { $set: payload }
+      );
+    } else {
+      await this.collection.insert(payload);
+      await this._setPrevious(payload.previousId, payload.id);
+    }
     return { id };
   }
 }

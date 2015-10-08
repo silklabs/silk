@@ -1,9 +1,59 @@
 {
+  "private": true,
+  "keywords": [
+    "iot"
+  ],
+  "repository": {
+    "url": "git@github.com:silklabs/silk-server.git",
+    "type": "git"
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    },
+    "rules": {
+      "yoda": 0,
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
+      ],
+      "strict": false,
+      "brace-style": 2,
+      "no-shadow": 0,
+      "no-debugger": 1,
+      "default-case": 2,
+      "comma-dangle": 0,
+      "indent": [
+        2,
+        2
+      ],
+      "no-underscore-dangle": 0
+    },
+    "globals": {
+      "suiteTeardown": true,
+      "suiteSetup": true,
+      "teardown": true,
+      "setup": true,
+      "test": true,
+      "suite": true
+    },
+    "parser": "babel-eslint"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": "^0.12.0"
+  },
   "name": "silk-server",
   "version": "1.0.0",
   "description": "Silk server and client API",
   "main": "dist/lib/main.js",
   "scripts": {
+    "test-react-native-api": "./bin/test-react-native-api",
+    "test": "npm run-script lint && npm run-script mocha",
+    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
+    "start": "./bin/start.sh",
     "preinstall": "./bin/pre-install",
     "postinstall": "./bin/post-install",
     "build": "./build.sh",
@@ -11,14 +61,28 @@
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
     "start-server": "babel-node --harmony src/server/main.js production",
-    "start-socketio": "babel-node --harmony src/socketio/main.js production",
-    "start": "./bin/start.sh",
-    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
-    "test": "npm run-script lint && npm run-script mocha",
-    "test-react-native-api": "./bin/test-react-native-api"
+    "start-socketio": "babel-node --harmony src/socketio/main.js production"
   },
   "license": "proprietary",
   "dependencies": {
+    "uuid": "^2.0.1",
+    "superagent-promise": "^0.2.0",
+    "superagent": "^1.2.0",
+    "socket.io-client": "^1.3.5",
+    "socket.io": "^1.3.5",
+    "scrypt": "^4.0.7",
+    "range-parser": "^1.0.2",
+    "promised-temp": "^0.1.0",
+    "promised-mongo": "^1.2.0",
+    "promise": "^6.1.0",
+    "eslint": "^0.22.1",
+    "elliptic": "^5.1.0",
+    "denodeify": "^1.2.1",
+    "debug": "^2.2.0",
+    "cors": "^2.7.1",
+    "browserify": "^11.0.1",
+    "body-parser": "^1.12.2",
+    "base64url": "^1.0.4",
     "api-schema": "git@github.com:silklabs/api-schema.git#76867d3486d8d53314073f8d7956692ec2f54524",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",
@@ -27,14 +91,6 @@
     "babel-runtime": "^5.8.23",
     "babelify": "^6.3.0",
     "base64-js": "0.0.8",
-    "base64url": "^1.0.4",
-    "body-parser": "^1.12.2",
-    "browserify": "^11.0.1",
-    "cors": "^2.7.1",
-    "debug": "^2.2.0",
-    "denodeify": "^1.2.1",
-    "elliptic": "^5.1.0",
-    "eslint": "^0.22.1",
     "event-to-promise": "^0.3.3",
     "express": "^4.12.3",
     "hash.js": "^1.0.3",
@@ -50,67 +106,11 @@
     "mz": "^2.0.0",
     "node-fetch": "^1.3.2",
     "node-static": "^0.7.7",
-    "pbkdf2": "^3.0.4",
-    "promise": "^6.1.0",
-    "promised-mongo": "^1.2.0",
-    "promised-temp": "^0.1.0",
-    "range-parser": "^1.0.2",
-    "scrypt": "^4.0.7",
-    "socket.io": "^1.3.5",
-    "socket.io-client": "^1.3.5",
-    "superagent": "^1.2.0",
-    "superagent-promise": "^0.2.0",
-    "uuid": "^2.0.1"
+    "pbkdf2": "^3.0.4"
   },
   "devDependencies": {
-    "dev-null": "^0.1.1",
+    "timekeeper": "0.0.5",
     "mocha": "^2.2.5",
-    "timekeeper": "0.0.5"
-  },
-  "engines": {
-    "node": "^0.12.0"
-  },
-  "engineStrict": true,
-  "eslintConfig": {
-    "parser": "babel-eslint",
-    "globals": {
-      "suite": true,
-      "test": true,
-      "setup": true,
-      "teardown": true,
-      "suiteSetup": true,
-      "suiteTeardown": true
-    },
-    "rules": {
-      "strict": false,
-      "brace-style": 2,
-      "no-shadow": 0,
-      "no-debugger": 1,
-      "default-case": 2,
-      "comma-dangle": 0,
-      "indent": [
-        2,
-        2
-      ],
-      "no-underscore-dangle": 0,
-      "quotes": [
-        2,
-        "single",
-        "avoid-escape"
-      ],
-      "yoda": 0
-    },
-    "env": {
-      "node": true,
-      "es6": true
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:silklabs/silk-server.git"
-  },
-  "keywords": [
-    "iot"
-  ],
-  "private": true
+    "dev-null": "^0.1.1"
+  }
 }

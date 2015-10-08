@@ -187,16 +187,12 @@ class DetectFace {
       }
       working = true;
 
-      let start = Date.now();
       this._env.camera.getPreviewFrame(async (err, im, orig) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
           return;
         }
-        let diff = Date.now() - start;
-        log.verbose(`Acquired preview image in ${diff}ms`);
-
         // Calculate preview scale
         previewScale = orig.width() / im.width();
 
@@ -211,7 +207,7 @@ class DetectFace {
         let motionRect = rects[0]; // Only one motion rectangle is supported right now
         let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
-        start = Date.now();
+        let start = Date.now();
         let faces = [];
 
         try {
@@ -231,7 +227,7 @@ class DetectFace {
             }
           }
 
-          diff = Date.now() - start;
+          let diff = Date.now() - start;
           let msg = `Cascade ran for ${diff}ms`;
           if (diff > 500) {
             log.warn(msg); // Time to optimize?

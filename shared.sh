@@ -99,8 +99,10 @@ updatePackageVersion() {
   local name=$1
   local version=$2
 
-  jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1
   local version_git=$(jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1)
+  if [[ "$version_git" == "null" ]]; then
+    return
+  fi
   jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r package.json > package.json.new
   mv package.json.new package.json
 }

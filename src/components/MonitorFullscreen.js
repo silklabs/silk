@@ -116,14 +116,13 @@ class LiveSegmentProvider {
       nextId: null,
       previousId: this.lastId,
       startUTC: message.when,
-      // XXX: We should really send real duration in message.
-      endUTC: message.when,
+      endUTC: message.when + (message.durationMs || 0),
       objects: message.objects,
     });
 
     // Keep track of the previous id (required for state tracking).
     this.lastId = id;
-    this.onSegment(segment);
+    this.onSegment(segment, message);
   }
 
   start(socket, id) {
@@ -251,7 +250,7 @@ export default React.createClass({
     });
   },
 
-  onLiveSegment(segment) {
+  onLiveSegment(segment, message) {
     if (this._videoSegments.length === 0) {
       console.log('set lag');
       this.liveVideoLag = Date.now() - segment.startUTC;
@@ -263,8 +262,8 @@ export default React.createClass({
     let meterId = segmentMeterId(segment);
     // TODO: we could batch meters if it's more efficient
     this.meter.meter('recordStart', meterId, segment.startUTC);
-    // TODO: get real video duration
-    this.meter.meter('recordEnd', meterId, segment.startUTC + 1000);
+    this.meter.meter('recordEnd', meterId, segment.endUTC);
+    this.meter.meter('deviceEmit', meterId, message.deviceEmitMs);
     this.meter.meter('arriveApp', meterId);
   },
 

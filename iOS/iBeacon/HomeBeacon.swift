@@ -16,26 +16,19 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
   let serviceUuid =
     CBUUID(string: "2d1b42ac-40cc-4ff2-a97d-b67027bc89f9")
 
-  // This characteristic is used for outgoing data.
-  let indicateCharacteristicUuid =
+  // This characteristic is used for sending and receiving data.
+  let characteristicUuid =
     CBUUID(string: "59ba85fb-6fba-439c-95b0-9307e62d4ca1")
-  private let indicateCharacteristicProperties =
-    CBCharacteristicProperties.Indicate
-  private let indicateCharacteristicPermissions =
-    CBAttributePermissions(rawValue: 0)
-
-  // This characteristic is used for incoming data.
-  let writeCharacteristicUuid =
-    CBUUID(string: "f08ea3c8-e858-4b30-8b86-f2d39690acc1")
-  private let writeCharacteristicProperties =
-    CBCharacteristicProperties.Write
-  private let writeCharacteristicPermissions =
+  private let characteristicProperties: CBCharacteristicProperties = [
+    .Indicate,
+    .Write
+  ]
+  private let characteristicPermissions =
     CBAttributePermissions.Writeable
 
   private var queue: dispatch_queue_t
   private let service: CBMutableService
-  private let indicateCharacteristic: CBMutableCharacteristic
-  private let writeCharacteristic: CBMutableCharacteristic
+  private let characteristic: CBMutableCharacteristic
   private var peripheral: CBPeripheralManager
   private var socketManager: BLESocketManager
 
@@ -66,22 +59,14 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
   override init() {
     log.debug("HomeBeacon()")
 
-    self.indicateCharacteristic =
-      CBMutableCharacteristic(type: indicateCharacteristicUuid,
-                              properties: indicateCharacteristicProperties,
+    self.characteristic =
+      CBMutableCharacteristic(type: characteristicUuid,
+                              properties: characteristicProperties,
                               value: nil,
-                              permissions: indicateCharacteristicPermissions)
-    self.writeCharacteristic =
-      CBMutableCharacteristic(type: writeCharacteristicUuid,
-                              properties: writeCharacteristicProperties,
-                              value: nil,
-                              permissions: writeCharacteristicPermissions)
+                              permissions: characteristicPermissions)
 
     self.service = CBMutableService(type: serviceUuid, primary: true)
-    self.service.characteristics = [
-      self.indicateCharacteristic,
-      self.writeCharacteristic,
-    ]
+    self.service.characteristics = [ self.characteristic ]
 
     self.socketManager = BLESocketManager.getOrCreateInstance()
     self.queue = self.socketManager.methodQueue
@@ -205,7 +190,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
 
       let success =
         self.peripheral.updateValue(chunk,
-                                    forCharacteristic: self.indicateCharacteristic,
+                                    forCharacteristic: self.characteristic,
                                     onSubscribedCentrals: [connection.central])
 
       // Only update |connection.outgoingQueue| if that succeeded. Otherwise we
@@ -275,8 +260,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
              "\(request.characteristic.UUID)");
 
     var error: CBATTError
-    if request.characteristic.UUID == indicateCharacteristicUuid ||
-       request.characteristic.UUID == writeCharacteristicUuid {
+    if request.characteristic.UUID == characteristicUuid {
       error = .ReadNotPermitted
     } else {
       error = .RequestNotSupported
@@ -295,13 +279,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
     var pendingData = [Connection: NSMutableData]()
 
     for request in requests {
-      if request.characteristic.UUID == indicateCharacteristicUuid {
-        peripheral.respondToRequest(request,
-                                    withResult:CBATTError.WriteNotPermitted)
-        return
-      }
-
-      if request.characteristic.UUID != writeCharacteristicUuid {
+      if request.characteristic.UUID != characteristicUuid {
         peripheral.respondToRequest(request,
                                     withResult:CBATTError.RequestNotSupported)
         return
@@ -342,7 +320,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
                          didSubscribeToCharacteristic characteristic: CBCharacteristic) {
     assert(peripheral == self.peripheral)
 
-    if characteristic.UUID == indicateCharacteristicUuid {
+    if characteristic.UUID == characteristicUuid {
 
       if let _ = self.connectionsByCentral[central] {
         log.error("Central attempted to subscribe more than once!");
@@ -363,7 +341,7 @@ class HomeBeacon: NSObject, CBPeripheralManagerDelegate {
                          didUnsubscribeFromCharacteristic characteristic: CBCharacteristic) {
     assert(peripheral == self.peripheral)
 
-    if characteristic.UUID == indicateCharacteristicUuid {
+    if characteristic.UUID == characteristicUuid {
       if let connection = self.connectionsByCentral[central] {
         self.connectionsById[connection.id] = nil
         self.connectionsByCentral[central] = nil

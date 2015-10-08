@@ -31,6 +31,7 @@ MERGE_GITS="\
   silk-webapp \
 "
 GITS="\
+  log \
   silk-api-node \
   silk-api-react-native \
   silk-device-locked-node-modules \

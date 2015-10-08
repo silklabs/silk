@@ -264,6 +264,7 @@ export default React.createClass({
     this.meter.meter('recordStart', meterId, segment.startUTC);
     this.meter.meter('recordEnd', meterId, segment.endUTC);
     this.meter.meter('deviceEmit', meterId, message.deviceEmitMs);
+    this.meter.meter('serverEmit', meterId, message.serverEmitMs);
     this.meter.meter('arriveApp', meterId);
   },
 

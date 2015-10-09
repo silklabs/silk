@@ -54,8 +54,8 @@ export default class extends AsyncComponent {
     if (this.state.serverUrl !== serverUrl && this.state.userState !== null) {
       let { userState } = this.state;
       await userState.signOut();
-      userState.off('authenticated', this.onAuthenticated);
-      userState.off('unauthenticated', this.onUnauthenticated);
+      userState.removeListener('authenticated', this.onAuthenticated);
+      userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
 
     let api = API({serverUrl}); /* eslint new-cap: 0 */

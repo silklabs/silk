@@ -1,27 +1,13 @@
-From bf25588470868013097e35f1d069f1b4fea0a425 Mon Sep 17 00:00:00 2001
+From fbc5b585eadc2efaa59412e2b58f96aca18d6574 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
-Date: Thu, 8 Oct 2015 10:42:54 -0700
+Date: Fri, 9 Oct 2015 11:16:59 -0700
 Subject: [PATCH] Androidify
 
 ---
- Android.mk   |  6 ++++++
- index.js     |  2 +-
- package.json | 10 +++++-----
- 3 files changed, 12 insertions(+), 6 deletions(-)
- create mode 100644 Android.mk
+ index.js     | 2 +-
+ package.json | 8 +++-----
+ 2 files changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/Android.mk b/Android.mk
-new file mode 100644
-index 0000000..40174ba
---- /dev/null
-+++ b/Android.mk
-@@ -0,0 +1,6 @@
-+LOCAL_PATH:= $(call my-dir)
-+
-+include $(CLEAR_VARS)
-+LOCAL_MODULE_TAGS := optional
-+LOCAL_NODE_MODULE_TYPE := file
-+include $(BUILD_NODE_MODULE)
 diff --git a/index.js b/index.js
 index 83b484b..ee91ea8 100644
 --- a/index.js
@@ -30,25 +16,23 @@ index 83b484b..ee91ea8 100644
 -module.exports = require('bindings')('kissfft');
 +module.exports = require('build/kissfft.node');
 diff --git a/package.json b/package.json
-index 747454d..4f568ff 100644
+index 29a7952..b0a9405 100644
 --- a/package.json
 +++ b/package.json
-@@ -2,10 +2,11 @@
+@@ -2,10 +2,9 @@
    "name": "kissfft",
-   "version": "0.0.8",
+   "version": "0.0.9",
    "description": "FFT for node using kissfft.",
 -  "main": "index.js",
-+  "os": [
-+    "android"
-+  ],
 +  "main": "build/Release/kissfft.node",
++  "os": ["android"],
    "scripts": {
 -    "test": "./node_modules/nodeunit/bin/nodeunit test.js",
 -    "install": "node-gyp rebuild"
    },
    "keywords": [
      "fft",
-@@ -21,10 +22,9 @@
+@@ -21,10 +20,9 @@
    },
    "license": "BSD",
    "dependencies": {

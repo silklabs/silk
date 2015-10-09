@@ -65,6 +65,7 @@ class InputDevice extends events.EventEmitter
     }
 
     if (event) {
+      log.debug(`input event: ${event.type}, ${event.keyId}`);
       this.emit(event.type, event);
     }
     this._read();

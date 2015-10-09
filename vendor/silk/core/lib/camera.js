@@ -130,7 +130,7 @@ class CameraStream extends EventEmitter {
     this.timeline = timeline;
     this._ready = false;
     this._cvVideoCapture = null;
-    this._busy = false;
+    this._cvVideoCaptureBusy = false;
     this._queue = []; // Queue of pending preview frame requests
 
     // Cache last few images to guarantee the consumers get the image they are
@@ -246,7 +246,7 @@ class CameraStream extends EventEmitter {
   }
 
   _retrieveNextFrame() {
-    if (this._busy || this._queue.length === 0) {
+    if (this._queue.length === 0) {
       return;
     }
 
@@ -306,7 +306,14 @@ class CameraStream extends EventEmitter {
     if (!this._cvVideoCapture) {
       return;
     }
+    if (this._cvVideoCaptureBusy) {
+      log.warn('Still waiting on preview frame, unable to read next');
+      return;
+    }
+    this._cvVideoCaptureBusy = true;
     this._cvVideoCapture.read((err, im) => {
+      this._cvVideoCaptureBusy = false;
+
       if (err || (im.width() <= 0) || (im.height() <= 0)) {
         log.error(`Unable to fetch frame: ${err}`);
         return;

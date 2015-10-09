@@ -18,6 +18,7 @@ const StackedBarChart = createChartClass('StackedBar', ['getBarsAtEvent']);
 const EVENT_SEQUENCE = [
   'recordStartMs',
   'recordEndMs',
+  'deviceDropMs',
   'deviceEmitMs',
   'serverEmitMs',
   'arriveAppMs',
@@ -26,12 +27,46 @@ const EVENT_SEQUENCE = [
 ];
 const FIRST_EVENT = EVENT_SEQUENCE[0];
 
-
 // How many rows (segments) we display in the chart.  This number is
 // picked arbitrarily because it fits well on cjones's monitor.  A
 // better approach might be to compute the number dynamically from
 // available window width/height based on some heuristics.
 const MAX_NR_SEGMENTS = 20;
+
+/**
+ * Return <0 if `a` happened before `b`, 1 if `a` happened after `b`,
+ * and 0 otherwise.  Happens-before is defined on the timestamp of the
+ * first event we track.
+ */
+function cmpSegmentTimestamps(a, b) {
+  return a[FIRST_EVENT] - b[FIRST_EVENT];
+}
+
+/**
+ * If `eventIdx` is missing from `segment`, add it with the value
+ * `nextValue`.  Then recursively backfill all events *before*
+ * `eventIdx` with the value from the event that happened most
+ * recently after the missing event.  But stop backfilling at
+ * `stopIdx`.
+ *
+ * For example, if `segment` is
+ *
+ *   [   , 23,   , 42,   ,    ]
+ *
+ * then `backfill(segment, 5, 66, 0)` will update `segment` to
+ *
+ *   [   , 23, 42, 42, 66, 66 ]
+ */
+function backfillMissingEvents(segment, eventIdx, nextValue, stopIdx = -1) {
+  if (eventIdx <= stopIdx) {
+    return;
+  }
+  let eventProp = EVENT_SEQUENCE[eventIdx];
+  if (!(eventProp in segment)) {
+    segment[eventProp] = nextValue;
+  }
+  backfillMissingEvents(segment, eventIdx - 1, segment[eventProp]);
+}
 
 // Don't animate when the chart redraws.
 chartjs.defaults.global.animation = false;
@@ -124,6 +159,12 @@ export default class AVPipeline extends React.Component {
       this.playbackExited = false;
       segments = {};
     }
+    let eventProp = event.what + 'Ms';
+    let eventIdx = EVENT_SEQUENCE.indexOf(eventProp);
+    if (eventIdx < 0) {
+      console.warn(`Ignoring unknown avpipeline event ${event.what}`);
+      return;
+    }
     // We know that `event` isn't an 'exit' event, so the `id` and
     // `nowMs` properties aren't optional.  For segment events, the
     // `id` field is the stringified timestamp for the start of video
@@ -132,9 +173,12 @@ export default class AVPipeline extends React.Component {
     if (!(id in segments)) {
       segments[id] = { id };
     }
-    segments[id][event.what + 'Ms'] = event.whenMs;
+    segments[id][eventProp] = event.whenMs;
+    // Make the series between all events we're missing before this
+    // one have the value 0.
+    backfillMissingEvents(segments[id], eventIdx - 1, event.whenMs, 0);
     this.setState({
-      lastNowMs: event.nowMs,
+      lastNowMs: event.nowMs || this.state.lastNowMs,
       segments: this.filterSegments(segments, MAX_NR_SEGMENTS),
     });
   };
@@ -147,7 +191,7 @@ export default class AVPipeline extends React.Component {
     let ids =
           Object.keys(segments)
           .filter(id => FIRST_EVENT in segments[id])
-          .sort((a, b) => segments[b][FIRST_EVENT] - segments[a][FIRST_EVENT])
+          .sort((a, b) => cmpSegmentTimestamps(segments[b], segments[a]))
           .slice(0, nrKeep);
     let filtered = {};
     ids.forEach(id => filtered[id] = segments[id]);
@@ -186,12 +230,21 @@ export default class AVPipeline extends React.Component {
     // recording up to receiving the mp4 segment in the app.  This
     // time is unassigned, hence "dark matter".
     let [/*nullSeries*/,
+      // recordStart vvv
       recordingSeries,
+      // ^^^ recordEnd vvv
       deviceQueuedSeries,
+      // ^^^ deviceDrop vvv
+      deviceDroppedSeries,
+      // ^^^ deviceEmit vvv
       darkMatterUploadSeries,
+      // ^^^ serverEmit vvv
       darkMatterDownloadSeries,
+      // ^^^ arriveApp vvv
       appQueuedSeries,
+      // ^^^ playbackStart vvv
       playingSeries,
+      // ^^^ playbackEnd
     ] = series;
     let data = {
       labels,
@@ -215,6 +268,14 @@ export default class AVPipeline extends React.Component {
           label: 'darkMatterUpload',
           fillColor: 'blue',
           data: darkMatterUploadSeries,
+        },
+        {
+          label: 'deviceDropped',
+          fillColor: 'rgba(220,192,203,0.3)',
+          strokeColor: 'rgba(220,192,203,0.8)',
+          highlightFill: 'rgba(220,192,203,0.8)',
+          highlightStroke: 'rgba(220,192,203,1)',
+          data: deviceDroppedSeries,
         },
         {
           label: 'deviceQueued',
@@ -256,7 +317,7 @@ export default class AVPipeline extends React.Component {
     // Sort descending by timestamp
     let sortedSegments =
           Object.keys(segments)
-          .sort((a, b) => segments[b].arriveAppMs - segments[a].arriveAppMs)
+          .sort((a, b) => cmpSegmentTimestamps(segments[b], segments[a]))
           .map(id => segments[id]);
     let content = (sortedSegments.length ?
                    this.renderChart(sortedSegments) :

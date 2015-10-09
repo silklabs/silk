@@ -18,7 +18,7 @@ import API from 'silk-api-react-native';
 
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';
-import TabsView from './TabsView';
+import Main from './Main';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
 import WifiSettings from './WifiSettings';
@@ -26,7 +26,7 @@ import WifiSettings from './WifiSettings';
 const routeToComponentMap = {
   SignIn,
   SignUp,
-  Tabs: TabsView,
+  Main,
   WifiSettings,
 };
 
@@ -89,7 +89,7 @@ export default class extends AsyncComponent {
       return <View />;
     }
 
-    let initialRoute = this.state.accessToken ? 'Tabs' : 'SignIn';
+    let initialRoute = this.state.accessToken ? 'Main' : 'SignIn';
     // By keying the navigator on the serverUrl and accessToken, a
     // change in either (e.g. logging in or changing the server
     // config) will trigger a complete re-render of the app.

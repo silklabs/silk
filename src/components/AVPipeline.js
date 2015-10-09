@@ -207,14 +207,14 @@ export default class AVPipeline extends React.Component {
           data: appQueuedSeries,
         },
         {
-          label: 'darkMatterUpload',
+          label: 'darkMatterDownload',
           fillColor: 'black',
-          data: darkMatterUploadSeries,
+          data: darkMatterDownloadSeries,
         },
         {
-          label: 'darkMatterDownload',
+          label: 'darkMatterUpload',
           fillColor: 'blue',
-          data: darkMatterDownloadSeries,
+          data: darkMatterUploadSeries,
         },
         {
           label: 'deviceQueued',

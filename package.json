@@ -21,18 +21,21 @@
     "art": "^0.10.0",
     "log": "git@github.com:silklabs/log.git#master",
     "moment": "^2.10.3",
-    "react-native": "^0.11.4",
+    "react-native": "^0.12.0",
     "react-native-button": "^1.2.0",
     "react-native-linear-gradient": "^0.3.2",
-    "react-native-webpack-server": "git@github.com:silklabs/react-native-webpack-server.git#v0.5.1-silk",
+    "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#3afbe2f2d57ade52f419764f22aff97865ca0bea",
     "react-timer-mixin": "^0.13.2",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master"
   },
+  "engines": {
+    "node": ">= 4.0.0"
+  },
   "scripts": {
     "update": "./tools/update",
-    "bundle": "react-native-webpack-server bundle --port 60050 --packagerPort 60051 --webpackPort 60052",
+    "bundle": "rnws bundle --port 60050 --packagerPort 60051 --webpackPort 60052 --no-optimize",
     "localBundle": "./tools/local_bundle",
-    "start": "react-native-webpack-server start --port 8082 --packagerPort 8081 --webpackPort 60046",
+    "start": "rnws start --port 8082 --packagerPort 8081 --webpackPort 60046",
     "postinstall": "./tools/patch",
     "lint": "eslint src"
   },

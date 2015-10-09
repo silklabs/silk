@@ -5,9 +5,8 @@ class SystemButtonManager : RCTViewManager {
     return SystemButton(eventDispatcher: self.bridge!.eventDispatcher)
   }
 
-  @objc override func customDirectEventTypes() -> [AnyObject]! {
+  @objc override func customBubblingEventTypes() -> [AnyObject]! {
     return [
-      // XXX: Figure out why we can't name this onPress (results in conflict error).
       "press",
     ]
   }

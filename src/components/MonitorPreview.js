@@ -184,7 +184,7 @@ export var MonitorPreview = React.createClass({
 
     return (
       <TouchableOpacity
-        onPress={this.showVideo}
+        onPress={() => this.showVideo()}
         style={[styles.monitorPreviewContainer, previewStyle]}>
         <ImageView style={styles.preview} blob={this.state.blob} />
         {logo}

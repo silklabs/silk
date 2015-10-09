@@ -252,8 +252,8 @@ export default React.createClass({
 
   onLiveSegment(segment, message) {
     if (this._videoSegments.length === 0) {
-      console.log('set lag');
       this.liveVideoLag = Date.now() - segment.startUTC;
+      console.log('updated live video lag to', this.liveVideoLag);
     }
 
     this.appendSegment(segment);

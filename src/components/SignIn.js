@@ -30,16 +30,14 @@ class LogoView extends React.Component {
 class SignInControls extends AsyncComponent {
 
   static propTypes = {
+    navigator: React.PropTypes.object,
     userState: React.PropTypes.object,
   };
 
   onSignIn = async (props) => {
     try {
       let { userState } = this.props;
-      let success = await userState.attemptSignIn(props.email, props.password);
-      if (success) {
-        this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
-      }
+      await userState.attemptSignIn(props.email, props.password);
     } catch (err) {
       console.log('Failed to sign in', err);
     }
@@ -49,15 +47,12 @@ class SignInControls extends AsyncComponent {
     let { userState } = this.props;
 
     this.setStateAsync({ loginInProgress: true });
-    let success = await userState.attemptDeveloperLogin();
+    await userState.attemptDeveloperLogin();
     this.setStateAsync({ loginInProgress: false });
-    if (success) {
-      this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
-    }
   };
 
   onSignUp = () => {
-    this.props.navigator.pushAsync({ name: 'SignUp', index: 0 });
+    this.props.navigator.pushAsync({ name: 'SignUp' });
   };
 
   onLearnMore = () => {

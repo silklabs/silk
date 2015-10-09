@@ -64,7 +64,7 @@
   <project name="silklabs/node-kissfft"
            path="external/node-kissfft"
            remote="github"
-           revision="f59bb22ef33bc5633f2069a6c2a74dfa8292376b" clone-depth="1"/>
+           revision="f59bb22ef33bc5633f2069a6c2a74dfa8292376b"/>
   <project name="sandeepmistry/noble"
            path="external/noble"
            remote="github"

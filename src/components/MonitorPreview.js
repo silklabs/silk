@@ -207,6 +207,7 @@ export var MonitorPreview = React.createClass({
     }
     return events.map((event) => (
       <TouchableOpacity
+        key={'event.' + event.startUTC}
         onPress={() => this.showVideo(event.startUTC - 2000)}
         style={styles.eventRow}>
         <Text>{this._labelForEvent(event)}</Text>

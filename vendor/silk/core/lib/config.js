@@ -150,7 +150,7 @@ class DeviceConfig extends events.EventEmitter {
       .then(configService => {
         if (this._configService) {
           assert(this._configService === configService);
-        } else {
+        } else if (configService !== null) {
           configService.state = this._registrationState;
           configService.errorMessage = this._errorMessage;
           configService.serverConnectionStatus = this._serverConnectionStatus;

@@ -43,7 +43,7 @@ export class MonitorConnecting extends React.Component {
 
 export var MonitorPreview = React.createClass({
   propTypes: {
-    id: React.PropTypes.string.isRequired,
+    deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
     status: React.PropTypes.string.isRequired,
     navigator: React.PropTypes.object.isRequired,
@@ -75,7 +75,7 @@ export var MonitorPreview = React.createClass({
   },
 
   componentWillMount() {
-    let { socket, id } = this.props;
+    let { socket, deviceId } = this.props;
 
     this._queue = new PreviewQueue(this.props.label, message => {
       this.setState({
@@ -84,12 +84,12 @@ export var MonitorPreview = React.createClass({
       });
     });
 
-    let stream = `preview-${id}`;
+    let stream = `preview-${deviceId}`;
     socket.on(stream, this.onPreviewFrame);
     socket.join(stream);
 
     this.props.api.timeMeta.findInTimeInterval({
-      deviceId: this.props.id,
+      deviceId: this.props.deviceId,
       metaType: 'event',
       startTime: Date.now() - 86400000,
       endTime: Date.now(),
@@ -100,8 +100,8 @@ export var MonitorPreview = React.createClass({
   },
 
   componentWillUnmount() {
-    let { socket, id } = this.props;
-    let stream = `preview-${id}`;
+    let { socket, deviceId } = this.props;
+    let stream = `preview-${deviceId}`;
     socket.off(stream, this.onPreviewFrame);
     socket.leave(stream);
     if (this._queue) {
@@ -111,7 +111,7 @@ export var MonitorPreview = React.createClass({
   },
 
   render() {
-    let id = this.props.id;
+    let { deviceId } = this.props;
     let status = this.props.status === '' ? '' : `(${this.props.status})`;
 
     let fullScreenMonitor = null;
@@ -122,7 +122,7 @@ export var MonitorPreview = React.createClass({
           api={this.props.api}
           onClose={this.onVideoHidden}
           socket={this.props.socket}
-          id={id}
+          deviceId={deviceId}
           previewSize={this.props.previewSize}
           startAtTime={this.state.videoStartTime}
         />
@@ -172,7 +172,7 @@ export var MonitorPreview = React.createClass({
     if (this.state.objects.length) {
       objects = (
         <ObjectBoxes
-          id={this.props.id}
+          deviceId={this.props.deviceId}
           socket={this.props.socket}
           width={previewStyle.width}
           height={previewStyle.height}

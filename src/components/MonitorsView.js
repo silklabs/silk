@@ -69,19 +69,19 @@ class MonitorsView extends React.Component {
   }
 
   render() {
-    var configuring = Object.keys(this.state.configuring).map(key => {
-      var device = this.state.configuring[key];
-      return <DeviceSetup key={key} name={device.name} rssi={device.rssi} />;
+    var configuring = Object.keys(this.state.configuring).map(deviceId => {
+      var device = this.state.configuring[deviceId];
+      return <DeviceSetup key={deviceId} name={device.name} rssi={device.rssi} />;
     });
-    var streaming = Object.keys(this.state.streaming).map(key => {
-      var device = this.state.streaming[key];
+    var streaming = Object.keys(this.state.streaming).map(deviceId => {
+      var device = this.state.streaming[deviceId];
       if (device.placeholder) {
-        return <MonitorConnecting key={key} status={device.status} />;
+        return <MonitorConnecting key={deviceId} status={device.status} />;
       }
       return (
         <MonitorPreview
-          key={key}
-          id={key}
+          key={deviceId}
+          deviceId={deviceId}
           label={device.name}
           status={device.status}
           logo={device.logo}
@@ -148,52 +148,54 @@ class MonitorsView extends React.Component {
   refreshDeviceList = () => {
     var configuring = this.state.configuring = {};
     var streaming = this.state.streaming;
-    this.props.bleDeviceManager.enumerateDevices().forEach(p => {
-      if ('unregistered' === p.state || 'registering' === p.state) {
+    this.props.bleDeviceManager.enumerateDevices().forEach(device => {
+      if ('unregistered' === device.state || 'registering' === device.state) {
         // Show configuring widget when we are registering
-        configuring[p.id] = {
-          name: p.prettyName,
-          rssi: p.rssi,
-          state: p.state,
-          error: p.error,
+        configuring[device.id] = {
+          name: device.prettyName,
+          rssi: device.rssi,
+          state: device.state,
+          error: device.error,
         };
         return;
       }
-      if ('registered' === p.state) {
+      if ('registered' === device.state) {
         // Device is registered...
-        if (!(p.deviceId in streaming)) {
+        if (!(device.deviceId in streaming)) {
           // Device has sent us its ID, but we haven't observed a
           // server-sent event from the device yet. Create a
           // starting-up placeholder widget for it that will be swapped
           // out once we get the device info from the server. Will need
           // remove if server-sent event never received.
-          streaming[p.deviceId] = {
+          streaming[device.deviceId] = {
             name: 'New Device',
             placeholder: true,
           };
         }
 
         // update status, use error message if exists
-        streaming[p.deviceId].status =
-            p.error ? p.error : p.serverConnectionStatus;
+        streaming[device.deviceId].status =
+            device.error ? device.error : device.serverConnectionStatus;
       }
     });
 
-    Object.keys(streaming).forEach(id => {
-      if (!this.props.bleDeviceManager.enumerateDevices().some(
-          p => p.deviceId === id && p.state !== 'disconnected')) {
+    Object.keys(streaming).forEach(deviceId => {
+      let isStillConnected = this.props.bleDeviceManager.enumerateDevices().some(
+        device => device.deviceId === deviceId && device.state !== 'disconnected'
+      );
+      if (!isStillConnected) {
         // Streaming widget still exists, but we are no longer connected
         // to the peripheral. Let's do some cleanup...
 
         // No longer receiving status update (over BLE), so clear status to not
         // show potentially stale data
-        streaming[id].status = '';
+        streaming[deviceId].status = '';
 
         // We have not received a server-sent event. Delete placeholder widget,
         // less, it will linger indefinitely. If/when the server sends the
         // event, it will get added back in.
-        if (streaming[id].placeholder) {
-          delete streaming[id];
+        if (streaming[deviceId].placeholder) {
+          delete streaming[deviceId];
         }
       }
     });

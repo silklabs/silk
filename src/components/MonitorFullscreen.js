@@ -230,7 +230,7 @@ export default React.createClass({
 
     let api = this.props.api;
     api.timeMeta.findOneAfterTime({
-      deviceId: this.props.id,
+      deviceId: this.props.deviceId,
       time: startTime.valueOf(),
       metaType: 'video',
     }).then(result => {
@@ -301,15 +301,15 @@ export default React.createClass({
   },
 
   _enterLiveMode() {
-    let { socket, id } = this.props;
-    this._liveSegmentProvider.start(socket, id);
+    let { socket, deviceId } = this.props;
+    this._liveSegmentProvider.start(socket, deviceId);
 
-    this.meter = new Meter('avpipeline', socket, id);
+    this.meter = new Meter('avpipeline', socket, deviceId);
   },
 
   _exitLiveMode() {
-    let { socket, id } = this.props;
-    this._liveSegmentProvider.stop(socket, id);
+    let { socket, deviceId } = this.props;
+    this._liveSegmentProvider.stop(socket, deviceId);
     if (this.meter) {
       this.meter.stop();
       this.meter = null;
@@ -506,7 +506,7 @@ export default React.createClass({
     this._pendingSeekOperation = api.timeMeta.findByTime({
       metaType: 'video',
       time: startTime,
-      deviceId: this.props.id,
+      deviceId: this.props.deviceId,
     }).then(result => {
       // Override current pending segments.
       let segment = this.createSegment(result);
@@ -683,7 +683,7 @@ export default React.createClass({
     if (this.state.objects.length) {
       objects = (
         <ObjectBoxes
-          id={this.props.id}
+          deviceId={this.props.deviceId}
           socket={this.props.socket}
           width={width}
           height={height}

@@ -144,7 +144,8 @@ class Sensors extends events.EventEmitter {
       } else if (sensorEvent.eventName === 'deactivated') {
         this.emit('deactivate');
       } else if (sensorEvent.eventName === 'error') {
-        this.emit('error');
+        log.warn('Received "error" from sensor service');
+        //this.emit('error');
       } else if (sensorEvent.eventName === 'data') {
         this.emit('data', sensorEvent);
       } else {

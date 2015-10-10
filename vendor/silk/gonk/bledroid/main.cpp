@@ -2409,7 +2409,7 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     if (err) {
       ALOGE("Failed to initialize bluetooth (%d)", err);
       bt_cleanup();
-      return err;
+      return 0;
     }
   } else if (0 == strcmp(cmd, "getAdapterState")) {
       bledroid.sendEvent("!adapterState powered%s",
@@ -2628,7 +2628,7 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     address_during_rssi_update = kInvalidAddr;
 
     if (err != BT_STATUS_SUCCESS) {
-      return 1;
+      return 0;
     }
   } else if (0 == strcmp(cmd, "discoverServices")) {
     err = bt_discover_services(saveptr);

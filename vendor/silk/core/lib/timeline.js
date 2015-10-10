@@ -306,17 +306,18 @@ class Timeline extends EventEmitter {
   }
 
   _pushPacket(when, frame, objects, type, durationMs = 0) {
-    let transmit;
+    let wouldTransmit = this.serverSocket.connected;
     switch (type) {
     case 'jpeg':
-      transmit = this.livePreview && this.serverSocket.connected;
+      wouldTransmit = wouldTransmit && this.livePreview;
       break;
     case 'mp4':
-      transmit = this.liveVideo && this.serverSocket.connected;
+      wouldTransmit = wouldTransmit && this.liveVideo;
       break;
     default:
       util.processthrow(`Unknown packet type: ${type}`);
     }
+    let willTransmit = wouldTransmit;
     let allObjects = this._addCachedObjects(objects, when);
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms`;
     if (durationMs) {
@@ -325,14 +326,14 @@ class Timeline extends EventEmitter {
     str += ` lag:${Date.now() - when}ms ` +
            ` objects:${(allObjects ? allObjects.length : 0)}`;
 
-    if (transmit) {
+    if (willTransmit) {
       if (this.acks.pending[type] >= this.acks.maxPending[type]) {
         log.warn(`Too many pending acks for ${type}`);
-        transmit = false;
+        willTransmit = false;
       }
       str = str + ` acks:${this.acks.pending[type]}`;
     }
-    if (transmit) {
+    if (willTransmit) {
       log.verbose(str);
       let queued = Date.now();
       this.serverSocket.emit('video',
@@ -349,7 +350,34 @@ class Timeline extends EventEmitter {
       this.acks.pending[type] = this.acks.pending[type] + 1;
     } else {
       log.verbose(`dropped ${str}`);
+      if (wouldTransmit && 'mp4' === type) {
+        // In the normal success case, the app meters the `record*`
+        // events below.  But for dropped segments, we have to meter
+        // these from device.
+        //
+        // TODO: should we always meter these record events from the
+        // device side?
+        let segmentId = '' + when;
+        this._meter('recordStart', segmentId, when);
+        this._meter('recordEnd', segmentId, when + durationMs);
+        // Note to clients that the device decided to drop this
+        // segment.
+        this._meter('deviceDrop', segmentId);
+      }
     }
+  }
+
+  /**
+   * Note to AV pipeline diag clients that event `what` happened for
+   * object `id` at timestamp `whenMs`.
+   */
+  _meter(what, id, whenMs = Date.now()) {
+    // TODO: de-dup with app side
+    this.serverSocket.emit('diag', {
+      id: this.id,
+      type: 'avpipeline',
+      log: { id, what, whenMs },
+    });
   }
 
   /**

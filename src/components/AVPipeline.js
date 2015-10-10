@@ -174,8 +174,27 @@ export default class AVPipeline extends React.Component {
       segments[id] = { id };
     }
     segments[id][eventProp] = event.whenMs;
-    // Make the series between all events we're missing before this
-    // one have the value 0.
+    // The delta between each pair of successive events x, y creates a
+    // bar in the generated chart. The problem to solve is that if the
+    // webapp version is a little older or newer than the system it's
+    // monitoring, event x might not exist. In that case, we don't
+    // want to drop all the data --- rather this "backfill" sets
+    // things up so that the slot for x gets the value of y. Then the
+    // bar between x and y on the generated chart has zero width, and
+    // whatever event interval it's supposed to represent effectively
+    // doesn't exist. And then we recursively apply that backfill to
+    // the previous event of x, and so on.
+    //
+    // The backfill stops before FIRST_EVENT because we use that to
+    // sort the segments --- if FIRST_EVENT never occurred then we
+    // just drop the segment.
+    //
+    // And we're slightly abusing this helper to hide the "segment
+    // dropped" bar for all segments that aren't dropped. For those
+    // segments, the device side just doesn't send the deviceDrop
+    // event, and so that slot takes on the value of deviceEmit, its
+    // successor, making the "dropped" bar in the chart have zero
+    // width.
     backfillMissingEvents(segments[id], eventIdx - 1, event.whenMs, 0);
     this.setState({
       lastNowMs: event.nowMs || this.state.lastNowMs,

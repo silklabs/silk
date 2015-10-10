@@ -139,6 +139,9 @@ class Env extends EventEmitter {
       getboolprop: (prop, defaultValue) => {
         return util.getboolprop(prop, defaultValue);
       },
+      getintprop: (prop, defaultValue) => {
+        return util.getintprop(prop, defaultValue);
+      },
       getprop: (prop, defaultValue) => {
         return util.getprop(prop, defaultValue);
       },

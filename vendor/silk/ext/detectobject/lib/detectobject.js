@@ -122,15 +122,12 @@ class DetectObject {
       }
       working = true;
 
-      let start = Date.now();
       this._env.camera.getPreviewFrame((err, im) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
           return;
         }
-        let diff = Date.now() - start;
-        log.verbose(`Acquired preview image in ${diff}ms`);
 
         // Fake a "motion" rectangle since the "preview" timeline event is being
         // used at the moment.

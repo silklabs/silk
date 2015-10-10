@@ -108,7 +108,7 @@ $(LOCAL_BUILT_MODULE): $(LOCAL_ADDITIONAL_DEPENDENCIES)
 $(LOCAL_BUILT_MODULE): $(all_libraries)
 
 npm_cli = $(abspath external/npm/cli.js)
-npm_node_dir = $(abspath external/$(or $(NODE_ENGINE),node))
+npm_node_dir = $(abspath external/node)
 
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))

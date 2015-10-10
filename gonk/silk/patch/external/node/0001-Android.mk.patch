@@ -1,28 +1,23 @@
-From 1e6a956544dc85d15ce6a79588912b364d62503e Mon Sep 17 00:00:00 2001
+From dd21bce74e587159e103906d74de3855865175bc Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 70 insertions(+)
+ Android.mk | 65 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 65 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..c3edf46
+index 0000000..888e969
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,70 @@
+@@ -0,0 +1,63 @@
 +LOCAL_PATH := $(call my-dir)
 +
-+LOCAL_NODE_ENGINE=$(notdir $(LOCAL_PATH))
-+
-+ifneq ($(NODE_ENGINE),$(LOCAL_NODE_ENGINE))
-+$(info Not building '$(LOCAL_NODE_ENGINE)' as NODE_ENGINE=$(NODE_ENGINE))
-+else
 +include $(CLEAR_VARS)
-+LOCAL_MODULE := $(LOCAL_NODE_ENGINE)
++LOCAL_MODULE := node
 +LOCAL_MODULE_CLASS := EXECUTABLES
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_EXECUTABLES)
@@ -80,8 +75,6 @@ index 0000000..c3edf46
 +	$(hide) cd $(<D) && ./configure --prefix=/ \
 +    --without-snapshot --without-npm --dest-cpu=arm --dest-os=android
 +	$(hide) cd $(<D) && $(MAKE) V=$(if $(SHOW_COMMANDS),1)
-+
-+endif
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 

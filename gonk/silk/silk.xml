@@ -21,10 +21,6 @@
            path="external/npm"
            remote="github"
            revision="refs/tags/v2.13.1" clone-depth="1"/>
-  <project name="nodejs/io.js"
-           path="external/iojs"
-           remote="github"
-           revision="refs/tags/v2.4.0" clone-depth="1"/>
   <project name="mozilla-b2g/librecovery"
            path="external/librecovery"
            remote="github"

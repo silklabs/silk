@@ -50,15 +50,9 @@ node_version_check()
     local minor=${BASH_REMATCH[2]}
     local patch=${BASH_REMATCH[3]}
 
-    # TODO: Ensure the host node version checked here is consistent with the
-    #      target node version at external/$NODE_ENGINE/
-    if [[ "$NODE_ENGINE" = "iojs" ]]; then
-      [[ $major -eq 2 ]] && [[ $minor -eq 4 ]] && return
-    else
-      if [[ $major -eq 0 ]]; then
-        [[ $minor -eq 12 ]] && return
-        [[ $minor -eq 10 ]] && [[ $patch -ge 29 ]] && return
-      fi
+    if [[ $major -eq 0 ]]; then
+      [[ $minor -eq 12 ]] && return
+      [[ $minor -eq 10 ]] && [[ $patch -ge 29 ]] && return
     fi
   fi
   poison_their_lunch Bad node version: $v
@@ -98,10 +92,6 @@ cmake_version_check()
   poison_their_lunch Unsupported cmake version: $v
 }
 
-
-# Uncomment to use iojs instead of node.
-# (clean build is then recommended to ensure native node modules are rebuilt)
-#export NODE_ENGINE=iojs
 
 node_version_check
 [[ $? -eq 0 ]] || return

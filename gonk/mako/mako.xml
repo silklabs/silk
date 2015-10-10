@@ -13,9 +13,6 @@
   <project groups="device,mako" name="vendor-lge-mako" path="vendor/lge/mako" remote="silk" revision="LMY47V"/>
   <project groups="device,mako" name="vendor-qcom-mako" path="vendor/qcom/mako" remote="silk" revision="LMY47V"/>
 
-  <!-- Remove iojs to reduce disk usage on Travis -->
-  <remove-project name="nodejs/io.js" />
-
   <!-- Remove Android things -->
   <remove-project name="platform/art" />
   <remove-project name="platform/cts" />

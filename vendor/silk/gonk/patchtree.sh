@@ -81,7 +81,9 @@ __abandon_tree()
 
      for p in $projects; do
        #echo [$p]
-       cd $p ; __abandon_branch $p "$FORCE" ; cd $OLDPWD
+       if [[ -d $p ]]; then
+         cd $p ; __abandon_branch $p "$FORCE" ; cd $OLDPWD
+       fi
      done
    fi
 }

@@ -25,8 +25,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 endif
 
 
-NODE_ENGINE?=node
-PRODUCT_PACKAGES += $(NODE_ENGINE)
+PRODUCT_PACKAGES += node
 
 # vendor/silk/core/...
 SILK_CORE := \

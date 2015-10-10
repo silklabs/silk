@@ -11,11 +11,8 @@ info() {
 
 NODE=/system/silk/bin/node
 if [ ! -x $NODE ]; then
-  NODE=/system/silk/bin/iojs
-  if [ ! -x $NODE ]; then
-    info Node engine not found.
-    exit 1
-  fi
+  info Node engine not found.
+  exit 1
 fi
 
 if [ "$(getprop ro.debuggable)" == "1" ]; then

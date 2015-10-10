@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 source $(dirname $0)/../.branch
 BRANCH_ARG=$1
 BRANCH_TO_DOWNLOAD=${BRANCH_ARG:-$BRANCH}
@@ -18,6 +16,13 @@ fi
 
 # Ensure a device is connected before taking the time to download the app
 ios-deploy --detect --timeout 1
+EXIT_CODE=$?
+if [[ $EXIT_CODE != 0 ]]; then
+  echo "Timed out waiting for an iOS device. Please make sure that the device is connected."
+  exit $EXIT_CODE
+fi
+
+set -e
 
 DOWNLOAD_URL=https://s3-us-west-2.amazonaws.com/silk-app/$BRANCH_TO_DOWNLOAD/latest/Silk.ipa
 TEMP_DIR=`mktemp -d -t silk-app.XXX`

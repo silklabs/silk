@@ -101,6 +101,7 @@ class CrashReporter {
     this.tombstoneServer = null;
 
     process.on('uncaughtException', this.uncaughtExceptionHandler.bind(this));
+    process.on('unhandledRejection', this.uncaughtExceptionHandler.bind(this));
 
     if (!this.running) {
       log.info(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash ` +
@@ -119,6 +120,9 @@ class CrashReporter {
   }
 
   uncaughtExceptionHandler(err) {
+    if (!err) {
+      err = `Unexpected !err: ${err}`;
+    }
     log.error(formatError(err));
 
     let file = exceptionToTombstoneSync(err);

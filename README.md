@@ -13,7 +13,7 @@ For details on Releng automation, please refer to [Automation.md](Automation.md)
 
 Branch  | Binaries | Servers
 --------|----------| -------
-master  | [Nexus 4 Full Device Image](https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/master/latest/Silk.ipa) | [Web app](https://silk-webapp-master.herokuapp.com/)
+master  | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/master/latest/Silk.ipa) | [Web app](https://silk-webapp-master.herokuapp.com/)
 next    | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/next/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/next/latest/Silk.ipa) | [Web app](https://silk-webapp-next.herokuapp.com/)
 release | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/release/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/release/latest/Silk.ipa) | [Web app](https://silk-webapp-release.herokuapp.com/)
 

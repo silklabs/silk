@@ -9,13 +9,15 @@ with the current release, and run completely independent to the normal sprint ca
 
 For details on Releng automation, please refer to [Automation.md](Automation.md).
 
+## Latest Builds
 
-## Glossary
+Branch  | Binaries | Servers
+--------|----------| -------
+master  | [Nexus 4 Full Device Image](https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/master/latest/Silk.ipa) | [Web app](https://silk-webapp-master.herokuapp.com/)
+next    | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/next/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/next/latest/Silk.ipa) | [Web app](https://silk-webapp-next.herokuapp.com/)
+release | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/release/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/release/latest/Silk.ipa) | [Web app](https://silk-webapp-release.herokuapp.com/)
 
-* **Code complete (CC)** - all blocking issues resolved, projects labeled, final binaries uploaded, setup documented.  The *release* branch is created upon the completion of CC.
-* **Feature complete (FC)** - all new features tested and operating as expected.
-* **Feature mid-week landing (FML)** - all features landed, bug fixing only beyond this point. The *next* branch is created upon the completion of FML.
-* **Start** - GH issues raised for major feature work targeted for this sprint and owners assigned
+
 
 ## Fall Release Calendar
 
@@ -30,6 +32,13 @@ Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26 | [Open](https://github.com/
 Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2+no%3Aassignee)
 Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+no%3Aassignee)
 *Happy Holidays!!!* |Dec 21 |-      |-      |Jan 1  | -
+
+### Glossary
+
+* **Code complete (CC)** - all blocking issues resolved, projects labeled, final binaries uploaded, setup documented.  The *release* branch is created upon the completion of CC.
+* **Feature complete (FC)** - all new features tested and operating as expected.
+* **Feature mid-week landing (FML)** - all features landed, bug fixing only beyond this point. The *next* branch is created upon the completion of FML.
+* **Start** - GH issues raised for major feature work targeted for this sprint and owners assigned
 
 ## Issue Tracking
 

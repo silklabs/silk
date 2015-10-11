@@ -27,3 +27,7 @@ include $(LOCAL_PATH)/animation.mk
 include $(CLEAR_VARS)
 LOCAL_MODULE := powerdown.zip
 include $(LOCAL_PATH)/animation.mk
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := charging.zip
+include $(LOCAL_PATH)/animation.mk

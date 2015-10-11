@@ -83,6 +83,7 @@ SILK_GONK_PROGIES := \
 SILK_UI_PACKAGES := \
   logo.png \
   bootanimation.zip \
+  charging.zip \
   connecting.zip \
   online.zip \
   powerdown.zip \

@@ -225,6 +225,7 @@ class Ui extends events.EventEmitter
       case 'powerdown':
         light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
         break;
+      case 'charging':
       default:
         light.set(light.BLACK);
         break;
@@ -232,17 +233,6 @@ class Ui extends events.EventEmitter
     }
 
     let movieName = this.currentState;
-    switch (this.currentState) {
-    case 'connecting':
-      movieName = 'bootanimation';
-      break;
-    case 'charging':
-      movieName = 'powerdown';
-      break;
-    default:
-      break;
-    }
-
     if (movieName !== this.currentMovieName) {
       this.currentMovieName = movieName;
       try {

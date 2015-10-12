@@ -39,6 +39,9 @@ function deviceOrAccountQuery(payload, addlQuery) {
 
 export default class TimeMetadata extends Base {
   static SCHEMA = {
+
+    // Mutations
+
     metadata: Joi.object().keys({
       id: Joi.string().optional(), // Optional for now so we don't break existing clients
       deviceId: Joi.string().required(),
@@ -60,12 +63,7 @@ export default class TimeMetadata extends Base {
       data: Joi.object().optional(),
     }).required(),
 
-    findNearTime: Joi.object().keys({
-      deviceId: Joi.string().required(),
-      metaType: TYPES,
-      time: Joi.number().required(),
-      strict: Joi.bool()
-    }).required(),
+    // Finding events in a time range
 
     findInTimeInterval: Joi.object().keys({
       // One of these must be specified.
@@ -79,17 +77,30 @@ export default class TimeMetadata extends Base {
       maxCount: Joi.number().required()
     }).required(),
 
+    findBeforeTime: Joi.object().keys({
+      // One of these must be specified.
+      deviceId: Joi.string().optional(),
+      deviceIds: Joi.array().items(Joi.string().required()).optional(),
+      accountId: Joi.string().optional(),
+
+      metaType: TYPES,
+      time: Joi.number().required(),
+      maxCount: Joi.number().required()
+    }).required(),
+
+    // Finding one specific event
+
+    findNearTime: Joi.object().keys({
+      deviceId: Joi.string().required(),
+      metaType: TYPES,
+      time: Joi.number().required(),
+      strict: Joi.bool()
+    }).required(),
+
     findOneByTime: Joi.object().keys({
       deviceId: Joi.string().required(),
       metaType: TYPES,
       time: Joi.number().required()
-    }).required(),
-
-    findBeforeTime: Joi.object().keys({
-      deviceId: Joi.string().required(),
-      metaType: TYPES,
-      time: Joi.number().required(),
-      maxCount: Joi.number().required()
     }).required(),
 
     findById: Joi.object().keys({
@@ -98,6 +109,37 @@ export default class TimeMetadata extends Base {
   };
 
   static COLLECTION = 'time_metadata';
+
+  // Finding events in a time range
+
+  async findInTimeInterval(payload) {
+    payload = this.validate(payload, 'findInTimeInterval');
+
+    let result = await this.collection.find(deviceOrAccountQuery(payload, {
+      metaType: payload.metaType,
+      startUTC: {
+        $lte: payload.endTime,
+      },
+      endUTC: {
+        $gte: payload.startTime,
+      }
+    })).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
+
+    return result.map(formatOutput);
+  }
+
+  async findBeforeTime(payload) {
+    payload = this.validate(payload, 'findBeforeTime');
+    let result = await this.collection.find(deviceOrAccountQuery(payload, {
+      metaType: payload.metaType,
+      startUTC: {
+        $lte: payload.time
+      }
+    })).sort({ endUTC: -1 }).limit(payload.maxCount).toArray();
+    return result.map(formatOutput);
+  }
+
+  // Finding one specific event
 
   async findById(payload) {
     payload = this.validate(payload, 'findById');
@@ -128,24 +170,6 @@ export default class TimeMetadata extends Base {
     return formatOutput(result);
   }
 
-  async findInTimeInterval(payload) {
-    payload = this.validate(payload, 'findInTimeInterval');
-
-    // First try to find one in the appropriate range...
-    // TODO: support paging in some way
-    let result = await this.collection.find(deviceOrAccountQuery(payload, {
-      metaType: payload.metaType,
-      startUTC: {
-        $lte: payload.endTime,
-      },
-      endUTC: {
-        $gte: payload.startTime,
-      }
-    })).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
-
-    return result.map(formatOutput);
-  }
-
   async findOneBeforeTime(payload) {
     payload = this.validate(payload, 'findOneByTime');
     let result = (await this.collection.find({
@@ -170,17 +194,7 @@ export default class TimeMetadata extends Base {
     return formatOutput(result);
   }
 
-  async findBeforeTime(payload) {
-    payload = this.validate(payload, 'findBeforeTime');
-    let result = (await this.collection.find({
-      deviceId: payload.deviceId,
-      metaType: payload.metaType,
-      startUTC: {
-        $lte: payload.time
-      }
-    }).sort({ endUTC: -1 }).limit(payload.maxCount).toArray());
-    return result.map(formatOutput);
-  }
+  // Mutations
 
   async _setPrevious(previousId, id) {
     if (!previousId) {

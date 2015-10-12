@@ -98,7 +98,7 @@ class DetectObject {
       log.info(`Found image in cache, saving...`);
 
       // Create directory if it doesn't exist
-      let dir = path.join(REPORT_OBJECT_DIR, cmd.tag);
+      let dir = path.join(REPORT_OBJECT_DIR, `no-${cmd.tag}`);
       fs.mkdir(dir).catch(e => {
         if (e.code !== 'EEXIST') {
           log.error(`Failed to create ${dir}, error: ${e}`);

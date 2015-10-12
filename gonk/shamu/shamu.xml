@@ -16,26 +16,28 @@
   <project groups="device,shamu" name="vendor-qcom-shamu" path="vendor/qcom/shamu" remote="silk" revision="LMY47Z"/>
 
   <!-- Example USB HID stuff -->
+
   <project name="libusb/libusb"
            path="external/libusb1.0"
            revision="refs/tags/v1.0.19"
            remote="github" clone-depth="1" />
-  <project name="mvines/node-hid"
+  <!--
+    node-hid needs an upgrade to NAN 2.0.9 to work with node4
+    -->
+  <!--project name="mvines/node-hid"
            path="external/node-hid"
            revision="a43c520262cb9d8ebf948d0e68d27bfaa7cd027f"
            upstream="master"
-           remote="github"
-           clone-depth_DOESNT_WORK_FOR_SHA1s="1" />
-  <project name="signal11/hidapi"
+           remote="github" -->
+  <!--project name="signal11/hidapi"
            path="external/node-hid/hidapi"
            revision="d17db57b9d4354752e0af42f5f33007a42ef2906"
            upstream="master"
-           remote="github"
-           clone-depth_DOESNT_WORK_FOR_SHA1s="1" />
-  <project name="mvines/relay"
+           remote="github" -->
+  <!--project name="mvines/relay"
            path="external/relay"
            revision="b0ba9b06c1da15341b049843abaa9514bc4441d5"
            upstream="master"
            remote="github"
-           clone-depth_DOESNT_WORK_FOR_SHA1s="1" />
+           clone-depth_DOESNT_WORK_FOR_SHA1s="1" -->
 </manifest>

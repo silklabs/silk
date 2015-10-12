@@ -30,7 +30,6 @@ const PERIPH_EVENTS = [
   'statusChange',
 ];
 
-const MS_IN_DAY = 86400000;
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
@@ -176,7 +175,7 @@ class MonitorsView extends AsyncComponent {
     if (leftToScroll < SCROLLVIEW_INFINITE_THRESHOLD) {
       this.setStateAsync({eventsLoading: 'older'});
       console.log('eventsEarliest', eventsEarliest);
-      await this._fetchActivity(eventsEarliest - MS_IN_DAY, eventsEarliest);
+      await this._fetchActivity(null, eventsEarliest);
       return;
     }
   };
@@ -218,7 +217,7 @@ class MonitorsView extends AsyncComponent {
     this.state.events = this.state.eventsLatest = this.state.eventsEarliest = null;
     this.state.eventsLoading = 'older';
     await this.setStateAsync(this.state);
-    await this._fetchActivity(Date.now() - MS_IN_DAY, Date.now());
+    await this._fetchActivity(null, Date.now());
   };
 
   onVideoStreamDelete = (msg) => {
@@ -287,13 +286,22 @@ class MonitorsView extends AsyncComponent {
   _fetchActivity = async (startTime, endTime) => {
     let addlEvents;
     try {
-      addlEvents = await this.props.api.timeMeta.findInTimeInterval({
-        deviceIds: Object.keys(this.state.streaming),
-        startTime,
-        endTime,
-        metaType: 'event',
-        maxCount: EVENTS_PAGE_SIZE,
-      });
+      if (startTime === null) {
+        addlEvents = await this.props.api.timeMeta.findBeforeTime({
+          deviceIds: Object.keys(this.state.streaming),
+          time: endTime,
+          metaType: 'event',
+          maxCount: EVENTS_PAGE_SIZE,
+        });
+      } else {
+        addlEvents = await this.props.api.timeMeta.findInTimeInterval({
+          deviceIds: Object.keys(this.state.streaming),
+          startTime,
+          endTime,
+          metaType: 'event',
+          maxCount: EVENTS_PAGE_SIZE,
+        });
+      }
     } catch (ex) {
       log.warn('Failed to load events', ex);
       this.setStateAsync({eventsLoading: null, eventsError: ex});

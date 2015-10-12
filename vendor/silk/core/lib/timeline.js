@@ -7,7 +7,7 @@
  */
 
 import createLog from './log';
-import * as util from './util';
+import * as util from './sysutils';
 
 import { EventEmitter } from 'events';
 

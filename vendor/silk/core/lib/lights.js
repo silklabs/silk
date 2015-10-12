@@ -7,7 +7,7 @@
  */
 
 import events from 'events';
-import { exec } from './util';
+import { exec } from './sysutils';
 import createLog from './log';
 
 const log = createLog('lights');

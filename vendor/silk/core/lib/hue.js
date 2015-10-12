@@ -13,7 +13,7 @@ let weOwnTty = (require.main === module);
 
 import hue from 'node-hue-api';
 import createLog from './log';
-import * as util from './util';
+import * as util from './sysutils';
 
 const log = createLog('hue');
 

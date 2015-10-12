@@ -9,7 +9,7 @@
 import api from './api';
 import events from 'events';
 import createLog from './log';
-import * as util from './util';
+import * as util from './sysutils';
 
 const log = createLog('server');
 

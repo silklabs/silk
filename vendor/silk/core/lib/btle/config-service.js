@@ -23,7 +23,7 @@ import { btleConfigService as decls, crypto } from '../api';
 import { Descriptor, Characteristic, PrimaryService } from 'bleno';
 import makeLog from '../log';
 import makeVibrator from '../vibrator';
-import { processthrow } from '../util';
+import { processthrow } from '../sysutils';
 
 const log = makeLog('config-service');
 const vibrator = makeVibrator();

@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import * as util from './util';
+import * as util from './sysutils';
 import fs from 'fs';
 
 let enabled = !util.getprop('persist.silk.quiet');

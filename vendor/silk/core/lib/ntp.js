@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import * as util from './util';
+import * as util from './sysutils';
 import ntpClient from 'ntp-client';
 import { EventEmitter } from 'events';
 import wifi from './wifi';

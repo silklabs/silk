@@ -51,39 +51,6 @@ class FakeCamera {
 /**
  *
  */
-class FakeUtil {
-  getprop(prop, defaultValue) {
-    log.debug(`getprop ${prop}`);
-    return defaultValue;
-  }
-
-  getboolprop(prop, defaultValue = false) {
-    log.debug(`getboolprop ${prop}`);
-    return defaultValue;
-  }
-
-  getintprop(prop, defaultValue = '0') {
-    log.debug(`getintprop ${prop}`);
-    return defaultValue;
-  }
-
-  setprop(prop, value) {
-    log.debug(`setprop ${prop}: ${value}`);
-    return true;
-  }
-
-  playSound(fileName) {
-    log.debug(`playSound ${fileName}`);
-  }
-
-  timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-}
-
-/**
- *
- */
 class Env {
   constructor(name, framework) {
     this._name = name;
@@ -105,7 +72,7 @@ class TestFramework {
     this.timeline = require('timeline')('test_id');
     this.camera = new FakeCamera();
     this.opencv = opencv;
-    this.util = new FakeUtil();
+    this.util = require('sysutils');
     require('detectobject')(new Env('detectobject', this));
     require('trackobject')(new Env('trackobject', this));
   }

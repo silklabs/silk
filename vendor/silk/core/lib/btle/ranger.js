@@ -7,7 +7,7 @@
  */
 
 import assert from 'assert';
-import { getboolprop } from '../util';
+import { getboolprop } from '../sysutils';
 import makeLog from '../log';
 
 const log = makeLog('ranger');

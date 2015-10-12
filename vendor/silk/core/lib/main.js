@@ -20,7 +20,7 @@ import createLog from './log';
 
 import wifi from './wifi';
 import ntp from './ntp';
-import * as util from './util';
+import * as util from './sysutils';
 import update from './update';
 import config from './config';
 import sensors from './sensors';

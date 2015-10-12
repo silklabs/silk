@@ -192,7 +192,7 @@ class Extensions {
         }
         log.error(`Unable to read ${dir}: ${err}`);
       })
-      .then(files => files.forEach(file => {
+      .then(files => files && files.forEach(file => {
         if (this._isModuleNameValid(file)) {
           this._loadExtension(path.join(dir, file));
         }

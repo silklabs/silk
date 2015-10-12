@@ -17,8 +17,7 @@
   "rules": {
     "no-trailing-spaces": 1,
     // Turn off 1.0 rules we are violating for now...
-    "no-extra-semi": 0,
-    "no-console": 0,
+    "no-console": 1,
     // Our extra rules...
     "semi": 1,
     "brace-style": 2,

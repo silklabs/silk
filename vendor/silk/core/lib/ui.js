@@ -42,7 +42,7 @@ class InputDevice extends events.EventEmitter
   _read() {
     fs.read(this.fd, this.buf, 0, this.bufferSize, null,
       (err, bytesRead, buffer) => this._onRead(err, bytesRead, buffer));
-  };
+  }
 
   _onRead(err, bytesRead, buffer) {
     if (err) {
@@ -70,7 +70,7 @@ class InputDevice extends events.EventEmitter
       this.emit(event.type, event);
     }
     this._read();
-  };
+  }
 }
 
 class Input extends events.EventEmitter

@@ -21,6 +21,22 @@ function idQuery(id) {
   return {id};
 }
 
+const _idKeys = ['deviceId', 'deviceIds', 'accountId'];
+function deviceOrAccountQuery(payload, addlQuery) {
+  if (_idKeys.map(key => payload[key]).filter(value => !!value).length !== 1) {
+    throw new Error(`Query needs to specify exactly one of ${_idKeys.join(', ')}`);
+  }
+  let query = {};
+  if (payload.deviceId) {
+    query.deviceId = payload.deviceId;
+  } else if (payload.deviceIds) {
+    query.deviceId = { $in: payload.deviceIds };
+  } else if (payload.accountId) {
+    query.accountId = payload.accountId;
+  }
+  return Object.assign(query, addlQuery);
+}
+
 export default class TimeMetadata extends Base {
   static SCHEMA = {
     metadata: Joi.object().keys({
@@ -52,7 +68,11 @@ export default class TimeMetadata extends Base {
     }).required(),
 
     findInTimeInterval: Joi.object().keys({
-      deviceId: Joi.string().required(),
+      // One of these must be specified.
+      deviceId: Joi.string().optional(),
+      deviceIds: Joi.array().items(Joi.string().required()).optional(),
+      accountId: Joi.string().optional(),
+
       metaType: TYPES,
       startTime: Joi.number().required(),
       endTime: Joi.number().required(),
@@ -113,8 +133,7 @@ export default class TimeMetadata extends Base {
 
     // First try to find one in the appropriate range...
     // TODO: support paging in some way
-    let result = await this.collection.find({
-      deviceId: payload.deviceId,
+    let result = await this.collection.find(deviceOrAccountQuery(payload, {
       metaType: payload.metaType,
       startUTC: {
         $lte: payload.endTime,
@@ -122,7 +141,7 @@ export default class TimeMetadata extends Base {
       endUTC: {
         $gte: payload.startTime,
       }
-    }).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
+    })).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
 
     return result.map(formatOutput);
   }

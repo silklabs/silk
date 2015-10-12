@@ -153,6 +153,10 @@ class CameraStream extends EventEmitter {
     }
     log.info(`camera restart: ${why}`);
     this._ready = false;
+    if (this._previewInterval) {
+      clearInterval(this._previewInterval);
+      this._previewInterval = null;
+    }
     if (this._cvVideoCapture) {
       this._cvVideoCapture.close();
       this._cvVideoCapture = null;
@@ -239,6 +243,10 @@ class CameraStream extends EventEmitter {
         this._cvVideoCapture = new cv.VideoCapture(0);
         this._cvVideoCapture.setWidth(this._videoWidth);
         this._cvVideoCapture.setHeight(this._videoHeight);
+
+        let delay = 1000 / (FPS / PREVIEW_SKIP_COUNT);
+        this._previewInterval = setInterval(() => this._readPreviewFrame(), delay);
+
         this.emit('start');
       } else if (captureEvent.eventName === 'stopped') {
         this.emit('stop');
@@ -285,14 +293,7 @@ class CameraStream extends EventEmitter {
         }
         return;
       case 2:
-        if (image.rgb) {
-          userCb(false, image.rgb, image.orig);
-        } else {
-          let rgbImage = image.default.copy();
-          rgbImage.cvtColor('CV_BGR2RGB');
-          image.rgb = rgbImage;
-          userCb(false, image.rgb, image.orig);
-        }
+        userCb(false, image.rgb, image.orig);
         return;
       default:
         userCb('unsupported channel', null);
@@ -305,7 +306,7 @@ class CameraStream extends EventEmitter {
   /**
    * Read the next frame
    */
-  _readPreviewFrame(when) {
+  _readPreviewFrame() {
     if (!this._cvVideoCapture) {
       return;
     }
@@ -321,16 +322,26 @@ class CameraStream extends EventEmitter {
         log.error(`Unable to fetch frame: ${err}`);
         return;
       }
-      let now = Date.now();
-      log.info(`Preview frame read. lag=${now - when}ms`);
 
-      // Store the preview frames (orig and resized)
+      // Scaled preview
       let imScaled = im.copy();
       imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-      this._imagecache.push({when: when, orig: im, default: imScaled});
 
-      // Add the frame to the timeline
-      this.timeline.addPreviewFrame(when);
+      // RGB preview
+      let rgbImage = imScaled.copy();
+      rgbImage.cvtColor('CV_BGR2RGB');
+
+      // Encode preview as JPEG to be sent to the server
+      rgbImage.toBufferAsync((err, pkt) =>{
+        let when = Date.now();
+
+        // Cache preview frames
+        this._imagecache.push({when: when, orig: im, default: imScaled, rgb: rgbImage});
+
+        // Add frames to the timeline
+        this.timeline.addPreviewJPEG(when, pkt);
+        this.timeline.addPreviewFrame(when);
+      }, {ext: '.jpg', jpegQuality: 100});
     });
   }
 
@@ -351,8 +362,6 @@ class CameraStream extends EventEmitter {
       switch (tag) {
       case TAG_PREVIEW:
         log.debug(`TAG_PREVIEW ${when}`);
-        this.timeline.addPreviewJPEG(when, pkt);
-        this._readPreviewFrame(when);
         break;
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`);

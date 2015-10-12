@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import * as util from './util';
+import * as util from './sysutils';
 import events from 'events';
 import net from 'net';
 import createLog from './log';

@@ -10,7 +10,7 @@ import makeDeferred from '../deferred';
 import makeLog from '../log';
 import noble from 'noble';
 import Ranger from './ranger';
-import * as util from '../util';
+import * as util from '../sysutils';
 
 /**
  * Config Service

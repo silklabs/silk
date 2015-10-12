@@ -7,7 +7,7 @@
  */
 
 import api from './api';
-import * as util from './util';
+import * as util from './sysutils';
 import { EventEmitter } from 'events';
 import createLog from './log';
 let log = createLog('events');

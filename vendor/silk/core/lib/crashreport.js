@@ -7,7 +7,7 @@
  */
 
 import fs from 'mz/fs';
-import { getboolprop, getprop } from './util';
+import { getboolprop, getprop } from './sysutils';
 import net from 'net';
 import createLog from './log';
 import createVib from './vibrator';

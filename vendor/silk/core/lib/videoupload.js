@@ -7,7 +7,7 @@ const log = createLog('videoupload');
 
 import { EventEmitter } from 'events';
 import api from './api';
-import * as util from './util';
+import * as util from './sysutils';
 
 // Content type must be set to make clients happy later on
 const VIDEO_CONTENT_TYPE = 'video/mp4';

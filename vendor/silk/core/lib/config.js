@@ -12,7 +12,7 @@ import createLog from './log';
 
 import server from './server';
 import wifi from './wifi';
-import * as util from './util';
+import * as util from './sysutils';
 
 import assert from 'assert';
 import getBTLE from './btle';

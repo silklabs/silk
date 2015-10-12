@@ -11,7 +11,7 @@ import createLog from './log';
 import fs from 'mz/fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import * as util from './util';
+import * as util from './sysutils';
 
 const log = createLog('ext');
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];

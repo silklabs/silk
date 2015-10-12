@@ -8,7 +8,7 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
-import * as util from './util';
+import * as util from './sysutils';
 import createLog from './log';
 import request from 'request';
 import validator from 'validator';

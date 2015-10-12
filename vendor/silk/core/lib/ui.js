@@ -10,7 +10,7 @@ import events from 'events';
 import fs from 'fs';
 import lights from './lights';
 import createLog from './log';
-import * as util from './util';
+import * as util from './sysutils';
 
 const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');

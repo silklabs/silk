@@ -8,7 +8,7 @@
 
 import createLog from './log';
 import { EventEmitter } from 'events';
-import * as util from './util';
+import * as util from './sysutils';
 import net from 'net';
 import cv from 'opencv';
 import CBuffer from 'CBuffer';

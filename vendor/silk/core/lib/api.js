@@ -6,7 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import { getprop } from './util';
+import { getprop } from './sysutils';
 
 var config = {};
 

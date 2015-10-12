@@ -1,7 +1,7 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-import * as util from './util';
+import * as util from './sysutils';
 import events from 'events';
 import net from 'net';
 import createLog from './log';

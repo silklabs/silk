@@ -9,7 +9,7 @@
 import events from 'events';
 import fs from 'mz/fs';
 import createLog from './log';
-import * as util from './util';
+import * as util from './sysutils';
 
 const log = createLog('battery');
 

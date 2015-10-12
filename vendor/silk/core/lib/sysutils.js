@@ -9,7 +9,7 @@
 import { execFile as childProcessExecFile } from 'child_process';
 import createLog from './log';
 
-const log = createLog('util');
+const log = createLog('sysutils');
 
 const SOUND_DIR = '/system/silk/media/sound/';
 

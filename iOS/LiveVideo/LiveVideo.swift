@@ -1,6 +1,8 @@
 import UIKit
 import AVFoundation
 
+private let log = DebugLog.create("silk-videoplayer")
+
 internal class GetAVAssetURLOperation : ConcurrentOperation {
   static let DESIRED_KEYS = ["duration"]
 
@@ -611,6 +613,14 @@ class LiveVideo : UIView {
       if (self.willPlay) {
         // This is safe to call multiple times or if we are already playing.
         self.play()
+      }
+
+      log.debug("Starting playback of \(item!.id)" +
+                " duration: \(item!.asset.duration.milliseconds())")
+      for track in item!.asset.tracks {
+        log.debug("  track \(track.mediaType):" +
+                  " \(track.timeRange.start.milliseconds())-" +
+                  "\(track.timeRange.duration.milliseconds())")
       }
     }
   }

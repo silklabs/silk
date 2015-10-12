@@ -45,7 +45,7 @@ class Env extends EventEmitter {
   _saveListener(device, event, listener) {
     this._listenerObjects.push({device, event, listener});
   }
- 
+
   /**
    * Builds the interface into the device functions that are available to
    * extensions.

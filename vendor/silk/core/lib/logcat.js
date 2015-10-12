@@ -89,7 +89,7 @@ export default class LogcatManager {
 
   start() {
     log.info('starting to read from logcat...');
-    
+
     if (!ENABLED) {
       log.info(' ... disabled, not starting.');
       return;

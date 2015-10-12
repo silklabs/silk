@@ -148,7 +148,7 @@ export default class Accounts extends Base {
 
   static COLLECTION = 'accounts';
 
-  scryptHash(value) {
+  async scryptHash(value) {
     // These values are taken from http://www.tarsnap.com/scrypt/scrypt-slides.pdf
     // from 2009 we can and likely should tune these values.
     // Also see: http://tools.ietf.org/html/draft-josefsson-scrypt-kdf-01#section-5
@@ -158,11 +158,12 @@ export default class Accounts extends Base {
       p: 1
     };
 
-    return scrypt.hash(new Buffer(value), params).toString('hex');
+    let hash = await scrypt.kdf(new Buffer(value), params);
+    return hash.toString('hex');
   }
 
-  scryptVerify(hash, key) {
-    return scrypt.verify(new Buffer(hash, 'hex'), new Buffer(key));
+  async scryptVerify(hash, key) {
+    return await scrypt.verifyKdf(new Buffer(hash, 'hex'), new Buffer(key));
   }
 
   /**
@@ -201,7 +202,7 @@ export default class Accounts extends Base {
    */
   async create(payload) {
     payload = this.validate(payload, 'create');
-    let password = this.scryptHash(payload.passwordHash);
+    let password = await this.scryptHash(payload.passwordHash);
 
     let account = this.validate({
       email: payload.email,
@@ -263,7 +264,7 @@ export default class Accounts extends Base {
       return this.error('unknownAccount');
     }
 
-    let validate = this.scryptVerify(account.password.hash, payload.passwordHash);
+    let validate = await this.scryptVerify(account.password.hash, payload.passwordHash);
     if (validate) {
       let accessToken = this.accessToken(payload);
 
@@ -315,7 +316,7 @@ export default class Accounts extends Base {
       return this.error('checkPasswordFailure');
     }
 
-    let validate = this.scryptVerify(account.password.hash, payload.passwordHash);
+    let validate = await this.scryptVerify(account.password.hash, payload.passwordHash);
     if (validate) {
       let update = await this.collection.update({
         _id: account._id,

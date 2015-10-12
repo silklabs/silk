@@ -386,7 +386,7 @@ class MonitorsView extends AsyncComponent {
     } else {
       activity = events.map((event) => (
         <TouchableOpacity
-          key={'event.' + event.startUTC}
+          key={event.id || event._id}
           onPress={() => this.startFullscreenVideo(event.deviceId, event.startUTC - 2000)}
           style={styles.eventRow}>
           <Text>{this._labelForEvent(event)}</Text>

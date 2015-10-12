@@ -4,6 +4,7 @@
 import React from 'react-native';
 var {
   ActivityIndicatorIOS,
+  PixelRatio,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,8 +13,8 @@ var {
 } = React;
 
 import mklog from 'log'; const log = mklog('MonitorPreview');
-import moment from 'moment';
 
+import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
 import DeviceSetup from './DeviceSetup';
 import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
@@ -86,9 +87,9 @@ class MonitorsView extends AsyncComponent {
     }
   }
 
-  startFullscreenVideo(fullscreenDeviceId, fullscreenStartTime = null) {
+  startFullscreenVideo = (fullscreenDeviceId, fullscreenStartTime = null) => {
     this.setState({fullscreenDeviceId, fullscreenStartTime});
-  }
+  };
 
   stopFullscreenVideo = () => {
     this.setState({fullscreenDeviceId: null, fullscreenStartTime: null});
@@ -99,7 +100,15 @@ class MonitorsView extends AsyncComponent {
     return device ? device.previewSize : null;
   }
 
+  _getDeviceName(deviceId) {
+    let device = this.state.streaming[deviceId];
+    return device ? device.name : 'unknown device';
+  }
+
   render() {
+    // Right now there's no stateful list of cameras, we only know
+    // about them through Bluetooth or socket.io connections. In the
+    // near future, we will just query the account.
     var configuring = Object.keys(this.state.configuring).map(deviceId => {
       var device = this.state.configuring[deviceId];
       return <DeviceSetup key={deviceId} name={device.name} rssi={device.rssi} />;
@@ -123,7 +132,11 @@ class MonitorsView extends AsyncComponent {
       );
     });
     if (0 === configuring.length + streaming.length) {
-      configuring = <PlaceholderMessage />;
+      configuring = this._renderPlaceholder();
+    }
+    let activity;
+    if (streaming.length !== 0) {
+      activity = this._renderActivity();
     }
 
     let fullscreenMonitor = null;
@@ -150,35 +163,23 @@ class MonitorsView extends AsyncComponent {
           onScroll={this.onScroll}>
           {configuring}
           {streaming}
-          {this._renderActivity()}
+          {activity}
         </ScrollView>
       </View>
     );
   }
 
-  onScroll = async (event) => {
-    let { eventsLoading, eventsLatest, eventsEarliest } = this.state;
-    if (eventsLoading || eventsLatest === null || eventsEarliest === null) {
-      return;
-    }
+  _renderPlaceholder() {
+    return (
+      <View style={styles.placeholderContainer}>
+        <PlaceholderText>
+          Connect Silk Cam to get started
+        </PlaceholderText>
+      </View>
+    );
+  }
 
-    let { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-
-    // Pull to refresh: fetch more recent events.
-    if (contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
-      this.setStateAsync({eventsLoading: 'newer'});
-      await this._fetchActivity(eventsLatest, Date.now());
-      return;
-    }
-
-    let leftToScroll = contentSize.height - layoutMeasurement.height - contentOffset.y;
-    if (leftToScroll < SCROLLVIEW_INFINITE_THRESHOLD) {
-      this.setStateAsync({eventsLoading: 'older'});
-      console.log('eventsEarliest', eventsEarliest);
-      await this._fetchActivity(null, eventsEarliest);
-      return;
-    }
-  };
+  // Socket.io subscriptions
 
   subscribeToSocket = () => {
     if (!this.props.socket) {
@@ -283,6 +284,32 @@ class MonitorsView extends AsyncComponent {
     this.setState(this.state);
   };
 
+  // Activity feed management
+
+  onScroll = async (event) => {
+    let { eventsLoading, eventsLatest, eventsEarliest } = this.state;
+    if (eventsLoading || eventsLatest === null || eventsEarliest === null) {
+      return;
+    }
+
+    let { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+
+    // Pull to refresh: fetch more recent events.
+    if (contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
+      this.setStateAsync({eventsLoading: 'newer'});
+      await this._fetchActivity(eventsLatest, Date.now());
+      return;
+    }
+
+    let leftToScroll = contentSize.height - layoutMeasurement.height - contentOffset.y;
+    if (leftToScroll < SCROLLVIEW_INFINITE_THRESHOLD) {
+      this.setStateAsync({eventsLoading: 'older'});
+      console.log('eventsEarliest', eventsEarliest);
+      await this._fetchActivity(null, eventsEarliest);
+      return;
+    }
+  };
+
   _fetchActivity = async (startTime, endTime) => {
     let addlEvents;
     try {
@@ -334,24 +361,6 @@ class MonitorsView extends AsyncComponent {
     await this.setStateAsync(newState);
   };
 
-  _labelForEvent(event) {
-    let startTimeString = moment(event.startUTC).format('h:mm:ss a');
-    let duration = (event.endUTC - event.startUTC) / 1000;
-    let durationString;
-    if (duration < 60) {
-      durationString = `${Math.round(duration)} s`;
-    } else if (duration < 3600) {
-      durationString = `${Math.round(duration / 60)} min`;
-    } else {
-      let mins = Math.round(duration / 60);
-      durationString = `${Math.floor(mins / 60)} h ${mins % 60} min`;
-    }
-    let { tag } = event.data;
-    let device = this.state.streaming[event.deviceId];
-    let deviceName = device ? device.name : 'unknown device';
-    return `${tag} on ${deviceName} at ${startTimeString}, duration ${durationString}`;
-  }
-
   _renderActivity() {
     let { eventsLoading, events, eventsError } = this.state;
     let spinnerNewer = null;
@@ -360,7 +369,7 @@ class MonitorsView extends AsyncComponent {
       let spinner = (
         <ActivityIndicatorIOS
           size="large"
-          style={{alignSelf: 'center'}}
+          style={styles.activitySpinner}
         />
       );
       if (eventsLoading === 'newer') {
@@ -373,30 +382,32 @@ class MonitorsView extends AsyncComponent {
 
     let activity = null;
     if (eventsError) {
+      // TODO this shouldn't really be here, this should be a "toast"
+      // or some other transient UI element.
       activity = (
         <Text>Failed to load activities.</Text>
       );
-    }
-    else if (!events) {
+    } else if (!events) {
       activity = null;
     } else if (!events.length) {
       activity = (
         <Text>No activity registered yet.</Text>
       );
     } else {
+      // TODO: insert labels for today, yesterday, etc.
       activity = events.map((event) => (
-        <TouchableOpacity
+        <Activity
           key={event.id || event._id}
-          onPress={() => this.startFullscreenVideo(event.deviceId, event.startUTC - 2000)}
-          style={styles.eventRow}>
-          <Text>{this._labelForEvent(event)}</Text>
-        </TouchableOpacity>
+          actor={this._getDeviceName(event.deviceId)}
+          event={event}
+          previewSize={this._getPreviewSize(event.deviceId)}
+          startFullscreenVideo={this.startFullscreenVideo}
+        />
       ));
     }
 
     return (
       <View>
-        <Text style={styles.activityLabel}>Activity</Text>
         {spinnerNewer}
         {activity}
         {spinnerOlder}
@@ -406,24 +417,16 @@ class MonitorsView extends AsyncComponent {
 
 }
 
-var PlaceholderMessage = React.createClass({
-  render: function() {
-    return (
-      <View style={styles.placeholderContainer}>
-        <PlaceholderText>
-          Connect Silk Cam to get started
-        </PlaceholderText>
-      </View>
-    );
-  },
-});
-
 const styles = StyleSheet.create({
   content: {
     borderColor: '#c8c7cc',
-    borderTopWidth: 0.5,
+    borderTopWidth: 1 / PixelRatio.get(),
     backgroundColor: 'white',
     flex: 1,
+  },
+
+  placeholderContainer: {
+    marginHorizontal: 8,
   },
 
   monitors: {
@@ -432,10 +435,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  activityLabel: {
-    fontSize: 17,
-    paddingHorizontal: 16,
-    paddingTop: 20,
+  activitySpinner: {
+    alignSelf: 'center',
+    marginVertical: 16,
   },
 
   eventRow: {

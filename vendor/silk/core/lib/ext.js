@@ -17,6 +17,7 @@ const log = createLog('ext');
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 
 const RELOAD_EXT_PROP = 'silk.reload-ext';
+const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 
 class Env extends EventEmitter {
 
@@ -181,6 +182,11 @@ class Extensions {
     this._loaded = {};
     this._watchers = [];
     this._deviceObjects = deviceObjects;
+    this._skips = [];
+    this._names = [];
+
+    // Enable/disable extensions
+    this._enable(ENABLED_SILK_EXTENSIONS);
 
     util.watchprop(RELOAD_EXT_PROP, () => this._onReloadRequested());
 
@@ -193,9 +199,7 @@ class Extensions {
         log.error(`Unable to read ${dir}: ${err}`);
       })
       .then(files => files && files.forEach(file => {
-        if (this._isModuleNameValid(file)) {
-          this._loadExtension(path.join(dir, file));
-        }
+        this._loadExtension(path.join(dir, file));
       }));
     });
   }
@@ -267,7 +271,14 @@ class Extensions {
   }
 
   _loadExtension(file) {
+    if (!this._isModuleNameValid(file)) {
+      return;
+    }
     let modulePath = this._getModulePath(file);
+    if (!this._isEnabled(path.basename(modulePath))) {
+      log.verbose(`Module ${file} is disabled`);
+      return;
+    }
     try {
       if (modulePath in this._loaded) {
         log.warn(`Already loaded, skipping ${modulePath}`);
@@ -319,6 +330,48 @@ class Extensions {
         return Promise.reject();
       });
     }
+  }
+
+  /**
+   * Enables extensions by namespaces. This can include modes
+   * separated by a colon and wildcards.
+   */
+  _enable(namespaces) {
+    let split = (namespaces || '').split(/[\s,]+/);
+    let len = split.length;
+
+    for (let i = 0; i < len; i++) {
+      if (!split[i]) { // ignore empty strings
+        continue;
+      }
+      namespaces = split[i].replace(/\*/g, '.*?');
+      if (namespaces[0] === '-') {
+        this._skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+      } else {
+        this._names.push(new RegExp('^' + namespaces + '$'));
+      }
+    }
+  }
+
+  /**
+   * Returns true if the given extension is enabled, false otherwise
+   *
+   * @param {String} name
+   * @return {Boolean}
+   */
+  _isEnabled(name) {
+    let i, len;
+    for (i = 0, len = this._skips.length; i < len; i++) {
+      if (this._skips[i].test(name)) {
+        return false;
+      }
+    }
+    for (i = 0, len = this._names.length; i < len; i++) {
+      if (this._names[i].test(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

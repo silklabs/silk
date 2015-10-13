@@ -2,11 +2,14 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
+
 import AsyncComponent from './AsyncComponent';
+import NetworkWarning from './NetworkWarning';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
 
 let {
+  Navigator,
   StyleSheet,
   View,
 } = React;
@@ -61,6 +64,7 @@ export default class extends React.Component {
     return (
       <View style={styles.container}>
         <View style={styles.statusBar} />
+        <NetworkWarning />
         <View style={styles.container}>
           <View style={styles.logoContainer} />
           <View style={styles.controlsContainer}>
@@ -82,7 +86,7 @@ var styles = StyleSheet.create({
   },
 
   statusBar: {
-    height: 20,
+    height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
     backgroundColor: '#dfdfdf',
   },
 

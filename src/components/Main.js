@@ -16,6 +16,7 @@ import BLECentral from '../libraries/btle/BLECentral';
 import { getWifiInfo } from '../libraries/Util';
 
 import MonitorsView from './MonitorsView';
+import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
 export default class extends React.Component {
@@ -174,6 +175,7 @@ export default class extends React.Component {
           socketConnectionState={this.state.socketConnectionState}
           openSettings={() => this.loadSettings().catch(() => {})}
         />
+        <NetworkWarning />
         <MonitorsView
           socket={this.state.socket}
           bleDeviceManager={this.bleDeviceManager}

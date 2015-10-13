@@ -20,6 +20,12 @@ const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 const DURATION_PROP = 'persist.silk.vidduration';
 const DURATION_SECONDS = util.getintprop(DURATION_PROP, 1);
 
+// Segments generally stay around 1MB or smaller, so there's not much
+// reason uploading them should ever take more than 5 minutes (that's
+// worse than 28.8k baud modem speeds).  Treat that as a degenerate
+// case and bail.  (Note: 5 minutes is pretty arbitrary.)
+const SEGMENT_UPLOAD_TIMEOUT_MS = 5 * 60 * 1000;
+
 import type { Socket } from 'socket.io-client';
 
 // This should be moved to timeline.js once that gets flowified.
@@ -138,7 +144,7 @@ class VideoUploadQueue extends EventEmitter {
     };
 
     // step 1 is to upload the data...
-    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, VIDEO_CONTENT_TYPE, frame)
+    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, VIDEO_CONTENT_TYPE, frame, SEGMENT_UPLOAD_TIMEOUT_MS)
     .then(blobUrl => {
       // step 2. upload the metadata...
       metadataPayload.url = blobUrl;

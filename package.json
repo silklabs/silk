@@ -31,6 +31,7 @@
   "scripts": {
     "update": "./tools/update",
     "bundle": "react-native-webpack-server bundle --port 60050 --packagerPort 60051 --webpackPort 60052",
+    "localBundle": "./tools/local_bundle",
     "start": "react-native-webpack-server start --port 8082 --packagerPort 8081 --webpackPort 60046",
     "postinstall": "./tools/patch",
     "lint": "eslint src"

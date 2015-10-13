@@ -14,8 +14,11 @@ try {
   var config = require('../config.local.json')
 } catch(e) {}
 
-if (!config['react-native'] || config["react-native"].type === "bundle") {
-  process.exit(0);
-} else {
-  process.exit(1);
+// For the purpose of the build process we treat "bundle" with a "local" field
+// as "local".
+
+var type = config['react-native'].type;
+if (type === 'bundle' && config['react-native'].local) {
+  type = 'local';
 }
+process.stdout.write(type);

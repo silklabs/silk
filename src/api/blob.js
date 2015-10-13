@@ -28,7 +28,7 @@ async function getPutUrl(baseUrl, blobType, contentLength, contentType) {
   return putUrl;
 }
 
-async function put(putUrl, contentLength, contentType, bufferOrStream) {
+async function put(putUrl, contentLength, contentType, bufferOrStream, timeoutMs = 0) {
   let stream;
   if (bufferOrStream instanceof Buffer) {
     stream = new BufferToStream(bufferOrStream);
@@ -42,7 +42,8 @@ async function put(putUrl, contentLength, contentType, bufferOrStream) {
       'Content-Length': contentLength,
       'Content-Type': contentType.toLowerCase()
     },
-    body: stream
+    body: stream,
+    timeout: timeoutMs
   };
 
   const response = await fetch(putUrl, request);
@@ -63,9 +64,9 @@ export default function(config) {
     put,
     ack: ack.bind(null, resolve(baseUrl, 'blob/ack')),
 
-    async upload(blobType, contentLength, contentType, bufferOrStream) {
+    async upload(blobType, contentLength, contentType, bufferOrStream, timeoutMs = 0) {
       let putUrl = await this.getPutUrl(blobType, contentLength, contentType);
-      await this.put(putUrl, contentLength, contentType, bufferOrStream);
+      await this.put(putUrl, contentLength, contentType, bufferOrStream, timeoutMs);
       return await this.ack(putUrl);
     }
   };

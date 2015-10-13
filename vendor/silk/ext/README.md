@@ -30,7 +30,7 @@ By default all the extensions are enabled.
 
 To enable all extensions
 ```sh
-adb shell setprop persist.silk.extensions "*"
+adb shell setprop persist.silk.extensions ""
 adb shell setprop ctl.restart silk
 ```
 

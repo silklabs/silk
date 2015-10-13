@@ -37,5 +37,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: '#99a0a4',
+    padding: 8,
   },
 });

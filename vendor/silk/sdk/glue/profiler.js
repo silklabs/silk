@@ -1,5 +1,11 @@
 #! /usr/bin/env ./node_modules/.bin/babel-node
 
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
 import fetch from 'node-fetch';
 import net from 'net';
 import fs from 'fs';

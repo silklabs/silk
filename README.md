@@ -402,3 +402,23 @@ $ adb shell setprop persist.silk.debug.colors true
 $ adb shell stop silk
 $ adb shell start silk
 ```
+
+### Profiling
+
+(See [./vendor/silk/core] for full details)
+
+To enable:
+
+```sh
+adb shell setprop persist.silk.profiling.enabled true
+adb shell stop silk
+adb shell start silk
+```
+
+Disable
+
+```sh
+adb shell setprop persist.silk.profiling.enabled false
+adb shell stop silk
+adb shell start silk
+```

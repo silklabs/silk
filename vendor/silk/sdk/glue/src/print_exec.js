@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
 import gutil from 'gulp-util';
 import { spawn } from 'mz/child_process';
 

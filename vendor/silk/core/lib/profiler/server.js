@@ -1,9 +1,20 @@
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
+/**
+ * This module exposes various bits of the v8 profiler over an http interface
+ * which can be used via our CLI tools (and in the future even remotely).
+ */
+
 import http from 'http';
 import eventToPromise from 'event-to-promise';
 import createLog from '../log';
 import path from 'path';
 import fs from 'mz/fs';
-import { getboolprop } from '../util';
+import { getboolprop } from '../sysutils';
 
 const PROF_ENABLED_PROP = 'persist.silk.profiling.enabled';
 const PROF_ENABLED = getboolprop(PROF_ENABLED_PROP);
@@ -42,12 +53,9 @@ class ProfileServer {
   // current cpu profile
   cpuProfile = false
 
-  async capture() {
-  }
-
-  async startMemory() {
-  }
-
+  /**
+   * Start the v8 cpu sampling profiler...
+   */
   async startCPU(req, res) {
     if (this.cpuProfile) {
       sendJSON(res, 400, {
@@ -65,6 +73,9 @@ class ProfileServer {
     });
   }
 
+  /**
+   * Collect the currently running profile.
+   */
   async collectCPU(req, res) {
     if (!this.cpuProfile) {
       sendJSON(res, 400, {
@@ -87,6 +98,15 @@ class ProfileServer {
     });
   }
 
+  /**
+   * Load a sourcemap off the device. This is intended to be used in conjunction
+   * with the output of the v8 profiler (which reads our massive browserified
+   * files). The idea is you collect a cpu/heap profile then grab the sourcemap
+   * and resolve lines on the _host_ rather then the _device_ which is
+   * expensive.
+   *
+   * XXX: In the future we may store our sourcemaps somewhere remotely.
+   */
   async sourcemap(req, res) {
     let json = await readJSON(req);
     log.info(json, req.headers);
@@ -131,12 +151,6 @@ class ProfileServer {
         break;
       case '/collect/cpu':
         await this.collectCPU(req, res);
-        break;
-      case '/start/memory':
-        await this.startMemory(req, res);
-        break;
-      case '/capture':
-        await this.capture(req, res);
         break;
       case '/sourcemap':
         await this.sourcemap(req, res);

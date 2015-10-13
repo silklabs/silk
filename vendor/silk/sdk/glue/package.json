@@ -27,7 +27,6 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-util": "^3.0.6",
     "gulplog": "^1.0.0",
-    "gutil": "^1.6.4",
     "mz": "^2.0.0",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",

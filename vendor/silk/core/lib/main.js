@@ -162,7 +162,7 @@ function main() {
       // Set global state up.
       bootCompleted = true;
       log.info('main completed device has been booted.');
-    })
+    });
 }
 
 main().catch(err => {

@@ -11,15 +11,14 @@
 
 #include <binder/ProcessState.h>
 #include <binder/BinderService.h>
-#include <camera/ICameraRecordingProxy.h>
 
 #include "IOpenCVCameraCapture.h"
 
 namespace android {
 
 class OpenCVCameraCapture : public BinderService<OpenCVCameraCapture>,
-                            public BnOpenCVCameraCapture,
-                            public IBinder::DeathRecipient {
+                            public BnOpenCVCameraCapture
+{
 public:
   static status_t publish();
   static void frameCallback(nsecs_t timestamp, const sp<IMemory>& data);
@@ -28,19 +27,11 @@ public:
   OpenCVCameraCapture();
   virtual ~OpenCVCameraCapture();
 
-  virtual status_t initCamera(int cameraId, const sp<ICameraRecordingProxyListener>& listener);
+  virtual status_t initCamera(int cameraId,
+    const sp<IGraphicBufferProducer>& producer);
   virtual void closeCamera();
-  virtual double getProperty(int id);
-  virtual void setProperty(int id, double value);
-  virtual void applyProperties();
-
-  virtual void binderDied(const wp<IBinder> &who) {
-    appListener = NULL;
-  }
 
 private:
-  static sp<ICameraRecordingProxyListener> appListener;
-  void setListener(const sp<ICameraRecordingProxyListener>& listener);
 };
 
 };

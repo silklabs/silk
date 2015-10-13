@@ -9,12 +9,11 @@
 #include <utils/Log.h>
 
 #include <binder/ProcessState.h>
+#include <gui/CpuConsumer.h>
 #include <media/openmax/OMX_IVCommon.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/CameraSource.h>
 #include <media/stagefright/MetaData.h>
-#include <gui/Surface.h>
-#include <gui/SurfaceComposerClient.h>
 #include <utils/Thread.h>
 #include <sysutils/FrameworkListener.h>
 
@@ -22,10 +21,9 @@
 #include "MPEG4MemoryWriter.h"
 #include "Capturedefs.h"
 #include "Channel.h"
-#include "PreviewMediaSource.h"
 #include "SlicedMP4Encoder.h"
 #include "FaceDetection.h"
-#include "OpenCVCameraRecordingProxy.h"
+#include "OpenCVCameraCapture.h"
 
 using namespace android;
 using namespace Json;
@@ -37,18 +35,13 @@ using namespace std;
 const char* kMimeTypeAvc = "video/avc";
 status_t OK = static_cast<status_t>(android::OK);
 Size sVideoSize(1280, 720);
-int32_t sColorFormat = (int) OMX_COLOR_FormatUnused;
-int32_t sStride = 1280;
-int32_t sSliceHeight = 720;
 int32_t sVideoBitRateInK = 1024;
 int32_t sFPS = 24;
 int32_t sIFrameIntervalSec = 15;
-int32_t sPreviewScale = 4;
-int32_t sPreviewSkipCount = 5;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
-int32_t sYuvPlanePadBytes = 0; // bytes of padding between YUV y and cbcr planes
+sp<IGraphicBufferProducer> sPreviewProducer = NULL;
 
 //
 // Helper macros
@@ -120,15 +113,12 @@ private:
   // Camera related
   bool mHardwareActive;
   sp<Camera> mCamera;
-  sp<SurfaceControl> mSurfaceControl;
-  sp<Surface> mPreviewSurface;
-  sp<SurfaceComposerClient> mSCClient;
+
   sp<SlicedMP4Encoder> mMp4;
   sp<MediaSource> mPreview;
   sp<IFrameRequestMonitor> mIframe;
   sp<ALooper> mLooper;
   sp<ICamera> mRemote;
-  sp<ICameraRecordingProxy> mProxy;
   sp<CameraSource> mCameraSource;
   Channel& mChannel;
 };
@@ -232,14 +222,6 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sIFrameIntervalSec = cmdData["frameInterval"].asInt();
     ALOGV("sIFrameIntervalSec %d", sIFrameIntervalSec);
   }
-  if (!cmdData["previewScale"].isNull()) {
-    sPreviewScale = cmdData["previewScale"].asInt();
-    ALOGV("sPreviewScale %d", sPreviewScale);
-  }
-  if (!cmdData["previewSkipCount"].isNull()) {
-    sPreviewSkipCount = cmdData["previewSkipCount"].asInt();
-    ALOGV("sFsPreviewSkipCount %d", sPreviewSkipCount);
-  }
   if (!cmdData["audioBitRate"].isNull()) {
     sAudioBitRate = cmdData["audioBitRate"].asInt();
     ALOGV("sAudioBitRate %d", sAudioBitRate);
@@ -251,10 +233,6 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (!cmdData["audioChannels"].isNull()) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
-  }
-  if (!cmdData["yuvPlanePadBytes"].isNull()) {
-    sYuvPlanePadBytes = cmdData["yuvPlanePadBytes"].asInt();
-    ALOGV("sYuvPlanePadBytes %d", sYuvPlanePadBytes);
   }
   // Start camera in a separate thread
   pthread_create(&mThread, NULL, initThreadWrapper, this);
@@ -278,21 +256,6 @@ status_t CaptureCommand::initThread() {
   mLooper->setName("capture-looper");
   mLooper->start();
 
-  // Use an empty hidden window to keep CameraSource happy.
-  // TODO: Avoid using surfaceflinger entirely
-  mSCClient = new SurfaceComposerClient();
-  if (mSCClient.get() == NULL) {
-    ALOGE("Unable to establish connection to Surface Composer");
-    return -1;
-  }
-  mSurfaceControl = mSCClient->createSurface(String8(CAMERA_NAME),
-      0, 0, PIXEL_FORMAT_RGBX_8888, ISurfaceComposerClient::eHidden);
-  if (mSurfaceControl.get() == NULL) {
-    ALOGE("Unable to create preview surface");
-    return -1;
-  }
-  mPreviewSurface = mSurfaceControl->getSurface();
-
   // Setup the camera
   int cameraId = 0;
   mCamera = Camera::connect(cameraId, String16(CAMERA_NAME),
@@ -303,53 +266,35 @@ status_t CaptureCommand::initThread() {
   }
   mRemote = mCamera->remote();
 
-  mProxy = new OpenCVCameraRecordingProxy(mCamera->getRecordingProxy());
-
   FaceDetection faces(&mChannel);
   mCamera->setListener(&faces);
 
-  CHECK(mCamera->setPreviewTarget(mPreviewSurface->getIGraphicBufferProducer()) == 0);
+  {
+    char previewSize[80];
+    snprintf(previewSize, sizeof(previewSize), "%dx%d", sVideoSize.width, sVideoSize.height);
+    CameraParameters params = mCamera->getParameters();
+    params.set(CameraParameters::KEY_PREVIEW_SIZE, previewSize);
+    params.set(CameraParameters::KEY_PREVIEW_FORMAT, "yuv420sp");
+    status_t err = mCamera->setParameters(params.flatten());
+    CHECK(err == 0);
+    params = mCamera->getParameters();
+    params.dump();
+  }
+
+  CHECK(sPreviewProducer != NULL);
+  CHECK(mCamera->setPreviewTarget(sPreviewProducer) == 0);
   CHECK(mCamera->startPreview() == 0);
   CHECK(mCamera->previewEnabled());
   CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
 
   // Start recording stream
-  mCameraSource = CameraSource::CreateFromCamera(mRemote, mProxy, cameraId,
+  mCameraSource = CameraSource::CreateFromCamera(mRemote, mCamera->getRecordingProxy(), cameraId,
       String16(CAMERA_NAME, strlen(CAMERA_NAME)), Camera::USE_CALLING_UID,
       sVideoSize, sFPS,
-      NULL);
+      NULL, true);
   CHECK_EQ(mCameraSource->initCheck(), ::OK);
 
-  sp<ProcessState> proc(ProcessState::self());
-  ProcessState::self()->startThreadPool();
-
-  // Ensure the output frames will be as expected
-  {
-    sp<MetaData> meta = mCameraSource->getFormat();
-    int32_t width, height;
-    CHECK(meta->findInt32(kKeyWidth, &width));
-    CHECK(meta->findInt32(kKeyHeight, &height));
-    CHECK_EQ(width, sVideoSize.width);
-    CHECK_EQ(height, sVideoSize.height);
-
-    CHECK(meta->findInt32(kKeyStride, &sStride));
-    CHECK(meta->findInt32(kKeySliceHeight, &sSliceHeight));
-    CHECK(meta->findInt32(kKeyColorFormat, &sColorFormat));
-
-    switch (sColorFormat) {
-    case (int) OMX_COLOR_FormatYUV420SemiPlanar:
-      CHECK_EQ(sStride, sVideoSize.width); // in NV21 stride == width
-      CHECK_EQ(sSliceHeight, sVideoSize.height); // in NV21 sliceHeight == height
-      break;
-    case (int) OMX_COLOR_FormatYUV420Planar:
-    default:
-      LOG_ALWAYS_FATAL("Unsupported color format: %d", sColorFormat);
-      return 0;
-    }
-  }
-
-  mPreview = new PreviewMediaSource(&mChannel, mCameraSource, sPreviewSkipCount);
-  mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mPreview);
+  mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mCameraSource);
   mMp4->run();
 
   mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
@@ -370,21 +315,6 @@ status_t CaptureCommand::initThread() {
 int CaptureCommand::capture_cleanup() {
   if (mHardwareActive) {
     mCamera->stopPreview();
-
-    /* Destroy preview surface */
-    if (NULL != mPreviewSurface.get()) {
-      mPreviewSurface.clear();
-    }
-
-    if (NULL != mSurfaceControl.get()) {
-      mSurfaceControl->clear();
-      mSurfaceControl.clear();
-    }
-
-    if (NULL != mSCClient.get()) {
-      mSCClient->dispose();
-      mSCClient.clear();
-    }
 
     // Close camera
     if (NULL != mCamera.get()) {
@@ -432,10 +362,21 @@ int main(int argc, char **argv) {
   (void) argc;
   (void) argv;
 
+  status_t err;
+
+  sp<ProcessState> proc(ProcessState::self());
+  ProcessState::self()->startThreadPool();
+
+  err = OpenCVCameraCapture::publish();
+  if (err != 0) {
+    ALOGE("Unable to publish OpenCVCameraCapture service: %d", err);
+    return 1;
+  }
+
   // Start the data socket that would be used to stream camera frames to the
   // camera node module
   Channel channel;
-  int err = channel.startListener();
+  err = channel.startListener();
   if (err < 0) {
     ALOGE("Failed to start capture data socket listener: %d\n", err);
     return 1;

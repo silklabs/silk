@@ -19,7 +19,6 @@ class Channel: public SocketListener1 {
 public:
   enum Tag {
     TAG_VIDEO = 0,
-    TAG_PREVIEW,
     TAG_FACES,
     TAG_MIC,
   };

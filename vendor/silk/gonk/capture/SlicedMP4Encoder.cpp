@@ -431,7 +431,7 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
   videoFormat->setFloat("frame-rate", sFPS);
   videoFormat->setInt32("i-frame-interval", sIFrameIntervalSec);
 
-  mVideoEncoder = MediaCodecSource::Create(mLooper, videoFormat, cameraSource);
+  mVideoEncoder = MediaCodecSource::Create(mLooper, videoFormat, cameraSource, MediaCodecSource::FLAG_USE_METADATA_INPUT);
 
   // Setup audio
   sp<MediaSource> audioSource = new AudioSource(AUDIO_SOURCE_MIC,

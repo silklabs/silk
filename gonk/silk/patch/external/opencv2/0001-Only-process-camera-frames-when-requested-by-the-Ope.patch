@@ -1,0 +1,171 @@
+From 91131351c94881a31be258656cce9f4adb6c1660 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 13 Oct 2015 00:16:46 -0700
+Subject: [PATCH] Only process camera frames when requested by the OpenCV user
+
+Note that this patch breaks "autograb" support, but this mode is currently
+required
+---
+ .../androidcamera/camera_wrapper/camera_wrapper.h  |  2 ++
+ modules/androidcamera/include/camera_activity.hpp  |  1 +
+ modules/androidcamera/src/camera_activity.cpp      | 27 ++++++++++++++++++++++
+ modules/highgui/src/cap_android.cpp                | 17 +++++++++++---
+ 4 files changed, 44 insertions(+), 3 deletions(-)
+
+diff --git a/modules/androidcamera/camera_wrapper/camera_wrapper.h b/modules/androidcamera/camera_wrapper/camera_wrapper.h
+index 430dea2..a27b773 100644
+--- a/modules/androidcamera/camera_wrapper/camera_wrapper.h
++++ b/modules/androidcamera/camera_wrapper/camera_wrapper.h
+@@ -5,6 +5,7 @@ typedef void (*CloseCameraConnectC)(void**);
+ typedef double (*GetCameraPropertyC)(void* camera, int propIdx);
+ typedef void (*SetCameraPropertyC)(void* camera, int propIdx, double value);
+ typedef void (*ApplyCameraPropertiesC)(void** camera);
++typedef void (*RequestFrameC)(void** camera);
+ 
+ extern "C"
+ {
+@@ -13,4 +14,5 @@ void closeCameraConnectC(void**);
+ double getCameraPropertyC(void* camera, int propIdx);
+ void setCameraPropertyC(void* camera, int propIdx, double value);
+ void applyCameraPropertiesC(void** camera);
++void requestFrameC(void** camera);
+ }
+diff --git a/modules/androidcamera/include/camera_activity.hpp b/modules/androidcamera/include/camera_activity.hpp
+index a6a62e7..8283729 100644
+--- a/modules/androidcamera/include/camera_activity.hpp
++++ b/modules/androidcamera/include/camera_activity.hpp
+@@ -34,6 +34,7 @@ public:
+     double getProperty(int propIdx);
+     void setProperty(int propIdx, double value);
+     void applyProperties();
++    void requestFrame();
+ 
+     int getFrameWidth();
+     int getFrameHeight();
+diff --git a/modules/androidcamera/src/camera_activity.cpp b/modules/androidcamera/src/camera_activity.cpp
+index 84db3e1..cacd906 100644
+--- a/modules/androidcamera/src/camera_activity.cpp
++++ b/modules/androidcamera/src/camera_activity.cpp
+@@ -39,6 +39,7 @@ public:
+     static CameraActivity::ErrorCode setProperty(void* camera, int propIdx, double value);
+     static CameraActivity::ErrorCode getProperty(void* camera, int propIdx, double* value);
+     static CameraActivity::ErrorCode applyProperties(void** ppcamera);
++    static CameraActivity::ErrorCode requestFrame(void** ppcamera);
+ 
+     static void setPathLibFolder(const std::string& path);
+ 
+@@ -57,6 +58,7 @@ private:
+     static GetCameraPropertyC pGetPropertyC;
+     static SetCameraPropertyC pSetPropertyC;
+     static ApplyCameraPropertiesC pApplyPropertiesC;
++    static RequestFrameC pRequestFrameC;
+ 
+     friend bool nextFrame(void* buffer, size_t bufferSize, void* userData);
+ };
+@@ -69,12 +71,14 @@ CloseCameraConnectC  CameraWrapperConnector::pCloseCameraC = 0;
+ GetCameraPropertyC CameraWrapperConnector::pGetPropertyC = 0;
+ SetCameraPropertyC CameraWrapperConnector::pSetPropertyC = 0;
+ ApplyCameraPropertiesC CameraWrapperConnector::pApplyPropertiesC = 0;
++RequestFrameC CameraWrapperConnector::pRequestFrameC = 0;
+ 
+ #define INIT_CAMERA_SYMBOL_NAME "initCameraConnectC"
+ #define CLOSE_CAMERA_SYMBOL_NAME "closeCameraConnectC"
+ #define SET_CAMERA_PROPERTY_SYMBOL_NAME "setCameraPropertyC"
+ #define GET_CAMERA_PROPERTY_SYMBOL_NAME "getCameraPropertyC"
+ #define APPLY_CAMERA_PROPERTIES_SYMBOL_NAME "applyCameraPropertiesC"
++#define REQUEST_FRAME_SYMBOL_NAME "requestFrameC"
+ #define PREFIX_CAMERA_WRAPPER_LIB "libnative_camera"
+ 
+ 
+@@ -161,6 +165,19 @@ CameraActivity::ErrorCode CameraWrapperConnector::applyProperties(void** ppcamer
+     return CameraActivity::NO_ERROR;
+ }
+ 
++CameraActivity::ErrorCode CameraWrapperConnector::requestFrame(void** ppcamera)
++{
++    if ((ppcamera == NULL) || (*ppcamera == NULL))
++    {
++        LOGE("CameraWrapperConnector::requestFrame error: wrong pointer to camera object");
++        return CameraActivity::ERROR_WRONG_POINTER_CAMERA_WRAPPER;
++    }
++
++    (*pRequestFrameC)(ppcamera);
++    return CameraActivity::NO_ERROR;
++}
++
++
+ CameraActivity::ErrorCode CameraWrapperConnector::connectToLib()
+ {
+     if (isConnectedToLib) {
+@@ -206,6 +223,7 @@ CameraActivity::ErrorCode CameraWrapperConnector::connectToLib()
+     GetCameraPropertyC pGetProp_C;
+     SetCameraPropertyC pSetProp_C;
+     ApplyCameraPropertiesC pApplyProp_C;
++    RequestFrameC pRequestFrame_C;
+ 
+     CameraActivity::ErrorCode res;
+ 
+@@ -224,11 +242,15 @@ CameraActivity::ErrorCode CameraWrapperConnector::connectToLib()
+     res = getSymbolFromLib(libHandle, APPLY_CAMERA_PROPERTIES_SYMBOL_NAME, (void**)(&pApplyProp_C));
+     if (res) return res;
+ 
++    res = getSymbolFromLib(libHandle, REQUEST_FRAME_SYMBOL_NAME, (void**)(&pRequestFrame_C));
++    if (res) return res;
++
+     pInitCameraC  = pInit_C;
+     pCloseCameraC = pClose_C;
+     pGetPropertyC = pGetProp_C;
+     pSetPropertyC = pSetProp_C;
+     pApplyPropertiesC = pApplyProp_C;
++    pRequestFrameC = pRequestFrame_C;
+     isConnectedToLib=true;
+ 
+     return CameraActivity::NO_ERROR;
+@@ -428,6 +450,11 @@ void CameraActivity::applyProperties()
+     frameHeight = getProperty(ANDROID_CAMERA_PROPERTY_FRAMEHEIGHT);
+ }
+ 
++void CameraActivity::requestFrame()
++{
++    CameraWrapperConnector::requestFrame(&camera);
++}
++
+ int CameraActivity::getFrameWidth()
+ {
+     if (frameWidth <= 0)
+diff --git a/modules/highgui/src/cap_android.cpp b/modules/highgui/src/cap_android.cpp
+index a8d8c5b..bfdca50 100644
+--- a/modules/highgui/src/cap_android.cpp
++++ b/modules/highgui/src/cap_android.cpp
+@@ -314,8 +314,14 @@ bool CvCapture_Android::setProperty( int propIdx, double propValue )
+             m_activity->setProperty(ANDROID_CAMERA_PROPERTY_FRAMEHEIGHT, propValue);
+             break;
+         case CV_CAP_PROP_AUTOGRAB:
+-        m_shouldAutoGrab=(propValue != 0);
+-            break;
++            // The capture plug-in needs to be reworked to support autograb, as 
++            // m_activity->requestFrame() explicitly inhibits autograb for
++            // efficiency reasons
++            //
++            //m_shouldAutoGrab=(propValue != 0);
++            CV_Error( CV_StsOutOfRange, "CV_CAP_PROP_AUTOGRAB not supported");
++            return false;
++
+         case CV_CAP_PROP_EXPOSURE:
+             m_activity->setProperty(ANDROID_CAMERA_PROPERTY_EXPOSURE, propValue);
+             break;
+@@ -369,6 +375,11 @@ bool CvCapture_Android::grabFrame()
+         m_CameraParamsChanged = false;
+         m_dataState = CVCAPTURE_ANDROID_STATE_NO_FRAME;//we will wait new frame
+     }
++    // Inform capture that a frame is desired. This is more efficient than
++    // continually requesting frames that would be ignored by the user of
++    // OpenCV.
++    m_dataState = CVCAPTURE_ANDROID_STATE_NO_FRAME;
++    m_activity->requestFrame();
+ 
+     if (m_dataState != CVCAPTURE_ANDROID_STATE_HAS_NEW_FRAME_UNGRABBED)
+     {
+-- 
+1.9.1
+

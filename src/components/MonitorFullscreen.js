@@ -113,7 +113,6 @@ class LiveSegmentProvider {
       type: 'data',
       data: message.frame,
       id,
-      nextId: null,
       previousId: this.lastId,
       startUTC: message.when,
       endUTC: message.when + (message.durationMs || 0),
@@ -316,15 +315,14 @@ export default React.createClass({
     }
   },
 
-  createSegment(result) {
+  createSegment(result, previousSegment) {
     return new LiveVideo.Segment({
       type: 'url',
       url: result.url,
       startUTC: result.startUTC,
       endUTC: result.endUTC,
       id: result.id,
-      nextId: result.nextId,
-      previousId: result.previousId,
+      previousId: previousSegment ? previousSegment.id : null,
       objects: result.data.objects,
     });
   },
@@ -408,17 +406,19 @@ export default React.createClass({
       throw new Error('Previous segment type _must_ be recorded');
     }
 
-    if (!segment || !segment.nextId) {
+    if (!segment || !segment.startUTC) {
       // We have reached the end of playable segments switch back to live.
       console.log('No next playable segments resuming live');
       this.transitionModes(MODES.live);
       return;
     }
 
-    api.timeMeta.findById({
-      id: segment.nextId,
+    api.timeMeta.findOneAfterTime({
+      deviceId: this.props.deviceId,
+      metaType: 'video',
+      time: segment.startUTC + 1,
     }).then(result => {
-      let newSegment = this.createSegment(result);
+      let newSegment = this.createSegment(result, segment);
       let delta = result.startUTC - segment.startUTC;
       let previousDuration = segment.endUTC - segment.startUTC;
 
@@ -519,13 +519,8 @@ export default React.createClass({
             Wanted: ${new Date(startTime)}
             Got: ${new Date(segment.startUTC)}
             ID: ${segment.id}
-            NextID: ${segment.nextId}
         `
       );
-
-      if (!segment.nextId) {
-        console.warn(`Segment ${segment.id} has no next id!`);
-      }
 
       // Load segment and show preview:
       this._videoSegments = [segment];

@@ -93,11 +93,6 @@ internal class LiveVideoItem : AVPlayerItem {
   var id: String!
 
   /**
-  identifier for the next item (useful for ensuring we playback in sane order).
-  */
-  var nextId: String!
-
-  /**
   When this video was taken.
   */
   var start: Int64!
@@ -488,7 +483,6 @@ class LiveVideo : UIView {
     // Segment is a wrapper for the data values too so we don't just copy it over.
     item.start = segment.startUTC
     item.id = segment.id
-    item.nextId = segment.nextId
 
     self.player.insertItem(item, afterItem: nil)
 

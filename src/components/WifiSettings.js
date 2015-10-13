@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   scrollView: {
     backgroundColor: '#efeff4',
     borderColor: '#a7a7aa',
-    borderTopWidth: 0.5,
+    borderTopWidth: 1 / PixelRatio.get(),
     flex: 1,
   },
   contentSpacer: {

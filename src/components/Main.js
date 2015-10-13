@@ -2,11 +2,11 @@ import React from 'react-native';
 let {
   View,
   StyleSheet,
-  TabBarIOS,
 } = React;
 
 import socketIOClient from 'socket.io-client-react-native';
-import mklog from 'log'; const log = mklog('TabsView');
+import createLog from 'log';
+const log = createLog('Main');
 
 import SocketIO from '../libraries/SocketIO';
 import Config from '../libraries/Config';
@@ -16,10 +16,9 @@ import BLECentral from '../libraries/btle/BLECentral';
 import MonitorsView from './MonitorsView';
 import TopBar from './TopBar';
 
-export default class TabsView extends React.Component {
+export default class extends React.Component {
 
   state = {
-    selectedTab: 'monitors',
     socketConnectionState: 'offline',
     socketUrl: null,
     socket: null,
@@ -140,45 +139,6 @@ export default class TabsView extends React.Component {
     });
   }
 
-
-  _renderTabs() {
-    return (
-      <TabBarIOS
-        tintColor="white"
-        barTintColor="#404e55">
-
-        <TabBarIOS.Item
-          title="Overview"
-          icon={require('image!Tab.png')}
-          selected={this.state.selectedTab === 'monitors'}
-          onPress={() => this.setState({ selectedTab: 'monitors' })}>
-          <MonitorsView
-            socket={this.state.socket}
-            bleDeviceManager={this.bleDeviceManager}
-            {...this.props}
-          />
-        </TabBarIOS.Item>
-
-        <TabBarIOS.Item
-          title="Activity"
-          icon={require('image!Tab.png')}
-          selected={this.state.selectedTab === 'activity'}
-          onPress={() => this.setState({ selectedTab: 'activity' })}>
-          <View />
-        </TabBarIOS.Item>
-
-        <TabBarIOS.Item
-          title="Profile"
-          icon={require('image!Tab.png')}
-          selected={this.state.selectedTab === 'profile'}
-          onPress={() => this.setState({ selectedTab: 'profile' })}>
-          <View />
-        </TabBarIOS.Item>
-
-      </TabBarIOS>
-    );
-  }
-
   render() {
     return (
       <View style={styles.container}>
@@ -186,7 +146,11 @@ export default class TabsView extends React.Component {
           socketConnectionState={this.state.socketConnectionState}
           openSettings={() => this.loadSettings().catch(() => {})}
         />
-        {this._renderTabs()}
+        <MonitorsView
+          socket={this.state.socket}
+          bleDeviceManager={this.bleDeviceManager}
+          {...this.props}
+        />
      </View>
     );
   }

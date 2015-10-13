@@ -126,19 +126,10 @@ class StyledButton extends React.Component {
 export default class UserForm extends AsyncComponent {
 
   static propTypes = {
-    // Explicitly pass through styles...
     style: View.propTypes.style,
-
-    submitText: React.PropTypes.string,
-
-    /**
-     * Should be an async function.
-     */
-    onSubmit: React.PropTypes.func,
-  };
-
-  state = {
-    submitInProgres: false,
+    submitText: React.PropTypes.string.required,
+    onSubmit: React.PropTypes.func.required,
+    inProgress: React.PropTypes.bool.required,
   };
 
   email = '';
@@ -153,17 +144,15 @@ export default class UserForm extends AsyncComponent {
   };
 
   handleSubmit = async () => {
-    this.setStateAsync({ submitInProgress: true });
-    await this.props.onSubmit({
+    this.props.onSubmit({
       email: this.email,
       password: this.password,
     });
-    this.setStateAsync({ submitInProgress: false });
   };
 
   render() {
     let submitOrLoading;
-    if (this.state.submitInProgress) {
+    if (this.props.inProgress) {
       submitOrLoading = <LoginSpinner/>;
     } else {
       submitOrLoading = (

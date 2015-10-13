@@ -29,7 +29,7 @@ let Square = React.createClass({
 
 let ObjectBoxes = React.createClass({
   propTypes: {
-    id: React.PropTypes.string.isRequired,
+    deviceId: React.PropTypes.string.isRequired,
     socket: React.PropTypes.object.isRequired,
     style: View.propTypes.style,
     width: React.PropTypes.number.isRequired,
@@ -49,8 +49,15 @@ let ObjectBoxes = React.createClass({
    */
   _reportObject: function(tag, when) {
     if ((tag === 'face') || (tag === 'car')) {
-      let { socket, id} = this.props;
-      let msg = {msgTarget: 'extensions', targetName: 'detectobject', msg: 'reportobject', id, tag, when};
+      let { socket, deviceId } = this.props;
+      let msg = {
+        msgTarget: 'extensions',
+        targetName: 'detectobject',
+        msg: 'reportobject',
+        id: deviceId,
+        tag,
+        when,
+      };
       console.log('Reporting object:' + tag + ' when: ' + when);
       socket.emit('cmd', msg);
     }

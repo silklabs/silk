@@ -33,13 +33,19 @@ class SignInControls extends AsyncComponent {
     userState: React.PropTypes.object,
   };
 
+  state = {
+    loginInProgress: false,
+  };
+
   onSignIn = async (props) => {
+    this.setStateAsync({ loginInProgress: true });
     try {
       let { userState } = this.props;
       await userState.attemptSignIn(props.email, props.password);
     } catch (err) {
       console.log('Failed to sign in', err);
     }
+    this.setStateAsync({ loginInProgress: false });
   };
 
   onDeveloperSignIn = async () => {
@@ -62,6 +68,7 @@ class SignInControls extends AsyncComponent {
     return (
       <UserForm
         onSubmit={this.onSignIn}
+        inProgress={this.state.loginInProgress}
         submitText="Sign In"
         style={styles.signInContainer}>
         <View style={styles.bottomLinks}>

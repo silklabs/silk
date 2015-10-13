@@ -2,12 +2,10 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-import moment from 'moment';
 
 import PreviewQueue from '../libraries/PreviewQueue';
 
 import ImageView from './ImageView';
-import MonitorFullscreen from './MonitorFullscreen';
 import ObjectBoxes from './ObjectBoxes';
 
 var {
@@ -43,7 +41,7 @@ export class MonitorConnecting extends React.Component {
 
 export var MonitorPreview = React.createClass({
   propTypes: {
-    id: React.PropTypes.string.isRequired,
+    deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
     status: React.PropTypes.string.isRequired,
     navigator: React.PropTypes.object.isRequired,
@@ -54,20 +52,9 @@ export var MonitorPreview = React.createClass({
 
   getInitialState() {
     return {
-      showVideo: false,
-      videoStartTime: null,
       objects: [],
-      events: null,
       previewWidth: null,
     };
-  },
-
-  showVideo(videoStartTime) {
-    this.setState({ showVideo: true, videoStartTime });
-  },
-
-  onVideoHidden() {
-    this.setState({ showVideo: false, videoStartTime: null });
   },
 
   onPreviewFrame(message) {
@@ -75,7 +62,7 @@ export var MonitorPreview = React.createClass({
   },
 
   componentWillMount() {
-    let { socket, id } = this.props;
+    let { socket, deviceId } = this.props;
 
     this._queue = new PreviewQueue(this.props.label, message => {
       this.setState({
@@ -84,24 +71,14 @@ export var MonitorPreview = React.createClass({
       });
     });
 
-    let stream = `preview-${id}`;
+    let stream = `preview-${deviceId}`;
     socket.on(stream, this.onPreviewFrame);
     socket.join(stream);
-
-    this.props.api.timeMeta.findInTimeInterval({
-      deviceId: this.props.id,
-      metaType: 'event',
-      startTime: Date.now() - 86400000,
-      endTime: Date.now(),
-      // TODO this is just to demo this feature. We really want a
-      // batching API, and a different UI of course.
-      maxCount: 3,
-    }).then((events) => this.setState({events}));
   },
 
   componentWillUnmount() {
-    let { socket, id } = this.props;
-    let stream = `preview-${id}`;
+    let { socket, deviceId } = this.props;
+    let stream = `preview-${deviceId}`;
     socket.off(stream, this.onPreviewFrame);
     socket.leave(stream);
     if (this._queue) {
@@ -111,32 +88,11 @@ export var MonitorPreview = React.createClass({
   },
 
   render() {
-    let id = this.props.id;
     let status = this.props.status === '' ? '' : `(${this.props.status})`;
-
-    let fullScreenMonitor = null;
-    let fullscreen = this.state.showVideo;
-    if (fullscreen) {
-      fullScreenMonitor = (
-        <MonitorFullscreen
-          api={this.props.api}
-          onClose={this.onVideoHidden}
-          socket={this.props.socket}
-          id={id}
-          previewSize={this.props.previewSize}
-          startAtTime={this.state.videoStartTime}
-        />
-      );
-    }
     return (
       <View style={styles.monitorContainer}>
-        {fullScreenMonitor}
         <MonitorLabel>{this.props.label} {status}</MonitorLabel>
         {this._renderPreview()}
-        <View>
-          <Text>Recent Events:</Text>
-          {this._renderEvents()}
-        </View>
       </View>
     );
   },
@@ -172,7 +128,7 @@ export var MonitorPreview = React.createClass({
     if (this.state.objects.length) {
       objects = (
         <ObjectBoxes
-          id={this.props.id}
+          deviceId={this.props.deviceId}
           socket={this.props.socket}
           width={previewStyle.width}
           height={previewStyle.height}
@@ -184,7 +140,7 @@ export var MonitorPreview = React.createClass({
 
     return (
       <TouchableOpacity
-        onPress={() => this.showVideo()}
+        onPress={this.props.onPress}
         style={[styles.monitorPreviewContainer, previewStyle]}>
         <ImageView style={styles.preview} blob={this.state.blob} />
         {logo}
@@ -193,40 +149,6 @@ export var MonitorPreview = React.createClass({
         </View>
       </TouchableOpacity>
     );
-  },
-
-  _renderEvents() {
-    // TODO: We should get events streamed over the socket so that we
-    // can update this list in real time.
-    let events = this.state.events;
-    if (!events) {
-      return <Text>Loading...</Text>;
-    }
-    if (!events.length) {
-      return <Text>No recent events registered.</Text>;
-    }
-    return events.map((event) => (
-      <TouchableOpacity
-        onPress={() => this.showVideo(event.startUTC - 2000)}
-        style={styles.eventRow}>
-        <Text>{this._labelForEvent(event)}</Text>
-      </TouchableOpacity>
-    ));
-  },
-
-  _labelForEvent(event) {
-    let startTimeString = moment(event.startUTC).format('h:mm:ss a');
-    let duration = (event.endUTC - event.startUTC) / 1000;
-    let durationString;
-    if (duration < 60) {
-      durationString = `${Math.round(duration)} s`;
-    } else if (duration < 3600) {
-      durationString = `${Math.round(duration / 60)} min`;
-    } else {
-      let mins = Math.round(duration / 60);
-      durationString = `${Math.floor(mins / 60)} h ${mins % 60} min`;
-    }
-    return `${event.data.tag} at ${startTimeString}, duration ${durationString}`;
   },
 });
 
@@ -293,9 +215,5 @@ var styles = StyleSheet.create({
 
   monitorPreviewOverlay: {
     backgroundColor: 'transparent',
-  },
-
-  eventRow: {
-    padding: 10,
   },
 });

@@ -10,14 +10,13 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(getNetInfo:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getWifiInfo:(RCTResponseSenderBlock)callback) {
   NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
   NSLog(@"%s: Supported interfaces: %@", __func__, interfaceNames);
   
   NSDictionary *SSIDInfo;
   for (NSString *interfaceName in interfaceNames) {
-    SSIDInfo = CFBridgingRelease(
-                                 CNCopyCurrentNetworkInfo((__bridge CFStringRef)interfaceName));
+    SSIDInfo = CFBridgingRelease(CNCopyCurrentNetworkInfo((__bridge CFStringRef)interfaceName));
     NSLog(@"%s: %@ => %@", __func__, interfaceName, SSIDInfo);
     
     BOOL isNotEmpty = (SSIDInfo.count > 0);

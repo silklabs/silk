@@ -12,6 +12,7 @@ import SocketIO from '../libraries/SocketIO';
 import Config from '../libraries/Config';
 import DeviceManager from '../libraries/btle/DeviceManager';
 import BLECentral from '../libraries/btle/BLECentral';
+import { getWifiInfo } from '../libraries/Util';
 
 import MonitorsView from './MonitorsView';
 import TopBar from './TopBar';
@@ -103,8 +104,7 @@ export default class extends React.Component {
         serverUrl,
       });
     } else {
-      const net = require('../libraries/Net');
-      promise = net.getInfo().then(info => {
+      promise = getWifiInfo().then(info => {
         return this.navigateWifiScene({
           ssid: info.SSID,
           secret: '',

@@ -197,21 +197,6 @@ export default class TimeMetadata extends Base {
     return formatOutput(result);
   }
 
-  // Mutations
-
-  async _setPrevious(previousId, id) {
-    if (!previousId) {
-      return;
-    }
-    // XXX: This part is sketchy and should be part of one transaction later.
-    await this.collection.update(
-      idQuery(previousId),
-      {
-        $set: { nextId: id }
-      }
-    );
-  }
-
   /**
    * Insert the next item in the time series.
    */
@@ -245,7 +230,6 @@ export default class TimeMetadata extends Base {
       );
     } else {
       await this.collection.insert(payload);
-      await this._setPrevious(payload.previousId, payload.id);
     }
     return { id };
   }

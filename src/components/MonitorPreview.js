@@ -88,9 +88,7 @@ export var MonitorPreview = React.createClass({
   },
 
   render() {
-    let { deviceId } = this.props;
     let status = this.props.status === '' ? '' : `(${this.props.status})`;
-
     return (
       <View style={styles.monitorContainer}>
         <MonitorLabel>{this.props.label} {status}</MonitorLabel>

@@ -8,7 +8,6 @@ var {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } = React;
 

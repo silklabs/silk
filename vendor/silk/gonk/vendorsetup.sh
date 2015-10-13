@@ -50,9 +50,9 @@ node_version_check()
     local minor=${BASH_REMATCH[2]}
     local patch=${BASH_REMATCH[3]}
 
-    if [[ $major -eq 0 ]]; then
+    if [[ $major -eq 4 ]]; then
+      [[ $minor -ge 1 ]] && return
       [[ $minor -eq 12 ]] && return
-      [[ $minor -eq 10 ]] && [[ $patch -ge 29 ]] && return
     fi
   fi
   poison_their_lunch Bad node version: $v

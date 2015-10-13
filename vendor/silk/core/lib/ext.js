@@ -182,8 +182,8 @@ class Extensions {
     this._loaded = {};
     this._watchers = [];
     this._deviceObjects = deviceObjects;
-    this._skips = [];
-    this._names = [];
+    this._disabledList = [];
+    this._enabledList = [];
 
     // Enable/disable extensions
     this._enable(ENABLED_SILK_EXTENSIONS);
@@ -333,8 +333,7 @@ class Extensions {
   }
 
   /**
-   * Enables extensions by namespaces. This can include modes
-   * separated by a colon and wildcards.
+   * Enables/disables extensions using regular expressions
    */
   _enable(namespaces) {
     let split = (namespaces || '').split(/[\s,]+/);
@@ -346,9 +345,9 @@ class Extensions {
       }
       namespaces = split[i].replace(/\*/g, '.*?');
       if (namespaces[0] === '-') {
-        this._skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+        this._disabledList.push(new RegExp('^' + namespaces.substr(1) + '$'));
       } else {
-        this._names.push(new RegExp('^' + namespaces + '$'));
+        this._enabledList.push(new RegExp('^' + namespaces + '$'));
       }
     }
   }
@@ -361,13 +360,13 @@ class Extensions {
    */
   _isEnabled(name) {
     let i, len;
-    for (i = 0, len = this._skips.length; i < len; i++) {
-      if (this._skips[i].test(name)) {
+    for (i = 0, len = this._disabledList.length; i < len; i++) {
+      if (this._disabledList[i].test(name)) {
         return false;
       }
     }
-    for (i = 0, len = this._names.length; i < len; i++) {
-      if (this._names[i].test(name)) {
+    for (i = 0, len = this._enabledList.length; i < len; i++) {
+      if (this._enabledList[i].test(name)) {
         return true;
       }
     }

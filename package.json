@@ -23,7 +23,6 @@
     "moment": "^2.10.3",
     "react-native": "^0.12.0",
     "react-native-button": "^1.2.0",
-    "react-native-linear-gradient": "^0.3.2",
     "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#3afbe2f2d57ade52f419764f22aff97865ca0bea",
     "react-timer-mixin": "^0.13.2",
     "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master"

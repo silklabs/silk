@@ -23,3 +23,25 @@ $ adb shell setprop silk.reload-ext "/system/silk/ext/<extension-name>.js"
 ### Extensions Reloading
 
 Note: extension module reloading only works if the extension has implemented `willUnload()`
+
+
+### Enable/disable extensions
+By default all the extensions are enabled.
+
+To enable all extensions
+```sh
+adb shell setprop persist.silk.extensions "*"
+adb shell setprop ctl.restart silk
+```
+
+To disable all extensions
+```sh
+adb shell setprop persist.silk.extensions "-*"
+adb shell setprop ctl.restart silk
+```
+
+To enable all extensions except a specific one
+```sh
+adb shell setprop persist.silk.extensions "*,-knockknock"
+adb shell setprop ctl.restart silk
+```

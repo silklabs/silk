@@ -1,0 +1,22 @@
+#! /usr/bin/env node
+
+var config = require(__dirname + '/../config.local.json');
+var rn = config['react-native'];
+var http = require('http');
+var fs = require('fs');
+var path = require('path');
+var bundle = path.join(__dirname, '../iOS/main.jsbundle');
+
+if (!rn || !rn.local || !rn.local.url) {
+  throw new Error('Must set .react-native.local.url in config.local.json');
+}
+
+console.log('Writing %s to %s', rn.local.url, bundle);
+var dest = fs.createWriteStream(bundle);
+http.get(rn.local.url, function(res) {
+  res.pipe(dest);
+  dest.on('finish', function() {
+    console.log('Done');
+  });
+});
+

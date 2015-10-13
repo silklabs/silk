@@ -76,6 +76,30 @@ The most basic version looks like this:
 }
 ```
 
+When rapidly deploying new changes to the phone using the bundle is the
+best option (you do not need to figure out your public ip). There is a
+special mode in the build system where we hit an existing bundle server
+to speed this process up:
+
+```
+# Ensure server is running...
+npm start
+```
+
+(Configure bundle to hit an existing server)
+
+```js
+{
+  "react-native": {
+    "type": "bundle",
+    "local": {
+      "url": "http://localhost:8082/index.ios.bundle"
+    }
+  }
+}
+```
+
+
 See: [The config file](./Libraries/Config) for all options.
 
 In addition to the config file you must ensure you have `watchman`

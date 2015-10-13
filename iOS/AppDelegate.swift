@@ -42,7 +42,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     let reactNativeType = config.reactNative.type
     let reactNativeUrl = config.reactNative.url!
 
-    if reactNativeType == "bundle" {
+    if reactNativeType == "bundle" || reactNativeType == "local" {
       reactViewURL = NSBundle.mainBundle().URLForResource(reactNativeUrl, withExtension: "")!
       NSLog("Starting react-native with bundle: \(reactNativeUrl)")
     } else {

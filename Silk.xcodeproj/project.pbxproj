@@ -1016,7 +1016,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Hack to ensure /usr/local/bin is laways in path...\nexport PATH=\"$PATH:/usr/local/bin\"\nif ./tools/should_bundle ;\nthen\n  npm run-script bundle\nfi\n";
+			shellScript = "# Hack to ensure /usr/local/bin is laways in path...\nexport PATH=\"$PATH:/usr/local/bin\"\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n npm run bundle\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localBundle\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 

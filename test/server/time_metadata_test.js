@@ -158,21 +158,6 @@ suite('time metadata apis', () => {
       assert.deepEqual(findByTime.data, first.data);
     });
 
-    test('find next', async () => {
-      let next = await insertNext();
-
-      let findFirst = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
-        id: first.id
-      });
-      assert.deepEqual(findFirst.body.data, first.data);
-
-      let findSecond = await context.post(`${SERVER_PATH_PREFIX}/find/byid`, {
-        id: findFirst.body.nextId
-      });
-      assert.equal(findSecond.statusCode, 200);
-      assert.deepEqual(findSecond.body.data, next.data);
-    });
-
     test('find/bytime/before - found next', async () => {
       let next = await insertNext();
       let items = await api.findBeforeTime({

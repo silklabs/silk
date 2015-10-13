@@ -10,7 +10,7 @@ suite('time metadata', () => {
     subject = new TimeMetadata(context.db);
   });
 
-  test('.insertNext / findNearTime', async () => {
+  test('.insert', async () => {
     let deviceId = 'foo';
     let metaType = 'video';
 
@@ -38,14 +38,9 @@ suite('time metadata', () => {
       },
     ];
 
-    let record, previous;
-    while ((record = records.shift())) {
-      if (previous) {
-        record.previousId = previous.id;
-      }
-
-      previous = await subject.insertNext(record);
-    }
+    await Promise.all(records.map(async (record) => {
+      await subject.insert(record);
+    }));
 
     let one = await subject.findNearTime({
       deviceId,
@@ -67,11 +62,6 @@ suite('time metadata', () => {
       time: 201
     });
     assert.equal(three.url, 'three');
-
-    // references should line up...
-    assert.equal(one.nextId, two.id);
-    assert.equal(two.nextId, three.id);
-    assert.equal(three.nextId, null);
 
     let outOfBounds = await subject.findNearTime({
       deviceId,
@@ -114,7 +104,7 @@ suite('time metadata', () => {
       endUTC: 267,
     }];
     for (let record of records) {
-      let {id} = await subject.insertNext(record);
+      let {id} = await subject.insert(record);
       record.id = id;
     }
     let results = await subject.findInTimeInterval({
@@ -137,7 +127,7 @@ suite('time metadata', () => {
       metaType: 'event',
       startUTC: 123,
     };
-    let {id} = await subject.insertNext(payload);
+    let {id} = await subject.insert(payload);
     let record = await subject.findById({id});
     assert.equal(record.deviceId, payload.deviceId);
     assert.equal(record.metaType, payload.metaType);

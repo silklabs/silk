@@ -130,7 +130,7 @@ function boot() {
       });
 
       log.info('Load configuration');
-      return config.init();
+      return config.init(networkStatus);
     });
 }
 
@@ -149,6 +149,7 @@ function main() {
   return getDeviceId()
     .then(deviceId => {
       id = deviceId;
+      api.accessToken = deviceId;
       crashreporter.deviceId = deviceId.toString();
       logcat = new Logcat(deviceId.toString(), outbox);
       logcat.start();
@@ -385,6 +386,7 @@ update.on('staged', () => {
 
 // UI...
 ui.on('key:setup', () => {
+  log.info('Unconfigure!', { bootCompleted });
   if (bootCompleted) {
     config.unconfigure()
     .catch(util.processthrow);

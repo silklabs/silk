@@ -8,7 +8,7 @@ before_install:
  
 install:
   - brew uninstall xctool && brew install --HEAD xctool
-  - brew reinstall gradle flow watchman
+  - brew reinstall npm gradle flow watchman
   - npm install
 
 env:

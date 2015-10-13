@@ -4,7 +4,6 @@
 'use strict';
 
 import React from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import AsyncComponent from './AsyncComponent';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
@@ -95,9 +94,7 @@ export default class extends React.Component {
     return (
       <View style={styles.container}>
         <View style={styles.statusBar} />
-        <LinearGradient
-          colors={['#efefef', '#1d292f']}
-          style={styles.container}>
+        <View style={styles.container}>
           <View style={styles.logoContainer}>
             <LogoView />
           </View>
@@ -107,7 +104,7 @@ export default class extends React.Component {
               navigator={this.props.navigator}
             />
           </View>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
@@ -116,6 +113,7 @@ export default class extends React.Component {
 var styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#dfdfdf',
   },
 
   statusBar: {

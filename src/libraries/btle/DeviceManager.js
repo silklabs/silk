@@ -2,33 +2,12 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import mklog from 'log'; const log = mklog('cdm');
+import { btleConfigService } from 'silk-api-react-native';
 
-// TODO: import silk-api for real
-//var api = require('silk-api');
-var api = {
-  btleConfigService: {
-    state: {
-      UNREGISTERED: 0,
-      REGISTERING: 1,
-      REGISTERED: 2,
-      ERROR: 3,
-    },
-    uuid: {
-      ConfigService: 'beef',
-      StateCharacteristic: '259a43754b8748548ef386be0f6faa68',
-      ServerConnectionStatusCharacteristic: '595d664ac5314245a7a89aeae6883cfe',
-      RssiCharacteristic: '803ce13fa50f4370a7e7af45a78788b8',
-      CurveCharacteristic: 'b3615a405497431fbf71e7949ff3ad2c',
-      PeripheralKeyCharacteristic: 'cebebab40e874de988b4cacaa0af6dfb',
-      CentralKeyCharacteristic: '6e1de318302b4e90b0d4232b8cda3c67',
-      AccessPointCharacteristic: '8e3ea52bbcbf40d18fdcb40d45dcdd3e',
-      SecretCharacteristic: 'cb6def342d794d12886351b17fea3bf1',
-      DeviceIdCharacteristic: '3f0497ec81b24850a2579237bcf8591a',
-      ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
-      VibratePatternCharacteristic: '385a2b58191211e5b60b1697f925ec7b',
-    },
-  },
-
+// HACK to use silk-api btle info...
+let api = {
+  btleConfigService,
+  // TODO: use real crypto...
   crypto: {
     create: () => {
       return {
@@ -62,14 +41,16 @@ function stateToString(state) {
   }
 }
 
+// XXX: Remove this once we are converted to await/async.
 function rejectFwd(e) {
   return Promise.reject(e);
 }
 
-function DeviceManager(scanner, getWifiConfig) {
+function DeviceManager(scanner, userState, getWifiConfig) {
   EventEmitter.call(this);
   this.devices = { };
   this.scanner = scanner;
+  this.userState = userState;
   this.getWifiConfig = getWifiConfig;
   this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
   this.scanner.on('disconnect', this._onPeripheralDisconnected.bind(this));
@@ -209,9 +190,9 @@ DeviceManager.prototype._configureDevice = function(p) {
   return this._passProximityGate(p)
   .then(resumeToken => this._configureWithoutCrypto(p, resumeToken), rejectFwd)
   .then(() => p.configuring = false, rejectFwd)
-  .catch(() => {
+  .catch((err) => {
     p.configuring = false;
-    log.warn('error configuring, disconnect and retry');
+    log.warn('error configuring, disconnect and retry', err.toString(), err.stack);
     this._disconnect(p);
     return Promise.reject(new Error('error configuring'));
   });
@@ -275,59 +256,77 @@ DeviceManager.prototype._waitForProximity = function(p) {
   });
 };
 
-DeviceManager.prototype._configureWithoutCrypto = function(p, resumeToken) {
-  var network = null;
-  return this.getWifiConfig()
-  .then(net => {
-    log.debug('Got network info');
-    network = net;
-    return this._readStateCharacteristic(p);
-  }, rejectFwd)
-  .then(state => {
-    if (state === 'registered') {
-      // Some time may have passed since getting network info. Don't proceed
-      // if we are now registered (or can't read state cause we are longer
-      // connected to device)
-      log.debug('Device is registered, bailing on configuration');
-      return Promise.reject(Error('Device is registered'));
-    }
+DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken) {
+  let network = await this.getWifiConfig();
+  log.debug('Got network info...');
+  let state = await this._readStateCharacteristic(p);
 
-    log.debug('Writing wifi info to peripheral ...');
-    return Promise.all([
-      p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
-                            new Buffer(network.ssid, 'utf8')),
-      p.writeCharacteristic(decls.uuid.SecretCharacteristic,
-                            new Buffer(network.secret, 'utf8')),
-    ]);
-  }, rejectFwd)
-  .then(() => {
-    log.info('finished configuring');
-  }, rejectFwd);
+  if (state === 'registered') {
+    // Some time may have passed since getting network info. Don't proceed
+    // if we are now registered (or can't read state cause we are longer
+    // connected to device)
+    log.debug('Device is registered, bailing on configuration');
+    return Promise.reject(Error('Device is registered'));
+  }
+
+  log.debug('Writing wifi info to peripheral ...');
+
+  // Register this device with the server... The device will need to
+  // confirm this token on their end.
+
+  // XXX: We should carefully handle error cases here in the future... We will
+  // want to provide some UI around the error state here.
+  let {
+    success,
+    registrarPublicKey,
+    registrationToken
+  } = await this.userState.registerDevice(
+    // TODO: We need a way to supply a name from the UI here...
+    'Lorem Ipsum',
+    p.deviceId.toString()
+  );
+
+  if (!success) {
+    log.error(`Failed to register device (this should not happen)`);
+    return null;
+  }
+
+  await Promise.all([
+    p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
+                          new Buffer(network.ssid, 'utf8')),
+
+    p.writeCharacteristic(decls.uuid.SecretCharacteristic,
+                          new Buffer(network.secret, 'utf8')),
+
+    p.writeCharacteristic(decls.uuid.RegistrarPublicKeyCharacteristic,
+                          new Buffer(registrarPublicKey, 'utf8')),
+
+    p.writeCharacteristic(decls.uuid.RegistrationTokenCharacteristic,
+                          new Buffer(registrationToken)),
+  ]);
+
+  log.info('finished configuring');
+
 };
 
-DeviceManager.prototype._resumeSession = function(p, token) {
+DeviceManager.prototype._resumeSession = async function(p, token) {
   log.debug(`Resuming session for peripheral with token ${token} ...`);
   // TODO: use `token` to actually resume the session; on the device
   // side, config-service sessions persist across reconnects (which is
   // a bug).
-  return Promise.resolve();
 };
 
-DeviceManager.prototype._connect = function(p) {
+DeviceManager.prototype._connect = async function(p) {
   log.info('connecting to peripheral:', p.id);
-  return p.connect()
-  .then(() => p.readCharacteristic(decls.uuid.DeviceIdCharacteristic), rejectFwd)
-  .then(id => {
-    p.deviceId = id.toString('hex');
-    log.info(`read device ID ${p.deviceId}`);
-  }, rejectFwd)
-  .then(() => this._pollStatus(p), rejectFwd) // TODO: change to notify
-  .then(() => {
-    log.info('connected to peripheral:', p.id);
-    p.state = 'connected';
-    p.connected = true;
-    this.emit('connect', p);
-  }, rejectFwd);
+
+  await p.connect();
+  p.deviceId = await p.readCharacteristic(decls.uuid.DeviceIdCharacteristic);
+  log.info(`read device ID ${p.deviceId}`);
+  await this._pollStatus(p); // TODO: change to notify
+  log.info('connected to peripheral:', p.id);
+  p.state = 'connected';
+  p.connected = true;
+  this.emit('connect', p);
 };
 
 DeviceManager.prototype._disconnect = function(p) {

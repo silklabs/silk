@@ -12,7 +12,7 @@ let {
 // first time and created it's own shims.
 import '../libraries/BrowserShims';
 import Config from '../libraries/Config';
-import UserState from '../libraries/UserState';
+import loadUserState from '../libraries/UserState';
 
 import API from 'silk-api-react-native';
 
@@ -59,8 +59,7 @@ export default class extends AsyncComponent {
     }
 
     let api = API({serverUrl}); /* eslint new-cap: 0 */
-    let userState = new UserState(api);
-    let accessToken = await userState.getAccessToken();
+    let userState = await loadUserState(api);
 
     userState.on('authenticated', this.onAuthenticated);
     userState.on('unauthenticated', this.onUnauthenticated);
@@ -69,7 +68,7 @@ export default class extends AsyncComponent {
       serverUrl,
       api,
       userState,
-      accessToken,
+      accessToken: userState.accessToken,
     });
   };
 

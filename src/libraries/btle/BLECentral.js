@@ -81,6 +81,11 @@ PeripheralCordova.prototype = {
   },
 
   readCharacteristic: function(uuid) {
+    if (!uuid) {
+      console.log(new Error().stack);
+      throw new Error('Attempting to read null or undefined uuid..');
+    }
+
     var self = this;
     return new Promise(function(resolve, reject) {
       var charc = self._charcs[uuid];

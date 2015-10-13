@@ -93,7 +93,7 @@ npm start
   "react-native": {
     "type": "bundle",
     "local": {
-      "url": "http://localhost:8082/index.ios.bundle"
+      "url": "http://localhost:8082/index.ios.bundle?platform=ios"
     }
   }
 }

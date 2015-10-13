@@ -383,6 +383,7 @@ class Wifi extends events.EventEmitter
   }
 
   forgetNetwork() {
+    log.info('forget networks...');
     return wpaCliRemoveAllNetworks()
       .then(() => wpaCliExpectOk('disconnect'));
   }

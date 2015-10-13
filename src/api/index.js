@@ -39,6 +39,8 @@ module.exports = function create(options) {
         AccessPointCharacteristic: '8e3ea52bbcbf40d18fdcb40d45dcdd3e',
         SecretCharacteristic: 'cb6def342d794d12886351b17fea3bf1',
         DeviceIdCharacteristic: '3f0497ec81b24850a2579237bcf8591a',
+        AccountIdCharacteristic: '2dc633ddd4d64429a62b2ac3c8c6831d',
+        RegistrationTokenCharacteristic: '7c6825b2514549da837f9e23f0b9497c',
         ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
         VibratePatternCharacteristic: '385a2b58191211e5b60b1697f925ec7b',
       }

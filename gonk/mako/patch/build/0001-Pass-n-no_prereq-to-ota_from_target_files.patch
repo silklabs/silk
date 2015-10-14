@@ -1,0 +1,27 @@
+From 184bd6cb9576b66e84101f40f83c81241dfe2024 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 14 Oct 2015 11:33:57 -0700
+Subject: [PATCH] Pass -n (--no_prereq) to ota_from_target_files
+
+Omit the timestamp prereq check normally included at the top of the build
+scripts (used for developer OTA packages which legitimately need to go back and
+forth).
+---
+ core/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 15c7f02..b007931 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1479,6 +1479,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
+ 	   --block \
+ 	   -p $(HOST_OUT) \
+ 	   -k $(KEY_CERT_PAIR) \
++	   -no_prereq \
+ 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
+ 	   $(BUILT_TARGET_FILES_PACKAGE) $@
+ 
+-- 
+1.9.1
+

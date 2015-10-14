@@ -7,6 +7,7 @@
  */
 
 import { getprop } from './sysutils';
+import createApi from 'silk-api';
 
 var config = {};
 
@@ -15,4 +16,4 @@ let serverUrl = getprop('persist.silk.server.url', null);
 if (serverUrl) {
   config.serverUrl = serverUrl;
 }
-module.exports = require('silk-api')(config);
+module.exports = createApi(config);

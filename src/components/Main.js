@@ -27,6 +27,7 @@ export default class extends React.Component {
   };
 
   state = {
+    hasNetwork: true,
     connectionState: 'connecting', // purposely optimistic default state
     socketConnectionState: 'offline',
     socketUrl: null,
@@ -79,6 +80,7 @@ export default class extends React.Component {
         this.state.socket.close();
       }
       this.setState({
+        hasNetwork,
         connectionState: 'offline',
         socketConnectionState: 'offline',
       });
@@ -87,6 +89,7 @@ export default class extends React.Component {
     // We have a network connection (again). Get rid of any old socket
     // that we might have kept around and (re-)connect.
     this.setState({
+      hasNetwork,
       connectionState: 'connecting',
       socketUrl: null,
       socket: null,
@@ -195,6 +198,7 @@ export default class extends React.Component {
         />
         <NetworkWarning />
         <MonitorsView
+          hasNetwork={this.state.hasNetwork}
           connectionState={this.state.connectionState}
           socket={this.state.socket}
           bleDeviceManager={this.bleDeviceManager}

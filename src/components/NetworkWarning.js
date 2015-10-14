@@ -2,9 +2,9 @@ import React from 'react-native';
 let {
   NetInfo,
   View,
-  StyleSheet,
-  Text,
 } = React;
+
+import ErrorBar from './ErrorBar';
 
 /**
  * Autonomous component that detects when there's no network availability and
@@ -34,30 +34,10 @@ export default class NetworkWarning extends React.Component {
       return <View />;
     }
     return (
-      <View style={styles.warningBox}>
-        <Text style={styles.warningHeading}>
-          Network Connection Unavailable
-        </Text>
-        <Text style={styles.warningText}>
-          Please check your data or WiFi connection.
-        </Text>
-      </View>
+      <ErrorBar
+        heading="Network Connection Unavailable"
+        description="Please check your data or WiFi connection."
+      />
     );
   }
 }
-
-const styles = StyleSheet.create({
-  warningBox: {
-    backgroundColor: '#c30016',
-    padding: 8,
-  },
-  warningHeading: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: 'white',
-  },
-  warningText: {
-    color: 'white',
-    marginTop: 2,
-  },
-});

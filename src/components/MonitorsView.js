@@ -17,6 +17,7 @@ import mklog from 'log'; const log = mklog('MonitorPreview');
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
 import DeviceSetup from './DeviceSetup';
+import ErrorBar from './ErrorBar';
 import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
@@ -160,6 +161,18 @@ class MonitorsView extends AsyncComponent {
       return this._renderNoDevices();
     }
 
+    let errorBar = null;
+    if (this.props.hasNetwork && this.state.eventsError) {
+      // Show an error bar if we couldn't fetch activity despite
+      // having a network connection.
+      errorBar = (
+        <ErrorBar
+          heading="Something Went Wrong"
+          description="Could not fetch recent activity."
+        />
+      );
+    }
+
     // Right now there's no stateful list of cameras, we only know
     // about them through Bluetooth or socket.io connections. In the
     // near future, we will just query the account.
@@ -198,17 +211,20 @@ class MonitorsView extends AsyncComponent {
     }
 
     return (
-      <View style={styles.content}>
+      <View style={styles.wrapper}>
         {fullscreenMonitor}
-        <ScrollView
-          style={styles.monitors}
-          automaticallyAdjustContentInsets={true}
-          scrollEventThrottle={5}
-          onScroll={this.onScroll}>
-          {configuring}
-          {streaming}
-          {activity}
-        </ScrollView>
+        {errorBar}
+        <View style={styles.content}>
+          <ScrollView
+            style={styles.monitors}
+            automaticallyAdjustContentInsets={true}
+            scrollEventThrottle={5}
+            onScroll={this.onScroll}>
+            {configuring}
+            {streaming}
+            {activity}
+          </ScrollView>
+        </View>
       </View>
     );
   }
@@ -384,6 +400,12 @@ class MonitorsView extends AsyncComponent {
   };
 
   _fetchActivity = async (startTime, endTime) => {
+    if (!this.props.hasNetwork) {
+      // No point in trying anything when there's no network connectivity.
+      this.setStateAsync({eventsLoading: null});
+      return;
+    }
+
     let addlEvents;
     try {
       if (startTime === null) {
@@ -413,7 +435,7 @@ class MonitorsView extends AsyncComponent {
     }
 
     if (!addlEvents.length) {
-      this.setStateAsync({eventsLoading: null});
+      this.setStateAsync({eventsLoading: null, eventsError: null});
       return;
     }
 
@@ -429,7 +451,11 @@ class MonitorsView extends AsyncComponent {
       // them to the top.
       events = addlEvents.concat(events);
     }
-    let newState = { eventsLoading: null, events };
+    let newState = {
+      eventsLoading: null,
+      eventsError: null,
+      events,
+    };
     if (!this.state.eventsLatest || endTime > this.state.eventsLatest) {
       newState.eventsLatest = endTime;
     }
@@ -440,7 +466,7 @@ class MonitorsView extends AsyncComponent {
   };
 
   _renderActivity() {
-    let { eventsLoading, events, eventsError } = this.state;
+    let { eventsLoading, events } = this.state;
     let spinnerNewer = null;
     let spinnerOlder = null;
     if (eventsLoading) {
@@ -459,13 +485,7 @@ class MonitorsView extends AsyncComponent {
     }
 
     let activity = null;
-    if (eventsError) {
-      // TODO this shouldn't really be here, this should be a "toast"
-      // or some other transient UI element.
-      activity = (
-        <Text>Failed to load activities.</Text>
-      );
-    } else if (!events) {
+    if (!events) {
       activity = null;
     } else if (!events.length) {
       activity = (
@@ -496,6 +516,10 @@ class MonitorsView extends AsyncComponent {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
+
   content: {
     borderColor: '#c8c7cc',
     borderTopWidth: 1 / PixelRatio.get(),

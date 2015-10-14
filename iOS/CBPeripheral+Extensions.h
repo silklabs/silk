@@ -20,8 +20,6 @@
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
 
-#import "NSData+Base64.h"
-
 @interface CBPeripheral(com_megster_ble_extension)
 
 @property (nonatomic, retain) NSDictionary *advertising;

@@ -2,12 +2,17 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
+import createLog from 'log';
+
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncComponent from './AsyncComponent';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
 
+const log = createLog('SignIn');
+
 let {
+  AlertIOS,
   StyleSheet,
   View,
 } = React;
@@ -19,26 +24,38 @@ class SignUpControls extends AsyncComponent {
     userState: React.PropTypes.object,
   };
 
+  state = {
+    loginInProgress: false,
+  };
+
   onTermsAndConditions = () => {
     console.log('TODO: ToC');
   };
 
   onSignUp = async (props) => {
+    let { userState } = this.props;
+    this.setStateAsync({ loginInProgress: true });
     try {
-      let { userState } = this.props;
       let success = await userState.attemptSignup(props.email, props.password);
       if (success) {
         this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
+        return;
       }
     } catch (err) {
-      console.log('Failed to sign up', err);
+      log.info('Failed to sign up', err);
     }
+    AlertIOS.alert(
+      'Error',
+      'Something went wrong. Please try again.'
+    );
+    this.setStateAsync({ loginInProgress: false });
   };
 
   render() {
     return (
       <UserForm
         onSubmit={this.onSignUp}
+        inProgress={this.state.loginInProgress}
         submitText="Sign Up"
         style={styles.signInContainer}>
 

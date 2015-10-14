@@ -4,14 +4,18 @@
 'use strict';
 
 import React from 'react-native';
+import createLog from 'log';
+
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncComponent from './AsyncComponent';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
-
 import { WordMarkText } from './Text';
 
+const log = createLog('SignIn');
+
 let {
+  AlertIOS,
   StyleSheet,
   View,
 } = React;
@@ -27,6 +31,8 @@ class LogoView extends React.Component {
   }
 }
 
+const DEVELOPER_CREDENTIALS = {};
+
 class SignInControls extends AsyncComponent {
 
   static propTypes = {
@@ -37,29 +43,32 @@ class SignInControls extends AsyncComponent {
     loginInProgress: false,
   };
 
-  onSignIn = async (props) => {
+  onSignIn = async (credentials) => {
+    let { userState } = this.props;
     this.setStateAsync({ loginInProgress: true });
     try {
-      let { userState } = this.props;
-      let success = await userState.attemptSignIn(props.email, props.password);
+      let success = false;
+      if (credentials === DEVELOPER_CREDENTIALS) {
+        success = await userState.attemptDeveloperLogin();
+      } else {
+        success = await userState.attemptSignIn(credentials.email, credentials.password);
+      }
       if (success) {
         this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
+        return;
       }
+      AlertIOS.alert(
+        'Error',
+        'Invalid username or password. Please try again'
+      );
     } catch (err) {
-      console.log('Failed to sign in', err);
+      log.info('Failed to sign in', err);
+      AlertIOS.alert(
+        'Error',
+        'Could not connect to server. Please try again.'
+      );
     }
     this.setStateAsync({ loginInProgress: false });
-  };
-
-  onDeveloperSignIn = async () => {
-    let { userState } = this.props;
-
-    this.setStateAsync({ loginInProgress: true });
-    let success = await userState.attemptDeveloperLogin();
-    this.setStateAsync({ loginInProgress: false });
-    if (success) {
-      this.props.navigator.pushAsync({ name: 'Tabs', index: 0 });
-    }
   };
 
   onSignUp = () => {
@@ -84,7 +93,7 @@ class SignInControls extends AsyncComponent {
           />
           <TextLink
             label="DEVELOPER"
-            onClick={this.onDeveloperSignIn}
+            onClick={() => this.onSignIn(DEVELOPER_CREDENTIALS)}
           />
           <TextLink
             label="LEARN MORE"

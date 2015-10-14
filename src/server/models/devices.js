@@ -106,22 +106,22 @@ export default class Devices extends Base {
     })
   }
 
-  registrationTokenValid(accountPublicKey, devicePublicKey, token) {
-    let accountAccessToken = Id.importPub(accountPublicKey);
+  registrationTokenValid(registrarPublicKey, devicePublicKey, token) {
+    let accountAccessToken = Id.importPub(registrarPublicKey);
     return accountAccessToken.verify(devicePublicKey, token);
   }
 
   /**
    * Create and register the device in the database.
    *
-   * @param {String} accountPublicKey to validate registration token.
+   * @param {String} registrarPublicKey to validate registration token.
    * @param {Object} payload
    */
-  async register(accountPublicKey, payload) {
+  async register(registrarPublicKey, payload) {
     payload = this.validate(payload, 'register');
 
     let tokenValid = this.registrationTokenValid(
-      accountPublicKey,
+      registrarPublicKey,
       payload.publicKey,
       payload.registrationToken
     );
@@ -189,10 +189,10 @@ export default class Devices extends Base {
    *
    * NOTE: This is idempotent.
    *
-   * @param {String} accountPublicKey to validate registration token.
+   * @param {String} registrarPublicKey to validate registration token.
    * @param {Object} payload for validate.
    */
-  async validateRegistration(accountPublicKey, payload) {
+  async validateRegistration(registrarPublicKey, payload) {
     payload = this.validate(payload, 'validateRegistration');
 
     let device = await this.findByPublicKey({
@@ -204,7 +204,7 @@ export default class Devices extends Base {
     }
 
     let tokenValid = this.registrationTokenValid(
-      accountPublicKey,
+      registrarPublicKey,
       payload.publicKey,
       payload.registrationToken
     );

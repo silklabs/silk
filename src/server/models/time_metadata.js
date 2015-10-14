@@ -45,7 +45,10 @@ export default class TimeMetadata extends Base {
     metadata: Joi.object().keys({
       id: Joi.string().optional(), // Optional for now so we don't break existing clients
       deviceId: Joi.string().required(),
+
+      // Legacy we will accept this value but it is no longer used.
       previousId: Joi.string().optional(),
+
       metaType: TYPES,
       // XXX: Long term these should be more complex types MS is not enough to
       // convey timezone details, etc...
@@ -194,31 +197,15 @@ export default class TimeMetadata extends Base {
     return formatOutput(result);
   }
 
-  // Mutations
-
-  async _setPrevious(previousId, id) {
-    if (!previousId) {
-      return;
-    }
-    // XXX: This part is sketchy and should be part of one transaction later.
-    await this.collection.update(
-      idQuery(previousId),
-      {
-        $set: { nextId: id }
-      }
-    );
-  }
-
   /**
    * Insert the next item in the time series.
    */
-  async insertNext(payload) {
+  async insert(payload) {
     payload = this.validate(payload, 'metadata');
     if (payload.id) {
       return await this.insertOrUpdate(payload);
     }
     let newItem = await this.collection.insert(payload);
-    await this._setPrevious(payload.previousId, newItem._id);
     return { id: newItem._id.toString() };
   }
 
@@ -243,7 +230,6 @@ export default class TimeMetadata extends Base {
       );
     } else {
       await this.collection.insert(payload);
-      await this._setPrevious(payload.previousId, payload.id);
     }
     return { id };
   }

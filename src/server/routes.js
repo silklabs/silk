@@ -51,7 +51,7 @@ module.exports = function(opts) {
 
   app.post('/device/metadata/time', asyncRoute(async (req, res) => {
     // create new metadata.
-    let result = await timeMeta.insertNext(req.body);
+    let result = await timeMeta.insert(req.body);
     res.status(201).send(result);
   }));
 

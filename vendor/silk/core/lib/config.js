@@ -9,7 +9,7 @@
 import api from './api';
 import events from 'events';
 import createLog from './log';
-import fs from 'fs';
+import fs from 'mz/fs';
 import eventToPromise from 'event-to-promise';
 import server from './server';
 import wifi from './wifi';
@@ -46,6 +46,7 @@ class DeviceConfig extends events.EventEmitter {
     }, null, 2);
 
     await fs.writeFile(CONFIG_PATH, config);
+    log.info('Updated config file', CONFIG_PATH);
   }
 
   async _loadConfig() {
@@ -257,7 +258,7 @@ class DeviceConfig extends events.EventEmitter {
       .then(() => this._unsetConfigService());
   }
 
-  init(networkStatus) {
+  async init(networkStatus) {
     if (this._initialized) {
       return Promise.reject(new Error('Already initialized'));
     }
@@ -282,43 +283,30 @@ class DeviceConfig extends events.EventEmitter {
     server.on('stateChange', state => this._onServerStateChange(state));
     server.on('error', () => {}); // keep, node requires 'error' event handled
 
-    const loadBtleAndStartConfigService = () => {
-      return getBTLE()
-        .then(btle => {
-          log.info('Got BTLE');
-          this._btle = btle;
-          return this._setBtleConfigMode();
-        })
-        .then((v) => {
-          log.info('BTLE success');
-          return v;
-        })
-        .catch((err) => {
-          log.info('BTLE error', err.stack);
-          throw err;
-        });
-    };
+    this._btle = await getBTLE();
 
-    return Promise.all([ loadBtleAndStartConfigService(),
-                         this._isWifiConfigured() ])
-      .then(results => {
-        let isConfigured = results[1];
-        if (isConfigured) {
-          log.debug('Configured');
-          this._registrationState = STATE.REGISTERED;
-          this.emit('configured');
-        } else {
-          log.debug('Unconfigured');
-          this._registrationState = STATE.UNREGISTERED;
-          this.emit('unconfigured');
-        }
-        this._initializing = false;
-        this._initialized = true;
-      })
-      .catch(err => {
-        log.error('Error configuring wifi', err.stack);
-        throw err;
-      });
+    // Not configured yet...
+    let config = await this._loadConfig();
+    log.info('Loading device configuration...', config);
+    if (!config || !config.success) {
+      // Ensure we don't have any stale state lying around...
+      await wifi.forgetNetwork();
+      await Promise.all([
+        wifi.forgetNetwork(),
+        this._setBtleConfigMode()
+      ]);
+      this._registrationState = STATE.UNREGISTERED;
+      this.emit('unconfigured');
+    }
+
+    if (config && config.success) {
+      this._registrationState = STATE.REGISTERED;
+      await this._setBtleNormalMode();
+      this.emit('configured');
+    }
+
+    this._initializing = false;
+    this._initialized = true;
   }
 
   unconfigure() {
@@ -334,12 +322,13 @@ class DeviceConfig extends events.EventEmitter {
       })
       .catch(err => {
         this._unconfigurePromise = null;
-        log.error('Error unconfiguring', err.stack);
+        log.error('Error unconfiguring', err.toString(), err.stack);
         throw err;
       });
   }
 
   async _unconfigureNetwork() {
+    log.info('Unconfigure network...');
     if (server.connected) {
       server.disconnect();
       await eventToPromise(server, 'disconnect');
@@ -380,6 +369,11 @@ class DeviceConfig extends events.EventEmitter {
     // the next tick to ensure that |this._unconfigurePromise| is set before any
     // event listeners have a chance to run.
     await Promise.resolve();
+
+    // Remove the config file so we know we need to reconfigure...
+    if (await fs.exists(CONFIG_PATH)) {
+      await fs.unlink(CONFIG_PATH);
+    }
 
     // Unconfigure BTLE and our network setup...
     await Promise.all([

@@ -127,7 +127,7 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
           charcUuidStr, valueB64, awaitResponse ? @"" : @"no ");
 
   // TODO need to check the max length
-  NSData* value = [NSData cdv_dataFromBase64String:valueB64];
+  NSData* value = [[NSData alloc] initWithBase64EncodedString:valueB64 options:NSDataBase64DecodingIgnoreUnknownCharacters];
   if (!value) {
     callback(@[@{ @"error": @"Invalid value specified to characteristic 'write'",
                   @"uuid": deviceUuidStr,
@@ -255,7 +255,7 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
     readCallback(@[[error localizedDescription], [NSNull null]]);
   } else {
     NSData *data = characteristic.value;
-    readCallback(@[[NSNull null], [data base64EncodedString]]);
+    readCallback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
   }
   [readCallbacks removeObjectForKey:key];
 }

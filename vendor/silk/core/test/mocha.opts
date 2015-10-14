@@ -2,3 +2,4 @@
 --ui tdd
 --compilers js:babel/register
 --timeout 4000
+--require test/setup.js

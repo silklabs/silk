@@ -70,6 +70,8 @@ export default class CrashReportOperation extends Operation {
     let failErr;
 
     writer.on('error', (err) => {
+      // Ensure the FD gets closed if we cannot upload for some reason...
+      readble.destroy();
       failErr = err;
       log.error('Failed to put blob for crash report', err);
     });

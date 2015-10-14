@@ -35,6 +35,11 @@ const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
 
+// This is mostly a guestimate based on FUT hardware. Absolute values
+// not important here, the ratio is what matters.
+const DEFAULT_PREVIEW_WIDTH = 16;
+const DEFAULT_PREVIEW_HEIGHT = 9;
+
 class MonitorsView extends AsyncComponent {
 
   state = {
@@ -106,7 +111,13 @@ class MonitorsView extends AsyncComponent {
 
   _getPreviewSize(deviceId) {
     let device = this.state.streaming[deviceId];
-    return device ? device.previewSize : null;
+    if (!device) {
+      return {
+        width: DEFAULT_PREVIEW_WIDTH,
+        height: DEFAULT_PREVIEW_HEIGHT,
+      };
+    }
+    return device.previewSize;
   }
 
   _getDeviceName(deviceId) {

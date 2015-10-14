@@ -68,7 +68,7 @@
     "dev-null": "^0.1.1"
   },
   "engines": {
-    "node": "^0.12.0"
+    "node": ">=4.1.2"
   },
   "engineStrict": true,
   "repository": {

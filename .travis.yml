@@ -8,7 +8,11 @@ before_install:
  
 install:
   - brew uninstall xctool && brew install --HEAD xctool
-  - brew reinstall npm gradle flow watchman
+  - brew reinstall nvm gradle flow watchman
+  - export NVM_DIR="$PWD/.nvm"
+  - source $(brew --prefix nvm)/nvm.sh
+  - nvm install 4
+  - npm config set spin=false
   - npm install
 
 env:

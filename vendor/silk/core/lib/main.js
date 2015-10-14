@@ -253,6 +253,15 @@ server.on('cmd', cmd => {
 
     timeline.configLiveStream(!!cmd.preview, !!cmd.video);
     break;
+  case 'reboot':
+    log.info('reboot command:', JSON.stringify(cmd));
+    if (cmd.channel) {
+      log.info('  reboot: setting update channel to', cmd.channel);
+      util.setprop('persist.silk.update.channel', cmd.channel);
+    }
+    log.info('  rebooting ...');
+    util.setprop('sys.powerctl', 'reboot');
+    break;
   default:
     log.error('Unknown command:', JSON.stringify(cmd));
     break;

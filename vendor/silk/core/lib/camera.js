@@ -144,6 +144,22 @@ class CameraStream extends EventEmitter {
     //   gray:    grayscale image // CV_CAP_ANDROID_GREY_FRAME resized
     //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB resized
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
+    this._imagecache.overflow = (item) => this._releasePreviewImages(item);
+  }
+
+  /**
+   * Releases cached preview images when the preview object is removed from the
+   * cache
+   */
+  _releasePreviewImages(item) {
+    for (let key in item) {
+      if (!item.hasOwnProperty(key)) {
+        continue;
+      }
+      if ((key !== 'when') && item[key]) {
+        item[key].release();
+      }
+    }
   }
 
   _restart(why) {

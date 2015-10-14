@@ -29,13 +29,13 @@ const ACCESS_TOKEN_KEY = 'user.accessToken';
  */
 const SHA256_HMAC_STRENGTH = 192;
 
-export default class UserState extends EventEmitter {
+export class UserState extends EventEmitter {
 
   /**
    * API Client
    */
   api = null;
-  _accessToken = null;
+  accessToken = null;
 
   constructor(api) {
     super();
@@ -43,7 +43,16 @@ export default class UserState extends EventEmitter {
     this.api = api;
   }
 
-  async setAccessToken(accessToken) {
+  // Load and initialize state...
+  static async load(api) {
+    let instance = new UserState(api);
+    let token = await instance._loadAccessToken();
+    log.info('~~ set access token', token);
+    api.accessToken = instance.accessToken = token;
+    return instance;
+  }
+
+  async _saveAccessToken(accessToken) {
     log.info('Set access token', accessToken);
     let json = JSON.stringify({
       publicKey: accessToken.pub,
@@ -53,7 +62,7 @@ export default class UserState extends EventEmitter {
     this.emit('authenticated', accessToken);
   }
 
-  async createAccessToken() {
+  async _createAccessToken() {
     // See above comment for SHA256_HMAC_STRENGTH to understand what this is
     // doing.
     let entropy = await getRandomBytes(SHA256_HMAC_STRENGTH);
@@ -64,12 +73,7 @@ export default class UserState extends EventEmitter {
   /**
    * Get the public/private keys...
    */
-  async getAccessToken() {
-    // If we have already loaded it then just return it directly.
-    if (this._accessToken) {
-      return this._accessToken;
-    }
-
+  async _loadAccessToken() {
     let accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
     if (!accessToken) {
       log.info('No access token set....');
@@ -77,26 +81,25 @@ export default class UserState extends EventEmitter {
     }
 
     let parsed = JSON.parse(accessToken);
-    this._accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
-    log.info('Using existing access token', this._accessToken);
-    return this._accessToken;
+    accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
+    log.info('Using existing access token', accessToken);
+    return accessToken;
   }
 
   async signOut() {
     // Clear out any previous state...
-    this._accessToken = null;
+    this.api.accessToken = this.accessToken = null;
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
     this.emit('unauthenticated');
   }
 
   async checkPassword(email, password) {
-    let vip = this.api.vip;
     let passwordHash = await PBKDF2KeyDerivation(
       password, /* input */
       email /* salt */
     );
 
-    return await vip.checkPassword({
+    return await this.api.vip.checkPassword({
       email,
       passwordHash,
     });
@@ -109,9 +112,8 @@ export default class UserState extends EventEmitter {
   async attemptSignIn(email, password) {
     log.info('Attempting user sign in');
     // Always create a new token when we attempt a sign up...
-    let vip = this.api.vip;
-    let accessToken = await this.createAccessToken();
-    vip.key = accessToken;
+    let accessToken = await this._createAccessToken();
+    this.accessToken = this.api.accessToken = accessToken;
 
     let passwordHash = await PBKDF2KeyDerivation(
       password, /* input */
@@ -121,7 +123,7 @@ export default class UserState extends EventEmitter {
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
-    let result = await vip.signIn({
+    let result = await this.api.vip.signIn({
       email,
       passwordHash,
       userAgent,
@@ -129,7 +131,7 @@ export default class UserState extends EventEmitter {
 
     if (result.success) {
       log.info('Successfully signed into account', email);
-      await this.setAccessToken(accessToken);
+      await this._saveAccessToken(accessToken);
       return true;
     }
     return false;
@@ -141,9 +143,8 @@ export default class UserState extends EventEmitter {
   async attemptSignup(email, password) {
     log.info('Attempting user sign up');
     // Always create a new token when we attempt a sign up...
-    let vip = this.api.vip;
-    let accessToken = await this.createAccessToken();
-    vip.key = accessToken;
+    let accessToken = await this._createAccessToken();
+    this.accessToken = this.api.accessToken = accessToken;
 
     let passwordHash = await PBKDF2KeyDerivation(
       password, /* input */
@@ -153,7 +154,7 @@ export default class UserState extends EventEmitter {
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
-    let result = await vip.createAccount({
+    let result = await this.api.vip.createAccount({
       email,
       passwordHash,
       userAgent,
@@ -161,9 +162,10 @@ export default class UserState extends EventEmitter {
 
     if (result.success) {
       log.info('Successfully created account');
-      await this.setAccessToken(accessToken);
+      await this._saveAccessToken(accessToken);
       return true;
     }
+
     return false;
   }
 
@@ -173,22 +175,55 @@ export default class UserState extends EventEmitter {
   async attemptDeveloperLogin() {
     log.info('Logging in via developer account');
     let account = this.api.devAccount;
-    let vip = this.api.vip;
     let accessToken = new this.api.id(account.publicKey, account.privateKey);
 
     // Use given developer account access token.
-    vip.key = accessToken;
+    this.accessToken = this.api.accessToken = accessToken;
 
     let check = await this.checkPassword(account.email, account.password);
     if (check.success) {
       log.info('Successfully logged in as', account.email);
-      await this.setAccessToken(accessToken);
+      await this._saveAccessToken(accessToken);
       return true;
     }
     // Reset to current access token...
-    vip.key = await this.getAccessToken();
+    this.api.accessToken = await this._loadAccessToken();
     log.info('Failed to logged in as', account.email);
     return false;
   }
 
+  /**
+   * Sign the deviceId with our accessToken (account) and register it with the
+   * server...
+   */
+  async registerDevice(name, deviceId, type = 'camera') {
+    deviceId = this.api.id.importPub(deviceId);
+    log.info('Registering device', deviceId);
+
+    // Sign the deviceId with the account token...
+    let registrationToken = this.accessToken.sign(deviceId.toString());
+
+    let { success } = await this.api.account.registerDevice({
+      devicePublicKey: deviceId.toString(),
+      name,
+      type,
+      registrationToken,
+    });
+
+    if (!success) {
+      log.warn(`Failed to regsiter device with the server...`);
+    } else {
+      log.info(`Successfully registered device`);
+    }
+
+    return {
+      success,
+      registrarPublicKey: this.accessToken.toString(),
+      registrationToken,
+    };
+  }
+
 }
+
+export default UserState.load;
+

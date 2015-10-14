@@ -14,6 +14,7 @@ import Config from '../libraries/Config';
 import DeviceManager from '../libraries/btle/DeviceManager';
 import BLECentral from '../libraries/btle/BLECentral';
 import { getWifiInfo } from '../libraries/Util';
+import UserState from '../libraries/UserState';
 
 import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
@@ -21,12 +22,17 @@ import TopBar from './TopBar';
 
 export default class extends React.Component {
 
+  static propTypes = {
+    userState: React.PropTypes.instanceOf(UserState),
+  };
+
   state = {
     socketConnectionState: 'offline',
     socketUrl: null,
     socket: null,
     wifi: Config.getDefault().wifi || null,
   };
+
   bleDeviceManager = null;
   socket = null;
   _wifiSettingsPromise = null;
@@ -34,6 +40,7 @@ export default class extends React.Component {
   componentWillMount() {
     this.bleDeviceManager = new DeviceManager(
       BLECentral,
+      this.props.userState,
       () => {
         if (this.state.wifi) {
           return Promise.resolve(this.state.wifi);

@@ -4,13 +4,15 @@
 'use strict';
 
 import React from 'react-native';
+
 import AsyncComponent from './AsyncComponent';
+import NetworkWarning from './NetworkWarning';
 import UserForm from './UserForm';
 import TextLink from './TextLink';
-
 import { WordMarkText } from './Text';
 
 let {
+  Navigator,
   StyleSheet,
   View,
 } = React;
@@ -101,6 +103,7 @@ export default class extends React.Component {
     return (
       <View style={styles.container}>
         <View style={styles.statusBar} />
+        <NetworkWarning />
         <View style={styles.container}>
           <View style={styles.logoContainer}>
             <LogoView />
@@ -124,7 +127,7 @@ var styles = StyleSheet.create({
   },
 
   statusBar: {
-    height: 20,
+    height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
     backgroundColor: '#dfdfdf',
   },
 

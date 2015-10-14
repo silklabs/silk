@@ -1,5 +1,6 @@
 import React from 'react-native';
 let {
+  NetInfo,
   View,
   StyleSheet,
 } = React;
@@ -12,8 +13,10 @@ import SocketIO from '../libraries/SocketIO';
 import Config from '../libraries/Config';
 import DeviceManager from '../libraries/btle/DeviceManager';
 import BLECentral from '../libraries/btle/BLECentral';
+import { getWifiInfo } from '../libraries/Util';
 
 import MonitorsView from './MonitorsView';
+import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
 export default class extends React.Component {
@@ -45,16 +48,43 @@ export default class extends React.Component {
     );
     this.bleDeviceManager.start();
 
-    this.props.api.socketio.address()
-      .then(result => this.setSocketUrlAndConnect(result.url))
-      .catch(err => log.info('Unable to get server socketio address', err));
+    NetInfo.isConnected.fetch().then(this.onConnectivityChange);
+    NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
   }
 
   componentWillUnmount() {
+    NetInfo.isConnected.removeEventListener('change', this.onConnectivityChange);
     if (this.state.socket) {
       this.state.socket.close();
     }
   }
+
+  onConnectivityChange = (hasNetwork) => {
+    log.info('Network connectivity change. Can haz internet?', hasNetwork);
+    if (!hasNetwork) {
+      // Close the socket in case we have one, but don't get rid of it
+      // so that the app still remains functional (apart from, you
+      // know, not having any network connection).
+      if (this.state.socket) {
+        log.info('Closing old socket');
+        this.state.socket.off();
+        this.state.socket.close();
+      }
+      this.setState({
+        socketConnectionState: 'offline',
+      });
+      return;
+    }
+    // We have a network connection (again). Get rid of any old socket
+    // that we might have kept around and (re-)connect.
+    this.setState({
+      socketUrl: null,
+      socket: null,
+    });
+    this.props.api.socketio.address()
+      .then(result => this.setSocketUrlAndConnect(result.url))
+      .catch(err => log.info('Unable to get server socket.io address', err));
+  };
 
   setSocketUrlAndConnect(socketUrl) {
     if (this.state.socket) {
@@ -103,8 +133,7 @@ export default class extends React.Component {
         serverUrl,
       });
     } else {
-      const net = require('../libraries/Net');
-      promise = net.getInfo().then(info => {
+      promise = getWifiInfo().then(info => {
         return this.navigateWifiScene({
           ssid: info.SSID,
           secret: '',
@@ -146,6 +175,7 @@ export default class extends React.Component {
           socketConnectionState={this.state.socketConnectionState}
           openSettings={() => this.loadSettings().catch(() => {})}
         />
+        <NetworkWarning />
         <MonitorsView
           socket={this.state.socket}
           bleDeviceManager={this.bleDeviceManager}

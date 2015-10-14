@@ -17,7 +17,6 @@ class VideoSegment: NSObject {
     let startUTC = (dict["startUTC"] as! NSNumber).longLongValue
     let endUTC = (dict["endUTC"] as! NSNumber).longLongValue
     let id = dict["id"] as! String
-    let nextId = dict["nextId"] as? String
     let previousId = dict["previousId"] as? String
 
     if type == "url" {
@@ -25,7 +24,6 @@ class VideoSegment: NSObject {
       return VideoSegment(
         url: url,
         id: id,
-        nextId: nextId,
         previousId: previousId,
         startUTC: startUTC,
         endUTC: endUTC
@@ -41,7 +39,6 @@ class VideoSegment: NSObject {
       return VideoSegment(
         data: data,
         id: id,
-        nextId: nextId,
         previousId: previousId,
         startUTC: startUTC,
         endUTC: endUTC
@@ -67,7 +64,6 @@ class VideoSegment: NSObject {
   var url: NSURL?
   var data: NSData?
   var id: String
-  var nextId: String?
   var previousId: String?
 
   /**
@@ -80,20 +76,18 @@ class VideoSegment: NSObject {
   */
   var endUTC: Int64
 
-  init(url: NSURL, id: String, nextId: String?, previousId: String?, startUTC: Int64, endUTC: Int64) {
+  init(url: NSURL, id: String, previousId: String?, startUTC: Int64, endUTC: Int64) {
     self.type = "url"
     self.id = id
-    self.nextId = nextId
     self.previousId = previousId
     self.url = url
     self.startUTC = startUTC
     self.endUTC = endUTC
   }
 
-  init(data: NSData?, id: String, nextId: String?, previousId: String?, startUTC: Int64, endUTC: Int64) {
+  init(data: NSData?, id: String, previousId: String?, startUTC: Int64, endUTC: Int64) {
     self.type = "data"
     self.id = id
-    self.nextId = nextId
     self.previousId = previousId
     self.data = data
     self.startUTC = startUTC

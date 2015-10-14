@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import Operation from './operation';
+import StreamOperation from './stream_operation';
 
 import api from '../api';
 import fs from 'mz/fs';
@@ -16,11 +16,10 @@ import assert from 'assert';
 const CONTENT_TYPE = 'text/plain';
 const log = createLog('operation:crash_report_operation');
 
-export default class CrashReportOperation extends Operation {
+export default class CrashReportOperation extends StreamOperation {
   static NAME = 'crash-report';
 
   metadata = null
-
   // Size in bytes of stream...
   size = null
 
@@ -32,19 +31,7 @@ export default class CrashReportOperation extends Operation {
     assert(typeof this.metadata === 'object', 'must pass metadata');
   }
 
-  /**
-   * Unlike most operations this accepts a _path_ to a file on disk so we can
-   * avoid buffering the contents into memory...
-   */
-  async _write(path) {
-    // backwards compatibility if we are asked to write a stream.
-    if (typeof path === 'object') {
-      log.warn(`Uploading old crash report (stream given)`, path);
-      path = path.path;
-    }
-
-    assert(typeof path === 'string', 'crash reporter only accepts paths');
-
+  async _getDestination() {
     let putUrl;
     try {
       putUrl = await api.blob.getPutUrl(
@@ -64,24 +51,22 @@ export default class CrashReportOperation extends Operation {
         'Content-Type': CONTENT_TYPE
       }
     });
+    writer.putUrl = putUrl;
+    return writer;
+  }
 
-    // TODO: https://github.com/silklabs/silk-device/issues/760
-    let readable = fs.createReadStream(path);
-    let failErr;
-
-    writer.on('error', (err) => {
-      // Ensure the FD gets closed if we cannot upload for some reason...
-      readble.destroy();
-      failErr = err;
-      log.error('Failed to put blob for crash report', err);
-    });
-    readable.pipe(writer);
-    await eventToPromise(writer, 'close');
-
-    if (failErr) {
-      return { done: false, remainder: path, error: failErr };
+  /**
+   * Unlike most operations this accepts a _path_ to a file on disk so we can
+   * avoid buffering the contents into memory...
+   */
+  async _write(path) {
+    assert(typeof path === 'string', 'crash reporter only accepts paths');
+    let result = await super._write(path);
+    if (!result.done) {
+      return result;
     }
 
+    let { putUrl } = this.destination;
     try {
       let url = await api.blob.ack(putUrl);
       await api.crashMeta.put(Object.assign(

@@ -37,11 +37,17 @@ export default class StreamOperation extends Operation {
   constructor(options) {
     super(options);
     Object.assign(this, options);
+  }
 
+  /**
+   * Get the writable destination.
+   */
+  async _getDestination() {
     if (!this.constructor.StreamClass) {
       throw new Error('StreamClass static property is required...');
     }
 
+    return new this.constructor.StreamClass(this.arguments);
   }
 
   /**
@@ -63,7 +69,7 @@ export default class StreamOperation extends Operation {
       fs.createReadStream(readable) :
       readable;
 
-    this.destination = new this.constructor.StreamClass(this.arguments);
+    this.destination = await this._getDestination();
 
     let error;
     let remainder = readable;
@@ -89,7 +95,11 @@ export default class StreamOperation extends Operation {
       );
       log.info(`(${this.constructor.NAME}) Need readable.destroy()?`, isReadingPath);
       if (isReadingPath) {
-        readable.destroy(); // Avoid leaking a file descriptor
+         // Avoid leaking a file descriptor if this is a file...
+        readable.destroy();
+      } else {
+        // Drain the rest of the stream...
+        readable.resume();
       }
     });
 

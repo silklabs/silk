@@ -252,7 +252,9 @@ export default class WifiSettings extends AsyncComponent {
 
   save = () => {
     let { serverUrl } = this.state;
-    if (serverUrl.indexOf('http://') !== 0 && serverUrl.indexOf('https://') !== 0) {
+    if (typeof serverUrl === 'string' &&
+        serverUrl.indexOf('http://') !== 0 &&
+        serverUrl.indexOf('https://') !== 0) {
       serverUrl = 'http://' + serverUrl;
     }
     if (this.props.route.resolve) {

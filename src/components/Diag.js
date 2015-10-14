@@ -3,7 +3,8 @@
 
 import ansiUp from 'ansi_up';
 import React from 'react';
-import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
+import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon,
+         Input, MenuItem } from 'react-bootstrap';
 import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
@@ -59,6 +60,10 @@ export default class Diag extends React.Component {
     this.setState({paused});
   };
 
+  onReboot = (e, channel) => {
+    this.state.camera.reboot(channel);
+  };
+
   render() {
     let style = {
       margin: 0,
@@ -78,14 +83,25 @@ export default class Diag extends React.Component {
     let logs = camera.logs;
     return (
       <div style={style}>
-        <ButtonGroup>
-          <Button bsStyle="warning">
-            <Link to="/"><Glyphicon glyph="home" /></Link>
-          </Button>
-          <Button onClick={this.onPause}>
-            <Glyphicon glyph={ paused ? 'play' : 'pause' } />
-          </Button>
-        </ButtonGroup>
+        <ButtonToolbar>
+          <ButtonGroup>
+            <Button bsStyle="warning">
+              <Link to="/"><Glyphicon glyph="home" /></Link>
+            </Button>
+            <Button onClick={this.onPause}>
+              <Glyphicon glyph={ paused ? 'play' : 'pause' } />
+            </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <DropdownButton
+              id="reboot" title="Reboot to" onSelect={this.onReboot}>
+              <MenuItem eventKey="">Current channel</MenuItem>
+              <MenuItem eventKey="master">master</MenuItem>
+              <MenuItem eventKey="next">next</MenuItem>
+              <MenuItem eventKey="release">release</MenuItem>
+            </DropdownButton>
+          </ButtonGroup>
+        </ButtonToolbar>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
           <DiagLog logName="dash" log={logs.dash} paused={paused}/>
           <CameraPreview deviceId={this.deviceId}/>

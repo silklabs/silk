@@ -84,6 +84,14 @@ class Camera extends EventEmitter {
     return ret;
   }
 
+  reboot(channel) {
+    let cmd = { id: this.id, msg: 'reboot' };
+    if (channel) {
+      cmd.channel = channel;
+    }
+    this._socket.emit('cmd', cmd);
+  }
+
   removeListener(event, listener) {
     let ret = super.removeListener(event, listener);
     this._adjustRooms(event);

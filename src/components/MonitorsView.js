@@ -34,6 +34,7 @@ const PERIPH_EVENTS = [
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
+const NEW_DEVICE_CONNECTION_TIMEOUT_MS = 5000;
 
 // This is mostly a guestimate based on FUT hardware. Absolute values
 // not important here, the ratio is what matters.
@@ -55,15 +56,19 @@ class MonitorsView extends AsyncComponent {
     eventsError: null,
   };
 
+  mounted = false;
+
   componentWillMount() {
     PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.on(ev, this.refreshDeviceList));
     this.subscribeToSocket();
     AppStateIOS.addEventListener('change', this.onAppStateChange);
+    this.mounted = true;
   }
 
   componentWillUnmount() {
     PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
     AppStateIOS.removeEventListener('change', this.onAppStateChange);
+    this.mounted = false;
   }
 
   componentWillReceiveProps(nextProps) {
@@ -241,7 +246,7 @@ class MonitorsView extends AsyncComponent {
   onVideoStreamDelete = (msg) => {
     log.info('deleted video stream', msg.id);
     delete this.state.streaming[msg.id];
-    this.setState(this.state);
+    this.mounted && this.setState(this.state);
   };
 
   refreshDeviceList = () => {
@@ -291,15 +296,24 @@ class MonitorsView extends AsyncComponent {
         // show potentially stale data
         streaming[deviceId].status = '';
 
-        // We have not received a server-sent event. Delete placeholder widget,
-        // less, it will linger indefinitely. If/when the server sends the
-        // event, it will get added back in.
+        // We have not received a server-sent event. Give the device
+        // some time to connect to the server. After that, delete
+        // placeholder widget so it doesn't linger indefinitely.
+        // See also https://github.com/silklabs/silk-device/issues/1006.
         if (streaming[deviceId].placeholder) {
-          delete streaming[deviceId];
+          setTimeout(() => {
+            if (!this.state.streaming[deviceId] ||
+                !this.state.streaming[deviceId].placeHolder) {
+              // Nothing to be done here.
+              return;
+            }
+            delete this.state.streaming[deviceId];
+            this.mounted && this.setState(this.state);
+          }, NEW_DEVICE_CONNECTION_TIMEOUT_MS);
         }
       }
     });
-    this.setState(this.state);
+    this.mounted && this.setState(this.state);
   };
 
   // Activity feed management
@@ -353,10 +367,15 @@ class MonitorsView extends AsyncComponent {
       return;
     }
 
+    if (!this.mounted) {
+      return;
+    }
+
     if (!addlEvents.length) {
       this.setStateAsync({eventsLoading: null});
       return;
     }
+
     let events = this.state.events;
     if (!events || !events.length) {
       events = addlEvents;

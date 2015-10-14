@@ -16,10 +16,10 @@ let baseversion = {
 try {
   baseversion.actual = require('base_version');
 } catch(e) {
-  console.error(`Unable to load base_version: ${e}`);
+  console.error(`Unable to load base_version: ${e}`); // eslint-disable-line
 }
 if (baseversion.actual !== baseversion.expected) { // TODO: use semver
-  console.error('\n' +
+  console.error('\n' + // eslint-disable-line
                 '**********************************\n' +
                 ' Device base version mismatch\n' +
                 `   Expected base version: ${baseversion.expected}\n` +

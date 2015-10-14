@@ -1,0 +1,117 @@
+From 93fe91cda92e86e9c277325484968fa58010599d Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Tue, 29 Sep 2015 15:57:34 -0700
+Subject: [PATCH] Androidify
+
+---
+ Android.mk     |  7 +++++++
+ binding.gyp    | 11 -----------
+ package.json   | 21 ++++++++-------------
+ v8-profiler.js |  4 +---
+ 4 files changed, 16 insertions(+), 27 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..408dee0
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,7 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_NODE_MODULE_TYPE := file
++include $(BUILD_NODE_MODULE)
++
+diff --git a/binding.gyp b/binding.gyp
+index ba0425b..5ab8520 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -17,17 +17,6 @@
+       'include_dirs' : [
+         "<!(node -e \"require('nan')\")"
+       ]
+-    },
+-    {
+-      "target_name": "action_after_build",
+-      "type": "none",
+-      "dependencies": [ "<(module_name)" ],
+-      "copies": [
+-        {
+-          "files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
+-          "destination": "<(module_path)"
+-        }
+-      ]
+     }
+   ]
+ }
+diff --git a/package.json b/package.json
+index acdedb5..afc573a 100644
+--- a/package.json
++++ b/package.json
+@@ -4,6 +4,9 @@
+   "description": "node bindings for the v8 profiler",
+   "homepage": "http://github.com/node-inspector/v8-profiler",
+   "author": "Danny Coates <dannycoates@gmail.com>",
++  "os": [
++    "android"
++  ],
+   "repository": {
+     "type": "git",
+     "url": "git://github.com/node-inspector/v8-profiler.git"
+@@ -18,13 +21,7 @@
+     }
+   ],
+   "license": "BSD-2-Clause",
+-  "binary": {
+-    "module_name" : "profiler",
+-    "module_path" : "./build/{module_name}/v{version}/{node_abi}-{platform}-{arch}/",
+-    "remote_path" : "./{module_name}/v{version}/",
+-    "package_name": "{node_abi}-{platform}-{arch}.tar.gz",
+-    "host"        : "https://node-inspector.s3.amazonaws.com/"
+-  },
++  "gypfile": true,
+   "keywords": [
+     "profiler",
+     "inspector"
+@@ -32,19 +29,17 @@
+   "engines": {
+     "node": ">=0.10"
+   },
+-  "main": "v8-profiler",
++  "main": "dist/index.js",
+   "dependencies": {
+-    "node-pre-gyp": "^0.6.5",
++    "browserify": "^10.2.1",
+     "nan": "~2.0.5"
+   },
+-  "devDependencies": {
++  "__devDependencies": {
+     "aws-sdk": "^2.0.0",
+     "mocha": "^1.20.1",
+     "chai": "^1.9.1"
+   },
+   "scripts": {
+-    "preinstall": " ",
+-    "install": "node-pre-gyp install --fallback-to-build",
+-    "test": "mocha"
++    "postinstall": "mkdir -p dist/ ; browserify v8-profiler.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
+   }
+ }
+diff --git a/v8-profiler.js b/v8-profiler.js
+index 9f00a05..f5fb951 100644
+--- a/v8-profiler.js
++++ b/v8-profiler.js
+@@ -1,7 +1,5 @@
+-var binary = require('node-pre-gyp');
+ var path = require('path');
+-var binding_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
+-var binding = require(binding_path);
++var binding = require('build/profiler.node');
+ 
+ var Stream = require('stream').Stream,
+     inherits = require('util').inherits;
+-- 
+2.4.5
+

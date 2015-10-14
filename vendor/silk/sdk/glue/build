@@ -8,4 +8,4 @@ SDK=$MOD/node_modules/silk-sdk-glue
 # Move into the sdk...
 cd $SDK
 export BASEDIR=$MOD
-exec ./node_modules/.bin/gulp --gulpfile ./dist/gulpfile.js $@
+exec ./node_modules/.bin/gulp --gulpfile ./src/gulpfile.babel.js $@

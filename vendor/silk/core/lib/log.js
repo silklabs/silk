@@ -71,7 +71,7 @@ export default function createLog(libraryName) {
         let args = arguments;
 
         if (!process.env.LOGWRAPPER) {
-          let consoleFunc = console[consoleFuncName];
+          let consoleFunc = console[consoleFuncName]; // eslint-disable-line
           consoleFunc.apply(consoleFunc, args);
         }
 
@@ -83,7 +83,7 @@ export default function createLog(libraryName) {
       };
     } else {
       func = function(...args) {
-        let consoleFunc = console[consoleFuncName];
+        let consoleFunc = console[consoleFuncName]; // eslint-disable-line
         consoleFunc.apply(consoleFunc,
             [prefix, ':'].concat(args));
       };

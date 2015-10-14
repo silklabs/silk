@@ -4,6 +4,7 @@
 import React from 'react-native';
 var {
   ActivityIndicatorIOS,
+  AppStateIOS,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -52,10 +53,12 @@ class MonitorsView extends AsyncComponent {
   componentWillMount() {
     PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.on(ev, this.refreshDeviceList));
     this.subscribeToSocket();
+    AppStateIOS.addEventListener('change', this.onAppStateChange);
   }
 
   componentWillUnmount() {
     PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
+    AppStateIOS.removeEventListener('change', this.onAppStateChange);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -85,6 +88,13 @@ class MonitorsView extends AsyncComponent {
       this.subscribeToSocket();
     }
   }
+
+  onAppStateChange = (appState) => {
+    if (appState === 'active' && this.state.eventsLatest) {
+      // Refresh feed: fetch more recent events if there are any.
+      this._fetchActivity(this.state.eventsLatest, Date.now());
+    }
+  };
 
   startFullscreenVideo = (fullscreenDeviceId, fullscreenStartTime = null) => {
     this.setState({fullscreenDeviceId, fullscreenStartTime});
@@ -285,7 +295,7 @@ class MonitorsView extends AsyncComponent {
 
   // Activity feed management
 
-  onScroll = async (event) => {
+  onScroll = (event) => {
     let { eventsLoading, eventsLatest, eventsEarliest } = this.state;
     if (eventsLoading || eventsLatest === null || eventsEarliest === null) {
       return;
@@ -296,15 +306,15 @@ class MonitorsView extends AsyncComponent {
     // Pull to refresh: fetch more recent events.
     if (contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
       this.setStateAsync({eventsLoading: 'newer'});
-      await this._fetchActivity(eventsLatest, Date.now());
+      this._fetchActivity(eventsLatest, Date.now());
       return;
     }
 
+    // Infinite scroll: fetch more older events.
     let leftToScroll = contentSize.height - layoutMeasurement.height - contentOffset.y;
     if (leftToScroll < SCROLLVIEW_INFINITE_THRESHOLD) {
       this.setStateAsync({eventsLoading: 'older'});
-      console.log('eventsEarliest', eventsEarliest);
-      await this._fetchActivity(null, eventsEarliest);
+      this._fetchActivity(null, eventsEarliest);
       return;
     }
   };

@@ -1,4 +1,4 @@
-From aea27f1e8fba6955bf57d4d3cce6d6b5797df420 Mon Sep 17 00:00:00 2001
+From 2f3828fd463092776678d0d49941a36aa3d7e4ef Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
@@ -26,7 +26,7 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..4151bdd
+index 0000000..64af3ba
 --- /dev/null
 +++ b/lib/android/bindings.js
 @@ -0,0 +1,2784 @@
@@ -1003,7 +1003,7 @@ index 0000000..4151bdd
 +  var filter;
 +  const packedUuids = packUuids(serviceUuids);
 +  if (packedUuids.length) {
-+    filter = packedUuids.map(expandUuid);
++    filter = packedUuids;
 +  }
 +
 +  this.queueCommand(this._discoverIncludedServices.bind(this,
@@ -1161,7 +1161,7 @@ index 0000000..4151bdd
 +  var filter;
 +  const packedUuids = packUuids(characteristicUuids);
 +  if (packedUuids.length) {
-+    filter = packedUuids.map(expandUuid);
++    filter = packedUuids;
 +  }
 +
 +  this.queueCommand(this._discoverCharacteristics.bind(this,
@@ -2877,5 +2877,5 @@ index 42cfdb6..9cdbc67 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.5.3
+2.6.0
 

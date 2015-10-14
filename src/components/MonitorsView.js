@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-var {
+let {
   ActivityIndicatorIOS,
   AppStateIOS,
   PixelRatio,
@@ -17,7 +17,7 @@ import mklog from 'log'; const log = mklog('MonitorPreview');
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
 import DeviceSetup from './DeviceSetup';
-import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
+import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
 
@@ -111,13 +111,13 @@ class MonitorsView extends AsyncComponent {
 
   _getPreviewSize(deviceId) {
     let device = this.state.streaming[deviceId];
-    if (!device) {
-      return {
-        width: DEFAULT_PREVIEW_WIDTH,
-        height: DEFAULT_PREVIEW_HEIGHT,
-      };
+    if (device && device.previewSize) {
+      return device.previewSize;
     }
-    return device.previewSize;
+    return {
+      width: DEFAULT_PREVIEW_WIDTH,
+      height: DEFAULT_PREVIEW_HEIGHT,
+    };
   }
 
   _getDeviceName(deviceId) {
@@ -129,15 +129,12 @@ class MonitorsView extends AsyncComponent {
     // Right now there's no stateful list of cameras, we only know
     // about them through Bluetooth or socket.io connections. In the
     // near future, we will just query the account.
-    var configuring = Object.keys(this.state.configuring).map(deviceId => {
-      var device = this.state.configuring[deviceId];
+    let configuring = Object.keys(this.state.configuring).map(deviceId => {
+      let device = this.state.configuring[deviceId];
       return <DeviceSetup key={deviceId} name={device.name} rssi={device.rssi} />;
     });
-    var streaming = Object.keys(this.state.streaming).map(deviceId => {
-      var device = this.state.streaming[deviceId];
-      if (device.placeholder) {
-        return <MonitorConnecting key={deviceId} status={device.status} />;
-      }
+    let streaming = Object.keys(this.state.streaming).map(deviceId => {
+      let device = this.state.streaming[deviceId];
       return (
         <MonitorPreview
           key={deviceId}
@@ -146,7 +143,7 @@ class MonitorsView extends AsyncComponent {
           label={device.name}
           status={device.status}
           logo={device.logo}
-          previewSize={device.previewSize}
+          previewSize={this._getPreviewSize(deviceId)}
           {...this.props}
         />
       );
@@ -248,8 +245,8 @@ class MonitorsView extends AsyncComponent {
   };
 
   refreshDeviceList = () => {
-    var configuring = this.state.configuring = {};
-    var streaming = this.state.streaming;
+    this.state.configuring = {};
+    let { streaming, configuring } = this.state;
     this.props.bleDeviceManager.enumerateDevices().forEach(device => {
       if ('unregistered' === device.state || 'registering' === device.state) {
         // Show configuring widget when we are registering
@@ -272,6 +269,7 @@ class MonitorsView extends AsyncComponent {
           streaming[device.deviceId] = {
             name: 'New Device',
             placeholder: true,
+            logo: null,
           };
         }
 

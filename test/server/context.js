@@ -83,7 +83,7 @@ export async function registeredDevice(ctx, accountAccessToken) {
   // Act as the device rather then the account...
   api.accessToken = deviceAccessToken;
   await api.device.completeRegistration({
-    accountPublicKey: accountAccessToken.toString(),
+    registrarPublicKey: accountAccessToken.toString(),
     registrationToken: token
   });
 

@@ -48,7 +48,7 @@ export default function (ctx) {
     }),
     input: Joi.object().keys({
       // _account_ public key...
-      accountPublicKey: Joi.string().hex().required(),
+      registrarPublicKey: Joi.string().hex().required(),
       // registration token to use...
       registrationToken: Joi.string()
     }).required()
@@ -57,7 +57,7 @@ export default function (ctx) {
     // First we need to find the account that this device belongs to so we can
     // validate the registration token.
     let account = await ctx.accounts.findByPublicKey({
-      publicKey: req.body.accountPublicKey
+      publicKey: req.body.registrarPublicKey
     });
 
     if (!account) {
@@ -69,7 +69,7 @@ export default function (ctx) {
       return;
     }
 
-    let result = await ctx.devices.validateRegistration(req.body.accountPublicKey, {
+    let result = await ctx.devices.validateRegistration(req.body.registrarPublicKey, {
       publicKey: req.device.accessToken.publicKey,
       registrationToken: req.body.registrationToken
     });

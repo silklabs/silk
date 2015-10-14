@@ -45,7 +45,7 @@ suite('account auth', () => {
     // Act as the device rather then the account...
     api.accessToken = deviceAccessToken;
     let complete = await api.device.completeRegistration({
-      accountPublicKey: accountOne.accessToken.toString(),
+      registrarPublicKey: accountOne.accessToken.toString(),
       registrationToken: token
     });
     assert.ok(complete.success);

@@ -34,6 +34,7 @@ const PERIPH_EVENTS = [
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
+const SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS = 1000;
 const NEW_DEVICE_CONNECTION_TIMEOUT_MS = 5000;
 
 // This is mostly a guestimate based on FUT hardware. Absolute values
@@ -44,6 +45,7 @@ const DEFAULT_PREVIEW_HEIGHT = 9;
 class MonitorsView extends AsyncComponent {
 
   state = {
+    waitingForDevices: true,
     configuring: {},
     streaming: {},
     fullscreenDeviceId: null,
@@ -72,17 +74,30 @@ class MonitorsView extends AsyncComponent {
   }
 
   componentWillReceiveProps(nextProps) {
+    let newState = {};
+
+    // Reset our UI state before we get the new socket so that we don't have
+    // any children rendered that are still listening to the old socket.
+    // Eventually, we should make those children smart and detect themselves
+    // when the socket changes under them and unsubscribe + resubscribe.
     if (this.props.socket !== nextProps.socket) {
-      // Reset our UI state before we get the new socket so that we
-      // don't have any children rendered that are still listening to
-      // the old socket. Eventually, we should make those children
-      // smart and detect themselves when the socket changes under
-      // them and unsubscribe + resubscribe.
-      this.setState({
-        configuring: {},
-        streaming: {},
-      });
+      newState.configuring = {};
+      newState.streaming = {};
     }
+
+    // Give the socket.io server some time to send us the list of devices.
+    // During that time we want to appear as if we're still connecting.
+    let { configuring, streaming } = this.state;
+    if (this.props.connectionState === 'connecting' &&
+        nextProps.connectionState === 'connected' &&
+        Object.keys(configuring).length + Object.keys(streaming).length === 0) {
+      newState.waitingForDevices = true;
+      setTimeout(() => {
+        this.mounted && this.setState({waitingForDevices: false});
+      }, SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS);
+    }
+
+    this.setState(newState);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -131,14 +146,28 @@ class MonitorsView extends AsyncComponent {
   }
 
   render() {
+    let { connectionState } = this.props;
+    if (connectionState === 'connecting' || this.state.waitingForDevices) {
+      return this._renderSpinner();
+    }
+
+    let configuringDeviceIds = Object.keys(this.state.configuring);
+    let streamingDeviceIds = Object.keys(this.state.streaming);
+    if (0 === configuringDeviceIds.length + streamingDeviceIds.length) {
+      if (connectionState === 'offline') {
+        return this._renderOffline();
+      }
+      return this._renderNoDevices();
+    }
+
     // Right now there's no stateful list of cameras, we only know
     // about them through Bluetooth or socket.io connections. In the
     // near future, we will just query the account.
-    let configuring = Object.keys(this.state.configuring).map(deviceId => {
+    let configuring = configuringDeviceIds.map(deviceId => {
       let device = this.state.configuring[deviceId];
       return <DeviceSetup key={deviceId} name={device.name} rssi={device.rssi} />;
     });
-    let streaming = Object.keys(this.state.streaming).map(deviceId => {
+    let streaming = streamingDeviceIds.map(deviceId => {
       let device = this.state.streaming[deviceId];
       return (
         <MonitorPreview
@@ -153,14 +182,7 @@ class MonitorsView extends AsyncComponent {
         />
       );
     });
-    if (0 === configuring.length + streaming.length) {
-      configuring = this._renderPlaceholder();
-    }
-    let activity;
-    if (streaming.length !== 0) {
-      activity = this._renderActivity();
-    }
-
+    let activity = streaming.length && this._renderActivity();
     let fullscreenMonitor = null;
     let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {
@@ -191,9 +213,28 @@ class MonitorsView extends AsyncComponent {
     );
   }
 
-  _renderPlaceholder() {
+  _renderOffline() {
     return (
-      <View style={styles.placeholderContainer}>
+      <View style={[styles.content, styles.placeholderContainer]}>
+        <PlaceholderText>
+          Not connected.
+        </PlaceholderText>
+      </View>
+    );
+  }
+
+  _renderSpinner() {
+    return (
+      <ActivityIndicatorIOS
+        size="large"
+        style={styles.loadingSpinner}
+      />
+    );
+  }
+
+  _renderNoDevices() {
+    return (
+      <View style={[styles.content, styles.placeholderContainer]}>
         <PlaceholderText>
           Connect Silk Cam to get started
         </PlaceholderText>
@@ -406,7 +447,7 @@ class MonitorsView extends AsyncComponent {
       let spinner = (
         <ActivityIndicatorIOS
           size="large"
-          style={styles.activitySpinner}
+          style={styles.loadingSpinner}
         />
       );
       if (eventsLoading === 'newer') {
@@ -463,7 +504,7 @@ const styles = StyleSheet.create({
   },
 
   placeholderContainer: {
-    marginHorizontal: 8,
+    margin: 8,
   },
 
   monitors: {
@@ -472,7 +513,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  activitySpinner: {
+  loadingSpinner: {
     alignSelf: 'center',
     marginVertical: 16,
   },

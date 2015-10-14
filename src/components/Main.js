@@ -27,6 +27,7 @@ export default class extends React.Component {
   };
 
   state = {
+    connectionState: 'connecting', // purposely optimistic default state
     socketConnectionState: 'offline',
     socketUrl: null,
     socket: null,
@@ -78,6 +79,7 @@ export default class extends React.Component {
         this.state.socket.close();
       }
       this.setState({
+        connectionState: 'offline',
         socketConnectionState: 'offline',
       });
       return;
@@ -85,12 +87,18 @@ export default class extends React.Component {
     // We have a network connection (again). Get rid of any old socket
     // that we might have kept around and (re-)connect.
     this.setState({
+      connectionState: 'connecting',
       socketUrl: null,
       socket: null,
     });
     this.props.api.socketio.address()
       .then(result => this.setSocketUrlAndConnect(result.url))
-      .catch(err => log.info('Unable to get server socket.io address', err));
+      .catch(err => {
+        log.info('Unable to get server socket.io address', err);
+        this.setState({
+          connectionState: 'offline',
+        });
+      });
   };
 
   setSocketUrlAndConnect(socketUrl) {
@@ -124,7 +132,10 @@ export default class extends React.Component {
         log.info('Connecting to ...', socketUrl);
         socket.on('connect', () => {
           log.info(' ... connected');
-          this.setState({socketConnectionState: 'connected'});
+          this.setState({
+            connectionState: 'connected',
+            socketConnectionState: 'connected',
+          });
         });
       }
     });
@@ -184,6 +195,7 @@ export default class extends React.Component {
         />
         <NetworkWarning />
         <MonitorsView
+          connectionState={this.state.connectionState}
           socket={this.state.socket}
           bleDeviceManager={this.bleDeviceManager}
           {...this.props}

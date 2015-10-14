@@ -107,7 +107,7 @@ enum {
 //
 #define BLE_SOCKET_NAME "bledroid"
 #define BLE_COMMAND_NAME "BleCommand"
-#define MAX_MSG_SIZE 256
+#define MAX_MSG_SIZE 1024
 
 #define BT_UNITS_PER_MS 1000 / 625
 

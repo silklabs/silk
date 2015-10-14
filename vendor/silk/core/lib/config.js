@@ -9,7 +9,8 @@
 import api from './api';
 import events from 'events';
 import createLog from './log';
-
+import fs from 'mz/fs';
+import eventToPromise from 'event-to-promise';
 import server from './server';
 import wifi from './wifi';
 import * as util from './sysutils';
@@ -18,12 +19,15 @@ import assert from 'assert';
 import getBTLE from './btle';
 
 const log = createLog('config');
+
 const STATE = api.btleConfigService.state;
+const CONFIG_PATH = '/data/silk/config/config.json';
 
 class DeviceConfig extends events.EventEmitter {
   _initialized = false
   _initializing = false
   _btle = null
+  _networkStatus = null
   _configService = null
   _unconfigurePromise = null
 
@@ -31,25 +35,94 @@ class DeviceConfig extends events.EventEmitter {
   _errorMessage = ''
   _registrationState = STATE.UNREGISTERED
 
-  _onStateChange = state => {
+  /**
+   * Persist the configuration after the device has completed registration.
+   */
+  async _persistConfig(configService, success = false) {
+    const config = JSON.stringify({
+      registrarPublicKey: configService.registrarPublicKey,
+      registrationToken: configService.registrationToken,
+      success
+    }, null, 2);
+
+    await fs.writeFile(CONFIG_PATH, config);
+    log.info('Updated config file', CONFIG_PATH);
+  }
+
+  async _loadConfig() {
+    if (!await fs.exists(CONFIG_PATH)) {
+      return null;
+    }
+    return JSON.parse(await fs.readFile(CONFIG_PATH, 'utf8'));
+  }
+
+  async _registerDevice(_configService, timeoutMS = 3 * 1000, max = 5, retry = 0) {
+    if (retry > max) {
+      throw new Error(`Exhausted retries for device registration...`);
+    }
+
+    // TODO: Remove this junk once our api supports proper retries...
+    try {
+      return await api.device.completeRegistration({
+        registrarPublicKey: _configService.registrarPublicKey,
+        registrationToken: _configService.registrationToken
+      });
+    } catch (err) {
+      log.info('Error during device registration retrying', err.stack);
+      await util.timeout(timeoutMS * retry);
+      return this._registerDevice(_configService, timeoutMS, max, retry + 1);
+    }
+  }
+
+  _onStateChange = async state => {
     log.info('Device configuration state is now', state);
-    assert(this._configService);
+    assert(this._configService, '_configService required');
 
     this._registrationState = state;
 
     if (state === STATE.REGISTERED) {
-      // Join network now that we are registered
-      wifi.forgetNetwork()
-        .then(() => {
-          assert(this._configService);
-          return wifi.joinNetwork(this._configService.ap,
-            this._configService.unsecured ? '' : this._configService.secret);
-        })
-        .then(() => {
-          log.debug('Configured');
-          this.emit('configured');
-        })
-        .catch(e => util.processthrow(e));
+      log.info('Registering new device...');
+      let secret = this._configService.unsecured ? '' :
+        this._configService.secret;
+
+      await wifi.forgetNetwork(),
+      assert(this._configService, '_configService required');
+      assert(api.accessToken, 'has api.accessToken set');
+      await wifi.joinNetwork(this._configService.ap, secret),
+
+      // Wait until the network is ready to use then register the device...
+      await Promise.all([
+        // Persist the configuration details we got over BTLE this includes the
+        // registrarPublicKey so we can communicate securely with that specific
+        // account in the future.
+        this._persistConfig(this._configService, false),
+
+        // Wait until we can connect to the internet...
+        // XXX: This may never happen so we should present some special
+        // error handling+state here...
+        eventToPromise(this._networkStatus, 'online')
+      ]);
+
+      try {
+        log.info('Wifi setup complete... Contacting the server...');
+        let result = await this._registerDevice(this._configService);
+        log.info('Registration complete', result);
+
+        if (!result.success) {
+          throw new Error(`Failed to register device for known reason`);
+        }
+
+        // Update the config on disk with the success flag so we know we are
+        // completely registered...
+        await this._persistConfig(this._configService, true);
+      } catch (err) {
+        // XXX: Semi-hack forget wifi so we are sure to reconfigure...
+        log.error('Failed to register device', err.stack);
+        await wifi.forgetNetwork();
+        throw err;
+      }
+      log.debug('Configured');
+      this.emit('configured');
     }
   }
 
@@ -141,8 +214,14 @@ class DeviceConfig extends events.EventEmitter {
 
   _isWifiConfigured() {
     return wifi.networkConfigured()
-      .then(() => true)
-      .catch(() => false);
+      .then(() => {
+        log.info('wifi is configured...');
+        return true;
+      })
+      .catch(() => {
+        log.info('wifi is not configured...');
+        return false;
+      });
   }
 
   _setBtleConfigMode() {
@@ -179,7 +258,7 @@ class DeviceConfig extends events.EventEmitter {
       .then(() => this._unsetConfigService());
   }
 
-  init() {
+  async init(networkStatus) {
     if (this._initialized) {
       return Promise.reject(new Error('Already initialized'));
     }
@@ -189,6 +268,7 @@ class DeviceConfig extends events.EventEmitter {
     }
 
     this._initializing = true;
+    this._networkStatus = networkStatus;
 
     log.info('Initializing config service');
 
@@ -203,39 +283,74 @@ class DeviceConfig extends events.EventEmitter {
     server.on('stateChange', state => this._onServerStateChange(state));
     server.on('error', () => {}); // keep, node requires 'error' event handled
 
-    const loadBtleAndStartConfigService = () => {
-      return getBTLE()
-        .then(btle => {
-          this._btle = btle;
-          return this._setBtleConfigMode();
-        });
-    };
+    this._btle = await getBTLE();
 
-    return Promise.all([ loadBtleAndStartConfigService(),
-                         this._isWifiConfigured() ])
-      .then(results => {
-        let isConfigured = results[1];
-        if (isConfigured) {
-          log.debug('Configured');
-          this._registrationState = STATE.REGISTERED;
-          this.emit('configured');
-        } else {
-          log.debug('Unconfigured');
-          this._registrationState = STATE.UNREGISTERED;
-          this.emit('unconfigured');
-        }
-        this._initializing = false;
-        this._initialized = true;
+    // Not configured yet...
+    let config = await this._loadConfig();
+    log.info('Loading device configuration...', config);
+    if (!config || !config.success) {
+      // Ensure we don't have any stale state lying around...
+      await wifi.forgetNetwork();
+      await Promise.all([
+        wifi.forgetNetwork(),
+        this._setBtleConfigMode()
+      ]);
+      this._registrationState = STATE.UNREGISTERED;
+      this.emit('unconfigured');
+    }
+
+    if (config && config.success) {
+      this._registrationState = STATE.REGISTERED;
+      await this._setBtleNormalMode();
+      this.emit('configured');
+    }
+
+    this._initializing = false;
+    this._initialized = true;
+  }
+
+  unconfigure() {
+    if (this._unconfigurePromise) {
+      return this._unconfigurePromise;
+    }
+
+    return this._unconfigurePromise = this._unconfigure()
+      .then(() => {
+        this._unconfigurePromise = null;
+        log.debug('Unconfigured');
+        this.emit('unconfigured');
       })
       .catch(err => {
-        log.error(err);
+        this._unconfigurePromise = null;
+        log.error('Error unconfiguring', err.toString(), err.stack);
         throw err;
       });
   }
 
-  unconfigure() {
+  async _unconfigureNetwork() {
+    log.info('Unconfigure network...');
+    if (server.connected) {
+      server.disconnect();
+      await eventToPromise(server, 'disconnect');
+      log.info('Unconfigure - Disconnected from server');
+    }
+
+    await wifi.forgetNetwork();
+    log.info('Unconfigure - forgot network...');
+  }
+
+  async _unconfigureBTLE() {
+    await this._setBtleOffMode();
+    log.info('Unconfigure - BTLE off mode');
+    await this._btle.resetBeaconUuid();
+    log.info('Unconfigure - BTLE reset beacon');
+    await this._setBtleConfigMode();
+    log.info('Unconfigure - Set BTLE to configure mode');
+  }
+
+  async _unconfigure() {
     if (!this._initialized) {
-      return Promise.reject(new Error('Not initialized yet'));
+      throw new Error('Not initialized yet');
     }
 
     if (this._unconfigurePromise) {
@@ -253,36 +368,18 @@ class DeviceConfig extends events.EventEmitter {
     // Calling the server/btle functions below can trigger events so run them on
     // the next tick to ensure that |this._unconfigurePromise| is set before any
     // event listeners have a chance to run.
-    this._unconfigurePromise = Promise.resolve()
-      .then(() => {
-        const networkPromise =
-          new Promise(resolve => {
-            if (!server.connected) {
-              resolve();
-              return;
-            }
-            server.once('disconnect', resolve);
-            server.disconnect();
-          })
-          .then(() => wifi.forgetNetwork());
+    await Promise.resolve();
 
-        const btlePromise = this._setBtleOffMode()
-          .then(() => this._btle.resetBeaconUuid())
-          .then(() => this._setBtleConfigMode());
+    // Remove the config file so we know we need to reconfigure...
+    if (await fs.exists(CONFIG_PATH)) {
+      await fs.unlink(CONFIG_PATH);
+    }
 
-        return Promise.all([ networkPromise, btlePromise ]);
-      })
-      .then(() => {
-        this._unconfigurePromise = null;
-        log.debug('Unconfigured');
-        this.emit('unconfigured');
-      })
-      .catch(err => {
-        this._unconfigurePromise = null;
-        log.error(err);
-        throw err;
-      });
-    return this._unconfigurePromise;
+    // Unconfigure BTLE and our network setup...
+    await Promise.all([
+      this._unconfigureBTLE(),
+      this._unconfigureNetwork()
+    ]);
   }
 }
 

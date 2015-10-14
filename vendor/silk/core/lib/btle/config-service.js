@@ -265,7 +265,63 @@ class DeviceIdCharacteristic extends Characteristic {
     if (offset) {
       return callback(this.RESULT_INVALID_OFFSET);
     }
-    callback(this.RESULT_SUCCESS, new Buffer(this.service.deviceId, 'hex'));
+
+    callback(
+      this.RESULT_SUCCESS,
+      new Buffer(this.service.deviceId.toString(), 'utf8')
+    );
+  }
+}
+
+class RegistrationTokenCharacteristic extends Characteristic {
+  static uuid = decls.uuid.RegistrationTokenCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: RegistrationTokenCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('Registration Token'),
+      ],
+    });
+  }
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    log.info('regToken write');
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+
+    this.service.setRegistrationToken(data);
+    callback(this.RESULT_SUCCESS);
+  }
+}
+
+class RegistrarPublicKeyCharacteristic extends Characteristic {
+  static uuid = decls.uuid.RegistrarPublicKeyCharacteristic
+
+  service = null
+
+  constructor() {
+    super({
+      uuid: RegistrarPublicKeyCharacteristic.uuid,
+      properties: ['write', 'writeWithoutResponse'],
+      descriptors: [
+        new DescriptionDescriptor('Account ID'),
+      ],
+    });
+  }
+
+  onWriteRequest(data, offset, withoutResponse, callback) {
+    log.info('registrarPublicKey write');
+    if (offset) {
+      return callback(this.RESULT_INVALID_OFFSET);
+    }
+
+    this.service.setRegistrarPublicKey(data);
+    callback(this.RESULT_SUCCESS);
   }
 }
 
@@ -334,6 +390,8 @@ export default class ConfigService extends PrimaryService {
   static STATE_ERROR = decls.state.ERROR
 
   deviceId = null
+  registrarPublicKey = null
+  registrationToken = null
   advertising = false
   ap = null
   serverConnectionStatus = ''
@@ -359,6 +417,8 @@ export default class ConfigService extends PrimaryService {
         new AccessPointCharacteristic(),
         new SecretCharacteristic(),
         new DeviceIdCharacteristic(),
+        new RegistrarPublicKeyCharacteristic(),
+        new RegistrationTokenCharacteristic(),
         new ErrorDescriptionCharacteristic(),
         new VibratePatternCharacteristic(),
       ],
@@ -376,6 +436,8 @@ export default class ConfigService extends PrimaryService {
     this.ap = null;
     this.serverConnectionStatus = '';
     this.crypto = null;
+    this.registrarPublicKey = null;
+    this.registrationToken = null;
     this.errorMessage = '';
     this.secret = null;
     this.unsecured = false;
@@ -436,6 +498,18 @@ export default class ConfigService extends PrimaryService {
     this.checkDone();
   }
 
+  setRegistrarPublicKey(value) {
+    this.registrarPublicKey = new Buffer(value).toString('utf8');
+    log.info('account id', this.registrarPublicKey);
+    this.checkDone();
+  }
+
+  setRegistrationToken(value) {
+    this.registrationToken = new Buffer(value).toString('utf8');
+    log.info('got reg token', this.registrationToken);
+    this.checkDone();
+  }
+
   setSecret(secretEnc) {
     if (secretEnc.length === 0) {
       log.info('  ... no secret, unsecured network');
@@ -451,9 +525,10 @@ export default class ConfigService extends PrimaryService {
   }
 
   checkDone() {
-    if (!(this.ap && (this.secret || this.unsecured))) {
+    if (!(this.ap && (this.secret || this.unsecured)) || !this.registrationToken || !this.registrarPublicKey) {
       return;
     }
+
     log.info('Finished registering wifi!');
     // TODO persist
     this.changeState(ConfigService.STATE_REGISTERED);

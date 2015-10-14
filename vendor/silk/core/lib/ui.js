@@ -128,6 +128,7 @@ class Ui extends events.EventEmitter
           volumeKeysPressed--;
           cancelVolumeKeys();
         }
+        log.info(`up - volumeKeysPressed: ${volumeKeysPressed}`);
         break;
       case 'power':
         cancelPowerDown();
@@ -148,6 +149,7 @@ class Ui extends events.EventEmitter
       case 'volumeup':
       case 'volumedown':
         volumeKeysPressed++;
+        log.info(`down - volumeKeysPressed: ${volumeKeysPressed}`);
         if (volumeKeysPressed === 2) {
           this.emit('key:setup');
           if (FACTORY_RESET_DISABLED) {

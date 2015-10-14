@@ -8,7 +8,7 @@
     "test": "npm run-script lint && npm run-script mocha",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "start": "./bin/start.sh",
-    "preinstall": "./bin/pre-install",
+    "preinstall": "npm install babel && ./bin/pre-install",
     "postinstall": "./bin/post-install",
     "build": "./build.sh",
     "wwwdev": "./build/browser/build.sh -w",

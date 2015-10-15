@@ -128,7 +128,6 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
 
   // TODO need to check the max length
   NSData* value = [[NSData alloc] initWithBase64EncodedString:valueB64 options:NSDataBase64DecodingIgnoreUnknownCharacters];
-  NSLog(@"BTLE write length %lu", (unsigned long)[value length]);
   if (!value) {
     callback(@[@{ @"error": @"Invalid value specified to characteristic 'write'",
                   @"uuid": deviceUuidStr,

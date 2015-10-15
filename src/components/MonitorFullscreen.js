@@ -4,6 +4,7 @@
 import React from 'react-native';
 import TimerMixin from 'react-timer-mixin';
 import uuid from 'uuid';
+import createLog from 'log';
 
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 import * as DateUtil from '../libraries/DateUtil';
@@ -13,6 +14,8 @@ import OverlayModal from './OverlayModal';
 import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import DateOverlay from './DateOverlay';
+
+const log = createLog('MonitorFullscreen');
 
 let {
   StyleSheet,
@@ -235,7 +238,8 @@ export default React.createClass({
     }).then(result => {
       this.setState({ minTime: result.startUTC });
     }).catch(err => {
-      console.log('Could not fetch initial time: ', err);
+      // TODO (#525): show error in UI.
+      log.info('Could not fetch initial time: ', err);
     });
   },
 
@@ -252,7 +256,7 @@ export default React.createClass({
   onLiveSegment(segment, message) {
     if (this._videoSegments.length === 0) {
       this.liveVideoLag = Date.now() - segment.startUTC;
-      console.log('updated live video lag to', this.liveVideoLag);
+      log.debug('updated live video lag to', this.liveVideoLag);
     }
 
     this.appendSegment(segment);
@@ -328,7 +332,7 @@ export default React.createClass({
   },
 
   onSegmentError(event) {
-    console.log('Segment error encountered!', event.nativeEvent);
+    log.info('Segment error encountered!', event.nativeEvent);
   },
 
   /**
@@ -344,7 +348,7 @@ export default React.createClass({
     }
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
-      console.log(`
+      log.info(`
         Unexpected end event:
 
           current: ${current}
@@ -408,7 +412,7 @@ export default React.createClass({
 
     if (!segment || !segment.startUTC) {
       // We have reached the end of playable segments switch back to live.
-      console.log('No next playable segments resuming live');
+      log.info('No next playable segments resuming live');
       this.transitionModes(MODES.live);
       return;
     }
@@ -429,10 +433,13 @@ export default React.createClass({
       }
 
       // Reconcile internal and video playback state.
-      console.log(
+      log.info(
         'queueing next segment', delta, newSegment
       );
       this.appendSegment(newSegment);
+    }).catch((err) => {
+      // TODO (#525): show error in UI.
+      log.info('Could not buffer next recorded segment: ', err);
     });
   },
 
@@ -512,7 +519,7 @@ export default React.createClass({
       let segment = this.createSegment(result);
 
       // Extra logging for initial landing....
-      console.log(
+      log.info(
         `
           Seeking to new time segment:
 
@@ -531,7 +538,8 @@ export default React.createClass({
       });
       return true;
     }).catch(err => {
-      console.log('Could not find segment in seek time', err);
+      // TODO (#525): show error in UI.
+      log.info('Could not find segment in seek time', err);
       // Fallback if we cannot find a recorded segment to start playback at we
       // will resume this mode after seeking is done.
       this._videoSegments = [];
@@ -614,7 +622,7 @@ export default React.createClass({
   onFastForward() {
     let rate = this.getPlaybackStep(1);
     this.setState({ rate });
-    console.log('fast forward', rate);
+    log.debug('fast forward', rate);
   },
 
   onRewind() {

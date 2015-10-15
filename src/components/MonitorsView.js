@@ -373,7 +373,7 @@ class MonitorsView extends AsyncComponent {
         if (streaming[deviceId].placeholder) {
           setTimeout(() => {
             if (!this.state.streaming[deviceId] ||
-                !this.state.streaming[deviceId].placeHolder) {
+                !this.state.streaming[deviceId].placeholder) {
               // Nothing to be done here.
               return;
             }

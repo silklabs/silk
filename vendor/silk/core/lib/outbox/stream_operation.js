@@ -69,11 +69,16 @@ export default class StreamOperation extends Operation {
       fs.createReadStream(readable) :
       readable;
 
-    this.destination = await this._getDestination();
-
     let error;
     let remainder = readable;
     let writer;
+
+    try {
+      this.destination = await this._getDestination(remainder);
+    } catch (err) {
+      log.error('Failed to get destination stream', err);
+      return { done: false, remainder, error: err };
+    }
 
     if (!isReadingPath) {
       remainder = new StoringStream();

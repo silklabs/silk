@@ -11,6 +11,7 @@ import path from 'path';
 import createOutbox from './outbox/manager';
 
 import CrashReportOp from './outbox/crash_report_operation';
+import VideoUploadOp from './outbox/video_upload_operation';
 import PapertrailOp from './outbox/papertrail_operation';
 
 const STORAGE_PATH = path.join('/data', 'outbox');
@@ -25,6 +26,7 @@ export default function(networkStatus) {
    */
   outbox.registerOperation(CrashReportOp);
   outbox.registerOperation(PapertrailOp);
+  outbox.registerOperation(VideoUploadOp);
 
   // Optimistically start running pending operations...
   outbox.online = networkStatus.online;

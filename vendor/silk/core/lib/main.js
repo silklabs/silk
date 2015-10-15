@@ -113,7 +113,7 @@ function boot() {
       // (usually running as -17) in out of memory situations.
       fs.writeFile('/proc/self/oom_adj', 0);
 
-      timeline = require('./timeline')(id.toString());
+      timeline = require('./timeline')(id.toString(), outbox);
       camera = require('./camera')(timeline);
       camera.on('error', () => {
         log.warn('Camera command errored out');

@@ -9,7 +9,6 @@ import StreamOperation from './stream_operation';
 import api from '../api';
 import fs from 'mz/fs';
 import createLog from '../log';
-import eventToPromise from 'event-to-promise';
 import httpStream from '../streams/http';
 import assert from 'assert';
 
@@ -32,17 +31,11 @@ export default class CrashReportOperation extends StreamOperation {
   }
 
   async _getDestination() {
-    let putUrl;
-    try {
-      putUrl = await api.blob.getPutUrl(
-        'crashreport',
-        this.size,
-        CONTENT_TYPE
-      );
-    } catch (err) {
-      log.error('Failed to get put url for crash report', err);
-      return { done: false, remainder: path, error: err };
-    }
+    let putUrl = await api.blob.getPutUrl(
+      'crashreport',
+      this.size,
+      CONTENT_TYPE
+    );
 
     let writer = httpStream(putUrl, {
       method: 'PUT',

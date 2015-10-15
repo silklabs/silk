@@ -130,7 +130,7 @@ DeviceManager.prototype._readStateCharacteristic = function(p) {
     var state = stateToString(data.readUInt8(0));
 
     if (p.state !== state) {
-      log.debug('new peripheral state:', p.id, state);
+      log.info('new peripheral state:', p.id, state);
       p.state = state;
       this.emit('stateChange', p);
 
@@ -283,7 +283,7 @@ DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken)
   } = await this.userState.registerDevice(
     // TODO: We need a way to supply a name from the UI here...
     'Lorem Ipsum',
-    p.deviceId.toString()
+    p.deviceId
   );
 
   if (!success) {
@@ -320,7 +320,8 @@ DeviceManager.prototype._connect = async function(p) {
   log.info('connecting to peripheral:', p.id);
 
   await p.connect();
-  p.deviceId = await p.readCharacteristic(decls.uuid.DeviceIdCharacteristic);
+  let deviceId = await p.readCharacteristic(decls.uuid.DeviceIdCharacteristic);
+  p.deviceId = deviceId.toString();
   log.info(`read device ID ${p.deviceId}`);
   await this._pollStatus(p); // TODO: change to notify
   log.info('connected to peripheral:', p.id);

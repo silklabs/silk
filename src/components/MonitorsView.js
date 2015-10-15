@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-var {
+let {
   ActivityIndicatorIOS,
   AppStateIOS,
   PixelRatio,
@@ -12,14 +12,20 @@ var {
   View,
 } = React;
 
-import mklog from 'log'; const log = mklog('MonitorPreview');
+import createLog from 'log';
+
+import DeviceManager from '../libraries/btle/DeviceManager';
+import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
 import DeviceSetup from './DeviceSetup';
-import { MonitorConnecting, MonitorPreview } from './MonitorPreview';
+import ErrorBar from './ErrorBar';
+import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
+
+const log = createLog('MonitorPreview');
 
 const PERIPH_EVENTS = [
   'discover',
@@ -34,45 +40,78 @@ const PERIPH_EVENTS = [
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
+const SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS = 1000;
+const NEW_DEVICE_CONNECTION_TIMEOUT_MS = 5000;
+
+// This is mostly a guestimate based on FUT hardware. Absolute values
+// not important here, the ratio is what matters.
+const DEFAULT_PREVIEW_WIDTH = 16;
+const DEFAULT_PREVIEW_HEIGHT = 9;
 
 class MonitorsView extends AsyncComponent {
 
+  static propTypes = {
+    api: React.PropTypes.object.isRequired, // TODO: we can do better here
+    hasNetwork: React.PropTypes.bool.isRequired,
+    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
+    socket: React.PropTypes.instanceOf(SocketIO),
+    connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
+  };
+
   state = {
+    waitingForDevices: true,
     configuring: {},
     streaming: {},
     fullscreenDeviceId: null,
     fullscreenStartTime: null,
 
-    eventsLoading: null,
+    eventsLoading: null, // 'newer', 'older', or null
     events: null,
     eventsLatest: null,
     eventsEarliest: null,
     eventsError: null,
   };
 
+  mounted = false;
+
   componentWillMount() {
     PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.on(ev, this.refreshDeviceList));
     this.subscribeToSocket();
     AppStateIOS.addEventListener('change', this.onAppStateChange);
+    this.mounted = true;
   }
 
   componentWillUnmount() {
     PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
     AppStateIOS.removeEventListener('change', this.onAppStateChange);
+    this.mounted = false;
   }
 
   componentWillReceiveProps(nextProps) {
+    let newState = {};
+
+    // Reset our UI state before we get the new socket so that we don't have
+    // any children rendered that are still listening to the old socket.
+    // Eventually, we should make those children smart and detect themselves
+    // when the socket changes under them and unsubscribe + resubscribe.
     if (this.props.socket !== nextProps.socket) {
-      // Reset our UI state before we get the new socket so that we
-      // don't have any children rendered that are still listening to
-      // the old socket. Eventually, we should make those children
-      // smart and detect themselves when the socket changes under
-      // them and unsubscribe + resubscribe.
-      this.setState({
-        configuring: {},
-        streaming: {},
-      });
+      newState.configuring = {};
+      newState.streaming = {};
     }
+
+    // Give the socket.io server some time to send us the list of devices.
+    // During that time we want to appear as if we're still connecting.
+    let { configuring, streaming } = this.state;
+    if (this.props.connectionState === 'connecting' &&
+        nextProps.connectionState === 'connected' &&
+        Object.keys(configuring).length + Object.keys(streaming).length === 0) {
+      newState.waitingForDevices = true;
+      setTimeout(() => {
+        this.mounted && this.setState({waitingForDevices: false});
+      }, SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS);
+    }
+
+    this.setState(newState);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -106,7 +145,13 @@ class MonitorsView extends AsyncComponent {
 
   _getPreviewSize(deviceId) {
     let device = this.state.streaming[deviceId];
-    return device ? device.previewSize : null;
+    if (device && device.previewSize) {
+      return device.previewSize;
+    }
+    return {
+      width: DEFAULT_PREVIEW_WIDTH,
+      height: DEFAULT_PREVIEW_HEIGHT,
+    };
   }
 
   _getDeviceName(deviceId) {
@@ -115,18 +160,41 @@ class MonitorsView extends AsyncComponent {
   }
 
   render() {
+    let { connectionState } = this.props;
+    if (connectionState === 'connecting' || this.state.waitingForDevices) {
+      return this._renderSpinner();
+    }
+
+    let configuringDeviceIds = Object.keys(this.state.configuring);
+    let streamingDeviceIds = Object.keys(this.state.streaming);
+    if (0 === configuringDeviceIds.length + streamingDeviceIds.length) {
+      if (connectionState === 'offline') {
+        return this._renderOffline();
+      }
+      return this._renderNoDevices();
+    }
+
+    let errorBar = null;
+    if (this.props.hasNetwork && this.state.eventsError) {
+      // Show an error bar if we couldn't fetch activity despite
+      // having a network connection.
+      errorBar = (
+        <ErrorBar
+          heading="Something Went Wrong"
+          description="Could not fetch recent activity."
+        />
+      );
+    }
+
     // Right now there's no stateful list of cameras, we only know
     // about them through Bluetooth or socket.io connections. In the
     // near future, we will just query the account.
-    var configuring = Object.keys(this.state.configuring).map(deviceId => {
-      var device = this.state.configuring[deviceId];
+    let configuring = configuringDeviceIds.map(deviceId => {
+      let device = this.state.configuring[deviceId];
       return <DeviceSetup key={deviceId} name={device.name} rssi={device.rssi} />;
     });
-    var streaming = Object.keys(this.state.streaming).map(deviceId => {
-      var device = this.state.streaming[deviceId];
-      if (device.placeholder) {
-        return <MonitorConnecting key={deviceId} status={device.status} />;
-      }
+    let streaming = streamingDeviceIds.map(deviceId => {
+      let device = this.state.streaming[deviceId];
       return (
         <MonitorPreview
           key={deviceId}
@@ -135,19 +203,12 @@ class MonitorsView extends AsyncComponent {
           label={device.name}
           status={device.status}
           logo={device.logo}
-          previewSize={device.previewSize}
+          previewSize={this._getPreviewSize(deviceId)}
           {...this.props}
         />
       );
     });
-    if (0 === configuring.length + streaming.length) {
-      configuring = this._renderPlaceholder();
-    }
-    let activity;
-    if (streaming.length !== 0) {
-      activity = this._renderActivity();
-    }
-
+    let activity = streaming.length && this._renderActivity();
     let fullscreenMonitor = null;
     let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {
@@ -163,24 +224,46 @@ class MonitorsView extends AsyncComponent {
     }
 
     return (
-      <View style={styles.content}>
+      <View style={styles.wrapper}>
         {fullscreenMonitor}
-        <ScrollView
-          style={styles.monitors}
-          automaticallyAdjustContentInsets={true}
-          scrollEventThrottle={5}
-          onScroll={this.onScroll}>
-          {configuring}
-          {streaming}
-          {activity}
-        </ScrollView>
+        {errorBar}
+        <View style={styles.content}>
+          <ScrollView
+            style={styles.monitors}
+            automaticallyAdjustContentInsets={true}
+            scrollEventThrottle={5}
+            onScroll={this.onScroll}>
+            {configuring}
+            {streaming}
+            {activity}
+          </ScrollView>
+        </View>
       </View>
     );
   }
 
-  _renderPlaceholder() {
+  _renderOffline() {
     return (
-      <View style={styles.placeholderContainer}>
+      <View style={[styles.content, styles.placeholderContainer]}>
+        <PlaceholderText>
+          Not connected.
+        </PlaceholderText>
+      </View>
+    );
+  }
+
+  _renderSpinner() {
+    return (
+      <ActivityIndicatorIOS
+        size="large"
+        style={styles.loadingSpinner}
+      />
+    );
+  }
+
+  _renderNoDevices() {
+    return (
+      <View style={[styles.content, styles.placeholderContainer]}>
         <PlaceholderText>
           Connect Silk Cam to get started
         </PlaceholderText>
@@ -233,12 +316,12 @@ class MonitorsView extends AsyncComponent {
   onVideoStreamDelete = (msg) => {
     log.info('deleted video stream', msg.id);
     delete this.state.streaming[msg.id];
-    this.setState(this.state);
+    this.mounted && this.setState(this.state);
   };
 
   refreshDeviceList = () => {
-    var configuring = this.state.configuring = {};
-    var streaming = this.state.streaming;
+    this.state.configuring = {};
+    let { streaming, configuring } = this.state;
     this.props.bleDeviceManager.enumerateDevices().forEach(device => {
       if ('unregistered' === device.state || 'registering' === device.state) {
         // Show configuring widget when we are registering
@@ -261,6 +344,7 @@ class MonitorsView extends AsyncComponent {
           streaming[device.deviceId] = {
             name: 'New Device',
             placeholder: true,
+            logo: null,
           };
         }
 
@@ -282,15 +366,24 @@ class MonitorsView extends AsyncComponent {
         // show potentially stale data
         streaming[deviceId].status = '';
 
-        // We have not received a server-sent event. Delete placeholder widget,
-        // less, it will linger indefinitely. If/when the server sends the
-        // event, it will get added back in.
+        // We have not received a server-sent event. Give the device
+        // some time to connect to the server. After that, delete
+        // placeholder widget so it doesn't linger indefinitely.
+        // See also https://github.com/silklabs/silk-device/issues/1006.
         if (streaming[deviceId].placeholder) {
-          delete streaming[deviceId];
+          setTimeout(() => {
+            if (!this.state.streaming[deviceId] ||
+                !this.state.streaming[deviceId].placeHolder) {
+              // Nothing to be done here.
+              return;
+            }
+            delete this.state.streaming[deviceId];
+            this.mounted && this.setState(this.state);
+          }, NEW_DEVICE_CONNECTION_TIMEOUT_MS);
         }
       }
     });
-    this.setState(this.state);
+    this.mounted && this.setState(this.state);
   };
 
   // Activity feed management
@@ -320,6 +413,12 @@ class MonitorsView extends AsyncComponent {
   };
 
   _fetchActivity = async (startTime, endTime) => {
+    if (!this.props.hasNetwork) {
+      // No point in trying anything when there's no network connectivity.
+      this.setStateAsync({eventsLoading: null});
+      return;
+    }
+
     let addlEvents;
     try {
       if (startTime === null) {
@@ -344,10 +443,15 @@ class MonitorsView extends AsyncComponent {
       return;
     }
 
-    if (!addlEvents.length) {
-      this.setStateAsync({eventsLoading: null});
+    if (!this.mounted) {
       return;
     }
+
+    if (!addlEvents.length) {
+      this.setStateAsync({eventsLoading: null, eventsError: null});
+      return;
+    }
+
     let events = this.state.events;
     if (!events || !events.length) {
       events = addlEvents;
@@ -360,7 +464,11 @@ class MonitorsView extends AsyncComponent {
       // them to the top.
       events = addlEvents.concat(events);
     }
-    let newState = { eventsLoading: null, events };
+    let newState = {
+      eventsLoading: null,
+      eventsError: null,
+      events,
+    };
     if (!this.state.eventsLatest || endTime > this.state.eventsLatest) {
       newState.eventsLatest = endTime;
     }
@@ -371,14 +479,14 @@ class MonitorsView extends AsyncComponent {
   };
 
   _renderActivity() {
-    let { eventsLoading, events, eventsError } = this.state;
+    let { eventsLoading, events } = this.state;
     let spinnerNewer = null;
     let spinnerOlder = null;
     if (eventsLoading) {
       let spinner = (
         <ActivityIndicatorIOS
           size="large"
-          style={styles.activitySpinner}
+          style={styles.loadingSpinner}
         />
       );
       if (eventsLoading === 'newer') {
@@ -390,13 +498,7 @@ class MonitorsView extends AsyncComponent {
     }
 
     let activity = null;
-    if (eventsError) {
-      // TODO this shouldn't really be here, this should be a "toast"
-      // or some other transient UI element.
-      activity = (
-        <Text>Failed to load activities.</Text>
-      );
-    } else if (!events) {
+    if (!events) {
       activity = null;
     } else if (!events.length) {
       activity = (
@@ -427,6 +529,10 @@ class MonitorsView extends AsyncComponent {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
+
   content: {
     borderColor: '#c8c7cc',
     borderTopWidth: 1 / PixelRatio.get(),
@@ -435,7 +541,7 @@ const styles = StyleSheet.create({
   },
 
   placeholderContainer: {
-    marginHorizontal: 8,
+    margin: 8,
   },
 
   monitors: {
@@ -444,7 +550,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  activitySpinner: {
+  loadingSpinner: {
     alignSelf: 'center',
     marginVertical: 16,
   },

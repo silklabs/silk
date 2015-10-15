@@ -7,7 +7,6 @@ let {
 
 import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
-const log = createLog('Main');
 
 import SocketIO from '../libraries/SocketIO';
 import Config from '../libraries/Config';
@@ -20,13 +19,18 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
+const log = createLog('Main');
+
 export default class extends React.Component {
 
   static propTypes = {
-    userState: React.PropTypes.instanceOf(UserState),
+    api: React.PropTypes.object.isRequired, // TODO: we can do better here
+    userState: React.PropTypes.instanceOf(UserState).isRequired,
   };
 
   state = {
+    hasNetwork: true,
+    connectionState: 'connecting', // purposely optimistic default state
     socketConnectionState: 'offline',
     socketUrl: null,
     socket: null,
@@ -78,6 +82,8 @@ export default class extends React.Component {
         this.state.socket.close();
       }
       this.setState({
+        hasNetwork,
+        connectionState: 'offline',
         socketConnectionState: 'offline',
       });
       return;
@@ -85,12 +91,19 @@ export default class extends React.Component {
     // We have a network connection (again). Get rid of any old socket
     // that we might have kept around and (re-)connect.
     this.setState({
+      hasNetwork,
+      connectionState: 'connecting',
       socketUrl: null,
       socket: null,
     });
     this.props.api.socketio.address()
       .then(result => this.setSocketUrlAndConnect(result.url))
-      .catch(err => log.info('Unable to get server socket.io address', err));
+      .catch(err => {
+        log.info('Unable to get server socket.io address', err);
+        this.setState({
+          connectionState: 'offline',
+        });
+      });
   };
 
   setSocketUrlAndConnect(socketUrl) {
@@ -124,7 +137,10 @@ export default class extends React.Component {
         log.info('Connecting to ...', socketUrl);
         socket.on('connect', () => {
           log.info(' ... connected');
-          this.setState({socketConnectionState: 'connected'});
+          this.setState({
+            connectionState: 'connected',
+            socketConnectionState: 'connected',
+          });
         });
       }
     });
@@ -184,6 +200,8 @@ export default class extends React.Component {
         />
         <NetworkWarning />
         <MonitorsView
+          hasNetwork={this.state.hasNetwork}
+          connectionState={this.state.connectionState}
           socket={this.state.socket}
           bleDeviceManager={this.bleDeviceManager}
           {...this.props}

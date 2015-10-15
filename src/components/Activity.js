@@ -78,10 +78,6 @@ export default class Activity extends React.Component {
     }
 
     let { event, previewSize } = this.props;
-    if (!previewSize) {
-      // Guestimate based on FUT hardware.
-      previewSize = { width: 16, height: 9 };
-    }
     let actionBoxStyle = {
       width: this.state.actionBoxWidth,
       height: previewSize.height * this.state.actionBoxWidth / previewSize.width,

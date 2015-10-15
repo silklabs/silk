@@ -8,39 +8,15 @@ import PreviewQueue from '../libraries/PreviewQueue';
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 
-var {
+let {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } = React;
 
-class MonitorLabel extends React.Component {
-  render() {
-    return (
-      <View style={styles.monitorLabelContainer}>
-        <Text style={styles.monitorLabel}>{this.props.children}</Text>
-      </View>
-    );
-  }
-}
-
-export class MonitorConnecting extends React.Component {
-  render() {
-    let status = this.props.status === '' ? '' : `(${this.props.status})`;
-    return (
-      <View style={styles.monitorContainer}>
-        <MonitorLabel>Connecting device ... {status}</MonitorLabel>
-        <View style={styles.monitorPreviewContainer}>
-          <View style={styles.placeholderPreview} />
-        </View>
-      </View>
-    );
-  }
-}
-
-export var MonitorPreview = React.createClass({
-  propTypes: {
+export default class extends React.Component {
+  static propTypes = {
     deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
     status: React.PropTypes.string.isRequired,
@@ -48,18 +24,16 @@ export var MonitorPreview = React.createClass({
     socket: React.PropTypes.object.isRequired,
     api: React.PropTypes.object.isRequired,
     logo: React.PropTypes.object.isRequired,
-  },
+  };
 
-  getInitialState() {
-    return {
-      objects: [],
-      previewWidth: null,
-    };
-  },
+  state = {
+    objects: [],
+    previewWidth: null,
+  };
 
-  onPreviewFrame(message) {
+  onPreviewFrame = (message) => {
     this._queue.push(message);
-  },
+  };
 
   componentWillMount() {
     let { socket, deviceId } = this.props;
@@ -74,7 +48,7 @@ export var MonitorPreview = React.createClass({
     let stream = `preview-${deviceId}`;
     socket.on(stream, this.onPreviewFrame);
     socket.join(stream);
-  },
+  }
 
   componentWillUnmount() {
     let { socket, deviceId } = this.props;
@@ -85,17 +59,22 @@ export var MonitorPreview = React.createClass({
       this._queue.deinit();
       this._queue = null;
     }
-  },
+  }
 
   render() {
-    let status = this.props.status === '' ? '' : `(${this.props.status})`;
+    let { status } = this.props;
+    if (status) {
+      status = `(${status})`;
+    }
     return (
       <View style={styles.monitorContainer}>
-        <MonitorLabel>{this.props.label} {status}</MonitorLabel>
+        <View style={styles.monitorLabelContainer}>
+          <Text style={styles.monitorLabel}>{this.props.label} {status}</Text>
+        </View>
         {this._renderPreview()}
       </View>
     );
-  },
+  }
 
   _renderPreview() {
     if (this.state.previewWidth === null) {
@@ -149,10 +128,10 @@ export var MonitorPreview = React.createClass({
         </View>
       </TouchableOpacity>
     );
-  },
-});
+  }
+}
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   monitorContainer: {
     shadowColor: 'black',
     shadowRadius: 2,

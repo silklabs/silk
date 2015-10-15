@@ -29,7 +29,6 @@ env:
     - GONK_SPEC=qemu
 
 before_script:
-  - source .travis/artifacts
   - source .travis/shared
   - if [[ $GONK == nop ]]; then
         echo Nothing to do;
@@ -53,6 +52,9 @@ before_script:
 
 script:
   .travis/log .travis/script
+
+after_success:
+  - .travis/after_success
 
 after_script:
   - .travis/after_script

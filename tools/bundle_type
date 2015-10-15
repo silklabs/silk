@@ -1,18 +1,24 @@
 #! /usr/bin/env node
 
 /**
-This is a little hack program to read config.local.json to decide if xcode
-should run react-native bundle or not.
-*/
+ * This is a little hack program to read config.local.json to decide if xcode
+ * should run react-native bundle or not.
+ */
 
-// XXX: Default config.json ?
-var config = {
+var merge = require('lodash.merge');
+
+var DEFAULT = {
   "react-native": { type: "bundle" }
 };
 
+var config;
 try {
-  var config = require('../config.local.json')
-} catch(e) {}
+  config = require('../config.local.json')
+} catch(e) {
+  config = {};
+}
+
+config = merge({}, DEFAULT, config);
 
 // For the purpose of the build process we treat "bundle" with a "local" field
 // as "local".

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [[ $TRAVIS_OS_NAME == osx ]]; then
+  export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
+else
+  export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
+fi
+
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     # Not a pull request
     case $TRAVIS_OS_NAME in

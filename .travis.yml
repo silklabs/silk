@@ -40,7 +40,7 @@ before_script:
   - git config --global color.ui false
   - if [ $TRAVIS_OS_NAME == osx ]; then
         brew update;
-        brew reinstall ccache coreutils nvm;
+        brew reinstall coreutils nvm;
         export NVM_DIR="$PWD/.nvm";
         source $(brew --prefix nvm)/nvm.sh;
         npm config set spin=false;

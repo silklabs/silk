@@ -22,10 +22,6 @@ else
   echo "Failed to find ccache bundle at $CCACHE_URL"
 fi
 
-# Clear the stats before this build...
-ccache -z
-# Dump info about ccache (how much is in the cache/etc...)
-ccache -s
 
 case $GONK in
 base)
@@ -36,10 +32,20 @@ base)
   ;;
 esac
 
-## Download and extract ccache cache.
-
 time make sync
-cp -v $(which ccache) prebuilts/misc/linux-x86/ccache/ccache
+
+if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+  $PREBUILT_CCACHE -M 1K # TODO: Free 2GB of disk on Travis then change this to 3.GG
+else
+  $PREBUILT_CCACHE -M 2.5G
+fi
+
+# Clear the stats before this build...
+$PREBUILT_CCACHE -z
+# Dump info about ccache (how much is in the cache/etc...)
+$PREBUILT_CCACHE -s
+
+
 time CI_PATCHTREE_FORCE=force make nothing # Applies patches as a side effect of doing nothing...
 
 # Reduce the disk space usage to avoid failures later on during full

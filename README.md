@@ -311,6 +311,20 @@ adb shell setprop persist.silk.vidduration 5
 adb reboot
 ```
 
+### Maximum outbox concurrency
+
+
+Set maximum outbox concurrency for items stored on disk.
+
+```sh
+# Maximum of 5 stored items uploaded in parallel.
+adb shell setprop persist.silk.outconcurrency 5
+adb shell stop silk
+adb shell start silk
+```
+
+
+
 ### Intelligent Detection
 
 To enable audio ding when two or more claps are detected:

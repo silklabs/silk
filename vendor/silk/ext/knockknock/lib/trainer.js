@@ -72,7 +72,7 @@ export default class Trainer {
     // Train the model using the collected training data
     log.info(`Face training in progress`);
     let start = Date.now();
-    model.trainSync(this._trainingData);
+    await this._trainFaces(model);
 
     // Save training data in a file
     model.saveSync(TRAIN_FACES_YML);
@@ -109,6 +109,16 @@ export default class Trainer {
       log.warn(`No faces available for ${faceDir}`);
       return;
     }
+  }
+
+  /**
+   * Calls train method asynchronously to prepare the model for facial
+   * recognition
+   */
+  _trainFaces(model) {
+    return new Promise(resolve => {
+      model.train(this._trainingData, resolve);
+    });
   }
 
   /**

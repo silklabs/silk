@@ -148,6 +148,17 @@ class FindFace {
   }
 
   /**
+   * Gets a prediction from FaceRecognizer
+   */
+  _predict(faceim) {
+    return new Promise(resolve => {
+      this._model.predict(faceim, (result) => {
+        resolve(result);
+      });
+    });
+  }
+
+  /**
    * Start running facial recognition on detected faces
    */
   _start() {
@@ -177,9 +188,9 @@ class FindFace {
 
         // Run facial recognition on each of the detected faces
         let start = Date.now();
-        faces.forEach(face => {
+        faces.forEach(async (face) => {
           let faceim = image.roi(face.x, face.y, face.width, face.height);
-          let result = this._model.predictSync(faceim);
+          let result = await this._predict(faceim);
           if (result.id !== -1) {
             log.info(`face detected id:${result.id} ` +
                 `${this._matchIdWithName(result.id)} ` +

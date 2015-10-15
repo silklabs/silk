@@ -12,7 +12,10 @@ let {
   View,
 } = React;
 
-import mklog from 'log'; const log = mklog('MonitorPreview');
+import createLog from 'log';
+
+import DeviceManager from '../libraries/btle/DeviceManager';
+import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
@@ -21,6 +24,8 @@ import ErrorBar from './ErrorBar';
 import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
+
+const log = createLog('MonitorPreview');
 
 const PERIPH_EVENTS = [
   'discover',
@@ -45,6 +50,14 @@ const DEFAULT_PREVIEW_HEIGHT = 9;
 
 class MonitorsView extends AsyncComponent {
 
+  static propTypes = {
+    api: React.PropTypes.object.isRequired, // TODO: we can do better here
+    hasNetwork: React.PropTypes.bool.isRequired,
+    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
+    socket: React.PropTypes.instanceOf(SocketIO),
+    connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
+  };
+
   state = {
     waitingForDevices: true,
     configuring: {},
@@ -52,7 +65,7 @@ class MonitorsView extends AsyncComponent {
     fullscreenDeviceId: null,
     fullscreenStartTime: null,
 
-    eventsLoading: null,
+    eventsLoading: null, // 'newer', 'older', or null
     events: null,
     eventsLatest: null,
     eventsEarliest: null,

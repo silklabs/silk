@@ -8,8 +8,8 @@ let {
 export default class extends React.Component {
 
   static propTypes = {
-    heading: React.PropTypes.string.required,
-    descripton: React.PropTypes.string.required,
+    heading: React.PropTypes.string.isRequired,
+    descripton: React.PropTypes.string.isRequired,
   };
 
   render() {

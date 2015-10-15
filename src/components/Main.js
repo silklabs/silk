@@ -7,7 +7,6 @@ let {
 
 import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
-const log = createLog('Main');
 
 import SocketIO from '../libraries/SocketIO';
 import Config from '../libraries/Config';
@@ -20,10 +19,13 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
+const log = createLog('Main');
+
 export default class extends React.Component {
 
   static propTypes = {
-    userState: React.PropTypes.instanceOf(UserState),
+    api: React.PropTypes.object.isRequired, // TODO: we can do better here
+    userState: React.PropTypes.instanceOf(UserState).isRequired,
   };
 
   state = {

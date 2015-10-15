@@ -127,9 +127,9 @@ export default class UserForm extends AsyncComponent {
 
   static propTypes = {
     style: View.propTypes.style,
-    submitText: React.PropTypes.string.required,
-    onSubmit: React.PropTypes.func.required,
-    inProgress: React.PropTypes.bool.required,
+    submitText: React.PropTypes.string.isRequired,
+    onSubmit: React.PropTypes.func.isRequired,
+    inProgress: React.PropTypes.bool.isRequired,
   };
 
   email = '';

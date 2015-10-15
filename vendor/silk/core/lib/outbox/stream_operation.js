@@ -24,10 +24,49 @@ import Operation from './operation';
 import createLog from '../log';
 import eventToPromise from 'event-to-promise';
 import fs from 'fs';
+import { timeout } from '../sysutils';
 
 const log = createLog('outbox:stream_operation');
 
+/**
+ * Maximum time for any stream based upload...
+ *
+ * (Note: 5 minutes is pretty arbitrary.)
+ */
+const MAX_UPLOAD_TIME = 60 * 1000 * 5;
+
+/**
+ * Handles the generic case where we want to cancel a stream after a specific
+ * amount of time...
+ *
+ * NOTE: Only use this in combination with Promise.race this will not resolve
+ * only reject!
+ */
+async function streamTimeout(writer, readable, timeout) {
+  return new Promise((accept, reject) => {
+    let timer = setTimeout(() => {
+      readable.unpipe(writer);
+      writer.end();
+
+      // XXX: This might be a little hacky but ensures we trigger the same logic
+      // as an exception in the underlying writer...
+      let err = new Error(
+        `Stream timeout! Has not completed after ${timeout} ms`
+      );
+      writer.emit('error', err);
+      reject(err);
+    }, timeout);
+
+    // Clear the timer so we don't reject all the time...
+    writer.once('close', () => {
+      clearTimeout(timer);
+    });
+  });
+}
+
 export default class StreamOperation extends Operation {
+
+  static MAX_UPLOAD_TIME = MAX_UPLOAD_TIME;
 
   createdAt = null
   arguments = {}
@@ -118,7 +157,10 @@ export default class StreamOperation extends Operation {
      * still may be network errors/etc..
      */
     try {
-      await eventToPromise(writer, 'close');
+      await Promise.race([
+        eventToPromise(writer, 'close'),
+        streamTimeout(writer, readable, this.constructor.MAX_UPLOAD_TIME)
+      ]);
     } catch (err) {
       // We have completely failed to write the stream for one reason or
       // another...

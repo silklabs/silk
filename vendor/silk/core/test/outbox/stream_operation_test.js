@@ -77,6 +77,18 @@ suite('outbox stream', () => {
     }
   }
 
+  class TimeoutOp extends StreamOperation {
+    static NAME = 'failable';
+    static MAX_UPLOAD_TIME = 0;
+    static StreamClass = () => {
+      let stream = new streams.PassThrough();
+      setTimeout(() => {
+        stream.emit('close');
+      }, 100);
+      return stream;
+    }
+  }
+
   async function cleanup() {
     await exec(`rm -rf ${FIXTURE_DIR}`);
   }
@@ -93,6 +105,7 @@ suite('outbox stream', () => {
     subject.registerOperation(TestOp);
     subject.registerOperation(FailableOp);
     subject.registerOperation(ImmediateFail);
+    subject.registerOperation(TimeoutOp);
   });
 
   test('.saveToDisk', async () => {
@@ -195,6 +208,22 @@ suite('outbox stream', () => {
     let result = await operation.write(stream);
     assert.ok(!result.ok);
     assert.ok(result.error.message.indexOf('throw') !== -1);
+  });
+
+  test('.write - with timeout', async () => {
+    let { stream } = randomStream();
+    let operation = new TimeoutOp({
+      arguments: {}
+    });
+
+    // Run some async operation after creating the operation... This will
+    // simulate the case where the exception is thrown in the next tick while we
+    // are busy doing something else..
+    await fs.readdir(__dirname);
+
+    let result = await operation.write(stream);
+    assert.ok(!result.ok);
+    assert.ok(result.error.message.indexOf('timeout') !== -1);
   });
 
 });

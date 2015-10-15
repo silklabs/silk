@@ -5,8 +5,6 @@
 
 var React = require('react-native');
 var {
-  Image,
-  DeviceEventEmitter,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -21,16 +19,7 @@ var {
 } = React;
 import AsyncComponent from './AsyncComponent';
 
-const SERVERS = [
-  {name: 'default', value: null},
-  {name: 'master', value: 'https://silk-server-master.herokuapp.com'},
-  {name: 'next', value: 'https://silk-server-next.herokuapp.com'},
-  {name: 'release', value: 'https://silk-server-release.herokuapp.com'},
-  {name: 'localhost', value: 'http://localhost:5000'},
-];
-
 const MIN_CONTENT_INSET_BOTTOM = 20;
-const ADDITIONAL_SCROLL_OFFSET = 100;
 
 export default class WifiSettings extends AsyncComponent {
 
@@ -42,28 +31,8 @@ export default class WifiSettings extends AsyncComponent {
       secret: hints.secret,
       serverUrl: hints.serverUrl,
       showSecret: false,
-      contentInsetBottom: 0,
     };
   }
-
-  componentWillMount() {
-    this._subscriptions = [
-      DeviceEventEmitter.addListener('keyboardWillShow', this.onKeyboardShow),
-      DeviceEventEmitter.addListener('keyboardWillHide', this.onKeyboardHide),
-    ];
-  }
-
-  componentWillUnmount() {
-    this._subscriptions.forEach(sub => sub.remove());
-  }
-
-  onKeyboardShow = (event) => {
-    this.setState({contentInsetBottom: event.endCoordinates.height});
-  };
-
-  onKeyboardHide = (event) => {
-    this.setState({contentInsetBottom: 0});
-  };
 
   _renderTitle() {
     return (
@@ -153,91 +122,19 @@ export default class WifiSettings extends AsyncComponent {
     );
   }
 
-  _renderServerSettings() {
-    let haveCustomServer = true;
-    let servers = SERVERS.map((server, index) => {
-      let checkmark = null;
-      if (server.value === this.state.serverUrl) {
-        checkmark = (
-          <Image
-            source={require('image!Checkmark')}
-            style={styles.checkmark}
-          />
-        );
-        haveCustomServer = false;
-      }
-      let style = index === 0 ? [styles.formRow, styles.formRowFirst] : styles.formRow;
-      return (
-        <TouchableHighlight
-          underlayColor="lightgrey"
-          onPress={() => this.setState({serverUrl: server.value})}>
-        <View
-          style={style}
-          key={server.name}>
-          <View style={styles.formRowLabelContainer}>
-            <Text style={styles.formRowLabel}>{server.name}</Text>
-          </View>
-          {checkmark}
-        </View></TouchableHighlight>
-      );
-    });
-
-    let customCheckmark = null;
-    if (haveCustomServer) {
-      customCheckmark = (
-        <Image
-          source={require('image!Checkmark')}
-          style={styles.checkmark}
-        />
-      );
-    }
-    return (
-      <View style={styles.form}>
-        {servers}
-        <View style={styles.formRow}>
-          <View style={styles.formInputContainer}>
-            <TextInput
-              ref="serverUrl"
-              value={haveCustomServer ? this.state.serverUrl : null}
-              placeholder="Enter a custom URL"
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={styles.formInput}
-              onChangeText={serverUrl => this.setState({serverUrl})}
-              onFocus={() => {
-                let scrollResponder = this.refs.scrollView.getScrollResponder();
-                scrollResponder.scrollResponderScrollNativeHandleToKeyboard(
-                  React.findNodeHandle(this.refs.serverUrl),
-                  ADDITIONAL_SCROLL_OFFSET, // additionalOffset
-                  true // preventNegativeScrollOffset
-                );
-              }}
-            />
-          </View>
-          {customCheckmark}
-        </View>
-      </View>
-    );
-  }
-
   render() {
-    // TODO: clean this up for production (remove server setting).
-    let contentInsetBottom = MIN_CONTENT_INSET_BOTTOM + this.state.contentInsetBottom;
     return (
       <View style={styles.container}>
         {this._renderTitle()}
 
         <ScrollView
-          ref="scrollView"
           keyboardShouldPersistTaps={false}
-          contentInset={{bottom: contentInsetBottom}}
+          contentInset={{bottom: MIN_CONTENT_INSET_BOTTOM}}
           style={styles.scrollView}>
           <Text style={styles.formHeader}>WIFI</Text>
           {this._renderWifiSettings()}
           <Text style={styles.formHeader}>ACCOUNT</Text>
           {this._renderAccountSettings()}
-          <Text style={styles.formHeader}>SERVER</Text>
-          {this._renderServerSettings()}
         </ScrollView>
       </View>
     );
@@ -315,9 +212,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1 / PixelRatio.get(),
     flex: 1,
   },
-  contentSpacer: {
-    height: 34,
-  },
 
   formHeader: {
     fontWeight: '500',
@@ -364,11 +258,5 @@ const styles = StyleSheet.create({
   signOutButtonLabel: {
     color: '#007aff',
     fontSize: 17,
-  },
-
-  checkmark: {
-    width: 16,
-    height: 16,
-    marginRight: 8,
   },
 });

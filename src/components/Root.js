@@ -19,13 +19,13 @@ import API from 'silk-api-react-native';
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';
 import Main from './Main';
-import SignIn from './SignIn';
-import SignUp from './SignUp';
+import NotLoggedIn from './auth/NotLoggedIn';
+import ServerPicker from './auth/ServerPicker';
 import WifiSettings from './WifiSettings';
 
 const routeToComponentMap = {
-  SignIn,
-  SignUp,
+  NotLoggedIn,
+  ServerPicker,
   Main,
   WifiSettings,
 };
@@ -88,7 +88,7 @@ export default class extends AsyncComponent {
       return <View />;
     }
 
-    let initialRoute = this.state.accessToken ? 'Main' : 'SignIn';
+    let initialRoute = this.state.accessToken ? 'Main' : 'NotLoggedIn';
     // By keying the navigator on the serverUrl and accessToken, a
     // change in either (e.g. logging in or changing the server
     // config) will trigger a complete re-render of the app.
@@ -132,6 +132,7 @@ export default class extends AsyncComponent {
   configureScene(route) {
     switch (route.name) {
     case 'WifiSettings':
+    case 'ServerPicker':
       return AsyncNavigator.SceneConfigs.FloatFromBottom;
     default:
       return AsyncNavigator.SceneConfigs.PushFromRight;

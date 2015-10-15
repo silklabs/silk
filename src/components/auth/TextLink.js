@@ -13,18 +13,12 @@ let {
 export default class TextLink extends React.Component {
   static propTypes = {
     label: React.PropTypes.string,
-    onClick: React.PropTypes.func,
+    onPress: React.PropTypes.func,
   };
-
-  onPress = () => {
-    if (this.props.onClick) {
-      this.props.onClick();
-    }
-  }
 
   render() {
     return (
-      <TouchableOpacity onPress={this.onPress}>
+      <TouchableOpacity onPress={this.props.onPress}>
         <Text style={styles.label}>{this.props.label}</Text>
       </TouchableOpacity>
     );

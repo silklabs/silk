@@ -148,28 +148,21 @@ export default class extends React.Component {
 
   loadSettings() {
     let promise;
-    let serverUrl = Config.get().server.url || null;
     if (this.state.wifi) {
       promise = this.navigateWifiScene({
         ssid: this.state.wifi.ssid,
         secret: this.state.wifi.secret,
-        serverUrl,
       });
     } else {
       promise = getWifiInfo().then(info => {
         return this.navigateWifiScene({
           ssid: info.SSID,
           secret: '',
-          serverUrl,
         });
       });
     }
     return promise.then(settings => {
       log.info('Saving settings', settings);
-
-      if (serverUrl !== settings.serverUrl) {
-        Config.set({server: {url: settings.serverUrl}});
-      }
       let wifi = {
         ssid: settings.ssid,
         secret: settings.secret,

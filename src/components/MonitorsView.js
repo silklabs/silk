@@ -244,29 +244,35 @@ class MonitorsView extends AsyncComponent {
 
   _renderOffline() {
     return (
-      <View style={[styles.content, styles.placeholderContainer]}>
-        <PlaceholderText>
-          Not connected.
-        </PlaceholderText>
+      <View style={styles.content}>
+        <View style={styles.placeholderContainer}>
+          <PlaceholderText>
+            Not connected.
+          </PlaceholderText>
+        </View>
       </View>
     );
   }
 
   _renderSpinner() {
     return (
-      <ActivityIndicatorIOS
-        size="large"
-        style={styles.loadingSpinner}
-      />
+      <View style={styles.content}>
+        <ActivityIndicatorIOS
+          size="large"
+          style={styles.loadingSpinner}
+        />
+      </View>
     );
   }
 
   _renderNoDevices() {
     return (
-      <View style={[styles.content, styles.placeholderContainer]}>
-        <PlaceholderText>
-          Connect Silk Cam to get started
-        </PlaceholderText>
+      <View style={styles.content}>
+        <View style={styles.placeholderContainer}>
+          <PlaceholderText>
+            Connect Silk Cam to get started
+          </PlaceholderText>
+        </View>
       </View>
     );
   }

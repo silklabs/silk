@@ -13,7 +13,7 @@ import Config from '../libraries/Config';
 import DeviceManager from '../libraries/btle/DeviceManager';
 import BLECentral from '../libraries/btle/BLECentral';
 import { getWifiInfo } from '../libraries/Util';
-import UserState from '../libraries/UserState';
+import { UserState } from '../libraries/UserState';
 
 import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';

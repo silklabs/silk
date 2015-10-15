@@ -208,7 +208,7 @@ class MonitorsView extends AsyncComponent {
         />
       );
     });
-    let activity = streaming.length && this._renderActivity();
+    let activity = streaming.length ? this._renderActivity() : null;
     let fullscreenMonitor = null;
     let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {

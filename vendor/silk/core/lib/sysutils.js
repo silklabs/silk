@@ -8,6 +8,7 @@
 
 import { execFile as childProcessExecFile } from 'child_process';
 import createLog from './log';
+import props from 'silk-properties';
 
 const log = createLog('sysutils');
 
@@ -50,18 +51,11 @@ export function execRetry(cmd, args, retries, delayMs) {
 }
 
 export function getprop(prop, defaultValue) {
-  let spawnSync = require('child_process').spawnSync;
-  let result = spawnSync('getprop', [prop]);
-  if (result.error) {
-    log.warn(`Error: getprop("${prop}"): ${result.error}`);
-    return undefined;
+  let value = props.get(prop);
+  if (value === '') {
+    return defaultValue;
   }
-  let value = result.stdout.toString().replace(/\n$/, '');
-  if (defaultValue !== undefined) {
-    return (value === '') ? defaultValue : value;
-  } else {
-    return value;
-  }
+  return value;
 }
 
 export function getboolprop(prop, defaultValue = false) {

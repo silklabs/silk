@@ -23,6 +23,7 @@ const CRASHREPORT_ENABLED = getboolprop(CRASHREPORT_ENABLED_PROP);
 const DEBUGGERD_SOCKET_PATH = '/data/system/ndebugsocket';
 const TOMBSTONE_DIR_PATH = '/data/tombstones/';
 const TOMBSTONE_FILE_REGEXP = new RegExp(/^tombstone_\d+$/); // 'tombstone_03'
+const BUILD_FINGERPRINT = getprop('ro.build.fingerprint');
 
 function formatError(err) {
   return `${err}:\n${err.stack}`;
@@ -31,7 +32,7 @@ function formatError(err) {
 function exceptionToTombstoneSync(exception) {
 
   let tombstone = `*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
-Build fingerprint: '${getprop('ro.build.fingerprint')}'
+Build fingerprint: '${BUILD_FINGERPRINT}'
 Type: 'Unhandled Exception'
 When: '${new Date()}'
 

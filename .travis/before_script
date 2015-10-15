@@ -1,6 +1,29 @@
-#!/bin/bash -ex
+#
+# |source| this file to ensure environment variables are exported correctly to
+# other travis scripts
+#
+
+source .travis/select_gonk
+if [[ $GONK == nop ]]; then
+   echo Nothing to do
+   exit 0
+fi
 
 git --version
+git config --global user.email "engineering@silklabs.com"
+git config --global user.name "Travis CI"
+git config --global color.ui false
+if [[ $TRAVIS_OS_NAME == osx ]]; then
+  brew update
+  brew reinstall coreutils nvm
+  export NVM_DIR="$PWD/.nvm"
+  source $(brew --prefix nvm)/nvm.sh
+  npm config set spin=false
+  export CI_IGNORE_CASE_INSENSITIVE_FS=please
+else
+  jdk_switcher use openjdk7
+fi
+nvm install 4.1.2
 
 source .travis/artifacts
 

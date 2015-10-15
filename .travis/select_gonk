@@ -1,4 +1,4 @@
-#!/bin/bash
+# |source| me
 
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     # Not a pull request

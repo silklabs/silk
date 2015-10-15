@@ -24,7 +24,6 @@ import Operation from './operation';
 import createLog from '../log';
 import eventToPromise from 'event-to-promise';
 import fs from 'fs';
-import { timeout } from '../sysutils';
 
 const log = createLog('outbox:stream_operation');
 

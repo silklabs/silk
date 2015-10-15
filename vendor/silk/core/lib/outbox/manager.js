@@ -204,10 +204,15 @@ export class Queue extends EventEmitter {
       return;
     }
 
+    let start = Date.now();
     let result = await operation.write(readable);
     if (result.done) {
       this.emit('finished operation', operation);
-      log.info('Successfully ran operation', operation);
+      log.info(
+        'Successfully ran operation',
+        operation.constructor.name,
+        `took ${Date.now() - start} ms`
+      );
       return;
     }
 
@@ -320,7 +325,9 @@ export class Queue extends EventEmitter {
       }
 
       if (this.running >= this.concurrency) {
-        log.info('Reached maximum number of running operations', this.running);
+        log.info(
+          `Reached maximum number of running operations max: ${this.concurrency} running: ${this.running}`
+        );
         break;
       }
 

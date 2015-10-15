@@ -13,8 +13,8 @@ import assert from 'assert';
 
 const META_TYPE = 'video';
 const CONTENT_TYPE = 'video/mp4';
-const log = createLog('operation:video_upload_operation');
 
+const log = createLog('operation:video_upload_operation');
 export default class VideoUploadOperation extends StreamOperation {
   static NAME = 'video-upload';
 

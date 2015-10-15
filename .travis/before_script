@@ -35,7 +35,8 @@ esac
 time make sync
 
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
-  $PREBUILT_CCACHE -M 1M # TODO: Free 2GB of disk on Travis then change this to 3.GG
+  # TODO: Free 2GB of disk on Travis then change this to 3.GG
+  export CCACHE_DISABLE=true
 else
   $PREBUILT_CCACHE -M 2.5G
 fi

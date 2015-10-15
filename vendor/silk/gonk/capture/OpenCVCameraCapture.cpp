@@ -9,12 +9,8 @@
 
 #include <binder/BinderService.h>
 #include <binder/ProcessState.h>
-#include <camera/ICameraRecordingProxy.h>
-#include <camera/ICameraRecordingProxyListener.h>
 #include <system/camera.h>
 #include <utils/Log.h>
-#include <external/opencv2/modules/androidcamera/camera_wrapper/camera_wrapper.h> 
-#include <external/opencv2/modules/androidcamera/include/camera_properties.h>
 
 #include "Capturedefs.h"
 #include "OpenCVCameraCapture.h"
@@ -35,82 +31,25 @@ OpenCVCameraCapture::~OpenCVCameraCapture()
   closeCamera();
 }
 
-
-status_t OpenCVCameraCapture::initCamera(int cameraId,
-  const sp<ICameraRecordingProxyListener>& listener)
+status_t OpenCVCameraCapture::initCamera(int cameraId, const sp<IGraphicBufferProducer>& producer)
 {
+  ALOGE("OpenCVCameraCapture initCamera");
   if (cameraId != 0) {
     return BAD_VALUE;
   }
-  if (appListener != NULL) {
-    // TODO: Technically there's no reason why multiple camera users couldn't
-    //      be supported, this just isn't implemented yet.
+  if (sPreviewProducer != NULL) {
+    // TODO: Maybe handle this better by restarting the recording?  It means
+    // node crashed, which at the moment means that capture is restarted as
+    // well, so not a big problem right now.
+    ALOGE("Error: sPreviewProducer already set");
     return ALREADY_EXISTS;
   }
-  setListener(listener);
+  sPreviewProducer = producer;
   return ::OK;
 }
 
 void OpenCVCameraCapture::closeCamera()
 {
   ALOGE("OpenCVCameraCapture closeCamera");
-  setListener(NULL);
+  sPreviewProducer = NULL;
 }
-
-double OpenCVCameraCapture::getProperty(int id)
-{
-  switch (id) {
-  case ANDROID_CAMERA_PROPERTY_FRAMEWIDTH:
-    return sVideoSize.width;
-  case ANDROID_CAMERA_PROPERTY_FRAMEHEIGHT:
-    return sVideoSize.height;
-  case ANDROID_CAMERA_PROPERTY_PREVIEW_FORMAT_STRING:
-    return sColorFormat;
-  default:
-    ALOGW("getProperty: unsupported property: id=%d", id);
-    return 0;
-  }
-}
-
-void OpenCVCameraCapture::setProperty(int id, double value)
-{
-  ALOGW("setProperty: unsupported property: id=%d", id);
-}
-
-void OpenCVCameraCapture::applyProperties()
-{
-  // If and when properties become writable, apply them here...
-}
-
-void OpenCVCameraCapture::setListener(const sp<ICameraRecordingProxyListener>& listener)
-{
-  if (appListener != NULL) {
-    sp<IBinder> binder = appListener->asBinder();
-    binder->unlinkToDeath(this);
-    appListener = NULL;
-  }
-  if (listener != NULL) {
-    appListener = listener;
-    sp<IBinder> binder = appListener->asBinder();
-    binder->linkToDeath(this);
-  }
-}
-
-sp<ICameraRecordingProxyListener> OpenCVCameraCapture::appListener = NULL;
-
-void OpenCVCameraCapture::frameCallback(nsecs_t timestamp, const sp<IMemory>& data)
-{
-  // TODO: On the OpenCV side there is an unnecessary memcpy() of the entire
-  //       frame data happening within CvCapture_Android::setFrame().  This
-  //       could be avoided by changing OpenCVCameraRecordingProxy to retain
-  //       ownership of the IMemory until the next VideoCapture::grab() as
-  //       well as corresponding changes within cap_android.cpp
-  //
-  //       Additionally if VideoCapture is not currently waiting for a new frame
-  //       it will be good to avoid the unnecessary IPC call here that provides
-  //       VideoCapture with a frame that it's going to probably ignore.
-  if (appListener != NULL) {
-    appListener->dataCallbackTimestamp(timestamp, CAMERA_MSG_VIDEO_FRAME, data);
-  }
-}
-

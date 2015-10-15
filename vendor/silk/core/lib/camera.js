@@ -27,7 +27,6 @@ const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
 const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 6);
-const YUV_PLANE_PAD_BYTES = util.getintprop('ro.silk.camera.yuv_pad_bytes', 0);
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -43,9 +42,8 @@ const CAPTURE_COMMAND_NAME = 'CaptureCommand';
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
-const TAG_PREVIEW = 1;
-const TAG_FACES = 2;
-const TAG_MIC = 3;
+const TAG_FACES = 1;
+const TAG_MIC = 2;
 
 const NUM_IMAGES_TO_CACHE = 10;
 
@@ -219,8 +217,15 @@ class CameraStream extends EventEmitter {
       if (cmdData) {
         this._videoWidth = cmdData.width;
         this._videoHeight = cmdData.height;
-        PREVIEW_WIDTH = cmdData.width / cmdData.previewScale;
-        PREVIEW_HEIGHT = cmdData.height / cmdData.previewScale;
+
+        // Initialize the OpenCV video capture before sending 'init' to the
+        // capture process.  There is currently a messy coupling between these
+        // two operations due to the multiple entry points into the
+        // capture process (OpenCV over binder, 'init' over a socket)
+        this._cvVideoCapture = new cv.VideoCapture(0);
+
+        PREVIEW_WIDTH = cmdData.width / PREVIEW_SCALE;
+        PREVIEW_HEIGHT = cmdData.height / PREVIEW_SCALE;
         this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
         this._command({cmdName: 'init', cmdData: cmdData});
       }
@@ -255,10 +260,6 @@ class CameraStream extends EventEmitter {
         this.emit('error');
       } else if (captureEvent.eventName === 'initialized') {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-
-        this._cvVideoCapture = new cv.VideoCapture(0);
-        this._cvVideoCapture.setWidth(this._videoWidth);
-        this._cvVideoCapture.setHeight(this._videoHeight);
 
         let delay = 1000 / (FPS / PREVIEW_SKIP_COUNT);
         this._previewInterval = setInterval(() => this._readPreviewFrame(), delay);
@@ -335,7 +336,7 @@ class CameraStream extends EventEmitter {
       this._cvVideoCaptureBusy = false;
 
       if (err || (im.width() <= 0) || (im.height() <= 0)) {
-        log.error(`Unable to fetch frame: ${err}`);
+        log.error(`Unable to fetch frame: err=${err} width=${im.width()} height=${im.height()}`);
         return;
       }
 
@@ -376,9 +377,6 @@ class CameraStream extends EventEmitter {
 
       let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
       switch (tag) {
-      case TAG_PREVIEW:
-        log.debug(`TAG_PREVIEW ${when}`);
-        break;
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`);
         this.timeline.addVideo(when, durationMs, pkt);
@@ -432,9 +430,6 @@ class CameraStream extends EventEmitter {
       height: HEIGHT,
       fps: FPS,
       vbr: VBR,
-      previewScale: PREVIEW_SCALE,
-      previewSkipCount: PREVIEW_SKIP_COUNT,
-      yuvPlanePadBytes: YUV_PLANE_PAD_BYTES
     };
     this._init(initargs);
   }

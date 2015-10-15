@@ -15,21 +15,18 @@ LOCAL_SRC_FILES := \
 	FaceDetection.cpp \
 	MPEG4MemoryWriter.cpp \
 	MediaCodecSource.cpp \
-	PreviewMediaSource.cpp \
 	SlicedMP4Encoder.cpp \
 	IOpenCVCameraCapture.cpp \
 	OpenCVCameraCapture.cpp \
-	OpenCVCameraRecordingProxy.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 	libstagefright libstagefright_foundation libutils liblog libbinder \
-	libgui libui libcamera_client libcutils libjpeg libsysutils
+	libgui libcamera_client libcutils libsysutils
 
 LOCAL_C_INCLUDES := \
 	frameworks/av/media/libstagefright \
 	frameworks/av/media/libstagefright/include \
 	frameworks/native/include/media/openmax \
-	external/jpeg \
 	. \
 
 LOCAL_C_INCLUDES += $(ROOT)/jsoncpp
@@ -49,18 +46,27 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)/build #<-- where OpenCV looks for "libnative_camera" shared objects
 
 LOCAL_SRC_FILES := \
-  libnative_camera_capture.cpp \
   IOpenCVCameraCapture.cpp \
+  libnative_camera_capture.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
   libbinder \
   libcamera_client \
+  libcutils \
+  libgui \
   liblog \
+  libui \
   libutils \
 
 LOCAL_C_INCLUDES := . \
   frameworks/native/include/media/openmax \
 
 LOCAL_CFLAGS += -Wextra -Werror
+
+ifeq ($(TARGET_USES_QCOM_BSP), true)
+# Select the CAF version of the CpuConsumer interface
+LOCAL_CFLAGS += -DCAF_CPUCONSUMER
+endif
+
 
 include $(BUILD_SILK_SHARED_LIBRARY)

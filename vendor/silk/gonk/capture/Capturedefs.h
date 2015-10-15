@@ -9,6 +9,7 @@
 
 #include <utils/Errors.h>
 #include <camera/CameraParameters.h>
+#include <gui/IGraphicBufferProducer.h>
 
 using namespace android;
 
@@ -29,16 +30,12 @@ using namespace android;
 extern const char* kMimeTypeAvc;
 extern status_t OK;
 extern Size sVideoSize;
-extern int32_t sColorFormat;
-extern int32_t sStride, sSliceHeight;
 extern int32_t sVideoBitRateInK;
+extern sp<IGraphicBufferProducer> sPreviewProducer;
 extern int32_t sFPS;
 extern int32_t sIFrameIntervalSec;
-extern int32_t sPreviewScale;
-extern int32_t sPreviewSkipCount;
 extern int32_t sAudioBitRate;
 extern int32_t sAudioSampleRate;
 extern int32_t sAudioChannels;
-extern int32_t sYuvPlanePadBytes;
 
 #endif

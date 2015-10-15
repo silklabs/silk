@@ -35,6 +35,7 @@ SILK_CORE := \
   silk-bledroid \
   silk-gc1 \
   silk-movie \
+  silk-properties \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
 

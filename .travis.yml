@@ -29,7 +29,7 @@ env:
     - GONK_SPEC=qemu
 
 before_script:
-  - source .travis/shared
+  - source .travis/select_gonk
   - if [[ $GONK == nop ]]; then
         echo Nothing to do;
         exit 0;

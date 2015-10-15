@@ -35,6 +35,12 @@ esac
 
 time make sync
 
+if [[ $TRAVIS_OS_NAME == osx ]]; then
+  export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
+else
+  export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
+fi
+
 export CCACHE_COMPRESS=true
 $PREBUILT_CCACHE -M 1G
 

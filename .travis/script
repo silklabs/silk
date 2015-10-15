@@ -65,7 +65,11 @@ echo "******************************************************************"
 test/unit
 
 
-if [[ -n $UPDATE_LOCKED_NODE_MODULES ]]; then
+# Only update locked_node_modules for one build in the entire OS/GONK
+# build matrix.  It doesn't matter which one, "mako" seems nice
+if [[ $TRAVIS_PULL_REQUEST == false ]] &&
+   [[ $TRAVIS_OS_NAME == linux ]] &&
+   [[ $GONK_SPEC == mako ]] ; then
   echo "******************************************************************"
   echo Update locked_node_modules
   echo "******************************************************************"

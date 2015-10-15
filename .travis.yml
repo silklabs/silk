@@ -41,9 +41,9 @@ before_script:
   - if [ $TRAVIS_OS_NAME == osx ]; then
         brew update;
         brew reinstall ccache coreutils nvm;
-        export NVM_DIR="$PWD/.nvm"
-        source $(brew --prefix nvm)/nvm.sh
-        npm config set spin=false
+        export NVM_DIR="$PWD/.nvm";
+        source $(brew --prefix nvm)/nvm.sh;
+        npm config set spin=false;
         export CI_IGNORE_CASE_INSENSITIVE_FS=please;
     else
         jdk_switcher use openjdk7;

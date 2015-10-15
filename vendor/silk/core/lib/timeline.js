@@ -9,6 +9,8 @@
 import createLog from './log';
 import * as util from './sysutils';
 
+import VideoUploadOp from './outbox/video_upload_operation';
+import BufferStream from './streams/buffer';
 import { EventEmitter } from 'events';
 
 const log = createLog('timeline');
@@ -17,15 +19,19 @@ const log = createLog('timeline');
 // uploading it and any objects that were detected.
 const VIDEO_COLLECTOBJECT_DELAY_MS = 500;
 
+const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
+const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
+
 /**
  * Class that receives events from various components synchronizes them and send
  * to the server
  *
  */
 class Timeline extends EventEmitter {
-  constructor(id) {
+  constructor(id, outbox) {
     super();
     this.id = id;
+    this.outbox = outbox;
     this.serverSocket = { connected: false };
     this._previewSize = {width: 0, height: 0};
 
@@ -43,7 +49,6 @@ class Timeline extends EventEmitter {
     // Hold all the video frames with the timestamps until the next poll interval
     this.videoFrames = [];
 
-    this.videoUpload = require('./videoupload')(this.id);
     this.eventTracker = require('./eventtracker')(this.id);
   }
 
@@ -63,7 +68,6 @@ class Timeline extends EventEmitter {
       };
     }
     this.serverSocket = socket;
-    this.videoUpload.socket = socket;
     this.eventTracker.socket = socket;
   }
 
@@ -89,7 +93,6 @@ class Timeline extends EventEmitter {
    */
   set previewSize(size) {
     this._previewSize = size;
-    this.videoUpload.previewSize = size;
   }
 
   /**
@@ -302,7 +305,31 @@ class Timeline extends EventEmitter {
     // For video we group all related face packets to make it easier on the
     // client.
     this._pushPacket(when, frame, objects, 'mp4', durationMs);
-    this.videoUpload.add(when, frame, this.videoObjects);
+
+
+    // Only queue the video to be sent to the outbox if uploads are enabled...
+    if (!UPLOAD_ENABLED) {
+      return;
+    }
+
+    const op = new VideoUploadOp({
+      size: frame.length,
+      metadata: {
+        deviceId: this.id.toString(),
+        metaType: 'video',
+        startUTC: when,
+        endUTC: when + durationMs,
+        data: {
+          frameWidth: this._previewSize.width,
+          frameHeight: this._previewSize.height,
+          objects
+        }
+      }
+    });
+
+    // If for whatever reason this fails it will bubble up to the crash
+    // reporter...
+    this.outbox.addToQueue(op, new BufferStream(frame));
   }
 
   _pushPacket(when, frame, objects, type, durationMs = 0) {
@@ -419,4 +446,4 @@ class Timeline extends EventEmitter {
   }
 }
 
-module.exports = id => new Timeline(id);
+module.exports = (id, outbox) => new Timeline(id, outbox);

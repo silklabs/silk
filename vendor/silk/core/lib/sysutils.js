@@ -8,9 +8,16 @@
 
 import { execFile as childProcessExecFile } from 'child_process';
 import createLog from './log';
-import props from 'silk-properties';
 
 const log = createLog('sysutils');
+
+// TODO: Ideally silk-properties would work on the host via shim.
+let props;
+if (process.env.SILK_TEST === 'unit') {
+  props = { get: () => '' };
+} else {
+  props = require('silk-properties'); //eslint-disable-line
+}
 
 const SOUND_DIR = '/system/silk/media/sound/';
 

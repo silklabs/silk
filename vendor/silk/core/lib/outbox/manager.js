@@ -10,6 +10,7 @@ import assert from 'assert';
 import fs from 'mz/fs';
 import path from 'path';
 import createLog from '../log';
+import { getintprop } from '../sysutils';
 
 import { EventEmitter } from 'events';
 import StreamOperation from './operation';
@@ -20,6 +21,9 @@ const DEFAULT_STORAGE_PATH = path.join(process.cwd(), '/.outbox');
 const DEFUALT_QUEUE_NAME = 'default-queue';
 const DEFAULT_POLL_INTERVAL = 1000; // 1 second
 const MAX_BACKOFF = (1000 * 60) * 60; // 1 hour
+
+const OUTBOX_CONCURRENCY_PROP = 'persist.silk.outconcurrency';
+const CONCURRENCY = getintprop(OUTBOX_CONCURRENCY_PROP, 2);
 
 async function wrapNoEntity(promise, value = null) {
   try {
@@ -70,7 +74,7 @@ export class Queue extends EventEmitter {
   // How long to wait between checks to do more operations (in ms)
   backoffInterval = 0
   // Maximum number of allowed concurrent operations in the queue.
-  concurrency = 2
+  concurrency = CONCURRENCY
   // Number of running operations in the queue (should always be < than
   // concurrency)
   running = 0
@@ -200,10 +204,15 @@ export class Queue extends EventEmitter {
       return;
     }
 
+    let start = Date.now();
     let result = await operation.write(readable);
     if (result.done) {
       this.emit('finished operation', operation);
-      log.info('Successfully ran operation', operation);
+      log.info(
+        'Successfully ran operation',
+        operation.constructor.name,
+        `took ${Date.now() - start} ms`
+      );
       return;
     }
 
@@ -316,7 +325,9 @@ export class Queue extends EventEmitter {
       }
 
       if (this.running >= this.concurrency) {
-        log.info('Reached maximum number of running operations', this.running);
+        log.info(
+          `Reached maximum number of running operations max: ${this.concurrency} running: ${this.running}`
+        );
         break;
       }
 

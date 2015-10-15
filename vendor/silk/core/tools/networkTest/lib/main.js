@@ -1,0 +1,121 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
+import createLog from './log';
+import * as util from './sysutils';
+import ServerTester from './serverTester';
+import network from './network';
+import config from './args';
+import url from 'url';
+import Table from 'easy-table';
+
+const log = createLog('main');
+
+let serverHost = url.parse(config.api.serverUrl).hostname;
+let iterationCnt = config.tests.iterationCnt;
+
+// max duration to run all tests (seconds) before considering a failure.
+// 0 for no limit.
+let maxDuration = config.tests.maxDuration;
+
+/**
+ * Specify which tests to run
+ */
+let networkTests = {};
+if (config.tests.traceroute) networkTests.traceroute = 1;
+
+let serverTests = {};
+
+serverTests.connect = { cnt: iterationCnt, hz: 4 };
+serverTests.info = { cnt: iterationCnt, hz: 4 };
+serverTests.preview = { cnt: iterationCnt, hz: 4 };
+serverTests.video = { cnt: iterationCnt, hz: 1 };
+serverTests.uploadVideo = { cnt: iterationCnt, hz: 1 };
+serverTests.uploadBlob = { cnt: iterationCnt, hz: 1 };
+serverTests.uploadMetadata = { cnt: iterationCnt, hz: 1 };
+
+
+/**
+ * Helpers for collecting stats
+ */
+let statsList = [];
+
+function addStats(test, stat) {
+  statsList.push({test, stat});
+  printStats(test, stat);
+}
+
+function printStats(test, stat) {
+  log.info(`${test} test avg: ${stat.avg}ms, ` +
+      `min: ${stat.min}ms, max: ${stat.max}ms, cnt: ${stat.cnt}`);
+}
+
+function printSummary() {
+  let table = new Table();
+  statsList.forEach(stats => {
+    table.cell('test', stats.test);
+    table.cell('cnt', stats.stat.cnt);
+    table.cell('avg', stats.stat.avg);
+    table.cell('min', stats.stat.min);
+    table.cell('max', stats.stat.max);
+    table.newRow();
+  });
+
+  console.log();
+  console.log('Results (in ms):');
+  console.log();
+  console.log(table.toString());
+}
+
+/**
+ * Test runners
+ */
+function runNetworkTests() {
+  if (networkTests.traceroute) {
+    return network.traceroute(serverHost)
+    .catch(util.processthrow);
+  } else {
+    return Promise.resolve();
+  }
+}
+
+function runServerTests() {
+  let serverTester = new ServerTester();
+  let testChain = Promise.resolve();
+
+  for (let test in serverTests) {
+    if (serverTests[test]) {
+      let cfg = serverTests[test];
+
+      testChain = testChain
+      .then(() => serverTester.doTest(test, cfg.cnt, cfg.hz, cfg))
+      .then(stat => addStats(test, stat))
+      .catch(util.processthrow);
+    }
+  }
+
+  testChain = testChain
+  .then(() => printSummary())
+  .catch(util.processthrow);
+
+  return testChain;
+}
+
+
+// Don't let tests run for too long (if specified, e.g. non-zero)
+if (maxDuration) {
+  setTimeout(() => {
+    log.warn('test execution timed out :( Exiting');
+    process.exit(-1);
+  }, maxDuration * 1000);
+}
+
+runNetworkTests()
+.then(() => runServerTests())
+.then(() => process.exit(0))
+.catch(util.processthrow);

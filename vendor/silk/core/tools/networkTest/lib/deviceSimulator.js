@@ -1,0 +1,133 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
+import api from './api';
+import server from './server';
+import * as util from './sysutils';
+
+import logoData from './logoData';
+import previewData from './previewData';
+import videoData from './videoData';
+
+const VIDEO_WIDTH = 1280;
+const VIDEO_HEIGHT = 720;
+const PREVIEW_SCALE = 4;
+const VIDEO_DURATION = 1000;
+
+const DEVICE_NAME = 'test';
+const VIDEO_CONTENT_TYPE = 'video/mp4'; 
+const VIDEO_BLOB_TYPE = 'video';
+
+export default class DeviceSimulator {
+  constructor() {
+    this._id = null;
+    this._previewSize = {
+      width: VIDEO_WIDTH / PREVIEW_SCALE, 
+      height: VIDEO_HEIGHT / PREVIEW_SCALE
+    };
+    this._logo = new Buffer(logoData, 'base64');
+    this._previewFrame = new Buffer(previewData, 'base64');
+    this._videoFrame = new Buffer(videoData, 'base64');
+  }
+
+  init() {
+    // TODO, we may want to persist this?
+    this._id = api.id.create();
+    return Promise.resolve();
+  }
+
+  connect() {
+    return new Promise(resolve => {
+      server.once('connect', () => resolve());
+      server.connect();
+    });
+  }
+
+  disconnect() {
+    return new Promise(resolve => {
+      server.once('disconnect', () => {
+        util.timeout(0) // need break, otherwise socket gets in bad state
+        .then(() => resolve())
+        .catch(util.processthrow);
+      });
+      server.disconnect();
+    });
+  }
+
+  emitInfo() {
+    let now = Date.now();
+    let info = { id: this._id.toString(), name: DEVICE_NAME, now, 
+        logo: this._logo, previewSize: this._previewSize };
+
+    return new Promise(resolve => {
+      server.socket.emit('info', info, () => resolve());
+    });
+  }
+
+  _emitVideo(frame, type, durationMs) {
+    let now = Date.now();
+    let data = { id: this._id.toString(), objects: null,
+        frame: frame, contents: type, when: now,
+        durationMs: durationMs, deviceEmitMs: now };
+
+    return new Promise(resolve => {
+      server.socket.emit('video', data, () => resolve());
+    });
+  }
+
+  emitJpeg(cfg) {
+    let frame = ('frame' in cfg) ? cfg.frame : this._previewFrame;
+
+    return this._emitVideo(frame, 'jpeg', 0);
+  }
+
+  emitMp4(cfg) {
+    let frame = ('frame' in cfg) ? cfg.frame : this._previewFrame;
+    let durationMs = ('durationMs' in cfg) ? cfg.durationMs : VIDEO_DURATION;
+
+    return this._emitVideo(frame, 'mp4', durationMs);
+  }
+
+  uploadBlob(cfg) {
+    let frame = ('frame' in cfg) ? cfg.frame : this._videoFrame;
+
+    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length, 
+        VIDEO_CONTENT_TYPE, frame)
+    .then(blobUrl => this._blobUrl = blobUrl)
+    .catch(util.processthrow);
+  }
+
+  uploadMetadata(cfg) {
+    let startMs = ('startMs' in cfg) ? cfg.startMs : Date.now();
+    let durationMs = ('durationMs' in cfg) ? cfg.durationMs : VIDEO_DURATION;
+
+    let metadata = {
+      metaType: 'video',
+      deviceId: this._id.toString(),
+      startUTC: startMs,
+      endUTC: startMs + durationMs,
+      data: {
+        frameWidth: this._previewSize.width,
+        frameHeight: this._previewSize.height,
+        objects: [],
+      },
+      url: this._blobUrl ? this._blobUrl : undefined,
+      previousId: this._previousId ? this._previousId : undefined,
+    };
+
+    return api.timeMeta.create(metadata)
+    .then(result => this._previousId = result.id)
+    .catch(util.processthrow);
+  }
+
+  uploadVideo(cfg) {
+    return this.uploadBlob(cfg)
+    .then(() => this.uploadMetadata(cfg))
+    .catch(util.processthrow);
+  }
+}

@@ -147,6 +147,7 @@ export default function (nonce, method) {
       expires: new Date(Date.now() + (TOKEN_LIFETIME * 2))
     });
 
+    req.publicKey = publicKey;
     req.signed = verified;
     next();
   }

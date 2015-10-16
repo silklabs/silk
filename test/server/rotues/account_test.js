@@ -35,6 +35,7 @@ suite('account auth', () => {
       registrationToken: token
     });
     assert.ok(result.success);
+    assert.ok(result.beaconUUID);
 
     let device = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString()
@@ -49,6 +50,7 @@ suite('account auth', () => {
       registrationToken: token
     });
     assert.ok(complete.success);
+    assert.ok(complete.beaconUUID);
 
     let deviceAfterComplete = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString()

@@ -6,12 +6,16 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-let log = require('log')('TestFramework');
-let opencv = require('opencv');
-let path = require('path');
+import createLog from 'log';
+import opencv from 'opencv';
+import path from 'path';
+import NetworkStatus from 'network_status';
+import createOutbox from 'outbox';
 
-let PREVIEW_WIDTH = 320;
-let PREVIEW_HEIGHT = 180;
+const PREVIEW_WIDTH = 320;
+const PREVIEW_HEIGHT = 180;
+
+const log = createLog('TestFramework');
 
 /**
  *
@@ -68,11 +72,15 @@ class TestFramework {
   constructor(name) {
     this.rootDir = __dirname;
     this._name = name;
+    this.wifi = require('wifi');
+    this.networkStatus = new NetworkStatus(this.wifi);
+    this.outbox = createOutbox(this.networkStatus);
     this.battery = require('battery');
-    this.timeline = require('timeline')('test_id');
+    this.timeline = require('timeline')('test_id', this.outbox);
     this.camera = new FakeCamera();
     this.opencv = opencv;
     this.util = require('sysutils');
+
     require('detectobject')(new Env('detectobject', this));
     require('trackobject')(new Env('trackobject', this));
   }

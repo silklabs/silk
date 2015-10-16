@@ -6,14 +6,14 @@
  * @flow
  */
 
-import api from './api';
-import * as util from './sysutils';
 import { EventEmitter } from 'events';
+import * as util from './sysutils';
+import APICallOperation from './outbox/api_call_operation';
 import createLog from './log';
-let log = createLog('events');
+const log = createLog('events');
 
-import type { Socket } from 'socket.io-client';
 import type { TimelineEventObject } from './videoupload';
+import type { Outbox } from './outbox/manager';
 
 type LocalEventRecord = {
   serverId?: string;
@@ -43,18 +43,15 @@ log.info(`Upload enabled: ${ENABLED}`);
  */
 class EventTracker extends EventEmitter {
   deviceId: string;
-  _serverSocket: ?Socket;
+  outbox: Outbox;
   _eventRecords: {[key: string]: LocalEventRecord};
-  _queue: Array<LocalEventRecord>;
   _expirationTimer: ?number;
-  running: boolean;
 
-  constructor(deviceId: string) {
+  constructor(deviceId: string, outbox: Outbox) {
     super();
     this.deviceId = deviceId;
+    this.outbox = outbox;
     this._eventRecords = {};
-    this.running = false;
-    this._queue = [];
   }
 
   eventDiscriminator(event: TimelineEventObject): string {
@@ -96,53 +93,18 @@ class EventTracker extends EventEmitter {
   }
 
   _enqueue(record: LocalEventRecord) {
-    if (this._queue.indexOf(record) !== -1) {
-      log.info(`Event '${record.tag}' already in queue`);
-      return;
-    }
-    this._queue.push(record);
-    this.start();
-  }
-
-  _processQueue() {
-    if (!this._serverSocket || !this._serverSocket.connected) {
-      log.warn(`server socket not ready, not uploading`);
-      this.stop();
-      return;
-    }
-
-    if (!this._queue.length) {
-      log.info(`Upload queue is empty, stopping.`);
-      this.stop();
-      return;
-    }
-
-    log.info(`Processing upload queue, size ${this._queue.length}`);
-    let record = this._queue.shift();
-    let promise;
-    if (record.serverId) {
-      promise = api.timeMeta.update(record.serverId, {
-        endUTC: record.endUTC,
-        data: record.data,
-      }).then(() => {
-        log.info(`Updated event '${record.tag}', id '${record.serverId}' on the server`);
-      });
-    } else {
-      // This event hasn't been uploaded to the server yet at all.
-      promise = api.timeMeta.create({
+    let operation = new APICallOperation({
+      endpoint: 'timeMeta.create',
+      args: [{
         metaType: 'event',
         deviceId: this.deviceId,
         startUTC: record.startUTC,
         endUTC: record.endUTC,
         data: record.data,
-      }).then((result) => {
-        record.serverId = result.id;
-        log.info(`Uploaded event '${record.tag}', id '${record.serverId}' to the server`);
-      });
-    }
-    promise
-      .catch((error) => log.error(`Failed upload record: ${error}`))
-      .then(() => process.nextTick(() => this._processQueue()));
+      }]
+    });
+
+    this.outbox.addToQueue(operation, null);
   }
 
   _trackExpirations() {
@@ -178,40 +140,8 @@ class EventTracker extends EventEmitter {
       log.info(`No more events to track, sleeping.`);
     }
   }
-
-  /**
-   * Start working the queue (it is safe to call this multiple times)
-   */
-  start() {
-    // Already working...
-    if (this.running || !ENABLED) {
-      return;
-    }
-    this.running = true;
-    this.emit('starting');
-    log.info(`Starting upload queue processing.`);
-    this._processQueue();
-  }
-
-  /**
-   * Stop working the queue (will not abort any running work)
-   */
-  stop() {
-    if (!this.running) {
-      return;
-    }
-    log.info(`Stopping upload queue processing.`);
-    this.running = false;
-    this.emit('stopping');
-  }
-
-  /**
-   * Update this's handle to the master server socket
-   */
-  set socket(socket) {
-    this._serverSocket = socket;
-    this.start();
-  }
 }
 
-module.exports = (deviceId: string): EventTracker => new EventTracker(deviceId);
+export default function (deviceId: string, outbox: Outbox): EventTracker {
+  return new EventTracker(deviceId, outbox);
+}

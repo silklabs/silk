@@ -14,6 +14,7 @@ ui.goto('bootanimation');
 let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
 
+import assert from 'assert';
 import api from './api';
 import battery from './battery';
 import createLog from './log';
@@ -113,6 +114,7 @@ function boot() {
       // (usually running as -17) in out of memory situations.
       fs.writeFile('/proc/self/oom_adj', 0);
 
+      assert(outbox, 'must have outbox when initializing timeline');
       timeline = require('./timeline')(id.toString(), outbox);
       camera = require('./camera')(timeline);
       camera.on('error', () => {

@@ -8,6 +8,7 @@ import { exec } from 'mz/child_process';
 import path from 'path';
 import { default as createOutbox, Queue } from '../../lib/outbox/manager';
 import StreamOperation from '../../lib/outbox/stream_operation';
+import Operation from '../../lib/outbox/operation';
 import fs from 'mz/fs';
 import assert from 'assert';
 import mkdirp from 'mkdirp-promise';
@@ -18,12 +19,38 @@ import randomStream from '../random_stream';
 
 const FIXTURE_DIR = path.join(__dirname, '/outbox_fixture');
 
-suite('outbox stream', () => {
+suite('outbox manager', () => {
 
   class HttpOp extends StreamOperation {
     static NAME = 'http';
     static StreamClass = (url) => {
       return httpStream(url, { method: 'post' });
+    }
+  }
+
+  class NoBufferOp extends Operation {
+    static REQUIRES_BLOB = false;
+    static NAME = 'noopbuffer';
+
+    constructor(options) {
+      super();
+      Object.assign(this, options);
+    }
+
+    _getMetadata() {
+      return {
+        url: this.url,
+        args: this.args
+      };
+    }
+
+    async _write() {
+      let stream = httpStream(this.url, { method: 'post' });
+      let content = new Buffer(JSON.stringify(this.args));
+      stream.end(content);
+      await eventToPromise(stream, 'close');
+
+      return { done: true }
     }
   }
 
@@ -42,6 +69,7 @@ suite('outbox stream', () => {
     });
     subject.queue.concurrency = 20;
     subject.registerOperation(HttpOp);
+    subject.registerOperation(NoBufferOp);
   });
 
   test('Queue.searchDirectory', async () => {
@@ -84,6 +112,30 @@ suite('outbox stream', () => {
       assert.equal(handle.attempts.length, 1);
       assert.equal(handle.success, true);
       assert.equal(handle.content.toString(), buffer.toString());
+    });
+
+    test('offline then online (/w blobless)', async () => {
+      let handle = server.registerStream(1);
+      await server.listen();
+      subject.online = false;
+      subject.start(50);
+
+      let args = { woot: true };
+      let op = new NoBufferOp({ url: handle.url, args });
+      let savedEvent = eventToPromise(subject.queue, 'saved operation');
+
+      await subject.addToQueue(op);
+      // ensure we emit the finished operation event...
+      await savedEvent;
+
+      let successEvent = eventToPromise(subject.queue, 'finished operation');
+      subject.online = true;
+      await successEvent;
+
+      assert.equal(handle.attempts.length, 1);
+      assert.equal(handle.success, true);
+      let content = JSON.parse(handle.content.toString());
+      assert.deepEqual(content, args);
     });
 
     test('offline then online', async () => {

@@ -3,10 +3,11 @@ class LiveVideoManager:  RCTViewManager {
 
   @objc override func customDirectEventTypes() -> [AnyObject]! {
     return [
-      "timeChange",
-      "segmentError",
       "segmentEnd",
+      "segmentEnqueued",
+      "segmentError",
       "segmentStart",
+      "timeChange",
     ]
   }
 

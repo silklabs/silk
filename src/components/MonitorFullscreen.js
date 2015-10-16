@@ -336,6 +336,16 @@ export default React.createClass({
   },
 
   /**
+   * Invoked when a segment has finished loading and has been added to
+   * the play queue.
+   */
+  onSegmentEnqueued(event) {
+    if (this.meter) {
+      this.meter.meter('playbackEnqueued', segmentMeterId(event.nativeEvent));
+    }
+  },
+
+  /**
   Called when any type of segment has ended. This is the same process for both
   live and recorded segment modes.
   */
@@ -343,8 +353,8 @@ export default React.createClass({
     let segments = this._videoSegments;
     let current = segments[0];
 
-    if (current && this.meter) {
-      this.meter.meter('playbackEnd', segmentMeterId(current));
+    if (this.meter) {
+      this.meter.meter('playbackEnd', segmentMeterId(event.nativeEvent));
     }
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
@@ -367,11 +377,15 @@ export default React.createClass({
   /**
   Invoked when any type of segment has begun playback.
   */
-  onSegmentStart() {
+  onSegmentStart(event) {
     let segment = this._videoSegments[0];
 
     if (segment && this.meter) {
-      this.meter.meter('playbackStart', segmentMeterId(segment));
+      let meterId = segmentMeterId(segment);
+      let startMs = Date.now();
+      let durationMs = segment.endUTC - segment.startUTC;
+      this.meter.meter('playbackStart', meterId, startMs);
+      this.meter.meter('segmentDuration', meterId, startMs + durationMs);
     }
     // Emit a segment start event so we can do processing based on segment
     // specific events.
@@ -716,6 +730,7 @@ export default React.createClass({
                 segments={this.state.videoSegments}
                 willPlay={this.state.willPlay}
                 onTimeChange={this.onTimeChange}
+                onSegmentEnqueued={this.onSegmentEnqueued}
                 onSegmentStart={this.onSegmentStart}
                 onSegmentEnd={this.onSegmentEnd}
                 onSegmentError={this.onSegmentError}

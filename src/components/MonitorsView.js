@@ -201,7 +201,7 @@ class MonitorsView extends AsyncComponent {
           onPress={() => this.startFullscreenVideo(deviceId)}
           deviceId={deviceId}
           label={device.name}
-          status={device.status}
+          serverConnectionStatus={device.serverConnectionStatus}
           logo={device.logo}
           previewSize={this._getPreviewSize(deviceId)}
           {...this.props}
@@ -270,7 +270,7 @@ class MonitorsView extends AsyncComponent {
       <View style={styles.content}>
         <View style={styles.placeholderContainer}>
           <PlaceholderText>
-            Connect Silk Cam to get started
+            Turn on a Silk device to get started
           </PlaceholderText>
         </View>
       </View>
@@ -301,13 +301,13 @@ class MonitorsView extends AsyncComponent {
 
     // use device status from discovered peripheral if available
     let device = this.state.streaming[msg.id];
-    let status = (device && device.status) ? device.status : '';
+    let serverConnectionStatus = device && device.serverConnectionStatus || null;
 
     this.state.streaming[msg.id] = {
       name: msg.name,
       logo: msg.logo,
       previewSize: msg.previewSize,
-      status: status,
+      serverConnectionStatus,
     };
 
     // This is pretty crude, but we have no other way of knowing which devices
@@ -355,7 +355,7 @@ class MonitorsView extends AsyncComponent {
         }
 
         // update status, use error message if exists
-        streaming[device.deviceId].status =
+        streaming[device.deviceId].serverConnectionStatus =
             device.error ? device.error : device.serverConnectionStatus;
       }
     });
@@ -370,7 +370,7 @@ class MonitorsView extends AsyncComponent {
 
         // No longer receiving status update (over BLE), so clear status to not
         // show potentially stale data
-        streaming[deviceId].status = '';
+        streaming[deviceId].serverConnectionStatus = null;
 
         // We have not received a server-sent event. Give the device
         // some time to connect to the server. After that, delete

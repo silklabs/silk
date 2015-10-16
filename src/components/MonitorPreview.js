@@ -35,7 +35,7 @@ export default class extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
-    status: React.PropTypes.string.isRequired,
+    serverConnectionStatus: React.PropTypes.oneOf(Object.keys(CONNECTION_STATUS_LABELS)),
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
     api: React.PropTypes.object.isRequired,
@@ -78,14 +78,15 @@ export default class extends React.Component {
   }
 
   render() {
-    let { status } = this.props;
-    if (status) {
-      status = `(${CONNECTION_STATUS_LABELS[status] || status})`;
+    let { label, serverConnectionStatus } = this.props;
+    if (serverConnectionStatus) {
+      let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
+      label = `${label} (${statusLabel})`;
     }
     return (
       <View style={styles.monitorContainer}>
         <View style={styles.monitorLabelContainer}>
-          <Text style={styles.monitorLabel}>{this.props.label} {status}</Text>
+          <Text style={styles.monitorLabel}>{label}</Text>
         </View>
         {this._renderPreview()}
       </View>

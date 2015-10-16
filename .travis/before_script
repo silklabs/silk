@@ -46,16 +46,7 @@ else
   echo "Failed to find ccache bundle at $CCACHE_URL"
 fi
 
-
-case $GONK in
-base)
-  # No initialization needed for "base" builds.
-  ;;
-*)
-  time make init.$GONK
-  ;;
-esac
-
+time make init.$GONK
 time make sync
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then

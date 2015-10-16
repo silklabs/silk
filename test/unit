@@ -1,7 +1,15 @@
 #! /bin/bash -e
 
 echo "## Running unit tests ##"
-cd vendor/silk/core
+pushd vendor/silk/core
 npm install
 npm test
+popd
+
+echo "## Testing networkTest tool ##"
+pushd vendor/silk/core/tools/networkTest
+npm install
+npm run lint
+npm start -- -c 1 -m 60
+popd
 

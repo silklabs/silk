@@ -1,0 +1,36 @@
+{
+  "name": "networkTest",
+  "version": "0.0.1",
+  "description": "Tests for network connectivity",
+  "author": {
+    "name": "Wayne Lee",
+    "email": "waynelee@silklabs.com"
+  },
+  "main": "main.js",
+  "scripts": {
+    "preinstall": "../../../locked_node_modules/fetch.sh",
+    "prepublish": "node_modules/grunt-cli/bin/grunt",
+    "lint": "node_modules/grunt-cli/bin/grunt eslint",
+    "start": "node --harmony dist/networkTest.js"
+  },
+  "dependencies": {
+    "easy-table": "^1.0.0",
+    "socket.io-client": "^1.3.5",
+    "silk-api": "file:../../local_node_modules/silk-api"
+  },
+  "devDependencies": {
+    "babel-eslint": "~3.1.15",
+    "commander": "~2.9.0",
+    "eslint-plugin-import": "^0.7.9",
+    "grunt": "~0.4.5",
+    "grunt-babel": "~5.0.1",
+    "grunt-browserify": "^4.0.0",
+    "grunt-cli": "~0.1.13",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-eslint": "~17.0.0",
+    "load-grunt-tasks": "~3.1.0"
+  },
+  "engines": {
+    "node": "^4.1.12"
+  }
+}

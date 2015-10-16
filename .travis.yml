@@ -1,9 +1,9 @@
 language: c
 compiler: gcc
 
+# Note that OS X builds are triggered periodically by Releng
 os:
   - linux
-  - osx
 
 jdk:
   - openjdk7

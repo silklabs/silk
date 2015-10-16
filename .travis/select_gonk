@@ -1,35 +1,13 @@
 # |source| me
 
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
-    # Not a pull request
-    case $TRAVIS_OS_NAME in
-    osx)
-        if [[ $GONK_SPEC == qemu ]]; then
-            # Only do OS X builds for non-PRs for now because they
-            # take too long compared to linux builds.  We don't
-            # attempt full builds on OS X yet, so we just do a "base"
-            # build for now.  And since "base" builds aren't specific
-            # to target device, arbitrarily choose the qemu target.
-            export GONK=base
-        else
-            export GONK=nop
-        fi
-        ;;
-    linux)
-        # Do a full build of the requested GONK.
-        export GONK=$GONK_SPEC
-        ;;
-    esac
+    export GONK=$GONK_SPEC
 else
-    # Pull request.  This will be a "base" build.
+    # Pull request.  Force a "base" build for only one of the entries in the
+    # Travis build matrix
     case $GONK_SPEC in
     qemu)
-        if [[ $TRAVIS_OS_NAME == osx ]]; then
-            # Skip building for OS X on PRs for now, takes too long.
-            export GONK=nop
-        else
-            export GONK=base
-        fi
+        export GONK=base
         ;;
     *)
         # "base" builds aren't target specific, so skip for everything

@@ -22,6 +22,9 @@ export default class APICallOperation extends Operation {
   constructor(options = {}) {
     super();
     Object.assign(this, options);
+
+    assert(this.endpoint, 'must provide .endpoint...');
+    assert(this.args, 'must provide .args');
   }
 
   _getMetadata() {

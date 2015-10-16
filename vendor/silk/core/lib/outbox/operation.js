@@ -1,4 +1,10 @@
 /**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
+/**
  * Base class for our "operations" this deals with cleaning up and persisting
  * state to disk when operations fail... Individual subclasses must implement
  * the important bits of actually writing to streams.

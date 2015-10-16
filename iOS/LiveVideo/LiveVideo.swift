@@ -485,6 +485,7 @@ class LiveVideo : UIView {
     item.id = segment.id
 
     self.player.insertItem(item, afterItem: nil)
+    self.sendSegmentEvent("segmentEnqueued", item: item)
 
     // If we should be playing video start it with play()
     if (self.willPlay) {
@@ -511,7 +512,8 @@ class LiveVideo : UIView {
 
     let eventBody: Dictionary<String, AnyObject> = [
       "target": self.reactTag,
-      "id": item.id
+      "id": item.id,
+      "startUTC": NSNumber(longLong: item.start)
     ]
 
     self.eventDispatcher.sendInputEventWithName(type, body: eventBody)

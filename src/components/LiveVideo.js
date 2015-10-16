@@ -66,6 +66,12 @@ let LiveVideo = React.createClass({
     onSegmentError: React.PropTypes.func,
 
     /**
+     * Invoked when the segment has loaded and been enqueued for
+     * playback.
+     */
+    onSegmentEnqueued: React.PropTypes.func,
+
+    /**
     Invoked when the segment starts.
     */
     onSegmentStart: React.PropTypes.func,

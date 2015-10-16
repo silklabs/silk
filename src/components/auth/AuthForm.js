@@ -72,7 +72,7 @@ export default class extends AsyncComponent {
 
   handleSubmit = async () => {
     if (this.props.verifyPassword &&
-        this.password !== this.passwordVerification) {
+        this.state.password !== this.state.passwordVerification) {
       AlertIOS.alert(
         'Password mismatch',
         'Your password did not match its verification.'

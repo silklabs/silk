@@ -16,6 +16,21 @@ let {
   View,
 } = React;
 
+
+const CONNECTION_STATUS_LABELS = {
+  'server_disconnected': 'server disconnected',
+  'server_connecting': 'connecting to server',
+  'server_connected': 'connected to server',
+  'wifi_offline': 'not connected to WiFi',
+  'wifi_scanning': 'scanning for WiFi networks',
+  'wifi_associating': 'connecting to WiFI',
+  'wifi_associated': 'connecting to WiFi',
+  'wifi_authenticating': 'authenticating with WiFi',
+  'wifi_connected': 'connected to WiFi',
+  'wifi_dhcping': 'configuring WiFi',
+  'wifi_online': 'connected to WiFi',
+};
+
 export default class extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string.isRequired,
@@ -65,7 +80,7 @@ export default class extends React.Component {
   render() {
     let { status } = this.props;
     if (status) {
-      status = `(${status})`;
+      status = `(${CONNECTION_STATUS_LABELS[status] || status})`;
     }
     return (
       <View style={styles.monitorContainer}>

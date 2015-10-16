@@ -1,5 +1,7 @@
 #! /bin/bash
 
+LOGFILE=.artifacts/build-$GONK.log
+
 # Helper to print dots to stdout so travis does not hate us...
 function keep_alive {
    while true; do
@@ -10,20 +12,16 @@ function keep_alive {
 
 keep_alive &
 keep_alive_pid=$!
-/bin/bash -c "$@" > .artifacts/log 2>&1
+/bin/bash -c "$@" > $LOGFILE 2>&1
 exit_code=$?
 kill $keep_alive_pid
 wait $keep_alive_pid 2>/dev/null
-
-echo
-echo For full build log and other artifacts, please see:
-echo $ARTIFACT_HOST/$ARTIFACT_REMOTE_PATH
 
 if [[ $exit_code -ne 0 ]]; then
   echo
   echo Error $exit_code: Build failed
   echo
-  ( set -x; tail -n 2000 .artifacts/log )
+  ( set -x; tail -n 2000 $LOGFILE )
 fi
 
 exit $exit_code

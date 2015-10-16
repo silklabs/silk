@@ -1,10 +1,4 @@
-#!/bin/bash
-
-if [[ $TRAVIS_OS_NAME == osx ]]; then
-  export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
-else
-  export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
-fi
+# |source| me
 
 if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     # Not a pull request
@@ -24,12 +18,6 @@ if [[ $TRAVIS_PULL_REQUEST == false ]]; then
     linux)
         # Do a full build of the requested GONK.
         export GONK=$GONK_SPEC
-
-        # Only update locked_node_modules for one build in the entire OS/GONK
-        # build matrix.  It doesn't matter which one, "mako" seems nice
-        if [[ $GONK_SPEC == mako ]]; then
-          export UPDATE_LOCKED_NODE_MODULES=true
-        fi
         ;;
     esac
 else

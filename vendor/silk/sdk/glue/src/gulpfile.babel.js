@@ -15,6 +15,11 @@ gulp.task('build', () => {
 });
 
 gulp.task('lint', () => {
+  if (process.env.LAX === '1') {
+    console.log('Skipping lint...');
+    return;
+  }
+
   return commands.lint();
 });
 

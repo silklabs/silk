@@ -7,6 +7,7 @@ import uuid from 'uuid';
 import createLog from 'log';
 
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
+import Config from '../libraries/Config';
 import * as DateUtil from '../libraries/DateUtil';
 
 import LiveVideo from './LiveVideo';
@@ -697,7 +698,8 @@ export default React.createClass({
     }
 
     let objects = null;
-    if (this.state.objects.length) {
+    if (Config.get().preferences.drawObjectBoxesFullscreenVideo
+        && this.state.objects.length) {
       objects = (
         <ObjectBoxes
           deviceId={this.props.deviceId}

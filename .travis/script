@@ -11,7 +11,7 @@ export NPM_CONFIG_REGISTRY=http://0.42.42.42.24/no/registry/for/you
 # Only enable ccache logging for PR builds (base build) to help keep Travis disk
 # usage down for full device builds.
 if [[ $TRAVIS_PULL_REQUEST != false ]]; then
-  export CCACHE_LOGFILE=$PWD/.artifacts/ccache.log
+  export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
 fi
 
 if [[ $GONK != base ]]; then

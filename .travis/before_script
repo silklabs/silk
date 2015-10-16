@@ -34,12 +34,8 @@ esac
 
 time make sync
 
-if [[ $TRAVIS_PULL_REQUEST == false ]]; then
-  # TODO: Free 2GB of disk on Travis then change this to 3.GG
-  export CCACHE_DISABLE=true
-else
-  $PREBUILT_CCACHE -M 2.5G
-fi
+export CCACHE_COMPRESS=true
+$PREBUILT_CCACHE -M 1G
 
 # Clear the stats before this build...
 $PREBUILT_CCACHE -z

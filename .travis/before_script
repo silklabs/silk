@@ -1,16 +1,17 @@
-#!/bin/bash
+#!/bin/bash -ex
 
-set -ex
 git --version
+
+source .travis/artifacts
+
+# Export the path which we want to upload our ccache artifacts to..
+# NOTE: Must not contain trailing slash...
+CCACHE_URL="https://s3-us-west-2.amazonaws.com/silk-travis-artifacts/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
 
 function get_http_status() {
   local url=$1
   curl -X HEAD -Is -w "%{http_code}" $1 -o /dev/null
 }
-
-# Export the path which we want to upload our ccache artifacts to..
-# NOTE: Must not contain trailing slash...
-CCACHE_URL="https://s3-us-west-2.amazonaws.com/silk-travis-artifacts/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
 
 if [[ "$(get_http_status $CCACHE_URL)" == "200" ]];
 then
@@ -70,6 +71,7 @@ if [[ $GONK != base ]]; then
     prebuilts/android-emulator/windows \
     prebuilts/qemu-kernel/{mips,x86,x86_64} \
     prebuilts/misc/{android-mips,android-mips64,android-x86,android-x86_64,darwin-x86,windows} \
+    prebuilts/ndk/{4,5,6,7} \
 
   find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
 

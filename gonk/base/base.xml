@@ -30,7 +30,6 @@
   <project name="platform/build" path="build" clone-depth="1">
     <copyfile src="core/root.mk" dest="Makefile" />
   </project>
-  <project name="platform/external/jpeg" path="external/jpeg" clone-depth="1"/>
   <project name="platform/external/skia" path="external/skia" clone-depth="1"/>
   <project name="platform/external/stlport" path="external/stlport" clone-depth="1"/>
   <project name="platform/frameworks/av" path="frameworks/av" clone-depth="1"/>

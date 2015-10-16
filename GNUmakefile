@@ -43,7 +43,7 @@ zest:
 .PHONY: sync
 sync: | .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --quiet
-	touch .repo/.repo_fetchtimes.json
+	date +%s > .repo/.repo_fetchtimes.json
 	rm -rf out/lastpatch.md5sum
 
 # Update the currently attached Mako device with the latest prebuilt dev build
@@ -160,7 +160,7 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 
 .repo/.repo_fetchtimes.json: .repo/manifest.xml
 	./repo sync -j4 --current-branch --no-tags --quiet
-	touch .repo/.repo_fetchtimes.json
+	date +%s > .repo/.repo_fetchtimes.json
 	rm -rf out/lastpatch.md5sum
 
 

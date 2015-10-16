@@ -65,9 +65,15 @@ export default function (ctx) {
     // XXX: Some accounts may not have beaconUUID yet so update them to include
     // it as needed...
     if (!req.account.beaconUUID) {
-      req.account.beaconUUID = await ctx.accounts.setBeaconUUIDIfMissing(
+      let beaconUUID = await ctx.accounts.setBeaconUUIDIfMissing(
         req.publicKey
       );
+
+      if (!beaconUUID) {
+        throw new Error(`
+          Unexpectedly could not assign beaconUUID for ${req.publicKey}
+        `);
+      }
     }
 
     let result = await ctx.devices.register(

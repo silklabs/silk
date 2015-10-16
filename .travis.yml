@@ -32,7 +32,8 @@ before_script:
   source .travis/before_script
 
 script:
-  .travis/log .travis/script
+  - echo For full build logs and other artifacts, please see $ARTIFACT_HOST/$ARTIFACT_REMOTE_PATH
+  - .travis/log .travis/script
 
 after_success:
   .travis/after_success

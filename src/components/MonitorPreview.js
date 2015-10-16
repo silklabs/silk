@@ -9,6 +9,7 @@ import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 
 let {
+  ActivityIndicatorIOS,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -117,11 +118,18 @@ export default class extends React.Component {
       );
     }
 
+    let preview = null;
+    if (this.state.blob) {
+      preview = <ImageView style={styles.preview} blob={this.state.blob} />;
+    } else {
+      preview = <ActivityIndicatorIOS />;
+    }
+
     return (
       <TouchableOpacity
         onPress={this.props.onPress}
         style={[styles.monitorPreviewContainer, previewStyle]}>
-        <ImageView style={styles.preview} blob={this.state.blob} />
+        {preview}
         {logo}
         <View style={styles.monitorPreviewOverlay}>
           {objects}
@@ -168,6 +176,8 @@ const styles = StyleSheet.create({
   monitorPreviewContainer: {
     backgroundColor: 'white',
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   preview: {

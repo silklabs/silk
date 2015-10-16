@@ -1,11 +1,16 @@
-#!/bin/bash
+#!/bin/bash -e
 
-set -ex
 source build/envsetup.sh
-rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
+if [[ -n $TRAVIS ]]; then
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
+fi
+
 ./gonk/archive.sh $GONK dist
 
-if [[ $GONK != qemu ]]; then
-  mv -v $ANDROID_PRODUCT_OUT/*ota*.zip dist/
-  ./gonk/ota_manifest.sh $TRAVIS_BRANCH $ANDROID_PRODUCT_OUT/system/build.prop dist
+if [[ -f $ANDROID_PRODUCT_OUT/*-ota-*.zip ]]; then
+  # Full OTA package not available for all gonks
+  mv -v $ANDROID_PRODUCT_OUT/*-ota-*.zip dist/
 fi
+mv -v $ANDROID_PRODUCT_OUT/*-silkota-*.zip dist/
+
+./gonk/ota_manifest.sh ${TRAVIS_BRANCH:-master} $GONK $ANDROID_PRODUCT_OUT/system dist

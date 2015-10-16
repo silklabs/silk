@@ -74,6 +74,7 @@ export default function (ctx) {
           Unexpectedly could not assign beaconUUID for ${req.publicKey}
         `);
       }
+      req.account.beaconUUID = beaconUUID;
     }
 
     let result = await ctx.devices.register(

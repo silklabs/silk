@@ -4,6 +4,7 @@ import Config from '../../libraries/Config';
 
 let {
   Image,
+  NativeModules,
   PixelRatio,
   StyleSheet,
   Text,
@@ -20,6 +21,18 @@ const SERVERS = [
   {name: 'release', value: 'https://silk-server-release.herokuapp.com'},
   {name: 'localhost', value: 'http://localhost:5000'},
 ];
+let { scriptURL } = NativeModules.SourceCode;
+let match = scriptURL && scriptURL.match(/^https?:\/\/(.*?)\//);
+if (match && match[1]) {
+  let bundleHost = match[1];
+  if (bundleHost.indexOf(':') !== -1) {
+    bundleHost = bundleHost.split(':')[0];
+  }
+  SERVERS.push({
+    name: `JS bundle host (${bundleHost})`,
+    value: `http://${bundleHost}:5000`,
+  });
+}
 
 export default class extends React.Component {
 

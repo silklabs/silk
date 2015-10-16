@@ -403,20 +403,11 @@ export class Queue extends EventEmitter {
     let metadataPath = path.join(handle.path, Operation.METATADATA_NAME);
     let blobPath = path.join(handle.path, Operation.BLOB_NAME);
 
-    // Ensure they both exist ... If for some reason they don't cleanup the
-    // directory and move on...
-    let [metadataExists, blobExists] = await Promise.all([
-      fs.exists(metadataPath),
-      fs.exists(blobPath),
-    ]);
-
-    if (!metadataExists || !blobExists) {
+    if (!await fs.exists(metadataPath)) {
       log.warn(`
-        Either metadata or blob is missing from: ${handle.path}
-
+        Metadata is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-
       await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
       return;
@@ -433,6 +424,17 @@ export class Queue extends EventEmitter {
     }
 
     let OperationClass = this.operations[metadata.name];
+
+    if (OperationClass.REQUIRES_BLOB && !await fs.exists(blobPath)) {
+      log.warn(`
+        Blob is missing from: ${handle.path}
+        Cleaning up operation directory...
+      `);
+      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle.id);
+      return;
+    }
+
 
     if (!OperationClass) {
       throw new Error(`

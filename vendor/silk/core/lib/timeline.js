@@ -48,8 +48,7 @@ class Timeline extends EventEmitter {
 
     // Hold all the video frames with the timestamps until the next poll interval
     this.videoFrames = [];
-
-    this.eventTracker = require('./eventtracker')(this.id);
+    this.eventTracker = require('./eventtracker')(this.id, this.outbox);
   }
 
   /**
@@ -68,7 +67,6 @@ class Timeline extends EventEmitter {
       };
     }
     this.serverSocket = socket;
-    this.eventTracker.socket = socket;
   }
 
   /**

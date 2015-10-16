@@ -36,6 +36,10 @@ export default class Operation {
   static BLOB_NAME = 'blob';
   static METATADATA_NAME = 'metadata.json';
 
+  // If this is false then this operation does not require a blob when loading
+  // form disk...
+  static REQUIRES_BLOB = true;
+
   // We must name our operations so we know which class to use when loading from
   // disk...
   static NAME = '';
@@ -118,7 +122,10 @@ export default class Operation {
    *
    */
   async write(readable) {
-    assert(readable, 'must pass readable');
+    if (this.constructor.REQUIRES_BLOB) {
+      assert(readable, 'must pass readable');
+    }
+
     let result = await this._write(readable);
     assert(('done' in result), '._write result must contain .done');
 
@@ -153,6 +160,11 @@ export default class Operation {
 
   async _writeBlob(directory, readable) {
     let blobPath = path.join(directory, this.constructor.BLOB_NAME);
+
+    // If there is no stream associated with this operation we are done.
+    if (!this.constructor.REQUIRES_BLOB) {
+      return;
+    }
 
     if (typeof readable === 'string') {
       // treat readable as a path to a file...

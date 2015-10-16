@@ -13,7 +13,7 @@ import createLog from '../log';
 import { getintprop } from '../sysutils';
 
 import { EventEmitter } from 'events';
-import StreamOperation from './operation';
+import Operation from './operation';
 
 const log = createLog('outbox:manager');
 
@@ -400,8 +400,8 @@ export class Queue extends EventEmitter {
   }
 
   async _workDiskQueueItem(handle) {
-    let metadataPath = path.join(handle.path, StreamOperation.METATADATA_NAME);
-    let blobPath = path.join(handle.path, StreamOperation.BLOB_NAME);
+    let metadataPath = path.join(handle.path, Operation.METATADATA_NAME);
+    let blobPath = path.join(handle.path, Operation.BLOB_NAME);
 
     // Ensure they both exist ... If for some reason they don't cleanup the
     // directory and move on...
@@ -417,13 +417,20 @@ export class Queue extends EventEmitter {
         Cleaning up operation directory...
       `);
 
-      await StreamOperation.removeFromDisk(handle.path);
+      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
       return;
     }
 
     let metadata = await fs.readFile(metadataPath, 'utf8');
-    metadata = JSON.parse(metadata);
+    try {
+      metadata = JSON.parse(metadata);
+    } catch (err) {
+      log.error(`Invalid metadata in operation... Purging operation directory`);
+      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle.id);
+      return;
+    }
 
     let OperationClass = this.operations[metadata.name];
 
@@ -441,7 +448,7 @@ export class Queue extends EventEmitter {
 
     if (result.done) {
       log.info(`Successfully finished operation ${handle.path}`);
-      await StreamOperation.removeFromDisk(handle.path);
+      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
       this.emit('finished operation', operation);
     } else {

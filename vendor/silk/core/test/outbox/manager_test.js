@@ -109,6 +109,30 @@ suite('outbox stream', () => {
       assert.equal(handle.content.toString(), buffer.toString());
     });
 
+    test('invalid metadata on disk', async () => {
+      let handle = server.registerStream(1);
+      await server.listen();
+      subject.online = false;
+      subject.start(50);
+
+      let { stream, buffer } = randomStream();
+      let op = new HttpOp({ arguments: handle.url });
+      let savedEvent = eventToPromise(subject.queue, 'saved operation');
+
+      await subject.addToQueue(op, stream);
+      // ensure we emit the finished operation event...
+      await savedEvent;
+
+      let metadataPath = path.join(FIXTURE_DIR, 'default-queue/1/metadata.json');
+      await fs.writeFile(metadataPath, 'blablanotjson');
+
+      let removeEvent = eventToPromise(subject.queue, 'removed operation');
+      subject.online = true;
+      await removeEvent;
+
+      assert.ok(!await fs.exists(metadataPath), 'removed operation');
+    });
+
     test('shutdown with pending operations...', async () => {
       let liveOperations = 2;
       let offlineOperations = 3;

@@ -30,7 +30,8 @@ PRODUCT_PACKAGES += node
 # vendor/silk/core/...
 SILK_CORE := \
   core \
-  base_version.js \
+  silk-base_version \
+  silk-core_version \
   silk-alog \
   silk-bledroid \
   silk-gc1 \

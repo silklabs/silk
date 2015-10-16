@@ -47,7 +47,8 @@ export default function (ctx) {
     name: 'registerDevice',
     description: 'Create a user account',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
+      beaconUUID: Joi.string().guid(),
     }),
     input: Joi.object().keys({
       // publicKey of the _device_
@@ -57,12 +58,19 @@ export default function (ctx) {
       // name of the device...
       name: Devices.NAME_SCHEMA,
       // registration token to use...
-      registrationToken: Joi.string()
+      registrationToken: Joi.string().required(),
     }).required()
   }, async (req, res) => {
 
-    let result = await ctx.devices.register(
+    // XXX: Some accounts may not have beaconUUID yet so update them to include
+    // it as needed...
+    if (!req.account.beaconUUID) {
+      req.account.beaconUUID = await ctx.accounts.setBeaconUUIDIfMissing(
+        req.publicKey
+      );
+    }
 
+    let result = await ctx.devices.register(
       req.publicKey,
       {
         // TODO: This is ugly figure out how to make this look better (passing
@@ -77,7 +85,10 @@ export default function (ctx) {
 
     if (!result.error) {
       log.info('registered device', req.account.id);
-      res.respond({ success: true });
+      res.respond({
+        success: true,
+        beaconUUID: req.account.beaconUUID
+      });
       return;
     }
     log.verbose('Failed to register device', result, req.account);

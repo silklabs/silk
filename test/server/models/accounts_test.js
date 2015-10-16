@@ -28,6 +28,43 @@ suite('accounts', () => {
     assert.equal(byPublicKey._id, account.id);
   });
 
+  test('#setBeaconUUIDIfMissing', async () => {
+    let key = id.create();
+    let input = {
+      publicKey: key.toString(),
+      email: 'user@example.com',
+      passwordHash: context.passwordHash('password'),
+      userAgent: 'nodejs'
+    };
+    await subject.create(input);
+    // Should not need an update yet...
+    assert.ok(!await subject.setBeaconUUIDIfMissing(
+      key.toString()
+    ));
+
+    await subject.collection.update(
+      {
+        'accountTokens.publicKey': key.toString()
+      },
+      {
+        $unset: {
+          'beaconUUID': ''
+        }
+      }
+    );
+
+    let beaconUUID = await subject.setBeaconUUIDIfMissing(
+      key.toString()
+    );
+    assert.ok(beaconUUID, 'updates beaconUUID');
+
+    let dbAccount;
+    dbAccount = await subject.collection.findOne({
+      'accountTokens.publicKey': key.toString()
+    });
+    assert.equal(dbAccount.beaconUUID, beaconUUID);
+  });
+
   test('#create / #checkPassword', async () => {
     let key = id.create();
     let input = {

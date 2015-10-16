@@ -44,7 +44,8 @@ export default function (ctx) {
     name: 'completeRegistration',
     description: 'Complete registration of the deivce',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
+      beaconUUID: Joi.string().guid()
     }),
     input: Joi.object().keys({
       // _account_ public key...
@@ -76,7 +77,10 @@ export default function (ctx) {
 
     if (!result.error) {
       log.info('validated registration', req.device.accountId);
-      res.respond({ success: true });
+      res.respond({
+        success: true,
+        beaconUUID: account.beaconUUID
+      });
       return;
     }
     log.verbose('Failed to register device', req.device.accountId);

@@ -4,6 +4,7 @@
 import * as Joi from 'joi';
 import Base from './base';
 import scrypt from 'scrypt';
+import uuid from 'uuid';
 
 const EMAIL = Joi.string().trim().email().lowercase().required();
 const PASSWORD_HASH = Joi.string().required().min(64).max(256);
@@ -97,6 +98,16 @@ export default class Accounts extends Base {
         email: 1
       },
       options: { unique: true }
+    },
+
+    /**
+     * Beacon uuid must be unique...
+     */
+    {
+      props: {
+        beaconUUID: 1
+      },
+      options: { unique: true }
     }
   ]
 
@@ -136,6 +147,9 @@ export default class Accounts extends Base {
         // scrypt hash this includes things like iterations/etc...
         hash: Joi.string().hex().required(),
       }).required(),
+
+      // Unique beacon id per account...
+      beaconUUID: Joi.string().guid().required(),
 
       /**
        * Individual account tokens that are used to talk to our API servers an
@@ -196,6 +210,31 @@ export default class Accounts extends Base {
   }
 
   /**
+   * Set beacon UUID if it is missing from the account.
+   */
+  async setBeaconUUIDIfMissing(publicKey) {
+    let id = uuid.v4();
+    let status = await this.collection.update(
+      {
+        'accountTokens.publicKey': publicKey,
+        'beaconUUID': {
+          $exists: false
+        }
+      },
+      {
+        $set: {
+          'beaconUUID': id
+        }
+      }
+    );
+
+    if (status.nModified === 1) {
+      return id;
+    }
+    return false;
+  }
+
+  /**
    * Create an initial account this in no way grants the user permissions but
    * allows them to use their public/private key pair to make further requests
    * to authenticate their account.
@@ -210,7 +249,8 @@ export default class Accounts extends Base {
         date: new Date(),
         hash: password
       },
-      accountTokens: [this.accessToken(payload)]
+      accountTokens: [this.accessToken(payload)],
+      beaconUUID: uuid.v4(),
     }, 'record');
 
     // Insert the document but do not override any other accounts with the same

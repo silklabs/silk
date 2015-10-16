@@ -6,6 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+import assert from 'assert';
 import createLog from './log';
 import * as util from './sysutils';
 
@@ -30,6 +31,8 @@ const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
 class Timeline extends EventEmitter {
   constructor(id, outbox) {
     super();
+    assert(outbox, 'must pass outbox...');
+
     this.id = id;
     this.outbox = outbox;
     this.serverSocket = { connected: false };

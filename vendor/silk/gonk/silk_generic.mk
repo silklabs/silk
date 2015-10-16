@@ -106,6 +106,7 @@ PRODUCT_PACKAGES += \
   noble \
   opencv \
   kissfft \
+  v8-profiler \
 
 # include platform-specific silk makefile, if exists
 -include gonk/${GONK}/silk_${GONK}.mk

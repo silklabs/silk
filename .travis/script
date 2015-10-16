@@ -13,6 +13,7 @@ export NPM_CONFIG_REGISTRY=http://0.42.42.42.42/no/registry/for/you
 case $GONK in
 qemu)
   $make
+  $make silkota
 
   echo "******************************************************************"
   echo Emulator tests
@@ -27,6 +28,7 @@ base)
   export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
 
   $make
+  $make silkota
 
   source build/envsetup.sh
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis falls down
@@ -64,10 +66,13 @@ base)
   fi
   ;;
 mako)
+  $make
   $make otapackage
+  $make silkota
   ;;
 *)
   $make
+  $make silkota
   ;;
 esac
 

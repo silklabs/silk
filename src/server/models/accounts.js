@@ -107,7 +107,7 @@ export default class Accounts extends Base {
       props: {
         beaconUUID: 1
       },
-      options: { unique: true }
+      options: { unique: true, sparse: true }
     }
   ]
 

@@ -7,11 +7,11 @@ Releng runs a Github webhook, implemented on a Heroku server, that provides its 
 * automated merging of `next` commits back to `master` branches
 * a convenient **automerge** label that enables PRs to be merged immediately upon a successfully CI result
 
-### Repocache
+### Nightly animation
 
-Nightly automation updates the "repocache" tarballs used to speed up
-silk-device developer sync times.  To trigger an update manually, run `npm run
-repocache`.
+Nightly automation is run to update the "repocache" tarballs used to speed up
+silk-device developer sync times, and other useful tasks.
+To trigger manually run `npm run triggerbuilds`.
 
 ## Status
 
@@ -40,7 +40,7 @@ The nightly repocache builds are visible at https://magnum.travis-ci.com/silklab
 * Resources Tab -> Add-ons:
   * Add 'Heroku Scheduler'
   * Configure the scheduler to run `npm run next2master` every hour
-  * Configure the scheduler to run `npm run repocache` every day
+  * Configure the scheduler to run `npm run triggerbuilds` every day
 
 ### Github WebHook
 

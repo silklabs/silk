@@ -16,22 +16,18 @@ import Cameras from '../libraries/Cameras';
 const StackedBarChart = createChartClass('StackedBar', ['getBarsAtEvent']);
 
 const EVENT_SEQUENCE = [
-  'recordStartMs',
-  'recordEndMs',
-  'deviceDropMs',
-  'deviceEmitMs',
-  'serverEmitMs',
-  'arriveAppMs',
-  'playbackStartMs',
-  'playbackEndMs',
-];
+  'recordStart',
+  'recordEnd',
+  'deviceDrop',
+  'deviceEmit',
+  'serverEmit',
+  'arriveApp',
+  'playbackEnqueued',
+  'playbackStart',
+  'segmentDuration',
+  'playbackEnd',
+].map(eventName => eventName + 'Ms');
 const FIRST_EVENT = EVENT_SEQUENCE[0];
-
-// How many rows (segments) we display in the chart.  This number is
-// picked arbitrarily because it fits well on cjones's monitor.  A
-// better approach might be to compute the number dynamically from
-// available window width/height based on some heuristics.
-const MAX_NR_SEGMENTS = 20;
 
 /**
  * Return <0 if `a` happened before `b`, 1 if `a` happened after `b`,
@@ -86,6 +82,46 @@ class HorizontalStackedBarChart extends React.Component {
   }
 }
 
+class Slider extends React.Component {
+  static propTypes = {
+    defaultValue: React.PropTypes.number,
+    min: React.PropTypes.number,
+    max: React.PropTypes.number,
+    onChange: React.PropTypes.func,
+    step: React.PropTypes.number,
+    style: React.PropTypes.object,
+  };
+  static defaultProps = {
+    onChange: () => undefined,
+    min: 0,
+    max: 100,
+    step: 1,
+  };
+
+  state = {
+    value: (this.props.defaultValue
+            || (this.props.min + (this.props.max - this.props.min) / 2)),
+  };
+
+  onChange = e => {
+    this.setState({ value: e.target.value });
+    this.props.onChange(this.state.value);
+  }
+
+  render() {
+    return (
+      <input
+        type="range"
+        min={this.props.min}
+        max={this.props.max}
+        value={this.state.value}
+        onChange={this.onChange}
+        style={this.props.style}
+      />
+    );
+  }
+}
+
 export default class AVPipeline extends React.Component {
   // True when the user has stopped playback, and we should clear out
   // all old segment information when receiving the next update
@@ -94,6 +130,11 @@ export default class AVPipeline extends React.Component {
   state = {
     camera: null,
     lastNowMs: null,
+    // How many rows (segments) we display in the chart.  This number
+    // is picked arbitrarily because it fits well on cjones's monitor.
+    // A better approach might be to compute the number dynamically
+    // from available window width/height based on some heuristics.
+    maxNrSegments: 20,
     paused: false,
     segments: {},
   };
@@ -162,7 +203,7 @@ export default class AVPipeline extends React.Component {
     let eventProp = event.what + 'Ms';
     let eventIdx = EVENT_SEQUENCE.indexOf(eventProp);
     if (eventIdx < 0) {
-      console.warn(`Ignoring unknown avpipeline event ${event.what}`);
+      console.warn(`Ignoring unknown avpipeline event "${event.what}"`);
       return;
     }
     // We know that `event` isn't an 'exit' event, so the `id` and
@@ -198,9 +239,13 @@ export default class AVPipeline extends React.Component {
     backfillMissingEvents(segments[id], eventIdx - 1, event.whenMs, 0);
     this.setState({
       lastNowMs: event.nowMs || this.state.lastNowMs,
-      segments: this.filterSegments(segments, MAX_NR_SEGMENTS),
+      segments: this.filterSegments(segments, this.state.maxNrSegments),
     });
   };
+
+  onMaxSegmentsChange = value => {
+    this.setState({ maxNrSegments: parseInt(value) });
+  }
 
   onPause = () => {
     alert('NYI: real pause');   // eslint-disable-line
@@ -242,7 +287,9 @@ export default class AVPipeline extends React.Component {
         if (!(eventName in segmentEvents)) {
           return nowMs - lastEventMs;
         }
-        return segmentEvents[eventName] - lastEventMs;
+        // Some events may be timestamped after the most recent "now",
+        // so limit our view of time to that most recent now.
+        return Math.min(nowMs, segmentEvents[eventName]) - lastEventMs;
       }));
     });
     // The `darkMatterSeries` covers what happens between stopping
@@ -260,23 +307,37 @@ export default class AVPipeline extends React.Component {
       // ^^^ serverEmit vvv
       darkMatterDownloadSeries,
       // ^^^ arriveApp vvv
-      appQueuedSeries,
+      loadingAssetSeries,
+      // ^^^ playbackEnqueued vvv
+      playbackQueuedSeries,
       // ^^^ playbackStart vvv
-      playingSeries,
+      segmentDurationSeries,
+      // ^^^ segmentDuration vvv
+      playbackEncoreSeries,
       // ^^^ playbackEnd
     ] = series;
     let data = {
       labels,
       datasets: [
         {
-          label: 'playing',
-          fillColor: 'green',
-          data: playingSeries,
+          label: 'playbackEncore',
+          fillColor: 'purple',
+          data: playbackEncoreSeries,
         },
         {
-          label: 'appQueued',
+          label: 'segmentDuration',
+          fillColor: 'green',
+          data: segmentDurationSeries,
+        },
+        {
+          label: 'playbackQueued',
           fillColor: 'yellow',
-          data: appQueuedSeries,
+          data: playbackQueuedSeries,
+        },
+        {
+          label: 'loadAsset',
+          fillColor: 'orange',
+          data: loadingAssetSeries,
         },
         {
           label: 'darkMatterDownload',
@@ -351,6 +412,14 @@ export default class AVPipeline extends React.Component {
             <Glyphicon glyph="pause" />
           </Button>
         </ButtonToolbar>
+        <Slider
+          min={1}
+          max={50}
+          defaultValue={20}
+          onChange={this.onMaxSegmentsChange}
+          style={{ width: '25%', display: 'inline' }}
+        />
+        <span>&nbsp;Showing max {this.state.maxNrSegments} segments</span>
         {content}
       </div>
     );

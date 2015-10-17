@@ -21,6 +21,14 @@ const DEFAULT = {
 
     // Very verbose socket.io logging!
     socketioLogs: false,
+
+    // If `true`, draw object boxes for detected events.
+    //
+    // Currently disabled because of
+    //
+    //  https://github.com/silklabs/silk-app/issues/546 and
+    //  https://github.com/silklabs/silk-app/issues/344
+    drawObjectBoxesFullscreenVideo: false,
   },
 };
 

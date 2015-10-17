@@ -2,7 +2,7 @@
 
 set -ex
 source build/envsetup.sh
-rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis will error out
+rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
 ./gonk/archive.sh $GONK dist
 
 if [[ $GONK != qemu ]]; then

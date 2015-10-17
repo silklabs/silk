@@ -11,7 +11,7 @@
   <include name="silk.xml"/>
 
   <!--
-    Minimum subset of LA.BR.1.1.2-01610-8x16.0.xml required to build Silk
+    Silk port to LA.BR.1.1.2-01610-8x16.0.xml
       <include name="android-5.1.1_r1.xml" />
    -->
 

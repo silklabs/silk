@@ -3,9 +3,9 @@
   "version": "0.0.1",
   "description": "releng<3dev",
   "scripts": {
-    "start": "DEBUG=* babel-node --harmony lib/server/main.js production",
-    "next2master": "babel-node --harmony lib/github-tool.js",
-    "triggerbuilds": "babel-node --harmony lib/trigger-builds.js",
+    "start": "DEBUG=* babel-node lib/server/main.js production",
+    "next2master": "DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
+    "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
     "lint": "eslint lib",
     "test": "npm run-script lint"
   },
@@ -23,13 +23,14 @@
     "express": "^4.12.3",
     "github-webhook-middleware": "0.0.2",
     "lodash.merge": "^3.3.2",
+    "log": "silklabs/log",
     "octokat": "^0.4.12",
     "promise-callback": "^3.0.3",
     "request-promise": "^0.4.3",
     "travis-ci": "^2.0.3"
   },
   "engines": {
-    "node": ">=0.12.x"
+    "node": ">=4.1.x"
   },
   "engineStrict": true,
   "eslintConfig": {

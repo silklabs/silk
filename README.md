@@ -145,10 +145,8 @@ if they resolve issues targeted for the next release.
 | [silk-server](https://github.com/silklabs/silk-server/compare/next...master)
 | [silk-webapp](https://github.com/silklabs/silk-webapp/compare/next...master)
 
-##  Release Engineering Tools
+## Release Engineering Tools
 
 * `./fml.sh` - Prepares the *next* branch to begin stabilizating for release.
 * `./release.sh` - Finishes the current release.
 
-## Training
-Please familiarize yourself with the following [background material](https://www.rubegoldberg.com/gallery/).

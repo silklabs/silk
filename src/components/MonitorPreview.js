@@ -35,6 +35,7 @@ export default class extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
+    configuring: React.PropTypes.bool,
     serverConnectionStatus: React.PropTypes.oneOf(Object.keys(CONNECTION_STATUS_LABELS)),
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
@@ -47,13 +48,7 @@ export default class extends React.Component {
     previewWidth: null,
   };
 
-  onPreviewFrame = (message) => {
-    this._queue.push(message);
-  };
-
   componentWillMount() {
-    let { socket, deviceId } = this.props;
-
     this._queue = new PreviewQueue(this.props.label, message => {
       this.setState({
         blob: message.frame,
@@ -61,10 +56,27 @@ export default class extends React.Component {
       });
     });
 
+    if (!this.props.configuring) {
+      this.connectToSocket();
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.configuring && !nextProps.configuring) {
+      this.connectToSocket();
+    }
+  }
+
+  connectToSocket() {
+    let { socket, deviceId } = this.props;
     let stream = `preview-${deviceId}`;
     socket.on(stream, this.onPreviewFrame);
     socket.join(stream);
   }
+
+  onPreviewFrame = (message) => {
+    this._queue.push(message);
+  };
 
   componentWillUnmount() {
     let { socket, deviceId } = this.props;
@@ -135,10 +147,14 @@ export default class extends React.Component {
     }
 
     let preview = null;
-    if (this.state.blob) {
+    if (this.props.configuring) {
+      preview = (
+        <Text style={styles.newDevicePlus}>+</Text>
+      );
+    } else if (this.state.blob) {
       preview = <ImageView style={styles.preview} blob={this.state.blob} />;
     } else {
-      preview = <ActivityIndicatorIOS />;
+      preview = <ActivityIndicatorIOS color="white" />;
     }
 
     return (
@@ -190,7 +206,7 @@ const styles = StyleSheet.create({
   },
 
   monitorPreviewContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#99a0a4',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -202,6 +218,11 @@ const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     right: 0,
+  },
+
+  newDevicePlus: {
+    color: 'white',
+    fontSize: 120,
   },
 
   placeholderPreview: {

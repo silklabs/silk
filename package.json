@@ -3,13 +3,13 @@
   "version": "0.0.1",
   "description": "releng<3dev",
   "scripts": {
-    "start": "DEBUG=* babel-node lib/server/main.js production",
-    "next2master": "DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
-    "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
     "lint": "eslint lib",
+    "next2master": "DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
     "preinstall": "./bin/preinstall",
-    "test": "npm run-script lint"
+    "start": "DEBUG=* babel-node lib/server/main.js production",
+    "test": "npm run-script lint",
+    "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js"
   },
   "license": "proprietary",
   "dependencies": {

@@ -107,7 +107,9 @@ class MonitorsView extends AsyncComponent {
       }, SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS);
     }
 
-    this.setState(newState);
+    if (Object.keys(newState)) {
+      this.setState(newState);
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -327,7 +329,7 @@ class MonitorsView extends AsyncComponent {
   onVideoStreamDelete = (msg) => {
     log.info('deleted video stream', msg.id);
     delete this.state.devices[msg.id];
-    this.mounted && this.setState(this.state);
+    this.mounted && this.setState({devices: this.state.devices});
   };
 
   refreshDeviceList = () => {
@@ -335,6 +337,7 @@ class MonitorsView extends AsyncComponent {
       return;
     }
 
+    let dirtyState = false;
     let { devices } = this.state;
     let bleDevices = this.props.bleDeviceManager.enumerateDevices();
     bleDevices.forEach(peripheral => {
@@ -357,11 +360,15 @@ class MonitorsView extends AsyncComponent {
           configuring: true,
           logo: null,
         };
+        dirtyState = true;
       }
 
-      // update status, use error message if exists
-      existingRecord.serverConnectionStatus =
+      let serverConnectionStatus =
         peripheral.error ? peripheral.error : peripheral.serverConnectionStatus;
+      if (existingRecord.serverConnectionStatus !== serverConnectionStatus) {
+        existingRecord.serverConnectionStatus = serverConnectionStatus;
+        dirtyState = true;
+      }
     });
 
     let stillConnectedDeviceIds = bleDevices
@@ -378,7 +385,10 @@ class MonitorsView extends AsyncComponent {
 
       // No longer receiving status update (over BLE), so clear status to not
       // show potentially stale data
-      devices[deviceId].serverConnectionStatus = null;
+      if (devices[deviceId].serverConnectionStatus !== null) {
+        devices[deviceId].serverConnectionStatus = null;
+        dirtyState = true;
+      }
 
       // We have not received a server-sent event. Give the device
       // some time to connect to the server. After that, delete
@@ -392,11 +402,13 @@ class MonitorsView extends AsyncComponent {
             return;
           }
           delete this.state.devices[deviceId];
-          this.mounted && this.setState(this.state);
+          this.mounted && this.setState({devices: this.state.devices});
         }, NEW_DEVICE_CONNECTION_TIMEOUT_MS);
       }
     });
-    this.setState(this.state);
+    if (dirtyState) {
+      this.setState({devices});
+    }
   };
 
   // Activity feed management

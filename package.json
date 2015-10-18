@@ -24,7 +24,7 @@
     "express": "^4.12.3",
     "github-webhook-middleware": "0.0.2",
     "lodash.merge": "^3.3.2",
-    "log": "silklabs/log",
+    "log": "git@github.com:silklabs/log.git#master",
     "octokat": "^0.4.12",
     "promise-callback": "^3.0.3",
     "request-promise": "^0.4.3",

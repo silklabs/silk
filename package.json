@@ -123,7 +123,7 @@
     "localforage": "^1.2.10"
   },
   "engines": {
-    "node": ">=0.12.x"
+    "node": ">=4.1.0"
   },
   "engineStrict": true
 }

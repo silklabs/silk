@@ -8,6 +8,7 @@
     "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
     "lint": "eslint lib",
+    "preinstall": "./bin/preinstall",
     "test": "npm run-script lint"
   },
   "license": "proprietary",

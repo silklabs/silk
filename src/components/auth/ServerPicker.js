@@ -28,10 +28,12 @@ if (match && match[1]) {
   if (bundleHost.indexOf(':') !== -1) {
     bundleHost = bundleHost.split(':')[0];
   }
-  SERVERS.push({
-    name: `JS bundle host (${bundleHost})`,
-    value: `http://${bundleHost}:5000`,
-  });
+  if (bundleHost !== 'localhost') {
+    SERVERS.push({
+      name: `JS bundle host (${bundleHost})`,
+      value: `http://${bundleHost}:5000`,
+    });
+  }
 }
 
 export default class extends React.Component {

@@ -6,6 +6,7 @@
     "start": "DEBUG=* babel-node lib/server/main.js production",
     "next2master": "DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
     "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
+    "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
     "lint": "eslint lib",
     "test": "npm run-script lint"
   },

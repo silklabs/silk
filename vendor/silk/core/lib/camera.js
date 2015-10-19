@@ -174,6 +174,7 @@ class CameraStream extends EventEmitter {
     if (this._cvVideoCapture) {
       this._cvVideoCapture.close();
       this._cvVideoCapture = null;
+      this._cvVideoCaptureBusy = false;
     }
     this._ctlSocket.destroy();
     this._ctlSocket = null;
@@ -212,17 +213,27 @@ class CameraStream extends EventEmitter {
     log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
     this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+
+      if (!this._cvVideoCapture) {
+        // Initialize the OpenCV video capture before sending 'init' to the
+        // capture process.  There is currently a messy coupling between these
+        // two operations due to the multiple entry points into the
+        // capture process (OpenCV over binder, 'init' over a socket)
+        try {
+          this._cvVideoCapture = new cv.VideoCapture(0);
+        } catch (err) {
+          if (this._startPromiseCallbacks) {
+            return this._startPromiseCallbacks.reject(err);
+          }
+          throw err;
+        }
+      }
+
       this._buffer = '';
       this._ready = true;
       if (cmdData) {
         this._videoWidth = cmdData.width;
         this._videoHeight = cmdData.height;
-
-        // Initialize the OpenCV video capture before sending 'init' to the
-        // capture process.  There is currently a messy coupling between these
-        // two operations due to the multiple entry points into the
-        // capture process (OpenCV over binder, 'init' over a socket)
-        this._cvVideoCapture = new cv.VideoCapture(0);
 
         PREVIEW_WIDTH = cmdData.width / PREVIEW_SCALE;
         PREVIEW_HEIGHT = cmdData.height / PREVIEW_SCALE;
@@ -264,9 +275,11 @@ class CameraStream extends EventEmitter {
         let delay = 1000 / (FPS / PREVIEW_SKIP_COUNT);
         this._previewInterval = setInterval(() => this._readPreviewFrame(), delay);
 
-        this.emit('start');
+        if (this._startPromiseCallbacks) {
+          this._startPromiseCallbacks.resolve();
+        }
       } else if (captureEvent.eventName === 'stopped') {
-        this.emit('stop');
+        throw new Error('Camera stop unhandled');
       } else {
         log.warn(`Error: Unknown capture command ${line}`);
       }
@@ -416,22 +429,25 @@ class CameraStream extends EventEmitter {
     log.verbose(`camera << ${event}`);
   }
 
-  ready() {
-    return this._ready;
-  }
-
   /**
    * Initialize camera
    */
-  start() {
-    let initargs = {
+  async start() {
+    if (this._startPromiseCallbacks) {
+      throw new Error('Re-entered start?');
+    }
+
+    let startPromise = new Promise((resolve, reject) => {
+      this._startPromiseCallbacks = { resolve, reject };
+    });
+    this._init({
       frameInterval: DURATION,
       width: WIDTH,
       height: HEIGHT,
       fps: FPS,
       vbr: VBR,
-    };
-    this._init(initargs);
+    });
+    await startPromise;
   }
 
   /**

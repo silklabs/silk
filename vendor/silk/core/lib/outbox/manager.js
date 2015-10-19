@@ -10,7 +10,7 @@ import assert from 'assert';
 import fs from 'mz/fs';
 import path from 'path';
 import createLog from '../log';
-import { getintprop } from '../sysutils';
+import { getintprop, randBetween } from '../sysutils';
 
 import { EventEmitter } from 'events';
 import Queue from './queue';
@@ -19,22 +19,35 @@ import Operation from './operation';
 const log = createLog('outbox:manager');
 
 const DEFAULT_STORAGE_PATH = path.join(process.cwd(), '/.outbox');
-const DEFUALT_QUEUE_NAME = 'default-queue';
 const DEFAULT_POLL_INTERVAL = 1000; // 1 second
 const MAX_BACKOFF = (1000 * 60) * 60; // 1 hour
+const OUTBOX_CONCURRENCY_PROP = 'persist.silk.outconcurrency';
+
+const DEFUALT_QUEUE_NAME = 'default-queue';
+const DEFAULT_QUEUE_CONCURRENCY = getintprop(OUTBOX_CONCURRENCY_PROP, 2);
+
+/**
+ * Maximum amount of time to stagger the queue polling intervals.
+ */
+const QUEUE_CHECK_STAGGER_MS = 30;
 
 export class Outbox {
   /**
    * Where on disk we will store outstanding uploads.
    */
-  storagePath = null
+  storagePath = DEFAULT_STORAGE_PATH;
 
   // Default queue
-  queue = null
+  queues = new Map();
+
+  _online = true;
 
   set online(value) {
     log.info(`status online = ${value}`);
-    this.queue.online = value;
+    this._online = false;
+    for (let [name, queue] of this.queues) {
+      queue.online = value;
+    }
   }
 
   /**
@@ -42,14 +55,23 @@ export class Outbox {
    * but we don't need that complexity now.
    */
   get online() {
-    return this.queue.online;
+    return this._online;
+  }
+
+  constructor(options = {}) {
+    Object.assign(this, options);
   }
 
   /**
    * Begin checking for operations...
    */
   start(interval = DEFAULT_POLL_INTERVAL) {
-    this.queue.start(interval);
+    for (let [name, queue] of this.queues) {
+      // Stagger when we start the work
+      let queueInterval = interval + randBetween(1, QUEUE_CHECK_STAGGER_MS);
+      log.info(`Will check ${name} every ${queueInterval}`);
+      queue.start(queueInterval);
+    }
   }
 
   /**
@@ -58,49 +80,76 @@ export class Outbox {
    * (implicitly bound to self so we can remove it later from hint)
    */
   resetBackOff = () => {
-    return this.queue.resetBackOff();
+    for (let [, queue] of this.queues) {
+      queue.resetBackOff();
+    }
   }
 
   shutdown() {
-    return this.queue.shutdown();
+    let pending = [];
+    for (let [, queue] of this.queues) {
+      pending.push(queue.shutdown());
+    }
+    return Promise.all(pending);
   }
 
   /**
    * Stop checking for pending operations...
    */
   stop() {
-    return this.queue.stop();
-  }
-
-  constructor(options = {}) {
-    Object.assign(this, options);
+    let pending = [];
+    for (let [, queue] of this.queues) {
+      pending.push(queue.stop());
+    }
+    return Promise.all(pending);
   }
 
   // XXX: Purely for future compatibility.
   registerOperation(operationClass) {
     assert(operationClass.BLOB_NAME, 'must have .BLOB_NAME');
     assert(operationClass.METATADATA_NAME, 'must have .METATADATA_NAME');
-    this.queue.operations[operationClass.NAME] = operationClass;
+    for (let [, queue] of this.queues) {
+      queue.operations[operationClass.NAME] = operationClass;
+    }
   }
 
+  registerQueue(queueName, options) {
+    if (this.queues.has(queueName)) {
+      throw new Error(`Cannot re-register queue ${queueName}`);
+    }
+
+    let storagePath = path.join(this.storagePath, queueName);
+    let queue = new Queue(Object.assign({}, options, { storagePath }));
+    queue.online = this.online;
+    return this.queues.set(queueName, queue);
+  }
+
+  /**
+   * Enqueue an operation on the default queue...
+   */
   addToQueue(operation, readable) {
-    return this.queue.add(operation, readable);
+    return this.enqueue(DEFUALT_QUEUE_NAME, operation, readable);
+  }
+
+  /**
+   * Enqueue an operation on a specific named field.
+   */
+  enqueue(queueName, operation, readable) {
+    if (!this.queues.has(queueName)) {
+      throw new Error(`${queueName} is not a valid queue name`);
+    }
+    return this.queues.get(queueName).add(operation, readable);
   }
 }
 
 export default function createOutbox(options) {
-  // Find the storage path where pending operations are being held.
-  let storagePath = options.storagePath || DEFAULT_STORAGE_PATH;
-  let queueStoragePath = path.join(storagePath, DEFUALT_QUEUE_NAME);
-  // Operations for the default queue on disk...
+  let outbox = new Outbox(Object.assign({}, options));
 
-  /**
-   * TODO: For the moment we have one single queue and no concept of different
-   * types of throttling or priority _maybe_ that is fine forever but probably
-   * not. This interface is designed so we can easily make it more complex and
-   * span to N queues.
-   */
-  let queue = new Queue(queueStoragePath);
+  // Register the default queue (mostly for legacy purposes over time we will
+  // migrate away from a single default queue).
+  outbox.registerQueue(DEFUALT_QUEUE_NAME, {
+    concurrency: DEFAULT_QUEUE_CONCURRENCY
+  });
 
-  return new Outbox(Object.assign({}, options, { queue }));
+  return outbox;
 }

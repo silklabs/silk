@@ -119,9 +119,12 @@ export default class Queue extends EventEmitter {
     }, []);
   }
 
-  constructor(storagePath) {
+  constructor(options) {
     super();
-    this.storagePath = storagePath;
+    Object.assign(this, options);
+
+    assert.ok(this.concurrency && this.concurrency > 0);
+    assert.ok(this.storagePath);
 
     /**
      * It's very important we start outbox synchronously so we can immediately
@@ -146,7 +149,6 @@ export default class Queue extends EventEmitter {
   }
 
   add(operation, readable) {
-
     // Do not process add operations until disk queue has been loaded...
     if (this._pendingDiskQueueLoad) {
       return this._pendingDiskQueueLoad.then(() => {

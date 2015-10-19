@@ -10,6 +10,7 @@ import createLog from 'log';
 import opencv from 'opencv';
 import path from 'path';
 import NetworkStatus from 'network_status';
+import Timeline from 'timeline';
 import createOutbox from 'outbox';
 
 const PREVIEW_WIDTH = 320;
@@ -76,7 +77,7 @@ class TestFramework {
     this.networkStatus = new NetworkStatus(this.wifi);
     this.outbox = createOutbox(this.networkStatus);
     this.battery = require('battery');
-    this.timeline = require('timeline')('test_id', this.outbox);
+    this.timeline = new Timeline('test_id', this.outbox);
     this.camera = new FakeCamera();
     this.opencv = opencv;
     this.util = require('sysutils');

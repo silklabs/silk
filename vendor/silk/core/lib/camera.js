@@ -13,6 +13,15 @@ import net from 'net';
 import cv from 'opencv';
 import CBuffer from 'CBuffer';
 
+type RawHalFace = {
+  rect: [number, number, number, number];
+  score: number;
+  id: number;
+  leftEye: [number, number];
+  rightEye: [number, number];
+  mouth: [number, number];
+};
+
 //const FRONT = 1;
 //const BACK = 0;
 
@@ -80,7 +89,7 @@ let FLASH_MODE = {
  * objects with fields named after `camera_face_t` in
  * system/core/include/system/camera.h.
  */
-function rawFaceArrayToFaces(buf) {
+function rawFaceArrayToFaces(buf): Array<RawHalFace> {
   const SIZEOF_CAMERA_FACE_T = 12 * 4;
   if (buf.length % SIZEOF_CAMERA_FACE_T) {
     throw `Raw face array has invalid length ${buf.length}`;

@@ -79,7 +79,7 @@ export class Outbox {
     for (let [, queue] of this.queues) {
       queue.resetBackOff();
     }
-  }
+  };
 
   shutdown() {
     let pending = [];

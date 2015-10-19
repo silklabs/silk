@@ -145,7 +145,10 @@ class MonitorsView extends AsyncComponent {
 
   _getPreviewSize(deviceId) {
     let device = this.state.streaming[deviceId];
-    if (device && device.previewSize) {
+    if (device &&
+        device.previewSize &&
+        device.previewSize.width &&
+        device.previewSize.height) {
       return device.previewSize;
     }
     return {

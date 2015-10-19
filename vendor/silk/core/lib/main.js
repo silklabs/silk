@@ -96,8 +96,8 @@ function boot() {
       // Wait for the battery to initialize and block until there's enough
       // capacity to fully boot.
       return battery.init();
-    }).
-    then(() => {
+    })
+    .then(() => {
       log.info('Initialize hardware');
       return Promise.all([
         wifi.init(),
@@ -106,8 +106,8 @@ function boot() {
         }),
         sensors.init(),
       ]);
-    }).
-    then(() => {
+    })
+    .then(() => {
       log.info('Initialize framework');
 
       // It's preferable to kill this process over system daemons
@@ -120,7 +120,9 @@ function boot() {
       camera.on('error', () => {
         log.warn('Camera command errored out');
       });
-      camera.start();
+      return camera.start();
+    })
+    .then(() => {
 
       diag = require('./diag')(id.toString());
 
@@ -171,6 +173,10 @@ function main() {
 main().catch(err => {
   log.fatal(`Initialization error: ${err}`);
   util.processthrow(err);
+  //
+  // TODO: We may want to eventually reboot-and-pray in this situation as the
+  //       device is now essentially nonoperational.
+  //
 });
 
 /**

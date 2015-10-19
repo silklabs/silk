@@ -43,7 +43,7 @@ export default class CameraPreview extends React.Component {
 
   render() {
     let camera = this.state.camera;
-    if (!camera) {
+    if (!camera || !camera.previewSize) {
       return <canvas />;
     }
     let {width, height} = camera.previewSize;

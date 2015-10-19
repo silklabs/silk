@@ -9,17 +9,33 @@ import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 
 let {
+  ActivityIndicatorIOS,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } = React;
 
+
+const CONNECTION_STATUS_LABELS = {
+  'server_disconnected': 'server disconnected',
+  'server_connecting': 'connecting to server',
+  'server_connected': 'connected to server',
+  'wifi_offline': 'not connected to WiFi',
+  'wifi_scanning': 'scanning for WiFi networks',
+  'wifi_associating': 'connecting to WiFI',
+  'wifi_associated': 'connecting to WiFi',
+  'wifi_authenticating': 'authenticating with WiFi',
+  'wifi_connected': 'connected to WiFi',
+  'wifi_dhcping': 'configuring WiFi',
+  'wifi_online': 'connected to WiFi',
+};
+
 export default class extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
-    status: React.PropTypes.string.isRequired,
+    serverConnectionStatus: React.PropTypes.oneOf(Object.keys(CONNECTION_STATUS_LABELS)),
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
     api: React.PropTypes.object.isRequired,
@@ -62,14 +78,15 @@ export default class extends React.Component {
   }
 
   render() {
-    let { status } = this.props;
-    if (status) {
-      status = `(${status})`;
+    let { label, serverConnectionStatus } = this.props;
+    if (serverConnectionStatus) {
+      let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
+      label = `${label} (${statusLabel})`;
     }
     return (
       <View style={styles.monitorContainer}>
         <View style={styles.monitorLabelContainer}>
-          <Text style={styles.monitorLabel}>{this.props.label} {status}</Text>
+          <Text style={styles.monitorLabel}>{label}</Text>
         </View>
         {this._renderPreview()}
       </View>
@@ -117,11 +134,18 @@ export default class extends React.Component {
       );
     }
 
+    let preview = null;
+    if (this.state.blob) {
+      preview = <ImageView style={styles.preview} blob={this.state.blob} />;
+    } else {
+      preview = <ActivityIndicatorIOS />;
+    }
+
     return (
       <TouchableOpacity
         onPress={this.props.onPress}
         style={[styles.monitorPreviewContainer, previewStyle]}>
-        <ImageView style={styles.preview} blob={this.state.blob} />
+        {preview}
         {logo}
         <View style={styles.monitorPreviewOverlay}>
           {objects}
@@ -168,6 +192,8 @@ const styles = StyleSheet.create({
   monitorPreviewContainer: {
     backgroundColor: 'white',
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   preview: {

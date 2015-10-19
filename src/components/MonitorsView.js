@@ -4,6 +4,7 @@
 import React from 'react-native';
 let {
   ActivityIndicatorIOS,
+  AlertIOS,
   AppStateIOS,
   PixelRatio,
   ScrollView,
@@ -14,6 +15,7 @@ let {
 
 import createLog from 'log';
 
+import BLECentral from '../libraries/btle/BLECentral';
 import DeviceManager from '../libraries/btle/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 
@@ -24,7 +26,7 @@ import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
 
-const log = createLog('MonitorPreview');
+const log = createLog('MonitorsView');
 
 const PERIPH_EVENTS = [
   'discover',
@@ -51,7 +53,6 @@ class MonitorsView extends AsyncComponent {
   static propTypes = {
     api: React.PropTypes.object.isRequired, // TODO: we can do better here
     hasNetwork: React.PropTypes.bool.isRequired,
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
   };
@@ -70,16 +71,23 @@ class MonitorsView extends AsyncComponent {
   };
 
   mounted = false;
+  bleDeviceManager = null;
 
   componentWillMount() {
-    PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.on(ev, this.refreshDeviceList));
+    this.bleDeviceManager = new DeviceManager(
+      BLECentral,
+      this.props.userState
+    );
+    PERIPH_EVENTS.forEach(ev => this.bleDeviceManager.on(ev, this.refreshDeviceList));
+    this.bleDeviceManager.start();
+
     this.subscribeToSocket();
     AppStateIOS.addEventListener('change', this.onAppStateChange);
     this.mounted = true;
   }
 
   componentWillUnmount() {
-    PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
+    PERIPH_EVENTS.forEach(ev => this.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
     AppStateIOS.removeEventListener('change', this.onAppStateChange);
     this.mounted = false;
   }
@@ -142,7 +150,47 @@ class MonitorsView extends AsyncComponent {
   };
 
   configureDevice(deviceId) {
-    // TODO
+    let device = this.state.devices[deviceId];
+    if (!device) {
+      this._showConfigError();
+      return;
+    }
+
+    this.props.navigator.pushAsync({
+      name: 'DeviceTouch',
+      props: {
+        deviceId,
+        bleDeviceManager: this.bleDeviceManager,
+      },
+    });
+
+    this.bleDeviceManager.configureDevice(device.peripheralId, this._onDeviceTouch)
+      .catch((err) => {
+        log.info('Could not configure device', err);
+        this._showConfigError();
+        this.props.navigator.popToTopAsync();
+      });
+  }
+
+  _onDeviceTouch = () => {
+    return new Promise((resolve, reject) => {
+      this.props.navigator.pushAsync({
+        name: 'DeviceConfig',
+        props: {
+          onActivate: (config) => {
+            this.props.navigator.popToTopAsync();
+            resolve(config);
+          },
+        },
+      });
+    });
+  };
+
+  _showConfigError() {
+    AlertIOS.alert(
+      'Error Configuring Device',
+      'The device could not be configured. Ensure that it is turned on and nearby.'
+    );
   }
 
   _getPreviewSize(deviceId) {
@@ -339,7 +387,7 @@ class MonitorsView extends AsyncComponent {
 
     let dirtyState = false;
     let { devices } = this.state;
-    let bleDevices = this.props.bleDeviceManager.enumerateDevices();
+    let bleDevices = this.bleDeviceManager.enumerateDevices();
     bleDevices.forEach(peripheral => {
       if (!peripheral.deviceId) {
         // We haven't fetched the deviceId for the peripheral yet.
@@ -354,6 +402,7 @@ class MonitorsView extends AsyncComponent {
         // or is still in the process of connecting to the
         // server. Create a placeholder widget for it that will be
         // swapped out once we get the device info from the server.
+        log.info(`Detected new device with ID ${peripheral.id}, device ID ${peripheral.deviceId}`);
         existingRecord = devices[peripheral.deviceId] = {
           peripheralId: peripheral.id,
           name: 'New Device',

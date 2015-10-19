@@ -135,7 +135,7 @@ export default class Operation {
     let result = await this._write(readable);
     assert(('done' in result), '._write result must contain .done');
 
-    if (!result.done) {
+    if (!result.done && this.constructor.REQUIRES_BLOB) {
       assert(
         result.remainder,
         '._write result with done=false must include remainder'

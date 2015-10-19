@@ -23,10 +23,6 @@ const SOUND_DIR = '/system/silk/media/sound/';
 
 // Throws an exception to the top level process exception handler, escaping any
 // Promises that might otherwise consume the exception.
-//
-// This facility is deprecated as crashreport.js now receives an
-// unhandledRejection event for uncaught promise rejections
-//
 export function processthrow(e) {
   process.emit('uncaughtException', e);
 }

@@ -13,6 +13,9 @@ import createLog from './log';
 import request from 'request';
 import validator from 'validator';
 
+import baseversion from './base_version';
+import coreversion from 'core_version';
+
 import { EventEmitter } from 'events';
 
 const log = createLog('update');
@@ -34,9 +37,6 @@ const CHANNEL = util.getprop(CHANNEL_PROP);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP);
-
-// TODO: Set this to false for engineering builds somehow.
-const IGNORE_SAME_FINGERPRINT = true;
 
 const isValidUpdateURLOptions = {
   protocols: ['https'],
@@ -109,11 +109,11 @@ function createRequestPromise(options) {
           try {
             body = JSON.parse(body);
           } catch(e) {
-            reject(e);
+            reject(`Invalid server response: ${e.stack}`);
             return;
           }
         }
-        resolve({ response: response, body: body });
+        resolve({ response, body });
       });
     });
 
@@ -300,7 +300,6 @@ function validateManifest(result) {
     return Promise.reject();
   }
 
-  // Examine the fingerprint to see if we need to update.
   let status = result.response.statusCode;
   if (status !== 200) {
     // Bail out.
@@ -308,78 +307,134 @@ function validateManifest(result) {
     return Promise.reject();
   }
 
-  let metadata = result.body[DEVICE];
-  if (!metadata) {
+  let deviceMetadata = result.body[DEVICE]; // Unsanitized server response
+  if (!deviceMetadata) {
     log.info(`Update server responded with nothing available for "${DEVICE}" ` +
              'device');
     return Promise.reject();
   }
 
-  // Validate the fingerprint.
-  let fingerprint = metadata.fingerprint;
-  if (!fingerprint) {
-    // Bail out.
-    log.warn('Update server responded with no fingerprint');
-    return Promise.reject();
+  function getBuildMetadata(deviceMetadata, buildType) {
+    let buildMetadata = deviceMetadata[buildType];
+    if (buildMetadata === null || typeof(buildMetadata) !== 'object') {
+      return null;
+    }
+
+    switch (buildType) {
+    case 'silk':
+      if (!buildMetadata.base_version) {
+        log.warn('Update server responded with no base_version');
+        return null;
+      }
+      if (!buildMetadata.core_version) {
+        log.warn('Update server responded with no core_version');
+        return null;
+      }
+      break;
+    case 'full':
+      // Validate the fingerprint.
+      let fingerprint = buildMetadata.fingerprint;
+      if (!fingerprint) {
+        log.warn('Update server responded with no fingerprint');
+        return null;
+      }
+      break;
+    default:
+      throw new Error(`Unknown buildType: ${buildType}`);
+    }
+
+    // Validate URL.
+    let url = buildMetadata.url;
+    if (!url) {
+      log.warn('Update server responded with no url');
+      return null;
+    }
+
+    if (!validator.isURL(url, isValidUpdateURLOptions)) {
+      log.warn(`Update server responded with an invalid url: "${url}"`);
+      return null;
+    }
+
+    // Validate size.
+    if (!buildMetadata.size) {
+      log.warn('Update server responded with empty size download');
+      return null;
+    }
+
+    let parsedSize = parseInt(buildMetadata.size);
+    if (isNaN(parsedSize)) {
+      log.warn(`Update server responded with invalid size ${buildMetadata.size}`);
+      return null;
+    }
+
+    buildMetadata.size = parsedSize;
+
+    // Validate sha1.
+    if (!buildMetadata.sha1) {
+      log.warn('Update server responded with no sha1 hash');
+      return null;
+    }
+
+    if (!validator.isHexadecimal(buildMetadata.sha1)) {
+      // Bail out.
+      log.warn('Update server responded with an invalid sha1: ' +
+               `"${buildMetadata.sha1}"`);
+      return null;
+    }
+
+    buildMetadata.sha1 = buildMetadata.sha1.toLowerCase();
+    return buildMetadata;
   }
 
-  if (IGNORE_SAME_FINGERPRINT && fingerprint === FINGERPRINT) {
-    // Bail out.
+  // Select an update from options provided by the server.  Prefer the smaller
+  // 'silk' update which only affects /system/silk and falling back to a 'full'
+  // update of the entire device software.
+  currentMetadata = null;
+  ['silk', 'full'].forEach(buildType => {
+    if (currentMetadata) {
+      return; // Already found a build
+    }
+
+    let buildMetadata = getBuildMetadata(deviceMetadata, buildType);
+    if (!buildMetadata) {
+      return;
+    }
+
+    const FORCE_UPDATE = false; // true can be helpful debugging
+    switch (buildType) {
+    case 'silk':
+      // Ensure the base gonk is compatible before accepting a partial /system
+      // update.
+      if (buildMetadata.base_version === baseversion) {
+        if (buildMetadata.core_version !== coreversion || FORCE_UPDATE) {
+          // Different fingerprint, select this build
+          currentMetadata = buildMetadata;
+          log.info('Selected "silk" update');
+        } else {
+          log.verbose('Already running the latest "silk" update');
+        }
+      } else {
+        log.verbose('base version mismatch for "silk" update');
+      }
+      break;
+    case 'full':
+      if (buildMetadata.fingerprint !== FINGERPRINT || FORCE_UPDATE) {
+        // Different fingerprint, select this build
+        currentMetadata = buildMetadata;
+        log.info('Selected "full" update');
+      } else {
+        log.verbose('Already running the latest "full" update');
+      }
+      break;
+    default:
+      throw new Error(`Unknown buildType: ${buildType}`);
+    }
+  });
+
+  if (!currentMetadata) {
     log.info('No update available');
     return Promise.reject();
   }
-
-  log.info(`Update server responded with fingerprint "${fingerprint}"`);
-
-  // Validate URL.
-  let url = metadata.url;
-  if (!url) {
-    // Bail out.
-    log.warn('Update server responded with no url');
-    return Promise.reject();
-  }
-
-  if (!validator.isURL(url, isValidUpdateURLOptions)) {
-    // Bail out.
-    log.warn(`Update server responded with an invalid url: "${url}"`);
-    return Promise.reject();
-  }
-
-  // Validate size.
-  if (!metadata.size) {
-    // Bail out.
-    log.warn('Update server responded with empty size download');
-    return Promise.reject();
-  }
-
-  let parsedSize = parseInt(metadata.size);
-  if (isNaN(parsedSize)) {
-    // Bail out.
-    log.warn(`Update server responded with invalid size ${metadata.size}`);
-    return Promise.reject();
-  }
-
-  metadata.size = parsedSize;
-
-  // Validate sha1.
-  if (!metadata.sha1) {
-    // Bail out.
-    log.warn('Update server responded with no sha1 hash');
-    return Promise.reject();
-  }
-
-  if (!validator.isHexadecimal(metadata.sha1)) {
-    // Bail out.
-    log.warn('Update server responded with an invalid sha1: ' +
-             `"${metadata.sha1}"`);
-    return Promise.reject();
-  }
-
-  metadata.sha1 = metadata.sha1.toLowerCase();
-
-  // Save this for later promises.
-  currentMetadata = metadata;
-
   return Promise.resolve();
 }
 
@@ -496,6 +551,9 @@ function stageUpdate() {
 
 function cleanup(err) {
   if (err) {
+    if (err.stack) {
+      util.processthrow(err);
+    }
     log.warn(`Update poll error: ${err}`);
   }
 

@@ -122,7 +122,7 @@ export default class extends AsyncComponent {
       navigator,
       route,
     };
-    return <Component {...props} />;
+    return <Component {...props} {...route.props} />;
   };
 
   onForward() {

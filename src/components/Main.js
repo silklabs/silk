@@ -177,9 +177,11 @@ export default class extends React.Component {
       this.props.navigator.pushAsync({
         name: 'WifiSettings',
         index: 1,
-        hints: hints,
-        resolve: resolve,
-        reject: reject,
+        props: {
+          hints,
+          resolve,
+          reject,
+        },
       });
     });
   }

@@ -72,29 +72,6 @@ suite('outbox manager', () => {
     subject.registerOperation(NoBufferOp);
   });
 
-  test('Queue.searchDirectory', async () => {
-    let storagePath = path.join(FIXTURE_DIR, 'queue');
-    await mkdirp(storagePath);
-
-    await Promise.all([
-      // Create some valid directories...
-      mkdirp(path.join(storagePath, '1')),
-      mkdirp(path.join(storagePath, '2')),
-      mkdirp(path.join(storagePath, '1000')),
-
-      // Some things which look like directories
-      fs.writeFile(path.join(storagePath, '1001'), ''),
-      fs.writeFile(path.join(storagePath, '3'), ''),
-
-      // Not number junk wtf is this stuff
-      fs.writeFile(path.join(storagePath, '.imessyouup')),
-      mkdirp(path.join(storagePath, '.imessyouupdir')),
-    ]);
-
-    let result = await Queue.searchDirectory(storagePath);
-    assert.deepEqual(result, [1, 2, 1000]);
-  });
-
   suite('with running queue', () => {
 
     test('online success', async () => {

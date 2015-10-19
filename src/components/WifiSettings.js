@@ -3,8 +3,13 @@
 
 'use strict';
 
-var React = require('react-native');
-var {
+import React from 'react-native';
+
+import { UserState } from '../libraries/UserState';
+
+import AsyncComponent from './AsyncComponent';
+
+let {
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -17,15 +22,20 @@ var {
   TouchableOpacity,
   View,
 } = React;
-import AsyncComponent from './AsyncComponent';
 
 const MIN_CONTENT_INSET_BOTTOM = 20;
 
 export default class WifiSettings extends AsyncComponent {
 
+  static propTypes = {
+    userState: React.PropTypes.instanceOf(UserState).isRequired,
+    resolve: React.PropTypes.func,
+    reject: React.PropTypes.func,
+  };
+
   constructor(props) {
     super(props);
-    let hints = props.route.hints;
+    let { hints } = props;
     this.state = {
       ssid: hints.ssid,
       secret: hints.secret,
@@ -141,9 +151,7 @@ export default class WifiSettings extends AsyncComponent {
   }
 
   cancel = () => {
-    if (this.props.route.reject) {
-      this.props.route.reject();
-    }
+    this.props.reject && this.props.reject();
     this.props.navigator.popAsync();
   };
 
@@ -154,8 +162,8 @@ export default class WifiSettings extends AsyncComponent {
         serverUrl.indexOf('https://') !== 0) {
       serverUrl = 'http://' + serverUrl;
     }
-    if (this.props.route.resolve) {
-      this.props.route.resolve({
+    if (this.props.resolve) {
+      this.props.resolve({
         ssid: this.state.ssid,
         secret: this.state.secret,
         serverUrl,

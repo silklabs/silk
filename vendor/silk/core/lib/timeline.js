@@ -330,7 +330,7 @@ class Timeline extends EventEmitter {
 
     // If for whatever reason this fails it will bubble up to the crash
     // reporter...
-    this.outbox.addToQueue(op, new BufferStream(frame));
+    this.outbox.enqueue('video', op, new BufferStream(frame));
   }
 
   _pushPacket(when, frame, objects, type, durationMs = 0) {

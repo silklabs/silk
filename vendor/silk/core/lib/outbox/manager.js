@@ -7,20 +7,16 @@
 /*eslint no-loop-func:0*/
 
 import assert from 'assert';
-import fs from 'mz/fs';
 import path from 'path';
 import createLog from '../log';
 import { getintprop, randBetween } from '../sysutils';
 
-import { EventEmitter } from 'events';
 import Queue from './queue';
-import Operation from './operation';
 
 const log = createLog('outbox:manager');
 
 const DEFAULT_STORAGE_PATH = path.join(process.cwd(), '/.outbox');
 const DEFAULT_POLL_INTERVAL = 1000; // 1 second
-const MAX_BACKOFF = (1000 * 60) * 60; // 1 hour
 const OUTBOX_CONCURRENCY_PROP = 'persist.silk.outconcurrency';
 
 const DEFUALT_QUEUE_NAME = 'default-queue';
@@ -29,7 +25,7 @@ const DEFAULT_QUEUE_CONCURRENCY = getintprop(OUTBOX_CONCURRENCY_PROP, 2);
 /**
  * Maximum amount of time to stagger the queue polling intervals.
  */
-const QUEUE_CHECK_STAGGER_MS = 30;
+const QUEUE_CHECK_STAGGER_MS = DEFAULT_POLL_INTERVAL * 0.1;
 
 export class Outbox {
   /**
@@ -45,7 +41,7 @@ export class Outbox {
   set online(value) {
     log.info(`status online = ${value}`);
     this._online = false;
-    for (let [name, queue] of this.queues) {
+    for (let [, queue] of this.queues) {
       queue.online = value;
     }
   }
@@ -119,7 +115,11 @@ export class Outbox {
     }
 
     let storagePath = path.join(this.storagePath, queueName);
-    let queue = new Queue(Object.assign({}, options, { storagePath }));
+    let queue = new Queue(Object.assign({}, options, {
+      storagePath,
+      name: queueName
+    }));
+
     queue.online = this.online;
     return this.queues.set(queueName, queue);
   }

@@ -16,7 +16,6 @@ import Operation from './operation';
 
 const log = createLog('outbox:queue');
 
-const DEFAULT_POLL_INTERVAL = 1000; // 1 second
 const MAX_BACKOFF = (1000 * 60) * 60; // 1 hour
 
 async function wrapNoEntity(promise, value = null) {
@@ -38,46 +37,49 @@ async function wrapNoEntity(promise, value = null) {
  */
 export default class Queue extends EventEmitter {
 
+  // Only used in logging...
+  name = 'default-queue';
+
   /**
    * Location where we persist data on disk.
    */
-  storagePath = null
+  storagePath = null;
   operations = {};
 
   /**
    * An array of promises holding all running "live" operations only used to
    * facilitate clean shutdowns.
    */
-  liveOperations = []
+  liveOperations = [];
 
   // Promise when loading disk queue...
-  _pendingDiskQueueLoad = null
+  _pendingDiskQueueLoad = null;
 
   /**
    * An array of directory names which are pending upload once the queue is
    * online.
    */
-  diskQueue = []
-  diskQueueState = new Map()
+  diskQueue = [];
+  diskQueueState = new Map();
 
   // setTimeout handle:
-  diskCheckHandle = null
+  diskCheckHandle = null;
   // Used to indicate if we should check for more work:
-  diskCheckRunning = false
+  diskCheckRunning = false;
 
   // How long to wait between checks to do more operations (in ms)
-  backoffInterval = 0
+  backoffInterval = 0;
   // Maximum number of allowed concurrent operations in the queue.
-  concurrency = 2
+  concurrency = 2;
   // Number of running operations in the queue (should always be < than
   // concurrency)
-  running = 0
+  running = 0;
 
   /**
    * When online the queue will attempt to write operations to their
    * destination. When false everything is immediately stored to disk.
    */
-  online = true
+  online = true;
 
   /**
    * Expected to be invoked by Outbox will return the list of pending items in a
@@ -205,7 +207,7 @@ export default class Queue extends EventEmitter {
     if (result.done) {
       this.emit('finished operation', operation);
       log.info(
-        'Successfully ran operation',
+        `Successfully ran operation on ${this.name}`,
         operation.constructor.name,
         `took ${Date.now() - start} ms`
       );

@@ -23,6 +23,15 @@ export default function(networkStatus) {
   });
 
   /**
+   * The outbox has a special queue specific to video uploads so we don't clog
+   * up the main queue with video (which is running constantly).
+   */
+  outbox.registerQueue('video', {
+    // TODO: This should be computed somehow
+    concurrency: 3
+  });
+
+  /**
    * Register all known operations so we can create them from disk as needed...
    */
   outbox.registerOperation(CrashReportOp);

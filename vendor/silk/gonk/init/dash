@@ -4,8 +4,11 @@
 #
 
 uptime
-echo -n "   Date: "; date
-echo -n "  Build: "; getprop ro.build.fingerprint
+echo -n "Date: "; date
+echo -n "Gonk: "; getprop ro.build.fingerprint
+node -e "\
+  console.log('Silk:', require('/system/silk/node_modules/core_version')); \
+"
 echo
 
 if [ -d /data/tombstones ]; then

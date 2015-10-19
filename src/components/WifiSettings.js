@@ -39,7 +39,6 @@ export default class WifiSettings extends AsyncComponent {
     this.state = {
       ssid: hints.ssid,
       secret: hints.secret,
-      serverUrl: hints.serverUrl,
       showSecret: false,
     };
   }
@@ -156,17 +155,10 @@ export default class WifiSettings extends AsyncComponent {
   };
 
   save = () => {
-    let { serverUrl } = this.state;
-    if (typeof serverUrl === 'string' &&
-        serverUrl.indexOf('http://') !== 0 &&
-        serverUrl.indexOf('https://') !== 0) {
-      serverUrl = 'http://' + serverUrl;
-    }
     if (this.props.resolve) {
       this.props.resolve({
         ssid: this.state.ssid,
         secret: this.state.secret,
-        serverUrl,
       });
     }
     // TODO save wifi to persistent DB --- here or elsewhere?

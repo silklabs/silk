@@ -1,6 +1,8 @@
 import React from 'react-native';
 import createLog from 'log';
 
+import { UserState } from '../../libraries/UserState';
+
 import AsyncComponent from '../AsyncComponent';
 import AuthForm from './AuthForm';
 import Button from './Button';
@@ -24,7 +26,7 @@ const DEVELOPER_CREDENTIALS = {};
 export default class extends AsyncComponent {
 
   static propTypes = {
-    userState: React.PropTypes.object,
+    userState: React.PropTypes.instanceOf(UserState).isRequired,
   };
 
   state = {
@@ -32,7 +34,6 @@ export default class extends AsyncComponent {
     inProgress: false,
     keyboardShown: false,
     contentInsetBottom: 0,
-    serverUrl: this.props.route.serverUrl,
   };
 
   componentWillMount() {

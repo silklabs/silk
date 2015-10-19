@@ -136,7 +136,13 @@ export default class extends React.Component {
   };
 
   save = () => {
-    Config.set({server: {url: this.state.serverUrl}});
+    let { serverUrl } = this.state;
+    if (typeof serverUrl === 'string' &&
+        serverUrl.indexOf('http://') !== 0 &&
+        serverUrl.indexOf('https://') !== 0) {
+      serverUrl = 'http://' + serverUrl;
+    }
+    Config.set({server: {url: serverUrl}});
     // Root view will take care of the rest.
   };
 }

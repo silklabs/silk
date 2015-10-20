@@ -88,7 +88,7 @@ procrank 2> /dev/null | (
 )
 
 echo Silk System Properties:
-( getprop | grep silk | grep -v ^init ) | (
+( getprop | grep silk | grep -v '^\[init' ) | (
   while read; do
     echo "  $REPLY"
   done

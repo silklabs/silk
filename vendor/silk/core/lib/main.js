@@ -123,6 +123,8 @@ function boot() {
       return camera.start();
     })
     .then(() => {
+      util.setprop('silk.boot_completed',
+                   1 + parseInt(util.getprop('silk.boot_completed', 0)));
 
       diag = require('./diag')(id.toString());
 

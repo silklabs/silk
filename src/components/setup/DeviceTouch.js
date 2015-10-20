@@ -11,6 +11,10 @@ import { LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
 import DeviceManager from '../../libraries/btle/DeviceManager';
 
+const RSSI_CLOSE = -50;
+const RSSI_NEAR = -60;
+const RSSI_FAR = -70;
+
 export default class DeviceTouch extends React.Component {
 
   static propTypes = {
@@ -18,7 +22,7 @@ export default class DeviceTouch extends React.Component {
   };
 
   state = {
-    rssi: -100,
+    proximity: 0,
   };
 
   componentWillMount() {
@@ -33,7 +37,18 @@ export default class DeviceTouch extends React.Component {
     if (peripheral.deviceId !== this.props.deviceId) {
       return;
     }
-    this.setState({rssi: peripheral.rssi});
+    let { rssi } = peripheral;
+    let proximity = 0;
+    if (rssi > RSSI_CLOSE) {
+      proximity = 3;
+    } else if (rssi > RSSI_NEAR) {
+      proximity = 2;
+    } else if (rssi > RSSI_FAR) {
+      proximity = 1;
+    }
+    if (proximity !== this.state.proximity) {
+      this.setState({proximity});
+    }
   };
 
   render() {
@@ -50,7 +65,7 @@ export default class DeviceTouch extends React.Component {
         </View>
         <View style={styles.contentContainer}>
           <Text style={styles.label}>Touch the device with your phone.</Text>
-          <ProximityMeter rssi={this.state.rssi} />
+          <ProximityMeter proximity={this.state.proximity} />
         </View>
       </View>
     );

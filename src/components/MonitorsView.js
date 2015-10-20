@@ -6,6 +6,7 @@ let {
   ActivityIndicatorIOS,
   AlertIOS,
   AppStateIOS,
+  InteractionManager,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -167,8 +168,9 @@ class MonitorsView extends AsyncComponent {
     this.bleDeviceManager.configureDevice(device.peripheralId, this._onDeviceTouch)
       .catch((err) => {
         log.info('Could not configure device', err);
-        this._showConfigError();
-        this.props.navigator.popToTopAsync();
+        this.props.navigator.popToTop();
+        // Don't interfere with the navigation animation.
+        InteractionManager.runAfterInteractions(() => this._showConfigError());
       });
   }
 
@@ -178,8 +180,9 @@ class MonitorsView extends AsyncComponent {
         name: 'DeviceConfig',
         props: {
           onActivate: (config) => {
-            this.props.navigator.popToTopAsync();
-            resolve(config);
+            this.props.navigator.popToTop();
+            // Don't interfere with the navigation animation.
+            InteractionManager.runAfterInteractions(() => resolve(config));
           },
         },
       });

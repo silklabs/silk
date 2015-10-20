@@ -7,17 +7,19 @@ let {
 export default class ProximityMeter extends React.Component {
 
   static propTypes = {
-    rssi: React.PropTypes.number.isRequired,
+    // very far, far, near, close
+    // Or IOW the number of circles we paint black.
+    proximity: React.PropTypes.oneOf([0, 1, 2, 3]),
     style: View.propTypes.style,
   };
 
   render() {
-    let { rssi } = this.props;
+    let { proximity } = this.props;
     return (
       <View style={[styles.container, this.props.style]}>
-        <View style={[styles.closeCircle, rssi > -50 ? styles.thereColor : styles.notThereColor]} />
-        <View style={[styles.nearCircle, rssi > -60 ? styles.thereColor : styles.notThereColor]} />
-        <View style={[styles.farCircle, rssi > -70 ? styles.thereColor : styles.notThereColor]} />
+        <View style={[styles.closeCircle, proximity >= 3 ? styles.thereColor : styles.notThereColor]} />
+        <View style={[styles.nearCircle, proximity >= 2 ? styles.thereColor : styles.notThereColor]} />
+        <View style={[styles.farCircle, proximity >= 1 ? styles.thereColor : styles.notThereColor]} />
       </View>
     );
   }

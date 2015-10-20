@@ -4,7 +4,9 @@
 import React from 'react-native';
 let {
   ActivityIndicatorIOS,
+  AlertIOS,
   AppStateIOS,
+  InteractionManager,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -14,23 +16,22 @@ let {
 
 import createLog from 'log';
 
+import BLECentral from '../libraries/btle/BLECentral';
 import DeviceManager from '../libraries/btle/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
-import DeviceSetup from './DeviceSetup';
 import ErrorBar from './ErrorBar';
 import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
 
-const log = createLog('MonitorPreview');
+const log = createLog('MonitorsView');
 
 const PERIPH_EVENTS = [
   'discover',
   'connect',
-  'rssi',
   'stateChange',
   'disconnect',
   'errorChange',
@@ -40,6 +41,7 @@ const PERIPH_EVENTS = [
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
+const AFTER_TOUCH_WAIT_MS = 500;
 const SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS = 1000;
 const NEW_DEVICE_CONNECTION_TIMEOUT_MS = 5000;
 
@@ -53,15 +55,13 @@ class MonitorsView extends AsyncComponent {
   static propTypes = {
     api: React.PropTypes.object.isRequired, // TODO: we can do better here
     hasNetwork: React.PropTypes.bool.isRequired,
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
   };
 
   state = {
-    waitingForDevices: true,
-    configuring: {},
-    streaming: {},
+    waitingForDevices: false,
+    devices: {},
     fullscreenDeviceId: null,
     fullscreenStartTime: null,
 
@@ -73,16 +73,23 @@ class MonitorsView extends AsyncComponent {
   };
 
   mounted = false;
+  bleDeviceManager = null;
 
   componentWillMount() {
-    PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.on(ev, this.refreshDeviceList));
+    this.bleDeviceManager = new DeviceManager(
+      BLECentral,
+      this.props.userState
+    );
+    PERIPH_EVENTS.forEach(ev => this.bleDeviceManager.on(ev, this.refreshDeviceList));
+    this.bleDeviceManager.start();
+
     this.subscribeToSocket();
     AppStateIOS.addEventListener('change', this.onAppStateChange);
     this.mounted = true;
   }
 
   componentWillUnmount() {
-    PERIPH_EVENTS.forEach(ev => this.props.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
+    PERIPH_EVENTS.forEach(ev => this.bleDeviceManager.removeListener(ev, this.refreshDeviceList));
     AppStateIOS.removeEventListener('change', this.onAppStateChange);
     this.mounted = false;
   }
@@ -95,23 +102,24 @@ class MonitorsView extends AsyncComponent {
     // Eventually, we should make those children smart and detect themselves
     // when the socket changes under them and unsubscribe + resubscribe.
     if (this.props.socket !== nextProps.socket) {
-      newState.configuring = {};
-      newState.streaming = {};
+      newState.devices = {};
     }
 
     // Give the socket.io server some time to send us the list of devices.
     // During that time we want to appear as if we're still connecting.
-    let { configuring, streaming } = this.state;
+    let { devices } = this.state;
     if (this.props.connectionState === 'connecting' &&
         nextProps.connectionState === 'connected' &&
-        Object.keys(configuring).length + Object.keys(streaming).length === 0) {
+        Object.keys(devices).length === 0) {
       newState.waitingForDevices = true;
       setTimeout(() => {
         this.mounted && this.setState({waitingForDevices: false});
       }, SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS);
     }
 
-    this.setState(newState);
+    if (Object.keys(newState)) {
+      this.setState(newState);
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -143,8 +151,92 @@ class MonitorsView extends AsyncComponent {
     this.setState({fullscreenDeviceId: null, fullscreenStartTime: null});
   };
 
+  configureDevice(deviceId) {
+    let device = this.state.devices[deviceId];
+    if (!device) {
+      this._showConfigError();
+      return;
+    }
+
+    let canceled = false;
+    let deviceTouchView = null;
+    this.props.navigator.push({
+      name: 'DeviceTouch',
+      props: {
+        deviceId,
+        bleDeviceManager: this.bleDeviceManager,
+        onCancel: () => this.props.navigator.popToTop(),
+        // Keep a ref so that we can update the view when the devices touch.
+        ref: (element) => deviceTouchView = element,
+      },
+    });
+    InteractionManager.runAfterInteractions(() => {
+      let device = this.state.devices[deviceId];
+      device.configuring = true;
+      this.setState({devices: this.state.devices});
+    });
+
+    this.bleDeviceManager.configureDevice(device.peripheralId, () => {
+      return new Promise((resolve, reject) => {
+        if (!deviceTouchView) {
+          reject(new Error('Did not render the setup flow?'));
+          return;
+        }
+        // Alright, we have achieved touch! Update the touch UI
+        // briefly to let the user know they did it correctly.
+        deviceTouchView.onDeviceTouch();
+        deviceTouchView = null;
+
+        // After a brief period of time, advance to the configuration
+        // screen where the user can enter device name, wifi
+        // credentials, etc.
+        setTimeout(() => this.props.navigator.push({
+          name: 'DeviceConfig',
+          props: {
+            onCancel: () => {
+              canceled = true;
+              reject(new Error('User canceled.'));
+              // We'll pop the views off the navigation stack below.
+            },
+            onSave: (config) => {
+              this.props.navigator.popToTop();
+              // Don't interfere with the navigation animation.
+              InteractionManager.runAfterInteractions(() => {
+                // Update the name of the new device in the UI.
+                let device = this.state.devices[deviceId];
+                if (!device) {
+                  reject(new Error('Device record no longer found, are we still connected?'));
+                  return;
+                }
+                device.name = config.name;
+                this.setStateAsync({devices: this.state.devices});
+
+                // And finally, configure the device.
+                resolve(config);
+              });
+            },
+          },
+        }), AFTER_TOUCH_WAIT_MS);
+      });
+    }).catch((err) => {
+      log.info('Could not configure device', err);
+      this.props.navigator.popToTop();
+      if (!canceled) {
+        // Don't interfere with the navigation animation.
+        InteractionManager.runAfterInteractions(() => this._showConfigError());
+      }
+    });
+  }
+
+  _showConfigError() {
+    AlertIOS.alert(
+      'Error Configuring Device',
+      'The device could not be configured. Ensure that it is turned on and nearby.'
+    );
+  }
+
   _getPreviewSize(deviceId) {
-    let device = this.state.streaming[deviceId];
+    let device = this.state.devices[deviceId];
     if (device &&
         device.previewSize &&
         device.previewSize.width &&
@@ -158,7 +250,7 @@ class MonitorsView extends AsyncComponent {
   }
 
   _getDeviceName(deviceId) {
-    let device = this.state.streaming[deviceId];
+    let device = this.state.devices[deviceId];
     return device ? device.name : 'unknown device';
   }
 
@@ -168,9 +260,8 @@ class MonitorsView extends AsyncComponent {
       return this._renderSpinner();
     }
 
-    let configuringDeviceIds = Object.keys(this.state.configuring);
-    let streamingDeviceIds = Object.keys(this.state.streaming);
-    if (0 === configuringDeviceIds.length + streamingDeviceIds.length) {
+    let deviceIds = Object.keys(this.state.devices);
+    if (0 === deviceIds.length) {
       if (connectionState === 'offline') {
         return this._renderOffline();
       }
@@ -192,18 +283,23 @@ class MonitorsView extends AsyncComponent {
     // Right now there's no stateful list of cameras, we only know
     // about them through Bluetooth or socket.io connections. In the
     // near future, we will just query the account.
-    let configuring = configuringDeviceIds.map(deviceId => {
-      let device = this.state.configuring[deviceId];
-      return <DeviceSetup key={deviceId} name={device.name} rssi={device.rssi} />;
-    });
-    let streaming = streamingDeviceIds.map(deviceId => {
-      let device = this.state.streaming[deviceId];
+    let devices = deviceIds.map(deviceId => {
+      let device = this.state.devices[deviceId];
+      let onPress;
+      if (device.configuring) {
+        onPress = null;
+      } else if (device.unconfigured) {
+        onPress = () => this.configureDevice(deviceId);
+      } else {
+        onPress = () => this.startFullscreenVideo(deviceId);
+      }
       return (
         <MonitorPreview
           key={deviceId}
-          onPress={() => this.startFullscreenVideo(deviceId)}
+          onPress={onPress}
           deviceId={deviceId}
           label={device.name}
+          configurable={device.unconfigured && !device.configuring}
           serverConnectionStatus={device.serverConnectionStatus}
           logo={device.logo}
           previewSize={this._getPreviewSize(deviceId)}
@@ -211,7 +307,10 @@ class MonitorsView extends AsyncComponent {
         />
       );
     });
-    let activity = streaming.length ? this._renderActivity() : null;
+    let configuredDevices = deviceIds.filter(
+      deviceId => !this.state.devices[deviceId].unconfigured
+    );
+    let activity = configuredDevices.length ? this._renderActivity() : null;
     let fullscreenMonitor = null;
     let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {
@@ -236,8 +335,7 @@ class MonitorsView extends AsyncComponent {
             automaticallyAdjustContentInsets={true}
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
-            {configuring}
-            {streaming}
+            {devices}
             {activity}
           </ScrollView>
         </View>
@@ -303,14 +401,17 @@ class MonitorsView extends AsyncComponent {
     log.info('new video stream', msg.id);
 
     // use device status from discovered peripheral if available
-    let device = this.state.streaming[msg.id];
+    let device = this.state.devices[msg.id];
     let serverConnectionStatus = device && device.serverConnectionStatus || null;
 
-    this.state.streaming[msg.id] = {
-      name: msg.name,
+    this.state.devices[msg.id] = {
+      peripheralId: device && device.peripheralId || null,
+      name: device && device.name || msg.name,
       logo: msg.logo,
       previewSize: msg.previewSize,
       serverConnectionStatus,
+      unconfigured: false,
+      configuring: false,
     };
 
     // This is pretty crude, but we have no other way of knowing which devices
@@ -324,75 +425,89 @@ class MonitorsView extends AsyncComponent {
 
   onVideoStreamDelete = (msg) => {
     log.info('deleted video stream', msg.id);
-    delete this.state.streaming[msg.id];
-    this.mounted && this.setState(this.state);
+    delete this.state.devices[msg.id];
+    this.mounted && this.setState({devices: this.state.devices});
   };
 
   refreshDeviceList = () => {
-    this.state.configuring = {};
-    let { streaming, configuring } = this.state;
-    this.props.bleDeviceManager.enumerateDevices().forEach(device => {
-      if ('unregistered' === device.state || 'registering' === device.state) {
-        // Show configuring widget when we are registering
-        configuring[device.id] = {
-          name: device.prettyName,
-          rssi: device.rssi,
-          state: device.state,
-          error: device.error,
-        };
+    if (!this.mounted) {
+      return;
+    }
+
+    let dirtyState = false;
+    let { devices } = this.state;
+    let bleDevices = this.bleDeviceManager.enumerateDevices();
+    bleDevices.forEach(peripheral => {
+      if (!peripheral.deviceId) {
+        // We haven't fetched the deviceId for the peripheral yet.
+        // Ignore for now.
+        // TODO: this is a problematic strategy:
+        // https://github.com/silklabs/silk-server/issues/307
         return;
       }
-      if ('registered' === device.state) {
-        // Device is registered...
-        if (!(device.deviceId in streaming)) {
-          // Device has sent us its ID, but we haven't observed a
-          // server-sent event from the device yet. Create a
-          // starting-up placeholder widget for it that will be swapped
-          // out once we get the device info from the server. Will need
-          // remove if server-sent event never received.
-          streaming[device.deviceId] = {
-            name: 'New Device',
-            placeholder: true,
-            logo: null,
-          };
-        }
+      let existingRecord = devices[peripheral.deviceId];
+      if (!existingRecord) {
+        // Device has sent us its ID, but it hasn't been configured yet
+        // or is still in the process of connecting to the
+        // server. Create a placeholder widget for it that will be
+        // swapped out once we get the device info from the server.
+        log.info(`Detected new device with ID ${peripheral.id}, device ID ${peripheral.deviceId}`);
+        existingRecord = devices[peripheral.deviceId] = {
+          peripheralId: peripheral.id,
+          name: 'New Device',
+          logo: null,
+          unconfigured: true,
+          configuring: false,
+        };
+        dirtyState = true;
+      }
 
-        // update status, use error message if exists
-        streaming[device.deviceId].serverConnectionStatus =
-            device.error ? device.error : device.serverConnectionStatus;
+      let serverConnectionStatus =
+        peripheral.error ? peripheral.error : peripheral.serverConnectionStatus;
+      if (existingRecord.serverConnectionStatus !== serverConnectionStatus) {
+        existingRecord.serverConnectionStatus = serverConnectionStatus;
+        dirtyState = true;
       }
     });
 
-    Object.keys(streaming).forEach(deviceId => {
-      let isStillConnected = this.props.bleDeviceManager.enumerateDevices().some(
-        device => device.deviceId === deviceId && device.state !== 'disconnected'
-      );
-      if (!isStillConnected) {
-        // Streaming widget still exists, but we are no longer connected
-        // to the peripheral. Let's do some cleanup...
+    let stillConnectedDeviceIds = bleDevices
+      .filter(peripheral => peripheral.state !== 'disconnected')
+      .map(peripheral => peripheral.deviceId);
 
-        // No longer receiving status update (over BLE), so clear status to not
-        // show potentially stale data
-        streaming[deviceId].serverConnectionStatus = null;
+    Object.keys(devices).forEach(deviceId => {
+      let isStillConnected = deviceId.indexOf(stillConnectedDeviceIds) !== -1;
+      if (isStillConnected) {
+        return;
+      }
+      // Devices widget still exists, but we are no longer connected
+      // to the peripheral over BLE. Let's do some cleanup...
 
-        // We have not received a server-sent event. Give the device
-        // some time to connect to the server. After that, delete
-        // placeholder widget so it doesn't linger indefinitely.
-        // See also https://github.com/silklabs/silk-device/issues/1006.
-        if (streaming[deviceId].placeholder) {
-          setTimeout(() => {
-            if (!this.state.streaming[deviceId] ||
-                !this.state.streaming[deviceId].placeholder) {
-              // Nothing to be done here.
-              return;
-            }
-            delete this.state.streaming[deviceId];
-            this.mounted && this.setState(this.state);
-          }, NEW_DEVICE_CONNECTION_TIMEOUT_MS);
-        }
+      // No longer receiving status update (over BLE), so clear status to not
+      // show potentially stale data
+      if (devices[deviceId].serverConnectionStatus !== null) {
+        devices[deviceId].serverConnectionStatus = null;
+        dirtyState = true;
+      }
+
+      // We have not received a server-sent event. Give the device
+      // some time to connect to the server. After that, delete
+      // placeholder widget so it doesn't linger indefinitely.
+      // See also https://github.com/silklabs/silk-device/issues/1006.
+      if (devices[deviceId].unconfigured) {
+        setTimeout(() => {
+          if (!this.state.devices[deviceId] ||
+              !this.state.devices[deviceId].unconfigured) {
+            // Nothing to be done here.
+            return;
+          }
+          delete this.state.devices[deviceId];
+          this.mounted && this.setState({devices: this.state.devices});
+        }, NEW_DEVICE_CONNECTION_TIMEOUT_MS);
       }
     });
-    this.mounted && this.setState(this.state);
+    if (dirtyState) {
+      this.setState({devices});
+    }
   };
 
   // Activity feed management
@@ -432,14 +547,14 @@ class MonitorsView extends AsyncComponent {
     try {
       if (startTime === null) {
         addlEvents = await this.props.api.timeMeta.findBeforeTime({
-          deviceIds: Object.keys(this.state.streaming),
+          deviceIds: Object.keys(this.state.devices),
           time: endTime,
           metaType: 'event',
           maxCount: EVENTS_PAGE_SIZE,
         });
       } else {
         addlEvents = await this.props.api.timeMeta.findInTimeInterval({
-          deviceIds: Object.keys(this.state.streaming),
+          deviceIds: Object.keys(this.state.devices),
           startTime,
           endTime,
           metaType: 'event',

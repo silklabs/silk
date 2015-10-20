@@ -2,6 +2,8 @@ import React from 'react-native';
 
 import Config from '../../libraries/Config';
 
+import { FormStyles, LayoutStyles } from '../CommonStyles';
+
 let {
   Image,
   NativeModules,
@@ -77,7 +79,7 @@ export default class extends React.Component {
         );
         haveCustomServer = false;
       }
-      let style = index === 0 ? [styles.formRow, styles.formRowFirst] : styles.formRow;
+      let style = index === 0 ? [FormStyles.formRow, FormStyles.formRowFirst] : FormStyles.formRow;
       return (
         <TouchableHighlight
           underlayColor="lightgrey"
@@ -85,8 +87,8 @@ export default class extends React.Component {
           <View
             style={style}
             key={server.name}>
-            <View style={styles.formRowLabelContainer}>
-              <Text style={styles.formRowLabel}>{server.name}</Text>
+            <View style={FormStyles.formRowLabelContainer}>
+              <Text style={FormStyles.formRowLabel}>{server.name}</Text>
             </View>
             {checkmark}
           </View>
@@ -106,15 +108,15 @@ export default class extends React.Component {
     return (
       <View style={styles.servers}>
         {servers}
-        <View style={styles.formRow}>
-          <View style={styles.formInputContainer}>
+        <View style={FormStyles.formRow}>
+          <View style={FormStyles.formInputContainer}>
             <TextInput
               ref="serverUrl"
               value={haveCustomServer ? this.state.serverUrl : null}
               placeholder="Enter a custom URL"
               autoCapitalize="none"
               autoCorrect={false}
-              style={styles.formInput}
+              style={FormStyles.formInput}
               onChangeText={(serverUrl) => this.setState({serverUrl})}
             />
           </View>
@@ -127,6 +129,7 @@ export default class extends React.Component {
   render() {
     return (
       <View style={styles.container}>
+        <View style={LayoutStyles.statusBarPlaceholder} />
         {this._renderTitle()}
         {this._renderServerPicker()}
       </View>
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
   titleContainer: {
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingTop: 22,
+    paddingTop: 2,
   },
   spacer: {
     flex: 1,
@@ -188,34 +191,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderColor: '#a7a7aa',
     borderTopWidth: 1 / PixelRatio.get(),
-  },
-  formRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 1,
-    borderColor: '#c8c7cc',
-    borderTopWidth: 1 / PixelRatio.get(),
-    height: 46,
-    paddingLeft: 16,
-    paddingRight: 8,
-  },
-  formRowFirst: {
-    borderTopWidth: 0,
-  },
-  formRowLabelContainer: {
-    flex: 1,
-  },
-  formRowLabel: {
-    fontSize: 17,
-  },
-  formInputContainer: {
-    flex: 1,
-  },
-  formInput: {
-    height: 44,
-    fontSize: 17,
-    flex: 1,
   },
   checkmark: {
     width: 16,

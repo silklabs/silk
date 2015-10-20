@@ -18,16 +18,20 @@ import API from 'silk-api-react-native';
 
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';
+import DeviceConfig from './setup/DeviceConfig';
+import DeviceTouch from './setup/DeviceTouch';
 import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
-import WifiSettings from './WifiSettings';
+import Settings from './Settings';
 
 const routeToComponentMap = {
   NotLoggedIn,
   ServerPicker,
   Main,
-  WifiSettings,
+  Settings,
+  DeviceTouch,
+  DeviceConfig,
 };
 
 export default class extends AsyncComponent {
@@ -131,8 +135,9 @@ export default class extends AsyncComponent {
 
   configureScene(route) {
     switch (route.name) {
-    case 'WifiSettings':
+    case 'Settings':
     case 'ServerPicker':
+    case 'DeviceTouch':
       return AsyncNavigator.SceneConfigs.FloatFromBottom;
     default:
       return AsyncNavigator.SceneConfigs.PushFromRight;

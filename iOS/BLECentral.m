@@ -237,6 +237,9 @@ RCT_EXPORT_METHOD(write:(NSString*)deviceUuidStr service:(NSString*)serviceUuidS
   if ([latch count] == 0) {
     // Call success callback for connect
     RCTResponseSenderBlock callback = [connectCallbacks valueForKey:peripheral.uuidAsString];
+    if (!callback) {
+      return;
+    }
     callback(@[[NSNull null], [peripheral asDictionary]]);
     [connectCallbacks removeObjectForKey:peripheralUUIDString];
     [connectCallbackLatches removeObjectForKey:peripheralUUIDString];

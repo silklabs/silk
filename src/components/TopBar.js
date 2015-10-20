@@ -14,7 +14,6 @@ export default class TopBar extends React.Component {
 
   static propTypes = {
     socketConnectionState: React.PropTypes.oneOf(CONNECTION_STATES).isRequired,
-    openSettings: React.PropTypes.func.isRequired,
   };
 
   render() {
@@ -24,7 +23,7 @@ export default class TopBar extends React.Component {
         <View style={styles.statusBarUnderlay} />
         <View style={styles.titleContainer}>
           <View style={styles.spacer}>
-            <TouchableOpacity onPress={this.props.openSettings}>
+            <TouchableOpacity onPress={this._openSettings}>
               <View style={styles.settings}>
                 <Image
                   source={require('image!Menu')}
@@ -42,6 +41,12 @@ export default class TopBar extends React.Component {
         </View>
       </View>
     );
+  }
+
+  _openSettings = () => {
+    this.props.navigator.push({
+       name: 'Settings',
+    });
   }
 
 }

@@ -46,12 +46,11 @@ function rejectFwd(e) {
   return Promise.reject(e);
 }
 
-function DeviceManager(scanner, userState, getWifiConfig) {
+function DeviceManager(scanner, userState) {
   EventEmitter.call(this);
   this.devices = { };
   this.scanner = scanner;
   this.userState = userState;
-  this.getWifiConfig = getWifiConfig;
   this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
   this.scanner.on('disconnect', this._onPeripheralDisconnected.bind(this));
 }
@@ -97,7 +96,7 @@ DeviceManager.prototype._onPeripheralDiscovered = function(p) {
   if (!p.connected) {
     this._connect(p)
     .catch(err => {
-      // unable to connect to peripheral. disconnect to force rescan
+      // unable to connect to peripheral. disconnect
       // so that we can try again if the peripheral is still there
       log.warn(`connect to ${p.id} failed. disconnect and retry`, err);
       this._disconnect(p);
@@ -133,10 +132,6 @@ DeviceManager.prototype._readStateCharacteristic = function(p) {
       log.info('new peripheral state:', p.id, state);
       p.state = state;
       this.emit('stateChange', p);
-
-      if (p.state === 'unregistered' && !p.configuring) {
-        this._configureDevice(p).catch(() => {});
-      }
     }
     return state;
   }, rejectFwd);
@@ -185,17 +180,27 @@ DeviceManager.prototype._pollStatus = function(p) {
   return Promise.resolve();
 };
 
-DeviceManager.prototype._configureDevice = function(p) {
+DeviceManager.prototype.configureDevice = async function(peripheralId, onDeviceTouch) {
+  let p = this.devices[peripheralId];
+  if (!p) {
+    throw new Error(`Unknown peripheral: ${peripheralId}`);
+  }
+  if (p.state !== 'unregistered') {
+    // TODO: We should really be throwing here.
+    log.warn(`Device ${p.deviceId} is in invalid state '${p.state}'`);
+  }
   p.configuring = true;
-  return this._passProximityGate(p)
-  .then(resumeToken => this._configureWithoutCrypto(p, resumeToken), rejectFwd)
-  .then(() => p.configuring = false, rejectFwd)
-  .catch((err) => {
+  try {
+    let resumeToken = await this._passProximityGate(p);
+    let config = await onDeviceTouch();
+    await this._configureWithoutCrypto(p, resumeToken, config);
+    p.configuring = false;
+  } catch(err) {
     p.configuring = false;
     log.warn('error configuring, disconnect and retry', err.toString(), err.stack);
     this._disconnect(p);
-    return Promise.reject(new Error('error configuring'));
-  });
+    throw err;
+  }
 };
 
 DeviceManager.prototype._passProximityGate = function(p) {
@@ -256,9 +261,7 @@ DeviceManager.prototype._waitForProximity = function(p) {
   });
 };
 
-DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken) {
-  let network = await this.getWifiConfig();
-  log.debug('Got network info...');
+DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken, config) {
   let state = await this._readStateCharacteristic(p);
 
   if (state === 'registered') {
@@ -279,10 +282,9 @@ DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken)
   let {
     success,
     registrarPublicKey,
-    registrationToken
+    registrationToken,
   } = await this.userState.registerDevice(
-    // TODO: We need a way to supply a name from the UI here...
-    'Lorem Ipsum',
+    config.name,
     p.deviceId
   );
 
@@ -293,10 +295,10 @@ DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken)
 
   await Promise.all([
     p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
-                          new Buffer(network.ssid, 'utf8')),
+                          new Buffer(config.ssid, 'utf8')),
 
     p.writeCharacteristic(decls.uuid.SecretCharacteristic,
-                          new Buffer(network.secret, 'utf8')),
+                          new Buffer(config.secret, 'utf8')),
 
     p.writeCharacteristic(decls.uuid.RegistrarPublicKeyCharacteristic,
                           new Buffer(registrarPublicKey, 'utf8')),
@@ -336,7 +338,7 @@ DeviceManager.prototype._disconnect = function(p) {
 
 /*
 TODO: this probably will not work post configure refactor
-function configureWithCrypto() {
+function configureWithCrypto(config) {
     return p.writeCharacteristic(decls.uuid.CurveCharacteristic,
                                  new Buffer('curve25519', 'utf8'));
   }).then(function() {
@@ -351,14 +353,12 @@ function configureWithCrypto() {
   }).then(function(data) {
     var key = data.toString('binary');
     central.deriveShared(key);
-    return self.wifiHelper.getWifiNetwork();
-  }).then(function(network) {
     Promise.all([
-      central.encrypt(network.ssid).then(function(ct) {
+      central.encrypt(config.ssid).then(function(ct) {
         return p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
                                      new Buffer(ct, 'utf8'));
       }),
-      central.encrypt(network.secret).then(function(ct) {
+      central.encrypt(config.secret).then(function(ct) {
         return p.writeCharacteristic(decls.uuid.SecretCharacteristic,
                                      new Buffer(ct, 'utf8'));
       })

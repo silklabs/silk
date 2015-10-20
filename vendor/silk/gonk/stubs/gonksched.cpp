@@ -55,6 +55,7 @@ GonkSchedulePolicyService::~GonkSchedulePolicyService()
 status_t
 GonkSchedulePolicyService::dump(int fd, const Vector<String16>& args)
 {
+    (void) fd, args;
     return NO_ERROR;
 }
 
@@ -95,6 +96,7 @@ GonkSchedulePolicyService::requestPriority(int32_t pid, int32_t tid, int32_t pri
 int
 GonkSchedulePolicyService::requestPriority(int32_t pid, int32_t tid, int32_t prio, bool async)
 {
+    (void) async;
     return requestPriority(pid, tid, prio);
 }
 
@@ -125,6 +127,7 @@ using namespace android;
 
 int main(int argc, char **argv)
 {
+    (void) argc, argv;
     GonkSchedulePolicyService::publishAndJoinThreadPool(true);
     return 0;
 }

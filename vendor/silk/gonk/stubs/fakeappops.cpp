@@ -60,18 +60,21 @@ FakeAppOpsService::~FakeAppOpsService()
 int32_t
 FakeAppOpsService::checkOperation(int32_t code, int32_t uid, const String16& packageName)
 {
+    (void) code, uid, packageName;
     return MODE_ALLOWED;
 }
 
 int32_t
 FakeAppOpsService::noteOperation(int32_t code, int32_t uid, const String16& packageName)
 {
+    (void) code, uid, packageName;
     return MODE_ALLOWED;
 }
 
 int32_t
 FakeAppOpsService::startOperation(int32_t code, int32_t uid, const String16& packageName)
 {
+    (void) code, uid, packageName;
     return MODE_ALLOWED;
 }
 
@@ -79,34 +82,40 @@ int32_t
 FakeAppOpsService::startOperation(const sp<IBinder>& token, int32_t code, int32_t uid,
     const String16& packageName)
 {
+    (void) token, code, uid, packageName;
     return MODE_ALLOWED;
 }
 
 void
 FakeAppOpsService::finishOperation(int32_t code, int32_t uid, const String16& packageName)
 {
+    (void) code, uid, packageName;
 }
 
 void
 FakeAppOpsService::finishOperation(const sp<IBinder>& token, int32_t code, int32_t uid,
     const String16& packageName)
 {
+    (void) token, code, uid, packageName;
 }
 
 sp<IBinder>
 FakeAppOpsService::getToken(const sp<IBinder>& clientToken)
 {
+  (void) clientToken;
   return NULL;
 }
 
 void
 FakeAppOpsService::startWatchingMode(int32_t op, const String16& packageName, const sp<IAppOpsCallback>& callback)
 {
+  (void) op, packageName, callback;
 }
 
 void
 FakeAppOpsService::stopWatchingMode(const sp<IAppOpsCallback>& callback)
 {
+  (void) callback;
 }
 }; // namespace android
 
@@ -114,6 +123,7 @@ using namespace android;
 
 int main(int argc, char **argv)
 {
+    (void ) argc, argv;
     FakeAppOpsService::publishAndJoinThreadPool();
     return 0;
 }

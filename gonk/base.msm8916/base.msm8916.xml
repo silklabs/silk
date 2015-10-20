@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2015 Silk Labs, Inc.
+  All Rights Reserved.
+  Confidential and Proprietary - Silk Labs, Inc.
+-->
+
+<manifest>
+  <include name="silk.xml"/>
+
+  <!--
+    Minimum subset of LA.BR.1.1.2-01610-8x16.0.xml required to build Silk
+
+      <include name="android-5.1.1_r1.xml" />
+   -->
+  <remote name="aosp" fetch="https://android.googlesource.com/" />
+  <remote name="caf" fetch="git://codeaurora.org/" />
+  <default revision="LA.BR.1.1.2_rb1.9" remote="caf" sync-j="4"/>
+
+  <project name="platform/bionic" path="bionic" clone-depth="1"/>
+  <!-- Select same platform/build as used by the base gonk as there's no benefit to using
+       the CAF fork -->
+  <project name="platform/build" path="build"
+           revision="refs/tags/android-5.1.1_r1"
+           remote="aosp"
+           clone-depth="1">
+    <copyfile src="core/root.mk" dest="Makefile" />
+  </project>
+  <project name="platform/external/skia" path="external/skia" clone-depth="1"/>
+  <project name="platform/external/stlport" path="external/stlport" clone-depth="1"/>
+  <project name="platform/frameworks/av" path="frameworks/av" clone-depth="1"/>
+  <project name="platform/frameworks/native" path="frameworks/native" clone-depth="1"/>
+  <project name="platform/system/core" path="system/core" clone-depth="1"/>
+  <project name="platform/system/media" path="system/media" clone-depth="1"/>
+
+  <project name="platform/prebuilts/clang/darwin-x86/host/3.5"
+           path="prebuilts/clang/darwin-x86/host/3.5"
+           groups="pdk,darwin" clone-depth="1"/>
+  <project name="platform/prebuilts/clang/linux-x86/host/3.5"
+           path="prebuilts/clang/linux-x86/host/3.5"
+           groups="pdk,linux" clone-depth="1"/>
+
+  <project name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8"
+           path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8"
+           groups="darwin,arm" clone-depth="1"/>
+  <project name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8"
+           path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8"
+           groups="linux,arm" clone-depth="1"/>
+
+  <project name="platform/prebuilts/python/darwin-x86/2.7.5"
+           path="prebuilts/python/darwin-x86/2.7.5"
+           groups="darwin,arm" clone-depth="1"/>
+  <project name="platform/prebuilts/python/linux-x86/2.7.5"
+           path="prebuilts/python/linux-x86/2.7.5"
+           groups="linux,arm" clone-depth="1"/>
+
+  <project name="platform/prebuilts/ndk" path="prebuilts/ndk" clone-depth="1"/>
+  <project name="platform/ndk" path="ndk" clone-depth="1"/>
+  <project path="prebuilts/misc" name="platform/prebuilts/misc" clone-depth="1"/>
+
+  <project name="platform/hardware/libhardware"
+           path="hardware/libhardware" clone-depth="1"/>
+  <project name="platform/hardware/libhardware_legacy"
+           path="hardware/libhardware_legacy" clone-depth="1"/>
+
+</manifest>

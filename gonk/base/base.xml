@@ -20,11 +20,8 @@
     sync times to a minimum.
 
    -->
-  <remote  name="aosp"
-           fetch="https://android.googlesource.com/" />
-  <default revision="refs/tags/android-5.1.1_r1"
-           remote="aosp"
-           sync-j="4" />
+  <remote name="aosp" fetch="https://android.googlesource.com/" />
+  <default revision="refs/tags/android-5.1.1_r1" remote="aosp" sync-j="4" />
 
   <project name="platform/bionic" path="bionic" clone-depth="1"/>
   <project name="platform/build" path="build" clone-depth="1">
@@ -37,11 +34,11 @@
   <project name="platform/system/core" path="system/core" clone-depth="1"/>
   <project name="platform/system/media" path="system/media" clone-depth="1"/>
 
-  <project path="prebuilts/clang/darwin-x86/host/3.5"
-           name="platform/prebuilts/clang/darwin-x86/host/3.5"
+  <project name="platform/prebuilts/clang/darwin-x86/host/3.5"
+           path="prebuilts/clang/darwin-x86/host/3.5"
            groups="pdk,darwin" clone-depth="1"/>
-  <project path="prebuilts/clang/linux-x86/host/3.5"
-           name="platform/prebuilts/clang/linux-x86/host/3.5"
+  <project name="platform/prebuilts/clang/linux-x86/host/3.5"
+           path="prebuilts/clang/linux-x86/host/3.5"
            groups="pdk,linux" clone-depth="1"/>
 
   <project name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8"

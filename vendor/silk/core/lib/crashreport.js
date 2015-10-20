@@ -29,14 +29,14 @@ function formatError(err) {
   return `${err}:\n${err.stack}`;
 }
 
-function exceptionToTombstoneSync(exception) {
+function exceptionToTombstoneSync(type, exceptionText) {
 
   let tombstone = `*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
 Build fingerprint: '${BUILD_FINGERPRINT}'
-Type: 'Unhandled Exception'
+Type: '${type}'
 When: '${new Date()}'
 
-${formatError(exception)}
+${exceptionText}
 `;
 
   // Find a free tombstone filename to use.
@@ -102,7 +102,7 @@ class CrashReporter {
     this.tombstoneServer = null;
 
     process.on('uncaughtException', this.uncaughtExceptionHandler.bind(this));
-    process.on('unhandledRejection', this.uncaughtExceptionHandler.bind(this));
+    process.on('unhandledRejection', this.unhandledRejectionHandler.bind(this));
 
     if (!this.running) {
       log.info(`'${CRASHREPORT_ENABLED_PROP}' is unset, disabling crash ` +
@@ -120,13 +120,31 @@ class CrashReporter {
     this.chainToActivePromise(this.scanTombstoneDir.bind(this));
   }
 
+  unhandledRejectionHandler(reason /*, promise*/) {
+    if (!reason) {
+      reason = `Null reject reason: ${reason}`;
+    }
+    let exceptionText = formatError(reason);
+    log.error(exceptionText);
+
+    let file = exceptionToTombstoneSync('unhandledRejectionHandler',
+                                        exceptionText);
+    this.submitTombstone(file);
+  }
+
   uncaughtExceptionHandler(err) {
     if (!err) {
-      err = `Unexpected !err: ${err}`;
+      err = `Null error object: ${err}`;
     }
-    log.error(formatError(err));
+    let exceptionText = formatError(err);
+    log.error(exceptionText);
 
-    let file = exceptionToTombstoneSync(err);
+    let file = exceptionToTombstoneSync('uncaughtException',
+                                        exceptionText);
+    this.submitTombstone(file);
+  }
+
+  submitTombstone(file) {
     if (this.running) {
       this.chainToActivePromise(() => {
         if (!this.fileSet.has(file)) {

@@ -41,6 +41,7 @@ const PERIPH_EVENTS = [
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
+const AFTER_TOUCH_WAIT_MS = 500;
 const SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS = 1000;
 const NEW_DEVICE_CONNECTION_TIMEOUT_MS = 5000;
 
@@ -157,37 +158,70 @@ class MonitorsView extends AsyncComponent {
       return;
     }
 
+    let canceled = false;
+    let deviceTouchView = null;
     this.props.navigator.pushAsync({
       name: 'DeviceTouch',
       props: {
         deviceId,
         bleDeviceManager: this.bleDeviceManager,
+        onCancel: () => this.props.navigator.popToTop(),
+        // Keep a ref so that we can update the view when the devices touch.
+        ref: (element) => deviceTouchView = element,
       },
     });
 
-    this.bleDeviceManager.configureDevice(device.peripheralId, this._onDeviceTouch)
-      .catch((err) => {
-        log.info('Could not configure device', err);
-        this.props.navigator.popToTop();
+    this.bleDeviceManager.configureDevice(device.peripheralId, () => {
+      return new Promise((resolve, reject) => {
+        if (!deviceTouchView) {
+          reject(new Error('Did not render the setup flow?'));
+          return;
+        }
+        // Alright, we have achieved touch! Update the touch UI
+        // briefly to let the user know they did it correctly.
+        deviceTouchView.onDeviceTouch();
+        deviceTouchView = null;
+
+        // After a brief period of time, advance to the configuration
+        // screen where the user can enter device name, wifi
+        // credentials, etc.
+        setTimeout(() => this.props.navigator.push({
+          name: 'DeviceConfig',
+          props: {
+            onCancel: () => {
+              canceled = true;
+              reject(new Error('User canceled.'));
+              // We'll pop the views off the navigation stack below.
+            },
+            onSave: (config) => {
+              this.props.navigator.popToTop();
+              // Don't interfere with the navigation animation.
+              InteractionManager.runAfterInteractions(() => {
+                // Update the name of the new device in the UI.
+                let device = this.state.devices[deviceId];
+                if (!device) {
+                  reject(new Error('Device record no longer found, are we still connected?'));
+                  return;
+                }
+                device.name = config.name;
+                this.setStateAsync({devices: this.state.devices});
+
+                // And finally, configure the device.
+                resolve(config);
+              });
+            },
+          },
+        }), AFTER_TOUCH_WAIT_MS);
+      });
+    }).catch((err) => {
+      log.info('Could not configure device', err);
+      this.props.navigator.popToTop();
+      if (!canceled) {
         // Don't interfere with the navigation animation.
         InteractionManager.runAfterInteractions(() => this._showConfigError());
-      });
-  }
-
-  _onDeviceTouch = () => {
-    return new Promise((resolve, reject) => {
-      this.props.navigator.pushAsync({
-        name: 'DeviceConfig',
-        props: {
-          onActivate: (config) => {
-            this.props.navigator.popToTop();
-            // Don't interfere with the navigation animation.
-            InteractionManager.runAfterInteractions(() => resolve(config));
-          },
-        },
-      });
+      }
     });
-  };
+  }
 
   _showConfigError() {
     AlertIOS.alert(
@@ -362,7 +396,7 @@ class MonitorsView extends AsyncComponent {
     let serverConnectionStatus = device && device.serverConnectionStatus || null;
 
     this.state.devices[msg.id] = {
-      name: msg.name,
+      name: device && device.name || msg.name,
       logo: msg.logo,
       previewSize: msg.previewSize,
       serverConnectionStatus,

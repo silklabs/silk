@@ -284,7 +284,6 @@ DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken,
     registrarPublicKey,
     registrationToken,
   } = await this.userState.registerDevice(
-    // TODO: We need a way to supply a name from the UI here...
     config.name,
     p.deviceId
   );

@@ -16,7 +16,9 @@ import { LayoutStyles, FormStyles, TitleBarStyles } from '../CommonStyles';
 export default class DeviceConfig extends React.Component {
 
   static propTypes = {
-    onActivate: React.PropTypes.func.isRequired,
+    deviceId: React.PropTypes.string.isRequired,
+    onSave: React.PropTypes.func.isRequired,
+    onCancel: React.PropTypes.func.isRequired,
   };
 
   state = {
@@ -103,12 +105,8 @@ export default class DeviceConfig extends React.Component {
     );
   }
 
-  _handleCancel = () => {
-    this.props.navigator.popToTop();
-  };
-
   _handleSave = () => {
-    this.props.onActivate({
+    this.props.onSave({
       name: this.state.name,
       ssid: this.state.ssid,
       secret: this.state.secret,
@@ -123,7 +121,7 @@ export default class DeviceConfig extends React.Component {
         <View style={LayoutStyles.statusBarPlaceholder} />
         <View style={TitleBarStyles.titleBar}>
           <TouchableOpacity
-            onPress={this._handleCancel}
+            onPress={this.props.onCancel}
             style={TitleBarStyles.titleBarLeftButton}>
             <Text style={TitleBarStyles.titleBarButtonLabel}>Cancel</Text>
           </TouchableOpacity>

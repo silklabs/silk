@@ -44,6 +44,7 @@ function cleanup {
       # If we have an artifacts directory upload the full log there...
       if [[ -d .artifacts ]]; then
         cp main.log .artifacts/devicecheck.log
+        echo See .artifacts/devicecheck.log for more
       fi
     fi
   fi
@@ -92,6 +93,21 @@ findprocess()
   done
 }
 
+getprop()
+{
+  local name=$1
+  local defaultValue=$2
+
+  local value=$(timeout -s KILL 10s adb shell getprop $name | sed -e "s/\r//")
+
+  if [[ -n "$value" ]]; then
+    echo $value
+  else
+    echo $defaultValue
+  fi
+  return 0
+}
+
 waitforprop()
 {
   local name=$1  # System property name
@@ -138,7 +154,11 @@ findprocess /system/silk/bin/node nodepid 45
 waitforprop sys.boot_completed 1 60
 
 attempt=0
-STABILITY_RETRIES=10
+STABILITY_RETRIES=20
+if [[ -n $TRAVIS ]]; then
+  STABILITY_RETRIES=$(( $STABILITY_RETRIES * 2 ))
+fi
+
 while [[ $attempt -lt $STABILITY_RETRIES ]]; do
   echo
   echo "Device stability check. $attempt/$STABILITY_RETRIES"
@@ -153,6 +173,17 @@ while [[ $attempt -lt $STABILITY_RETRIES ]]; do
   attempt=$(( $attempt + 1 ))
   slumber
 done
+
+timeout -s KILL 20s adb shell dash  # <-- helpful for debug
+
+echo Checking silk.boot_completed property
+silk_boot_completed=$(getprop silk.boot_completed "?")
+if [[ ! $silk_boot_completed -ge 1 ]]; then
+  #   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -> more complex expression to ensure that
+  #                                   non-integers are caught
+  echo "Error: Expecting silk.boot_completed to be > 0, but was '$silk_boot_completed'"
+  cleanup
+fi
 
 echo
 echo =============================================================================

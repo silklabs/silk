@@ -14,9 +14,6 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-ifneq ($(TARGET_PRODUCT),silk_arm)  # Skip these in the minimal build
-
-ifneq ($(wildcard frameworks/native/libs/binder/IAppOpsService.cpp),)
 include $(CLEAR_VARS)
 LOCAL_MODULE       := fakeappops
 LOCAL_MODULE_TAGS  := optional
@@ -24,7 +21,7 @@ LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := fakeappops.cpp
 LOCAL_SHARED_LIBRARIES := libbinder libutils
 include $(BUILD_SILK_EXECUTABLE)
-endif
+
 
 ifneq ($(wildcard frameworks/av/services/audioflinger),)
 include $(CLEAR_VARS)
@@ -32,10 +29,11 @@ LOCAL_MODULE       := gonksched
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := gonksched.cpp
+# Inline libscheduling_policy.a as it is not available for the base build
+LOCAL_SRC_FILES += \
+  ../../../../frameworks/av/services/audioflinger/ISchedulingPolicyService.cpp \
+  ../../../../frameworks/av/services/audioflinger/SchedulingPolicyService.cpp
 LOCAL_SHARED_LIBRARIES := libbinder libutils libcutils
-LOCAL_STATIC_LIBRARIES := libscheduling_policy
 LOCAL_C_INCLUDES := frameworks/av/services/audioflinger
 include $(BUILD_SILK_EXECUTABLE)
-endif
-
 endif

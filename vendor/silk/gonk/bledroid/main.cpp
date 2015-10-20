@@ -2681,6 +2681,8 @@ int main(int argc, char *argv[]) {
     setuid(AID_BLUETOOTH);
     setgid(AID_BLUETOOTH);
 
+    prctl(PR_SET_DUMPABLE, 1, 0, 0, 0); // setuid clears PR_SET_DUMPABLE
+
     __user_cap_header_struct header = {
       .version = _LINUX_CAPABILITY_VERSION,
       .pid = 0
@@ -2694,7 +2696,6 @@ int main(int argc, char *argv[]) {
       return 1;
     }
   }
-
 
   // Start the server socket and register for commands from bleno
   int err = bledroid.start();

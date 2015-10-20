@@ -160,7 +160,7 @@ class MonitorsView extends AsyncComponent {
 
     let canceled = false;
     let deviceTouchView = null;
-    this.props.navigator.pushAsync({
+    this.props.navigator.push({
       name: 'DeviceTouch',
       props: {
         deviceId,
@@ -169,6 +169,11 @@ class MonitorsView extends AsyncComponent {
         // Keep a ref so that we can update the view when the devices touch.
         ref: (element) => deviceTouchView = element,
       },
+    });
+    InteractionManager.runAfterInteractions(() => {
+      let device = this.state.devices[deviceId];
+      device.configuring = true;
+      this.setState({devices: this.state.devices});
     });
 
     this.bleDeviceManager.configureDevice(device.peripheralId, () => {
@@ -280,9 +285,13 @@ class MonitorsView extends AsyncComponent {
     // near future, we will just query the account.
     let devices = deviceIds.map(deviceId => {
       let device = this.state.devices[deviceId];
-      let onPress = () => this.startFullscreenVideo(deviceId);
+      let onPress;
       if (device.configuring) {
+        onPress = null;
+      } else if (device.unconfigured) {
         onPress = () => this.configureDevice(deviceId);
+      } else {
+        onPress = () => this.startFullscreenVideo(deviceId);
       }
       return (
         <MonitorPreview
@@ -290,7 +299,7 @@ class MonitorsView extends AsyncComponent {
           onPress={onPress}
           deviceId={deviceId}
           label={device.name}
-          configuring={device.configuring}
+          configurable={device.unconfigured && !device.configuring}
           serverConnectionStatus={device.serverConnectionStatus}
           logo={device.logo}
           previewSize={this._getPreviewSize(deviceId)}
@@ -298,10 +307,10 @@ class MonitorsView extends AsyncComponent {
         />
       );
     });
-    let notConfiguringDevices = deviceIds.filter(
-      deviceId => !this.state.devices[deviceId].configuring
+    let configuredDevices = deviceIds.filter(
+      deviceId => !this.state.devices[deviceId].unconfigured
     );
-    let activity = notConfiguringDevices.length ? this._renderActivity() : null;
+    let activity = configuredDevices.length ? this._renderActivity() : null;
     let fullscreenMonitor = null;
     let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {
@@ -396,10 +405,13 @@ class MonitorsView extends AsyncComponent {
     let serverConnectionStatus = device && device.serverConnectionStatus || null;
 
     this.state.devices[msg.id] = {
+      peripheralId: device && device.peripheralId || null,
       name: device && device.name || msg.name,
       logo: msg.logo,
       previewSize: msg.previewSize,
       serverConnectionStatus,
+      unconfigured: false,
+      configuring: false,
     };
 
     // This is pretty crude, but we have no other way of knowing which devices
@@ -443,8 +455,9 @@ class MonitorsView extends AsyncComponent {
         existingRecord = devices[peripheral.deviceId] = {
           peripheralId: peripheral.id,
           name: 'New Device',
-          configuring: true,
           logo: null,
+          unconfigured: true,
+          configuring: false,
         };
         dirtyState = true;
       }
@@ -480,10 +493,10 @@ class MonitorsView extends AsyncComponent {
       // some time to connect to the server. After that, delete
       // placeholder widget so it doesn't linger indefinitely.
       // See also https://github.com/silklabs/silk-device/issues/1006.
-      if (devices[deviceId].configuring) {
+      if (devices[deviceId].unconfigured) {
         setTimeout(() => {
           if (!this.state.devices[deviceId] ||
-              !this.state.devices[deviceId].configuring) {
+              !this.state.devices[deviceId].unconfigured) {
             // Nothing to be done here.
             return;
           }

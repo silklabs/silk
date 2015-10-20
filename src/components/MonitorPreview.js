@@ -22,6 +22,7 @@ const CONNECTION_STATUS_LABELS = {
   'server_connecting': 'connecting to server',
   'server_connected': 'connected to server',
   'wifi_offline': 'not connected to WiFi',
+  'wifi_disconnected': 'not connected to WiFi',
   'wifi_scanning': 'scanning for WiFi networks',
   'wifi_associating': 'connecting to WiFI',
   'wifi_associated': 'connecting to WiFi',
@@ -35,7 +36,7 @@ export default class extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string.isRequired,
     label: React.PropTypes.string.isRequired,
-    configuring: React.PropTypes.bool,
+    configurable: React.PropTypes.bool,
     serverConnectionStatus: React.PropTypes.oneOf(Object.keys(CONNECTION_STATUS_LABELS)),
     navigator: React.PropTypes.object.isRequired,
     socket: React.PropTypes.object.isRequired,
@@ -56,13 +57,13 @@ export default class extends React.Component {
       });
     });
 
-    if (!this.props.configuring) {
+    if (!this.props.configurable) {
       this.connectToSocket();
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.configuring && !nextProps.configuring) {
+    if (this.props.configurable && !nextProps.configurable) {
       this.connectToSocket();
     }
   }
@@ -147,12 +148,12 @@ export default class extends React.Component {
     }
 
     let preview = null;
-    if (this.props.configuring) {
+    if (this.state.blob) {
+      preview = <ImageView style={styles.preview} blob={this.state.blob} />;
+    } else if (this.props.configurable) {
       preview = (
         <Text style={styles.newDevicePlus}>+</Text>
       );
-    } else if (this.state.blob) {
-      preview = <ImageView style={styles.preview} blob={this.state.blob} />;
     } else {
       preview = <ActivityIndicatorIOS color="white" />;
     }

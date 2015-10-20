@@ -67,32 +67,9 @@ suite('outbox manager', () => {
     subject = createOutbox({
       storagePath: FIXTURE_DIR
     });
-    subject.queue.concurrency = 20;
+    subject.queues.get('default-queue').concurrency = 20;
     subject.registerOperation(HttpOp);
     subject.registerOperation(NoBufferOp);
-  });
-
-  test('Queue.searchDirectory', async () => {
-    let storagePath = path.join(FIXTURE_DIR, 'queue');
-    await mkdirp(storagePath);
-
-    await Promise.all([
-      // Create some valid directories...
-      mkdirp(path.join(storagePath, '1')),
-      mkdirp(path.join(storagePath, '2')),
-      mkdirp(path.join(storagePath, '1000')),
-
-      // Some things which look like directories
-      fs.writeFile(path.join(storagePath, '1001'), ''),
-      fs.writeFile(path.join(storagePath, '3'), ''),
-
-      // Not number junk wtf is this stuff
-      fs.writeFile(path.join(storagePath, '.imessyouup')),
-      mkdirp(path.join(storagePath, '.imessyouupdir')),
-    ]);
-
-    let result = await Queue.searchDirectory(storagePath);
-    assert.deepEqual(result, [1, 2, 1000]);
   });
 
   suite('with running queue', () => {
@@ -103,7 +80,7 @@ suite('outbox manager', () => {
 
       let { stream, buffer } = randomStream();
       let op = new HttpOp({ arguments: handle.url });
-      let finishedOp = eventToPromise(subject.queue, 'finished operation');
+      let finishedOp = eventToPromise(subject.queues.get('default-queue'), 'finished operation');
 
       await subject.addToQueue(op, stream);
       // ensure we emit the finished operation event...
@@ -122,13 +99,13 @@ suite('outbox manager', () => {
 
       let args = { woot: true };
       let op = new NoBufferOp({ url: handle.url, args });
-      let savedEvent = eventToPromise(subject.queue, 'saved operation');
+      let savedEvent = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
 
       await subject.addToQueue(op);
       // ensure we emit the finished operation event...
       await savedEvent;
 
-      let successEvent = eventToPromise(subject.queue, 'finished operation');
+      let successEvent = eventToPromise(subject.queues.get('default-queue'), 'finished operation');
       subject.online = true;
       await successEvent;
 
@@ -146,13 +123,13 @@ suite('outbox manager', () => {
 
       let { stream, buffer } = randomStream();
       let op = new HttpOp({ arguments: handle.url });
-      let savedEvent = eventToPromise(subject.queue, 'saved operation');
+      let savedEvent = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
 
       await subject.addToQueue(op, stream);
       // ensure we emit the finished operation event...
       await savedEvent;
 
-      let successEvent = eventToPromise(subject.queue, 'finished operation');
+      let successEvent = eventToPromise(subject.queues.get('default-queue'), 'finished operation');
       subject.online = true;
       await successEvent;
 
@@ -169,7 +146,7 @@ suite('outbox manager', () => {
 
       let { stream, buffer } = randomStream();
       let op = new HttpOp({ arguments: handle.url });
-      let savedEvent = eventToPromise(subject.queue, 'saved operation');
+      let savedEvent = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
 
       await subject.addToQueue(op, stream);
       // ensure we emit the finished operation event...
@@ -178,7 +155,7 @@ suite('outbox manager', () => {
       let metadataPath = path.join(FIXTURE_DIR, 'default-queue/1/metadata.json');
       await fs.writeFile(metadataPath, 'blablanotjson');
 
-      let removeEvent = eventToPromise(subject.queue, 'removed operation');
+      let removeEvent = eventToPromise(subject.queues.get('default-queue'), 'removed operation');
       subject.online = true;
       await removeEvent;
 
@@ -221,11 +198,11 @@ suite('outbox manager', () => {
 
       await Promise.all(pendingRequests);
 
-      assert.equal(subject.queue.liveOperations.length, liveOperations);
-      assert.ok(subject.queue.running >= liveOperations + offlineOperations);
+      assert.equal(subject.queues.get('default-queue').liveOperations.length, liveOperations);
+      assert.ok(subject.queues.get('default-queue').running >= liveOperations + offlineOperations);
       await subject.shutdown();
-      assert.equal(subject.queue.running, 0);
-      assert.equal(subject.queue.liveOperations.length, 0);
+      assert.equal(subject.queues.get('default-queue').running, 0);
+      assert.equal(subject.queues.get('default-queue').liveOperations.length, 0);
     });
 
     test('recover from failure', async () => {
@@ -236,7 +213,7 @@ suite('outbox manager', () => {
 
       let { stream, buffer } = randomStream();
       let op = new HttpOp({ arguments: handle.url });
-      let failedOp = eventToPromise(subject.queue, 'saved operation');
+      let failedOp = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
 
       await subject.addToQueue(op, stream);
       // ensure we emit the finished operation event...
@@ -246,12 +223,12 @@ suite('outbox manager', () => {
       // Wait for a number of retries...
       let retryAttempts = 5;
       for (let retry = 0; retry < retryAttempts; retry++) {
-        await eventToPromise(subject.queue, 'failed operation');
+        await eventToPromise(subject.queues.get('default-queue'), 'failed operation');
       }
 
       // Now turn on the server so the operation will be successful this time.
-      let successOp = eventToPromise(subject.queue, 'finished operation');
-      let removeOp = eventToPromise(subject.queue, 'removed operation');
+      let successOp = eventToPromise(subject.queues.get('default-queue'), 'finished operation');
+      let removeOp = eventToPromise(subject.queues.get('default-queue'), 'removed operation');
       await server.listen();
       await successOp;
       let removeHandle = await removeOp;
@@ -260,7 +237,7 @@ suite('outbox manager', () => {
       assert.equal(handle.success, true);
       assert.equal(buffer.toString(), handle.content.toString());
       assert.ok(!(await fs.exists(removeHandle.path)), 'removes from disk');
-      assert.equal(subject.queue.running, 0);
+      assert.equal(subject.queues.get('default-queue').running, 0);
     });
 
   });

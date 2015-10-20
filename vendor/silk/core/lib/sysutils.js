@@ -114,21 +114,6 @@ export function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// TODO: find a nodeunit home for me
-if (require.main === module) {
-  log.info('Starting in 1 second ...');
-  timeout(1000).then(() => {
-    log.info('Running `ls` ...');
-    return exec('ls');
-  }).then(result => {
-    log.info('  output:\n' + result.stdout);
-    log.info('Failing `grep foo bar 5 times ...');
-    return execRetry('grep', ['foo', 'bar'], 5, 100);
-  }).then(
-    () => log.warn('(should not have succeeded'),
-    result => log.info('... done failing with code ' + result.code));
-}
-
 export function escape(str) {
   return JSON.stringify(str);
 }
@@ -150,4 +135,8 @@ export function playSound(fileName) {
       throw new Error(msg);
     }
   });
+}
+
+export function randBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

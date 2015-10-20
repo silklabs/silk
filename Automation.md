@@ -19,6 +19,8 @@ Heroku server logs can be viewed:
 
     heroku logs --tail --app silk-releng
 
+or https://papertrailapp.com/systems/silk-releng/events
+
 Heroku configuration is at https://dashboard.heroku.com/apps/silk-releng
 
 To examine recent Github Webhook deliveries, view the **Recent Deliveries** section of

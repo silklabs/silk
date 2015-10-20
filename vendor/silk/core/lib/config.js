@@ -23,17 +23,50 @@ const log = createLog('config');
 const STATE = api.btleConfigService.state;
 const CONFIG_PATH = '/data/silk/config/config.json';
 
-class DeviceConfig extends events.EventEmitter {
-  _initialized = false
-  _initializing = false
-  _btle = null
-  _networkStatus = null
-  _configService = null
-  _unconfigurePromise = null
+const SERVER_STATE_TO_CONNECTION_STATUS = {
+  'disconnect': 'server_disconnected',
+  'connecting': 'server_connecting',
+  'connect': 'server_connected',
+};
 
-  _serverConnectionStatus = ''
-  _errorMessage = ''
-  _registrationState = STATE.UNREGISTERED
+// Keys: see WIFI_STATES in wifi.js
+const WIFI_STATE_TO_CONNECTION_STATUS = {
+  'disconnected': 'wifi_disconnected',
+  'scanning': 'wifi_scanning',
+  'associating': 'wifi_associating',
+  'associated': 'wifi_associated',
+  'authenticating': 'wifi_authenticating',
+  'four_way_handshake': 'wifi_authenticating',
+  'group_handshake': 'wifi_authenticating',
+  'completed': 'wifi_connected',
+  // The following values are not part of WIFI_STATES (wifi.js).
+  // This next value is emitted by WpaMonitor manually as it initializes
+  // the DHCP process.
+  'dhcping': 'wifi_dhcping',
+  // These two values correspond to the 'online' and 'offline' events of
+  // WpaMonitor and represent the overall state of the internet uplink.
+  'online': 'wifi_online',
+  'offline': 'wifi_offline',
+};
+
+const ONLINE_CONNECTION_STATUSES = [
+  'wifi_online',
+  'server_disconnected',
+  'server_connecting',
+  'server_connected',
+];
+
+class DeviceConfig extends events.EventEmitter {
+  _initialized = false;
+  _initializing = false;
+  _btle = null;
+  _networkStatus = null;
+  _configService = null;
+  _unconfigurePromise = null;
+
+  _serverConnectionStatus = '';
+  _errorMessage = '';
+  _registrationState = STATE.UNREGISTERED;
 
   /**
    * Persist the configuration after the device has completed registration.
@@ -124,31 +157,13 @@ class DeviceConfig extends events.EventEmitter {
       log.debug('Configured');
       this.emit('configured');
     }
-  }
+  };
 
   _isWifiOnline() {
-    const states = [
-      'wifi_online',
-      'server_disconnected',
-      'server_connecting',
-      'server_connected'
-    ];
-    return states.indexOf(this._serverConnectionStatus) !== -1;
+    return ONLINE_CONNECTION_STATUSES.indexOf(this._serverConnectionStatus) !== -1;
   }
 
   _onWifiStateChange(state) {
-    const wifiStates = {
-      'offline': 'wifi_offline',
-      'scanning': 'wifi_scanning',
-      'associating': 'wifi_associating',
-      'associated': 'wifi_associated',
-      'four_way_handshake': 'wifi_authenticating',
-      'group_handshake': 'wifi_authenticating',
-      'completed': 'wifi_connected',
-      'dhcping': 'wifi_dhcping',
-      'online': 'wifi_online',
-    };
-
     // clear error if we are online
     if (state === 'online') {
       this._errorMessage = '';
@@ -157,8 +172,8 @@ class DeviceConfig extends events.EventEmitter {
       }
     }
 
-    if (state in wifiStates) {
-      this._serverConnectionStatus = wifiStates[state];
+    if (state in WIFI_STATE_TO_CONNECTION_STATUS) {
+      this._serverConnectionStatus = WIFI_STATE_TO_CONNECTION_STATUS[state];
       if (this._configService) {
         this._configService.serverConnectionStatus =
           this._serverConnectionStatus;
@@ -187,12 +202,6 @@ class DeviceConfig extends events.EventEmitter {
   }
 
   _onServerStateChange(state) {
-    const serverStates = {
-      'disconnect': 'server_disconnected',
-      'connecting': 'server_connecting',
-      'connect': 'server_connected',
-    };
-
     if (state === 'connect' && this._configService) {
       this._setBtleNormalMode().catch(util.processthrow);
     } else if (state === 'disconnect' &&
@@ -201,9 +210,9 @@ class DeviceConfig extends events.EventEmitter {
       this._setBtleConfigMode().catch(util.processthrow);
     }
 
-    if (this._isWifiOnline() && state in serverStates) {
+    if (this._isWifiOnline() && state in SERVER_STATE_TO_CONNECTION_STATUS) {
       // Wi-Fi is offline; don't update as Wi-Fi state is more meaningful
-      this._serverConnectionStatus = serverStates[state];
+      this._serverConnectionStatus = SERVER_STATE_TO_CONNECTION_STATUS[state];
       if (this._configService) {
         this._configService.serverConnectionStatus =
           this._serverConnectionStatus;

@@ -9,11 +9,64 @@ import createLog from './log';
 const log = createLog('wifi');
 const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu', false);
 
+// ref: external/wpa_supplicant_8/src/common/defs.h
+const WIFI_STATES = [
+  'disconnected',
+  'disabled',
+  'inactive',
+  'scanning',
+  'authenticating',
+  'associating',
+  'associated',
+  'four_way_handshake',
+  'group_handshake',
+  'completed',
+];
+
+// ref: external/wpa_supplicant_8/src/common/ieee802_11_defs.h
+const WIFI_DISCONNECT_REASONS = [
+  'invalid_0',
+  'unspecified',
+  'prev_auth_not_valid',
+  'deauth_leaving',
+  'disassoc_due_to_inactivity',
+  'disassoc_ap_busy',
+  'class2_frame_from_nonauth_sta',
+  'class3_frame_from_nonassoc_sta',
+  'disassoc_sta_has_left',
+  'sta_req_assoc_without_auth',
+  'pwr_capability_not_valid',
+  'supported_channel_not_valid',
+  'invalid_12',
+  'invalid_ie',
+  'michael_mic_failure',
+  '4way_handshake_timeout',
+  'group_key_update_timeout',
+  'ie_in_4way_differs',
+  'group_cipher_not_valid',
+  'pairwise_cipher_not_valid',
+  'akmp_not_valid',
+  'unsupported_rsn_ie_version',
+  'invalid_rsn_ie_capab',
+  'ieee_802_1x_auth_failed',
+  'cipher_suite_rejected',
+  'tdls_teardown_unreachable',
+  'tdls_teardown_unspecified',
+  'invalid_27',
+  'invalid_28',
+  'invalid_29',
+  'invalid_30',
+  'invalid_31',
+  'invalid_32',
+  'invalid_33',
+  'disassoc_low_ack',
+];
+
 let iface = util.getprop('wifi.interface');
 let monitor;
 
-class WpaMonitor extends events.EventEmitter
-{
+class WpaMonitor extends events.EventEmitter {
+
   constructor() {
     super();
     this._ready = false;
@@ -77,23 +130,8 @@ class WpaMonitor extends events.EventEmitter
         case 'CTRL-EVENT-DISCONNECTED':
           let reason = '';
           if ((found = extra.match(/ reason=([0-9]+)/))) {
-            // ref: external/wpa_supplicant_8/src/common/ieee802_11_defs.h
             let reasonIndex = found[1];
-            reason = ['invalid_0', 'unspecified', 'prev_auth_not_valid',
-                'deauth_leaving', 'disassoc_due_to_inactivity',
-                'disassoc_ap_busy', 'class2_frame_from_nonauth_sta',
-                'class3_frame_from_nonassoc_sta', 'disassoc_sta_has_left',
-                'sta_req_assoc_without_auth', 'pwr_capability_not_valid',
-                'supported_channel_not_valid', 'invalid_12', 'invalid_ie',
-                'michael_mic_failure', '4way_handshake_timeout',
-                'group_key_update_timeout', 'ie_in_4way_differs',
-                'group_cipher_not_valid', 'pairwise_cipher_not_valid',
-                'akmp_not_valid', 'unsupported_rsn_ie_version',
-                'invalid_rsn_ie_capab', 'ieee_802_1x_auth_failed',
-                'cipher_suite_rejected', 'tdls_teardown_unreachable',
-                'tdls_teardown_unspecified', 'invalid_27', 'invalid_28',
-                'invalid_29', 'invalid_30', 'invalid_31', 'invalid_32',
-                'invalid_33', 'disassoc_low_ack'][reasonIndex];
+            reason = WIFI_DISCONNECT_REASONS[reasonIndex];
             log.info(`wifi disconnect reason: ${reason}`);
           }
           this.emit('disconnected', reason);
@@ -103,11 +141,8 @@ class WpaMonitor extends events.EventEmitter
           break;
         case 'CTRL-EVENT-STATE-CHANGE':
           if ((found = extra.match(/ state=([0-9]) /))) {
-            // ref: external/wpa_supplicant_8/src/common/defs.h
             let stateIndex = found[1];
-            let state = ['disconnected', 'disabled', 'inactive', 'scanning',
-             'authenticating', 'associating', 'associated', 'four_way_handshake',
-             'group_handshake', 'completed'][stateIndex];
+            let state = WIFI_STATES[stateIndex];
             log.info(`wifi state: ${state}`);
             this.emit('stateChange', state);
           }
@@ -202,11 +237,10 @@ function wpaCliRemoveAllNetworks() {
 }
 
 
-class Wifi extends events.EventEmitter
-{
+class Wifi extends events.EventEmitter {
 
   // Always start as offline until proven otherwise...
-  _online = false
+  _online = false;
 
   constructor() {
     super();
@@ -390,8 +424,8 @@ class Wifi extends events.EventEmitter
 }
 
 
-class QEmuWifi extends events.EventEmitter
-{
+class QEmuWifi extends events.EventEmitter {
+
   constructor() {
     super();
   }

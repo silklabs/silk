@@ -1,0 +1,33 @@
+#!/bin/bash -ex
+#
+# This test attempts to ensure that the Silk framework correctly restarts
+# itself.
+#
+# Copyright (c) 2015 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+#
+
+LOCAL_PATH=$(dirname $0)
+
+# Assume that a device is already running and stable, so just perform a quick
+# check to ensure it's reachable
+adb="timeout -s KILL 10s adb"
+$adb wait-for-device
+
+echo "<<<<<<<<<<<<<< Restarting all silk services >>>>>>>>>>>>>>"
+$adb shell stop
+$adb shell setprop silk.boot_completed '' # Ensure failed silk boot is detected
+$adb shell start
+$LOCAL_PATH/devicecheck
+
+echo "<<<<<<<<<<<<<< Restarting just the silk process >>>>>>>>>>>>>>"
+$adb shell stop silk
+$adb shell setprop silk.boot_completed '' # Ensure failed silk boot is detected
+$adb shell start silk
+$LOCAL_PATH/devicecheck
+
+# TODO: Test restarting the |capture| process.  Need a way to validate the
+#       silk process has re-established contact with it
+
+exit 0

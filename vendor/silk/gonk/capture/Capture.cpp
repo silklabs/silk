@@ -9,7 +9,8 @@
 #include <utils/Log.h>
 
 #include <binder/ProcessState.h>
-#include <gui/CpuConsumer.h>
+#include <gui/Surface.h>
+#include <gui/SurfaceComposerClient.h>
 #include <media/openmax/OMX_IVCommon.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/CameraSource.h>
@@ -41,7 +42,7 @@ int32_t sIFrameIntervalSec = 15;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
-sp<IGraphicBufferProducer> sPreviewProducer = NULL;
+sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 
 //
 // Helper macros
@@ -86,7 +87,8 @@ public:
  * This class provided a method that is run each time
  * {@code CAPTURE_COMMAND_NAME} is received from node over the socket
  */
-class CaptureCommand: public FrameworkCommand {
+class CaptureCommand: public FrameworkCommand,
+                      public OpenCVCameraCapture::PreviewProducerListener {
 public:
   CaptureCommand(CaptureListener* captureListener, Channel& channel) :
       FrameworkCommand(CAPTURE_COMMAND_NAME),
@@ -96,13 +98,20 @@ public:
   }
 
   virtual ~CaptureCommand() {}
+
+  // FrameworkCommand
   int runCommand(SocketClient *c, int argc, char ** argv);
+
+  // OpenCVCameraCapture::PreviewProducerListener
+  void onPreviewProducer();
 
 private:
   int capture_init(Value& cmdData);
   int capture_cleanup();
   int capture_setParameter(Value& name, Value& value);
   static void* initThreadWrapper(void* me);
+  status_t setPreviewTarget();
+
   status_t initThread();
   void notifyCameraEvent(const char* eventName);
 
@@ -114,6 +123,9 @@ private:
   bool mHardwareActive;
   sp<Camera> mCamera;
 
+  // Faux preview target for when there's no client preview producer around
+  sp<SurfaceControl> mPreviewSurfaceControl;
+
   sp<SlicedMP4Encoder> mMp4;
   sp<MediaSource> mPreview;
   sp<IFrameRequestMonitor> mIframe;
@@ -121,6 +133,7 @@ private:
   sp<ICamera> mRemote;
   sp<CameraSource> mCameraSource;
   Channel& mChannel;
+  Mutex mPreviewTargetLock;
 };
 
 /**
@@ -249,6 +262,59 @@ void* CaptureCommand::initThreadWrapper(void* me) {
 }
 
 /**
+ * Changes the active preview target for the camera stream
+ *
+ * This is a little bit involved because we can't:
+ * 1. Swap the preview target without pausing the preview stream first.
+ * 2. Run the camera without a preview target.
+ * 3. Guarantee that node will connect the preview target to us before
+ *    requesting that the preview start.
+ *
+ * (This method may be called by multiple threads)
+ */
+status_t CaptureCommand::setPreviewTarget() {
+  Mutex::Autolock autoLock(mPreviewTargetLock);
+
+  if (mCamera->previewEnabled()) {
+    ALOGI("Stopping camera preview");
+    mCamera->stopPreview();
+  }
+  sp<IGraphicBufferProducer> previewProducer = sOpenCVCameraCapture->getPreviewProducer();
+  if (previewProducer == NULL) {
+    ALOGW("No client, selecting null preview target");
+    if (mPreviewSurfaceControl == NULL) {
+      sp<SurfaceComposerClient> sCClient = new SurfaceComposerClient();
+      if (sCClient.get() == NULL) {
+        ALOGE("Unable to establish connection to Surface Composer");
+        return -1;
+      }
+      mPreviewSurfaceControl = sCClient->createSurface(String8(CAMERA_NAME),
+          0, 0, PIXEL_FORMAT_RGBX_8888, ISurfaceComposerClient::eHidden);
+      if (mPreviewSurfaceControl == NULL) {
+        ALOGE("Unable to create preview surface");
+        return -1;
+      }
+    }
+    previewProducer = mPreviewSurfaceControl->getSurface()->getIGraphicBufferProducer();
+  }
+  ALOGI("Setting preview target");
+  CHECK(mCamera->setPreviewTarget(previewProducer) == 0);
+  ALOGI("Starting camera preview");
+  CHECK(mCamera->startPreview() == 0);
+  CHECK(mCamera->previewEnabled());
+  return ::OK;
+}
+
+
+/**
+ * Notification when a client preview producer has connected.
+ */
+void CaptureCommand::onPreviewProducer() {
+  CHECK(setPreviewTarget() == 0);
+}
+
+
+/**
  * Thread function that initializes the camera
  */
 status_t CaptureCommand::initThread() {
@@ -281,10 +347,8 @@ status_t CaptureCommand::initThread() {
     params.dump();
   }
 
-  CHECK(sPreviewProducer != NULL);
-  CHECK(mCamera->setPreviewTarget(sPreviewProducer) == 0);
-  CHECK(mCamera->startPreview() == 0);
-  CHECK(mCamera->previewEnabled());
+  sOpenCVCameraCapture->setPreviewProducerListener(this);
+  CHECK(setPreviewTarget() == 0);
   CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
 
   // Start recording stream
@@ -306,6 +370,7 @@ status_t CaptureCommand::initThread() {
   // Block this thread while camera is running
   mMp4->join();
 
+  sOpenCVCameraCapture->setPreviewProducerListener(NULL);
   return 0;
 }
 
@@ -367,7 +432,8 @@ int main(int argc, char **argv) {
   sp<ProcessState> proc(ProcessState::self());
   ProcessState::self()->startThreadPool();
 
-  err = OpenCVCameraCapture::publish();
+  sOpenCVCameraCapture = new OpenCVCameraCapture();
+  err = sOpenCVCameraCapture->publish();
   if (err != 0) {
     ALOGE("Unable to publish OpenCVCameraCapture service: %d", err);
     return 1;

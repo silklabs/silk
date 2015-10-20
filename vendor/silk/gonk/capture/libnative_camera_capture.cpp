@@ -20,6 +20,7 @@
 #include <utils/String16.h>
 
 #include "IOpenCVCameraCapture.h"
+#include "OpenCVCameraCapture.h"
 
 using namespace android;
 
@@ -173,7 +174,7 @@ void* initCameraConnectC(void* cameraCallback, int cameraId, void* userData)
   ps->startThreadPool();
 
   sp<IServiceManager> sm = defaultServiceManager();
-  sp<IBinder> binder = sm->getService(String16("libnative_camera_capture"));
+  sp<IBinder> binder = sm->getService(String16(OpenCVCameraCapture::getServiceName()));
   if (binder == NULL) {
     ALOGE("Unable to connect with capture preview service");
     return NULL;

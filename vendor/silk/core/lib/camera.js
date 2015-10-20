@@ -216,9 +216,8 @@ class CameraStream extends EventEmitter {
 
       if (!this._cvVideoCapture) {
         // Initialize the OpenCV video capture before sending 'init' to the
-        // capture process.  There is currently a messy coupling between these
-        // two operations due to the multiple entry points into the
-        // capture process (OpenCV over binder, 'init' over a socket)
+        // capture process to enable capture's 'init' implementation to run more
+        // efficiently.
         try {
           this._cvVideoCapture = new cv.VideoCapture(0);
         } catch (err) {

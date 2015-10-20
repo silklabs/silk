@@ -33,7 +33,7 @@ function requestHash(req, buf) {
 
 let middleware = bodyParser.json({
   // Somewhat arbitrary but should be plenty of space for any json operations.
-  limit: '8kb',
+  limit: '16kb',
 
   // As part of nearly all operations we rely on hashing the body to validate
   // that the request was not tampered with we use this value and compare it

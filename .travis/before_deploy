@@ -11,7 +11,8 @@ fi
 ./gonk/archive.sh $GONK dist
 
 ls -l $ANDROID_PRODUCT_OUT/*.zip
-if [[ -f $ANDROID_PRODUCT_OUT/*-ota-*.zip ]]; then
+
+if [ -f $ANDROID_PRODUCT_OUT/*-ota-*.zip ]; then # [ not [[, due to pathname expansion
   # Full OTA package not available for all gonks
   mv -v $ANDROID_PRODUCT_OUT/*-ota-*.zip dist/
 fi

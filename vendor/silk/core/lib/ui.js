@@ -160,7 +160,8 @@ class Ui extends events.EventEmitter
             util.timeout(1000),
             new Promise((resolve, reject) => cancelVolumeKeys = reject)
           ])
-          .then(() => this.emit('key:factoryreset'));
+          .then(() => this.emit('key:factoryreset'))
+          .catch(() => null);
         }
         break;
       case 'power':
@@ -168,7 +169,8 @@ class Ui extends events.EventEmitter
           util.timeout(1000),
           new Promise((resolve, reject) => cancelPowerDown = reject)
         ])
-        .then(() => this.emit('key:powerdown'));
+        .then(() => this.emit('key:powerdown'))
+        .catch(() => null);
         break;
       default:
         break;

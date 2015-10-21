@@ -3,10 +3,12 @@
 
 import React from 'react-native';
 
+import DeviceManager from '../libraries/btle/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
+import SocketIOComponent from './SocketIOComponent';
 
 let {
   ActivityIndicatorIOS,
@@ -32,21 +34,27 @@ const CONNECTION_STATUS_LABELS = {
   'wifi_online': 'connected to WiFi',
 };
 
-export default class extends React.Component {
+export default class extends SocketIOComponent {
   static propTypes = {
-    deviceId: React.PropTypes.string.isRequired,
+    deviceId: React.PropTypes.string,
+    peripheralId: React.PropTypes.string,
     label: React.PropTypes.string.isRequired,
+    logo: React.PropTypes.object,
+    previewSize: React.PropTypes.shape({
+      width: React.PropTypes.number.isRequired,
+      height: React.PropTypes.number.isRequired,
+    }),
     configurable: React.PropTypes.bool,
-    serverConnectionStatus: React.PropTypes.oneOf(Object.keys(CONNECTION_STATUS_LABELS)),
-    navigator: React.PropTypes.object.isRequired,
+    configuring: React.PropTypes.bool,
+    onPress: React.PropTypes.func,
     socket: React.PropTypes.object.isRequired,
-    api: React.PropTypes.object.isRequired,
-    logo: React.PropTypes.object.isRequired,
+    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
   };
 
   state = {
     objects: [],
     previewWidth: null,
+    serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
   };
 
   componentWillMount() {
@@ -57,22 +65,36 @@ export default class extends React.Component {
       });
     });
 
-    if (!this.props.configurable) {
-      this.connectToSocket();
+    this.subscribeToSocket(this.props.socket);
+    if (this.props.configuring) {
+      this.subscribeToBLEStatus();
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.configurable && !nextProps.configurable) {
-      this.connectToSocket();
+    if (!this.props.configuring && nextProps.configuring) {
+      this.subscribeToBLEStatus();
     }
   }
 
-  connectToSocket() {
-    let { socket, deviceId } = this.props;
+  subscribeToSocket(socket) {
+    let { deviceId, configurable } = this.props;
+    if (configurable || !socket || !deviceId) {
+      return;
+    }
     let stream = `preview-${deviceId}`;
     socket.on(stream, this.onPreviewFrame);
     socket.join(stream);
+  }
+
+  unsubscribeFromSocket(socket) {
+    let { deviceId } = this.props;
+    if (!socket || !deviceId) {
+      return;
+    }
+    let stream = `preview-${deviceId}`;
+    socket.off(stream, this.onPreviewFrame);
+    socket.leave(stream);
   }
 
   onPreviewFrame = (message) => {
@@ -80,18 +102,33 @@ export default class extends React.Component {
   };
 
   componentWillUnmount() {
-    let { socket, deviceId } = this.props;
-    let stream = `preview-${deviceId}`;
-    socket.off(stream, this.onPreviewFrame);
-    socket.leave(stream);
+    let { socket, bleDeviceManager } = this.props;
+    this.unsubscribeFromSocket(socket);
     if (this._queue) {
       this._queue.deinit();
       this._queue = null;
     }
+    bleDeviceManager.removeListener('statusChange', this.onBLEPeripheralStatusChange);
   }
 
+  subscribeToBLEStatus() {
+    this.props.bleDeviceManager.on('statusChange', this.onBLEPeripheralStatusChange);
+  }
+
+  onBLEPeripheralStatusChange = (peripheral) => {
+    if (this.props.peripheralId !== peripheral.id) {
+      return;
+    }
+    let serverConnectionStatus =
+      peripheral.error ? peripheral.error : peripheral.serverConnectionStatus;
+    if (!this.state.serverConnectionStatus !== serverConnectionStatus) {
+      this.setState({serverConnectionStatus});
+    }
+  };
+
   render() {
-    let { label, serverConnectionStatus } = this.props;
+    let { label } = this.props;
+    let { serverConnectionStatus } = this.state;
     if (serverConnectionStatus) {
       let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
       label = `${label} (${statusLabel})`;

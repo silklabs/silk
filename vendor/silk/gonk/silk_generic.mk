@@ -13,6 +13,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
   persist.silk.debug.colors=true \
   persist.silk.ranger.enabled=false \
   persist.silk.eventtrk.enabled=true \
+  persist.silk.capture.mute=true \
   ro.silk.services=bledroid,silk-sensors,capture,silk \
   ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json \
   ro.silk.update.poll_hours=3 \

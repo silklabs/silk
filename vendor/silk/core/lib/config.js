@@ -337,25 +337,24 @@ class DeviceConfig extends events.EventEmitter {
   }
 
   async _unconfigureNetwork() {
-    log.info('Unconfigure network...');
+    log.verbose('Unconfigure network...');
     if (server.connected) {
       server.disconnect();
-      await eventToPromise(server, 'disconnect');
-      log.info('Unconfigure - Disconnected from server');
+      log.verbose('Unconfigure - Disconnected from server');
     }
 
     await wifi.forgetNetwork();
-    log.info('Unconfigure - forgot network...');
+    log.verbose('Unconfigure - forgot network...');
   }
 
   async _unconfigureBTLE() {
-    log.info('Unconfigure - turning off BTLE mode');
+    log.verbose('Unconfigure - turning off BTLE mode');
     await this._setBtleOffMode();
-    log.info('Unconfigure - BTLE mode off');
+    log.verbose('Unconfigure - BTLE mode off');
     await this._btle.resetBeaconUuid();
-    log.info('Unconfigure - BTLE reset beacon');
+    log.verbose('Unconfigure - BTLE reset beacon');
     await this._setBtleConfigMode();
-    log.info('Unconfigure - Set BTLE to configure mode');
+    log.verbose('Unconfigure - Set BTLE to configure mode');
   }
 
   async _unconfigure() {
@@ -364,13 +363,12 @@ class DeviceConfig extends events.EventEmitter {
     }
 
     if (this._unconfigurePromise) {
-      log.info('Device already unconfiguring');
-      return this._unconfigurePromise;
+      throw new Error('Device already unconfiguring');
     }
 
     if (this._registrationState === STATE.UNREGISTERED) {
       log.info('Device already unconfigured');
-      return Promise.resolve();
+      return;
     }
 
     this._registrationState = STATE.UNREGISTERED;
@@ -390,6 +388,8 @@ class DeviceConfig extends events.EventEmitter {
       this._unconfigureBTLE(),
       this._unconfigureNetwork()
     ]);
+
+    log.verbose('Unconfigured');
   }
 }
 

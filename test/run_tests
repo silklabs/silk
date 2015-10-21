@@ -10,7 +10,7 @@ SILKTEST=$LOCAL_PATH/../vendor/silk/test/run
 echo "Running silk tests"
 $SILKTEST
 
-echo "Running restart test"
-$LOCAL_PATH/restart_test
+# echo "Running restart test"
+# $LOCAL_PATH/restart_test
 
 exit 0

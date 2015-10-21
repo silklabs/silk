@@ -349,8 +349,9 @@ class DeviceConfig extends events.EventEmitter {
   }
 
   async _unconfigureBTLE() {
+    log.info('Unconfigure - turning off BTLE mode');
     await this._setBtleOffMode();
-    log.info('Unconfigure - BTLE off mode');
+    log.info('Unconfigure - BTLE mode off');
     await this._btle.resetBeaconUuid();
     log.info('Unconfigure - BTLE reset beacon');
     await this._setBtleConfigMode();

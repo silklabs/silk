@@ -19,7 +19,11 @@ import CBuffer from 'CBuffer';
 const log = createLog('camera');
 
 const DURATION_PROP = 'persist.silk.vidduration';
-const DURATION = util.getintprop(DURATION_PROP, 1);
+
+// Clamp duration to 1..10 seconds. Any longer and the object metadata
+// associated with a video clip could easily get too large for the server to
+// handle (silk-device#1054).
+const DURATION = Math.max(1,Math.min(util.getintprop(DURATION_PROP, 1), 10));
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
@@ -114,11 +118,15 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   // mako device-pixel space with top-left as (0,0)
   let normLen = (l, len) => (len * l / 2000.0) | 0;
   let normCoord = (c, len) => normLen(c + 1000.0, len);
-  face.x = normCoord(left, PREVIEW_WIDTH);
-  face.y = normCoord(top, PREVIEW_HEIGHT);
-  face.width = normLen(right - left, PREVIEW_WIDTH);
-  face.height = normLen(bottom - top, PREVIEW_HEIGHT);
-  return face;
+
+  // Intentionally discard additional HAL face data such as the
+  // id/leftEye/rightEye/mouth/score as they are never used downstream.
+  return {
+    x: normCoord(left, PREVIEW_WIDTH),
+    y: normCoord(top, PREVIEW_HEIGHT),
+    width: normLen(right - left, PREVIEW_WIDTH),
+    height: normLen(bottom - top, PREVIEW_HEIGHT),
+  };
 }
 
 /**

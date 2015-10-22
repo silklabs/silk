@@ -299,7 +299,6 @@ class DeviceConfig extends events.EventEmitter {
     log.info('Loading device configuration...', config);
     if (!config || !config.success) {
       // Ensure we don't have any stale state lying around...
-      await wifi.forgetNetwork();
       await Promise.all([
         wifi.forgetNetwork(),
         this._setBtleConfigMode()

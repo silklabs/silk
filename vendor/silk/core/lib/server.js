@@ -60,7 +60,7 @@ class Server extends events.EventEmitter {
 
   _connect(url) {
     log.info(`socket.io server: ${url}`);
-    this.socket = require('socket.io-client')(
+    this.socket = require('silk-socket.io-client-node')(
       url,
       {
         autoConnect: true,

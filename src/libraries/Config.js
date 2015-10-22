@@ -11,7 +11,15 @@ import mklog from 'log'; const log = mklog('Config');
 const DEFAULT = {
   'debug': 'silk-*,-silk-*:debug',
   'react-native': {},
-  'server': {},
+  'server': {
+    choices: [
+      {name: 'default', value: null},
+      {name: 'master', value: 'https://silk-server-master.herokuapp.com'},
+      {name: 'next', value: 'https://silk-server-next.herokuapp.com'},
+      {name: 'release', value: 'https://silk-server-release.herokuapp.com'},
+      {name: 'localhost', value: 'http://localhost:5000'},
+    ],
+  },
 
   /**
    * Development preferences intended to be overriden in config.local.json
@@ -29,6 +37,9 @@ const DEFAULT = {
     //  https://github.com/silklabs/silk-app/issues/546 and
     //  https://github.com/silklabs/silk-app/issues/344
     drawObjectBoxesFullscreenVideo: false,
+
+    allowDevAccount: true,
+    showServerPicker: true,
   },
 };
 

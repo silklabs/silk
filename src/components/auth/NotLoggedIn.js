@@ -1,6 +1,7 @@
 import React from 'react-native';
 import createLog from 'log';
 
+import Config from '../../libraries/Config';
 import { UserState } from '../../libraries/UserState';
 
 import AsyncComponent from '../AsyncComponent';
@@ -76,6 +77,28 @@ export default class extends AsyncComponent {
   }
 
   _renderFirstScreen() {
+    let devAccountButton = null;
+    let serverPickerButton = null;
+    let { allowDevAccount, showServerPicker } = Config.get().preferences;
+    if (allowDevAccount) {
+      devAccountButton = (
+        <Button
+          label="Run As Developer"
+          secondary={true}
+          inProgress={this.state.inProgress}
+          onPress={() => this._signIn(DEVELOPER_CREDENTIALS)}
+        />
+      );
+    }
+    if (showServerPicker) {
+      serverPickerButton = (
+        <Button
+          label="Change Server"
+          secondary={true}
+          onPress={() => this.props.navigator.push({name: 'ServerPicker'})}
+        />
+      );
+    }
     return (
       <View style={styles.controlsContainer}>
         <Button
@@ -86,17 +109,8 @@ export default class extends AsyncComponent {
           label="I Already Have An Account"
           onPress={() => this.setState({controls: 'signin'})}
         />
-        <Button
-          label="Run As Developer"
-          secondary={true}
-          inProgress={this.state.inProgress}
-          onPress={() => this._signIn(DEVELOPER_CREDENTIALS)}
-        />
-        <Button
-          label="Change Server"
-          secondary={true}
-          onPress={() => this.props.navigator.push({name: 'ServerPicker'})}
-        />
+        {devAccountButton}
+        {serverPickerButton}
         <View style={styles.bottomLinks}>
           <TextLink
             label="LEARN MORE"

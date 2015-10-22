@@ -1,23 +1,4 @@
 {
-  "name": "silk-server",
-  "version": "1.0.0",
-  "description": "Silk server and client API",
-  "main": "dist/lib/main.js",
-  "scripts": {
-    "test-react-native-api": "./bin/test-react-native-api",
-    "test": "npm run-script lint && npm run-script mocha",
-    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
-    "start": "./bin/start.sh",
-    "preinstall": "npm install babel && ./bin/pre-install",
-    "postinstall": "./bin/post-install",
-    "build": "./build.sh",
-    "wwwdev": "./build/browser/build.sh -w",
-    "lint": "eslint test src",
-    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
-    "start-server": "babel-node --harmony src/server/main.js production",
-    "start-socketio": "babel-node --harmony src/socketio/main.js production"
-  },
-  "license": "proprietary",
   "dependencies": {
     "api-schema": "git@github.com:silklabs/api-schema.git#76867d3486d8d53314073f8d7956692ec2f54524",
     "argparse": "^1.0.2",
@@ -62,21 +43,40 @@
     "superagent-promise": "^0.2.0",
     "uuid": "^2.0.1"
   },
+  "description": "Silk server and client API",
   "devDependencies": {
-    "timekeeper": "0.0.5",
+    "dev-null": "^0.1.1",
     "mocha": "^2.2.5",
-    "dev-null": "^0.1.1"
-  },
-  "engines": {
-    "node": ">=4.1.2"
+    "timekeeper": "0.0.5"
   },
   "engineStrict": true,
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:silklabs/silk-server.git"
+  "engines": {
+    "node": ">=4.1.2"
   },
   "keywords": [
     "iot"
   ],
-  "private": true
+  "license": "proprietary",
+  "main": "dist/lib/main.js",
+  "name": "silk-server",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-server.git"
+  },
+  "scripts": {
+    "build": "./build.sh",
+    "lint": "eslint test src",
+    "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
+    "postinstall": "./bin/post-install",
+    "preinstall": "npm install babel && ./bin/pre-install",
+    "start": "./bin/start.sh",
+    "start-debug": "DEBUG=silk-*,-*:verbose npm start",
+    "start-server": "babel-node --harmony src/server/main.js production",
+    "start-socketio": "babel-node --harmony src/socketio/main.js production",
+    "test": "npm run-script lint && npm run-script mocha",
+    "test-react-native-api": "./bin/test-react-native-api",
+    "wwwdev": "./build/browser/build.sh -w"
+  },
+  "version": "1.0.0"
 }

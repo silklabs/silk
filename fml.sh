@@ -35,6 +35,22 @@ cd $BRANCH
 
 clone $ORIGIN_BRANCH
 nostragglers $BRANCH
+
+if [[ $ORIGIN_BRANCH == master ]]; then
+  for app in $NPM_GITS; do
+    pushd $app
+    (
+      set -ex
+
+      git checkout $ORIGIN_BRANCH
+      normalizePackageJson package.json
+      git add package.json
+      git commit -m "Normalize package.json" || true
+    )
+    popd > /dev/null
+  done
+fi
+
 replace $ORIGIN_BRANCH $BRANCH
 
 updatebranch__silk_api $ORIGIN_BRANCH $BRANCH

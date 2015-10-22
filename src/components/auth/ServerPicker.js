@@ -16,28 +16,6 @@ let {
   View,
 } = React;
 
-const SERVERS = [
-  {name: 'default', value: null},
-  {name: 'master', value: 'https://silk-server-master.herokuapp.com'},
-  {name: 'next', value: 'https://silk-server-next.herokuapp.com'},
-  {name: 'release', value: 'https://silk-server-release.herokuapp.com'},
-  {name: 'localhost', value: 'http://localhost:5000'},
-];
-let { scriptURL } = NativeModules.SourceCode;
-let match = scriptURL && scriptURL.match(/^https?:\/\/(.*?)\//);
-if (match && match[1]) {
-  let bundleHost = match[1];
-  if (bundleHost.indexOf(':') !== -1) {
-    bundleHost = bundleHost.split(':')[0];
-  }
-  if (bundleHost !== 'localhost') {
-    SERVERS.push({
-      name: `JS bundle host (${bundleHost})`,
-      value: `http://${bundleHost}:5000`,
-    });
-  }
-}
-
 export default class extends React.Component {
 
   state = {
@@ -66,9 +44,39 @@ export default class extends React.Component {
     );
   }
 
+  _getServerChoices() {
+    let { choices } = Config.get().server;
+
+    // In dev builds where the bundle is loaded from a JS server,
+    // offer that host as an option too. It's pretty common to be
+    // running a JS bundle server and a Silk server on the same
+    // development host.
+    if (!__DEV__) {
+      return choices;
+    }
+    let { scriptURL } = NativeModules.SourceCode;
+    let match = scriptURL && scriptURL.match(/^https?:\/\/(.*?)\//);
+    if (!match || !match[1]) {
+      return choices;
+    }
+    let bundleHost = match[1];
+    if (bundleHost.indexOf(':') !== -1) {
+      bundleHost = bundleHost.split(':')[0];
+    }
+    if (bundleHost === 'localhost') {
+      return choices;
+    }
+    choices = choices.slice();
+    choices.push({
+      name: `JS bundle host (${bundleHost})`,
+      value: `http://${bundleHost}:5000`,
+    });
+    return choices;
+  }
+
   _renderServerPicker() {
     let haveCustomServer = true;
-    let servers = SERVERS.map((server, index) => {
+    let servers = this._getServerChoices().map((server, index) => {
       let checkmark = null;
       if (server.value === this.state.serverUrl) {
         checkmark = (

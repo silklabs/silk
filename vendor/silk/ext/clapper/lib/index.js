@@ -16,12 +16,23 @@ class Clapper {
     this._env = env;
     log = env.log;
 
+    let fftCfg = {
+      // TODO: hard coded audio constants assumed
+      sampleRate: 8000,
+      bytesPerSample: 2,
+      numChannels: 1,
+      fftWindowSize: 256, // 32ms - units of samples
+      fftWindowStep: 64,  // 8ms - units of samples
+    };
+
+    let audioTools = require('./audioTools')(env);
+    this._fftProcessor = new audioTools.FftProcessor(fftCfg);
+
     this._initClapDetector();
     this._initLoudSoundDetector();
 
     this._onMicData = pkt => {
-      this._clapDetector.processPcmFrames(pkt.when, pkt.frames);
-      //this._loudSoundDetector.processPcmFrames(pkt.when, pkt.frames);
+      this._fftProcessor.processSamples(pkt.when, pkt.frames);
     };
 
     this._env.camera.on('mic-data', this._onMicData);
@@ -30,7 +41,7 @@ class Clapper {
 
   _initClapDetector() {
     let ClapDetector = require('./clapDetector')(this._env);
-    this._clapDetector = new ClapDetector();
+    this._clapDetector = new ClapDetector({fftProcessor: this._fftProcessor});
 
     this._onClap = clap => {
       let count = clap.count;
@@ -59,19 +70,12 @@ class Clapper {
 
   _initLoudSoundDetector() {
     let cfg = {
-      // TODO: hard coded constants assumed
-      sampleRate: 8000,
-      bytesPerSample: 2,
-      numChannels: 1,
-      fftWindowSize: 256, // 32ms - units of samples
-      fftWindowStep: 16,  // 2ms - units of samples 
-      riseDurationMs: 8,
-      riseEnergyDelta: 50000,
-      minEnergyThreshold: 100000,
-      minEnergyDurationMs: 100,
-      maxEnergyDurationMs: 1000,
-      //saveWavFilename: '/data/media/micInputDebug.wav',
-      //saveWavDurationSecs: 10,
+      fftProcessor: this._fftProcessor,
+      riseDurationMs: 24,
+      riseEnergyDelta: 25000,
+      minEnergyThreshold: 30000,
+      minEnergyDurationMs: 120,
+      maxEnergyDurationMs: 2000,
     };
 
     let LoudSoundDetector = require('./loudSoundDetector')(this._env);
@@ -88,8 +92,9 @@ class Clapper {
     this._env.camera.removeListener('mic-data', this._onMicData);
     this._clapDetector.removeListener('clap', this._onClap);
     this._clapDetector.cleanup();
-    //this._loudSoundDetector.removeListener('loudSound', this._onLoudSound);
-    //this._loudSoundDetector.cleanup();
+    this._loudSoundDetector.removeListener('loudSound', this._onLoudSound);
+    this._loudSoundDetector.cleanup();
+    this._fftProcessor.cleanup();
   }
 }
 

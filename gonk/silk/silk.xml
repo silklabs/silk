@@ -46,6 +46,11 @@
            path="vendor/silk/core/local_node_modules/silk-api"
            remote="silk"
            revision="master"/>
+  <project name="silk-socket.io-client-node"
+           path="vendor/silk/core/local_node_modules/silk-socket.io-client-node"
+           remote="silk"
+           revision="refs/tags/0.0.1"
+           clone-depth="1"/>
   <project name="sandeepmistry/bleno"
            path="external/bleno"
            remote="github"

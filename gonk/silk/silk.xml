@@ -1,86 +1,33 @@
 <?xml version="1.0"?>
-
 <!--
   Copyright (c) 2015 Silk Labs, Inc.
   All Rights Reserved.
   Confidential and Proprietary - Silk Labs, Inc.
 -->
-
 <manifest>
   <remote name="github" fetch="git://github.com/" sync-j="4"/>
-  <remote name="silk"
-          fetch="ssh://git@github.com/silklabs/"
-          revision="Always invalid.  Contact releng for more details"
-          sync-j="4"/>
+  <remote name="silk" fetch="ssh://git@github.com/silklabs/" revision="Always invalid.  Contact releng for more details" sync-j="4"/>
 
-  <project name="nodejs/node"
-           path="external/node"
-           remote="github"
-           revision="refs/tags/v4.1.2" clone-depth="1"/>
-  <project name="npm/npm"
-           path="external/npm"
-           remote="github"
-           revision="refs/tags/v2.13.1" clone-depth="1"/>
-  <project name="mozilla-b2g/librecovery"
-           path="external/librecovery"
-           remote="github"
-           revision="v2.2" clone-depth="1"/>
+  <project name="nodejs/node" path="external/node" remote="github" revision="refs/tags/v4.1.2" clone-depth="1"/>
+  <project name="npm/npm" path="external/npm" remote="github" revision="refs/tags/v2.13.1" clone-depth="1"/>
+  <project name="mozilla-b2g/librecovery" path="external/librecovery" remote="github" revision="v2.2" clone-depth="1"/>
 
-  <project name="Itseez/opencv"
-           path="external/opencv2"
-           remote="github"
-           revision="refs/tags/2.4.12" clone-depth="1"/>
+  <project name="Itseez/opencv" path="external/opencv2" remote="github" revision="refs/tags/2.4.12" clone-depth="1"/>
 
-  <project name="silk-trainingset"
-           path="vendor/silk/trainingset"
-           remote="silk"
-           revision="master"/>
+  <project name="silk-trainingset" path="vendor/silk/trainingset" remote="silk" revision="next"/>
 
-  <project name="node-inspector/v8-profiler"
-           path="external/v8-profiler"
-           remote="github"
-           revision="refs/tags/v5.3.2" clone-depth="1"/>
+  <project name="node-inspector/v8-profiler" path="external/v8-profiler" remote="github" revision="refs/tags/v5.3.2" clone-depth="1"/>
 
   <!-- node modules -->
-  <project name="silk-api-node"
-           path="vendor/silk/core/local_node_modules/silk-api"
-           remote="silk"
-           revision="master"/>
-  <project name="silk-socket.io-client-node"
-           path="vendor/silk/core/local_node_modules/silk-socket.io-client-node"
-           remote="silk"
-           revision="refs/tags/0.0.1"
-           clone-depth="1"/>
-  <project name="sandeepmistry/bleno"
-           path="external/bleno"
-           remote="github"
-           revision="refs/tags/0.1.13" clone-depth="1"/>
-  <project name="mvines/node-ntp-client"
-           path="vendor/silk/core/local_node_modules/ntp-client"
-           remote="github"
-           revision="c9c4d65c2cf9c3dff1612ff80dc542a270bbdb4a"
-           upstream="master"
-           clone-depth="1"/>
-  <project name="peterbraden/node-opencv"
-           path="external/node-opencv"
-           remote="github"
-           revision="90971d3ac8f329843f0c198872e48138334eece5"
-           upstream="master"
-           clone-depth="42"/>
-  <project name="silklabs/node-kissfft"
-           path="external/node-kissfft"
-           remote="github"
-           revision="f59bb22ef33bc5633f2069a6c2a74dfa8292376b"/>
-  <project name="sandeepmistry/noble"
-           path="external/noble"
-           remote="github"
-           revision="refs/tags/v1.1.0" clone-depth="1"/>
+  <project name="silk-api-node" path="vendor/silk/core/local_node_modules/silk-api" remote="silk" revision="next"/>
+  <project name="silk-socket.io-client-node" path="vendor/silk/core/local_node_modules/silk-socket.io-client-node" remote="silk" revision="refs/tags/0.0.1" clone-depth="1"/>
+  <project name="sandeepmistry/bleno" path="external/bleno" remote="github" revision="refs/tags/0.1.13" clone-depth="1"/>
+  <project name="mvines/node-ntp-client" path="vendor/silk/core/local_node_modules/ntp-client" remote="github" revision="c9c4d65c2cf9c3dff1612ff80dc542a270bbdb4a" upstream="master" clone-depth="1"/>
+  <project name="peterbraden/node-opencv" path="external/node-opencv" remote="github" revision="90971d3ac8f329843f0c198872e48138334eece5" upstream="master" clone-depth="42"/>
+  <project name="silklabs/node-kissfft" path="external/node-kissfft" remote="github" revision="f59bb22ef33bc5633f2069a6c2a74dfa8292376b"/>
+  <project name="sandeepmistry/noble" path="external/noble" remote="github" revision="refs/tags/v1.1.0" clone-depth="1"/>
 
   <!-- Locked npm dependencies -->
-  <project name="silk-device-locked-node-modules"
-           path="vendor/silk/locked_node_modules/node_modules"
-           clone-depth="1"
-           remote="silk"
-           revision="master" />
+  <project name="silk-device-locked-node-modules" path="vendor/silk/locked_node_modules/node_modules" clone-depth="1" remote="silk" revision="next"/>
 
 </manifest>

@@ -31,7 +31,8 @@ class SessionCrypto {
 
   deriveShared(otherPublicKey) {
     otherPublicKey = this.ec.keyFromPublic(otherPublicKey, 'binary').getPublic();
-    this.sharedKey = sha256(new Buffer(this.key.derive(otherPublicKey)));
+    var derivedArray = this.key.derive(otherPublicKey).toArray('le');
+    this.sharedKey = sha256(new Buffer(derivedArray));
   }
 
   encrypt(cleartext) {

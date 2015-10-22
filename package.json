@@ -1,30 +1,92 @@
 {
-  "devDependencies": {
-    "webpack-hot-middleware": "^2.0.0",
-    "webpack-dev-server": "^1.10.1"
+  "dependencies": {
+    "Chart.StackedBar.js": "git@github.com:Regaddi/Chart.StackedBar.js.git#63eb91092266ac16a20bda28cc9ba5c80415513d",
+    "ansi_up": "^1.3.0",
+    "babel": "^5.8.9",
+    "babel-core": "^5.8.23",
+    "babel-eslint": "~3.1.15",
+    "babel-loader": "^5.3.2",
+    "babel-runtime": "^5.8.20",
+    "babelify": "^6.1.3",
+    "chart.js": "^1.0.2",
+    "debug": "^2.2.0",
+    "eslint": "^0.22.1",
+    "eslint-plugin-react": "^3.3.1",
+    "event-to-promise": "^0.4.0",
+    "express": "^4.12.3",
+    "json-loader": "^0.5.2",
+    "localforage": "^1.2.10",
+    "lodash.merge": "^3.3.2",
+    "log": "git@github.com:silklabs/log.git#master",
+    "ms": "^0.7.1",
+    "pbkdf2": "^3.0.4",
+    "react": "^0.13.3",
+    "react-bootstrap": "^0.25.1",
+    "react-chartjs": "^0.6.0",
+    "react-iframe": "^0.0.2",
+    "react-router": "^1.0.0-rc1",
+    "script-loader": "^0.6.1",
+    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
+    "socket.io-client": "^1.3.6",
+    "text-encoding": "^0.5.2",
+    "webpack": "^1.12.1",
+    "whatwg-fetch": "^0.9.0"
   },
-  "private": true,
-  "keywords": [
-    "iot"
-  ],
-  "repository": {
-    "url": "git@github.com:silklabs/silk-webapp.git",
-    "type": "git"
+  "description": "Silk web app",
+  "devDependencies": {
+    "webpack-dev-server": "^1.10.1",
+    "webpack-hot-middleware": "^2.0.0"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=4.1.0"
   },
   "eslintConfig": {
     "env": {
+      "browser": true,
       "es6": true,
-      "node": true,
-      "browser": true
+      "node": true
     },
+    "globals": {
+      "document": true,
+      "setup": true,
+      "suite": true,
+      "suiteSetup": true,
+      "suiteTeardown": true,
+      "teardown": true,
+      "test": true
+    },
+    "parser": "babel-eslint",
+    "plugins": [
+      "react"
+    ],
     "rules": {
-      "react/jsx-quotes": [
-        2,
-        "double"
+      "brace-style": 2,
+      "comma-dangle": [
+        1,
+        "always-multiline"
       ],
-      "react/jsx-indent-props": [
+      "default-case": 2,
+      "indent": [
         2,
         2
+      ],
+      "no-debugger": 1,
+      "no-shadow": 0,
+      "no-underscore-dangle": 0,
+      "no-unused-expressions": 0,
+      "no-unused-vars": [
+        2,
+        {
+          "args": "none",
+          "vars": "all"
+        }
+      ],
+      "no-use-before-define": 0,
+      "quotes": [
+        2,
+        "single",
+        "avoid-escape"
       ],
       "react/jsx-closing-bracket-location": [
         1,
@@ -33,97 +95,35 @@
           "selfClosing": "tag-aligned"
         }
       ],
-      "yoda": 0,
-      "quotes": [
-        2,
-        "single",
-        "avoid-escape"
-      ],
-      "no-unused-vars": [
-        2,
-        {
-          "args": "none",
-          "vars": "all"
-        }
-      ],
-      "no-unused-expressions": 0,
-      "no-use-before-define": 0,
-      "strict": false,
-      "brace-style": 2,
-      "no-shadow": 0,
-      "no-debugger": 1,
-      "default-case": 2,
-      "comma-dangle": [
-        1,
-        "always-multiline"
-      ],
-      "indent": [
+      "react/jsx-indent-props": [
         2,
         2
       ],
-      "no-underscore-dangle": 0
-    },
-    "globals": {
-      "suiteTeardown": true,
-      "suiteSetup": true,
-      "teardown": true,
-      "setup": true,
-      "test": true,
-      "suite": true,
-      "document": true
-    },
-    "plugins": [
-      "react"
-    ],
-    "parser": "babel-eslint"
+      "react/jsx-quotes": [
+        2,
+        "double"
+      ],
+      "strict": false,
+      "yoda": 0
+    }
   },
+  "keywords": [
+    "iot"
+  ],
+  "license": "proprietary",
   "name": "silk-webapp",
-  "version": "0.0.1",
-  "description": "Silk web app",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-webapp.git"
+  },
   "scripts": {
-    "test": "npm run-script lint",
     "lint": "eslint src",
+    "postinstall": "webpack --progress",
+    "preinstall": "./bin/preinstall",
     "start": "webpack-dev-server --host 0.0.0.0 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "start-server": "babel-node --harmony server/main.js production",
-    "postinstall": "webpack --progress",
-    "preinstall": "./bin/preinstall"
+    "test": "npm run-script lint"
   },
-  "license": "proprietary",
-  "dependencies": {
-    "whatwg-fetch": "^0.9.0",
-    "webpack": "^1.12.1",
-    "text-encoding": "^0.5.2",
-    "socket.io-client": "^1.3.6",
-    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
-    "script-loader": "^0.6.1",
-    "react-router": "^1.0.0-rc1",
-    "react-iframe": "^0.0.2",
-    "react-chartjs": "^0.6.0",
-    "react-bootstrap": "^0.25.1",
-    "react": "^0.13.3",
-    "pbkdf2": "^3.0.4",
-    "ms": "^0.7.1",
-    "log": "git@github.com:silklabs/log.git#master",
-    "lodash.merge": "^3.3.2",
-    "chart.js": "^1.0.2",
-    "babelify": "^6.1.3",
-    "babel-runtime": "^5.8.20",
-    "babel-loader": "^5.3.2",
-    "babel-eslint": "~3.1.15",
-    "babel-core": "^5.8.23",
-    "babel": "^5.8.9",
-    "ansi_up": "^1.3.0",
-    "Chart.StackedBar.js": "git@github.com:Regaddi/Chart.StackedBar.js.git#63eb91092266ac16a20bda28cc9ba5c80415513d",
-    "debug": "^2.2.0",
-    "eslint": "^0.22.1",
-    "eslint-plugin-react": "^3.3.1",
-    "event-to-promise": "^0.4.0",
-    "express": "^4.12.3",
-    "json-loader": "^0.5.2",
-    "localforage": "^1.2.10"
-  },
-  "engines": {
-    "node": ">=4.1.0"
-  },
-  "engineStrict": true
+  "version": "0.0.1"
 }

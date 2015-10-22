@@ -18,7 +18,6 @@ let {
   View,
 } = React;
 
-
 const CONNECTION_STATUS_LABELS = {
   'server_disconnected': 'server disconnected',
   'server_connecting': 'connecting to server',
@@ -33,6 +32,8 @@ const CONNECTION_STATUS_LABELS = {
   'wifi_dhcping': 'configuring WiFi',
   'wifi_online': 'connected to WiFi',
 };
+
+const DEVICE_PREVIEW_TIMEOUT_MS = 30000;
 
 export default class extends SocketIOComponent {
   static propTypes = {
@@ -52,10 +53,14 @@ export default class extends SocketIOComponent {
   };
 
   state = {
+    blob: null,
     objects: [],
     previewWidth: null,
     serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
+    timedOut: false,
   };
+
+  _timeoutTimer = null;
 
   componentWillMount() {
     this._queue = new PreviewQueue(this.props.label, message => {
@@ -69,6 +74,7 @@ export default class extends SocketIOComponent {
     if (this.props.configuring) {
       this.subscribeToBLEStatus();
     }
+    this.startTimeoutTimer();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -97,8 +103,23 @@ export default class extends SocketIOComponent {
     socket.leave(stream);
   }
 
+  startTimeoutTimer() {
+    this.clearTimeoutTimer();
+    setTimeout(
+      () => this.setState({timedOut: true}),
+      DEVICE_PREVIEW_TIMEOUT_MS
+    );
+  }
+
+  clearTimeoutTimer() {
+    if (this._timeoutTimer) {
+      clearTimeout(this._timeoutTimer);
+    }
+  }
+
   onPreviewFrame = (message) => {
     this._queue.push(message);
+    this.startTimeoutTimer();
   };
 
   componentWillUnmount() {
@@ -109,6 +130,7 @@ export default class extends SocketIOComponent {
       this._queue = null;
     }
     bleDeviceManager.removeListener('statusChange', this.onBLEPeripheralStatusChange);
+    this.clearTimeoutTimer();
   }
 
   subscribeToBLEStatus() {
@@ -144,7 +166,8 @@ export default class extends SocketIOComponent {
   }
 
   _renderPreview() {
-    if (this.state.previewWidth === null) {
+    let { previewWidth } = this.state;
+    if (previewWidth === null) {
       // Measure layout so we know how large to display the preview images.
       return (
         <View
@@ -156,8 +179,8 @@ export default class extends SocketIOComponent {
 
     let { previewSize } = this.props;
     let previewStyle = {
-      width: this.state.previewWidth,
-      height: previewSize.height * this.state.previewWidth / previewSize.width,
+      width: previewWidth,
+      height: previewSize.height * previewWidth / previewSize.width,
     };
 
     let logo = null;
@@ -190,6 +213,12 @@ export default class extends SocketIOComponent {
     } else if (this.props.configurable) {
       preview = (
         <Text style={styles.newDevicePlus}>+</Text>
+      );
+    } else if (this.state.timedOut) {
+      preview = (
+        <Text style={styles.timedOutLabel}>
+          No preview available. Check the device's power and internet connection.
+        </Text>
       );
     } else {
       preview = <ActivityIndicatorIOS color="white" />;
@@ -279,5 +308,12 @@ const styles = StyleSheet.create({
 
   monitorPreviewOverlay: {
     backgroundColor: 'transparent',
+  },
+
+  timedOutLabel: {
+    color: 'white',
+    fontSize: 12,
+    textAlign: 'center',
+    padding: 32,
   },
 });

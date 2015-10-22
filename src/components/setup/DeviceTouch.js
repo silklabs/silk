@@ -19,7 +19,7 @@ export default class DeviceTouch extends React.Component {
 
   static propTypes = {
     bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
-    deviceId: React.PropTypes.string.isRequired,
+    peripheralId: React.PropTypes.string.isRequired,
     onCancel: React.PropTypes.func.isRequired,
   };
 
@@ -37,7 +37,7 @@ export default class DeviceTouch extends React.Component {
   }
 
   _onRSSI = (peripheral) => {
-    if (this.state.touched || peripheral.deviceId !== this.props.deviceId) {
+    if (this.state.touched || peripheral.id !== this.props.peripheralId) {
       return;
     }
     let { rssi } = peripheral;

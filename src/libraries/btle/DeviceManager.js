@@ -192,7 +192,7 @@ DeviceManager.prototype.configureDevice = async function(peripheralId, onDeviceT
   p.configuring = true;
   try {
     let resumeToken = await this._passProximityGate(p);
-    let config = await onDeviceTouch();
+    let config = await onDeviceTouch(p);
     await this._configureWithoutCrypto(p, resumeToken, config);
     p.configuring = false;
   } catch(err) {
@@ -289,8 +289,8 @@ DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken,
   );
 
   if (!success) {
-    log.error(`Failed to register device (this should not happen)`);
-    return null;
+    log.error(`Failed to register device with the server.`);
+    throw new Error('Failed to register device with the server.');
   }
 
   await Promise.all([
@@ -308,7 +308,6 @@ DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken,
   ]);
 
   log.info('finished configuring');
-
 };
 
 DeviceManager.prototype._resumeSession = async function(p, token) {

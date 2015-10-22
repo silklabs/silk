@@ -9,7 +9,7 @@ export default class extends React.Component {
 
   static propTypes = {
     heading: React.PropTypes.string.isRequired,
-    descripton: React.PropTypes.string.isRequired,
+    description: React.PropTypes.string.isRequired,
   };
 
   render() {

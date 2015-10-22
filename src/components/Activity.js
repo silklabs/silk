@@ -55,7 +55,9 @@ export default class Activity extends React.Component {
   }
 
   _getTimeLabel() {
-    return moment(this.props.event.startUTC).format('h:mm:ss a');
+    return moment(this.props.event.startUTC).calendar(null, {
+      sameElse: 'llll',
+    });
   }
 
   _performAction = () => {

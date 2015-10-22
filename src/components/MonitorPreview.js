@@ -218,7 +218,7 @@ export default class extends SocketIOComponent {
     } else if (this.state.timedOut) {
       preview = (
         <Text style={styles.timedOutLabel}>
-          No preview available. Check the device's power and internet connection.
+          No preview available. Check the device{"'"}s power and internet connection.
         </Text>
       );
     } else {

@@ -34,6 +34,10 @@ let ObjectBoxes = React.createClass({
     style: View.propTypes.style,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
+    previewSize: React.PropTypes.shape({
+      width: React.PropTypes.number.isRequired,
+      height: React.PropTypes.number.isRequired,
+    }).isRequired,
     objects: React.PropTypes.array.isRequired,
     objectColor: React.PropTypes.string,
   },
@@ -84,7 +88,13 @@ let ObjectBoxes = React.createClass({
     return (
       <View style={styles.objectContainerStyle} key={idx}>
         <TouchableOpacity onPress={objectClick}>
-        <Square top={top} left={left} width={width} height={height} stroke={this.props.objectColor} />
+          <Square
+            top={top}
+            left={left}
+            width={width}
+            height={height}
+            stroke={this.props.objectColor}
+          />
         </TouchableOpacity>
         <Text style={objectLabelStyle}>
           {tag}

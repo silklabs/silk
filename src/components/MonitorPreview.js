@@ -203,6 +203,7 @@ export default class extends SocketIOComponent {
           height={previewStyle.height}
           objects={this.state.objects}
           previewSize={previewSize}
+          style={styles.preview}
         />
       );
     }
@@ -230,9 +231,7 @@ export default class extends SocketIOComponent {
         style={[styles.monitorPreviewContainer, previewStyle]}>
         {preview}
         {logo}
-        <View style={styles.monitorPreviewOverlay}>
-          {objects}
-        </View>
+        {objects}
       </TouchableOpacity>
     );
   }
@@ -285,6 +284,7 @@ const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     right: 0,
+    backgroundColor: 'transparent',
   },
 
   newDevicePlus: {
@@ -304,10 +304,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 15,
     opacity: 0.5,
-  },
-
-  monitorPreviewOverlay: {
-    backgroundColor: 'transparent',
   },
 
   timedOutLabel: {

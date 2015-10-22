@@ -29,6 +29,7 @@
     "octokat": "^0.4.12",
     "promise-callback": "^3.0.3",
     "request-promise": "^0.4.3",
+    "sort-json": "^1.1.1",
     "travis-ci": "^2.0.3"
   },
   "engines": {

@@ -5,7 +5,8 @@
 set -o pipefail
 
 # Check for tools first
-TOOLS="jq xmlstarlet"
+PATH=$PATH:$(dirname $(readlink -f $0))/node_modules/.bin/
+TOOLS="jq xmlstarlet sort-json"
 for tool in $TOOLS; do
   if ! which $tool > /dev/null; then
     echo "Please install '$tool' to continue, maybe"
@@ -39,6 +40,14 @@ GITS="\
   $MERGE_GITS \
 "
 
+# Subset of MERGE_GITS with a package.json at the root (ie, that are
+# bootstrapped with |npm install|)
+NPM_GITS="\
+  silk-server \
+  silk-app \
+  silk-webapp \
+"
+
 # Fetch all the silk projects
 clone() {
   local origin=$1
@@ -60,7 +69,7 @@ nostragglers() {
       echo Error: Refusing to continue until all commits from
       echo $branch have been merged back into master:
       echo
-      git -C $g cherry -v origin/master $branch
+      git -C $g cherry -v origin/master origin/$branch
       echo
       ok=false
     fi
@@ -79,20 +88,7 @@ ignoreUpToHEADOnMaster() {
 }
 
 normalizePackageJson() {
-  local from=$1
-  local to=$2
-
-  # Normalize package.json first
-  git checkout $from
-  jq "" -r package.json > package.json.new
-  mv package.json.new package.json
-  git add package.json
-  if git commit -m "Normalize package.json"; then
-    local SHA1=$(git rev-parse --short HEAD)
-    git checkout $to
-    git cherry-pick $SHA1
-  fi
-  git checkout $to
+  sort-json $1
 }
 
 updatePackageVersion() {
@@ -103,8 +99,9 @@ updatePackageVersion() {
   if [[ "$version_git" == "null" ]]; then
     return
   fi
-  jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r package.json > package.json.new
-  mv package.json.new package.json
+  jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r package.json > package.new.json
+  mv package.new.json package.json
+  normalizePackageJson package.json
 }
 
 # Update branch references within the silk apis
@@ -127,7 +124,7 @@ updatebranch__silk_api() {
       git commit -m "Automated branch update from ${from} to ${to}"
       git --no-pager show
     )
-    popd
+    popd > /dev/null
   done
 }
 
@@ -137,15 +134,11 @@ updatebranch__silk_npms() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
-  for app in silk-app silk-server silk-webapp; do
+  for app in $NPM_GITS; do
     echo "Updating branch for $app: $from => $to"
     pushd $app
     (
       set -x
-
-      if [[ $to != release ]]; then
-        normalizePackageJson $from $to
-      fi
 
       if [[ -f .branch ]]; then
         sed -i .branch -e s/${from}/${to}/g
@@ -169,7 +162,7 @@ updatebranch__silk_npms() {
         ignoreUpToHEADOnMaster "$msg"
       fi
     )
-    popd
+    popd > /dev/null
   done
 }
 
@@ -205,7 +198,7 @@ semver_inc__silk_app() {
       ignoreUpToHEADOnMaster "$msg"
     fi
   )
-  popd
+  popd > /dev/null
 }
 
 # Update branch references within silk-device
@@ -269,10 +262,10 @@ replace() {
       git clean -dfx
       git checkout $from
       git branch -D $to || true
-      git branch $to origin/$from
+      git branch $to $from
       git checkout $to
     )
-    popd
+    popd > /dev/null
   done
 }
 
@@ -306,7 +299,7 @@ mergerelease() {
       git shortlog ${to}~1..${to} >> msg
       git commit --amend -F msg
     )
-    popd
+    popd > /dev/null
   done
 }
 

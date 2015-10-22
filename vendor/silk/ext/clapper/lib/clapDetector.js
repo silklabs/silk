@@ -11,31 +11,26 @@ let env;
 import { EventEmitter } from 'events';
 
 class ClapDetector extends EventEmitter {
-  constructor() {
+  constructor(cfg = {}) {
     super();
 
-    let cfg = {
-      // TODO: hard coded audio constants assumed
-      sampleRate: 8000,
-      bytesPerSample: 2,
-      numChannels: 1,
-      fftWindowSize: 256, // 32ms - units of samples
-      fftWindowStep: 16,  // 2ms - units of samples 
-      riseDurationMs: 8,
-      riseEnergyDelta: 30000,
-      minEnergyThreshold: 45000,
+    let loudCfg = {
+      riseDurationMs: 24,
+      riseEnergyDelta: 25000,
+      minEnergyThreshold: 30000,
       minEnergyDurationMs: 70,
-      maxEnergyDurationMs: 300,
-      //saveWavFilename: '/data/media/micInputDebug.wav',
-      //saveWavDurationSecs: 10,
+      maxEnergyDurationMs: 140,
     };
+
+    Object.assign(loudCfg, cfg);
 
     this._lastClapTime = 0;
     this._repeatedClapCnt = 0;
-    this._maxClapIntervalMs = 550;// max time in ms between 2 claps to be 'repeated'
+    // max time in ms between 2 claps to be 'repeated'
+    this._maxClapIntervalMs = 550;
 
     let LoudSoundDetector = require('./loudSoundDetector')(env);
-    this._loudSoundDetector = new LoudSoundDetector(cfg);
+    this._loudSoundDetector = new LoudSoundDetector(loudCfg);
     this._loudSoundDetector.on('loudSound', () => this._onLoudSound());
   }
 
@@ -60,10 +55,6 @@ class ClapDetector extends EventEmitter {
 
   cleanup() {
     this._loudSoundDetector.cleanup();
-  }
-
-  processPcmFrames(when, frames) {
-    this._loudSoundDetector.processPcmFrames(when, frames);
   }
 }
 

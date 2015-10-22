@@ -8,8 +8,12 @@
  */
 
 let log;
+let util;
 import { EventEmitter } from 'events';
 import { fft } from 'kissfft';
+
+// Url to send audio diag data. Consider disabled if prop not set
+const AUDIO_DIAG_URL_PROP = 'persist.silk.audioDiagUrl';
 
 //
 // WindowHistory - helper for algorithms to track historical calculations
@@ -60,7 +64,8 @@ class FftProcessor extends EventEmitter {
   constructor(cfg = {}) {
     super();
 
-    let params = ['sampleRate', 'bytesPerSample', 'fftWindowSize', 'fftWindowStep'];
+    let params = ['sampleRate', 'bytesPerSample', 'numChannels',
+        'fftWindowSize', 'fftWindowStep'];
     params.forEach(param => {
       if (!(param in cfg)) {
         throw `Missing ${param} in cfg`;
@@ -69,14 +74,42 @@ class FftProcessor extends EventEmitter {
 
     this._sampleRate = cfg.sampleRate;
     this._bytesPerSample = cfg.bytesPerSample;
+    this._numChannels = cfg.numChannels;
     this._fftWindowSize = cfg.fftWindowSize;
     this._fftWindowStep = cfg.fftWindowStep;
 
     this._inputBuffer = new Buffer(0);
     this._windowCnt = 0;
+    this._processingInProgress = false;
+
+    // optionally send fft data to audio diag to visualize for tuning/analysis
+    let audioDiagUrl = util.getprop(AUDIO_DIAG_URL_PROP);
+    if (audioDiagUrl) {
+      this._audioDiag = new AudioDiag(audioDiagUrl, cfg);
+    }
   }
 
-  _performFft(when) {
+  get sampleRate() {
+    return this._sampleRate;
+  }
+
+  get bytesPerSample() {
+    return this._bytesPerSample;
+  }
+
+  get numChannels() {
+    return this._numChannels;
+  }
+
+  get fftWindowSize() {
+    return this._fftWindowSize;
+  }
+
+  get fftWindowStep() {
+    return this._fftWindowStep;
+  }
+
+  _performFft(when, onDone) {
     let fftNode = {
       windowCnt: this._windowCnt,
       when: when, // ms from epoch
@@ -100,47 +133,62 @@ class FftProcessor extends EventEmitter {
       fftNode.time[i] = this._inputBuffer.readInt16LE(2 * i);
     }
 
-    return new Promise(resolve => {
-      fft(fftInput, fftOutput, (err, result) => {
-        if (err) {
-          log.error('fft calculation error', err, result);
-        }
-        for (let i = 0; i < (this._fftWindowSize / 2) + 1; i++) {
-          fftNode.freq[i] = Math.abs(fftOutput[i]);
-        }
-        resolve(fftNode);
-      });
+    fft(fftInput, fftOutput, (err, result) => {
+      if (err) {
+        log.error('fft calculation error', err, result);
+      }
+      for (let i = 0; i < this._fftWindowSize + 2; i++) {
+        fftNode.freq[i] = Math.abs(fftOutput[i]);
+      }
+      onDone(fftNode);
     });
+  }
+
+  _onPerformFftDone(fftNode) {
+    this.emit('fftDone', fftNode);
+
+    if (this._audioDiag) {
+      this._audioDiag.addFftNode(fftNode);
+    }
+
+    // step to next window
+    let windowStepBytes = this._fftWindowStep * this._bytesPerSample *
+        this._numChannels;
+    let rest = new Buffer(this._inputBuffer.length - windowStepBytes);
+    this._inputBuffer.copy(rest, 0, windowStepBytes);
+    this._inputBuffer = rest;
+    this._when += (this._fftWindowStep / this._sampleRate * 1000);
+
+    this._processNextFft(this._when);
+  }
+
+  _processNextFft(when) {
+    let windowBytes = this._fftWindowSize * this._bytesPerSample *
+        this._numChannels;
+    this._when = when;
+
+    // compute fft provided buffer has 1 window of data
+    if (this._inputBuffer.length >= windowBytes) {
+      this._processingInProgress = true;
+      this._performFft(this._when, fftNode => this._onPerformFftDone(fftNode));
+    } else {
+      this._processingInProgress = false;
+    }
   }
 
   processSamples(when, samples) {
     this._inputBuffer = Buffer.concat([this._inputBuffer, samples]);
-    let windowBytes = this._fftWindowSize * this._bytesPerSample;
-    let fftPromises = [];
 
-    // compute fft avg energy level provided buffer has 1 window of data
-    while (this._inputBuffer.length >= windowBytes) {
-      fftPromises.push(this._performFft(when));
-
-      // step to next window
-      let windowStepBytes = this._fftWindowStep * this._bytesPerSample;
-      let rest = new Buffer(this._inputBuffer.length - windowStepBytes);
-      this._inputBuffer.copy(rest, 0, windowStepBytes);
-      this._inputBuffer = rest;
-
-      when += this._fftWindowStep / this._sampleRate;
+    if (this._processingInProgress === false) {
+      // kick the processing if not already started
+      this._processNextFft(when);
     }
+  }
 
-    // process results in order
-    let chain = Promise.resolve();
-    fftPromises.forEach(fftPromise => {
-      chain = chain
-        .then(() => fftPromise)
-        .then(fftNode => {
-          this.emit('fftDone', fftNode);
-        })
-        .catch(e => log.error('error', e));
-    });
+  cleanup() {
+    if (this._audioDiag) {
+      this._audioDiag.cleanup();
+    }
   }
 }
 
@@ -205,12 +253,10 @@ class WavFileSaver extends EventEmitter {
 }
 
 class AudioDiag extends EventEmitter {
-  constructor(serverUrl, emitHz, fftCfg) {
+  constructor(serverUrl, fftCfg) {
     super();
     this._listenerObjects = [];
     this._serverUrl = serverUrl;
-    this._lastEmitMs = 0;
-    this._emitHz = emitHz;
 
     log.info(`Connecting to ${serverUrl}`);
     let opts = {
@@ -249,15 +295,13 @@ class AudioDiag extends EventEmitter {
 
   addFftNode(fftNode) {
     if (this.socket.connected) {
-      if (fftNode.when - this._lastEmitMs >= 1000 / this._emitHz) {
-        this.socket.emit('fft', fftNode);
-        this._lastEmitMs = fftNode.when;
-      }
+      this.socket.emit('fft', fftNode);
     }
   }
 }
 
 module.exports = env => {
   log = env.log;
+  util = env.util;
   return { WindowHistory, FftProcessor, AudioDiag, WavFileSaver };
 };

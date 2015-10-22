@@ -36,6 +36,7 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
+  isDeveloper = false;
 
   constructor(api) {
     super();
@@ -49,6 +50,11 @@ export class UserState extends EventEmitter {
     let token = await instance._loadAccessToken();
     log.info('~~ set access token', token);
     api.accessToken = instance.accessToken = token;
+
+    if (token && token.pub === api.devAccount.publicKey) {
+      instance.isDeveloper = true;
+    }
+
     return instance;
   }
 
@@ -89,6 +95,7 @@ export class UserState extends EventEmitter {
   async signOut() {
     // Clear out any previous state...
     this.api.accessToken = this.accessToken = null;
+    this.isDeveloper = false;
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
     this.emit('unauthenticated');
   }
@@ -184,6 +191,7 @@ export class UserState extends EventEmitter {
     if (check.success) {
       log.info('Successfully logged in as', account.email);
       await this._saveAccessToken(accessToken);
+      this.isDeveloper = true;
       return true;
     }
     // Reset to current access token...

@@ -5,6 +5,7 @@
     "buffer": "^3.2.2",
     "debug": "^2.2.0",
     "events": "^1.0.2",
+    "immutable": "^3.7.5",
     "lodash.merge": "^3.3.2",
     "log": "git@github.com:silklabs/log.git#master",
     "moment": "^2.10.3",

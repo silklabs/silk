@@ -6,6 +6,7 @@ import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
 
+// XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
   state: {
     UNREGISTERED: 0,
@@ -30,6 +31,11 @@ export const btleConfigService = {
     ErrorDescriptionCharacteristic: '47be732080e44d29913dfc9083d2eba3',
     VibratePatternCharacteristic: '385a2b58191211e5b60b1697f925ec7b',
   }
+};
+
+export const BTLE_SOCKET_UUIDS = {
+  service: 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424',
+  characteristic: '59ba85fb-6fba-439c-95b0-9307e62d4ca1',
 };
 
 export default function create(options) {

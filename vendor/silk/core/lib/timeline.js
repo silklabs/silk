@@ -274,10 +274,10 @@ class Timeline extends EventEmitter {
     // future if desired, once the appropriate client changes are made.
     //
     if (this.lastPreviewFrame) {
-      for (let o in this.previewObjects) {
-        if (o.when < this.lastPreviewFrameWhen ||
-            o.when >= when) {
-          log.warn(`Preview object sent with wrong image: ${JSON.stringify(o)}`);
+      for (let obj of this.previewObjects) {
+        if (obj.when < this.lastPreviewFrameWhen ||
+            obj.when >= when) {
+          log.warn(`Preview object sent with wrong image: ${JSON.stringify(obj)}`);
         }
       }
       this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,

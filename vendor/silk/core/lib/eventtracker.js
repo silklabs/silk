@@ -26,6 +26,8 @@ type LocalEventRecord = {
   data: {[arbitraryKeys: string]: any};
 };
 
+// If 12 bytes is enough for MongoDB, it should be enough for us.
+// See https://docs.mongodb.org/manual/reference/object-id/
 const ID_NUM_BYTES = 12;
 
 const DEFAULT_DEBOUNCE_MS = 5000;

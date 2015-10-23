@@ -412,6 +412,8 @@ class MonitorsView extends AsyncComponent {
       // TODO: insert labels for today, yesterday, etc.
       activity = events.map((event) => (
         <Activity
+          api={this.props.api}
+          hasNetwork={this.props.hasNetwork}
           key={event.id || event._id}
           actor={this._getDeviceName(event.deviceId)}
           event={event}

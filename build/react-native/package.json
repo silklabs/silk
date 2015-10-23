@@ -6,6 +6,7 @@
   "license": "proprietary",
   "dependencies": {
     "base64url": "^1.0.4",
+    "debug": "^2.2.0",
     "elliptic": "^5.1.0",
     "hash.js": "^1.0.3",
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",

@@ -80,7 +80,7 @@ export default async function main (config) {
     blobs.s3 = await createS3Blob(config);
   }
 
-  let context = {
+  const context = {
     app,
     nonce,
     accounts,

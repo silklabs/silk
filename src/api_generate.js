@@ -7,7 +7,7 @@ import fs from 'fs';
 import vipRoutes from './server/routes/vip';
 import accountRoutes from './server/routes/account';
 import deviceRoutes from './server/routes/device';
-import securityRoutes from './server/routes/security_validation';
+import testRoutes from './server/routes/test';
 
 const AUTOGEN_ROOT = path.join(__dirname, '/api/gen');
 const GENERATE = {
@@ -23,8 +23,8 @@ const GENERATE = {
     routes: deviceRoutes,
     base: '../http_client'
   },
-  'security_validation': {
-    routes: securityRoutes,
+  test: {
+    routes: testRoutes,
     base: '../http_client'
   }
 };

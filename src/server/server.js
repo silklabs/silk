@@ -80,8 +80,7 @@ export default async function main (config) {
     blobs.s3 = await createS3Blob(config);
   }
 
-  // Install the routes.
-  require('./routes')({
+  const context = {
     app,
     nonce,
     accounts,
@@ -91,7 +90,10 @@ export default async function main (config) {
     timeMeta,
     config,
     blobs
-  });
+  };
+
+  // Install the routes.
+  require('./routes')(context);
 
   http.listen(config.server.port);
   let errorEvent = eventToPromise(http, 'error').then(err => {
@@ -122,6 +124,8 @@ export default async function main (config) {
     // Useful because tests bind on 0 we don't know which port we are using
     // until this is done.
     port: http.address().port,
+
+    context,
 
     // Do any cleanup here that would normally happen because of the server
     // process being killed. We do this instead of closing the process mostly

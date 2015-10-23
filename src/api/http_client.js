@@ -10,17 +10,71 @@ import jwa from './jwa';
 import jwt from 'jsonwebtoken';
 import { sha } from 'hash.js';
 import uuid from 'uuid';
+import debug from 'debug';
+
+const MAX_ID = 999;
+const ID_LENGTH = String(MAX_ID).length;
+
+const MAXIMUM_RETRY_DELAY_MS = 30 * 1000;
+const MAXIMUM_RETRIES = 10;
+
+// Jitter time is a guess...
+const RETRY_DELAY_MIN_MS = 10;
+const RETRY_DELAY_MAX_MS = 50;
+
+/**
+ * How long to wait for each request to return an initial response (headers).
+ */
+const REQUEST_TIMEOUT_MS = 30 * 1000;
+
+// We cycle through request ID's 0-999 to make this more readable.
+let requestID = 0;
+
+function getRequestID() {
+  let id = requestID++;
+  if (id > MAX_ID) {
+    requestID = 0;
+  }
+
+  // Format to include leading zeros...
+  let strID = String(id);
+  while (strID.length < ID_LENGTH) {
+    strID = `0${strID}`;
+  }
+  return strID;
+}
 
 function sha256(str) {
   return sha.sha256().update(str).digest('hex');
 }
 
+function sleep(duration) {
+  return new Promise((accept) => {
+    setTimeout(accept, duration);
+  });
+}
+
 export default class HttpClient {
-  constructor(baseUrl) {
-    if (!baseUrl) {
-      throw new Error('baseUrl is required');
+  maxiumRetryDelayMs = MAXIMUM_RETRY_DELAY_MS;
+  maxRetries = MAXIMUM_RETRIES;
+  retryDelayMinMs = RETRY_DELAY_MIN_MS;
+  retryDelayMaxMs = RETRY_DELAY_MAX_MS;
+  requestTimeout = REQUEST_TIMEOUT_MS;
+
+  constructor(baseURL, options = {}) {
+    if (!baseURL) {
+      throw new Error('baseURL is required');
     }
-    this.baseUrl = baseUrl;
+    this.baseURL = baseURL;
+    Object.assign(this, options);
+  }
+
+  _logger = null;
+  _log(...args) {
+    if (!this._logger) {
+      this._logger = debug(`silk-api:${this.name}`);
+    }
+    this._logger(...args);
   }
 
   get key() {
@@ -32,6 +86,7 @@ export default class HttpClient {
   }
 
   set accessToken(value) {
+    this._log('set access token', value && value.pub);
     this._accessToken = value;
   }
 
@@ -44,14 +99,72 @@ export default class HttpClient {
     return this._accessToken;
   }
 
-  /**
-   * Issue a JWT signed request to the server.
-   *
-   * TODO:
-   *  - cross platform timeouts
-   *  - retires
-   */
+  async _sleep(interval, retry, id) {
+    let duration = Math.min(Math.pow(2, retry) * interval, this.maxiumRetryDelayMs);
+    this._log(`Wait (${id}) for ${duration}`);
+    await sleep(duration);
+  }
+
   async requestWithBody(method, url, body) {
+    // XXX: This "request id" is for display only right now at some point in the
+    // future we should send more meaningful (uuid) ids that are logged across
+    // the various services we hit so we can track where they originated and why.
+    const id = getRequestID();
+    let retry = 0;
+    let lastErr;
+
+    // Base amount of time to use in retry delays...
+    let retryDelay;
+
+    /**
+     * NOTE: We cannot abort or cancel an ongoing fetch request. This might
+     * cause leaks or other problems if the underlying implementation is not
+     * cleaning things up. Someday we might need to rework this into lower level
+     * implementation with optimizations for node.
+     */
+    do {
+      try {
+        let attempt = this._sendRequestWithBody(method, url, body, id, retry);
+        let timeout = sleep(this.requestTimeout).then(() => {
+          throw new Error(`Response Timeout (${id}) failed to respond in ${this.requestTimeout}`);
+        });
+        return await Promise.race([attempt, timeout]);
+      } catch (err) {
+        // If we have a status code outside of the server error range simply
+        // throw the error...
+        if (err.status && (err.status < 500)) {
+          this._log(`Error (${id}) in http request`, err);
+          throw err;
+        }
+
+        lastErr = err;
+
+        // Otherwise retry if we have any left over attempts...
+        if (retry < this.maxRetries) {
+          this._log(
+            `Retry (${retry}/${this.maxRetries}) on error (${id}) ${method} ${url}`,
+            err
+          );
+
+          if (!retryDelay) {
+            retryDelay = Math.floor(
+              Math.random() * (this.retryDelayMinMs - this.retryDelayMaxMs + 1)
+            ) + this.retryDelayMaxMs;
+          }
+
+          await this._sleep(retryDelay, retry, id);
+        }
+      }
+    } while(retry++ < this.maxRetries);
+
+    this._log(`Exhausted retries (${id}) ${method} ${url}`);
+    throw lastErr;
+  }
+
+  /**
+   * Underlying implementation which actually builds the request.
+   */
+  async _sendRequestWithBody(method, url, body, id) {
     body = JSON.stringify(body);
     let canonicalReq = `${url}\n${method.toLowerCase()}\n${sha256(body)}`;
     let jwtPayload = {
@@ -93,16 +206,28 @@ export default class HttpClient {
       // platform byte length issues.
     };
 
-    let res = await fetch(URL.resolve(this.baseUrl, url), {
+    let absURL = URL.resolve(this.baseURL, url);
+    this._log(`Request (${id}) ${method} ${absURL}`);
+
+    let start = Date.now();
+    let res = await fetch(absURL, {
       method,
       body: body,
       headers: headers
     });
 
+    let headDetails = '';
+    headDetails += `status=${res.status} `;
+    headDetails += `length=${res.headers.get('content-length')} `;
+    headDetails += `duration=${Date.now() - start}ms`;
+    this._log(`Headers (${id}) ${method} ${absURL} [${headDetails}]`);
+
     if (!res.ok) {
       await throwError(res);
     }
 
-    return await res.json();
+    let resBody = await res.json();
+    this._log(`Body (${id}) ${method} ${absURL}`);
+    return resBody;
   }
 }

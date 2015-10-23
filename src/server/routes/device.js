@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
+import sharedRoutes from './shared';
 
 let log = require('log')('routes:device');
 const PREFIX = '/v1/device/';
@@ -36,6 +37,8 @@ export default function (ctx) {
       API calls for devices...
     `,
   });
+
+  sharedRoutes(api, ctx);
 
   api.define({
     path: 'complete_registration',

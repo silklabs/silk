@@ -97,6 +97,12 @@ suite('account auth', () => {
     });
   });
 
+  test('socket.io address', async () => {
+    api.accessToken = accountOne.accessToken;
+    let { url } = await api.account.socketioURL();
+    assert.ok(url);
+  });
+
 });
 
 

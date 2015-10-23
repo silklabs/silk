@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
+import sharedRoutes from './shared';
 
 import Devices from '../models/devices';
 
@@ -39,6 +40,8 @@ export default function (ctx) {
       Account manipulation (adding devices/etc...)
     `,
   });
+
+  sharedRoutes(api, ctx);
 
   api.define({
     path: 'register_device',

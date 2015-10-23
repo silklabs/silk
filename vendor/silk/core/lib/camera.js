@@ -43,6 +43,18 @@ const CAPTURE_DATA_SOCKET_NAME = '/dev/socket/captured';
 const CAPTURE_COMMAND_NAME = 'CaptureCommand';
 
 
+// When trying to reestablish contact with the capture process first delay by
+// this amount to permit:
+// * multiple restart commands to collect - each of the capture socket
+// disconnects can cause an independent restart request.
+// * the capture process a little bit of time to recover itself if it
+// just crashed before attempting to reestablish contact.
+const CAPTURE_RESTART_DELAY_MS = 1000;
+
+// Amount of time to give the capture process to initialize before declaring
+// the attempt as failed and triggering a retry
+const CAPTURE_INIT_TIMEOUT_MS = 10 * 1000;
+
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
@@ -169,7 +181,7 @@ class CameraStream extends EventEmitter {
   }
 
   _restart(why) {
-    if (!this._ready) {
+    if (this._restartTimeout) {
       log.info(`camera restart pending (ignored "${why}")`);
       return;
     }
@@ -184,21 +196,35 @@ class CameraStream extends EventEmitter {
       this._cvVideoCapture = null;
       this._cvVideoCaptureBusy = false;
     }
-    this._ctlSocket.destroy();
-    this._ctlSocket = null;
-    this._dataSocket.destroy();
-    this._dataSocket = null;
+    if (this._ctlSocket) {
+      this._ctlSocket.destroy();
+      this._ctlSocket = null;
+    }
+    if (this._dataSocket) {
+      this._dataSocket.destroy();
+      this._dataSocket = null;
+    }
 
-    util.timeout(1000)
-    .then(() => this._init())
-    .catch(util.processthrow);
+    this._restartTimeout = setTimeout(() => {
+      log.verbose('restart timeout expired, trying to initialize');
+      this._restartTimeout = null;
+      this._init();
+    }, CAPTURE_RESTART_DELAY_MS);
   }
 
-  _init(cmdData = null /*null expected on reconnect*/) {
+  _init() {
     if (this._ready) {
-      log.info(`camera already initialized`);
+      log.warn(`camera already initialized`);
       return;
     }
+    if (this._initTimeout) {
+      log.warn(`camera actively initializing`);
+      return;
+    }
+    this._initTimeout = setTimeout(() => {
+      this._initTimeout = null;
+      this._restart('failed to initialize in a timely fashion');
+    }, CAPTURE_INIT_TIMEOUT_MS);
 
     // Connecting to data socket
     this._dataBuffer = new Buffer(0);
@@ -237,16 +263,22 @@ class CameraStream extends EventEmitter {
       }
 
       this._buffer = '';
-      this._ready = true;
-      if (cmdData) {
-        this._videoWidth = cmdData.width;
-        this._videoHeight = cmdData.height;
 
-        PREVIEW_WIDTH = cmdData.width / PREVIEW_SCALE;
-        PREVIEW_HEIGHT = cmdData.height / PREVIEW_SCALE;
-        this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
-        this._command({cmdName: 'init', cmdData: cmdData});
-      }
+      const cmdData = {
+        frameInterval: DURATION,
+        width: WIDTH,
+        height: HEIGHT,
+        fps: FPS,
+        vbr: VBR,
+      };
+
+      this._videoWidth = cmdData.width;
+      this._videoHeight = cmdData.height;
+
+      PREVIEW_WIDTH = cmdData.width / PREVIEW_SCALE;
+      PREVIEW_HEIGHT = cmdData.height / PREVIEW_SCALE;
+      this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
+      this._command({cmdName: 'init', cmdData: cmdData});
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
     this._ctlSocket.on('error', err => {
@@ -281,6 +313,10 @@ class CameraStream extends EventEmitter {
 
         let delay = 1000 / (FPS / PREVIEW_SKIP_COUNT);
         this._previewInterval = setInterval(() => this._readPreviewFrame(), delay);
+
+        clearTimeout(this._initTimeout);
+        this._initTimeout = null;
+        this._ready = true;
 
         if (this._startPromiseCallbacks) {
           this._startPromiseCallbacks.resolve();
@@ -424,11 +460,6 @@ class CameraStream extends EventEmitter {
   }
 
   _command(cmd) {
-    if (!this._ready) {
-      log.error(`camera service not ready, ignoring the command ${cmd.cmdName}`);
-      return;
-    }
-
     // Camera socket expects the command data in the following format
     let event = CAPTURE_COMMAND_NAME + ' ' + '\"' + util.escape(JSON.stringify(cmd)) + '\"' + '\0';
 
@@ -447,13 +478,7 @@ class CameraStream extends EventEmitter {
     let startPromise = new Promise((resolve, reject) => {
       this._startPromiseCallbacks = { resolve, reject };
     });
-    this._init({
-      frameInterval: DURATION,
-      width: WIDTH,
-      height: HEIGHT,
-      fps: FPS,
-      vbr: VBR,
-    });
+    this._init();
     await startPromise;
   }
 
@@ -463,6 +488,10 @@ class CameraStream extends EventEmitter {
   flash(flashMode) {
     if (!FLASH_LIGHT_ENABLED) {
       log.warn(`flash light is not enabled`);
+      return;
+    }
+    if (!this._ready) {
+      log.error(`camera not ready, ignoring flash command`);
       return;
     }
     this._command({cmdName: 'setParameter', name: 'flash-mode', value: flashMode});

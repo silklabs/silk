@@ -19,7 +19,7 @@ Heroku server logs can be viewed:
 
     heroku logs --tail --app silk-releng
 
-or https://papertrailapp.com/systems/silk-releng/events
+or [https://papertrailapp.com/systems/silk-releng/events](https://addons-sso.heroku.com/apps/silk-releng/addons/16a0bd41-7cc1-4e0d-9c1c-3a258faf77a5).
 
 Heroku configuration is at https://dashboard.heroku.com/apps/silk-releng
 
@@ -55,4 +55,3 @@ Goto https://github.com/organizations/silklabs/settings/hooks/new:
   * [X] Pull Request
   * [X] Status
 * Click "Add webhook"
-

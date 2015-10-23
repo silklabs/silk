@@ -44,7 +44,8 @@ export default class TimeMetadata extends Base {
       props: {
         id: 1
       },
-      options: { unique: true, sparse: true }
+      /* XXX: We have non unique ids floating around in staging db */
+      /* options: { unique: true, sparse: true } */
     },
     {
       props: {

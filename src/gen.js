@@ -75,7 +75,6 @@ export default function gen(schema, options = {}) {
     action.path = url.resolve(schema.prefix, action.path);
     return method(action);
   });
-  console.log(schema);
 
   let body = `
 import BaseClass from '${options.baseClassPath}'

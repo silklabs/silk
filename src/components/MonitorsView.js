@@ -181,11 +181,13 @@ class MonitorsView extends AsyncComponent {
         {errorBar}
         <View style={styles.content}>
           <ScrollView
-            style={styles.monitors}
+            style={styles.scrollView}
             automaticallyAdjustContentInsets={true}
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
-            {this._renderDeviceThumbnails()}
+            <View style={styles.thumbnailContainer}>
+              {this._renderDeviceThumbnails()}
+            </View>
             {devices.size ? this._renderActivity() : null}
           </ScrollView>
         </View>
@@ -282,11 +284,27 @@ class MonitorsView extends AsyncComponent {
       />
     )).toArray().reverse();
 
-    return [
-      unconfiguredDeviceThumbnails,
-      configuringDeviceThumbnail,
-      deviceThumbnails,
-    ];
+    let allThumbnails = unconfiguredDeviceThumbnails
+      .concat(configuringDeviceThumbnail)
+      .concat(deviceThumbnails)
+      .filter((element) => !!element);
+
+    // Easy way out for just 1 device.
+    if (allThumbnails.length === 1) {
+      return allThumbnails[0];
+    }
+
+    // Display devices in rows of 2.
+    let rows = [];
+    for (let i = 0; i < allThumbnails.length; i += 2) {
+      rows.push(
+        <View style={styles.thumbnailRow}>
+          {allThumbnails[i]}
+          {allThumbnails[i + 1] || <View style={styles.thumbnailPlaceholder} />}
+        </View>
+      );
+    }
+    return rows;
   }
 
   // Activity feed management
@@ -448,7 +466,7 @@ const styles = StyleSheet.create({
     margin: 8,
   },
 
-  monitors: {
+  scrollView: {
     paddingTop: 5,
     backgroundColor: '#efefef',
     flex: 1,
@@ -457,6 +475,19 @@ const styles = StyleSheet.create({
   loadingSpinner: {
     alignSelf: 'center',
     marginVertical: 16,
+  },
+
+  thumbnailContainer: {
+    paddingHorizontal: 4,
+  },
+
+  thumbnailRow: {
+    flexDirection: 'row',
+  },
+
+  thumbnailPlaceholder: {
+    flex: 1,
+    margin: 4,
   },
 
   eventRow: {

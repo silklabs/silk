@@ -148,7 +148,7 @@ export default class extends SocketIOComponent {
     }
   };
 
-  render() {
+  _renderLabel() {
     let { label } = this.props;
     let { serverConnectionStatus } = this.state;
     if (serverConnectionStatus) {
@@ -156,24 +156,42 @@ export default class extends SocketIOComponent {
       label = `${label} (${statusLabel})`;
     }
     return (
-      <View style={styles.monitorContainer}>
-        <View style={styles.monitorLabelContainer}>
-          <Text style={styles.monitorLabel}>{label}</Text>
-        </View>
-        {this._renderPreview()}
+      <View style={styles.monitorLabelContainer}>
+        <Text style={styles.monitorLabel}>{label}</Text>
       </View>
     );
   }
 
   _renderPreview() {
+    if (this.state.blob) {
+      return <ImageView style={styles.preview} blob={this.state.blob} />;
+    }
+    if (this.props.configurable) {
+      return (
+        <Text style={styles.newDevicePlus}>+</Text>
+      );
+    }
+    if (this.state.timedOut) {
+      return (
+        <Text style={styles.timedOutLabel}>
+          No preview available. Device appears to be offline.
+        </Text>
+      );
+    }
+    return <ActivityIndicatorIOS color="white" />;
+  }
+
+  render() {
     let { previewWidth } = this.state;
     if (previewWidth === null) {
       // Measure layout so we know how large to display the preview images.
       return (
-        <View
-          onLayout={(event) => this.setState({previewWidth: event.nativeEvent.layout.width})}
-          style={styles.monitorPreviewPlaceholder}
-        />
+        <View style={styles.monitorContainer}>
+          <View
+            onLayout={(event) => this.setState({previewWidth: event.nativeEvent.layout.width})}
+            style={styles.monitorPreviewPlaceholder}
+          />
+        </View>
       );
     }
 
@@ -208,31 +226,17 @@ export default class extends SocketIOComponent {
       );
     }
 
-    let preview = null;
-    if (this.state.blob) {
-      preview = <ImageView style={styles.preview} blob={this.state.blob} />;
-    } else if (this.props.configurable) {
-      preview = (
-        <Text style={styles.newDevicePlus}>+</Text>
-      );
-    } else if (this.state.timedOut) {
-      preview = (
-        <Text style={styles.timedOutLabel}>
-          No preview available. Check the device{"'"}s power and internet connection.
-        </Text>
-      );
-    } else {
-      preview = <ActivityIndicatorIOS color="white" />;
-    }
-
     return (
-      <TouchableOpacity
-        onPress={this.props.onPress}
-        style={[styles.monitorPreviewContainer, previewStyle]}>
-        {preview}
-        {logo}
-        {objects}
-      </TouchableOpacity>
+      <View style={styles.monitorContainer}>
+        <TouchableOpacity
+          onPress={this.props.onPress}
+          style={[styles.monitorPreviewContainer, previewStyle]}>
+          {this._renderPreview()}
+          {logo}
+          {this._renderLabel()}
+          {objects}
+        </TouchableOpacity>
+      </View>
     );
   }
 }
@@ -246,25 +250,24 @@ const styles = StyleSheet.create({
       height: 1,
       width: 0,
     },
-    backgroundColor: 'white',
-    paddingTop: 5,
-    marginTop: 5,
-    marginBottom: 5,
-    marginLeft: 8,
-    marginRight: 7,
+    margin: 4,
     flex: 1,
   },
 
   monitorLabelContainer: {
-    paddingLeft: 10,
-    paddingBottom: 5,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: 'black',
+    opacity: 0.5,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   monitorLabel: {
     fontFamily: 'Open Sans',
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#3a3a48',
-    textAlign: 'left',
+    fontSize: 10,
+    color: 'white',
+    textAlign: 'right',
   },
 
   monitorPreviewPlaceholder: {
@@ -308,8 +311,8 @@ const styles = StyleSheet.create({
 
   timedOutLabel: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 10,
     textAlign: 'center',
-    padding: 32,
+    padding: 8,
   },
 });

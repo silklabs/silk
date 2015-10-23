@@ -454,6 +454,11 @@ export default class Queue extends EventEmitter {
     } else {
       this.emit('failed operation', operation);
 
+      // Cleanup any remainder stream if we failed to complete this operation.
+      if (result.remainder && result.remainder.destroy) {
+        result.remainder.destroy();
+      }
+
       // Configure the retry delay for this item in the queue...
       handle.retries = handle.retries || 0;
       let retryDelay =

@@ -6,6 +6,8 @@
  * @flow
  */
 
+import crypto from 'crypto';
+
 import { EventEmitter } from 'events';
 import * as util from './sysutils';
 import APICallOperation from './outbox/api_call_operation';
@@ -16,12 +18,15 @@ import type { TimelineEventObject } from './videoupload';
 import type { Outbox } from './outbox/manager';
 
 type LocalEventRecord = {
+  id: ?string;
   serverId?: string;
   tag: string;
   startUTC: number;
   endUTC: number;
   data: {[arbitraryKeys: string]: any};
 };
+
+const ID_NUM_BYTES = 12;
 
 const DEFAULT_DEBOUNCE_MS = 5000;
 const DEBOUNCE_MS_BY_EVENT_TAG = {
@@ -73,23 +78,39 @@ class EventTracker extends EventEmitter {
       // enqueue this event once it has expired, so that the end time
       // will be updated on the server.
       log.info(`Extended event '${record.tag}'. Total duration: ${record.endUTC - record.startUTC}ms`);
-    } else {
-      record = this._eventRecords[discriminator] = {
-        tag: event.tag,
-        startUTC: event.when,
-        endUTC: event.when + DEFAULT_EVENT_LENGTH_MS,
-        // TODO: we might be able to pile more stuff into the `data` field later on, such as
-        // which face was detected, movement of the motion across the screen, etc.
-        data: {tag: event.tag},
-      };
-      log.info(`Recorded event '${record.tag}'`);
+      return;
+    }
 
+    // Insert the record into our local store right away. But we can't
+    // upload it to the server until we've generated a random ID for it.
+    // Generating the ID on the client is important so that subsequent
+    // updates to the same event are not recorded as separate records on
+    // the server.
+    record = this._eventRecords[discriminator] = {
+      id: null,
+      tag: event.tag,
+      startUTC: event.when,
+      endUTC: event.when + DEFAULT_EVENT_LENGTH_MS,
+      // TODO: we might be able to pile more stuff into the `data`
+      // field later on, such as which face was detected, movement of
+      // the motion across the screen, etc.
+      data: {tag: event.tag},
+    };
+    log.info(`Recorded event '${record.tag}'`);
+
+    crypto.randomBytes(ID_NUM_BYTES, (error, idBytes) => {
+      if (error) {
+        log.error('Could not generate random ID', error);
+        return;
+      }
+
+      record.id = idBytes.toString('base64');
       // Push this in the upload queue so that we create a server
       // record of the event.
       this._enqueue(record);
       // Ensure we're tracking expirations.
       this._trackExpirations();
-    }
+    });
   }
 
   _enqueue(record: LocalEventRecord) {
@@ -98,6 +119,7 @@ class EventTracker extends EventEmitter {
       args: [{
         metaType: 'event',
         deviceId: this.deviceId,
+        id: record.id,
         startUTC: record.startUTC,
         endUTC: record.endUTC,
         data: record.data,

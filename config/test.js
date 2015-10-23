@@ -20,6 +20,9 @@ export default {
       video: {
         bucket: 'silk-blobs-test-us-west-2'
       },
+      preview: {
+        bucket: 'silk-blobs-test-us-west-2'
+      },
       crashreport: {
         bucket: 'silk-blobs-test-us-west-2'
       },

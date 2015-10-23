@@ -51,6 +51,9 @@ export default {
       video: {
         path: 'tmp/video/'
       },
+      preview: {
+        path: 'tmp/preview/'
+      },
       crashreport: {
         path: 'tmp/crashreport/'
       },
@@ -65,6 +68,12 @@ export default {
     // AWS S3 blob storage.
     s3: {
       video: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: 'us-west-2',
+        bucket: 'silk-blobs-dev-us-west-2'
+      },
+      preview: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: 'us-west-2',

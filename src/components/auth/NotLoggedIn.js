@@ -229,6 +229,7 @@ export default class extends AsyncComponent {
       <ScrollView
         contentContainerStyle={[styles.container, extraStyle]}
         keyboardShouldPersistTaps={false}
+        alwaysBounceVertical={false}
         scrollable={false}>
         <View style={styles.statusBar} />
         <NetworkWarning />

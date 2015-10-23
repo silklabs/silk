@@ -1,5 +1,9 @@
 import React from 'react-native';
-var {
+import moment from 'moment';
+
+import AsyncComponent from './AsyncComponent';
+
+const {
   Image,
   PixelRatio,
   StyleSheet,
@@ -8,13 +12,14 @@ var {
   View,
 } = React;
 
-import moment from 'moment';
-
 const VIDEO_REWIND_MS = 2000;
 
-export default class Activity extends React.Component {
+export default class Activity extends AsyncComponent {
 
   static propTypes = {
+    api: React.PropTypes.object.isRequired,
+    hasNetwork: React.PropTypes.bool.isRequired,
+
     actor: React.PropTypes.string,
     event: React.PropTypes.object,
     previewSize: React.PropTypes.object,
@@ -23,7 +28,23 @@ export default class Activity extends React.Component {
 
   state = {
     actionBoxWidth: null,
+    previewImageURL: null,
   };
+
+  mounted = false;
+
+  componentWillMount() {
+    this.mounted = true;
+    this._loadPreviewImage(this.props);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this._loadPreviewImage(nextProps);
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
+  }
 
   render() {
     return (
@@ -37,6 +58,29 @@ export default class Activity extends React.Component {
         </View>
       </View>
     );
+  }
+
+  async _loadPreviewImage(props) {
+    let { hasNetwork, event, api } = props;
+    if (!hasNetwork || this.state.previewImageURL) {
+      return;
+    }
+    let result = null;
+    try {
+      result = await api.timeMeta.findOneAfterTime({
+        metaType: 'preview',
+        deviceId: event.deviceId,
+        time: event.startUTC,
+      });
+    } catch(ex) { // eslint-disable-line no-empty
+      // Couldn't load, probably due to network error.
+    }
+    if (!this.mounted || !result || !result.url) {
+      return;
+    }
+    this.setStateAsync({
+      previewImageURL: result.url,
+    });
   }
 
   _getActivityLabel() {
@@ -84,12 +128,28 @@ export default class Activity extends React.Component {
       width: this.state.actionBoxWidth,
       height: previewSize.height * this.state.actionBoxWidth / previewSize.width,
     };
+    let previewImage = null;
+    let { previewImageURL } = this.state;
+    if (previewImageURL) {
+      previewImage = (
+        <Image
+          source={{uri: previewImageURL}}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            ...actionBoxStyle,
+          }}
+        />
+      );
+    }
     return (
       <TouchableOpacity
         key={event.id || event._id}
         onPress={this._performAction}
         style={styles.eventRow}>
         <View style={[styles.actionBox, actionBoxStyle]}>
+          {previewImage}
           <Image
             source={require('image!PlayButton')}
             style={styles.actionPlayButton}
@@ -140,5 +200,6 @@ const styles = StyleSheet.create({
   actionPlayButton: {
     width: 44,
     height: 50,
+    backgroundColor: 'transparent',
   },
 });

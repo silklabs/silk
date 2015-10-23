@@ -48,12 +48,22 @@ export default class TimeMetadata extends Base {
     },
     {
       props: {
+        deviceId: 1
+      }
+    },
+    {
+      props: {
         metaType: 1
       }
     },
     {
       props: {
         startUTC: 1
+      }
+    },
+    {
+      props: {
+        endUTC: 1
       }
     }
   ];

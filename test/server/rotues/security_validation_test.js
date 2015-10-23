@@ -8,13 +8,13 @@ import launchApp from '../launch_app';
 import createIntercept from '../intercept';
 import timekeeper from 'timekeeper';
 import express from 'express';
-import testRoutes from '../../../src/server/routes/security_validation';
+import testRoutes from '../../../src/server/routes/test';
 import eventToPromise from 'event-to-promise';
 import mutateJWT from '../mutate_jwt';
 
 import Accounts from '../../../src/server/models/accounts';
 import Nonce from '../../../src/server/models/nonce';
-import SecurityAPI from '../../../src/api/gen/security_validation';
+import TestAPI from '../../../src/api/gen/test';
 
 /**
  * Basic suite of security validation tests... These are intended to be a
@@ -44,7 +44,7 @@ suite('security validation tests', () => {
 
   // Setup the user and api which the user will use to interact with the
   // server...
-  let api, secApi;
+  let api, testApi;
 
   let users = {
     one: {
@@ -73,7 +73,7 @@ suite('security validation tests', () => {
     for (var userKey in users) {
       let user = users[userKey];
       user.id = api.id.create();
-      api.vip.key = user.id;
+      api.vip.accessToken = user.id;
 
       // Create test users...
       let create = await api.vip.createAccountWithPassword(user.input);
@@ -88,8 +88,8 @@ suite('security validation tests', () => {
     intercept = mitm.intercept;
     interceptURL = mitm.url;
     // Setup security testing api
-    secApi = new SecurityAPI(interceptURL);
-    secApi.key = users.one.id;
+    testApi = new TestAPI(interceptURL);
+    testApi.accessToken = users.one.id;
   });
 
   teardown(() => {
@@ -104,7 +104,7 @@ suite('security validation tests', () => {
    */
   test('unmodified request replay attack...', async () => {
     // Initiate the request but do not wait for it to be completed...
-    secApi.aPut();
+    testApi.aPut();
 
     let req = await eventToPromise(intercept, 'request');
     let canonicalReply = await req.send(canonicalURL);
@@ -144,7 +144,7 @@ suite('security validation tests', () => {
    * mutated.
    */
   test('unauthorized body mutations', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     // Send a different body...
     req.body = JSON.stringify({ hacked: true });
@@ -155,7 +155,7 @@ suite('security validation tests', () => {
   });
 
   test('send unmodified body/headers/path to different method', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     // Send different method
     req.method = 'post';
@@ -165,7 +165,7 @@ suite('security validation tests', () => {
   });
 
   test('send unmodified body/headers/method to different path', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     // Send different path.
     req.path = '/v1/test/b';
@@ -178,7 +178,7 @@ suite('security validation tests', () => {
    * The request will be validly signed but attempting to use another users id.
    */
   test('use a valid public key belonging to someone else', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     let auth = req.headers.authorization;
     let originalJWT = auth.split('Bearer ').pop();
@@ -202,7 +202,7 @@ suite('security validation tests', () => {
    * Simple "attack" null out a vital field (id)
    */
   test('null jwt.headers.id', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     let auth = req.headers.authorization;
     let originalJWT = auth.split('Bearer ').pop();
@@ -222,7 +222,7 @@ suite('security validation tests', () => {
    * Simple "attack" null out a vital field (sig)
    */
   test('null jwt.headers.sig', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     let auth = req.headers.authorization;
     let originalJWT = auth.split('Bearer ').pop();
@@ -242,7 +242,7 @@ suite('security validation tests', () => {
    * Wrong JWT algo (none)
    */
   test('jwt.headers.algo == none', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     let auth = req.headers.authorization;
     let originalJWT = auth.split('Bearer ').pop();
@@ -262,7 +262,7 @@ suite('security validation tests', () => {
    * Wrong JWT algo (foobar)
    */
   test('jwt.headers.algo == foobar', async () => {
-    secApi.aPut();
+    testApi.aPut();
     let req = await eventToPromise(intercept, 'request');
     let auth = req.headers.authorization;
     let originalJWT = auth.split('Bearer ').pop();

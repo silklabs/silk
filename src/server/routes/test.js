@@ -1,5 +1,5 @@
 /**
- * Test only routes to checking some of our security features,
+ * Test only routes useful for various types of tests.
  */
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
@@ -74,9 +74,6 @@ export default function (ctx) {
   }, async (req, res) => {
     res.respond({});
   });
-
-
-
 
   return api;
 }

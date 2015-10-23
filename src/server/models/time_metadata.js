@@ -9,7 +9,7 @@ import mongo from 'promised-mongo';
 import Base from './base';
 import formatOutput from './format_output';
 
-const TYPES = Joi.string().only(['log', 'video', 'event']).required();
+const TYPES = Joi.string().only(['log', 'video', 'preview', 'event']).required();
 
 // Mongo IDs are 12 bytes long, 24 hex chars.
 const MONGO_ID_REGEX = /[0-9a-f]{24}/;

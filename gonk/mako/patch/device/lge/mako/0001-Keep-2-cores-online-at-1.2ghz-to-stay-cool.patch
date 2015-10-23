@@ -1,0 +1,46 @@
+From 0a656b74b5948b0d0143ddbc598de162943cd63e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 22 Oct 2015 20:47:58 -0700
+Subject: [PATCH] Keep 2 cores online at ~1.2ghz to stay cool
+
+---
+ init.mako.rc | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/init.mako.rc b/init.mako.rc
+index 8e5fb14..8580246 100644
+--- a/init.mako.rc
++++ b/init.mako.rc
+@@ -231,6 +231,14 @@ on post-fs-data
+     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 384000
+     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 384000
+ 
++    write /sys/devices/system/cpu/cpu0/online 1
++    write /sys/devices/system/cpu/cpu1/online 1
++    write /sys/devices/system/cpu/cpu2/online 0
++    write /sys/devices/system/cpu/cpu3/online 0
++    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 1242000
++    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq 1242000
++
++
+     # disable diag port
+     rm /dev/diag
+ 
+@@ -384,10 +392,10 @@ service thermald /system/bin/thermald
+     class main
+     group radio system
+ 
+-service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
+-    class main
+-    user root
+-    group root system
++#service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
++#    class main
++#    user root
++#    group root system
+ 
+ service qcamerasvr /system/bin/mm-qcamera-daemon
+     class late_start
+-- 
+1.9.1
+

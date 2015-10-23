@@ -2,7 +2,7 @@ import React from 'react-native';
 
 import Config from '../../libraries/Config';
 
-import { FormStyles, LayoutStyles } from '../CommonStyles';
+import { FormStyles, LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
 let {
   Image,
@@ -23,23 +23,34 @@ export default class extends React.Component {
   };
 
   _renderTitle() {
+    let saveButtonLabel = (
+      <Text style={TitleBarStyles.titleBarButtonLabel}>Save</Text>
+    );
+    let saveButton;
+    if (this.state.serverUrl === Config.get().server.url) {
+      saveButton = (
+        <View style={[TitleBarStyles.titleBarRightButton, styles.disabledButton]}>
+          {saveButtonLabel}
+        </View>
+      );
+    } else {
+      saveButton = (
+        <TouchableOpacity
+          onPress={this.save}
+          style={TitleBarStyles.titleBarRightButton}>
+          {saveButtonLabel}
+        </TouchableOpacity>
+      );
+    }
     return (
-      <View style={styles.titleContainer}>
-        <View style={styles.spacer}>
-          <TouchableOpacity onPress={this.cancel}>
-            <View style={styles.titleButton}>
-              <Text style={styles.cancel}>Cancel</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.title}>Server</Text>
-        <View style={styles.spacer}>
-          <TouchableOpacity onPress={this.save}>
-            <View style={styles.titleButton}>
-              <Text style={styles.save}>Save</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+      <View style={TitleBarStyles.titleBar}>
+        <TouchableOpacity
+          onPress={this.cancel}
+          style={TitleBarStyles.titleBarLeftButton}>
+            <Text style={TitleBarStyles.titleBarButtonLabel}>Cancel</Text>
+        </TouchableOpacity>
+        <Text style={TitleBarStyles.titleBarLabel}>Server</Text>
+        {saveButton}
       </View>
     );
   }
@@ -165,34 +176,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f4f4f6',
     flex: 1,
   },
-  titleContainer: {
-    justifyContent: 'center',
-    flexDirection: 'row',
-    paddingTop: 2,
-  },
-  spacer: {
-    flex: 1,
-  },
-  title: {
-    color: 'black',
-    fontSize: 17,
-    textAlign: 'center',
-    fontWeight: '500',
-    paddingTop: 8,
-  },
-  titleButton: {
-    padding: 8,
-  },
-  save: {
-    color: '#007aff',
-    fontSize: 18,
-    fontWeight: '500',
-    textAlign: 'right',
-  },
-  cancel: {
-    color: '#007aff',
-    fontSize: 17,
-    textAlign: 'left',
+  disabledButton: {
+    opacity: 0.5,
   },
 
   servers: {

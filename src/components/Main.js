@@ -101,14 +101,15 @@ export default class extends AsyncComponent {
 
   onConnectivityChange = (hasNetwork) => {
     log.info('Network connectivity change. Can haz internet?', hasNetwork);
+    let { socket } = this.pendingState;
     if (!hasNetwork) {
       // Close the socket in case we have one, but don't get rid of it
       // so that the app still remains functional (apart from, you
       // know, not having any network connection).
-      if (this.state.socket) {
+      if (socket) {
         log.info('Closing old socket');
-        this.state.socket.off();
-        this.state.socket.close();
+        socket.off();
+        socket.close();
       }
       this.setStateAsync({
         hasNetwork,
@@ -141,10 +142,11 @@ export default class extends AsyncComponent {
   }
 
   setSocketUrlAndConnect(socketUrl) {
-    if (this.state.socket) {
+    let { socket } = this.pendingState;
+    if (socket) {
       log.info('Closing old socket');
-      this.state.socket.off();
-      this.state.socket.close();
+      socket.off();
+      socket.close();
     }
     log.info('Going to connect to', socketUrl);
     this.setStateAsync({
@@ -197,7 +199,7 @@ export default class extends AsyncComponent {
       // though, so give them some time. If they haven't come through by
       // then, we need to assume there are no devices connected right now.
       setTimeout(() => {
-        if (!this.state.devices) {
+        if (!this.pendingState.devices) {
           this.setState({devices: new OrderedMap()});
         }
       }, SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS);
@@ -221,7 +223,7 @@ export default class extends AsyncComponent {
     }
 
     let newDevices = new OrderedMap().asMutable();
-    let existingDevices = this.state.devices;
+    let existingDevices = this.pendingState.devices;
     result.devices.forEach((serverObj) => {
       if (!serverObj.deviceId) {
         // https://github.com/silklabs/silk-server/issues/310
@@ -262,7 +264,7 @@ export default class extends AsyncComponent {
 
     let deviceId = msg.id;
     log.info('new video stream', deviceId);
-    let { devices, configuringDevice, unconfiguredDevices } = this.state;
+    let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
     }
@@ -319,7 +321,7 @@ export default class extends AsyncComponent {
     if (!deviceRecord.has('logo')) {
       devices = devices.setIn([deviceId, 'logo'], msg.logo);
     }
-    if (devices !== this.state.devices) {
+    if (devices !== this.pendingState.devices) {
       this.setStateAsync({devices});
     }
   };
@@ -331,7 +333,7 @@ export default class extends AsyncComponent {
 
     if (this.props.userState.isDeveloper) {
       log.info('deleted video stream', msg.id);
-      this.setStateAsync({devices: this.state.devices.delete(msg.id)});
+      this.setStateAsync({devices: this.pendingState.devices.delete(msg.id)});
     }
 
     // TODO: should we update any state here? Perhaps that the device went
@@ -342,7 +344,7 @@ export default class extends AsyncComponent {
   // Book keeping for unconfigured devices detected via BLE
 
   onBLEPeripheralStateChange = (peripheral) => {
-    let { unconfiguredDevices } = this.state;
+    let { unconfiguredDevices } = this.pendingState;
     let { state, id } = peripheral;
 
     if (state === 'registered' && unconfiguredDevices.contains(id)) {
@@ -363,7 +365,7 @@ export default class extends AsyncComponent {
   };
 
   onBLEPeripheralDisconnect = (peripheral) => {
-    let { unconfiguredDevices } = this.state;
+    let { unconfiguredDevices } = this.pendingState;
     if (unconfiguredDevices.contains(peripheral.id)) {
       log.info('BLE peripheral disconnected', peripheral.id);
       this.setStateAsync({
@@ -426,7 +428,7 @@ export default class extends AsyncComponent {
               // don't interfere with the navigation animation.
               InteractionManager.runAfterInteractions(() => {
                 // Update the name of the new device in the UI.
-                let { configuringDevice } = this.state;
+                let { configuringDevice } = this.pendingState;
                 configuringDevice = configuringDevice
                   .set('name', config.name)
                   .set('deviceId', peripheral.deviceId);

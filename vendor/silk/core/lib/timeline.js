@@ -10,7 +10,7 @@ import assert from 'assert';
 import createLog from './log';
 import * as util from './sysutils';
 
-import VideoUploadOp from './outbox/video_upload_operation';
+import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import BufferStream from './streams/buffer';
 import { EventEmitter } from 'events';
 
@@ -20,8 +20,11 @@ const log = createLog('timeline');
 // uploading it and any objects that were detected.
 const VIDEO_COLLECTOBJECT_DELAY_MS = 500;
 
-const UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const UPLOAD_ENABLED = util.getboolprop(UPLOAD_PROP);
+const VIDEO_UPLOAD_PROP = 'persist.silk.vidupload.enabled';
+const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP);
+
+const PREVIEW_UPLOAD_PROP = 'persist.silk.prvupload.enabled';
+const PREVIEW_UPLOAD_ENABLED = util.getboolprop(PREVIEW_UPLOAD_PROP);
 
 /**
  * Class that receives events from various components synchronizes them and send
@@ -83,7 +86,7 @@ class Timeline extends EventEmitter {
         // Force the last preview image to be transmitted immediately, to provide
         // the client with a preview image as quick as possible when the camera
         // first connects.
-        this._pushPreview(null, null);
+        this._pushPreview(null, 0, null);
       }
     }
     this.liveVideo = video;
@@ -99,8 +102,8 @@ class Timeline extends EventEmitter {
   /**
    * JPEG-encoded preview image
    */
-  addPreviewJPEG(when, jpeg) {
-    this._pushPreview(when, jpeg);
+  addPreviewJPEG(when, durationMs, jpeg) {
+    this._pushPreview(when, durationMs, jpeg);
   }
 
   /**
@@ -261,7 +264,7 @@ class Timeline extends EventEmitter {
     });
   }
 
-  _pushPreview(when, frame) {
+  _pushPreview(when, durationMs, frame) {
     // Intentionally delay the preview image by one cycle to ensure
     // that the previewObjects are transmitted with their corresponding image.
     //
@@ -283,6 +286,27 @@ class Timeline extends EventEmitter {
       this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,
                        this.previewObjects, 'jpeg');
     }
+
+    if (PREVIEW_UPLOAD_ENABLED && this.lastPreviewFrame) {
+      const op = new PreviewUploadOp({
+        size: this.lastPreviewFrame.length,
+        metadata: {
+          deviceId: this.id.toString(),
+          metaType: 'preview',
+          startUTC: this.lastPreviewFrameWhen,
+          endUTC: this.lastPreviewFrameWhen + durationMs,
+          data: {
+            frameWidth: this._previewSize.width,
+            frameHeight: this._previewSize.height,
+            objects: this.previewObjects,
+          },
+        },
+      });
+      // If for whatever reason this fails it will bubble up to the crash
+      // reporter...
+      this.outbox.enqueue('preview', op, new BufferStream(this.lastPreviewFrame));
+    }
+
     this.lastPreviewFrame = frame;
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
@@ -309,7 +333,7 @@ class Timeline extends EventEmitter {
 
 
     // Only queue the video to be sent to the outbox if uploads are enabled...
-    if (!UPLOAD_ENABLED) {
+    if (!VIDEO_UPLOAD_ENABLED) {
       return;
     }
 
@@ -323,9 +347,9 @@ class Timeline extends EventEmitter {
         data: {
           frameWidth: this._previewSize.width,
           frameHeight: this._previewSize.height,
-          objects
-        }
-      }
+          objects,
+        },
+      },
     });
 
     // If for whatever reason this fails it will bubble up to the crash

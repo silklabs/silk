@@ -11,7 +11,7 @@ import path from 'path';
 import createOutbox from './outbox/manager';
 
 import CrashReportOp from './outbox/crash_report_operation';
-import VideoUploadOp from './outbox/video_upload_operation';
+import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import PapertrailOp from './outbox/papertrail_operation';
 import APICallOp from './outbox/api_call_operation';
 
@@ -23,13 +23,14 @@ export default function(networkStatus) {
   });
 
   /**
-   * The outbox has a special queue specific to video uploads so we don't clog
+   * The outbox has special queues specific to blob uploads so we don't clog
    * up the main queue with video (which is running constantly).
    */
   outbox.registerQueue('video', {
     // TODO: This should be computed somehow
     concurrency: 3
   });
+  outbox.registerQueue('preview');
 
   /**
    * Register all known operations so we can create them from disk as needed...
@@ -37,6 +38,7 @@ export default function(networkStatus) {
   outbox.registerOperation(CrashReportOp);
   outbox.registerOperation(PapertrailOp);
   outbox.registerOperation(VideoUploadOp);
+  outbox.registerOperation(PreviewUploadOp);
   outbox.registerOperation(APICallOp);
 
   // Optimistically start running pending operations...

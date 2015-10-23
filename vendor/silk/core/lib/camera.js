@@ -450,7 +450,7 @@ class CameraStream extends EventEmitter {
         // Flush the buffer and restart the socket
         this._dataBuffer = new Buffer(0);
         this._restart('Invalid capture tag');
-        throw new Error(`Invalid capture tag: ${tag}`);
+        throw new Error(`Invalid capture tag:${tag} size:${size} when:${sec}.${usec} durationMs:${durationMs}`);
       }
       // put the rest of the buffer back
       let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));

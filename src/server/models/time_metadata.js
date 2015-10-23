@@ -38,6 +38,26 @@ function deviceOrAccountQuery(payload, addlQuery) {
 }
 
 export default class TimeMetadata extends Base {
+
+  static INDEX = [
+    {
+      props: {
+        id: 1
+      },
+      options: { unique: true, sparse: true }
+    },
+    {
+      props: {
+        metaType: 1
+      }
+    },
+    {
+      props: {
+        startUTC: 1
+      }
+    }
+  ];
+
   static SCHEMA = {
 
     // Mutations

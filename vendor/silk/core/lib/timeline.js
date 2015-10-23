@@ -25,6 +25,8 @@ const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP);
 
 const PREVIEW_UPLOAD_PROP = 'persist.silk.prvupload.enabled';
 const PREVIEW_UPLOAD_ENABLED = util.getboolprop(PREVIEW_UPLOAD_PROP);
+// Default to uploading 1 preview image per second.
+const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
 
 /**
  * Class that receives events from various components synchronizes them and send
@@ -55,6 +57,8 @@ class Timeline extends EventEmitter {
     // Hold all the video frames with the timestamps until the next poll interval
     this.videoFrames = [];
     this.eventTracker = require('./eventtracker')(this.id, this.outbox);
+
+    this.lastPreviewUploadWhenMs = 0;
   }
 
   /**
@@ -287,7 +291,9 @@ class Timeline extends EventEmitter {
                        this.previewObjects, 'jpeg');
     }
 
-    if (PREVIEW_UPLOAD_ENABLED && this.lastPreviewFrame) {
+    if (PREVIEW_UPLOAD_ENABLED &&
+        this.lastPreviewFrame &&
+        Date.now() - this.lastPreviewUploadWhenMs > PREVIEW_UPLOAD_INTERVAL_MS) {
       const op = new PreviewUploadOp({
         size: this.lastPreviewFrame.length,
         metadata: {
@@ -305,6 +311,7 @@ class Timeline extends EventEmitter {
       // If for whatever reason this fails it will bubble up to the crash
       // reporter...
       this.outbox.enqueue('preview', op, new BufferStream(this.lastPreviewFrame));
+      this.lastPreviewUploadWhenMs = Date.now();
     }
 
     this.lastPreviewFrame = frame;

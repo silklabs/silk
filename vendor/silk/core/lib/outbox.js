@@ -30,7 +30,10 @@ export default function(networkStatus) {
     // TODO: This should be computed somehow
     concurrency: 3
   });
-  outbox.registerQueue('preview');
+  outbox.registerQueue('preview', {
+    // TODO: This should be computed somehow
+    concurrency: 3
+  });
 
   /**
    * Register all known operations so we can create them from disk as needed...

@@ -75,11 +75,16 @@ export default function gen(schema, options = {}) {
     action.path = url.resolve(schema.prefix, action.path);
     return method(action);
   });
+  console.log(schema);
 
   let body = `
 import BaseClass from '${options.baseClassPath}'
 
 export default class extends BaseClass {
+
+  name = '${schema.name}';
+  prefix = '${schema.prefix};'
+
   ${actions.join('\n')}
 }
   `;

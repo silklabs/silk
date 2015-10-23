@@ -87,6 +87,7 @@ suite('express', () => {
     let client, subject;
     setup(async () => {
       subject = createApi(app, {
+        name: 'test',
         description: 'Testing app'
       });
 
@@ -147,6 +148,10 @@ suite('express', () => {
       await fs.writeFile(clientPath, generated);
       let Client = require(clientPath);
       client = new Client(url);
+    });
+
+    test('.name', () => {
+      assert.equal(client.name, 'test');
     });
 
     test('server response', async () => {

@@ -76,6 +76,7 @@ export default function create(options) {
     timeMeta: require('./time_metadata')(config),
     crashMeta: require('./crash_metadata')(config),
     socketio: require('./socketio')(config),
+    streams: require('./streams')(config),
 
     set accessToken(token) {
       accessToken = token;

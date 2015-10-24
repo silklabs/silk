@@ -43,7 +43,7 @@ suite('test opencv', function () {
       timeline.addPreviewFrame(timestamp);
 
       // Force timeline to add the cached objects
-      timeline.addPreviewJPEG(timestamp, {});
+      timeline.addPreviewJPEG(timestamp, 1000, {});
     };
 
     // Motion detection requires at least two images to run so load it with two

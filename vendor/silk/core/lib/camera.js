@@ -31,6 +31,7 @@ const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
 const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 6);
+const PREVIEW_DELAY_MS = 1000 / (FPS / PREVIEW_SKIP_COUNT);
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -310,9 +311,7 @@ class CameraStream extends EventEmitter {
         this.emit('error');
       } else if (captureEvent.eventName === 'initialized') {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-
-        let delay = 1000 / (FPS / PREVIEW_SKIP_COUNT);
-        this._previewInterval = setInterval(() => this._readPreviewFrame(), delay);
+        this._previewInterval = setInterval(() => this._readPreviewFrame(), PREVIEW_DELAY_MS);
 
         clearTimeout(this._initTimeout);
         this._initTimeout = null;
@@ -412,7 +411,7 @@ class CameraStream extends EventEmitter {
         this._imagecache.push({when: when, orig: im, default: imScaled, rgb: rgbImage});
 
         // Add frames to the timeline
-        this.timeline.addPreviewJPEG(when, pkt);
+        this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
         this.timeline.addPreviewFrame(when);
       }, {ext: '.jpg', jpegQuality: 100});
     });

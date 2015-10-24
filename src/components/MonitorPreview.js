@@ -33,7 +33,9 @@ const CONNECTION_STATUS_LABELS = {
   'wifi_online': 'connected to WiFi',
 };
 
-const DEVICE_PREVIEW_TIMEOUT_MS = 30000;
+// TODO: turn this value way down except for devices that are
+// configuring right now / have just configured.
+const DEVICE_PREVIEW_TIMEOUT_MS = 60000;
 
 export default class extends SocketIOComponent {
   static propTypes = {

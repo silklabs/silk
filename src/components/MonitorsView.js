@@ -138,7 +138,11 @@ class MonitorsView extends AsyncComponent {
     // this.props.devices === null means we haven't fetched a list of devices yet,
     // so we're still loading from network.
     if (connectionState === 'connecting' || !devices) {
-      return this._renderSpinner();
+      return (
+        <View style={styles.content}>
+          {this._renderSpinner()}
+        </View>
+      );
     }
 
     if (!devices.size && !unconfiguredDevices.size && !configuringDevice) {
@@ -160,8 +164,9 @@ class MonitorsView extends AsyncComponent {
       );
     }
 
+    let { fullscreenDeviceId, eventsLoading} = this.state;
+
     let fullscreenMonitor = null;
-    let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {
       fullscreenMonitor = (
         <MonitorFullscreen
@@ -184,6 +189,7 @@ class MonitorsView extends AsyncComponent {
             automaticallyAdjustContentInsets={true}
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
+            {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
             <View style={styles.thumbnailContainer}>
               {this._renderDeviceThumbnails()}
             </View>
@@ -208,11 +214,17 @@ class MonitorsView extends AsyncComponent {
 
   _renderSpinner() {
     return (
-      <View style={styles.content}>
-        <ActivityIndicatorIOS
-          size="large"
-          style={styles.loadingSpinner}
-        />
+      <ActivityIndicatorIOS
+        size="large"
+        style={styles.loadingSpinner}
+      />
+    );
+  }
+
+  _renderPTRSpinner() {
+    return (
+      <View style={styles.ptrSpinnerContainer}>
+        {this._renderSpinner()}
       </View>
     );
   }
@@ -306,8 +318,12 @@ class MonitorsView extends AsyncComponent {
 
   // Activity feed management
 
+  // Only fire pull-to-refresh action once per pull. That way we don't
+  // keep continuously firing the action.
+  _pullToRefreshActive = false;
+
   onScroll = (event) => {
-    let { eventsLoading, eventsLatest, eventsEarliest } = this.state;
+    let { eventsLoading, eventsLatest, eventsEarliest } = this.pendingState;
     if (eventsLoading || eventsLatest === null || eventsEarliest === null) {
       return;
     }
@@ -315,10 +331,15 @@ class MonitorsView extends AsyncComponent {
     let { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
 
     // Pull to refresh: fetch more recent events.
-    if (contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
+    if (!this._pullToRefreshActive && contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
+      this._pullToRefreshActive = true;
       this.setStateAsync({eventsLoading: 'newer'});
       this._fetchActivity(eventsLatest, Date.now());
       return;
+    }
+
+    if (this._pullToRefreshActive && contentOffset.y === 0) {
+      this._pullToRefreshActive = false;
     }
 
     // Infinite scroll: fetch more older events.
@@ -399,22 +420,6 @@ class MonitorsView extends AsyncComponent {
 
   _renderActivity() {
     let { eventsLoading, events } = this.state;
-    let spinnerNewer = null;
-    let spinnerOlder = null;
-    if (eventsLoading) {
-      let spinner = (
-        <ActivityIndicatorIOS
-          size="large"
-          style={styles.loadingSpinner}
-        />
-      );
-      if (eventsLoading === 'newer') {
-        spinnerNewer = spinner;
-      }
-      if (eventsLoading === 'older') {
-        spinnerOlder = spinner;
-      }
-    }
 
     let activity = null;
     if (!events) {
@@ -439,9 +444,8 @@ class MonitorsView extends AsyncComponent {
     }
 
     return [
-      spinnerNewer,
       activity,
-      spinnerOlder,
+      eventsLoading === 'older' ? this._renderSpinner() : null,
     ];
   }
 
@@ -472,6 +476,14 @@ const styles = StyleSheet.create({
   loadingSpinner: {
     alignSelf: 'center',
     marginVertical: 16,
+  },
+
+  ptrSpinnerContainer: {
+    position: 'absolute',
+    top: SCROLLVIEW_PTR_THRESHOLD - 10,
+    left: 0,
+    right: 0,
+    height: -SCROLLVIEW_PTR_THRESHOLD,
   },
 
   thumbnailContainer: {

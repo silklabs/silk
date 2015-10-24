@@ -52,7 +52,6 @@ class MonitorsView extends AsyncComponent {
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
     configuringDevice: React.PropTypes.instanceOf(Map),
-    configureDevice: React.PropTypes.func.isRequired,
   };
 
   state = {
@@ -245,7 +244,6 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={true}
           configuring={false}
-          onPress={() => this.props.configureDevice(peripheralId)}
           socket={this.props.socket}
           bleDeviceManager={this.props.bleDeviceManager}
         />
@@ -262,7 +260,6 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={false}
           configuring={true}
-          onPress={null}
           socket={this.props.socket}
           bleDeviceManager={this.props.bleDeviceManager}
         />

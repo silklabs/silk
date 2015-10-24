@@ -11,7 +11,9 @@ import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './SocketIOComponent';
 
 let {
+  ActionSheetIOS,
   ActivityIndicatorIOS,
+  AlertIOS,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -54,6 +56,10 @@ export default class extends SocketIOComponent {
     bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
   };
 
+  static contextTypes = {
+    silkDevices: React.PropTypes.object.isRequired,
+  };
+
   state = {
     blob: null,
     objects: [],
@@ -67,6 +73,7 @@ export default class extends SocketIOComponent {
   componentWillMount() {
     this._queue = new PreviewQueue(this.props.label, message => {
       this.setState({
+        timedOut: false,
         blob: message.frame,
         objects: message.objects || [],
       });
@@ -107,8 +114,8 @@ export default class extends SocketIOComponent {
 
   startTimeoutTimer() {
     this.clearTimeoutTimer();
-    setTimeout(
-      () => this.setState({timedOut: true}),
+    this._timeoutTimer = setTimeout(
+      () => this.setState({timedOut: true, blob: null}),
       DEVICE_PREVIEW_TIMEOUT_MS
     );
   }
@@ -231,7 +238,7 @@ export default class extends SocketIOComponent {
     return (
       <View style={styles.monitorContainer}>
         <TouchableOpacity
-          onPress={this.props.onPress}
+          onPress={this._onPress}
           style={[styles.monitorPreviewContainer, previewStyle]}>
           {this._renderPreview()}
           {logo}
@@ -241,6 +248,46 @@ export default class extends SocketIOComponent {
       </View>
     );
   }
+
+  _onPress = () => {
+    if (this.props.configurable) {
+      this.context.silkDevices.configureDevice(this.props.peripheralId);
+      return;
+    }
+    if (this.state.timedOut && this.props.deviceId) {
+      this._showRemoveDeviceSheet();
+      return;
+    }
+    this.props.onPress();
+  };
+
+  _showRemoveDeviceSheet = () => {
+    ActionSheetIOS.showActionSheetWithOptions({
+      options: [
+        'Remove Device',
+        'Cancel',
+      ],
+      cancelButtonIndex: 1,
+      destructiveButtonIndex: 0,
+    }, async (buttonIndex) => {
+      if (buttonIndex === 1) {
+        return;
+      }
+      // Display spinner again while we're attempting to unregister the device.
+      await this.setStateAsync({timedOut: false});
+
+      try {
+        await this.context.silkDevices.unregisterDevice(this.props.deviceId);
+      } catch(ex) {
+        AlertIOS.alert(
+          'Error Unregistering Device',
+          'The device could not be unregistered. Please try again.'
+        );
+        // Restore timeout error message again.
+        await this.setStateAsync({timedOut: true});
+      }
+    });
+  };
 }
 
 const styles = StyleSheet.create({

@@ -3,7 +3,7 @@ import api from '../api';
 import randomStream from '../random_stream';
 import fetch from 'node-fetch';
 
-import VideoUploadOperation from '../../lib/outbox/video_upload_operation';
+import { VideoUploadOp } from '../../lib/outbox/blob_upload_operation';
 
 suite('VideoUploadOperation', () => {
 
@@ -15,7 +15,7 @@ suite('VideoUploadOperation', () => {
   test('Upload crash report...', async () => {
     let { stream, buffer } = randomStream();
 
-    let operation = new VideoUploadOperation({
+    let operation = new VideoUploadOp({
       size: buffer.length,
       metadata: {
         metaType: 'video',
@@ -41,4 +41,3 @@ suite('VideoUploadOperation', () => {
   });
 
 });
-

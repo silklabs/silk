@@ -115,7 +115,10 @@ export class Outbox {
     }
 
     let storagePath = path.join(this.storagePath, queueName);
-    let queue = new Queue(Object.assign({}, options, {
+    let defaultOptions = {
+      concurrency: DEFAULT_QUEUE_CONCURRENCY,
+    };
+    let queue = new Queue(Object.assign(defaultOptions, options, {
       storagePath,
       name: queueName
     }));
@@ -147,9 +150,7 @@ export default function createOutbox(options) {
 
   // Register the default queue (mostly for legacy purposes over time we will
   // migrate away from a single default queue).
-  outbox.registerQueue(DEFUALT_QUEUE_NAME, {
-    concurrency: DEFAULT_QUEUE_CONCURRENCY
-  });
+  outbox.registerQueue(DEFUALT_QUEUE_NAME);
 
   return outbox;
 }

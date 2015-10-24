@@ -11,12 +11,9 @@ import createLog from '../log';
 import httpStream from '../streams/http';
 import assert from 'assert';
 
-const META_TYPE = 'video';
-const CONTENT_TYPE = 'video/mp4';
+const log = createLog('operation:blob_upload_operation');
 
-const log = createLog('operation:video_upload_operation');
-export default class VideoUploadOperation extends StreamOperation {
-  static NAME = 'video-upload';
+export class BlobUploadOperation extends StreamOperation {
 
   metadata = null;
   // Size in bytes of stream...
@@ -32,16 +29,16 @@ export default class VideoUploadOperation extends StreamOperation {
 
   async _getDestination() {
     let putUrl = await api.blob.getPutUrl(
-      META_TYPE,
+      this.constructor.META_TYPE,
       this.size,
-      CONTENT_TYPE
+      this.constructor.CONTENT_TYPE,
     );
 
     let writer = httpStream(putUrl, {
       method: 'PUT',
       headers: {
         'Content-Length': this.size,
-        'Content-Type': CONTENT_TYPE
+        'Content-Type': this.constructor.CONTENT_TYPE,
       }
     });
 
@@ -81,4 +78,16 @@ export default class VideoUploadOperation extends StreamOperation {
       metadata: this.metadata
     };
   }
+}
+
+export class VideoUploadOp extends BlobUploadOperation {
+  static NAME = 'video-upload';
+  static META_TYPE = 'video';
+  static CONTENT_TYPE = 'video/mp4';
+}
+
+export class PreviewUploadOp extends BlobUploadOperation {
+  static NAME = 'preview-upload';
+  static META_TYPE = 'preview';
+  static CONTENT_TYPE = 'image/jpeg';
 }

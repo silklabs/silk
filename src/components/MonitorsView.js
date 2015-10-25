@@ -52,7 +52,6 @@ class MonitorsView extends AsyncComponent {
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
     configuringDevice: React.PropTypes.instanceOf(Map),
-    configureDevice: React.PropTypes.func.isRequired,
   };
 
   state = {
@@ -139,7 +138,11 @@ class MonitorsView extends AsyncComponent {
     // this.props.devices === null means we haven't fetched a list of devices yet,
     // so we're still loading from network.
     if (connectionState === 'connecting' || !devices) {
-      return this._renderSpinner();
+      return (
+        <View style={styles.content}>
+          {this._renderSpinner()}
+        </View>
+      );
     }
 
     if (!devices.size && !unconfiguredDevices.size && !configuringDevice) {
@@ -161,8 +164,9 @@ class MonitorsView extends AsyncComponent {
       );
     }
 
+    let { fullscreenDeviceId, eventsLoading} = this.state;
+
     let fullscreenMonitor = null;
-    let { fullscreenDeviceId } = this.state;
     if (fullscreenDeviceId) {
       fullscreenMonitor = (
         <MonitorFullscreen
@@ -181,11 +185,14 @@ class MonitorsView extends AsyncComponent {
         {errorBar}
         <View style={styles.content}>
           <ScrollView
-            style={styles.monitors}
+            style={styles.scrollView}
             automaticallyAdjustContentInsets={true}
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
-            {this._renderDeviceThumbnails()}
+            {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
+            <View style={styles.thumbnailContainer}>
+              {this._renderDeviceThumbnails()}
+            </View>
             {devices.size ? this._renderActivity() : null}
           </ScrollView>
         </View>
@@ -207,11 +214,17 @@ class MonitorsView extends AsyncComponent {
 
   _renderSpinner() {
     return (
-      <View style={styles.content}>
-        <ActivityIndicatorIOS
-          size="large"
-          style={styles.loadingSpinner}
-        />
+      <ActivityIndicatorIOS
+        size="large"
+        style={styles.loadingSpinner}
+      />
+    );
+  }
+
+  _renderPTRSpinner() {
+    return (
+      <View style={styles.ptrSpinnerContainer}>
+        {this._renderSpinner()}
       </View>
     );
   }
@@ -243,7 +256,6 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={true}
           configuring={false}
-          onPress={() => this.props.configureDevice(peripheralId)}
           socket={this.props.socket}
           bleDeviceManager={this.props.bleDeviceManager}
         />
@@ -260,7 +272,6 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={false}
           configuring={true}
-          onPress={null}
           socket={this.props.socket}
           bleDeviceManager={this.props.bleDeviceManager}
         />
@@ -282,17 +293,37 @@ class MonitorsView extends AsyncComponent {
       />
     )).toArray().reverse();
 
-    return [
-      unconfiguredDeviceThumbnails,
-      configuringDeviceThumbnail,
-      deviceThumbnails,
-    ];
+    let allThumbnails = unconfiguredDeviceThumbnails
+      .concat(configuringDeviceThumbnail)
+      .concat(deviceThumbnails)
+      .filter((element) => !!element);
+
+    // Easy way out for just 1 device.
+    if (allThumbnails.length === 1) {
+      return allThumbnails[0];
+    }
+
+    // Display devices in rows of 2.
+    let rows = [];
+    for (let i = 0; i < allThumbnails.length; i += 2) {
+      rows.push(
+        <View style={styles.thumbnailRow}>
+          {allThumbnails[i]}
+          {allThumbnails[i + 1] || <View style={styles.thumbnailPlaceholder} />}
+        </View>
+      );
+    }
+    return rows;
   }
 
   // Activity feed management
 
+  // Only fire pull-to-refresh action once per pull. That way we don't
+  // keep continuously firing the action.
+  _pullToRefreshActive = false;
+
   onScroll = (event) => {
-    let { eventsLoading, eventsLatest, eventsEarliest } = this.state;
+    let { eventsLoading, eventsLatest, eventsEarliest } = this.pendingState;
     if (eventsLoading || eventsLatest === null || eventsEarliest === null) {
       return;
     }
@@ -300,10 +331,15 @@ class MonitorsView extends AsyncComponent {
     let { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
 
     // Pull to refresh: fetch more recent events.
-    if (contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
+    if (!this._pullToRefreshActive && contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
+      this._pullToRefreshActive = true;
       this.setStateAsync({eventsLoading: 'newer'});
       this._fetchActivity(eventsLatest, Date.now());
       return;
+    }
+
+    if (this._pullToRefreshActive && contentOffset.y === 0) {
+      this._pullToRefreshActive = false;
     }
 
     // Infinite scroll: fetch more older events.
@@ -384,22 +420,6 @@ class MonitorsView extends AsyncComponent {
 
   _renderActivity() {
     let { eventsLoading, events } = this.state;
-    let spinnerNewer = null;
-    let spinnerOlder = null;
-    if (eventsLoading) {
-      let spinner = (
-        <ActivityIndicatorIOS
-          size="large"
-          style={styles.loadingSpinner}
-        />
-      );
-      if (eventsLoading === 'newer') {
-        spinnerNewer = spinner;
-      }
-      if (eventsLoading === 'older') {
-        spinnerOlder = spinner;
-      }
-    }
 
     let activity = null;
     if (!events) {
@@ -424,9 +444,8 @@ class MonitorsView extends AsyncComponent {
     }
 
     return [
-      spinnerNewer,
       activity,
-      spinnerOlder,
+      eventsLoading === 'older' ? this._renderSpinner() : null,
     ];
   }
 
@@ -448,7 +467,7 @@ const styles = StyleSheet.create({
     margin: 8,
   },
 
-  monitors: {
+  scrollView: {
     paddingTop: 5,
     backgroundColor: '#efefef',
     flex: 1,
@@ -457,6 +476,27 @@ const styles = StyleSheet.create({
   loadingSpinner: {
     alignSelf: 'center',
     marginVertical: 16,
+  },
+
+  ptrSpinnerContainer: {
+    position: 'absolute',
+    top: SCROLLVIEW_PTR_THRESHOLD - 10,
+    left: 0,
+    right: 0,
+    height: -SCROLLVIEW_PTR_THRESHOLD,
+  },
+
+  thumbnailContainer: {
+    paddingHorizontal: 4,
+  },
+
+  thumbnailRow: {
+    flexDirection: 'row',
+  },
+
+  thumbnailPlaceholder: {
+    flex: 1,
+    margin: 4,
   },
 
   eventRow: {

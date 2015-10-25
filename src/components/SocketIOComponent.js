@@ -1,6 +1,6 @@
-import React from 'react-native';
+import AsyncComponent from './AsyncComponent';
 
-export default class SocketIOComponent extends React.Component {
+export default class SocketIOComponent extends AsyncComponent {
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.socket !== this.props.socket) {

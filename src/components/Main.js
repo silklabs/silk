@@ -71,6 +71,7 @@ export default class extends AsyncComponent {
   bleDeviceManager = null;
   socket = null;
   mounted = false;
+  _fetchDevicesPromise = Promise.resolve();
 
   componentWillMount() {
     this.mounted = true;
@@ -126,8 +127,8 @@ export default class extends AsyncComponent {
       socketUrl: null,
       socket: null,
     });
+    this._fetchDevicesPromise = this.fetchDevices();
     this.connectSocketIO();
-    this.fetchDevices();
   };
 
   connectSocketIO() {
@@ -177,7 +178,16 @@ export default class extends AsyncComponent {
             connectionState: 'connected',
             socketConnectionState: 'connected',
           });
-          this.subscribeToVideoStreams();
+
+          // Be sure we have our device list before we subscribe to
+          // the video streams, otherwise we might identify any video
+          // streams coming in before we know the device list as not
+          // pertaining to our account.
+          // See also https://github.com/silklabs/silk-app/issues/566.
+          this._fetchDevicesPromise.then(() => {
+            this._fetchDevicesPromise = Promise.resolve();
+            this.subscribeToVideoStreams();
+          });
         });
       }
     });

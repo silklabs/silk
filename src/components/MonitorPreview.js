@@ -139,11 +139,13 @@ export default class extends SocketIOComponent {
       this._queue = null;
     }
     bleDeviceManager.removeListener('statusChange', this.onBLEPeripheralStatusChange);
+    bleDeviceManager.removeListener('errorChange', this.onBLEPeripheralStatusChange);
     this.clearTimeoutTimer();
   }
 
   subscribeToBLEStatus() {
     this.props.bleDeviceManager.on('statusChange', this.onBLEPeripheralStatusChange);
+    this.props.bleDeviceManager.on('errorChange', this.onBLEPeripheralStatusChange);
   }
 
   onBLEPeripheralStatusChange = (peripheral) => {

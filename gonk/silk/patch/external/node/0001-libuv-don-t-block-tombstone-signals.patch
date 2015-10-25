@@ -1,12 +1,12 @@
-From 6f74fc527fee48de58e5ff91ffc038c130760042 Mon Sep 17 00:00:00 2001
+From 0677a2a71877f8cf1bcc16d8d54bf05a6c0d76d5 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Fri, 9 Oct 2015 09:54:08 -0700
-Subject: [PATCH] dont block tombstone signals
+Subject: [PATCH] Don't block tombstone signals
 
 ---
  deps/uv/src/unix/signal.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- src/node.cc               |  9 +++++++++
- 2 files changed, 55 insertions(+)
+ src/node.cc               | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 75 insertions(+)
 
 diff --git a/deps/uv/src/unix/signal.c b/deps/uv/src/unix/signal.c
 index 0b7a405..e306736 100644
@@ -89,7 +89,7 @@ index 0b7a405..e306736 100644
    if (sigaction(signum, &sa, NULL))
      return -errno;
 diff --git a/src/node.cc b/src/node.cc
-index b6acc9d..27057be 100644
+index b6acc9d..1e15148 100644
 --- a/src/node.cc
 +++ b/src/node.cc
 @@ -3348,6 +3348,15 @@ static void RegisterSignalHandler(int signal,
@@ -108,6 +108,40 @@ index b6acc9d..27057be 100644
    CHECK_EQ(sigaction(signal, &sa, nullptr), 0);
  }
  
+@@ -3576,6 +3585,23 @@ inline void PlatformInit() {
+   for (unsigned nr = 1; nr < 32; nr += 1) {
+     if (nr == SIGKILL || nr == SIGSTOP)
+       continue;
++
++    // Don't mess with the signals that debuggerd_init() hooks for tombstones
++    //
++    // Ref: http://androidxref.com/5.1.0_r1/xref/bionic/linker/debugger.cpp#299
++    switch (nr) {
++    case SIGABRT:
++    case SIGBUS:
++    case SIGILL:
++    case SIGPIPE:
++    case SIGSEGV:
++#if defined(SIGSTKFLT)
++    case SIGSTKFLT:
++#endif
++    case SIGTRAP:
++      continue;
++    }
++
+     act.sa_handler = (nr == SIGPIPE) ? SIG_IGN : SIG_DFL;
+     CHECK_EQ(0, sigaction(nr, &act, nullptr));
+   }
+@@ -3930,6 +3956,9 @@ static void StartNodeInstance(void* arg) {
+     if (instance_data->use_debug_agent())
+       EnableDebug(env);
+ 
++    // TEST CASE: The next line should produce a debuggerd tombstone.
++    // *(char *) 0 = 0;
++
+     {
+       SealHandleScope seal(isolate);
+       bool more;
 -- 
 1.9.1
 

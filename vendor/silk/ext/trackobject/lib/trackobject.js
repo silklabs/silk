@@ -26,7 +26,6 @@ const MAX_THRESHOLD_VAL = 255;
 let MOTION_THRESHOLD = 1;
 
 const NUM_ITERATIONS_ERODE = 1;
-const PADDING = 50;
 
 // Enable sound when motion is detected
 const MOTION_PLAY_SOUND_PROP = 'persist.silk.motion.sound';
@@ -111,32 +110,22 @@ function _detectMotion(image, callback) {
       }
     }
 
-    // Add padding around the rectangle to help object detection algorithms
-    // by providing more data surrounding the object
+    let width = 0;
+    let height = 0;
     if (numChanges) {
+      width = maxx - minx;
+      height = maxy - miny;
+
       // Check if the motion rectangle size is bigger than the minimum required
-      if (((maxx - minx) < MIN_WIDTH) || ((maxy - miny) < MIN_HEIGHT)) {
-        log.debug(`Ignoring motion: ${maxx} - ${minx} x ${maxy} - ${miny}`);
+      if ((width < MIN_WIDTH) || (height < MIN_HEIGHT)) {
+        log.debug(`Ignoring motion: ${width} x ${height}`);
         callback(0);
         return;
       }
 
-      // Check if not out of bounds
-      if ((minx - PADDING) > 0) {
-        minx -= PADDING;
-      }
-      if ((miny - PADDING) > 0) {
-        miny -= PADDING;
-      }
-      if ((maxx + PADDING) < (image.cols - 1)) {
-        maxx += PADDING;
-      }
-      if ((maxy + PADDING) < (image.rows - 1)) {
-        maxy += PADDING;
-      }
-      log.debug(`rect: [${minx}, ${miny}, ${maxx - minx}, ${maxy - miny}]`);
+      log.debug(`rect: [${minx}, ${miny}, ${width}, ${height}]`);
     }
-    callback(numChanges, {x: minx, y: miny, width: maxx - minx, height: maxy - miny});
+    callback(numChanges, {x: minx, y: miny, width, height});
   } else {
     callback(0);
   }
@@ -164,7 +153,7 @@ export default function init(env) {
   soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 
   timeline.on('preview', when => {
-    log.info(`Retrieving frame ${when}`);
+    log.debug(`Retrieving frame ${when}`);
     if (working) {
       log.error('Still busy, unable to process next preview image');
       return;

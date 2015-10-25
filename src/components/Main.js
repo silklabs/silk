@@ -284,12 +284,13 @@ export default class extends AsyncComponent {
         previewSize: msg.previewSize,
       });
       this.setStateAsync({
-        // TODO: perhaps we should add the new record to the beginning
-        // of the ordered map? Need to figure out how to preserve
-        // device order in general. Perhaps simply take what server
-        // serves in reverse (most recently configured devices always
-        // further towards the top).
-        devices: devices.set(deviceId, newRecord),
+        // There could be a lingering record of the device already.
+        // "But how can this be, we just configured the device!",
+        // you might ask. Well, if we configured the device because it
+        // merely lost WiFi credentials, then it retained its deviceId.
+        // In this case we just want to bump it to the right place, so we
+        // explicitly remove it from the ordered map before re-adding it.
+        devices: devices.delete(deviceId).set(deviceId, newRecord),
         unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.get('peripheralId')),
         configuringDevice: null,
       });

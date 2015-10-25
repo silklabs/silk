@@ -9,7 +9,7 @@ let {
 
 import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
-import { Map, OrderedMap, OrderedSet } from 'immutable';
+import { OrderedMap, OrderedSet } from 'immutable';
 
 import BLECentral from '../libraries/btle/BLECentral';
 import DeviceManager from '../libraries/btle/DeviceManager';
@@ -17,6 +17,7 @@ import SocketIO from '../libraries/SocketIO';
 import { UserState } from '../libraries/UserState';
 
 import AsyncComponent from './AsyncComponent';
+import { DeviceRecord, ConfiguringDeviceRecord } from './Records';
 import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
@@ -241,7 +242,7 @@ export default class extends AsyncComponent {
       }
       let { deviceId } = serverObj;
       let clientRecord = existingDevices && existingDevices.get(deviceId);
-      let serverRecord = new Map(serverObj); // TODO should we use immutable.Record?
+      let serverRecord = new DeviceRecord(serverObj);
 
       // No client-side record of this device yet, create it.
       if (!clientRecord) {
@@ -280,16 +281,16 @@ export default class extends AsyncComponent {
       devices = new OrderedMap();
     }
 
-    if (configuringDevice && configuringDevice.get('deviceId') === deviceId) {
+    if (configuringDevice && configuringDevice.deviceId === deviceId) {
       // We must've successfully configured this new device. Add the
       // device record to the list of configured devices, remove the
       // corresponding entry from the list of unconfigured devices,
       // and reset the configuring device.
-      let newRecord = new Map({
+      let newRecord = new DeviceRecord({
         deviceId,
         publicKey: deviceId,
         // Explicitly use the name we gave it locally.
-        name: configuringDevice.get('name'),
+        name: configuringDevice.name,
         logo: msg.logo,
         previewSize: msg.previewSize,
       });
@@ -301,7 +302,7 @@ export default class extends AsyncComponent {
         // In this case we just want to bump it to the right place, so we
         // explicitly remove it from the ordered map before re-adding it.
         devices: devices.delete(deviceId).set(deviceId, newRecord),
-        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.get('peripheralId')),
+        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.peripheralId),
         configuringDevice: null,
       });
       return;
@@ -315,7 +316,7 @@ export default class extends AsyncComponent {
       }
       // A device we don't know about, but it's ok, we're a developer.
       // So just create a record for it.
-      let newRecord = new Map({
+      let newRecord = new DeviceRecord({
         deviceId,
         publicKey: deviceId,
         name: msg.name,
@@ -401,7 +402,7 @@ export default class extends AsyncComponent {
 
     InteractionManager.runAfterInteractions(() => {
       this.setStateAsync({
-        configuringDevice: new Map({
+        configuringDevice: new ConfiguringDeviceRecord({
           deviceId: null,
           name: null,
           peripheralId,
@@ -490,7 +491,7 @@ export default class extends AsyncComponent {
       throw new Error('Unknown device, cannot unregister.', deviceId);
     }
 
-    let devicePublicKey = deviceRecord.get('publicKey');
+    let devicePublicKey = deviceRecord.publicKey;
     log.info('Attempting to unregister device from server.', deviceId);
     let result = await this.props.api.account.unregisterDevice({devicePublicKey});
     if (!result || !result.success) {

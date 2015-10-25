@@ -343,7 +343,8 @@ const styles = StyleSheet.create({
 
   newDevicePlus: {
     color: 'white',
-    fontSize: 120,
+    fontSize: 72,
+    backgroundColor: 'transparent',
   },
 
   placeholderPreview: {

@@ -97,6 +97,12 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     self.homeBeacon.send(id, data: data)
   }
 
+  func updateRssi(id: NSInteger) {
+    log.debug("BLESocketManager.updateRssi(\(id))")
+
+    self.homeBeacon.updateRssi(id)
+  }
+
   internal func receive(id: Int, data: NSData!) {
     log.debug("BLESocketManager.receive(\(id))")
 
@@ -105,6 +111,14 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
 
     let name = "silk-blesocketmanager-data"
     let body = ["id": id, "data": dataBase64]
+    self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+  }
+  
+  internal func rssiUpdate(id: Int, rssi: Int) {
+    log.debug("BLESocketManager.rssiUpdate(\(id), \(rssi))")
+
+    let name = "silk-blesocketmanager-rssi"
+    let body = ["id": id, "rssi": rssi]
     self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
   }
 

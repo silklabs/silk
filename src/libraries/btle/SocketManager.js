@@ -19,11 +19,11 @@ let singletonInstance = null;
  *
  * Data can be sent to the other side using the send() method.
  */
-class BLESocket extends EventEmitter {
+class Socket extends EventEmitter {
   _id = 0;
 
   constructor(id) {
-    log.debug(`BLESocket(${id})`);
+    log.debug(`Socket(${id})`);
 
     super();
 
@@ -31,13 +31,13 @@ class BLESocket extends EventEmitter {
   }
 
   send(data) {
-    log.debug(`BLESocket.send(${data.length})`);
+    log.debug(`Socket.send(${data.length})`);
 
     singletonInstance.send(this._id, data);
   }
 
   updateRssi() {
-    log.debug(`BLESocket.updateRssi()`);
+    log.debug(`Socket.updateRssi()`);
 
     singletonInstance.updateRssi(this._id);
   }
@@ -52,17 +52,17 @@ class BLESocket extends EventEmitter {
  *
  * Only one instance of this class will ever be created.
  */
-class BLESocketManager extends EventEmitter {
+class SocketManager extends EventEmitter {
   _nativeManager = null;
   _sockets = new Map();
 
   constructor() {
-    log.debug('BLESocketManager()');
+    log.debug('SocketManager()');
 
     super();
 
     this._nativeManager =
-      require('react-native').NativeModules.BLESocketManager;
+      require('react-native').NativeModules.SocketManager;
 
     let RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
 
@@ -78,11 +78,11 @@ class BLESocketManager extends EventEmitter {
 
   onConnect = args => {
     const id = args.id;
-    log.debug(`BLESocketManager.onConnect(${id})`);
+    log.debug(`SocketManager.onConnect(${id})`);
 
     assert(!this._sockets.has(id));
 
-    let socket = new BLESocket(id);
+    let socket = new Socket(id);
     this._sockets.set(id, socket);
 
     this.emit('connect', socket);
@@ -90,7 +90,7 @@ class BLESocketManager extends EventEmitter {
 
   onData = args => {
     const { id, data } = args;
-    log.debug(`BLESocketManager.onData(${id}, ${data.length})`);
+    log.debug(`SocketManager.onData(${id}, ${data.length})`);
 
     let socket = this._sockets.get(id);
     if (socket) {
@@ -103,7 +103,7 @@ class BLESocketManager extends EventEmitter {
 
   onRssiUpdate = args => {
     const { id, rssi } = args;
-    log.debug(`BLESocketManager.onRssiUpdate(${id}, ${rssi})`);
+    log.debug(`SocketManager.onRssiUpdate(${id}, ${rssi})`);
 
     let socket = this._sockets.get(id);
     if (socket) {
@@ -116,7 +116,7 @@ class BLESocketManager extends EventEmitter {
 
   onDisconnect = args => {
     const id = args.id;
-    log.debug(`BLESocketManager.onDisconnect(${id})`);
+    log.debug(`SocketManager.onDisconnect(${id})`);
 
     let socket = this._sockets.get(id);
     if (socket) {
@@ -130,7 +130,7 @@ class BLESocketManager extends EventEmitter {
   };
 
   send(id, data) {
-    log.debug(`BLESocketManager.send(${id}, ${data.length})`);
+    log.debug(`SocketManager.send(${id}, ${data.length})`);
 
     assert(this._sockets.has(id));
 
@@ -138,7 +138,7 @@ class BLESocketManager extends EventEmitter {
   }
 
   updateRssi(id) {
-    log.debug(`BLESocketManager.updateRssi(${id})`);
+    log.debug(`SocketManager.updateRssi(${id})`);
 
     assert(this._sockets.has(id));
 
@@ -148,7 +148,7 @@ class BLESocketManager extends EventEmitter {
 
 export default function getBLESocketManager() {
   if (!singletonInstance) {
-    singletonInstance = new BLESocketManager();
+    singletonInstance = new SocketManager();
   }
 
   let emitter = new EventEmitter();

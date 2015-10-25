@@ -239,8 +239,9 @@ export default class extends AsyncComponent {
         return;
       }
 
-      // Nothing to do for us, client is already up-to-date.
+      // Client is already up-to-date, use existing client record.
       if (serverRecord.isSubset(clientRecord)) {
+        newDevices.set(deviceId, clientRecord);
         return;
       }
 

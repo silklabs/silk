@@ -257,6 +257,7 @@ class MonitorsView extends AsyncComponent {
           configurable={true}
           configuring={false}
           socket={this.props.socket}
+          hasNetwork={this.props.hasNetwork}
           bleDeviceManager={this.props.bleDeviceManager}
         />
       );
@@ -274,6 +275,7 @@ class MonitorsView extends AsyncComponent {
           configurable={false}
           configuring={true}
           socket={this.props.socket}
+          hasNetwork={this.props.hasNetwork}
           bleDeviceManager={this.props.bleDeviceManager}
         />
       );
@@ -290,6 +292,7 @@ class MonitorsView extends AsyncComponent {
         configuring={false}
         onPress={() => this.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
+        hasNetwork={this.props.hasNetwork}
         bleDeviceManager={this.props.bleDeviceManager}
       />
     )).toArray().reverse();

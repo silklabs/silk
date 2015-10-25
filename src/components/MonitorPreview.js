@@ -51,6 +51,8 @@ export default class extends SocketIOComponent {
     configurable: React.PropTypes.bool,
     configuring: React.PropTypes.bool,
     onPress: React.PropTypes.func,
+
+    hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.object.isRequired,
     bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
   };
@@ -82,14 +84,18 @@ export default class extends SocketIOComponent {
     if (this.props.configuring) {
       this.subscribeToBLEStatus();
     }
-    if (!this.props.configurable) {
-      this.startTimeoutTimer();
-    }
+    this.startTimeoutTimer();
   }
 
   componentWillReceiveProps(nextProps) {
     if (!this.props.configuring && nextProps.configuring) {
       this.subscribeToBLEStatus();
+    }
+    if (!this.props.hasNetwork && nextProps.hasNetwork) {
+      this.startTimeoutTimer();
+    }
+    if (this.props.hasNetwork && !nextProps.hasNetwork) {
+      this.clearTimeoutTimer();
     }
   }
 
@@ -114,13 +120,21 @@ export default class extends SocketIOComponent {
   }
 
   startTimeoutTimer() {
+    if (this.props.configurable) {
+      return;
+    }
     this.clearTimeoutTimer();
     let timeOut = DEVICE_PREVIEW_TIMEOUT_MS;
     if (this.props.configuring) {
       timeOut = DEVICE_CONFIGURING_TIMEOUT_MS;
     }
     this._timeoutTimer = setTimeout(
-      () => this.setState({timedOut: true, blob: null}),
+      () => {
+        if (!this.props.hasNetwork) {
+          return;
+        }
+        this.setState({timedOut: true, blob: null});
+      },
       timeOut
     );
   }

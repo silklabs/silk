@@ -7,6 +7,18 @@
  */
 
 let log;
+let util;
+
+// Adjust clap and loud sound detection sensititivty. Will need to make
+// this more user friendly and make this a single setting, but for now,
+// this value determines the minimum duration (in ms) the sound must
+// maintain a certain energy level to be considered a clap or a loud sound.
+//
+// Defaults for loud sound: 140
+// Defaults for clap: 70
+//
+const CLAPPER_LOUDSOUND_ADJUST_PROP = 'persist.silk.loudsound.adjust';
+const CLAPPER_CLAP_ADJUST_PROP = 'persist.silk.clap.adjust';
 
 const CLAPPER_PLAY_SOUND_PROP = 'persist.silk.clapper.sound';
 const TWO_CLAPS_FILENAME = 'two_claps_detected.mp3';
@@ -15,6 +27,7 @@ class Clapper {
   constructor(env) {
     this._env = env;
     log = env.log;
+    util = env.util;
 
     let fftCfg = {
       // TODO: hard coded audio constants assumed
@@ -40,8 +53,29 @@ class Clapper {
   }
 
   _initClapDetector() {
+    let minEnergyDurationMs =
+      util.getintprop(CLAPPER_CLAP_ADJUST_PROP, 70);
+
+    // Assume that if the min value needs to be larger, that the device is
+    // in an environment that has more echo, thus the max needs to be
+    // proportionally larger too.
+    let maxEnergyDurationMs = minEnergyDurationMs * 4;
+
+    log.info(`Init clap detector with min energy duration: ` +
+        `${minEnergyDurationMs} ms and max energy duration: ` +
+        `${maxEnergyDurationMs} ms`);
+
+    let cfg = {
+      fftProcessor: this._fftProcessor,
+      riseDurationMs: 24,
+      riseEnergyDelta: 25000,
+      minEnergyThreshold: 30000,
+      minEnergyDurationMs: minEnergyDurationMs,
+      maxEnergyDurationMs: maxEnergyDurationMs,
+    };
+
     let ClapDetector = require('./clapDetector')(this._env);
-    this._clapDetector = new ClapDetector({fftProcessor: this._fftProcessor});
+    this._clapDetector = new ClapDetector(cfg);
 
     this._onClap = clap => {
       let count = clap.count;
@@ -50,13 +84,13 @@ class Clapper {
       log.info(`clap ${clap.type} ${clap.count}`);
 
       let hueLightsOn = false;
-      let soundEnabled = this._env.util.getboolprop(CLAPPER_PLAY_SOUND_PROP);
+      let soundEnabled = util.getboolprop(CLAPPER_PLAY_SOUND_PROP);
       let tag = count === 1 ? 'clap ' : `${count} claps`;
 
       if (count == 2 && type === 'normal') {
         this._env.log.info(tag);
         if (soundEnabled) {
-          this._env.util.playSound(TWO_CLAPS_FILENAME);
+          util.playSound(TWO_CLAPS_FILENAME);
         }
         this._env.timeline.addObject(tag);
       }
@@ -69,13 +103,19 @@ class Clapper {
   }
 
   _initLoudSoundDetector() {
+    let minEnergyDurationMs =
+      util.getintprop(CLAPPER_LOUDSOUND_ADJUST_PROP, 140);
+
+    log.info(`Init loud sound with min energy ` +
+        `duration: ${minEnergyDurationMs}ms`);
+
     let cfg = {
       fftProcessor: this._fftProcessor,
       riseDurationMs: 24,
       riseEnergyDelta: 25000,
       minEnergyThreshold: 30000,
-      minEnergyDurationMs: 120,
-      maxEnergyDurationMs: 2000,
+      minEnergyDurationMs: minEnergyDurationMs,
+      maxEnergyDurationMs: 5000,
     };
 
     let LoudSoundDetector = require('./loudSoundDetector')(this._env);

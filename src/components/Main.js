@@ -465,6 +465,49 @@ export default class extends AsyncComponent {
     );
   }
 
+  unregisterDevice = async (deviceId) => {
+    let { devices } = this.state;
+    if (!devices) {
+      log.error('No known devices. Cannot unregister device.', deviceId);
+      throw new Error('No known devices. Cannot unregister device.', deviceId);
+    }
+
+    let deviceRecord = devices.get(deviceId);
+    if (!deviceRecord) {
+      log.error('Unknown device, cannot unregister.', deviceId);
+      throw new Error('Unknown device, cannot unregister.', deviceId);
+    }
+
+    let devicePublicKey = deviceRecord.get('publicKey');
+    log.info('Attempting to unregister device from server.', deviceId);
+    let result = await this.props.api.account.unregisterDevice({devicePublicKey});
+    if (!result || !result.success) {
+      throw new Error('Attempt to unregister device was unsuccessful', deviceId);
+    }
+
+    await this.setStateAsync({devices: this.pendingState.devices.delete(deviceId)});
+  };
+
+  static childContextTypes = {
+    // TODO could be more specific here.
+    silkDevices: React.PropTypes.object.isRequired,
+  };
+
+  childContext = {
+    silkDevices: {
+      configureDevice: this.configureDevice,
+      unregisterDevice: this.unregisterDevice,
+      // TODO: instead of passing down `bleDeviceManager`, we should
+      // expose minimal functionality like RSSI change subscriptions
+      // etc. here
+      // TODO: expose fullscreen video here
+    },
+  };
+
+  getChildContext() {
+    return this.childContext;
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -475,7 +518,6 @@ export default class extends AsyncComponent {
         <NetworkWarning />
         <MonitorsView
           bleDeviceManager={this.bleDeviceManager}
-          configureDevice={this.configureDevice}
           {...this.state}
           {...this.props}
         />

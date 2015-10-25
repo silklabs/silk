@@ -191,6 +191,13 @@ const styles = StyleSheet.create({
     color: '#c8c7cc',
   },
   actionBox: {
+    shadowColor: 'black',
+    shadowRadius: 2,
+    shadowOpacity: 0.5,
+    shadowOffset: {
+      height: 1,
+      width: 0,
+    },
     flex: 1,
     marginVertical: 8,
     backgroundColor: '#c8c7cc',

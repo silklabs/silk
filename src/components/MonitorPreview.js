@@ -35,6 +35,7 @@ const CONNECTION_STATUS_LABELS = {
   'wifi_online': 'connected to WiFi',
 };
 
+const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
 const DEVICE_PREVIEW_TIMEOUT_MS = 5000;
 const DEVICE_CONFIGURING_TIMEOUT_MS = 60000;
 
@@ -50,6 +51,7 @@ export default class extends SocketIOComponent {
     }),
     configurable: React.PropTypes.bool,
     configuring: React.PropTypes.bool,
+    haveVideoStream: React.PropTypes.bool,
     onPress: React.PropTypes.func,
 
     hasNetwork: React.PropTypes.bool.isRequired,
@@ -69,9 +71,11 @@ export default class extends SocketIOComponent {
     timedOut: false,
   };
 
+  mounted: false;
   _timeoutTimer = null;
 
   componentWillMount() {
+    this.mounted = true;
     this._queue = new PreviewQueue(this.props.label, message => {
       this.setState({
         timedOut: false,
@@ -80,7 +84,9 @@ export default class extends SocketIOComponent {
       });
     });
 
-    this.subscribeToSocket(this.props.socket);
+    if (this.props.haveVideoStream) {
+      this.subscribeToSocket();
+    }
     if (this.props.configuring) {
       this.subscribeToBLEStatus();
     }
@@ -91,6 +97,21 @@ export default class extends SocketIOComponent {
     if (!this.props.configuring && nextProps.configuring) {
       this.subscribeToBLEStatus();
     }
+    if (!this.props.haveVideoStream && nextProps.haveVideoStream) {
+      // The device was known to us before, but only just now came
+      // online. Start subscribing to the device's socket.io room to
+      // receive preview images. However, for some reason, subscribing
+      // to it immediately can lead to not receiving any messages at all.
+      // See https://github.com/silklabs/silk-app/issues/577.
+      // Also, in anticipation of receiving preview images soon, clear any
+      // timeout state.
+      this.unsubscribeFromSocket();
+      this.startTimeoutTimer();
+      this.setState({timedOut: false, blob: null});
+      setTimeout(() => {
+        this.subscribeToSocket();
+      }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
+    }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
     }
@@ -99,9 +120,9 @@ export default class extends SocketIOComponent {
     }
   }
 
-  subscribeToSocket(socket) {
-    let { deviceId, configurable } = this.props;
-    if (configurable || !socket || !deviceId) {
+  subscribeToSocket() {
+    let { socket, deviceId } = this.props;
+    if (!socket || !deviceId || !this.mounted) {
       return;
     }
     let stream = `preview-${deviceId}`;
@@ -109,8 +130,8 @@ export default class extends SocketIOComponent {
     socket.join(stream);
   }
 
-  unsubscribeFromSocket(socket) {
-    let { deviceId } = this.props;
+  unsubscribeFromSocket() {
+    let { socket, deviceId } = this.props;
     if (!socket || !deviceId) {
       return;
     }
@@ -151,12 +172,13 @@ export default class extends SocketIOComponent {
   };
 
   componentWillUnmount() {
-    let { socket, bleDeviceManager } = this.props;
-    this.unsubscribeFromSocket(socket);
+    this.mounted = false;
+    this.unsubscribeFromSocket();
     if (this._queue) {
       this._queue.deinit();
       this._queue = null;
     }
+    let { bleDeviceManager } = this.props;
     bleDeviceManager.removeListener('statusChange', this.onBLEPeripheralStatusChange);
     bleDeviceManager.removeListener('errorChange', this.onBLEPeripheralStatusChange);
     this.clearTimeoutTimer();
@@ -194,6 +216,8 @@ export default class extends SocketIOComponent {
   }
 
   _renderPreview() {
+    // TODO: display this.props.haveVideoStream visually in some way.
+    // See https://github.com/silklabs/silk-app/issues/526
     if (this.state.blob) {
       return <ImageView style={styles.preview} blob={this.state.blob} />;
     }

@@ -275,7 +275,7 @@ export default class extends AsyncComponent {
     }
 
     let deviceId = msg.id;
-    log.info('new video stream', deviceId);
+    log.info('New video stream', deviceId);
     let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
@@ -293,6 +293,7 @@ export default class extends AsyncComponent {
         name: configuringDevice.name,
         logo: msg.logo,
         previewSize: msg.previewSize,
+        haveVideoStream: true,
       });
       this.setStateAsync({
         // There could be a lingering record of the device already.
@@ -322,12 +323,14 @@ export default class extends AsyncComponent {
         name: msg.name,
         logo: msg.logo,
         previewSize: msg.previewSize,
+        haveVideoStream: true,
       });
       this.setStateAsync({devices: devices.set(deviceId, newRecord)});
       return;
     }
 
     // Existing record from the server. Supplement it with info from device.
+    devices = devices.setIn([deviceId, 'haveVideoStream'], true);
     if (!deviceRecord.has('previewSize')) {
       devices = devices.setIn([deviceId, 'previewSize'], msg.previewSize);
     }
@@ -344,14 +347,21 @@ export default class extends AsyncComponent {
       return;
     }
 
+    let { devices } = this.pendingState;
+    let deviceId = msg.id;
+    if (!devices.has(deviceId)) {
+      return;
+    }
+    log.info('Deleting video stream', deviceId);
+
     if (this.props.userState.isDeveloper) {
-      log.info('deleted video stream', msg.id);
-      this.setStateAsync({devices: this.pendingState.devices.delete(msg.id)});
+      this.setStateAsync({devices: devices.delete(deviceId)});
+      return;
     }
 
-    // TODO: should we update any state here? Perhaps that the device went
-    // offline, so that the user can check power and WiFi connectivity for it?
-    // See https://github.com/silklabs/silk-app/issues/526
+    this.setStateAsync({
+      devices: devices.setIn([deviceId, 'haveVideoStream'], true),
+    });
   };
 
   // Book keeping for unconfigured devices detected via BLE

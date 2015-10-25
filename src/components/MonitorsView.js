@@ -256,6 +256,7 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={true}
           configuring={false}
+          haveVideoStream={false}
           socket={this.props.socket}
           hasNetwork={this.props.hasNetwork}
           bleDeviceManager={this.props.bleDeviceManager}
@@ -274,6 +275,7 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={false}
           configuring={true}
+          haveVideoStream={false}
           socket={this.props.socket}
           hasNetwork={this.props.hasNetwork}
           bleDeviceManager={this.props.bleDeviceManager}
@@ -290,6 +292,7 @@ class MonitorsView extends AsyncComponent {
         previewSize={this._getPreviewSize(deviceId)}
         configurable={false}
         configuring={false}
+        haveVideoStream={device.haveVideoStream}
         onPress={() => this.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
         hasNetwork={this.props.hasNetwork}

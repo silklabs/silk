@@ -6,6 +6,7 @@ export const DeviceRecord = Record({ /* eslint new-cap: 0 */
   name: null,
   logo: null,
   previewSize: null,
+  haveVideoStream: false,
 });
 
 export const ConfiguringDeviceRecord = Record({ /* eslint new-cap: 0 */

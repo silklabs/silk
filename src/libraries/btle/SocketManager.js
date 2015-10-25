@@ -2,7 +2,7 @@ import assert from 'assert';
 import { EventEmitter } from 'events';
 import makeLog from 'log';
 
-const log = makeLog(`BLESocketManager`);
+const log = makeLog(`btle-SocketManager`);
 
 let singletonInstance = null;
 
@@ -35,6 +35,12 @@ class BLESocket extends EventEmitter {
 
     singletonInstance.send(this._id, data);
   }
+
+  updateRssi() {
+    log.debug(`BLESocket.updateRssi()`);
+
+    singletonInstance.updateRssi(this._id);
+  }
 }
 
 /**
@@ -64,6 +70,8 @@ class BLESocketManager extends EventEmitter {
                                       this.onConnect);
     RCTDeviceEventEmitter.addListener('silk-blesocketmanager-data',
                                       this.onData);
+    RCTDeviceEventEmitter.addListener('silk-blesocketmanager-rssi',
+                                      this.onRssiUpdate);
     RCTDeviceEventEmitter.addListener('silk-blesocketmanager-disconnect',
                                       this.onDisconnect);
   }
@@ -93,6 +101,19 @@ class BLESocketManager extends EventEmitter {
     }
   };
 
+  onRssiUpdate = args => {
+    const { id, rssi } = args;
+    log.debug(`BLESocketManager.onRssiUpdate(${id}, ${rssi})`);
+
+    let socket = this._sockets.get(id);
+    if (socket) {
+      socket.emit('rssiUpdate', rssi);
+    } else {
+      log.info(`RSSI update received for connection ${id} that no longer ` +
+               `exists, ignoring`);
+    }
+  };
+
   onDisconnect = args => {
     const id = args.id;
     log.debug(`BLESocketManager.onDisconnect(${id})`);
@@ -114,6 +135,14 @@ class BLESocketManager extends EventEmitter {
     assert(this._sockets.has(id));
 
     this._nativeManager.send(id, data.toString('base64'));
+  }
+
+  updateRssi(id) {
+    log.debug(`BLESocketManager.updateRssi(${id})`);
+
+    assert(this._sockets.has(id));
+
+    this._nativeManager.updateRssi(id);
   }
 }
 

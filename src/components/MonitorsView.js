@@ -268,6 +268,7 @@ class MonitorsView extends AsyncComponent {
         <MonitorPreview
           key={configuringDevice.get('peripheralId')}
           peripheralId={configuringDevice.get('peripheralId')}
+          deviceId={configuringDevice.get('deviceId')}
           label={configuringDevice.get('name') || 'New Device'}
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={false}

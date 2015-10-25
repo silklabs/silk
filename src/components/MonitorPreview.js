@@ -35,9 +35,8 @@ const CONNECTION_STATUS_LABELS = {
   'wifi_online': 'connected to WiFi',
 };
 
-// TODO: turn this value way down except for devices that are
-// configuring right now / have just configured.
-const DEVICE_PREVIEW_TIMEOUT_MS = 60000;
+const DEVICE_PREVIEW_TIMEOUT_MS = 5000;
+const DEVICE_CONFIGURING_TIMEOUT_MS = 60000;
 
 export default class extends SocketIOComponent {
   static propTypes = {
@@ -83,7 +82,9 @@ export default class extends SocketIOComponent {
     if (this.props.configuring) {
       this.subscribeToBLEStatus();
     }
-    this.startTimeoutTimer();
+    if (!this.props.configurable) {
+      this.startTimeoutTimer();
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -114,9 +115,13 @@ export default class extends SocketIOComponent {
 
   startTimeoutTimer() {
     this.clearTimeoutTimer();
+    let timeOut = DEVICE_PREVIEW_TIMEOUT_MS;
+    if (this.props.configuring) {
+      timeOut = DEVICE_CONFIGURING_TIMEOUT_MS;
+    }
     this._timeoutTimer = setTimeout(
       () => this.setState({timedOut: true, blob: null}),
-      DEVICE_PREVIEW_TIMEOUT_MS
+      timeOut
     );
   }
 
@@ -152,6 +157,7 @@ export default class extends SocketIOComponent {
     if (this.props.peripheralId !== peripheral.id) {
       return;
     }
+    this.startTimeoutTimer();
     let serverConnectionStatus =
       peripheral.error ? peripheral.error : peripheral.serverConnectionStatus;
     if (!this.state.serverConnectionStatus !== serverConnectionStatus) {

@@ -1,4 +1,4 @@
-From 0677a2a71877f8cf1bcc16d8d54bf05a6c0d76d5 Mon Sep 17 00:00:00 2001
+From f29161f88497dbec30afe0380e621f2ae9c4cd33 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Fri, 9 Oct 2015 09:54:08 -0700
 Subject: [PATCH] Don't block tombstone signals
@@ -89,7 +89,7 @@ index 0b7a405..e306736 100644
    if (sigaction(signum, &sa, NULL))
      return -errno;
 diff --git a/src/node.cc b/src/node.cc
-index b6acc9d..1e15148 100644
+index b6acc9d..f9acae2 100644
 --- a/src/node.cc
 +++ b/src/node.cc
 @@ -3348,6 +3348,15 @@ static void RegisterSignalHandler(int signal,
@@ -114,13 +114,13 @@ index b6acc9d..1e15148 100644
        continue;
 +
 +    // Don't mess with the signals that debuggerd_init() hooks for tombstones
++    // (SIGPIPE excluded)
 +    //
 +    // Ref: http://androidxref.com/5.1.0_r1/xref/bionic/linker/debugger.cpp#299
 +    switch (nr) {
 +    case SIGABRT:
 +    case SIGBUS:
 +    case SIGILL:
-+    case SIGPIPE:
 +    case SIGSEGV:
 +#if defined(SIGSTKFLT)
 +    case SIGSTKFLT:

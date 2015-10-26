@@ -9,7 +9,7 @@ let {
 
 import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
-import { Map, OrderedMap, OrderedSet } from 'immutable';
+import { OrderedMap, OrderedSet } from 'immutable';
 
 import BLECentral from '../libraries/btle/BLECentral';
 import DeviceManager from '../libraries/btle/DeviceManager';
@@ -17,6 +17,7 @@ import SocketIO from '../libraries/SocketIO';
 import { UserState } from '../libraries/UserState';
 
 import AsyncComponent from './AsyncComponent';
+import { DeviceRecord, ConfiguringDeviceRecord } from './Records';
 import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
@@ -71,6 +72,7 @@ export default class extends AsyncComponent {
   bleDeviceManager = null;
   socket = null;
   mounted = false;
+  _fetchDevicesPromise = Promise.resolve();
 
   componentWillMount() {
     this.mounted = true;
@@ -126,8 +128,8 @@ export default class extends AsyncComponent {
       socketUrl: null,
       socket: null,
     });
+    this._fetchDevicesPromise = this.fetchDevices();
     this.connectSocketIO();
-    this.fetchDevices();
   };
 
   connectSocketIO() {
@@ -177,7 +179,16 @@ export default class extends AsyncComponent {
             connectionState: 'connected',
             socketConnectionState: 'connected',
           });
-          this.subscribeToVideoStreams();
+
+          // Be sure we have our device list before we subscribe to
+          // the video streams, otherwise we might identify any video
+          // streams coming in before we know the device list as not
+          // pertaining to our account.
+          // See also https://github.com/silklabs/silk-app/issues/566.
+          this._fetchDevicesPromise.then(() => {
+            this._fetchDevicesPromise = Promise.resolve();
+            this.subscribeToVideoStreams();
+          });
         });
       }
     });
@@ -231,7 +242,7 @@ export default class extends AsyncComponent {
       }
       let { deviceId } = serverObj;
       let clientRecord = existingDevices && existingDevices.get(deviceId);
-      let serverRecord = new Map(serverObj); // TODO should we use immutable.Record?
+      let serverRecord = new DeviceRecord(serverObj);
 
       // No client-side record of this device yet, create it.
       if (!clientRecord) {
@@ -239,8 +250,9 @@ export default class extends AsyncComponent {
         return;
       }
 
-      // Nothing to do for us, client is already up-to-date.
+      // Client is already up-to-date, use existing client record.
       if (serverRecord.isSubset(clientRecord)) {
+        newDevices.set(deviceId, clientRecord);
         return;
       }
 
@@ -263,33 +275,35 @@ export default class extends AsyncComponent {
     }
 
     let deviceId = msg.id;
-    log.info('new video stream', deviceId);
+    log.info('New video stream', deviceId);
     let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
     }
 
-    if (configuringDevice && configuringDevice.get('deviceId') === deviceId) {
+    if (configuringDevice && configuringDevice.deviceId === deviceId) {
       // We must've successfully configured this new device. Add the
       // device record to the list of configured devices, remove the
       // corresponding entry from the list of unconfigured devices,
       // and reset the configuring device.
-      let newRecord = new Map({
+      let newRecord = new DeviceRecord({
         deviceId,
         publicKey: deviceId,
         // Explicitly use the name we gave it locally.
-        name: configuringDevice.get('name'),
+        name: configuringDevice.name,
         logo: msg.logo,
         previewSize: msg.previewSize,
+        haveVideoStream: true,
       });
       this.setStateAsync({
-        // TODO: perhaps we should add the new record to the beginning
-        // of the ordered map? Need to figure out how to preserve
-        // device order in general. Perhaps simply take what server
-        // serves in reverse (most recently configured devices always
-        // further towards the top).
-        devices: devices.set(deviceId, newRecord),
-        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.get('peripheralId')),
+        // There could be a lingering record of the device already.
+        // "But how can this be, we just configured the device!",
+        // you might ask. Well, if we configured the device because it
+        // merely lost WiFi credentials, then it retained its deviceId.
+        // In this case we just want to bump it to the right place, so we
+        // explicitly remove it from the ordered map before re-adding it.
+        devices: devices.delete(deviceId).set(deviceId, newRecord),
+        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.peripheralId),
         configuringDevice: null,
       });
       return;
@@ -303,18 +317,20 @@ export default class extends AsyncComponent {
       }
       // A device we don't know about, but it's ok, we're a developer.
       // So just create a record for it.
-      let newRecord = new Map({
+      let newRecord = new DeviceRecord({
         deviceId,
         publicKey: deviceId,
         name: msg.name,
         logo: msg.logo,
         previewSize: msg.previewSize,
+        haveVideoStream: true,
       });
       this.setStateAsync({devices: devices.set(deviceId, newRecord)});
       return;
     }
 
     // Existing record from the server. Supplement it with info from device.
+    devices = devices.setIn([deviceId, 'haveVideoStream'], true);
     if (!deviceRecord.has('previewSize')) {
       devices = devices.setIn([deviceId, 'previewSize'], msg.previewSize);
     }
@@ -331,14 +347,21 @@ export default class extends AsyncComponent {
       return;
     }
 
+    let { devices } = this.pendingState;
+    let deviceId = msg.id;
+    if (!devices.has(deviceId)) {
+      return;
+    }
+    log.info('Deleting video stream', deviceId);
+
     if (this.props.userState.isDeveloper) {
-      log.info('deleted video stream', msg.id);
-      this.setStateAsync({devices: this.pendingState.devices.delete(msg.id)});
+      this.setStateAsync({devices: devices.delete(deviceId)});
+      return;
     }
 
-    // TODO: should we update any state here? Perhaps that the device went
-    // offline, so that the user can check power and WiFi connectivity for it?
-    // See https://github.com/silklabs/silk-app/issues/526
+    this.setStateAsync({
+      devices: devices.setIn([deviceId, 'haveVideoStream'], true),
+    });
   };
 
   // Book keeping for unconfigured devices detected via BLE
@@ -389,7 +412,7 @@ export default class extends AsyncComponent {
 
     InteractionManager.runAfterInteractions(() => {
       this.setStateAsync({
-        configuringDevice: new Map({
+        configuringDevice: new ConfiguringDeviceRecord({
           deviceId: null,
           name: null,
           peripheralId,
@@ -478,7 +501,7 @@ export default class extends AsyncComponent {
       throw new Error('Unknown device, cannot unregister.', deviceId);
     }
 
-    let devicePublicKey = deviceRecord.get('publicKey');
+    let devicePublicKey = deviceRecord.publicKey;
     log.info('Attempting to unregister device from server.', deviceId);
     let result = await this.props.api.account.unregisterDevice({devicePublicKey});
     if (!result || !result.success) {

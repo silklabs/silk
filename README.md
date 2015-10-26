@@ -170,7 +170,13 @@ If you don't use emacs, ignore this.
 
 JavaScript files are tagged to use js2-mode.  [Follow these instructions to install js2-mode](https://github.com/mooz/js2-mode).
 
-## Heroku logging
+## Logging
+
+### Papertrail
+
+https://papertrailapp.com/groups/1878483 (log-in first)
+
+### Heroku logging
 
 To see live logging from the Heroku deployment, run
 ```

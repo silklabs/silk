@@ -78,6 +78,8 @@ export default function create(options) {
     socketio: require('./socketio')(config),
     streams: require('./streams')(config),
 
+    RssiSmoother: require('./rssi_smoother'),
+
     set accessToken(token) {
       accessToken = token;
       for (let key in services) {

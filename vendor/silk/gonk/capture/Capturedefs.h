@@ -35,5 +35,6 @@ extern int32_t sIFrameIntervalSec;
 extern int32_t sAudioBitRate;
 extern int32_t sAudioSampleRate;
 extern int32_t sAudioChannels;
+extern bool sUseMetaDataMode;
 
 #endif

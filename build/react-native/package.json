@@ -10,6 +10,8 @@
     "elliptic": "^5.1.0",
     "hash.js": "^1.0.3",
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
+    "log": "git@github.com:silklabs/log.git#master",
+    "msgpack-lite": "^0.1.13",
     "pbkdf2": "^3.0.4",
     "uuid": "^2.0.1"
   },

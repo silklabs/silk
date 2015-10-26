@@ -37,6 +37,20 @@ suite('account auth', () => {
     assert.ok(result.success);
     assert.ok(result.beaconUUID);
 
+    let dup = await api.account.registerDevice({
+      devicePublicKey: deviceAccessToken.toString(),
+      name: 'test',
+      type: 'camera',
+      registrationToken: token
+    });
+    assert.ok(dup.success, 'idempotent');
+
+    // Idempotent but should not result in multiple devices in list.
+    let allByPubKey = await devices.collection.find({
+      'accessToken.publicKey': deviceAccessToken.toString()
+    });
+    assert.equal(allByPubKey.length, 1);
+
     let device = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString()
     });

@@ -15,6 +15,18 @@ import { Transform } from 'stream';
 
 const log = makeLog(`api-streams-crypto`);
 
+// By default we'll try to use whatever is on |crypto| for our source of entropy
+// but Browserify/ReactNative don't provide that so we need to pass this in
+// sometimes.
+let getRandomBytes = crypto.randomBytes;
+
+export function setRandomBytesFunction(func) {
+  assert(func);
+  assert(typeof func === `function`);
+
+  getRandomBytes = func;
+}
+
 class CryptoStreamBase extends Transform {
   static CURVE_NAME = `curve25519`;
   static CIPHER_NAME = `aes-256-cbc`;
@@ -66,6 +78,8 @@ class CryptoStreamBase extends Transform {
 export class EncryptStream extends CryptoStreamBase {
   _bufferedWrites = null;
   _sequenceBuffer = null;
+  _randomBytes = [ ];
+  _queuedPushEncryptedData = [ ];
 
   constructor(ec, keyPair, options) {
     log.debug(`EncryptStream()`);
@@ -77,9 +91,8 @@ export class EncryptStream extends CryptoStreamBase {
 
     // Queue up several chunks of random bytes so that we are less likely to
     // block when sending data later.
-    this._randomBytes = [ ];
     for (let index = 0; index < 5; index++) {
-      crypto.randomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
+      getRandomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
     }
 
     // Elliptic always returns an array if anything other than 'hex' is passed.
@@ -117,6 +130,12 @@ export class EncryptStream extends CryptoStreamBase {
       this._endWithError(error);
     } else {
       this._randomBytes.push(random);
+
+      if (this._queuedPushEncryptedData.length) {
+        const { data, encoding, callback } =
+          this._queuedPushEncryptedData.shift();
+        this._pushEncryptedData(data, encoding, callback);
+      }
     }
   };
 
@@ -173,15 +192,15 @@ export class EncryptStream extends CryptoStreamBase {
   _pushEncryptedData(chunk, encoding, callback) {
     assert(this._sharedSecret);
 
-    let random;
-    if (this._randomBytes.length) {
-      // Grab random bytes out of our cache, and refill it asynchronously.
-      random = this._randomBytes.pop();
-      crypto.randomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
-    } else {
-      log.warn(`Blocking while collecting random bytes`);
-      random = crypto.randomBytes(CryptoStreamBase.IV_LENGTH);
+    if (!this._randomBytes.length) {
+      log.warn(`No random bytes available, waiting`);
+      this._queuedPushEncryptedData.push({ chunk, encoding, callback });
+      return;
     }
+
+    // Grab random bytes out of our cache, and refill it asynchronously.
+    const random = this._randomBytes.pop();
+    getRandomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
 
     const cipher =
       crypto.createCipheriv(CryptoStreamBase.CIPHER_NAME,

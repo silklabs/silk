@@ -5,7 +5,11 @@ import * as crypto from './crypto';
 import * as duplex_transform from './duplex_transform';
 import * as msgpack from './msgpack';
 
-export default function(/* config */) {
+export default function(config) {
+  if (`getRandomBytes` in config) {
+    crypto.setRandomBytesFunction(config.getRandomBytes);
+  }
+
   return Object.assign(
     { },
     crypto,

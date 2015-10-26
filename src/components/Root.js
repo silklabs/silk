@@ -12,6 +12,7 @@ let {
 // first time and created it's own shims.
 import '../libraries/BrowserShims';
 import Config from '../libraries/Config';
+import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
 import API from 'silk-api-react-native';
@@ -62,7 +63,10 @@ export default class extends AsyncComponent {
       userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
 
-    let api = API({serverUrl}); /* eslint new-cap: 0 */
+    let api = API({                               // eslint-disable-line new-cap
+      getRandomBytes,
+      serverUrl,
+    });
     let userState = await loadUserState(api);
 
     userState.on('authenticated', this.onAuthenticated);

@@ -17,9 +17,12 @@ const DEFAULT_ROUNDS = 64000;
  * This is most useful when a function typically expects a Buffer or TypedArray
  * to provide entropy (window.crypto.getRandomValues).
  *
+ * Also supports node-style callback argument. The callback function should be
+ * of the form |function callback(error, result) { ... }|.
+ *
  * @return {UInt8Array}
  */
-export function getRandomBytes(numberOfBytes) {
+export function getRandomBytes(numberOfBytes, callback = null) {
   return new Promise((accept) => {
     let start = Date.now();
     AppCrypto.getRandomBytes(numberOfBytes, function(bytes) {
@@ -33,6 +36,10 @@ export function getRandomBytes(numberOfBytes) {
         result[i] = bytes[i];
       }
       log(`Got ${numberOfBytes} random bytes in ${Date.now() - start} ms`);
+      if (callback) {
+        // First argument is an error object.
+        callback(null, result);
+      }
       accept(result);
     });
   });

@@ -111,7 +111,8 @@ export default function (ctx) {
     output: Joi.object().keys({
       devices: Joi.array().required().items(Joi.object().keys({
         name: Devices.NAME_SCHEMA,
-        publicKey: Joi.string().hex().required()
+        publicKey: Joi.string().hex().required(),
+        deviceId: Joi.string().hex().required()
       }))
     }),
     input: Joi.object().keys({
@@ -122,7 +123,8 @@ export default function (ctx) {
     list = list.map((device) => {
       return {
         name: device.name,
-        publicKey: device.accessToken.publicKey
+        publicKey: device.accessToken.publicKey,
+        deviceId: device.accessToken.publicKey
       };
     });
 

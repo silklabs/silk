@@ -114,17 +114,17 @@ class MonitorsView extends AsyncComponent {
   _getPreviewSize(deviceId) {
     let device = this.props.devices.get(deviceId);
     if (device &&
-        device.get('previewSize') &&
-        device.get('previewSize').width &&
-        device.get('previewSize').height) {
-      return device.get('previewSize');
+        device.previewSize &&
+        device.previewSize.width &&
+        device.previewSize.height) {
+      return device.previewSize;
     }
     return DEFAULT_PREVIEW_SIZE;
   }
 
   _getDeviceName(deviceId) {
     let device = this.props.devices.get(deviceId);
-    return device ? device.get('name') : 'unknown device';
+    return device ? device.name : 'unknown device';
   }
 
   render() {
@@ -245,7 +245,7 @@ class MonitorsView extends AsyncComponent {
     let { devices, unconfiguredDevices, configuringDevice } = this.props;
 
     let unconfiguredDeviceThumbnails = unconfiguredDevices.map((peripheralId) => {
-      if (configuringDevice && configuringDevice.get('peripheralId') === peripheralId) {
+      if (configuringDevice && configuringDevice.peripheralId === peripheralId) {
         return null;
       }
       return (
@@ -256,7 +256,9 @@ class MonitorsView extends AsyncComponent {
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={true}
           configuring={false}
+          haveVideoStream={false}
           socket={this.props.socket}
+          hasNetwork={this.props.hasNetwork}
           bleDeviceManager={this.props.bleDeviceManager}
         />
       );
@@ -266,13 +268,16 @@ class MonitorsView extends AsyncComponent {
     if (configuringDevice) {
       configuringDeviceThumbnail = (
         <MonitorPreview
-          key={configuringDevice.get('peripheralId')}
-          peripheralId={configuringDevice.get('peripheralId')}
-          label={configuringDevice.get('name') || 'New Device'}
+          key={configuringDevice.peripheralId}
+          peripheralId={configuringDevice.peripheralId}
+          deviceId={configuringDevice.deviceId}
+          label={configuringDevice.name || 'New Device'}
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={false}
           configuring={true}
+          haveVideoStream={false}
           socket={this.props.socket}
+          hasNetwork={this.props.hasNetwork}
           bleDeviceManager={this.props.bleDeviceManager}
         />
       );
@@ -282,13 +287,15 @@ class MonitorsView extends AsyncComponent {
       <MonitorPreview
         key={deviceId}
         deviceId={deviceId}
-        label={device.get('name')}
-        logo={device.get('logo')}
+        label={device.name}
+        logo={device.logo}
         previewSize={this._getPreviewSize(deviceId)}
         configurable={false}
         configuring={false}
+        haveVideoStream={device.haveVideoStream}
         onPress={() => this.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
+        hasNetwork={this.props.hasNetwork}
         bleDeviceManager={this.props.bleDeviceManager}
       />
     )).toArray().reverse();

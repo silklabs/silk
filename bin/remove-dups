@@ -1,0 +1,66 @@
+#! ./node_modules/.bin/babel-node --harmony
+/**
+One off script to remove duplicate entries in device.accessToken.publicKey
+*/
+
+import loadConfig from '../src/server/config';
+import createDb from '../src/server/db';
+
+import { ArgumentParser } from 'argparse';
+import Devices from '../src/server/models/devices';
+
+let parser = new ArgumentParser();
+
+parser.addArgument(['profile'], {
+  help: 'Configuration profile',
+  type: (value) => {
+    return loadConfig(value);
+  }
+});
+
+async function main() {
+  let args = parser.parseArgs(process.argv.slice(2));
+  console.log('Purging expired nonce values...');
+
+  let db = await createDb(args.profile);
+  let devices = new Devices(db);
+
+  let agg = await devices.collection.aggregate(
+    {
+      $group: {
+        _id: { 'accessToken.publicKey': '$accessToken.publicKey' },
+        dups: { $push: '$_id' },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $match: {
+        count: {
+          $gt: 1
+        }
+      }
+    }
+  );
+
+  for (let r of agg) {
+    r.dups.shift();
+    console.log(r.dups);
+    await devices.collection.remove({
+      _id: {
+        $in: r.dups
+      }
+    });
+    console.log(`Removed dups in ${r._id['accessToken.publicKey']} count ${r.dups.length}`)
+  }
+
+  // Cleanly close the database so the process can exit...
+  await db.close();
+}
+
+main().catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});
+
+

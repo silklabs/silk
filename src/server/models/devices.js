@@ -34,7 +34,7 @@ export default class Devices extends Base {
   static INDEX = [
     {
       props: {
-        'publicKey': 1
+        'accessToken.publicKey': 1
       },
       options: { unique: true }
     },
@@ -148,14 +148,16 @@ export default class Devices extends Base {
     // Insert the document but do not override any other accounts with the same
     // public key!
     let insert = await this.collection.update(
-      { 'accessToken.publicKey': record.publicKey }, // query
+      { 'accessToken.publicKey': record.accessToken.publicKey }, // query
       { $setOnInsert: record }, // insert only if no duplicates...
       { upsert: true }
     );
 
-    let didInsert = insert.upserted;
-    if (didInsert && didInsert[0]._id) {
-      return { id: didInsert[0]._id.toString() };
+    if (insert.n === 1) {
+      let device = await this.findByPublicKey({
+        publicKey: record.accessToken.publicKey
+      });
+      return { id: device._id };
     }
 
     return this.error('duplicatePublicKey');

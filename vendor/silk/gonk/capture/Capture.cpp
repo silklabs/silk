@@ -275,10 +275,10 @@ void* CaptureCommand::initThreadWrapper(void* me) {
 status_t CaptureCommand::setPreviewTarget() {
   Mutex::Autolock autoLock(mPreviewTargetLock);
 
-  if (mCamera->previewEnabled()) {
-    ALOGI("Stopping camera preview");
-    mCamera->stopPreview();
-  }
+  ALOGI("Stopping camera preview");
+  mCamera->stopPreview();
+  CHECK(!mCamera->previewEnabled());
+
   sp<IGraphicBufferProducer> previewProducer = sOpenCVCameraCapture->getPreviewProducer();
   if (previewProducer == NULL) {
     ALOGW("No client, selecting null preview target");

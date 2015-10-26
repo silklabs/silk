@@ -9,6 +9,7 @@
 #include <utils/Log.h>
 
 #include <binder/ProcessState.h>
+#include <cutils/properties.h>
 #include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include <media/openmax/OMX_IVCommon.h>
@@ -42,6 +43,7 @@ int32_t sIFrameIntervalSec = 15;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
+bool sUseMetaDataMode = true;
 sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 
 //
@@ -247,6 +249,17 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
   }
+
+  // The default qemu camera HAL does not support metadata mode
+  {
+    char val[PROPERTY_VALUE_MAX];
+    property_get("ro.kernel.qemu", val,  "");
+    if (val[0] == '1') {
+      ALOGW("qemu detected, disabling frame metadata mode");
+      sUseMetaDataMode = false;
+    }
+  }
+
   // Start camera in a separate thread
   pthread_create(&mThread, NULL, initThreadWrapper, this);
   return 0;
@@ -355,7 +368,7 @@ status_t CaptureCommand::initThread() {
   mCameraSource = CameraSource::CreateFromCamera(mRemote, mCamera->getRecordingProxy(), cameraId,
       String16(CAMERA_NAME, strlen(CAMERA_NAME)), Camera::USE_CALLING_UID,
       sVideoSize, sFPS,
-      NULL, true);
+      NULL, sUseMetaDataMode);
   CHECK_EQ(mCameraSource->initCheck(), ::OK);
 
   mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mCameraSource);

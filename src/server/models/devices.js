@@ -35,7 +35,7 @@ export default class Devices extends Base {
   static INDEX = [
     {
       props: {
-        'publicKey': 1
+        'accessToken.publicKey': 1
       },
       options: { unique: true }
     },

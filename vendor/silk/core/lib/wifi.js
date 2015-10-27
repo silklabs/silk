@@ -454,7 +454,7 @@ class QEmuWifi extends events.EventEmitter {
   }
 
   joinNetwork(ssid, psk) { //eslint-disable-line
-    log.error('joinNetwork not implemented');
+    return Promise.reject(new Error('QEmuWifi.joinNetwork not implemented'));
   }
 
   networkConfigured() {
@@ -462,7 +462,7 @@ class QEmuWifi extends events.EventEmitter {
   }
 
   forgetNetwork() {
-    log.error('forgetNetwork not implemented');
+    return Promise.reject(new Error('QEmuWifi.forgetNetwork not implemented'));
   }
 }
 

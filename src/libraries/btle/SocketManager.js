@@ -1,8 +1,17 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
+import {
+  NativeModules,
+  DeviceEventEmitter,
+} from 'react-native';
 import assert from 'assert';
 import { EventEmitter } from 'events';
 import makeLog from 'log';
 
 const log = makeLog(`btle-SocketManager`);
+
+const { BLESocketManager } = NativeModules;
 
 let singletonInstance = null;
 
@@ -53,7 +62,6 @@ class Socket extends EventEmitter {
  * Only one instance of this class will ever be created.
  */
 class SocketManager extends EventEmitter {
-  _nativeManager = null;
   _sockets = new Map();
 
   constructor() {
@@ -61,19 +69,14 @@ class SocketManager extends EventEmitter {
 
     super();
 
-    this._nativeManager =
-      require('react-native').NativeModules.SocketManager;
-
-    let RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
-
-    RCTDeviceEventEmitter.addListener('silk-blesocketmanager-connect',
-                                      this.onConnect);
-    RCTDeviceEventEmitter.addListener('silk-blesocketmanager-data',
-                                      this.onData);
-    RCTDeviceEventEmitter.addListener('silk-blesocketmanager-rssi',
-                                      this.onRssiUpdate);
-    RCTDeviceEventEmitter.addListener('silk-blesocketmanager-disconnect',
-                                      this.onDisconnect);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-connect',
+                                   this.onConnect);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-data',
+                                   this.onData);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-rssi',
+                                   this.onRssiUpdate);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-disconnect',
+                                   this.onDisconnect);
   }
 
   onConnect = args => {
@@ -134,7 +137,7 @@ class SocketManager extends EventEmitter {
 
     assert(this._sockets.has(id));
 
-    this._nativeManager.send(id, data.toString('base64'));
+    BLESocketManager.send(id, data.toString('base64'));
   }
 
   updateRssi(id) {
@@ -142,11 +145,11 @@ class SocketManager extends EventEmitter {
 
     assert(this._sockets.has(id));
 
-    this._nativeManager.updateRssi(id);
+    BLESocketManager.updateRssi(id);
   }
 }
 
-export default function getBLESocketManager() {
+export default function getSocketManager() {
   if (!singletonInstance) {
     singletonInstance = new SocketManager();
   }

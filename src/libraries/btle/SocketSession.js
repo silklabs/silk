@@ -1,10 +1,17 @@
-import assert from 'assert';
-import makeLog from '../log';
-import Stream from './stream';
-import { RssiSmoother, streams } from 'silk-api-react-native';
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-const { CryptoDuplexStream } = streams.crypto;
-const { MessagePackDuplexStream } = streams.msgpack;
+import assert from 'assert';
+import { createStreams, RssiSmoother } from 'silk-api';
+import { getRandomBytes } from '../Crypto';
+import makeLog from 'log';
+import Stream from './Stream';
+
+const streams = createStreams({
+  getRandomBytes,
+});
+
+const { CryptoDuplexStream, MessagePackDuplexStream } = streams;
 
 const log = makeLog(`btle-SocketSession`);
 
@@ -76,10 +83,6 @@ export default class SocketSession extends MessagePackDuplexStream {
     assert(!this._finished);
 
     this._finished = true;
-
-    if (!this._sentDisconnect) {
-      this._sendDisconnect();
-    }
   };
 
   _killRssiUpdates() {
@@ -105,7 +108,7 @@ export default class SocketSession extends MessagePackDuplexStream {
       this._rssiTimeout = null;
       this._rssiUpdatePending = true;
 
-      this._peripheral.updateRssi();
+      this._socket.updateRssi();
     }, RSSI_UPDATE_TIMEOUT);
   }
 
@@ -115,7 +118,8 @@ export default class SocketSession extends MessagePackDuplexStream {
 
     this._sentDisconnect = true;
 
-    this._socket.write({ name: `disconnect` });
+    this.write({ name: `disconnect` });
+    this.end();
   }
 
   get connected() {
@@ -139,7 +143,7 @@ export default class SocketSession extends MessagePackDuplexStream {
     this._rssiUpdatesEnabled = val;
 
     if (this.rssiUpdatesEnabled) {
-      assert(this._peripheral);
+      assert(this._socket);
       assert(!this._rssiTimeout);
       if (!this._rssiUpdatePending) {
         this._updateRssiAfterDelay();
@@ -164,12 +168,9 @@ export default class SocketSession extends MessagePackDuplexStream {
 
     this._killRssiUpdates();
 
-    if (!this._finished) {
+    if (!this._finished && !this._sentDisconnect) {
       // We will disconnect in |_onFinish()| after all the data that was written
       // has been sent.
-      this.end();
-    } else {
-      // Disconnect immediately.
       this._sendDisconnect();
     }
   }

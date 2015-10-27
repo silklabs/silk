@@ -118,25 +118,27 @@ class DeviceConfig extends events.EventEmitter {
       let secret = this._configService.unsecured ? '' :
         this._configService.secret;
 
-      await wifi.forgetNetwork(),
-      assert(this._configService, '_configService required');
-      assert(api.accessToken, 'has api.accessToken set');
-      await wifi.joinNetwork(this._configService.ap, secret),
-
-      // Wait until the network is ready to use then register the device...
-      await Promise.all([
-        // Persist the configuration details we got over BTLE this includes the
-        // registrarPublicKey so we can communicate securely with that specific
-        // account in the future.
-        this._persistConfig(this._configService, false),
-
-        // Wait until we can connect to the internet...
-        // XXX: This may never happen so we should present some special
-        // error handling+state here...
-        eventToPromise(this._networkStatus, 'online')
-      ]);
-
       try {
+        await wifi.forgetNetwork();
+        assert(this._configService, '_configService required');
+        assert(api.accessToken, 'has api.accessToken set');
+
+        log.error(`wifi.joinNetwork(${this._configService.ap}, ${secret})`);
+        await wifi.joinNetwork(this._configService.ap, secret),
+
+        // Wait until the network is ready to use then register the device...
+        await Promise.all([
+          // Persist the configuration details we got over BTLE this includes the
+          // registrarPublicKey so we can communicate securely with that specific
+          // account in the future.
+          this._persistConfig(this._configService, false),
+
+          // Wait until we can connect to the internet...
+          // XXX: This may never happen so we should present some special
+          // error handling+state here...
+          eventToPromise(this._networkStatus, 'online')
+        ]);
+
         log.info('Wifi setup complete... Contacting the server...');
         let result = await this._registerDevice(this._configService);
         log.info('Registration complete', result);
@@ -149,10 +151,19 @@ class DeviceConfig extends events.EventEmitter {
         // completely registered...
         await this._persistConfig(this._configService, true);
       } catch (err) {
-        // XXX: Semi-hack forget wifi so we are sure to reconfigure...
         log.error('Failed to register device', err.stack);
-        await wifi.forgetNetwork();
-        throw err;
+        if (this._configService) {
+          this._configService.errorMessage = err.toString();
+        }
+
+        // TODO: Right now we don't have a good mechanism to signal the app that
+        //       something bad has happened and the device wants to revert back
+        //       to the unconfigured state.  Executing |this.unconfigure()| will
+        //       sever the ^errorMessage^ that was just published for the app to
+        //       see.  Instead soldier on, and rely the user to manually
+        //       reset the device once they view the errorMessage in the app.
+        //await this.unconfigure();
+        //return;
       }
       log.debug('Configured');
       this.emit('configured');

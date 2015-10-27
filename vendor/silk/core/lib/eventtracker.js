@@ -26,10 +26,6 @@ type LocalEventRecord = {
   data: {[arbitraryKeys: string]: any};
 };
 
-// If 12 bytes is enough for MongoDB, it should be enough for us.
-// See https://docs.mongodb.org/manual/reference/object-id/
-const ID_NUM_BYTES = 12;
-
 const DEFAULT_DEBOUNCE_MS = 5000;
 const DEBOUNCE_MS_BY_EVENT_TAG = {
   motion: 10000,
@@ -41,6 +37,24 @@ const DEFAULT_EVENT_LENGTH_MS = 1000;
 const ENABLED_PROP = 'persist.silk.eventtrk.enabled';
 const ENABLED = util.getboolprop(ENABLED_PROP);
 log.info(`Upload enabled: ${ENABLED}`);
+
+// If 12 bytes is enough for MongoDB, it should be enough for us.
+// See https://docs.mongodb.org/manual/reference/object-id/
+const ID_NUM_BYTES = 12;
+// Any string that's not 12 bytes == 16 base64 characters long.
+const GENERATING_ID_PLACEHOLDER = 'generating';
+
+function generateRecordID(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(ID_NUM_BYTES, (error, idBytes) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(idBytes.toString('base64'));
+    });
+  });
+}
 
 /**
  * Record event bursts from the camera and microphone and assemble
@@ -100,22 +114,23 @@ class EventTracker extends EventEmitter {
     };
     log.info(`Recorded event '${record.tag}'`);
 
-    crypto.randomBytes(ID_NUM_BYTES, (error, idBytes) => {
-      if (error) {
-        log.error('Could not generate random ID', error);
-        return;
-      }
-
-      record.id = idBytes.toString('base64');
-      // Push this in the upload queue so that we create a server
-      // record of the event.
-      this._enqueue(record);
-      // Ensure we're tracking expirations.
-      this._trackExpirations();
-    });
+    // Push this in the upload queue so that we create a server
+    // record of the event.
+    this._enqueue(record);
+    // Ensure we're tracking expirations.
+    this._trackExpirations();
   }
 
-  _enqueue(record: LocalEventRecord) {
+  async _enqueue(record: LocalEventRecord) {
+    if (record.id === GENERATING_ID_PLACEHOLDER) {
+      // The record is already enqueued, we're just generating an ID for it.
+      // No need to enqueue it again.
+      return;
+    }
+    if (!record.id) {
+      record.id = GENERATING_ID_PLACEHOLDER;
+      record.id = await generateRecordID();
+    }
     let operation = new APICallOperation({
       endpoint: 'timeMeta.create',
       args: [{

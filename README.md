@@ -347,7 +347,7 @@ searching until you get a good value. (max precision is 8ms)
 ```sh
 adb shell setprop persist.silk.loudsound.adjust 140
 adb shell setprop persist.silk.clap.adjust 70
-adb shell setprop silk.reload-ext /system/silk/ext/index.js   # or just restart silk core
+adb shell setprop silk.reload-ext /system/silk/ext/clapper.js   # or just restart silk core
 ```
 
 ### OTA Updates

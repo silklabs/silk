@@ -17,17 +17,20 @@ $adb wait-for-device
 
 echo "<<<<<<<<<<<<<< Restarting all silk services >>>>>>>>>>>>>>"
 $adb shell stop
-$adb shell setprop silk.boot_completed '' # Ensure failed silk boot is detected
 $adb shell start
 $LOCAL_PATH/devicecheck
 
 echo "<<<<<<<<<<<<<< Restarting just the silk process >>>>>>>>>>>>>>"
 $adb shell stop silk
-$adb shell setprop silk.boot_completed '' # Ensure failed silk boot is detected
 $adb shell start silk
 $LOCAL_PATH/devicecheck
 
-# TODO: Test restarting the |capture| process.  Need a way to validate the
-#       silk process has re-established contact with it
+echo "<<<<<<<<<<<<<< Restarting just the capture process >>>>>>>>>>>>>>"
+$adb shell stop capture
+$adb shell start capture
+# TODO: Need a way to validate the silk process has re-established contact with
+#       capture. For now just sleep for a while to permit time for something to
+#       maybe crash
+sleep 5
 
 exit 0

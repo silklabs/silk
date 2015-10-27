@@ -60,6 +60,14 @@ slumber()
   # requested duration to augment visibility into what's happening on device
   # while waiting.
   timeout -s KILL 10s adb shell top -d $seconds -n 1 -m 3 -s cpu
+
+  if $QEMU; then
+    # Sleep without touching qemu as well, as running |top| steals cycles from
+    # the emulator that could otherwise be used to boot the system.  This also
+    # has a sneaky side effect of doubling the slumber time, which is also good
+    # for avoiding qemu timeouts as it's much slower than a real device.
+    sleep $seconds
+  fi
 }
 
 findprocess()
@@ -142,22 +150,31 @@ if [[ $? -ne "0" ]] ; then
 fi
 
 echo Device serial number: $(timeout -s KILL 10s adb get-serialno)
-echo Device path: $(timeout -s KILL 10s adb get-devpath)
+
+QEMU=false
+if [[ -n "$(timeout -s KILL 10s adb shell getprop | grep ro.kernel.qemu)" ]]; then
+  QEMU=true
+  echo Device is emulated
+else
+  echo Device path: $(timeout -s KILL 10s adb get-devpath)
+fi
+
 echo
 echo logcat =\> main.log
 adb logcat > main.log &
 echo
+
+expected_silk_boot_completed=$(( 1 + $(getprop silk.boot_completed "0") ))
 
 nodepid=0
 findprocess /system/silk/bin/node nodepid 45
 
 waitforprop sys.boot_completed 1 60
 
+waitforprop silk.boot_completed $expected_silk_boot_completed 60
+
 attempt=0
-STABILITY_RETRIES=20
-if [[ -n $TRAVIS ]]; then
-  STABILITY_RETRIES=$(( $STABILITY_RETRIES * 2 ))
-fi
+STABILITY_RETRIES=10
 
 while [[ $attempt -lt $STABILITY_RETRIES ]]; do
   echo
@@ -173,17 +190,6 @@ while [[ $attempt -lt $STABILITY_RETRIES ]]; do
   attempt=$(( $attempt + 1 ))
   slumber
 done
-
-timeout -s KILL 20s adb shell dash  # <-- helpful for debug
-
-echo Checking silk.boot_completed property
-silk_boot_completed=$(getprop silk.boot_completed "?")
-if [[ ! $silk_boot_completed -ge 1 ]]; then
-  #   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -> more complex expression to ensure that
-  #                                   non-integers are caught
-  echo "Error: Expecting silk.boot_completed to be > 0, but was '$silk_boot_completed'"
-  cleanup
-fi
 
 echo
 echo =============================================================================

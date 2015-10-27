@@ -340,6 +340,16 @@ adb shell setprop persist.silk.motion.sound true
 adb shell setprop ctl.restart silk
 ```
 
+To tune audio analysis, set these values. They are in units of very unfriendly milliseconds.
+Default values are listed below. You can try increasing by 50-100 and binary
+searching until you get a good value. (max precision is 8ms)
+
+```sh
+adb shell setprop persist.silk.loudsound.adjust 140
+adb shell setprop persist.silk.clap.adjust 70
+adb shell setprop silk.reload-ext /system/silk/ext/index.js   # or just restart silk core
+```
+
 ### OTA Updates
 
 OTA updates are disabled by default.

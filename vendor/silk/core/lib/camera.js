@@ -228,11 +228,11 @@ class CameraStream extends EventEmitter {
     }, CAPTURE_INIT_TIMEOUT_MS);
 
     // Connecting to data socket
-    this._dataBuffer = new Buffer(0);
+    this._dataBuffer = null;
     log.verbose(`connecting to ${CAPTURE_DATA_SOCKET_NAME} socket`);
     this._dataSocket = net.createConnection(CAPTURE_DATA_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_DATA_SOCKET_NAME} socket`);
-      this._dataBuffer = new Buffer(0);
+      this._dataBuffer = null;
     });
     this._dataSocket.on('data', data => this._onDataSocketRead(data));
     this._dataSocket.on('error', err => {
@@ -417,20 +417,28 @@ class CameraStream extends EventEmitter {
     });
   }
 
-  _onDataSocketRead(data) {
-    this._dataBuffer = Buffer.concat([this._dataBuffer, data]);
-    while (this._dataBuffer.length >= HEADER_NR_BYTES) {
-      let size = this._dataBuffer.readInt32LE(0);
-      if (this._dataBuffer.length < HEADER_NR_BYTES + size) {
-        break;
+  _onDataSocketRead(newdata) {
+    let buf;
+    if (this._dataBuffer) {
+      // Prepend previous incomplete packet
+      buf = Buffer.concat([this._dataBuffer, newdata]);
+    } else {
+      buf = newdata;
+    }
+
+    let pos = 0;
+    while (pos + HEADER_NR_BYTES < buf.length) {
+      let size = buf.readInt32LE(pos);
+      if (pos + HEADER_NR_BYTES + size > buf.length) {
+        break; // Incomplete packet received
       }
-      let tag = this._dataBuffer.readInt32LE(4);
-      let sec = this._dataBuffer.readInt32LE(8);   // timeval.tv_sec
-      let usec = this._dataBuffer.readInt32LE(12); // timeval.tv_usec
-      let durationMs = this._dataBuffer.readInt32LE(16);
+      let tag = buf.readInt32LE(pos + 4);
+      let sec = buf.readInt32LE(pos + 8);   // timeval.tv_sec
+      let usec = buf.readInt32LE(pos + 12); // timeval.tv_usec
+      let durationMs = buf.readInt32LE(pos + 16);
       let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
 
-      let pkt = this._dataBuffer.slice(HEADER_NR_BYTES, HEADER_NR_BYTES + size);
+      let pkt = buf.slice(pos + HEADER_NR_BYTES, pos + HEADER_NR_BYTES + size);
       switch (tag) {
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`);
@@ -447,14 +455,16 @@ class CameraStream extends EventEmitter {
         break;
       default:
         // Flush the buffer and restart the socket
-        this._dataBuffer = new Buffer(0);
+        this._dataBuffer = null;
         this._restart('Invalid capture tag');
         throw new Error(`Invalid capture tag:${tag} size:${size} when:${sec}.${usec} durationMs:${durationMs}`);
       }
-      // put the rest of the buffer back
-      let rest = new Buffer(this._dataBuffer.length - (HEADER_NR_BYTES + size));
-      this._dataBuffer.copy(rest, 0, HEADER_NR_BYTES + size);
-      this._dataBuffer = rest;
+      pos += HEADER_NR_BYTES + size;
+    }
+    if (pos != buf.length) {
+      this._dataBuffer = buf.slice(pos); // Save partial packet for next time
+    } else {
+      this._dataBuffer = null;
     }
   }
 

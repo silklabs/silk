@@ -38,6 +38,9 @@ export const BTLE_SOCKET_UUIDS = {
   characteristic: '59ba85fb-6fba-439c-95b0-9307e62d4ca1',
 };
 
+export { default as createStreams } from './streams';
+export RssiSmoother from './rssi_smoother';
+
 export default function create(options) {
   const config = loadConfig(options);
   let accessToken = null;

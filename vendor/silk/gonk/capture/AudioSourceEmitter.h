@@ -24,6 +24,10 @@ private:
   Channel *mChannel;
   sp<MediaSource> mSource;
   DISALLOW_EVIL_CONSTRUCTORS(AudioSourceEmitter);
+
+  uint8_t *mAudioBuffer;
+  uint32_t mAudioBufferIdx;
+  uint32_t mAudioBufferLen;
 };
 
 #endif

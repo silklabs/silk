@@ -27,8 +27,7 @@ AudioSourceEmitter::AudioSourceEmitter(Channel* channel, const sp<MediaSource> &
   mAudioBufferIdx = 0;
   // AudioSource is always 16 bit PCM (2 bytes / sample)
   mAudioBufferLen = sAudioSampleRate * AUDIO_BUFFER_MS / 1000 * 2;
-  mAudioBuffer = (uint8_t *) malloc(mAudioBufferLen);
-  CHECK(mAudioBuffer != NULL);
+  mAudioBuffer = nullptr;
 }
 
 AudioSourceEmitter::~AudioSourceEmitter() {
@@ -56,7 +55,8 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
 
     // If these next samples will overrun the buffer, then send out data now
     if (mAudioBufferIdx + len >= mAudioBufferLen) {
-      mChannel->send(Channel::TAG_MIC, mAudioBuffer, mAudioBufferIdx);
+      mChannel->send(Channel::TAG_MIC, mAudioBuffer, mAudioBufferIdx, free, mAudioBuffer);
+      mAudioBuffer = nullptr;
       mAudioBufferIdx = 0;
     }
 
@@ -64,6 +64,10 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
     CHECK(mAudioBufferIdx + len < mAudioBufferLen);
 
     // batch samples
+    if (mAudioBuffer == nullptr) {
+      mAudioBuffer = (uint8_t *) malloc(mAudioBufferLen);
+      CHECK(mAudioBuffer != nullptr);
+    }
     memcpy(mAudioBuffer + mAudioBufferIdx,
         (const uint8_t *) (*buffer)->data() + (*buffer)->range_offset(), len);
     mAudioBufferIdx += len;

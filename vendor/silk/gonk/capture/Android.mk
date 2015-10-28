@@ -34,6 +34,7 @@ LOCAL_C_INCLUDES += $(ROOT)/SocketListener
 
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
+LOCAL_CFLAGS += -Dnullptr=0
 
 include external/stlport/libstlport.mk
 

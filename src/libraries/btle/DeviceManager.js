@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import mklog from 'log'; const log = mklog('cdm');
-import { btleConfigService } from 'silk-api-react-native';
+import { btleConfigService } from 'silk-api';
 
 // HACK to use silk-api btle info...
 let api = {

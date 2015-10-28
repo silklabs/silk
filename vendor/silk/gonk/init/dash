@@ -31,6 +31,20 @@ if [ -f /sys/class/power_supply/usb/current_max ]; then
 fi
 echo
 
+if [ -d /data/outbox ]; then
+  cd /data/outbox/
+  queues=$(ls)
+  if [ "$queues" != "" ]; then
+    echo Outbox:
+    for q in $queues; do
+      du=$(du -hs $q)
+      wc=$(ls $q | busybox wc -l)
+      echo "  $du ($wc entries)"
+    done
+    echo
+  fi
+fi
+
 if [ -f /sys/devices/system/cpu/cpu0/online ]; then
   echo CPU Info:
   cd /sys/devices/system/cpu/

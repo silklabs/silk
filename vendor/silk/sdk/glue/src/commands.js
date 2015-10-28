@@ -11,6 +11,8 @@ import gulp from 'gulp';
 import source from 'vinyl-source-stream';
 import buffer from 'vinyl-buffer';
 import gutil from 'gulp-util';
+import gulpif from 'gulp-if';
+import uglify from 'gulp-uglify';
 import sourcemaps from 'gulp-sourcemaps';
 import cache from 'gulp-cache';
 import eslint from 'gulp-eslint';
@@ -136,6 +138,10 @@ export default function(baseDirectory = process.env.BASEDIR) {
     // these values...
     let babelrc = getBabelrc();
     let cacheProps = [pkgSource, babelrc]
+    let uglifyCfg = {
+      compress: {keep_fnames: true},
+      mangle: {keep_fnames: true}
+    };
 
     return browserifyStream.bundle()
       .on('error', (err) => {
@@ -150,7 +156,12 @@ export default function(baseDirectory = process.env.BASEDIR) {
       .pipe(source(pkg.main))
       .pipe(buffer())
       .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-      .pipe(sourcemaps.write('.')) // writes .map file
+      .pipe(gulpif(!(process.env.NO_UGLY === '1'), uglify(uglifyCfg)))
+      .on('error', err => {
+         gutil.log('(uglify)', gutil.colors.red('Uglify Error'));
+         gutil.log('(uglify)', err);
+      })
+      .pipe(sourcemaps.write('.', {includeContent: false})) // writes .map file
       .pipe(gulp.dest(baseDirectory));
   }
 

@@ -15,20 +15,24 @@ let singletonInstance = null;
 const SCHEMA = {
   id: Joi.object().keys({
     name: Joi.string().equal(`id`).required(),
-    manufacturer: Joi.string().min(1).required(),
-    model: Joi.string().min(1).required(),
-    version: Joi.string().min(1).required(),
-    image: Joi.array().min(1).optional(),
+    manufacturer: Joi.string().required(),
+    model: Joi.string().required(),
+    version: Joi.string().required(),
+    image: Joi.array().optional(),
+  }).required(),
+
+  registered: Joi.object().keys({
+    name: Joi.string().equal(`registered`).required(),
   }).required(),
 
   status: Joi.object().keys({
     name: Joi.string().equal(`status`).required(),
-    status: Joi.string().min(1).required(),
+    status: Joi.string().required(),
   }).required(),
 
   error: Joi.object().keys({
     name: Joi.string().equal(`error`).required(),
-    error: Joi.string().min(1).required(),
+    error: Joi.string().required(),
   }).required(),
 
   register: Joi.object().keys({
@@ -44,6 +48,15 @@ const SCHEMA = {
     name: Joi.string().equal(`secret`).required(),
     deviceId: Joi.string().lowercase().trim().length(66).hex().required(),
   }).required(),
+
+  restart: Joi.object().keys({
+    name: Joi.string().equal(`restart`).required(),
+    error: Joi.string().required(),
+  }).required(),
+
+  complete: Joi.object().keys({
+    name: Joi.string().equal(`complete`).required(),
+  }).required(),
 };
 
 export class DeviceSession extends EventEmitter {
@@ -52,7 +65,8 @@ export class DeviceSession extends EventEmitter {
   static STATE_REGISTER_REQUESTED = 2;
   static STATE_REGISTERING = 3;
   static STATE_REGISTERING_PROXIMITY = 4;
-  static STATE_REGISTERED = 5;
+  static STATE_REGISTERING_SENT_SECRET = 5;
+  static STATE_REGISTERED = 6;
 
   static STATE_ERROR = 10;
 
@@ -68,6 +82,7 @@ export class DeviceSession extends EventEmitter {
   _status = null;
 
   _connectEmitted = false;
+  _registeredEmitted = false;
   _secretEmitted = false;
 
   constructor(socket) {
@@ -128,6 +143,16 @@ export class DeviceSession extends EventEmitter {
     singletonInstance.emit(`connect`, this);
   }
 
+  _emitRegistered() {
+    log.debug(`DeviceSession._emitRegistered()`);
+
+    assert(this._state === DeviceSession.STATE_REGISTERED);
+    assert(!this._registeredEmitted);
+    this._registeredEmitted = true;
+
+    this.emit(`registered`);
+  }
+
   _maybeEmitSecret() {
     log.debug(`DeviceSession._maybeEmitSecret()`);
 
@@ -180,11 +205,19 @@ export class DeviceSession extends EventEmitter {
       this._state = DeviceSession.STATE_ID_RECEIVED;
       return;
 
+    case `registered`:
+      if (this._state !== DeviceSession.STATE_ID_RECEIVED) {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
+
+      this._state = DeviceSession.STATE_REGISTERED;
+      this._emitConnect();
+      this._emitRegistered();
+      return;
+
     case `status`:
-      if (this._state === DeviceSession.STATE_ID_RECEIVED) {
-        this._state = DeviceSession.STATE_REGISTERED;
-        this._emitConnect();
-      } else if (this._state !== DeviceSession.STATE_REGISTERED) {
+      if (this._state !== DeviceSession.STATE_REGISTERED) {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
@@ -197,10 +230,7 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `error`:
-      if (this._state === DeviceSession.STATE_ID_RECEIVED) {
-        this._state = DeviceSession.STATE_REGISTERED;
-        this._emitConnect();
-      } else if (this._state !== DeviceSession.STATE_REGISTERED) {
+      if (this._state !== DeviceSession.STATE_REGISTERED) {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
@@ -234,18 +264,38 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `secret`:
-    if (this._state !== DeviceSession.STATE_REGISTERING &&
-        this._state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
-      log.warn(`Received '${data.name}' while in state ${this._state}`);
-      break;
-    }
+      if (this._state !== DeviceSession.STATE_REGISTERING &&
+          this._state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
 
-    this._secret = {
-      deviceId: data.deviceId,
-    };
+      this._secret = {
+        deviceId: data.deviceId,
+      };
 
-    this._maybeEmitSecret();
-    return;
+      this._maybeEmitSecret();
+      return;
+
+    case `restart`:
+      if (this._state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
+
+      this._state = DeviceSession.STATE_REGISTER_REQUESTED;
+      this.emit(`restart`, data.error);
+      return;
+
+    case `complete`:
+      if (this._state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
+
+      this._state = DeviceSession.STATE_REGISTERED;
+      this._emitRegistered();
+      return;
 
     default:
       throw new Error(`Unhandled message: '${data.name}'`);
@@ -333,7 +383,7 @@ export class DeviceSession extends EventEmitter {
       ...config,
     });
 
-    this._state = DeviceSession.STATE_REGISTERED;
+    this._state = DeviceSession.STATE_REGISTERING_SENT_SECRET;
   }
 }
 

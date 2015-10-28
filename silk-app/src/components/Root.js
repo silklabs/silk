@@ -1,0 +1,157 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
+import React from 'react-native';
+let {
+  StyleSheet,
+  Text,
+  View,
+} = React;
+
+// Include our own browser shim goop but after react-native has loaded for the
+// first time and created it's own shims.
+import '../libraries/BrowserShims';
+import Config from '../libraries/Config';
+import { getRandomBytes } from '../libraries/Crypto';
+import loadUserState from '../libraries/UserState';
+
+import API from 'silk-api-react-native';
+
+import AsyncComponent from './AsyncComponent';
+import AsyncNavigator from './AsyncNavigator';
+import DeviceConfig from './setup/DeviceConfig';
+import DeviceTouch from './setup/DeviceTouch';
+import Main from './Main';
+import NotLoggedIn from './auth/NotLoggedIn';
+import ServerPicker from './auth/ServerPicker';
+import Settings from './Settings';
+
+const routeToComponentMap = {
+  NotLoggedIn,
+  ServerPicker,
+  Main,
+  Settings,
+  DeviceTouch,
+  DeviceConfig,
+};
+
+export default class extends AsyncComponent {
+
+  state = {
+    initialized: false,
+    serverUrl: null,
+    api: null,
+    userState: null,
+    accessToken: null,
+  };
+
+  componentDidMount() {
+    Config.init();
+    Config.on('change', this.onConfigChange);
+  }
+
+  onConfigChange = async (config) => {
+    let serverUrl = config.server.url;
+    if (serverUrl === null) {
+      serverUrl = Config.getDefault().server.url;
+    }
+
+    if (this.state.serverUrl !== serverUrl && this.state.userState !== null) {
+      let { userState } = this.state;
+      await userState.signOut();
+      userState.removeListener('authenticated', this.onAuthenticated);
+      userState.removeListener('unauthenticated', this.onUnauthenticated);
+    }
+
+    let api = API({                               // eslint-disable-line new-cap
+      getRandomBytes,
+      serverUrl,
+    });
+    let userState = await loadUserState(api);
+
+    userState.on('authenticated', this.onAuthenticated);
+    userState.on('unauthenticated', this.onUnauthenticated);
+    this.setStateAsync({
+      initialized: true,
+      serverUrl,
+      api,
+      userState,
+      accessToken: userState.accessToken,
+    });
+  };
+
+  onAuthenticated = (accessToken) => {
+    this.setState({accessToken});
+  };
+
+  onUnauthenticated = () => {
+    this.setState({accessToken: null});
+  };
+
+  render() {
+    // Do not create a navigator until we have loaded initial state from
+    // disk... That process is fast enough that we do not need to do do any
+    // loading/splash screen.
+    if (!this.state.initialized) {
+      return <View />;
+    }
+
+    let initialRoute = this.state.accessToken ? 'Main' : 'NotLoggedIn';
+    // By keying the navigator on the serverUrl and accessToken, a
+    // change in either (e.g. logging in or changing the server
+    // config) will trigger a complete re-render of the app.
+    let key = this.state.serverUrl + ':' + this.state.accessToken;
+    return (
+      <AsyncNavigator
+        key={key}
+        initialRoute={{name: initialRoute, index: 0}}
+        onForward={this.onForward}
+        configureScene={this.configureScene}
+        renderScene={this.renderScene}
+        style={styles.container}
+      />
+    );
+  }
+
+  renderScene = (route, navigator) => {
+    let Component = routeToComponentMap[route.name];
+    if (!Component) {
+      return (
+        <View style={{flex: 1, backgroundColor: 'red', paddingTop: 32}}>
+          <Text style={{color: 'yellow', fontSize: 30}}>
+            Unknown scene {route.name}
+          </Text>
+        </View>
+      );
+    }
+    let props = {
+      api: this.state.api,
+      userState: this.state.userState,
+      navigator,
+      route,
+    };
+    return <Component {...props} {...route.props} />;
+  };
+
+  onForward() {
+    // --> Settings
+  }
+
+  configureScene(route) {
+    switch (route.name) {
+    case 'Settings':
+    case 'ServerPicker':
+    case 'DeviceTouch':
+      return AsyncNavigator.SceneConfigs.FloatFromBottom;
+    default:
+      return AsyncNavigator.SceneConfigs.PushFromRight;
+    }
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+});

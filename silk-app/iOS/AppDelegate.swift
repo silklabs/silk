@@ -1,0 +1,98 @@
+import AVFoundation
+import CoreLocation
+import UIKit
+
+private let log = DebugLog.create("silk-app")
+
+@UIApplicationMain
+class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
+
+  var window: UIWindow?
+  var regionMonitor: RegionMonitor?
+  var homeBeacon: HomeBeacon?
+  var entered = false
+
+  // This is the unique UUID of silk-device
+  let homeRegionUuid = "e0f3a744-fb2f-46f1-b45a-f2b398f2a424"
+
+  func loadConfig() -> Config {
+    let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
+    if url == nil {
+      return Config()
+    }
+
+    // If your specify a url your responsible for validating its json
+    let data = NSData(contentsOfURL: url!)!
+    let (config, err) = LoadConfig.load(data)
+    if err != nil {
+      // This is on boot and should only be in the development path so raise...
+      NSException.raise("Exception", format:"Error: %@", arguments:getVaList([err!]))
+    }
+    return config!
+  }
+
+  func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+    let config = self.loadConfig()
+
+    // Configuring logging
+    DebugLog.enable(config.debug)
+    log.info("Logging level %@", config.debug)
+
+    var reactViewURL: NSURL
+    let reactNativeType = config.reactNative.type
+    let reactNativeUrl = config.reactNative.url!
+
+    if reactNativeType == "bundle" || reactNativeType == "local" {
+      reactViewURL = NSBundle.mainBundle().URLForResource(reactNativeUrl, withExtension: "")!
+      NSLog("Starting react-native with bundle: \(reactNativeUrl)")
+    } else {
+      reactViewURL = NSURL(string: reactNativeUrl)!
+      NSLog("Starting react-native with remote url: \(reactNativeUrl)")
+    }
+
+    let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", initialProperties: nil, launchOptions: launchOptions)
+
+    // At least for now we don't implement our own specific controller...
+    let rootViewController = ViewController()
+    rootViewController.view = rootView
+
+    self.window = UIWindow(frame: UIScreen.mainScreen().bounds)
+
+    self.window?.rootViewController = rootViewController
+    self.window?.makeKeyAndVisible()
+
+    // Start monitoring for home region
+    self.regionMonitor = RegionMonitor(uuid: homeRegionUuid)
+    self.regionMonitor!.delegate = self
+    self.homeBeacon = HomeBeacon()
+
+    // Allow audio playback even when user has enabled mute switch.
+    let _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
+
+    return true
+  }
+
+  // Display region enter/exit notifications to the user
+  func notifyUser(notificationText: String) {
+    // Ask user permission for user notifications
+    let registerUserNotificationSettings = UIApplication.instancesRespondToSelector("registerUserNotificationSettings:")
+    if registerUserNotificationSettings {
+      let types: UIUserNotificationType = [UIUserNotificationType.Alert, UIUserNotificationType.Sound, UIUserNotificationType.Badge]
+      UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(forTypes: types, categories: nil))
+    }
+
+    let notification = UILocalNotification()
+    notification.alertBody = notificationText
+    notification.fireDate = NSDate()
+    notification.soundName = UILocalNotificationDefaultSoundName
+    UIApplication.sharedApplication().scheduleLocalNotification(notification)
+  }
+
+  func regionStateChanged(entered: Bool) {
+    if self.entered != entered {
+      self.entered = entered
+      notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
+      self.homeBeacon!.setIsEnabled(entered)
+    }
+  }
+}

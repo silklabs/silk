@@ -1,0 +1,29 @@
+#!/bin/bash
+
+source .travis/determine_files_changed.sh
+
+if [ "$TEST_TYPE" = lint ]; then
+  if [[ -z "$JS_CHANGES" ]]; then
+    echo "No JS changes detected, aborting lint."
+    exit 0
+  fi
+  npm run-script lint
+
+elif [ "$TEST_TYPE" = objc-test ]; then
+  if [[ -z "$NON_JS_CHANGES" ]]; then
+    echo "Only JS changes detected, aborting Objective-C tests."
+    exit 0
+  fi
+  .travis/objc-test.sh
+
+elif [ "$TEST_TYPE" = build-dist ]; then
+  if [[ -z "$NON_JS_CHANGES" && "$TRAVIS_PULL_REQUEST" != "false"  ]]; then
+    echo "Pull Request with only JS changes detected, aborting build."
+    exit 0
+  fi
+  .travis/build-dist.sh
+
+else
+  echo "Unknown test type: $TEST_TYPE"
+  exit 1
+fi

@@ -1,0 +1,50 @@
+language: objective-c
+
+osx_image: xcode7
+
+before_install:
+  # Update brew twice because the first run can fail: https://github.com/Homebrew/homebrew/issues/42553
+  - brew update; brew update
+
+install:
+  - .travis/install
+
+env:
+  matrix:
+    - TEST_TYPE=lint
+    - TEST_TYPE=objc-test
+    - TEST_TYPE=build-dist
+  global:
+    - PROJECT=Silk
+    # Debug or Release
+    - CONFIGURATION=Debug
+    # Single quotes needed so that YAML doesn't escape the colon
+    - 'DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"'
+    # These values are all related and could even be extracted from the .mobileprovision file:
+    # http://stackoverflow.com/questions/21860632/archive-distribute-ios-app-to-app-store-via-command-line
+    - PROFILE_NAME="CI Build Profile"
+    - PROFILE_FILE_NAME="CI_Build_Profile.mobileprovision"
+    - PROFILE_UUID="d6f599df-2a83-40fa-89c3-fd40df2f3bc4"
+
+before_script:
+  - .travis/add-key.sh
+
+script:
+  - .travis/script
+
+after_script:
+  - .travis/remove-key.sh
+
+deploy:
+  provider: s3
+  access_key_id: "AKIAIASNJWAY2EBXDKRA"
+  secret_access_key: "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"
+  bucket: "silk-app"
+  region: us-west-2
+  skip_cleanup: true
+  acl: public_read
+  local-dir: dist/
+  upload-dir: $TRAVIS_BRANCH/latest
+  on:
+    all_branches: true
+    condition: $TEST_TYPE = build-dist

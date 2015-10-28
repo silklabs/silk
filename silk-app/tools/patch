@@ -1,0 +1,8 @@
+#! /bin/bash -e
+
+patches=( tools/patches/*.patch )
+for patch in ${patches[@]};
+do
+  echo $patch
+  patch -N -p0 -i $patch || echo
+done

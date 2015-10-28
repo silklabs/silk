@@ -1,0 +1,30 @@
+#!/bin/bash
+
+source $(dirname $0)/../.branch
+BRANCH_ARG=$1
+BRANCH_TO_DOWNLOAD=${BRANCH_ARG:-$BRANCH}
+
+if ! which wget > /dev/null; then
+  echo "Error: wget not found, try |brew install wget|"
+  exit 1
+fi
+
+if ! which ios-deploy > /dev/null; then
+  echo "Error: ios-deploy not found, try |npm install -g ios-deploy|"
+  exit 1
+fi
+
+# Ensure a device is connected before taking the time to download the app
+ios-deploy --detect --timeout 1
+EXIT_CODE=$?
+if [[ $EXIT_CODE != 0 ]]; then
+  echo "Timed out waiting for an iOS device. Please make sure that the device is connected."
+  exit $EXIT_CODE
+fi
+
+set -e
+
+DOWNLOAD_URL=https://s3-us-west-2.amazonaws.com/silk-app/$BRANCH_TO_DOWNLOAD/latest/Silk.ipa
+TEMP_DIR=`mktemp -d -t silk-app.XXX`
+wget -O $TEMP_DIR/Silk.ipa $DOWNLOAD_URL
+ios-deploy -b $TEMP_DIR/Silk.ipa --nostart

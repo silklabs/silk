@@ -1,0 +1,9 @@
+{
+  "breakConfig": true,
+  "stage": "1",
+  "optional": [
+    "asyncToGenerator",
+    "runtime",
+    "es7.classProperties"
+  ]
+}

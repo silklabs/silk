@@ -1,0 +1,4 @@
+--harmony
+--ui tdd
+--compilers js:babel/register
+test/setup.js

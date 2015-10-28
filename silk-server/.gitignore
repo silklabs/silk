@@ -1,0 +1,15 @@
+node_modules
+public/js/
+data/
+npm-debug.log
+app/platforms/
+fonts/
+dist/lib/
+dist/test/
+.DS_Store
+*~
+/config.local.js
+/config.local.json
+/Procfile
+/src/api/gen
+/src/server/emails

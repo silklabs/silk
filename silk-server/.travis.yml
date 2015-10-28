@@ -1,0 +1,15 @@
+language: node_js
+node_js: 0.12
+notifications:
+  email:
+    - engineering@silklabs.com
+
+before_script:
+  - git config --global user.email "james+bot@silklabs.com"
+  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
+  - echo "deb http://repo.mongodb.org/apt/ubuntu precise/mongodb-org/3.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.0.list
+  - sudo apt-get update
+  - sudo apt-get install -y mongodb-org=3.0.6 mongodb-org-server=3.0.6 mongodb-org-shell=3.0.6 mongodb-org-mongos=3.0.6 mongodb-org-tools=3.0.6
+  - mongo --version
+
+script: npm test && ./build/ci.sh

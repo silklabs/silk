@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Heroku needs help fetching private projects over SSH.  This is accomplished by
+# defining the HEROKU_PRIVATE_KEY environment variable in the Config Variables
+# section of the affected dynos, which is then set up by the script as the SSH
+# identity.
+#
+
+[[ -n $HEROKU_PRIVATE_KEY ]] || exit 0
+
+if [[ -d ~/.ssh ]]; then
+  echo Failsafe! ~/.ssh is not expected to exist in the Heroku environment
+  exit 1
+fi
+
+echo Using HEROKU_PRIVATE_KEY
+
+set -e
+mkdir -p ~/.ssh
+
+echo "$HEROKU_PRIVATE_KEY" > ~/.ssh/heroku_private_key
+
+cat >> ~/.ssh/config <<-EOF
+
+Host *
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/heroku_private_key
+EOF
+
+chmod 0700 ~/.ssh
+chmod 0600 ~/.ssh/*

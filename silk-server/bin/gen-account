@@ -1,0 +1,54 @@
+#! ./node_modules/.bin/babel-node --harmony
+/**
+ * This is a CLI helper for generating account details such as
+ * public/private key, email and password. This is intended to be used to create
+ * "global" accounts but _will not_ modify the database.
+ */
+
+import { ArgumentParser } from 'argparse';
+import loadConfig from '../src/server/config';
+
+import VIP from '../src/api/vip';
+import id from '../src/api/id';
+
+let parser = new ArgumentParser();
+
+parser.addArgument(['profile'], {
+  help: 'Configuration profile',
+  type: (value) => {
+    return loadConfig(value);
+  }
+});
+
+parser.addArgument(['email'], {
+  help: 'Email address for account'
+});
+
+parser.addArgument(['password'], {
+  help: 'Password for account'
+});
+
+
+async function main() {
+  let args = parser.parseArgs(process.argv.slice(2));
+  let vip = new VIP('http://example.com', /* baseUrl: not needed for this */);
+
+  let passwordHash = vip.hashPassword(args.email, args.password);
+  let keys = id.create();
+
+  let out = {
+    email: args.email,
+    password: args.password,
+    passwordHash: passwordHash,
+    publicKey: keys.pub,
+    privateKey: keys.priv
+  };
+  console.log(JSON.stringify(out, null, 4));
+}
+
+main().catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});
+

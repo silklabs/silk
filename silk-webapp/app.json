@@ -1,0 +1,13 @@
+{
+  "name":"silk-webapp",
+  "scripts":{},
+  "env":{
+    "DEBUG":{
+      "required":true
+    },
+    "HEROKU_PRIVATE_KEY":{
+      "required":true
+    }
+  },
+  "addons":[]
+}

@@ -1,0 +1,21 @@
+language: node_js
+node_js: 4.1
+notifications:
+  email:
+    - engineering@silklabs.com
+
+script: npm test
+
+deploy:
+  provider: s3
+  access_key_id: "AKIAIASNJWAY2EBXDKRA"
+  secret_access_key: "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"
+  bucket: "silk-webapp"
+  region: us-east-1
+  skip_cleanup: true
+  acl: public_read
+  local-dir: public/
+  upload-dir: $TRAVIS_BRANCH/latest
+  on:
+    all_branches: true
+

@@ -1,0 +1,8 @@
+*.sw?
+*~
+.DS_Store
+/config.local.json
+/node_modules/
+/npm-debug.log
+/public/js/bundle.js
+/public/js/bundle.js.map

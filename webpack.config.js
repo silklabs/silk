@@ -34,6 +34,7 @@ var config = {
           path.resolve(__dirname, 'node_modules/react-timer-mixin'),
           path.resolve(__dirname, 'node_modules/react-native-button'),
           path.resolve(__dirname, 'node_modules/react-native/Libraries/ART'),
+          path.resolve(__dirname, 'node_modules/silk-api'),
         ],
         loaders: [
           'babel-loader?stage=0&blacklist=validation.react&optional=runtime'

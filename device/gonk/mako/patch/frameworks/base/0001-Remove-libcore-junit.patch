@@ -1,0 +1,29 @@
+From 371fe25fd25a0a583267ef51df460bf06a0239e6 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 28 Jun 2015 02:17:10 -0700
+Subject: [PATCH] Remove libcore/junit
+
+---
+ Android.mk | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 0ba92cf..85f77d1 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -612,12 +612,6 @@ fwbase_dirs_to_document := \
+ 	   ) \
+ 	 )
+ 
+-# include definition of libcore_to_document
+-include libcore/Docs.mk
+-
+-# include definition of junit_to_document
+-include external/junit/Common.mk
+-
+ non_base_dirs := \
+ 	../../external/apache-http/src/org/apache/http \
+ 	../opt/telephony/src/java/android/provider \
+-- 
+1.9.1
+

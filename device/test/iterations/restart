@@ -1,0 +1,54 @@
+#!/bin/bash -e
+#
+# Restarts the framework N times looking for tombstones
+#
+
+N=500
+
+# Set to true to ensure no tombstones are generated during the iterations
+# (ie, mediaserver like the crash in the background sometimes)
+BAN_TOMBSTONES=false
+#BAN_TOMBSTONES=true
+
+LOCAL_PATH=$(dirname $0)
+
+adb="timeout -s KILL 10s adb"
+
+$adb shell setprop persist.silk.quiet true # <-- the vibrations do get annoying
+$adb shell rm -rf /data/tombstones
+$adb shell mkdir /data/tombstones
+
+$adb shell setprop persist.silk.coredump 1
+$adb shell rm -rf /data/core
+
+pulltombstones() {
+  local count=$($adb shell ls /data/tombstones | wc -l)
+  if [[ $count -gt 0 ]]; then
+    echo "****************** TOMBSTONES ******************"
+    $adb pull /data/tombstones/
+    echo "****************** CORES ******************"
+    $adb pull /data/core
+    exit 1
+  fi
+  echo No tombstones observed after $i iterations
+}
+trap pulltombstones EXIT
+
+i=1
+while [[ $i -le $N ]]; do
+  echo "****************** ITERATION $i ******************"
+  $adb shell ls -l /data/tombstones
+
+  if $BAN_TOMBSTONES; then
+    count=$($adb shell ls /data/tombstones | wc -l)
+    test $count -eq 0
+  fi
+
+  $adb shell stop
+  $adb shell start
+
+  $LOCAL_PATH/../devicecheck
+  i=$(($i + 1))
+done
+
+exit 0

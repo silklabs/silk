@@ -1,0 +1,217 @@
+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ */
+
+import cv from 'opencv';
+import fs from 'mz/fs';
+import Trainer from './trainer';
+
+/* Face recognition parameters */
+const RADIUS = 1;
+
+// Higher the value, more time it takes to train the recognizer. With value higher
+// values 8 model is not recognizing faces at all. With values lower than 4 model
+// is returning lot of false positives
+const NEIGHBORS = 4;
+
+const GRID_X = 8;
+const GRID_Y = 8;
+
+// Represents the threshold for the confidence value returned by the model. If
+// the confidence is more than the threshold, model returns an unknown person.
+// Higher the threshold more false postives the model returns. Lower the threshold
+// bigger the face rectangle required for succesful recognition. So faces that
+// are far in the view are not recognized.
+const THRESHOLD = 60;
+
+const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
+const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
+const ADD_COMMAND_PROP = 'silk.addperson';
+
+let log;
+
+/**
+ * Listen for all detected faces and try to match them up with the existing
+ * face database
+ */
+class FindFace {
+  constructor(env) {
+    log = env.log;
+    this._env = env;
+    this._model = cv.FaceRecognizer.createLBPHFaceRecognizer(RADIUS,
+      NEIGHBORS, GRID_X, GRID_Y, THRESHOLD);
+
+    this._trainingInProgress = false;
+    this._working = false;
+    this._trainer = new Trainer(env);
+
+    // Not calling await on purpose so as not to block the constructor
+    this._init();
+  }
+
+  /**
+   * Called when a command directed for this extension is recieved by the device
+   *
+   * @cmd Command data
+   */
+  async onCommand(cmd) {
+    switch (cmd.msg) {
+    case 'addPerson':
+      log.info(`addPerson command: ${JSON.stringify(cmd)}`);
+      await this._trainer.addPerson(cmd.person);
+
+      // Finished adding the person; re-train face model
+      log.info(`Finished adding person ${cmd.person}`);
+      this._trainModel();
+      break;
+    default:
+      break;
+    }
+  }
+
+  /**
+   *
+   */
+  willUnload() {
+    if (this._onFace) {
+      this._env.timeline.removeListener('face', this._onFace);
+    }
+    if (this._watchprop) {
+      this._watchprop.kill();
+    }
+  }
+
+  /**
+   * Load training data from a configuration file if available
+   */
+  _loadTrainingData() {
+    log.info(`Loading training data`);
+    try {
+      this._model.loadSync(TRAIN_FACES_YML);
+      this._faceMap = require(TRAIN_FACES_MAP);
+      this._start();
+    } catch (e) {
+      log.error(`Error loading face training data: ${e}`);
+    }
+  }
+
+  /**
+   * Match an id returned by opencv with the names database available at
+   * {@code TRAIN_FACES_MAP}
+   */
+  _matchIdWithName(id) {
+    return this._faceMap[id];
+  }
+
+  /**
+   * Train face recognition model
+   */
+  async _trainModel() {
+    this._trainingInProgress = true;
+    await this._trainer.start(this._model);
+    this._trainingInProgress = false;
+  }
+
+  /**
+   * Add a person if {@code ADD_COMMAND_PROP} is set
+   */
+  _addCommandProp() {
+    let person = this._env.util.getprop(ADD_COMMAND_PROP);
+    log.info(`Property ${ADD_COMMAND_PROP} changed to ${person}`);
+    setTimeout(() => this.onCommand({msg: 'addPerson', person: person}));
+  }
+
+  /**
+   * Check if training data and face map is available
+   * If not train for available faces
+   */
+  async _init() {
+    this._watchprop = this._env.util.watchprop(ADD_COMMAND_PROP,
+      () => this._addCommandProp());
+
+    let existsYml = await fs.exists(TRAIN_FACES_YML);
+    let existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
+    if (existsYml && existsFaceMap) {
+      this._loadTrainingData();
+    } else {
+      try {
+        await this._trainModel();
+        this._loadTrainingData();
+      } catch (e) {
+        log.error(`Error training for faces: ${e}`);
+      }
+    }
+  }
+
+  /**
+   * Gets a prediction from FaceRecognizer
+   */
+  _predict(faceim) {
+    return new Promise(resolve => {
+      this._model.predict(faceim, (result) => {
+        resolve(result);
+      });
+    });
+  }
+
+  /**
+   * Start running facial recognition on detected faces
+   */
+  _start() {
+    log.info(`Starting face recognition`);
+    this._onFace = (when, faces, source) => {
+      if ((faces.length <= 0) || (source === 'hal')) {
+        return;
+      }
+
+      if (this._trainingInProgress) {
+        log.info(`Face training in progress; ignoring`);
+        return;
+      }
+
+      if (this._working) {
+        log.debug(`Still busy, unable to process next preview image`);
+        return;
+      }
+
+      this._working = true;
+      this._env.camera.getPreviewFrame((err, image) => {
+        if (err) {
+          log.warn(`Unable to fetch frame: ${err}`);
+          this._working = false;
+          return;
+        }
+
+        // Run facial recognition on each of the detected faces
+        let start = Date.now();
+        faces.forEach(async (face) => {
+          let faceim = image.roi(face.x, face.y, face.width, face.height);
+          let result = await this._predict(faceim);
+          if (result.id !== -1) {
+            log.info(`face detected id:${result.id} ` +
+                `${this._matchIdWithName(result.id)} ` +
+                `confidence: ${result.confidence}`);
+
+            // Add the person to timeline
+            this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);
+          } else {
+            // Unknown face
+            log.debug(`Unknown face detected`);
+            this._env.timeline.addObject('elvis', when, face);
+          }
+        });
+        let diff = Date.now() - start;
+        log.verbose(`Face recognition finished in ${diff}ms`);
+        this._working = false;
+      }, when, 1 /* == 1 channel image (RGB not required) */);
+    };
+
+    this._env.timeline.on('face', this._onFace);
+  }
+}
+
+module.exports = (env) => new FindFace(env);

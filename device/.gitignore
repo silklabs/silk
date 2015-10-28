@@ -1,0 +1,66 @@
+/.repo/
+
+# repo projects from base gonk
+/Makefile
+/abi/
+/bionic/
+/bootable/
+/build/
+/device/
+/development/scripts/*.pyc
+/external/
+/frameworks/
+/frameworks/av/
+/frameworks/base/
+/frameworks/native/
+/hardware/
+/libnativehelper/
+/ndk
+/out/
+/prebuilts/android-emulator/
+/prebuilts/clang/
+/prebuilts/gcc/
+/prebuilts/libs/
+/prebuilts/misc/
+/prebuilts/ndk/
+/prebuilts/python/
+/prebuilts/qemu-kernel/
+/sdk/
+/system/
+/vendor/broadcom/
+/vendor/lge/
+/vendor/moto/
+/vendor/qcom/
+/vendor/silk/core/core.js
+/vendor/silk/core/local_node_modules/ntp-client/
+/vendor/silk/core/local_node_modules/silk-api/
+/vendor/silk/core/npm-debug.log
+/vendor/silk/**/node_modules/
+/vendor/silk/trainingset/
+/vendor/silk/**/*.js.map
+.gulpcache
+/vendor/silk/ext/**/npm-debug.log
+vendor/silk/ext/clapper/clapper.js
+vendor/silk/ext/detectface/detectface.js
+vendor/silk/ext/detectobject/detectobject.js
+vendor/silk/ext/knockknock/knockknock.js
+vendor/silk/ext/nightlight/nightlight.js
+vendor/silk/ext/trackobject/trackobject.js
+
+# repo projects from msm8916 gonk
+/build.sh
+/kernel/
+
+# |adb sync| generates this
+/filelist
+
+# vim droppings
+*.swp
+
+# eclipse droppings
+.cproject
+.project
+/.settings/
+
+# Mac OSX droppings
+.DS_Store

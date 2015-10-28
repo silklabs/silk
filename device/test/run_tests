@@ -1,0 +1,27 @@
+#!/bin/bash -e
+#
+# Quick test suite run as a part of CI
+#
+# Copyright (c) 2015 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+
+LOCAL_PATH=$(dirname $0)
+SILKTEST=$LOCAL_PATH/../vendor/silk/test/run
+
+echo "Running silk tests"
+$SILKTEST
+
+# Disabled, as it does not yet run reliably on qemu
+#echo "Running restart test"
+#$LOCAL_PATH/restart_test
+
+# Look for tombstones and save them in .artifacts/ for post-CI viewing
+adb="timeout -s KILL 10s adb"
+$adb shell mkdir -p /data/tombstones/
+$adb shell ls -l /data/tombstones/
+if [[ -d .artifacts ]]; then
+  $adb pull /data/tombstones/ .artifacts/
+fi
+
+exit 0

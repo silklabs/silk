@@ -1,0 +1,99 @@
+#!/system/bin/sh
+#
+# Brief system state dashboard.
+#
+
+uptime
+echo -n "Date: "; date
+echo -n "Gonk: "; getprop ro.build.fingerprint
+node -e "\
+  console.log('Silk:', require('/system/silk/node_modules/core_version')); \
+"
+echo
+
+if [ -d /data/tombstones ]; then
+  tombstones=$(ls /data/tombstones)
+  if [ "$tombstones" != "" ]; then
+    echo "TOMBSTONES (/data/tombstones):"
+    ls -l /data/tombstones
+    echo
+  fi
+fi
+
+echo Battery:
+echo "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%"
+echo "  Status: $(cat /sys/class/power_supply/battery/status), $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null), $(cat /sys/class/power_supply/battery/health 2> /dev/null)"
+if [ -f /sys/class/power_supply/battery/current_now ]; then
+  echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
+fi
+if [ -f /sys/class/power_supply/usb/current_max ]; then
+  echo "  USB Max Current: $(cat /sys/class/power_supply/usb/current_max)mA"
+fi
+echo
+
+if [ -f /sys/devices/system/cpu/cpu0/online ]; then
+  echo CPU Info:
+  cd /sys/devices/system/cpu/
+  for cpu in cpu[0-8]; do
+    online=$(cat $cpu/online 2> /dev/null || echo 1)
+    if [ $online == 1 ]; then
+      currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
+      maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
+      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
+    else
+      echo "  $cpu: offline"
+    fi
+  done
+  echo
+fi
+
+if [ -d /sys/class/thermal ]; then
+  echo Thermal Info:
+  cd /sys/class/thermal/
+  for zone in thermal_zone*; do
+    type=$(cat $zone/type)
+    temp=$(cat $zone/temp)
+    mode=$(cat $zone/mode 2> /dev/null || echo enabled)
+    if [ $mode == enabled ]; then
+      if [ $temp -gt 200 ]; then
+        echo "  $type: $temp m°C"
+      else
+        echo "  $type: $temp °C"
+      fi
+    fi
+  done
+  echo
+fi
+
+echo "Open File Descriptors:"
+nodepid=$(ps node | busybox tail -n1 | busybox cut -c11-15)
+if [ $nodepid -gt 1 ]; then
+  echo -n "  node: "; lsof $nodepid | busybox wc -l
+fi
+echo -n "     *: "; lsof | busybox wc -l
+echo
+
+echo "Procrank (top 5 Pss)":
+procrank 2> /dev/null | (
+  i=0
+  lastLine=
+  while read; do
+    lastLine="$REPLY"
+    i=$(($i + 1))
+    test $i -le 7 && echo "  $REPLY"
+  done
+  echo "  ..."
+  echo "  $lastLine"
+  echo
+)
+
+echo Silk System Properties:
+( getprop | grep silk | grep -v '^\[init' ) | (
+  while read; do
+    echo "  $REPLY"
+  done
+)
+echo
+
+df
+echo

@@ -1,0 +1,25 @@
+From 7377d5ac49f56c27dbcd146763653e7a9fcf2652 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 1 Jul 2015 16:28:24 -0700
+Subject: [PATCH] sdcard: remove derived permissions
+
+---
+ init.mako.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init.mako.rc b/init.mako.rc
+index 73edc13..8e5fb14 100644
+--- a/init.mako.rc
++++ b/init.mako.rc
+@@ -377,7 +377,7 @@ service charger /sbin/healthd -c
+     seclabel u:r:healthd:s0
+ 
+ # virtual sdcard daemon running as media_rw (1023)
+-service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
++service sdcard /system/bin/sdcard -u 1023 -g 1023 /data/media /mnt/shell/emulated
+     class late_start
+ 
+ service thermald /system/bin/thermald
+-- 
+1.9.1
+

@@ -1,0 +1,110 @@
+#!/system/bin/sh
+#
+# Copyright (c) 2015 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+
+usage()
+{
+  echo "Usage: $0 (-h|-f|-o|-n)"
+  echo
+  echo "Train cascade for the specified object. This may take quite a bit of "
+  echo "time depending on the feature type and number of images."
+  echo
+  echo " -f  Feature type, HAAR, HOG, LBP (optional, default: HOG)"
+  echo " -o  Object to train for, example car, face (mandatory)"
+  echo " -n  number of images in the vector file of positive images (mandatory)"
+  echo " -h  Display this message"
+  exit 1
+}
+
+# Command line arguments
+FEATURE_TYPE=HOG
+
+while getopts "hc:f:o:n:" opt; do
+  case $opt in
+    h) usage
+       ;;
+    f) FEATURE_TYPE=$OPTARG
+       ;;
+    n) NUM_POS=$OPTARG
+       ;;
+    o) OBJECT_TYPE=$OPTARG
+       ;;
+   \?) echo "Error: Invalid option -$OPTARG"; exit 1;;
+  esac
+done
+
+if [ -z $OBJECT_TYPE ]; then
+  usage
+fi 
+
+# File paths
+NEGATIVE_IMG_PATH=no-${OBJECT_TYPE}
+POSITIVE_IMG_PATH=${OBJECT_TYPE}
+CLASSIFIER_PATH=classifier/${OBJECT_TYPE}
+
+POSITIVES_FILE=${OBJECT_TYPE}_positives.txt
+NEGATIVES_FILE=${OBJECT_TYPE}_negatives.txt
+DESCRIPTION_FILE=${OBJECT_TYPE}_info.dat
+VECTOR_FILE=${OBJECT_TYPE}_info.vec
+
+# This script expects the images in the data set to be of the following size
+# and in PGM format
+IMG_WIDTH=100
+IMG_HEIGHT=40
+
+# Training parameters
+WIDTH=50
+HEIGHT=20
+STAGES=10
+MIN_HIT_RATE=0.999
+MAX_FALSE_ALARM=0.3
+
+set -e
+
+# Create list of negative images
+echo creating list of negative images
+busybox find $NEGATIVE_IMG_PATH -name "*.pgm" > $NEGATIVES_FILE
+
+# Check if we need to create a vector file
+if [ ! -e $VECTOR_FILE ]; then
+  busybox find $POSITIVE_IMG_PATH -name *.pgm -exec echo \{\} 1 0 0 $IMG_WIDTH $IMG_HEIGHT \; > $DESCRIPTION_FILE
+
+  # Get number of positive images in the description file
+  NUM_POS=$(busybox wc -l < $DESCRIPTION_FILE)
+
+  # Create vector file from the description file
+  echo creating vector file
+  opencv_createsamples -vec $VECTOR_FILE -num $NUM_POS -info $DESCRIPTION_FILE -w $WIDTH -h $HEIGHT
+else
+  if [ -z $NUM_POS ]; then
+    usage
+  fi
+fi
+
+# Get number of negative images
+NUM_NEG=$(busybox wc -l < $NEGATIVES_FILE)
+
+echo NUM_POS=$NUM_POS
+echo NUM_NEG=$NUM_NEG
+
+# Train cascade for opencv object detection
+echo starting opencv training
+mkdir -p $CLASSIFIER_PATH
+NUM_POS=$(($NUM_POS*90/100)) # Ref: http://answers.opencv.org/question/776/error-in-parameter-of-traincascade/
+exec opencv_traincascade \
+  -data $CLASSIFIER_PATH \
+  -vec $VECTOR_FILE \
+  -bg $NEGATIVES_FILE \
+  -numStages $STAGES \
+  -minHitRate $MIN_HIT_RATE \
+  -maxFalseAlarmRate $MAX_FALSE_ALARM \
+  -numPos $NUM_POS \
+  -numNeg $NUM_NEG \
+  -w $WIDTH \
+  -h $HEIGHT \
+  -mode ALL \
+  -featureType $FEATURE_TYPE \
+  -precalcValBufSize 10240 \
+  -precalcIdxBufSize 10240 \

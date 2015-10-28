@@ -1,0 +1,19 @@
+{
+  "name": "silk-alog",
+  "version": "0.0.1",
+  "description": "wrapper for android log",
+  "main": "build/Release/silk-alog.node",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "author": {
+    "name": "Ben Turner",
+    "email": "bent@silklabs.com"
+  },
+  "license": "Proprietary",
+  "dependencies": {
+    "nan": "^2.0.9"
+  },
+  "gypfile": true,
+  "private": true
+}

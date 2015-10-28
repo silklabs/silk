@@ -1,0 +1,188 @@
+From d72bfb83df9aa3629548d4a6c813f82c3f27705e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 3 Jul 2015 21:19:14 -0700
+Subject: [PATCH] Hide build echo commands when running in CI to avoid log file
+ to long errors
+
+---
+ core/binary.mk         |  4 ++--
+ core/definitions.mk    | 30 +++++++++++++++++++-----------
+ core/dynamic_binary.mk |  6 +++---
+ core/notice_files.mk   |  2 +-
+ 4 files changed, 25 insertions(+), 17 deletions(-)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 1e313ff..ada4581 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -787,7 +787,7 @@ import_includes_deps := $(strip \
+     $(foreach l, $(my_static_libraries) $(my_whole_static_libraries), \
+       $(call intermediates-dir-for,STATIC_LIBRARIES,$(l),$(LOCAL_IS_HOST_MODULE),,$(LOCAL_2ND_ARCH_VAR_PREFIX))/export_includes))
+ $(import_includes) : $(import_includes_deps)
+-	@echo Import includes file: $@
++	$(hideecho) Import includes file: $@
+ 	$(hide) mkdir -p $(dir $@) && rm -f $@
+ ifdef import_includes_deps
+ 	$(hide) for f in $^; do \
+@@ -982,7 +982,7 @@ export_includes := $(intermediates)/export_includes
+ $(export_includes): PRIVATE_EXPORT_C_INCLUDE_DIRS := $(LOCAL_EXPORT_C_INCLUDE_DIRS)
+ # Make sure .pb.h are already generated before any dependent source files get compiled.
+ $(export_includes) : $(LOCAL_MODULE_MAKEFILE) $(proto_generated_headers)
+-	@echo Export includes file: $< -- $@
++	$(hideecho) Export includes file: $< -- $@
+ 	$(hide) mkdir -p $(dir $@) && rm -f $@
+ ifdef LOCAL_EXPORT_C_INCLUDE_DIRS
+ 	$(hide) for d in $(PRIVATE_EXPORT_C_INCLUDE_DIRS); do \
+diff --git a/core/definitions.mk b/core/definitions.mk
+index 38aa720..f32cf0e 100644
+--- a/core/definitions.mk
++++ b/core/definitions.mk
+@@ -771,6 +771,14 @@ endef
+ hide :=
+ endif
+ 
++ifeq ($(strip $(CI)),)
++hideecho := @echo
++else
++# Hide build echo commands when running in CI to avoid log file to long errors
++hideecho := @true
++endif
++
++
+ ###########################################################
+ ## Dump the variables that are associated with targets
+ ###########################################################
+@@ -971,7 +979,7 @@ endef
+ 
+ define transform-cpp-to-o
+ @mkdir -p $(dir $@)
+-@echo "target $(PRIVATE_ARM_MODE) C++: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "target $(PRIVATE_ARM_MODE) C++: $(PRIVATE_MODULE) <= $<"
+ $(hide) $(PRIVATE_CXX) \
+ 	$(addprefix -I , $(PRIVATE_C_INCLUDES)) \
+ 	$(shell cat $(PRIVATE_IMPORT_INCLUDES)) \
+@@ -1020,12 +1028,12 @@ $(hide) $(PRIVATE_CC) \
+ endef
+ 
+ define transform-c-to-o-no-deps
+-@echo "target $(PRIVATE_ARM_MODE) C: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "target $(PRIVATE_ARM_MODE) C: $(PRIVATE_MODULE) <= $<"
+ $(call transform-c-or-s-to-o-no-deps, $(PRIVATE_CFLAGS) $(PRIVATE_CONLYFLAGS) $(PRIVATE_DEBUG_CFLAGS))
+ endef
+ 
+ define transform-s-to-o-no-deps
+-@echo "target asm: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "target asm: $(PRIVATE_MODULE) <= $<"
+ $(call transform-c-or-s-to-o-no-deps, $(PRIVATE_ASFLAGS))
+ endef
+ 
+@@ -1071,7 +1079,7 @@ endef
+ 
+ define transform-host-cpp-to-o
+ @mkdir -p $(dir $@)
+-@echo "host C++: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "host C++: $(PRIVATE_MODULE) <= $<"
+ $(hide) $(PRIVATE_CXX) \
+ 	$(addprefix -I , $(PRIVATE_C_INCLUDES)) \
+ 	$(shell cat $(PRIVATE_IMPORT_INCLUDES)) \
+@@ -1117,12 +1125,12 @@ $(hide) $(PRIVATE_CC) \
+ endef
+ 
+ define transform-host-c-to-o-no-deps
+-@echo "host C: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "host C: $(PRIVATE_MODULE) <= $<"
+ $(call transform-host-c-or-s-to-o-no-deps, $(PRIVATE_CFLAGS) $(PRIVATE_CONLYFLAGS) $(PRIVATE_DEBUG_CFLAGS))
+ endef
+ 
+ define transform-host-s-to-o-no-deps
+-@echo "host asm: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "host asm: $(PRIVATE_MODULE) <= $<"
+ $(call transform-host-c-or-s-to-o-no-deps, $(PRIVATE_ASFLAGS))
+ endef
+ 
+@@ -1343,13 +1351,13 @@ endif
+ 
+ define transform-to-stripped
+ @mkdir -p $(dir $@)
+-@echo "target Strip: $(PRIVATE_MODULE) ($@)"
++$(hideecho) "target Strip: $(PRIVATE_MODULE) ($@)"
+ $(hide) $(PRIVATE_STRIP) --strip-all $< -o $@ $(TARGET_STRIP_EXTRA)
+ endef
+ 
+ define transform-to-stripped-keep-symbols
+ @mkdir -p $(dir $@)
+-@echo "target Strip (keep symbols): $(PRIVATE_MODULE) ($@)"
++$(hideecho) "target Strip (keep symbols): $(PRIVATE_MODULE) ($@)"
+ $(hide) $(PRIVATE_OBJCOPY) \
+     `$(PRIVATE_READELF) -S $< | awk '/.debug_/ {print "-R " $$2}' | xargs` \
+     $(TARGET_STRIP_KEEP_SYMBOLS_EXTRA) $< $@
+@@ -1843,7 +1851,7 @@ endef
+ # $(2): destination header
+ define copy-one-header
+ $(2): $(1)
+-	@echo "Header: $$@"
++	$(hideecho) "Header: $$@"
+ 	$$(copy-file-to-new-target-with-cp)
+ endef
+ 
+@@ -1852,7 +1860,7 @@ endef
+ # $(2): destination file
+ define copy-one-file
+ $(2): $(1) | $(ACP)
+-	@echo "Copy: $$@"
++	$(hideecho) "Copy: $$@"
+ 	$$(copy-file-to-target)
+ endef
+ 
+@@ -1988,7 +1996,7 @@ endef
+ ###########################################################
+ 
+ define transform-generated-source
+-@echo "target Generated: $(PRIVATE_MODULE) <= $<"
++$(hideecho) "target Generated: $(PRIVATE_MODULE) <= $<"
+ @mkdir -p $(dir $@)
+ $(hide) $(PRIVATE_CUSTOM_TOOL)
+ endef
+diff --git a/core/dynamic_binary.mk b/core/dynamic_binary.mk
+index 08fb176..d798efe 100644
+--- a/core/dynamic_binary.mk
++++ b/core/dynamic_binary.mk
+@@ -73,7 +73,7 @@ endif
+ symbolic_input := $(compress_output)
+ symbolic_output := $(my_unstripped_path)/$(my_installed_module_stem)
+ $(symbolic_output) : $(symbolic_input) | $(ACP)
+-	@echo "target Symbolic: $(PRIVATE_MODULE) ($@)"
++	$(hideecho) "target Symbolic: $(PRIVATE_MODULE) ($@)"
+ 	$(copy-file-to-target)
+ 
+ 
+@@ -119,11 +119,11 @@ else
+ # use cp(1) instead.
+ ifneq ($(LOCAL_ACP_UNAVAILABLE),true)
+ $(strip_output): $(strip_input) | $(ACP)
+-	@echo "target Unstripped: $(PRIVATE_MODULE) ($@)"
++	$(hideecho) "target Unstripped: $(PRIVATE_MODULE) ($@)"
+ 	$(copy-file-to-target)
+ else
+ $(strip_output): $(strip_input)
+-	@echo "target Unstripped: $(PRIVATE_MODULE) ($@)"
++	$(hideecho) "target Unstripped: $(PRIVATE_MODULE) ($@)"
+ 	$(copy-file-to-target-with-cp)
+ endif
+ endif
+diff --git a/core/notice_files.mk b/core/notice_files.mk
+index e63cd84..c7c6a88 100644
+--- a/core/notice_files.mk
++++ b/core/notice_files.mk
+@@ -62,7 +62,7 @@ installed_notice_file := $($(my_prefix)OUT_NOTICE_FILES)/src/$(module_installed_
+ $(installed_notice_file): PRIVATE_INSTALLED_MODULE := $(module_installed_filename)
+ 
+ $(installed_notice_file): $(notice_file)
+-	@echo Notice file: $< -- $@
++	$(hideecho) Notice file: $< -- $@
+ 	$(hide) mkdir -p $(dir $@)
+ 	$(hide) cat $< > $@
+ 
+-- 
+1.9.1
+

@@ -1,0 +1,16 @@
+{
+  "name": "clapper",
+  "version": "0.0.1",
+  "description": "Clap sample extension",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
+    "install": "./build"
+  },
+  "dependencies": {
+    "babel-runtime": "^5.8.20",
+    "silk-sdk-glue": "0.0.1",
+    "socket.io-client": "^1.3.5"
+  },
+  "private": true
+}

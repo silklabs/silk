@@ -1,0 +1,26 @@
+From 573722f6180fbec5fcb1ddd8e6b850778d6e85f5 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Mon, 17 Aug 2015 09:52:17 -0700
+Subject: [PATCH] sdcard: remove derived permissions
+
+Change-Id: I62c58252dbb541c735900fb092f633dfab963800
+---
+ rootdir/etc/init.qcom.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/etc/init.qcom.rc b/rootdir/etc/init.qcom.rc
+index 1bcbfaa..bca0d79 100644
+--- a/rootdir/etc/init.qcom.rc
++++ b/rootdir/etc/init.qcom.rc
+@@ -803,7 +803,7 @@ service profiler_daemon /system/bin/profiler_daemon
+     disabled
+ 
+ # virtual sdcard daemon running as media_rw (1023)
+-service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
++service sdcard /system/bin/sdcard -u 1023 -g 1023 /data/media /mnt/shell/emulated
+     class late_start
+ 
+ service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/sdcard1 /storage/sdcard1
+-- 
+2.5.0
+

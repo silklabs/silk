@@ -1,0 +1,77 @@
+From 804e8404300c05a5ed6b2086d6192800443477e3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 3 Aug 2015 18:40:58 -0700
+Subject: [PATCH] Androidify
+
+---
+ Android.mk   |  9 +++++++++
+ binding.gyp  | 10 +++++++++-
+ package.json |  3 ---
+ 3 files changed, 18 insertions(+), 4 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..76bba3a
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,9 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS  := optional debug eng
++LOCAL_SHARED_LIBRARIES := libusb1.0
++LOCAL_SDK_VERSION := 19
++LOCAL_NDK_STL_VARIANT := gnustl_static
++LOCAL_CPPFLAGS += -fexceptions -Wno-sign-promo
++include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+index 7bfcbdd..543f77a 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -13,6 +13,9 @@
+             '/usr/include/libusb-1.0/'
+           ]
+         }],
++        [ 'OS=="android"', {
++            'sources': [ 'hidapi/libusb/hid.c' ]
++        }],
+         [ 'OS=="linux"', {
+           'conditions': [
+             [ 'driver=="libusb"', {
+@@ -64,6 +67,11 @@
+         '_FILE_OFFSET_BITS=64',
+       ],
+       'conditions': [
++        [ 'OS=="android"', {
++          'libraries': [
++            '<!(echo $Android_mk__LIBRARIES)'
++          ],
++        }],
+         [ 'OS=="mac"', {
+               'LDFLAGS': [
+             '-framework IOKit',
+@@ -108,4 +116,4 @@
+       'cflags_cc': ['-g', '-exceptions']
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/package.json b/package.json
+index 3a9eec5..43fe7b1 100644
+--- a/package.json
++++ b/package.json
+@@ -14,9 +14,6 @@
+     "type": "git",
+     "url": "git://github.com/hanshuebner/node-hid.git"
+   },
+-  "scripts": {
+-    "prepublish": "git submodule update --init"
+-  },
+   "main": "./index.js",
+   "engines": {
+     "node": ">=0.8.0"
+-- 
+1.9.1
+

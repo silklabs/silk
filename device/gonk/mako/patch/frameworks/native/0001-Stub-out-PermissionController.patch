@@ -1,0 +1,31 @@
+From 0ad6acc8322ff78f075ba1a20ee506dd7efabd6d Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 28 Jun 2015 16:58:58 -0700
+Subject: [PATCH] Stub out PermissionController
+
+---
+ libs/binder/IServiceManager.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libs/binder/IServiceManager.cpp b/libs/binder/IServiceManager.cpp
+index 7b1b0e7..cff48d8 100644
+--- a/libs/binder/IServiceManager.cpp
++++ b/libs/binder/IServiceManager.cpp
+@@ -57,12 +57,13 @@ static String16 _permission("permission");
+ 
+ bool checkCallingPermission(const String16& permission, int32_t* outPid, int32_t* outUid)
+ {
++    (void) permission;
+     IPCThreadState* ipcState = IPCThreadState::self();
+     pid_t pid = ipcState->getCallingPid();
+     uid_t uid = ipcState->getCallingUid();
+     if (outPid) *outPid = pid;
+     if (outUid) *outUid = uid;
+-    return checkPermission(permission, pid, uid);
++    return true;
+ }
+ 
+ bool checkPermission(const String16& permission, pid_t pid, uid_t uid)
+-- 
+1.9.1
+

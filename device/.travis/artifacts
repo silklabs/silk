@@ -1,0 +1,19 @@
+export ARTIFACT_HOST="http://silk-travis-artifacts.s3-website-us-west-2.amazonaws.com"
+export ARTIFACT_REMOTE_PATH="$TRAVIS_REPO_SLUG/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
+export ARTIFACT_DIR=.artifacts/
+
+# XXX: These credentials can only upload to the silklabs/s3-artifacts bucket but
+# this is still potentially sketchy!
+export AWS_ACCESS_KEY_ID=AKIAJZCE7JU4GWU4JISQ
+export AWS_SECRET_ACCESS_KEY=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
+
+if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+  CACHE_TYPE="branch"
+else
+  CACHE_TYPE="pull_request"
+fi
+# Must not contain leading or trailing slashes...
+export CCACHE_ARTIFACT_PATH="silk-device/$TRAVIS_OS_NAME/$GONK_SPEC/$CACHE_TYPE/ccache"
+mkdir -p $ARTIFACT_DIR
+
+npm install -g silklabs/s3-artifacts

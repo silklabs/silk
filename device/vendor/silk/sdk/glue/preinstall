@@ -1,0 +1,23 @@
+#!/bin/bash -e
+#
+# Copyright (c) 2015 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+
+fetch=vendor/silk/locked_node_modules/fetch.sh
+
+if [[ -z $ANDROID_BUILD_TOP ]]; then
+  # Walk up the directory tree looking for $fetch
+  pushd . > /dev/null
+  while [[ "$PWD" != "/" ]]; do
+    if [[ -f $fetch ]]; then
+      ANDROID_BUILD_TOP=$PWD
+      break;
+    fi
+    cd ..
+  done
+  popd > /dev/null
+fi
+
+[[ -f $ANDROID_BUILD_TOP/$fetch ]] || exit 0
+exec $ANDROID_BUILD_TOP/$fetch

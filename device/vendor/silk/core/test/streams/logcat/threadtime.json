@@ -1,0 +1,150 @@
+[
+  {
+    "utc": 1443162610117,
+    "message": "--------- beginning of main"
+  },
+  {
+    "utc": 1443162610117,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "option : f=/persist/bluetooth/.bdaddr"
+  },
+  {
+    "utc": 1420070400650,
+    "pid": "168",
+    "tid": "168",
+    "priority": "W",
+    "tag": "auditd",
+    "message": "type=2000 audit(0.0:1): initialized"
+  },
+  {
+    "utc": 1443162610117,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "option : h"
+  },
+  {
+    "utc": 1443162610117,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "option : x"
+  },
+  {
+    "utc": 1443162610117,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "Read From /persist/bluetooth/.bdaddr by Path type(0x11), Data type (0x21)"
+  },
+  {
+    "utc": 1443162610277,
+    "pid": "0",
+    "tid": "190",
+    "priority": "E",
+    "tag": "Diag_Lib",
+    "message": " Diag_LSM_Init: Failed to open handle to diag driver, error = 2"
+  },
+  {
+    "utc": 1443162610278,
+    "pid": "0",
+    "tid": "191",
+    "priority": "E",
+    "tag": "Diag_Lib",
+    "message": " Diag_LSM_Init: Failed to open handle to diag driver, error = 2"
+  },
+  {
+    "utc": 1443162610283,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "Output Data type(0x22), bPrintout(1), bPath((null))"
+  },
+  {
+    "utc": 1443162610283,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "Loaded Data type(0x21)"
+  },
+  {
+    "utc": 1443162610283,
+    "pid": "0",
+    "tid": "194",
+    "priority": "I",
+    "tag": "bdAddrLoader",
+    "message": "hex_to_ascii() - converted Data (30766F607198)"
+  },
+  {
+    "utc": 1443162610284,
+    "pid": "0",
+    "tid": "174",
+    "priority": "E",
+    "tag": "rmt_storage",
+    "message": "Remote storage service is not supported on mdm target"
+  },
+  {
+    "utc": 1443162610284,
+    "pid": "0",
+    "tid": "201",
+    "priority": "D",
+    "tag": "silk-sensors",
+    "message": "Starting SensorsListener"
+  },
+  {
+    "utc": 1443162610285,
+    "pid": "0",
+    "tid": "170",
+    "priority": "I",
+    "tag": "lowmemorykiller",
+    "message": "Using in-kernel low memory killer interface"
+  },
+  {
+    "utc": 1443162610285,
+    "pid": "176",
+    "tid": "176",
+    "priority": "D",
+    "tag": "QSEECOMD",
+    "message": ": qseecom listener services process entry PPID = 1"
+  },
+  {
+    "utc": 1443162610285,
+    "pid": "187",
+    "tid": "187",
+    "priority": "I",
+    "tag": "",
+    "message": "debuggerd: Sep 24 2015 04:54:37"
+  },
+  {
+    "utc": 1443162610286,
+    "pid": "200",
+    "tid": "200",
+    "priority": "D",
+    "tag": "bledroid",
+    "message": "Starting BledroidListener"
+  },
+  {
+    "utc": 1443162610286,
+    "pid": "175",
+    "tid": "175",
+    "priority": "I",
+    "tag": "kickstart-qcks",
+    "message": "PARAMETER VALUES"
+  },
+  {
+    "utc": 1443162610286,
+    "message": ""
+  },
+  {
+    "utc": 1443162610286,
+    "message": ""
+  }
+]

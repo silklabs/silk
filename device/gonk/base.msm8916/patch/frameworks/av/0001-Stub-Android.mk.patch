@@ -1,0 +1,17 @@
+From a414b0b847930f8f7b1ce5dec8ab081e289cab84 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 16 Oct 2015 22:13:56 -0700
+Subject: [PATCH] Stub Android.mk
+
+Change-Id: Ib14e869c9f097724c854f6dfd2a97b2305bbb605
+---
+ Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

@@ -1,0 +1,23 @@
+From fde8bdeadd172977b281e7c65820bb4cade6f4fb Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Fri, 2 Oct 2015 11:23:42 -0700
+Subject: [PATCH] Use specific version of stat
+
+---
+ core/combo/HOST_darwin-x86.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/combo/HOST_darwin-x86.mk b/core/combo/HOST_darwin-x86.mk
+index ec37993..e8e7de4 100644
+--- a/core/combo/HOST_darwin-x86.mk
++++ b/core/combo/HOST_darwin-x86.mk
+@@ -116,5 +116,5 @@ endef
+ 
+ # $(1): The file to check
+ define get-file-size
+-stat -f "%z" $(1)
++/usr/bin/stat -f "%z" $(1)
+ endef
+-- 
+2.4.5
+

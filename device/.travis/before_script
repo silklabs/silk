@@ -1,0 +1,106 @@
+#
+# |source| this file to ensure environment variables are exported correctly to
+# other travis scripts
+#
+
+source .travis/select_gonk
+if [[ $GONK == nop ]]; then
+   echo Nothing to do
+   exit 0
+fi
+
+git --version
+git config --global user.email "engineering@silklabs.com"
+git config --global user.name "Travis CI"
+git config --global color.ui false
+if [[ $TRAVIS_OS_NAME == osx ]]; then
+  brew update
+  brew reinstall coreutils nvm
+  export NVM_DIR="$PWD/.nvm"
+  source $(brew --prefix nvm)/nvm.sh
+  npm config set spin=false
+  export CI_IGNORE_CASE_INSENSITIVE_FS=please
+else
+  jdk_switcher use openjdk7
+fi
+nvm install 4.1.2
+
+source .travis/artifacts
+
+# Export the path which we want to upload our ccache artifacts to..
+# NOTE: Must not contain trailing slash...
+CCACHE_URL="https://s3-us-west-2.amazonaws.com/silk-travis-artifacts/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
+
+function get_http_status() {
+  local url=$1
+  curl -X HEAD -Is -w "%{http_code}" $1 -o /dev/null
+}
+
+if [[ "$(get_http_status $CCACHE_URL)" == "200" ]];
+then
+  mkdir -p $HOME/.ccache
+  cd $HOME/.ccache
+  curl $CCACHE_URL | tar -xz
+  cd -
+else
+  echo "Failed to find ccache bundle at $CCACHE_URL"
+fi
+
+time make init.$GONK
+time make sync
+
+if [[ $TRAVIS_OS_NAME == osx ]]; then
+  export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
+else
+  export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
+fi
+
+export CCACHE_COMPRESS=true
+$PREBUILT_CCACHE -M 1G
+
+# Clear the stats before this build...
+$PREBUILT_CCACHE -z
+# Dump info about ccache (how much is in the cache/etc...)
+$PREBUILT_CCACHE -s
+
+
+time CI_PATCHTREE_FORCE=force make nothing # Applies patches as a side effect of doing nothing...
+
+# Reduce the disk space usage to avoid failures later on during full
+# builds
+if [[ $GONK != base ]]; then
+  # Save silk-device-locked-node-modules before other .repo git projects are removed
+  mv .repo/project-objects/silk-device-locked-node-modules.git .repo/
+  mv .repo/projects/vendor/silk/locked_node_modules/node_modules.git .repo/
+
+  rm -rf \
+    .repo/project-objects \
+    .repo/projects \
+
+  rm -rf \
+    frameworks/base/core/{java,res,tests} \
+    frameworks/base/data/fonts \
+    frameworks/base/data/sounds \
+    frameworks/base/data/videos \
+    frameworks/base/docs \
+    frameworks/base/media/java \
+    frameworks/base/media/mca \
+    frameworks/base/media/tests \
+    frameworks/base/packages \
+    frameworks/base/tests \
+    prebuilts/android-emulator/windows \
+    prebuilts/qemu-kernel/{mips,x86,x86_64} \
+    prebuilts/misc/{android-mips,android-mips64,android-x86,android-x86_64,darwin-x86,windows} \
+    prebuilts/ndk/{4,5,6,7} \
+
+  find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
+
+  # Restore silk-device-locked-node-modules
+  mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules
+  mv .repo/silk-device-locked-node-modules.git .repo/project-objects/
+  mv .repo/node_modules.git .repo/projects/vendor/silk/locked_node_modules/
+fi
+
+df -h
+du -hs * .repo
+du -hs .

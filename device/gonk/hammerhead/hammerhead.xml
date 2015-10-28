@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2015 Silk Labs, Inc.
+  All Rights Reserved.
+  Confidential and Proprietary - Silk Labs, Inc.
+-->
+
+<manifest>
+  <include name="mako.xml"/>
+  <remove-project name="vendor-broadcom-mako"/>
+  <remove-project name="vendor-lge-mako"/>
+  <remove-project name="vendor-qcom-mako"/>
+  <project groups="device,hammerhead" name="vendor-broadcom-hammerhead" path="vendor/broadcom/hammerhead" remote="silk" revision="LMY48M"/>
+  <project groups="device,hammerhead" name="vendor-lge-hammerhead" path="vendor/lge/hammerhead" remote="silk" revision="LMY48M"/>
+  <project groups="device,hammerhead" name="vendor-qcom-hammerhead" path="vendor/qcom/hammerhead" remote="silk" revision="LMY48M"/>
+</manifest>

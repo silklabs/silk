@@ -1,0 +1,19 @@
+--------- beginning of main
+09-25 06:30:10.117     0   194 I bdAddrLoader: option : f=/persist/bluetooth/.bdaddr
+01-01 00:00:00.650   168   168 W auditd  : type=2000 audit(0.0:1): initialized
+09-25 06:30:10.117     0   194 I bdAddrLoader: option : h
+09-25 06:30:10.117     0   194 I bdAddrLoader: option : x
+09-25 06:30:10.117     0   194 I bdAddrLoader: Read From /persist/bluetooth/.bdaddr by Path type(0x11), Data type (0x21)
+09-25 06:30:10.277     0   190 E Diag_Lib:  Diag_LSM_Init: Failed to open handle to diag driver, error = 2
+09-25 06:30:10.278     0   191 E Diag_Lib:  Diag_LSM_Init: Failed to open handle to diag driver, error = 2
+09-25 06:30:10.283     0   194 I bdAddrLoader: Output Data type(0x22), bPrintout(1), bPath((null))
+09-25 06:30:10.283     0   194 I bdAddrLoader: Loaded Data type(0x21)
+09-25 06:30:10.283     0   194 I bdAddrLoader: hex_to_ascii() - converted Data (30766F607198)
+09-25 06:30:10.284     0   174 E rmt_storage: Remote storage service is not supported on mdm target
+09-25 06:30:10.284     0   201 D silk-sensors: Starting SensorsListener
+09-25 06:30:10.285     0   170 I lowmemorykiller: Using in-kernel low memory killer interface
+09-25 06:30:10.285   176   176 D QSEECOMD: : qseecom listener services process entry PPID = 1
+09-25 06:30:10.285   187   187 I         : debuggerd: Sep 24 2015 04:54:37
+09-25 06:30:10.286   200   200 D bledroid: Starting BledroidListener
+09-25 06:30:10.286   175   175 I kickstart-qcks: PARAMETER VALUES
+

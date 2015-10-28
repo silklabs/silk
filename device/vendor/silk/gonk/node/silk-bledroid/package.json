@@ -1,0 +1,22 @@
+{
+  "name": "silk-bledroid",
+  "version": "0.0.1",
+  "description": "wrapper for bledroid",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "if [ -d ../../../locked_node_modules ]; then ../../../locked_node_modules/fetch.sh; fi",
+    "install": "./build"
+  },
+  "author": {
+    "name": "Ben Turner",
+    "email": "bent@silklabs.com"
+  },
+  "license": "Proprietary",
+  "dependencies": {
+    "babel-runtime": "^5.8.20",
+    "debug": "~2.2.0",
+    "silk-sdk-glue": "0.0.1",
+    "uuid": "2.0.1"
+  },
+  "private": true
+}

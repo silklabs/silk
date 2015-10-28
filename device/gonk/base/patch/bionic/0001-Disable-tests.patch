@@ -1,0 +1,31 @@
+From 8ac0a71d5c2a86397458b3a58b3c25a62f87df33 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Thu, 18 Jun 2015 16:39:32 -0700
+Subject: [PATCH] Disable tests
+
+---
+ tests/Android.build.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tests/Android.build.mk b/tests/Android.build.mk
+index 63729da..84d8e1d 100644
+--- a/tests/Android.build.mk
++++ b/tests/Android.build.mk
+@@ -89,12 +89,12 @@ LOCAL_LDLIBS := \
+ ifeq ($(build_type),target)
+   include external/stlport/libstlport.mk
+ 
+-  include $(BUILD_$(build_target))
++  #include $(BUILD_$(build_target))
+ endif
+ 
+ ifeq ($(build_type),host)
+   # Only build if host builds are supported.
+   ifeq ($(build_host),true)
+-    include $(BUILD_HOST_$(build_target))
++    #include $(BUILD_HOST_$(build_target))
+   endif
+ endif
+-- 
+1.9.1
+

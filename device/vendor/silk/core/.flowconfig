@@ -1,0 +1,15 @@
+[include]
+lib
+
+[libs]
+interface/
+
+[ignore]
+.*/dist/.*
+
+[options]
+unsafe.enable_getters_and_setters=true
+module.system=node
+
+[version]
+0.16.0

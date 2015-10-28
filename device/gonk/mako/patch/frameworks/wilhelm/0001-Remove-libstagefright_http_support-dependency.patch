@@ -1,0 +1,74 @@
+From eed2ca6a7ad8d4d2dc15cb9df0e9686a4a07400f Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 28 Jun 2015 01:09:52 -0700
+Subject: [PATCH] Remove libstagefright_http_support dependency
+
+---
+ src/Android.mk                         | 2 --
+ src/android/AudioPlayer_to_android.cpp | 2 ++
+ src/android/MediaPlayer_to_android.cpp | 2 ++
+ 3 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/Android.mk b/src/Android.mk
+index 82fae28..9397e4c 100644
+--- a/src/Android.mk
++++ b/src/Android.mk
+@@ -93,7 +93,6 @@ LOCAL_SRC_FILES:=                     \
+         android/android_AudioToCbRenderer.cpp \
+         android/android_GenericMediaPlayer.cpp\
+         android/android_GenericPlayer.cpp     \
+-        android/android_LocAVPlayer.cpp       \
+         android/android_StreamPlayer.cpp      \
+         android/android_Effect.cpp            \
+         android/util/AacAdtsExtractor.cpp     \
+@@ -185,7 +184,6 @@ LOCAL_SHARED_LIBRARIES :=         \
+         libbinder                 \
+         libstagefright            \
+         libstagefright_foundation \
+-        libstagefright_http_support \
+         libcutils                 \
+         libgui                    \
+         libdl                     \
+diff --git a/src/android/AudioPlayer_to_android.cpp b/src/android/AudioPlayer_to_android.cpp
+index 6e73396..7b19ac7 100644
+--- a/src/android/AudioPlayer_to_android.cpp
++++ b/src/android/AudioPlayer_to_android.cpp
+@@ -1549,6 +1549,7 @@ SLresult android_audioPlayer_realize(CAudioPlayer *pAudioPlayer, SLboolean async
+         }
+         break;
+ 
++#if 0
+     //-----------------------------------
+     // MediaPlayer
+     case AUDIOPLAYER_FROM_URIFD: {
+@@ -1608,6 +1609,7 @@ SLresult android_audioPlayer_realize(CAudioPlayer *pAudioPlayer, SLboolean async
+         }
+ 
+         }
++#endif
+         break;
+ 
+     //-----------------------------------
+diff --git a/src/android/MediaPlayer_to_android.cpp b/src/android/MediaPlayer_to_android.cpp
+index 3622356..307517f 100644
+--- a/src/android/MediaPlayer_to_android.cpp
++++ b/src/android/MediaPlayer_to_android.cpp
+@@ -424,6 +424,7 @@ XAresult android_Player_realize(CMediaPlayer *mp, SLboolean async) {
+         mp->mAVPlayer->init(player_handleMediaPlayerEventNotifications, (void*)mp);
+         }
+         break;
++#if 0
+     case AUDIOVIDEOPLAYER_FROM_URIFD: {
+         mp->mAVPlayer = new android::LocAVPlayer(&ap_params, true /*hasVideo*/);
+         mp->mAVPlayer->init(player_handleMediaPlayerEventNotifications, (void*)mp);
+@@ -448,6 +449,7 @@ XAresult android_Player_realize(CMediaPlayer *mp, SLboolean async) {
+         }
+         }
+         break;
++#endif
+     case INVALID_TYPE: // intended fall-through
+     default:
+         SL_LOGE("Unable to realize MediaPlayer, invalid internal Android object type");
+-- 
+1.9.1
+

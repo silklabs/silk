@@ -1,0 +1,51 @@
+{
+  "name": "core",
+  "version": "0.0.1",
+  "description": "The common control software on each silk node",
+  "main": "core.js",
+  "scripts": {
+    "preinstall": "./bin/preinstall",
+    "install": "rm -rf node_modules/babel/test/ && ./build",
+    "test": "mocha $(find test -name '*_test.js')"
+  },
+  "dependencies": {
+    "babel-runtime": "^5.8.20",
+    "debug": "2.2.0",
+    "event-to-promise": "^0.4.0",
+    "is-online": "file:local_node_modules/is-online",
+    "is-reachable": "^1.0.0",
+    "onetime": "^1.0.0",
+    "random-item": "^1.0.0",
+    "root-hints": "^1.0.0",
+    "mkdirp-promise": "^1.0.3",
+    "mold-source-map": "^0.4.0",
+    "mz": "2.0.0",
+    "netmask": "^1.0.5",
+    "node-hue-api": "1.0.5",
+    "ntp-client": "file:local_node_modules/ntp-client",
+    "request": "2.58.0",
+    "silk-api": "file:local_node_modules/silk-api",
+    "silk-sdk-glue": "0.0.1",
+    "socket.io-client": "^1.3.5",
+    "silk-socket.io-client-node": "file:local_node_modules/silk-socket.io-client-node",
+    "source-map-support": "^0.3.2",
+    "split": "^1.0.0",
+    "validator": "3.41.2",
+    "CBuffer": "1.1.0"
+  },
+  "devDependencies": {
+    "babel": "^5.8.23",
+    "mocha": "^2.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-device.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "engines": {
+    "node": "0.12.2"
+  },
+  "private": true
+}

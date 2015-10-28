@@ -1,0 +1,37 @@
+From cc20a805f8ebdc02cb1f7ce6e4694e16732242b2 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 3 Aug 2015 17:48:20 -0700
+Subject: [PATCH] Androidify
+
+---
+ Android.mk   | 6 ++++++
+ package.json | 1 -
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..682e31f
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,5 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS  := optional debug eng
++include $(BUILD_NODE_MODULE)
+diff --git a/package.json b/package.json
+index 306bde1..9df42a0 100644
+--- a/package.json
++++ b/package.json
+@@ -32,7 +32,6 @@
+     }
+   },
+   "dependencies": {
+-    "node-hid": "~0.4.0",
+     "grunt": "~0.4.5",
+     "load-grunt-tasks": "~3.2.0",
+     "grunt-cli": "~0.1.13",
+-- 
+1.9.1
+

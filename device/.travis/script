@@ -1,0 +1,113 @@
+#!/bin/bash -ex
+
+make="make -j2"
+
+# Update locked_node_modules if needed before starting the build
+./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
+vendor/silk/locked_node_modules/update.sh
+
+# With locked_node_modules primed there should be no npm registry activity
+# during the build
+export NPM_CONFIG_REGISTRY=http://0.42.42.42.42/no/registry/for/you
+
+case $GONK in
+qemu)
+  $make
+  $make silkota
+
+  echo "******************************************************************"
+  echo Emulator tests
+  echo "******************************************************************"
+  source build/envsetup.sh
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis gets borked
+  test/start_emulator -r run_tests
+  ;;
+base)
+  # Only enable ccache logging for the base gonk because Travis has a little disk
+  # and doesn't like to talk about it
+  export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
+
+  $make
+  $make silkota
+
+  source build/envsetup.sh
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis falls down
+
+  if [[ $TRAVIS_OS_NAME == linux ]]; then
+    echo "******************************************************************"
+    echo Emulator tests
+    echo "******************************************************************"
+    $make update.qemu # Fetch the emulator
+
+    if ! which adb; then
+      # Fetch an adb since it's not built as a part of the base build nor
+      # installed by Travis (https://github.com/travis-ci/apt-package-whitelist/issues/1410)
+      for i in {1..10}; do
+        wget --retry-connrefused https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip || true
+        test -f platform-tools_r23-linux.zip && break
+        sleep 10s # The Googles will fail us sometimes.  Be strong
+      done
+
+      unzip platform-tools_r23-linux.zip
+      export PATH=$PATH:$(readlink -f platform-tools)
+      which adb
+    fi
+
+    test/start_emulator -r run_tests
+  else
+    echo Warning: Skipping emulator boot check on OS X for now
+  fi
+
+  if [[ $TRAVIS_OS_NAME == linux ]]; then  # We only support building Mako on Linux
+    echo "******************************************************************"
+    echo Validating Mako manifest
+    echo "******************************************************************"
+    $make init.mako
+  fi
+  ;;
+mako)
+  $make
+  $make otapackage
+  $make silkota
+  ;;
+*)
+  $make
+  $make silkota
+  ;;
+esac
+
+echo "******************************************************************"
+echo Unit tests
+echo "******************************************************************"
+test/unit
+
+
+# Only update locked_node_modules for one build in the entire OS/GONK
+# build matrix.  It doesn't matter which one, "mako" seems nice
+if [[ $TRAVIS_PULL_REQUEST == false ]] &&
+   [[ $TRAVIS_OS_NAME == linux ]] &&
+   [[ $GONK_SPEC == mako ]] ; then
+  echo "******************************************************************"
+  echo Update locked_node_modules
+  echo "******************************************************************"
+  push_branch=false
+  if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+    for branch in master next chemspill; do
+      if [ "$TRAVIS_BRANCH" = "$branch" ]; then
+        push_branch=true
+        break
+      fi
+    done
+  fi
+
+  if $push_branch; then
+    pushd vendor/silk/locked_node_modules/node_modules
+    # This can fail if we raced and lost another Travis build.  No big deal
+    git push silk $TRAVIS_BRANCH
+    popd
+  else
+    echo "Will not push locked_node_modules for branch $TRAVIS_BRANCH"
+  fi
+fi
+
+exit 0

@@ -1,0 +1,16 @@
+{
+  "name": "knockknock",
+  "version": "0.0.1",
+  "description": "Checks if the face is a known face",
+  "main": "knockknock.js",
+  "scripts": {
+    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
+    "install": "./build"
+  },
+  "dependencies": {
+    "babel-runtime": "^5.8.25",
+    "mz": "2.0.0",
+    "silk-sdk-glue": "0.0.1"
+  },
+  "private": true
+}

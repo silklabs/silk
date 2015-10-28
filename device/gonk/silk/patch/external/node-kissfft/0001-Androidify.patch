@@ -1,0 +1,63 @@
+From cdad1842b62cefcc321674ec884d53e0f9db95c9 Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Fri, 9 Oct 2015 11:16:59 -0700
+Subject: [PATCH] Androidify
+
+---
+ Android.mk   | 6 ++++++
+ index.js     | 2 +-
+ package.json | 8 +++-----
+ 3 files changed, 10 insertions(+), 6 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..40174ba
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,6 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_NODE_MODULE_TYPE := file
++include $(BUILD_NODE_MODULE)
+diff --git a/index.js b/index.js
+index 83b484b..ee91ea8 100644
+--- a/index.js
++++ b/index.js
+@@ -1 +1 @@
+-module.exports = require('bindings')('kissfft');
++module.exports = require('build/kissfft.node');
+diff --git a/package.json b/package.json
+index 29a7952..b0a9405 100644
+--- a/package.json
++++ b/package.json
+@@ -2,10 +2,9 @@
+   "name": "kissfft",
+   "version": "0.0.9",
+   "description": "FFT for node using kissfft.",
+-  "main": "index.js",
++  "main": "build/Release/kissfft.node",
++  "os": ["android"],
+   "scripts": {
+-    "test": "./node_modules/nodeunit/bin/nodeunit test.js",
+-    "install": "node-gyp rebuild"
+   },
+   "keywords": [
+     "fft",
+@@ -21,10 +20,9 @@
+   },
+   "license": "BSD",
+   "dependencies": {
+-    "bindings": "^1.2.1",
+     "nan": "^2.0.9"
+   },
+-  "devDependencies": {
++  "__devDependencies": {
+     "fft": "^0.2.1",
+     "nodeunit": "^0.9.1"
+   },
+-- 
+1.9.1
+

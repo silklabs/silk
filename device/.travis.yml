@@ -1,0 +1,59 @@
+language: c
+compiler: gcc
+
+# Note that OS X builds are triggered periodically by Releng
+os:
+  - linux
+
+jdk:
+  - openjdk7
+
+addons:
+  apt:
+    packages:
+      - g++
+      - libc6:i386
+      - libstdc++6:i386
+      - linux-libc-dev
+
+notifications:
+  slack:
+    on_success: change
+    on_failure: always
+    rooms:
+      - silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
+
+env:
+  matrix:
+    - GONK_SPEC=mako
+    - GONK_SPEC=qemu
+
+before_script:
+  source .travis/before_script
+
+script:
+  - echo For full build logs and other artifacts, please see $ARTIFACT_HOST/$ARTIFACT_REMOTE_PATH
+  - .travis/log .travis/script
+
+after_success:
+  .travis/after_success
+
+after_script:
+  .travis/after_script
+
+before_deploy:
+  .travis/before_deploy
+
+deploy:
+  provider: s3
+  access_key_id: "AKIAIASNJWAY2EBXDKRA"
+  secret_access_key: "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"
+  bucket: "silk-device"
+  region: us-west-2
+  skip_cleanup: true
+  acl: public_read
+  local-dir: dist/
+  upload-dir: $TRAVIS_BRANCH/latest
+  on:
+    all_branches: true
+    condition: "$TRAVIS_OS_NAME != osx"

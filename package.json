@@ -26,7 +26,7 @@
     "react-iframe": "^0.0.2",
     "react-router": "^1.0.0-rc1",
     "script-loader": "^0.6.1",
-    "silk-api-react-native": "git@github.com:silklabs/silk-api-react-native.git#master",
+    "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "socket.io-client": "^1.3.6",
     "text-encoding": "^0.5.2",
     "webpack": "^1.12.1",
@@ -119,7 +119,7 @@
   },
   "scripts": {
     "lint": "eslint src",
-    "postinstall": "webpack --progress",
+    "postinstall": "./tools/patch && webpack --progress",
     "preinstall": "./bin/preinstall",
     "start": "webpack-dev-server --host 0.0.0.0 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "start-server": "babel-node --harmony server/main.js production",

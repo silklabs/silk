@@ -710,8 +710,13 @@ export class CryptoDuplexStream extends DuplexTransform {
     const randomByteCountNeeded = ec.hash.hmacStrength;
     assert(randomByteCountNeeded);
 
-    getRandomBytes(randomByteCountNeeded, bytes => {
-      log.error(`getRandomBytes`);
+    getRandomBytes(randomByteCountNeeded, (error, bytes) => {
+      if (error) {
+        log.error(error);
+        this.push(null);
+        return;
+      }
+
       const keyPair = ec.genKeyPair({ entropy: bytes });
       decrypt.setKeyPair(keyPair);
       encrypt.setKeyPair(keyPair);

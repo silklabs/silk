@@ -107,7 +107,7 @@ export default class extends SocketIOComponent {
       // timeout state.
       this.unsubscribeFromSocket();
       this.startTimeoutTimer();
-      this.setState({timedOut: false, blob: null});
+      this.setState({timedOut: false, blob: null, objects: []});
       setTimeout(() => {
         this.subscribeToSocket();
       }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
@@ -154,7 +154,7 @@ export default class extends SocketIOComponent {
         if (!this.props.hasNetwork) {
           return;
         }
-        this.setState({timedOut: true, blob: null});
+        this.setState({timedOut: true, blob: null, objects: []});
       },
       timeOut
     );

@@ -15,7 +15,7 @@ import Config from '../libraries/Config';
 import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
-import API from 'silk-api-react-native';
+import API from 'silk-api';
 
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';

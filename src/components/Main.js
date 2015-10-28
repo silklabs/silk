@@ -2,6 +2,7 @@ import React from 'react-native';
 let {
   AlertIOS,
   InteractionManager,
+  NativeModules,
   NetInfo,
   View,
   StyleSheet,
@@ -11,8 +12,7 @@ import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
 import { OrderedMap, OrderedSet } from 'immutable';
 
-import BLECentral from '../libraries/btle/BLECentral';
-import DeviceManager from '../libraries/btle/DeviceManager';
+import getDeviceManager from '../libraries/btle/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 import { UserState } from '../libraries/UserState';
 
@@ -22,10 +22,16 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
+const { BLESocketManager } = NativeModules;
 const log = createLog('Main');
 
 const SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS = 1000;
-const AFTER_TOUCH_WAIT_MS = 500;
+
+// Obsolete once https://github.com/facebook/react-native/pull/3788
+// gets upstreamed.
+function uiInteractions(): Promise<void> {
+  return new Promise((resolve) => InteractionManager.runAfterInteractions(resolve));
+}
 
 /**
  * This component is the heart of the app.
@@ -62,7 +68,8 @@ export default class extends AsyncComponent {
     // OrderedMap of configured devices that we know about.
     devices: null,
 
-    // OrderedSet of unconfigured peripheral IDs that we observe.
+    // OrderedSet of DeviceSession objects rerpresenting BLE sockets
+    // to unconfigured devices.
     unconfiguredDevices: new OrderedSet(),
 
     // Device record of the device that we're configuring right now.
@@ -79,13 +86,9 @@ export default class extends AsyncComponent {
     NetInfo.isConnected.fetch().then(this.onConnectivityChange);
     NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
 
-    this.bleDeviceManager = new DeviceManager(
-      BLECentral,
-      this.props.userState
-    );
-    this.bleDeviceManager.on('stateChange', this.onBLEPeripheralStateChange);
-    this.bleDeviceManager.on('disconnect', this.onBLEPeripheralDisconnect);
-    this.bleDeviceManager.start();
+    this.bleDeviceManager = getDeviceManager();
+    this.bleDeviceManager.on('connect', this.onBLEDeviceConnect);
+    BLESocketManager.start();
   }
 
   componentWillUnmount() {
@@ -95,8 +98,13 @@ export default class extends AsyncComponent {
       this.state.socket.close();
     }
 
+    BLESocketManager.stop();
     this.bleDeviceManager.removeAllListeners();
-    this.bleDeviceManager.stop();
+    let { unconfiguredDevices, configuringDevice } = this.state;
+    unconfiguredDevices.forEach(device => device.removeAllListeners());
+    if (configuringDevice && configuringDevice.bleDeviceSession) {
+      configuringDevice.bleDeviceSession.removeAllListeners();
+    }
   }
 
   // Network and socket.io connectivity
@@ -366,119 +374,106 @@ export default class extends AsyncComponent {
 
   // Book keeping for unconfigured devices detected via BLE
 
-  onBLEPeripheralStateChange = (peripheral) => {
-    let { unconfiguredDevices } = this.pendingState;
-    let { state, id } = peripheral;
-
-    if (state === 'registered' && unconfiguredDevices.contains(id)) {
-      log.info('BLE peripheral now registered', peripheral.id);
-      this.setStateAsync({
-        unconfiguredDevices: unconfiguredDevices.delete(peripheral.id),
-      });
+  onBLEDeviceConnect = (bleDeviceSession) => {
+    if (bleDeviceSession.isRegistered) {
+      log.debug(`Connected to a BLE device, but it's already registered.`);
+      // TODO: even if the device is registered, we still want to talk
+      // to it if we're close by, e.g. to get wifi errors and stuff.
       return;
     }
-
-    if (state === 'unregistered' && !unconfiguredDevices.contains(id)) {
-      log.info('Detected new unregistered device', id);
-      this.setStateAsync({
-        unconfiguredDevices: unconfiguredDevices.add(peripheral.id),
-      });
+    log.debug('Connected to an unregistered device.');
+    let { unconfiguredDevices } = this.pendingState;
+    if (unconfiguredDevices.contains(bleDeviceSession)) {
+      log.debug(`We're already tracking this BLE device... Huh?`);
       return;
     }
-  };
-
-  onBLEPeripheralDisconnect = (peripheral) => {
-    let { unconfiguredDevices } = this.pendingState;
-    if (unconfiguredDevices.contains(peripheral.id)) {
-      log.info('BLE peripheral disconnected', peripheral.id);
-      this.setStateAsync({
-        unconfiguredDevices: unconfiguredDevices.delete(peripheral.id),
-      });
-    }
-  };
-
-  configureDevice = (peripheralId) => {
-    let deviceTouchView = null;
-    this.props.navigator.push({
-      name: 'DeviceTouch',
-      props: {
-        peripheralId,
-        bleDeviceManager: this.bleDeviceManager,
-        onCancel: () => this.props.navigator.popToTop(),
-        // Keep a ref so that we can update the view when the devices touch.
-        ref: (element) => deviceTouchView = element,
-      },
+    this.setStateAsync({
+      unconfiguredDevices: unconfiguredDevices.add(bleDeviceSession),
     });
 
-    InteractionManager.runAfterInteractions(() => {
-      this.setStateAsync({
-        configuringDevice: new ConfiguringDeviceRecord({
-          deviceId: null,
-          name: null,
-          peripheralId,
-        }),
-      });
-    });
-
-    let canceled = false;
-    let onDeviceTouch = (peripheral) => {
-      return new Promise((resolve, reject) => {
-        if (!deviceTouchView) {
-          reject(new Error('Did not render the setup flow?'));
-          return;
-        }
-        // Alright, we have achieved touch! Update the touch UI
-        // briefly to let the user know they did it correctly.
-        deviceTouchView.onDeviceTouch();
-        deviceTouchView = null;
-
-        // After a brief period of time, advance to the configuration
-        // screen where the user can enter device name, wifi
-        // credentials, etc.
-        setTimeout(() => this.props.navigator.push({
-          name: 'DeviceConfig',
-          props: {
-            onCancel: () => {
-              canceled = true;
-              reject(new Error('User canceled.'));
-              // We'll pop the views off the navigation stack below.
-            },
-            onSave: (config) => {
-              this.props.navigator.popToTop();
-
-              // The UI needs to be responsive immediately, so pop the setup
-              // screens first.  For the following book keeping ensure we
-              // don't interfere with the navigation animation.
-              InteractionManager.runAfterInteractions(() => {
-                // Update the name of the new device in the UI.
-                let { configuringDevice } = this.pendingState;
-                configuringDevice = configuringDevice
-                  .set('name', config.name)
-                  .set('deviceId', peripheral.deviceId);
-                this.setStateAsync({configuringDevice});
-
-                // And finally, configure the device.
-                resolve(config);
-              });
-            },
-          },
-        }), AFTER_TOUCH_WAIT_MS);
-      });
+    let removeFromUnconfiguredDevices = () => {
+      log.debug('BLE device no longer connected or unconfigured. Cleaning up.');
+      let { unconfiguredDevices } = this.pendingState;
+      if (unconfiguredDevices.contains(bleDeviceSession)) {
+        this.setStateAsync({
+          unconfiguredDevices: unconfiguredDevices.delete(bleDeviceSession),
+        });
+      }
     };
+    bleDeviceSession.on('registered', removeFromUnconfiguredDevices);
+    bleDeviceSession.on('disconnect', removeFromUnconfiguredDevices);
+  };
 
-    return this.bleDeviceManager
-      .configureDevice(peripheralId, onDeviceTouch)
-      .catch((err) => {
-        log.info('Could not configure device', err);
-        this.props.navigator.popToTop();
+  configureDevice = async (bleDeviceSession) => {
+    log.debug('Going to configure a device.');
+    try {
+      bleDeviceSession.respondToRegistrationRequest(/* accept = */ true);
+      bleDeviceSession.once('secret', (deviceSecret) => {
+        let { deviceId } = deviceSecret;
+        log.debug('And now kiththth! Received device ID', deviceId);
+        let configuringDevice = new ConfiguringDeviceRecord({
+          bleDeviceSession,
+          deviceId,
+          name: null,
+        });
+        this.setStateAsync({configuringDevice});
+      });
 
-        InteractionManager.runAfterInteractions(() => {
-          this.setStateAsync({configuringDevice: null});
-          if (!canceled) {
-            this._showConfigError();
-          }
+      log.debug('Launching device setup UI.');
+      let config = await new Promise((resolve, reject) => {
+        this.props.navigator.pushAsync({
+          name: 'DeviceTouch',
+          props: {
+            bleDeviceSession,
+            onCancel: () => reject({canceled: true}),
+            onSave: resolve,
+          },
         });
       });
+      log.debug('Device setup UI complete, received configuration', config);
+      this.props.navigator.popToTop();
+
+      // Update the name of the new device in the UI after the
+      // previous navigation animation has finished.
+      await uiInteractions();
+      let { configuringDevice } = this.pendingState;
+      configuringDevice = configuringDevice.set('name', config.name);
+      this.setStateAsync({configuringDevice});
+
+      log.debug('Going to register the device with the server.');
+      let {
+        success,
+        registrarPublicKey,
+        registrationToken,
+      } = await this.props.userState.registerDevice(
+        config.name,
+        config.deviceId
+      );
+      if (!success) {
+        throw new Error('Could not register device with the server.');
+      }
+
+      // And finally, configure the device.
+      log.debug('Successfully registered with server. ' +
+                'Sending registration information to device.');
+      bleDeviceSession.sendRegistrationInformation({
+        accessPoint: config.ssid,
+        password: config.secret,
+        publicKey: registrarPublicKey,
+        regToken: registrationToken,
+      });
+    } catch(ex) {
+      await this.props.navigator.popToTopAsync();
+      await uiInteractions();
+      await this.setStateAsync({configuringDevice: null});
+      if (ex.canceled) {
+        log.debug('User cancelled. Aborting.');
+        // TODO: should we do anything if the user canceled?
+      } else {
+        log.warn('Could not configure device due to error:', ex);
+        this._showConfigError();
+      }
+    }
   };
 
   _showConfigError() {
@@ -540,7 +535,6 @@ export default class extends AsyncComponent {
         />
         <NetworkWarning />
         <MonitorsView
-          bleDeviceManager={this.bleDeviceManager}
           {...this.state}
           {...this.props}
         />

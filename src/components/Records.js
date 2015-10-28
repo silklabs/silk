@@ -12,5 +12,5 @@ export const DeviceRecord = Record({ /* eslint new-cap: 0 */
 export const ConfiguringDeviceRecord = Record({ /* eslint new-cap: 0 */
   deviceId: null,
   name: null,
-  peripheralId: null,
+  bleDeviceSession: null,
 });

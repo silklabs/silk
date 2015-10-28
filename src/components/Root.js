@@ -15,7 +15,7 @@ import Config from '../libraries/Config';
 import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
-import API from 'silk-api';
+import createAPI from 'silk-api';
 
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';
@@ -63,7 +63,7 @@ export default class extends AsyncComponent {
       userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
 
-    let api = API({                               // eslint-disable-line new-cap
+    let api = createAPI({
       getRandomBytes,
       serverUrl,
     });

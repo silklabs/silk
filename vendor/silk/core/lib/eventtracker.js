@@ -14,7 +14,7 @@ import APICallOperation from './outbox/api_call_operation';
 import createLog from './log';
 const log = createLog('events');
 
-import type { TimelineEventObject } from './videoupload';
+import type { TimelineEventObject } from './timeline';
 import type { Outbox } from './outbox/manager';
 
 type LocalEventRecord = {
@@ -62,7 +62,7 @@ function generateRecordID(): Promise<string> {
  * motion detection over multiple 1s periods will be tracked as a
  * single motion event lasting several seconds.
  */
-class EventTracker extends EventEmitter {
+export default class EventTracker extends EventEmitter {
   deviceId: string;
   outbox: Outbox;
   _eventRecords: {[key: string]: LocalEventRecord};
@@ -121,7 +121,7 @@ class EventTracker extends EventEmitter {
     this._trackExpirations();
   }
 
-  async _enqueue(record: LocalEventRecord) {
+  async _enqueue(record: LocalEventRecord): Promise<void> {
     if (record.id === GENERATING_ID_PLACEHOLDER) {
       // The record is already enqueued, we're just generating an ID for it.
       // No need to enqueue it again.
@@ -179,8 +179,4 @@ class EventTracker extends EventEmitter {
       log.info(`No more events to track, sleeping.`);
     }
   }
-}
-
-export default function (deviceId: string, outbox: Outbox): EventTracker {
-  return new EventTracker(deviceId, outbox);
 }

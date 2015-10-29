@@ -36,6 +36,7 @@ import initOutbox from './outbox';
 import initProfiler from './profiler/server';
 import NetworkStatus from './network_status';
 import Logcat from './logcat';
+import Timeline from './timeline';
 
 const log = createLog('main');
 // Start the profile server ASAP.
@@ -115,7 +116,7 @@ function boot() {
       fs.writeFile('/proc/self/oom_adj', 0);
 
       assert(outbox, 'must have outbox when initializing timeline');
-      timeline = require('./timeline')(id.toString(), outbox);
+      timeline = new Timeline(id.toString(), outbox);
       camera = require('./camera')(timeline);
       camera.on('error', () => {
         log.warn('Camera command errored out');

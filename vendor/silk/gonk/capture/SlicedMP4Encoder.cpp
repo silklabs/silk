@@ -473,6 +473,12 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
   }
 }
 
+
+static void writerDecStrong(void *data) {
+  MPEG4MemoryWriter *writer = static_cast<MPEG4MemoryWriter *>(data);
+  writer->decStrong(nullptr);
+};
+
 bool SlicedMP4Encoder::threadLoop() {
   while (true) {
     sp<MPEG4MemoryWriter> writer = new MPEG4MemoryWriter();
@@ -530,9 +536,12 @@ bool SlicedMP4Encoder::threadLoop() {
       // (We won't overflow 31 bits unless the video duration is
       // > 35,000 hours ~= 4 years.)
       int32_t videoDurationMs = int32_t(videoDurationUs / 1000LL);
+
       // Write size and .mp4 data
+      writer->incStrong(this);
       mChannel->send(Channel::TAG_VIDEO, when, videoDurationMs,
-                     writer->data().array(), writer->data().size());
+                     writer->data().array(), writer->data().size(),
+                     writerDecStrong, writer.get());
     } else {
       ALOGW("MPEG4MemoryWriter stop failed with %d. No video data sent", err);
     }

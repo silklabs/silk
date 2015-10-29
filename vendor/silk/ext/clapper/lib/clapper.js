@@ -30,7 +30,8 @@ class Clapper {
     util = env.util;
 
     let fftCfg = {
-      // TODO: hard coded audio constants assumed
+      // TODO: hard coded audio constants assumed.  Changing these will also
+      //       affect AudioSourceEmitter.cpp
       sampleRate: 8000,
       bytesPerSample: 2,
       numChannels: 1,

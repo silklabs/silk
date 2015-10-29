@@ -20,8 +20,12 @@ void FaceDetection::postData(int32_t msgType, const sp<IMemory>& dataPtr,
     camera_frame_metadata_t *metadata) {
   (void) dataPtr;
   if ((CAMERA_MSG_PREVIEW_METADATA & msgType) && metadata) {
-    mChannel->send(Channel::TAG_FACES, metadata->faces,
-        sizeof(camera_face_t) * metadata->number_of_faces);
+    size_t size = sizeof(camera_face_t) * metadata->number_of_faces;
+    void *faceData = malloc(size);
+    if (faceData != nullptr) {
+      memcpy(faceData, metadata->faces, size);
+      mChannel->send(Channel::TAG_FACES, faceData, size, free, faceData);
+    }
   }
 }
 

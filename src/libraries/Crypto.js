@@ -22,7 +22,7 @@ const DEFAULT_ROUNDS = 64000;
  *
  * @return {UInt8Array}
  */
-export function getRandomBytes(numberOfBytes, callback = null) {
+export function getRandomBytes(numberOfBytes: number, callback = null): Buffer {
   return new Promise((accept) => {
     let start = Date.now();
     AppCrypto.getRandomBytes(numberOfBytes, function(bytes) {
@@ -31,7 +31,7 @@ export function getRandomBytes(numberOfBytes, callback = null) {
        * of numbers (which are enforced as UInt8 on the native side) which we
        * can then properly convert into a typed array.
        */
-      let result = new Uint8Array(numberOfBytes);
+      let result = new Buffer(numberOfBytes);
       for (let i = 0; i < numberOfBytes; i++) {
         result[i] = bytes[i];
       }

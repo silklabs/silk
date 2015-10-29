@@ -1,11 +1,14 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import { createStreams, RssiSmoother } from 'silk-api';
 import { getRandomBytes } from '../Crypto';
 import makeLog from 'log';
 import Stream from './Stream';
+
+import type { Socket } from './SocketManager';
 
 const streams = createStreams({
   getRandomBytes,
@@ -18,19 +21,19 @@ const log = makeLog(`btle-SocketSession`);
 const RSSI_UPDATE_TIMEOUT = 100;
 
 export default class SocketSession extends MessagePackDuplexStream {
-  _socket = null;
+  _socket: Socket;
 
-  _disconnecting = false;
-  _sentDisconnect = false;
-  _finished = false;
+  _disconnecting: boolean = false;
+  _sentDisconnect: boolean = false;
+  _finished: boolean = false;
 
-  _rssiSmoother = new RssiSmoother();
-  _rssiUpdatesEnabled = false;
-  _rssiUpdatePending = false;
-  _rssiValue = 0;
-  _rssiTimeout = null;
+  _rssiSmoother: RssiSmoother = new RssiSmoother();
+  _rssiUpdatesEnabled: boolean = false;
+  _rssiUpdatePending: boolean = false;
+  _rssiValue: number = 0;
+  _rssiTimeout: ?number = null;
 
-  constructor(socket) {
+  constructor(socket: Socket) {
     log.debug(`SocketSession()`);
 
     let stream = new Stream(socket);
@@ -46,7 +49,7 @@ export default class SocketSession extends MessagePackDuplexStream {
     this.once(`finish`, this._onFinish);
   }
 
-  _onSocketRssiUpdate = rssi => {
+  _onSocketRssiUpdate: ((rssi: number) => void) = (rssi) => {
     log.debug(`SocketSession._onSocketRssiUpdate(${rssi})`);
 
     this._rssiSmoother.update(rssi);
@@ -64,19 +67,19 @@ export default class SocketSession extends MessagePackDuplexStream {
     }
   };
 
-  _onSocketDisconnect = () => {
+  _onSocketDisconnect: (() => void) = () => {
     log.debug(`SocketSession._onSocketDisconnect()`);
 
     this._killRssiUpdates();
   };
 
-  _onEnd = () => {
+  _onEnd: (() => void) = () => {
     log.debug(`SocketSession._onEnd()`);
 
     this._killRssiUpdates();
   };
 
-  _onFinish = () => {
+  _onFinish: (() => void) = () => {
     log.debug(`SocketSession._onFinish()`);
 
     assert(!this._rssiUpdatesEnabled);
@@ -122,15 +125,15 @@ export default class SocketSession extends MessagePackDuplexStream {
     this.end();
   }
 
-  get connected() {
+  get connected(): boolean {
     return !this._disconnecting;
   }
 
-  get rssi() {
+  get rssi(): number {
     return this._rssiValue;
   }
 
-  get rssiUpdatesEnabled() {
+  get rssiUpdatesEnabled(): boolean {
     return this._rssiUpdatesEnabled;
   }
 

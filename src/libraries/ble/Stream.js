@@ -1,19 +1,23 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import { Duplex } from 'stream';
 import makeLog from 'log';
 
+import type { Socket } from './SocketManager';
+
 const log = makeLog(`btle-stream`);
 
 export default class Stream extends Duplex {
-  _socket = null;
-  _writeError = null;
-  _ended = false;
-  _finished = false;
+  _socket: Socket;
 
-  constructor(socket) {
+  _writeError: ?Error = null;
+  _ended: boolean = false;
+  _finished: boolean = false;
+
+  constructor(socket: Socket) {
     log.debug(`Stream()`);
 
     super();
@@ -43,11 +47,11 @@ export default class Stream extends Duplex {
     });
   }
 
-  _read(size) {
+  _read(size: number) {
     // Nothing to do here.
   }
 
-  _write(data, encoding, callback) {
+  _write(data: Buffer, encoding: 'buffer', callback: ((error: ?Error) => void)) {
     log.debug(`Stream._write(<Buffer ${data.length}>, ${encoding})`);
     assert(encoding === `buffer`);
 
@@ -62,7 +66,7 @@ export default class Stream extends Duplex {
     callback(this._writeError);
   }
 
-  _setWriteError(error) {
+  _setWriteError(error: Error) {
     log.debug(`Stream._setWriteError('${error.toString()}')`);
 
     if (this._writeError) {
@@ -72,19 +76,19 @@ export default class Stream extends Duplex {
     }
   }
 
-  _onError = error => {
+  _onError: ((error: Error) => void) = (error) => {
     log.debug(`Stream._onError('${error.toString()}')`);
 
     this.emit(`error`, error);
   };
 
-  _onData = data => {
+  _onData: ((data: Buffer) => void) = (data) => {
     log.debug(`Stream._onData(<Buffer ${data.length}>)`);
 
     this.push(data);
   };
 
-  _onDisconnect = () => {
+  _onDisconnect: (() => void) = () => {
     log.debug(`Stream._onDisconnect()`);
 
     this._socket.removeListener(`error`, this._onError);

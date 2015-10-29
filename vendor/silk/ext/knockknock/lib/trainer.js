@@ -14,7 +14,14 @@ const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
 const FACE_COUNT = 100;
-const FACE_PADDING = 5;
+
+const DESIRED_LEFT_EYE_X = 0.23; // Desired left eye center on a scale of 1.0
+const DESIRED_LEFT_EYE_Y = 0.2;
+const FACE_ELLIPSE_CY = 0.40;
+const FACE_ELLIPSE_W = 0.50; // Controls the width of the face mask
+const FACE_ELLIPSE_H = 0.80; // Controls the height of the face mask
+const FACE_WIDTH = 75;
+const FACE_HEIGHT = FACE_WIDTH;
 
 let log;
 
@@ -122,6 +129,88 @@ export default class Trainer {
   }
 
   /**
+   * Performs face preprocessing as a combination of:
+   *  - Geometrical scaling, rotation and translation using Eye Detection
+   *  - Smoothing away image noise using a Bilateral Filter
+   *  - Standardize the brightness on both left and right sides of the face
+   *    independently using separated Histogram Equalization
+   *  - Removal of background and hair using an Elliptical Mask
+   *
+   *  Reference: https://github.com/MasteringOpenCV/code/blob/master/
+   *             Chapter8_FaceRecognition/preprocessFace.cpp
+   *  @returns a preprocessed face square image
+   */
+  _preprocessFace(im, face) {
+    const leftEye = {x: face.leftEye[0], y: face.leftEye[1]};
+    const rightEye = {x: face.rightEye[0], y: face.rightEye[1]};
+    let gray = im.roi(face.x, face.y, face.width, face.height);
+
+    // Since we found both eyes lets rotate & scale & translate the face so that
+    // the two eyes line up perfectly with ideal eye positions. This makes sure
+    // that eyes will be horizontal, and not too far left or right of the face
+
+    // Get the center between the 2 eyes
+    const eyesCenter = new cv.Point((leftEye.x + rightEye.x) * 0.5,
+        (leftEye.y + rightEye.y) * 0.5);
+
+    // Get the angle between the 2 eyes
+    const dy = (rightEye.y - leftEye.y);
+    const dx = (rightEye.x - leftEye.x);
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * 180.0 / cv.Constants.CV_PI; // Convert radians to degrees
+
+    // Get the amount we need to scale the image to be the desired fixed size we
+    // want
+    const DESIRED_RIGHT_EYE_X = (1.0 - DESIRED_LEFT_EYE_X);
+    const desiredLen = (DESIRED_RIGHT_EYE_X - DESIRED_LEFT_EYE_X) * FACE_WIDTH;
+    const scale = desiredLen / len;
+
+    // Get the transformation matrix for rotating and scaling the face to the
+    // desired angle & size
+    let rotMatrix = new cv.Matrix(2, 3, cv.Constants.CV_8UC1);
+    rotMatrix.getRotationMatrix2D(angle, eyesCenter.x, eyesCenter.y, scale);
+
+    // Shift the center of the eyes to be the desired center between the eyes
+    const adjustx = rotMatrix.get(0, 2) + (FACE_WIDTH * 0.5 - eyesCenter.x);
+    const adjusty = rotMatrix.get(1, 2) + (FACE_HEIGHT * DESIRED_LEFT_EYE_Y -
+        eyesCenter.y);
+    rotMatrix.set(0, 2, adjustx);
+    rotMatrix.set(1, 2, adjusty);
+    log.debug(`Eye center: ${eyesCenter.x}, ${eyesCenter.y} angle: ${angle}`);
+
+    // Rotate and scale the image to the desired angle, position and size
+    // Reference: http://docs.opencv.org/doc/tutorials/imgproc/imgtrans/
+    //            warp_affine/warp_affine.html
+    gray.warpAffine(rotMatrix, FACE_WIDTH, FACE_HEIGHT);
+
+    // Use the "Bilateral Filter" to reduce pixel noise by smoothing the image,
+    // but keeping the sharp edges in the face
+    gray.bilateralFilter(0, 20.0, 2.0);
+
+    const cols = gray.width();
+    const rows = gray.height();
+
+    // Filter out the corners of the face, since we mainly just care about the
+    // middle parts
+    // Draw a filled ellipse in the middle of the face-sized image
+    let mask = new cv.Matrix(rows, cols, cv.Constants.CV_8UC1, [0]);
+    const faceCenter = new cv.Point(FACE_WIDTH / 2,
+        Math.round(FACE_HEIGHT * FACE_ELLIPSE_CY));
+    const faceWidth = Math.round(FACE_WIDTH * FACE_ELLIPSE_W);
+    const faceHeight = Math.round(FACE_HEIGHT * FACE_ELLIPSE_H);
+    mask.ellipse(faceCenter.x, faceCenter.y, faceWidth, faceHeight, [255],
+        cv.Constants.CV_FILLED);
+
+    // Use the mask to remove outside pixels
+    let dstImg = new cv.Matrix(rows, cols, cv.Constants.CV_8UC1, [128, 128, 128]);
+
+    // Apply elliptical mask on the face
+    gray.copyWithMask(dstImg, mask);
+
+    return dstImg;
+  }
+
+  /**
    * Start collecting faces for the specified person and store the resulting
    * face set to be later used for training for that person
    *
@@ -162,8 +251,7 @@ export default class Trainer {
           // Save the face
           this._working = false;
           faces.forEach(face => {
-            let faceim = new cv.Matrix(image, face.x, face.y, face.width, face.height);
-            faceim.adjustROI(FACE_PADDING, FACE_PADDING, FACE_PADDING, FACE_PADDING);
+            let faceim = this._preprocessFace(image, face);
             log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
             faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
             faceCount++;

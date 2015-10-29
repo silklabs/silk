@@ -288,6 +288,7 @@ void applyCameraPropertiesC(void** camera __unused)
 void requestFrameC(void** camera __unused)
 {
   if (sPreviewFrameGrabber != NULL) {
+    ALOGV("requestFrameC");
     sPreviewFrameGrabber->requestFrame();
   }
 }

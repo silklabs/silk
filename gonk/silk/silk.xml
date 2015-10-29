@@ -69,7 +69,7 @@
   <project name="peterbraden/node-opencv"
            path="external/node-opencv"
            remote="github"
-           revision="90971d3ac8f329843f0c198872e48138334eece5"
+           revision="58093bdcfc4c02655f7267f024e0128b5e8979ec"
            upstream="master"
            clone-depth="42"/>
   <project name="silklabs/node-kissfft"

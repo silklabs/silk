@@ -18,7 +18,11 @@ const SCHEMA = {
     manufacturer: Joi.string().required(),
     model: Joi.string().required(),
     version: Joi.string().required(),
-    image: Joi.array().optional(),
+    // TODO: this should really be
+    // Joi.object().type(Uint8Array).optional()
+    // but that doesn't work due to the Uint8Array polyfill.
+    // See https://github.com/silklabs/silk-app/issues/597.
+    image: Joi.object().optional(),
   }).required(),
 
   registered: Joi.object().keys({
@@ -199,7 +203,8 @@ export class DeviceSession extends EventEmitter {
       this._manufacturer = data.manufacturer;
       this._model = data.model;
       this._version = data.version;
-      if (`image` in data) {
+      // TODO: see https://github.com/silklabs/silk-app/issues/597
+      if (false && (`image` in data)) {
         this._image = new Buffer(data.image);
       }
 

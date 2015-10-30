@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "license": "proprietary",
   "dependencies": {
+    "babelify": "^6.3.0",
     "babel-runtime": "^5.8.20",
     "base64url": "^1.0.4",
     "debug": "^2.2.0",
@@ -18,6 +19,11 @@
     "pbkdf2": "^3.0.4",
     "promise": "^6.1.0",
     "uuid": "^2.0.1"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
   },
   "engines": {
     "node": "0.12.x || >=4.0.0"

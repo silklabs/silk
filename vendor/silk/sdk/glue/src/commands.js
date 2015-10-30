@@ -149,17 +149,21 @@ export default function(baseDirectory = process.env.BASEDIR) {
           gutil.log('(browserify)', gutil.colors.red('Browserify Error'));
           gutil.log('(browserify)', err.toString());
           gutil.log('(browserify)', err.codeFrame);
-          return;
+        } else {
+          gutil.log(err);
         }
-        gutil.log(err);
+        process.exit(1);
       })
       .pipe(source(pkg.main))
       .pipe(buffer())
       .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
       .pipe(gulpif(!(process.env.NO_UGLY === '1'), uglify(uglifyCfg)))
       .on('error', err => {
-         gutil.log('(uglify)', gutil.colors.red('Uglify Error'));
-         gutil.log('(uglify)', err);
+        gutil.log('(uglify)', gutil.colors.red('Uglify Error'));
+        gutil.log('(uglify)', err.message);
+        gutil.log('(uglify)', err.fileName);
+        gutil.log('(uglify)', err.lineNumber);
+        process.exit(1);
       })
       .pipe(sourcemaps.write('.', {includeContent: false})) // writes .map file
       .pipe(gulp.dest(baseDirectory));

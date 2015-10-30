@@ -175,22 +175,23 @@ export class DeviceSession extends EventEmitter {
   };
 
   _onData = data => {
-    log.debug(`DeviceSession._onData()`);
+    log.debug(`DeviceSession._onData()`, data);
 
     if (!this._validateData(data)) {
       this._forceDisconnect();
       return;
     }
 
-    if (this._state === DeviceSession.STATE_ERROR) {
+    const state = this._state;
+    if (state === DeviceSession.STATE_ERROR) {
       log.debug(`Received data while in the ERROR state, ignoring`);
       return;
     }
 
     switch (data.name) {
     case `id`:
-      if (this._state !== DeviceSession.STATE_UNKNOWN) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_UNKNOWN) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -206,8 +207,8 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `registered`:
-      if (this._state !== DeviceSession.STATE_ID_RECEIVED) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_ID_RECEIVED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -217,8 +218,9 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `status`:
-      if (this._state !== DeviceSession.STATE_REGISTERED) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
+          state !== DeviceSession.STATE_REGISTERED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -230,8 +232,9 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `error`:
-      if (this._state !== DeviceSession.STATE_REGISTERED) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
+          state !== DeviceSession.STATE_REGISTERED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -244,8 +247,8 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `register`:
-      if (this._state !== DeviceSession.STATE_ID_RECEIVED) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_ID_RECEIVED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -254,9 +257,10 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `rssi`:
-      if (this._state !== DeviceSession.STATE_REGISTERING &&
-          this._state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_REGISTERING &&
+          state !== DeviceSession.STATE_REGISTERING_PROXIMITY &&
+          state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -264,9 +268,9 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `secret`:
-      if (this._state !== DeviceSession.STATE_REGISTERING &&
-          this._state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_REGISTERING &&
+          state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -278,8 +282,8 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `restart`:
-      if (this._state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
@@ -288,8 +292,8 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `complete`:
-      if (this._state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 

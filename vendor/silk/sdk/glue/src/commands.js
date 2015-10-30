@@ -138,9 +138,10 @@ export default function(baseDirectory = process.env.BASEDIR) {
     // these values...
     let babelrc = getBabelrc();
     let cacheProps = [pkgSource, babelrc]
+
     let uglifyCfg = {
       compress: {keep_fnames: true},
-      mangle: {keep_fnames: true}
+      mangle: false
     };
 
     return browserifyStream.bundle()

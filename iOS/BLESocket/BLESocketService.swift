@@ -6,11 +6,11 @@ private let log = DebugLog.create("silk-beacon")
 
 // This class sends a BLE service advertisement when in the home region
 // and stops the advertisement when outside of the home region.
-class HomeBeacon: NSObject,
-                  CBCentralManagerDelegate,
-                  CBPeripheralManagerDelegate,
-                  CBPeripheralDelegate {
-  private static var instance: HomeBeacon!
+class BLESocketService: NSObject,
+                        CBCentralManagerDelegate,
+                        CBPeripheralManagerDelegate,
+                        CBPeripheralDelegate {
+  private static var instance: BLESocketService!
 
   // This will be the 'local name' for the device when advertising.
   let deviceName = "Silk-app"
@@ -64,7 +64,7 @@ class HomeBeacon: NSObject,
   private var nextConnectionId = 0
 
   override init() {
-    log.debug("HomeBeacon()")
+    log.debug("BLESocketService()")
 
     self.characteristic =
       CBMutableCharacteristic(type: characteristicUuid,
@@ -84,11 +84,11 @@ class HomeBeacon: NSObject,
 
     super.init()
 
-    BLESocketManager.setBeacon(self)
+    BLESocketManager.setSocketService(self)
 
-    assert(HomeBeacon.instance == nil,
+    assert(BLESocketService.instance == nil,
            "BLESocketManager can't handle more than one instance!")
-    HomeBeacon.instance = self
+    BLESocketService.instance = self
 
     self.peripheralManager.delegate = self
     self.centralManager.delegate = self
@@ -99,7 +99,7 @@ class HomeBeacon: NSObject,
   }
 
   func startAdvertising() {
-    log.debug("HomeBeacon.startAdvertising()")
+    log.debug("BLESocketService.startAdvertising()")
 
     assert(!self.advertising, "Already advertising")
 
@@ -114,7 +114,7 @@ class HomeBeacon: NSObject,
   }
 
   func stopAdvertising() {
-    log.debug("HomeBeacon.stopAdvertising()")
+    log.debug("BLESocketService.stopAdvertising()")
 
     assert(self.advertising, "Not advertising")
 
@@ -480,6 +480,7 @@ class HomeBeacon: NSObject,
   }
 }
 
-private func ==(lhs: HomeBeacon.Connection, rhs: HomeBeacon.Connection) -> Bool {
+private func ==(lhs: BLESocketService.Connection,
+                rhs: BLESocketService.Connection) -> Bool {
   return lhs === rhs;
 }

@@ -9,7 +9,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
 
   var window: UIWindow?
   var regionMonitor: RegionMonitor?
-  var homeBeacon: HomeBeacon?
+  var bleSocketService: BLESocketService?
   var entered = false
 
   // This is the unique UUID of silk-device
@@ -64,7 +64,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     // Start monitoring for home region
     self.regionMonitor = RegionMonitor(uuid: homeRegionUuid)
     self.regionMonitor!.delegate = self
-    self.homeBeacon = HomeBeacon()
+    self.bleSocketService = BLESocketService()
 
     // Allow audio playback even when user has enabled mute switch.
     let _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
@@ -92,7 +92,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     if self.entered != entered {
       self.entered = entered
       notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
-      self.homeBeacon!.setIsEnabled(entered)
+      self.bleSocketService!.setIsEnabled(entered)
     }
   }
 }

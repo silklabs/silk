@@ -4,9 +4,9 @@ private let log = DebugLog.create("silk-blesocketmanager")
 public class BLESocketManager : NSObject, RCTBridgeModule {
 
   private static var instance: BLESocketManager? = nil
-  internal class func setBeacon(beacon: HomeBeacon!) {
+  internal class func setSocketService(service: BLESocketService!) {
     assert(BLESocketManager.instance != nil)
-    BLESocketManager.instance!.homeBeacon = beacon
+    BLESocketManager.instance!.bleSocketService = service
   }
 
   internal class func getOrCreateInstance() -> BLESocketManager! {
@@ -24,7 +24,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     return instance
   }
 
-  private var homeBeacon: HomeBeacon!
+  private var bleSocketService: BLESocketService!
   public let methodQueue: dispatch_queue_t
 
   // RCTBridgeModule
@@ -46,8 +46,8 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     }
     set {
       self._bridge = newValue
-      if let beacon = self.homeBeacon {
-        beacon.updateSocketManager(self)
+      if let bleSocketService = self.bleSocketService {
+        bleSocketService.updateSocketManager(self)
       }
     }
   }
@@ -63,9 +63,9 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
       BLESocketManager.instance = nil
 
       self.methodQueue = previous.methodQueue
-      self.homeBeacon = previous.homeBeacon
+      self.bleSocketService = previous.bleSocketService
 
-      previous.homeBeacon = nil
+      previous.bleSocketService = nil
     } else {
       self.methodQueue = dispatch_queue_create("com.silklabs.bluetooth", nil)
     }
@@ -94,13 +94,13 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     let data = NSData(base64EncodedString: dataBase64 as String,
                       options: decodingOptions)
 
-    self.homeBeacon.send(id, data: data)
+    self.bleSocketService.send(id, data: data)
   }
 
   func updateRssi(id: NSInteger) {
     log.debug("BLESocketManager.updateRssi(\(id))")
 
-    self.homeBeacon.updateRssi(id)
+    self.bleSocketService.updateRssi(id)
   }
 
   internal func receive(id: Int, data: NSData!) {

@@ -417,6 +417,10 @@ class DeviceManager extends EventEmitter {
   _onDisconnect = socket => {
     log.debug(`DeviceManager._onDisconnect()`);
 
+    let device = this._devices.get(socket);
+    if (device) {
+      device.emit(`disconnect`);
+    }
     this._devices.delete(socket);
   };
 }

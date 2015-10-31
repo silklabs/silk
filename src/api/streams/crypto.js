@@ -271,10 +271,6 @@ export class EncryptStream extends CryptoStreamBase {
     this.push(outgoing);
 
     this._pushedPublicKey = true;
-
-    if (this._sharedSecret) {
-      this._processBufferedChunks();
-    }
   }
 
   get sharedSecret() {
@@ -718,8 +714,8 @@ export class CryptoDuplexStream extends DuplexTransform {
       }
 
       const keyPair = ec.genKeyPair({ entropy: bytes });
-      decrypt.setKeyPair(keyPair);
       encrypt.setKeyPair(keyPair);
+      decrypt.setKeyPair(keyPair);
     });
 
     decrypt.once(`sharedSecret`, sharedSecret => {

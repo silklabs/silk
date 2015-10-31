@@ -5,15 +5,21 @@ import UIKit
 private let log = DebugLog.create("silk-app")
 
 @UIApplicationMain
-class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
+class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
+  let regionMonitor: RegionMonitor
+  let bleSocketPeripheral: BLESocketPeripheral
   var window: UIWindow?
-  var regionMonitor: RegionMonitor?
-  var bleSocketService: BLESocketService?
-  var entered = false
 
-  // This is the unique UUID of silk-device
-  let homeRegionUuid = "e0f3a744-fb2f-46f1-b45a-f2b398f2a424"
+  override init() {
+    self.regionMonitor = RegionMonitor()
+    self.bleSocketPeripheral =
+      BLESocketPeripheral(serviceUuids: regionMonitor.regionUuids)
+    
+    super.init()
+    
+    self.regionMonitor.delegate = self
+  }
 
   func loadConfig() -> Config {
     let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
@@ -61,11 +67,6 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     self.window?.rootViewController = rootViewController
     self.window?.makeKeyAndVisible()
 
-    // Start monitoring for home region
-    self.regionMonitor = RegionMonitor(uuid: homeRegionUuid)
-    self.regionMonitor!.delegate = self
-    self.bleSocketService = BLESocketService()
-
     // Allow audio playback even when user has enabled mute switch.
     let _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
 
@@ -88,11 +89,19 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     UIApplication.sharedApplication().scheduleLocalNotification(notification)
   }
 
-  func regionStateChanged(entered: Bool) {
-    if self.entered != entered {
-      self.entered = entered
-      notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
-      self.bleSocketService!.setIsEnabled(entered)
-    }
+  func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor)
+    self.bleSocketPeripheral.addServiceUuid(uuid)
+  }
+
+  func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor)
+    self.bleSocketPeripheral.removeServiceUuid(uuid)
+  }
+
+  func regionStateChanged(regionMonitor: RegionMonitor, entered: Bool) {
+    assert(regionMonitor === self.regionMonitor)
+    notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
+    self.bleSocketPeripheral.setIsInRegion(entered)
   }
 }

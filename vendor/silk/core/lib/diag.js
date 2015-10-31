@@ -105,7 +105,12 @@ class Diag {
 
     this.loggers = [
       new DiagLogger(this.id, 'logcat',
-        '/system/bin/logcat', ['-v', 'threadtime']),
+        '/system/bin/logcat',
+        /* "-T 1000" to provide a reasonably-sized scrollback to start with.
+           Some devices could have a very large and full logcat buffer (eg,
+           16MB) and sending all that data on initial connect is choking to the
+           current Diag webapp client */
+        ['-v', 'threadtime', '-T', '1000']),
 
       new DiagLogger(this.id, 'procrank',
         '/system/xbin/procrank', [], 10),

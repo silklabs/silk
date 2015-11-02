@@ -45,40 +45,42 @@ void *Channel::startTransmitThread(void *arg) {
 void Channel::transmitThread() {
   Looper::setForThread(mTransmitLooper);
 
-  while (mTransmitLooper->pollOnce(-1)) {
-    QueuedPacket *packet = nullptr;
-
+  QueuedPacket *packet = nullptr;
+  for (;;) {
     {
       Mutex::Autolock autoLock(mPacketQueueLock);
+
       if (!mPacketQueue.empty()) {
         List<QueuedPacket *>::iterator i = mPacketQueue.begin();
         packet = *i;
         mPacketQueue.erase(i);
+        --mPacketQueueByTag[packet->tag];
       }
     }
 
     if (packet == nullptr) {
-      continue;
-    }
-
-    ALOGV("xmit tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
-          packet->tag, packet->size, packet->when.tv_sec, packet->when.tv_usec,
-          packet->durationMs);
-    if (isSocketAvailable()) {
-      Header header = { packet->size, packet->tag, packet->when, packet->durationMs };
-      sendData(&header, sizeof(header));
-      if (packet->size > 0) {
-        sendData(packet->data, packet->size);
+      // The packet queue is empty. Wait until |wake()| is called after a new
+      // packet is enqueued.
+      int event = mTransmitLooper->pollOnce(-1);
+      if (event != Looper::POLL_WAKE) {
+        ALOGE("Unexpected event: %d", event);
       }
     } else {
-      ALOGV("Socket not available; packet dropped");
+      ALOGV("xmit tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
+            packet->tag, packet->size, packet->when.tv_sec, packet->when.tv_usec,
+            packet->durationMs);
+      if (isSocketAvailable()) {
+        Header header = { packet->size, packet->tag, packet->when, packet->durationMs };
+        sendData(&header, sizeof(header));
+        if (packet->size > 0) {
+          sendData(packet->data, packet->size);
+        }
+      } else {
+        ALOGV("socket not available; packet dropped");
+      }
+      delete packet;
+      packet = nullptr;
     }
-
-    {
-      Mutex::Autolock autoLock(mPacketQueueLock);
-      --mPacketQueueByTag[packet->tag];
-    }
-    delete packet;
   }
 }
 
@@ -88,22 +90,26 @@ void Channel::transmitThread() {
 void Channel::send(Tag tag, timeval &when, int32_t durationMs,
                    const void *data, size_t size,
                    FreeDataFunc freeDataFunc, void *freeData) {
-  ALOGV("queuing tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
-        tag, size, when.tv_sec, when.tv_usec, durationMs);
+  QueuedPacket *packet = new QueuedPacket(tag, when, durationMs, data, size, freeDataFunc, freeData);
+  bool drop = true;
 
   {
     Mutex::Autolock autoLock(mPacketQueueLock);
-    bool drop = false;
-    QueuedPacket *packet = new QueuedPacket(tag, when, durationMs, data, size, freeDataFunc, freeData);
 
-    if (mPacketQueueByTag[tag] >= MaxPacketQueueByTag[tag]) {
-      ALOGE("Packet queue full for tag: %d (%d/%d), dropping...",
-        tag, mPacketQueueByTag[tag], MaxPacketQueueByTag[tag]);
-      delete packet;
-      return;
+    if (mPacketQueueByTag[tag] < MaxPacketQueueByTag[tag]) {
+      mPacketQueue.push_back(packet);
+      ++mPacketQueueByTag[tag];
+      drop = false;
     }
-    mPacketQueue.push_back(packet);
-    ++mPacketQueueByTag[tag];
+  }
+
+  ALOGV("queuing tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
+        tag, size, when.tv_sec, when.tv_usec, durationMs);
+  if (drop) {
+    ALOGE("Packet queue full for tag: %d (%d/%d), dropping...",
+      tag, mPacketQueueByTag[tag], MaxPacketQueueByTag[tag]);
+    delete packet;
+  } else {
     mTransmitLooper->wake();
   }
 }

@@ -43,6 +43,17 @@ if [ -z $1 ]; then
     NODE_ARGS="$NODE_ARGS --debug"
   fi
 
+  # Reduce the size of the v8 heap.  The default values in MBs are:
+  #   --max_semi_space_size=8 --max_old_space_size=700 --max_executable_size=256"
+  #
+  # These values were derived from the kMax*SizeLowMemoryDevice constants in
+  # v8/src/heap.h and observations from --trace_gc_verbose output
+  NODE_ARGS="$NODE_ARGS --max_semi_space_size=4 --max_old_space_size=192 --max_executable_size=64"
+
+  # Emit gc traces for easy runtime monitoring
+  NODE_ARGS="$NODE_ARGS --trace_gc"
+  #NODE_ARGS="$NODE_ARGS --trace_gc_verbose" # Uncomment for more
+
   # Feign sys.boot_completed for the benefit of other Gonk components that
   # listen on it.
   setprop sys.boot_completed 1

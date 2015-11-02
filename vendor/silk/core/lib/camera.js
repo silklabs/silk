@@ -448,25 +448,27 @@ class CameraStream extends EventEmitter {
       let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
 
       let pkt = buf.slice(pos + HEADER_NR_BYTES, pos + HEADER_NR_BYTES + size);
+
+      let tagInfo = `| size:${size} when:${sec}.${usec} durationMs:${durationMs}`;
       switch (tag) {
       case TAG_VIDEO:
-        log.debug(`TAG_VIDEO ${when}`);
+        log.debug(`TAG_VIDEO ${when}`, tagInfo);
         this.timeline.addVideo(when, durationMs, pkt);
         break;
       case TAG_FACES:
-        log.debug(`TAG_FACES ${when}`);
+        log.debug(`TAG_FACES ${when}`, tagInfo);
         let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
         this.timeline.addFace(when, faces, 'hal');
         break;
       case TAG_MIC:
-        log.debug(`TAG_MIC ${when}`);
+        log.debug(`TAG_MIC ${when}`, tagInfo);
         this.emit('mic-data', {when: when, frames: pkt});
         break;
       default:
         // Flush the buffer and restart the socket
         this._dataBuffer = null;
         this._restart('Invalid capture tag');
-        throw new Error(`Invalid capture tag:${tag} size:${size} when:${sec}.${usec} durationMs:${durationMs}`);
+        throw new Error(`Invalid capture tag #${tag}`, tagInfo);
       }
       pos += HEADER_NR_BYTES + size;
     }

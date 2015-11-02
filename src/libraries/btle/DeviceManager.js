@@ -244,7 +244,7 @@ export class DeviceSession extends EventEmitter {
       }
 
       this._status = {
-        message: data.status,
+        message: data.error,
         isError: true,
         errorCode: 0, // TODO: Real error codes?
       };

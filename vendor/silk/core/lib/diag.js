@@ -41,7 +41,7 @@ class DiagLogger {
         }
       });
     } else {
-      // For a non-streaming log (eg, procrank) collect all the data and send it
+      // For a non-streaming log (eg, dash) collect all the data and send it
       // in one shot once the process exits.
       helper.stdout.on('data', data => {
         this.data += data.toString();
@@ -116,9 +116,6 @@ class Diag {
            16MB) and sending all that data on initial connect is choking to the
            current Diag webapp client */
         ['-v', 'threadtime', '-T', '1000']),
-
-      new DiagLogger(this.id, 'procrank',
-        '/system/xbin/procrank', [], 10),
 
       new DiagLogger(this.id, 'dash',
         '/system/silk/bin/dash', [], 10),

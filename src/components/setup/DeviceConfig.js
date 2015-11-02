@@ -16,7 +16,9 @@ import { LayoutStyles, FormStyles, TitleBarStyles } from '../CommonStyles';
 export default class DeviceConfig extends React.Component {
 
   static propTypes = {
-    deviceId: React.PropTypes.string.isRequired,
+    deviceSecret: React.PropTypes.shape({
+      deviceId: React.PropTypes.string.isRequired,
+    }).isRequired,
     onSave: React.PropTypes.func.isRequired,
     onCancel: React.PropTypes.func.isRequired,
   };
@@ -107,6 +109,7 @@ export default class DeviceConfig extends React.Component {
 
   _handleSave = () => {
     this.props.onSave({
+      deviceId: this.props.deviceSecret.deviceId,
       name: this.state.name,
       ssid: this.state.ssid,
       secret: this.state.secret,

@@ -1,16 +1,25 @@
-private let log = DebugLog.create("silk-blesocketmanager")
+private let log = DebugLog.create("silk-BLESocketManager")
 
 @objc(BLESocketManager)
 public class BLESocketManager : NSObject, RCTBridgeModule {
 
   private static var instance: BLESocketManager? = nil
-  internal class func setBeacon(beacon: HomeBeacon!) {
-    assert(BLESocketManager.instance != nil)
-    BLESocketManager.instance!.homeBeacon = beacon
+  private static var bleSocketPeripheral: BLESocketPeripheral? = nil
+  private static var regionMonitor: RegionMonitor? = nil
+  private static let mainQueue: dispatch_queue_t = dispatch_get_main_queue()
+
+  internal class func setSocketPeripheral(peripheral: BLESocketPeripheral) {
+    assert(BLESocketManager.bleSocketPeripheral == nil)
+    BLESocketManager.bleSocketPeripheral = peripheral
+  }
+
+  internal class func setRegionMonitor(regionMonitor: RegionMonitor) {
+    assert(BLESocketManager.regionMonitor == nil)
+    BLESocketManager.regionMonitor = regionMonitor
   }
 
   internal class func getOrCreateInstance() -> BLESocketManager! {
-    log.debug("BLESocketManager.getOrCreateInstance()")
+    log.debug("getOrCreateInstance()")
 
     if BLESocketManager.instance != nil {
       log.debug("Returning previous instance")
@@ -24,7 +33,6 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     return instance
   }
 
-  private var homeBeacon: HomeBeacon!
   public let methodQueue: dispatch_queue_t
 
   // RCTBridgeModule
@@ -46,8 +54,8 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     }
     set {
       self._bridge = newValue
-      if let beacon = self.homeBeacon {
-        beacon.updateSocketManager(self)
+      if let bleSocketPeripheral = BLESocketManager.bleSocketPeripheral {
+        bleSocketPeripheral.updateSocketManager(self)
       }
     }
   }
@@ -63,9 +71,6 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
       BLESocketManager.instance = nil
 
       self.methodQueue = previous.methodQueue
-      self.homeBeacon = previous.homeBeacon
-
-      previous.homeBeacon = nil
     } else {
       self.methodQueue = dispatch_queue_create("com.silklabs.bluetooth", nil)
     }
@@ -87,18 +92,8 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
   }
 
-  func send(id: NSInteger, dataBase64:NSString) {
-    log.debug("BLESocketManager.send(\(id))")
-
-    let decodingOptions = NSDataBase64DecodingOptions(rawValue: 0)
-    let data = NSData(base64EncodedString: dataBase64 as String,
-                      options: decodingOptions)
-
-    self.homeBeacon.send(id, data: data)
-  }
-
   internal func receive(id: Int, data: NSData!) {
-    log.debug("BLESocketManager.receive(\(id))")
+    log.debug("receive(\(id))")
 
     let encodingOptions = NSDataBase64EncodingOptions(rawValue: 0)
     let dataBase64 = data.base64EncodedStringWithOptions(encodingOptions)
@@ -107,12 +102,94 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     let body = ["id": id, "data": dataBase64]
     self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
   }
+  
+  internal func rssiUpdate(id: Int, rssi: Int) {
+    log.debug("rssiUpdate(\(id), \(rssi))")
+
+    let name = "silk-blesocketmanager-rssi"
+    let body = ["id": id, "rssi": rssi]
+    self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+  }
 
   internal func disconnect(id: Int) {
-    log.debug("BLESocketManager.disconnect(\(id))")
+    log.debug("disconnect(\(id))")
 
     let name = "silk-blesocketmanager-disconnect"
     let body = ["id": id]
     self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+  }
+
+  func start() {
+    log.debug("start()")
+
+    BLESocketManager.bleSocketPeripheral!.setEnabled(true)
+  }
+
+  func stop() {
+    log.debug("stop()")
+
+    BLESocketManager.bleSocketPeripheral!.setEnabled(false)
+  }
+
+  func addBeaconUuid(beaconUuidString: NSString) {
+    log.debug("addBeaconUuid('\(beaconUuidString)')")
+    
+    let beaconUuid = NSUUID(UUIDString: beaconUuidString as String)
+    if beaconUuid == nil {
+      log.error("Invalid uuid string: '\(beaconUuidString)'")
+      return
+    }
+
+    if beaconUuid! == RegionMonitor.configBeaconUuid {
+      log.error("Cannot add the config beacon uuid")
+      return
+    }
+
+    dispatch_async(BLESocketManager.mainQueue) {
+      BLESocketManager.regionMonitor!.startMonitoring(beaconUuid!)
+    }
+  }
+
+  func removeBeaconUuid(beaconUuidString: NSString) {
+    log.debug("removeBeaconUuid('\(beaconUuidString)')")
+
+    let beaconUuid = NSUUID(UUIDString: beaconUuidString as String)
+    if beaconUuid == nil {
+      log.error("Invalid uuid string: '\(beaconUuidString)'")
+      return
+    }
+
+    if beaconUuid! == RegionMonitor.configBeaconUuid {
+      log.error("Cannot remove the config beacon uuid")
+      return
+    }
+
+    dispatch_async(BLESocketManager.mainQueue) {
+      BLESocketManager.regionMonitor!.stopMonitoring(beaconUuid!)
+    }
+  }
+
+  func removeAllBeaconUuids() {
+    log.debug("removeAllBeaconUuids()")
+
+    dispatch_async(BLESocketManager.mainQueue) {
+      BLESocketManager.regionMonitor!.reset()
+    }
+  }
+
+  func send(id: NSInteger, dataBase64: NSString) {
+    log.debug("send(\(id))")
+
+    let decodingOptions = NSDataBase64DecodingOptions(rawValue: 0)
+    let data = NSData(base64EncodedString: dataBase64 as String,
+                      options: decodingOptions)
+
+    BLESocketManager.bleSocketPeripheral!.send(id, data: data)
+  }
+
+  func updateRssi(id: NSInteger) {
+    log.debug("updateRssi(\(id))")
+
+    BLESocketManager.bleSocketPeripheral!.updateRssi(id)
   }
 }

@@ -1,378 +1,448 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-import mklog from 'log'; const log = mklog('cdm');
-import { btleConfigService } from 'silk-api';
+import assert from 'assert';
+import { EventEmitter } from 'events';
+import getSocketManager from './SocketManager';
+import * as Joi from 'joi-browserify';
+import mklog from 'log';
+import SocketSession from './SocketSession';
 
-// HACK to use silk-api btle info...
-let api = {
-  btleConfigService,
-  // TODO: use real crypto...
-  crypto: {
-    create: () => {
-      return {
-        exportPublic: () => 'key',
-        deriveShared: () => 'shared',
-        encrypt: (text) => Promise.resolve(text),
-        decrypt: (text) => text,
+const log = mklog('btle-DeviceManager');
+
+let singletonInstance = null;
+
+const SCHEMA = {
+  id: Joi.object().keys({
+    name: Joi.string().equal(`id`).required(),
+    manufacturer: Joi.string().required(),
+    model: Joi.string().required(),
+    version: Joi.string().required(),
+    // TODO: this should really be
+    // Joi.object().type(Uint8Array).optional()
+    // but that doesn't work due to the Uint8Array polyfill.
+    // See https://github.com/silklabs/silk-app/issues/597.
+    image: Joi.object().optional(),
+  }).required(),
+
+  registered: Joi.object().keys({
+    name: Joi.string().equal(`registered`).required(),
+  }).required(),
+
+  status: Joi.object().keys({
+    name: Joi.string().equal(`status`).required(),
+    status: Joi.string().required(),
+  }).required(),
+
+  error: Joi.object().keys({
+    name: Joi.string().equal(`error`).required(),
+    error: Joi.string().required(),
+  }).required(),
+
+  register: Joi.object().keys({
+    name: Joi.string().equal(`register`).required(),
+  }).required(),
+
+  rssi: Joi.object().keys({
+    name: Joi.string().equal(`rssi`).required(),
+    rssi: Joi.number().integer().min(-100).max(0).required(),
+  }).required(),
+
+  secret: Joi.object().keys({
+    name: Joi.string().equal(`secret`).required(),
+    deviceId: Joi.string().lowercase().trim().length(66).hex().required(),
+  }).required(),
+
+  restart: Joi.object().keys({
+    name: Joi.string().equal(`restart`).required(),
+    error: Joi.string().required(),
+  }).required(),
+
+  complete: Joi.object().keys({
+    name: Joi.string().equal(`complete`).required(),
+  }).required(),
+};
+
+export class DeviceSession extends EventEmitter {
+  static STATE_UNKNOWN = 0;
+  static STATE_ID_RECEIVED = 1;
+  static STATE_REGISTER_REQUESTED = 2;
+  static STATE_REGISTERING = 3;
+  static STATE_REGISTERING_PROXIMITY = 4;
+  static STATE_REGISTERING_SENT_SECRET = 5;
+  static STATE_REGISTERED = 6;
+
+  static STATE_ERROR = 10;
+
+  _socketSession = null;
+  _state = DeviceSession.STATE_UNKNOWN;
+  _secret = null;
+
+  _manufacturer = ``;
+  _model = ``;
+  _version = ``;
+  _image = null;
+
+  _status = null;
+
+  _connectEmitted = false;
+  _registeredEmitted = false;
+  _secretEmitted = false;
+
+  constructor(socket) {
+    log.debug(`DeviceSession()`);
+
+    super();
+
+    const socketSession = new SocketSession(socket);
+    socketSession.addListener(`error`, this._onError);
+    socketSession.addListener(`data`, this._onData);
+    socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
+
+    this._socketSession = socketSession;
+  }
+
+  _validateData(data) {
+    log.debug(`DeviceSession._validateData(%j)`, data);
+
+    if (!(`name` in data)) {
+      log.warn(`Data has no 'name' proptery`);
+      return false;
+    }
+
+    if (!(data.name in SCHEMA)) {
+      log.warn(`Data has unexpected 'name' property: '${data.name}'`);
+      return false;
+    }
+
+    let error;
+    Joi.validate(data, SCHEMA[data.name], (err, val) => {
+      error = err;
+    });
+
+    if (error) {
+      log.warn(`Data failed validation`, error);
+      return false;
+    }
+
+    return true;
+  }
+
+  _forceDisconnect() {
+    log.debug(`DeviceSession._forceDisconnect()`);
+
+    this._state = SocketSession.STATE_ERROR;
+    this._socketSession.rssiUpdatesEnabled = false;
+    this._socketSession.disconnect();
+  }
+
+  _emitConnect() {
+    log.debug(`DeviceSession._emitConnect()`);
+
+    assert(this._state === DeviceSession.STATE_REGISTER_REQUESTED ||
+           this._state === DeviceSession.STATE_REGISTERED);
+    assert(!this._connectEmitted);
+    this._connectEmitted = true;
+
+    singletonInstance.emit(`connect`, this);
+  }
+
+  _emitRegistered() {
+    log.debug(`DeviceSession._emitRegistered()`);
+
+    assert(this._state === DeviceSession.STATE_REGISTERED);
+    assert(!this._registeredEmitted);
+    this._registeredEmitted = true;
+
+    this.emit(`registered`);
+  }
+
+  _maybeEmitSecret() {
+    log.debug(`DeviceSession._maybeEmitSecret()`);
+
+    assert(this._state === DeviceSession.STATE_REGISTERING ||
+           this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
+    assert(!this._secretEmitted);
+
+    if (this._state === DeviceSession.STATE_REGISTERING_PROXIMITY &&
+        this._secret) {
+      this._secretEmitted = true;
+      this.emit(`secret`, this._secret);
+    }
+  }
+
+  _onError = error => {
+    log.debug(`DeviceSession._onError('${error.toString()}')`);
+
+    log.warn(`Session error, disconnecting`, error);
+    this._forceDisconnect();
+  };
+
+  _onData = data => {
+    log.debug(`DeviceSession._onData()`, data);
+
+    if (!this._validateData(data)) {
+      this._forceDisconnect();
+      return;
+    }
+
+    const state = this._state;
+    if (state === DeviceSession.STATE_ERROR) {
+      log.debug(`Received data while in the ERROR state, ignoring`);
+      return;
+    }
+
+    switch (data.name) {
+    case `id`:
+      if (state !== DeviceSession.STATE_UNKNOWN) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
+
+      log.info(`Received device identification information`);
+      this._manufacturer = data.manufacturer;
+      this._model = data.model;
+      this._version = data.version;
+      // TODO: see https://github.com/silklabs/silk-app/issues/597
+      if (false && (`image` in data)) {
+        this._image = new Buffer(data.image);
+      }
+
+      this._state = DeviceSession.STATE_ID_RECEIVED;
+      return;
+
+    case `registered`:
+      if (state !== DeviceSession.STATE_ID_RECEIVED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
+
+      this._state = DeviceSession.STATE_REGISTERED;
+      this._emitConnect();
+      this._emitRegistered();
+      return;
+
+    case `status`:
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
+          state !== DeviceSession.STATE_REGISTERED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
+
+      this._status = {
+        message: data.status,
+        isError: false,
       };
-    },
-  },
-};
+      this.emit(`status`, this._status);
+      return;
 
-var Buffer = require('buffer').Buffer;
-var EventEmitter = require('events').EventEmitter;
+    case `error`:
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
+          state !== DeviceSession.STATE_REGISTERED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
 
-var decls = api.btleConfigService;
-var normUuid = require('./util').normUuid;
+      this._status = {
+        message: data.status,
+        isError: true,
+        errorCode: 0, // TODO: Real error codes?
+      };
+      this.emit(`status`, this._status);
+      return;
 
-function stateToString(state) {
-  switch (state) {
-  case decls.state.UNREGISTERED:
-    return 'unregistered';
-  case decls.state.REGISTERING:
-    return 'registering';
-  case decls.state.REGISTERED:
-    return 'registered';
-  case decls.state.ERROR:
-    return 'error';
-  default:
-    return '???';
-  }
-}
+    case `register`:
+      if (state !== DeviceSession.STATE_ID_RECEIVED) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
 
-// XXX: Remove this once we are converted to await/async.
-function rejectFwd(e) {
-  return Promise.reject(e);
-}
+      this._state = DeviceSession.STATE_REGISTER_REQUESTED;
+      this._emitConnect();
+      return;
 
-function DeviceManager(scanner, userState) {
-  EventEmitter.call(this);
-  this.devices = { };
-  this.scanner = scanner;
-  this.userState = userState;
-  this.scanner.on('discover', this._onPeripheralDiscovered.bind(this));
-  this.scanner.on('disconnect', this._onPeripheralDisconnected.bind(this));
-}
-DeviceManager.prototype = Object.create(EventEmitter.prototype);
+    case `rssi`:
+      if (state !== DeviceSession.STATE_REGISTERING &&
+          state !== DeviceSession.STATE_REGISTERING_PROXIMITY &&
+          state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
 
-DeviceManager.prototype.start = function() {
-  log.info('startScanning');
-  this.scanner.startScanning();
-};
+      this.emit(`rssiUpdate`, data.rssi);
+      return;
 
-DeviceManager.prototype.stop = function() {
-  log.info('stopScanning');
-  this.scanner.stopScanning();
-};
+    case `secret`:
+      if (state !== DeviceSession.STATE_REGISTERING &&
+          state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
 
-DeviceManager.prototype.enumerateDevices = function() {
-  return Object.keys(this.devices).map((id) => this.devices[id]);
-};
+      this._secret = {
+        deviceId: data.deviceId,
+      };
 
-DeviceManager.prototype._onPeripheralDiscovered = function(p) {
-  if (!p.advertisement || !p.advertisement.services
-      || !p.advertisement.services.some(function(u) {
-          return normUuid(u) === normUuid(decls.uuid.ConfigService); })) {
-    //log.debug('(Ignoring non-configurable peripheral '+ p.id +')');
-    return;
-  }
+      this._maybeEmitSecret();
+      return;
 
-  if (p.id in this.devices) {
-    log.debug('already discovered peripheral', p.id);
-    p = this.devices[p.id];
-  } else {
-    log.info('discovered Silk peripheral:', p.id);
-    p.prettyName = p.advertisement.localName;
-    p.serverConnectionStatus = '';
-    p.error = '';
-    p.state = 'discovered';
-    p.connected = false;
-    p.configuring = false;
-    this.devices[p.id] = p;
-    this.emit('discover', p);
-  }
+    case `restart`:
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
 
-  if (!p.connected) {
-    this._connect(p)
-    .catch(err => {
-      // unable to connect to peripheral. disconnect
-      // so that we can try again if the peripheral is still there
-      log.warn(`connect to ${p.id} failed. disconnect and retry`, err);
-      this._disconnect(p);
-    });
-  }
-};
+      this._state = DeviceSession.STATE_REGISTER_REQUESTED;
+      this.emit(`restart`, data.error);
+      return;
 
-DeviceManager.prototype._onPeripheralDisconnected = function(id) {
-  if (!(id in this.devices)) {
-    log.debug('unknown peripheral disconnected:', id);
-    return;
-  }
-  let p = this.devices[id];
+    case `complete`:
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+        log.warn(`Received '${data.name}' while in state ${state}`);
+        break;
+      }
 
-  log.info('disconnected from peripheral:', p.id);
-  clearTimeout(p._pollStatusTimer);
-  p.state = 'disconnected';
-  p.connected = false;
-  this.emit('disconnect', p);
+      this._state = DeviceSession.STATE_REGISTERED;
+      this._emitRegistered();
+      return;
 
-  // Subsequent advertisements are not received after disconnecting from
-  // the peripheral. Workaround this by restarting scanning.
-  this.stop();
-  this.start();
-};
-
-DeviceManager.prototype._readStateCharacteristic = function(p) {
-  return p.readCharacteristic(decls.uuid.StateCharacteristic)
-  .then(data => {
-    var state = stateToString(data.readUInt8(0));
-
-    if (p.state !== state) {
-      log.info('new peripheral state:', p.id, state);
-      p.state = state;
-      this.emit('stateChange', p);
+    default:
+      throw new Error(`Unhandled message: '${data.name}'`);
     }
-    return state;
-  }, rejectFwd);
-};
 
-DeviceManager.prototype._readServerConnectionStatusCharacteristic = function(p) {
-  return p.readCharacteristic(decls.uuid.ServerConnectionStatusCharacteristic)
-  .then(data => {
-    var serverConnectionStatus = data.toString('utf8');
+    this._forceDisconnect();
+  };
 
-    if (p.serverConnectionStatus !== serverConnectionStatus) {
-      log.debug('new connection status', p.id, serverConnectionStatus);
-      p.serverConnectionStatus = serverConnectionStatus;
-      this.emit('statusChange', p);
+  _onRssiUpdate = rssi => {
+    log.debug(`DeviceSession._onRssiUpdate(${rssi})`);
+
+    if (this._state === DeviceSession.STATE_ERROR) {
+      log.debug(`Received rssi update while in the ERROR state, ignoring`);
+      return;
     }
-    return serverConnectionStatus;
-  }, rejectFwd);
-};
 
-DeviceManager.prototype._readErrorDescriptionCharacteristic = function(p) {
-  return p.readCharacteristic(decls.uuid.ErrorDescriptionCharacteristic)
-  .then(data => {
-    var error = data.toString('utf8');
+    assert(this._state >= DeviceSession.STATE_REGISTERING);
 
-    if (p.error !== error) {
-      log.debug('new peripheral error', p.id, error);
-      p.error = error;
-      this.emit('errorChange', p);
+    if (this._state === DeviceSession.STATE_REGISTERING && rssi >= -40) {
+      log.info(`Passed proximity gate`);
+      this._socketSession.rssiUpdatesEnabled = false;
+      this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
+      this._maybeEmitSecret();
     }
-    return error;
-  }, rejectFwd);
-};
+  };
 
-DeviceManager.prototype._pollStatus = function(p) {
-  clearTimeout(p._pollStatusTimer);
-  p._pollStatusTimer = setTimeout(() => {
-    this._readStateCharacteristic(p)
-    .then(() => this._readServerConnectionStatusCharacteristic(p), rejectFwd)
-    .then(() => this._readErrorDescriptionCharacteristic(p), rejectFwd)
-    .then(() => this._pollStatus(p), rejectFwd)
-    .catch(e => {
-      log.debug('cant read from device, likely not there, disconnect', e);
-      this._disconnect(p);
-    });
-  }, 500);
-  return Promise.resolve();
-};
-
-DeviceManager.prototype.configureDevice = async function(peripheralId, onDeviceTouch) {
-  let p = this.devices[peripheralId];
-  if (!p) {
-    throw new Error(`Unknown peripheral: ${peripheralId}`);
+  get manufacturer() {
+    return this._manufacturer;
   }
-  if (p.state !== 'unregistered') {
-    // TODO: We should really be throwing here.
-    log.warn(`Device ${p.deviceId} is in invalid state '${p.state}'`);
-  }
-  p.configuring = true;
-  try {
-    let resumeToken = await this._passProximityGate(p);
-    let config = await onDeviceTouch(p);
-    await this._configureWithoutCrypto(p, resumeToken, config);
-    p.configuring = false;
-  } catch(err) {
-    p.configuring = false;
-    log.warn('error configuring, disconnect and retry', err.toString(), err.stack);
-    this._disconnect(p);
-    throw err;
-  }
-};
 
-DeviceManager.prototype._passProximityGate = function(p) {
-  return this._waitForProximity(p)
-  .then(() => {
-    log.debug('Passed proximity gate');
-    // TODO: get resume token from config service itself
-    var resumeToken = 'TODO-IMPLEMENT-ME';
-    return resumeToken;
-  }, rejectFwd);
-};
+  get model() {
+    return this._model;
+  }
 
-/**
- * Wait until we're close enough to the peripheral so that we
- * can be sure it'll accept our connection.
- */
-DeviceManager.prototype._waitForProximity = function(p) {
-  return new Promise((resolve, reject) => {
-    // TODO: this should be a notification
-    var updateRssiInterval = setInterval(() => {
-      p.readCharacteristic(decls.uuid.RssiCharacteristic)
-      .then(data => {
-        var rssi = -data.readUInt8(0);
-        p.rssi = rssi;
-        this.emit('rssi', p);
-        if (rssi < -40) {
-          // RSSI at or below `min` gets a duty cycle of 0, and at or
-          // above `max` is a duty cycle of 1.0.  The cycle scales
-          // linearly with RSSI in between.
-          var min = -70, max = -40;
-          var scaled = (rssi - min) / (max - min);
-          var duty = Math.min(1.0, Math.max(0.0, scaled));
-          // Set the period to fill 100ms (RSSI poll interval), and be
-          // long enough so that a 0.1 change in duty cycle is
-          // approximately perceptible to the user.
-          var period = 100;
-          var pattern = new Uint16Array([period * duty, period * (1 - duty)]);
-          // TODO: let the UI at the next level up be responsible for
-          // this
-          p.writeCharacteristic(decls.uuid.VibratePatternCharacteristic,
-                                new Buffer(new Uint8Array(pattern.buffer)))
-          .then(() => {}, () => {
-            clearInterval(updateRssiInterval);
-            log.debug('error writing vibrate pattern', p.id);
-            reject(new Error('error writting vibrate pattern'));
-          });
-          return;
-        }
-        clearInterval(updateRssiInterval);
-        resolve();
-      }, rejectFwd)
-      .catch(err => {
-        clearInterval(updateRssiInterval);
-        log.debug('Error reading rssi', err, p.id);
-        reject(new Error('Error reading rssi'));
+  get version() {
+    return this._version;
+  }
+
+  get image() {
+    return this._image;
+  }
+
+  get statusMessage() {
+    return this._statusMessage;
+  }
+
+  get errorMessage() {
+    return this._errorMessage;
+  }
+
+  respondToRegistrationRequest(accept) {
+    log.debug(`DeviceSession.respondToRegistrationRequest(${accept})`);
+
+    if (this._state === DeviceSession.STATE_ERROR) {
+      log.warn(`Cannot begin registration because the session is in the ` +
+               `ERROR state, ignoring`);
+      return;
+    }
+
+    assert(this._state === DeviceSession.STATE_REGISTER_REQUESTED);
+
+    if (accept) {
+      this._socketSession.write({
+        name: `accept`,
       });
-    }, 100);
-  });
-};
+      this._socketSession.rssiUpdatesEnabled = true;
+      this._state = DeviceSession.STATE_REGISTERING;
+      return;
+    }
 
-DeviceManager.prototype._configureWithoutCrypto = async function(p, resumeToken, config) {
-  let state = await this._readStateCharacteristic(p);
-
-  if (state === 'registered') {
-    // Some time may have passed since getting network info. Don't proceed
-    // if we are now registered (or can't read state cause we are longer
-    // connected to device)
-    log.debug('Device is registered, bailing on configuration');
-    return Promise.reject(Error('Device is registered'));
-  }
-
-  log.debug('Writing wifi info to peripheral ...');
-
-  // Register this device with the server... The device will need to
-  // confirm this token on their end.
-
-  // XXX: We should carefully handle error cases here in the future... We will
-  // want to provide some UI around the error state here.
-  let {
-    success,
-    registrarPublicKey,
-    registrationToken,
-  } = await this.userState.registerDevice(
-    config.name,
-    p.deviceId
-  );
-
-  if (!success) {
-    log.error(`Failed to register device with the server.`);
-    throw new Error('Failed to register device with the server.');
-  }
-
-  await Promise.all([
-    p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
-                          new Buffer(config.ssid, 'utf8')),
-
-    p.writeCharacteristic(decls.uuid.SecretCharacteristic,
-                          new Buffer(config.secret, 'utf8')),
-
-    p.writeCharacteristic(decls.uuid.RegistrarPublicKeyCharacteristic,
-                          new Buffer(registrarPublicKey, 'utf8')),
-
-    p.writeCharacteristic(decls.uuid.RegistrationTokenCharacteristic,
-                          new Buffer(registrationToken)),
-  ]);
-
-  log.info('finished configuring');
-};
-
-DeviceManager.prototype._resumeSession = async function(p, token) {
-  log.debug(`Resuming session for peripheral with token ${token} ...`);
-  // TODO: use `token` to actually resume the session; on the device
-  // side, config-service sessions persist across reconnects (which is
-  // a bug).
-};
-
-DeviceManager.prototype._connect = async function(p) {
-  log.info('connecting to peripheral:', p.id);
-
-  await p.connect();
-  let deviceId = await p.readCharacteristic(decls.uuid.DeviceIdCharacteristic);
-  p.deviceId = deviceId.toString();
-  log.info(`read device ID ${p.deviceId}`);
-  await this._pollStatus(p); // TODO: change to notify
-  log.info('connected to peripheral:', p.id);
-  p.state = 'connected';
-  p.connected = true;
-  this.emit('connect', p);
-};
-
-DeviceManager.prototype._disconnect = function(p) {
-  return p.disconnect();
-};
-
-/*
-TODO: this probably will not work post configure refactor
-function configureWithCrypto(config) {
-    return p.writeCharacteristic(decls.uuid.CurveCharacteristic,
-                                 new Buffer('curve25519', 'utf8'));
-  }).then(function() {
-    // TODO: get this from state charc notify
-    p.state = 'registering';
-    self.emit('stateChange', p);
-    central = api.crypto.create('curve25519');
-    return p.writeCharacteristic(decls.uuid.CentralKeyCharacteristic,
-                                 new Buffer(central.exportPublic(), 'binary'));
-  }).then(function() {
-    return p.readCharacteristic(decls.uuid.PeripheralKeyCharacteristic);
-  }).then(function(data) {
-    var key = data.toString('binary');
-    central.deriveShared(key);
-    Promise.all([
-      central.encrypt(config.ssid).then(function(ct) {
-        return p.writeCharacteristic(decls.uuid.AccessPointCharacteristic,
-                                     new Buffer(ct, 'utf8'));
-      }),
-      central.encrypt(config.secret).then(function(ct) {
-        return p.writeCharacteristic(decls.uuid.SecretCharacteristic,
-                                     new Buffer(ct, 'utf8'));
-      })
-    ]).then(function() {
-      // TODO: get this from state charc notify
-      p.state = 'registered';
-      self.emit('stateChange', p);
-      setTimeout(function() {
-        p.disconnect();
-        delete self.devices[p.id];
-        self.emit('disconnect', p);
-      }, 2000);
+    this._socketSession.write({
+      name: `decline`,
     });
-  });
-}
-*/
+    this._forceDisconnect();
+  }
 
-module.exports = DeviceManager;
+  sendRegistrationInformation(config) {
+    log.debug(`DeviceSession.sendRegistrationInformation()`);
+
+    assert(this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
+    assert(this._secretEmitted);
+
+    this._socketSession.write({
+      name: `secret`,
+      ...config,
+    });
+
+    this._state = DeviceSession.STATE_REGISTERING_SENT_SECRET;
+  }
+}
+
+class DeviceManager extends EventEmitter {
+  _devices = new Map();
+  _socketManager = null;
+
+  constructor() {
+    log.debug(`DeviceManager()`);
+
+    super();
+
+    this._socketManager = getSocketManager();
+    this._socketManager.on(`connect`, this._onConnect);
+    this._socketManager.on(`disconnect`, this._onDisconnect);
+  }
+
+  _onConnect = socket => {
+    log.debug(`DeviceManager._onConnect()`);
+
+    assert(!this._devices.has(socket));
+
+    let device = new DeviceSession(socket);
+    this._devices.set(socket, device);
+  };
+
+  _onDisconnect = socket => {
+    log.debug(`DeviceManager._onDisconnect()`);
+
+    let device = this._devices.get(socket);
+    if (device) {
+      device.emit(`disconnect`);
+    }
+    this._devices.delete(socket);
+  };
+}
+
+
+export default function getDeviceManager() {
+  if (!singletonInstance) {
+    singletonInstance = new DeviceManager();
+  }
+
+  let emitter = new EventEmitter();
+  emitter.on('newListener', (event, listener) => {
+    singletonInstance.addListener(event, listener);
+  });
+  emitter.on('removeListener', (event, listener) => {
+    singletonInstance.removeListener(event, listener);
+  });
+
+  return emitter;
+}

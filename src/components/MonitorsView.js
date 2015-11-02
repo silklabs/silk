@@ -13,13 +13,13 @@ let {
 } = React;
 
 import createLog from 'log';
-import { OrderedMap, OrderedSet, Map } from 'immutable';
+import { OrderedMap, OrderedSet } from 'immutable';
 
-import DeviceManager from '../libraries/btle/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
+import { ConfiguringDeviceRecord } from './Records';
 import ErrorBar from './ErrorBar';
 import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
@@ -47,11 +47,10 @@ class MonitorsView extends AsyncComponent {
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
 
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
-    configuringDevice: React.PropTypes.instanceOf(Map),
+    configuringDevice: React.PropTypes.instanceOf(ConfiguringDeviceRecord),
   };
 
   state = {
@@ -244,14 +243,13 @@ class MonitorsView extends AsyncComponent {
   _renderDeviceThumbnails() {
     let { devices, unconfiguredDevices, configuringDevice } = this.props;
 
-    let unconfiguredDeviceThumbnails = unconfiguredDevices.map((peripheralId) => {
-      if (configuringDevice && configuringDevice.peripheralId === peripheralId) {
+    let unconfiguredDeviceThumbnails = unconfiguredDevices.map((bleDeviceSession, index) => {
+      if (configuringDevice && configuringDevice.bleDeviceSession === bleDeviceSession) {
         return null;
       }
       return (
         <MonitorPreview
-          key={peripheralId}
-          peripheralId={peripheralId}
+          key={'unconfiguredDevice-' + index}
           label="New Device"
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={true}
@@ -259,7 +257,7 @@ class MonitorsView extends AsyncComponent {
           haveVideoStream={false}
           socket={this.props.socket}
           hasNetwork={this.props.hasNetwork}
-          bleDeviceManager={this.props.bleDeviceManager}
+          bleDeviceSession={bleDeviceSession}
         />
       );
     }).toArray().reverse();
@@ -268,8 +266,7 @@ class MonitorsView extends AsyncComponent {
     if (configuringDevice) {
       configuringDeviceThumbnail = (
         <MonitorPreview
-          key={configuringDevice.peripheralId}
-          peripheralId={configuringDevice.peripheralId}
+          key="configuringDevice"
           deviceId={configuringDevice.deviceId}
           label={configuringDevice.name || 'New Device'}
           previewSize={DEFAULT_PREVIEW_SIZE}
@@ -278,7 +275,7 @@ class MonitorsView extends AsyncComponent {
           haveVideoStream={false}
           socket={this.props.socket}
           hasNetwork={this.props.hasNetwork}
-          bleDeviceManager={this.props.bleDeviceManager}
+          bleDeviceSession={configuringDevice.bleDeviceSession}
         />
       );
     }
@@ -296,7 +293,7 @@ class MonitorsView extends AsyncComponent {
         onPress={() => this.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
         hasNetwork={this.props.hasNetwork}
-        bleDeviceManager={this.props.bleDeviceManager}
+        bleDeviceSession={device.bleDeviceSession} // TODO: add this to configured devices
       />
     )).toArray().reverse();
 

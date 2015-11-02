@@ -9,10 +9,10 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; settings = {ASSET_TAGS = (); }; };
-		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; settings = {ASSET_TAGS = (); }; };
+		3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */; };
+		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; };
+		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
-		3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */; };
 		5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0641B734C4A00B0630C /* VideoSegment.swift */; };
 		5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
@@ -272,10 +272,10 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketPeripheral.swift; sourceTree = "<group>"; };
 		3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketManager.swift; sourceTree = "<group>"; };
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
-		3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeBeacon.swift; sourceTree = "<group>"; };
 		5714A0641B734C4A00B0630C /* VideoSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoSegment.swift; sourceTree = "<group>"; };
 		5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTConvertVideoSegment.h; sourceTree = "<group>"; };
 		5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTConvertVideoSegment.m; sourceTree = "<group>"; };
@@ -462,19 +462,11 @@
 		3CFBF22B1BBF41ED00A7AF67 /* BLESocket */ = {
 			isa = PBXGroup;
 			children = (
+				3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */,
 				3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */,
 				3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */,
 			);
 			path = BLESocket;
-			sourceTree = "<group>";
-		};
-		3D85672F1B72DF64000C8BE1 /* iBeacon */ = {
-			isa = PBXGroup;
-			children = (
-				3D8567341B72DF9D000C8BE1 /* HomeBeacon.swift */,
-				3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */,
-			);
-			path = iBeacon;
 			sourceTree = "<group>";
 		};
 		573C20C51B4EF5C900C40871 /* PropertyObserver */ = {
@@ -551,9 +543,7 @@
 				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
-				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
 				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
-				3D85672F1B72DF64000C8BE1 /* iBeacon */,
 				57BCE10B1B69910C0047088B /* NSDataBridge */,
 				57BCE0F51B695FB10047088B /* RCTConvert */,
 				5758F25E1B600AD300C18E5D /* PreviewImage */,
@@ -568,12 +558,14 @@
 				F954C3FB1B37247E0081F479 /* CBPeripheral+Extensions.h */,
 				F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */,
 				5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */,
+				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
 				579422371B963F1B0068569E /* ErrorDomain.swift */,
 				5741E0BF1B5A108D00F9376C /* LoadConfig.swift */,
 				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
 				5758F33E1B61681300C18E5D /* NotImplemented.swift */,
 				5714F47C1BA373DC0087A138 /* NSDataExtension.swift */,
 				5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */,
+				3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */,
 				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
 				5758F23A1B5EFE7600C18E5D /* Sync.swift */,
 				57BCE0FB1B6984360047088B /* TypeTransfer.swift */,
@@ -1017,11 +1009,11 @@
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				5758F2641B600B2000C18E5D /* ImageView.swift in Sources */,
 				5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */,
+				3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
-				3D8567351B72DF9D000C8BE1 /* HomeBeacon.swift in Sources */,
 				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,

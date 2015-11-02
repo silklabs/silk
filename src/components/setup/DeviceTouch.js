@@ -9,38 +9,72 @@ let {
 import ProximityMeter from './ProximityMeter';
 import { LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
-import DeviceManager from '../../libraries/btle/DeviceManager';
+import { DeviceSession } from '../../libraries/btle/DeviceManager';
 
 const RSSI_CLOSE = -50;
 const RSSI_NEAR = -60;
 const RSSI_FAR = -70;
 
+const AFTER_TOUCH_WAIT_MS = 500;
+
 export default class DeviceTouch extends React.Component {
 
   static propTypes = {
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
-    peripheralId: React.PropTypes.string.isRequired,
+    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
     onCancel: React.PropTypes.func.isRequired,
+    onSave: React.PropTypes.func.isRequired,
   };
 
   state = {
     proximity: 0,
     touched: false,
+    deviceSecret: null,
   };
 
+  mounted = false;
+
   componentWillMount() {
-    this.props.bleDeviceManager.on('rssi', this._onRSSI);
+    this.mounted = true;
+    let { bleDeviceSession } = this.props;
+    bleDeviceSession.on('rssiUpdate', this._onRSSI);
+    bleDeviceSession.on('secret', this._onDeviceTouch);
   }
 
   componentWillUnmount() {
-    this.props.bleDeviceManager.removeListener('rssi', this._onRSSI);
+    this.mounted = false;
+    let { bleDeviceSession } = this.props;
+    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
+    bleDeviceSession.removeListener('secret', this._onDeviceTouch);
   }
 
-  _onRSSI = (peripheral) => {
-    if (this.state.touched || peripheral.id !== this.props.peripheralId) {
+  _onDeviceTouch = (deviceSecret) => {
+    let { bleDeviceSession } = this.props;
+    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
+    bleDeviceSession.removeListener('secret', this._onDeviceTouch);
+    if (!this.mounted) {
       return;
     }
-    let { rssi } = peripheral;
+
+    this.setState({
+      deviceSecret,
+      touched: true,
+      proximity: 3,
+    });
+    setTimeout(() => {
+      if (!this.mounted) {
+        return;
+      }
+      this.props.navigator.push({
+        name: 'DeviceConfig',
+        props: {
+          ...this.props,
+          deviceSecret: this.state.deviceSecret,
+        },
+      });
+    }, AFTER_TOUCH_WAIT_MS);
+  };
+
+  _onRSSI = (rssi) => {
     let proximity = 0;
     if (rssi > RSSI_CLOSE) {
       proximity = 3;
@@ -52,13 +86,6 @@ export default class DeviceTouch extends React.Component {
     if (proximity !== this.state.proximity) {
       this.setState({proximity});
     }
-  };
-
-  onDeviceTouch = () => {
-    this.setState({
-      touched: true,
-      proximity: 3,
-    });
   };
 
   render() {

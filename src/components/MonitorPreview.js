@@ -3,7 +3,7 @@
 
 import React from 'react-native';
 
-import DeviceManager from '../libraries/btle/DeviceManager';
+import { DeviceSession } from '../libraries/btle/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 
 import ImageView from './ImageView';
@@ -56,7 +56,7 @@ export default class extends SocketIOComponent {
 
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.object.isRequired,
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
+    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession),
   };
 
   static contextTypes = {
@@ -178,26 +178,21 @@ export default class extends SocketIOComponent {
       this._queue.deinit();
       this._queue = null;
     }
-    let { bleDeviceManager } = this.props;
-    bleDeviceManager.removeListener('statusChange', this.onBLEPeripheralStatusChange);
-    bleDeviceManager.removeListener('errorChange', this.onBLEPeripheralStatusChange);
+    let { bleDeviceSession } = this.props;
+    if (bleDeviceSession) {
+      bleDeviceSession.removeListener('status', this.onBLEDeviceStatusChange);
+    }
     this.clearTimeoutTimer();
   }
 
   subscribeToBLEStatus() {
-    this.props.bleDeviceManager.on('statusChange', this.onBLEPeripheralStatusChange);
-    this.props.bleDeviceManager.on('errorChange', this.onBLEPeripheralStatusChange);
+    this.props.bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
   }
 
-  onBLEPeripheralStatusChange = (peripheral) => {
-    if (this.props.peripheralId !== peripheral.id) {
-      return;
-    }
+  onBLEDeviceStatusChange = (status) => {
     this.startTimeoutTimer();
-    let serverConnectionStatus =
-      peripheral.error ? peripheral.error : peripheral.serverConnectionStatus;
-    if (!this.state.serverConnectionStatus !== serverConnectionStatus) {
-      this.setState({serverConnectionStatus});
+    if (!this.state.serverConnectionStatus !== status.message) {
+      this.setState({serverConnectionStatus: status.message});
     }
   };
 
@@ -297,7 +292,7 @@ export default class extends SocketIOComponent {
 
   _onPress = () => {
     if (this.props.configurable) {
-      this.context.silkDevices.configureDevice(this.props.peripheralId);
+      this.context.silkDevices.configureDevice(this.props.bleDeviceSession);
       return;
     }
     if (this.state.timedOut && this.props.deviceId) {

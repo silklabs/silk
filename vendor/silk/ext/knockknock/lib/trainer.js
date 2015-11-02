@@ -248,14 +248,19 @@ export default class Trainer {
             return;
           }
 
+          // Ignore if there are more than one face as we don't know which of
+          // the face is the person being trained
+          if (faces.length > 1) {
+            return;
+          }
+
           // Save the face
           this._working = false;
-          faces.forEach(face => {
-            let faceim = this._preprocessFace(image, face);
-            log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
-            faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
-            faceCount++;
-          });
+          let face = faces[0];
+          let faceim = this._preprocessFace(image, face);
+          log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
+          faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
+          faceCount++;
 
           if (faceCount >= FACE_COUNT) {
             this._env.timeline.removeListener('face', this._onFace);

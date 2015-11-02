@@ -34,7 +34,6 @@ MERGE_GITS="\
 GITS="\
   log \
   silk-api-node \
-  silk-api-react-native \
   silk-device-locked-node-modules \
   silk-trainingset \
   $MERGE_GITS \
@@ -109,7 +108,7 @@ updatebranch__silk_api() {
   local from=$1
   local to=$2
   local ignoreOnMaster=$3
-  for api in silk-api-node silk-api-react-native; do
+  for api in silk-api-node; do
     echo "Updating branch for $api: $from => $to"
     pushd $api
     (
@@ -145,7 +144,7 @@ updatebranch__silk_npms() {
         git add .branch
       fi
 
-      for p in log silk-api-react-native; do
+      for p in log; do
         local HEAD=$to
         if [[ $to == release ]]; then
           # Lock to SHA1 for release branch

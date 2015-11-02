@@ -79,16 +79,12 @@ class DiagLogger {
     this.cmd = cmd;
     this.params = params;
     this.respawnDelaySecs = respawnDelaySecs;
+    this._launch();
     return this;
   }
 
-  start(socket) {
-    this.stop();
-    this.socket = socket;
-    this._launch();
-  }
-
-  stop() {
+  deinit() {
+    this.socket = null;
     if (this.helper) {
       this.helper.removeAllListeners('close'); // to not respawn on close event
       this.helper.kill();
@@ -98,7 +94,6 @@ class DiagLogger {
       clearTimeout(this.respawnTimer);
       this.respawnTimer = null;
     }
-    this.socket = null;
   }
 }
 
@@ -111,11 +106,10 @@ class Diag {
     this.loggers = [
       new DiagLogger(this.id, 'logcat',
         '/system/bin/logcat',
-        /* "-T 1000" to provide a reasonably-sized scrollback to start with.
-           Some devices could have a very large and full logcat buffer (eg,
-           16MB) and sending all that data on initial connect is choking to the
-           current Diag webapp client */
-        ['-v', 'threadtime', '-T', '1000']),
+        /* "-T 0" to skip to the current tip of logcat data. Diag starts up
+           immediately at boot before the device connects to the server so any
+           existing scroll back will be lost anyway (as there's no socket yet) */
+        ['-v', 'threadtime', '-T', '0']),
 
       new DiagLogger(this.id, 'dash',
         '/system/silk/bin/dash', [], 10),
@@ -130,7 +124,7 @@ class Diag {
 
   stop() {
     log.info('Stopping diag service');
-    this.loggers.map( logger => logger.stop() );
+    this.loggers.map( logger => logger.socket = null );
     this.socket = null;
   }
 
@@ -150,10 +144,10 @@ class Diag {
       if (type in this.cfg) {
         if (this.cfg[type] === 1) {
           log.info('Enabling', type);
-          logger.start(this.socket);
+          logger.socket = this.socket;
         } else {
           log.info('Disabling', type);
-          logger.stop(this.socket);
+          logger.socket = null;
         }
       }
     });

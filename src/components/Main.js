@@ -391,7 +391,7 @@ export default class extends AsyncComponent {
       unconfiguredDevices: unconfiguredDevices.add(bleDeviceSession),
     });
 
-    let removeFromUnconfiguredDevices = () => {
+    bleDeviceSession.on('registered', () => {
       log.debug('BLE device no longer connected or unconfigured. Cleaning up.');
       let { unconfiguredDevices } = this.pendingState;
       if (unconfiguredDevices.contains(bleDeviceSession)) {
@@ -399,9 +399,19 @@ export default class extends AsyncComponent {
           unconfiguredDevices: unconfiguredDevices.delete(bleDeviceSession),
         });
       }
-    };
-    bleDeviceSession.on('registered', removeFromUnconfiguredDevices);
-    bleDeviceSession.on('disconnect', removeFromUnconfiguredDevices);
+    });
+    bleDeviceSession.on('disconnect', () => {
+      let { configuringDevice } = this.pendingState;
+      if (unconfiguredDevices.contains(bleDeviceSession) ||
+          (configuringDevice && configuringDevice.bleDeviceSession === bleDeviceSession)) {
+        this.setStateAsync({
+          unconfiguredDevices: unconfiguredDevices.delete(bleDeviceSession),
+          configuringDevice: null,
+        });
+      }
+      bleDeviceSession.removeAllListeners();
+      this._abortConfig(new Error('BLE socket disconnected.'));
+    });
   };
 
   configureDevice = async (bleDeviceSession) => {
@@ -463,18 +473,24 @@ export default class extends AsyncComponent {
         regToken: registrationToken,
       });
     } catch(ex) {
-      await this.props.navigator.popToTopAsync();
-      await uiInteractions();
-      await this.setStateAsync({configuringDevice: null});
-      if (ex.canceled) {
-        log.debug('User cancelled. Aborting.');
-        // TODO: should we do anything if the user canceled?
-      } else {
-        log.warn('Could not configure device due to error:', ex);
-        this._showConfigError();
-      }
+      await this._abortConfig(ex);
     }
   };
+
+  async _abortConfig(error) {
+    await this.props.navigator.popToTopAsync();
+    await uiInteractions();
+    if (this.pendingState.configuringDevice) {
+      await this.setStateAsync({configuringDevice: null});
+    }
+    if (error && error.canceled) {
+      log.debug('User cancelled. Aborting.');
+      // TODO: should we do anything if the user canceled?
+    } else {
+      log.warn('Could not configure device due to error:', error);
+      this._showConfigError();
+    }
+  }
 
   _showConfigError() {
     AlertIOS.alert(

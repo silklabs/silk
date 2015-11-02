@@ -23,6 +23,11 @@ const FACE_ELLIPSE_H = 0.80; // Controls the height of the face mask
 const FACE_WIDTH = 75;
 const FACE_HEIGHT = FACE_WIDTH;
 
+// Parameters controlling how often to keep new faces when collecting them
+// Otherwise, the training set could look too similar to each other
+const CHANGE_IN_IMAGE_FOR_COLLECTION = 0.20;
+const CHANGE_IN_SECONDS_FOR_COLLECTION = 1000;
+
 let log;
 
 /**
@@ -211,6 +216,26 @@ export default class Trainer {
   }
 
   /**
+   * Compare two images by getting the L2 error (square-root of sum of squared error)
+   *
+   * Reference: http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#norm
+   */
+  _getSimilarity(matA, matB) {
+    if ((matA.width() == matB.width()) && (matA.width() > 0) &&
+        (matA.height() == matB.height()) && (matB.height() > 0)) {
+      // Calculate the L2 relative error between the 2 images
+      let errorL2 = matA.norm(matB, cv.Constants.NORM_L2);
+
+      // Convert to a reasonable scale, since L2 error is summed across all pixels
+      // of the image
+      let similarity = errorL2 / (matA.height() * matA.width());
+      return similarity;
+    } else {
+      return Number.MAX_VALUE;
+    }
+  }
+
+  /**
    * Start collecting faces for the specified person and store the resulting
    * face set to be later used for training for that person
    *
@@ -220,6 +245,8 @@ export default class Trainer {
     log.info(`Adding faces for ${person}`);
     let faceCount = 1;
     let facePath = path.join(TRAIN_FACES_PATH, person);
+    let oldPreprocessedFaceImg = null;
+    let oldTime = 0;
 
     return new Promise((resolve, reject) => {
       fs.mkdir(facePath)
@@ -258,9 +285,31 @@ export default class Trainer {
           this._working = false;
           let face = faces[0];
           let faceim = this._preprocessFace(image, face);
-          log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, count: ${faceCount}`);
-          faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
-          faceCount++;
+
+          // Check if this face looks somewhat different from the previously
+          // collected face
+          let imageDiff = Number.MAX_VALUE;
+          if (oldPreprocessedFaceImg) {
+            imageDiff = this._getSimilarity(faceim, oldPreprocessedFaceImg);
+            log.debug(`Image diff: ${imageDiff}`);
+          }
+
+          // Also record when it happened
+          let currentTime = Date.now();
+          let timeDiff = currentTime - oldTime;
+
+          // Only process the face if it is noticably different from the
+          // previous frame and there has been noticeable time gap
+          if ((imageDiff > CHANGE_IN_IMAGE_FOR_COLLECTION) &&
+              (timeDiff > CHANGE_IN_SECONDS_FOR_COLLECTION)) {
+            log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, ` +
+                 `count: ${faceCount}`);
+            faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
+            faceCount++;
+
+            oldPreprocessedFaceImg = faceim;
+            oldTime = currentTime;
+          }
 
           if (faceCount >= FACE_COUNT) {
             this._env.timeline.removeListener('face', this._onFace);

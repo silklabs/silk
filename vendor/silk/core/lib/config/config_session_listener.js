@@ -29,6 +29,10 @@ const SCHEMA = {
     publicKey: Joi.string().lowercase().trim().length(66).hex().required(),
     regToken: Joi.string().required(),
   }).required(),
+
+  dismiss: Joi.object().keys({
+    name: Joi.string().equal(`dismiss`).required(),
+  }).required(),
 };
 
 export default class ConfigSessionListener extends SessionListenerBase {
@@ -38,11 +42,15 @@ export default class ConfigSessionListener extends SessionListenerBase {
   static STATE_REGISTERING_PROXIMITY = 3;
   static STATE_REGISTERED = 5;
   static STATE_COMPLETE = 6;
+  static STATE_DISMISSED = 7;
 
   static STATE_ERROR = 10;
 
+  static DISMISS_TIMEOUT_MS = 15000;
+
   _deviceConfig = null;
   _state = ConfigSessionListener.STATE_IDLE;
+  _dismissTimeout = null;
 
   constructor(deviceConfig) {
     log.debug(`ConfigSessionListener()`);
@@ -94,6 +102,27 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._socketSession.rssiUpdatesEnabled = false;
 
     this._deviceConfig._onConfigured(secret);
+  }
+
+  _dismiss() {
+    log.debug(`ConfigSessionListener._dismiss()`);
+
+    assert(this._socketSession);
+    assert(this._state === ConfigSessionListener.STATE_COMPLETE ||
+           this._state === ConfigSessionListener.STATE_DISMISSED);
+
+    if (this._state === ConfigSessionListener.STATE_DISMISSED) {
+      return;
+    }
+
+    if (this._dismissTimeout) {
+      clearTimeout(this._dismissTimeout);
+      this._dismissTimeout = null;
+    }
+
+    this._state = ConfigSessionListener.STATE_DISMISSED;
+
+    this._deviceConfig._onDismissed();
   }
 
   _onConnect(socketSession) {
@@ -170,6 +199,16 @@ export default class ConfigSessionListener extends SessionListenerBase {
       this._completeRegistration(secret);
       return;
 
+    case `dismiss`:
+      if (this._state !== ConfigSessionListener.STATE_COMPLETE &&
+          this._state !== ConfigSessionListener.STATE_DISMISSED) {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
+
+      this._dismiss();
+      return;
+
     default:
       log.warn(`Unknown message: %j`, data);
     }
@@ -205,6 +244,27 @@ export default class ConfigSessionListener extends SessionListenerBase {
     });
   }
 
+  _onDismissTimeout() {
+    log.debug(`ConfigSessionListener._onDismissTimeout()`);
+
+    assert(this._state === ConfigSessionListener.STATE_COMPLETE);
+
+    this._dismissTimeout = null;
+
+    this._dismiss();
+  }
+
+  disconnect() {
+    log.debug(`ConfigSessionListener.disconnect()`);
+
+    if (this._dismissTimeout) {
+      clearTimeout(this._dismissTimeout);
+      this._dismissTimeout = null;
+    }
+
+    super.disconnect();
+  }
+
   sendComplete() {
     log.debug(`ConfigSessionListener.sendComplete()`);
 
@@ -215,6 +275,9 @@ export default class ConfigSessionListener extends SessionListenerBase {
     });
 
     this._state = ConfigSessionListener.STATE_COMPLETE;
+
+    this._dismissTimeout = setTimeout(() => this._onDismissTimeout,
+                                      ConfigSessionListener.DISMISS_TIMEOUT_MS);
   }
 
   sendRestart(errorMessage) {

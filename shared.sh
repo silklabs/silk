@@ -91,16 +91,17 @@ normalizePackageJson() {
 }
 
 updatePackageVersion() {
-  local name=$1
-  local version=$2
+  local package_json=$1
+  local name=$2
+  local version=$3
 
-  local version_git=$(jq ".dependencies[\"${name}\"]" -r package.json | cut -d# -f1)
+  local version_git=$(jq ".dependencies[\"${name}\"]" -r $package_json | cut -d# -f1)
   if [[ "$version_git" == "null" ]]; then
     return
   fi
-  jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r package.json > package.new.json
-  mv package.new.json package.json
-  normalizePackageJson package.json
+  jq ".dependencies[\"${name}\"] = \"${version_git}#${version}\"" -r $package_json > package.new.json
+  mv package.new.json $package_json
+  normalizePackageJson $package_json
 }
 
 # Update branch references within the silk apis
@@ -144,16 +145,20 @@ updatebranch__silk_npms() {
         git add .branch
       fi
 
-      for p in log; do
-        local HEAD=$to
-        if [[ $to == release ]]; then
-          # Lock to SHA1 for release branch
-          HEAD=$(git -C ../$p rev-parse HEAD)
-        fi
-        updatePackageVersion $p $HEAD
-      done
+      for package_json in package.json build/api/package.json; do
+        if [[ -f $package_json ]]; then
+          for p in log; do
+            local HEAD=$to
+            if [[ $to == release ]]; then
+              # Lock to SHA1 for release branch
+              HEAD=$(git -C ../$p rev-parse HEAD)
+            fi
+            updatePackageVersion $package_json $p $HEAD
+          done
 
-      git add package.json
+          git add $package_json
+        fi
+      done
 
       local msg="Automated branch update from ${from} to ${to}"
       git commit -m "$msg"

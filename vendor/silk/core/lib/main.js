@@ -31,7 +31,8 @@ import deferred from './deferred';
 
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
-import makeCrashReporter from './crashreport';
+import makeCrashReporter from './crash_reporter';
+import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
 import NetworkStatus from './network_status';
@@ -155,12 +156,13 @@ function main() {
 
   outbox = initOutbox(networkStatus);
   crashreporter = makeCrashReporter(outbox);
+  jsErrors(crashreporter);
 
   return getDeviceId()
     .then(deviceId => {
       id = deviceId;
       api.accessToken = deviceId;
-      crashreporter.deviceId = deviceId.toString();
+      crashreporter.assignDeviceId(deviceId);
       logcat = new Logcat(deviceId.toString(), outbox);
       logcat.start();
 

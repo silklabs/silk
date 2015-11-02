@@ -57,6 +57,11 @@ class DiagLogger {
             log: this.data
           });
         }
+
+        // Dump non-streaming logs into logcat as well for convenience
+        const lines = this.data.split('\n');
+        log.info(`${this.cmd}:`);
+        lines.forEach(l => log.info(l));
         this.data = '';
       }
       if (this.respawnDelaySecs) {

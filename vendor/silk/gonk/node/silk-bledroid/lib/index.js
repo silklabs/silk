@@ -279,6 +279,9 @@ class Bledroid extends EventEmitter {
   command(commandStr) {
     // bledroid socket expects the command data in the following format:
     let data = `${BLE_COMMAND_NAME} "${commandStr}"\0`;
+    if (data.length > 1024) {
+      throw new Error(`Command is too long (${data.length})`);
+    }
 
     if (this.commandBuffer) {
       const whitelist = /^(?:getAdapterState)/;

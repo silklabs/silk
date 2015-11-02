@@ -190,16 +190,18 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   *
+   * Handle faces returned by camera HAL
    */
   addFace(when: number, faces: Array<Rect>, source: string) {
-    this.emit('face', when, faces, source);
-    this._pushFace(when, faces, source);
-    this.eventTracker.record({
-      tag: 'face',
-      when,
-      faces,
-    });
+    // Only emit the first set of HAL-detected faces
+    // (HAL can return multiple faces a second, but it's not helpful to show
+    //  them all on the preview)
+    if (!this.previewHalFaces) {
+      this.previewHalFaces = true;
+
+      // Run facial recognition on the detected faces before recording the event
+      this.emit('face', when, faces, source);
+    }
   }
 
   /**
@@ -248,7 +250,9 @@ export default class Timeline extends EventEmitter {
 
   _processEvents(objects: Array<TimelineEventObject>) {
     objects.forEach((object) => {
-      this.eventTracker.record(object);
+      if (object.tag !== 'face') {
+        this.eventTracker.record(object);
+      }
     });
     this._emitEvents(objects);
   }
@@ -385,19 +389,6 @@ export default class Timeline extends EventEmitter {
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
     this.previewHalFaces = false;
-  }
-
-  _pushFace(when: number, faces: Array<Rect>, source: string) {
-    let object = {tag: 'hal', when, rects: faces, source};
-
-    // Only add the first set of HAL-detected faces to the preview object set
-    // (the HAL can return multiple faces a second, but it's not helpful to show
-    //  them all on the preview)
-    if (!this.previewHalFaces) {
-      this.previewHalFaces = true;
-      this.previewObjects.push(object);
-    }
-    this.videoObjects.push(object);
   }
 
   _pushVideo(

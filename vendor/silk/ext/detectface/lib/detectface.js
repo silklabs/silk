@@ -6,6 +6,8 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+import cv from 'opencv';
+
 let log;
 let timeline;
 
@@ -110,25 +112,25 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
   let topLeftOfFace = face.roi(leftX, topY, widthX, heightY);
   let topRightOfFace = face.roi(rightX, topY, widthX, heightY);
 
-  let leftEyeRect = null;
-  let rightEyeRect = null;
+  let leftEye = null;
+  let rightEye = null;
 
   return new Promise(async (resolve, reject) => {
     try {
       // Find left eye. If the eye was not detected, try a different cascade
-      leftEyeRect = await _runEyeCascasde(topLeftOfFace, eyeCascade1);
+      let leftEyeRect = await _runEyeCascasde(topLeftOfFace, eyeCascade1);
       if (!leftEyeRect && eyeCascade2) {
         leftEyeRect = await _runEyeCascasde(topLeftOfFace, eyeCascade2);
       }
 
       // Find right eye. If the eye was not detected, try a different cascade
-      rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade1);
+      let rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade1);
       if (!rightEyeRect && eyeCascade2) {
         rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade2);
       }
 
       // Adjust the eye rectangles because the face border was removed
-      // Also scaled down the eye rectangles to preview size
+      // Also scale down the eye rectangles to match preview size
       if (leftEyeRect) {
         leftEyeRect.x += leftX;
         leftEyeRect.y += topY;
@@ -137,6 +139,9 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
         leftEyeRect.y = leftEyeRect.y / previewScale;
         leftEyeRect.width = leftEyeRect.width / previewScale;
         leftEyeRect.height = leftEyeRect.height / previewScale;
+
+        leftEye = new cv.Point(leftEyeRect.x + leftEyeRect.width / 2,
+            leftEyeRect.y + leftEyeRect.height / 2);
       }
 
       if (rightEyeRect) {
@@ -147,10 +152,13 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
         rightEyeRect.y = rightEyeRect.y / previewScale;
         rightEyeRect.width = rightEyeRect.width / previewScale;
         rightEyeRect.height = rightEyeRect.height / previewScale;
+
+        rightEye = new cv.Point(rightEyeRect.x + rightEyeRect.width / 2,
+            rightEyeRect.y + rightEyeRect.height / 2);
       }
 
       log.debug(`eyes: ${JSON.stringify(leftEyeRect)} ${JSON.stringify(rightEyeRect)}`);
-      resolve([leftEyeRect, rightEyeRect]);
+      resolve([leftEye, rightEye]);
     } catch (e) {
       reject(e);
     }
@@ -223,6 +231,8 @@ class DetectFace {
 
             // Only if both the eyes are visible is when we say it is a face
             if (leftEye && rightEye) {
+              faceRect.leftEye = [leftEye.x, leftEye.y];
+              faceRect.rightEye = [rightEye.x, rightEye.y];
               faces.push(faceRect);
             }
           }

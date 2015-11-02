@@ -14,9 +14,9 @@ import Trainer from './trainer';
 const RADIUS = 1;
 
 // Higher the value, more time it takes to train the recognizer. With value higher
-// values 8 model is not recognizing faces at all. With values lower than 4 model
-// is returning lot of false positives
-const NEIGHBORS = 4;
+// value of 8 model is not recognizing faces at all. With lower values model
+// returns lot of false positives
+const NEIGHBORS = 3;
 
 const GRID_X = 8;
 const GRID_Y = 8;
@@ -24,8 +24,7 @@ const GRID_Y = 8;
 // Represents the threshold for the confidence value returned by the model. If
 // the confidence is more than the threshold, model returns an unknown person.
 // Higher the threshold more false postives the model returns. Lower the threshold
-// bigger the face rectangle required for succesful recognition. So faces that
-// are far in the view are not recognized.
+// bigger the face rectangle required for succesful recognition.
 const THRESHOLD = 60;
 
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -61,6 +60,7 @@ class FindFace {
   async onCommand(cmd) {
     switch (cmd.msg) {
     case 'addPerson':
+      this._trainingInProgress = true;
       log.info(`addPerson command: ${JSON.stringify(cmd)}`);
       await this._trainer.addPerson(cmd.person);
 
@@ -189,7 +189,7 @@ class FindFace {
         // Run facial recognition on each of the detected faces
         let start = Date.now();
         faces.forEach(async (face) => {
-          let faceim = image.roi(face.x, face.y, face.width, face.height);
+          let faceim = this._trainer._preprocessFace(image, face);
           let result = await this._predict(faceim);
           if (result.id !== -1) {
             log.info(`face detected id:${result.id} ` +

@@ -6,8 +6,7 @@
     "silk-setup": "./setup"
   },
   "scripts": {
-    "preinstall": "./preinstall",
-    "postinstall": "rm -rf node_modules/babel/test/"
+    "preinstall": "./preinstall"
   },
   "private": true,
   "dependencies": {

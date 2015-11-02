@@ -5,7 +5,7 @@
   "main": "core.js",
   "scripts": {
     "preinstall": "./bin/preinstall",
-    "install": "rm -rf node_modules/babel/test/ && ./build",
+    "install": "./build",
     "test": "mocha $(find test -name '*_test.js')"
   },
   "dependencies": {

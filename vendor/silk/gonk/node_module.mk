@@ -77,7 +77,14 @@ endif
 # Shotgun approach to ensuring that the module is rebuilt when local source
 # changes are made, as there's no NPM dependency information conveyed up to
 # Make.
-LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
+#
+# Specific "known bad" subdirectories are excluded.  These directories contain
+# files with characters such as '-', ''', and ' ' that generate invalid
+# dependencies.
+LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f \
+  ! -regex '.*/node_modules/babel/test/fixtures/.*' \
+  ! -regex '.*/node_modules/gulp-match/Rob.*' \
+)
 
 LOCAL_32_BIT_ONLY := true
 LOCAL_CUSTOM_BUILT_MODULE := true

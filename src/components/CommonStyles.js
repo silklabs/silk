@@ -94,3 +94,15 @@ export let TitleBarStyles = StyleSheet.create({
     fontSize: 17,
   },
 });
+
+export const THUMBNAIL_MARGIN = 4;
+
+export let ThumbnailStyles = StyleSheet.create({
+  // This style gets applied to each individual thumbnail container as
+  // well as the container of all thumbnails. That way the overall
+  // margins between thumbnails and screen edge as well as between
+  // thumbnails themselves will be twice the value specified below.
+  thumbnailContainer: {
+    margin: THUMBNAIL_MARGIN,
+  },
+});

@@ -283,7 +283,7 @@ export default class extends AsyncComponent {
     }
 
     let deviceId = msg.id;
-    log.info('New video stream', deviceId);
+    log.info('New video stream', msg.name, deviceId);
     let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();

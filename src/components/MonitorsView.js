@@ -21,24 +21,16 @@ import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
 import { ConfiguringDeviceRecord } from './Records';
 import ErrorBar from './ErrorBar';
-import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
+import PreviewThumbnails from './PreviewThumbnails';
+import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 
 const log = createLog('MonitorsView');
 
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
-
-// This is mostly a guestimate based on FUT hardware. Absolute values
-// not important here, the ratio is what matters.
-const DEFAULT_PREVIEW_WIDTH = 16;
-const DEFAULT_PREVIEW_HEIGHT = 9;
-const DEFAULT_PREVIEW_SIZE = {
-  width: DEFAULT_PREVIEW_WIDTH,
-  height: DEFAULT_PREVIEW_HEIGHT,
-};
 
 class MonitorsView extends AsyncComponent {
 
@@ -189,9 +181,7 @@ class MonitorsView extends AsyncComponent {
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
             {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
-            <View style={styles.thumbnailContainer}>
-              {this._renderDeviceThumbnails()}
-            </View>
+            <PreviewThumbnails {...this.props} />
             {devices.size ? this._renderActivity() : null}
           </ScrollView>
         </View>
@@ -238,88 +228,6 @@ class MonitorsView extends AsyncComponent {
         </View>
       </View>
     );
-  }
-
-  _renderDeviceThumbnails() {
-    let { devices, unconfiguredDevices, configuringDevice } = this.props;
-
-    let unconfiguredDeviceThumbnails = unconfiguredDevices.toArray().reverse()
-    .map((bleDeviceSession, index) => {
-      if (configuringDevice && configuringDevice.bleDeviceSession === bleDeviceSession) {
-        return null;
-      }
-      return (
-        <MonitorPreview
-          key={'unconfiguredDevice-' + index}
-          label={`${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          configurable={true}
-          configuring={false}
-          haveVideoStream={false}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-          bleDeviceSession={bleDeviceSession}
-        />
-      );
-    });
-
-    let configuringDeviceThumbnail = null;
-    if (configuringDevice) {
-      let { bleDeviceSession } = configuringDevice;
-      configuringDeviceThumbnail = (
-        <MonitorPreview
-          key={configuringDevice.deviceId}
-          deviceId={configuringDevice.deviceId}
-          label={configuringDevice.name || `${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          configurable={false}
-          configuring={true}
-          haveVideoStream={false}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-          bleDeviceSession={configuringDevice.bleDeviceSession}
-        />
-      );
-    }
-
-    let deviceThumbnails = devices.map((device, deviceId) => (
-      <MonitorPreview
-        key={deviceId}
-        deviceId={deviceId}
-        label={device.name}
-        logo={device.logo}
-        previewSize={this._getPreviewSize(deviceId)}
-        configurable={false}
-        configuring={false}
-        haveVideoStream={device.haveVideoStream}
-        onPress={() => this.startFullscreenVideo(deviceId)}
-        socket={this.props.socket}
-        hasNetwork={this.props.hasNetwork}
-        bleDeviceSession={device.bleDeviceSession}
-      />
-    )).toArray().reverse();
-
-    let allThumbnails = unconfiguredDeviceThumbnails
-      .concat(configuringDeviceThumbnail)
-      .concat(deviceThumbnails)
-      .filter((element) => !!element);
-
-    // Easy way out for just 1 device.
-    if (allThumbnails.length === 1) {
-      return allThumbnails[0];
-    }
-
-    // Display devices in rows of 2.
-    let rows = [];
-    for (let i = 0; i < allThumbnails.length; i += 2) {
-      rows.push(
-        <View style={styles.thumbnailRow} key={`row-${i / 2}`}>
-          {allThumbnails[i]}
-          {allThumbnails[i + 1] || <View style={styles.thumbnailPlaceholder} />}
-        </View>
-      );
-    }
-    return rows;
   }
 
   // Activity feed management
@@ -490,19 +398,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: -SCROLLVIEW_PTR_THRESHOLD,
-  },
-
-  thumbnailContainer: {
-    paddingHorizontal: 4,
-  },
-
-  thumbnailRow: {
-    flexDirection: 'row',
-  },
-
-  thumbnailPlaceholder: {
-    flex: 1,
-    margin: 4,
   },
 
   eventRow: {

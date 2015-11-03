@@ -9,6 +9,7 @@ import PreviewQueue from '../libraries/PreviewQueue';
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './SocketIOComponent';
+import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 
 let {
   ActionSheetIOS,
@@ -49,6 +50,7 @@ export default class extends SocketIOComponent {
       width: React.PropTypes.number.isRequired,
       height: React.PropTypes.number.isRequired,
     }),
+    width: React.PropTypes.number.isRequired,
     configurable: React.PropTypes.bool,
     configuring: React.PropTypes.bool,
     haveVideoStream: React.PropTypes.bool,
@@ -66,7 +68,6 @@ export default class extends SocketIOComponent {
   state = {
     blob: null,
     objects: [],
-    previewWidth: null,
     registered: false,
     serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
     timedOut: false,
@@ -256,23 +257,11 @@ export default class extends SocketIOComponent {
   }
 
   render() {
-    let { previewWidth } = this.state;
-    if (previewWidth === null) {
-      // Measure layout so we know how large to display the preview images.
-      return (
-        <View style={styles.monitorContainer}>
-          <View
-            onLayout={(event) => this.setState({previewWidth: event.nativeEvent.layout.width})}
-            style={styles.monitorPreviewPlaceholder}
-          />
-        </View>
-      );
-    }
-
-    let { previewSize } = this.props;
+    let { width, previewSize } = this.props;
+    width -= 2 * THUMBNAIL_MARGIN;
     let previewStyle = {
-      width: previewWidth,
-      height: previewSize.height * previewWidth / previewSize.width,
+      width,
+      height: previewSize.height * width / previewSize.width,
     };
 
     let logo = null;
@@ -301,10 +290,14 @@ export default class extends SocketIOComponent {
     }
 
     return (
-      <View style={styles.monitorContainer}>
+      <View style={[
+        styles.monitorContainer,
+        ThumbnailStyles.thumbnailContainer,
+        previewStyle,
+      ]}>
         <TouchableOpacity
           onPress={this._onPress}
-          style={[styles.monitorPreviewContainer, previewStyle]}>
+          style={styles.monitorPreviewContainer}>
           {this._renderPreview()}
           {logo}
           {this._renderLabel()}
@@ -367,8 +360,6 @@ const styles = StyleSheet.create({
       height: 1,
       width: 0,
     },
-    margin: 4,
-    flex: 1,
   },
 
   monitorLabelContainer: {
@@ -385,10 +376,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'white',
     textAlign: 'right',
-  },
-
-  monitorPreviewPlaceholder: {
-    flex: 1,
   },
 
   monitorPreviewContainer: {

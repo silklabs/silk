@@ -149,9 +149,18 @@ class DeviceConfig extends EventEmitter {
 
     log.info('Configured');
     this.emit('configured');
+  }
+
+  _onDismissed() {
+    log.debug(`DeviceConfig._onDismissed()`);
+
+    this._socketSessionListener.disconnect();
+    this._socketSessionListener = null;
 
     server.addListener(`connect`, this._onServerConnect);
     server.addListener(`disconnect`, this._onServerDisconnect);
+
+    this._btle.changeMode(this._btle.MODE_OFF);
   }
 
   _onServerConnect = async () => {

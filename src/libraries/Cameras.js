@@ -36,7 +36,6 @@ class Camera extends EventEmitter {
   _feedNewLog(type, data) {
     switch (type) {
     case 'dash':
-    case 'procrank':
       this.logs[type] = data;
       break;
     case 'logcat':
@@ -54,6 +53,7 @@ class Camera extends EventEmitter {
       this.logs.logcat = logcat;
       break;
     default:
+      log.warn(`Unknown log type: ${type}`);
       break;
     }
   }

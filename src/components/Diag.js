@@ -106,7 +106,6 @@ export default class Diag extends React.Component {
           <DiagLog logName="dash" log={logs.dash} paused={paused}/>
           <CameraPreview deviceId={this.deviceId}/>
         </div>
-        <DiagLog logName="procrank" log={logs.procrank} paused={paused}/>
         <DiagLogcat logName="logcat" log={logs.logcat} paused={paused}/>
       </div>
     );

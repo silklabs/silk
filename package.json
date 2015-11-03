@@ -125,5 +125,9 @@
     "start-server": "babel-node --harmony server/main.js production",
     "test": "npm run-script lint"
   },
+  "engines": {
+    "node": "^4.1.2",
+    "npm": "^2.1.0"
+  },
   "version": "0.0.1"
 }

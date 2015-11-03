@@ -16,7 +16,6 @@ module.exports = {
       { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
-        exclude: /node_modules/,
         include: [
           path.resolve(__dirname, 'src'),
           path.resolve(__dirname, 'config.local.json'),

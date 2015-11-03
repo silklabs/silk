@@ -8,7 +8,9 @@ import chartjs from 'chart.js';
 import 'Chart.StackedBar.js';
 import React from 'react';
 import { createClass as createChartClass } from 'react-chartjs';
-import { Button, ButtonToolbar, Glyphicon } from 'react-bootstrap';
+import { Button, ButtonToolbar, Glyphicon,
+         ListGroup, ListGroupItem,
+         OverlayTrigger, Popover } from 'react-bootstrap';
 import { Link } from 'react-router';
 
 import Cameras from '../libraries/Cameras';
@@ -28,6 +30,59 @@ const EVENT_SEQUENCE = [
   'playbackEnd',
 ].map(eventName => eventName + 'Ms');
 const FIRST_EVENT = EVENT_SEQUENCE[0];
+
+const SERIES = {
+  spacer: {
+    color: 'rgba(0,0,0,0)',
+    desc: '',
+  },
+  // recordStart vvv
+  recording: {
+    color: 'red',
+    desc: `Time between AV segment recording start / stop`,
+  },
+  // ^^^ recordEnd vvv
+  deviceQueued: {
+    color: 'gray',
+    desc: `Time between segment enqueued in 'capture' process to be sent over socket, up to segment enqueued for server upload in silk-core process by 'socket.emit(segment)'`,
+  },
+  // ^^^ deviceDrop vvv
+  deviceDropped: {
+    color: 'rgba(220,192,203,0.3)',
+    desc: `(Segment was dropped on the floor because too many server acks became pending)`,
+  },
+  // ^^^ deviceEmit vvv
+  darkMatterUpload: {
+    color: 'blue',
+    desc: `"Dark matter", unclassified time, between 'socket.emit(segment)' on the device side and the segment being received ('socket.on(...)') on the server side`,
+  },
+  // ^^^ serverEmit vvv
+  darkMatterDownload: {
+    color: 'black',
+    desc: `"Dark matter", unclassified time, between 'socket.emit(segment)' on the server side and the segment being received ('socket.on(...)') on the app side`,
+  },
+  // ^^^ arriveApp vvv
+  loadAsset: {
+    color: 'orange',
+    desc: `Time spent loading and processing the segment before it's enqueued for playback`,
+  },
+  // ^^^ playbackEnqueued vvv
+  playbackQueued: {
+    color: 'yellow',
+    desc: `Time the AV segment spends in the playback queue before being played`,
+  },
+  // ^^^ playbackStart vvv
+  segmentDuration: {
+    color: 'green',
+    desc: `Time the segment is actually being played in the playback widget`,
+  },
+  // ^^^ segmentDuration vvv
+  playbackEncore: {
+    color: 'purple',
+    desc: `Time the already-played segment "lingers" in the playback widget because the next segment isn't ready to be played yet`,
+  },
+  // ^^^ playbackEnd
+};
 
 /**
  * Return <0 if `a` happened before `b`, 1 if `a` happened after `b`,
@@ -118,6 +173,40 @@ class Slider extends React.Component {
         onChange={this.onChange}
         style={this.props.style}
       />
+    );
+  }
+}
+
+class LegendLabel extends React.Component {
+  render() {
+    if ('spacer' === this.props.name) {
+      return (<span />);
+    }
+    let box = {
+      width: '100px',
+      height: '20px',
+      backgroundColor: this.props.color,
+    };
+    return (
+      <ListGroupItem>
+        <div style={box} /> {this.props.desc}
+      </ListGroupItem>
+    );
+  }
+}
+
+class Legend extends React.Component {
+  render() {
+    let labels = Object.keys(SERIES).map(name => (
+      <LegendLabel
+        key={name} name={name}
+        color={SERIES[name].color} desc={SERIES[name].desc}
+      />
+    ));
+    return (
+      <Popover id="legend" title="Legend">
+        <ListGroup>{labels}</ListGroup>
+      </Popover>
     );
   }
 }
@@ -292,93 +381,27 @@ export default class AVPipeline extends React.Component {
         return Math.min(nowMs, segmentEvents[eventName]) - lastEventMs;
       }));
     });
-    // The `darkMatterSeries` covers what happens between stopping
-    // recording up to receiving the mp4 segment in the app.  This
-    // time is unassigned, hence "dark matter".
-    let [/*nullSeries*/,
-      // recordStart vvv
-      recordingSeries,
-      // ^^^ recordEnd vvv
-      deviceQueuedSeries,
-      // ^^^ deviceDrop vvv
-      deviceDroppedSeries,
-      // ^^^ deviceEmit vvv
-      darkMatterUploadSeries,
-      // ^^^ serverEmit vvv
-      darkMatterDownloadSeries,
-      // ^^^ arriveApp vvv
-      loadingAssetSeries,
-      // ^^^ playbackEnqueued vvv
-      playbackQueuedSeries,
-      // ^^^ playbackStart vvv
-      segmentDurationSeries,
-      // ^^^ segmentDuration vvv
-      playbackEncoreSeries,
-      // ^^^ playbackEnd
-    ] = series;
-    let data = {
-      labels,
-      datasets: [
-        {
-          label: 'playbackEncore',
-          fillColor: 'purple',
-          data: playbackEncoreSeries,
-        },
-        {
-          label: 'segmentDuration',
-          fillColor: 'green',
-          data: segmentDurationSeries,
-        },
-        {
-          label: 'playbackQueued',
-          fillColor: 'yellow',
-          data: playbackQueuedSeries,
-        },
-        {
-          label: 'loadAsset',
-          fillColor: 'orange',
-          data: loadingAssetSeries,
-        },
-        {
-          label: 'darkMatterDownload',
-          fillColor: 'black',
-          data: darkMatterDownloadSeries,
-        },
-        {
-          label: 'darkMatterUpload',
-          fillColor: 'blue',
-          data: darkMatterUploadSeries,
-        },
-        {
-          label: 'deviceDropped',
-          fillColor: 'rgba(220,192,203,0.3)',
-          strokeColor: 'rgba(220,192,203,0.8)',
-          highlightFill: 'rgba(220,192,203,0.8)',
-          highlightStroke: 'rgba(220,192,203,1)',
-          data: deviceDroppedSeries,
-        },
-        {
-          label: 'deviceQueued',
-          fillColor: 'gray',
-          data: deviceQueuedSeries,
-        },
-        {
-          label: 'recording',
-          fillColor: 'red',
-          data: recordingSeries,
-        },
-        {
-          label: '',
-          fillColor: 'rgba(0,0,0,0)',
-          strokeColor: 'rgba(0,0,0,0)',
-          pointColor: 'rgba(0,0,0,0)',
-          pointStrokeColor: 'rgba(0,0,0,0)',
-          pointHighlightFill: 'rgba(0,0,0,0)',
-          pointHighlightStroke: 'rgba(0,0,0,0)',
-          data: nullSeries,
-        },
-      ],
-    };
+    let datasets = Object.keys(SERIES).map((name, seriesIdx) => {
+      let dataset = {
+        label: name,
+        fillColor: SERIES[name].color,
+        data: series[seriesIdx],
+      };
+      if ('deviceDropped' === name) {
+        dataset.strokeColor = 'rgba(220,192,203,0.8)';
+        dataset.highlightFill = 'rgba(220,192,203,0.8)';
+        dataset.highlightStroke = 'rgba(220,192,203,1)';
+      } else if ('spacer' === name) {
+        dataset.strokeColor = 'rgba(0,0,0,0)';
+        dataset.pointColor = 'rgba(0,0,0,0)';
+        dataset.pointStrokeColor = 'rgba(0,0,0,0)';
+        dataset.pointHighlightFill = 'rgba(0,0,0,0)';
+        dataset.pointHighlightStroke = 'rgba(0,0,0,0)';
+      }
+      return dataset;
+    });
+    datasets.reverse();
+    let data = { labels, datasets };
     // TODO: listen for SIGWINCH and redraw
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -411,6 +434,11 @@ export default class AVPipeline extends React.Component {
           <Button onClick={this.onPause}>
             <Glyphicon glyph="pause" />
           </Button>
+          <OverlayTrigger
+            trigger="click" rootClose placement="bottom"
+            overlay={<Legend />}>
+            <Button bsStyle="info">Legend</Button>
+          </OverlayTrigger>
         </ButtonToolbar>
         <Slider
           min={1}

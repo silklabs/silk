@@ -245,7 +245,7 @@ export class Debuggerd extends EventEmitter {
     log.info('starting debuggerd socket...', this.socketPath);
     // remove the socket file from disk if present...
     try {
-      fs.unlink(this.socketPath);
+      await fs.unlink(this.socketPath);
     } catch (err) {
       if (err.code !== 'ENOENT') {
         throw err;
@@ -377,7 +377,10 @@ export default function(outbox, options = {}) {
   );
 
   // start the dependant services...
-  crashReporter.start();
+  crashReporter.start()
+  .catch(err => {
+    log.error('crashReporter failed to start:', err.stack);
+  });
 
   return {
     report: (readable) => tombstones.report(readable),

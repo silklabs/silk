@@ -74,8 +74,6 @@
 		F91A54FC1B8B9D48009C75C9 /* OpenSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */; };
 		F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */; };
 		F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */; };
-		F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */; };
-		F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */ = {isa = PBXBuildFile; fileRef = F9BEA4B51B3699810093EA0A /* BLECentral.m */; };
 		F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = F9E92CD71B3864A100C10C24 /* SLKUtil.m */; };
 		F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */ = {isa = PBXBuildFile; fileRef = F9E92CF71B3900C200C10C24 /* main.jsbundle */; };
 /* End PBXBuildFile section */
@@ -333,10 +331,6 @@
 		F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Regular.ttf"; sourceTree = "<group>"; };
 		F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Semibold.ttf"; sourceTree = "<group>"; };
 		F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-SemiboldItalic.ttf"; sourceTree = "<group>"; };
-		F954C3FB1B37247E0081F479 /* CBPeripheral+Extensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CBPeripheral+Extensions.h"; sourceTree = "<group>"; };
-		F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CBPeripheral+Extensions.m"; sourceTree = "<group>"; };
-		F9BEA4AA1B3699650093EA0A /* BLECentral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLECentral.h; sourceTree = "<group>"; };
-		F9BEA4B51B3699810093EA0A /* BLECentral.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECentral.m; sourceTree = "<group>"; };
 		F9E92CCC1B38642000C10C24 /* SLKUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKUtil.h; sourceTree = "<group>"; };
 		F9E92CD71B3864A100C10C24 /* SLKUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKUtil.m; sourceTree = "<group>"; };
 		F9E92CF71B3900C200C10C24 /* main.jsbundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = main.jsbundle; sourceTree = "<group>"; };
@@ -459,14 +453,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		3CFBF22B1BBF41ED00A7AF67 /* BLESocket */ = {
+		3CFBF22B1BBF41ED00A7AF67 /* BLE */ = {
 			isa = PBXGroup;
 			children = (
 				3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */,
 				3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */,
 				3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */,
+				3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */,
 			);
-			path = BLESocket;
+			path = BLE;
 			sourceTree = "<group>";
 		};
 		573C20C51B4EF5C900C40871 /* PropertyObserver */ = {
@@ -539,7 +534,7 @@
 		57AC68811B4F0CE6009B70A3 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				3CFBF22B1BBF41ED00A7AF67 /* BLESocket */,
+				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
 				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
@@ -553,10 +548,6 @@
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
-				F9BEA4AA1B3699650093EA0A /* BLECentral.h */,
-				F9BEA4B51B3699810093EA0A /* BLECentral.m */,
-				F954C3FB1B37247E0081F479 /* CBPeripheral+Extensions.h */,
-				F954C4061B3724980081F479 /* CBPeripheral+Extensions.m */,
 				5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */,
 				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
 				579422371B963F1B0068569E /* ErrorDomain.swift */,
@@ -565,7 +556,6 @@
 				5758F33E1B61681300C18E5D /* NotImplemented.swift */,
 				5714F47C1BA373DC0087A138 /* NSDataExtension.swift */,
 				5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */,
-				3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */,
 				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
 				5758F23A1B5EFE7600C18E5D /* Sync.swift */,
 				57BCE0FB1B6984360047088B /* TypeTransfer.swift */,
@@ -1004,7 +994,6 @@
 				5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */,
 				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
 				5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */,
-				F9BEA4B61B3699810093EA0A /* BLECentral.m in Sources */,
 				579422381B963F1B0068569E /* ErrorDomain.swift in Sources */,
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				5758F2641B600B2000C18E5D /* ImageView.swift in Sources */,
@@ -1019,7 +1008,6 @@
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
 				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
 				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
-				F954C4071B3724980081F479 /* CBPeripheral+Extensions.m in Sources */,
 				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
 				5758F2601B600AF500C18E5D /* ImageViewManager.m in Sources */,

@@ -12,7 +12,7 @@ import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
 import { OrderedMap, OrderedSet } from 'immutable';
 
-import getDeviceManager from '../libraries/btle/DeviceManager';
+import getDeviceManager from '../libraries/ble/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 import { UserState } from '../libraries/UserState';
 

@@ -9,7 +9,7 @@ let {
 import ProximityMeter from './ProximityMeter';
 import { LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
-import { DeviceSession } from '../../libraries/btle/DeviceManager';
+import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 const RSSI_CLOSE = -50;
 const RSSI_NEAR = -60;

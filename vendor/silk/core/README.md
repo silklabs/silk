@@ -72,6 +72,7 @@ The node debugger is activate by default in non-production builds.  To set
 breakpoints, either first restart the main silk program and tell node to halt at
 the first line:
 ```
+$ adb shell setprop persist.silk.profiling.enabled false  #<-- the default
 $ adb shell stop silk
 $ adb shell silk --debug-brk
 ```

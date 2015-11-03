@@ -140,8 +140,8 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
         leftEyeRect.width = leftEyeRect.width / previewScale;
         leftEyeRect.height = leftEyeRect.height / previewScale;
 
-        leftEye = new cv.Point(leftEyeRect.x + leftEyeRect.width / 2,
-            leftEyeRect.y + leftEyeRect.height / 2);
+        leftEye = new cv.Point(faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
+            faceRect.y + leftEyeRect.y + leftEyeRect.height / 2);
       }
 
       if (rightEyeRect) {
@@ -153,8 +153,8 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
         rightEyeRect.width = rightEyeRect.width / previewScale;
         rightEyeRect.height = rightEyeRect.height / previewScale;
 
-        rightEye = new cv.Point(rightEyeRect.x + rightEyeRect.width / 2,
-            rightEyeRect.y + rightEyeRect.height / 2);
+        rightEye = new cv.Point(faceRect.x + rightEyeRect.x + rightEyeRect.width / 2,
+            faceRect.y + rightEyeRect.y + rightEyeRect.height / 2);
       }
 
       log.debug(`eyes: ${JSON.stringify(leftEyeRect)} ${JSON.stringify(rightEyeRect)}`);

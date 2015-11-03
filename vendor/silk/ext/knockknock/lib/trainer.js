@@ -146,8 +146,9 @@ export default class Trainer {
    *  @returns a preprocessed face square image
    */
   _preprocessFace(im, face) {
-    const leftEye = {x: face.leftEye[0], y: face.leftEye[1]};
-    const rightEye = {x: face.rightEye[0], y: face.rightEye[1]};
+    // Convert eye rectangles to relative scale w.r.t face
+    const leftEye = {x: face.leftEye[0] - face.x, y: face.leftEye[1] - face.y};
+    const rightEye = {x: face.rightEye[0] - face.x, y: face.rightEye[1] - face.y};
     let gray = im.roi(face.x, face.y, face.width, face.height);
 
     // Since we found both eyes lets rotate & scale & translate the face so that

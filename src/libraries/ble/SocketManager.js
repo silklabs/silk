@@ -1,5 +1,6 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * @flow
+ */
 
 import {
   NativeModules,
@@ -8,6 +9,18 @@ import {
 import assert from 'assert';
 import { EventEmitter } from 'events';
 import makeLog from 'log';
+
+type ConnectMessage = {
+  id: number;
+};
+type ReceiveDataMessage = {
+  id: number;
+  data: string;
+};
+type RssiUpdateMessage = {
+  id: number;
+  rssi: number;
+};
 
 const log = makeLog(`btle-SocketManager`);
 
@@ -29,9 +42,9 @@ let singletonInstance = null;
  * Data can be sent to the other side using the send() method.
  */
 class Socket extends EventEmitter {
-  _id = 0;
+  _id: number;
 
-  constructor(id) {
+  constructor(id: number) {
     log.debug(`Socket(${id})`);
 
     super();
@@ -39,16 +52,16 @@ class Socket extends EventEmitter {
     this._id = id;
   }
 
-  send(data) {
+  send(data: Buffer) {
     log.debug(`Socket.send(${data.length})`);
 
-    singletonInstance.send(this._id, data);
+    singletonInstance && singletonInstance.send(this._id, data);
   }
 
   updateRssi() {
     log.debug(`Socket.updateRssi()`);
 
-    singletonInstance.updateRssi(this._id);
+    singletonInstance && singletonInstance.updateRssi(this._id);
   }
 }
 
@@ -62,7 +75,7 @@ class Socket extends EventEmitter {
  * Only one instance of this class will ever be created.
  */
 class SocketManager extends EventEmitter {
-  _sockets = new Map();
+  _sockets: Map<number, Socket> = new Map();
 
   constructor() {
     log.debug('SocketManager()');
@@ -79,7 +92,7 @@ class SocketManager extends EventEmitter {
                                    this.onDisconnect);
   }
 
-  onConnect = args => {
+  onConnect: ((args: ConnectMessage) => void) = (args) => {
     const id = args.id;
     log.debug(`SocketManager.onConnect(${id})`);
 
@@ -91,7 +104,7 @@ class SocketManager extends EventEmitter {
     this.emit('connect', socket);
   };
 
-  onData = args => {
+  onData: ((args: ReceiveDataMessage) => void) = (args) => {
     const { id, data } = args;
     log.debug(`SocketManager.onData(${id}, ${data.length})`);
 
@@ -104,7 +117,7 @@ class SocketManager extends EventEmitter {
     }
   };
 
-  onRssiUpdate = args => {
+  onRssiUpdate: ((args: RssiUpdateMessage) => void) = (args) => {
     const { id, rssi } = args;
     log.debug(`SocketManager.onRssiUpdate(${id}, ${rssi})`);
 
@@ -117,7 +130,7 @@ class SocketManager extends EventEmitter {
     }
   };
 
-  onDisconnect = args => {
+  onDisconnect: ((args: ConnectMessage) => void) = (args) => {
     const id = args.id;
     log.debug(`SocketManager.onDisconnect(${id})`);
 
@@ -132,7 +145,7 @@ class SocketManager extends EventEmitter {
     }
   };
 
-  send(id, data) {
+  send(id: number, data: Buffer) {
     log.debug(`SocketManager.send(${id}, ${data.length})`);
 
     assert(this._sockets.has(id));
@@ -140,7 +153,7 @@ class SocketManager extends EventEmitter {
     BLESocketManager.send(id, data.toString('base64'));
   }
 
-  updateRssi(id) {
+  updateRssi(id: number) {
     log.debug(`SocketManager.updateRssi(${id})`);
 
     assert(this._sockets.has(id));
@@ -149,17 +162,19 @@ class SocketManager extends EventEmitter {
   }
 }
 
-export default function getSocketManager() {
+export type { Socket, SocketManager };
+
+export default function getSocketManager(): EventEmitter {
   if (!singletonInstance) {
     singletonInstance = new SocketManager();
   }
 
   let emitter = new EventEmitter();
   emitter.on('newListener', (event, listener) => {
-    singletonInstance.addListener(event, listener);
+    singletonInstance && singletonInstance.addListener(event, listener);
   });
   emitter.on('removeListener', (event, listener) => {
-    singletonInstance.removeListener(event, listener);
+    singletonInstance && singletonInstance.removeListener(event, listener);
   });
 
   return emitter;

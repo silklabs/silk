@@ -1,5 +1,6 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import { EventEmitter } from 'events';
@@ -9,6 +10,31 @@ import mklog from 'log';
 import SocketSession from './SocketSession';
 
 const log = mklog('btle-DeviceManager');
+
+import type { Socket, SocketManager } from './SocketManager';
+
+type DeviceStatus = {
+  message: string;
+  isError: boolean;
+};
+
+type MessageData = {
+  name: string;
+  // TODO: even better: do union `name`:
+  // type MessageData = {...} | {...} | {...};
+  [arbitraryKey: string]: string;
+};
+
+type RegistrationInformation = {
+  accessPoint: string;
+  password: string;
+  publicKey: string;
+  regToken: string;
+};
+
+type DeviceSecret = {
+  deviceId: string;
+};
 
 let singletonInstance = null;
 
@@ -75,22 +101,23 @@ export class DeviceSession extends EventEmitter {
 
   static STATE_ERROR = 10;
 
-  _socketSession = null;
-  _state = DeviceSession.STATE_UNKNOWN;
-  _secret = null;
+  _socketSession: SocketSession;
 
-  _manufacturer = ``;
-  _model = ``;
-  _version = ``;
-  _image = null;
+  _state: number = DeviceSession.STATE_UNKNOWN; // TODO number -> string enum
+  _secret: ?DeviceSecret = null;
 
-  _status = null;
+  _manufacturer: string = ``;
+  _model: string = ``;
+  _version: string = ``;
+  _image: ?Buffer = null;
 
-  _connectEmitted = false;
-  _registeredEmitted = false;
-  _secretEmitted = false;
+  _status: ?DeviceStatus = null;
 
-  constructor(socket) {
+  _connectEmitted: boolean = false;
+  _registeredEmitted: boolean = false;
+  _secretEmitted: boolean = false;
+
+  constructor(socket: Socket) {
     log.debug(`DeviceSession()`);
 
     super();
@@ -103,7 +130,7 @@ export class DeviceSession extends EventEmitter {
     this._socketSession = socketSession;
   }
 
-  _validateData(data) {
+  _validateData(data: MessageData): boolean {
     log.debug(`DeviceSession._validateData(%j)`, data);
 
     if (!(`name` in data)) {
@@ -145,7 +172,7 @@ export class DeviceSession extends EventEmitter {
     assert(!this._connectEmitted);
     this._connectEmitted = true;
 
-    singletonInstance.emit(`connect`, this);
+    singletonInstance && singletonInstance.emit(`connect`, this);
   }
 
   _emitRegistered() {
@@ -172,14 +199,14 @@ export class DeviceSession extends EventEmitter {
     }
   }
 
-  _onError = error => {
+  _onError: ((error: Error) => void) = (error) => {
     log.debug(`DeviceSession._onError('${error.toString()}')`);
 
     log.warn(`Session error, disconnecting`, error);
     this._forceDisconnect();
   };
 
-  _onData = data => {
+  _onData: ((data: MessageData) => void) = (data) => {
     log.debug(`DeviceSession._onData()`, data);
 
     if (!this._validateData(data)) {
@@ -314,7 +341,7 @@ export class DeviceSession extends EventEmitter {
     this._forceDisconnect();
   };
 
-  _onRssiUpdate = rssi => {
+  _onRssiUpdate: ((rssi: number) => void) = (rssi) => {
     log.debug(`DeviceSession._onRssiUpdate(${rssi})`);
 
     if (this._state === DeviceSession.STATE_ERROR) {
@@ -332,31 +359,31 @@ export class DeviceSession extends EventEmitter {
     }
   };
 
-  get manufacturer() {
+  get manufacturer(): string {
     return this._manufacturer;
   }
 
-  get model() {
+  get model(): string {
     return this._model;
   }
 
-  get version() {
+  get version(): string {
     return this._version;
   }
 
-  get image() {
+  get image(): ?Buffer {
     return this._image;
   }
 
-  get statusMessage() {
+  get statusMessage(): string {
     return this._statusMessage;
   }
 
-  get errorMessage() {
+  get errorMessage(): string {
     return this._errorMessage;
   }
 
-  respondToRegistrationRequest(accept) {
+  respondToRegistrationRequest(accept: boolean) {
     log.debug(`DeviceSession.respondToRegistrationRequest(${accept})`);
 
     if (this._state === DeviceSession.STATE_ERROR) {
@@ -382,7 +409,7 @@ export class DeviceSession extends EventEmitter {
     this._forceDisconnect();
   }
 
-  sendRegistrationInformation(config) {
+  sendRegistrationInformation(config: RegistrationInformation) {
     log.debug(`DeviceSession.sendRegistrationInformation()`);
 
     assert(this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
@@ -396,7 +423,7 @@ export class DeviceSession extends EventEmitter {
     this._state = DeviceSession.STATE_REGISTERING_SENT_SECRET;
   }
 
-  dismiss = () => {
+  dismiss: (() => void) = () => {
     // socket.io and BLE sockets can race each other. If we happen to
     // be able to confirm a socket.io connection to the device and
     // want to dismiss the socket before we've confirmed a successful
@@ -415,8 +442,8 @@ export class DeviceSession extends EventEmitter {
 }
 
 class DeviceManager extends EventEmitter {
-  _devices = new Map();
-  _socketManager = null;
+  _devices: Map<Socket, DeviceSession> = new Map();
+  _socketManager: SocketManager;
 
   constructor() {
     log.debug(`DeviceManager()`);
@@ -428,7 +455,7 @@ class DeviceManager extends EventEmitter {
     this._socketManager.on(`disconnect`, this._onDisconnect);
   }
 
-  _onConnect = socket => {
+  _onConnect: ((socket: Socket) => void) = (socket) => {
     log.debug(`DeviceManager._onConnect()`);
 
     assert(!this._devices.has(socket));
@@ -437,7 +464,7 @@ class DeviceManager extends EventEmitter {
     this._devices.set(socket, device);
   };
 
-  _onDisconnect = socket => {
+  _onDisconnect: ((socket: Socket) => void) = socket => {
     log.debug(`DeviceManager._onDisconnect()`);
 
     let device = this._devices.get(socket);
@@ -449,17 +476,17 @@ class DeviceManager extends EventEmitter {
 }
 
 
-export default function getDeviceManager() {
+export default function getDeviceManager(): EventEmitter {
   if (!singletonInstance) {
     singletonInstance = new DeviceManager();
   }
 
   let emitter = new EventEmitter();
   emitter.on('newListener', (event, listener) => {
-    singletonInstance.addListener(event, listener);
+    singletonInstance && singletonInstance.addListener(event, listener);
   });
   emitter.on('removeListener', (event, listener) => {
-    singletonInstance.removeListener(event, listener);
+    singletonInstance && singletonInstance.removeListener(event, listener);
   });
 
   return emitter;

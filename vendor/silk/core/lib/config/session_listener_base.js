@@ -43,12 +43,18 @@ export default class SessionListenerBase extends EventEmitter {
     [ 'reconnecting', 'server_reconnecting' ],
   ]);
 
+  static ERROR_CODE_MAP = new Map([
+    [ '4way_handshake_timeout', 'wifi_wrong_password'],
+  ]);
+
   _socketSession = null;
   _disconnecting = false;
+  _addStatusListeners = null;
   _removeStatusListeners = null;
+  _statusListenersInstalled = false;
   _removeSessionListeners = null;
   _status = '';
-  _error = '';
+  _errorCode = '';
 
   constructor() {
     log.debug(`SessionListenerBase()`);
@@ -61,33 +67,44 @@ export default class SessionListenerBase extends EventEmitter {
                      socketSession => this._onDisconnect(socketSession));
 
     const wifiOnlineListener = () => this._onWifiOnline();
-    wifi.addListener(`online`, wifiOnlineListener);
     const wifiOfflineListener = () => this._onWifiOffline();
-    wifi.addListener(`offline`, wifiOfflineListener);
     const wifiStateChangeListener = state => this._onWifiStateChange(state);
-    wifi.addListener(`stateChange`, wifiStateChangeListener);
     const wifiErrorListener = error => this._onWifiError(error);
-    wifi.addListener(`error`, wifiErrorListener);
-
     const serverConnectingListener = () => this._onServerConnecting();
-    server.addListener(`connecting`, serverConnectingListener);
     const serverReconnectingListener = () => this._onServerReconnecting();
-    server.addListener(`reconnecting`, serverReconnectingListener);
     const serverConnectListener = () => this._onServerConnect();
-    server.addListener(`connect`, serverConnectListener);
     const serverDisconnectListener = () => this._onServerDisconnect();
-    server.addListener(`disconnect`, serverDisconnectListener);
     const serverStateChangeListener = state => this._onServerStateChange(state);
-    server.addListener(`stateChange`, serverStateChangeListener);
     const serverErrorListener = error => this._onServerError(error);
-    server.addListener(`error`, serverErrorListener);
+
+    this._addStatusListeners = () => {
+      if (this._statusListenersInstalled) {
+        return;
+      }
+      this._statusListenersInstalled = true;
+
+      wifi.addListener(`online`, wifiOnlineListener);
+      wifi.addListener(`offline`, wifiOfflineListener);
+      wifi.addListener(`stateChange`, wifiStateChangeListener);
+      wifi.addListener(`error`, wifiErrorListener);
+      server.addListener(`connecting`, serverConnectingListener);
+      server.addListener(`reconnecting`, serverReconnectingListener);
+      server.addListener(`connect`, serverConnectListener);
+      server.addListener(`disconnect`, serverDisconnectListener);
+      server.addListener(`stateChange`, serverStateChangeListener);
+      server.addListener(`error`, serverErrorListener);
+    };
 
     this._removeStatusListeners = () => {
+      if (!this._statusListenersInstalled) {
+        return;
+      }
+      this._statusListenersInstalled = false;
+
       wifi.removeListener(`online`, wifiOnlineListener);
       wifi.removeListener(`offline`, wifiOfflineListener);
       wifi.removeListener(`stateChange`, wifiStateChangeListener);
       wifi.removeListener(`error`, wifiErrorListener);
-
       server.removeListener(`connecting`, serverConnectingListener);
       server.removeListener(`reconnecting`, serverReconnectingListener);
       server.removeListener(`connect`, serverConnectListener);
@@ -97,13 +114,16 @@ export default class SessionListenerBase extends EventEmitter {
     };
   }
 
+  addStatusListeners() {
+    log.debug(`SessionListenerBase.addStatusListeners()`);
+
+    this._addStatusListeners();
+  }
+
   removeStatusListeners() {
     log.debug(`SessionListenerBase.removeStatusListeners()`);
 
-    if (this._removeStatusListeners) {
-      this._removeStatusListeners();
-      this._removeStatusListeners = null;
-    }
+    this._removeStatusListeners();
   }
 
   disconnect() {
@@ -115,8 +135,9 @@ export default class SessionListenerBase extends EventEmitter {
 
     this._disconnecting = true;
 
+    this.removeStatusListeners();
+
     if (this._socketSession) {
-      this.removeStatusListeners();
       this._socketSession.rssiUpdatesEnabled = false;
       this._socketSession.disconnect();
     }
@@ -129,19 +150,31 @@ export default class SessionListenerBase extends EventEmitter {
     this._socketSession.write(data);
   }
 
-  _sendStatus(status) {
-    assert(this._socketSession);
+  _sendStatus(status, force = false) {
+    if (this._status === status && !force) {
+      return;
+    }
+    this._status = status;
+    if (!this._socketSession) {
+      return;
+    }
     this._send({
       name: `status`,
       status
     });
   }
 
-  _sendError(error) {
-    assert(this._socketSession);
+  _sendError(code, force = false) {
+    if (this._errorCode === code && !force) {
+      return;
+    }
+    this._errorCode = code;
+    if (!this._socketSession) {
+      return;
+    }
     this._send({
       name: `error`,
-      error
+      code,
     });
   }
 
@@ -209,28 +242,20 @@ export default class SessionListenerBase extends EventEmitter {
       status = `wifi_${state}`;
     }
 
-    if (status !== this._status) {
-      this._status = status;
-      if (this._socketSession) {
-        this._sendStatus(status);
-      }
-    }
+    this._sendStatus(status);
   }
 
   _onWifiError(error) {
     error = error.toString();
     log.debug(`SessionListenerBase._onWifiError('${error}')`);
 
-    let errorMessage = SessionListenerBase.WIFI_ERROR_MAP.get(error);
-    if (!errorMessage) {
+    let message = SessionListenerBase.WIFI_ERROR_MAP.get(error);
+    if (!message) {
       log.error(`No error message mapping for wifi error '${error}'`);
-      errorMessage = error;
+      message = error;
     }
 
-    this._error = errorMessage;
-    if (this._socketSession) {
-      this._sendError(errorMessage);
-    }
+    this._sendStatus(message);
   }
 
   _onServerConnecting() {
@@ -258,21 +283,16 @@ export default class SessionListenerBase extends EventEmitter {
       status = `server_${state}`;
     }
 
-    if (wifi.isOnline() && this._status !== status) {
-      this._status = status;
-      if (this._socketSession) {
-        this._sendStatus(status);
-      }
+    if (wifi.isOnline()) {
+      this._sendStatus(status);
     }
   }
 
   _onServerError(error) {
-    error = error.toString();
-    log.debug(`SessionListenerBase._onServerError('${error}')`);
+    let message = error.toString();
+    log.debug(`SessionListenerBase._onServerError('${message}')`);
 
-    if (this._socketSession) {
-      this._sendError(error);
-    }
+    this._sendStatus(message);
   }
 
   _onData() {

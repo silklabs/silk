@@ -27,12 +27,12 @@ export default class NormalSessionListener extends SessionListenerBase {
       name: `registered`,
     });
 
-    if (this._error) {
-      this._sendError(this._error);
+    if (this._errorCode) {
+      this._sendError(this._errorCode, /* force */ true);
     }
 
     if (this._status) {
-      this._sendStatus(this._status);
+      this._sendStatus(this._status, /* force */ true);
     }
   }
 

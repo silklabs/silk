@@ -329,10 +329,14 @@ class CameraStream extends EventEmitter {
         if (this._startPromiseCallbacks) {
           this._startPromiseCallbacks.resolve();
         }
+      } else if (captureEvent.eventName === 'getParameter') {
+        if (this._getParameterCallback) {
+          this._getParameterCallback.resolve(captureEvent.data);
+        }
       } else if (captureEvent.eventName === 'stopped') {
         throw new Error('Camera stop unhandled');
       } else {
-        log.warn(`Error: Unknown capture command ${line}`);
+        log.warn(`Error: Unknown capture event ${line}`);
       }
     }
   }
@@ -492,7 +496,7 @@ class CameraStream extends EventEmitter {
    */
   async start() {
     if (this._startPromiseCallbacks) {
-      throw new Error('Re-entered start?');
+      throw new Error(`Re-entered start?`);
     }
 
     let startPromise = new Promise((resolve, reject) => {
@@ -515,6 +519,42 @@ class CameraStream extends EventEmitter {
       return;
     }
     this._command({cmdName: 'setParameter', name: 'flash-mode', value: flashMode});
+  }
+
+  /**
+   * Get integer camera parameter
+   */
+  async getParameterInt(name) {
+    if (this._getParameterCallback) {
+      throw new Error(`Re-entered getParameter?`);
+    }
+    if (!this._ready) {
+      throw new Error(`camera not ready, ignoring flash command`);
+    }
+
+    let getParamPromise = new Promise((resolve, reject) => {
+      this._getParameterCallback = { resolve, reject };
+    });
+    this._command({cmdName: 'getParameterInt', name});
+    return getParamPromise;
+  }
+
+  /**
+   * Get string camera parameter
+   */
+  async getParameterStr(name) {
+    if (this._getParameterCallback) {
+      throw new Error(`Re-entered getParameter?`);
+    }
+    if (!this._ready) {
+      throw new Error(`camera not ready, ignoring flash command`);
+    }
+
+    let getParamPromise = new Promise((resolve, reject) => {
+      this._getParameterCallback = { resolve, reject };
+    });
+    this._command({cmdName: 'getParameterStr', name});
+    return await getParamPromise;
   }
 
   /**

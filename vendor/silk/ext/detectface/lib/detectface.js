@@ -183,10 +183,13 @@ class DetectFace {
     }
   }
 
-  _init() {
-    log = this._env.log;
+  async _init() {
     timeline = this._env.timeline;
+    log = this._env.log;
     let working = false;
+
+    let halFaces = await this._env.camera.getParameterInt('max-num-detected-faces-hw');
+    log.info(`HAL faces HW: ${halFaces}`);
 
     this._onMotion = when => {
       if (working) {

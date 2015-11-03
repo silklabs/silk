@@ -111,6 +111,8 @@ private:
   int capture_init(Value& cmdData);
   int capture_cleanup();
   int capture_setParameter(Value& name, Value& value);
+  int capture_getParameterInt(Value& name);
+  int capture_getParameterStr(Value& name);
   static void* initThreadWrapper(void* me);
   status_t setPreviewTarget();
 
@@ -196,6 +198,10 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     capture_cleanup();
   } else if (cmdName == "setParameter") {
     capture_setParameter(cmdJson["name"], cmdJson["value"]);
+  } else if (cmdName == "getParameterInt") {
+    capture_getParameterInt(cmdJson["name"]);
+  } else if (cmdName == "getParameterStr") {
+    capture_getParameterStr(cmdJson["name"]);
   } else {
     LOG_ERROR(true, "Invalid command %s", cmdName.c_str());
   }
@@ -421,6 +427,42 @@ int CaptureCommand::capture_setParameter(Value& name, Value& value) {
     ALOGW("Error %d: Failed to set '%s' to '%s'", err,
       name.asCString(), value.asCString());
   }
+  return 0;
+}
+
+/**
+ * Get integer camera parameter
+ */
+int CaptureCommand::capture_getParameterInt(Value& name) {
+  LOG_ERROR((name.isNull()), "name not specified");
+  LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
+
+  CameraParameters params = mCamera->getParameters();
+  int value = params.getInt(name.asCString());
+
+  Value jsonMsg;
+  jsonMsg["eventName"] = "getParameter";
+  jsonMsg["data"] = value;
+  mCaptureListener->sendEvent(jsonMsg);
+
+  return 0;
+}
+
+/**
+ * Get string camera parameter
+ */
+int CaptureCommand::capture_getParameterStr(Value& name) {
+  LOG_ERROR((name.isNull()), "name not specified");
+  LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
+
+  CameraParameters params = mCamera->getParameters();
+  const char* value = params.get(name.asCString());
+
+  Value jsonMsg;
+  jsonMsg["eventName"] = "getParameter";
+  jsonMsg["data"] = value;
+  mCaptureListener->sendEvent(jsonMsg);
+
   return 0;
 }
 

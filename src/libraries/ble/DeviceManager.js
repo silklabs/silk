@@ -71,6 +71,7 @@ export class DeviceSession extends EventEmitter {
   static STATE_REGISTERING_PROXIMITY = 4;
   static STATE_REGISTERING_SENT_SECRET = 5;
   static STATE_REGISTERED = 6;
+  static STATE_DISMISSED = 7;
 
   static STATE_ERROR = 10;
 
@@ -394,6 +395,23 @@ export class DeviceSession extends EventEmitter {
 
     this._state = DeviceSession.STATE_REGISTERING_SENT_SECRET;
   }
+
+  dismiss = () => {
+    // socket.io and BLE sockets can race each other. If we happen to
+    // be able to confirm a socket.io connection to the device and
+    // want to dismiss the socket before we've confirmed a successful
+    // configuration, wait for the BLE socket to catch up.
+    if (this._state === DeviceSession.STATE_REGISTERING_SENT_SECRET) {
+      this.once(`registered`, this.dismiss);
+      return;
+    }
+
+    assert(this._state === DeviceSession.STATE_REGISTERED);
+    this._socketSession.write({
+      name: `dismiss`,
+    });
+    this._state = DeviceSession.STATE_DISMISSED;
+  };
 }
 
 class DeviceManager extends EventEmitter {

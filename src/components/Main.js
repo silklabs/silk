@@ -290,10 +290,14 @@ export default class extends AsyncComponent {
     }
 
     if (configuringDevice && configuringDevice.deviceId === deviceId) {
-      // We must've successfully configured this new device. Add the
-      // device record to the list of configured devices, remove the
-      // corresponding entry from the list of unconfigured devices,
-      // and reset the configuring device.
+      // We must've successfully configured this new device. Let's
+      // close the loop on the BLE socket.
+      log.debug('New video stream belongs to currently configuring device.');
+      configuringDevice.bleDeviceSession.dismiss();
+
+      // Add the device record to the list of configured devices,
+      // remove the corresponding entry from the list of unconfigured
+      // devices, and reset the configuring device.
       let newRecord = new DeviceRecord({
         deviceId,
         publicKey: deviceId,
@@ -311,7 +315,7 @@ export default class extends AsyncComponent {
         // In this case we just want to bump it to the right place, so we
         // explicitly remove it from the ordered map before re-adding it.
         devices: devices.delete(deviceId).set(deviceId, newRecord),
-        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.peripheralId),
+        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.bleDeviceSession),
         configuringDevice: null,
       });
       return;
@@ -392,7 +396,15 @@ export default class extends AsyncComponent {
     });
 
     bleDeviceSession.on('registered', () => {
-      log.debug('BLE device no longer connected or unconfigured. Cleaning up.');
+      log.debug('BLE device no longer unconfigured. Cleaning up.');
+      let { configuringDevice } = this.pendingState;
+      let isCurrentConfiguringDevice = configuringDevice &&
+        configuringDevice.bleDeviceSession === bleDeviceSession;
+      if (isCurrentConfiguringDevice) {
+        log.debug(`We're currently configuring it. Avoid changing state just yet.`);
+        return;
+      }
+
       let { unconfiguredDevices } = this.pendingState;
       if (unconfiguredDevices.contains(bleDeviceSession)) {
         this.setStateAsync({
@@ -401,16 +413,20 @@ export default class extends AsyncComponent {
       }
     });
     bleDeviceSession.on('disconnect', () => {
+      log.debug('BLE device disconnected. Cleaning up.');
       let { configuringDevice } = this.pendingState;
-      if (unconfiguredDevices.contains(bleDeviceSession) ||
-          (configuringDevice && configuringDevice.bleDeviceSession === bleDeviceSession)) {
+      let isCurrentConfiguringDevice = configuringDevice &&
+        configuringDevice.bleDeviceSession === bleDeviceSession;
+      if (unconfiguredDevices.contains(bleDeviceSession) || isCurrentConfiguringDevice) {
         this.setStateAsync({
           unconfiguredDevices: unconfiguredDevices.delete(bleDeviceSession),
           configuringDevice: null,
         });
       }
       bleDeviceSession.removeAllListeners();
-      this._abortConfig(new Error('BLE socket disconnected.'));
+      if (isCurrentConfiguringDevice) {
+        this._abortConfig(new Error('BLE socket disconnected.'));
+      }
     });
   };
 

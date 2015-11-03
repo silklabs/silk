@@ -142,12 +142,16 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   let normCoord = (c, len) => normLen(c + 1000.0, len);
 
   // Intentionally discard additional HAL face data such as the
-  // id/leftEye/rightEye/mouth/score as they are never used downstream.
+  // id/mouth/score as they are never used downstream.
   return {
     x: normCoord(left, PREVIEW_WIDTH),
     y: normCoord(top, PREVIEW_HEIGHT),
     width: normLen(right - left, PREVIEW_WIDTH),
     height: normLen(bottom - top, PREVIEW_HEIGHT),
+    leftEye: [normCoord(face.leftEye[0], PREVIEW_WIDTH),
+        normCoord(face.leftEye[1], PREVIEW_HEIGHT)],
+    rightEye: [normCoord(face.rightEye[0], PREVIEW_WIDTH),
+        normCoord(face.rightEye[1], PREVIEW_HEIGHT)],
   };
 }
 

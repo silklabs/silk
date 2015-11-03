@@ -1,0 +1,31 @@
+From 511140335ea821ed627c93e63812403f97cc6be1 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 3 Nov 2015 11:10:39 -0800
+Subject: [PATCH] Create /data/system directory
+
+It is expected to exist by debuggerd.  On normal devices, this directory is
+constructed as a side effect of initializing the sensor subsystem (!)
+---
+ init.goldfish.rc | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/init.goldfish.rc b/init.goldfish.rc
+index ead468d..ea3f0ef 100644
+--- a/init.goldfish.rc
++++ b/init.goldfish.rc
+@@ -60,6 +60,12 @@ on boot
+ on fs
+         mount_all /fstab.goldfish
+ 
++on post-fs-data
++    # Create /data/system directory, it is expected to exist by debuggerd.
++    # On normal devices, this directory is constructed as a side effect of
++    # initializing the sensor subsystem (!)
++    mkdir /data/system 0755 system system
++
+ service goldfish-setup /system/etc/init.goldfish.sh
+     user root
+     group root
+-- 
+1.9.1
+

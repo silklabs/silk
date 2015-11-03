@@ -46,7 +46,9 @@ async function drainLogcat(destination) {
 
 async function handleJSError(type, err) {
   let stream = new Store();
-  stream.write(tombstoneHeader(type, err));
+  const header = tombstoneHeader(type, err);
+  log.error(header);
+  stream.write(header);
   await drainLogcat(stream);
   return stream;
 }

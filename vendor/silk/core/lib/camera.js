@@ -142,7 +142,7 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   let normCoord = (c, len) => normLen(c + 1000.0, len);
 
   // Intentionally discard additional HAL face data such as the
-  // id/mouth/score as they are never used downstream.
+  // mouth/score as they are never used downstream.
   return {
     x: normCoord(left, PREVIEW_WIDTH),
     y: normCoord(top, PREVIEW_HEIGHT),
@@ -436,7 +436,9 @@ class CameraStream extends EventEmitter {
         // (HAL can return multiple faces per preview, but it's not helpful to show
         //  them all on the preview)
         if (this.faces) {
-          log.info(`Detected face=${this.faces.length}`);
+          if (this.faces.length > 0) {
+            log.info(`Detected face=${this.faces.length}`);
+          }
           this.timeline.addFace(when, this.faces, 'hal');
         }
       }, {ext: '.jpg', jpegQuality: 100});

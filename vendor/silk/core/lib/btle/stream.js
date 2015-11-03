@@ -306,12 +306,18 @@ class Stream extends Duplex {
     log.debug(`Stream._onDrain()`);
 
     assert(!this._btDrained);
-    assert(this._streamWriteCallback);
 
-    clearTimeout(this._btWriteTimeout);
-    this._btWriteTimeout = null;
+    if (this._btWriteTimeout) {
+      assert(this._streamWriteCallback);
+      clearTimeout(this._btWriteTimeout);
+      this._btWriteTimeout = null;
+    }
 
     this._btDrained = true;
+
+    if (!this._streamWriteCallback) {
+      return;
+    }
 
     if (this._outgoingBuffer.length > this._btMaxChunkSize) {
       this._outgoingBuffer = this._outgoingBuffer.slice(this._btMaxChunkSize);

@@ -166,7 +166,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
         gutil.log('(uglify)', err.lineNumber);
         process.exit(1);
       })
-      .pipe(sourcemaps.write('.', {includeContent: false})) // writes .map file
+      .pipe(sourcemaps.write('.', {includeContent: true})) // writes .map file
       .pipe(gulp.dest(baseDirectory));
   }
 

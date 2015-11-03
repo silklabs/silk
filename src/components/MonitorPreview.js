@@ -3,7 +3,7 @@
 
 import React from 'react-native';
 
-import { DeviceSession } from '../libraries/btle/DeviceManager';
+import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 
 import ImageView from './ImageView';

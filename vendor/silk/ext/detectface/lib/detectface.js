@@ -189,7 +189,10 @@ class DetectFace {
     let working = false;
 
     let halFaces = await this._env.camera.getParameterInt('max-num-detected-faces-hw');
-    log.info(`HAL faces HW: ${halFaces}`);
+    if (halFaces > 0) {
+      log.info(`HAL faces: ${halFaces}. Disabling opencv face detection`);
+      return;
+    }
 
     this._onMotion = when => {
       if (working) {

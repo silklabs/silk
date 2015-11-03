@@ -164,7 +164,7 @@ class FindFace {
   _start() {
     log.info(`Starting face recognition`);
     this._onFace = (when, faces, source) => {
-      if ((faces.length <= 0) || (source === 'hal')) {
+      if (faces.length <= 0) {
         return;
       }
 
@@ -194,7 +194,7 @@ class FindFace {
           if (result.id !== -1) {
             log.info(`face detected id:${result.id} ` +
                 `${this._matchIdWithName(result.id)} ` +
-                `confidence: ${result.confidence}`);
+                `confidence: ${result.confidence} source:${source}`);
 
             // Add the person to timeline
             this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);

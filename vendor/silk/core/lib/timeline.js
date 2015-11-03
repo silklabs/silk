@@ -69,7 +69,6 @@ export default class Timeline extends EventEmitter {
   _previewSize: Size;
   videoObjects: Array<TimelineEventObject>;
   previewObjects: Array<TimelineEventObject>;
-  previewHalFaces: boolean;
   cachedObjs: Array<TimelineEventObject>;
   videoFrames: Array<VideoFrame>;
   eventTracker: EventTracker;
@@ -104,7 +103,6 @@ export default class Timeline extends EventEmitter {
 
     // previewObjects is like videoObjects, but for the preview images
     this.previewObjects = [];
-    this.previewHalFaces = false;
 
     // Keeps a copy of previous objects to be sent when there is no motion detected
     this.cachedObjs = [];
@@ -193,15 +191,8 @@ export default class Timeline extends EventEmitter {
    * Handle faces returned by camera HAL
    */
   addFace(when: number, faces: Array<Rect>, source: string) {
-    // Only emit the first set of HAL-detected faces
-    // (HAL can return multiple faces a second, but it's not helpful to show
-    //  them all on the preview)
-    if (!this.previewHalFaces) {
-      this.previewHalFaces = true;
-
-      // Run facial recognition on the detected faces before recording the event
-      this.emit('face', when, faces, source);
-    }
+    // Run facial recognition on the detected faces before recording the event
+    this.emit('face', when, faces, source);
   }
 
   /**
@@ -388,7 +379,6 @@ export default class Timeline extends EventEmitter {
     this.lastPreviewFrame = frame;
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
-    this.previewHalFaces = false;
   }
 
   _pushVideo(

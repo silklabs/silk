@@ -258,8 +258,16 @@ export default class Trainer {
         }
       });
 
-      this._onFace = (when, faces, source) => {
-        if ((faces.length <= 0) || (source === 'hal')) {
+      this._onFace = (when, faces) => {
+        if (faces.length <= 0) {
+          return;
+        }
+
+        // Ignore if there are more than one face as we don't know which of
+        // the face is the person being trained
+        if (faces.length > 1) {
+          log.warn(`More than one face detected while training. Please ask` +
+              `the other person to step aside.`);
           return;
         }
 
@@ -273,12 +281,6 @@ export default class Trainer {
           if (err) {
             log.warn(`Unable to fetch frame: ${err}`);
             this._working = false;
-            return;
-          }
-
-          // Ignore if there are more than one face as we don't know which of
-          // the face is the person being trained
-          if (faces.length > 1) {
             return;
           }
 

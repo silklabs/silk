@@ -152,6 +152,7 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
         normCoord(face.leftEye[1], PREVIEW_HEIGHT)],
     rightEye: [normCoord(face.rightEye[0], PREVIEW_WIDTH),
         normCoord(face.rightEye[1], PREVIEW_HEIGHT)],
+    id: face.id,
   };
 }
 
@@ -430,6 +431,14 @@ class CameraStream extends EventEmitter {
         // Add frames to the timeline
         this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
         this.timeline.addPreviewFrame(when);
+
+        // Only emit the latest set of HAL-detected faces
+        // (HAL can return multiple faces per preview, but it's not helpful to show
+        //  them all on the preview)
+        if (this.faces) {
+          log.info(`Detected face=${this.faces.length}`);
+          this.timeline.addFace(when, this.faces, 'hal');
+        }
       }, {ext: '.jpg', jpegQuality: 100});
     });
   }
@@ -465,9 +474,7 @@ class CameraStream extends EventEmitter {
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`, tagInfo);
-        let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-        log.info(`Detected face=${faces.length}`);
-        this.timeline.addFace(when, faces, 'hal');
+        this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
         break;
       case TAG_MIC:
         log.debug(`TAG_MIC ${when}`, tagInfo);

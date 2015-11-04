@@ -9,8 +9,6 @@ import * as Joi from 'joi-browserify';
 import mklog from 'log';
 import SocketSession from './SocketSession';
 
-const log = mklog('btle-DeviceManager');
-
 import type { Socket, SocketManager } from './SocketManager';
 
 type DeviceStatus = {
@@ -36,7 +34,9 @@ type DeviceSecret = {
   deviceId: string;
 };
 
-let singletonInstance = null;
+const log = mklog('btle-DeviceManager');
+
+const RSSI_THRESHOLD = -40;
 
 const SCHEMA = {
   id: Joi.object().keys({
@@ -88,6 +88,8 @@ const SCHEMA = {
   }).required(),
 };
 
+let singletonInstance = null;
+
 export class DeviceSession extends EventEmitter {
   static STATE_UNKNOWN = 0;
   static STATE_ID_RECEIVED = 1;
@@ -97,6 +99,7 @@ export class DeviceSession extends EventEmitter {
   static STATE_REGISTERING_SENT_SECRET = 5;
   static STATE_REGISTERED = 6;
   static STATE_DISMISSED = 7;
+  static STATE_RESTARTED = 8;
 
   static STATE_ERROR = 10;
 
@@ -115,6 +118,7 @@ export class DeviceSession extends EventEmitter {
   _connectEmitted: boolean = false;
   _registeredEmitted: boolean = false;
   _secretEmitted: boolean = false;
+  _acceptRegistrationPending: boolean = false;
 
   constructor(socket: Socket) {
     log.debug(`DeviceSession()`);
@@ -158,7 +162,7 @@ export class DeviceSession extends EventEmitter {
   _forceDisconnect() {
     log.debug(`DeviceSession._forceDisconnect()`);
 
-    this._state = SocketSession.STATE_ERROR;
+    this._state = DeviceSession.STATE_ERROR;
     this._socketSession.rssiUpdatesEnabled = false;
     this._socketSession.disconnect();
   }
@@ -216,6 +220,15 @@ export class DeviceSession extends EventEmitter {
     const state = this._state;
     if (state === DeviceSession.STATE_ERROR) {
       log.debug(`Received data while in the ERROR state, ignoring`);
+      return;
+    }
+
+    if (state === DeviceSession.STATE_RESTARTED &&
+        data.name !== `register`) {
+      // We've requested to restart the configuration process. While
+      // we're waiting for the device acknowledge with `register` (which
+      // resets state back to STATE_REGISTER_REQUESTED), ignore any other
+      // messages that the device might still be sending to us.
       return;
     }
 
@@ -279,13 +292,18 @@ export class DeviceSession extends EventEmitter {
       return;
 
     case `register`:
-      if (state !== DeviceSession.STATE_ID_RECEIVED) {
+      if (state !== DeviceSession.STATE_ID_RECEIVED &&
+          state !== DeviceSession.STATE_RESTARTED) {
         log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
       this._state = DeviceSession.STATE_REGISTER_REQUESTED;
-      this._emitConnect();
+      if (state !== DeviceSession.STATE_RESTARTED) {
+        this._emitConnect();
+      } else if (this._acceptRegistrationPending) {
+        this.acceptRegistrationRequest();
+      }
       return;
 
     case `rssi`:
@@ -351,9 +369,9 @@ export class DeviceSession extends EventEmitter {
       return;
     }
 
-    assert(this._state >= DeviceSession.STATE_REGISTERING);
+    assert(this._state === DeviceSession.STATE_REGISTERING);
 
-    if (this._state === DeviceSession.STATE_REGISTERING && rssi >= -40) {
+    if (rssi >= RSSI_THRESHOLD) {
       log.info(`Passed proximity gate`);
       this._socketSession.rssiUpdatesEnabled = false;
       this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
@@ -385,6 +403,13 @@ export class DeviceSession extends EventEmitter {
     return this._errorMessage;
   }
 
+  /**
+   * Accept the device's registration request.
+   *
+   * This signals to an unconfigured device that the user wants to
+   * configure it. The device is expected to start sending RSSI
+   * updates.
+   */
   acceptRegistrationRequest() {
     log.debug(`DeviceSession.acceptRegistrationRequest()`);
 
@@ -394,7 +419,17 @@ export class DeviceSession extends EventEmitter {
       return;
     }
 
+    // It's possible we're being asked to configure the device again
+    // while we're still waiting for it to acknowledge the restart of
+    // the configuration process. Let's still honour that request,
+    // just wait until the device has confirmed the new state.
+    if (this._state === DeviceSession.STATE_RESTARTED) {
+      this._acceptRegistrationPending = true;
+      return;
+    }
+
     assert(this._state === DeviceSession.STATE_REGISTER_REQUESTED);
+    this._acceptRegistrationPending = false;
 
     this._socketSession.write({
       name: `accept`,
@@ -403,6 +438,13 @@ export class DeviceSession extends EventEmitter {
     this._state = DeviceSession.STATE_REGISTERING;
   }
 
+  /**
+   * Decline the device's registration request
+   *
+   * This indicates to the device that the user does not want to
+   * configure it, at least not using this app. The BLE socket
+   * connection is expected to be closed after this.
+   */
   declineRegistrationRequest() {
     log.debug(`DeviceSession.declineRegistrationRequest()`);
 
@@ -418,6 +460,13 @@ export class DeviceSession extends EventEmitter {
     this._forceDisconnect();
   }
 
+  /**
+   * Send registration information to the device.
+   *
+   * This sends WiFi and other configuration data to the device. The
+   * device is expected to send `status` messages as it connects to
+   * the WiFi network, registers with the server, etc.
+   */
   sendRegistrationInformation(config: RegistrationInformation) {
     log.debug(`DeviceSession.sendRegistrationInformation()`);
 
@@ -432,11 +481,51 @@ export class DeviceSession extends EventEmitter {
     this._state = DeviceSession.STATE_REGISTERING_SENT_SECRET;
   }
 
+  /**
+   * Restart the configuration process.
+   *
+   * This indicates to the device that the user has aborted the
+   * configuration process. The device is expected to go back to
+   * requesting configuration and stop sending us RSSI updates.
+   */
+  restart() {
+    log.debug(`DeviceSession.restart()`);
+
+    if (this._state === DeviceSession.STATE_ERROR) {
+      log.debug(`Cannot restart while in the ERROR state, ignoring.`);
+      return;
+    }
+
+    if (this._state === DeviceSession.STATE_RESTARTED) {
+      log.info(`Already restarting configuration process. Ignoring.`);
+      return;
+    }
+
+    assert(this._state === DeviceSession.STATE_REGISTERING ||
+           this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
+
+    this._state = DeviceSession.STATE_RESTARTED;
+    this._socketSession.rssiUpdatesEnabled = false;
+    this._secret = null;
+    this._secretEmitted = false;
+
+    this._socketSession.write({
+      name: `restart`,
+    });
+  }
+
+  /**
+   * Dismiss the BLE socket connection.
+   *
+   * This indicates to the device that the app has successfully
+   * received data through the server connection, and the BLE socket
+   * can be closed.
+   */
   dismiss: (() => void) = () => {
-    // socket.io and BLE sockets can race each other. If we happen to
-    // be able to confirm a socket.io connection to the device and
-    // want to dismiss the socket before we've confirmed a successful
-    // configuration, wait for the BLE socket to catch up.
+    // The server connection and BLE sockets can race each other. If
+    // we happen to be able to confirm a socket.io connection to the
+    // device and want to dismiss the socket before we've confirmed a
+    // successful configuration, wait for the BLE socket to catch up.
     if (this._state === DeviceSession.STATE_REGISTERING_SENT_SECRET) {
       this.once(`registered`, this.dismiss);
       return;

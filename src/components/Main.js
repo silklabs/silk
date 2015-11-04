@@ -425,7 +425,7 @@ export default class extends AsyncComponent {
       }
       bleDeviceSession.removeAllListeners();
       if (isCurrentConfiguringDevice) {
-        this._abortConfig(new Error('BLE socket disconnected.'));
+        this._abortConfig(bleDeviceSession, new Error('BLE socket disconnected.'));
       }
     });
   };
@@ -489,11 +489,11 @@ export default class extends AsyncComponent {
         regToken: registrationToken,
       });
     } catch(ex) {
-      await this._abortConfig(ex);
+      await this._abortConfig(bleDeviceSession, ex);
     }
   };
 
-  async _abortConfig(error) {
+  async _abortConfig(bleDeviceSession, error) {
     await this.props.navigator.popToTopAsync();
     await uiInteractions();
     if (this.pendingState.configuringDevice) {
@@ -501,7 +501,7 @@ export default class extends AsyncComponent {
     }
     if (error && error.canceled) {
       log.debug('User cancelled. Aborting.');
-      // TODO: should we do anything if the user canceled?
+      bleDeviceSession.restart();
     } else {
       log.warn('Could not configure device due to error:', error);
       this._showConfigError();

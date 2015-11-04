@@ -229,12 +229,13 @@ export default class Queue extends EventEmitter {
     this.emit('failed operation', operation);
 
     if (Number.isInteger(result.error.code) &&
-        result.error.code >= /*HTTP status code*/ 400) {
+        result.error.code >= /*HTTP status code*/ 400 &&
+        result.error.code != /*HTTP status code*/ 500) {
       // Pretty clear signal that the server told us to go away
-      log.warn(`Error while adding ${this.name} operation, DELETING`);
+      log.warn(`Error ${result.error.code} while adding ${this.name} operation, DELETING`, result.error);
       return;
     }
-    log.warn(`Error while running operation, saving to disk:`, result.error);
+    log.warn(`Error while running ${this.name} operation, saving to disk:`, result.error);
     await this._appendToDisk(operation, result.remainder);
   }
 
@@ -265,7 +266,7 @@ export default class Queue extends EventEmitter {
       this.emit('saved operation', handle);
     } catch (err) {
       log.error(`
-        Failed to save operation to disk (${handle.path}):
+        Failed to save ${this.name} operation to disk (${handle.path}):
 
         ${err.stack}
       `);
@@ -486,9 +487,10 @@ export default class Queue extends EventEmitter {
       }
 
       if (Number.isInteger(result.error.code) &&
-          result.error.code >= /*HTTP status code*/ 400) {
+          result.error.code >= /*HTTP status code*/ 400 &&
+          result.error.code != /*HTTP status code*/ 500) {
         // Pretty clear signal that the server told us to go away
-        log.warn(`Server rejected with ${result.error.code}, DELETING`, handle.path);
+        log.warn(`Server rejected ${this.name} with ${result.error.code}, DELETING`, handle.path);
       } else {
         // Configure the retry delay for this item in the queue...
         handle.retries = handle.retries || 0;
@@ -498,10 +500,10 @@ export default class Queue extends EventEmitter {
         handle.retries++;
         handle.delay = Date.now() + retryDelayMs;
         if (handle.retries < MAX_RETRIES) {
-          log.info(`Failed ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
+          log.info(`Failed ${this.name} ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
           return;
         }
-        log.warn(`Failed ${MAX_RETRIES} times, DELETING`, handle.path);
+        log.warn(`Failed ${this.name} ${MAX_RETRIES} times, DELETING`, handle.path);
       }
       this.removeFromDiskQueue(handle);
       await Operation.removeFromDisk(handle.path);

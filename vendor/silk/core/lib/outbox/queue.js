@@ -228,7 +228,8 @@ export default class Queue extends EventEmitter {
 
     this.emit('failed operation', operation);
 
-    if (result.error.code >= /*HTTP status code*/ 400) {
+    if (Number.isInteger(result.error.code) &&
+        result.error.code >= /*HTTP status code*/ 400) {
       // Pretty clear signal that the server told us to go away
       log.warn(`Error while adding ${this.name} operation, DELETING`);
       return;
@@ -484,7 +485,8 @@ export default class Queue extends EventEmitter {
         result.remainder.destroy();
       }
 
-      if (result.error.code >= /*HTTP status code*/ 400) {
+      if (Number.isInteger(result.error.code) &&
+          result.error.code >= /*HTTP status code*/ 400) {
         // Pretty clear signal that the server told us to go away
         log.warn(`Server rejected with ${result.error.code}, DELETING`, handle.path);
       } else {

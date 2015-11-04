@@ -24,7 +24,7 @@ const GRID_Y = 8;
 // Represents the threshold for the confidence value returned by the model. If
 // the confidence is more than the threshold, model returns an unknown person.
 // Higher the threshold more false postives the model returns. Lower the threshold
-// bigger the face rectangle required for succesful recognition.
+// bigger the face rectangle required for successful recognition.
 const THRESHOLD = 60;
 
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -182,7 +182,7 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame((err, image) => {
+      this._env.camera.getPreviewFrame((err, image, orig) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           this._working = false;
@@ -203,7 +203,10 @@ class FindFace {
             }
           }
 
-          let faceim = this._trainer._preprocessFace(image, face);
+          // Calculate preview scale
+          let previewScale = orig.width() / image.width();
+
+          let faceim = this._trainer._preprocessFace(orig, face, previewScale);
           let result = await this._predict(faceim);
           if (result.id !== -1) {
             log.info(`face detected id:${result.id} ` +

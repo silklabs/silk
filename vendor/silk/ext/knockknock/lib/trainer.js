@@ -145,11 +145,30 @@ export default class Trainer {
    *             Chapter8_FaceRecognition/preprocessFace.cpp
    *  @returns a preprocessed face square image
    */
-  _preprocessFace(im, face) {
+  _preprocessFace(im, face, previewScale) {
+    // Adjust rectangles to scale up to the original size as face rectangles
+    // are reported for scaled down image
+    face.leftEye[0] = face.leftEye[0] * previewScale;
+    face.leftEye[1] = face.leftEye[1] * previewScale;
+    face.rightEye[0] = face.rightEye[0] * previewScale;
+    face.rightEye[1] = face.rightEye[1] * previewScale;
+    face.x = face.x * previewScale;
+    face.y = face.y * previewScale;
+    face.width = face.width * previewScale;
+    face.height = face.height * previewScale;
+
     // Convert eye rectangles to relative scale w.r.t face
     const leftEye = {x: face.leftEye[0] - face.x, y: face.leftEye[1] - face.y};
     const rightEye = {x: face.rightEye[0] - face.x, y: face.rightEye[1] - face.y};
+
+    // Convert to grayscale if not already
+    if (im.channels() === 3) {
+      im.convertGrayscale();
+      im.equalizeHist();
+    }
+
     let gray = im.roi(face.x, face.y, face.width, face.height);
+    log.debug(`face: ${JSON.stringify(face)}`);
 
     // Since we found both eyes lets rotate & scale & translate the face so that
     // the two eyes line up perfectly with ideal eye positions. This makes sure
@@ -277,17 +296,20 @@ export default class Trainer {
         }
 
         this._working = true;
-        this._env.camera.getPreviewFrame((err, image) => {
+        this._env.camera.getPreviewFrame((err, image, orig) => {
           if (err) {
             log.warn(`Unable to fetch frame: ${err}`);
             this._working = false;
             return;
           }
 
+          // Calculate preview scale
+          let previewScale = orig.width() / image.width();
+
           // Save the face
           this._working = false;
           let face = faces[0];
-          let faceim = this._preprocessFace(image, face);
+          let faceim = this._preprocessFace(orig, face, previewScale);
 
           // Check if this face looks somewhat different from the previously
           // collected face

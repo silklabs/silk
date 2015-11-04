@@ -234,7 +234,7 @@ class DeviceConfig extends EventEmitter {
 
     this._btle.beaconInfo = this._getBeaconInfo();
 
-    this._socketSessionListener = new NormalSessionListener();
+    this._socketSessionListener = new NormalSessionListener(this);
     this._btle.socketSessionListener = this._socketSessionListener;
 
     await this._btle.changeMode(this._btle.MODE_SCAN);
@@ -289,7 +289,7 @@ class DeviceConfig extends EventEmitter {
     this._btle.beaconInfo = this._getBeaconInfo();
 
     if (this._config && this._config.success) {
-      this._socketSessionListener = new NormalSessionListener();
+      this._socketSessionListener = new NormalSessionListener(this);
       this._btle.socketSessionListener = this._socketSessionListener;
 
       await this._btle.changeMode(this._btle.MODE_SCAN);

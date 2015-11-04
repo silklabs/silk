@@ -12,10 +12,10 @@ import SessionListenerBase from './session_listener_base';
 const log = createLog('normal-session-listener');
 
 export default class NormalSessionListener extends SessionListenerBase {
-  constructor() {
+  constructor(deviceConfig) {
     log.debug(`NormalSessionListener()`);
 
-    super();
+    super(deviceConfig);
   }
 
   _onConnect(socketSession) {
@@ -25,6 +25,7 @@ export default class NormalSessionListener extends SessionListenerBase {
 
     this._send({
       name: `registered`,
+      deviceId: this._deviceConfig._deviceId,
     });
 
     if (this._errorCode) {

@@ -134,7 +134,10 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     log.debug("startMonitoring('\(beaconUuid)')")
 
     let identifier = beaconUuid.UUIDString
-    assert(self.regions[identifier] == nil)
+    if self.regions[identifier] != nil {
+      log.info("Already monitoring this region, ignoring")
+      return
+    }
 
     let region =
       CLBeaconRegion(proximityUUID: beaconUuid, identifier: identifier)
@@ -166,7 +169,10 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(beaconUuid != RegionMonitor.configBeaconUuid)
 
     let identifier = beaconUuid.UUIDString
-    assert(self.regions[identifier] != nil)
+    if self.regions[identifier] == nil {
+      log.info("Not monitoring this region, ignoring")
+      return
+    }
 
     let regionInfo = self.regions[identifier]!
     self.regions[identifier] = nil

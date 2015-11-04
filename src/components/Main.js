@@ -433,7 +433,7 @@ export default class extends AsyncComponent {
   configureDevice = async (bleDeviceSession) => {
     log.debug('Going to configure a device.');
     try {
-      bleDeviceSession.respondToRegistrationRequest(/* accept = */ true);
+      bleDeviceSession.acceptRegistrationRequest();
       bleDeviceSession.once('secret', (deviceSecret) => {
         let { deviceId } = deviceSecret;
         log.debug('And now kiththth! Received device ID', deviceId);

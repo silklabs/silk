@@ -383,8 +383,8 @@ export class DeviceSession extends EventEmitter {
     return this._errorMessage;
   }
 
-  respondToRegistrationRequest(accept: boolean) {
-    log.debug(`DeviceSession.respondToRegistrationRequest(${accept})`);
+  acceptRegistrationRequest() {
+    log.debug(`DeviceSession.acceptRegistrationRequest()`);
 
     if (this._state === DeviceSession.STATE_ERROR) {
       log.warn(`Cannot begin registration because the session is in the ` +
@@ -394,12 +394,19 @@ export class DeviceSession extends EventEmitter {
 
     assert(this._state === DeviceSession.STATE_REGISTER_REQUESTED);
 
-    if (accept) {
-      this._socketSession.write({
-        name: `accept`,
-      });
-      this._socketSession.rssiUpdatesEnabled = true;
-      this._state = DeviceSession.STATE_REGISTERING;
+    this._socketSession.write({
+      name: `accept`,
+    });
+    this._socketSession.rssiUpdatesEnabled = true;
+    this._state = DeviceSession.STATE_REGISTERING;
+  }
+
+  declineRegistrationRequest() {
+    log.debug(`DeviceSession.declineRegistrationRequest()`);
+
+    if (this._state === DeviceSession.STATE_ERROR) {
+      log.warn(`Cannot reject registration because the session is in the ` +
+               `ERROR state, ignoring`);
       return;
     }
 

@@ -130,7 +130,7 @@ struct /*STACK_CLASS*/ AutoBox {
     size_t write(const void *ptr, size_t size, size_t nmemb);
     size_t writeAt(int32_t offset, const void *data, size_t size);
 
-    size_t offset() const { return mWriter->mOffset; }
+    size_t offset() const { return mWriter->mBufferPos; }
 
 private:
     MPEG4SegmentDASHWriter* mWriter;
@@ -1463,7 +1463,6 @@ MPEG4SegmentDASHWriter::MPEG4SegmentDASHWriter()
     : mVideoTrack(nullptr)
     , mAudioTrack(nullptr)
     , mBufferPos(0)
-    , mOffset(0)
     , mMdatOffset(0)
     , mStartTimestampUs(0)
     , mTimeScale(0)
@@ -1817,7 +1816,7 @@ void MPEG4SegmentDASHWriter::writeSegment() {
     int32_t moofOffset = writeMoofBox(box);
     writeMdat(box, moofOffset);
 
-    int32_t segmentSize = htonl(mOffset - segmentStartOffset);
+    int32_t segmentSize = htonl(mBufferPos - segmentStartOffset);
     box.writeAt(referencedSizeOffset, &segmentSize, sizeof(segmentSize));
 }
 
@@ -1917,7 +1916,7 @@ void MPEG4SegmentDASHWriter::writeMdat(AutoBox& parent, int32_t moofOffset) {
 void MPEG4SegmentDASHWriter::beginBox(AutoBox& box, const char *fourcc) {
     CHECK_EQ(strlen(fourcc), 4);
 
-    mBoxes.push_back(mOffset);
+    mBoxes.push_back(mBufferPos);
 
     box.writeInt32(0);
     box.writeFourcc(fourcc);
@@ -1929,13 +1928,11 @@ void MPEG4SegmentDASHWriter::endBox(AutoBox& box) {
     // Get the most recently saved box offset and then erase it.
     // mBoxes.end() returns an iterator, which is what we're
     // manipulating here.
-    off64_t offset = *--mBoxes.end();
+    off64_t boxStartOffset = *--mBoxes.end();
     mBoxes.erase(--mBoxes.end());
 
-    mBufferPos = offset;
-    box.writeInt32(mOffset - offset);
-    mOffset -= 4;
-    mBufferPos = mOffset;
+    int32_t boxSize = htonl(mBufferPos - boxStartOffset);
+    raw_write_mem(boxStartOffset, &boxSize, sizeof(boxSize));
 }
 
 size_t MPEG4SegmentDASHWriter::write(const void *ptr, size_t size) {
@@ -1944,26 +1941,24 @@ size_t MPEG4SegmentDASHWriter::write(const void *ptr, size_t size) {
 
 size_t MPEG4SegmentDASHWriter::write(
     const void *ptr, size_t size, size_t nmemb) {
-    const size_t bytes = size * nmemb;
-    raw_write_mem(ptr, size * nmemb);
-    mOffset += bytes;
+    size_t bytes = size * nmemb;
+    mBufferPos += raw_write_mem(mBufferPos, ptr, bytes);
     return bytes;
 }
 
 size_t MPEG4SegmentDASHWriter::writeAt(
     int32_t offset, const void* ptr, size_t size) {
-    mBufferPos = offset;
-    raw_write_mem(ptr, size);
-    mBufferPos = mOffset;
-    return size;
+    return raw_write_mem(offset, ptr, size);
 }
 
-void MPEG4SegmentDASHWriter::raw_write_mem(const void *ptr, size_t size) {
-    size_t tail = mBufferPos + size;
-    if (mBuffer.size() < tail)
+size_t MPEG4SegmentDASHWriter::raw_write_mem(
+    int32_t bufferPos, const void* ptr, size_t size) {
+    size_t tail = bufferPos + size;
+    if (mBuffer.size() < tail) {
         mBuffer.resize(tail);
-    memcpy(mBuffer.editArray() + mBufferPos, ptr, size);
-    mBufferPos = tail;
+    }
+    memcpy(mBuffer.editArray() + bufferPos, ptr, size);
+    return size;
 }
 
 status_t MPEG4SegmentDASHWriter::addSource(const sp<MediaSource>&) {

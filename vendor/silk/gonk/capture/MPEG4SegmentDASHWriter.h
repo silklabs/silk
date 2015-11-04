@@ -59,7 +59,6 @@ private:
     Track* mVideoTrack;
     Track* mAudioTrack;
     off_t mBufferPos;
-    off64_t mOffset;
     off_t mMdatOffset;
     int64_t mStartTimestampUs;
     int32_t mTimeScale;
@@ -99,7 +98,7 @@ private:
     inline size_t write(const void* ptr, size_t size, size_t nmemb);
     size_t writeAt(int32_t offset, const void* ptr, size_t size);
 
-    void raw_write_mem(const void* ptr, size_t size);
+    size_t raw_write_mem(int32_t bufferPos, const void* ptr, size_t size);
 
     // Disabled.  Use init() instead.
     virtual status_t addSource(const sp<MediaSource>&);

@@ -49,6 +49,7 @@
     },
     "globals": {
       "document": true,
+      "MediaSource": true,
       "setup": true,
       "suite": true,
       "suiteSetup": true,

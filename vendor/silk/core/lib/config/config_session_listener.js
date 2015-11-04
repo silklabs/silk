@@ -47,10 +47,12 @@ export default class ConfigSessionListener extends SessionListenerBase {
   static STATE_ERROR = 10;
 
   static DISMISS_TIMEOUT_MS = 15000;
+  static MAX_WIFI_ERRORS = 3;
 
   _deviceConfig = null;
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
+  _wifiErrorCount = 0;
 
   constructor(deviceConfig) {
     log.debug(`ConfigSessionListener()`);
@@ -100,6 +102,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._state = ConfigSessionListener.STATE_REGISTERED;
 
     this._socketSession.rssiUpdatesEnabled = false;
+    this.addStatusListeners();
 
     this._deviceConfig._onConfigured(secret);
   }
@@ -244,6 +247,31 @@ export default class ConfigSessionListener extends SessionListenerBase {
     });
   }
 
+  _onWifiError(error) {
+    log.debug(`ConfigSessionListener._onWifiError('${error.toString()}')`);
+
+    super._onWifiError(error);
+
+    if (this._state !== ConfigSessionListener.STATE_REGISTERED) {
+      return;
+    }
+
+    this._wifiErrorCount++;
+
+    if (this._wifiErrorCount === ConfigSessionListener.MAX_WIFI_ERRORS) {
+      this.removeStatusListeners();
+
+      const errorString = error.toString();
+      const errorObject =
+        new Error(`Wifi unable to connect after ${this._wifiErrorCount} ` +
+                  `attempts: '${errorString}'`);
+      const errorCode = SessionListenerBase.ERROR_CODE_MAP.get(errorString);
+      assert(errorCode, `No error code for '${errorString}'`);
+      this._sendError(errorCode);
+      this._deviceConfig._stopRetryingWifiConnection(errorObject);
+    }
+  }
+
   _onDismissTimeout() {
     log.debug(`ConfigSessionListener._onDismissTimeout()`);
 
@@ -269,6 +297,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     log.debug(`ConfigSessionListener.sendComplete()`);
 
     assert(this._state === ConfigSessionListener.STATE_REGISTERED);
+    assert(!this._dismissTimeout);
 
     this._send({
       name: `complete`,
@@ -284,12 +313,13 @@ export default class ConfigSessionListener extends SessionListenerBase {
     log.debug(`ConfigSessionListener.sendRestart('${errorMessage}')`);
 
     assert(this._state === ConfigSessionListener.STATE_REGISTERED);
+    assert(!this._dismissTimeout);
 
     this._send({
       name: `restart`,
-      error: errorMessage,
     });
 
-    this._state = ConfigSessionListener.STATE_REGISTER_REQUESTED;
+    this._wifiErrorCount = 0;
+    this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
   }
 }

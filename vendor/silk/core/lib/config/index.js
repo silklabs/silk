@@ -16,14 +16,27 @@ import eventToPromise from 'event-to-promise';
 import fs from 'mz/fs';
 import getBTLE from '../btle';
 import getDeviceId from '../deviceid';
+import * as Joi from 'joi';
+import makeDeferred from '../deferred';
 import NormalSessionListener from './normal_session_listener';
 import server from '../server';
-import wifi from '../wifi';
 import * as util from '../sysutils';
+import wifi from '../wifi';
 
 const log = createLog('config');
 
 const CONFIG_PATH = '/data/silk/config/config.json';
+
+const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
+  success:
+    Joi.boolean().required(),
+  beaconUUID:
+    Joi.any().when(`success`, {
+      is: true,
+      then: Joi.string().guid().required(),
+      otherwise: Joi.string().optional(),
+    }),
+}).required();
 
 class DeviceConfig extends EventEmitter {
   static CONFIG_BEACON_INFO = {
@@ -37,6 +50,7 @@ class DeviceConfig extends EventEmitter {
   _deviceId = ``;
   _btle = null;
   _networkStatus = null;
+  _wifiAbortConnection = null;
   _unconfigurePromise = null;
   _socketSessionListener = null;
   _config = null;
@@ -98,37 +112,62 @@ class DeviceConfig extends EventEmitter {
       await wifi.forgetNetwork();
       await wifi.joinNetwork(secret.accessPoint, secret.password);
 
-      // Wait until the network is ready to use then register the device...
-      await Promise.all([
-        // Persist the configuration details we got over BTLE this includes the
-        // registrarPublicKey so we can communicate securely with that specific
-        // account in the future.
-        this._persistConfig(secret),
+      // |wifi.joinNetwork()| resolves as soon as it has issued the commands to
+      // the wpa supplicant. It then tries to connect to the network over and
+      // over again even if such attempts are futile (e.g. the password is
+      // incorrect). We don't want to wait forever for the 'online' event below
+      // if we're in one of these loops, so we need a mechanism to break out of
+      // the connection loop. To do that we establish a deferred that we can
+      // reject after a few failed attempts, and then race with that deferred.
+      // ConfigSessionListener rejects the deferred by calling
+      // |_stopRetryingWifiConnection|. The deferred will never be accepted.
+      const deferred = makeDeferred();
 
-        // Wait until we can connect to the internet...
-        // XXX: This may never happen so we should present some special
-        // error handling+state here...
-        eventToPromise(this._networkStatus, 'online')
+      assert(!this._wifiAbortConnection);
+      this._wifiAbortConnection = deferred.reject;
+
+      log.info('Connecting to wifi');
+
+      await Promise.race([
+        // Race between a successful connection to the internet, and...
+        eventToPromise(this._networkStatus, 'online'),
+
+        // ... the deferred rejection if we need to break out of a connection
+        // loop.
+        deferred.promise,
       ]);
 
-      log.info('Wifi setup complete... Contacting the server...');
-      let result = await this._registerDevice(secret);
-      log.info('Registration complete', result);
+      assert(this._wifiAbortConnection);
+      this._wifiAbortConnection = null;
 
-      if (!result.success) {
+      log.info('Contacting the server');
+      let response = await this._registerDevice(secret);
+
+      Joi.validate(
+        response,
+        REGISTRATION_RESPONSE_SCHEMA,
+        { stripUnknown: true },
+        (error, value) => {
+          if (error) {
+            throw error;
+          }
+          response = value;
+        }
+      );
+
+      if (!response.success) {
         throw new Error(`Failed to register device for known reason`);
       }
 
-      if (!result.beaconUUID) {
-        throw new Error(`No beacon UUID delivered with successful ` +
-                        `registration!`);
-      }
+      log.info('Registration complete', response);
 
       // Update the config on disk with the response so that we know we are
       // completely registered.
-      await this._persistConfig(secret, result);
+      await this._persistConfig(secret, response);
     } catch (error) {
-      log.error('Failed to register device, starting over', error.stack);
+      log.warn('Failed to register device, starting over', error);
+
+      this._wifiAbortConnection = null;
 
       await Promise.all([
         fs.exists(CONFIG_PATH)
@@ -141,14 +180,24 @@ class DeviceConfig extends EventEmitter {
       ]);
 
       this._socketSessionListener.sendRestart(error.toString());
-
-      throw error;
+      return;
     }
+
+    assert(!this._wifiAbortConnection);
 
     this._socketSessionListener.sendComplete();
 
     log.info('Configured');
     this.emit('configured');
+  }
+
+  _stopRetryingWifiConnection(error) {
+    log.debug(`DeviceConfig._stopRetryingWifiConnection()`);
+
+    if (this._wifiAbortConnection) {
+      this._wifiAbortConnection(error);
+      this._wifiAbortConnection = null;
+    }
   }
 
   _onDismissed() {

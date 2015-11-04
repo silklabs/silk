@@ -22,6 +22,10 @@ const SCHEMA = {
     name: Joi.string().equal(`accept`).required(),
   }).required(),
 
+  restart: Joi.object().keys({
+    name: Joi.string().equal(`restart`).required(),
+  }).required(),
+
   secret: Joi.object().keys({
     name: Joi.string().equal(`secret`).required(),
     accessPoint: Joi.string().min(1).required(),
@@ -99,6 +103,17 @@ export default class ConfigSessionListener extends SessionListenerBase {
     return data;
   }
 
+  _sendRegister() {
+    assert(this._state === ConfigSessionListener.STATE_IDLE ||
+           this._state === ConfigSessionListener.STATE_REGISTERING ||
+           this._state === ConfigSessionListener.STATE_REGISTERING_PROXIMITY);
+
+    this._send({
+      name: `register`,
+    });
+    this._state = ConfigSessionListener.STATE_REGISTER_REQUESTED;
+  }
+
   _completeRegistration(secret) {
     log.debug(`ConfigSessionListener._completeRegistration()`);
 
@@ -137,14 +152,10 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _onConnect(socketSession) {
     log.debug(`ConfigSessionListener._onConnect()`);
     assert(this._state === ConfigSessionListener.STATE_IDLE);
-    assert(!this._passedProximityGate);
 
     super._onConnect(socketSession);
 
-    this._send({
-      name: `register`,
-    });
-    this._state = ConfigSessionListener.STATE_REGISTER_REQUESTED;
+    this._sendRegister();
   }
 
   _onDisconnect(socketSession) {
@@ -179,6 +190,9 @@ export default class ConfigSessionListener extends SessionListenerBase {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
       }
 
+      assert(!this._dismissTimeout);
+      assert(!this._wifiErrorCount);
+
       log.info(`App declined to register this device, disconnecting`);
       break;
 
@@ -188,9 +202,28 @@ export default class ConfigSessionListener extends SessionListenerBase {
         break;
       }
 
+      assert(!this._dismissTimeout);
+      assert(!this._wifiErrorCount);
+
       log.info(`App agreed to register this device`);
       this._state = ConfigSessionListener.STATE_REGISTERING;
       this._socketSession.rssiUpdatesEnabled = true;
+      return;
+
+    case `restart`:
+      if (this._state !== ConfigSessionListener.STATE_REGISTERING &&
+          this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
+
+      assert(!this._dismissTimeout);
+      assert(!this._wifiErrorCount);
+
+      log.info(`App canceled registration of this device`);
+      this._socketSession.rssiUpdatesEnabled = false;
+
+      this._sendRegister();
       return;
 
     case `secret`:
@@ -198,6 +231,9 @@ export default class ConfigSessionListener extends SessionListenerBase {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
+
+      assert(!this._dismissTimeout);
+      assert(!this._wifiErrorCount);
 
       const secret = {
         accessPoint: data.accessPoint,
@@ -215,6 +251,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
+
+      assert(!this._wifiErrorCount);
 
       this._dismiss();
       return;
@@ -311,6 +349,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     });
 
     this._state = ConfigSessionListener.STATE_COMPLETE;
+    this._wifiErrorCount = 0;
 
     this._dismissTimeout = setTimeout(() => this._onDismissTimeout,
                                       ConfigSessionListener.DISMISS_TIMEOUT_MS);

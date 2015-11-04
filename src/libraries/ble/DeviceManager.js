@@ -62,7 +62,7 @@ const SCHEMA = {
 
   error: Joi.object().keys({
     name: Joi.string().equal(`error`).required(),
-    error: Joi.string().required(),
+    code: Joi.string().required(),
   }).required(),
 
   register: Joi.object().keys({
@@ -320,7 +320,10 @@ export class DeviceSession extends EventEmitter {
         break;
       }
 
-      this._state = DeviceSession.STATE_REGISTER_REQUESTED;
+      assert(this._secret);
+      assert(this._secretEmitted);
+
+      this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
       this.emit(`restart`, data.error);
       return;
 

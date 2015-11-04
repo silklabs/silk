@@ -18,6 +18,11 @@ const log = createLog('outbox:queue');
 
 const MAX_BACKOFF_MS = (1000 * 60) * 60; // 1 hour
 
+// After this many retries, give up and DELETE the operation
+//   “Insanity: doing the same thing over and over again
+//    and expecting different results."
+const MAX_RETRIES = 128;
+
 async function wrapNoEntity(promise, value = null) {
   try {
     return await promise;
@@ -469,11 +474,13 @@ export default class Queue extends EventEmitter {
 
       handle.retries++;
       handle.delay = Date.now() + retryDelayMs;
-
-      log.info(`Failed during retry will try again later`, {
-        handle,
-        retryInMs: retryDelayMs
-      });
+      if (handle.retries < MAX_RETRIES) {
+        log.info(`Failed ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
+        return;
+      }
+      log.warn(`Failed ${MAX_RETRIES} times, DELETING`, handle.path);
+      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle.id);
     }
   }
 }

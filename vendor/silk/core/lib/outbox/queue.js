@@ -18,14 +18,6 @@ const log = createLog('outbox:queue');
 
 const MAX_BACKOFF_MS = (1000 * 60) * 60; // 1 hour
 
-// After this many retries, give up and DELETE the operation
-//   “Insanity: doing the same thing over and over again
-//    and expecting different results."
-const MAX_RETRIES = 128;
-
-// ext4 only permits 65000 subdirectories per directory ('dir_nlink' is not
-// enabled for /data it seems).
-const MAX_DISKQUEUE_SIZE = 64998; // 65000 - '.' and '..'
 
 async function wrapNoEntity(promise, value = null) {
   try {
@@ -135,6 +127,8 @@ export default class Queue extends EventEmitter {
     Object.assign(this, options);
 
     assert.ok(this.concurrency && this.concurrency > 0);
+    assert.ok(this.maxRetries && this.maxRetries > 0);
+    assert.ok(this.maxEntries && this.maxEntries > 0);
     assert.ok(this.storagePath);
 
     /**
@@ -241,15 +235,20 @@ export default class Queue extends EventEmitter {
 
   async _appendToDisk(operation, readable) {
 
-    while (this.diskQueue.length >= MAX_DISKQUEUE_SIZE) {
-      // Look for the oldest item in the queue and delete it
+    while (this.diskQueue.length >= this.maxEntries) {
+      let handle = { running: true };
+      // Look for the oldest item in the queue and delete it. Operations are
+      // removed sequentially since each removal is async, so the queue itself
+      // could change while running this (async) while loop
       for (let id of this.diskQueue) {
-        let handle = this.diskQueueState.get(id);
+        handle = this.diskQueueState.get(id);
         if (!handle.running) {
-          log.warn(`${this.name} disk queue is full, DELETING ${handle.path}`);
-          this.removeFromDiskQueue(handle);
           break;
         }
+      }
+      if (!handle.running) {
+        log.warn(`${this.name} disk queue is full, DELETING ${handle.path}`);
+        this.removeFromDiskQueue(handle);
       }
     }
 
@@ -307,13 +306,16 @@ export default class Queue extends EventEmitter {
   }
 
   async removeFromDiskQueue(handle) {
-    await Operation.removeFromDisk(handle.path);
+    // Remove from diskQueue before physically removing from disk, to avoid the
+    // operation from getting scheduled to run while it's being removed from
+    // disk.
     let idx = this.diskQueue.indexOf(handle.id);
     if (idx !== -1) {
       this.diskQueue.splice(idx, 1);
       this.diskQueueState.delete(handle.id);
-      this.emit('removed operation', handle);
     }
+    await Operation.removeFromDisk(handle.path);
+    this.emit('removed operation', handle);
   }
 
   start(interval) {
@@ -499,11 +501,12 @@ export default class Queue extends EventEmitter {
 
         handle.retries++;
         handle.delay = Date.now() + retryDelayMs;
-        if (handle.retries < MAX_RETRIES) {
+        if (handle.retries < this.maxRetries) {
           log.info(`Failed ${this.name} ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
           return;
         }
-        log.warn(`Failed ${this.name} ${MAX_RETRIES} times, DELETING`, handle.path);
+        log.warn(`Failed ${this.name} ${this.maxRetries} times, DELETING`, handle.path);
+        this.emit('giveup operation', operation);
       }
       this.removeFromDiskQueue(handle);
       await Operation.removeFromDisk(handle.path);

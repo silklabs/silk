@@ -22,6 +22,13 @@ const OUTBOX_CONCURRENCY_PROP = 'persist.silk.outconcurrency';
 const DEFUALT_QUEUE_NAME = 'default-queue';
 const DEFAULT_QUEUE_CONCURRENCY = getintprop(OUTBOX_CONCURRENCY_PROP, 2);
 
+// After this many retries, give up and delete the operation
+const DEFAULT_QUEUE_MAX_RETRIES = 128;
+
+// ext4 only permits 65000 subdirectories per directory ('dir_nlink' is not
+// enabled for /data it seems).
+const DEFAULT_QUEUE_MAX_ENTRIES = 64998; // 65000 - '.' and '..'
+
 /**
  * Maximum amount of time to stagger the queue polling intervals.
  */
@@ -117,6 +124,8 @@ export class Outbox {
     let storagePath = path.join(this.storagePath, queueName);
     let defaultOptions = {
       concurrency: DEFAULT_QUEUE_CONCURRENCY,
+      maxRetries: DEFAULT_QUEUE_MAX_RETRIES,
+      maxEntries: DEFAULT_QUEUE_MAX_ENTRIES
     };
     let queue = new Queue(Object.assign(defaultOptions, options, {
       storagePath,

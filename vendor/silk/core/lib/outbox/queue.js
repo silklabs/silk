@@ -16,7 +16,7 @@ import Operation from './operation';
 
 const log = createLog('outbox:queue');
 
-const MAX_BACKOFF = (1000 * 60) * 60; // 1 hour
+const MAX_BACKOFF_MS = (1000 * 60) * 60; // 1 hour
 
 async function wrapNoEntity(promise, value = null) {
   try {
@@ -158,11 +158,6 @@ export default class Queue extends EventEmitter {
       });
     }
 
-    /**
-     * Live operations are given higher priority then pending ones so while we
-     * increment the `.running` counter here we only throttle pending
-     * operations.
-     */
     this.running += 1;
 
     let cleanup = promise => {
@@ -195,9 +190,16 @@ export default class Queue extends EventEmitter {
       `);
     }
 
-    // No reason to attempt a write call on the operation if we are offline.
+    let saveToDisk = false;
     if (!this.online) {
-      log.info('Operation while offline saving to disk....');
+      log.info('Operation while offline, saving to disk');
+      saveToDisk = true;
+    } else if (this.running >= this.concurrency) {
+      log.info('Too many concurrent operations, saving to disk');
+      saveToDisk = true;
+    }
+
+    if (saveToDisk) {
       await this._appendToDisk(operation, readable);
       return;
     }
@@ -215,7 +217,7 @@ export default class Queue extends EventEmitter {
     }
 
     this.emit('failed operation', operation);
-    log.warn(`Error while running operation`, result.error);
+    log.warn(`Error while running operation, saving to disk:`, result.error);
     await this._appendToDisk(operation, result.remainder);
   }
 
@@ -315,7 +317,7 @@ export default class Queue extends EventEmitter {
 
       // Skip over anything that is not ready to be retried...
       if (handle.delay && handle.delay > now) {
-        log.info(
+        log.debug(
           `${handle.path} will be retried in`,
           handle.delay - now
         );
@@ -323,8 +325,9 @@ export default class Queue extends EventEmitter {
       }
 
       if (this.running >= this.concurrency) {
-        log.info(
-          `Reached maximum number of running operations max: ${this.concurrency} running: ${this.running}`
+        log.info(`Reached maximum number of running operations max:` +
+          `${this.concurrency} running: ${this.running} ` +
+          `diskqueue: ${this.diskQueue.length}`
         );
         break;
       }
@@ -461,15 +464,15 @@ export default class Queue extends EventEmitter {
 
       // Configure the retry delay for this item in the queue...
       handle.retries = handle.retries || 0;
-      let retryDelay =
-        Math.min(MAX_BACKOFF, this.backoffInterval * handle.retries);
+      let retryDelayMs  =
+        Math.min(MAX_BACKOFF_MS, this.backoffInterval * handle.retries);
 
       handle.retries++;
-      handle.delay = Date.now() + retryDelay;
+      handle.delay = Date.now() + retryDelayMs;
 
       log.info(`Failed during retry will try again later`, {
         handle,
-        retryIn: retryDelay
+        retryInMs: retryDelayMs
       });
     }
   }

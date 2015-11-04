@@ -245,8 +245,7 @@ export default class Queue extends EventEmitter {
         let handle = this.diskQueueState.get(id);
         if (!handle.running) {
           log.warn(`${this.name} disk queue is full, DELETING ${handle.path}`);
-          this.removeFromDiskQueue(handle.id);
-          await Operation.removeFromDisk(handle.path);
+          this.removeFromDiskQueue(handle);
           break;
         }
       }
@@ -269,9 +268,8 @@ export default class Queue extends EventEmitter {
 
         ${err.stack}
       `);
-      await operation.constructor.removeFromDisk(handle.path);
       try {
-        this.removeFromDiskQueue(handle.id);
+        this.removeFromDiskQueue(handle);
       } catch(errRemoveDisk) {
         log.error(`
           Unexpected error removing files from disk
@@ -306,12 +304,12 @@ export default class Queue extends EventEmitter {
     return handle;
   }
 
-  removeFromDiskQueue(id) {
-    let idx = this.diskQueue.indexOf(id);
-    let handle = this.diskQueueState.get(id);
+  async removeFromDiskQueue(handle) {
+    await Operation.removeFromDisk(handle.path);
+    let idx = this.diskQueue.indexOf(handle.id);
     if (idx !== -1) {
       this.diskQueue.splice(idx, 1);
-      this.diskQueueState.delete(id);
+      this.diskQueueState.delete(handle.id);
       this.emit('removed operation', handle);
     }
   }
@@ -437,8 +435,7 @@ export default class Queue extends EventEmitter {
         Metadata is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-      this.removeFromDiskQueue(handle.id);
-      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle);
       return;
     }
 
@@ -447,8 +444,7 @@ export default class Queue extends EventEmitter {
       metadata = JSON.parse(metadata);
     } catch (err) {
       log.error(`Invalid metadata in operation... Purging operation directory`);
-      this.removeFromDiskQueue(handle.id);
-      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle);
       return;
     }
 
@@ -459,8 +455,7 @@ export default class Queue extends EventEmitter {
         Blob is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-      this.removeFromDiskQueue(handle.id);
-      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle);
       return;
     }
 
@@ -479,8 +474,7 @@ export default class Queue extends EventEmitter {
 
     if (result.done) {
       log.info(`Successfully finished operation ${handle.path}`);
-      this.removeFromDiskQueue(handle.id);
-      await Operation.removeFromDisk(handle.path);
+      this.removeFromDiskQueue(handle);
       this.emit('finished operation', operation);
     } else {
       this.emit('failed operation', operation);
@@ -507,7 +501,7 @@ export default class Queue extends EventEmitter {
         }
         log.warn(`Failed ${MAX_RETRIES} times, DELETING`, handle.path);
       }
-      this.removeFromDiskQueue(handle.id);
+      this.removeFromDiskQueue(handle);
       await Operation.removeFromDisk(handle.path);
     }
   }

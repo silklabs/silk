@@ -159,7 +159,8 @@ suite('outbox manager', () => {
       subject.online = true;
       await removeEvent;
 
-      assert.ok(!await fs.exists(metadataPath), 'removed operation');
+      assert.ok(!await fs.exists(metadataPath),
+        'removed operation failed, file should not exist: ' + metadataPath);
     });
 
     test('shutdown with pending operations...', async () => {

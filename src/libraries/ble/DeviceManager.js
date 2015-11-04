@@ -81,7 +81,6 @@ const SCHEMA = {
 
   restart: Joi.object().keys({
     name: Joi.string().equal(`restart`).required(),
-    error: Joi.string().required(),
   }).required(),
 
   complete: Joi.object().keys({
@@ -324,7 +323,7 @@ export class DeviceSession extends EventEmitter {
       assert(this._secretEmitted);
 
       this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
-      this.emit(`restart`, data.error);
+      this.emit(`restart`);
       return;
 
     case `complete`:

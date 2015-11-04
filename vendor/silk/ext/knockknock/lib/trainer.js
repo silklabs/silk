@@ -167,6 +167,13 @@ export default class Trainer {
       im.equalizeHist();
     }
 
+    if ((face.x + face.width > im.width()) || (face.y + face.height > im.height())) {
+      log.error(`Invalid face rectangle`);
+      log.verbose(`face: ${JSON.stringify(face)}`);
+      log.verbose(`image: ${im.width()} x ${im.height()}`);
+      return null;
+    }
+
     let gray = im.roi(face.x, face.y, face.width, face.height);
     log.debug(`face: ${JSON.stringify(face)}`);
 
@@ -307,9 +314,12 @@ export default class Trainer {
           let previewScale = orig.width() / image.width();
 
           // Save the face
-          this._working = false;
           let face = faces[0];
           let faceim = this._preprocessFace(orig, face, previewScale);
+          if (!faceim) {
+            this._working = false;
+            return;
+          }
 
           // Check if this face looks somewhat different from the previously
           // collected face
@@ -340,6 +350,7 @@ export default class Trainer {
             this._env.timeline.removeListener('face', this._onFace);
             resolve();
           }
+          this._working = false;
         }, when, 1 /* == 1 channel image (RGB not required) */);
       };
 

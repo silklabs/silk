@@ -207,6 +207,9 @@ class FindFace {
           let previewScale = orig.width() / image.width();
 
           let faceim = this._trainer._preprocessFace(orig, face, previewScale);
+          if (!faceim) {
+            return;
+          }
           let result = await this._predict(faceim);
           if (result.id !== -1) {
             log.info(`face detected id:${result.id} ` +

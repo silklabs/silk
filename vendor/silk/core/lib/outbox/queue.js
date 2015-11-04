@@ -200,7 +200,8 @@ export default class Queue extends EventEmitter {
       log.info('Operation while offline, saving to disk');
       saveToDisk = true;
     } else if (this.running >= this.concurrency) {
-      log.info('Too many concurrent operations, saving to disk');
+      log.info(`${this.name} too many concurrent operations ` +
+               `(${this.running}/${this.concurrency}), saving to disk`);
       saveToDisk = true;
     }
 
@@ -222,6 +223,12 @@ export default class Queue extends EventEmitter {
     }
 
     this.emit('failed operation', operation);
+
+    if (result.error.code >= /*HTTP status code*/ 400) {
+      // Pretty clear signal that the server told us to go away
+      log.warn(`Error while adding ${this.name} operation, DELETING`);
+      return;
+    }
     log.warn(`Error while running operation, saving to disk:`, result.error);
     await this._appendToDisk(operation, result.remainder);
   }
@@ -232,10 +239,7 @@ export default class Queue extends EventEmitter {
     // when writing out the files to disk!
     handle.running = true;
 
-    log.verbose(
-      `Saving operation to disk (${handle.path})`,
-      operation.getMetadata()
-    );
+    log.verbose(`Saving operation to disk: ${handle.path}`);
 
     try {
       await operation.saveToDisk(readable, handle.path);
@@ -330,7 +334,7 @@ export default class Queue extends EventEmitter {
       }
 
       if (this.running >= this.concurrency) {
-        log.info(`Reached maximum number of running operations max:` +
+        log.info(`${this.name} reached maximum number of running operations max:` +
           `${this.concurrency} running: ${this.running} ` +
           `diskqueue: ${this.diskQueue.length}`
         );
@@ -467,18 +471,23 @@ export default class Queue extends EventEmitter {
         result.remainder.destroy();
       }
 
-      // Configure the retry delay for this item in the queue...
-      handle.retries = handle.retries || 0;
-      let retryDelayMs  =
-        Math.min(MAX_BACKOFF_MS, this.backoffInterval * handle.retries);
+      if (result.error.code >= /*HTTP status code*/ 400) {
+        // Pretty clear signal that the server told us to go away
+        log.warn(`Server rejected with ${result.error.code}, DELETING`, handle.path);
+      } else {
+        // Configure the retry delay for this item in the queue...
+        handle.retries = handle.retries || 0;
+        let retryDelayMs  =
+          Math.min(MAX_BACKOFF_MS, this.backoffInterval * handle.retries);
 
-      handle.retries++;
-      handle.delay = Date.now() + retryDelayMs;
-      if (handle.retries < MAX_RETRIES) {
-        log.info(`Failed ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
-        return;
+        handle.retries++;
+        handle.delay = Date.now() + retryDelayMs;
+        if (handle.retries < MAX_RETRIES) {
+          log.info(`Failed ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
+          return;
+        }
+        log.warn(`Failed ${MAX_RETRIES} times, DELETING`, handle.path);
       }
-      log.warn(`Failed ${MAX_RETRIES} times, DELETING`, handle.path);
       await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
     }

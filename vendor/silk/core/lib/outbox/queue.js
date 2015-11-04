@@ -23,6 +23,10 @@ const MAX_BACKOFF_MS = (1000 * 60) * 60; // 1 hour
 //    and expecting different results."
 const MAX_RETRIES = 128;
 
+// ext4 only permits 65000 subdirectories per directory ('dir_nlink' is not
+// enabled for /data it seems).
+const MAX_DISKQUEUE_SIZE = 64998; // 65000 - '.' and '..'
+
 async function wrapNoEntity(promise, value = null) {
   try {
     return await promise;
@@ -234,6 +238,21 @@ export default class Queue extends EventEmitter {
   }
 
   async _appendToDisk(operation, readable) {
+
+    while (this.diskQueue.length >= MAX_DISKQUEUE_SIZE) {
+      // Look for the oldest item in the queue and delete it
+      for (let id of this.diskQueue) {
+        let handle = this.diskQueueState.get(id);
+        if (!handle.running) {
+          log.warn(`${this.name} disk queue is full, DELETING ${handle.path}`);
+          this.removeFromDiskQueue(handle.id);
+          await Operation.removeFromDisk(handle.path);
+          break;
+        }
+      }
+    }
+
+
     let handle = this.createDiskQueueId();
     // Mark the handle as running to ensure we do not race against ourselves
     // when writing out the files to disk!
@@ -418,8 +437,8 @@ export default class Queue extends EventEmitter {
         Metadata is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
+      await Operation.removeFromDisk(handle.path);
       return;
     }
 
@@ -428,8 +447,8 @@ export default class Queue extends EventEmitter {
       metadata = JSON.parse(metadata);
     } catch (err) {
       log.error(`Invalid metadata in operation... Purging operation directory`);
-      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
+      await Operation.removeFromDisk(handle.path);
       return;
     }
 
@@ -440,8 +459,8 @@ export default class Queue extends EventEmitter {
         Blob is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
+      await Operation.removeFromDisk(handle.path);
       return;
     }
 
@@ -460,8 +479,8 @@ export default class Queue extends EventEmitter {
 
     if (result.done) {
       log.info(`Successfully finished operation ${handle.path}`);
-      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
+      await Operation.removeFromDisk(handle.path);
       this.emit('finished operation', operation);
     } else {
       this.emit('failed operation', operation);
@@ -488,8 +507,8 @@ export default class Queue extends EventEmitter {
         }
         log.warn(`Failed ${MAX_RETRIES} times, DELETING`, handle.path);
       }
-      await Operation.removeFromDisk(handle.path);
       this.removeFromDiskQueue(handle.id);
+      await Operation.removeFromDisk(handle.path);
     }
   }
 }

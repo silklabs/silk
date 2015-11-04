@@ -167,6 +167,7 @@ class CameraStream extends EventEmitter {
     this._cvVideoCapture = null;
     this._cvVideoCaptureBusy = false;
     this._queue = []; // Queue of pending preview frame requests
+    this._motion = true;
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
@@ -178,6 +179,14 @@ class CameraStream extends EventEmitter {
     //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB resized
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releasePreviewImages(item);
+
+    this.timeline.on('no-motion', () => {
+      this._motion = false;
+    });
+
+    this.timeline.on('motion', () => {
+      this._motion = true;
+    });
   }
 
   /**
@@ -436,10 +445,13 @@ class CameraStream extends EventEmitter {
         // (HAL can return multiple faces per preview, but it's not helpful to show
         //  them all on the preview)
         if (this.faces) {
-          if (this.faces.length > 0) {
-            log.info(`Detected face=${this.faces.length}`);
+          // Add faces only if there is motion
+          if (this._motion) {
+            if (this.faces.length > 0) {
+              log.info(`Detected face=${this.faces.length}`);
+            }
+            this.timeline.addFace(when, this.faces, 'hal');
           }
-          this.timeline.addFace(when, this.faces, 'hal');
         }
       }, {ext: '.jpg', jpegQuality: 100});
     });

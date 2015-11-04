@@ -53,6 +53,7 @@ const SCHEMA = {
 
   registered: Joi.object().keys({
     name: Joi.string().equal(`registered`).required(),
+    deviceId: Joi.string().lowercase().trim().length(66).hex().required(),
   }).required(),
 
   status: Joi.object().keys({

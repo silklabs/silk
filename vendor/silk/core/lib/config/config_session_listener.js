@@ -28,6 +28,8 @@ const SCHEMA = {
     password: Joi.string().allow(``).default(``).optional(),
     publicKey: Joi.string().lowercase().trim().length(66).hex().required(),
     regToken: Joi.string().required(),
+  }).options({
+    stripUnknown: true,
   }).required(),
 
   dismiss: Joi.object().keys({
@@ -72,25 +74,29 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     if (!(`name` in data)) {
       log.warn(`Data has no 'name' proptery`);
-      return false;
+      return null;
     }
 
     if (!(data.name in SCHEMA)) {
       log.warn(`Data has unexpected 'name' property: '${data.name}'`);
-      return false;
+      return null;
     }
 
     let error;
-    Joi.validate(data, SCHEMA[data.name], err => {
-      error = err;
+    Joi.validate(data, SCHEMA[data.name], (err, value) => {
+      if (err) {
+        error = err;
+      } else {
+        data = value;
+      }
     });
 
     if (error) {
       log.warn(`Data failed validation`, error);
-      return false;
+      return null;
     }
 
-    return true;
+    return data;
   }
 
   _completeRegistration(secret) {
@@ -155,7 +161,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     assert(this._state !== ConfigSessionListener.STATE_IDLE);
 
-    if (!this._validateData(data)) {
+    data = this._validateData(data);
+    if (!data) {
       this._state = ConfigSessionListener.STATE_ERROR;
       this.disconnect();
       return;

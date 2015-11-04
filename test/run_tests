@@ -8,8 +8,10 @@
 
 LOCAL_PATH=$(dirname $0)
 SILKTEST=$LOCAL_PATH/../vendor/silk/test/run
+adb="timeout -s KILL 10s adb"
 
 echo "Running silk tests"
+$adb shell stop silk # Halt main silk while running tests to keep qemu cpu usage down
 $SILKTEST
 
 # Disabled, as it does not yet run reliably on qemu
@@ -17,7 +19,6 @@ $SILKTEST
 #$LOCAL_PATH/restart_test
 
 # Look for tombstones and save them in .artifacts/ for post-CI viewing
-adb="timeout -s KILL 10s adb"
 $adb shell mkdir -p /data/tombstones/
 $adb shell ls -l /data/tombstones/
 if [[ -d .artifacts ]]; then

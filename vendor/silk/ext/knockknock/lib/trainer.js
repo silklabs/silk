@@ -134,6 +134,63 @@ export default class Trainer {
   }
 
   /**
+   * Histogram Equalize seperately for the left and right sides of the face
+   */
+  _equalizeLeftAndRightHalves(faceImg) {
+    // It is common that there is stronger light from one half of the face
+    // than the other. In that case, if we simply did histogram equalization on
+    // the whole face then it would make one half dark and one half bright.
+    // So we will do histogram equalization separately on each face half, so
+    // they will both look similar on average. But this would cause a sharp edge
+    // in the middle of the face, because the left half and right half would be
+    // suddenly different. So we also histogram equalize the whole image, and
+    // in the middle part we blend the 3 images together for a smooth brightness
+    // transition.
+
+    let w = faceImg.width();
+    let h = faceImg.height();
+
+    // 1) First, equalize the whole face
+    let wholeFace = faceImg.copy();
+    wholeFace.equalizeHist();
+
+    // 2) Equalize the left half and the right half of the face separately
+    let midX = Math.round(w / 2);
+    let leftSide = faceImg.roi(0, 0, midX, h);
+    let rightSide = faceImg.roi(midX, 0, w - midX, h);
+    leftSide.equalizeHist();
+    rightSide.equalizeHist();
+
+    // 3) Combine the left half and right half and whole face together, so
+    // that it has a smooth transition
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let v;
+        if (x < (w / 4)) { // Left 25%: just use the left face
+          v = leftSide.pixel(y, x);
+        } else if (x < (w * 2 / 4)) { // Mid-left 25%: blend the left face & whole face
+          let lv = leftSide.pixel(y, x);
+          let wv = wholeFace.pixel(y, x);
+
+          // Blend more of the whole face as it moves further right along the face
+          let f = (x - w * 1 / 4) / (w * 0.25);
+          v = Math.round((1.0 - f) * lv + f * wv);
+        } else if (x < w * 3 / 4) { // Mid-right 25%: blend the right face & whole face
+          let rv = rightSide.pixel(y, x - midX);
+          let wv = wholeFace.pixel(y, x);
+
+          // Blend more of the right-side face as it moves further right along the face
+          let f = (x - w * 2 / 4) / (w * 0.25);
+          v = Math.round((1.0 - f) * wv + f * rv);
+        } else { // Right 25%: just use the right face
+          v = rightSide.pixel(y, x - midX);
+        }
+        faceImg.pixel(y, x, [v]);
+      }
+    }
+  }
+
+  /**
    * Performs face preprocessing as a combination of:
    *  - Geometrical scaling, rotation and translation using Eye Detection
    *  - Smoothing away image noise using a Bilateral Filter
@@ -164,7 +221,6 @@ export default class Trainer {
     // Convert to grayscale if not already
     if (im.channels() === 3) {
       im.convertGrayscale();
-      im.equalizeHist();
     }
 
     if ((face.x + face.width > im.width()) || (face.y + face.height > im.height())) {
@@ -214,6 +270,9 @@ export default class Trainer {
     // Reference: http://docs.opencv.org/doc/tutorials/imgproc/imgtrans/
     //            warp_affine/warp_affine.html
     gray.warpAffine(rotMatrix, FACE_WIDTH, FACE_HEIGHT);
+
+    // Equalize left and right half of the face separately
+    this._equalizeLeftAndRightHalves(gray);
 
     // Use the "Bilateral Filter" to reduce pixel noise by smoothing the image,
     // but keeping the sharp edges in the face

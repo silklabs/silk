@@ -70,7 +70,7 @@ echo
   adb remount
   adb wait-for-device
   adb shell stop
-  adb shell rm -rv /system/silk
+  adb shell rm -rv /system/silk /data/silk-test
   make -C $ANDROID_BUILD_TOP install
 )
 echo

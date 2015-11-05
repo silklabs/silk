@@ -55,7 +55,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
   static DISMISS_TIMEOUT_MS = 15000;
   static MAX_WIFI_ERRORS = 3;
 
-  _deviceConfig = null;
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
   _wifiErrorCount = 0;
@@ -64,8 +63,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
     log.debug(`ConfigSessionListener()`);
 
     super(deviceConfig);
-
-    this._deviceConfig = deviceConfig;
   }
 
   _send(data) {

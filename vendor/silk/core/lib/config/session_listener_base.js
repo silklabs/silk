@@ -47,6 +47,7 @@ export default class SessionListenerBase extends EventEmitter {
     [ '4way_handshake_timeout', 'wifi_wrong_password'],
   ]);
 
+  _deviceConfig = null;
   _socketSession = null;
   _disconnecting = false;
   _addStatusListeners = null;
@@ -56,10 +57,14 @@ export default class SessionListenerBase extends EventEmitter {
   _status = '';
   _errorCode = '';
 
-  constructor() {
+  constructor(deviceConfig) {
     log.debug(`SessionListenerBase()`);
 
+    assert(deviceConfig);
+
     super();
+
+    this._deviceConfig = deviceConfig;
 
     this.addListener(`connect`,
                      socketSession => this._onConnect(socketSession));

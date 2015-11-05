@@ -39,7 +39,7 @@ const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
-const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 6);
+const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 12);
 const PREVIEW_DELAY_MS = 1000 / (FPS / PREVIEW_SKIP_COUNT);
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';

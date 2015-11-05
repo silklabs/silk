@@ -283,6 +283,7 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   private func cleanupConnection(connection: Connection) {
+    log.debug("cleanupConnection(\(connection.id))")
     let central = connection.central
     let characteristic = connection.characteristic
     let peripheral = connection.peripheral
@@ -307,6 +308,7 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   private func sendConnectionOutgoingData(connection: Connection!) -> Bool {
+    log.debug("sendConnectionOutgoingData(\(connection.id))");
     assert(!self.pendingWrites.isEmpty)
     assert(self.pendingWrites[0] === connection)
 
@@ -346,11 +348,13 @@ internal class BLESocketPeripheral: NSObject,
         outgoing.removeFirst(index)
       }
 
+      log.debug("Sending \(chunk.length) bytes");
       let success =
         self.peripheralManager.updateValue(
           chunk,
           forCharacteristic: connection.characteristic,
           onSubscribedCentrals: [connection.central])
+      log.debug("Sent \(chunk.length) bytes successfully? \(success)");
 
       // Only update |connection.outgoingQueue| if that succeeded. Otherwise we
       // will try again in the |peripheralManagerIsReadyToUpdateSubscribers|
@@ -368,6 +372,7 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   private func sendOutgoingData() {
+    log.debug("sendOutgoingData()");
     while !self.pendingWrites.isEmpty {
       let connection = self.pendingWrites[0]
       if connection.outgoingQueue.isEmpty ||
@@ -586,6 +591,7 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   func peripheralManagerIsReadyToUpdateSubscribers(peripheral: CBPeripheralManager) {
+    log.debug("peripheralManagerIsReadyToUpdateSubscribers()")
     assert(peripheral === self.peripheralManager)
 
     self.sendOutgoingData()

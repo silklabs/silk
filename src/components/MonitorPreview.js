@@ -200,11 +200,13 @@ export default class extends SocketIOComponent {
   };
 
   _renderLabel() {
-    let { label } = this.props;
+    let { label, bleDeviceSession } = this.props;
     let { serverConnectionStatus } = this.state;
     if (serverConnectionStatus) {
       let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
       label = `${label} (${statusLabel})`;
+    } else if (bleDeviceSession) {
+      label = `${label} (BLE)`;
     }
     return (
       <View style={styles.monitorLabelContainer}>

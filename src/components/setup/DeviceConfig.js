@@ -10,12 +10,14 @@ let {
 } = React;
 
 import { getWifiInfo } from '../../libraries/Util';
+import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 import { LayoutStyles, FormStyles, TitleBarStyles } from '../CommonStyles';
 
 export default class DeviceConfig extends React.Component {
 
   static propTypes = {
+    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
     deviceSecret: React.PropTypes.shape({
       deviceId: React.PropTypes.string.isRequired,
     }).isRequired,
@@ -24,7 +26,7 @@ export default class DeviceConfig extends React.Component {
   };
 
   state = {
-    name: 'Silk Cam',
+    name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
     ssid: '',
     secret: '',
     showSecret: false,

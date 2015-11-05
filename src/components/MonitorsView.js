@@ -293,7 +293,7 @@ class MonitorsView extends AsyncComponent {
         onPress={() => this.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
         hasNetwork={this.props.hasNetwork}
-        bleDeviceSession={device.bleDeviceSession} // TODO: add this to configured devices
+        bleDeviceSession={device.bleDeviceSession}
       />
     )).toArray().reverse();
 

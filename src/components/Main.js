@@ -379,24 +379,24 @@ export default class extends AsyncComponent {
   // Book keeping for unconfigured devices detected via BLE
 
   onBLEDeviceConnect = (bleDeviceSession) => {
-    if (bleDeviceSession.isRegistered) {
-      log.debug(`Connected to a BLE device, but it's already registered.`);
-      // TODO: even if the device is registered, we still want to talk
-      // to it if we're close by, e.g. to get wifi errors and stuff.
-      return;
+    log.debug(`New BLE socket connection to ${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`);
+
+    if (!bleDeviceSession.isRegistered) {
+      log.debug(`Device on BLE socket is not registered`);
+      let { unconfiguredDevices } = this.pendingState;
+      if (unconfiguredDevices.contains(bleDeviceSession)) {
+        log.debug(`We're already tracking this BLE device... Huh?`);
+        return;
+      }
+      this.setStateAsync({
+        unconfiguredDevices: unconfiguredDevices.add(bleDeviceSession),
+      });
     }
-    log.debug('Connected to an unregistered device.');
-    let { unconfiguredDevices } = this.pendingState;
-    if (unconfiguredDevices.contains(bleDeviceSession)) {
-      log.debug(`We're already tracking this BLE device... Huh?`);
-      return;
-    }
-    this.setStateAsync({
-      unconfiguredDevices: unconfiguredDevices.add(bleDeviceSession),
-    });
 
     bleDeviceSession.on('registered', () => {
-      log.debug('BLE device no longer unconfigured. Cleaning up.');
+      log.debug(`Device on BLE socket is registered: ${bleDeviceSession.deviceId}`);
+
+      // Is it because we are actually in the process of registering the device?
       let { configuringDevice } = this.pendingState;
       let isCurrentConfiguringDevice = configuringDevice &&
         configuringDevice.bleDeviceSession === bleDeviceSession;
@@ -405,25 +405,74 @@ export default class extends AsyncComponent {
         return;
       }
 
+      // It's a previously unconfigured device, but we weren't
+      // configuring it? That shouldn't happen...
       let { unconfiguredDevices } = this.pendingState;
       if (unconfiguredDevices.contains(bleDeviceSession)) {
+        log.warn(`Found unconfigured device that magically became configured. Wat?`);
         this.setStateAsync({
           unconfiguredDevices: unconfiguredDevices.delete(bleDeviceSession),
         });
+        return;
       }
+
+      let { devices } = this.pendingState;
+      if (!devices) {
+        // This means we haven't fetched devices from the network yet.
+        devices = new OrderedMap();
+      }
+      let { deviceId } = bleDeviceSession;
+      let record = devices.get(deviceId);
+      if (record) {
+        log.debug(`Mapping BLE socket to existing device record: ${deviceId}`);
+        devices = devices.setIn([deviceId, 'bleDeviceSession'], bleDeviceSession);
+      } else {
+        // Either this means we haven't fetched devices from the network
+        // yet (see above), or we've encountered a device not registered
+        // with the account. This shouldn't really happen, but we have
+        // the sketchy developer account, so allow it for now.
+        record = new DeviceRecord({
+          deviceId,
+          publicKey: deviceId,
+          // TODO: have the device sent its name along if it's registered
+          name: 'Silk Device',
+          bleDeviceSession,
+        });
+        devices = devices.set(deviceId, record);
+      }
+      this.setStateAsync({devices});
     });
+
     bleDeviceSession.on('disconnect', () => {
-      log.debug('BLE device disconnected. Cleaning up.');
-      let { configuringDevice } = this.pendingState;
+      log.debug('BLE socket disconnected. Cleaning up.');
+      bleDeviceSession.removeAllListeners();
+
+      let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
+
+      let { deviceId } = bleDeviceSession;
+      if (deviceId && devices.get(bleDeviceSession.deviceId)) {
+        log.debug(`The disconnected BLE socket belonged to device ID ${deviceId}`);
+        devices = devices.setIn([deviceId, 'bleDeviceSession'], null);
+      }
+
       let isCurrentConfiguringDevice = configuringDevice &&
         configuringDevice.bleDeviceSession === bleDeviceSession;
-      if (unconfiguredDevices.contains(bleDeviceSession) || isCurrentConfiguringDevice) {
+
+      if (unconfiguredDevices.contains(bleDeviceSession)) {
+        log.debug(`The disconnected BLE device belonged to an unconfigured device.`);
+        unconfiguredDevices = unconfiguredDevices.delete(bleDeviceSession);
+      }
+
+      if (devices !== this.pendingState.devices ||
+          isCurrentConfiguringDevice ||
+          unconfiguredDevices !== this.pendingState.unconfiguredDevices) {
         this.setStateAsync({
-          unconfiguredDevices: unconfiguredDevices.delete(bleDeviceSession),
+          devices,
           configuringDevice: null,
+          unconfiguredDevices,
         });
       }
-      bleDeviceSession.removeAllListeners();
+
       if (isCurrentConfiguringDevice) {
         this._abortConfig(bleDeviceSession, new Error('BLE socket disconnected.'));
       }

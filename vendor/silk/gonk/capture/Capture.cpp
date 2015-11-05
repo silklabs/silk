@@ -13,19 +13,25 @@
 #include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include <media/openmax/OMX_IVCommon.h>
-#include <media/stagefright/foundation/ADebug.h>
+#include <media/stagefright/AudioSource.h>
 #include <media/stagefright/CameraSource.h>
+#include <media/stagefright/foundation/ADebug.h>
+#include <media/stagefright/foundation/AMessage.h>
+#include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MetaData.h>
-#include <utils/Thread.h>
+#include <media/stagefright/OMXCodec.h>
+#include <system/audio.h>
 #include <sysutils/FrameworkListener.h>
+#include <utils/Thread.h>
 
+#include "AudioSourceEmitter.h"
 #include "json/json.h"
-#include "MPEG4MemoryWriter.h"
 #include "Capturedefs.h"
 #include "Channel.h"
-#include "SlicedMP4Encoder.h"
 #include "FaceDetection.h"
+#include "MPEG4SegmenterDASH.h"
 #include "OpenCVCameraCapture.h"
+#include "SlicedMP4Encoder.h"
 
 using namespace android;
 using namespace Json;
@@ -130,6 +136,7 @@ private:
   // Faux preview target for when there's no client preview producer around
   sp<SurfaceControl> mPreviewSurfaceControl;
 
+  sp<MPEG4SegmenterDASH> mSegmenter;
   sp<SlicedMP4Encoder> mMp4;
   sp<MediaSource> mPreview;
   sp<IFrameRequestMonitor> mIframe;
@@ -332,6 +339,56 @@ void CaptureCommand::onPreviewProducer() {
   CHECK(setPreviewTarget() == 0);
 }
 
+sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
+                                    const sp<MediaSource>& source) {
+  sp<MetaData> meta = source->getFormat();
+  int32_t width, height, stride, sliceHeight, colorFormat;
+  CHECK(meta->findInt32(kKeyWidth, &width));
+  CHECK(meta->findInt32(kKeyHeight, &height));
+  CHECK(meta->findInt32(kKeyStride, &stride));
+  CHECK(meta->findInt32(kKeySliceHeight, &sliceHeight));
+  CHECK(meta->findInt32(kKeyColorFormat, &colorFormat));
+
+  sp<AMessage> format = new AMessage();
+  format->setInt32("width", width);
+  format->setInt32("height", height);
+  format->setInt32("stride", stride);
+  format->setInt32("slice-height", sliceHeight);
+  format->setInt32("color-format", colorFormat);
+
+  format->setString("mime", kMimeTypeAvc);
+  format->setInt32("bitrate", sVideoBitRateInK * 1024);
+  format->setInt32("bitrate-mode", OMX_Video_ControlRateVariable);
+  format->setFloat("frame-rate", sFPS);
+  format->setInt32("i-frame-interval", sIFrameIntervalSec);
+
+  return MediaCodecSource::Create(looper, format, source,
+    sUseMetaDataMode ? MediaCodecSource::FLAG_USE_METADATA_INPUT : 0);
+}
+
+sp<MediaSource> prepareAudioEncoder(const sp<ALooper>& looper,
+                                    const sp<MediaSource>& source) {
+  sp<MetaData> meta = source->getFormat();
+  int32_t maxInputSize, channels, sampleRate, bitrate;
+  CHECK(meta->findInt32(kKeyMaxInputSize, &maxInputSize));
+  CHECK(meta->findInt32(kKeySampleRate, &sampleRate));
+  CHECK(meta->findInt32(kKeyChannelCount, &channels));
+
+  sp<AMessage> format = new AMessage();
+  format->setString("mime", MEDIA_MIMETYPE_AUDIO_AAC);
+  format->setInt32("aac-profile", OMX_AUDIO_AACObjectLC);
+  format->setInt32("max-input-size", maxInputSize);
+  format->setInt32("sample-rate", sampleRate);
+  format->setInt32("channel-count", channels);
+  format->setInt32("bitrate", sAudioBitRate);
+
+  return MediaCodecSource::Create(looper, format, source);
+}
+
+static bool useDASHSegmenter() {
+  char value[PROPERTY_VALUE_MAX];
+  return property_get("persist.silk.dashSegmenter", value, "") > 0;
+}
 
 /**
  * Thread function that initializes the camera
@@ -377,17 +434,39 @@ status_t CaptureCommand::initThread() {
       NULL, sUseMetaDataMode);
   CHECK_EQ(mCameraSource->initCheck(), ::OK);
 
-  mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mCameraSource);
-  mMp4->run();
+  if (!useDASHSegmenter()) {
+      ALOGI("Using legacy mp4 slicer");
 
-  mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
+      mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mCameraSource);
+      mMp4->run();
+
+      mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
+  } else {
+      ALOGI("Using DASH segmenter");
+      
+      sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
+
+      sp<MediaSource> audioSource(
+          new AudioSource(AUDIO_SOURCE_MIC, sAudioSampleRate, sAudioChannels));
+      sp<MediaSource> audioSourceEmitter =
+          new AudioSourceEmitter(&mChannel, audioSource);
+      sp<MediaSource> audioEncoder =
+          prepareAudioEncoder(mLooper, audioSourceEmitter);
+
+      mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
+      mSegmenter->run();
+  }
 
   // Notify node that camera is initialized
   notifyCameraEvent("initialized");
   mHardwareActive = true;
 
   // Block this thread while camera is running
-  mMp4->join();
+  if (mMp4.get()) {
+      mMp4->join();
+  } else {
+      mSegmenter->join();
+  }
 
   sOpenCVCameraCapture->setPreviewProducerListener(NULL);
   return 0;

@@ -13,13 +13,11 @@ LOCAL_SRC_FILES := \
 	Capture.cpp \
 	Channel.cpp \
 	FaceDetection.cpp \
-	IOpenCVCameraCapture.cpp \
-	MediaCodecSource.cpp \
 	MPEG4MemoryWriter.cpp \
-	MPEG4SegmentDASHWriter.cpp \
-	MPEG4SegmenterDASH.cpp \
-	OpenCVCameraCapture.cpp \
+	MediaCodecSource.cpp \
 	SlicedMP4Encoder.cpp \
+	IOpenCVCameraCapture.cpp \
+	OpenCVCameraCapture.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 	libstagefright libstagefright_foundation libutils liblog libbinder \

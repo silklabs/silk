@@ -13,6 +13,7 @@
     "debug": "2.2.0",
     "event-to-promise": "^0.4.0",
     "is-online": "^5.0.1",
+    "is-reachable": "^1.1.0",
     "joi": "^6.6.1",
     "mkdirp-promise": "^1.0.3",
     "mold-source-map": "^0.4.0",

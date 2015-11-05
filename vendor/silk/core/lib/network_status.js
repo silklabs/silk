@@ -126,7 +126,8 @@ export default class NetworkStatus extends EventEmitter {
   }
 
   /**
-   * Check if we can reach the internet.
+   * Returns a Promise that accepts when somewhere interesting is reachable
+   * (like maybe the Internet).
    */
   isOnline() {
     return this._isOnlineFn();

@@ -23,9 +23,11 @@
 // have the private key:
 // var signature = id.sign(token);
 
-var crypto = require('crypto');
-var EC = require('elliptic').ec;
-var ec = new EC('ed25519');
+import assert from 'assert';
+import crypto from 'crypto';
+import { ec as EC } from 'elliptic';
+
+const ec = new EC('ed25519');
 
 function sha256(text) {
   var hasher = crypto.createHash('sha256');
@@ -36,12 +38,12 @@ function sha256(text) {
 export default class Id {
 
   static create(options = {}) {
-    var key = ec.genKeyPair(options);
+    const key = ec.genKeyPair(options);
     return new Id(key.getPublic(true, 'hex'), key.getPrivate('hex'));
   }
 
   static import(json) {
-    var obj = JSON.parse(json);
+    const obj = JSON.parse(json);
     return new Id(obj.pub, obj.priv);
   }
 
@@ -55,10 +57,10 @@ export default class Id {
   }
 
   export() {
-    var obj = { hash: this.hash, pub: this.pub };
-    if (this.priv) {
-      obj.priv = this.priv;
-    }
+    const obj = {
+      pub: this.pub,
+      priv: this.priv,
+    };
     return JSON.stringify(obj);
   }
 
@@ -67,18 +69,13 @@ export default class Id {
   }
 
   sign(token) {
-    if (!this.priv) {
-      throw new Error('no private key for device id ' + this.hash);
-    }
-    var key = ec.keyFromPrivate(this.priv, 'hex');
+    assert(this.priv, 'no private key');
+    const key = ec.keyFromPrivate(this.priv, 'hex');
     return key.sign(sha256(token)).toDER('hex');
   }
 
   verify(token, signature) {
-    if (!this.pub) {
-      throw new Error('no public key for device id ' + this.hash);
-    }
-
+    assert(this.pub, 'no public key');
     let key;
     try {
       key = ec.keyFromPublic(this.pub, 'hex');
@@ -90,7 +87,7 @@ export default class Id {
 
   isValid() {
     if (this.priv) {
-      var key = ec.keyFromPrivate(this.priv, 'hex');
+      let key = ec.keyFromPrivate(this.priv, 'hex');
       if (key.getPublic(true, 'hex') !== this.pub) {
         return false;
       }

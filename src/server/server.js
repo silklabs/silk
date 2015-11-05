@@ -5,6 +5,7 @@ import cors from 'cors';
 import createDb from './db';
 import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
+import createAliyunBlob from './blobs/aliyun';
 import createFileBlob from './blobs/file';
 import url from 'url';
 import jsonParser from './json';
@@ -78,6 +79,8 @@ export default async function main (config) {
 
   if (config.server.blobType === 's3') {
     blobs.s3 = await createS3Blob(config);
+  } else if (config.server.blobType === 'aliyun') {
+    blobs.aliyun = await createAliyunBlob(config);
   }
 
   const context = {

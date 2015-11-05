@@ -401,24 +401,6 @@ bool MPEG4SegmenterDASH::threadLoop() {
       int32_t videoDurationMs = int32_t(videoDurationUs / 1000LL);
       // Write size and .mp4 data
       writer->incStrong(this);
-
-//#define DUMP_FILE
-#ifdef DUMP_FILE
-      static int count = 0;
-      char filename[PATH_MAX];
-      snprintf(filename, sizeof(filename), "/data/local/tmp/vid-%03d.mp4",
-               ++count);
-      ALOGI("Opening file %s", filename);
-      FILE* f = fopen(filename, "w");
-      CHECK(f && "Couldn't open file");
-      fwrite(writer->data().array(), writer->data().size(), 1, f);
-      fclose(f);
-
-      if (count == 20) {
-        ALOGI("  done, stalling writer ...");
-        sleep(-1);
-      }
-#endif
       
       mChannel->send(Channel::TAG_VIDEO, when, videoDurationMs,
                      writer->data().array(), writer->data().size(),

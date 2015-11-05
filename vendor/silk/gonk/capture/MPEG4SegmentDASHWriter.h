@@ -24,6 +24,7 @@ class MediaSource;
 class MetaData;
 
 struct AutoBox;
+struct StashedOffsets;
 
 class MPEG4SegmentDASHWriter : public MediaWriter {
 public:
@@ -87,7 +88,7 @@ private:
     void writeSegment();
     void writeHeader(AutoBox& parent);
     void writeMoovBox(AutoBox& parent);
-    int32_t writeMoofBox(AutoBox& parent);
+    int32_t writeMoofBox(AutoBox& parent, const StashedOffsets& offsets);
     void writeMdat(AutoBox& parent, int32_t moofOffset);
 
     friend struct AutoBox;

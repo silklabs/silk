@@ -250,6 +250,59 @@ size_t AutoBox::writeAt(int32_t offset, const void* data, size_t size) {
     return mWriter->writeAt(offset, data, size);
 }
 
+//-----------------------------------------------------------------------------
+struct StashedOffsets {
+    /**
+     * Write the placeholder fields that we'll later fill in with the
+     * actual offset values in `update()` below.
+     */
+    void prepare(AutoBox& box) {
+        box.writeInt32(0);      // version = 0, flags = 0
+        seqnoOffsetOffset = box.offset();
+        box.writeFourcc("????");
+        presentationTimeOffsetOffset = box.offset();
+        box.writeFourcc("????");
+        videoDecodeTimeOffsetOffset = box.offset();
+        box.writeFourcc("????");
+        audioDecodeTimeOffsetOffset = box.offset();
+        box.writeFourcc("????");
+    }
+
+    void setSeqnoOffset(AutoBox& box) const {
+        update(seqnoOffsetOffset, box);
+    }
+    void setPresentationTimeOffset(AutoBox& box) const {
+        update(presentationTimeOffsetOffset, box);
+    }
+    void setVideoDecodeTimeOffset(AutoBox& box) const {
+        update(videoDecodeTimeOffsetOffset, box);
+    }
+    void setAudioDecodeTimeOffset(AutoBox& box) const {
+        update(audioDecodeTimeOffsetOffset, box);
+    }
+
+private:
+    /**
+     * The offset for `offsetOffset`, one of the fields stored in this
+     * struct, has become known --- it will be the next value written
+     * by `box`.  So write the now-known offset value into its
+     * placeholder position.
+     */
+    void update(int32_t offsetOffset, AutoBox& box) const {
+        int32_t offset = htonl(box.offset());
+        box.writeAt(offsetOffset, &offset, sizeof(offset));
+    }
+
+    // These fields are "offset offsets" --- the offsets within our
+    // index at which we'll store the value of the offsets of
+    // interesting items.
+    int32_t seqnoOffsetOffset;
+    int32_t presentationTimeOffsetOffset;
+    int32_t videoDecodeTimeOffsetOffset;
+    int32_t audioDecodeTimeOffsetOffset;
+};
+
+
 static void writeFtypBox(AutoBox& parent) {
     AutoBox box("ftyp", parent);
     box.writeFourcc("isom");
@@ -327,7 +380,8 @@ public:
 
     void writeTrexBox(AutoBox& parent);
     void writeTrepBox(AutoBox& parent);
-    void writeTrafBox(AutoBox& parent, bool use4ByteNalLength);
+    void writeTrafBox(AutoBox& parent, const StashedOffsets& offsets,
+                      bool use4ByteNalLength);
     void writeTrakBox(AutoBox& parent);
     void writeMdat(AutoBox& parent, int32_t moofOffset,
                    bool use4ByteNalLength = true);
@@ -577,7 +631,8 @@ void Track::writeTrepBox(AutoBox& parent) {
     box.writeInt32(mTrackId);
 }
 
-void Track::writeTrafBox(AutoBox& parent, bool use4ByteNalLength) {
+void Track::writeTrafBox(AutoBox& parent, const StashedOffsets& offsets,
+                         bool use4ByteNalLength) {
     AutoBox traf("traf", parent);
     {
         AutoBox tfhd("tfhd", traf);
@@ -599,6 +654,11 @@ void Track::writeTrafBox(AutoBox& parent, bool use4ByteNalLength) {
         // track" (video).  When the segment is played back, an
         // additional decode offset will be added to this to account
         // for all previously-played segments.
+        if (mIsAudio) {
+            offsets.setAudioDecodeTimeOffset(tfdt);
+        } else {
+            offsets.setVideoDecodeTimeOffset(tfdt);
+        }
         tfdt.writeInt32(getStartTimeOffsetScaledTime());
     }
     {
@@ -1468,7 +1528,7 @@ MPEG4SegmentDASHWriter::MPEG4SegmentDASHWriter()
     , mTimeScale(0)
     , mInitCheck(NO_INIT)
     , mUse4ByteNalLength(true)
-    , mSelfContainedMp4(true)
+    , mSelfContainedMp4(false)
     , mPaused(false)
     , mStarted(false)
     , mDone(false)
@@ -1782,7 +1842,7 @@ static void writeStypBox(AutoBox& parent) {
     box.writeFourcc("msix");
 }
 
-static void writeSidxBox(AutoBox& parent,
+static void writeSidxBox(AutoBox& parent, const StashedOffsets& offsets,
                          Track* keyTrack, int32_t* referencedSizeOffset) {
     AutoBox box("sidx", parent);
     box.writeInt32(0);          // version
@@ -1790,6 +1850,7 @@ static void writeSidxBox(AutoBox& parent,
     box.writeInt32(keyTrack->getTimeScale());
     // We don't know what our earliest presentation will be when
     // played back, so we leave this "blank".
+    offsets.setPresentationTimeOffset(box);
     box.writeFourcc("?prs");    // earliest presentation time
     box.writeInt32(0);          // first offset
     box.writeInt16(0);          // reserved
@@ -1810,10 +1871,23 @@ void MPEG4SegmentDASHWriter::writeSegment() {
     }
     int32_t segmentStartOffset = box.offset();
     writeStypBox(box);
+    // Leave behind an index of the offsets that need to be rewritten
+    // at playback time on the client side.  We'll fill in the offsets
+    // as we discover them when writing the rest of the segment.
+    // Because the index is stored in a "free" box, playback widgets
+    // will ignore it.
+    StashedOffsets offsets;
+    {
+        AutoBox udta("free", box);
+        {
+            AutoBox xoff("xoff", udta);
+            offsets.prepare(xoff);
+        }
+    }
     int32_t referencedSizeOffset;
     // Key the fragment duration off of the video track.
-    writeSidxBox(box, mVideoTrack, &referencedSizeOffset);
-    int32_t moofOffset = writeMoofBox(box);
+    writeSidxBox(box, offsets, mVideoTrack, &referencedSizeOffset);
+    int32_t moofOffset = writeMoofBox(box, offsets);
     writeMdat(box, moofOffset);
 
     int32_t segmentSize = htonl(mBufferPos - segmentStartOffset);
@@ -1885,7 +1959,8 @@ void MPEG4SegmentDASHWriter::writeMoovBox(AutoBox& parent) {
     }
 }
 
-int32_t MPEG4SegmentDASHWriter::writeMoofBox(AutoBox& parent) {
+int32_t MPEG4SegmentDASHWriter::writeMoofBox(AutoBox& parent,
+                                             const StashedOffsets& offsets) {
     int32_t moofOffset = parent.offset();
     AutoBox moof("moof", parent);
     {
@@ -1893,11 +1968,12 @@ int32_t MPEG4SegmentDASHWriter::writeMoofBox(AutoBox& parent) {
         mfhd.writeInt32(0);     // version = 0, flags = 0
         // We don't know what the sequence number will be when played
         // back, so we leave this "blank".
+        offsets.setSeqnoOffset(mfhd);
         mfhd.writeFourcc("?seq");
     }
-    mVideoTrack->writeTrafBox(moof, mUse4ByteNalLength);
+    mVideoTrack->writeTrafBox(moof, offsets, mUse4ByteNalLength);
     if (mAudioTrack) {
-        mAudioTrack->writeTrafBox(moof, mUse4ByteNalLength);
+        mAudioTrack->writeTrafBox(moof, offsets, mUse4ByteNalLength);
     }
     return moofOffset;
 }

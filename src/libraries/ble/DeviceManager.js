@@ -221,6 +221,11 @@ export class DeviceSession extends EventEmitter {
     }
 
     const state = this._state;
+    if (state === DeviceSession.STATE_DISMISSED) {
+      log.debug(`Session already dismissed, dropping incoming '${data.name}' message.`);
+      return;
+    }
+
     if (state === DeviceSession.STATE_ERROR) {
       log.debug(`Received data while in the ERROR state, ignoring`);
       return;

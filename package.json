@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "aliyun-oss": "git@github.com:silklabs/aliyun-oss.git#540df81691504bef91539ca91b0e06e142dffd49",
     "api-schema": "git@github.com:silklabs/api-schema.git#2356267dd47d4ef7bdd432e519ffc1cf1027485a",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",

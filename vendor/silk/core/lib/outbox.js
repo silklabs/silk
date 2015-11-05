@@ -28,7 +28,7 @@ export default function(networkStatus) {
    */
   outbox.registerQueue('video', {
     // TODO: This should be computed somehow
-    concurrency: 3
+    concurrency: 4
   });
   outbox.registerQueue('preview', {
     // TODO: This should be computed somehow

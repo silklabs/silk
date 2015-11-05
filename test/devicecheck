@@ -50,6 +50,7 @@ function cleanup {
   fi
   exit $exitstatus
 }
+rm -f main.log
 trap cleanup SIGINT SIGTERM SIGHUP
 
 

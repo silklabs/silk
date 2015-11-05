@@ -373,13 +373,13 @@ class CameraStream extends EventEmitter {
 
       switch(channel) {
       case 0:
-        userCb(false, image.default, image.orig);
+        userCb(false, image.rgb, image.orig);
         return;
       case 1:
         if (image.gray) {
           userCb(false, image.gray, image.orig);
         } else {
-          let grayImage = image.default.copy();
+          let grayImage = image.rgb.copy();
           grayImage.convertGrayscale();
 
           // TODO: Running equalizeHist() on the full resolution image
@@ -390,9 +390,6 @@ class CameraStream extends EventEmitter {
           image.gray = grayImage;
           userCb(false, image.gray, image.orig);
         }
-        return;
-      case 2:
-        userCb(false, image.rgb, image.orig);
         return;
       default:
         userCb('unsupported channel', null);
@@ -414,46 +411,52 @@ class CameraStream extends EventEmitter {
       return;
     }
     this._cvVideoCaptureBusy = true;
-    this._cvVideoCapture.read((err, im) => {
-      this._cvVideoCaptureBusy = false;
 
-      if (err || (im.width() <= 0) || (im.height() <= 0)) {
-        log.error(`Unable to fetch frame: err=${err} width=${im.width()} height=${im.height()}`);
+    // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
+    // image
+    this._cvVideoCapture.grab(errGrab => {
+      if (errGrab) {
+        log.error(`Grab failed: ${errGrab}`);
+        this._cvVideoCaptureBusy = false;
         return;
       }
+      this._cvVideoCapture.retrieve((err, im) => {
+        this._cvVideoCaptureBusy = false;
 
-      // Scaled preview
-      let imScaled = im.copy();
-      imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-
-      // RGB preview
-      let rgbImage = imScaled.copy();
-      rgbImage.cvtColor('CV_BGR2RGB');
-
-      // Encode preview as JPEG to be sent to the server
-      rgbImage.toBufferAsync((err, pkt) =>{
-        let when = Date.now();
-
-        // Cache preview frames
-        this._imagecache.push({when: when, orig: im, default: imScaled, rgb: rgbImage});
-
-        // Add frames to the timeline
-        this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
-        this.timeline.addPreviewFrame(when);
-
-        // Only emit the latest set of HAL-detected faces
-        // (HAL can return multiple faces per preview, but it's not helpful to show
-        //  them all on the preview)
-        if (this.faces) {
-          // Add faces only if there is motion
-          if (this._motion) {
-            if (this.faces.length > 0) {
-              log.info(`Detected face=${this.faces.length}`);
-            }
-            this.timeline.addFace(when, this.faces, 'hal');
-          }
+        if (err || (im.width() <= 0) || (im.height() <= 0)) {
+          log.error(`Unable to fetch frame: err=${err} width=${im.width()} height=${im.height()}`);
+          return;
         }
-      }, {ext: '.jpg', jpegQuality: 100});
+
+        // Scaled preview
+        let imScaled = im.copy();
+        imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+
+        // Encode preview as JPEG to be sent to the server
+        imScaled.toBufferAsync((err, pkt) =>{
+          let when = Date.now();
+          // Cache preview frames
+          this._imagecache.push({when: when, orig: im, rgb: imScaled});
+
+          // Add frames to the timeline
+          this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
+          this.timeline.addPreviewFrame(when);
+
+          // Only emit the latest set of HAL-detected faces
+          // (HAL can return multiple faces per preview, but it's not helpful to show
+          //  them all on the preview)
+          if (this.faces) {
+            // Add faces only if there is motion
+            if (this._motion) {
+              if (this.faces.length > 0) {
+                log.info(`Detected face=${this.faces.length}`);
+              }
+              this.timeline.addFace(when, this.faces, 'hal');
+            }
+          }
+
+        }, {ext: '.jpg', jpegQuality: 100});
+      }, 2 /* = CV_CAP_ANDROID_COLOR_FRAME_RGB */);
     });
   }
 
@@ -595,9 +598,8 @@ class CameraStream extends EventEmitter {
    *    userCb   - the callback that receives an error object, scaled image
    *               as an OpenCV matrix and the original image
    *    when     - timestamp of the frame to get
-   *    channel  - 0 (default) for color     (CV_CAP_ANDROID_COLOR_FRAME_BGR)
+   *    channel  - 0 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)
-   *               2 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    */
   getPreviewFrame(userCb, when, channel = 0) {
     this._queue.push([userCb, when, channel]); // Enqueue the frame request

@@ -31,7 +31,7 @@ export default class CrashReportOperation extends StreamOperation {
   }
 
   async _getDestination() {
-    let putUrl = await api.blob.getPutUrl(
+    let {putUrl, putHeaders} = await api.blob.getPutUrl(
       'crashreport',
       this.size,
       CONTENT_TYPE
@@ -39,10 +39,7 @@ export default class CrashReportOperation extends StreamOperation {
 
     let writer = httpStream(putUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Length': this.size,
-        'Content-Type': CONTENT_TYPE
-      }
+      headers: putHeaders
     });
     writer.putUrl = putUrl;
     return writer;

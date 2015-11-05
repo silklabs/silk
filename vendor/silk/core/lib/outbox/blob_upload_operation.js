@@ -28,7 +28,7 @@ export class BlobUploadOperation extends StreamOperation {
   }
 
   async _getDestination() {
-    let putUrl = await api.blob.getPutUrl(
+    let {putUrl, putHeaders} = await api.blob.getPutUrl(
       this.constructor.META_TYPE,
       this.size,
       this.constructor.CONTENT_TYPE,
@@ -36,10 +36,7 @@ export class BlobUploadOperation extends StreamOperation {
 
     let writer = httpStream(putUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Length': this.size,
-        'Content-Type': this.constructor.CONTENT_TYPE,
-      }
+      headers: putHeaders
     });
 
     writer.putUrl = putUrl;

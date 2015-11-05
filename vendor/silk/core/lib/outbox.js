@@ -32,7 +32,7 @@ export default function(networkStatus) {
   });
   outbox.registerQueue('preview', {
     // TODO: This should be computed somehow
-    concurrency: 3
+    concurrency: 5
   });
 
   /**

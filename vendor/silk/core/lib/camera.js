@@ -142,12 +142,17 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   let normCoord = (c, len) => normLen(c + 1000.0, len);
 
   // Intentionally discard additional HAL face data such as the
-  // id/leftEye/rightEye/mouth/score as they are never used downstream.
+  // mouth/score as they are never used downstream.
   return {
     x: normCoord(left, PREVIEW_WIDTH),
     y: normCoord(top, PREVIEW_HEIGHT),
     width: normLen(right - left, PREVIEW_WIDTH),
     height: normLen(bottom - top, PREVIEW_HEIGHT),
+    leftEye: [normCoord(face.leftEye[0], PREVIEW_WIDTH),
+        normCoord(face.leftEye[1], PREVIEW_HEIGHT)],
+    rightEye: [normCoord(face.rightEye[0], PREVIEW_WIDTH),
+        normCoord(face.rightEye[1], PREVIEW_HEIGHT)],
+    id: face.id,
   };
 }
 
@@ -162,6 +167,7 @@ class CameraStream extends EventEmitter {
     this._cvVideoCapture = null;
     this._cvVideoCaptureBusy = false;
     this._queue = []; // Queue of pending preview frame requests
+    this._motion = true;
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
@@ -173,6 +179,14 @@ class CameraStream extends EventEmitter {
     //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB resized
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releasePreviewImages(item);
+
+    this.timeline.on('no-motion', () => {
+      this._motion = false;
+    });
+
+    this.timeline.on('motion', () => {
+      this._motion = true;
+    });
   }
 
   /**
@@ -329,10 +343,14 @@ class CameraStream extends EventEmitter {
         if (this._startPromiseCallbacks) {
           this._startPromiseCallbacks.resolve();
         }
+      } else if (captureEvent.eventName === 'getParameter') {
+        if (this._getParameterCallback) {
+          this._getParameterCallback.resolve(captureEvent.data);
+        }
       } else if (captureEvent.eventName === 'stopped') {
         throw new Error('Camera stop unhandled');
       } else {
-        log.warn(`Error: Unknown capture command ${line}`);
+        log.warn(`Error: Unknown capture event ${line}`);
       }
     }
   }
@@ -422,6 +440,19 @@ class CameraStream extends EventEmitter {
         // Add frames to the timeline
         this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
         this.timeline.addPreviewFrame(when);
+
+        // Only emit the latest set of HAL-detected faces
+        // (HAL can return multiple faces per preview, but it's not helpful to show
+        //  them all on the preview)
+        if (this.faces) {
+          // Add faces only if there is motion
+          if (this._motion) {
+            if (this.faces.length > 0) {
+              log.info(`Detected face=${this.faces.length}`);
+            }
+            this.timeline.addFace(when, this.faces, 'hal');
+          }
+        }
       }, {ext: '.jpg', jpegQuality: 100});
     });
   }
@@ -457,8 +488,7 @@ class CameraStream extends EventEmitter {
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`, tagInfo);
-        let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-        this.timeline.addFace(when, faces, 'hal');
+        this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
         break;
       case TAG_MIC:
         log.debug(`TAG_MIC ${when}`, tagInfo);
@@ -492,7 +522,7 @@ class CameraStream extends EventEmitter {
    */
   async start() {
     if (this._startPromiseCallbacks) {
-      throw new Error('Re-entered start?');
+      throw new Error(`Re-entered start?`);
     }
 
     let startPromise = new Promise((resolve, reject) => {
@@ -515,6 +545,42 @@ class CameraStream extends EventEmitter {
       return;
     }
     this._command({cmdName: 'setParameter', name: 'flash-mode', value: flashMode});
+  }
+
+  /**
+   * Get integer camera parameter
+   */
+  async getParameterInt(name) {
+    if (this._getParameterCallback) {
+      throw new Error(`Re-entered getParameter?`);
+    }
+    if (!this._ready) {
+      throw new Error(`camera not ready, ignoring flash command`);
+    }
+
+    let getParamPromise = new Promise((resolve, reject) => {
+      this._getParameterCallback = { resolve, reject };
+    });
+    this._command({cmdName: 'getParameterInt', name});
+    return getParamPromise;
+  }
+
+  /**
+   * Get string camera parameter
+   */
+  async getParameterStr(name) {
+    if (this._getParameterCallback) {
+      throw new Error(`Re-entered getParameter?`);
+    }
+    if (!this._ready) {
+      throw new Error(`camera not ready, ignoring flash command`);
+    }
+
+    let getParamPromise = new Promise((resolve, reject) => {
+      this._getParameterCallback = { resolve, reject };
+    });
+    this._command({cmdName: 'getParameterStr', name});
+    return await getParamPromise;
   }
 
   /**

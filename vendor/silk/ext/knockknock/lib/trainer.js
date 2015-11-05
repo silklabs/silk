@@ -134,6 +134,63 @@ export default class Trainer {
   }
 
   /**
+   * Histogram Equalize seperately for the left and right sides of the face
+   */
+  _equalizeLeftAndRightHalves(faceImg) {
+    // It is common that there is stronger light from one half of the face
+    // than the other. In that case, if we simply did histogram equalization on
+    // the whole face then it would make one half dark and one half bright.
+    // So we will do histogram equalization separately on each face half, so
+    // they will both look similar on average. But this would cause a sharp edge
+    // in the middle of the face, because the left half and right half would be
+    // suddenly different. So we also histogram equalize the whole image, and
+    // in the middle part we blend the 3 images together for a smooth brightness
+    // transition.
+
+    let w = faceImg.width();
+    let h = faceImg.height();
+
+    // 1) First, equalize the whole face
+    let wholeFace = faceImg.copy();
+    wholeFace.equalizeHist();
+
+    // 2) Equalize the left half and the right half of the face separately
+    let midX = Math.round(w / 2);
+    let leftSide = faceImg.roi(0, 0, midX, h);
+    let rightSide = faceImg.roi(midX, 0, w - midX, h);
+    leftSide.equalizeHist();
+    rightSide.equalizeHist();
+
+    // 3) Combine the left half and right half and whole face together, so
+    // that it has a smooth transition
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let v;
+        if (x < (w / 4)) { // Left 25%: just use the left face
+          v = leftSide.pixel(y, x);
+        } else if (x < (w * 2 / 4)) { // Mid-left 25%: blend the left face & whole face
+          let lv = leftSide.pixel(y, x);
+          let wv = wholeFace.pixel(y, x);
+
+          // Blend more of the whole face as it moves further right along the face
+          let f = (x - w * 1 / 4) / (w * 0.25);
+          v = Math.round((1.0 - f) * lv + f * wv);
+        } else if (x < w * 3 / 4) { // Mid-right 25%: blend the right face & whole face
+          let rv = rightSide.pixel(y, x - midX);
+          let wv = wholeFace.pixel(y, x);
+
+          // Blend more of the right-side face as it moves further right along the face
+          let f = (x - w * 2 / 4) / (w * 0.25);
+          v = Math.round((1.0 - f) * wv + f * rv);
+        } else { // Right 25%: just use the right face
+          v = rightSide.pixel(y, x - midX);
+        }
+        faceImg.pixel(y, x, [v]);
+      }
+    }
+  }
+
+  /**
    * Performs face preprocessing as a combination of:
    *  - Geometrical scaling, rotation and translation using Eye Detection
    *  - Smoothing away image noise using a Bilateral Filter
@@ -145,10 +202,36 @@ export default class Trainer {
    *             Chapter8_FaceRecognition/preprocessFace.cpp
    *  @returns a preprocessed face square image
    */
-  _preprocessFace(im, face) {
-    const leftEye = {x: face.leftEye[0], y: face.leftEye[1]};
-    const rightEye = {x: face.rightEye[0], y: face.rightEye[1]};
+  _preprocessFace(im, face, previewScale) {
+    // Adjust rectangles to scale up to the original size as face rectangles
+    // are reported for scaled down image
+    face.leftEye[0] = face.leftEye[0] * previewScale;
+    face.leftEye[1] = face.leftEye[1] * previewScale;
+    face.rightEye[0] = face.rightEye[0] * previewScale;
+    face.rightEye[1] = face.rightEye[1] * previewScale;
+    face.x = face.x * previewScale;
+    face.y = face.y * previewScale;
+    face.width = face.width * previewScale;
+    face.height = face.height * previewScale;
+
+    // Convert eye rectangles to relative scale w.r.t face
+    const leftEye = {x: face.leftEye[0] - face.x, y: face.leftEye[1] - face.y};
+    const rightEye = {x: face.rightEye[0] - face.x, y: face.rightEye[1] - face.y};
+
+    // Convert to grayscale if not already
+    if (im.channels() === 3) {
+      im.convertGrayscale();
+    }
+
+    if ((face.x + face.width > im.width()) || (face.y + face.height > im.height())) {
+      log.error(`Invalid face rectangle`);
+      log.verbose(`face: ${JSON.stringify(face)}`);
+      log.verbose(`image: ${im.width()} x ${im.height()}`);
+      return null;
+    }
+
     let gray = im.roi(face.x, face.y, face.width, face.height);
+    log.debug(`face: ${JSON.stringify(face)}`);
 
     // Since we found both eyes lets rotate & scale & translate the face so that
     // the two eyes line up perfectly with ideal eye positions. This makes sure
@@ -187,6 +270,9 @@ export default class Trainer {
     // Reference: http://docs.opencv.org/doc/tutorials/imgproc/imgtrans/
     //            warp_affine/warp_affine.html
     gray.warpAffine(rotMatrix, FACE_WIDTH, FACE_HEIGHT);
+
+    // Equalize left and right half of the face separately
+    this._equalizeLeftAndRightHalves(gray);
 
     // Use the "Bilateral Filter" to reduce pixel noise by smoothing the image,
     // but keeping the sharp edges in the face
@@ -257,8 +343,16 @@ export default class Trainer {
         }
       });
 
-      this._onFace = (when, faces, source) => {
-        if ((faces.length <= 0) || (source === 'hal')) {
+      this._onFace = (when, faces) => {
+        if (faces.length <= 0) {
+          return;
+        }
+
+        // Ignore if there are more than one face as we don't know which of
+        // the face is the person being trained
+        if (faces.length > 1) {
+          log.warn(`More than one face detected while training. Please ask` +
+              `the other person to step aside.`);
           return;
         }
 
@@ -268,23 +362,23 @@ export default class Trainer {
         }
 
         this._working = true;
-        this._env.camera.getPreviewFrame((err, image) => {
+        this._env.camera.getPreviewFrame((err, image, orig) => {
           if (err) {
             log.warn(`Unable to fetch frame: ${err}`);
             this._working = false;
             return;
           }
 
-          // Ignore if there are more than one face as we don't know which of
-          // the face is the person being trained
-          if (faces.length > 1) {
-            return;
-          }
+          // Calculate preview scale
+          let previewScale = orig.width() / image.width();
 
           // Save the face
-          this._working = false;
           let face = faces[0];
-          let faceim = this._preprocessFace(image, face);
+          let faceim = this._preprocessFace(orig, face, previewScale);
+          if (!faceim) {
+            this._working = false;
+            return;
+          }
 
           // Check if this face looks somewhat different from the previously
           // collected face
@@ -315,6 +409,7 @@ export default class Trainer {
             this._env.timeline.removeListener('face', this._onFace);
             resolve();
           }
+          this._working = false;
         }, when, 1 /* == 1 channel image (RGB not required) */);
       };
 

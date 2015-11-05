@@ -84,6 +84,12 @@ class Env extends EventEmitter {
       this.camera.getPreviewFrame = (userCb, when, channel) => {
         camera.getPreviewFrame(userCb, when, channel);
       };
+      this.camera.getParameterInt = (name) => {
+        return camera.getParameterInt(name);
+      };
+      this.camera.getParameterStr = (name) => {
+        return camera.getParameterStr(name);
+      };
     }
 
     let timeline = deviceObjects.timeline;

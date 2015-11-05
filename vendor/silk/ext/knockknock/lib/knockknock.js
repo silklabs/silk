@@ -24,7 +24,7 @@ const GRID_Y = 8;
 // Represents the threshold for the confidence value returned by the model. If
 // the confidence is more than the threshold, model returns an unknown person.
 // Higher the threshold more false postives the model returns. Lower the threshold
-// bigger the face rectangle required for succesful recognition.
+// bigger the face rectangle required for successful recognition.
 const THRESHOLD = 60;
 
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -47,6 +47,7 @@ class FindFace {
     this._trainingInProgress = false;
     this._working = false;
     this._trainer = new Trainer(env);
+    this._idMap = {};
 
     // Not calling await on purpose so as not to block the constructor
     this._init();
@@ -164,7 +165,9 @@ class FindFace {
   _start() {
     log.info(`Starting face recognition`);
     this._onFace = (when, faces, source) => {
-      if ((faces.length <= 0) || (source === 'hal')) {
+      if (faces.length <= 0) {
+        // Clear id map as there are no more faces detected
+        this._idMap = {};
         return;
       }
 
@@ -179,7 +182,7 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame((err, image) => {
+      this._env.camera.getPreviewFrame((err, image, orig) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           this._working = false;
@@ -189,15 +192,39 @@ class FindFace {
         // Run facial recognition on each of the detected faces
         let start = Date.now();
         faces.forEach(async (face) => {
-          let faceim = this._trainer._preprocessFace(image, face);
+          // If a name with the id is available then no need to run facial
+          // recognition again
+          if (face.id) {
+            let name = this._idMap[face.id];
+            if (name) {
+              log.info(`face.id: ${face.id} name: ${name}`);
+              this._env.timeline.addObject(name, when, face);
+              return;
+            }
+          }
+
+          // Calculate preview scale
+          let previewScale = orig.width() / image.width();
+
+          let faceim = this._trainer._preprocessFace(orig, face, previewScale);
+          if (!faceim) {
+            return;
+          }
           let result = await this._predict(faceim);
           if (result.id !== -1) {
             log.info(`face detected id:${result.id} ` +
                 `${this._matchIdWithName(result.id)} ` +
-                `confidence: ${result.confidence}`);
+                `confidence: ${result.confidence} source:${source}`);
 
             // Add the person to timeline
-            this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);
+            let name = this._matchIdWithName(result.id);
+            this._env.timeline.addObject(name, when, face);
+
+            // Cache name with face.id to skip face recognition next time
+            // a face with the same ID is reported by HAL
+            if (face.id) {
+              this._idMap[face.id] = name;
+            }
           } else {
             // Unknown face
             log.debug(`Unknown face detected`);

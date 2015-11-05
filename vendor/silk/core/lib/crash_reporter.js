@@ -63,7 +63,7 @@ export class Tombstones extends EventEmitter {
       readable.pipe(writable);
       await eventToPromise(writable, 'close');
       log.info(`reporting tombstone to ${tombstonePath}`);
-      this.addToQueue(tombstonePath);
+      await this.addToQueue(tombstonePath);
     });
   }
 
@@ -75,7 +75,7 @@ export class Tombstones extends EventEmitter {
   async updateQueue() {
     let tombstones = await this.scan();
     for (let tombstone of tombstones) {
-      this.addToQueue(tombstone);
+      await this.addToQueue(tombstone);
     }
   }
 

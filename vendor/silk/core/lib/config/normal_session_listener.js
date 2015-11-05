@@ -16,6 +16,8 @@ export default class NormalSessionListener extends SessionListenerBase {
     log.debug(`NormalSessionListener()`);
 
     super(deviceConfig);
+
+    this.addStatusListeners();
   }
 
   _onConnect(socketSession) {

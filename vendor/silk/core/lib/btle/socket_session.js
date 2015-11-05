@@ -32,10 +32,10 @@ export default class SocketSession extends MessagePackDuplexStream {
   _rssiValue = 0;
   _rssiTimeout = null;
 
-  constructor(scanner, peripheral) {
+  constructor(scanner, peripheral, serviceUuid) {
     log.debug(`SocketSession()`);
 
-    let stream = new ClientStream(peripheral);
+    let stream = new ClientStream(peripheral, serviceUuid);
     stream = new CryptoDuplexStream(stream);
 
     super(stream);

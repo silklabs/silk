@@ -36,6 +36,7 @@ import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
 import NetworkStatus from './network_status';
+import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
 
@@ -151,7 +152,24 @@ function boot() {
 function main() {
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
-  networkStatus = new NetworkStatus(wifi);
+  networkStatus = new NetworkStatus(wifi,
+    () => {
+      // Instead of using the default "Internet available test", tell
+      // NetworkStatus to only report online if the configured server is
+      // assessable (eg. a local setup without full Internet access)
+      return new Promise((accept, reject)=> {
+        isReachable(api.config.serverUrl, (err, reachable) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          log.verbose(`${api.config.serverUrl} reachable? ${reachable}`);
+          accept(reachable);
+        });
+      });
+    }
+  );
+
   networkStatus.hintSocket = server;
 
   outbox = initOutbox(networkStatus);

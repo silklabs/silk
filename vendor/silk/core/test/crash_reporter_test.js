@@ -228,6 +228,9 @@ suite('crash report', () => {
     });
 
     test('upload to server', async () => {
+
+      if (require('./skip-on-travis.js')()) return;
+
       let deviceId = api.id.create();
       let { crash, outbox} = create();
       let { stream, buffer } = randomStream();

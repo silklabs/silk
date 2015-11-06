@@ -1,5 +1,6 @@
 import React from 'react-native';
 let {
+  InteractionManager,
   ScrollView,
   StyleSheet,
   SwitchIOS,
@@ -32,6 +33,7 @@ export default class DeviceConfig extends React.Component {
 
   componentWillMount() {
     getWifiInfo().then((info) => this.setState({ssid: info.SSID}));
+    InteractionManager.runAfterInteractions(() => this.refs.secret.focus());
   }
 
   _renderDeviceSettings() {
@@ -86,7 +88,6 @@ export default class DeviceConfig extends React.Component {
               secureTextEntry={!this.state.showSecret}
               placeholder="Enter WiFi password"
               value={this.state.secret}
-              autoFocus={true}
               style={FormStyles.formInput}
               onChangeText={secret => this.setState({secret})}
             />
@@ -120,6 +121,7 @@ export default class DeviceConfig extends React.Component {
     return (
       <ScrollView
         keyboardShouldPersistTaps={false}
+        alwaysBounceVertical={false}
         style={styles.container}>
         <View style={LayoutStyles.statusBarPlaceholder} />
         <View style={TitleBarStyles.titleBar}>

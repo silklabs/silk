@@ -15,6 +15,8 @@ suite('VideoUploadOperation', () => {
   });
 
   test('Upload video...', async () => {
+    if (require('../skip-on-travis.js')()) return;
+
     let { stream, buffer } = randomStream();
 
     let operation = new VideoUploadOp({

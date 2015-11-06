@@ -54,6 +54,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
   static DISMISS_TIMEOUT_MS = 15000;
   static MAX_WIFI_ERRORS = 3;
+  static RSSI_THRESHOLD = -40;
 
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
@@ -119,7 +120,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     this._state = ConfigSessionListener.STATE_REGISTERED;
 
-    this._socketSession.rssiUpdatesEnabled = false;
     this.addStatusListeners();
 
     this._deviceConfig._onConfigured(secret);
@@ -276,21 +276,20 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
     }
 
-    assert(this._state >= ConfigSessionListener.STATE_REGISTERING);
+    assert(this._state === ConfigSessionListener.STATE_REGISTERING);
 
-    if (this._state === ConfigSessionListener.STATE_REGISTERING &&
-        rssi >= -40) {
-      log.info(`Passed proximity gate`);
-      this._send({
-        name: `secret`,
-        deviceId: this._deviceConfig._deviceId,
-      });
-      this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+    if (rssi < ConfigSessionListener.RSSI_THRESHOLD) {
+      return;
     }
 
+    log.info(`Passed proximity gate`);
+
+    this._socketSession.rssiUpdatesEnabled = false;
+    this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+
     this._send({
-      name: `rssi`,
-      rssi,
+      name: `secret`,
+      deviceId: this._deviceConfig._deviceId,
     });
   }
 

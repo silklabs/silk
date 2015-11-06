@@ -114,6 +114,8 @@ export class DeviceSession extends EventEmitter {
   _version: string = ``;
   _image: ?Buffer = null;
 
+  _isRegistered: boolean = false;
+  _deviceId: ?string = null;
   _status: ?DeviceStatus = null;
 
   _connectEmitted: boolean = false;
@@ -219,6 +221,11 @@ export class DeviceSession extends EventEmitter {
     }
 
     const state = this._state;
+    if (state === DeviceSession.STATE_DISMISSED) {
+      log.debug(`Session already dismissed, dropping incoming '${data.name}' message.`);
+      return;
+    }
+
     if (state === DeviceSession.STATE_ERROR) {
       log.debug(`Received data while in the ERROR state, ignoring`);
       return;
@@ -258,6 +265,8 @@ export class DeviceSession extends EventEmitter {
         break;
       }
 
+      this._isRegistered = true;
+      this._deviceId = data.deviceId;
       this._state = DeviceSession.STATE_REGISTERED;
       this._emitConnect();
       this._emitRegistered();
@@ -325,6 +334,7 @@ export class DeviceSession extends EventEmitter {
         break;
       }
 
+      this._deviceId = data.deviceId;
       this._secret = {
         deviceId: data.deviceId,
       };
@@ -352,6 +362,7 @@ export class DeviceSession extends EventEmitter {
       }
 
       this._state = DeviceSession.STATE_REGISTERED;
+      this._isRegistered = true;
       this._emitRegistered();
       return;
 
@@ -394,6 +405,14 @@ export class DeviceSession extends EventEmitter {
 
   get image(): ?Buffer {
     return this._image;
+  }
+
+  get isRegistered(): boolean {
+    return this._isRegistered;
+  }
+
+  get deviceId(): string {
+    return this._deviceId;
   }
 
   get statusMessage(): string {

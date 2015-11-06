@@ -87,8 +87,8 @@ export default class extends SocketIOComponent {
     if (this.props.haveVideoStream) {
       this.subscribeToSocket();
     }
-    if (this.props.configuring) {
-      this.subscribeToBLEStatus();
+    if (this.props.bleDeviceSession) {
+      this.subscribeToBLEStatus(this.props.bleDeviceSession);
     }
     this.startTimeoutTimer();
   }
@@ -111,6 +111,9 @@ export default class extends SocketIOComponent {
       setTimeout(() => {
         this.subscribeToSocket();
       }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
+    }
+    if (!this.props.bleDeviceSession && nextProps.bleDeviceSession) {
+      this.subscribeToBLEStatus(nextProps.bleDeviceSession);
     }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
@@ -185,8 +188,8 @@ export default class extends SocketIOComponent {
     this.clearTimeoutTimer();
   }
 
-  subscribeToBLEStatus() {
-    this.props.bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
+  subscribeToBLEStatus(bleDeviceSession) {
+    bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
   }
 
   onBLEDeviceStatusChange = (status) => {
@@ -197,11 +200,13 @@ export default class extends SocketIOComponent {
   };
 
   _renderLabel() {
-    let { label } = this.props;
+    let { label, bleDeviceSession } = this.props;
     let { serverConnectionStatus } = this.state;
     if (serverConnectionStatus) {
       let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
       label = `${label} (${statusLabel})`;
+    } else if (bleDeviceSession) {
+      label = `${label} (BLE)`;
     }
     return (
       <View style={styles.monitorLabelContainer}>

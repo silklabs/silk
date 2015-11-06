@@ -1,5 +1,6 @@
 import React from 'react-native';
 let {
+  InteractionManager,
   ScrollView,
   StyleSheet,
   SwitchIOS,
@@ -10,12 +11,14 @@ let {
 } = React;
 
 import { getWifiInfo } from '../../libraries/Util';
+import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 import { LayoutStyles, FormStyles, TitleBarStyles } from '../CommonStyles';
 
 export default class DeviceConfig extends React.Component {
 
   static propTypes = {
+    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
     deviceSecret: React.PropTypes.shape({
       deviceId: React.PropTypes.string.isRequired,
     }).isRequired,
@@ -24,7 +27,7 @@ export default class DeviceConfig extends React.Component {
   };
 
   state = {
-    name: 'Silk Cam',
+    name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
     ssid: '',
     secret: '',
     showSecret: false,
@@ -32,6 +35,7 @@ export default class DeviceConfig extends React.Component {
 
   componentWillMount() {
     getWifiInfo().then((info) => this.setState({ssid: info.SSID}));
+    InteractionManager.runAfterInteractions(() => this.refs.secret.focus());
   }
 
   _renderDeviceSettings() {
@@ -86,7 +90,6 @@ export default class DeviceConfig extends React.Component {
               secureTextEntry={!this.state.showSecret}
               placeholder="Enter WiFi password"
               value={this.state.secret}
-              autoFocus={true}
               style={FormStyles.formInput}
               onChangeText={secret => this.setState({secret})}
             />
@@ -120,6 +123,7 @@ export default class DeviceConfig extends React.Component {
     return (
       <ScrollView
         keyboardShouldPersistTaps={false}
+        alwaysBounceVertical={false}
         style={styles.container}>
         <View style={LayoutStyles.statusBarPlaceholder} />
         <View style={TitleBarStyles.titleBar}>

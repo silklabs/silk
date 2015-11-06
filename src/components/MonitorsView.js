@@ -250,7 +250,7 @@ class MonitorsView extends AsyncComponent {
       return (
         <MonitorPreview
           key={'unconfiguredDevice-' + index}
-          label="New Device"
+          label={`${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={true}
           configuring={false}
@@ -264,11 +264,12 @@ class MonitorsView extends AsyncComponent {
 
     let configuringDeviceThumbnail = null;
     if (configuringDevice) {
+      let { bleDeviceSession } = configuringDevice;
       configuringDeviceThumbnail = (
         <MonitorPreview
           key="configuringDevice"
           deviceId={configuringDevice.deviceId}
-          label={configuringDevice.name || 'New Device'}
+          label={configuringDevice.name || `${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
           previewSize={DEFAULT_PREVIEW_SIZE}
           configurable={false}
           configuring={true}
@@ -293,7 +294,7 @@ class MonitorsView extends AsyncComponent {
         onPress={() => this.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
         hasNetwork={this.props.hasNetwork}
-        bleDeviceSession={device.bleDeviceSession} // TODO: add this to configured devices
+        bleDeviceSession={device.bleDeviceSession}
       />
     )).toArray().reverse();
 

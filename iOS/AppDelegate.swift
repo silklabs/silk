@@ -73,22 +73,6 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     return true
   }
 
-  // Display region enter/exit notifications to the user
-  func notifyUser(notificationText: String) {
-    // Ask user permission for user notifications
-    let registerUserNotificationSettings = UIApplication.instancesRespondToSelector("registerUserNotificationSettings:")
-    if registerUserNotificationSettings {
-      let types: UIUserNotificationType = [UIUserNotificationType.Alert, UIUserNotificationType.Sound, UIUserNotificationType.Badge]
-      UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(forTypes: types, categories: nil))
-    }
-
-    let notification = UILocalNotification()
-    notification.alertBody = notificationText
-    notification.fireDate = NSDate()
-    notification.soundName = UILocalNotificationDefaultSoundName
-    UIApplication.sharedApplication().scheduleLocalNotification(notification)
-  }
-
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor)
     self.bleSocketPeripheral.addServiceUuid(uuid)
@@ -101,7 +85,6 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
   func regionStateChanged(regionMonitor: RegionMonitor, entered: Bool) {
     assert(regionMonitor === self.regionMonitor)
-    notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
     self.bleSocketPeripheral.setIsInRegion(entered)
   }
 }

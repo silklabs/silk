@@ -18,9 +18,9 @@ const { CryptoDuplexStream, MessagePackDuplexStream } = streams;
 
 const log = makeLog(`btle-SocketSession`);
 
-const RSSI_UPDATE_TIMEOUT = 100;
-
 export default class SocketSession extends MessagePackDuplexStream {
+  static RSSI_UPDATE_TIMEOUT = 50;
+
   _socket: Socket;
 
   _disconnecting: boolean = false;
@@ -112,7 +112,7 @@ export default class SocketSession extends MessagePackDuplexStream {
       this._rssiUpdatePending = true;
 
       this._socket.updateRssi();
-    }, RSSI_UPDATE_TIMEOUT);
+    }, SocketSession.RSSI_UPDATE_TIMEOUT);
   }
 
   _sendDisconnect() {

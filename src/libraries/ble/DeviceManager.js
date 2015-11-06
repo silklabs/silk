@@ -36,8 +36,6 @@ type DeviceSecret = {
 
 const log = mklog('btle-DeviceManager');
 
-const RSSI_THRESHOLD = -40;
-
 const SCHEMA = {
   id: Joi.object().keys({
     name: Joi.string().equal(`id`).required(),
@@ -70,11 +68,6 @@ const SCHEMA = {
     name: Joi.string().equal(`register`).required(),
   }).required(),
 
-  rssi: Joi.object().keys({
-    name: Joi.string().equal(`rssi`).required(),
-    rssi: Joi.number().integer().min(-100).max(0).required(),
-  }).required(),
-
   secret: Joi.object().keys({
     name: Joi.string().equal(`secret`).required(),
     deviceId: Joi.string().lowercase().trim().length(66).hex().required(),
@@ -103,6 +96,8 @@ export class DeviceSession extends EventEmitter {
   static STATE_RESTARTED = 8;
 
   static STATE_ERROR = 10;
+
+  static RSSI_THRESHOLD = -40;
 
   _socketSession: SocketSession;
 
@@ -316,17 +311,6 @@ export class DeviceSession extends EventEmitter {
       }
       return;
 
-    case `rssi`:
-      if (state !== DeviceSession.STATE_REGISTERING &&
-          state !== DeviceSession.STATE_REGISTERING_PROXIMITY &&
-          state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
-      }
-
-      this.emit(`rssiUpdate`, data.rssi);
-      return;
-
     case `secret`:
       if (state !== DeviceSession.STATE_REGISTERING &&
           state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
@@ -383,12 +367,17 @@ export class DeviceSession extends EventEmitter {
 
     assert(this._state === DeviceSession.STATE_REGISTERING);
 
-    if (rssi >= RSSI_THRESHOLD) {
-      log.info(`Passed proximity gate`);
-      this._socketSession.rssiUpdatesEnabled = false;
-      this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
-      this._maybeEmitSecret();
+    if (rssi < DeviceSession.RSSI_THRESHOLD) {
+      this.emit(`rssiUpdate`, rssi);
+      return;
     }
+
+    log.info(`Passed proximity gate`);
+
+    this._socketSession.rssiUpdatesEnabled = false;
+    this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
+
+    this._maybeEmitSecret();
   };
 
   get manufacturer(): string {
@@ -427,8 +416,7 @@ export class DeviceSession extends EventEmitter {
    * Accept the device's registration request.
    *
    * This signals to an unconfigured device that the user wants to
-   * configure it. The device is expected to start sending RSSI
-   * updates.
+   * configure it.
    */
   acceptRegistrationRequest() {
     log.debug(`DeviceSession.acceptRegistrationRequest()`);
@@ -506,7 +494,7 @@ export class DeviceSession extends EventEmitter {
    *
    * This indicates to the device that the user has aborted the
    * configuration process. The device is expected to go back to
-   * requesting configuration and stop sending us RSSI updates.
+   * requesting configuration.
    */
   restart() {
     log.debug(`DeviceSession.restart()`);

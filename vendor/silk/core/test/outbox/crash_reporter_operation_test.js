@@ -28,6 +28,8 @@ suite('CrashReporterOperation', () => {
   });
 
   test('Upload crash report...', async () => {
+    if (require('../skip-on-travis.js')()) return;
+
     let { stream, buffer } = randomStream();
     let tombstone = path.join(FIXTURE_DIR, 'one');
     await fs.writeFile(tombstone, buffer);

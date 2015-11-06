@@ -1,6 +1,6 @@
 /**
  * User account store.
-*/
+ */
 import * as Joi from 'joi';
 import Base from './base';
 import scrypt from 'scrypt';
@@ -231,7 +231,7 @@ export default class Accounts extends Base {
     if (status.nModified === 1) {
       return id;
     }
-    return false;
+    return null;
   }
 
   /**
@@ -268,7 +268,10 @@ export default class Accounts extends Base {
 
     let didInsert = insert.upserted;
     if (didInsert && didInsert[0]._id) {
-      return { id: didInsert[0]._id.toString() };
+      return {
+        id: didInsert[0]._id.toString(),
+        beaconUUID: account.beaconUUID,
+      };
     }
 
     return this.error('duplicateEmail');
@@ -305,38 +308,42 @@ export default class Accounts extends Base {
     }
 
     let validate = await this.scryptVerify(account.password.hash, payload.passwordHash);
-    if (validate) {
-      let accessToken = this.accessToken(payload);
+    if (!validate) {
+      return this.error('checkPasswordFailure');
+    }
 
-      /**
-       * We need to take some extra steps... While multiple accounts are
-       * enforced not to have duplicate publicKeys at the collection level those
-       * protections do not work within a single document.
-       */
-      let update = await this.collection.update(
-        {
-          _id: account._id,
-          'accountTokens.publicKey': {
-            $ne: payload.publicKey
-          }
-        },
-        {
-          $push: {
-            accountTokens: accessToken
-          }
+    let accessToken = this.accessToken(payload);
+
+    /**
+     * We need to take some extra steps... While multiple accounts are
+     * enforced not to have duplicate publicKeys at the collection level those
+     * protections do not work within a single document.
+     */
+    let update = await this.collection.update(
+      {
+        _id: account._id,
+        'accountTokens.publicKey': {
+          $ne: payload.publicKey
         }
-      );
+      },
+      {
+        $push: {
+          accountTokens: accessToken
+        }
+      }
+    );
 
-      if (update.n !== 1) {
-        throw new Error(
-          `checkPassword update failed for unknown reasons: ${
+    if (update.n !== 1) {
+      throw new Error(
+        `checkPassword update failed for unknown reasons: ${
             JSON.stringify(update)
           }`
-        );
-      }
-      return { id: account._id.toString() };
+      );
     }
-    return this.error('checkPasswordFailure');
+    return {
+      id: account._id.toString(),
+      beaconUUID: account.beaconUUID,
+    };
   }
 
   /**
@@ -357,27 +364,27 @@ export default class Accounts extends Base {
     }
 
     let validate = await this.scryptVerify(account.password.hash, payload.passwordHash);
-    if (validate) {
-      let update = await this.collection.update({
-        _id: account._id,
-        'accountTokens.publicKey': payload.publicKey
-      }, {
-        $set: {
-          passwordCheck: { date: new Date() }
-        }
-      });
-
-      if (update.n !== 1) {
-        throw new Error(
-          `checkPassword update failed for unknown reasons: ${
-            JSON.stringify(update)
-          }`
-        );
-      }
-
-      return { id: account._id.toString() };
+    if (!validate) {
+      return this.error('checkPasswordFailure');
     }
 
-    return this.error('checkPasswordFailure');
+    let update = await this.collection.update({
+      _id: account._id,
+      'accountTokens.publicKey': payload.publicKey
+    }, {
+      $set: {
+        passwordCheck: { date: new Date() }
+      }
+    });
+
+    if (update.n !== 1) {
+      throw new Error(
+        `checkPassword update failed for unknown reasons: ${
+            JSON.stringify(update)
+          }`
+      );
+    }
+
+    return { id: account._id.toString() };
   }
 }

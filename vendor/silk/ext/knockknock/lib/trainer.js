@@ -203,6 +203,8 @@ export default class Trainer {
    *  @returns a preprocessed face square image
    */
   _preprocessFace(im, face, previewScale) {
+    log.debug(`face: ${JSON.stringify(face)}`);
+
     // Adjust rectangles to scale up to the original size as face rectangles
     // are reported for scaled down image
     face.leftEye[0] = face.leftEye[0] * previewScale;
@@ -231,7 +233,6 @@ export default class Trainer {
     }
 
     let gray = im.roi(face.x, face.y, face.width, face.height);
-    log.debug(`face: ${JSON.stringify(face)}`);
 
     // Since we found both eyes lets rotate & scale & translate the face so that
     // the two eyes line up perfectly with ideal eye positions. This makes sure
@@ -297,6 +298,12 @@ export default class Trainer {
 
     // Apply elliptical mask on the face
     gray.copyWithMask(dstImg, mask);
+
+    // Scale down the face to match the preview size
+    face.x = face.x / previewScale;
+    face.y = face.y / previewScale;
+    face.width = face.width / previewScale;
+    face.height = face.height / previewScale;
 
     return dstImg;
   }

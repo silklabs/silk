@@ -45,7 +45,6 @@ enum WaitType {
   WaitReadCharacteristic,
   WaitWriteCharacteristic,
   WaitRegisterForNotification,
-  WaitDeregisterForNotification,
   WaitReadDescriptor,
   WaitWriteDescriptor,
   WaitListen,
@@ -2320,7 +2319,7 @@ int bt_enable_notify(char *&saveptr) {
                                                             &addr,
                                                             &service,
                                                             &characteristic),
-                  WaitDeregisterForNotification);
+                  WaitRegisterForNotification);
   }
 
   connection_id_during_register_for_notification = -1;

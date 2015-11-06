@@ -555,7 +555,7 @@ class CameraStream extends EventEmitter {
       throw new Error(`Re-entered getParameter?`);
     }
     if (!this._ready) {
-      throw new Error(`camera not ready, ignoring flash command`);
+      throw new Error(`camera not ready, ignoring getParameterInt command`);
     }
 
     let getParamPromise = new Promise((resolve, reject) => {
@@ -573,7 +573,7 @@ class CameraStream extends EventEmitter {
       throw new Error(`Re-entered getParameter?`);
     }
     if (!this._ready) {
-      throw new Error(`camera not ready, ignoring flash command`);
+      throw new Error(`camera not ready, ignoring getParameterStr command`);
     }
 
     let getParamPromise = new Promise((resolve, reject) => {

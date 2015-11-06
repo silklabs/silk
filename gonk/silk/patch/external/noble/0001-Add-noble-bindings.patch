@@ -1,14 +1,14 @@
-From 2f3828fd463092776678d0d49941a36aa3d7e4ef Mon Sep 17 00:00:00 2001
+From 584635f345b28cab44732e508b013734c38ce569 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2784 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2787 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2801 insertions(+), 4 deletions(-)
+ 4 files changed, 2804 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..64af3ba
+index 0000000..145d676
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2784 @@
+@@ -0,0 +1,2787 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -726,6 +726,9 @@ index 0000000..64af3ba
 +
 +  if (peripheralInfo.connectionId === null) {
 +    log.info('Already disconnected from \'%s\'', deviceUuid);
++    process.nextTick(function() {
++      this.emit('disconnect', peripheralInfo.uuid, null);
++    }.bind(this));
 +    return true;
 +  }
 +
@@ -2877,5 +2880,5 @@ index 42cfdb6..9cdbc67 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.6.0
+2.6.2
 

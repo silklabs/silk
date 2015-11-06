@@ -23,11 +23,21 @@ const CLAPPER_CLAP_ADJUST_PROP = 'persist.silk.clap.adjust';
 const CLAPPER_PLAY_SOUND_PROP = 'persist.silk.clapper.sound';
 const TWO_CLAPS_FILENAME = 'two_claps_detected.mp3';
 
+const RISE_ENERGY_DELTA_PROP = 'ro.silk.clapper.rise.delta';
+const MIN_ENERGY_THRESH_PROP = 'ro.silk.clapper.min.thresh';
+
 class Clapper {
   constructor(env) {
     this._env = env;
     log = env.log;
     util = env.util;
+
+    // Platform specific constants
+    this._riseEnergyDelta = util.getintprop(RISE_ENERGY_DELTA_PROP, 25000);
+    this._minEnergyThreshold = util.getintprop(MIN_ENERGY_THRESH_PROP, 30000);
+
+    log.info(`Clapper init with riseEnergyDelta: ${this._riseEnergyDelta} ` +
+        `and minEnergyThreshold: ${this._minEnergyThreshold}`);
 
     let fftCfg = {
       // TODO: hard coded audio constants assumed.  Changing these will also
@@ -69,8 +79,8 @@ class Clapper {
     let cfg = {
       fftProcessor: this._fftProcessor,
       riseDurationMs: 24,
-      riseEnergyDelta: 25000,
-      minEnergyThreshold: 30000,
+      riseEnergyDelta: this._riseEnergyDelta,
+      minEnergyThreshold: this._minEnergyThreshold,
       minEnergyDurationMs: minEnergyDurationMs,
       maxEnergyDurationMs: maxEnergyDurationMs,
     };
@@ -113,8 +123,8 @@ class Clapper {
     let cfg = {
       fftProcessor: this._fftProcessor,
       riseDurationMs: 24,
-      riseEnergyDelta: 25000,
-      minEnergyThreshold: 30000,
+      riseEnergyDelta: this._riseEnergyDelta,
+      minEnergyThreshold: this._minEnergyThreshold,
       minEnergyDurationMs: minEnergyDurationMs,
       maxEnergyDurationMs: 5000,
     };

@@ -20,6 +20,7 @@ automatically installed on device, and silk core restarted.
 
 `./watch` options:
   * `LAX=1 ./watch` - to skip running ESLint
+  * `NO_UGLY=1 LAX=1 ./watch` - also don't uglify
   * `./watch --no-restart` - to skip restarting silk core.
 
 ### Manual push of silk core

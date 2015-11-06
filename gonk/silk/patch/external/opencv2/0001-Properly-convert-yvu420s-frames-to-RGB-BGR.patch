@@ -1,0 +1,29 @@
+From b6ff5a741f7dc4ea3ecfbbabb9ad000d0dde52a5 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 5 Nov 2015 15:41:42 -0800
+Subject: [PATCH] Properly convert yvu420s frames to RGB/BGR
+
+---
+ modules/highgui/src/cap_android.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/modules/highgui/src/cap_android.cpp b/modules/highgui/src/cap_android.cpp
+index 6615391..fd1d669 100644
+--- a/modules/highgui/src/cap_android.cpp
++++ b/modules/highgui/src/cap_android.cpp
+@@ -546,7 +546,11 @@ bool CvCapture_Android::convertYUV2BGR(int width, int height, const unsigned cha
+     if (m_frameFormat == yuv420sp)
+         cv::cvtColor(src, resmat, inRGBorder ? CV_YUV420sp2RGB : CV_YUV420sp2BGR, withAlpha ? 4 : 3);
+     else if (m_frameFormat == yvu420sp)
+-        cv::cvtColor(src, resmat, inRGBorder ? CV_YUV2RGB_NV21 : CV_YUV2BGR_NV12, withAlpha ? 4 : 3);
++        // There are no CY_YVU420sp2xGx color formats defined,
++        //                  ^^
++        // so use CY_YUV420sp2xGx in reverse to achieve the same effect
++        //            ^^
++        cv::cvtColor(src, resmat, inRGBorder ? CV_YUV420sp2BGR : CV_YUV420sp2RGB, withAlpha ? 4 : 3);
+ 
+     return !resmat.empty();
+ }
+-- 
+1.9.1
+

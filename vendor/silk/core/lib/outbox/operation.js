@@ -214,10 +214,7 @@ export default class Operation {
    *
    */
   async saveToDisk(readable, directory) {
-    log.verbose(`Preparing to save to disk`, {
-      directory,
-      metadata: this.getMetadata()
-    });
+    log.verbose(`Saving operation to disk: ${directory}`);
 
     try {
       // Ensure the directory exists in full...

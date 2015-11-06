@@ -44,6 +44,7 @@ class Stream extends Duplex {
 
   _eventEmitter = null;
   _dataEmitter = null;
+  _socketCharacteristic = null;
 
   _incomingBuffer = null;
   _outgoingBuffer = null;
@@ -155,6 +156,8 @@ class Stream extends Duplex {
 
       socketCharacteristic.addListener(`data`, this._onData);
       this._dataEmitter = socketCharacteristic;
+
+      this._socketCharacteristic = socketCharacteristic;
 
       const writeCallback = data => {
         socketCharacteristic.write(data,
@@ -419,6 +422,22 @@ class Stream extends Duplex {
         log.debug(`Read stream full, waiting to push more data`);
         break;
       }
+    }
+  }
+
+  disconnect(callback) {
+    log.debug(`Stream.disconnect()`);
+
+    if (this._isServer) {
+      log.info(`Can't disconnect from server side`);
+      return;
+    }
+
+    if (this._socketCharacteristic) {
+      this._socketCharacteristic.notify(false, callback);
+      this._socketCharacteristic = null;
+    } else {
+      log.info(`Not connected, nothing to do`);
     }
   }
 }

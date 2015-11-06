@@ -21,6 +21,7 @@ const RSSI_UPDATE_TIMEOUT = 100;
 export default class SocketSession extends MessagePackDuplexStream {
   _scanner = null;
   _peripheral = null;
+  _socketStream = null;
 
   _disconnecting = false;
   _disconnectedPeripheral = false;
@@ -35,10 +36,10 @@ export default class SocketSession extends MessagePackDuplexStream {
   constructor(scanner, peripheral, serviceUuid) {
     log.debug(`SocketSession()`);
 
-    let stream = new ClientStream(peripheral, serviceUuid);
-    stream = new CryptoDuplexStream(stream);
+    const socketStream = new ClientStream(peripheral, serviceUuid);
+    const cryptoStream = new CryptoDuplexStream(socketStream);
 
-    super(stream);
+    super(cryptoStream);
 
     this._scanner = scanner;
 
@@ -46,10 +47,12 @@ export default class SocketSession extends MessagePackDuplexStream {
     peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
     this._peripheral = peripheral;
 
+    this._socketStream = socketStream;
+
     this._rssiSmoother.update(peripheral.rssi);
 
     this.once(`end`, this._onEnd);
-    this.once(`finish`, this._onFinish);
+    socketStream.once(`finish`, this._onFinish);
   }
 
   _onPeripheralRssiUpdate = rssi => {
@@ -96,8 +99,7 @@ export default class SocketSession extends MessagePackDuplexStream {
     this._finished = true;
 
     if (!this._disconnectedPeripheral) {
-      this._disconnectedPeripheral = true;
-      this._peripheral.disconnect();
+      this._disconnectPeripheral();
     }
   };
 
@@ -126,6 +128,17 @@ export default class SocketSession extends MessagePackDuplexStream {
 
       this._peripheral.updateRssi();
     }, RSSI_UPDATE_TIMEOUT);
+  }
+
+  _disconnectPeripheral() {
+    log.debug(`SocketSession._disconnectedPeripheral()`);
+
+    assert(!this._disconnectedPeripheral);
+
+    this._disconnectedPeripheral = true;
+    this._socketStream.disconnect(() => {
+      this._peripheral.disconnect();
+    });
   }
 
   get connected() {
@@ -193,8 +206,7 @@ export default class SocketSession extends MessagePackDuplexStream {
     } else {
       // Disconnect immediately. This will trigger an 'end' event if we haven't
       // gotten one already.
-      this._disconnectedPeripheral = true;
-      this._peripheral.disconnect();
+      this._disconnectPeripheral();
     }
   }
 }

@@ -272,7 +272,7 @@ export default class SocketScanner extends EventEmitter {
       // to stop, so make sure it's still connected.
       if (peripheral.state === `connected`) {
         // Make sure we restart scanning when the session ends.
-        const session = new SocketSession(this, peripheral);
+        const session = new SocketSession(this, peripheral, this._serviceUuid);
         session.once(`close`, async () => {
           log.debug(`Session closed`);
           if (this._enabled) {

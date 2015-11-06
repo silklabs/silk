@@ -27,6 +27,7 @@ const WRITE_MAX_BYTES = 256;
 
 class Stream extends Duplex {
   _isServer = false;
+  _serviceUuid = ``;
 
   _subscribed = false;
   _wasSubscribed = false;
@@ -50,12 +51,13 @@ class Stream extends Duplex {
   _ended = false;
   _finished = false;
 
-  constructor(serviceOrPeripheral, isServer) {
-    log.debug(`Stream(${isServer})`);
+  constructor(serviceOrPeripheral, isServer, serviceUuid) {
+    log.debug(`Stream(${isServer}, '${serviceUuid}')`);
 
     super();
 
     this._isServer = isServer;
+    this._serviceUuid = serviceUuid;
 
     this.once(`end`, () => {
       assert(!this._ended);
@@ -102,7 +104,7 @@ class Stream extends Duplex {
 
     let socketService;
     for (let service of peripheral.services) {
-      if (service.uuid === BTLE_SOCKET_UUIDS.service) {
+      if (service.uuid === this._serviceUuid) {
         socketService = service;
         break;
       }
@@ -425,14 +427,14 @@ export class ServerStream extends Stream {
   constructor(service) {
     log.debug(`ServerStream()`);
 
-    super(service, true);
+    super(service, true, service.uuid);
   }
 }
 
 export class ClientStream extends Stream {
-  constructor(peripheral) {
+  constructor(peripheral, serviceUuid) {
     log.debug(`ClientStream()`);
 
-    super(peripheral, false);
+    super(peripheral, false, serviceUuid);
   }
 }

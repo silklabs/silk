@@ -4,6 +4,9 @@
 # All Rights Reserved.
 # Confidential and Proprietary - Silk Labs, Inc.
 
+LOCAL_PATH=$(dirname $0)
+source $LOCAL_PATH/../vendor/silk/gonk/gnutools.sh
+
 usage()
 {
   echo "Usage: $0 (-h)"
@@ -13,11 +16,6 @@ usage()
   echo " -h        Display this message"
   exit 1
 }
-
-if [ -z $ANDROID_BUILD_TOP ]; then
-  echo ANDROID_BUILD_TOP is not defined.  Please envsetup first
-  exit 1
-fi
 
 while getopts "h" opt; do
   case $opt in

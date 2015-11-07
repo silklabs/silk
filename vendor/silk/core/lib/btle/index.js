@@ -275,7 +275,7 @@ class BluetoothLE extends EventEmitter {
     this._adapterState = adapterState;
 
     if (adapterState === `poweredOn`) {
-      const modeAtReset = this.modeAtReset;
+      const modeAtReset = this._modeAtReset;
       this._modeAtReset = BluetoothLE.MODE_OFF;
 
       this._changeStatePromise =

@@ -16,8 +16,10 @@ const log = makeLog(`btle-socketscanner`);
 
 const DEFAULT_LOCALNAME = `Silk-app`;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
+const DEFAULT_CONNECTION_RETRY_TIMEOUT_MS = 1000;
 
 export default class SocketScanner extends EventEmitter {
+
   _noble = null;
   _localName = DEFAULT_LOCALNAME;
   _serviceUuid = BTLE_SOCKET_UUIDS.service;
@@ -47,7 +49,7 @@ export default class SocketScanner extends EventEmitter {
   }
 
   _onDiscover = async peripheral => {
-    if (!this._enabled) {
+    if (!this._enabled || !this._scanning) {
       return;
     }
 
@@ -258,8 +260,8 @@ export default class SocketScanner extends EventEmitter {
     const peripheral = this._connectionQueue[0].peripheral;
     const connected = await this._attemptConnection(peripheral);
 
+    const queueInfo = this._connectionQueue.shift();
     this._connectionMap.delete(peripheral.uuid);
-    this._connectionQueue.shift();
 
     if (connected) {
       assert(peripheral.state === `connected`);
@@ -290,6 +292,18 @@ export default class SocketScanner extends EventEmitter {
       }
     } else {
       peripheral.disconnect();
+
+      // If we added the peripheral to the blacklist then we shouldn't try to
+      // reconnect to it again. If the failure was spurious, though, we will put
+      // the peripheral back in the list.
+      if (!this._blackList.has(peripheral.uuid)) {
+        log.debug(`Connection to peripheral '${peripheral.uuid}' failed for ` +
+                  `(hopefully) spurious reasons. It will be added back to ` +
+                  `the queue after a short delay`);
+        setTimeout(() => {
+          this._onDiscover(queueInfo.peripheral);
+        }, DEFAULT_CONNECTION_RETRY_TIMEOUT_MS);
+      }
     }
 
     this._attemptNextConnection();

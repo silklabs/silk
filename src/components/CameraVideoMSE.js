@@ -9,6 +9,12 @@ import { Link } from 'react-router';
 import Cameras from '../libraries/Cameras';
 
 const CODEC_DESCRIPTOR = 'video/mp4;codecs=avc1.42c01f,mp4a.40.2';
+// NB: these values are defined in the init header.  While the init
+// header is hard coded, so are these constants for convenience.  If
+// we ever support multiple init header types with different sample
+// rates, then we'll want to read these constants from the header.
+const AUDIO_TICKS_PER_SEC = 8000;  // 8KHz = audio sampling rate
+const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 
 function readFourcc(buf, offset) {
   let fourcc = '';
@@ -73,8 +79,10 @@ function prepareSegment(segment, state) {
   m4s.writeInt32BE(videoDecodeTime, offsets.videoDecodeTime);
 
   // TODO: get timeScales from init header
-  let startTimeDelta = (startTime * 8000 / 90000) | 0;
-  let audioDecodeTime = startTimeDelta + m4s.readInt32BE(offsets.audioDecodeTime);
+  let startTimeDelta =
+        (startTime * AUDIO_TICKS_PER_SEC / VIDEO_TICKS_PER_SEC) | 0;
+  let audioDecodeTime =
+        startTimeDelta + m4s.readInt32BE(offsets.audioDecodeTime);
   m4s.writeInt32BE(audioDecodeTime, offsets.audioDecodeTime);
 
   ++state.seqno;

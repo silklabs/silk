@@ -19,6 +19,7 @@ const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
 const DEFAULT_CONNECTION_RETRY_TIMEOUT_MS = 1000;
 
 export default class SocketScanner extends EventEmitter {
+
   _noble = null;
   _localName = DEFAULT_LOCALNAME;
   _serviceUuid = BTLE_SOCKET_UUIDS.service;

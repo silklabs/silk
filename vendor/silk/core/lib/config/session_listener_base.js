@@ -15,6 +15,7 @@ import wifi from '../wifi';
 const log = createLog('config-session-listener-base');
 
 export default class SessionListenerBase extends EventEmitter {
+
   static WIFI_STATE_MAP = new Map([
     [ 'scanning', 'wifi_scanning' ],
     [ 'associating', 'wifi_associating' ],
@@ -144,7 +145,8 @@ export default class SessionListenerBase extends EventEmitter {
 
     if (this._socketSession) {
       this._socketSession.rssiUpdatesEnabled = false;
-      this._socketSession.disconnect();
+      this._socketSession.end();
+      this._socketSession = null;
     }
   }
 
@@ -213,14 +215,20 @@ export default class SessionListenerBase extends EventEmitter {
     });
   }
 
-  _onDisconnect = socketSession => {
+  _onDisconnect(socketSession) {
     log.debug(`SessionListenerBase._onDisconnect()`);
 
-    assert(this._socketSession);
-    assert(this._socketSession === socketSession);
+    if (this._socketSession) {
+      assert(this._socketSession === socketSession);
 
-    this._removeSessionListeners();
-    this._socketSession = null;
+      this._removeSessionListeners();
+      this._socketSession = null;
+    }
+
+    assert(!this._statusListenersInstalled);
+    this._status = '';
+    this._errorCode = '';
+    this._disconnecting = false;
   }
 
   _onError(error) {

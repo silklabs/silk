@@ -26,6 +26,7 @@ const WRITE_TIMEOUT_MS = 15000;
 const WRITE_MAX_BYTES = 256;
 
 class Stream extends Duplex {
+
   _isServer = false;
   _serviceUuid = ``;
 
@@ -50,7 +51,9 @@ class Stream extends Duplex {
   _outgoingBuffer = null;
 
   _ended = false;
+  _finishing = false;
   _finished = false;
+  _closed = false;
 
   constructor(serviceOrPeripheral, isServer, serviceUuid) {
     log.debug(`Stream(${isServer}, '${serviceUuid}')`);
@@ -60,23 +63,8 @@ class Stream extends Duplex {
     this._isServer = isServer;
     this._serviceUuid = serviceUuid;
 
-    this.once(`end`, () => {
-      assert(!this._ended);
-      this._ended = true;
-
-      if (this._finished) {
-        this.emit(`close`);
-      }
-    });
-
-    this.once(`finish`, () => {
-      assert(!this._finished);
-      this._finished = true;
-
-      if (this._ended) {
-        this.emit(`close`);
-      }
-    });
+    this.once(`end`, this._onEnd);
+    this.once(`finish`, this._onFinish);
 
     if (isServer) {
       this._initServer(serviceOrPeripheral);
@@ -85,17 +73,17 @@ class Stream extends Duplex {
     }
   }
 
-  _initServer(serivce) {
+  _initServer(service) {
     log.debug(`Stream._initServer()`);
 
-    serivce.addListener(`subscribe`, this._onSubscribe);
-    serivce.addListener(`unsubscribe`, this._onUnsubscribe);
-    serivce.addListener(`drain`, this._onDrain);
+    service.addListener(`subscribe`, this._onSubscribe);
+    service.addListener(`unsubscribe`, this._onUnsubscribe);
+    service.addListener(`drain`, this._onDrain);
     // No easy way to have a `disconnect` listener.
-    this._eventEmitter = serivce;
+    this._eventEmitter = service;
 
-    serivce.addListener(`data`, this._onData);
-    this._dataEmitter = serivce;
+    service.addListener(`data`, this._onData);
+    this._dataEmitter = service;
   }
 
   _initClient(peripheral) {
@@ -178,11 +166,21 @@ class Stream extends Duplex {
   }
 
   _emitError(error) {
+    log.debug(`Stream._emitError('${error.toString()}')`);
     try {
       // If there are no error listeners attached then this will throw...
       this.emit(`error`, error);
     } catch(e) {
       log.warn(e);
+    }
+  }
+
+  _maybeEmitClose() {
+    log.debug(`Stream._maybeEmitClose()`);
+
+    if (!this._closed && this._ended && this._finished) {
+      this._closed = true;
+      this.emit(`close`);
     }
   }
 
@@ -221,6 +219,58 @@ class Stream extends Duplex {
 
     this._maybeWrite();
   }
+
+  emit(eventName, ...args) {
+    const finishEventName = `finish`;
+
+    // Hook the 'finish' event so that we can properly unsubscribe from the
+    // characteristic before emitting the event.
+    if (eventName !== finishEventName || this._finishing) {
+      return super.emit(eventName, ...args);
+    }
+
+    if (this._subscribed) {
+      log.debug(`Finished, unsubscribing from characteristic`);
+
+      this._socketCharacteristic.notify(false, () => {
+        assert(!this._finishing);
+        this._finishing = true;
+
+        if (this._subscribed) {
+          this._onUnsubscribe();
+        }
+
+        this.emit(finishEventName);
+      });
+      return;
+    }
+
+    log.debug(`Finished and already unsubscribed`);
+
+    assert(!this._finishing);
+    this._finishing = true;
+
+    this.emit(finishEventName);
+  }
+
+  _onEnd = () => {
+    log.debug(`Stream._onEnd()`);
+
+    assert(!this._ended);
+    this._ended = true;
+
+    this._maybeEmitClose();
+  };
+
+  _onFinish = () => {
+    log.debug(`Stream._onFinish()`);
+
+    assert(this._finishing);
+    assert(!this._finished);
+    this._finished = true;
+
+    this._maybeEmitClose();
+  };
 
   _onSubscribe = (writeCallback, maxChunkSize) => {
     log.debug(`Stream._onSubscribe(${maxChunkSize})`);
@@ -269,7 +319,7 @@ class Stream extends Duplex {
     let error = new Error(`Other side has disconnected, cannot write`);
     this._setWriteError(error);
 
-    if (!this._finished) {
+    if (!this._finishing) {
       error = new Error(`Other side disconnected unexpectedly`);
       this._emitError(error);
     }
@@ -279,6 +329,8 @@ class Stream extends Duplex {
       this._pushDataWhenAvailable = false;
       this._pushData();
     }
+
+    this._maybeEmitClose();
   };
 
   _onDisconnect = () => {
@@ -422,22 +474,6 @@ class Stream extends Duplex {
         log.debug(`Read stream full, waiting to push more data`);
         break;
       }
-    }
-  }
-
-  disconnect(callback) {
-    log.debug(`Stream.disconnect()`);
-
-    if (this._isServer) {
-      log.info(`Can't disconnect from server side`);
-      return;
-    }
-
-    if (this._socketCharacteristic) {
-      this._socketCharacteristic.notify(false, callback);
-      this._socketCharacteristic = null;
-    } else {
-      log.info(`Not connected, nothing to do`);
     }
   }
 }

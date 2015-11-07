@@ -181,13 +181,13 @@ class BluetoothLE extends EventEmitter {
     let promises = [ ];
 
     if (this._socketSession) {
-      log.debug(`Disconnecting socket session`);
+      log.info(`Waiting for socket session to disconnect`);
       promises.push(new Promise((resolve) => {
         this._socketSession.once(`close`, () => {
           this._socketSession = null;
           resolve();
         });
-        this._socketSession.disconnect();
+        this._socketSession.end();
       }));
     }
 

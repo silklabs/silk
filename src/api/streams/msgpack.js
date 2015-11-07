@@ -45,15 +45,19 @@ export class MessagePackEncodeStream extends Transform {
 }
 
 export class MessagePackDuplexStream extends DuplexTransform {
-  constructor(stream, options) {
+  constructor(stream, options = { }) {
     log.debug(`MessagePackDuplexStream()`);
 
     const decoder = new MessagePackDecodeStream();
     const encoder = new MessagePackEncodeStream();
 
-    options = Object.assign({ }, options, {
-      objectMode: true,
-    });
+    options = Object.assign({ }, options);
+    if (!(`objectMode` in options)) {
+      options.objectMode = true;
+    }
+    if (!(`autoClose` in options)) {
+      options.autoClose = true;
+    }
 
     super(stream, stream, decoder, encoder, options);
   }

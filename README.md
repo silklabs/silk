@@ -7,7 +7,13 @@ every sprint a release is made to complete that milestone.
 Quick "chemspill" branches may also occur on demand to resolve critical issues
 with the current release, and run completely independent to the normal sprint cadence.
 
-For details on Releng automation, please refer to [Automation.md](Automation.md).
+Releng is responsible for:
+* Ensuring all branches remain green (aka. sheriffing the trees).
+* The migration of code from branch to branch in support of release milestones.
+* Ensuring that releases are reproducible, both internally and by customers.
+* Developing tools to offload Dev and Test from mundane tasks pertaining to the previous points.
+
+To request Releng support, please file an issue [here](https://github.com/silklabs/releng/issues/new).
 
 ## Latest Builds
 
@@ -16,8 +22,6 @@ Branch  | Binaries | Servers
 master  | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/master/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/master/latest/Silk.ipa) | [Web app](https://silk-webapp-master.herokuapp.com/)
 next    | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/next/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/next/latest/Silk.ipa) | [Web app](https://silk-webapp-next.herokuapp.com/)
 release | [Nexus 4 Device Image](https://s3-us-west-2.amazonaws.com/silk-device/release/latest/mako.tgz) / [Silk iOS App](https://s3-us-west-2.amazonaws.com/silk-app/release/latest/Silk.ipa) | [Web app](https://silk-webapp-release.herokuapp.com/)
-
-
 
 ## Fall Release Calendar
 
@@ -55,7 +59,7 @@ Github milestones are created in all the affected projects to collect issues:
 * Please feel free to help assign the appropriate priority label for an issue, and file new issues as appropriate.
 * [Issues without a milestone](https://github.com/issues?utf8=%E2%9C%93&q=is%3Aissue+user%3Asilklabs+is%3Aopen+no%3Amilestone).
 
-## Branching Details
+## Branching
 
 <img align="right" src="https://github.com/mvines/releng/raw/master/Branching Diagram.png"/>
 
@@ -64,6 +68,8 @@ All our projects use the same branch names:
 * **release** - where releases are merged to from *next* or *chemspill*
 * **next** - stabilization branch for the current milestone
 * **chemspill** - used to resolve critical bugs in release that can't wait for the next milestone
+
+Branching procedures are documented [here](Procedures.md).
 
 ### Master branch:
 * Default location for merging commits
@@ -145,8 +151,9 @@ if they resolve issues targeted for the next release.
 | [silk-server](https://github.com/silklabs/silk-server/compare/next...master)
 | [silk-webapp](https://github.com/silklabs/silk-webapp/compare/next...master)
 
-## Release Engineering Tools
 
-* `./fml.sh` - Prepares the *next* branch to begin stabilizating for release.
-* `./release.sh` - Finishes the current release.
-
+## Appendix
+### Automation
+For details on Releng automation, please refer to [Automation.md](Automation.md).
+### Procedures
+For details on Releng release procedures, please refer to [Procedures.md](Procedures.md).

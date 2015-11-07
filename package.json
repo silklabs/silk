@@ -37,7 +37,7 @@
     "bundle": "rnws bundle --port 60050 --packagerPort 60051 --webpackPort 60052 --no-optimize",
     "lint": "eslint src",
     "localBundle": "./tools/local_bundle",
-    "postinstall": "./tools/patch",
+    "postinstall": "./tools/patch && ./tools/update_crypto_browserify",
     "start": "rnws start --port 8082 --packagerPort 8081 --webpackPort 60046",
     "update": "./tools/update"
   },

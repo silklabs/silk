@@ -695,7 +695,7 @@ export class DecryptStream extends CryptoStreamBase {
 }
 
 export class CryptoDuplexStream extends DuplexTransform {
-  constructor(stream, options) {
+  constructor(stream, options = { }) {
     log.debug(`CryptoDuplexStream()`);
 
     const ec = new EC(CryptoStreamBase.CURVE_NAME);
@@ -721,6 +721,11 @@ export class CryptoDuplexStream extends DuplexTransform {
     decrypt.once(`sharedSecret`, sharedSecret => {
       encrypt.sharedSecret = sharedSecret;
     });
+
+    options = Object.assign({ }, options);
+    if (!(`autoClose` in options)) {
+      options.autoClose = true;
+    }
 
     super(stream, stream, decrypt, encrypt, options);
   }

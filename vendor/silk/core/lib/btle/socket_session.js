@@ -22,10 +22,21 @@ export default class SocketSession extends MessagePackDuplexStream {
 
   _scanner = null;
   _peripheral = null;
+  _socketStream = null;
 
-  _disconnecting = false;
-  _disconnectedPeripheral = false;
+  // Set to true after the 'end' event has been emitted.
+  _ended = false;
+  // Set to true when |end()| is called.
+  _ending = false;
+  // Set to true when the underlying stream is finished and the socket stream
+  // has finished.
+  _finishAllowed = false;
+  // Set to true when the 'finish' event is emitted.
   _finished = false;
+  // Set to true after the peripheral has been disconnected.
+  _peripheralDisconnected = false;
+  // Set to true when the 'close' event is emitted.
+  _closed = false;
 
   _rssiSmoother = new RssiSmoother();
   _rssiUpdatesEnabled = false;
@@ -36,16 +47,18 @@ export default class SocketSession extends MessagePackDuplexStream {
   constructor(scanner, peripheral, serviceUuid) {
     log.debug(`SocketSession()`);
 
-    let stream = new ClientStream(peripheral, serviceUuid);
-    stream = new CryptoDuplexStream(stream);
+    const socketStream = new ClientStream(peripheral, serviceUuid);
+    const cryptoStream = new CryptoDuplexStream(socketStream);
 
-    super(stream);
+    super(cryptoStream, { autoClose: false });
 
     this._scanner = scanner;
 
     peripheral.addListener(`rssiUpdate`, this._onPeripheralRssiUpdate);
     peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
     this._peripheral = peripheral;
+
+    this._socketStream = socketStream;
 
     this._rssiSmoother.update(peripheral.rssi);
 
@@ -85,22 +98,48 @@ export default class SocketSession extends MessagePackDuplexStream {
   _onEnd = () => {
     log.debug(`SocketSession._onEnd()`);
 
+    assert(!this._ended);
+
+    this._ended = true;
+
     this._killRssiUpdates();
+    this._maybeEmitClose();
   };
 
   _onFinish = () => {
     log.debug(`SocketSession._onFinish()`);
 
-    assert(!this._rssiUpdatesEnabled);
+    assert(this._finishAllowed);
     assert(!this._finished);
+    assert(!this._rssiUpdatesEnabled);
 
     this._finished = true;
 
-    if (!this._disconnectedPeripheral) {
-      this._disconnectedPeripheral = true;
-      this._peripheral.disconnect();
+    if (this._peripheral.state === `disconnected`) {
+      this._peripheralDisconnected = true;
+      this._maybeEmitClose();
+      return;
     }
-  };
+
+    this._peripheral.once(`disconnect`, () => {
+      this._peripheralDisconnected = true;
+      this._maybeEmitClose();
+    });
+
+    this._peripheral.disconnect();
+  }
+
+  _maybeEmitClose() {
+    log.debug(`SocketSession._maybeEmitClose()`);
+
+    if (!this._closed &&
+        this._ended &&
+        this._finished &&
+        this._peripheralDisconnected) {
+      this._closed = true;
+      this.emit(`close`);
+    }
+  }
 
   _killRssiUpdates() {
     log.debug(`SocketSession._killRssiUpdates()`);
@@ -129,8 +168,46 @@ export default class SocketSession extends MessagePackDuplexStream {
     }, SocketSession.RSSI_UPDATE_TIMEOUT);
   }
 
+  end(chunk, encoding, callback) {
+    log.debug(`SocketSession.end()`);
+
+    if (!this._ending) {
+      this._killRssiUpdates();
+      this._ending = true;
+    }
+
+    return super.end(chunk, encoding, callback);
+  }
+
+  emit(eventName, ...args) {
+    const finishEventName = `finish`;
+
+    // Hook the 'finish' event so that we can properly disconnect our peripheral
+    // before emitting the event.
+    if (eventName !== finishEventName || this._finishAllowed) {
+      return super.emit(eventName, ...args);
+    }
+
+    log.debug(`SocketSession finished, ending socket stream`);
+
+    assert(this._ending);
+    assert(!this._finishAllowed);
+
+    this._socketStream.once(finishEventName, () => {
+      assert(!this._finishAllowed);
+      assert(!this._finished);
+
+      // Allow the finish event to be emitted.
+      this._finishAllowed = true;
+
+      this.emit(finishEventName);
+    });
+
+    this._socketStream.end();
+  }
+
   get connected() {
-    return !this._disconnecting;
+    return !this._ending && !this._ended;
   }
 
   get rssi() {
@@ -173,29 +250,5 @@ export default class SocketSession extends MessagePackDuplexStream {
     log.debug(`SocketSession.unskip()`);
 
     this._scanner.removeFromSkipList(this._peripheral);
-  }
-
-  disconnect() {
-    log.debug(`SocketSession.disconnect()`);
-
-    if (this._disconnecting) {
-      log.info(`Already disconnecting`);
-      return;
-    }
-
-    this._disconnecting = true;
-
-    this._killRssiUpdates();
-
-    if (!this._finished) {
-      // We will disconnect the peripheral in |_onFinish()| after all the
-      // data that was written has been sent.
-      this.end();
-    } else {
-      // Disconnect immediately. This will trigger an 'end' event if we haven't
-      // gotten one already.
-      this._disconnectedPeripheral = true;
-      this._peripheral.disconnect();
-    }
   }
 }

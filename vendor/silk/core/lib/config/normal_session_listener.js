@@ -12,6 +12,7 @@ import SessionListenerBase from './session_listener_base';
 const log = createLog('normal-session-listener');
 
 export default class NormalSessionListener extends SessionListenerBase {
+
   constructor(deviceConfig) {
     log.debug(`NormalSessionListener()`);
 

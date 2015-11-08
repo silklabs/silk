@@ -160,8 +160,11 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     super._onDisconnect(socketSession);
 
+    assert(!this._dismissTimeout);
+
     // Reset.
     this._state = ConfigSessionListener.STATE_IDLE;
+    this._wifiErrorCount = 0;
   }
 
   _onData(data) {

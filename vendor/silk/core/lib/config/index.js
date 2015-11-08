@@ -54,6 +54,7 @@ class DeviceConfig extends EventEmitter {
   _unconfigurePromise = null;
   _socketSessionListener = null;
   _config = null;
+  _serverConnected = false;
 
   /**
    * Persist the configuration after the device has completed registration.
@@ -217,9 +218,14 @@ class DeviceConfig extends EventEmitter {
 
     assert(this._config);
     assert(this._config.beaconUUID);
+    assert(!this._serverConnected);
 
-    this._socketSessionListener.disconnect();
-    this._socketSessionListener = null;
+    this._serverConnected = true;
+
+    if (this._socketSessionListener) {
+      this._socketSessionListener.disconnect();
+      this._socketSessionListener = null;
+    }
 
     await this._btle.changeMode(this._btle.MODE_OFF);
   };
@@ -230,7 +236,15 @@ class DeviceConfig extends EventEmitter {
     assert(this._config);
     assert(this._config.beaconUUID);
 
-    await this._btle.changeMode(this._btle.MODE_OFF),
+    this._serverConnected = false;
+
+    await this._btle.changeMode(this._btle.MODE_OFF);
+
+    // It's possible that the server connected while we were turning off
+    // bluetooth.
+    if (this._serverConnected) {
+      return;
+    }
 
     this._btle.beaconInfo = this._getBeaconInfo();
 

@@ -67,6 +67,7 @@ export default class extends SocketIOComponent {
     blob: null,
     objects: [],
     previewWidth: null,
+    registered: false,
     serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
     timedOut: false,
   };
@@ -115,6 +116,14 @@ export default class extends SocketIOComponent {
     if (!this.props.bleDeviceSession && nextProps.bleDeviceSession) {
       this.subscribeToBLEStatus(nextProps.bleDeviceSession);
     }
+    if (this.props.bleDeviceSession && !nextProps.bleDeviceSession) {
+      // There's no need to explicitly unsubscribe from `bleDeviceSession`
+      // here. If we lose the session, it means it disconnected, which
+      // causes us to remove all listeners anyway. But not that we no longer
+      // are talking to the device, we don't know what its status is, so
+      // let's reset that.
+      this.setState({serverConnectionStatus: null});
+    }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
     }
@@ -145,6 +154,9 @@ export default class extends SocketIOComponent {
 
   startTimeoutTimer() {
     if (this.props.configurable) {
+      return;
+    }
+    if (this.props.configuring && !this.state.registered) {
       return;
     }
     this.clearTimeoutTimer();
@@ -184,11 +196,13 @@ export default class extends SocketIOComponent {
     let { bleDeviceSession } = this.props;
     if (bleDeviceSession) {
       bleDeviceSession.removeListener('status', this.onBLEDeviceStatusChange);
+      bleDeviceSession.removeListener('registered', this.onBLEDeviceRegistered);
     }
     this.clearTimeoutTimer();
   }
 
   subscribeToBLEStatus(bleDeviceSession) {
+    bleDeviceSession.on('registered', this.onBLEDeviceRegistered);
     bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
   }
 
@@ -197,6 +211,11 @@ export default class extends SocketIOComponent {
     if (!this.state.serverConnectionStatus !== status.message) {
       this.setState({serverConnectionStatus: status.message});
     }
+  };
+
+  onBLEDeviceRegistered = () => {
+    this.startTimeoutTimer();
+    this.setState({registered: true});
   };
 
   _renderLabel() {

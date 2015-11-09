@@ -306,6 +306,7 @@ export default class extends AsyncComponent {
         logo: msg.logo,
         previewSize: msg.previewSize,
         haveVideoStream: true,
+        bleDeviceSession: configuringDevice.bleDeviceSession,
       });
       this.setStateAsync({
         // There could be a lingering record of the device already.

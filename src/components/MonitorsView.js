@@ -268,7 +268,7 @@ class MonitorsView extends AsyncComponent {
       let { bleDeviceSession } = configuringDevice;
       configuringDeviceThumbnail = (
         <MonitorPreview
-          key="configuringDevice"
+          key={configuringDevice.deviceId}
           deviceId={configuringDevice.deviceId}
           label={configuringDevice.name || `${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
           previewSize={DEFAULT_PREVIEW_SIZE}

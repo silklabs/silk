@@ -60,15 +60,27 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
+  private class ServiceInfo {
+    let requiresForeground: Bool
+    var service: Service? = nil
+    var enabled: Bool = false
+    var installed: Bool = false
+
+    init(requiresForeground: Bool) {
+      self.requiresForeground = requiresForeground
+    }
+  }
+
   private var queue: dispatch_queue_t
   private var peripheralManager: CBPeripheralManager
   private var centralManager: CBCentralManager
   private var socketManager: BLESocketManager
 
-  private var inRegion: Bool = false
+  private var inForeground: Bool = false
   private var enabled: Bool = false
   private var advertising: Bool = false
-  private var services: [CBUUID: Service?] = [:]
+  private var advertisingAllowed: Bool = false
+  private var services: [CBUUID: ServiceInfo] = [:]
 
   private var connectionsById = [Int: Connection]()
   private var connectionsByCentral = [CBCentral: Connection]()
@@ -86,9 +98,20 @@ internal class BLESocketPeripheral: NSObject,
       CBPeripheralManager(delegate: nil, queue: self.queue)
     self.centralManager = CBCentralManager(delegate: nil, queue: self.queue)
 
+    var addedConfigService = false
+
     for serviceUuid in serviceUuids {
-      self.services[CBUUID(NSUUID: serviceUuid)] = nil as Service?
+      let isConfigService = serviceUuid == RegionMonitor.configBeaconUuid
+      if isConfigService {
+        assert(!addedConfigService)
+        addedConfigService = true
+      }
+
+      let uuid = CBUUID(NSUUID: serviceUuid)
+      self.services[uuid] = ServiceInfo(requiresForeground: isConfigService)
     }
+
+    assert(addedConfigService)
 
     super.init()
 
@@ -106,28 +129,148 @@ internal class BLESocketPeripheral: NSObject,
     self.socketManager = socketManager
   }
 
+  func setForeground() {
+    dispatch_async(self.queue) {
+      log.debug("setForeground")
+      self.inForeground = true
+
+      if !self.enabled || !self.advertisingAllowed {
+        return
+      }
+
+      var servicesToAdd: [ServiceInfo] = []
+
+      for (uuid, serviceInfo) in self.services {
+        if serviceInfo.requiresForeground && serviceInfo.enabled {
+          assert(!serviceInfo.installed)
+          if serviceInfo.service == nil {
+            serviceInfo.service = Service(type: uuid)
+          }
+          servicesToAdd.append(serviceInfo)
+        }
+      }
+
+      if !servicesToAdd.isEmpty {
+        self.maybeStopAdvertising()
+
+        for serviceInfo in servicesToAdd {
+          self.peripheralManager.addService(serviceInfo.service!)
+          serviceInfo.installed = true
+
+          log.debug("Added service \(serviceInfo.service!.UUID)")
+        }
+
+        self.maybeStartAdvertising()
+      }
+    }
+  }
+
+  func setBackground() {
+    dispatch_async(self.queue) {
+      log.debug("setBackground")
+      self.inForeground = false
+
+      if !self.enabled || !self.advertisingAllowed {
+        return
+      }
+
+      var servicesToRemove: [ServiceInfo] = []
+
+      for serviceInfo in self.services.values {
+        if serviceInfo.requiresForeground && serviceInfo.installed {
+          assert(serviceInfo.service != nil)
+          servicesToRemove.append(serviceInfo)
+        }
+      }
+
+      if !servicesToRemove.isEmpty {
+        self.maybeStopAdvertising()
+
+        for serviceInfo in servicesToRemove {
+          self.removeAndCleanupService(serviceInfo.service!)
+          serviceInfo.installed = false
+
+          log.debug("Removed service \(serviceInfo.service!.UUID)")
+        }
+
+        self.maybeStartAdvertising()
+      }
+    }
+  }
+
   func addServiceUuid(uuid: NSUUID) {
     dispatch_async(self.queue) {
-      self.addServiceUuidInternal(CBUUID(NSUUID: uuid))
+      let serviceUuid = CBUUID(NSUUID: uuid)
+      log.debug("addServiceUuid(\(serviceUuid))")
+
+      assert(self.services[serviceUuid] == nil)
+
+      self.services[serviceUuid] = ServiceInfo(requiresForeground: false)
     }
   }
 
   func removeServiceUuid(uuid: NSUUID) {
     dispatch_async(self.queue) {
-      self.removeServiceUuidInternal(CBUUID(NSUUID: uuid))
+      let serviceUuid = CBUUID(NSUUID: uuid)
+      log.debug("removeServiceUuid(\(serviceUuid))")
+
+      assert(self.services[serviceUuid] != nil)
+
+      let serviceInfo = self.services[serviceUuid]!
+
+      self.stopAdvertisingServiceUuidInternal(serviceUuid)
+
+      serviceInfo.enabled = false
+      serviceInfo.service = nil
+
+      self.services[serviceUuid] = nil
+    }
+  }
+
+  func startAdvertisingServiceUuid(uuid: NSUUID) {
+    dispatch_async(self.queue) {
+      let serviceUuid = CBUUID(NSUUID: uuid)
+      log.debug("startAdvertisingServiceUuid(\(serviceUuid))")
+
+      assert(self.services[serviceUuid] != nil)
+
+      let serviceInfo = self.services[serviceUuid]!
+
+      if serviceInfo.service == nil {
+        serviceInfo.service = Service(type: serviceUuid)
+      }
+
+      assert(!serviceInfo.enabled)
+      assert(!serviceInfo.installed)
+
+      serviceInfo.enabled = true
+
+      if !self.enabled || !self.advertisingAllowed {
+        return
+      }
+
+      if serviceInfo.requiresForeground && !self.inForeground {
+        return
+      }
+
+      self.maybeStopAdvertising()
+
+      self.peripheralManager.addService(serviceInfo.service!)
+      serviceInfo.installed = true
+
+      self.maybeStartAdvertising()
+    }
+  }
+
+  func stopAdvertisingServiceUuid(uuid: NSUUID) {
+    dispatch_async(self.queue) {
+      self.stopAdvertisingServiceUuidInternal(CBUUID(NSUUID: uuid))
     }
   }
 
   func setEnabled(enabled: Bool) {
     self.enabled = enabled
     self.updateState()
-  }
-
-  func setIsInRegion(inRegion: Bool) {
-    dispatch_async(self.queue) {
-      self.inRegion = inRegion
-      self.updateState()
-    }
   }
 
   func send(id: Int, data: NSData!) {
@@ -152,63 +295,49 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  private func addServiceUuidInternal(uuid: CBUUID) {
-    log.debug("addServiceUuidInternal(\(uuid))")
+  private func stopAdvertisingServiceUuidInternal(serviceUuid: CBUUID) {
+    log.debug("stopAdvertisingServiceUuid(\(serviceUuid))")
 
-    let optionalServiceEntry: Service?? = self.services[uuid]
-    assert(optionalServiceEntry == nil)
+    assert(self.services[serviceUuid] != nil)
 
-    if self.advertising {
-      self.stopAdvertising()
+    let serviceInfo = self.services[serviceUuid]!
+    if serviceInfo.enabled {
+      assert(serviceInfo.service != nil)
 
-      let service = Service(type: uuid)
-      self.peripheralManager.addService(service)
-      self.services[uuid] = service
+      serviceInfo.enabled = false
 
-      self.startAdvertising()
-    } else {
-      self.services[uuid] = nil as Service?
-    }
-  }
+      if serviceInfo.installed {
+        self.maybeStopAdvertising()
 
-  private func removeServiceUuidInternal(uuid: CBUUID) {
-    log.debug("removeServiceUuidInternal(\(uuid))")
+        self.removeAndCleanupService(serviceInfo.service!)
+        serviceInfo.installed = false
 
-    let optionalServiceEntry: Service?? = self.services[uuid]
-    assert(optionalServiceEntry != nil)
-
-    let optionalService = optionalServiceEntry!
-
-    let wasAdvertising = self.advertising
-
-    if wasAdvertising {
-      self.stopAdvertising()
-
-      assert(optionalService != nil)
-      self.peripheralManager.removeService(optionalService!)
-    } else {
-      assert(optionalService == nil)
-    }
-
-    self.services[uuid] = nil
-
-    if wasAdvertising {
-      self.startAdvertising()
+        self.maybeStartAdvertising()
+      }
     }
   }
 
   private func addAllServices() {
     log.debug("addAllServices()")
 
+    assert(self.enabled)
+    assert(self.advertisingAllowed)
     assert(!self.advertising, "Already advertising")
     assert(!self.services.isEmpty)
 
-    for (uuid, optionalService) in self.services {
-      assert(optionalService == nil)
+    for (uuid, serviceInfo) in self.services {
+      assert(!serviceInfo.installed)
 
-      let service = Service(type: uuid)
-      self.peripheralManager.addService(service)
-      self.services[uuid] = service
+      if serviceInfo.enabled &&
+         (!serviceInfo.requiresForeground || self.inForeground) {
+        if serviceInfo.service == nil {
+          serviceInfo.service = Service(type: uuid)
+        }
+        self.peripheralManager.addService(serviceInfo.service!)
+        serviceInfo.installed = true
+
+        log.debug("Added service \(serviceInfo.service!.UUID)")
+      }
     }
   }
 
@@ -218,67 +347,98 @@ internal class BLESocketPeripheral: NSObject,
     assert(!self.advertising, "Still advertising")
     assert(!self.services.isEmpty)
 
-    for uuid in self.services.keys {
-      let optionalServiceEntry: Service?? = self.services[uuid]
-      assert(optionalServiceEntry != nil)
+    for serviceInfo in self.services.values {
+      if serviceInfo.installed {
+        assert(serviceInfo.service != nil)
+        self.removeAndCleanupService(serviceInfo.service!)
+        serviceInfo.installed = false
 
-      let optionalService = optionalServiceEntry!
-      assert(optionalService != nil)
-
-      self.peripheralManager.removeService(optionalService!)
-      self.services[uuid] = nil as Service?
+        log.debug("Removed service \(serviceInfo.service!.UUID)")
+      }
     }
   }
 
-  private func startAdvertising() {
-    log.debug("startAdvertising()")
+  private func maybeStartAdvertising() {
+    log.debug("maybeStartAdvertising()")
 
     assert(!self.advertising, "Already advertising")
     assert(!self.services.isEmpty)
 
+    if !self.enabled || !self.advertisingAllowed {
+      return
+    }
+
+    var services: [CBUUID] = []
+    for (uuid, serviceInfo) in self.services {
+      if serviceInfo.installed {
+        services.append(uuid)
+      }
+    }
+
+    if services.isEmpty {
+      return
+    }
+
     let dataToBeAdvertised: [String: AnyObject!] = [
       CBAdvertisementDataLocalNameKey: BLESocketPeripheral.deviceName,
-      CBAdvertisementDataServiceUUIDsKey: Array(self.services.keys)
+      CBAdvertisementDataServiceUUIDsKey: services
     ]
 
     self.peripheralManager.startAdvertising(dataToBeAdvertised)
     self.advertising = true
   }
 
-  private func stopAdvertising() {
-    log.debug("stopAdvertising()")
+  private func maybeStopAdvertising() {
+    log.debug("maybeStopAdvertising()")
 
-    assert(self.advertising, "Not advertising")
-
-    self.peripheralManager.stopAdvertising()
-    self.advertising = false
+    if self.advertising {
+      self.peripheralManager.stopAdvertising()
+      self.advertising = false
+    }
   }
 
   private func updateState() {
     log.debug("updateState() " +
               "peripheralState: \(self.peripheralManager.state.rawValue) " +
               "enabled: \(self.enabled) " +
-              "inRegion: \(self.inRegion) " +
+              "inForeground: \(self.inForeground) " +
+              "advertisingAllowed: \(self.advertisingAllowed) " +
               "advertising: \(self.advertising)")
 
-    if self.advertising {
+    if self.advertisingAllowed {
       if !self.enabled ||
-         !self.inRegion ||
          self.peripheralManager.state != .PoweredOn {
-        self.stopAdvertising()
+        self.maybeStopAdvertising()
         self.removeAllServices()
+        self.advertisingAllowed = false
 
         for (_, connection) in self.connectionsById {
           self.cleanupConnection(connection)
         }
       }
-    } else {
-      if self.enabled &&
-         self.inRegion &&
+    } else if self.enabled &&
          self.peripheralManager.state == .PoweredOn {
-        self.addAllServices()
-        self.startAdvertising()
+      self.advertisingAllowed = true
+      self.addAllServices()
+      self.maybeStartAdvertising()
+    }
+  }
+
+  private func removeAndCleanupService(service: Service) {
+    log.debug("removeAndCleanupService(\(service.UUID))")
+
+    self.peripheralManager.removeService(service)
+
+    var connectionsToCleanUp: [Connection] = []
+
+    for connection in self.connectionsById.values {
+      if connection.characteristic.service.UUID == service.UUID {
+        connectionsToCleanUp.append(connection)
       }
+    }
+
+    for connection in connectionsToCleanUp {
+      self.cleanupConnection(connection)
     }
   }
 
@@ -442,9 +602,9 @@ internal class BLESocketPeripheral: NSObject,
     assert(peripheral === self.peripheralManager)
 
     if error == nil {
-      log.debug("Added service \(service)")
+      log.debug("Added service \(service.UUID)")
     } else {
-      log.error("Failed to add service \(service): " +
+      log.error("Failed to add service \(service.UUID): " +
                 "\(error?.localizedDescription)")
     }
   }
@@ -497,26 +657,32 @@ internal class BLESocketPeripheral: NSObject,
         return
       }
 
-      if let connection = self.connectionsByCentral[request.central] {
-        let requestServiceUuid = request.characteristic.service.UUID
-        if connection.characteristic.service.UUID != requestServiceUuid {
-          // Each central is only allowed to write to the characteristic on a
-          // single service.
+      var connection = self.connectionsByCentral[request.central]
+      if connection == nil {
+        if !registerConnection(request.central,
+                               characteristic: request.characteristic) {
           peripheral.respondToRequest(request,
-                                      withResult:CBATTError.WriteNotPermitted)
+                                      withResult:CBATTError.RequestNotSupported)
           return
         }
+        connection = self.connectionsByCentral[request.central]
+      }
+      assert(connection != nil)
 
-        let data = pendingData[connection]
-        if data == nil {
-          pendingData[connection] = NSMutableData(data: request.value!)
-        } else {
-          data!.appendData(request.value!)
-        }
-      } else {
+      let requestServiceUuid = request.characteristic.service.UUID
+      if connection!.characteristic.service.UUID != requestServiceUuid {
+        // Each central is only allowed to write to the characteristic on a
+        // single service.
         peripheral.respondToRequest(request,
-                                    withResult:CBATTError.RequestNotSupported)
+                                    withResult:CBATTError.WriteNotPermitted)
         return
+      }
+
+      let data = pendingData[connection!]
+      if data == nil {
+        pendingData[connection!] = NSMutableData(data: request.value!)
+      } else {
+        data!.appendData(request.value!)
       }
     }
 
@@ -536,36 +702,9 @@ internal class BLESocketPeripheral: NSObject,
 
     if characteristic.UUID == Service.characteristicUuid {
       if let _ = self.connectionsByCentral[central] {
-        log.error("Central attempted to subscribe more than once!")
+        log.debug("Central attempted to subscribe more than once!")
       } else {
-        if let optionalService = self.services[characteristic.service.UUID] {
-          assert(optionalService != nil)
-        
-          let mutableCharacteristic = optionalService!.mutableCharacteristic
-          assert(mutableCharacteristic === characteristic)
-
-          let deviceId = [central.identifier]
-          let peripheralsWithThisDeviceId =
-            self.centralManager.retrievePeripheralsWithIdentifiers(deviceId)
-          assert(peripheralsWithThisDeviceId.count == 1,
-                 "Central not available as peripheral")
-
-          let centralAsPeripheral = peripheralsWithThisDeviceId[0]
-          self.centralManager.connectPeripheral(centralAsPeripheral,
-                                                options: nil)
-
-          let connection =
-            Connection(id: self.nextConnectionId++,
-                       central: central,
-                       peripheral: centralAsPeripheral,
-                       characteristic: mutableCharacteristic)
-
-          self.connectionsById[connection.id] = connection
-          self.connectionsByCentral[central] = connection
-          self.connectionsByPeripheral[centralAsPeripheral] = connection
-
-          self.socketManager.connect(connection.id)
-        } else {
+        if !self.registerConnection(central, characteristic: characteristic) {
           log.error("Subscribed to characteristic '\(characteristic.UUID)' " +
                     "that belongs to unknown service " +
                     "'\(characteristic.service.UUID)'")
@@ -574,6 +713,46 @@ internal class BLESocketPeripheral: NSObject,
     } else {
       log.debug("Subscribed to characteristic '\(characteristic.UUID)'")
     }
+  }
+
+  private func registerConnection(central: CBCentral,
+                                  characteristic: CBCharacteristic) -> Bool {
+    log.debug("registerConnection()")
+
+    assert(self.connectionsByCentral[central] == nil)
+
+    let serviceUuid = characteristic.service.UUID;
+    if (self.services[serviceUuid] == nil) {
+      return false
+    }
+
+    let serviceInfo = self.services[serviceUuid]!
+    assert(serviceInfo.service != nil)
+    
+    let mutableCharacteristic = serviceInfo.service!.mutableCharacteristic
+    assert(mutableCharacteristic === characteristic)
+
+    let deviceId = [central.identifier]
+    let peripheralsWithThisDeviceId =
+      self.centralManager.retrievePeripheralsWithIdentifiers(deviceId)
+    assert(peripheralsWithThisDeviceId.count == 1,
+           "Central not available as peripheral")
+
+    let centralAsPeripheral = peripheralsWithThisDeviceId[0]
+    self.centralManager.connectPeripheral(centralAsPeripheral, options: nil)
+
+    let connection =
+      Connection(id: self.nextConnectionId++,
+                 central: central,
+                 peripheral: centralAsPeripheral,
+                 characteristic: mutableCharacteristic)
+
+    self.connectionsById[connection.id] = connection
+    self.connectionsByCentral[central] = connection
+    self.connectionsByPeripheral[centralAsPeripheral] = connection
+
+    self.socketManager.connect(connection.id)
+    return true
   }
 
   func peripheralManager(peripheral: CBPeripheralManager,

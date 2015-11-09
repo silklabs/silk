@@ -73,6 +73,30 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     return true
   }
 
+  func applicationDidBecomeActive(application: UIApplication) {
+    self.bleSocketPeripheral.setForeground()
+  }
+
+  func applicationDidEnterBackground(application: UIApplication) {
+    self.bleSocketPeripheral.setBackground()
+  }
+
+  // Display region enter/exit notifications to the user
+  func notifyUser(notificationText: String) {
+    // Ask user permission for user notifications
+    let registerUserNotificationSettings = UIApplication.instancesRespondToSelector("registerUserNotificationSettings:")
+    if registerUserNotificationSettings {
+      let types: UIUserNotificationType = [UIUserNotificationType.Alert, UIUserNotificationType.Sound, UIUserNotificationType.Badge]
+      UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(forTypes: types, categories: nil))
+    }
+
+    let notification = UILocalNotification()
+    notification.alertBody = notificationText
+    notification.fireDate = NSDate()
+    notification.soundName = UILocalNotificationDefaultSoundName
+    UIApplication.sharedApplication().scheduleLocalNotification(notification)
+  }
+
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor)
     self.bleSocketPeripheral.addServiceUuid(uuid)
@@ -83,8 +107,16 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     self.bleSocketPeripheral.removeServiceUuid(uuid)
   }
 
-  func regionStateChanged(regionMonitor: RegionMonitor, entered: Bool) {
+  func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor)
-    self.bleSocketPeripheral.setIsInRegion(entered)
+    if uuid == RegionMonitor.configBeaconUuid {
+      notifyUser("An unconfigured SilkCam is nearby.")
+    }
+    self.bleSocketPeripheral.startAdvertisingServiceUuid(uuid)
+  }
+
+  func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor)
+    self.bleSocketPeripheral.stopAdvertisingServiceUuid(uuid)
   }
 }

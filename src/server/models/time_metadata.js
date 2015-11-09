@@ -78,9 +78,6 @@ export default class TimeMetadata extends Base {
       id: Joi.string().optional(), // Optional for now so we don't break existing clients
       deviceId: Joi.string().required(),
 
-      // Legacy we will accept this value but it is no longer used.
-      previousId: Joi.string().optional(),
-
       metaType: TYPES,
       // XXX: Long term these should be more complex types MS is not enough to
       // convey timezone details, etc...

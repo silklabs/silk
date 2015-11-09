@@ -1,11 +1,43 @@
+/* @flow */
+
 import * as Joi from 'joi';
 
 let log = require('log')('models:base');
+
+// XXX: Sadly we need to re-declare Error to add captureStackTrace.
+declare class Error {
+  static (message?:string):Error;
+  name: string;
+  message: string;
+  stack: string;
+  static captureStackTrace(ctx: any, fn: any): void;
+}
+
+class SchemaError extends Error {
+  type: string;
+  schema: any;
+
+  constructor(msg) {
+    super();
+    Error.captureStackTrace(this, this.constructor);
+    this.name = this.constructor.name;
+    this.message = msg;
+    this.stack = `${this.name}: ${this.message}\n ${this.stack}`;
+  }
+}
 
 /**
  * Provides basic structure for classes which deal with our datastore.
  */
 export default class Base {
+
+  static INDEX: any;
+  static COLLECTION: ?string = null;
+  static ERROR: any;
+  static SCHEMA: any;
+
+  db: any;
+  collection: any;
 
   constructor(db) {
     let name = this.constructor.COLLECTION;
@@ -22,7 +54,7 @@ export default class Base {
    *
    * Index fields are defined as a class static `INDEX`.
    */
-  async ensureIndexes() {
+  async ensureIndexes(): Promise<void> {
     let indexes = this.constructor.INDEX;
     let name = this.constructor.name;
     let collectionName = this.constructor.COLLECTION;
@@ -30,10 +62,10 @@ export default class Base {
 
     if (!indexes) {
       log.info(`Skipping indexing ${desc} no indexes`);
-      return null;
+      return;
     }
 
-    return await Promise.all(indexes.map(async (idx) => {
+    await Promise.all(indexes.map(async (idx) => {
       log.info(`Adding index to ${desc}`, idx);
       let { props, options } = idx;
       if (!props) {
@@ -49,7 +81,7 @@ export default class Base {
    * @param {String} name error name.
    * @return {Object} error object with type set to ERROR value.
    */
-  error(name) {
+  error(name: string): any {
     let error = this.constructor.ERROR[name];
     if (!error) {
       throw new Error(`Attempted to use unknown error type: ${name}`);
@@ -70,7 +102,7 @@ export default class Base {
    * @param {String} schema Name of schema (constructor.SCHEMA[name]).
    * @param {Bool} strict when true will disallow unknown properties.
    */
-  validate(object, schema, strict = true) {
+  validate(object: any, schema: string, strict: bool = true) {
     let schemaObject = this.constructor.SCHEMA[schema];
     if (!schemaObject) {
       throw new Error(`Attempted to use unknown schema: ${schema}`);
@@ -89,7 +121,7 @@ export default class Base {
       );
 
       // Annotate will produce a nice human readable error.
-      let error = new Error(
+      let error = new SchemaError(
         `
          Object is not a valid schema for ${schema}
 

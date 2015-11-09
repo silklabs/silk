@@ -1,3 +1,5 @@
+/* @flow */
+
 /**
  * The account routes deal with operations on an account that has been created
  * previously (authenticated).
@@ -6,31 +8,22 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import jwtMiddleware from '../jwt';
 import sharedRoutes from './shared';
+import authorizeAccount from '../authorize_account';
 
 import Devices from '../models/devices';
+
+import type { RouteContext } from '../server';
 
 let log = require('log')('routes:account');
 const PREFIX = '/v1/account/';
 
-export default function (ctx) {
+export default function (ctx: RouteContext) {
   let routes = new Router();
 
-  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (publicKey, req) => {
-    let account = await ctx.accounts.findByPublicKey({
-      publicKey
-    });
-
-    if (!account || account.error) {
-      log.info(`Unauthorized public key at ${req.url}`, publicKey);
-      return null;
-    }
-
-    // TODO: Validate the scopes and expiration of the used public key!
-    req.account = account;
-    req.publicKey = publicKey;
-    return publicKey;
+  routes.use(PREFIX, authorizeAccount({
+    nonce: ctx.nonce,
+    accounts: ctx.accounts
   }));
 
   let api = expressApi(routes, {

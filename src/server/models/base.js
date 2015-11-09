@@ -1,5 +1,4 @@
 /* @flow */
-
 import * as Joi from 'joi';
 
 let log = require('log')('models:base');
@@ -32,14 +31,14 @@ class SchemaError extends Error {
 export default class Base {
 
   static INDEX: any;
-  static COLLECTION: ?string = null;
+  static COLLECTION: string;
   static ERROR: any;
   static SCHEMA: any;
 
   db: any;
   collection: any;
 
-  constructor(db) {
+  constructor(db: any) {
     let name = this.constructor.COLLECTION;
     if (!name) {
       throw new Error('Must set "COLLECTION" as static variable.');

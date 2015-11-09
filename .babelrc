@@ -1,6 +1,7 @@
 {
   "stage": "0",
   "optional": [
-    "asyncToGenerator"
+    "es7.classProperties",
+    "runtime"
   ]
 }

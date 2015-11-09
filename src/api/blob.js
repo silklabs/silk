@@ -1,3 +1,6 @@
+/**
+ * NOTE: This module is now deprecated!
+ */
 import fetch from './fetch';
 import fetchJson from './fetch_json';
 import { Readable } from 'stream';

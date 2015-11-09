@@ -28,6 +28,7 @@ export type RouteContext = {
   crashMeta: CrashMetadata;
   config: any; // TODO
   blobs: any; // TODO
+  blobHandler: any; // TODO
 };
 
 export default async function main (config: any): any {
@@ -97,6 +98,11 @@ export default async function main (config: any): any {
     blobs.aliyun = await createAliyunBlob(config);
   }
 
+  const blobHandler = blobs[config.server.blobType];
+  if (!blobHandler) {
+    throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
+  }
+
   const context: RouteContext  = {
     app,
     nonce,
@@ -106,7 +112,8 @@ export default async function main (config: any): any {
     crashMeta,
     timeMeta,
     config,
-    blobs
+    blobs,
+    blobHandler,
   };
 
   // Install the routes.

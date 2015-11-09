@@ -5,6 +5,7 @@ import { resolve } from 'url';
 import vipRoutes from './routes/vip';
 import accountRoutes from './routes/account';
 import deviceRoute from './routes/device';
+import blobPublisherRoutes from './routes/blob_publisher';
 
 let log = require('log')('routes');
 
@@ -137,14 +138,17 @@ module.exports = function(opts) {
     }
   }));
 
+  // TODO: Remove me once clients no longer use this version of the API.
   app.post('/blob/ack', asyncRoute(async (req, res) => {
     await blobHandler.postAck(req, res);
   }));
 
+  // TODO: Remove me once clients no longer use this version of the API.
   app.post('/blob/:type', asyncRoute(async (req, res) => {
     await blobHandler.postBlob(req, res);
   }));
 
+  /* NOTE: Will be kept to support file blob */
   app.put('/blob/:type/:id', asyncRoute(async (req, res) => {
     if (config.server.blobType !== 'file') {
       res.sendStatus(501);
@@ -153,6 +157,10 @@ module.exports = function(opts) {
     await blobHandler.putBlob(req, res);
   }));
 
+  /**
+   * NOTE: We leave this here for demo purposes it should never be used in
+   * production. This will not get migrated to the newer (and secured) interfaces.
+   */
   app.get('/blob/:type/:id', asyncRoute(async (req, res) => {
     if (config.server.blobType !== 'file') {
       res.sendStatus(501);
@@ -164,4 +172,5 @@ module.exports = function(opts) {
   app.use(vipRoutes(opts).app);
   app.use(accountRoutes(opts).app);
   app.use(deviceRoute(opts).app);
+  app.use(blobPublisherRoutes(opts).app);
 };

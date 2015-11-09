@@ -77,7 +77,7 @@ function validatePostBlob(config, req, res) {
   try {
     Joi.assert(req.body, SCHEMA.postBlob);
   } catch(e) {
-    log.warn(`${e}: ` + JSON.stringify(req.body));
+    log.warn(`(validate post blob) ${e}: ` + JSON.stringify(req.body));
     res.sendStatus(400);
     return false;
   }
@@ -95,7 +95,7 @@ function validatePostAck(req, res) {
   try {
     Joi.assert(req.body, SCHEMA.postAck);
   } catch(e) {
-    log.warn(`${e}: ` + JSON.stringify(req.body));
+    log.warn(`(post ack) ${e}: ` + JSON.stringify(req.body));
     res.sendStatus(400);
     return false;
   }

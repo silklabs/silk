@@ -10,7 +10,7 @@ the owner.
 3. Monitor Travis to ensure that all the *master* and *next* builds go green.  This may take a couple hours. 
 4. Notify #eng that FML has been completed, reminding folks that *master* is now for milestone + 1 development and that *next* is open for stabilization of the current milestone.
 
-Product Test will now engage to validate that *next* and *master* are performing to exception.
+Product Test will now engage to validate that *next* and *master* are performing to expectation.
 
 ## Code Complete (next -> release)
 

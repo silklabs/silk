@@ -70,6 +70,7 @@
   "scripts": {
     "build": "./build.sh",
     "lint": "eslint test src",
+    "flow": "flow check",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
     "postinstall": "./bin/post-install",
     "preinstall": "npm install babel && ./bin/pre-install",
@@ -77,7 +78,7 @@
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "start-server": "babel-node --harmony src/server/main.js production",
     "start-socketio": "babel-node --harmony src/socketio/main.js production",
-    "test": "npm run-script lint && npm run-script mocha",
+    "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"
   },

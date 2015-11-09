@@ -545,12 +545,23 @@ export default class extends AsyncComponent {
   async _abortConfig(bleDeviceSession, error) {
     await this.props.navigator.popToTopAsync();
     await uiInteractions();
+
+    // Attempt to reset the BLE socket connection to the device so we
+    // can make another attempt at configuring the device. This should
+    // be possible if the user canceled or the device registration
+    // failed due to lack of network connectivity to the server.
+    try {
+      bleDeviceSession.restart();
+    } catch (ex) { // eslint-disable-line no-empty
+      // Ignore. The BLE socket connection is toast and can't be salvaged.
+      // We'll just have to wait for it to be re-established.
+    }
+
     if (this.pendingState.configuringDevice) {
       await this.setStateAsync({configuringDevice: null});
     }
     if (error && error.canceled) {
       log.debug('User cancelled. Aborting.');
-      bleDeviceSession.restart();
     } else {
       log.warn('Could not configure device due to error:', error);
       this._showConfigError();

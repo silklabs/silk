@@ -296,6 +296,9 @@ export default class extends SocketIOComponent {
   }
 
   _onPress = () => {
+    if (this.props.configuring) {
+      return;
+    }
     if (this.props.configurable) {
       this.context.silkDevices.configureDevice(this.props.bleDeviceSession);
       return;

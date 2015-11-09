@@ -1,0 +1,11 @@
+[ignore]
+.*/build/.*
+.*/test/rntest/.*
+
+[include]
+
+[libs]
+
+[options]
+esproposal.class_instance_fields=ignore
+esproposal.class_static_fields=ignore

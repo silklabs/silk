@@ -243,7 +243,8 @@ class MonitorsView extends AsyncComponent {
   _renderDeviceThumbnails() {
     let { devices, unconfiguredDevices, configuringDevice } = this.props;
 
-    let unconfiguredDeviceThumbnails = unconfiguredDevices.map((bleDeviceSession, index) => {
+    let unconfiguredDeviceThumbnails = unconfiguredDevices.toArray().reverse()
+    .map((bleDeviceSession, index) => {
       if (configuringDevice && configuringDevice.bleDeviceSession === bleDeviceSession) {
         return null;
       }
@@ -260,7 +261,7 @@ class MonitorsView extends AsyncComponent {
           bleDeviceSession={bleDeviceSession}
         />
       );
-    }).toArray().reverse();
+    });
 
     let configuringDeviceThumbnail = null;
     if (configuringDevice) {
@@ -312,7 +313,7 @@ class MonitorsView extends AsyncComponent {
     let rows = [];
     for (let i = 0; i < allThumbnails.length; i += 2) {
       rows.push(
-        <View style={styles.thumbnailRow}>
+        <View style={styles.thumbnailRow} key={`row-${i / 2}`}>
           {allThumbnails[i]}
           {allThumbnails[i + 1] || <View style={styles.thumbnailPlaceholder} />}
         </View>

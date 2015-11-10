@@ -394,9 +394,6 @@ static bool useDASHSegmenter() {
  * Thread function that initializes the camera
  */
 status_t CaptureCommand::initThread() {
-  mLooper = new ALooper;
-  mLooper->setName("capture-looper");
-  mLooper->start();
 
   // Setup the camera
   int cameraId = 0;
@@ -434,6 +431,10 @@ status_t CaptureCommand::initThread() {
       NULL, sUseMetaDataMode);
   CHECK_EQ(mCameraSource->initCheck(), ::OK);
 
+  mLooper = new ALooper;
+  mLooper->setName("capture-looper");
+  mLooper->start();
+
   if (!useDASHSegmenter()) {
       ALOGI("Using legacy mp4 slicer");
 
@@ -443,7 +444,7 @@ status_t CaptureCommand::initThread() {
       mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
   } else {
       ALOGI("Using DASH segmenter");
-      
+
       sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
 
       sp<MediaSource> audioSource(
@@ -478,6 +479,7 @@ status_t CaptureCommand::initThread() {
 int CaptureCommand::capture_cleanup() {
   if (mHardwareActive) {
     mCamera->stopPreview();
+    mLooper->stop();
 
     // Close camera
     if (NULL != mCamera.get()) {

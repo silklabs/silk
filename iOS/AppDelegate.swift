@@ -10,6 +10,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
   let regionMonitor: RegionMonitor
   let bleSocketPeripheral: BLESocketPeripheral
   var window: UIWindow?
+  var inForeground: Bool = false
 
   override init() {
     self.regionMonitor = RegionMonitor()
@@ -74,11 +75,17 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
   }
 
   func applicationDidBecomeActive(application: UIApplication) {
-    self.bleSocketPeripheral.setForeground()
+    if !self.inForeground {
+      self.inForeground = true
+      self.bleSocketPeripheral.setForeground()
+    }
   }
 
   func applicationDidEnterBackground(application: UIApplication) {
-    self.bleSocketPeripheral.setBackground()
+    if self.inForeground {
+      self.inForeground = false
+      self.bleSocketPeripheral.setBackground()
+    }
   }
 
   // Display region enter/exit notifications to the user

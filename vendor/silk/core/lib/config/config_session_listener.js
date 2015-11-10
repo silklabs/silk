@@ -74,6 +74,10 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _validateData(data) {
     log.debug(`ConfigSessionListener._validateData(%j)`, data);
 
+    if (!data || (typeof data !== `object`)) {
+      return null;
+    }
+
     if (!(`name` in data)) {
       log.warn(`Data has no 'name' proptery`);
       return null;

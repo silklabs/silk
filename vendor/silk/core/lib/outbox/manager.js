@@ -25,9 +25,13 @@ const DEFAULT_QUEUE_CONCURRENCY = getintprop(OUTBOX_CONCURRENCY_PROP, 2);
 // After this many retries, give up and delete the operation
 const DEFAULT_QUEUE_MAX_RETRIES = 128;
 
-// ext4 only permits 65000 subdirectories per directory ('dir_nlink' is not
-// enabled for /data it seems).
-const DEFAULT_QUEUE_MAX_ENTRIES = 64998; // 65000 - '.' and '..'
+// ext4 permits up to 64998 subdirectories (excluding . and ..) per directory
+// ('dir_nlink' is not enabled for /data it seems), however after 30,000 entries
+// the device is clearly not keeping up.
+//
+// Q: What's the first thing you do when you realize you're in a hole?
+// A: Stop digging.
+const DEFAULT_QUEUE_MAX_ENTRIES = 30000; // ~8.3 hours of video
 
 /**
  * Maximum amount of time to stagger the queue polling intervals.

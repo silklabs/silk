@@ -120,7 +120,7 @@ export default class extends SocketIOComponent {
     if (this.props.bleDeviceSession && !nextProps.bleDeviceSession) {
       // There's no need to explicitly unsubscribe from `bleDeviceSession`
       // here. If we lose the session, it means it disconnected, which
-      // causes us to remove all listeners anyway. But not that we no longer
+      // causes us to remove all listeners anyway. But now that we no longer
       // are talking to the device, we don't know what its status is, so
       // let's reset that.
       this.setState({serverConnectionStatus: null});

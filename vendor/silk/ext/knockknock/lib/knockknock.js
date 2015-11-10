@@ -41,6 +41,7 @@ class FindFace {
   constructor(env) {
     log = env.log;
     this._env = env;
+    this._faceMap = null;
     this._model = cv.FaceRecognizer.createLBPHFaceRecognizer(RADIUS,
       NEIGHBORS, GRID_X, GRID_Y, THRESHOLD);
 
@@ -94,9 +95,8 @@ class FindFace {
     try {
       this._model.loadSync(TRAIN_FACES_YML);
       this._faceMap = require(TRAIN_FACES_MAP);
-      this._start();
     } catch (e) {
-      log.error(`Error loading face training data: ${e}`);
+      log.warn(`Error loading face training data: ${e.stack}`);
     }
   }
 
@@ -134,27 +134,34 @@ class FindFace {
     this._watchprop = this._env.util.watchprop(ADD_COMMAND_PROP,
       () => this._addCommandProp());
 
-    let existsYml = await fs.exists(TRAIN_FACES_YML);
-    let existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
-    if (existsYml && existsFaceMap) {
-      this._loadTrainingData();
-    } else {
-      try {
-        await this._trainModel();
-        this._loadTrainingData();
-      } catch (e) {
-        log.error(`Error training for faces: ${e}`);
+    const existsYml = await fs.exists(TRAIN_FACES_YML);
+    if (existsYml) {
+      const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
+      if (!existsFaceMap) {
+        try {
+          await this._trainModel();
+        } catch (err) {
+          log.warn(`Error training for faces: ${err.stack}`);
+        }
       }
+      this._loadTrainingData();
     }
+    this._start();
   }
 
   /**
-   * Gets a prediction from FaceRecognizer
+   * Promises a prediction from FaceRecognizer
    */
   _predict(faceim) {
-    return new Promise(resolve => {
+    if (!this._faceMap) {
+      return Promise.reject();
+    }
+    return new Promise((resolve, reject) => {
       this._model.predict(faceim, (result) => {
-        resolve(result);
+        if (result.id !== -1) {
+          return resolve(result);
+        }
+        return reject();
       });
     });
   }
@@ -210,8 +217,8 @@ class FindFace {
           if (!faceim) {
             return;
           }
-          let result = await this._predict(faceim);
-          if (result.id !== -1) {
+          try {
+            const result = await this._predict(faceim);
             log.info(`face detected id:${result.id} ` +
                 `${this._matchIdWithName(result.id)} ` +
                 `confidence: ${result.confidence} source:${source}`);
@@ -225,9 +232,9 @@ class FindFace {
             if (face.id) {
               this._idMap[face.id] = name;
             }
-          } else {
+          } catch (err) {
             // Unknown face
-            log.debug(`Unknown face detected`);
+            log.debug(`Unknown face detected: why=${err}`);
             this._env.timeline.addObject('elvis', when, face);
           }
         });

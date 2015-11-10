@@ -18,39 +18,76 @@ const HEARTBEAT_PROP_NAME = `_<3_<3_<3_`;
 const HEARTBEAT_INTERVAL_MS = 1000;
 const HEARTBEAT_WAIT_MS = 5000;
 
+// maps wifi states to a connection status string that is sent to the app
+const wifi_state_map = new Map([
+  [ 'scanning', 'wifi_scanning' ],
+  [ 'associating', 'wifi_associating' ],
+  [ 'associated', 'wifi_associated' ],
+  [ 'four_way_handshake', 'wifi_authenticating' ],
+  [ 'group_handshake', 'wifi_authenticating' ],
+  [ 'completed', 'wifi_connected' ],
+  // The following values are not part of WIFI_STATES (wifi.js).
+  // This next value is emitted by WpaMonitor manually as it initializes
+  // the DHCP process.
+  [ 'dhcping', 'wifi_dhcping' ],
+  // These two values correspond to the 'online' and 'offline' events of
+  // WpaMonitor and represent the overall state of the internet uplink.
+  [ 'online', 'wifi_online' ],
+  [ 'offline', 'wifi_offline' ],
+]);
+
+// maps wifi errors to a connection status string that is sent to the app
+const wifi_error_map = new Map([
+  [ 'invalid_0',                      'wifi_error (0)' ],
+  [ 'unspecified',                    'wifi_error (1)' ],
+  [ 'prev_auth_not_valid',            'wifi_wrong_password (2)' ],
+  [ 'deauth_leaving',                 'wifi_deauth_leaving (3)' ],
+  [ 'disassoc_due_to_inactivity',     'wifi_disassoc_due_to_inactivity (4)' ],
+  [ 'disassoc_ap_busy',               'wifi_disassoc_ap_busy (5)' ],
+  [ 'class2_frame_from_nonauth_sta',  'wifi_class2_frame_from_nonauth_sta (6)' ],
+  [ 'class3_frame_from_nonassoc_sta', 'wifi_class3_frame_from_nonassoc_sta (7)' ],
+  [ 'disassoc_sta_has_left',          'wifi_disassoc_sta_has_left (8)' ],
+  [ 'sta_req_assoc_without_auth',     'wifi_sta_req_assoc_without_auth (9)' ],
+  [ 'pwr_capability_not_valid',       'wifi_pwr_capability_not_valid (10)' ],
+  [ 'supported_channel_not_valid',    'wifi_supported_channel_not_valid (11)' ],
+  [ 'invalid_12',                     'wifi_error (12)' ],
+  [ 'invalid_ie',                     'wifi_error (13)' ],
+  [ 'michael_mic_failure',            'wifi_michael_mic_failure (14)' ],
+  [ '4way_handshake_timeout',         'wifi_wrong_password (15)' ],
+  [ 'group_key_update_timeout',       'wifi_group_key_update_timeout (16)' ],
+  [ 'ie_in_4way_differs',             'wifi_ie_in_4way_differs (17)' ],
+  [ 'group_cipher_not_valid',         'wifi_group_cipher_not_valid (18)' ],
+  [ 'pairwise_cipher_not_valid',      'wifi_pairwise_cipher_not_valid (19)' ],
+  [ 'akmp_not_valid',                 'wifi_akmp_not_valid (20)' ],
+  [ 'unsupported_rsn_ie_version',     'wifi_unsupported_rsn_ie_version (21)'],
+  [ 'invalid_rsn_ie_capab',           'wifi_invalid_rsn_ie_capab (22)' ],
+  [ 'ieee_802_1x_auth_failed',        'wifi_ieee_802_1x_auth_failed (23)' ],
+  [ 'cipher_suite_rejected',          'wifi_cipher_suite_rejected (24)' ],
+  [ 'tdls_teardown_unreachable',      'wifi_tdls_teardown_unreachable (25)' ],
+  [ 'tdls_teardown_unspecified',      'wifi_tdls_teardown_unspecified (26)' ],
+  [ 'invalid_27',                     'wifi_error (27)' ],
+  [ 'invalid_28',                     'wifi_error (28)' ],
+  [ 'invalid_29',                     'wifi_error (29)' ],
+  [ 'invalid_30',                     'wifi_error (30)' ],
+  [ 'invalid_31',                     'wifi_error (31)' ],
+  [ 'invalid_32',                     'wifi_error (32)' ],
+  [ 'invalid_33',                     'wifi_error (33)' ],
+  [ 'disassoc_low_ack',               'wifi_disassoc_low_ack (34)' ],
+]);
+
+// maps server states to a connection status string that is sent to the app
+const server_state_map = new Map([
+  [ 'connecting', 'server_connecting' ],
+  [ 'connected', 'server_connected' ],
+  [ 'disconnected', 'server_disconnected' ],
+  [ 'reconnecting', 'server_reconnecting' ],
+]);
+
 export default class SessionListenerBase extends EventEmitter {
-
-  static WIFI_STATE_MAP = new Map([
-    [ 'scanning', 'wifi_scanning' ],
-    [ 'associating', 'wifi_associating' ],
-    [ 'associated', 'wifi_associated' ],
-    [ 'four_way_handshake', 'wifi_authenticating' ],
-    [ 'group_handshake', 'wifi_authenticating' ],
-    [ 'completed', 'wifi_connected' ],
-    // The following values are not part of WIFI_STATES (wifi.js).
-    // This next value is emitted by WpaMonitor manually as it initializes
-    // the DHCP process.
-    [ 'dhcping', 'wifi_dhcping' ],
-    // These two values correspond to the 'online' and 'offline' events of
-    // WpaMonitor and represent the overall state of the internet uplink.
-    [ 'online', 'wifi_online' ],
-    [ 'offline', 'wifi_offline' ],
-  ]);
-
-  static WIFI_ERROR_MAP = new Map([
-    [ '4way_handshake_timeout', 'wrong password' ],
-  ]);
-
-  static SERVER_STATE_MAP = new Map([
-    [ 'connecting', 'server_connecting' ],
-    [ 'connected', 'server_connected' ],
-    [ 'disconnected', 'server_disconnected' ],
-    [ 'reconnecting', 'server_reconnecting' ],
-  ]);
-
-  static ERROR_CODE_MAP = new Map([
-    [ '4way_handshake_timeout', 'wifi_wrong_password'],
-  ]);
+  static WIFI_STATE_MAP = wifi_state_map;
+  static WIFI_ERROR_MAP = wifi_error_map;
+  static SERVER_STATE_MAP = server_state_map;
+  static ERROR_CODE_MAP = new Map(wifi_error_map);
 
   _deviceConfig = null;
   _socketSession = null;

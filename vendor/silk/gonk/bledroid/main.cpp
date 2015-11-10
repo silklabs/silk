@@ -277,11 +277,17 @@ public:
         // If this wait type is whitelisted then we can ignore it.
         for (const auto& toleratedWaitType : kToleratedWaitFailures) {
           if (toleratedWaitType == currentWaitType) {
-            ALOGD("Wait type is whitelisted, not aborting");
+            ALOGD("Wait type is whitelisted, not exiting");
             return;
           }
         }
-        abort();
+
+        // Bluedroid sometimes just drops callbacks on the floor and there is no
+        // way for us to tell except by timing out. When this happens we can't
+        // really recover in any meaningful way so we simply exit and allow the
+        // process to restart.
+        ALOGE("Exiting");
+        exit(1);
       }
     }
   }

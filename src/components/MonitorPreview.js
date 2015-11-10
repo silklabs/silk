@@ -9,6 +9,7 @@ import PreviewQueue from '../libraries/PreviewQueue';
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './SocketIOComponent';
+import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 
 let {
   ActionSheetIOS,
@@ -49,6 +50,7 @@ export default class extends SocketIOComponent {
       width: React.PropTypes.number.isRequired,
       height: React.PropTypes.number.isRequired,
     }),
+    width: React.PropTypes.number.isRequired,
     configurable: React.PropTypes.bool,
     configuring: React.PropTypes.bool,
     haveVideoStream: React.PropTypes.bool,
@@ -66,7 +68,7 @@ export default class extends SocketIOComponent {
   state = {
     blob: null,
     objects: [],
-    previewWidth: null,
+    registered: false,
     serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
     timedOut: false,
   };
@@ -115,6 +117,14 @@ export default class extends SocketIOComponent {
     if (!this.props.bleDeviceSession && nextProps.bleDeviceSession) {
       this.subscribeToBLEStatus(nextProps.bleDeviceSession);
     }
+    if (this.props.bleDeviceSession && !nextProps.bleDeviceSession) {
+      // There's no need to explicitly unsubscribe from `bleDeviceSession`
+      // here. If we lose the session, it means it disconnected, which
+      // causes us to remove all listeners anyway. But now that we no longer
+      // are talking to the device, we don't know what its status is, so
+      // let's reset that.
+      this.setState({serverConnectionStatus: null});
+    }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
     }
@@ -145,6 +155,9 @@ export default class extends SocketIOComponent {
 
   startTimeoutTimer() {
     if (this.props.configurable) {
+      return;
+    }
+    if (this.props.configuring && !this.state.registered) {
       return;
     }
     this.clearTimeoutTimer();
@@ -184,11 +197,13 @@ export default class extends SocketIOComponent {
     let { bleDeviceSession } = this.props;
     if (bleDeviceSession) {
       bleDeviceSession.removeListener('status', this.onBLEDeviceStatusChange);
+      bleDeviceSession.removeListener('registered', this.onBLEDeviceRegistered);
     }
     this.clearTimeoutTimer();
   }
 
   subscribeToBLEStatus(bleDeviceSession) {
+    bleDeviceSession.on('registered', this.onBLEDeviceRegistered);
     bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
   }
 
@@ -197,6 +212,11 @@ export default class extends SocketIOComponent {
     if (!this.state.serverConnectionStatus !== status.message) {
       this.setState({serverConnectionStatus: status.message});
     }
+  };
+
+  onBLEDeviceRegistered = () => {
+    this.startTimeoutTimer();
+    this.setState({registered: true});
   };
 
   _renderLabel() {
@@ -237,23 +257,11 @@ export default class extends SocketIOComponent {
   }
 
   render() {
-    let { previewWidth } = this.state;
-    if (previewWidth === null) {
-      // Measure layout so we know how large to display the preview images.
-      return (
-        <View style={styles.monitorContainer}>
-          <View
-            onLayout={(event) => this.setState({previewWidth: event.nativeEvent.layout.width})}
-            style={styles.monitorPreviewPlaceholder}
-          />
-        </View>
-      );
-    }
-
-    let { previewSize } = this.props;
+    let { width, previewSize } = this.props;
+    width -= 2 * THUMBNAIL_MARGIN;
     let previewStyle = {
-      width: previewWidth,
-      height: previewSize.height * previewWidth / previewSize.width,
+      width,
+      height: previewSize.height * width / previewSize.width,
     };
 
     let logo = null;
@@ -282,10 +290,14 @@ export default class extends SocketIOComponent {
     }
 
     return (
-      <View style={styles.monitorContainer}>
+      <View style={[
+        styles.monitorContainer,
+        ThumbnailStyles.thumbnailContainer,
+        previewStyle,
+      ]}>
         <TouchableOpacity
           onPress={this._onPress}
-          style={[styles.monitorPreviewContainer, previewStyle]}>
+          style={styles.monitorPreviewContainer}>
           {this._renderPreview()}
           {logo}
           {this._renderLabel()}
@@ -296,6 +308,9 @@ export default class extends SocketIOComponent {
   }
 
   _onPress = () => {
+    if (this.props.configuring) {
+      return;
+    }
     if (this.props.configurable) {
       this.context.silkDevices.configureDevice(this.props.bleDeviceSession);
       return;
@@ -345,8 +360,6 @@ const styles = StyleSheet.create({
       height: 1,
       width: 0,
     },
-    margin: 4,
-    flex: 1,
   },
 
   monitorLabelContainer: {
@@ -363,10 +376,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'white',
     textAlign: 'right',
-  },
-
-  monitorPreviewPlaceholder: {
-    flex: 1,
   },
 
   monitorPreviewContainer: {

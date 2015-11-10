@@ -283,7 +283,7 @@ export default class extends AsyncComponent {
     }
 
     let deviceId = msg.id;
-    log.info('New video stream', deviceId);
+    log.info('New video stream', msg.name, deviceId);
     let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
@@ -306,6 +306,7 @@ export default class extends AsyncComponent {
         logo: msg.logo,
         previewSize: msg.previewSize,
         haveVideoStream: true,
+        bleDeviceSession: configuringDevice.bleDeviceSession,
       });
       this.setStateAsync({
         // There could be a lingering record of the device already.
@@ -545,12 +546,23 @@ export default class extends AsyncComponent {
   async _abortConfig(bleDeviceSession, error) {
     await this.props.navigator.popToTopAsync();
     await uiInteractions();
+
+    // Attempt to reset the BLE socket connection to the device so we
+    // can make another attempt at configuring the device. This should
+    // be possible if the user canceled or the device registration
+    // failed due to lack of network connectivity to the server.
+    try {
+      bleDeviceSession.restart();
+    } catch (ex) { // eslint-disable-line no-empty
+      // Ignore. The BLE socket connection is toast and can't be salvaged.
+      // We'll just have to wait for it to be re-established.
+    }
+
     if (this.pendingState.configuringDevice) {
       await this.setStateAsync({configuringDevice: null});
     }
     if (error && error.canceled) {
       log.debug('User cancelled. Aborting.');
-      bleDeviceSession.restart();
     } else {
       log.warn('Could not configure device due to error:', error);
       this._showConfigError();

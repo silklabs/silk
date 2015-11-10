@@ -3,7 +3,8 @@ import CoreLocation
 protocol RegionMonitorDelegate {
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID)
   func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID)
-  func regionStateChanged(regionMonitor: RegionMonitor, entered: Bool)
+  func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID)
+  func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID)
 }
 
 private let log = DebugLog.create("silk-RegionMonitor")
@@ -22,6 +23,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     let uuid: NSUUID
     let region: CLBeaconRegion
     var state: CLRegionState = .Unknown
+    var sentFirstNotification: Bool = false
     
     init(uuid: NSUUID, region: CLBeaconRegion) {
       self.uuid = uuid
@@ -31,9 +33,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   private var locationManager: CLLocationManager!
   private var regions: [String: RegionInfo] = [:]
-  private var updateCount: Int = 0
-  private var notifiedFirstStateChange: Bool = false
-  private var inRegion: Bool = false
 
   var delegate: RegionMonitorDelegate?
 
@@ -77,7 +76,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       self.locationManager.requestAlwaysAuthorization()
     }
     self.locationManager.delegate = self
-    self.locationManager.activityType = .Fitness
 
     for (_, regionInfo) in self.regions {
       let region = regionInfo.region
@@ -88,36 +86,11 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       // Make sure we always get at least one notification, regardless of
       // whether we are currently in the region or not.
       self.locationManager.requestStateForRegion(region)
-      self.updateCount++
     }
 
     BLESocketManager.setRegionMonitor(self)
   }
 
-  private func notifyDelegateRegionStateChanged() {
-    log.debug("notifyDelegateRegionStateChanged()")
-
-    if self.updateCount > 0 {
-      return
-    }
-
-    // If we are inside any region then we are "in" our region.
-    var inRegion = false
-    for (_, regionInfo) in self.regions {
-      if regionInfo.state == .Inside {
-        inRegion = true
-        break
-      }
-    }
-
-    if self.inRegion != inRegion || !self.notifiedFirstStateChange {
-      log.info("Region state changed: \(inRegion)")
-      self.notifiedFirstStateChange = true
-      self.inRegion = inRegion
-      self.delegate?.regionStateChanged(self, entered: inRegion)
-    }
-  }
-  
   var regionUuids: [NSUUID] {
     get {
       var uuids: [NSUUID] = []
@@ -146,7 +119,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     log.info("Started monitoring region \(region)")
     self.locationManager.startMonitoringForRegion(region)
 
-    self.updateCount++
     self.locationManager.requestStateForRegion(region)
 
     let userDefaults = NSUserDefaults.standardUserDefaults()
@@ -248,13 +220,18 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
                        didDetermineState state: CLRegionState,
                        forRegion region: CLRegion) {
     assert(manager === self.locationManager)
-    if self.updateCount > 0 {
-      if let regionInfo = self.regions[region.identifier] {
-        log.info("didDetermineState(\(state.rawValue), \(region))")
-        regionInfo.state = state
+    if let regionInfo = self.regions[region.identifier] {
+      log.info("didDetermineState(\(state.rawValue), \(region))")
+      regionInfo.state = state
 
-        --self.updateCount
-        self.notifyDelegateRegionStateChanged()
+      if !regionInfo.sentFirstNotification {
+        if state == .Inside {
+          regionInfo.sentFirstNotification = true
+          self.delegate?.regionEntered(self, uuid: regionInfo.uuid)
+        } else if state == .Outside {
+          regionInfo.sentFirstNotification = true
+          self.delegate?.regionExited(self, uuid: regionInfo.uuid)
+        }
       }
     }
   }
@@ -267,8 +244,11 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager)
     if let regionInfo = self.regions[region.identifier] {
       log.info("didEnterRegion(\(region)")
-      regionInfo.state = .Inside
-      self.notifyDelegateRegionStateChanged()
+      if regionInfo.state != .Inside {
+        regionInfo.state = .Inside
+        regionInfo.sentFirstNotification = true
+        self.delegate?.regionEntered(self, uuid: regionInfo.uuid)
+      }
     }
   }
 
@@ -279,8 +259,11 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager)
     if let regionInfo = self.regions[region.identifier] {
       log.info("didExitRegion(\(region)")
-      regionInfo.state = .Outside
-      self.notifyDelegateRegionStateChanged()
+      if regionInfo.state != .Outside {
+        regionInfo.state = .Outside
+        regionInfo.sentFirstNotification = true
+        self.delegate?.regionExited(self, uuid: regionInfo.uuid)
+      }
     }
   }
 }

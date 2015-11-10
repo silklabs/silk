@@ -128,7 +128,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _dismiss() {
     log.debug(`ConfigSessionListener._dismiss()`);
 
-    assert(this._socketSession);
     assert(this._state === ConfigSessionListener.STATE_COMPLETE ||
            this._state === ConfigSessionListener.STATE_DISMISSED);
 
@@ -160,11 +159,14 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     super._onDisconnect(socketSession);
 
-    assert(!this._dismissTimeout);
-
     // Reset.
     this._state = ConfigSessionListener.STATE_IDLE;
     this._wifiErrorCount = 0;
+
+    if (this._dismissTimeout) {
+      clearTimeout(this._dismissTimeout);
+      this._dismissTimeout = null;
+    }
   }
 
   _onData(data) {

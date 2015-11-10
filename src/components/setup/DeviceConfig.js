@@ -33,9 +33,20 @@ export default class DeviceConfig extends React.Component {
     showSecret: false,
   };
 
+  mounted = false;
+
   componentWillMount() {
+    this.mounted = true;
     getWifiInfo().then((info) => this.setState({ssid: info.SSID}));
-    InteractionManager.runAfterInteractions(() => this.refs.secret.focus());
+    InteractionManager.runAfterInteractions(() => {
+      if (this.mounted) {
+        this.refs.secret.focus();
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
   }
 
   _renderDeviceSettings() {

@@ -4,7 +4,7 @@ import {
   Navigator,
 } from 'react-native';
 
-export let FormStyles = StyleSheet.create({
+export const FormStyles = StyleSheet.create({
   formHeader: {
     fontWeight: '500',
     color: '#404e55',
@@ -52,13 +52,13 @@ export let FormStyles = StyleSheet.create({
   },
 });
 
-export let LayoutStyles = StyleSheet.create({
+export const LayoutStyles = StyleSheet.create({
   statusBarPlaceholder: {
     height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
   },
 });
 
-export let TitleBarStyles = StyleSheet.create({
+export const TitleBarStyles = StyleSheet.create({
   titleBar: {
     height: Navigator.NavigationBar.Styles.General.NavBarHeight,
     justifyContent: 'center',
@@ -92,5 +92,17 @@ export let TitleBarStyles = StyleSheet.create({
   titleBarButtonLabel: {
     color: '#007aff',
     fontSize: 17,
+  },
+});
+
+export const THUMBNAIL_MARGIN = 4;
+
+export const ThumbnailStyles = StyleSheet.create({
+  // This style gets applied to each individual thumbnail container as
+  // well as the container of all thumbnails. That way the overall
+  // margins between thumbnails and screen edge as well as between
+  // thumbnails themselves will be twice the value specified below.
+  thumbnailContainer: {
+    margin: THUMBNAIL_MARGIN,
   },
 });

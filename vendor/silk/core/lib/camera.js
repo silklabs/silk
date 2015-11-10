@@ -65,6 +65,10 @@ const CAPTURE_RESTART_DELAY_MS = 1000;
 // the attempt as failed and triggering a retry
 const CAPTURE_INIT_TIMEOUT_MS = 10 * 1000;
 
+// If TAG_VIDEO or TAG_MIC is not received in this amount of time, assume the
+// capture process is wedged and restart it.
+const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
+
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
@@ -204,16 +208,29 @@ class CameraStream extends EventEmitter {
     }
   }
 
-  _restart(why) {
+  /**
+   * Restarts communication with the capture process.
+   *
+   * In certain error conditions, it can also be beneficial to restart the
+   * capture process (such as when it is not providing the expected video data)
+   * an attempt to recover the system.
+   */
+  _restart(why, restartCaptureProcess = false) {
     if (this._restartTimeout) {
       log.info(`camera restart pending (ignored "${why}")`);
       return;
     }
-    log.info(`camera restart: ${why}`);
+
+    log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
     this._ready = false;
-    if (this._previewInterval) {
-      clearInterval(this._previewInterval);
-      this._previewInterval = null;
+
+    if (this._previewFrameTimeout) {
+      clearTimeout(this._previewFrameTimeout);
+      this._previewFrameTimeout = null;
+    }
+    if (this._tagMonitorTimeout) {
+      clearTimeout(this._tagMonitorTimeout);
+      this._tagMonitorTimeout = null;
     }
     if (this._cvVideoCapture) {
       this._cvVideoCapture.close();
@@ -227,6 +244,10 @@ class CameraStream extends EventEmitter {
     if (this._dataSocket) {
       this._dataSocket.destroy();
       this._dataSocket = null;
+    }
+
+    if (restartCaptureProcess) {
+      util.setprop('ctl.restart', 'capture');
     }
 
     this._restartTimeout = setTimeout(() => {
@@ -247,7 +268,7 @@ class CameraStream extends EventEmitter {
     }
     this._initTimeout = setTimeout(() => {
       this._initTimeout = null;
-      this._restart('failed to initialize in a timely fashion');
+      this._restart('failed to initialize in a timely fashion', true);
     }, CAPTURE_INIT_TIMEOUT_MS);
 
     // Connecting to data socket
@@ -334,11 +355,26 @@ class CameraStream extends EventEmitter {
         this.emit('error');
       } else if (captureEvent.eventName === 'initialized') {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-        this._previewInterval = setInterval(() => this._readPreviewFrame(), PREVIEW_DELAY_MS);
 
         clearTimeout(this._initTimeout);
         this._initTimeout = null;
         this._ready = true;
+
+        this._scheduleNextPreviewFrame();
+
+        const tagMonitor = () => {
+          if (this._videoTagReceived && this._micTagReceived) {
+            this._videoTagReceived = this._micTagReceived = null;
+            this._tagMonitorTimeout = setTimeout(tagMonitor,
+              CAPTURE_TAG_TIMEOUT_MS);
+            return;
+          }
+          this._restart(`Expected Tags not received from capture promptly. ` +
+              `video=${this._videoTagReceived}, mic=${this._micTagReceived}`,
+              true);
+        };
+        this._tagMonitorTimeout = setTimeout(tagMonitor,
+          CAPTURE_TAG_TIMEOUT_MS);
 
         if (this._startPromiseCallbacks) {
           this._startPromiseCallbacks.resolve();
@@ -399,10 +435,18 @@ class CameraStream extends EventEmitter {
     userCb('image not available in the cache', null);
   }
 
+  _scheduleNextPreviewFrame() {
+    this._previewFrameTimeout = setTimeout(() => {
+      this._previewFrameTimeout = null;
+      this._readPreviewFrame();
+    }, PREVIEW_DELAY_MS);
+  }
+
   /**
    * Read the next frame
    */
   _readPreviewFrame() {
+    this._scheduleNextPreviewFrame();
     if (!this._cvVideoCapture) {
       return;
     }
@@ -487,6 +531,7 @@ class CameraStream extends EventEmitter {
       switch (tag) {
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`, tagInfo);
+        this._videoTagReceived = true;
         this.timeline.addVideo(when, durationMs, pkt);
         break;
       case TAG_FACES:
@@ -495,12 +540,13 @@ class CameraStream extends EventEmitter {
         break;
       case TAG_MIC:
         log.debug(`TAG_MIC ${when}`, tagInfo);
+        this._micTagReceived = true;
         this.emit('mic-data', {when: when, frames: pkt});
         break;
       default:
         // Flush the buffer and restart the socket
         this._dataBuffer = null;
-        this._restart('Invalid capture tag');
+        this._restart('Invalid capture tag', true);
         throw new Error(`Invalid capture tag #${tag}`, tagInfo);
       }
       pos += HEADER_NR_BYTES + size;

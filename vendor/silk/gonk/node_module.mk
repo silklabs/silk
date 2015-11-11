@@ -122,6 +122,7 @@ define abs_import_includes
 endef
 $(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
 $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
 	$(hide) mkdir -p $(built_module_path)
@@ -164,8 +165,10 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
       $(PRIVATE_LDLIBS) \
       $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
       -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
+      $(and $(my_ndk_sysroot_lib),-L$(abspath $(my_ndk_sysroot_lib))) \
       -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       "\ && \
+    export V=$(if $(SHOW_COMMANDS),1) \
     export NPM_CONFIG_ARCH=arm &&  \
     export NPM_CONFIG_PLATFORM=android && \
     export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \

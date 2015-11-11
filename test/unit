@@ -6,10 +6,15 @@ npm install
 npm test
 popd
 
+source $(dirname $0)/../.branch
+if [ -n "$TRAVIS_BRANCH" ]; then
+  BRANCH=$TRAVIS_BRANCH
+fi
+
 echo "## Testing networkTest tool ##"
 pushd vendor/silk/core/tools/networkTest
 npm install
 npm run lint
-npm start -- -c 1 -m 60
+npm start -- -c 1 -m 60 -s https://silk-server-${BRANCH}.herokuapp.com/
 popd
 

@@ -181,7 +181,10 @@ class MonitorsView extends AsyncComponent {
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
             {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
-            <PreviewThumbnails {...this.props} />
+            <PreviewThumbnails
+              {...this.props}
+              startFullscreenVideo={this.startFullscreenVideo}
+            />
             {devices.size ? this._renderActivity() : null}
           </ScrollView>
         </View>

@@ -132,6 +132,7 @@ internal class BLESocketPeripheral: NSObject,
   func setForeground() {
     dispatch_async(self.queue) {
       log.debug("setForeground")
+      assert(!self.inForeground)
       self.inForeground = true
 
       if !self.enabled || !self.advertisingAllowed {
@@ -168,6 +169,7 @@ internal class BLESocketPeripheral: NSObject,
   func setBackground() {
     dispatch_async(self.queue) {
       log.debug("setBackground")
+      assert(self.inForeground)
       self.inForeground = false
 
       if !self.enabled || !self.advertisingAllowed {

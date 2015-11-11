@@ -29,6 +29,7 @@ export default class PreviewThumbnails extends React.Component {
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
     configuringDevice: React.PropTypes.instanceOf(ConfiguringDeviceRecord),
+    startFullscreenVideo: React.PropTypes.func,
   };
 
   state = {
@@ -95,7 +96,7 @@ export default class PreviewThumbnails extends React.Component {
         configurable={false}
         configuring={false}
         haveVideoStream={device.haveVideoStream}
-        onPress={() => this.startFullscreenVideo(deviceId)}
+        onPress={() => this.props.startFullscreenVideo(deviceId)}
         socket={this.props.socket}
         hasNetwork={this.props.hasNetwork}
         bleDeviceSession={device.bleDeviceSession}

@@ -90,14 +90,21 @@ class FindFace {
   /**
    * Load training data from a configuration file if available
    */
-  _loadTrainingData() {
-    log.info(`Loading training data`);
+  async _loadTrainingData() {
+    let loaded = false;
     try {
-      this._model.loadSync(TRAIN_FACES_YML);
-      this._faceMap = require(TRAIN_FACES_MAP);
+      this._faceMap = null;
+      if (await fs.exists(TRAIN_FACES_YML)) {
+        this._model.loadSync(TRAIN_FACES_YML);
+        if (await fs.exists(TRAIN_FACES_MAP)) {
+          this._faceMap = require(TRAIN_FACES_MAP);
+          loaded = true;
+        }
+      }
     } catch (e) {
       log.warn(`Error loading face training data: ${e.stack}`);
     }
+    log.verbose(`Face training data loaded: ${loaded}`);
   }
 
   /**
@@ -113,7 +120,11 @@ class FindFace {
    */
   async _trainModel() {
     this._trainingInProgress = true;
-    await this._trainer.start(this._model);
+    try {
+      await this._trainer.start(this._model);
+    } catch (err) {
+      log.warn(`Error training for faces: ${err.stack}`);
+    }
     this._trainingInProgress = false;
   }
 
@@ -135,17 +146,11 @@ class FindFace {
       () => this._addCommandProp());
 
     const existsYml = await fs.exists(TRAIN_FACES_YML);
-    if (existsYml) {
-      const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
-      if (!existsFaceMap) {
-        try {
-          await this._trainModel();
-        } catch (err) {
-          log.warn(`Error training for faces: ${err.stack}`);
-        }
-      }
-      this._loadTrainingData();
+    const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
+    if (!existsYml || !existsFaceMap) {
+      this._trainModel();
     }
+    await this._loadTrainingData();
     this._start();
   }
 

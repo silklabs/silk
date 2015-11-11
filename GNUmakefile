@@ -58,6 +58,10 @@ update:
 fut: FLASH_SCRIPT=flash_fut.sh
 fut: update
 
+# Update the currently attached Mako device with the latest prebuilt demo build
+.PHONY: demo
+demo: FLASH_SCRIPT=flash_demo.sh
+demo: update
 
 # Run the emulator
 EMULATOR=emulator -verbose -show-kernel $(EXTRA_EMULATOR_OPTS)

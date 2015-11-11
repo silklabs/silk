@@ -41,7 +41,7 @@ export default class ServerTester {
     .catch(util.processthrow);
   }
 
-  _doConnectTest(cnt, hz, cfg) { 
+  _doConnectTest(cnt, hz, cfg) {
     let repeater = new Repeater('connect', cnt, hz, cfg,
         () => this._device.connect(cfg),
         () => this._device.disconnect(cfg));

@@ -66,10 +66,10 @@ function printSummary() {
     table.newRow();
   });
 
-  console.log();
-  console.log('Results (in ms):');
-  console.log();
-  console.log(table.toString());
+  console.log(); // eslint-disable-line no-console
+  console.log('Results (in ms):'); // eslint-disable-line no-console
+  console.log(); // eslint-disable-line no-console
+  console.log(table.toString()); // eslint-disable-line no-console
 }
 
 /**

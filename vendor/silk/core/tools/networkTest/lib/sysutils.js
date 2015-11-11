@@ -11,7 +11,7 @@ export function timeout(ms) {
 }
 
 export function processthrow(e) {
-  console.error(e.stack);
+  console.error(e.stack); // eslint-disable-line no-console
   process.exit(1);
 }
 

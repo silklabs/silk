@@ -78,6 +78,7 @@
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "start-server": "babel-node --harmony src/server/main.js production",
     "start-socketio": "babel-node --harmony src/socketio/main.js production",
+    "pretest": "babel-node src/api_generate",
     "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"

@@ -43,7 +43,7 @@ suite('blob', () => {
     let content = new Buffer(input);
     let url;
     setup(async () => {
-      let putSigned = await context.api.blobv2.putUrl('video', {
+      let putSigned = await context.api.blobPublisher.putUrl('video', {
         contentLength: content.length,
         contentType: 'application/json'
       });
@@ -55,7 +55,7 @@ suite('blob', () => {
       });
 
       assert(res.ok, 'successfully puts');
-      let ack = await context.api.blobv2.ack({
+      let ack = await context.api.blobPublisher.ack({
         url: putSigned.putUrl
       });
       url = ack.url;
@@ -104,7 +104,7 @@ suite('blob', () => {
       let input = JSON.stringify(object);
       let content = new Buffer(input);
 
-      let putSigned = await context.api.blobv2.putUrl('video', {
+      let putSigned = await context.api.blobPublisher.putUrl('video', {
         contentLength: content.length,
         contentType: 'application/json'
       });
@@ -116,7 +116,7 @@ suite('blob', () => {
       });
 
       assert(res.ok, 'successfully puts');
-      let ack = await context.api.blobv2.ack({
+      let ack = await context.api.blobPublisher.ack({
         url: putSigned.putUrl
       });
 

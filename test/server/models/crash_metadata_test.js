@@ -10,7 +10,7 @@ suite('metadata', () => {
     subject = new CrashMetadata(context.db);
   });
 
-  test('put / get / find', async () => {
+  test('create / get / find', async () => {
     let deviceId = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01';
     let type = 'tombstone';
 
@@ -36,7 +36,7 @@ suite('metadata', () => {
     ];
 
     await Promise.all(records.map(async record => {
-      record.id = await subject.put(record);
+      record.id = await subject.create(record);
     }));
 
     await Promise.all(records.map(async record => {

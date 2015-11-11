@@ -6,6 +6,7 @@ import vipRoutes from './routes/vip';
 import accountRoutes from './routes/account';
 import deviceRoute from './routes/device';
 import blobPublisherRoutes from './routes/blob_publisher';
+import crashPublisherRoutes from './routes/crash_publisher';
 
 let log = require('log')('routes');
 
@@ -94,7 +95,7 @@ module.exports = function(opts) {
   app.post('/device/metadata/crashreport', asyncRoute(async (req, res) => {
     let id;
     try {
-      id = await crashMeta.put(req.body);
+      id = await crashMeta.create(req.body);
     } catch(e) {
       res.sendStatus(400);
       return;
@@ -173,4 +174,5 @@ module.exports = function(opts) {
   app.use(accountRoutes(opts).app);
   app.use(deviceRoute(opts).app);
   app.use(blobPublisherRoutes(opts).app);
+  app.use(crashPublisherRoutes(opts).app);
 };

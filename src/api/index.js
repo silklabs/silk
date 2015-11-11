@@ -5,7 +5,8 @@ import loadConfig from './config';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
-import Blob from './gen/blob';
+import BlobPublisher from './gen/blob_publisher';
+import CrashPublisher from './gen/crash_publisher';
 
 // XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
@@ -49,7 +50,8 @@ export default function create(options) {
     vip: new VIP(config.serverUrl),
     account: new Account(config.serverUrl),
     device: new Device(config.serverUrl),
-    blobv2: new Blob(config.serverUrl)
+    blobPublisher: new BlobPublisher(config.serverUrl),
+    crashPublisher: new CrashPublisher(config.serverUrl),
   };
 
   let exports = {

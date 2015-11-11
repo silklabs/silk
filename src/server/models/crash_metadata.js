@@ -9,7 +9,7 @@ let log = require('log')('models-crashreport');
 
 const TYPE_DEVICEID = Joi.string().lowercase().trim().length(66).hex();
 
-const TYPE_ALL = Joi.string().only([
+export const TYPE_ALL = Joi.string().only([
   'exception',
   'tombstone',
 ]);
@@ -45,7 +45,7 @@ export default class CrashMetadata extends Base {
 
   static COLLECTION: string = 'crash_metadata';
 
-  async put(payload: any): any {
+  async create(payload: any): any {
     payload = this.validate(payload, 'record');
     log.info(`Saving new crash report for device '` +
              `${payload.deviceId}'`);

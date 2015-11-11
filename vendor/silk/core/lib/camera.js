@@ -65,9 +65,13 @@ const CAPTURE_RESTART_DELAY_MS = 1000;
 // the attempt as failed and triggering a retry
 const CAPTURE_INIT_TIMEOUT_MS = 10 * 1000;
 
-// If TAG_VIDEO or TAG_MIC is not received in this amount of time, assume the
+// If TAG_VIDEO or TAG_MIC is not received in this amount of time assume the
 // capture process is wedged and restart it.
 const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
+
+// If there is still not a preview frame after this number of attempts assume the
+// capture process is wedged and restart it.
+const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 10;
 
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
@@ -451,9 +455,15 @@ class CameraStream extends EventEmitter {
       return;
     }
     if (this._cvVideoCaptureBusy) {
-      log.warn('Still waiting on preview frame, unable to read next');
+      this._noPreviewCount++;
+      log.warn(`Waiting for preview frame: ` +
+               `${this._noPreviewCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
+      if (this._noPreviewCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
+        this._restart(`Preview frame timeout`, true);
+      }
       return;
     }
+    this._noPreviewCount = 0;
     this._cvVideoCaptureBusy = true;
 
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG

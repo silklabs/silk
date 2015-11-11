@@ -6,6 +6,7 @@
  */
 
 import url from 'url';
+import {convertObject as flowifyObject} from './flow';
 
 const INDENT = /^\s+/gm;
 
@@ -27,14 +28,14 @@ function method(action) {
   let commentParams = '';
 
   action.params.forEach(param => {
-    args.push(param.id);
+    args.push(param.id + ': string');
     // url variable is referenced below...
     urlParams += `    url = url.replace(':${param.id}', ${param.id});\n`;
     commentParams += `  @param String ${param.id} (${param.name}) ${param.description || ''}\n`;
   });
 
   if (action.input) {
-    args.push('payload');
+    args.push(`payload: ${action.inputType}`);
     perform = 'this.requestWithBody(method, url, payload);';
     commentParams += `  @param Object payload of request`;
   }
@@ -48,16 +49,17 @@ ${commentParams}
 
   // This code is written specifically to output somewhat pretty output however
   // the indent looks a little off internally because of this.
-  let body = `
-  ${comment}
-  ${action.name}(${args.join(', ')}) {
+
+  let outputType = action.outputType || 'any';
+
+  let body = `${comment}
+  ${action.name}(${args.join(', ')}): ${outputType} {
     let method = '${action.method}';
     let url = '${action.path}';
     // Perform url subtitutions:
 ${urlParams}
     return ${perform}
-  }
-  `;
+  }`;
 
   return body;
 }
@@ -69,20 +71,41 @@ const DEFAULTS = {
 export default function gen(schema, options = {}) {
   options = Object.assign({}, DEFAULTS, options);
 
+  let types = [];
+
   // Normalize pathing:
   let actions = schema.actions.map(action => {
+    if (action.input) {
+      let inputName = `${action.name}_input`;
+      let inputFlow = flowifyObject(inputName, action.input);
+      types = types.concat(inputFlow.types).concat(inputFlow.flow);
+      action.inputType = inputFlow.typeName;
+    }
+
+    if (action.output) {
+      let outputName = `${action.name}_output`;
+      let outputFlow = flowifyObject(outputName, action.output);
+      types = types.concat(outputFlow.types).concat(outputFlow.flow);
+      action.outputType = `Promise<${outputFlow.typeName}>`;
+    }
+
     action = Object.assign({}, action);
     action.path = url.resolve(schema.prefix, action.path);
     return method(action);
   });
 
   let body = `
+/* @flow */
+
 import BaseClass from '${options.baseClassPath}'
 
+${types.map((type) => {
+  return `export ${type}`;
+}).join('\n')}
 export default class extends BaseClass {
 
-  name = '${schema.name}';
-  prefix = '${schema.prefix};'
+  name: string = '${schema.name}';
+  prefix: string = '${schema.prefix}';
 
   ${actions.join('\n')}
 }

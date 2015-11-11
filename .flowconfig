@@ -1,0 +1,13 @@
+[ignore]
+.*/build/.*
+.*/test/rntest/.*
+.*/node_modules/api-schema/.*
+
+[include]
+
+[libs]
+interface
+
+[options]
+esproposal.class_instance_fields=ignore
+esproposal.class_static_fields=ignore

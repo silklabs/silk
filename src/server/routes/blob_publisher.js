@@ -21,7 +21,7 @@ export default function (ctx: RouteContext) {
   }));
 
   let api = expressApi(routes, {
-    name: 'blobPublisher',
+    name: 'blob_publisher',
     prefix: PREFIX,
     description: `
       Blob creation API(s)

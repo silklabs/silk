@@ -27,7 +27,7 @@ export default function (ctx) {
   }));
 
   let api = expressApi(routes, {
-    name: 'auth',
+    name: 'vip',
     prefix: PREFIX,
     description: `
       API methods for creating/logging in/authenticating user accounts

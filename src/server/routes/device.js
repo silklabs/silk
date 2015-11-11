@@ -24,7 +24,7 @@ export default function (ctx: RouteContext) {
   }));
 
   let api = expressApi(routes, {
-    name: 'account',
+    name: 'device',
     prefix: PREFIX,
     description: `
       API calls for devices...

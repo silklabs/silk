@@ -19,9 +19,10 @@
   },
   "dependencies": {
     "babel": "^5.8.21",
+    "camel-case": "^1.2.0",
     "debug": "^2.2.0",
     "joi": "^6.6.1",
-    "joi-to-json-schema": "^2.0.4",
+    "joi-to-json-schema": "^2.0.5",
     "uuid": "^2.0.1"
   }
 }

@@ -30,9 +30,11 @@ We've typically pushed (manual) builds from the `next` branch to TestFlight user
 
 TestFlight builds need to be manually created because they need to ship with the `XC: com.silklabs.Silk` iOS Distribution provisioning profile, as opposed to Travis's builds which include the `CI Build Profile` iOS Development profile and can only run on a specific list of devices. TestFlight on the other hand allows us to add up to 25 iTunes *accounts* for internal testing, independent of the device used.
 
-There are three major components to generating a manual build:
+There are four major steps to generating a manual build:
 
-Ensure that the app version in the branch you're building from (mostly likely `next`) is unique and has not yet been used in a TestFlight build. If FML just happened, this is not a concern. But if a TestFlight build has already been uploaded for this cycle, perform the following steps:
+### Rev the bundle/build version in Xcode
+
+Prior to building and uploading the binary, you need to ensure that the app version in the branch you're building from (mostly likely `next`) is unique and has not yet been used in a TestFlight build. If FML just happened, this is not a concern. But if a TestFlight build has already been uploaded for this cycle, perform the following steps:
 
 0. Ensure the last automated merge from `next` to `master` was performed successfully.
 0. Open `Silk.xcodeproj` in Xcode.
@@ -40,7 +42,26 @@ Ensure that the app version in the branch you're building from (mostly likely `n
 0. Merge `next` to `master`, ignoring the version conflict: `git checkout master && git merge -s ours next`
 0. Push both `next` and `master` to `origin`.
 
-Generate and upload the actual build:
+### Import the iOS Distribution signing identity
+
+TestFlight builds need to be signed with our distribution signing identity. It consists of a public/private keypair whose public key is known to Apple, but the private key only exists on developer machines. So if you haven't published a TestFlight build yet on your machine, or the certificate has been reset (this is bad, see below), you need to import the private key from a fellow colleague's machine.
+
+WARNING: If you don't have the private key and attempt to upload a TestFlight build anyway, Xcode will helpfully offer to reset or re-create the signing identity for you. DO NOT NEVER EVER DON'T DO THAT. It will revoke the certificate with which existing TestFlight builds are signed, making it impossible for TestFlight users to install or upgrade their app until a new build gets published.
+
+0. Find a fellow colleague who has the current signing identity's private key (e.g. the last person who uploaded a TestFlight build)
+0. Have them export the private key:
+  0. open Xcode -> Preferences -> Accounts tab
+  0. select the <name>@silklabs.com Apple ID if multiple ones are configured
+  0. select the "Weave Laboraties Inc" team and click the "View Details..." butotn
+  0. right-click on the "iOS Distribution" signing identity and choose "Export"
+  0. save the private key file with a passphrase and email/slack/fax it to you
+0. Import the private key:
+  0. open Keychain Access on your Mac
+  0. open the Certificates category view
+  0. if you already have an "iPhone Distribution: Weave Laboratories Inc (xxx)" certificate, delete it
+  0. drag-and-drop the private key file into the list and enter the passphrase
+
+### Generate and upload the actual build:
 
 0. Close Xcode and any react-native package servers that might be running
 0. Create a fresh clone of `silk-app` or get rid of any previous build artifacts by running `git clean -xfd` in your existing clone. (Careful! This will get rid of any local changes and your `config.local.json`!)
@@ -51,7 +72,7 @@ Generate and upload the actual build:
 0. Click on the 'Upload to App Store...' button.
 0. Confirm the 'Weave Laboratories Inc' development team in the next dialog, and the use of the `XC: com.silklabs.Silk` provisioning profile in the second dialog.
 
-Enable the new version in iTunes Connect:
+### Enable the new version in iTunes Connect:
 
 0. Log into [iTunes Connect](https://itunesconnect.apple.com)
 0. Go to 'My Apps', 'Silk Alpha', and open the 'TestFlight' tab. Click on the 'Select Version to Test' link. The new app version should appear, but if you just uploaded it, it will still say processing.

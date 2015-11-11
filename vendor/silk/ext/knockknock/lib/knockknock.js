@@ -235,7 +235,7 @@ class FindFace {
           } catch (err) {
             // Unknown face
             log.debug(`Unknown face detected: why=${err}`);
-            this._env.timeline.addObject('face', when, face);
+            this._env.timeline.addObject('a face', when, face); // See #1306 for 'a face' vs 'face'
           }
         });
         let diff = Date.now() - start;

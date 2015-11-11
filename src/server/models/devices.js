@@ -1,3 +1,4 @@
+/* @flow */
 /**
  * We represent each device as a single record in the data store...
  *
@@ -20,16 +21,16 @@ const NAME_SCHEMA = Joi.string().min(1).max(60).required();
 
 export default class Devices extends Base {
 
-  static NAME_SCHEMA = NAME_SCHEMA
-  static TYPE_SCHEMA = TYPE_SCHEMA
+  static NAME_SCHEMA = NAME_SCHEMA;
+  static TYPE_SCHEMA = TYPE_SCHEMA;
 
-  static COLLECTION = 'devices'
+  static COLLECTION = 'devices';
 
   static ERROR = {
     duplicatePublicKey: 'DuplicatePublicKey',
     unknownDevice: 'UnknownDevice',
     invalidRegistrationToken: 'InvalidRegistrationToken'
-  }
+  };
 
   static INDEX = [
     {
@@ -43,7 +44,7 @@ export default class Devices extends Base {
         'accountId': 1
       }
     },
-  ]
+  ];
 
   static SCHEMA = {
     findByPublicKey: Joi.object().keys({
@@ -104,9 +105,9 @@ export default class Devices extends Base {
        * should monitor closely... We likely will want to record more details.
        */
     })
-  }
+  };
 
-  registrationTokenValid(registrarPublicKey, devicePublicKey, token) {
+  registrationTokenValid(registrarPublicKey: string, devicePublicKey: string, token: string): bool {
     let accountAccessToken = Id.importPub(registrarPublicKey);
     return accountAccessToken.verify(devicePublicKey, token);
   }
@@ -117,7 +118,7 @@ export default class Devices extends Base {
    * @param {String} registrarPublicKey to validate registration token.
    * @param {Object} payload
    */
-  async register(registrarPublicKey, payload) {
+  async register(registrarPublicKey: string, payload: any): any {
     payload = this.validate(payload, 'register');
 
     let tokenValid = this.registrationTokenValid(
@@ -161,7 +162,7 @@ export default class Devices extends Base {
     return this.error('duplicatePublicKey');
   }
 
-  async unregister(payload) {
+  async unregister(payload: any): any {
     payload = this.validate(payload, 'unregister');
 
     let result = await this.collection.update(
@@ -192,7 +193,7 @@ export default class Devices extends Base {
    * @param {String} registrarPublicKey to validate registration token.
    * @param {Object} payload for validate.
    */
-  async validateRegistration(registrarPublicKey, payload) {
+  async validateRegistration(registrarPublicKey: string, payload: any): any {
     payload = this.validate(payload, 'validateRegistration');
 
     let device = await this.findByPublicKey({
@@ -236,7 +237,7 @@ export default class Devices extends Base {
   /**
    * Find the device by it's public key (for auth)
    */
-  async findByPublicKey(payload) {
+  async findByPublicKey(payload: any): any {
     payload = this.validate(payload, 'findByPublicKey');
     let { publicKey } = payload;
 
@@ -245,7 +246,7 @@ export default class Devices extends Base {
     });
   }
 
-  async findAllByAccount(accountId) {
+  async findAllByAccount(accountId: any): any {
     if (!(accountId instanceof ObjectId)) {
       accountId = new ObjectId(accountId);
     }

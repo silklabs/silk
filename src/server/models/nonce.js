@@ -1,3 +1,4 @@
+/* @flow */
 /**
  * Collection for storing nonce values. The collection is designed to be
  * periodically purged of values which have expired. In the event the collection
@@ -11,8 +12,7 @@ const UUID = Joi.string().guid().required();
 export default class Nonce extends Base {
   static ERROR = {
     duplicateValue: 'DuplicateUUIDValue',
-  }
-
+  };
 
   static INDEX = [
     /**
@@ -33,7 +33,7 @@ export default class Nonce extends Base {
         expires: 1
       }
     }
-  ]
+  ];
 
   static SCHEMA = {
     record: Joi.object().keys({
@@ -49,14 +49,14 @@ export default class Nonce extends Base {
     check: Joi.object().keys({
       value: Joi.string()
     }).required()
-  }
+  };
 
-  static COLLECTION = 'nonce'
+  static COLLECTION = 'nonce';
 
   /**
    * Create a nonce value.
    */
-  async create(payload) {
+  async create(payload: any): any {
     payload = this.validate(payload, 'record');
 
     let insert = await this.collection.update(
@@ -82,7 +82,7 @@ export default class Nonce extends Base {
   /**
    * Check if a nonce value exists.
    */
-  async check(payload) {
+  async check(payload: any): any {
     payload = this.validate(payload, 'check');
     return this.collection.findOne({
       value: payload.value
@@ -95,7 +95,7 @@ export default class Nonce extends Base {
    * Note: MongoDB can do this natively without any additional server logic but
    * this method was chosen for interoperability if we ever change stores.
    */
-  async expireAll() {
+  async expireAll(): Promise<any> {
     return await this.collection.remove({
       expires: {
         $lte: new Date()

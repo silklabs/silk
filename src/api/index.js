@@ -5,6 +5,7 @@ import loadConfig from './config';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
+import Blob from './gen/blob';
 
 // XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
@@ -47,7 +48,8 @@ export default function create(options) {
   const services = {
     vip: new VIP(config.serverUrl),
     account: new Account(config.serverUrl),
-    device: new Device(config.serverUrl)
+    device: new Device(config.serverUrl),
+    blobv2: new Blob(config.serverUrl)
   };
 
   let exports = {
@@ -75,7 +77,7 @@ export default function create(options) {
         };
       },
     },
-    blob: require('./blob')(config),
+    blob: require('./blob')(config), // TODO: Remove
     timeMeta: require('./time_metadata')(config),
     crashMeta: require('./crash_metadata')(config),
     socketio: require('./socketio')(config),

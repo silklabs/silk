@@ -1,3 +1,4 @@
+/* @flow */
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
@@ -18,7 +19,19 @@ import Devices from './models/devices';
 import Nonce from './models/nonce';
 import EmailSender from './email_sender';
 
-export default async function main (config) {
+export type RouteContext = {
+  app: any;
+  nonce: Nonce;
+  accounts: Accounts;
+  devices: Devices;
+  emailSender: EmailSender;
+  crashMeta: CrashMetadata;
+  config: any; // TODO
+  blobs: any; // TODO
+  blobHandler: any; // TODO
+};
+
+export default async function main (config: any): any {
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);
@@ -74,6 +87,8 @@ export default async function main (config) {
 
   let emailSender = new EmailSender(config);
   let blobs = {
+    aliyun: null,
+    s3: null,
     file: await createFileBlob(config)
   };
 
@@ -83,7 +98,12 @@ export default async function main (config) {
     blobs.aliyun = await createAliyunBlob(config);
   }
 
-  const context = {
+  const blobHandler = blobs[config.server.blobType];
+  if (!blobHandler) {
+    throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
+  }
+
+  const context: RouteContext  = {
     app,
     nonce,
     accounts,
@@ -92,7 +112,8 @@ export default async function main (config) {
     crashMeta,
     timeMeta,
     config,
-    blobs
+    blobs,
+    blobHandler,
   };
 
   // Install the routes.
@@ -111,7 +132,7 @@ export default async function main (config) {
 
     // Configure socket.io public url for local development.
     if (!config.socketio.publicUrl) {
-      let basePublicUrl = url.parse(config.server.publicUrl);
+      let basePublicUrl: any = url.parse(config.server.publicUrl);
       basePublicUrl.port = config.socketio.port;
       // Delete host so port override will be used.
       delete basePublicUrl.host;

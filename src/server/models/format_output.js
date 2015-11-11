@@ -1,3 +1,4 @@
+/* @flow weak */
 /**
  * Formats the given object converts mongodb style _id to .id.
  *

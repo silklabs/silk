@@ -61,6 +61,11 @@ export async function testAccount(context) {
   };
 }
 
+export async function testDevice(context) {
+  let account = await testAccount(context);
+  return await registeredDevice(context, account.accessToken);
+}
+
 export async function registeredDevice(ctx, accountAccessToken) {
   let api = createApi({ serverUrl: ctx.url });
   let devices = new Devices(ctx.db);
@@ -107,6 +112,7 @@ export default function createContext(overrides = {}) {
     context.config = config;
     context.server = server;
     context.url = `http://localhost:${server.port}`;
+    context.api = createApi({ serverUrl: context.url });
 
     // assign methods for convenience...
     for (let name in module.exports) {

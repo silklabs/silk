@@ -1,5 +1,4 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/* @flow */
 
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
@@ -42,11 +41,11 @@ export default class CrashMetadata extends Base {
       limit: Joi.number().integer().positive().optional(),
     }).required(),
 
-  }
+  };
 
-  static COLLECTION = 'crash_metadata';
+  static COLLECTION: string = 'crash_metadata';
 
-  async put(payload) {
+  async put(payload: any): any {
     payload = this.validate(payload, 'record');
     log.info(`Saving new crash report for device '` +
              `${payload.deviceId}'`);
@@ -63,7 +62,7 @@ export default class CrashMetadata extends Base {
     return id;
   }
 
-  async get(id) {
+  async get(id: any): any {
     let _id;
     try {
       _id = mongo.ObjectId(id);                   // eslint-disable-line new-cap
@@ -89,7 +88,7 @@ export default class CrashMetadata extends Base {
     return result;
   }
 
-  async find(payload) {
+  async find(payload: any): any {
     payload = this.validate(payload, 'find');
     log.info('Finding metadata: ' + JSON.stringify(payload));
 

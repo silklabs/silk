@@ -8,6 +8,7 @@ import vipRoutes from './server/routes/vip';
 import accountRoutes from './server/routes/account';
 import deviceRoutes from './server/routes/device';
 import testRoutes from './server/routes/test';
+import blobPublisherRoutes from './server/routes/blob_publisher';
 
 const AUTOGEN_ROOT = path.join(__dirname, '/api/gen');
 const GENERATE = {
@@ -25,6 +26,10 @@ const GENERATE = {
   },
   test: {
     routes: testRoutes,
+    base: '../http_client'
+  },
+  blob: {
+    routes: blobPublisherRoutes,
     base: '../http_client'
   }
 };
@@ -50,4 +55,3 @@ if (process.mainModule === module) {
   console.log('Building auto generated files');
   generate();
 }
-

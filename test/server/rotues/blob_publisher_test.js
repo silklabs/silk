@@ -1,6 +1,5 @@
 import assert from 'assert';
-import createContext from './context';
-import createBlobApi from '../../src/api/blob';
+import createContext from '../context';
 import fetch from 'node-fetch';
 import { exec } from 'mz/child_process';
 
@@ -33,19 +32,33 @@ suite('blob', () => {
       }
     });
 
-    let blob;
+    let device;
+    setup(async function() {
+      device = await context.testDevice();
+      context.api.accessToken = device.accessToken;
+    });
+
     let object = { foo: 'bar' };
     let input = JSON.stringify(object);
     let content = new Buffer(input);
     let url;
     setup(async () => {
-      blob = createBlobApi({ serverUrl: context.url });
-      url = await blob.upload(
-        'video',
-        content.length,
-        'application/json',
-        content
-      );
+      let putSigned = await context.api.blobv2.putUrl('video', {
+        contentLength: content.length,
+        contentType: 'application/json'
+      });
+
+      let res = await fetch(putSigned.putUrl, {
+        method: 'PUT',
+        headers: putSigned.putHeaders,
+        body: content.toString()
+      });
+
+      assert(res.ok, 'successfully puts');
+      let ack = await context.api.blobv2.ack({
+        url: putSigned.putUrl
+      });
+      url = ack.url;
     });
 
     test('/blob/ - signing full content', async () => {
@@ -80,22 +93,34 @@ suite('blob', () => {
       return;
     }
 
-    let blob;
-    setup(() => {
-      blob = createBlobApi({ serverUrl: context.url });
+    let device;
+    setup(async function() {
+      device = await context.testDevice();
+      context.api.accessToken = device.accessToken;
     });
 
     test('/blob/ - signing', async () => {
       let object = { foo: 'bar' };
       let input = JSON.stringify(object);
       let content = new Buffer(input);
-      let url = await blob.upload(
-        'video',
-        content.length,
-        'application/json',
-        content,
-      );
-      let response = await fetch(url);
+
+      let putSigned = await context.api.blobv2.putUrl('video', {
+        contentLength: content.length,
+        contentType: 'application/json'
+      });
+
+      let res = await fetch(putSigned.putUrl, {
+        method: 'PUT',
+        headers: putSigned.putHeaders,
+        body: content.toString()
+      });
+
+      assert(res.ok, 'successfully puts');
+      let ack = await context.api.blobv2.ack({
+        url: putSigned.putUrl
+      });
+
+      let response = await fetch(ack.url);
       assert.equal(response.headers.get('Content-Type'), 'application/json');
       let text = await response.text();
       assert.equal(text, input);

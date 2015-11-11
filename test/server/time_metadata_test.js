@@ -11,7 +11,7 @@ suite('time metadata apis', () => {
   let api;
   setup(async () => {
     id = createId().toString();
-    api = createMetadataApi({ serverUrl: context.url }); //eslint-disable-line 
+    api = createMetadataApi({ serverUrl: context.url }); //eslint-disable-line
   });
 
   suite(`${SERVER_PATH_PREFIX}/*`, () => {
@@ -43,7 +43,6 @@ suite('time metadata apis', () => {
         data: { woot: true }
       });
       delete next.id;
-      next.previousId = first.id;
       await api.create(next);
       return next;
     }

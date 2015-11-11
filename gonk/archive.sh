@@ -195,6 +195,66 @@ EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_fut.sh
 
+  # Create flash_demo script
+  cat > $archiveDir/$TARGET_PRODUCT/flash_demo.sh <<'EOF'
+#!/bin/bash
+
+# "Official" demo config
+DISPLAY_NAME="Front Door"
+SERVER_URL="http://192.168.13.100:5000/"
+
+TZ_OFFSET=$(date +%z)
+TZ_OFFSET=${TZ_OFFSET:0:3}
+HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)
+
+cd $(dirname $0)
+
+echo Flash the build and clear userdata/cache partitions
+./flash.sh -w
+
+adb wait-for-device
+
+echo Preparing default.prop ...
+rm default.prop
+
+adb root
+adb wait-for-device
+
+echo Set device name to $DISPLAY_NAME
+echo persist.silk.displayName="$DISPLAY_NAME" >> default.prop
+
+echo Set silk-server URL to $SERVER_URL
+echo persist.silk.server.url=$SERVER_URL >> default.prop
+
+echo Activated uploads to cloud storage
+echo persist.silk.vidupload.enabled=1 >> default.prop
+echo persist.silk.prvupload.enabled=1 >> default.prop
+
+echo Enable sounds on double clap ze clapper
+echo persist.silk.clapper.sound=true >> default.prop
+
+echo Set device time zone to match host: $HOST_TZ
+echo persist.sys.timezone="${HOST_TZ}" >> default.prop
+
+echo Disable vibration
+echo persist.silk.quiet=true >> default.prop
+
+echo Disable BLE ranger to avoid wifi 2.4GHz conflicts
+echo persist.silk.ranger.enabled=false >> default.prop
+
+echo Pushing new default.prop ...
+adb remount
+adb push default.prop /system/
+rm default.prop
+
+echo Rebooting to apply configuration...
+adb reboot
+adb wait-for-device
+echo Device provisioning successful
+EOF
+
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash_demo.sh
+  
   cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
 
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then

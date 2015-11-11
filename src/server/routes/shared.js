@@ -4,6 +4,9 @@ import * as Joi from 'joi';
  * Helper for routes shared between accounts and devices...
  */
 export default function(api, ctx) {
+  // Semi-nasty hack so we don't need to run this in autogenerate.
+  if (!api || !api.define) return;
+
   api.define({
     path: 'socketio/url',
     method: 'post',

@@ -229,10 +229,10 @@ export default class TimeMetadata extends Base {
   /**
    * Insert the next item in the time series.
    */
-  async insert(payload) {
+  async create(payload) {
     payload = this.validate(payload, 'metadata');
     if (payload.id) {
-      return await this.insertOrUpdate(payload);
+      return await this.createOrUpdate(payload);
     }
     let newItem = await this.collection.insert(payload);
     return { id: newItem._id.toString() };
@@ -244,7 +244,7 @@ export default class TimeMetadata extends Base {
     return { id };
   }
 
-  async insertOrUpdate(payload) {
+  async createOrUpdate(payload) {
     payload = this.validate(payload, 'metadata');
     let { id } = payload;
     if (typeof id !== 'string') {

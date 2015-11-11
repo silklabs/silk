@@ -7,6 +7,7 @@ import accountRoutes from './routes/account';
 import deviceRoute from './routes/device';
 import blobPublisherRoutes from './routes/blob_publisher';
 import crashPublisherRoutes from './routes/crash_publisher';
+import metadataPublisherRoutes from './routes/metadata_publisher';
 
 let log = require('log')('routes');
 
@@ -53,7 +54,7 @@ module.exports = function(opts) {
 
   app.post('/device/metadata/time', asyncRoute(async (req, res) => {
     // create new metadata.
-    let result = await timeMeta.insert(req.body);
+    let result = await timeMeta.create(req.body);
     res.status(201).send(result);
   }));
 
@@ -175,4 +176,5 @@ module.exports = function(opts) {
   app.use(deviceRoute(opts).app);
   app.use(blobPublisherRoutes(opts).app);
   app.use(crashPublisherRoutes(opts).app);
+  app.use(metadataPublisherRoutes(opts).app);
 };

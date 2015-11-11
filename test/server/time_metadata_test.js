@@ -1,16 +1,21 @@
 import assert from 'assert';
 import createContext from './context';
 import createMetadataApi from '../../src/api/time_metadata';
-import { create as createId } from '../../src/api/id';
 
 const SERVER_PATH_PREFIX = '/device/metadata/time';
 
 suite('time metadata apis', () => {
   let context = createContext();
+  let device;
+  setup(async function() {
+    device = await context.testDevice();
+    context.api.accessToken = device.accessToken;
+  });
+
   let id;
   let api;
   setup(async () => {
-    id = createId().toString();
+    id = device.accessToken.toString();
     api = createMetadataApi({ serverUrl: context.url }); //eslint-disable-line
   });
 
@@ -20,7 +25,6 @@ suite('time metadata apis', () => {
     let first;
     setup(async () => {
       first = {
-        deviceId: id,
         metaType: 'video',
         startUTC: 100,
         endUTC: 200,
@@ -30,10 +34,10 @@ suite('time metadata apis', () => {
         }
       };
 
-      let insert = await context.post(SERVER_PATH_PREFIX, first);
-      assert.equal(insert.statusCode, 201, 'creates record');
-      assert.ok(insert.body.id, 'has id');
-      first.id = insert.body.id;
+      let insert = await context.api.metadataPublisher.create(first);
+      first.id = insert.id;
+      // For easy assertions...
+      first.deviceId = device.accessToken;
     });
 
     async function insertNext() {
@@ -43,7 +47,8 @@ suite('time metadata apis', () => {
         data: { woot: true }
       });
       delete next.id;
-      await api.create(next);
+      let insert = await context.api.metadataPublisher.create(next);
+      next.id = insert.id;
       return next;
     }
 

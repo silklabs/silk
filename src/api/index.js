@@ -7,6 +7,7 @@ import Account from './gen/account';
 import Device from './gen/device';
 import BlobPublisher from './gen/blob_publisher';
 import CrashPublisher from './gen/crash_publisher';
+import MetadataPublisher from './gen/metadata_publisher';
 
 // XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
@@ -52,6 +53,7 @@ export default function create(options) {
     device: new Device(config.serverUrl),
     blobPublisher: new BlobPublisher(config.serverUrl),
     crashPublisher: new CrashPublisher(config.serverUrl),
+    metadataPublisher: new MetadataPublisher(config.serverUrl),
   };
 
   let exports = {

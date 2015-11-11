@@ -2,7 +2,6 @@
   "name": "api-schema",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
   "scripts": {
     "postinstall": "babel src -d build",
     "test": "mocha $(find test -name '*_test.js')"

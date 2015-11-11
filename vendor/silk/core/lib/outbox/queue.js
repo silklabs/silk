@@ -8,6 +8,7 @@
 
 import assert from 'assert';
 import fs from 'mz/fs';
+import { statSync } from 'fs';
 import path from 'path';
 import createLog from '../log';
 
@@ -104,22 +105,23 @@ export default class Queue extends EventEmitter {
     // Sort numerically.
     paths.sort((a, b) => a - b);
 
-    let stats = await Promise.all(paths.map(async (directoryPath) => {
-      let absPath = path.join(storagePath, directoryPath);
-      return fs.stat(absPath);
-    }));
 
-    return stats.reduce((result, value, idx) => {
-      // Skip over anything that is not a directory it is certainly not what we
-      // are looking for.
-      if (!value.isDirectory()) {
-        let absPath = path.join(storagePath, paths[idx]);
+    // The outbox needs to be fully enumerated before continuing so heads down
+    // and let's make this as quick as possible.
+    let items = [];
+    log.verbose(`statSyncing ${paths.length} entries`);
+    paths.forEach((directoryPath) => {
+      const absPath = path.join(storagePath, directoryPath);
+      const value = statSync(absPath);
+
+      if (value.isDirectory()) {
+        items.push(parseInt(directoryPath, 10));
+      } else {
         log.warn(`Skipping over path which is not a directory: ${absPath}`);
-        return result;
       }
-      result.push(parseInt(paths[idx], 10));
-      return result;
-    }, []);
+    });
+    log.verbose(`statSync-ing complete`);
+    return items;
   }
 
   constructor(options) {

@@ -35,10 +35,10 @@ export default function (ctx: RouteContext) {
     name: 'ack',
     description: 'Acknowledge a blob upload',
     output: Joi.object().keys({
-      url: Joi.string().uri()
+      url: Joi.string().uri().required()
     }),
     input: Joi.object().keys({
-      url: Joi.string().uri()
+      url: Joi.string().uri().required()
     }).required()
   }, async (req, res) => {
     await ctx.blobHandler.postAck(req, res);
@@ -48,11 +48,13 @@ export default function (ctx: RouteContext) {
     path: 'put-url/:type',
     method: 'post',
     params: [
-      { name: 'type', description: 'Type of blob.' },
+      { name: 'type', description: 'Type of blob. (video, etc...)' },
     ],
     name: 'putUrl',
     description: 'Get the blob put url',
     output: Joi.object().keys({
+      putUrl: Joi.string().required(),
+      putHeaders: Joi.object().required()
     }),
     input: Joi.object().keys({
       contentLength: Joi.number().required(),

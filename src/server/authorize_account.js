@@ -1,6 +1,6 @@
-/* @flow */
 /**
  * Middleware to authorize accounts.
+ * @flow
  */
 
 import jwtMiddleware from './jwt';

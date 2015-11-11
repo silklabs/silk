@@ -1,6 +1,6 @@
-/* @flow */
 /**
  * Middleware to authorize devices.
+ * @flow
  */
 
 import jwtMiddleware from './jwt';

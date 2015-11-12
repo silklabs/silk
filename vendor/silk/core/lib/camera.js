@@ -168,6 +168,7 @@ class CameraStream extends EventEmitter {
     super();
     this.timeline = timeline;
     this._ready = false;
+    this._recording = false;
     this._cvVideoCapture = null;
     this._cvVideoCaptureBusy = false;
     this._queue = []; // Queue of pending preview frame requests
@@ -352,7 +353,7 @@ class CameraStream extends EventEmitter {
 
       let captureEvent = JSON.parse(line);
       if (captureEvent.eventName === 'error') {
-        this.emit('error');
+        log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
 
@@ -447,7 +448,7 @@ class CameraStream extends EventEmitter {
    */
   _readPreviewFrame() {
     this._scheduleNextPreviewFrame();
-    if (!this._cvVideoCapture) {
+    if (!this._cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
@@ -532,16 +533,22 @@ class CameraStream extends EventEmitter {
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`, tagInfo);
         this._videoTagReceived = true;
-        this.timeline.addVideo(when, durationMs, pkt);
+        if (this._recording) {
+          this.timeline.addVideo(when, durationMs, pkt);
+        }
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`, tagInfo);
-        this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+        if (this._recording) {
+          this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+        }
         break;
       case TAG_MIC:
         log.debug(`TAG_MIC ${when}`, tagInfo);
         this._micTagReceived = true;
-        this.emit('mic-data', {when: when, frames: pkt});
+        if (this._recording) {
+          this.emit('mic-data', {when: when, frames: pkt});
+        }
         break;
       default:
         // Flush the buffer and restart the socket
@@ -569,7 +576,7 @@ class CameraStream extends EventEmitter {
   /**
    * Initialize camera
    */
-  async start() {
+  async init() {
     if (this._startPromiseCallbacks) {
       throw new Error(`Re-entered start?`);
     }
@@ -579,6 +586,20 @@ class CameraStream extends EventEmitter {
     });
     this._init();
     await startPromise;
+  }
+
+  startRecording() {
+    if (!this._recording) {
+      this._recording = true;
+      log.verbose('recording started');
+    }
+  }
+
+  stopRecording() {
+    if (this._recording) {
+      this._recording = false;
+      log.verbose('recording stopped');
+    }
   }
 
   /**

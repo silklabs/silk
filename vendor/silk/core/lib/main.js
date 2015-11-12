@@ -120,10 +120,7 @@ function boot() {
       assert(outbox, 'must have outbox when initializing timeline');
       timeline = new Timeline(id.toString(), outbox);
       camera = require('./camera')(timeline);
-      camera.on('error', () => {
-        log.warn('Camera command errored out');
-      });
-      return camera.start();
+      return camera.init();
     })
     .then(() => {
       util.setprop('silk.boot_completed',
@@ -303,12 +300,13 @@ server.on('cmd', cmd => {
 // Config service...
 config.on('unconfigured', () => {
   if (ui.goto('setup')) {
+    camera.stopRecording();
     server.disconnect();
   }
 });
 config.on('configured', () => {
   if (ui.goto('connecting')) {
-
+    camera.startRecording();
     wifi.online()
     .then(() => {
       update.start();
@@ -374,6 +372,7 @@ function shutdown(finalPromiseFactory) {
       if (!uiStateWasSet) {
         log.warn(`ui state was set to 'powerdown' more than once`);
       }
+      camera.stopRecording();
       return crashreporter.shutdown();
     })
     .then(() => {

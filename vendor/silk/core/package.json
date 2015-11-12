@@ -6,7 +6,7 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "install": "./build",
-    "test": "mocha $(find test -name '*_test.js')"
+    "test": "DEBUG=* mocha $(find test -name '*_test.js')"
   },
   "dependencies": {
     "babel-runtime": "^5.8.20",

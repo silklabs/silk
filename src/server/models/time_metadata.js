@@ -20,7 +20,7 @@ function idQuery(id) {
   return {id};
 }
 
-const _idKeys = ['deviceId', 'deviceIds', 'accountId'];
+const _idKeys = ['deviceId', 'deviceIds'];
 function deviceOrAccountQuery(payload, addlQuery) {
   if (_idKeys.map(key => payload[key]).filter(value => !!value).length !== 1) {
     throw new Error(`Query needs to specify exactly one of ${_idKeys.join(', ')}`);
@@ -30,8 +30,6 @@ function deviceOrAccountQuery(payload, addlQuery) {
     query.deviceId = payload.deviceId;
   } else if (payload.deviceIds) {
     query.deviceId = { $in: payload.deviceIds };
-  } else if (payload.accountId) {
-    query.accountId = payload.accountId;
   }
   return Object.assign(query, addlQuery);
 }
@@ -114,7 +112,6 @@ export default class TimeMetadata extends Base {
       // One of these must be specified.
       deviceId: Joi.string().optional(),
       deviceIds: Joi.array().items(Joi.string().required()).optional(),
-      accountId: Joi.string().optional(),
 
       metaType: TYPES,
       startTime: Joi.number().required(),
@@ -126,7 +123,6 @@ export default class TimeMetadata extends Base {
       // One of these must be specified.
       deviceId: Joi.string().optional(),
       deviceIds: Joi.array().items(Joi.string().required()).optional(),
-      accountId: Joi.string().optional(),
 
       metaType: TYPES,
       time: Joi.number().required(),

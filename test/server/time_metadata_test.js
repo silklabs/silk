@@ -110,20 +110,6 @@ suite('time metadata apis', () => {
       assert.equal(items.length, 0);
     });
 
-    test('find/byid - found', async () => {
-      let findById = await account.api.metadata.findById(first.id);
-      assert.deepEqual(findById.data, first.data);
-    });
-
-    test('find/byid - missing', async () => {
-      await context.httpErrCode(404, async () => {
-        await account.api.metadata.findById(
-          // must be 12 byte string to make mongodb accept the value
-          'aaaaaaaaaaaa'
-        );
-      });
-    });
-
     test('find/near - missing (outside of time)', async () => {
       await context.httpErrCode(404, async () => {
         await account.api.metadata.findOneNear({

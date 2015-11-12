@@ -46,25 +46,6 @@ export default function (ctx: RouteContext) {
   });
 
   api.define({
-    path: 'find/id/:id',
-    method: 'post',
-    params: [{
-      name: 'id',
-      description: 'time metadata id'
-    }],
-    name: 'findById',
-    description: 'Find metadata id',
-    output: Joi.alternatives().try([
-      TimeMetadata.SCHEMA.metadata,
-      EMPTY,
-    ]),
-  }, async (req, res) => {
-    send404OnEmpty(res, await ctx.timeMeta.findById({
-      id: req.params.id
-    }));
-  });
-
-  api.define({
     path: 'find/near',
     method: 'post',
     name: 'findOneNear',

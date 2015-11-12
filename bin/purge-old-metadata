@@ -1,0 +1,49 @@
+#! ./node_modules/.bin/babel-node --harmony
+
+import loadConfig from '../src/server/config';
+import createDb from '../src/server/db';
+
+import { ArgumentParser } from 'argparse';
+import TimeMetadata from '../src/server/models/time_metadata';
+
+let parser = new ArgumentParser();
+
+parser.addArgument(['profile'], {
+  help: 'Configuration profile',
+  type: (value) => {
+    return loadConfig(value);
+  }
+});
+
+parser.addArgument(['days'], {
+  help: 'If data is older then given days will be purged...',
+  type: (value) => {
+    return parseInt(value, 10);
+  }
+});
+
+async function main() {
+  let args = parser.parseArgs(process.argv.slice(2));
+
+  let db = await createDb(args.profile);
+  let meta = new TimeMetadata(db);
+
+  let daysAgo = new Date();
+  daysAgo.setDate(daysAgo.getDate() - args.days);
+
+  console.log(`Purging data older then ${daysAgo}`);
+
+  let metas = await meta.collection.remove({
+    startUTC: {
+      $lt: daysAgo.valueOf()
+    }
+  });
+  console.log(metas);
+  process.exit();
+}
+
+main().catch(err => {
+  setTimeout(() => {
+    throw err;
+  });
+});

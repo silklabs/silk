@@ -185,6 +185,20 @@ suite('crash report', () => {
       await fs.writeFile(tombstonePath('tombstone_1'), buffer);
       await debuggerdTrigger(stream);
 
+      // debuggerdTrigger() guarantees that the signal was sent to the crash
+      // report but not that the tombstone has been fully processed.  Block
+      // until the tombstone_1 file is removed implying that it has been
+      // successfully queued in the outbox.
+      await new Promise(resolve => {
+        let tick = setInterval(() => {
+          fs.stat(tombstonePath('tombstone_1'))
+          .catch(err => {
+            clearInterval(tick);
+            resolve();
+          });
+        }, 500);
+      });
+
       // Test both that shutdown works and use it as a mechanism to ensure we
       // have written everything to disk...
       await crash.shutdown();

@@ -71,7 +71,7 @@ suite('time metadata', () => {
     assert.equal(outOfBounds.url, 'three');
   });
 
-  test('.findInTimeInterval', async () => {
+  test('.findAllInTimeInterval', async () => {
     let deviceId = 'baz';
     let metaType = 'event';
     let records = [{
@@ -107,7 +107,7 @@ suite('time metadata', () => {
       let {id} = await subject.create(record);
       record.id = id;
     }
-    let results = await subject.findInTimeInterval({
+    let results = await subject.findAllInTimeInterval({
       deviceId,
       metaType,
       startTime: 100,

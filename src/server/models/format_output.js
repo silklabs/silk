@@ -10,5 +10,11 @@ export default function formatOutput(record) {
     delete record._id;
     record.id = id.toString();
   }
+
+  // Explicitly return null so we can use results /w Joi validation.
+  if (record === undefined) {
+    return null;
+  }
+
   return record;
 }

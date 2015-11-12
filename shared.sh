@@ -294,31 +294,37 @@ replace() {
 mergerelease() {
   local from=$1
   local to=$2
+
   for g in $GITS; do
     pushd $g
-    (
-      set -x
+    if ! git diff --name-only --exit-code origin/$to origin/$from; then
+      echo $g: merging $from into $to
+      (
+        set -x
 
-      #
-      # http://stackoverflow.com/questions/173919/is-there-a-theirs-version-of-git-merge-s-ours
-      #
-      git checkout $to || git branch $to  #<!-- TODO: Remove this line after first release is made
-      git checkout $to
-      git merge -s ours $from -m "Automated release"
-      git branch -D tmp || true
-      git branch tmp
-      git reset --hard $from
-      git reset --soft tmp
-      git commit --amend -C HEAD
-      git branch -D tmp
-      git diff HEAD $from
+        #
+        # http://stackoverflow.com/questions/173919/is-there-a-theirs-version-of-git-merge-s-ours
+        #
+        git checkout $to || git branch $to  #<!-- TODO: Remove this line after first release is made
+        git checkout $to
+        git merge -s ours $from -m "Automated release"
+        git branch -D tmp || true
+        git branch tmp
+        git reset --hard $from
+        git reset --soft tmp
+        git commit --amend -C HEAD
+        git branch -D tmp
+        git diff HEAD $from
 
-      # Fix release commit message
-      echo "Automated release" > msg
-      echo >> msg
-      git shortlog ${to}~1..${to} >> msg
-      git commit --amend -F msg
-    )
+        # Fix release commit message
+        echo "Automated release" > msg
+        echo >> msg
+        git shortlog ${to}~1..${to} >> msg
+        git commit --amend -F msg
+      )
+    else
+      echo $g: NOT merging $from into $to, no changes
+    fi
     popd > /dev/null
   done
 }

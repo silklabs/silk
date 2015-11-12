@@ -161,7 +161,13 @@ updatebranch__silk_npms() {
             local HEAD=$to
             if [[ $to == release ]]; then
               # Lock to SHA1 for release branch
-              HEAD=$(git -C ../$p rev-parse HEAD)
+              if [[ "$p" = "silk-api" ]]; then
+                # TODO: Rename either "silk-api" or "silk-api-node" in
+                # the package.json
+                HEAD=$(git -C ../${p}-node rev-parse HEAD)
+              else
+                HEAD=$(git -C ../$p rev-parse HEAD)
+              fi
             fi
             updatePackageVersion $package_json $p $HEAD
           done

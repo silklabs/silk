@@ -12,7 +12,6 @@ import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import ConfigSessionListener from './config_session_listener';
 import createLog from '../log';
 import { EventEmitter } from 'events';
-import eventToPromise from 'event-to-promise';
 import fs from 'mz/fs';
 import getBTLE from '../btle';
 import getDeviceId from '../deviceid';
@@ -49,7 +48,6 @@ class DeviceConfig extends EventEmitter {
   _initializing = false;
   _deviceId = ``;
   _btle = null;
-  _networkStatus = null;
   _wifiAbortConnection = null;
   _unconfigurePromise = null;
   _socketSessionListener = null;
@@ -63,6 +61,7 @@ class DeviceConfig extends EventEmitter {
     const config = {
       registrarPublicKey: secret.publicKey,
       registrationToken: secret.regToken,
+      serverUrl: secret.serverUrl,
       ...response,
     };
 
@@ -109,6 +108,14 @@ class DeviceConfig extends EventEmitter {
     assert(secret.publicKey);
     assert(secret.regToken);
 
+    // Only accept the server URL from the app in development.  In production
+    // the server URL is locked to avoid the potential of device
+    // hijacking (TODO: Need to clarify this requirement).
+    if (!util.getboolprop('ro.debuggable')) {
+      secret.serverUrl = null;
+    }
+    this._setApiServerUrl(secret.serverUrl);
+
     try {
       await wifi.forgetNetwork();
       await wifi.joinNetwork(secret.accessPoint, secret.password);
@@ -130,8 +137,8 @@ class DeviceConfig extends EventEmitter {
       log.info('Connecting to wifi');
 
       await Promise.race([
-        // Race between a successful connection to the internet, and...
-        eventToPromise(this._networkStatus, 'online'),
+        // Race between a successful wifi connection and...
+        wifi.online(),
 
         // ... the deferred rejection if we need to break out of a connection
         // loop.
@@ -166,7 +173,7 @@ class DeviceConfig extends EventEmitter {
       // completely registered.
       await this._persistConfig(secret, response);
     } catch (error) {
-      log.warn('Failed to register device, starting over', error);
+      log.warn('Failed to register device, starting over', error.stack);
 
       this._wifiAbortConnection = null;
 
@@ -269,7 +276,23 @@ class DeviceConfig extends EventEmitter {
     return DeviceConfig.CONFIG_BEACON_INFO;
   }
 
-  async init(networkStatus) {
+  /*
+   Sets the server URL used by the API.
+
+   If serverUrl is null, try the URL persisted in the device configuration first
+   then fall back to the default URL in the API itself
+  */
+  _setApiServerUrl(serverUrl) {
+    if (!serverUrl) {
+      if (this._config && this._config.success) {
+        serverUrl = this._config.serverUrl;
+      }
+    }
+    log.info(`api serverUrl: ${serverUrl}`);
+    api.loadConfig({serverUrl: serverUrl});
+  }
+
+  async init() {
     if (this._initialized) {
       return Promise.reject(new Error('Already initialized'));
     }
@@ -279,11 +302,7 @@ class DeviceConfig extends EventEmitter {
     }
 
     this._initializing = true;
-    this._networkStatus = networkStatus;
-
     log.info('Initializing config service');
-
-    assert(api.accessToken, 'Has api.accessToken set');
 
     let [ deviceId, btle ] = await Promise.all([
       getDeviceId(),
@@ -296,6 +315,7 @@ class DeviceConfig extends EventEmitter {
     assert(btle.mode === btle.MODE_OFF);
 
     this._deviceId = deviceId.pub;
+    api.accessToken = deviceId;
     this._btle = btle;
 
     log.info('Device configuration', this._config);
@@ -303,6 +323,8 @@ class DeviceConfig extends EventEmitter {
     this._btle.beaconInfo = this._getBeaconInfo();
 
     if (this._config && this._config.success) {
+
+      this._setApiServerUrl();
       this._socketSessionListener = new NormalSessionListener(this);
       this._btle.socketSessionListener = this._socketSessionListener;
 

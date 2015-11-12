@@ -27,7 +27,6 @@ import config from './config';
 import sensors from './sensors';
 import server from './server';
 import fs from 'mz/fs';
-import deferred from './deferred';
 
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
@@ -44,10 +43,6 @@ const log = createLog('main');
 // Start the profile server ASAP.
 initProfiler();
 
-// Wait for 60 seconds for boot before issuing a warning.
-const BOOT_TIMEOUT = 60 * 1000;
-// How frequently (in ms) we check if the boot prop has been set.
-const BOOT_CHECK_INTERVAL = 1000;
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
@@ -69,33 +64,51 @@ let ext;
 let diag;
 let hue;
 
+// true once the device has a configuration and is ready for normal operation
+let configured = false;
+
 /**
- * Wait until system has been booted.
+ * Wait for bootup and initialize the device.
  */
-function _waitForSysBoot(startTime, defer) {
-  // Don't use an arbitrarily long promise chain if one is passed use it.
-  startTime = startTime || Date.now();
-  defer = defer || deferred();
+function main() {
+  // Start these ASAP so that unhandled exceptions in the boot sequence will
+  // be properly recorded.
+  networkStatus = new NetworkStatus(wifi,
+    () => {
+      // Instead of using the default "Internet available test", tell
+      // NetworkStatus to only report online if the configured server is
+      // accessible (eg. a local setup without full Internet access)
+      if (!configured) {
+        // No configuration so abort early
+        log.verbose(`Offline as device is not configured`);
+        return Promise.resolve(false);
+      }
+      const serverUrl = api.config.serverUrl;
+      return new Promise((accept, reject) => {
+        isReachable(serverUrl, (err, reachable) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          log.verbose(`${serverUrl} reachable? ${reachable}`);
+          accept(reachable);
+        });
+      });
+    }
+  );
+  networkStatus.hintSocket = server;
 
-  // If we have waited a long time to boot log an error but keep trying.
-  if (Date.now() - startTime > BOOT_TIMEOUT) {
-    log.error(`Boot took over ${BOOT_TIMEOUT} ms something might be broken`);
-  }
+  outbox = initOutbox(networkStatus);
+  crashreporter = makeCrashReporter(outbox);
+  jsErrors(crashreporter);
 
-  if ('1' === util.getprop('sys.boot_completed')) {
-    defer.accept();
-  } else {
-    log.info('Waiting for sys.boot_completed=1');
-    setTimeout(_waitForSysBoot.bind(this, startTime, defer), BOOT_CHECK_INTERVAL);
-  }
+  return getDeviceId()
+    .then(deviceId => {
+      id = deviceId;
+      crashreporter.assignDeviceId(deviceId);
+      logcat = new Logcat(deviceId.toString(), outbox);
+      logcat.start();
 
-  return defer.promise;
-}
-
-
-function boot() {
-  return _waitForSysBoot().
-    then(() => {
       // Wait for the battery to initialize and block until there's enough
       // capacity to fully boot.
       return battery.init();
@@ -139,49 +152,7 @@ function boot() {
       });
 
       log.info('Load configuration');
-      return config.init(networkStatus);
-    });
-}
-
-/**
- * Wait for bootup and initialize the device.
- */
-function main() {
-  // Start these ASAP so that unhandled exceptions in the boot sequence will
-  // be properly recorded.
-  networkStatus = new NetworkStatus(wifi,
-    () => {
-      // Instead of using the default "Internet available test", tell
-      // NetworkStatus to only report online if the configured server is
-      // assessable (eg. a local setup without full Internet access)
-      return new Promise((accept, reject)=> {
-        isReachable(api.config.serverUrl, (err, reachable) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          log.verbose(`${api.config.serverUrl} reachable? ${reachable}`);
-          accept(reachable);
-        });
-      });
-    }
-  );
-
-  networkStatus.hintSocket = server;
-
-  outbox = initOutbox(networkStatus);
-  crashreporter = makeCrashReporter(outbox);
-  jsErrors(crashreporter);
-
-  return getDeviceId()
-    .then(deviceId => {
-      id = deviceId;
-      api.accessToken = deviceId;
-      crashreporter.assignDeviceId(deviceId);
-      logcat = new Logcat(deviceId.toString(), outbox);
-      logcat.start();
-
-      return boot();
+      return config.init();
     })
     .then(() => {
       // Set global state up.
@@ -299,6 +270,7 @@ server.on('cmd', cmd => {
 
 // Config service...
 config.on('unconfigured', () => {
+  configured = false;
   if (ui.goto('setup')) {
     camera.stopRecording();
     server.disconnect();
@@ -306,6 +278,7 @@ config.on('unconfigured', () => {
 });
 config.on('configured', () => {
   if (ui.goto('connecting')) {
+    configured = true;
     camera.startRecording();
     wifi.online()
     .then(() => {

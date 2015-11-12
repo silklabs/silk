@@ -78,19 +78,8 @@ https://silk-server-master.herokuapp.com/.  You can view live cameras in your
 desktop browser by navigating to https://silk-webapp-master.herokuapp.com.
 
 If you would like to use a local server for development purposes or otherwise,
-configure the device with:
-
-```
-$ adb shell setprop persist.silk.server.url http://192.168.0.3:5000/
-$ adb shell setprop ctl.restart silk
-```
-This information is persisted in `/data/property/`. To revert back to the
-production server:
-
-```
-$ adb shell setprop persist.silk.server.url ""
-$ adb shell setprop ctl.restart silk
-```
+reconfigure the device using an app that is already connected to that local
+server (`persist.silk.server.url` is now obsolete)
 
 ## Debugging
 

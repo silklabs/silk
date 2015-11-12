@@ -4,8 +4,17 @@
 
 set -o pipefail
 
+
+NODE_MODULES_BIN=$(dirname $(readlink -f $0))/node_modules/.bin/
+
+
+if [[ ! -d $NODE_MODULES_BIN ]]; then
+  echo "$NODE_MODULES_BIN not found, please run |npm install|"
+  exit 1
+fi
+
 # Check for tools first
-PATH=$PATH:$(dirname $(readlink -f $0))/node_modules/.bin/
+PATH=$PATH:$NODE_MODULES_BIN
 TOOLS="jq xmlstarlet sort-json"
 for tool in $TOOLS; do
   if ! which $tool > /dev/null; then

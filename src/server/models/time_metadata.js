@@ -1,9 +1,7 @@
-/* @flow weak */
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 /**
-Time metadata store.
+ * Time metadata store.
+ *
+ * @flow weak
 */
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
@@ -36,6 +34,21 @@ function deviceOrAccountQuery(payload, addlQuery) {
     query.accountId = payload.accountId;
   }
   return Object.assign(query, addlQuery);
+}
+
+// XXX: Once again lame to have duplicate type entries.
+type Metadata = {
+  id: ?string;
+  deviceId: string;
+  metaType: string;
+  startUTC: number;
+  endUTC: number;
+  url: ?string;
+  data: ?{[key: string]: any};
+};
+
+type MetadataId = {
+  id: string;
 }
 
 export default class TimeMetadata extends Base {
@@ -97,7 +110,7 @@ export default class TimeMetadata extends Base {
 
     // Finding events in a time range
 
-    findInTimeInterval: Joi.object().keys({
+    findAllInTimeInterval: Joi.object().keys({
       // One of these must be specified.
       deviceId: Joi.string().optional(),
       deviceIds: Joi.array().items(Joi.string().required()).optional(),
@@ -144,8 +157,8 @@ export default class TimeMetadata extends Base {
 
   // Finding events in a time range
 
-  async findInTimeInterval(payload) {
-    payload = this.validate(payload, 'findInTimeInterval');
+  async findAllInTimeInterval(payload): Promise<Array<Metadata>> {
+    payload = this.validate(payload, 'findAllInTimeInterval');
 
     let result = await this.collection.find(deviceOrAccountQuery(payload, {
       metaType: payload.metaType,
@@ -160,7 +173,7 @@ export default class TimeMetadata extends Base {
     return result.map(formatOutput);
   }
 
-  async findBeforeTime(payload) {
+  async findBeforeTime(payload): Promise<Array<Metadata>> {
     payload = this.validate(payload, 'findBeforeTime');
     let result = await this.collection.find(deviceOrAccountQuery(payload, {
       metaType: payload.metaType,
@@ -173,13 +186,13 @@ export default class TimeMetadata extends Base {
 
   // Finding one specific event
 
-  async findById(payload) {
+  async findById(payload): Promise<?Metadata> {
     payload = this.validate(payload, 'findById');
     let result = await this.collection.findOne(idQuery(payload.id));
     return formatOutput(result);
   }
 
-  async findNearTime(payload) {
+  async findNearTime(payload): Promise<?Metadata> {
     payload = this.validate(payload, 'findNearTime');
 
     // First try to find one in the appropriate range...
@@ -202,7 +215,7 @@ export default class TimeMetadata extends Base {
     return formatOutput(result);
   }
 
-  async findOneBeforeTime(payload) {
+  async findOneBeforeTime(payload): Promise<?Metadata> {
     payload = this.validate(payload, 'findOneByTime');
     let result = (await this.collection.find({
       deviceId: payload.deviceId,
@@ -214,7 +227,7 @@ export default class TimeMetadata extends Base {
     return formatOutput(result);
   }
 
-  async findOneAfterTime(payload) {
+  async findOneAfterTime(payload): Promise<?Metadata> {
     payload = this.validate(payload, 'findOneByTime');
     let result = (await this.collection.find({
       deviceId: payload.deviceId,
@@ -229,22 +242,22 @@ export default class TimeMetadata extends Base {
   /**
    * Insert the next item in the time series.
    */
-  async insert(payload) {
+  async create(payload: Metadata): Promise<MetadataId> {
     payload = this.validate(payload, 'metadata');
     if (payload.id) {
-      return await this.insertOrUpdate(payload);
+      return await this.createOrUpdate(payload);
     }
     let newItem = await this.collection.insert(payload);
     return { id: newItem._id.toString() };
   }
 
-  async update(id, payload) {
+  async update(id, payload): Promise<MetadataId> {
     payload = this.validate(payload, 'update');
     await this.collection.update(idQuery(id), {$set: payload});
     return { id };
   }
 
-  async insertOrUpdate(payload) {
+  async createOrUpdate(payload): Promise<MetadataId> {
     payload = this.validate(payload, 'metadata');
     let { id } = payload;
     if (typeof id !== 'string') {

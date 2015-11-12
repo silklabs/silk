@@ -26,6 +26,18 @@ export function sha256(context, text) {
   return sha1.digest('hex');
 }
 
+export async function httpErrCode(context, code, fn) {
+  try {
+    await fn();
+  } catch (err) {
+    if (err.code !== code) {
+      throw err;
+    }
+    return;
+  }
+  throw new Error('Expected an http error to be thrown...');
+}
+
 export async function get(context, path) {
   let req = request.get(`${context.url}${path}`);
   return await req.end().catch(err => {
@@ -54,7 +66,13 @@ export async function testAccount(context) {
     publicKey: id.toString()
   });
 
+  let api = createApi({ serverUrl: context.url });
+  // Fail fast...
+  api.maxRetries = 0;
+  api.accessToken = id;
+
   return {
+    api,
     accessToken: id,
     record,
     password: 'password'
@@ -64,6 +82,12 @@ export async function testAccount(context) {
 export async function testDevice(context) {
   let account = await testAccount(context);
   return await registeredDevice(context, account.accessToken);
+}
+
+export async function testPair(context) {
+  let account = await testAccount(context);
+  let device = await registeredDevice(context, account.accessToken);
+  return { device, account };
 }
 
 export async function registeredDevice(ctx, accountAccessToken) {
@@ -87,12 +111,15 @@ export async function registeredDevice(ctx, accountAccessToken) {
 
   // Act as the device rather then the account...
   api.accessToken = deviceAccessToken;
+  // Fail fast...
+  api.maxRetries = 0;
   await api.device.completeRegistration({
     registrarPublicKey: accountAccessToken.toString(),
     registrationToken: token
   });
 
   return {
+    api,
     accessToken: deviceAccessToken,
     record: device
   };

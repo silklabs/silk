@@ -26,6 +26,7 @@ export type RouteContext = {
   devices: Devices;
   emailSender: EmailSender;
   crashMeta: CrashMetadata;
+  timeMeta: TimeMetadata,
   config: any; // TODO
   blobs: any; // TODO
   blobHandler: any; // TODO

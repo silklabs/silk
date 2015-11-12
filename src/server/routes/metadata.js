@@ -1,0 +1,122 @@
+/**
+ * This module provides routes to read metadata for accounts.
+ *
+ * @flow
+ */
+import { Router } from 'express';
+import { expressApi } from 'api-schema';
+import * as Joi from 'joi';
+import authorizeAccount from '../authorize_account';
+
+import TimeMetadata from '../models/time_metadata';
+
+import type { RouteContext } from '../server';
+
+const PREFIX = '/v1/metadata/';
+const EMPTY = Joi.any().only([null]);
+
+// Must contain metadata items but can be an empty array...
+const METADATA_ARRAY =
+  Joi.array().items(TimeMetadata.SCHEMA.metadata.optional()).required();
+
+// XXX: Use better input types...
+function send404OnEmpty(res: any, output: any): void {
+  if (!output) {
+    res.sendStatus(404);
+    return;
+  }
+  res.respond(output);
+}
+
+export default function (ctx: RouteContext) {
+
+  let routes = new Router();
+
+  routes.use(PREFIX, authorizeAccount({
+    nonce: ctx.nonce,
+    accounts: ctx.accounts
+  }));
+
+  let api = expressApi(routes, {
+    name: 'metadata',
+    prefix: PREFIX,
+    description: `
+      Metadata reading methods...
+    `,
+  });
+
+  api.define({
+    path: 'find/id/:id',
+    method: 'post',
+    params: [{
+      name: 'id',
+      description: 'time metadata id'
+    }],
+    name: 'findById',
+    description: 'Find metadata id',
+    output: Joi.alternatives().try([
+      TimeMetadata.SCHEMA.metadata,
+      EMPTY,
+    ]),
+  }, async (req, res) => {
+    send404OnEmpty(res, await ctx.timeMeta.findById({
+      id: req.params.id
+    }));
+  });
+
+  api.define({
+    path: 'find/near',
+    method: 'post',
+    name: 'findOneNear',
+    description: 'Find metadata id',
+    input: TimeMetadata.SCHEMA.findNearTime,
+    output: Joi.alternatives().try([
+      TimeMetadata.SCHEMA.metadata,
+      EMPTY,
+    ]),
+  }, async (req, res) => {
+    // TODO: Validate deviceId against known devices for this account.
+    send404OnEmpty(res, await ctx.timeMeta.findNearTime(req.body));
+  });
+
+  api.define({
+    path: 'findall/interval',
+    method: 'post',
+    name: 'findAllInTimeInterval',
+    description: 'Find all metadata entries in a particular time interval',
+    input: TimeMetadata.SCHEMA.findAllInTimeInterval,
+    output: METADATA_ARRAY,
+  }, async (req, res) => {
+    // TODO: Validate deviceId against known devices for this account.
+    res.respond(await ctx.timeMeta.findAllInTimeInterval(req.body));
+  });
+
+  api.define({
+    path: 'find/aftertime',
+    method: 'post',
+    name: 'findOneAfterTime',
+    description: 'Find one metadata entry after given time',
+    input: TimeMetadata.SCHEMA.findOneByTime,
+    output: Joi.alternatives().try([
+      TimeMetadata.SCHEMA.metadata,
+      EMPTY,
+    ]),
+  }, async (req, res) => {
+    // TODO: Validate deviceId against known devices for this account.
+    send404OnEmpty(res, await ctx.timeMeta.findOneAfterTime(req.body));
+  });
+
+  api.define({
+    path: 'findall/beforetime',
+    method: 'post',
+    name: 'findAllBeforeTime',
+    description: 'Find all metadata entries in a before a particular time',
+    input: TimeMetadata.SCHEMA.findBeforeTime,
+    output: METADATA_ARRAY,
+  }, async (req, res) => {
+    // TODO: Validate deviceId against known devices for this account.
+    res.respond(await ctx.timeMeta.findBeforeTime(req.body));
+  });
+
+  return api;
+}

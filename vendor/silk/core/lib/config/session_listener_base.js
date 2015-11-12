@@ -83,6 +83,10 @@ const server_state_map = new Map([
   [ 'reconnecting', 'server_reconnecting' ],
 ]);
 
+const HEARTBEAT_PROP_NAME = `_<3_<3_<3_`;
+const HEARTBEAT_INTERVAL_MS = 1000;
+const HEARTBEAT_WAIT_MS = 5000;
+
 export default class SessionListenerBase extends EventEmitter {
   static WIFI_STATE_MAP = wifi_state_map;
   static WIFI_ERROR_MAP = wifi_error_map;

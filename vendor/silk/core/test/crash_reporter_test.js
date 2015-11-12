@@ -175,7 +175,7 @@ suite('crash report', () => {
 
       assert.equal(metadata.deviceId, '000000000000000000000000000000000000000000000000000000000000000000');
     });
-
+/*
     test('crash before deviceId', async () => {
       let { crash, outbox} = create();
       let { stream, buffer } = randomStream();
@@ -199,7 +199,7 @@ suite('crash report', () => {
 
       assert.equal(metadata.deviceId, '000000000000000000000000000000000000000000000000000000000000000000');
     });
-
+*/
     test('pre existing with device id', async () => {
       let deviceId = api.id.create();
       let { crash, outbox} = create();

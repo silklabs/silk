@@ -5,6 +5,10 @@ osx_image: xcode7
 before_install:
   # Update brew twice because the first run can fail: https://github.com/Homebrew/homebrew/issues/42553
   - brew update; brew update
+  - brew reinstall nvm
+  - export NVM_DIR="$PWD/.nvm"
+  - source $(brew --prefix nvm)/nvm.sh
+  - nvm install 4.2
 
 install:
   - .travis/install
@@ -27,6 +31,8 @@ env:
     - PROFILE_UUID="d6f599df-2a83-40fa-89c3-fd40df2f3bc4"
 
 before_script:
+  - node --version
+  - npm --version
   - .travis/add-key.sh
 
 script:

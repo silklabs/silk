@@ -222,13 +222,13 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager)
     if let regionInfo = self.regions[region.identifier] {
       log.info("didDetermineState(\(state.rawValue), \(region))")
-      regionInfo.state = state
-
       if !regionInfo.sentFirstNotification {
         if state == .Inside {
+          regionInfo.state = state
           regionInfo.sentFirstNotification = true
           self.delegate?.regionEntered(self, uuid: regionInfo.uuid)
         } else if state == .Outside {
+          regionInfo.state = state
           regionInfo.sentFirstNotification = true
           self.delegate?.regionExited(self, uuid: regionInfo.uuid)
         }

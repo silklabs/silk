@@ -88,8 +88,8 @@ internal class BLESocketPeripheral: NSObject,
   private var pendingWrites = [Connection]()
   private var nextConnectionId = 0
 
-  init(serviceUuids: [NSUUID]) {
-    log.debug("BLESocketPeripheral(\(serviceUuids))")
+  override init() {
+    log.debug("BLESocketPeripheral()")
 
     self.socketManager = BLESocketManager.getOrCreateInstance()
     self.queue = self.socketManager.methodQueue
@@ -97,21 +97,6 @@ internal class BLESocketPeripheral: NSObject,
     self.peripheralManager =
       CBPeripheralManager(delegate: nil, queue: self.queue)
     self.centralManager = CBCentralManager(delegate: nil, queue: self.queue)
-
-    var addedConfigService = false
-
-    for serviceUuid in serviceUuids {
-      let isConfigService = serviceUuid == RegionMonitor.configBeaconUuid
-      if isConfigService {
-        assert(!addedConfigService)
-        addedConfigService = true
-      }
-
-      let uuid = CBUUID(NSUUID: serviceUuid)
-      self.services[uuid] = ServiceInfo(requiresForeground: isConfigService)
-    }
-
-    assert(addedConfigService)
 
     super.init()
 
@@ -201,13 +186,16 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   func addServiceUuid(uuid: NSUUID) {
+    let requiresForeground = uuid == RegionMonitor.configBeaconUuid
+
     dispatch_async(self.queue) {
       let serviceUuid = CBUUID(NSUUID: uuid)
       log.debug("addServiceUuid(\(serviceUuid))")
 
       assert(self.services[serviceUuid] == nil)
 
-      self.services[serviceUuid] = ServiceInfo(requiresForeground: false)
+      self.services[serviceUuid] =
+        ServiceInfo(requiresForeground: requiresForeground)
     }
   }
 
@@ -325,7 +313,6 @@ internal class BLESocketPeripheral: NSObject,
     assert(self.enabled)
     assert(self.advertisingAllowed)
     assert(!self.advertising, "Already advertising")
-    assert(!self.services.isEmpty)
 
     for (uuid, serviceInfo) in self.services {
       assert(!serviceInfo.installed)
@@ -347,7 +334,6 @@ internal class BLESocketPeripheral: NSObject,
     log.debug("removeAllServices()")
 
     assert(!self.advertising, "Still advertising")
-    assert(!self.services.isEmpty)
 
     for serviceInfo in self.services.values {
       if serviceInfo.installed {
@@ -364,7 +350,6 @@ internal class BLESocketPeripheral: NSObject,
     log.debug("maybeStartAdvertising()")
 
     assert(!self.advertising, "Already advertising")
-    assert(!self.services.isEmpty)
 
     if !self.enabled || !self.advertisingAllowed {
       return

@@ -14,8 +14,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
   override init() {
     self.regionMonitor = RegionMonitor()
-    self.bleSocketPeripheral =
-      BLESocketPeripheral(serviceUuids: regionMonitor.regionUuids)
+    self.bleSocketPeripheral = BLESocketPeripheral()
     
     super.init()
     
@@ -44,6 +43,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     // Configuring logging
     DebugLog.enable(config.debug)
     log.info("Logging level %@", config.debug)
+
+    self.regionMonitor.start()
 
     var reactViewURL: NSURL
     let reactNativeType = config.reactNative.type

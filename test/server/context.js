@@ -52,12 +52,14 @@ export async function post(context, path, json) {
   });
 }
 
+let testAccountId = 0;
+
 export async function testAccount(context) {
   let id = Id.create();
   let account = new Accounts(context.db);
   await account.create({
     publicKey: id.toString(),
-    email: 'user@example.com',
+    email: `user${testAccountId++}@example.com`,
     passwordHash: context.passwordHash('password'),
     userAgent: 'nodejs'
   });

@@ -59,6 +59,17 @@ suite('time metadata apis', () => {
       assert.deepEqual(findAfterTime.data, first.data);
     });
 
+    test('find/bytime/after - with wrong account', async () => {
+      let secondAccount = await context.testAccount();
+      await context.httpErrCode(401, async () => {
+        await secondAccount.api.metadata.findOneAfterTime({
+          deviceId: id,
+          metaType: 'video',
+          time: first.startUTC - 1
+        });
+      });
+    });
+
     test('find/bytime/after - wrong type', async () => {
       await context.httpErrCode(404, async () => {
         await account.api.metadata.findOneAfterTime({

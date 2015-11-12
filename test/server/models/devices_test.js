@@ -66,10 +66,37 @@ suite('devices', () => {
       assert.equal(device.registration.complete, false);
       assert.equal(device.accountId.toString(), account.id);
     });
+  });
 
+  test('.belongsToAccount', async () => {
+    let firstPair = await context.testPair();
+    let firstSecondDevice =
+      await context.registeredDevice(firstPair.account.accessToken);
 
+    let secondPair = await context.testPair();
+    let firstAccountId = firstPair.account.record._id;
+
+    assert(await subject.belongsToAccount(
+      firstAccountId,
+      firstPair.device.accessToken.toString()
+    ), 'single match');
+
+    assert(await subject.belongsToAccount(
+      firstAccountId,
+      firstPair.device.accessToken.toString(),
+      firstSecondDevice.accessToken.toString(),
+    ), 'multiple match');
+
+    assert(!await subject.belongsToAccount(
+      firstAccountId,
+      secondPair.device.accessToken.toString(),
+    ), 'mismatch');
+
+    assert(!await subject.belongsToAccount(
+      firstAccountId,
+      firstPair.device.accessToken.toString(),
+      secondPair.device.accessToken.toString(),
+    ), 'mixed matching and not matching');
   });
 
 });
-
-

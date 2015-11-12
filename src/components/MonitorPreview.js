@@ -96,9 +96,6 @@ export default class extends SocketIOComponent {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!this.props.configuring && nextProps.configuring) {
-      this.subscribeToBLEStatus();
-    }
     if (!this.props.haveVideoStream && nextProps.haveVideoStream) {
       // The device was known to us before, but only just now came
       // online. Start subscribing to the device's socket.io room to

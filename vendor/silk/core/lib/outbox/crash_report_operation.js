@@ -31,10 +31,12 @@ export default class CrashReportOperation extends StreamOperation {
   }
 
   async _getDestination() {
-    let {putUrl, putHeaders} = await api.blob.getPutUrl(
+    let {putUrl, putHeaders} = await api.blobPublisher.putUrl(
       'crashreport',
-      this.size,
-      CONTENT_TYPE
+      {
+        contentLength: this.size,
+        contentType: CONTENT_TYPE
+      }
     );
 
     let writer = httpStream(putUrl, {
@@ -58,8 +60,8 @@ export default class CrashReportOperation extends StreamOperation {
 
     let { putUrl } = this.destination;
     try {
-      let url = await api.blob.ack(putUrl);
-      await api.crashMeta.put(Object.assign(
+      let { url } = await api.blobPublisher.ack({ url: putUrl });
+      await api.crashPublisher.create(Object.assign(
         {},
         this.metadata,
         { url }

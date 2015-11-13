@@ -114,7 +114,7 @@ export default class StreamOperation extends Operation {
     try {
       this.destination = await this._getDestination(remainder);
     } catch (err) {
-      log.error('Failed to get destination stream', err);
+      log.error('Failed to get destination stream', err.stack);
       return { done: false, remainder, error: err };
     }
 

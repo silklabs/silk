@@ -132,10 +132,9 @@ export default class EventTracker extends EventEmitter {
       record.id = await generateRecordID();
     }
     let operation = new APICallOperation({
-      endpoint: 'timeMeta.create',
+      endpoint: 'metadataPublisher.create',
       args: [{
         metaType: 'event',
-        deviceId: this.deviceId,
         id: record.id,
         startUTC: record.startUTC,
         endUTC: record.endUTC,

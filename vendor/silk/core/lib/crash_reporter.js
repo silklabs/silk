@@ -310,7 +310,6 @@ export class CrashReporter {
       let operation = new CrashReportOp({
         size: stats.size,
         metadata: {
-          deviceId: this.getDeviceId(),
           timeStamp: stats.birthtime,
           type: 'tombstone'
         }

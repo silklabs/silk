@@ -279,14 +279,14 @@ class MonitorsView extends AsyncComponent {
     let addlEvents;
     try {
       if (startTime === null) {
-        addlEvents = await this.props.api.timeMeta.findBeforeTime({
+        addlEvents = await this.props.api.metadata.findAllBeforeTime({
           deviceIds: [...this.props.devices.keys()],
           time: endTime,
           metaType: 'event',
           maxCount: EVENTS_PAGE_SIZE,
         });
       } else {
-        addlEvents = await this.props.api.timeMeta.findInTimeInterval({
+        addlEvents = await this.props.api.metadata.findAllInTimeInterval({
           deviceIds: [...this.props.devices.keys()],
           startTime,
           endTime,

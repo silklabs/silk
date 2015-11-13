@@ -67,7 +67,7 @@ export default class Activity extends AsyncComponent {
     }
     let result = null;
     try {
-      result = await api.timeMeta.findOneAfterTime({
+      result = await api.metadata.findOneAfterTime({
         metaType: 'preview',
         deviceId: event.deviceId,
         time: event.startUTC,

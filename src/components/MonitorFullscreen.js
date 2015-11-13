@@ -232,7 +232,7 @@ export default React.createClass({
     let startTime = DateUtil.startOfDay();
 
     let api = this.props.api;
-    api.timeMeta.findOneAfterTime({
+    api.metadata.findOneAfterTime({
       deviceId: this.props.deviceId,
       time: startTime.valueOf(),
       metaType: 'video',
@@ -432,7 +432,7 @@ export default React.createClass({
       return;
     }
 
-    api.timeMeta.findOneAfterTime({
+    api.metadata.findOneAfterTime({
       deviceId: this.props.deviceId,
       metaType: 'video',
       time: segment.startUTC + 1,
@@ -525,7 +525,7 @@ export default React.createClass({
     // TODO: what should we do here if there's a previous seek
     // operation still pending?  For now we assume these don't
     // overlap.
-    this._pendingSeekOperation = api.timeMeta.findByTime({
+    this._pendingSeekOperation = api.metadata.findOneNear({
       metaType: 'video',
       time: startTime,
       deviceId: this.props.deviceId,

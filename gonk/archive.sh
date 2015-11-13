@@ -118,6 +118,15 @@ usage () {
   echo s - Server URL. Default server URL will be used if not provided.
 }
 
+waitForDevice() {
+  adb wait-for-device
+  # adb sometimes errors out, if so, wait and try again
+  while [ $? -ne 0 ]; do
+    sleep 1
+    adb wait-for-device
+  done
+}
+
 while getopts "h?d:s:" opt; do
     case $opt in
     h|\?)
@@ -144,11 +153,11 @@ cd $(dirname $0)
 echo Flash the build and clear userdata/cache partitions
 ./flash.sh -w
 
-adb wait-for-device
+waitForDevice
 
 echo Configuring the device:
 adb root
-adb wait-for-device
+waitForDevice
 
 echo OTA updates enabled.
 adb shell setprop persist.silk.update.enabled true
@@ -188,7 +197,7 @@ adb shell setprop persist.sys.timezone $HOST_TZ
 
 echo Rebooting...
 adb reboot
-adb wait-for-device
+waitForDevice
 echo Device provisioning successful
 
 EOF
@@ -277,11 +286,20 @@ else
   cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<EOF
 #/bin/sh
 
+waitForDevice() {
+  adb wait-for-device
+  # adb sometimes errors out, if so, wait and try again
+  while [ $? -ne 0 ]; do
+    sleep 1
+    adb wait-for-device
+  done
+}
+
 set -ex
 cd \$(dirname \$0)
-adb wait-for-device
+waitForDevice
 adb root
-adb wait-for-device
+waitForDevice
 adb remount
 adb shell stop
 adb shell rm -rf /system/silk

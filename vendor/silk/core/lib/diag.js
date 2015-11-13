@@ -41,38 +41,47 @@ class DiagLogger {
         }
       });
     } else {
+      this.data = '';
+
       // For a non-streaming log (eg, dash) collect all the data and send it
       // in one shot once the process exits.
       helper.stdout.on('data', data => {
         this.data += data.toString();
       });
+
+      helper.on('close', () => {
+        this.send(true);
+        if (this.respawnDelaySecs) {
+          this.respawnTimer = setTimeout( () => {
+            this._launch();
+            this.respawnTimer = null;
+          }, this.respawnDelaySecs * 1000);
+        }
+      });
     }
 
-    helper.on('close', () => {
-      if (this.data.length > 0) {
-        if (this.socket) {
-          this.socket.emit('diag', {
-            id: this.id,
-            type: this.type,
-            log: this.data
-          });
-        }
-
-        // Dump non-streaming logs into logcat as well for convenience
-        const lines = this.data.split('\n');
-        log.info(`${this.cmd}:`);
-        lines.forEach(l => log.info(l));
-        this.data = '';
-      }
-      if (this.respawnDelaySecs) {
-        this.respawnTimer = setTimeout( () => {
-          this._launch();
-          this.respawnTimer = null;
-        }, this.respawnDelaySecs * 1000);
-      }
-    });
-
     this.helper = helper;
+  }
+
+  send(dumpTologcat = false) {
+    if (this.data.length === 0) {
+      return;
+    }
+
+    if (this.socket) {
+      this.socket.emit('diag', {
+        id: this.id,
+        type: this.type,
+        log: this.data
+      });
+    }
+
+    if (dumpTologcat) {
+      // Dump as well for convenience
+      const lines = this.data.split('\n');
+      log.info(`${this.cmd}:`);
+      lines.forEach(l => log.verbose(l));
+    }
   }
 
   config(cmd, params, respawnDelaySecs) {
@@ -112,7 +121,7 @@ class Diag {
         ['-v', 'threadtime', '-T', '0']),
 
       new DiagLogger(this.id, 'dash',
-        '/system/silk/bin/dash', [], 10),
+        '/system/silk/bin/dash', [], 60),
     ];
   }
 
@@ -145,6 +154,7 @@ class Diag {
         if (this.cfg[type] === 1) {
           log.info('Enabling', type);
           logger.socket = this.socket;
+          logger.send(); // Send the latest data immediately
         } else {
           log.info('Disabling', type);
           logger.socket = null;

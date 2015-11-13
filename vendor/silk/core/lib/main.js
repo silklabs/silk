@@ -278,7 +278,7 @@ server.on('cmd', cmd => {
   case 'livestream':
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
-    diag.setConfig({dash: flag, logcat: flag, procrank: flag, });
+    diag.setConfig({dash: flag, logcat: flag});
 
     timeline.configLiveStream(!!cmd.preview, !!cmd.video);
     break;

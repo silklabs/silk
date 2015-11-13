@@ -68,6 +68,7 @@ suite('outbox manager', () => {
       storagePath: FIXTURE_DIR
     });
     subject.queues.get('default-queue').concurrency = 20;
+    subject.queues.get('default-queue').diskConcurrency = 20;
     subject.queues.get('default-queue').maxEntries = 5;
     subject.queues.get('default-queue').maxRetries = 6;
     subject.registerOperation(HttpOp);

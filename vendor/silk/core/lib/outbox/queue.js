@@ -71,8 +71,15 @@ export default class Queue extends EventEmitter {
 
   // How long to wait between checks to do more operations (in ms)
   backoffInterval = 0;
+
   // Maximum number of allowed concurrent operations in the queue.
-  concurrency = 2;
+  // (disk and live)
+  concurrency = 3;
+
+  // Maximum number of allowed diskQueue concurrent operations in the queue.
+  // (should always be < than concurrency)
+  diskConcurrency = 2;
+
   // Number of running operations in the queue (should always be < than
   // concurrency)
   running = 0;
@@ -129,6 +136,7 @@ export default class Queue extends EventEmitter {
     Object.assign(this, options);
 
     assert.ok(this.concurrency && this.concurrency > 0);
+    assert.ok(this.diskConcurrency && this.diskConcurrency <= this.concurrency);
     assert.ok(this.maxRetries && this.maxRetries > 0);
     assert.ok(this.maxEntries && this.maxEntries > 0);
     assert.ok(this.storagePath);
@@ -337,9 +345,28 @@ export default class Queue extends EventEmitter {
     this.workDiskQueue();
   }
 
-  workDiskQueue() {
-    let now = Date.now();
-    for (let id of this.diskQueue) {
+  workDiskQueue(chatty = false) {
+    const uptime = process.uptime();
+
+    // Work the disk queue backwards so that newer operations are preferred
+    // over older operations.  This has the benefit of working at the "same end
+    // of the queue" as live operations. For example when the network can't
+    // keep up and the disk queue grows the set of operations that can't be
+    // uploaded are more likely to be collected into larger blobs of darkness.
+    // This is analogous to turning the lights off for 5mins versus toggling the
+    // lights on/off every second for 10 minutes.
+    for (let idx = this.diskQueue.length - 1; idx >= 0; --idx) {
+      if (this.running >= this.diskConcurrency) {
+        if (chatty) {
+          log.verbose(`${this.name} reached max running disk operations, max:` +
+            `${this.diskConcurrency} running:${this.running} ` +
+            `diskqueue:${this.diskQueue.length}`
+          );
+        }
+        break;
+      }
+
+      const id = this.diskQueue[idx];
       let handle = this.diskQueueState.get(id);
 
       // Skip over anything that is currently running...
@@ -348,23 +375,12 @@ export default class Queue extends EventEmitter {
       }
 
       // Skip over anything that is not ready to be retried...
-      if (handle.delay && handle.delay > now) {
-        log.debug(
-          `${handle.path} will be retried in`,
-          handle.delay - now
-        );
+      if (handle.delay && handle.delay > uptime) {
+        log.debug(`${handle.path} retry in ${handle.delay - uptime}s`);
         continue;
       }
 
-      if (this.running >= this.concurrency) {
-        log.info(`${this.name} reached maximum number of running operations max:` +
-          `${this.concurrency} running: ${this.running} ` +
-          `diskqueue: ${this.diskQueue.length}`
-        );
-        break;
-      }
-
-      this.running += 1;
+      ++this.running;
       handle.running = true;
       handle.promise = async () => {
         try {
@@ -373,13 +389,22 @@ export default class Queue extends EventEmitter {
           log.error('Error working queue', err.stack);
         }
         handle.running = false;
-        this.running -= 1;
+        --this.running;
+
+        // Try to schedule more work
+        if (this.diskCheckRunning) {
+          this.workDiskQueue();
+        }
       }();
     }
 
-    if (this.diskCheckRunning) {
+    // Periodic timer to catch retries and new additions to the work queue
+    if (this.diskCheckRunning && !this.diskCheckHandle) {
       this.diskCheckHandle = setTimeout(
-        () => this.workDiskQueue(),
+        () => {
+          this.diskCheckHandle = null;
+          this.workDiskQueue(/* chatty = */ true);
+        },
         this.backoffInterval
       );
     }
@@ -393,9 +418,9 @@ export default class Queue extends EventEmitter {
   }
 
   stop() {
-    clearInterval(this.diskCheckHandle);
-    this.diskCheckRunning = false;
+    clearTimeout(this.diskCheckHandle);
     this.diskCheckHandle = null;
+    this.diskCheckRunning = false;
     log.info(`Stopped checking for pending operations...`, {
       online: this.online
     });
@@ -502,7 +527,7 @@ export default class Queue extends EventEmitter {
           Math.min(MAX_BACKOFF_MS, this.backoffInterval * handle.retries);
 
         handle.retries++;
-        handle.delay = Date.now() + retryDelayMs;
+        handle.delay = process.uptime() + retryDelayMs / 1000;
         if (handle.retries < this.maxRetries) {
           log.info(`Failed ${this.name} ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
           return;

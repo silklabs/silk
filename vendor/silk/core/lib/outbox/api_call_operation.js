@@ -36,15 +36,19 @@ export default class APICallOperation extends Operation {
 
   async _write() {
     let callable = api;
+    let ctx;
     this.endpoint.split('.').forEach(segment => {
+      ctx = callable; // context is always the previous segment.
       callable = callable && callable[segment];
     });
+
     if (!callable) {
       log.error('Could not resolve API endpoint', this.endpoint);
       return;
     }
+
     try {
-      await callable(...this.args);
+      await callable.call(ctx, ...this.args);
       return { done: true };
     } catch (err) {
       return { done: false, error: err };

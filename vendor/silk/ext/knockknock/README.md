@@ -8,6 +8,8 @@ one by a certain threshold and at the rate of at most one image a second. This i
 sure the image set is varied enough to provide a good training set. This may take some time so
 please be patient.
 
+To monitor progress while the training is occuring run `adb logcat | grep knockknock`.
+
 * Start by standing next to the device and then gradually move away from the device. This is to
 help the recognizer detect faces at different distances from the device.
 * Please make sure that the entire face is visible in the frame. It helps if silk-app is running

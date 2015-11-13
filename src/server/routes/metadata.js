@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import authorizeAccount from '../authorize_account';
+import createLog from 'log';
 
 import TimeMetadata from '../models/time_metadata';
 
@@ -14,6 +15,8 @@ import type { RouteContext } from '../server';
 
 const PREFIX = '/v1/metadata/';
 const EMPTY = Joi.any().only([null]);
+
+const log = createLog('routes:metadata');
 
 // Must contain metadata items but can be an empty array...
 const METADATA_ARRAY =
@@ -37,31 +40,57 @@ export default function (ctx: RouteContext) {
     accounts: ctx.accounts
   }));
 
+  /**
+   * Ensure the account is only querying devices it owns.
+   */
+  routes.use(PREFIX, async (req, res, next) => {
+    let { deviceId, deviceIds } = req.body;
+    if (!deviceId && !deviceIds) {
+      next(new Error('Missing deviceId or deviceIds'));
+      return;
+    }
+
+    if (deviceId && deviceIds) {
+      next(new Error('Must send .deviceId OR .deviceIds not both.'));
+      return;
+    }
+
+    if (!deviceIds) {
+      deviceIds = [deviceId];
+    }
+
+    let validDevices;
+    try {
+      validDevices = await ctx.devices.belongsToAccount(
+        req.account._id,
+        ...deviceIds
+      );
+    } catch (err) {
+      next(err);
+      return;
+    }
+
+    if (!validDevices) {
+      // TODO: Add better checks for when accounts are doing suspicious things.
+      // https://github.com/silklabs/silk-server/issues/372
+      log.warn(
+        `${req.account._id} attempting to access devices it does not own.`,
+        deviceIds
+      );
+      res.sendStatus(401);
+      return;
+    }
+
+    // Let other routes do their thing...
+    next();
+  });
+
   let api = expressApi(routes, {
     name: 'metadata',
     prefix: PREFIX,
     description: `
       Metadata reading methods...
     `,
-  });
-
-  api.define({
-    path: 'find/id/:id',
-    method: 'post',
-    params: [{
-      name: 'id',
-      description: 'time metadata id'
-    }],
-    name: 'findById',
-    description: 'Find metadata id',
-    output: Joi.alternatives().try([
-      TimeMetadata.SCHEMA.metadata,
-      EMPTY,
-    ]),
-  }, async (req, res) => {
-    send404OnEmpty(res, await ctx.timeMeta.findById({
-      id: req.params.id
-    }));
   });
 
   api.define({

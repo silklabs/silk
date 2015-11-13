@@ -59,6 +59,17 @@ suite('time metadata apis', () => {
       assert.deepEqual(findAfterTime.data, first.data);
     });
 
+    test('find/bytime/after - with wrong account', async () => {
+      let secondAccount = await context.testAccount();
+      await context.httpErrCode(401, async () => {
+        await secondAccount.api.metadata.findOneAfterTime({
+          deviceId: id,
+          metaType: 'video',
+          time: first.startUTC - 1
+        });
+      });
+    });
+
     test('find/bytime/after - wrong type', async () => {
       await context.httpErrCode(404, async () => {
         await account.api.metadata.findOneAfterTime({
@@ -108,20 +119,6 @@ suite('time metadata apis', () => {
         maxCount: 1
       });
       assert.equal(items.length, 0);
-    });
-
-    test('find/byid - found', async () => {
-      let findById = await account.api.metadata.findById(first.id);
-      assert.deepEqual(findById.data, first.data);
-    });
-
-    test('find/byid - missing', async () => {
-      await context.httpErrCode(404, async () => {
-        await account.api.metadata.findById(
-          // must be 12 byte string to make mongodb accept the value
-          'aaaaaaaaaaaa'
-        );
-      });
     });
 
     test('find/near - missing (outside of time)', async () => {

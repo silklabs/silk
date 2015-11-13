@@ -258,4 +258,36 @@ export default class Devices extends Base {
     }).toArray();
   }
 
+  /**
+   * Verify that the public keys given for devices belong to the account given.
+   */
+  async belongsToAccount(
+    accountId: string,
+     ...publicKeys: Array<string>
+   ): Promise<bool> {
+    // Attempt to find all the public keys filtering on the account id.
+    let query = {
+      accountId,
+      'accessToken.publicKey': {
+        $exists: true,
+        $in: publicKeys
+      }
+    };
+
+    // Run the query and stick the results in a set so we can verify all
+    // the devices belong to the given account.
+    let listedPublicKeys = (await this.collection.find(
+      query,
+      { 'accessToken.publicKey': 1 } // only return accessToken.publicKey
+    )).reduce((result, value) => {
+      result.add(value.accessToken.publicKey);
+      return result;
+    }, new Set());
+
+    // Only return true if _every_ single id is inside the given account.
+    return publicKeys.every((publicKey) => {
+      return listedPublicKeys.has(publicKey);
+    });
+  }
+
 }

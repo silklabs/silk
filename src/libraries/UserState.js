@@ -12,6 +12,7 @@
 // The API violates this rule, so disable it for the whole file.
 /* eslint new-cap:0 */
 
+import assert from 'assert';
 import { EventEmitter} from 'events';
 import createLog from 'log';
 
@@ -28,6 +29,7 @@ const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;
 
 const ACCESS_TOKEN_KEY = 'user.accessToken';
+const REGISTERED_DEVICES_KEY = 'user.registeredDevices';
 
 /**
  * This value has been chosen based on what elliptic would do when generating
@@ -57,9 +59,13 @@ export class UserState extends EventEmitter {
   // Load and initialize state...
   static async load(api) {
     let instance = new UserState(api);
-    let token = await instance._loadAccessToken();
+    let [ token, registeredDevices] = await Promise.all([
+      instance._loadAccessToken(),
+      UserState._loadRegisteredDevices(),
+    ]);
     log.info('~~ set access token', token);
     api.accessToken = instance.accessToken = token;
+    instance.registeredDevices = registeredDevices;
     return instance;
   }
 
@@ -95,6 +101,21 @@ export class UserState extends EventEmitter {
     accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
     log.info('Using existing access token', accessToken);
     return accessToken;
+  }
+
+  static async _loadRegisteredDevices() {
+    let registeredDevices = await AsyncStorage.getItem(REGISTERED_DEVICES_KEY);
+    if (!registeredDevices) {
+      log.info('No registered devices');
+      return [ ];
+    }
+
+    registeredDevices = JSON.parse(registeredDevices);
+    assert(Array.isArray(registeredDevices));
+
+    log.info('Registered devices', registeredDevices);
+
+    return registeredDevices;
   }
 
   async signOut() {
@@ -238,7 +259,26 @@ export class UserState extends EventEmitter {
     };
   }
 
+  async updateRegisteredDevices(deviceRecords) {
+    assert(this.accessToken, `Must be signed in`);
+
+    let publicKeys = [ ]
+
+    if (deviceRecords && deviceRecords.size) {
+      for (let record of deviceRecords.values()) {
+        publicKeys.push(record.publicKey);
+      }
+      await AsyncStorage.setItem(REGISTERED_DEVICES_KEY,
+                                 JSON.stringify(publicKeys));
+    } else {
+      await AsyncStorage.removeItem(REGISTERED_DEVICES_KEY);
+    }
+
+    log.info(`Registered devices updated`, publicKeys);
+
+    this.registeredDevices = publicKeys;
+    this.emit(`registered-devices-updated`, publicKeys);
+  }
 }
 
 export default UserState.load;
-

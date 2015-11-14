@@ -17,10 +17,6 @@ import * as util from './sysutils';
 
 const log = createLog('timeline');
 
-// Amount of time to wait for objects to be associated with a video chunk before
-// uploading it and any objects that were detected.
-const VIDEO_COLLECTOBJECT_DELAY_MS = 500;
-
 const VIDEO_UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP);
 
@@ -36,12 +32,6 @@ export type TimelineEventObject = {
   tag: string;
   when: number;
   [arbitraryKeys: string]: any;
-};
-
-type VideoFrame = {
-  when: number;
-  durationMs: number;
-  pkt: Buffer;
 };
 
 type Size = {
@@ -67,10 +57,8 @@ export default class Timeline extends EventEmitter {
   outbox: Outbox;
   serverSocket: ?Socket;
   _previewSize: Size;
-  videoObjects: Array<TimelineEventObject>;
   previewObjects: Array<TimelineEventObject>;
   cachedObjs: Array<TimelineEventObject>;
-  videoFrames: Array<VideoFrame>;
   eventTracker: EventTracker;
   liveVideo: boolean;
   livePreview: boolean;
@@ -97,18 +85,14 @@ export default class Timeline extends EventEmitter {
     this.serverSocket = null;
     this._previewSize = {width: 0, height: 0};
 
-    // Keep track of all face packets we send and upload them along with the
-    // metadata for video segments.
-    this.videoObjects = [];
-
-    // previewObjects is like videoObjects, but for the preview images
+    // Keep track of all objects and upload them along with the
+    // metadata for previews (TODO: it would be nice to integrate this into the
+    // event system)
     this.previewObjects = [];
 
     // Keeps a copy of previous objects to be sent when there is no motion detected
     this.cachedObjs = [];
 
-    // Hold all the video frames with the timestamps until the next poll interval
-    this.videoFrames = [];
     this.eventTracker = new EventTracker(this.id, this.outbox);
 
     this.lastPreviewFrame = null;
@@ -183,8 +167,7 @@ export default class Timeline extends EventEmitter {
    *
    */
   addVideo(when: number, durationMs: number, pkt: Buffer) {
-    this.videoFrames.push({when, durationMs, pkt});
-    setTimeout(this._sendVideoWithObjects, VIDEO_COLLECTOBJECT_DELAY_MS);
+    this._pushVideo(when, durationMs, pkt);
   }
 
   /**
@@ -233,7 +216,6 @@ export default class Timeline extends EventEmitter {
           this.cachedObjs.push(object);
         }
         this.previewObjects.push(object);
-        this.videoObjects.push(object);
       }
     });
     this._processEvents(objects);
@@ -344,9 +326,14 @@ export default class Timeline extends EventEmitter {
     //
     if (this.lastPreviewFrame) {
       for (let obj of this.previewObjects) {
-        if (obj.when < this.lastPreviewFrameWhen ||
-            obj.when >= when) {
-          log.warn(`Preview object sent with wrong image: ${JSON.stringify(obj)}`);
+        if (obj.when < this.lastPreviewFrameWhen) {
+          log.warn(`Preview object mismatch: ` +
+            `object too old by ${this.lastPreviewFrameWhen - obj.when}ms: ` +
+            JSON.stringify(obj));
+        } else if (obj.when >= when) {
+          log.warn(`Preview object mismatch: ` +
+            `object too new by ${obj.when - when}ms: ` +
+            JSON.stringify(obj));
         }
       }
       this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,
@@ -381,16 +368,8 @@ export default class Timeline extends EventEmitter {
     this.previewObjects = [];
   }
 
-  _pushVideo(
-    when: number,
-    durationMs: number,
-    frame: Buffer,
-    objects: Array<TimelineEventObject>
-  ) {
-    // For video we group all related face packets to make it easier on the
-    // client.
-    this._pushPacket(when, frame, objects, 'mp4', durationMs);
-
+  _pushVideo(when: number, durationMs: number, frame: Buffer) {
+    this._pushPacket(when, frame, null, 'mp4', durationMs);
 
     // Only queue the video to be sent to the outbox if uploads are enabled...
     if (!VIDEO_UPLOAD_ENABLED) {
@@ -406,8 +385,7 @@ export default class Timeline extends EventEmitter {
         endUTC: when + durationMs,
         data: {
           frameWidth: this._previewSize.width,
-          frameHeight: this._previewSize.height,
-          objects,
+          frameHeight: this._previewSize.height
         },
       },
     });
@@ -425,9 +403,11 @@ export default class Timeline extends EventEmitter {
     durationMs: number = 0
   ) {
     let wouldTransmit = this.serverSocket && this.serverSocket.connected;
+    let allObjects;
     switch (type) {
     case 'jpeg':
       wouldTransmit = wouldTransmit && this.livePreview;
+      allObjects = this._addCachedObjects(objects, when);
       break;
     case 'mp4':
       wouldTransmit = wouldTransmit && this.liveVideo;
@@ -436,7 +416,6 @@ export default class Timeline extends EventEmitter {
       util.processthrow(`Unknown packet type: ${type}`);
     }
     let willTransmit = wouldTransmit;
-    let allObjects = this._addCachedObjects(objects, when);
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms`;
     if (durationMs) {
       str += ` durationMs:${durationMs}`;
@@ -508,42 +487,4 @@ export default class Timeline extends EventEmitter {
       log: { id, what, whenMs },
     });
   }
-
-  /**
-   * Associate events received so far with the video frames and push them
-   * together.
-   */
-  _sendVideoWithObjects: (() => void) = () => {
-    if (this.videoFrames.length > 1) {
-      log.error(`Video is backed up: ${this.videoFrames.length} pending uploads`);
-    }
-    for (let i = 0; i < this.videoFrames.length; i++) {
-      let objects = [];
-
-      // Find all events that belong to this video frame
-      for (let j = 0; j < this.videoObjects.length; j++) {
-        if ((i === (this.videoFrames.length - 1)) &&
-            (this.videoFrames[i].when <= this.videoObjects[j].when)) {
-          // If it is the last video packet then this object may belong to
-          // this video frame
-          objects.push(this.videoObjects[j]);
-        } else if ((i + 1 <= (this.videoFrames.length - 1)) &&
-            ((this.videoFrames[i].when <= this.videoObjects[j].when) &&
-             (this.videoFrames[i + 1].when > this.videoObjects[j].when))) {
-          // Else find the object that is within the boundary of this frame and
-          // the next
-          objects.push(this.videoObjects[j]);
-        }
-      }
-      this._pushVideo(this.videoFrames[i].when, this.videoFrames[i].durationMs,
-                      this.videoFrames[i].pkt, objects);
-    }
-
-    // Drop all the leftover video objects as the corresponding video packets
-    // have already been sent
-    this.videoObjects = [];
-
-    // All the video frames are already sent so clear the queue
-    this.videoFrames = [];
-  };
 }

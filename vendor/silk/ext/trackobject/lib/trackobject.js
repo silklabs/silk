@@ -12,7 +12,7 @@ let util;
 let prevFrame = null, currentFrame = null, nextFrame = null;
 
 /**
- * Following constans could be tweaked to improve motion detection
+ * Following constants could be tweaked to improve motion detection
  */
 // Maximum deviation of the image, higher the value more the motion is allowed
 // This is used to isolate big changes like snow or sunlight changes

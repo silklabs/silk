@@ -17,7 +17,7 @@ git config --global user.name "Travis CI"
 git config --global color.ui false
 if [[ $TRAVIS_OS_NAME == osx ]]; then
   brew update
-  brew reinstall coreutils nvm
+  brew reinstall coreutils nvm xz
   export NVM_DIR="$PWD/.nvm"
   source $(brew --prefix nvm)/nvm.sh
   npm config set spin=false

@@ -141,7 +141,7 @@ export default class extends AsyncComponent {
   };
 
   connectSocketIO() {
-    this.props.api.socketio.address()
+    this.props.api.account.socketioURL()
       .then(result => this.setSocketUrlAndConnect(result.url))
       .catch(err => {
         log.info('Unable to get server socket.io address', err);

@@ -105,8 +105,8 @@ void Consensus::findConsensus(const vector<Point2f> & points, const vector<int> 
 {
     FILE_LOG(logDEBUG) << "Consensus::findConsensus() call";
 
-    //If no points are available, reteurn nan
-    if (points.size() == 0)
+    //If at least two points are not available, return nan
+    if (points.size() < 2)
     {
         center.x = numeric_limits<float>::quiet_NaN();
         center.y = numeric_limits<float>::quiet_NaN();

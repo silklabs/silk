@@ -28,6 +28,7 @@ export function setRandomBytesFunction(func) {
 }
 
 class CryptoStreamBase extends Transform {
+
   static CURVE_NAME = `curve25519`;
   static CIPHER_NAME = `aes-256-cbc`;
   static HASH_NAME = `sha256`;
@@ -76,6 +77,7 @@ class CryptoStreamBase extends Transform {
 // monotonically and wraps at 0xff. This sequence number is verified by the
 // DecodeStream to ensure that no messages arrive out of order.
 export class EncryptStream extends CryptoStreamBase {
+
   _bufferedWrites = [ ];
   _sequenceBuffer = null;
   _randomBytes = [ ];
@@ -288,6 +290,8 @@ export class EncryptStream extends CryptoStreamBase {
     if (this._pushedPublicKey) {
       this._processBufferedChunks();
     }
+
+    this.emit(`sharedSecret`, val);
   }
 }
 
@@ -296,6 +300,7 @@ export class EncryptStream extends CryptoStreamBase {
 // be written, from which it calculates the shared secret. Thereafter it will
 // be uncorked and data will be decrypted as it is written.
 export class DecryptStream extends CryptoStreamBase {
+
   _bufferedWrites = [ ];
 
   _data = [ ];
@@ -695,6 +700,9 @@ export class DecryptStream extends CryptoStreamBase {
 }
 
 export class CryptoDuplexStream extends DuplexTransform {
+
+  _sharedSecret = null;
+
   constructor(stream, options = { }) {
     log.debug(`CryptoDuplexStream()`);
 
@@ -705,6 +713,7 @@ export class CryptoDuplexStream extends DuplexTransform {
 
     const randomByteCountNeeded = ec.hash.hmacStrength;
     assert(randomByteCountNeeded);
+    log.debug(`hmac requires ${randomByteCountNeeded} random bytes`);
 
     getRandomBytes(randomByteCountNeeded, (error, bytes) => {
       if (error) {
@@ -728,5 +737,14 @@ export class CryptoDuplexStream extends DuplexTransform {
     }
 
     super(stream, stream, decrypt, encrypt, options);
+
+    encrypt.once(`sharedSecret`, sharedSecret => {
+      this._sharedSecret = sharedSecret;
+      this.emit(`sharedSecret`, sharedSecret);
+    });
+  }
+
+  get sharedSecret() {
+    return this._sharedSecret;
   }
 }

@@ -537,6 +537,7 @@ export default class extends AsyncComponent {
         password: config.secret,
         publicKey: registrarPublicKey,
         regToken: registrationToken,
+        serverUrl: this.props.api.config.serverUrl,
       });
     } catch(ex) {
       await this._abortConfig(bleDeviceSession, ex);

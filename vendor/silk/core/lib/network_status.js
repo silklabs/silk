@@ -148,7 +148,7 @@ export default class NetworkStatus extends EventEmitter {
   }
 
   _checkForConnection = async () => {
-    log.info(`Checking for internet connection...`);
+    log.info(`Checking for connection...`);
     let canConnect = false;
     try {
       canConnect = await this.isOnline();
@@ -172,7 +172,7 @@ export default class NetworkStatus extends EventEmitter {
       this._checkAttempt * this._checkIntervalMS,
       MAX_CHECK_INTERVAL_MS
     );
-    log.info(`Could not connect to the internet will retry`, {
+    log.info(`Could not connect, will retry`, {
       attempt: this._checkAttempt,
       timeout
     });

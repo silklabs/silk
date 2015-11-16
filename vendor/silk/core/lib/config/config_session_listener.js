@@ -32,6 +32,7 @@ const SCHEMA = {
     password: Joi.string().allow(``).default(``).optional(),
     publicKey: Joi.string().lowercase().trim().length(66).hex().required(),
     regToken: Joi.string().required(),
+    serverUrl: Joi.string().allow(``).default(``).optional(),
   }).options({
     stripUnknown: true,
   }).required(),
@@ -246,6 +247,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
         password: data.password,
         publicKey: data.publicKey,
         regToken: data.regToken,
+        serverUrl: data.serverUrl
       };
 
       this._completeRegistration(secret);

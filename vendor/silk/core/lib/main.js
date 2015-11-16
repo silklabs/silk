@@ -25,6 +25,7 @@ import * as util from './sysutils';
 import update from './update';
 import config from './config';
 import sensors from './sensors';
+import infrared from './infrared';
 import server from './server';
 import fs from 'mz/fs';
 
@@ -121,6 +122,7 @@ function main() {
           btle = btleInstance;
         }),
         sensors.init(),
+        infrared.init(),
       ]);
     })
     .then(() => {
@@ -319,6 +321,7 @@ config.on('configured', () => {
           camera: camera,
           hue: hue,
           sensors: sensors,
+          infrared: infrared,
           timeline: timeline,
         });
       }

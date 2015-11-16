@@ -128,6 +128,16 @@ class Env extends EventEmitter {
       };
     }
 
+    let infrared = deviceObjects.infrared;
+    if (infrared) {
+      this.infrared = {
+        MODE: infrared.MODE,
+        setMode: mode => {
+          infrared.setMode(mode);
+        },
+      };
+    }
+
     let btle = deviceObjects.btle;
     if (btle) {
       this.ranger = new EventEmitter();

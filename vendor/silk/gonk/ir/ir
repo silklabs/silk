@@ -1,0 +1,59 @@
+#!/system/bin/sh
+
+# Copyright (c) 2015 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+
+IR_FILTER_FILE=/sys/class/leds/ir-cut-swi/brightness
+IR_LED_FILE=/sys/class/leds/led-ipcam-flash/brightness
+
+function usage {
+  echo "Usage: ir [filter|led] <value>"
+  echo "   or: ir filter <value> led <value>"
+  echo "       set <value> to 0 to disable, 1 or anything else to enable"
+}
+
+function filter {
+  if [ "$1" -eq "0" ]; then
+    IR_FILTER=1
+  else
+    IR_FILTER=2
+  fi
+
+  if [ -e $IR_FILTER_FILE ]; then
+    echo $IR_FILTER > $IR_FILTER_FILE
+  else
+    echo "$IR_FILTER_FILE does not exist"
+  fi
+}
+
+function led {
+  if [ "$1" -eq "0" ]; then
+    IR_LED=0
+  else
+    IR_LED=1
+  fi
+
+  if [ -e $IR_LED_FILE ]; then
+    echo $IR_LED > $IR_LED_FILE
+  else
+    echo "$IR_LED_FILE does not exist"
+  fi
+}
+
+if [ $# -lt 2 ]; then
+  usage
+  exit 1
+fi
+
+while [ $# -gt 0 ]; do
+  if [ "$1" = "filter" ]; then
+    filter $2
+  elif [ "$1" = "led" ]; then
+    led $2
+  else
+    usage
+    exit 1
+  fi
+  shift 2
+done

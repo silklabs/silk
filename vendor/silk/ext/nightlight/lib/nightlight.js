@@ -44,12 +44,14 @@ export default function init(env) {
         log.info(`It's dark out. Turning on night mode`);
         nightModeOn = true;
         env.camera.torch(true);
+        env.infrared.setMode(env.infrared.MODE.NIGHT);
       }
     } else if (level >= DAY_LIGHT_SI_LUX) {
       if (nightModeOn) {
         log.info(`It's light out. Turning off night mode`);
         nightModeOn = false;
         env.camera.torch(false);
+        env.infrared.setMode(env.infrared.MODE.DAY);
       }
     }
   });

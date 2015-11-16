@@ -4,6 +4,7 @@
 import * as authenticate from './authenticate';
 import * as crypto from './crypto';
 import * as duplex_transform from './duplex_transform';
+import * as heartbeat from './heartbeat';
 import * as msgpack from './msgpack';
 
 export default function(config = { }) {
@@ -16,6 +17,7 @@ export default function(config = { }) {
     authenticate,
     crypto,
     duplex_transform,
+    heartbeat,
     msgpack,
   );
 }

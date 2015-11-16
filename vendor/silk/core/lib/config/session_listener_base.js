@@ -14,10 +14,6 @@ import wifi from '../wifi';
 
 const log = createLog('config-session-listener-base');
 
-const HEARTBEAT_PROP_NAME = `_<3_<3_<3_`;
-const HEARTBEAT_INTERVAL_MS = 1000;
-const HEARTBEAT_WAIT_MS = 5000;
-
 // maps wifi states to a connection status string that is sent to the app
 const wifi_state_map = new Map([
   [ 'scanning', 'wifi_scanning' ],
@@ -98,7 +94,6 @@ export default class SessionListenerBase extends EventEmitter {
   _removeSessionListeners = null;
   _status = '';
   _errorCode = '';
-  _heartbeatTimeout = null;
 
   constructor(deviceConfig) {
     log.debug(`SessionListenerBase()`);
@@ -185,8 +180,6 @@ export default class SessionListenerBase extends EventEmitter {
 
     this.removeStatusListeners();
 
-    this._clearHeartbeatTimeout();
-
     if (this._socketSession) {
       this._socketSession.rssiUpdatesEnabled = false;
       this._socketSession.end();
@@ -229,38 +222,6 @@ export default class SessionListenerBase extends EventEmitter {
     });
   }
 
-  _sendHeartbeat() {
-    log.debug(`SessionListenerBase._sendHeartbeat()`);
-
-    assert(!this._heartbeatTimeout);
-
-    this._heartbeatTimeout = setTimeout(() => {
-      assert(!this._disconnecting);
-
-      log.debug(`Sending heartbeat message`);
-
-      let msg = { };
-      msg[HEARTBEAT_PROP_NAME] = null;
-      this._send(msg);
-
-      this._heartbeatTimeout = setTimeout(() => {
-        log.warn(`Failed to receive heartbeat message in expected time, ` +
-                 `disconnecting`);
-        this._heartbeatTimeout = null;
-        this.disconnect();
-      }, HEARTBEAT_WAIT_MS);
-    }, HEARTBEAT_INTERVAL_MS);
-  }
-
-  _clearHeartbeatTimeout() {
-    log.debug(`SessionListenerBase._clearHeartbeatTimeout()`);
-
-    if (this._heartbeatTimeout) {
-      clearTimeout(this._heartbeatTimeout);
-      this._heartbeatTimeout = null;
-    }
-  }
-
   _onConnect(socketSession) {
     log.debug(`SessionListenerBase._onConnect()`);
 
@@ -268,7 +229,7 @@ export default class SessionListenerBase extends EventEmitter {
 
     const sessionErrorListener = error => this._onError(error);
     socketSession.addListener(`error`, sessionErrorListener);
-    const sessionDataListener = data => this._onBaseData(data);
+    const sessionDataListener = data => this._onData(data);
     socketSession.addListener(`data`, sessionDataListener);
     const sessionRssiListener = rssi => this._onRssiUpdate(rssi);
     socketSession.addListener(`rssiUpdate`, sessionRssiListener);
@@ -280,8 +241,6 @@ export default class SessionListenerBase extends EventEmitter {
     };
 
     this._socketSession = socketSession;
-
-    this._sendHeartbeat();
 
     this._send({
       name: `id`,
@@ -295,8 +254,6 @@ export default class SessionListenerBase extends EventEmitter {
 
   _onDisconnect(socketSession) {
     log.debug(`SessionListenerBase._onDisconnect()`);
-
-    this._clearHeartbeatTimeout();
 
     if (this._socketSession) {
       assert(this._socketSession === socketSession);
@@ -386,25 +343,6 @@ export default class SessionListenerBase extends EventEmitter {
     log.debug(`SessionListenerBase._onServerError('${message}')`);
 
     this._sendStatus(message);
-  }
-
-  _onBaseData(data) {
-    if (!data ||
-        (typeof data !== `object`) ||
-        !(HEARTBEAT_PROP_NAME in data) ||
-        data[HEARTBEAT_PROP_NAME] !== null) {
-      this._onData(data);
-      return;
-    }
-
-    if (this._disconnecting) {
-      return;
-    }
-
-    log.debug(`Received heartbeat message`);
-
-    this._clearHeartbeatTimeout();
-    this._sendHeartbeat();
   }
 
   _onData(/* data */) {

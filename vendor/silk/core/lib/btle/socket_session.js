@@ -15,7 +15,8 @@ const streams = createStreams();
 const {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
-  MessagePackDuplexStream
+  HeartbeatDuplexStream,
+  MessagePackDuplexStream,
 } = streams;
 
 const log = makeLog(`btle-socketsession`);
@@ -50,8 +51,9 @@ export default class SocketSession extends AuthenticateDuplexStream {
     const socketStream = new ClientStream(peripheral, scanner._serviceUuid);
     const cryptoStream = new CryptoDuplexStream(socketStream);
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
+    const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
 
-    super(msgpackStream,
+    super(heartbeatStream,
           cryptoStream,
           scanner._privateKey,
           scanner._publicKeys,
@@ -68,6 +70,16 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._rssiSmoother.update(peripheral.rssi);
 
     this.once(`end`, this._onEnd);
+
+    heartbeatStream.once(`data`, () => {
+      heartbeatStream.addListener(`flatline`, this._onFlatline);
+      heartbeatStream.monitorHeartbeats = true;
+
+      // Waiting to unpack entire messages can take longer than we would like
+      // sometimes so reset the monitor whenever the bluetooth stream receives
+      // data.
+      socketStream.addListener(`data`, () => heartbeatStream.resetMonitor());
+    });
   }
 
   _onPeripheralRssiUpdate = rssi => {
@@ -104,6 +116,15 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this._killRssiUpdates();
     this._maybeEmitClose();
+  };
+
+  _onFlatline = () => {
+    log.debug(`SocketSession._onFlatline()`);
+
+    const error = new Error(`Failed to receive heartbeat message in expected ` +
+                            `time`);
+    log.warn(error);
+    this.emit(`error`, error);
   };
 
   _onEnd = () => {

@@ -77,6 +77,7 @@ SILK_GONK_PROGIES := \
   capture \
   libnative_camera_capture \
   dhcputil \
+  ir \
   lights \
   player \
   volume \

@@ -68,7 +68,8 @@ class FindFace {
 
       // Finished adding the person; re-train face model
       log.info(`Finished adding person ${cmd.person}`);
-      this._trainModel();
+      await this._trainModel();
+      await this._loadTrainingData();
       break;
     default:
       break;
@@ -97,8 +98,10 @@ class FindFace {
       if (await fs.exists(TRAIN_FACES_YML)) {
         this._model.loadSync(TRAIN_FACES_YML);
         if (await fs.exists(TRAIN_FACES_MAP)) {
-          this._faceMap = require(TRAIN_FACES_MAP);
+          let faceMapJson = await fs.readFile(TRAIN_FACES_MAP);
+          this._faceMap = JSON.parse(faceMapJson);
           loaded = true;
+          log.debug(`${JSON.stringify(this._faceMap)}`);
         }
       }
     } catch (e) {
@@ -148,7 +151,7 @@ class FindFace {
     const existsYml = await fs.exists(TRAIN_FACES_YML);
     const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
     if (!existsYml || !existsFaceMap) {
-      this._trainModel();
+      await this._trainModel();
     }
     await this._loadTrainingData();
     this._start();
@@ -159,10 +162,11 @@ class FindFace {
    */
   _predict(faceim) {
     if (!this._faceMap) {
-      return Promise.reject();
+      return Promise.reject(`faceMap not found`);
     }
     return new Promise((resolve, reject) => {
       this._model.predict(faceim, (result) => {
+        log.debug(`${JSON.stringify(result)}`);
         if (result.id !== -1) {
           return resolve(result);
         }

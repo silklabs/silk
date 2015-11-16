@@ -314,7 +314,7 @@ export default class SessionListenerBase extends EventEmitter {
   _onError(error) {
     log.debug(`SessionListenerBase._onError()`);
 
-    log.warn(`Session error, disconnecting`, error);
+    log.warn(`Session error, disconnecting`, error.stack);
     this.disconnect();
   }
 

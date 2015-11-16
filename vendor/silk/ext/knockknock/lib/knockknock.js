@@ -148,7 +148,7 @@ class FindFace {
     const existsYml = await fs.exists(TRAIN_FACES_YML);
     const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
     if (!existsYml || !existsFaceMap) {
-      this._trainModel();
+      await this._trainModel();
     }
     await this._loadTrainingData();
     this._start();
@@ -159,10 +159,11 @@ class FindFace {
    */
   _predict(faceim) {
     if (!this._faceMap) {
-      return Promise.reject();
+      return Promise.reject(`faceMap not found`);
     }
     return new Promise((resolve, reject) => {
       this._model.predict(faceim, (result) => {
+        log.debug(`${JSON.stringify(result)}`);
         if (result.id !== -1) {
           return resolve(result);
         }

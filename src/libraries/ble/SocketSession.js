@@ -17,6 +17,7 @@ const streams = createStreams({
 const {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
+  HeartbeatDuplexStream,
   MessagePackDuplexStream,
 } = streams;
 
@@ -28,6 +29,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _socket: Socket;
   _privateKey: String;
   _publicKeys: Array<String>;
+  _heartbeatStream: HeartbeatDuplexStream;
 
   _disconnecting: boolean = false;
   _sentDisconnect: boolean = false;
@@ -45,8 +47,9 @@ export default class SocketSession extends AuthenticateDuplexStream {
     const socketStream = new Stream(socket);
     const cryptoStream = new CryptoDuplexStream(socketStream);
     const msgpackStream = new MessagePackDuplexStream(cryptoStream)
+    const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
 
-    super(msgpackStream,
+    super(heartbeatStream,
           cryptoStream,
           privateKey,
           publicKeys,
@@ -55,6 +58,9 @@ export default class SocketSession extends AuthenticateDuplexStream {
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
     socket.addListener(`disconnect`, this._onSocketDisconnect);
     this._socket = socket;
+
+    heartbeatStream.sendHeartbeats = true;
+    this._heartbeatStream = heartbeatStream;
 
     this.once(`end`, this._onEnd);
     this.once(`finish`, this._onFinish);
@@ -105,6 +111,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
   _killRssiUpdates() {
     log.debug(`SocketSession._killRssiUpdates()`);
+
+    this._heartbeatStream.sendHeartbeats = false;
 
     this.rssiUpdatesEnabled = false;
     this._socket.removeListener(`rssiUpdate`, this._onSocketRssiUpdate);

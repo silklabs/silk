@@ -99,7 +99,6 @@ export class DeviceSession extends EventEmitter {
   static STATE_ERROR = 10;
 
   static RSSI_THRESHOLD = -40;
-  static HEARTBEAT_PROP_NAME = `_<3_<3_<3_`;
 
   _socketSession: SocketSession;
 
@@ -141,11 +140,6 @@ export class DeviceSession extends EventEmitter {
 
     if (!data || (typeof data !== `object`)) {
       return false;
-    }
-
-    if ((DeviceSession.HEARTBEAT_PROP_NAME in data) &&
-        data[DeviceSession.HEARTBEAT_PROP_NAME] === null) {
-      return true;
     }
 
     if (!(`name` in data)) {
@@ -226,13 +220,6 @@ export class DeviceSession extends EventEmitter {
 
     if (!this._validateData(data)) {
       this._forceDisconnect();
-      return;
-    }
-
-    // Send the heartbeat straight back.
-    if (DeviceSession.HEARTBEAT_PROP_NAME in data &&
-        data[DeviceSession.HEARTBEAT_PROP_NAME] === null) {
-      this._socketSession.write(data);
       return;
     }
 

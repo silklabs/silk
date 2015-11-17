@@ -21,7 +21,8 @@ export default {
   server: {
     cors: {
       origin: '*',
-      methods: '*'
+      methods: '*',
+      credentials: true
     },
 
     // Will dynamically configure itself if empty...

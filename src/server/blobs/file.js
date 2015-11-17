@@ -288,6 +288,11 @@ class FileBlobHandler {
       path.join(this.blobPaths[blobType], key), headers, req, res
     );
   }
+
+  getSignedUrl(url) {
+    // No signing is needed file blobs
+    return url;
+  }
 }
 
 export default async function(config) {

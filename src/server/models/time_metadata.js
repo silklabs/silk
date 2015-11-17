@@ -6,7 +6,6 @@
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
 import Base from './base';
-import formatOutput from './format_output';
 
 const TYPES = Joi.string().only(['log', 'video', 'preview', 'event']).required();
 
@@ -166,7 +165,7 @@ export default class TimeMetadata extends Base {
       }
     })).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
 
-    return result.map(formatOutput);
+    return result.map(this.formatOutput.bind(this));
   }
 
   async findBeforeTime(payload): Promise<Array<Metadata>> {
@@ -177,7 +176,7 @@ export default class TimeMetadata extends Base {
         $lte: payload.time
       }
     })).sort({ endUTC: -1 }).limit(payload.maxCount).toArray();
-    return result.map(formatOutput);
+    return result.map(this.formatOutput.bind(this));
   }
 
   // Finding one specific event
@@ -185,7 +184,7 @@ export default class TimeMetadata extends Base {
   async findById(payload): Promise<?Metadata> {
     payload = this.validate(payload, 'findById');
     let result = await this.collection.findOne(idQuery(payload.id));
-    return formatOutput(result);
+    return this.formatOutput(result);
   }
 
   async findNearTime(payload): Promise<?Metadata> {
@@ -207,8 +206,7 @@ export default class TimeMetadata extends Base {
     if (!result && !payload.strict) {
       return this.findOneBeforeTime(payload);
     }
-
-    return formatOutput(result);
+    return this.formatOutput(result);
   }
 
   async findOneBeforeTime(payload): Promise<?Metadata> {
@@ -220,7 +218,7 @@ export default class TimeMetadata extends Base {
         $lt: payload.time
       }
     }).sort({ startUTC: -1 }).limit(1).toArray())[0];
-    return formatOutput(result);
+    return this.formatOutput(result);
   }
 
   async findOneAfterTime(payload): Promise<?Metadata> {
@@ -232,7 +230,7 @@ export default class TimeMetadata extends Base {
         $gt: payload.time
       }
     }).sort({ startUTC: 1 }).limit(1).toArray())[0];
-    return formatOutput(result);
+    return this.formatOutput(result);
   }
 
   /**

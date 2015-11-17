@@ -75,6 +75,11 @@ class S3Blobs {
     res.append('Location', getUrl);
     res.status(201).send({ url: getUrl });
   }
+
+  getSignedUrl(url) {
+    // No signing is needed s3 blobs
+    return url;
+  }
 }
 
 export default async function(config) {

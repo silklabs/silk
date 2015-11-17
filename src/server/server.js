@@ -69,24 +69,6 @@ export default async function main (config: any): any {
   // TODO: Explicitly use middleware in prefixed paths.
   app.use(jsonParser);
 
-  let db = await createDb(config);
-  let crashMeta = new CrashMetadata(db);
-  let timeMeta = new TimeMetadata(db);
-  let nonce = new Nonce(db);
-  let accounts = new Accounts(db);
-  let devices = new Devices(db);
-
-  // Ensure we have indexed models...
-  let index = [crashMeta, timeMeta, nonce, accounts].map(async model => {
-    await model.ensureIndexes();
-  });
-  // It is safe to run these concurrently:
-  await Promise.all(index);
-
-  // Create the developer account...
-  await accounts.ensureDevAccount(devAccount);
-
-  let emailSender = new EmailSender(config);
   let blobs = {
     aliyun: null,
     s3: null,
@@ -103,6 +85,25 @@ export default async function main (config: any): any {
   if (!blobHandler) {
     throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
   }
+
+  let db = await createDb(config);
+  let crashMeta = new CrashMetadata(db, blobHandler);
+  let timeMeta = new TimeMetadata(db, blobHandler);
+  let nonce = new Nonce(db);
+  let accounts = new Accounts(db);
+  let devices = new Devices(db);
+
+  // Ensure we have indexed models...
+  let index = [crashMeta, timeMeta, nonce, accounts].map(async model => {
+    await model.ensureIndexes();
+  });
+  // It is safe to run these concurrently:
+  await Promise.all(index);
+
+  // Create the developer account...
+  await accounts.ensureDevAccount(devAccount);
+
+  let emailSender = new EmailSender(config);
 
   const context: RouteContext  = {
     app,

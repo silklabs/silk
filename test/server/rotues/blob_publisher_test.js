@@ -126,4 +126,53 @@ suite('blob', () => {
       assert.equal(text, input);
     });
   });
+
+
+  suite('Aliyun', () => {
+    let context = createContext({
+      server: {
+        blobType: 'aliyun'
+      }
+    });
+
+    if (!process.env.ALIYUN_ACCESS_KEY_ID) {
+      test.skip('Skipping aliyun blob tests: No Aliyun credentials present');
+      return;
+    }
+
+    let device;
+    setup(async function() {
+      device = await context.testDevice();
+      context.api.accessToken = device.accessToken;
+    });
+
+    test('/blob/ - signing', async () => {
+      let object = { foo: 'bar' };
+      let input = JSON.stringify(object);
+      let content = new Buffer(input);
+
+      let putSigned = await context.api.blobPublisher.putUrl('video', {
+        contentLength: content.length,
+        contentType: 'application/json'
+      });
+
+      let res = await fetch(putSigned.putUrl, {
+        method: 'PUT',
+        headers: putSigned.putHeaders,
+        body: content.toString()
+      });
+
+      assert(res.ok, 'successfully puts');
+      let ack = await context.api.blobPublisher.ack({
+        url: putSigned.putUrl
+      });
+
+      let signedUrl = context.blobHandler.getSignedUrl(ack.url);
+      let response = await fetch(signedUrl);
+      assert.equal(response.headers.get('Content-Type'), 'application/json');
+      let text = await response.text();
+      assert.equal(text, input);
+    });
+  });
+
 });

@@ -84,7 +84,7 @@ export default class extends AsyncComponent {
     NetInfo.isConnected.fetch().then(this.onConnectivityChange);
     NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
 
-    this.bleDeviceManager = getDeviceManager();
+    this.bleDeviceManager = getDeviceManager(this.props.userState);
     this.bleDeviceManager.on('connect', this.onBLEDeviceConnect);
     BLESocketManager.start();
   }

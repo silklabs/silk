@@ -10,6 +10,7 @@ import mklog from 'log';
 import SocketSession from './SocketSession';
 
 import type { Socket, SocketManager } from './SocketManager';
+import type { UserState } from '../UserState';
 
 type DeviceStatus = {
   message: string;
@@ -124,7 +125,10 @@ export class DeviceSession extends EventEmitter {
 
     super();
 
-    const socketSession = new SocketSession(socket);
+    const privateKey = singletonInstance._privateKey;
+    const publicKeys = singletonInstance._registeredDevicePublicKeys;
+
+    const socketSession = new SocketSession(socket, privateKey, publicKeys);
     socketSession.addListener(`error`, this._onError);
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
@@ -276,6 +280,8 @@ export class DeviceSession extends EventEmitter {
         log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
+
+      assert(this._socketSession.authenticated);
 
       this._isRegistered = true;
       this._deviceId = data.deviceId;
@@ -561,21 +567,38 @@ export class DeviceSession extends EventEmitter {
       name: `dismiss`,
     });
     this._state = DeviceSession.STATE_DISMISSED;
+    this._socketSession.disconnect();
   };
 }
 
 class DeviceManager extends EventEmitter {
+
   _devices: Map<Socket, DeviceSession> = new Map();
   _socketManager: SocketManager;
+  _privateKey: String = ``;
+  _registeredDevicePublicKeys: Array<String> = [ ];
 
-  constructor() {
+  constructor(userState: UserState) {
     log.debug(`DeviceManager()`);
+
+    assert(userState);
+
+    const accessToken = userState.accessToken;
+    assert(accessToken.priv);
+    assert(accessToken.isValid());
 
     super();
 
     this._socketManager = getSocketManager();
     this._socketManager.on(`connect`, this._onConnect);
     this._socketManager.on(`disconnect`, this._onDisconnect);
+
+    this._privateKey = accessToken.priv;
+
+    this._registeredDevicePublicKeys = userState.registeredDevices;
+    userState.on(`registered-devices-updated`, (publicKeys) => {
+      this._registeredDevicePublicKeys = publicKeys;
+    });
   }
 
   _onConnect: ((socket: Socket) => void) = (socket) => {
@@ -599,9 +622,9 @@ class DeviceManager extends EventEmitter {
 }
 
 
-export default function getDeviceManager(): EventEmitter {
+export default function getDeviceManager(userState: UserState): EventEmitter {
   if (!singletonInstance) {
-    singletonInstance = new DeviceManager();
+    singletonInstance = new DeviceManager(userState);
   }
 
   let emitter = new EventEmitter();

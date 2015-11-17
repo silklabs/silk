@@ -14,14 +14,20 @@ const streams = createStreams({
   getRandomBytes,
 });
 
-const { CryptoDuplexStream, MessagePackDuplexStream } = streams;
+const {
+  AuthenticateDuplexStream,
+  CryptoDuplexStream,
+  MessagePackDuplexStream,
+} = streams;
 
 const log = makeLog(`btle-SocketSession`);
 
-export default class SocketSession extends MessagePackDuplexStream {
+export default class SocketSession extends AuthenticateDuplexStream {
   static RSSI_UPDATE_TIMEOUT = 50;
 
   _socket: Socket;
+  _privateKey: String;
+  _publicKeys: Array<String>;
 
   _disconnecting: boolean = false;
   _sentDisconnect: boolean = false;
@@ -33,13 +39,18 @@ export default class SocketSession extends MessagePackDuplexStream {
   _rssiValue: number = 0;
   _rssiTimeout: ?number = null;
 
-  constructor(socket: Socket) {
+  constructor(socket: Socket, privateKey: String, publicKeys: Array<String>) {
     log.debug(`SocketSession()`);
 
-    let stream = new Stream(socket);
-    stream = new CryptoDuplexStream(stream);
+    const socketStream = new Stream(socket);
+    const cryptoStream = new CryptoDuplexStream(socketStream);
+    const msgpackStream = new MessagePackDuplexStream(cryptoStream)
 
-    super(stream);
+    super(msgpackStream,
+          cryptoStream,
+          privateKey,
+          publicKeys,
+          { autoClose: false });
 
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
     socket.addListener(`disconnect`, this._onSocketDisconnect);
@@ -47,6 +58,10 @@ export default class SocketSession extends MessagePackDuplexStream {
 
     this.once(`end`, this._onEnd);
     this.once(`finish`, this._onFinish);
+    this.once(`unauthenticated`, () => {
+      log.info(`Receiving unauthenticated data`);
+      this.allowUnauthenticated();
+    });
   }
 
   _onSocketRssiUpdate: ((rssi: number) => void) = (rssi) => {

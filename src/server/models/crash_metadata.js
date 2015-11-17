@@ -2,7 +2,6 @@
 
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
-import formatOutput from './format_output';
 import Base from './base';
 
 let log = require('log')('models-crashreport');
@@ -77,7 +76,7 @@ export default class CrashMetadata extends Base {
       _id
     });
 
-    result = formatOutput(result);
+    result = this.formatOutput(result);
 
     if (result) {
       log.debug(`Found crash report with id '${id}': '${result.url}'`);
@@ -114,7 +113,7 @@ export default class CrashMetadata extends Base {
 
     let results =
       await this.collection.find(query).sort(sort).limit(limit).toArray();
-    results = results.map(formatOutput);
+    results = results.map(this.formatOutput.bind(this));
 
     log.debug(`Found ${results.length} results`);
     return results;

@@ -36,15 +36,17 @@ export default class Base {
   static SCHEMA: any;
 
   db: any;
+  blobHandler: any;
   collection: any;
 
-  constructor(db: any) {
+  constructor(db: any, blobHandler: any) {
     let name = this.constructor.COLLECTION;
     if (!name) {
       throw new Error('Must set "COLLECTION" as static variable.');
     }
 
     this.db = db;
+    this.blobHandler = blobHandler;
     this.collection = db.collection(name);
   }
 
@@ -135,4 +137,35 @@ export default class Base {
 
     return validation.value;
   }
+
+  /**
+   * Formats a given object
+   *   1) converts mongodb style _id to .id.
+   *   2) converts url to an object containing the signed url and
+   *      request headers
+   *
+   * Mutates input!
+   *
+   * @param {Object} object to format.
+   */
+  formatOutput(record: any): any {
+    if (record) {
+      if ('_id' in record) {
+        let id = record._id;
+        delete record._id;
+        record.id = id.toString();
+      }
+      if ('url' in record && this.blobHandler) {
+        record.url = this.blobHandler.getSignedUrl(record.url);
+      }
+    }
+
+    // Explicitly return null so we can use results /w Joi validation.
+    if (record === undefined) {
+      return null;
+    }
+
+    return record;
+  }
+
 }

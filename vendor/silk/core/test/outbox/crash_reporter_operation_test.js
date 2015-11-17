@@ -1,5 +1,5 @@
 import assert from 'assert';
-import api from '../api';
+import createApi from '../api';
 import randomStream from '../random_stream';
 import { exec } from 'mz/child_process';
 import path from 'path';
@@ -21,14 +21,9 @@ suite('CrashReporterOperation', () => {
   setup(cleanup);
   teardown(cleanup);
 
-  let id;
-  setup(() => {
-    id = api.id.create();
-    log.info('id', id);
-  });
-
   test('Upload crash report...', async () => {
     if (require('../skip-on-travis.js')()) return;
+    let { device: api } = await createApi();
 
     let { stream, buffer } = randomStream();
     let tombstone = path.join(FIXTURE_DIR, 'one');
@@ -38,7 +33,6 @@ suite('CrashReporterOperation', () => {
     let operation = new CrashReporterOperation({
       size: stat.size,
       metadata: {
-        deviceId: id.toString(),
         timeStamp: stat.birthtime,
         type: 'tombstone'
       }
@@ -49,7 +43,7 @@ suite('CrashReporterOperation', () => {
 
     log.info('See if we can find it on the server...');
     let result = await api.crashMeta.find({
-      deviceId: id.toString(),
+      deviceId: api.accessToken.toString(),
       type: 'tombstone',
       limit: 1
     });

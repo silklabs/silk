@@ -14,7 +14,7 @@ Run
 ---
 
 ```
-node start
+npm start
 ```
 
 Options

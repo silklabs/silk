@@ -1,5 +1,5 @@
 import assert from 'assert';
-import api from '../api';
+import createApi from '../api';
 import randomStream from '../random_stream';
 import fetch from 'node-fetch';
 
@@ -8,22 +8,16 @@ import mkLog from '../../lib/log'; const log = mkLog('ut');
 
 suite('VideoUploadOperation', () => {
 
-  let id;
-  setup(() => {
-    id = api.id.create();
-    log.info('id', id);
-  });
-
   test('Upload video...', async () => {
     if (require('../skip-on-travis.js')()) return;
 
+    let { device, account } = await createApi();
     let { stream, buffer } = randomStream();
 
     let operation = new VideoUploadOp({
       size: buffer.length,
       metadata: {
         metaType: 'video',
-        deviceId: id.toString(),
         startUTC: Date.now(),
         endUTC: Date.now() + 1000,
         data: {},
@@ -34,9 +28,9 @@ suite('VideoUploadOperation', () => {
     await operation.write(stream);
 
     log.info('See if we can find it on the server...');
-    let result = await api.timeMeta.findOneAfterTime({
+    let result = await account.metadata.findOneAfterTime({
       metaType: 'video',
-      deviceId: id.toString(),
+      deviceId: device.accessToken.toString(),
       time: 0
     });
     log.info('Found it:', result);

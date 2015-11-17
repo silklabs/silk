@@ -3,7 +3,8 @@ import mkdirp from 'mkdirp-promise';
 import net from 'net';
 import fs from 'mz/fs';
 import path from 'path';
-import api from './api';
+import createApi from './api';
+import createDeviceId from './device_id';
 import randomStream from './random_stream';
 import { exec } from 'mz/child_process';
 import eventToPromise from 'event-to-promise';
@@ -169,11 +170,8 @@ suite('crash report', () => {
       let expectedEntry = path.join(outboxPath, 'default-queue/1/');
       assert.ok(await fs.exists(expectedEntry, 'has outbox entry'));
 
-      let { metadata } = await loadJSON(path.join(expectedEntry, 'metadata.json'));
       let content = await fs.readFile(path.join(expectedEntry, 'blob'), 'utf8');
       assert.equal(content, buffer.toString());
-
-      assert.equal(metadata.deviceId, '000000000000000000000000000000000000000000000000000000000000000000');
     });
 
     test('crash before deviceId', async () => {
@@ -192,7 +190,7 @@ suite('crash report', () => {
       await new Promise(resolve => {
         let tick = setInterval(() => {
           fs.stat(tombstonePath('tombstone_1'))
-          .catch(err => {
+          .catch(() => {
             clearInterval(tick);
             resolve();
           });
@@ -207,15 +205,12 @@ suite('crash report', () => {
       let expectedEntry = path.join(outboxPath, 'default-queue/1/');
       assert.ok(await fs.exists(expectedEntry, 'has outbox entry'));
 
-      let { metadata } = await loadJSON(path.join(expectedEntry, 'metadata.json'));
       let content = await fs.readFile(path.join(expectedEntry, 'blob'), 'utf8');
       assert.equal(content, buffer.toString());
-
-      assert.equal(metadata.deviceId, '000000000000000000000000000000000000000000000000000000000000000000');
     });
 
     test('pre existing with device id', async () => {
-      let deviceId = api.id.create();
+      let deviceId = createDeviceId();
       let { crash, outbox} = create();
       let { buffer } = randomStream();
 
@@ -234,20 +229,19 @@ suite('crash report', () => {
       let expectedEntry = path.join(outboxPath, 'default-queue/1/');
       assert.ok(await fs.exists(expectedEntry, 'has outbox entry'));
 
-      let { metadata } = await loadJSON(path.join(expectedEntry, 'metadata.json'));
       let content = await fs.readFile(path.join(expectedEntry, 'blob'), 'utf8');
       assert.equal(content, buffer.toString());
-
-      assert.equal(metadata.deviceId, deviceId.toString());
     });
 
     test('upload to server', async () => {
 
       if (require('./skip-on-travis.js')()) return;
 
-      let deviceId = api.id.create();
+      let deviceId = createDeviceId();
       let { crash, outbox} = create();
-      let { stream, buffer } = randomStream();
+      let { stream } = randomStream();
+
+      let { device: api } = await createApi();
 
       outbox.online = true;
       await crash.assignDeviceId(deviceId);
@@ -260,13 +254,13 @@ suite('crash report', () => {
 
       // See if we can find it on the server...
       let result = await api.crashMeta.find({
-        deviceId: deviceId.toString(),
+        deviceId: api.accessToken.toString(),
         type: 'tombstone',
         limit: 1
       });
 
       assert.equal(result.length, 1);
-      assert.equal(result[0].deviceId, deviceId.toString());
+      assert.equal(result[0].deviceId, api.accessToken.toString());
     });
   });
 });

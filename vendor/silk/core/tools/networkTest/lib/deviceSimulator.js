@@ -24,8 +24,8 @@ const VIDEO_CONTENT_TYPE = 'video/mp4';
 const VIDEO_BLOB_TYPE = 'video';
 
 export default class DeviceSimulator {
-  constructor() {
-    this._id = null;
+  constructor(accessToken) {
+    this.accessToken = accessToken;
     this._previewSize = {
       width: VIDEO_WIDTH / PREVIEW_SCALE,
       height: VIDEO_HEIGHT / PREVIEW_SCALE
@@ -33,12 +33,6 @@ export default class DeviceSimulator {
     this._logo = new Buffer(logoData, 'base64');
     this._previewFrame = new Buffer(previewData, 'base64');
     this._videoFrame = new Buffer(videoData, 'base64');
-  }
-
-  init() {
-    // TODO, we may want to persist this?
-    this._id = api.id.create();
-    return Promise.resolve();
   }
 
   connect() {
@@ -61,7 +55,7 @@ export default class DeviceSimulator {
 
   emitInfo() {
     let now = Date.now();
-    let info = { id: this._id.toString(), name: DEVICE_NAME, now,
+    let info = { id: this.accessToken.toString(), name: DEVICE_NAME, now,
         logo: this._logo, previewSize: this._previewSize };
 
     return new Promise(resolve => {
@@ -71,7 +65,7 @@ export default class DeviceSimulator {
 
   _emitVideo(frame, type, durationMs) {
     let now = Date.now();
-    let data = { id: this._id.toString(), objects: null,
+    let data = { id: this.accessToken.toString(), objects: null,
         frame: frame, contents: type, when: now,
         durationMs: durationMs, deviceEmitMs: now };
 
@@ -108,7 +102,6 @@ export default class DeviceSimulator {
 
     let metadata = {
       metaType: 'video',
-      deviceId: this._id.toString(),
       startUTC: startMs,
       endUTC: startMs + durationMs,
       data: {
@@ -119,7 +112,7 @@ export default class DeviceSimulator {
       url: this._blobUrl ? this._blobUrl : undefined,
     };
 
-    return api.timeMeta.create(metadata)
+    return api.metadataPublisher.create(metadata)
     .then(result => this._previousId = result.id)
     .catch(util.processthrow);
   }

@@ -14,25 +14,13 @@ import {LatencyStats, Repeater} from './testutils';
 const log = createLog('deviceTester');
 
 export default class ServerTester {
-  constructor() {
-    this._device = new DeviceSimulator();
-    this._inited = false;
-  }
-
-  _init() {
-    if (this._inited) {
-      return Promise.resolve();
-    } else {
-      return this._device.init()
-      .then(() => this._inited = true)
-      .catch(util.processthrow);
-    }
+  constructor(accessToken) {
+    this._device = new DeviceSimulator(accessToken);
   }
 
   _startTest(repeater) {
     let stats;
-    return this._init()
-    .then(() => this._device.connect())
+    return this._device.connect()
     .then(() => this._device.emitInfo(1, 0)) // server expects info first
     .then(() => repeater.start())
     .then(results => stats = results)
@@ -46,8 +34,7 @@ export default class ServerTester {
         () => this._device.connect(cfg),
         () => this._device.disconnect(cfg));
 
-    return this._init()
-    .then(() => repeater.start())
+    return repeater.start()
     .catch(util.processthrow);
   }
 
@@ -72,4 +59,3 @@ export default class ServerTester {
     }
   }
 }
-

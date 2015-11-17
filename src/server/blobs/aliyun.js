@@ -3,6 +3,7 @@
 
 import OSS from 'aliyun-oss';
 import uuid from 'uuid';
+import url from 'url';
 
 let log = require('log')('blob-aliyun');
 
@@ -17,13 +18,17 @@ class AliyunBlobs {
   }
 
   _getOss(blobType) {
-    const blobConfig = this.config.blobs.aliyun[blobType];
-
     let oss = this.aliyunMap.get(blobType);
     if (!oss) {
-      log.warn('aliyun blob config', blobType, blobConfig);
-      oss = new OSS.createClient(blobConfig);
-      this.aliyunMap.set(blobType, oss);
+      const blobConfig = this.config.blobs.aliyun[blobType];
+      if (blobConfig === undefined) {
+        log.warn('aliyun blob unknown blobType', blobType);
+        oss = null;
+      } else {
+        log.warn('aliyun blob new config', blobType, blobConfig);
+        oss = new OSS.createClient(blobConfig);
+        this.aliyunMap.set(blobType, oss);
+      }
     }
     return oss;
   }
@@ -51,7 +56,7 @@ class AliyunBlobs {
     let { url: putUrl, headers: putHeaders } = await oss.getSignedUrl({
       method: 'PUT',
       bucket: blobConfig.bucket,
-      object: uuid.v4(),
+      object: blobType + '!' + uuid.v4(), // enbed blobType in object name
       headers: headers
     });
 
@@ -74,6 +79,32 @@ class AliyunBlobs {
 
     res.append('Location', getUrl);
     res.status(201).send({ url: getUrl });
+  }
+
+  getSignedUrl(getUrl) {
+    let urlObj = url.parse(getUrl);
+
+    // pathname looks like this '/blobType!uuid'
+    let object = urlObj.pathname.slice(1); // remove leading '/'
+    const blobType = decodeURIComponent(object).split('!')[0];
+
+    let oss = this._getOss(blobType);
+    if (!oss) {
+      log.warn(`Bad URL, cannot sign: ${getUrl}`);
+      return getUrl;
+    }
+
+    const blobConfig = this.config.blobs.aliyun[blobType];
+    let { url: signedUrl } = oss.getSignedUrl({
+      method: 'GET',
+      bucket: blobConfig.bucket,
+      object: object,
+      headers: {},
+      signHeaders: false,
+    });
+
+    log.warn(`Returning signed get url '${signedUrl}'`);
+    return signedUrl;
   }
 }
 

@@ -2,7 +2,11 @@
 .*/build/.*
 .*/test/rntest/.*
 .*/node_modules/api-schema/.*
+<<<<<<< HEAD
 .*/node_modules/aws-sdk-promise/.*
+=======
+.*/node_modules/jsonwebtoken/.*
+>>>>>>> 6a94ad9... Add flow types to JWT api code and make generating signed requests easier
 
 [include]
 
@@ -12,6 +16,7 @@ interface
 [options]
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
+unsafe.enable_getters_and_setters=true
 
 [version]
 0.18.1

@@ -140,6 +140,7 @@ export default function createContext(overrides = {}) {
     context.db = await createDb(config);
     context.config = config;
     context.server = server;
+    context.blobHandler = server.context.blobHandler;
     context.url = `http://localhost:${server.port}`;
     context.api = createApi({ serverUrl: context.url });
 

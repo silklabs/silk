@@ -111,6 +111,11 @@ export class OnlineCameras extends React.Component {
       <div>
         <Alert bsStyle="info">{this.state.status}</Alert>
         <div style={styles.flexRow}>{cameras}</div>
+        <Link style={{float: 'right'}} to="/login">
+          <Button bsStyle="warning">
+            <Glyphicon glyph="log-out" style={styles.glyphicon} />
+          </Button>
+        </Link>
       </div>
     );
   }

@@ -45,6 +45,11 @@ export function parseUrl(url: string): BlobConfig {
 // XXX: More hacks we should use a class and support more clouds...
 let s3;
 export default function signUrl(url: string, expireInSeconds: number = SECONDS_IN_HOUR): string {
+  // XXX: Another hack to support file backed blobs.
+  if (url.indexOf('aws') === -1) {
+    return url;
+  }
+
   if (!s3) {
     s3 = new S3();
   }

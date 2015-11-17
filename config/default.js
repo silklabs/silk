@@ -65,6 +65,13 @@ export default {
       }
     },
 
+    clouds: {
+      aws: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      },
+    },
+
     // AWS S3 blob storage.
     s3: {
       video: {

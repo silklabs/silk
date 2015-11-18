@@ -1,6 +1,7 @@
 var path = require('path');
+var webpack = require('webpack');
 
-module.exports = {
+var config = {
   devServer : {
     contentBase: './public',
     publicPath: '/js/',
@@ -24,5 +25,11 @@ module.exports = {
         loaders: ['babel']
       }
     ]
-  }
+  },
+  plugins: [],
 }
+
+// TODO: Uglify disabled for now.  The output it produces doesn't load correctly
+//config.plugins.push(new webpack.optimize.UglifyJsPlugin({ output: {comments: false} }));
+
+module.exports = config;

@@ -20,7 +20,7 @@ export default {
 
   server: {
     cors: {
-      origin: '*',
+      origin: true,
       methods: '*',
       credentials: true
     },

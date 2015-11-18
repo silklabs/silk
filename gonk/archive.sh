@@ -195,6 +195,9 @@ HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)
 echo Set device time zone to match host: $HOST_TZ
 adb shell setprop persist.sys.timezone $HOST_TZ
 
+echo Set device time to match host: $(date)
+adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+
 echo Rebooting...
 adb reboot
 waitForDevice

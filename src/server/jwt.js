@@ -8,8 +8,6 @@ import createLog from 'log';
 import type Nonce from './models/nonce';
 import type { RouteNextFn, MiddlewareFn } from './express_types';
 
-export type PublicKeyProvider = ((publicKey: string, req: any) => Promise<?string>);
-
 const log = createLog('routes:jwt');
 
 /**
@@ -53,29 +51,58 @@ function validateClaim(jwt) {
   return jti;
 }
 
+function getSignature(req: any): ?string {
+  // Authorization header is required.
+  let { authorization } = req.headers;
+  if (!authorization) {
+    log.error('Missing authorization header', req.path, req.method);
+    return;
+  }
+
+  // Must be a scheme we understand.
+  let [scheme, signature] = authorization.split(' ');
+  if (scheme.toLowerCase() !== 'bearer') {
+    log.error('Unknown authorization header type', req.path, req.method, scheme);
+    return;
+  }
+
+  return signature;
+}
+
+export type PublicKeyProvider = ((publicKey: string, req: any) => Promise<?string>);
+export type SignatureProvider = ((req: any, res: any) => ?string);
+
+type MiddlewareOptions = {
+  nonce: Nonce;
+  publicKeyProvider: PublicKeyProvider;
+  signatureProvider: ?SignatureProvider;
+};
+
+export type MiddlewareOverrides = {
+  signatureProvider: ?SignatureProvider
+};
+
+
 /**
  * JWT Authorization middleware.
  *
  * @param {Object} nonce database.
  * @param {Function} method to invoke to fetch public key.
  */
-export default function (nonce: Nonce, method: PublicKeyProvider): MiddlewareFn {
+export default function (options: MiddlewareOptions): MiddlewareFn {
+  let {nonce, publicKeyProvider, signatureProvider} = options || {};
+  let signatureProviderFn = signatureProvider || getSignature;
+
+
+  if (typeof signatureProvider !== 'function') {
+    signatureProvider = getSignature;
+  }
 
   async function handle(req: any, res: any, next: RouteNextFn) {
-    // Authorization header is required.
-    let { authorization } = req.headers;
-    if (!authorization) {
-      log.error('Missing authorization header', req.path, req.method);
-      // 401 = no header sent.
-      res.sendStatus(401);
-      return;
-    }
+    let signature = signatureProviderFn(req, res);
 
-    // Must be a scheme we understand.
-    let [scheme, signature] = authorization.split(' ');
-    if (scheme.toLowerCase() !== 'bearer') {
-      log.error('Unknown authorization header type', req.path, req.method, scheme);
-      res.sendStatus(403);
+    if (typeof signature !== 'string') {
+      res.sendStatus(401);
       return;
     }
 
@@ -95,9 +122,9 @@ export default function (nonce: Nonce, method: PublicKeyProvider): MiddlewareFn 
       return;
     }
 
-    let publicKey = await method(jwtHeader.id, req, res);
+    let publicKey = await publicKeyProvider(jwtHeader.id, req, res);
     if (!publicKey) {
-      log.error('Missing public key', req.path, req.method, scheme);
+      log.error('Missing public key', req.path, req.method);
       res.sendStatus(403);
       return;
     }

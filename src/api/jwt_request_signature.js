@@ -22,7 +22,7 @@ function jwtPayload(canonicalReq: string): SignPayload {
     jti: uuid.v1(),
     // JSON representation of a string...
     iat: new Date().toJSON(),
-    // sha1 of the json body...
+    // sha256 of the json body...
     requestHash: sha256(canonicalReq)
   };
 }
@@ -47,7 +47,7 @@ export function signature(
       id: accessToken.pub
     },
     algorithm: 'ed25519',
-    jwa: jwa
+    jwa: jwa,
   });
 }
 
@@ -78,10 +78,6 @@ export function bodySignature(
        * The server will identify us based on the public key. We send it is
        * sent in the clear here as an "id" then server _must_ validate this
        * against known public keys.
-       *
-       * XXX: An alternative design would be to use an opaque id which is
-       * assigned to us by the server but that was deemed to add complexity
-       * without much value.
        */
       id: accessToken.toString()
     },

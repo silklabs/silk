@@ -31,7 +31,7 @@ export default function (ctx: RouteContext) {
     `,
   });
 
-  sharedRoutes(api, ctx);
+  sharedRoutes(api, 'device', ctx);
 
   api.define({
     path: 'complete_registration',

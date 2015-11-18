@@ -2,11 +2,10 @@
 .*/build/.*
 .*/test/rntest/.*
 .*/node_modules/api-schema/.*
-<<<<<<< HEAD
 .*/node_modules/aws-sdk-promise/.*
-=======
 .*/node_modules/jsonwebtoken/.*
->>>>>>> 6a94ad9... Add flow types to JWT api code and make generating signed requests easier
+.*/node_modules/socket.io/.*
+.*/node_modules/socket.io-client/.*
 
 [include]
 

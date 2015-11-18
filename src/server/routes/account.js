@@ -1,8 +1,8 @@
-/* @flow */
-
 /**
  * The account routes deal with operations on an account that has been created
  * previously (authenticated).
+ *
+ * @flow
  */
 
 import { Router } from 'express';
@@ -34,7 +34,7 @@ export default function (ctx: RouteContext) {
     `,
   });
 
-  sharedRoutes(api, ctx);
+  sharedRoutes(api, 'account', ctx);
 
   api.define({
     path: 'register_device',

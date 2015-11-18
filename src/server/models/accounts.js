@@ -6,7 +6,9 @@ import * as Joi from 'joi';
 import Base from './base';
 import scrypt from 'scrypt';
 import uuid from 'uuid';
+
 import AccessToken from '../../api/id';
+import {ObjectId} from 'promised-mongo';
 
 /**
  * Password reset expires in 4 hours...
@@ -69,6 +71,13 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
     expires: Joi.date().required()
   })
 });
+
+// XXX: Duplicating types so we can use them in flow too (lame).
+export type Record = {
+  _id: ObjectId;
+  email: string;
+  // TODO: finish type...
+}
 
 const log = require('log')('models:accounts');
 

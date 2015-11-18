@@ -37,6 +37,10 @@ function validateClaim(jwt) {
   Joi.assert(jwt, CLAIM_SCHEMA);
   let { jti, iat } = jwt;
 
+  if (process.env.DISABLE_TIME_CHECK) { // TODO: Remove this...
+    return jti;
+  }
+
   let now = Date.now();
   let issued = new Date(iat);
   let delta = Math.abs(Date.now() - issued.valueOf());

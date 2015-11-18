@@ -89,12 +89,18 @@ class Bledroid extends EventEmitter {
     this.startBufferingCommands();
 
     log.info(`Connecting to '${BLE_SOCKET_PATH}' socket`);
-    const socket = net.createConnection(BLE_SOCKET_PATH, err => {
-      if (err) {
-        this.onSocketConnectionError(err);
-      } else {
-        this.onSocketConnected(socket);
-      }
+
+    const socket = net.createConnection(BLE_SOCKET_PATH);
+
+    const errorListener = (error) => {
+      socket.removeListener(`error`, errorListener);
+      this.onSocketConnectionError(error);
+    };
+    socket.on(`error`, errorListener);
+
+    socket.once(`connect`, () => {
+      socket.removeListener(`error`, errorListener);
+      this.onSocketConnected(socket);
     });
   }
 

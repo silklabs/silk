@@ -1185,6 +1185,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "";
+				"OTHER_SWIFT_FLAGS[arch=*]" = "-assert-config Debug";
 				PRODUCT_NAME = Silk;
 				PROVISIONING_PROFILE = "";
 				SWIFT_INCLUDE_PATHS = "";

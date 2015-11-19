@@ -1,4 +1,5 @@
 
+import Config from '../libraries/Config';
 import React from 'react';
 import { Alert, ButtonInput, Panel, Input, Row, Col } from 'react-bootstrap';
 
@@ -17,6 +18,10 @@ export default class Login extends React.Component {
       submitDisabled: true,
       signingIn: false,
     });
+
+    if (Config.defaultUser && Config.defaultPassword) {
+      this.setState({ submitDisabled: false });
+    }
   }
 
   doSignOut = async () => {
@@ -71,24 +76,35 @@ export default class Login extends React.Component {
           <Alert bsStyle="danger">{this.state.alertMessage}</Alert>
         )}
         <form onSubmit={this.handleSubmit}>
-          <Input type="email" ref="email"
-            defaultValue={this.state.defaultUser}
-            placeholder="Email Address" onChange={this.handleChange}
+          <Input
+            type="email"
+            ref="email"
+            defaultValue={Config.defaultUser}
+            placeholder="Email Address"
+            onChange={this.handleChange}
           />
-          <Input type="password" ref="pass"
-            defaultValue={this.state.defaultPassword}
-            placeholder="Password" onChange={this.handleChange}
+          <Input
+            type="password"
+            ref="pass"
+            defaultValue={Config.defaultPassword}
+            placeholder="Password"
+            onChange={this.handleChange}
           />
           <Row>
             <Col xs={6}>
-              <ButtonInput type="submit" bsStyle="primary"
+              <ButtonInput
+                type="submit"
+                bsStyle="primary"
                 value={this.state.signingIn ? 'Signing In...' : 'Sign In'}
                 disabled={this.state.submitDisabled}
               />
             </Col>
             <Col xs={6}>
-              <ButtonInput type="reset" bsStyle="warning"
-                value="Clear" onClick={this.resetForm}
+              <ButtonInput
+                type="reset"
+                bsStyle="warning"
+                value="Reset"
+                onClick={this.resetForm}
               />
             </Col>
           </Row>

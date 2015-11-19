@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 import cv from 'opencv';
-import MotionZone from './groupRectangles';
+import MotionZone from './motionzone';
 
 let log;
 let util;

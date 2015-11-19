@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 import cv from 'opencv';
-import groupRectangles from './groupRectangles';
+import MotionZone from './motionzone';
 
 let log;
 let util;
@@ -35,7 +35,7 @@ const GAUSSIAN_KERNEL_SIZE = 21;
  *
  * Reference: https://kerberos.io/
  */
-function _detectMotion(image, callback) {
+function _detectMotion(image, motionZone, callback) {
   // d1 and d2 for calculating the differences
   // motion, the result of "and" operation, calculated on d1 and d2
   // numChanges, the amount of changes in the result matrix.
@@ -92,8 +92,12 @@ function _detectMotion(image, callback) {
   // Group rectangles that intersect with each other or are contained within
   // each other
   if (rects.length > 0) {
-    groupRectangles(rects);
+    motionZone.groupRectangles(rects);
     log.debug(`group rects: ${JSON.stringify(rects)}`);
+
+    // Remove motion rectangles that fall with in the ignore motion zones
+    rects = motionZone.pruneMotionZones(rects);
+    log.debug(`pruned rects: ${JSON.stringify(rects)}`);
   }
 
   callback(rects);
@@ -109,7 +113,6 @@ function _playSound() {
   }
 }
 
-
 /**
  * This class tracks any motion in the preview image and repots discrete motion
  * rectangles
@@ -122,6 +125,7 @@ class TrackObject {
     let working = false;
     let timeline = this._env.timeline;
     soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
+    this._motionzone = new MotionZone(this._env);
 
     this._onPreview = when => {
       log.debug(`Retrieving frame ${when}`);
@@ -140,7 +144,7 @@ class TrackObject {
 
         let start = Date.now();
 
-        _detectMotion(image, (rects) => {
+        _detectMotion(image, this._motionzone, (rects) => {
           let diff = Date.now() - start;
           log.verbose(`Motion detection ran for ${diff}ms`);
 
@@ -166,7 +170,6 @@ class TrackObject {
       this._env.timeline.removeListener('preview', this._onPreview);
     }
   }
-
 }
 
 module.exports = (env) => new TrackObject(env);

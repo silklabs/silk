@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "silk-sdk-glue": "0.0.1",
-    "babel-runtime": "^5.8.20"
+    "babel-runtime": "^5.8.20",
+    "mz": "2.0.0"
   },
   "private": true
 }

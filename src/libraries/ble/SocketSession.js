@@ -46,7 +46,17 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     const socketStream = new Stream(socket);
     const cryptoStream = new CryptoDuplexStream(socketStream);
-    const msgpackStream = new MessagePackDuplexStream(cryptoStream)
+
+    const msgpackStream = new MessagePackDuplexStream(cryptoStream);
+    msgpackStream.on(`data`, (data) => {
+      log.verbose(`Received`, data);
+    });
+    const oldWrite = msgpackStream._write;
+    msgpackStream._write = (data, encoding, callback) => {
+      log.verbose(`Sending`, data);
+      oldWrite.call(msgpackStream, data, encoding, callback);
+    };
+
     const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
 
     super(heartbeatStream,

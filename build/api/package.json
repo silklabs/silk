@@ -1,39 +1,39 @@
 {
-  "name": "silk-api",
-  "version": "0.0.1",
-  "description": "Silk client API for node js",
-  "main": "src/index.js",
-  "license": "proprietary",
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  },
   "dependencies": {
-    "babelify": "^6.3.0",
     "babel-runtime": "^5.8.20",
+    "babelify": "^6.3.0",
     "base64url": "^1.0.4",
     "debug": "^2.2.0",
     "elliptic": "^5.1.0",
     "hash.js": "^1.0.3",
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
     "localStorage": "^1.0.3",
-    "log": "git@github.com:silklabs/log.git#master",
+    "log": "git@github.com:silklabs/log.git#next",
     "msgpack-lite": "^0.1.13",
     "node-fetch": "^1.3.2",
     "pbkdf2": "^3.0.4",
     "promise": "^6.1.0",
     "uuid": "^2.0.1"
   },
-  "browserify": {
-    "transform": [
-      "babelify"
-    ]
-  },
+  "description": "Silk client API for node js",
   "engines": {
     "node": "0.12.x || >=4.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:silklabs/silk-api.git"
   },
   "keywords": [
     "iot"
   ],
-  "private": true
+  "license": "proprietary",
+  "main": "src/index.js",
+  "name": "silk-api",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-api.git"
+  },
+  "version": "0.0.1"
 }

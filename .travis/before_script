@@ -29,7 +29,7 @@ source .travis/artifacts
 
 # Export the path which we want to upload our ccache artifacts to..
 # NOTE: Must not contain trailing slash...
-CCACHE_URL="https://s3-us-west-2.amazonaws.com/silk-travis-artifacts/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
+CCACHE_URL="$ARTIFACT_HOST/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
 
 function get_http_status() {
   local url=$1
@@ -40,7 +40,7 @@ if [[ "$(get_http_status $CCACHE_URL)" == "200" ]];
 then
   mkdir -p $HOME/.ccache
   cd $HOME/.ccache
-  curl $CCACHE_URL | tar -xz
+  ( set -x; curl $CCACHE_URL | tar -xz )
   cd -
 else
   echo "Failed to find ccache bundle at $CCACHE_URL"

@@ -4,4 +4,4 @@
 cd $HOME/.ccache/
 mkdir -p $HOME/ccache_dist/
 tar -czf $HOME/ccache_dist/ccache.tar.gz *
-silk-artifacts silk-travis-artifacts $CCACHE_ARTIFACT_PATH $HOME/ccache_dist
+silk-artifacts $ARTIFACT_BUCKET $CCACHE_ARTIFACT_PATH $HOME/ccache_dist

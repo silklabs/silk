@@ -227,7 +227,7 @@ REPO_VERSION=--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-st
 
 
 ifndef NO_REPOCACHE
-REPOCACHE_URLPREFIX := https://silk-releng.s3.amazonaws.com/master/repocache/repocache-
+REPOCACHE_URLPREFIX := https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/repocache-
 
 REPOCACHE_base := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-base.tgz
 ifeq ($(REPO_INIT_HOST),linux)

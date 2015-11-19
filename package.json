@@ -49,8 +49,8 @@
       "node": true
     },
     "globals": {
-      "document": true,
       "MediaSource": true,
+      "document": true,
       "setup": true,
       "suite": true,
       "suiteSetup": true,

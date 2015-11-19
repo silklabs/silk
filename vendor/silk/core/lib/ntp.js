@@ -76,7 +76,6 @@ function getNetworkTime() {
   //       Make the server to use configurable?
   wifi.online().then(() => {
     log.info('Retrieving NTP time');
-    ntpClient.defaultNtpServer = '104.232.3.3';
     ntpClient.getNetworkTime(undefined, undefined, ntpCallback);
   });
 }

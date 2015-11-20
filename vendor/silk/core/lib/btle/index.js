@@ -10,27 +10,6 @@ import makeLog from '../log';
 import noble from 'noble';
 import SocketScanner from './socket_scanner';
 
-/**
- * Config Service
- *
- * BLE Roles
- *   - Device is the "Peripheral" and is advertising a service
- *   - App is the "Central" and is listening for advertisements
- *
- * We are using the GATT profile to send data between the Device and App
- *   - Device is the GATT server, offering ability to read/write Characteristics
- *   - App is the GATT client, doing reads/write on the device.
- *
- * Config Process
- *   1) Device advertises service
- *   2) Device waits for connection from App
- *   3) After connection, Device keeps RSSI (GATT Characteristic) up-to-date
- *   4) App polls and read the RSSI until above a min threshold
- *   5) App writes the Wi-Fi access point and secret key (GATT Characteristics)
- *   6) BLE Config Service updates state to configured
- *   7) Config connects to new Wi-Fi network received from BLE Config Service
- */
-
 const DEFAULT_BEACON_MAJOR = 0;
 const DEFAULT_BEACON_MINOR = 0;
 
@@ -51,11 +30,15 @@ class BluetoothLE extends EventEmitter {
 
   _beaconInfo = null;
   _mode = BluetoothLE.MODE_OFF;
+  _desiredMode = BluetoothLE.MODE_OFF;
   _advertising = false;
   _changeStatePromise = Promise.resolve();
   _adapterState = ``;
-  _modeAtReset = BluetoothLE.MODE_OFF;
-  _adapterStateResolve = null;
+
+  _adapterStateDeferred = makeDeferred();
+  _adapterStateDeferredAccepted = false;
+
+  _bledroidCrashDeferred = null;
 
   _socketScanner = null;
   _socketSession = null;
@@ -72,6 +55,11 @@ class BluetoothLE extends EventEmitter {
 
     assert(bleno.state === noble.state);
     this._adapterState = noble.state;
+
+    if (noble.state === `poweredOn`) {
+      this._adapterStateDeferred.accept();
+      this._adapterStateDeferredAccepted = true;
+    }
 
     noble.addListener(`stateChange`, this._onAdapterStateChange);
   }
@@ -138,15 +126,30 @@ class BluetoothLE extends EventEmitter {
 
     // If bledroid crashes before we actually set |_mode| then we want to
     // restart in this mode.
-    this._modeAtReset = mode;
+    this._desiredMode = mode;
 
-    try {
-      await this._changeStatePromise;
-    } catch(error) {                             // eslint-disable-line no-empty
-      // Any error should have been logged by now.
-    }
-
-    this._changeStatePromise = this._changeMode(mode);
+    this._changeStatePromise =
+      this._changeStatePromise
+        .catch(() => {
+          // All previous errors should have been logged already.
+        })
+        .then(async () => {
+          let failureCount = 0;
+          for ( ; ; ) {
+            try {
+              await this._changeMode(mode);
+              return;
+            } catch(error) {
+              if (++failureCount === 3) {
+                log.warn(`Unable to change mode to '${mode}' after ` +
+                         `${failureCount} attempts`,
+                         error);
+                throw error;
+              }
+              log.warn(`Failed to change mode to '${mode}', retrying`, error);
+            }
+          }
+        });
     await this._changeStatePromise;
   }
 
@@ -156,8 +159,6 @@ class BluetoothLE extends EventEmitter {
     if (this._mode === mode) {
       return;
     }
-
-    this.emit(`modeChanging`, this._mode, mode);
 
     await this._off();
 
@@ -182,11 +183,8 @@ class BluetoothLE extends EventEmitter {
 
     if (this._socketSession) {
       log.info(`Waiting for socket session to disconnect`);
-      promises.push(new Promise((resolve) => {
-        this._socketSession.once(`close`, () => {
-          this._socketSession = null;
-          resolve();
-        });
+      promises.push(new Promise(resolve => {
+        this._socketSession.once(`close`, () => resolve());
         this._socketSession.end();
       }));
     }
@@ -200,11 +198,18 @@ class BluetoothLE extends EventEmitter {
 
     if (this._advertising && this._adapterState === `poweredOn`) {
       log.info(`Waiting for advertising to stop`);
-      promises.push(new Promise(resolve => {
-        bleno.stopAdvertising(() => {
-          resolve();
-        });
-      }));
+
+      assert(!this._bledroidCrashDeferred);
+      this._bledroidCrashDeferred = makeDeferred();
+
+      let promise = new Promise(resolve => {
+        bleno.stopAdvertising(() => resolve());
+      });
+
+      promises.push(Promise.race([
+        this._bledroidCrashDeferred.promise,
+        promise,
+      ]));
     }
 
     if (promises.length) {
@@ -212,8 +217,10 @@ class BluetoothLE extends EventEmitter {
       log.info(`Done waiting`);
     }
 
+    this._socketSession = null;
     this._socketScanner = null;
     this._advertising = false;
+    this._bledroidCrashDeferred = null;
   }
 
   async _startAdvertising() {
@@ -223,13 +230,13 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
-    if (this._adapterState !== `poweredOn`) {
-      log.warn(`Ignoring _startAdvertising() because adapter state is ` +
-               `'${this._adapterState}'`);
-      return;
-    }
+    // Make sure that the adapter is on before attempting to start advertising.
+    await this._adapterStateDeferred.promise;
 
-    await new Promise((resolve, reject) => {
+    assert(!this._bledroidCrashDeferred);
+    this._bledroidCrashDeferred = makeDeferred();
+
+    let promise = new Promise((resolve, reject) => {
       const callback = error => {
         if (error) {
           reject(error);
@@ -244,7 +251,13 @@ class BluetoothLE extends EventEmitter {
                                     callback);
     });
 
+    await Promise.race([
+      this._bledroidCrashDeferred.promise,
+      promise,
+    ]);
+
     this._advertising = true;
+    this._bledroidCrashDeferred = null;
   }
 
   async _startSocketScanner() {
@@ -254,19 +267,26 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
-    if (this._adapterState !== `poweredOn`) {
-      log.warn(`Ignoring _startSocket() because adapter state is ` +
-               `'${this._adapterState}'`);
-      return;
-    }
+    // Make sure that the adapter is on before attempting to start scanning.
+    await this._adapterStateDeferred.promise;
 
     const scanner =
       new SocketScanner(noble, { serviceUuid: this._beaconInfo.uuid });
-    await scanner.start();
+
+    assert(!this._bledroidCrashDeferred);
+    this._bledroidCrashDeferred = makeDeferred();
+
+    let promise = scanner.start();
+
+    await Promise.race([
+      this._bledroidCrashDeferred.promise,
+      promise,
+    ]);
 
     scanner.addListener(`connect`, this._onSocketSessionConnect);
 
     this._socketScanner = scanner;
+    this._bledroidCrashDeferred = null;
   }
 
   _onAdapterStateChange = adapterState => {
@@ -276,47 +296,73 @@ class BluetoothLE extends EventEmitter {
       return;
     }
 
+    const justCrashed = this._adapterState === `poweredOn`;
+    if (justCrashed) {
+      log.warn(`Bledroid crashed`);
+    }
+
     log.info(`Adapter state changed to '${adapterState}'`);
     this._adapterState = adapterState;
 
     if (adapterState === `poweredOn`) {
-      const modeAtReset = this._modeAtReset;
-      this._modeAtReset = BluetoothLE.MODE_OFF;
+      assert(!this._bledroidCrashDeferred);
 
-      this._changeStatePromise =
-        this._changeStatePromise
-          .catch(error => undefined)                      // eslint-disable-line
-          .then(() => this._changeMode(modeAtReset))
-          .catch(error => log.warn(error));
-
-      if (this._adapterStateResolve) {
-        this._adapterStateResolve();
-        this._adapterStateResolve = null;
+      // Make sure that we unblock anyone waiting on the adapter state promise.
+      if (!this._adapterStateDeferredAccepted) {
+        this._adapterStateDeferred.accept();
+        this._adapterStateDeferredAccepted = true;
       }
-
       return;
     }
 
-    if (this._adapterStateResolve) {
+    if (!justCrashed) {
+      assert(!this._adapterStateDeferredAccepted);
       return;
     }
 
-    // Make futher calls to changeState() wait for the power to come back on.
-    let deferred = makeDeferred();
+    // Make sure that any mode changes wait for bledroid to reconnect.
+    this._adapterStateDeferred = makeDeferred();
+    this._adapterStateDeferredAccepted = false;
 
-    this._changeStatePromise =
-      this._changeStatePromise
-        .catch(error => undefined)                        // eslint-disable-line
-        .then(() => this._changeMode(BluetoothLE.MODE_OFF))
-        .then(() => {
-          assert(this._mode === BluetoothLE.MODE_OFF);
-          assert(!this._advertising);
-          assert(!this._configService);
-          assert(!this._socketScanner);
-          return deferred.promise;
-        })
-        .catch(error => log.warn(error));
-    this._adapterStateResolve = deferred.accept;
+    // Make sure that any mode changes that were waiting on bledroid wake up and
+    // retry.
+    const crashDeferred = this._bledroidCrashDeferred;
+    this._bledroidCrashDeferred = null;
+    if (crashDeferred) {
+      crashDeferred.reject();
+    }
+
+    // Make sure that we restart in the correct mode. If the current mode does
+    // not match the desired mode then there must be another promise in the
+    // chain already that will eventually get us to the right mode. If the mode
+    // does match then we need to add a new promise to the end of the chain.
+    if (this._mode === this._desiredMode) {
+      this.changeMode(this._desiredMode);
+    }
+
+    // Pretend like we're just changing to OFF.
+    try {
+      if (this._socketSession) {
+        this._socketSession.end();
+        this._socketSession = null;
+      }
+      if (this._socketScanner) {
+        this._socketScanner.stop();
+        this._socketScanner = null;
+      }
+      this._advertising = false;
+
+      this._mode = BluetoothLE.MODE_OFF;
+      this.emit(`modeChanged`, BluetoothLE.MODE_OFF);
+    } catch(error) {
+      // Ensure that our state is correct even if something above failed.
+      this._socketSession = null;
+      this._socketScanner = null;
+      this._advertising = false;
+      this._mode = BluetoothLE.MODE_OFF;
+
+      log.warn(error);
+    }
   };
 
   _onSocketSessionConnect = socketSession => {

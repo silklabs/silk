@@ -8,6 +8,7 @@ import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import authorizeAccount from '../authorize_account';
 import createLog from 'log';
+import signUrl from '../sign_url';
 
 import TimeMetadata from '../models/time_metadata';
 
@@ -39,6 +40,18 @@ export default function (ctx: RouteContext) {
     nonce: ctx.nonce,
     accounts: ctx.accounts
   }));
+
+  type ObjectWithUrl = {
+    url: ?string;
+  }
+
+  // XXX: Hack until we convert over to more robust blobs.
+  function decorateUrl(obj: ObjectWithUrl): ObjectWithUrl {
+    if (obj.url) {
+      obj.url = signUrl(obj.url);
+    }
+    return obj;
+  }
 
   /**
    * Ensure the account is only querying devices it owns.
@@ -104,8 +117,12 @@ export default function (ctx: RouteContext) {
       EMPTY,
     ]),
   }, async (req, res) => {
+    let record = await ctx.timeMeta.findNearTime(req.body);
+    if (record != null) {
+      record = decorateUrl(record);
+    }
     // TODO: Validate deviceId against known devices for this account.
-    send404OnEmpty(res, await ctx.timeMeta.findNearTime(req.body));
+    send404OnEmpty(res, record);
   });
 
   api.define({
@@ -116,8 +133,10 @@ export default function (ctx: RouteContext) {
     input: TimeMetadata.SCHEMA.findAllInTimeInterval,
     output: METADATA_ARRAY,
   }, async (req, res) => {
+    let records = await ctx.timeMeta.findAllInTimeInterval(req.body);
+    records = records.map(decorateUrl);
     // TODO: Validate deviceId against known devices for this account.
-    res.respond(await ctx.timeMeta.findAllInTimeInterval(req.body));
+    res.respond(records);
   });
 
   api.define({
@@ -131,8 +150,12 @@ export default function (ctx: RouteContext) {
       EMPTY,
     ]),
   }, async (req, res) => {
+    let record = await ctx.timeMeta.findOneAfterTime(req.body);
+    if (record) {
+      record = decorateUrl(record);
+    }
     // TODO: Validate deviceId against known devices for this account.
-    send404OnEmpty(res, await ctx.timeMeta.findOneAfterTime(req.body));
+    send404OnEmpty(res, record);
   });
 
   api.define({
@@ -143,8 +166,10 @@ export default function (ctx: RouteContext) {
     input: TimeMetadata.SCHEMA.findBeforeTime,
     output: METADATA_ARRAY,
   }, async (req, res) => {
+    let records = await ctx.timeMeta.findBeforeTime(req.body);
+    records.map(decorateUrl);
     // TODO: Validate deviceId against known devices for this account.
-    res.respond(await ctx.timeMeta.findBeforeTime(req.body));
+    res.respond(records);
   });
 
   return api;

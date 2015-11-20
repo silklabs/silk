@@ -2,6 +2,7 @@
 .*/build/.*
 .*/test/rntest/.*
 .*/node_modules/api-schema/.*
+.*/node_modules/aws-sdk-promise/.*
 
 [include]
 

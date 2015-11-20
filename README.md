@@ -70,9 +70,7 @@ The most basic version looks like this:
   },
 
   // You may also pass a config to override the default silk-server instance.
-  "server": {
-    "url": "http://localhost:5000"
-  }
+  "serverUrl": "http://localhost:5000"
 }
 ```
 
@@ -135,10 +133,10 @@ A default username, password, server URL can be configured via
 `config.local.json`.  Also set `showDevServers` to easily move between our
 internal development servers:
 
-```json
+```js
 {
   "showDevServers": true,
-  "serverUrl": "http://localhost:5000",
+  "serverUrl": "",         <-- Empty string means 'default' server for current branch
   "defaultEmail": "e@silk.io",
   "defaultPassword": "raccoon"
 }

@@ -70,7 +70,7 @@ class Clapper {
     // Assume that if the min value needs to be larger, that the device is
     // in an environment that has more echo, thus the max needs to be
     // proportionally larger too.
-    let maxEnergyDurationMs = minEnergyDurationMs * 4;
+    let maxEnergyDurationMs = minEnergyDurationMs * 6;
 
     log.info(`Init clap detector with min energy duration: ` +
         `${minEnergyDurationMs} ms and max energy duration: ` +
@@ -79,8 +79,8 @@ class Clapper {
     let cfg = {
       fftProcessor: this._fftProcessor,
       riseDurationMs: 24,
-      riseEnergyDelta: this._riseEnergyDelta,
-      minEnergyThreshold: this._minEnergyThreshold,
+      riseEnergyDelta: 10000,
+      minEnergyThreshold: 15000,
       minEnergyDurationMs: minEnergyDurationMs,
       maxEnergyDurationMs: maxEnergyDurationMs,
     };

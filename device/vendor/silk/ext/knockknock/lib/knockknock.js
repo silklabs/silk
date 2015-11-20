@@ -27,6 +27,15 @@ const GRID_Y = 8;
 // bigger the face rectangle required for successful recognition.
 const THRESHOLD = 60;
 
+// Used by Eigenface and Fisherface algorithms
+// Sets how confident the Face Verification algorithm should be to decide if it
+// is an unknown person or a known person. This value is based on experimentation
+// by starting with a known threshold value from https://github.com/
+// MasteringOpenCV/code/blob/master/Chapter8_FaceRecognition/main.cpp#L41
+// Note that a higher threshold value means accepting more faces as known people,
+// whereas lower values mean more faces will be classified as "unknown".
+const UNKNOWN_PERSON_THRESHOLD = 0.65;
+
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
 const ADD_COMMAND_PROP = 'silk.addperson';
@@ -42,8 +51,7 @@ class FindFace {
     log = env.log;
     this._env = env;
     this._faceMap = null;
-    this._model = cv.FaceRecognizer.createLBPHFaceRecognizer(RADIUS,
-      NEIGHBORS, GRID_X, GRID_Y, THRESHOLD);
+    this._model = cv.FaceRecognizer.createEigenFaceRecognizer();
 
     this._trainingInProgress = false;
     this._working = false;
@@ -166,12 +174,24 @@ class FindFace {
       return Promise.reject(`faceMap not found`);
     }
     return new Promise((resolve, reject) => {
+      let reconstructedFace = this._trainer.reconstructFace(this._model, faceim);
+      if (!reconstructedFace) {
+        return reject(`can not reconstruct face`);
+      }
+
+      // Verify whether the reconstructed face looks like the preprocessed face,
+      // otherwise it is probably an unknown person
+      let similarity = this._trainer.getSimilarity(faceim, reconstructedFace);
+      if (similarity >= UNKNOWN_PERSON_THRESHOLD) {
+        return reject(`similarity ${similarity}`);
+      }
+
       this._model.predict(faceim, (result) => {
         log.debug(`${JSON.stringify(result)}`);
         if (result.id !== -1) {
           return resolve(result);
         }
-        return reject();
+        return reject(`identity is unknown`);
       });
     });
   }
@@ -223,7 +243,7 @@ class FindFace {
           // Calculate preview scale
           let previewScale = orig.width() / image.width();
 
-          let faceim = this._trainer._preprocessFace(orig, face, previewScale);
+          let faceim = this._trainer.preprocessFace(orig, face, previewScale);
           if (!faceim) {
             return;
           }

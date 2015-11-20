@@ -118,7 +118,7 @@ export default class Trainer {
         this._trainingData.push([id, path.join(faceDir, file)]);
       }
     } catch (e) {
-      log.warn(`No faces available for ${faceDir}`);
+      log.warn(`No faces available for ${faceDir}, error: ${e}`);
       return;
     }
   }
@@ -202,7 +202,7 @@ export default class Trainer {
    *             Chapter8_FaceRecognition/preprocessFace.cpp
    *  @returns a preprocessed face square image
    */
-  _preprocessFace(im, face, previewScale) {
+  preprocessFace(im, face, previewScale) {
     log.debug(`face: ${JSON.stringify(face)}`);
 
     // Adjust rectangles to scale up to the original size as face rectangles
@@ -313,7 +313,7 @@ export default class Trainer {
    *
    * Reference: http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#norm
    */
-  _getSimilarity(matA, matB) {
+  getSimilarity(matA, matB) {
     if ((matA.width() == matB.width()) && (matA.width() > 0) &&
         (matA.height() == matB.height()) && (matB.height() > 0)) {
       // Calculate the L2 relative error between the 2 images
@@ -326,6 +326,42 @@ export default class Trainer {
     } else {
       return Number.MAX_VALUE;
     }
+  }
+
+  /**
+   * Generate an approximately reconstructed face by back-projecting the
+   * eigenvectors & eigenvalues of the given (preprocessed) face
+   */
+  reconstructFace(model, preprocessedFace) {
+    // Get some required data from the FaceRecognizer model
+    let eigenvectors = model.getMat('eigenvectors');
+    let averageFaceRow = model.getMat('mean');
+
+    if (eigenvectors.empty() || averageFaceRow.empty()) {
+      log.warn(`Model not trained with eigenface?`);
+      return null;
+    }
+
+    let faceHeight = preprocessedFace.height();
+
+    // Project the input image onto the PCA subspace
+    let projection = cv.LDA.subspaceProject(eigenvectors, averageFaceRow,
+        preprocessedFace.reshape(1, 1));
+
+    // Generate the reconstructed face back from the PCA subspace
+    let reconstructionRow = cv.LDA.subspaceReconstruct(eigenvectors,
+        averageFaceRow, projection);
+
+    // Convert the float row matrix to a regular 8-bit image
+    // Make it a rectangular shaped image instead of a single row
+    let reconstructionMat = reconstructionRow.reshape(1, faceHeight);
+
+    // Convert the floating-point pixels to regular 8-bit uchar pixels
+    let reconstructedFace = new cv.Matrix(reconstructionMat.height(),
+        reconstructionMat.width(), cv.Constants.CV_8U);
+    reconstructionMat.convertTo(reconstructedFace, cv.Constants.CV_8U, 1);
+
+    return reconstructedFace;
   }
 
   /**
@@ -381,7 +417,7 @@ export default class Trainer {
 
           // Save the face
           let face = faces[0];
-          let faceim = this._preprocessFace(orig, face, previewScale);
+          let faceim = this.preprocessFace(orig, face, previewScale);
           if (!faceim) {
             this._working = false;
             return;
@@ -391,7 +427,7 @@ export default class Trainer {
           // collected face
           let imageDiff = Number.MAX_VALUE;
           if (oldPreprocessedFaceImg) {
-            imageDiff = this._getSimilarity(faceim, oldPreprocessedFaceImg);
+            imageDiff = this.getSimilarity(faceim, oldPreprocessedFaceImg);
             log.debug(`Image diff: ${imageDiff}`);
           }
 

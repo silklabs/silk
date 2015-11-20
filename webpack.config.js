@@ -12,6 +12,12 @@ var config = {
     path: 'public/js',
     filename: 'bundle.js'
   },
+  resolve: {
+    alias : {
+      'react-native': path.resolve(__dirname, 'src', 'shim', 'ReactNative.js'),
+      'NativeModules': path.resolve(__dirname, 'src', 'shim', 'NativeModules.js'),
+    },
+  },
   module : {
     loaders: [
       { test: /\.json$/, loader: 'json' },

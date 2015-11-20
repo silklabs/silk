@@ -1,14 +1,14 @@
-From 584635f345b28cab44732e508b013734c38ce569 Mon Sep 17 00:00:00 2001
+From 8d40b047faa16f6a4d9f0933aa9ede156ee0db29 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2787 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2798 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2804 insertions(+), 4 deletions(-)
+ 4 files changed, 2815 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..145d676
+index 0000000..109638e
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2787 @@
+@@ -0,0 +1,2798 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -853,9 +853,15 @@ index 0000000..145d676
 +    return;
 +  }
 +
-+  if (!status) {
-+    this.emit('rssiUpdate', peripheralInfo.uuid, rssi);
++  if (status) {
++    log.warn('Failed to update rssi: %d', status);
++
++    // XXX Total hack but we have to emit something or else API consumer
++    //     callbacks won't be called properly.
++    rssi = -80;
 +  }
++
++  this.emit('rssiUpdate', peripheralInfo.uuid, rssi);
 +};
 +
 +/**
@@ -2320,40 +2326,45 @@ index 0000000..145d676
 +
 +  this.scheduleNextCommand();
 +
-+  if (!status) {
-+
-+    const peripheralInfo = this.peripheralMap.get(deviceUuid);
-+    if (!peripheralInfo) {
-+      log.warn('Cannot set notify for unknown peripheral uuid \'%s\'',
-+               deviceUuid);
-+      return;
-+    }
-+
-+    const serviceInfo = peripheralInfo.services.get(serviceUuid);
-+    if (!serviceInfo) {
-+      log.warn('Cannot set notify for service \'%s\' because it no longer ' +
-+               'exists',
-+               serviceUuid);
-+      return;
-+    }
-+
-+    const characteristicInfo =
-+      serviceInfo.characteristics.get(characteristicUuid);
-+    if (!characteristicInfo) {
-+      log.warn('Cannot set notify for characteristic \'%s\' because it no ' +
-+               'longer exists',
-+               characteristicUuid);
-+      return;
-+    }
-+
-+    characteristicInfo.notifying = notify;
-+
-+    this.emit('notify',
-+              deviceUuid,
-+              expandUuid(serviceUuid),
-+              expandUuid(characteristicUuid),
-+              notify);
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot set notify for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return;
 +  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot set notify for service \'%s\' because it no longer ' +
++             'exists',
++             serviceUuid);
++    return;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot set notify for characteristic \'%s\' because it no ' +
++             'longer exists',
++             characteristicUuid);
++    return;
++  }
++
++  if (status) {
++    // There's no good way to throw an error here... All we can do is not update
++    // the |notifying| flag on the |characteristicInfo|.
++    log.warn('Failed to %sable notifications: %d',
++             notify ? 'en' : 'dis',
++             status);
++  } else {
++    characteristicInfo.notifying = notify;
++  }
++
++  this.emit('notify',
++            deviceUuid,
++            expandUuid(serviceUuid),
++            expandUuid(characteristicUuid),
++            characteristicInfo.notifying);
 +};
 +
 +/**
@@ -2880,5 +2891,5 @@ index 42cfdb6..9cdbc67 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.6.2
+2.6.3
 

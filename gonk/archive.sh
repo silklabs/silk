@@ -248,6 +248,9 @@ echo persist.silk.clapper.sound=true >> default.prop
 echo Set device time zone to match host: $HOST_TZ
 echo persist.sys.timezone="${HOST_TZ}" >> default.prop
 
+echo Set device time to match host: $(date)
+adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+
 echo Disable vibration
 echo persist.silk.quiet=true >> default.prop
 

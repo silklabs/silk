@@ -275,9 +275,9 @@ export default class Timeline extends EventEmitter {
    * @return original objects + cached objects if any
    */
   _addCachedObjects(
-    origObjects: Array<TimelineEventObject>,
+    origObjects: ?Array<TimelineEventObject>,
     when: number
-  ): Array<TimelineEventObject> {
+  ): ?Array<TimelineEventObject> {
     // Adjust the timestamp of the last cached objects
     let objs = null;
     if (this.cachedObjs.length > 0) {
@@ -398,7 +398,7 @@ export default class Timeline extends EventEmitter {
   _pushPacket(
     when: number,
     frame: Buffer,
-    objects: Array<TimelineEventObject>,
+    objects: ?Array<TimelineEventObject>,
     type: string,
     durationMs: number = 0
   ) {

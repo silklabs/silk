@@ -122,7 +122,7 @@
   },
   "scripts": {
     "lint": "eslint src",
-    "postinstall": "./tools/patch && webpack --progress",
+    "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./tools/patch && webpack --progress",
     "preinstall": "./bin/preinstall",
     "start": "webpack-dev-server --host 0.0.0.0 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "start-server": "babel-node --harmony server/main.js production",

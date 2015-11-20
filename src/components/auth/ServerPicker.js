@@ -19,7 +19,7 @@ let {
 export default class extends React.Component {
 
   state = {
-    serverUrl: Config.get().server.url || null,
+    serverUrl: Config.get().serverUrl,
   };
 
   _renderTitle() {
@@ -27,7 +27,7 @@ export default class extends React.Component {
       <Text style={TitleBarStyles.titleBarButtonLabel}>Save</Text>
     );
     let saveButton;
-    if (this.state.serverUrl === Config.get().server.url) {
+    if (this.state.serverUrl === Config.get().serverUrl) {
       saveButton = (
         <View style={[TitleBarStyles.titleBarRightButton, styles.disabledButton]}>
           {saveButtonLabel}
@@ -56,7 +56,12 @@ export default class extends React.Component {
   }
 
   _getServerChoices() {
-    let { choices } = Config.get().server;
+    let { choices, devChoices } = Config.get().server;
+    let { showDevServers } = Config.get();
+
+    if (showDevServers) {
+      choices = choices.concat(devChoices);
+    }
 
     // In dev builds where the bundle is loaded from a JS server,
     // offer that host as an option too. It's pretty common to be
@@ -162,11 +167,12 @@ export default class extends React.Component {
   save = () => {
     let { serverUrl } = this.state;
     if (typeof serverUrl === 'string' &&
+        serverUrl.length > 0 &&
         serverUrl.indexOf('http://') !== 0 &&
         serverUrl.indexOf('https://') !== 0) {
       serverUrl = 'http://' + serverUrl;
     }
-    Config.set({server: {url: serverUrl}});
+    Config.set({serverUrl});
     // Root view will take care of the rest.
   };
 }

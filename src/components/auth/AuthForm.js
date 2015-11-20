@@ -3,6 +3,7 @@
  */
 
 import React from 'react-native';
+import Config from '../../libraries/Config';
 
 let {
   AlertIOS,
@@ -63,6 +64,15 @@ export default class extends AsyncComponent {
     password: '',
     passwordVerification: '',
   };
+
+  constructor(props) {
+    super(props);
+    if (!this.props.verifyPassword) {
+      let { defaultEmail, defaultPassword } = Config.get();
+      this.state.email = defaultEmail;
+      this.state.password = defaultPassword;
+    }
+  }
 
   onEmailChange = (email) => this.setState({email});
   onPasswordChange = (password) => this.setState({password});

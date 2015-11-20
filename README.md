@@ -70,9 +70,7 @@ The most basic version looks like this:
   },
 
   // You may also pass a config to override the default silk-server instance.
-  "server": {
-    "url": "http://localhost:5000"
-  }
+  "serverUrl": "http://localhost:5000"
 }
 ```
 
@@ -127,6 +125,21 @@ Coding style is enforced by Travis CI. You can run the linter locally with the f
 
 ```sh
 npm run lint
+```
+
+### Default User, Password, Server URL
+
+A default username, password, server URL can be configured via
+`config.local.json`.  Also set `showDevServers` to easily move between our
+internal development servers:
+
+```js
+{
+  "showDevServers": true,
+  "serverUrl": "",         <-- Empty string means 'default' server for current branch
+  "defaultEmail": "e@silk.io",
+  "defaultPassword": "raccoon"
+}
 ```
 
 ### Logging
@@ -184,9 +197,7 @@ To build a democonfig app package set up to run off an OS X local server over so
 0. Create a file `config.local.json` in your app clone dir with the following contents:
   ```
 {
-  "server": {
-    "url": "192.168.2.1:5000"
-  }
+  "serverUrl": "192.168.2.1:5000"
 }
 ```
 0. Follow the steps above to build, QA, and package the app.

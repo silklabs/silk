@@ -51,9 +51,14 @@ export default class extends AsyncComponent {
   }
 
   onConfigChange = async (config) => {
-    let serverUrl = config.server.url;
-    if (serverUrl === null) {
-      serverUrl = Config.getDefault().server.url;
+    let serverUrl = config.serverUrl;
+    if (serverUrl === null || serverUrl === undefined) {
+      // Default to the first entry in server.choices
+      let { choices } = Config.get().server;
+      serverUrl = choices[0].value;
+      console.log('Selecting default server:', serverUrl);
+      Config.set({serverUrl});
+      return; // Wait for the next 'change' event to continue processing
     }
 
     if (this.state.serverUrl !== serverUrl && this.state.userState !== null) {
@@ -63,10 +68,11 @@ export default class extends AsyncComponent {
       userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
 
-    let api = createAPI({
-      getRandomBytes,
-      serverUrl,
-    });
+    let apiOptions = {getRandomBytes};
+    if (serverUrl !== '' /* use API default server */) {
+      apiOptions.serverUrl = serverUrl;
+    }
+    let api = createAPI(apiOptions);
     let userState = await loadUserState(api);
 
     userState.on('authenticated', this.onAuthenticated);

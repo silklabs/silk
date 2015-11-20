@@ -25,8 +25,6 @@ import TopBar from './TopBar';
 const { BLESocketManager } = NativeModules;
 const log = createLog('Main');
 
-const SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS = 1000;
-
 // Obsolete once https://github.com/facebook/react-native/pull/3788
 // gets upstreamed.
 function uiInteractions(): Promise<void> {
@@ -211,27 +209,11 @@ export default class extends AsyncComponent {
     socket.on('video-stream-new', this.onVideoStreamNew);
     socket.on('video-stream-delete', this.onVideoStreamDelete);
     socket.emit('join', 'video-streams');
-
-    if (this.props.userState.isDeveloper) {
-      // In the developer account, we get to see all devices connected to
-      // the socket.io server. They'll take a few moments to come through,
-      // though, so give them some time. If they haven't come through by
-      // then, we need to assume there are no devices connected right now.
-      setTimeout(() => {
-        if (!this.pendingState.devices) {
-          this.setState({devices: new OrderedMap()});
-        }
-      }, SOCKET_CONNECT_DEVICE_LIST_TIMEOUT_MS);
-    }
   }
 
   // Book keeping for configured devices
 
   async fetchDevices() {
-    if (this.props.userState.isDeveloper) {
-      return;
-    }
-
     let result;
     try {
       result = await this.props.api.account.listDevices();
@@ -324,21 +306,7 @@ export default class extends AsyncComponent {
 
     let deviceRecord = devices.get(deviceId);
     if (!deviceRecord) {
-      if (!this.props.userState.isDeveloper) {
-        // Not a device we know about, and we're not a developer, so bail.
-        return;
-      }
-      // A device we don't know about, but it's ok, we're a developer.
-      // So just create a record for it.
-      let newRecord = new DeviceRecord({
-        deviceId,
-        publicKey: deviceId,
-        name: msg.name,
-        logo: msg.logo,
-        previewSize: msg.previewSize,
-        haveVideoStream: true,
-      });
-      this.setStateAsync({devices: devices.set(deviceId, newRecord)});
+      // Not a device we know about, bail.
       return;
     }
 
@@ -366,15 +334,7 @@ export default class extends AsyncComponent {
       return;
     }
     log.info('Deleting video stream', deviceId);
-
-    if (this.props.userState.isDeveloper) {
-      this.setStateAsync({devices: devices.delete(deviceId)});
-      return;
-    }
-
-    this.setStateAsync({
-      devices: devices.setIn([deviceId, 'haveVideoStream'], true),
-    });
+    this.setStateAsync({devices: devices.delete(deviceId)});
   };
 
   // Book keeping for unconfigured devices detected via BLE

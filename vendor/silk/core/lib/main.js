@@ -260,6 +260,12 @@ server.on('cmd', cmd => {
     if (cmd.channel) {
       log.info('  reboot: setting update channel to', cmd.channel);
       util.setprop('persist.silk.update.channel', cmd.channel);
+      // When moving the device to a new update channel, it's likely that the
+      // serverUrl received from the app during initial configuration time will
+      // no longer be valid for the new update channel.  Clearing the serverUrl
+      // here reverts the device back to using the default server supplied by the
+      // current update channel.
+      config.forceDefaultServerUrl();
     }
     log.info('  rebooting ...');
     util.setprop('sys.powerctl', 'reboot');

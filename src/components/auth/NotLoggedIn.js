@@ -22,8 +22,6 @@ let {
   View,
 } = React;
 
-const DEVELOPER_CREDENTIALS = {};
-
 export default class extends AsyncComponent {
 
   static propTypes = {
@@ -77,19 +75,8 @@ export default class extends AsyncComponent {
   }
 
   _renderFirstScreen() {
-    let devAccountButton = null;
     let serverPickerButton = null;
-    let { allowDevAccount, showServerPicker } = Config.get().preferences;
-    if (allowDevAccount) {
-      devAccountButton = (
-        <Button
-          label="Run As Developer"
-          secondary={true}
-          inProgress={this.state.inProgress}
-          onPress={() => this._signIn(DEVELOPER_CREDENTIALS)}
-        />
-      );
-    }
+    let { showServerPicker } = Config.get().preferences;
     if (showServerPicker) {
       serverPickerButton = (
         <Button
@@ -109,7 +96,6 @@ export default class extends AsyncComponent {
           label="I Already Have An Account"
           onPress={() => this.setState({controls: 'signin'})}
         />
-        {devAccountButton}
         {serverPickerButton}
         <View style={styles.bottomLinks}>
           <TextLink
@@ -181,15 +167,10 @@ export default class extends AsyncComponent {
   }
 
   _signIn = async (credentials) => {
-    let { userState } = this.props;
+    const { userState } = this.props;
     this.setStateAsync({ inProgress: true });
     try {
-      let success = false;
-      if (credentials === DEVELOPER_CREDENTIALS) {
-        success = await userState.attemptDeveloperLogin();
-      } else {
-        success = await userState.attemptSignIn(credentials.email, credentials.password);
-      }
+      const success = await userState.attemptSignIn(credentials.email, credentials.password);
       if (success) {
         return;
       }

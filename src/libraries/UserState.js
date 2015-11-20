@@ -47,7 +47,6 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
-  isDeveloper = false;
 
   constructor(api) {
     super();
@@ -61,11 +60,6 @@ export class UserState extends EventEmitter {
     let token = await instance._loadAccessToken();
     log.info('~~ set access token', token);
     api.accessToken = instance.accessToken = token;
-
-    if (token && token.pub === api.devAccount.publicKey) {
-      instance.isDeveloper = true;
-    }
-
     return instance;
   }
 
@@ -106,7 +100,6 @@ export class UserState extends EventEmitter {
   async signOut() {
     // Clear out any previous state...
     this.api.accessToken = this.accessToken = null;
-    this.isDeveloper = false;
 
     log.debug(`Stop advertising all BLE beacons.`);
     BLESocketManager.removeAllBeaconUuids();
@@ -210,30 +203,6 @@ export class UserState extends EventEmitter {
     return true;
   }
 
-   /**
-   * Attempt logging in with the developer credentials...
-   */
-  async attemptDeveloperLogin() {
-    log.info('Logging in via developer account');
-    let account = this.api.devAccount;
-    let accessToken = new this.api.id(account.publicKey, account.privateKey);
-
-    // Use given developer account access token.
-    this.accessToken = this.api.accessToken = accessToken;
-
-    let check = await this.checkPassword(account.email, account.password);
-    if (check.success) {
-      log.info('Successfully logged in as', account.email);
-      await this._saveAccessToken(accessToken);
-      this.isDeveloper = true;
-      return true;
-    }
-    // Reset to current access token...
-    this.api.accessToken = await this._loadAccessToken();
-    log.info('Failed to logged in as', account.email);
-    return false;
-  }
-
   /**
    * Sign the deviceId with our accessToken (account) and register it with the
    * server...
@@ -259,7 +228,7 @@ export class UserState extends EventEmitter {
       log.info(`Successfully registered device`);
       BLESocketManager.addBeaconUuid(beaconUUID);
     } else {
-      log.warn(`Failed to regsiter device with the server...`);
+      log.warn(`Failed to register device with the server...`);
     }
 
     return {

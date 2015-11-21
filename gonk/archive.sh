@@ -173,7 +173,6 @@ adb shell setprop persist.silk.server.url "$SERVER_URL"
 
 echo Activated uploads to cloud storage
 adb shell setprop persist.silk.vidupload.enabled 1
-adb shell setprop persist.silk.prvupload.enabled 1
 
 #echo Enabled sound on motion detection
 #adb shell setprop persist.silk.motion.sound true
@@ -240,7 +239,6 @@ echo persist.silk.server.url=$SERVER_URL >> default.prop
 
 echo Activated uploads to cloud storage
 echo persist.silk.vidupload.enabled=1 >> default.prop
-echo persist.silk.prvupload.enabled=1 >> default.prop
 
 echo Enable sounds on double clap ze clapper
 echo persist.silk.clapper.sound=true >> default.prop

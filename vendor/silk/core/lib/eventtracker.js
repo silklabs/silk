@@ -9,7 +9,6 @@
 import crypto from 'crypto';
 
 import { EventEmitter } from 'events';
-import * as util from './sysutils';
 import APICallOperation from './outbox/api_call_operation';
 import createLog from './log';
 const log = createLog('events');
@@ -33,10 +32,6 @@ const DEBOUNCE_MS_BY_EVENT_TAG = {
 
 const RECURRING_TIMER_INTERVAL_MS = 1000;
 const DEFAULT_EVENT_LENGTH_MS = 1000;
-
-const ENABLED_PROP = 'persist.silk.eventtrk.enabled';
-const ENABLED = util.getboolprop(ENABLED_PROP);
-log.info(`Upload enabled: ${ENABLED}`);
 
 // If 12 bytes is enough for MongoDB, it should be enough for us.
 // See https://docs.mongodb.org/manual/reference/object-id/

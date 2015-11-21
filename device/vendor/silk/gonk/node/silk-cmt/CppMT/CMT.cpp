@@ -105,6 +105,9 @@ void CMT::initialize(const Mat im_gray, const Rect rect)
         classes_active = classes_fg;
     }
 
+	//Store initial set of keypoints for confidence calculation
+	points_initial = points_active;
+
     FILE_LOG(logDEBUG) << "CMT::initialize() return";
 }
 
@@ -191,6 +194,9 @@ void CMT::processFrame(Mat im_gray) {
 
     //TODO: Use theta to suppress result
     bb_rot = RotatedRect(center,  size_initial * scale, rotation/CV_PI * 180);
+
+	// Compute tracking confidence
+	confidence = (float)points_fused.size() / points_initial.size();
 
     //Remember current image
     im_prev = im_gray;

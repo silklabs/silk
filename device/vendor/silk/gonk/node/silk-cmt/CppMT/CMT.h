@@ -36,12 +36,14 @@ public:
 
     vector<Point2f> points_active; //public for visualization purposes
     RotatedRect bb_rot;
+	float confidence;
 
 private:
     Ptr<FeatureDetector> detector;
     Ptr<DescriptorExtractor> descriptor;
 
     Size2f size_initial;
+	vector<Point2f> points_initial;
 
     vector<int> classes_active;
 

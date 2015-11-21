@@ -19,7 +19,7 @@
     // Turn off 1.0 rules we are violating for now...
     "no-console": 1,
     // Our extra rules...
-    "semi": 1,
+    "semi": 2,
     "brace-style": 2,
     "no-debugger": 1,
     "default-case": 2,

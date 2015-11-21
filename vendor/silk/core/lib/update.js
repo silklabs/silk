@@ -114,7 +114,7 @@ function createRequestPromise(options) {
             body = JSON.parse(body);
           } catch(e) {
             log.error(`Invalid server response: ${e.stack}`);
-            reject()
+            reject();
             return;
           }
         }

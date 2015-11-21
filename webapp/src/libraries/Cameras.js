@@ -36,7 +36,6 @@ class Camera extends EventEmitter {
   _feedNewLog(type, data) {
     switch (type) {
     case 'dash':
-    case 'procrank':
       this.logs[type] = data;
       break;
     case 'logcat':
@@ -54,6 +53,7 @@ class Camera extends EventEmitter {
       this.logs.logcat = logcat;
       break;
     default:
+      log.warn(`Unknown log type: ${type}`);
       break;
     }
   }
@@ -212,7 +212,7 @@ class Camera extends EventEmitter {
       URL.revokeObjectURL(this.videoClip);
     }
     this.videoClip = URL.createObjectURL(blob);
-    this.emit('videoClip', this.videoClip, new Date(msg.when));
+    this.emit('videoClip', this.videoClip, new Date(msg.when), view);
   }
 }
 

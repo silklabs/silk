@@ -17,12 +17,15 @@ npm install
 
 If working with a local server create the file `config.local.json` at the root
 of the project to override the default server URL:
-```js
+```json
 {
-  "serverUrl": "http://localhost:5000"
+  "serverUrl": "http://localhost:5000",
+  "defaultUser": "e@silk.io",
+  "defaultPassword": "raccoon"
 }
-
 ```
+Also demonstrated here a default username and password, used to simplify sign in
+during development.
 
 ### Iterative development
 

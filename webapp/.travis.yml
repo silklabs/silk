@@ -1,5 +1,7 @@
 language: node_js
 node_js: 4.1
+sudo: required
+dist: trusty
 notifications:
   email:
     - engineering@silklabs.com

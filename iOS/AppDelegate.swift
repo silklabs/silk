@@ -43,7 +43,6 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     // uses it.
 
     self.regionMonitor = RegionMonitor(delegate: self)
-    self.regionMonitor!.start()
 
     var reactViewURL: NSURL
     let reactNativeType = config.reactNative.type
@@ -62,6 +61,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     // This must not be created until *after* ReactNative has loaded all its
     // modules during the |RCTRootView| initializer.
     self.bleSocketPeripheral = BLESocketPeripheral()
+
+    self.regionMonitor!.start()
 
     // At least for now we don't implement our own specific controller...
     let rootViewController = ViewController()
@@ -110,24 +111,28 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
-    self.bleSocketPeripheral?.addServiceUuid(uuid)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.addServiceUuid(uuid)
   }
 
   func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
-    self.bleSocketPeripheral?.removeServiceUuid(uuid)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.removeServiceUuid(uuid)
   }
 
   func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
+    assert(self.bleSocketPeripheral != nil)
     if uuid == RegionMonitor.configBeaconUuid {
       notifyUser("An unconfigured SilkCam is nearby.")
     }
-    self.bleSocketPeripheral?.startAdvertisingServiceUuid(uuid)
+    self.bleSocketPeripheral!.startAdvertisingServiceUuid(uuid)
   }
 
   func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
-    self.bleSocketPeripheral?.stopAdvertisingServiceUuid(uuid)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.stopAdvertisingServiceUuid(uuid)
   }
 }

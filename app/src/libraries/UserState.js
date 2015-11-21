@@ -6,16 +6,27 @@
  *  - current user
  *  - login state
  *  - accessToken
+ *  - BLE beacon UUID
  */
 
 // The API violates this rule, so disable it for the whole file.
 /* eslint new-cap:0 */
 
 import { EventEmitter} from 'events';
-import { AsyncStorage } from 'react-native';
-import { getRandomBytes, PBKDF2KeyDerivation } from './Crypto';
+import createLog from 'log';
 
-import mklog from 'log'; const log = mklog('UserState');
+import {
+  AsyncStorage,
+  NativeModules,
+} from 'react-native';
+import {
+  getRandomBytes,
+  PBKDF2KeyDerivation,
+} from './Crypto';
+
+const log = createLog('UserState');
+const { BLESocketManager } = NativeModules;
+
 const ACCESS_TOKEN_KEY = 'user.accessToken';
 
 /**
@@ -36,7 +47,6 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
-  isDeveloper = false;
 
   constructor(api) {
     super();
@@ -50,11 +60,6 @@ export class UserState extends EventEmitter {
     let token = await instance._loadAccessToken();
     log.info('~~ set access token', token);
     api.accessToken = instance.accessToken = token;
-
-    if (token && token.pub === api.devAccount.publicKey) {
-      instance.isDeveloper = true;
-    }
-
     return instance;
   }
 
@@ -95,7 +100,11 @@ export class UserState extends EventEmitter {
   async signOut() {
     // Clear out any previous state...
     this.api.accessToken = this.accessToken = null;
-    this.isDeveloper = false;
+
+    log.debug(`Stop advertising all BLE beacons.`);
+    BLESocketManager.removeAllBeaconUuids();
+
+    log.debug(`Remove access token from disk storage.`);
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
     this.emit('unauthenticated');
   }
@@ -130,18 +139,29 @@ export class UserState extends EventEmitter {
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
-    let result = await this.api.vip.signIn({
+    let {
+      success,
+      beaconUUID,
+    } = await this.api.vip.signIn({
       email,
       passwordHash,
       userAgent,
     });
 
-    if (result.success) {
-      log.info('Successfully signed into account', email);
-      await this._saveAccessToken(accessToken);
-      return true;
+    if (!success) {
+      return false;
     }
-    return false;
+
+    log.info('Successfully signed into account', email);
+    if (!beaconUUID) {
+      throw new Error('Did not get a BLE beacon UUID.');
+    }
+
+    log.debug('Adding BLE beacon', beaconUUID);
+    BLESocketManager.addBeaconUuid(beaconUUID);
+
+    await this._saveAccessToken(accessToken);
+    return true;
   }
 
   /**
@@ -161,43 +181,26 @@ export class UserState extends EventEmitter {
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
-    let result = await this.api.vip.createAccount({
+    let {
+      success,
+      beaconUUID,
+    } = await this.api.vip.createAccount({
       email,
       passwordHash,
       userAgent,
     });
 
-    if (result.success) {
-      log.info('Successfully created account');
-      await this._saveAccessToken(accessToken);
-      return true;
+    if (!success) {
+      return false;
     }
 
-    return false;
-  }
+    log.info('Successfully created account');
 
-   /**
-   * Attempt logging in with the developer credentials...
-   */
-  async attemptDeveloperLogin() {
-    log.info('Logging in via developer account');
-    let account = this.api.devAccount;
-    let accessToken = new this.api.id(account.publicKey, account.privateKey);
+    log.debug('Adding BLE beacon', beaconUUID);
+    BLESocketManager.addBeaconUuid(beaconUUID);
 
-    // Use given developer account access token.
-    this.accessToken = this.api.accessToken = accessToken;
-
-    let check = await this.checkPassword(account.email, account.password);
-    if (check.success) {
-      log.info('Successfully logged in as', account.email);
-      await this._saveAccessToken(accessToken);
-      this.isDeveloper = true;
-      return true;
-    }
-    // Reset to current access token...
-    this.api.accessToken = await this._loadAccessToken();
-    log.info('Failed to logged in as', account.email);
-    return false;
+    await this._saveAccessToken(accessToken);
+    return true;
   }
 
   /**
@@ -211,17 +214,21 @@ export class UserState extends EventEmitter {
     // Sign the deviceId with the account token...
     let registrationToken = this.accessToken.sign(deviceId.toString());
 
-    let { success } = await this.api.account.registerDevice({
+    let {
+      success,
+      beaconUUID,
+    } = await this.api.account.registerDevice({
       devicePublicKey: deviceId.toString(),
       name,
       type,
       registrationToken,
     });
 
-    if (!success) {
-      log.warn(`Failed to regsiter device with the server...`);
-    } else {
+    if (success) {
       log.info(`Successfully registered device`);
+      BLESocketManager.addBeaconUuid(beaconUUID);
+    } else {
+      log.warn(`Failed to register device with the server...`);
     }
 
     return {

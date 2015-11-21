@@ -4,33 +4,19 @@
 .*/*.web.js
 .*/*.android.js
 
-# Some modules have their own node_modules with overlap
-.*/node_modules/node-haste/.*
-
-# Ignore react-tools where there are overlaps, but don't ignore anything that
-# react-native relies on
-.*/node_modules/react-tools/src/vendor/core/ExecutionEnvironment.js
-.*/node_modules/react-tools/src/browser/eventPlugins/ResponderEventPlugin.js
-.*/node_modules/react-tools/src/browser/ui/React.js
-.*/node_modules/react-tools/src/core/ReactInstanceHandles.js
-.*/node_modules/react-tools/src/event/EventPropagators.js
-
-# Ignore commoner tests
-.*/node_modules/react-tools/node_modules/commoner/test/.*
-
-# See https://github.com/facebook/flow/issues/442
-.*/react-tools/node_modules/commoner/lib/reader.js
-
-# Ignore jest
-.*/react-native/node_modules/jest-cli/.*
+.*/node_modules/react-native/Libraries/.*
 
 [include]
+src/
 
 [libs]
 node_modules/react-native/Libraries/react-native/react-native-interface.js
 
 [options]
-module.system=haste
+module.system=node
+unsafe.enable_getters_and_setters=true
+esproposal.class_instance_fields=ignore
+esproposal.class_static_fields=ignore
 
 [version]
-0.11.0
+0.18.1

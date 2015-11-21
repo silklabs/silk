@@ -13,32 +13,24 @@ let {
 } = React;
 
 import createLog from 'log';
-import { OrderedMap, OrderedSet, Map } from 'immutable';
+import { OrderedMap, OrderedSet } from 'immutable';
 
-import DeviceManager from '../libraries/btle/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
 import AsyncComponent from './AsyncComponent';
+import { ConfiguringDeviceRecord } from './Records';
 import ErrorBar from './ErrorBar';
-import MonitorPreview from './MonitorPreview';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
+import PreviewThumbnails from './PreviewThumbnails';
+import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 
 const log = createLog('MonitorsView');
 
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
 const SCROLLVIEW_INFINITE_THRESHOLD = 100;
-
-// This is mostly a guestimate based on FUT hardware. Absolute values
-// not important here, the ratio is what matters.
-const DEFAULT_PREVIEW_WIDTH = 16;
-const DEFAULT_PREVIEW_HEIGHT = 9;
-const DEFAULT_PREVIEW_SIZE = {
-  width: DEFAULT_PREVIEW_WIDTH,
-  height: DEFAULT_PREVIEW_HEIGHT,
-};
 
 class MonitorsView extends AsyncComponent {
 
@@ -47,11 +39,10 @@ class MonitorsView extends AsyncComponent {
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
 
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
-    configuringDevice: React.PropTypes.instanceOf(Map),
+    configuringDevice: React.PropTypes.instanceOf(ConfiguringDeviceRecord),
   };
 
   state = {
@@ -190,9 +181,10 @@ class MonitorsView extends AsyncComponent {
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
             {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
-            <View style={styles.thumbnailContainer}>
-              {this._renderDeviceThumbnails()}
-            </View>
+            <PreviewThumbnails
+              {...this.props}
+              startFullscreenVideo={this.startFullscreenVideo}
+            />
             {devices.size ? this._renderActivity() : null}
           </ScrollView>
         </View>
@@ -241,88 +233,6 @@ class MonitorsView extends AsyncComponent {
     );
   }
 
-  _renderDeviceThumbnails() {
-    let { devices, unconfiguredDevices, configuringDevice } = this.props;
-
-    let unconfiguredDeviceThumbnails = unconfiguredDevices.map((peripheralId) => {
-      if (configuringDevice && configuringDevice.peripheralId === peripheralId) {
-        return null;
-      }
-      return (
-        <MonitorPreview
-          key={peripheralId}
-          peripheralId={peripheralId}
-          label="New Device"
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          configurable={true}
-          configuring={false}
-          haveVideoStream={false}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-          bleDeviceManager={this.props.bleDeviceManager}
-        />
-      );
-    }).toArray().reverse();
-
-    let configuringDeviceThumbnail = null;
-    if (configuringDevice) {
-      configuringDeviceThumbnail = (
-        <MonitorPreview
-          key={configuringDevice.peripheralId}
-          peripheralId={configuringDevice.peripheralId}
-          deviceId={configuringDevice.deviceId}
-          label={configuringDevice.name || 'New Device'}
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          configurable={false}
-          configuring={true}
-          haveVideoStream={false}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-          bleDeviceManager={this.props.bleDeviceManager}
-        />
-      );
-    }
-
-    let deviceThumbnails = devices.map((device, deviceId) => (
-      <MonitorPreview
-        key={deviceId}
-        deviceId={deviceId}
-        label={device.name}
-        logo={device.logo}
-        previewSize={this._getPreviewSize(deviceId)}
-        configurable={false}
-        configuring={false}
-        haveVideoStream={device.haveVideoStream}
-        onPress={() => this.startFullscreenVideo(deviceId)}
-        socket={this.props.socket}
-        hasNetwork={this.props.hasNetwork}
-        bleDeviceManager={this.props.bleDeviceManager}
-      />
-    )).toArray().reverse();
-
-    let allThumbnails = unconfiguredDeviceThumbnails
-      .concat(configuringDeviceThumbnail)
-      .concat(deviceThumbnails)
-      .filter((element) => !!element);
-
-    // Easy way out for just 1 device.
-    if (allThumbnails.length === 1) {
-      return allThumbnails[0];
-    }
-
-    // Display devices in rows of 2.
-    let rows = [];
-    for (let i = 0; i < allThumbnails.length; i += 2) {
-      rows.push(
-        <View style={styles.thumbnailRow}>
-          {allThumbnails[i]}
-          {allThumbnails[i + 1] || <View style={styles.thumbnailPlaceholder} />}
-        </View>
-      );
-    }
-    return rows;
-  }
-
   // Activity feed management
 
   // Only fire pull-to-refresh action once per pull. That way we don't
@@ -369,14 +279,14 @@ class MonitorsView extends AsyncComponent {
     let addlEvents;
     try {
       if (startTime === null) {
-        addlEvents = await this.props.api.timeMeta.findBeforeTime({
+        addlEvents = await this.props.api.metadata.findAllBeforeTime({
           deviceIds: [...this.props.devices.keys()],
           time: endTime,
           metaType: 'event',
           maxCount: EVENTS_PAGE_SIZE,
         });
       } else {
-        addlEvents = await this.props.api.timeMeta.findInTimeInterval({
+        addlEvents = await this.props.api.metadata.findAllInTimeInterval({
           deviceIds: [...this.props.devices.keys()],
           startTime,
           endTime,
@@ -491,19 +401,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: -SCROLLVIEW_PTR_THRESHOLD,
-  },
-
-  thumbnailContainer: {
-    paddingHorizontal: 4,
-  },
-
-  thumbnailRow: {
-    flexDirection: 'row',
-  },
-
-  thumbnailPlaceholder: {
-    flex: 1,
-    margin: 4,
   },
 
   eventRow: {

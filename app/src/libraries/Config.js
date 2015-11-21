@@ -13,16 +13,25 @@ const DEFAULT = {
   'react-native': {},
   'server': {
     choices: [
-      {name: 'default', value: null},
+      {name: 'China', value: 'http://120.25.204.154'},
+      {name: 'US East', value: '' /* use API default server */ },
+    ],
+    // The following are only visible when showDevServers is true
+    devChoices: [
+      {name: 'localhost', value: 'http://localhost:5000'},
       {name: 'master', value: 'https://silk-server-master.herokuapp.com'},
       {name: 'next', value: 'https://silk-server-next.herokuapp.com'},
       {name: 'release', value: 'https://silk-server-release.herokuapp.com'},
-      {name: 'localhost', value: 'http://localhost:5000'},
     ],
   },
 
+  // If `true` list server.devChoices in the server picker as well
+  showDevServers: false,
+
   /**
    * Development preferences intended to be overriden in config.local.json
+   * (TODO: remove the `preferences` prefix for consistency with other settings
+   *        that are intended to be overriden in config.local.json)
    */
   'preferences': {
     showLiveLag: false,
@@ -38,7 +47,6 @@ const DEFAULT = {
     //  https://github.com/silklabs/silk-app/issues/344
     drawObjectBoxesFullscreenVideo: false,
 
-    allowDevAccount: true,
     showServerPicker: true,
   },
 };

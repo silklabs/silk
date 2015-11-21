@@ -3,12 +3,13 @@
 
 import React from 'react-native';
 
-import DeviceManager from '../libraries/btle/DeviceManager';
+import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './SocketIOComponent';
+import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 
 let {
   ActionSheetIOS,
@@ -36,7 +37,7 @@ const CONNECTION_STATUS_LABELS = {
 };
 
 const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
-const DEVICE_PREVIEW_TIMEOUT_MS = 5000;
+const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
 const DEVICE_CONFIGURING_TIMEOUT_MS = 60000;
 
 export default class extends SocketIOComponent {
@@ -49,6 +50,7 @@ export default class extends SocketIOComponent {
       width: React.PropTypes.number.isRequired,
       height: React.PropTypes.number.isRequired,
     }),
+    width: React.PropTypes.number.isRequired,
     configurable: React.PropTypes.bool,
     configuring: React.PropTypes.bool,
     haveVideoStream: React.PropTypes.bool,
@@ -56,7 +58,7 @@ export default class extends SocketIOComponent {
 
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.object.isRequired,
-    bleDeviceManager: React.PropTypes.instanceOf(DeviceManager).isRequired,
+    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession),
   };
 
   static contextTypes = {
@@ -66,7 +68,7 @@ export default class extends SocketIOComponent {
   state = {
     blob: null,
     objects: [],
-    previewWidth: null,
+    registered: false,
     serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
     timedOut: false,
   };
@@ -87,16 +89,13 @@ export default class extends SocketIOComponent {
     if (this.props.haveVideoStream) {
       this.subscribeToSocket();
     }
-    if (this.props.configuring) {
-      this.subscribeToBLEStatus();
+    if (this.props.bleDeviceSession) {
+      this.subscribeToBLEStatus(this.props.bleDeviceSession);
     }
     this.startTimeoutTimer();
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!this.props.configuring && nextProps.configuring) {
-      this.subscribeToBLEStatus();
-    }
     if (!this.props.haveVideoStream && nextProps.haveVideoStream) {
       // The device was known to us before, but only just now came
       // online. Start subscribing to the device's socket.io room to
@@ -111,6 +110,17 @@ export default class extends SocketIOComponent {
       setTimeout(() => {
         this.subscribeToSocket();
       }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
+    }
+    if (!this.props.bleDeviceSession && nextProps.bleDeviceSession) {
+      this.subscribeToBLEStatus(nextProps.bleDeviceSession);
+    }
+    if (this.props.bleDeviceSession && !nextProps.bleDeviceSession) {
+      // There's no need to explicitly unsubscribe from `bleDeviceSession`
+      // here. If we lose the session, it means it disconnected, which
+      // causes us to remove all listeners anyway. But now that we no longer
+      // are talking to the device, we don't know what its status is, so
+      // let's reset that.
+      this.setState({serverConnectionStatus: null});
     }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
@@ -142,6 +152,9 @@ export default class extends SocketIOComponent {
 
   startTimeoutTimer() {
     if (this.props.configurable) {
+      return;
+    }
+    if (this.props.configuring && !this.state.registered) {
       return;
     }
     this.clearTimeoutTimer();
@@ -178,35 +191,39 @@ export default class extends SocketIOComponent {
       this._queue.deinit();
       this._queue = null;
     }
-    let { bleDeviceManager } = this.props;
-    bleDeviceManager.removeListener('statusChange', this.onBLEPeripheralStatusChange);
-    bleDeviceManager.removeListener('errorChange', this.onBLEPeripheralStatusChange);
+    let { bleDeviceSession } = this.props;
+    if (bleDeviceSession) {
+      bleDeviceSession.removeListener('status', this.onBLEDeviceStatusChange);
+      bleDeviceSession.removeListener('registered', this.onBLEDeviceRegistered);
+    }
     this.clearTimeoutTimer();
   }
 
-  subscribeToBLEStatus() {
-    this.props.bleDeviceManager.on('statusChange', this.onBLEPeripheralStatusChange);
-    this.props.bleDeviceManager.on('errorChange', this.onBLEPeripheralStatusChange);
+  subscribeToBLEStatus(bleDeviceSession) {
+    bleDeviceSession.on('registered', this.onBLEDeviceRegistered);
+    bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
   }
 
-  onBLEPeripheralStatusChange = (peripheral) => {
-    if (this.props.peripheralId !== peripheral.id) {
-      return;
-    }
+  onBLEDeviceStatusChange = (status) => {
     this.startTimeoutTimer();
-    let serverConnectionStatus =
-      peripheral.error ? peripheral.error : peripheral.serverConnectionStatus;
-    if (!this.state.serverConnectionStatus !== serverConnectionStatus) {
-      this.setState({serverConnectionStatus});
+    if (!this.state.serverConnectionStatus !== status.message) {
+      this.setState({serverConnectionStatus: status.message});
     }
   };
 
+  onBLEDeviceRegistered = () => {
+    this.startTimeoutTimer();
+    this.setState({registered: true});
+  };
+
   _renderLabel() {
-    let { label } = this.props;
+    let { label, bleDeviceSession } = this.props;
     let { serverConnectionStatus } = this.state;
     if (serverConnectionStatus) {
       let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
       label = `${label} (${statusLabel})`;
+    } else if (bleDeviceSession) {
+      label = `${label} (BLE)`;
     }
     return (
       <View style={styles.monitorLabelContainer}>
@@ -237,23 +254,11 @@ export default class extends SocketIOComponent {
   }
 
   render() {
-    let { previewWidth } = this.state;
-    if (previewWidth === null) {
-      // Measure layout so we know how large to display the preview images.
-      return (
-        <View style={styles.monitorContainer}>
-          <View
-            onLayout={(event) => this.setState({previewWidth: event.nativeEvent.layout.width})}
-            style={styles.monitorPreviewPlaceholder}
-          />
-        </View>
-      );
-    }
-
-    let { previewSize } = this.props;
+    let { width, previewSize } = this.props;
+    width -= 2 * THUMBNAIL_MARGIN;
     let previewStyle = {
-      width: previewWidth,
-      height: previewSize.height * previewWidth / previewSize.width,
+      width,
+      height: previewSize.height * width / previewSize.width,
     };
 
     let logo = null;
@@ -282,10 +287,14 @@ export default class extends SocketIOComponent {
     }
 
     return (
-      <View style={styles.monitorContainer}>
+      <View style={[
+        styles.monitorContainer,
+        ThumbnailStyles.thumbnailContainer,
+        previewStyle,
+      ]}>
         <TouchableOpacity
           onPress={this._onPress}
-          style={[styles.monitorPreviewContainer, previewStyle]}>
+          style={styles.monitorPreviewContainer}>
           {this._renderPreview()}
           {logo}
           {this._renderLabel()}
@@ -296,8 +305,11 @@ export default class extends SocketIOComponent {
   }
 
   _onPress = () => {
+    if (this.props.configuring) {
+      return;
+    }
     if (this.props.configurable) {
-      this.context.silkDevices.configureDevice(this.props.peripheralId);
+      this.context.silkDevices.configureDevice(this.props.bleDeviceSession);
       return;
     }
     if (this.state.timedOut && this.props.deviceId) {
@@ -345,8 +357,6 @@ const styles = StyleSheet.create({
       height: 1,
       width: 0,
     },
-    margin: 4,
-    flex: 1,
   },
 
   monitorLabelContainer: {
@@ -363,10 +373,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'white',
     textAlign: 'right',
-  },
-
-  monitorPreviewPlaceholder: {
-    flex: 1,
   },
 
   monitorPreviewContainer: {

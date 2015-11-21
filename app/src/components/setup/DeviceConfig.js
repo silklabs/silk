@@ -1,5 +1,6 @@
 import React from 'react-native';
 let {
+  InteractionManager,
   ScrollView,
   StyleSheet,
   SwitchIOS,
@@ -10,26 +11,42 @@ let {
 } = React;
 
 import { getWifiInfo } from '../../libraries/Util';
+import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 import { LayoutStyles, FormStyles, TitleBarStyles } from '../CommonStyles';
 
 export default class DeviceConfig extends React.Component {
 
   static propTypes = {
-    deviceId: React.PropTypes.string.isRequired,
+    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
+    deviceSecret: React.PropTypes.shape({
+      deviceId: React.PropTypes.string.isRequired,
+    }).isRequired,
     onSave: React.PropTypes.func.isRequired,
     onCancel: React.PropTypes.func.isRequired,
   };
 
   state = {
-    name: 'Silk Cam',
+    name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
     ssid: '',
     secret: '',
     showSecret: false,
   };
 
+  mounted = false;
+
   componentWillMount() {
+    this.mounted = true;
     getWifiInfo().then((info) => this.setState({ssid: info.SSID}));
+    InteractionManager.runAfterInteractions(() => {
+      if (this.mounted) {
+        this.refs.secret.focus();
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
   }
 
   _renderDeviceSettings() {
@@ -84,7 +101,6 @@ export default class DeviceConfig extends React.Component {
               secureTextEntry={!this.state.showSecret}
               placeholder="Enter WiFi password"
               value={this.state.secret}
-              autoFocus={true}
               style={FormStyles.formInput}
               onChangeText={secret => this.setState({secret})}
             />
@@ -107,6 +123,7 @@ export default class DeviceConfig extends React.Component {
 
   _handleSave = () => {
     this.props.onSave({
+      deviceId: this.props.deviceSecret.deviceId,
       name: this.state.name,
       ssid: this.state.ssid,
       secret: this.state.secret,
@@ -117,6 +134,7 @@ export default class DeviceConfig extends React.Component {
     return (
       <ScrollView
         keyboardShouldPersistTaps={false}
+        alwaysBounceVertical={false}
         style={styles.container}>
         <View style={LayoutStyles.statusBarPlaceholder} />
         <View style={TitleBarStyles.titleBar}>

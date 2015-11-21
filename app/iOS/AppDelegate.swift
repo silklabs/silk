@@ -5,15 +5,16 @@ import UIKit
 private let log = DebugLog.create("silk-app")
 
 @UIApplicationMain
-class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
+class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
-  var window: UIWindow?
   var regionMonitor: RegionMonitor?
-  var homeBeacon: HomeBeacon?
-  var entered = false
+  var bleSocketPeripheral: BLESocketPeripheral?
+  var window: UIWindow?
+  var inForeground: Bool = false
 
-  // This is the unique UUID of silk-device
-  let homeRegionUuid = "e0f3a744-fb2f-46f1-b45a-f2b398f2a424"
+  override init() {
+    super.init()
+  }
 
   func loadConfig() -> Config {
     let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
@@ -38,6 +39,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     DebugLog.enable(config.debug)
     log.info("Logging level %@", config.debug)
 
+    // Make sure we wait until DebugLog is set up before we load any code that
+    // uses it.
+
+    self.regionMonitor = RegionMonitor(delegate: self)
+
     var reactViewURL: NSURL
     let reactNativeType = config.reactNative.type
     let reactNativeUrl = config.reactNative.url!
@@ -52,6 +58,12 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
 
     let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", initialProperties: nil, launchOptions: launchOptions)
 
+    // This must not be created until *after* ReactNative has loaded all its
+    // modules during the |RCTRootView| initializer.
+    self.bleSocketPeripheral = BLESocketPeripheral()
+
+    self.regionMonitor!.start()
+
     // At least for now we don't implement our own specific controller...
     let rootViewController = ViewController()
     rootViewController.view = rootView
@@ -61,15 +73,24 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     self.window?.rootViewController = rootViewController
     self.window?.makeKeyAndVisible()
 
-    // Start monitoring for home region
-    self.regionMonitor = RegionMonitor(uuid: homeRegionUuid)
-    self.regionMonitor!.delegate = self
-    self.homeBeacon = HomeBeacon()
-
     // Allow audio playback even when user has enabled mute switch.
     let _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
 
     return true
+  }
+
+  func applicationDidBecomeActive(application: UIApplication) {
+    if !self.inForeground {
+      self.inForeground = true
+      self.bleSocketPeripheral?.setForeground()
+    }
+  }
+
+  func applicationDidEnterBackground(application: UIApplication) {
+    if self.inForeground {
+      self.inForeground = false
+      self.bleSocketPeripheral?.setBackground()
+    }
   }
 
   // Display region enter/exit notifications to the user
@@ -88,11 +109,30 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionUpdatesDelegate {
     UIApplication.sharedApplication().scheduleLocalNotification(notification)
   }
 
-  func regionStateChanged(entered: Bool) {
-    if self.entered != entered {
-      self.entered = entered
-      notifyUser("Silk device is " + (entered ? "in range" : "out of range"))
-      self.homeBeacon!.setIsEnabled(entered)
+  func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor!)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.addServiceUuid(uuid)
+  }
+
+  func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor!)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.removeServiceUuid(uuid)
+  }
+
+  func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor!)
+    assert(self.bleSocketPeripheral != nil)
+    if uuid == RegionMonitor.configBeaconUuid {
+      notifyUser("An unconfigured SilkCam is nearby.")
     }
+    self.bleSocketPeripheral!.startAdvertisingServiceUuid(uuid)
+  }
+
+  func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID) {
+    assert(regionMonitor === self.regionMonitor!)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.stopAdvertisingServiceUuid(uuid)
   }
 }

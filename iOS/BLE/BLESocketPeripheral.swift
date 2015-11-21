@@ -288,9 +288,7 @@ internal class BLESocketPeripheral: NSObject,
   private func stopAdvertisingServiceUuidInternal(serviceUuid: CBUUID) {
     log.debug("stopAdvertisingServiceUuid(\(serviceUuid))")
 
-    if self.services[serviceUuid] == nil {
-      return
-    }
+    assert(self.services[serviceUuid] != nil)
 
     let serviceInfo = self.services[serviceUuid]!
     if serviceInfo.enabled {

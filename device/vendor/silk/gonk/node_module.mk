@@ -77,7 +77,14 @@ endif
 # Shotgun approach to ensuring that the module is rebuilt when local source
 # changes are made, as there's no NPM dependency information conveyed up to
 # Make.
-LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f)
+#
+# Specific "known bad" subdirectories are excluded.  These directories contain
+# files with characters such as '-', ''', and ' ' that generate invalid
+# dependencies.
+LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f \
+  ! -regex '.*/node_modules/babel/test/fixtures/.*' \
+  ! -regex '.*/node_modules/gulp-match/Rob.*' \
+)
 
 LOCAL_32_BIT_ONLY := true
 LOCAL_CUSTOM_BUILT_MODULE := true
@@ -115,6 +122,7 @@ define abs_import_includes
 endef
 $(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
 $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
 	$(hide) mkdir -p $(built_module_path)
@@ -157,8 +165,10 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
       $(PRIVATE_LDLIBS) \
       $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
       -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
+      $(and $(my_ndk_sysroot_lib),-L$(abspath $(my_ndk_sysroot_lib))) \
       -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       "\ && \
+    export V=$(if $(SHOW_COMMANDS),1) \
     export NPM_CONFIG_ARCH=arm &&  \
     export NPM_CONFIG_PLATFORM=android && \
     export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \

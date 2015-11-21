@@ -1,39 +1,32 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 import cv from 'opencv';
+import MotionZone from './motionzone';
 
 let log;
 let util;
 let prevFrame = null, currentFrame = null, nextFrame = null;
 
 /**
- * Following constans could be tweaked to improve motion detection
+ * Following constants could be tweaked to improve motion detection
  */
-// Maximum deviation of the image, higher the value more the motion is allowed
-// This is used to isolate big changes like snow or sunlight changes
-const MAX_DEVIATION = 75;
-
 // Low differences are ignored (ex. contrast change due to sunlight)
 const THRESHOLD = 25;
 const MAX_THRESHOLD_VAL = 255;
 
-// If more than 'MOTION_THRESHOLD' pixels are changed, we say there is motion
-let MOTION_THRESHOLD = 1;
-
-const NUM_ITERATIONS_ERODE = 1;
+const NUM_ITERATIONS_DILATE = 2;
 
 // Enable sound when motion is detected
 const MOTION_PLAY_SOUND_PROP = 'persist.silk.motion.sound';
 let soundEnabled = false;
 
 // Minimum rectangle size for motion
-const MIN_WIDTH = 10;
-const MIN_HEIGHT = 10;
+const MIN_AREA = 500;
+
+const GAUSSIAN_KERNEL_SIZE = 21;
 
 /**
  * Compare three consecutive frames by diffing them and find out how many pixels
@@ -42,15 +35,19 @@ const MIN_HEIGHT = 10;
  *
  * Reference: https://kerberos.io/
  */
-function _detectMotion(image, callback) {
+function _detectMotion(image, motionZone, callback) {
   // d1 and d2 for calculating the differences
   // motion, the result of "and" operation, calculated on d1 and d2
   // numChanges, the amount of changes in the result matrix.
   let d1, d2, motion;
 
   // Window in which to detect for motion
-  let xStart = 0, xStop = image.width();
-  let yStart = 0, yStop = image.height();
+  let xStop = image.width();
+  let yStop = image.height();
+
+  // Apply Gaussian smoothing to average pixel intensities due to tiny
+  // variations in the digital camera sensor
+  image.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
 
   // Take a new image
   prevFrame = currentFrame;
@@ -74,61 +71,36 @@ function _detectMotion(image, callback) {
   // Threshold the image, low differences are ignored (ex. contrast change due
   // to sunlight)
   motion = motion.threshold(THRESHOLD, MAX_THRESHOLD_VAL, 'Binary');
-  motion.erode(NUM_ITERATIONS_ERODE);
 
-  let meanStdDev;
-  meanStdDev = motion.meanStdDev(); // calculate the standard deviation
+  // Dilate the thresholded image to fill in holes
+  motion.dilate(NUM_ITERATIONS_DILATE);
 
-  // If not too much changes then the motion is real (neglect agressive snow,
-  // temporary sunlight)
-  if (meanStdDev.stddev.get(0, 0) < MAX_DEVIATION) {
-    let numChanges = 0;
-    let minx = motion.width(), maxx = 0;
-    let miny = motion.height(), maxy = 0;
+  // Find contours on thresholded image
+  let contours = motion.findContours();
+  log.debug(`Contours # ${contours.size()}`);
 
-    // Loop over image and detect changes
-    for (let j = yStart; j < yStop; j += 2) { // height
-      for (let i = xStart; i < xStop; i += 2) { // width
-        // Check if at pixel (j,i) intensity is equal to 255 this means that the
-        // pixel is different in the sequence of images
-        // (prevFrame, currentFrame, nextFrame)
-        if (motion.pixel(j, i) === MAX_THRESHOLD_VAL) {
-          numChanges++;
-          if (minx > i) {
-            minx = i;
-          }
-          if (maxx < i) {
-            maxx = i;
-          }
-          if (miny > j) {
-            miny = j;
-          }
-          if (maxy < j) {
-            maxy = j;
-          }
-        }
-      }
+  let rects = [];
+  for (let i = 0; i < contours.size(); i++) {
+    if (contours.area(i) < MIN_AREA) {
+      continue;
     }
-
-    let width = 0;
-    let height = 0;
-    if (numChanges) {
-      width = maxx - minx;
-      height = maxy - miny;
-
-      // Check if the motion rectangle size is bigger than the minimum required
-      if ((width < MIN_WIDTH) || (height < MIN_HEIGHT)) {
-        log.debug(`Ignoring motion: ${width} x ${height}`);
-        callback(0);
-        return;
-      }
-
-      log.debug(`rect: [${minx}, ${miny}, ${width}, ${height}]`);
-    }
-    callback(numChanges, {x: minx, y: miny, width, height});
-  } else {
-    callback(0);
+    let rect = contours.boundingRect(i);
+    rects.push(rect);
+    log.debug(`${JSON.stringify(rect)}`);
   }
+
+  // Group rectangles that intersect with each other or are contained within
+  // each other
+  if (rects.length > 0) {
+    motionZone.groupRectangles(rects);
+    log.debug(`group rects: ${JSON.stringify(rects)}`);
+
+    // Remove motion rectangles that fall with in the ignore motion zones
+    rects = motionZone.pruneMotionZones(rects);
+    log.debug(`pruned rects: ${JSON.stringify(rects)}`);
+  }
+
+  callback(rects);
 }
 
 /**
@@ -141,47 +113,63 @@ function _playSound() {
   }
 }
 
-
 /**
- * Entry point into this module
+ * This class tracks any motion in the preview image and repots discrete motion
+ * rectangles
  */
-export default function init(env) {
-  log = env.log;
-  util = env.util;
-  let working = false;
-  let timeline = env.timeline;
-  soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
+class TrackObject {
+  constructor(env) {
+    this._env = env;
+    log = this._env.log;
+    util = this._env.util;
+    let working = false;
+    let timeline = this._env.timeline;
+    soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
+    this._motionzone = new MotionZone(this._env);
 
-  timeline.on('preview', when => {
-    log.debug(`Retrieving frame ${when}`);
-    if (working) {
-      log.error('Still busy, unable to process next preview image');
-      return;
-    }
-
-    working = true;
-    env.camera.getPreviewFrame((err, image) => {
-      if (err) {
-        log.warn(`Unable to fetch frame: ${err}`);
-        working = false;
+    this._onPreview = when => {
+      log.debug(`Retrieving frame ${when}`);
+      if (working) {
+        log.error('Still busy, unable to process next preview image');
         return;
       }
 
-      let start = Date.now();
-
-      _detectMotion(image, (numChanges, rect) => {
-        let diff = Date.now() - start;
-        log.verbose(`Motion detection ran for ${diff}ms numChanges: ${numChanges}`);
-
-        // If a lot of changes happened, we assume something changed.
-        if (numChanges >= MOTION_THRESHOLD) {
-          timeline.addObject('motion', when, rect);
-          _playSound();
-        } else {
-          timeline.noMotion(when);
+      working = true;
+      this._env.camera.getPreviewFrame((err, image) => {
+        if (err) {
+          log.warn(`Unable to fetch frame: ${err}`);
+          working = false;
+          return;
         }
-        working = false;
-      });
-    }, when, 1 /* == 1 channel image (RGB not required) */);
-  });
+
+        let start = Date.now();
+
+        _detectMotion(image, this._motionzone, (rects) => {
+          let diff = Date.now() - start;
+          log.verbose(`Motion detection ran for ${diff}ms`);
+
+          if (rects && (rects.length > 0)) {
+            timeline.addObjects([{tag: 'motion', when, rects}]);
+            _playSound();
+          } else {
+            timeline.noMotion(when);
+          }
+          working = false;
+        });
+      }, when, 1 /* == 1 channel image (RGB not required) */);
+    };
+
+    timeline.on('preview', this._onPreview);
+  }
+
+  /**
+   *
+   */
+  willUnload() {
+    if (this._onPreview) {
+      this._env.timeline.removeListener('preview', this._onPreview);
+    }
+  }
 }
+
+module.exports = (env) => new TrackObject(env);

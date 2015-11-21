@@ -1,25 +1,29 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+ /**
+  * @flow
+  */
 import api from './api';
 import events from 'events';
 import createLog from './log';
-import * as util from './sysutils';
+
+import type { Socket } from 'socket.io-client';
 
 const log = createLog('server');
 
 class Server extends events.EventEmitter {
+  socket: Socket;
+  _fetchRetryTimer: ?number;
+
   constructor() {
     super();
-    this.socket = null;
   }
 
-  get connected() {
+  get connected(): bool {
     if (this.socket) {
       return this.socket.connected;
     } else {
@@ -40,22 +44,23 @@ class Server extends events.EventEmitter {
     this._fetchAddress();
   }
 
-  _fetchAddress() {
+  /**
+   * XXX: The extra wrapping here might be useless since the api does retries.
+   */
+  async _fetchAddress(): Promise<void> {
     clearTimeout(this._fetchRetryTimer);
     this._fetchRetryTimer = null;
 
-    api.socketio.address()
-    .then(result => {
+    try {
+      let {url} = await api.device.socketioURL();
+      log.info('got socket.io url', url);
       this._fetchRetryTimer = null;
-      this._connect(result.url);
-    })
-    .catch(err => {
-      log.warn('Error retrieving socket.io url:' +
-               JSON.stringify(err));
+      this._connect(url);
+    } catch (err) {
+      log.warn('Error retrieving socket.io url:', err.stack);
       // Retry in an arbitrary time that feels "not to long and not to short"
       this._fetchRetryTimer = setTimeout(this._fetchAddress.bind(this), 3000);
-    })
-    .catch(util.processthrow);
+    }
   }
 
   _connect(url) {

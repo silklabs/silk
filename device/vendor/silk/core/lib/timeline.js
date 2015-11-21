@@ -1,96 +1,140 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import assert from 'assert';
+import { EventEmitter } from 'events';
+
+import BufferStream from './streams/buffer';
+import EventTracker from './eventtracker';
+import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import createLog from './log';
 import * as util from './sysutils';
 
-import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
-import BufferStream from './streams/buffer';
-import { EventEmitter } from 'events';
-
 const log = createLog('timeline');
-
-// Amount of time to wait for objects to be associated with a video chunk before
-// uploading it and any objects that were detected.
-const VIDEO_COLLECTOBJECT_DELAY_MS = 500;
 
 const VIDEO_UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP);
 
-const PREVIEW_UPLOAD_PROP = 'persist.silk.prvupload.enabled';
-const PREVIEW_UPLOAD_ENABLED = util.getboolprop(PREVIEW_UPLOAD_PROP);
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
+
+import type { Socket } from 'socket.io-client';
+import type { Outbox } from './outbox/manager';
+
+export type TimelineEventObject = {
+  tag: string;
+  when: number;
+  [arbitraryKeys: string]: any;
+};
+
+type Size = {
+  width: number;
+  height: number;
+};
+
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 /**
  * Class that receives events from various components synchronizes them and send
  * to the server
  *
  */
-class Timeline extends EventEmitter {
-  constructor(id, outbox) {
+export default class Timeline extends EventEmitter {
+
+  id: string; // deviceId
+  outbox: Outbox;
+  serverSocket: ?Socket;
+  _previewSize: Size;
+  previewObjects: Array<TimelineEventObject>;
+  cachedObjs: Array<TimelineEventObject>;
+  eventTracker: EventTracker;
+  liveVideo: boolean;
+  livePreview: boolean;
+  lastPreviewFrame: ?Buffer;
+  lastPreviewFrameWhen: number;
+  lastPreviewUploadWhenMs: number;
+  acks: {
+    pending: {
+      jpeg: number;
+      mp4: number;
+    };
+    maxPending: {
+      jpeg: number;
+      mp4: number;
+    }
+  };
+
+  constructor(id: string, outbox: Outbox) {
     super();
     assert(outbox, 'must pass outbox...');
 
     this.id = id;
     this.outbox = outbox;
-    this.serverSocket = { connected: false };
+    this.serverSocket = null;
     this._previewSize = {width: 0, height: 0};
 
-    // Keep track of all face packets we send and upload them along with the
-    // metadata for video segments.
-    this.videoObjects = [];
-
-    // previewObjects is like videoObjects, but for the preview images
+    // Keep track of all objects and upload them along with the
+    // metadata for previews (TODO: it would be nice to integrate this into the
+    // event system)
     this.previewObjects = [];
-    this.previewHalFaces = false;
 
     // Keeps a copy of previous objects to be sent when there is no motion detected
     this.cachedObjs = [];
 
-    // Hold all the video frames with the timestamps until the next poll interval
-    this.videoFrames = [];
-    this.eventTracker = require('./eventtracker')(this.id, this.outbox);
+    this.eventTracker = new EventTracker(this.id, this.outbox);
 
+    this.lastPreviewFrame = null;
+    this.lastPreviewFrameWhen = 0;
     this.lastPreviewUploadWhenMs = 0;
+
+    this.liveVideo = false;
+    this.livePreview = false;
+
+    this._resetAcks();
   }
 
   /**
    * Provide the timeline with a socket to use
    */
-  set socket(socket) {
-    if (!socket) {
-      socket = { connected: false };
-    } else {
-      log.warn(`server socket connected`);
-      this.acks = {
-        pending: { jpeg: 0, mp4: 0 },
-        // Number of acks that can be pending before starting to drop live
-        // preview images/video chunks.
-        maxPending: { jpeg: 4, mp4: 2 },
-      };
+  set socket(socket: ?Socket) {
+    if (socket) {
+      log.info(`server socket connected`);
+      this._resetAcks();
     }
     this.serverSocket = socket;
+  }
+
+  _resetAcks() {
+    this.acks = {
+      pending: { jpeg: 0, mp4: 0 },
+      // Number of acks that can be pending before starting to drop live
+      // preview images/video chunks.
+      maxPending: { jpeg: 4, mp4: 2 },
+    };
   }
 
   /**
    * Selects if transition of the live preview images and/or video should be
    * enabled or not.
    */
-  configLiveStream(preview, video) {
+  configLiveStream(preview: boolean, video: boolean) {
     if (this.livePreview !== preview) {
       this.livePreview = preview;
       if (this.livePreview) {
         // Force the last preview image to be transmitted immediately, to provide
         // the client with a preview image as quick as possible when the camera
         // first connects.
-        this._pushPreview(null, 0, null);
+        this._pushPreview(0, 0, null);
       }
     }
     this.liveVideo = video;
@@ -99,49 +143,43 @@ class Timeline extends EventEmitter {
   /**
    *
    */
-  set previewSize(size) {
+  set previewSize(size: Size) {
     this._previewSize = size;
   }
 
   /**
    * JPEG-encoded preview image
    */
-  addPreviewJPEG(when, durationMs, jpeg) {
+  addPreviewJPEG(when: number, durationMs: number, jpeg: Buffer) {
     this._pushPreview(when, durationMs, jpeg);
   }
 
   /**
    * OpenCV preview frame
    */
-  addPreviewFrame(when) {
+  addPreviewFrame(when: number) {
     this.emit('preview', when);
   }
 
   /**
    *
    */
-  addVideo(when, durationMs, pkt) {
-    this.videoFrames.push({when: when, durationMs: durationMs, pkt: pkt});
-    setTimeout(this._sendVideoWithObjects.bind(this), VIDEO_COLLECTOBJECT_DELAY_MS);
+  addVideo(when: number, durationMs: number, pkt: Buffer) {
+    this._pushVideo(when, durationMs, pkt);
   }
 
   /**
-   *
+   * Handle faces returned by camera HAL
    */
-  addFace(when, faces, source) {
+  addFace(when: number, faces: Array<Rect>, source: string) {
+    // Run facial recognition on the detected faces before recording the event
     this.emit('face', when, faces, source);
-    this._pushFace(when, faces, source);
-    this.eventTracker.record({
-      tag: 'face',
-      when,
-      faces,
-    });
   }
 
   /**
    *
    */
-  addClap(count) {
+  addClap(count: number) {
     this.emit('clap', count);
     this.eventTracker.record({
       tag: 'clap',
@@ -161,7 +199,7 @@ class Timeline extends EventEmitter {
    *          The video preview image dimensions are used as the scale for
    *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
    */
-  addObjects(objects) {
+  addObjects(objects: Array<TimelineEventObject>) {
     if (!objects) {
       throw new Error('Invalid objects');
     }
@@ -176,15 +214,16 @@ class Timeline extends EventEmitter {
           this.cachedObjs.push(object);
         }
         this.previewObjects.push(object);
-        this.videoObjects.push(object);
       }
     });
     this._processEvents(objects);
   }
 
-  _processEvents(objects) {
+  _processEvents(objects: Array<TimelineEventObject>) {
     objects.forEach((object) => {
-      this.eventTracker.record(object);
+      if (object.tag !== 'face') {
+        this.eventTracker.record(object);
+      }
     });
     this._emitEvents(objects);
   }
@@ -197,7 +236,7 @@ class Timeline extends EventEmitter {
    *   rect: optional rectangle
    *
    */
-  addObject(tag, when, rect, source) {
+  addObject(tag: string, when: number, rect: Rect, source: string) {
     if (!when) {
       when = this.lastPreviewFrameWhen; // best guess
     }
@@ -213,10 +252,10 @@ class Timeline extends EventEmitter {
     }
 
     this.addObjects([{
-      tag: tag,
-      when: when,
+      tag,
+      when,
       rects: [rect],
-      source: source
+      source,
     }]);
   }
 
@@ -224,7 +263,7 @@ class Timeline extends EventEmitter {
    * Notify timeline that there is no motion in the image as compared to the
    * previous image.
    */
-  noMotion(when) {
+  noMotion(when: number) {
     this.emit('no-motion', when);
   }
 
@@ -233,7 +272,10 @@ class Timeline extends EventEmitter {
    *
    * @return original objects + cached objects if any
    */
-  _addCachedObjects(origObjects, when) {
+  _addCachedObjects(
+    origObjects: Array<TimelineEventObject>,
+    when: number
+  ): Array<TimelineEventObject> {
     // Adjust the timestamp of the last cached objects
     let objs = null;
     if (this.cachedObjs.length > 0) {
@@ -247,14 +289,14 @@ class Timeline extends EventEmitter {
 
     if (origObjects && objs) {
       return origObjects.concat(objs);
-    } else if (objs) {
-      return objs;
-    } else {
-      return origObjects;
     }
+    if (objs) {
+      return objs;
+    }
+    return origObjects;
   }
 
-  _emitEvents(objects) {
+  _emitEvents(objects: Array<TimelineEventObject>) {
     objects.forEach(object => {
       if (object.tag === 'face') {
         this.emit('face', object.when, object.rects, object.source);
@@ -268,7 +310,7 @@ class Timeline extends EventEmitter {
     });
   }
 
-  _pushPreview(when, durationMs, frame) {
+  _pushPreview(when: number, durationMs: number, frame: ?Buffer) {
     // Intentionally delay the preview image by one cycle to ensure
     // that the previewObjects are transmitted with their corresponding image.
     //
@@ -282,16 +324,21 @@ class Timeline extends EventEmitter {
     //
     if (this.lastPreviewFrame) {
       for (let obj of this.previewObjects) {
-        if (obj.when < this.lastPreviewFrameWhen ||
-            obj.when >= when) {
-          log.warn(`Preview object sent with wrong image: ${JSON.stringify(obj)}`);
+        if (obj.when < this.lastPreviewFrameWhen) {
+          log.warn(`Preview object mismatch: ` +
+            `object too old by ${this.lastPreviewFrameWhen - obj.when}ms: ` +
+            JSON.stringify(obj));
+        } else if (obj.when >= when) {
+          log.warn(`Preview object mismatch: ` +
+            `object too new by ${obj.when - when}ms: ` +
+            JSON.stringify(obj));
         }
       }
       this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,
                        this.previewObjects, 'jpeg');
     }
 
-    if (PREVIEW_UPLOAD_ENABLED &&
+    if (VIDEO_UPLOAD_ENABLED &&
         this.lastPreviewFrame &&
         Date.now() - this.lastPreviewUploadWhenMs > PREVIEW_UPLOAD_INTERVAL_MS) {
       const op = new PreviewUploadOp({
@@ -317,27 +364,10 @@ class Timeline extends EventEmitter {
     this.lastPreviewFrame = frame;
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
-    this.previewHalFaces = false;
   }
 
-  _pushFace(when, faces, source) {
-    let object = {tag: 'hal', when: when, rects: faces, source: source};
-
-    // Only add the first set of HAL-detected faces to the preview object set
-    // (the HAL can return multiple faces a second, but it's not helpful to show
-    //  them all on the preview)
-    if (!this.previewHalFaces) {
-      this.previewHalFaces = true;
-      this.previewObjects.push(object);
-    }
-    this.videoObjects.push(object);
-  }
-
-  _pushVideo(when, durationMs, frame, objects) {
-    // For video we group all related face packets to make it easier on the
-    // client.
-    this._pushPacket(when, frame, objects, 'mp4', durationMs);
-
+  _pushVideo(when: number, durationMs: number, frame: Buffer) {
+    this._pushPacket(when, frame, null, 'mp4', durationMs);
 
     // Only queue the video to be sent to the outbox if uploads are enabled...
     if (!VIDEO_UPLOAD_ENABLED) {
@@ -353,8 +383,7 @@ class Timeline extends EventEmitter {
         endUTC: when + durationMs,
         data: {
           frameWidth: this._previewSize.width,
-          frameHeight: this._previewSize.height,
-          objects,
+          frameHeight: this._previewSize.height
         },
       },
     });
@@ -364,11 +393,19 @@ class Timeline extends EventEmitter {
     this.outbox.enqueue('video', op, new BufferStream(frame));
   }
 
-  _pushPacket(when, frame, objects, type, durationMs = 0) {
-    let wouldTransmit = this.serverSocket.connected;
+  _pushPacket(
+    when: number,
+    frame: Buffer,
+    objects: Array<TimelineEventObject>,
+    type: string,
+    durationMs: number = 0
+  ) {
+    let wouldTransmit = this.serverSocket && this.serverSocket.connected;
+    let allObjects;
     switch (type) {
     case 'jpeg':
       wouldTransmit = wouldTransmit && this.livePreview;
+      allObjects = this._addCachedObjects(objects, when);
       break;
     case 'mp4':
       wouldTransmit = wouldTransmit && this.liveVideo;
@@ -377,7 +414,6 @@ class Timeline extends EventEmitter {
       util.processthrow(`Unknown packet type: ${type}`);
     }
     let willTransmit = wouldTransmit;
-    let allObjects = this._addCachedObjects(objects, when);
     let str = `${type} size:${frame ? frame.length : 0} when:${when}ms`;
     if (durationMs) {
       str += ` durationMs:${durationMs}`;
@@ -395,18 +431,25 @@ class Timeline extends EventEmitter {
     if (willTransmit) {
       log.verbose(str);
       let queued = Date.now();
-      this.serverSocket.emit('video',
-        { id: this.id, objects: allObjects, frame, contents: type, when,
-          durationMs, deviceEmitMs: queued },
-        () => {
-          this.acks.pending[type] = this.acks.pending[type] - 1;
-          if (this.acks.pending[type] < 0) {
-            throw new Error(`pending acks for ${type} < 0`);
-          }
-          log.info(`ack in ${Date.now() - queued}ms for ${str}`);
+      // Flow isn't smart enough to realize that `willTransmit`
+      // guarantees that `this.serverSocket` is truthy, too.
+      // See https://github.com/facebook/flow/issues/998
+      this.serverSocket && this.serverSocket.emit('video', {
+        id: this.id,
+        objects: allObjects,
+        frame,
+        contents: type,
+        when,
+        durationMs,
+        deviceEmitMs: queued,
+      }, () => {
+        this.acks.pending[type] -= 1;
+        if (this.acks.pending[type] < 0) {
+          throw new Error(`pending acks for ${type} < 0`);
         }
-      );
-      this.acks.pending[type] = this.acks.pending[type] + 1;
+        log.info(`ack in ${Date.now() - queued}ms for ${str}`);
+      });
+      this.acks.pending[type] += 1;
     } else {
       log.verbose(`dropped ${str}`);
       if (wouldTransmit && 'mp4' === type) {
@@ -430,7 +473,11 @@ class Timeline extends EventEmitter {
    * Note to AV pipeline diag clients that event `what` happened for
    * object `id` at timestamp `whenMs`.
    */
-  _meter(what, id, whenMs = Date.now()) {
+  _meter(what: string, id: string, whenMs: number = Date.now()) {
+    if (!this.serverSocket || !this.serverSocket.connected) {
+      log.debug(`Not metering '${what}' event, socket.io connection not available.`);
+      return;
+    }
     // TODO: de-dup with app side
     this.serverSocket.emit('diag', {
       id: this.id,
@@ -438,44 +485,4 @@ class Timeline extends EventEmitter {
       log: { id, what, whenMs },
     });
   }
-
-  /**
-   * Associate events received so far with the video frames and push them
-   * together.
-   */
-  _sendVideoWithObjects() {
-    if (this.videoFrames.length > 1) {
-      log.error(`Video is backed up: ${this.videoFrames.length} pending uploads`);
-    }
-    for (let i = 0; i < this.videoFrames.length; i++) {
-      let objects = [];
-
-      // Find all events that belong to this video frame
-      for (let j = 0; j < this.videoObjects.length; j++) {
-        if ((i === (this.videoFrames.length - 1)) &&
-            (this.videoFrames[i].when <= this.videoObjects[j].when)) {
-          // If it is the last video packet then this object may belong to
-          // this video frame
-          objects.push(this.videoObjects[j]);
-        } else if ((i + 1 <= (this.videoFrames.length - 1)) &&
-            ((this.videoFrames[i].when <= this.videoObjects[j].when) &&
-             (this.videoFrames[i + 1].when > this.videoObjects[j].when))) {
-          // Else find the object that is within the boundary of this frame and
-          // the next
-          objects.push(this.videoObjects[j]);
-        }
-      }
-      this._pushVideo(this.videoFrames[i].when, this.videoFrames[i].durationMs,
-                      this.videoFrames[i].pkt, objects);
-    }
-
-    // Drop all the leftover video objects as the corresponding video packets
-    // have already been sent
-    this.videoObjects = [];
-
-    // All the video frames are already sent so clear the queue
-    this.videoFrames = [];
-  }
 }
-
-module.exports = (id, outbox) => new Timeline(id, outbox);

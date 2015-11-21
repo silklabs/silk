@@ -118,6 +118,15 @@ usage () {
   echo s - Server URL. Default server URL will be used if not provided.
 }
 
+waitForDevice() {
+  adb wait-for-device
+  # adb sometimes errors out, if so, wait and try again
+  while [ $? -ne 0 ]; do
+    sleep 1
+    adb wait-for-device
+  done
+}
+
 while getopts "h?d:s:" opt; do
     case $opt in
     h|\?)
@@ -144,11 +153,11 @@ cd $(dirname $0)
 echo Flash the build and clear userdata/cache partitions
 ./flash.sh -w
 
-adb wait-for-device
+waitForDevice
 
 echo Configuring the device:
 adb root
-adb wait-for-device
+waitForDevice
 
 echo OTA updates enabled.
 adb shell setprop persist.silk.update.enabled true
@@ -164,7 +173,6 @@ adb shell setprop persist.silk.server.url "$SERVER_URL"
 
 echo Activated uploads to cloud storage
 adb shell setprop persist.silk.vidupload.enabled 1
-adb shell setprop persist.silk.prvupload.enabled 1
 
 #echo Enabled sound on motion detection
 #adb shell setprop persist.silk.motion.sound true
@@ -186,15 +194,80 @@ HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)
 echo Set device time zone to match host: $HOST_TZ
 adb shell setprop persist.sys.timezone $HOST_TZ
 
+echo Set device time to match host: $(date)
+adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+
 echo Rebooting...
 adb reboot
-adb wait-for-device
+waitForDevice
 echo Device provisioning successful
 
 EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_fut.sh
 
+  # Create flash_demo script
+  cat > $archiveDir/$TARGET_PRODUCT/flash_demo.sh <<'EOF'
+#!/bin/bash
+
+# "Official" demo config
+DISPLAY_NAME="Front Door"
+SERVER_URL="http://192.168.13.100:5000/"
+
+TZ_OFFSET=$(date +%z)
+TZ_OFFSET=${TZ_OFFSET:0:3}
+HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)
+
+cd $(dirname $0)
+
+echo Flash the build and clear userdata/cache partitions
+./flash.sh -w
+
+adb wait-for-device
+
+echo Preparing default.prop ...
+rm default.prop
+
+adb root
+adb wait-for-device
+
+echo Set device name to $DISPLAY_NAME
+echo persist.silk.displayName="$DISPLAY_NAME" >> default.prop
+
+echo Set silk-server URL to $SERVER_URL
+echo persist.silk.server.url=$SERVER_URL >> default.prop
+
+echo Activated uploads to cloud storage
+echo persist.silk.vidupload.enabled=1 >> default.prop
+
+echo Enable sounds on double clap ze clapper
+echo persist.silk.clapper.sound=true >> default.prop
+
+echo Set device time zone to match host: $HOST_TZ
+echo persist.sys.timezone="${HOST_TZ}" >> default.prop
+
+echo Set device time to match host: $(date)
+adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+
+echo Disable vibration
+echo persist.silk.quiet=true >> default.prop
+
+echo Disable BLE ranger to avoid wifi 2.4GHz conflicts
+echo persist.silk.ranger.enabled=false >> default.prop
+
+echo Pushing new default.prop ...
+adb remount
+adb push default.prop /system/
+rm default.prop
+
+echo Rebooting to apply configuration...
+adb reboot
+adb wait-for-device
+echo Device provisioning successful
+EOF
+
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash_demo.sh
+  
   cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
 
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then
@@ -217,11 +290,20 @@ else
   cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<EOF
 #/bin/sh
 
+waitForDevice() {
+  adb wait-for-device
+  # adb sometimes errors out, if so, wait and try again
+  while [ $? -ne 0 ]; do
+    sleep 1
+    adb wait-for-device
+  done
+}
+
 set -ex
 cd \$(dirname \$0)
-adb wait-for-device
+waitForDevice
 adb root
-adb wait-for-device
+waitForDevice
 adb remount
 adb shell stop
 adb shell rm -rf /system/silk

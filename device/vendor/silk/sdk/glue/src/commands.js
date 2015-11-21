@@ -11,6 +11,8 @@ import gulp from 'gulp';
 import source from 'vinyl-source-stream';
 import buffer from 'vinyl-buffer';
 import gutil from 'gulp-util';
+import gulpif from 'gulp-if';
+import uglify from 'gulp-uglify';
 import sourcemaps from 'gulp-sourcemaps';
 import cache from 'gulp-cache';
 import eslint from 'gulp-eslint';
@@ -137,20 +139,34 @@ export default function(baseDirectory = process.env.BASEDIR) {
     let babelrc = getBabelrc();
     let cacheProps = [pkgSource, babelrc]
 
+    let uglifyCfg = {
+      compress: {keep_fnames: true},
+      mangle: false
+    };
+
     return browserifyStream.bundle()
       .on('error', (err) => {
         if (err.codeFrame) {
           gutil.log('(browserify)', gutil.colors.red('Browserify Error'));
           gutil.log('(browserify)', err.toString());
           gutil.log('(browserify)', err.codeFrame);
-          return;
+        } else {
+          gutil.log(err);
         }
-        gutil.log(err);
+        process.exit(1);
       })
       .pipe(source(pkg.main))
       .pipe(buffer())
       .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-      .pipe(sourcemaps.write('.')) // writes .map file
+      .pipe(gulpif(!(process.env.NO_UGLY === '1'), uglify(uglifyCfg)))
+      .on('error', err => {
+        gutil.log('(uglify)', gutil.colors.red('Uglify Error'));
+        gutil.log('(uglify)', err.message);
+        gutil.log('(uglify)', err.fileName);
+        gutil.log('(uglify)', err.lineNumber);
+        process.exit(1);
+      })
+      .pipe(sourcemaps.write('.', {includeContent: true})) // writes .map file
       .pipe(gulp.dest(baseDirectory));
   }
 

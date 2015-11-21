@@ -5,18 +5,16 @@
   "main": "core.js",
   "scripts": {
     "preinstall": "./bin/preinstall",
-    "install": "rm -rf node_modules/babel/test/ && ./build",
-    "test": "mocha $(find test -name '*_test.js')"
+    "install": "./build",
+    "test": "DEBUG=* mocha $(find test -name '*_test.js')"
   },
   "dependencies": {
     "babel-runtime": "^5.8.20",
     "debug": "2.2.0",
     "event-to-promise": "^0.4.0",
-    "is-online": "file:local_node_modules/is-online",
-    "is-reachable": "^1.0.0",
-    "onetime": "^1.0.0",
-    "random-item": "^1.0.0",
-    "root-hints": "^1.0.0",
+    "is-online": "^5.0.1",
+    "is-reachable": "^1.1.0",
+    "joi": "^6.6.1",
     "mkdirp-promise": "^1.0.3",
     "mold-source-map": "^0.4.0",
     "mz": "2.0.0",

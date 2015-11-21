@@ -14,13 +14,13 @@ module.exports = function(grunt) {
 
   var defaultTasks = ['eslint', 'babel', 'jsdataify', 'browserify'];
 
-  grunt.registerMultiTask('jsdataify', 
+  grunt.registerMultiTask('jsdataify',
       'Converts binary file to base64 js string', function() {
     this.files.forEach(function(filePair) {
       var src = filePair.orig.src[0];
       var base = path.basename(src, path.extname(src));
 
-      var data = fs.readFileSync(src).toString('base64'); 
+      var data = fs.readFileSync(src).toString('base64');
       var out = 'var ' + base + ' = \"' + data +
           '\";\n' + 'module.exports = ' + base + ';';
       fs.writeFileSync(filePair.dest, out);

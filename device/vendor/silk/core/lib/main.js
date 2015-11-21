@@ -25,31 +25,29 @@ import * as util from './sysutils';
 import update from './update';
 import config from './config';
 import sensors from './sensors';
+import infrared from './infrared';
 import server from './server';
 import fs from 'mz/fs';
-import deferred from './deferred';
 
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
-import makeCrashReporter from './crashreport';
+import makeCrashReporter from './crash_reporter';
+import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
 import NetworkStatus from './network_status';
+import isReachable from 'is-reachable';
 import Logcat from './logcat';
+import Timeline from './timeline';
 
 const log = createLog('main');
 // Start the profile server ASAP.
 initProfiler();
 
-// Wait for 60 seconds for boot before issuing a warning.
-const BOOT_TIMEOUT = 60 * 1000;
-// How frequently (in ms) we check if the boot prop has been set.
-const BOOT_CHECK_INTERVAL = 1000;
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
 const name = util.getprop('persist.silk.displayName', 'Silkcam');
-const logoFilePath = '/system/silk/media/logo.png';
 
 let id = null;
 let btle = null;
@@ -66,33 +64,51 @@ let ext;
 let diag;
 let hue;
 
+// true once the device has a configuration and is ready for normal operation
+let configured = false;
+
 /**
- * Wait until system has been booted.
+ * Wait for bootup and initialize the device.
  */
-function _waitForSysBoot(startTime, defer) {
-  // Don't use an arbitrarily long promise chain if one is passed use it.
-  startTime = startTime || Date.now();
-  defer = defer || deferred();
+function main() {
+  // Start these ASAP so that unhandled exceptions in the boot sequence will
+  // be properly recorded.
+  networkStatus = new NetworkStatus(wifi,
+    () => {
+      // Instead of using the default "Internet available test", tell
+      // NetworkStatus to only report online if the configured server is
+      // accessible (eg. a local setup without full Internet access)
+      if (!configured) {
+        // No configuration so abort early
+        log.verbose(`Offline as device is not configured`);
+        return Promise.resolve(false);
+      }
+      const serverUrl = api.config.serverUrl;
+      return new Promise((accept, reject) => {
+        isReachable(serverUrl, (err, reachable) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          log.verbose(`${serverUrl} reachable? ${reachable}`);
+          accept(reachable);
+        });
+      });
+    }
+  );
+  networkStatus.hintSocket = server;
 
-  // If we have waited a long time to boot log an error but keep trying.
-  if (Date.now() - startTime > BOOT_TIMEOUT) {
-    log.error(`Boot took over ${BOOT_TIMEOUT} ms something might be broken`);
-  }
+  outbox = initOutbox(networkStatus);
+  crashreporter = makeCrashReporter(outbox);
+  jsErrors(crashreporter);
 
-  if ('1' === util.getprop('sys.boot_completed')) {
-    defer.accept();
-  } else {
-    log.info('Waiting for sys.boot_completed=1');
-    setTimeout(_waitForSysBoot.bind(this, startTime, defer), BOOT_CHECK_INTERVAL);
-  }
+  return getDeviceId()
+    .then(deviceId => {
+      id = deviceId;
+      crashreporter.assignDeviceId(deviceId);
+      logcat = new Logcat(deviceId.toString(), outbox);
+      logcat.start();
 
-  return defer.promise;
-}
-
-
-function boot() {
-  return _waitForSysBoot().
-    then(() => {
       // Wait for the battery to initialize and block until there's enough
       // capacity to fully boot.
       return battery.init();
@@ -105,6 +121,7 @@ function boot() {
           btle = btleInstance;
         }),
         sensors.init(),
+        infrared.init(),
       ]);
     })
     .then(() => {
@@ -115,12 +132,9 @@ function boot() {
       fs.writeFile('/proc/self/oom_adj', 0);
 
       assert(outbox, 'must have outbox when initializing timeline');
-      timeline = require('./timeline')(id.toString(), outbox);
+      timeline = new Timeline(id.toString(), outbox);
       camera = require('./camera')(timeline);
-      camera.on('error', () => {
-        log.warn('Camera command errored out');
-      });
-      return camera.start();
+      return camera.init();
     })
     .then(() => {
       util.setprop('silk.boot_completed',
@@ -139,31 +153,7 @@ function boot() {
       });
 
       log.info('Load configuration');
-      return config.init(networkStatus);
-    });
-}
-
-/**
- * Wait for bootup and initialize the device.
- */
-function main() {
-  // Start these ASAP so that unhandled exceptions in the boot sequence will
-  // be properly recorded.
-  networkStatus = new NetworkStatus(wifi);
-  networkStatus.hintSocket = server;
-
-  outbox = initOutbox(networkStatus);
-  crashreporter = makeCrashReporter(outbox);
-
-  return getDeviceId()
-    .then(deviceId => {
-      id = deviceId;
-      api.accessToken = deviceId;
-      crashreporter.deviceId = deviceId.toString();
-      logcat = new Logcat(deviceId.toString(), outbox);
-      logcat.start();
-
-      return boot();
+      return config.init();
     })
     .then(() => {
       // Set global state up.
@@ -184,21 +174,20 @@ main().catch(err => {
 /**
  * Read vendor specific logo
  */
-function readLogo() {
+async function readLogo() {
   if (logo) {
-    return Promise.resolve();
+    return;
   }
-
-  return fs.readFile(logoFilePath)
-  .then(data => {
-    logo = data;
-    return Promise.resolve();
-  })
-  .catch(err => {
-    log.warn(`No vendor logo available at ${logoFilePath} err: ${err}`);
-    logo = [];
-    return Promise.resolve();
-  });
+  for (const root of ['/data', '/system']) {
+    const logoFile = root + '/silk/media/logo.png';
+    try {
+      logo = await fs.readFile(logoFile);
+      return; // Return once the first logo is successfully read
+    } catch (err) {
+      log.verbose(`No logo at ${logoFile}: ${err}`);
+    }
+  }
+  logo = [];
 }
 
 function emitDeviceInfo() {
@@ -260,7 +249,7 @@ server.on('cmd', cmd => {
   case 'livestream':
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
-    diag.setConfig({dash: flag, logcat: flag, procrank: flag, });
+    diag.setConfig({dash: flag, logcat: flag});
 
     timeline.configLiveStream(!!cmd.preview, !!cmd.video);
     break;
@@ -269,6 +258,12 @@ server.on('cmd', cmd => {
     if (cmd.channel) {
       log.info('  reboot: setting update channel to', cmd.channel);
       util.setprop('persist.silk.update.channel', cmd.channel);
+      // When moving the device to a new update channel, it's likely that the
+      // serverUrl received from the app during initial configuration time will
+      // no longer be valid for the new update channel.  Clearing the serverUrl
+      // here reverts the device back to using the default server supplied by the
+      // current update channel.
+      config.forceDefaultServerUrl();
     }
     log.info('  rebooting ...');
     util.setprop('sys.powerctl', 'reboot');
@@ -281,13 +276,16 @@ server.on('cmd', cmd => {
 
 // Config service...
 config.on('unconfigured', () => {
+  configured = false;
   if (ui.goto('setup')) {
+    camera.stopRecording();
     server.disconnect();
   }
 });
 config.on('configured', () => {
   if (ui.goto('connecting')) {
-
+    configured = true;
+    camera.startRecording();
     wifi.online()
     .then(() => {
       update.start();
@@ -327,6 +325,7 @@ config.on('configured', () => {
           camera: camera,
           hue: hue,
           sensors: sensors,
+          infrared: infrared,
           timeline: timeline,
         });
       }
@@ -353,6 +352,7 @@ function shutdown(finalPromiseFactory) {
       if (!uiStateWasSet) {
         log.warn(`ui state was set to 'powerdown' more than once`);
       }
+      camera.stopRecording();
       return crashreporter.shutdown();
     })
     .then(() => {

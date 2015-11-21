@@ -462,7 +462,8 @@ class QEmuWifi extends events.EventEmitter {
   }
 
   forgetNetwork() {
-    return Promise.reject(new Error('QEmuWifi.forgetNetwork not implemented'));
+    log.warn('QEmuWifi.forgetNetwork not implemented');
+    return Promise.resolve();
   }
 }
 

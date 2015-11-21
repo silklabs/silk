@@ -14,9 +14,9 @@ import Trainer from './trainer';
 const RADIUS = 1;
 
 // Higher the value, more time it takes to train the recognizer. With value higher
-// values 8 model is not recognizing faces at all. With values lower than 4 model
-// is returning lot of false positives
-const NEIGHBORS = 4;
+// value of 8 model is not recognizing faces at all. With lower values model
+// returns lot of false positives
+const NEIGHBORS = 3;
 
 const GRID_X = 8;
 const GRID_Y = 8;
@@ -24,8 +24,7 @@ const GRID_Y = 8;
 // Represents the threshold for the confidence value returned by the model. If
 // the confidence is more than the threshold, model returns an unknown person.
 // Higher the threshold more false postives the model returns. Lower the threshold
-// bigger the face rectangle required for succesful recognition. So faces that
-// are far in the view are not recognized.
+// bigger the face rectangle required for successful recognition.
 const THRESHOLD = 60;
 
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -42,12 +41,14 @@ class FindFace {
   constructor(env) {
     log = env.log;
     this._env = env;
+    this._faceMap = null;
     this._model = cv.FaceRecognizer.createLBPHFaceRecognizer(RADIUS,
       NEIGHBORS, GRID_X, GRID_Y, THRESHOLD);
 
     this._trainingInProgress = false;
     this._working = false;
     this._trainer = new Trainer(env);
+    this._idMap = {};
 
     // Not calling await on purpose so as not to block the constructor
     this._init();
@@ -61,12 +62,14 @@ class FindFace {
   async onCommand(cmd) {
     switch (cmd.msg) {
     case 'addPerson':
+      this._trainingInProgress = true;
       log.info(`addPerson command: ${JSON.stringify(cmd)}`);
       await this._trainer.addPerson(cmd.person);
 
       // Finished adding the person; re-train face model
       log.info(`Finished adding person ${cmd.person}`);
-      this._trainModel();
+      await this._trainModel();
+      await this._loadTrainingData();
       break;
     default:
       break;
@@ -88,15 +91,23 @@ class FindFace {
   /**
    * Load training data from a configuration file if available
    */
-  _loadTrainingData() {
-    log.info(`Loading training data`);
+  async _loadTrainingData() {
+    let loaded = false;
     try {
-      this._model.loadSync(TRAIN_FACES_YML);
-      this._faceMap = require(TRAIN_FACES_MAP);
-      this._start();
+      this._faceMap = null;
+      if (await fs.exists(TRAIN_FACES_YML)) {
+        this._model.loadSync(TRAIN_FACES_YML);
+        if (await fs.exists(TRAIN_FACES_MAP)) {
+          let faceMapJson = await fs.readFile(TRAIN_FACES_MAP);
+          this._faceMap = JSON.parse(faceMapJson);
+          loaded = true;
+          log.debug(`${JSON.stringify(this._faceMap)}`);
+        }
+      }
     } catch (e) {
-      log.error(`Error loading face training data: ${e}`);
+      log.warn(`Error loading face training data: ${e.stack}`);
     }
+    log.verbose(`Face training data loaded: ${loaded}`);
   }
 
   /**
@@ -112,7 +123,11 @@ class FindFace {
    */
   async _trainModel() {
     this._trainingInProgress = true;
-    await this._trainer.start(this._model);
+    try {
+      await this._trainer.start(this._model);
+    } catch (err) {
+      log.warn(`Error training for faces: ${err.stack}`);
+    }
     this._trainingInProgress = false;
   }
 
@@ -133,27 +148,29 @@ class FindFace {
     this._watchprop = this._env.util.watchprop(ADD_COMMAND_PROP,
       () => this._addCommandProp());
 
-    let existsYml = await fs.exists(TRAIN_FACES_YML);
-    let existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
-    if (existsYml && existsFaceMap) {
-      this._loadTrainingData();
-    } else {
-      try {
-        await this._trainModel();
-        this._loadTrainingData();
-      } catch (e) {
-        log.error(`Error training for faces: ${e}`);
-      }
+    const existsYml = await fs.exists(TRAIN_FACES_YML);
+    const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
+    if (!existsYml || !existsFaceMap) {
+      await this._trainModel();
     }
+    await this._loadTrainingData();
+    this._start();
   }
 
   /**
-   * Gets a prediction from FaceRecognizer
+   * Promises a prediction from FaceRecognizer
    */
   _predict(faceim) {
-    return new Promise(resolve => {
+    if (!this._faceMap) {
+      return Promise.reject(`faceMap not found`);
+    }
+    return new Promise((resolve, reject) => {
       this._model.predict(faceim, (result) => {
-        resolve(result);
+        log.debug(`${JSON.stringify(result)}`);
+        if (result.id !== -1) {
+          return resolve(result);
+        }
+        return reject();
       });
     });
   }
@@ -164,7 +181,9 @@ class FindFace {
   _start() {
     log.info(`Starting face recognition`);
     this._onFace = (when, faces, source) => {
-      if ((faces.length <= 0) || (source === 'hal')) {
+      if (faces.length <= 0) {
+        // Clear id map as there are no more faces detected
+        this._idMap = {};
         return;
       }
 
@@ -179,7 +198,7 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame((err, image) => {
+      this._env.camera.getPreviewFrame((err, image, orig) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           this._working = false;
@@ -189,19 +208,43 @@ class FindFace {
         // Run facial recognition on each of the detected faces
         let start = Date.now();
         faces.forEach(async (face) => {
-          let faceim = image.roi(face.x, face.y, face.width, face.height);
-          let result = await this._predict(faceim);
-          if (result.id !== -1) {
+          // If a name with the id is available then no need to run facial
+          // recognition again
+          if (face.id) {
+            let name = this._idMap[face.id];
+            if (name) {
+              log.info(`face.id: ${face.id} name: ${name}`);
+              this._env.timeline.addObject(name, when, face);
+              return;
+            }
+          }
+
+          // Calculate preview scale
+          let previewScale = orig.width() / image.width();
+
+          let faceim = this._trainer._preprocessFace(orig, face, previewScale);
+          if (!faceim) {
+            return;
+          }
+          try {
+            const result = await this._predict(faceim);
             log.info(`face detected id:${result.id} ` +
                 `${this._matchIdWithName(result.id)} ` +
-                `confidence: ${result.confidence}`);
+                `confidence: ${result.confidence} source:${source}`);
 
             // Add the person to timeline
-            this._env.timeline.addObject(this._matchIdWithName(result.id), when, face);
-          } else {
+            let name = this._matchIdWithName(result.id);
+            this._env.timeline.addObject(name, when, face);
+
+            // Cache name with face.id to skip face recognition next time
+            // a face with the same ID is reported by HAL
+            if (face.id) {
+              this._idMap[face.id] = name;
+            }
+          } catch (err) {
             // Unknown face
-            log.debug(`Unknown face detected`);
-            this._env.timeline.addObject('elvis', when, face);
+            log.debug(`Unknown face detected: why=${err}`);
+            this._env.timeline.addObject('a face', when, face); // See #1306 for 'a face' vs 'face'
           }
         });
         let diff = Date.now() - start;

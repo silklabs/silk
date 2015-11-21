@@ -20,6 +20,7 @@ automatically installed on device, and silk core restarted.
 
 `./watch` options:
   * `LAX=1 ./watch` - to skip running ESLint
+  * `NO_UGLY=1 LAX=1 ./watch` - also don't uglify
   * `./watch --no-restart` - to skip restarting silk core.
 
 ### Manual push of silk core
@@ -72,6 +73,7 @@ The node debugger is activate by default in non-production builds.  To set
 breakpoints, either first restart the main silk program and tell node to halt at
 the first line:
 ```
+$ adb shell setprop persist.silk.profiling.enabled false  #<-- the default
 $ adb shell stop silk
 $ adb shell silk --debug-brk
 ```

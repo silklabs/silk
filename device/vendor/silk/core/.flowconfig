@@ -6,10 +6,16 @@ interface/
 
 [ignore]
 .*/dist/.*
+.*/node_modules/eslint*
+.*/node_modules/babel*
+.*/node_modules/gulp*
+.*/node_modules/silk-socket.io*
 
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=node
+esproposal.class_instance_fields=ignore
+esproposal.class_static_fields=ignore
 
 [version]
-0.16.0
+0.18.1

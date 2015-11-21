@@ -58,6 +58,10 @@ update:
 fut: FLASH_SCRIPT=flash_fut.sh
 fut: update
 
+# Update the currently attached Mako device with the latest prebuilt demo build
+.PHONY: demo
+demo: FLASH_SCRIPT=flash_demo.sh
+demo: update
 
 # Run the emulator
 EMULATOR=emulator -verbose -show-kernel $(EXTRA_EMULATOR_OPTS)
@@ -223,7 +227,7 @@ REPO_VERSION=--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-st
 
 
 ifndef NO_REPOCACHE
-REPOCACHE_URLPREFIX := https://silk-releng.s3.amazonaws.com/master/repocache/repocache-
+REPOCACHE_URLPREFIX := https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/repocache-
 
 REPOCACHE_base := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-base.tgz
 ifeq ($(REPO_INIT_HOST),linux)

@@ -9,12 +9,11 @@
 import crypto from 'crypto';
 
 import { EventEmitter } from 'events';
-import * as util from './sysutils';
 import APICallOperation from './outbox/api_call_operation';
 import createLog from './log';
 const log = createLog('events');
 
-import type { TimelineEventObject } from './videoupload';
+import type { TimelineEventObject } from './timeline';
 import type { Outbox } from './outbox/manager';
 
 type LocalEventRecord = {
@@ -33,10 +32,6 @@ const DEBOUNCE_MS_BY_EVENT_TAG = {
 
 const RECURRING_TIMER_INTERVAL_MS = 1000;
 const DEFAULT_EVENT_LENGTH_MS = 1000;
-
-const ENABLED_PROP = 'persist.silk.eventtrk.enabled';
-const ENABLED = util.getboolprop(ENABLED_PROP);
-log.info(`Upload enabled: ${ENABLED}`);
 
 // If 12 bytes is enough for MongoDB, it should be enough for us.
 // See https://docs.mongodb.org/manual/reference/object-id/
@@ -62,7 +57,7 @@ function generateRecordID(): Promise<string> {
  * motion detection over multiple 1s periods will be tracked as a
  * single motion event lasting several seconds.
  */
-class EventTracker extends EventEmitter {
+export default class EventTracker extends EventEmitter {
   deviceId: string;
   outbox: Outbox;
   _eventRecords: {[key: string]: LocalEventRecord};
@@ -121,7 +116,7 @@ class EventTracker extends EventEmitter {
     this._trackExpirations();
   }
 
-  async _enqueue(record: LocalEventRecord) {
+  async _enqueue(record: LocalEventRecord): Promise<void> {
     if (record.id === GENERATING_ID_PLACEHOLDER) {
       // The record is already enqueued, we're just generating an ID for it.
       // No need to enqueue it again.
@@ -132,10 +127,9 @@ class EventTracker extends EventEmitter {
       record.id = await generateRecordID();
     }
     let operation = new APICallOperation({
-      endpoint: 'timeMeta.create',
+      endpoint: 'metadataPublisher.create',
       args: [{
         metaType: 'event',
-        deviceId: this.deviceId,
         id: record.id,
         startUTC: record.startUTC,
         endUTC: record.endUTC,
@@ -179,8 +173,4 @@ class EventTracker extends EventEmitter {
       log.info(`No more events to track, sleeping.`);
     }
   }
-}
-
-export default function (deviceId: string, outbox: Outbox): EventTracker {
-  return new EventTracker(deviceId, outbox);
 }

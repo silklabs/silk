@@ -24,15 +24,17 @@ export default function(networkStatus) {
 
   /**
    * The outbox has special queues specific to blob uploads so we don't clog
-   * up the main queue with video (which is running constantly).
+   * up the main queue with video/previews (which are running constantly).
    */
   outbox.registerQueue('video', {
     // TODO: This should be computed somehow
-    concurrency: 3
+    concurrency: 5,
+    diskConcurrency: 3
   });
   outbox.registerQueue('preview', {
     // TODO: This should be computed somehow
-    concurrency: 3
+    concurrency: 5,
+    diskConcurrency: 3
   });
 
   /**

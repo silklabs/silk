@@ -1,0 +1,27 @@
+From 3ea276c73301ec38a3cda5aa9841065ffcbd178b Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 1 Nov 2015 20:16:32 -0800
+Subject: [PATCH] Don't enable MTP by default
+
+---
+ device.mk | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 41486f8..ff36dad 100644
+--- a/device.mk
++++ b/device.mk
+@@ -339,10 +339,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
+ PRODUCT_PROPERTY_OVERRIDES += \
+     persist.radio.custom_ecc=1
+ 
+-# set default USB configuration
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+-    persist.sys.usb.config=mtp
+-
+ # Request modem to send PLMN name always irrespective
+ # of display condition in EFSPN.
+ # RIL uses this property.
+-- 
+1.9.1
+

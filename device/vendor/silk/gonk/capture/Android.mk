@@ -13,11 +13,13 @@ LOCAL_SRC_FILES := \
 	Capture.cpp \
 	Channel.cpp \
 	FaceDetection.cpp \
-	MPEG4MemoryWriter.cpp \
-	MediaCodecSource.cpp \
-	SlicedMP4Encoder.cpp \
 	IOpenCVCameraCapture.cpp \
+	MediaCodecSource.cpp \
+	MPEG4MemoryWriter.cpp \
+	MPEG4SegmentDASHWriter.cpp \
+	MPEG4SegmenterDASH.cpp \
 	OpenCVCameraCapture.cpp \
+	SlicedMP4Encoder.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 	libstagefright libstagefright_foundation libutils liblog libbinder \
@@ -34,6 +36,7 @@ LOCAL_C_INCLUDES += $(ROOT)/SocketListener
 
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
+LOCAL_CFLAGS += -Dnullptr=0
 
 include external/stlport/libstlport.mk
 

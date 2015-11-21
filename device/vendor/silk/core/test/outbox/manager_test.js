@@ -68,6 +68,9 @@ suite('outbox manager', () => {
       storagePath: FIXTURE_DIR
     });
     subject.queues.get('default-queue').concurrency = 20;
+    subject.queues.get('default-queue').diskConcurrency = 20;
+    subject.queues.get('default-queue').maxEntries = 5;
+    subject.queues.get('default-queue').maxRetries = 6;
     subject.registerOperation(HttpOp);
     subject.registerOperation(NoBufferOp);
   });
@@ -159,7 +162,8 @@ suite('outbox manager', () => {
       subject.online = true;
       await removeEvent;
 
-      assert.ok(!await fs.exists(metadataPath), 'removed operation');
+      assert.ok(!await fs.exists(metadataPath),
+        'removed operation failed, file should not exist: ' + metadataPath);
     });
 
     test('shutdown with pending operations...', async () => {
@@ -206,7 +210,7 @@ suite('outbox manager', () => {
     });
 
     test('recover from failure', async () => {
-      // Ensure we are polling for retires.
+      // Ensure we are polling for retries.
       subject.start(50 /* poll every 50ms */);
 
       let handle = server.registerStream(1);
@@ -221,7 +225,7 @@ suite('outbox manager', () => {
       assert.equal(handle.success, false);
 
       // Wait for a number of retries...
-      let retryAttempts = 5;
+      let retryAttempts = subject.queues.get('default-queue').maxRetries - 1;
       for (let retry = 0; retry < retryAttempts; retry++) {
         await eventToPromise(subject.queues.get('default-queue'), 'failed operation');
       }
@@ -239,6 +243,68 @@ suite('outbox manager', () => {
       assert.ok(!(await fs.exists(removeHandle.path)), 'removes from disk');
       assert.equal(subject.queues.get('default-queue').running, 0);
     });
+
+    test('max retries', async () => {
+      // Ensure we are polling for retries.
+      subject.start(50 /* poll every 50ms */);
+
+      let handle = server.registerStream(1);
+
+      let { stream, buffer } = randomStream();
+      let op = new HttpOp({ arguments: handle.url });
+
+      let saveOp = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
+
+      await subject.addToQueue(op, stream);
+      let operationHandle = await saveOp;
+      assert.equal(handle.success, false);
+
+      assert.ok(await fs.exists(operationHandle.path), 'not on disk');
+
+      // Wait for the max number of retries
+      let retryAttempts = subject.queues.get('default-queue').maxRetries;
+      for (let retry = 1; retry < retryAttempts; retry++) {
+        await eventToPromise(subject.queues.get('default-queue'), 'failed operation');
+      }
+
+      // Queue should now give up
+      await eventToPromise(subject.queues.get('default-queue'), 'giveup operation');
+      await eventToPromise(subject.queues.get('default-queue'), 'removed operation');
+
+      assert.ok(!(await fs.exists(operationHandle.path)), 'removes from disk');
+      assert.equal(subject.queues.get('default-queue').running, 0);
+    });
+
+    test('max queue', async () => {
+      await server.listen();
+      subject.start(10);
+
+      let pendingRequests = [];
+
+      subject.online = false;
+
+      // Overflow the queue looking for "removed operation" events
+      let maxEntries = subject.queues.get('default-queue').maxEntries;
+      for (let i = 0; i < maxEntries * 2; i++) {
+        let handle = server.registerStream(100 + i);
+        handle.delay = 100; // wait 100ms before responding to request...
+        let args = { woot: true };
+        let op = new NoBufferOp({ url: handle.url, args });
+
+        let saveOp = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
+        let removeOp = eventToPromise(subject.queues.get('default-queue'), 'removed operation');
+
+        await subject.addToQueue(op);
+        pendingRequests.push(eventToPromise(handle, 'request'));
+
+        if (i >= maxEntries) {
+          await removeOp;
+        }
+        await saveOp;
+      }
+      await subject.shutdown();
+    });
+
 
   });
 });

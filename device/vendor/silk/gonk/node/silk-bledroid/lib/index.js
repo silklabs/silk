@@ -89,12 +89,18 @@ class Bledroid extends EventEmitter {
     this.startBufferingCommands();
 
     log.info(`Connecting to '${BLE_SOCKET_PATH}' socket`);
-    const socket = net.createConnection(BLE_SOCKET_PATH, err => {
-      if (err) {
-        this.onSocketConnectionError(err);
-      } else {
-        this.onSocketConnected(socket);
-      }
+
+    const socket = net.createConnection(BLE_SOCKET_PATH);
+
+    const errorListener = (error) => {
+      socket.removeListener(`error`, errorListener);
+      this.onSocketConnectionError(error);
+    };
+    socket.on(`error`, errorListener);
+
+    socket.once(`connect`, () => {
+      socket.removeListener(`error`, errorListener);
+      this.onSocketConnected(socket);
     });
   }
 
@@ -279,6 +285,9 @@ class Bledroid extends EventEmitter {
   command(commandStr) {
     // bledroid socket expects the command data in the following format:
     let data = `${BLE_COMMAND_NAME} "${commandStr}"\0`;
+    if (data.length > 1024) {
+      throw new Error(`Command is too long (${data.length})`);
+    }
 
     if (this.commandBuffer) {
       const whitelist = /^(?:getAdapterState)/;

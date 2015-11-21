@@ -13,6 +13,15 @@ import net from 'net';
 import cv from 'opencv';
 import CBuffer from 'CBuffer';
 
+type RawHalFace = {
+  rect: [number, number, number, number];
+  score: number;
+  id: number;
+  leftEye: [number, number];
+  rightEye: [number, number];
+  mouth: [number, number];
+};
+
 //const FRONT = 1;
 //const BACK = 0;
 
@@ -30,7 +39,7 @@ const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
-const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 6);
+const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 12);
 const PREVIEW_DELAY_MS = 1000 / (FPS / PREVIEW_SKIP_COUNT);
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
@@ -56,6 +65,14 @@ const CAPTURE_RESTART_DELAY_MS = 1000;
 // the attempt as failed and triggering a retry
 const CAPTURE_INIT_TIMEOUT_MS = 10 * 1000;
 
+// If TAG_VIDEO or TAG_MIC is not received in this amount of time assume the
+// capture process is wedged and restart it.
+const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
+
+// If there is still not a preview frame after this number of attempts assume the
+// capture process is wedged and restart it.
+const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 10;
+
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
 const TAG_VIDEO = 0;
@@ -80,7 +97,7 @@ let FLASH_MODE = {
  * objects with fields named after `camera_face_t` in
  * system/core/include/system/camera.h.
  */
-function rawFaceArrayToFaces(buf) {
+function rawFaceArrayToFaces(buf): Array<RawHalFace> {
   const SIZEOF_CAMERA_FACE_T = 12 * 4;
   if (buf.length % SIZEOF_CAMERA_FACE_T) {
     throw `Raw face array has invalid length ${buf.length}`;
@@ -133,12 +150,17 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   let normCoord = (c, len) => normLen(c + 1000.0, len);
 
   // Intentionally discard additional HAL face data such as the
-  // id/leftEye/rightEye/mouth/score as they are never used downstream.
+  // mouth/score as they are never used downstream.
   return {
     x: normCoord(left, PREVIEW_WIDTH),
     y: normCoord(top, PREVIEW_HEIGHT),
     width: normLen(right - left, PREVIEW_WIDTH),
     height: normLen(bottom - top, PREVIEW_HEIGHT),
+    leftEye: [normCoord(face.leftEye[0], PREVIEW_WIDTH),
+        normCoord(face.leftEye[1], PREVIEW_HEIGHT)],
+    rightEye: [normCoord(face.rightEye[0], PREVIEW_WIDTH),
+        normCoord(face.rightEye[1], PREVIEW_HEIGHT)],
+    id: face.id,
   };
 }
 
@@ -150,9 +172,11 @@ class CameraStream extends EventEmitter {
     super();
     this.timeline = timeline;
     this._ready = false;
+    this._recording = false;
     this._cvVideoCapture = null;
     this._cvVideoCaptureBusy = false;
     this._queue = []; // Queue of pending preview frame requests
+    this._motion = true;
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
@@ -164,6 +188,14 @@ class CameraStream extends EventEmitter {
     //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB resized
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releasePreviewImages(item);
+
+    this.timeline.on('no-motion', () => {
+      this._motion = false;
+    });
+
+    this.timeline.on('motion', () => {
+      this._motion = true;
+    });
   }
 
   /**
@@ -181,16 +213,29 @@ class CameraStream extends EventEmitter {
     }
   }
 
-  _restart(why) {
+  /**
+   * Restarts communication with the capture process.
+   *
+   * In certain error conditions, it can also be beneficial to restart the
+   * capture process (such as when it is not providing the expected video data)
+   * an attempt to recover the system.
+   */
+  _restart(why, restartCaptureProcess = false) {
     if (this._restartTimeout) {
       log.info(`camera restart pending (ignored "${why}")`);
       return;
     }
-    log.info(`camera restart: ${why}`);
+
+    log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
     this._ready = false;
-    if (this._previewInterval) {
-      clearInterval(this._previewInterval);
-      this._previewInterval = null;
+
+    if (this._previewFrameTimeout) {
+      clearTimeout(this._previewFrameTimeout);
+      this._previewFrameTimeout = null;
+    }
+    if (this._tagMonitorTimeout) {
+      clearTimeout(this._tagMonitorTimeout);
+      this._tagMonitorTimeout = null;
     }
     if (this._cvVideoCapture) {
       this._cvVideoCapture.close();
@@ -204,6 +249,10 @@ class CameraStream extends EventEmitter {
     if (this._dataSocket) {
       this._dataSocket.destroy();
       this._dataSocket = null;
+    }
+
+    if (restartCaptureProcess) {
+      util.setprop('ctl.restart', 'capture');
     }
 
     this._restartTimeout = setTimeout(() => {
@@ -224,7 +273,7 @@ class CameraStream extends EventEmitter {
     }
     this._initTimeout = setTimeout(() => {
       this._initTimeout = null;
-      this._restart('failed to initialize in a timely fashion');
+      this._restart('failed to initialize in a timely fashion', true);
     }, CAPTURE_INIT_TIMEOUT_MS);
 
     // Connecting to data socket
@@ -308,22 +357,41 @@ class CameraStream extends EventEmitter {
 
       let captureEvent = JSON.parse(line);
       if (captureEvent.eventName === 'error') {
-        this.emit('error');
+        log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-        this._previewInterval = setInterval(() => this._readPreviewFrame(), PREVIEW_DELAY_MS);
 
         clearTimeout(this._initTimeout);
         this._initTimeout = null;
         this._ready = true;
 
+        this._scheduleNextPreviewFrame();
+
+        const tagMonitor = () => {
+          if (this._videoTagReceived && this._micTagReceived) {
+            this._videoTagReceived = this._micTagReceived = null;
+            this._tagMonitorTimeout = setTimeout(tagMonitor,
+              CAPTURE_TAG_TIMEOUT_MS);
+            return;
+          }
+          this._restart(`Expected Tags not received from capture promptly. ` +
+              `video=${this._videoTagReceived}, mic=${this._micTagReceived}`,
+              true);
+        };
+        this._tagMonitorTimeout = setTimeout(tagMonitor,
+          CAPTURE_TAG_TIMEOUT_MS);
+
         if (this._startPromiseCallbacks) {
           this._startPromiseCallbacks.resolve();
+        }
+      } else if (captureEvent.eventName === 'getParameter') {
+        if (this._getParameterCallback) {
+          this._getParameterCallback.resolve(captureEvent.data);
         }
       } else if (captureEvent.eventName === 'stopped') {
         throw new Error('Camera stop unhandled');
       } else {
-        log.warn(`Error: Unknown capture command ${line}`);
+        log.warn(`Error: Unknown capture event ${line}`);
       }
     }
   }
@@ -346,13 +414,13 @@ class CameraStream extends EventEmitter {
 
       switch(channel) {
       case 0:
-        userCb(false, image.default, image.orig);
+        userCb(false, image.rgb, image.orig);
         return;
       case 1:
         if (image.gray) {
           userCb(false, image.gray, image.orig);
         } else {
-          let grayImage = image.default.copy();
+          let grayImage = image.rgb.copy();
           grayImage.convertGrayscale();
 
           // TODO: Running equalizeHist() on the full resolution image
@@ -364,9 +432,6 @@ class CameraStream extends EventEmitter {
           userCb(false, image.gray, image.orig);
         }
         return;
-      case 2:
-        userCb(false, image.rgb, image.orig);
-        return;
       default:
         userCb('unsupported channel', null);
         return;
@@ -375,45 +440,78 @@ class CameraStream extends EventEmitter {
     userCb('image not available in the cache', null);
   }
 
+  _scheduleNextPreviewFrame() {
+    this._previewFrameTimeout = setTimeout(() => {
+      this._previewFrameTimeout = null;
+      this._readPreviewFrame();
+    }, PREVIEW_DELAY_MS);
+  }
+
   /**
    * Read the next frame
    */
   _readPreviewFrame() {
-    if (!this._cvVideoCapture) {
+    this._scheduleNextPreviewFrame();
+    if (!this._cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
-      log.warn('Still waiting on preview frame, unable to read next');
+      this._noPreviewCount++;
+      log.warn(`Waiting for preview frame: ` +
+               `${this._noPreviewCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
+      if (this._noPreviewCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
+        this._restart(`Preview frame timeout`, true);
+      }
       return;
     }
+    this._noPreviewCount = 0;
     this._cvVideoCaptureBusy = true;
-    this._cvVideoCapture.read((err, im) => {
-      this._cvVideoCaptureBusy = false;
 
-      if (err || (im.width() <= 0) || (im.height() <= 0)) {
-        log.error(`Unable to fetch frame: err=${err} width=${im.width()} height=${im.height()}`);
+    // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
+    // image
+    this._cvVideoCapture.grab(errGrab => {
+      if (errGrab) {
+        log.error(`Grab failed: ${errGrab}`);
+        this._cvVideoCaptureBusy = false;
         return;
       }
+      this._cvVideoCapture.retrieve((err, im) => {
+        this._cvVideoCaptureBusy = false;
 
-      // Scaled preview
-      let imScaled = im.copy();
-      imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+        if (err || (im.width() <= 0) || (im.height() <= 0)) {
+          log.error(`Unable to fetch frame: err=${err} width=${im.width()} height=${im.height()}`);
+          return;
+        }
 
-      // RGB preview
-      let rgbImage = imScaled.copy();
-      rgbImage.cvtColor('CV_BGR2RGB');
+        // Scaled preview
+        let imScaled = im.copy();
+        imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
-      // Encode preview as JPEG to be sent to the server
-      rgbImage.toBufferAsync((err, pkt) =>{
-        let when = Date.now();
+        // Encode preview as JPEG to be sent to the server
+        imScaled.toBufferAsync((err, pkt) =>{
+          let when = Date.now();
+          // Cache preview frames
+          this._imagecache.push({when: when, orig: im, rgb: imScaled});
 
-        // Cache preview frames
-        this._imagecache.push({when: when, orig: im, default: imScaled, rgb: rgbImage});
+          // Add frames to the timeline
+          this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
+          this.timeline.addPreviewFrame(when);
 
-        // Add frames to the timeline
-        this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
-        this.timeline.addPreviewFrame(when);
-      }, {ext: '.jpg', jpegQuality: 100});
+          // Only emit the latest set of HAL-detected faces
+          // (HAL can return multiple faces per preview, but it's not helpful to show
+          //  them all on the preview)
+          if (this.faces) {
+            // Add faces only if there is motion
+            if (this._motion) {
+              if (this.faces.length > 0) {
+                log.info(`Detected face=${this.faces.length}`);
+              }
+              this.timeline.addFace(when, this.faces, 'hal');
+            }
+          }
+
+        }, {ext: '.jpg', jpegQuality: 100});
+      }, 2 /* = CV_CAP_ANDROID_COLOR_FRAME_RGB */);
     });
   }
 
@@ -439,25 +537,34 @@ class CameraStream extends EventEmitter {
       let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
 
       let pkt = buf.slice(pos + HEADER_NR_BYTES, pos + HEADER_NR_BYTES + size);
+
+      let tagInfo = `| size:${size} when:${sec}.${usec} durationMs:${durationMs}`;
       switch (tag) {
       case TAG_VIDEO:
-        log.debug(`TAG_VIDEO ${when}`);
-        this.timeline.addVideo(when, durationMs, pkt);
+        log.debug(`TAG_VIDEO ${when}`, tagInfo);
+        this._videoTagReceived = true;
+        if (this._recording) {
+          this.timeline.addVideo(when, durationMs, pkt);
+        }
         break;
       case TAG_FACES:
-        log.debug(`TAG_FACES ${when}`);
-        let faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-        this.timeline.addFace(when, faces, 'hal');
+        log.debug(`TAG_FACES ${when}`, tagInfo);
+        if (this._recording) {
+          this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+        }
         break;
       case TAG_MIC:
-        log.debug(`TAG_MIC ${when}`);
-        this.emit('mic-data', {when: when, frames: pkt});
+        log.debug(`TAG_MIC ${when}`, tagInfo);
+        this._micTagReceived = true;
+        if (this._recording) {
+          this.emit('mic-data', {when: when, frames: pkt});
+        }
         break;
       default:
         // Flush the buffer and restart the socket
         this._dataBuffer = null;
-        this._restart('Invalid capture tag');
-        throw new Error(`Invalid capture tag:${tag} size:${size} when:${sec}.${usec} durationMs:${durationMs}`);
+        this._restart('Invalid capture tag', true);
+        throw new Error(`Invalid capture tag #${tag}`, tagInfo);
       }
       pos += HEADER_NR_BYTES + size;
     }
@@ -479,9 +586,9 @@ class CameraStream extends EventEmitter {
   /**
    * Initialize camera
    */
-  async start() {
+  async init() {
     if (this._startPromiseCallbacks) {
-      throw new Error('Re-entered start?');
+      throw new Error(`Re-entered start?`);
     }
 
     let startPromise = new Promise((resolve, reject) => {
@@ -489,6 +596,20 @@ class CameraStream extends EventEmitter {
     });
     this._init();
     await startPromise;
+  }
+
+  startRecording() {
+    if (!this._recording) {
+      this._recording = true;
+      log.verbose('recording started');
+    }
+  }
+
+  stopRecording() {
+    if (this._recording) {
+      this._recording = false;
+      log.verbose('recording stopped');
+    }
   }
 
   /**
@@ -507,6 +628,42 @@ class CameraStream extends EventEmitter {
   }
 
   /**
+   * Get integer camera parameter
+   */
+  async getParameterInt(name) {
+    if (this._getParameterCallback) {
+      throw new Error(`Re-entered getParameter?`);
+    }
+    if (!this._ready) {
+      throw new Error(`camera not ready, ignoring getParameterInt command`);
+    }
+
+    let getParamPromise = new Promise((resolve, reject) => {
+      this._getParameterCallback = { resolve, reject };
+    });
+    this._command({cmdName: 'getParameterInt', name});
+    return getParamPromise;
+  }
+
+  /**
+   * Get string camera parameter
+   */
+  async getParameterStr(name) {
+    if (this._getParameterCallback) {
+      throw new Error(`Re-entered getParameter?`);
+    }
+    if (!this._ready) {
+      throw new Error(`camera not ready, ignoring getParameterStr command`);
+    }
+
+    let getParamPromise = new Promise((resolve, reject) => {
+      this._getParameterCallback = { resolve, reject };
+    });
+    this._command({cmdName: 'getParameterStr', name});
+    return await getParamPromise;
+  }
+
+  /**
    *
    */
   get previewSize() {
@@ -518,9 +675,8 @@ class CameraStream extends EventEmitter {
    *    userCb   - the callback that receives an error object, scaled image
    *               as an OpenCV matrix and the original image
    *    when     - timestamp of the frame to get
-   *    channel  - 0 (default) for color     (CV_CAP_ANDROID_COLOR_FRAME_BGR)
+   *    channel  - 0 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)
-   *               2 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    */
   getPreviewFrame(userCb, when, channel = 0) {
     this._queue.push([userCb, when, channel]); // Enqueue the frame request

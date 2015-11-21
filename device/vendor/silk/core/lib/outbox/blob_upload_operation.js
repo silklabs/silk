@@ -28,18 +28,17 @@ export class BlobUploadOperation extends StreamOperation {
   }
 
   async _getDestination() {
-    let putUrl = await api.blob.getPutUrl(
+    let {putUrl, putHeaders} = await api.blobPublisher.putUrl(
       this.constructor.META_TYPE,
-      this.size,
-      this.constructor.CONTENT_TYPE,
+      {
+        contentLength: this.size,
+        contentType: this.constructor.CONTENT_TYPE
+      }
     );
 
     let writer = httpStream(putUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Length': this.size,
-        'Content-Type': this.constructor.CONTENT_TYPE,
-      }
+      headers: putHeaders
     });
 
     writer.putUrl = putUrl;
@@ -58,8 +57,8 @@ export class BlobUploadOperation extends StreamOperation {
 
     let { putUrl } = this.destination;
     try {
-      let url = await api.blob.ack(putUrl);
-      await api.timeMeta.create(Object.assign(
+      let { url } = await api.blobPublisher.ack({ url: putUrl });
+      await api.metadataPublisher.create(Object.assign(
         {},
         this.metadata,
         { url }

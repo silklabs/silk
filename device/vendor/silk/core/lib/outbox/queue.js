@@ -8,6 +8,7 @@
 
 import assert from 'assert';
 import fs from 'mz/fs';
+import { statSync } from 'fs';
 import path from 'path';
 import createLog from '../log';
 
@@ -16,7 +17,8 @@ import Operation from './operation';
 
 const log = createLog('outbox:queue');
 
-const MAX_BACKOFF = (1000 * 60) * 60; // 1 hour
+const MAX_BACKOFF_MS = (1000 * 60) * 60; // 1 hour
+
 
 async function wrapNoEntity(promise, value = null) {
   try {
@@ -69,8 +71,15 @@ export default class Queue extends EventEmitter {
 
   // How long to wait between checks to do more operations (in ms)
   backoffInterval = 0;
+
   // Maximum number of allowed concurrent operations in the queue.
-  concurrency = 2;
+  // (disk and live)
+  concurrency = 3;
+
+  // Maximum number of allowed diskQueue concurrent operations in the queue.
+  // (should always be < than concurrency)
+  diskConcurrency = 2;
+
   // Number of running operations in the queue (should always be < than
   // concurrency)
   running = 0;
@@ -103,22 +112,23 @@ export default class Queue extends EventEmitter {
     // Sort numerically.
     paths.sort((a, b) => a - b);
 
-    let stats = await Promise.all(paths.map(async (directoryPath) => {
-      let absPath = path.join(storagePath, directoryPath);
-      return fs.stat(absPath);
-    }));
 
-    return stats.reduce((result, value, idx) => {
-      // Skip over anything that is not a directory it is certainly not what we
-      // are looking for.
-      if (!value.isDirectory()) {
-        let absPath = path.join(storagePath, paths[idx]);
+    // The outbox needs to be fully enumerated before continuing so heads down
+    // and let's make this as quick as possible.
+    let items = [];
+    log.verbose(`statSyncing ${paths.length} entries`);
+    paths.forEach((directoryPath) => {
+      const absPath = path.join(storagePath, directoryPath);
+      const value = statSync(absPath);
+
+      if (value.isDirectory()) {
+        items.push(parseInt(directoryPath, 10));
+      } else {
         log.warn(`Skipping over path which is not a directory: ${absPath}`);
-        return result;
       }
-      result.push(parseInt(paths[idx], 10));
-      return result;
-    }, []);
+    });
+    log.verbose(`statSync-ing complete`);
+    return items;
   }
 
   constructor(options) {
@@ -126,6 +136,9 @@ export default class Queue extends EventEmitter {
     Object.assign(this, options);
 
     assert.ok(this.concurrency && this.concurrency > 0);
+    assert.ok(this.diskConcurrency && this.diskConcurrency <= this.concurrency);
+    assert.ok(this.maxRetries && this.maxRetries > 0);
+    assert.ok(this.maxEntries && this.maxEntries > 0);
     assert.ok(this.storagePath);
 
     /**
@@ -158,11 +171,6 @@ export default class Queue extends EventEmitter {
       });
     }
 
-    /**
-     * Live operations are given higher priority then pending ones so while we
-     * increment the `.running` counter here we only throttle pending
-     * operations.
-     */
     this.running += 1;
 
     let cleanup = promise => {
@@ -195,9 +203,17 @@ export default class Queue extends EventEmitter {
       `);
     }
 
-    // No reason to attempt a write call on the operation if we are offline.
+    let saveToDisk = false;
     if (!this.online) {
-      log.info('Operation while offline saving to disk....');
+      log.info('Operation while offline, saving to disk');
+      saveToDisk = true;
+    } else if (this.running >= this.concurrency) {
+      log.info(`${this.name} too many concurrent operations ` +
+               `(${this.running}/${this.concurrency}), saving to disk`);
+      saveToDisk = true;
+    }
+
+    if (saveToDisk) {
       await this._appendToDisk(operation, readable);
       return;
     }
@@ -215,33 +231,56 @@ export default class Queue extends EventEmitter {
     }
 
     this.emit('failed operation', operation);
-    log.warn(`Error while running operation`, result.error);
+
+    if (Number.isInteger(result.error.code) &&
+        result.error.code >= /*HTTP status code*/ 400 &&
+        result.error.code != /*HTTP status code*/ 500) {
+      // Pretty clear signal that the server told us to go away
+      log.warn(`Error ${result.error.code} while adding ${this.name} operation, DELETING`, result.error);
+      return;
+    }
+    log.warn(`Error while running ${this.name} operation, saving to disk:`, result.error);
     await this._appendToDisk(operation, result.remainder);
   }
 
   async _appendToDisk(operation, readable) {
+
+    while (this.diskQueue.length >= this.maxEntries) {
+      let handle = { running: true };
+      // Look for the oldest item in the queue and delete it. Operations are
+      // removed sequentially since each removal is async, so the queue itself
+      // could change while running this (async) while loop
+      for (let id of this.diskQueue) {
+        handle = this.diskQueueState.get(id);
+        if (!handle.running) {
+          break;
+        }
+      }
+      if (!handle.running) {
+        log.warn(`${this.name} disk queue is full, DELETING ${handle.path}`);
+        this.removeFromDiskQueue(handle);
+      }
+    }
+
+
     let handle = this.createDiskQueueId();
     // Mark the handle as running to ensure we do not race against ourselves
     // when writing out the files to disk!
     handle.running = true;
 
-    log.verbose(
-      `Saving operation to disk (${handle.path})`,
-      operation.getMetadata()
-    );
+    log.verbose(`Saving operation to disk: ${handle.path}`);
 
     try {
       await operation.saveToDisk(readable, handle.path);
       this.emit('saved operation', handle);
     } catch (err) {
       log.error(`
-        Failed to save operation to disk (${handle.path}):
+        Failed to save ${this.name} operation to disk (${handle.path}):
 
         ${err.stack}
       `);
-      await operation.constructor.removeFromDisk(handle.path);
       try {
-        this.removeFromDiskQueue(handle.id);
+        this.removeFromDiskQueue(handle);
       } catch(errRemoveDisk) {
         log.error(`
           Unexpected error removing files from disk
@@ -276,14 +315,17 @@ export default class Queue extends EventEmitter {
     return handle;
   }
 
-  removeFromDiskQueue(id) {
-    let idx = this.diskQueue.indexOf(id);
-    let handle = this.diskQueueState.get(id);
+  async removeFromDiskQueue(handle) {
+    // Remove from diskQueue before physically removing from disk, to avoid the
+    // operation from getting scheduled to run while it's being removed from
+    // disk.
+    let idx = this.diskQueue.indexOf(handle.id);
     if (idx !== -1) {
       this.diskQueue.splice(idx, 1);
-      this.diskQueueState.delete(id);
-      this.emit('removed operation', handle);
+      this.diskQueueState.delete(handle.id);
     }
+    await Operation.removeFromDisk(handle.path);
+    this.emit('removed operation', handle);
   }
 
   start(interval) {
@@ -303,9 +345,28 @@ export default class Queue extends EventEmitter {
     this.workDiskQueue();
   }
 
-  workDiskQueue() {
-    let now = Date.now();
-    for (let id of this.diskQueue) {
+  workDiskQueue(chatty = false) {
+    const uptime = process.uptime();
+
+    // Work the disk queue backwards so that newer operations are preferred
+    // over older operations.  This has the benefit of working at the "same end
+    // of the queue" as live operations. For example when the network can't
+    // keep up and the disk queue grows the set of operations that can't be
+    // uploaded are more likely to be collected into larger blobs of darkness.
+    // This is analogous to turning the lights off for 5mins versus toggling the
+    // lights on/off every second for 10 minutes.
+    for (let idx = this.diskQueue.length - 1; idx >= 0; --idx) {
+      if (this.running >= this.diskConcurrency) {
+        if (chatty) {
+          log.verbose(`${this.name} reached max running disk operations, max:` +
+            `${this.diskConcurrency} running:${this.running} ` +
+            `diskqueue:${this.diskQueue.length}`
+          );
+        }
+        break;
+      }
+
+      const id = this.diskQueue[idx];
       let handle = this.diskQueueState.get(id);
 
       // Skip over anything that is currently running...
@@ -314,22 +375,12 @@ export default class Queue extends EventEmitter {
       }
 
       // Skip over anything that is not ready to be retried...
-      if (handle.delay && handle.delay > now) {
-        log.info(
-          `${handle.path} will be retried in`,
-          handle.delay - now
-        );
+      if (handle.delay && handle.delay > uptime) {
+        log.debug(`${handle.path} retry in ${handle.delay - uptime}s`);
         continue;
       }
 
-      if (this.running >= this.concurrency) {
-        log.info(
-          `Reached maximum number of running operations max: ${this.concurrency} running: ${this.running}`
-        );
-        break;
-      }
-
-      this.running += 1;
+      ++this.running;
       handle.running = true;
       handle.promise = async () => {
         try {
@@ -338,13 +389,22 @@ export default class Queue extends EventEmitter {
           log.error('Error working queue', err.stack);
         }
         handle.running = false;
-        this.running -= 1;
+        --this.running;
+
+        // Try to schedule more work
+        if (this.diskCheckRunning) {
+          this.workDiskQueue();
+        }
       }();
     }
 
-    if (this.diskCheckRunning) {
+    // Periodic timer to catch retries and new additions to the work queue
+    if (this.diskCheckRunning && !this.diskCheckHandle) {
       this.diskCheckHandle = setTimeout(
-        () => this.workDiskQueue(),
+        () => {
+          this.diskCheckHandle = null;
+          this.workDiskQueue(/* chatty = */ true);
+        },
         this.backoffInterval
       );
     }
@@ -358,9 +418,9 @@ export default class Queue extends EventEmitter {
   }
 
   stop() {
-    clearInterval(this.diskCheckHandle);
-    this.diskCheckRunning = false;
+    clearTimeout(this.diskCheckHandle);
     this.diskCheckHandle = null;
+    this.diskCheckRunning = false;
     log.info(`Stopped checking for pending operations...`, {
       online: this.online
     });
@@ -406,8 +466,7 @@ export default class Queue extends EventEmitter {
         Metadata is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-      await Operation.removeFromDisk(handle.path);
-      this.removeFromDiskQueue(handle.id);
+      this.removeFromDiskQueue(handle);
       return;
     }
 
@@ -416,8 +475,7 @@ export default class Queue extends EventEmitter {
       metadata = JSON.parse(metadata);
     } catch (err) {
       log.error(`Invalid metadata in operation... Purging operation directory`);
-      await Operation.removeFromDisk(handle.path);
-      this.removeFromDiskQueue(handle.id);
+      this.removeFromDiskQueue(handle);
       return;
     }
 
@@ -428,8 +486,7 @@ export default class Queue extends EventEmitter {
         Blob is missing from: ${handle.path}
         Cleaning up operation directory...
       `);
-      await Operation.removeFromDisk(handle.path);
-      this.removeFromDiskQueue(handle.id);
+      this.removeFromDiskQueue(handle);
       return;
     }
 
@@ -448,8 +505,7 @@ export default class Queue extends EventEmitter {
 
     if (result.done) {
       log.info(`Successfully finished operation ${handle.path}`);
-      await Operation.removeFromDisk(handle.path);
-      this.removeFromDiskQueue(handle.id);
+      this.removeFromDiskQueue(handle);
       this.emit('finished operation', operation);
     } else {
       this.emit('failed operation', operation);
@@ -459,18 +515,28 @@ export default class Queue extends EventEmitter {
         result.remainder.destroy();
       }
 
-      // Configure the retry delay for this item in the queue...
-      handle.retries = handle.retries || 0;
-      let retryDelay =
-        Math.min(MAX_BACKOFF, this.backoffInterval * handle.retries);
+      if (Number.isInteger(result.error.code) &&
+          result.error.code >= /*HTTP status code*/ 400 &&
+          result.error.code != /*HTTP status code*/ 500) {
+        // Pretty clear signal that the server told us to go away
+        log.warn(`Server rejected ${this.name} with ${result.error.code}, DELETING`, handle.path);
+      } else {
+        // Configure the retry delay for this item in the queue...
+        handle.retries = handle.retries || 0;
+        let retryDelayMs  =
+          Math.min(MAX_BACKOFF_MS, this.backoffInterval * handle.retries);
 
-      handle.retries++;
-      handle.delay = Date.now() + retryDelay;
-
-      log.info(`Failed during retry will try again later`, {
-        handle,
-        retryIn: retryDelay
-      });
+        handle.retries++;
+        handle.delay = process.uptime() + retryDelayMs / 1000;
+        if (handle.retries < this.maxRetries) {
+          log.info(`Failed ${this.name} ${handle.retries} times, retry in ${retryDelayMs}ms:`, handle.path);
+          return;
+        }
+        log.warn(`Failed ${this.name} ${this.maxRetries} times, DELETING`, handle.path);
+        this.emit('giveup operation', operation);
+      }
+      this.removeFromDiskQueue(handle);
+      await Operation.removeFromDisk(handle.path);
     }
   }
 }

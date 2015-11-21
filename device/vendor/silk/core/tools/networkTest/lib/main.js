@@ -13,6 +13,8 @@ import network from './network';
 import config from './args';
 import url from 'url';
 import Table from 'easy-table';
+import api from './api';
+import createApi from 'silk-api';
 
 const log = createLog('main');
 
@@ -66,10 +68,10 @@ function printSummary() {
     table.newRow();
   });
 
-  console.log();
-  console.log('Results (in ms):');
-  console.log();
-  console.log(table.toString());
+  console.log(); // eslint-disable-line no-console
+  console.log('Results (in ms):'); // eslint-disable-line no-console
+  console.log(); // eslint-disable-line no-console
+  console.log(table.toString()); // eslint-disable-line no-console
 }
 
 /**
@@ -84,8 +86,8 @@ function runNetworkTests() {
   }
 }
 
-function runServerTests() {
-  let serverTester = new ServerTester();
+function runServerTests(accessToken) {
+  let serverTester = new ServerTester(accessToken);
   let testChain = Promise.resolve();
 
   for (let test in serverTests) {
@@ -115,7 +117,40 @@ if (maxDuration) {
   }, maxDuration * 1000);
 }
 
-runNetworkTests()
-.then(() => runServerTests())
-.then(() => process.exit(0))
-.catch(util.processthrow);
+async function setupDevice() {
+  api.accessToken = api.id.create();
+
+  let accessToken = new api.id(
+    api.devAccount.publicKey,
+    api.devAccount.privateKey,
+  );
+
+  // API as the developer account...
+  let accountApi = createApi();
+  accountApi.accessToken = accessToken;
+
+  // register the device...
+  let token = accountApi.accessToken.sign(api.accessToken.toString());
+  await accountApi.account.registerDevice({
+    devicePublicKey: api.accessToken.toString(),
+    name: 'testing',
+    type: 'camera',
+    registrationToken: token
+  });
+
+  await api.device.completeRegistration({
+    registrarPublicKey: accountApi.accessToken.toString(),
+    registrationToken: token
+  });
+
+  return api.accessToken;
+}
+
+async function main() {
+  let accessToken = await setupDevice();
+  await runNetworkTests();
+  await runServerTests(accessToken);
+  process.exit(0);
+}
+
+main().catch(util.processthrow);

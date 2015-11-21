@@ -93,7 +93,10 @@ function createRequestPromise(options) {
   let promise = new Promise((resolve, reject) => {
     let req = request.get(options);
     req.on('error', (err) => {
-      reject(err);
+      // DNS errors due to the device being offline show up here.  No big deal,
+      // the retry mechanism will kick in
+      log.warn(`request.get() error: ${err}`);
+      reject();
       req.abort();
     })
     .on('response', (response) => {
@@ -110,7 +113,8 @@ function createRequestPromise(options) {
           try {
             body = JSON.parse(body);
           } catch(e) {
-            reject(`Invalid server response: ${e.stack}`);
+            log.error(`Invalid server response: ${e.stack}`);
+            reject();
             return;
           }
         }
@@ -555,7 +559,7 @@ function cleanup(err) {
     if (err.stack) {
       util.processthrow(err);
     }
-    log.warn(`Update poll error: ${err}`);
+    log.error(`Update poll error: ${err}`);
   }
 
   if (startedDownload) {

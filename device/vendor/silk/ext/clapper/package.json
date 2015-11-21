@@ -2,7 +2,7 @@
   "name": "clapper",
   "version": "0.0.1",
   "description": "Clap sample extension",
-  "main": "index.js",
+  "main": "clapper.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "install": "./build"

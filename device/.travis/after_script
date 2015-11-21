@@ -7,4 +7,4 @@ du -hs * .repo
 du -hs .
 
 # Deploy our per build artifacts...
-silk-artifacts silk-travis-artifacts $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR
+silk-artifacts $ARTIFACT_BUCKET $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR

@@ -16,7 +16,7 @@
   <project name="nodejs/node"
            path="external/node"
            remote="github"
-           revision="refs/tags/v4.1.2" clone-depth="1"/>
+           revision="refs/tags/v4.2.2" clone-depth="1"/>
   <project name="npm/npm"
            path="external/npm"
            remote="github"
@@ -61,15 +61,10 @@
            revision="c9c4d65c2cf9c3dff1612ff80dc542a270bbdb4a"
            upstream="master"
            clone-depth="1"/>
-  <project name="silklabs/is-online"
-           path="vendor/silk/core/local_node_modules/is-online"
-           remote="github"
-           revision="4611159f23b78f6080f60dc84873e9034a5a62aa"
-           upstream="master"/>
   <project name="peterbraden/node-opencv"
            path="external/node-opencv"
            remote="github"
-           revision="90971d3ac8f329843f0c198872e48138334eece5"
+           revision="58093bdcfc4c02655f7267f024e0128b5e8979ec"
            upstream="master"
            clone-depth="42"/>
   <project name="silklabs/node-kissfft"

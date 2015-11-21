@@ -54,6 +54,11 @@ class DeviceConfig extends EventEmitter {
   _config = null;
   _serverConnected = false;
 
+  async _writeConfig(config) {
+    fs.writeFile(CONFIG_PATH, JSON.stringify(config));
+    log.info('Updated config file', CONFIG_PATH, config);
+  }
+
   /**
    * Persist the configuration after the device has completed registration.
    */
@@ -65,9 +70,7 @@ class DeviceConfig extends EventEmitter {
       ...response,
     };
 
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(config));
-    log.info('Updated config file', CONFIG_PATH, config);
-
+    await this._writeConfig(config);
     this._config = config;
   }
 
@@ -433,6 +436,14 @@ class DeviceConfig extends EventEmitter {
       this._unconfigureBTLE(),
       this._unconfigureNetwork()
     ]);
+  }
+
+  /**
+   * Clear the server URL received from the app during device configuration.
+   */
+  async forceDefaultServerUrl() {
+    this._config.serverUrl = undefined;
+    await this._writeConfig(this._config);
   }
 }
 

@@ -20,8 +20,6 @@ const log = createLog('timeline');
 const VIDEO_UPLOAD_PROP = 'persist.silk.vidupload.enabled';
 const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP);
 
-const PREVIEW_UPLOAD_PROP = 'persist.silk.prvupload.enabled';
-const PREVIEW_UPLOAD_ENABLED = util.getboolprop(PREVIEW_UPLOAD_PROP);
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
 
@@ -340,7 +338,7 @@ export default class Timeline extends EventEmitter {
                        this.previewObjects, 'jpeg');
     }
 
-    if (PREVIEW_UPLOAD_ENABLED &&
+    if (VIDEO_UPLOAD_ENABLED &&
         this.lastPreviewFrame &&
         Date.now() - this.lastPreviewUploadWhenMs > PREVIEW_UPLOAD_INTERVAL_MS) {
       const op = new PreviewUploadOp({

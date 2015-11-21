@@ -48,7 +48,6 @@ initProfiler();
 const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
 const name = util.getprop('persist.silk.displayName', 'Silkcam');
-const logoFilePath = '/system/silk/media/logo.png';
 
 let id = null;
 let btle = null;
@@ -175,21 +174,20 @@ main().catch(err => {
 /**
  * Read vendor specific logo
  */
-function readLogo() {
+async function readLogo() {
   if (logo) {
-    return Promise.resolve();
+    return;
   }
-
-  return fs.readFile(logoFilePath)
-  .then(data => {
-    logo = data;
-    return Promise.resolve();
-  })
-  .catch(err => {
-    log.warn(`No vendor logo available at ${logoFilePath} err: ${err}`);
-    logo = [];
-    return Promise.resolve();
-  });
+  for (const root of ['/data', '/system']) {
+    const logoFile = root + '/silk/media/logo.png';
+    try {
+      logo = await fs.readFile(logoFile);
+      return; // Return once the first logo is successfully read
+    } catch (err) {
+      log.verbose(`No logo at ${logoFile}: ${err}`);
+    }
+  }
+  logo = [];
 }
 
 function emitDeviceInfo() {

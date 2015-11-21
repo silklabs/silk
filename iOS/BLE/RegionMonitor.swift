@@ -67,8 +67,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
       for beaconUuid in beaconUuids {
         let identifier = beaconUuid.UUIDString
-        log.info("Starting to monitor region '\(identifier)'")
-
         let region =
           CLBeaconRegion(proximityUUID: beaconUuid, identifier: identifier)
         self.regions[identifier] = RegionInfo(uuid: beaconUuid, region: region)

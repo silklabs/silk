@@ -7,18 +7,13 @@ private let log = DebugLog.create("silk-app")
 @UIApplicationMain
 class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
-  let regionMonitor: RegionMonitor
-  let bleSocketPeripheral: BLESocketPeripheral
+  var regionMonitor: RegionMonitor?
+  var bleSocketPeripheral: BLESocketPeripheral?
   var window: UIWindow?
   var inForeground: Bool = false
 
   override init() {
-    self.regionMonitor = RegionMonitor()
-    self.bleSocketPeripheral = BLESocketPeripheral()
-    
     super.init()
-    
-    self.regionMonitor.delegate = self
   }
 
   func loadConfig() -> Config {
@@ -44,7 +39,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     DebugLog.enable(config.debug)
     log.info("Logging level %@", config.debug)
 
-    self.regionMonitor.start()
+    // Make sure we wait until DebugLog is set up before we load any code that
+    // uses it.
+
+    self.regionMonitor = RegionMonitor(delegate: self)
+    self.regionMonitor!.start()
 
     var reactViewURL: NSURL
     let reactNativeType = config.reactNative.type
@@ -59,6 +58,10 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     }
 
     let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", initialProperties: nil, launchOptions: launchOptions)
+
+    // This must not be created until *after* ReactNative has loaded all its
+    // modules during the |RCTRootView| initializer.
+    self.bleSocketPeripheral = BLESocketPeripheral()
 
     // At least for now we don't implement our own specific controller...
     let rootViewController = ViewController()
@@ -78,14 +81,14 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
   func applicationDidBecomeActive(application: UIApplication) {
     if !self.inForeground {
       self.inForeground = true
-      self.bleSocketPeripheral.setForeground()
+      self.bleSocketPeripheral?.setForeground()
     }
   }
 
   func applicationDidEnterBackground(application: UIApplication) {
     if self.inForeground {
       self.inForeground = false
-      self.bleSocketPeripheral.setBackground()
+      self.bleSocketPeripheral?.setBackground()
     }
   }
 
@@ -106,25 +109,25 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
   }
 
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
-    assert(regionMonitor === self.regionMonitor)
-    self.bleSocketPeripheral.addServiceUuid(uuid)
+    assert(regionMonitor === self.regionMonitor!)
+    self.bleSocketPeripheral?.addServiceUuid(uuid)
   }
 
   func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID) {
-    assert(regionMonitor === self.regionMonitor)
-    self.bleSocketPeripheral.removeServiceUuid(uuid)
+    assert(regionMonitor === self.regionMonitor!)
+    self.bleSocketPeripheral?.removeServiceUuid(uuid)
   }
 
   func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID) {
-    assert(regionMonitor === self.regionMonitor)
+    assert(regionMonitor === self.regionMonitor!)
     if uuid == RegionMonitor.configBeaconUuid {
       notifyUser("An unconfigured SilkCam is nearby.")
     }
-    self.bleSocketPeripheral.startAdvertisingServiceUuid(uuid)
+    self.bleSocketPeripheral?.startAdvertisingServiceUuid(uuid)
   }
 
   func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID) {
-    assert(regionMonitor === self.regionMonitor)
-    self.bleSocketPeripheral.stopAdvertisingServiceUuid(uuid)
+    assert(regionMonitor === self.regionMonitor!)
+    self.bleSocketPeripheral?.stopAdvertisingServiceUuid(uuid)
   }
 }

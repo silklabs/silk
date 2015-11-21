@@ -32,17 +32,19 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
   }
 
   private let locationManager: CLLocationManager?
-  private var regions: [String: RegionInfo] = [:]
   private var monitoringEnabled: Bool = false
+  private var regions: [String: RegionInfo] = [:]
   private var monitoring: Bool = false
 
-  var delegate: RegionMonitorDelegate?
+  let delegate: RegionMonitorDelegate
 
-  override init() {
+  init(delegate: RegionMonitorDelegate) {
     log.debug("RegionMonitor()")
 
     assert(RegionMonitor.instance === nil,
            "RegionMonitor can't handle more than one instance!")
+
+    self.delegate = delegate
 
     if CLLocationManager.isMonitoringAvailableForClass(CLBeaconRegion) {
       self.locationManager = CLLocationManager()
@@ -118,7 +120,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       // whether we are currently in the region or not.
       locationManager.requestStateForRegion(regionInfo.region)
 
-      self.delegate?.regionAdded(self, uuid: regionInfo.uuid)
+      self.delegate.regionAdded(self, uuid: regionInfo.uuid)
     }
   }
 
@@ -174,7 +176,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       self.locationManager!.startMonitoringForRegion(region)
       self.locationManager!.requestStateForRegion(region)
 
-      self.delegate?.regionAdded(self, uuid: beaconUuid)
+      self.delegate.regionAdded(self, uuid: beaconUuid)
     }
   }
 
@@ -219,7 +221,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       log.info("Stopped monitoring region '\(identifier)'")
       self.locationManager!.stopMonitoringForRegion(regionInfo.region)
 
-      self.delegate?.regionRemoved(self, uuid: beaconUuid)
+      self.delegate.regionRemoved(self, uuid: beaconUuid)
     }
   }
 
@@ -254,10 +256,8 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       userDefaults.removeObjectForKey(RegionMonitor.beaconUuidsKey)
 
       if self.monitoring {
-        if let delegate = self.delegate {
-          for uuid in removedUuids {
-            delegate.regionRemoved(self, uuid: uuid)
-          }
+        for uuid in removedUuids {
+          self.delegate.regionRemoved(self, uuid: uuid)
         }
       }
     }
@@ -268,7 +268,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager!)
     if status == .AuthorizedAlways {
       log.debug("User granted 'always' location permission")
-      if self.monitoringEnabled && !self.monitoring {
+      if !self.monitoring {
         self.startMonitoringAllRegions()
       }
     } else {
@@ -300,11 +300,11 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
         if state == .Inside {
           regionInfo.state = state
           regionInfo.sentFirstNotification = true
-          self.delegate?.regionEntered(self, uuid: regionInfo.uuid)
+          self.delegate.regionEntered(self, uuid: regionInfo.uuid)
         } else if state == .Outside {
           regionInfo.state = state
           regionInfo.sentFirstNotification = true
-          self.delegate?.regionExited(self, uuid: regionInfo.uuid)
+          self.delegate.regionExited(self, uuid: regionInfo.uuid)
         }
       }
     }
@@ -321,7 +321,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       if regionInfo.state != .Inside {
         regionInfo.state = .Inside
         regionInfo.sentFirstNotification = true
-        self.delegate?.regionEntered(self, uuid: regionInfo.uuid)
+        self.delegate.regionEntered(self, uuid: regionInfo.uuid)
       }
     }
   }
@@ -337,7 +337,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       if regionInfo.state != .Outside {
         regionInfo.state = .Outside
         regionInfo.sentFirstNotification = true
-        self.delegate?.regionExited(self, uuid: regionInfo.uuid)
+        self.delegate.regionExited(self, uuid: regionInfo.uuid)
       }
     }
   }

@@ -195,7 +195,7 @@ echo Set device time zone to match host: $HOST_TZ
 adb shell setprop persist.sys.timezone $HOST_TZ
 
 echo Set device time to match host: $(date)
-adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+adb shell time_genoff $(shell date +%s)000
 
 echo Rebooting...
 adb reboot
@@ -247,7 +247,7 @@ echo Set device time zone to match host: $HOST_TZ
 echo persist.sys.timezone="${HOST_TZ}" >> default.prop
 
 echo Set device time to match host: $(date)
-adb shell "toolbox date $(date +%s) || toolbox date -s $(date +%Y%m%d.%H%M%S)"
+adb shell time_genoff $(shell date +%s)000
 
 echo Disable vibration
 echo persist.silk.quiet=true >> default.prop

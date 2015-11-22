@@ -1026,7 +1026,7 @@ static int settime_alarm_tm(struct tm *tm) {
     return settime_alarm(&ts);
 }
 
-static int settime_alarm_timeval(struct timeval *tv) {
+int settime_alarm_timeval(struct timeval *tv) {
     struct timespec ts;
 
     ts.tv_sec = tv->tv_sec;
@@ -1067,7 +1067,7 @@ done:
     return ret;
 }
 
-static int settime_rtc_timeval(struct timeval *tv) {
+int settime_rtc_timeval(struct timeval *tv) {
     struct tm tm, *err;
     time_t t = tv->tv_sec;
 

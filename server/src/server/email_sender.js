@@ -1,3 +1,4 @@
+/* @flow */
 import { SES } from 'aws-sdk-promise';
 import { readdirSync } from 'fs';
 import path from 'path';
@@ -26,9 +27,11 @@ const SEND_INPUT = Joi.object().keys({
 
 export default class EmailSender {
   // Cache of all the templates loaded...
-  _templates = {}
+  _templates: any = {};
+  sourceEmail: string;
+  ses: any;
 
-  constructor(config) {
+  constructor(config: any) {
     // Who is on the "from" label in emails...
     this.sourceEmail = config.emails.sender;
     this.ses = new SES({
@@ -45,7 +48,7 @@ export default class EmailSender {
    * @param {Object} context to use in template.
    * @param {Array} types of email templates to load.
    */
-  renderTemplate(name, context = {}, types = ['html', 'txt']) {
+  renderTemplate(name: string, context: any = {}, types: Array<string> = ['html', 'txt']): any {
     if (!ALLOWED_TEMPLATES.has(name)) {
       throw new Error(`Attempted to use invalid email template: ${name}`);
     }
@@ -72,7 +75,7 @@ export default class EmailSender {
    *
    * @param {Object} options for email to be sent.
    */
-  async send(options) {
+  async send(options: any): any {
     Joi.assert(options, SEND_INPUT);
     let send = this.ses.sendEmail({
       // Note: we pay per destination so more destinations here does not make

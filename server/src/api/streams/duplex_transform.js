@@ -24,10 +24,20 @@ export class DuplexTransform extends Duplex {
   __ended = false;
   __finished = false;
 
-  constructor(readable, writable, readTransform, writeTransform, options) {
+  __autoClose = false;
+
+  constructor(readable,
+              writable,
+              readTransform,
+              writeTransform,
+              options = { }) {
     log.debug(`DuplexTransform()`);
 
     super(options);
+
+    if (`autoClose` in options) {
+      this.__autoClose = options.autoClose;
+    }
 
     this.__readable = readable;
     this.__readable.addListener(`error`, this.__onReadError);
@@ -93,7 +103,7 @@ export class DuplexTransform extends Duplex {
     this.__readable = null;
     this.__readTransform = null;
 
-    if (this.__finished) {
+    if (this.__autoClose && this.__finished) {
       this.emit(`close`);
     }
   };
@@ -113,7 +123,7 @@ export class DuplexTransform extends Duplex {
       this.__writable = null;
       this.__writeTransform = null;
 
-      if (this.__ended) {
+      if (this.__autoClose && this.__ended) {
         this.emit(`close`);
       }
     });

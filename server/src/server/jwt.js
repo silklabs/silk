@@ -1,8 +1,16 @@
+/* @flow */
+
 import jwa from '../api/jwa';
 import jwt from 'jsonwebtoken';
 import * as Joi from 'joi';
+import createLog from 'log';
 
-let log = require('log')('routes:jwt');
+import type Nonce from './models/nonce';
+import type { RouteNextFn, MiddlewareFn } from './express_types';
+
+export type PublicKeyProvider = ((publicKey: string, req: any) => Promise<?string>);
+
+const log = createLog('routes:jwt');
 
 /**
  * The "lifetime" of a token this value must be plus or minus within this amount
@@ -51,9 +59,9 @@ function validateClaim(jwt) {
  * @param {Object} nonce database.
  * @param {Function} method to invoke to fetch public key.
  */
-export default function (nonce, method) {
+export default function (nonce: Nonce, method: PublicKeyProvider): MiddlewareFn {
 
-  async function handle(req, res, next) {
+  async function handle(req: any, res: any, next: RouteNextFn) {
     // Authorization header is required.
     let { authorization } = req.headers;
     if (!authorization) {
@@ -152,7 +160,7 @@ export default function (nonce, method) {
     next();
   }
 
-  return function (req, res, next) {
+  return function (req: any, res: any, next: RouteNextFn) {
     handle(req, res, next).catch(next);
   };
 }

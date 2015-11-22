@@ -1,3 +1,4 @@
+/* @flow */
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
@@ -5,6 +6,7 @@ import cors from 'cors';
 import createDb from './db';
 import eventToPromise from 'event-to-promise';
 import createS3Blob from './blobs/s3';
+import createAliyunBlob from './blobs/aliyun';
 import createFileBlob from './blobs/file';
 import url from 'url';
 import jsonParser from './json';
@@ -17,7 +19,20 @@ import Devices from './models/devices';
 import Nonce from './models/nonce';
 import EmailSender from './email_sender';
 
-export default async function main (config) {
+export type RouteContext = {
+  app: any;
+  nonce: Nonce;
+  accounts: Accounts;
+  devices: Devices;
+  emailSender: EmailSender;
+  crashMeta: CrashMetadata;
+  timeMeta: TimeMetadata,
+  config: any; // TODO
+  blobs: any; // TODO
+  blobHandler: any; // TODO
+};
+
+export default async function main (config: any): any {
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);
@@ -54,9 +69,26 @@ export default async function main (config) {
   // TODO: Explicitly use middleware in prefixed paths.
   app.use(jsonParser);
 
+  let blobs = {
+    aliyun: null,
+    s3: null,
+    file: await createFileBlob(config)
+  };
+
+  if (config.server.blobType === 's3') {
+    blobs.s3 = await createS3Blob(config);
+  } else if (config.server.blobType === 'aliyun') {
+    blobs.aliyun = await createAliyunBlob(config);
+  }
+
+  const blobHandler = blobs[config.server.blobType];
+  if (!blobHandler) {
+    throw new Error(`Unknown blob handler type: ${config.server.blobType}`);
+  }
+
   let db = await createDb(config);
-  let crashMeta = new CrashMetadata(db);
-  let timeMeta = new TimeMetadata(db);
+  let crashMeta = new CrashMetadata(db, blobHandler);
+  let timeMeta = new TimeMetadata(db, blobHandler);
   let nonce = new Nonce(db);
   let accounts = new Accounts(db);
   let devices = new Devices(db);
@@ -72,15 +104,8 @@ export default async function main (config) {
   await accounts.ensureDevAccount(devAccount);
 
   let emailSender = new EmailSender(config);
-  let blobs = {
-    file: await createFileBlob(config)
-  };
 
-  if (config.server.blobType === 's3') {
-    blobs.s3 = await createS3Blob(config);
-  }
-
-  const context = {
+  const context: RouteContext  = {
     app,
     nonce,
     accounts,
@@ -89,7 +114,8 @@ export default async function main (config) {
     crashMeta,
     timeMeta,
     config,
-    blobs
+    blobs,
+    blobHandler,
   };
 
   // Install the routes.
@@ -108,7 +134,7 @@ export default async function main (config) {
 
     // Configure socket.io public url for local development.
     if (!config.socketio.publicUrl) {
-      let basePublicUrl = url.parse(config.server.publicUrl);
+      let basePublicUrl: any = url.parse(config.server.publicUrl);
       basePublicUrl.port = config.socketio.port;
       // Delete host so port override will be used.
       delete basePublicUrl.host;

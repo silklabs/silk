@@ -1,0 +1,17 @@
+[ignore]
+.*/build/.*
+.*/test/rntest/.*
+.*/node_modules/api-schema/.*
+.*/node_modules/aws-sdk-promise/.*
+
+[include]
+
+[libs]
+interface
+
+[options]
+esproposal.class_instance_fields=ignore
+esproposal.class_static_fields=ignore
+
+[version]
+0.18.1

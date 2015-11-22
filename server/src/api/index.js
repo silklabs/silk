@@ -5,6 +5,10 @@ import loadConfig from './config';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
+import BlobPublisher from './gen/blob_publisher';
+import CrashPublisher from './gen/crash_publisher';
+import MetadataPublisher from './gen/metadata_publisher';
+import Metadata from './gen/metadata';
 
 // XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
@@ -42,16 +46,41 @@ export { default as createStreams } from './streams';
 export RssiSmoother from './rssi_smoother';
 
 export default function create(options) {
-  const config = loadConfig(options);
   let accessToken = null;
-  const services = {
-    vip: new VIP(config.serverUrl),
-    account: new Account(config.serverUrl),
-    device: new Device(config.serverUrl)
-  };
+  let api = {
+    loadConfig(options) {
+      const config = loadConfig(options);
 
-  let exports = {
-    config: config,
+      // Load/reload only the portions of the API that are dependent on the config
+      Object.assign(api, {
+        config,
+        blob: require('./blob')(config), // TODO: Remove
+        timeMeta: require('./time_metadata')(config),
+        crashMeta: require('./crash_metadata')(config),
+        socketio: require('./socketio')(config),
+        streams: require('./streams')(config),
+      });
+
+      const services = {
+        vip: new VIP(config.serverUrl),
+        account: new Account(config.serverUrl),
+        device: new Device(config.serverUrl),
+        blobPublisher: new BlobPublisher(config.serverUrl),
+        crashPublisher: new CrashPublisher(config.serverUrl),
+        metadataPublisher: new MetadataPublisher(config.serverUrl),
+        metadata: new Metadata(config.serverUrl),
+      };
+
+      for (let key in services) {
+        api[key] = services[key];
+      }
+      api._services = services;
+
+      if (accessToken) {
+        api.accessToken = accessToken;
+      }
+    },
+
     id: require('./id'),
     // These are the components of the service protocol that must be
     // agreed upon by central and peripheral nodes.
@@ -75,22 +104,17 @@ export default function create(options) {
         };
       },
     },
-    blob: require('./blob')(config),
-    timeMeta: require('./time_metadata')(config),
-    crashMeta: require('./crash_metadata')(config),
-    socketio: require('./socketio')(config),
-    streams: require('./streams')(config),
 
     RssiSmoother: require('./rssi_smoother'),
 
     set accessToken(token) {
       accessToken = token;
-      for (let key in services) {
+      for (let key in api._services) {
         // TODO: Rename .key once consumers are using this new way of setting
         // the accessToken.
         //
         // .key = accessToken...
-        services[key].key = token;
+        api._services[key].key = token;
       }
     },
 
@@ -99,9 +123,6 @@ export default function create(options) {
     }
   };
 
-  for (let key in services) {
-    exports[key] = services[key];
-  }
-
-  return exports;
-};
+  api.loadConfig(options);
+  return api;
+}

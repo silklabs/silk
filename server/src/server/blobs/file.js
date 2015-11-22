@@ -161,6 +161,11 @@ class FileBlobHandler {
     const putUrl = url.resolve(this.config.server.publicUrl,
                                `blob/${blobType}/${key}`);
 
+    const putHeaders = {
+      'Content-Length': contentLength,
+      'Content-Type': contentType
+    };
+
     let metadata = {
       blobType,
       key,
@@ -174,7 +179,7 @@ class FileBlobHandler {
 
     log.info(`Responding with PUT url '${putUrl}'`);
 
-    res.status(201).send({ putUrl });
+    res.status(201).send({ putUrl, putHeaders });
   }
 
   async putBlob(req, res) {
@@ -282,6 +287,11 @@ class FileBlobHandler {
     await serveStatic(
       path.join(this.blobPaths[blobType], key), headers, req, res
     );
+  }
+
+  getSignedUrl(url) {
+    // No signing is needed file blobs
+    return url;
   }
 }
 

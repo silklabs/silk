@@ -5,6 +5,10 @@ import { resolve } from 'url';
 import vipRoutes from './routes/vip';
 import accountRoutes from './routes/account';
 import deviceRoute from './routes/device';
+import blobPublisherRoutes from './routes/blob_publisher';
+import crashPublisherRoutes from './routes/crash_publisher';
+import metadataPublisherRoutes from './routes/metadata_publisher';
+import metadataRoutes from './routes/metadata';
 
 let log = require('log')('routes');
 
@@ -51,7 +55,7 @@ module.exports = function(opts) {
 
   app.post('/device/metadata/time', asyncRoute(async (req, res) => {
     // create new metadata.
-    let result = await timeMeta.insert(req.body);
+    let result = await timeMeta.create(req.body);
     res.status(201).send(result);
   }));
 
@@ -74,7 +78,7 @@ module.exports = function(opts) {
   }));
 
   app.post('/device/metadata/time/find/ininterval', asyncRoute(async (req, res) => {
-    let result = await timeMeta.findInTimeInterval(req.body);
+    let result = await timeMeta.findAllInTimeInterval(req.body);
     let status = result ? 200 : 404;
     res.status(status).send(result);
   }));
@@ -93,7 +97,7 @@ module.exports = function(opts) {
   app.post('/device/metadata/crashreport', asyncRoute(async (req, res) => {
     let id;
     try {
-      id = await crashMeta.put(req.body);
+      id = await crashMeta.create(req.body);
     } catch(e) {
       res.sendStatus(400);
       return;
@@ -137,14 +141,17 @@ module.exports = function(opts) {
     }
   }));
 
+  // TODO: Remove me once clients no longer use this version of the API.
   app.post('/blob/ack', asyncRoute(async (req, res) => {
     await blobHandler.postAck(req, res);
   }));
 
+  // TODO: Remove me once clients no longer use this version of the API.
   app.post('/blob/:type', asyncRoute(async (req, res) => {
     await blobHandler.postBlob(req, res);
   }));
 
+  /* NOTE: Will be kept to support file blob */
   app.put('/blob/:type/:id', asyncRoute(async (req, res) => {
     if (config.server.blobType !== 'file') {
       res.sendStatus(501);
@@ -153,6 +160,10 @@ module.exports = function(opts) {
     await blobHandler.putBlob(req, res);
   }));
 
+  /**
+   * NOTE: We leave this here for demo purposes it should never be used in
+   * production. This will not get migrated to the newer (and secured) interfaces.
+   */
   app.get('/blob/:type/:id', asyncRoute(async (req, res) => {
     if (config.server.blobType !== 'file') {
       res.sendStatus(501);
@@ -164,4 +175,8 @@ module.exports = function(opts) {
   app.use(vipRoutes(opts).app);
   app.use(accountRoutes(opts).app);
   app.use(deviceRoute(opts).app);
+  app.use(blobPublisherRoutes(opts).app);
+  app.use(crashPublisherRoutes(opts).app);
+  app.use(metadataPublisherRoutes(opts).app);
+  app.use(metadataRoutes(opts).app);
 };

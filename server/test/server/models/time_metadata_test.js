@@ -10,7 +10,7 @@ suite('time metadata', () => {
     subject = new TimeMetadata(context.db);
   });
 
-  test('.insert', async () => {
+  test('.create', async () => {
     let deviceId = 'foo';
     let metaType = 'video';
 
@@ -39,7 +39,7 @@ suite('time metadata', () => {
     ];
 
     await Promise.all(records.map(async (record) => {
-      await subject.insert(record);
+      await subject.create(record);
     }));
 
     let one = await subject.findNearTime({
@@ -71,7 +71,7 @@ suite('time metadata', () => {
     assert.equal(outOfBounds.url, 'three');
   });
 
-  test('.findInTimeInterval', async () => {
+  test('.findAllInTimeInterval', async () => {
     let deviceId = 'baz';
     let metaType = 'event';
     let records = [{
@@ -104,10 +104,10 @@ suite('time metadata', () => {
       endUTC: 267,
     }];
     for (let record of records) {
-      let {id} = await subject.insert(record);
+      let {id} = await subject.create(record);
       record.id = id;
     }
-    let results = await subject.findInTimeInterval({
+    let results = await subject.findAllInTimeInterval({
       deviceId,
       metaType,
       startTime: 100,
@@ -127,7 +127,7 @@ suite('time metadata', () => {
       metaType: 'event',
       startUTC: 123,
     };
-    let {id} = await subject.insert(payload);
+    let {id} = await subject.create(payload);
     let record = await subject.findById({id});
     assert.equal(record.deviceId, payload.deviceId);
     assert.equal(record.metaType, payload.metaType);
@@ -146,7 +146,7 @@ suite('time metadata', () => {
     assert.equal(record.endUTC, endUTC);
   });
 
-  test('.insertOrUpdate', async () => {
+  test('.createOrUpdate', async () => {
     let record = {
       id: 'de305d54-75b4-431b-adb2-eb6b9e546014',
       deviceId: 'foo',
@@ -155,11 +155,11 @@ suite('time metadata', () => {
       endUTC: 2,
     };
 
-    let result = await subject.insertOrUpdate(record);
+    let result = await subject.createOrUpdate(record);
     assert.equal(record.id, result.id);
 
     record.endUTC = 3;
-    let result2 = await subject.insertOrUpdate(record);
+    let result2 = await subject.createOrUpdate(record);
     assert.equal(result.id, result2.id);
 
     let dbRecord = await subject.findById({id: record.id});

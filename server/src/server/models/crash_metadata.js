@@ -1,16 +1,14 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/* @flow */
 
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
-import formatOutput from './format_output';
 import Base from './base';
 
 let log = require('log')('models-crashreport');
 
 const TYPE_DEVICEID = Joi.string().lowercase().trim().length(66).hex();
 
-const TYPE_ALL = Joi.string().only([
+export const TYPE_ALL = Joi.string().only([
   'exception',
   'tombstone',
 ]);
@@ -42,11 +40,11 @@ export default class CrashMetadata extends Base {
       limit: Joi.number().integer().positive().optional(),
     }).required(),
 
-  }
+  };
 
-  static COLLECTION = 'crash_metadata';
+  static COLLECTION: string = 'crash_metadata';
 
-  async put(payload) {
+  async create(payload: any): any {
     payload = this.validate(payload, 'record');
     log.info(`Saving new crash report for device '` +
              `${payload.deviceId}'`);
@@ -63,7 +61,7 @@ export default class CrashMetadata extends Base {
     return id;
   }
 
-  async get(id) {
+  async get(id: any): any {
     let _id;
     try {
       _id = mongo.ObjectId(id);                   // eslint-disable-line new-cap
@@ -78,7 +76,7 @@ export default class CrashMetadata extends Base {
       _id
     });
 
-    result = formatOutput(result);
+    result = this.formatOutput(result);
 
     if (result) {
       log.debug(`Found crash report with id '${id}': '${result.url}'`);
@@ -89,7 +87,7 @@ export default class CrashMetadata extends Base {
     return result;
   }
 
-  async find(payload) {
+  async find(payload: any): any {
     payload = this.validate(payload, 'find');
     log.info('Finding metadata: ' + JSON.stringify(payload));
 
@@ -115,7 +113,7 @@ export default class CrashMetadata extends Base {
 
     let results =
       await this.collection.find(query).sort(sort).limit(limit).toArray();
-    results = results.map(formatOutput);
+    results = results.map(this.formatOutput.bind(this));
 
     log.debug(`Found ${results.length} results`);
     return results;

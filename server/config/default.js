@@ -20,8 +20,9 @@ export default {
 
   server: {
     cors: {
-      origin: '*',
-      methods: '*'
+      origin: true,
+      methods: '*',
+      credentials: true
     },
 
     // Will dynamically configure itself if empty...
@@ -65,6 +66,13 @@ export default {
       }
     },
 
+    clouds: {
+      aws: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      },
+    },
+
     // AWS S3 blob storage.
     s3: {
       video: {
@@ -96,6 +104,40 @@ export default {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: 'us-west-2',
         bucket: 'silk-blobs-dev-us-west-2'
+      }
+    },
+
+    // Aliyun OSS blob storage.
+    aliyun: {
+      video: {
+        accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID,
+        accessKeySecret: process.env.ALIYUN_SECRET_ACCESS_KEY,
+        host: 'oss-cn-shenzhen.aliyuncs.com',
+        bucket: 'silk-blobs-dev-shenzhen'
+      },
+      preview: {
+        accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID,
+        accessKeySecret: process.env.ALIYUN_SECRET_ACCESS_KEY,
+        host: 'oss-cn-shenzhen.aliyuncs.com',
+        bucket: 'silk-blobs-dev-shenzhen'
+      },
+      crashreport: {
+        accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID,
+        accessKeySecret: process.env.ALIYUN_SECRET_ACCESS_KEY,
+        host: 'oss-cn-shenzhen.aliyuncs.com',
+        bucket: 'silk-blobs-dev-shenzhen'
+      },
+      log: {
+        accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID,
+        accessKeySecret: process.env.ALIYUN_SECRET_ACCESS_KEY,
+        host: 'oss-cn-shenzhen.aliyuncs.com',
+        bucket: 'silk-blobs-dev-shenzhen'
+      },
+      metrics: {
+        accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID,
+        accessKeySecret: process.env.ALIYUN_SECRET_ACCESS_KEY,
+        host: 'oss-cn-shenzhen.aliyuncs.com',
+        bucket: 'silk-blobs-dev-shenzhen'
       }
     }
   },

@@ -28,6 +28,7 @@ export function setRandomBytesFunction(func) {
 }
 
 class CryptoStreamBase extends Transform {
+
   static CURVE_NAME = `curve25519`;
   static CIPHER_NAME = `aes-256-cbc`;
   static HASH_NAME = `sha256`;
@@ -76,12 +77,13 @@ class CryptoStreamBase extends Transform {
 // monotonically and wraps at 0xff. This sequence number is verified by the
 // DecodeStream to ensure that no messages arrive out of order.
 export class EncryptStream extends CryptoStreamBase {
-  _bufferedWrites = null;
+
+  _bufferedWrites = [ ];
   _sequenceBuffer = null;
   _randomBytes = [ ];
-  _queuedPushEncryptedData = [ ];
+  _pushedPublicKey = false;
 
-  constructor(ec, keyPair, options) {
+  constructor(ec, options) {
     log.debug(`EncryptStream()`);
 
     super(ec, options);
@@ -94,31 +96,6 @@ export class EncryptStream extends CryptoStreamBase {
     for (let index = 0; index < 5; index++) {
       getRandomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
     }
-
-    // Elliptic always returns an array if anything other than 'hex' is passed.
-    const publicKeyArray = keyPair.getPublic(true, 'binary');
-    assert(Array.isArray(publicKeyArray));
-
-    // For now this will always be a constant length.
-    assert(publicKeyArray.length === CryptoStreamBase.PUBLIC_KEY_LENGTH);
-
-    // We currently only send one byte for the length of the public key. If we
-    // ever need more than 255 bytes for the key we will need to change this to
-    // take a multi-byte encoded length.
-    assert(publicKeyArray.length <= 0xff);
-
-    // The first data sent contains the public key length followed by the public
-    // key.
-    let outgoing = new Buffer(publicKeyArray.length + 1);
-    outgoing[0] = publicKeyArray.length;
-
-    // Copy the public key into the buffer.
-    for (let i = 0; i < publicKeyArray.length; i++) {
-      outgoing[i + 1] = publicKeyArray[i];
-    }
-
-    log.debug(`This public key: '${outgoing.slice(1).toString('hex')}'`);
-    this.push(outgoing);
   }
 
   _insecureRandomInt(min, max) {
@@ -131,10 +108,11 @@ export class EncryptStream extends CryptoStreamBase {
     } else {
       this._randomBytes.push(random);
 
-      if (this._queuedPushEncryptedData.length) {
-        const { data, encoding, callback } =
-          this._queuedPushEncryptedData.shift();
-        this._pushEncryptedData(data, encoding, callback);
+      if (this._pushedPublicKey &&
+          this._sharedSecret &&
+          this._bufferedWrites.length) {
+        const { data, encoding, callback } = this._bufferedWrites.shift();
+        this._processChunk(data, encoding, callback);
       }
     }
   };
@@ -162,41 +140,17 @@ export class EncryptStream extends CryptoStreamBase {
     return new Buffer(array);
   }
 
-  _transform(chunk, encoding, callback) {
-    assert(chunk.length);
-    assert(encoding === `buffer`);
-
-    if (this._error) {
-      callback(this._error);
-      return;
-    }
-
-    if (!this._sharedSecret) {
-      log.debug(`Buffering writes until shared secret is set`);
-      const chunkInfo = {
-        chunk,
-        encoding,
-      };
-      if (this._bufferedWrites) {
-        this._bufferedWrites.push(chunkInfo);
-      } else {
-        this._bufferedWrites = [ chunkInfo ];
-      }
-      callback(this._error);
-      return;
-    }
-
-    this._pushEncryptedData(chunk, encoding, callback);
-  }
-
-  _pushEncryptedData(chunk, encoding, callback) {
+  _processChunk(chunk, encoding, callback) {
+    assert(this._pushedPublicKey);
     assert(this._sharedSecret);
 
     if (!this._randomBytes.length) {
       log.warn(`No random bytes available, waiting`);
-      this._queuedPushEncryptedData.push({ chunk, encoding, callback });
+      this._bufferedWrites.push({ chunk, encoding, callback });
       return;
     }
+
+    assert(this._randomBytes.length);
 
     // Grab random bytes out of our cache, and refill it asynchronously.
     const random = this._randomBytes.pop();
@@ -249,29 +203,95 @@ export class EncryptStream extends CryptoStreamBase {
     });
   }
 
+  _processBufferedChunks() {
+    assert(this._pushedPublicKey);
+    assert(this._sharedSecret);
+
+    if (this._bufferedWrites.length) {
+      log.debug(`Processing all buffered writes`);
+
+      let bufferedWrites = this._bufferedWrites;
+      this._bufferedWrites = [ ];
+
+      while (bufferedWrites.length) {
+        let { chunk, encoding, callback } = bufferedWrites.shift();
+        this._processChunk(chunk, encoding, callback);
+      }
+    }
+  }
+
+  _transform(chunk, encoding, callback) {
+    assert(chunk.length);
+    assert(encoding === `buffer`);
+
+    if (this._error) {
+      callback(this._error);
+      return;
+    }
+
+    if (!this._pushedPublicKey || !this._sharedSecret) {
+      if (!this._pushedPublicKey) {
+        log.debug(`Buffering writes until key pair is set`);
+      } else {
+        log.debug(`Buffering writes until shared secret is set`);
+      }
+      this._bufferedWrites.push({ chunk, encoding, callback });
+      return;
+    }
+
+    this._processChunk(chunk, encoding, callback);
+  }
+
+  setKeyPair(keyPair) {
+    assert(!this._pushedPublicKey);
+    assert(!this._sharedSecret);
+    assert(this._bufferedWrites);
+
+    // Elliptic always returns an array if anything other than 'hex' is passed.
+    const publicKeyArray = keyPair.getPublic(true, 'binary');
+    assert(Array.isArray(publicKeyArray));
+
+    // For now this will always be a constant length.
+    assert(publicKeyArray.length === CryptoStreamBase.PUBLIC_KEY_LENGTH);
+
+    // We currently only send one byte for the length of the public key. If we
+    // ever need more than 255 bytes for the key we will need to change this to
+    // take a multi-byte encoded length.
+    assert(publicKeyArray.length <= 0xff);
+
+    // The first data sent contains the public key length followed by the public
+    // key.
+    let outgoing = new Buffer(publicKeyArray.length + 1);
+    outgoing[0] = publicKeyArray.length;
+
+    // Copy the public key into the buffer.
+    for (let i = 0; i < publicKeyArray.length; i++) {
+      outgoing[i + 1] = publicKeyArray[i];
+    }
+
+    log.debug(`This public key: '${outgoing.slice(1).toString('hex')}'`);
+    this.push(outgoing);
+
+    this._pushedPublicKey = true;
+  }
+
   get sharedSecret() {
     return this._sharedSecret;
   }
 
   set sharedSecret(val) {
-    assert(!this._sharedSecret);
     assert(Buffer.isBuffer(val));
+    assert(!this._sharedSecret);
+    assert(this._bufferedWrites);
 
     log.debug(`Setting shared secret`, val);
     this._sharedSecret = val;
 
-    if (this._bufferedWrites) {
-      log.debug(`Processing queued writes`);
-
-      // |_pushEncryptedData| will handle errors.
-      const callback = () => undefined;
-
-      for (let chunkInfo of this._bufferedWrites) {
-        this._pushEncryptedData(chunkInfo.chunk, chunkInfo.encoding, callback);
-      }
-
-      this._bufferedWrites = null;
+    if (this._pushedPublicKey) {
+      this._processBufferedChunks();
     }
+
+    this.emit(`sharedSecret`, val);
   }
 }
 
@@ -280,6 +300,9 @@ export class EncryptStream extends CryptoStreamBase {
 // be written, from which it calculates the shared secret. Thereafter it will
 // be uncorked and data will be decrypted as it is written.
 export class DecryptStream extends CryptoStreamBase {
+
+  _bufferedWrites = [ ];
+
   _data = [ ];
   _dataLength = 0;
 
@@ -292,12 +315,10 @@ export class DecryptStream extends CryptoStreamBase {
   _otherPublicKeyBuffer = null;
   _otherPublicKeyBufferIndex = 0;
 
-  constructor(ec, keyPair, options) {
+  constructor(ec, options) {
     log.debug(`DecryptStream()`);
 
     super(ec, options);
-
-    this._keyPair = keyPair;
   }
 
   _deriveKey(chunk) {
@@ -605,7 +626,7 @@ export class DecryptStream extends CryptoStreamBase {
     return true;
   }
 
-  _transform(chunk, encoding, callback) {
+  _processChunk(chunk, encoding, callback) {
     assert(chunk.length);
     assert(encoding === `buffer`);
 
@@ -634,25 +655,96 @@ export class DecryptStream extends CryptoStreamBase {
     callback(this._error);
   }
 
+  _transform(chunk, encoding, callback) {
+    assert(chunk.length);
+    assert(encoding === `buffer`);
+
+    if (this._error) {
+      callback(this._error);
+      return;
+    }
+
+    if (!this._sharedSecret && !this._keyPair) {
+      log.debug(`Buffering writes until key pair is set`);
+      this._bufferedWrites.push({ chunk, encoding, callback });
+      return;
+    }
+
+    this._processChunk(chunk, encoding, callback);
+  }
+
+  setKeyPair(keyPair) {
+    assert(keyPair);
+    assert(!this._keyPair);
+    assert(this._bufferedWrites);
+
+    log.debug(`Setting key pair`);
+
+    this._keyPair = keyPair;
+
+    if (this._bufferedWrites.length) {
+      log.debug(`Processing buffered writes`);
+
+      while (this._bufferedWrites.length) {
+        let { chunk, encoding, callback } = this._bufferedWrites.shift();
+        this._processChunk(chunk, encoding, callback);
+      }
+    }
+
+    this._bufferedWrites = null;
+  }
+
   get sharedSecret() {
     return this._sharedSecret;
   }
 }
 
 export class CryptoDuplexStream extends DuplexTransform {
-  constructor(stream, options) {
+
+  _sharedSecret = null;
+
+  constructor(stream, options = { }) {
     log.debug(`CryptoDuplexStream()`);
 
     const ec = new EC(CryptoStreamBase.CURVE_NAME);
-    const keyPair = ec.genKeyPair();
 
-    const decrypt = new DecryptStream(ec, keyPair);
-    const encrypt = new EncryptStream(ec, keyPair);
+    const decrypt = new DecryptStream(ec);
+    const encrypt = new EncryptStream(ec);
+
+    const randomByteCountNeeded = ec.hash.hmacStrength;
+    assert(randomByteCountNeeded);
+    log.debug(`hmac requires ${randomByteCountNeeded} random bytes`);
+
+    getRandomBytes(randomByteCountNeeded, (error, bytes) => {
+      if (error) {
+        log.error(error);
+        this.push(null);
+        return;
+      }
+
+      const keyPair = ec.genKeyPair({ entropy: bytes });
+      encrypt.setKeyPair(keyPair);
+      decrypt.setKeyPair(keyPair);
+    });
 
     decrypt.once(`sharedSecret`, sharedSecret => {
       encrypt.sharedSecret = sharedSecret;
     });
 
+    options = Object.assign({ }, options);
+    if (!(`autoClose` in options)) {
+      options.autoClose = true;
+    }
+
     super(stream, stream, decrypt, encrypt, options);
+
+    encrypt.once(`sharedSecret`, sharedSecret => {
+      this._sharedSecret = sharedSecret;
+      this.emit(`sharedSecret`, sharedSecret);
+    });
+  }
+
+  get sharedSecret() {
+    return this._sharedSecret;
   }
 }

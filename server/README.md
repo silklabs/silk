@@ -187,3 +187,18 @@ or
 $ heroku logs --app silk-socketio-master --tail
 ```
 depending on which server you want.  Replace `master` with `next` or `release` if necessary.
+
+### Troubleshooting
+
+When updating to a newer version of the server, if you get errors like this:
+
+```
+MongoError: exception: Index with name: id_1 already exists with different options
+```
+
+An arguably evil "fix" to clear your MongoDB data. 
+[From StackOverflow](http://stackoverflow.com/questions/6376436/mongodb-drop-every-database/16908246#16908246):
+
+```
+mongo --quiet --eval 'db.getMongo().getDBNames().forEach(function(i){db.getSiblingDB(i).dropDatabase()})'
+```

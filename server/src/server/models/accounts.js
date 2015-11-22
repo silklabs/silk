@@ -1,6 +1,7 @@
+/* @flow */
 /**
  * User account store.
-*/
+ */
 import * as Joi from 'joi';
 import Base from './base';
 import scrypt from 'scrypt';
@@ -71,13 +72,13 @@ const log = require('log')('models:accounts');
 const AUTHENTICATED_DURATION = 60 * 1000 * 15;
 
 export default class Accounts extends Base {
-  static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION
+  static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION;
 
   static ERROR = {
     duplicateEmail: 'DuplicateEmail',
     checkPasswordFailure: 'CheckPasswordFailure',
     unknownAccount: 'UnknownAccount'
-  }
+  };
 
   static INDEX = [
     /**
@@ -109,7 +110,7 @@ export default class Accounts extends Base {
       },
       options: { unique: true, sparse: true }
     }
-  ]
+  ];
 
   static SCHEMA = {
     findByPublicKey: Joi.object().keys({
@@ -158,11 +159,11 @@ export default class Accounts extends Base {
       accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA).required()
 
     }).required()
-  }
+  };
 
   static COLLECTION = 'accounts';
 
-  async scryptHash(value) {
+  async scryptHash(value: string): Promise<string> {
     // These values are taken from http://www.tarsnap.com/scrypt/scrypt-slides.pdf
     // from 2009 we can and likely should tune these values.
     // Also see: http://tools.ietf.org/html/draft-josefsson-scrypt-kdf-01#section-5
@@ -176,14 +177,14 @@ export default class Accounts extends Base {
     return hash.toString('hex');
   }
 
-  async scryptVerify(hash, key) {
+  async scryptVerify(hash: string, key: string): Promise<bool> {
     return await scrypt.verifyKdf(new Buffer(hash, 'hex'), new Buffer(key));
   }
 
   /**
    * Find an account by its mongodb id.
    */
-  async findByPublicKey(payload) {
+  async findByPublicKey(payload: any): any {
     payload = this.validate(payload, 'findByPublicKey');
     let { publicKey } = payload;
 
@@ -195,7 +196,7 @@ export default class Accounts extends Base {
   /**
    * Common access token generation stuff.
    */
-  accessToken(payload) {
+  accessToken(payload: any): any {
     let { publicKey, userAgent } = payload;
     return this.validate({
       issued: new Date(),
@@ -212,7 +213,7 @@ export default class Accounts extends Base {
   /**
    * Set beacon UUID if it is missing from the account.
    */
-  async setBeaconUUIDIfMissing(publicKey) {
+  async setBeaconUUIDIfMissing(publicKey: any): any {
     let id = uuid.v4();
     let status = await this.collection.update(
       {
@@ -231,7 +232,7 @@ export default class Accounts extends Base {
     if (status.nModified === 1) {
       return id;
     }
-    return false;
+    return null;
   }
 
   /**
@@ -239,7 +240,7 @@ export default class Accounts extends Base {
    * allows them to use their public/private key pair to make further requests
    * to authenticate their account.
    */
-  async create(payload) {
+  async create(payload: any): any {
     payload = this.validate(payload, 'create');
     let password = await this.scryptHash(payload.passwordHash);
 
@@ -268,13 +269,16 @@ export default class Accounts extends Base {
 
     let didInsert = insert.upserted;
     if (didInsert && didInsert[0]._id) {
-      return { id: didInsert[0]._id.toString() };
+      return {
+        id: didInsert[0]._id.toString(),
+        beaconUUID: account.beaconUUID,
+      };
     }
 
     return this.error('duplicateEmail');
   }
 
-  async ensureDevAccount(payload) {
+  async ensureDevAccount(payload: any): any {
     payload = this.validate(payload, 'ensureDevAccount');
     let { email, passwordHash, publicKey } = payload;
 
@@ -293,7 +297,7 @@ export default class Accounts extends Base {
     }
   }
 
-  async signIn(payload) {
+  async signIn(payload: any): any {
     payload = this.validate(payload, 'signIn');
 
     let account = await this.collection.findOne({
@@ -305,38 +309,42 @@ export default class Accounts extends Base {
     }
 
     let validate = await this.scryptVerify(account.password.hash, payload.passwordHash);
-    if (validate) {
-      let accessToken = this.accessToken(payload);
+    if (!validate) {
+      return this.error('checkPasswordFailure');
+    }
 
-      /**
-       * We need to take some extra steps... While multiple accounts are
-       * enforced not to have duplicate publicKeys at the collection level those
-       * protections do not work within a single document.
-       */
-      let update = await this.collection.update(
-        {
-          _id: account._id,
-          'accountTokens.publicKey': {
-            $ne: payload.publicKey
-          }
-        },
-        {
-          $push: {
-            accountTokens: accessToken
-          }
+    let accessToken = this.accessToken(payload);
+
+    /**
+     * We need to take some extra steps... While multiple accounts are
+     * enforced not to have duplicate publicKeys at the collection level those
+     * protections do not work within a single document.
+     */
+    let update = await this.collection.update(
+      {
+        _id: account._id,
+        'accountTokens.publicKey': {
+          $ne: payload.publicKey
         }
-      );
+      },
+      {
+        $push: {
+          accountTokens: accessToken
+        }
+      }
+    );
 
-      if (update.n !== 1) {
-        throw new Error(
-          `checkPassword update failed for unknown reasons: ${
+    if (update.n !== 1) {
+      throw new Error(
+        `checkPassword update failed for unknown reasons: ${
             JSON.stringify(update)
           }`
-        );
-      }
-      return { id: account._id.toString() };
+      );
     }
-    return this.error('checkPasswordFailure');
+    return {
+      id: account._id.toString(),
+      beaconUUID: account.beaconUUID,
+    };
   }
 
   /**
@@ -344,7 +352,7 @@ export default class Accounts extends Base {
    * been checked against the users password in some time and we want to perform
    * a sensitive operation.
    */
-  async checkPassword(payload) {
+  async checkPassword(payload: any): any {
     payload = this.validate(payload, 'checkPassword');
 
     let account = await this.collection.findOne({
@@ -357,27 +365,27 @@ export default class Accounts extends Base {
     }
 
     let validate = await this.scryptVerify(account.password.hash, payload.passwordHash);
-    if (validate) {
-      let update = await this.collection.update({
-        _id: account._id,
-        'accountTokens.publicKey': payload.publicKey
-      }, {
-        $set: {
-          passwordCheck: { date: new Date() }
-        }
-      });
-
-      if (update.n !== 1) {
-        throw new Error(
-          `checkPassword update failed for unknown reasons: ${
-            JSON.stringify(update)
-          }`
-        );
-      }
-
-      return { id: account._id.toString() };
+    if (!validate) {
+      return this.error('checkPasswordFailure');
     }
 
-    return this.error('checkPasswordFailure');
+    let update = await this.collection.update({
+      _id: account._id,
+      'accountTokens.publicKey': payload.publicKey
+    }, {
+      $set: {
+        passwordCheck: { date: new Date() }
+      }
+    });
+
+    if (update.n !== 1) {
+      throw new Error(
+        `checkPassword update failed for unknown reasons: ${
+            JSON.stringify(update)
+          }`
+      );
+    }
+
+    return { id: account._id.toString() };
   }
 }

@@ -105,6 +105,11 @@ export default class HttpClient {
     await sleep(duration);
   }
 
+  // XXX: This is a hack since we still do not support true GET requests...
+  request(method, url) {
+    return this.requestWithBody(method, url, {});
+  }
+
   async requestWithBody(method, url, body) {
     // XXX: This "request id" is for display only right now at some point in the
     // future we should send more meaningful (uuid) ids that are logged across

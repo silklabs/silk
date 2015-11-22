@@ -53,5 +53,4 @@ build() {
   echo "[ building $2: $1 ] done"
 }
 
-build silklabs/silk-api-react-native react-native
-build silklabs/silk-api-node node
+build silklabs/silk-api-node api

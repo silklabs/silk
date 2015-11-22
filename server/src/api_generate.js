@@ -3,31 +3,12 @@ import path from 'path';
 import { generateSchema } from 'api-schema';
 import fs from 'fs';
 
-// import all the routes
-import vipRoutes from './server/routes/vip';
-import accountRoutes from './server/routes/account';
-import deviceRoutes from './server/routes/device';
-import testRoutes from './server/routes/test';
-
 const AUTOGEN_ROOT = path.join(__dirname, '/api/gen');
-const GENERATE = {
-  vip: {
-    routes: vipRoutes,
-    base: '../http_client'
-  },
-  account: {
-    routes: accountRoutes,
-    base: '../http_client'
-  },
-  device: {
-    routes: deviceRoutes,
-    base: '../http_client'
-  },
-  test: {
-    routes: testRoutes,
-    base: '../http_client'
-  }
-};
+const CLIENT_MODULE = '../http_client';
+const ROUTE_PATH = path.join(__dirname, 'server/routes');
+
+// Create list of all the route modules...
+const ROUTES = fs.readdirSync(ROUTE_PATH);
 
 export default function generate() {
   // XXX: The routes should not need any context for this but perhaps we will
@@ -36,12 +17,15 @@ export default function generate() {
 
   mkdirp.sync(AUTOGEN_ROOT);
 
-  for (let name in GENERATE) {
-    let endpoint = GENERATE[name];
-    let route = endpoint.routes(ctx);
-    let absPath = path.join(AUTOGEN_ROOT, name + '.js');
-    fs.writeFileSync(absPath, generateSchema(route.api.toJSON(), {
-      baseClassPath: endpoint.base
+  for (let name of ROUTES) {
+    let route = require(path.join(ROUTE_PATH, name));
+    let entrypoint = route(ctx);
+    if (!entrypoint) continue;
+
+    let { api } = entrypoint;
+    let absPath = path.join(AUTOGEN_ROOT, api.name + '.js');
+    fs.writeFileSync(absPath, generateSchema(api.toJSON(), {
+      baseClassPath: CLIENT_MODULE
     }));
   }
 }
@@ -50,4 +34,3 @@ if (process.mainModule === module) {
   console.log('Building auto generated files');
   generate();
 }
-

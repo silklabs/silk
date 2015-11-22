@@ -27,7 +27,7 @@ export default function (ctx) {
   }));
 
   let api = expressApi(routes, {
-    name: 'auth',
+    name: 'vip',
     prefix: PREFIX,
     description: `
       API methods for creating/logging in/authenticating user accounts
@@ -52,7 +52,8 @@ export default function (ctx) {
     name: 'createAccount',
     description: 'Create a user account',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
+      beaconUUID: Joi.string().guid(),
     }),
     input: Joi.object().keys(ACCESS_TOKEN_SCHEMA)
   }, async (req, res) => {
@@ -70,13 +71,16 @@ export default function (ctx) {
       passwordHash: req.body.passwordHash
     });
 
-    if (!account.error) {
-      log.info('create account', account.id);
-      res.respond({ success: true });
+    if (account.error) {
+      log.verbose('Failed to create account', account);
+      res.respond({ success: false });
       return;
     }
-    log.verbose('Failed to create account', account);
-    res.respond({ success: false });
+    log.info('create account', account.id);
+    res.respond({
+      success: true,
+      beaconUUID: account.beaconUUID,
+    });
   });
 
   api.define({
@@ -86,7 +90,8 @@ export default function (ctx) {
     name: 'signIn',
     description: 'Sign into an account',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
+      beaconUUID: Joi.string().guid(),
     }),
     input: Joi.object().keys(ACCESS_TOKEN_SCHEMA)
   }, async (req, res) => {
@@ -97,14 +102,17 @@ export default function (ctx) {
       passwordHash: req.body.passwordHash
     });
 
-    if (!account.error) {
-      // TODO: Notify user of new sign in
-      log.info('sign in', account.id);
-      res.respond({ success: true });
+    if (account.error) {
+      log.verbose('sign in failure', account);
+      res.respond({ success: false });
       return;
     }
-    log.verbose('sign in failure', account);
-    res.respond({ success: false });
+    // TODO: Notify user of new sign in
+    log.info('sign in', account.id);
+    res.respond({
+      success: true,
+      beaconUUID: account.beaconUUID,
+    });
   });
 
   api.define({

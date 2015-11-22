@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "api-schema": "git@github.com:silklabs/api-schema.git#2356267dd47d4ef7bdd432e519ffc1cf1027485a",
+    "aliyun-oss": "^1.1.0",
+    "api-schema": "git@github.com:silklabs/api-schema.git#fcc71be4958f5d0e3226e84ecf39dee502223c9d",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",
     "babel": "^5.8.23",
@@ -47,12 +48,14 @@
   "description": "Silk server and client API",
   "devDependencies": {
     "dev-null": "^0.1.1",
+    "flow-bin": "0.18.1",
     "mocha": "^2.2.5",
     "timekeeper": "0.0.5"
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=4.1.2"
+    "node": "^4.1.2",
+    "npm": "^2.1.0"
   },
   "keywords": [
     "iot"
@@ -67,15 +70,17 @@
   },
   "scripts": {
     "build": "./build.sh",
+    "flow": "flow check",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
-    "postinstall": "./bin/post-install",
+    "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./bin/post-install",
     "preinstall": "npm install babel && ./bin/pre-install",
+    "pretest": "babel-node src/api_generate",
     "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "start-server": "babel-node --harmony src/server/main.js production",
     "start-socketio": "babel-node --harmony src/socketio/main.js production",
-    "test": "npm run-script lint && npm run-script mocha",
+    "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"
   },

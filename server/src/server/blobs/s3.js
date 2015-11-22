@@ -43,9 +43,14 @@ class S3Blobs {
       ContentType: contentType
     });
 
+    const putHeaders = {
+      'Content-Length': contentLength,
+      'Content-Type': contentType
+    };
+
     log.info(`Responding with PUT url '${putUrl}'`);
 
-    res.status(201).send({ putUrl });
+    res.status(201).send({ putUrl, putHeaders });
   }
 
   async postAck(req, res) {
@@ -69,6 +74,11 @@ class S3Blobs {
 
     res.append('Location', getUrl);
     res.status(201).send({ url: getUrl });
+  }
+
+  getSignedUrl(url) {
+    // No signing is needed s3 blobs
+    return url;
   }
 }
 

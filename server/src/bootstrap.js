@@ -3,6 +3,10 @@
 
 import loadConfig from './server/config';
 
+import v8 from 'v8';
+v8.setFlagsFromString('--trace_gc'); 
+//v8.setFlagsFromString('--trace_gc_verbose');
+
 export default function(createServer) {
   let log = require('log')('main');
   let profile = process.argv[2];

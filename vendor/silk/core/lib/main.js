@@ -359,7 +359,7 @@ function shutdown(finalPromiseFactory) {
       server.disconnect();
       update.stop();
     })
-    .then(outbox.shutdown)
+    .then(() => outbox.shutdown)
     .then(() => {
       // Always make sure this one is last.
       return STATUS_COMPLETE;
@@ -372,8 +372,8 @@ function shutdown(finalPromiseFactory) {
 
   shutdownPromise = Promise.race([ timeoutPromise, asyncWorkPromise ])
     .catch(err => {
-      log.error('Shutdown error: %s', err);
-      return 'exception';
+      log.error('Shutdown error:', err.stack);
+      return STATUS_EXCEPTION;
     })
     .then(status => {
       switch (status) {

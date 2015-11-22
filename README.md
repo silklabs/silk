@@ -16,4 +16,10 @@ to pull and merge the latest changes from the individual repositories. You can t
 git push origin master
 ```
 
-To import a new repo that doesn't exist as yet as a subtree, follow this great tutorial on git subtree merging: http://nuclearsquid.com/writings/subtree-merging-and-you/
+Importing a new repo that doesn't exist yet as a subtree can be done with the following command:
+```
+git subtree add \
+  -m "Initial import of silk-$foobar into $foobar/" \
+  --prefix $foobar \
+  git@github.com:silklabs/silk-$foobar.git master
+```

@@ -75,7 +75,7 @@ export default class EventTracker extends EventEmitter {
     this._eventRecords = {};
   }
 
-  eventDiscriminator(event: TimelineEventObject): string {
+  _eventDiscriminator(event: TimelineEventObject): string {
     // For now we throw all 'motion', 'car', etc. events into one basket.
     // Later one we could use additional info to discriminate one 'face'
     // event from another 'face' event.
@@ -86,10 +86,14 @@ export default class EventTracker extends EventEmitter {
   }
 
   record(event: TimelineEventObject) {
-    let discriminator = this.eventDiscriminator(event);
+    let discriminator = this._eventDiscriminator(event);
     let record = this._eventRecords[discriminator];
     if (record) {
       record.endUTC = event.when;
+      if (record.endUTC < record.startUTC) {
+        record.startUTC = record.endUTC; // System time moved backwards?
+      }
+
       // No need to do anything else here. Our periodic timer will
       // enqueue this event once it has expired, so that the end time
       // will be updated on the server.
@@ -108,7 +112,7 @@ export default class EventTracker extends EventEmitter {
       startUTC: event.when,
       endUTC: event.when + DEFAULT_EVENT_LENGTH_MS,
       // TODO: we might be able to pile more stuff into the `data`
-      // field later on, such as which face was detected, movement of
+      // field later on, such as which face was detected, direction of
       // the motion across the screen, etc.
       data: {tag: event.tag},
     };

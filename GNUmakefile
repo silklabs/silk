@@ -127,8 +127,11 @@ time:
   adb root ; \
   adb wait-for-device ; \
   adb shell setprop persist.sys.timezone $(shell date +%Z%:::z|tr +- -+) ; \
-  adb shell "toolbox date $(shell date +%s) || toolbox date -s $(shell date +%Y%m%d.%H%M%S)" ; \
-  adb shell date
+  adb shell time_genoff $(shell date +%s)000 ; \
+  set +x ; \
+  echo "(sleep 2s while time updates)" ; sleep 2s ; \
+  echo "Host time:   $(shell date)" ; \
+  echo "Device time: $(shell adb shell date)" ; \
 
 
 #

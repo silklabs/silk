@@ -83,6 +83,7 @@ SILK_GONK_PROGIES := \
   volume \
   wpad \
   silk-sensors \
+  silk-time_genoff \
 
 SILK_UI_PACKAGES := \
   logo.png \

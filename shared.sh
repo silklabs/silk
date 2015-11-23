@@ -4,26 +4,24 @@
 
 set -o pipefail
 
-
-NODE_MODULES_BIN=$(dirname $(readlink -f $0))/node_modules/.bin/
-
-
-if [[ ! -d $NODE_MODULES_BIN ]]; then
-  echo "$NODE_MODULES_BIN not found, please run |npm install|"
-  exit 1
-fi
-
-# Check for tools first
-PATH=$PATH:$NODE_MODULES_BIN
-TOOLS="jq xmlstarlet sort-json"
-for tool in $TOOLS; do
-  if ! which $tool > /dev/null; then
-    echo "Please install '$tool' to continue, maybe"
-    echo "|apt-get install $tool| or |brew install $tool|"
+if [[ ! -d $SKIP_TOOL_CHECK ]]; then
+  NODE_MODULES_BIN=$(dirname $(readlink -f $0))/node_modules/.bin/
+  if [[ ! -d $NODE_MODULES_BIN ]]; then
+    echo "$NODE_MODULES_BIN not found, please run |npm install|"
     exit 1
   fi
-done
 
+  # Check for tools first
+  PATH=$PATH:$NODE_MODULES_BIN
+  TOOLS="jq xmlstarlet sort-json"
+  for tool in $TOOLS; do
+    if ! which $tool > /dev/null; then
+      echo "Please install '$tool' to continue, maybe"
+      echo "|apt-get install $tool| or |brew install $tool|"
+      exit 1
+    fi
+  done
+fi
 
 #
 # GITS: List of projects that are branched.
@@ -39,13 +37,13 @@ MERGE_GITS="\
   silk-app \
   silk-device \
   silk-webapp \
+  gonk-alto \
 "
 GITS="\
   log \
   silk-api-node \
   silk-device-locked-node-modules \
   silk-trainingset \
-  gonk-alto \
   $MERGE_GITS \
 "
 

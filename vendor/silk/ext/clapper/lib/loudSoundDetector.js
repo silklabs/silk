@@ -71,6 +71,13 @@ class LoudSoundDetector extends EventEmitter {
     this._fftWindowStep = cfg.fftProcessor.fftWindowStep;
     this._riseEnergyDelta = cfg.riseEnergyDelta;
 
+    // If set, save band pass filter range, else use the entire range.
+    // By definition, the entire FFT freq range is 0 to sampleRate / 2 + 1
+    this._bandFilterLowFreq = 'bandFilterLowFreq' in cfg ?
+        cfg.bandFilterLowFreq : 0;
+    this._bandFilterHighFreq = 'bandFilterHighFreq' in cfg ?
+        cfg.bandFilterHighFreq : this._sampleRate / 2 + 1;
+
     // (note, duration in units of fftWindowStep)
     this._riseEnergyDelta = cfg.riseEnergyDelta;
     this._riseDistance = this._msToSteps(cfg.riseDurationMs);
@@ -142,12 +149,17 @@ class LoudSoundDetector extends EventEmitter {
   }
 
   _onFftDone(fftNode) {
-    // calculate average energy
+    // calculate avg energy while filtering out freq outside of band
+    const hzPerBin = 2 * this._fftWindowSize / this._sampleRate;
+
+    let minFreqBin = Math.floor(this._bandFilterLowFreq * hzPerBin);
+    let maxFreqBin = Math.floor(this._bandFilterHighFreq * hzPerBin);
+
     let avg = 0;
-    for (let i = 0; i < fftNode.freq.length; i++) {
+    for (let i = minFreqBin; i < maxFreqBin; i++) {
       avg += fftNode.freq[i];
     }
-    fftNode.data = avg / fftNode.freq.length;
+    fftNode.data = avg / (maxFreqBin - minFreqBin);
 
     this._windowHistory.push(fftNode);
     if (!this._windowHistory.isPrimed()) {

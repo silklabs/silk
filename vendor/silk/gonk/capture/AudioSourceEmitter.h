@@ -28,6 +28,10 @@ private:
   uint8_t *mAudioBuffer;
   uint32_t mAudioBufferIdx;
   uint32_t mAudioBufferLen;
+  timeval mNextTime;
+
+  void getTime(timeval *when);
+  void updateNextTime(uint32_t numBytes);
 };
 
 #endif

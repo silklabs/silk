@@ -20,6 +20,11 @@ class ClapDetector extends EventEmitter {
       minEnergyThreshold: 30000,
       minEnergyDurationMs: 70,
       maxEnergyDurationMs: 140,
+
+      // Apply band pass filter using this range. A clap has a lot of energy
+      // in this freq range, filtering out other common sounds that do not.
+      bandFilterLowFreq: 2200,
+      bandFilterHighFreq: 2800,
     };
 
     Object.assign(loudCfg, cfg);

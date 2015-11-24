@@ -187,13 +187,6 @@ adb shell setprop persist.silk.ui.reset.disabled true
 echo Disable SOS vibrate
 adb shell setprop persist.silk.quiet true
 
-TZ_OFFSET=$(date +%z)
-TZ_OFFSET=${TZ_OFFSET:0:3}
-HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)
-
-echo Set device time zone to match host: $HOST_TZ
-adb shell setprop persist.sys.timezone $HOST_TZ
-
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
 
@@ -213,10 +206,6 @@ EOF
 # "Official" demo config
 DISPLAY_NAME="Front Door"
 SERVER_URL="http://192.168.13.100:5000/"
-
-TZ_OFFSET=$(date +%z)
-TZ_OFFSET=${TZ_OFFSET:0:3}
-HOST_TZ=$(date +%Z${TZ_OFFSET}|tr +- -+)
 
 cd $(dirname $0)
 
@@ -242,9 +231,6 @@ echo persist.silk.vidupload.enabled=1 >> default.prop
 
 echo Enable sounds on double clap ze clapper
 echo persist.silk.clapper.sound=true >> default.prop
-
-echo Set device time zone to match host: $HOST_TZ
-echo persist.sys.timezone="${HOST_TZ}" >> default.prop
 
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000

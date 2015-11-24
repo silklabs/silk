@@ -131,6 +131,14 @@ function main() {
       // (usually running as -17) in out of memory situations.
       fs.writeFile('/proc/self/oom_adj', 0);
 
+      // If no time zone is set select Pacific time.  The device currently
+      // doesn't really care what time zone it's in, all operations are done
+      // in UTC.  However using Pacific for local time helps ensure that log
+      // message timestamps are aligned with where most developers are.
+      if (util.getprop('persist.sys.timezone', '').length === 0) {
+        util.setprop('persist.sys.timezone', 'America/Los_Angeles');
+      }
+
       assert(outbox, 'must have outbox when initializing timeline');
       timeline = new Timeline(id.toString(), outbox);
       camera = require('./camera')(timeline);

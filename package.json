@@ -11,9 +11,7 @@
     "log": "git@github.com:silklabs/log.git#master",
     "moment": "^2.10.3",
     "react-native": "^0.12.0",
-    "react-native-button": "^1.2.0",
     "react-native-webpack-server": "0.7.2",
-    "react-timer-mixin": "^0.13.2",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"

@@ -7,10 +7,12 @@
 class VideoSegment: NSObject {
 
   /**
-   * Convert an AnyObject type into VideoSegment this is intended to be
-   * called by a RCTConvert category. Because of it's intended caller this method
-   * makes use of more aggressive casting (JS should return the right values in all cases).
-  */
+   * Create a VideoSegment from JSON data
+   *
+   * This is intended to be called by a RCTConvert category. Because of its
+   * intended caller, this method makes use of more aggressive casting (JS
+   * should return the right values in all cases).
+   */
   class func fromJSON(json: AnyObject) -> VideoSegment! {
     let dict = json as! Dictionary<String, AnyObject>
     let type = dict["type"] as! String

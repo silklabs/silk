@@ -189,7 +189,7 @@ export class EncryptStream extends CryptoStreamBase {
       // Send the message size unencrypted.
       this.push(this._encodeInteger(messageSize));
 
-      log.debug(`Sending random bytes`, random);
+      log.debug(`Sending random bytes '${random.toString('hex')}'`);
 
       // Send the random bytes unencrypted.
       this.push(random);
@@ -284,7 +284,7 @@ export class EncryptStream extends CryptoStreamBase {
     assert(!this._sharedSecret);
     assert(this._bufferedWrites);
 
-    log.debug(`Setting shared secret`, val);
+    log.debug(`Setting shared secret '${val.toString('hex')}'`);
     this._sharedSecret = val;
 
     if (this._pushedPublicKey) {
@@ -399,7 +399,7 @@ export class DecryptStream extends CryptoStreamBase {
       hasher.update(new Buffer(derived));
       this._sharedSecret = hasher.digest();
 
-      log.debug('Got shared secret', this._sharedSecret);
+      log.debug(`Got shared secret '${this._sharedSecret.toString('hex')}'`);
       this.emit(`sharedSecret`, this._sharedSecret);
     }
 
@@ -512,8 +512,7 @@ export class DecryptStream extends CryptoStreamBase {
     this._dataLength -= random.length;
     this._encryptedChunkSize -= random.length;
 
-    log.debug(`Creating decipher with the first ${random.length} bytes`,
-              random);
+    log.debug(`Creating decipher with random bytes '${random.toString('hex')}`);
 
     const decipher =
       crypto.createDecipheriv(CryptoStreamBase.CIPHER_NAME,

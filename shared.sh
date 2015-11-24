@@ -4,7 +4,7 @@
 
 set -o pipefail
 
-if [[ ! -d $SKIP_TOOL_CHECK ]]; then
+if [[ -z $SKIP_TOOL_CHECK ]]; then
   NODE_MODULES_BIN=$(dirname $(readlink -f $0))/node_modules/.bin/
   if [[ ! -d $NODE_MODULES_BIN ]]; then
     echo "$NODE_MODULES_BIN not found, please run |npm install|"

@@ -54,7 +54,6 @@ export default class extends AsyncComponent {
     hasNetwork: true,
     connectionState: 'connecting', // purposely optimistic default state
     socketConnectionState: 'offline',
-    socketUrl: null,
     socket: null,
 
     /**
@@ -131,7 +130,6 @@ export default class extends AsyncComponent {
     this.setStateAsync({
       hasNetwork,
       connectionState: 'connecting',
-      socketUrl: null,
       socket: null,
     });
     this._fetchDevicesPromise = this.fetchDevices();
@@ -139,46 +137,27 @@ export default class extends AsyncComponent {
   };
 
   connectSocketIO() {
-    this.props.api.account.socketioURL()
-      .then(result => this.setSocketUrlAndConnect(result.url))
-      .catch(err => {
-        log.info('Unable to get server socket.io address', err);
-        this.setStateAsync({
-          connectionState: 'offline',
-        });
-      });
-  }
-
-  setSocketUrlAndConnect(socketUrl) {
     let { socket } = this.pendingState;
     if (socket) {
       log.info('Closing old socket');
       socket.off();
       socket.close();
     }
-    log.info('Going to connect to', socketUrl);
     this.setStateAsync({
-      socketUrl,
       socket: null,
       socketConnectionState: 'offline',
     }).then(() => {
-      // XXX: Hack to ensure we make the server happy (remove trailing slash).
-      if (socketUrl[socketUrl.length - 1] === '/') {
-        socketUrl = this.state.socketUrl.slice(0, -1);
-      }
 
-      let socket = new SocketIO(socketIOClient(socketUrl, {
-        autoConnect: true,
+      let {api} = this.props;
+      let socket = new SocketIO(api.socketioClient(socketIOClient, 'account', {
         forceNew: true,
-        transports: ['websocket'],
       }));
-
+      socket.open();
       this.setStateAsync({
         socket,
         socketConnectionState: socket.connected ? 'connected' : 'connecting',
       });
       if (!socket.connected) {
-        log.info('Connecting to ...', socketUrl);
         socket.on('connect', () => {
           log.info(' ... connected');
           this.setStateAsync({

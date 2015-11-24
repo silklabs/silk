@@ -8,15 +8,11 @@ import {
 
 class NativeBlob {
   constructor(data) {
-    this.data = data;
+    Object.assign(this, data);
   }
 
   release() {
-    NativeModules.BlobBridge.release(this.data.id);
-  }
-
-  toJSON() {
-    return this.data;
+    NativeModules.BlobBridge.release(this.id);
   }
 }
 

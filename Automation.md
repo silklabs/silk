@@ -43,7 +43,6 @@ The nightly repocache builds are visible at https://magnum.travis-ci.com/silklab
   * Add 'Heroku Scheduler'
   * Configure the scheduler to run `npm run next2master` every hour
   * Configure the scheduler to run `npm run triggerbuilds` every day
-  * Configure the scheduler to run `./update-stooge-forks.sh` every hour
 
 ### Github WebHook
 

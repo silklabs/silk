@@ -8,8 +8,8 @@
  */
 
 #import "RCTBridgeModule.h"
-#import "RCTWebSocketManager.h"
+#import "RCTWebSocketModule.h"
 #import "Silk-Swift.h"
 
-@interface AppRCTWebSocketManager : RCTWebSocketManager
+@interface AppRCTWebSocketModule : RCTWebSocketModule
 @end

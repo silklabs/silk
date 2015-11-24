@@ -8,12 +8,12 @@
  */
 
 #import "RCTSRWebSocket.h"
-#import "RCTWebSocketManager.h"
-#import "AppRCTWebSocketManager.h"
+#import "RCTWebSocketModule.h"
+#import "AppRCTWebSocketModule.h"
 
-@implementation AppRCTWebSocketManager
+@implementation AppRCTWebSocketModule
 
-RCT_EXPORT_MODULE(AppWebSocketManager)
+RCT_EXPORT_MODULE(AppWebSocketModule)
 
 
 RCT_EXTERN_METHOD(connect:(NSURL *)URL socketID:(nonnull NSNumber *)socketID)

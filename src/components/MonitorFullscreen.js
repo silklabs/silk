@@ -2,7 +2,6 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-import TimerMixin from 'react-timer-mixin';
 import uuid from 'uuid';
 import createLog from 'log';
 
@@ -147,7 +146,6 @@ class LiveSegmentProvider {
 }
 
 export default React.createClass({
-  mixins: [TimerMixin],
 
   /**
    * Used to hold the promise of a pending seek operation.

@@ -1,5 +1,4 @@
 import React from 'react-native';
-import TimerMixin from 'react-timer-mixin';
 import moment from 'moment';
 
 import Config from '../libraries/Config';
@@ -13,7 +12,6 @@ let {
 } = React;
 
 export default React.createClass({
-  mixins: [TimerMixin],
 
   getInitialState() {
     return {
@@ -62,6 +60,11 @@ export default React.createClass({
 
   _seeking: false,
   _lastChangeEventValue: null,
+  _seekChangeTimeout: null,
+
+  componentWillUnmount() {
+    clearTimeout(this._seekChangeTimeout);
+  },
 
   formatUTCTime(time) {
     return moment(new Date(time)).format(
@@ -101,8 +104,8 @@ export default React.createClass({
     let absoluteValue = this.dayStart().valueOf() + (value * 1000);
     this.setState({ seekTime: absoluteValue });
 
-    this.clearTimeout(this._seekChangeTimeout);
-    this._seekChangeTimeout = this.setTimeout(
+    clearTimeout(this._seekChangeTimeout);
+    this._seekChangeTimeout = setTimeout(
       this.onSeekChange,
       this.props.seekChangeThreshold
     );
@@ -115,7 +118,7 @@ export default React.createClass({
 
   onSeekEnd() {
     // Do not emit any seek change events after we are done seeking.
-    this.clearTimeout(this._seekChangeTimeout);
+    clearTimeout(this._seekChangeTimeout);
     // Ensure it is called once last time.
     this.onSeekChange();
 

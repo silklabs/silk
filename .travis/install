@@ -9,10 +9,11 @@ install_xctool()
 
 install_npm()
 {
-  brew reinstall npm nvm watchman
+  brew reinstall npm nvm
   export NVM_DIR="$PWD/.nvm"
   source $(brew --prefix nvm)/nvm.sh
-  nvm install 4
+  nvm install 4.2
+
   npm config set spin=false
   npm install
 }

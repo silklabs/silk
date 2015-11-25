@@ -49,6 +49,7 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
+  registeredDevices = [ ];
 
   constructor(api) {
     super();
@@ -125,8 +126,11 @@ export class UserState extends EventEmitter {
     log.debug(`Stop advertising all BLE beacons.`);
     BLESocketManager.removeAllBeaconUuids();
 
-    log.debug(`Remove access token from disk storage.`);
-    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+    log.debug(`Remove access token and registered devices from disk storage.`);
+    await Promise.all([
+      AsyncStorage.removeItem(ACCESS_TOKEN_KEY),
+      AsyncStorage.removeItem(REGISTERED_DEVICES_KEY),
+    ]);
     this.emit('unauthenticated');
   }
 
@@ -262,22 +266,19 @@ export class UserState extends EventEmitter {
   async updateRegisteredDevices(deviceRecords) {
     assert(this.accessToken, `Must be signed in`);
 
-    let publicKeys = [ ]
+    let storedRecords = deviceRecords.map((record) => {
+      return {
+        publicKey: record.publicKey,
+      };
+    });
 
-    if (deviceRecords && deviceRecords.size) {
-      for (let record of deviceRecords.values()) {
-        publicKeys.push(record.publicKey);
-      }
-      await AsyncStorage.setItem(REGISTERED_DEVICES_KEY,
-                                 JSON.stringify(publicKeys));
-    } else {
-      await AsyncStorage.removeItem(REGISTERED_DEVICES_KEY);
-    }
+    await AsyncStorage.setItem(REGISTERED_DEVICES_KEY,
+                               JSON.stringify(storedRecords));
 
-    log.info(`Registered devices updated`, publicKeys);
+    log.info(`Registered devices updated`, storedRecords);
 
-    this.registeredDevices = publicKeys;
-    this.emit(`registered-devices-updated`, publicKeys);
+    this.registeredDevices = storedRecords;
+    this.emit(`registered-devices-updated`, storedRecords);
   }
 }
 

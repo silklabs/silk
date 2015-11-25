@@ -9,6 +9,7 @@ import * as Joi from 'joi-browserify';
 import mklog from 'log';
 import SocketSession from './SocketSession';
 
+import type { DeviceRecord } from '../../components/Records';
 import type { Socket, SocketManager } from './SocketManager';
 import type { UserState } from '../UserState';
 
@@ -562,8 +563,8 @@ class DeviceManager extends EventEmitter {
 
   _devices: Map<Socket, DeviceSession> = new Map();
   _socketManager: SocketManager;
-  _privateKey: String = ``;
-  _registeredDevicePublicKeys: Array<String> = [ ];
+  _privateKey: string = ``;
+  _registeredDevicePublicKeys: Array<string> = [ ];
 
   constructor(userState: UserState) {
     log.debug(`DeviceManager()`);
@@ -582,10 +583,8 @@ class DeviceManager extends EventEmitter {
 
     this._privateKey = accessToken.priv;
 
-    this._registeredDevicePublicKeys = userState.registeredDevices;
-    userState.on(`registered-devices-updated`, (publicKeys) => {
-      this._registeredDevicePublicKeys = publicKeys;
-    });
+    userState.on(`registered-devices-updated`, this._onRegisteredUpdatedDevices);
+    this._onRegisteredUpdatedDevices(userState.registeredDevices);
   }
 
   _onConnect: ((socket: Socket) => void) = (socket) => {
@@ -597,7 +596,7 @@ class DeviceManager extends EventEmitter {
     this._devices.set(socket, device);
   };
 
-  _onDisconnect: ((socket: Socket) => void) = socket => {
+  _onDisconnect: ((socket: Socket) => void) = (socket) => {
     log.debug(`DeviceManager._onDisconnect()`);
 
     let device = this._devices.get(socket);
@@ -606,8 +605,16 @@ class DeviceManager extends EventEmitter {
     }
     this._devices.delete(socket);
   };
-}
 
+  _onRegisteredUpdatedDevices: ((deviceRecords: Array<DeviceRecord>) => void) = (deviceRecords) => {
+    log.debug(`DeviceManager._onRegisteredUpdatedDevices()`);
+
+    assert(Array.isArray(deviceRecords));
+
+    this._registeredDevicePublicKeys =
+      deviceRecords.map((deviceRecord) => deviceRecord.publicKey);
+  };
+}
 
 export default function getDeviceManager(userState: UserState): EventEmitter {
   if (!singletonInstance) {

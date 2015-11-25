@@ -258,9 +258,8 @@ export default class extends AsyncComponent {
     }
 
     let immutableDevices = newDevices.asImmutable();
-    await this.props.userState.updateRegisteredDevices(immutableDevices);
-
     this.setStateAsync({devices: immutableDevices});
+    await this.props.userState.updateRegisteredDevices(immutableDevices.toArray());
   }
 
   onVideoStreamNew = async (msg) => {

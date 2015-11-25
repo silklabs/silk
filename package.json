@@ -6,7 +6,7 @@
     "debug": "^2.2.0",
     "events": "^1.0.2",
     "immutable": "^3.7.5",
-    "joi-browserify": "^0.0.2",
+    "joi-browserify": "git@github.com:fhemberger/joi-browserify.git#v0.0.2",
     "lodash.merge": "^3.3.2",
     "log": "git@github.com:silklabs/log.git#next",
     "moment": "^2.10.3",

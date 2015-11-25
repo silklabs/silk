@@ -1,0 +1,41 @@
+#!/system/bin/sh
+#
+# Copyright (c) 2015 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+#
+# Wrapper to run debug tools on services that cannot be launched from
+# adb shell.
+#
+
+# Get the service executable name
+SERVICE=${1/*\//}
+
+info() {
+  log -p i -t silk-debug-wrapper $@
+}
+
+VALGRIND=
+VALGRIND_ARGS=
+VALGRIND_SERVICES=$(getprop persist.silk.valgrind)
+if [ "$VALGRIND_SERVICES" != "" ]; then
+  # Replace ',' with ' ' to iterate more easily around list
+  SERVICES=${VALGRIND_SERVICES/,/ }
+
+  for name in $SERVICES; do
+    if [ "$name" == "$SERVICE" ]; then
+      info "Enabling valgrind for $name"
+      VALGRIND=valgrind
+      VALGRIND_ARGS=$(getprop persist.silk.valgrind.args)
+      break;
+    fi
+  done
+fi
+
+export LOGWRAPPER=
+if [ $PPID -eq 1 ]; then
+  LOGWRAPPER="logwrapper"
+fi
+
+$LOGWRAPPER $VALGRIND $VALGRIND_ARGS $@
+exit 1

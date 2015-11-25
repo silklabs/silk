@@ -71,6 +71,7 @@ SILK_INIT := \
   silk-kmsg \
   silk-service \
   silk-dashboard \
+  silk-debug-wrapper \
 
 SILK_GONK_PROGIES := \
   bledroid \

@@ -8,24 +8,27 @@
 
 [[ -n $HEROKU_PRIVATE_KEY ]] || exit 0
 
-if [[ -d ~/.ssh ]]; then
-  echo Failsafe! ~/.ssh is not expected to exist in the Heroku environment
+if [[ ~ != /app ]]; then
+  echo Failsafe! This does not look like the Heroku environment
   exit 1
 fi
 
 echo Using HEROKU_PRIVATE_KEY
 
 set -e
-mkdir -p ~/.ssh
+mkdir -p /app/.ssh
 
-echo "$HEROKU_PRIVATE_KEY" > ~/.ssh/heroku_private_key
+echo "$HEROKU_PRIVATE_KEY" > /app/.ssh/heroku_private_key
 
-cat >> ~/.ssh/config <<-EOF
+cat >> /app/.ssh/config <<-EOF
 
 Host *
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/heroku_private_key
+  IdentityFile /app/.ssh/heroku_private_key
 EOF
 
-chmod 0700 ~/.ssh
-chmod 0600 ~/.ssh/*
+chmod 0700 /app/.ssh
+chmod 0600 /app/.ssh/*
+
+git config --global user.email "shipit@silklabs.com"
+git config --global user.name "Release Engineering"

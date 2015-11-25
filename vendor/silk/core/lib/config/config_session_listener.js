@@ -154,6 +154,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
     log.debug(`ConfigSessionListener._onConnect()`);
     assert(this._state === ConfigSessionListener.STATE_IDLE);
 
+    socketSession.allowUnauthenticated();
+
     super._onConnect(socketSession);
 
     this._sendRegister();

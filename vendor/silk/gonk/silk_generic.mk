@@ -112,6 +112,11 @@ PRODUCT_PACKAGES += \
   kissfft \
   v8-profiler \
 
+# packages for debug builds
+ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
+PRODUCT_PACKAGES += valgrind
+endif
+
 # include platform-specific silk makefile, if exists
 -include gonk/${GONK}/silk_${GONK}.mk
 

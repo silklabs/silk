@@ -11,13 +11,12 @@ import { ClientStream } from './stream';
 import { createStreams, RssiSmoother } from 'silk-api';
 import makeLog from '../log';
 
-const streams = createStreams();
 const {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
   HeartbeatDuplexStream,
   MessagePackDuplexStream,
-} = streams;
+} = createStreams();
 
 const log = makeLog(`btle-socketsession`);
 

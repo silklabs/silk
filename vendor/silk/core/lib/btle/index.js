@@ -79,13 +79,8 @@ class BluetoothLE extends EventEmitter {
   set publicKeys(val) {
     assert(val === null || Array.isArray(val));
 
-    if (val) {
-      for (let publicKey of val) {
-        assert(typeof publicKey === `string`);
-      }
-    } else {
-      val = [ ];
-    }
+    val = val || [];
+    val.forEach((publicKey) => assert(typeof publicKey === `string`));
 
     this._publicKeys = val;
   }

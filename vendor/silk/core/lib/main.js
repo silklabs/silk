@@ -9,15 +9,26 @@
 import ui from './ui';
 ui.goto('bootanimation');
 
+import createLog from './log';
+const log = createLog('main');
+
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
 let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
+{
+  // Force the source maps into memory right away. It typically takes ~5
+  // seconds to load the source maps and unfortunately asynchronous loading is
+  // not currently supported by the source map library.  Taking the hit now
+  // avoids an unpredictable delay the first time an exception is thrown.
+  log.verbose('Warming up source maps');
+  (new Error()).stack; // Trigger a call to Error.prepareStackTrace
+  log.verbose('Source maps ready');
+}
 
 import assert from 'assert';
 import api from './api';
 import battery from './battery';
-import createLog from './log';
 
 import wifi from './wifi';
 import ntp from './ntp';
@@ -40,7 +51,6 @@ import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
 
-const log = createLog('main');
 // Start the profile server ASAP.
 initProfiler();
 

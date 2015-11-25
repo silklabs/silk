@@ -32,9 +32,9 @@ RealLog(Nan::NAN_METHOD_ARGS_TYPE info, android_LogPriority priority)
       return Nan::ThrowTypeError("Argument 2 failed to convert to string");
     }
 
-    __android_log_print(priority, *arg0, *arg1);
+    __android_log_write(priority, *arg0, *arg1);
   } else {
-    __android_log_print(priority, "node", *arg0);
+    __android_log_write(priority, "node", *arg0);
   }
 
   return;

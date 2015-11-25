@@ -29,19 +29,18 @@
 // By default all info(), warn(), and error() output is enabled. All debug()
 // output is disabled.
 export default function createLog(libraryName) {
-  let debug = require('debug');
-  let os = require('os');
+  const debug = require('debug');
+  const os = require('os');
 
   function formatArgs() {
     let args = arguments;
-    let name = this.namespace;
-    let diff = debug.humanize(this.diff);
+    const diff = debug.humanize(this.diff);
 
     if (this.useColors) {
-      let color = this.color;
-      args[0] = `\u001b[3${color}m${name} (+${diff}) ${args[0]}\u001b[0m `;
+      args[0] = `\u001b[3${this.color}m(+${diff}) ${args[0]}`;
+      args[args.length-1] += '\u001b[0m';
     } else {
-      args[0] = `${name} (+${diff}) ` + args[0];
+      args[0] = `(+${diff}) ` + args[0];
     }
 
     return args;
@@ -51,41 +50,31 @@ export default function createLog(libraryName) {
 
   libraryName = 'silk-' + libraryName;
 
-  // This matches |libraryName| to remove it from the output in logcat. It also
-  // matches the ANSI color codes that the |debug| module may insert
-  // (e.g. '\u001b[31;1m').
-  let libraryNameRegExp =
-    new RegExp('^(\\u001b\\[3\\dm)?' +
-               libraryName +
-               ':\\w+(\\u001b\\[0m)?\\s+(.*)');
-
   function makeLogFunction(consoleFuncName, alogFuncName = consoleFuncName) {
     let func;
-    let prefix = `${libraryName}:${alogFuncName}`;
+    const prefix = `${libraryName}:${alogFuncName}`;
+    const consoleFunc = console[consoleFuncName]; // eslint-disable-line
     if (os.platform() === 'android') {
       const alog = require('silk-alog');
       const util = require('util');
+      const alogFunc = alog[alogFuncName];
 
       func = debug(prefix);
       func.log = function() {
         let args = arguments;
 
         if (!process.env.LOGWRAPPER) {
-          let consoleFunc = console[consoleFuncName]; // eslint-disable-line
-          consoleFunc.apply(consoleFunc, args);
+          consoleFunc.apply(consoleFunc, [prefix, ':', ...args]);
         }
 
         // Mimic console.* functions by treating additional arguments as
         // printf-style arguments.
-        let msg = util.format.apply(this, args);
-        let alogFunc = alog[alogFuncName];
-        alogFunc(libraryName, msg.replace(libraryNameRegExp, '$1$3$2'));
+        const msg = util.format.apply(this, args);
+        alogFunc(libraryName, msg);
       };
     } else {
       func = function(...args) {
-        let consoleFunc = console[consoleFuncName]; // eslint-disable-line
-        consoleFunc.apply(consoleFunc,
-            [prefix, ':'].concat(args));
+        consoleFunc.apply(consoleFunc, [prefix, ':'].concat(args));
       };
     }
     return func;

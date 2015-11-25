@@ -29,7 +29,7 @@ service volume /system/silk/bin/volume
     group audio
     oneshot
 
-service wpad /system/silk/bin/wpad
+service wpad /system/silk/bin/debug-wrapper /system/silk/bin/wpad
     class main
     user root
     group root
@@ -37,20 +37,20 @@ service wpad /system/silk/bin/wpad
     # driver, which requires root
     socket wpad stream 0600 root root
 
-service bledroid /system/silk/bin/bledroid
+service bledroid /system/silk/bin/debug-wrapper /system/silk/bin/bledroid
     class main
     user root
     group root
     # bledroid will switch to the bluetooth user
     socket bledroid stream 0600 root root
 
-service silk-sensors /system/silk/bin/silk-sensors
+service silk-sensors /system/silk/bin/debug-wrapper /system/silk/bin/silk-sensors
     class main
     user root
     group root
     socket sensors stream 0600 root root
 
-service capture /system/silk/bin/capture
+service capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
     class main
     user graphics
     group camera

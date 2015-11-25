@@ -266,6 +266,7 @@ export default class extends AsyncComponent {
 
     let deviceId = msg.id;
     log.info('New video stream', msg.name, deviceId);
+    log.debug('Full device message', msg);
     let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
@@ -312,10 +313,10 @@ export default class extends AsyncComponent {
 
     // Existing record from the server. Supplement it with info from device.
     devices = devices.setIn([deviceId, 'haveVideoStream'], true);
-    if (!deviceRecord.has('previewSize')) {
+    if (!deviceRecord.previewSize) {
       devices = devices.setIn([deviceId, 'previewSize'], msg.previewSize);
     }
-    if (!deviceRecord.has('logo')) {
+    if (!deviceRecord.logo) {
       devices = devices.setIn([deviceId, 'logo'], msg.logo);
     }
     if (devices !== this.pendingState.devices) {

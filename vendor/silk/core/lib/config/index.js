@@ -217,6 +217,8 @@ class DeviceConfig extends EventEmitter {
     this._socketSessionListener.disconnect();
     this._socketSessionListener = null;
 
+    this._btle.publicKeys = [ this._config.registrarPublicKey ];
+
     server.addListener(`connect`, this._onServerConnect);
     server.addListener(`disconnect`, this._onServerDisconnect);
 
@@ -326,8 +328,10 @@ class DeviceConfig extends EventEmitter {
     this._btle.beaconInfo = this._getBeaconInfo();
 
     if (this._config && this._config.success) {
+      this._btle.publicKeys = [ this._config.registrarPublicKey ];
 
       this._setApiServerUrl();
+
       this._socketSessionListener = new NormalSessionListener(this);
       this._btle.socketSessionListener = this._socketSessionListener;
 
@@ -401,6 +405,7 @@ class DeviceConfig extends EventEmitter {
     assert(beaconInfo === DeviceConfig.CONFIG_BEACON_INFO);
 
     this._btle.beaconInfo = beaconInfo;
+    this._btle.publicKeys = null;
 
     this._socketSessionListener = new ConfigSessionListener(this);
     this._btle.socketSessionListener = this._socketSessionListener;

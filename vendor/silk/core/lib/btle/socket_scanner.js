@@ -21,6 +21,8 @@ const DEFAULT_CONNECTION_RETRY_TIMEOUT_MS = 1000;
 export default class SocketScanner extends EventEmitter {
 
   _noble = null;
+  _privateKey = ``;
+  _publicKeys = [ ];
   _localName = DEFAULT_LOCALNAME;
   _serviceUuid = BTLE_SOCKET_UUIDS.service;
   _enabled = false;
@@ -33,13 +35,20 @@ export default class SocketScanner extends EventEmitter {
   _connectionQueue = [];
   _connectionMap = new Map();
 
-  constructor(noble, options = { }) {
-    log.debug(`SocketScanner(%j)`);
+  constructor(noble, privateKey, options = { }) {
+    log.debug(`SocketScanner()`);
+
+    assert(noble);
+    assert(privateKey);
 
     super();
 
     this._noble = noble;
+    this._privateKey = privateKey;
 
+    if (`publicKeys` in options) {
+      this._publicKeys = options.publicKeys;
+    }
     if (`serviceUuid` in options) {
       this._serviceUuid = options.serviceUuid;
     }
@@ -274,7 +283,7 @@ export default class SocketScanner extends EventEmitter {
       // to stop, so make sure it's still connected.
       if (peripheral.state === `connected`) {
         // Make sure we restart scanning when the session ends.
-        const session = new SocketSession(this, peripheral, this._serviceUuid);
+        const session = new SocketSession(this, peripheral);
         session.once(`close`, async () => {
           log.debug(`Session closed`);
           if (this._enabled) {

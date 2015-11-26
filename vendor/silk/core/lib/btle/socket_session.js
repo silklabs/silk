@@ -11,27 +11,27 @@ import { ClientStream } from './stream';
 import { createStreams, RssiSmoother } from 'silk-api';
 import makeLog from '../log';
 
-const streams = createStreams();
-const { CryptoDuplexStream, MessagePackDuplexStream } = streams;
+const {
+  AuthenticateDuplexStream,
+  CryptoDuplexStream,
+  HeartbeatDuplexStream,
+  MessagePackDuplexStream,
+} = createStreams();
 
 const log = makeLog(`btle-socketsession`);
 
-export default class SocketSession extends MessagePackDuplexStream {
+export default class SocketSession extends AuthenticateDuplexStream {
 
   static RSSI_UPDATE_TIMEOUT = 50;
 
   _scanner = null;
   _peripheral = null;
-  _socketStream = null;
 
   // Set to true after the 'end' event has been emitted.
   _ended = false;
   // Set to true when |end()| is called.
   _ending = false;
-  // Set to true when the underlying stream is finished and the socket stream
-  // has finished.
-  _finishAllowed = false;
-  // Set to true when the 'finish' event is emitted.
+  // Set to true after the socket stream has finished.
   _finished = false;
   // Set to true after the peripheral has been disconnected.
   _peripheralDisconnected = false;
@@ -44,13 +44,29 @@ export default class SocketSession extends MessagePackDuplexStream {
   _rssiValue = 0;
   _rssiTimeout = null;
 
-  constructor(scanner, peripheral, serviceUuid) {
+  constructor(scanner, peripheral) {
     log.debug(`SocketSession()`);
 
-    const socketStream = new ClientStream(peripheral, serviceUuid);
+    const socketStream = new ClientStream(peripheral, scanner._serviceUuid);
     const cryptoStream = new CryptoDuplexStream(socketStream);
 
-    super(cryptoStream, { autoClose: false });
+    const msgpackStream = new MessagePackDuplexStream(cryptoStream);
+    msgpackStream.on(`data`, (data) => {
+      log.verbose(`Received`, data);
+    });
+    const oldWrite = msgpackStream._write;
+    msgpackStream._write = (data, encoding, callback) => {
+      log.verbose(`Sending`, data);
+      oldWrite.call(msgpackStream, data, encoding, callback);
+    };
+
+    const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
+
+    super(heartbeatStream,
+          cryptoStream,
+          scanner._privateKey,
+          scanner._publicKeys,
+          { autoClose: false });
 
     this._scanner = scanner;
 
@@ -58,12 +74,21 @@ export default class SocketSession extends MessagePackDuplexStream {
     peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
     this._peripheral = peripheral;
 
-    this._socketStream = socketStream;
+    socketStream.on(`finish`, this._onFinish);
 
     this._rssiSmoother.update(peripheral.rssi);
 
     this.once(`end`, this._onEnd);
-    this.once(`finish`, this._onFinish);
+
+    heartbeatStream.once(`data`, () => {
+      heartbeatStream.addListener(`flatline`, this._onFlatline);
+      heartbeatStream.monitorHeartbeats = true;
+
+      // Waiting to unpack entire messages can take longer than we would like
+      // sometimes so reset the monitor whenever the bluetooth stream receives
+      // data.
+      socketStream.addListener(`data`, () => heartbeatStream.resetMonitor());
+    });
   }
 
   _onPeripheralRssiUpdate = rssi => {
@@ -92,7 +117,23 @@ export default class SocketSession extends MessagePackDuplexStream {
   _onPeripheralDisconnect = () => {
     log.debug(`SocketSession._onPeripheralDisconnect()`);
 
+    assert(!this._peripheralDisconnected);
+
+    this._peripheralDisconnected = true;
+
+    this._peripheral.removeListener(`disconnect`, this._onPeripheralDisconnect);
+
     this._killRssiUpdates();
+    this._maybeEmitClose();
+  };
+
+  _onFlatline = () => {
+    log.debug(`SocketSession._onFlatline()`);
+
+    const error = new Error(`Failed to receive heartbeat message in expected ` +
+                            `time`);
+    log.warn(error);
+    this.emit(`error`, error);
   };
 
   _onEnd = () => {
@@ -109,33 +150,34 @@ export default class SocketSession extends MessagePackDuplexStream {
   _onFinish = () => {
     log.debug(`SocketSession._onFinish()`);
 
-    assert(this._finishAllowed);
     assert(!this._finished);
     assert(!this._rssiUpdatesEnabled);
 
     this._finished = true;
 
-    if (this._peripheral.state === `disconnected`) {
-      this._peripheralDisconnected = true;
-      this._maybeEmitClose();
-      return;
-    }
-
-    this._peripheral.once(`disconnect`, () => {
-      this._peripheralDisconnected = true;
-      this._maybeEmitClose();
-    });
-
-    this._peripheral.disconnect();
+    this._maybeEmitClose();
   }
 
   _maybeEmitClose() {
-    log.debug(`SocketSession._maybeEmitClose()`);
+    log.debug(`SocketSession._maybeEmitClose()`,
+      {
+        ended: this._ended,
+        finished: this._finished,
+        disconnected: this._peripheralDisconnected,
+        closed: this._closed,
+      }
+    );
 
     if (!this._closed &&
         this._ended &&
-        this._finished &&
-        this._peripheralDisconnected) {
+        this._finished) {
+      if (!this._peripheralDisconnected) {
+        log.debug(`Stream is finished and ended, disconnecting peripheral`);
+        this._peripheral.disconnect();
+        return;
+      }
+
+      log.debug(`Stream is closed`);
       this._closed = true;
       this.emit(`close`);
     }
@@ -146,7 +188,6 @@ export default class SocketSession extends MessagePackDuplexStream {
 
     this.rssiUpdatesEnabled = false;
     this._peripheral.removeListener(`rssiUpdate`, this._onPeripheralRssiUpdate);
-    this._peripheral.removeListener(`disconnect`, this._onPeripheralDisconnect);
   }
 
   _updateRssiAfterDelay() {
@@ -179,31 +220,8 @@ export default class SocketSession extends MessagePackDuplexStream {
     return super.end(chunk, encoding, callback);
   }
 
-  emit(eventName, ...args) {
-    const finishEventName = `finish`;
-
-    // Hook the 'finish' event so that we can properly disconnect our peripheral
-    // before emitting the event.
-    if (eventName !== finishEventName || this._finishAllowed) {
-      return super.emit(eventName, ...args);
-    }
-
-    log.debug(`SocketSession finished, ending socket stream`);
-
-    assert(this._ending);
-    assert(!this._finishAllowed);
-
-    this._socketStream.once(finishEventName, () => {
-      assert(!this._finishAllowed);
-      assert(!this._finished);
-
-      // Allow the finish event to be emitted.
-      this._finishAllowed = true;
-
-      this.emit(finishEventName);
-    });
-
-    this._socketStream.end();
+  get scanner() {
+    return this._scanner;
   }
 
   get connected() {

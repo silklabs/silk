@@ -162,9 +162,17 @@ suite('account auth', () => {
 
   suite('password reset', function() {
 
+    if (!process.env.AWS_ACCESS_KEY_ID) {
+      test.skip('Reset tests require AWS_ACCESS_KEY_ID env set');
+      return;
+    }
+
     let account;
     setup(async () => {
-      account = await context.testAccount();
+      account = await context.testAccount({
+        // Required so SES will pass...
+        email: 'success@simulator.amazonses.com'
+      });
       account.api.accessToken = account.api.id.create();
     });
 

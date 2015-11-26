@@ -9,9 +9,9 @@ import uuid from 'uuid';
 import AccessToken from '../../api/id';
 
 /**
- * Password reset expires in 24 hours...
+ * Password reset expires in 4 hours...
  */
-const PASSWORD_RESET_EXPIRES_MS = (1000 * 60 * 60) * 24;
+const PASSWORD_RESET_EXPIRES_MS = (1000 * 60 * 60) * 4;
 
 const EMAIL = Joi.string().trim().email().lowercase().required();
 const PASSWORD_HASH = Joi.string().required().min(64).max(256);
@@ -192,7 +192,7 @@ export default class Accounts extends Base {
 
     usePasswordResetToken: Joi.object().keys({
       email: EMAIL,
-      token: Joi.string().required(),
+      token: Joi.string().hex().required(),
       passwordHash: PASSWORD_HASH,
     }).required(),
   };
@@ -464,7 +464,7 @@ export default class Accounts extends Base {
      * an attacker to guess or craft the token.
      */
     let accessToken = AccessToken.create();
-    let secret = uuid.v1();
+    let secret = uuid.v4();
 
     let created = new Date();
     let expires = created.valueOf() + PASSWORD_RESET_EXPIRES_MS;

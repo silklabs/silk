@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
+import URL from 'url';
 
 import Accounts from '../models/accounts';
 
@@ -160,7 +161,22 @@ export default function (ctx) {
       res.sendStatus(404);
       return;
     }
-    // TODO: Send email...
+
+    let baseUrl = ctx.config.resetPassword.url;
+    let parsed = URL.parse(baseUrl, true);
+    parsed.query = parsed.query || {};
+    delete parsed.search;
+
+    parsed.query.token = reset.token;
+    parsed.query.email = req.body.email;
+
+    let passwordResetUrl = URL.format(parsed);
+
+    await ctx.emailSender.resetPassword({
+      email: req.body.email,
+      url: passwordResetUrl,
+    });
+
     res.respond({ success: true });
   });
 
@@ -177,7 +193,7 @@ export default function (ctx) {
   }, async (req, res) => {
     let result = await ctx.accounts.usePasswordResetToken(req.body);
     if (result.error) {
-      log.warn(`Failed to use password reset token`, reset.error);
+      log.warn(`Failed to use password reset token`, result.error);
       res.sendStatus(401);
       return;
     }

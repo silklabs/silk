@@ -335,7 +335,9 @@ export default class extends AsyncComponent {
       return;
     }
     log.info('Deleting video stream', deviceId);
-    this.setStateAsync({devices: devices.delete(deviceId)});
+    this.setStateAsync({
+      devices: devices.setIn([deviceId, 'haveVideoStream'], false),
+    });
   };
 
   // Book keeping for unconfigured devices detected via BLE

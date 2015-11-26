@@ -143,19 +143,27 @@ class MonitorsView extends AsyncComponent {
       return this._renderNoDevices();
     }
 
+    let { fullscreenDeviceId, eventsLoading, eventsError } = this.state;
+
     let errorBar = null;
-    if (this.props.hasNetwork && this.state.eventsError) {
+    if (this.props.hasNetwork && eventsError) {
       // Show an error bar if we couldn't fetch activity despite
       // having a network connection.
+      let description = 'Could not fetch recent activity.';
+      if (__DEV__) {
+        if (eventsError.status) {
+          description = `Server responded with HTTP status ${eventsError.status}`;
+        } else if (eventsError.message) {
+          description = eventsError.message;
+        }
+      }
       errorBar = (
         <ErrorBar
           heading="Something Went Wrong"
-          description="Could not fetch recent activity."
+          description={description}
         />
       );
     }
-
-    let { fullscreenDeviceId, eventsLoading} = this.state;
 
     let fullscreenMonitor = null;
     if (fullscreenDeviceId) {

@@ -372,7 +372,7 @@ export default class Accounts extends Base {
 
     if (update.n !== 1) {
       throw new Error(
-        `checkPassword update failed for unknown reasons: ${
+        `signIn update failed for unknown reasons: ${
             JSON.stringify(update)
           }`
       );

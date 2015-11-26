@@ -1,0 +1,154 @@
+From 0a1aee5a2d6b49e918c54e155de04ce31701d5e6 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Wed, 25 Nov 2015 18:52:51 -0800
+Subject: [PATCH] Make valgrind build all valgrind products
+
+---
+ main/Android.mk | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/main/Android.mk b/main/Android.mk
+index 11abb96..8be7ee9 100644
+--- a/main/Android.mk
++++ b/main/Android.mk
+@@ -14,6 +14,9 @@
+ 
+ LOCAL_PATH:= $(call my-dir)
+ 
++# Keep list of all valgrind products
++VG_ALL :=
++
+ ANDROID_HARDWARE := ANDROID_HARDWARE_generic
+ 
+ ifneq ($(filter arm arm64 x86,$(TARGET_ARCH)),)
+@@ -141,6 +144,7 @@ vg_local_src_files := \
+ 
+ vg_local_target := STATIC_LIBRARY
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build libcoregrind-$(TARGET_ARCH)-linux.a
+ vg_local_module := libcoregrind
+@@ -289,6 +293,7 @@ vg_local_ldflags := $(vex_ldflags)
+ vg_local_cflags := $(common_cflags)
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build libreplacemalloc_toolpreload-$(TARGET_ARCH)-linux.a
+ vg_local_module := libreplacemalloc_toolpreload
+@@ -302,6 +307,7 @@ vg_local_ldflags := $(preload_ldflags)
+ vg_local_cflags := $(common_cflags)
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build vgpreload_core-$(TARGET_ARCH)-linux.so
+ vg_local_module := vgpreload_core
+@@ -321,6 +327,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_arch_cflags := $(target_arch_cflags)
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build memcheck-$(TARGET_ARCH)-linux
+ vg_local_module := memcheck
+@@ -342,6 +349,7 @@ vg_local_without_system_shared_libraries := true
+ vg_local_no_crt := true
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build vgpreload_memcheck-$(TARGET_ARCH)-linux.so
+ vg_local_module := vgpreload_memcheck
+@@ -357,6 +365,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_whole_static_libraries := libreplacemalloc_toolpreload
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ #LOCAL_STRIP_MODULE := false
+ #vg_local_no_crt := true
+@@ -380,6 +389,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_static_libraries := libcoregrind libvex
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ #LOCAL_FORCE_STATIC_EXECUTABLE := true
+ 
+@@ -413,6 +423,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_static_libraries := libcoregrind libvex
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ #LOCAL_FORCE_STATIC_EXECUTABLE := true
+ 
+@@ -436,6 +447,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_static_libraries := libcoregrind libvex
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ #LOCAL_FORCE_STATIC_EXECUTABLE := true
+ 
+@@ -456,6 +468,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_whole_static_libraries := libreplacemalloc_toolpreload
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build drd-$(TARGET_ARCH)-linux
+ vg_local_module := drd
+@@ -487,6 +500,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_static_libraries := libcoregrind libvex
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build vgpreload_drd-$(TARGET_ARCH)-linux.so
+ vg_local_module := vgpreload_drd
+@@ -507,6 +521,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_whole_static_libraries := libreplacemalloc_toolpreload
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build massif-$(TARGET_ARCH)-linux
+ vg_local_module := massif
+@@ -525,6 +540,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_static_libraries := libcoregrind libvex
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build vgpreload_massif-$(TARGET_ARCH)-linux.so
+ vg_local_module := vgpreload_massif
+@@ -542,6 +558,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_whole_static_libraries := libreplacemalloc_toolpreload
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build none-$(TARGET_ARCH)-linux
+ vg_local_module := none
+@@ -560,6 +577,7 @@ vg_local_cflags := $(common_cflags)
+ vg_local_static_libraries := libcoregrind libvex
+ 
+ include $(LOCAL_PATH)/Android.build_all.mk
++VG_ALL += $(LOCAL_MODULE)
+ 
+ # Build valgrind
+ include $(CLEAR_VARS)
+@@ -571,6 +589,7 @@ LOCAL_SRC_FILES := \
+ 
+ LOCAL_C_INCLUDES := $(common_includes)
+ LOCAL_CFLAGS := $(common_cflags)
++LOCAL_ADDITIONAL_DEPENDENCIES := $(VG_ALL) default.supp
+ 
+ LOCAL_CFLAGS_$(TARGET_ARCH) = $(target_arch_cflags)
+ 
+-- 
+2.5.0
+

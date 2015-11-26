@@ -220,6 +220,10 @@ export default class SocketSession extends AuthenticateDuplexStream {
     return super.end(chunk, encoding, callback);
   }
 
+  get scanner() {
+    return this._scanner;
+  }
+
   get connected() {
     return !this._ending && !this._ended;
   }

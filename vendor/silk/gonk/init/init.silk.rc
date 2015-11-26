@@ -12,7 +12,7 @@ service fakeappops /system/silk/bin/fakeappops
     class main
     user root
 
-service silk /system/silk/bin/silk
+service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-core
     class main
     user root
     # The bledroid and silk-sensors services are useless without the

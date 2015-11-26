@@ -156,5 +156,64 @@ suite('accounts', () => {
     let publicKeys = accountDetails.accountTokens.map(v => v.publicKey);
     assert.deepEqual(publicKeys, [key.toString(), newKey.toString()]);
   });
-});
 
+  test('.resetPassword - no account', async () => {
+    let result = await subject.resetPassword({
+      email: 'nothere@example.com'
+    });
+    assert(result.error);
+  });
+
+  suite('.resetPassword', function() {
+
+    let account, resetValue;
+    setup(async() => {
+      account = await context.testAccount();
+      resetValue = await subject.resetPassword({
+        email: account.record.email
+      });
+    });
+
+    test('first reset', async () => {
+      assert(resetValue.token, 'has reset token');
+      let newPass = context.passwordHash('newpass');
+
+      let update = await subject.usePasswordResetToken({
+        email: account.record.email,
+        passwordHash: newPass,
+        token: resetValue.token
+      });
+
+      assert.equal(update.success, true);
+
+      let accessToken = id.create();
+      let auth = await subject.signIn({
+        email: account.record.email,
+        passwordHash: newPass,
+        publicKey: accessToken.toString(),
+        userAgent: 'test'
+      });
+      assert(auth.id, 'can reset password..');
+
+      let secondReset = await subject.resetPassword({
+        email: account.record.email
+      });
+      assert(secondReset.token, 'can reset again...');
+      // After using the reset token it should be reset to a new token for next
+      // password reset...
+      assert.notEqual(resetValue.token, secondReset.token);
+    });
+
+    test('second reset', async () => {
+      let secondReset = await subject.resetPassword({
+        email: account.record.email
+      });
+      assert(secondReset.token, 'second has second reset...');
+      assert.equal(
+        secondReset.token, resetValue.token, 'second reset gets same token'
+      );
+    });
+
+  });
+
+});

@@ -106,3 +106,5 @@ fi
 df -h
 du -hs * .repo
 du -hs .
+
+set +e

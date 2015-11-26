@@ -110,14 +110,6 @@ EOF
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
 #!/bin/bash
 
-usage () {
-  echo usage: $0 [-d] [-s]
-  echo " "
-  echo Enable easy device provisioning
-  echo d - Display name for the device. Username will be used if not provided.
-  echo s - Server URL. Default server URL will be used if not provided.
-}
-
 waitForDevice() {
   adb wait-for-device
   # adb sometimes errors out, if so, wait and try again
@@ -127,65 +119,42 @@ waitForDevice() {
   done
 }
 
-while getopts "h?d:s:" opt; do
-    case $opt in
-    h|\?)
-        usage
-        exit 0
-        ;;
-    d)  DISPLAY_NAME="$OPTARG"
-        ;;
-    s)  SERVER_URL=$OPTARG
-        ;;
-    esac
-done
-
-if [[ -z $DISPLAY_NAME ]]; then
-  DISPLAY_NAME=$(whoami)
-fi
-
-if [[ -z $SERVER_URL ]]; then
-  SERVER_URL=""
-fi
-
 cd $(dirname $0)
 
 echo Flash the build and clear userdata/cache partitions
 ./flash.sh -w
 
-waitForDevice
-
-echo Configuring the device:
-adb root
-waitForDevice
+echo Preparing default.prop ...
+if [ -f default.prop ]; then
+rm default.prop
+fi
 
 echo OTA updates enabled.
-adb shell setprop persist.silk.update.enabled true
-
-echo Set device name to $DISPLAY_NAME
-adb shell setprop persist.silk.displayName "$DISPLAY_NAME"
+echo persist.silk.update.enabled=true >> default.prop
 
 echo Enable crash reporting
-adb shell setprop persist.silk.crashrprt.enabled true
-
-echo Set silk-server URL to $SERVER_URL
-adb shell setprop persist.silk.server.url "$SERVER_URL"
+echo persist.silk.crashrprt.enabled=true >> default.prop
 
 echo Activated uploads to cloud storage
-adb shell setprop persist.silk.vidupload.enabled 1
-
-#echo Enabled sound on motion detection
-#adb shell setprop persist.silk.motion.sound true
+echo persist.silk.vidupload.enabled=1 >> default.prop
 
 echo Set ota manifest channel
 source .branch
-adb shell setprop persist.silk.update.channel $BRANCH
-
-echo Disabled factory reset on pressing volume keys
-adb shell setprop persist.silk.ui.reset.disabled true
+echo persist.silk.update.channel=$BRANCH >> default.prop
 
 echo Disable SOS vibrate
-adb shell setprop persist.silk.quiet true
+echo persist.silk.quiet=true >> default.prop
+
+echo Configuring the device ...
+waitForDevice
+adb root
+waitForDevice
+
+echo Pushing new default.prop ...
+adb remount
+waitForDevice
+adb push default.prop /system/
+rm default.prop
 
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000

@@ -21,8 +21,8 @@ if [ -d /data/tombstones ]; then
 fi
 
 echo Battery:
-echo "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%"
-echo "  Status: $(cat /sys/class/power_supply/battery/status), $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null), $(cat /sys/class/power_supply/battery/health 2> /dev/null)"
+echo -n "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%, "
+echo "$(cat /sys/class/power_supply/battery/status), $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null), $(cat /sys/class/power_supply/battery/health 2> /dev/null)"
 if [ -f /sys/class/power_supply/battery/current_now ]; then
   echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
 fi
@@ -45,24 +45,8 @@ if [ -d /data/outbox ]; then
   fi
 fi
 
-if [ -f /sys/devices/system/cpu/cpu0/online ]; then
-  echo CPU Info:
-  cd /sys/devices/system/cpu/
-  for cpu in cpu[0-8]; do
-    online=$(cat $cpu/online 2> /dev/null || echo 1)
-    if [ $online == 1 ]; then
-      currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
-      maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
-      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
-    else
-      echo "  $cpu: offline"
-    fi
-  done
-  echo
-fi
-
 if [ -d /sys/class/thermal ]; then
-  echo Thermal Info:
+  echo Thermal:
   cd /sys/class/thermal/
   for zone in thermal_zone*; do
     type=$(cat $zone/type)
@@ -108,6 +92,38 @@ echo Silk System Properties:
   done
 )
 echo
+
+echo Network:
+echo "  wlan0: $(ndc interface getcfg wlan0)"
+echo "  route:"
+( busybox route ) | (
+  while read; do
+    echo "    $REPLY"
+  done
+)
+echo "  dhcp:"
+( getprop | grep '^\[dhcp' ) | (
+  while read; do
+    echo "    $REPLY"
+  done
+)
+echo
+
+if [ -f /sys/devices/system/cpu/cpu0/online ]; then
+  echo CPU:
+  cd /sys/devices/system/cpu/
+  for cpu in cpu[0-8]; do
+    online=$(cat $cpu/online 2> /dev/null || echo 1)
+    if [ $online == 1 ]; then
+      currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
+      maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
+      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
+    else
+      echo "  $cpu: offline"
+    fi
+  done
+  echo
+fi
 
 df
 echo

@@ -41,7 +41,7 @@ if [[ $? -ne "0" ]] ; then
 fi
 
 # Run tests
-timeout -s KILL 300s adb shell silk $TEST_DIR/node_modules/mocha/bin/mocha --opts $TEST_DIR/mocha.opts $TEST_DIR/dist/test | tee $RESULT_FILE
+timeout -s KILL 300s adb shell silk-core $TEST_DIR/node_modules/mocha/bin/mocha --opts $TEST_DIR/mocha.opts $TEST_DIR/dist/test | tee $RESULT_FILE
 result=$(<$RESULT_FILE)
 
 # Delete results file

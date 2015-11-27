@@ -8,4 +8,4 @@
 
 // This module represents the version of base device software that core is
 // compatible with.
-module.exports = '0.0.10';
+module.exports = '0.0.11';

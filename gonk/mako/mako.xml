@@ -131,7 +131,6 @@
   <remove-project name="platform/external/srtp" />
   <remove-project name="platform/external/stressapptest" />
   <remove-project name="platform/external/tagsoup" />
-  <remove-project name="platform/external/valgrind" />
   <remove-project name="platform/external/vixl" />
   <remove-project name="platform/external/xmp_toolkit" />
   <remove-project name="platform/frameworks/compile/libbcc" />

@@ -55,6 +55,19 @@ int main(int, char **)
     return 1;
   }
 
+  // wpa_supplicant fails to gracefully handle a zero-length or unreadable
+  // config file.  This can happen if the device crashes at just the right time.
+  // Recovery is just a matter of removing the config file, which causes the
+  // supplicant to re-create the file with defaults.
+  struct stat statbuf;
+  const char *wpa_supplicant_conf = "/data/misc/wifi/wpa_supplicant.conf";
+  if (0 == stat(wpa_supplicant_conf, &statbuf)) {
+    if (statbuf.st_size == 0 || statbuf.st_gid != AID_WIFI)  {
+      ALOGW("Removing invalid config file: %s", wpa_supplicant_conf);
+      unlink(wpa_supplicant_conf);
+    }
+  }
+
   wifi_stop_supplicant(false);
   wifi_unload_driver();
 

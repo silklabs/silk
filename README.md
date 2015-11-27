@@ -65,26 +65,28 @@ Github milestones are created in all the affected projects to collect issues:
 
 All our projects use the same branch names:
 * **master** - always open for new development
-* **release** - where releases are merged to from *next* or *chemspill*
+* **release** - where releases are merged to from `next` or `chemspill`
 * **next** - stabilization branch for the current milestone
-* **chemspill** - used to resolve critical bugs in release that can't wait for the next milestone
+* **chemspill** - used to resolve critical bugs in release that can't wait for
+  the next milestone release
 
 Branching procedures are documented [here](Procedures.md).
 
 ### Master branch:
-* Default location for merging commits
-* It is not necessary to double-land next or chemspill commits on both the next/chemspill branch and master, but doing so is no problem.  For example if you want to let your commit rest on master for a time.  However it is always necessary to land your fix in the next/chemspill branch if it is applicable to the branch (ie, we have no integration team for commit propagation yet).   To uplift a commit from *master* to *next*: 
-  1. Create a new topic branch based off *next* in your project fork
-  1. `git cherry-pick` the commit(s) from *master*
-  1. Send the PR to the *next* branch
+* Default location for merging commits, including fixes for `next` or
+  `chemspill` that also affect `master`.
 
 ### Next branch:
-* The next branch is created at Feature Midweek Landing from the current HEAD of the master branch.
-* Generally assumed that all changes should be applicable to the master branch (ie, reverts of changes on master require special attention, see "Special Case" section below)
-* Upon completion of the milestone goals, the next branch is:
- 1. Copied into the release branch
- 2. Merged back into the master branch
- 3. Deleted until the next  Feature Midweek Landing (to avoid confusion)
+* The `next` branch is created at Feature Midweek Landing from the current HEAD of
+  the `master` branch.
+* It is generally assumed that all changes to `next` are applicable to the 
+  `master` branch, and should merge on the `master` branch first.  Adding the **next+**
+  on a PR to `master` will cause it to be uplifted to `next` upon merging.
+  Automation will attempt the uplift and notify the PR owner on a merge conflict
+  with details on how to manually resolve.
+* `next`-only commits are also possible, send the PR to the `next` branch
+  instead of `master`.  Note that this should only be done if the fix is not
+  relevant to `master`.
 
 ### Release branch:
 * Updated at the end of milestone by the Release Engineer.
@@ -93,58 +95,21 @@ Branching procedures are documented [here](Procedures.md).
 
 ### ChemSpill branch:
 * Created by branching from the HEAD of the release branch.
-* Upon completion of the milestone goals, the chemspill branch is:
- 1. Merged into the release branch
- 2. Merged into the master branch
- 3. Merged into the milestone branch, if one exists at that time.
- 4. Deleted
-
-
-#### Special Case: Managing Reverts on a Next or ChemSpill Branch
-
-If a commit from master is reverted, or some other changes made that is only for
-the next branch then special handling is required.  If the following steps are
-not taken then that change will propagate back to the master branch undesirably
-once the current milestone completes.
-
-1. Before making the change on the next branch that is not applicable to master,
-ensure that all existing changes on the next branch have been merged back to the
-master branch by running `git checkout master && git merge next`
-
-2. Commit the change to the next branch that should not be propagated back to master.
-
-3. Once again perform a merge back to master however this time instruct git to
-ignore the new commit: `git checkout master && git merge next -s ours`
-
-4. Resume normal workflow.
-
-It is currently expected that this will be a rare occurrence, as the next branch
-should be created as late as possible such that they only contain minor bug
-fixes as a result of stabilization.
+* Just like `next`, fixes for chemspill should first merge to `master` if
+  applicable.
+* `chemspill` uplifts from `master` are currently manual, also be sure to uplift
+  the fix to `next` as well (also currently manual).
 
 ## Branch Comparison Tools
 
 #### *next* commits not in *master*
-
-These links display the commits that need to be merged back to *master* before
-finishing the release.
 
 [silk-app](https://github.com/silklabs/silk-app/compare/master...next)
 | [silk-device](https://github.com/silklabs/silk-device/compare/master...next)
 | [silk-server](https://github.com/silklabs/silk-server/compare/master...next)
 | [silk-webapp](https://github.com/silklabs/silk-webapp/compare/master...next)
 
-If no merge conflicts exist a github PR may be created directly from these
-links.  If merge conflicts do exist, manual resolution is required on the
-commandline by (1) cloning the project, and (2) running `git merge next` while on
-the *master* branch then resolving any conflicts, and finally (3) sending a normal PR
-back to *master*.
-
 #### *master* commits not in *next*
-
-These links display the commits on *master* that are not in the current *next*
-branch.  Some of these commits may need to be manually cherry picked into *next*
-if they resolve issues targeted for the next release.
 
 [silk-app](https://github.com/silklabs/silk-app/compare/next...master)
 | [silk-device](https://github.com/silklabs/silk-device/compare/next...master)

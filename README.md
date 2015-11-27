@@ -80,7 +80,7 @@ Branching procedures are documented [here](Procedures.md).
 ### Next branch:
 * The `next` branch is created at Feature Midweek Landing from the current HEAD of
   the `master` branch.
-* It is generally assumed that all changes to `next` are applicable to the 
+* It is generally assumed that all changes to `next` are applicable to the
   `master` branch, and should merge on the `master` branch first.  Adding the **next+**
   on a PR to `master` will cause it to be uplifted to `next` upon merging.
   Automation will attempt the uplift and notify the PR owner on a merge conflict

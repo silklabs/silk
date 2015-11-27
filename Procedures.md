@@ -19,9 +19,10 @@ CC occurs when there are no open issues for the given milestone and the PE
 confirms that the release criteria has been met.  
 
 1. Receive the :shipit: notification from the Project Engineer.
-2. Run `./release.sh` (same cautious note from *FML* applies here as well).
-3. Monitor Travis to ensure that all the `release` builds go green.  This may take a couple hours. 
-4. Notify #eng that the release has been completed.
+2. Ensure there are no open PRs for `next`: https://github.com/issues?q=is%3Apr+user%3Asilklabs+base%3Anext+is%3Aopen
+3. Run `./release.sh` (same cautious note from *FML* applies here as well).
+4. Monitor Travis to ensure that all the `release` builds go green.  This may take a couple hours.
+5. Notify #eng that the release has been completed.
 
 Product Test will now engage to validate the release.
 

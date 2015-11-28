@@ -8,6 +8,7 @@
     "next2master": "DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
     "preinstall": "./bin/preinstall",
     "start": "DEBUG=* babel-node lib/server/main.js production",
+    "prd": "DEBUG=silk-* babel-node lib/prd.js",
     "test": "npm run-script lint",
     "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
     "upliftall": "DEBUG=silk-* babel-node lib/uplifter.js"

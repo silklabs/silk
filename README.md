@@ -11,7 +11,8 @@ Releng is responsible for:
 * Ensuring all branches remain green (aka. sheriffing the trees).
 * The migration of code from branch to branch in support of release milestones.
 * Ensuring that releases are reproducible, both internally and by customers.
-* Developing tools to offload Dev and Test from mundane tasks pertaining to the previous points.
+* Developing tools to offload Product, Engineering and Test from mundane tasks
+  pertaining to the previous items.
 
 To request Releng support, please file an issue [here](https://github.com/silklabs/releng/issues/new).
 

@@ -97,6 +97,15 @@ if [[ $GONK != base ]]; then
 
   find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
 
+  if [[ $GONK != qemu ]]; then
+    rm -rf \
+      prebuilts/android-emulator \
+      prebuilts/qemu-kernel \
+
+      mkdir -p prebuilts/qemu-kernel/arm
+      touch prebuilts/qemu-kernel/arm/LINUX_KERNEL_COPYING
+  fi
+
   # Restore silk-device-locked-node-modules
   mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules
   mv .repo/silk-device-locked-node-modules.git .repo/project-objects/

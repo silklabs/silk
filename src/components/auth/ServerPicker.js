@@ -67,7 +67,7 @@ export default class extends React.Component {
     // offer that host as an option too. It's pretty common to be
     // running a JS bundle server and a Silk server on the same
     // development host.
-    if (!__DEV__) { /* eslint no-undef: 0 */
+    if (!__DEV__) {
       return choices;
     }
     let { scriptURL } = NativeModules.SourceCode;

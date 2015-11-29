@@ -16,7 +16,7 @@ if (!('userAgent' in navigator)) {  //eslint-disable-line
   // We're in a browser environment, e.g. Chrome, for debugging
   // purposes. Spin the JS event loop along. This is not necessary
   // when running the JS in-process.
-  if (__DEV__) { //eslint-disable-line
+  if (__DEV__) {
     let tick = () => requestAnimationFrame(tick); //eslint-disable-line
     tick();
   }

@@ -68,32 +68,6 @@ clone() {
   done
 }
 
-nostragglers() {
-  local branch=$1
-  ok=true
-  for g in $MERGE_GITS; do
-    if [[ $(git -C $g cherry origin/master $branch | wc -l) -ne 0 ]]; then
-      echo Error: Refusing to continue until all commits from
-      echo $branch have been merged back into master:
-      echo
-      git -C $g cherry -v origin/master origin/$branch
-      echo
-      ok=false
-    fi
-  done
-
-  $ok || exit 1
-}
-
-ignoreUpToHEADOnMaster() {
-  local msg="$1"
-  local SHA1=$(git rev-parse --short HEAD)
-  local currentBranch=$(git rev-parse --abbrev-ref HEAD)
-  git checkout master
-  git merge $SHA1 -s ours -m "Ignoring on master: $msg"
-  git checkout $currentBranch
-}
-
 normalizePackageJson() {
   sort-json $1
 }
@@ -116,7 +90,6 @@ updatePackageVersion() {
 updatebranch__silk_api() {
   local from=$1
   local to=$2
-  local ignoreOnMaster=$3
   for api in silk-api-node; do
     echo "Updating branch for $api: $from => $to"
     pushd $api
@@ -141,7 +114,6 @@ updatebranch__silk_api() {
 updatebranch__silk_npms() {
   local from=$1
   local to=$2
-  local ignoreOnMaster=$3
   for app in $NPM_GITS; do
     echo "Updating branch for $app: $from => $to"
     pushd $app
@@ -176,9 +148,6 @@ updatebranch__silk_npms() {
 
       local msg="Automated branch update from ${from} to ${to}"
       git commit -m "$msg"
-      if [[ -n $ignoreOnMaster ]]; then
-        ignoreUpToHEADOnMaster "$msg"
-      fi
     )
     popd > /dev/null
   done
@@ -188,7 +157,6 @@ updatebranch__silk_npms() {
 semver_inc__silk_app() {
   local branch=$1
   local level=$2
-  local ignoreOnMaster=$3
   pushd silk-app
   (
     set -x
@@ -212,9 +180,6 @@ semver_inc__silk_app() {
 
     local msg="Automated version update from ${ver} to ${nextver}"
     git commit -m "$msg"
-    if [[ $branch != master ]]; then
-      ignoreUpToHEADOnMaster "$msg"
-    fi
   )
   popd > /dev/null
 }
@@ -223,7 +188,6 @@ semver_inc__silk_app() {
 updatebranch__silk_device() {
   local from=$1
   local to=$2
-  local ignoreOnMaster=$3
   echo "Updating branch for silk-device: $from => $to"
   pushd silk-device
   (
@@ -261,9 +225,6 @@ updatebranch__silk_device() {
 
     local msg="Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
-    if [[ -n $ignoreOnMaster ]]; then
-      ignoreUpToHEADOnMaster "$msg"
-    fi
   )
   popd > /dev/null
 }

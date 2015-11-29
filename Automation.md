@@ -41,7 +41,6 @@ The nightly repocache builds are visible at https://magnum.travis-ci.com/silklab
   * Create a GITHUB_SECRET token that matches the Github webhook secret
 * Resources Tab -> Add-ons:
   * Add 'Heroku Scheduler'
-  * Configure the scheduler to run `npm run next2master` every hour
   * Configure the scheduler to run `npm run triggerbuilds` every day
 
 ### Github WebHook

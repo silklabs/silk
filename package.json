@@ -5,7 +5,7 @@
   "scripts": {
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
     "lint": "eslint lib",
-    "next2master": "DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
+    "next2master": "false; DEBUG=silk-*,-silk-*:debug babel-node lib/github-tool.js",
     "preinstall": "./bin/preinstall",
     "start": "DEBUG=* babel-node lib/server/main.js production",
     "prd": "DEBUG=silk-* babel-node lib/prd.js",

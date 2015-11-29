@@ -321,6 +321,7 @@ mergerelease() {
         git commit --amend -F msg
       )
     else
+      git checkout $to # Ensure the $to branch exists locally
       echo $g: NOT merging $from into $to, no changes
     fi
     popd > /dev/null

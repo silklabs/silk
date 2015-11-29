@@ -84,7 +84,7 @@ export default class extends AsyncComponent {
     NetInfo.isConnected.fetch().then(this.onConnectivityChange);
     NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
 
-    this.bleDeviceManager = getDeviceManager();
+    this.bleDeviceManager = getDeviceManager(this.props.userState);
     this.bleDeviceManager.on('connect', this.onBLEDeviceConnect);
     BLESocketManager.start();
   }
@@ -256,7 +256,10 @@ export default class extends AsyncComponent {
     if (newDevices.equals(existingDevices)) {
       return;
     }
-    this.setStateAsync({devices: newDevices.asImmutable()});
+
+    let immutableDevices = newDevices.asImmutable();
+    this.setStateAsync({devices: immutableDevices});
+    await this.props.userState.updateRegisteredDevices(immutableDevices.toArray());
   }
 
   onVideoStreamNew = async (msg) => {

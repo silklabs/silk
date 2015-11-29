@@ -14,14 +14,22 @@ const streams = createStreams({
   getRandomBytes,
 });
 
-const { CryptoDuplexStream, MessagePackDuplexStream } = streams;
+const {
+  AuthenticateDuplexStream,
+  CryptoDuplexStream,
+  HeartbeatDuplexStream,
+  MessagePackDuplexStream,
+} = streams;
 
 const log = makeLog(`btle-SocketSession`);
 
-export default class SocketSession extends MessagePackDuplexStream {
+export default class SocketSession extends AuthenticateDuplexStream {
   static RSSI_UPDATE_TIMEOUT = 50;
 
   _socket: Socket;
+  _privateKey: String;
+  _publicKeys: Array<String>;
+  _heartbeatStream: HeartbeatDuplexStream;
 
   _disconnecting: boolean = false;
   _sentDisconnect: boolean = false;
@@ -33,20 +41,43 @@ export default class SocketSession extends MessagePackDuplexStream {
   _rssiValue: number = 0;
   _rssiTimeout: ?number = null;
 
-  constructor(socket: Socket) {
+  constructor(socket: Socket, privateKey: String, publicKeys: Array<String>) {
     log.debug(`SocketSession()`);
 
-    let stream = new Stream(socket);
-    stream = new CryptoDuplexStream(stream);
+    const socketStream = new Stream(socket);
+    const cryptoStream = new CryptoDuplexStream(socketStream);
 
-    super(stream);
+    const msgpackStream = new MessagePackDuplexStream(cryptoStream);
+    msgpackStream.on(`data`, (data) => {
+      log.verbose(`Received`, data);
+    });
+    const oldWrite = msgpackStream._write;
+    msgpackStream._write = (data, encoding, callback) => {
+      log.verbose(`Sending`, data);
+      oldWrite.call(msgpackStream, data, encoding, callback);
+    };
+
+    const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
+
+    super(heartbeatStream,
+          cryptoStream,
+          privateKey,
+          publicKeys,
+          { autoClose: false });
 
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
     socket.addListener(`disconnect`, this._onSocketDisconnect);
     this._socket = socket;
 
+    heartbeatStream.sendHeartbeats = true;
+    this._heartbeatStream = heartbeatStream;
+
     this.once(`end`, this._onEnd);
     this.once(`finish`, this._onFinish);
+    this.once(`unauthenticated`, () => {
+      log.info(`Receiving unauthenticated data`);
+      this.allowUnauthenticated();
+    });
   }
 
   _onSocketRssiUpdate: ((rssi: number) => void) = (rssi) => {
@@ -90,6 +121,8 @@ export default class SocketSession extends MessagePackDuplexStream {
 
   _killRssiUpdates() {
     log.debug(`SocketSession._killRssiUpdates()`);
+
+    this._heartbeatStream.sendHeartbeats = false;
 
     this.rssiUpdatesEnabled = false;
     this._socket.removeListener(`rssiUpdate`, this._onSocketRssiUpdate);

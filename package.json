@@ -11,7 +11,7 @@
     "log": "git@github.com:silklabs/log.git#master",
     "moment": "^2.10.3",
     "react-native": "^0.14.0",
-    "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#802103ae2a6e4124f86ef025c70d13ee92aaec1c",
+    "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#02a415ca02d9a003e8dd47b8be5a71f83c2cd122",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"

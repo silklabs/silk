@@ -49,7 +49,9 @@
     ],
     "no-underscore-dangle": 0
   },
-  "globals": {},
+  "globals": {
+    "__DEV__": false
+  },
   "ecmaFeatures": {
     "jsx": true
   },

@@ -98,9 +98,10 @@ if [[ $GONK != base ]]; then
   find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
 
   if [[ $GONK != qemu ]]; then
+    # Careful not to remove the .git dirs, which are needed during the deploy step
     rm -rf \
-      prebuilts/android-emulator \
-      prebuilts/qemu-kernel \
+      prebuilts/android-emulator/* \
+      prebuilts/qemu-kernel/* \
 
       mkdir -p prebuilts/qemu-kernel/arm
       touch prebuilts/qemu-kernel/arm/LINUX_KERNEL_COPYING

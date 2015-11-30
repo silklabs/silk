@@ -5,7 +5,7 @@
  const _ = require('underscore');
  
 -const MAX_WAIT_TIME = 25000;
-+const MAX_WAIT_TIME = 60000;
++const MAX_WAIT_TIME = 120000;
  
  // TODO(amasad): can we use watchman version command instead?r
  const detectingWatcherClass = new Promise(function(resolve) {

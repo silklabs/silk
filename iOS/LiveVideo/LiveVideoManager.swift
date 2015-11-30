@@ -1,7 +1,7 @@
 @objc(LiveVideoManager)
 class LiveVideoManager:  RCTViewManager {
 
-  @objc override func customDirectEventTypes() -> [AnyObject]! {
+  @objc override func customDirectEventTypes() -> [String]! {
     return [
       "segmentEnd",
       "segmentEnqueued",

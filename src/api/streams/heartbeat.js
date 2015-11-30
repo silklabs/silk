@@ -108,7 +108,7 @@ export class HeartbeatReceiverStream extends HeartbeatStreamBase {
        !Buffer.isBuffer(chunk) &&
        (PROPERTY_NAME in chunk) &&
        chunk[PROPERTY_NAME] === null) {
-      log.debug(`Received heartbeat`)
+      log.debug(`Received heartbeat`);
 
       const oldTimeout = this._timeout;
       if (oldTimeout) {

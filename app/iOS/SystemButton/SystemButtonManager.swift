@@ -5,7 +5,7 @@ class SystemButtonManager : RCTViewManager {
     return SystemButton(eventDispatcher: self.bridge!.eventDispatcher)
   }
 
-  @objc override func customBubblingEventTypes() -> [AnyObject]! {
+  @objc override func customBubblingEventTypes() -> [String]! {
     return [
       "press",
     ]

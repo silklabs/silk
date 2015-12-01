@@ -52,10 +52,10 @@ class OverlayModal : RCTView {
   }
 
   /**
-  Note this is critically important to expose as React cannot properly remove subviews without knowing
-  where they are!
-  */
-  override func reactSubviews() -> [AnyObject] {
+   * Note this is critically important to expose as React cannot properly
+   * remove subviews without knowing where they are!
+   */
+  override func reactSubviews() -> [UIView] {
     return self.overlayView!.reactSubviews()
   }
 

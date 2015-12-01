@@ -84,7 +84,7 @@ export default class extends AsyncComponent {
     NetInfo.isConnected.fetch().then(this.onConnectivityChange);
     NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
 
-    this.bleDeviceManager = getDeviceManager();
+    this.bleDeviceManager = getDeviceManager(this.props.userState);
     this.bleDeviceManager.on('connect', this.onBLEDeviceConnect);
     BLESocketManager.start();
   }
@@ -256,7 +256,10 @@ export default class extends AsyncComponent {
     if (newDevices.equals(existingDevices)) {
       return;
     }
-    this.setStateAsync({devices: newDevices.asImmutable()});
+
+    let immutableDevices = newDevices.asImmutable();
+    this.setStateAsync({devices: immutableDevices});
+    await this.props.userState.updateRegisteredDevices(immutableDevices.toArray());
   }
 
   onVideoStreamNew = async (msg) => {
@@ -266,6 +269,7 @@ export default class extends AsyncComponent {
 
     let deviceId = msg.id;
     log.info('New video stream', msg.name, deviceId);
+    log.debug('Full device message', msg);
     let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
@@ -312,10 +316,10 @@ export default class extends AsyncComponent {
 
     // Existing record from the server. Supplement it with info from device.
     devices = devices.setIn([deviceId, 'haveVideoStream'], true);
-    if (!deviceRecord.has('previewSize')) {
+    if (!deviceRecord.previewSize) {
       devices = devices.setIn([deviceId, 'previewSize'], msg.previewSize);
     }
-    if (!deviceRecord.has('logo')) {
+    if (!deviceRecord.logo) {
       devices = devices.setIn([deviceId, 'logo'], msg.logo);
     }
     if (devices !== this.pendingState.devices) {
@@ -334,7 +338,9 @@ export default class extends AsyncComponent {
       return;
     }
     log.info('Deleting video stream', deviceId);
-    this.setStateAsync({devices: devices.delete(deviceId)});
+    this.setStateAsync({
+      devices: devices.setIn([deviceId, 'haveVideoStream'], false),
+    });
   };
 
   // Book keeping for unconfigured devices detected via BLE

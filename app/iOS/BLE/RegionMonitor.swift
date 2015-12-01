@@ -23,8 +23,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     let uuid: NSUUID
     let region: CLBeaconRegion
     var state: CLRegionState = .Unknown
-    var sentFirstNotification: Bool = false
-    
+
     init(uuid: NSUUID, region: CLBeaconRegion) {
       self.uuid = uuid
       self.region = region
@@ -293,15 +292,17 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {
-      log.info("didDetermineState(\(state.rawValue), \(region))")
-      if !regionInfo.sentFirstNotification {
-        if state == .Inside {
-          regionInfo.state = state
-          regionInfo.sentFirstNotification = true
+      log.info("didDetermineState(\(state.rawValue), \(region.identifier))")
+
+      // Assume unknown means outside.
+      let stateToReport = state == .Unknown ? .Outside : state
+
+      if regionInfo.state != stateToReport {
+        regionInfo.state = stateToReport
+
+        if stateToReport == .Inside {
           self.delegate.regionEntered(self, uuid: regionInfo.uuid)
-        } else if state == .Outside {
-          regionInfo.state = state
-          regionInfo.sentFirstNotification = true
+        } else {
           self.delegate.regionExited(self, uuid: regionInfo.uuid)
         }
       }
@@ -315,10 +316,9 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {
-      log.info("didEnterRegion(\(region)")
+      log.info("didEnterRegion(\(region.identifier)")
       if regionInfo.state != .Inside {
         regionInfo.state = .Inside
-        regionInfo.sentFirstNotification = true
         self.delegate.regionEntered(self, uuid: regionInfo.uuid)
       }
     }
@@ -331,10 +331,9 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {
-      log.info("didExitRegion(\(region)")
+      log.info("didExitRegion(\(region.identifier)")
       if regionInfo.state != .Outside {
         regionInfo.state = .Outside
-        regionInfo.sentFirstNotification = true
         self.delegate.regionExited(self, uuid: regionInfo.uuid)
       }
     }

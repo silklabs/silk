@@ -51,7 +51,7 @@
 		577396151BA2914C00F900C6 /* AppCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 577396141BA2914C00F900C6 /* AppCrypto.m */; };
 		577396171BA2921400F900C6 /* AppCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396161BA2921400F900C6 /* AppCrypto.swift */; };
 		5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396181BA29F8F00F900C6 /* AppCryptoTest.swift */; };
-		5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */; };
+		5774D7641B90D6710071F187 /* AppRCTWebSocketModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* AppRCTWebSocketModule.m */; };
 		5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
 		579422381B963F1B0068569E /* ErrorDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579422371B963F1B0068569E /* ErrorDomain.swift */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
@@ -280,7 +280,7 @@
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
 		5714F47C1BA373DC0087A138 /* NSDataExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDataExtension.swift; sourceTree = "<group>"; };
 		571B2F801B813641005A4460 /* ConcurrentOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConcurrentOperation.swift; sourceTree = "<group>"; };
-		57297F6C1B90E55000CBC04D /* AppRCTWebSocketManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTWebSocketManager.h; sourceTree = "<group>"; };
+		57297F6C1B90E55000CBC04D /* AppRCTWebSocketModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTWebSocketModule.h; sourceTree = "<group>"; };
 		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
 		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
@@ -305,7 +305,7 @@
 		577396141BA2914C00F900C6 /* AppCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCrypto.m; sourceTree = "<group>"; };
 		577396161BA2921400F900C6 /* AppCrypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCrypto.swift; sourceTree = "<group>"; };
 		577396181BA29F8F00F900C6 /* AppCryptoTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCryptoTest.swift; sourceTree = "<group>"; };
-		5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTWebSocketManager.m; sourceTree = "<group>"; };
+		5774D7631B90D6710071F187 /* AppRCTWebSocketModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTWebSocketModule.m; sourceTree = "<group>"; };
 		579422371B963F1B0068569E /* ErrorDomain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorDomain.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -525,8 +525,8 @@
 		5774D75C1B90D6050071F187 /* WebSocket */ = {
 			isa = PBXGroup;
 			children = (
-				5774D7631B90D6710071F187 /* AppRCTWebSocketManager.m */,
-				57297F6C1B90E55000CBC04D /* AppRCTWebSocketManager.h */,
+				5774D7631B90D6710071F187 /* AppRCTWebSocketModule.m */,
+				57297F6C1B90E55000CBC04D /* AppRCTWebSocketModule.h */,
 			);
 			path = WebSocket;
 			sourceTree = "<group>";
@@ -963,7 +963,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Hack to ensure /usr/local/bin is laways in path...\nexport PATH=\"$PATH:/usr/local/bin\"\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n npm run bundle\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localBundle\nfi";
+			shellScript = "no_optimize=\nif [[ \"$CONFIGURATION\" == \"Debug\" ]]; then\n  no_optimize=--no-optimize\nfi\n\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n  npm run bundle -- $no_optimize\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localBundle\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1001,7 +1001,7 @@
 				3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */,
 				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
-				5774D7641B90D6710071F187 /* AppRCTWebSocketManager.m in Sources */,
+				5774D7641B90D6710071F187 /* AppRCTWebSocketModule.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,

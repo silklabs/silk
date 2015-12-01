@@ -12,6 +12,7 @@
 // The API violates this rule, so disable it for the whole file.
 /* eslint new-cap:0 */
 
+import assert from 'assert';
 import { EventEmitter} from 'events';
 import createLog from 'log';
 
@@ -28,6 +29,7 @@ const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;
 
 const ACCESS_TOKEN_KEY = 'user.accessToken';
+const REGISTERED_DEVICES_KEY = 'user.registeredDevices';
 
 /**
  * This value has been chosen based on what elliptic would do when generating
@@ -47,6 +49,7 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
+  registeredDevices = [ ];
 
   constructor(api) {
     super();
@@ -57,9 +60,13 @@ export class UserState extends EventEmitter {
   // Load and initialize state...
   static async load(api) {
     let instance = new UserState(api);
-    let token = await instance._loadAccessToken();
+    let [ token, registeredDevices] = await Promise.all([
+      instance._loadAccessToken(),
+      UserState._loadRegisteredDevices(),
+    ]);
     log.info('~~ set access token', token);
     api.accessToken = instance.accessToken = token;
+    instance.registeredDevices = registeredDevices;
     return instance;
   }
 
@@ -97,6 +104,21 @@ export class UserState extends EventEmitter {
     return accessToken;
   }
 
+  static async _loadRegisteredDevices() {
+    let registeredDevices = await AsyncStorage.getItem(REGISTERED_DEVICES_KEY);
+    if (!registeredDevices) {
+      log.info('No registered devices');
+      return [ ];
+    }
+
+    registeredDevices = JSON.parse(registeredDevices);
+    assert(Array.isArray(registeredDevices));
+
+    log.info('Registered devices', registeredDevices);
+
+    return registeredDevices;
+  }
+
   async signOut() {
     // Clear out any previous state...
     this.api.accessToken = this.accessToken = null;
@@ -104,8 +126,11 @@ export class UserState extends EventEmitter {
     log.debug(`Stop advertising all BLE beacons.`);
     BLESocketManager.removeAllBeaconUuids();
 
-    log.debug(`Remove access token from disk storage.`);
-    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+    log.debug(`Remove access token and registered devices from disk storage.`);
+    await Promise.all([
+      AsyncStorage.removeItem(ACCESS_TOKEN_KEY),
+      AsyncStorage.removeItem(REGISTERED_DEVICES_KEY),
+    ]);
     this.emit('unauthenticated');
   }
 
@@ -238,7 +263,23 @@ export class UserState extends EventEmitter {
     };
   }
 
+  async updateRegisteredDevices(deviceRecords) {
+    assert(this.accessToken, `Must be signed in`);
+
+    let storedRecords = deviceRecords.map((record) => {
+      return {
+        publicKey: record.publicKey,
+      };
+    });
+
+    await AsyncStorage.setItem(REGISTERED_DEVICES_KEY,
+                               JSON.stringify(storedRecords));
+
+    log.info(`Registered devices updated`, storedRecords);
+
+    this.registeredDevices = storedRecords;
+    this.emit(`registered-devices-updated`, storedRecords);
+  }
 }
 
 export default UserState.load;
-

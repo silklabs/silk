@@ -1,0 +1,11 @@
+--- node_modules/react-native/packager/react-packager/src/FileWatcher/index.js.orig	2015-11-24 10:55:36.000000000 -0800
++++ node_modules/react-native/packager/react-packager/src/FileWatcher/index.js	2015-11-24 10:55:44.000000000 -0800
+@@ -14,7 +14,7 @@
+ const exec = require('child_process').exec;
+ const _ = require('underscore');
+ 
+-const MAX_WAIT_TIME = 25000;
++const MAX_WAIT_TIME = 120000;
+ 
+ // TODO(amasad): can we use watchman version command instead?r
+ const detectingWatcherClass = new Promise(function(resolve) {

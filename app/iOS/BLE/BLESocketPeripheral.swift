@@ -713,6 +713,8 @@ internal class BLESocketPeripheral: NSObject,
       return false
     }
 
+    self.peripheralManager.setDesiredConnectionLatency(.Low, forCentral: central)
+
     let serviceInfo = self.services[serviceUuid]!
     assert(serviceInfo.service != nil)
     

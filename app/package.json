@@ -6,14 +6,12 @@
     "debug": "^2.2.0",
     "events": "^1.0.2",
     "immutable": "^3.7.5",
-    "joi-browserify": "^0.0.2",
+    "joi-browserify": "git@github.com:fhemberger/joi-browserify.git#v0.0.2",
     "lodash.merge": "^3.3.2",
     "log": "git@github.com:silklabs/log.git#master",
     "moment": "^2.10.3",
-    "react-native": "^0.12.0",
-    "react-native-button": "^1.2.0",
-    "react-native-webpack-server": "0.7.2",
-    "react-timer-mixin": "^0.13.2",
+    "react-native": "^0.15.0",
+    "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#02a415ca02d9a003e8dd47b8be5a71f83c2cd122",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"
@@ -26,7 +24,8 @@
     "eslint-plugin-react": "~3.4.2",
     "ios-deploy": "^1.7.0",
     "json-loader": "^0.5.2",
-    "webpack": "^1.12.1"
+    "webpack": "^1.12.1",
+    "webpack-dev-server": "^1.12.1"
   },
   "engines": {
     "node": ">= 4.0.0"
@@ -34,7 +33,7 @@
   "name": "Silk",
   "private": true,
   "scripts": {
-    "bundle": "rnws bundle --port 60050 --packagerPort 60051 --webpackPort 60052 --no-optimize",
+    "bundle": "rnws bundle --port 60050 --packagerPort 60051 --webpackPort 60052 --iosBundlePath iOS/main.jsbundle --no-android",
     "lint": "eslint src",
     "localBundle": "./tools/local_bundle",
     "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./tools/patch && ./tools/update_crypto_browserify",

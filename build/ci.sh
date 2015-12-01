@@ -11,9 +11,10 @@ repo_url_type="ssh"
 publish_opts="--dry-run --no-auth"
 push_branch=false
 
-if [ "$TRAVIS_PULL_REQUEST" != "false" ];
-then
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
   echo "Will not push on pull request..."
+elif [ -z "$GITHUB_USER" ]; then
+  echo "GITHUB_USER environment variable not set. Not pushing."
 else
   for branch in master next chemspill; do
     if [ "$TRAVIS_BRANCH" = "$branch" ];

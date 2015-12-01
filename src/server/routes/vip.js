@@ -9,6 +9,10 @@ import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
+import URL from 'url';
+
+import Accounts from '../models/accounts';
+
 
 let log = require('log')('routes:vip');
 const PREFIX = '/v1/vip/';
@@ -140,6 +144,61 @@ export default function (ctx) {
     res.respond({ success: false });
   });
 
+  api.define({
+    path: 'reset_password',
+    method: 'post',
+    params: [],
+    name: 'resetPassword',
+    description: 'Trigger a password reset (forgot password)',
+    output: Joi.object().keys({
+      success: Joi.boolean().required()
+    }),
+    input: Accounts.SCHEMA.resetPassword,
+  }, async (req, res) => {
+    let reset = await ctx.accounts.resetPassword(req.body);
+    if (reset.error) {
+      log.warn(`Password reset request fail`, reset.error);
+      res.sendStatus(404);
+      return;
+    }
+
+    let baseUrl = ctx.config.resetPassword.url;
+    let parsed = URL.parse(baseUrl, true);
+    parsed.query = parsed.query || {};
+    delete parsed.search;
+
+    parsed.query.token = reset.token;
+    parsed.query.email = req.body.email;
+
+    let passwordResetUrl = URL.format(parsed);
+
+    await ctx.emailSender.resetPassword({
+      email: req.body.email,
+      url: passwordResetUrl,
+    });
+
+    res.respond({ success: true });
+  });
+
+  api.define({
+    path: 'use_password_reset_token',
+    method: 'post',
+    params: [],
+    name: 'usePasswordResetToken',
+    description: 'Use the token provided by resetPassword to set a new password',
+    output: Joi.object().keys({
+      success: Joi.boolean().required()
+    }),
+    input: Accounts.SCHEMA.usePasswordResetToken,
+  }, async (req, res) => {
+    let result = await ctx.accounts.usePasswordResetToken(req.body);
+    if (result.error) {
+      log.warn(`Failed to use password reset token`, result.error);
+      res.sendStatus(401);
+      return;
+    }
+    res.respond(result);
+  });
 
   return api;
 }

@@ -6,6 +6,12 @@ import * as Joi from 'joi';
 import Base from './base';
 import scrypt from 'scrypt';
 import uuid from 'uuid';
+import AccessToken from '../../api/id';
+
+/**
+ * Password reset expires in 4 hours...
+ */
+const PASSWORD_RESET_EXPIRES_MS = (1000 * 60 * 60) * 4;
 
 const EMAIL = Joi.string().trim().email().lowercase().required();
 const PASSWORD_HASH = Joi.string().required().min(64).max(256);
@@ -71,13 +77,33 @@ const log = require('log')('models:accounts');
  */
 const AUTHENTICATED_DURATION = 60 * 1000 * 15;
 
+type PasswordResetInput = {
+  email: string;
+}
+
+export type PasswordResetResult = {
+  token: string;
+  expires: number;
+}
+
+type UsePasswordResetTokenInput = {
+  email: string;
+  token: string;
+}
+
+export type UsePasswordResetTokenOutput = {
+  success: boolean;
+}
+
 export default class Accounts extends Base {
   static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION;
 
   static ERROR = {
     duplicateEmail: 'DuplicateEmail',
     checkPasswordFailure: 'CheckPasswordFailure',
-    unknownAccount: 'UnknownAccount'
+    unknownAccount: 'UnknownAccount',
+    resetPasswordFailure: 'ResetPasswordFailure',
+    resetPasswordTokenMismatch: 'ResetPasswordTokenMismatch',
   };
 
   static INDEX = [
@@ -158,7 +184,17 @@ export default class Accounts extends Base {
        */
       accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA).required()
 
-    }).required()
+    }).required(),
+
+    resetPassword: Joi.object().keys({
+      email: EMAIL,
+    }).required(),
+
+    usePasswordResetToken: Joi.object().keys({
+      email: EMAIL,
+      token: Joi.string().hex().required(),
+      passwordHash: PASSWORD_HASH,
+    }).required(),
   };
 
   static COLLECTION = 'accounts';
@@ -336,7 +372,7 @@ export default class Accounts extends Base {
 
     if (update.n !== 1) {
       throw new Error(
-        `checkPassword update failed for unknown reasons: ${
+        `signIn update failed for unknown reasons: ${
             JSON.stringify(update)
           }`
       );
@@ -387,5 +423,123 @@ export default class Accounts extends Base {
     }
 
     return { id: account._id.toString() };
+  }
+
+  /**
+   * NOTE: This current impl is only suitable for development and early production....
+   * TODO: Security questions silk-server#401
+   */
+  async resetPassword(
+    payload: PasswordResetInput
+  ): Promise<PasswordResetResult|Object> {
+    payload = this.validate(payload, 'resetPassword');
+
+    // Noted a few times but again this is sketchy effectively anyone can just
+    // request a "reset" password for a range of known email addresses costing
+    // us time and money...
+    let account = await this.collection.findOne({
+      email: payload.email,
+    });
+
+    if (!account) {
+      return this.error('resetPasswordFailure');
+    }
+
+    if (account.passwordReset) {
+      let previousExpires =
+        account.passwordReset.created.valueOf() + PASSWORD_RESET_EXPIRES_MS;
+
+      let {pub, priv} = account.passwordReset.accessToken;
+
+      if (previousExpires > Date.now()) {
+        return {
+          token: new AccessToken(pub, priv).sign(account.passwordReset.secret),
+          expires: previousExpires,
+        };
+      }
+    }
+
+    /**
+     * Tokens are ed25519 signed uuids this makes it very very difficult for
+     * an attacker to guess or craft the token.
+     */
+    let accessToken = AccessToken.create();
+    let secret = uuid.v4();
+
+    let created = new Date();
+    let expires = created.valueOf() + PASSWORD_RESET_EXPIRES_MS;
+
+    let update = await this.collection.update(
+      { _id: account._id },
+      {
+        $set: {
+          passwordReset: {
+            secret: secret,
+            accessToken: {
+              pub: accessToken.pub,
+              priv: accessToken.priv,
+            },
+            created
+          }
+        }
+      }
+    );
+
+    if (update.n !== 1) {
+      throw new Error(`Unexpected error updating account ${account._id}`);
+    }
+
+    return {
+      token: accessToken.sign(secret),
+      expires
+    };
+  }
+
+  async usePasswordResetToken(
+    payload: UsePasswordResetTokenInput
+  ): Promise<UsePasswordResetTokenOutput|Object> {
+    payload = this.validate(payload, 'usePasswordResetToken');
+
+    let account = await this.collection.findOne({
+      email: payload.email
+    });
+
+    if (!account) {
+      return this.error('resetPasswordFailure');
+    }
+
+    let {passwordReset} = account;
+    if (!passwordReset) {
+      return this.error('resetPasswordFailure');
+    }
+
+    let {pub, priv} = passwordReset.accessToken;
+    let accessToken = new AccessToken(pub, priv);
+
+    if (!accessToken.verify(passwordReset.secret, payload.token)) {
+      return this.error('resetPasswordTokenMismatch');
+    }
+
+    let password = await this.scryptHash(payload.passwordHash);
+
+    let update = await this.collection.update(
+      { _id: account._id },
+      {
+        // Tokens should only be used once to prevent abuses!
+        $unset: { passwordReset: '' },
+        $set: {
+          password: {
+            date: new Date(),
+            hash: password,
+          }
+        }
+      }
+    );
+
+    if (update.n !== 1) {
+      throw new Error(`Unexpected error updating account ${account._id}`);
+    }
+
+    return { success: true };
   }
 }

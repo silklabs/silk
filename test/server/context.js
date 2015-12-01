@@ -54,15 +54,15 @@ export async function post(context, path, json) {
 
 let testAccountId = 0;
 
-export async function testAccount(context) {
+export async function testAccount(context, overrides = {}) {
   let id = Id.create();
   let account = new Accounts(context.db);
-  await account.create({
+  await account.create(Object.assign({}, {
     publicKey: id.toString(),
     email: `user${testAccountId++}@example.com`,
     passwordHash: context.passwordHash('password'),
     userAgent: 'nodejs'
-  });
+  }, overrides));
 
   let record = await account.findByPublicKey({
     publicKey: id.toString()

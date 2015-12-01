@@ -25,6 +25,11 @@ const SEND_INPUT = Joi.object().keys({
   }),
 });
 
+export type PasswordResetInput = {
+  email: string;
+  url: string;
+};
+
 export default class EmailSender {
   // Cache of all the templates loaded...
   _templates: any = {};
@@ -62,6 +67,16 @@ export default class EmailSender {
       result[type] = module.render(context);
     }
     return result;
+  }
+
+  async resetPassword(options: PasswordResetInput): Promise<any> {
+    return await this.send({
+      subject: 'Reset password',
+      recipient: options.email,
+      body: this.renderTemplate('reset_password', {
+        resetPasswordUrl: options.url
+      })
+    });
   }
 
   /**

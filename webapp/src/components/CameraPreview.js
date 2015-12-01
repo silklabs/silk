@@ -36,9 +36,9 @@ export default class CameraPreview extends React.Component {
   shouldComponentUpdate() {
     // render() only if the camera has changed.  For normal state updates, the
     // onPreviewImage() listener manages updating the canvas outside of React.
-    let shouldComponentUpdate = this._shouldComponentUpdate;
+    const update = this._shouldComponentUpdate;
     this._shouldComponentUpdate = false;
-    return shouldComponentUpdate;
+    return update;
   }
 
   render() {

@@ -127,6 +127,10 @@ export default class extends EventEmitter {
     this.socket.emit(event, ...data);
   }
 
+  open(fn) {
+    this.socket.open(fn);
+  }
+
   /**
    * Silk-server specific join room.
    *

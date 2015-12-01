@@ -1,15 +1,15 @@
-From 1c011a36fd5e9a0104472dd67623c35ce6957972 Mon Sep 17 00:00:00 2001
+From 422cfa2edf866d4c011451f4719b6d107590786b Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 93 ++++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 97 ++++++++++++++++++++++++++++++++++++++++++++
  apps/Android.mk              |  1 +
  apps/haartraining/Android.mk | 16 ++++++++
  apps/traincascade/Android.mk | 19 +++++++++
- opencv.mk                    | 38 ++++++++++++++++++
- 5 files changed, 167 insertions(+)
+ opencv.mk                    | 38 +++++++++++++++++
+ 5 files changed, 171 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/Android.mk
  create mode 100644 apps/haartraining/Android.mk
@@ -18,10 +18,10 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..8a11d53
+index 0000000..5dc84f4
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,97 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -66,11 +66,20 @@ index 0000000..8a11d53
 +	$(hide) mkdir -p $(@D)
 +	$(hide) touch $@
 +
++
++# If the 2nd arch exists assume it's 32bit and select it
++ifdef TARGET_2ND_ARCH
++#$(error DD $(TARGET_2ND_ARCH) - $(TARGET_$(TARGET_2ND_ARCH_VAR_PREFIX)CPU_ABI))
++LOCAL_2ND_ARCH_VAR_PREFIX := $(TARGET_2ND_ARCH_VAR_PREFIX)
++endif
++
++$(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A):
 +	@echo Symlink: $@
 +	$(hide) mkdir -p $(@D)
 +	$(hide) ln -sf ../libopencv_core_intermediates/install/sdk/native/3rdparty/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv_,lib,$(notdir $@)) $@
 +
++$(__FAKE_OPENCV_MODULES_A): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(__FAKE_OPENCV_MODULES_A):
 +	@echo Symlink: $@
 +	$(hide) mkdir -p $(@D)
@@ -98,11 +107,6 @@ index 0000000..8a11d53
 + -DANDROID_NDK_LAYOUT=ANDROID \
 + -DWITH_TBB=true \
 + $(LOCAL_PATH)
-+
-+# If the 2nd arch exists assume it's 32bit and select it
-+ifdef TARGET_2ND_ARCH
-+LOCAL_2ND_ARCH_VAR_PREFIX := $(TARGET_2ND_ARCH_VAR_PREFIX)
-+endif
 +
 +$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(LOCAL_BUILT_MODULE): $(OPENCV_MAKEFILE) \
@@ -214,5 +218,5 @@ index 0000000..ba22e54
 +LOCAL_SHARED_LIBRARIES += liblog libz
 +endif
 -- 
-2.4.5
+1.9.1
 

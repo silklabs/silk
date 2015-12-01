@@ -725,6 +725,15 @@ void bt_le_lpp_rssi_threshold_evt_callback(bt_bdaddr_t *bda,
 }
 #endif
 
+#ifdef QBLUETOOTH_HCI_CMD_SEND
+/** Bluetooth HCI event Callback */
+/* Receive any HCI event from controller for raw commands */
+void bt_hci_event_recv_callback(uint8_t event_code, uint8_t *buf, uint8_t len)
+{
+  ALOGE("bt_hci_event_recv_callback");
+}
+#endif
+
 bt_callbacks_t bt_callbacks = {
   sizeof(bt_callbacks_t),
   bt_adapter_state_changed_callback,
@@ -745,6 +754,9 @@ bt_callbacks_t bt_callbacks = {
   bt_le_lpp_read_rssi_thresh_callback,
   bt_le_lpp_enable_rssi_monitor_callback,
   bt_le_lpp_rssi_threshold_evt_callback,
+#endif
+#ifdef QBLUETOOTH_HCI_CMD_SEND
+  bt_hci_event_recv_callback,
 #endif
 };
 
@@ -1750,7 +1762,7 @@ btgatt_server_callbacks_t bt_gatt_server_callbacks = {
     gatt_server_response_confirmation_callback,
     gatt_server_indication_sent_callback,
     gatt_server_congestion_callback,
-#ifndef QBLUETOOTH
+#ifdef BLUETOOTH_GATT_SERVER_MTU_CHANGED_CALLBACK
     gatt_server_mtu_changed_callback,
 #endif
 };

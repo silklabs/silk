@@ -66,10 +66,9 @@ LOCAL_C_INCLUDES := . \
 
 LOCAL_CFLAGS += -Wextra -Werror
 
-ifeq ($(TARGET_USES_QCOM_BSP), true)
-# Select the CAF version of the CpuConsumer interface
+ifeq ($(TARGET_CPUCONSUMER_ONFRAMEAVAILABLE__NOITEM), true)
+# Select the (older) CAF version of the CpuConsumer interface
 LOCAL_CFLAGS += -DCAF_CPUCONSUMER
 endif
-
 
 include $(BUILD_SILK_SHARED_LIBRARY)

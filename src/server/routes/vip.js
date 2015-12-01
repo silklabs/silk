@@ -10,6 +10,7 @@ import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
 import URL from 'url';
+import querystring from 'querystring';
 
 import Accounts from '../models/accounts';
 
@@ -164,12 +165,12 @@ export default function (ctx) {
 
     let baseUrl = ctx.config.resetPassword.url;
     let parsed = URL.parse(baseUrl, true);
-    parsed.query = parsed.query || {};
-    delete parsed.search;
+    let hashParams = {
+      token: reset.token,
+      email: req.body.email,
+    };
 
-    parsed.query.token = reset.token;
-    parsed.query.email = req.body.email;
-
+    parsed.hash += `?${querystring.stringify(hashParams)}`;
     let passwordResetUrl = URL.format(parsed);
 
     await ctx.emailSender.resetPassword({

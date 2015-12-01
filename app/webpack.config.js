@@ -34,8 +34,8 @@ var config = {
 };
 
 // Production config
-if (process.env.NODE_ENV === 'production') {
-  config.plugins.push(new webpack.optimize.OccurrenceOrderPlugin());
+if (process.env.CONFIGURATION === 'Release') {
+  config.plugins.push(new webpack.optimize.DedupePlugin());
   config.plugins.push(new webpack.optimize.UglifyJsPlugin());
 }
 

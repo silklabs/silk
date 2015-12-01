@@ -57,6 +57,7 @@ export default class extends AsyncComponent {
     verifyPassword: React.PropTypes.bool.isRequired,
     onSubmit: React.PropTypes.func.isRequired,
     inProgress: React.PropTypes.bool.isRequired,
+    skipPassword: React.PropTypes.bool.isRequired,
   };
 
   state = {
@@ -123,6 +124,20 @@ export default class extends AsyncComponent {
         />
       );
     }
+
+    let password = null;
+    if (this.props.skipPassword !== true) {
+      password = (
+        <StyledTextInput
+          placeholder="Password"
+          value={this.state.password}
+          secureTextEntry={true}
+          onSubmitEditing={this.handleSubmit}
+          onChangeText={(password) => this.setState({password})}
+        />
+      );
+    }
+
     return (
       <View style={this.props.style}>
         <StyledTextInput
@@ -132,13 +147,7 @@ export default class extends AsyncComponent {
           onSubmitEditing={this.handleSubmit}
           onChangeText={(email) => this.setState({email})}
         />
-        <StyledTextInput
-          placeholder="Password"
-          value={this.state.password}
-          secureTextEntry={true}
-          onSubmitEditing={this.handleSubmit}
-          onChangeText={(password) => this.setState({password})}
-        />
+        {password}
         {passwordVerification}
         {button}
       </View>

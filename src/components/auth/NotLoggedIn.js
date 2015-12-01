@@ -161,6 +161,29 @@ export default class extends AsyncComponent {
             label="BACK"
             onPress={() => this.setState({controls: null})}
           />
+          <TextLink
+            label="FORGOT PASSWORD?"
+            onPress={() => this.setState({controls: 'forgot_password'})}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  _renderForgotPassword() {
+    return (
+      <View style={styles.controlsContainer}>
+        <AuthForm
+          onSubmit={this._forgotPassword}
+          inProgress={this.state.inProgress}
+          submitText="Reset Password"
+          skipPassword={true}
+        />
+        <View style={styles.bottomLinks}>
+          <TextLink
+            label="BACK"
+            onPress={() => this.setState({controls: null})}
+          />
         </View>
       </View>
     );
@@ -188,12 +211,42 @@ export default class extends AsyncComponent {
     this.setStateAsync({ inProgress: false });
   };
 
+  _forgotPassword = async(credentials) => {
+    const { userState } = this.props;
+    this.setStateAsync({ inProgress: true });
+
+    let title = 'Error';
+    let message = 'Could not connect to server. Please try again.';
+
+    try {
+      const success = await userState.forgotPassword(credentials.email);
+      if (success) {
+        title = 'Success';
+        message = 'A password reset email has been sent!';
+        this.setStateAsync({ controls: 'signin' });
+      } else {
+        message = 'Failed to send password reset. Please try again.';
+      }
+    } catch (err) {
+      log.info('Failed to reset password', err);
+      if (err.code === 404) {
+        // Server will send 404 if it cannot find the account...
+        message = 'This email address is not registered with an account.';
+      }
+    } finally {
+      this.setStateAsync({ inProgress: false });
+      AlertIOS.alert(title, message);
+    }
+  }
+
   _renderControls() {
     switch (this.state.controls) {
       case 'signup':
         return this._renderSignUp();
       case 'signin':
         return this._renderSignIn();
+      case 'forgot_password':
+        return this._renderForgotPassword();
       default:
         return this._renderFirstScreen();
     }

@@ -9,15 +9,26 @@
 import ui from './ui';
 ui.goto('bootanimation');
 
+import createLog from './log';
+const log = createLog('main');
+
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
 let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
+{
+  // Force the source maps into memory right away. It typically takes ~5
+  // seconds to load the source maps and unfortunately asynchronous loading is
+  // not currently supported by the source map library.  Taking the hit now
+  // avoids an unpredictable delay the first time an exception is thrown.
+  log.verbose('Warming up source maps');
+  (new Error()).stack; // Trigger a call to Error.prepareStackTrace
+  log.verbose('Source maps ready');
+}
 
 import assert from 'assert';
 import api from './api';
 import battery from './battery';
-import createLog from './log';
 
 import wifi from './wifi';
 import ntp from './ntp';
@@ -40,7 +51,6 @@ import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
 
-const log = createLog('main');
 // Start the profile server ASAP.
 initProfiler();
 
@@ -130,6 +140,14 @@ function main() {
       // It's preferable to kill this process over system daemons
       // (usually running as -17) in out of memory situations.
       fs.writeFile('/proc/self/oom_adj', 0);
+
+      // If no time zone is set select Pacific time.  The device currently
+      // doesn't really care what time zone it's in, all operations are done
+      // in UTC.  However using Pacific for local time helps ensure that log
+      // message timestamps are aligned with where most developers are.
+      if (util.getprop('persist.sys.timezone', '').length === 0) {
+        util.setprop('persist.sys.timezone', 'America/Los_Angeles');
+      }
 
       assert(outbox, 'must have outbox when initializing timeline');
       timeline = new Timeline(id.toString(), outbox);
@@ -359,7 +377,7 @@ function shutdown(finalPromiseFactory) {
       server.disconnect();
       update.stop();
     })
-    .then(outbox.shutdown)
+    .then(() => outbox.shutdown)
     .then(() => {
       // Always make sure this one is last.
       return STATUS_COMPLETE;
@@ -372,8 +390,8 @@ function shutdown(finalPromiseFactory) {
 
   shutdownPromise = Promise.race([ timeoutPromise, asyncWorkPromise ])
     .catch(err => {
-      log.error('Shutdown error: %s', err);
-      return 'exception';
+      log.error('Shutdown error:', err.stack);
+      return STATUS_EXCEPTION;
     })
     .then(status => {
       switch (status) {

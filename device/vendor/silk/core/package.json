@@ -6,7 +6,8 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "install": "./build",
-    "test": "DEBUG=* mocha $(find test -name '*_test.js')"
+    "test": "DEBUG=* mocha $(find test -name '*_test.js')",
+    "clean": "rm -rf node_modules core.js core.js.map"
   },
   "dependencies": {
     "babel-runtime": "^5.8.20",

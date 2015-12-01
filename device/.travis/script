@@ -67,8 +67,8 @@ base)
   ;;
 mako)
   $make
-  $make otapackage
-  $make silkota
+  BUILD_LATER_OTAPACKAGE=1
+  BUILD_LATER_SILKOTA=1
   ;;
 *)
   $make
@@ -108,6 +108,17 @@ if [[ $TRAVIS_PULL_REQUEST == false ]] &&
   else
     echo "Will not push locked_node_modules for branch $TRAVIS_BRANCH"
   fi
+fi
+
+# Clear more space for Travis builds
+rm -rf vendor/silk/locked_node_modules/node_modules/modules
+
+if [ -n "$BUILD_LATER_OTAPACKAGE" ]; then
+  $make otapackage
+fi
+
+if [ -n "$BUILD_LATER_SILKOTA" ]; then
+  $make silkota
 fi
 
 exit 0

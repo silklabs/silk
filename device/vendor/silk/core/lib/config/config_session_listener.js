@@ -154,6 +154,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
     log.debug(`ConfigSessionListener._onConnect()`);
     assert(this._state === ConfigSessionListener.STATE_IDLE);
 
+    socketSession.allowUnauthenticated();
+
     super._onConnect(socketSession);
 
     this._sendRegister();
@@ -354,6 +356,11 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._send({
       name: `complete`,
     });
+
+    // Disable the scanner now that we're properly configured. If the connection
+    // dies after this we don't really care and we don't want to start scanning
+    // again.
+    this._socketSession.scanner.stop();
 
     this._state = ConfigSessionListener.STATE_COMPLETE;
     this._wifiErrorCount = 0;

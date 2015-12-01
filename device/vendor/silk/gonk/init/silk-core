@@ -15,21 +15,6 @@ if [ ! -x $NODE ]; then
   exit 1
 fi
 
-if [ "$(getprop ro.debuggable)" == "1" ]; then
-  if [ "$(getprop persist.silk.coredump)" == "1" ]; then
-    if [ ! -d /data/core ]; then
-      mkdir /data/core
-      chmod 0733 /data/core
-      chown root:root /data/core
-    fi
-    echo "/data/core/%e.%p.%t.core" > /proc/sys/kernel/core_pattern
-    echo "1" > /proc/sys/fs/suid_dumpable
-    prlimit $BASHPID 4 -1 -1 # RLIMIT_CORE = 4
-
-    info Core dump enabled
-  fi
-fi
-
 NODE_ARGS="--harmony"
 if [ "$1" = "--debug-brk" ]; then
   NODE_ARGS="$NODE_ARGS $1"
@@ -58,12 +43,7 @@ if [ -z $1 ]; then
   # listen on it.
   setprop sys.boot_completed 1
 
-  export LOGWRAPPER=
-  if [ $PPID -eq 1 ]; then
-    LOGWRAPPER="logwrapper -d"
-  fi
-
-  exec $LOGWRAPPER $NODE $NODE_ARGS /system/silk/core.js
+  exec $NODE $NODE_ARGS /system/silk/core.js
   exit 1
 fi
 

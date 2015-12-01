@@ -5,6 +5,7 @@ import assert from 'assert';
 import bleno from 'bleno';
 import EventEmitter from 'events';
 import { getboolprop } from '../sysutils';
+import getDeviceId from '../deviceid';
 import makeDeferred from '../deferred';
 import makeLog from '../log';
 import noble from 'noble';
@@ -44,14 +45,21 @@ class BluetoothLE extends EventEmitter {
   _socketSession = null;
   _socketSessionListener = null;
 
-  constructor() {
+  _privateKey = ``;
+  _publicKeys = [ ];
+
+  constructor(privateKey) {
     log.debug(`BluetoothLE()`)  ;
+
+    assert(privateKey);
 
     super();
 
     this.MODE_OFF = BluetoothLE.MODE_OFF;
     this.MODE_SCAN = BluetoothLE.MODE_SCAN;
     this.MODE_BEACON = BluetoothLE.MODE_BEACON;
+
+    this._privateKey = privateKey;
 
     assert(bleno.state === noble.state);
     this._adapterState = noble.state;
@@ -66,6 +74,15 @@ class BluetoothLE extends EventEmitter {
 
   get mode() {
     return this._mode;
+  }
+
+  set publicKeys(val) {
+    assert(val === null || Array.isArray(val));
+
+    val = val || [];
+    val.forEach((publicKey) => assert(typeof publicKey === `string`));
+
+    this._publicKeys = val;
   }
 
   get beaconInfo() {
@@ -270,17 +287,21 @@ class BluetoothLE extends EventEmitter {
     // Make sure that the adapter is on before attempting to start scanning.
     await this._adapterStateDeferred.promise;
 
-    const scanner =
-      new SocketScanner(noble, { serviceUuid: this._beaconInfo.uuid });
+    const scanner = new SocketScanner(
+      noble,
+      this._privateKey,
+      {
+        publicKeys: this._publicKeys,
+        serviceUuid: this._beaconInfo.uuid,
+      }
+    );
 
     assert(!this._bledroidCrashDeferred);
     this._bledroidCrashDeferred = makeDeferred();
 
-    let promise = scanner.start();
-
     await Promise.race([
       this._bledroidCrashDeferred.promise,
-      promise,
+      scanner.start(),
     ]);
 
     scanner.addListener(`connect`, this._onSocketSessionConnect);
@@ -420,12 +441,15 @@ async function init() {
     log.warn(message);
   });
 
-  await Promise.all([
+  let [ deviceId ] = await Promise.all([
+    getDeviceId(),
     waitForState(bleno, `bleno`),
     waitForState(noble, `noble`),
   ]);
 
-  let instance = new BluetoothLE();
+  assert(deviceId);
+
+  let instance = new BluetoothLE(deviceId.priv);
 
   initPromiseComplete = true;
 

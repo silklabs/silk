@@ -297,7 +297,7 @@
   <project groups="pdk" name="platform/external/tinyxml" path="external/tinyxml" revision="f065a8058659c0e6c5a5ccddcdb4faf0fe645cd0" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk" name="platform/external/tinyxml2" path="external/tinyxml2" revision="c74b546f5af36968ffa56d7fd4529f4273b96f48" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk" name="platform/external/tremolo" path="external/tremolo" revision="4955bfb4caeb9b0b03b85a1e886674ddbccdb44f" upstream="LA.BR.1.1.2_rb1.9"/>
-  <!-- <project groups="pdk" name="platform/external/valgrind" path="external/valgrind" revision="5ddeb576ce582b81842a97d836f6a28cd419f7b3" upstream="LA.BR.1.1.2_rb1.9"/> -->
+  <project groups="pdk" name="platform/external/valgrind" path="external/valgrind" revision="5ddeb576ce582b81842a97d836f6a28cd419f7b3" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk" name="platform/external/vixl" path="external/vixl" revision="29d04c1f6d91ab8336f419bd854e5badcccbc706" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/webp" path="external/webp" revision="af51b94a435132e9014c324e25fb686b3d07a8c8" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk" name="platform/external/webrtc" path="external/webrtc" revision="96907bb2db8383d06970a5d23163bfcbc50f8089" upstream="LA.BR.1.1.2_rb1.9"/>

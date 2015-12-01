@@ -71,6 +71,7 @@ SILK_INIT := \
   silk-kmsg \
   silk-service \
   silk-dashboard \
+  silk-debug-wrapper \
 
 SILK_GONK_PROGIES := \
   bledroid \
@@ -83,6 +84,7 @@ SILK_GONK_PROGIES := \
   volume \
   wpad \
   silk-sensors \
+  silk-time_genoff \
 
 SILK_UI_PACKAGES := \
   logo.png \
@@ -110,6 +112,11 @@ PRODUCT_PACKAGES += \
   opencv \
   kissfft \
   v8-profiler \
+
+# packages for debug builds
+ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
+PRODUCT_PACKAGES += valgrind
+endif
 
 # include platform-specific silk makefile, if exists
 -include gonk/${GONK}/silk_${GONK}.mk

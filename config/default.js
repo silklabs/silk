@@ -43,7 +43,7 @@ export default {
   },
 
   resetPassword: {
-    url: process.env.PASSWORD_RESET_URL || 'http://localhost:8080/'
+    url: process.env.PASSWORD_RESET_URL || 'http://localhost:8080/#/forgot_password',
   },
 
   ses: {

@@ -71,6 +71,23 @@ export default class ForgotPassword extends React.Component {
   }
 
   render() {
+    if (this.state.token && this.state.email) {
+      return this._renderReset();
+    }
+
+    // If user randomly stumbles on this page...
+    const panelStyle = {maxWidth: 400, margin: '10px auto 10px'};
+    return (
+      <Panel style={panelStyle}>
+        <Alert bsStyle="danger">
+          Oops... Looks like you did not copy or click the reset password link...
+        </Alert>
+      </Panel>
+    );
+
+  }
+
+  _renderReset() {
     const panelStyle = {maxWidth: 400, margin: '10px auto 10px'};
     return (
       <Panel style={panelStyle}>

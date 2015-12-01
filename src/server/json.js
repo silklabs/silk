@@ -4,11 +4,7 @@
 
 
 import bodyParser from 'body-parser';
-import crypto from 'crypto';
-
-function sha256(buf) {
-  return crypto.createHash('sha256').update(buf).digest('hex');
-}
+import sha256 from './sha256';
 
 /**
  * Construct a hash of the request looks like this:

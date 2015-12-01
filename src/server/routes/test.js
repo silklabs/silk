@@ -1,11 +1,16 @@
 /**
  * Test only routes useful for various types of tests.
+ *
+ * @flow
  */
 import assert from 'assert';
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
+
+import type Nonce from '../models/nonce';
+import type Accounts from '../models/accounts';
 
 const PREFIX = '/v1/test/';
 
@@ -15,7 +20,13 @@ function sleep(amount) {
   });
 }
 
-export default function (ctx) {
+type RouteContext = {
+  test: Array<any>;
+  accounts: Accounts;
+  nonce: Nonce;
+}
+
+export default function (ctx: RouteContext) {
   let routes = new Router();
 
   let api = expressApi(routes, {
@@ -26,25 +37,31 @@ export default function (ctx) {
     `,
   });
 
-  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (publicKey) => {
-    // Attempt to find an account with this id...
-    let account = await ctx.accounts.findByPublicKey({
-      publicKey: publicKey
-    });
+  let options = {
+    nonce: ctx.nonce,
+    signatureProvider: null,
+    publicKeyProvider: async (publicKey) => {
+      // Attempt to find an account with this id...
+      let account = await ctx.accounts.findByPublicKey({
+        publicKey: publicKey
+      });
 
-    if (!account) {
+      if (!account) {
+        return null;
+      }
+
+      let accessToken = account.accountTokens.find(v => {
+        return v.publicKey === publicKey;
+      });
+
+      if (accessToken) {
+        return accessToken.publicKey;
+      }
       return null;
     }
+  };
 
-    let accessToken = account.accountTokens.find(v => {
-      return v.publicKey === publicKey;
-    });
-
-    if (accessToken) {
-      return accessToken.publicKey;
-    }
-    return null;
-  }));
+  routes.use(PREFIX, jwtMiddleware(options));
 
   /**
    * Note the names in both the paths and names of these routes are meaningless
@@ -123,4 +140,3 @@ export default function (ctx) {
 
   return api;
 }
-

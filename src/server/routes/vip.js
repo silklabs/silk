@@ -3,6 +3,8 @@
  * is passed as part of the payloads and validated against a knowns set of keys.
  * Primarily this provides assurance that the issuer of the request owns the
  * private key.
+ *
+ * @flow
  */
 
 import { Router } from 'express';
@@ -15,10 +17,12 @@ import querystring from 'querystring';
 import Accounts from '../models/accounts';
 
 
+import type {RouteContext} from '../server';
+
 let log = require('log')('routes:vip');
 const PREFIX = '/v1/vip/';
 
-export default function (ctx) {
+export default function (ctx: RouteContext) {
   let routes = new Router();
 
   /**
@@ -27,8 +31,11 @@ export default function (ctx) {
    *
    * This will _not_ check against known public key values.
    */
-  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (publicKey) => {
-    return publicKey;
+
+  routes.use(PREFIX, jwtMiddleware({
+    nonce: ctx.nonce,
+    signatureProvider: null,
+    publicKeyProvider: async publicKey => publicKey
   }));
 
   let api = expressApi(routes, {

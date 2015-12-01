@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import loadConfig from './config';
+import URL from 'url';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
@@ -12,6 +13,12 @@ import Metadata from './gen/metadata';
 import Id from './id';
 import RssiSmoother from './rssi_smoother';
 
+import {signature} from './jwt_request_signature';
+import makeBlob from './blob'; // TODO: Remove
+import makeTimeMeta from './time_metadata';
+import makeCrashMeta from './crash_metadata';
+import makeSocketio from './socketio';
+import makeStreams from './streams';
 
 // XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
@@ -48,11 +55,23 @@ export const BTLE_SOCKET_UUIDS = {
 export { default as createStreams } from './streams';
 export RssiSmoother from './rssi_smoother';
 
-import makeBlob from './blob'; // TODO: Remove
-import makeTimeMeta from './time_metadata';
-import makeCrashMeta from './crash_metadata';
-import makeSocketio from './socketio';
-import makeStreams from './streams';
+function socketioConfig(accessToken, url) {
+  let parsed = URL.parse(url, true /* parse query string */);
+  parsed.query.jwt = signature(accessToken, 'GET', parsed.path);
+  delete parsed.search;
+
+  /**
+   * - socket.io-client will ignore path and query parameters so we must parse
+   *   the out and pass them as options...
+   *
+   * - The signature does not include the host so pass only the path+query...
+   */
+  return [URL.format(parsed), {
+    transports: ['websocket'],
+    path: parsed.pathname,
+    query: parsed.query,
+  }];
+}
 
 export default function create(options) {
   let accessToken = null;
@@ -129,7 +148,63 @@ export default function create(options) {
 
     get accessToken() {
       return accessToken;
-    }
+    },
+
+    /**
+     * Because we need to periodically renew our JWT token (on each connect)
+     * we must monkey patch the socket.io client.
+     *
+     * let io = api.socketioClient(require('socket.io-client'), 'account');
+     *
+     * There are two types of clients:
+     *
+     *   - account : Uses socket.io url for accounts.
+     *   - device  : Uses socket.io url for devices.
+     */
+    socketioClient: (socketFactory, type, overrides = {}) => {
+      let configFn;
+      switch (type) {
+      case 'account':
+        configFn = api.socketioAccountConfig;
+        break;
+      case 'device':
+        configFn = api.socketioDeviceConfig;
+        break;
+      default:
+        throw new Error(`Unknown socket.io client type ${type}`);
+      }
+
+      // This intentionally uses junk values since we override them in .open
+      let socket = socketFactory('', {
+        autoConnect: false,
+        transports: ['websocket']
+      });
+      let manager = socket.io;
+      // The .open call is used both during the initial connect and all reconnections...
+      let superOpen = manager.open;
+      manager.open = async (fn) => {
+        try {
+          let [uri, opts] = await configFn();
+          manager.uri = uri;
+          manager.opts = Object.assign({}, overrides, opts);
+          Object.assign(manager, manager.opts);
+          superOpen.call(manager, fn);
+        } catch (err) {
+          fn && fn(err);
+        }
+      };
+      return socket;
+    },
+
+    socketioDeviceConfig: async () => {
+      let {url} = await api.device.socketioURL();
+      return socketioConfig(accessToken, url);
+    },
+
+    socketioAccountConfig: async () => {
+      let {url} = await api.account.socketioURL();
+      return socketioConfig(accessToken, url);
+    },
   };
 
   api.loadConfig(options);

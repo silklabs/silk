@@ -1,16 +1,16 @@
 /**
  * Basic http client which provides shared functionality (including JWT) for all
  * our api calls
+ *
+ * @flow
  */
-
 import fetch from './fetch';
 import URL from 'url';
 import throwError from './fetch_error';
-import jwa from './jwa';
-import jwt from 'jsonwebtoken';
-import { sha } from 'hash.js';
-import uuid from 'uuid';
 import debug from 'debug';
+import {bodySignature} from './jwt_request_signature';
+
+import type AccessToken from './id';
 
 const MAX_ID = 999;
 const ID_LENGTH = String(MAX_ID).length;
@@ -30,7 +30,7 @@ const REQUEST_TIMEOUT_MS = 30 * 1000;
 // We cycle through request ID's 0-999 to make this more readable.
 let requestID = 0;
 
-function getRequestID() {
+function getRequestID(): string {
   let id = requestID++;
   if (id > MAX_ID) {
     requestID = 0;
@@ -44,9 +44,7 @@ function getRequestID() {
   return strID;
 }
 
-function sha256(str) {
-  return sha.sha256().update(str).digest('hex');
-}
+
 
 function sleep(duration) {
   return new Promise((accept) => {
@@ -55,13 +53,17 @@ function sleep(duration) {
 }
 
 export default class HttpClient {
-  maxiumRetryDelayMs = MAXIMUM_RETRY_DELAY_MS;
-  maxRetries = MAXIMUM_RETRIES;
-  retryDelayMinMs = RETRY_DELAY_MIN_MS;
-  retryDelayMaxMs = RETRY_DELAY_MAX_MS;
-  requestTimeout = REQUEST_TIMEOUT_MS;
+  name: string;
+  maxiumRetryDelayMs: number = MAXIMUM_RETRY_DELAY_MS;
+  maxRetries: number = MAXIMUM_RETRIES;
+  retryDelayMinMs: number = RETRY_DELAY_MIN_MS;
+  retryDelayMaxMs: number = RETRY_DELAY_MAX_MS;
+  requestTimeout: number = REQUEST_TIMEOUT_MS;
+  baseURL: string;
+  accessToken: AccessToken;
+  _accessToken: ?AccessToken;
 
-  constructor(baseURL, options = {}) {
+  constructor(baseURL: string, options: {[key: string]: any} = {}) {
     if (!baseURL) {
       throw new Error('baseURL is required');
     }
@@ -69,15 +71,17 @@ export default class HttpClient {
     Object.assign(this, options);
   }
 
-  _logger = null;
-  _log(...args) {
+  _logger: ?(...args: any) => void;
+  _log(...args: any): void {
     if (!this._logger) {
       this._logger = debug(`silk-api:${this.name}`);
     }
-    this._logger(...args);
+    if (this._logger) { // XXX: Make flow happy by adding another if...
+      this._logger(...args);
+    }
   }
 
-  get key() {
+  get key(): AccessToken {
     return this.accessToken;
   }
 
@@ -90,7 +94,7 @@ export default class HttpClient {
     this._accessToken = value;
   }
 
-  get accessToken() {
+  get accessToken(): AccessToken {
     // Allow the key to be undefined or null but throw an error if we attempt to
     // use it in that state.
     if (!this._accessToken || !this._accessToken.priv) {
@@ -99,18 +103,18 @@ export default class HttpClient {
     return this._accessToken;
   }
 
-  async _sleep(interval, retry, id) {
+  async _sleep(interval: number, retry: number, id: string): Promise<void> {
     let duration = Math.min(Math.pow(2, retry) * interval, this.maxiumRetryDelayMs);
     this._log(`Wait (${id}) for ${duration}`);
     await sleep(duration);
   }
 
   // XXX: This is a hack since we still do not support true GET requests...
-  request(method, url) {
+  request(method: string, url: string): Promise<any> {
     return this.requestWithBody(method, url, {});
   }
 
-  async requestWithBody(method, url, body) {
+  async requestWithBody(method: string, url: string, body: {[key: string]: any}): Promise<any> {
     // XXX: This "request id" is for display only right now at some point in the
     // future we should send more meaningful (uuid) ids that are logged across
     // the various services we hit so we can track where they originated and why.
@@ -169,40 +173,14 @@ export default class HttpClient {
   /**
    * Underlying implementation which actually builds the request.
    */
-  async _sendRequestWithBody(method, url, body, id) {
+  async _sendRequestWithBody(
+    method: string,
+    url: string,
+    body: any,
+    id: string
+  ): Promise<any> {
     body = JSON.stringify(body);
-    let canonicalReq = `${url}\n${method.toLowerCase()}\n${sha256(body)}`;
-    let jwtPayload = {
-      // Unique id for this request.
-      jti: uuid.v1(),
-      // JSON representation of a string...
-      iat: new Date().toJSON(),
-      // sha1 of the json body...
-      requestHash: sha256(canonicalReq)
-    };
-
-    // TODO: Add hash of body to payload...
-    let signature = jwt.sign(jwtPayload, this.key.priv, {
-      /**
-       * Remember headers are _not_ signed do not trust them and do not put
-       * values in here that are implicitly assumed to be verified.
-       */
-      headers: {
-        /**
-         * The server will identify us based on the public key. We send it is
-         * sent in the clear here as an "id" then server _must_ validate this
-         * against known public keys.
-         *
-         * XXX: An alternative design would be to use an opaque id which is
-         * assigned to us by the server but that was deemed to add complexity
-         * without much value.
-         */
-        id: this.key.pub
-      },
-      algorithm: 'ed25519',
-      jwa: jwa
-    });
-
+    let signature = bodySignature(this.key, method, url, body);
     let headers = {
       'authorization': `Bearer ${signature}`,
       'content-type': 'application/json'

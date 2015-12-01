@@ -1,0 +1,13 @@
+--- node_modules/react-native/local-cli/server/runServer.js.orig	2015-12-01 12:44:53.000000000 -0800
++++ node_modules/react-native/local-cli/server/runServer.js	2015-12-01 12:46:20.000000000 -0800
+@@ -49,6 +49,10 @@
+       readyCallback();
+     }
+   );
++  // Disable any kind of automatic timeout behavior for incoming
++  // requests in case it takes the packager more than the default
++  // timeout of 120 seconds to respond to a request.
++  serverInstance.timeout = 0;
+ }
+ 
+ function getAppMiddleware(args, config) {

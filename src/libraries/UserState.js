@@ -228,6 +228,18 @@ export class UserState extends EventEmitter {
     return true;
   }
 
+  async forgotPassword(email) {
+    // XXX: Semi-nasty hacks to ensure we use an access token for password reset.
+    this.api.accessToken = await this._createAccessToken();
+    let res;
+    try {
+      res = await this.api.vip.resetPassword({ email });
+    } finally {
+      this.api.accessToken = null;
+    }
+    return res;
+  }
+
   /**
    * Sign the deviceId with our accessToken (account) and register it with the
    * server...

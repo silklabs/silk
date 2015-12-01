@@ -131,8 +131,10 @@ export default io => {
     });
 
     socket.on('error', err => {
-      log.error(`Client socket error: io=${socket.id} ${err.stack}`);
-      // TODO: Do something more here, maybe throw?
+      // Something unexpected happened and the connection might now be unrecoverable.
+      // Disconnect the device and hope it can reconnect.
+      log.error(`socket error, disconnecting: io=${socket.id} ${err.stack}`);
+      socket.disconnect();
     });
 
     // Send a command message from the app to a directed device or every

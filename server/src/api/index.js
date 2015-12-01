@@ -9,6 +9,9 @@ import BlobPublisher from './gen/blob_publisher';
 import CrashPublisher from './gen/crash_publisher';
 import MetadataPublisher from './gen/metadata_publisher';
 import Metadata from './gen/metadata';
+import Id from './id';
+import RssiSmoother from './rssi_smoother';
+
 
 // XXX Remove once app has been updated to use socket service.
 export const btleConfigService = {
@@ -45,6 +48,12 @@ export const BTLE_SOCKET_UUIDS = {
 export { default as createStreams } from './streams';
 export RssiSmoother from './rssi_smoother';
 
+import makeBlob from './blob'; // TODO: Remove
+import makeTimeMeta from './time_metadata';
+import makeCrashMeta from './crash_metadata';
+import makeSocketio from './socketio';
+import makeStreams from './streams';
+
 export default function create(options) {
   let accessToken = null;
   let api = {
@@ -54,11 +63,11 @@ export default function create(options) {
       // Load/reload only the portions of the API that are dependent on the config
       Object.assign(api, {
         config,
-        blob: require('./blob')(config), // TODO: Remove
-        timeMeta: require('./time_metadata')(config),
-        crashMeta: require('./crash_metadata')(config),
-        socketio: require('./socketio')(config),
-        streams: require('./streams')(config),
+        blob: makeBlob(config), // TODO: Remove
+        timeMeta: makeTimeMeta(config),
+        crashMeta: makeCrashMeta(config),
+        socketio: makeSocketio(config),
+        streams: makeStreams(config),
       });
 
       const services = {
@@ -81,7 +90,7 @@ export default function create(options) {
       }
     },
 
-    id: require('./id'),
+    id: Id,
     // These are the components of the service protocol that must be
     // agreed upon by central and peripheral nodes.
     btleConfigService,
@@ -105,7 +114,7 @@ export default function create(options) {
       },
     },
 
-    RssiSmoother: require('./rssi_smoother'),
+    RssiSmoother,
 
     set accessToken(token) {
       accessToken = token;

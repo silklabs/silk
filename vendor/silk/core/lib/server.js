@@ -41,50 +41,17 @@ class Server extends events.EventEmitter {
     }
 
     this.emit('stateChange', 'connecting');
-    this._fetchAddress();
+    this._connect();
   }
 
   /**
    * XXX: The extra wrapping here might be useless since the api does retries.
    */
-  async _fetchAddress(): Promise<void> {
-    clearTimeout(this._fetchRetryTimer);
-    this._fetchRetryTimer = null;
-
-    try {
-      let {url} = await api.device.socketioURL();
-      log.info('got socket.io url', url);
-      this._fetchRetryTimer = null;
-      this._connect(url);
-    } catch (err) {
-      log.warn('Error retrieving socket.io url:', err.stack);
-      // Retry in an arbitrary time that feels "not to long and not to short"
-      this._fetchRetryTimer = setTimeout(this._fetchAddress.bind(this), 3000);
-    }
-  }
-
-  _connect(url) {
-    log.info(`socket.io server: ${url}`);
-    this.socket = require('silk-socket.io-client-node')(
-      url,
-      {
-        autoConnect: true,
-        forceNew: true,
-
-        /**
-         * Only use websockets this is important for the following reasons:
-         *
-         *   - it's faster by bypassing the upgrade check
-         *
-         *   - works around various bugs where we send base64 via polling
-         *     which native does not decode correctly.
-         *
-         *   - More deterministic behavior since we don't sometimes use
-         *     polling and sometimes use websockets.
-         */
-        transports: ['websocket']
-      }
-    );
+  _connect() {
+    this.socket = api.socketioClient(require('silk-socket.io-client-node'), 'device', {
+      forceNew: true,
+    });
+    this.socket.open();
 
     this.socket.on('connect', () => {
       log.info(`server socket connected`);

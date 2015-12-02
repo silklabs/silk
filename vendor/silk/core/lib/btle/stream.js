@@ -50,6 +50,7 @@ class Stream extends Duplex {
   _incomingBuffer = null;
   _outgoingBuffer = null;
 
+  _emittedError = false;
   _ended = false;
   _finishing = false;
   _finished = false;
@@ -118,9 +119,6 @@ class Stream extends Duplex {
 
       // Notify the consumer of the error.
       this._emitError(error);
-
-      // Close the read stream.
-      this.push(null);
     };
 
     let timeout = null;
@@ -167,21 +165,43 @@ class Stream extends Duplex {
 
   _emitError(error) {
     log.debug(`Stream._emitError('${error.toString()}')`);
-    try {
-      // If there are no error listeners attached then this will throw...
+
+    assert(this._writeError);
+
+    if (this._emittedError) {
+      log.warn(`Received more than one error`, error);
+    } else {
+      this._emittedError = true;
       this.emit(`error`, error);
-    } catch(e) {
-      log.warn(e);
+
+      // Discard all data.
+      this._incomingBuffer = null;
+      this._outgoingBuffer = null;
+
+      this._pushDataWhenAvailable = false;
+      this._pushData();
     }
   }
 
   _maybeEmitClose() {
     log.debug(`Stream._maybeEmitClose()`);
 
-    if (!this._closed && this._ended && this._finished) {
+    if (!this._closed &&
+        (this._emittedError ||
+         (this._ended && this._finished))) {
       this._closed = true;
-      this.emit(`close`);
+      process.nextTick(() => this.emit(`close`));
     }
+  }
+
+  emit(eventName, ...args) {
+    if (this._emittedError &&
+        (eventName === `finish` || eventName === `end`)) {
+      log.debug(`Blocked the '${eventName}' event`);
+      return;
+    }
+
+    return super.emit(eventName, ...args);
   }
 
   // Part of the stream API.
@@ -316,11 +336,12 @@ class Stream extends Duplex {
     this._outgoingBuffer = null;
 
     // Make sure any further write() calls fail.
-    let error = new Error(`Other side has disconnected, cannot write`);
-    this._setWriteError(error);
-
-    if (!this._finishing) {
-      error = new Error(`Other side disconnected unexpectedly`);
+    if (this._finishing) {
+      let error = new Error(`No longer connected`);
+      this._setWriteError(error);
+    } else {
+      let error = new Error(`Other side disconnected unexpectedly`);
+      this._setWriteError(error);
       this._emitError(error);
     }
 
@@ -345,6 +366,11 @@ class Stream extends Duplex {
 
   _onData = data => {
     log.debug(`Stream._onData(<Buffer ${data.length}>)`);
+
+    if (this._emittedError) {
+      log.debug(`Ignoring incoming data due to previous error`);
+      return;
+    }
 
     if (this._incomingBuffer) {
       // TODO: Not very efficient.

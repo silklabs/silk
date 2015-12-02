@@ -39,7 +39,7 @@ class AuthenticateStreamBase extends Transform {
 
     cryptoStream.once(`sharedSecret`, (secret) => this._onSharedSecret(secret));
 
-    this.once(`end`, () => this.emit(`close`));
+    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
   }
 
   _queueOrPush(chunk, callback) {

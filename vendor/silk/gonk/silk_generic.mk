@@ -100,7 +100,7 @@ PRODUCT_PACKAGES += $(SILK_GONK_PROGIES)
 PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 
 ENABLE_LIBRECOVERY := true
-PRODUCT_PACKAGES += librecovery librecovery_test
+PRODUCT_PACKAGES += librecovery_test
 
 # gonk stubs
 PRODUCT_PACKAGES += fakeappops gonksched

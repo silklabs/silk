@@ -63,6 +63,27 @@ PUBLIC_URL=http://192.168.0.3:5000 npm start
 
 Alternatively you can set this value in configuration (see: https://github.com/silklabs/silk-server/blob/master/config/default.js#L14)
 
+#### Running the InfluxDB tests locally
+
+Docker is recommended. It is the easiest way to pull down the latest version of influxdb.
+
+Note that this relies on volume mounting the `influxdb` folder of this project which means
+you must have this project somewhere under /Users/ in OSX.
+
+```sh
+docker run -v $PWD/influxdb/:/config/ -d -p 8083:8083 -p 8086:8086 -e ADMIN_USER="root" -e INFLUXDB_INIT_PWD="password" -e PRE_CREATE_DB="test" tutum/influxdb:latest
+```
+
+(Note you need to know which ip docker is running under I am going to assume the host alias of "docker" in the url below)
+
+```
+export INFLUX_CONNECTION_STRING="http://root:password@docker:8086/test"
+```
+
+Now you can run the tests for influx and the server will submit data to
+your local influxdb connection.
+
+
 #### API Tests for specific environments:
 
 ##### React Native
@@ -196,7 +217,7 @@ When updating to a newer version of the server, if you get errors like this:
 MongoError: exception: Index with name: id_1 already exists with different options
 ```
 
-An arguably evil "fix" to clear your MongoDB data. 
+An arguably evil "fix" to clear your MongoDB data.
 [From StackOverflow](http://stackoverflow.com/questions/6376436/mongodb-drop-every-database/16908246#16908246):
 
 ```

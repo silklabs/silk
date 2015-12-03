@@ -76,7 +76,7 @@ export default class Diag extends React.Component {
     };
 
     let { camera, paused } = this.state;
-    if (!camera) {
+    if (!camera || !camera.online) {
       return <div>Waiting for camera {this.deviceId} to connect ...</div>;
     }
 

@@ -262,7 +262,7 @@ class Cameras extends EventEmitter {
     super();
     Object.assign(this, {
       cameras: {},
-      status: `Initializing`,
+      status: `Initializing...`,
       socket: Api.socketioClient(io, 'account'),
       _allDevices: {},
       _liveDevices: {},
@@ -298,11 +298,13 @@ class Cameras extends EventEmitter {
 
   async _loadAllDevices() {
     try {
+      this._updateStatus(`Fetching device list...`);
       const result = await Api.account.listDevices();
       this._allDevices = result.devices;
       this._update();
     } catch (err) {
       log.error(err.stack);
+      this._updateStatus(`Initialization failed: ${err}`);
     }
   }
 
@@ -348,6 +350,10 @@ class Cameras extends EventEmitter {
 
     // Avoid listener leak runtime warning with > 10 devices
     this.setMaxListeners(this._allDevices.length * 2);
+    this._updateStatus(status);
+  }
+
+  _updateStatus(status) {
     this.status = status;
     this.emit('stateChanged', this);
   }

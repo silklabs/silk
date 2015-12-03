@@ -57,8 +57,6 @@ initProfiler();
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
 
-const name = util.getprop('persist.silk.displayName', 'Silkcam');
-
 let id = null;
 let btle = null;
 let timeline;
@@ -214,7 +212,6 @@ function emitDeviceInfo() {
     if (server.connected) {
       server.socket.emit('info', {
         id: id.toString(),
-        name: name,
         now: Date.now(),
         logo: logo,
         previewSize: camera.previewSize,

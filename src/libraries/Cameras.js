@@ -272,6 +272,7 @@ class Cameras extends EventEmitter {
     this.socket.on('connect', () => {
       log.info(`Connected to server`);
       this.socket.emit('join', 'video-streams');
+      this._update();
     });
 
     this.socket.on('disconnect', e => {

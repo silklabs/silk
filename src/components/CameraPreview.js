@@ -93,7 +93,7 @@ export default class CameraPreview extends React.Component {
     let camera = this.state.camera;
     if (camera) {
       // Preview image
-      if (camera.previewImage) {
+      if (camera.online && camera.previewImage) {
         context.drawImage(camera.previewImage, 0, 0);
       } else {
         context.fillStyle = 'grey';
@@ -107,7 +107,7 @@ export default class CameraPreview extends React.Component {
       }
 
       // Objects
-      let objects = camera.previewObjects;
+      let objects = camera.online && camera.previewObjects;
       if (objects) {
         let objectColors = [
           'red',
@@ -144,7 +144,7 @@ export default class CameraPreview extends React.Component {
       context.fillText(camera.name, canvas.width - 5, canvas.height - 5);
 
       // Timestamp
-      let when = camera.previewTimestamp;
+      let when = camera.online && camera.previewTimestamp;
       if (when) {
         context.textAlign = 'start';
         context.fillText(when.toLocaleDateString() + ' ' + when.toLocaleTimeString(),
@@ -152,8 +152,10 @@ export default class CameraPreview extends React.Component {
       }
 
       // Logo
-      context.globalAlpha = 0.50;
-      context.drawImage(camera.logoImage, 0, 0);
+      if (camera.online && camera.logoImage) {
+        context.globalAlpha = 0.50;
+        context.drawImage(camera.logoImage, 0, 0);
+      }
       context.restore();
     }
   }

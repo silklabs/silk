@@ -75,6 +75,12 @@
            path="external/noble"
            remote="github"
            revision="refs/tags/v1.1.0" clone-depth="1"/>
+  <project name="mikeseven/node-opencl"
+           path="external/node-opencl"
+           remote="github"
+           revision="refs/tags/v0.4"
+           upstream="master"
+           clone-depth="1"/>
 
   <!-- Locked npm dependencies -->
   <project name="silk-device-locked-node-modules"

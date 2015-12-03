@@ -173,7 +173,6 @@ EOF
 #!/bin/bash
 
 # "Official" demo config
-DISPLAY_NAME="Front Door"
 SERVER_URL="http://192.168.13.100:5000/"
 
 cd $(dirname $0)
@@ -188,9 +187,6 @@ rm default.prop
 
 adb root
 adb wait-for-device
-
-echo Set device name to $DISPLAY_NAME
-echo persist.silk.displayName="$DISPLAY_NAME" >> default.prop
 
 echo Set silk-server URL to $SERVER_URL
 echo persist.silk.server.url=$SERVER_URL >> default.prop

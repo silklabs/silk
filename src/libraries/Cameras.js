@@ -261,11 +261,11 @@ class Cameras extends EventEmitter {
   constructor() {
     super();
     Object.assign(this, {
-      cameras: {},
+      cameras: {}, // indexed by device id
       status: `Initializing...`,
       socket: Api.socketioClient(io, 'account'),
-      _allDevices: {},
-      _liveDevices: {},
+      _allDevices: [], // unmodified result from Api.account.listDevices()
+      _liveDevices: {}, // indexed by device id
     });
     this.socket.open();
 

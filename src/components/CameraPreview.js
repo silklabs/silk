@@ -74,7 +74,7 @@ export default class CameraPreview extends React.Component {
       }
     }
     this._shouldComponentUpdate = true;
-    this.setState({ camera: newCamera, online: newCamera.online });
+    this.setState({ camera: newCamera, online: newCamera && newCamera.online });
   };
 
   onPreviewImage = () => this.renderPreview();

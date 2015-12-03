@@ -9,6 +9,7 @@ import createLog from 'log';
 import type Devices from './models/devices';
 import type Nonce from './models/nonce';
 import type { MiddlewareFn } from './express_types';
+import type { MiddlewareOverrides } from './jwt';
 
 const log = createLog('authorize:device');
 
@@ -17,7 +18,7 @@ export type AuthorizeDeviceConfig = {
   nonce: Nonce;
 }
 
-export default function (ctx: AuthorizeDeviceConfig): MiddlewareFn {
+export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrides): MiddlewareFn {
   const method = async (publicKey: string, req: any): Promise<?string> => {
     let device = await ctx.devices.findByPublicKey({
       publicKey
@@ -33,5 +34,11 @@ export default function (ctx: AuthorizeDeviceConfig): MiddlewareFn {
     return publicKey;
   };
 
-  return jwtMiddleware(ctx.nonce, method);
+  let config = Object.assign(
+    {},
+    options,
+    { nonce: ctx.nonce, publicKeyProvider: method }
+  );
+
+  return jwtMiddleware(config);
 }

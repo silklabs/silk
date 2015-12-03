@@ -4,6 +4,7 @@
 import crypto from 'crypto';
 import loadConfig from '../../src/server/config';
 import createServer from '../../src/server/server';
+import createSocketioServer from '../../src/socketio/server';
 import createDb from '../../src/server/db';
 import createApi from '../../src/api';
 import request from 'superagent-promise';
@@ -54,15 +55,15 @@ export async function post(context, path, json) {
 
 let testAccountId = 0;
 
-export async function testAccount(context) {
+export async function testAccount(context, overrides = {}) {
   let id = Id.create();
   let account = new Accounts(context.db);
-  await account.create({
+  await account.create(Object.assign({}, {
     publicKey: id.toString(),
     email: `user${testAccountId++}@example.com`,
     passwordHash: context.passwordHash('password'),
     userAgent: 'nodejs'
-  });
+  }, overrides));
 
   let record = await account.findByPublicKey({
     publicKey: id.toString()
@@ -135,12 +136,19 @@ export default function createContext(overrides = {}) {
 
   setup(async () => {
     let config = merge({}, loadConfig('test'), overrides);
+
+    // socket.io server launches first so we can grab the url..
+    let socketioServer = await createSocketioServer(config);
+    config.socketio.port = socketioServer.port;
+    config.socketio.publicUrl = `http://localhost:${socketioServer.port}`;
+
     let server = await createServer(config);
 
     context.db = await createDb(config);
     context.config = config;
     context.server = server;
     context.blobHandler = server.context.blobHandler;
+    context.socketio = socketioServer;
     context.url = `http://localhost:${server.port}`;
     context.api = createApi({ serverUrl: context.url });
 
@@ -159,6 +167,7 @@ export default function createContext(overrides = {}) {
     await context.db.dropDatabase();
     await context.db.close();
     await context.server.close();
+    await context.socketio.close();
   });
 
   return context;

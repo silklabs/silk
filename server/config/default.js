@@ -42,6 +42,10 @@ export default {
     reciever: 'james@silklabs.com'
   },
 
+  resetPassword: {
+    url: process.env.PASSWORD_RESET_URL || 'http://localhost:8080/#/forgot_password',
+  },
+
   ses: {
     region: 'us-west-2'
   },

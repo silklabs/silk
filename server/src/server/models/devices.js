@@ -19,6 +19,17 @@ const TYPE_SCHEMA = Joi.string().only(DEVICE_TYPES).required();
 // XXX: Max name length was chosen randomly...
 const NAME_SCHEMA = Joi.string().min(1).max(60).required();
 
+export type Record = {
+  _id: ObjectId;
+  accountId: string;
+  name: string;
+  type: string;
+  accessToken: {
+    publicKey: string;
+  }
+  // TODO: finish type...
+};
+
 export default class Devices extends Base {
 
   static NAME_SCHEMA = NAME_SCHEMA;

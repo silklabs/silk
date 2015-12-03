@@ -10,9 +10,9 @@ suite('account auth', () => {
   let context = createContext();
 
   let email = 'one@example.com';
-  let id, api, account;
+  let id, api, accounts;
   setup(async () => {
-    account = new Account(context.db);
+    accounts = new Account(context.db);
     api = createApi({ serverUrl: context.url });
     id = api.id.create();
     api.vip.key = id;
@@ -39,7 +39,7 @@ suite('account auth', () => {
     };
     let create = await api.vip.createAccountWithPassword(input);
     assert.ok(create.success);
-    let record = await account.findByPublicKey({ publicKey: id.pub });
+    let record = await accounts.findByPublicKey({ publicKey: id.pub });
     assert.equal(record.email, input.email);
 
     // Ensure we use a new key so we don't hit key duplicate errors...
@@ -70,7 +70,7 @@ suite('account auth', () => {
       password: 'password'
     });
     assert.ok(create.success);
-    let record = await account.findByPublicKey({ publicKey: id.pub });
+    let record = await accounts.findByPublicKey({ publicKey: id.pub });
     assert.equal(record.email, email);
 
     let auth = await api.vip.checkPasswordWithPassword({
@@ -159,5 +159,51 @@ suite('account auth', () => {
 
     assert.ok(auth.success, 'dev account login works');
   });
-});
 
+  suite('password reset', function() {
+
+    if (!process.env.AWS_ACCESS_KEY_ID) {
+      test.skip('Reset tests require AWS_ACCESS_KEY_ID env set');
+      return;
+    }
+
+    let account;
+    setup(async () => {
+      account = await context.testAccount({
+        // Required so SES will pass...
+        email: 'success@simulator.amazonses.com'
+      });
+      account.api.accessToken = account.api.id.create();
+    });
+
+    test('reset password', async () => {
+      let reset = await account.api.vip.resetPassword({
+        email: account.record.email
+      });
+      assert(reset.success);
+
+      let {passwordReset} = await accounts.collection.findOne({
+        email: account.record.email
+      });
+
+      let {pub, priv} = passwordReset.accessToken;
+      let accessToken = new api.id(pub, priv);
+
+      let password = context.passwordHash('newpass');
+      let useToken = await account.api.vip.usePasswordResetToken({
+        email: account.record.email,
+        token: accessToken.sign(passwordReset.secret),
+        passwordHash: password
+      });
+      assert(useToken.success);
+
+      let signIn = await account.api.vip.signIn({
+        email: account.record.email,
+        passwordHash: password,
+        userAgent: 'test'
+      });
+      assert(signIn.success);
+    });
+  });
+
+});

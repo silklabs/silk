@@ -3,17 +3,26 @@
  * is passed as part of the payloads and validated against a knowns set of keys.
  * Primarily this provides assurance that the issuer of the request owns the
  * private key.
+ *
+ * @flow
  */
 
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
+import URL from 'url';
+import querystring from 'querystring';
+
+import Accounts from '../models/accounts';
+
+
+import type {RouteContext} from '../server';
 
 let log = require('log')('routes:vip');
 const PREFIX = '/v1/vip/';
 
-export default function (ctx) {
+export default function (ctx: RouteContext) {
   let routes = new Router();
 
   /**
@@ -22,8 +31,11 @@ export default function (ctx) {
    *
    * This will _not_ check against known public key values.
    */
-  routes.use(PREFIX, jwtMiddleware(ctx.nonce, async (publicKey) => {
-    return publicKey;
+
+  routes.use(PREFIX, jwtMiddleware({
+    nonce: ctx.nonce,
+    signatureProvider: null,
+    publicKeyProvider: async publicKey => publicKey
   }));
 
   let api = expressApi(routes, {
@@ -140,6 +152,61 @@ export default function (ctx) {
     res.respond({ success: false });
   });
 
+  api.define({
+    path: 'reset_password',
+    method: 'post',
+    params: [],
+    name: 'resetPassword',
+    description: 'Trigger a password reset (forgot password)',
+    output: Joi.object().keys({
+      success: Joi.boolean().required()
+    }),
+    input: Accounts.SCHEMA.resetPassword,
+  }, async (req, res) => {
+    let reset = await ctx.accounts.resetPassword(req.body);
+    if (reset.error) {
+      log.warn(`Password reset request fail`, reset.error);
+      res.sendStatus(404);
+      return;
+    }
+
+    let baseUrl = ctx.config.resetPassword.url;
+    let parsed = URL.parse(baseUrl, true);
+    let hashParams = {
+      token: reset.token,
+      email: req.body.email,
+    };
+
+    parsed.hash += `?${querystring.stringify(hashParams)}`;
+    let passwordResetUrl = URL.format(parsed);
+
+    await ctx.emailSender.resetPassword({
+      email: req.body.email,
+      url: passwordResetUrl,
+    });
+
+    res.respond({ success: true });
+  });
+
+  api.define({
+    path: 'use_password_reset_token',
+    method: 'post',
+    params: [],
+    name: 'usePasswordResetToken',
+    description: 'Use the token provided by resetPassword to set a new password',
+    output: Joi.object().keys({
+      success: Joi.boolean().required()
+    }),
+    input: Accounts.SCHEMA.usePasswordResetToken,
+  }, async (req, res) => {
+    let result = await ctx.accounts.usePasswordResetToken(req.body);
+    if (result.error) {
+      log.warn(`Failed to use password reset token`, result.error);
+      res.sendStatus(401);
+      return;
+    }
+    res.respond(result);
+  });
 
   return api;
 }

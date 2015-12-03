@@ -3,6 +3,9 @@
 .*/test/rntest/.*
 .*/node_modules/api-schema/.*
 .*/node_modules/aws-sdk-promise/.*
+.*/node_modules/jsonwebtoken/.*
+.*/node_modules/socket.io/.*
+.*/node_modules/socket.io-client/.*
 
 [include]
 
@@ -12,6 +15,7 @@ interface
 [options]
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
+unsafe.enable_getters_and_setters=true
 
 [version]
 0.18.1

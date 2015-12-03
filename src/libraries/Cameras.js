@@ -29,6 +29,7 @@ class Camera extends EventEmitter {
     if (this.online) {
       return;
     }
+    this.online = true;
     this._socket = socket;
     const logo = opts.logo;
     this.previewSize = opts.previewSize;
@@ -40,7 +41,6 @@ class Camera extends EventEmitter {
         this.logoImage.src = URL.createObjectURL(blob);
       }
     }
-    this.online = true;
     this._updateDiagStream();
     this._updatePreviewImageStream();
     this._updateVideoClipStream();
@@ -50,10 +50,13 @@ class Camera extends EventEmitter {
     if (!this.online) {
       return;
     }
-    this._updateDiagStream();
-    this._updatePreviewImageStream();
-    this._updateVideoClipStream();
     this.online = false;
+
+    if (this._socket) {
+      this._updateDiagStream();
+      this._updatePreviewImageStream();
+      this._updateVideoClipStream();
+    }
 
     if (this.logoImage) {
       URL.revokeObjectURL(this.logoImage.src);
@@ -89,24 +92,24 @@ class Camera extends EventEmitter {
 
   set logging(enabled) {
     this._requestedRooms.diag = enabled;
-    if (this.online) {
-      this._updateDiagStream();
-    }
+    this._updateDiagStream();
   }
 
   _updateDiagStream() {
     const enabled = this._requestedRooms.diag;
     const diagStream = 'diag-' + this.id;
 
-    if (enabled) {
+    if (this.online && enabled) {
       log.info('Joining diag stream ' + diagStream);
       this._socket.on(diagStream, this._onDiagStream);
       this._socket.emit('join', diagStream);
 
     } else {
       log.info('Leaving diag stream ' + diagStream);
-      this._socket.removeListener(diagStream, this._onDiagStream);
-      this._socket.emit('leave', diagStream);
+      if (this._socket) {
+        this._socket.removeListener(diagStream, this._onDiagStream);
+        this._socket.emit('leave', diagStream);
+      }
     }
   }
 
@@ -143,10 +146,8 @@ class Camera extends EventEmitter {
     case 'previewImage':
     case 'videoClip':
       this._requestedRooms[event] = enabled;
-      if (this.online) {
-        this._updatePreviewImageStream();
-        this._updateVideoClipStream();
-      }
+      this._updatePreviewImageStream();
+      this._updateVideoClipStream();
       break;
     default:
       log.verbose(`Unhandled event: ${event}`);
@@ -161,7 +162,7 @@ class Camera extends EventEmitter {
       URL.revokeObjectURL(this.previewImage.src);
     }
 
-    if (enabled) {
+    if (this.online && enabled) {
       log.info('Joining preview stream ' + previewStream);
       this.previewImage = document.createElement('img');
       this._socket.on(previewStream, this._onPreviewStream);
@@ -183,8 +184,10 @@ class Camera extends EventEmitter {
 
     } else {
       log.info('Leaving preview stream ' + previewStream);
-      this._socket.removeListener(previewStream, this._onPreviewStream);
-      this._socket.emit('leave', previewStream);
+      if (this._socket) {
+        this._socket.removeListener(previewStream, this._onPreviewStream);
+        this._socket.emit('leave', previewStream);
+      }
       if (this._queue) {
         this._queue.deinit();
         this._queue = null;
@@ -219,15 +222,17 @@ class Camera extends EventEmitter {
       this.videoClip = null;
     }
 
-    if (enabled) {
+    if (this.online && enabled) {
       log.info('Joining video stream ' + videoStream);
       this._socket.on(videoStream, this._onVideoStream);
       this._socket.emit('join', videoStream);
 
     } else {
       log.info('Leaving video stream ' + videoStream);
-      this._socket.removeListener(videoStream, this._onVideoStream);
-      this._socket.emit('leave', videoStream);
+      if (this._socket) {
+        this._socket.removeListener(videoStream, this._onVideoStream);
+        this._socket.emit('leave', videoStream);
+      }
     }
   }
 
@@ -314,6 +319,7 @@ class Cameras extends EventEmitter {
     let oldDevices = this.cameras;
     let newDevices = {};
 
+    let unregisteredLiveDevices = Object.keys(this._liveDevices);
     for (const device of this._allDevices) {
       const id = device.deviceId;
       if (newDevices[id]) {
@@ -331,6 +337,7 @@ class Cameras extends EventEmitter {
 
       if (this._liveDevices[id]) {
         newDevices[id].setOnline(this.socket, this._liveDevices[id]);
+        unregisteredLiveDevices.splice(unregisteredLiveDevices.indexOf(id), 1);
       } else {
         newDevices[id].setOffline();
       }
@@ -339,11 +346,20 @@ class Cameras extends EventEmitter {
     // Cleanup any devices that no longer exist
     Object.keys(oldDevices).map(id => oldDevices[id].deinit());
 
+    // There should never be any unregistered devices...
+    for (const id of unregisteredLiveDevices) {
+      newDevices[id] = new Camera('!! UNKNOWN DEVICE !!', id);
+      newDevices[id].setOnline(this.socket, this._liveDevices[id]);
+    }
+
     this.cameras = newDevices;
 
     let status = `${this._allDevices.length} registered devices, `;
     if (this.socket.connected) {
       status += `${Object.keys(this._liveDevices).length} online`;
+      if (unregisteredLiveDevices.length > 0) {
+        status += `, ${unregisteredLiveDevices.length} online but unregistered`;
+      }
     } else {
       status += 'socket.io disconnected';
     }

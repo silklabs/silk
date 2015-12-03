@@ -2,6 +2,11 @@ os:
   - linux
   - osx
 
+env:
+  matrix:
+    - TEST_TYPE=lint
+    - TEST_TYPE=flow
+
 before_install:
   - git config --global user.email "shipit@silklabs.com"
   - git config --global user.name "Release Engineering"
@@ -17,7 +22,7 @@ before_install:
   - npm install
 
 script:
-  - npm test
+  - npm run $TEST_TYPE
 
 before_deploy:
   - mkdir -p deploy/

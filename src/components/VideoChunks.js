@@ -49,7 +49,7 @@ export default class VideoChunks extends React.Component {
         lastTime = chunk.startUTC;
       }
       let earliestChunk = chunks[chunks.length - 1];
-      this.setState({ gaps: gaps, queryTime: earliestChunk.startUTC });
+      this.setState({ gaps: gaps, queryTime: earliestChunk && earliestChunk.startUTC });
       if (this.state.mostRecentTime - this.state.queryTime
           < TWELVE_HOURS_MS) {
         this.findGaps();

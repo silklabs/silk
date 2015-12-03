@@ -21,6 +21,7 @@ import CameraVideoMSE from './components/CameraVideoMSE';
 import CrashReports from './components/CrashReports';
 import Diag from './components/Diag';
 import Login from './components/Login';
+import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 import VideoChunks from './components/VideoChunks';
 
@@ -56,6 +57,7 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />
         <Route onEnter={loginCheck} path="/video/:deviceId" component={videoWidget} />
+        <Route path="/forgot_password" component={ForgotPassword} userState={userState} />
       </Router>
     ), document.body);
   } catch (err) {

@@ -33,7 +33,7 @@ export default class VideoChunks extends React.Component {
 
   findGaps() {
     console.log('Querying 1000 chunks at', this.state.queryTime);
-    Api.timeMeta.findBeforeTime({
+    Api.metadata.findAllBeforeTime({
       deviceId: this.deviceId,
       time: this.state.queryTime,
       metaType: 'video',

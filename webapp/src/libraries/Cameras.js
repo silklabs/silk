@@ -222,49 +222,41 @@ class Cameras extends EventEmitter {
     this.cameras = {};
     this.socket = null;
     this.status = `Initializing`;
-    Api.socketio.address().then(result => {
-      this._changeState(`Connecting to ${result.url}...`);
 
-      this.socket = io(result.url, {
-        transports: ['websocket'],
-      });
+    this.socket = Api.socketioClient(io, 'account');
+    this.socket.open();
 
-      this.socket.on('connect', () => {
-        this._changeState(`Connected to server`);
-        this.socket.emit('join', 'video-streams');
-      });
+    this.socket.on('connect', () => {
+      this._changeState(`Connected to server`);
+      this.socket.emit('join', 'video-streams');
+    });
 
-      this.socket.on('disconnect', e => {
-        let cameras = this.cameras;
-        Object.keys(cameras).forEach(id => cameras[id].deinit());
+    this.socket.on('disconnect', e => {
+      let cameras = this.cameras;
+      Object.keys(cameras).forEach(id => cameras[id].deinit());
 
-        this.cameras = {};
-        this._changeState(`Disconnected from server: ${e}. Reload page!`);
-        log.error('Server disconnected');
-      });
+      this.cameras = {};
+      this._changeState(`Disconnected from server: ${e}. Reload page!`);
+      log.error('Server disconnected');
+    });
 
-      this.socket.on('video-stream-new', msg => {
-        log.info('New camera', msg.name, msg.id);
-        let camera = new Camera(msg.name, msg.id, msg.logo,
-                                msg.previewSize, this.socket);
-        this.cameras[msg.id] = camera;
+    this.socket.on('video-stream-new', msg => {
+      log.info('New camera', msg.name, msg.id);
+      let camera = new Camera(msg.name, msg.id, msg.logo,
+                              msg.previewSize, this.socket);
+      this.cameras[msg.id] = camera;
+      this._changeState(`${Object.keys(this.cameras).length} cameras connected`);
+    });
+
+    this.socket.on('video-stream-delete', msg => {
+      log.info('Lost camera', msg.name, msg.id);
+
+      let camera = this.cameras[msg.id];
+      if (camera) {
+        camera.deinit();
+        delete this.cameras[msg.id];
         this._changeState(`${Object.keys(this.cameras).length} cameras connected`);
-      });
-
-      this.socket.on('video-stream-delete', msg => {
-        log.info('Lost camera', msg.name, msg.id);
-
-        let camera = this.cameras[msg.id];
-        if (camera) {
-          camera.deinit();
-          delete this.cameras[msg.id];
-          this._changeState(`${Object.keys(this.cameras).length} cameras connected`);
-        }
-      });
-
-    }).catch(err => {
-      this._changeState(`Server connection failure: ${err}`);
-      log.error(err.stack);
+      }
     });
   }
 

@@ -274,7 +274,30 @@ export class UserState extends EventEmitter {
     };
   }
 
+  async resetPassword(email, token, password) {
+    let accessToken = await this._createAccessToken();
+    // Semi hack: We need to pass an accessToken even though we don't use it for
+    // more than one operation.
+    this.api.accessToken = accessToken;
+
+    let passwordHash = await PBKDF2KeyDerivation(
+      password, /* input */
+      email /* salt */
+    );
+
+    let res;
+    try {
+      res = await this.api.vip.usePasswordResetToken({
+        token,
+        email,
+        passwordHash,
+      });
+    } finally {
+      this.api.accessToken = null;
+    }
+    return res;
+  }
+
 }
 
 export default UserState.load;
-

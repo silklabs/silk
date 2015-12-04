@@ -9,6 +9,7 @@
 import cv from 'opencv';
 import fs from 'mz/fs';
 import path from 'path';
+import imageSize from 'fast-image-size';
 
 const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -112,6 +113,12 @@ export default class Trainer {
         let file = files[count];
         if (isHiddenPath(file)) {
           log.info(`Ignoring file ${file}`);
+          continue;
+        }
+
+        let size = imageSize(path.join(faceDir, file));
+        if ((size.width != FACE_WIDTH) || (size.height != FACE_HEIGHT)) {
+          log.warn(`${file} is of incorrect size ${JSON.stringify(size)}`);
           continue;
         }
         log.debug(`Adding file ${path.join(faceDir, file)}`);

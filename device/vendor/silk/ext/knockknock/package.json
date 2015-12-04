@@ -10,6 +10,7 @@
   "dependencies": {
     "babel-runtime": "^5.8.25",
     "mz": "2.0.0",
+    "fast-image-size": "0.1.2",
     "silk-sdk-glue": "0.0.1"
   },
   "private": true

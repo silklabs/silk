@@ -135,7 +135,7 @@ class FindFace {
     try {
       await this._trainer.start(this._model);
     } catch (err) {
-      log.warn(`Error training for faces: ${err.stack}`);
+      log.warn(`Error training for faces: ${err}`);
     }
     this._trainingInProgress = false;
   }

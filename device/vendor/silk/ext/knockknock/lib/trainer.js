@@ -225,7 +225,11 @@ export default class Trainer {
       im.convertGrayscale();
     }
 
-    if ((face.x + face.width > im.width()) || (face.y + face.height > im.height())) {
+    // Sanity checks
+    if ((face.x + face.width > im.width()) ||
+        (face.y + face.height > im.height()) ||
+        (face.width <= 0) ||
+        (face.height <= 0)) {
       log.error(`Invalid face rectangle`);
       log.verbose(`face: ${JSON.stringify(face)}`);
       log.verbose(`image: ${im.width()} x ${im.height()}`);

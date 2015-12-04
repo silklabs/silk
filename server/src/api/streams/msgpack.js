@@ -22,7 +22,7 @@ export class MessagePackDecodeStream extends msgpack.createDecodeStream {
       readableObjectMode: true,
     });
 
-    this.once(`end`, () => this.emit(`close`));
+    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
   }
 }
 
@@ -36,7 +36,7 @@ export class MessagePackEncodeStream extends Transform {
       writableObjectMode: true,
     });
 
-    this.once(`end`, () => this.emit(`close`));
+    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
   }
 
   _transform(chunk, encoding, callback) {

@@ -15,8 +15,14 @@ import Devices from '../models/devices';
 
 import type { RouteContext } from '../server';
 
-let log = require('log')('routes:account');
+const log = require('log')('routes:account');
+
 const PREFIX = '/v1/account/';
+
+/**
+ * NOTE: I would like to bake the concept of scopes into api define soon.
+ */
+const METRICS_SCOPES = 'metrics:query';
 
 export default function (ctx: RouteContext) {
   let routes = new Router();
@@ -170,7 +176,14 @@ export default function (ctx: RouteContext) {
       query: Joi.string().required()
     }).required()
   }, async (req, res) => {
-    // TODO: silk-server/#413
+    let {account} = req;
+    let scopes = ctx.scopes.accountScopes(account);
+    if (scopes.indexOf(METRICS_SCOPES) === -1) {
+      res.sendStatus(401);
+      log.warn(`Attempted to query metrics without proper scope ${account.email}`);
+      return;
+    }
+
     if (ctx.influxdb == null) {
       res.respond({ error: 'InfluxDB not configured.' });
       return;

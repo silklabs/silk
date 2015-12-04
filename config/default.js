@@ -42,6 +42,17 @@ export default {
     reciever: 'james@silklabs.com'
   },
 
+  /**
+   * Primitive scoping mechanism which may be removed in future.
+   */
+  scopes: {
+    // the key is the scope name and the array is email suffix.
+    'metrics:query': [
+      '@silk.io',
+      '@silklabs.com'
+    ]
+  },
+
   metrics: {
     // The backend system for our metrics...
     influxdb: {

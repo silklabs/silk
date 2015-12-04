@@ -5,6 +5,12 @@ Configuration profile used in tests.
 import defaultConfig from './default';
 
 export default {
+  scopes: Object.assign(defaultConfig.scopes, {
+    'metrics:query': [
+      '@example.com'
+    ]
+  }),
+
   socketio: {
     port: 0,
   },

@@ -138,4 +138,19 @@ suite('account auth', () => {
   } else {
     test.skip('read / writeMetrics');
   }
+
+  test('metrics query scopes', async () => {
+    // See config/test.js to see what is enabled....
+    let allowed = await context.testAccount({ email: 'scoped@example.com' });
+    let invalid = await context.testAccount({ email: 'user@noscopesforyou.com' });
+
+    await allowed.api.account.queryMetrics({
+      // We don't care about the results only that we don't get hit with the 401
+      query: 'does not matter'
+    });
+
+    await context.assertThrows(async () => {
+      await invalid.api.account.queryMetrics({ query: 'does not matter' });
+    }, /Unauthorized/);
+  });
 });

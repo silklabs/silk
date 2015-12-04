@@ -50,12 +50,11 @@ class CryptoStreamBase extends Transform {
   _endWithError(error) {
     log.debug(`CryptoStreamBase._endWithError('${error.toString()}')`);
 
-    this.emit(`error`, error);
-
     if (this._error) {
-      log.warn(error);
+      log.warn(`Received more than one error`, error);
     } else {
       this._error = error;
+      this.emit(`error`, error);
       this.push(null);
     }
   }

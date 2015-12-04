@@ -33,7 +33,7 @@ class HeartbeatStreamBase extends PassThrough {
 
     super(options);
 
-    this.once(`end`, () => this.emit(`close`));
+    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
 
     this._delay = options.delay;
 

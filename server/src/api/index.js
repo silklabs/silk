@@ -53,7 +53,7 @@ export const BTLE_SOCKET_UUIDS = {
 };
 
 export { default as createStreams } from './streams';
-export RssiSmoother from './rssi_smoother';
+export { default as RssiSmoother } from './rssi_smoother';
 
 function socketioConfig(accessToken, url) {
   let parsed = URL.parse(url, true /* parse query string */);

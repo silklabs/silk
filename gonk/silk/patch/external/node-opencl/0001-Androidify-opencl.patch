@@ -1,0 +1,125 @@
+From 9d7b4cf418569c9b13ba35940e287bd20898a1bf Mon Sep 17 00:00:00 2001
+From: Anshul Jain <anshul@silklabs.com>
+Date: Wed, 2 Dec 2015 22:39:19 -0800
+Subject: [PATCH] Androidify opencl
+
+---
+ Android.mk     | 19 +++++++++++++++++++
+ binding.gyp    |  8 ++++++++
+ fakeopencl.cpp |  0
+ lib/opencl.js  |  2 +-
+ package.json   | 18 ++++++++++--------
+ 5 files changed, 38 insertions(+), 9 deletions(-)
+ create mode 100644 Android.mk
+ create mode 100644 fakeopencl.cpp
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..90df43b
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,19 @@
++LOCAL_PATH:= $(call my-dir)
++
++# Create a fake libOpenCL.so
++# bindings.gyp only cares about the presence of this library and not symbols in
++# it to tell node where to go resolve symbols at runtime
++include $(CLEAR_VARS)
++LOCAL_MODULE := libOpenCL
++LOCAL_SRC_FILES := fakeopencl.cpp
++LOCAL_MODULE_TAGS := optional
++LOCAL_UNINSTALLABLE_MODULE := true
++include $(BUILD_SHARED_LIBRARY)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_NODE_MODULE_TYPE := file
++LOCAL_NDK_STL_VARIANT := gnustl_static
++LOCAL_SDK_VERSION := 19
++LOCAL_SHARED_LIBRARIES := libOpenCL
++include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+index 94bbe82..2058ab6 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -54,6 +54,14 @@
+           'libraries': ['-lGL', '-lOpenCL','-L<(OPENCL_SDK_LIB) -lOpenCL'],
+           'cflags': ['-std=c++11' ' -Wall']
+         }],
++        ['OS=="android"', {
++          'libraries': ['<!(echo $Android_mk__LIBRARIES)'],
++          'cflags': [
++            '-std=c++11',
++            '-Wno-non-virtual-dtor',
++            '-Wno-strict-aliasing',
++            "-isystem <!(echo $ANDROID_BUILD_TOP/external/opencv2/3rdparty/include/opencl/1.2)",]
++        }],
+         ['OS=="win"', {
+           'variables' :
+             {
+diff --git a/fakeopencl.cpp b/fakeopencl.cpp
+new file mode 100644
+index 0000000..e69de29
+diff --git a/lib/opencl.js b/lib/opencl.js
+index 0158b78..3cc7643 100644
+--- a/lib/opencl.js
++++ b/lib/opencl.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ 
+-var cl = require('bindings')('opencl.node');
++var cl = require('build/opencl.node');
+ 
+ module.exports = cl;
+ 
+diff --git a/package.json b/package.json
+index 2129015..d82a8e9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,9 +1,12 @@
+-﻿{
+-  "name": "node-opencl",
++{
++  "name": "opencl",
+   "version": "0.4.0",
+   "description": "A binding to OpenCL for Node.JS",
+-  "main": "lib/opencl.js",
++  "main": "dist/index.js",
+   "author": "Ioweb <context@ioweb.fr>, Mikael Bourges-Sevenier <mikeseven@gmail.com>",
++  "os": [
++    "android"
++  ],
+   "keywords": [
+     "opencl",
+     "gpu",
+@@ -46,19 +49,17 @@
+     "test": "test"
+   },
+   "scripts": {
+-    "install": "node-gyp rebuild --msvs_version=auto",
+-    "clean": "rm -rf build node_modules",
+-    "lint": "eslint lib test",
+-    "test": "mocha test"
++    "postinstall": "mkdir -p dist/ ; browserify lib/opencl.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
+   },
+   "dependencies": {
++    "browserify": "^10.2.1",
+     "bindings": "^1.2.1",
+     "chai": "^2.0.0",
+     "get-pixels": "^3.1.1",
+     "nan": ">=2.0.0",
+     "png-js": "^0.1.1"
+   },
+-  "devDependencies": {
++  "__devDependencies": {
+     "chalk": "^0.5.1",
+     "mocha": "*"
+   },
+@@ -69,3 +70,4 @@
+     "npm" : "*"
+   }
+ }
++
+-- 
+2.4.5
+

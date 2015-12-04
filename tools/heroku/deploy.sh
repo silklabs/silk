@@ -37,8 +37,10 @@ fi
 # tools/heroku/$HEROKU_SERVERNAME/
 #   * rootdir - symbolic link to where to run |npm install| for this dyno
 #   * Procfile - the real Procfile
-#   * app.json - the real (but optional) app.json
 #
+# Unfortunately Heroku is to smart to fall for this trick for the top-level
+# app.json file (required for Review Apps), so /app.json must be shared across
+# all the Heroku servers
 #
 if [[ -z $HEROKU_SERVERNAME ]]; then
   echo Error: HEROKU_SERVERNAME environment variable not defined
@@ -53,9 +55,5 @@ fi
 
 set -x
 cp -fL $serverConfigDir/Procfile .
-if [[ -f $serverConfigDir/app.json ]]; then
-  cp -fL $serverConfigDir/app.json .
-fi
-
 cd $serverConfigDir/rootdir/
 npm install

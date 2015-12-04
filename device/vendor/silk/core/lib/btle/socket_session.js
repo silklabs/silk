@@ -27,16 +27,14 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _scanner = null;
   _peripheral = null;
 
-  // Set to true after the 'end' event has been emitted.
-  _ended = false;
   // Set to true when |end()| is called.
   _ending = false;
-  // Set to true after the socket stream has finished.
-  _finished = false;
+
+  // Set to true once the 'end' or 'error' event is emitted.
+  _ended = false;
+
   // Set to true after the peripheral has been disconnected.
   _peripheralDisconnected = false;
-  // Set to true when the 'close' event is emitted.
-  _closed = false;
 
   _rssiSmoother = new RssiSmoother();
   _rssiUpdatesEnabled = false;
@@ -54,10 +52,10 @@ export default class SocketSession extends AuthenticateDuplexStream {
     msgpackStream.on(`data`, (data) => {
       log.verbose(`Received`, data);
     });
-    const oldWrite = msgpackStream._write;
-    msgpackStream._write = (data, encoding, callback) => {
+    const oldWrite = msgpackStream.write;
+    msgpackStream.write = (data, ...args) => {
       log.verbose(`Sending`, data);
-      oldWrite.call(msgpackStream, data, encoding, callback);
+      return oldWrite.call(msgpackStream, data, ...args);
     };
 
     const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
@@ -65,8 +63,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     super(heartbeatStream,
           cryptoStream,
           scanner._privateKey,
-          scanner._publicKeys,
-          { autoClose: false });
+          scanner._publicKeys);
 
     this._scanner = scanner;
 
@@ -74,13 +71,15 @@ export default class SocketSession extends AuthenticateDuplexStream {
     peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
     this._peripheral = peripheral;
 
-    socketStream.on(`finish`, this._onFinish);
-
     this._rssiSmoother.update(peripheral.rssi);
 
     this.once(`end`, this._onEnd);
+    this.once(`error`, this._onError);
 
     heartbeatStream.once(`data`, () => {
+      log.debug(`Heartbeat stream received first data event, starting `+
+                `monitoring`);
+
       heartbeatStream.addListener(`flatline`, this._onFlatline);
       heartbeatStream.monitorHeartbeats = true;
 
@@ -124,7 +123,6 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._peripheral.removeListener(`disconnect`, this._onPeripheralDisconnect);
 
     this._killRssiUpdates();
-    this._maybeEmitClose();
   };
 
   _onFlatline = () => {
@@ -140,48 +138,22 @@ export default class SocketSession extends AuthenticateDuplexStream {
     log.debug(`SocketSession._onEnd()`);
 
     assert(!this._ended);
+    this._ended = true;
+
+    this._killRssiUpdates();
+  };
+
+  _onError = (error) => {
+    log.debug(`SocketSession._onError('${error.toString()}')`);
 
     this._ended = true;
 
     this._killRssiUpdates();
-    this._maybeEmitClose();
+
+    // Force-close both ends of the stream.
+    this.end();
+    this.push(null);
   };
-
-  _onFinish = () => {
-    log.debug(`SocketSession._onFinish()`);
-
-    assert(!this._finished);
-    assert(!this._rssiUpdatesEnabled);
-
-    this._finished = true;
-
-    this._maybeEmitClose();
-  }
-
-  _maybeEmitClose() {
-    log.debug(`SocketSession._maybeEmitClose()`,
-      {
-        ended: this._ended,
-        finished: this._finished,
-        disconnected: this._peripheralDisconnected,
-        closed: this._closed,
-      }
-    );
-
-    if (!this._closed &&
-        this._ended &&
-        this._finished) {
-      if (!this._peripheralDisconnected) {
-        log.debug(`Stream is finished and ended, disconnecting peripheral`);
-        this._peripheral.disconnect();
-        return;
-      }
-
-      log.debug(`Stream is closed`);
-      this._closed = true;
-      this.emit(`close`);
-    }
-  }
 
   _killRssiUpdates() {
     log.debug(`SocketSession._killRssiUpdates()`);
@@ -207,6 +179,20 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
       this._peripheral.updateRssi();
     }, SocketSession.RSSI_UPDATE_TIMEOUT);
+  }
+
+  emit(eventName, ...args) {
+    if (eventName === `close` && !this._peripheralDisconnected) {
+      log.debug(`Stream is closed, disconnecting peripheral before emitting ` +
+                `the '${eventName}' event`);
+      this._peripheral.disconnect(() => {
+        log.debug(`Emitting the '${eventName}' event`);
+        super.emit(eventName, ...args);
+      });
+      return;
+    }
+
+    return super.emit(eventName, ...args);
   }
 
   end(chunk, encoding, callback) {

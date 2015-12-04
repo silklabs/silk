@@ -171,9 +171,7 @@ EOF
   # Create flash_demo script
   cat > $archiveDir/$TARGET_PRODUCT/flash_demo.sh <<'EOF'
 #!/bin/bash
-
 # "Official" demo config
-SERVER_URL="http://192.168.13.100:5000/"
 
 cd $(dirname $0)
 
@@ -187,9 +185,6 @@ rm default.prop
 
 adb root
 adb wait-for-device
-
-echo Set silk-server URL to $SERVER_URL
-echo persist.silk.server.url=$SERVER_URL >> default.prop
 
 echo Activated uploads to cloud storage
 echo persist.silk.vidupload.enabled=1 >> default.prop

@@ -60,11 +60,15 @@ export default async function main (config: any): any {
   };
 
   function getOrCreateRoom(accountId: string): AccountRoom {
-    if (!rooms.has(accountId)) {
-      rooms.set(accountId, new AccountRoom(io, accountId));
+    let room = rooms.get(accountId);
+    if (room) {
+      return room;
     }
+
+    room = new AccountRoom(io, accountId);
+    rooms.set(accountId, room);
     log.info(`Get room for account: ${accountId}`);
-    return rooms.get(accountId);
+    return room;
   }
 
   function middleware(handler: (socket: Socket, next: Function) => Promise<any>): Function {

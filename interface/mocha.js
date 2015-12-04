@@ -1,4 +1,5 @@
-type TestFn = () => void | () => Promise<any>;
+/* @flow */
+type TestFn = () => void | Promise<any>
 
 declare function test(name: string, fn:TestFn): void;
 declare function setup(fn:TestFn): void;

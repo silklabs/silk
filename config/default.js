@@ -42,6 +42,13 @@ export default {
     reciever: 'james@silklabs.com'
   },
 
+  metrics: {
+    // The backend system for our metrics...
+    influxdb: {
+      connectionString: process.env.INFLUX_CONNECTION_STRING
+    }
+  },
+
   resetPassword: {
     url: process.env.PASSWORD_RESET_URL || 'http://localhost:8080/#/forgot_password',
   },

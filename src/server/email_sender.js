@@ -58,10 +58,13 @@ export default class EmailSender {
       throw new Error(`Attempted to use invalid email template: ${name}`);
     }
 
+    // XXX: Workaround for flow.
+    let requireAlias = require;
+
     let result = {};
     for (let type of types) {
       let modulePath = path.join(TEMPLATE_SRC, `${name}.${type}.js`);
-      let module = this._templates[modulePath] || require(modulePath);
+      let module = this._templates[modulePath] || requireAlias(modulePath);
       this._templates[modulePath] = module;
       log.info('render', modulePath);
       result[type] = module.render(context);

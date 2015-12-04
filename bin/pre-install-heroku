@@ -8,8 +8,8 @@
 
 [[ -n $HEROKU_PRIVATE_KEY ]] || exit 0
 
-if [[ -d ~/.ssh ]]; then
-  echo Failsafe! ~/.ssh is not expected to exist in the Heroku environment
+if [[ ~ != /app ]]; then
+  echo Failsafe! This does not look like the Heroku environment
   exit 1
 fi
 

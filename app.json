@@ -1,0 +1,19 @@
+{
+  "name": "silk-core",
+  "scripts": {
+  },
+  "env": {
+    "DEBUG": {
+      "required": true
+    },
+    "HEROKU_PRIVATE_KEY": {
+      "required": true
+    },
+    "HEROKU_SERVERNAME": {
+      "required": true
+    },
+  },
+  "addons": [
+
+  ]
+}

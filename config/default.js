@@ -7,6 +7,7 @@ Every other configuration profile inherits from this (and can override it).
 // Provide default connection string...
 const DEFAULT_MONGO = 'mongodb://localhost:27017';
 const PORT = process.env.PORT || 5000;
+const SILK_EMAILS = ['@silklabs.com', '@silk.io'];
 
 export default {
 
@@ -47,10 +48,8 @@ export default {
    */
   scopes: {
     // the key is the scope name and the array is email suffix.
-    'metrics:query': [
-      '@silk.io',
-      '@silklabs.com'
-    ]
+    'metrics:query': SILK_EMAILS,
+    'crash:find': SILK_EMAILS,
   },
 
   metrics: {

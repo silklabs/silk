@@ -17,6 +17,7 @@
     "mocha": "^2.3.0",
     "event-to-promise": "^0.3.3",
     "mz": "2.0.0",
+    "chai": "^2.0.0",
     "babel-runtime": "^5.8.20"
   },
   "devDependencies": {

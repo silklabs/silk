@@ -27,8 +27,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
   static RSSI_UPDATE_TIMEOUT = 50;
 
   _socket: Socket;
-  _privateKey: String;
-  _publicKeys: Array<String>;
+  _privateKey: string;
+  _publicKeys: Array<string>;
   _heartbeatStream: HeartbeatDuplexStream;
 
   _disconnecting: boolean = false;
@@ -41,7 +41,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _rssiValue: number = 0;
   _rssiTimeout: ?number = null;
 
-  constructor(socket: Socket, privateKey: String, publicKeys: Array<String>) {
+  constructor(socket: Socket, privateKey: string, publicKeys: Array<string>) {
     log.debug(`SocketSession()`);
 
     const socketStream = new Stream(socket);

@@ -4,6 +4,7 @@
 import assert from 'assert';
 import createContext from '../context';
 import createApi from '../../../src/api';
+import uuid from 'uuid';
 
 import Devices from '../../../src/server/models/devices';
 
@@ -117,6 +118,24 @@ suite('account auth', () => {
     assert.ok(url);
   });
 
+  if (process.env.INFLUX_CONNECTION_STRING) {
+    test('read / writeMetrics', async () => {
+      let series = uuid.v4().replace(/-/g, '');
+      let points  = [
+        [series, { tag: 'a' }, { value: '1i' }],
+        [series, { tag2: 'a' }, { value: '2i' }],
+        [series, { tag3: 'a' }, { value: '3i' }],
+      ];
+
+      await accountOne.api.account.writeMetrics(points);
+
+      // read the metrics back out...
+      let read = await accountOne.api.account.queryMetrics({ query: `
+        SELECT * FROM account_${series}
+      `});
+      assert.equal(read.results[0].series[0].values.length, 3);
+    });
+  } else {
+    test.skip('read / writeMetrics');
+  }
 });
-
-

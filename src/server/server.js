@@ -18,6 +18,7 @@ import Accounts from './models/accounts';
 import Devices from './models/devices';
 import Nonce from './models/nonce';
 import EmailSender from './email_sender';
+import InfluxDB from './influxdb_client';
 
 export type RouteContext = {
   app: any;
@@ -30,6 +31,7 @@ export type RouteContext = {
   config: any; // TODO
   blobs: any; // TODO
   blobHandler: any; // TODO
+  influxdb: ?InfluxDB
 };
 
 export default async function main (config: any): any {
@@ -105,6 +107,11 @@ export default async function main (config: any): any {
 
   let emailSender = new EmailSender(config);
 
+  let influxdb;
+  if (config.metrics.influxdb.connectionString) {
+    influxdb = new InfluxDB(config.metrics.influxdb.connectionString);
+  }
+
   const context: RouteContext  = {
     app,
     nonce,
@@ -116,6 +123,7 @@ export default async function main (config: any): any {
     config,
     blobs,
     blobHandler,
+    influxdb
   };
 
   // Install the routes.

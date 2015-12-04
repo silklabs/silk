@@ -154,5 +154,31 @@ export default function (ctx: RouteContext) {
     res.respond({ success: true });
   });
 
+  api.define({
+    path: 'metrics/query',
+    method: 'post',
+    params: [],
+    name: 'queryMetrics',
+    description: 'Query metrics /w influxql',
+    // NOTE: This intentionally is identical to the format that influxdb itself
+    // returns we make no attempt to transform or change the output.
+    output: Joi.object().keys({
+      results: Joi.any(),
+      error: Joi.string(),
+    }),
+    input: Joi.object().keys({
+      query: Joi.string().required()
+    }).required()
+  }, async (req, res) => {
+    // TODO: silk-server/#413
+    if (ctx.influxdb == null) {
+      res.respond({ error: 'InfluxDB not configured.' });
+      return;
+    }
+    let {query} = req.body;
+    let result = await ctx.influxdb.query(query);
+    res.respond(result);
+  });
+
   return api;
 }

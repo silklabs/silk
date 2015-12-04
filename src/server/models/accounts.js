@@ -1,6 +1,7 @@
-/* @flow */
 /**
  * User account store.
+ *
+ * @flow
  */
 import * as Joi from 'joi';
 import Base from './base';

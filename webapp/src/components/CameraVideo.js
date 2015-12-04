@@ -179,7 +179,9 @@ export default class CameraVideo extends React.Component {
 
   render() {
     let buffering;
-    if (this.state.buffering) {
+    if (this.state.camera && !this.state.camera.online) {
+      buffering = <ProgressBar active bsSize="large" bsStyle="danger" now={100} label="Camera offline"/>;
+    } else if (this.state.buffering) {
       buffering = <ProgressBar active bsSize="large" bsStyle="warning" now={100} label="Loading..."/>;
     }
 

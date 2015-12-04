@@ -9,28 +9,60 @@ import Api from './Api';
 import mklog from 'log'; const log = mklog('Cameras');
 
 class Camera extends EventEmitter {
-  constructor(name, id, logo, previewSize, socket) {
+  constructor(name, id) {
     super();
-    this.name = name;
-    this.id = id;
-    this.previewSize = previewSize;
-    this.logs = {};
-    this._socket = socket;
-
-    this.logoImage = document.createElement('img');
-    let logoArray = new Uint8Array(logo);
-    if (logoArray.length > 0) {
-      let blob = new Blob([logoArray], { type: 'image/png' });
-      this.logoImage.src = URL.createObjectURL(blob);
-    }
+    Object.assign(this, {
+      name,
+      id,
+      logs: {},
+      logoImage: document.createElement('img'),
+      _requestedRooms: {},
+    });
+    this.setOffline();
   }
 
   deinit() {
-    this.logging = false;
-    this._previewImageStream(false);
-    this._videoClipStream(false);
+    this.setOffline();
+  }
 
-    URL.revokeObjectURL(this.logoImage.src);
+  setOnline(socket, opts) {
+    if (this.online) {
+      return;
+    }
+    this.online = true;
+    this._socket = socket;
+    const logo = opts.logo;
+    this.previewSize = opts.previewSize;
+
+    if (logo) {
+      let logoArray = new Uint8Array(logo);
+      if (logoArray.length > 0) {
+        let blob = new Blob([logoArray], { type: 'image/png' });
+        this.logoImage.src = URL.createObjectURL(blob);
+      }
+    }
+    this._updateDiagStream();
+    this._updatePreviewImageStream();
+    this._updateVideoClipStream();
+  }
+
+  setOffline() {
+    if (!this.online) {
+      return;
+    }
+    this.online = false;
+
+    if (this._socket) {
+      this._updateDiagStream();
+      this._updatePreviewImageStream();
+      this._updateVideoClipStream();
+    }
+
+    if (this.logoImage) {
+      URL.revokeObjectURL(this.logoImage.src);
+    }
+    this._socket = null;
+    this.previewSize = null;
   }
 
   _feedNewLog(type, data) {
@@ -59,17 +91,25 @@ class Camera extends EventEmitter {
   }
 
   set logging(enabled) {
-    let diagStream = 'diag-' + this.id;
+    this._requestedRooms.diag = enabled;
+    this._updateDiagStream();
+  }
 
-    if (enabled) {
+  _updateDiagStream() {
+    const enabled = this._requestedRooms.diag;
+    const diagStream = 'diag-' + this.id;
+
+    if (this.online && enabled) {
       log.info('Joining diag stream ' + diagStream);
       this._socket.on(diagStream, this._onDiagStream);
       this._socket.emit('join', diagStream);
 
     } else {
       log.info('Leaving diag stream ' + diagStream);
-      this._socket.removeListener(diagStream, this._onDiagStream);
-      this._socket.emit('leave', diagStream);
+      if (this._socket) {
+        this._socket.removeListener(diagStream, this._onDiagStream);
+        this._socket.emit('leave', diagStream);
+      }
     }
   }
 
@@ -104,24 +144,25 @@ class Camera extends EventEmitter {
 
     switch (event) {
     case 'previewImage':
-      this._previewImageStream(enabled);
-      break;
     case 'videoClip':
-      this._videoClipStream(enabled);
+      this._requestedRooms[event] = enabled;
+      this._updatePreviewImageStream();
+      this._updateVideoClipStream();
       break;
     default:
       log.verbose(`Unhandled event: ${event}`);
     }
   }
 
-  _previewImageStream(enabled) {
-    let previewStream = 'preview-' + this.id;
+  _updatePreviewImageStream() {
+    const enabled = this._requestedRooms.previewImage;
+    const previewStream = 'preview-' + this.id;
 
     if (this.previewImage) {
       URL.revokeObjectURL(this.previewImage.src);
     }
 
-    if (enabled) {
+    if (this.online && enabled) {
       log.info('Joining preview stream ' + previewStream);
       this.previewImage = document.createElement('img');
       this._socket.on(previewStream, this._onPreviewStream);
@@ -143,8 +184,10 @@ class Camera extends EventEmitter {
 
     } else {
       log.info('Leaving preview stream ' + previewStream);
-      this._socket.removeListener(previewStream, this._onPreviewStream);
-      this._socket.emit('leave', previewStream);
+      if (this._socket) {
+        this._socket.removeListener(previewStream, this._onPreviewStream);
+        this._socket.emit('leave', previewStream);
+      }
       if (this._queue) {
         this._queue.deinit();
         this._queue = null;
@@ -170,7 +213,8 @@ class Camera extends EventEmitter {
     this._queue.push(msg);
   }
 
-  _videoClipStream(enabled) {
+  _updateVideoClipStream() {
+    const enabled = this._requestedRooms.videoClip;
     let videoStream = 'video-' + this.id;
 
     if (this.videoClip) {
@@ -178,15 +222,17 @@ class Camera extends EventEmitter {
       this.videoClip = null;
     }
 
-    if (enabled) {
+    if (this.online && enabled) {
       log.info('Joining video stream ' + videoStream);
       this._socket.on(videoStream, this._onVideoStream);
       this._socket.emit('join', videoStream);
 
     } else {
       log.info('Leaving video stream ' + videoStream);
-      this._socket.removeListener(videoStream, this._onVideoStream);
-      this._socket.emit('leave', videoStream);
+      if (this._socket) {
+        this._socket.removeListener(videoStream, this._onVideoStream);
+        this._socket.emit('leave', videoStream);
+      }
     }
   }
 
@@ -219,48 +265,111 @@ class Camera extends EventEmitter {
 class Cameras extends EventEmitter {
   constructor() {
     super();
-    this.cameras = {};
-    this.socket = null;
-    this.status = `Initializing`;
-
-    this.socket = Api.socketioClient(io, 'account');
+    Object.assign(this, {
+      cameras: {}, // indexed by device id
+      status: `Initializing...`,
+      socket: Api.socketioClient(io, 'account'),
+      _allDevices: [], // unmodified result from Api.account.listDevices()
+      _liveDevices: {}, // indexed by device id
+    });
     this.socket.open();
 
     this.socket.on('connect', () => {
-      this._changeState(`Connected to server`);
+      log.info(`Connected to server`);
       this.socket.emit('join', 'video-streams');
+      this._update();
     });
 
     this.socket.on('disconnect', e => {
-      let cameras = this.cameras;
-      Object.keys(cameras).forEach(id => cameras[id].deinit());
-
-      this.cameras = {};
-      this._changeState(`Disconnected from server: ${e}. Reload page!`);
-      log.error('Server disconnected');
+      log.warn(`Disconnected from server: ${e}`);
+      this._liveDevices = {};
+      this._update();
     });
 
     this.socket.on('video-stream-new', msg => {
-      log.info('New camera', msg.name, msg.id);
-      let camera = new Camera(msg.name, msg.id, msg.logo,
-                              msg.previewSize, this.socket);
-      this.cameras[msg.id] = camera;
-      this._changeState(`${Object.keys(this.cameras).length} cameras connected`);
+      log.info(`Device online: ${msg.id}`);
+      this._liveDevices[msg.id] = {logo: msg.logo, previewSize: msg.previewSize};
+      this._update();
     });
 
     this.socket.on('video-stream-delete', msg => {
-      log.info('Lost camera', msg.name, msg.id);
-
-      let camera = this.cameras[msg.id];
-      if (camera) {
-        camera.deinit();
-        delete this.cameras[msg.id];
-        this._changeState(`${Object.keys(this.cameras).length} cameras connected`);
-      }
+      log.info(`Device offline: ${msg.id}`);
+      delete this._liveDevices[msg.id];
+      this._update();
     });
+
+    this._loadAllDevices();
   }
 
-  _changeState(status) {
+  async _loadAllDevices() {
+    try {
+      this._updateStatus(`Fetching device list...`);
+      const result = await Api.account.listDevices();
+      this._allDevices = result.devices;
+      this._update();
+    } catch (err) {
+      log.error(err.stack);
+      this._updateStatus(`Initialization failed: ${err}`);
+    }
+  }
+
+  // Merge |this._allDevices| and |this._liveDevices| into the public list of
+  // devices: |this.camera|
+  _update() {
+    let oldDevices = this.cameras;
+    let newDevices = {};
+
+    let unregisteredLiveDevices = Object.keys(this._liveDevices);
+    for (const device of this._allDevices) {
+      const id = device.deviceId;
+      if (newDevices[id]) {
+        // Server bug?  Sometimes the same device Id occurs multiple times
+        log.error(`Ignoring duplicate device: ${id}`);
+        continue;
+      }
+
+      if (oldDevices[id]) {
+        newDevices[id] = oldDevices[id];
+        delete oldDevices[id];
+      } else {
+        newDevices[id] = new Camera(device.name, id);
+      }
+
+      if (this._liveDevices[id]) {
+        newDevices[id].setOnline(this.socket, this._liveDevices[id]);
+        unregisteredLiveDevices.splice(unregisteredLiveDevices.indexOf(id), 1);
+      } else {
+        newDevices[id].setOffline();
+      }
+    }
+
+    // Cleanup any devices that no longer exist
+    Object.keys(oldDevices).map(id => oldDevices[id].deinit());
+
+    // There should never be any unregistered devices...
+    for (const id of unregisteredLiveDevices) {
+      newDevices[id] = new Camera('!! UNKNOWN DEVICE !!', id);
+      newDevices[id].setOnline(this.socket, this._liveDevices[id]);
+    }
+
+    this.cameras = newDevices;
+
+    let status = `${this._allDevices.length} registered devices, `;
+    if (this.socket.connected) {
+      status += `${Object.keys(this._liveDevices).length} online`;
+      if (unregisteredLiveDevices.length > 0) {
+        status += `, ${unregisteredLiveDevices.length} online but unregistered`;
+      }
+    } else {
+      status += 'socket.io disconnected';
+    }
+
+    // Avoid listener leak runtime warning with > 10 devices
+    this.setMaxListeners(this._allDevices.length * 2);
+    this._updateStatus(status);
+  }
+
+  _updateStatus(status) {
     this.status = status;
     this.emit('stateChanged', this);
   }

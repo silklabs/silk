@@ -59,16 +59,22 @@ export default class CameraPreview extends React.Component {
     let newCamera = state.cameras[this.deviceId];
 
     if (oldCamera === newCamera) {
-      return;
-    }
-    if (oldCamera) {
-      oldCamera.removeListener('previewImage', this.onPreviewImage);
-    }
-    if (newCamera) {
-      newCamera.on('previewImage', this.onPreviewImage);
+      // If the camera is the same but the online state has changed, this
+      // component should be re-rendered as the preview window size may have
+      // changed.
+      if (this.state.online === newCamera.online) {
+        return;
+      }
+    } else {
+      if (oldCamera) {
+        oldCamera.removeListener('previewImage', this.onPreviewImage);
+      }
+      if (newCamera) {
+        newCamera.on('previewImage', this.onPreviewImage);
+      }
     }
     this._shouldComponentUpdate = true;
-    this.setState({ camera: newCamera });
+    this.setState({ camera: newCamera, online: newCamera && newCamera.online });
   };
 
   onPreviewImage = () => this.renderPreview();
@@ -87,12 +93,21 @@ export default class CameraPreview extends React.Component {
     let camera = this.state.camera;
     if (camera) {
       // Preview image
-      if (camera.previewImage) {
+      if (camera.online && camera.previewImage) {
         context.drawImage(camera.previewImage, 0, 0);
+      } else {
+        context.fillStyle = 'grey';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.fillStyle = 'white';
+        context.font = '12px serif';
+        context.textAlign = 'start';
+        context.textBaseline = 'top';
+        context.fillText('Offline', 5, 5);
       }
 
       // Objects
-      let objects = camera.previewObjects;
+      let objects = camera.online && camera.previewObjects;
       if (objects) {
         let objectColors = [
           'red',
@@ -122,13 +137,14 @@ export default class CameraPreview extends React.Component {
 
       context.font = '12px serif';
       context.fillStyle = 'white';
+      context.textBaseline = 'bottom';
 
       // Camera name
       context.textAlign = 'end';
       context.fillText(camera.name, canvas.width - 5, canvas.height - 5);
 
       // Timestamp
-      let when = camera.previewTimestamp;
+      let when = camera.online && camera.previewTimestamp;
       if (when) {
         context.textAlign = 'start';
         context.fillText(when.toLocaleDateString() + ' ' + when.toLocaleTimeString(),
@@ -136,8 +152,10 @@ export default class CameraPreview extends React.Component {
       }
 
       // Logo
-      context.globalAlpha = 0.50;
-      context.drawImage(camera.logoImage, 0, 0);
+      if (camera.online && camera.logoImage) {
+        context.globalAlpha = 0.50;
+        context.drawImage(camera.logoImage, 0, 0);
+      }
       context.restore();
     }
   }

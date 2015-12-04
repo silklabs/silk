@@ -125,6 +125,10 @@ export class DeviceSession extends EventEmitter {
 
     super();
 
+    if (!singletonInstance) {
+      throw new Error('DeviceManager is not initialized!');
+    }
+
     const privateKey = singletonInstance._privateKey;
     const publicKeys = singletonInstance._registeredDevicePublicKeys;
 
@@ -411,7 +415,7 @@ export class DeviceSession extends EventEmitter {
     return this._isRegistered;
   }
 
-  get deviceId(): string {
+  get deviceId(): ?string {
     return this._deviceId;
   }
 

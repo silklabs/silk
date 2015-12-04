@@ -1,6 +1,11 @@
-import { AppCrypto } from 'NativeModules';
+/**
+ * @flow
+ */
+
+import { NativeModules } from 'react-native';
 import createDebug from 'debug';
 
+const { AppCrypto } = NativeModules;
 const log = createDebug('Crypto');
 
 /**
@@ -22,7 +27,10 @@ const DEFAULT_ROUNDS = 64000;
  *
  * @return {UInt8Array}
  */
-export function getRandomBytes(numberOfBytes: number, callback = null): Buffer {
+export function getRandomBytes(
+  numberOfBytes: number,
+  callback: ?((error: ?Error, result: ?Buffer) => void) = null
+): Promise<Buffer> {
   return new Promise((accept) => {
     let start = Date.now();
     AppCrypto.getRandomBytes(numberOfBytes, function(bytes) {
@@ -45,7 +53,11 @@ export function getRandomBytes(numberOfBytes: number, callback = null): Buffer {
   });
 }
 
-export function PBKDF2KeyDerivation(input, salt, rounds = DEFAULT_ROUNDS) {
+export function PBKDF2KeyDerivation(
+  input: string,
+  salt: string,
+  rounds: number = DEFAULT_ROUNDS
+): Promise<string> {
   return new Promise((accept) => {
     let start = Date.now();
     /* eslint new-cap:0 */

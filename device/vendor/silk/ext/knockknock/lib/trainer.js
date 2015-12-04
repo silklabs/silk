@@ -443,9 +443,9 @@ export default class Trainer {
           // previous frame and there has been noticeable time gap
           if ((imageDiff > CHANGE_IN_IMAGE_FOR_COLLECTION) &&
               (timeDiff > CHANGE_IN_SECONDS_FOR_COLLECTION)) {
-            log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, ` +
+            log.info(`Saving ${facePath}/${person}_${Date.now()}.png, ` +
                  `count: ${faceCount}`);
-            faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
+            faceim.save(`${facePath}/${person}_${Date.now()}.png`);
             faceCount++;
 
             oldPreprocessedFaceImg = faceim;

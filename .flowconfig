@@ -10,6 +10,7 @@
 src/
 
 [libs]
+interface/
 node_modules/react-native/Libraries/react-native/react-native-interface.js
 
 [options]
@@ -19,4 +20,4 @@ esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 
 [version]
-0.18.1
+0.19.1

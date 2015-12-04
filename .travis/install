@@ -18,14 +18,14 @@ install_npm()
   npm install
 }
 
-if [ "$TEST_TYPE" = lint ]; then
+if [[ "$TEST_TYPE" = lint || "$TEST_TYPE" = flow ]]; then
   if [[ -z "$JS_CHANGES" ]]; then
-    echo "No JS changes detected, aborting lint."
+    echo "No JS changes detected, aborting $TEST_TYPE."
     exit 0
   fi
   install_npm
 
-elif [ "$TEST_TYPE" = objc-test ]; then
+elif [[ "$TEST_TYPE" = objc-test ]]; then
   if [[ -z "$NON_JS_CHANGES" ]]; then
     echo "Only JS changes detected, aborting Objective-C tests."
     exit 0
@@ -33,7 +33,7 @@ elif [ "$TEST_TYPE" = objc-test ]; then
   install_xctool
   install_npm
 
-elif [ "$TEST_TYPE" = build-dist ]; then
+elif [[ "$TEST_TYPE" = build-dist ]]; then
   if [[ -z "$NON_JS_CHANGES" && "$TRAVIS_PULL_REQUEST" != "false"  ]]; then
     echo "Pull Request with only JS changes detected, aborting build."
     exit 0

@@ -256,8 +256,8 @@ export default class Trainer {
 
     // Get the transformation matrix for rotating and scaling the face to the
     // desired angle & size
-    let rotMatrix = new cv.Matrix(2, 3, cv.Constants.CV_8UC1);
-    rotMatrix.getRotationMatrix2D(angle, eyesCenter.x, eyesCenter.y, scale);
+    let rotMatrix = cv.Matrix.getRotationMatrix2D(angle, eyesCenter.x,
+        eyesCenter.y, scale);
 
     // Shift the center of the eyes to be the desired center between the eyes
     const adjustx = rotMatrix.get(0, 2) + (FACE_WIDTH * 0.5 - eyesCenter.x);

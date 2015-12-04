@@ -3,7 +3,7 @@
 
 import assert from 'assert';
 import bleno from 'bleno';
-import EventEmitter from 'events';
+import { EventEmitter } from 'events';
 import { getboolprop } from '../sysutils';
 import getDeviceId from '../deviceid';
 import makeDeferred from '../deferred';

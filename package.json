@@ -5,11 +5,12 @@
   "scripts": {
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
     "lint": "eslint lib",
+    "flow": "flow check",
     "preinstall": "./bin/preinstall",
     "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && webpack --progress",
     "start": "DEBUG=* babel-node lib/server/main.js production",
     "dev": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
-    "test": "npm run-script lint",
+    "test": "npm run lint && npm run flow",
     "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
     "upliftall": "DEBUG=silk-* babel-node lib/uplifter.js"
   },
@@ -44,6 +45,7 @@
     "yamljs": "^0.2.4"
   },
   "devDependencies": {
+    "flow-bin": "0.19.1",
     "webpack-dev-server": "^1.10.1",
     "webpack-hot-middleware": "^2.0.0"
   },

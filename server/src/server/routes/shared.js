@@ -1,11 +1,18 @@
+/* @flow */
 import * as Joi from 'joi';
 import URL from 'url';
 import path from 'path';
+import createLog from 'log';
+
+import type {RouteContext} from '../server';
+import InfluxDB from '../influxdb_client';
+
+const log = createLog('routes:account');
 
 /**
  * Helper for routes shared between accounts and devices...
  */
-export default function(api, type, ctx) {
+export default function(api: any, type: string, ctx: RouteContext) {
   // Semi-nasty hack so we don't need to run this in autogenerate.
   if (!api || !api.define) return;
 
@@ -51,4 +58,44 @@ export default function(api, type, ctx) {
       url: getUrl()
     });
   });
+
+  api.define({
+    path: 'metrics/point',
+    method: 'post',
+    params: [],
+    name: 'writeMetrics',
+    output: Joi.object(),
+    // TODO: Allow typing this for documentation without actually validating the
+    // input.
+    input: Joi.array().required(),
+  }, async (req, res) => {
+    if (ctx.influxdb == null) {
+      log.info('Dropping metrics influxdb not configured.');
+      res.respond({});
+      return;
+    }
+
+    let influxdb: InfluxDB = ctx.influxdb;
+
+    if (!Array.isArray(req.body)) {
+      res.sendStatus(400);
+      return;
+    }
+
+    // XXX: This is potentially lame but we need to validate the series names
+    // somehow... Ideally we could do this against a known list of series names
+    // but for now we simply prefix it by type.
+    let metrics = req.body.reduce((final, value) => {
+      if (Array.isArray(value) && value.length === 3) {
+        // series
+        value[0] = `${type}_${value[0]}`;
+        final.push(value);
+      }
+      return final;
+    }, []);
+
+    await influxdb.writeAll(metrics);
+    res.respond({});
+  });
+
 }

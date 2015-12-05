@@ -6,6 +6,7 @@
 .*/node_modules/jsonwebtoken/.*
 .*/node_modules/socket.io/.*
 .*/node_modules/socket.io-client/.*
+.*/node_modules/node-fetch/.*
 
 [include]
 
@@ -13,9 +14,10 @@
 interface
 
 [options]
+module.system=haste
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 unsafe.enable_getters_and_setters=true
 
 [version]
-0.18.1
+0.19.0

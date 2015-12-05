@@ -15,8 +15,14 @@ import Devices from '../models/devices';
 
 import type { RouteContext } from '../server';
 
-let log = require('log')('routes:account');
+const log = require('log')('routes:account');
+
 const PREFIX = '/v1/account/';
+
+/**
+ * NOTE: I would like to bake the concept of scopes into api define soon.
+ */
+const METRICS_SCOPES = 'metrics:query';
 
 export default function (ctx: RouteContext) {
   let routes = new Router();
@@ -152,6 +158,39 @@ export default function (ctx: RouteContext) {
     }
 
     res.respond({ success: true });
+  });
+
+  api.define({
+    path: 'metrics/query',
+    method: 'post',
+    params: [],
+    name: 'queryMetrics',
+    description: 'Query metrics /w influxql',
+    // NOTE: This intentionally is identical to the format that influxdb itself
+    // returns we make no attempt to transform or change the output.
+    output: Joi.object().keys({
+      results: Joi.any(),
+      error: Joi.string(),
+    }),
+    input: Joi.object().keys({
+      query: Joi.string().required()
+    }).required()
+  }, async (req, res) => {
+    let {account} = req;
+    let scopes = ctx.scopes.accountScopes(account);
+    if (scopes.indexOf(METRICS_SCOPES) === -1) {
+      res.sendStatus(401);
+      log.warn(`Attempted to query metrics without proper scope ${account.email}`);
+      return;
+    }
+
+    if (ctx.influxdb == null) {
+      res.respond({ error: 'InfluxDB not configured.' });
+      return;
+    }
+    let {query} = req.body;
+    let result = await ctx.influxdb.query(query);
+    res.respond(result);
   });
 
   return api;

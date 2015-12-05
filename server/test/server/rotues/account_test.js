@@ -4,6 +4,7 @@
 import assert from 'assert';
 import createContext from '../context';
 import createApi from '../../../src/api';
+import uuid from 'uuid';
 
 import Devices from '../../../src/server/models/devices';
 
@@ -117,6 +118,39 @@ suite('account auth', () => {
     assert.ok(url);
   });
 
+  if (process.env.INFLUX_CONNECTION_STRING) {
+    test('read / writeMetrics', async () => {
+      let series = uuid.v4().replace(/-/g, '');
+      let points  = [
+        [series, { tag: 'a' }, { value: '1i' }],
+        [series, { tag2: 'a' }, { value: '2i' }],
+        [series, { tag3: 'a' }, { value: '3i' }],
+      ];
+
+      await accountOne.api.account.writeMetrics(points);
+
+      // read the metrics back out...
+      let read = await accountOne.api.account.queryMetrics({ query: `
+        SELECT * FROM account_${series}
+      `});
+      assert.equal(read.results[0].series[0].values.length, 3);
+    });
+  } else {
+    test.skip('read / writeMetrics');
+  }
+
+  test('metrics query scopes', async () => {
+    // See config/test.js to see what is enabled....
+    let allowed = await context.testAccount({ email: 'scoped@example.com' });
+    let invalid = await context.testAccount({ email: 'user@noscopesforyou.com' });
+
+    await allowed.api.account.queryMetrics({
+      // We don't care about the results only that we don't get hit with the 401
+      query: 'does not matter'
+    });
+
+    await context.assertThrows(async () => {
+      await invalid.api.account.queryMetrics({ query: 'does not matter' });
+    }, /Unauthorized/);
+  });
 });
-
-

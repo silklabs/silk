@@ -53,6 +53,23 @@ export async function post(context, path, json) {
   });
 }
 
+export async function assertThrows(context, asyncFn, testRegex) {
+  try {
+    await asyncFn();
+  } catch (err) {
+    if (!testRegex) {
+      return;
+    }
+
+    if (testRegex.test(err.message)) {
+      return;
+    } else {
+      throw new Error(`Unexpected error ${err.stack}`);
+    }
+  }
+  throw new Error('Expected an error');
+}
+
 let testAccountId = 0;
 
 export async function testAccount(context, overrides = {}) {

@@ -177,8 +177,15 @@ export default function (ctx: RouteContext) {
       email: req.body.email,
     };
 
+    parsed.hash = parsed.hash || '';
     parsed.hash += `?${querystring.stringify(hashParams)}`;
-    let passwordResetUrl = URL.format(parsed);
+    
+    let passwordResetUrl = URL.format({
+      host: parsed.host,
+      pathname: parsed.pathname,
+      query: parsed.query,
+      hash: parsed.hash,
+    });
 
     await ctx.emailSender.resetPassword({
       email: req.body.email,

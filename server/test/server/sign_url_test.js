@@ -22,8 +22,10 @@ suite('sign url', function() {
   }
 
   test('get signed url', () => {
+    // Ensure... this is a string to keep flow happy.
+    let key: string = process.env.AWS_ACCESS_KEY_ID || '';
     let signed = sign(url);
-    assert(signed.indexOf(process.env.AWS_ACCESS_KEY_ID) !== -1);
+    assert(signed.indexOf(key) !== -1);
   });
 
 });

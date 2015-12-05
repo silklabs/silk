@@ -4,7 +4,14 @@ Configuration profile used in tests.
 
 import defaultConfig from './default';
 
+// Add @example.com to all scopes so test users can use them.
+let testScopes = {};
+for (let scope in defaultConfig.scopes) {
+  testScopes[scope] = defaultConfig.scopes[scope].concat('@example.com');
+}
+
 export default {
+  scopes: testScopes,
   socketio: {
     port: 0,
   },

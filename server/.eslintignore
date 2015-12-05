@@ -1,3 +1,4 @@
 src/api/gen/**/*.js
 src/server/emails/**/*.js
 test/rntest
+src/interface/**/*.js

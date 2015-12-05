@@ -5,6 +5,7 @@ import React from 'react';
 import { Alert, Button, Glyphicon } from 'react-bootstrap';
 import { Link } from 'react-router';
 
+import Api from '../libraries/Api';
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
 import Reports from '../libraries/CrashReports';
@@ -109,7 +110,7 @@ export class OnlineCameras extends React.Component {
     ));
     return (
       <div>
-        <Alert bsStyle="info">{this.state.status}</Alert>
+        <Alert bsStyle="info">{this.state.status}<br/><small>Server: {Api.config.serverUrl}</small></Alert>
         <div style={styles.flexRow}>{cameras}</div>
         <Link style={{float: 'right'}} to="/login">
           <Button bsStyle="warning">

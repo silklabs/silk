@@ -23,7 +23,7 @@ import Diag from './components/Diag';
 import Login from './components/Login';
 import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
-import VideoChunks from './components/VideoChunks';
+import Chunks from './components/VideoChunks';
 
 let videoWidget = CameraVideo;
 let userState;
@@ -52,7 +52,7 @@ function loginCheck(nextState, replaceState) {
         <Route path="/login" component={Login} userState={userState} />
         <Route onEnter={loginCheck} path="/" component={OnlineCameras} />
         <Route onEnter={loginCheck} path="/avpipeline/:deviceId" component={AVPipeline} />
-        <Route onEnter={loginCheck} path="/chunks/:deviceId" component={VideoChunks} />
+        <Route onEnter={loginCheck} path="/chunks/:deviceId" component={Chunks} />
         <Route onEnter={loginCheck} path="/crashes/:deviceId" component={CrashReports} />
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />

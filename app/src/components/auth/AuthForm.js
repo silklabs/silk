@@ -101,8 +101,12 @@ export default class extends AsyncComponent {
   };
 
   render() {
-    let buttonDisabled = !this.state.email || !this.state.password ||
-       (this.state.verifyPassword && !this.state.passwordVerification);
+    let buttonDisabled = (
+      !this.state.email || // Always require email
+      (!this.props.skipPassword && !this.state.password) || // Only require password if not skipped
+      (this.state.verifyPassword && !this.state.passwordVerification) // Pasword mismatch ...
+    );
+
     let button = (
       <Button
         label={this.props.submitText}

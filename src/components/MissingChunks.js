@@ -101,7 +101,7 @@ class VideoChunks extends React.Component {
   }
 }
 
-export default class Chunks extends React.Component {
+export default class MissingChunks extends React.Component {
   state = { key: 0 };
 
   render() {

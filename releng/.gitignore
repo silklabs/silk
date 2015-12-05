@@ -1,0 +1,9 @@
+*.sw?
+*~
+.DS_Store
+/next
+/release
+npm-debug.log
+/node_modules
+/public/js/bundle.js
+/public/js/bundle.js.map

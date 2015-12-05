@@ -1,0 +1,14 @@
+/**
+ * @flow
+ */
+
+// TODO: Merge this with MERGE_GITS in ../shared.sh
+module.exports = [
+  'silk-core',
+  'silk-server',
+  'silk-app',
+  'silk-device',
+  'silk-webapp',
+  'gonk-alto',
+  'releng',
+];

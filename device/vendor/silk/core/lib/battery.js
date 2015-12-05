@@ -19,8 +19,8 @@ const BATTERY_OK_TO_BOOT_LEVEL = 10;
 // Suggest a shutdown when the battery is below this level
 const BATTERY_OUT_OF_POWER_LEVEL = 5;
 
-class Battery extends events.EventEmitter
-{
+class Battery extends events.EventEmitter {
+
   constructor() {
     super();
   }

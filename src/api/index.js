@@ -6,6 +6,7 @@ import URL from 'url';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
+import Crash from './gen/crash';
 import BlobPublisher from './gen/blob_publisher';
 import CrashPublisher from './gen/crash_publisher';
 import MetadataPublisher from './gen/metadata_publisher';
@@ -70,6 +71,7 @@ export default function create(options) {
       const services = {
         vip: new VIP(config.serverUrl),
         account: new Account(config.serverUrl),
+        crash: new Crash(config.serverUrl),
         device: new Device(config.serverUrl),
         blobPublisher: new BlobPublisher(config.serverUrl),
         crashPublisher: new CrashPublisher(config.serverUrl),

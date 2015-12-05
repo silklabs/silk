@@ -9,6 +9,7 @@ import blobPublisherRoutes from './routes/blob_publisher';
 import crashPublisherRoutes from './routes/crash_publisher';
 import metadataPublisherRoutes from './routes/metadata_publisher';
 import metadataRoutes from './routes/metadata';
+import crashRoutes from './routes/crash';
 
 let log = require('log')('routes');
 
@@ -179,4 +180,5 @@ module.exports = function(opts) {
   app.use(crashPublisherRoutes(opts).app);
   app.use(metadataPublisherRoutes(opts).app);
   app.use(metadataRoutes(opts).app);
+  app.use(crashRoutes(opts).app);
 };

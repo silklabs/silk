@@ -4,13 +4,14 @@ Configuration profile used in tests.
 
 import defaultConfig from './default';
 
-export default {
-  scopes: Object.assign(defaultConfig.scopes, {
-    'metrics:query': [
-      '@example.com'
-    ]
-  }),
+// Add @example.com to all scopes so test users can use them.
+let testScopes = {};
+for (let scope in defaultConfig.scopes) {
+  testScopes[scope] = defaultConfig.scopes[scope].concat('@example.com');
+}
 
+export default {
+  scopes: testScopes,
   socketio: {
     port: 0,
   },

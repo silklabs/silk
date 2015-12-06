@@ -35,8 +35,8 @@
   "private": true,
   "scripts": {
     "bundle": "rnws bundle --port 60050 --packagerPort 60051 --webpackPort 60052 --iosBundlePath iOS/main.jsbundle --no-android",
-    "lint": "eslint src",
     "flow": "flow check",
+    "lint": "eslint src",
     "localBundle": "./tools/local_bundle",
     "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./tools/patch && ./tools/update_crypto_browserify",
     "start": "rnws start --port 8082 --packagerPort 8081 --webpackPort 60046",

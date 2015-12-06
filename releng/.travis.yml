@@ -27,6 +27,5 @@ deploy:
     local-dir: deploy/
     upload-dir: $TRAVIS_BRANCH
     on:
-      all_branches: true
       condition: $DEPLOY = true
 

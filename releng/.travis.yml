@@ -8,13 +8,13 @@ env:
     - TEST_TYPE=flow
 
 before_install:
-  source .travis_before_install.sh
+  - source .travis_before_install.sh
 
 script:
-  npm run $TEST_TYPE
+  - npm run $TEST_TYPE
 
 before_deploy:
-  mkdir -p deploy/
+  - mkdir -p deploy/
 
 deploy:
   - provider: s3

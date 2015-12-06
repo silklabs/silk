@@ -1,0 +1,4 @@
+# Travis should never use this .travis.yml, however it will emit a confusing
+# message, 'WARNING: We were unable to find a .travis.yml file.', on every
+# build if it doesn't exist
+script: false

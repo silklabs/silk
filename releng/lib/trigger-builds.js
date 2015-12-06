@@ -49,8 +49,8 @@ const buildList = [
     },
   },
   {
-    repo: 'releng',
-    project: null,
+    repo: 'silk-core',
+    project: 'releng',
     message: 'Updating repocache for base gonk',
     branch: 'master',
     config: {
@@ -60,13 +60,14 @@ const buildList = [
           'DEPLOY=true',
           'GONK=base',
         ],
+        matrix: [],
       },
       script: './travis/script_repocache',
     },
   },
   {
-    repo: 'releng',
-    project: null,
+    repo: 'silk-core',
+    project: 'releng',
     message: 'Updating repocache for mako gonk',
     branch: 'master',
     config: {
@@ -76,13 +77,14 @@ const buildList = [
           'DEPLOY=true',
           'GONK=mako',
         ],
+        matrix: [],
       },
       script: './travis/script_repocache',
     },
   },
   {
-    repo: 'releng',
-    project: null,
+    repo: 'silk-core',
+    project: 'releng',
     message: 'Updating repocache for qemu gonk',
     branch: 'master',
     config: {
@@ -92,6 +94,7 @@ const buildList = [
           'DEPLOY=true',
           'GONK=qemu',
         ],
+        matrix: [],
       },
       script: './travis/script_repocache',
     },

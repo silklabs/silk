@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Must be run from the root directory of silk-core
+# Run from releng/
 #
 
 if [[ -n $1 ]]; then
@@ -16,6 +16,7 @@ if [[ -z $GONK ]]; then
 fi
 
 set -x
+cd ..
 make -C device repocache.$GONK
 
 mkdir -p deploy/repocache

@@ -34,11 +34,8 @@ const buildList = [
     },
   },
   {
-    repo: 'silk-device',
-    project: null,
-    // TODO: enable this once silk-core takes over for 'next'
-    //repo: 'silk-core',
-    //project: 'device',
+    repo: 'silk-core',
+    project: 'device',
     message: 'Nightly base.msm8916 next build',
     branch: 'next',
     config: {

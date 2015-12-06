@@ -34,7 +34,7 @@ Adventus6           |Sept 28|Oct 7  |Oct 9  |Oct 15 | [Closed](https://github.co
 Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus5+is%3Aclosed)
 Adventus4           |Oct 26 |Nov 4  |Nov 6  |Nov 12 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus4+is%3Aclosed)
 Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus3+is%3Aclosed)
-Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus2+no%3Aassignee) / [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus2+is%3Aclosed)
+Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus2+is%3Aclosed)
 Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+no%3Aassignee) / [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+is%3Aclosed)
 *Happy Holidays!!!* |Dec 21 |-      |-      |Jan 1  | -
 
@@ -50,6 +50,7 @@ Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [Open](https://github.com/
 Github milestones are created in all the affected projects to collect issues:
 
 [silk-app](https://github.com/silklabs/silk-app/milestones)
+| [silk-core](https://github.com/silklabs/silk-core/milestones)
 | [silk-device](https://github.com/silklabs/silk-device/milestones)
 | [silk-server](https://github.com/silklabs/silk-server/milestones)
 | [silk-webapp](https://github.com/silklabs/silk-webapp/milestones)
@@ -105,17 +106,11 @@ Branching procedures are documented [here](Procedures.md).
 
 #### *next* commits not in *master*
 
-[silk-app](https://github.com/silklabs/silk-app/compare/master...next)
-| [silk-device](https://github.com/silklabs/silk-device/compare/master...next)
-| [silk-server](https://github.com/silklabs/silk-server/compare/master...next)
-| [silk-webapp](https://github.com/silklabs/silk-webapp/compare/master...next)
+[silk-core](https://github.com/silklabs/silk-core/compare/master...next)
 
 #### *master* commits not in *next*
 
-[silk-app](https://github.com/silklabs/silk-app/compare/next...master)
-| [silk-device](https://github.com/silklabs/silk-device/compare/next...master)
-| [silk-server](https://github.com/silklabs/silk-server/compare/next...master)
-| [silk-webapp](https://github.com/silklabs/silk-webapp/compare/next...master)
+[silk-core](https://github.com/silklabs/silk-core/compare/next...master)
 
 
 ## Appendix

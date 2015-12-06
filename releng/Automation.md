@@ -10,7 +10,7 @@ Releng runs a Github webhook, implemented on a Heroku server, that provides its 
 ### Nightly animation
 
 Nightly automation is run to update the "repocache" tarballs used to speed up
-silk-device developer sync times, and other useful tasks.
+device developer sync times, and other useful tasks.
 To trigger manually run `npm run triggerbuilds`.
 
 ## Status

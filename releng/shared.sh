@@ -28,15 +28,8 @@ fi
 # MERGE_GITS: Subset of GITS that need commits merged back to master
 #             (TODO: Merge this with lib/repos.js)
 #
-# Note that these projects are sorted by the order in which the branch changes
-# should be pushed.  That is, projects that depend on the branches of other
-# projects should be listed after their dependant project.
-#
 MERGE_GITS="\
-  silk-server \
-  silk-app \
-  silk-device \
-  silk-webapp \
+  silk-core \
   gonk-alto \
 "
 GITS="\
@@ -47,12 +40,12 @@ GITS="\
   $MERGE_GITS \
 "
 
-# Subset of MERGE_GITS with a package.json at the root (ie, that are
+# silk-core subdirectories with a package.json at the root (ie, that are
 # bootstrapped with |npm install|)
-NPM_GITS="\
-  silk-server \
-  silk-app \
-  silk-webapp \
+NPM_PROJECTS="\
+  server \
+  app \
+  webapp \
 "
 
 # Fetch all the silk projects
@@ -114,7 +107,8 @@ updatebranch__silk_api() {
 updatebranch__silk_npms() {
   local from=$1
   local to=$2
-  for app in $NPM_GITS; do
+  pushd silk-core/
+  for app in $NPM_PROJECTS; do
     echo "Updating branch for $app: $from => $to"
     pushd $app
     (
@@ -146,18 +140,19 @@ updatebranch__silk_npms() {
         fi
       done
 
-      local msg="Automated branch update from ${from} to ${to}"
+      local msg="${app}: Automated branch update from ${from} to ${to}"
       git commit -m "$msg"
     )
     popd > /dev/null
   done
+  popd > /dev/null
 }
 
 # Bumps the version of silk-app for given branch
 semver_inc__silk_app() {
   local branch=$1
   local level=$2
-  pushd silk-app
+  pushd silk-core/app
   (
     set -x
     git checkout $branch
@@ -178,7 +173,7 @@ semver_inc__silk_app() {
     sed -e "s/$ver/$nextver/" -i iOS/Info.plist
     git add iOS/Info.plist
 
-    local msg="Automated version update from ${ver} to ${nextver}"
+    local msg="app: Automated version update from ${ver} to ${nextver}"
     git commit -m "$msg"
   )
   popd > /dev/null
@@ -189,7 +184,7 @@ updatebranch__silk_device() {
   local from=$1
   local to=$2
   echo "Updating branch for silk-device: $from => $to"
-  pushd silk-device
+  pushd silk-core/device
   (
     set -x
     sed -i .branch -e s/${from}/${to}/g
@@ -223,7 +218,7 @@ updatebranch__silk_device() {
 
     done
 
-    local msg="Automated branch update from ${from} to ${to}"
+    local msg="device: Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
   )
   popd > /dev/null

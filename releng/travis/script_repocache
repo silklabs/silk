@@ -1,4 +1,7 @@
 #!/bin/bash -e
+#
+# Must be run from the root directory of silk-core
+#
 
 if [[ -n $1 ]]; then
   GONK=$1
@@ -13,10 +16,8 @@ if [[ -z $GONK ]]; then
 fi
 
 set -x
-rm -rf silk-device
-git clone ssh://git@github.com/silklabs/silk-device.git
-make -C silk-device repocache.$GONK
+make -C device repocache.$GONK
 
 mkdir -p deploy/repocache
-mv silk-device/repocache*tgz deploy/repocache
+mv device/repocache*tgz deploy/repocache
 exit 0

@@ -15,10 +15,6 @@ import Id from './id';
 import RssiSmoother from './rssi_smoother';
 
 import {signature} from './jwt_request_signature';
-import makeBlob from './blob'; // TODO: Remove
-import makeTimeMeta from './time_metadata';
-import makeCrashMeta from './crash_metadata';
-import makeSocketio from './socketio';
 import makeStreams from './streams';
 
 export const BTLE_SOCKET_UUIDS = {
@@ -61,10 +57,6 @@ export default function create(options) {
       // Load/reload only the portions of the API that are dependent on the config
       Object.assign(api, {
         config,
-        blob: makeBlob(config), // TODO: Remove
-        timeMeta: makeTimeMeta(config),
-        crashMeta: makeCrashMeta(config),
-        socketio: makeSocketio(config),
         streams: makeStreams(config),
       });
 

@@ -75,12 +75,17 @@ let testAccountId = 0;
 export async function testAccount(context, overrides = {}) {
   let id = Id.create();
   let account = new Accounts(context.db);
-  await account.create(Object.assign({}, {
+  let email = `test.${String(testAccountId++)}@example.com`;
+  let res = await account.create(Object.assign({}, {
     publicKey: id.toString(),
-    email: `user${testAccountId++}@example.com`,
+    email: email,
     passwordHash: context.passwordHash('password'),
     userAgent: 'nodejs'
   }, overrides));
+
+  if (res.error) {
+    throw new Error(`Failed to create test account: ${res.error.type}`);
+  }
 
   let record = await account.findByPublicKey({
     publicKey: id.toString()

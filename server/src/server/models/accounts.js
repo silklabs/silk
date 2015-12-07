@@ -94,6 +94,7 @@ type PasswordResetInput = {
 export type PasswordResetResult = {
   token: string;
   expires: number;
+  newToken: bool;
 }
 
 type UsePasswordResetTokenInput = {
@@ -463,6 +464,7 @@ export default class Accounts extends Base {
 
       if (previousExpires > Date.now()) {
         return {
+          newToken: false,
           token: new AccessToken(pub, priv).sign(account.passwordReset.secret),
           expires: previousExpires,
         };
@@ -500,6 +502,7 @@ export default class Accounts extends Base {
     }
 
     return {
+      newToken: true,
       token: accessToken.sign(secret),
       expires
     };

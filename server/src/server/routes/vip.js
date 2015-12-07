@@ -170,27 +170,34 @@ export default function (ctx: RouteContext) {
       return;
     }
 
-    let baseUrl = ctx.config.resetPassword.url;
-    let parsed = URL.parse(baseUrl, true);
-    let hashParams = {
-      token: reset.token,
-      email: req.body.email,
-    };
+    /**
+     * Limit the number of times we allow a reset email to be sent to once per
+     * token period. This prevents abuse while still allowing an idempontent
+     * operation.
+     */
+    if (reset.newToken) {
+      let baseUrl = ctx.config.resetPassword.url;
+      let parsed = URL.parse(baseUrl, true);
+      let hashParams = {
+        token: reset.token,
+        email: req.body.email,
+      };
 
-    parsed.hash = parsed.hash || '';
-    parsed.hash += `?${querystring.stringify(hashParams)}`;
-    
-    let passwordResetUrl = URL.format({
-      host: parsed.host,
-      pathname: parsed.pathname,
-      query: parsed.query,
-      hash: parsed.hash,
-    });
+      parsed.hash = parsed.hash || '';
+      parsed.hash += `?${querystring.stringify(hashParams)}`;
 
-    await ctx.emailSender.resetPassword({
-      email: req.body.email,
-      url: passwordResetUrl,
-    });
+      let passwordResetUrl = URL.format({
+        host: parsed.host,
+        pathname: parsed.pathname,
+        query: parsed.query,
+        hash: parsed.hash,
+      });
+
+      await ctx.emailSender.resetPassword({
+        email: req.body.email,
+        url: passwordResetUrl,
+      });
+    }
 
     res.respond({ success: true });
   });

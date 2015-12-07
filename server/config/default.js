@@ -7,7 +7,7 @@ Every other configuration profile inherits from this (and can override it).
 // Provide default connection string...
 const DEFAULT_MONGO = 'mongodb://localhost:27017';
 const PORT = process.env.PORT || 5000;
-const SILK_EMAILS = ['@silklabs.com'];
+const SILK_EMAILS = ['@silk.io', '@silklabs.com'];
 
 export default {
 

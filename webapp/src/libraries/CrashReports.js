@@ -92,7 +92,7 @@ class CrashReports {
       query.startTimeStamp = this.metadata[deviceId].lastSyncTime.toISOString();
     }
 
-    return Api.crashMeta.find(query)
+    return Api.crash.findAll(query)
       .then(reports => {
         // Assign new metadata properties.
         reports.forEach(report => {

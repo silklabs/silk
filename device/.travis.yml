@@ -56,4 +56,4 @@ deploy:
   upload-dir: $TRAVIS_BRANCH/latest
   on:
     all_branches: true
-    condition: "$TRAVIS_OS_NAME != osx"
+    condition: "$TRAVIS_PULL_REQUEST/$TRAVIS_OS_NAME == false/linux"

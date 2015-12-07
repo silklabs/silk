@@ -9,6 +9,9 @@
 import api from './api';
 import server from './server';
 import * as util from './sysutils';
+import https from 'https';
+import URL from 'url';
+import eventToPromise from 'event-to-promise';
 
 import logoData from './logoData';
 import previewData from './previewData';
@@ -87,13 +90,28 @@ export default class DeviceSimulator {
     return this._emitVideo(frame, 'mp4', durationMs);
   }
 
-  uploadBlob(cfg) {
+  async uploadBlob(cfg) {
     let frame = ('frame' in cfg) ? cfg.frame : this._videoFrame;
+    let {putUrl, putHeaders} = await api.blobPublisher.putUrl(
+      VIDEO_BLOB_TYPE,
+      {
+        contentLength: frame.length,
+        contentType: VIDEO_CONTENT_TYPE,
+      }
+    );
 
-    return api.blob.upload(VIDEO_BLOB_TYPE, frame.length,
-        VIDEO_CONTENT_TYPE, frame)
-    .then(blobUrl => this._blobUrl = blobUrl)
-    .catch(util.processthrow);
+    let params = Object.assign(URL.parse(putUrl), {
+      method: 'PUT',
+      headers: putHeaders,
+    });
+
+    let writer = https.request(params);
+    writer.write(frame);
+    writer.end();
+    await eventToPromise(writer, 'close');
+
+    let { url } = await api.blobPublisher.ack({ url: putUrl });
+    this._blobUrl = url;
   }
 
   uploadMetadata(cfg) {

@@ -1,5 +1,3 @@
-[![Build Status](https://magnum.travis-ci.com/silklabs/releng.svg?token=j54FanpWeLbC7r1NyfJA)](https://magnum.travis-ci.com/silklabs/releng)
-
 We run two and a half week sprints, with the stabilization period of the
 previous sprint overlapping with the start of the next by 3 days.  At the conclusion of
 every sprint a release is made to complete that milestone.

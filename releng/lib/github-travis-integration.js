@@ -63,6 +63,7 @@ type ProjectBuildRequest = TravisBuildRequest & {
   sha?: string;
   commitRange?: string;
   pullRequest?: number;
+  pullRequestBaseBranch?: string;
 };
 
 if (!process.env.GITHUB_TOKEN) {
@@ -301,6 +302,7 @@ export async function triggerBuildForProject(
     `0000000000000000000000000000000000000000...${sha}`;
   config.env.global.unshift(
     `TRAVIS_COMMIT=${sha}`,
+    `TRAVIS_BRANCH=${request.pullRequestBaseBranch || request.branch}`,
     `TRAVIS_PULL_REQUEST=${request.pullRequest || 'false'}`,
     `TRAVIS_COMMIT_RANGE=${commitRange}`
   );
@@ -392,8 +394,9 @@ export async function handleGitHubPullRequestEvent(
           message: `#${event.number}: ${pr.title}`,
           branch,
           sha: pr.mergeCommitSha,
-          pullRequest: event.number,
           commitRange: `${pr.base.sha}...${pr.head.sha}`,
+          pullRequest: event.number,
+          pullRequestBaseBranch: pr.base.ref,
         }
       )
     )

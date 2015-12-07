@@ -432,6 +432,9 @@ export async function handleGitHubPullRequestEvent(
     // Only consider builds that were just created. If they've been
     // started by now, we will have been notified via the webhook
     // already, and we don't need to update commit status twice.
+    if (build.commit.sha === pr.mergeCommitSha) {
+      log.info(`Build ${build.id} is for this PR, state is ${build.state}.`);
+    }
     return build.commit.sha === pr.mergeCommitSha && build.state === 'created';
   });
 

@@ -8,7 +8,7 @@ import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import authorizeAccount from '../authorize_account';
 import createLog from 'log';
-import signUrl from '../sign_url';
+import decorateUrl from '../decorate_url';
 
 import TimeMetadata from '../models/time_metadata';
 
@@ -25,7 +25,7 @@ const METADATA_ARRAY =
 
 // XXX: Use better input types...
 function send404OnEmpty(res: any, output: any): void {
-  if (!output) {
+  if (!output)  {
     res.sendStatus(404);
     return;
   }
@@ -40,18 +40,6 @@ export default function (ctx: RouteContext) {
     nonce: ctx.nonce,
     accounts: ctx.accounts
   }));
-
-  type ObjectWithUrl = {
-    url: ?string;
-  }
-
-  // XXX: Hack until we convert over to more robust blobs.
-  function decorateUrl(obj: ObjectWithUrl): ObjectWithUrl {
-    if (obj.url) {
-      obj.url = signUrl(obj.url);
-    }
-    return obj;
-  }
 
   /**
    * Ensure the account is only querying devices it owns.

@@ -50,4 +50,4 @@ deploy:
   upload-dir: $TRAVIS_BRANCH/latest
   on:
     all_branches: true
-    condition: $TEST_TYPE = build-dist
+    condition: "$TRAVIS_PULL_REQUEST/$TEST_TYPE = false/build-dist"

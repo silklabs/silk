@@ -98,6 +98,8 @@ const TRAVIS_TO_GITHUB_BUILD_STATES = {
 const MAX_PR_MERGEABLE_RETRIES = 3;
 const PR_MERGEABLE_TIMEOUT_MS = 250;
 
+const TRAVIS_QUERY_BUILD_DELAY_MS = 1000;
+
 /**
  * Awaitable version of `setTimeout`.
  */
@@ -423,7 +425,10 @@ export async function handleGitHubPullRequestEvent(
   // Travis won't call us back on the webhook when a build is queued,
   // only when one is eventually started. This can take anywhere from
   // a few seconds to a few minutes. We want to update GitHub as soon
-  // as possible, though. Let's stitch this together manually.
+  // as possible, though. Let's stitch this together manually. But
+  // don't query Travis too soon -- it needs a bit of time to queue
+  // the builds.
+  await timeout(TRAVIS_QUERY_BUILD_DELAY_MS);
   let travis = await genTravis();
   let response = await cb2promise(travis.repos(owner_name, repo_name).builds.get);
   let queuedBuilds = response.builds.filter((build, index) => {

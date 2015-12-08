@@ -59,6 +59,7 @@ type PullRequestEvent = Object;
 type PushEvent = Object;
 type TravisWebhookPayload = Object;
 type Repo = Object;
+type PullRequest = Object;
 type ProjectBuildRequest = TravisBuildRequest & {
   sha?: string;
   commitRange?: string;
@@ -347,9 +348,8 @@ export async function triggerBuildForProject(
 export async function handleGitHubPullRequestEvent(
   event: PullRequestEvent
 ): Promise<void> {
-  let pr = event.pull_request;
-  let owner_name = pr.base.repo.owner.login;
-  let repo_name = pr.base.repo.name;
+  let owner_name = event.pull_request.base.repo.owner.login;
+  let repo_name = event.pull_request.base.repo.name;
   log.info(`${owner_name}/${repo_name}#${event.number} ${event.action}`);
   log.debug('Full event payload:', JSON.stringify(event, null, 2));
 
@@ -364,15 +364,15 @@ export async function handleGitHubPullRequestEvent(
     log.info(`'${event.action}' not in ${PR_ACTIONS_THAT_KICK_OFF_BUILDS}), does not kick off a build,  ignoring event.`);
     return;
   }
-  if (pr.merged) {
+  if (event.pull_request.merged) {
     log.info(`PR #${event.number} is already merged, nothing to do.`);
     return;
   }
 
   // Ensure PR is mergeable. GitHub doesn't always tell us
   // immediately, so keep polling the GitHub API until we know.
-  log.info('Fetching PR #2 info.');
-  pr = await repo.pulls(event.number).fetch();
+  log.info(`Fetching PR #${event.number} info.`);
+  let pr = await repo.pulls(event.number).fetch();
   log.debug('Full PR info:', JSON.stringify(pr, null, 2));
 
   let tries = 0;
@@ -403,17 +403,16 @@ export async function handleGitHubPullRequestEvent(
 
   let numberOfBuilds = 0;
   try {
-    numberOfBuilds = await triggerBuildsForPullRequestEvent(repo, event);
+    numberOfBuilds = await triggerBuildsForPullRequest(repo, pr);
   } catch (error) {
     log.error('Error', error, error.stack);
     // Uh-oh. We failed to trigger some or all builds. Let's mark the
     // head commit as failed just to be safe so that the author gets
     // the chance to retrigger the build, hopefully with a better result.
-    let description = `Failed to determine builds: ${error.message}`.slice(0, 140);
     await repo.statuses(pr.head.sha).create({
       state: 'error',
-      target_url: 'http://git.io/h3KG',
-      description,
+      target_url: 'https://dashboard.heroku.com/apps/silk-releng/resources',
+      description: `Failed to determine builds. Check Papertrail logs for details.`,
       context: `silk/releng/build-determinator`,
     });
     return;
@@ -434,18 +433,17 @@ export async function handleGitHubPullRequestEvent(
 }
 
 /**
- * Trigger Travis builds based on GitHub Pull Request event and mark
- * the PR's head commit status as pending accordingly. Returns the
- * number of builds triggered.
+ * Trigger Travis builds based on a GitHub Pull Request payload and
+ * mark the PR's head commit status as pending accordingly. Returns
+ * the number of builds triggered.
  */
-async function triggerBuildsForPullRequestEvent(
+async function triggerBuildsForPullRequest(
   repo: Repo,
-  event: PullRequestEvent
+  pr: PullRequest
 ): Promise<number> {
-  let pr = event.pull_request;
   let owner_name = pr.base.repo.owner.login;
   let repo_name = pr.base.repo.name;
-  let branch = getCIBranchForPR(event.number);
+  let branch = getCIBranchForPR(pr.number);
 
   await createOrUpdateBranch(repo, branch, pr.mergeCommitSha);
   let projects = await determineProjectsToBuildForCommit(repo, pr.mergeCommitSha);
@@ -456,11 +454,11 @@ async function triggerBuildsForPullRequestEvent(
         repo_name,
         project,
         {
-          message: `#${event.number}: ${pr.title}`,
+          message: `#${pr.number}: ${pr.title}`,
           branch,
           sha: pr.mergeCommitSha,
           commitRange: `${pr.base.sha}...${pr.head.sha}`,
-          pullRequest: event.number,
+          pullRequest: pr.number,
           pullRequestBaseBranch: pr.base.ref,
         }
       )
@@ -471,7 +469,7 @@ async function triggerBuildsForPullRequestEvent(
   // triggered for a given project. Filter those out to see how many
   // builds we actually triggered.
   let triggeredBuilds = travisResponses.filter((result) => !!result);
-  log.info(`Triggered ${triggeredBuilds.length} builds for PR #${event.number}.`);
+  log.info(`Triggered ${triggeredBuilds.length} builds for PR #${pr.number}.`);
 
   if (triggeredBuilds.length === 0) {
     return 0;

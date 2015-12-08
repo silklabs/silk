@@ -16,13 +16,6 @@ addons:
       - libstdc++6:i386
       - linux-libc-dev
 
-notifications:
-  slack:
-    on_success: change
-    on_failure: always
-    rooms:
-      - silklabs:rQg7Mb0R1AqJ43FAJzkRaNdS
-
 env:
   matrix:
     - GONK_SPEC=mako

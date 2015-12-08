@@ -98,7 +98,7 @@ const TRAVIS_TO_GITHUB_BUILD_STATES = {
 const MAX_PR_MERGEABLE_RETRIES = 3;
 const PR_MERGEABLE_TIMEOUT_MS = 250;
 
-const TRAVIS_QUERY_BUILD_DELAY_MS = 1000;
+const TRAVIS_QUERY_BUILD_DELAY_MS = 2000;
 
 /**
  * Awaitable version of `setTimeout`.

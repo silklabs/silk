@@ -98,7 +98,7 @@ const TRAVIS_TO_GITHUB_BUILD_STATES = {
 const MAX_PR_MERGEABLE_RETRIES = 3;
 const PR_MERGEABLE_TIMEOUT_MS = 250;
 
-const TRAVIS_QUERY_BUILD_DELAY_MS = 1000;
+const TRAVIS_QUERY_BUILD_DELAY_MS = 2000;
 
 /**
  * Awaitable version of `setTimeout`.
@@ -447,7 +447,7 @@ export async function handleGitHubPullRequestEvent(
            `builds for this PR, reporting them to GitHub as pending.`);
   for (let build of queuedBuilds) {
     let project = getProjectFromBuildMessage(build.commit.message);
-    await repo.statuses(pr.mergeCommitSha).create({
+    await repo.statuses(pr.head.sha).create({
       state: 'pending',
       target_url: `https://travis-ci.com/${owner_name}/${repo_name}/builds/${build.id}`,
       description: 'Created',

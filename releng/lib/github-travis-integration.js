@@ -447,7 +447,7 @@ export async function handleGitHubPullRequestEvent(
            `builds for this PR, reporting them to GitHub as pending.`);
   for (let build of queuedBuilds) {
     let project = getProjectFromBuildMessage(build.commit.message);
-    await repo.statuses(pr.mergeCommitSha).create({
+    await repo.statuses(pr.head.sha).create({
       state: 'pending',
       target_url: `https://travis-ci.com/${owner_name}/${repo_name}/builds/${build.id}`,
       description: 'Created',

@@ -10,6 +10,5 @@ dist/test/
 *~
 /config.local.js
 /config.local.json
-/Procfile
 /src/api/gen
 /src/server/emails

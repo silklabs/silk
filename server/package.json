@@ -74,7 +74,7 @@
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
     "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./bin/post-install",
-    "preinstall": "npm install babel && ./bin/pre-install",
+    "preinstall": "npm install babel",
     "pretest": "babel-node src/api_generate",
     "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",

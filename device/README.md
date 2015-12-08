@@ -1,4 +1,4 @@
-# Silk Gonk Build [![Build Status](https://magnum.travis-ci.com/silklabs/silk-device.svg?token=9zqxLJky1XFHahNndToB)](https://magnum.travis-ci.com/silklabs/silk-device)
+# Silk Device
 
 ## Configuring Nexus 4 (Mako)
 

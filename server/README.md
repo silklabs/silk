@@ -1,4 +1,4 @@
-# silk-server [![Build Status](https://magnum.travis-ci.com/silklabs/silk-server.svg?token=9zqxLJky1XFHahNndToB&branch=master)](https://magnum.travis-ci.com/silklabs/silk-server)
+# Silk Server
 
 This is the main silk server.
 

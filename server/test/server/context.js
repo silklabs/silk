@@ -10,6 +10,7 @@ import createApi from '../../src/api';
 import request from 'superagent-promise';
 import merge from 'lodash.merge';
 import pbkdf2 from 'pbkdf2';
+import uuid from 'uuid';
 
 import Id from '../../src/api/id';
 import Accounts from '../../src/server/models/accounts';
@@ -71,11 +72,13 @@ export async function assertThrows(context, asyncFn, testRegex) {
 }
 
 let testAccountId = 0;
+// Allow tests to be run in parallel...
+let uniqueId = uuid.v4();
 
 export async function testAccount(context, overrides = {}) {
   let id = Id.create();
   let account = new Accounts(context.db);
-  let email = `test.${String(testAccountId++)}@example.com`;
+  let email = `test.${uniqueId}.${String(testAccountId++)}@example.com`;
   let res = await account.create(Object.assign({}, {
     publicKey: id.toString(),
     email: email,

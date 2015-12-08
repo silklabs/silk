@@ -1,6 +1,6 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
+/**
+ * @flow
+ */
 import loadConfig from './config';
 import URL from 'url';
 import VIP from './vip';
@@ -13,9 +13,14 @@ import MetadataPublisher from './gen/metadata_publisher';
 import Metadata from './gen/metadata';
 import Id from './id';
 import RssiSmoother from './rssi_smoother';
+import {StateContainer} from './http_client';
 
 import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
+
+// New consumers should refer to "id" as AccessToken.
+export { default as AccessToken } from './id' ;
+export { default as RssiSmoother } from './rssi_smoother';
 
 export const BTLE_SOCKET_UUIDS = {
   service: 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424',
@@ -30,7 +35,13 @@ export const BTLE_SOCKET_UUIDS = {
 export { default as createStreams } from './streams';
 export { default as RssiSmoother } from './rssi_smoother';
 
-function socketioConfig(accessToken, url) {
+type SocketioConfig = [string, {
+  transports: Array<string>;
+  path: string;
+  query: Object;
+}]
+
+function socketioConfig(accessToken: Id, url: string): SocketioConfig {
   let parsed = URL.parse(url, true /* parse query string */);
   parsed.query.jwt = signature(accessToken, 'GET', parsed.path);
   delete parsed.search;
@@ -48,134 +59,135 @@ function socketioConfig(accessToken, url) {
   }];
 }
 
-export default function create(options) {
-  let accessToken = null;
-  let api = {
-    loadConfig(options) {
-      const config = loadConfig(options);
+export type Config = {
+  getRandomBytes?: Function;
+  serverUrl?: string;
+};
 
-      // Load/reload only the portions of the API that are dependent on the config
-      Object.assign(api, {
-        config,
-        streams: makeStreams(config),
-      });
+export class SilkApi {
 
-      const services = {
-        vip: new VIP(config.serverUrl),
-        account: new Account(config.serverUrl),
-        crash: new Crash(config.serverUrl),
-        device: new Device(config.serverUrl),
-        blobPublisher: new BlobPublisher(config.serverUrl),
-        crashPublisher: new CrashPublisher(config.serverUrl),
-        metadataPublisher: new MetadataPublisher(config.serverUrl),
-        metadata: new Metadata(config.serverUrl),
-      };
+  config: Config;
+  streams: any; // TODO: Streams should be moved out of silk-api.
 
-      for (let key in services) {
-        api[key] = services[key];
-      }
-      api._services = services;
+  vip: VIP;
+  account: Account;
+  crash: Crash;
+  device: Device;
+  blobPublisher: BlobPublisher;
+  crashPublisher: CrashPublisher;
+  metadataPublisher: MetadataPublisher;
+  metadata: Metadata;
 
-      if (accessToken) {
-        api.accessToken = accessToken;
-      }
-    },
+  config: StateContainer;
 
-    id: Id,
+  // XXX: Remove me should be re-export.
+  RssiSmoother: typeof RssiSmoother = RssiSmoother;
 
-    // Export the developer account
-    // TODO: Remove prior to production!
-    devAccount: require('./dev_account'),
-
-    // TODO: crypto has been working fine for a long time, but
-    // react-native JS environment is unable to load the 'elliptic'
-    // module, which otherwise works in both browser and node
-    // environments.  Sigh.
-    crypto: {
-      create: () => {
-        return {
-          exportPublic: () => 'key',
-          deriveShared: () => 'shared',
-          encrypt: (text) => Promise.resolve(text),
-          decrypt: (text) => text,
-        };
-      },
-    },
-
-    RssiSmoother,
-
-    set accessToken(token) {
-      accessToken = token;
-      for (let key in api._services) {
-        // TODO: Rename .key once consumers are using this new way of setting
-        // the accessToken.
-        //
-        // .key = accessToken...
-        api._services[key].key = token;
-      }
-    },
-
-    get accessToken() {
-      return accessToken;
-    },
-
-    /**
-     * Because we need to periodically renew our JWT token (on each connect)
-     * we must monkey patch the socket.io client.
-     *
-     * let io = api.socketioClient(require('socket.io-client'), 'account');
-     *
-     * There are two types of clients:
-     *
-     *   - account : Uses socket.io url for accounts.
-     *   - device  : Uses socket.io url for devices.
-     */
-    socketioClient: (socketFactory, type, overrides = {}) => {
-      let configFn;
-      switch (type) {
-      case 'account':
-        configFn = api.socketioAccountConfig;
-        break;
-      case 'device':
-        configFn = api.socketioDeviceConfig;
-        break;
-      default:
-        throw new Error(`Unknown socket.io client type ${type}`);
-      }
-
-      // This intentionally uses junk values since we override them in .open
-      let socket = socketFactory('', {
-        autoConnect: false,
-        transports: ['websocket']
-      });
-      let manager = socket.io;
-      // The .open call is used both during the initial connect and all reconnections...
-      let superOpen = manager.open;
-      manager.open = async (fn) => {
-        try {
-          let [uri, opts] = await configFn();
-          manager.uri = uri;
-          manager.opts = Object.assign({}, overrides, opts);
-          Object.assign(manager, manager.opts);
-          superOpen.call(manager, fn);
-        } catch (err) {
-          fn && fn(err);
-        }
-      };
-      return socket;
-    },
-
-    socketioDeviceConfig: async () => {
-      let {url} = await api.device.socketioURL();
-      return socketioConfig(accessToken, url);
-    },
-
-    socketioAccountConfig: async () => {
-      let {url} = await api.account.socketioURL();
-      return socketioConfig(accessToken, url);
-    },
+  socketioDeviceConfig: Function = async (): SocketioConfig => {
+    let {url} = await this.device.socketioURL();
+    return socketioConfig(this.config.accessToken, url);
   };
 
-  api.loadConfig(options);
-  return api;
+  socketioAccountConfig: Function = async (): SocketioConfig => {
+    let {url} = await this.account.socketioURL();
+    return socketioConfig(this.config.accessToken, url);
+  };
+
+  /** Deprecated exports */
+
+  // Deprecated use the re-export.
+  id: Object = Id;
+  // Export the developer account
+  // TODO: Remove prior to production!
+  devAccount: Object = require('./dev_account');
+
+  set accessToken(accessToken: ?Id) {
+    this.config.accessToken = accessToken;
+  }
+
+  get accessToken(): ?Id {
+    return this.config.accessToken;
+  }
+
+  constructor(config: Config) {
+    config = loadConfig(config);
+
+    let state = this.config = new StateContainer({
+      serverUrl: config.serverUrl || 'http://localhost:8081',
+      accessToken: config.accessToken || null,
+    });
+
+    this.vip = new VIP(state);
+    this.account = new Account(state);
+    this.crash = new Crash(state);
+    this.device = new Device(state);
+    this.blobPublisher = new BlobPublisher(state);
+    this.crashPublisher = new CrashPublisher(state);
+    this.metadataPublisher = new MetadataPublisher(state);
+    this.metadata = new Metadata(state);
+    this.streams = makeStreams(config);
+  }
+
+  /**
+   * Update the serverUrl or accessToken for all services.
+   */
+  loadConfig(config: Config = {}) {
+    config = loadConfig(config);
+    this.config.update({
+      serverUrl: config.serverUrl || this.config.serverUrl,
+      accessToken: config.accessToken || this.config.accessToken,
+    });
+
+    this.streams = makeStreams(config);
+  }
+
+  /**
+   * Because we need to periodically renew our JWT token (on each connect)
+   * we must monkey patch the socket.io client.
+   *
+   * let io = api.socketioClient(require('socket.io-client'), 'account');
+   *
+   * There are two types of clients:
+   *
+   *   - account : Uses socket.io url for accounts.
+   *   - device  : Uses socket.io url for devices.
+   */
+  socketioClient(socketFactory: any, type: string, overrides: Object): any {
+    let configFn;
+    switch (type) {
+    case 'account':
+      configFn = this.socketioAccountConfig;
+      break;
+    case 'device':
+      configFn = this.socketioDeviceConfig;
+      break;
+    default:
+      throw new Error(`Unknown socket.io client type ${type}`);
+    }
+
+    // This intentionally uses junk values since we override them in .open
+    let socket = socketFactory('', {
+      autoConnect: false,
+      transports: ['websocket']
+    });
+    let manager = socket.io;
+    // The .open call is used both during the initial connect and all reconnections...
+    let superOpen = manager.open;
+    manager.open = async (fn) => {
+      try {
+        let [uri, opts] = await configFn();
+        manager.uri = uri;
+        manager.opts = Object.assign({}, overrides, opts);
+        Object.assign(manager, manager.opts);
+        superOpen.call(manager, fn);
+      } catch (err) {
+        fn && fn(err);
+      }
+    };
+    return socket;
+  }
+}
+
+export default function (config: Config): SilkApi {
+  return new SilkApi(config);
 }

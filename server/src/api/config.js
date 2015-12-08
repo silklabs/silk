@@ -1,11 +1,14 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
+/**
+ * Hacks to allow overrides.json and defaults for our configurations.
+ *
+ * @no-flow
+ */
 const DEFAULTS = {
   serverUrl: 'https://silk-test-server.herokuapp.com'
 };
 
-export default function configure(input = {}) {
+
+export default function configure(input) {
   let overrides = {};
   try {
     overrides = require('./overrides.json');

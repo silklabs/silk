@@ -6,6 +6,7 @@ import createContext from '../server/context';
 import launchApp from '../server/launch_app';
 import express from 'express';
 import testRoutes from '../../src/server/routes/test';
+import {StateContainer} from '../../src/api/http_client';
 import TestAPI from '../../src/api/gen/test';
 
 suite('api call retries', () => {
@@ -56,9 +57,10 @@ suite('api call retries', () => {
   });
 
   function buildTestApi(options = {}) {
-    let testApi = new TestAPI(testServerURL, options);
-    testApi.accessToken = account.accessToken;
-    return testApi;
+    return new TestAPI(new StateContainer({
+      serverUrl: testServerURL,
+      accessToken: account.accessToken,
+    }), options);
   }
 
   test('immediate success', async () => {

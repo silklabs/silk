@@ -11,10 +11,12 @@ import express from 'express';
 import testRoutes from '../../../src/server/routes/test';
 import eventToPromise from 'event-to-promise';
 import mutateJWT from '../mutate_jwt';
+import uuid from 'uuid';
 
 import Accounts from '../../../src/server/models/accounts';
 import Nonce from '../../../src/server/models/nonce';
 import TestAPI from '../../../src/api/gen/test';
+import {StateContainer} from '../../../src/api/http_client';
 
 /**
  * Basic suite of security validation tests... These are intended to be a
@@ -51,7 +53,7 @@ suite('security validation tests', () => {
       id: null, // will be assigned later
       input: {
         userAgent: 'woot',
-        email: 'one@example.com',
+        email: `${uuid.v4()}@example.com`,
         password: 'passwordsogood'
       }
     },
@@ -60,7 +62,7 @@ suite('security validation tests', () => {
       id: null, // will be assigned later
       input: {
         userAgent: 'woot',
-        email: 'two@example.com',
+        email: `${uuid.v4()}@example.com`,
         password: 'passwordsogood'
       }
     }
@@ -73,7 +75,7 @@ suite('security validation tests', () => {
     for (var userKey in users) {
       let user = users[userKey];
       user.id = api.id.create();
-      api.vip.accessToken = user.id;
+      api.accessToken = user.id;
 
       // Create test users...
       let create = await api.vip.createAccountWithPassword(user.input);
@@ -88,8 +90,10 @@ suite('security validation tests', () => {
     intercept = mitm.intercept;
     interceptURL = mitm.url;
     // Setup security testing api
-    testApi = new TestAPI(interceptURL);
-    testApi.accessToken = users.one.id;
+    testApi = new TestAPI(new StateContainer({
+      serverUrl: interceptURL,
+      accessToken: users.one.id,
+    }));
   });
 
   teardown(() => {

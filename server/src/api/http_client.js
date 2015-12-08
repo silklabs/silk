@@ -4,6 +4,7 @@
  *
  * @flow
  */
+import assert from 'assert';
 import fetch from './fetch';
 import URL from 'url';
 import throwError from './fetch_error';
@@ -52,6 +53,32 @@ function sleep(duration) {
   });
 }
 
+export type StateContainerOptions = {
+  serverUrl: string;
+  accessToken: ?AccessToken;
+}
+
+/**
+ * We need the ability to "hot reload" the configuration of accessToken and the
+ * serverUrl at will from webapp/app. Using a specific container type allows us
+ * to do this by mutating the container (which can be shared) rather then every
+ * api instance.
+ */
+export class StateContainer {
+  serverUrl: string;
+  accessToken: ?AccessToken;
+
+  constructor(options: StateContainerOptions) {
+    this.update(options);
+  }
+
+  update(options: StateContainerOptions) {
+    assert(options.serverUrl);
+    this.serverUrl = options.serverUrl;
+    this.accessToken = options.accessToken;
+  }
+}
+
 export default class HttpClient {
   name: string;
   maxiumRetryDelayMs: number = MAXIMUM_RETRY_DELAY_MS;
@@ -59,15 +86,11 @@ export default class HttpClient {
   retryDelayMinMs: number = RETRY_DELAY_MIN_MS;
   retryDelayMaxMs: number = RETRY_DELAY_MAX_MS;
   requestTimeout: number = REQUEST_TIMEOUT_MS;
-  baseURL: string;
-  accessToken: AccessToken;
-  _accessToken: ?AccessToken;
 
-  constructor(baseURL: string, options: {[key: string]: any} = {}) {
-    if (!baseURL) {
-      throw new Error('baseURL is required');
-    }
-    this.baseURL = baseURL;
+  _state: StateContainer;
+
+  constructor(state: StateContainer, options: {[key: string]: any} = {}) {
+    this._state = state;
     Object.assign(this, options);
   }
 
@@ -79,28 +102,6 @@ export default class HttpClient {
     if (this._logger) { // XXX: Make flow happy by adding another if...
       this._logger(...args);
     }
-  }
-
-  get key(): AccessToken {
-    return this.accessToken;
-  }
-
-  set key(value) {
-    return this.accessToken = value;
-  }
-
-  set accessToken(value) {
-    this._log('set access token', value && value.pub);
-    this._accessToken = value;
-  }
-
-  get accessToken(): AccessToken {
-    // Allow the key to be undefined or null but throw an error if we attempt to
-    // use it in that state.
-    if (!this._accessToken || !this._accessToken.priv) {
-      throw new Error('client.key is missing please set it.');
-    }
-    return this._accessToken;
   }
 
   async _sleep(interval: number, retry: number, id: string): Promise<void> {
@@ -179,8 +180,13 @@ export default class HttpClient {
     body: any,
     id: string
   ): Promise<any> {
+    let accessToken = this._state.accessToken;
+    if (!accessToken) {
+      throw new Error('accessToken is required...');
+    }
+
     body = JSON.stringify(body);
-    let signature = bodySignature(this.key, method, url, body);
+    let signature = bodySignature(accessToken, method, url, body);
     let headers = {
       'authorization': `Bearer ${signature}`,
       'content-type': 'application/json'
@@ -189,7 +195,7 @@ export default class HttpClient {
       // platform byte length issues.
     };
 
-    let absURL = URL.resolve(this.baseURL, url);
+    let absURL = URL.resolve(this._state.serverUrl, url);
     this._log(`Request (${id}) ${method} ${absURL}`);
 
     let start = Date.now();

@@ -405,13 +405,15 @@ export async function handleGitHubPullRequestEvent(
   try {
     numberOfBuilds = await triggerBuildsForPullRequestEvent(repo, event);
   } catch (error) {
+    log.error('Error', error, error.stack);
     // Uh-oh. We failed to trigger some or all builds. Let's mark the
     // head commit as failed just to be safe so that the author gets
     // the chance to retrigger the build, hopefully with a better result.
+    let description = `Failed to determine builds: ${error.message}`.slice(0, 140);
     await repo.statuses(pr.head.sha).create({
       state: 'error',
       target_url: 'http://git.io/h3KG',
-      description: `Failed to determine builds: ${error.message}`,
+      description,
       context: `silk/releng/build-determinator`,
     });
     return;

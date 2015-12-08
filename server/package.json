@@ -48,7 +48,7 @@
   "description": "Silk server and client API",
   "devDependencies": {
     "dev-null": "^0.1.1",
-    "flow-bin": "0.19.0",
+    "flow-bin": "0.19.1",
     "mocha": "^2.2.5",
     "timekeeper": "0.0.5"
   },

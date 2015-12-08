@@ -98,7 +98,7 @@ const TRAVIS_TO_GITHUB_BUILD_STATES = {
 const MAX_PR_MERGEABLE_RETRIES = 3;
 const PR_MERGEABLE_TIMEOUT_MS = 250;
 
-const TRAVIS_QUERY_BUILD_DELAY_MS = 2000;
+const TRAVIS_QUERY_BUILD_DELAY_MS = 5000;
 
 /**
  * Awaitable version of `setTimeout`.
@@ -199,6 +199,14 @@ async function deleteBranch(repo: Repo, branch: string): Promise<void> {
   }
   await repo.git.refs.heads(branch).remove();
   log.info(`Deleted ${branch}`);
+}
+
+/**
+ * Given a Pull Request number, return the name of the temporary
+ * special branch that we'll create for it for CI purposes.
+ */
+function getCIBranchForPR(pr: number): string {
+  return `pr_${pr}_merge_ci`;
 }
 
 /**
@@ -345,11 +353,10 @@ export async function handleGitHubPullRequestEvent(
   log.info(`${owner_name}/${repo_name}#${event.number} ${event.action}`);
   log.debug('Full event payload:', JSON.stringify(event, null, 2));
 
-  let branch = `pr_${event.number}_merge_ci`;
   let repo = octokat.repos(owner_name, repo_name);
   if (event.action === 'closed') {
     log.info(`PR ${event.number} was closed. Mop up our CI branch.`);
-    await deleteBranch(repo, branch);
+    await deleteBranch(repo, getCIBranchForPR(event.number));
     return;
   }
 
@@ -384,6 +391,60 @@ export async function handleGitHubPullRequestEvent(
     return;
   }
 
+  // Create a pending status on the PR immediately while we figure out
+  // what other builds to trigger, and potentially have to wait for
+  // Travis to queue and start them.
+  await repo.statuses(pr.head.sha).create({
+    state: 'pending',
+    target_url: 'http://git.io/h3KG',
+    description: '',
+    context: `silk/releng/build-determinator`,
+  });
+
+  let numberOfBuilds = 0;
+  try {
+    numberOfBuilds = await triggerBuildsForPullRequestEvent(repo, event);
+  } catch (error) {
+    // Uh-oh. We failed to trigger some or all builds. Let's mark the
+    // head commit as failed just to be safe so that the author gets
+    // the chance to retrigger the build, hopefully with a better result.
+    await repo.statuses(pr.head.sha).create({
+      state: 'error',
+      target_url: 'http://git.io/h3KG',
+      description: `Failed to determine builds: ${error.message}`,
+      context: `silk/releng/build-determinator`,
+    });
+    return;
+  }
+
+  // Mark the previously pending status for the build determinator as
+  // successful. If we triggered any other builds, the PR will still
+  // have an overall pending status. And if we didn't trigger any
+  // other builds, it will now have a success status, which is
+  // important for the uplifter and autolander (because they won't
+  // work on a non-existent status, it needs to be a success status).
+  await repo.statuses(pr.head.sha).create({
+    state: 'success',
+    target_url: 'git.io/vR1YX',
+    description: `Triggered ${numberOfBuilds} builds`,
+    context: `silk/releng/build-determinator`,
+  });
+}
+
+/**
+ * Trigger Travis builds based on GitHub Pull Request event and mark
+ * the PR's head commit status as pending accordingly. Returns the
+ * number of builds triggered.
+ */
+async function triggerBuildsForPullRequestEvent(
+  repo: Repo,
+  event: PullRequestEvent
+): Promise<number> {
+  let pr = event.pull_request;
+  let owner_name = pr.base.repo.owner.login;
+  let repo_name = pr.base.repo.name;
+  let branch = getCIBranchForPR(event.number);
+
   await createOrUpdateBranch(repo, branch, pr.mergeCommitSha);
   let projects = await determineProjectsToBuildForCommit(repo, pr.mergeCommitSha);
   let travisResponses = await Promise.all(
@@ -411,15 +472,7 @@ export async function handleGitHubPullRequestEvent(
   log.info(`Triggered ${triggeredBuilds.length} builds for PR #${event.number}.`);
 
   if (triggeredBuilds.length === 0) {
-    // automerge and uplifter want to see a green PR status, so if we
-    // didn't trigger any Travis builds, create a fake success status.
-    await repo.statuses(pr.head.sha).create({
-      state: 'success',
-      target_url: 'http://git.io/h3KG',
-      description: 'No builds were triggered. Great success!',
-      context: `travis-ci/noop`,
-    });
-    return;
+    return 0;
   }
 
   // Travis won't call us back on the webhook when a build is queued,
@@ -454,6 +507,8 @@ export async function handleGitHubPullRequestEvent(
       context: `travis-ci/${project}`,
     });
   }
+
+  return triggeredBuilds.length;
 }
 
 export async function handleGitHubPushEvent(

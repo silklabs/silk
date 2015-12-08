@@ -18,7 +18,7 @@ install_npm()
   npm install
 }
 
-if [[ "$TEST_TYPE" = lint || "$TEST_TYPE" = flow ]]; then
+if [[ "$TEST_TYPE" = lint ]]; then
   if [[ -z "$JS_CHANGES" ]]; then
     echo "No JS changes detected, aborting $TEST_TYPE."
     exit 0

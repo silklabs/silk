@@ -1,35 +1,37 @@
-From 9d7b4cf418569c9b13ba35940e287bd20898a1bf Mon Sep 17 00:00:00 2001
+From ba16e2050560e493c1c14c0b591a8e8b82075314 Mon Sep 17 00:00:00 2001
 From: Anshul Jain <anshul@silklabs.com>
 Date: Wed, 2 Dec 2015 22:39:19 -0800
 Subject: [PATCH] Androidify opencl
 
 ---
- Android.mk     | 19 +++++++++++++++++++
+ Android.mk     | 21 +++++++++++++++++++++
  binding.gyp    |  8 ++++++++
  fakeopencl.cpp |  0
  lib/opencl.js  |  2 +-
  package.json   | 18 ++++++++++--------
- 5 files changed, 38 insertions(+), 9 deletions(-)
+ 5 files changed, 40 insertions(+), 9 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 fakeopencl.cpp
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..90df43b
+index 0000000..f729dcc
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,21 @@
 +LOCAL_PATH:= $(call my-dir)
 +
-+# Create a fake libOpenCL.so
-+# bindings.gyp only cares about the presence of this library and not symbols in
-+# it to tell node where to go resolve symbols at runtime
-+include $(CLEAR_VARS)
-+LOCAL_MODULE := libOpenCL
-+LOCAL_SRC_FILES := fakeopencl.cpp
-+LOCAL_MODULE_TAGS := optional
-+LOCAL_UNINSTALLABLE_MODULE := true
-+include $(BUILD_SHARED_LIBRARY)
++ifneq ($(TARGET_NO_FAKE_LIBOPENCL),true)
++  # Create a fake libOpenCL.so if not already being built for this platform.
++  # bindings.gyp only cares about the presence of this library and not
++  # symbols in it to tell node where to go resolve symbols at runtime
++  include $(CLEAR_VARS)
++  LOCAL_MODULE := libOpenCL
++  LOCAL_SRC_FILES := fakeopencl.cpp
++  LOCAL_MODULE_TAGS := optional
++  LOCAL_UNINSTALLABLE_MODULE := true
++  include $(BUILD_SHARED_LIBRARY)
++endif
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS := optional
@@ -121,5 +123,5 @@ index 2129015..d82a8e9 100644
  }
 +
 -- 
-2.4.5
+2.5.0
 

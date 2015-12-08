@@ -397,7 +397,7 @@ export async function handleGitHubPullRequestEvent(
   await repo.statuses(pr.head.sha).create({
     state: 'pending',
     target_url: 'http://git.io/h3KG',
-    description: '',
+    description: 'Determining which builds to trigger',
     context: `silk/releng/build-determinator`,
   });
 
@@ -426,7 +426,7 @@ export async function handleGitHubPullRequestEvent(
   // work on a non-existent status, it needs to be a success status).
   await repo.statuses(pr.head.sha).create({
     state: 'success',
-    target_url: 'git.io/vR1YX',
+    target_url: 'http://git.io/vR1YX',
     description: `Triggered ${numberOfBuilds} builds`,
     context: `silk/releng/build-determinator`,
   });

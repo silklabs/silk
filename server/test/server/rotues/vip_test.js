@@ -15,7 +15,7 @@ suite('account auth', () => {
     accounts = new Account(context.db);
     api = createApi({ serverUrl: context.url });
     id = api.id.create();
-    api.vip.key = id;
+    api.accessToken = id;
   });
 
   test('#createAccount - invalid signature', async () => {
@@ -43,7 +43,7 @@ suite('account auth', () => {
     assert.equal(record.email, input.email);
 
     // Ensure we use a new key so we don't hit key duplicate errors...
-    api.vip.key = api.id.create();
+    api.accessToken = api.id.create();
 
     let dup = await api.vip.createAccountWithPassword(input);
     assert.ok(!dup.success);
@@ -124,7 +124,7 @@ suite('account auth', () => {
 
     test('sign in - success', async () => {
       let newKey = api.id.create();
-      api.vip.key = newKey;
+      api.accessToken = newKey;
       let result = await api.vip.signInWithPassword(Object.assign(
         {},
         account
@@ -134,7 +134,7 @@ suite('account auth', () => {
 
     test('sign in - wrong password', async () => {
       let newKey = api.id.create();
-      api.vip.key = newKey;
+      api.accessToken = newKey;
       let result = await api.vip.signInWithPassword(Object.assign(
         {},
         account,
@@ -150,7 +150,7 @@ suite('account auth', () => {
   test('developer account login', async () => {
     let { publicKey, privateKey, email, password } = api.devAccount;
     let id = new api.id(publicKey, privateKey); //eslint-disable-line new-cap
-    api.vip.key = id;
+    api.accessToken = id;
 
     let auth = await api.vip.checkPasswordWithPassword({
       email,

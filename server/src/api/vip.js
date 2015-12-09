@@ -1,6 +1,8 @@
 /**
  * Wrapper around auto generated auth lib to provide cross platform
  * hashing/etc..
+ *
+ * @flow
  */
 
 import VIPBase from './gen/vip';
@@ -8,7 +10,7 @@ import pbkdf2 from 'pbkdf2';
 
 export default class Auth extends VIPBase {
 
-  hashPassword(email, password) {
+  hashPassword(email: string, password: string): string {
     // Domain names are case insensitive!
     email = email.toLowerCase().trim();
 
@@ -21,7 +23,7 @@ export default class Auth extends VIPBase {
     ).toString('hex');
   }
 
-  fromPassword(payload) {
+  fromPassword(payload: any): any {
     if (!payload.password) {
       throw new Error('Password is required');
     }
@@ -42,15 +44,15 @@ export default class Auth extends VIPBase {
    * Wrapper for the underlying createAccount functionality which expects a
    * passwordHash to be generated.
    */
-  createAccountWithPassword(payload) {
+  createAccountWithPassword(payload: any): any {
     return this.createAccount(this.fromPassword(payload));
   }
 
-  checkPasswordWithPassword(payload) {
+  checkPasswordWithPassword(payload: any): any {
     return this.checkPassword(this.fromPassword(payload));
   }
 
-  signInWithPassword(payload) {
+  signInWithPassword(payload: any): any {
     return this.signIn(this.fromPassword(payload));
   }
 

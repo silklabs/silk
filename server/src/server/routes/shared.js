@@ -67,7 +67,10 @@ export default function(api: any, type: string, ctx: RouteContext) {
     output: Joi.object(),
     // TODO: Allow typing this for documentation without actually validating the
     // input.
-    input: Joi.array().required(),
+    input: Joi.object().keys({
+      // TODO: Handle "tuple" values. This will allow us to type this better.
+      points: Joi.array().items(Joi.any()).required()
+    }).required(),
   }, async (req, res) => {
     if (ctx.influxdb == null) {
       log.info('Dropping metrics influxdb not configured.');
@@ -77,15 +80,10 @@ export default function(api: any, type: string, ctx: RouteContext) {
 
     let influxdb: InfluxDB = ctx.influxdb;
 
-    if (!Array.isArray(req.body)) {
-      res.sendStatus(400);
-      return;
-    }
-
     // XXX: This is potentially lame but we need to validate the series names
     // somehow... Ideally we could do this against a known list of series names
     // but for now we simply prefix it by type.
-    let metrics = req.body.reduce((final, value) => {
+    let metrics = req.body.points.reduce((final, value) => {
       if (Array.isArray(value) && value.length === 3) {
         // series
         value[0] = `${type}_${value[0]}`;

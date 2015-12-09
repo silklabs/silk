@@ -14,7 +14,7 @@ before_script:
 script: npm test && ./build/ci.sh
 
 before_deploy:
-  - cd ..
+  - test -d server || cd ..
 
 deploy:
   - provider: heroku

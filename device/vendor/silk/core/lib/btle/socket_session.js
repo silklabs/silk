@@ -7,7 +7,7 @@
  */
 
 import assert from 'assert';
-import { ClientStream } from './stream';
+import Stream from './stream';
 import { createStreams, RssiSmoother } from 'silk-api';
 import makeLog from '../log';
 
@@ -45,7 +45,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   constructor(scanner, peripheral) {
     log.debug(`SocketSession()`);
 
-    const socketStream = new ClientStream(peripheral, scanner._serviceUuid);
+    const socketStream = new Stream(peripheral, scanner._serviceUuid);
     const cryptoStream = new CryptoDuplexStream(socketStream);
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
@@ -137,7 +137,6 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _onEnd = () => {
     log.debug(`SocketSession._onEnd()`);
 
-    assert(!this._ended);
     this._ended = true;
 
     this._killRssiUpdates();

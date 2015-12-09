@@ -15,7 +15,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   private static let beaconUuidsKey = "silk-regionmonitor-beacon-uuids"
   internal static let configBeaconUuid =
-    NSUUID(UUIDString: "e0f3a744-fb2f-46f1-b45a-f2b398f2a424")!
+    NSUUID(UUIDString: "78955692-e50a-4dfd-b1f0-f59303ebf4cb")!
 
   private static var instance: RegionMonitor? = nil
 

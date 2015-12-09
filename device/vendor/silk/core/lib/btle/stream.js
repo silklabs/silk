@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -13,42 +11,31 @@ import makeLog from '../log';
 
 const log = makeLog(`btle-stream`);
 
-// This is the amount of time we will wait after issuing a write request without
-// acknowledgement before returning an error to the caller. It's pretty
+// This is the amount of time we will wait after issuing a read or write request
+// without acknowledgement before returning an error to the caller. It's pretty
 // arbitrary.
-const WRITE_TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 15000;
 
-// The maximum number of bytes we will write at a time. This is mostly governed
-// by the 1024 byte maximum command size that we can send to bledroid using the
-// Android FrameworkListener socket stuff. Those commands have to include
-// characteristic uuids and other metadata so the amount of space left for the
-// actual data is smaller than 512.
-const WRITE_MAX_BYTES = 256;
+// See app/iOS/BLE/BLESocketPeripheral.swift for explanation of this constant.
+const WRITE_MAX_BYTES = 132;
 
-class Stream extends Duplex {
+export default class Stream extends Duplex {
 
-  _isServer = false;
+  _peripheral = null;
   _serviceUuid = ``;
+  _readCharacteristic = null;
+  _writeCharacteristic = null;
 
+  _disconnected = false;
   _subscribed = false;
-  _wasSubscribed = false;
 
-  _writeError = null;
+  _readTimeout = null;
+  _readAckTimeout = null;
 
-  _btMaxChunkSize = 0;
-  _btDrained = true;
-  _btWriteCallback = null;
-  _btWriteTimeout = null;
+  _outgoing = [ ];
+  _writeTimeout = null;
 
-  _pushDataWhenAvailable = false;
-  _streamWriteCallback = null;
-
-  _eventEmitter = null;
-  _dataEmitter = null;
-  _socketCharacteristic = null;
-
-  _incomingBuffer = null;
-  _outgoingBuffer = null;
+  _error = null;
 
   _emittedError = false;
   _ended = false;
@@ -56,466 +43,444 @@ class Stream extends Duplex {
   _finished = false;
   _closed = false;
 
-  constructor(serviceOrPeripheral, isServer, serviceUuid) {
-    log.debug(`Stream(${isServer}, '${serviceUuid}')`);
+  constructor(peripheral, serviceUuid, options) {
+    log.debug(`Stream('${serviceUuid}')`);
 
-    super();
+    assert(peripheral);
+    assert(peripheral.state === `connected`);
+    assert(serviceUuid);
 
-    this._isServer = isServer;
+    super(options);
+
+    peripheral.addListener(`disconnect`, this._onDisconnect);
+    this._peripheral = peripheral;
+
     this._serviceUuid = serviceUuid;
 
-    this.once(`end`, this._onEnd);
-    this.once(`finish`, this._onFinish);
-
-    if (isServer) {
-      this._initServer(serviceOrPeripheral);
-    } else {
-      this._initClient(serviceOrPeripheral);
-    }
-  }
-
-  _initServer(service) {
-    log.debug(`Stream._initServer()`);
-
-    service.addListener(`subscribe`, this._onSubscribe);
-    service.addListener(`unsubscribe`, this._onUnsubscribe);
-    service.addListener(`drain`, this._onDrain);
-    // No easy way to have a `disconnect` listener.
-    this._eventEmitter = service;
-
-    service.addListener(`data`, this._onData);
-    this._dataEmitter = service;
-  }
-
-  _initClient(peripheral) {
-    log.debug(`Stream._initClient()`);
-
-    assert(peripheral.state === `connected`);
-
-    let socketService;
-    for (let service of peripheral.services) {
-      if (service.uuid === this._serviceUuid) {
-        socketService = service;
-        break;
-      }
-    }
-
+    const socketService = peripheral.services.find(
+      (service) => service.uuid.toLowerCase() === this._serviceUuid);
     assert(socketService);
 
-    let socketCharacteristic;
-    for (let characteristic of socketService.characteristics) {
-      if (characteristic.uuid === BTLE_SOCKET_UUIDS.characteristic) {
-        socketCharacteristic = characteristic;
-        break;
-      }
-    }
+    const readCharacteristic = socketService.characteristics.find(
+      (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.read);
+    assert(readCharacteristic);
+    assert(readCharacteristic.properties.indexOf(`notify`) !== -1);
+    assert(readCharacteristic.properties.indexOf(`read`) !== -1);
+    assert(readCharacteristic.properties.indexOf(`write`) !== -1);
 
-    assert(socketCharacteristic);
+    readCharacteristic.addListener(`data`, this._onData);
+    readCharacteristic.addListener(`write`, this._onDataAcknowledged);
+    this._readCharacteristic = readCharacteristic;
 
-    const handleNotifyError = () => {
-      const error = new Error(`Failed to enable notifications`);
-      // Don't let any writes succeed.
-      this._setWriteError(error);
+    const writeCharacteristic = socketService.characteristics.find(
+      (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.write);
+    assert(writeCharacteristic);
+    assert(writeCharacteristic.properties.indexOf(`write`) !== -1);
 
-      // Notify the consumer of the error.
-      this._emitError(error);
-    };
+    writeCharacteristic.addListener(`write`, this._onWrite);
+    this._writeCharacteristic = writeCharacteristic;
 
-    let timeout = null;
-
-    const eventName = `notify`;
-    const notifyListener = state => {
-      log.debug(`Notifications %sabled`, state ? `en` : `dis`);
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      socketCharacteristic.removeListener(eventName, notifyListener);
-
-      if (!state) {
-        handleNotifyError();
-        return;
-      }
-
-      peripheral.addListener(`disconnect`, this._onDisconnect);
-      this._eventEmitter = peripheral;
-
-      socketCharacteristic.addListener(`data`, this._onData);
-      this._dataEmitter = socketCharacteristic;
-
-      this._socketCharacteristic = socketCharacteristic;
-
-      const writeCallback = data => {
-        socketCharacteristic.write(data,
-                                   /* withoutResponse */ false,
-                                   this._onDrain);
-      };
-      this._onSubscribe(writeCallback, WRITE_MAX_BYTES);
-    };
-
-    timeout = setTimeout(() => {
-      log.debug(`Timed out while setting up notification`);
-      socketCharacteristic.removeListener(eventName, notifyListener);
-      handleNotifyError();
-    }, WRITE_TIMEOUT_MS);
-
-    socketCharacteristic.addListener(eventName, notifyListener);
-    socketCharacteristic.notify(true);
-  }
-
-  _emitError(error) {
-    log.debug(`Stream._emitError('${error.toString()}')`);
-
-    assert(this._writeError);
-
-    if (this._emittedError) {
-      log.warn(`Received more than one error`, error);
-    } else {
-      this._emittedError = true;
-      this.emit(`error`, error);
-
-      // Discard all data.
-      this._incomingBuffer = null;
-      this._outgoingBuffer = null;
-
-      this._pushDataWhenAvailable = false;
-      this._pushData();
-    }
-  }
-
-  _maybeEmitClose() {
-    log.debug(`Stream._maybeEmitClose()`);
-
-    if (!this._closed &&
-        (this._emittedError ||
-         (this._ended && this._finished))) {
-      this._closed = true;
-      process.nextTick(() => this.emit(`close`));
-    }
+    this._enableNotifications();
   }
 
   emit(eventName, ...args) {
-    if (this._emittedError &&
-        (eventName === `finish` || eventName === `end`)) {
-      log.debug(`Blocked the '${eventName}' event`);
-      return;
+    switch (eventName) {
+    case `end`:
+      assert(!this._ended);
+      this._ended = true;
+      this._maybeScheduleClose();
+
+      if (this._error) {
+        log.debug(`Blocked the '${eventName}' event due to previous error`);
+        return;
+      }
+
+      log.debug(`Emitting '${eventName}' event`);
+      break;
+
+    case `finish`:
+      assert(!this._finished);
+
+      this._finishing = true;
+
+      if (this._outgoing && this._outgoing.length) {
+        log.debug(`Waiting for all data to be written before emitting ` +
+                  `'${eventName}' event`);
+        assert(this._writeTimeout);
+        assert(this._subscribed);
+        return;
+      }
+
+      if (this._subscribed) {
+        log.debug(`Disabling notifications before emitting '${eventName}' ` +
+                  `event`);
+        this._disableNotifications();
+        return;
+      }
+
+      this._finished = true;
+      this._maybeScheduleClose();
+
+      if (this._error) {
+        log.debug(`Blocked the '${eventName}' event due to previous error`);
+        return;
+      }
+
+      log.debug(`Emitting '${eventName}' event`);
+      break;
+
+    default:
+      break;
     }
 
     return super.emit(eventName, ...args);
   }
 
-  // Part of the stream API.
-  _read(size) {
-    log.debug(`Stream._read(%d)`, size);
+  _read(/* size */) {
+    log.debug(`Stream._read()`);
 
-    assert(!this._pushDataWhenAvailable);
-
-    this._pushData(size);
+    // Nothing to do here. Data will be pushed as it arrives from the connected
+    // device in |_onData()|.
   }
 
   // Part of the stream API.
   _write(data, encoding, callback) {
-    log.debug(`Stream._write(<Buffer ${data.length}>, ${encoding})`);
+    log.debug(`Stream._write(<Buffer ${data.length}>)`);
+
+    assert(data.length);
     assert(encoding === `buffer`);
-    assert(!this._streamWriteCallback);
 
-    if (this._writeError) {
-      log.debug(`Passing previous write error to write callback`);
-      assert(!this._outgoingBuffer);
-      callback(this._writeError);
+    if (this._error) {
+      log.debug(`Unable to write due to previous error`);
+      callback(this._error);
       return;
     }
 
-    // We must have never been subscribed or we must be subscribed now.
-    assert(!this._wasSubscribed || this._subscribed);
+    this._outgoing.push(data);
 
-    if (this._outgoingBuffer) {
-      // TODO: Not very efficient.
-      this._outgoingBuffer = Buffer.concat([ this._outgoingBuffer, data ]);
-    } else {
-      this._outgoingBuffer = data;
+    if (this._outgoing.length === 1 &&
+        this._subscribed &&
+        !this._writeTimeout) {
+      // Allow more data to be written on this turn of the event loop.
+      process.nextTick(() => this._sendOutgoing());
     }
-    this._streamWriteCallback = callback;
 
-    this._maybeWrite();
+    callback(null);
   }
 
-  emit(eventName, ...args) {
-    const finishEventName = `finish`;
+  _maybeScheduleClose() {
+    log.debug(`Stream._maybeScheduleClose()`);
 
-    // Hook the 'finish' event so that we can properly unsubscribe from the
-    // characteristic before emitting the event.
-    if (eventName !== finishEventName || this._finishing) {
-      return super.emit(eventName, ...args);
-    }
-
-    if (this._subscribed) {
-      log.debug(`Finished, unsubscribing from characteristic`);
-
-      this._socketCharacteristic.notify(false, () => {
-        assert(!this._finishing);
-        this._finishing = true;
-
-        if (this._subscribed) {
-          this._onUnsubscribe();
-        }
-
-        this.emit(finishEventName);
+    if (this._ended && this._finished && !this._closed) {
+      log.debug(`Scheduling 'close' event`);
+      this._closed = true;
+      process.nextTick(() => {
+        log.debug(`Emitting 'close' event`);
+        this.emit(`close`);
       });
-      return;
     }
-
-    log.debug(`Finished and already unsubscribed`);
-
-    assert(!this._finishing);
-    this._finishing = true;
-
-    this.emit(finishEventName);
   }
 
-  _onEnd = () => {
-    log.debug(`Stream._onEnd()`);
+  _enableNotifications() {
+    log.debug(`Stream._enableNotifications()`);
 
-    assert(!this._ended);
-    this._ended = true;
+    const eventName = `notify`;
 
-    this._maybeEmitClose();
-  };
+    let timeout;
 
-  _onFinish = () => {
-    log.debug(`Stream._onFinish()`);
+    const listener = (state) => {
+      log.debug(`Notifications %sabled`, state ? `en` : `dis`);
 
-    assert(this._finishing);
-    assert(!this._finished);
-    this._finished = true;
+      this._readCharacteristic.removeListener(eventName, listener);
+      clearTimeout(timeout);
 
-    this._maybeEmitClose();
-  };
+      if (this._disconnected) {
+        return;
+      }
 
-  _onSubscribe = (writeCallback, maxChunkSize) => {
-    log.debug(`Stream._onSubscribe(${maxChunkSize})`);
+      if (!state) {
+        this._emitError(new Error(`Failed to enable notifications`));
+        return;
+      }
 
-    assert(!this._subscribed);
-    assert(!this._wasSubscribed);
-    assert(!this._btWriteCallback);
-    assert(!this._btMaxChunkSize);
+      assert(!this._subscribed);
+      this._subscribed = true;
 
-    this._subscribed = true;
-    this._wasSubscribed = true;
-    this._btWriteCallback = writeCallback;
-    this._btMaxChunkSize = maxChunkSize;
+      // Start reading.
+      this._requestData();
 
-    if (this._isServer) {
-      this._eventEmitter.removeListener(`subscribe`, this._onSubscribe);
+      // Start writing.
+      if (this._outgoing.length) {
+        this._sendOutgoing();
+      }
+    };
+
+    timeout = setTimeout(() => {
+      this._readCharacteristic.removeListener(eventName, listener);
+      this._emitError(new Error(`Timed out while enabling notifications`));
+    }, TIMEOUT_MS);
+
+    this._readCharacteristic.addListener(eventName, listener);
+    this._readCharacteristic.notify(true);
+  }
+
+  _disableNotifications() {
+    log.debug(`Stream._disableNotifications()`);
+
+    assert(!this._disconnected);
+
+    if (!this._subscribed) {
+      return;
     }
-
-    this._maybeWrite();
-  };
-
-  _onUnsubscribe = () => {
-    log.debug(`Stream._onUnsubscribe()`);
-
-    assert(this._subscribed);
-    assert(this._wasSubscribed);
 
     this._subscribed = false;
-    this._btWriteCallback = null;
 
-    clearTimeout(this._btWriteTimeout);
-    this._btWriteTimeout = null;
+    this._readCharacteristic.removeListener(`data`, this._onData);
+    clearTimeout(this._readTimeout);
+    this._readTimeout = null;
 
-    if (this._isServer) {
-      this._eventEmitter.removeListener(`unsubscribe`, this._onUnsubscribe);
-      this._eventEmitter.removeListener(`drain`, this._onDrain);
-    } else {
-      this._eventEmitter.removeListener(`disconnect`, this._onDisconnect);
+    this._readCharacteristic.removeListener(`write`, this._onDataAcknowledged);
+    clearTimeout(this._readAckTimeout);
+    this._readAckTimeout = null;
+
+    const eventName = `notify`;
+
+    let finish;
+    let timeout;
+
+    const listener = (state) => {
+      log.debug(`Notifications %sabled`, state ? `en` : `dis`);
+      clearTimeout(timeout);
+      finish();
+    };
+
+    finish = () => {
+      this._readCharacteristic.removeListener(eventName, listener);
+
+      this.emit(`finish`);
+      this.push(null);
+    };
+
+    timeout = setTimeout(() => {
+      log.warn(`Timed out while disabling notifications`);
+      finish();
+    }, TIMEOUT_MS);
+
+    this._readCharacteristic.addListener(eventName, listener);
+    this._readCharacteristic.notify(false);
+  }
+
+  _requestData() {
+    log.debug(`Stream._requestData()`);
+
+    assert(!this._readTimeout);
+    assert(!this._readAckTimeout);
+
+    if (!this._subscribed) {
+      return;
     }
-    this._dataEmitter.removeListener(`data`, this._onData);
 
-    // There's no way we can send more data now so clear any buffered data.
-    this._outgoingBuffer = null;
+    this._readCharacteristic.read();
+    this._readTimeout = setTimeout(() => {
+      this._emitError(new Error(`Timed out while reading`));
+    }, TIMEOUT_MS);
+  }
 
-    // Make sure any further write() calls fail.
-    if (this._finishing) {
-      let error = new Error(`No longer connected`);
-      this._setWriteError(error);
-    } else {
-      let error = new Error(`Other side disconnected unexpectedly`);
-      this._setWriteError(error);
-      this._emitError(error);
+  _sendOutgoing() {
+    log.debug(`Stream._sendOutgoing()`);
+
+    if (!this._subscribed || this._error) {
+      return;
     }
 
-    if (this._pushDataWhenAvailable) {
-      assert(!this._incomingBuffer);
-      this._pushDataWhenAvailable = false;
-      this._pushData();
+    assert(this._outgoing);
+    assert(this._outgoing.length);
+    assert(!this._writeTimeout);
+
+    let chunksToSend = [ ];
+    let chunksToSendLength = 0;
+
+    let outgoingIndex = 0;
+    for ( ; outgoingIndex < this._outgoing.length; outgoingIndex++) {
+      let chunk = this._outgoing[outgoingIndex];
+
+      assert(Buffer.isBuffer(chunk));
+      assert(chunk.length);
+
+      let availableLength = WRITE_MAX_BYTES - chunksToSendLength;
+
+      if (chunk.length > availableLength) {
+        // Slice the buffer and send as much as possible, leaving the rest for
+        // later.
+        chunksToSend.push(chunk.slice(0, availableLength));
+        this._outgoing[outgoingIndex] = chunk.slice(availableLength);
+        chunksToSendLength += availableLength;
+        break;
+      }
+
+      chunksToSend.push(chunk);
+      chunksToSendLength += chunk.length;
+
+      if (chunksToSendLength === WRITE_MAX_BYTES) {
+        break;
+      }
     }
 
-    this._maybeEmitClose();
-  };
+    assert(chunksToSend.length);
+    assert(chunksToSendLength <= WRITE_MAX_BYTES);
+
+    if (outgoingIndex) {
+      this._outgoing.splice(0, outgoingIndex);
+    }
+
+    const data = chunksToSend.length === 1 ?
+                 chunksToSend[0] :
+                 Buffer.concat(chunksToSend);
+    assert(data.length === chunksToSendLength);
+
+    this._writeCharacteristic.write(data, /* withoutResponse */ false);
+
+    this._writeTimeout = setTimeout(() => {
+      this._onWrite(new Error(`Timed out while writing`));
+    }, TIMEOUT_MS);
+  }
+
+  _emitError(error) {
+    log.debug(`Stream._emitError('${error.toString()}')`);
+
+    if (this._error) {
+      log.warn(`Received more than one error`, error);
+      return;
+    }
+
+    log.warn(error);
+
+    // Make all future writes fail with this error.
+    this._error = error;
+
+    // End the read stream.
+    this.push(null);
+
+    // Don't hang on to data that we will never send.
+    this._outgoing = null;
+
+    // End the write stream.
+    this.end();
+
+    this.emit(`error`, error);
+  }
 
   _onDisconnect = () => {
     log.debug(`Stream._onDisconnect()`);
 
-    assert(!this._isServer);
+    this._peripheral.removeListener(`disconnect`, this._onDisconnect);
+    this._readCharacteristic.removeListener(`data`, this._onData);
+    this._writeCharacteristic.removeListener(`write`, this._onWrite);
+
+    assert(!this._disconnected);
+    this._disconnected = true;
+
+    this._subscribed = false;
+
+    clearTimeout(this._readTimeout);
+    this._readTimeout = null;
+
+    clearTimeout(this._readAckTimeout);
+    this._readAckTimeout = null;
+
+    clearTimeout(this._writeTimeout);
+    this._writeTimeout = null;
+
+    if (this._finished) {
+      assert(this._ended);
+    } else {
+      this._emitError(new Error(`Disconnected unexpectedly`));
+    }
+  };
+
+  _onData = (data, isNotification) => {
+    log.debug(`Stream._onData(<Buffer ${data.length}>, ${isNotification})`);
+
+    assert(Buffer.isBuffer(data));
+
+    if (isNotification) {
+      assert(!data.length);
+
+      if (!this._readTimeout && !this._readAckTimeout) {
+        this._requestData();
+      }
+      return;
+    }
+
+    assert(this._readTimeout);
+    assert(!this._readAckTimeout);
+
+    clearTimeout(this._readTimeout);
+    this._readTimeout = null;
+
+    if (!data.length) {
+      return;
+    }
 
     if (this._subscribed) {
-      this._onUnsubscribe();
+      // Acknowledge receipt of the data.
+      this._readCharacteristic.write(new Buffer(0),
+                                     /* withoutResponse */ false);
+
+      this._readAckTimeout = setTimeout(() => {
+        this._onDataAcknowledged(new Error(`Timed out while acknowledging`));
+      }, TIMEOUT_MS);
+    }
+
+    // Make the data available to stream consumers.
+    this.push(data);
+  };
+
+  _onDataAcknowledged = (error) => {
+    log.debug(`Stream._onDataAcknowledged(%s)`, error ? `'${error.toString()}'` : ``);
+
+    assert(this._readAckTimeout);
+    clearTimeout(this._readAckTimeout);
+    this._readAckTimeout = null;
+
+    if (error) {
+      this._emitError(error);
+      return;
+    }
+
+    if (this._subscribed) {
+      // Ask for more data immediately.
+      this._requestData();
     }
   };
 
-  _onData = data => {
-    log.debug(`Stream._onData(<Buffer ${data.length}>)`);
+  _onWrite = (error) => {
+    log.debug(`Stream._onWrite(%s)`, error ? `'${error.toString()}'` : ``);
 
-    if (this._emittedError) {
-      log.debug(`Ignoring incoming data due to previous error`);
+    assert(this._writeTimeout);
+    clearTimeout(this._writeTimeout);
+    this._writeTimeout = null;
+
+    if (error) {
+      this._emitError(error);
       return;
     }
 
-    if (this._incomingBuffer) {
-      // TODO: Not very efficient.
-      this._incomingBuffer = Buffer.concat([ this._incomingBuffer, data ]);
-    } else {
-      this._incomingBuffer = data;
+    if (this._error || !this._subscribed) {
+      return;
     }
 
-    if (this._pushDataWhenAvailable) {
-      this._pushDataWhenAvailable = false;
-      this._pushData();
+    assert(this._outgoing);
+
+    if (this._outgoing.length) {
+      this._sendOutgoing();
+      return;
+    }
+
+    if (this._finishing) {
+      log.debug(`All data written`);
+      this._writeCharacteristic.removeListener(`write`, this._onWrite);
+      this._disableNotifications();
     }
   };
-
-  _onDrain = () => {
-    log.debug(`Stream._onDrain()`);
-
-    assert(!this._btDrained);
-
-    if (this._btWriteTimeout) {
-      assert(this._streamWriteCallback);
-      clearTimeout(this._btWriteTimeout);
-      this._btWriteTimeout = null;
-    }
-
-    this._btDrained = true;
-
-    if (!this._streamWriteCallback) {
-      return;
-    }
-
-    if (this._outgoingBuffer.length > this._btMaxChunkSize) {
-      this._outgoingBuffer = this._outgoingBuffer.slice(this._btMaxChunkSize);
-      this._maybeWrite();
-    } else {
-      this._outgoingBuffer = null;
-
-      let callback = this._streamWriteCallback;
-      this._streamWriteCallback = null;
-
-      callback(this._writeError);
-    }
-  };
-
-  _setWriteError(error) {
-    log.debug(`Stream._setWriteError('${error.toString()}')`);
-
-    assert(!this._writeError);
-
-    // Make all future writes fail.
-    this._writeError = error;
-
-    // Don't hang on to data that we will never send.
-    this._outgoingBuffer = null;
-
-    // Unblock the write stream. It's still the consumer's responsibility to
-    // call |end()\.
-    const callback = this._streamWriteCallback;
-    this._streamWriteCallback = null;
-
-    this._btDrained = true;
-    if (callback) {
-      callback(error);
-    }
-  }
-
-  _maybeWrite() {
-    log.debug(`Stream._maybeWrite()`);
-
-    if (!this._outgoingBuffer ||
-        !this._btDrained ||
-        !this._btWriteCallback ||
-        !this._streamWriteCallback) {
-      return;
-    }
-
-    let chunk;
-    if (this._outgoingBuffer.length > this._btMaxChunkSize) {
-      chunk = this._outgoingBuffer.slice(0, this._btMaxChunkSize);
-    } else {
-      chunk = this._outgoingBuffer;
-    }
-
-    this._btWriteCallback(chunk);
-    this._btDrained = false;
-
-    this._btWriteTimeout = setTimeout(() => {
-      this._btWriteTimeout = null;
-
-      const callback = this._streamWriteCallback;
-      this._streamWriteCallback = null;
-
-      const error = new Error(`Timed out while writing`);
-      callback(error);
-    }, WRITE_TIMEOUT_MS);
-  }
-
-  _pushData(size = /* node's default read chunk size 16k */ 16 * 1024) {
-    log.debug(`Stream._pushData(${size})`);
-
-    assert(!this._pushDataWhenAvailable);
-
-    if (!this._incomingBuffer) {
-      if (!this._subscribed && this._wasSubscribed) {
-        // We're unsubscribed so no more data is coming. End the stream.
-        log.debug(`Disconnected and all data consumed`);
-        this.push(null);
-        return;
-      }
-
-      log.debug(`All data consumed, waiting for more`);
-      this._pushDataWhenAvailable = true;
-      return;
-    }
-
-    while (this._incomingBuffer) {
-      let chunk;
-      if (size >= this._incomingBuffer.length) {
-        chunk = this._incomingBuffer;
-        this._incomingBuffer = null;
-      } else {
-        chunk = this._incomingBuffer.slice(0, size);
-        this._incomingBuffer = this._incomingBuffer.slice(size);
-      }
-
-      if (!this.push(chunk)) {
-        log.debug(`Read stream full, waiting to push more data`);
-        break;
-      }
-    }
-  }
-}
-
-export class ServerStream extends Stream {
-  constructor(service) {
-    log.debug(`ServerStream()`);
-
-    super(service, true, service.uuid);
-  }
-}
-
-export class ClientStream extends Stream {
-  constructor(peripheral, serviceUuid) {
-    log.debug(`ClientStream()`);
-
-    super(peripheral, false, serviceUuid);
-  }
 }

@@ -18,13 +18,9 @@ import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
 
 export const BTLE_SOCKET_UUIDS = {
-  service: 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424',
-
+  service: '78955692-e50a-4dfd-b1f0-f59303ebf4cb',
   read: '9c333756-62c3-4141-8ee5-fed0d9f84a72',
   write: 'ef4cf114-5d10-4b73-8a5f-214aae42c6f9',
-
-  // XXX Remove soon
-  characteristic: '59ba85fb-6fba-439c-95b0-9307e62d4ca1',
 };
 
 export { default as createStreams } from './streams';

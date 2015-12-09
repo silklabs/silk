@@ -66,7 +66,7 @@ The most basic version looks like this:
 {
   "react-native": {
     "type": "remote",
-    "url": "http://localhost:8082/index.ios.bundle?platform=ios"
+    "url": "http://localhost:8082/index.ios.bundle?platform=ios&dev=true"
   },
 
   // You may also pass a config to override the default silk-server instance.

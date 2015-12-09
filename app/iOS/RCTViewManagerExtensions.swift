@@ -9,8 +9,8 @@ extension RCTViewManager  {
     let queue = self.bridge!.uiManager.methodQueue
     self.bridge!.uiManager.addUIBlock() {
       [unowned self]
-      (__unused: RCTUIManager!, viewRegistry: RCTSparseArray!) in
-      let view = viewRegistry?[reactTag] as? UIView
+      (__unused: RCTUIManager!, viewRegistry: Dictionary<NSNumber, UIView>!) in
+      let view = viewRegistry?[reactTag]
       if retries > 0 && view == nil {
         dispatch_async(queue) {
           self.aquireViewWithRetries(retries - 1, reactTag: reactTag, block: block)

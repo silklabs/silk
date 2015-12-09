@@ -6,7 +6,7 @@ var config = {
   debug: true,
   devtool: 'source-map',
   entry: {
-    'index.ios': ['./src/index.ios.js']
+    'index.ios': ['./src/index.ios.js'],
   },
   watch: true,
   output: {
@@ -24,9 +24,10 @@ var config = {
           path.resolve(__dirname, 'src'),
           path.resolve(__dirname, 'node_modules/silk-api'),
         ],
-        loaders: [
-          'babel-loader?stage=0&blacklist=validation.react&optional=runtime'
-        ]
+        loader: 'babel',
+        query: {
+          presets: ['es2015', 'stage-0', 'react'],
+        },
       },
     ],
   },

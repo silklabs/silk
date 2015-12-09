@@ -581,11 +581,16 @@ export async function handleTravisWebhook(
   if (pr_number !== null) {
     let pr = await repo.pulls(pr_number).fetch();
     if (sha !== pr.mergeCommitSha) {
-      log.warn(
-        `Expected the PR merge commit to be ${sha}, but it is ${pr.mergeCommitSha}. ` +
-        `Somebody must've pushed in the meantime. Aborting.`
-      );
-      return;
+      // The PR's merge commit is not the same, but that could be
+      // because the target branch has received new commits. We only
+      // care that the PR's head commit stayed the same.
+      let buildCommitInfo = await repo.commits(sha).fetch();
+      if (buildCommitInfo.parents.length !== 2 ||
+          buildCommitInfo.parents[1].sha !== pr.head.sha) {
+        log.warn(`New commits were pushed to PR #${pr.number} while Travis ` +
+                 `was running. Ignore build results.`);
+        return;
+      }
     }
     sha = pr.head.sha;
     log.info(`Build was for PR #${pr_number}, head commit ${sha}`);

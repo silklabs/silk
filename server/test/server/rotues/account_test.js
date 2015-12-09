@@ -127,7 +127,7 @@ suite('account auth', () => {
         [series, { tag3: 'a' }, { value: '3i' }],
       ];
 
-      await accountOne.api.account.writeMetrics(points);
+      await accountOne.api.account.writeMetrics({ points });
 
       // read the metrics back out...
       let read = await accountOne.api.account.queryMetrics({ query: `

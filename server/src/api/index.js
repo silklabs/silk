@@ -14,6 +14,7 @@ import Metadata from './gen/metadata';
 import Id from './id';
 import RssiSmoother from './rssi_smoother';
 import {StateContainer} from './http_client';
+import MetricsAgent from './metrics_agent';
 
 import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
@@ -21,6 +22,7 @@ import makeStreams from './streams';
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './id' ;
 export { default as RssiSmoother } from './rssi_smoother';
+export { default as Metric, Integer, Float }  from './metric';
 
 export const BTLE_SOCKET_UUIDS = {
   service: 'e0f3a744-fb2f-46f1-b45a-f2b398f2a424',
@@ -78,6 +80,11 @@ export class SilkApi {
   metadataPublisher: MetadataPublisher;
   metadata: Metadata;
 
+  // NOTE: This really shows how we may want to split these up or make some of our
+  // endpoints "polymorphic" so we can allow both account and device clients.
+  deviceMetrics: MetricsAgent;
+  accountMetrics: MetricsAgent;
+
   config: StateContainer;
 
   // XXX: Remove me should be re-export.
@@ -126,6 +133,9 @@ export class SilkApi {
     this.metadataPublisher = new MetadataPublisher(state);
     this.metadata = new Metadata(state);
     this.streams = makeStreams(config);
+
+    this.deviceMetrics = new MetricsAgent(this.device);
+    this.accountMetrics = new MetricsAgent(this.account);
   }
 
   /**

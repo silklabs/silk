@@ -30,5 +30,5 @@ deploy:
       master: silk-releng
     on:
       branch: master
-      condition: "$TRAVIS_PULL_REQUEST/$TRAVIS_OS_NAME/$DEPLOY == false/linux/false"
+      condition: "$TRAVIS_PULL_REQUEST/$DEPLOY == false/false"
 

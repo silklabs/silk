@@ -461,8 +461,7 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
   mSlicedVideoSource->addListener(mSlicedAudioSource.get());
 
 
-  isAudioEncodeEnabled = !property_get_bool("persist.silk.capture.mute",
-                                            false);
+  isAudioEncodeEnabled = !sAudioMute;
   ALOGI("Audio capture is%s muted", isAudioEncodeEnabled ? " not" : "");
   // When audio capture is disabled, we spawn an extra thread to read
   // microphone samples so that audio analyses continue working.

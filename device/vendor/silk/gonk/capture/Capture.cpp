@@ -49,6 +49,7 @@ int32_t sIFrameIntervalSec = 15;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
+bool sAudioMute = 0;
 bool sUseMetaDataMode = true;
 sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 
@@ -261,6 +262,10 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (!cmdData["audioChannels"].isNull()) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
+  }
+  if (!cmdData["audioMute"].isNull()) {
+    sAudioMute = cmdData["audioMute"].asBool();
+    ALOGV("sAudioMute %d", sAudioMute);
   }
 
   // The default qemu camera HAL does not support metadata mode

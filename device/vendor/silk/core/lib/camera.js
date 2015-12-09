@@ -199,6 +199,12 @@ class CameraStream extends EventEmitter {
     this.timeline.on('motion', () => {
       this._motion = true;
     });
+
+    // TODO Remove watch when this setting gets moved to the UI
+    util.propWatcher.on(AUDIO_MUTE_PROP, () => {
+      audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
+      this.setMute(audioMute);
+    });
   }
 
   /**

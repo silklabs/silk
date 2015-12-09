@@ -2,7 +2,7 @@
 
 source .travis/determine_files_changed.sh
 
-if [[ "$TEST_TYPE" = lint || "$TEST_TYPE" = flow ]]; then
+if [[ "$TEST_TYPE" = lint ]]; then
   if [[ -z "$JS_CHANGES" ]]; then
     # Flow should technically still be triggered for changes to
     # package.json, .flowconfig, and interface/*. But rather than
@@ -12,7 +12,7 @@ if [[ "$TEST_TYPE" = lint || "$TEST_TYPE" = flow ]]; then
     echo "No JS changes detected, aborting $TEST_TYPE."
     exit 0
   fi
-  npm run-script $TEST_TYPE
+  npm run lint && npm run flow
 
 elif [[ "$TEST_TYPE" = objc-test ]]; then
   if [[ -z "$NON_JS_CHANGES" ]]; then

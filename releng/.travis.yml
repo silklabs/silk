@@ -1,17 +1,11 @@
 os:
   - linux
-  - osx
-
-env:
-  matrix:
-    - TEST_TYPE=lint
-    - TEST_TYPE=flow
 
 before_install:
   - source .travis_before_install.sh
 
 script:
-  - npm run $TEST_TYPE
+  - npm run lint && npm run flow
 
 before_deploy:
   - cd ..

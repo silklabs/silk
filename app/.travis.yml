@@ -12,7 +12,6 @@ install:
 env:
   matrix:
     - TEST_TYPE=lint
-    - TEST_TYPE=flow
     - TEST_TYPE=objc-test
     - TEST_TYPE=build-dist
   global:

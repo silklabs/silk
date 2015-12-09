@@ -16,6 +16,15 @@ const CODEC_DESCRIPTOR = 'video/mp4;codecs=avc1.42c01f,mp4a.40.2';
 const AUDIO_TICKS_PER_SEC = 8000;  // 8KHz = audio sampling rate
 const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 
+// Each MP4 box contains:
+//   - boxSize   (4 bytes)
+//   - fourcc    (4 bytes)
+//   - box specific data (boxSize - 8 bytes)
+//
+// A box can contain box specific data or more boxes
+//
+const BOX_HDR_SIZE = 8;
+
 function readFourcc(buf, offset) {
   let fourcc = '';
   for (let i = 0; i < 4; ++i) {
@@ -32,21 +41,21 @@ function findNextBox(mp4, box = { fourcc: '', size: 0, offset: 0 }) {
   return box;
 }
 
-function findStashedOffsetsBox(m4s) {
+function findMetadataBox(m4s) {
   let offsets = { };
-  // Find the "free" box our offsets are stashed in.
+  // Find the "free" box where our metadata is stashed in.
   let box = findNextBox(m4s);
   while (box.fourcc !== 'free') {
     box = findNextBox(m4s, box);
   }
 
   // Check that we found the right box.
-  box.offset += 4/*size*/ + 4/*fourcc*/;  //eslint-disable-line semi-spacing
+  box.offset += BOX_HDR_SIZE;
   box.size = 0;
   box = findNextBox(m4s, box);
-  assert.equal(box.fourcc, 'xoff');
+  assert.equal(box.fourcc, 'Xmta');
 
-  let pos = box.offset + 4/*size*/ + 4/*fourcc*/;  //eslint-disable-line semi-spacing
+  let pos = box.offset + BOX_HDR_SIZE;
   pos += 4;               // version and flags (we don't care yet)
   offsets.seqno = m4s.readInt32BE(pos);
   pos += 4;
@@ -56,7 +65,9 @@ function findStashedOffsetsBox(m4s) {
   pos += 4;
   offsets.audioDecodeTime = m4s.readInt32BE(pos);
   pos += 4;
-  return offsets;
+  let mute = m4s.readInt32BE(pos);
+  pos += 4;
+  return {offsets, mute};
 }
 
 function prepareSegment(segment, state) {
@@ -64,7 +75,7 @@ function prepareSegment(segment, state) {
   let seqno = state.seqno;
   let startTime = state.startTime;
 
-  let offsets = findStashedOffsetsBox(m4s);
+  let {offsets, mute} = findMetadataBox(m4s);
   // Duration is 16 bytes after earliest_presentation_time in "sidx".
   let durationTicks = m4s.readInt32BE(offsets.presentationTime + 16);
 
@@ -88,7 +99,7 @@ function prepareSegment(segment, state) {
   ++state.seqno;
   state.startTime += durationTicks;
 
-  return m4s.toArrayBuffer();
+  return { data: m4s.toArrayBuffer(), mute: mute };
 }
 
 export default class CameraVideo extends React.Component {
@@ -186,7 +197,7 @@ export default class CameraVideo extends React.Component {
     if (this.initHeader) {
       console.log('Appending initialization header');
       assert(!this.wroteInitHeader);
-      this._appendSegment(this.initHeader);
+      this._appendSegment({data: this.initHeader, mute: true});
       this.initHeader = null;
       this.wroteInitHeader = true;
       if (segment) {
@@ -216,9 +227,10 @@ export default class CameraVideo extends React.Component {
   };
 
   _appendSegment(segment) {
-    this.sourceBuffer.appendBuffer(segment);
+    this.sourceBuffer.appendBuffer(segment.data);
     if (this.video.readyState >= 2) {
       console.log('  video ready, ensuring playback');
+      this.video.muted = segment.mute ? true : false;
       this.video.play();
     }
   }

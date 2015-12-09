@@ -1522,6 +1522,7 @@ void Track::writeMp4vEsdsBox(AutoBox& parent) {
 MPEG4SegmentDASHWriter::MPEG4SegmentDASHWriter()
     : mVideoTrack(nullptr)
     , mAudioTrack(nullptr)
+    , mMuteAudio(false)
     , mBufferPos(0)
     , mMdatOffset(0)
     , mStartTimestampUs(0)
@@ -1543,7 +1544,8 @@ MPEG4SegmentDASHWriter::~MPEG4SegmentDASHWriter() {
 }
 
 status_t MPEG4SegmentDASHWriter::init(const sp<MediaSource>& video,
-                                      const sp<MediaSource>* audio) {
+                                      const sp<MediaSource>* audio,
+                                      bool muteAudio) {
     Mutex::Autolock lock(mLock);
     if (mStarted) {
         ALOGE("Attempt to add source AFTER recording is started");
@@ -1564,6 +1566,7 @@ status_t MPEG4SegmentDASHWriter::init(const sp<MediaSource>& video,
         return ERROR_UNSUPPORTED;
     }
     mVideoTrack = videoTrack;
+    mMuteAudio = muteAudio;
     if (audio) {
         Track* audioTrack = new Track(this, *audio, trackId++);
         if (!audioTrack->isAudio()) {
@@ -1880,8 +1883,12 @@ void MPEG4SegmentDASHWriter::writeSegment() {
     {
         AutoBox udta("free", box);
         {
-            AutoBox xoff("xoff", udta);
-            offsets.prepare(xoff);
+            AutoBox xmta("Xmta", udta);
+            offsets.prepare(xmta);
+
+            // Store mute property so player can mute away the silent frames
+            // to remove any potential speaker noise.
+            xmta.writeInt32(mMuteAudio ? 1 : 0);
         }
     }
     int32_t referencedSizeOffset;

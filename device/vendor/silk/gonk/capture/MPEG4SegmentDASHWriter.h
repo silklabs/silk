@@ -33,7 +33,8 @@ public:
     MPEG4SegmentDASHWriter();
 
     status_t init(const sp<MediaSource>& video,
-                  const sp<MediaSource>* audio = nullptr);
+                  const sp<MediaSource>* audio = nullptr,
+                  bool muteAudio = false);
     
     // Returns INVALID_OPERATION if there is no source or track.
     virtual status_t start(MetaData* param = nullptr);
@@ -59,6 +60,7 @@ private:
     Vector<char> mBuffer;    
     Track* mVideoTrack;
     Track* mAudioTrack;
+    bool mMuteAudio;
     off_t mBufferPos;
     off_t mMdatOffset;
     int64_t mStartTimestampUs;

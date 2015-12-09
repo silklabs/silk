@@ -25,6 +25,7 @@
 #include <utils/Thread.h>
 
 #include "AudioSourceEmitter.h"
+#include "AudioMutter.h"
 #include "json/json.h"
 #include "Capturedefs.h"
 #include "Channel.h"
@@ -49,6 +50,7 @@ int32_t sIFrameIntervalSec = 15;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
+bool sAudioMute = 0;
 bool sUseMetaDataMode = true;
 sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 
@@ -262,6 +264,10 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
   }
+  if (!cmdData["audioMute"].isNull()) {
+    sAudioMute = cmdData["audioMute"].asBool();
+    ALOGV("sAudioMute %d", sAudioMute);
+  }
 
   // The default qemu camera HAL does not support metadata mode
   {
@@ -451,8 +457,10 @@ status_t CaptureCommand::initThread() {
           new AudioSource(AUDIO_SOURCE_MIC, sAudioSampleRate, sAudioChannels));
       sp<MediaSource> audioSourceEmitter =
           new AudioSourceEmitter(&mChannel, audioSource);
+      sp<MediaSource> audioMutter =
+          new AudioMutter(audioSourceEmitter);
       sp<MediaSource> audioEncoder =
-          prepareAudioEncoder(mLooper, audioSourceEmitter);
+          prepareAudioEncoder(mLooper, audioMutter);
 
       mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
       mSegmenter->run();

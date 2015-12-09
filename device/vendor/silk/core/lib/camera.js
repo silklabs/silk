@@ -45,6 +45,8 @@ const PREVIEW_DELAY_MS = 1000 / (FPS / PREVIEW_SKIP_COUNT);
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
 
+const AUDIO_MUTE = util.getboolprop('persist.silk.capture.mute', true);
+
 //
 // Constants
 //
@@ -320,6 +322,7 @@ class CameraStream extends EventEmitter {
         height: HEIGHT,
         fps: FPS,
         vbr: VBR,
+        audioMute: AUDIO_MUTE
       };
 
       this._videoWidth = cmdData.width;

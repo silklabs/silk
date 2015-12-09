@@ -8,6 +8,7 @@
 
 import { execFile as childProcessExecFile } from 'child_process';
 import createLog from './log';
+import events from 'events';
 
 const log = createLog('sysutils');
 
@@ -84,31 +85,35 @@ export function getlistprop(prop, defaultValue = []) {
   return (value === '') ? defaultValue : value.split(',');
 }
 
-export function watchprop(prop, onPropChanged) {
-  let spawn = require('child_process').spawn;
-  let spawnWatchprops = () => {
-    let cmd = spawn('watchprops', []);
-    cmd.stderr.on('data', data => {
-      let match = data.toString().match(/^\d+ ([^ ]+) /);
-      if (match && match[1] && match[1] === prop) {
-        onPropChanged();
-      }
-    });
-    cmd.on('close', (code, signal) => {
-      if (signal !== 'SIGTERM') { // Not explicitly killed
-        spawnWatchprops();
-      }
-    }); // respawn if dies for some reason
-    return cmd;
-  };
-  return spawnWatchprops();
-}
-
 export function setprop(prop, value) {
   let spawnSync = require('child_process').spawnSync;
   let result = spawnSync('setprop', [prop, value]);
   return result.error;
 }
+
+class PropWatcher extends events.EventEmitter {
+  constructor() {
+    super();
+    let spawn = require('child_process').spawn;
+    let spawnWatchprops = () => {
+      let cmd = spawn('watchprops', []);
+      cmd.stderr.on('data', data => {
+        let match = data.toString().match(/^\d+ ([^ ]+) /);
+        if (match && match[1]) {
+          this.emit(match[1]);
+        }
+      });
+
+      // respawn if dies for some reason
+      cmd.on('close', () => spawnWatchprops());
+    };
+
+    // Spawn process only if there is someone watching
+    this.once('newListener', () => spawnWatchprops());
+  }
+}
+
+export let propWatcher = new PropWatcher();
 
 export function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

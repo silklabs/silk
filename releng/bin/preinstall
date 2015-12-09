@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if [[ ~ != /app ]]; then
-  echo Failsafe! This does not look like the Heroku environment
-  exit 1
+  echo "(this does not look like the Heroku environment)"
+  exit 0
 fi
 
 git config --global user.email "shipit@silklabs.com"

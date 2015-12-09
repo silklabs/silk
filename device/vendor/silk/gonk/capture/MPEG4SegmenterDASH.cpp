@@ -376,7 +376,7 @@ bool MPEG4SegmenterDASH::threadLoop() {
     sp<MediaSource> audioSource(new AudioSegmenter(mAudioSource,
                                                    videoSource.get()));
     sp<MPEG4SegmentDASHWriter> writer = new MPEG4SegmentDASHWriter();
-    writer->init(videoSource, &audioSource);
+    writer->init(videoSource, &audioSource, sAudioMute);
     
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);

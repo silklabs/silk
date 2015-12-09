@@ -1,15 +1,18 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import assert from 'assert';
 import Stream from './stream';
 import { createStreams, RssiSmoother } from 'silk-api';
 import makeLog from '../log';
+
+import type { Peripheral } from 'noble';
+import type SocketScanner from './socket_scanner';
 
 const {
   AuthenticateDuplexStream,
@@ -24,25 +27,25 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
   static RSSI_UPDATE_TIMEOUT = 50;
 
-  _scanner = null;
-  _peripheral = null;
+  _scanner: SocketScanner;
+  _peripheral: Peripheral;
 
   // Set to true when |end()| is called.
-  _ending = false;
+  _ending: boolean = false;
 
   // Set to true once the 'end' or 'error' event is emitted.
-  _ended = false;
+  _ended: boolean = false;
 
   // Set to true after the peripheral has been disconnected.
-  _peripheralDisconnected = false;
+  _peripheralDisconnected: boolean = false;
 
-  _rssiSmoother = new RssiSmoother();
-  _rssiUpdatesEnabled = false;
-  _rssiUpdatePending = false;
-  _rssiValue = 0;
-  _rssiTimeout = null;
+  _rssiSmoother: RssiSmoother = new RssiSmoother();
+  _rssiUpdatesEnabled: boolean = false;
+  _rssiUpdatePending: boolean = false;
+  _rssiValue: number = 0;
+  _rssiTimeout: ?number = null;
 
-  constructor(scanner, peripheral) {
+  constructor(scanner: SocketScanner, peripheral: Peripheral) {
     log.debug(`SocketSession()`);
 
     const socketStream = new Stream(peripheral, scanner._serviceUuid);
@@ -90,7 +93,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     });
   }
 
-  _onPeripheralRssiUpdate = rssi => {
+  _onPeripheralRssiUpdate: ((rssi: number) => void) = (rssi) => {
     log.debug(`SocketSession._onPeripheralRssiUpdate(${rssi})`);
 
     this._rssiSmoother.update(rssi);
@@ -113,7 +116,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     }
   };
 
-  _onPeripheralDisconnect = () => {
+  _onPeripheralDisconnect: (() => void) = () => {
     log.debug(`SocketSession._onPeripheralDisconnect()`);
 
     assert(!this._peripheralDisconnected);
@@ -125,7 +128,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._killRssiUpdates();
   };
 
-  _onFlatline = () => {
+  _onFlatline: (() => void) = () => {
     log.debug(`SocketSession._onFlatline()`);
 
     const error = new Error(`Failed to receive heartbeat message in expected ` +
@@ -134,7 +137,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this.emit(`error`, error);
   };
 
-  _onEnd = () => {
+  _onEnd: (() => void) = () => {
     log.debug(`SocketSession._onEnd()`);
 
     this._ended = true;
@@ -142,7 +145,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._killRssiUpdates();
   };
 
-  _onError = (error) => {
+  _onError: ((error: Error) => void) = (error) => {
     log.debug(`SocketSession._onError('${error.toString()}')`);
 
     this._ended = true;
@@ -180,7 +183,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     }, SocketSession.RSSI_UPDATE_TIMEOUT);
   }
 
-  emit(eventName, ...args) {
+  emit(eventName: string, ...args: Array<any>): boolean {
     if (eventName === `close` && !this._peripheralDisconnected) {
       log.debug(`Stream is closed, disconnecting peripheral before emitting ` +
                 `the '${eventName}' event`);
@@ -188,13 +191,17 @@ export default class SocketSession extends AuthenticateDuplexStream {
         log.debug(`Emitting the '${eventName}' event`);
         super.emit(eventName, ...args);
       });
-      return;
+      return true;
     }
 
     return super.emit(eventName, ...args);
   }
 
-  end(chunk, encoding, callback) {
+  end(
+    chunkOrEncodingOrCallback?: string | Buffer | Function,
+    encodingOrCallback?: string | Function,
+    callback?: Function
+  ): void {
     log.debug(`SocketSession.end()`);
 
     if (!this._ending) {
@@ -202,26 +209,26 @@ export default class SocketSession extends AuthenticateDuplexStream {
       this._ending = true;
     }
 
-    return super.end(chunk, encoding, callback);
+    return super.end(chunkOrEncodingOrCallback, encodingOrCallback, callback);
   }
 
-  get scanner() {
+  get scanner(): SocketScanner {
     return this._scanner;
   }
 
-  get connected() {
+  get connected(): boolean {
     return !this._ending && !this._ended;
   }
 
-  get rssi() {
+  get rssi(): number {
     return this._rssiValue;
   }
 
-  get rssiUpdatesEnabled() {
+  get rssiUpdatesEnabled(): boolean {
     return this._rssiUpdatesEnabled;
   }
 
-  set rssiUpdatesEnabled(val) {
+  set rssiUpdatesEnabled(val: boolean) {
     val = val ? true : false;
     if (this.rssiUpdatesEnabled === val) {
       return;

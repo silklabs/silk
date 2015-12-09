@@ -2,12 +2,34 @@
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import { Duplex } from 'stream';
 import makeLog from '../log';
+
+import type { Peripheral, Characteristic } from 'noble';
+
+// It'd be nice if we could import these from Flow's interface definitions
+// rather than having to copy them here.
+type ReadableStreamOptions = {
+  highWaterMark?: number,
+  encoding?: ?string,
+  objectMode?: boolean
+};
+type WritableStreamOptions = {
+  highWaterMark?: number,
+  decodeString?: boolean,
+  objectMode?: boolean
+};
+type DuplexStreamOptions = WritableStreamOptions & ReadableStreamOptions & {
+  allowHalfOpen?: boolean,
+  readableObjectMode?: boolean,
+  writableObjectMode?: boolean
+};
 
 const log = makeLog(`btle-stream`);
 
@@ -21,34 +43,38 @@ const WRITE_MAX_BYTES = 132;
 
 export default class Stream extends Duplex {
 
-  _peripheral = null;
-  _serviceUuid = ``;
-  _readCharacteristic = null;
-  _writeCharacteristic = null;
+  _peripheral: Peripheral;
+  _serviceUuid: string;
+  _readCharacteristic: Characteristic;
+  _writeCharacteristic: Characteristic;
 
-  _disconnected = false;
-  _subscribed = false;
+  _disconnected: boolean = false;
+  _subscribed: boolean = false;
 
-  _readTimeout = null;
-  _readAckTimeout = null;
+  _readTimeout: ?number = null;
+  _readAckTimeout: ?number = null;
 
-  _outgoing = [ ];
-  _writeTimeout = null;
+  _outgoing: Array<Buffer> = [];
+  _writeTimeout: ?number = null;
 
-  _error = null;
+  _error: ?Error = null;
 
-  _emittedError = false;
-  _ended = false;
-  _finishing = false;
-  _finished = false;
-  _closed = false;
+  _emittedError: boolean = false;
+  _ended: boolean = false;
+  _finishing: boolean = false;
+  _finished: boolean = false;
+  _closed: boolean = false;
 
-  constructor(peripheral, serviceUuid, options) {
+  constructor(
+    peripheral: Peripheral,
+    serviceUuid: string,
+    options?: DuplexStreamOptions
+  ) {
     log.debug(`Stream('${serviceUuid}')`);
 
-    assert(peripheral);
-    assert(peripheral.state === `connected`);
-    assert(serviceUuid);
+    invariant(peripheral);
+    invariant(peripheral.state === `connected`);
+    invariant(serviceUuid);
 
     super(options);
 
@@ -59,14 +85,14 @@ export default class Stream extends Duplex {
 
     const socketService = peripheral.services.find(
       (service) => service.uuid.toLowerCase() === this._serviceUuid);
-    assert(socketService);
+    invariant(socketService);
 
     const readCharacteristic = socketService.characteristics.find(
       (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.read);
-    assert(readCharacteristic);
-    assert(readCharacteristic.properties.indexOf(`notify`) !== -1);
-    assert(readCharacteristic.properties.indexOf(`read`) !== -1);
-    assert(readCharacteristic.properties.indexOf(`write`) !== -1);
+    invariant(readCharacteristic);
+    invariant(readCharacteristic.properties.indexOf(`notify`) !== -1);
+    invariant(readCharacteristic.properties.indexOf(`read`) !== -1);
+    invariant(readCharacteristic.properties.indexOf(`write`) !== -1);
 
     readCharacteristic.addListener(`data`, this._onData);
     readCharacteristic.addListener(`write`, this._onDataAcknowledged);
@@ -74,8 +100,8 @@ export default class Stream extends Duplex {
 
     const writeCharacteristic = socketService.characteristics.find(
       (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.write);
-    assert(writeCharacteristic);
-    assert(writeCharacteristic.properties.indexOf(`write`) !== -1);
+    invariant(writeCharacteristic);
+    invariant(writeCharacteristic.properties.indexOf(`write`) !== -1);
 
     writeCharacteristic.addListener(`write`, this._onWrite);
     this._writeCharacteristic = writeCharacteristic;
@@ -83,39 +109,39 @@ export default class Stream extends Duplex {
     this._enableNotifications();
   }
 
-  emit(eventName, ...args) {
+  emit(eventName: string, ...args: Array<any>): boolean {
     switch (eventName) {
     case `end`:
-      assert(!this._ended);
+      invariant(!this._ended);
       this._ended = true;
       this._maybeScheduleClose();
 
       if (this._error) {
         log.debug(`Blocked the '${eventName}' event due to previous error`);
-        return;
+        return false;
       }
 
       log.debug(`Emitting '${eventName}' event`);
       break;
 
     case `finish`:
-      assert(!this._finished);
+      invariant(!this._finished);
 
       this._finishing = true;
 
-      if (this._outgoing && this._outgoing.length) {
+      if (this._outgoing.length) {
         log.debug(`Waiting for all data to be written before emitting ` +
                   `'${eventName}' event`);
-        assert(this._writeTimeout);
-        assert(this._subscribed);
-        return;
+        invariant(this._writeTimeout);
+        invariant(this._subscribed);
+        return false;
       }
 
       if (this._subscribed) {
         log.debug(`Disabling notifications before emitting '${eventName}' ` +
                   `event`);
         this._disableNotifications();
-        return;
+        return false;
       }
 
       this._finished = true;
@@ -123,7 +149,7 @@ export default class Stream extends Duplex {
 
       if (this._error) {
         log.debug(`Blocked the '${eventName}' event due to previous error`);
-        return;
+        return false;
       }
 
       log.debug(`Emitting '${eventName}' event`);
@@ -144,11 +170,15 @@ export default class Stream extends Duplex {
   }
 
   // Part of the stream API.
-  _write(data, encoding, callback) {
+  _write(
+    data: Buffer,
+    encoding: 'buffer',
+    callback: Function
+  ): void {
     log.debug(`Stream._write(<Buffer ${data.length}>)`);
 
-    assert(data.length);
-    assert(encoding === `buffer`);
+    invariant(data.length);
+    invariant(encoding === `buffer`);
 
     if (this._error) {
       log.debug(`Unable to write due to previous error`);
@@ -203,7 +233,7 @@ export default class Stream extends Duplex {
         return;
       }
 
-      assert(!this._subscribed);
+      invariant(!this._subscribed);
       this._subscribed = true;
 
       // Start reading.
@@ -227,7 +257,7 @@ export default class Stream extends Duplex {
   _disableNotifications() {
     log.debug(`Stream._disableNotifications()`);
 
-    assert(!this._disconnected);
+    invariant(!this._disconnected);
 
     if (!this._subscribed) {
       return;
@@ -273,8 +303,8 @@ export default class Stream extends Duplex {
   _requestData() {
     log.debug(`Stream._requestData()`);
 
-    assert(!this._readTimeout);
-    assert(!this._readAckTimeout);
+    invariant(!this._readTimeout);
+    invariant(!this._readAckTimeout);
 
     if (!this._subscribed) {
       return;
@@ -293,9 +323,8 @@ export default class Stream extends Duplex {
       return;
     }
 
-    assert(this._outgoing);
-    assert(this._outgoing.length);
-    assert(!this._writeTimeout);
+    invariant(this._outgoing.length);
+    invariant(!this._writeTimeout);
 
     let chunksToSend = [ ];
     let chunksToSendLength = 0;
@@ -304,8 +333,8 @@ export default class Stream extends Duplex {
     for ( ; outgoingIndex < this._outgoing.length; outgoingIndex++) {
       let chunk = this._outgoing[outgoingIndex];
 
-      assert(Buffer.isBuffer(chunk));
-      assert(chunk.length);
+      invariant(Buffer.isBuffer(chunk));
+      invariant(chunk.length);
 
       let availableLength = WRITE_MAX_BYTES - chunksToSendLength;
 
@@ -326,8 +355,8 @@ export default class Stream extends Duplex {
       }
     }
 
-    assert(chunksToSend.length);
-    assert(chunksToSendLength <= WRITE_MAX_BYTES);
+    invariant(chunksToSend.length);
+    invariant(chunksToSendLength <= WRITE_MAX_BYTES);
 
     if (outgoingIndex) {
       this._outgoing.splice(0, outgoingIndex);
@@ -336,7 +365,7 @@ export default class Stream extends Duplex {
     const data = chunksToSend.length === 1 ?
                  chunksToSend[0] :
                  Buffer.concat(chunksToSend);
-    assert(data.length === chunksToSendLength);
+    invariant(data.length === chunksToSendLength);
 
     this._writeCharacteristic.write(data, /* withoutResponse */ false);
 
@@ -345,7 +374,7 @@ export default class Stream extends Duplex {
     }, TIMEOUT_MS);
   }
 
-  _emitError(error) {
+  _emitError(error: Error) {
     log.debug(`Stream._emitError('${error.toString()}')`);
 
     if (this._error) {
@@ -362,7 +391,7 @@ export default class Stream extends Duplex {
     this.push(null);
 
     // Don't hang on to data that we will never send.
-    this._outgoing = null;
+    this._outgoing = [];
 
     // End the write stream.
     this.end();
@@ -370,14 +399,14 @@ export default class Stream extends Duplex {
     this.emit(`error`, error);
   }
 
-  _onDisconnect = () => {
+  _onDisconnect: (() => void) = () => {
     log.debug(`Stream._onDisconnect()`);
 
     this._peripheral.removeListener(`disconnect`, this._onDisconnect);
     this._readCharacteristic.removeListener(`data`, this._onData);
     this._writeCharacteristic.removeListener(`write`, this._onWrite);
 
-    assert(!this._disconnected);
+    invariant(!this._disconnected);
     this._disconnected = true;
 
     this._subscribed = false;
@@ -392,19 +421,19 @@ export default class Stream extends Duplex {
     this._writeTimeout = null;
 
     if (this._finished) {
-      assert(this._ended);
+      invariant(this._ended);
     } else {
       this._emitError(new Error(`Disconnected unexpectedly`));
     }
   };
 
-  _onData = (data, isNotification) => {
+  _onData: ((data: Buffer, isNotification: boolean) => void) = (data, isNotification) => {
     log.debug(`Stream._onData(<Buffer ${data.length}>, ${isNotification})`);
 
-    assert(Buffer.isBuffer(data));
+    invariant(Buffer.isBuffer(data));
 
     if (isNotification) {
-      assert(!data.length);
+      invariant(!data.length);
 
       if (!this._readTimeout && !this._readAckTimeout) {
         this._requestData();
@@ -412,8 +441,8 @@ export default class Stream extends Duplex {
       return;
     }
 
-    assert(this._readTimeout);
-    assert(!this._readAckTimeout);
+    invariant(this._readTimeout);
+    invariant(!this._readAckTimeout);
 
     clearTimeout(this._readTimeout);
     this._readTimeout = null;
@@ -436,10 +465,10 @@ export default class Stream extends Duplex {
     this.push(data);
   };
 
-  _onDataAcknowledged = (error) => {
+  _onDataAcknowledged: ((error?: Error) => void) = (error) => {
     log.debug(`Stream._onDataAcknowledged(%s)`, error ? `'${error.toString()}'` : ``);
 
-    assert(this._readAckTimeout);
+    invariant(this._readAckTimeout);
     clearTimeout(this._readAckTimeout);
     this._readAckTimeout = null;
 
@@ -454,10 +483,10 @@ export default class Stream extends Duplex {
     }
   };
 
-  _onWrite = (error) => {
+  _onWrite: ((error?: Error) => void) = (error) => {
     log.debug(`Stream._onWrite(%s)`, error ? `'${error.toString()}'` : ``);
 
-    assert(this._writeTimeout);
+    invariant(this._writeTimeout);
     clearTimeout(this._writeTimeout);
     this._writeTimeout = null;
 
@@ -469,8 +498,6 @@ export default class Stream extends Duplex {
     if (this._error || !this._subscribed) {
       return;
     }
-
-    assert(this._outgoing);
 
     if (this._outgoing.length) {
       this._sendOutgoing();

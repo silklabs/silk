@@ -9,6 +9,7 @@ LOCAL_SRC_FILES := \
 	../SocketListener/SocketListener1.cpp \
 	../jsoncpp/jsoncpp.cpp \
 	AudioLooper.cpp \
+	AudioMutter.cpp \
 	AudioSourceEmitter.cpp \
 	Capture.cpp \
 	Channel.cpp \

@@ -25,6 +25,7 @@
 #include <utils/Thread.h>
 
 #include "AudioSourceEmitter.h"
+#include "AudioMutter.h"
 #include "json/json.h"
 #include "Capturedefs.h"
 #include "Channel.h"
@@ -456,8 +457,10 @@ status_t CaptureCommand::initThread() {
           new AudioSource(AUDIO_SOURCE_MIC, sAudioSampleRate, sAudioChannels));
       sp<MediaSource> audioSourceEmitter =
           new AudioSourceEmitter(&mChannel, audioSource);
+      sp<MediaSource> audioMutter =
+          new AudioMutter(audioSourceEmitter);
       sp<MediaSource> audioEncoder =
-          prepareAudioEncoder(mLooper, audioSourceEmitter);
+          prepareAudioEncoder(mLooper, audioMutter);
 
       mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
       mSegmenter->run();

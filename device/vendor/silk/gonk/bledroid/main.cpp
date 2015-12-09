@@ -203,7 +203,7 @@ public:
             realEventSize,
             sizeof(event),
             event);
-      return;
+      abort();
     }
 
     ALOGD("Broadcasting %s", event);

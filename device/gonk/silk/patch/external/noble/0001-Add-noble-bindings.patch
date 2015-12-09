@@ -1,14 +1,14 @@
-From 8d40b047faa16f6a4d9f0933aa9ede156ee0db29 Mon Sep 17 00:00:00 2001
+From dcd0d71ecf471bef1330db7c364e7981d6d2bef7 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2798 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2797 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2815 insertions(+), 4 deletions(-)
+ 4 files changed, 2814 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..109638e
+index 0000000..5d297f0
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2798 @@
+@@ -0,0 +1,2797 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -1670,15 +1670,14 @@ index 0000000..109638e
 +
 +  // There's no good way to throw an error here...
 +  if (data.length !== dataLength) {
-+    log.warn('Buffer size (%d) does not match dataLength (%d)',
-+             data.length,
-+             dataLength);
-+    data = null;
++    log.error('Buffer size (%d) does not match dataLength (%d)',
++              data.length,
++              dataLength);
 +  }
 +
 +  if (status) {
 +    log.warn('Failed to read characteristic: %d', status);
-+    data = null;
++    assert(data.length === 0);
 +  }
 +
 +  this.emit('read',

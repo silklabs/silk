@@ -234,7 +234,10 @@ export default class SocketScanner extends EventEmitter {
     return await this._waitForEventWithTimeout(
       service,
       `characteristicsDiscover`,
-      () => service.discoverCharacteristics([BTLE_SOCKET_UUIDS.characteristic]),
+      () => service.discoverCharacteristics([
+        BTLE_SOCKET_UUIDS.read,
+        BTLE_SOCKET_UUIDS.write,
+      ]),
       () => peripheral.disconnect(),
       `Timed out discovering characteristics for '${peripheral.uuid}'`);
   }
@@ -366,8 +369,10 @@ export default class SocketScanner extends EventEmitter {
       return false;
     }
 
+    const serviceUuid = this._serviceUuid;
+
     const socketService =
-      services.find(service => service.uuid === this._serviceUuid, this);
+      services.find((service) => service.uuid.toLowerCase() === serviceUuid);
     if (!socketService) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide ` +
                `socket service`);
@@ -381,16 +386,29 @@ export default class SocketScanner extends EventEmitter {
       return false;
     }
 
-    const socketCharacteristic =
-      characteristics.find(char => char.uuid === BTLE_SOCKET_UUIDS.characteristic);
-    if (!socketCharacteristic) {
+    const readCharacteristic = characteristics.find(
+      (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.read);
+    if (!readCharacteristic ||
+        readCharacteristic.properties.indexOf(`notify`) == -1 ||
+        readCharacteristic.properties.indexOf(`read`) == -1 ||
+        readCharacteristic.properties.indexOf(`write`) == -1) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide socket ` +
-               `characteristic`);
+               `read characteristic`);
       this._blackList.add(peripheral.uuid);
       return false;
     }
 
-    await this._discoverDescriptors(peripheral, socketCharacteristic);
+    const writeCharacteristic = characteristics.find(
+      (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.write);
+    if (!writeCharacteristic ||
+        writeCharacteristic.properties.indexOf(`write`) == -1) {
+      log.info(`Peripheral '${peripheral.uuid}' does not provide socket ` +
+               `write characteristic`);
+      this._blackList.add(peripheral.uuid);
+      return false;
+    }
+
+    await this._discoverDescriptors(peripheral, readCharacteristic);
     if (!this._enabled || closure.disconnected) {
       return false;
     }

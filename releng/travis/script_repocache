@@ -16,8 +16,9 @@ if [[ -z $GONK ]]; then
 fi
 
 set -x
-make -C ../device repocache.$GONK
+cd ..
+make -C device repocache.$GONK
 
-mkdir -p deploy/repocache
-mv ../device/repocache*tgz deploy/repocache
+mkdir -p deploy/
+mv device/repocache*tgz deploy/
 exit 0

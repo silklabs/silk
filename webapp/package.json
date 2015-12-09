@@ -17,7 +17,7 @@
     "json-loader": "^0.5.2",
     "localforage": "^1.2.10",
     "lodash.merge": "^3.3.2",
-    "log": "git@github.com:silklabs/log.git#master",
+    "log": "../log",
     "ms": "^0.7.1",
     "pbkdf2": "^3.0.4",
     "react": "^0.13.3",
@@ -123,7 +123,6 @@
   "scripts": {
     "lint": "eslint src",
     "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./tools/patch && webpack --progress",
-    "preinstall": "./bin/preinstall",
     "start": "webpack-dev-server --host 0.0.0.0 --port 8080 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "start-server": "babel-node --harmony server/main.js production",
     "test": "npm run-script lint"

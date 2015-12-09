@@ -13,6 +13,9 @@ before_script:
 
 script: npm test && ./build/ci.sh
 
+before_deploy:
+  - cd ..
+
 deploy:
   - provider: heroku
     api_key:

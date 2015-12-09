@@ -60,12 +60,3 @@ For example to enable all logs possible (socket.io, etc..):
   "debug": "*"
 }
 ```
-
-## S3 Deployment
-
-Upon merging a change Travis CI will deploy the application (`public/`) to the silk-webapp
-bucket in S3.
-
-* http://silk-webapp.s3-website-us-east-1.amazonaws.com/master/latest/
-* http://silk-webapp.s3-website-us-east-1.amazonaws.com/next/latest/
-* http://silk-webapp.s3-website-us-east-1.amazonaws.com/release/latest/

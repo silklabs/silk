@@ -14,6 +14,7 @@ script:
   - npm run $TEST_TYPE
 
 before_deploy:
+  - cd ..
   - mkdir -p deploy/
 
 deploy:

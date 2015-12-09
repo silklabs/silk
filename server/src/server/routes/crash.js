@@ -8,6 +8,7 @@ import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import authorizeAccount from '../authorize_account';
 import createLog from 'log';
+import decorateUrl from '../decorate_url';
 
 import CrashMetadata from '../models/crash_metadata';
 
@@ -76,7 +77,7 @@ export default function (ctx: RouteContext) {
     }
 
     if (result) {
-      res.respond(result);
+      res.respond(decorateUrl(result));
     } else {
       res.sendStatus(404);
     }
@@ -96,6 +97,7 @@ export default function (ctx: RouteContext) {
     input: CrashMetadata.SCHEMA.find,
   }, async (req, res) => {
     let result = await ctx.crashMeta.find(req.body);
+    result = result.map(object => decorateUrl(object));
     res.respond(result);
   });
 

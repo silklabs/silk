@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import loadConfig from './server/config';
+import version from 'silk-core-version';
 
 import v8 from 'v8';
 v8.setFlagsFromString('--trace_gc'); 
@@ -13,7 +14,7 @@ export default function(createServer) {
   let config = loadConfig(profile);
 
   createServer(config).then(() => {
-    log.info(`server is running at localhost: ${config.server.port}`);
+    log.info(`${version.branch} server ${version.semver} is running at localhost:${config.server.port}`);
   }).catch((e) => {
     // Allow error to be thrown...
     setTimeout(() => {

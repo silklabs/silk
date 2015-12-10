@@ -10,6 +10,8 @@ import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
 import Reports from '../libraries/CrashReports';
 
+import version from 'silk-core-version';
+
 const styles = {
   center: {
     marginLeft: 'auto',
@@ -117,6 +119,15 @@ export class OnlineCameras extends React.Component {
             <Glyphicon glyph="log-out" style={styles.glyphicon} />
           </Button>
         </Link>
+        <div style={{textAlign: 'center'}}>
+          <small>
+            {version.branch} {version.semver} (
+              <a href={'https://github.com/silklabs/silk-core/commit/' + version.sha}>
+                {version.sha.substr(0, 7)}
+              </a>
+            )
+          </small>
+        </div>
       </div>
     );
   }

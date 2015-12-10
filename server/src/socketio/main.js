@@ -4,7 +4,7 @@
 import createServer from './server';
 import bootstrap from '../bootstrap';
 
-bootstrap(createServer);
+bootstrap(createServer, 'socketio');
 
 const WATCHDOG_MS = 250;
 const BOGGED_DOWN_MS = WATCHDOG_MS * 2;

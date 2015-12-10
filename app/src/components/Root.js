@@ -16,6 +16,7 @@ import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
 import createAPI from 'silk-api';
+import version from 'silk-core-version';
 
 import AsyncComponent from './AsyncComponent';
 import AsyncNavigator from './AsyncNavigator';
@@ -48,6 +49,7 @@ export default class extends AsyncComponent {
   componentDidMount() {
     Config.init();
     Config.on('change', this.onConfigChange);
+    console.log(`silk-core ${version.semver} (${version.sha})`);
   }
 
   onConfigChange = async (config) => {

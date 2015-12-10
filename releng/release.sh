@@ -35,12 +35,10 @@ cd release
 clone $ORIGIN_BRANCH
 
 # Merge $ORIGIN_BRANCH to the release branch, replacing what is currently there
+updatebranch__silk_core $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_api $ORIGIN_BRANCH release
 updatebranch__silk_npms $ORIGIN_BRANCH release
 updatebranch__silk_device $ORIGIN_BRANCH release
-
-# Bump the app's patch version before finalizing the release
-semver_inc__silk_app $ORIGIN_BRANCH patch
 
 mergerelease $ORIGIN_BRANCH release
 

@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Bumps the silk-core version
+#
+
+usage () {
+  echo "usage: $0 [major|minor|patch]"
+  echo
+  echo "Bumps the version of silk-core."
+  echo
+}
+set -e
+
+versionBumpType=$1
+case $versionBumpType in
+major|minor|patch)
+  ;;
+*)
+  if [[ -n $versionBumpType ]]; then
+    echo "Error: invalid version type: $versionBumpType"
+    echo
+    usage
+    exit 1
+  fi
+  versionBumpType=patch # default
+  ;;
+esac
+
+cd $(dirname $(readlink -f $0))/..
+
+cd version
+npm version --no-git-tag-version $versionBumpType
+cd ..
+
+SILK_CORE_VERSION=$(node -p "require('./version/package.json').version")
+
+# Update the version in Info.plist to match the new silk-core version
+source device/vendor/silk/gonk/gnutools.sh # <-- need GNU sed on OS X
+appver=$(cat app/iOS/Info.plist | \
+  sed -n -e 's#\t<string>\([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*\)</string>#\1#p' | \
+  head -n1)
+
+if [[ "$appver" == "" ]]; then
+  echo Error: unable to determine app version
+  exit
+fi
+
+sed -e "s/$appver/$SILK_CORE_VERSION/" -i app/iOS/Info.plist
+
+git commit --all -m "$SILK_CORE_VERSION"

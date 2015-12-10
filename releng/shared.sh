@@ -79,6 +79,32 @@ updatePackageVersion() {
   normalizePackageJson $package_json
 }
 
+updatebranch__silk_core() {
+  local from=$1
+  local to=$2
+  echo "Updating branch: $from => $to"
+  pushd silk-core
+  (
+    set -ex
+
+    git checkout $from
+    # Bump the version on the origin branch.  If branching from master, bump
+    # the new master by a minor version.  Otherwise just bump the patch version.
+    if [[ $from == master ]]; then
+      ./releng/version_bump minor
+    else
+      ./releng/version_bump patch
+    fi
+
+    git checkout $to
+    # Update .branch to match the destination branch
+    sed -i .branch -e s/${from}/${to}/g
+    local msg="Automated branch update from ${from} to ${to}"
+    git commit --all -m "$msg"
+  )
+  popd > /dev/null
+}
+
 # Update branch references within the silk apis
 updatebranch__silk_api() {
   local from=$1
@@ -114,14 +140,9 @@ updatebranch__silk_npms() {
     (
       set -x
 
-      if [[ -f .branch ]]; then
-        sed -i .branch -e s/${from}/${to}/g
-        git add .branch
-      fi
-
       for package_json in package.json build/api/package.json; do
         if [[ -f $package_json ]]; then
-          for p in log silk-api; do
+          for p in silk-api; do
             local HEAD=$to
             if [[ $to == release ]]; then
               # Lock to SHA1 for release branch
@@ -148,37 +169,6 @@ updatebranch__silk_npms() {
   popd > /dev/null
 }
 
-# Bumps the version of silk-app for given branch
-semver_inc__silk_app() {
-  local branch=$1
-  local level=$2
-  pushd silk-core/app
-  (
-    set -x
-    git checkout $branch
-
-    local ver=$(cat iOS/Info.plist | \
-      sed -n -e 's#\t<string>\([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*\)</string>#\1#p' | \
-      head -n1)
-
-    if [[ "$ver" == "" ]]; then
-      echo Error: unable to determine app version
-      exit
-    fi
-
-    mkdir -p node_modules
-    npm install semver --loglevel http
-    local nextver=$(./node_modules/.bin/semver $ver -i $level)
-
-    sed -e "s/$ver/$nextver/" -i iOS/Info.plist
-    git add iOS/Info.plist
-
-    local msg="app: Automated version update from ${ver} to ${nextver}"
-    git commit -m "$msg"
-  )
-  popd > /dev/null
-}
-
 # Update branch references within silk-device
 updatebranch__silk_device() {
   local from=$1
@@ -187,7 +177,6 @@ updatebranch__silk_device() {
   pushd silk-core/device
   (
     set -x
-    sed -i .branch -e s/${from}/${to}/g
 
     # Update the revision attribute for the all silk.xml projects on the $from
     # branch

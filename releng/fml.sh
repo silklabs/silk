@@ -54,16 +54,10 @@ fi
 
 replace $ORIGIN_BRANCH $BRANCH
 
+updatebranch__silk_core $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_api $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_npms $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH
-if [[ $ORIGIN_BRANCH == master ]]; then
-  # Bump the master minor version when creating a next branch
-  semver_inc__silk_app master minor
-else
-  # Bump the chemspill patch version when branching from release
-  semver_inc__silk_app chemspill patch
-fi
 
 read -n 1 -p "Rewrite history on the branch $BRANCH for $GITS?  BE SURE!!! [Ny]: "
 echo

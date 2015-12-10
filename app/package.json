@@ -13,6 +13,7 @@
     "react-native": "^0.15.0",
     "react-native-webpack-server": "0.8.2",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
+    "silk-core-version": "file:../version",
     "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
     "uuid": "^2.0.1"
   },

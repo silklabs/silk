@@ -25,6 +25,11 @@ import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 import MissingChunks from './components/MissingChunks';
 
+
+// Activate better Error stack traces
+import 'source-map-support/browser-source-map-support';
+sourceMapSupport.install(); //eslint-disable-line no-undef
+
 let videoWidget = CameraVideo;
 let userState;
 

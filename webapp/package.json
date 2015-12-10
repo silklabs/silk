@@ -29,6 +29,7 @@
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "sjcl": "^1.0.3",
     "socket.io-client": "^1.3.6",
+    "source-map-support": "^0.3.2",
     "text-encoding": "^0.5.2",
     "webpack": "^1.12.1",
     "whatwg-fetch": "^0.9.0"

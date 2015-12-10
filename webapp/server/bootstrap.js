@@ -10,7 +10,7 @@ export default function(createServer) {
   let config = loadConfig(profile);
 
   createServer(config).then(() => {
-    log.info(`server ${version.semver} is running at localhost:${config.server.port}`);
+    log.info(`${version.branch} server ${version.semver} is running at localhost:${config.server.port}`);
   }).catch((e) => {
     // Allow error to be thrown...
     setTimeout(() => {

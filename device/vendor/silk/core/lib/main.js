@@ -13,7 +13,7 @@ import createLog from './log';
 const log = createLog('main');
 
 import version from 'silk-core-version';
-log.info(`silk-core ${version.semver} (${version.sha})`);
+log.info(`silk-core ${version.branch} ${version.semver} (${version.sha})`);
 
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence

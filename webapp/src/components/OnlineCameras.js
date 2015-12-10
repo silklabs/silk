@@ -121,7 +121,7 @@ export class OnlineCameras extends React.Component {
         </Link>
         <div style={{textAlign: 'center'}}>
           <small>
-            {version.semver} (
+            {version.branch} {version.semver} (
               <a href={'https://github.com/silklabs/silk-core/commit/' + version.sha}>
                 {version.sha.substr(0, 7)}
               </a>

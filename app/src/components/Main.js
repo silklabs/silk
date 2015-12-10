@@ -241,7 +241,7 @@ export default class extends AsyncComponent {
     await this.props.userState.updateRegisteredDevices(immutableDevices.toArray());
   }
 
-  onVideoStreamNew = async (msg) => {
+  onVideoStreamNew = (msg) => {
     if (!this.mounted) {
       return;
     }
@@ -273,6 +273,7 @@ export default class extends AsyncComponent {
         haveVideoStream: true,
         bleDeviceSession: configuringDevice.bleDeviceSession,
       });
+      devices = devices.delete(deviceId).set(deviceId, newRecord);
       this.setStateAsync({
         // There could be a lingering record of the device already.
         // "But how can this be, we just configured the device!",
@@ -280,10 +281,11 @@ export default class extends AsyncComponent {
         // merely lost WiFi credentials, then it retained its deviceId.
         // In this case we just want to bump it to the right place, so we
         // explicitly remove it from the ordered map before re-adding it.
-        devices: devices.delete(deviceId).set(deviceId, newRecord),
+        devices,
         unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.bleDeviceSession),
         configuringDevice: null,
       });
+      this.props.userState.updateRegisteredDevices(devices.toArray());
       return;
     }
 

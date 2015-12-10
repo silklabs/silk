@@ -1,2 +1,8 @@
+# OSX
+.DS_Store
+
+# Heroku
 /Procfile
+
+# npm fails
 npm-debug.log

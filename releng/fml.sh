@@ -54,6 +54,7 @@ fi
 
 replace $ORIGIN_BRANCH $BRANCH
 
+updatebranch__silk_core $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_api $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_npms $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH

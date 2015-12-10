@@ -79,6 +79,20 @@ updatePackageVersion() {
   normalizePackageJson $package_json
 }
 
+updatebranch__silk_core() {
+  local from=$1
+  local to=$2
+  echo "Updating branch: $from => $to"
+  pushd silk-core
+  (
+    set -x
+    sed -i .branch -e s/${from}/${to}/g
+    local msg="Automated branch update from ${from} to ${to}"
+    git commit --all -m "$msg"
+  )
+  popd > /dev/null
+}
+
 # Update branch references within the silk apis
 updatebranch__silk_api() {
   local from=$1
@@ -113,11 +127,6 @@ updatebranch__silk_npms() {
     pushd $app
     (
       set -x
-
-      if [[ -f .branch ]]; then
-        sed -i .branch -e s/${from}/${to}/g
-        git add .branch
-      fi
 
       for package_json in package.json build/api/package.json; do
         if [[ -f $package_json ]]; then
@@ -187,7 +196,6 @@ updatebranch__silk_device() {
   pushd silk-core/device
   (
     set -x
-    sed -i .branch -e s/${from}/${to}/g
 
     # Update the revision attribute for the all silk.xml projects on the $from
     # branch

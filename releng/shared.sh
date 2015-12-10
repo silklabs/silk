@@ -130,7 +130,7 @@ updatebranch__silk_npms() {
 
       for package_json in package.json build/api/package.json; do
         if [[ -f $package_json ]]; then
-          for p in log silk-api; do
+          for p in silk-api; do
             local HEAD=$to
             if [[ $to == release ]]; then
               # Lock to SHA1 for release branch

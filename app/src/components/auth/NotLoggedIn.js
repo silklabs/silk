@@ -1,5 +1,6 @@
 import React from 'react-native';
 import createLog from 'log';
+import { SilkApi } from 'silk-api';
 
 import Config from '../../libraries/Config';
 import { UserState } from '../../libraries/UserState';
@@ -13,7 +14,7 @@ import { WordMarkText } from '../Text';
 
 const log = createLog('NotLoggedIn');
 
-let {
+const {
   AlertIOS,
   DeviceEventEmitter,
   Navigator,
@@ -25,6 +26,7 @@ let {
 export default class extends AsyncComponent {
 
   static propTypes = {
+    api: React.PropTypes.instanceOf(SilkApi).isRequired,
     userState: React.PropTypes.instanceOf(UserState).isRequired,
   };
 
@@ -266,7 +268,7 @@ export default class extends AsyncComponent {
         alwaysBounceVertical={false}
         scrollable={false}>
         <View style={styles.statusBar} />
-        <NetworkWarning />
+        <NetworkWarning api={this.props.api} />
         <View style={styles.container}>
           {this._renderLogo()}
           {this._renderControls()}

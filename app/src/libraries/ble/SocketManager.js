@@ -6,7 +6,7 @@ import {
   NativeModules,
   DeviceEventEmitter,
 } from 'react-native';
-import assert from 'assert';
+import invariant from 'assert';
 import { EventEmitter } from 'events';
 import makeLog from 'log';
 
@@ -54,14 +54,14 @@ class Socket extends EventEmitter {
 
   send(data: Buffer) {
     log.debug(`Socket.send(${data.length})`);
-
-    singletonInstance && singletonInstance.send(this._id, data);
+    invariant(singletonInstance);
+    singletonInstance.send(this._id, data);
   }
 
   updateRssi() {
     log.debug(`Socket.updateRssi()`);
-
-    singletonInstance && singletonInstance.updateRssi(this._id);
+    invariant(singletonInstance);
+    singletonInstance.updateRssi(this._id);
   }
 }
 
@@ -96,7 +96,7 @@ class SocketManager extends EventEmitter {
     const id = args.id;
     log.debug(`SocketManager.onConnect(${id})`);
 
-    assert(!this._sockets.has(id));
+    invariant(!this._sockets.has(id));
 
     let socket = new Socket(id);
     this._sockets.set(id, socket);
@@ -148,7 +148,7 @@ class SocketManager extends EventEmitter {
   send(id: number, data: Buffer) {
     log.debug(`SocketManager.send(${id}, ${data.length})`);
 
-    assert(this._sockets.has(id));
+    invariant(this._sockets.has(id));
 
     BLESocketManager.send(id, data.toString('base64'));
   }
@@ -156,7 +156,7 @@ class SocketManager extends EventEmitter {
   updateRssi(id: number) {
     log.debug(`SocketManager.updateRssi(${id})`);
 
-    assert(this._sockets.has(id));
+    invariant(this._sockets.has(id));
 
     BLESocketManager.updateRssi(id);
   }
@@ -171,10 +171,12 @@ export default function getSocketManager(): EventEmitter {
 
   let emitter = new EventEmitter();
   emitter.on('newListener', (event, listener) => {
-    singletonInstance && singletonInstance.addListener(event, listener);
+    invariant(singletonInstance);
+    singletonInstance.addListener(event, listener);
   });
   emitter.on('removeListener', (event, listener) => {
-    singletonInstance && singletonInstance.removeListener(event, listener);
+    invariant(singletonInstance);
+    singletonInstance.removeListener(event, listener);
   });
 
   return emitter;

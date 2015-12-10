@@ -40,9 +40,6 @@ updatebranch__silk_api $ORIGIN_BRANCH release
 updatebranch__silk_npms $ORIGIN_BRANCH release
 updatebranch__silk_device $ORIGIN_BRANCH release
 
-# Bump the app's patch version before finalizing the release
-semver_inc__silk_app $ORIGIN_BRANCH patch
-
 mergerelease $ORIGIN_BRANCH release
 
 read -n 1 -p "Push new release?  BE SURE!!! [Ny]: "

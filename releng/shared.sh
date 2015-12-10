@@ -85,7 +85,19 @@ updatebranch__silk_core() {
   echo "Updating branch: $from => $to"
   pushd silk-core
   (
-    set -x
+    set -ex
+
+    git checkout $from
+    # Bump the version on the origin branch.  If branching from master, bump
+    # the new master by a minor version.  Otherwise just bump the patch version.
+    if [[ $from == master ]]; then
+      ./releng/version_bump minor
+    else
+      ./releng/version_bump patch
+    fi
+
+    git checkout $to
+    # Update .branch to match the destination branch
     sed -i .branch -e s/${from}/${to}/g
     local msg="Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
@@ -154,37 +166,6 @@ updatebranch__silk_npms() {
     )
     popd > /dev/null
   done
-  popd > /dev/null
-}
-
-# Bumps the version of silk-app for given branch
-semver_inc__silk_app() {
-  local branch=$1
-  local level=$2
-  pushd silk-core/app
-  (
-    set -x
-    git checkout $branch
-
-    local ver=$(cat iOS/Info.plist | \
-      sed -n -e 's#\t<string>\([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*\)</string>#\1#p' | \
-      head -n1)
-
-    if [[ "$ver" == "" ]]; then
-      echo Error: unable to determine app version
-      exit
-    fi
-
-    mkdir -p node_modules
-    npm install semver --loglevel http
-    local nextver=$(./node_modules/.bin/semver $ver -i $level)
-
-    sed -e "s/$ver/$nextver/" -i iOS/Info.plist
-    git add iOS/Info.plist
-
-    local msg="app: Automated version update from ${ver} to ${nextver}"
-    git commit -m "$msg"
-  )
   popd > /dev/null
 }
 

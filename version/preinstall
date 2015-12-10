@@ -1,0 +1,9 @@
+#!/bin/bash
+
+mkdir -p dist
+cat > dist/index.json <<-EOF
+	{
+	  "semver": "$(node -p "require('./package.json').version")",
+	  "sha": "$(git rev-parse HEAD)"
+	}
+EOF

@@ -127,6 +127,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
 	$(hide) mkdir -p $(built_module_path)
 	$(hide) rsync -qav --exclude='/node_modules' $(LOCAL_PATH)/ $(built_module_path)
+	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/build/package_abs_file.js package.json $(LOCAL_PATH)/
 	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
 	@echo "Build: $(built_module_path)"
 	$(hide) cd $(built_module_path) &&  \

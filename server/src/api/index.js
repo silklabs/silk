@@ -1,8 +1,10 @@
 /**
  * @flow
  */
-import loadConfig from './config';
+import invariant from 'assert';
 import URL from 'url';
+
+import loadConfig from './config';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
@@ -36,29 +38,40 @@ export { default as RssiSmoother } from './rssi_smoother';
 type SocketioConfig = [string, {
   transports: Array<string>;
   path: string;
-  query: Object;
+  query: {[key: string]: string};
 }]
 
 function socketioConfig(accessToken: Id, url: string): SocketioConfig {
-  let parsed = URL.parse(url, true /* parse query string */);
-  parsed.query.jwt = signature(accessToken, 'GET', parsed.path);
-  delete parsed.search;
+  // TODO: remove 'any' type here once
+  // https://github.com/facebook/flow/issues/1173 is resolved.
+  let parsed: any = URL.parse(url, true /* parse query string */);
+  invariant(typeof parsed.path === 'string');
 
-  /**
-   * - socket.io-client will ignore path and query parameters so we must parse
-   *   the out and pass them as options...
-   *
-   * - The signature does not include the host so pass only the path+query...
-   */
-  return [URL.format(parsed), {
+  let jwt = signature(accessToken, 'GET', parsed.path);
+  invariant(typeof parsed.query === 'object');
+  parsed.query.jwt = jwt;
+
+  // socket.io-client will ignore path and query parameters so we must
+  // parse the out and pass them as options. The signature does not
+  // include the host so pass only the path+query.
+  delete parsed.search;
+  url = URL.format(parsed);
+
+  invariant(typeof parsed.pathname === 'string');
+  invariant(typeof parsed.query === 'object');
+  let options = {
     transports: ['websocket'],
     path: parsed.pathname,
     query: parsed.query,
-  }];
+  };
+  return [url, options];
 }
 
 export type Config = {
-  getRandomBytes?: Function;
+  getRandomBytes?: (
+    size: number,
+    callback: (err: ?Error, buffer: Buffer) => void
+  ) => void;
   serverUrl?: string;
 };
 
@@ -84,14 +97,14 @@ export class SilkApi {
   config: StateContainer;
 
   // XXX: Remove me should be re-export.
-  RssiSmoother: typeof RssiSmoother = RssiSmoother;
+  RssiSmoother: Function = RssiSmoother;
 
-  socketioDeviceConfig: Function = async (): SocketioConfig => {
+  socketioDeviceConfig: (() => Promise<SocketioConfig>) = async () => {
     let {url} = await this.device.socketioURL();
     return socketioConfig(this.config.accessToken, url);
   };
 
-  socketioAccountConfig: Function = async (): SocketioConfig => {
+  socketioAccountConfig: (() => Promise<SocketioConfig>) = async () => {
     let {url} = await this.account.socketioURL();
     return socketioConfig(this.config.accessToken, url);
   };
@@ -99,7 +112,7 @@ export class SilkApi {
   /** Deprecated exports */
 
   // Deprecated use the re-export.
-  id: Object = Id;
+  id: Function = Id;
   // Export the developer account
   // TODO: Remove prior to production!
   devAccount: Object = require('./dev_account');

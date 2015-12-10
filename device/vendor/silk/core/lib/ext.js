@@ -165,9 +165,7 @@ class Env extends EventEmitter {
       setprop: (prop, value) => {
         util.setprop(prop, value);
       },
-      watchprop: (prop, cb) => {
-        return util.watchprop(prop, cb);
-      },
+      propWatcher: util.propWatcher
     };
   }
 
@@ -204,7 +202,7 @@ class Extensions {
     // Enable/disable extensions
     this._enable(ENABLED_SILK_EXTENSIONS);
 
-    util.watchprop(RELOAD_EXT_PROP, () => this._onReloadRequested());
+    util.propWatcher.on(RELOAD_EXT_PROP, () => this._onReloadRequested());
 
     extDirs.forEach(dir => {
       fs.readdir(dir)

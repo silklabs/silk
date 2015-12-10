@@ -83,8 +83,9 @@ class FindFace {
     if (this._onFace) {
       this._env.timeline.removeListener('face', this._onFace);
     }
-    if (this._watchprop) {
-      this._watchprop.kill();
+    if (this._propWatcherListener) {
+      this._env.util.propWatcher.removeListener(ADD_COMMAND_PROP,
+          this._propWatcherListener);
     }
   }
 
@@ -145,8 +146,8 @@ class FindFace {
    * If not train for available faces
    */
   async _init() {
-    this._watchprop = this._env.util.watchprop(ADD_COMMAND_PROP,
-      () => this._addCommandProp());
+    this._propWatcherListener = () => this._addCommandProp();
+    this._env.util.propWatcher.on(ADD_COMMAND_PROP, this._propWatcherListener);
 
     const existsYml = await fs.exists(TRAIN_FACES_YML);
     const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);

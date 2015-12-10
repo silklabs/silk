@@ -50,7 +50,7 @@ int32_t sIFrameIntervalSec = 15;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
-bool sAudioMute = 0;
+bool sAudioMute = false;
 bool sUseMetaDataMode = true;
 sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 
@@ -117,6 +117,7 @@ public:
 
 private:
   int capture_init(Value& cmdData);
+  int capture_update(Value& cmdData);
   int capture_cleanup();
   int capture_setParameter(Value& name, Value& value);
   int capture_getParameterInt(Value& name);
@@ -203,6 +204,8 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   string cmdName = cmdNameVal.asString();
   if (cmdName == "init") {
     capture_init(cmdJson["cmdData"]);
+  } else if (cmdName == "update") {
+    capture_update(cmdJson["cmdData"]);
   } else if (cmdName == "stop") {
     capture_cleanup();
   } else if (cmdName == "setParameter") {
@@ -264,10 +267,9 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
   }
-  if (!cmdData["audioMute"].isNull()) {
-    sAudioMute = cmdData["audioMute"].asBool();
-    ALOGV("sAudioMute %d", sAudioMute);
-  }
+
+  // Now update the run-time configurable parameters
+  capture_update(cmdData);
 
   // The default qemu camera HAL does not support metadata mode
   {
@@ -283,6 +285,23 @@ int CaptureCommand::capture_init(Value& cmdData) {
   pthread_create(&mThread, NULL, initThreadWrapper, this);
   return 0;
 }
+
+
+/**
+ * Update run-time configurable parameters
+ */
+int CaptureCommand::capture_update(Value& cmdData) {
+  ALOGV("%s", __FUNCTION__);
+
+  LOG_ERROR((cmdData.isNull()), "update command data is null");
+
+  if (!cmdData["audioMute"].isNull()) {
+    sAudioMute = cmdData["audioMute"].asBool();
+    ALOGV("sAudioMute %d", sAudioMute);
+  }
+  return 0;
+}
+
 
 /**
  * Helper function

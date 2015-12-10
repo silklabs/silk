@@ -45,7 +45,8 @@ const PREVIEW_DELAY_MS = 1000 / (FPS / PREVIEW_SKIP_COUNT);
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
 
-const AUDIO_MUTE = util.getboolprop('persist.silk.capture.mute', true);
+const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
+let audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
 
 //
 // Constants
@@ -198,6 +199,12 @@ class CameraStream extends EventEmitter {
     this.timeline.on('motion', () => {
       this._motion = true;
     });
+
+    // TODO Remove watch when this setting gets moved to the UI
+    util.propWatcher.on(AUDIO_MUTE_PROP, () => {
+      audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
+      this.setMute(audioMute);
+    });
   }
 
   /**
@@ -322,7 +329,7 @@ class CameraStream extends EventEmitter {
         height: HEIGHT,
         fps: FPS,
         vbr: VBR,
-        audioMute: AUDIO_MUTE
+        audioMute
       };
 
       this._videoWidth = cmdData.width;
@@ -628,6 +635,23 @@ class CameraStream extends EventEmitter {
       return;
     }
     this._command({cmdName: 'setParameter', name: 'flash-mode', value: flashMode});
+  }
+
+  /**
+   * Set mute mode
+   */
+  setMute(mute) {
+    // Persist mute setting if changed
+    if (audioMute !== mute) {
+      audioMute = mute;
+      util.setprop(AUDIO_MUTE_PROP, audioMute);
+    }
+
+    if (!this._ready) {
+      log.error(`camera not ready, ignoring setMute command`);
+      return;
+    }
+    this._command({cmdName: 'update', cmdData: {audioMute}});
   }
 
   /**

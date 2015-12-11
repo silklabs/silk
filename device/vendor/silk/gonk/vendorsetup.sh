@@ -19,26 +19,23 @@ poison_their_lunch()
   return 1
 }
 
-if [ $(uname) = "Darwin" ]; then
-  source $(dirname $BASH_SOURCE)/gnutools.sh
+source ../tools/gnu.sh
 
-  echo foo > foo
-  echo FOO > FOO
-  if [ "$(cat foo)" = $(cat FOO) ]; then
-    if [ -z "$CI_IGNORE_CASE_INSENSITIVE_FS" ]; then
-      poison_their_lunch Please use a case-sensitive file system
-      return
-    fi
-    echo WARNING: Forcing build on case-insensitive file system
-  fi
-  rm -f foo FOO
-
-
-  for path in $(pwd); do true; done
-  if [[ "$(pwd)" != "$path" ]]; then
-    poison_their_lunch Source tree path \"$(pwd)\" cannot contain a space.
+echo foo > foo
+echo FOO > FOO
+if [ "$(cat foo)" = $(cat FOO) ]; then
+  if [ -z "$CI_IGNORE_CASE_INSENSITIVE_FS" ]; then
+    poison_their_lunch Please use a case-sensitive file system
     return
   fi
+  echo WARNING: Forcing build on case-insensitive file system
+fi
+rm -f foo FOO
+
+for path in $(pwd); do true; done
+if [[ "$(pwd)" != "$path" ]]; then
+  poison_their_lunch Source tree path \"$(pwd)\" cannot contain a space.
+  return
 fi
 
 node_version_check()

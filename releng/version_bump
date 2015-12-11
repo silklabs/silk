@@ -35,7 +35,7 @@ cd ..
 SILK_CORE_VERSION=$(node -p "require('./version/package.json').version")
 
 # Update the version in Info.plist to match the new silk-core version
-source device/vendor/silk/gonk/gnutools.sh # <-- need GNU sed on OS X
+source ../tools/gnu.sh # <-- need GNU sed on OS X
 appver=$(cat app/iOS/Info.plist | \
   sed -n -e 's#\t<string>\([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*\)</string>#\1#p' | \
   head -n1)

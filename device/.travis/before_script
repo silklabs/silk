@@ -29,15 +29,13 @@ nvm install 4.1.2
 
 source .travis/artifacts
 
-# Export the path which we want to upload our ccache artifacts to..
-# NOTE: Must not contain trailing slash...
-CCACHE_URL="$ARTIFACT_HOST/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
 
 function get_http_status() {
   local url=$1
   curl -X HEAD -Is -w "%{http_code}" $1 -o /dev/null
 }
 
+CCACHE_URL="$ARTIFACT_WEBHOST/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
 if [[ "$(get_http_status $CCACHE_URL)" == "200" ]];
 then
   mkdir -p $HOME/.ccache

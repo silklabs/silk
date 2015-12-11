@@ -1,17 +1,21 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * The Deferred pattern is considered "legacy" don't use it unless you
+ * need to do something awkward like loop promises with timers.
+ *
+ * @flow
  */
 
+export type Deferred<T> = {
+  promise: Promise<T>,
+  accept: (value: Promise<T> | T) => void,
+  reject: (error: any) => void,
+};
 
-/**
- * This pattern is considered "legacy" don't use it unless you need to do
- * something awkward like loop promises with timers.
- */
-export default function deferred() {
+export default function deferred<T>(): Deferred<T> {
   let opts = {};
   opts.promise = new Promise((accept, reject) => {
     opts.accept = accept;

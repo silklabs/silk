@@ -1,9 +1,9 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import assert from 'assert';
@@ -11,6 +11,22 @@ import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import { EventEmitter } from 'events';
 import makeLog from '../log';
 import SocketSession from './socket_session';
+
+import type { Noble, Peripheral, Characteristic, Service } from 'noble';
+
+type ConnectionInfo = {
+  averageRssi: number;
+  peripheral: Peripheral;
+};
+type ScannerOptions = { // eslint-disable-line no-unused-vars
+  publicKeys?: Array<string>;
+  serviceUuid?: string;
+  localName?: string;
+};
+type PeripheralState = {
+  peripheral: Peripheral;
+  disconnected: boolean;
+};
 
 const log = makeLog(`btle-socketscanner`);
 
@@ -20,22 +36,22 @@ const DEFAULT_CONNECTION_RETRY_TIMEOUT_MS = 1000;
 
 export default class SocketScanner extends EventEmitter {
 
-  _noble = null;
-  _privateKey = ``;
-  _publicKeys = [ ];
-  _localName = DEFAULT_LOCALNAME;
-  _serviceUuid = BTLE_SOCKET_UUIDS.service;
-  _enabled = false;
-  _scanning = false;
-  _scanPromise = Promise.resolve();
-  _timeout = null;
-  _blackList = new Set();
-  _skipList = new Set();
+  _noble: Noble;
+  _privateKey: string;
+  _publicKeys: Array<string> = [];
+  _localName: string = DEFAULT_LOCALNAME;
+  _serviceUuid: string = BTLE_SOCKET_UUIDS.service;
+  _enabled: boolean = false;
+  _scanning: boolean = false;
+  _scanPromise: Promise<void> = Promise.resolve();
+  _timeout: ?number = null;
+  _blackList: Set<string> = new Set();
+  _skipList: Set<string> = new Set();
 
-  _connectionQueue = [];
-  _connectionMap = new Map();
+  _connectionQueue: Array<ConnectionInfo> = [];
+  _connectionMap: Map<string, ConnectionInfo> = new Map();
 
-  constructor(noble, privateKey, options = { }) {
+  constructor(noble: Noble, privateKey: string, options?: ScannerOptions = {}) {
     log.debug(`SocketScanner()`);
 
     assert(noble);
@@ -46,18 +62,18 @@ export default class SocketScanner extends EventEmitter {
     this._noble = noble;
     this._privateKey = privateKey;
 
-    if (`publicKeys` in options) {
+    if (options.publicKeys) {
       this._publicKeys = options.publicKeys;
     }
-    if (`serviceUuid` in options) {
+    if (options.serviceUuid) {
       this._serviceUuid = options.serviceUuid;
     }
-    if (`localName` in options) {
+    if (options.localName) {
       this._localName = options.localName;
     }
   }
 
-  _onDiscover = async peripheral => {
+  _onDiscover: ((peripheral: Peripheral) => Promise<void>) = async (peripheral) => {
     if (!this._enabled || !this._scanning) {
       return;
     }
@@ -119,7 +135,7 @@ export default class SocketScanner extends EventEmitter {
     }
   };
 
-  async _startScan() {
+  async _startScan(): Promise<void> {
     log.debug(`_startScan()`);
     assert(this._enabled);
 
@@ -148,7 +164,7 @@ export default class SocketScanner extends EventEmitter {
     this._scanning = true;
   }
 
-  async _stopScan() {
+  async _stopScan(): Promise<void> {
     log.debug(`_stopScan()`);
 
     try {
@@ -176,7 +192,13 @@ export default class SocketScanner extends EventEmitter {
     await this._scanPromise;
   }
 
-  async _waitForEventWithTimeout(emitter, eventName, start, stop, errorString) {
+  async _waitForEventWithTimeout(
+    emitter: EventEmitter,
+    eventName: string,
+    start: () => void,
+    stop: () => void,
+    errorString: string
+  ): Promise<any> {
     assert(this._enabled);
 
     return await new Promise((resolve, reject) => {
@@ -202,7 +224,7 @@ export default class SocketScanner extends EventEmitter {
     });
   }
 
-  async _connect(peripheral) {
+  async _connect(peripheral: Peripheral): Promise<void> {
     log.debug(`_connect('${peripheral.uuid}'`);
 
     let error = await this._waitForEventWithTimeout(
@@ -210,13 +232,14 @@ export default class SocketScanner extends EventEmitter {
       `connect`,
       () => peripheral.connect(),
       () => peripheral.disconnect(),
-      `Timed out connecting to '${peripheral.uuid}'`);
+      `Timed out connecting to '${peripheral.uuid}'`
+    );
     if (error) {
       throw error;
     }
   }
 
-  async _discoverServices(peripheral) {
+  async _discoverServices(peripheral: Peripheral): Promise<Array<Service>> {
     log.debug(`_discoverServices('${peripheral.uuid}'`);
 
     return await this._waitForEventWithTimeout(
@@ -224,10 +247,14 @@ export default class SocketScanner extends EventEmitter {
       `servicesDiscover`,
       () => peripheral.discoverServices([ this._serviceUuid ]),
       () => peripheral.disconnect(),
-      `Timed out discovering services for '${peripheral.uuid}'`);
+      `Timed out discovering services for '${peripheral.uuid}'`
+    );
   }
 
-  async _discoverCharacteristics(peripheral, service) {
+  async _discoverCharacteristics(
+    peripheral: Peripheral,
+    service: Service
+  ): Promise<Array<Characteristic>> {
     log.debug(`_discoverCharacteristics('${peripheral.uuid}', ` +
               `'${service.uuid}')`);
 
@@ -239,10 +266,14 @@ export default class SocketScanner extends EventEmitter {
         BTLE_SOCKET_UUIDS.write,
       ]),
       () => peripheral.disconnect(),
-      `Timed out discovering characteristics for '${peripheral.uuid}'`);
+      `Timed out discovering characteristics for '${peripheral.uuid}'`
+    );
   }
 
-  async _discoverDescriptors(peripheral, characteristic) {
+  async _discoverDescriptors(
+    peripheral: Peripheral,
+    characteristic: Characteristic
+  ): Promise<void> {
     log.debug(`_discoverDescriptors('${peripheral.uuid}', ` +
               `'${characteristic.uuid}')`);
 
@@ -251,10 +282,11 @@ export default class SocketScanner extends EventEmitter {
       `descriptorsDiscover`,
       () => characteristic.discoverDescriptors(),
       () => peripheral.disconnect(),
-      `Timed out discovering descriptors for '${peripheral.uuid}'`);
+      `Timed out discovering descriptors for '${peripheral.uuid}'`
+    );
   }
 
-  async _attemptNextConnection() {
+  async _attemptNextConnection(): Promise<void> {
     log.debug(`_attemptNextConnection(): ${this._connectionQueue.length}`);
 
     if (!this._enabled || !this._connectionQueue.length) {
@@ -321,12 +353,12 @@ export default class SocketScanner extends EventEmitter {
     this._attemptNextConnection();
   }
 
-  async _attemptConnection(peripheral) {
+  async _attemptConnection(peripheral: Peripheral): Promise<boolean> {
     log.debug(`_attemptConnection('${peripheral.uuid}')`);
 
-    const closure = {
+    const closure: PeripheralState = {
       peripheral,
-      disconnected: false
+      disconnected: false,
     };
     let disconnectListener;
 
@@ -355,7 +387,7 @@ export default class SocketScanner extends EventEmitter {
     return result;
   }
 
-  async _attemptConnectionInternal(closure) {
+  async _attemptConnectionInternal(closure: PeripheralState): Promise<boolean> {
     const { peripheral } = closure;
     log.info(`Attempting to connect to peripheral '${peripheral.uuid}'`);
 
@@ -416,7 +448,7 @@ export default class SocketScanner extends EventEmitter {
     return true;
   }
 
-  async start() {
+  async start(): Promise<void> {
     log.debug('start()');
 
     if (!this._enabled) {
@@ -425,7 +457,7 @@ export default class SocketScanner extends EventEmitter {
     }
   }
 
-  async stop() {
+  async stop(): Promise<void> {
     log.debug('stop()');
 
     if (this._enabled) {
@@ -434,7 +466,7 @@ export default class SocketScanner extends EventEmitter {
     }
   }
 
-  addToSkipList(peripheral) {
+  addToSkipList(peripheral: Peripheral) {
     log.debug(`addToSkipList('${peripheral.uuid}')`);
 
     if (!this._skipList.has(peripheral.uuid)) {
@@ -442,7 +474,7 @@ export default class SocketScanner extends EventEmitter {
     }
   }
 
-  removeFromSkipList(peripheral) {
+  removeFromSkipList(peripheral: Peripheral) {
     log.debug(`removeFromSkipList('${peripheral.uuid}')`);
 
     this._skipList.delete(peripheral.uuid);

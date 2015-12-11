@@ -1,16 +1,14 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
- */
-
-/**
+ *
  * Read or create a new device id. The id will persist across device restarts.
  *
  * Note: This current pattern of storing to disk may not be secure enough for
  * production.
+ *
+ * @flow
  */
 
 import api from './api';
@@ -18,6 +16,8 @@ import fs from 'mz/fs';
 import mkdirp from 'mkdirp-promise';
 import path from 'path';
 import makeLog from './log';
+
+import type { AccessToken } from 'silk-api';
 
 const log = makeLog('deviceid');
 
@@ -27,7 +27,7 @@ const ID_PATH = path.join(ID_DIR, 'id.json');
 
 let deviceId;
 
-export default async function getDeviceId() {
+export default async function getDeviceId(): Promise<AccessToken> {
   if (deviceId) {
     return deviceId;
   }

@@ -1,7 +1,12 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
 
-import assert from 'assert';
+import invariant from 'assert';
 import bleno from 'bleno';
 import { EventEmitter } from 'events';
 import { getboolprop } from '../sysutils';
@@ -11,57 +16,65 @@ import makeLog from '../log';
 import noble from 'noble';
 import SocketScanner from './socket_scanner';
 
+import type SocketSession from './socket_session';
+import type { Deferred } from '../deferred';
+
+type BluetoothMode = 'off' | 'scan' | 'beacon';
+type BeaconInfo = {
+  major: number;
+  minor: number;
+  measuredPower: number;
+  uuid: string;
+};
+
 const DEFAULT_BEACON_MAJOR = 0;
 const DEFAULT_BEACON_MINOR = 0;
 
 const log = makeLog(`btle`);
 
-let initPromise;
-let initPromiseComplete;
-
 class BluetoothLE extends EventEmitter {
   // TODO: This needs to be measured and customized for each type of device we
   //       ship.
   // This is the transmit power measured against a Nexus 4 at 1 meter distance.
-  static DEFAULT_BEACON_POWER = -60;
+  static DEFAULT_BEACON_POWER: number = -60;
 
-  static MODE_OFF = `off`;
-  static MODE_SCAN = `scan`;
-  static MODE_BEACON = `beacon`;
+  static MODE_OFF: string = `off`;
+  static MODE_SCAN: string = `scan`;
+  static MODE_BEACON: string = `beacon`;
 
-  _beaconInfo = null;
-  _mode = BluetoothLE.MODE_OFF;
-  _desiredMode = BluetoothLE.MODE_OFF;
-  _advertising = false;
-  _changeStatePromise = Promise.resolve();
-  _adapterState = ``;
+  MODE_OFF: string = BluetoothLE.MODE_OFF;
+  MODE_SCAN: string = BluetoothLE.MODE_SCAN;
+  MODE_BEACON: string = BluetoothLE.MODE_BEACON;
 
-  _adapterStateDeferred = makeDeferred();
-  _adapterStateDeferredAccepted = false;
+  _beaconInfo: ?BeaconInfo = null;
+  _mode: BluetoothMode = BluetoothLE.MODE_OFF;
+  _desiredMode: BluetoothMode = BluetoothLE.MODE_OFF;
+  _advertising: boolean = false;
+  _changeStatePromise: Promise<void> = Promise.resolve();
+  _adapterState: string; // TODO enum?
 
-  _bledroidCrashDeferred = null;
+  _adapterStateDeferred: Deferred<void> = makeDeferred();
+  _adapterStateDeferredAccepted: boolean = false;
 
-  _socketScanner = null;
-  _socketSession = null;
-  _socketSessionListener = null;
+  _bledroidCrashDeferred: ?Deferred<void> = null;
 
-  _privateKey = ``;
-  _publicKeys = [ ];
+  _socketScanner: ?SocketScanner = null;
+  _socketSession: ?SocketSession = null;
+  _socketSessionListener: ?EventEmitter = null;
 
-  constructor(privateKey) {
+  _privateKey: string;
+  _publicKeys: Array<string> = [];
+
+  constructor(privateKey: string) {
     log.debug(`BluetoothLE()`)  ;
 
-    assert(privateKey);
+    invariant(privateKey);
 
     super();
 
-    this.MODE_OFF = BluetoothLE.MODE_OFF;
-    this.MODE_SCAN = BluetoothLE.MODE_SCAN;
-    this.MODE_BEACON = BluetoothLE.MODE_BEACON;
-
     this._privateKey = privateKey;
 
-    assert(bleno.state === noble.state);
+    invariant(bleno.state === noble.state);
     this._adapterState = noble.state;
 
     if (noble.state === `poweredOn`) {
@@ -72,52 +85,48 @@ class BluetoothLE extends EventEmitter {
     noble.addListener(`stateChange`, this._onAdapterStateChange);
   }
 
-  get mode() {
+  get mode(): BluetoothMode {
     return this._mode;
   }
 
-  set publicKeys(val) {
-    assert(val === null || Array.isArray(val));
+  set publicKeys(val: ?Array<string>) {
+    invariant(val === null || Array.isArray(val));
 
     val = val || [];
-    val.forEach((publicKey) => assert(typeof publicKey === `string`));
+    val.forEach((publicKey) => invariant(typeof publicKey === `string`));
 
     this._publicKeys = val;
   }
 
-  get beaconInfo() {
+  get beaconInfo(): BeaconInfo {
     return Object.assign({ }, this._beaconInfo);
   }
 
-  set beaconInfo(value) {
+  set beaconInfo(value: BeaconInfo) {
     if (this._mode !== BluetoothLE.MODE_OFF) {
       throw new Error(`Must be 'off' before changing beacon info`);
     }
 
-    let info = {
+    let info: BeaconInfo = {
       major: DEFAULT_BEACON_MAJOR,
       minor: DEFAULT_BEACON_MINOR,
       measuredPower: BluetoothLE.DEFAULT_BEACON_POWER,
+      uuid: '',
     };
 
-    if (typeof value === 'string') {
-      info.uuid = value;
-    } else {
-      info = Object.assign(info, value);
-
-      if (!info.uuid) {
-        throw new Error(`Must have a uuid`);
-      }
+    info = Object.assign(info, value);
+    if (!info.uuid) {
+      throw new Error(`Must have a uuid`);
     }
 
     this._beaconInfo = info;
   }
 
-  get socketSessionListener() {
+  get socketSessionListener(): ?EventEmitter {
     return this._socketSessionListener;
   }
 
-  set socketSessionListener(val) {
+  set socketSessionListener(val: ?EventEmitter) {
     if (this._mode !== BluetoothLE.MODE_OFF) {
       throw new Error(`Must be 'off' before changing socket listener`);
     }
@@ -125,7 +134,7 @@ class BluetoothLE extends EventEmitter {
     this._socketSessionListener = val;
   }
 
-  async changeMode(mode) {
+  async changeMode(mode: BluetoothMode): Promise<void> {
     log.debug(`BluetoothLE.changeMode('${mode}')`);
 
     switch (mode) {
@@ -134,7 +143,7 @@ class BluetoothLE extends EventEmitter {
 
     case BluetoothLE.MODE_SCAN:
     case BluetoothLE.MODE_BEACON:
-      assert(this._beaconInfo);
+      invariant(this._beaconInfo);
       break;
 
     default:
@@ -170,7 +179,7 @@ class BluetoothLE extends EventEmitter {
     await this._changeStatePromise;
   }
 
-  async _changeMode(mode) {
+  async _changeMode(mode: BluetoothMode): Promise<void> {
     log.debug(`BluetoothLE._changeMode('${mode}')`);
 
     if (this._mode === mode) {
@@ -180,7 +189,7 @@ class BluetoothLE extends EventEmitter {
     await this._off();
 
     if (mode !== BluetoothLE.MODE_OFF) {
-      assert(this._beaconInfo);
+      invariant(this._beaconInfo);
 
       await this._startAdvertising();
 
@@ -193,7 +202,7 @@ class BluetoothLE extends EventEmitter {
     this.emit(`modeChanged`, mode);
   }
 
-  async _off() {
+  async _off(): Promise<void> {
     log.debug(`BluetoothLE._off()`);
 
     let promises = [ ];
@@ -201,22 +210,24 @@ class BluetoothLE extends EventEmitter {
     if (this._socketSession) {
       log.info(`Waiting for socket session to disconnect`);
       promises.push(new Promise(resolve => {
-        this._socketSession.once(`close`, () => resolve());
-        this._socketSession.end();
+        let socketSession = this._socketSession;
+        invariant(socketSession);
+        socketSession.once(`close`, () => resolve());
+        socketSession.end();
       }));
     }
 
-    if (this._socketScanner) {
+    let socketScanner = this._socketScanner;
+    if (socketScanner) {
       log.info(`Waiting for socket scanner to stop`);
-      this._socketScanner.removeListener(`connect`,
-                                         this._onSocketSessionConnect);
-      promises.push(this._socketScanner.stop());
+      socketScanner.removeListener(`connect`, this._onSocketSessionConnect);
+      promises.push(socketScanner.stop());
     }
 
     if (this._advertising && this._adapterState === `poweredOn`) {
       log.info(`Waiting for advertising to stop`);
 
-      assert(!this._bledroidCrashDeferred);
+      invariant(!this._bledroidCrashDeferred);
       this._bledroidCrashDeferred = makeDeferred();
 
       let promise = new Promise(resolve => {
@@ -240,7 +251,7 @@ class BluetoothLE extends EventEmitter {
     this._bledroidCrashDeferred = null;
   }
 
-  async _startAdvertising() {
+  async _startAdvertising(): Promise<void> {
     log.debug(`BluetoothLE._startAdvertising()`);
 
     if (this._advertising) {
@@ -250,7 +261,7 @@ class BluetoothLE extends EventEmitter {
     // Make sure that the adapter is on before attempting to start advertising.
     await this._adapterStateDeferred.promise;
 
-    assert(!this._bledroidCrashDeferred);
+    invariant(!this._bledroidCrashDeferred);
     this._bledroidCrashDeferred = makeDeferred();
 
     let promise = new Promise((resolve, reject) => {
@@ -261,6 +272,7 @@ class BluetoothLE extends EventEmitter {
           resolve();
         }
       };
+      invariant(this._beaconInfo);
       bleno.startAdvertisingIBeacon(this._beaconInfo.uuid,
                                     this._beaconInfo.major,
                                     this._beaconInfo.minor,
@@ -277,7 +289,7 @@ class BluetoothLE extends EventEmitter {
     this._bledroidCrashDeferred = null;
   }
 
-  async _startSocketScanner() {
+  async _startSocketScanner(): Promise<void> {
     log.debug(`BluetoothLE._startSocketScanner()`);
 
     if (this._socketScanner) {
@@ -292,11 +304,11 @@ class BluetoothLE extends EventEmitter {
       this._privateKey,
       {
         publicKeys: this._publicKeys,
-        serviceUuid: this._beaconInfo.uuid,
+        serviceUuid: this._beaconInfo ? this._beaconInfo.uuid : '',
       }
     );
 
-    assert(!this._bledroidCrashDeferred);
+    invariant(!this._bledroidCrashDeferred);
     this._bledroidCrashDeferred = makeDeferred();
 
     await Promise.race([
@@ -310,7 +322,7 @@ class BluetoothLE extends EventEmitter {
     this._bledroidCrashDeferred = null;
   }
 
-  _onAdapterStateChange = adapterState => {
+  _onAdapterStateChange: ((adapterState: string) => void) = (adapterState) => {
     log.debug(`BluetoothLE._onAdapterStateChange('${adapterState}')`);
 
     if (this._adapterState === adapterState) {
@@ -326,7 +338,7 @@ class BluetoothLE extends EventEmitter {
     this._adapterState = adapterState;
 
     if (adapterState === `poweredOn`) {
-      assert(!this._bledroidCrashDeferred);
+      invariant(!this._bledroidCrashDeferred);
 
       // Make sure that we unblock anyone waiting on the adapter state promise.
       if (!this._adapterStateDeferredAccepted) {
@@ -337,7 +349,7 @@ class BluetoothLE extends EventEmitter {
     }
 
     if (!justCrashed) {
-      assert(!this._adapterStateDeferredAccepted);
+      invariant(!this._adapterStateDeferredAccepted);
       return;
     }
 
@@ -386,15 +398,15 @@ class BluetoothLE extends EventEmitter {
     }
   };
 
-  _onSocketSessionConnect = socketSession => {
+  _onSocketSessionConnect: ((socketSession: SocketSession) => void) = (socketSession) => {
     log.debug(`BluetoothLE._onSocketSessionConnect()`);
 
     // This won't be true always, but right now we only support one connection
     // at a time.
-    assert(!this._socketSession);
+    invariant(!this._socketSession);
 
     const listener = this._socketSessionListener;
-    assert(listener);
+    invariant(listener);
 
     socketSession.once(`close`, () => {
       listener.emit(`disconnect`, socketSession);
@@ -409,15 +421,21 @@ class BluetoothLE extends EventEmitter {
   };
 }
 
-async function init() {
-  assert(!initPromiseComplete);
+// TODO: remove 'any' once
+// https://github.com/facebook/flow/issues/1170 is resolved
+let initPromise: ?Promise<any> = null;
+let initPromiseComplete = false;
+
+// TODO: remove 'any'
+async function init(): Promise<any> {
+  invariant(!initPromiseComplete);
 
   const stateChange = `stateChange`;
   const expectedState = getboolprop(`ro.silk.bt.enabled`, true) ?
                         `poweredOn` :
                         `poweredOff`;
 
-  function waitForState(api, apiName) {
+  function waitForState(api: any, apiName: string): Promise<void> {
     return new Promise(resolve => {
       if (api.state === expectedState) {
         log.debug(`${apiName} is already '${expectedState}'`);
@@ -441,28 +459,30 @@ async function init() {
     log.warn(message);
   });
 
-  let [ deviceId ] = await Promise.all([
-    getDeviceId(),
+  let deviceId;
+  await Promise.all([
+    // We can't just `await getDeviceId()` and use the return value
+    // because Flow doesn't like bunching up promises of different
+    // return types in Promise.all().
+    getDeviceId().then((id) => deviceId = id),
     waitForState(bleno, `bleno`),
     waitForState(noble, `noble`),
   ]);
 
-  assert(deviceId);
-
-  let instance = new BluetoothLE(deviceId.priv);
-
+  invariant(deviceId);
+  // TODO: remove 'any'
+  let instance: any = new BluetoothLE(deviceId.priv);
   initPromiseComplete = true;
-
   log.info(`Initialization complete`);
-
   return instance;
 }
 
-export default async function() {
+// TODO: remove 'any'
+export default function(): Promise<any> {
   if (initPromise) {
     log.debug(`Already initializ` + (initPromiseComplete ? `ed` : `ing`));
   } else {
     initPromise = init();
   }
-  return await initPromise;
+  return initPromise;
 }

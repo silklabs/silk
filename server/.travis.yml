@@ -15,6 +15,7 @@ script: npm test && ./build/ci.sh
 
 before_deploy:
   - test -d server || cd ..
+  - (cd version; npm install --loglevel http)
 
 deploy:
   - provider: heroku

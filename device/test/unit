@@ -6,7 +6,7 @@ npm install
 npm test
 popd
 
-source $(dirname $0)/../../.branch
+source $(dirname $0)/../../version/branch
 if [ -n "$TRAVIS_BRANCH" ]; then
   BRANCH=$TRAVIS_BRANCH
 fi

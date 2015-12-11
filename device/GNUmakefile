@@ -4,7 +4,7 @@
 
 SHELL=/bin/bash
 
--include ../.branch
+-include ../version/branch
 BRANCH ?= unknown
 export BRANCH
 
@@ -266,4 +266,4 @@ $(eval \
 # gonk build system
 GNUmakefile: ;
 out/repo_fetchtimes.P: ;
-../.branch: ;
+../version/branch: ;

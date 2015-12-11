@@ -97,8 +97,8 @@ updatebranch__silk_core() {
     fi
 
     git checkout $to
-    # Update .branch to match the destination branch
-    sed -i .branch -e s/${from}/${to}/g
+    # Update version/branch to match the destination branch
+    sed -i version/branch -e s/${from}/${to}/g
     local msg="Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
   )

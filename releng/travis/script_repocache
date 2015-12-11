@@ -19,6 +19,6 @@ set -x
 cd ..
 make -C device repocache.$GONK
 
-mkdir -p deploy/
-mv device/repocache*tgz deploy/
+mkdir -p deploy/repocache
+mv device/repocache*tgz deploy/repocache/
 exit 0

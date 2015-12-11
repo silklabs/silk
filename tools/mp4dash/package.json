@@ -1,0 +1,30 @@
+{
+  "name": "silk-mp4dash",
+  "description": "Tools to generate mp4 dash videos",
+  "version": "0.0.1",
+  "license": "proprietary",
+  "scripts": {
+    "start": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/server.js",
+    "file": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js"
+  },
+  "dependencies": {
+    "babel-cli": "^6.0.0",
+    "babel-preset-es2015": "^6.0.0",
+    "babel-preset-stage-0": "^6.0.0",
+    "babel-preset-react": "^6.0.0",
+    "log": "file:../../log",
+    "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
+    "socket.io-client": "^1.3.6"
+  },
+  "babel": {
+    "presets": [
+      "es2015",
+      "stage-0",
+      "react"
+    ],
+    "only": [
+      "src/**",
+      "node_modules/silk-api/src/**"
+    ]
+  }
+}

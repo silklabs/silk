@@ -11,6 +11,7 @@ import ntpClient from 'ntp-client';
 import { EventEmitter } from 'events';
 import wifi from './wifi';
 import createLog from './log';
+import version from 'silk-core-version';
 
 const log = createLog('ntp');
 
@@ -53,9 +54,19 @@ function getNetworkTime() {
   // TODO: This is currently using the default NTP time server.
   //       Make the server to use configurable?
   wifi.online().then(() => {
-    log.info('Retrieving NTP time');
+    log.info(`Retrieving NTP time from ${ntpClient.defaultNtpServer}`);
     ntpClient.getNetworkTime(undefined, undefined, ntpCallback);
   });
+}
+
+// Ensure the device time is newer than the build time of this software.
+// In particular this helps avoid device times that are clearly wrong (1969)
+// from causing certificates to be considered invalid, etc.
+if (Date.now() < version.buildtime) {
+  log.warn(`Device time is certainly in the past, adjusting to build time`);
+  let date = new Date();
+  date.setTime(version.buildtime);
+  setSystemDate(date);
 }
 
 getNetworkTime();

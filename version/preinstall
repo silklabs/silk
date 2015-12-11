@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [[ -f dist/index.json ]]; then
+  exit 0;
+fi
+
 mkdir -p dist
 cat > dist/index.json <<-EOF
 	{

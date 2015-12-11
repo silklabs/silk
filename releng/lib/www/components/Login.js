@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Alert, ButtonInput, Panel, Input, Row, Col } from 'react-bootstrap';
+import version from 'silk-core-version';
 
 const Config = {
 /*
@@ -114,6 +115,15 @@ export default class Login extends React.Component {
             </Col>
           </Row>
         </form>
+        <div style={{textAlign: 'center'}}>
+          <small>
+            {version.branch} {version.semver} (
+              <a href={'https://github.com/silklabs/silk-core/commit/' + version.sha}>
+                {version.sha.substr(0, 7)}
+              </a>
+            )
+          </small>
+        </div>
       </Panel>
     );
   }

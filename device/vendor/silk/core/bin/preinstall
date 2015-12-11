@@ -1,7 +1,8 @@
 #!/bin/bash -ex
 
-if [[ -f ../gonk/gnutools.sh ]]; then
-  source ../gonk/gnutools.sh
+SCROOT=../../../..
+if [[ -f $SCROOT/tools/gnu.sh ]]; then
+  source $SCROOT/tools/gnu.sh
 fi
 
 # Delete previously copied "local" node modules

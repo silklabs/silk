@@ -5,7 +5,7 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 LOCAL_PATH=$(dirname $0)
-source $LOCAL_PATH/../vendor/silk/gonk/gnutools.sh
+source $LOCAL_PATH/../../tools/gnu.sh
 
 usage()
 {

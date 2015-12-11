@@ -6,11 +6,10 @@ import createLog from 'log';
 
 import connectToSocketIO from './socketio';
 import SegmentProvider from './segment_provider';
+import config from './config';
 
 const log = createLog('server');
 
-const HTTP_PORT = 9999;
-const SOCKET_IO_SERVER = 'http://localhost:5001';
 const PRETEND_CONTENT_LENGTH = 1024 * 1024 * 1024; // LOL
 
 function parseRange(request): [?number, ?number] {
@@ -134,6 +133,9 @@ function handleRequest(request, response, socket) {
   if (deviceId[0] === '/') {
     deviceId = deviceId.slice(1);
   }
+  if (deviceId === 'default') {
+    deviceId = config.deviceId;
+  }
   let provider = SegmentProvider.get(socket, deviceId);
   let [start, end] = parseRange(request);
   if (end === null) {
@@ -144,7 +146,7 @@ function handleRequest(request, response, socket) {
 }
 
 function main() {
-  connectToSocketIO((socket) => {
+  connectToSocketIO().then((socket) => {
     log.info('Connected to socket.io');
     socket.emit('join', 'video-streams');
     socket.on('video-stream-new', (message) => {
@@ -153,13 +155,13 @@ function main() {
     socket.on('video-stream-delete', (message) => {
       log.info('video-stream-delete', message.id);
     });
-  });
 
-  let http_server = http.createServer();
-  http_server.on('request', (request, response) => {
-    handleRequest(request, response, socket);
+    let http_server = http.createServer();
+    http_server.on('request', (request, response) => {
+      handleRequest(request, response, socket);
+    });
+    http_server.listen(config.port, '0.0.0.0');
   });
-  http_server.listen(HTTP_PORT, '0.0.0.0');
 
   // Prime the init segment.
   SegmentProvider.getInitSegment();

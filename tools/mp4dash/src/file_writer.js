@@ -4,14 +4,14 @@ import createLog from 'log';
 
 import connectToSocketIO from './socketio';
 import SegmentProvider from './segment_provider';
+import config from './config';
 
 const log = createLog('file-writer');
-
-const DEVICE_ID = '032aa987ce505299f31b5317ecd1ca774e4e9a411ad81bc90aec177b9bd935883b';
+const { deviceId } = config;
 
 function startRecording(socket) {
-  log.info(`startRecording(${DEVICE_ID}`);
-  let provider = SegmentProvider.get(socket, DEVICE_ID);
+  log.info(`startRecording(${deviceId}`);
+  let provider = SegmentProvider.get(socket, deviceId);
   let fileStream = fs.createWriteStream('out.mp4', { flags: 'w' });
   let writeSegmentToFile = (segment) => {
     log.info(`Writing segment ${segment.seqno} to file.`);
@@ -22,12 +22,12 @@ function startRecording(socket) {
 }
 
 function main() {
-  connectToSocketIO((socket) => {
+  connectToSocketIO().then((socket) => {
     log.info('Connected to socket.io');
     socket.emit('join', 'video-streams');
     socket.on('video-stream-new', (message) => {
       log.info('video-stream-new', message.id);
-      if (message.id === DEVICE_ID) {
+      if (message.id === deviceId) {
         startRecording(socket);
       }
     });

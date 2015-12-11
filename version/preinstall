@@ -3,7 +3,7 @@
 mkdir -p dist
 cat > dist/index.json <<-EOF
 	{
-	  "branch": "$(source ../.branch && echo $BRANCH)",
+	  "branch": "$(source branch; echo $BRANCH)",
 	  "buildtime": "$(node -p "Date.now()")",
 	  "semver": "$(node -p "require('./package.json').version")",
 	  "sha": "$(git rev-parse HEAD)"

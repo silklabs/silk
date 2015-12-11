@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $(dirname $0)/../../.branch
+source $(dirname $0)/../../version/branch
 BRANCH_ARG=$1
 BRANCH_TO_DOWNLOAD=${BRANCH_ARG:-$BRANCH}
 

@@ -2,7 +2,7 @@
  * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import { Duplex } from 'stream';
 import makeLog from 'log';
 
@@ -29,7 +29,7 @@ export default class Stream extends Duplex {
     this._socket = socket;
 
     this.once(`end`, () => {
-      assert(!this._ended);
+      invariant(!this._ended);
       this._ended = true;
 
       if (this._finished) {
@@ -38,7 +38,7 @@ export default class Stream extends Duplex {
     });
 
     this.once(`finish`, () => {
-      assert(!this._finished);
+      invariant(!this._finished);
       this._finished = true;
 
       if (this._ended) {
@@ -53,7 +53,7 @@ export default class Stream extends Duplex {
 
   _write(data: Buffer, encoding: 'buffer', callback: ((error: ?Error) => void)) {
     log.debug(`Stream._write(<Buffer ${data.length}>, ${encoding})`);
-    assert(encoding === `buffer`);
+    invariant(encoding === `buffer`);
 
     if (!this._writeError) {
       try {

@@ -2,7 +2,7 @@
  * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import { createStreams, RssiSmoother } from 'silk-api';
 import { getRandomBytes } from '../Crypto';
 import makeLog from 'log';
@@ -113,8 +113,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _onFinish: (() => void) = () => {
     log.debug(`SocketSession._onFinish()`);
 
-    assert(!this._rssiUpdatesEnabled);
-    assert(!this._finished);
+    invariant(!this._rssiUpdatesEnabled);
+    invariant(!this._finished);
 
     this._finished = true;
   };
@@ -138,8 +138,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
     }
 
     this._rssiTimeout = setTimeout(() => {
-      assert(this._rssiUpdatesEnabled);
-      assert(!this._rssiUpdatePending);
+      invariant(this._rssiUpdatesEnabled);
+      invariant(!this._rssiUpdatePending);
 
       this._rssiTimeout = null;
       this._rssiUpdatePending = true;
@@ -150,7 +150,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
   _sendDisconnect() {
     log.debug(`SocketSession._sendDisconnect()`);
-    assert(!this._sentDisconnect);
+    invariant(!this._sentDisconnect);
 
     this._sentDisconnect = true;
 
@@ -170,8 +170,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
     return this._rssiUpdatesEnabled;
   }
 
-  set rssiUpdatesEnabled(val) {
-    val = val ? true : false;
+  set rssiUpdatesEnabled(val: boolean) {
+    val = !!val;
     if (this.rssiUpdatesEnabled === val) {
       return;
     }
@@ -179,8 +179,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._rssiUpdatesEnabled = val;
 
     if (this.rssiUpdatesEnabled) {
-      assert(this._socket);
-      assert(!this._rssiTimeout);
+      invariant(this._socket);
+      invariant(!this._rssiTimeout);
       if (!this._rssiUpdatePending) {
         this._updateRssiAfterDelay();
       }

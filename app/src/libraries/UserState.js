@@ -12,7 +12,7 @@
 // The API violates this rule, so disable it for the whole file.
 /* eslint new-cap:0 */
 
-import assert from 'assert';
+import invariant from 'assert';
 import { EventEmitter} from 'events';
 import createLog from 'log';
 
@@ -112,7 +112,7 @@ export class UserState extends EventEmitter {
     }
 
     registeredDevices = JSON.parse(registeredDevices);
-    assert(Array.isArray(registeredDevices));
+    invariant(Array.isArray(registeredDevices));
 
     log.info('Registered devices', registeredDevices);
 
@@ -276,7 +276,7 @@ export class UserState extends EventEmitter {
   }
 
   async updateRegisteredDevices(deviceRecords) {
-    assert(this.accessToken, `Must be signed in`);
+    invariant(this.accessToken, `Must be signed in`);
 
     let storedRecords = deviceRecords.map((record) => {
       return {

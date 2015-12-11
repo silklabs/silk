@@ -2,7 +2,7 @@
  * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import { EventEmitter } from 'events';
 import getSocketManager from './SocketManager';
 import * as Joi from 'joi-browserify';
@@ -125,10 +125,7 @@ export class DeviceSession extends EventEmitter {
 
     super();
 
-    if (!singletonInstance) {
-      throw new Error('DeviceManager is not initialized!');
-    }
-
+    invariant(singletonInstance);
     const privateKey = singletonInstance._privateKey;
     const publicKeys = singletonInstance._registeredDevicePublicKeys;
 
@@ -181,9 +178,9 @@ export class DeviceSession extends EventEmitter {
   _emitConnect() {
     log.debug(`DeviceSession._emitConnect()`);
 
-    assert(this._state === DeviceSession.STATE_REGISTER_REQUESTED ||
-           this._state === DeviceSession.STATE_REGISTERED);
-    assert(!this._connectEmitted);
+    invariant(this._state === DeviceSession.STATE_REGISTER_REQUESTED ||
+              this._state === DeviceSession.STATE_REGISTERED);
+    invariant(!this._connectEmitted);
     this._connectEmitted = true;
 
     singletonInstance && singletonInstance.emit(`connect`, this);
@@ -192,8 +189,8 @@ export class DeviceSession extends EventEmitter {
   _emitRegistered() {
     log.debug(`DeviceSession._emitRegistered()`);
 
-    assert(this._state === DeviceSession.STATE_REGISTERED);
-    assert(!this._registeredEmitted);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    invariant(!this._registeredEmitted);
     this._registeredEmitted = true;
 
     this.emit(`registered`);
@@ -202,9 +199,9 @@ export class DeviceSession extends EventEmitter {
   _maybeEmitSecret() {
     log.debug(`DeviceSession._maybeEmitSecret()`);
 
-    assert(this._state === DeviceSession.STATE_REGISTERING ||
-           this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
-    assert(!this._secretEmitted);
+    invariant(this._state === DeviceSession.STATE_REGISTERING ||
+              this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
+    invariant(!this._secretEmitted);
 
     if (this._state === DeviceSession.STATE_REGISTERING_PROXIMITY &&
         this._secret) {
@@ -273,7 +270,7 @@ export class DeviceSession extends EventEmitter {
         break;
       }
 
-      assert(this._socketSession.authenticated);
+      invariant(this._socketSession.authenticated);
 
       this._isRegistered = true;
       this._deviceId = data.deviceId;
@@ -347,8 +344,8 @@ export class DeviceSession extends EventEmitter {
         break;
       }
 
-      assert(this._secret);
-      assert(this._secretEmitted);
+      invariant(this._secret);
+      invariant(this._secretEmitted);
 
       this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
       this.emit(`restart`);
@@ -380,7 +377,7 @@ export class DeviceSession extends EventEmitter {
       return;
     }
 
-    assert(this._state === DeviceSession.STATE_REGISTERING);
+    invariant(this._state === DeviceSession.STATE_REGISTERING);
 
     if (rssi < DeviceSession.RSSI_THRESHOLD) {
       this.emit(`rssiUpdate`, rssi);
@@ -451,7 +448,7 @@ export class DeviceSession extends EventEmitter {
       return;
     }
 
-    assert(this._state === DeviceSession.STATE_REGISTER_REQUESTED);
+    invariant(this._state === DeviceSession.STATE_REGISTER_REQUESTED);
     this._acceptRegistrationPending = false;
 
     this._socketSession.write({
@@ -493,8 +490,8 @@ export class DeviceSession extends EventEmitter {
   sendRegistrationInformation(config: RegistrationInformation) {
     log.debug(`DeviceSession.sendRegistrationInformation()`);
 
-    assert(this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
-    assert(this._secretEmitted);
+    invariant(this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
+    invariant(this._secretEmitted);
 
     this._socketSession.write({
       name: `secret`,
@@ -524,8 +521,8 @@ export class DeviceSession extends EventEmitter {
       return;
     }
 
-    assert(this._state === DeviceSession.STATE_REGISTERING ||
-           this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
+    invariant(this._state === DeviceSession.STATE_REGISTERING ||
+              this._state === DeviceSession.STATE_REGISTERING_PROXIMITY);
 
     this._state = DeviceSession.STATE_RESTARTED;
     this._socketSession.rssiUpdatesEnabled = false;
@@ -554,7 +551,7 @@ export class DeviceSession extends EventEmitter {
       return;
     }
 
-    assert(this._state === DeviceSession.STATE_REGISTERED);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
     this._socketSession.write({
       name: `dismiss`,
     });
@@ -573,11 +570,11 @@ class DeviceManager extends EventEmitter {
   constructor(userState: UserState) {
     log.debug(`DeviceManager()`);
 
-    assert(userState);
+    invariant(userState);
 
     const accessToken = userState.accessToken;
-    assert(accessToken.priv);
-    assert(accessToken.isValid());
+    invariant(accessToken.priv);
+    invariant(accessToken.isValid());
 
     super();
 
@@ -594,7 +591,7 @@ class DeviceManager extends EventEmitter {
   _onConnect: ((socket: Socket) => void) = (socket) => {
     log.debug(`DeviceManager._onConnect()`);
 
-    assert(!this._devices.has(socket));
+    invariant(!this._devices.has(socket));
 
     let device = new DeviceSession(socket);
     this._devices.set(socket, device);
@@ -613,7 +610,7 @@ class DeviceManager extends EventEmitter {
   _onRegisteredUpdatedDevices: ((deviceRecords: Array<DeviceRecord>) => void) = (deviceRecords) => {
     log.debug(`DeviceManager._onRegisteredUpdatedDevices()`);
 
-    assert(Array.isArray(deviceRecords));
+    invariant(Array.isArray(deviceRecords));
 
     this._registeredDevicePublicKeys =
       deviceRecords.map((deviceRecord) => deviceRecord.publicKey);

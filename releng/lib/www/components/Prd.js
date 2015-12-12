@@ -213,7 +213,7 @@ export default class Prd extends React.Component {
       const itemsByMilestone = await prd.fetchAllPrdItems(this.props.route.userState.octo);
       this.setState({itemsByMilestone, loadingMessage: null});
     } catch (err) {
-      this.setState({loadingMessage: err.stack});
+      this.setState({loadingMessage: 'Loading failed: ' + err.stack});
     }
   }
 
@@ -310,11 +310,20 @@ export default class Prd extends React.Component {
         );
     }
 
+    let prdRepoLink;
+    if (this.state.labels) {
+      prdRepoLink =
+        <sup><a
+          target="_blank"
+          href={'https://github.com/silklabs/' + prd.prdRepo}>
+          *
+        </a></sup>;
+    }
     return (
       <div>
         {zen}
         {navBar}
-        <h3>"X Concept" Product Requirements</h3>
+        <h3>{prd.prdRepoName}{prdRepoLink}</h3>
         <hr/>
         {prdBody}
       </div>

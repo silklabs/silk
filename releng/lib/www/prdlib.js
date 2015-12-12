@@ -4,7 +4,8 @@
 import makeLog from 'log';
 const log = makeLog('prd');
 
-export const prdRepo = 'x-concept-prd';
+export const prdRepo = 'silk-vision-prd';
+export const prdRepoName = 'Silk Vision Product Requirements';
 
 export const priorityLabels = {
   'must-have': 0,

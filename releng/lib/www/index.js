@@ -2,6 +2,10 @@
 import debug from 'debug';
 debug.enable('silk-*');
 
+// Activate better Error stack traces
+import 'source-map-support/browser-source-map-support';
+sourceMapSupport.install(); //eslint-disable-line no-undef
+
 import React from 'react';
 import { Router, Route, Redirect } from 'react-router';
 import { Alert } from 'react-bootstrap';

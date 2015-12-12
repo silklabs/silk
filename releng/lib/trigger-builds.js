@@ -54,7 +54,7 @@ const buildList = [
       os: ['linux', 'osx'],
       env: {
         global: [
-          'DEPLOY=true',
+          'S3DEPLOY=true',
           'GONK=base',
         ],
         matrix: [],
@@ -71,7 +71,7 @@ const buildList = [
       os: ['linux'],
       env: {
         global: [
-          'DEPLOY=true',
+          'S3DEPLOY=true',
           'GONK=mako',
         ],
         matrix: [],
@@ -88,7 +88,7 @@ const buildList = [
       os: ['linux'],
       env: {
         global: [
-          'DEPLOY=true',
+          'S3DEPLOY=true',
           'GONK=qemu',
         ],
         matrix: [],

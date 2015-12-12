@@ -23,7 +23,7 @@ deploy:
     local-dir: deploy/
     upload-dir: $TRAVIS_BRANCH
     on:
-      condition: $DEPLOY = true
+      condition: $S3DEPLOY = true
   - provider: heroku
     api_key:
       secure: "VvQd6nZOrR9FxX4HBGPCTEwFJsMg4v4akPV53BPGy0rMI5Nk+PovuIgb1TZDHZj9dxus8os8ekvzeCHZSivUTQPwiIz2FkhhaVTbga/SMfv0a+FiAgCXIuz4jGJ3AxxBMoA9LJrmYZK45htj6kIFvmRkOLQbDDPAMlkk+7hSeDCFG+m6q5hvbjl4NjoMhXzgHVkaPwf0jApj0AdY9SRj2skFMQk2zBh91pvwkIh8j0BUqDkVUj5d754u7dlFCnQRZLZ+d0sIeLBuuiDx8PBMDTwSqdaaIDUsV80ZKnALpjLLBShL9S9cmM7b4/ak/ml8mCreag5qOi6QZ2OjBZVtcCeUjcNnpfatwq97F9ga5K5Eoc8kJgMaU1oltyEQV5D1W6UxDj2Pb2Vsyyeyv9PgiWo/XYhfl9vkP9QnJlfMmEDfyDh85vEA6Mm8cVxUnXL3I3HZEUVbzfSlTjma1Am1AmEu4yuPIzPrS//A7HYxMKsSmHwXqbJa7cG37XuhD6tRCZHVCvlv800Y/aLdlT3whDwr7qfISgey9xFO0QDSmi7YBMXWSkPMmDvmg/Q+6s1cWgFCcBttRc65nCVXA3dS36Z5LhmHKDhsdAoagFll207q9cKI7/E0OtcklTH2iDrfoA5Rij9vpbKO02kG6X/JVkYhKLwOvjiraSdSJ3ya/9I="
@@ -31,5 +31,5 @@ deploy:
       master: silk-releng
     on:
       branch: master
-      condition: "$TRAVIS_PULL_REQUEST/$DEPLOY == false/false"
+      condition: "$TRAVIS_PULL_REQUEST/$S3DEPLOY == false/"
 

@@ -1,18 +1,18 @@
 # |source| me
 
-if [[ $TRAVIS_PULL_REQUEST == false ]]; then
-    export GONK=$GONK_SPEC
+echo GONK_SPEC=$GONK_SPEC
+
+if [[ -z $GONK_SPEC ]]; then
+  if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+    # Branch build.  Select the primary development device.  Secondary devices
+    # are built nightly by Releng.
+    export GONK=mako
+  else
+    # Pull request.  Build a quick "base" build.
+    export GONK=base
+  fi
 else
-    # Pull request.  Force a "base" build for only one of the entries in the
-    # Travis build matrix
-    case $GONK_SPEC in
-    qemu)
-        export GONK=base
-        ;;
-    *)
-        # "base" builds aren't target specific, so skip for everything
-        # else since we're already doing them for qemu.
-        export GONK=nop
-        ;;
-    esac
+  export GONK=$GONK_SPEC
 fi
+
+echo GONK=$GONK

@@ -12,6 +12,30 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
+    message: 'Nightly qemu master build',
+    branch: 'master',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [ 'GONK_SPEC=qemu' ],
+      },
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'device',
+    message: 'Nightly qemu next build',
+    branch: 'next',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [ 'GONK_SPEC=qemu' ],
+      },
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'device',
     message: 'Nightly OS X base build',
     branch: 'master',
     config: {

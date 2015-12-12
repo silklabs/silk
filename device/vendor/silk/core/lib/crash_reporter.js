@@ -15,6 +15,7 @@ import mkdirp from 'mkdirp-promise';
 import net from 'net';
 import wrapNoEntity from './fs/wrap_no_entity';
 import { getboolprop } from './sysutils';
+import version from 'silk-core-version';
 
 import CrashReportOp from './outbox/crash_report_operation';
 import { EventEmitter } from 'events';
@@ -22,7 +23,7 @@ import { EventEmitter } from 'events';
 const log = createLog('crash_reporter');
 
 const CRASHREPORT_ENABLED_PROP = 'persist.silk.crashrprt.enabled';
-const CRASHREPORT_ENABLED = getboolprop(CRASHREPORT_ENABLED_PROP);
+const CRASHREPORT_ENABLED = getboolprop(CRASHREPORT_ENABLED_PROP, version.official);
 
 const TOMBSTONE_PATH = '/data/tombstones/';
 const DEBUGGERD_SOCKET_PATH = '/data/system/ndebugsocket';

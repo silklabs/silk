@@ -33,8 +33,8 @@ Adventus5           |Oct 12 |Oct 21 |Oct 23 |Oct 29 | [Closed](https://github.co
 Adventus4           |Oct 26 |Nov 4  |Nov 6  |Nov 12 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus4+is%3Aclosed)
 Adventus3           |Nov 9  |Nov 18 |Nov 20 |Nov 26 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus3+is%3Aclosed)
 Adventus2           |Nov 23 |Dec 2  |Dec 4  |Dec 10 | [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus2+is%3Aclosed)
-Adventus1           |Dec 7  |Dec 11 |Dec 15 |Dec 18 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+no%3Aassignee) / [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+is%3Aclosed)
-*Happy Holidays!!!* |Dec 21 |-      |-      |Jan 1  | -
+Adventus1           |Dec 7  |Dec 16 |Dec 18 |Jan 6 | [Open](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1) / [Unassigned](https://github.com/issues?q=is%3Aopen+is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+no%3Aassignee) / [Closed](https://github.com/issues?q=is%3Aissue+user%3Asilklabs+milestone%3AAdventus1+is%3Aclosed)
+*Happy Holidays!!!*
 
 ### Glossary
 

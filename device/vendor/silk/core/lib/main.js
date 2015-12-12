@@ -74,6 +74,7 @@ let logcat;
 let ext;
 let diag;
 let hue;
+const HUE_ENABLED = util.getboolprop('persist.silk.hue.enabled');
 
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
@@ -312,7 +313,7 @@ config.on('configured', () => {
     })
     .then(() => {
 
-      if (!hue) {
+      if (HUE_ENABLED && !hue) {
         // Initialize hue module, which is special in the following ways:
         //
         // 1. It will fail to initialize if there's no wifi connection.

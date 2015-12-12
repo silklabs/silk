@@ -5,7 +5,9 @@
   "license": "proprietary",
   "scripts": {
     "start": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/server.js",
-    "file": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js"
+    "cat": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js cat",
+    "segments": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js segments",
+    "file": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js cat"
   },
   "dependencies": {
     "babel-cli": "^6.0.0",

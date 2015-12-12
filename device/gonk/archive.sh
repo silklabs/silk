@@ -104,7 +104,7 @@ EOF
   chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
   # Copy branch file
-  cp ../../version/branch $archiveDir/$TARGET_PRODUCT
+  cp ../version/branch $archiveDir/$TARGET_PRODUCT
 
   # Create flash_fut script
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'

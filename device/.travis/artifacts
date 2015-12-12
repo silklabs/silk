@@ -15,7 +15,7 @@ else
   CACHE_TYPE="pull_request"
 fi
 # Must not contain leading or trailing slashes...
-export CCACHE_ARTIFACT_PATH="silk-device/$TRAVIS_OS_NAME/$GONK_SPEC/$CACHE_TYPE/ccache"
+export CCACHE_ARTIFACT_PATH="silk-device/$TRAVIS_OS_NAME/$GONK/$CACHE_TYPE/ccache"
 mkdir -p $ARTIFACT_DIR
 
 npm install -g silklabs/s3-artifacts

@@ -86,7 +86,7 @@ test/unit
 # build matrix.  It doesn't matter which one, "mako" seems nice
 if [[ $TRAVIS_PULL_REQUEST == false ]] &&
    [[ $TRAVIS_OS_NAME == linux ]] &&
-   [[ $GONK_SPEC == mako ]] ; then
+   [[ $GONK == mako ]] ; then
   echo "******************************************************************"
   echo Update locked_node_modules
   echo "******************************************************************"

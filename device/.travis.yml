@@ -16,11 +16,6 @@ addons:
       - libstdc++6:i386
       - linux-libc-dev
 
-env:
-  matrix:
-    - GONK_SPEC=mako
-    - GONK_SPEC=qemu
-
 before_script:
   source .travis/before_script
 

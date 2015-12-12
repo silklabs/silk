@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/bin/bash -e
 
-if [[ -f dist/index.json ]]; then
-  exit 0;
+# Heroku defines SOURCE_VERSION because the .git/ is not available, so use it if
+# present and otherwise consult git
+if [[ -z "$SOURCE_VERSION" ]]; then
+  SOURCE_VERSION="$(git rev-parse HEAD)"
 fi
 
 mkdir -p dist
@@ -10,6 +12,6 @@ cat > dist/index.json <<-EOF
 	  "branch": "$(source branch; echo $BRANCH)",
 	  "buildtime": "$(node -p "Date.now()")",
 	  "semver": "$(node -p "require('./package.json').version")",
-	  "sha": "$(git rev-parse HEAD)"
+	  "sha": "$SOURCE_VERSION"
 	}
 EOF

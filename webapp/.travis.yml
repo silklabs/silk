@@ -7,7 +7,6 @@ script: npm test
 
 before_deploy:
   - cd ..
-  - (cd version; npm install --loglevel http)
 
 deploy:
   - provider: heroku

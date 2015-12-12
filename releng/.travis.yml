@@ -10,7 +10,6 @@ script:
 before_deploy:
   - cd ..
   - mkdir -p deploy/
-  - (cd version; npm install --loglevel http)
 
 deploy:
   - provider: s3

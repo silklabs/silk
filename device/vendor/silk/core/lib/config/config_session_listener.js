@@ -67,6 +67,16 @@ export default class ConfigSessionListener extends SessionListenerBase {
     super(deviceConfig);
   }
 
+  _resetState() {
+    this._state = ConfigSessionListener.STATE_IDLE;
+    this._wifiErrorCount = 0;
+
+    if (this._dismissTimeout) {
+      clearTimeout(this._dismissTimeout);
+      this._dismissTimeout = null;
+    }
+  }
+
   _send(data) {
     assert(this._state !== ConfigSessionListener.STATE_ERROR);
     super._send(data);
@@ -166,14 +176,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     super._onDisconnect(socketSession);
 
-    // Reset.
-    this._state = ConfigSessionListener.STATE_IDLE;
-    this._wifiErrorCount = 0;
-
-    if (this._dismissTimeout) {
-      clearTimeout(this._dismissTimeout);
-      this._dismissTimeout = null;
-    }
+    this._resetState();
+    this._deviceConfig._stopRetryingWifiConnection(new Error(`Disconnected`));
   }
 
   _onData(data) {
@@ -339,11 +343,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
   disconnect() {
     log.debug(`ConfigSessionListener.disconnect()`);
 
-    if (this._dismissTimeout) {
-      clearTimeout(this._dismissTimeout);
-      this._dismissTimeout = null;
-    }
-
+    this._resetState();
+    this._deviceConfig._stopRetryingWifiConnection(new Error(`Disconnecting`));
     super.disconnect();
   }
 
@@ -369,11 +370,17 @@ export default class ConfigSessionListener extends SessionListenerBase {
                                       ConfigSessionListener.DISMISS_TIMEOUT_MS);
   }
 
-  sendRestart(errorMessage) {
-    log.debug(`ConfigSessionListener.sendRestart('${errorMessage}')`);
+  maybeSendRestart(errorMessage) {
+    log.debug(`ConfigSessionListener.maybeSendRestart('${errorMessage}')`);
 
-    assert(this._state === ConfigSessionListener.STATE_REGISTERED);
+    assert(this._state === ConfigSessionListener.STATE_IDLE ||
+           this._state === ConfigSessionListener.STATE_REGISTERED);
     assert(!this._dismissTimeout);
+
+    if (this._state === ConfigSessionListener.STATE_IDLE) {
+      log.info(`No longer connected, cannot restart`);
+      return;
+    }
 
     this._send({
       name: `restart`,

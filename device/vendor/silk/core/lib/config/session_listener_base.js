@@ -190,7 +190,12 @@ export default class SessionListenerBase extends EventEmitter {
   _send(data) {
     log.debug(`SessionListenerBase._send(%j)`, data);
 
-    assert(this._socketSession);
+    if (!this._socketSession) {
+      log.warn(`Unable to send because socketSession has already disconnected`,
+               data);
+      return;
+    }
+
     this._socketSession.write(data);
   }
 
@@ -199,9 +204,6 @@ export default class SessionListenerBase extends EventEmitter {
       return;
     }
     this._status = status;
-    if (!this._socketSession) {
-      return;
-    }
     this._send({
       name: `status`,
       status
@@ -213,9 +215,6 @@ export default class SessionListenerBase extends EventEmitter {
       return;
     }
     this._errorCode = code;
-    if (!this._socketSession) {
-      return;
-    }
     this._send({
       name: `error`,
       code,

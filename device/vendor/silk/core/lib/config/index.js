@@ -176,9 +176,9 @@ class DeviceConfig extends EventEmitter {
       // completely registered.
       await this._persistConfig(secret, response);
     } catch (error) {
-      log.warn('Failed to register device, starting over', error.stack);
+      log.warn('Failed to register device', error || error.stack);
 
-      this._wifiAbortConnection = null;
+      this._stopRetryingWifiConnection(error);
 
       await Promise.all([
         fs.exists(CONFIG_PATH)
@@ -190,7 +190,8 @@ class DeviceConfig extends EventEmitter {
         this._unconfigureNetwork(),
       ]);
 
-      this._socketSessionListener.sendRestart(error.toString());
+      // If we're still connected then we can try again.
+      this._socketSessionListener.maybeSendRestart(error.toString());
       return;
     }
 
@@ -203,9 +204,11 @@ class DeviceConfig extends EventEmitter {
   }
 
   _stopRetryingWifiConnection(error) {
-    log.debug(`DeviceConfig._stopRetryingWifiConnection()`);
+    log.debug(`DeviceConfig._stopRetryingWifiConnection(` +
+              `'${error.toString()}')`);
 
     if (this._wifiAbortConnection) {
+      log.debug(`Rejecting wifi connection promise`);
       this._wifiAbortConnection(error);
       this._wifiAbortConnection = null;
     }

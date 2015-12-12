@@ -103,8 +103,8 @@ set +x
 EOF
   chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
-  # Copy .branch file
-  cp ../.branch $archiveDir/$TARGET_PRODUCT
+  # Copy branch file
+  cp ../../version/branch $archiveDir/$TARGET_PRODUCT
 
   # Create flash_fut script
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
@@ -139,7 +139,7 @@ echo Activated uploads to cloud storage
 echo persist.silk.vidupload.enabled=1 >> default.prop
 
 echo Set ota manifest channel
-source ../.branch
+source ../branch
 echo persist.silk.update.channel=$BRANCH >> default.prop
 
 echo Disable SOS vibrate
@@ -213,7 +213,7 @@ echo Device provisioning successful
 EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_demo.sh
-  
+
   cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
 
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then

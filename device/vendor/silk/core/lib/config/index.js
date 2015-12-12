@@ -176,7 +176,7 @@ class DeviceConfig extends EventEmitter {
       // completely registered.
       await this._persistConfig(secret, response);
     } catch (error) {
-      log.warn('Failed to register device', error || error.stack);
+      log.warn('Failed to register device', error.stack || error);
 
       this._stopRetryingWifiConnection(error);
 

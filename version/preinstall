@@ -6,11 +6,20 @@ if [[ -z "$SOURCE_VERSION" ]]; then
   SOURCE_VERSION="$(git rev-parse HEAD)"
 fi
 
+# Official builds are untouched by germ-infested human hands
+OFFICIAL=false
+if [[ -n $DYNO ]]; then  # Heroku deployment?
+  OFFICIAL=true
+elif [[ -n $CI ]]; then  # CI environment?
+  OFFICIAL=true
+fi
+
 mkdir -p dist
 cat > dist/index.json <<-EOF
 	{
 	  "branch": "$(source branch; echo $BRANCH)",
 	  "buildtime": "$(node -p "Date.now()")",
+	  "official": "$OFFICIAL",
 	  "semver": "$(node -p "require('./package.json').version")",
 	  "sha": "$SOURCE_VERSION"
 	}

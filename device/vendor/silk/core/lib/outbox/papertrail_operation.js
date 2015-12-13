@@ -14,7 +14,7 @@ const log = createLog('outbox:papertrail_operation');
 
 export default class PapertrailOperation extends StreamOperation {
 
-  static NAME = 'papertrail'
+  static NAME = 'papertrail';
 
   static StreamClass = () => {
     let sock = net.connect(PORT, HOST);
@@ -33,6 +33,6 @@ export default class PapertrailOperation extends StreamOperation {
     });
 
     return tlsSock;
-  }
+  };
 
 }

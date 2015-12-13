@@ -19,9 +19,9 @@ const log = createLog('operation:crash_report_operation');
 export default class CrashReportOperation extends StreamOperation {
   static NAME = 'crash-report';
 
-  metadata = null
+  metadata = null;
   // Size in bytes of stream...
-  size = null
+  size = null;
 
   constructor(options = {}) {
     super();

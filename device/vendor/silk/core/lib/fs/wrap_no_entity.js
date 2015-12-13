@@ -1,7 +1,12 @@
 /**
  * Helper for wrapping ENOENT file system errors.
+ *
+ * @flow
  */
-export default async function wrapNoEntity(promise, value = null) {
+export default async function wrapNoEntity<T>(
+  promise: Promise<T>,
+  value: ?T = null
+): Promise<?T> {
   try {
     return await promise;
   } catch (err) {

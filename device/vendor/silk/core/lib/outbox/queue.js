@@ -202,7 +202,7 @@ export default class Queue extends EventEmitter {
     return liveOperation;
   }
 
-  throttled(concurrencyMax) {
+  isThrottled(concurrencyMax): boolean {
     if (this.running >= concurrencyMax) {
       return true;
     }
@@ -223,7 +223,7 @@ export default class Queue extends EventEmitter {
     if (!this.online) {
       log.info('Operation while offline, saving to disk');
       saveToDisk = true;
-    } else if (this.throttled(this.concurrency)) {
+    } else if (this.isThrottled(this.concurrency)) {
       log.info(`${this.name} too many concurrent operations ` +
                `(${this.running}/${this.concurrency}), saving to disk`);
       saveToDisk = true;
@@ -372,7 +372,7 @@ export default class Queue extends EventEmitter {
     // This is analogous to turning the lights off for 5mins versus toggling the
     // lights on/off every second for 10 minutes.
     for (let idx = this.diskQueue.length - 1; idx >= 0; --idx) {
-      if (this.throttled(this.diskConcurrency)) {
+      if (this.isThrottled(this.diskConcurrency)) {
         if (chatty) {
           log.verbose(`${this.name} reached max running disk operations, max:` +
             `${this.diskConcurrency} running:${this.running} ` +

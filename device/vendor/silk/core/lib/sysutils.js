@@ -6,9 +6,10 @@
  * @flow
  */
 
-import { execFile as childProcessExecFile } from 'child_process';
-import createLog from './log';
+import { execFile, spawn, spawnSync } from 'child_process';
 import events from 'events';
+
+import createLog from './log';
 
 const log = createLog('sysutils');
 
@@ -39,7 +40,7 @@ type ExecOutput = {
 
 export function exec(cmd: string, args: [string]): Promise<ExecOutput> {
   return new Promise((resolve, reject) => {
-    childProcessExecFile(cmd, args, (err, stdout, stderr) => {
+    execFile(cmd, args, (err, stdout, stderr) => {
       let code = err ? err.code : 0;
       // 127 is failed exec, which is always wrong.  Otherwise we
       // leave it up to the user.
@@ -103,21 +104,23 @@ export function getintprop(prop: string, defaultValue: number = 0): number {
   return value;
 }
 
-export function getlistprop(prop: string, defaultValue: Array<string> = []): Array<string> {
+export function getlistprop(
+  prop: string,
+  defaultValue: Array<string> = []
+): Array<string> {
   let value = getprop(prop, '');
   return (value === '') ? defaultValue : String(value).split(',');
 }
 
-export function setprop(prop: string, value: PropTypes): ?string {
-  let spawnSync = require('child_process').spawnSync;
-  let result = spawnSync('setprop', [prop, value]);
+// TODO shouldn't we better throw `result.error`?
+export function setprop(prop: string, value: PropTypes): ?Error {
+  let result = spawnSync('setprop', [prop, value.toString()]);
   return result.error;
 }
 
 class PropWatcher extends events.EventEmitter {
   constructor() {
     super();
-    let spawn = require('child_process').spawn;
     let spawnWatchprops = () => {
       let cmd = spawn('watchprops', []);
       cmd.stderr.on('data', data => {

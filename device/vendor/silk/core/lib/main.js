@@ -29,7 +29,7 @@ require('source-map-support').install();
 import assert from 'assert';
 import api from './api';
 import {Integer} from 'silk-api';
-import battery from './battery';
+import Battery from './battery';
 
 import wifi from './wifi';
 import ntp from './ntp';
@@ -45,7 +45,7 @@ import Say from './say';
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crash_reporter';
-import makeDiag from './diag';
+import Diag from './diag';
 import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
@@ -69,6 +69,7 @@ api.deviceMetrics.add(new JSStartup({
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 45 * 1000;
 
+let battery = new Battery();
 let id = null;
 let btle = null;
 let timeline;
@@ -198,7 +199,7 @@ function main() {
     })
     .then(maybeAbortBoot)
     .then(() => {
-      diag = makeDiag();
+      diag = new Diag();
 
       btle.on('region-entered', (uuid, rssi) => {
         log.info('Device \'%s\' entered range %d', uuid, rssi);

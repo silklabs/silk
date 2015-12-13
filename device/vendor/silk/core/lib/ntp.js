@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import * as util from './sysutils';
@@ -14,6 +16,7 @@ import version from 'silk-core-version';
 const log = createLog('ntp');
 
 let emitter = new EventEmitter();
+export default emitter;
 
 // Retry every 10 seconds until time is acquired
 const NTP_RETRY_DELAY = 10 * 1000;
@@ -21,21 +24,17 @@ const NTP_RETRY_DELAY = 10 * 1000;
 // Refresh every 24 hours to combat drift
 const NTP_REFRESH_DELAY = 24 * 60 * 60 * 1000;
 
-function setSystemDate(date) {
+function setSystemDate(date: Date) {
   log.info(`Setting system time to: ${date}`);
 
-  util.exec('time_genoff', [date.getTime()])
-  .catch(err => {
-    log.warn(`Error: unable to set system time: ${err}`);
-  })
-  .then(() => {
-    emitter.emit('time');
-  });
+  util.exec('time_genoff', [date.getTime().toString()])
+    .then(() => emitter.emit('time'))
+    .catch((err) => log.warn(`Error: unable to set system time: ${err}`));
 }
 
 function getNetworkTime() {
 
-  function ntpCallback(err, date) {
+  function ntpCallback(err, date: Date) {
     if (err) {
       log.warn(`Error: NTP failed: ${err}`);
       util.timeout(NTP_RETRY_DELAY)
@@ -68,4 +67,3 @@ if (Date.now() < version.buildtime) {
 }
 
 getNetworkTime();
-module.exports = emitter;

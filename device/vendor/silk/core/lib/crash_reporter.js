@@ -37,12 +37,12 @@ const TOMBSTONE_FILE_REGEXP = new RegExp(/^tombstone_\d+$/); // 'tombstone_03'
  * Represents tombstones on disk and manages races around them.
  */
 export class Tombstones extends EventEmitter {
-  fileQueue = []
-  fileSet = new Set()
-  tombstonePath = null
-  isShutdown = false
+  fileQueue = [];
+  fileSet = new Set();
+  tombstonePath = null;
+  isShutdown = false;
 
-  _activePromise = Promise.resolve()
+  _activePromise = Promise.resolve();
 
   constructor(tombstonePath) {
     super();
@@ -211,7 +211,7 @@ export class Debuggerd extends EventEmitter {
   server = null
   connectionCounter = 0
 
-  _startPromise = null
+  _startPromise = null;
 
   constructor(socketPath) {
     super();

@@ -101,7 +101,7 @@ class DiagLogger {
   }
 }
 
-class Diag {
+export default class Diag {
   constructor() {
     this.socket = null;
     this.cfg = [];
@@ -157,5 +157,3 @@ class Diag {
     });
   }
 }
-
-module.exports = () => new Diag();

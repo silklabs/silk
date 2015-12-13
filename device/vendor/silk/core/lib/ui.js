@@ -9,6 +9,7 @@ import fs from 'fs';
 import lights from './lights';
 import createLog from './log';
 import * as util from './sysutils';
+import Vibrator from './vibrator';
 
 const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
@@ -101,13 +102,13 @@ class Input extends events.EventEmitter
 }
 
 
-class Ui extends events.EventEmitter
-{
+class Ui extends events.EventEmitter {
+
   constructor() {
     super();
 
     this.movie = new (require('silk-movie').Movie)();
-    this.vib = require('./vibrator')();
+    this.vib = new Vibrator();
 
     // Only monitor the input devices used for the power and volume keys for these
     // devices (determined by running |adb shell getevent -l| and pressing each

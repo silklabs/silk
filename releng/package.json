@@ -41,6 +41,7 @@
     "request-promise": "^0.4.3",
     "script-loader": "^0.6.1",
     "silk-core-version": "file:../version",
+    "silk-raygun": "file:../raygun",
     "source-map-support": "^0.3.2",
     "sort-json": "^1.1.1",
     "travis-ci": "^2.0.3",

@@ -4,5 +4,8 @@
   "description": "raygun.io integration",
   "main": "",
   "license": "proprietary",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "raygun4js": "^2.1.0"
+  }
 }

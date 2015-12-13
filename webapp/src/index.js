@@ -1,6 +1,16 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+// Activate better Error stack traces
+import 'source-map-support/browser-source-map-support';
+sourceMapSupport.install(); //eslint-disable-line no-undef
+
+import version from 'silk-core-version';
+import raygun from 'silk-raygun/browser';
+if (version.official) {
+  // Enable crash reporting as early as practical
+  raygun.enable('webapp', version.semver);
+}
 
 import Config from './libraries/Config';
 import Cameras from './libraries/Cameras';
@@ -26,11 +36,6 @@ import Login from './components/Login';
 import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 import MissingChunks from './components/MissingChunks';
-
-
-// Activate better Error stack traces
-import 'source-map-support/browser-source-map-support';
-sourceMapSupport.install(); //eslint-disable-line no-undef
 
 let videoWidget = CameraVideo;
 let userState;
@@ -80,5 +85,6 @@ function loginCheck(nextState, replaceState) {
         <strong>Oops</strong><pre>{err.stack}</pre>
       </Alert>
     ), document.body);
+    raygun.send(err);
   }
 })();

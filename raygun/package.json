@@ -1,0 +1,8 @@
+{
+  "name": "silk-raygun",
+  "version": "0.0.1",
+  "description": "raygun.io integration",
+  "main": "",
+  "license": "proprietary",
+  "private": true
+}

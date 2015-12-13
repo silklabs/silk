@@ -36,6 +36,7 @@ script:
 
 after_script:
   - .travis/remove-key.sh
+  - .travis/raygun-dsym.sh
 
 deploy:
   provider: s3

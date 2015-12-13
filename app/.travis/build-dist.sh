@@ -1,17 +1,20 @@
-#!/bin/bash
+#!/bin/bash -x
 
 export NODE_DEBUG=http
 
-mkdir build
+mkdir -p build
 xctool \
   -project $PROJECT.xcodeproj \
   -scheme $PROJECT \
   -sdk iphoneos \
+  EXFILTRATED_DSYM_ZIP=$(pwd)/dsym.zip \
   archive -archivePath build/$PROJECT.xcarchive \
   CODE_SIGN_IDENTITY="$DEVELOPER_NAME" \
   PROVISIONING_PROFILE="$PROFILE_UUID"
 
-mkdir dist
+ls -l dsym.zip
+
+mkdir -p dist
 xcodebuild \
   -exportArchive \
   -archivePath build/$PROJECT.xcarchive \

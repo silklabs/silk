@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+//
+// Echo true if this is an official Releng build, otherwise false
+//
+
+var version = require('silk-core-version');
+process.stdout.write((version.official || false).toString());

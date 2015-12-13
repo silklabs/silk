@@ -33,6 +33,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
   }
 
   func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+    CrashReporter.start();
     let config = self.loadConfig()
 
     // Configuring logging

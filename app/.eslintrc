@@ -50,7 +50,8 @@
     "no-underscore-dangle": 0
   },
   "globals": {
-    "__DEV__": false
+    "__DEV__": false,
+    "ErrorUtils": true
   },
   "ecmaFeatures": {
     "jsx": true

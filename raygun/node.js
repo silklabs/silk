@@ -9,6 +9,7 @@
 'use strict'
 
 var raygun = require('raygun');
+var api = require('./api.js');
 var config = require('./config.raygun.json');
 var https = require('https');
 var MessageBuilder = require('raygun/lib/raygun.messageBuilder');
@@ -92,38 +93,11 @@ module.exports = {
   },
 
   // Posts a new message to raygun
-  postMessage: function postMessage(message, cb) {
-    if (!cb) {
-      cb = function () {};
-    }
+  postMessage: function postMessage(message) {
     if (raygunClient) {
-      var data = new Buffer(JSON.stringify(message), 'utf8');
-      var httpOptions = {
-        host: 'api.raygun.io',
-        port: 443,
-        path: '/entries',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': data.length,
-          'X-ApiKey': config.apiKey,
-        }
-      };
-
-      var request = https.request(httpOptions,
-        function (response) {
-          console.log('Raygun response:', response.statusCode, response.statusMessage);
-          cb();
-        }
-      );
-      request.on('error', function (err) {
-        console.log('Raygun error', err.message, 'while attempting to post message');
-      });
-      request.write(data);
-      request.end();
-    } else {
-      cb();
+      return api.create(message);
     }
+    return Promise.reject('Raygun client unconfigured');
   },
 };
 

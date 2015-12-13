@@ -6,6 +6,7 @@
   "license": "proprietary",
   "private": true,
   "dependencies": {
+    "raygun": "^0.8.3",
     "raygun4js": "^2.1.0"
   }
 }

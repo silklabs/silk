@@ -2,18 +2,9 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react-native';
-let {
-  ActivityIndicatorIOS,
-  AppStateIOS,
-  PixelRatio,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} = React;
-
 import createLog from 'log';
 import { OrderedMap, OrderedSet } from 'immutable';
+import { SilkApi } from 'silk-api';
 
 import SocketIO from '../libraries/SocketIO';
 
@@ -26,6 +17,16 @@ import MonitorFullscreen from './MonitorFullscreen';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 
+const {
+  ActivityIndicatorIOS,
+  AppStateIOS,
+  PixelRatio,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} = React;
+
 const log = createLog('MonitorsView');
 
 const EVENTS_PAGE_SIZE = 10;
@@ -35,7 +36,7 @@ const SCROLLVIEW_INFINITE_THRESHOLD = 100;
 class MonitorsView extends AsyncComponent {
 
   static propTypes = {
-    api: React.PropTypes.object.isRequired, // TODO: we can do better here
+    api: React.PropTypes.instanceOf(SilkApi).isRequired,
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),

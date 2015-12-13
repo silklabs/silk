@@ -1,16 +1,8 @@
 import React from 'react-native';
-let {
-  AlertIOS,
-  InteractionManager,
-  NativeModules,
-  NetInfo,
-  View,
-  StyleSheet,
-} = React;
-
 import socketIOClient from 'socket.io-client-react-native';
 import createLog from 'log';
 import { OrderedMap, OrderedSet } from 'immutable';
+import { SilkApi } from 'silk-api';
 
 import getDeviceManager from '../libraries/ble/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
@@ -22,6 +14,14 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
+const {
+  AlertIOS,
+  InteractionManager,
+  NativeModules,
+  NetInfo,
+  View,
+  StyleSheet,
+} = React;
 const { BLESocketManager } = NativeModules;
 const log = createLog('Main');
 
@@ -43,7 +43,7 @@ function uiInteractions(): Promise<void> {
 export default class extends AsyncComponent {
 
   static propTypes = {
-    api: React.PropTypes.object.isRequired, // TODO: we can do better here
+    api: React.PropTypes.instanceOf(SilkApi).isRequired,
     userState: React.PropTypes.instanceOf(UserState).isRequired,
   };
 
@@ -80,7 +80,7 @@ export default class extends AsyncComponent {
 
   componentWillMount() {
     this.mounted = true;
-    NetInfo.isConnected.fetch().then(this.onConnectivityChange);
+    this.onConnectivityChange();
     NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
 
     this.bleDeviceManager = getDeviceManager(this.props.userState);
@@ -106,77 +106,67 @@ export default class extends AsyncComponent {
 
   // Network and socket.io connectivity
 
-  onConnectivityChange = (hasNetwork) => {
-    log.info('Network connectivity change. Can haz internet?', hasNetwork);
-    let { socket } = this.pendingState;
+  onConnectivityChange = async () => {
+    let hasNetwork = await this.props.api.canReachServer();
     if (!hasNetwork) {
-      // Close the socket in case we have one, but don't get rid of it
-      // so that the app still remains functional (apart from, you
-      // know, not having any network connection).
-      if (socket) {
-        log.info('Closing old socket');
-        socket.off();
-        socket.close();
-      }
       this.setStateAsync({
-        hasNetwork,
+        hasNetwork: false,
         connectionState: 'offline',
         socketConnectionState: 'offline',
+        socket: null,
       });
       return;
     }
-    // We have a network connection (again). Get rid of any old socket
-    // that we might have kept around and (re-)connect.
-    this.setStateAsync({
-      hasNetwork,
-      connectionState: 'connecting',
-      socket: null,
-    });
     this._fetchDevicesPromise = this.fetchDevices();
     this.connectSocketIO();
   };
 
-  connectSocketIO() {
-    let { socket } = this.pendingState;
-    if (socket) {
-      log.info('Closing old socket');
-      socket.off();
-      socket.close();
-    }
-    this.setStateAsync({
+  async connectSocketIO() {
+    await this.setStateAsync({
       socket: null,
+      connectionState: 'connecting',
       socketConnectionState: 'offline',
-    }).then(() => {
-
-      let {api} = this.props;
-      let socket = new SocketIO(api.socketioClient(socketIOClient, 'account', {
-        forceNew: true,
-      }));
-      socket.open();
-      this.setStateAsync({
-        socket,
-        socketConnectionState: socket.connected ? 'connected' : 'connecting',
-      });
-      if (!socket.connected) {
-        socket.on('connect', () => {
-          log.info(' ... connected');
-          this.setStateAsync({
-            connectionState: 'connected',
-            socketConnectionState: 'connected',
-          });
-
-          // Be sure we have our device list before we subscribe to
-          // the video streams, otherwise we might identify any video
-          // streams coming in before we know the device list as not
-          // pertaining to our account.
-          // See also https://github.com/silklabs/silk-app/issues/566.
-          this._fetchDevicesPromise.then(() => {
-            this._fetchDevicesPromise = Promise.resolve();
-            this.subscribeToVideoStreams();
-          });
-        });
-      }
     });
+
+    let {api} = this.props;
+    let socket = new SocketIO(api.socketioClient(socketIOClient, 'account', {
+      forceNew: true,
+    }));
+
+    socket.on('error', (error) => {
+      log.info('Socket error', error);
+      this.setStateAsync({
+        hasNetwork: false,
+        connectionState: 'offline',
+        socketConnectionState: 'offline',
+        socket: null,
+      });
+      return;
+    });
+    socket.on('connect', () => {
+      log.info('Socket connected');
+      this.setStateAsync({
+        connectionState: 'connected',
+        socketConnectionState: 'connected',
+      });
+
+      // Be sure we have our device list before we subscribe to the
+      // video streams, otherwise we might identify any video
+      // streams coming in before we know the device list as not
+      // pertaining to our account.
+      // See also https://github.com/silklabs/silk-app/issues/566.
+      this._fetchDevicesPromise.then(() => {
+        this._fetchDevicesPromise = Promise.resolve();
+        this.subscribeToVideoStreams();
+      });
+    });
+
+    await this.setStateAsync({
+      socket,
+      socketConnectionState: 'connecting',
+    });
+    log.info('Connecting to socket');
+    socket.connect();
   }
 
   subscribeToVideoStreams() {
@@ -574,7 +564,7 @@ export default class extends AsyncComponent {
           socketConnectionState={this.state.socketConnectionState}
           {...this.props}
         />
-        <NetworkWarning />
+        <NetworkWarning api={this.props.api} />
         <MonitorsView
           {...this.state}
           {...this.props}

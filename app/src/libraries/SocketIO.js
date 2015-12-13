@@ -118,17 +118,21 @@ export default class extends EventEmitter {
   }
 
   /**
-  Overrides superclass emit interface for one that emits on the server.
-
-  Note: it is safe to call this when disconnected the native side will buffer
-  events and send them on reconnect.
-  */
+   * Overrides superclass emit interface for one that emits on the server.
+   *
+   * Note: it is safe to call this when disconnected the native side will buffer
+   * events and send them on reconnect.
+   */
   emit(event, ...data) {
     this.socket.emit(event, ...data);
   }
 
-  open(fn) {
-    this.socket.open(fn);
+  open() {
+    this.socket.open();
+  }
+
+  connect() {
+    this.socket.connect();
   }
 
   /**

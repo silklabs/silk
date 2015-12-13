@@ -3,6 +3,7 @@
  */
 import invariant from 'assert';
 import URL from 'url';
+import createLog from 'log';
 
 import loadConfig from './config';
 import VIP from './vip';
@@ -18,6 +19,7 @@ import RssiSmoother from './rssi_smoother';
 import {StateContainer} from './http_client';
 import MetricsAgent from './metrics_agent';
 
+import fetch from './fetch';
 import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
 
@@ -40,6 +42,8 @@ type SocketioConfig = [string, {
   path: string;
   query: {[key: string]: string};
 }]
+
+const log = createLog('api');
 
 function socketioConfig(accessToken: Id, url: string): SocketioConfig {
   // TODO: remove 'any' type here once
@@ -204,6 +208,19 @@ export class SilkApi {
       }
     };
     return socket;
+  }
+
+  async canReachServer(): Promise<bool> {
+    let path = '/v1/account/socketio/url';
+    let url = URL.resolve(this.config.serverUrl, path);
+    try {
+      await fetch(url, { method: 'POST' });
+      log.info('canReachServer(): true');
+      return true;
+    } catch (ex) {
+      log.info('canReachServer(): false');
+      return false;
+    }
   }
 }
 

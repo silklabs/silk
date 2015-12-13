@@ -1,20 +1,33 @@
 /**
  *  raygun.io integration for Node (ES5)
+*
+ * Copyright (c) 2015 Silk Labs, Inc
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
  */
+
 'use strict'
 
 var raygun = require('raygun');
 var config = require('./config.raygun.json');
+var https = require('https');
+var MessageBuilder = require('raygun/lib/raygun.messageBuilder');
 
 var raygunClient;
+
+var tags;
+var version;
 
 module.exports = {
   enable: function enable(appName, appVersion, options) {
     console.log('Initializing Raygun');
+    tags = [appName];
+    version = appVersion;
+
     raygunClient = new raygun.Client();
     raygunClient.init({apiKey: config.apiKey});
-    raygunClient.setVersion(appVersion);
-    raygunClient.setTags(appName);
+    raygunClient.setVersion(version);
+    raygunClient.setTags(tags);
 
     if (options && options.exceptionHandlers) {
       process.on('uncaughtException', function (err) {
@@ -47,6 +60,7 @@ module.exports = {
     }
   },
 
+  // Sends an Error object to raygun
   send: function send(err, cb) {
     if (!cb) {
       cb = function () {};
@@ -56,6 +70,57 @@ module.exports = {
         console.log('Error report sent to Raygun');
         cb();
       });
+    } else {
+      cb();
+    }
+  },
+
+  // Builds a new message from an Error object
+  buildMessage: function(error, customData) {
+    var builder = new MessageBuilder()
+      .setMachineName()
+      .setEnvironmentDetails()
+      .setVersion(version)
+      .setTags(tags);
+    if (error) {
+      builder.setErrorDetails(error);
+    }
+    if (customData) {
+      builder.setUserCustomData(customData);
+    }
+    return builder.build();
+  },
+
+  // Posts a new message to raygun
+  postMessage: function postMessage(message, cb) {
+    if (!cb) {
+      cb = function () {};
+    }
+    if (raygunClient) {
+      var data = new Buffer(JSON.stringify(message), 'utf8');
+      var httpOptions = {
+        host: 'api.raygun.io',
+        port: 443,
+        path: '/entries',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': data.length,
+          'X-ApiKey': config.apiKey,
+        }
+      };
+
+      var request = https.request(httpOptions,
+        function (response) {
+          console.log('Raygun response:', response.statusCode, response.statusMessage);
+          cb();
+        }
+      );
+      request.on('error', function (err) {
+        console.log('Raygun error', err.message, 'while attempting to post message');
+      });
+      request.write(data);
+      request.end();
     } else {
       cb();
     }

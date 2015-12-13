@@ -1,0 +1,16 @@
+{
+ "stackTrace": [
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "deleted",
+   "lineNumber": "?"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "deleted",
+   "lineNumber": "?"
+  }
+ ],
+ "message": "signal 6 (SIGABRT), code 0 (SI_USER), fault addr --------",
+ "className": "mm-qcamera-daem  >>> /system/bin/mm-qcamera-daemon <<<"
+}

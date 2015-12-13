@@ -1,0 +1,56 @@
+{
+ "stackTrace": [
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "write",
+   "lineNumber": "12"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "__sflush",
+   "lineNumber": "48"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "fclose",
+   "lineNumber": "40"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "malloc_fini_impl()",
+   "lineNumber": "20"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "pthread_once",
+   "lineNumber": "90"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "malloc_debug_fini",
+   "lineNumber": "10"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "__cxa_finalize",
+   "lineNumber": "132"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "exit",
+   "lineNumber": "?"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "__libc_init",
+   "lineNumber": "46"
+  },
+  {
+   "fileName": "/system/bin/toolbox",
+   "methodName": "?",
+   "lineNumber": "?"
+  }
+ ],
+ "message": "signal 13 (SIGPIPE), code 0 (SI_USER), fault addr --------",
+ "className": "ls  >>> ls <<<"
+}

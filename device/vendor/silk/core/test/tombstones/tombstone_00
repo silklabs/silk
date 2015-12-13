@@ -1,0 +1,57 @@
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'Android/aosp_mako/mako:5.1.1/LMY47V/travis12042206:eng/next,test-keys'
+Revision: '11'
+ABI: 'arm'
+pid: 180, tid: 180, name: surfaceflinger  >>> /system/bin/surfaceflinger <<<
+signal 11 (SIGSEGV), code 0 (SI_USER), fault addr 0xb4
+    r0 fffffffc  r1 bee97908  r2 00000010  r3 ffffffff
+    r4 00000000  r5 00000008  r6 00000000  r7 0000015a
+    r8 b764ccf0  r9 00000014  sl 00000000  fp bee97adc
+    ip bee978b8  sp bee978a8  lr b6f1333d  pc b6f3adb0  cpsr 20070010
+    d0  0000000000000000  d1  0000000000000000
+    d2  43c0000043c00000  d3  413ccccd41a2aaab
+    d4  00000000bf000000  d5  43c0000044200000
+    d6  43c0000000000001  d7  3f800000441fe000
+    d8  0000000000000000  d9  0000000000000000
+    d10 0000000000000000  d11 0000000000000000
+    d12 0000000000000000  d13 0000000000000000
+    d14 0000000000000000  d15 0000000000000000
+    d16 0000000000000001  d17 0000000000000001
+    d18 3f80000000000000  d19 0000000000000000
+    d20 0000000000000000  d21 000000003f800000
+    d22 0000000000000000  d23 3f80000000000000
+    d24 93a6a0cfd501e9f0  d25 4075b09460000000
+    d26 400bc34d47ae147b  d27 061b78df2671b86a
+    d28 f9338dc350000000  d29 0ce7eb1bd671b86a
+    d30 0ce7eb1bd671b869  d31 4000000000000000
+    scr 20000012
+
+backtrace:
+    #00 pc 0003bdb0  /system/lib/libc.so (__epoll_pwait+20)
+    #01 pc 00014339  /system/lib/libc.so (epoll_pwait+26)
+    #02 pc 00014347  /system/lib/libc.so (epoll_wait+6)
+    #03 pc 000123c3  /system/lib/libutils.so (android::Looper::pollInner(int)+98)
+    #04 pc 000125ed  /system/lib/libutils.so (android::Looper::pollOnce(int, int*, int*, void**)+92)
+    #05 pc 00016001  /system/lib/libsurfaceflinger.so
+    #06 pc 000183d5  /system/lib/libsurfaceflinger.so (android::SurfaceFlinger::run()+8)
+    #07 pc 000008cd  /system/bin/surfaceflinger (main+192)
+    #08 pc 0001239d  /system/lib/libc.so (__libc_init+44)
+    #09 pc 00000968  /system/bin/surfaceflinger
+
+stack:
+         bee97868  b764cd30  [heap]
+         bee9786c  b764cd48  [heap]
+         bee97870  b77097b8  [heap]
+         bee97874  b6e8fbf5  /system/lib/libutils.so (android::RefBase::weakref_type::decWeak(void const*)+12)
+         bee97878  0000006b  
+         bee9787c  00000050  
+         bee97880  b76d29f8  [heap]
+         bee97884  00000003  
+         bee97888  b77825f8  [heap]
+         bee9788c  c0000000  
+         bee97890  00000000  
+         bee97894  b7782600  [heap]
+         bee97898  b76d2a08  [heap]
+         bee9789c  b6f2a681  /system/lib/libc.so (dlfree+52)
+         bee978a0  00000000  
+         bee978a4  00000000  

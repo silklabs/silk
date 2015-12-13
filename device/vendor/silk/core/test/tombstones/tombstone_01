@@ -1,0 +1,42 @@
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'Android/aosp_hammerhead/hammerhead:5.1.1/LMY47V/mvines12111025:eng/master,test-keys'
+Revision: '11'
+ABI: 'arm'
+pid: 210, tid: 210, name: mm-qcamera-daem  >>> /system/bin/mm-qcamera-daemon <<<
+signal 6 (SIGABRT), code 0 (SI_USER), fault addr --------
+    r0 fffffffc  r1 beae57dc  r2 00000000  r3 00000000
+    r4 00000000  r5 00000000  r6 beae56e8  r7 0000014f
+    r8 00000000  r9 00000000  sl 00000000  fp b6fc22c7
+    ip beae56c0  sp beae56b0  lr b6f4b34b  pc b6f6f588  cpsr 400f0010
+    d0  0000000000000000  d1  0000000000000000
+    d2  0000000000000000  d3  0000000000000000
+    d4  0000000006bb4646  d5  0000000000000000
+    d6  193242d50000a22b  d7  0000000000000002
+    d8  0000000000000000  d9  0000000000000000
+    d10 0000000000000000  d11 0000000000000000
+    d12 0000000000000000  d13 0000000000000000
+    d14 0000000000000000  d15 0000000000000000
+    d16 0000000000000000  d17 000000000083a109
+    d18 3fe0000000000000  d19 405f1c74c0000000
+    d20 bfe0000000000000  d21 3fe0000000000000
+    d22 4053bd6de0000000  d23 3fe0000000000000
+    d24 4053dd6de0000000  d25 40c9d7a280000000
+    d26 3ff30a3d70a3d70a  d27 3ff6a0902de00d1b
+    d28 40a65cae7d566cf4  d29 40ad038366516db1
+    d30 4072d11eb851eb85  d31 40b2d11eb851eb85
+    scr 20000011
+
+backtrace:
+    #00 pc 0003a588  /system/lib/libc.so (deleted)
+    #01 pc 00016347  /system/lib/libc.so (deleted)
+
+stack:
+         beae5670  b6404e00  [anon:libc_malloc]
+         beae5674  acc847b0  [anon:libc_malloc]
+         beae5678  b6faafc8  
+         beae567c  00000001  
+         beae5680  b6404e18  [anon:libc_malloc]
+         beae5684  beae57ac  [stack]
+         beae5688  b6faafd8  
+         beae568c  b6f7e8ad  /system/lib/libc.so (deleted)
+

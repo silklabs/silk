@@ -28,4 +28,8 @@ export default class StoringStream extends streams.Duplex {
     let write = this._writes.shift();
     this.push(write ? write : null);
   }
+
+  getStoreSize() {
+    return this._writes.reduce((size, item) => size + item.length, 0);
+  }
 }

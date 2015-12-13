@@ -1,0 +1,52 @@
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'Android/aosp_hammerhead/hammerhead:5.1.1/LMY47V/mvines12111258:eng/master,test-keys'
+Revision: '11'
+ABI: 'arm'
+pid: 2076, tid: 2076, name: capture  >>> /system/silk/bin/capture <<<
+signal 6 (SIGABRT), code 0 (SI_USER), fault addr --------
+    r0 fffffffc  r1 beb6f950  r2 f79fa30b  r3 00000000
+    r4 7fffffff  r5 00000000  r6 beb6f9d8  r7 000000a2
+    r8 beb6f96c  r9 b6ff8e68  sl 00000000  fp beb6fa6c
+    ip beb6f9a0  sp beb6f948  lr b6f380eb  pc b6f4cf54  cpsr 600f0010
+    d0  0000000000000000  d1  0000000000000000
+    d2  0000000000000000  d3  0000000000000000
+    d4  0076007200650053  d5  004d006500630069
+    d6  00670061006e0061  d7  0000000000720065
+    d8  0000000000000000  d9  0000000000000000
+    d10 0000000000000000  d11 0000000000000000
+    d12 0000000000000000  d13 0000000000000000
+    d14 0000000000000000  d15 0000000000000000
+    d16 0000000000000000  d17 0000000000000fff
+    d18 0000000000000000  d19 0000000000000000
+    d20 0000000000000000  d21 0000000000000000
+    d22 0000000000000000  d23 0000000000000000
+    d24 0000000000000000  d25 0000000000000000
+    d26 0000000000000000  d27 0000000000000000
+    d28 0000000000000000  d29 0000000000000000
+    d30 0000000000000000  d31 0000000000000000
+    scr 00000000
+
+backtrace:
+    #00 pc 00039f54  /system/lib/libc.so (nanosleep+12)
+    #01 pc 000250e7  /system/lib/libc.so (sleep+38)
+    #02 pc 0000ba49  /system/silk/bin/capture
+    #03 pc 00012df5  /system/lib/libc.so (__libc_init+44)
+    #04 pc 0000bb44  /system/silk/bin/capture
+
+stack:
+         beb6f908  5f44494f  
+         beb6f90c  4b434f53  
+         beb6f910  635f5445  
+         beb6f914  75747061  
+         beb6f918  74636572  
+         beb6f91c  0000006c  
+         beb6f920  00000000  
+         beb6f924  00000000  
+         beb6f928  00000000  
+         beb6f92c  00000000  
+         beb6f930  00000000  
+         beb6f934  00000000  
+         beb6f938  00000000  
+         beb6f93c  00000000  
+         beb6f940  00000000  
+         beb6f944  f79fa30b  

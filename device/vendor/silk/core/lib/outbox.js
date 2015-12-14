@@ -28,8 +28,8 @@ export default function(networkStatus) {
    */
   outbox.registerQueue('video', {
     // TODO: This should be computed somehow
-    concurrency: 5,
-    diskConcurrency: 3
+    concurrency: 8,
+    diskConcurrency: 4
   });
   outbox.registerQueue('preview', {
     // TODO: This should be computed somehow

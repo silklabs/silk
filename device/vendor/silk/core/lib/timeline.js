@@ -18,7 +18,7 @@ import * as util from './sysutils';
 const log = createLog('timeline');
 
 const VIDEO_UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP);
+const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP, true);
 
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;

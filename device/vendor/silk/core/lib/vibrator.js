@@ -8,8 +8,10 @@
 
 import * as util from './sysutils';
 import fs from 'fs';
+import version from 'silk-core-version';
 
-let enabled = !util.getprop('persist.silk.quiet');
+// Vibrate by default only on developer builds
+let enabled = !util.getprop('persist.silk.quiet', version.official);
 
 class Vibrator {
 

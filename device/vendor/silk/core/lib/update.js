@@ -36,7 +36,7 @@ const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
-const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP);
+const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP, silkCoreVersion.official);
 
 const isValidUpdateURLOptions = {
   protocols: ['https'],

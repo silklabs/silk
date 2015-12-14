@@ -107,56 +107,8 @@ EOF
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
 #!/bin/bash
 
-waitForDevice() {
-  adb wait-for-device
-  # adb sometimes errors out, if so, wait and try again
-  while [ $? -ne 0 ]; do
-    sleep 1
-    adb wait-for-device
-  done
-}
-
-cd $(dirname $0)
-
 echo Flash the build and clear userdata/cache partitions
-./flash.sh -w
-
-echo Preparing default.prop ...
-if [ -f default.prop ]; then
-rm default.prop
-fi
-
-echo OTA updates enabled.
-echo persist.silk.update.enabled=true >> default.prop
-
-echo Enable crash reporting
-echo persist.silk.crashrprt.enabled=true >> default.prop
-
-echo Activated uploads to cloud storage
-echo persist.silk.vidupload.enabled=1 >> default.prop
-
-echo Disable SOS vibrate
-echo persist.silk.quiet=true >> default.prop
-
-echo Configuring the device ...
-waitForDevice
-adb root
-waitForDevice
-
-echo Pushing new default.prop ...
-adb remount
-waitForDevice
-adb push default.prop /system/
-rm default.prop
-
-echo Set device time to match host: $(date)
-adb shell time_genoff $(date +%s)000
-
-echo Rebooting...
-adb reboot
-waitForDevice
-echo Device provisioning successful
-
+$(dirname $0)/flash.sh -w
 EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_fut.sh
@@ -179,17 +131,14 @@ rm default.prop
 adb root
 adb wait-for-device
 
-echo Activated uploads to cloud storage
-echo persist.silk.vidupload.enabled=1 >> default.prop
+echo OTA updates disabled for demo builds to avoid surprises
+echo persist.silk.update.enabled=false >> default.prop
 
 echo Enable sounds on double clap ze clapper
 echo persist.silk.clapper.sound=true >> default.prop
 
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
-
-echo Disable vibration
-echo persist.silk.quiet=true >> default.prop
 
 echo Disable BLE ranger to avoid wifi 2.4GHz conflicts
 echo persist.silk.ranger.enabled=false >> default.prop

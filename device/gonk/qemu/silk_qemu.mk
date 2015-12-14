@@ -6,6 +6,8 @@
 #
 
 PRODUCT_PROPERTY_OVERRIDES += \
+  persist.silk.vidupload.enabled=false \
+  persist.silk.crashrprt.enabled=false \
   ro.silk.camera.width=320 \
   ro.silk.camera.height=240 \
   ro.silk.camera.fps=5 \

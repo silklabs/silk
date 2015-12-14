@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -13,8 +11,9 @@ import createLog from './log';
 import request from 'request';
 import validator from 'validator';
 
-import baseversion from './base_version';
-import coreversion from 'core_version';
+import baseversion from './base_version'; // Base device image version
+import coreversion from 'core_version'; // Build fingerprint of /system/silk
+import silkCoreVersion from 'silk-core-version'; // silk-core version information
 
 import { EventEmitter } from 'events';
 
@@ -34,7 +33,7 @@ const UPDATE_FILE_PATH = '/cache/update.zip';
 const DEVICE = util.getprop(DEVICEOVERRIDE_PROP,util.getprop(DEVICE_PROP));
 const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
-const CHANNEL = util.getprop(CHANNEL_PROP);
+const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP);

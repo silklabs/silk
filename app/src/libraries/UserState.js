@@ -49,7 +49,7 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
-  registeredDevices = [ ];
+  registeredDevices = [];
 
   constructor(api) {
     super();
@@ -122,6 +122,7 @@ export class UserState extends EventEmitter {
   async signOut() {
     // Clear out any previous state...
     this.api.accessToken = this.accessToken = null;
+    this.registeredDevices = [];
 
     log.debug(`Stop advertising all BLE beacons.`);
     BLESocketManager.removeAllBeaconUuids();

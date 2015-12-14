@@ -63,9 +63,8 @@ export default class extends AsyncComponent {
       return; // Wait for the next 'change' event to continue processing
     }
 
-    if (this.state.serverUrl !== serverUrl && this.state.userState !== null) {
-      let { userState } = this.state;
-      await userState.signOut();
+    let { userState } = this.pendingState;
+    if (userState !== null) {
       userState.removeListener('authenticated', this.onAuthenticated);
       userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
@@ -75,7 +74,7 @@ export default class extends AsyncComponent {
       apiOptions.serverUrl = serverUrl;
     }
     let api = createAPI(apiOptions);
-    let userState = await loadUserState(api);
+    userState = await loadUserState(api);
 
     userState.on('authenticated', this.onAuthenticated);
     userState.on('unauthenticated', this.onUnauthenticated);
@@ -89,11 +88,11 @@ export default class extends AsyncComponent {
   };
 
   onAuthenticated = (accessToken) => {
-    this.setState({accessToken});
+    this.setStateAsync({accessToken});
   };
 
   onUnauthenticated = () => {
-    this.setState({accessToken: null});
+    this.setStateAsync({accessToken: null});
   };
 
   render() {

@@ -33,7 +33,6 @@ MERGE_GITS="\
   gonk-alto \
 "
 GITS="\
-  log \
   silk-api-node \
   silk-device-locked-node-modules \
   silk-trainingset \

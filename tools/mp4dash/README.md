@@ -25,17 +25,28 @@ const config = {
 };
 ```
 
-## Recording to a file
+## Concatenating segments into a standalone mp4 file
 
-After editing the configuration file, you can recording video to a
-file by simply calling
+After editing the configuration file, you can record video to a
+single, standalone mp4 file by simply calling
 
 ```
-npm run file
+npm run cat
 ```
 
-This will record to `out.mp4` in your current directory. Stop
+(or `npm run file`).  This will record to `out.mp4` in your current directory. Stop
 recording with Ctrl-C.
+
+## Saving individual segments to file
+
+Alternatively, you can each individual segment sent from device by running
+```
+npm run segments
+```
+
+This commands saves the mp4 "initialization header" to `segments/seg-init.mp4`, and
+each successive segment to `segments/seg-%d.m4s`, where the `%d` is replaced with the
+segment sequence number, for example `segments/seg-1.m4s`.  Stop recording with Ctrl-C.
 
 ## Streaming over HTTP
 

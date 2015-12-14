@@ -343,7 +343,14 @@ export default class ConfigSessionListener extends SessionListenerBase {
   disconnect() {
     log.debug(`ConfigSessionListener.disconnect()`);
 
+    if (this._disconnecting) {
+      return;
+    }
+
     this._resetState();
+    // Set the STATE_ERROR state so that we ignore any further data.
+    this._state = ConfigSessionListener.STATE_ERROR;
+
     this._deviceConfig._stopRetryingWifiConnection(new Error(`Disconnecting`));
     super.disconnect();
   }

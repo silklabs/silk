@@ -14,6 +14,7 @@
     "babel-preset-es2015": "^6.0.0",
     "babel-preset-stage-0": "^6.0.0",
     "babel-preset-react": "^6.0.0",
+    "fs-extra": "^0.26.2",
     "log": "file:../../log",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "socket.io-client": "^1.3.6"

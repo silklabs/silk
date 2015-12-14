@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs-extra';
 import process from 'process';
 import createLog from 'log';
 
@@ -37,6 +37,7 @@ function startSegmentsWriter(provider) {
     log.info(`Writing segment '${path}'.`);
     fs.writeFile(path, segment.buffer);
   };
+  fs.removeSync(SEGMENTS_DIR);
   fs.mkdirSync(SEGMENTS_DIR);
   provider.segments.forEach(writeSegmentToFile);
   provider.on('segment', writeSegmentToFile);

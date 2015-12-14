@@ -40,7 +40,7 @@ define GET_PACKAGE_NAME_MAIN_JS
 var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
 console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
 console.log('LOCAL_NODE_MODULE_MAIN=' + (pkg.main || ''));
-console.log('LOCAL_INSTALL_NODE_MODULES_LIST=' + (Object.keys(pkg.dependencies) || ''));
+console.log('LOCAL_INSTALL_NODE_MODULES_LIST=' + (Object.keys(pkg.dependencies || {}) || ''));
 endef
 $(foreach stmt,$(shell node -e "$(GET_PACKAGE_NAME_MAIN_JS)"),$(eval $(stmt)))
 
@@ -121,10 +121,11 @@ define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef
 $(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
-$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(ANDROID_BUILD_TOP)/$(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
 $(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
 $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
+	@echo "            from: $(LOCAL_PATH)"
 	$(hide) mkdir -p $(built_module_path)
 	$(hide) rsync -qav --exclude='/node_modules' $(LOCAL_PATH)/ $(built_module_path)
 	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/build/package_abs_file.js package.json $(LOCAL_PATH)/
@@ -170,6 +171,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
       -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       "\ && \
     export V=$(if $(SHOW_COMMANDS),1) \
+    export BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" &&  \
     export NPM_CONFIG_ARCH=arm &&  \
     export NPM_CONFIG_PLATFORM=android && \
     export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \

@@ -6,8 +6,10 @@
 uptime
 echo -n "Date: "; date
 echo -n "Gonk: "; getprop ro.build.fingerprint
-node -e "\
-  console.log('Silk:', require('/system/silk/node_modules/core_version')); \
+node -p "\
+  v=require('/system/silk/node_modules/silk-core-version'); \
+  'Silk: ' + v.fingerprint + '\n' + \
+  '      ' + v.branch + ' ' + v.semver + ' (' + v.sha.substr(0,7) + ')' + ' official=' + v.official \
 "
 echo
 

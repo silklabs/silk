@@ -6,7 +6,7 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "install": "./build",
-    "test": "DEBUG=* mocha $(find test -name '*_test.js')",
+    "test": "./bin/test",
     "clean": "rm -rf node_modules core.js core.js.map"
   },
   "dependencies": {
@@ -26,7 +26,6 @@
     "silk-api": "file:local_node_modules/silk-api",
     "log": "file:../../../../log",
     "silk-sdk-glue": "0.0.1",
-    "silk-core-version": "file:../../../../version",
     "socket.io-client": "^1.3.5",
     "silk-socket.io-client-node": "file:local_node_modules/silk-socket.io-client-node",
     "source-map-support": "^0.3.2",

@@ -12,7 +12,6 @@ import request from 'request';
 import validator from 'validator';
 
 import baseversion from './base_version'; // Base device image version
-import coreversion from 'core_version'; // Build fingerprint of /system/silk
 import silkCoreVersion from 'silk-core-version'; // silk-core version information
 
 import { EventEmitter } from 'events';
@@ -410,7 +409,7 @@ function validateManifest(result) {
       // Ensure the base gonk is compatible before accepting a partial /system
       // update.
       if (buildMetadata.base_version === baseversion) {
-        if (buildMetadata.core_version !== coreversion || FORCE_UPDATE) {
+        if (buildMetadata.core_version !== silkCoreVersion.fingerprint || FORCE_UPDATE) {
           // Different fingerprint, select this build
           currentMetadata = buildMetadata;
           log.info('Selected "silk" update');

@@ -103,9 +103,6 @@ set +x
 EOF
   chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
-  # Copy branch file
-  cp ../version/branch $archiveDir/$TARGET_PRODUCT
-
   # Create flash_fut script
   cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
 #!/bin/bash
@@ -137,10 +134,6 @@ echo persist.silk.crashrprt.enabled=true >> default.prop
 
 echo Activated uploads to cloud storage
 echo persist.silk.vidupload.enabled=1 >> default.prop
-
-echo Set ota manifest channel
-source ../branch
-echo persist.silk.update.channel=$BRANCH >> default.prop
 
 echo Disable SOS vibrate
 echo persist.silk.quiet=true >> default.prop

@@ -107,7 +107,9 @@ class Clapper {
       }
       if (count === 2 && type === 'normal') {
         hueLightsOn = !hueLightsOn;
-        this._env.hue.setState( { on: hueLightsOn, intensity: 1.0 } );
+        if (this._env.hue) {
+          this._env.hue.setState( { on: hueLightsOn, intensity: 1.0 } );
+        }
       }
     };
     this._clapDetector.on('clap', this._onClap);

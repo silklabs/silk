@@ -3,7 +3,7 @@ import { OrderedMap, OrderedSet } from 'immutable';
 
 import SocketIO from '../libraries/SocketIO';
 
-import { ConfiguringDeviceRecord } from './Records';
+import { ConfiguringDeviceRecord } from './abstract/Devices';
 import MonitorPreview from './MonitorPreview';
 import { ThumbnailStyles } from './CommonStyles';
 

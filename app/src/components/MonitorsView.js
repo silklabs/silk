@@ -10,7 +10,7 @@ import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
 import AsyncComponent from './abstract/AsyncComponent';
-import { ConfiguringDeviceRecord } from './Records';
+import { ConfiguringDeviceRecord } from './abstract/Devices';
 import ErrorBar from './ErrorBar';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';

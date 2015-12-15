@@ -349,7 +349,7 @@ export default class Trainer {
     let averageFaceRow = model.getMat('mean');
 
     if (eigenvectors.empty() || averageFaceRow.empty()) {
-      log.warn(`Model not trained with eigenface?`);
+      log.warn(`Model not trained with eigenface or fisherface?`);
       return null;
     }
 

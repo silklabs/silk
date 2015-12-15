@@ -27,3 +27,12 @@ adb pull /data/silk/opencv/faces/<Name> ~/Desktop/<Name>
 #### Limitations
 * If a light is falling straight on the face the recognizer doesn't work very well.
 * Face recognizer doesn't work very well in low light conditions and is error prone.
+
+## How to choose an alternative facial recognition algorithm
+```
+adb shell setprop persist.silk.facerecognizer <alorithm_name>
+```
+Possible values are:
+* LBPH (default)
+* Eigen
+* Fisher

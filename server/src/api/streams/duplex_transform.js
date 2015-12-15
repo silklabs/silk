@@ -28,7 +28,7 @@ class ClosingPassThrough extends PassThrough {
     const maybeClose = () => {
       if (!closed) {
         closed = true;
-        this.emit(EVENT_NAME_CLOSE);
+        process.nextTick(() => this.emit(EVENT_NAME_CLOSE));
       }
     };
 
@@ -81,22 +81,28 @@ export class DuplexTransform extends Duplex {
     this.__readableTransform = readableTransform || new ClosingPassThrough();
     this.__writableTransform = writableTransform || new ClosingPassThrough();
 
-    this.__readable.pipe(this.__readableTransform);
-    this.__writableTransform.pipe(this.__writable);
-
-    this.__readable.addListener(EVENT_NAME_END, this.__onReadableEnd);
-    this.__readable.addListener(EVENT_NAME_ERROR, this.__onReadableError);
     DuplexTransform.__ensureCloseEvent(this.__name,
                                        this.__readable,
                                        EVENT_NAME_END,
                                        this.__onReadableClose);
-
-    this.__writable.addListener(EVENT_NAME_FINISH, this.__onWritableFinish);
-    this.__writable.addListener(EVENT_NAME_ERROR, this.__onWritableError);
     DuplexTransform.__ensureCloseEvent(this.__name,
                                        this.__writable,
                                        EVENT_NAME_FINISH,
                                        this.__onWritableClose);
+    DuplexTransform.__ensureCloseEvent(this.__name,
+                                       this.__readableTransform,
+                                       EVENT_NAME_END,
+                                       this.__onReadableTransformClose);
+    DuplexTransform.__ensureCloseEvent(this.__name,
+                                       this.__writableTransform,
+                                       EVENT_NAME_END,
+                                       this.__onWritableTransformClose);
+
+    this.__readable.addListener(EVENT_NAME_END, this.__onReadableEnd);
+    this.__readable.addListener(EVENT_NAME_ERROR, this.__onReadableError);
+
+    this.__writable.addListener(EVENT_NAME_ERROR, this.__onWritableError);
+    this.__writable.addListener(EVENT_NAME_FINISH, this.__onWritableFinish);
 
     this.__readableTransform.addListener(EVENT_NAME_DATA,
                                          this.__onReadableTransformData);
@@ -104,24 +110,17 @@ export class DuplexTransform extends Duplex {
                                          this.__onReadableTransformEnd);
     this.__readableTransform.addListener(EVENT_NAME_ERROR,
                                          this.__onReadableTransformError);
-    DuplexTransform.__ensureCloseEvent(this.__name,
-                                       this.__readableTransform,
-                                       EVENT_NAME_END,
-                                       this.__onReadableTransformClose);
 
     this.__writableTransform.addListener(EVENT_NAME_END,
                                          this.__onWritableTransformEnd);
     this.__writableTransform.addListener(EVENT_NAME_ERROR,
                                          this.__onWritableTransformError);
-    DuplexTransform.__ensureCloseEvent(this.__name,
-                                       this.__writableTransform,
-                                       EVENT_NAME_END,
-                                       this.__onWritableTransformClose);
+
+    this.__readable.pipe(this.__readableTransform);
+    this.__writableTransform.pipe(this.__writable);
   }
 
   static __ensureCloseEvent(className, emitter, finalEventName, callback) {
-    const closeEventName = EVENT_NAME_CLOSE;
-    const errorEventName = EVENT_NAME_ERROR;
     const closeEventTimeoutMS = 5000;
     const emitterName = emitter.constructor.name;
 
@@ -139,11 +138,11 @@ export class DuplexTransform extends Duplex {
 
       timeout = setTimeout(() => {
         log.warn(`[${className}] '${emitterName}' instance did not emit a ` +
-                 `'${closeEventName}' event within ${closeEventTimeoutMS}ms ` +
-                 `of the '${eventName}' event`);
+                 `'${EVENT_NAME_CLOSE}' event within ` +
+                 `${closeEventTimeoutMS}ms of the '${eventName}' event`);
 
-        emitter.removeListener(closeEventName, closeEventListener);
-        emitter.removeListener(errorEventName, errorEventListener);
+        emitter.removeListener(EVENT_NAME_CLOSE, closeEventListener);
+        emitter.removeListener(EVENT_NAME_ERROR, errorEventListener);
         emitter.removeListener(finalEventName, finalEventListener);
 
         assert(!closed);
@@ -157,11 +156,11 @@ export class DuplexTransform extends Duplex {
     };
 
     closeEventListener = () => {
-      log.debug(`[${className}] ${emitterName} emitted '${closeEventName}' ` +
+      log.debug(`[${className}] ${emitterName} emitted '${EVENT_NAME_CLOSE}' ` +
                 `event`);
 
-      emitter.removeListener(closeEventName, closeEventListener);
-      emitter.removeListener(errorEventName, errorEventListener);
+      emitter.removeListener(EVENT_NAME_CLOSE, closeEventListener);
+      emitter.removeListener(EVENT_NAME_ERROR, errorEventListener);
       emitter.removeListener(finalEventName, finalEventListener);
 
       assert(!closed);
@@ -176,13 +175,13 @@ export class DuplexTransform extends Duplex {
     };
 
     errorEventListener = () => {
-      log.debug(`[${className}] ${emitterName} emitted '${errorEventName}' ` +
+      log.debug(`[${className}] ${emitterName} emitted '${EVENT_NAME_ERROR}' ` +
                 `event`);
 
-      emitter.removeListener(errorEventName, errorEventListener);
+      emitter.removeListener(EVENT_NAME_ERROR, errorEventListener);
       emitter.removeListener(finalEventName, finalEventListener);
 
-      waitForCloseEvent(errorEventName);
+      waitForCloseEvent(EVENT_NAME_ERROR);
     };
 
     finalEventListener = () => {
@@ -194,8 +193,8 @@ export class DuplexTransform extends Duplex {
       waitForCloseEvent(finalEventName);
     };
 
-    emitter.addListener(closeEventName, closeEventListener);
-    emitter.addListener(errorEventName, errorEventListener);
+    emitter.addListener(EVENT_NAME_CLOSE, closeEventListener);
+    emitter.addListener(EVENT_NAME_ERROR, errorEventListener);
     emitter.addListener(finalEventName, finalEventListener);
   }
 
@@ -214,6 +213,7 @@ export class DuplexTransform extends Duplex {
         return;
       }
       assert(!this.__error);
+      log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
       break;
 
     case EVENT_NAME_FINISH:
@@ -229,6 +229,7 @@ export class DuplexTransform extends Duplex {
         return;
       }
       assert(!this.__error);
+      log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
       break;
 
     default:
@@ -253,24 +254,60 @@ export class DuplexTransform extends Duplex {
     this.__writableTransform.write(data, encoding, callback);
   }
 
-  __maybeEmitError(error) {
-    log.debug(`[${this.__name}] DuplexTransform.__maybeEmitError(` +
+  __cleanupAfterError(error) {
+    log.debug(`[${this.__name}] DuplexTransform.__cleanupAfterError(` +
               `'${error.toString()}')`);
 
     if (this.__error) {
-      log.warn(`[${this.__name}] Received more than one error`, error);
-
       assert(!this.__endEventAllowed);
       assert(!this.__finishEventAllowed);
-
       return;
     }
 
+    this.__error = error;
     this.__endEventAllowed = false;
     this.__finishEventAllowed = false;
 
-    this.__error = error;
+    // Remove all event listeners.
+    this.__readable.removeListener(EVENT_NAME_END, this.__onReadableEnd);
+    this.__readable.removeListener(EVENT_NAME_ERROR, this.__onReadableError);
+    this.__writable.removeListener(EVENT_NAME_ERROR, this.__onWritableError);
+    this.__writable.removeListener(EVENT_NAME_FINISH, this.__onWritableFinish);
+    this.__readableTransform.removeListener(EVENT_NAME_DATA,
+                                            this.__onReadableTransformData);
+    this.__readableTransform.removeListener(EVENT_NAME_END,
+                                            this.__onReadableTransformEnd);
+    this.__readableTransform.removeListener(EVENT_NAME_ERROR,
+                                            this.__onReadableTransformError);
+    this.__writableTransform.removeListener(EVENT_NAME_END,
+                                            this.__onWritableTransformEnd);
+    this.__writableTransform.removeListener(EVENT_NAME_ERROR,
+                                            this.__onWritableTransformError);
+
+    // Unpipe everything.
+    this.__readable.unpipe(this.__readableTransform);
+    this.__writableTransform.unpipe(this.__writable);
+
+    // End the transform streams.
+    this.__readableTransform.end();
+    this.__writableTransform.end();
+
+    // Make sure that the transform streams emit 'end' events.
+    this.__readableTransform.resume();
+    this.__writableTransform.resume();
+
+    // Tell others about this error now that our internal state is sane.
     this.emit(EVENT_NAME_ERROR, error);
+
+    // End the readable and writable parts of this stream.
+    this.push(null);
+    this.end();
+
+    // Tell the writable stream that we will not be writing any more data.
+    this.__writable.end();
+
+    // And see if we can emit the close event.
+    this.__maybeEmitClose();
   }
 
   __maybeEmitClose() {
@@ -283,6 +320,7 @@ export class DuplexTransform extends Duplex {
         this.__writableClosed &&
         this.__readableTransformClosed &&
         this.__writableTransformClosed) {
+      log.debug(`[${this.__name}] Scheduling '${EVENT_NAME_CLOSE}' event`);
       this.__closed = true;
       process.nextTick(() => {
         log.debug(`[${this.__name}] Emitting '${EVENT_NAME_CLOSE}' event`);
@@ -303,17 +341,7 @@ export class DuplexTransform extends Duplex {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableError(` +
               `'${error.toString()}')`);
 
-    this.__readable.removeListener(EVENT_NAME_ERROR, this.__onReadableError);
-
-    this.__maybeEmitError(error);
-
-    // Unpipe |__readable| and let it drain.
-    this.__readable.unpipe(this.__readableTransform);
-    this.__readable.resume();
-
-    // End |__readableTransform|. If there is no error emitted on
-    // |__readableTransform| then this call will eventually end this stream too.
-    this.__readableTransform.end();
+    this.__cleanupAfterError(error);
   };
 
   __onReadableClose = () => {
@@ -329,6 +357,8 @@ export class DuplexTransform extends Duplex {
   };
 
   __onReadableTransformData = data => {
+    assert(!this.__error);
+
     this.push(data);
   };
 
@@ -340,6 +370,9 @@ export class DuplexTransform extends Duplex {
     this.__readableTransform.removeListener(EVENT_NAME_END,
                                             this.__onReadableTransformEnd);
 
+    // Unpipe.
+    this.__readable.unpipe(this.__readableTransform);
+
     // End this stream.
     this.push(null);
   };
@@ -348,20 +381,7 @@ export class DuplexTransform extends Duplex {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableTransformError(` +
               `'${error.toString()}')`);
 
-    this.__readableTransform.removeListener(EVENT_NAME_DATA,
-                                            this.__onReadableTransformData);
-    this.__readableTransform.removeListener(EVENT_NAME_ERROR,
-                                            this.__onReadableTransformError);
-
-    this.__maybeEmitError(error);
-
-    // By emitting an error |__readable| will be automatically unpiped from
-    // |__readableTransform|. Just drain both.
-    this.__readable.resume();
-    this.__readableTransform.resume();
-
-    // End this stream.
-    this.push(null);
+    this.__cleanupAfterError(error);
   };
 
   __onReadableTransformClose = () => {
@@ -395,20 +415,7 @@ export class DuplexTransform extends Duplex {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableError(` +
               `'${error.toString()}')`);
 
-    this.__writable.removeListener(EVENT_NAME_ERROR, this.__onWritableError);
-    this.__writable.removeListener(EVENT_NAME_FINISH, this.__onWritableFinish);
-
-    // Emitting an error event means that |__writable| is automatically unpiped
-    // from |__writableTransform|.
-
-    this.__maybeEmitError(error);
-
-    // Pass the error along to the transform stream.
-    this.__writableTransform.emit(EVENT_NAME_ERROR, error);
-
-    // And end both streams.
-    this.end();
-    this.__writableTransform.end();
+    this.__cleanupAfterError(error);
   };
 
   __onWritableClose = () => {
@@ -438,18 +445,7 @@ export class DuplexTransform extends Duplex {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableTransformError(` +
               `'${error.toString()}')`);
 
-    this.__writableTransform.removeListener(EVENT_NAME_END,
-                                            this.__onWritableTransformEnd);
-    this.__writableTransform.removeListener(EVENT_NAME_ERROR,
-                                            this.__onWritableTransformError);
-
-    // Emitting an error event means that |__writable| is automatically unpiped
-    // from |__writableTransform|.
-
-    this.__maybeEmitError(error);
-
-    // End this stream.
-    this.end();
+    this.__cleanupAfterError(error);
   };
 
   __onWritableTransformClose = () => {

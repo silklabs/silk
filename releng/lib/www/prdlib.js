@@ -113,10 +113,11 @@ export async function fetchAllPrdItems(octo) {
   // Collect issues by milestones
   let milestones = {};
   allIssues.forEach(i => {
-    if (milestones[i.milestone.title] === undefined) {
-      milestones[i.milestone.title] = [];
+    const title = i.milestone ? i.milestone.title : '';
+    if (milestones[title] === undefined) {
+      milestones[title] = [];
     }
-    milestones[i.milestone.title].push(i);
+    milestones[title].push(i);
   });
 
   for (const m in milestones) {

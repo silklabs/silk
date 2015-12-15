@@ -29,7 +29,6 @@ const config = {
 
 After editing the configuration file, you can record video to a
 single, standalone mp4 file by simply calling
-
 ```
 npm run cat
 ```
@@ -57,7 +56,9 @@ continuously receiving more data. Safari and QuickTime can't.
 
 This will start the server and listen on the port specified in
 `src/config.js`:
-
 ```
 npm start
 ```
+
+You can then point your browser at `http://localhost:9999/default.mp4` or
+`http://localhost:9999/<deviceid>.mp4` to stream the video.

@@ -267,50 +267,60 @@ class Cameras extends EventEmitter {
     super();
     Object.assign(this, {
       cameras: {}, // indexed by device id
-      status: `Initializing...`,
-      socket: Api.socketioClient(io, 'account'),
+      status: 'Initializing...',
+      socket: null,
       _allDevices: [], // unmodified result from Api.account.listDevices()
       _liveDevices: {}, // indexed by device id
     });
-    this.socket.open();
-
-    this.socket.on('connect', () => {
-      log.info(`Connected to server`);
-      this.socket.emit('join', 'video-streams');
-      this._update();
-    });
-
-    this.socket.on('disconnect', e => {
-      log.warn(`Disconnected from server: ${e}`);
-      this._liveDevices = {};
-      this._update();
-    });
-
-    this.socket.on('video-stream-new', msg => {
-      log.info(`Device online: ${msg.id}`);
-      this._liveDevices[msg.id] = {logo: msg.logo, previewSize: msg.previewSize};
-      this._update();
-    });
-
-    this.socket.on('video-stream-delete', msg => {
-      log.info(`Device offline: ${msg.id}`);
-      delete this._liveDevices[msg.id];
-      this._update();
-    });
-
-    this._loadAllDevices();
   }
 
-  async _loadAllDevices() {
+  async connect() {
+    this.status = 'Connecting...';
+
     try {
-      this._updateStatus(`Fetching device list...`);
+      this._updateStatus('Fetching device list...');
       const result = await Api.account.listDevices();
       this._allDevices = result.devices;
       this._update();
+
+      this.socket = Api.socketioClient(io, 'account');
+      this.socket.open();
+
+      this.socket.on('connect', () => {
+        log.info(`Connected to server`);
+        this.socket.emit('join', 'video-streams');
+        this._update();
+      });
+
+      this.socket.on('disconnect', e => {
+        log.warn(`Disconnected from server: ${e}`);
+        this._liveDevices = {};
+        this._update();
+      });
+
+      this.socket.on('video-stream-new', msg => {
+        log.info(`Device online: ${msg.id}`);
+        this._liveDevices[msg.id] = {logo: msg.logo, previewSize: msg.previewSize};
+        this._update();
+      });
+
+      this.socket.on('video-stream-delete', msg => {
+        log.info(`Device offline: ${msg.id}`);
+        delete this._liveDevices[msg.id];
+        this._update();
+      });
     } catch (err) {
       log.error(err.stack);
       this._updateStatus(`Initialization failed: ${err}`);
     }
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+    this.socket = null;
+    this._updateStatus('Disconnected');
   }
 
   // Merge |this._allDevices| and |this._liveDevices| into the public list of
@@ -355,7 +365,7 @@ class Cameras extends EventEmitter {
     this.cameras = newDevices;
 
     let status = `${this._allDevices.length} registered devices, `;
-    if (this.socket.connected) {
+    if (this.socket && this.socket.connected) {
       status += `${Object.keys(this._liveDevices).length} online`;
       if (unregisteredLiveDevices.length > 0) {
         status += `, ${unregisteredLiveDevices.length} online but unregistered`;

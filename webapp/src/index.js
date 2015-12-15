@@ -3,6 +3,7 @@
 
 
 import Config from './libraries/Config';
+import Cameras from './libraries/Cameras';
 import api from './libraries/Api';
 import loadUserState from './libraries/UserState';
 
@@ -53,6 +54,12 @@ function loginCheck(nextState, replaceState) {
 (async function main() {
   try {
     userState = await loadUserState(api);
+    if (userState.accessToken) {
+      Cameras.connect();
+    }
+    userState.on('authenticated', () => Cameras.connect());
+    userState.on('unauthenticated', () => Cameras.disconnect());
+
     React.render((
       <Router>
         <Route path="/login" component={Login} userState={userState} />

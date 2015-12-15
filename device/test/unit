@@ -18,6 +18,18 @@ npm run lint
 npm start -- -c 1 -m 60 -s https://silk-server-${BRANCH}.herokuapp.com/
 popd
 
+echo "## Running unit tests for extensions ##"
+for dir in vendor/silk/ext/*/; do
+  echo "Processing $dir"
+  if [ -d "$dir/test" ]; then
+    pushd "$dir/test"
+    npm install --dev
+    npm test
+    npm run clean # clean up to save disk space
+    popd
+  fi
+done
+
 echo "## Cleaning unit tests ##"
 pushd vendor/silk/core
 npm run clean # clean up to save disk space

@@ -125,6 +125,7 @@ internal class BLESocketPeripheral: NSObject,
   private var peripheralManager: CBPeripheralManager
   private var centralManager: CBCentralManager
   private var socketManager: BLESocketManager
+  private let regionMonitor: RegionMonitor
 
   private var inForeground: Bool = false
   private var enabled: Bool = false
@@ -140,9 +141,10 @@ internal class BLESocketPeripheral: NSObject,
   private var pendingNotifies = [Connection]()
   private var nextConnectionId = 0
 
-  override init() {
+  init(regionMonitor: RegionMonitor) {
     log.debug("BLESocketPeripheral()")
 
+    self.regionMonitor = regionMonitor
     self.socketManager = BLESocketManager.getOrCreateInstance()
     self.queue = self.socketManager.methodQueue
 
@@ -718,6 +720,12 @@ internal class BLESocketPeripheral: NSObject,
     assert(peripheral === self.peripheralManager)
 
     log.info("PeripheralManager state changed: \(peripheral.state.rawValue)")
+
+    if (peripheral.state == .PoweredOn) {
+      dispatch_async(dispatch_get_main_queue()) {
+        self.regionMonitor.updateState()
+      }
+    }
 
     updateState()
   }

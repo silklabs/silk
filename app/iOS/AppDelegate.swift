@@ -60,7 +60,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
 
     // This must not be created until *after* ReactNative has loaded all its
     // modules during the |RCTRootView| initializer.
-    self.bleSocketPeripheral = BLESocketPeripheral()
+    self.bleSocketPeripheral =
+      BLESocketPeripheral(regionMonitor: self.regionMonitor!)
 
     self.regionMonitor!.start()
 

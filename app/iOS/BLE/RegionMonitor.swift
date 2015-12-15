@@ -260,6 +260,20 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     }
   }
 
+  func updateState() {
+    log.info("updateState()")
+
+    if !self.monitoring {
+      return
+    }
+
+    let locationManager = self.locationManager!
+
+    for regionInfo in self.regions.values {
+      locationManager.requestStateForRegion(regionInfo.region)
+    }
+  }
+
   func locationManager(manager: CLLocationManager,
                        didChangeAuthorizationStatus status: CLAuthorizationStatus) {
     assert(manager === self.locationManager!)

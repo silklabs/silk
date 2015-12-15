@@ -1,1 +1,1 @@
-export default from 'log/device';
+export { default } from 'log/device';

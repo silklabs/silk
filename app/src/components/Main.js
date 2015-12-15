@@ -8,7 +8,7 @@ import getDeviceManager from '../libraries/ble/DeviceManager';
 import SocketIO from '../libraries/SocketIO';
 import { UserState } from '../libraries/UserState';
 
-import AsyncComponent from './AsyncComponent';
+import AsyncComponent from './abstract/AsyncComponent';
 import { DeviceRecord, ConfiguringDeviceRecord } from './Records';
 import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';

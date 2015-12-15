@@ -1,7 +1,7 @@
 import React from 'react-native';
 import moment from 'moment';
 
-import AsyncComponent from './AsyncComponent';
+import AsyncComponent from './abstract/AsyncComponent';
 
 const {
   Image,

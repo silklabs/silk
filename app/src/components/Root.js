@@ -18,8 +18,8 @@ import loadUserState from '../libraries/UserState';
 import createAPI from 'silk-api';
 import version from 'silk-core-version';
 
-import AsyncComponent from './AsyncComponent';
-import AsyncNavigator from './AsyncNavigator';
+import AsyncComponent from './abstract/AsyncComponent';
+import AsyncNavigator from './abstract/AsyncNavigator';
 import DeviceConfig from './setup/DeviceConfig';
 import DeviceTouch from './setup/DeviceTouch';
 import Main from './Main';

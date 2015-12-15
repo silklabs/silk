@@ -8,7 +8,7 @@ import PreviewQueue from '../libraries/PreviewQueue';
 
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
-import SocketIOComponent from './SocketIOComponent';
+import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 
 let {

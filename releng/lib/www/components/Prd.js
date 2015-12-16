@@ -82,11 +82,14 @@ class PrdItem extends React.Component {
     let bulletList;
     { //eslint-disable-line no-lone-blocks
       let bullets = [];
+      // Add extra newline at the end of the body to simplify regex
+      const body = issue.body + '\r\n';
+
       const re = new RegExp('- \\[.\\](.*)\r\n', 'g'); //eslint-disable-line no-control-regex
-      let reResult = re.exec(issue.body);
+      let reResult = re.exec(body);
       while (reResult !== null) {
         bullets.push(reResult[1].trim());
-        reResult = re.exec(issue.body);
+        reResult = re.exec(body);
       }
       if (bullets.length > 0) {
         bulletList = (

@@ -6,10 +6,14 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+import ClosingTransform from './closing_transform';
 import { DuplexTransform } from './duplex_transform';
 import makeLog from 'log';
 import msgpack from 'msgpack-lite';
-import { Transform } from 'stream';
+
+const EVENT_NAME_CLOSE = `close`;
+const EVENT_NAME_END = `end`;
+const EVENT_NAME_ERROR = `error`;
 
 const log = makeLog(`api-streams-msgpack`);
 
@@ -22,21 +26,27 @@ export class MessagePackDecodeStream extends msgpack.createDecodeStream {
       readableObjectMode: true,
     });
 
-    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
+    const emitClose = () => {
+      this.removeListener(EVENT_NAME_END, emitClose);
+      this.removeListener(EVENT_NAME_ERROR, emitClose);
+
+      process.nextTick(() => this.emit(EVENT_NAME_CLOSE));
+    };
+
+    this.addListener(EVENT_NAME_END, emitClose);
+    this.addListener(EVENT_NAME_ERROR, emitClose);
   }
 }
 
 // The built-in MessagePack encode stream uses buffers and there's no clean way
 // to disable that behavior. This stream encodes without buffering.
-export class MessagePackEncodeStream extends Transform {
+export class MessagePackEncodeStream extends ClosingTransform {
   constructor() {
     log.debug(`MessagePackEncodeStream()`);
 
     super({
       writableObjectMode: true,
     });
-
-    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
   }
 
   _transform(chunk, encoding, callback) {

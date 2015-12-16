@@ -1,0 +1,56 @@
+{
+ "stackTrace": [
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "__epoll_pwait",
+   "lineNumber": "20"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "epoll_pwait",
+   "lineNumber": "26"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "epoll_wait",
+   "lineNumber": "6"
+  },
+  {
+   "fileName": "/system/lib/libutils.so",
+   "methodName": "android::Looper::pollInner(int)",
+   "lineNumber": "98"
+  },
+  {
+   "fileName": "/system/lib/libutils.so",
+   "methodName": "android::Looper::pollOnce(int, int*, int*, void**)",
+   "lineNumber": "92"
+  },
+  {
+   "fileName": "/system/lib/libsurfaceflinger.so",
+   "methodName": "?",
+   "lineNumber": "?"
+  },
+  {
+   "fileName": "/system/lib/libsurfaceflinger.so",
+   "methodName": "android::SurfaceFlinger::run()",
+   "lineNumber": "8"
+  },
+  {
+   "fileName": "/system/bin/surfaceflinger",
+   "methodName": "main",
+   "lineNumber": "192"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "__libc_init",
+   "lineNumber": "44"
+  },
+  {
+   "fileName": "/system/bin/surfaceflinger",
+   "methodName": "?",
+   "lineNumber": "?"
+  }
+ ],
+ "message": "signal 11 (SIGSEGV), code 0 (SI_USER), fault addr 0xb4",
+ "className": "surfaceflinger  >>> /system/bin/surfaceflinger <<<"
+}

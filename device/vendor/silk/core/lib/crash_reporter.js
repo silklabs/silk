@@ -16,6 +16,8 @@ import net from 'net';
 import wrapNoEntity from './fs/wrap_no_entity';
 import { getboolprop } from './sysutils';
 import version from 'silk-core-version';
+import raygun from 'silk-raygun/node';
+import byline from 'byline';
 
 import CrashReportOp from './outbox/crash_report_operation';
 import { EventEmitter } from 'events';
@@ -24,6 +26,10 @@ const log = createLog('crash_reporter');
 
 const CRASHREPORT_ENABLED_PROP = 'persist.silk.crashrprt.enabled';
 const CRASHREPORT_ENABLED = getboolprop(CRASHREPORT_ENABLED_PROP, version.official);
+
+if (CRASHREPORT_ENABLED) {
+  raygun.enable('device', version.semver);
+}
 
 const TOMBSTONE_PATH = '/data/tombstones/';
 const DEBUGGERD_SOCKET_PATH = '/data/system/ndebugsocket';
@@ -272,15 +278,16 @@ export class Debuggerd extends EventEmitter {
 }
 
 export class CrashReporter {
-  outbox = null
-  tombstones = null
-  debuggerd = null
-  active = false
-  deviceId = null
+  outbox = null;
+  tombstones = null;
+  debuggerd = null;
+  active = false;
+  deviceId = null;
+  doUploads = false;
 
   constructor(outbox, tombstones, debuggerd, doUploads) {
     Object.assign(this, {
-      outbox, tombstones, debuggerd
+      outbox, tombstones, debuggerd, doUploads
     });
 
     // if we are actively uploading crashes hook up the listeners to create
@@ -301,15 +308,107 @@ export class CrashReporter {
     }
   }
 
+  // Converts a tombstone backtrace into a raygun.io error object
+  static async _tombstoneToRaygunError(tombstoneFile) {
+    const escape = (str) => str.replace(/[\\$'"]/g, '\\$&');
+
+    // Read in the first part of the tombstone line-by-line
+    let fsStream = fs.createReadStream(tombstoneFile, {
+      encoding: 'utf8',
+      start: 0,
+      end: 0xFFFF, // Only bother reading the first 64KB of the tombstone
+    });
+    let stream = byline(fsStream, { keepEmptyLines: true });
+
+    // Populate the tombstone header and backtrace arrays
+    let header = [];
+    let backtrace = [];
+    let lines = header;
+    stream.on('data', (line) => {
+      lines.push(line);
+      if (line.length === 0) {
+        // The first empty line denotes the start of the backtrace.
+        // The second empty line denotes the end of the backtrace.
+        if (lines === header) {
+          lines = backtrace; // Switch over to collecting the backtrace
+        } else {
+          lines = []; // Ignore the rest of the input
+          fsStream.destroy();
+        }
+      }
+    });
+
+    await eventToPromise(fsStream, 'close');
+
+    // Validate the header
+    assert.equal(header[0], `*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***`);
+    assert.equal(header[2], `Revision: '11'`);
+
+    // Line 4: The process that crashed
+    const who = escape(header[4].replace(/.*name: /, ''));
+
+    // Line 5: How it crashed
+    const message = escape(header[5]);
+
+    // Decode the backtrace lines
+    assert(backtrace.length > 1, null);
+    assert.equal(backtrace.shift(), `backtrace:`);
+    assert.equal(backtrace.pop(), ``);
+
+    var fileMethodRegEx = /^([^ ]*) \((.*)\)$/;
+    var methodOffsetRegEx = /^([^+]*)\+(.*)$/;
+    const stackTrace = backtrace.map(bt => {
+      bt = bt.trim();
+      bt = bt.replace(/^.* {2}/, ''); // Remove frame number/pc/stack value
+
+      let frame = { fileName: '?', methodName: '?', lineNumber: '?' };
+      const methodInfo = bt.match(fileMethodRegEx);
+      if (methodInfo) {
+        frame.fileName = escape(methodInfo[1]);
+
+        // The method may contain an +offset
+        const methodOffsetInfo = methodInfo[2].match(methodOffsetRegEx);
+        if (methodOffsetInfo) {
+          frame.methodName = escape(methodOffsetInfo[1]);
+          frame.lineNumber = escape(methodOffsetInfo[2]);
+        } else {
+          frame.methodName = escape(methodInfo[2]);
+        }
+      } else {
+        frame.fileName = escape(bt);
+      }
+      return frame;
+    });
+
+    // Conforms to the "details.error" object at
+    // https://raygun.io/raygun-providers/rest-json-api
+    return {
+      stackTrace,
+      message,
+      className: who, // Shim the process name into the Error className
+    };
+  }
+
   uploadTombstone = (tombstonePath) => {
     log.info(`Handing off ${tombstonePath} to be uploaded...`);
     // We must do this inside of the tombstone lock so we don't race to modify
     // the queue...
     return this.tombstones.withLock(async () => {
+
+      let raygunMessage;
+      try {
+        raygunMessage = raygun.buildMessage();
+        raygunMessage.details.error = await CrashReporter._tombstoneToRaygunError(tombstonePath);
+      } catch (err) {
+        // If _tombstoneToRaygunError fails, report the failure to raygun
+        raygunMessage = raygun.buildMessage(err);
+      }
+
       // construct the operation from the current deviceId + stats.
       let stats = await fs.stat(tombstonePath);
       let operation = new CrashReportOp({
         size: stats.size,
+        raygunMessage,
         metadata: {
           timeStamp: stats.birthtime,
           type: 'tombstone'
@@ -353,6 +452,26 @@ export class CrashReporter {
       this.debuggerd.shutdown()
     ]);
   }
+
+  async reportJSError(error, type, readable, readableSize) {
+    if (this.doUploads) {
+      let raygunMessage = raygun.buildMessage(error, { jsErrorType: type });
+
+      let operation = new CrashReportOp({
+        size: readableSize,
+        raygunMessage,
+        metadata: {
+          timeStamp: (new Date()).toISOString(), // Accurate enough...
+          type: 'tombstone',
+        }
+      });
+      await this.outbox.addToQueue(operation, readable);
+    } else {
+      // Uploads are disabled.  Store the JS error as a normal tombstone in the
+      // hopes that somebody will spot it.
+      this.tombstones.report(readable);
+    }
+  }
 }
 
 export default function(outbox, options = {}) {
@@ -384,6 +503,8 @@ export default function(outbox, options = {}) {
 
   return {
     report: (readable) => tombstones.report(readable),
+    reportJSError: (error, type, readable, readableSize) =>
+      crashReporter.reportJSError(error, type, readable, readableSize),
     shutdown: () => crashReporter.shutdown(),
     assignDeviceId: (value) => crashReporter.assignDeviceId(value),
   };

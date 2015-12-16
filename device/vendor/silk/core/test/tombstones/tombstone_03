@@ -1,0 +1,106 @@
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'Android/aosp_mako/mako:5.1.1/LMY47V/travis12042206:eng/next,test-keys'
+Revision: '11'
+ABI: 'arm'
+pid: 1271, tid: 1271, name: ls  >>> ls <<<
+signal 13 (SIGPIPE), code 0 (SI_USER), fault addr --------
+    r0 ffffffe0  r1 b7695438  r2 0000016d  r3 44000000
+    r4 b6edd438  r5 b7695438  r6 0000016d  r7 00000004
+    r8 b6d47000  r9 b6e95a89  sl b6ee07bc  fp b6d47024
+    ip 00000000  sp bea599a0  lr b6eb8ac3  pc b6ec1720  cpsr 000f0010
+    d0  2e64746e65766576  d1  b7695360b7695365
+    d2  b7695200b769526e  d3  b7695228b7695264
+    d4  b7695118b7695108  d5  b76951c8b76951b0
+    d6  b76951e8b76951d8  d7  b7695180b7695170
+    d8  0000000000000000  d9  0000000000000000
+    d10 0000000000000000  d11 0000000000000000
+    d12 0000000000000000  d13 0000000000000000
+    d14 0000000000000000  d15 0000000000000000
+    d16 0000000000000000  d17 0000000000000fff
+    d18 0000000000000000  d19 0000000000000000
+    d20 0000000000000000  d21 0000000000000000
+    d22 0000000000000000  d23 0000000000000000
+    d24 0000000000000000  d25 0000000000000000
+    d26 0000000000000000  d27 0000000000000000
+    d28 0000000000000000  d29 0000000000000000
+    d30 0000000000000000  d31 0000000000000000
+    scr 00000000
+
+backtrace:
+    #00 pc 0003d720  /system/lib/libc.so (write+12)
+    #01 pc 00034ac1  /system/lib/libc.so (__sflush+48)
+    #02 pc 00024721  /system/lib/libc.so (fclose+40)
+    #03 pc 00011a9d  /system/lib/libc.so (malloc_fini_impl()+20)
+    #04 pc 00016fab  /system/lib/libc.so (pthread_once+90)
+    #05 pc 00012343  /system/lib/libc.so (malloc_debug_fini+10)
+    #06 pc 0003ac1d  /system/lib/libc.so (__cxa_finalize+132)
+    #07 pc 000119bb  /system/lib/libc.so (exit)
+    #08 pc 0001239f  /system/lib/libc.so (__libc_init+46)
+    #09 pc 00005b08  /system/bin/toolbox
+
+stack:
+         bea59960  bea59a5c  [stack]
+         bea59964  b6f072bd  /system/bin/toolbox
+         bea59968  00000001  
+         bea5996c  00000000  
+         bea59970  00000000  
+         bea59974  00000001  
+         bea59978  000041ed  
+         bea5997c  00000010  
+         bea59980  00000000  
+         bea59984  00000000  
+         bea59988  00000000  
+         bea5998c  00000000  
+         bea59990  b6edd438  /system/lib/libc.so
+         bea59994  b7695438  [heap]
+         bea59998  0000016d  
+         bea5999c  b6eb8ac3  /system/lib/libc.so (__sflush+50)
+    #00  bea599a0  b6edd438  /system/lib/libc.so
+         ........  ........
+    #01  bea599a0  b6edd438  /system/lib/libc.so
+         bea599a4  00000008  
+         bea599a8  00000000  
+         bea599ac  b6ea8725  /system/lib/libc.so (fclose+44)
+    #02  bea599b0  b6eda600  /system/lib/libc.so
+         bea599b4  b6edd3e4  /system/lib/libc.so
+         bea599b8  00000000  
+         bea599bc  b6e95aa1  /system/lib/libc.so (malloc_fini_impl()+24)
+    #03  bea599c0  b6edd580  /system/lib/libc.so
+         bea599c4  b6e9afad  /system/lib/libc.so (pthread_once+92)
+    #04  bea599c8  b6edd580  /system/lib/libc.so
+         bea599cc  b6e95a89  /system/lib/libc.so (malloc_fini_impl())
+         bea599d0  00000001  
+         bea599d4  00000001  
+         bea599d8  00001000  
+         bea599dc  00000000  
+         bea599e0  b6e986cd  /system/lib/libc.so (__libc_fini)
+         bea599e4  b6d47000  
+         bea599e8  0000000c  
+         bea599ec  b6e96347  /system/lib/libc.so (malloc_debug_fini+14)
+    #05  bea599f0  00000000  
+         bea599f4  b6ebec1f  /system/lib/libc.so (__cxa_finalize+134)
+    #06  bea599f8  b6f1f6b8  /system/bin/toolbox
+         bea599fc  b6ee07bc  
+         bea59a00  870196f6  
+         bea59a04  00000000  
+         bea59a08  bea59a6c  [stack]
+         bea59a0c  00000001  
+         bea59a10  b6f02a35  /system/bin/toolbox
+         bea59a14  00000000  
+         bea59a18  00000000  
+         bea59a1c  00000000  
+         bea59a20  bea59a5c  [stack]
+         bea59a24  b6e959bf  /system/lib/libc.so (exit+10)
+    #07  bea59a28  00000000  
+         bea59a2c  b6e963a3  /system/lib/libc.so (__libc_init+50)
+    #08  bea59a30  bea59a48  [stack]
+         bea59a34  00000000  
+         bea59a38  00000000  
+         bea59a3c  00000000  
+         bea59a40  00000000  
+         bea59a44  b6f02b0c  /system/bin/toolbox
+    #09  bea59a48  b6f1f6a8  /system/bin/toolbox
+         bea59a4c  b6f1f6b0  /system/bin/toolbox
+         bea59a50  b6f1f6b8  /system/bin/toolbox
+         bea59a54  bea59a60  [stack]
+         bea59a58  00000000  

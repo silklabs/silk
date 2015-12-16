@@ -1,0 +1,31 @@
+{
+ "stackTrace": [
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "nanosleep",
+   "lineNumber": "12"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "sleep",
+   "lineNumber": "38"
+  },
+  {
+   "fileName": "/system/silk/bin/capture",
+   "methodName": "?",
+   "lineNumber": "?"
+  },
+  {
+   "fileName": "/system/lib/libc.so",
+   "methodName": "__libc_init",
+   "lineNumber": "44"
+  },
+  {
+   "fileName": "/system/silk/bin/capture",
+   "methodName": "?",
+   "lineNumber": "?"
+  }
+ ],
+ "message": "signal 6 (SIGABRT), code 0 (SI_USER), fault addr --------",
+ "className": "capture  >>> /system/silk/bin/capture <<<"
+}

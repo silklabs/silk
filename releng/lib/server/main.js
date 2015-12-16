@@ -1,6 +1,13 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+import version from 'silk-core-version';
+import raygun from 'silk-raygun/node';
+if (version.official) {
+  // Enable crash reporting as early as practical
+  raygun.enable('releng', version.semver, { exceptionHandlers: true });
+}
+
 import createServer from './server';
 import loadConfig from './config';
 

@@ -44,7 +44,7 @@ async function drainLogcat(destination) {
   log.info('Took %d ms to drain logcat', Date.now() - start);
 }
 
-async function handleJSError(type, err) {
+async function buildJSTombstone(type, err) {
   let stream = new Store();
   const header = tombstoneHeader(type, err);
   log.error(header);
@@ -57,8 +57,8 @@ export default function(crashreporter) {
   process.on('uncaughtException', async (err) => {
     log.info('uncaughtException', err);
     try {
-      let stream = await handleJSError('uncaughtException', err);
-      await crashreporter.report(stream);
+      let stream = await buildJSTombstone('uncaughtException', err);
+      await crashreporter.reportJSError(err, 'uncaughtException', stream, stream.getStoreSize());
     } catch (err) {
       log.error('Failed to report uncaughtException', err.stack);
     }
@@ -70,8 +70,8 @@ export default function(crashreporter) {
       if (!err) {
         err = new Error(`Unhandled rejection without an error...`);
       }
-      let stream = await handleJSError('unhandledRejection', err);
-      await crashreporter.report(stream);
+      let stream = await buildJSTombstone('unhandledRejection', err);
+      await crashreporter.reportJSError(err, 'unhandledRejection', stream, stream.getStoreSize());
     } catch (err) {
       log.error('Failed to report unhandledRejection', err.stack);
     }

@@ -6,6 +6,13 @@ debug.enable('silk-*');
 import 'source-map-support/browser-source-map-support';
 sourceMapSupport.install(); //eslint-disable-line no-undef
 
+import version from 'silk-core-version';
+import raygun from 'silk-raygun/browser';
+if (version.official) {
+  // Enable crash reporting as early as practical
+  raygun.enable('releng', version.semver);
+}
+
 import React from 'react';
 import { Router, Route, Redirect } from 'react-router';
 import { Alert } from 'react-bootstrap';
@@ -62,5 +69,6 @@ function loginCheck(nextState, replaceState) {
         <strong>Oops</strong><pre>{err.stack}</pre>
       </Alert>
     ), document.body);
+    raygun.send(err);
   }
 })();

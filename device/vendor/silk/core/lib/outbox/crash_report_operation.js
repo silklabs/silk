@@ -11,6 +11,7 @@ import fs from 'mz/fs';
 import createLog from '../log';
 import httpStream from '../streams/http';
 import assert from 'assert';
+import raygun from 'silk-raygun/node';
 
 const CONTENT_TYPE = 'text/plain';
 const log = createLog('operation:crash_report_operation');
@@ -47,49 +48,62 @@ export default class CrashReportOperation extends StreamOperation {
     return writer;
   }
 
-  /**
-   * Unlike most operations this accepts a _path_ to a file on disk so we can
-   * avoid buffering the contents into memory...
-   */
   async _write(path) {
-    assert(typeof path === 'string', 'crash reporter only accepts paths');
     let result = await super._write(path);
     if (!result.done) {
       return result;
     }
 
     let { putUrl } = this.destination;
+    let crashId;
     try {
       let { url } = await api.blobPublisher.ack({ url: putUrl });
-      await api.crashPublisher.create(Object.assign(
+      let { id } = await api.crashPublisher.create(Object.assign(
         {},
         this.metadata,
         { url }
       ));
+      crashId = id;
     } catch (err) {
-      log.error(`Failed to upload crash metadata`, err);
+      log.error(`Failed to upload crash metadata`, err, err.stack);
       return { done: false, remainder: path, error: err };
     }
 
-    try {
-      await fs.unlink(path);
-    } catch (err) {
-      log.error(`
-        Failed to unlink underlying crash report at ${path}.
+    log.verbose(`Crash ${crashId}`);
 
-        This will result in the crash being uploaded multiple times.
-
-        ${err.stack}
-      `);
+    // Forward the crash to raygun on success.
+    // TODO: Retry on failure
+    if (this.raygunMessage) {
+      if (!this.raygunMessage.details.userCustomData) {
+        this.raygunMessage.details.userCustomData = {};
+      }
+      this.raygunMessage.details.userCustomData.crashId = crashId;
+      this.raygunMessage.details.userCustomData.crashUrl =
+        `https://silk-webapp-master.herokuapp.com/#/crashById/${crashId}?`;
+      raygun.postMessage(this.raygunMessage, null);
     }
 
+    if (typeof path === 'string') {
+      try {
+        await fs.unlink(path);
+      } catch (err) {
+        log.error(`
+          Failed to unlink underlying crash report at ${path}.
+
+          This will result in the crash being uploaded multiple times.
+
+          ${err.stack}
+        `);
+      }
+    }
     return { done: true };
   }
 
   _getMetadata() {
     return {
       size: this.size,
-      metadata: this.metadata
+      metadata: this.metadata,
+      raygunMessage: this.raygunMessage,
     };
   }
 }

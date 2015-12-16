@@ -7,15 +7,15 @@
  */
 
 import assert from 'assert';
+import ClosingPassThrough from './closing_passthrough';
 import { DuplexTransform } from './duplex_transform';
 import makeLog from 'log';
-import { PassThrough } from 'stream';
 
 const log = makeLog(`api-streams-heartbeat`);
 
 const PROPERTY_NAME = `_<3_<3_<3_`;
 
-class HeartbeatStreamBase extends PassThrough {
+class HeartbeatStreamBase extends ClosingPassThrough {
 
   _delay = 0;
   _ending = false;
@@ -32,8 +32,6 @@ class HeartbeatStreamBase extends PassThrough {
     }
 
     super(options);
-
-    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
 
     this._delay = options.delay;
 

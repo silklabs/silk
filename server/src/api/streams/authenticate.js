@@ -7,17 +7,17 @@
  */
 
 import assert from 'assert';
+import ClosingTransform from './closing_transform';
 import { CryptoDuplexStream } from './crypto';
 import { DuplexTransform } from './duplex_transform';
 import Id from '../id';
 import makeLog from 'log';
-import { Transform } from 'stream';
 
 const log = makeLog(`api-streams-authenticate`);
 
 const PROPERTY_NAME = `_0--"_`;
 
-class AuthenticateStreamBase extends Transform {
+class AuthenticateStreamBase extends ClosingTransform {
 
   _authenticated = false;
   _allowUnauthenticated = false;
@@ -38,8 +38,6 @@ class AuthenticateStreamBase extends Transform {
     super(options);
 
     cryptoStream.once(`sharedSecret`, (secret) => this._onSharedSecret(secret));
-
-    this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
   }
 
   _queueOrPush(chunk) {

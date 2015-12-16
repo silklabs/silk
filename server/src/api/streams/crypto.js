@@ -7,11 +7,11 @@
  */
 
 import assert from 'assert';
+import ClosingTransform from './closing_transform';
 import crypto from 'crypto';
 import { DuplexTransform } from './duplex_transform';
 import { ec as EC } from 'elliptic';
 import makeLog from 'log';
-import { Transform } from 'stream';
 
 const log = makeLog(`api-streams-crypto`);
 
@@ -27,7 +27,7 @@ export function setRandomBytesFunction(func) {
   getRandomBytes = func;
 }
 
-class CryptoStreamBase extends Transform {
+class CryptoStreamBase extends ClosingTransform {
 
   static CURVE_NAME = `curve25519`;
   static CIPHER_NAME = `aes-256-cbc`;

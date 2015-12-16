@@ -15,7 +15,8 @@
 //    time.
 //
 export default function init(env) {
-  let log = env.log;
+  const log = env.log;
+  const hue = env.hue;
 
   const NIGHT_LIGHT_SI_LUX = 3; // light sensor value in SI lux units
   const DAY_LIGHT_SI_LUX = 5;   // light sensor value in SI lux units
@@ -66,7 +67,9 @@ export default function init(env) {
     if (!hueLightsOn) {
       log.info(`Lights on. Face detected`);
       hueLightsOn = true;
-      env.hue.setState({on: true, intensity: 1.0});
+      if (hue) {
+        hue.setState({on: true, intensity: 1.0});
+      }
     }
 
     // Turn off hue light if no face is detected within {@code HUE_LIGHTS_OFF_TIMEOUT_MS}
@@ -75,7 +78,9 @@ export default function init(env) {
     }
     faceLostTimeout = setTimeout(() => {
       log.info(`Lights out. No face observed for ${HUE_LIGHTS_OFF_TIMEOUT_MS / 1000} seconds`);
-      env.hue.setState({on: false});
+      if (hue) {
+        hue.setState({on: false});
+      }
       hueLightsOn = false;
       faceLostTimeout = null;
     }, HUE_LIGHTS_OFF_TIMEOUT_MS);

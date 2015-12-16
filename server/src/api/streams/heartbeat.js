@@ -52,7 +52,7 @@ class HeartbeatStreamBase extends PassThrough {
   }
 
   end(chunk, encoding, callback) {
-    log.debug(`HeartbeatStreamBase.end()`);
+    log.debug(`[${this.constructor.name}] HeartbeatStreamBase.end()`);
 
     assert(!this._ending);
     this._ending = true;

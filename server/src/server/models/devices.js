@@ -8,7 +8,7 @@
 import * as Joi from 'joi';
 import Base from './base';
 import { ObjectId } from 'promised-mongo';
-import Id from '../../api/id';
+import { AccessToken } from 'silk-api';
 
 const DEVICE_TYPES = [
   'camera'
@@ -119,7 +119,7 @@ export default class Devices extends Base {
   };
 
   registrationTokenValid(registrarPublicKey: string, devicePublicKey: string, token: string): bool {
-    let accountAccessToken = Id.importPub(registrarPublicKey);
+    let accountAccessToken = AccessToken.importPub(registrarPublicKey);
     return accountAccessToken.verify(devicePublicKey, token);
   }
 

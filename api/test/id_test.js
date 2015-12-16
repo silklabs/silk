@@ -1,6 +1,6 @@
 
 import assert from 'assert';
-import DeviceID from '../../src/api/id';
+import DeviceID from '../src/id';
 
 suite('device id', () => {
 

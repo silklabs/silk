@@ -1,6 +1,6 @@
 /* @flow */
-import createContext from '../server/context';
-import {Metric, Float} from '../../src/api';
+import createContext from 'silk-server/test/server/context';
+import {Metric, Float} from '../src/';
 import uuid from 'uuid';
 import assert from 'assert';
 

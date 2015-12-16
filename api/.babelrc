@@ -1,0 +1,8 @@
+{
+  "stage": "0",
+  "only": "**",
+  "ignore": "/node_modules\/(?!silk-server)/",
+  "optional": [
+    "asyncToGenerator"
+  ]
+}

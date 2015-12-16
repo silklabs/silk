@@ -1,11 +1,11 @@
 
 import assert from 'assert';
-import createContext from '../server/context';
-import launchApp from '../server/launch_app';
+import createContext from 'silk-server/test/server/context';
+import launchApp from 'silk-server/test/server/launch_app';
 import express from 'express';
-import testRoutes from '../../src/server/routes/test';
-import {StateContainer} from '../../src/api/http_client';
-import TestAPI from '../../src/api/gen/test';
+import testRoutes from 'silk-server/src/server/routes/test';
+import {StateContainer} from '../src/http_client';
+import TestAPI from '../src/gen/test';
 
 suite('api call retries', () => {
   let context = createContext();
@@ -36,7 +36,7 @@ suite('api call retries', () => {
   let account, app, testServerURL, testModel;
   setup(async () => {
     app = express();
-    app.use(require('../../src/server/json'));
+    app.use(require('silk-server/src/server/json'));
     testModel = new TestModel();
 
     // XXX: A little yucky but copies the proper context from the real server

@@ -1,8 +1,8 @@
 import assert from 'assert';
-import id from '../../src/api/id';
+import id from '../src/id';
 import base64url from 'base64url';
 
-import jwa from '../../src/api/jwa';
+import jwa from '../src/jwa';
 import jwt from 'jsonwebtoken';
 
 suite('jwa via jwt', () => {

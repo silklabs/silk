@@ -1,4 +1,4 @@
-import parse from '../../../src/api/influxdb/parse';
+import parse from '../../src/influxdb/parse';
 import assert from 'assert';
 
 suite('influxdb/deserialize', () => {

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import createApi from '../../src/api';
+import createApi from '../src/';
 
 suite('loadConfig', () => {
   test('reload', async () => {

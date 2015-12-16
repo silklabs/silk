@@ -5,7 +5,7 @@ import {
   Float,
   Integer,
   default as BaseMetric,
-} from '../../src/api/metric';
+} from '../src/metric';
 
 suite('metrics', function() {
 

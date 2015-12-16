@@ -5,15 +5,18 @@
   "main": "src/index.js",
   "license": "proprietary",
   "dependencies": {
-    "babelify": "^6.3.0",
+    "api-schema": "../api-schema",
+    "babel": "^5.8.34",
     "babel-runtime": "^5.8.20",
+    "babelify": "^6.3.0",
     "base64url": "^1.0.4",
     "debug": "^2.2.0",
     "elliptic": "^5.1.0",
     "hash.js": "^1.0.3",
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
     "localStorage": "^1.0.3",
-    "log": "git@github.com:silklabs/log.git#master",
+    "log": "../log",
+    "mkdirp": "^0.5.1",
     "msgpack-lite": "^0.1.13",
     "node-fetch": "^1.3.2",
     "pbkdf2": "^3.0.4",
@@ -32,8 +35,21 @@
     "type": "git",
     "url": "git@github.com:silklabs/silk-api.git"
   },
+  "scripts": {
+    "mocha": "mocha $(find ./test -name '*_test.js')",
+    "lint": "eslint test src",
+    "flow": "flow check",
+    "test": "npm run lint && npm run mocha && npm run flow"
+  },
   "keywords": [
     "iot"
   ],
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "babel-eslint": "^5.0.0-beta6",
+    "eslint": "^1.10.3",
+    "express": "^4.13.3",
+    "mocha": "^2.3.4",
+    "silk-server": "../server"
+  }
 }

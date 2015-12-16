@@ -7,7 +7,8 @@
  */
 
 import assert from 'assert';
-import { Duplex, PassThrough } from 'stream';
+import ClosingPassThrough from './closing_passthrough';
+import { Duplex } from 'stream';
 import makeLog from 'log';
 
 const log = makeLog(`api-streams-duplex-transform`);
@@ -17,25 +18,6 @@ const EVENT_NAME_DATA = `data`;
 const EVENT_NAME_END = `end`;
 const EVENT_NAME_ERROR = `error`;
 const EVENT_NAME_FINISH = `finish`;
-
-class ClosingPassThrough extends PassThrough {
-
-  constructor(options) {
-    super(options);
-
-    let closed = false;
-
-    const maybeClose = () => {
-      if (!closed) {
-        closed = true;
-        process.nextTick(() => this.emit(EVENT_NAME_CLOSE));
-      }
-    };
-
-    this.once(EVENT_NAME_ERROR, maybeClose);
-    this.once(EVENT_NAME_END, maybeClose);
-  }
-}
 
 // Applies transforms to both directions of a Duplex stream.
 export class DuplexTransform extends Duplex {

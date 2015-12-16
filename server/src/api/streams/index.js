@@ -2,6 +2,8 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import * as authenticate from './authenticate';
+import * as closingPassThrough from './closing_passthrough';
+import * as closingTransform from './closing_transform';
 import * as crypto from './crypto';
 import * as duplex_transform from './duplex_transform';
 import * as heartbeat from './heartbeat';
@@ -15,6 +17,8 @@ export default function(config = { }) {
   return Object.assign(
     { },
     authenticate,
+    closingPassThrough,
+    closingTransform,
     crypto,
     duplex_transform,
     heartbeat,

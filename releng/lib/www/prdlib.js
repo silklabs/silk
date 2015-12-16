@@ -112,10 +112,14 @@ export async function fetchAllPrdItems(octo) {
 
   // Collect issues by milestones
   let milestones = {};
+  let milestoneDescriptions = {};
   allIssues.forEach(i => {
     const title = i.milestone ? i.milestone.title : '';
     if (milestones[title] === undefined) {
       milestones[title] = [];
+      if (i.milestone) {
+        milestoneDescriptions[title] = i.milestone.description;
+      }
     }
     milestones[title].push(i);
   });
@@ -124,9 +128,8 @@ export async function fetchAllPrdItems(octo) {
     milestones[m] = milestones[m].sort(_issuePrioritySort);
   }
 
-  return milestones;
+  return { itemsByMilestone: milestones, milestoneDescriptions };
 }
-
 
 export function lintPrdItem(issue) {
   let lint = [];

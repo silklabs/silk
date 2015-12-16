@@ -149,7 +149,8 @@ class PrdSection extends React.Component {
 
     let panelHeader = (
         <div>
-          <a target="_blank" href={milestoneUrl}>{this.props.section}</a>
+          <b><a target="_blank" href={milestoneUrl}>{this.props.section}</a></b>
+          <br/><small>{this.props.sectionDescription}</small>
           {progress}
         </div>
       );
@@ -210,8 +211,13 @@ export default class Prd extends React.Component {
 
     try {
       this.setState({itemsByMilestone: null, loadingMessage: 'Loading...'});
-      const itemsByMilestone = await prd.fetchAllPrdItems(this.props.route.userState.octo);
-      this.setState({itemsByMilestone, loadingMessage: null});
+      const { itemsByMilestone, milestoneDescriptions } =
+        await prd.fetchAllPrdItems(this.props.route.userState.octo);
+      this.setState({
+        itemsByMilestone,
+        milestoneDescriptions,
+        loadingMessage: null
+      });
     } catch (err) {
       this.setState({loadingMessage: 'Loading failed: ' + err.stack});
     }
@@ -297,11 +303,13 @@ export default class Prd extends React.Component {
     } else {
       prdBody = Object.keys(this.state.itemsByMilestone).sort().map(
           section => {
+            const description = this.state.milestoneDescriptions[section];
             return (
                 <PrdSection
                   key={section}
                   params={this.state}
                   section={section}
+                  sectionDescription={description}
                   filterBy={this.state.filterBy}
                   items={this.state.itemsByMilestone[section]}
                 />

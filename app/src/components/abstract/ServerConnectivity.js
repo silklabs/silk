@@ -26,7 +26,6 @@ export default class ServerConnectivity extends AsyncComponent {
 
   state = {
     hasNetwork: true,
-    connectionState: 'connecting', // purposely optimistic default state
     socketConnectionState: 'offline',
     socket: null,
   };
@@ -51,7 +50,6 @@ export default class ServerConnectivity extends AsyncComponent {
     if (!hasNetwork) {
       this.setStateAsync({
         hasNetwork: false,
-        connectionState: 'offline',
         socketConnectionState: 'offline',
         socket: null,
       });
@@ -64,7 +62,6 @@ export default class ServerConnectivity extends AsyncComponent {
     await this.setStateAsync({
       hasNetwork: true,
       socket: null,
-      connectionState: 'connecting',
       socketConnectionState: 'offline',
     });
 
@@ -77,7 +74,6 @@ export default class ServerConnectivity extends AsyncComponent {
       log.info('Socket error', error);
       this.setStateAsync({
         hasNetwork: false,
-        connectionState: 'offline',
         socketConnectionState: 'offline',
         socket: null,
       });
@@ -86,7 +82,6 @@ export default class ServerConnectivity extends AsyncComponent {
     socket.on('connect', () => {
       log.info('Socket connected');
       this.setStateAsync({
-        connectionState: 'connected',
         socketConnectionState: 'connected',
       });
     });

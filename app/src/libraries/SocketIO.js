@@ -1,5 +1,4 @@
 import { NativeModules } from 'react-native';
-import { EventEmitter } from 'events';
 import createLog from 'log';
 
 const log = createLog('SocketIO');
@@ -65,10 +64,8 @@ function wrapEvent(method) {
  * Our custom implementation of the react-native-socket.io interface. The API
  * closely follows the original but uses our SocketIO native manager classes.
  */
-export default class extends EventEmitter {
+export default class SocketIO {
   constructor(socket) {
-    super();
-
     this.socket = socket;
     this.rooms = new Set();
 

@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -27,9 +25,19 @@ const GRID_Y = 8;
 // bigger the face rectangle required for successful recognition.
 const THRESHOLD = 60;
 
+// Used by Eigenface and Fisherface algorithms
+// Sets how confident the Face Verification algorithm should be to decide if it
+// is an unknown person or a known person. This value is based on experimentation
+// by starting with a known threshold value from https://github.com/
+// MasteringOpenCV/code/blob/master/Chapter8_FaceRecognition/main.cpp#L41
+// Note that a higher threshold value means accepting more faces as known people,
+// whereas lower values mean more faces will be classified as "unknown".
+const UNKNOWN_PERSON_THRESHOLD = 0.65;
+
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
 const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
 const ADD_COMMAND_PROP = 'silk.addperson';
+const FACE_RECOGNIZER_PROP = 'persist.silk.facerecognizer';
 
 let log;
 
@@ -42,8 +50,27 @@ class FindFace {
     log = env.log;
     this._env = env;
     this._faceMap = null;
-    this._model = cv.FaceRecognizer.createLBPHFaceRecognizer(RADIUS,
-      NEIGHBORS, GRID_X, GRID_Y, THRESHOLD);
+    this.faceRecognizer = env.util.getprop(FACE_RECOGNIZER_PROP, 'LBPH');
+
+    // Create facial recognizer model based on the {@code FACE_RECOGNIZER} prop
+    switch(this.faceRecognizer) {
+    case 'LBPH':
+      this._model = cv.FaceRecognizer.createLBPHFaceRecognizer(RADIUS,
+          NEIGHBORS, GRID_X, GRID_Y, THRESHOLD);
+      log.verbose(`Using LBPH face recognizer`);
+      break;
+    case 'Eigen':
+      this._model = cv.FaceRecognizer.createEigenFaceRecognizer();
+      log.verbose(`Using Eigen face recognizer`);
+      break;
+    case 'Fisher':
+      this._model = cv.FaceRecognizer.createFisherFaceRecognizer();
+      log.verbose(`Using Fisher face recognizer`);
+      break;
+    default:
+      log.error(`Invalid face recognizer method ${this.faceRecognizer}`);
+      this._model = null;
+    }
 
     this._trainingInProgress = false;
     this._working = false;
@@ -51,7 +78,9 @@ class FindFace {
     this._idMap = {};
 
     // Not calling await on purpose so as not to block the constructor
-    this._init();
+    if (this._model != null) {
+      this._init();
+    }
   }
 
   /**
@@ -127,7 +156,7 @@ class FindFace {
     try {
       await this._trainer.start(this._model);
     } catch (err) {
-      log.warn(`Error training for faces: ${err.stack}`);
+      log.warn(`Error training for faces: ${err}`);
     }
     this._trainingInProgress = false;
   }
@@ -166,12 +195,34 @@ class FindFace {
       return Promise.reject(`faceMap not found`);
     }
     return new Promise((resolve, reject) => {
+      let similarity = UNKNOWN_PERSON_THRESHOLD;
+
+      // For eigenface and fisherface type of model the confidence number is
+      // very unreliable so use facial reconstruction instead
+      if (this.faceRecognizer != 'LBPH') {
+        let reconstructedFace = this._trainer.reconstructFace(this._model, faceim);
+        if (!reconstructedFace) {
+          return reject(`can not reconstruct face`);
+        }
+
+        // Verify whether the reconstructed face looks like the preprocessed face,
+        // otherwise it is probably an unknown person
+        similarity = this._trainer.getSimilarity(faceim, reconstructedFace);
+        if (similarity >= UNKNOWN_PERSON_THRESHOLD) {
+          return reject(`similarity ${similarity} >= ${UNKNOWN_PERSON_THRESHOLD}`);
+        }
+      }
+
       this._model.predict(faceim, (result) => {
         log.debug(`${JSON.stringify(result)}`);
         if (result.id !== -1) {
-          return resolve(result);
+          if (this.faceRecognizer != 'LBPH') {
+            return resolve([result.id, similarity]);
+          } else {
+            return resolve([result.id, result.confidence]);
+          }
         }
-        return reject();
+        return reject(`identity is unknown`);
       });
     });
   }
@@ -223,18 +274,18 @@ class FindFace {
           // Calculate preview scale
           let previewScale = orig.width() / image.width();
 
-          let faceim = this._trainer._preprocessFace(orig, face, previewScale);
+          let faceim = this._trainer.preprocessFace(orig, face, previewScale);
           if (!faceim) {
             return;
           }
           try {
-            const result = await this._predict(faceim);
-            log.info(`face detected id:${result.id} ` +
-                `${this._matchIdWithName(result.id)} ` +
-                `confidence: ${result.confidence} source:${source}`);
+            const [id, confidence] = await this._predict(faceim);
+            log.info(`face detected id:${id} ` +
+                `${this._matchIdWithName(id)} ` +
+                `confidence/similarity: ${confidence} source:${source}`);
 
             // Add the person to timeline
-            let name = this._matchIdWithName(result.id);
+            let name = this._matchIdWithName(id);
             this._env.timeline.addObject(name, when, face);
 
             // Cache name with face.id to skip face recognition next time

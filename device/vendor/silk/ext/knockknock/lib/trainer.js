@@ -9,6 +9,7 @@
 import cv from 'opencv';
 import fs from 'mz/fs';
 import path from 'path';
+import imageSize from 'fast-image-size';
 
 const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -114,11 +115,17 @@ export default class Trainer {
           log.info(`Ignoring file ${file}`);
           continue;
         }
+
+        let size = imageSize(path.join(faceDir, file));
+        if ((size.width != FACE_WIDTH) || (size.height != FACE_HEIGHT)) {
+          log.warn(`${file} is of incorrect size ${JSON.stringify(size)}`);
+          continue;
+        }
         log.debug(`Adding file ${path.join(faceDir, file)}`);
         this._trainingData.push([id, path.join(faceDir, file)]);
       }
     } catch (e) {
-      log.warn(`No faces available for ${faceDir}`);
+      log.warn(`No faces available for ${faceDir}, error: ${e}`);
       return;
     }
   }
@@ -202,7 +209,7 @@ export default class Trainer {
    *             Chapter8_FaceRecognition/preprocessFace.cpp
    *  @returns a preprocessed face square image
    */
-  _preprocessFace(im, face, previewScale) {
+  preprocessFace(im, face, previewScale) {
     log.debug(`face: ${JSON.stringify(face)}`);
 
     // Adjust rectangles to scale up to the original size as face rectangles
@@ -225,7 +232,11 @@ export default class Trainer {
       im.convertGrayscale();
     }
 
-    if ((face.x + face.width > im.width()) || (face.y + face.height > im.height())) {
+    // Sanity checks
+    if ((face.x + face.width > im.width()) ||
+        (face.y + face.height > im.height()) ||
+        (face.width <= 0) ||
+        (face.height <= 0)) {
       log.error(`Invalid face rectangle`);
       log.verbose(`face: ${JSON.stringify(face)}`);
       log.verbose(`image: ${im.width()} x ${im.height()}`);
@@ -256,8 +267,8 @@ export default class Trainer {
 
     // Get the transformation matrix for rotating and scaling the face to the
     // desired angle & size
-    let rotMatrix = new cv.Matrix(2, 3, cv.Constants.CV_8UC1);
-    rotMatrix.getRotationMatrix2D(angle, eyesCenter.x, eyesCenter.y, scale);
+    let rotMatrix = cv.Matrix.getRotationMatrix2D(angle, eyesCenter.x,
+        eyesCenter.y, scale);
 
     // Shift the center of the eyes to be the desired center between the eyes
     const adjustx = rotMatrix.get(0, 2) + (FACE_WIDTH * 0.5 - eyesCenter.x);
@@ -313,7 +324,7 @@ export default class Trainer {
    *
    * Reference: http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#norm
    */
-  _getSimilarity(matA, matB) {
+  getSimilarity(matA, matB) {
     if ((matA.width() == matB.width()) && (matA.width() > 0) &&
         (matA.height() == matB.height()) && (matB.height() > 0)) {
       // Calculate the L2 relative error between the 2 images
@@ -326,6 +337,42 @@ export default class Trainer {
     } else {
       return Number.MAX_VALUE;
     }
+  }
+
+  /**
+   * Generate an approximately reconstructed face by back-projecting the
+   * eigenvectors & eigenvalues of the given (preprocessed) face
+   */
+  reconstructFace(model, preprocessedFace) {
+    // Get some required data from the FaceRecognizer model
+    let eigenvectors = model.getMat('eigenvectors');
+    let averageFaceRow = model.getMat('mean');
+
+    if (eigenvectors.empty() || averageFaceRow.empty()) {
+      log.warn(`Model not trained with eigenface or fisherface?`);
+      return null;
+    }
+
+    let faceHeight = preprocessedFace.height();
+
+    // Project the input image onto the PCA subspace
+    let projection = cv.LDA.subspaceProject(eigenvectors, averageFaceRow,
+        preprocessedFace.reshape(1, 1));
+
+    // Generate the reconstructed face back from the PCA subspace
+    let reconstructionRow = cv.LDA.subspaceReconstruct(eigenvectors,
+        averageFaceRow, projection);
+
+    // Convert the float row matrix to a regular 8-bit image
+    // Make it a rectangular shaped image instead of a single row
+    let reconstructionMat = reconstructionRow.reshape(1, faceHeight);
+
+    // Convert the floating-point pixels to regular 8-bit uchar pixels
+    let reconstructedFace = new cv.Matrix(reconstructionMat.height(),
+        reconstructionMat.width(), cv.Constants.CV_8U);
+    reconstructionMat.convertTo(reconstructedFace, cv.Constants.CV_8U, 1);
+
+    return reconstructedFace;
   }
 
   /**
@@ -381,7 +428,7 @@ export default class Trainer {
 
           // Save the face
           let face = faces[0];
-          let faceim = this._preprocessFace(orig, face, previewScale);
+          let faceim = this.preprocessFace(orig, face, previewScale);
           if (!faceim) {
             this._working = false;
             return;
@@ -391,7 +438,7 @@ export default class Trainer {
           // collected face
           let imageDiff = Number.MAX_VALUE;
           if (oldPreprocessedFaceImg) {
-            imageDiff = this._getSimilarity(faceim, oldPreprocessedFaceImg);
+            imageDiff = this.getSimilarity(faceim, oldPreprocessedFaceImg);
             log.debug(`Image diff: ${imageDiff}`);
           }
 
@@ -403,9 +450,9 @@ export default class Trainer {
           // previous frame and there has been noticeable time gap
           if ((imageDiff > CHANGE_IN_IMAGE_FOR_COLLECTION) &&
               (timeDiff > CHANGE_IN_SECONDS_FOR_COLLECTION)) {
-            log.info(`Saving ${facePath}/${person}_${Date.now()}.jpg, ` +
+            log.info(`Saving ${facePath}/${person}_${Date.now()}.png, ` +
                  `count: ${faceCount}`);
-            faceim.save(`${facePath}/${person}_${Date.now()}.jpg`);
+            faceim.save(`${facePath}/${person}_${Date.now()}.png`);
             faceCount++;
 
             oldPreprocessedFaceImg = faceim;

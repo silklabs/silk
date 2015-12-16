@@ -1,4 +1,4 @@
-From fea37a7874c5c6d1fddb70070baa1f93ed241dc3 Mon Sep 17 00:00:00 2001
+From ef0c63890f8c2e2b297be1b3dbb4f71ad253bbef Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 10 Aug 2015 15:06:39 -0700
 Subject: [PATCH] Androidify
@@ -27,10 +27,10 @@ index 0000000..76f0224
 +include external/opencv2/opencv.mk
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp
-index 97ccd40..4b8d9a9 100755
+index 8cd66bf..e241f2c 100755
 --- a/binding.gyp
 +++ b/binding.gyp
-@@ -23,12 +23,11 @@
+@@ -24,12 +24,11 @@
        ],
  
        "libraries": [
@@ -44,7 +44,7 @@ index 97ccd40..4b8d9a9 100755
          "<!(node -e \"require('nan')\")"
        ],
  
-@@ -68,16 +67,5 @@
+@@ -69,16 +68,5 @@
            }
          }]
      ]
@@ -135,23 +135,22 @@ index dc043a0..f746093 100755
  var Matrix = cv.Matrix
    , VideoCapture = cv.VideoCapture
 diff --git a/package.json b/package.json
-index 88dda82..d01a1fd 100644
+index cd735a3..912f986 100644
 --- a/package.json
 +++ b/package.json
-@@ -2,26 +2,25 @@
-   "name": "opencv",
+@@ -3,25 +3,24 @@
+   "version": "4.0.0",
    "description": "Node Bindings to OpenCV",
    "author": "Peter Braden <peterbraden@peterbraden.co.uk>",
 +  "os": [
 +    "android"
 +  ],
    "dependencies": {
-+   "browserify": "^10.2.1",
++    "browserify": "^10.2.1",
      "buffers": "^0.1.1",
      "nan": "^2.0.9",
      "node-pre-gyp": "^0.6.11"
    },
-   "version": "3.2.0",
 -  "devDependencies": {
 +  "__devDependencies": {
      "tape": "^3.0.0",

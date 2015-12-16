@@ -42,11 +42,11 @@ class AuthenticateStreamBase extends Transform {
     this.once(`end`, () => process.nextTick(() => this.emit(`close`)));
   }
 
-  _queueOrPush(chunk, callback) {
+  _queueOrPush(chunk) {
     if (this._queue) {
-      this._queue.push({ chunk, callback });
+      this._queue.push(chunk);
     } else {
-      callback(null, chunk);
+      this.push(chunk);
     }
   }
 
@@ -63,20 +63,10 @@ class AuthenticateStreamBase extends Transform {
     this._releaseQueue(callback);
   }
 
-  _discardQueue(error) {
-    log.debug(`AuthenticateStreamBase._discardQueue('${error.toString()}')`);
+  _discardQueue() {
+    log.debug(`AuthenticateStreamBase._discardQueue()`);
 
-    assert(error);
-
-    let queue = this._queue;
     this._queue = null;
-
-    assert(queue);
-
-    queue.forEach((queued) => {
-      queued.chunk = null;
-      queued.callback(error);
-    });
   }
 
   _releaseQueue(callback = null) {
@@ -87,23 +77,17 @@ class AuthenticateStreamBase extends Transform {
 
     assert(queue);
 
-    let error = null;
+    let error;
 
     if (this._ending) {
       error = new Error(`Stream ended, cannot push queued data`);
       log.warn(error);
     } else {
-      // Push all chunks before calling any callbacks or else the order could be
-      // disturbed.
+      error = null;
       queue.forEach((queued) => {
-        this.push(queued.chunk);
-        queued.chunk = null;
+        this.push(queued);
       });
     }
-
-    queue.forEach((queued) => {
-      queued.callback(error);
-    });
 
     if (callback) {
       callback(error);
@@ -119,7 +103,7 @@ class AuthenticateStreamBase extends Transform {
   }
 
   end(chunk, encoding, callback) {
-    log.debug(`AuthenticateStreamBase.end()`);
+    log.debug(`[${this.constructor.name}] AuthenticateStreamBase.end()`);
 
     this._ending = true;
 
@@ -128,16 +112,10 @@ class AuthenticateStreamBase extends Transform {
       return;
     }
 
-    const error = new Error(`Stream ended with queued data`);
-    log.warn(error);
+    log.warn(`Stream ended with queued data`);
+    this._discardQueue();
 
-    this._discardQueue(error);
-
-    if (callback) {
-      this.once(`finish`, callback);
-    }
-
-    super.end();
+    super.end(callback);
   }
 
   allowUnauthenticated() {
@@ -196,7 +174,8 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     }
 
     if (!this._isAuthChunk(chunk)) {
-      this._queueOrPush(chunk, callback);
+      this._queueOrPush(chunk);
+      callback(null);
       return;
     }
 
@@ -215,7 +194,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
             new Error(`Unauthenticated data was not explicitly allowed`);
           log.warn(this._authError);
 
-          this._discardQueue(this._authError);
+          this._discardQueue();
         }
       }
 
@@ -243,7 +222,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
     if (this._authError) {
       log.warn(this._authError);
-      this._discardQueue(this._authError);
+      this._discardQueue();
       callback(this._authError);
       return;
     }
@@ -324,7 +303,8 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
     // Make sure auth messages don't come through the normal write pipe.
     assert(!this._isAuthChunk(chunk));
 
-    this._queueOrPush(chunk, callback);
+    this._queueOrPush(chunk);
+    callback(null);
   }
 
   _onSharedSecret(sharedSecret) {

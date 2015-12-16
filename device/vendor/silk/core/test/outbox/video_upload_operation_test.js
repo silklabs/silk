@@ -36,7 +36,7 @@ suite('VideoUploadOperation', () => {
     log.info('Found it:', result);
 
     log.info('Fetching', result.url);
-    let res = await fetch(result.url)
+    let res = await fetch(result.url);
     let text = await res.text();
     assert.equal(text, buffer.toString());
   });

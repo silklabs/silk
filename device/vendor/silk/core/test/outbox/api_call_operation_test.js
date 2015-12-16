@@ -1,7 +1,4 @@
-import assert from 'assert';
 import createApi from '../api';
-import randomStream from '../random_stream';
-import fetch from 'node-fetch';
 
 import APICallOperation from '../../lib/outbox/api_call_operation';
 

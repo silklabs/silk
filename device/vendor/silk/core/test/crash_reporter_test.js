@@ -25,10 +25,6 @@ suite('crash report', () => {
     await exec(`rm -rf ${FIXTURES}`);
   };
 
-  async function loadJSON(path) {
-    return JSON.parse(await fs.readFile(path, 'utf8'));
-  }
-
   function tombstonePath(value) {
     return path.join(FIXTURES, 'tombstones', value);
   }

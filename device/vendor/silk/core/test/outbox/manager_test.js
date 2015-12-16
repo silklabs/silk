@@ -6,12 +6,11 @@
 
 import { exec } from 'mz/child_process';
 import path from 'path';
-import { default as createOutbox, Queue } from '../../lib/outbox/manager';
+import { default as createOutbox } from '../../lib/outbox/manager';
 import StreamOperation from '../../lib/outbox/stream_operation';
 import Operation from '../../lib/outbox/operation';
 import fs from 'mz/fs';
 import assert from 'assert';
-import mkdirp from 'mkdirp-promise';
 import createStreamServer from '../stream_server';
 import httpStream from '../../lib/streams/http';
 import eventToPromise from 'event-to-promise';
@@ -50,7 +49,7 @@ suite('outbox manager', () => {
       stream.end(content);
       await eventToPromise(stream, 'close');
 
-      return { done: true }
+      return { done: true };
     }
   }
 
@@ -147,7 +146,7 @@ suite('outbox manager', () => {
       subject.online = false;
       subject.start(50);
 
-      let { stream, buffer } = randomStream();
+      let { stream } = randomStream();
       let op = new HttpOp({ arguments: handle.url });
       let savedEvent = eventToPromise(subject.queues.get('default-queue'), 'saved operation');
 
@@ -250,7 +249,7 @@ suite('outbox manager', () => {
 
       let handle = server.registerStream(1);
 
-      let { stream, buffer } = randomStream();
+      let { stream } = randomStream();
       let op = new HttpOp({ arguments: handle.url });
 
       let saveOp = eventToPromise(subject.queues.get('default-queue'), 'saved operation');

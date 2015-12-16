@@ -9,8 +9,8 @@ import { SilkApi } from 'silk-api';
 import SocketIO from '../libraries/SocketIO';
 
 import Activity from './Activity';
-import AsyncComponent from './AsyncComponent';
-import { ConfiguringDeviceRecord } from './Records';
+import AsyncComponent from './abstract/AsyncComponent';
+import { ConfiguringDeviceRecord } from './abstract/Devices';
 import ErrorBar from './ErrorBar';
 import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';

@@ -1,7 +1,7 @@
 import React from 'react-native';
 import { SilkApi } from 'silk-api';
 
-import AsyncComponent from './AsyncComponent';
+import AsyncComponent from './abstract/AsyncComponent';
 import ErrorBar from './ErrorBar';
 
 const {

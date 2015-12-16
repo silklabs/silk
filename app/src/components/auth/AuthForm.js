@@ -12,7 +12,7 @@ let {
   View,
 } = React;
 
-import AsyncComponent from '../AsyncComponent';
+import AsyncComponent from '../abstract/AsyncComponent';
 import Button from './Button';
 
 const inputStyles = StyleSheet.create({

@@ -9,7 +9,7 @@ import * as Joi from 'joi-browserify';
 import mklog from 'log';
 import SocketSession from './SocketSession';
 
-import type { DeviceRecord } from '../../components/Records';
+import type { DeviceRecord } from '../../components/abstract/Devices';
 import type { Socket, SocketManager } from './SocketManager';
 import type { UserState } from '../UserState';
 

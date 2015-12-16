@@ -7,7 +7,7 @@ import React from 'react-native';
 
 import { UserState } from '../libraries/UserState';
 
-import AsyncComponent from './AsyncComponent';
+import AsyncComponent from './abstract/AsyncComponent';
 import { FormStyles, LayoutStyles, TitleBarStyles } from './CommonStyles';
 
 let {

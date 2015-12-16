@@ -5,7 +5,7 @@ import { SilkApi } from 'silk-api';
 import Config from '../../libraries/Config';
 import { UserState } from '../../libraries/UserState';
 
-import AsyncComponent from '../AsyncComponent';
+import AsyncComponent from '../abstract/AsyncComponent';
 import AuthForm from './AuthForm';
 import Button from './Button';
 import NetworkWarning from '../NetworkWarning';

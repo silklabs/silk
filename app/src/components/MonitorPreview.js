@@ -1,17 +1,15 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 import React from 'react-native';
 
 import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
+import SocketIO from '../libraries/SocketIO';
 
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
-import SocketIOComponent from './SocketIOComponent';
+import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 
-let {
+const {
   ActionSheetIOS,
   ActivityIndicatorIOS,
   AlertIOS,
@@ -57,7 +55,7 @@ export default class extends SocketIOComponent {
     onPress: React.PropTypes.func,
 
     hasNetwork: React.PropTypes.bool.isRequired,
-    socket: React.PropTypes.object.isRequired,
+    socket: React.PropTypes.instanceOf(SocketIO),
     bleDeviceSession: React.PropTypes.instanceOf(DeviceSession),
   };
 

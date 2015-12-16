@@ -1,10 +1,8 @@
-import {
-  NativeModules,
-} from 'react-native';
+import { NativeModules } from 'react-native';
+import { EventEmitter } from 'events';
+import createLog from 'log';
 
-import {
-  EventEmitter,
-} from 'events';
+const log = createLog('SocketIO');
 
 class NativeBlob {
   constructor(data) {
@@ -17,8 +15,8 @@ class NativeBlob {
 }
 
 /**
-Construct one of our custom types given the name of the type and a payload.
-*/
+ * Construct one of our custom types given the name of the type and a payload.
+ */
 function createNativeType(type, payload) {
   switch (type) {
     case 'NSData':
@@ -33,8 +31,8 @@ function createNativeType(type, payload) {
 }
 
 /**
-Helper to convert specialized native types.
-*/
+ * Helper to convert specialized native types.
+ */
 function convertTypes(items) {
   if (Array.isArray(items)) {
     return items.map(convertTypes);
@@ -63,10 +61,10 @@ function wrapEvent(method) {
   };
 }
 
-/*
-Our custom implementation of the react-native-socket.io interface. The API
-closely follows the original but uses our SocketIO native manager classes.
-*/
+/**
+ * Our custom implementation of the react-native-socket.io interface. The API
+ * closely follows the original but uses our SocketIO native manager classes.
+ */
 export default class extends EventEmitter {
   constructor(socket) {
     super();
@@ -81,18 +79,19 @@ export default class extends EventEmitter {
      * so we must reconnect manually here.
      */
     this.socket.on('reconnect', () => {
-      console.log('Disconnect detected will need to rejoin rooms.');
+      log.info('Disconnect detected will need to rejoin rooms.');
       this._needsRoomReconnect = true;
     });
 
     this.socket.on('connect', () => {
       if (!this._needsRoomReconnect) {
+        log.info('Connected to socket.');
         return;
       }
 
-      console.log('Reconnected to server rejoining rooms');
+      log.info('Reconnected to socket, rejoining previous rooms.');
       for (let room of this.rooms) {
-        console.log('rejoining', room);
+        log.debug('rejoining', room);
         this.emit('join', room);
       }
       this._needsRoomReconnect = false;
@@ -124,7 +123,7 @@ export default class extends EventEmitter {
    * events and send them on reconnect.
    */
   emit(event, ...data) {
-    this.socket.emit(event, ...data);
+    return this.socket.emit(event, ...data);
   }
 
   open() {

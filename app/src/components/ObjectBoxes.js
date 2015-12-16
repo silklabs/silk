@@ -1,6 +1,8 @@
 import React from 'react-native';
 
-let {
+import SocketIO from '../libraries/SocketIO';
+
+const {
   View,
   Text,
   TouchableOpacity,
@@ -30,7 +32,7 @@ let Square = React.createClass({
 let ObjectBoxes = React.createClass({
   propTypes: {
     deviceId: React.PropTypes.string.isRequired,
-    socket: React.PropTypes.object.isRequired,
+    socket: React.PropTypes.instanceOf(SocketIO),
     style: View.propTypes.style,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,

@@ -1,10 +1,14 @@
 #!/bin/bash -ex
 
+what="$@"
+if [[ -z $what ]]; then
+  what="$(find test -name '*_test.js')"
+fi
+
 # silk-core-version is assumed to already exist on device, so it needs to be
 # manually installed here for local unit tests
 if [[ ! -d node_modules/silk-core-version ]]; then
   npm install ../../../../version
 fi
 
-DEBUG=* mocha $(find test -name '*_test.js')
-
+DEBUG=* mocha $what

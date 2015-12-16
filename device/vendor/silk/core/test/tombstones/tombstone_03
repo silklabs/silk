@@ -1,6 +1,6 @@
 *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
 Build fingerprint: 'Android/aosp_mako/mako:5.1.1/LMY47V/travis12042206:eng/next,test-keys'
-Revision: '11'
+Revision: '10'
 ABI: 'arm'
 pid: 1271, tid: 1271, name: ls  >>> ls <<<
 signal 13 (SIGPIPE), code 0 (SI_USER), fault addr --------

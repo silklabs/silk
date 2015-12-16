@@ -342,7 +342,9 @@ export class CrashReporter {
 
     // Validate the header
     assert.equal(header[0], `*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***`);
-    assert.equal(header[2], `Revision: '11'`);
+    assert(header[1].startsWith('Build fingerprint:'));
+    assert(header[2].startsWith('Revision:'));
+    assert(header[3].startsWith('ABI:'));
 
     // Line 4: The process that crashed
     const who = escape(header[4].replace(/.*name: /, ''));

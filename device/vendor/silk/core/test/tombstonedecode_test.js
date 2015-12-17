@@ -1,11 +1,41 @@
 import assert from 'assert';
+import mkdirp from 'mkdirp-promise';
 import fs from 'mz/fs';
+import { exec } from 'mz/child_process';
 import path from 'path';
 import { CrashReporter } from '../lib/crash_reporter';
+import { buildJSTombstone } from '../lib/js_errors.js';
 
 const TOMBSTONE_PATH = path.join(__dirname, 'tombstones');
 
+const FIXTURES = path.join(__dirname, '.crash_reporter');
+
 suite(__filename, () => {
+
+  let cleanup = async () => {
+    console.log('cleanup');
+    await exec(`rm -rf ${FIXTURES}`);
+  };
+
+  setup(cleanup);
+  teardown(cleanup);
+
+  // Ensure that a simulated JS tombstone can be successfully parsed by
+  // CrashReporter._tombstoneToRaygunError
+  test('bareJSTombstone', async () => {
+    await mkdirp(FIXTURES);
+    const jsTombstone = path.join(FIXTURES, 'tombstone_js');
+    let rstream = await buildJSTombstone('bogusException', new Error('I am a test'));
+    let wstream = fs.createWriteStream(jsTombstone);
+    rstream.pipe(wstream);
+    const raygunError = await CrashReporter._tombstoneToRaygunError(jsTombstone);
+
+    assert.equal(raygunError.message, 'Error: I am a test');
+    assert.equal(raygunError.className, 'Type: \\\'bogusException\\\'');
+  });
+
+  // Ensure that CrashReporter._tombstoneToRaygunError processes some canned
+  // tombstones as expected
   test('_tombstoneToRaygunError', async () => {
     const files = await fs.readdir(TOMBSTONE_PATH);
 

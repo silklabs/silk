@@ -78,6 +78,10 @@ export async function triggerBuild(
   repo: string,
   build_request: TravisBuildRequest
 ): Promise<TravisBuildResponse> {
+  if (!process.env.TRAVIS_USER_TOKEN) {
+    throw new Error('TRAVIS_USER_TOKEN variable undefined');
+  }
+
   let travis = await genTravis();
   let accessToken = travis.agent._getAccessToken();
   if (!accessToken) {
@@ -94,6 +98,11 @@ export async function triggerBuild(
       'Authorization': 'token ' + accessToken,
     },
     json: true,
-    body: { request: build_request },
+    body: {
+      request: {
+        ...build_request,
+        token: process.env.TRAVIS_USER_TOKEN,
+      },
+    },
   });
 }

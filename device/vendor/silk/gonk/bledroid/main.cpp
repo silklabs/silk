@@ -129,6 +129,25 @@ static const bt_uuid_t kBluetoothBaseUuid = {{
   0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 }};
 
+// Set to true when we're trying to clean up after an error so that we don't
+// try to block or accidentally recurse. It will never be reset to false.
+bool cleaning_up_after_error = false;
+
+void bt_cleanup();
+
+void cleanup_and_abort() {
+  ALOGD("cleanup_and_abort()");
+
+  if (cleaning_up_after_error) {
+    ALOGW("prevented recursion, aborting immediately");
+  } else {
+    cleaning_up_after_error = true;
+    bt_cleanup();
+  }
+
+  abort();
+}
+
 //
 // Helper macros
 //
@@ -203,7 +222,7 @@ public:
             realEventSize,
             sizeof(event),
             event);
-      abort();
+      cleanup_and_abort();
     }
 
     ALOGD("Broadcasting %s", event);
@@ -242,7 +261,7 @@ public:
   ~ThreadWaiter() {
     if (currentWaitType != WaitNone) {
       ALOGE("Waiting for type %d at shutdown", currentWaitType);
-      abort();
+      cleanup_and_abort();
     }
   }
 
@@ -263,7 +282,7 @@ public:
       ALOGE("Cannot wait for type %d, already waiting on type %d",
             waitType,
             currentWaitType);
-      abort();
+      cleanup_and_abort();
     }
 
     currentWaitType = waitType;
@@ -287,6 +306,11 @@ public:
         // really recover in any meaningful way so we simply exit and allow the
         // process to restart.
         ALOGE("Exiting");
+
+        // Try to clean up, but don't block.
+        cleaning_up_after_error = true;
+        bt_cleanup();
+
         exit(1);
       }
     }
@@ -306,7 +330,7 @@ private:
       }
 
       if (abortIfNotWaiting) {
-        abort();
+        cleanup_and_abort();
       }
 
       return;
@@ -495,15 +519,15 @@ bool uuid_to_str(const bt_uuid_t &uuid, char *str, size_t strLength) {
 }
 
 //
-// Global state
+// Global state. Make sure to update bt_cleanup() if you add global members!
 //
 bt_state_t adapter_state = BT_STATE_OFF;
 int gatt_client_if = -1;
 int gatt_server_if = -1;
 bool gatt_client_listening = false;
 bool gatt_client_scanning = false;
-btgatt_interface_t const *gatt;
-hw_device_t *device;
+btgatt_interface_t const *gatt = nullptr;
+hw_device_t *device = nullptr;
 ThreadWaiter mainThreadWaiter;
 BledroidListener bledroid;
 
@@ -571,7 +595,8 @@ static bt_os_callouts_t os_callouts = {
 //
 
 void bt_adapter_state_changed_callback(bt_state_t state) {
-  auto signal = mainThreadWaiter.autoSignal(WaitEnableDisable);
+  auto signal = mainThreadWaiter.autoSignal(WaitEnableDisable,
+                                            !cleaning_up_after_error);
 
   adapter_state = state;
   bledroid.sendEvent("!adapterState powered%s",
@@ -771,7 +796,7 @@ void gatt_register_client_callback(int status, int client_if,
   (void) app_uuid;
   if (status != 0) {
     ALOGE("register_client failed. error=%d", status);
-    abort();
+    cleanup_and_abort();
   }
   gatt_client_if = client_if;
 }
@@ -1536,7 +1561,7 @@ void gatt_server_register_server_callback(int status, int server_if,
   (void) app_uuid;
   if (status != 0) {
     ALOGE("register_server failed. error=%d", status);
-    abort();
+    cleanup_and_abort();
   }
   gatt_server_if = server_if;
 }
@@ -1697,7 +1722,7 @@ void gatt_server_request_write_callback(int conn_id, int trans_id,
   *p = '\0';
 
   if (strlen(w) >= sizeof(w)) {
-    abort();  // BUG!
+    cleanup_and_abort();  // BUG!
   }
 
   ALOGE(w);
@@ -1890,34 +1915,58 @@ int bt_convert_args(char *&saveptr,
 /**
  *
  */
-int bt_cleanup() {
+void bt_cleanup() {
   ALOGV("bt cleanup");
-  int err = 0;
 
   if (gatt) {
-    (void) gatt->server->unregister_server(gatt_server_if);
-    (void) gatt->client->unregister_client(gatt_client_if);
+    if (gatt_server_if != -1) {
+      (void) gatt->server->unregister_server(gatt_server_if);
+    }
+    if (gatt_client_if != -1) {
+      (void) gatt->client->unregister_client(gatt_client_if);
+    }
     gatt->cleanup();
   }
 
   if (device) {
     const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
     const bt_interface_t *bt = bt_device->get_bluetooth_interface();
-    LOG_ERROR(!bt, "bt_device->get_bluetooth_interface failed");
-
-    CALL_AND_WAIT(bt->disable(), WaitEnableDisable);
-    LOG_ERROR((adapter_state != BT_STATE_OFF), "failed to disable BT");
-
-    bt->cleanup();
+    if (bt) {
+      if (cleaning_up_after_error) {
+        // Don't attempt to wait for this if we're in an error state.
+        if (bt->disable() != BT_STATUS_SUCCESS) {
+          ALOGE("bt->disable() failed");
+        }
+      } else {
+        auto lock = mainThreadWaiter.autoLock();
+        if (bt->disable() == BT_STATUS_SUCCESS) {
+          mainThreadWaiter.wait(WaitEnableDisable);
+          if (adapter_state != BT_STATE_OFF) {
+            ALOGE("failed to disable BT");
+          }
+        } else {
+          ALOGE("bt->disable() failed");
+        }
+      }
+      bt->cleanup();
+    } else {
+      ALOGE("bt_device->get_bluetooth_interface failed");
+    }
     device->close(device);
   }
 
-  adapter_state = BT_STATE_OFF;
-  gatt_client_if = -1;
-  gatt_server_if = -1;
-  gatt_client_listening = false;
-
-  return 0;
+  if (!cleaning_up_after_error) {
+    adapter_state = BT_STATE_OFF;
+    gatt_client_if = -1;
+    gatt_server_if = -1;
+    gatt_client_listening = false;
+    gatt_client_scanning = false;
+    gatt = nullptr;
+    device = nullptr;
+    connection_id_during_register_for_notification = -1;
+    address_during_rssi_update = kInvalidAddr;
+    gatt_client_connection_count = 0;
+  }
 }
 
 /**

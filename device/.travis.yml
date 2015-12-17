@@ -8,13 +8,23 @@ os:
 jdk:
   - openjdk7
 
+install:
+  - export CXX="g++-4.8" CC="gcc-4.8"
+
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - kubuntu-backports
     packages:
-      - g++
+      - g++-4.8
       - libc6:i386
       - libstdc++6:i386
       - linux-libc-dev
+      - libcv-dev
+      - libcvaux-dev
+      - libhighgui-dev
+      - libopencv-dev
 
 before_script:
   source .travis/before_script

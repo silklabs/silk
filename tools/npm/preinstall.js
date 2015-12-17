@@ -4,18 +4,34 @@
  * This module is a little helper which when invoked as part of an npm preinsall
  * step will symlink file:./ deps instead of copying them.
  *
+ * This facilities a number of very important workflow changes such as allowing
+ * editing of one module while working on another without running npm install
+ * between each and every change.
+ *
  * XXX: Note: That this should not use babel features.
  */
 'use strict';
 
 let fs = require('fs');
 let path = require('path');
+let install = require('./conditional_install');
+
+/**
+ * This is an ugly hack to break circular references up ...
+ */
+const PARENT = process.env.SILK_NPM_PARENT;
 
 function log(msg) {
   console.log(`[npm preinstall symlink] ${msg}`);
 }
 
-function symlinkDeps(nodeModules, dependencies) {
+function installDeps(cwd, nodeModules, dependencies) {
+  let operations = [];
+
+  // In some cases we must prevent the npm install step as it will result in an
+  // unresolvable situation due to cylic references between packages.
+  let skipInstalls = PARENT && PARENT === cwd;
+
   for (let pkg in dependencies) {
     let dep = dependencies[pkg];
     if (!dep.startsWith('file:')) {
@@ -43,15 +59,18 @@ function symlinkDeps(nodeModules, dependencies) {
       process.chdir(oldCWD);
     }
 
-    // TODO: npm install...
+    if (!skipInstalls) {
+      operations.push(install(cwd, pkgSource));
+    }
   }
+
+  return Promise.all(operations);
 }
 
 function findPackageJSON(cwd) {
   let pkgPath = path.join(cwd, 'package.json');
   if (!fs.existsSync(pkgPath)) {
-    findPackageJSON(path.join(cwd, '..'));
-    return;
+    return findPackageJSON(path.join(cwd, '..'));
   }
 
   let nodeModules = path.join(cwd, 'node_modules');
@@ -60,13 +79,19 @@ function findPackageJSON(cwd) {
   }
 
   let pkg = require(pkgPath);
+  let operations = [];
   if (pkg.dependencies) {
-    symlinkDeps(nodeModules, pkg.dependencies);
+    operations.push(installDeps(cwd, nodeModules, pkg.dependencies));
   }
 
   if (pkg.devDependencies) {
-    symlinkDeps(nodeModules, pkg.devDependencies);
+    operations.push(installDeps(cwd, nodeModules, pkg.devDependencies));
   }
+
+  return Promise.all(operations)
 }
 
-findPackageJSON(process.cwd());
+findPackageJSON(process.cwd()).catch((err) => {
+  log(`Preinstall has failed ${err.stack || err}`);
+  process.exit(1);
+});

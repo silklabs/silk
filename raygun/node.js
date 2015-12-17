@@ -52,8 +52,8 @@ module.exports = {
       });
 
       process.on('unhandledRejection', function (reason, p) {
-        const err = new Error('Unhandled Rejection at: Promise ' + p +
-                              ' reason:' + reason);
+        var err = new Error('Unhandled Rejection at: Promise ' + p +
+                            ' reason:' + reason);
         console.error('unhandledRejection', err, err.stack);
         throw err;
       });

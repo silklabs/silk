@@ -35,8 +35,14 @@ export default function(baseDirectory = process.env.BASEDIR) {
 
   // Needed so gulp always operates on the base directory.
   function src(glob) {
+    glob = (glob instanceof Array)? glob: [glob];
+
+    var srcPaths = glob.map(function(src) {
+      return path.join(baseDirectory, src);
+   });
+
     // XXX: The "base" option does not work so we use the whole baseDirectory.
-    return gulp.src(path.join(baseDirectory, glob));
+    return gulp.src(srcPaths);
   }
 
   function trimSlash(str) {
@@ -174,7 +180,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
     let eslintrc = fs.readFileSync(path.join(__dirname, '../.eslintrc'));
     let cacheProps = [pkgSource, eslintrc];
 
-    return src('lib/**/*.js')
+    return src(['lib/**/*.js', 'test/**/*.js'])
       .pipe(cache(eslint(), {
         fileCache: getCache(),
         key: (file) => {

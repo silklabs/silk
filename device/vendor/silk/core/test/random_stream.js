@@ -3,7 +3,6 @@
  */
 
 import { PassThrough } from 'stream';
-import assert from 'assert';
 
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;

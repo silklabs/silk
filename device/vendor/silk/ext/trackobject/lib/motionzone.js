@@ -62,10 +62,14 @@ export default class MotionZone {
           }
         }
       }
+
       // Remove any rectangles that have been merged (have 0 height)
-      for (let i = 0; i < array.length; i++) {
+      let i = 0;
+      while (i < array.length) {
         if (array[i].height === 0) {
           array.splice(i, 1);
+        } else {
+          i++;
         }
       }
     } while (didMerge);

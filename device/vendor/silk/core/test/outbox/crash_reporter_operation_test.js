@@ -25,7 +25,9 @@ suite('CrashReporterOperation', () => {
     if (require('../skip-on-travis.js')()) return;
     let { device: api } = await createApi();
 
+    /*eslint-disable no-unused-vars*/
     let { stream, buffer } = randomStream();
+    /*eslint-enable no-unused-vars*/
     let tombstone = path.join(FIXTURE_DIR, 'one');
     await fs.writeFile(tombstone, buffer);
     let stat = await fs.stat(tombstone);
@@ -52,7 +54,7 @@ suite('CrashReporterOperation', () => {
     assert.equal(result.length, 1);
 
     log.info('Fetching', result[0].url);
-    let res = await fetch(result[0].url)
+    let res = await fetch(result[0].url);
     let text = await res.text();
     assert.equal(text, buffer.toString());
   });

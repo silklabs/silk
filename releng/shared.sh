@@ -120,7 +120,7 @@ updatebranch__silk_api() {
         git add $js
       done
 
-      git commit -m "Automated branch update from ${from} to ${to}"
+      git commit -m "Automated branch update from ${from} to ${to}" || true
       git --no-pager show
     )
     popd > /dev/null
@@ -161,7 +161,7 @@ updatebranch__silk_npms() {
       done
 
       local msg="${app}: Automated branch update from ${from} to ${to}"
-      git commit -m "$msg"
+      git commit -m "$msg" || true
     )
     popd > /dev/null
   done
@@ -207,7 +207,7 @@ updatebranch__silk_device() {
     done
 
     local msg="device: Automated branch update from ${from} to ${to}"
-    git commit --all -m "$msg"
+    git commit --all -m "$msg" || true
   )
   popd > /dev/null
 }

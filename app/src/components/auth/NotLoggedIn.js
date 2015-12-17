@@ -243,14 +243,14 @@ export default class extends AsyncComponent {
 
   _renderControls() {
     switch (this.state.controls) {
-      case 'signup':
-        return this._renderSignUp();
-      case 'signin':
-        return this._renderSignIn();
-      case 'forgot_password':
-        return this._renderForgotPassword();
-      default:
-        return this._renderFirstScreen();
+    case 'signup':
+      return this._renderSignUp();
+    case 'signin':
+      return this._renderSignIn();
+    case 'forgot_password':
+      return this._renderForgotPassword();
+    default:
+      return this._renderFirstScreen();
     }
   }
 

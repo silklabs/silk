@@ -18,14 +18,14 @@ class NativeBlob {
  */
 function createNativeType(type, payload) {
   switch (type) {
-    case 'NSData':
-      // SocketIO pads the first byte of all binary data to indicate what type
-      // of data it is... This is only useful internally to socket.io so we
-      // strip the byte.
-      payload.offset = 1;
-      return new NativeBlob(payload);
-    default:
-      throw new Error(`Unknown custom native type: ${type}`);
+  case 'NSData':
+    // SocketIO pads the first byte of all binary data to indicate what type
+    // of data it is... This is only useful internally to socket.io so we
+    // strip the byte.
+    payload.offset = 1;
+    return new NativeBlob(payload);
+  default:
+    throw new Error(`Unknown custom native type: ${type}`);
   }
 }
 

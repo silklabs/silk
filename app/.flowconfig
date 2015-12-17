@@ -1,10 +1,7 @@
 [ignore]
-
-# We fork some components by platform.
-.*/*.web.js
-.*/*.android.js
-
 .*/node_modules/react-native/Libraries/.*
+.*/node_modules/react-native/node_modules/.*
+.*/node_modules/babel.*
 
 [include]
 src/

@@ -8,7 +8,7 @@ let {
   StyleSheet,
   Text,
   View,
-  SliderIOS
+  SliderIOS,
 } = React;
 
 export default React.createClass({

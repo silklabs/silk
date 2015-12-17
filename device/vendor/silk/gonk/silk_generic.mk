@@ -55,6 +55,8 @@ SILK_EXT := \
   detectface-cascade-eye \
   detectface-cascade-eyeglasses \
   knockknock \
+  detectcat-cascade \
+  detectcat \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

@@ -23,7 +23,7 @@ for dir in vendor/silk/ext/*/; do
   echo "Processing $dir"
   if [ -d "$dir/test" ]; then
     pushd "$dir/test"
-    npm install --dev
+    npm install
     npm test
     npm run clean # clean up to save disk space
     popd

@@ -29,11 +29,9 @@ export default function(options) {
       let hash = crypto.createHash('sha256')
         .update(slug + userToken)
         .digest('hex');
-      log.error('Expect Authorization header to be:', hash);
+      log.debug('Expect Authorization header to be:', hash);
       if (hash !== authHeader) {
-        log.error('Authorization header mismatch!');
-        // TODO: https://github.com/silklabs/releng/issues/74
-        //throw new Error('Authorization header does not match!');
+        throw new Error('Authorization header does not match!');
       }
     },
   });

@@ -39,7 +39,6 @@ class MonitorsView extends AsyncComponent {
     api: React.PropTypes.instanceOf(SilkApi).isRequired,
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
-    connectionState: React.PropTypes.oneOf(['offline', 'connecting', 'connected']),
 
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
@@ -121,7 +120,7 @@ class MonitorsView extends AsyncComponent {
 
   render() {
     let {
-      connectionState,
+      hasNetwork,
       devices,
       unconfiguredDevices,
       configuringDevice,
@@ -129,7 +128,10 @@ class MonitorsView extends AsyncComponent {
 
     // this.props.devices === null means we haven't fetched a list of devices yet,
     // so we're still loading from network.
-    if (connectionState === 'connecting' || !devices) {
+    if (!devices) {
+      if (!hasNetwork) {
+        return this._renderOffline();
+      }
       return (
         <View style={styles.content}>
           {this._renderSpinner()}
@@ -138,9 +140,6 @@ class MonitorsView extends AsyncComponent {
     }
 
     if (!devices.size && !unconfiguredDevices.size && !configuringDevice) {
-      if (connectionState === 'offline') {
-        return this._renderOffline();
-      }
       return this._renderNoDevices();
     }
 

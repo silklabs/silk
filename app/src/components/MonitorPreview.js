@@ -102,11 +102,11 @@ export default class extends SocketIOComponent {
       // See https://github.com/silklabs/silk-app/issues/577.
       // Also, in anticipation of receiving preview images soon, clear any
       // timeout state.
-      this.unsubscribeFromSocket();
+      this.unsubscribeFromSocket(this.props.socket);
       this.startTimeoutTimer();
       this.setState({timedOut: false, blob: null, objects: []});
       setTimeout(() => {
-        this.subscribeToSocket();
+        this.subscribeToSocket(this.props.socket);
       }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
     }
     if (!this.props.bleDeviceSession && nextProps.bleDeviceSession) {
@@ -128,8 +128,8 @@ export default class extends SocketIOComponent {
     }
   }
 
-  subscribeToSocket() {
-    let { socket, deviceId } = this.props;
+  subscribeToSocket(socket) {
+    let { deviceId } = this.props;
     if (!socket || !deviceId || !this.mounted) {
       return;
     }
@@ -138,8 +138,8 @@ export default class extends SocketIOComponent {
     socket.join(stream);
   }
 
-  unsubscribeFromSocket() {
-    let { socket, deviceId } = this.props;
+  unsubscribeFromSocket(socket) {
+    let { deviceId } = this.props;
     if (!socket || !deviceId) {
       return;
     }
@@ -184,7 +184,7 @@ export default class extends SocketIOComponent {
 
   componentWillUnmount() {
     this.mounted = false;
-    this.unsubscribeFromSocket();
+    this.unsubscribeFromSocket(this.props.socket);
     if (this._queue) {
       this._queue.deinit();
       this._queue = null;

@@ -190,8 +190,9 @@ export class SilkApi {
 
     // This intentionally uses junk values since we override them in .open
     let socket = socketFactory('', {
+      ...overrides,
       autoConnect: false,
-      transports: ['websocket']
+      transports: ['websocket'],
     });
     let manager = socket.io;
     // The .open call is used both during the initial connect and all reconnections...
@@ -200,8 +201,7 @@ export class SilkApi {
       try {
         let [uri, opts] = await configFn();
         manager.uri = uri;
-        manager.opts = Object.assign({}, overrides, opts);
-        Object.assign(manager, manager.opts);
+        Object.assign(manager.opts, opts);
         superOpen.call(manager, fn);
       } catch (err) {
         fn && fn(err);

@@ -36,7 +36,7 @@ const routeToComponentMap = {
   DeviceConfig,
 };
 
-export default class extends AsyncComponent {
+export default class Root extends AsyncComponent {
 
   state = {
     initialized: false,

@@ -8,7 +8,7 @@ let {
   View,
 } = React;
 
-export default class extends React.Component {
+export default class DateOverlay extends React.Component {
 
   static defaultProps = {
     fadeDuration: 1500,

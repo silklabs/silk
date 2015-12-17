@@ -45,7 +45,7 @@ export default React.createClass({
     playing: React.PropTypes.bool,
     seekChangeThreshold: React.PropTypes.number,
     startTime: React.PropTypes.number.isRequired,
-    currentTime: React.PropTypes.number.isRequired,
+    currentTime: React.PropTypes.number,
     endTime: React.PropTypes.number.isRequired,
     onDone: React.PropTypes.func,
     onSeekStart: React.PropTypes.func,

@@ -38,7 +38,7 @@ const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
 const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
 const DEVICE_CONFIGURING_TIMEOUT_MS = 60000;
 
-export default class extends SocketIOComponent {
+export default class MonitorPreview extends SocketIOComponent {
   static propTypes = {
     deviceId: React.PropTypes.string,
     peripheralId: React.PropTypes.string,

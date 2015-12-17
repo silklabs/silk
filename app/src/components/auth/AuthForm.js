@@ -49,15 +49,15 @@ class StyledTextInput extends React.Component {
   }
 }
 
-export default class extends AsyncComponent {
+export default class AuthForm extends AsyncComponent {
 
   static propTypes = {
     style: View.propTypes.style,
     submitText: React.PropTypes.string.isRequired,
+    skipPassword: React.PropTypes.bool.isRequired,
     verifyPassword: React.PropTypes.bool.isRequired,
     onSubmit: React.PropTypes.func.isRequired,
     inProgress: React.PropTypes.bool.isRequired,
-    skipPassword: React.PropTypes.bool.isRequired,
   };
 
   state = {

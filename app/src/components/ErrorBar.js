@@ -5,7 +5,7 @@ let {
   Text,
 } = React;
 
-export default class extends React.Component {
+export default class ErrorBar extends React.Component {
 
   static propTypes = {
     heading: React.PropTypes.string.isRequired,

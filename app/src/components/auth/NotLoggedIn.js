@@ -23,7 +23,7 @@ const {
   View,
 } = React;
 
-export default class extends AsyncComponent {
+export default class NotLoggedIn extends AsyncComponent {
 
   static propTypes = {
     api: React.PropTypes.instanceOf(SilkApi).isRequired,
@@ -119,6 +119,7 @@ export default class extends AsyncComponent {
         <AuthForm
           onSubmit={this._signUp}
           inProgress={this.state.inProgress}
+          skipPassword={false}
           verifyPassword={true}
           submitText="Sign Up"
         />
@@ -156,6 +157,8 @@ export default class extends AsyncComponent {
         <AuthForm
           onSubmit={this._signIn}
           inProgress={this.state.inProgress}
+          skipPassword={false}
+          verifyPassword={false}
           submitText="Sign In"
         />
         <View style={styles.bottomLinks}>
@@ -180,6 +183,7 @@ export default class extends AsyncComponent {
           inProgress={this.state.inProgress}
           submitText="Reset Password"
           skipPassword={true}
+          verifyPassword={false}
         />
         <View style={styles.bottomLinks}>
           <TextLink

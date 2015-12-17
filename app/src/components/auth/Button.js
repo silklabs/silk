@@ -7,7 +7,7 @@ let {
   View,
 } = React;
 
-export default class extends React.Component {
+export default class Button extends React.Component {
   static propTypes = {
     label: React.PropTypes.string,
     disabled: React.PropTypes.bool,

@@ -5,9 +5,17 @@
   "main": "core.js",
   "scripts": {
     "preinstall": "./bin/preinstall",
-    "install": "./build",
+    "postinstall": "./bin/postinstall && ./build",
     "test": "./bin/test",
     "clean": "rm -rf node_modules core.js core.js.map"
+  },
+  "silkDependencies": {
+    "babelfilter": "/babelfilter",
+    "log": "/log",
+    "silk-api": "/api",
+    "silk-raygun": "/raygun",
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-server": "/server"
   },
   "dependencies": {
     "CBuffer": "1.1.0",
@@ -18,16 +26,12 @@
     "is-online": "^5.0.1",
     "is-reachable": "^1.1.0",
     "joi": "^6.6.1",
-    "log": "file:../../../../log",
     "mkdirp-promise": "^1.0.3",
     "mold-source-map": "^0.4.0",
     "mz": "2.0.0",
     "netmask": "^1.0.5",
     "ntp-client": "file:local_node_modules/ntp-client",
     "request": "2.58.0",
-    "silk-api": "file:local_node_modules/silk-api",
-    "silk-raygun": "file:../../../../raygun",
-    "silk-sdk-glue": "0.0.1",
     "silk-socket.io-client-node": "file:local_node_modules/silk-socket.io-client-node",
     "socket.io-client": "^1.3.5",
     "source-map-support": "^0.3.2",
@@ -36,7 +40,8 @@
   },
   "devDependencies": {
     "babel": "^5.8.23",
-    "mocha": "^2.3.3"
+    "mocha": "^2.3.3",
+    "node-fetch": "^1.3.3"
   },
   "repository": {
     "type": "git",

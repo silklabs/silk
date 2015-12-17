@@ -12,4 +12,3 @@ export function processthrow(e) {
   console.error(e.stack); // eslint-disable-line no-console
   process.exit(1); // eslint-disable-line no-process-exit
 }
-

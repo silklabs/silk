@@ -12,6 +12,13 @@ var config = {
     path: 'public/js',
     filename: 'bundle.js'
   },
+  // Something about how we use relative paths in our modules messes up webpack
+  // without a more specific modulesDirectories config.
+  resolveLoader: {
+    modulesDirectories: [
+      path.join(__dirname, 'node_modules'),
+    ]
+  },
   resolve: {
     alias : {
       'react-native': path.resolve(__dirname, 'src', 'shim', 'ReactNative.js'),
@@ -23,12 +30,8 @@ var config = {
       { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
-        include: [
-          path.resolve(__dirname, 'src'),
-          path.resolve(__dirname, 'config.local.json'),
-          path.resolve(__dirname, 'node_modules/silk-api'),
-        ],
-        loaders: ['babel']
+        include: require('babelfilter'),
+        loaders: ['babel-loader?stage=0&optional=runtime'],
       }
     ]
   },

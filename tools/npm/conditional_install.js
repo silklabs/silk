@@ -28,30 +28,22 @@ function log(msg) {
 /**
  * Spawn a sub process and log it's output.
  */
-function run(title, opts, cli, argv, cb) {
+function run(opts, cli, argv, cb) {
   opts = Object.assign({}, opts, {
-    stdio: 'pipe',
+    stdio: 'inherit',
   });
 
   let proc = spawn(cli, argv, opts);
-
-  proc.stdout.on('data', (buffer) => {
-    process.stdout.write(`[${title}] ${buffer.toString()}`);
-  });
-
-  proc.stderr.on('data', (buffer) => {
-    process.stderr.write(`[${title} err!] ${buffer.toString()}`);
-  });
-
   proc.once('exit', cb);
+  return proc;
 }
 
 /**
  * Construct the hash used to detect when to run npm install.
  */
-function constructHash(directory) {
-  let gitsha = execSync(`git rev-list HEAD -n1 ${directory}`);
-  let pkgContent = fs.readFileSync(path.join(directory, 'package.json'));
+function constructHash(installModulePath) {
+  let gitsha = execSync(`git rev-list HEAD -n1 ${installModulePath}`);
+  let pkgContent = fs.readFileSync(path.join(installModulePath, 'package.json'));
 
   return crypto.createHash('sha256').update(Buffer.concat([
     gitsha,
@@ -59,67 +51,88 @@ function constructHash(directory) {
   ])).digest('hex');
 }
 
-function install(parent, directory, nodeModules, hashFile, hash) {
+class ConditionalInstall {
+  constructor() {
+    this._process = null;
+  }
 
-  let title = `npm install ${directory}`;
-  let opts = {
-    /**
-     * Allows us to break cylic references by telling sub installs why the npm
-     * install was triggered.
-     */
-    env: Object.assign({}, process.env, { SILK_NPM_PARENT: directory }),
-    cwd: directory
-  };
-
-  return new Promise((accept, reject) => {
-    run(title, opts, '/bin/bash', [
-      '-c',
-      `npm install`
-    ], (code) => {
-      if (code !== 0) {
-        let msg = `failed to install ${directory}`;
-        log(msg);
-        reject(new Error(msg));
-        return;
-      }
-
-      // If the module has no dependencies it will not have a node_modules folder
-      // detect this and bypass writing the hash...
-      if (!fs.existsSync(nodeModules)) {
-        log(`${directory} has no node_modules folder after successful install skipping hash.`);
+  cancel() {
+    return new Promise((accept) => {
+      if (!this._process) {
         accept();
         return;
       }
-
-      log(`writing hash for ${directory}`);
-      fs.writeFileSync(hashFile, hash);
-      accept();
+      this._process.on('exit', accept);
+      this._process = null;
     });
-  });
-}
-
-/**
- * Run npm install in the given directory if needed.
- */
-function conditionallyInstall(installingFor, directory) {
-  let nodeModules = path.join(directory, 'node_modules');
-  let hashFile = path.join(nodeModules, HASH_FILE);
-
-  let hasModules = fs.existsSync(nodeModules);
-  let hasHash = fs.existsSync(hashFile);
-  let hash = constructHash(directory);
-
-  if (
-    hasModules &&
-    hasHash &&
-    hash === fs.readFileSync(hashFile, 'utf8')
-  ) {
-    log(`Hash matches in ${directory} skipping...`);
-    return Promise.resolve();
   }
 
-  log(`Installing ${directory}`);
-  return install(installingFor, directory, nodeModules, hashFile, hash);
+  _install(parent, installModulePath, nodeModules, hashFile, hash) {
+    let opts = {
+      /**
+       * Allows us to break cylic references by telling sub installs why the npm
+       * install was triggered.
+       */
+      env: Object.assign({}, process.env),
+      cwd: installModulePath
+    };
+
+    return new Promise((accept, reject) => {
+      run(opts, '/bin/bash', [
+        '-c',
+        `npm install`
+      ], (code) => {
+        if (code !== 0) {
+          let msg = `failed to install ${installModulePath}`;
+          log(msg);
+          reject(new Error(msg));
+          return;
+        }
+
+        // Only store a hash if the node modules folder has content.
+        let hasModules = fs.readdirSync(nodeModules).some((path) => {
+          return path.indexOf('.') === -1;
+        });
+
+        if (!hasModules) {
+          log(`${installModulePath} has no node_modules folder after successful install skipping hash.`);
+          accept();
+          return;
+        }
+
+        log(`writing hash for ${installModulePath}`);
+        fs.writeFileSync(hashFile, hash);
+        accept();
+      });
+    });
+  }
+
+  run(installingFor, installModulePath) {
+    let nodeModules = path.join(installModulePath, 'node_modules');
+    let hashFile = path.join(nodeModules, HASH_FILE);
+
+    let hasModules = fs.existsSync(nodeModules);
+    let hasHash = fs.existsSync(hashFile);
+    let hash = constructHash(installModulePath);
+
+    if (
+      hasModules &&
+      hasHash &&
+      hash === fs.readFileSync(hashFile, 'utf8')
+    ) {
+      log(`Hash matches in ${installModulePath} skipping...`);
+      return Promise.resolve();
+    }
+
+    log(`Installing ${installModulePath}`);
+    return this._install(
+      installingFor,
+      installModulePath,
+      nodeModules,
+      hashFile,
+      hash
+    );
+  }
 }
 
-module.exports = conditionallyInstall;
+module.exports = ConditionalInstall;

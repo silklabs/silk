@@ -6,20 +6,22 @@
     "name": "Wayne Lee",
     "email": "waynelee@silklabs.com"
   },
-  "main": "main.js",
+  "bin": {
+    "networkTest": "./bin/networkTest"
+  },
   "scripts": {
-    "preinstall": "../../../locked_node_modules/fetch.sh",
-    "prepublish": "node_modules/grunt-cli/bin/grunt",
-    "lint": "node_modules/grunt-cli/bin/grunt eslint",
-    "start": "node --harmony dist/networkTest.js",
-    "clean": "rm -rf node_modules dist"
+    "preinstall": "../../../../../../tools/npm/preinstall.js && ../../../locked_node_modules/fetch.sh",
+    "lint": "eslint lib",
+    "start": "./bin/networkTest.js"
   },
   "dependencies": {
     "debug": "2.2.0",
+    "babelfilter": "file:../../../../../../babelfilter",
     "easy-table": "^1.0.0",
     "event-to-promise": "^0.6.0",
-    "silk-api": "file:../../local_node_modules/silk-api",
-    "silk-sdk-glue": "0.0.1",
+    "log": "file:../../../../../../log",
+    "silk-api": "file:../../../../../../api",
+    "silk-sdk-glue": "file:../../../sdk/glue",
     "socket.io-client": "^1.3.5"
   },
   "devDependencies": {

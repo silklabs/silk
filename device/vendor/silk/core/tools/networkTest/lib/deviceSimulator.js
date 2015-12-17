@@ -4,16 +4,17 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import api from './api';
-import server from './server';
+import api from '../../../lib/api';
+import server from '../../../lib/server';
 import * as util from './sysutils';
 import https from 'https';
 import URL from 'url';
 import eventToPromise from 'event-to-promise';
+import fs from 'fs';
 
-import logoData from './logoData';
-import previewData from './previewData';
-import videoData from './videoData';
+const logoData = fs.readFileSync(__dirname + '/../media/logoData.png');
+const previewData = fs.readFileSync(__dirname + '/../media/previewData.jpg');
+const videoData = fs.readFileSync(__dirname + '/../media/videoData.mp4');
 
 const VIDEO_WIDTH = 1280;
 const VIDEO_HEIGHT = 720;
@@ -25,15 +26,16 @@ const VIDEO_CONTENT_TYPE = 'video/mp4';
 const VIDEO_BLOB_TYPE = 'video';
 
 export default class DeviceSimulator {
+  _logo = logoData;
+  _previewFrame = previewData;
+  _videoFrame = videoData;
+  _previewSize = {
+    width: VIDEO_WIDTH / PREVIEW_SCALE,
+    height: VIDEO_HEIGHT / PREVIEW_SCALE
+  };
+
   constructor(accessToken) {
     this.accessToken = accessToken;
-    this._previewSize = {
-      width: VIDEO_WIDTH / PREVIEW_SCALE,
-      height: VIDEO_HEIGHT / PREVIEW_SCALE
-    };
-    this._logo = new Buffer(logoData, 'base64');
-    this._previewFrame = new Buffer(previewData, 'base64');
-    this._videoFrame = new Buffer(videoData, 'base64');
   }
 
   connect() {

@@ -101,7 +101,7 @@ export class SilkApi {
   config: StateContainer;
 
   // XXX: Remove me should be re-export.
-  RssiSmoother: Function = RssiSmoother;
+  RssiSmoother: typeof RssiSmoother = RssiSmoother;
 
   socketioDeviceConfig: (() => Promise<SocketioConfig>) = async () => {
     let {url} = await this.device.socketioURL();

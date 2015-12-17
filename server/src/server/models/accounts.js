@@ -8,7 +8,7 @@ import Base from './base';
 import scrypt from 'scrypt';
 import uuid from 'uuid';
 
-import {AccessToken} from 'silk-api';
+import AccessToken from 'silk-api/src/access_token';
 import {ObjectId} from 'promised-mongo';
 
 /**

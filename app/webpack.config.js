@@ -13,6 +13,13 @@ var config = {
     path: path.resolve(__dirname, 'build'),
     filename: '[name].js',
   },
+  // Something about how we use relative paths in our modules messes up webpack
+  // without a more specific modulesDirectories config.
+  resolveLoader: {
+    modulesDirectories: [
+      path.join(__dirname, 'node_modules'),
+    ]
+  },
   module: {
     loaders: [
       {
@@ -20,16 +27,15 @@ var config = {
         loader: 'json',
       }, {
         test: /\.js$/,
-        include: [
-          path.resolve(__dirname, 'src'),
-          path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native'),
-          path.resolve(__dirname, 'node_modules/silk-api'),
-        ],
         loader: 'babel',
         query: {
           presets: ['es2015', 'stage-0', 'react'],
           plugins: [],
         },
+        include: [
+          require('babelfilter'),
+          path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native')
+        ]
       },
     ],
   },

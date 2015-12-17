@@ -1,0 +1,11 @@
+--- node_modules/react-native/packager/blacklist.js
++++ node_modules/react-native/packager/blacklist.js
+@@ -46,6 +46,8 @@ var sharedBlacklist = [
+   'downstream/core/hyphenateStyleName.js',
+ ];
+
++sharedBlacklist = sharedBlacklist.concat(['silk-server', 'silk-api']);
++
+ // Raw unescaped patterns in case you need to use wildcards
+ var sharedBlacklistWildcards = [
+   'website\/node_modules\/.*',

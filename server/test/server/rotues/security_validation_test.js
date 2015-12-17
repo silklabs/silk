@@ -1,7 +1,7 @@
 
 import assert from 'assert';
 import createContext from '../context';
-import createApi from '../../../src/api';
+import createApi from 'silk-api';
 import launchApp from '../launch_app';
 import createIntercept from '../intercept';
 import timekeeper from 'timekeeper';
@@ -13,8 +13,8 @@ import uuid from 'uuid';
 
 import Accounts from '../../../src/server/models/accounts';
 import Nonce from '../../../src/server/models/nonce';
-import TestAPI from '../../../src/api/gen/test';
-import {StateContainer} from '../../../src/api/http_client';
+import TestAPI from 'silk-api/src/gen/test';
+import {StateContainer} from 'silk-api/src/http_client';
 
 /**
  * Basic suite of security validation tests... These are intended to be a

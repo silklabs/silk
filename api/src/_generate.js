@@ -29,12 +29,20 @@ export default function generate() {
   mkdirp.sync(AUTOGEN_ROOT);
 
   for (let name of ROUTES) {
-    let route = require(path.join(ROUTE_PATH, name));
+    let routePath = path.join(ROUTE_PATH, name);
+    let route;
+    try {
+      route = require(routePath);
+    } catch (err) {
+      console.error('Error building client for route', routePath);
+      throw err;
+    }
     let entrypoint = route(ctx);
     if (!entrypoint) continue;
 
     let { api } = entrypoint;
     let absPath = path.join(AUTOGEN_ROOT, api.name + '.js');
+    console.log(`generating ${absPath}`);
     fs.writeFileSync(absPath, generateSchema(api.toJSON(), {
       baseClassPath: CLIENT_MODULE
     }));

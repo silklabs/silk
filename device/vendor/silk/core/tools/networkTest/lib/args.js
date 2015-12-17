@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
-import createLog from './log';
+import createLog from 'log';
 import program from 'commander';
 const log = createLog('args');
 

@@ -9,7 +9,7 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
-import createLog from './log';
+import createLog from 'log';
 import * as util from './sysutils';
 import ServerTester from './serverTester';
 import network from './network';
@@ -120,6 +120,7 @@ if (maxDuration) {
 }
 
 async function setupDevice() {
+  // Assign the accessToken to the main silk-api instance used by server...
   api.accessToken = api.id.create();
 
   let accessToken = new AccessToken(
@@ -128,7 +129,7 @@ async function setupDevice() {
   );
 
   // API as the developer account...
-  let accountApi = createApi();
+  let accountApi = createApi(config.api);
   accountApi.accessToken = accessToken;
 
   // register the device...

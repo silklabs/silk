@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import createLog from './log';
+import createLog from 'log';
 import events from 'events';
 import childProcess from 'child_process';
 

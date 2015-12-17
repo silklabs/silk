@@ -100,6 +100,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
   function getBabelrc() {
     if (!_babelrc) {
       _babelrc = fs.readFileSync(path.join(__dirname, '../babel.json'));
+      _babelrc.only = require('babelfilter');
     }
     return _babelrc;
   }

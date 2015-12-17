@@ -1,7 +1,7 @@
 
 import assert from 'assert';
 import createContext from '../context';
-import createApi from '../../../src/api';
+import createApi from 'silk-api';
 import uuid from 'uuid';
 
 import Devices from '../../../src/server/models/devices';

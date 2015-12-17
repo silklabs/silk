@@ -42,10 +42,6 @@
            revision="refs/tags/v5.3.2" clone-depth="1"/>
 
   <!-- node modules -->
-  <project name="silk-api-node"
-           path="vendor/silk/core/local_node_modules/silk-api"
-           remote="silk"
-           revision="master"/>
   <project name="silk-socket.io-client-node"
            path="vendor/silk/core/local_node_modules/silk-socket.io-client-node"
            remote="silk"

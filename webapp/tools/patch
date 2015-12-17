@@ -1,8 +1,19 @@
-#! /bin/bash -e
+#! /usr/bin/env node
 
-patches=( tools/patches/*.patch )
-for patch in ${patches[@]};
-do
-  echo $patch
-  patch -N -p0 -i $patch || echo
-done
+'use strict'
+
+let fs = require('fs');
+let path = require('path');
+
+
+const MSGPACK_PATH = './node_modules/silk-api/node_modules/msgpack-lite/package.json';
+
+let msgpackPkg = path.join(process.cwd(), MSGPACK_PATH);
+
+if (fs.existsSync(msgpackPkg)) {
+  let json = require(msgpackPkg);
+  if (json.browser) {
+    delete json.browser;
+    fs.writeFileSync(msgpackPkg, JSON.stringify(json, null, 2));
+  }
+}

@@ -3,10 +3,12 @@
  *
  * @no-flow
  */
-const DEFAULTS = {
-  serverUrl: 'https://silk-test-server.herokuapp.com'
-};
 
+import {branch} from 'silk-core-version';
+
+const DEFAULTS = {
+  serverUrl: `https://silk-server-${branch}.herokuapp.com`
+};
 
 export default function configure(input) {
   let overrides = {};

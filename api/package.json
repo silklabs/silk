@@ -4,8 +4,14 @@
   "description": "Silk client API for node js",
   "main": "src/index.js",
   "license": "proprietary",
+  "silkDependencies": {
+    "silk-core-version": "/version",
+    "log": "/log",
+    "api-schema": "/api-schema",
+    "babelfilter": "/babelfilter",
+    "silk-server": "/server"
+  },
   "dependencies": {
-    "api-schema": "../api-schema",
     "babel": "^5.8.34",
     "babel-runtime": "^5.8.20",
     "babelify": "^6.3.0",
@@ -15,7 +21,6 @@
     "hash.js": "^1.0.3",
     "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
     "localStorage": "^1.0.3",
-    "log": "../log",
     "mkdirp": "^0.5.1",
     "msgpack-lite": "^0.1.13",
     "node-fetch": "^1.3.2",
@@ -36,6 +41,7 @@
     "url": "git@github.com:silklabs/silk-api.git"
   },
   "scripts": {
+    "postinstall": "../tools/npm/postinstall.js && ./bin/gen.js",
     "mocha": "mocha $(find ./test -name '*_test.js')",
     "lint": "eslint test src",
     "flow": "flow check",
@@ -47,9 +53,12 @@
   "private": true,
   "devDependencies": {
     "babel-eslint": "^5.0.0-beta6",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-react": "^6.3.13",
+    "babel-preset-stage-0": "^6.3.13",
     "eslint": "^1.10.3",
     "express": "^4.13.3",
-    "mocha": "^2.3.4",
-    "silk-server": "../server"
+    "flow-bin": "^0.19.1",
+    "mocha": "^2.3.4"
   }
 }

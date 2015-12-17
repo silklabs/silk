@@ -1,11 +1,17 @@
 {
+  "silkDependencies": {
+    "api-schema": "/api-schema",
+    "babelfilter": "/babelfilter",
+    "silk-api": "/api",
+    "silk-core-version": "/version",
+    "silk-raygun": "/raygun",
+    "eslint-config-silk": "/eslint"
+  },
   "dependencies": {
     "aliyun-oss": "^1.1.0",
-    "api-schema": "git@github.com:silklabs/api-schema.git#fcc71be4958f5d0e3226e84ecf39dee502223c9d",
     "argparse": "^1.0.2",
     "aws-sdk-promise": "0.0.2",
     "babel": "^5.8.23",
-    "babel-runtime": "^5.8.23",
     "babelify": "^6.3.0",
     "base64-js": "0.0.8",
     "base64url": "^1.0.4",
@@ -36,9 +42,6 @@
     "promised-temp": "^0.1.0",
     "range-parser": "^1.0.2",
     "scrypt": "^5.4.0",
-    "silk-api": "../api",
-    "silk-core-version": "file:../version",
-    "silk-raygun": "file:../raygun",
     "socket.io": "^1.3.5",
     "socket.io-client": "socketio/socket.io-client#e787cb2669abf257f113439673bbf4874095a3a7",
     "superagent": "^1.2.0",
@@ -50,7 +53,6 @@
     "babel-eslint": "^4.1.6",
     "dev-null": "^0.1.1",
     "eslint": "^1.10.3",
-    "eslint-config-silk": "file:../eslint",
     "flow-bin": "0.20.1",
     "mocha": "^2.2.5",
     "timekeeper": "0.0.5"
@@ -76,8 +78,8 @@
     "flow": "flow check",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
-    "postinstall": "./bin/post-install",
-    "pretest": "babel-node src/api_generate",
+    "postinstall": "../tools/npm/postinstall.js && babel-node src/email_generate.js",
+    "pretest": "./node_modules/silk-api/bin/gen.js",
     "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "start-server": "babel-node --harmony src/server/main.js production",

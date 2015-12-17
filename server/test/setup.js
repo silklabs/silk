@@ -1,6 +1,6 @@
 import loadConfig from '../src/server/config';
 import mongo from 'promised-mongo';
-import gen from '../src/api_generate';
+import gen from 'silk-api/src/_generate';
 import emailGen from '../src/email_generate';
 
 // Ensure we have recently auto-generated files. Must happen before mocha runs

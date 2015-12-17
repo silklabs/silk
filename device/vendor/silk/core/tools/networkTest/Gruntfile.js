@@ -70,7 +70,8 @@ module.exports = function(grunt) {
     },
     babel: {
       options: {
-        sourceMap: true
+        sourceMap: true,
+        only: ["lib/*", "**/silk-api/src/**"],
       },
       dist: {
         files: [

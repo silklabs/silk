@@ -8,7 +8,7 @@
 import * as Joi from 'joi';
 import Base from './base';
 import { ObjectId } from 'promised-mongo';
-import { AccessToken } from 'silk-api';
+import AccessToken from 'silk-api/src/access_token';
 
 const DEVICE_TYPES = [
   'camera'

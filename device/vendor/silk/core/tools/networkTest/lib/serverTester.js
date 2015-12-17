@@ -5,7 +5,7 @@
  */
 
 import DeviceSimulator from './deviceSimulator';
-import createLog from './log';
+import createLog from 'log';
 import * as util from './sysutils';
 import {LatencyStats, Repeater} from './testutils';
 

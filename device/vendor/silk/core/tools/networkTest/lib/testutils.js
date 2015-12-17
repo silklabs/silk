@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import createLog from './log';
+import createLog from 'log';
 import * as util from './sysutils';
 
 const log = createLog('testUtils');

@@ -1,0 +1,13 @@
+{
+  "breakConfig": true,
+  "stage": "1",
+  "optional": ["runtime", "es7.classProperties"],
+  "blacklist": "asyncToGenerator",
+  "only": [
+    "build/**",
+    "lib/**",
+    "test/**",
+    "node_modules/log/**",
+    "node_modules/silk-api/src/**"
+  ]
+}

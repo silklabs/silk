@@ -186,7 +186,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
         $(PRIVATE_ALL_SHARED_LIBRARIES) \
       ) \
       -Wl,--end-group" && \
-    node $(npm_cli) install --nodedir=$(npm_node_dir) #--loglevel silly
+    node $(npm_cli) install --production --nodedir=$(npm_node_dir) #--loglevel silly
 ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
 	$(hide) touch $@
 endif

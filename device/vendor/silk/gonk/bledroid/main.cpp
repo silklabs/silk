@@ -2673,23 +2673,21 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
 
     address_during_rssi_update = addr;
 
-    do {
+    { // Scope for autoLock.
       auto lock = mainThreadWaiter.autoLock();
 
-      if (!gatt_client_connection_count) {
+      if (gatt_client_connection_count) {
+        err = gatt->client->read_remote_rssi(gatt_client_if, &addr);
+        if (err == BT_STATUS_SUCCESS) {
+          mainThreadWaiter.wait(WaitReadRemoteRssi);
+        } else {
+          ALOGE("read_remote_rssi() failed: %d", err);
+        }
+      } else {
         ALOGW("No clients connected, ignoring command");
-        err = 1;
-        break;
+        err = BT_STATUS_NOT_READY;
       }
-
-      err = gatt->client->read_remote_rssi(gatt_client_if, &addr);
-      if (err != BT_STATUS_SUCCESS) {
-        ALOGE("read_remote_rssi() failed: %d", err);
-        break;
-      }
-
-      mainThreadWaiter.wait(WaitReadRemoteRssi);
-    } while (false);
+    }
 
     address_during_rssi_update = kInvalidAddr;
 

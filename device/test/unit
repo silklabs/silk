@@ -18,17 +18,20 @@ npm run lint
 npm start -- -c 1 -m 60 -s https://silk-server-${BRANCH}.herokuapp.com/
 popd
 
-echo "## Running unit tests for extensions ##"
-for dir in vendor/silk/ext/*/; do
-  echo "Processing $dir"
-  if [ -d "$dir/test" ]; then
-    pushd "$dir/test"
-    NODE_ENV=development npm install
-    npm test
-    npm run clean # clean up to save disk space
-    popd
-  fi
-done
+# Do not run these tests on travis Mac OSX build
+if [ -z $TRAVIS_OS_NAME ] || [ $TRAVIS_OS_NAME != "osx" ]; then
+  echo "## Running unit tests for extensions ##"
+  for dir in vendor/silk/ext/*/; do
+    echo "Processing $dir"
+    if [ -d "$dir/test" ]; then
+      pushd "$dir/test"
+      NODE_ENV=development npm install
+      npm test
+      npm run clean # clean up to save disk space
+      popd
+    fi
+  done
+fi
 
 echo "## Cleaning unit tests ##"
 pushd vendor/silk/core

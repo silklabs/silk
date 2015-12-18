@@ -409,9 +409,9 @@ Bledroid.prototype.messageMap = [
     regex: /^!serverDisconnect ([\dA-F:]{17})$/,
     emit: 'serverDisconnect',
   }, {
-    regex: /^!clientConnect ([\dA-F:]{17}) (\d+) (\d+)$/,
+    regex: /^!clientConnect (\d+) ([\dA-F:]{17}) (\d+) (\d+)$/,
     emit: 'clientConnect',
-    transform: [ undefined, parseInt, parseInt ],
+    transform: [ parseInt, undefined, parseInt, parseInt ],
   }, {
     regex: /^!clientDisconnect ([\dA-F:]{17}) (\d+) (\d+)$/,
     method: 'onClientDisconnect',

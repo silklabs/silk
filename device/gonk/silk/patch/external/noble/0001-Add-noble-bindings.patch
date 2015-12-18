@@ -1,14 +1,14 @@
-From dcd0d71ecf471bef1330db7c364e7981d6d2bef7 Mon Sep 17 00:00:00 2001
+From 6d5077ed816fbcf2e05d1e519cff4f6fbbccbddd Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2797 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2809 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2814 insertions(+), 4 deletions(-)
+ 4 files changed, 2826 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..5d297f0
+index 0000000..0bbd484
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2797 @@
+@@ -0,0 +1,2809 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -92,6 +92,7 @@ index 0000000..5d297f0
 +  this.address = address;
 +  this.uuid = deviceUuid;
 +
++  this.interfaceId = null;
 +  this.connectionId = null;
 +
 +  this.services = new Map();
@@ -658,10 +659,15 @@ index 0000000..5d297f0
 +/**
 + * Called when a peripheral connects.
 + */
-+NobleBindings.prototype.onClientConnect = function(address,
++NobleBindings.prototype.onClientConnect = function(interfaceId,
++                                                   address,
 +                                                   status,
 +                                                   connectionId) {
-+  log.debug('onClientConnect(%s, %d, %d)', address, status, connectionId);
++  log.debug('onClientConnect(%d, %s, %d, %d)',
++            interfaceId,
++            address,
++            status,
++            connectionId);
 +
 +  // This event can happen any time, even when we're not waiting for it, so we
 +  // have to make sure that we were actually waiting for this event before
@@ -684,6 +690,7 @@ index 0000000..5d297f0
 +      this.peripheralMap.delete(peripheralInfo.connectionId);
 +    }
 +
++    peripheralInfo.interfaceId = null;
 +    peripheralInfo.connectionId = null;
 +
 +    error = new Error('Connection error: ' + status);
@@ -692,6 +699,7 @@ index 0000000..5d297f0
 +           'Map already has an entry for connectionId ' + connectionId + '!');
 +    this.peripheralMap.set(connectionId, peripheralInfo);
 +
++    peripheralInfo.interfaceId = interfaceId;
 +    peripheralInfo.connectionId = connectionId;
 +  }
 +
@@ -733,6 +741,7 @@ index 0000000..5d297f0
 +  }
 +
 +  this.bledroid.command('disconnect ' +
++                        peripheralInfo.interfaceId + ' ' +
 +                        peripheralInfo.address.replace(/:/g, '') + ' ' +
 +                        peripheralInfo.connectionId);
 +
@@ -780,6 +789,7 @@ index 0000000..5d297f0
 +
 +  this.peripheralMap.delete(peripheralInfo.connectionId);
 +
++  peripheralInfo.interfaceId = null;
 +  peripheralInfo.connectionId = null;
 +  peripheralInfo.services.clear();
 +
@@ -830,6 +840,7 @@ index 0000000..5d297f0
 +  }
 +
 +  this.bledroid.command('updateRssi ' +
++                        peripheralInfo.interfaceId + ' ' +
 +                        peripheralInfo.address.replace(/:/g, ''));
 +
 +  assert(!this.currentCommandInfo);
@@ -2186,6 +2197,7 @@ index 0000000..5d297f0
 +
 +  // Step 1.
 +  this.bledroid.command('enableNotify ' +
++                        peripheralInfo.interfaceId + ' ' +
 +                        peripheralInfo.connectionId + ' ' +
 +                        peripheralInfo.address.replace(/:/g, '') + ' ' +
 +                        serviceInfo.uuid + ' ' +
@@ -2890,5 +2902,5 @@ index 42cfdb6..9cdbc67 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.6.3
+2.6.4
 

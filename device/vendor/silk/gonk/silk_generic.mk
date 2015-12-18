@@ -43,8 +43,8 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 
 # vendor/silk/ext/...
 SILK_EXT := \
-  detectobject \
-  detectobject-cascade-cars \
+  detectcar \
+  detectcar-cascade-cars \
   clapper \
   clapper-sound \
   nightlight \

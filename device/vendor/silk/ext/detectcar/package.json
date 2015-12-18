@@ -1,8 +1,8 @@
 {
-  "name": "detectobject",
+  "name": "detectcar",
   "version": "0.0.1",
-  "description": "Example OpenCV extension",
-  "main": "detectobject.js",
+  "description": "OpenCV extension to detect car",
+  "main": "detectcar.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "install": "./build"

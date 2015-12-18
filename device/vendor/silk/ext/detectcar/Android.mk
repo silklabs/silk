@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := detectobject-cascade-cars
+LOCAL_MODULE := detectcar-cascade-cars
 LOCAL_INSTALLED_MODULE_STEM := hogcascade_cars_sideview.xml
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC

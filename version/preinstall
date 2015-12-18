@@ -20,7 +20,7 @@ cat > dist/index.json <<-EOF
 	  "branch": "$(source branch; echo $BRANCH)",
 	  "buildtime": "$(node -p "Date.now()")",
 	  "fingerprint": "$BUILD_FINGERPRINT",
-	  "official": "$OFFICIAL",
+	  "official": $OFFICIAL,
 	  "semver": "$(node -p "require('./package.json').version")",
 	  "sha": "$SOURCE_VERSION"
 	}

@@ -41,7 +41,10 @@ function detectCats(im, when, cb) {
 }
 
 class DetectCat {
-  constructor(env) {
+  constructor(env, cascadeFile) {
+    // Override cascade file if explicitly provided
+    cascade.file = cascadeFile || cascade.file;
+
     this._env = env;
     this._init();
   }
@@ -89,4 +92,4 @@ class DetectCat {
   }
 }
 
-module.exports = (env) => new DetectCat(env);
+module.exports = (env, cascadeFile) => new DetectCat(env, cascadeFile);

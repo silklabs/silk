@@ -15,20 +15,11 @@ env:
     - TEST_TYPE=objc-test
     - TEST_TYPE=build-dist
   global:
-    - PROJECT=Silk
-    # Debug or Release
-    - CONFIGURATION=Debug
-    # Single quotes needed so that YAML doesn't escape the colon
-    - 'DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"'
-    # These values are all related and could even be extracted from the .mobileprovision file:
-    # http://stackoverflow.com/questions/21860632/archive-distribute-ios-app-to-app-store-via-command-line
-    - PROFILE_NAME="CI Build Profile"
-    - PROFILE_FILE_NAME="CI_Build_Profile.mobileprovision"
-    - PROFILE_UUID="d6f599df-2a83-40fa-89c3-fd40df2f3bc4"
 
 before_script:
   - node --version
   - npm --version
+  - source .travis/env.sh
   - .travis/add-key.sh
 
 script:

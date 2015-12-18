@@ -1,5 +1,10 @@
 #!/bin/bash -x
 
+if [[ -z $PROJECT ]]; then
+  echo PROJECT not defined
+  exit 1
+fi
+
 export NODE_DEBUG=http
 
 mkdir -p build

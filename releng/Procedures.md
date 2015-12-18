@@ -34,15 +34,11 @@ TestFlight builds need to be manually created because they need to ship with the
 
 There are four major steps to generating a manual build:
 
-### Rev the bundle/build version in Xcode
+### Rev the bundle/build version
 
 Prior to building and uploading the binary, you need to ensure that the app version in the branch you're building from (mostly likely `next`) is unique and has not yet been used in a TestFlight build. If FML just happened, this is not a concern. But if a TestFlight build has already been uploaded for this cycle, perform the following steps:
 
-0. Ensure the last automated merge from `next` to `master` was performed successfully.
-0. Open `Silk.xcodeproj` in Xcode.
-0. Select the root node (`Silk`) in the tree view, and increment the 'Version' and 'Build' numbers in the 'General' tab, and commit the change on the `next` branch.
-0. Merge `next` to `master`, ignoring the version conflict: `git checkout master && git merge -s ours next`
-0. Push both `next` and `master` to `origin`.
+0. Run `./releng/version_bump patch` and push the new commit back to silk-core
 
 ### Import the iOS Distribution signing identity
 
@@ -67,7 +63,7 @@ WARNING: If you don't have the private key and attempt to upload a TestFlight bu
 
 0. Close Xcode and any react-native package servers that might be running
 0. Create a fresh clone of `silk-app` or get rid of any previous build artifacts by running `git clean -xfd` in your existing clone. (Careful! This will get rid of any local changes and your `config.local.json`!)
-0. Install node packages with `npm install`
+0. Install node packages with `CI=true npm install`  (IMPORTANT: `CI=true` enables crash reporting)
 0. Open `Silk.xcodeproj` in Xcode
 0. Perform a sanity check by building + running the app on a real iOS device. Test basic features: account login, live video, configuring a device.
 0. Select Product -> Archive to produce a production build of the app

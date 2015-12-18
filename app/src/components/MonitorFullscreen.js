@@ -15,6 +15,7 @@ import DateOverlay from './DateOverlay';
 const log = createLog('MonitorFullscreen');
 
 const {
+  ActivityIndicatorIOS,
   AlertIOS,
   StyleSheet,
   TouchableWithoutFeedback,
@@ -740,8 +741,9 @@ export default class MonitorFullscreen extends React.Component {
 
     return (
       <OverlayModal ref="overlay" presented={true}>
-          <View style={[styles.container]}>
-            <TouchableWithoutFeedback onPress={this.toggleControls}>
+        <View style={styles.container}>
+          <TouchableWithoutFeedback onPress={this.toggleControls}>
+            <View style={[styles.video, styles.videoContainer]}>
               <LiveVideo
                 rate={this.state.rate}
                 segments={this.state.videoSegments}
@@ -754,15 +756,24 @@ export default class MonitorFullscreen extends React.Component {
                 style={styles.video}
                 ref="video"
               />
-            </TouchableWithoutFeedback>
-            <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
-              {showTimeJump}
-              {controls}
-              {objects}
+              {this._renderSpinner()}
             </View>
+          </TouchableWithoutFeedback>
+          <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
+            {showTimeJump}
+            {controls}
+            {objects}
           </View>
+        </View>
       </OverlayModal>
     );
+  }
+
+  _renderSpinner() {
+    if (this.state.videoSegments.length) {
+      return <View />;
+    }
+    return <ActivityIndicatorIOS color="white" />;
   }
 
   close = () => {
@@ -777,6 +788,12 @@ export default class MonitorFullscreen extends React.Component {
 }
 
 const styles = StyleSheet.create({
+  videoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   video: {
     position: 'absolute',
     top: 0,

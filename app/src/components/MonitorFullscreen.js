@@ -15,6 +15,7 @@ import DateOverlay from './DateOverlay';
 const log = createLog('MonitorFullscreen');
 
 const {
+  AlertIOS,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -151,8 +152,12 @@ export default class MonitorFullscreen extends React.Component {
 
   /**
    * Holds list of video segments to be played.
+   *
+   * All mutations to state.videoSegments should first happen in this
+   * private member to maintain consistent state and to avoid extra
+   * updates in some cases.
    */
-  _videoSegments = null;
+  _videoSegments = [];
 
   state = {
     // Mode entered after seek is finished.
@@ -208,7 +213,11 @@ export default class MonitorFullscreen extends React.Component {
     };
   }
 
+  mounted = false;
+
   componentWillMount() {
+    this.mounted = true;
+
     this._liveSegmentProvider = new LiveSegmentProvider(this.onLiveSegment);
     if (this.props.startAtTime) {
       this._playRecorded(this.props.startAtTime);
@@ -216,23 +225,27 @@ export default class MonitorFullscreen extends React.Component {
       this.transitionModes(MODES.live);
     }
 
-    // List of video segments all mutations to state.videoSegments should first
-    // happen in our private variable to maintain consistent state and to avoid
-    // extra updates in some cases.
-    this._videoSegments = [];
+    this.determineMinTime();
+  }
 
+  componentWillUnmount() {
+    this.mounted = false;
+  }
+
+  determineMinTime() {
     // Figure out start time for video:
     let startTime = DateUtil.startOfDay();
 
-    let api = this.props.api;
-    api.metadata.findOneAfterTime({
+    this.props.api.metadata.findOneAfterTime({
       deviceId: this.props.deviceId,
       time: startTime.valueOf(),
       metaType: 'video',
-    }).then(result => {
-      this.setState({ minTime: result.startUTC });
-    }).catch(err => {
-      // TODO (#525): show error in UI.
+    }).then((result) => {
+      if (this.mounted) {
+        this.setState({ minTime: result.startUTC });
+      }
+    }, (err) => {
+      // TODO: should we show an error in the UI here? If so, what and where?
       log.info('Could not fetch initial time: ', err);
     });
   }
@@ -241,6 +254,9 @@ export default class MonitorFullscreen extends React.Component {
    * Appends a new video segment.
    */
   appendSegment(segment) {
+    if (!this.mounted) {
+      return;
+    }
     this._videoSegments = this._videoSegments.concat([segment]);
     this.setState({
       videoSegments: this._videoSegments,
@@ -269,6 +285,9 @@ export default class MonitorFullscreen extends React.Component {
    * Helper for managing state transitions between video modes.
    */
   transitionModes(newMode, state = {}) {
+    if (!this.mounted) {
+      return;
+    }
     this.setState(function(previous) {
       switch (previous.mode) {
         case MODES.live:
@@ -409,7 +428,6 @@ export default class MonitorFullscreen extends React.Component {
   bufferNextRecordedSegment() {
     // new segment has started lets queue up the next one.
     let segment = this._videoSegments[0];
-    let { api } = this.props;
 
     if (segment.type !== 'url') {
       throw new Error('Previous segment type _must_ be recorded');
@@ -422,7 +440,7 @@ export default class MonitorFullscreen extends React.Component {
       return;
     }
 
-    api.metadata.findOneAfterTime({
+    this.props.api.metadata.findOneAfterTime({
       deviceId: this.props.deviceId,
       metaType: 'video',
       time: segment.startUTC + 1,
@@ -442,9 +460,14 @@ export default class MonitorFullscreen extends React.Component {
         'queueing next segment', delta, newSegment
       );
       this.appendSegment(newSegment);
-    }).catch((err) => {
-      // TODO (#525): show error in UI.
+    }, (err) => {
       log.info('Could not buffer next recorded segment: ', err);
+      this.close().then(() => {
+        AlertIOS.alert(
+          'Video Playback Failed',
+          'Could not fetch video data.'
+        );
+      });
     });
   }
 
@@ -501,8 +524,6 @@ export default class MonitorFullscreen extends React.Component {
   };
 
   _playRecorded(startTime) {
-    let api = this.props.api;
-
     // Clear the segment queue and update the time to the seek target
     // while we figure out where we're actually going to end up below.
     this._videoSegments = [];
@@ -515,11 +536,15 @@ export default class MonitorFullscreen extends React.Component {
     // TODO: what should we do here if there's a previous seek
     // operation still pending?  For now we assume these don't
     // overlap.
-    this._pendingSeekOperation = api.metadata.findOneNear({
+    this._pendingSeekOperation = this.props.api.metadata.findOneNear({
       metaType: 'video',
       time: startTime,
       deviceId: this.props.deviceId,
-    }).then(result => {
+    }).then((result) => {
+      if (!this.mounted) {
+        return;
+      }
+
       // Override current pending segments.
       let segment = this.createSegment(result);
 
@@ -541,19 +566,7 @@ export default class MonitorFullscreen extends React.Component {
         pendingSeekMode: MODES.recorded,
         videoSegments: this._videoSegments,
       });
-      return true;
-    }).catch(err => {
-      // TODO (#525): show error in UI.
-      log.info('Could not find segment in seek time', err);
-      // Fallback if we cannot find a recorded segment to start playback at we
-      // will resume this mode after seeking is done.
-      this._videoSegments = [];
-      this.setState({
-        videoSegments: this._videoSegments,
-        pendingSeekMode: MODES.live,
-      });
-      return false;
-    }).then(result => {
+
       this._pendingSeekOperation = null;
 
       this.transitionModes(this.state.pendingSeekMode, {
@@ -569,7 +582,19 @@ export default class MonitorFullscreen extends React.Component {
         this.bufferNextRecordedSegment();
       }
 
-      return result;
+      return;
+    }, (err) => {
+      log.info('Could not find segment in seek time', err);
+      if (!this.mounted) {
+        return;
+      }
+
+      this.close().then(() => {
+        AlertIOS.alert(
+          'Recorded Video Unavailable',
+          'Could not find recorded video for the specified time.'
+        );
+      });
     });
   }
 
@@ -744,7 +769,7 @@ export default class MonitorFullscreen extends React.Component {
     var overlay = this.refs.overlay;
     // Signal dismissal of the view (but let it animate closed).
     // After the animation allow any parent views to cleanup.
-    overlay.dismiss().then(() => {
+    return overlay.dismiss().then(() => {
       this.transitionModes(null);
       this.props.onClose();
     });

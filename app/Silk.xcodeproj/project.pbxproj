@@ -64,6 +64,10 @@
 		57BCE10D1B6991520047088B /* BlobBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* BlobBridge.m */; };
 		57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C2F1B92CE01003F9EFF /* DebugLog.swift */; };
 		57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C311B92CE10003F9EFF /* DebugLogTest.swift */; };
+		6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5839001C1D04610004EC78 /* CrashReporter.swift */; };
+		6C5839031C1D14C30004EC78 /* Raygun4iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */; };
+		6C5839051C1D15380004EC78 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C5839041C1D15380004EC78 /* libc++.tbd */; };
+		6C5839061C1D15CF0004EC78 /* Raygun4iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */; };
 		F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */; };
 		F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */; };
 		F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */; };
@@ -241,20 +245,18 @@
 			remoteInfo = RCTText;
 		};
 /* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
-		571B2F4F1B813046005A4460 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+               571B2F4F1B813046005A4460 /* Embed Frameworks */ = {
+                       isa = PBXCopyFilesBuildPhase;
+                       buildActionMask = 2147483647;
+                       dstPath = "";
+                       dstSubfolderSpec = 10;
+                       files = (
+                       );
+                       name = "Embed Frameworks";
+                       runOnlyForDeploymentPostprocessing = 0;
+               };
 /* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		00C302A71ABCB8CE00DB3ED1 /* RCTActionSheet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTActionSheet.xcodeproj; path = "node_modules/react-native/Libraries/ActionSheetIOS/RCTActionSheet.xcodeproj"; sourceTree = "<group>"; };
 		00C302B51ABCB90400DB3ED1 /* RCTGeolocation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTGeolocation.xcodeproj; path = "node_modules/react-native/Libraries/Geolocation/RCTGeolocation.xcodeproj"; sourceTree = "<group>"; };
@@ -319,6 +321,9 @@
 		57BCE10C1B6991520047088B /* BlobBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BlobBridge.m; sourceTree = "<group>"; };
 		57C30C2F1B92CE01003F9EFF /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		57C30C311B92CE10003F9EFF /* DebugLogTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLogTest.swift; sourceTree = "<group>"; };
+		6C5839001C1D04610004EC78 /* CrashReporter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
+		6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Raygun4iOS.framework; path = external/Raygun4iOS/Raygun4iOS.framework; sourceTree = "<group>"; };
+		6C5839041C1D15380004EC78 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTLinking.xcodeproj; path = "node_modules/react-native/Libraries/LinkingIOS/RCTLinking.xcodeproj"; sourceTree = "<group>"; };
 		832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTText.xcodeproj; path = "node_modules/react-native/Libraries/Text/RCTText.xcodeproj"; sourceTree = "<group>"; };
 		F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Bold.ttf"; sourceTree = "<group>"; };
@@ -341,6 +346,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C5839061C1D15CF0004EC78 /* Raygun4iOS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -348,6 +354,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C5839051C1D15380004EC78 /* libc++.tbd in Frameworks */,
 				5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */,
 				5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */,
 				5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */,
@@ -359,6 +366,7 @@
 				5758F17D1B5DD52800C18E5D /* libRCTSettings.a in Frameworks */,
 				5758F17E1B5DD52800C18E5D /* libRCTText.a in Frameworks */,
 				5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */,
+				6C5839031C1D14C30004EC78 /* Raygun4iOS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -568,6 +576,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB11A68108700A75B9A /* LaunchScreen.xib */,
+				6C5839001C1D04610004EC78 /* CrashReporter.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -648,6 +657,8 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				6C5839041C1D15380004EC78 /* libc++.tbd */,
+				6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */,
 				F91A54EA1B8B9D48009C75C9 /* Resources */,
 				13B07FAE1A68108700A75B9A /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
@@ -711,10 +722,11 @@
 			buildPhases = (
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
-				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json) */,
+				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json / raygun.json) */,
 				5741E1471B5DA53300F9376C /* Conditionally react-native bundle */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
-				571B2F4F1B813046005A4460 /* Embed Frameworks */,
+        571B2F4F1B813046005A4460 /* Embed Frameworks */,
+				6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */,
 			);
 			buildRules = (
 			);
@@ -937,19 +949,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		5741E0BD1B5A04B000F9376C /* Configuration (config.local.json) */ = {
+		5741E0BD1B5A04B000F9376C /* Configuration (config.local.json / raygun.json) */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Configuration (config.local.json)";
+			name = "Configuration (config.local.json / raygun.json)";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Copy json config if it's available...\nconfig_file=\"$SRCROOT/config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ];\nthen\n  cp $config_file $target_file\nfi";
+			shellPath = /bin/bash;
+			shellScript = "set -x\n\n# Copy json config if it's available...\nconfig_file=\"$SRCROOT/config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ]; then\n  cp $config_file $target_file\nfi\n\n# Copy raygun.json, to enable native crash reporting, only on offical builds\nconfig_file=\"$SRCROOT/node_modules/silk-raygun/config.raygun.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.raygun.json\"\nrm -f $target_file\necho $config_file\nif [ \"$(./tools/official_build)\" == \"true\" ]; then\n  cp $config_file $target_file\nfi\n";
 		};
 		5741E1471B5DA53300F9376C /* Conditionally react-native bundle */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -962,8 +974,22 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "no_optimize=--no-optimize\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n  no_optimize=\nfi\n\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n  npm run bundle -- $no_optimize\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localBundle\nfi";
+			shellPath = /bin/bash;
+			shellScript = "set -x\nno_optimize=--no-optimize\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n  no_optimize=\nfi\n\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n  npm run bundle -- $no_optimize\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localBundle\nfi";
+		};
+		6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Exfiltrate Symbols";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Yuck. Is there a better way to find the symbol directory from outside XCode?\nset -ex\n\nif [ -n \"$EXFILTRATED_DSYM_ZIP\" ]; then\n  cd $DWARF_DSYM_FOLDER_PATH\n  rm -rf $EXFILTRATED_DSYM_ZIP\n  zip -r $EXFILTRATED_DSYM_ZIP $DWARF_DSYM_FILE_NAME\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1004,6 +1030,7 @@
 				5774D7641B90D6710071F187 /* AppRCTWebSocketModule.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
+				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
 				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
@@ -1112,6 +1139,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
+					"$(PROJECT_DIR)/external/Raygun4iOS",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1135,6 +1163,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
+					"$(PROJECT_DIR)/external/Raygun4iOS",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
@@ -1150,6 +1179,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/external/Raygun4iOS",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -1175,6 +1208,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/external/Raygun4iOS",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,

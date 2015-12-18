@@ -11,3 +11,8 @@ export function getWifiInfo() {
     });
   });
 }
+
+export function exitApp() {
+  SLKUtil.exitApp();
+}
+

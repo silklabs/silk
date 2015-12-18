@@ -65,7 +65,7 @@ export default class CrashReportOperation extends StreamOperation {
       ));
       crashId = id;
     } catch (err) {
-      log.error(`Failed to upload crash metadata`, err, err.stack);
+      log.error(`Failed to upload crash metadata: ${err.stack || err}`);
       return { done: false, remainder: path, error: err };
     }
 
@@ -80,7 +80,11 @@ export default class CrashReportOperation extends StreamOperation {
       this.raygunMessage.details.userCustomData.crashId = crashId;
       this.raygunMessage.details.userCustomData.crashUrl =
         `https://silk-webapp-master.herokuapp.com/#/crashById/${crashId}?`;
-      raygun.postMessage(this.raygunMessage, null);
+      try {
+        await raygun.postMessage(this.raygunMessage);
+      } catch (err) {
+        log.error(`Failed to post to raygun: ${err.stack || err}`);
+      }
     }
 
     if (typeof path === 'string') {

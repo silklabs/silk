@@ -31,4 +31,9 @@ RCT_EXPORT_METHOD(getWifiInfo:(RCTResponseSenderBlock)callback) {
   callback(@[[NSNull null], @{ @"SSID": ssid }]);
 }
 
+RCT_EXPORT_METHOD(exitApp) {
+  // Not allowed to exit, so crash instead :-/
+  @throw [NSException exceptionWithName:@"NotAllowedToExitException" reason:@"Attempted exit" userInfo:nil];
+}
+
 @end

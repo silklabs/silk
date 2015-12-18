@@ -69,21 +69,10 @@ WARNING: If you don't have the private key and attempt to upload a TestFlight bu
 0. Select Product -> Archive to produce a production build of the app
 0. Click on the 'Upload to App Store...' button.
 0. Confirm the 'Weave Laboratories Inc' development team in the next dialog, and the use of the `XC: com.silklabs.Silk` provisioning profile in the second dialog.
+0. Finally upload the symbols to Raygun so that any iOS crashes will be symbolicated: `export CI=true; export TRAVIS_PULL_REQUEST=false; ./.travis/raygun-dsym.sh`
 
 ### Enable the new version in iTunes Connect:
 
 0. Log into [iTunes Connect](https://itunesconnect.apple.com)
 0. Go to 'My Apps', 'Silk Alpha', and open the 'TestFlight' tab. Click on the 'Select Version to Test' link. The new app version should appear, but if you just uploaded it, it will still say processing.
 0. After about half an hour or so, the newly uploaded build should be available for selection.
-
-### Silk Parter App
-
-* Until we fix [silk-app/647](https://github.com/silklabs/silk-app/issues/647),
-  a forked Silk Partner app is needed.
-* Follow the above instructions with the following changes:
-  * When making the build, after running `npm install`, cherry-pick these changes from https://github.com/waynelee/silk-app:
-    * [485534f](https://github.com/waynelee/silk-app/commit/485534f02014c59ccfadb7cae56aef271a22db22) - changes Bundle ID to com.silklabs.Silk.Partners
-    * [7a252f2](https://github.com/waynelee/silk-app/commit/7a252f2cea169c053ec7ae1676ef84b199813dc6) - uses green app icon instead
-    * [701b877](https://github.com/waynelee/silk-app/commit/701b877036052f0d534c215f93dc4d8d70a8a1df) - sets server to http://120.25.204.154, disables dev account, and disables server picker
-  * In the last step of [uploading the actual build](#generate-and-upload-the-actual-build), use the `XC: com.silklabs.Silk.Partners` provisioning profile instead.
-  * When [adding the app to iTunes Connect](#enable-the-new-version-in-itunes-connect), select 'Silk Parterns' instead of 'Silk Alpha'.

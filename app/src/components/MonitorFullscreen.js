@@ -1,6 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 import React from 'react-native';
 import uuid from 'uuid';
 import createLog from 'log';
@@ -17,7 +14,7 @@ import DateOverlay from './DateOverlay';
 
 const log = createLog('MonitorFullscreen');
 
-let {
+const {
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -145,73 +142,71 @@ class LiveSegmentProvider {
   }
 }
 
-export default React.createClass({
+export default class MonitorFullscreen extends React.Component {
 
   /**
    * Used to hold the promise of a pending seek operation.
    */
-  _pendingSeekOperation: null,
+  _pendingSeekOperation = null;
 
   /**
    * Holds list of video segments to be played.
    */
-  _videoSegments: null,
+  _videoSegments = null;
 
-  getInitialState() {
-    return {
-      // Mode entered after seek is finished.
-      pendingSeekMode: null,
+  state = {
+    // Mode entered after seek is finished.
+    pendingSeekMode: null,
 
-      mode: null, // initial unspecified mode
+    mode: null, // initial unspecified mode
 
-      /**
-       * When time jump is true we display a view showing the current time (it
-       * will slowly fade away and we will reset this to false).
-       */
-      showTimeJump: false,
+    /**
+     * When time jump is true we display a view showing the current time (it
+     * will slowly fade away and we will reset this to false).
+     */
+    showTimeJump: false,
 
-      /**
-       * Playback rate 1.0 is playing 0.0 is paused (2.0 is 2x).
-       */
-      rate: DEFAULT_PLAYBACK_STEP,
+    /**
+     * Playback rate 1.0 is playing 0.0 is paused (2.0 is 2x).
+     */
+    rate: DEFAULT_PLAYBACK_STEP,
 
-      /**
-       * Represents the UX state of playing/paused in some cases we may not be
-       * actively playing video (such as seeking) when this is true.
-       */
-      playing: true,
+    /**
+     * Represents the UX state of playing/paused in some cases we may not be
+     * actively playing video (such as seeking) when this is true.
+     */
+    playing: true,
 
-      /**
-       * Indicates to native layer if we should immediately begin playback of
-       * segments as it receives them. This value may not match the value of
-       * .playing in the case where we are seeking playing will be true if the
-       * controls are not paused (and the video will begin playback after the
-       * seek) and willPlay will be false to indicate to native not to begin
-       * playback as we are actively seeking.
-       */
-      willPlay: true,
+    /**
+     * Indicates to native layer if we should immediately begin playback of
+     * segments as it receives them. This value may not match the value of
+     * .playing in the case where we are seeking playing will be true if the
+     * controls are not paused (and the video will begin playback after the
+     * seek) and willPlay will be false to indicate to native not to begin
+     * playback as we are actively seeking.
+     */
+    willPlay: true,
 
-      showingControls: true,
-      currentTime: null,
-      // Maximum time we have recorded for today.
-      maxTime: Date.now(),
-      minTime: DateUtil.startOfDay().getTime(),
-      videoSegments: [],
+    showingControls: true,
+    currentTime: null,
+    // Maximum time we have recorded for today.
+    maxTime: Date.now(),
+    minTime: DateUtil.startOfDay().getTime(),
+    videoSegments: [],
 
-      /**
-       * Set of detected objects (faces, cars, motion, etc) that have
-       * been detected for the currently-playing segment at the
-       * current time point (give or take some milliseconds).
-       */
-      objects: [],
-    };
-  },
+    /**
+     * Set of detected objects (faces, cars, motion, etc) that have
+     * been detected for the currently-playing segment at the
+     * current time point (give or take some milliseconds).
+     */
+    objects: [],
+  };
 
   getInitialProps() {
     return {
       onClose: function() {},
     };
-  },
+  }
 
   componentWillMount() {
     this._liveSegmentProvider = new LiveSegmentProvider(this.onLiveSegment);
@@ -240,19 +235,19 @@ export default React.createClass({
       // TODO (#525): show error in UI.
       log.info('Could not fetch initial time: ', err);
     });
-  },
+  }
 
   /**
-  Appends a new video segment.
-  */
+   * Appends a new video segment.
+   */
   appendSegment(segment) {
     this._videoSegments = this._videoSegments.concat([segment]);
     this.setState({
       videoSegments: this._videoSegments,
     });
-  },
+  }
 
-  onLiveSegment(segment, message) {
+  onLiveSegment = (segment, message) => {
     if (this._videoSegments.length === 0) {
       this.liveVideoLag = Date.now() - segment.startUTC;
       log.debug('updated live video lag to', this.liveVideoLag);
@@ -268,14 +263,11 @@ export default React.createClass({
     this.meter.meter('deviceEmit', meterId, message.deviceEmitMs);
     this.meter.meter('serverEmit', meterId, message.serverEmitMs);
     this.meter.meter('arriveApp', meterId);
-  },
+  };
 
   /**
-  Helper for managing state transitions between video modes.
-
-  @param {String} newMode to set (see MODES).
-  @param {Object} [state={}] additional state to set.
-  */
+   * Helper for managing state transitions between video modes.
+   */
   transitionModes(newMode, state = {}) {
     this.setState(function(previous) {
       switch (previous.mode) {
@@ -300,14 +292,14 @@ export default React.createClass({
 
       return Object.assign(newState, state);
     });
-  },
+  }
 
   _enterLiveMode() {
     let { socket, deviceId } = this.props;
     this._liveSegmentProvider.start(socket, deviceId);
 
     this.meter = new Meter('avpipeline', socket, deviceId);
-  },
+  }
 
   _exitLiveMode() {
     let { socket, deviceId } = this.props;
@@ -316,7 +308,7 @@ export default React.createClass({
       this.meter.stop();
       this.meter = null;
     }
-  },
+  }
 
   createSegment(result, previousSegment) {
     return new LiveVideo.Segment({
@@ -328,27 +320,27 @@ export default React.createClass({
       previousId: previousSegment ? previousSegment.id : null,
       objects: result.data.objects,
     });
-  },
+  }
 
-  onSegmentError(event) {
+  onSegmentError = (event) => {
     log.info('Segment error encountered!', event.nativeEvent);
-  },
+  };
 
   /**
    * Invoked when a segment has finished loading and has been added to
    * the play queue.
    */
-  onSegmentEnqueued(event) {
+  onSegmentEnqueued = (event) => {
     if (this.meter) {
       this.meter.meter('playbackEnqueued', segmentMeterId(event.nativeEvent));
     }
-  },
+  };
 
   /**
-  Called when any type of segment has ended. This is the same process for both
-  live and recorded segment modes.
-  */
-  onSegmentEnd(event) {
+   * Called when any type of segment has ended. This is the same
+   * process for both live and recorded segment modes.
+   */
+  onSegmentEnd = (event) => {
     let segments = this._videoSegments;
     let current = segments[0];
 
@@ -371,12 +363,12 @@ export default React.createClass({
     // this is purely to reconcile internal state and the state of the video
     // playback.
     this._videoSegments = segments.slice(1);
-  },
+  };
 
   /**
-  Invoked when any type of segment has begun playback.
-  */
-  onSegmentStart(event) {
+   * Invoked when any type of segment has begun playback.
+   */
+  onSegmentStart = (event) => {
     let segment = this._videoSegments[0];
 
     if (segment && this.meter) {
@@ -412,7 +404,7 @@ export default React.createClass({
         objects: this.getActiveObjects(segment, segment.startUTC),
       });
     }
-  },
+  };
 
   bufferNextRecordedSegment() {
     // new segment has started lets queue up the next one.
@@ -454,7 +446,7 @@ export default React.createClass({
       // TODO (#525): show error in UI.
       log.info('Could not buffer next recorded segment: ', err);
     });
-  },
+  }
 
   modifyLiveRate(segment, time) {
     if (!ENABLE_CONTINUOUS_RATE_ADJUSTMENT) {
@@ -467,9 +459,9 @@ export default React.createClass({
       let rate = 1 + currentLag / 1000;
       this.setState({ rate: rate });
     }
-  },
+  }
 
-  onTimeChange(event) {
+  onTimeChange = (event) => {
     // Let seek bar manage it's own state in video controls.
     if (this.state.mode === MODES.seeking) {
       // Do not emit any time events while we are seeking...
@@ -487,9 +479,9 @@ export default React.createClass({
       currentTime: time,
       objects: this.getActiveObjects(segment, time),
     });
-  },
+  };
 
-  onSeekStart() {
+  onSeekStart = () => {
     this.transitionModes(MODES.seeking, {
       // Reset playback speed when we start seeking.
       rate: DEFAULT_PLAYBACK_STEP,
@@ -498,15 +490,15 @@ export default React.createClass({
       // Playback is paused while we seek.
       willPlay: false,
     });
-  },
+  };
 
-  onSeekChange(value) {
+  onSeekChange = (value) => {
     // For now we don't change the video display during seek events.
-  },
+  };
 
-  onSeekEnd(value) {
+  onSeekEnd = (value) => {
     this._playRecorded(value);
-  },
+  };
 
   _playRecorded(startTime) {
     let api = this.props.api;
@@ -579,11 +571,11 @@ export default React.createClass({
 
       return result;
     });
-  },
+  }
 
-  toggleControls() {
+  toggleControls = () => {
     this.setState({ showingControls: !this.state.showingControls });
-  },
+  };
 
   /**
    * Calculate the playback rate based on current value + increment.
@@ -605,7 +597,7 @@ export default React.createClass({
     }
 
     return PLAYBACK_STEPS[nextId];
-  },
+  }
 
   getActiveObjects(segment, timeUTC) {
     if (!segment || !segment.objects) {
@@ -630,39 +622,39 @@ export default React.createClass({
         return true;
       }
     });
-  },
+  }
 
-  onFastForward() {
+  onFastForward = () => {
     let rate = this.getPlaybackStep(1);
     this.setState({ rate });
     log.debug('fast forward', rate);
-  },
+  };
 
-  onRewind() {
+  onRewind = () => {
     let rate = this.getPlaybackStep(-1);
     this.setState({ rate });
-  },
+  };
 
-  onPlay() {
+  onPlay = () => {
     this.setState({
       rate: DEFAULT_PLAYBACK_STEP,
       playing: true,
       willPlay: true,
     });
-  },
+  };
 
-  onPause() {
+  onPause = () => {
     this.setState({
       // Reset rate when we pause.
       rate: DEFAULT_PLAYBACK_STEP,
       playing: false,
       willPlay: false,
     });
-  },
+  };
 
-  hideTimeJump() {
+  hideTimeJump = () => {
     this.setState({ showTimeJump: false });
-  },
+  };
 
   buildControls() {
     return (
@@ -684,9 +676,9 @@ export default React.createClass({
         onDone={this.close}
       />
     );
-  },
+  }
 
-  render: function() {
+  render() {
     let { width, height } = getLandscapeDimensions();
     let dimensions = { width, height };
     let controls;
@@ -746,9 +738,9 @@ export default React.createClass({
           </View>
       </OverlayModal>
     );
-  },
+  }
 
-  close() {
+  close = () => {
     var overlay = this.refs.overlay;
     // Signal dismissal of the view (but let it animate closed).
     // After the animation allow any parent views to cleanup.
@@ -756,10 +748,10 @@ export default React.createClass({
       this.transitionModes(null);
       this.props.onClose();
     });
-  },
-});
+  };
+}
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   video: {
     position: 'absolute',
     top: 0,

@@ -49,7 +49,10 @@ function detectCars(im, when, cb) {
  *
  */
 class DetectCar {
-  constructor(env) {
+  constructor(env, cascadeFile) {
+    // Override cascade file if explicitly provided
+    cascade.file = cascadeFile || cascade.file;
+
     this._env = env;
     this._init();
   }
@@ -133,4 +136,4 @@ class DetectCar {
   }
 }
 
-module.exports = (env) => new DetectCar(env);
+module.exports = (env, cascadeFile) => new DetectCar(env, cascadeFile);

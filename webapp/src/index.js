@@ -9,7 +9,11 @@ import version from 'silk-core-version';
 import raygun from 'silk-raygun/browser';
 if (version.official) {
   // Enable crash reporting as early as practical
-  raygun.enable('webapp', version.semver);
+  raygun.enable('webapp', version.semver, {
+    customData: {
+      version,
+    },
+  });
 }
 
 import Config from './libraries/Config';

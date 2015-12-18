@@ -399,11 +399,11 @@ export class CrashReporter {
 
       let raygunMessage;
       try {
-        raygunMessage = raygun.buildMessage();
+        raygunMessage = raygun.buildMessage(null, {version});
         raygunMessage.details.error = await CrashReporter._tombstoneToRaygunError(tombstonePath);
       } catch (err) {
         // If _tombstoneToRaygunError fails, report the failure to raygun
-        raygunMessage = raygun.buildMessage(err);
+        raygunMessage = raygun.buildMessage(err, {version});
       }
 
       // construct the operation from the current deviceId + stats.
@@ -457,7 +457,10 @@ export class CrashReporter {
 
   async reportJSError(error, type, readable, readableSize) {
     if (this.doUploads) {
-      let raygunMessage = raygun.buildMessage(error, { jsErrorType: type });
+      let raygunMessage = raygun.buildMessage(error, {
+        jsErrorType: type,
+        version,
+      });
 
       let operation = new CrashReportOp({
         size: readableSize,

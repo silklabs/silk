@@ -6,13 +6,18 @@ import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
 
 import v8 from 'v8';
-v8.setFlagsFromString('--trace_gc'); 
+v8.setFlagsFromString('--trace_gc');
 //v8.setFlagsFromString('--trace_gc_verbose');
 
 export default function(createServer) {
   if (version.official) {
     // Enable crash reporting as early as practical
-    raygun.enable('server', version.semver, { exceptionHandlers: true });
+    raygun.enable('server', version.semver, {
+      exceptionHandlers: true,
+      customData: {
+        version,
+      },
+    });
   }
 
   let log = require('log')('main');

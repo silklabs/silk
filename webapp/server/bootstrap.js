@@ -8,7 +8,12 @@ import raygun from 'silk-raygun/node';
 export default function(createServer) {
   if (version.official) {
     // Enable crash reporting as early as practical
-    raygun.enable('webapp', version.semver, { exceptionHandlers: true });
+    raygun.enable('webapp', version.semver, {
+      exceptionHandlers: true,
+      customData: {
+        version,
+      },
+    });
   }
 
   let log = require('./log')('main');

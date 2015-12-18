@@ -18,6 +18,7 @@ var raygunClient;
 
 var tags;
 var version;
+var customData;
 
 module.exports = {
   enable: function enable(appName, appVersion, options) {
@@ -30,34 +31,38 @@ module.exports = {
     raygunClient.setVersion(version);
     raygunClient.setTags(tags);
 
-    if (options && options.exceptionHandlers) {
-      process.on('uncaughtException', function (err) {
-        console.error('uncaughtException', err, err.stack);
-        var exit = true;
+    if (options) {
+      customData = options.customData;
 
-        if (raygunClient) {
-          try {
-            console.log('Sending error report to Raygun');
-            raygunClient.send(err, null, function () {
-              console.log('Error report sent to Raygun, terminating process');
-              process.exit(1);
-            });
-            exit = false;
-          } catch (err) {
-            console.error('uncaughtException', err, err.stack);
+      if (options.exceptionHandlers) {
+        process.on('uncaughtException', function (err) {
+          console.error('uncaughtException', err, err.stack);
+          var exit = true;
+
+          if (raygunClient) {
+            try {
+              console.log('Sending error report to Raygun');
+              raygunClient.send(err, null, function () {
+                console.log('Error report sent to Raygun, terminating process');
+                process.exit(1);
+              });
+              exit = false;
+            } catch (err) {
+              console.error('uncaughtException', err, err.stack);
+            }
           }
-        }
-        if (exit) {
-          process.exit(1);
-        }
-      });
+          if (exit) {
+            process.exit(1);
+          }
+        });
 
-      process.on('unhandledRejection', function (reason, p) {
-        var err = new Error('Unhandled Rejection at: Promise ' + p +
-                            ' reason:' + reason);
-        console.error('unhandledRejection', err, err.stack);
-        throw err;
-      });
+        process.on('unhandledRejection', function (reason, p) {
+          var err = new Error('Unhandled Rejection at: Promise ' + p +
+                              ' reason:' + reason);
+          console.error('unhandledRejection', err, err.stack);
+          throw err;
+        });
+      }
     }
   },
 
@@ -67,7 +72,7 @@ module.exports = {
       cb = function () {};
     }
     if (raygunClient) {
-      raygunClient.send(err, function () {
+      raygunClient.send(err, customData, function () {
         console.log('Error report sent to Raygun');
         cb();
       });

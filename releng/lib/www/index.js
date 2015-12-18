@@ -10,7 +10,11 @@ import version from 'silk-core-version';
 import raygun from 'silk-raygun/browser';
 if (version.official) {
   // Enable crash reporting as early as practical
-  raygun.enable('releng', version.semver);
+  raygun.enable('releng', version.semver, {
+    customData: {
+      version,
+    },
+  });
 }
 
 import React from 'react';

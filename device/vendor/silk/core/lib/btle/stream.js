@@ -132,7 +132,6 @@ export default class Stream extends Duplex {
       if (this._outgoing.length) {
         log.debug(`Waiting for all data to be written before emitting ` +
                   `'${eventName}' event`);
-        invariant(this._writeTimeout);
         invariant(this._subscribed);
         return false;
       }

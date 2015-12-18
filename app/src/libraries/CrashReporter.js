@@ -44,6 +44,7 @@ class CrashReporter {
             tags: [ 'app' ],
             userCustomData: {
               isFatal,
+              version,
             },
           },
         };

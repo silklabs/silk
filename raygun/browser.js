@@ -9,11 +9,14 @@ var config = require('./config.raygun.json');
 var enabled = false;
 
 module.exports = {
-  enable: function enable(appName, appVersion) {
-    window.Raygun.init(config.apiKey, {
-      debugMode: true,
-      disableAnonymousUserTracking: true,
-    })
+  enable: function enable(appName, appVersion, options) {
+    window.Raygun.init(config.apiKey,
+      {
+        debugMode: true,
+        disableAnonymousUserTracking: true,
+      },
+      options && options.customData
+    )
     .setVersion(appVersion)
     .withTags(appName)
     .attach();

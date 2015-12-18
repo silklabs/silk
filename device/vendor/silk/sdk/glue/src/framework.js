@@ -7,12 +7,12 @@
  */
 
 import createLog from 'log';
-import createOutbox from '../../../../../core/lib/outbox';
-import NetworkStatus from '../../../../../core/lib/network_status';
+import createOutbox from '../core/lib/outbox';
+import NetworkStatus from '../core/lib/network_status';
 import opencv from 'opencv';
-import Timeline from '../../../../../core/lib/timeline';
-import * as util from '../../../../../core/lib/sysutils';
-import wifi from '../../../../../core/lib/wifi';
+import Timeline from '../core/lib/timeline';
+import * as util from '../core/lib/sysutils';
+import wifi from '../core/lib/wifi';
 
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 180;

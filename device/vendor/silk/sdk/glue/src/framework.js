@@ -7,11 +7,12 @@
  */
 
 import createLog from 'log';
+import createOutbox from '../core/lib/outbox';
+import NetworkStatus from '../core/lib/network_status';
 import opencv from 'opencv';
-import path from 'path';
-import NetworkStatus from 'network_status';
-import Timeline from 'timeline';
-import createOutbox from 'outbox';
+import Timeline from '../core/lib/timeline';
+import * as util from '../core/lib/sysutils';
+import wifi from '../core/lib/wifi';
 
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 180;
@@ -23,8 +24,7 @@ const log = createLog('TestFramework');
  */
 class FakeCamera {
   constructor() {
-    this._imgPath = path.resolve(__dirname, 'files');
-    this._imgSrc = 'car1.jpg';
+    this._imgSrc = null;
   }
 
   get previewSize() {
@@ -36,9 +36,8 @@ class FakeCamera {
   }
 
   getPreviewFrame(userCb, when, channel = 0) {
-    let imgFullPath = path.join(this._imgPath, this._imgSrc);
-    log.info(`getPreviewFrame ${imgFullPath} ${channel}`);
-    opencv.readImage(imgFullPath, (err, im) => {
+    log.info(`getPreviewFrame ${this._imgSrc} ${channel}`);
+    opencv.readImage(this._imgSrc, (err, im) => {
       if ((im.width() <= 0 ) || (im.height() <= 0 )) {
         userCb(true, null);
         return;
@@ -54,44 +53,22 @@ class FakeCamera {
 }
 
 /**
- *
+ * Dummy environment class
  */
-class Env {
-  constructor(name, framework) {
-    this._name = name;
-    this.timeline = framework.timeline;
-    this.camera = framework.camera;
-    this.util = framework.util;
-    this.log = require('log')(name);
-  }
-}
-
-/**
- *
- */
-class TestFramework {
+export default class Framework {
   constructor(name) {
-    this.rootDir = __dirname;
     this._name = name;
-    this.wifi = require('wifi');
-    this.networkStatus = new NetworkStatus(this.wifi);
+    this.networkStatus = new NetworkStatus(wifi);
     this.outbox = createOutbox(this.networkStatus);
-    this.battery = require('battery');
     this.timeline = new Timeline('test_id', this.outbox);
     this.camera = new FakeCamera();
-    this.opencv = opencv;
-    this.util = require('sysutils');
-
-    require('detectobject')(new Env('detectobject', this));
-    require('trackobject')(new Env('trackobject', this));
+    this.util = util;
   }
 
   get log() {
     if (!this._log) {
-      this._log = require('log')(this._name);
+      this._log = createLog(this._name);
     }
     return this._log;
   }
 }
-
-module.exports = (name) => new TestFramework(name);

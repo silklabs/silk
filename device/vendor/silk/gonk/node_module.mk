@@ -28,10 +28,6 @@
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
-# 7. LOCAL_INSTALL_NODE_MODULES may be set to true to copy node_modules as
-#    listed in dependencies section of package.json on the device. This is only
-#    relevant for LOCAL_NODE_MODULE_TYPE == folder
-#
 
 LOCAL_MODULE_CLASS := NPM
 my_prefix := TARGET_
@@ -40,7 +36,6 @@ define GET_PACKAGE_NAME_MAIN_JS
 var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
 console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
 console.log('LOCAL_NODE_MODULE_MAIN=' + (pkg.main || ''));
-console.log('LOCAL_INSTALL_NODE_MODULES_LIST=' + (Object.keys(pkg.dependencies || {}) || ''));
 endef
 $(foreach stmt,$(shell node -e "$(GET_PACKAGE_NAME_MAIN_JS)"),$(eval $(stmt)))
 
@@ -186,7 +181,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
         $(PRIVATE_ALL_SHARED_LIBRARIES) \
       ) \
       -Wl,--end-group" && \
-    node $(npm_cli) install --nodedir=$(npm_node_dir) #--loglevel silly
+    node $(npm_cli) install --production --nodedir=$(npm_node_dir) #--loglevel silly
 ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
 	$(hide) touch $@
 endif
@@ -238,25 +233,16 @@ endif # .js module
 else # LOCAL_NODE_MODULE_TYPE == folder
 # Assume that all device node_module dependencies are already
 # present somehow, so don't install all of node_modules/ (which likely also
-# contains a bunch of development only tools) unless explicitly requested by
-# LOCAL_INSTALL_NODE_MODULES
+# contains a bunch of development only tools).
 #
 # TODO: Any binaries within the folder module are not stripped
 #
 # TODO: Maybe a better way would be to use the package.json's "files" section to
 # determine what to install on device?
-$(LOCAL_INSTALLED_MODULE): LOCAL_INSTALL_NODE_MODULES:= $(LOCAL_INSTALL_NODE_MODULES)
-$(LOCAL_INSTALLED_MODULE): LOCAL_INSTALL_NODE_MODULES_LIST:= $(LOCAL_INSTALL_NODE_MODULES_LIST)
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
 	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
-ifneq (,$(strip $(LOCAL_INSTALL_NODE_MODULES)))
-ifneq (,$(strip $(LOCAL_INSTALL_NODE_MODULES_LIST)))
-	$(hide) mkdir -p $(@D)/node_modules
-	rsync -qavL $(<D)/node_modules/{$(LOCAL_INSTALL_NODE_MODULES_LIST)} $(@D)/node_modules
-endif
-endif
 	$(hide) touch $@
 endif
 

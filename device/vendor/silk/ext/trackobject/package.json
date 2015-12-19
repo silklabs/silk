@@ -16,8 +16,10 @@
   },
   "devDependencies": {
     "babel": "^5.8.23",
+    "event-to-promise": "^0.4.0",
     "log": "file:../../../../../log",
-    "mocha": "^2.3.3"
+    "mocha": "^2.3.3",
+    "opencv": "^4.0.0"
   },
   "private": true
 }

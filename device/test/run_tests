@@ -7,12 +7,7 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 LOCAL_PATH=$(dirname $0)
-SILKTEST=$LOCAL_PATH/../vendor/silk/test/run
 adb="timeout -s KILL 10s adb"
-
-echo "Running silk tests"
-$adb shell stop silk # Halt main silk while running tests to keep qemu cpu usage down
-$SILKTEST
 
 # Disabled, as it does not yet run reliably on qemu
 #echo "Running restart test"

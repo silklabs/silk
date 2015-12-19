@@ -16,12 +16,11 @@
 //
 export default function init(env) {
   const log = env.log;
-  const hue = env.hue;
 
   const NIGHT_LIGHT_SI_LUX = 3; // light sensor value in SI lux units
   const DAY_LIGHT_SI_LUX = 5;   // light sensor value in SI lux units
   const LIGHT_SENSOR_POLL_INTERVAL_MS = 10 * 1000;
-  const HUE_LIGHTS_OFF_TIMEOUT_MS = 15 * 1000;
+  const LIGHTS_OFF_TIMEOUT_MS = 15 * 1000;
 
   let nightModeOn = false;
 
@@ -57,33 +56,29 @@ export default function init(env) {
     }
   });
 
-  let hueLightsOn = false;
+  let lightsOn = false;
   let faceLostTimeout;
   env.timeline.on('face', (when, faces) => {
     if ((faces.length <= 0) || (!nightModeOn)) {
       return;
     }
 
-    if (!hueLightsOn) {
+    if (!lightsOn) {
       log.info(`Lights on. Face detected`);
-      hueLightsOn = true;
-      if (hue) {
-        hue.setState({on: true, intensity: 1.0});
-      }
+      lightsOn = true;
+      // TODO: Add integration to turn on the lights
     }
 
-    // Turn off hue light if no face is detected within {@code HUE_LIGHTS_OFF_TIMEOUT_MS}
+    // Turn off light if no face is detected within {@code LIGHTS_OFF_TIMEOUT_MS}
     if (faceLostTimeout) {
       clearTimeout(faceLostTimeout);
     }
     faceLostTimeout = setTimeout(() => {
-      log.info(`Lights out. No face observed for ${HUE_LIGHTS_OFF_TIMEOUT_MS / 1000} seconds`);
-      if (hue) {
-        hue.setState({on: false});
-      }
-      hueLightsOn = false;
+      log.info(`Lights out. No face observed for ${LIGHTS_OFF_TIMEOUT_MS / 1000} seconds`);
+      // TODO: Add integration to turn off the lights
+      lightsOn = false;
       faceLostTimeout = null;
-    }, HUE_LIGHTS_OFF_TIMEOUT_MS);
+    }, LIGHTS_OFF_TIMEOUT_MS);
   });
   log.info(`initialized`);
 }

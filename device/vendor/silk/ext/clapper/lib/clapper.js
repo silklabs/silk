@@ -94,7 +94,7 @@ class Clapper {
 
       log.info(`clap ${clap.type} ${clap.count}`);
 
-      let hueLightsOn = false;
+      let lightsOn = false;
       let soundEnabled = util.getboolprop(CLAPPER_PLAY_SOUND_PROP);
       let tag = count === 1 ? 'clap ' : `${count} claps`;
 
@@ -106,10 +106,8 @@ class Clapper {
         this._env.timeline.addObject(tag);
       }
       if (count === 2 && type === 'normal') {
-        hueLightsOn = !hueLightsOn;
-        if (this._env.hue) {
-          this._env.hue.setState( { on: hueLightsOn, intensity: 1.0 } );
-        }
+        lightsOn = !lightsOn;
+        log.info('light is', lightsOn ? 'on' : 'off');
       }
     };
     this._clapDetector.on('clap', this._onClap);

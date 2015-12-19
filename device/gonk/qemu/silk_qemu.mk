@@ -13,7 +13,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.camera.fps=5 \
   ro.silk.camera.preview_scale=1 \
   ro.silk.camera.preview_skip_cnt=5 \
-  ro.silk.bt.enabled=false \
+  ro.silk.bt.hw.enabled=false \
+  ro.silk.audio.hw.enabled=false \
   ro.silk.wifi.qemu=true
 
 # Use the logo from Mako

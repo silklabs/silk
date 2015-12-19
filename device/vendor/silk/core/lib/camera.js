@@ -48,6 +48,8 @@ const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
 const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
 let audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
 
+const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
+
 //
 // Constants
 //
@@ -367,7 +369,7 @@ class CameraStream extends EventEmitter {
         this._scheduleNextPreviewFrame();
 
         const tagMonitor = () => {
-          if (this._videoTagReceived && this._micTagReceived) {
+          if (this._videoTagReceived && (this._micTagReceived || !AUDIO_HW_ENABLED)) {
             this._videoTagReceived = this._micTagReceived = null;
             this._tagMonitorTimeout = setTimeout(tagMonitor,
               CAPTURE_TAG_TIMEOUT_MS);

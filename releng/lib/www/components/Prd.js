@@ -219,7 +219,7 @@ export default class Prd extends React.Component {
       this.setState({
         itemsByMilestone,
         milestoneDescriptions,
-        loadingMessage: null
+        loadingMessage: null,
       });
     } catch (err) {
       this.setState({loadingMessage: 'Loading failed: ' + err.stack});

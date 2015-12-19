@@ -58,6 +58,23 @@ function loginCheck(nextState, replaceState) {
   }
 }
 
+// Little helper for folks who like to hit page refresh.
+window.addEventListener('beforeunload', function (e) {
+  if (!version.official) {
+    // Skip the confirmation message in non-official builds
+    // (ie, during development)
+    return null;
+  }
+  if (!userState.signedIn()) {
+    return null;
+  }
+
+  let confirmationMessage = 'Github login will be discarded.';
+
+  e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+  return confirmationMessage;              // Gecko, WebKit, Chrome <34
+});
+
 (async function main() {
   try {
     React.render((

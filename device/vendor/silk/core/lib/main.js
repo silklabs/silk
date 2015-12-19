@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -53,6 +51,7 @@ import NetworkStatus from './network_status';
 import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
+import makeExtensions from './ext';
 
 // Start the profile server ASAP.
 initProfiler();
@@ -301,56 +300,55 @@ config.on('unconfigured', () => {
     server.disconnect();
   }
 });
-config.on('configured', () => {
-  if (ui.goto('connecting')) {
-    configured = true;
-    camera.startRecording();
-    wifi.online()
-    .then(() => {
-      update.start();
-      log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
-      server.connect();
-    })
-    .then(() => {
-
-      if (HUE_ENABLED && !hue) {
-        // Initialize hue module, which is special in the following ways:
-        //
-        // 1. It will fail to initialize if there's no wifi connection.
-        //
-        // 2. Deep within the hue initialization, the q module throws/catches an error
-        //    to check if an Error object contains stack traces (e.stack).  However
-        //    throwing this Error() triggers the loading of source maps unnecessarily,
-        //    delaying startup and consuming memory. As a workaround for this (and in
-        //    lieu of patching the q module), temporary remove the prepareStackTrace
-        //    implementation provided by the 'source-map-support' module.
-        //
-        try {
-          let prepareStackTrace = Error.prepareStackTrace;
-          Error.prepareStackTrace = v8PrepareStackTrace;
-          hue = require('./hue')();
-          Error.prepareStackTrace = prepareStackTrace;
-        } catch (e) {
-          log.warn(`Error: hue module failed to init: ${e}: ${e.stack}`);
-        }
-      }
-
-      // Load extensions
-      // (currently need to wait for hue to initialize, otherwise this could be
-      //  done much sooner)
-      if (!ext) {
-        ext = require('./ext')({ // eslint-disable-line
-          btle: btle,
-          camera: camera,
-          hue: hue,
-          sensors: sensors,
-          infrared: infrared,
-          timeline: timeline,
-        });
-      }
-    })
-    .catch(util.processthrow);
+config.on('configured', async () => {
+  if (!ui.goto('connecting')) {
+    return;
   }
+  configured = true;
+
+  camera.startRecording();
+  await wifi.online();
+
+  log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
+  server.connect();
+
+  if (HUE_ENABLED && !hue) {
+    // Initialize hue module, which is special in the following ways:
+    //
+    // 1. It will fail to initialize if there's no wifi connection.
+    //
+    // 2. Deep within the hue initialization, the q module throws/catches an error
+    //    to check if an Error object contains stack traces (e.stack).  However
+    //    throwing this Error() triggers the loading of source maps unnecessarily,
+    //    delaying startup and consuming memory. As a workaround for this (and in
+    //    lieu of patching the q module), temporary remove the prepareStackTrace
+    //    implementation provided by the 'source-map-support' module.
+    //
+    try {
+      let prepareStackTrace = Error.prepareStackTrace;
+      Error.prepareStackTrace = v8PrepareStackTrace;
+      hue = require('./hue')();
+      Error.prepareStackTrace = prepareStackTrace;
+    } catch (e) {
+      log.warn(`Error: hue module failed to init: ${e}: ${e.stack}`);
+    }
+  }
+
+  // Load extensions
+  // (currently need to wait for hue to initialize, otherwise this could be
+  //  done much sooner)
+  if (!ext) {
+    ext = await makeExtensions({
+      btle: btle,
+      camera: camera,
+      hue: hue,
+      sensors: sensors,
+      infrared: infrared,
+      timeline: timeline,
+    });
+  }
+
+  update.start();
 });
 
 function shutdown(finalPromiseFactory) {

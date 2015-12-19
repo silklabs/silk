@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -12,6 +10,7 @@ import fs from 'mz/fs';
 import path from 'path';
 import { EventEmitter } from 'events';
 import * as util from './sysutils';
+import wrapNoEntity from './fs/wrap_no_entity';
 
 const log = createLog('ext');
 const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
@@ -192,6 +191,13 @@ class Env extends EventEmitter {
 
 
 class Extensions {
+  static async load(deviceObjects) {
+    let ext = new Extensions(deviceObjects);
+    await ext._init();
+    return ext;
+  }
+
+  // Use Extensions.load(), not this constructor!
   constructor(deviceObjects = {}) {
     this._loaded = {};
     this._watchers = [];
@@ -201,21 +207,18 @@ class Extensions {
 
     // Enable/disable extensions
     this._enable(ENABLED_SILK_EXTENSIONS);
+  }
 
-    util.propWatcher.on(RELOAD_EXT_PROP, () => this._onReloadRequested());
-
-    extDirs.forEach(dir => {
-      fs.readdir(dir)
-      .catch(err => {
-        if (err && err.code === 'ENOENT') {
-          return;
+  async _init() {
+    for (const dir of extDirs) {
+      const files = await wrapNoEntity(fs.readdir(dir), []);
+      for (const file of files) {
+        if (this._loadExtension(path.join(dir, file))) {
+          await util.timeout(100); // do unto others...
         }
-        log.error(`Unable to read ${dir}: ${err}`);
-      })
-      .then(files => files && files.forEach(file => {
-        this._loadExtension(path.join(dir, file));
-      }));
-    });
+      }
+    }
+    util.propWatcher.on(RELOAD_EXT_PROP, () => this._onReloadRequested());
   }
 
   _isModuleNameValid(file) {
@@ -286,12 +289,12 @@ class Extensions {
 
   _loadExtension(file) {
     if (!this._isModuleNameValid(file)) {
-      return;
+      return false;
     }
     let modulePath = this._getModulePath(file);
     if (!this._isEnabled(path.basename(modulePath))) {
       log.verbose(`Module ${file} is disabled`);
-      return;
+      return false;
     }
     try {
       if (modulePath in this._loaded) {
@@ -307,6 +310,7 @@ class Extensions {
       log.error(`Extension failed to load: ${modulePath}`);
       log.error(e);
     }
+    return true;
   }
 
   _removeExtensionFromCache(file) {
@@ -388,6 +392,6 @@ class Extensions {
   }
 }
 
-export default function makeExtensions(deviceObjects) {
-  return new Extensions(deviceObjects);
+export default /*async*/ function makeExtensions(deviceObjects) {
+  return Extensions.load(deviceObjects);
 }

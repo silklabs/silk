@@ -1,0 +1,5 @@
+--harmony
+--ui tdd
+--compilers js:babel/register
+--timeout 45000
+--require test/setup.js

@@ -214,7 +214,9 @@ class Extensions {
       const files = await wrapNoEntity(fs.readdir(dir), []);
       for (const file of files) {
         if (this._loadExtension(path.join(dir, file))) {
-          await util.timeout(100); // do unto others...
+          // The timeout here was selected by monitoring 'main thread bogged
+          // down' log messages
+          await util.timeout(100);
         }
       }
     }

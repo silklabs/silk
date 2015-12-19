@@ -15,7 +15,6 @@ log.info(`silk-core ${version.branch} ${version.semver} (${version.sha})`);
 
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
-let v8PrepareStackTrace = Error.prepareStackTrace;
 require('source-map-support').install();
 {
   // Force the source maps into memory right away. It typically takes ~5
@@ -72,8 +71,6 @@ let networkStatus;
 let logcat;
 let ext;
 let diag;
-let hue;
-const HUE_ENABLED = util.getboolprop('persist.silk.hue.enabled');
 
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
@@ -252,15 +249,6 @@ server.on('cmd', cmd => {
   }
 
   switch (cmd.msg) {
-  case 'light':
-    if (hue) { // TODO: This command is no longer used by clients
-      hue.setState(cmd.state);
-    }
-    break;
-  case 'diag': // TODO: This command is no longer used by clients
-    diag.setConfig(cmd.config);
-    break;
-
   // The 'livestream' command is sent by the server to request live streaming
   // data from this device.  Supported streams: preview, video, logging
   //
@@ -305,49 +293,32 @@ config.on('configured', async () => {
     return;
   }
   configured = true;
-
   camera.startRecording();
-  await wifi.online();
 
-  log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
-  server.connect();
-
-  if (HUE_ENABLED && !hue) {
-    // Initialize hue module, which is special in the following ways:
-    //
-    // 1. It will fail to initialize if there's no wifi connection.
-    //
-    // 2. Deep within the hue initialization, the q module throws/catches an error
-    //    to check if an Error object contains stack traces (e.stack).  However
-    //    throwing this Error() triggers the loading of source maps unnecessarily,
-    //    delaying startup and consuming memory. As a workaround for this (and in
-    //    lieu of patching the q module), temporary remove the prepareStackTrace
-    //    implementation provided by the 'source-map-support' module.
-    //
-    try {
-      let prepareStackTrace = Error.prepareStackTrace;
-      Error.prepareStackTrace = v8PrepareStackTrace;
-      hue = require('./hue')();
-      Error.prepareStackTrace = prepareStackTrace;
-    } catch (e) {
-      log.warn(`Error: hue module failed to init: ${e}: ${e.stack}`);
-    }
-  }
-
-  // Load extensions
-  // (currently need to wait for hue to initialize, otherwise this could be
-  //  done much sooner)
+  // Load extensions in the "background" while initializing wifi
+  let extPromise;
   if (!ext) {
-    ext = await makeExtensions({
+    extPromise = makeExtensions({
       btle: btle,
       camera: camera,
-      hue: hue,
       sensors: sensors,
       infrared: infrared,
       timeline: timeline,
     });
+  } else {
+    extPromise = Promise.resolve(ext);
   }
 
+  await wifi.online();
+  ext = await extPromise;
+
+  log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
+  server.connect();
+
+  // Yield a pinch of time since updates don't need to start immediately,
+  // |update.start()| is currently a little main thread heavy, and there's lots
+  // of other activity as the server connection is being established.
+  await util.timeout(200);
   update.start();
 });
 
@@ -462,7 +433,7 @@ const BOGGED_DOWN_MS = WATCHDOG_MS * 2;
 let lastDogTick = Date.now();
 function watchdog() {
   let diff = Date.now() - lastDogTick;
-  //log.debug('tick');
+  //log.warn('tick');
   if (diff > BOGGED_DOWN_MS) {
     log.warn(`====[ Main thread was bogged down for ${diff - WATCHDOG_MS}ms ]====`);
   }

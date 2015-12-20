@@ -24,6 +24,7 @@ import loadUserState from './libraries/UserState';
 import debug from 'debug';
 debug.enable(Config.debug);
 
+import React from 'react'; //eslint-disable-line no-unused-vars
 import ReactDOM from 'react-dom';
 import { Router, Route } from 'react-router';
 import { Alert } from 'react-bootstrap';

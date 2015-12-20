@@ -25,8 +25,8 @@ if [ -z $TRAVIS_OS_NAME ] || [ $TRAVIS_OS_NAME != "osx" ]; then
     echo "Processing $dir"
     if [ -d "$dir/test" ]; then
       pushd "$dir/test"
-      NODE_ENV=development npm install
-      npm test
+      npm install
+      NPM_CONFIG_REGISTRY="" npm test
       npm run clean # clean up to save disk space
       popd
     fi

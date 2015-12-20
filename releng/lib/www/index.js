@@ -17,7 +17,7 @@ if (version.official) {
   });
 }
 
-import React from 'react';
+import ReactDOM from 'react-dom';
 import { Router, Route, Redirect } from 'react-router';
 import { Alert } from 'react-bootstrap';
 import Login from './components/Login';
@@ -60,19 +60,19 @@ function loginCheck(nextState, replaceState) {
 
 (async function main() {
   try {
-    React.render((
+    ReactDOM.render((
       <Router>
         <Route path="/login" component={Login} userState={userState} />
         <Route onEnter={loginCheck} path="/prd" component={Prd} userState={userState} />
         <Redirect from="*" to="/prd" />
       </Router>
-    ), document.body);
+    ), document.getElementById('root'));
   } catch (err) {
-    React.render((
+    ReactDOM.render((
       <Alert bsStyle="danger">
         <strong>Oops</strong><pre>{err.stack}</pre>
       </Alert>
-    ), document.body);
+    ), document.getElementById('root'));
     raygun.send(err);
   }
 })();

@@ -22,6 +22,7 @@ var config = {
         test: /\.js$/,
         include: [
           path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native'),
           path.resolve(__dirname, 'node_modules/silk-api'),
         ],
         loader: 'babel',

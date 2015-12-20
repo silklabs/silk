@@ -1,5 +1,8 @@
 
+import createLog from 'log';
 import Octokat from 'octokat'; // Ref: https://www.npmjs.com/package/octokat
+
+const log = createLog('github-tool');
 
 if (!process.env.GITHUB_TOKEN) {
   throw new Error('GITHUB_TOKEN environment variable undefined');
@@ -26,20 +29,18 @@ function forEachSilkRepo(f) {
 function maybeCreatePullRequest(destOwner, destRepo, destBranch, sourceBranch) {
   var r = octo.repos(destOwner, destRepo);
 
-  console.log('Fetching pull requests for ' + destOwner + '/' + destRepo + '...');
+  log.info(`Fetching pull requests for ${destOwner}/${destRepo}...`);
 
   return new Promise((resolve, reject) => {
     var checkForActivePr = pulls => {
-      console.log('(Found', pulls.length, 'pull requests)');
-      var activePr = pulls.find(pr => {
-        return pr.head.ref === sourceBranch;
-      });
+      log.info(`(Found ${pulls.length} pull requests)`);
+      var activePr = pulls.find((pr) => pr.head.ref === sourceBranch);
       if (activePr) {
-        console.log('Open pull request for branch', sourceBranch, 'already exists:', activePr.number);
+        log.info(`Open pull request for branch ${sourceBranch} already exists: ${activePr.number}`);
         return reject(undefined);
       }
       if (pulls.nextPage) {
-        console.log('Fetching more pull requests...');
+        log.info('Fetching more pull requests...');
         return pulls.nextPage()
         .then(checkForActivePr)
         .catch(reject);
@@ -51,7 +52,7 @@ function maybeCreatePullRequest(destOwner, destRepo, destBranch, sourceBranch) {
     .catch(reject);
   })
   .then(() => {
-    console.log('Creating a new pull request from the branch', sourceBranch);
+    log.info(`Creating a new pull request from the branch ${sourceBranch}`);
     return r.pulls.create({
       title: 'Automated merge from ' + sourceBranch + ' to ' + destBranch,
       head: sourceBranch,
@@ -68,18 +69,18 @@ function maybeCreatePullRequest(destOwner, destRepo, destBranch, sourceBranch) {
           json.errors[0].resource === 'PullRequest' &&
           json.errors[0].code === 'custom' &&
           json.errors[0].message === 'No commits between ' + destBranch + ' and ' + sourceBranch) {
-        console.log('Nothing to merge from', sourceBranch, 'to', destBranch);
+        log.info(`Nothing to merge from ${sourceBranch} to ${destBranch}`);
         return Promise.reject(undefined);
       }
     }
     return Promise.reject(err);
   })
   .then(result => {
-    console.log('Created pull request', result.number);
+    log.info(`Created pull request ${result.number}`);
     return r.issues(result.number).labels.create(['automerge']);
   })
   .then(() => {
-    console.log('Succesfully labelled pull request');
+    log.info(`Succesfully added 'automerge' label to pull request.`);
   })
   .catch(err => {
     if (err) {
@@ -98,37 +99,30 @@ function maybeCreateAllRepoPullRequests(destBranch, sourceBranch) {
 
 function createMilestone(owner, repo, title, dueDate) { //eslint-disable-line no-unused-vars
   var r = octo.repos(owner, repo);
-
-  return new Promise((resolve, reject) => {
-    console.log('Creating milestone:', title, ', due_on:', dueDate.toISOString(),
-      ', for', owner + '/' + repo);
-    r.milestones.create({
-      'title': title,
-      'due_on': dueDate.toISOString(),
-    })
-    .then(resolve)
-    .catch(reject);
+  log.info(`Creating milestone: ${title}, due_on: ${dueDate.toISOString()} for ${owner}/${repo}`);
+  return r.milestones.create({
+    'title': title,
+    'due_on': dueDate.toISOString(),
   });
 }
 
 
 export function autoMergePullRequest(owner, repo, pr) {
-  console.log('Fetching ' + owner + '/' + repo + '#' + pr);
+  log.info(`#${pr}: fetching info`);
   var r = octo.repos(owner, repo);
 
-  return r.issues(pr).fetch()
-  .then(result => {
-    console.log('Title:', result.title);
-    console.log('Number:', result.number);
-    console.log('State:', result.state);
+  return r.issues(pr).fetch().then(result => {
+    log.debug(`#${pr} title: ${result.title}`);
+    log.debug(`#${pr} number: ${result.number}`);
+    log.debug(`#${pr} state: ${result.state}`);
 
     if (!result.pullRequest) {
-      console.log('This issue is not a pull request.');
+      log.info(`#${pr}: this is an issue, not a pull request.`);
       return Promise.reject();
     }
 
     if (result.state !== 'open') {
-      console.log('Pull request is not open.');
+      log.info(`PR #${pr}: pull request is not open.`);
       return Promise.reject();
     }
 
@@ -136,21 +130,21 @@ export function autoMergePullRequest(owner, repo, pr) {
       return label.name === 'automerge';
     });
     if (!label) {
-      console.log('Pull request is missing the "automerge" label.');
+      log.info(`PR #${pr}: missing the 'automerge' label.`);
       return Promise.reject();
     }
-    console.log('Fetching PR info for', result.number);
+    log.debug(`PR #${result.number}: fetching info`);
     return r.pulls(result.number).fetch(); // Switch to the 'pull' API to get CI status
   })
   .then(result => {
     if (result.mergeable === null) {
       // Ref: https://developer.github.com/v3/pulls/#response-1
-      console.log('Pull request mergeable state is not yet known.');
+      log.info(`PR #${result.number}: mergeable state is not yet known.`);
       return Promise.reject();
     }
 
     if (result.mergeable === false) {
-      console.log('Pull request is not mergeable.');
+      log.info(`PR #${result.number}: not mergeable.`);
       return r.issues(result.number).comments.create({
         'body': ':broken_heart: Unable to automerge due to merge conflict',
       }).then(() => {
@@ -158,29 +152,29 @@ export function autoMergePullRequest(owner, repo, pr) {
       });
     }
 
-    console.log('Fetching CI status for head SHA', result.head.sha);
+    log.debug(`PR #${result.number}: fetching CI status for head SHA ${result.head.sha}`);
     // Check the CI status of the head SHA
     return new Promise((resolve, reject) => {
       r.commits(result.head.sha).status.fetch()
       .then(status => {
-        console.log('CI Status:', status.state);
+        log.info(`PR #${result.number}: CI status: ${status.state}`);
 
         switch (status.state) {
         case 'success':
-          console.log('Trying to merge...');
+          log.info(`PR #${result.number}: CI status is success, trying to merge...`);
           r.pulls(result.number).merge.add({
             sha: result.head.sha,
             commit_message: 'automerge',
           })
           .then(mergeResult => {
-            console.log('Pull Request successfully merged:', mergeResult);
+            log.info(`PR #${result.number}: successfully merged: ${mergeResult}`);
             return resolve();
           })
           .catch(reject);
           break;
 
         case 'failure':
-          console.log('CI status is failure, request is not mergeable.');
+          log.info(`PR #${result.number}: CI status is failure, not going to merge.`);
           r.issues(result.number).comments.create({'body': ':broken_heart: Unable to automerge due to CI failure'})
           .then(() => {
             r.issues(result.number).labels('automerge').remove();
@@ -207,11 +201,11 @@ export function autoMergePullRequest(owner, repo, pr) {
 function forAllOpenPullRequests(owner, repo, cb) {
   var r = octo.repos(owner, repo);
 
-  console.log('Fetching pull requests for ' + owner + '/' + repo + '...');
+  log.info(`Fetching pull requests for ${owner}/${repo}...`);
 
   return new Promise((resolve, reject) => {
     var checkPulls = pulls => {
-      console.log('(Found', pulls.length, 'pull requests)');
+      log.info(`(Found ${pulls.length} pull requests)`);
 
       pulls.reduce(
         (promise, pr) => {
@@ -220,7 +214,7 @@ function forAllOpenPullRequests(owner, repo, cb) {
         Promise.resolve()
       ).then(() => {
         if (pulls.nextPage) {
-          console.log('Fetching more pull requests...');
+          log.info(`Fetching more pull requests...`);
           return pulls.nextPage()
           .then(checkPulls)
           .catch(reject);
@@ -238,7 +232,7 @@ function forAllOpenPullRequests(owner, repo, cb) {
 
 
 export function autoMergePullRequests(owner, repo) {
-  console.log('autoMergePullRequests for ' + owner + '/' + repo + '...');
+  log.info(`autoMergePullRequests for ${owner}/${repo}...`);
   return forAllOpenPullRequests(owner, repo, prInfo => {
     return autoMergePullRequest(owner, repo, prInfo.number);
   });
@@ -246,7 +240,7 @@ export function autoMergePullRequests(owner, repo) {
 
 
 function handleCommitsPushedToPullRequest(owner, repo, pr) {
-  console.log(`Fetching ${owner}/${repo}#${pr}`);
+  log.debug(`PR #${pr}: fetching info`);
   let r = octo.repos(owner, repo);
 
   return r.issues(pr).fetch().then(result => {
@@ -255,9 +249,11 @@ function handleCommitsPushedToPullRequest(owner, repo, pr) {
     });
 
     if (!automerge) {
+      log.debug(`PR #${pr}: no automerge label, ignoring.`);
       return Promise.resolve();
     }
 
+    log.info(`PR #${pr}: new commits were pushed while 'automerge' label was present.`);
     return r.issues(pr).comments.create({
       'body': ':scream: New commits were pushed while the automerge label was present.',
     }).then(() => {
@@ -269,18 +265,18 @@ function handleCommitsPushedToPullRequest(owner, repo, pr) {
 
 export function handlePullRequestAction(owner, repo, pr, action) {
   if (action === 'synchronize') {
-    console.log(`New commits were pushed to PR #${pr}`);
+    log.info(`PR #${pr}: new commits were pushed`);
     return handleCommitsPushedToPullRequest(owner, repo, pr);
   }
 
-  console.log(`Checking if PR #${pr} should be automerged`);
+  log.info(`PR #${pr}: checking if it should be automerged`);
   return autoMergePullRequest(owner, repo, pr);
 }
 
 
 function exitOnError(err) {
   if (err) {
-    console.error('Error', err.stack);
+    log.error('Error', err, err.stack);
     process.exit(1); //eslint-disable-line no-process-exit
   }
 }
@@ -292,7 +288,7 @@ function next2master() {  //eslint-disable-line no-unused-vars
   .then(() => maybeCreateAllRepoPullRequests('master', 'next'))
   .catch(exitOnError)
   .then(() => {
-    console.log('SUCCESS');
+    log.info('SUCCESS');
   });
 }
 

@@ -24,7 +24,7 @@ import loadUserState from './libraries/UserState';
 import debug from 'debug';
 debug.enable(Config.debug);
 
-import React from 'react';
+import ReactDOM from 'react-dom';
 import { Router, Route } from 'react-router';
 import { Alert } from 'react-bootstrap';
 
@@ -69,7 +69,7 @@ function loginCheck(nextState, replaceState) {
     userState.on('authenticated', () => Cameras.connect());
     userState.on('unauthenticated', () => Cameras.disconnect());
 
-    React.render((
+    ReactDOM.render((
       <Router>
         <Route path="/login" component={Login} userState={userState} />
         <Route onEnter={loginCheck} path="/" component={OnlineCameras} />
@@ -82,13 +82,13 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/video/:deviceId" component={videoWidget} />
         <Route path="/forgot_password" component={ForgotPassword} userState={userState} />
       </Router>
-    ), document.body);
+    ), document.getElementById('root'));
   } catch (err) {
-    React.render((
+    ReactDOM.render((
       <Alert bsStyle="danger">
         <strong>Oops</strong><pre>{err.stack}</pre>
       </Alert>
-    ), document.body);
+    ), document.getElementById('root'));
     raygun.send(err);
   }
 })();

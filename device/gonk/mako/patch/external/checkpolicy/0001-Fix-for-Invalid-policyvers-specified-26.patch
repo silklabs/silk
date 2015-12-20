@@ -1,0 +1,31 @@
+From 9e08c51eb432004366b07632650b0dfe02bf7160 Mon Sep 17 00:00:00 2001
+From: Dan Albert <danalbert@google.com>
+Date: Thu, 11 Dec 2014 11:23:50 -0800
+Subject: [PATCH] Clear errno before call to strtol(3).
+
+Since strtol(3) doesn't clear errno on success, anything that sets
+errno prior to this call will make it look like the call failed. This
+happens when built with ASAN.
+
+Signed-off-by: Dan Albert <danalbert@google.com>
+Acked-by: Steve Lawrence <slawrence@tresys.com>
+
+---
+ checkpolicy.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/checkpolicy.c b/checkpolicy.c
+index 292f568..f372afb 100644
+--- a/checkpolicy.c
++++ b/checkpolicy.c
+@@ -452,6 +452,7 @@ int main(int argc, char **argv)
+ 			mlspol = 1;
+ 			break;
+ 		case 'c':{
++                                errno = 0;
+ 				long int n = strtol(optarg, NULL, 10);
+ 				if (errno) {
+ 					fprintf(stderr,
+-- 
+2.4.5
+

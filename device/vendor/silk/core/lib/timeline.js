@@ -298,16 +298,11 @@ export default class Timeline extends EventEmitter {
 
   _emitEvents(objects: Array<TimelineEventObject>) {
     objects.forEach(object => {
-      if (object.tag === 'face') {
-        this.emit('face', object.when, object.rects, object.source);
-      } else if (object.tag === 'motion') {
-        // Clear the cached object list as new objects would be received
+      this.emit(object.tag, object.when, object.rects, object.source);
+
+      // Clear the cached object list as new objects would be received
+      if (object.tag === 'motion') {
         this.cachedObjs = [];
-        this.emit('motion', object.when, object.rects);
-      } else if (object.tag === 'car') {
-        this.emit('car', object.when, object.rects);
-      } else if (object.tag === 'cat') {
-        this.emit('cat', object.when, object.rects);
       }
     });
   }

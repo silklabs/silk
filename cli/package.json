@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "babel-runtime": "^5.8.20",
+    "event-to-promise": "^0.6.0",
     "log": "file:../log",
     "mz": "^2.0.0",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
@@ -20,7 +21,6 @@
     "babel-eslint": "~3.1.15",
     "babelify": "^6.3.0",
     "browserify": "^11.2.0",
-    "event-to-promise": "^0.4.0",
     "gulp": "^3.9.0",
     "gulp-babel": "^5.2.1",
     "gulp-cache": "^0.3.0",

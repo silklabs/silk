@@ -39,7 +39,9 @@ export default class DotConfig {
   }
 
   async deleteConfig() {
-    await fs.unlink(this._configPath);
+    try {
+      await fs.unlink(this._configPath);
+    } catch(err) {} // eslint-disable-line no-empty
   }
 
   async updateConfig(accessToken, serverUrl, beaconUUID) {

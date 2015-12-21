@@ -29,6 +29,19 @@ export default class CmdArgParser {
     process.exit(0);
   }
 
+  doHelpCmd(cmd) {
+    let err = '';
+    let helpCmd = 'help'; // if no command specified, show general help command
+    if (cmd) {
+      if (cmd in this.cmds) {
+        helpCmd = cmd;
+      } else {
+        err = `Unknown command: ${cmd}`;
+      }
+    }
+    this.showHelpAndExit(helpCmd, err);
+  }
+
   parse(argv) {
     let config = {};
 
@@ -37,7 +50,7 @@ export default class CmdArgParser {
 
     config.cmd = argv.shift();
     if (!config.cmd) {
-      this.showHelpAndExit('help', `no command specified`);
+      this.showHelpAndExit('help');
     }
     if (! (config.cmd in this.cmds)) {
       this.showHelpAndExit('help', `Unknown command: ${config.cmd}`);
@@ -81,13 +94,9 @@ export default class CmdArgParser {
       this.showHelpAndExit(config.cmd, 'number of required args not correct');
     }
 
-    // Special case, show specific help command
     if (config.cmd === 'help') {
-      let cmd = 'help'; // if no command specififed, show general help command
-      if (config.command) {
-        cmd = config.command;
-      }
-      this.showHelpAndExit(cmd);
+      // Special case, show specific help command
+      this.doHelpCmd(config.command);
     }
 
     return config;

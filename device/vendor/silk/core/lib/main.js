@@ -63,7 +63,6 @@ let btle = null;
 let timeline;
 let camera;
 let logo = null;
-let bootCompleted = false;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
@@ -172,8 +171,6 @@ function main() {
       return config.init();
     })
     .then(() => {
-      // Set global state up.
-      bootCompleted = true;
       log.info('main completed device has been booted.');
     });
 }
@@ -396,11 +393,7 @@ update.on('staged', () => {
 
 // UI...
 ui.on('key:setup', () => {
-  log.info('Unconfigure!', { bootCompleted });
-  if (bootCompleted) {
-    config.unconfigure()
-    .catch(util.processthrow);
-  }
+  log.info('Continue holding for factory reset...');
 });
 ui.on('key:powerdown', shutdown);
 ui.on('key:factoryreset', () => {

@@ -4,8 +4,6 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-/* eslint-disable no-console */
-
 import createLog from 'log';
 import childProcess from 'child_process';
 import tmp from 'tmp';
@@ -16,28 +14,33 @@ const log = createLog('adb');
 class Adb {
   constructor(device) {
     this.device = device;
+    this._root = false;
   }
 
   async cmd(args = []) {
     let stdout = '';
     let stderr = '';
     if (this.device) {
-      args.unshift(this.device);
-      args.unshift('-s');
+      args = ['-s', this.device].concat(args);
     }
 
     log.debug(`cmd: adb ${args.join(' ')}`);
-
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let helper = childProcess.spawn('adb', args);
       helper.stdout.on('data', chunk => stdout += chunk.toString());
       helper.stderr.on('data', chunk => stderr += chunk.toString());
-      helper.on('close', () => resolve({stdout, stderr}));
+      helper.on('close', code => {
+        if (code !== 0) {
+          reject(new Error(stderr));
+          return;
+        }
+        resolve(stdout);
+      });
     });
   }
 
   async listDevices() {
-    let {stdout} = await this.cmd(['devices']);
+    let stdout = await this.cmd(['devices']);
 
     let devices = [];
     let lines = stdout.replace('\r').split('\n');
@@ -54,19 +57,25 @@ class Adb {
   }
 
   async root() {
-    await this.cmd(['root']);
-    await this.cmd(['wait-for-device']);
+    if (!this._root) {
+      await this.cmd(['root']);
+      await this.cmd(['wait-for-device']);
+      this._root = true;
+    }
   }
 
   async shell(args) {
-    args.unshift('shell');
+    args = ['shell'].concat(args);
     return await this.cmd(args);
   }
 
   async getTmpFilename() {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       tmp.tmpName((err, path) => {
-        if (err) throw err;
+        if (err) {
+          reject(new Error(err));
+          return;
+        }
         resolve(path);
       });
     });
@@ -77,11 +86,7 @@ class Adb {
 
     let tmpFilename = await this.getTmpFilename();
     await fs.writeFile(tmpFilename, data);
-    let {stderr} = await this.cmd(['push', tmpFilename, filepath]);
-    if (stderr.match(/^error/)) {
-      console.error(stderr);
-      throw stderr;
-    }
+    await this.cmd(['push', tmpFilename, filepath]);
     await fs.unlink(tmpFilename);
     return;
   }
@@ -90,11 +95,7 @@ class Adb {
     await this.root();
 
     let tmpFilename = await this.getTmpFilename();
-    let {stderr} = await this.cmd(['pull', filepath, tmpFilename]);
-    if (stderr.match(/^error/)) {
-      console.error(stderr);
-      throw stderr;
-    }
+    await this.cmd(['pull', filepath, tmpFilename]);
     let data = await fs.readFile(tmpFilename);
     await fs.unlink(tmpFilename);
     return data;

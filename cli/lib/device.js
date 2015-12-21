@@ -41,26 +41,29 @@ export default class Device {
   }
 
   async setupDevice(account, deviceName) {
-    log.debug(`setupDevice`);
-    let { regToken, regPublicKey } = await account.registerDevice(this, deviceName);
+    log.debug(`setupDevice with ${deviceName}`);
+    let { success, regToken, regPublicKey } =
+        await account.registerDevice(this, deviceName);
 
-    let { success, beaconUUID } = await this.api.device.completeRegistration({
-      registrarPublicKey: regPublicKey,
-      registrationToken: regToken
-    });
+    if (success) {
+      let result = await this.api.device.completeRegistration({
+        registrarPublicKey: regPublicKey,
+        registrationToken: regToken
+      });
 
-    this.success = success;
-    this.beaconUUID = beaconUUID;
-    this.registrationToken = regToken;
-    this.registrarPublicKey = regPublicKey;
+      success = result.success;
+      this.beaconUUID = result.beaconUUID;
+      this.registrationToken = regToken;
+      this.registrarPublicKey = regPublicKey;
+    }
 
     if (success) {
       let configData = {
         registrarPublicKey: regPublicKey,
         registrationToken: regToken,
         serverUrl: this.serverUrl,
-        success: true,
-        beaconUUID
+        success: success,
+        beaconUUID: this.beaconUUID
       };
       await this.adb.push(SILK_CONFIG_FILEPATH, JSON.stringify(configData));
     }
@@ -71,20 +74,16 @@ export default class Device {
   async updateWifi(ssid, password) {
     log.debug(`update wifi with ${ssid} and ${password}`);
 
-    let {stdout} = await this.adb.shell(['getprop', 'wifi.interface']);
+    let stdout = await this.adb.shell(['getprop', 'wifi.interface']);
     let iface = stdout.replace(/\r?\n$/,'');
 
     let wpaCli = async (args, expectRegex = /(.*)/) => {
-      args.unshift(`IFNAME=${iface}`);
-      args.unshift(`-i${iface}`);
-      args.unshift('wpa_cli');
+      args = ['wpa_cli', `-i${iface}`, `IFNAME=${iface}`].concat(args);
 
-      let {stdout} = await this.adb.shell(args);
+      let stdout = await this.adb.shell(args);
       let match = stdout.match(expectRegex);
       if (!stdout.match(expectRegex)) {
-        let err = `Error configuring Wi-Fi: ${stdout}`;
-        console.error(err);
-        throw err;
+        throw new Error(`Error configuring Wi-Fi: ${stdout}`);
       }
       return match[0];
     };
@@ -106,6 +105,11 @@ export default class Device {
       console.log('No wifi interface, skipping Wi-Fi configuration');
     }
 
+    return true;
+  }
+
+  async removeConfig() {
+    await this.adb.shell(['rm', SILK_CONFIG_FILEPATH]);
     return true;
   }
 }

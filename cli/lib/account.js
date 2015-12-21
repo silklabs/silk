@@ -34,6 +34,20 @@ export default class Account {
     }
   }
 
+  async createAccount(email, password) {
+    log.debug(`create account using ${email} and ${password}`);
+
+    let input = {
+      userAgent: 'silkcli',
+      email: email,
+      password: password
+    };
+
+    let {success} = await this.api.vip.createAccountWithPassword(input);
+
+    return success;
+  }
+
   async login(email, password) {
     log.debug(`login using ${email} and ${password}`);
 
@@ -70,13 +84,25 @@ export default class Account {
     let deviceToken = device.accessToken.toString();
     let regToken = this.accessToken.sign(deviceToken);
 
-    await this.api.account.registerDevice({
+    let {success} = await this.api.account.registerDevice({
       devicePublicKey: deviceToken,
       name: deviceName,
       type: 'camera',
       registrationToken: regToken
     });
 
-    return { regToken, regPublicKey: this.accessToken.toString() };
+    return { success, regToken, regPublicKey: this.accessToken.toString() };
+  }
+
+  async listDevices() {
+    log.debug(`ListDevices`);
+    let {devices} = await this.api.account.listDevices();
+    return devices;
+  }
+
+  async unregisterDevice(deviceToken) {
+    log.debug(`UnregisterDevice`);
+    await this.api.account.unregisterDevice({devicePublicKey: deviceToken});
+    return true;
   }
 }

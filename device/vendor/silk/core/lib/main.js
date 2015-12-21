@@ -56,7 +56,7 @@ import makeExtensions from './ext';
 initProfiler();
 
 // Amount of time to wait for async shutdown before forcing power status change.
-const SHUTDOWN_TIMEOUT_MS = 30 * 1000;
+const SHUTDOWN_TIMEOUT_MS = 45 * 1000;
 
 let id = null;
 let btle = null;
@@ -90,6 +90,10 @@ function main() {
         log.verbose(`Offline as device is not configured`);
         return Promise.resolve(false);
       }
+      if (shutdownPromise) {
+        log.verbose(`Offline as device is shutting down`);
+        return Promise.resolve(false);
+      }
       const serverUrl = api.config.serverUrl;
       return new Promise((accept, reject) => {
         isReachable(serverUrl, (err, reachable) => {
@@ -109,6 +113,13 @@ function main() {
   crashreporter = makeCrashReporter(outbox);
   jsErrors(crashreporter);
 
+  const bootAbortedFlag = Symbol();
+  const maybeAbortBoot = () => {
+    if (shutdownPromise) {
+      throw bootAbortedFlag;
+    }
+  };
+
   return getDeviceId()
     .then(deviceId => {
       id = deviceId;
@@ -120,6 +131,7 @@ function main() {
       // capacity to fully boot.
       return battery.init();
     })
+    .then(maybeAbortBoot)
     .then(() => {
       log.info('Initialize hardware');
       return Promise.all([
@@ -131,6 +143,7 @@ function main() {
         infrared.init(),
       ]);
     })
+    .then(maybeAbortBoot)
     .then(() => {
       log.info('Initialize framework');
 
@@ -151,6 +164,7 @@ function main() {
       camera = require('./camera')(timeline);
       return camera.init();
     })
+    .then(maybeAbortBoot)
     .then(() => {
       util.setprop('silk.boot_completed',
                    1 + parseInt(util.getprop('silk.boot_completed', 0)));
@@ -170,19 +184,25 @@ function main() {
       log.info('Load configuration');
       return config.init();
     })
+    .then(maybeAbortBoot)
     .then(() => {
       log.info('main completed device has been booted.');
+    }).
+    catch(err => {
+      if (err === bootAbortedFlag) {
+        log.warn('Bootup sequence aborted due to shutdown');
+        // Shutdown is in progress, not an error.
+        return;
+      }
+      log.fatal(`Initialization error: ${err}`);
+      util.processthrow(err);
+      //
+      // TODO: We may want to eventually reboot-and-pray in this situation as the
+      //       device is now essentially nonoperational.
+      //
     });
 }
-
-main().catch(err => {
-  log.fatal(`Initialization error: ${err}`);
-  util.processthrow(err);
-  //
-  // TODO: We may want to eventually reboot-and-pray in this situation as the
-  //       device is now essentially nonoperational.
-  //
-});
+main();
 
 /**
  * Read vendor specific logo
@@ -321,68 +341,86 @@ config.on('configured', async () => {
 
 function shutdown(finalPromiseFactory) {
   if (shutdownPromise) {
-    log.warn('Shutdown caller more than once');
-    return shutdownPromise;
+    log.warn('Shutdown already in progress');
+    return;
+  }
+
+  log.info('Shutdown started');
+  if (!ui.goto('powerdown')) {
+    log.error(`ui state was set to 'powerdown' more than once?`);
   }
 
   const STATUS_COMPLETE = 'complete';
   const STATUS_EXCEPTION = 'exception';
   const STATUS_TIMEOUT = 'timeout';
 
-  log.info('Shutdown started');
+  if (camera) {
+    log.info('Camera stop');
+    camera.stopRecording();
+  }
+
+  // Outbox shutdown can take a while and runs async so begin right away
+  let outboxShutdownPromise = outbox.shutdown();
 
   // Do all async shutdown work here.
-  let asyncWorkPromise = Promise.resolve(ui.goto('powerdown'))
-    .then(uiStateWasSet => {
-      if (!uiStateWasSet) {
-        log.warn(`ui state was set to 'powerdown' more than once`);
-      }
-      camera.stopRecording();
-      return crashreporter.shutdown();
-    })
-    .then(() => {
-      server.disconnect();
-      update.stop();
-    })
-    .then(() => outbox.shutdown)
-    .then(() => {
-      // Always make sure this one is last.
-      return STATUS_COMPLETE;
-    });
+  let asyncWorkPromise = Promise.resolve()
+  .then(() => {
+    return wifi.shutdown();
+  })
+  .then(() => {
+    if (btle) {
+      log.info('BTLE shutdown');
+      return btle.changeMode(btle.MODE_OFF);
+    }
+  })
+  .then(() => {
+    log.info('Server disconnect');
+    server.disconnect();
+    log.info('Crash reporter shutdown');
+    return crashreporter.shutdown();
+  })
+  .then(() => {
+    log.info('Updates stop');
+    return update.stop();
+  })
+  .then(() => {
+    log.info('Waiting for outbox shutdown');
+    return outboxShutdownPromise;
+  })
+  .then(() => {
+    // Always make sure this one is last.
+    return STATUS_COMPLETE;
+  });
 
   let timeoutPromise = util.timeout(SHUTDOWN_TIMEOUT_MS)
-    .then(() => {
-      return STATUS_TIMEOUT;
-    });
+  .then(() => STATUS_TIMEOUT);
 
   shutdownPromise = Promise.race([ timeoutPromise, asyncWorkPromise ])
-    .catch(err => {
-      log.error('Shutdown error:', err.stack);
-      return STATUS_EXCEPTION;
-    })
-    .then(status => {
-      switch (status) {
-      case STATUS_COMPLETE:
-        log.info('Shutdown completed normally');
-        break;
-      case STATUS_EXCEPTION:
-        break;
-      case STATUS_TIMEOUT:
-        log.error('Shutdown timed out!');
-        break;
-      default:
-        log.warn('Unknown status: %s', status);
-      }
+  .catch(err => {
+    log.error('Shutdown error:', err.stack || err);
+    return STATUS_EXCEPTION;
+  })
+  .then(status => {
+    switch (status) {
+    case STATUS_COMPLETE:
+      log.info('Shutdown completed normally');
+      break;
+    case STATUS_EXCEPTION:
+      break;
+    case STATUS_TIMEOUT:
+      log.error('Shutdown timed out!');
+      break;
+    default:
+      log.warn('Unknown status: %s', status);
+    }
 
-      if (finalPromiseFactory) {
-        return finalPromiseFactory();
-      }
+    if (finalPromiseFactory) {
+      return finalPromiseFactory();
+    }
 
-      log.info('Powering off');
-      util.setprop('sys.powerctl', 'shutdown');
-    });
-
-  return shutdownPromise;
+    log.info('Powering off');
+    util.setprop('sys.powerctl', 'shutdown');
+  });
 }
 
 // Update service...

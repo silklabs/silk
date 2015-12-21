@@ -321,6 +321,12 @@ class Wifi extends events.EventEmitter {
     })
     .then(r => {
       log.info(`${iface} state| ${r.stdout}`);
+
+      if (this._shutdown) {
+        log.info('(WiFi shutdown)');
+        return this._networkCleanup();
+      }
+
       log.info('==> Wifi online');
       this._online = true;
       this.emit('online');
@@ -376,6 +382,13 @@ class Wifi extends events.EventEmitter {
         log.info('WiFi initialization complete');
         return Promise.resolve();
       });
+  }
+
+  shutdown() {
+    // Once Wifi has been shutdown(), there's no recovery beyond restart
+    log.info('WiFi shutdown');
+    this._shutdown = true;
+    return this._networkCleanup();
   }
 
   isOnline() {
@@ -443,6 +456,10 @@ class QEmuWifi extends events.EventEmitter {
       }
     }
     return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns]);
+  }
+
+  shutdown() {
+    log.info('QEmu: "WiFi" shutdown');
   }
 
   isOnline() {

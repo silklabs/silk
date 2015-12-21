@@ -17,7 +17,6 @@ const log = createLog('server');
 
 class Server extends events.EventEmitter {
   socket: Socket;
-  _fetchRetryTimer: ?number;
 
   constructor() {
     super();
@@ -97,9 +96,6 @@ class Server extends events.EventEmitter {
   }
 
   disconnect() {
-    clearTimeout(this._fetchRetryTimer);
-    this._fetchRetryTimer = null;
-
     if (this.socket) {
       log.warn('Disconnecting from server');
       this.socket.disconnect();

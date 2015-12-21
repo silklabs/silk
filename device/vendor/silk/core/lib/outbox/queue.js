@@ -421,9 +421,7 @@ export default class Queue extends EventEmitter {
     clearTimeout(this.diskCheckHandle);
     this.diskCheckHandle = null;
     this.diskCheckRunning = false;
-    log.info(`Stopped checking for pending operations...`, {
-      online: this.online
-    });
+    log.info(`Stop check for pending ${this.name} ops. online=${this.online}`);
   }
 
   /**
@@ -432,10 +430,7 @@ export default class Queue extends EventEmitter {
    * for pending operations).
    */
   async shutdown() {
-    log.info(`Shutting down`, {
-      running: this.running
-    });
-
+    log.info(`Shutting down ${this.name}: running=${this.running}`);
     this.stop();
 
     let pending = [];
@@ -449,7 +444,7 @@ export default class Queue extends EventEmitter {
     pending = pending.concat(this.liveOperations);
     if (pending.length !== this.running) {
       log.error(`
-        Clean shutdown impossible:
+        Clean shutdown of ${this.name} impossible:
           Known Pending: ${pending.length}
           Running: ${this.running}
       `);

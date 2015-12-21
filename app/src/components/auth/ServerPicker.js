@@ -16,7 +16,7 @@ let {
   View,
 } = React;
 
-export default class extends React.Component {
+export default class ServerPicker extends React.Component {
 
   state = {
     serverUrl: Config.get().serverUrl,
@@ -106,6 +106,7 @@ export default class extends React.Component {
       let style = index === 0 ? [FormStyles.formRow, FormStyles.formRowFirst] : FormStyles.formRow;
       return (
         <TouchableHighlight
+          key={server.name}
           underlayColor="lightgrey"
           onPress={() => this.setState({serverUrl: server.value})}>
           <View

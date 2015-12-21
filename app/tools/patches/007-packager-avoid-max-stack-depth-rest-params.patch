@@ -1,0 +1,16 @@
+--- node_modules/react-native/packager/react-packager/src/DependencyResolver/fastfs.js.orig	2015-12-21 10:28:12.000000000 -0800
++++ node_modules/react-native/packager/react-packager/src/DependencyResolver/fastfs.js	2015-12-21 11:13:39.000000000 -0800
+@@ -293,11 +293,11 @@
+   }
+ 
+   getFiles() {
+-    const files = [];
++    var files = [];
+     Object.keys(this.children).forEach(key => {
+       const file = this.children[key];
+       if (file.isDir) {
+-        files.push(...file.getFiles());
++        files = files.concat(file.getFiles());
+       } else {
+         files.push(file);
+       }

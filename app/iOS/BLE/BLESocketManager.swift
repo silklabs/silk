@@ -40,7 +40,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     return "BLESocketManager"
   }
   
-  public func constantsToExport() -> [NSObject : AnyObject] {
+  public func constantsToExport() -> [String: AnyObject] {
     return [:]
   }
   

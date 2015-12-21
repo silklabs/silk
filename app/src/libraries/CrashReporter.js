@@ -32,10 +32,10 @@ class CrashReporter {
             error: {
               stackTrace: stackTrace.map(site => {
                 return {
-                   column: site.column,
-                   fileName: site.file,
-                   lineNumber: site.lineNumber,
-                   methodName: site.methodName,
+                  column: site.column,
+                  fileName: site.file,
+                  lineNumber: site.lineNumber,
+                  methodName: site.methodName,
                 };
               }),
               message: err.message,

@@ -24,7 +24,7 @@ import React from 'react-native';
  *       doSomethingWith(this.state.foo);
  *     });
  */
-export default class extends React.Component {
+export default class AsyncComponent extends React.Component {
 
   /**
    * Pending state will always be what `this.state` is at any given

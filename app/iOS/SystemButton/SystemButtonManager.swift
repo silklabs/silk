@@ -11,7 +11,7 @@ class SystemButtonManager : RCTViewManager {
     ]
   }
 
-  override func constantsToExport() -> [NSObject : AnyObject]{
+  override func constantsToExport() -> [String: AnyObject] {
     // Export the entire UIBarButtonSystemItem enum so it's easy for JS to see what is available.
     return [
       "Done": UIBarButtonSystemItem.Done.rawValue,

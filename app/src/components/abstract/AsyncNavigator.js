@@ -6,7 +6,7 @@ import {
  * Provide async versions of navigation operations that decouple them
  * from the promise chain within which they're being called.
  */
-export default class extends Navigator {
+export default class AsyncNavigator extends Navigator {
 
   static BreadcrumbNavigationBar = Navigator.BreadcrumbNavigationBar;
   static NavigationBar = Navigator.NavigationBar;

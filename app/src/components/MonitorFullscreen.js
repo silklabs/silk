@@ -291,12 +291,12 @@ export default class MonitorFullscreen extends React.Component {
     }
     this.setState(function(previous) {
       switch (previous.mode) {
-        case MODES.live:
-          this._exitLiveMode();
-          break;
-        default:
-          // Ignore
-          break;
+      case MODES.live:
+        this._exitLiveMode();
+        break;
+      default:
+        // Ignore
+        break;
       }
 
       if (newMode === MODES.live) {
@@ -405,18 +405,18 @@ export default class MonitorFullscreen extends React.Component {
     }
 
     switch (this.state.mode) {
-      // When a recorded segment starts we should begin buffering the next
-      // segment.
-      case MODES.recorded:
-        this.bufferNextRecordedSegment();
-        break;
-      case MODES.seeking:
-        // Intentionally left blank when we seek we should not be running
-        // additional buffering operations/etc...
-        break;
-      default:
-        // Ignore
-        break;
+    // When a recorded segment starts we should begin buffering the next
+    // segment.
+    case MODES.recorded:
+      this.bufferNextRecordedSegment();
+      break;
+    case MODES.seeking:
+      // Intentionally left blank when we seek we should not be running
+      // additional buffering operations/etc...
+      break;
+    default:
+      // Ignore
+      break;
     }
 
     if (segment) {

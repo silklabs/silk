@@ -28,7 +28,7 @@ export default class WifiSettings extends AsyncComponent {
     userState: React.PropTypes.instanceOf(UserState).isRequired,
   };
 
- _renderTitleBar() {
+  _renderTitleBar() {
     return (
       <View style={TitleBarStyles.titleBar}>
         <TouchableOpacity

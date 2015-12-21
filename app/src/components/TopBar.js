@@ -45,9 +45,9 @@ export default class TopBar extends React.Component {
 
   _openSettings = () => {
     this.props.navigator.push({
-       name: 'Settings',
+      name: 'Settings',
     });
-  }
+  };
 
 }
 

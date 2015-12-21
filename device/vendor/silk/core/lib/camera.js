@@ -314,9 +314,6 @@ class CameraStream extends EventEmitter {
         try {
           this._cvVideoCapture = new cv.VideoCapture(0);
         } catch (err) {
-          if (this._startPromiseCallbacks) {
-            return this._startPromiseCallbacks.reject(err);
-          }
           throw err;
         }
       }
@@ -370,11 +367,6 @@ class CameraStream extends EventEmitter {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-
-        clearTimeout(this._initTimeout);
-        this._initTimeout = null;
-        this._ready = true;
-
         this._scheduleNextPreviewFrame();
 
         const tagMonitor = () => {
@@ -391,9 +383,11 @@ class CameraStream extends EventEmitter {
         this._tagMonitorTimeout = setTimeout(tagMonitor,
           CAPTURE_TAG_TIMEOUT_MS);
 
-        if (this._startPromiseCallbacks) {
-          this._startPromiseCallbacks.resolve();
-        }
+        clearTimeout(this._initTimeout);
+        this._initTimeout = null;
+
+        this._ready = true;
+        this.emit('ready');
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);
@@ -598,28 +592,35 @@ class CameraStream extends EventEmitter {
    * Initialize camera
    */
   async init() {
-    if (this._startPromiseCallbacks) {
-      throw new Error(`Re-entered start?`);
-    }
-
-    let startPromise = new Promise((resolve, reject) => {
-      this._startPromiseCallbacks = { resolve, reject };
-    });
     this._init();
-    await startPromise;
+    return Promise.resolve();
+  }
+
+  /**
+   * Block until the camera is online and operational.
+   * IMPORTANT: Since the camera can crash at any time, once this method returns
+   *            it's never guaranteed that the camera is STILL online
+   */
+  /* async */ ready() {
+    if (this._ready) {
+      return Promise.resolve();
+    }
+    return new Promise(resolve => {
+      this.once('ready', resolve);
+    });
   }
 
   startRecording() {
     if (!this._recording) {
       this._recording = true;
-      log.verbose('recording started');
+      log.verbose(`recording enabled (ready=${this._ready}`);
     }
   }
 
   stopRecording() {
     if (this._recording) {
       this._recording = false;
-      log.verbose('recording stopped');
+      log.verbose(`recording disabled (ready=${this._ready})`);
     }
   }
 

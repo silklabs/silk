@@ -122,6 +122,18 @@ function main() {
     }
   };
 
+  // It's preferable to kill this process over system daemons
+  // (usually running as -17) in out of memory situations.
+  fs.writeFile('/proc/self/oom_adj', 0);
+
+  // If no time zone is set select Pacific time.  The device currently
+  // doesn't really care what time zone it's in, all operations are done
+  // in UTC.  However using Pacific for local time helps ensure that log
+  // message timestamps are aligned with where most developers are.
+  if (util.getprop('persist.sys.timezone', '').length === 0) {
+    util.setprop('persist.sys.timezone', 'America/Los_Angeles');
+  }
+
   return getDeviceId()
     .then(deviceId => {
       id = deviceId;
@@ -138,7 +150,12 @@ function main() {
       log.info('Initialize hardware');
       say = new Say();
 
+      assert(outbox, 'must have outbox when initializing timeline');
+      timeline = new Timeline(id.toString(), outbox);
+      camera = require('./camera')(timeline);
+
       return Promise.all([
+        camera.init(),
         wifi.init(),
         getBTLE().then(btleInstance => {
           btle = btleInstance;
@@ -147,27 +164,6 @@ function main() {
         infrared.init(),
         say.init(),
       ]);
-    })
-    .then(maybeAbortBoot)
-    .then(() => {
-      log.info('Initialize framework');
-
-      // It's preferable to kill this process over system daemons
-      // (usually running as -17) in out of memory situations.
-      fs.writeFile('/proc/self/oom_adj', 0);
-
-      // If no time zone is set select Pacific time.  The device currently
-      // doesn't really care what time zone it's in, all operations are done
-      // in UTC.  However using Pacific for local time helps ensure that log
-      // message timestamps are aligned with where most developers are.
-      if (util.getprop('persist.sys.timezone', '').length === 0) {
-        util.setprop('persist.sys.timezone', 'America/Los_Angeles');
-      }
-
-      assert(outbox, 'must have outbox when initializing timeline');
-      timeline = new Timeline(id.toString(), outbox);
-      camera = require('./camera')(timeline);
-      return camera.init();
     })
     .then(maybeAbortBoot)
     .then(() => {

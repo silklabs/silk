@@ -395,7 +395,7 @@ class Wifi extends events.EventEmitter {
     return this._online;
   }
 
-  online() {
+  /* async */ online() {
     if (this._online) {
       return Promise.resolve();
     }

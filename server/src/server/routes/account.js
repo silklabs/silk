@@ -8,14 +8,16 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
+import createLog from 'log';
+
 import sharedRoutes from './shared';
 import authorizeAccount from '../authorize_account';
-
 import Devices from '../models/devices';
 
+import type { ExpressRoutes } from 'api-schema';
 import type { RouteContext } from '../server';
 
-const log = require('log')('routes:account');
+const log = createLog('routes:account');
 
 const PREFIX = '/v1/account/';
 
@@ -24,7 +26,7 @@ const PREFIX = '/v1/account/';
  */
 const METRICS_SCOPES = 'metrics:query';
 
-export default function (ctx: RouteContext) {
+export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   routes.use(PREFIX, authorizeAccount({

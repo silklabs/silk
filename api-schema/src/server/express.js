@@ -1,16 +1,18 @@
-import { HttpAction, HttpApi } from '../types';
 import assert from 'assert';
-import { validate} from 'joi';
+import makeDebug from 'debug';
+import { validate } from 'joi';
 import uuid from 'uuid';
 
-let debug = require('debug')('express-schema');
+import { HttpAction, HttpApi } from '../types';
+
+const debug = makeDebug('express-schema');
 
 /**
  * A helper class which manages the internal http api state and adds routes to
  * the actual express instances. The intention is we could replace this specific
  * layer with something other then express.
  */
-class ExpressRoutes {
+export class ExpressRoutes {
   constructor(app, api = {}) {
     this.app = app;
     this.api = new HttpApi(api);

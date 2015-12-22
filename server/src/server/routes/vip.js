@@ -10,19 +10,20 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import jwtMiddleware from '../jwt';
+import createLog from 'log';
 import URL from 'url';
 import querystring from 'querystring';
 
+import jwtMiddleware from '../jwt';
 import Accounts from '../models/accounts';
 
+import type { ExpressRoutes } from 'api-schema';
+import type { RouteContext } from '../server';
 
-import type {RouteContext} from '../server';
-
-let log = require('log')('routes:vip');
+const log = createLog('routes:vip');
 const PREFIX = '/v1/vip/';
 
-export default function (ctx: RouteContext) {
+export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   /**

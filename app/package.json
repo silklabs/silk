@@ -27,7 +27,7 @@
     "babel-loader": "^6.2.0",
     "eslint": "^1.10.3",
     "eslint-plugin-react": "^3.11.3",
-    "flow-bin": "0.19.1",
+    "flow-bin": "0.20.1",
     "ios-deploy": "^1.7.0",
     "json-loader": "^0.5.2",
     "webpack": "^1.12.1",

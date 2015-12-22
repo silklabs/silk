@@ -4,7 +4,6 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-
 import { exec } from 'mz/child_process';
 import path from 'path';
 import createOutbox from '../../lib/outbox/manager';

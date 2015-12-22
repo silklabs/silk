@@ -2,6 +2,7 @@ import assert from 'assert';
 import createApi from '../api';
 import randomStream from '../random_stream';
 import fetch from 'node-fetch';
+import skipOnTravis from '../skip-on-travis.js';
 
 import { VideoUploadOp } from '../../lib/outbox/blob_upload_operation';
 import mkLog from '../../lib/log'; const log = mkLog('ut');
@@ -9,7 +10,9 @@ import mkLog from '../../lib/log'; const log = mkLog('ut');
 suite('VideoUploadOperation', () => {
 
   test('Upload video...', async () => {
-    if (require('../skip-on-travis.js')()) return;
+    if (skipOnTravis()) {
+      return;
+    }
 
     let { device, account } = await createApi();
     let { stream, buffer } = randomStream();

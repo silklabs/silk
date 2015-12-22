@@ -1,8 +1,9 @@
 /**
- * @flow
- * Module to aid in converting JSON Schema to flowtype annoations...
+ * Module to aid in converting JSON Schema to flowtype annotations...
  *
  * This is a best effort and may exclude or simplify some types with "any".
+ *
+ * @flow
  */
 
 import camelcase from 'camel-case';
@@ -33,7 +34,7 @@ type ConvertArrayType = {
 export function convertObject(
   name: string,
   input: any,
-  seenNames: {[key: string]:bool} = {}
+  seenNames: {[key: string]: bool} = {}
 ): ConvertType {
   if (name in seenNames) {
     // XXX: Lame but this is an unlikely case...

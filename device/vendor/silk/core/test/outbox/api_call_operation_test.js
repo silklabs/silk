@@ -1,11 +1,14 @@
 import createApi from '../api';
+import skipOnTravis from '../skip-on-travis.js';
 
 import APICallOperation from '../../lib/outbox/api_call_operation';
 
 suite('APICallOperation', () => {
 
   test('make simple api call', async () => {
-    if (require('../skip-on-travis.js')()) return;
+    if (skipOnTravis()) {
+      return;
+    }
 
     // Ensure api has been bootstrapped.
     await createApi();

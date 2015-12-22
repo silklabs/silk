@@ -11,4 +11,4 @@ esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 
 [version]
-0.19.1
+0.20.1

@@ -1,2 +1,5 @@
-export expressApi from './server/express';
-export generateSchema from './gen';
+/**
+ * @flow
+ */
+export { default as expressApi } from './server/express';
+export { default as generateSchema } from './gen';

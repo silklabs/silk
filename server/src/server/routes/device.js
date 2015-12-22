@@ -1,21 +1,25 @@
-/* @flow */
 /**
  * The account routes deal with operations on an account that has been created
  * previously (authenticated).
+ *
+ * @flow
  */
 
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
+import createLog from 'log';
+
 import sharedRoutes from './shared';
 import authorizeDevice from '../authorize_device';
 
+import type { ExpressRoutes } from 'api-schema';
 import type { RouteContext } from '../server';
 
-let log = require('log')('routes:device');
+const log = createLog('routes:device');
 const PREFIX = '/v1/device/';
 
-export default function (ctx: RouteContext) {
+export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   routes.use(PREFIX, authorizeDevice({

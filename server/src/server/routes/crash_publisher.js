@@ -1,20 +1,21 @@
-/* @flow */
 /**
  * This module deals with the publishing side of creating blobs...
+ *
+ * @flow
  */
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import authorizeDevice from '../authorize_device';
 
+import authorizeDevice from '../authorize_device';
 import { TYPE_ALL as CrashReportTypes } from '../models/crash_metadata';
 
+import type { ExpressRoutes } from 'api-schema';
 import type { RouteContext } from '../server';
 
 const PREFIX = '/v1/crash-publisher/';
 
-export default function (ctx: RouteContext) {
-
+export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   routes.use(PREFIX, authorizeDevice({

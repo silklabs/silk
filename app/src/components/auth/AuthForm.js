@@ -35,6 +35,7 @@ class StyledTextInput extends React.Component {
         style={inputStyles.text}
         autoCapitalize="none"
         autoCorrect={false}
+        clearButtonMode="always"
         enablesReturnKeyAutomatically={true}
         placeholderTextColor="#999999"
         {...this.props}

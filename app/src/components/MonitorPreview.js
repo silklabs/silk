@@ -77,6 +77,9 @@ export default class MonitorPreview extends SocketIOComponent {
   componentWillMount() {
     this.mounted = true;
     this._queue = new PreviewQueue(this.props.label, message => {
+      if (!this.mounted) {
+        return;
+      }
       this.setState({
         timedOut: false,
         blob: message.frame,

@@ -28,24 +28,26 @@ const inputStyles = StyleSheet.create({
 });
 
 class StyledTextInput extends React.Component {
-  static defaultProps = {
-    secure: false,
-    keyboardType: 'default',
-    returnKeyType: 'done',
-  };
-
-  static propTypes = TextInput.propTypes;
-
   render() {
     return (
       <TextInput
+        ref="input"
         style={inputStyles.text}
         autoCapitalize="none"
         autoCorrect={false}
+        enablesReturnKeyAutomatically={true}
         placeholderTextColor="#999999"
         {...this.props}
       />
     );
+  }
+
+  focus() {
+    this.refs.input.focus();
+  }
+
+  blur() {
+    this.refs.input.blur();
   }
 }
 
@@ -54,7 +56,7 @@ export default class AuthForm extends AsyncComponent {
   static propTypes = {
     style: View.propTypes.style,
     submitText: React.PropTypes.string.isRequired,
-    skipPassword: React.PropTypes.bool.isRequired,
+    password: React.PropTypes.bool.isRequired,
     verifyPassword: React.PropTypes.bool.isRequired,
     onSubmit: React.PropTypes.func.isRequired,
     inProgress: React.PropTypes.bool.isRequired,
@@ -70,8 +72,8 @@ export default class AuthForm extends AsyncComponent {
     super(props);
     if (!this.props.verifyPassword) {
       let { defaultEmail, defaultPassword } = Config.get();
-      this.state.email = defaultEmail;
-      this.state.password = defaultPassword;
+      this.state.email = defaultEmail || '';
+      this.state.password = defaultPassword || '';
     }
   }
 
@@ -82,7 +84,18 @@ export default class AuthForm extends AsyncComponent {
   };
 
   handleSubmit = async () => {
-    if (this.props.verifyPassword &&
+    if (this.haveInvalidInputs()) {
+      // It's very unlikely that users will hit this given that the
+      // submit button and the return key are disabled in most cases.
+      AlertIOS.alert(
+        'All fields are required',
+        'Please fill out all fields.'
+      );
+      return;
+    }
+
+    if (this.props.password &&
+        this.props.verifyPassword &&
         this.state.password !== this.state.passwordVerification) {
       AlertIOS.alert(
         'Password mismatch',
@@ -100,59 +113,72 @@ export default class AuthForm extends AsyncComponent {
     });
   };
 
-  render() {
-    let buttonDisabled = (
-      !this.state.email || // Always require email
-      (!this.props.skipPassword && !this.state.password) || // Only require password if not skipped
-      (this.state.verifyPassword && !this.state.passwordVerification) // Pasword mismatch ...
+  haveInvalidInputs() {
+    return (
+      !this.state.email ||
+      (this.props.password && !this.state.password) ||
+      (this.props.verifyPassword && !this.state.passwordVerification)
     );
+  }
+
+  render() {
+    let { password, verifyPassword } = this.props;
 
     let button = (
       <Button
         label={this.props.submitText}
         onPress={this.handleSubmit}
         inProgress={this.props.inProgress}
-        disabled={buttonDisabled}
+        disabled={this.haveInvalidInputs()}
       />
     );
 
-    let passwordVerification = null;
-    if (this.props.verifyPassword) {
-      passwordVerification = (
+    let emailInput = (
+      <StyledTextInput
+        placeholder="Email Address"
+        value={this.state.email}
+        keyboardType="email-address"
+        returnKeyType={password ? 'next' : 'done'}
+        onSubmitEditing={password ? () => this.refs.password.focus() : this.handleSubmit}
+        onChangeText={(email) => this.setState({email})}
+      />
+    );
+
+    let passwordInput = null;
+    if (password) {
+      passwordInput = (
         <StyledTextInput
+          ref="password"
+          placeholder="Password"
+          value={this.state.password}
+          secureTextEntry={true}
+          returnKeyType={verifyPassword ? 'next' : 'done'}
+          onSubmitEditing={verifyPassword ? () => this.refs.passwordVerification.focus() : this.handleSubmit}
+          onChangeText={(password) => this.setState({password})}
+        />
+      );
+    }
+
+    let passwordVerificationInput = null;
+    if (verifyPassword) {
+      passwordVerificationInput = (
+        <StyledTextInput
+          ref="passwordVerification"
           placeholder="Type password again"
           value={this.state.passwordVerification}
           secureTextEntry={true}
+          returnKeyType="done"
           onSubmitEditing={this.handleSubmit}
           onChangeText={this.onPasswordVerificationChange}
         />
       );
     }
 
-    let password = null;
-    if (this.props.skipPassword !== true) {
-      password = (
-        <StyledTextInput
-          placeholder="Password"
-          value={this.state.password}
-          secureTextEntry={true}
-          onSubmitEditing={this.handleSubmit}
-          onChangeText={(password) => this.setState({password})}
-        />
-      );
-    }
-
     return (
       <View style={this.props.style}>
-        <StyledTextInput
-          placeholder="Email Address"
-          value={this.state.email}
-          keyboardType="email-address"
-          onSubmitEditing={this.handleSubmit}
-          onChangeText={(email) => this.setState({email})}
-        />
-        {password}
-        {passwordVerification}
+        {emailInput}
+        {passwordInput}
+        {passwordVerificationInput}
         {button}
       </View>
     );

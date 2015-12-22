@@ -119,7 +119,7 @@ export default class NotLoggedIn extends AsyncComponent {
         <AuthForm
           onSubmit={this._signUp}
           inProgress={this.state.inProgress}
-          skipPassword={false}
+          password={true}
           verifyPassword={true}
           submitText="Sign Up"
         />
@@ -157,7 +157,7 @@ export default class NotLoggedIn extends AsyncComponent {
         <AuthForm
           onSubmit={this._signIn}
           inProgress={this.state.inProgress}
-          skipPassword={false}
+          password={true}
           verifyPassword={false}
           submitText="Sign In"
         />
@@ -182,7 +182,7 @@ export default class NotLoggedIn extends AsyncComponent {
           onSubmit={this._forgotPassword}
           inProgress={this.state.inProgress}
           submitText="Reset Password"
-          skipPassword={true}
+          password={false}
           verifyPassword={false}
         />
         <View style={styles.bottomLinks}>
@@ -217,7 +217,7 @@ export default class NotLoggedIn extends AsyncComponent {
     this.setStateAsync({ inProgress: false });
   };
 
-  _forgotPassword = async(credentials) => {
+  _forgotPassword = async (credentials) => {
     const { userState } = this.props;
     this.setStateAsync({ inProgress: true });
 
@@ -243,7 +243,7 @@ export default class NotLoggedIn extends AsyncComponent {
       this.setStateAsync({ inProgress: false });
       AlertIOS.alert(title, message);
     }
-  }
+  };
 
   _renderControls() {
     switch (this.state.controls) {

@@ -26,20 +26,12 @@ class MainView extends React.Component {
   }
 }
 
-// TODO: once we're on RN 0.16+, this could just be inlined as
-//   (props) => <Devices {...props} component={MainView} />
-class MainWithDevices extends React.Component {
-  render() {
-    return <Devices {...this.props} component={MainView} />;
-  }
-}
-
 export default class Main extends React.Component {
   render() {
     return (
       <ServerConnectivity
         {...this.props}
-        component={MainWithDevices}
+        component={(props) => <Devices {...props} component={MainView} />}
       />
     );
   }

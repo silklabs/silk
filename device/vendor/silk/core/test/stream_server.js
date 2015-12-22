@@ -95,7 +95,7 @@ class StreamServer {
     }
 
     storing.on('error', (err) => {
-      console.log('Unexpected error', err);
+      console.error('Unexpected error', err); // eslint-disable-line no-console
       res.writeHead(500);
       res.end();
     });

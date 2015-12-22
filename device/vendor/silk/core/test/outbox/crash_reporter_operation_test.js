@@ -6,7 +6,10 @@ import path from 'path';
 import fs from 'mz/fs';
 import mkdirp from 'mkdirp-promise';
 import fetch from 'node-fetch';
-import mkLog from '../../lib/log'; const log = mkLog('ut');
+import mkLog from '../../lib/log';
+import skipOnTravis from '../skip-on-travis.js';
+
+const log = mkLog('ut');
 
 import CrashReporterOperation from '../../lib/outbox/crash_report_operation';
 
@@ -22,7 +25,10 @@ suite('CrashReporterOperation', () => {
   teardown(cleanup);
 
   test('Upload crash report...', async () => {
-    if (require('../skip-on-travis.js')()) return;
+    if (skipOnTravis()) {
+      return;
+    }
+
     let { device: api } = await createApi();
 
     /*eslint-disable no-unused-vars*/

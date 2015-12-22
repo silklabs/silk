@@ -169,4 +169,3 @@ export class HttpApi {
     return result;
   }
 }
-

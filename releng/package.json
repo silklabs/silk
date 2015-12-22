@@ -50,7 +50,7 @@
     "yamljs": "^0.2.4"
   },
   "devDependencies": {
-    "flow-bin": "0.19.1",
+    "flow-bin": "0.20.1",
     "webpack-dev-server": "^1.10.1",
     "webpack-hot-middleware": "^2.0.0"
   },

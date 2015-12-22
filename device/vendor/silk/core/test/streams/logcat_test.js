@@ -30,7 +30,7 @@ suite('logcat', () => {
       result.push(json);
     });
     await eventToPromise(logcat, 'finish');
-    console.log(result);
+    console.log(result); // eslint-disable-line no-console
     await fs.writeFile(jsonFile, JSON.stringify(result, null, 2));
   }
 
@@ -71,7 +71,7 @@ suite('logcat', () => {
     let stream = spawn('adb', ['logcat', '-v', 'threadtime']);
     stream.stdout.pipe(split()).pipe(subject);
     subject.on('data', (d) => {
-      console.log(d);
+      console.log(d); // eslint-disable-line no-console
     });
     await eventToPromise(subject, 'finish');
   });

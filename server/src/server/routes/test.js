@@ -9,6 +9,7 @@ import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
 
+import type { ExpressRoutes } from 'api-schema';
 import type Nonce from '../models/nonce';
 import type Accounts from '../models/accounts';
 
@@ -26,7 +27,7 @@ type RouteContext = {
   nonce: Nonce;
 }
 
-export default function (ctx: RouteContext) {
+export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   let api = expressApi(routes, {

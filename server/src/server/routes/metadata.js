@@ -6,12 +6,13 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import authorizeAccount from '../authorize_account';
 import createLog from 'log';
-import decorateUrl from '../decorate_url';
 
+import authorizeAccount from '../authorize_account';
+import decorateUrl from '../decorate_url';
 import TimeMetadata from '../models/time_metadata';
 
+import type { ExpressRoutes } from 'api-schema';
 import type { RouteContext } from '../server';
 
 const PREFIX = '/v1/metadata/';
@@ -32,7 +33,7 @@ function send404OnEmpty(res: any, output: any): void {
   res.respond(output);
 }
 
-export default function (ctx: RouteContext) {
+export default function (ctx: RouteContext): ExpressRoutes {
 
   let routes = new Router();
 

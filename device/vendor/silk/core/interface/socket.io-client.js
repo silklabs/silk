@@ -3,7 +3,7 @@
  * @flow
  */
 
-import type { EventEmitter } from 'events';
+import { EventEmitter } from 'events';
 
 type ConnectOptions = {
   [key: string]: any;

@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "postinstall": "babel src -d build",
-    "test": "mocha $(find test -name '*_test.js')"
+    "test": "flow check && mocha $(find test -name '*_test.js')"
   },
   "author": "James Lal [:lightsofapollo]",
   "license": "",
@@ -12,6 +12,7 @@
     "body-parser": "^1.13.3",
     "event-to-promise": "^0.3.3",
     "express": "^4.13.3",
+    "flow-bin": "0.20.1",
     "mocha": "^2.2.5",
     "mz": "^2.0.0",
     "node-fetch": "^1.3.2"

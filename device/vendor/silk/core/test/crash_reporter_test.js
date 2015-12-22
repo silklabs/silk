@@ -9,6 +9,7 @@ import randomStream from './random_stream';
 import { exec } from 'mz/child_process';
 import eventToPromise from 'event-to-promise';
 import createOutbox from '../lib/outbox/manager';
+import skipOnTravis from './skip-on-travis.js';
 
 import CrashReportOp from '../lib/outbox/crash_report_operation';
 
@@ -230,8 +231,9 @@ suite('crash report', () => {
     });
 
     test('upload to server', async () => {
-
-      if (require('./skip-on-travis.js')()) return;
+      if (skipOnTravis()) {
+        return;
+      }
 
       let deviceId = createDeviceId();
       let { crash, outbox} = create();

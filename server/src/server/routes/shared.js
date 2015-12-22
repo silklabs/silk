@@ -1,9 +1,12 @@
-/* @flow */
+/**
+ * @flow
+ */
 import * as Joi from 'joi';
 import URL from 'url';
 import path from 'path';
 import createLog from 'log';
 
+import type { ExpressRoutes } from 'api-schema';
 import type {RouteContext} from '../server';
 import InfluxDB from '../influxdb_client';
 
@@ -12,9 +15,11 @@ const log = createLog('routes:account');
 /**
  * Helper for routes shared between accounts and devices...
  */
-export default function(api: any, type: string, ctx: RouteContext) {
+export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
   // Semi-nasty hack so we don't need to run this in autogenerate.
-  if (!api || !api.define) return;
+  if (!api || !api.define) {
+    return;
+  }
 
   /**
    * The base socket.io url must be annotated with some special details in particular:

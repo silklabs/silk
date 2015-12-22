@@ -12,6 +12,7 @@ import decorateUrl from '../decorate_url';
 
 import CrashMetadata from '../models/crash_metadata';
 
+import type { ExpressRoutes } from 'api-schema';
 import type { RouteContext } from '../server';
 
 const log = createLog('routes:crash');
@@ -22,7 +23,7 @@ const PREFIX = '/v1/crash/';
  */
 const CRASH_SCOPE = 'crash:find';
 
-export default function (ctx: RouteContext) {
+export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   routes.use(PREFIX, authorizeAccount({

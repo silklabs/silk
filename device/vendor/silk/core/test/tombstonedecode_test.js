@@ -11,9 +11,7 @@ const TOMBSTONE_PATH = path.join(__dirname, 'tombstones');
 const FIXTURES = path.join(__dirname, '.crash_reporter');
 
 suite(__filename, () => {
-
   let cleanup = async () => {
-    console.log('cleanup');
     await exec(`rm -rf ${FIXTURES}`);
   };
 
@@ -42,7 +40,7 @@ suite(__filename, () => {
     for (const file of files) {
       if (file.match(/^tombstone_\d\d$/)) {
         const tombstone = path.join(TOMBSTONE_PATH, file);
-        console.log('Processing', tombstone);
+        console.log('Processing', tombstone); // eslint-disable-line no-console
 
         const raygunError = await CrashReporter._tombstoneToRaygunError(tombstone);
         const actual = JSON.stringify(raygunError, null, ' ');

@@ -17,6 +17,7 @@ const log = createLog('NotLoggedIn');
 const {
   AlertIOS,
   DeviceEventEmitter,
+  LayoutAnimation,
   Navigator,
   ScrollView,
   StyleSheet,
@@ -49,6 +50,7 @@ export default class NotLoggedIn extends AsyncComponent {
   }
 
   onKeyboardShow = (event) => {
+    LayoutAnimation.easeInEaseOut();
     this.setState({
       keyboardShown: true,
       contentInsetBottom: event.endCoordinates.height,
@@ -56,6 +58,7 @@ export default class NotLoggedIn extends AsyncComponent {
   };
 
   onKeyboardHide = (event) => {
+    LayoutAnimation.easeInEaseOut();
     this.setState({
       keyboardShown: false,
       contentInsetBottom: 0,

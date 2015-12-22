@@ -28,6 +28,7 @@ var config = {
         loader: 'babel',
         query: {
           presets: ['es2015', 'stage-0', 'react'],
+          plugins: [],
         },
       },
     ],
@@ -37,6 +38,11 @@ var config = {
 
 // Production config
 if (process.env.CONFIGURATION === 'Release') {
+  // React Native 0.16+ transforms `__DEV__` out of the minified production
+  // bundles, so we should do the same (by replacing the `__DEV__` identifier
+  // with the `false` literal and then having uglify eliminate the resulting
+  // dead code.)
+  config.module.loaders[1].query.plugins.push('./src/transforms/__DEV__-to-false');
   config.plugins.push(new webpack.optimize.DedupePlugin());
   config.plugins.push(new webpack.optimize.UglifyJsPlugin());
 }

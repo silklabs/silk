@@ -93,17 +93,19 @@ export default class CameraPreview extends React.Component {
     let camera = this.state.camera;
     if (camera) {
       // Preview image
-      if (camera.online && camera.previewImage) {
+      if (camera.online && camera.previewImage.src !== '') {
         context.drawImage(camera.previewImage, 0, 0);
       } else {
         context.fillStyle = 'grey';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        context.fillStyle = 'white';
-        context.font = '12px serif';
-        context.textAlign = 'start';
-        context.textBaseline = 'top';
-        context.fillText('Offline', 5, 5);
+        if (!camera.online) {
+          context.fillStyle = 'white';
+          context.font = '12px serif';
+          context.textAlign = 'start';
+          context.textBaseline = 'top';
+          context.fillText('Offline', 5, 5);
+        }
       }
 
       // Objects

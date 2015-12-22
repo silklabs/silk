@@ -54,7 +54,7 @@ export default class Id {
     return new Id(pubKey);
   }
 
-  constructor(pub, priv) {
+  constructor(pub: string, priv?: string) {
     this.pub = pub;
     this.priv = priv;
   }

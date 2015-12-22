@@ -355,7 +355,7 @@ export async function handleGitHubPullRequestEvent(
 
   let repo = octokat.repos(owner_name, repo_name);
   if (event.action === 'closed') {
-    log.info(`PR ${event.number} was closed. Mop up our CI branch.`);
+    log.info(`PR #${event.number} was closed. Mop up our CI branch.`);
     await deleteBranch(repo, getCIBranchForPR(event.number));
     return;
   }
@@ -469,7 +469,7 @@ async function triggerBuildsForPullRequest(
   // triggered for a given project. Filter those out to see how many
   // builds we actually triggered.
   let triggeredBuilds = travisResponses.filter((result) => !!result);
-  log.info(`Triggered ${triggeredBuilds.length} builds for PR #${pr.number}.`);
+  log.info(`PR #${pr.number}: triggered ${triggeredBuilds.length} builds.`);
 
   if (triggeredBuilds.length === 0) {
     return 0;
@@ -482,6 +482,7 @@ async function triggerBuildsForPullRequest(
   // don't query Travis too soon -- it needs a bit of time to queue
   // the builds.
   await timeout(TRAVIS_QUERY_BUILD_DELAY_MS);
+  log.info(`PR #${pr.number}: checking Travis for builds.`);
   let travis = await genTravis();
   let response = await cb2promise(travis.repos(owner_name, repo_name).builds.get);
   let queuedBuilds = response.builds.filter((build, index) => {
@@ -491,13 +492,13 @@ async function triggerBuildsForPullRequest(
     // started by now, we will have been notified via the webhook
     // already, and we don't need to update commit status twice.
     if (build.commit.sha === pr.mergeCommitSha) {
-      log.info(`Build ${build.id} is for this PR, state is ${build.state}.`);
+      log.info(`PR #${pr.number}: found build ${build.id}, state is ${build.state}.`);
     }
     return build.commit.sha === pr.mergeCommitSha && build.state === 'created';
   });
 
-  log.info(`Travis has queued but not yet started ${queuedBuilds.length} ` +
-           `builds for this PR, reporting them to GitHub as pending.`);
+  log.info(`PR #${pr.number}: Travis has queued but not yet started ` +
+           `${queuedBuilds.length} builds, reporting them to GitHub as pending.`);
   for (let build of queuedBuilds) {
     let project = getProjectFromBuildMessage(build.commit.message);
     await repo.statuses(pr.head.sha).create({

@@ -6,7 +6,7 @@
 
 import assert from 'assert';
 import cb2promise from 'promise-callback';
-import makeLog from 'log';
+import createLog from 'log';
 
 import repos from './repos';
 import { genTravis } from './travis';
@@ -15,7 +15,7 @@ import {
   getProjectFromBuildMessage,
 } from './github-travis-integration';
 
-const log = makeLog('cancelOldPRs');
+const log = createLog('cancelOldPRs');
 
 export async function cancelOldPRBuilds(
   owner: string,
@@ -49,7 +49,7 @@ export async function cancelOldPRBuilds(
       return;
     }
 
-    log.info(`PR#${pull_request_number} [${project}] - ${build.id} is ${build.state}`);
+    log.info(`PR #${pull_request_number}: [${project}] - ${build.id} is ${build.state}`);
     let existingBuildSha = activePullRequestBuilds[pull_request_number];
 
     if (!existingBuildSha) {
@@ -57,17 +57,19 @@ export async function cancelOldPRBuilds(
       // so we can tell later if another build is for the same SHA
       // (that's ok) or for a different (that's not ok, we want to
       // cancel those.)
-      log.info(`This is the most recent build for PR #${pull_request_number}. Allowing it to run.`);
+      log.info(`PR #${pull_request_number}: this is the most recent build, allowing it to run.`);
       activePullRequestBuilds[pull_request_number] = commit.sha;
       return;
     }
 
     if (existingBuildSha === commit.sha) {
-      log.info(`This build is running against same commit as the most recent build(s). Allowing it to run.`);
+      log.info(`PR #${pull_request_number}: this build is running against ` +
+               `same commit as the most recent build(s). Allowing it to run.`);
       return;
     }
 
-    log.info(`This build is running against outdated commit. Cancelling it.`);
+    log.info(`PR #${pull_request_number}: this build is running against ` +
+             `outdated commit, cancelling it.`);
     await cb2promise(travis.builds(build.id).cancel.post);
   }));
 }

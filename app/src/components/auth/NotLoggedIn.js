@@ -62,6 +62,17 @@ export default class NotLoggedIn extends AsyncComponent {
     });
   };
 
+  goBack = () => {
+    this.setState({
+      controls: null,
+      // Pre-emptively expand ScrollView again to avoid two
+      // re-renders, one from hiding the controls and one from
+      // dismissing the keyboard.
+      keyboardShown: false,
+      contentInsetBottom: 0,
+    });
+  };
+
   _renderLogo() {
     if (this.state.keyboardShown) {
       return null;
@@ -126,7 +137,7 @@ export default class NotLoggedIn extends AsyncComponent {
         <View style={styles.bottomLinks}>
           <TextLink
             label="BACK"
-            onPress={() => this.setState({controls: null})}
+            onPress={this.goBack}
           />
         </View>
       </View>
@@ -164,7 +175,7 @@ export default class NotLoggedIn extends AsyncComponent {
         <View style={styles.bottomLinks}>
           <TextLink
             label="BACK"
-            onPress={() => this.setState({controls: null})}
+            onPress={this.goBack}
           />
           <TextLink
             label="FORGOT PASSWORD?"
@@ -188,7 +199,7 @@ export default class NotLoggedIn extends AsyncComponent {
         <View style={styles.bottomLinks}>
           <TextLink
             label="BACK"
-            onPress={() => this.setState({controls: null})}
+            onPress={this.goBack}
           />
         </View>
       </View>
@@ -268,7 +279,7 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <ScrollView
         contentContainerStyle={[styles.container, extraStyle]}
-        keyboardShouldPersistTaps={false}
+        keyboardShouldPersistTaps={true}
         alwaysBounceVertical={false}
         scrollable={false}>
         <View style={styles.statusBar} />

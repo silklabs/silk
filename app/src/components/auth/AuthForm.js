@@ -59,6 +59,7 @@ export default class AuthForm extends AsyncComponent {
     submitText: React.PropTypes.string.isRequired,
     password: React.PropTypes.bool.isRequired,
     verifyPassword: React.PropTypes.bool.isRequired,
+    onChangeTextInputFocus: React.PropTypes.func.isRequired,
     onSubmit: React.PropTypes.func.isRequired,
     inProgress: React.PropTypes.bool.isRequired,
   };
@@ -122,6 +123,11 @@ export default class AuthForm extends AsyncComponent {
     );
   }
 
+  focusInput(ref) {
+    this.props.onChangeTextInputFocus();
+    this.refs[ref].focus();
+  }
+
   render() {
     let { password, verifyPassword } = this.props;
 
@@ -140,7 +146,7 @@ export default class AuthForm extends AsyncComponent {
         value={this.state.email}
         keyboardType="email-address"
         returnKeyType={password ? 'next' : 'done'}
-        onSubmitEditing={password ? () => this.refs.password.focus() : this.handleSubmit}
+        onSubmitEditing={password ? () => this.focusInput('password') : this.handleSubmit}
         onChangeText={(email) => this.setState({email})}
       />
     );
@@ -154,7 +160,7 @@ export default class AuthForm extends AsyncComponent {
           value={this.state.password}
           secureTextEntry={true}
           returnKeyType={verifyPassword ? 'next' : 'done'}
-          onSubmitEditing={verifyPassword ? () => this.refs.passwordVerification.focus() : this.handleSubmit}
+          onSubmitEditing={verifyPassword ? () => this.focusInput('passwordVerification') : this.handleSubmit}
           onChangeText={(password) => this.setState({password})}
         />
       );

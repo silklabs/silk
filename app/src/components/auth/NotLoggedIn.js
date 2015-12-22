@@ -49,6 +49,13 @@ export default class NotLoggedIn extends AsyncComponent {
     this._subscriptions.forEach(sub => sub.remove());
   }
 
+  // Avoid bouncing the view unnecessarily when focus jumps from one
+  // text input to the next.
+  _animateKeyboard = true;
+  _disableKeyboardAnimation = () => {
+    this._animateKeyboard = false;
+  };
+
   onKeyboardShow = (event) => {
     LayoutAnimation.easeInEaseOut();
     this.setState({
@@ -58,6 +65,10 @@ export default class NotLoggedIn extends AsyncComponent {
   };
 
   onKeyboardHide = (event) => {
+    if (!this._animateKeyboard) {
+      this._animateKeyboard = true;
+      return;
+    }
     LayoutAnimation.easeInEaseOut();
     this.setState({
       keyboardShown: false,
@@ -131,6 +142,7 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
           onSubmit={this._signUp}
           inProgress={this.state.inProgress}
           password={true}
@@ -169,6 +181,7 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
           onSubmit={this._signIn}
           inProgress={this.state.inProgress}
           password={true}
@@ -193,6 +206,7 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
           onSubmit={this._forgotPassword}
           inProgress={this.state.inProgress}
           submitText="Reset Password"

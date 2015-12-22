@@ -197,15 +197,15 @@ class Camera extends EventEmitter {
 
   _onPreviewStream = msg => {
     if (!msg) {
-      log.warning('_onPreviewStream: null msg');
+      log.warn('_onPreviewStream: null msg');
       return;
     }
     if (!msg.frame) {
-      log.warning('_onPreviewStream: null msg.frame');
+      log.warn('_onPreviewStream: null msg.frame');
       return;
     }
     if (this.id !== msg.id) {
-      log.warning('Video preview from unknown camera:', msg);
+      log.warn('Video preview from unknown camera:', msg);
       return;
     }
 
@@ -238,15 +238,15 @@ class Camera extends EventEmitter {
 
   _onVideoStream = msg => {
     if (!msg) {
-      log.warning('_onVideoStream: null msg');
+      log.warn('_onVideoStream: null msg');
       return;
     }
     if (!msg.frame) {
-      log.warning('_onVideoStream: null msg.frame');
+      log.warn('_onVideoStream: null msg.frame');
       return;
     }
     if (this.id !== msg.id) {
-      log.warning('Video preview from unknown camera:', msg);
+      log.warn('Video preview from unknown camera:', msg);
       return;
     }
 

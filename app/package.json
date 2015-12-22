@@ -10,7 +10,7 @@
     "log": "../log",
     "moment": "^2.10.3",
     "react-native": "^0.17.0",
-    "react-native-webpack-server": "git@github.com:mjohnston/react-native-webpack-server.git#d638bd42e7c89b79b1fd85172a859591363b6a67",
+    "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#a78d81ae17c7ea6569e0b91a9777497da972125f",
     "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "silk-core-version": "file:../version",
     "silk-raygun": "file:../raygun",
@@ -44,7 +44,7 @@
     "lint": "eslint src",
     "localBundle": "./tools/local_bundle",
     "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./tools/patch && ./tools/update_crypto_browserify",
-    "start": "rnws start --port 8082 --packagerPort 8081 --webpackPort 60046",
+    "start": "rnws start --port 8082 --packagerPort 8081 --webpackPort 60046 --no-android",
     "update": "./tools/update"
   },
   "version": "0.0.1"

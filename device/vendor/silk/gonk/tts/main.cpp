@@ -184,18 +184,11 @@ private:
  * This function is run when a tts command is received from the client
  */
 int TextToSpeechCommand::runCommand(SocketClient *c, int argc, char ** argv) {
-  char *saveptr;
-
-  char *cmd = strtok_r(argv[1], " \n", &saveptr);
-  if (!cmd) {
-    return 1;
-  }
-
-  ALOGD("Received command %s", cmd);
+  ALOGD("Received command %s", argv[0]);
 
   // Parse JSON command
   Value cmdJson;
-  bool result = mJsonReader.parse(cmd, cmdJson, false);
+  bool result = mJsonReader.parse(argv[0], cmdJson, false);
   LOG_ERROR((result != true), "Failed to parse command: %s",
       mJsonReader.getFormattedErrorMessages().c_str());
 

@@ -83,123 +83,18 @@ void FrameworkListener1::registerCmd(FrameworkCommand *cmd) {
 }
 
 void FrameworkListener1::dispatchCommand(SocketClient *cli, char *data) {
-    FrameworkCommandCollection::iterator i;
     int argc = 0;
     char *argv[FrameworkListener1::CMD_ARGS_MAX];
-    char tmp[CMD_BUF_SIZE];
-    char *p = data;
-    char *q = tmp;
-    char *qlimit = tmp + sizeof(tmp) - 1;
-    bool esc = false;
-    bool quote = false;
-    bool haveCmdNum = !mWithSeq;
 
     memset(argv, 0, sizeof(argv));
-    memset(tmp, 0, sizeof(tmp));
-    while(*p) {
-        if (*p == '\\') {
-            if (esc) {
-                if (q >= qlimit)
-                    goto overflow;
-                *q++ = '\\';
-                esc = false;
-            } else
-                esc = true;
-            p++;
-            continue;
-        } else if (esc) {
-            if (*p == '"') {
-                if (q >= qlimit)
-                    goto overflow;
-                *q++ = '"';
-            } else if (*p == '\\') {
-                if (q >= qlimit)
-                    goto overflow;
-                *q++ = '\\';
-            } else {
-                cli->sendMsg(500, "Unsupported escape sequence", false);
-                goto out;
-            }
-            p++;
-            esc = false;
-            continue;
-        }
+    argv[argc++] = strdup(data);
 
-        if (*p == '"') {
-            if (quote)
-                quote = false;
-            else
-                quote = true;
-            p++;
-            continue;
-        }
-
-        if (q >= qlimit)
-            goto overflow;
-        *q = *p++;
-        if (!quote && *q == ' ') {
-            *q = '\0';
-            if (!haveCmdNum) {
-                char *endptr;
-                int cmdNum = (int)strtol(tmp, &endptr, 0);
-                if (endptr == NULL || *endptr != '\0') {
-                    cli->sendMsg(500, "Invalid sequence number", false);
-                    goto out;
-                }
-                cli->setCmdNum(cmdNum);
-                haveCmdNum = true;
-            } else {
-                if (argc >= CMD_ARGS_MAX)
-                    goto overflow;
-                argv[argc++] = strdup(tmp);
-            }
-            memset(tmp, 0, sizeof(tmp));
-            q = tmp;
-            continue;
-        }
-        q++;
+    FrameworkCommand *c = *mCommands->begin();
+    if (c->runCommand(cli, argc, argv)) {
+      SLOGW("Handler '%s' error (%s)", c->getCommand(), strerror(errno));
     }
-
-    *q = '\0';
-    if (argc >= CMD_ARGS_MAX)
-        goto overflow;
-    argv[argc++] = strdup(tmp);
-#if 0
-    for (int k = 0; k < argc; k++) {
-        SLOGD("arg[%d] = '%s'", k, argv[k]);
+    for (int j = 0; j < argc; j++) {
+      free(argv[j]);
     }
-#endif
-
-    if (quote) {
-        cli->sendMsg(500, "Unclosed quotes error", false);
-        goto out;
-    }
-
-    if (errorRate && (++mCommandCount % errorRate == 0)) {
-        /* ignore this command - let the timeout handler handle it */
-        SLOGE("Faking a timeout");
-        goto out;
-    }
-
-    for (i = mCommands->begin(); i != mCommands->end(); ++i) {
-        FrameworkCommand *c = *i;
-
-        if (!strcmp(argv[0], c->getCommand())) {
-            if (c->runCommand(cli, argc, argv)) {
-                SLOGW("Handler '%s' error (%s)", c->getCommand(), strerror(errno));
-            }
-            goto out;
-        }
-    }
-    cli->sendMsg(500, "Command not recognized", false);
-out:
-    int j;
-    for (j = 0; j < argc; j++)
-        free(argv[j]);
     return;
-
-overflow:
-    LOG_EVENT_INT(78001, cli->getUid());
-    cli->sendMsg(500, "Command too long", false);
-    goto out;
 }

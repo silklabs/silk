@@ -12,7 +12,6 @@ import createLog from './log';
 const log = createLog('say');
 
 const TTS_SOCKET_NAME = '/dev/socket/tts';
-const TTS_COMMAND_NAME = 'ttsCommand';
 
 /**
  * This is a text to speech module for silk OS
@@ -112,7 +111,7 @@ export default class Say extends events.EventEmitter {
     }
 
     // tts socket expects the command data in the following format
-    let event = TTS_COMMAND_NAME + ' ' + '\"' + util.escape(JSON.stringify(cmd)) + '\"' + '\0';
+    let event = JSON.stringify(cmd) + '\0';
 
     this._socket.write(event);
     log.verbose(`tts << ${event}`);

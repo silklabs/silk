@@ -4,9 +4,9 @@
     "node": true
   },
   "rules": {
-    "react/jsx-quotes": [
+    "jsx-quotes": [
       2,
-      "double"
+      "prefer-double"
     ],
     "react/jsx-indent-props": [
       2,

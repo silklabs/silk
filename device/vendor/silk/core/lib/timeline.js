@@ -51,7 +51,6 @@ type Rect = {
  */
 export default class Timeline extends EventEmitter {
 
-  id: string; // deviceId
   outbox: Outbox;
   serverSocket: ?Socket;
   _previewSize: Size;
@@ -74,11 +73,10 @@ export default class Timeline extends EventEmitter {
     }
   };
 
-  constructor(id: string, outbox: Outbox) {
+  constructor(outbox: Outbox) {
     super();
     assert(outbox, 'must pass outbox...');
 
-    this.id = id;
     this.outbox = outbox;
     this.serverSocket = null;
     this._previewSize = {width: 0, height: 0};
@@ -91,7 +89,7 @@ export default class Timeline extends EventEmitter {
     // Keeps a copy of previous objects to be sent when there is no motion detected
     this.cachedObjs = [];
 
-    this.eventTracker = new EventTracker(this.id, this.outbox);
+    this.eventTracker = new EventTracker(this.outbox);
 
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
@@ -341,7 +339,6 @@ export default class Timeline extends EventEmitter {
       const op = new PreviewUploadOp({
         size: this.lastPreviewFrame.length,
         metadata: {
-          deviceId: this.id.toString(),
           metaType: 'preview',
           startUTC: this.lastPreviewFrameWhen,
           endUTC: this.lastPreviewFrameWhen + durationMs,
@@ -374,7 +371,6 @@ export default class Timeline extends EventEmitter {
     const op = new VideoUploadOp({
       size: frame.length,
       metadata: {
-        deviceId: this.id.toString(),
         metaType: 'video',
         startUTC: when,
         endUTC: when + durationMs,
@@ -432,7 +428,6 @@ export default class Timeline extends EventEmitter {
       // guarantees that `this.serverSocket` is truthy, too.
       // See https://github.com/facebook/flow/issues/998
       this.serverSocket && this.serverSocket.emit('video', {
-        id: this.id,
         objects: allObjects,
         frame,
         contents: type,
@@ -477,7 +472,6 @@ export default class Timeline extends EventEmitter {
     }
     // TODO: de-dup with app side
     this.serverSocket.emit('diag', {
-      id: this.id,
       type: 'avpipeline',
       log: { id, what, whenMs },
     });

@@ -319,7 +319,6 @@ class CameraStream extends EventEmitter {
       }
 
       this._buffer = '';
-
       const cmdData = {
         frameInterval: DURATION,
         width: WIDTH,
@@ -329,13 +328,7 @@ class CameraStream extends EventEmitter {
         audioMute
       };
 
-      this._videoWidth = cmdData.width;
-      this._videoHeight = cmdData.height;
-
-      PREVIEW_WIDTH = cmdData.width / PREVIEW_SCALE;
-      PREVIEW_HEIGHT = cmdData.height / PREVIEW_SCALE;
-      this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
-      this._command({cmdName: 'init', cmdData: cmdData});
+      this._command({cmdName: 'init', cmdData});
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
     this._ctlSocket.on('error', err => {
@@ -366,6 +359,10 @@ class CameraStream extends EventEmitter {
       if (captureEvent.eventName === 'error') {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
+        PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
+        PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
+        this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
+
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
         this._scheduleNextPreviewFrame();
 
@@ -693,9 +690,14 @@ class CameraStream extends EventEmitter {
   }
 
   /**
+   * Returns the camera preview size (or null until the camera has successfully
+   * initialized once)
    *
    */
   get previewSize() {
+    if (PREVIEW_WIDTH === 0) {
+      return null;
+    }
     return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 

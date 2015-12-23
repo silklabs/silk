@@ -194,6 +194,7 @@ class MonitorsView extends AsyncComponent {
               startFullscreenVideo={this.startFullscreenVideo}
             />
             {devices.size ? this._renderActivity() : null}
+            {eventsLoading === 'older' ? this._renderSpinner() : null}
           </ScrollView>
         </View>
       </View>
@@ -344,34 +345,24 @@ class MonitorsView extends AsyncComponent {
   };
 
   _renderActivity() {
-    let { eventsLoading, events } = this.state;
-
-    let activity = null;
+    let { events } = this.state;
     if (!events) {
-      activity = null;
-    } else if (!events.length) {
-      activity = (
-        <Text>No activity registered yet.</Text>
-      );
-    } else {
-      // TODO: insert labels for today, yesterday, etc.
-      activity = events.map((event) => (
-        <Activity
-          api={this.props.api}
-          hasNetwork={this.props.hasNetwork}
-          key={event.id || event._id}
-          actor={this._getDeviceName(event.deviceId)}
-          event={event}
-          previewSize={this._getPreviewSize(event.deviceId)}
-          startFullscreenVideo={this.startFullscreenVideo}
-        />
-      ));
+      return null;
     }
-
-    return [
-      activity,
-      eventsLoading === 'older' ? this._renderSpinner() : null,
-    ];
+    if (!events.length) {
+      return <Text>No activity registered yet.</Text>
+    }
+    return events.map((event) => (
+      <Activity
+        api={this.props.api}
+        hasNetwork={this.props.hasNetwork}
+        key={event.id || event._id}
+        actor={this._getDeviceName(event.deviceId)}
+        event={event}
+        previewSize={this._getPreviewSize(event.deviceId)}
+        startFullscreenVideo={this.startFullscreenVideo}
+      />
+    ));
   }
 
 }

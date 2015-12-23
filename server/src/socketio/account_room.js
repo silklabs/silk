@@ -23,10 +23,14 @@ import type {Record as DeviceRecord} from '../server/models/devices';
 
 const log = createLog('socketio:account_room');
 
+type DevicePreviewInfo = {
+  width: number;
+  height: number;
+}
+
 export type DeviceInfo = {
   id: string;
-  name: string;
-  previewSize: ?any;
+  previewSize: ?DevicePreviewInfo;
   logo: ?any;
   now: number;
 }
@@ -59,21 +63,39 @@ const VIDEO_IDLE_TIMEOUT_MS = 10000;
  * move to an adapater that allows us to move beyond a single server...
  */
 class Device {
-  info: DeviceInfo;
+  id: string;
+  info: DeviceInfo = {};
   socket: Socket;
   timeout: ?number;
-  timeOffset: number;
+  timeOffset: number = 0;
   livestream: DeviceLiveStream = {
     video: false,
     diag: false,
     preview: false,
   };
 
-  constructor(socket: Socket, info: DeviceInfo) {
+  constructor(socket: Socket, id: string) {
     this.socket = socket;
-    this.info = info;
+    this.id = id;
+    this.info.id = id;
+  }
 
-    this.timeOffset = Date.now() - info.now;
+  updateDeviceInfo(info: DeviceInfo) {
+    if (typeof info !== 'object') {
+      log.warn('Invalid DeviceInfo, not an object');
+      return;
+    }
+    if (typeof info.now === 'number') {
+      this.timeOffset = Date.now() - info.now;
+    }
+
+    if (typeof info.logo === 'object') {
+      this.info.logo = info.logo;
+    }
+
+    if (typeof info.previewSize === 'object') {
+      this.info.previewSize = info.previewSize;
+    }
   }
 
   updateLiveStream() {
@@ -91,9 +113,10 @@ class Device {
       this.timeout = null;
     }
 
-    if (this.livestream.preview || this.livestream.video || this.livestream.diag) {
+    if (this.livestream.diag ||
+        (this.info.previewSize && (this.livestream.preview || this.livestream.video))) {
       this.timeout = setTimeout(() => {
-        log.info(`Device packet timeout. Disconnecting io=${this.socket.id} id=${this.info.id}`);
+        log.info(`Device packet timeout. Disconnecting io=${this.socket.id} id=${this.id}`);
         this.socket.disconnect(true);
       }, VIDEO_IDLE_TIMEOUT_MS);
     }
@@ -171,41 +194,17 @@ export default class AccountRoom {
     ]);
   }
 
-  registerDeviceInfo(
+  registerOnlineDevice(
     device: DeviceRecord,
-    msg: DeviceInfo,
     socket: Socket
   ): Device {
-    let deviceInfo = msg;
-    if (!msg.logo || !msg.logo.length) {
-      deviceInfo = {
-        name: msg.name,
-        id: msg.id,
-        logo: null,
-        previewSize: null,
-        now: msg.now
-      };
-    }
-
-    if (deviceInfo.id && deviceInfo.id !== device.accessToken.publicKey) {
-      // TODO: Handle suspcious activity.
-      log.warn('User attempting to use another device.id!');
-    }
-
-    deviceInfo.id = device.accessToken.publicKey;
-    let deviceInstance = new Device(socket, deviceInfo);
-    this.devices.set(deviceInfo.id, deviceInstance);
+    const id = device.accessToken.publicKey;
+    let deviceInstance = new Device(socket, id);
+    this.devices.set(id, deviceInstance);
     socket.once('disconnect', () => {
       deviceInstance.destroy();
-      this.devices.delete(deviceInfo.id);
+      this.devices.delete(id);
     });
-
-    this.broadcast(
-      VIDEO_STREAMS_ROOM,
-      DEVICE_ONLINE_EVENT,
-      deviceInfo
-    );
-
     return deviceInstance;
   }
 

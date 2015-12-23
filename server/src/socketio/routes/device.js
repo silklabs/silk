@@ -5,6 +5,7 @@ import createLog from 'log';
 
 import {
   VIDEO_STREAMS_ROOM,
+  DEVICE_ONLINE_EVENT,
   DEVICE_OFFLINE_EVENT,
 } from '../account_room';
 
@@ -23,14 +24,12 @@ type Session = {
 }
 
 type VideoMessage = {
-  id: string;
   contents: string;
   when: number;
   serverEmitMs: ?number;
 }
 
 type DiagMessage = {
-  id: string;
   when: number;
   serverEmitMs: ?number;
 }
@@ -41,10 +40,10 @@ export function deviceRoom(deviceId: string, name: string): string {
 
 export default function(session: Session): EventHandlers {
 
-  function sendToDeviceRoom(roomType, msg) {
-    let deviceId = msg.id;
-    let device = session.room.devices.get(deviceId);
+  const deviceId = session.publicKey;
 
+  function sendToDeviceRoom(roomType, msg) {
+    let device = session.room.devices.get(deviceId);
     if (!device) {
       log.error(`Disconnecting bad device ("info" packet expected first): ` +
                 `io=${session.socket.id} id=${deviceId}`);
@@ -73,32 +72,26 @@ export default function(session: Session): EventHandlers {
 
   return {
     info: async (msg: DeviceInfo) => {
-      // Always ensure we use the authenticated devices's id.
-      msg.id = session.publicKey;
-
-      let device = session.room.devices.get(msg.id);
+      let device = session.room.devices.get(deviceId);
       if (!device) {
         // new device ...
-        device = session.room.registerDeviceInfo(session.device, msg, session.socket);
+        device = session.room.registerOnlineDevice(session.device, session.socket);
         device.updateLiveStream();
       }
+      device.updateDeviceInfo(msg);
 
-      log.info(`Device info. io=${session.socket.id} name=${msg.name} ` +
-                    `timeOffset=${device.timeOffset}ms id=${msg.id}`);
+      log.info(`Device info. io=${session.socket.id} ` +
+               `timeOffset=${device.timeOffset}ms id=${deviceId}`);
 
       device.resetTimeout();
+      session.room.broadcast(VIDEO_STREAMS_ROOM, DEVICE_ONLINE_EVENT, device.info);
     },
 
     diag: async (msg: DiagMessage) => {
-      // Always ensure we use the authenticated devices's id.
-      msg.id = session.publicKey;
       sendToDeviceRoom('diag', msg);
     },
 
     video: async(video: VideoMessage) => {
-      // Always ensure we use the authenticated devices's id.
-      video.id = session.publicKey;
-
       switch (video.contents) {
       case 'jpeg':
         sendToDeviceRoom('preview', video);
@@ -112,7 +105,7 @@ export default function(session: Session): EventHandlers {
     },
 
     disconnect: async () => {
-      let msg = { id: session.device.accessToken.publicKey };
+      const msg = { id: deviceId };
       session.room.broadcast(VIDEO_STREAMS_ROOM, DEVICE_OFFLINE_EVENT, msg);
     },
   };

@@ -25,6 +25,7 @@ addons:
       - libcvaux-dev
       - libhighgui-dev
       - libopencv-dev
+      - g++-4.8-multilib
 
 before_script:
   source .travis/before_script

@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Button, ButtonGroup, Glyphicon, Label, ProgressBar } from 'react-bootstrap';
 import { Link } from 'react-router';
 import { EventEmitter } from 'events';
@@ -81,8 +82,8 @@ export default class CameraVideo extends React.Component {
 
   componentDidMount() {
     this.videoTags = [
-      new VideoTag(React.findDOMNode(this.refs.video0), 0),
-      new VideoTag(React.findDOMNode(this.refs.video1), 1),
+      new VideoTag(ReactDOM.findDOMNode(this.refs.video0), 0),
+      new VideoTag(ReactDOM.findDOMNode(this.refs.video1), 1),
     ];
 
     this.videoTags.forEach(tag => {

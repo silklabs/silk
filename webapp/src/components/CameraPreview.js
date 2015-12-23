@@ -2,6 +2,7 @@
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import Cameras from '../libraries/Cameras';
 
 export default class CameraPreview extends React.Component {
@@ -21,7 +22,7 @@ export default class CameraPreview extends React.Component {
   }
 
   componentDidMount() {
-    this._canvas = React.findDOMNode(this);
+    this._canvas = ReactDOM.findDOMNode(this);
     this._context = this._canvas.getContext('2d');
   }
 

@@ -5,6 +5,8 @@ LOCAL_MODULE := silk-tts
 LOCAL_MODULE_STEM := tts
 
 LOCAL_SRC_FILES := ../jsoncpp/jsoncpp.cpp \
+                   ../SocketListener/FrameworkListener1.cpp \
+                   ../SocketListener/SocketListener1.cpp \
                    main.cpp \
                    AudioPlayer.cpp \
 
@@ -16,12 +18,14 @@ LOCAL_SHARED_LIBRARIES := liblog \
                           libhardware \
                           libsysutils \
                           libutils \
+                          libcutils \
                           libttspico \
                           libmedia \
                           libstagefright_foundation \
 
 LOCAL_C_INCLUDES += hardware/libhardware/include \
                     $(LOCAL_PATH)/../jsoncpp \
+                    $(LOCAL_PATH)/../SocketListener \
                     external/svox/pico/compat/include \
 
 LOCAL_MODULE_TAGS := optional

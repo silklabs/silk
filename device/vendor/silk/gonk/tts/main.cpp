@@ -11,7 +11,6 @@
 #include <utils/Log.h>
 
 #include <stdlib.h>
-#include <sysutils/FrameworkListener.h>
 #include <utils/Timers.h>
 #include <json/json.h>
 #include <utils/Thread.h>
@@ -22,6 +21,7 @@
 #include "TtsEngine.h"
 #include "AudioPlayer.h"
 #include "EqualizeFilter.h"
+#include "FrameworkListener1.h"
 
 using namespace android;
 using namespace Json;
@@ -115,16 +115,16 @@ private:
  * This class provides a wrapper around tts socket to help with
  * sending and receiving messages using the tts socket.
  */
-class TextToSpeechListener: private FrameworkListener, public virtual RefBase {
+class TextToSpeechListener: private FrameworkListener1, public virtual RefBase {
 public:
   TextToSpeechListener() :
-      FrameworkListener(TTS_SOCKET_NAME) {
-    FrameworkListener::registerCmd(new TextToSpeechCommand(this));
+      FrameworkListener1(TTS_SOCKET_NAME) {
+    FrameworkListener1::registerCmd(new TextToSpeechCommand(this));
   }
 
   int start() {
     ALOGD("Starting TextToSpeechListener");
-    return FrameworkListener::startListener();
+    return FrameworkListener1::startListener();
   }
 
   /**
@@ -135,7 +135,7 @@ public:
     std::string jsonMessage = fastWriter.write(jsonMsg);
 
     ALOGV("Broadcasting %s", jsonMessage.c_str());
-    FrameworkListener::sendBroadcast(200, jsonMessage.c_str(), false);
+    FrameworkListener1::sendBroadcast(200, jsonMessage.c_str(), false);
   }
 };
 

@@ -397,6 +397,7 @@ class CameraStream extends EventEmitter {
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);
+          this._getParameterCallback = null;
         }
       } else if (captureEvent.eventName === 'stopped') {
         throw new Error('Camera stop unhandled');
@@ -669,7 +670,7 @@ class CameraStream extends EventEmitter {
       this._getParameterCallback = { resolve, reject };
     });
     this._command({cmdName: 'getParameterInt', name});
-    return getParamPromise;
+    return await getParamPromise;
   }
 
   /**

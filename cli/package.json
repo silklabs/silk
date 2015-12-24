@@ -4,6 +4,7 @@
   "description": "Silk command line tool",
   "main": "silk.js",
   "scripts": {
+    "lint": "eslint lib",
     "install": "( ./build/build && echo \"#!/usr/bin/env node\" > silk && cat silk.js >> silk && chmod u+x silk && rm silk.js )"
   },
   "dependencies": {
@@ -18,9 +19,10 @@
     "argparse": "^1.0.2",
     "babel": "^5.8.23",
     "babel-core": "^5.8.25",
-    "babel-eslint": "~3.1.15",
+    "babel-eslint": "^4.1.6",
     "babelify": "^6.3.0",
     "browserify": "^11.2.0",
+    "eslint": "^1.10.3",
     "gulp": "^3.9.0",
     "gulp-babel": "^5.2.1",
     "gulp-cache": "^0.3.0",

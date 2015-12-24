@@ -47,7 +47,7 @@ else
 fi
 
 if [[ -n "$GONK_REPO" ]]; then
-  time git clone $GONK_REPO gonk/$GONK
+  ( set -x; time git clone $GONK_REPO gonk/$GONK )
 fi
 time make init.$GONK
 time make sync

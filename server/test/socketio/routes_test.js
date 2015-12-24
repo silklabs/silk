@@ -9,7 +9,7 @@ suite('routes', () => {
   let deviceSocket, device, accountSocket, account;
   let secondDeviceSocket;
   setup(async () => {
-    let pair  = await context.testPair();
+    let pair = await context.testPair();
     device = pair.device;
     account = pair.account;
 
@@ -112,7 +112,7 @@ suite('routes', () => {
     let roomName = `video-${device.record.accessToken.publicKey}`;
     await emit(accountSocket, 'join', roomName);
     let videoEvent = eventToPromise(accountSocket, roomName);
-    let event =   {
+    let event = {
       id: device.record.accessToken.publicKey,
       contents: 'mp4',
       when: Date.now()
@@ -142,7 +142,9 @@ suite('routes', () => {
     let cmd = { woot: true };
     await emit(accountSocket, 'cmd', cmd);
     let result = await events;
-    for (let value of result) assert.deepEqual(value, cmd);
+    for (let value of result) {
+      assert.deepEqual(value, cmd);
+    }
   });
 
   test('.cmd - single device', async () => {

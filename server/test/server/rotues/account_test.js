@@ -121,7 +121,7 @@ suite('account auth', () => {
   if (process.env.INFLUX_CONNECTION_STRING) {
     test('read / writeMetrics', async () => {
       let series = uuid.v4().replace(/-/g, '');
-      let points  = [
+      let points = [
         [series, { tag: 'a' }, { value: '1i' }],
         [series, { tag2: 'a' }, { value: '2i' }],
         [series, { tag3: 'a' }, { value: '3i' }],

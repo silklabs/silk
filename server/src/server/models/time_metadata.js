@@ -14,7 +14,7 @@ const MONGO_ID_REGEX = /[0-9a-f]{24}/;
 
 function idQuery(id) {
   if (id.match(MONGO_ID_REGEX)) {
-    return {_id: mongo.ObjectId(id)}; // eslint-disable-line new-cap
+    return {_id: new mongo.ObjectId(id)};
   }
   return {id};
 }
@@ -261,7 +261,7 @@ export default class TimeMetadata extends Base {
     let existing = await this.collection.findOne({id});
     if (existing) {
       await this.collection.update(
-        { _id: mongo.ObjectId(existing._id) },
+        { _id: new mongo.ObjectId(existing._id) },
         { $set: payload }
       );
     } else {

@@ -29,7 +29,7 @@ export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrid
       return null;
     }
 
-    req.device = device ;
+    req.device = device;
     req.publicKey = publicKey;
     return publicKey;
   };

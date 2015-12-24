@@ -26,7 +26,7 @@ const METADATA_ARRAY =
 
 // XXX: Use better input types...
 function send404OnEmpty(res: any, output: any): void {
-  if (!output)  {
+  if (!output) {
     res.sendStatus(404);
     return;
   }
@@ -107,7 +107,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     ]),
   }, async (req, res) => {
     let record = await ctx.timeMeta.findNearTime(req.body);
-    if (record != null) {
+    if (record) {
       record = decorateUrl(record);
     }
     // TODO: Validate deviceId against known devices for this account.

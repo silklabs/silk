@@ -26,16 +26,11 @@ export default class Scopes {
   accountScopes(account: AccountRecord): Array<string> {
     let {email} = account;
     email = email.toLowerCase();
+    let suffixMatches = (suffix) => email.endsWith(suffix.toLowerCase());
 
     let scopes = [];
-
     for (let scope in this._scopeRules) {
-      let suffixes = this._scopeRules[scope];
-      let matches = suffixes.some((suffix) => {
-        return email.toLowerCase().endsWith(suffix.toLowerCase());
-      });
-
-      if (matches) {
+      if (this._scopeRules[scope].some(suffixMatches)) {
         scopes.push(scope);
       }
     }

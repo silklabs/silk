@@ -1,9 +1,6 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 import assert from 'assert';
 import createContext from '../context';
-import createApi from '../../../src/api';
+import { default as createApi, AccessToken } from '../../../src/api';
 import Account from '../../../src/server/models/accounts';
 
 suite('account auth', () => {
@@ -187,7 +184,7 @@ suite('account auth', () => {
       });
 
       let {pub, priv} = passwordReset.accessToken;
-      let accessToken = new api.id(pub, priv);
+      let accessToken = new AccessToken(pub, priv);
 
       let password = context.passwordHash('newpass');
       let useToken = await account.api.vip.usePasswordResetToken({

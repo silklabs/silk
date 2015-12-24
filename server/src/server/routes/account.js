@@ -186,7 +186,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       return;
     }
 
-    if (ctx.influxdb == null) {
+    if (!ctx.influxdb) {
       res.respond({ error: 'InfluxDB not configured.' });
       return;
     }

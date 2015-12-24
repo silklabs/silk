@@ -56,14 +56,14 @@ function getSignature(req: any): ?string {
   let { authorization } = req.headers;
   if (!authorization) {
     log.error('Missing authorization header', req.path, req.method);
-    return;
+    return null;
   }
 
   // Must be a scheme we understand.
   let [scheme, signature] = authorization.split(' ');
   if (scheme.toLowerCase() !== 'bearer') {
     log.error('Unknown authorization header type', req.path, req.method, scheme);
-    return;
+    return null;
   }
 
   return signature;

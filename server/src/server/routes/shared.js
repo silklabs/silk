@@ -77,7 +77,7 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
       points: Joi.array().items(Joi.any()).required()
     }).required(),
   }, async (req, res) => {
-    if (ctx.influxdb == null) {
+    if (!ctx.influxdb) {
       log.info('Dropping metrics influxdb not configured.');
       res.respond({});
       return;

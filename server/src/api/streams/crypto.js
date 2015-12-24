@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -334,7 +332,7 @@ export class DecryptStream extends CryptoStreamBase {
       if (chunk[0] !== CryptoStreamBase.PUBLIC_KEY_LENGTH) {
         const error = new Error(`Invalid public key length (${chunk[0]})`);
         this._endWithError(error);
-        return;
+        return null;
       }
 
       // Make the buffer that will hold the entire public key.
@@ -363,7 +361,7 @@ export class DecryptStream extends CryptoStreamBase {
     // Slice out the data that we need for the public key and leave the rest to
     // get processed in |_transform|.
     let publicKeyChunk;
-    if (chunkPublicKeyLength == chunk.length) {
+    if (chunkPublicKeyLength === chunk.length) {
       publicKeyChunk = chunk;
       chunk = null;
     } else {
@@ -376,7 +374,7 @@ export class DecryptStream extends CryptoStreamBase {
                         this._otherPublicKeyBufferIndex);
     this._otherPublicKeyBufferIndex += publicKeyChunk.length;
 
-    if (this._otherPublicKeyBufferIndex == this._otherPublicKeyBuffer.length) {
+    if (this._otherPublicKeyBufferIndex === this._otherPublicKeyBuffer.length) {
       log.debug(`Received all ${this._otherPublicKeyBuffer.length} bytes for ` +
                 `the public key: ` +
                 `'${this._otherPublicKeyBuffer.toString('hex')}'`);

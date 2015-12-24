@@ -1,0 +1,7 @@
+{
+  "extends": ".eslintrc",
+  "rules": {
+    "react/jsx-indent-props": [2, 2],
+    "react/jsx-closing-bracket-location": [2, {"nonEmpty": "after-props", "selfClosing": "tag-aligned"}]
+  }
+}

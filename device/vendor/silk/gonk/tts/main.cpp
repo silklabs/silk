@@ -17,11 +17,12 @@
 #include <media/stagefright/foundation/ABuffer.h>
 #include <utils/List.h>
 #include <utils/Condition.h>
+#include <dlfcn.h>
 
-#include "TtsEngine.h"
 #include "AudioPlayer.h"
 #include "EqualizeFilter.h"
 #include "FrameworkListener1.h"
+#include "tts.h"
 
 using namespace android;
 using namespace Json;
@@ -34,6 +35,7 @@ using namespace std;
 #define TTS_COMMAND_NAME "ttsCommand"
 #define MAX_MSG_SIZE 128
 
+#define TTS_ENGINE_LIB          "libttspico.so"
 #define DEFAULT_TTS_BUFFERSIZE  2048
 #define DEFAULT_SPEECH_RATE     "100"
 #define DEFAULT_PITCH           "100"
@@ -59,16 +61,19 @@ using namespace std;
 class TextToSpeechListener;
 class SynthesisPlaybackHandler;
 
+typedef android_tts_engine_t *(*android_tts_entrypoint)();
+
 /**
  * Convert int audio format to AudioTrack audio format
  */
-static inline audio_format_t audioFormatToNative(tts_audio_format audioFormat) {
+static inline audio_format_t audioFormatToNative(
+    android_tts_audio_format_t audioFormat) {
   switch (audioFormat) {
-    case TTS_AUDIO_FORMAT_PCM_16_BIT:
+    case ANDROID_TTS_AUDIO_FORMAT_PCM_16_BIT:
       return AUDIO_FORMAT_PCM_16_BIT;
-    case TTS_AUDIO_FORMAT_PCM_8_BIT:
+    case ANDROID_TTS_AUDIO_FORMAT_PCM_8_BIT:
       return AUDIO_FORMAT_PCM_8_BIT;
-    case TTS_AUDIO_FORMAT_DEFAULT:
+    case ANDROID_TTS_AUDIO_FORMAT_DEFAULT:
       return AUDIO_FORMAT_DEFAULT;
     default:
       return AUDIO_FORMAT_INVALID;
@@ -107,7 +112,7 @@ private:
   int tts_synthesizeText(Value& text);
 
   Reader mJsonReader;
-  TtsEngine* ttsEngine;
+  android_tts_engine_t* ttsEngine;
   int8_t *mBuffer;
 };
 
@@ -210,18 +215,19 @@ int TextToSpeechCommand::runCommand(SocketClient *c, int argc, char ** argv) {
 /**
  * Callback for synthesis completed
  */
-tts_callback_status synthesis_callback(void *& pUserData,
-    uint32_t trackSamplingHz, tts_audio_format audioFormat, int channelCount,
-    int8_t*& pAudioBuffer, size_t& pBufferSize, tts_synth_status status) {
-  if (pUserData == NULL) {
+android_tts_callback_status_t synthesis_callback(void ** pUserData,
+    uint32_t trackSamplingHz, android_tts_audio_format_t audioFormat,
+    int channelCount, int8_t** pAudioBuffer, size_t* pBufferSize,
+    android_tts_synth_status_t status) {
+  if (*pUserData == NULL) {
     ALOGE("userdata == NULL");
-    return TTS_CALLBACK_HALT;
+    return ANDROID_TTS_CALLBACK_HALT;
   }
 
-  TextToSpeechCommand *pMe = static_cast<TextToSpeechCommand*>(pUserData);
+  TextToSpeechCommand *pMe = static_cast<TextToSpeechCommand*>(*pUserData);
 
-  if (pAudioBuffer != NULL && pBufferSize > 0) {
-    applyFilter(reinterpret_cast<int16_t*>(pAudioBuffer), pBufferSize / 2);
+  if (*pAudioBuffer != NULL && *pBufferSize > 0) {
+    applyFilter(reinterpret_cast<int16_t*>(*pAudioBuffer), *pBufferSize / 2);
 
     if (!pMe->startCalled) {
       ALOGD("Synthesis started");
@@ -230,7 +236,7 @@ tts_callback_status synthesis_callback(void *& pUserData,
       audio_format_t format = audioFormatToNative(audioFormat);
       if (format == AUDIO_FORMAT_INVALID) {
         ALOGE("Invalid audio format %d", audioFormat);
-        return TTS_CALLBACK_HALT;
+        return ANDROID_TTS_CALLBACK_HALT;
       }
 
       // Start the new thread to begin audio playback
@@ -240,20 +246,20 @@ tts_callback_status synthesis_callback(void *& pUserData,
     }
 
     // Queue audio data on the audio thread
-    pMe->mPlaybackHandler->put(pAudioBuffer, pBufferSize);
-    memset(pAudioBuffer, 0, pBufferSize);
+    pMe->mPlaybackHandler->put(*pAudioBuffer, *pBufferSize);
+    memset(*pAudioBuffer, 0, *pBufferSize);
   }
 
   // Finished synthesis, report event to node process
-  if (pAudioBuffer == NULL || status == TTS_SYNTH_DONE) {
+  if (pAudioBuffer == NULL || status == ANDROID_TTS_SYNTH_DONE) {
     // Notify playback handler that synthesis is done
     pMe->mPlaybackHandler->done();
 
-    return TTS_CALLBACK_HALT;
+    return ANDROID_TTS_CALLBACK_HALT;
   }
 
-  pBufferSize = DEFAULT_TTS_BUFFERSIZE;
-  return TTS_CALLBACK_CONTINUE;
+  *pBufferSize = DEFAULT_TTS_BUFFERSIZE;
+  return ANDROID_TTS_CALLBACK_CONTINUE;
 }
 
 /**
@@ -267,9 +273,29 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
   string pitch = DEFAULT_PITCH;
   string volume = PICO_MAX_VOLUME;
 
-  ttsEngine = new TtsEngine();
-  tts_result result = ttsEngine->init(synthesis_callback, NULL);
-  LOG_ERROR((result != TTS_SUCCESS), "ttsEngine->init() failed (%d)", result);
+  // Load TTS engine specified by {@code TTS_ENGINE_LIB} dynamically
+  void *engineLibHandle = dlopen(TTS_ENGINE_LIB, RTLD_NOW | RTLD_LOCAL);
+  LOG_ERROR((engineLibHandle == NULL), "%s engineLibHandle == NULL", __FUNCTION__);
+
+  android_tts_entrypoint getTtsEngine =
+      reinterpret_cast<android_tts_entrypoint>(dlsym(engineLibHandle,
+          "android_getTtsEngine"));
+
+  // Support obsolete/legacy binary modules
+  if (getTtsEngine == NULL) {
+    getTtsEngine = reinterpret_cast<android_tts_entrypoint>(dlsym(
+        engineLibHandle, "getTtsEngine"));
+  }
+  LOG_ERROR((getTtsEngine == NULL), "%s getTtsEngine == NULL", __FUNCTION__);
+
+  ttsEngine = (*getTtsEngine)();
+  LOG_ERROR((getTtsEngine == NULL), "%s Unable to get TTSEngine",
+      __FUNCTION__);
+
+  android_tts_result_t result = ttsEngine->funcs->init(ttsEngine,
+      synthesis_callback, NULL);
+  LOG_ERROR((result != ANDROID_TTS_SUCCESS), "ttsEngine->init() failed (%d)",
+      result);
 
   initializeEQ();
 
@@ -291,29 +317,34 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
   }
 
   // Check if language is available
-  tts_support_result langAvailable = ttsEngine->isLanguageAvailable(
-      lang.c_str(), country.c_str(), "");
-  LOG_ERROR((langAvailable != TTS_LANG_COUNTRY_AVAILABLE),
+  android_tts_support_result_t langAvailable =
+      ttsEngine->funcs->isLanguageAvailable(ttsEngine, lang.c_str(),
+          country.c_str(), "");
+  LOG_ERROR((langAvailable != ANDROID_TTS_LANG_COUNTRY_AVAILABLE),
       "ttsEngine->isLanguageAvailable failed (%d)", langAvailable);
 
   // Set language
-  result = ttsEngine->setLanguage(lang.c_str(), country.c_str(), "");
-  LOG_ERROR((result != TTS_SUCCESS),
+  result = ttsEngine->funcs->setLanguage(ttsEngine, lang.c_str(),
+      country.c_str(), "");
+  LOG_ERROR((result != ANDROID_TTS_SUCCESS),
       "ttsEngine->setLanguage failed (%d)", result);
 
   // Set rate
-  result = ttsEngine->setProperty("rate", rate.c_str(), rate.length());
-  LOG_ERROR((result != TTS_SUCCESS),
+  result = ttsEngine->funcs->setProperty(ttsEngine, "rate", rate.c_str(),
+      rate.length());
+  LOG_ERROR((result != ANDROID_TTS_SUCCESS),
       "ttsEngine->setProperty('rate') failed (%d)", result);
 
   // Set pitch
-  result = ttsEngine->setProperty("pitch", pitch.c_str(), pitch.length());
-  LOG_ERROR((result != TTS_SUCCESS),
+  result = ttsEngine->funcs->setProperty(ttsEngine, "pitch", pitch.c_str(),
+      pitch.length());
+  LOG_ERROR((result != ANDROID_TTS_SUCCESS),
       "ttsEngine->setProperty('pitch') failed (%d)", result);
 
   // Set volume
-  result = ttsEngine->setProperty("volume", volume.c_str(), volume.length());
-  LOG_ERROR((result != TTS_SUCCESS),
+  result = ttsEngine->funcs->setProperty(ttsEngine, "volume", volume.c_str(),
+      volume.length());
+  LOG_ERROR((result != ANDROID_TTS_SUCCESS),
       "ttsEngine->setProperty('volume') failed (%d)", result);
 
   Json::Value jsonMsg;
@@ -327,7 +358,7 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
  * Shut down the TTS engine and releases all associated resources
  */
 int TextToSpeechCommand::tts_shutdown() {
-  ttsEngine->shutdown();
+  ttsEngine->funcs->shutdown(ttsEngine);
   return 0;
 }
 
@@ -337,7 +368,7 @@ int TextToSpeechCommand::tts_shutdown() {
  */
 int TextToSpeechCommand::tts_stop() {
   ALOGV("%s", __PRETTY_FUNCTION__);
-  ttsEngine->stop();
+  ttsEngine->funcs->stop(ttsEngine);
   return 0;
 }
 
@@ -362,9 +393,10 @@ int TextToSpeechCommand::tts_synthesizeText(Value& text) {
   memset(mBuffer, 0, DEFAULT_TTS_BUFFERSIZE);
 
   startCalled = false;
-  tts_result result = ttsEngine->synthesizeText(textStr, mBuffer,
-      DEFAULT_TTS_BUFFERSIZE, static_cast<void *>(this));
-  LOG_ERROR((result != TTS_SUCCESS), "ttsEngine->synthesizeText() failed (%d)", result);
+  android_tts_result_t result = ttsEngine->funcs->synthesizeText(ttsEngine,
+      textStr, mBuffer, DEFAULT_TTS_BUFFERSIZE, static_cast<void *>(this));
+  LOG_ERROR((result != ANDROID_TTS_SUCCESS),
+      "ttsEngine->synthesizeText() failed (%d)", result);
 
   return 0;
 }

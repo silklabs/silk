@@ -19,14 +19,14 @@ LOCAL_SHARED_LIBRARIES := liblog \
                           libsysutils \
                           libutils \
                           libcutils \
-                          libttspico \
+                          libdl \
                           libmedia \
                           libstagefright_foundation \
 
 LOCAL_C_INCLUDES += hardware/libhardware/include \
                     $(LOCAL_PATH)/../jsoncpp \
                     $(LOCAL_PATH)/../SocketListener \
-                    external/svox/pico/compat/include \
+                    external/svox/pico/compat/jni \
 
 LOCAL_MODULE_TAGS := optional
 

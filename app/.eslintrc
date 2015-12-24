@@ -1,5 +1,5 @@
 {
-  "extends": "../.eslintrc",
+  "extends": "../eslintrc",
   "globals": {
     "__DEV__": false,
     "ErrorUtils": false

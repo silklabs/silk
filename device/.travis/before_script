@@ -46,6 +46,9 @@ else
   echo "Failed to find ccache bundle at $CCACHE_URL"
 fi
 
+if [[ -n "$GONK_REPO" ]]; then
+  time git clone $GONK_REPO gonk/$GONK
+fi
 time make init.$GONK
 time make sync
 

@@ -31,7 +31,8 @@ export default class Say extends events.EventEmitter {
       log.verbose(`connected to ${TTS_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
-      this._command({cmdName: 'init', lang: 'eng', country: 'USA'});
+      this._command({cmdName: 'init', lang: 'eng', country: 'USA', pitch: '90',
+        rate: '90'});
     });
     this._socket.on('data', data => this._onData(data));
     this._socket.on('error', err => {

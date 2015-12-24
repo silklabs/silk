@@ -43,7 +43,7 @@
     "flow": "flow check",
     "lint": "eslint src",
     "localBundle": "./tools/local_bundle",
-    "postinstall": "cd node_modules/eslint && npm i escope@3.2.0 && cd ../.. && ./tools/patch && ./tools/update_crypto_browserify",
+    "postinstall": "./tools/patch && ./tools/update_crypto_browserify",
     "start": "rnws start --port 8082 --packagerPort 8081 --webpackPort 60046 --no-android",
     "update": "./tools/update"
   },

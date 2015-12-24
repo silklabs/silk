@@ -350,7 +350,7 @@ class MonitorsView extends AsyncComponent {
       return null;
     }
     if (!events.length) {
-      return <Text>No activity registered yet.</Text>
+      return <Text>No activity registered yet.</Text>;
     }
     return events.map((event) => (
       <Activity

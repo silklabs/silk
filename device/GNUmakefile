@@ -49,9 +49,13 @@ sync: | .repo/manifest.xml
 # Update the currently attached Mako device with the latest prebuilt dev build
 .PHONY: update
 update:
-	rm -rf out/prebuilt/mako
-	$(MAKE) update.mako
-	out/prebuilt/mako/aosp_mako/$(or $(FLASH_SCRIPT),flash.sh)
+	source vendor/silk/build/gonk.sh && ( \
+    set -e; \
+    if [[ $$GONK == base ]]; then GONK=mako; fi; \
+    rm -rf out/prebuilt/$$GONK; \
+    $(MAKE) update.$$GONK; \
+    out/prebuilt/$$GONK/aosp_$$GONK/$(or $(FLASH_SCRIPT),flash.sh); \
+  )
 
 # Update the currently attached Mako device with the latest prebuilt FUT build
 .PHONY: fut
@@ -83,20 +87,6 @@ qemu:
 
 .PHONY: emu
 emu: qemu
-
-# Fetch the latest prebuilt mako distribution
-update.mako: | out/prebuilt/mako ;
-out/prebuilt/mako:
-	mkdir -p out/prebuilt/mako
-	cd out/prebuilt/mako && wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/mako.tgz
-	cd out/prebuilt/mako && tar zxf mako.tgz
-
-# Fetch the latest prebuilt qemu distribution
-update.qemu: | out/prebuilt/qemu ;
-out/prebuilt/qemu:
-	mkdir -p out/prebuilt/qemu
-	cd out/prebuilt/qemu && wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/qemu.tgz
-	cd out/prebuilt/qemu && tar zxf qemu.tgz
 
 
 # Builds a distribution archive from the current build products
@@ -134,29 +124,40 @@ time:
 
 
 #
-# Initialize the workspace with gonk/<gonk>/<gonk>.xml instead of the default
-# gonk with:
+# $ make init.<gonk>
+#   Initialize the workspace with gonk/<gonk>/<gonk>.xml
 #
-#   $ make init.<gonk>
+# $ make update.<gonk>
+#   Fetch the latest binaries for the specified gonk into out/prebuilt/<gonk>
 #
-define __init_rules
-
+define __gonk_rules
 .PHONY: init.$(1)
 init.$(1): GONK=$(1)
 init.$(1):
 	rm -rf .repo/manifest* .repo/.repo_fetchtimes.json out/repo_fetchtimes.P
 	+$(MAKE) --no-print-directory .repo/manifest.xml GONK=$(1)
+
+# Fetch the latest prebuilt distribution
+update.$(1): | out/prebuilt/$(1) ;
+out/prebuilt/$(1):
+	mkdir -p out/prebuilt/$(1)
+	cd out/prebuilt/$(1) && wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$(1).tgz
+	cd out/prebuilt/$(1) && tar zxf $(1).tgz
+
 endef
 
 $(eval \
   $(foreach manifest,$(subst /,,$(subst gonk/,,$(notdir $(basename $(wildcard gonk/*/*.xml))))),\
-    $(call __init_rules,$(manifest))) \
+    $(call __gonk_rules,$(manifest))) \
 )
 
 init.%:
 	@echo Error: gonk/*/$(subst init.,,$@).xml does not exist
 	@false
 
+update.%:
+	@echo Error: gonk/*/$(subst update.,,$@).xml does not exist
+	@false
 
 #
 # Gonk manifest management (internal)

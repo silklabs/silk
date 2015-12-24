@@ -63,3 +63,8 @@ service silk-kmsg /system/bin/logwrapper /system/silk/bin/kmsg
     user root
     group system
 
+service silk-tts /system/silk/bin/debug-wrapper /system/silk/bin/tts
+    class main
+    user audio
+    group audio
+    socket tts stream 0600 root root

@@ -148,6 +148,15 @@ class Env extends EventEmitter {
       });
     }
 
+    let say = deviceObjects.say;
+    if (say) {
+      this.say = {
+        speak: text => {
+          say.speak(text);
+        },
+      };
+    }
+
     this.util = {
       playSound: fileName => {
         util.playSound(fileName);

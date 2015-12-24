@@ -39,6 +39,7 @@ import sensors from './sensors';
 import infrared from './infrared';
 import server from './server';
 import fs from 'mz/fs';
+import Say from './say';
 
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
@@ -70,6 +71,7 @@ let networkStatus;
 let logcat;
 let ext;
 let diag;
+let say;
 
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
@@ -134,6 +136,8 @@ function main() {
     .then(maybeAbortBoot)
     .then(() => {
       log.info('Initialize hardware');
+      say = new Say();
+
       return Promise.all([
         wifi.init(),
         getBTLE().then(btleInstance => {
@@ -141,6 +145,7 @@ function main() {
         }),
         sensors.init(),
         infrared.init(),
+        say.init(),
       ]);
     })
     .then(maybeAbortBoot)
@@ -303,6 +308,7 @@ config.on('unconfigured', () => {
   if (ui.goto('setup')) {
     camera.stopRecording();
     server.disconnect();
+    say.speak('Hello there, welcome to your new silk device');
   }
 });
 config.on('configured', async () => {
@@ -321,6 +327,7 @@ config.on('configured', async () => {
       sensors: sensors,
       infrared: infrared,
       timeline: timeline,
+      say: say,
     });
   } else {
     extPromise = Promise.resolve(ext);

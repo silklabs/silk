@@ -87,6 +87,7 @@ SILK_GONK_PROGIES := \
   wpad \
   silk-sensors \
   silk-time_genoff \
+  tts \
 
 SILK_UI_PACKAGES := \
   logo.png \

@@ -65,9 +65,11 @@ const buildList = [
     config: {
       os: [ 'linux' ],
       env: {
+        global: [
+          'GONK_REPO=git@github.com:silklabs/gonk-410c.git',
+        ],
         matrix: [
           'GONK_SPEC=410c',
-          'GONK_REPO=git@github.com:silklabs/gonk-410c.git'
         ],
       },
     },

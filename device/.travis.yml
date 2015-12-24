@@ -25,7 +25,6 @@ addons:
       - libcvaux-dev
       - libhighgui-dev
       - libopencv-dev
-      - genisoimage
 
 before_script:
   source .travis/before_script

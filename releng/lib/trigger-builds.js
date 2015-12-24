@@ -12,7 +12,7 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
-    message: 'Nightly qemu master build',
+    message: 'qemu master build',
     branch: 'master',
     config: {
       os: [ 'linux' ],
@@ -24,7 +24,7 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
-    message: 'Nightly qemu next build',
+    message: 'qemu next build',
     branch: 'next',
     config: {
       os: [ 'linux' ],
@@ -36,7 +36,46 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
-    message: 'Nightly OS X base build',
+    message: 'hammerhead master build',
+    branch: 'master',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [ 'GONK_SPEC=hammerhead' ],
+      },
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'device',
+    message: 'shamu master build',
+    branch: 'master',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [ 'GONK_SPEC=shamu' ],
+      },
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'device',
+    message: 'Dragonboard 410c master build',
+    branch: 'master',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [
+          'GONK_SPEC=410c',
+          'GONK_REPO=git@github.com:silklabs/gonk-410c.git'
+        ],
+      },
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'device',
+    message: 'OS X base build',
     branch: 'master',
     config: {
       os: [ 'osx' ],
@@ -48,7 +87,7 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
-    message: 'Nightly base.msm8916 master build',
+    message: 'base.msm8916 master build',
     branch: 'master',
     config: {
       os: [ 'linux' ],
@@ -60,7 +99,7 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
-    message: 'Nightly base.msm8916 next build',
+    message: 'base.msm8916 next build',
     branch: 'next',
     config: {
       os: [ 'linux' ],

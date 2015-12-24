@@ -102,11 +102,11 @@ export default class NotLoggedIn extends AsyncComponent {
         <View style={styles.bottomLinks}>
           <TextLink
             label="LEARN MORE"
-            onPress={() => console.log('Learn more')}
+            onPress={undefined} // TODO
           />
           <TextLink
             label="TERMS & CONDITIONS"
-            onPress={() => console.log('T&C')}
+            onPress={undefined} // TODO
           />
         </View>
       </View>

@@ -64,7 +64,6 @@ let ObjectBoxes = React.createClass({
         tag,
         when,
       };
-      console.log('Reporting object:' + tag + ' when: ' + when);
       socket.emit('cmd', msg);
     }
   },

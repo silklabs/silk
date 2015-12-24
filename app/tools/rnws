@@ -1,0 +1,15 @@
+#!/bin/bash -ex
+#
+# Invoke react-native-webpack-server bundler. We limit the React Native
+# packager to the node_moduels/react-native directory and any dependencies
+# that our app and React Native share (because they won't be installed in
+# node_modules/react-native/node_modules).
+
+node_modules/.bin/rnws \
+  "$@" \
+  --port 8082 \
+  --packagerPort 8081 \
+  --webpackPort 8083 \
+  --no-android \
+  --projectRoots node_modules/react-native,node_modules/stacktrace-parser,node_modules/immutable \
+  --assetRoots iOS/Images.xcassets

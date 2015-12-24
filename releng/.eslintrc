@@ -1,0 +1,16 @@
+{
+  "extends": "../.eslintrc",
+  "env": {
+    "browser": true
+  },
+  "ecmaFeatures": {
+    "jsx": true
+  },
+  "plugins": [
+    "react"
+  ],
+  "parser": "babel-eslint",
+  "rules": {
+    "camelcase": 0,
+  }
+}

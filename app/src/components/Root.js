@@ -15,6 +15,7 @@ import Config from '../libraries/Config';
 import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
+import createLog from 'log';
 import createAPI from 'silk-api';
 import version from 'silk-core-version';
 
@@ -26,6 +27,8 @@ import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
 import Settings from './Settings';
+
+const log = createLog('Root');
 
 const routeToComponentMap = {
   NotLoggedIn,
@@ -49,7 +52,7 @@ export default class Root extends AsyncComponent {
   componentDidMount() {
     Config.init();
     Config.on('change', this.onConfigChange);
-    console.log(`silk-core ${version.semver} (${version.sha})`);
+    log.info(`silk-core ${version.semver} (${version.sha})`);
   }
 
   onConfigChange = async (config) => {
@@ -58,7 +61,7 @@ export default class Root extends AsyncComponent {
       // Default to the first entry in server.choices
       let { choices } = Config.get().server;
       serverUrl = choices[0].value;
-      console.log('Selecting default server:', serverUrl);
+      log.info('Selecting default server:', serverUrl);
       Config.set({serverUrl});
       return; // Wait for the next 'change' event to continue processing
     }

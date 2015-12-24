@@ -1,57 +1,8 @@
 {
-  "env": {
-    "es6": true,
-    "node": true
-  },
-  "rules": {
-    "jsx-quotes": [
-      2,
-      "prefer-double"
-    ],
-    "react/jsx-indent-props": [
-      2,
-      2
-    ],
-    "react/jsx-closing-bracket-location": [
-      1,
-      {
-        "nonEmpty": "after-props",
-        "selfClosing": "tag-aligned"
-      }
-    ],
-    "yoda": 0,
-    "quotes": [
-      2,
-      "single",
-      "avoid-escape"
-    ],
-    "no-unused-vars": [
-      2,
-      {
-        "args": "none",
-        "vars": "all"
-      }
-    ],
-    "no-unused-expressions": 0,
-    "no-use-before-define": 0,
-    "strict": 0,
-    "brace-style": 2,
-    "no-shadow": 0,
-    "no-debugger": 1,
-    "default-case": 2,
-    "comma-dangle": [
-      1,
-      "always-multiline"
-    ],
-    "indent": [
-      2,
-      2
-    ],
-    "no-underscore-dangle": 0
-  },
+  "extends": "../.eslintrc",
   "globals": {
     "__DEV__": false,
-    "ErrorUtils": true
+    "ErrorUtils": false
   },
   "ecmaFeatures": {
     "jsx": true

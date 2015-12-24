@@ -8,14 +8,18 @@
 
 import version from 'silk-core-version';
 import RaygunApi from 'silk-raygun/api';
+import createLog from 'log';
 import { parse } from 'stacktrace-parser';
+
 import { exitApp } from './Util';
+
+const log = createLog('CrashReporter');
 
 class CrashReporter {
 
   static start() {
     if (!version.official) {
-      console.log('CrashReporter disabled in non-official builds');
+      log.debug('CrashReporter disabled in non-official builds');
       return;
     }
 
@@ -62,7 +66,7 @@ class CrashReporter {
           oldHandler(err, isFatal);
         });
       } catch (err2) {
-        console.log('Error while processing error:', err2, err2.stack);
+        log.error('Error while processing error:', err2, err2.stack);
         oldHandler(err, isFatal);
       }
     });

@@ -17,6 +17,7 @@ const log = createLog('NotLoggedIn');
 const {
   AlertIOS,
   DeviceEventEmitter,
+  LayoutAnimation,
   Navigator,
   ScrollView,
   StyleSheet,
@@ -48,7 +49,15 @@ export default class NotLoggedIn extends AsyncComponent {
     this._subscriptions.forEach(sub => sub.remove());
   }
 
+  // Avoid bouncing the view unnecessarily when focus jumps from one
+  // text input to the next.
+  _animateKeyboard = true;
+  _disableKeyboardAnimation = () => {
+    this._animateKeyboard = false;
+  };
+
   onKeyboardShow = (event) => {
+    LayoutAnimation.easeInEaseOut();
     this.setState({
       keyboardShown: true,
       contentInsetBottom: event.endCoordinates.height,
@@ -56,7 +65,23 @@ export default class NotLoggedIn extends AsyncComponent {
   };
 
   onKeyboardHide = (event) => {
+    if (!this._animateKeyboard) {
+      this._animateKeyboard = true;
+      return;
+    }
+    LayoutAnimation.easeInEaseOut();
     this.setState({
+      keyboardShown: false,
+      contentInsetBottom: 0,
+    });
+  };
+
+  goBack = () => {
+    this.setState({
+      controls: null,
+      // Pre-emptively expand ScrollView again to avoid two
+      // re-renders, one from hiding the controls and one from
+      // dismissing the keyboard.
       keyboardShown: false,
       contentInsetBottom: 0,
     });
@@ -117,16 +142,17 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
           onSubmit={this._signUp}
           inProgress={this.state.inProgress}
-          skipPassword={false}
+          password={true}
           verifyPassword={true}
           submitText="Sign Up"
         />
         <View style={styles.bottomLinks}>
           <TextLink
             label="BACK"
-            onPress={() => this.setState({controls: null})}
+            onPress={this.goBack}
           />
         </View>
       </View>
@@ -155,16 +181,17 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
           onSubmit={this._signIn}
           inProgress={this.state.inProgress}
-          skipPassword={false}
+          password={true}
           verifyPassword={false}
           submitText="Sign In"
         />
         <View style={styles.bottomLinks}>
           <TextLink
             label="BACK"
-            onPress={() => this.setState({controls: null})}
+            onPress={this.goBack}
           />
           <TextLink
             label="FORGOT PASSWORD?"
@@ -179,16 +206,17 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
           onSubmit={this._forgotPassword}
           inProgress={this.state.inProgress}
           submitText="Reset Password"
-          skipPassword={true}
+          password={false}
           verifyPassword={false}
         />
         <View style={styles.bottomLinks}>
           <TextLink
             label="BACK"
-            onPress={() => this.setState({controls: null})}
+            onPress={this.goBack}
           />
         </View>
       </View>
@@ -217,7 +245,7 @@ export default class NotLoggedIn extends AsyncComponent {
     this.setStateAsync({ inProgress: false });
   };
 
-  _forgotPassword = async(credentials) => {
+  _forgotPassword = async (credentials) => {
     const { userState } = this.props;
     this.setStateAsync({ inProgress: true });
 
@@ -243,7 +271,7 @@ export default class NotLoggedIn extends AsyncComponent {
       this.setStateAsync({ inProgress: false });
       AlertIOS.alert(title, message);
     }
-  }
+  };
 
   _renderControls() {
     switch (this.state.controls) {
@@ -268,7 +296,7 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <ScrollView
         contentContainerStyle={[styles.container, extraStyle]}
-        keyboardShouldPersistTaps={false}
+        keyboardShouldPersistTaps={true}
         alwaysBounceVertical={false}
         scrollable={false}>
         <View style={styles.statusBar} />

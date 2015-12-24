@@ -105,13 +105,7 @@ export NPM_CONFIG_LOGLEVEL=http
 #
 #  Prepare the Gonk tree
 #
-
-# Figure the current Gonk from the basename of what .repo/manifest.xml is
-# pointing at.
-GONK=$(readlink -f .repo/manifest.xml)
-GONK=${GONK##*/}
-GONK=${GONK%.xml}
-export GONK
+source vendor/silk/build/gonk.sh # Define GONK
 
 # Traverses a manifest, outputting the name of all included manifests
 find_manifest_names()
@@ -144,7 +138,6 @@ for manifest in $(find_manifest_names $GONK); do
   fi
 done
 
-echo Gonk: ${GONK}
 if [[ ! -d gonk/${GONK} ]]; then
   poison_their_lunch Unknown gonk: $GONK
   return

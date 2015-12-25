@@ -69,7 +69,7 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
       if (room.match(ROOM_NAMES_REGEX) || room === VIDEO_STREAMS_ROOM) {
         await session.room.leave(room, session.socket);
       } else {
-        // TODO: Warn about suspcious activity.
+        // TODO: Warn about suspicious activity.
         log.warn(`Attempting to leave invalid room`, room);
       }
     },
@@ -83,7 +83,7 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
       let deviceId: string = cmd.id;
       // Only allow direct communication if the account owns the device.
       if (!await ctx.devices.belongsToAccount(session.account._id, cmd.id)) {
-        // TODO: Warn about suspcious activity.
+        // TODO: Warn about suspicious activity.
         log.warn(`Tried to message device not belonging to account ${session.account._id}`);
         return;
       }

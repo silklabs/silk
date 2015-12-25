@@ -204,11 +204,6 @@ class Camera extends EventEmitter {
       log.warn('_onPreviewStream: null msg.frame');
       return;
     }
-    if (this.id !== msg.id) {
-      log.warn('Video preview from unknown camera:', msg);
-      return;
-    }
-
     log.debug('preview', msg);
     this._queue.push(msg);
   }
@@ -245,11 +240,6 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    if (this.id !== msg.id) {
-      log.warn('Video preview from unknown camera:', msg);
-      return;
-    }
-
     log.debug('video', msg);
 
     let view = new Uint8Array(msg.frame);
@@ -299,7 +289,8 @@ class Cameras extends EventEmitter {
       });
 
       this.socket.on('video-stream-new', msg => {
-        log.info(`Device online: ${msg.id}`);
+        log.info(`Device online: ${msg.id} ` +
+                 `previewSize:${JSON.stringify(msg.previewSize)}`);
         this._liveDevices[msg.id] = {logo: msg.logo, previewSize: msg.previewSize};
         this._update();
       });

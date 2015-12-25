@@ -44,6 +44,7 @@ import Say from './say';
 import getBTLE from './btle';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crash_reporter';
+import makeDiag from './diag';
 import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
@@ -75,6 +76,25 @@ let say;
 
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
+
+/**
+ * Read vendor specific logo
+ */
+async function readLogo() {
+  if (logo) {
+    return;
+  }
+  for (const root of ['/data', '/system']) {
+    const logoFile = root + '/silk/media/logo.png';
+    try {
+      logo = await fs.readFile(logoFile);
+      return; // Return once the first logo is successfully read
+    } catch (err) {
+      log.verbose(`No logo at ${logoFile}: ${err}`);
+    }
+  }
+  logo = [];
+}
 
 /**
  * Wait for bootup and initialize the device.
@@ -122,6 +142,18 @@ function main() {
     }
   };
 
+  // It's preferable to kill this process over system daemons
+  // (usually running as -17) in out of memory situations.
+  fs.writeFile('/proc/self/oom_adj', 0);
+
+  // If no time zone is set select Pacific time.  The device currently
+  // doesn't really care what time zone it's in, all operations are done
+  // in UTC.  However using Pacific for local time helps ensure that log
+  // message timestamps are aligned with where most developers are.
+  if (util.getprop('persist.sys.timezone', '').length === 0) {
+    util.setprop('persist.sys.timezone', 'America/Los_Angeles');
+  }
+
   return getDeviceId()
     .then(deviceId => {
       id = deviceId;
@@ -138,7 +170,12 @@ function main() {
       log.info('Initialize hardware');
       say = new Say();
 
+      assert(outbox, 'must have outbox when initializing timeline');
+      timeline = new Timeline(outbox);
+      camera = require('./camera')(timeline);
+
       return Promise.all([
+        camera.init(),
         wifi.init(),
         getBTLE().then(btleInstance => {
           btle = btleInstance;
@@ -146,35 +183,12 @@ function main() {
         sensors.init(),
         infrared.init(),
         say.init(),
+        readLogo(),
       ]);
     })
     .then(maybeAbortBoot)
     .then(() => {
-      log.info('Initialize framework');
-
-      // It's preferable to kill this process over system daemons
-      // (usually running as -17) in out of memory situations.
-      fs.writeFile('/proc/self/oom_adj', 0);
-
-      // If no time zone is set select Pacific time.  The device currently
-      // doesn't really care what time zone it's in, all operations are done
-      // in UTC.  However using Pacific for local time helps ensure that log
-      // message timestamps are aligned with where most developers are.
-      if (util.getprop('persist.sys.timezone', '').length === 0) {
-        util.setprop('persist.sys.timezone', 'America/Los_Angeles');
-      }
-
-      assert(outbox, 'must have outbox when initializing timeline');
-      timeline = new Timeline(id.toString(), outbox);
-      camera = require('./camera')(timeline);
-      return camera.init();
-    })
-    .then(maybeAbortBoot)
-    .then(() => {
-      util.setprop('silk.boot_completed',
-                   1 + parseInt(util.getprop('silk.boot_completed', 0)));
-
-      diag = require('./diag')(id.toString());
+      diag = makeDiag();
 
       btle.on('region-entered', (uuid, rssi) => {
         log.info('Device \'%s\' entered range %d', uuid, rssi);
@@ -192,6 +206,8 @@ function main() {
     .then(maybeAbortBoot)
     .then(() => {
       log.info('main completed device has been booted.');
+      util.setprop('silk.boot_completed',
+                   1 + parseInt(util.getprop('silk.boot_completed', 0)));
     }).
     catch(err => {
       if (err === bootAbortedFlag) {
@@ -209,49 +225,25 @@ function main() {
 }
 main();
 
-/**
- * Read vendor specific logo
- */
-async function readLogo() {
-  if (logo) {
-    return;
-  }
-  for (const root of ['/data', '/system']) {
-    const logoFile = root + '/silk/media/logo.png';
-    try {
-      logo = await fs.readFile(logoFile);
-      return; // Return once the first logo is successfully read
-    } catch (err) {
-      log.verbose(`No logo at ${logoFile}: ${err}`);
-    }
-  }
-  logo = [];
-}
-
 function emitDeviceInfo() {
-  return readLogo()
-  .then(() => {
-    if (server.connected) {
-      server.socket.emit('info', {
-        id: id.toString(),
-        now: Date.now(),
-        logo: logo,
-        previewSize: camera.previewSize,
-      });
-    }
-  });
+  if (server.connected) {
+    server.socket.emit('info', {
+      logo,
+      now: Date.now(),
+      previewSize: camera.previewSize,
+    });
+  }
 }
 ntp.on('time', emitDeviceInfo);
 
 // Server related...
 server.on('connect', () => {
   ui.goto('online');
-  emitDeviceInfo()
-  .then(() => {
-    diag.start(server.socket);
-    timeline.socket = server.socket;
-  })
-  .catch(util.processthrow);
+
+  emitDeviceInfo();
+
+  diag.start(server.socket);
+  timeline.socket = server.socket;
 });
 
 server.on('disconnect', () => {
@@ -272,13 +264,12 @@ server.on('cmd', cmd => {
 
   switch (cmd.msg) {
   // The 'livestream' command is sent by the server to request live streaming
-  // data from this device.  Supported streams: preview, video, logging
+  // data from this device.  Supported streams: preview, video, diag
   //
   case 'livestream':
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
     diag.setConfig({dash: flag, logcat: flag});
-
     timeline.configLiveStream(!!cmd.preview, !!cmd.video);
     break;
   case 'reboot':
@@ -338,6 +329,13 @@ config.on('configured', async () => {
 
   log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
   server.connect();
+
+  // If the camera has not yet initialized, ensure that the socket.io server is
+  // updated with the camera preview size once the camera initialization completes.
+  // (currently it's assumed that the camera preview size is fixed)
+  if (camera.previewSize === null) {
+    camera.once('ready', emitDeviceInfo);
+  }
 
   // Yield a pinch of time since updates don't need to start immediately,
   // |update.start()| is currently a little main thread heavy, and there's lots

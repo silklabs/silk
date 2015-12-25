@@ -58,14 +58,12 @@ function generateRecordID(): Promise<string> {
  * single motion event lasting several seconds.
  */
 export default class EventTracker extends EventEmitter {
-  deviceId: string;
   outbox: Outbox;
   _eventRecords: {[key: string]: LocalEventRecord};
   _expirationTimer: ?number;
 
-  constructor(deviceId: string, outbox: Outbox) {
+  constructor(outbox: Outbox) {
     super();
-    this.deviceId = deviceId;
     this.outbox = outbox;
     this._eventRecords = {};
   }

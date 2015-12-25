@@ -160,7 +160,7 @@ fi
 
 echo
 echo logcat =\> main.log
-adb logcat > main.log &
+adb logcat -v threadtime > main.log &
 echo
 
 expected_silk_boot_completed=$(( 1 + $(getprop silk.boot_completed "0") ))
@@ -170,7 +170,7 @@ findprocess /system/silk/bin/node nodepid 45
 
 waitforprop sys.boot_completed 1 60
 
-waitforprop silk.boot_completed $expected_silk_boot_completed 60
+waitforprop silk.boot_completed $expected_silk_boot_completed 90
 
 attempt=0
 STABILITY_RETRIES=10

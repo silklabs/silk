@@ -1,4 +1,6 @@
 /**
+ * Server socket.io connection
+ *
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.

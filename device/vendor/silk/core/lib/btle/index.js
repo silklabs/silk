@@ -30,6 +30,8 @@ type BeaconInfo = {
 const DEFAULT_BEACON_MAJOR = 0;
 const DEFAULT_BEACON_MINOR = 0;
 
+const btHwAvailable = getboolprop(`ro.silk.bt.hw.enabled`, true);
+
 const log = makeLog(`btle`);
 
 class BluetoothLE extends EventEmitter {
@@ -136,6 +138,11 @@ class BluetoothLE extends EventEmitter {
 
   async changeMode(mode: BluetoothMode): Promise<void> {
     log.debug(`BluetoothLE.changeMode('${mode}')`);
+
+    if (!btHwAvailable) {
+      log.debug(`BT HW not available, noop for changeMode()`);
+      return;
+    }
 
     switch (mode) {
     case BluetoothLE.MODE_OFF:
@@ -431,9 +438,7 @@ async function init(): Promise<any> {
   invariant(!initPromiseComplete);
 
   const stateChange = `stateChange`;
-  const expectedState = getboolprop(`ro.silk.bt.enabled`, true) ?
-                        `poweredOn` :
-                        `poweredOff`;
+  const expectedState = btHwAvailable ? `poweredOn` : `poweredOff`;
 
   function waitForState(api: any, apiName: string): Promise<void> {
     return new Promise(resolve => {

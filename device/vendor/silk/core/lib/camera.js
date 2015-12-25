@@ -48,6 +48,8 @@ const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
 const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
 let audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
 
+const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
+
 //
 // Constants
 //
@@ -314,15 +316,11 @@ class CameraStream extends EventEmitter {
         try {
           this._cvVideoCapture = new cv.VideoCapture(0);
         } catch (err) {
-          if (this._startPromiseCallbacks) {
-            return this._startPromiseCallbacks.reject(err);
-          }
           throw err;
         }
       }
 
       this._buffer = '';
-
       const cmdData = {
         frameInterval: DURATION,
         width: WIDTH,
@@ -332,13 +330,7 @@ class CameraStream extends EventEmitter {
         audioMute
       };
 
-      this._videoWidth = cmdData.width;
-      this._videoHeight = cmdData.height;
-
-      PREVIEW_WIDTH = cmdData.width / PREVIEW_SCALE;
-      PREVIEW_HEIGHT = cmdData.height / PREVIEW_SCALE;
-      this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
-      this._command({cmdName: 'init', cmdData: cmdData});
+      this._command({cmdName: 'init', cmdData});
     });
     this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
     this._ctlSocket.on('error', err => {
@@ -369,16 +361,15 @@ class CameraStream extends EventEmitter {
       if (captureEvent.eventName === 'error') {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
+        PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
+        PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
+        this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
+
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-
-        clearTimeout(this._initTimeout);
-        this._initTimeout = null;
-        this._ready = true;
-
         this._scheduleNextPreviewFrame();
 
         const tagMonitor = () => {
-          if (this._videoTagReceived && this._micTagReceived) {
+          if (this._videoTagReceived && (this._micTagReceived || !AUDIO_HW_ENABLED)) {
             this._videoTagReceived = this._micTagReceived = null;
             this._tagMonitorTimeout = setTimeout(tagMonitor,
               CAPTURE_TAG_TIMEOUT_MS);
@@ -391,9 +382,11 @@ class CameraStream extends EventEmitter {
         this._tagMonitorTimeout = setTimeout(tagMonitor,
           CAPTURE_TAG_TIMEOUT_MS);
 
-        if (this._startPromiseCallbacks) {
-          this._startPromiseCallbacks.resolve();
-        }
+        clearTimeout(this._initTimeout);
+        this._initTimeout = null;
+
+        this._ready = true;
+        this.emit('ready');
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);
@@ -598,28 +591,35 @@ class CameraStream extends EventEmitter {
    * Initialize camera
    */
   async init() {
-    if (this._startPromiseCallbacks) {
-      throw new Error(`Re-entered start?`);
-    }
-
-    let startPromise = new Promise((resolve, reject) => {
-      this._startPromiseCallbacks = { resolve, reject };
-    });
     this._init();
-    await startPromise;
+    return Promise.resolve();
+  }
+
+  /**
+   * Block until the camera is online and operational.
+   * IMPORTANT: Since the camera can crash at any time, once this method returns
+   *            it's never guaranteed that the camera is STILL online
+   */
+  /* async */ ready() {
+    if (this._ready) {
+      return Promise.resolve();
+    }
+    return new Promise(resolve => {
+      this.once('ready', resolve);
+    });
   }
 
   startRecording() {
     if (!this._recording) {
       this._recording = true;
-      log.verbose('recording started');
+      log.verbose(`recording enabled (ready=${this._ready}`);
     }
   }
 
   stopRecording() {
     if (this._recording) {
       this._recording = false;
-      log.verbose('recording stopped');
+      log.verbose(`recording disabled (ready=${this._ready})`);
     }
   }
 
@@ -692,9 +692,14 @@ class CameraStream extends EventEmitter {
   }
 
   /**
+   * Returns the camera preview size (or null until the camera has successfully
+   * initialized once)
    *
    */
   get previewSize() {
+    if (PREVIEW_WIDTH === 0) {
+      return null;
+    }
     return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 

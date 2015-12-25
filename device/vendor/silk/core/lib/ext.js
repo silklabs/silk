@@ -84,10 +84,12 @@ class Env extends EventEmitter {
         camera.getPreviewFrame(userCb, when, channel);
       };
       this.camera.getParameterInt = /* async */ (name) => {
-        return camera.getParameterInt(name);
+        return camera.ready()
+        .then(() => camera.getParameterInt(name));
       };
       this.camera.getParameterStr = /* async */ (name) => {
-        return camera.getParameterStr(name);
+        return camera.ready()
+        .then(() => camera.getParameterStr(name));
       };
     }
 

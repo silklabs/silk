@@ -14,8 +14,7 @@ class DiagLogger {
   // respawnDelay specifies amount of time to wait after process dies before
   // running the command again. Use null for "streaming logs" that should be
   // running at all times.
-  constructor(id, type, cmd, params, respawnDelaySecs) {
-    this.id = id;
+  constructor(type, cmd, params, respawnDelaySecs) {
     this.type = type;
     this.respawnTimer = null;
     this.helper = null;
@@ -34,7 +33,6 @@ class DiagLogger {
       helper.stdout.on('data', data => {
         if (this.socket) {
           this.socket.emit('diag', {
-            id: this.id,
             type: this.type,
             log: data.toString()
           });
@@ -70,7 +68,6 @@ class DiagLogger {
 
     if (this.socket) {
       this.socket.emit('diag', {
-        id: this.id,
         type: this.type,
         log: this.data
       });
@@ -107,20 +104,19 @@ class DiagLogger {
 }
 
 class Diag {
-  constructor(id) {
-    this.id = id;
+  constructor() {
     this.socket = null;
     this.cfg = [];
 
     this.loggers = [
-      new DiagLogger(this.id, 'logcat',
+      new DiagLogger('logcat',
         '/system/bin/logcat',
         /* "-T 0" to skip to the current tip of logcat data. Diag starts up
            immediately at boot before the device connects to the server so any
            existing scroll back will be lost anyway (as there's no socket yet) */
         ['-v', 'threadtime', '-T', '0']),
 
-      new DiagLogger(this.id, 'dash',
+      new DiagLogger('dash',
         '/system/silk/bin/dash', [], 60),
     ];
   }
@@ -164,4 +160,4 @@ class Diag {
   }
 }
 
-module.exports = (id) => new Diag(id);
+module.exports = () => new Diag();

@@ -3,6 +3,7 @@
 
 import ansiUp from 'ansi_up';
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon,
          Input, MenuItem } from 'react-bootstrap';
 import { Link } from 'react-router';
@@ -196,7 +197,7 @@ class DiagLogcat extends DiagLog {
   }
 
   componentDidUpdate() {
-    let dom = React.findDOMNode(this);
+    let dom = ReactDOM.findDOMNode(this);
     dom.scrollTop = dom.scrollHeight;
   }
 }

@@ -33,18 +33,6 @@ const buildList = [
       },
     },
   },
-  {
-    repo: 'silk-core',
-    project: 'device',
-    message: 'hammerhead master build',
-    branch: 'master',
-    config: {
-      os: [ 'linux' ],
-      env: {
-        matrix: [ 'GONK_SPEC=hammerhead' ],
-      },
-    },
-  },
   /* 410c build is currently too big for the Travis disk :-/
   {
     repo: 'silk-core',

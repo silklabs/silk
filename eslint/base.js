@@ -1,5 +1,8 @@
-{
+module.exports = {
   "extends": "eslint:recommended",
+  "ecmaFeatures": {
+    "modules": true
+  },
   "env": {
     "es6": true,
     "node": true
@@ -69,4 +72,4 @@
     "strict": 0,
     "yoda": 0
   }
-}
+};

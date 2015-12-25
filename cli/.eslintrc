@@ -1,9 +1,5 @@
 {
-  "ecmaFeatures": {
-    "modules": true
-  },
-  "extends": "../.eslintrc",
-  "parser": "babel-eslint",
+  "extends": "eslint-config-silk",
   "plugins": [
     "import"
   ],

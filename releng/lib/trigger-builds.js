@@ -48,18 +48,6 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'device',
-    message: 'shamu master build',
-    branch: 'master',
-    config: {
-      os: [ 'linux' ],
-      env: {
-        matrix: [ 'GONK_SPEC=shamu' ],
-      },
-    },
-  },
-  {
-    repo: 'silk-core',
-    project: 'device',
     message: 'Dragonboard 410c master build',
     branch: 'master',
     config: {

@@ -227,7 +227,9 @@ android_tts_callback_status_t synthesis_callback(void ** pUserData,
   TextToSpeechCommand *pMe = static_cast<TextToSpeechCommand*>(*pUserData);
 
   if (*pAudioBuffer != NULL && *pBufferSize > 0) {
-    applyFilter(reinterpret_cast<int16_t*>(*pAudioBuffer), *pBufferSize / 2);
+    if (shouldApplyAudioFilter(TTS_ENGINE_LIB)) {
+      applyFilter(reinterpret_cast<int16_t*>(*pAudioBuffer), *pBufferSize / 2);
+    }
 
     if (!pMe->startCalled) {
       ALOGD("Synthesis started");

@@ -17,6 +17,7 @@ addons:
       - ubuntu-toolchain-r-test
       - kubuntu-backports
     packages:
+      - bc
       - g++-4.8
       - libc6:i386
       - libstdc++6:i386

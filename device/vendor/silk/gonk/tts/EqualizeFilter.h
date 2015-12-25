@@ -113,3 +113,10 @@ void applyFilter(int16_t* buffer, size_t sampleCount) {
     }
   }
 }
+
+/**
+ * Apply audio filter only if the engine is pico
+ */
+bool shouldApplyAudioFilter(const char* nativeSoLib) {
+    return (strstr(nativeSoLib, "pico") != NULL);
+}

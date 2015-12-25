@@ -165,11 +165,12 @@ suite('routes', () => {
     let event = eventToPromise(accountSocket, roomName);
     let cmd = {
       when: Date.now(),
-      id: 'ooopz',
+      hi: 'hi',
     };
     await emit(deviceSocket, 'diag', cmd);
     let result = await event;
-    assert.equal(result.id, device.record.accessToken.publicKey);
+    assert.equal(result.when, cmd.when);
+    assert.equal(result.hi, cmd.hi);
   });
 
   test('reconnections - device', async () => {

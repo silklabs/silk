@@ -45,6 +45,7 @@ const buildList = [
       },
     },
   },
+  /* 410c build is currently too big for the Travis disk :-/
   {
     repo: 'silk-core',
     project: 'device',
@@ -62,6 +63,7 @@ const buildList = [
       },
     },
   },
+  */
   {
     repo: 'silk-core',
     project: 'device',

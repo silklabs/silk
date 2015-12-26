@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -12,6 +10,6 @@ export function timeout(ms) {
 
 export function processthrow(e) {
   console.error(e.stack); // eslint-disable-line no-console
-  process.exit(1);
+  process.exit(1); // eslint-disable-line no-process-exit
 }
 

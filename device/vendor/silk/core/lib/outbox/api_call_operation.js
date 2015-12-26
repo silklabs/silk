@@ -6,11 +6,8 @@
 
 import api from '../api';
 import assert from 'assert';
-import createLog from '../log';
 
 import Operation from './operation';
-
-const log = createLog('outbox:api_call_operation');
 
 export default class APICallOperation extends Operation {
   static NAME = 'api-call-operation';
@@ -43,8 +40,7 @@ export default class APICallOperation extends Operation {
     });
 
     if (!callable) {
-      log.error('Could not resolve API endpoint', this.endpoint);
-      return;
+      throw new Error('Could not resolve API endpoint', this.endpoint);
     }
 
     try {

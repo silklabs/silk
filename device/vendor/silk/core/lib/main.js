@@ -16,7 +16,7 @@ log.info(`silk-core ${version.branch} ${version.semver} (${version.sha})`);
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
 require('source-map-support').install();
-{
+{ // eslint-disable-line no-lone-blocks
   // Force the source maps into memory right away. It typically takes ~5
   // seconds to load the source maps and unfortunately asynchronous loading is
   // not currently supported by the source map library.  Taking the hit now

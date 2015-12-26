@@ -91,7 +91,7 @@ export default class MotionZone {
 
     for (let i = 0; i < rects.length; i++) {
       let ignore = false;
-      for (let j = 0; j <  this._ignoredZones.length; j++) {
+      for (let j = 0; j < this._ignoredZones.length; j++) {
         if (this._contains(this._ignoredZones[j], rects[i])) {
           log.debug(`Ignoring ${JSON.stringify(rects[i])} as it falls within ` +
             ` the zone ${JSON.stringify(this._ignoredZones[j])}`);

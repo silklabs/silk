@@ -46,7 +46,7 @@ suite(__filename, () => {
         const actual = JSON.stringify(raygunError, null, ' ');
         await fs.writeFile(tombstone + '.actual', actual); // Save actual for easy inspection on fail
 
-        const expected = await fs.readFile(tombstone + '.expected', {encoding:'utf8'});
+        const expected = await fs.readFile(tombstone + '.expected', {encoding: 'utf8'});
         assert.deepEqual(expected, actual);
       }
     }

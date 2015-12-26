@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -14,7 +12,7 @@ import config from './args';
 import url from 'url';
 import Table from 'easy-table';
 import api from './api';
-import createApi from 'silk-api';
+import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('main');
 
@@ -29,7 +27,9 @@ let maxDuration = config.tests.maxDuration;
  * Specify which tests to run
  */
 let networkTests = {};
-if (config.tests.traceroute) networkTests.traceroute = 1;
+if (config.tests.traceroute) {
+  networkTests.traceroute = 1;
+}
 
 let serverTests = {};
 
@@ -90,16 +90,13 @@ function runServerTests(accessToken) {
   let serverTester = new ServerTester(accessToken);
   let testChain = Promise.resolve();
 
-  for (let test in serverTests) {
-    if (serverTests[test]) {
-      let cfg = serverTests[test];
-
-      testChain = testChain
+  Object.keys(serverTests).forEach((test) => {
+    let cfg = serverTests[test];
+    testChain = testChain
       .then(() => serverTester.doTest(test, cfg.cnt, cfg.hz, cfg))
       .then(stat => addStats(test, stat))
       .catch(util.processthrow);
-    }
-  }
+  });
 
   testChain = testChain
   .then(() => printSummary())
@@ -113,14 +110,14 @@ function runServerTests(accessToken) {
 if (maxDuration) {
   setTimeout(() => {
     log.warn('test execution timed out :( Exiting');
-    process.exit(-1);
+    process.exit(-1); // eslint-disable-line no-process-exit
   }, maxDuration * 1000);
 }
 
 async function setupDevice() {
   api.accessToken = api.id.create();
 
-  let accessToken = new api.id(
+  let accessToken = new AccessToken(
     api.devAccount.publicKey,
     api.devAccount.privateKey,
   );
@@ -150,7 +147,7 @@ async function main() {
   let accessToken = await setupDevice();
   await runNetworkTests();
   await runServerTests(accessToken);
-  process.exit(0);
+  process.exit(0); // eslint-disable-line no-process-exit
 }
 
 main().catch(util.processthrow);

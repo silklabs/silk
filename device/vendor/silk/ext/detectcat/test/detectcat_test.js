@@ -39,8 +39,10 @@ function failOnTimeout(timeout) {
 }
 
 function addPreviewFrame(image, timestamp) {
-  camera.setPreviewFrame(path.resolve(__dirname, 'files', image));
-  timeline.emit('motion', timestamp);
+  process.nextTick(() => {
+    camera.setPreviewFrame(path.resolve(__dirname, 'files', image));
+    timeline.emit('motion', timestamp);
+  });
 }
 
 suite('test detectcat', function () {
@@ -59,11 +61,13 @@ suite('test detectcat', function () {
       }
 
       let timestamp = Date.now();
-      process.nextTick(() => addPreviewFrame(files[count], timestamp));
+      addPreviewFrame(files[count], timestamp);
 
       try {
-        let [when, rects] = await Promise.race([eventToPromise(timeline, 'cat'),
-            failOnTimeout(1000)]);
+        let [when, rects] = await Promise.race([
+          eventToPromise(timeline, 'cat'),
+          failOnTimeout(1000),
+        ]);
         log.info(`when: ${when} rects: ${JSON.stringify(rects)}`);
         assert.notEqual(rects, null);
       } catch (err) {

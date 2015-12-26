@@ -68,7 +68,7 @@ class BluetoothLE extends EventEmitter {
   _publicKeys: Array<string> = [];
 
   constructor(privateKey: string) {
-    log.debug(`BluetoothLE()`)  ;
+    log.debug(`BluetoothLE()`);
 
     invariant(privateKey);
 

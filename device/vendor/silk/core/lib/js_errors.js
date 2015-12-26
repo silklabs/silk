@@ -66,8 +66,8 @@ export default function(crashreporter) {
     try {
       let stream = await buildJSTombstone('uncaughtException', err);
       await crashreporter.reportJSError(err, 'uncaughtException', stream, stream.getStoreSize());
-    } catch (err) {
-      log.error('Failed to report uncaughtException', err.stack);
+    } catch (ex) {
+      log.error('Failed to report uncaughtException', ex.stack);
     }
   });
 
@@ -79,8 +79,8 @@ export default function(crashreporter) {
       }
       let stream = await buildJSTombstone('unhandledRejection', err);
       await crashreporter.reportJSError(err, 'unhandledRejection', stream, stream.getStoreSize());
-    } catch (err) {
-      log.error('Failed to report unhandledRejection', err.stack);
+    } catch (ex) {
+      log.error('Failed to report unhandledRejection', ex.stack);
     }
   });
 }

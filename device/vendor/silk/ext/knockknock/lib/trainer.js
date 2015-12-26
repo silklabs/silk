@@ -117,7 +117,7 @@ export default class Trainer {
         }
 
         let size = imageSize(path.join(faceDir, file));
-        if ((size.width != FACE_WIDTH) || (size.height != FACE_HEIGHT)) {
+        if ((size.width !== FACE_WIDTH) || (size.height !== FACE_HEIGHT)) {
           log.warn(`${file} is of incorrect size ${JSON.stringify(size)}`);
           continue;
         }
@@ -325,8 +325,8 @@ export default class Trainer {
    * Reference: http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#norm
    */
   getSimilarity(matA, matB) {
-    if ((matA.width() == matB.width()) && (matA.width() > 0) &&
-        (matA.height() == matB.height()) && (matB.height() > 0)) {
+    if ((matA.width() === matB.width()) && (matA.width() > 0) &&
+        (matA.height() === matB.height()) && (matB.height() > 0)) {
       // Calculate the L2 relative error between the 2 images
       let errorL2 = matA.norm(matB, cv.Constants.NORM_L2);
 

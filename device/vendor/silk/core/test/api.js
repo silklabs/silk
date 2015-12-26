@@ -1,4 +1,4 @@
-import createApi from 'silk-api';
+import { default as createApi, AccessToken } from 'silk-api';
 import realAPI from '../lib/api';
 
 // Helper will use developer account and register a device...
@@ -9,7 +9,7 @@ export default async function() {
   // Semi-nasty hack where we set the acessToken that the lib code will use.
   realAPI.accessToken = api.accessToken;
 
-  let accessToken = new api.id(
+  let accessToken = new AccessToken(
     api.devAccount.publicKey,
     api.devAccount.privateKey,
   );

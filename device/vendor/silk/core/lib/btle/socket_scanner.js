@@ -124,7 +124,7 @@ export default class SocketScanner extends EventEmitter {
     } else {
       queueInfo = {
         averageRssi: peripheral.rssi,
-        peripheral
+        peripheral,
       };
       this._connectionQueue.push(queueInfo);
       this._connectionMap.set(peripheral.uuid, queueInfo);
@@ -421,9 +421,9 @@ export default class SocketScanner extends EventEmitter {
     const readCharacteristic = characteristics.find(
       (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.read);
     if (!readCharacteristic ||
-        readCharacteristic.properties.indexOf(`notify`) == -1 ||
-        readCharacteristic.properties.indexOf(`read`) == -1 ||
-        readCharacteristic.properties.indexOf(`write`) == -1) {
+        readCharacteristic.properties.indexOf(`notify`) === -1 ||
+        readCharacteristic.properties.indexOf(`read`) === -1 ||
+        readCharacteristic.properties.indexOf(`write`) === -1) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide socket ` +
                `read characteristic`);
       this._blackList.add(peripheral.uuid);
@@ -433,7 +433,7 @@ export default class SocketScanner extends EventEmitter {
     const writeCharacteristic = characteristics.find(
       (char) => char.uuid.toLowerCase() === BTLE_SOCKET_UUIDS.write);
     if (!writeCharacteristic ||
-        writeCharacteristic.properties.indexOf(`write`) == -1) {
+        writeCharacteristic.properties.indexOf(`write`) === -1) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide socket ` +
                `write characteristic`);
       this._blackList.add(peripheral.uuid);

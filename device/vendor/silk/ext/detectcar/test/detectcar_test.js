@@ -28,8 +28,10 @@ function failOnTimeout(timeout) {
 }
 
 function addPreviewFrame(image, timestamp) {
-  camera.setPreviewFrame(path.resolve(__dirname, 'files', image));
-  timeline.emit('motion', timestamp);
+  process.nextTick(() => {
+    camera.setPreviewFrame(path.resolve(__dirname, 'files', image));
+    timeline.emit('motion', timestamp);
+  });
 }
 
 suite('test opencv', () => {
@@ -43,13 +45,13 @@ suite('test opencv', () => {
 
     for (let count = 0; count < files.length; count++) {
       log.info(`read file ${files[count]}`);
-
-      let timestamp = Date.now();
-      process.nextTick(() => addPreviewFrame(files[count], timestamp));
+      addPreviewFrame(files[count], Date.now());
 
       try {
-        let [when, rects] = await Promise.race([eventToPromise(timeline, 'car'),
-            failOnTimeout(10000)]);
+        let [when, rects] = await Promise.race([
+          eventToPromise(timeline, 'car'),
+          failOnTimeout(10000),
+        ]);
         log.info(`when: ${when} rects: ${JSON.stringify(rects)}`);
         assert.notEqual(rects, null);
       } catch (err) {
@@ -70,8 +72,10 @@ suite('test opencv', () => {
       timeline.emit('motion', timestamp);
 
       try {
-        let [when, rects] = await Promise.race([eventToPromise(timeline, 'car'),
-            failOnTimeout(10000)]);
+        let [when, rects] = await Promise.race([
+          eventToPromise(timeline, 'car'),
+          failOnTimeout(10000),
+        ]);
         log.info(`when: ${when} rects: ${JSON.stringify(rects)}`);
         assert.equal(when, timestamp, 'car timestamp');
         assert.deepEqual(rects, rectsExp, 'car rects');

@@ -80,8 +80,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this.once(`error`, this._onError);
 
     heartbeatStream.once(`data`, () => {
-      log.debug(`Heartbeat stream received first data event, starting `+
-                `monitoring`);
+      log.debug(`Heartbeat stream received first data event, starting monitoring`);
 
       heartbeatStream.addListener(`flatline`, this._onFlatline);
       heartbeatStream.monitorHeartbeats = true;

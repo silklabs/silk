@@ -175,7 +175,7 @@ class Env extends EventEmitter {
       setprop: (prop, value) => {
         util.setprop(prop, value);
       },
-      propWatcher: util.propWatcher
+      propWatcher: util.propWatcher,
     };
   }
 
@@ -237,11 +237,7 @@ class Extensions {
   _isModuleNameValid(file) {
     // module names must end in .js, .json, .node or nothing
     let ext = path.extname(file);
-    if (!ext.length || ext === '.js' || ext ===  '.json' || ext === '.node') {
-      return true;
-    } else {
-      return false;
-    }
+    return !ext.length || ext === '.js' || ext === '.json' || ext === '.node';
   }
 
   _onReloadRequested() {

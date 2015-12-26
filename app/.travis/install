@@ -9,7 +9,7 @@ install_xctool()
 
 install_npm()
 {
-  brew reinstall npm nvm watchman
+  brew reinstall npm nvm
   export NVM_DIR="$PWD/.nvm"
   source $(brew --prefix nvm)/nvm.sh
   nvm install 4.2
@@ -32,8 +32,6 @@ elif [[ "$TEST_TYPE" = objc-test ]]; then
   fi
   install_xctool
   install_npm
-  # Speed up React Native packager startup by starting watchman manually now.
-  watchman watch .
 
 elif [[ "$TEST_TYPE" = build-dist ]]; then
   if [[ -z "$NON_JS_CHANGES" && "$TRAVIS_PULL_REQUEST" != "false"  ]]; then
@@ -42,8 +40,6 @@ elif [[ "$TEST_TYPE" = build-dist ]]; then
   fi
   install_xctool
   install_npm
-  # Speed up React Native packager startup by starting watchman manually now.
-  watchman watch .
 
 else
   echo "Unknown test type: $TEST_TYPE"

@@ -26,7 +26,6 @@ LOCAL_SHARED_LIBRARIES := liblog \
 LOCAL_C_INCLUDES += hardware/libhardware/include \
                     $(LOCAL_PATH)/../jsoncpp \
                     $(LOCAL_PATH)/../SocketListener \
-                    external/svox/pico/compat/jni \
 
 LOCAL_MODULE_TAGS := optional
 

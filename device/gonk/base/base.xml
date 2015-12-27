@@ -29,8 +29,6 @@
   </project>
   <project name="platform/external/skia" path="external/skia" clone-depth="1"/>
   <project name="platform/external/stlport" path="external/stlport" clone-depth="1"/>
-  <project name="platform/external/expat" path="external/expat" clone-depth="1" />
-  <project name="platform/external/svox" path="external/svox" clone-depth="1"/>
   <project name="platform/frameworks/av" path="frameworks/av" clone-depth="1"/>
   <project name="platform/frameworks/native" path="frameworks/native" clone-depth="1"/>
   <project name="platform/system/core" path="system/core" clone-depth="1"/>

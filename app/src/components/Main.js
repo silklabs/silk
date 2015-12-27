@@ -26,12 +26,20 @@ class MainView extends React.Component {
   }
 }
 
-export default class Main extends React.Component {
+// We can't inline this as a functional component below because that would
+// cause `MainView` to be remounted every time `Devices` re-renders.
+class MainWithDevices extends React.Component {
+  render() {
+    return <Devices {...this.props} component={MainView} />;
+  }
+}
+
+ export default class Main extends React.Component {
   render() {
     return (
       <ServerConnectivity
         {...this.props}
-        component={(props) => <Devices {...props} component={MainView} />}
+        component={MainWithDevices}
       />
     );
   }

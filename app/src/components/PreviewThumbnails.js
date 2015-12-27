@@ -3,6 +3,7 @@ import { OrderedMap, OrderedSet } from 'immutable';
 
 import SocketIO from '../libraries/SocketIO';
 
+import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import MonitorPreview from './MonitorPreview';
 import { ThumbnailStyles } from './CommonStyles';
@@ -21,7 +22,7 @@ export const DEFAULT_PREVIEW_SIZE = {
   height: DEFAULT_PREVIEW_HEIGHT,
 };
 
-export default class PreviewThumbnails extends React.Component {
+export default class PreviewThumbnails extends AsyncComponent {
 
   static propTypes = {
     hasNetwork: React.PropTypes.bool.isRequired,
@@ -115,7 +116,7 @@ export default class PreviewThumbnails extends React.Component {
       return (
         <View
           style={[styles.thumbnailContainer, ThumbnailStyles.thumbnailContainer]}
-          onLayout={(event) => this.setState({layoutWidth: event.nativeEvent.layout.width})}
+          onLayout={(event) => this.setStateAsync({layoutWidth: event.nativeEvent.layout.width})}
         />
       );
     }

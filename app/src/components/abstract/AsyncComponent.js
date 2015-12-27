@@ -84,7 +84,7 @@ export default class AsyncComponent extends React.Component {
   setStateAsync(state) {
     Object.assign(this.pendingState, state);
     return new Promise(
-      (resolve, reject) => setTimeout(() => super.setState(state, resolve), 0)
+      (resolve, reject) => requestAnimationFrame(() => super.setState(state, resolve))
     );
   }
 
@@ -92,7 +92,7 @@ export default class AsyncComponent extends React.Component {
     this.pendingState; // ensure the getter is gone
     this.pendingState = Object.assign({}, state);
     return new Promise(
-      (resolve, reject) => setTimeout(() => super.replaceState(state, resolve), 0)
+      (resolve, reject) => requestAnimationFrame(() => super.replaceState(state, resolve))
     );
   }
 

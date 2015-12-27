@@ -6,6 +6,7 @@ let {
   View,
 } = React;
 
+import AsyncComponent from '../abstract/AsyncComponent.js';
 import ProximityMeter from './ProximityMeter';
 import { LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
@@ -17,7 +18,7 @@ const RSSI_FAR = -70;
 
 const AFTER_TOUCH_WAIT_MS = 500;
 
-export default class DeviceTouch extends React.Component {
+export default class DeviceTouch extends AsyncComponent {
 
   static propTypes = {
     bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
@@ -55,7 +56,7 @@ export default class DeviceTouch extends React.Component {
       return;
     }
 
-    this.setState({
+    this.setStateAsync({
       deviceSecret,
       touched: true,
       proximity: 3,
@@ -64,7 +65,7 @@ export default class DeviceTouch extends React.Component {
       if (!this.mounted) {
         return;
       }
-      this.props.navigator.push({
+      this.props.navigator.pushAsync({
         name: 'DeviceConfig',
         props: {
           ...this.props,
@@ -84,7 +85,7 @@ export default class DeviceTouch extends React.Component {
       proximity = 1;
     }
     if (proximity !== this.state.proximity) {
-      this.setState({proximity});
+      this.setStateAsync({proximity});
     }
   };
 

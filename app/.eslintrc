@@ -2,6 +2,7 @@
   "extends": "eslint-config-silk/react",
   "globals": {
     "__DEV__": false,
-    "ErrorUtils": false
+    "ErrorUtils": false,
+    "requestAnimationFrame": false
   }
 }

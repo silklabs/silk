@@ -117,7 +117,7 @@ export default class Activity extends AsyncComponent {
     if (actionBoxWidth === null) {
       return (
         <View
-          onLayout={(event) => this.setState({actionBoxWidth: event.nativeEvent.layout.width})}
+          onLayout={(event) => this.setStateAsync({actionBoxWidth: event.nativeEvent.layout.width})}
           style={styles.actionBox}
         />
       );

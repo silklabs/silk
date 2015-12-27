@@ -95,11 +95,11 @@ class MonitorsView extends AsyncComponent {
   };
 
   startFullscreenVideo = (fullscreenDeviceId, fullscreenStartTime = null) => {
-    this.setState({fullscreenDeviceId, fullscreenStartTime});
+    this.setStateAsync({fullscreenDeviceId, fullscreenStartTime});
   };
 
   stopFullscreenVideo = () => {
-    this.setState({fullscreenDeviceId: null, fullscreenStartTime: null});
+    this.setStateAsync({fullscreenDeviceId: null, fullscreenStartTime: null});
   };
 
   _getPreviewSize(deviceId) {

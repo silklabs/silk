@@ -234,7 +234,7 @@ export default class Queue extends EventEmitter {
 
     if (Number.isInteger(result.error.code) &&
         result.error.code >= /*HTTP status code*/ 400 &&
-        result.error.code != /*HTTP status code*/ 500) {
+        result.error.code !== /*HTTP status code*/ 500) {
       // Pretty clear signal that the server told us to go away
       log.warn(`Error ${result.error.code} while adding ${this.name} operation, DELETING`, result.error);
       return;
@@ -512,13 +512,13 @@ export default class Queue extends EventEmitter {
 
       if (Number.isInteger(result.error.code) &&
           result.error.code >= /*HTTP status code*/ 400 &&
-          result.error.code != /*HTTP status code*/ 500) {
+          result.error.code !== /*HTTP status code*/ 500) {
         // Pretty clear signal that the server told us to go away
         log.warn(`Server rejected ${this.name} with ${result.error.code}, DELETING`, handle.path);
       } else {
         // Configure the retry delay for this item in the queue...
         handle.retries = handle.retries || 0;
-        let retryDelayMs  =
+        let retryDelayMs =
           Math.min(MAX_BACKOFF_MS, this.backoffInterval * handle.retries);
 
         handle.retries++;

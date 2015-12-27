@@ -8,7 +8,7 @@
 
 import crypto from 'crypto';
 import createLog from 'log';
-import createApi from 'silk-api';
+import {default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('device');
 
@@ -25,7 +25,7 @@ export default class Device {
     this.serverUrl = options.serverUrl;
     this.api = createApi({serverUrl: this.serverUrl});
     let entropy = crypto.randomBytes(SHA256_HMAC_STRENGTH);
-    this.api.accessToken = this.accessToken = this.api.id.create({entropy});
+    this.api.accessToken = this.accessToken = AccessToken.create({entropy});
   }
 
   async pullDeviceId() {
@@ -33,7 +33,7 @@ export default class Device {
     let token = JSON.parse(data.toString());
 
     this.api.accessToken = this.accessToken =
-      new this.api.id(token.pub, token.priv);
+      new AccessToken(token.pub, token.priv);
   }
 
   async pushDeviceId() {
@@ -48,7 +48,7 @@ export default class Device {
     if (success) {
       let result = await this.api.device.completeRegistration({
         registrarPublicKey: regPublicKey,
-        registrationToken: regToken
+        registrationToken: regToken,
       });
 
       success = result.success;
@@ -63,7 +63,7 @@ export default class Device {
         registrationToken: regToken,
         serverUrl: this.serverUrl,
         success: success,
-        beaconUUID: this.beaconUUID
+        beaconUUID: this.beaconUUID,
       };
       await this.adb.push(SILK_CONFIG_FILEPATH, JSON.stringify(configData));
     }
@@ -75,7 +75,7 @@ export default class Device {
     log.debug(`update wifi with ${ssid} and ${password}`);
 
     let stdout = await this.adb.shell(['getprop', 'wifi.interface']);
-    let iface = stdout.replace(/\r?\n$/,'');
+    let iface = stdout.replace(/\r?\n$/, '');
 
     let wpaCli = async (args, expectRegex = /(.*)/) => {
       args = ['wpa_cli', `-i${iface}`, `IFNAME=${iface}`].concat(args);

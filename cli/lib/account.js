@@ -6,7 +6,7 @@
 
 import crypto from 'crypto';
 import createLog from 'log';
-import createApi from 'silk-api';
+import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('account');
 
@@ -23,10 +23,10 @@ export default class Account {
 
     if (options.accessToken) {
       this.api.accessToken = this.accessToken =
-        new this.api.id(options.accessToken.pub, options.accessToken.priv);
+        new AccessToken(options.accessToken.pub, options.accessToken.priv);
     } else {
       let entropy = crypto.randomBytes(SHA256_HMAC_STRENGTH);
-      this.api.accessToken = this.accessToken = this.api.id.create({entropy});
+      this.api.accessToken = this.accessToken = AccessToken.create({entropy});
     }
 
     if (options.beaconUUID) {
@@ -40,7 +40,7 @@ export default class Account {
     let input = {
       userAgent: 'silkcli',
       email: email,
-      password: password
+      password: password,
     };
 
     let {success} = await this.api.vip.createAccountWithPassword(input);
@@ -65,7 +65,7 @@ export default class Account {
     } = await this.api.vip.signIn({
       email,
       passwordHash,
-      userAgent: 'silkcli'
+      userAgent: 'silkcli',
     });
 
     this.beaconUUID = beaconUUID;
@@ -88,7 +88,7 @@ export default class Account {
       devicePublicKey: deviceToken,
       name: deviceName,
       type: 'camera',
-      registrationToken: regToken
+      registrationToken: regToken,
     });
 
     return { success, regToken, regPublicKey: this.accessToken.toString() };

@@ -1,11 +1,9 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 import OSS from 'aliyun-oss';
 import uuid from 'uuid';
 import url from 'url';
+import createLog from 'log';
 
-let log = require('log')('blob-aliyun');
+const log = createLog('blob-aliyun');
 
 class AliyunBlobs {
   constructor(config) {
@@ -26,7 +24,7 @@ class AliyunBlobs {
         oss = null;
       } else {
         log.warn('aliyun blob new config', blobType, blobConfig);
-        oss = new OSS.createClient(blobConfig);
+        oss = new OSS.createClient(blobConfig); // eslint-disable-line new-cap
         this.aliyunMap.set(blobType, oss);
       }
     }

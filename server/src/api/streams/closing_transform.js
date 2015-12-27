@@ -41,7 +41,7 @@ export default class ClosingTransform extends Transform {
       if (this.__finalEventName) {
         log.warn(`[${this.__constructorName}] Blocked the '${eventName}' ` +
                  `event after a previous '${this.__finalEventName}' event`);
-        return;
+        return false;
       }
       this.__finalEventName = eventName;
       break;

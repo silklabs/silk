@@ -1,5 +1,8 @@
-{
+module.exports = {
   "extends": "eslint:recommended",
+  "ecmaFeatures": {
+    "modules": true
+  },
   "env": {
     "es6": true,
     "node": true
@@ -37,6 +40,7 @@
     "no-shadow-restricted-names": 2,
     "no-spaced-func": 2,
     "no-trailing-spaces": 2,
+    "no-undef": 2,
     "no-undef-init": 2,
     "no-underscore-dangle": 0,
     "no-unused-expressions": 0,
@@ -60,8 +64,6 @@
     "new-cap": 2,
     "new-parens": 2,
     "quotes": [2, "single", "avoid-escape"],
-    "react/jsx-indent-props": [2, 2],
-    "react/jsx-closing-bracket-location": [2, {"nonEmpty": "after-props", "selfClosing": "tag-aligned"}],
     "semi": 2,
     "semi-spacing": [2, {"before": false, "after": true}],
     "space-infix-ops": 2,
@@ -70,4 +72,4 @@
     "strict": 0,
     "yoda": 0
   }
-}
+};

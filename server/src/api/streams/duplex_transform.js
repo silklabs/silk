@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -192,7 +190,7 @@ export class DuplexTransform extends Duplex {
       if (!this.__endEventAllowed) {
         // Don't allow the 'end' event until later.
         log.debug(`[${this.__name}] Blocked the '${eventName}' event`);
-        return;
+        return false;
       }
       assert(!this.__error);
       log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
@@ -208,7 +206,7 @@ export class DuplexTransform extends Duplex {
                     `${this.__writableTransform.constructor.name} stream`);
           this.__writableTransform.end();
         }
-        return;
+        return false;
       }
       assert(!this.__error);
       log.debug(`[${this.__name}] Emitting the '${eventName}' event`);

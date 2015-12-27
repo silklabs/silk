@@ -9,7 +9,7 @@ suite('loadConfig', () => {
     api.accessToken = 'Open Sesame';
 
     // Override server Url
-    api.loadConfig({serverUrl:'example.com'});
+    api.loadConfig({serverUrl: 'example.com'});
     assert.equal(api.config.serverUrl, 'example.com');
 
     // Restore default Url

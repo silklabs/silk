@@ -24,14 +24,14 @@ Silk Commands:
   logout     - log out of account
   config     - register device with server and configure Wi-Fi network
   unconfig   - unconfigure the device (locally)
-  remove     - unregister device from account`
+  remove     - unregister device from account`,
 });
 
 // ----------------------------------------------------------------------------
 // Create
 // ----------------------------------------------------------------------------
 parser.newCmd('create', {
-  optionalArgs: { 'u' : ['serverUrl', 'string'] },
+  optionalArgs: { 'u': ['serverUrl', 'string'] },
   positionalArgs: ['email', 'password'],
   helpText:
 `usage: silk create [-u <serverUrl>] <email> <password>
@@ -43,14 +43,14 @@ parser.newCmd('create', {
     password    - new account password
 
   Options:
-    -u <serverUrl>  - specific server to connect to`
+    -u <serverUrl>  - specific server to connect to`,
 });
 
 // ----------------------------------------------------------------------------
 // Login
 // ----------------------------------------------------------------------------
 parser.newCmd('login', {
-  optionalArgs: { 'u' : ['serverUrl', 'string'] },
+  optionalArgs: { 'u': ['serverUrl', 'string'] },
   positionalArgs: ['email', 'password'],
   helpText:
 `usage: silk login [-u <serverUrl>] <email> <password>
@@ -62,7 +62,7 @@ parser.newCmd('login', {
     password    - account password
 
   Options:
-    -u <serverUrl>  - specific server to connect to`
+    -u <serverUrl>  - specific server to connect to`,
 });
 
 // ----------------------------------------------------------------------------
@@ -72,16 +72,16 @@ parser.newCmd('logout', {
   helpText:
 `usage: silk logout
 
-  Logs out of account. Removes token in ~/.silk.`
+  Logs out of account. Removes token in ~/.silk.`,
 });
 
 // ----------------------------------------------------------------------------
 // Config
 // ----------------------------------------------------------------------------
 parser.newCmd('config', {
-  optionalArgs : {
+  optionalArgs: {
     's': ['deviceSerialNumber', 'string'],
-    'n': ['newDeviceId', null]
+    'n': ['newDeviceId', null],
   },
   positionalArgs: ['deviceName', 'ssid', 'password'],
   helpText:
@@ -100,14 +100,14 @@ parser.newCmd('config', {
 
   Options:
     -s <deviceSerialNumber>  - specific device to configure (from adb devices)
-    -n                       - set flag to create a new device id`
+    -n                       - set flag to create a new device id`,
 });
 
 // ----------------------------------------------------------------------------
 // Unconfig
 // ----------------------------------------------------------------------------
 parser.newCmd('unconfig', {
-  optionalArgs : {
+  optionalArgs: {
     's': ['deviceSerialNumber', 'string'],
   },
   helpText:
@@ -121,14 +121,14 @@ parser.newCmd('unconfig', {
   ** Requires |adb shell stop silk; adb shell start silk| to take effect **
 
   Options:
-    -s <deviceSerialNumber>  - specific device to configure (from adb devices)`
+    -s <deviceSerialNumber>  - specific device to configure (from adb devices)`,
 });
 
 // ----------------------------------------------------------------------------
 // Remove
 // ----------------------------------------------------------------------------
 parser.newCmd('remove', {
-  optionalArgs : {
+  optionalArgs: {
     's': ['deviceSerialNumber', 'string'],
     'i': ['interactive', 'null'],
   },
@@ -142,7 +142,7 @@ parser.newCmd('remove', {
 
   Options:
     -s <deviceSerialNumber>  - specific device to configure (from adb devices)
-    -i                       - interactive mode. Remove device from list`
+    -i                       - interactive mode. Remove device from list`,
 });
 
 

@@ -120,6 +120,9 @@ export default class HttpClient {
     // future we should send more meaningful (uuid) ids that are logged across
     // the various services we hit so we can track where they originated and why.
     const id = getRequestID();
+    const timeoutHandler = () => {
+      throw new Error(`Response Timeout (${id}) failed to respond in ${this.requestTimeout}`);
+    };
     let retry = 0;
     let lastErr;
 
@@ -135,9 +138,7 @@ export default class HttpClient {
     do {
       try {
         let attempt = this._sendRequestWithBody(method, url, body, id, retry);
-        let timeout = sleep(this.requestTimeout).then(() => {
-          throw new Error(`Response Timeout (${id}) failed to respond in ${this.requestTimeout}`);
-        });
+        let timeout = sleep(this.requestTimeout).then(timeoutHandler);
         return await Promise.race([attempt, timeout]);
       } catch (err) {
         // If we have a status code outside of the server error range simply

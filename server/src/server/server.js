@@ -1,6 +1,6 @@
-/* @flow */
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * @flow
+ */
 
 import cors from 'cors';
 import createDb from './db';
@@ -110,12 +110,12 @@ export default async function main (config: any): any {
   let emailSender = new EmailSender(config);
   let scopes = new Scopes(config.scopes);
 
-  let influxdb;
+  let influxdb = null;
   if (config.metrics.influxdb.connectionString) {
     influxdb = new InfluxDB(config.metrics.influxdb.connectionString);
   }
 
-  const context: RouteContext  = {
+  const context: RouteContext = {
     app,
     nonce,
     accounts,

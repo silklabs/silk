@@ -32,7 +32,7 @@ function createAccount(isNew) {
     return new Account({
       serverUrl: dotConfig.serverUrl,
       accessToken: dotConfig.accessToken,
-      beaconUUID: dotConfig.beaconUUID
+      beaconUUID: dotConfig.beaconUUID,
     });
   }
 }
@@ -111,7 +111,7 @@ async function getDeviceFromPrompt(devices) {
 
   let rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
   let getDeviceIdx = () => {
@@ -119,8 +119,9 @@ async function getDeviceFromPrompt(devices) {
       if (deviceIdx < devices.length && deviceIdx >= 0) {
         deviceToken = devices[deviceIdx].publicKey.toString();
         rl.close();
+      } else {
+        getDeviceIdx();
       }
-      else getDeviceIdx();
     });
   };
   getDeviceIdx();

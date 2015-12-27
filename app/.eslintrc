@@ -1,14 +1,7 @@
 {
-  "extends": "../eslintrc",
+  "extends": "eslint-config-silk/react",
   "globals": {
     "__DEV__": false,
     "ErrorUtils": false
-  },
-  "ecmaFeatures": {
-    "jsx": true
-  },
-  "plugins": [
-    "react"
-  ],
-  "parser": "babel-eslint"
+  }
 }

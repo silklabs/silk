@@ -143,7 +143,7 @@ export default class Devices extends Base {
     }
 
     let record = this.validate({
-      accountId: ObjectId(payload.accountId),
+      accountId: new ObjectId(payload.accountId),
       createdAt: new Date(),
       type: payload.type,
       name: payload.name,

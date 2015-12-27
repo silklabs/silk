@@ -253,7 +253,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
         password: data.password,
         publicKey: data.publicKey,
         regToken: data.regToken,
-        serverUrl: data.serverUrl
+        serverUrl: data.serverUrl,
       };
 
       this._completeRegistration(secret);

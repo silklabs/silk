@@ -29,7 +29,7 @@ const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/cache/update.zip';
 
-const DEVICE = util.getprop(DEVICEOVERRIDE_PROP,util.getprop(DEVICE_PROP));
+const DEVICE = util.getprop(DEVICEOVERRIDE_PROP, util.getprop(DEVICE_PROP));
 const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
@@ -40,7 +40,7 @@ const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP, silkCoreVersion.off
 const isValidUpdateURLOptions = {
   protocols: ['https'],
   require_protocol: true,                       // eslint-disable-line camelcase
-  require_tld: true                             // eslint-disable-line camelcase
+  require_tld: true,                            // eslint-disable-line camelcase
 };
 
 // Whether or not start has been called.
@@ -319,7 +319,7 @@ function validateManifest(result) {
 
   function getBuildMetadata(deviceMetadata, buildType) {
     let buildMetadata = deviceMetadata[buildType];
-    if (buildMetadata === null || typeof(buildMetadata) !== 'object') {
+    if (buildMetadata === null || typeof buildMetadata !== 'object') {
       return null;
     }
 

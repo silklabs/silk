@@ -26,7 +26,7 @@ import makeStreams from './streams';
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './id' ;
 export { default as RssiSmoother } from './rssi_smoother';
-export { default as Metric, Integer, Float }  from './metric';
+export { default as Metric, Integer, Float } from './metric';
 
 export const BTLE_SOCKET_UUIDS = {
   service: '78955692-e50a-4dfd-b1f0-f59303ebf4cb',

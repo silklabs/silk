@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -315,7 +313,7 @@ class DeviceConfig extends EventEmitter {
     let [ deviceId, btle ] = await Promise.all([
       getDeviceId(),
       getBTLE(),
-      this._loadConfig()
+      this._loadConfig(),
     ]);
 
     assert(deviceId);
@@ -352,7 +350,7 @@ class DeviceConfig extends EventEmitter {
       // Ensure we don't have any stale state lying around...
       await Promise.all([
         wifi.forgetNetwork(),
-        this._btle.changeMode(this._btle.MODE_SCAN)
+        this._btle.changeMode(this._btle.MODE_SCAN),
       ]);
 
       this.emit('unconfigured');
@@ -367,7 +365,7 @@ class DeviceConfig extends EventEmitter {
       return this._unconfigurePromise;
     }
 
-    return this._unconfigurePromise = this._unconfigure()
+    this._unconfigurePromise = this._unconfigure()
       .then(() => {
         this._unconfigurePromise = null;
         log.debug('Unconfigured');
@@ -378,6 +376,7 @@ class DeviceConfig extends EventEmitter {
         log.error('Error unconfiguring', err.stack);
         throw err;
       });
+    return this._unconfigurePromise;
   }
 
   async _unconfigureNetwork() {

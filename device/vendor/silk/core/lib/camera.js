@@ -32,7 +32,7 @@ const DURATION_PROP = 'persist.silk.vidduration';
 // Clamp duration to 1..10 seconds. Any longer and the object metadata
 // associated with a video clip could easily get too large for the server to
 // handle (silk-device#1054).
-const DURATION = Math.max(1,Math.min(util.getintprop(DURATION_PROP, 1), 10));
+const DURATION = Math.max(1, Math.min(util.getintprop(DURATION_PROP, 1), 10));
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
@@ -94,7 +94,7 @@ let FLASH_MODE = {
   AUTO: 'auto',
   ON: 'on',
   RED_EYE: 'red-eye',
-  TORCH: 'torch'
+  TORCH: 'torch',
 };
 
 /**
@@ -327,7 +327,7 @@ class CameraStream extends EventEmitter {
         height: HEIGHT,
         fps: FPS,
         vbr: VBR,
-        audioMute
+        audioMute,
       };
 
       this._command({cmdName: 'init', cmdData});
@@ -342,6 +342,17 @@ class CameraStream extends EventEmitter {
       }
     });
   }
+
+  _tagMonitor = () => {
+    if (this._videoTagReceived && (this._micTagReceived || !AUDIO_HW_ENABLED)) {
+      this._videoTagReceived = this._micTagReceived = null;
+      this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
+      return;
+    }
+    this._restart(`Expected Tags not received from capture promptly. ` +
+                  `video=${this._videoTagReceived}, mic=${this._micTagReceived}`,
+                  true);
+  };
 
   _onCtlSocketRead(data) {
     log.verbose(`received ctl data: ${data.toString()}`);
@@ -368,19 +379,7 @@ class CameraStream extends EventEmitter {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
         this._scheduleNextPreviewFrame();
 
-        const tagMonitor = () => {
-          if (this._videoTagReceived && (this._micTagReceived || !AUDIO_HW_ENABLED)) {
-            this._videoTagReceived = this._micTagReceived = null;
-            this._tagMonitorTimeout = setTimeout(tagMonitor,
-              CAPTURE_TAG_TIMEOUT_MS);
-            return;
-          }
-          this._restart(`Expected Tags not received from capture promptly. ` +
-              `video=${this._videoTagReceived}, mic=${this._micTagReceived}`,
-              true);
-        };
-        this._tagMonitorTimeout = setTimeout(tagMonitor,
-          CAPTURE_TAG_TIMEOUT_MS);
+        this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
 
         clearTimeout(this._initTimeout);
         this._initTimeout = null;
@@ -572,7 +571,7 @@ class CameraStream extends EventEmitter {
       }
       pos += HEADER_NR_BYTES + size;
     }
-    if (pos != buf.length) {
+    if (pos !== buf.length) {
       this._dataBuffer = buf.slice(pos); // Save partial packet for next time
     } else {
       this._dataBuffer = null;

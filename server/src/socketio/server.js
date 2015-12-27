@@ -174,7 +174,7 @@ export default async function main (config: any): any {
     await runMiddleware(auth[query.type], req, res);
 
     if (query.type === 'device') {
-      let room =  getOrCreateRoom(req.device.accountId.toString());
+      let room = getOrCreateRoom(req.device.accountId.toString());
 
       let session = {
         room,
@@ -190,7 +190,7 @@ export default async function main (config: any): any {
         socket.on(event, promiseWrap(event, events[event]));
       }
     } else if (query.type === 'account') {
-      let room =  getOrCreateRoom(req.account._id.toString());
+      let room = getOrCreateRoom(req.account._id.toString());
       let session = {
         room,
         account: req.account,

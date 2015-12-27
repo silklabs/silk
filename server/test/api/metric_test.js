@@ -20,7 +20,7 @@ suite('metrics', function() {
     ].forEach((values) => {
       let {type, input, expected} = values;
       test(`${input} as ${type.name} should stirngify to ${expected}`, () => {
-        let instance = new type(input);
+        let instance = new type(input); // eslint-disable-line new-cap
         assert.strictEqual(instance.toString(), expected);
       });
     });

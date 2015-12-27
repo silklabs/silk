@@ -20,7 +20,9 @@ export default function generate() {
   for (let name of ROUTES) {
     let route = require(path.join(ROUTE_PATH, name));
     let entrypoint = route(ctx);
-    if (!entrypoint) continue;
+    if (!entrypoint) {
+      continue;
+    }
 
     let { api } = entrypoint;
     let absPath = path.join(AUTOGEN_ROOT, api.name + '.js');

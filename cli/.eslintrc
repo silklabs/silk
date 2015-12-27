@@ -1,56 +1,13 @@
 {
-  "parser": "babel-eslint",
+  "extends": "eslint-config-silk",
   "plugins": [
     "import"
   ],
-  "globals": {
-    "suite": true,
-    "test": true,
-    "setup": true,
-    "teardown": true,
-    "suiteSetup": true,
-    "suiteTeardown": true,
-    "it": true,
-    "describe": true,
-  },
-  "extends": "eslint:recommended",
   "rules": {
-    "no-trailing-spaces": 1,
-    // Turn off 1.0 rules we are violating for now...
-    "no-console": 1,
-    // Our extra rules...
-    "semi": 2,
-    "brace-style": 2,
-    "no-debugger": 1,
-    "default-case": 2,
-    "comma-dangle": 0,
-    "import/no-require": 1,
-    // we do some non standard module loading so the below import lints need to
-    // be off for now!
     "import/no-unresolved": 0,
     "import/named": 0,
     "import/default": 0,
     "import/no-duplicates": 0,
-    "indent": [
-      2,
-      2
-    ],
-    "no-underscore-dangle": 0,
-    "strict": 0,
-    "quotes": [
-      2,
-      "single",
-      "avoid-escape"
-    ],
-    "yoda": 0
-  },
-  "env": {
-    "node": true,
-    "es6": true
-  },
-  "ecmaFeatures": {
-    // We need to explicitly enable modules...
-    modules: true
+    "no-process-exit": 0
   }
 }
-

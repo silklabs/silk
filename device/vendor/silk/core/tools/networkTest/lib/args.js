@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -30,8 +28,12 @@ program
       'max duration to run all tests. 0 is forever (default: 0)', parseInt)
   .parse(process.argv);
 
-if (program.serverUrl) config.api.serverUrl = program.serverUrl;
-if (program.traceroute) config.tests.traceroute = true;
+if (program.serverUrl) {
+  config.api.serverUrl = program.serverUrl;
+}
+if (program.traceroute) {
+  config.tests.traceroute = true;
+}
 if (program.iterationCnt !== undefined) {
   config.tests.iterationCnt = program.iterationCnt;
 }

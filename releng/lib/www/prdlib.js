@@ -153,28 +153,31 @@ export function lintPrdItem(issue) {
   const state = issueState(issue);
   if (state.name === null) {
     lint.push([issue.number, 'No workflow label']);
-  } else {
-    if (state.value >= 3 /* - Ready */) {
-      if (issuePriority(issue).name === null) {
-        lint.push([issue.number, `No priority assigned`]);
-      }
-
-      if (issueLoE(issue).name === null) {
-        lint.push([issue.number, `No LoE assigned`]);
-      }
-
-      if (issueOwners(issue).length < 1) {
-        lint.push([issue.number, `No owner(s) identified ("Who:..." label)`]);
-      }
-    }
-    if ( (state.value === 4 /* - In Progress */) ||
-         (state.value === 5 /* - Validate */) ) {
-      if (issue.assignee === null) {
-        lint.push([issue.number, `Not assigned to one human`]);
-      }
-    }
-  }
-  if (lint.length > 0) {
     return lint;
   }
+
+  if (state.value >= 3 /* - Ready */) {
+    if (issuePriority(issue).name === null) {
+      lint.push([issue.number, `No priority assigned`]);
+    }
+
+    if (issueLoE(issue).name === null) {
+      lint.push([issue.number, `No LoE assigned`]);
+    }
+
+    if (issueOwners(issue).length < 1) {
+      lint.push([issue.number, `No owner(s) identified ("Who:..." label)`]);
+    }
+  }
+  if ( (state.value === 4 /* - In Progress */) ||
+       (state.value === 5 /* - Validate */) ) {
+    if (issue.assignee === null) {
+      lint.push([issue.number, `Not assigned to one human`]);
+    }
+  }
+
+  if (!lint.length) {
+    return null;
+  }
+  return lint;
 }

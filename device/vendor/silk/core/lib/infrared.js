@@ -80,8 +80,7 @@ class Infrared {
       return;
     }
 
-    return this._setFilterAndLed(filter, led)
-    .then(() => this._mode = mode);
+    this._setFilterAndLed(filter, led).then(() => this._mode = mode);
   }
 
   setFilter(enable) {

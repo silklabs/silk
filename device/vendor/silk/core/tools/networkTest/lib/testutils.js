@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -75,12 +73,14 @@ export class Repeater {
     .then(() => this._doCleanup())
     .then(() => {
       // don't wait if this is the last iteration
-      if (this._cnt === 0) return;
+      if (this._cnt === 0) {
+        return;
+      }
 
       // wait before starting next iteration
       let now = Date.now();
       let waitMs = Math.max((startMs + 1000 / this._hz) - now, 0);
-      return util.timeout(waitMs);
+      util.timeout(waitMs);
     })
     .then(() => this._doNext())
     .catch(util.processthrow);

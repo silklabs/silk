@@ -1,10 +1,10 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
+
+/* eslint-disable no-multi-spaces */
 
 import assert from 'assert';
 import createLog from '../log';
@@ -15,7 +15,7 @@ import wifi from '../wifi';
 const log = createLog('config-session-listener-base');
 
 // maps wifi states to a connection status string that is sent to the app
-const wifi_state_map = new Map([
+const WIFI_STATE_MAP = new Map([
   [ 'scanning', 'wifi_scanning' ],
   [ 'associating', 'wifi_associating' ],
   [ 'associated', 'wifi_associated' ],
@@ -33,7 +33,7 @@ const wifi_state_map = new Map([
 ]);
 
 // maps wifi errors to a connection status string that is sent to the app
-const wifi_error_map = new Map([
+const WIFI_ERROR_MAP = new Map([
   [ 'invalid_0',                      'wifi_error (0)' ],
   [ 'unspecified',                    'wifi_error (1)' ],
   [ 'prev_auth_not_valid',            'wifi_wrong_password (2)' ],
@@ -72,7 +72,7 @@ const wifi_error_map = new Map([
 ]);
 
 // maps server states to a connection status string that is sent to the app
-const server_state_map = new Map([
+const SERVER_STATE_MAP = new Map([
   [ 'connecting', 'server_connecting' ],
   [ 'connected', 'server_connected' ],
   [ 'disconnected', 'server_disconnected' ],
@@ -80,10 +80,10 @@ const server_state_map = new Map([
 ]);
 
 export default class SessionListenerBase extends EventEmitter {
-  static WIFI_STATE_MAP = wifi_state_map;
-  static WIFI_ERROR_MAP = wifi_error_map;
-  static SERVER_STATE_MAP = server_state_map;
-  static ERROR_CODE_MAP = new Map(wifi_error_map);
+  static WIFI_STATE_MAP = WIFI_STATE_MAP;
+  static WIFI_ERROR_MAP = WIFI_ERROR_MAP;
+  static SERVER_STATE_MAP = SERVER_STATE_MAP;
+  static ERROR_CODE_MAP = new Map(WIFI_ERROR_MAP);
 
   _deviceConfig = null;
   _socketSession = null;
@@ -206,7 +206,7 @@ export default class SessionListenerBase extends EventEmitter {
     this._status = status;
     this._send({
       name: `status`,
-      status
+      status,
     });
   }
 

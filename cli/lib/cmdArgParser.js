@@ -17,7 +17,7 @@ export default class CmdArgParser {
       optionalArgs: options.optionalArgs || {},
       positionalArgs: options.positionalArgs || [],
       optionalPositionalArgs: options.optionalPositionalArgs || [],
-      helpText: options.helpText || ''
+      helpText: options.helpText || '',
     };
   }
 
@@ -52,7 +52,7 @@ export default class CmdArgParser {
     if (!config.cmd) {
       this.showHelpAndExit('help');
     }
-    if (! (config.cmd in this.cmds)) {
+    if (!(config.cmd in this.cmds)) {
       this.showHelpAndExit('help', `Unknown command: ${config.cmd}`);
     }
     let cmdInfo = this.cmds[config.cmd];
@@ -90,7 +90,7 @@ export default class CmdArgParser {
       arg = argv.shift();
     }
 
-    if (pArgsIdx != cmdInfo.positionalArgs.length) {
+    if (pArgsIdx !== cmdInfo.positionalArgs.length) {
       this.showHelpAndExit(config.cmd, 'number of required args not correct');
     }
 

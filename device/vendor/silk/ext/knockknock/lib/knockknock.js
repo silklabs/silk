@@ -78,7 +78,7 @@ class FindFace {
     this._idMap = {};
 
     // Not calling await on purpose so as not to block the constructor
-    if (this._model != null) {
+    if (this._model !== null) {
       this._init();
     }
   }
@@ -199,7 +199,7 @@ class FindFace {
 
       // For eigenface and fisherface type of model the confidence number is
       // very unreliable so use facial reconstruction instead
-      if (this.faceRecognizer != 'LBPH') {
+      if (this.faceRecognizer !== 'LBPH') {
         let reconstructedFace = this._trainer.reconstructFace(this._model, faceim);
         if (!reconstructedFace) {
           return reject(`can not reconstruct face`);
@@ -216,11 +216,10 @@ class FindFace {
       this._model.predict(faceim, (result) => {
         log.debug(`${JSON.stringify(result)}`);
         if (result.id !== -1) {
-          if (this.faceRecognizer != 'LBPH') {
+          if (this.faceRecognizer !== 'LBPH') {
             return resolve([result.id, similarity]);
-          } else {
-            return resolve([result.id, result.confidence]);
           }
+          return resolve([result.id, result.confidence]);
         }
         return reject(`identity is unknown`);
       });
@@ -293,9 +292,9 @@ class FindFace {
             if (face.id) {
               this._idMap[face.id] = name;
             }
-          } catch (err) {
+          } catch (ex) {
             // Unknown face
-            log.debug(`Unknown face detected: why=${err}`);
+            log.debug(`Unknown face detected: why=${ex}`);
             this._env.timeline.addObject('a face', when, face); // See #1306 for 'a face' vs 'face'
           }
         });

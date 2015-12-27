@@ -64,7 +64,7 @@ export default class CrashMetadata extends Base {
   async get(id: any): any {
     let _id;
     try {
-      _id = mongo.ObjectId(id);                   // eslint-disable-line new-cap
+      _id = new mongo.ObjectId(id);
     } catch(e) {
       log.warn(`${e}: '%s'`, id);
       throw e;

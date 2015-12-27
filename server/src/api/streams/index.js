@@ -1,11 +1,8 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 import * as authenticate from './authenticate';
 import * as closingPassThrough from './closing_passthrough';
 import * as closingTransform from './closing_transform';
 import * as crypto from './crypto';
-import * as duplex_transform from './duplex_transform';
+import * as duplex_transform from './duplex_transform'; // eslint-disable-line camelcase
 import * as heartbeat from './heartbeat';
 import * as msgpack from './msgpack';
 

@@ -34,7 +34,7 @@ class MainWithDevices extends React.Component {
   }
 }
 
- export default class Main extends React.Component {
+export default class Main extends React.Component {
   render() {
     return (
       <ServerConnectivity

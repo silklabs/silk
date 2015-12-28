@@ -80,7 +80,7 @@ export default class MonitorPreview extends SocketIOComponent {
       if (!this.mounted) {
         return;
       }
-      this.setState({
+      this.setStateAsync({
         timedOut: false,
         blob: message.frame,
         objects: message.objects || [],
@@ -168,7 +168,7 @@ export default class MonitorPreview extends SocketIOComponent {
         if (!this.props.hasNetwork) {
           return;
         }
-        this.setState({timedOut: true, blob: null, objects: []});
+        this.setStateAsync({timedOut: true, blob: null, objects: []});
       },
       timeOut
     );
@@ -208,13 +208,13 @@ export default class MonitorPreview extends SocketIOComponent {
   onBLEDeviceStatusChange = (status) => {
     this.startTimeoutTimer();
     if (!this.state.serverConnectionStatus !== status.message) {
-      this.setState({serverConnectionStatus: status.message});
+      this.setStateAsync({serverConnectionStatus: status.message});
     }
   };
 
   onBLEDeviceRegistered = () => {
     this.startTimeoutTimer();
-    this.setState({registered: true});
+    this.setStateAsync({registered: true});
   };
 
   _renderLabel() {

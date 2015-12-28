@@ -13,47 +13,47 @@ export default class AsyncNavigator extends Navigator {
   static SceneConfigs = Navigator.SceneConfigs;
 
   jumpToAsync(route) {
-    setTimeout(() => this.jumpTo(route), 0);
+    requestAnimationFrame(() => this.jumpTo(route));
   }
 
   jumpForwardAsync(){
-    setTimeout(() => this.jumpForward(), 0);
+    requestAnimationFrame(() => this.jumpForward());
   }
 
   jumpBackAsync(){
-    setTimeout(() => this.jumpBack(), 0);
+    requestAnimationFrame(() => this.jumpBack());
   }
 
   popAsync() {
-    setTimeout(() => this.pop(), 0);
+    requestAnimationFrame(() => this.pop());
   }
 
   popToTopAsync() {
-    setTimeout(() => this.popToTop(), 0);
+    requestAnimationFrame(() => this.popToTop());
   }
 
   popToRouteAsync(route) {
-    setTimeout(() => this.popToRoute(route), 0);
+    requestAnimationFrame(() => this.popToRoute(route));
   }
 
   replacePreviousAndPopAsync(route) {
-    setTimeout(() => this.replacePreviousAndPop(route), 0);
+    requestAnimationFrame(() => this.replacePreviousAndPop(route));
   }
 
   resetToAsync(route) {
-    setTimeout(() => this.resetTo(route), 0);
+    requestAnimationFrame(() => this.resetTo(route));
   }
 
   pushAsync(route) {
-    setTimeout(() => this.push(route), 0);
+    requestAnimationFrame(() => this.push(route));
   }
 
   replaceAsync(route) {
-    setTimeout(() => this.replace(route), 0);
+    requestAnimationFrame(() => this.replace(route));
   }
 
   replacePreviousAsync(route) {
-    setTimeout(() => this.replacePrevious(route), 0);
+    requestAnimationFrame(() => this.replacePrevious(route));
   }
 
 }

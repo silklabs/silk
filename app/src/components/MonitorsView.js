@@ -31,7 +31,11 @@ const log = createLog('MonitorsView');
 
 const EVENTS_PAGE_SIZE = 10;
 const SCROLLVIEW_PTR_THRESHOLD = -50;
-const SCROLLVIEW_INFINITE_THRESHOLD = 100;
+// This value is purposely larger than the length of initial list of
+// events. That way, the moment the user start scrolling down, we load
+// more events. Adjust this value if the rendering of the events list
+// changes in some drastic way.
+const SCROLLVIEW_INFINITE_THRESHOLD = 3500;
 
 class MonitorsView extends AsyncComponent {
 
@@ -259,7 +263,6 @@ class MonitorsView extends AsyncComponent {
     // Pull to refresh: fetch more recent events.
     if (!this._pullToRefreshActive && contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
       this._pullToRefreshActive = true;
-      this.setStateAsync({eventsLoading: 'newer'});
       this._fetchActivity(eventsLatest, Date.now());
       return;
     }
@@ -269,25 +272,41 @@ class MonitorsView extends AsyncComponent {
     }
 
     // Infinite scroll: fetch more older events.
+    // Ensure that the treshold isn't bigger than the length of off-screen
+    // content. Otherwise we'd be triggering infinite-scrolling when pulling up!
+    let infiniteThreshold = Math.min(
+      SCROLLVIEW_INFINITE_THRESHOLD,
+      contentSize.height - layoutMeasurement.height
+    );
     let leftToScroll = contentSize.height - layoutMeasurement.height - contentOffset.y;
-    if (leftToScroll < SCROLLVIEW_INFINITE_THRESHOLD) {
-      this.setStateAsync({eventsLoading: 'older'});
+    if (leftToScroll < infiniteThreshold) {
       this._fetchActivity(null, eventsEarliest);
       return;
     }
   };
 
+  _noMoreOlderEvents = false;
+
   _fetchActivity = async (startTime, endTime) => {
+    let { eventsLoading } = this.pendingState;
     if (!this.props.hasNetwork || !this.props.devices.size) {
       // No point in trying anything when there's no network connectivity
       // or no devices.
-      this.setStateAsync({eventsLoading: null});
+      if (eventsLoading) {
+        this.setStateAsync({eventsLoading: null});
+      }
       return;
     }
 
     let addlEvents;
     try {
       if (startTime === null) {
+        if (this._noMoreOlderEvents) {
+          return;
+        }
+        if (eventsLoading !== 'older') {
+          this.setStateAsync({eventsLoading: 'older'});
+        }
         addlEvents = await this.props.api.metadata.findAllBeforeTime({
           deviceIds: [...this.props.devices.keys()],
           time: endTime,
@@ -295,6 +314,9 @@ class MonitorsView extends AsyncComponent {
           maxCount: EVENTS_PAGE_SIZE,
         });
       } else {
+        if (eventsLoading !== 'newer') {
+          this.setStateAsync({eventsLoading: 'newer'});
+        }
         addlEvents = await this.props.api.metadata.findAllInTimeInterval({
           deviceIds: [...this.props.devices.keys()],
           startTime,
@@ -305,7 +327,9 @@ class MonitorsView extends AsyncComponent {
       }
     } catch (ex) {
       log.warn('Failed to load events', ex);
-      this.setStateAsync({eventsLoading: null, eventsError: ex});
+      if (this.mounted) {
+        this.setStateAsync({eventsLoading: null, eventsError: ex});
+      }
       return;
     }
 
@@ -314,6 +338,10 @@ class MonitorsView extends AsyncComponent {
     }
 
     if (!addlEvents.length) {
+      if (startTime === null) {
+        log.info(`No more events before ${endTime}. Disabling infinite scrolling.`);
+        this._noMoreOlderEvents = true;
+      }
       this.setStateAsync({eventsLoading: null, eventsError: null});
       return;
     }

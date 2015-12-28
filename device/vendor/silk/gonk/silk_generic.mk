@@ -115,6 +115,7 @@ PRODUCT_PACKAGES += \
   opencv \
   kissfft \
   v8-profiler \
+  libttspico \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

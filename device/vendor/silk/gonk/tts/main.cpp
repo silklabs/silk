@@ -360,7 +360,9 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
  * Shut down the TTS engine and releases all associated resources
  */
 int TextToSpeechCommand::tts_shutdown() {
-  ttsEngine->funcs->shutdown(ttsEngine);
+  if (ttsEngine != NULL) {
+    ttsEngine->funcs->shutdown(ttsEngine);
+  }
   return 0;
 }
 
@@ -370,7 +372,9 @@ int TextToSpeechCommand::tts_shutdown() {
  */
 int TextToSpeechCommand::tts_stop() {
   ALOGV("%s", __PRETTY_FUNCTION__);
-  ttsEngine->funcs->stop(ttsEngine);
+  if (ttsEngine != NULL) {
+    ttsEngine->funcs->stop(ttsEngine);
+  }
   return 0;
 }
 
@@ -380,6 +384,7 @@ int TextToSpeechCommand::tts_stop() {
 int TextToSpeechCommand::tts_synthesizeText(Value& text) {
   ALOGV("%s", __PRETTY_FUNCTION__);
   LOG_ERROR((text.isNull()), "name not specified");
+  LOG_ERROR((ttsEngine == NULL), "ttsEngine not initialized");
 
   // Stop the previous playback session if any
   tts_stop();

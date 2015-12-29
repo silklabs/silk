@@ -60,9 +60,10 @@ export default class DeviceConfig extends React.Component {
             <TextInput
               ref="ssid"
               placeholder="Enter device name"
+              clearButtonMode="always"
               value={this.state.name}
               autoCapitalize="words"
-              autoCorrect={true}
+              autoCorrect={false}
               style={FormStyles.formInput}
               onChangeText={name => this.setState({name})}
             />
@@ -83,6 +84,7 @@ export default class DeviceConfig extends React.Component {
             <TextInput
               ref="ssid"
               placeholder="Enter WiFi network name"
+              clearButtonMode="always"
               value={this.state.ssid}
               autoCapitalize="none"
               autoCorrect={false}
@@ -100,6 +102,7 @@ export default class DeviceConfig extends React.Component {
               ref="secret"
               secureTextEntry={!this.state.showSecret}
               placeholder="Enter WiFi password"
+              clearButtonMode="always"
               value={this.state.secret}
               style={FormStyles.formInput}
               onChangeText={secret => this.setState({secret})}

@@ -4,7 +4,6 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import watchify from 'watchify';
 import babelify from 'babelify';
 import browserify from 'browserify';
 import gulp from 'gulp';
@@ -18,7 +17,6 @@ import cache from 'gulp-cache';
 import eslint from 'gulp-eslint';
 import path from 'path';
 import fs from 'fs';
-import printExec from './print_exec';
 
 export default function(baseDirectory = process.env.BASEDIR) {
   // Base directory which we are operating on ... All assets should be loaded and
@@ -28,20 +26,10 @@ export default function(baseDirectory = process.env.BASEDIR) {
   // package.json from the basedir.
   let pkg = JSON.parse(pkgSource);
 
-  // add custom browserify options here
-  let browserifyStream = browserify();
-
   // Needed so gulp always operates on the base directory.
   function src(glob) {
     // XXX: The "base" option does not work so we use the whole baseDirectory.
     return gulp.src(path.join(baseDirectory, glob));
-  }
-
-  function trimSlash(str) {
-    if (str[str.length - 1] === '/') {
-      return str.slice(0, -1);
-    }
-    return str;
   }
 
   let _cache;
@@ -90,7 +78,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
       exclude: '**/*.node',
       transform: [babelify.configure(
         JSON.parse(getBabelrc())
-      )]
+      )],
     };
 
     for (let key in options) {
@@ -101,14 +89,9 @@ export default function(baseDirectory = process.env.BASEDIR) {
   }
 
   function build(browserifyStream) {
-    // We heavily cache our assets we cache bust not only by their content but also
-    // these values...
-    let babelrc = getBabelrc();
-    let cacheProps = [pkgSource, babelrc]
-
     let uglifyCfg = {
-      compress: {keep_fnames: true},
-      mangle: false
+      compress: {keep_fnames: true}, // eslint-disable-line camelcase
+      mangle: false,
     };
 
     return browserifyStream.bundle()
@@ -154,9 +137,9 @@ export default function(baseDirectory = process.env.BASEDIR) {
         // What to store as the result of the successful action
         value: function(jshintedFile) {
           return {
-            eslint: jshintedFile.eslint
+            eslint: jshintedFile.eslint,
           };
-        }
+        },
       }))
       .pipe(eslint.format())
       .pipe(eslint.failAfterError());
@@ -169,4 +152,4 @@ export default function(baseDirectory = process.env.BASEDIR) {
     getCache,
     createBrowserifyStream,
   };
-};
+}

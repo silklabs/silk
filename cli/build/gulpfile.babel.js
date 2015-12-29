@@ -16,8 +16,8 @@ gulp.task('build', () => {
 
 gulp.task('lint', () => {
   if (process.env.LAX === '1') {
-    console.log('Skipping lint...');
-    return;
+    console.log('Skipping lint...'); // eslint-disable-line no-console
+    return null;
   }
 
   return commands.lint();

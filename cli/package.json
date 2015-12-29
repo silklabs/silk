@@ -4,7 +4,7 @@
   "description": "Silk command line tool",
   "main": "silk.js",
   "scripts": {
-    "lint": "eslint lib",
+    "lint": "eslint build lib",
     "install": "( ./build/build && echo \"#!/usr/bin/env node\" > silk && cat silk.js >> silk && chmod u+x silk && rm silk.js )"
   },
   "dependencies": {
@@ -37,8 +37,7 @@
     "node-fetch": "^1.3.3",
     "source-map": "^0.5.1",
     "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0",
-    "watchify": "^3.4.0"
+    "vinyl-source-stream": "^1.1.0"
   },
   "private": true
 }

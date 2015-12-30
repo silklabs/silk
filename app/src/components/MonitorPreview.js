@@ -3,6 +3,7 @@ import React from 'react-native';
 import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
+import { shouldPureComponentUpdate } from '../libraries/Util';
 
 import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
@@ -95,6 +96,8 @@ export default class MonitorPreview extends SocketIOComponent {
     }
     this.startTimeoutTimer();
   }
+
+  shouldComponentUpdate = shouldPureComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     if (!this.props.haveVideoStream && nextProps.haveVideoStream) {

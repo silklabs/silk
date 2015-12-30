@@ -7,6 +7,7 @@ import { OrderedMap, OrderedSet } from 'immutable';
 import { SilkApi } from 'silk-api';
 
 import SocketIO from '../libraries/SocketIO';
+import { shouldPureComponentUpdate } from '../libraries/Util';
 
 import Activity from './Activity';
 import AsyncComponent from './abstract/AsyncComponent';
@@ -67,6 +68,8 @@ class MonitorsView extends AsyncComponent {
     AppStateIOS.removeEventListener('change', this.onAppStateChange);
     this.mounted = false;
   }
+
+  shouldComponentUpdate = shouldPureComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     let { devices } = this.props;

@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -55,7 +53,6 @@ const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
 //
 const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
 const CAPTURE_DATA_SOCKET_NAME = '/dev/socket/captured';
-const CAPTURE_COMMAND_NAME = 'CaptureCommand';
 
 
 // When trying to reestablish contact with the capture process first delay by
@@ -580,7 +577,7 @@ class CameraStream extends EventEmitter {
 
   _command(cmd) {
     // Camera socket expects the command data in the following format
-    let event = CAPTURE_COMMAND_NAME + ' ' + '\"' + util.escape(JSON.stringify(cmd)) + '\"' + '\0';
+    let event = JSON.stringify(cmd) + '\0';
 
     this._ctlSocket.write(event);
     log.verbose(`camera << ${event}`);

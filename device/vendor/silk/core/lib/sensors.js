@@ -1,5 +1,3 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015 Silk Labs, Inc.
  * All Rights Reserved.
@@ -14,7 +12,6 @@ import createLog from './log';
 const log = createLog('sensors');
 
 const SENSORS_SOCKET_NAME = '/dev/socket/sensors';
-const SENSORS_COMMAND_NAME = 'SensorsCommand';
 
 /**
  * Sensor types as defined in <hardware/sensors.h>
@@ -73,7 +70,7 @@ class Sensors extends events.EventEmitter {
       log.verbose(`connected to ${SENSORS_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
-      this._command('ready');
+      this._command({cmdName: 'ready'});
     });
     this._socket.on('data', data => this._onData(data));
     this._socket.on('error', err => {
@@ -94,7 +91,7 @@ class Sensors extends events.EventEmitter {
    */
   activate(sensorType, rate) {
     this._active = true;
-    this._command('activate ' + sensorType + ' ' + rate);
+    this._command({cmdName: 'activate', sensorType, rate});
   }
 
   /**
@@ -104,7 +101,7 @@ class Sensors extends events.EventEmitter {
    */
   deactivate(sensorType) {
     this._active = false;
-    this._command('deactivate ' + sensorType);
+    this._command({cmdName: 'deactivate', sensorType});
   }
 
   _restart(why) {
@@ -140,7 +137,7 @@ class Sensors extends events.EventEmitter {
         this.emit('initialize');
       } else if (sensorEvent.eventName === 'activated') {
         this.emit('activate');
-        this._command('poll'); // Start polling
+        this._command({cmdName: 'poll'}); // Start polling
       } else if (sensorEvent.eventName === 'deactivated') {
         this.emit('deactivate');
       } else if (sensorEvent.eventName === 'error') {
@@ -161,10 +158,10 @@ class Sensors extends events.EventEmitter {
     }
 
     // sensors socket expects the command data in the following format
-    var event = SENSORS_COMMAND_NAME + ' ' + '\"' + cmd + '\"' + '\0';
+    var event = JSON.stringify(cmd) + '\0';
 
     this._socket.write(event);
-    log.verbose(`sensors << ${cmd}`);
+    log.verbose(`sensors << ${JSON.stringify(cmd)}`);
   }
 }
 

@@ -21,7 +21,6 @@
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/OMXCodec.h>
 #include <system/audio.h>
-#include <sysutils/FrameworkListener.h>
 #include <utils/Thread.h>
 
 #include "AudioSourceEmitter.h"
@@ -33,6 +32,7 @@
 #include "MPEG4SegmenterDASH.h"
 #include "OpenCVCameraCapture.h"
 #include "SlicedMP4Encoder.h"
+#include "FrameworkListener1.h"
 
 using namespace android;
 using namespace Json;
@@ -154,16 +154,16 @@ private:
  * This class provides a wrapper around capture socket to help with
  * sending and receiving messages using the capture socket.
  */
-class CaptureListener: private FrameworkListener {
+class CaptureListener: private FrameworkListener1 {
 public:
   CaptureListener(Channel& channel) :
-      FrameworkListener(CAPTURE_CTL_SOCKET_NAME) {
-    FrameworkListener::registerCmd(new CaptureCommand(this, channel));
+      FrameworkListener1(CAPTURE_CTL_SOCKET_NAME) {
+    FrameworkListener1::registerCmd(new CaptureCommand(this, channel));
   }
 
   int start() {
     ALOGD("Starting CaptureListener");
-    return FrameworkListener::startListener();
+    return FrameworkListener1::startListener();
   }
 
   /**
@@ -174,7 +174,7 @@ public:
     string jsonMessage = fastWriter.write(jsonMsg);
 
     ALOGV("Broadcasting %s", jsonMessage.c_str());
-    FrameworkListener::sendBroadcast(200, jsonMessage.c_str(), false);
+    FrameworkListener1::sendBroadcast(200, jsonMessage.c_str(), false);
   }
 };
 
@@ -182,18 +182,11 @@ public:
  * This function is run when a capture command is received from the client
  */
 int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
-  char *saveptr;
-
-  char *cmd = strtok_r(argv[1], " \n", &saveptr);
-  if (!cmd) {
-    return 1;
-  }
-
-  ALOGV("Received command: %s", cmd);
+  ALOGD("Received command %s", argv[0]);
 
   // Parse JSON command
   Value cmdJson;
-  bool result = mJsonReader.parse(cmd, cmdJson, false);
+  bool result = mJsonReader.parse(argv[0], cmdJson, false);
   LOG_ERROR((result != true), "Failed to parse command: %s",
       mJsonReader.getFormattedErrorMessages().c_str());
 

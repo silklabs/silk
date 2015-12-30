@@ -6,6 +6,7 @@ LOCAL_MODULE := capture
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
+	../SocketListener/FrameworkListener1.cpp \
 	../SocketListener/SocketListener1.cpp \
 	../jsoncpp/jsoncpp.cpp \
 	AudioLooper.cpp \

@@ -11,14 +11,17 @@
 #include <utils/Log.h>
 
 #include <stdlib.h>
-#include <sysutils/FrameworkListener.h>
 #include <utils/Timers.h>
 #include <hardware/sensors.h>
 #include <json/json.h>
 #include <utils/Thread.h>
 #include <utils/KeyedVector.h>
 
+#include "FrameworkListener1.h"
+
 using namespace android;
+using namespace Json;
+using namespace std;
 
 //
 // Constants
@@ -34,7 +37,7 @@ using namespace android;
   do { \
     if (expression) { \
       ALOGE(__VA_ARGS__); \
-      Json::Value jsonMsg; \
+      Value jsonMsg; \
       jsonMsg["eventName"] = "error"; \
       mSensorsListener->sendEvent(jsonMsg); \
       return 1; \
@@ -96,33 +99,34 @@ private:
   sp<SensorsPoll> mSensorsPoll;
   int mActiveSensorCount;
   DefaultKeyedVector<int, bool> mActiveSensors;
+  Reader mJsonReader;
 };
 
 /**
  * This class provides a wrapper around sensors socket to help with
  * sending and receiving messages using the sensors socket.
  */
-class SensorsListener: private FrameworkListener, public virtual RefBase {
+class SensorsListener: private FrameworkListener1, public virtual RefBase {
 public:
   SensorsListener() :
-      FrameworkListener(SENSORS_SOCKET_NAME) {
-    FrameworkListener::registerCmd(new SensorsCommand(this));
+      FrameworkListener1(SENSORS_SOCKET_NAME) {
+    FrameworkListener1::registerCmd(new SensorsCommand(this));
   }
 
   int start() {
     ALOGD("Starting SensorsListener");
-    return FrameworkListener::startListener();
+    return FrameworkListener1::startListener();
   }
 
   /**
    * Notify the client of a sensors event
    */
-  void sendEvent(const Json::Value & jsonMsg) {
-    Json::FastWriter fastWriter;
+  void sendEvent(const Value & jsonMsg) {
+    FastWriter fastWriter;
     std::string jsonMessage = fastWriter.write(jsonMsg);
 
     ALOGV("Broadcasting %s", jsonMessage.c_str());
-    FrameworkListener::sendBroadcast(200, jsonMessage.c_str(), false);
+    FrameworkListener1::sendBroadcast(200, jsonMessage.c_str(), false);
   }
 };
 
@@ -165,28 +169,35 @@ private:
  * This function is run when a sensors command is received from the client
  */
 int SensorsCommand::runCommand(SocketClient *c, int argc, char ** argv) {
-  char *saveptr;
+  ALOGD("Received command %s", argv[0]);
 
-  char *cmd = strtok_r(argv[1], " \n", &saveptr);
-  if (!cmd) {
-    return 1;
-  }
+  // Parse JSON command
+  Value cmdJson;
+  bool result = mJsonReader.parse(argv[0], cmdJson, false);
+  LOG_ERROR((result != true), "Failed to parse command: %s",
+      mJsonReader.getFormattedErrorMessages().c_str());
 
-  ALOGD("Received command %s", cmd);
-  if (0 == strcmp(argv[1], "ready")) {
+  // Get command name
+  Value cmdNameVal = cmdJson["cmdName"];
+  LOG_ERROR((cmdNameVal.isNull()), "cmdName not available");
+
+  string cmdName = cmdNameVal.asString();
+  if (cmdName == "ready") {
     sensors_init();
-  } else if (0 == strcmp(cmd, "activate")) {
-    char *sensorTypeStr = strtok_r(NULL, " \n", &saveptr);
-    char *rateStr = strtok_r(NULL, " \n", &saveptr);
-    if (sensorTypeStr && rateStr) {
-      sensors_activate(atoi(sensorTypeStr), 1, atoi(rateStr));
-    }
-  } else if (0 == strcmp(cmd, "deactivate")) {
-    char *sensorTypeStr = strtok_r(NULL, " \n", &saveptr);
-    if (sensorTypeStr) {
-      sensors_activate(atoi(sensorTypeStr), 0, -1);
-    }
-  } else if (0 == strcmp(cmd, "poll")) {
+  } else if (cmdName ==  "activate") {
+    LOG_ERROR((cmdJson["sensorType"].isNull()), "sensor type not specified");
+    LOG_ERROR((cmdJson["rate"].isNull()), "rate not specified");
+
+    int sensorType = cmdJson["sensorType"].asInt();
+    int rate = cmdJson["rate"].asInt();
+    ALOGD("sensor Type %d rate %d", sensorType, rate);
+    sensors_activate(sensorType, 1, rate);
+  } else if (cmdName == "deactivate") {
+    LOG_ERROR((cmdJson["sensorType"].isNull()), "sensor type not specified");
+
+    int sensorType = cmdJson["sensorType"].asInt();
+    sensors_activate(sensorType, 0, -1);
+  } else if (cmdName == "poll") {
     if (mSensorsPoll != NULL) {
       ALOGW("sensors already polling");
       return 0;
@@ -247,7 +258,7 @@ int SensorsCommand::sensors_init() {
     }
   }
 
-  Json::Value jsonMsg;
+  Value jsonMsg;
   jsonMsg["eventName"] = "initialized";
   mSensorsListener->sendEvent(jsonMsg);
   return 0;
@@ -272,7 +283,7 @@ int SensorsCommand::sensors_activate(int sensorType, int activate, int rate) {
       sensorType);
 
   int err;
-  Json::Value jsonMsg;
+  Value jsonMsg;
   if (activate) {
     // Only activate if not already active
     if (!mActiveSensors.valueFor(mSensorsList[count].handle)) {
@@ -337,8 +348,8 @@ bool SensorsPoll::threadLoop() {
         sizeof(sensors_event_t));
 
     // Format JSON message
-    Json::Value jsonMsg;
-    Json::Value jsonArray;
+    Value jsonMsg;
+    Value jsonArray;
     jsonMsg["eventName"] = "data";
     jsonMsg["sensorType"] = data.type;
 
@@ -385,7 +396,7 @@ int main(int argc, char *argv[]) {
   if (err < 0) {
     ALOGE("Failed to start sensors socket listener: %d\n", err);
 
-    Json::Value jsonMsg; \
+    Value jsonMsg; \
     jsonMsg["eventName"] = "error"; \
     sensorsListener.sendEvent(jsonMsg); \
     return 1;

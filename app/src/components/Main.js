@@ -6,21 +6,23 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
+import { shouldPureComponentUpdate } from '../libraries/Util';
+
 const {
   StyleSheet,
   View,
 } = React;
 
 class MainView extends React.Component {
+
+  shouldComponentUpdate = shouldPureComponentUpdate;
+
   render() {
     return (
       <View style={styles.container}>
         <TopBar {...this.props} />
         <NetworkWarning api={this.props.api} />
-        <MonitorsView
-          {...this.state}
-          {...this.props}
-        />
+        <MonitorsView {...this.props} />
       </View>
     );
   }

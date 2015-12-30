@@ -2,6 +2,7 @@ import React from 'react-native';
 import moment from 'moment';
 
 import AsyncComponent from './abstract/AsyncComponent';
+import { shouldPureComponentUpdate } from '../libraries/Util';
 
 const {
   Image,
@@ -37,6 +38,8 @@ export default class Activity extends AsyncComponent {
     this.mounted = true;
     this._loadPreviewImage(this.props);
   }
+
+  shouldComponentUpdate = shouldPureComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     this._loadPreviewImage(nextProps);

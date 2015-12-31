@@ -17,7 +17,6 @@
     "elliptic": "^5.1.0",
     "event-to-promise": "^0.3.3",
     "express": "^4.12.3",
-    "hash.js": "^1.0.3",
     "hogan.js": "^3.0.2",
     "inline-css": "^1.0.5",
     "joi": "^6.6.1",

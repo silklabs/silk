@@ -97,7 +97,8 @@ git push --force stooge ${upliftPrBranchName}`;
   // Create an issue to "transfer ownership" of the upliftApprovedLabel
   let newissue = await sharedRepo.issues.create({
     title: `Uplift to ${destBranch}: ${pull.title}`,
-    body: 'Uplift of #' + pr + ' to `' + destBranch + '`\n' +
+    body: `Uplift of #${pr} to **${destBranch}** ` +
+            `via https://github.com/${owner}/${repo}/tree/${upliftPrBranchName}:\n` +
           '```\n' + upliftCommand + '\n```',
     assignee: pull.user.login,
   });
@@ -111,7 +112,9 @@ git push --force stooge ${upliftPrBranchName}`;
   // Cherry-pick the PR commits into the new branch
   let convertIssueToPull = false;
 
-  const halp = `\n@${pull.user.login}, please help!`;
+  const halp = `\n@${pull.user.login}, please help by manually performing ` +
+    'the uplift using the above instructions as a guide, and sending a ' +
+    'Pull Request to resolve this issue.';
 
   if (foundMergeCommit) {
     sharedRepo.issues(newissue.number).comments.create({

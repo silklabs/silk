@@ -4,6 +4,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Cameras from '../libraries/Cameras';
+import mklog from 'log'; const log = mklog('CameraPreview');
 
 export default class CameraPreview extends React.Component {
   static propTypes = {
@@ -95,7 +96,17 @@ export default class CameraPreview extends React.Component {
     if (camera) {
       // Preview image
       if (camera.online && camera.previewImage.src !== '') {
-        context.drawImage(camera.previewImage, 0, 0);
+        try {
+          context.drawImage(camera.previewImage, 0, 0);
+        } catch (err) {
+          if (err.name === 'NS_ERROR_NOT_AVAILABLE') {
+            // Ignore the occasional Firefox "NS_ERROR_NOT_AVAILABLE: Component is
+            // not available" complaint
+            log.warn('Error:', err.stack || err);
+          } else {
+            throw err;
+          }
+        }
       } else {
         context.fillStyle = 'grey';
         context.fillRect(0, 0, canvas.width, canvas.height);
@@ -155,9 +166,19 @@ export default class CameraPreview extends React.Component {
       }
 
       // Logo
-      if (camera.online && camera.logoImage) {
+      if (camera.online && camera.logoImage.src !== '') {
         context.globalAlpha = 0.50;
-        context.drawImage(camera.logoImage, 0, 0);
+        try {
+          context.drawImage(camera.logoImage, 0, 0);
+        } catch (err) {
+          if (err.name !== 'NS_ERROR_NOT_AVAILABLE') {
+            // Ignore the occasional Firefox "NS_ERROR_NOT_AVAILABLE: Component is
+            // not available" complaint
+            log.warn('Error:', err.stack || err);
+          } else {
+            throw err;
+          }
+        }
       }
       context.restore();
     }

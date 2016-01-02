@@ -15,7 +15,6 @@ class Camera extends EventEmitter {
       name,
       id,
       logs: {},
-      logoImage: document.createElement('img'),
       _requestedRooms: {},
     });
     this.setOffline();
@@ -38,6 +37,7 @@ class Camera extends EventEmitter {
       let logoArray = new Uint8Array(logo);
       if (logoArray.length > 0) {
         let blob = new Blob([logoArray], { type: 'image/png' });
+        this.logoImage = document.createElement('img');
         this.logoImage.src = URL.createObjectURL(blob);
       }
     }
@@ -60,6 +60,7 @@ class Camera extends EventEmitter {
 
     if (this.logoImage) {
       URL.revokeObjectURL(this.logoImage.src);
+      this.logoImage = null;
     }
     this._socket = null;
     this.previewSize = null;
@@ -160,6 +161,7 @@ class Camera extends EventEmitter {
 
     if (this.previewImage) {
       URL.revokeObjectURL(this.previewImage.src);
+      this.previewImage = null;
     }
 
     if (this.online && enabled) {

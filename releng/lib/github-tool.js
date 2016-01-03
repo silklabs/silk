@@ -295,23 +295,29 @@ function next2master() {  //eslint-disable-line no-unused-vars
 
 // TODO: Convert this to a command-line option or something...
 /*
+function genMilestones(prefix, number = 5, baseDate, baseNumber = 1,
+  incNumber = 1, incDate = 14) {
+  let m = [];
+
+  while (number >= 1) {
+    let date = new Date();
+    date.setTime(baseDate.getTime());
+    m.push([`${prefix}${baseNumber}`, date]);
+
+    baseDate.setTime(baseDate.getTime() + 1000 * 60 * 60 * 24 * incDate);
+    baseNumber += incNumber;
+    number--;
+  }
+  return m;
+}
+
 if (require.main === module) {
   Promise.resolve()
   .then(() => {
-    var milestones = [
-      ['Adventus5', new Date(2015, 9, 29)],
-      ['Adventus4', new Date(2015, 10, 12)],
-      ['Adventus3', new Date(2015, 10, 26)],
-      ['Adventus2', new Date(2015, 11, 10)],
-      ['Adventus1', new Date(2015, 11, 18)],
-    ];
+    let milestones = genMilestones('Feature', 6, new Date(2016, 0, 8));
     return Promise.all(
-      milestones.map(m => {
-        forEachSilkRepo((owner, repo) => {
-          return createMilestone(owner, repo, m[0], m[1]);
-        })
-      })
-    );
+      milestones.map(m => createMilestone('silklabs', 'silk-core', m[0], m[1]))
+    )
   })
   .catch(exitOnError)
   .then(() => {

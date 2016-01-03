@@ -6,5 +6,4 @@
 module.exports = [
   'silk-core',
   'gonk-alto',
-  'releng',
 ];

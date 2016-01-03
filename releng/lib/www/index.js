@@ -1,9 +1,13 @@
+/*
+ * @flow
+ */
 
 import debug from 'debug';
 debug.enable('silk-*');
 
 // Activate better Error stack traces
 import 'source-map-support/browser-source-map-support';
+declare var sourceMapSupport: any
 sourceMapSupport.install(); //eslint-disable-line no-undef
 
 import version from 'silk-core-version';

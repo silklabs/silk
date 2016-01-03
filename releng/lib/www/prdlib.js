@@ -1,8 +1,19 @@
 /**
  * PRD manipulation module
+ *
+ * @flow
  */
 import makeLog from 'log';
 const log = makeLog('prd');
+
+type GithubIssueLabel = {
+  name: string;
+};
+
+type GithubIssue = {
+  number: number;
+  labels: Array<GithubIssueLabel>;
+};
 
 export const prdRepo = 'silk-vision-prd';
 export const prdRepoName = 'Silk Vision Product Requirements';
@@ -35,7 +46,11 @@ export const workflowLabels = [
 const ownerLabelPrefix = 'Who:';
 const silkOwnerLabelPrefix = 'Who:Silk';
 
-export function issuePriority(issue) {
+type IssuePriorityResponse = {
+  name: ?string;
+  value: number;
+};
+export function issuePriority(issue: GithubIssue): IssuePriorityResponse {
   let name = null;
   let value = priorityLabels['nice-to-have'];
 
@@ -48,7 +63,11 @@ export function issuePriority(issue) {
   return { name, value };
 }
 
-export function issueLoE(issue) {
+type IssueLoEResponse = {
+  name: ?string;
+  value: number;
+};
+export function issueLoE(issue: GithubIssue): IssueLoEResponse {
   let name = null;
   let value = 0;
 
@@ -61,7 +80,7 @@ export function issueLoE(issue) {
   return { name, value };
 }
 
-export function issueOwners(issue) {
+export function issueOwners(issue: GithubIssue): Array<string> {
   let owners = [];
   issue.labels.forEach(label => {
     if (label.name.startsWith(ownerLabelPrefix)) {
@@ -72,7 +91,11 @@ export function issueOwners(issue) {
   return owners;
 }
 
-export function issueState(issue) {
+type IssueStateResponse = {
+  name: ?string;
+  value: number;
+};
+export function issueState(issue: GithubIssue): IssueStateResponse {
   let stateIndex = -1;
   issue.labels.forEach(label => {
     const index = workflowLabels.indexOf(label.name);
@@ -99,7 +122,12 @@ function _issuePrioritySort(a, b) {
   return 0;
 }
 
-export async function fetchAllPrdItems(octo) {
+type AllPrdItems = {
+  itemsByMilestone: { [key: string]: Array<GithubIssue>; };
+  milestoneDescriptions: { [key: string]: string; };
+};
+
+export async function fetchAllPrdItems(octo: any): Promise<AllPrdItems> {
   let repo = octo.repos('silklabs', prdRepo);
 
   let allIssues = [];
@@ -132,7 +160,7 @@ export async function fetchAllPrdItems(octo) {
   return { itemsByMilestone: milestones, milestoneDescriptions };
 }
 
-export function lintPrdItem(issue) {
+export function lintPrdItem(issue: GithubIssue) : ?Array<[number, string]> {
   let lint = [];
 
   const permitOne = (issue, labels, name) => {

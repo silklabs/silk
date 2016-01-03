@@ -33,6 +33,7 @@ export const workflowLabels = [
 ];
 
 const ownerLabelPrefix = 'Who:';
+const silkOwnerLabelPrefix = 'Who:Silk';
 
 export function issuePriority(issue) {
   let name = null;
@@ -161,11 +162,21 @@ export function lintPrdItem(issue) {
       lint.push([issue.number, `No priority assigned`]);
     }
 
+    const owners = issueOwners(issue);
+
     if (issueLoE(issue).name === null) {
-      lint.push([issue.number, `No LoE assigned`]);
+      let loeLint = true;
+      if (owners.length > 0) {
+        // Only issues with Silk owners are expected to have LoEs
+        loeLint = owners.some(
+          (owner) => owner.startsWith(silkOwnerLabelPrefix));
+      }
+      if (loeLint) {
+        lint.push([issue.number, `No LoE assigned`]);
+      }
     }
 
-    if (issueOwners(issue).length < 1) {
+    if (owners.length < 1) {
       lint.push([issue.number, `No owner(s) identified ("Who:..." label)`]);
     }
   }

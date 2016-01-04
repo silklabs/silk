@@ -59,10 +59,10 @@ suite('logcat', () => {
      * A human must uncomment and commit the results of these fixture
      * generations to disk!
      */
-    //await createFixture('threadtime');
+    //await createFixture('threadtime_2016');
   });
 
-  testFixture('threadtime');
+  testFixture('threadtime_2016');
 
   test('with real device hooked up', async () => {
     if (process.env.WITH_DEVICE !== 'true') {

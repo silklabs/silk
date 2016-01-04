@@ -213,8 +213,7 @@ export function lintPrdItem(issue: GithubIssue) : ?Array<[number, string]> {
       lint.push([issue.number, `No owner(s) identified ("Who:..." label)`]);
     }
   }
-  if ( (state.value === 4 /* - In Progress */) ||
-       (state.value === 5 /* - Validate */) ) {
+  if (state.value === 4 /* - In Progress */) {
     if (issue.assignee === null) {
       lint.push([issue.number, `Not assigned to one human`]);
     }

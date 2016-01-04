@@ -6,7 +6,7 @@ export default async function() {
   let api = createApi();
   api.accessToken = api.id.create();
 
-  // Semi-nasty hack where we set the acessToken that the lib code will use.
+  // Semi-nasty hack where we set the accessToken that the lib code will use.
   realAPI.accessToken = api.accessToken;
 
   let accessToken = new AccessToken(

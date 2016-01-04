@@ -29,7 +29,7 @@ suite('CrashReporterOperation', () => {
       return;
     }
 
-    let { device: api } = await createApi();
+    let { device: api, account: accountApi } = await createApi();
 
     /*eslint-disable no-unused-vars*/
     let { stream, buffer } = randomStream();
@@ -50,7 +50,7 @@ suite('CrashReporterOperation', () => {
     await operation.write(tombstone);
 
     log.info('See if we can find it on the server...');
-    let result = await api.crashMeta.find({
+    let result = await accountApi.crash.findAll({
       deviceId: api.accessToken.toString(),
       type: 'tombstone',
       limit: 1

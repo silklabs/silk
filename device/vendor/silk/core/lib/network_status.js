@@ -1,16 +1,14 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /**
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
- */
 
-/**
  * This module is designed to provide a consistent indicator that we can or
  * cannot connect to the Internet... This is distinctly different from "do we
  * have a wifi connection" as you can still be connected to wifi and have no
  * connection.
+ *
+ * @flow
  */
 
 
@@ -19,11 +17,14 @@ import createLog from './log';
 import checkOnline from 'is-online';
 import { EventEmitter } from 'events';
 
+import type { Wifi } from './wifi';
+import type { Socket } from 'socket.io-client';
+
 const log = createLog('network_status');
 
 const CHECK_INTERVAL_MS = 2000; // 2s
 const MAX_CHECK_INTERVAL_MS = 1000 * 60 * 5; // 5min
-const IS_ONLINE = () => {
+const IS_ONLINE = (): Promise<bool> => {
   return new Promise((accept, reject)=> {
     checkOnline((err, value) => {
       if (err) {
@@ -53,16 +54,18 @@ const IS_ONLINE = () => {
 export default class NetworkStatus extends EventEmitter {
 
   // wifi module...
-  _wifi = null
+  _wifi: Wifi = null;
   // function to check if we are online or not ...
-  _isOnlineFn = null
+  _isOnlineFn: (() => Promise<bool>);
 
   // hint socket ...
-  _hintSocket = null
+  _hintSocket: ?Socket = null;
+
   set hintSocket(socket) {
     if (this._hintSocket) {
-      this._hintSocket.removeListener('connect', this._checkForConnection);
-      this._hintSocket.removeListener('disconnect', this._checkForConnection);
+      let oldSocket = this._hintSocket;
+      oldSocket.removeListener('connect', this._checkForConnection);
+      oldSocket.removeListener('disconnect', this._checkForConnection);
     }
 
     if (socket) {
@@ -72,25 +75,29 @@ export default class NetworkStatus extends EventEmitter {
 
     this._hintSocket = socket;
   }
-  get hintSocket() {
+  get hintSocket(): ?Socket {
     return this._hintSocket;
   }
 
   // internal flag when we are online/offline ...
-  _online = null // set to null so first check will set online/offline event
+  _online: ?bool = null; // set to null so first check will set online/offline event
 
   // how often to check if we are online again ...
-  _checkIntervalMS = null
+  _checkIntervalMS: ?number = null;
   // setTimeout handle...
-  _checkIntervalHandle = null
+  _checkIntervalHandle: ?number = null;
   // number of attempts to check if are online ...
-  _checkAttempt = 0
+  _checkAttempt: number = 0;
 
-  get online() {
+  get online(): bool {
     return !!this._online;
   }
 
-  constructor(wifi, isOnlineFn = IS_ONLINE, checkInterval = CHECK_INTERVAL_MS) {
+  constructor(
+    wifi: Wifi,
+    isOnlineFn: () => Promise<bool> = IS_ONLINE,
+    checkInterval: number = CHECK_INTERVAL_MS
+  ) {
     super();
     assert(wifi instanceof EventEmitter, 'must pass wifi module');
     assert(typeof isOnlineFn === 'function');
@@ -107,8 +114,10 @@ export default class NetworkStatus extends EventEmitter {
       log.info('wifi offline');
       // We do not need to check for a connection if we are completely sure to
       // be offline...
-      clearInterval(this._checkIntervalHandle);
-      this._checkIntervalHandle = null;
+      if (this._checkIntervalHandle) {
+        clearInterval(this._checkIntervalHandle);
+        this._checkIntervalHandle = null;
+      }
       // reset connection attempts since we will not be trying while wifi is
       // disconnected...
       this._checkAttempt = 0;
@@ -129,11 +138,11 @@ export default class NetworkStatus extends EventEmitter {
    * Returns a Promise that accepts when somewhere interesting is reachable
    * (like maybe the Internet).
    */
-  isOnline() {
+  isOnline(): Promise<bool> {
     return this._isOnlineFn();
   }
 
-  _changeOnlineStatus(online) {
+  _changeOnlineStatus(online: bool) {
     // Only emit the event if there is a state change.
     let event = (online) ? 'online' : 'offline';
     let shouldEmitEvent = (online !== this._online) ?
@@ -147,7 +156,7 @@ export default class NetworkStatus extends EventEmitter {
     }
   }
 
-  _checkForConnection = async () => {
+  _checkForConnection: () => Promise<void> = async (): Promise<void> => {
     log.info(`Checking for connection...`);
     let canConnect = false;
     try {
@@ -179,6 +188,6 @@ export default class NetworkStatus extends EventEmitter {
     this._checkAttempt++;
     setTimeout(this._checkForConnection, timeout);
     this.emit('check failure', timeout);
-  }
+  };
 
 }

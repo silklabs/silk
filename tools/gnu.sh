@@ -12,7 +12,12 @@ if [ $(uname) = "Darwin" ]; then
       echo
       ( set -x; brew install $package )
     fi
-    PATH="/usr/local/opt/$package/libexec/gnubin:$PATH"
+
+    __TOOLPATH=/usr/local/opt/$package/libexec/gnubin
+    PATH=${PATH//":$__TOOLPATH"/} # Maybe remove __TOOLPATH in the middle or end of PATH
+    PATH=${PATH//"$__TOOLPATH:"/} # Maybe remove __TOOLPATH at the beginning of PATH
+    PATH="$__TOOLPATH:$PATH"      # Add __TOOLPATH to the beginning of PATH
+    unset __TOOLPATH
   done
 
   if ! cp --version | grep -q GNU; then

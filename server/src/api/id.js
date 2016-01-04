@@ -24,16 +24,11 @@
  * @flow
  */
 import assert from 'assert';
-import crypto from 'crypto';
 import { ec as EC } from 'elliptic';
 
-const ec = new EC('ed25519');
+import { sha256 } from './util';
 
-function sha256(text) {
-  var hasher = crypto.createHash('sha256');
-  hasher.update(text);
-  return hasher.digest('hex');
-}
+const ec = new EC('ed25519');
 
 export default class Id {
 

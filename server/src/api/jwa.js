@@ -4,9 +4,10 @@
  * algorithms is omitted (we don't need them)
  */
 
-import { sha256 } from 'hash.js';
 import { ec as EC } from 'elliptic';
 import base64url from 'base64url';
+
+import { sha256 } from './util';
 
 const ALGO = 'ed25519';
 const ec = new EC('ed25519');
@@ -22,7 +23,7 @@ function sign(input, privateKey) {
   let key = ec.keyFromPrivate(privateKey, 'hex');
 
   // Signing is defined by https://tools.ietf.org/html/rfc7518#section-3.4
-  let hash = sha256().update(input).digest('hex');
+  let hash = sha256(input);
   let signed = key.sign(hash, 'hex');
 
   // Per rfc7518 we create a single array R then S in BE order.
@@ -47,7 +48,7 @@ function verify(input, signature, publicKey) {
     return false;
   }
 
-  let hash = sha256().update(input).digest('hex');
+  let hash = sha256(input);
   let bufferSig = base64url.toBuffer(signature);
   let signatureDecoded = [];
 

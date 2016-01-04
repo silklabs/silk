@@ -5,16 +5,13 @@
  */
 
 import {sign} from 'jsonwebtoken';
-import jwa from './jwa';
-import { sha } from 'hash.js';
 import uuid from 'uuid';
+
+import jwa from './jwa';
+import { sha256 } from './util';
 
 import type AccessToken from './id';
 import type {SignPayload} from 'jsonwebtoken';
-
-function sha256(str) {
-  return sha.sha256().update(str).digest('hex');
-}
 
 function jwtPayload(canonicalReq: string): SignPayload {
   return {

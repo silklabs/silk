@@ -5,6 +5,7 @@
 # All Rights Reserved.
 # Confidential and Proprietary - Silk Labs, Inc.
 
+source $(dirname $BASH_SOURCE)/../../../../tools/gnu.sh
 GONK=$(readlink -f .repo/manifest.xml)
 GONK=${GONK##*/}
 GONK=${GONK%.xml}

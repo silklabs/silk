@@ -6,6 +6,11 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+// Load the regnerator polyfill manually so we don't need to also load all the
+// core-js pollyfills which we don't actually need...
+import regeneratorRuntime from 'babel-runtime/regenerator';
+global.regeneratorRuntime = regeneratorRuntime;
+
 // Example nightlight behaviour
 //
 // 1. When the light sensor drops below a fixed value, turn on the torch. Turn

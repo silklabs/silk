@@ -10,7 +10,12 @@ type GithubIssueLabel = {
   name: string;
 };
 
+type GithubIssueAssignee = {
+  login: string;
+};
+
 type GithubIssue = {
+  assignee: ?GithubIssueAssignee;
   number: number;
   labels: Array<GithubIssueLabel>;
 };

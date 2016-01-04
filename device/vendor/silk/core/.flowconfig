@@ -11,6 +11,9 @@ interface/
 .*/node_modules/browserify.*
 .*/node_modules/watchify.*
 
+[libs]
+interface/net.js
+
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=haste

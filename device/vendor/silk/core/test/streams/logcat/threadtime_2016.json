@@ -1,10 +1,10 @@
 [
   {
-    "utc": 1443162610117,
+    "utc": 1474785010117,
     "message": "--------- beginning of main"
   },
   {
-    "utc": 1443162610117,
+    "utc": 1474785010117,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -12,7 +12,7 @@
     "message": "option : f=/persist/bluetooth/.bdaddr"
   },
   {
-    "utc": 1420070400650,
+    "utc": 1451606400650,
     "pid": "168",
     "tid": "168",
     "priority": "W",
@@ -20,7 +20,7 @@
     "message": "type=2000 audit(0.0:1): initialized"
   },
   {
-    "utc": 1443162610117,
+    "utc": 1474785010117,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -28,7 +28,7 @@
     "message": "option : h"
   },
   {
-    "utc": 1443162610117,
+    "utc": 1474785010117,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -36,7 +36,7 @@
     "message": "option : x"
   },
   {
-    "utc": 1443162610117,
+    "utc": 1474785010117,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -44,7 +44,7 @@
     "message": "Read From /persist/bluetooth/.bdaddr by Path type(0x11), Data type (0x21)"
   },
   {
-    "utc": 1443162610277,
+    "utc": 1474785010277,
     "pid": "0",
     "tid": "190",
     "priority": "E",
@@ -52,7 +52,7 @@
     "message": " Diag_LSM_Init: Failed to open handle to diag driver, error = 2"
   },
   {
-    "utc": 1443162610278,
+    "utc": 1474785010278,
     "pid": "0",
     "tid": "191",
     "priority": "E",
@@ -60,7 +60,7 @@
     "message": " Diag_LSM_Init: Failed to open handle to diag driver, error = 2"
   },
   {
-    "utc": 1443162610283,
+    "utc": 1474785010283,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -68,7 +68,7 @@
     "message": "Output Data type(0x22), bPrintout(1), bPath((null))"
   },
   {
-    "utc": 1443162610283,
+    "utc": 1474785010283,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -76,7 +76,7 @@
     "message": "Loaded Data type(0x21)"
   },
   {
-    "utc": 1443162610283,
+    "utc": 1474785010283,
     "pid": "0",
     "tid": "194",
     "priority": "I",
@@ -84,7 +84,7 @@
     "message": "hex_to_ascii() - converted Data (30766F607198)"
   },
   {
-    "utc": 1443162610284,
+    "utc": 1474785010284,
     "pid": "0",
     "tid": "174",
     "priority": "E",
@@ -92,7 +92,7 @@
     "message": "Remote storage service is not supported on mdm target"
   },
   {
-    "utc": 1443162610284,
+    "utc": 1474785010284,
     "pid": "0",
     "tid": "201",
     "priority": "D",
@@ -100,7 +100,7 @@
     "message": "Starting SensorsListener"
   },
   {
-    "utc": 1443162610285,
+    "utc": 1474785010285,
     "pid": "0",
     "tid": "170",
     "priority": "I",
@@ -108,7 +108,7 @@
     "message": "Using in-kernel low memory killer interface"
   },
   {
-    "utc": 1443162610285,
+    "utc": 1474785010285,
     "pid": "176",
     "tid": "176",
     "priority": "D",
@@ -116,7 +116,7 @@
     "message": ": qseecom listener services process entry PPID = 1"
   },
   {
-    "utc": 1443162610285,
+    "utc": 1474785010285,
     "pid": "187",
     "tid": "187",
     "priority": "I",
@@ -124,7 +124,7 @@
     "message": "debuggerd: Sep 24 2015 04:54:37"
   },
   {
-    "utc": 1443162610286,
+    "utc": 1474785010286,
     "pid": "200",
     "tid": "200",
     "priority": "D",
@@ -132,7 +132,7 @@
     "message": "Starting BledroidListener"
   },
   {
-    "utc": 1443162610286,
+    "utc": 1474785010286,
     "pid": "175",
     "tid": "175",
     "priority": "I",
@@ -140,11 +140,11 @@
     "message": "PARAMETER VALUES"
   },
   {
-    "utc": 1443162610286,
+    "utc": 1474785010286,
     "message": ""
   },
   {
-    "utc": 1443162610286,
+    "utc": 1474785010286,
     "message": ""
   }
 ]

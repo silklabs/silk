@@ -239,7 +239,7 @@ suite('crash report', () => {
       let { crash, outbox} = create();
       let { stream } = randomStream();
 
-      let { device: api } = await createApi();
+      let { device: api, account: accountApi } = await createApi();
 
       outbox.online = true;
       await crash.assignDeviceId(deviceId);
@@ -251,7 +251,7 @@ suite('crash report', () => {
       await outbox.shutdown();
 
       // See if we can find it on the server...
-      let result = await api.crashMeta.find({
+      let result = await accountApi.crash.findAll({
         deviceId: api.accessToken.toString(),
         type: 'tombstone',
         limit: 1

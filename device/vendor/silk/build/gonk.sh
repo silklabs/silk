@@ -1,7 +1,7 @@
 # Figure the current Gonk from the basename of what .repo/manifest.xml is
 # pointing at.
 #
-# Copyright (c) 2015 Silk Labs, Inc.
+# Copyright (c) 2015-2016 Silk Labs, Inc.
 # All Rights Reserved.
 # Confidential and Proprietary - Silk Labs, Inc.
 

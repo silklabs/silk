@@ -40,6 +40,10 @@ class PrdItem extends React.Component {
 
     let labels;
     if (this.props.params.labels) {
+      let assigneeLabel;
+      if (issue.assignee !== null) {
+        assigneeLabel = <Label>PoC:{issue.assignee.login}</Label>;
+      }
       labels = (
         <p style={{float: 'right'}}>
           <Label bsStyle="primary">{priority.name}</Label>
@@ -49,6 +53,8 @@ class PrdItem extends React.Component {
           <Label bsStyle="danger">{prd.issueLoE(issue).name}</Label>
           &nbsp;
           {prd.issueOwners(issue).map(who => <Label key={issue.number + who} bsStyle="default">{who}</Label>)}
+          &nbsp;
+          {assigneeLabel}
         </p>
       );
     }

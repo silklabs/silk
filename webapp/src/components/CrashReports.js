@@ -139,12 +139,11 @@ class CrashReport extends React.Component {
           ref="checkbox"
           style={styles.checkbox}
         />
-        <a
+        <Button
           style={styles.link}
-          href="#"
           onClick={() => this.onShowCrash(crash.url)}>
           {datetime.toString()}
-        </a>
+        </Button>
         {modal}
       </ListGroupItem>
     );

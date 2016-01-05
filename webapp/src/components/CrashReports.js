@@ -6,6 +6,7 @@ import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon, Label,
          ListGroupItem, MenuItem, Modal } from 'react-bootstrap';
 import Iframe from 'react-iframe';
 import { Link } from 'react-router';
+import Api from '../libraries/Api';
 import Reports from '../libraries/CrashReports';
 
 const SHOW_INITIAL_NUMBER_REPORTS = 100;
@@ -90,11 +91,19 @@ class CrashReport extends React.Component {
     this.refs.checkbox.check(value);
   }
 
-  onShowCrash = url => {
-    if (this.props.shouldOpenInModal) {
-      this.setState({ modalUrl: url });
-    } else {
-      window.open(url);
+  onShowCrash = async () => {
+    try {
+      // Fetch a new crash URL.  The URL we have has likely expired by now
+      const crash = await Api.crash.findById(this.props.crash.id);
+      const url = crash.url;
+
+      if (this.props.shouldOpenInModal) {
+        this.setState({ modalUrl: url });
+      } else {
+        window.open(url);
+      }
+    } catch (err) {
+      console.error(err.stack || err);
     }
     return false;
   };
@@ -141,7 +150,7 @@ class CrashReport extends React.Component {
         />
         <Button
           style={styles.link}
-          onClick={() => this.onShowCrash(crash.url)}>
+          onClick={this.onShowCrash}>
           {datetime.toString()}
         </Button>
         {modal}

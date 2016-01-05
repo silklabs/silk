@@ -94,6 +94,11 @@ export default class EventTracker extends EventEmitter {
       return;
     }
 
+    let eventsLeftToTrack = Object.keys(this._eventRecords).length;
+    if (eventsLeftToTrack === 0) {
+      this.emit('active', event.when);
+    }
+
     // Insert the record into our local store right away. But we can't
     // upload it to the server until we've generated a random ID for it.
     // Generating the ID on the client is important so that subsequent
@@ -173,6 +178,7 @@ export default class EventTracker extends EventEmitter {
       this._trackExpirations();
     } else {
       log.info(`No more events to track, sleeping.`);
+      this.emit('inactive', Date.now());
     }
   }
 }

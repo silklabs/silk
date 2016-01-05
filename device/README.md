@@ -277,18 +277,23 @@ Building on Linux is 2x faster, even when running Linux in a VM hosted by OS X. 
 
 ### Video uploading
 
-Video and metadata uploading are disabled by default.
+Video uploading for events-only is enabled by default.
 
-To enable uploads:
+To enable video upload 24/7:
 ```sh
-adb shell setprop persist.silk.vidupload.enabled 1
+adb shell setprop persist.silk.vidupload.type all
+adb shell setprop ctl.restart silk
+```
+To enable video upload only for events:
+```sh
+adb shell setprop persist.silk.vidupload.type events
 adb shell setprop ctl.restart silk
 ```
 
-To disable uploads:
+To disable video upload entirely:
 ```sh
-adb shell rm /data/property/persist.silk.vidupload.enabled
-adb reboot
+adb shell setprop persist.silk.vidupload.type none
+adb shell setprop ctl.restart silk
 ```
 
 ### Configuring Video Duration

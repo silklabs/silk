@@ -26,16 +26,21 @@ export default function(networkStatus) {
    * The outbox has special queues specific to blob uploads so we don't clog
    * up the main queue with video/previews (which are running constantly).
    */
-  outbox.registerQueue('video', {
-    // TODO: This should be computed somehow
+  const videoOptions = {
+    // TODO: This should be computed somehow, and dynamically adjusted
     concurrency: 8,
-    diskConcurrency: 4
-  });
-  outbox.registerQueue('preview', {
-    // TODO: This should be computed somehow
+    diskConcurrency: 4,
+  };
+  const previewOptions = {
+    // TODO: This should be computed somehow, and dynamically adjusted
     concurrency: 5,
-    diskConcurrency: 3
-  });
+    diskConcurrency: 3,
+  };
+
+  outbox.registerQueue('event_video', videoOptions);
+  outbox.registerQueue('video', videoOptions, 'event_video');
+  outbox.registerQueue('event_preview', previewOptions);
+  outbox.registerQueue('preview', previewOptions, 'event_preview');
 
   /**
    * Register all known operations so we can create them from disk as needed...

@@ -21,7 +21,7 @@ type GithubIssue = {
 };
 
 export const prdRepo = 'silk-vision-prd';
-export const prdRepoName = 'Silk Vision Product Requirements';
+export const prdRepoName = 'Silk Sense Product Requirements';
 
 export const priorityLabels = {
   'must-have': 0,

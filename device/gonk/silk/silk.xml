@@ -82,6 +82,10 @@
            revision="refs/tags/v0.4"
            upstream="master"
            clone-depth="1"/>
+  <project name="cmusphinx/node-pocketsphinx"
+           path="external/node-pocketsphinx"
+           remote="github"
+           revision="1a469adcec7ff26c6f6968e7e44b1d0ed4ab95ed" clone-depth="1"/>
 
   <!-- Locked npm dependencies -->
   <project name="silk-device-locked-node-modules"

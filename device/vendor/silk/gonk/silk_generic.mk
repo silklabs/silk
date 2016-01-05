@@ -116,6 +116,7 @@ PRODUCT_PACKAGES += \
   kissfft \
   v8-profiler \
   libttspico \
+  pocketsphinx \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

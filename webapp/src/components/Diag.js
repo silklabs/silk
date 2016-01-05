@@ -105,7 +105,9 @@ export default class Diag extends React.Component {
         </ButtonToolbar>
         <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
           <DiagLog logName="dash" log={logs.dash} paused={paused}/>
-          <CameraPreview deviceId={this.deviceId}/>
+          <div>
+            <CameraPreview deviceId={this.deviceId}/>
+          </div>
         </div>
         <DiagLogcat logName="logcat" log={logs.logcat} paused={paused}/>
       </div>

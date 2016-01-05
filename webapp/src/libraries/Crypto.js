@@ -3,18 +3,11 @@
 // UNFORK ME: // https://github.com/silklabs/silk-app/blob/master/src/libraries/Crypto.js
 
 
-import { AppCrypto } from 'NativeModules';
+import { NativeModules } from 'react-native';
 import createDebug from 'debug';
 
+const { AppCrypto } = NativeModules;
 const log = createDebug('Crypto');
-
-/**
- * This is the number of rounds all clients should be using in their KDF for
- * generating passwords...
- *
- * XXX: Should be a constant in API.
- */
-const DEFAULT_ROUNDS = 64000;
 
 /**
  * Requests a number of random bytes from the native layer.
@@ -27,7 +20,10 @@ const DEFAULT_ROUNDS = 64000;
  *
  * @return {UInt8Array}
  */
-export function getRandomBytes(numberOfBytes: number, callback = null): Buffer {
+export function getRandomBytes(
+  numberOfBytes: number,
+  callback: ?((error: ?Error, result: ?Buffer) => void) = null
+): Promise<Buffer> {
   return new Promise((accept) => {
     let start = Date.now();
     AppCrypto.getRandomBytes(numberOfBytes, function(bytes) {
@@ -50,11 +46,14 @@ export function getRandomBytes(numberOfBytes: number, callback = null): Buffer {
   });
 }
 
-export function PBKDF2KeyDerivation(input, salt, rounds = DEFAULT_ROUNDS) {
+export function pbkdf2KeyDerivation(
+  input: string,
+  salt: string,
+  rounds: number
+): Promise<string> {
   return new Promise((accept) => {
     let start = Date.now();
-    /* eslint new-cap:0 */
-    AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, function(hexString) {
+    AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, (hexString) => { // eslint-disable-line new-cap
       log(`Generated PBKDF2KeyDerivation (${rounds}) in ${Date.now() - start} ms`);
       accept(hexString);
     });

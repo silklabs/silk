@@ -10,6 +10,8 @@ import pbkdf2 from 'pbkdf2';
 
 export default class Auth extends VIPBase {
 
+  PBKDF2_ROUNDS: number = 64000; // (recommendation from 2009)
+
   hashPassword(email: string, password: string): string {
     // Domain names are case insensitive!
     email = email.toLowerCase().trim();
@@ -17,7 +19,7 @@ export default class Auth extends VIPBase {
     return pbkdf2.pbkdf2Sync(
       password, // key
       email, // salt
-      64000, // rounds (recommendation from 2009)
+      this.PBKDF2_ROUNDS, // rounds
       32, // key length
       'sha256' // hash algorithm
     ).toString('hex');

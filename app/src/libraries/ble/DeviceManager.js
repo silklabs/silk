@@ -53,7 +53,7 @@ const SCHEMA = {
 
   registered: Joi.object().keys({
     name: Joi.string().equal(`registered`).required(),
-    deviceId: Joi.string().lowercase().trim().length(66).hex().required(),
+    deviceId: Joi.string().lowercase().trim().length(64).hex().required(),
   }).required(),
 
   status: Joi.object().keys({
@@ -72,7 +72,7 @@ const SCHEMA = {
 
   secret: Joi.object().keys({
     name: Joi.string().equal(`secret`).required(),
-    deviceId: Joi.string().lowercase().trim().length(66).hex().required(),
+    deviceId: Joi.string().lowercase().trim().length(64).hex().required(),
   }).required(),
 
   restart: Joi.object().keys({

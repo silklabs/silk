@@ -90,7 +90,7 @@ suite('crash metadata apis', () => {
 
     test(`/find - missing (deviceId)`, async () => {
       const find = await crashApi.findAll({
-        deviceId: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01',
+        deviceId: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       });
       assert.strictEqual(find.length, 0, '0 records found');
     });

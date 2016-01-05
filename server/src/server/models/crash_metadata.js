@@ -6,7 +6,7 @@ import Base from './base';
 
 let log = require('log')('models-crashreport');
 
-const TYPE_DEVICEID = Joi.string().lowercase().trim().length(66).hex();
+const TYPE_DEVICEID = Joi.string().lowercase().trim().length(64).hex();
 
 export const TYPE_ALL = Joi.string().only([
   'exception',

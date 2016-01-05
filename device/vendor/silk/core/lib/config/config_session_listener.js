@@ -28,7 +28,7 @@ const SCHEMA = {
     name: Joi.string().equal(`secret`).required(),
     accessPoint: Joi.string().min(1).required(),
     password: Joi.string().allow(``).default(``).optional(),
-    publicKey: Joi.string().lowercase().trim().length(66).hex().required(),
+    publicKey: Joi.string().lowercase().trim().length(64).hex().required(),
     regToken: Joi.string().required(),
     serverUrl: Joi.string().allow(``).default(``).optional(),
   }).options({

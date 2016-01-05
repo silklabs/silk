@@ -14,36 +14,25 @@
  *  - BLE beacon UUID
  */
 
-// The API violates this rule, so disable it for the whole file.
-/* eslint new-cap:0 */
-
+import invariant from 'assert';
 import { EventEmitter} from 'events';
-import createLog from 'log';
-
 import {
   AsyncStorage,
   NativeModules,
 } from 'react-native';
+import createLog from 'log';
+import { AccessToken } from 'silk-api';
+
 import {
   getRandomBytes,
-  PBKDF2KeyDerivation,
+  pbkdf2KeyDerivation,
 } from './Crypto';
 
 const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;
 
 const ACCESS_TOKEN_KEY = 'user.accessToken';
-
-/**
- * This value has been chosen based on what elliptic would do when generating
- * it's own entropy.
- *
- * See: https://github.com/indutny/elliptic/blob/cbccbc862bcbb3a0f2ce8021d340e51f785e2ebd/lib/elliptic/ec/index.js#L60
- * See: https://github.com/indutny/hash.js/blob/b8d200196b7e8a335d1f94c6b14366491822b7bb/lib/hash/sha.js#L105
- *
- * The ed25519 algorithm uses sha256 under the hood.
- */
-const SHA256_HMAC_STRENGTH = 192;
+const REGISTERED_DEVICES_KEY = 'user.registeredDevices';
 
 export class UserState extends EventEmitter {
 
@@ -52,7 +41,7 @@ export class UserState extends EventEmitter {
    */
   api = null;
   accessToken = null;
-  isDeveloper = false;
+  registeredDevices = [];
 
   constructor(api) {
     super();
@@ -63,14 +52,13 @@ export class UserState extends EventEmitter {
   // Load and initialize state...
   static async load(api) {
     let instance = new UserState(api);
-    let token = await instance._loadAccessToken();
+    let [ token, registeredDevices] = await Promise.all([
+      instance._loadAccessToken(),
+      UserState._loadRegisteredDevices(),
+    ]);
     log.info('~~ set access token', token);
     api.accessToken = instance.accessToken = token;
-
-    if (token && token.pub === api.devAccount.publicKey) {
-      instance.isDeveloper = true;
-    }
-
+    instance.registeredDevices = registeredDevices;
     return instance;
   }
 
@@ -85,11 +73,8 @@ export class UserState extends EventEmitter {
   }
 
   async _createAccessToken() {
-    // See above comment for SHA256_HMAC_STRENGTH to understand what this is
-    // doing.
-    let entropy = await getRandomBytes(SHA256_HMAC_STRENGTH);
-    let accessToken = this.api.id.create({ entropy });
-    return accessToken;
+    let entropy = await getRandomBytes(AccessToken.ENTROPY_BYTES);
+    return AccessToken.create({ entropy });
   }
 
   /**
@@ -103,28 +88,47 @@ export class UserState extends EventEmitter {
     }
 
     let parsed = JSON.parse(accessToken);
-    accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
+    accessToken = new AccessToken(parsed.publicKey, parsed.privateKey);
     log.info('Using existing access token', accessToken);
     return accessToken;
+  }
+
+  static async _loadRegisteredDevices() {
+    let registeredDevices = await AsyncStorage.getItem(REGISTERED_DEVICES_KEY);
+    if (!registeredDevices) {
+      log.info('No registered devices');
+      return [ ];
+    }
+
+    registeredDevices = JSON.parse(registeredDevices);
+    invariant(Array.isArray(registeredDevices));
+
+    log.info('Registered devices', registeredDevices);
+
+    return registeredDevices;
   }
 
   async signOut() {
     // Clear out any previous state...
     this.api.accessToken = this.accessToken = null;
-    this.isDeveloper = false;
+    this.registeredDevices = [];
 
     log.debug(`Stop advertising all BLE beacons.`);
     BLESocketManager.removeAllBeaconUuids();
 
-    log.debug(`Remove access token from disk storage.`);
-    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+    log.debug(`Remove access token and registered devices from disk storage.`);
+    await Promise.all([
+      AsyncStorage.removeItem(ACCESS_TOKEN_KEY),
+      AsyncStorage.removeItem(REGISTERED_DEVICES_KEY),
+    ]);
     this.emit('unauthenticated');
   }
 
   async checkPassword(email, password) {
-    let passwordHash = await PBKDF2KeyDerivation(
+    let passwordHash = await pbkdf2KeyDerivation(
       password, /* input */
-      email /* salt */
+      email, /* salt */
+      this.api.vip.PBKDF2_ROUNDS
     );
 
     return await this.api.vip.checkPassword({
@@ -143,9 +147,10 @@ export class UserState extends EventEmitter {
     let accessToken = await this._createAccessToken();
     this.accessToken = this.api.accessToken = accessToken;
 
-    let passwordHash = await PBKDF2KeyDerivation(
+    let passwordHash = await pbkdf2KeyDerivation(
       password, /* input */
-      email /* salt */
+      email, /* salt */
+      this.api.vip.PBKDF2_ROUNDS
     );
 
     // XXX: Put some more useful information here...
@@ -185,9 +190,10 @@ export class UserState extends EventEmitter {
     let accessToken = await this._createAccessToken();
     this.accessToken = this.api.accessToken = accessToken;
 
-    let passwordHash = await PBKDF2KeyDerivation(
+    let passwordHash = await pbkdf2KeyDerivation(
       password, /* input */
-      email /* salt */
+      email, /* salt */
+      this.api.vip.PBKDF2_ROUNDS
     );
 
     // XXX: Put some more useful information here...
@@ -215,28 +221,16 @@ export class UserState extends EventEmitter {
     return true;
   }
 
-   /**
-   * Attempt logging in with the developer credentials...
-   */
-  async attemptDeveloperLogin() {
-    log.info('Logging in via developer account');
-    let account = this.api.devAccount;
-    let accessToken = new this.api.id(account.publicKey, account.privateKey);
-
-    // Use given developer account access token.
-    this.accessToken = this.api.accessToken = accessToken;
-
-    let check = await this.checkPassword(account.email, account.password);
-    if (check.success) {
-      log.info('Successfully logged in as', account.email);
-      await this._saveAccessToken(accessToken);
-      this.isDeveloper = true;
-      return true;
+  async forgotPassword(email) {
+    // XXX: Semi-nasty hacks to ensure we use an access token for password reset.
+    this.api.accessToken = await this._createAccessToken();
+    let res;
+    try {
+      res = await this.api.vip.resetPassword({ email });
+    } finally {
+      this.api.accessToken = null;
     }
-    // Reset to current access token...
-    this.api.accessToken = await this._loadAccessToken();
-    log.info('Failed to logged in as', account.email);
-    return false;
+    return res;
   }
 
   /**
@@ -244,17 +238,17 @@ export class UserState extends EventEmitter {
    * server...
    */
   async registerDevice(name, deviceId, type = 'camera') {
-    deviceId = this.api.id.importPub(deviceId);
-    log.info('Registering device', deviceId);
+    let deviceToken = AccessToken.importPub(deviceId);
+    log.info('Registering device', deviceToken);
 
     // Sign the deviceId with the account token...
-    let registrationToken = this.accessToken.sign(deviceId.toString());
+    let registrationToken = this.accessToken.sign(deviceToken.toString());
 
     let {
       success,
       beaconUUID,
     } = await this.api.account.registerDevice({
-      devicePublicKey: deviceId.toString(),
+      devicePublicKey: deviceToken.toString(),
       name,
       type,
       registrationToken,
@@ -264,7 +258,7 @@ export class UserState extends EventEmitter {
       log.info(`Successfully registered device`);
       BLESocketManager.addBeaconUuid(beaconUUID);
     } else {
-      log.warn(`Failed to regsiter device with the server...`);
+      log.warn(`Failed to register device with the server...`);
     }
 
     return {
@@ -274,30 +268,23 @@ export class UserState extends EventEmitter {
     };
   }
 
-  async resetPassword(email, token, password) {
-    let accessToken = await this._createAccessToken();
-    // Semi hack: We need to pass an accessToken even though we don't use it for
-    // more than one operation.
-    this.api.accessToken = accessToken;
+  async updateRegisteredDevices(deviceRecords) {
+    invariant(this.accessToken, `Must be signed in`);
 
-    let passwordHash = await PBKDF2KeyDerivation(
-      password, /* input */
-      email /* salt */
-    );
+    let storedRecords = deviceRecords.map((record) => {
+      return {
+        publicKey: record.publicKey,
+      };
+    });
 
-    let res;
-    try {
-      res = await this.api.vip.usePasswordResetToken({
-        token,
-        email,
-        passwordHash,
-      });
-    } finally {
-      this.api.accessToken = null;
-    }
-    return res;
+    await AsyncStorage.setItem(REGISTERED_DEVICES_KEY,
+                               JSON.stringify(storedRecords));
+
+    log.info(`Registered devices updated`, storedRecords);
+
+    this.registeredDevices = storedRecords;
+    this.emit(`registered-devices-updated`, storedRecords);
   }
-
 }
 
 export default UserState.load;

@@ -1,5 +1,5 @@
 {
   "stage": 1,
-  "optional": ["runtime", "es7.classProperties"],
+  "optional": ["regenerator", "es7.classProperties"],
   "blacklist": "asyncToGenerator"
 }

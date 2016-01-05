@@ -4,6 +4,11 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+// Load the regnerator polyfill manually so we don't need to also load all the
+// core-js pollyfills which we don't actually need...
+import regeneratorRuntime from 'babel-runtime/regenerator';
+global.regeneratorRuntime = regeneratorRuntime;
+
 let log;
 let util;
 
@@ -148,4 +153,3 @@ class Clapper {
 }
 
 module.exports = env => new Clapper(env);
-

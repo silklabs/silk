@@ -28,6 +28,7 @@ require('source-map-support').install();
 
 import assert from 'assert';
 import api from './api';
+import {Integer} from 'silk-api';
 import battery from './battery';
 
 import wifi from './wifi';
@@ -48,14 +49,22 @@ import makeDiag from './diag';
 import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
+import initMetrics from './metrics_submitter';
 import NetworkStatus from './network_status';
 import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
 import makeExtensions from './ext';
+import JSStartup from './metrics/js_startup';
 
 // Start the profile server ASAP.
 initProfiler();
+
+api.deviceMetrics.add(new JSStartup({
+  version: version.semver,
+  type: 'camera', // TODO: Make this more specific
+  startupMS: new Integer(process.uptime() * 1000)
+}));
 
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 45 * 1000;
@@ -130,8 +139,9 @@ function main() {
     }
   );
   networkStatus.hintSocket = server;
-
   outbox = initOutbox(networkStatus);
+  initMetrics(networkStatus);
+
   crashreporter = makeCrashReporter(outbox);
   jsErrors(crashreporter);
 
@@ -302,6 +312,7 @@ config.on('unconfigured', () => {
     say.speak('Hello there, welcome to your new silk device');
   }
 });
+
 config.on('configured', async () => {
   if (!ui.goto('connecting')) {
     return;

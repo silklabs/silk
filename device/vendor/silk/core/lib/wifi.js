@@ -1,10 +1,16 @@
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/**
+ * Copyright (c) 2015 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
 
 import * as util from './sysutils';
 import events from 'events';
 import net from 'net';
 import createLog from './log';
+import type {Socket} from 'socket.io-client';
 
 const log = createLog('wifi');
 const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu', false);
@@ -62,10 +68,14 @@ const WIFI_DISCONNECT_REASONS = [
   'disassoc_low_ack',
 ];
 
-let iface = util.getprop('wifi.interface');
+let iface = util.getstrprop('wifi.interface');
 let monitor;
 
 class WpaMonitor extends events.EventEmitter {
+
+  _ready: bool;
+  _socket: Socket;
+  _buffer: string;
 
   constructor() {
     super();
@@ -130,7 +140,7 @@ class WpaMonitor extends events.EventEmitter {
         case 'CTRL-EVENT-DISCONNECTED':
           let reason = '';
           if ((found = extra.match(/ reason=([0-9]+)/))) {
-            let reasonIndex = found[1];
+            let reasonIndex = Number(found[1]);
             reason = WIFI_DISCONNECT_REASONS[reasonIndex];
             log.info(`wifi disconnect reason: ${reason}`);
           }
@@ -141,7 +151,7 @@ class WpaMonitor extends events.EventEmitter {
           break;
         case 'CTRL-EVENT-STATE-CHANGE':
           if ((found = extra.match(/ state=([0-9]) /))) {
-            let stateIndex = found[1];
+            let stateIndex = Number(found[1]);
             let state = WIFI_STATES[stateIndex];
             log.info(`wifi state: ${state}`);
             this.emit('stateChange', state);
@@ -237,10 +247,11 @@ function wpaCliRemoveAllNetworks() {
 }
 
 
-class Wifi extends events.EventEmitter {
+export class Wifi extends events.EventEmitter {
 
   // Always start as offline until proven otherwise...
-  _online = false;
+  _online: bool = false;
+  dhcpRetryTimer: ?number;
 
   constructor() {
     super();
@@ -285,16 +296,16 @@ class Wifi extends events.EventEmitter {
       // dhcpd provides its output in system properties,
       let dns = [];
       for (let i = 1; i <= 4; i++) {
-        let dnsN = util.getprop(`dhcp.${iface}.dns${i}`);
+        let dnsN = util.getstrprop(`dhcp.${iface}.dns${i}`);
         if (dnsN) {
           dns.push(dnsN);
         }
       }
 
-      let ipaddress = util.getprop(`dhcp.${iface}.ipaddress`);
-      let mask = util.getprop(`dhcp.${iface}.mask`);
-      let gateway = util.getprop(`dhcp.${iface}.gateway`);
-      let domain = util.getprop(`dhcp.${iface}.domain`);
+      let ipaddress = util.getstrprop(`dhcp.${iface}.ipaddress`);
+      let mask = util.getstrprop(`dhcp.${iface}.mask`);
+      let gateway = util.getstrprop(`dhcp.${iface}.gateway`);
+      let domain = util.getstrprop(`dhcp.${iface}.domain`);
       if (domain === '') {
         domain = 'localdomain';
       }
@@ -340,7 +351,7 @@ class Wifi extends events.EventEmitter {
     });
   }
 
-  _startWpaMonitor() {
+  _startWpaMonitor(): Promise<void> {
 
     monitor = new WpaMonitor(iface);
     monitor.on('connected', () => {
@@ -368,7 +379,7 @@ class Wifi extends events.EventEmitter {
     log.info('WiFi initializing');
 
     // Set the device hostname to something that is probably unique
-    util.setprop('net.hostname', 'silk-' + util.getprop('ro.serialno'));
+    util.setprop('net.hostname', 'silk-' + util.getstrprop('ro.serialno'));
 
     // add 'error' listener in case no one else is, else node throws exception
     this.on('error', () => {});
@@ -391,11 +402,11 @@ class Wifi extends events.EventEmitter {
     return this._networkCleanup();
   }
 
-  isOnline() {
+  isOnline(): bool {
     return this._online;
   }
 
-  /* async */ online() {
+  /* async */ online(): Promise<void> {
     if (this._online) {
       return Promise.resolve();
     }
@@ -404,7 +415,7 @@ class Wifi extends events.EventEmitter {
     });
   }
 
-  joinNetwork(ssid, psk) {
+  joinNetwork(ssid: string, psk: string) {
     return wpaCliRemoveAllNetworks()
       .then(wpaCliAddNetwork)
       .then(id => {
@@ -437,7 +448,7 @@ class Wifi extends events.EventEmitter {
 }
 
 
-class QEmuWifi extends events.EventEmitter {
+export class QEmuWifi extends events.EventEmitter {
 
   constructor() {
     super();
@@ -450,7 +461,7 @@ class QEmuWifi extends events.EventEmitter {
     // hardcoded netId == 0
     let dns = [];
     for (let i = 1; i <= 4; i++) {
-      let dnsN = util.getprop(`net.eth0.dns${i}`);
+      let dnsN = util.getstrprop(`net.eth0.dns${i}`);
       if (dnsN) {
         dns.push(dnsN);
       }
@@ -462,26 +473,26 @@ class QEmuWifi extends events.EventEmitter {
     log.info('QEmu: "WiFi" shutdown');
   }
 
-  isOnline() {
+  isOnline(): bool {
     return true;
   }
 
-  online() {
+  online(): Promise<void> {
     return Promise.resolve();
   }
 
-  joinNetwork(ssid, psk) { //eslint-disable-line
+  joinNetwork(ssid: string, psk: string): Promise<void> { //eslint-disable-line
     return Promise.reject(new Error('QEmuWifi.joinNetwork not implemented'));
   }
 
-  networkConfigured() {
+  networkConfigured(): Promise<void> {
     return Promise.resolve();
   }
 
-  forgetNetwork() {
+  forgetNetwork(): Promise<void> {
     log.warn('QEmuWifi.forgetNetwork not implemented');
     return Promise.resolve();
   }
 }
 
-module.exports = USE_QEMU_WIFI ? new QEmuWifi() : new Wifi();
+export default USE_QEMU_WIFI ? new QEmuWifi() : new Wifi();

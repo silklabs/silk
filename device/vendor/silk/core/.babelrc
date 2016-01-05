@@ -1,7 +1,7 @@
 {
   "breakConfig": true,
   "stage": "1",
-  "optional": ["runtime", "asyncToGenerator", "es7.classProperties"],
+  "optional": ["regenerator", "asyncToGenerator", "es7.classProperties"],
   "only": [
     "lib/**",
     "test/**",

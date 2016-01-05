@@ -21,7 +21,7 @@ fi
 
 # Create symlink to silk/core for easy access to core libraries
 echo "Creating symlink to $ANDROID_BUILD_TOP/vendor/silk/core"
-ln -s "$ANDROID_BUILD_TOP/vendor/silk/core" core
+ln -fs "$ANDROID_BUILD_TOP/vendor/silk/core" core
 
 [[ -f $ANDROID_BUILD_TOP/$fetch ]] || exit 0
 exec $ANDROID_BUILD_TOP/$fetch

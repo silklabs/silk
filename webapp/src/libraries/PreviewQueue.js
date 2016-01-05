@@ -3,8 +3,6 @@
 // UNFORK ME: https://github.com/silklabs/silk-app/blob/master/src/libraries/PreviewQueue.js
 
 
-/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 //
 // PreviewQueue attempts to smooth out the preview frames received over the

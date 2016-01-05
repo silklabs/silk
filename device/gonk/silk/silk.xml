@@ -41,6 +41,16 @@
            remote="github"
            revision="refs/tags/v5.3.2" clone-depth="1"/>
 
+  <project name="cmusphinx/pocketsphinx"
+           path="external/pocketsphinx"
+           remote="github"
+           revision="64ee030a8ac1ee1a8198ac54700c8ddc0014b454" clone-depth="1"/>
+
+  <project name="cmusphinx/sphinxbase"
+           path="external/sphinxbase"
+           remote="github"
+           revision="c6e3c0ddf4e8ed5195492b0a7476890dc127967e" clone-depth="1"/>
+
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

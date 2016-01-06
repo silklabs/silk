@@ -348,7 +348,13 @@ export class DeviceSession extends EventEmitter {
       invariant(this._secretEmitted);
 
       this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
-      this.emit(`restart`);
+      if (this.listenerCount(`restart`) === 0) {
+        // TODO: This could go away once a restart UI has been implemented.
+        log.warn('Nobody listening to the restart event, disconnecting instead');
+        this._forceDisconnect();
+      } else {
+        this.emit(`restart`);
+      }
       return;
 
     case `complete`:

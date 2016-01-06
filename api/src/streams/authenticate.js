@@ -8,7 +8,7 @@ import assert from 'assert';
 import ClosingTransform from './closing_transform';
 import { CryptoDuplexStream } from './crypto';
 import { DuplexTransform } from './duplex_transform';
-import Id from '../id';
+import Id from '../access_token';
 import makeLog from 'log';
 
 const log = makeLog(`api-streams-authenticate`);

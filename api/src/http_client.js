@@ -11,7 +11,7 @@ import throwError from './fetch_error';
 import debug from 'debug';
 import {bodySignature} from './jwt_request_signature';
 
-import type AccessToken from './id';
+import type AccessToken from './access_token';
 
 const MAX_ID = 999;
 const ID_LENGTH = String(MAX_ID).length;

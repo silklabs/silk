@@ -1,26 +1,6 @@
 /*
  * Module implementing device ids.
  *
- * A device id is the compact public key of curve ed25519 public/private key
- * pair.
- *
- * Create a new device id:
- * var id = require('device-id').create();
- *
- * Import a device id from a JSON string.
- * var id = require('device-id').import(json_string);
- *
- * Export a device id to a JSON string. Handle with care. The JSON string
- * contains the private key if we have it:
- * console.log(id.export());
- *
- * Get the 66 hex digit hash id:
- * console.log(id);
- *
- * Sign a challenge token string with the private key. This throws if we don't
- * have the private key:
- * var signature = id.sign(token);
- *
  * @flow
  */
 import assert from 'assert';
@@ -30,23 +10,23 @@ import { sha256 } from './util';
 
 const ec = new EC('ed25519');
 
-export default class Id {
+export default class AccessToken {
 
   pub: string;
   priv: ?string;
 
   static create(options = {}) {
     const key = ec.genKeyPair(options);
-    return new Id(key.getPublic(true, 'hex'), key.getPrivate('hex'));
+    return new AccessToken(key.getPublic(true, 'hex'), key.getPrivate('hex'));
   }
 
   static import(json) {
     const obj = JSON.parse(json);
-    return new Id(obj.pub, obj.priv);
+    return new AccessToken(obj.pub, obj.priv);
   }
 
   static importPub(pubKey) {
-    return new Id(pubKey);
+    return new AccessToken(pubKey);
   }
 
   constructor(pub: string, priv?: string) {

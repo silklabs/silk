@@ -14,7 +14,7 @@ import BlobPublisher from './gen/blob_publisher';
 import CrashPublisher from './gen/crash_publisher';
 import MetadataPublisher from './gen/metadata_publisher';
 import Metadata from './gen/metadata';
-import Id from './id';
+import Id from './access_token';
 import RssiSmoother from './rssi_smoother';
 import {StateContainer} from './http_client';
 import MetricsAgent from './metrics_agent';
@@ -24,7 +24,7 @@ import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
 
 // New consumers should refer to "id" as AccessToken.
-export { default as AccessToken } from './id' ;
+export { default as AccessToken } from './access_token' ;
 export { default as RssiSmoother } from './rssi_smoother';
 export { default as Metric, Integer, Float } from './metric';
 

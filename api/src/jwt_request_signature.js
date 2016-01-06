@@ -10,7 +10,7 @@ import uuid from 'uuid';
 import jwa from './jwa';
 import { sha256 } from './util';
 
-import type AccessToken from './id';
+import type AccessToken from './access_token';
 import type {SignPayload} from 'jsonwebtoken';
 
 function jwtPayload(canonicalReq: string): SignPayload {

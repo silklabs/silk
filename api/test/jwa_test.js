@@ -1,5 +1,5 @@
 import assert from 'assert';
-import id from '../src/id';
+import id from '../src/access_token';
 import base64url from 'base64url';
 
 import jwa from '../src/jwa';

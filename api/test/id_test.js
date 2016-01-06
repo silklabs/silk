@@ -1,6 +1,6 @@
 
 import assert from 'assert';
-import DeviceID from '../src/id';
+import DeviceID from '../src/access_token';
 
 suite('device id', () => {
 

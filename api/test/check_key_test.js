@@ -1,6 +1,6 @@
 
 import assert from 'assert';
-import Id from '../src/id';
+import Id from '../src/access_token';
 
 suite('check key', () => {
 

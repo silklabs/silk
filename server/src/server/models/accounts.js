@@ -5,7 +5,7 @@
  */
 import * as Joi from 'joi';
 import Base from './base';
-import scrypt from 'scrypt';
+import scrypt from '../scrypt';
 import uuid from 'uuid';
 
 import AccessToken from 'silk-api/src/access_token';

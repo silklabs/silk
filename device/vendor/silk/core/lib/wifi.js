@@ -417,6 +417,13 @@ export class Wifi extends events.EventEmitter {
   }
 
   joinNetwork(ssid: string, psk: string) {
+    if (ssid.length === 0) {
+      throw new Error('Empty SSID');
+    }
+    // |wpa_cli| refuses a PSK outside the range 8..63 so don't even try
+    if (psk.length < 8 || psk.length > 63) {
+      throw new Error('Invalid PSK length');
+    }
     return wpaCliRemoveAllNetworks()
       .then(wpaCliAddNetwork)
       .then(id => {

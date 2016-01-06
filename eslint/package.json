@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Silk eslint rules",
   "main": "index.js",
+  "dependencies": {},
   "peerDependencies": {
     "babel-eslint": "^4.1.6",
     "eslint": ">=1.0.0",

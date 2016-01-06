@@ -10,6 +10,7 @@ import assert from 'assert';
 import createLog from '../log';
 import { EventEmitter } from 'events';
 import server from '../server';
+import version from 'silk-core-version';
 import wifi from '../wifi';
 
 const log = createLog('config-session-listener-base');
@@ -246,7 +247,7 @@ export default class SessionListenerBase extends EventEmitter {
       // TODO: Something real here.
       manufacturer: `Silk Labs`,
       model: `SilkCam`,
-      version: `0.0.1`,
+      version: version.semver,
       image: new Uint8Array([ 0xfe, 0xfe, 0xfe, 0xfe ]),
     });
   }

@@ -57,6 +57,9 @@ SILK_EXT := \
   knockknock \
   detectcat-cascade \
   detectcat \
+  oksilk \
+  oksilk-pocketsphinx-dict \
+  oksilk-pocketsphinx-grammar \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

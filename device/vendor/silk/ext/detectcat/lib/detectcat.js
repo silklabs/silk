@@ -7,7 +7,7 @@
 // Load the regnerator polyfill manually so we don't need to also load all the
 // core-js pollyfills which we don't actually need...
 import regeneratorRuntime from 'babel-runtime/regenerator';
-global.regeneratorRuntime = regeneratorRuntime;
+global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
 let log;
 let timeline;

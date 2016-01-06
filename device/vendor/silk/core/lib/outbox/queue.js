@@ -31,6 +31,8 @@ async function wrapNoEntity(promise, value = null) {
   }
 }
 
+type ThrottledCallbackType = (running: number, concurrencyMax: number) => boolean;
+
 /**
  * Manages the queuing functionality for the Outbox.
  *
@@ -83,6 +85,10 @@ export default class Queue extends EventEmitter {
   // Number of running operations in the queue (should always be < than
   // concurrency)
   running = 0;
+
+  // Callback function to check if this queue should not start any more
+  // operations regardless of its current concurrency count
+  throttledCallback: ThrottledCallbackType = null;
 
   /**
    * When online the queue will attempt to write operations to their
@@ -196,6 +202,16 @@ export default class Queue extends EventEmitter {
     return liveOperation;
   }
 
+  throttled(concurrencyMax) {
+    if (this.running >= concurrencyMax) {
+      return true;
+    }
+    if (this.throttledCallback !== null) {
+      return this.throttledCallback(this.running, concurrencyMax);
+    }
+    return false;
+  }
+
   async _add(operation, readable) {
     if (!this.operations[operation.constructor.NAME]) {
       throw new Error(`
@@ -207,7 +223,7 @@ export default class Queue extends EventEmitter {
     if (!this.online) {
       log.info('Operation while offline, saving to disk');
       saveToDisk = true;
-    } else if (this.running >= this.concurrency) {
+    } else if (this.throttled(this.concurrency)) {
       log.info(`${this.name} too many concurrent operations ` +
                `(${this.running}/${this.concurrency}), saving to disk`);
       saveToDisk = true;
@@ -356,7 +372,7 @@ export default class Queue extends EventEmitter {
     // This is analogous to turning the lights off for 5mins versus toggling the
     // lights on/off every second for 10 minutes.
     for (let idx = this.diskQueue.length - 1; idx >= 0; --idx) {
-      if (this.running >= this.diskConcurrency) {
+      if (this.throttled(this.diskConcurrency)) {
         if (chatty) {
           log.verbose(`${this.name} reached max running disk operations, max:` +
             `${this.diskConcurrency} running:${this.running} ` +

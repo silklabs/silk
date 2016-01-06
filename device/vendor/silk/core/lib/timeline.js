@@ -17,8 +17,12 @@ import * as util from './sysutils';
 
 const log = createLog('timeline');
 
-const VIDEO_UPLOAD_PROP = 'persist.silk.vidupload.enabled';
-const VIDEO_UPLOAD_ENABLED = util.getboolprop(VIDEO_UPLOAD_PROP, true);
+// persist.silk.vidupload.type defines when video is uploaded:
+// * "events" -- only upload video during events
+// * "all"    -- upload all video
+// * "none"   -- never upload video
+const VIDEOUPLOADTYPE_PROP = 'persist.silk.vidupload.type';
+const DEFAULT_VIDEOUPLOADTYPE = 'events';
 
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
@@ -57,6 +61,7 @@ export default class Timeline extends EventEmitter {
   previewObjects: Array<TimelineEventObject>;
   cachedObjs: Array<TimelineEventObject>;
   eventTracker: EventTracker;
+  eventTrackerActive: boolean;
   liveVideo: boolean;
   livePreview: boolean;
   lastPreviewFrame: ?Buffer;
@@ -72,6 +77,7 @@ export default class Timeline extends EventEmitter {
       mp4: number;
     }
   };
+  videoUploadType: string;
 
   constructor(outbox: Outbox) {
     super();
@@ -91,12 +97,34 @@ export default class Timeline extends EventEmitter {
 
     this.eventTracker = new EventTracker(this.outbox);
 
+    this.eventTracker.on('active', (date) => {
+      log.verbose('event tracker active');
+      this.eventTrackerActive = true;
+    });
+    this.eventTracker.on('inactive', (date) => {
+      log.verbose('event tracker inactive');
+      this.eventTrackerActive = false;
+    });
+
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
     this.lastPreviewUploadWhenMs = 0;
 
     this.liveVideo = false;
     this.livePreview = false;
+
+    this.videoUploadType = util.getstrprop(VIDEOUPLOADTYPE_PROP,
+      DEFAULT_VIDEOUPLOADTYPE);
+    switch (this.videoUploadType) {
+    case 'events':
+    case 'all':
+    case 'none':
+      break;
+    default:
+      this.videoUploadType = DEFAULT_VIDEOUPLOADTYPE;
+      break;
+    }
+    log.info('AV upload type:', this.videoUploadType);
 
     this._resetAcks();
   }
@@ -333,25 +361,27 @@ export default class Timeline extends EventEmitter {
                        this.previewObjects, 'jpeg');
     }
 
-    if (VIDEO_UPLOAD_ENABLED &&
+    if (this.videoUploadType !== 'none' &&
         this.lastPreviewFrame &&
-        Date.now() - this.lastPreviewUploadWhenMs > PREVIEW_UPLOAD_INTERVAL_MS) {
-      const op = new PreviewUploadOp({
-        size: this.lastPreviewFrame.length,
-        metadata: {
-          metaType: 'preview',
-          startUTC: this.lastPreviewFrameWhen,
-          endUTC: this.lastPreviewFrameWhen + durationMs,
-          data: {
-            frameWidth: this._previewSize.width,
-            frameHeight: this._previewSize.height,
-            objects: this.previewObjects,
+        Date.now() - this.lastPreviewUploadWhenMs >= PREVIEW_UPLOAD_INTERVAL_MS) {
+
+      if (this.videoUploadType !== 'events' || this.eventTrackerActive) {
+        const op = new PreviewUploadOp({
+          size: this.lastPreviewFrame.length,
+          metadata: {
+            metaType: 'preview',
+            startUTC: this.lastPreviewFrameWhen,
+            endUTC: this.lastPreviewFrameWhen + durationMs,
+            data: {
+              frameWidth: this._previewSize.width,
+              frameHeight: this._previewSize.height,
+              objects: this.previewObjects,
+            },
           },
-        },
-      });
-      // If for whatever reason this fails it will bubble up to the crash
-      // reporter...
-      this.outbox.enqueue('preview', op, new BufferStream(this.lastPreviewFrame));
+        });
+        this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
+          op, new BufferStream(this.lastPreviewFrame));
+      }
       this.lastPreviewUploadWhenMs = Date.now();
     }
 
@@ -364,7 +394,11 @@ export default class Timeline extends EventEmitter {
     this._pushPacket(when, frame, null, 'mp4', durationMs);
 
     // Only queue the video to be sent to the outbox if uploads are enabled...
-    if (!VIDEO_UPLOAD_ENABLED) {
+    if (this.videoUploadType === 'none') {
+      return;
+    }
+
+    if (this.videoUploadType === 'events' && !this.eventTrackerActive) {
       return;
     }
 
@@ -383,7 +417,8 @@ export default class Timeline extends EventEmitter {
 
     // If for whatever reason this fails it will bubble up to the crash
     // reporter...
-    this.outbox.enqueue('video', op, new BufferStream(frame));
+    this.outbox.enqueue(this.eventTrackerActive ? 'event_video' : 'video',
+      op, new BufferStream(frame));
   }
 
   _pushPacket(

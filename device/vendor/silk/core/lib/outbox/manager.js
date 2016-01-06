@@ -116,7 +116,7 @@ export class Outbox {
     }
   }
 
-  registerQueue(queueName, options) {
+  registerQueue(queueName, options, higherPriorityQueueName = null) {
     if (this.queues.has(queueName)) {
       throw new Error(`Cannot re-register queue ${queueName}`);
     }
@@ -127,9 +127,26 @@ export class Outbox {
       maxRetries: DEFAULT_QUEUE_MAX_RETRIES,
       maxEntries: DEFAULT_QUEUE_MAX_ENTRIES
     };
+
+    // higherPriorityQueueName defines another queue that should take precedence
+    // over this one.  That is, if the total number of running operations across
+    // this queue and the higher-priority queue exceed the concurrency threshold then
+    // this queue's operations should be throttled.
+    let throttledCallback = null;
+    if (higherPriorityQueueName !== null) {
+      let higherPriorityQueue = this.queues.get(higherPriorityQueueName);
+      if (!higherPriorityQueue) {
+        throw new Error(`queue does not exist: ${higherPriorityQueueName}`);
+      }
+
+      throttledCallback = (running, concurrencyMax) => {
+        return running + higherPriorityQueue.running >= concurrencyMax;
+      };
+    }
     let queue = new Queue(Object.assign(defaultOptions, options, {
       storagePath,
-      name: queueName
+      name: queueName,
+      throttledCallback,
     }));
 
     queue.online = this.online;

@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 /**
@@ -15,11 +17,14 @@ import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import PapertrailOp from './outbox/papertrail_operation';
 import APICallOp from './outbox/api_call_operation';
 
+import type NetworkStatus from './network_status';
+import type { Outbox } from './outbox/manager';
+
 const STORAGE_PATH = path.join('/data', 'outbox');
 
-export default function(networkStatus) {
+export default function(networkStatus: NetworkStatus): Outbox {
   let outbox = createOutbox({
-    storagePath: STORAGE_PATH
+    storagePath: STORAGE_PATH,
   });
 
   /**

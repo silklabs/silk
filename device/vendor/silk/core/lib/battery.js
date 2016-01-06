@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import events from 'events';
@@ -17,20 +19,15 @@ const BATTERY_OK_TO_BOOT_LEVEL = 10;
 // Suggest a shutdown when the battery is below this level
 const BATTERY_OUT_OF_POWER_LEVEL = 5;
 
-class Battery extends events.EventEmitter {
+export default class Battery extends events.EventEmitter {
 
-  constructor() {
-    super();
-  }
-
-  _readCapacity() {
+  _readCapacity(): Promise<number> {
     return fs.readFile('/sys/class/power_supply/battery/capacity')
-    .then(data => data.toString());
+      .then((data) => Number(data.toString()));
   }
 
-  _peroidicBatteryCapacityCheck(resolveInitPromise) {
-    this._readCapacity()
-    .then(capacity => {
+  _peroidicBatteryCapacityCheck(resolveInitPromise: ?Function) {
+    this._readCapacity().then((capacity) => {
       log.info(`Battery capacity: ${capacity}%`);
       if (resolveInitPromise) {
         if (capacity >= BATTERY_OK_TO_BOOT_LEVEL) {
@@ -47,29 +44,26 @@ class Battery extends events.EventEmitter {
         }
       }
       util.timeout(60 * 1000)
-      .then(() => this._peroidicBatteryCapacityCheck(resolveInitPromise));
-    })
-    .catch(util.processthrow);
+        .then(() => this._peroidicBatteryCapacityCheck(resolveInitPromise));
+    }).catch(util.processthrow);
   }
 
-  init() {
-    return new Promise(resolve => {
-      fs.readFile('/sys/class/power_supply/battery/present')
-      .then(data => {
+  init(): Promise<void> {
+    return new Promise((resolve) => {
+      fs.readFile('/sys/class/power_supply/battery/present').then((data) => {
         let present = data.toString();
         if (!present) {
-          return resolve();
+          resolve();
+          return;
         }
         this._peroidicBatteryCapacityCheck(resolve);
-      })
-      .catch(err => {
+      }).catch((err) => {
         if (err.code === 'ENOENT') {
-          return resolve();
+          resolve();
+          return;
         }
         util.processthrow(err);
       });
     });
   }
 }
-
-module.exports = new Battery();

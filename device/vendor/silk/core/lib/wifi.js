@@ -251,6 +251,7 @@ export class Wifi extends events.EventEmitter {
 
   // Always start as offline until proven otherwise...
   _online: bool = false;
+  _shutdown: bool = false;
   dhcpRetryTimer: ?number;
 
   constructor() {

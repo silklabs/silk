@@ -222,6 +222,14 @@ function findPackageJSON(cwd) {
     fs.mkdirSync(nodeModules);
   }
 
+  // We might create cyclic references with our symlinks ensure that Android
+  // build system never looks in our node_modules folders by adding an empty
+  // Android.mk.
+  let androidMk = path.join(nodeModules, 'Android.mk');
+  if (!fs.existsSync(androidMk)) {
+    fs.writeFileSync(androidMk, '');
+  }
+
   // Initiate the lock!
   selfLock = path.join(cwd, LOCK_FILE);
   if (!fs.existsSync(selfLock)) {
@@ -231,7 +239,7 @@ function findPackageJSON(cwd) {
 
   let pkg = require(pkgPath);
   if (!pkg.silkDependencies) {
-    return;
+    return Promise.resolve();
   }
 
   return installDeps(cwd, nodeModules, pkg.silkDependencies).then(() => {

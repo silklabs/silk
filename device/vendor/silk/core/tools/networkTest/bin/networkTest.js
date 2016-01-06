@@ -2,7 +2,7 @@
 
 'use strict';
 
-require('babel-core/register')({
+require('babel/register-without-polyfill')({
   stage: 0,
   only: require('babelfilter')
 });

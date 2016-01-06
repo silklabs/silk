@@ -183,7 +183,10 @@ export default class MonitorPreview extends SocketIOComponent {
     }
   }
 
-  onPreviewFrame = (message) => {
+  onPreviewFrame = (message, ack) => {
+    if (typeof ack === 'function') {
+      ack();
+    }
     this._queue.push(message);
     this.startTimeoutTimer();
   };

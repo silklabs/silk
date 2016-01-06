@@ -103,7 +103,11 @@ class LiveSegmentProvider {
     this._provideSegment = this._provideSegment.bind(this);
   }
 
-  _provideSegment(message) {
+  _provideSegment(message, ack) {
+    if (typeof ack === 'function') {
+      ack();
+    }
+
     // discard non video frames.
     if (message.contents !== 'mp4') {
       return;

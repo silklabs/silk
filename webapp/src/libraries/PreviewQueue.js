@@ -58,7 +58,7 @@ export default class PreviewQueue {
           (previewArrival.when - this._previewQueue[0].when) + 'ms';
       }
 
-      log.debug(`preview ${this._name}:` +
+      log.verbose(`preview ${this._name}:` +
        ' queueDepth=' + this._previewQueue.length +
        ', device elapsed=' + // Elapsed time on device since last preview
           (previewArrival.when - this._lastPreviewArrival.when) + 'ms' +
@@ -68,9 +68,6 @@ export default class PreviewQueue {
           (previewArrival.when - this._deviceTime) +
         queueTimeRange // How far apart the first/last items in the queue are
       );
-      previewArrival.when - this._lastPreviewArrival.when;
-
-
     }
     this._lastPreviewArrival = previewArrival;
 
@@ -82,7 +79,7 @@ export default class PreviewQueue {
 
   _setNextPreviewFrameTimeout() {
     let diff = this._previewQueue[0].when - this._deviceTime;
-    log.debug(`Time to next frame: ${diff}ms`);
+    log.verbose(`Time to next frame: ${diff}ms`);
     this._previewTimeoutId = setTimeout(this._advancePreviewImage, diff);
   }
 

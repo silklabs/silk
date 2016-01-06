@@ -118,7 +118,8 @@ suite('routes', () => {
       when: Date.now()
     };
     await emit(deviceSocket, 'video', event);
-    let result = await videoEvent;
+    let [result, ack] = await videoEvent;
+    assert.equal(typeof ack, 'function');
     assert.equal(result.id, event.id);
 
     // Emit the event again after leaving the room...
@@ -170,7 +171,9 @@ suite('routes', () => {
       hi: 'hi',
     };
     await emit(deviceSocket, 'diag', cmd);
-    let result = await event;
+    let [result, ack] = await event;
+    assert.equal(typeof ack, 'function');
+    ack();
     assert.equal(result.when, cmd.when);
     assert.equal(result.hi, cmd.hi);
   });

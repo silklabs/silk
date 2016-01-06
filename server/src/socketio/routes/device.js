@@ -65,7 +65,7 @@ export default function(session: Session): EventHandlers {
       device.updateLiveStream();
     } else {
       msg.serverEmitMs = Date.now();
-      session.room.broadcast(room, room, msg);
+      session.room.liveStreamData(room, msg);
       device.resetTimeout();
     }
   }

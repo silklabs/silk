@@ -63,9 +63,6 @@ export default class PreviewQueue {
           (previewArrival.when - this._deviceTime) +
         queueTimeRange // How far apart the first/last items in the queue are
       );
-      previewArrival.when - this._lastPreviewArrival.when;
-
-
     }
     this._lastPreviewArrival = previewArrival;
 

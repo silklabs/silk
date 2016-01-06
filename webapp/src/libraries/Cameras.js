@@ -112,7 +112,10 @@ class Camera extends EventEmitter {
     }
   }
 
-  _onDiagStream = msg => {
+  _onDiagStream = (msg, ack) => {
+    if (typeof ack === 'function') {
+      ack();
+    }
     this._feedNewLog(msg.type, msg.log);
     this.emit('diag', msg);
   }
@@ -195,7 +198,10 @@ class Camera extends EventEmitter {
     }
   }
 
-  _onPreviewStream = msg => {
+  _onPreviewStream = (msg, ack) => {
+    if (typeof ack === 'function') {
+      ack();
+    }
     if (!msg) {
       log.warn('_onPreviewStream: null msg');
       return;
@@ -231,7 +237,10 @@ class Camera extends EventEmitter {
     }
   }
 
-  _onVideoStream = msg => {
+  _onVideoStream = (msg, ack) => {
+    if (typeof ack === 'function') {
+      ack();
+    }
     if (!msg) {
       log.warn('_onVideoStream: null msg');
       return;

@@ -56,6 +56,10 @@ type DeviceLiveStream = {
 // expecting one before it will be disconnected on
 const VIDEO_IDLE_TIMEOUT_MS = 10000;
 
+// Only permit this number of unacknowledged livestream messages
+// (preview/video/diag) to each client.
+const MAX_PENDING_ACKS = 3;
+
 /**
  * Manages the global state of devices...
  *
@@ -146,6 +150,9 @@ export default class AccountRoom {
   // of any socket.io connection states (we will need to scale to > 1 server).
   devices: Map<string, Device> = new Map();
 
+  // Number of pending acks for each live stream roomType
+  pendingAcks: {[key: string]: number} = [];
+
   constructor(io: Manager, id: string) {
     this.io = io;
     this.accountId = id;
@@ -168,15 +175,20 @@ export default class AccountRoom {
     return `${this.accountId}/${name}`;
   }
 
+  _pendingAckId(room: string, socketId: string): string {
+    return `${socketId}|${room}`;
+  }
+
   async join(room: string, socket: Socket): Promise<any> {
-    room = this._prefixRoom(room);
-    log.info(`Join ${room}`);
-    await denodeify(socket.join).call(socket, room);
+    const prefixedRoom = this._prefixRoom(room);
+    log.info(`Join ${prefixedRoom} by ${socket.id}`);
+    this.pendingAcks[this._pendingAckId(room, socket.id)] = 0;
+    await denodeify(socket.join).call(socket, prefixedRoom);
   }
 
   async leave(room: string, socket: Socket): Promise<any> {
     room = this._prefixRoom(room);
-    log.info(`Leave ${room}`);
+    log.info(`Leave ${room} by ${socket.id}`);
     await denodeify(socket.leave).call(socket, room);
   }
 
@@ -185,6 +197,32 @@ export default class AccountRoom {
     let event = emit[0];
     log.info(`Broadcast in ${room} with ${event}`);
     this.io.to(room).emit(...emit);
+  }
+
+  liveStreamData(room: string, msg: any): void {
+    const prefixedRoom = this._prefixRoom(room);
+    const ioRoom = this.io.nsps['/'].adapter.rooms[prefixedRoom];
+
+    let clients;
+    if (ioRoom.sockets) {
+      // When running under |mocha|, the room object is a little different :-/
+      clients = Object.keys(ioRoom.sockets);
+    } else {
+      clients = Object.keys(ioRoom);
+    }
+    log.info(`Live data to ${prefixedRoom}: ${clients.length} client(s)`);
+    clients.forEach(id => {
+      const ackId = this._pendingAckId(room, id);
+      if (this.pendingAcks[ackId] >= MAX_PENDING_ACKS) {
+        log.warn(`  Skipping client ${id}, too many outstanding ack`);
+        return;
+      }
+      ++this.pendingAcks[ackId];
+      this.io.nsps['/'].connected[id].emit(room, msg, () => {
+        log.info(`Ack from ${id} for ${room}`);
+        --this.pendingAcks[ackId];
+      });
+    });
   }
 
   async registerDevice(deviceId: string, socket: Socket): Promise<any> {

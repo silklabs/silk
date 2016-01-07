@@ -5,7 +5,8 @@
     "silk-api": "/api",
     "silk-core-version": "/version",
     "silk-raygun": "/raygun",
-    "eslint-config-silk": "/eslint"
+    "eslint-config-silk": "/eslint",
+    "jsonwebtoken": "/jsonwebtoken"
   },
   "dependencies": {
     "aliyun-oss": "^1.1.0",

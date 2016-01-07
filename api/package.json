@@ -9,7 +9,8 @@
     "log": "/log",
     "api-schema": "/api-schema",
     "babelfilter": "/babelfilter",
-    "silk-server": "/server"
+    "silk-server": "/server",
+    "jsonwebtoken": "/jsonwebtoken"
   },
   "dependencies": {
     "babel": "^5.8.34",
@@ -19,7 +20,6 @@
     "debug": "^2.2.0",
     "elliptic": "^5.1.0",
     "hash.js": "^1.0.3",
-    "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c",
     "localStorage": "^1.0.3",
     "mkdirp": "^0.5.1",
     "msgpack-lite": "^0.1.13",

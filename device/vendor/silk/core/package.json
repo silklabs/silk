@@ -4,7 +4,7 @@
   "description": "The common control software on each silk node",
   "main": "core.js",
   "scripts": {
-    "preinstall": "./bin/preinstall",
+    "preinstall": "mkdir -p local_node_modules && ./bin/preinstall",
     "postinstall": "./bin/postinstall && ./build",
     "test": "./bin/test",
     "clean": "rm -rf node_modules core.js core.js.map"
@@ -30,9 +30,9 @@
     "mold-source-map": "^0.4.0",
     "mz": "2.0.0",
     "netmask": "^1.0.5",
-    "ntp-client": "file:local_node_modules/ntp-client",
+    "ntp-client": "mvines/node-ntp-client#c9c4d65c2cf9c3dff1612ff80dc542a270bbdb4a",
     "request": "2.58.0",
-    "silk-socket.io-client-node": "file:local_node_modules/silk-socket.io-client-node",
+    "silk-socket.io-client-node": "silklabs/silk-socket.io-client-node#0.0.1",
     "socket.io-client": "^1.3.5",
     "source-map-support": "^0.3.2",
     "split": "^1.0.0",

@@ -46,7 +46,7 @@ function destroyUnownedLocks() {
 };
 
 function log(msg) {
-  console.log(`[npm preinstall symlink] ${msg}`);
+  console.log(`[npm postinstall] ${msg}`);
 }
 
 function parseLockFile(content) {
@@ -89,7 +89,6 @@ function waitForLocks(lock) {
 
         let content = fs.readFileSync(lockFile, 'utf8').trim();
         if (!content) {
-          console.log('No content in', lockFile);
           emptyLocks = true;
           continue;
         }
@@ -117,7 +116,6 @@ function waitForLocks(lock) {
         return;
       }
 
-      console.log(currentModule, remainderArray, '<<<!?');
       setTimeout(poll, LOCK_POLL_MS);
     };
     poll();
@@ -184,7 +182,7 @@ function installDeps(cwd, nodeModules, dependencies) {
         // Simple dependencies may not actually write to their lock file. If
         // it's empty delete it so we don't get held up.
         if (fs.existsSync(lock)) {
-          console.log(`Removing simple or stale lock ${lock}`);
+          log(`Removing simple or stale lock ${lock}`);
           fs.unlinkSync(lock);
         }
       }
@@ -200,7 +198,7 @@ function installDeps(cwd, nodeModules, dependencies) {
     } else {
       if (createdLocks.indexOf(lock) === -1) {
         // Wait for install in another process...
-        console.log('Dependency is locked!', pkgSource);
+        log(`Waiting for dependency ${pkgSource}`);
         pendingLocks.push(lock);
       }
     }
@@ -246,7 +244,6 @@ function findPackageJSON(cwd) {
     try {
       fs.unlinkSync(selfLock);
     } catch (err) {}
-    console.log('... waiting for npm install in other processes', pendingLocks.length);
     return waitForLocks();
   });
 }

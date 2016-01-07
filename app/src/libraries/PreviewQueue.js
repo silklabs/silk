@@ -144,6 +144,6 @@ export default class PreviewQueue {
 
     this._lastDevicePreviewTime = preview.when;
     this._onDisplay(preview);
-  }
+  };
 }
 

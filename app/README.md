@@ -115,7 +115,7 @@ npm start
 
 From the root of the project.
 
-Now, after making a change to a react-native .js file, simply press Ctrl-r in the simlator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
+Now, after making a change to a react-native .js file, simply press Ctrl-r in the simulator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
 
 However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the full Ctrl-r rebuild/redeploy from within Xcode always works.
 

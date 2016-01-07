@@ -4,14 +4,14 @@ let {
   ScrollView,
   StyleSheet,
   SwitchIOS,
+  PickerIOS,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } = React;
 
-import { getWifiInfo } from '../../libraries/Util';
-import { DeviceSession } from '../../libraries/ble/DeviceManager';
+import { DeviceSession, DeviceWifiNetworks } from '../../libraries/ble/DeviceManager';
 
 import { LayoutStyles, FormStyles, TitleBarStyles } from '../CommonStyles';
 
@@ -28,7 +28,9 @@ export default class DeviceConfig extends React.Component {
 
   state = {
     name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
+    networks: [],
     ssid: '',
+    psk: true,
     secret: '',
     showSecret: false,
   };
@@ -37,7 +39,9 @@ export default class DeviceConfig extends React.Component {
 
   componentWillMount() {
     this.mounted = true;
-    getWifiInfo().then((info) => this.setState({ssid: info.SSID}));
+    let { bleDeviceSession } = this.props;
+    bleDeviceSession.on('wifiscan', this._onWifiScan);
+    this._onWifiScan(bleDeviceSession.wifiNetworks);
     InteractionManager.runAfterInteractions(() => {
       if (this.mounted) {
         this.refs.secret.focus();
@@ -45,8 +49,25 @@ export default class DeviceConfig extends React.Component {
     });
   }
 
+  _onWifiScan : ((networks: DeviceWifiNetworks) => void) = (networks) => {
+    let { ssid, psk } = this.state;
+
+    // Sort by signal strength
+    networks = networks.sort((a, b) => b.level - a.level);
+
+    // If an ssid has not yet been selected or manually entered, choose the
+    // first scan result
+    if (networks.length > 0 && this.state.ssid === '') {
+      ssid = networks[0].ssid;
+      psk = networks[0].psk;
+    }
+    this.setState({ networks, ssid, psk });
+  };
+
   componentWillUnmount() {
     this.mounted = false;
+    let { bleDeviceSession } = this.props;
+    bleDeviceSession.removeListener('wifiscan', this._onWifiScan);
   }
 
   _renderDeviceSettings() {
@@ -73,6 +94,14 @@ export default class DeviceConfig extends React.Component {
     );
   }
 
+  _onChangeSSID = (ssid) => {
+    const psk = ssid === '' ||
+      this.state.networks.some(network => {
+        return (network.ssid === ssid) && network.psk;
+      });
+    this.setState({ssid, psk});
+  };
+
   _renderWifiSettings() {
     return (
       <View style={FormStyles.form}>
@@ -83,13 +112,14 @@ export default class DeviceConfig extends React.Component {
           <View style={FormStyles.formInputContainer}>
             <TextInput
               ref="ssid"
-              placeholder="Enter WiFi network name"
+              placeholder={this.state.networks.length === 0 ?
+                'Searching...' : 'Enter WiFi network name'}
               clearButtonMode="always"
               value={this.state.ssid}
               autoCapitalize="none"
               autoCorrect={false}
               style={FormStyles.formInput}
-              onChangeText={ssid => this.setState({ssid})}
+              onChangeText={this._onChangeSSID}
             />
           </View>
         </View>
@@ -101,9 +131,10 @@ export default class DeviceConfig extends React.Component {
             <TextInput
               ref="secret"
               secureTextEntry={!this.state.showSecret}
-              placeholder="Enter WiFi password"
+              placeholder={this.state.psk ? 'Enter WiFi password' : 'None'}
+              editable={this.state.psk}
               clearButtonMode="always"
-              value={this.state.secret}
+              value={this.state.psk ? this.state.secret : ''}
               style={FormStyles.formInput}
               onChangeText={secret => this.setState({secret})}
             />
@@ -120,6 +151,29 @@ export default class DeviceConfig extends React.Component {
             onValueChange={showSecret => this.setState({showSecret})}
           />
         </View>
+        <View style={FormStyles.formRow}>
+          <View style={FormStyles.formRowLabelContainer}>
+            <Text style={FormStyles.formRowLabel}>
+              Open Network
+            </Text>
+          </View>
+          <SwitchIOS
+            value={!this.state.psk}
+            onValueChange={(open) => this.setState({psk: !open})}
+          />
+        </View>
+        <PickerIOS
+          itemStyle={{flex: 1}}
+          selectedValue={this.state.ssid}
+          onValueChange={this._onChangeSSID}>
+          {this.state.networks.map((network, index) => (
+            <PickerIOS.Item
+              key={network.ssid + network.psk}
+              value={network.ssid}
+              label={network.ssid + ' (' + network.level + ' dBm)'}
+            />
+          ))}
+        </PickerIOS>
       </View>
     );
   }
@@ -129,11 +183,32 @@ export default class DeviceConfig extends React.Component {
       deviceId: this.props.deviceSecret.deviceId,
       name: this.state.name,
       ssid: this.state.ssid,
-      secret: this.state.secret,
+      secret: this.state.psk ? this.state.secret : null,
     });
   };
 
   render() {
+    let saveButtonLabel = (
+      <Text style={TitleBarStyles.titleBarButtonLabel}>Save</Text>
+    );
+    let saveButton;
+    if (this.state.ssid.length === 0 ||
+         (this.state.psk && this.state.secret.length < 8)) {
+      saveButton = (
+        <View style={[TitleBarStyles.titleBarRightButton, styles.disabledButton]}>
+          {saveButtonLabel}
+        </View>
+      );
+    } else {
+      saveButton = (
+        <TouchableOpacity
+          onPress={this._handleSave}
+          style={TitleBarStyles.titleBarRightButton}>
+          {saveButtonLabel}
+        </TouchableOpacity>
+      );
+    }
+
     return (
       <ScrollView
         keyboardShouldPersistTaps={false}
@@ -147,11 +222,7 @@ export default class DeviceConfig extends React.Component {
             <Text style={TitleBarStyles.titleBarButtonLabel}>Cancel</Text>
           </TouchableOpacity>
           <Text style={TitleBarStyles.titleBarLabel}>Device Setup</Text>
-          <TouchableOpacity
-            onPress={this._handleSave}
-            style={TitleBarStyles.titleBarRightButton}>
-            <Text style={TitleBarStyles.titleBarButtonLabel}>Save</Text>
-          </TouchableOpacity>
+          {saveButton}
         </View>
         <View style={styles.contentContainer}>
           <Text style={FormStyles.formHeader}>DEVICE</Text>
@@ -172,5 +243,9 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+    marginBottom: 250,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });

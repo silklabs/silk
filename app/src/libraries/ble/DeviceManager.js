@@ -18,6 +18,12 @@ type DeviceStatus = {
   isError: boolean;
 };
 
+type DeviceWifiNetwork = {
+  ssid: string;
+  level: number;
+  psk: boolean;
+};
+
 type MessageData = {
   name: string;
   // TODO: even better: do union `name`:
@@ -59,6 +65,17 @@ const SCHEMA = {
   status: Joi.object().keys({
     name: Joi.string().equal(`status`).required(),
     status: Joi.string().required(),
+  }).required(),
+
+  wifiscan: Joi.object().keys({
+    name: Joi.string().equal(`wifiscan`).required(),
+    networks: Joi.array().items(
+      Joi.object().keys({
+        ssid: Joi.string().required(),
+        level: Joi.number().integer().min(-100).max(-10).required(),
+        psk: Joi.boolean().required(),
+      }).required(),
+    ).required(),
   }).required(),
 
   error: Joi.object().keys({
@@ -114,6 +131,7 @@ export class DeviceSession extends EventEmitter {
   _isRegistered: boolean = false;
   _deviceId: ?string = null;
   _status: ?DeviceStatus = null;
+  _wifiNetworks: Array<DeviceWifiNetwork> = [];
 
   _connectEmitted: boolean = false;
   _registeredEmitted: boolean = false;
@@ -293,6 +311,11 @@ export class DeviceSession extends EventEmitter {
       this.emit(`status`, this._status);
       return;
 
+    case `wifiscan`:
+      this._wifiNetworks = data.networks;
+      this.emit(`wifiscan`, this._wifiNetworks);
+      return;
+
     case `error`:
       if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
           state !== DeviceSession.STATE_REGISTERED) {
@@ -428,6 +451,10 @@ export class DeviceSession extends EventEmitter {
 
   get errorMessage(): string {
     return this._errorMessage;
+  }
+
+  get wifiNetworks(): Array<DeviceWifiNetwork> {
+    return this._wifiNetworks;
   }
 
   /**

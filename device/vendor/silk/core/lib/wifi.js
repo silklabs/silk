@@ -500,19 +500,27 @@ export class Wifi extends events.EventEmitter {
     this.emit('scanResults', scanResults);
   }
 
-  joinNetwork(ssid: string, psk: string) {
+  joinNetwork(ssid: string, psk: ?string) {
     if (ssid.length === 0) {
       throw new Error('Empty SSID');
     }
-    // |wpa_cli| refuses a PSK outside the range 8..63 so don't even try
-    if (psk.length < 8 || psk.length > 63) {
-      throw new Error('Invalid PSK length');
+    if (psk) {
+      // |wpa_cli| refuses a PSK outside the range 8..63 so don't even try
+      if (psk.length < 8 || psk.length > 63) {
+        throw new Error('Invalid PSK length');
+      }
     }
     return wpaCliRemoveAllNetworks()
       .then(wpaCliAddNetwork)
       .then(id => {
         return wpaCliExpectOk('set_network', id, 'ssid', `"${ssid}"`)
-          .then(() => wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`))
+          .then(() => wpaCliExpectOk('set_network', id, 'scan_ssid', '1'))
+          .then(() => {
+            if (psk) {
+              return wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`);
+            }
+            return wpaCliExpectOk('set_network', id, 'key_mgmt', 'NONE');
+          })
           .then(() => wpaCliExpectOk('enable_network', id))
           .then(() => wpaCliExpectOk('save_config'))
           .then(() => wpaCliExpectOk('reconnect'));

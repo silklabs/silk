@@ -9,10 +9,11 @@ import createLog from 'log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 import fs from 'mz/fs';
-import Framework from 'silk-sdk-glue/src/framework';
+import Framework from 'silk-exttest';
+import opencv from 'opencv';
 
 const log = createLog('TestFramework');
-const env = new Framework('detectcar');
+const env = new Framework('detectcar', opencv);
 const timeline = env.timeline;
 const camera = env.camera;
 const cascade = '../../../../external/node-opencv/data/hogcascade_cars_sideview.xml';

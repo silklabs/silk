@@ -5,12 +5,11 @@
  */
 
 import createLog from 'log';
-import createOutbox from '../core/lib/outbox';
-import NetworkStatus from '../core/lib/network_status';
-import opencv from 'opencv';
-import Timeline from '../core/lib/timeline';
-import * as util from '../core/lib/sysutils';
-import wifi from '../core/lib/wifi';
+import createOutbox from 'silk-core/lib/outbox';
+import NetworkStatus from 'silk-core/lib/network_status';
+import Timeline from 'silk-core/lib/timeline';
+import * as util from 'silk-core/lib/sysutils';
+import wifi from 'silk-core/lib/wifi';
 
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 180;
@@ -21,8 +20,11 @@ const log = createLog('TestFramework');
  *
  */
 class FakeCamera {
-  constructor() {
-    this._imgSrc = null;
+  _imgSrc = null;
+  opencv = null;
+
+  constructor(opencv) {
+    this.opencv = opencv;
   }
 
   get previewSize() {
@@ -35,7 +37,7 @@ class FakeCamera {
 
   getPreviewFrame(userCb, when, channel = 0) {
     log.info(`getPreviewFrame ${this._imgSrc} ${channel}`);
-    opencv.readImage(this._imgSrc, (err, im) => {
+    this.opencv.readImage(this._imgSrc, (err, im) => {
       if ((im.width() <= 0 ) || (im.height() <= 0 )) {
         userCb(true, null);
         return;
@@ -54,12 +56,12 @@ class FakeCamera {
  * Dummy environment class
  */
 export default class Framework {
-  constructor(name) {
+  constructor(name, opencv) {
     this._name = name;
     this.networkStatus = new NetworkStatus(wifi);
     this.outbox = createOutbox(this.networkStatus);
     this.timeline = new Timeline('test_id', this.outbox);
-    this.camera = new FakeCamera();
+    this.camera = new FakeCamera(opencv);
     this.util = util;
   }
 

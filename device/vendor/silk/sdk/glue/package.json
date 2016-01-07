@@ -12,7 +12,8 @@
   "private": true,
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
-    "eslint-config-silk": "/eslint"
+    "eslint-config-silk": "/eslint",
+    "log": "/log"
   },
   "dependencies": {
     "argparse": "^1.0.2",

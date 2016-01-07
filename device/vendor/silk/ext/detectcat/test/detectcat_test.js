@@ -9,10 +9,11 @@ import createLog from 'log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 import fs from 'mz/fs';
-import Framework from 'silk-sdk-glue/src/framework';
+import opencv from 'opencv';
+import Framework from 'silk-exttest';
 
 const log = createLog('TestFramework');
-const env = new Framework('detectcat');
+const env = new Framework('detectcat', opencv);
 const timeline = env.timeline;
 const camera = env.camera;
 

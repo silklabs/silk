@@ -5,12 +5,14 @@
  */
 import createLog from 'log';
 import program from 'commander';
+import version from 'silk-core-version';
+
 const log = createLog('args');
 
 // TODO: modify silk api to export server urls
 let config = {
   api: {
-    serverUrl: 'https://silk-server-master.herokuapp.com',
+    serverUrl: `https://silk-server-${version.branch}.herokuapp.com`,
   },
   tests: {
     traceroute: false,
@@ -25,7 +27,7 @@ program
   .option('-c, --iterationCnt <num>',
       'iteration count per test (default: 10)', parseInt)
   .option('-m, --maxDuration <seconds>',
-      'max duration to run all tests. 0 is forever (default: 0)', parseInt)
+      'max duration to run all tests. 0 is forever (default: 60)', parseInt)
   .parse(process.argv);
 
 if (program.serverUrl) {
@@ -35,10 +37,10 @@ if (program.traceroute) {
   config.tests.traceroute = true;
 }
 if (program.iterationCnt !== undefined) {
-  config.tests.iterationCnt = program.iterationCnt;
+  config.tests.iterationCnt = program.iterationCnt || 1;
 }
 if (program.maxDuration !== undefined) {
-  config.tests.maxDuration = program.maxDuration;
+  config.tests.maxDuration = program.maxDuration || 60;
 }
 
 log.info(`Using Silk server: ${config.api.serverUrl}`);

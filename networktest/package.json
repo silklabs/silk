@@ -10,20 +10,20 @@
     "networkTest": "./bin/networkTest"
   },
   "scripts": {
-    "preinstall": "../../../locked_node_modules/fetch.sh",
-    "postinstall": "../../../../../../tools/npm/postinstall.js",
+    "postinstall": "../tools/npm/postinstall.js",
     "lint": "eslint lib",
-    "start": "./bin/networkTest.js"
+    "test": "./bin/networkTest.js"
   },
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-core": "/device/vendor/silk/core",
+    "silk-core-version": "/version",
     "silk-api": "/api",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
     "eslint-config-silk": "/eslint",
     "log": "/log"
   },
-  "dependncies": {
+  "dependencies": {
     "easy-table": "^1.0.0",
     "babel-runtime": "^5.8.34",
     "debug": "2.2.0",

@@ -11,13 +11,6 @@ if [ -n "$TRAVIS_BRANCH" ]; then
   BRANCH=$TRAVIS_BRANCH
 fi
 
-echo "## Testing networkTest tool ##"
-pushd vendor/silk/core/tools/networkTest
-npm install
-npm run lint
-npm start -- -c 1 -m 60 -s https://silk-server-${BRANCH}.herokuapp.com/
-popd
-
 # Do not run these tests on travis Mac OSX build
 if [ -z $TRAVIS_OS_NAME ] || [ $TRAVIS_OS_NAME != "osx" ]; then
   echo "## Running unit tests for extensions ##"

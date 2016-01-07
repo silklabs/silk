@@ -58,7 +58,7 @@
     "babel-preset-stage-0": "^6.3.13",
     "eslint": "^1.10.3",
     "express": "^4.13.3",
-    "flow-bin": "^0.19.1",
+    "flow-bin": "^0.20.1",
     "mocha": "^2.3.4"
   }
 }

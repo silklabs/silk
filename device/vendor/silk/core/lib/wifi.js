@@ -15,6 +15,9 @@ import type {Socket} from 'socket.io-client';
 const log = createLog('wifi');
 const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu', false);
 
+// Duration between network scans while not connected.
+const SCAN_INTERVAL_MS = 10 * 1000;
+
 // ref: external/wpa_supplicant_8/src/common/defs.h
 const WIFI_STATES = [
   'disconnected',
@@ -70,6 +73,13 @@ const WIFI_DISCONNECT_REASONS = [
 
 let iface = util.getstrprop('wifi.interface');
 let monitor;
+
+
+type WifiScanResult = {
+  level: number;
+  psk: boolean;
+  ssid: string;
+};
 
 class WpaMonitor extends events.EventEmitter {
 
@@ -145,6 +155,11 @@ class WpaMonitor extends events.EventEmitter {
             log.info(`wifi disconnect reason: ${reason}`);
           }
           this.emit('disconnected', reason);
+          break;
+        case 'CTRL-EVENT-SCAN-STARTED':
+          break;
+        case 'CTRL-EVENT-SCAN-RESULTS':
+          this.emit('scanResults');
           break;
         case 'CTRL-EVENT-CONNECTED':
           this.emit('connected');
@@ -253,6 +268,7 @@ export class Wifi extends events.EventEmitter {
   _online: bool = false;
   _shutdown: bool = false;
   dhcpRetryTimer: ?number;
+  _shutdown: bool = false;
 
   constructor() {
     super();
@@ -368,9 +384,21 @@ export class Wifi extends events.EventEmitter {
       log.info(`==> Wifi offline (${reason})`);
       this._online = false;
       this.emit('offline');
+      this.scan();
     });
     monitor.on('stateChange', state => {
       this.emit('stateChange', state);
+    });
+    monitor.on('scanResults', async () => {
+      await this._emitScanResults();
+      if (this._online) {
+        return;
+      }
+      // Schedule another scan
+      await util.timeout(SCAN_INTERVAL_MS);
+      if (!this._online) {
+        this.scan();
+      }
     });
 
     return Promise.resolve();
@@ -414,6 +442,62 @@ export class Wifi extends events.EventEmitter {
     return new Promise(resolve => {
       this.once('online', resolve);
     });
+  }
+
+  scan() {
+    log.info('Issuing scan request');
+    wpaCli('scan')
+    .catch(err => {
+      log.warn('scan failed with', err.stack || err);
+    });
+  }
+
+  async _emitScanResults(): Promise<void> {
+    // Fetch the latest scan results
+    const stdout = await wpaCli('scan_results');
+    let lines = stdout.split('\n');
+
+    // Check header/footer line
+    if (lines[0] !== 'bssid / frequency / signal level / flags / ssid') {
+      throw new Error(`Unexpected wpa_cli header: "${lines[0]}"`);
+    }
+    lines.shift();
+    if (lines[lines.length - 1] !== '') {
+      throw new Error(`Unexpected wpa_cli footer: "${lines[lines.length - 1]}"`);
+    }
+    lines.pop();
+
+    // Parse each discovered network line
+    let scanResults: Array<WifiScanResult> = [];
+    for (const line of lines) {
+      let info = line.split('\t');
+      if (info.length !== 5) {
+        log.warning(`Unexpected wpa_cli scan result: "${line}"`);
+        continue;
+      }
+      const [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
+
+      // Search |flags| for:
+      // 1. "WPA-PSK" or "WPA2-PSK"
+      // 2. No "WEP"
+      // Otherwise assume an open network
+      let psk = false;
+      if (flags.includes('WEP')) {
+        continue; // No
+      }
+      if (flags.includes('WPA')) {
+        if (!flags.includes('PSK')) {
+          continue; // Only WPA/WPA2 PSK supported
+        }
+        psk = true;
+      }
+      scanResults.push({
+        ssid,
+        level: parseInt(level, 10),
+        psk,
+      });
+    }
+    this.emit('scanResults', scanResults);
   }
 
   joinNetwork(ssid: string, psk: string) {
@@ -487,6 +571,10 @@ export class QEmuWifi extends events.EventEmitter {
 
   online(): Promise<void> {
     return Promise.resolve();
+  }
+
+  scan() {
+    log.warn('QEmuWifi.scan not implemented');
   }
 
   joinNetwork(ssid: string, psk: string): Promise<void> { //eslint-disable-line

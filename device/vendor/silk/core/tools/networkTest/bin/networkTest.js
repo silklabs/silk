@@ -4,7 +4,7 @@
 
 require('babel/register-without-polyfill')({
   stage: 0,
-  only: require('babelfilter')
+  only: require('silk-babeldeps')
 });
 
 require('../lib/main');

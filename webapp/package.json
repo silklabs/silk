@@ -1,6 +1,6 @@
 {
   "silkDependencies": {
-    "babelfilter": "/babelfilter",
+    "silk-babeldeps": "/babeldeps",
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-core-version": "/version",

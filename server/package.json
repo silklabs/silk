@@ -1,7 +1,7 @@
 {
   "silkDependencies": {
     "api-schema": "/api-schema",
-    "babelfilter": "/babelfilter",
+    "silk-babeldeps": "/babeldeps",
     "silk-api": "/api",
     "silk-core-version": "/version",
     "silk-raygun": "/raygun",

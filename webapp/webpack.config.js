@@ -30,7 +30,7 @@ var config = {
       { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
-        include: require('babelfilter'),
+        include: require('silk-babeldeps'),
         loaders: ['babel-loader?stage=0&optional=runtime'],
       }
     ]

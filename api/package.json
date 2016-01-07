@@ -8,7 +8,7 @@
     "silk-core-version": "/version",
     "log": "/log",
     "api-schema": "/api-schema",
-    "babelfilter": "/babelfilter",
+    "silk-babeldeps": "/babeldeps",
     "silk-server": "/server",
     "jsonwebtoken": "/jsonwebtoken"
   },

@@ -33,7 +33,7 @@ var config = {
           plugins: [],
         },
         include: [
-          require('babelfilter'),
+          require('silk-babeldeps'),
           path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native')
         ]
       },

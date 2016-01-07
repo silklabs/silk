@@ -10,7 +10,7 @@
     "clean": "rm -rf node_modules core.js core.js.map"
   },
   "silkDependencies": {
-    "babelfilter": "/babelfilter",
+    "silk-babeldeps": "/babeldeps",
     "log": "/log",
     "silk-api": "/api",
     "silk-raygun": "/raygun",

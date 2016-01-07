@@ -11,7 +11,7 @@
   },
   "private": true,
   "silkDependencies": {
-    "babelfilter": "/babelfilter",
+    "silk-babeldeps": "/babeldeps",
     "eslint-config-silk": "/eslint"
   },
   "dependencies": {

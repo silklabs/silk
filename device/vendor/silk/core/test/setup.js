@@ -12,6 +12,6 @@ let babelrc = fs.readFileSync(path.resolve(__dirname, '..', '.babelrc'));
 
 require('babel/register')(
   Object.assign(JSON.parse(babelrc), {
-    only: require('babelfilter')
+    only: require('silk-babeldeps')
   })
 );

@@ -16,7 +16,7 @@
     "start": "./bin/networkTest.js"
   },
   "silkDependencies": {
-    "babelfilter": "/babelfilter",
+    "silk-babeldeps": "/babeldeps",
     "silk-core": "/device/vendor/silk/core",
     "silk-api": "/api",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",

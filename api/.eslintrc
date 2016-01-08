@@ -1,8 +1,7 @@
 {
-  "extends": "eslint:recommended",
+  "extends": "eslint-config-silk",
   "parser": "babel-eslint",
   "env": {
-    "node": true,
     "mocha": true
   },
   "rules": {
@@ -12,4 +11,3 @@
     "modules": true
   }
 }
-

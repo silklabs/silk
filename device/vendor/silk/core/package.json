@@ -16,7 +16,8 @@
     "silk-api": "/api",
     "silk-raygun": "/raygun",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
-    "silk-server": "/server"
+    "silk-server": "/server",
+    "silk-core-version": "/version"
   },
   "dependencies": {
     "CBuffer": "1.1.0",

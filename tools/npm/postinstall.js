@@ -167,7 +167,7 @@ function installDeps(cwd, nodeModules, dependencies) {
       // symlink and then back.
       let oldCWD = process.cwd();
       process.chdir(nodeModules)
-      fs.symlinkSync(pkgSource, pkg);
+      fs.symlinkSync(path.relative(nodeModules, pkgSource), pkg);
       process.chdir(oldCWD);
     }
 

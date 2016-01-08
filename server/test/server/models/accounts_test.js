@@ -1,7 +1,7 @@
 import assert from 'assert';
 import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
-import id from '../../../src/api/id';
+import id from 'silk-api/src/access_token';
 
 suite('accounts', () => {
   let context = createContext();

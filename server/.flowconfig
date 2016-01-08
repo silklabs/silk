@@ -1,12 +1,14 @@
 [ignore]
 .*/build/.*
 .*/test/rntest/.*
-.*/node_modules/api-schema/.*
 .*/node_modules/aws-sdk-promise/.*
 .*/node_modules/jsonwebtoken/.*
 .*/node_modules/socket.io/.*
 .*/node_modules/socket.io-client/.*
 .*/node_modules/node-fetch/.*
+.*/node_modules/silk-api/node_modules/babel.*
+.*babel-eslint.*
+.*api-schema.*
 
 [include]
 

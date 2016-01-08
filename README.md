@@ -5,6 +5,10 @@ https://travis-ci.com/silklabs/silk-core/builds
 
 ## Useful Links:
 
+### Documentation:
+
+[/docs]
+
 ### Metrics:
 
 https://hilldale-delorean-43.c.influxdb.com:3000

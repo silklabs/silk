@@ -4,13 +4,13 @@ import loadConfig from '../../src/server/config';
 import createServer from '../../src/server/server';
 import createSocketioServer from '../../src/socketio/server';
 import createDb from '../../src/server/db';
-import createApi from '../../src/api';
+import createApi from 'silk-api';
 import request from 'superagent-promise';
 import merge from 'lodash.merge';
 import pbkdf2 from 'pbkdf2';
 import uuid from 'uuid';
 
-import Id from '../../src/api/id';
+import Id from 'silk-api/src/access_token';
 import Accounts from '../../src/server/models/accounts';
 import Devices from '../../src/server/models/devices';
 

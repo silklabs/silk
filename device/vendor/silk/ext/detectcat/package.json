@@ -5,19 +5,23 @@
   "main": "detectcat.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
-    "install": "./build",
-    "pretest": "npm install opencv@4.0.0",
+    "postinstall": "./bin/postinstall",
+    "pretest": "npm install node-pre-gyp@0.6.11 && npm install opencv@4.0.0",
     "test": "DEBUG=* mocha $(find test -name '*_test.js')",
     "clean": "rm -rf node_modules"
   },
+  "silkDependencies": {
+    "silk-babeldeps": "/babeldeps",
+    "silk-exttest": "/device/vendor/silk/sdk/exttest",
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "log": "/log"
+  },
   "dependencies": {
-    "babel-runtime": "^5.8.20",
-    "silk-sdk-glue": "0.0.1"
+    "babel-runtime": "^5.8.20"
   },
   "devDependencies": {
     "babel": "^5.8.23",
     "event-to-promise": "^0.4.0",
-    "log": "file:../../../../../log",
     "mocha": "^2.3.3",
     "mz": "2.0.0"
   },

@@ -67,10 +67,10 @@ module.exports = function createLog(libraryName) {
 
       func = debug(prefix);
       func.log = function() {
-        let args = arguments;
+        let args = Array.prototype.slice.call(arguments);
 
         if (!process.env.LOGWRAPPER) {
-          consoleFunc.apply(consoleFunc, [prefix, ':', ...args]);
+          consoleFunc.apply(consoleFunc, [prefix, ':'].concat(args));
         }
 
         // Mimic console.* functions by treating additional arguments as
@@ -79,7 +79,8 @@ module.exports = function createLog(libraryName) {
         alogFunc(libraryName, msg);
       };
     } else {
-      func = function(...args) {
+      func = function() {
+        let args = Array.prototype.slice.call(arguments);
         consoleFunc.apply(consoleFunc, [prefix, ':'].concat(args));
       };
     }

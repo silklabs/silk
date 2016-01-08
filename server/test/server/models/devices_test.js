@@ -2,7 +2,7 @@ import assert from 'assert';
 import Devices from '../../../src/server/models/devices';
 import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
-import id from '../../../src/api/id';
+import id from 'silk-api/src/access_token';
 
 suite('devices', () => {
   let context = createContext();

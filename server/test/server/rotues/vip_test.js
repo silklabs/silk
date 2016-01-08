@@ -1,6 +1,6 @@
 import assert from 'assert';
 import createContext from '../context';
-import { default as createApi, AccessToken } from '../../../src/api';
+import createApi, {AccessToken} from 'silk-api';
 import Account from '../../../src/server/models/accounts';
 
 suite('account auth', () => {

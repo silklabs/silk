@@ -1,0 +1,12 @@
+{
+  "name": "silk-jsonwebtoken",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "../tools/npm/postinstall.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "git@github.com:silklabs/node-jsonwebtoken.git#12168fc568e299565b3824f79fc956890dcab87c"
+  }
+}

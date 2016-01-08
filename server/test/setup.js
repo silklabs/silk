@@ -1,6 +1,6 @@
 import loadConfig from '../src/server/config';
 import mongo from 'promised-mongo';
-import gen from '../src/api_generate';
+import gen from 'silk-api/src/_generate';
 import emailGen from '../src/email_generate';
 
 // Ensure we have recently auto-generated files. Must happen before mocha runs
@@ -17,6 +17,11 @@ function timeout(time) {
 
 // Run a one time check to ensure mongodb has been started.
 suiteSetup(async function() {
+
+  // As a hack for silk-device we make scrypt an optional dependency so it does
+  // not need to be compiled on android.. However we need to be sure it works
+  // everywhere else so we assert it here.
+  require('scrypt');
 
   let config = loadConfig('test');
   let db = mongo(config.db.connectionString);

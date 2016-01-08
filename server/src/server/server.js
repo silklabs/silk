@@ -10,7 +10,7 @@ import createAliyunBlob from './blobs/aliyun';
 import createFileBlob from './blobs/file';
 import url from 'url';
 import jsonParser from './json';
-import devAccount from '../api/dev_account';
+import devAccount from 'silk-api/src/dev_account';
 
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';

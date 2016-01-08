@@ -6,10 +6,6 @@ make="make -j2"
 ./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
 vendor/silk/locked_node_modules/update.sh
 
-# With locked_node_modules primed there should be no npm registry activity
-# during the build
-export NPM_CONFIG_REGISTRY=http://0.42.42.42.42/no/registry/for/you
-
 case $GONK in
 qemu)
   $make

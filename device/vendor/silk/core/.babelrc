@@ -1,13 +1,5 @@
 {
   "breakConfig": true,
   "stage": "1",
-  "optional": ["regenerator", "asyncToGenerator", "es7.classProperties"],
-  "only": [
-    "lib/**",
-    "test/**",
-    "node_modules/log/device.js",
-    "node_modules/silk-api/src/**",
-    "node_modules/silk-sdk-glue/src/**",
-    "node_modules/silk-sdk-glue/profiler.js"
-  ]
+  "optional": ["regenerator", "asyncToGenerator", "es7.classProperties"]
 }

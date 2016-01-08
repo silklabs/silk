@@ -3,6 +3,11 @@
 .*/node_modules/react-native/node_modules/.*
 .*/node_modules/babel.*
 
+.*/server/test/.*
+.*/server/src/server/.*
+.*/server/src/socketio/.*
+.*/api/test/.*
+
 [include]
 src/
 

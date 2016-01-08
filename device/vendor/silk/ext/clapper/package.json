@@ -5,11 +5,13 @@
   "main": "clapper.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
-    "install": "./build"
+    "postinstall": "./bin/postinstall"
+  },
+  "silkDependencies": {
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue"
   },
   "dependencies": {
     "babel-runtime": "^5.8.20",
-    "silk-sdk-glue": "0.0.1",
     "socket.io-client": "^1.3.5"
   },
   "private": true

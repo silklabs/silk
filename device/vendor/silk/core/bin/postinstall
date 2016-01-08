@@ -1,0 +1,7 @@
+#! /bin/bash -ex
+if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
+  ../../../../tools/npm/postinstall.js
+else
+  $ANDROID_BUILD_TOP/../tools/npm/postinstall.js
+fi
+

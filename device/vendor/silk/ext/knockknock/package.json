@@ -5,13 +5,15 @@
   "main": "knockknock.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
-    "install": "./build"
+    "postinstall": "./bin/postinstall"
+  },
+  "silkDependencies": {
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue"
   },
   "dependencies": {
     "babel-runtime": "^5.8.25",
     "mz": "2.0.0",
-    "fast-image-size": "0.1.2",
-    "silk-sdk-glue": "0.0.1"
+    "fast-image-size": "0.1.2"
   },
   "private": true
 }

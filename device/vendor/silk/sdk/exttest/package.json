@@ -1,0 +1,13 @@
+{
+  "name": "exttest",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "private": true,
+  "scripts": {
+    "postinstall": "../../../../../tools/npm/postinstall.js"
+  },
+  "silkDependencies": {
+    "log": "/log",
+    "silk-core": "/device/vendor/silk/core"
+  }
+}

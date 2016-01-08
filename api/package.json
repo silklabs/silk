@@ -1,0 +1,64 @@
+{
+  "name": "silk-api",
+  "version": "0.0.1",
+  "description": "Silk client API for node js",
+  "main": "src/index.js",
+  "license": "proprietary",
+  "silkDependencies": {
+    "silk-core-version": "/version",
+    "log": "/log",
+    "api-schema": "/api-schema",
+    "silk-babeldeps": "/babeldeps",
+    "silk-server": "/server",
+    "jsonwebtoken": "/jsonwebtoken"
+  },
+  "dependencies": {
+    "babel": "^5.8.34",
+    "babel-runtime": "^5.8.20",
+    "babelify": "^6.3.0",
+    "base64url": "^1.0.4",
+    "debug": "^2.2.0",
+    "elliptic": "^5.1.0",
+    "hash.js": "^1.0.3",
+    "localStorage": "^1.0.3",
+    "mkdirp": "^0.5.1",
+    "msgpack-lite": "^0.1.13",
+    "node-fetch": "^1.3.2",
+    "pbkdf2": "^3.0.4",
+    "promise": "^6.1.0",
+    "uuid": "^2.0.1"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  },
+  "engines": {
+    "node": "0.12.x || >=4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:silklabs/silk-api.git"
+  },
+  "scripts": {
+    "postinstall": "../tools/npm/postinstall.js && ./bin/gen.js",
+    "mocha": "mocha $(find ./test -name '*_test.js')",
+    "lint": "eslint test src",
+    "flow": "flow check",
+    "test": "npm run lint && npm run mocha && npm run flow"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "private": true,
+  "devDependencies": {
+    "babel-eslint": "^5.0.0-beta6",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-react": "^6.3.13",
+    "babel-preset-stage-0": "^6.3.13",
+    "eslint": "^1.10.3",
+    "express": "^4.13.3",
+    "flow-bin": "^0.20.1",
+    "mocha": "^2.3.4"
+  }
+}

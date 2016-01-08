@@ -55,8 +55,6 @@ fi
 replace $ORIGIN_BRANCH $BRANCH
 
 updatebranch__silk_core $ORIGIN_BRANCH $BRANCH
-updatebranch__silk_api $ORIGIN_BRANCH $BRANCH
-updatebranch__silk_npms $ORIGIN_BRANCH $BRANCH
 updatebranch__silk_device $ORIGIN_BRANCH $BRANCH
 
 read -n 1 -p "Rewrite history on the branch $BRANCH for $GITS?  BE SURE!!! [Ny]: "

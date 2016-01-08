@@ -1,6 +1,6 @@
 /* @flow */
 import createContext from 'silk-server/test/server/context';
-import {Metric, Float} from '../src/';
+import {Metric, MetricTypes} from '../src/';
 import uuid from 'uuid';
 import assert from 'assert';
 
@@ -20,7 +20,7 @@ suite('metrics agent', function() {
 
   type CpuMetricProps = {
     server: string;
-    load: Float;
+    load: MetricTypes.Float;
   };
 
   class CpuMetric extends Metric {
@@ -39,11 +39,11 @@ suite('metrics agent', function() {
     account.api.accountMetrics.add([
       new CpuMetric({
         server: '1',
-        load: new Float(0.7),
+        load: new MetricTypes.Float(0.7),
       }),
       new CpuMetric({
         server: '2',
-        load: new Float(0.7),
+        load: new MetricTypes.Float(0.7),
       }),
     ]);
 

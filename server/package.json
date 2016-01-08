@@ -81,8 +81,8 @@
     "pretest": "./node_modules/silk-api/bin/gen.js",
     "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
-    "start-server": "babel-node --harmony src/server/main.js production",
-    "start-socketio": "babel-node --harmony src/socketio/main.js production",
+    "start-server": "./bin/babel-node src/server/main.js production",
+    "start-socketio": "./bin/babel-node src/socketio/main.js production",
     "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"

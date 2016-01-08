@@ -100,8 +100,12 @@ class ConditionalInstall {
           return;
         }
 
-        log(`writing hash for ${installModulePath}`);
-        fs.writeFileSync(hashFile, hash);
+        // Only write the hash out if it's given...
+        if (hash) {
+          log(`writing hash for ${installModulePath}`);
+          fs.writeFileSync(hashFile, hash);
+        }
+
         accept();
       });
     });
@@ -113,7 +117,13 @@ class ConditionalInstall {
 
     let hasModules = fs.existsSync(nodeModules);
     let hasHash = fs.existsSync(hashFile);
-    let hash = constructHash(installModulePath);
+    let hash;
+    try {
+      hash = constructHash(installModulePath);
+    } catch (err) {
+      log(`Warning: failed to construct hash: ${err.stack}`);
+      hasHash = false;
+    }
 
     if (
       hasModules &&

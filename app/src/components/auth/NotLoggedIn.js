@@ -11,6 +11,7 @@ import Button from './Button';
 import NetworkWarning from '../NetworkWarning';
 import TextLink from './TextLink';
 import { WordMarkText } from '../Text';
+import LoginMetric from '../../metrics/Login';
 
 const log = createLog('NotLoggedIn');
 
@@ -229,6 +230,7 @@ export default class NotLoggedIn extends AsyncComponent {
     try {
       const success = await userState.attemptSignIn(credentials.email, credentials.password);
       if (success) {
+        this.props.api.accountMetrics.add(new LoginMetric());
         return;
       }
       AlertIOS.alert(

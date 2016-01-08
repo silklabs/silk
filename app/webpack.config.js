@@ -30,11 +30,12 @@ var config = {
         loader: 'babel',
         query: {
           presets: ['es2015', 'stage-0', 'react'],
-          plugins: [],
+          plugins: ['transform-runtime'],
         },
         include: [
           require('silk-babeldeps'),
-          path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native')
+          path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native'),
+          path.resolve(__dirname, 'node_modules/react-native-device'),
         ]
       },
     ],

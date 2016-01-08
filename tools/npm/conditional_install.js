@@ -119,7 +119,9 @@ class ConditionalInstall {
     let hasHash = fs.existsSync(hashFile);
     let hash;
     try {
-      hash = constructHash(installModulePath);
+      // XXX: Hack for heroku compatibility. Uses heroku slug as "hash" since
+      // there is no git present.
+      hash = process.env.HEROKU_SLUG_COMMIT || constructHash(installModulePath);
     } catch (err) {
       log(`Warning: failed to construct hash: ${err.stack}`);
       hasHash = false;

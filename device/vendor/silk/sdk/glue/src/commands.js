@@ -66,7 +66,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
   function getDestFile() {
     // XXX: Nasty hack since we don't know where we are in the silk tree...
     let search = 'vendor/silk';
-    let startingPoint = path.resolve(__dirname);
+    let startingPoint = path.resolve(baseDirectory);
     let vendorStart = startingPoint.lastIndexOf(search);
     let vendorSegment = startingPoint.slice(vendorStart + search.length + 1);
 

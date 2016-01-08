@@ -1,0 +1,16 @@
+{
+  "name": "silk-sdk",
+  "version": "0.0.2-0",
+  "description": "Silk SDK",
+  "bin": {
+    "silk-debugger": "./debugger"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Silk Labs Inc.",
+  "license": "ISC",
+  "dependencies": {
+    "node-inspector": "0.12.5"
+  }
+}

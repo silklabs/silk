@@ -147,6 +147,13 @@ function installDeps(cwd, nodeModules, dependencies) {
     let pkgDest = path.join(nodeModules, pkg);
 
     if (fs.existsSync(pkgDest)) {
+      let stat = fs.lstatSync(pkgDest);
+      if (stat.isSymbolicLink()) {
+        fs.unlinkSync(pkgDest);
+      }
+    }
+
+    if (fs.existsSync(pkgDest)) {
       log(`${pkgDest} already present skipping symlink...`);
     } else {
       log(`symlinking ${pkgSource} into ${pkgDest}`);

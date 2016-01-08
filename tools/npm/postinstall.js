@@ -31,6 +31,8 @@ let pendingLocks = [];
 let createdLocks = [];
 let runningInstalls = new Set();
 
+let INVOKE_TYPE = process.env.INVOKE_TYPE;
+
 function unlink(path) {
   if (!fs.existsSync(path)) {
     return;
@@ -146,7 +148,6 @@ function installDeps(cwd, nodeModules, dependencies) {
     let pkgSource = depPathToAbsolute(nodeModules, dep);
     let pkgDest = path.join(nodeModules, pkg);
 
-    console.log('check', pkgDest);
     try {
       let stat = fs.lstatSync(pkgDest);
       if (stat.isSymbolicLink()) {
@@ -165,12 +166,13 @@ function installDeps(cwd, nodeModules, dependencies) {
       // in a sane way we change into the correct directory to make the relative
       // symlink and then back.
       let oldCWD = process.cwd();
-      console.log('moving from', oldCWD);
       process.chdir(nodeModules)
-      console.log('to', nodeModules);
-      console.log('symlink', pkgSource, pkg);
       fs.symlinkSync(pkgSource, pkg);
       process.chdir(oldCWD);
+    }
+
+    if (INVOKE_TYPE === 'symlink') {
+      continue;
     }
 
     let pkgNodeModules = path.join(pkgSource, 'node_modules');

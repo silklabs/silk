@@ -81,8 +81,8 @@
     "pretest": "./node_modules/silk-api/bin/gen.js",
     "start": "./bin/start.sh",
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
-    "start-server": "npm run postinstall && ./bin/babel-node src/server/main.js production",
-    "start-socketio": "npm run poistinstall && ./bin/babel-node src/socketio/main.js production",
+    "start-server": "INVOKE_TYPE=symlink npm run postinstall && ./bin/babel-node src/server/main.js production",
+    "start-socketio": "INVOKE_TYPE=symlink npm run poistinstall && ./bin/babel-node src/socketio/main.js production",
     "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"

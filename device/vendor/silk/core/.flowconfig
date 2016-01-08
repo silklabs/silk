@@ -1,6 +1,7 @@
 [include]
 lib/
 interface/
+node_modules/silk-core-version
 
 [ignore]
 .*/dist/.*
@@ -10,6 +11,11 @@ interface/
 .*/node_modules/silk-socket.io.*
 .*/node_modules/browserify.*
 .*/node_modules/watchify.*
+
+.*/server/test/.*
+.*/server/src/server/.*
+.*/server/src/socketio/.*
+.*/api/test/.*
 
 [libs]
 interface/net.js

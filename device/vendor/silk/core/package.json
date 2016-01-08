@@ -7,6 +7,7 @@
     "preinstall": "mkdir -p local_node_modules && ./bin/preinstall",
     "postinstall": "./bin/postinstall && ./build",
     "test": "./bin/test",
+    "posttest": "flow check",
     "clean": "rm -rf node_modules core.js core.js.map"
   },
   "silkDependencies": {
@@ -15,7 +16,8 @@
     "silk-api": "/api",
     "silk-raygun": "/raygun",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
-    "silk-server": "/server"
+    "silk-server": "/server",
+    "silk-core-version": "/version"
   },
   "dependencies": {
     "CBuffer": "1.1.0",
@@ -37,6 +39,9 @@
     "source-map-support": "^0.3.2",
     "split": "^1.0.0",
     "validator": "3.41.2"
+  },
+  "optionalDependencies": {
+    "flow-bin": "^0.20.1"
   },
   "devDependencies": {
     "babel": "^5.8.23",

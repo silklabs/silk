@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+LOCAL_PATH=$(dirname $0)
+
+echo Forwarding 5858 port to device
+function cleanup {
+  echo Removing 5858 port forward
+  ( set -x; adb forward --remove tcp:5858 )
+}
+trap cleanup EXIT
+( set -x; adb forward tcp:5858 tcp:5858 )
+
+# Exit cleanly on ^C
+trap exit SIGINT
+trap cleanup SIGHUP
+
+cd $LOCAL_PATH
+node_modules/.bin/node-inspector $@

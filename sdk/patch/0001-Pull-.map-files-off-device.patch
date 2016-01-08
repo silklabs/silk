@@ -1,0 +1,35 @@
+From 2879cd3d9e9af27f322d1d97396cd7a60e9e516b Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 2 Nov 2015 22:54:39 -0800
+Subject: [PATCH] Pull .map files off device
+
+---
+ node_modules/node-inspector/lib/NetworkAgent.js | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/node_modules/node-inspector/lib/NetworkAgent.js b/node_modules/node-inspector/lib/NetworkAgent.js
+index 83b3143..959da17 100644
+--- a/node_modules/node-inspector/lib/NetworkAgent.js
++++ b/node_modules/node-inspector/lib/NetworkAgent.js
+@@ -187,6 +187,18 @@ function loadFileResource(params, done) {
+   // ensure there are no ".." in the path
+   filePath = path.normalize(filePath);
+ 
++  try {
++    var execSync = require('child_process').execSync;
++    var tmpdir = require('os').tmpdir();
++    var localPath = tmpdir + filePath
++    var cmd = 'adb pull ' + filePath + ' ' + localPath;
++    console.log(cmd);
++    execSync(cmd);
++    filePath = localPath;
++  } catch (err) {
++    return done(err);
++  }
++
+   fs.readFile(
+     filePath,
+     { encoding: 'utf8' },
+-- 
+1.9.1
+

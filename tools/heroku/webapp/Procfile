@@ -1,1 +1,1 @@
-web: cd webapp && npm run-script start-server
+web: cd webapp && INVOKE_TYPE=symlink npm run postinstall && npm run-script start-server

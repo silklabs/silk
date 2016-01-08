@@ -59,10 +59,11 @@ function getNetworkTime() {
 // Ensure the device time is newer than the build time of this software.
 // In particular this helps avoid device times that are clearly wrong (1969)
 // from causing certificates to be considered invalid, etc.
-if (Date.now() < version.buildtime) {
+let buildTime = parseInt(version.buildtime, 10);
+if (Date.now() < buildTime) {
   log.warn(`Device time is certainly in the past, adjusting to build time`);
   let date = new Date();
-  date.setTime(version.buildtime);
+  date.setTime(buildTime);
   setSystemDate(date);
 }
 

@@ -30,8 +30,3 @@ echo "## Cleaning unit tests ##"
 pushd vendor/silk/core
 npm run clean # clean up to save disk space
 popd
-
-echo "## Cleaning networkTest tool ##"
-pushd vendor/silk/core/tools/networkTest
-npm run clean # clean up to save disk space
-popd

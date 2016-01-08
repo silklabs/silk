@@ -146,11 +146,14 @@ function installDeps(cwd, nodeModules, dependencies) {
     let pkgSource = depPathToAbsolute(nodeModules, dep);
     let pkgDest = path.join(nodeModules, pkg);
 
-    if (fs.existsSync(pkgDest)) {
+    console.log('check', pkgDest);
+    try {
       let stat = fs.lstatSync(pkgDest);
       if (stat.isSymbolicLink()) {
         fs.unlinkSync(pkgDest);
       }
+    } catch (err) {
+      // Just ensure we don't fall over...
     }
 
     if (fs.existsSync(pkgDest)) {
@@ -162,7 +165,10 @@ function installDeps(cwd, nodeModules, dependencies) {
       // in a sane way we change into the correct directory to make the relative
       // symlink and then back.
       let oldCWD = process.cwd();
+      console.log('moving from', oldCWD);
       process.chdir(nodeModules)
+      console.log('to', nodeModules);
+      console.log('symlink', pkgSource, pkg);
       fs.symlinkSync(pkgSource, pkg);
       process.chdir(oldCWD);
     }

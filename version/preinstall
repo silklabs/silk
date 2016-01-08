@@ -11,7 +11,9 @@ OFFICIAL=false
 if [[ -n $DYNO ]]; then  # Heroku deployment?
   OFFICIAL=true
 elif [[ -n $CI ]]; then  # CI environment?
-  OFFICIAL=true
+  if [[ "$TRAVIS_PULL_REQUEST" = "false" ]]; then
+    OFFICIAL=true
+  fi
 fi
 
 mkdir -p dist

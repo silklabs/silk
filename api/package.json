@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "license": "proprietary",
   "silkDependencies": {
+    "eslint-config-silk": "/eslint",
     "silk-core-version": "/version",
     "log": "/log",
     "api-schema": "/api-schema",

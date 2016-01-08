@@ -39,7 +39,9 @@ export default function generate() {
       throw err;
     }
     let entrypoint = route(ctx);
-    if (!entrypoint) continue;
+    if (!entrypoint) {
+      continue;
+    }
 
     let { api } = entrypoint;
     let absPath = path.join(AUTOGEN_ROOT, api.name + '.js');

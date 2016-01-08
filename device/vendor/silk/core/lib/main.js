@@ -310,7 +310,6 @@ config.on('unconfigured', () => {
   if (ui.goto('setup')) {
     camera.stopRecording();
     server.disconnect();
-    say.speak('Hello there, welcome to your new silk device');
   }
 });
 

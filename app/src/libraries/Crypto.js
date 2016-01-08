@@ -9,14 +9,6 @@ const { AppCrypto } = NativeModules;
 const log = createDebug('Crypto');
 
 /**
- * This is the number of rounds all clients should be using in their KDF for
- * generating passwords...
- *
- * XXX: Should be a constant in API.
- */
-const DEFAULT_ROUNDS = 64000;
-
-/**
  * Requests a number of random bytes from the native layer.
  *
  * This is most useful when a function typically expects a Buffer or TypedArray
@@ -53,15 +45,14 @@ export function getRandomBytes(
   });
 }
 
-export function PBKDF2KeyDerivation(
+export function pbkdf2KeyDerivation(
   input: string,
   salt: string,
-  rounds: number = DEFAULT_ROUNDS
+  rounds: number
 ): Promise<string> {
   return new Promise((accept) => {
     let start = Date.now();
-    /* eslint new-cap:0 */
-    AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, function(hexString) {
+    AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, (hexString) => { // eslint-disable-line new-cap
       log(`Generated PBKDF2KeyDerivation (${rounds}) in ${Date.now() - start} ms`);
       accept(hexString);
     });

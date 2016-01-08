@@ -146,8 +146,7 @@ suite('account auth', () => {
 
   test('developer account login', async () => {
     let { publicKey, privateKey, email, password } = api.devAccount;
-    let id = new api.id(publicKey, privateKey); //eslint-disable-line new-cap
-    api.accessToken = id;
+    api.accessToken = new AccessToken(publicKey, privateKey);
 
     let auth = await api.vip.checkPasswordWithPassword({
       email,

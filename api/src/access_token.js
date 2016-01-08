@@ -3,21 +3,19 @@
  *
  * @flow
  */
-import assert from 'assert';
-import { ec as EC } from 'elliptic';
-
-import { sha256 } from './util';
-
-const ec = new EC('ed25519');
+import invariant from 'assert';
+import * as cryptoSign from './crypto_sign';
 
 export default class AccessToken {
 
   pub: string;
   priv: ?string;
 
+  static ENTROPY_BYTES = cryptoSign.encodingLength;
+
   static create(options = {}) {
-    const key = ec.genKeyPair(options);
-    return new AccessToken(key.getPublic(true, 'hex'), key.getPrivate('hex'));
+    const [secretKey, pubKey] = cryptoSign.generateKeyPair(options);
+    return new AccessToken(pubKey.toString('hex'), secretKey.toString('hex'));
   }
 
   static import(json) {
@@ -46,30 +44,27 @@ export default class AccessToken {
     return this.pub;
   }
 
-  sign(token: string): string {
-    assert(this.priv, 'no private key');
-    const key = ec.keyFromPrivate(this.priv, 'hex');
-    return key.sign(sha256(token)).toDER('hex');
+  sign(message: string): string {
+    invariant(this.priv, 'no private key');
+    const secret = new Buffer(this.priv, 'hex');
+    return cryptoSign.sign(cryptoSign.sha256(message), secret).toString('hex');
   }
 
-  verify(token: string, signature: string): bool {
-    assert(this.pub, 'no public key');
-    let key;
-    try {
-      key = ec.keyFromPublic(this.pub, 'hex');
-    } catch(e) {
-      return false;
-    }
-    return key.verify(sha256(token), signature);
+  verify(message: string, signatureHex: string): boolean {
+    return cryptoSign.verify(
+      cryptoSign.sha256(message),
+      new Buffer(signatureHex, 'hex'),
+      new Buffer(this.pub, 'hex')
+    );
   }
 
-  isValid(): bool {
+  isValid(): boolean {
     if (this.priv) {
-      let key = ec.keyFromPrivate(this.priv, 'hex');
-      if (key.getPublic(true, 'hex') !== this.pub) {
+      const pubKey = cryptoSign.publicKeyFromSecret(new Buffer(this.priv, 'hex'));
+      if (pubKey.toString('hex') !== this.pub) {
         return false;
       }
     }
-    return !!this.pub;
+    return !!this.pub && this.pub.length === 64;
   }
 }

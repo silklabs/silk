@@ -15,7 +15,7 @@ suite('device id', () => {
     assert.equal(id.priv, i.priv);
 
     assert.equal(id + '', id.pub);
-    assert.equal(id.pub.length, 66);
+    assert.equal(id.pub.length, 64);
 
     assert(id.isValid());
 

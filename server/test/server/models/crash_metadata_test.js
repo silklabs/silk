@@ -11,7 +11,7 @@ suite('metadata', () => {
   });
 
   test('create / get / find', async () => {
-    let deviceId = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01';
+    let deviceId = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     let type = 'tombstone';
 
     let records = [

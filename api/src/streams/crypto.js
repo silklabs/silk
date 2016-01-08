@@ -8,7 +8,7 @@ import assert from 'assert';
 import ClosingTransform from './closing_transform';
 import crypto from 'crypto';
 import { DuplexTransform } from './duplex_transform';
-import { ec as EC } from 'elliptic';
+import { ec as ECDH } from 'elliptic';
 import makeLog from 'log';
 
 const log = makeLog(`api-streams-crypto`);
@@ -702,12 +702,12 @@ export class CryptoDuplexStream extends DuplexTransform {
   constructor(stream, options = { }) {
     log.debug(`CryptoDuplexStream()`);
 
-    const ec = new EC(CryptoStreamBase.CURVE_NAME);
+    const ecdh = new ECDH(CryptoStreamBase.CURVE_NAME);
 
-    const decrypt = new DecryptStream(ec);
-    const encrypt = new EncryptStream(ec);
+    const decrypt = new DecryptStream(ecdh);
+    const encrypt = new EncryptStream(ecdh);
 
-    const randomByteCountNeeded = ec.hash.hmacStrength;
+    const randomByteCountNeeded = ecdh.hash.hmacStrength;
     assert(randomByteCountNeeded);
     log.debug(`hmac requires ${randomByteCountNeeded} random bytes`);
 
@@ -718,7 +718,7 @@ export class CryptoDuplexStream extends DuplexTransform {
         return;
       }
 
-      const keyPair = ec.genKeyPair({ entropy: bytes });
+      const keyPair = ecdh.genKeyPair({ entropy: bytes });
       encrypt.setKeyPair(keyPair);
       decrypt.setKeyPair(keyPair);
     });

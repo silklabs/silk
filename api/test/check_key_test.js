@@ -18,9 +18,21 @@ suite('check key', () => {
     assert(checkId.verify(TOKEN, sig));
   });
 
-  test('garbage sig', () => {
-    let id = Id.importPub('garbage');
-    assert(!id.verify('garbage', 'trash'));
+  test('garbage key', () => {
+    let id = Id.importPub('garbage: no 64 hex chars');
+    assert(!id.isValid(), 'garbage key is not considered valid');
+    assert.throws(() => id.verify('token', 'garbage'), TypeError);
+    assert.throws(
+      () => id.verify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'),
+      assert.AssertionError
+    );
+  });
+
+  test('garbage signature', () => {
+    let id = Id.importPub('0123401234012340123401234012340123401234012340123401234012340123');
+    assert(id.isValid(), '64 byte hex key is valid');
+    assert.throws(() => id.verify('token', 'garbage'), TypeError);
+    assert(!id.verify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'));
   });
 
 });

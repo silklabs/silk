@@ -13,8 +13,8 @@ let account = {
   'email': 'engineering@silklabs.com',
   'password': 'silklabs',
   'passwordHash': 'fed892d4c48cb16af5f1fb33754a81be59809518046a7990208c6a61e4b731b8',
-  'publicKey': '034fb3096bb15ab4bde7c3bb2eaa82fe3d272ce631e068212e221ab2b6b755f12e',
-  'privateKey': '074ab271b1d8d4bed0f523e4864f2792f25147fcfb5101bdc4b06f9f79e8a1cd'
+  'publicKey': '93a2f81582253c4edbbf6f69ceb2e32870a04614f7e31d5a60d46e4bc8cdcba7',
+  'privateKey': '4b066b20312427fbec1e76374d34bff370abb486454cf6f286efb7c526887f3f'
 };
 
 export default account;

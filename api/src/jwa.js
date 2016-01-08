@@ -2,34 +2,30 @@
  * This module implements the core of https://tools.ietf.org/html/rfc7518 with
  * specific support for ed25519 as a sign/verify algorithm support for other
  * algorithms is omitted (we don't need them)
+ *
+ * @flow
  */
 
-import { ec as EC } from 'elliptic';
 import base64url from 'base64url';
-
-import { sha256 } from './util';
+import * as cryptoSign from './crypto_sign';
 
 const ALGO = 'ed25519';
-const ec = new EC('ed25519');
 
 /**
  * Sign the input with the given private key.
  *
  * @param {String} input string to sign (should be ascii).
- * @param {String} privateKey hex private key.
+ * @param {String} privateKeyHex hex private key.
  * @return {String} base64url encoded signature.
  */
-function sign(input, privateKey) {
-  let key = ec.keyFromPrivate(privateKey, 'hex');
-
-  // Signing is defined by https://tools.ietf.org/html/rfc7518#section-3.4
-  let hash = sha256(input);
-  let signed = key.sign(hash, 'hex');
-
-  // Per rfc7518 we create a single array R then S in BE order.
-  let r = signed.r.toArray('be', 32);
-  let s = signed.s.toArray('be', 32);
-  return base64url(new Buffer(r.concat(s)));
+function sign(
+  input: string,
+  privateKeyHex: string
+): string {
+  return base64url(cryptoSign.sign(
+    cryptoSign.sha256(input),
+    new Buffer(privateKeyHex, 'hex')
+  ));
 }
 
 /**
@@ -40,41 +36,27 @@ function sign(input, privateKey) {
  * @param {String} publicKey public key to use in validation.
  * @return {Boolean} true when input is verified by signature.
  */
-function verify(input, signature, publicKey) {
-  let key = ec.keyFromPublic(publicKey, 'hex');
-
-  if (!signature || typeof signature !== 'string') {
+function verify(
+  input: string,
+  signatureBase64url: string,
+  publicKeyHex: string
+): boolean {
+  if (!signatureBase64url || typeof signatureBase64url !== 'string') {
     // TODO: Logging.
     return false;
   }
 
-  let hash = sha256(input);
-  let bufferSig = base64url.toBuffer(signature);
-  let signatureDecoded = [];
-
-  // Convert the buffer into an array of octets represented by js Number.
-  // This can be passed to elliptic.
-  for (let i = 0; i < bufferSig.length; i++) {
-    signatureDecoded.push(bufferSig[i]);
-  }
-
-  if (signatureDecoded.length !== 64) {
-    throw new Error('invalid signature length');
-  }
-
-  return key.verify(
-    hash,
-    {
-      r: signatureDecoded.slice(0, 32),
-      s: signatureDecoded.slice(32)
-    }
+  return cryptoSign.verify(
+    cryptoSign.sha256(input),
+    base64url.toBuffer(signatureBase64url),
+    new Buffer(publicKeyHex, 'hex')
   );
 }
 
 /**
  * @param {String} algorithm (must be ed25519)
  */
-export default function factory(algorithm) {
+export default function factory(algorithm: string): any {
   if (algorithm !== ALGO) {
     throw new Error(`JWA only supports: ${ALGO}`);
   }

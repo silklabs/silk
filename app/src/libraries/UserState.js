@@ -9,21 +9,18 @@
  *  - BLE beacon UUID
  */
 
-// The API violates this rule, so disable it for the whole file.
-/* eslint new-cap:0 */
-
 import invariant from 'assert';
 import { EventEmitter} from 'events';
-import createLog from 'log';
-
-
 import {
   AsyncStorage,
   NativeModules,
 } from 'react-native';
+import createLog from 'log';
+import { AccessToken } from 'silk-api';
+
 import {
   getRandomBytes,
-  PBKDF2KeyDerivation,
+  pbkdf2KeyDerivation,
 } from './Crypto';
 
 const log = createLog('UserState');
@@ -31,17 +28,6 @@ const { BLESocketManager } = NativeModules;
 
 const ACCESS_TOKEN_KEY = 'user.accessToken';
 const REGISTERED_DEVICES_KEY = 'user.registeredDevices';
-
-/**
- * This value has been chosen based on what elliptic would do when generating
- * it's own entropy.
- *
- * See: https://github.com/indutny/elliptic/blob/cbccbc862bcbb3a0f2ce8021d340e51f785e2ebd/lib/elliptic/ec/index.js#L60
- * See: https://github.com/indutny/hash.js/blob/b8d200196b7e8a335d1f94c6b14366491822b7bb/lib/hash/sha.js#L105
- *
- * The ed25519 algorithm uses sha256 under the hood.
- */
-const SHA256_HMAC_STRENGTH = 192;
 
 export class UserState extends EventEmitter {
 
@@ -82,11 +68,8 @@ export class UserState extends EventEmitter {
   }
 
   async _createAccessToken() {
-    // See above comment for SHA256_HMAC_STRENGTH to understand what this is
-    // doing.
-    let entropy = await getRandomBytes(SHA256_HMAC_STRENGTH);
-    let accessToken = this.api.id.create({ entropy });
-    return accessToken;
+    let entropy = await getRandomBytes(AccessToken.ENTROPY_BYTES);
+    return AccessToken.create({ entropy });
   }
 
   /**
@@ -100,7 +83,7 @@ export class UserState extends EventEmitter {
     }
 
     let parsed = JSON.parse(accessToken);
-    accessToken = new this.api.id(parsed.publicKey, parsed.privateKey);
+    accessToken = new AccessToken(parsed.publicKey, parsed.privateKey);
     log.info('Using existing access token', accessToken);
     return accessToken;
   }
@@ -137,9 +120,10 @@ export class UserState extends EventEmitter {
   }
 
   async checkPassword(email, password) {
-    let passwordHash = await PBKDF2KeyDerivation(
+    let passwordHash = await pbkdf2KeyDerivation(
       password, /* input */
-      email /* salt */
+      email, /* salt */
+      this.api.vip.PBKDF2_ROUNDS
     );
 
     return await this.api.vip.checkPassword({
@@ -158,9 +142,10 @@ export class UserState extends EventEmitter {
     let accessToken = await this._createAccessToken();
     this.accessToken = this.api.accessToken = accessToken;
 
-    let passwordHash = await PBKDF2KeyDerivation(
+    let passwordHash = await pbkdf2KeyDerivation(
       password, /* input */
-      email /* salt */
+      email, /* salt */
+      this.api.vip.PBKDF2_ROUNDS
     );
 
     // XXX: Put some more useful information here...
@@ -200,9 +185,10 @@ export class UserState extends EventEmitter {
     let accessToken = await this._createAccessToken();
     this.accessToken = this.api.accessToken = accessToken;
 
-    let passwordHash = await PBKDF2KeyDerivation(
+    let passwordHash = await pbkdf2KeyDerivation(
       password, /* input */
-      email /* salt */
+      email, /* salt */
+      this.api.vip.PBKDF2_ROUNDS
     );
 
     // XXX: Put some more useful information here...
@@ -247,17 +233,17 @@ export class UserState extends EventEmitter {
    * server...
    */
   async registerDevice(name, deviceId, type = 'camera') {
-    deviceId = this.api.id.importPub(deviceId);
-    log.info('Registering device', deviceId);
+    let deviceToken = AccessToken.importPub(deviceId);
+    log.info('Registering device', deviceToken);
 
     // Sign the deviceId with the account token...
-    let registrationToken = this.accessToken.sign(deviceId.toString());
+    let registrationToken = this.accessToken.sign(deviceToken.toString());
 
     let {
       success,
       beaconUUID,
     } = await this.api.account.registerDevice({
-      devicePublicKey: deviceId.toString(),
+      devicePublicKey: deviceToken.toString(),
       name,
       type,
       registrationToken,

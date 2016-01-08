@@ -31,6 +31,8 @@ let pendingLocks = [];
 let createdLocks = [];
 let runningInstalls = new Set();
 
+let INVOKE_TYPE = process.env.INVOKE_TYPE;
+
 function unlink(path) {
   if (!fs.existsSync(path)) {
     return;
@@ -146,11 +148,13 @@ function installDeps(cwd, nodeModules, dependencies) {
     let pkgSource = depPathToAbsolute(nodeModules, dep);
     let pkgDest = path.join(nodeModules, pkg);
 
-    if (fs.existsSync(pkgDest)) {
+    try {
       let stat = fs.lstatSync(pkgDest);
       if (stat.isSymbolicLink()) {
         fs.unlinkSync(pkgDest);
       }
+    } catch (err) {
+      // Just ensure we don't fall over...
     }
 
     if (fs.existsSync(pkgDest)) {
@@ -165,6 +169,10 @@ function installDeps(cwd, nodeModules, dependencies) {
       process.chdir(nodeModules)
       fs.symlinkSync(pkgSource, pkg);
       process.chdir(oldCWD);
+    }
+
+    if (INVOKE_TYPE === 'symlink') {
+      continue;
     }
 
     let pkgNodeModules = path.join(pkgSource, 'node_modules');

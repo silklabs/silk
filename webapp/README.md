@@ -60,3 +60,4 @@ For example to enable all logs possible (socket.io, etc..):
   "debug": "*"
 }
 ```
+

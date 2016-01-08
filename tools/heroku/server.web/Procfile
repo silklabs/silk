@@ -1,1 +1,1 @@
-web: cd server && npm run-script start-server
+web: cd server && INVOKE_TYPE=symlink npm run postinstall &&  npm run-script start-server

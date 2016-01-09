@@ -180,6 +180,7 @@ class OkSilk {
     log.info(`Received partial result hypothesis: ${text}`);
 
     if (text.match(new RegExp(`${KEYPHRASE}`, 'i'))) {
+      this._playHotKeywordSound();
       this._switchSearch(SILK_COMMANDS);
     }
   }
@@ -205,6 +206,13 @@ class OkSilk {
   _handleTimeout() {
     log.debug(`Timeout`);
     this._switchSearch(HOTKEY_SEARCH);
+  }
+
+  /**
+   * Play a sound when hot keyword is detected
+   */
+  _playHotKeywordSound() {
+    this._util.playSound('hotkeyword_detected.mp3');
   }
 }
 

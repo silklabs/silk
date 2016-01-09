@@ -60,6 +60,7 @@ SILK_EXT := \
   oksilk \
   oksilk-pocketsphinx-dict \
   oksilk-pocketsphinx-grammar \
+  oksilk-hotkeyword-sound \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

@@ -33,18 +33,9 @@ MERGE_GITS="\
   gonk-alto \
 "
 GITS="\
-  silk-api-node \
   silk-device-locked-node-modules \
   silk-trainingset \
   $MERGE_GITS \
-"
-
-# silk-core subdirectories with a package.json at the root (ie, that are
-# bootstrapped with |npm install|)
-NPM_PROJECTS="\
-  server \
-  app \
-  webapp \
 "
 
 # Fetch all the silk projects
@@ -104,69 +95,6 @@ updatebranch__silk_core() {
   popd > /dev/null
 }
 
-# Update branch references within the silk apis
-updatebranch__silk_api() {
-  local from=$1
-  local to=$2
-  for api in silk-api-node; do
-    echo "Updating branch for $api: $from => $to"
-    pushd $api
-    (
-      for js in $(find . -type f -name \*.js -o -name \*.json); do
-        (
-          set -x;
-          sed -i $js -e "s/silk-server-[a-zA-Z0-9]*.herokuapp.com/silk-server-${to}.herokuapp.com/g"
-        )
-        git add $js
-      done
-
-      git commit -m "Automated branch update from ${from} to ${to}" || true
-      git --no-pager show
-    )
-    popd > /dev/null
-  done
-}
-
-
-# Update branch references for silk "npm projects" (app/server)
-updatebranch__silk_npms() {
-  local from=$1
-  local to=$2
-  pushd silk-core/
-  for app in $NPM_PROJECTS; do
-    echo "Updating branch for $app: $from => $to"
-    pushd $app
-    (
-      set -x
-
-      for package_json in package.json build/api/package.json; do
-        if [[ -f $package_json ]]; then
-          for p in silk-api; do
-            local HEAD=$to
-            if [[ $to == release ]]; then
-              # Lock to SHA1 for release branch
-              if [[ "$p" = "silk-api" ]]; then
-                # TODO: Rename either "silk-api" or "silk-api-node" in
-                # the package.json
-                HEAD=$(git -C ../${p}-node rev-parse HEAD)
-              else
-                HEAD=$(git -C ../$p rev-parse HEAD)
-              fi
-            fi
-            updatePackageVersion $package_json $p $HEAD
-          done
-
-          git add $package_json
-        fi
-      done
-
-      local msg="${app}: Automated branch update from ${from} to ${to}"
-      git commit -m "$msg" || true
-    )
-    popd > /dev/null
-  done
-  popd > /dev/null
-}
 
 # Update branch references within silk-device
 updatebranch__silk_device() {
@@ -188,7 +116,7 @@ updatebranch__silk_device() {
       local HEAD=$to
       if [[ $to == release ]]; then
         # Lock to SHA1 for release branch
-        HEAD=$(git -C ../$p rev-parse HEAD)
+        HEAD=$(git -C ../../$p rev-parse HEAD)
       fi
 
       xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" $silk_xml

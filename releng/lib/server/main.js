@@ -14,7 +14,7 @@ if (version.official) {
 import createServer from './server';
 import loadConfig from './config';
 
-let log = require('./log')('main');
+let log = require('log')('main');
 let profile = process.argv[2];
 let config = loadConfig(profile);
 

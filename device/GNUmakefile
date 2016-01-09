@@ -221,6 +221,7 @@ REPO_VERSION=--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-st
 # creation of the tarball.
 #
 # Example usage:
+#   $ make zest
 #   $ make repocache.base
 #
 # Upload the resulting repocache-<gonk>.tgz to S3 or some other cloud storage.
@@ -246,7 +247,6 @@ define __repocache_rules
 
 .PHONY: repocache.$(1)
 repocache.$(1):
-	$(MAKE) zest
 	export NO_REPOCACHE=1 ; \
   export REPO_INIT_ARGS="--depth=1" ; \
   $(MAKE) init.$(1)

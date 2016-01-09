@@ -1,5 +1,6 @@
-language: c
-compiler: gcc
+language: generic
+sudo: required
+dist: trusty
 
 # Note that OS X builds are triggered periodically by Releng
 os:
@@ -19,14 +20,13 @@ addons:
     packages:
       - bc
       - g++-4.8
-      - libc6:i386
-      - libstdc++6:i386
-      - linux-libc-dev
+      - g++-4.8-multilib
       - libcv-dev
       - libcvaux-dev
       - libhighgui-dev
       - libopencv-dev
-      - g++-4.8-multilib
+      - linux-libc-dev
+      - openjdk-7-jdk
 
 before_script:
   source .travis/before_script

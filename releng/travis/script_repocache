@@ -17,6 +17,9 @@ fi
 
 set -x
 cd ..
+if [[ -n "$GONK_REPO" ]]; then
+  ( set -x; time git clone $GONK_REPO device/gonk/$GONK )
+fi
 make -C device repocache.$GONK
 
 mkdir -p deploy/repocache

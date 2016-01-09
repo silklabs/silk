@@ -10,5 +10,4 @@ dist/test/
 *~
 /config.local.js
 /config.local.json
-/src/api/gen
 /src/server/emails

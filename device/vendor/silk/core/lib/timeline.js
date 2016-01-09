@@ -28,6 +28,10 @@ const DEFAULT_VIDEOUPLOADTYPE = 'events';
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
 
+// Time between preview image "keyframes".  These are uploaded regardless of the
+// value of VIDEOUPLOADTYPE_PROP.
+const PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS = 5 * 60 * 1000; /* 5 minutes */
+
 // When VIDEOUPLOADTYPE_PROP === 'events', this indicates how much video data
 // should be uploaded before the event officially started.
 const PRE_EVENT_UPLOAD_MS = 5000;
@@ -74,6 +78,7 @@ export default class Timeline extends EventEmitter {
   lastPreviewFrame: ?Buffer;
   lastPreviewFrameWhen: number;
   lastPreviewUploadWhenMs: number;
+  lastPreviewKeyframeWhen: number;
   acks: {
     pending: {
       jpeg: number;
@@ -108,6 +113,7 @@ export default class Timeline extends EventEmitter {
 
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
+    this.lastPreviewKeyframeWhen = 0;
     this.lastPreviewUploadWhenMs = 0;
     this.uploadOpQueue = new CBuffer(PRE_EVENT_UPLOAD_MS / 250); // Hold up to 4 ops per second
 
@@ -410,26 +416,32 @@ export default class Timeline extends EventEmitter {
       const previewObjects = this.previewObjects;
       this.lastPreviewUploadWhenMs = now;
 
-      this._addUploadOp(lastPreviewFrameWhen,
-        () => {
-          const op = new PreviewUploadOp({
-            size: lastPreviewFrame.length,
-            metadata: {
-              metaType: 'preview',
-              startUTC: lastPreviewFrameWhen,
-              endUTC: lastPreviewFrameWhen + durationMs,
-              data: {
-                frameWidth: this._previewSize.width,
-                frameHeight: this._previewSize.height,
-                objects: previewObjects,
-              },
+      const enqueueOp = () => {
+        const op = new PreviewUploadOp({
+          size: lastPreviewFrame.length,
+          metadata: {
+            metaType: 'preview',
+            startUTC: lastPreviewFrameWhen,
+            endUTC: lastPreviewFrameWhen + durationMs,
+            data: {
+              frameWidth: this._previewSize.width,
+              frameHeight: this._previewSize.height,
+              objects: previewObjects,
             },
-          });
-          this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
-            op, new BufferStream(lastPreviewFrame));
-        }
-      );
+          },
+        });
+        this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
+          op, new BufferStream(lastPreviewFrame));
+      };
 
+      if (now - this.lastPreviewKeyframeWhen >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
+        // This is a preview keyframe, enqueue it right away
+        enqueueOp();
+        this.lastPreviewKeyframeWhen = now;
+      } else {
+        // This is not a preview keyframe, maybe enqueue it
+        this._addUploadOp(lastPreviewFrameWhen, enqueueOp);
+      }
     }
     this.lastPreviewFrame = frame;
     this.lastPreviewFrameWhen = when;

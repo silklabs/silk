@@ -16,7 +16,7 @@ uploaded.
 ## Usage
 
 ```sh
-npm install -g silklabs/s3-artifacts
+npm install -g s3-artifacts
 silk-artifacts -h
 ```
 

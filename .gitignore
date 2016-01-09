@@ -4,5 +4,5 @@
 # Heroku
 /Procfile
 
-# npm fails
+node_modules
 npm-debug.log

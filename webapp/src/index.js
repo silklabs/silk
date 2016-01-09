@@ -19,8 +19,8 @@ import Cameras from './libraries/Cameras';
 import api from './libraries/Api';
 import loadUserState from './libraries/UserState';
 
-import debug from 'debug';
-debug.enable(Config.debug);
+import { configureLog } from 'log';
+configureLog(Config.debug);
 
 import React from 'react'; //eslint-disable-line no-unused-vars
 import ReactDOM from 'react-dom';

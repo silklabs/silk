@@ -3,10 +3,10 @@
  */
 
 import { NativeModules } from 'react-native';
-import createDebug from 'debug';
+import createLog from 'log';
 
 const { AppCrypto } = NativeModules;
-const log = createDebug('Crypto');
+const log = createLog('Crypto');
 
 /**
  * Requests a number of random bytes from the native layer.

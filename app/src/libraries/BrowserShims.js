@@ -2,8 +2,8 @@
  * Configure debug prior to entrypoint so it is ready for other modules.
  */
 import Config from './Config';
-import debug from 'debug';
-debug.enable(Config.getDefault().debug);
+import { configureLog } from 'log';
+configureLog(Config.getDefault().debug);
 
 /**
  * Collection of browser shims to make various JS libraries happy.

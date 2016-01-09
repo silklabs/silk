@@ -13,12 +13,12 @@ import http from 'http';
 import net from 'net';
 import eventToPromise from 'event-to-promise';
 import assert from 'assert';
-import createDebug from 'debug';
+import createLog from 'log';
 
 import StoringStream from '../lib/streams/store';
 import { EventEmitter } from 'events';
 
-const debug = createDebug('stream-server');
+const log = createLog('stream-server');
 
 // get an open port...
 async function getPort() {
@@ -67,14 +67,14 @@ class StreamServer {
     assert(typeof id === 'number');
     let handle = new StreamHandle(`http://localhost:${this.port}/${id}`);
     this.streams.set(id, handle);
-    debug('register', id);
+    log.debug('register', id);
     return handle;
   }
 
   handleRequest(req, res) {
     let id = parseInt(req.url.slice(1), 10);
     let stream = this.streams.get(id);
-    debug('handle request', req.url);
+    log.debug('handle request', req.url);
 
     if (!stream) {
       res.writeHead(500);
@@ -89,7 +89,7 @@ class StreamServer {
     stream.emit('request');
 
     if (stream.forceAbort) {
-      debug('force abort', req.url);
+      log.debug('force abort', req.url);
       req.socket.destroy();
       return;
     }
@@ -101,7 +101,7 @@ class StreamServer {
     });
 
     storing.on('finish', async () => {
-      debug('client finished writing...');
+      log.debug('client finished writing...');
       stream.success = true;
 
       // Make it easy to inspect the result...
@@ -115,7 +115,7 @@ class StreamServer {
         // Save the state so we can inspect it in later tests...
         stream.content = content;
         stream.success = true;
-        debug('successfully finished', req.url);
+        log.debug('successfully finished', req.url);
         res.writeHead(200);
         res.end();
       }, stream.delay);

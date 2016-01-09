@@ -6,7 +6,7 @@ import * as githubEvent from './github-event';
 import * as githubTravisIntegration from '../github-travis-integration.js';
 
 export default async function main (config) {
-  let log = require('./log')('server');
+  let log = require('log')('server');
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);

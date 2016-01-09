@@ -1,39 +1,50 @@
+/**
+ * Silk logging helper
+ *
+ * Expected use:
+ *
+ *   import createLog from 'log';
+ *   const log = createLog('coolfeature');
+ *
+ *   log.verbose('useless');
+ *   log.debug('assert(1+1=3)');
+ *   log.info('hi');
+ *   log.warn('tsktsk');
+ *   log.error('ono');
+ *   log.fatal('sos');
+ *
+ * To enable output,
+ * - call the `configureLog` function, importable from the 'log' module,
+ * - set the `DEBUG` environment variable,
+ * - or set the `persist.silk.debug` prop on device.
+ *
+ * Some possible uses:
+ *
+ *   silk-coolfeature:error
+ *   silk-coolfeature:*,-silk-coolfeature:info
+ *   silk-coolfeature:*
+ *   silk-*
+ *
+ */
 
 'use strict';
 
+var debug = require('debug');
 
-// Expected use:
-//
-//   let log = require('./log')('coolfeature');
-//
-//   log.verbose('useless');
-//   log.debug('assert(1+1=3)');
-//   log.info('hi');
-//   log.warn('tsktsk');
-//   log.error('ono');
-//   log.fatal('sos');
-//
-// To enable output set the 'persist.silk.debug' property:
-//
-//   $ export DEBUG=silk-coolfeature:error
-//   $ export DEBUG=silk-coolfeature:*,-silk-coolfeature:info
-//   $ export DEBUG=silk-coolfeature:*
-//   $ export DEBUG=silk-*
-//
-// By default all info(), warn(), and error() output is enabled. All debug()
-// output is disabled.
+function createLogger(libraryName, level) {
+  return debug('silk-' + libraryName + ':' + level);
+}
+
 module.exports = function createLog(libraryName) {
-  function makeLogFunction(level) {
-    var name = 'silk-' + libraryName + ':' + level;
-    return require('debug')(name);
-  }
-
   return {
-    verbose: makeLogFunction('verbose'),
-    debug: makeLogFunction('debug'),
-    info: makeLogFunction('info'),
-    warn: makeLogFunction('warn'),
-    error: makeLogFunction('error'),
-    fatal: makeLogFunction('fatal')
+    verbose: createLogger(libraryName, 'verbose'),
+    debug: createLogger(libraryName, 'debug'),
+    info: createLogger(libraryName, 'info'),
+    warn: createLogger(libraryName, 'warn'),
+    error: createLogger(libraryName, 'error'),
+    fatal: createLogger(libraryName, 'fatal'),
   };
 }
+
+module.exports.createLogger = createLogger;
+module.exports.configureLog = debug.enable;

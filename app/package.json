@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "buffer": "^3.2.2",
-    "debug": "^2.2.0",
     "events": "^1.0.2",
     "immutable": "^3.7.5",
     "joi-browserify": "git@github.com:fhemberger/joi-browserify.git#v0.0.2",

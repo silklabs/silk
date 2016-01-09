@@ -5,10 +5,11 @@
  * @flow
  */
 import assert from 'assert';
+import createLog from 'log';
+
 import fetch from './fetch';
 import URL from 'url';
 import throwError from './fetch_error';
-import debug from 'debug';
 import {bodySignature} from './jwt_request_signature';
 
 import type AccessToken from './access_token';
@@ -97,11 +98,9 @@ export default class HttpClient {
   _logger: ?(...args: any) => void;
   _log(...args: any): void {
     if (!this._logger) {
-      this._logger = debug(`silk-api:${this.name}`);
+      this._logger = createLog(`api-${this.name}`).debug;
     }
-    if (this._logger) { // XXX: Make flow happy by adding another if...
-      this._logger(...args);
-    }
+    this._logger(...args);
   }
 
   async _sleep(interval: number, retry: number, id: string): Promise<void> {

@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "Heroku shim and nothing more",
   "scripts": {
-    "preinstall": "./tools/heroku/deploy.sh"
+    "preinstall": "./tools/heroku/deploy.sh",
+    "zest": "git reset --hard HEAD; git clean -dffx; echo https://youtu.be/1r_2fNiYkyE"
   },
   "repository": {
     "type": "git",

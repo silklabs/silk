@@ -4,7 +4,8 @@
   "description": "gc wrapper",
   "main": "build/Release/silk-gc1.node",
   "scripts": {
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild",
+    "test": "node -e \"require('assert').equal(typeof require('./silk-gc1').idleNotification, 'function')\""
   },
   "author": {
     "name": "Michael Vines",

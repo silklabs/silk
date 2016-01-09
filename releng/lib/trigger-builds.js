@@ -147,6 +147,58 @@ const buildList = [
   {
     repo: 'silk-core',
     project: 'releng',
+    message: 'Updating repocache for hammerhead gonk',
+    branch: 'master',
+    config: {
+      os: ['linux'],
+      env: {
+        global: [
+          'S3DEPLOY=true',
+          'GONK=hammerhead',
+        ],
+        matrix: [],
+      },
+      script: './travis/script_repocache',
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'releng',
+    message: 'Updating repocache for shamu gonk',
+    branch: 'master',
+    config: {
+      os: ['linux'],
+      env: {
+        global: [
+          'S3DEPLOY=true',
+          'GONK=shamu',
+        ],
+        matrix: [],
+      },
+      script: './travis/script_repocache',
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'releng',
+    message: 'Updating repocache for Dragonboard 410c gonk',
+    branch: 'master',
+    config: {
+      os: ['linux'],
+      env: {
+        global: [
+          'S3DEPLOY=true',
+          'GONK=410c',
+          'GONK_REPO=git@github.com:silklabs/gonk-410c.git',
+        ],
+        matrix: [],
+      },
+      script: './travis/script_repocache',
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'releng',
     message: 'Updating repocache for qemu gonk',
     branch: 'master',
     config: {

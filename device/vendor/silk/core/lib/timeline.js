@@ -6,7 +6,7 @@
  * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import { EventEmitter } from 'events';
 
 import BufferStream from './streams/buffer';
@@ -26,7 +26,7 @@ const VIDEOUPLOADTYPE_PROP = 'persist.silk.vidupload.type';
 const DEFAULT_VIDEOUPLOADTYPE = 'events';
 
 // Default to uploading 1 preview image per second.
-const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
+const PREVIEW_UPLOAD_INTERVAL_S = util.getintprop('persist.silk.prvupload.interval', 1);
 
 // Time between preview image "keyframes".  These are uploaded regardless of the
 // value of VIDEOUPLOADTYPE_PROP.
@@ -77,8 +77,9 @@ export default class Timeline extends EventEmitter {
   livePreview: boolean;
   lastPreviewFrame: ?Buffer;
   lastPreviewFrameWhen: number;
-  lastPreviewUploadWhenMs: number;
   lastPreviewKeyframeWhen: number;
+  lastPreviewEmitSeconds: number;
+  secondsUntilNextPreviewEmit: number;
   acks: {
     pending: {
       jpeg: number;
@@ -93,7 +94,7 @@ export default class Timeline extends EventEmitter {
 
   constructor(outbox: Outbox) {
     super();
-    assert(outbox, 'must pass outbox...');
+    invariant(outbox, 'must pass outbox...');
 
     this.outbox = outbox;
     this.serverSocket = null;
@@ -114,7 +115,8 @@ export default class Timeline extends EventEmitter {
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
     this.lastPreviewKeyframeWhen = 0;
-    this.lastPreviewUploadWhenMs = 0;
+    this.lastPreviewEmitSeconds = 0;
+    this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
     this.uploadOpQueue = new CBuffer(PRE_EVENT_UPLOAD_MS / 250); // Hold up to 4 ops per second
 
     this.liveVideo = false;
@@ -391,7 +393,15 @@ export default class Timeline extends EventEmitter {
     // preview image and objects so this little workaround can be removed in the
     // future if desired, once the appropriate client changes are made.
     //
+    const now = Date.now();
+    const nowSeconds = Math.floor(now / 1000);
+    this.secondsUntilNextPreviewEmit -= nowSeconds - this.lastPreviewEmitSeconds;
+    if (this.secondsUntilNextPreviewEmit > 0) {
+      return; // Not time to emit a preview yet
+    }
+
     if (this.lastPreviewFrame) {
+      // Live stream
       for (let obj of this.previewObjects) {
         if (obj.when < this.lastPreviewFrameWhen) {
           log.warn(`Preview object mismatch: ` +
@@ -403,20 +413,16 @@ export default class Timeline extends EventEmitter {
             JSON.stringify(obj));
         }
       }
-      this._pushPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,
-                       this.previewObjects, 'jpeg');
-    }
+      this._pushSocketIoPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,
+        this.previewObjects, 'jpeg');
 
-    const now = Date.now();
-    if (this.lastPreviewFrame &&
-        now - this.lastPreviewUploadWhenMs >= PREVIEW_UPLOAD_INTERVAL_MS) {
-
+      // Storage
       const lastPreviewFrame = this.lastPreviewFrame;
       const lastPreviewFrameWhen = this.lastPreviewFrameWhen;
       const previewObjects = this.previewObjects;
-      this.lastPreviewUploadWhenMs = now;
 
       const enqueueOp = () => {
+        invariant(lastPreviewFrame);
         const op = new PreviewUploadOp({
           size: lastPreviewFrame.length,
           metadata: {
@@ -443,13 +449,16 @@ export default class Timeline extends EventEmitter {
         this._addUploadOp(lastPreviewFrameWhen, enqueueOp);
       }
     }
+
     this.lastPreviewFrame = frame;
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
+    this.lastPreviewEmitSeconds = nowSeconds;
+    this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
   }
 
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
-    this._pushPacket(when, frame, null, 'mp4', durationMs);
+    this._pushSocketIoPacket(when, frame, null, 'mp4', durationMs);
 
     // Only queue the video to be sent to the outbox if uploads are enabled...
     if (this.videoUploadType === 'none') {
@@ -483,7 +492,7 @@ export default class Timeline extends EventEmitter {
     );
   }
 
-  _pushPacket(
+  _pushSocketIoPacket(
     when: number,
     frame: Buffer,
     objects: ?Array<TimelineEventObject>,

@@ -116,7 +116,7 @@ updatebranch__silk_device() {
       local HEAD=$to
       if [[ $to == release ]]; then
         # Lock to SHA1 for release branch
-        HEAD=$(git -C ../$p rev-parse HEAD)
+        HEAD=$(git -C ../../$p rev-parse HEAD)
       fi
 
       xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" $silk_xml

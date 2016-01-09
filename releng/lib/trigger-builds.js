@@ -33,7 +33,30 @@ const buildList = [
       },
     },
   },
-  /* 410c build is currently too big for the Travis disk :-/
+  {
+    repo: 'silk-core',
+    project: 'device',
+    message: 'hammerhead master build',
+    branch: 'master',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [ 'GONK_SPEC=hammerhead' ],
+      },
+    },
+  },
+  {
+    repo: 'silk-core',
+    project: 'device',
+    message: 'shamu master build',
+    branch: 'master',
+    config: {
+      os: [ 'linux' ],
+      env: {
+        matrix: [ 'GONK_SPEC=shamu' ],
+      },
+    },
+  },
   {
     repo: 'silk-core',
     project: 'device',
@@ -51,7 +74,6 @@ const buildList = [
       },
     },
   },
-  */
   {
     repo: 'silk-core',
     project: 'device',

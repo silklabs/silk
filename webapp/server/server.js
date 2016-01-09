@@ -2,7 +2,7 @@
 import eventToPromise from 'event-to-promise';
 
 export default async function main (config) {
-  let log = require('./log')('server');
+  let log = require('log')('server');
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);

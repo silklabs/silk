@@ -36,6 +36,8 @@ BUILD_PROP=$SYSTEM_DIR/build.prop
 
 BASE_VERSION_JS=$(readlink -f $LOCAL_PATH/../vendor/silk/core/lib/base_version.js)
 SILK_CORE_VERSION_JSON=$(readlink -f $SYSTEM_DIR/silk/node_modules/silk-core-version.json)
+BASE_VERSION=$(node -p "require('$BASE_VERSION_JS')")
+CORE_VERSION=$(node -p "require('$SILK_CORE_VERSION_JSON').fingerprint")
 
 ota_manifest="${OTA_DIR}/${GONK}_ota.json"
 
@@ -55,6 +57,13 @@ for zip in $(shopt -s nullglob; echo $OTA_DIR/*.zip); do
       exit 1
     fi
 
+    if [ "$fingerprint_value" != "$CORE_VERSION" ]; then
+      echo Error: fingerprint mismatch between...
+      echo "    1. $fingerprint_value"
+      echo "    2. $CORE_VERSION"
+      exit 1
+    fi
+
     {
       echo "    \"full\": {"
       echo "      \"fingerprint\": \"${fingerprint_value}\","
@@ -67,13 +76,10 @@ for zip in $(shopt -s nullglob; echo $OTA_DIR/*.zip); do
   elif [[ $zip =~ .*-silkota-.* ]]; then
     echo Silk OTA: $zip
 
-    base_version=$(node -p "require('$BASE_VERSION_JS')")
-    core_version=$(node -p "require('$SILK_CORE_VERSION_JSON').fingerprint")
-
     {
       echo "    \"silk\": { "
-      echo "      \"base_version\": \"${base_version}\","
-      echo "      \"core_version\": \"${core_version}\","
+      echo "      \"base_version\": \"${BASE_VERSION}\","
+      echo "      \"core_version\": \"${CORE_VERSION}\","
       echo "      \"url\": \"${SERVER_PATH}$(basename ${zip})\","
       echo "      \"size\": \"${zip_size}\","
       echo "      \"sha1\": \"${zip_sha1}\""

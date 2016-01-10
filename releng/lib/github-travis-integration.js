@@ -45,12 +45,18 @@
  */
 
 import assert from 'assert';
-import Octokat from 'octokat';
 import YAML from 'yamljs';
 import merge from 'lodash.merge';
 import cb2promise from 'promise-callback';
 import createLog from 'log';
 
+import {
+  getOctokat,
+  readFileAtCommit,
+  createOrUpdateBranch,
+  deleteBranch,
+  makeGitHubLog,
+} from './github';
 import { genTravis, triggerBuild } from './travis';
 
 import type { TravisBuildRequest, TravisBuildResponse } from './travis';
@@ -58,7 +64,6 @@ import type { TravisBuildRequest, TravisBuildResponse } from './travis';
 type PullRequestEvent = Object;
 type PushEvent = Object;
 type TravisWebhookPayload = Object;
-type Repo = Object;
 type PullRequest = Object;
 type ProjectBuildRequest = TravisBuildRequest & {
   sha?: string;
@@ -67,14 +72,7 @@ type ProjectBuildRequest = TravisBuildRequest & {
   pullRequestBaseBranch?: string;
 };
 
-if (!process.env.GITHUB_TOKEN) {
-  throw new Error('GITHUB_TOKEN environment variable undefined');
-}
-
-const log = createLog('github-travis-integration');
-const octokat = new Octokat({
-  token: process.env.GITHUB_TOKEN,
-});
+const LOG_PREFIX = 'github-travis-integration';
 
 const PR_ACTIONS_THAT_KICK_OFF_BUILDS = [
   'opened',
@@ -128,78 +126,19 @@ function populateProjectsFromFilename(projects: Set<string>, filename: string) {
  * a given single commit.
  */
 async function determineProjectsToBuildForCommit(
-  repo: Repo,
+  owner_name: string,
+  repo_name: string,
   sha: string
 ): Promise<Array<string>> {
+  let repo = getOctokat().repos(owner_name, repo_name);
+  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, sha);
+
   let unique_projects = new Set();
   let commit = await repo.commits(sha).fetch();
   commit.files.forEach((file) => populateProjectsFromFilename(unique_projects, file.filename));
   let projects = Array.from(unique_projects);
   log.info(`Projects touched by commit ${sha}: ${projects}`);
   return projects;
-}
-
-/**
- * Read the contents of a file at a given commit.
- */
-async function readFileAtCommit(
-  repo: Repo,
-  filename: string,
-  commit: string
-): Promise<?string> {
-  let contents = null;
-  try {
-    contents = await repo.contents(filename).read({ref: commit});
-    log.info(`Read ${filename} at commit ${commit}`);
-  } catch(ex) {
-    log.info(`Could not read ${filename} at commit ${commit}`);
-  }
-  return contents;
-}
-
-/**
- * Create a branch called `branch` off the given commit. The branch
- * will be force-updated if it already exists.
- */
-async function createOrUpdateBranch(
-  repo: Repo,
-  branch: string,
-  sha: string
-): Promise<void> {
-  let ref = null;
-  try {
-    ref = await repo.git.refs.heads(branch).fetch();
-  } catch (err) { // eslint-disable-line no-empty
-    // Ignore.
-  }
-
-  if (!ref) {
-    log.info(`Branch ${branch} doesn\'t exist yet, creating it...`);
-    await repo.git.refs.create({
-      ref: 'refs/heads/' + branch,
-      sha,
-    });
-    return;
-  }
-  if (ref.object.sha !== sha) {
-    log.info(`Branch ${branch} exist, but is at ${ref.object.sha}, updating...`);
-    await repo.git.refs.heads(branch).update({
-      sha,
-      force: true,
-    });
-    return;
-  }
-  log.info(`Branch ${branch} up-to-date.`);
-}
-
-async function deleteBranch(repo: Repo, branch: string): Promise<void> {
-  let branchExists = await repo.git.refs.heads.contains(branch);
-  if (!branchExists) {
-    log.info(`Branch ${branch} doesn't exist, nothing to do.`);
-    return;
-  }
-  await repo.git.refs.heads(branch).remove();
-  log.info(`Deleted ${branch}`);
 }
 
 /**
@@ -250,10 +189,11 @@ export async function triggerBuildForProject(
   project: string,
   request: ProjectBuildRequest
 ): Promise<?TravisBuildResponse> {
-  log.info(`${owner_name}/${repo_name}: going to build project ${project}`);
-  let repo = octokat.repos(owner_name, repo_name);
+  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name);
+  log.info(`Going to build project ${project}`);
 
   // If a commit was not explicitly provided, build the tip of the specified branch.
+  let repo = getOctokat().repos(owner_name, repo_name);
   let sha = request.sha;
   if (!sha) {
     let info = await repo.git.refs.heads(request.branch).fetch();
@@ -263,9 +203,10 @@ export async function triggerBuildForProject(
   // Use the existing .travis.yml as a template. If the request contains
   // any additional configuration,
   let travis_yml = await readFileAtCommit(
-    repo,
-    project + '/.travis.yml',
-    sha
+    owner_name,
+    repo_name,
+    sha,
+    project + '/.travis.yml'
   );
   if (!travis_yml) {
     log.info(`No .travis.yml found in ${project}/, skipping.`);
@@ -350,28 +291,30 @@ export async function handleGitHubPullRequestEvent(
 ): Promise<void> {
   let owner_name = event.pull_request.base.repo.owner.login;
   let repo_name = event.pull_request.base.repo.name;
-  log.info(`${owner_name}/${repo_name}#${event.number} ${event.action}`);
+  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, event.number);
   log.debug('Full event payload:', JSON.stringify(event, null, 2));
 
-  let repo = octokat.repos(owner_name, repo_name);
   if (event.action === 'closed') {
-    log.info(`PR #${event.number} was closed. Mop up our CI branch.`);
-    await deleteBranch(repo, getCIBranchForPR(event.number));
+    log.info('PR was closed. Mop up our CI branch.');
+    await deleteBranch(owner_name, repo_name, getCIBranchForPR(event.number));
     return;
   }
 
+  log.info(`Action '${event.action}'`);
   if (PR_ACTIONS_THAT_KICK_OFF_BUILDS.indexOf(event.action) === -1) {
-    log.info(`'${event.action}' not in ${PR_ACTIONS_THAT_KICK_OFF_BUILDS}), does not kick off a build,  ignoring event.`);
+    log.info(`'${event.action}' not in ${PR_ACTIONS_THAT_KICK_OFF_BUILDS}), ignoring event.`);
     return;
   }
+
   if (event.pull_request.merged) {
-    log.info(`PR #${event.number} is already merged, nothing to do.`);
+    log.info('PR is already merged, nothing to do.');
     return;
   }
 
   // Ensure PR is mergeable. GitHub doesn't always tell us
   // immediately, so keep polling the GitHub API until we know.
-  log.info(`Fetching PR #${event.number} info.`);
+  log.info('Fetching info...');
+  let repo = getOctokat().repos(owner_name, repo_name);
   let pr = await repo.pulls(event.number).fetch();
   log.debug('Full PR info:', JSON.stringify(pr, null, 2));
 
@@ -381,13 +324,13 @@ export async function handleGitHubPullRequestEvent(
       log.info('GitHub is taking an awful long time to determine whether the PR is mergeable. Giving up.');
       break;
     }
-    log.info('Mergeable state is still unknown, refetching PR info.');
+    log.info('Mergeable state still unknown, refetching PR info.');
     await timeout(PR_MERGEABLE_TIMEOUT_MS);
     pr = await repo.pulls(event.number).fetch();
     tries += 1;
   }
   if (!pr.mergeable) {
-    log.info(`PR #${event.number} is not mergeable, ignoring.`);
+    log.info('PR is not mergeable, aborting.');
     return;
   }
 
@@ -398,12 +341,12 @@ export async function handleGitHubPullRequestEvent(
     state: 'pending',
     target_url: 'http://git.io/h3KG',
     description: 'Determining which builds to trigger',
-    context: `silk/releng/build-determinator`,
+    context: `silk-releng/build-determinator`,
   });
 
   let numberOfBuilds = 0;
   try {
-    numberOfBuilds = await triggerBuildsForPullRequest(repo, pr);
+    numberOfBuilds = await triggerBuildsForPullRequest(pr);
   } catch (error) {
     log.error('Error', error, error.stack);
     // Uh-oh. We failed to trigger some or all builds. Let's mark the
@@ -413,7 +356,7 @@ export async function handleGitHubPullRequestEvent(
       state: 'error',
       target_url: 'https://dashboard.heroku.com/apps/silk-releng/resources',
       description: `Failed to determine builds. Check Papertrail logs for details.`,
-      context: `silk/releng/build-determinator`,
+      context: `silk-releng/build-determinator`,
     });
     return;
   }
@@ -428,7 +371,7 @@ export async function handleGitHubPullRequestEvent(
     state: 'success',
     target_url: 'http://git.io/vR1YX',
     description: `Triggered ${numberOfBuilds} builds`,
-    context: `silk/releng/build-determinator`,
+    context: `silk-releng/build-determinator`,
   });
 }
 
@@ -438,15 +381,20 @@ export async function handleGitHubPullRequestEvent(
  * the number of builds triggered.
  */
 async function triggerBuildsForPullRequest(
-  repo: Repo,
   pr: PullRequest
 ): Promise<number> {
   let owner_name = pr.base.repo.owner.login;
   let repo_name = pr.base.repo.name;
+  let repo = getOctokat().repos(owner_name, repo_name);
+  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr.number);
   let branch = getCIBranchForPR(pr.number);
 
-  await createOrUpdateBranch(repo, branch, pr.mergeCommitSha);
-  let projects = await determineProjectsToBuildForCommit(repo, pr.mergeCommitSha);
+  await createOrUpdateBranch(owner_name, repo_name, branch, pr.mergeCommitSha);
+  let projects = await determineProjectsToBuildForCommit(
+    owner_name,
+    repo_name,
+    pr.mergeCommitSha
+  );
   let travisResponses = await Promise.all(
     projects.map(
       (project) => triggerBuildForProject(
@@ -469,7 +417,7 @@ async function triggerBuildsForPullRequest(
   // triggered for a given project. Filter those out to see how many
   // builds we actually triggered.
   let triggeredBuilds = travisResponses.filter((result) => !!result);
-  log.info(`PR #${pr.number}: triggered ${triggeredBuilds.length} builds.`);
+  log.info(`Triggered ${triggeredBuilds.length} builds.`);
 
   if (triggeredBuilds.length === 0) {
     return 0;
@@ -482,7 +430,7 @@ async function triggerBuildsForPullRequest(
   // don't query Travis too soon -- it needs a bit of time to queue
   // the builds.
   await timeout(TRAVIS_QUERY_BUILD_DELAY_MS);
-  log.info(`PR #${pr.number}: checking Travis for builds.`);
+  log.info(`checking Travis for builds.`);
   let travis = await genTravis();
   let response = await cb2promise(travis.repos(owner_name, repo_name).builds.get);
   let queuedBuilds = response.builds.filter((build, index) => {
@@ -492,13 +440,13 @@ async function triggerBuildsForPullRequest(
     // started by now, we will have been notified via the webhook
     // already, and we don't need to update commit status twice.
     if (build.commit.sha === pr.mergeCommitSha) {
-      log.info(`PR #${pr.number}: found build ${build.id}, state is ${build.state}.`);
+      log.info(`found build ${build.id}, state is ${build.state}.`);
     }
     return build.commit.sha === pr.mergeCommitSha && build.state === 'created';
   });
 
-  log.info(`PR #${pr.number}: Travis has queued but not yet started ` +
-           `${queuedBuilds.length} builds, reporting them to GitHub as pending.`);
+  log.info(`Travis has queued but not yet started ${queuedBuilds.length} ` +
+           `builds, reporting them to GitHub as pending.`);
   for (let build of queuedBuilds) {
     let project = getProjectFromBuildMessage(build.commit.message);
     await repo.statuses(pr.head.sha).create({
@@ -517,7 +465,8 @@ export async function handleGitHubPushEvent(
 ): Promise<void> {
   let owner_name = event.repository.owner.name;
   let repo_name = event.repository.name;
-  log.info(`${owner_name}/${repo_name}: push to ${event.ref}`);
+  let log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name);
+  log.info(`Push to ${event.ref}`);
   log.debug('Full event payload:', JSON.stringify(event, null, 2));
 
   if (event.ref.indexOf('refs/heads/') === -1) {
@@ -530,6 +479,8 @@ export async function handleGitHubPushEvent(
     log.info('This branch is one of our special PR branches. Ignoring.');
     return;
   }
+
+  log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, branch);
 
   let unique_projects = new Set();
   event.commits.forEach((commit) => {
@@ -560,6 +511,7 @@ export async function handleGitHubPushEvent(
 export async function handleTravisWebhook(
   payload: TravisWebhookPayload
 ): Promise<void> {
+  let log = createLog(LOG_PREFIX);
   log.info(`Travis build id ${payload.id}: ${payload.state}`);
   log.debug(`Full incoming request payload:`, JSON.stringify(payload, null, 2));
 
@@ -570,7 +522,8 @@ export async function handleTravisWebhook(
 
   let owner_name = payload.repository.owner_name;
   let repo_name = payload.repository.name;
-  let repo = octokat.repos(owner_name, repo_name);
+  log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, payload.branch);
+  let repo = getOctokat().repos(owner_name, repo_name);
 
   // Figure out which commit to report the status for. If the build
   // was for a PR, we want to report the status on the PR's head commit.
@@ -580,6 +533,7 @@ export async function handleTravisWebhook(
     pr_number = getPRNumberFromBranch(payload.branch);
   }
   if (pr_number !== null) {
+    log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr_number);
     let pr = await repo.pulls(pr_number).fetch();
     if (sha !== pr.mergeCommitSha) {
       // The PR's merge commit is not the same, but that could be
@@ -588,13 +542,13 @@ export async function handleTravisWebhook(
       let buildCommitInfo = await repo.commits(sha).fetch();
       if (buildCommitInfo.parents.length !== 2 ||
           buildCommitInfo.parents[1].sha !== pr.head.sha) {
-        log.warn(`New commits were pushed to PR #${pr.number} while Travis ` +
-                 `was running. Ignore build results.`);
+        log.warn(`New commits were pushed to PR while Travis was running. ` +
+                 `Ignore build results.`);
         return;
       }
     }
     sha = pr.head.sha;
-    log.info(`Build was for PR #${pr_number}, head commit ${sha}`);
+    log.info(`Build was for this PR, head commit ${sha}`);
   }
 
   let project = getProjectFromBuildMessage(payload.message);

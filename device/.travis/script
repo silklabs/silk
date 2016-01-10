@@ -6,15 +6,26 @@ make="make -j2"
 ./repo start $TRAVIS_BRANCH vendor/silk/locked_node_modules/node_modules
 vendor/silk/locked_node_modules/update.sh
 
+lock_build_fingerprint() {
+  local buildprop=$ANDROID_PRODUCT_OUT/system/build.prop
+  export BUILD_FINGERPRINT=`sed -ne 's/^ro.build.fingerprint=\(.*\)$/\1/p' $buildprop`
+  if [[ -z "$BUILD_FINGERPRINT" ]]; then
+    echo Error: ro.build.fingerprint not found in $buildprop >&2
+    exit 1
+  fi
+  echo BUILD_FINGERPRINT=$BUILD_FINGERPRINT
+}
+
 case $GONK in
 qemu)
   $make
+  source build/envsetup.sh
+  lock_build_fingerprint
   $make silkota
 
   echo "******************************************************************"
   echo Emulator tests
   echo "******************************************************************"
-  source build/envsetup.sh
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis gets borked
   test/start_emulator -r run_tests
   ;;
@@ -24,9 +35,10 @@ base)
   export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
 
   $make
+  source build/envsetup.sh
+  lock_build_fingerprint
   $make silkota
 
-  source build/envsetup.sh
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis falls down
 
   if [[ $TRAVIS_OS_NAME == linux ]]; then
@@ -63,11 +75,15 @@ base)
   ;;
 mako)
   $make
+  source build/envsetup.sh
+  lock_build_fingerprint
   $make otapackage
   $make silkota
   ;;
 *)
   $make
+  source build/envsetup.sh
+  lock_build_fingerprint
   $make silkota
   ;;
 esac

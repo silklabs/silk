@@ -35,7 +35,7 @@ export function getRandomBytes(
       for (let i = 0; i < numberOfBytes; i++) {
         result[i] = bytes[i];
       }
-      log(`Got ${numberOfBytes} random bytes in ${Date.now() - start} ms`);
+      log.debug(`Got ${numberOfBytes} random bytes in ${Date.now() - start} ms`);
       if (callback) {
         // First argument is an error object.
         callback(null, result);
@@ -53,7 +53,7 @@ export function pbkdf2KeyDerivation(
   return new Promise((accept) => {
     let start = Date.now();
     AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, (hexString) => { // eslint-disable-line new-cap
-      log(`Generated PBKDF2KeyDerivation (${rounds}) in ${Date.now() - start} ms`);
+      log.debug(`Generated PBKDF2KeyDerivation (${rounds}) in ${Date.now() - start} ms`);
       accept(hexString);
     });
   });

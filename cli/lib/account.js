@@ -10,9 +10,7 @@ import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('account');
 
-const DEFAULT_ROUNDS = 64000;
 const SHA256_KEYLENGTH = 32;
-const SHA256_HMAC_STRENGTH = 192;
 
 export default class Account {
   constructor(options) {
@@ -25,8 +23,7 @@ export default class Account {
       this.api.accessToken = this.accessToken =
         new AccessToken(options.accessToken.pub, options.accessToken.priv);
     } else {
-      let entropy = crypto.randomBytes(SHA256_HMAC_STRENGTH);
-      this.api.accessToken = this.accessToken = AccessToken.create({entropy});
+      this.api.accessToken = this.accessToken = AccessToken.create();
     }
 
     if (options.beaconUUID) {
@@ -54,7 +51,7 @@ export default class Account {
     let passwordHash = crypto.pbkdf2Sync(
       password,
       email,
-      DEFAULT_ROUNDS,
+      this.api.vip.PBKDF2_ROUNDS,
       SHA256_KEYLENGTH,
       'sha256'
     ).toString('hex');

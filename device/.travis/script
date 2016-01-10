@@ -36,7 +36,7 @@ base)
 
   $make
   source build/envsetup.sh
-  lock_build_fingerprint
+  # No |lock_build_fingerprint| here since base build doesn't generate build.prop
   $make silkota
 
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis falls down

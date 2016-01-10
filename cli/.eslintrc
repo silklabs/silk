@@ -1,13 +1,6 @@
 {
   "extends": "eslint-config-silk",
-  "plugins": [
-    "import"
-  ],
   "rules": {
-    "import/no-unresolved": 0,
-    "import/named": 0,
-    "import/default": 0,
-    "import/no-duplicates": 0,
-    "no-process-exit": 0
+    "no-process-exit": 0,
   }
 }

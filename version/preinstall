@@ -27,3 +27,4 @@ cat > dist/index.json <<-EOF
 	  "sha": "$SOURCE_VERSION"
 	}
 EOF
+cat dist/index.json

@@ -55,15 +55,6 @@ for zip in $(shopt -s nullglob; echo $OTA_DIR/*.zip); do
       exit 1
     fi
 
-    # TODO: Remove the next |echo| statement after November 1st.  This data is
-    #       expected by older devices, and will enable them to update seamlessly
-    #       to the newer format.
-    echo "    \"fingerprint\": \"${fingerprint_value}\", "\
-         "\"url\": \"${SERVER_PATH}$(basename ${zip})\", "\
-         "\"size\": \"${zip_size}\", "\
-         "\"sha1\": \"${zip_sha1}\", "\
-      >> $ota_manifest
-
     {
       echo "    \"full\": {"
       echo "      \"fingerprint\": \"${fingerprint_value}\","

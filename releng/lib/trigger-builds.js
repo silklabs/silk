@@ -45,6 +45,7 @@ const buildList = [
       },
     },
   },
+/*  
   {
     repo: 'silk-core',
     project: 'device',
@@ -74,6 +75,7 @@ const buildList = [
       },
     },
   },
+*/
   {
     repo: 'silk-core',
     project: 'device',
@@ -161,6 +163,7 @@ const buildList = [
       script: './travis/script_repocache',
     },
   },
+/*
   {
     repo: 'silk-core',
     project: 'releng',
@@ -196,6 +199,7 @@ const buildList = [
       script: './travis/script_repocache',
     },
   },
+*/
   {
     repo: 'silk-core',
     project: 'releng',

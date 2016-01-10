@@ -1,0 +1,135 @@
+/**
+ * Helpers for querying and anipulating GitHub repository data.
+ *
+ * @flow
+ */
+
+import Octokat from 'octokat';
+import createLog from 'log';
+
+let _octokat = null;
+export function getOctokat(): Octokat {
+  if (_octokat) {
+    return _octokat;
+  }
+  if (!process.env.GITHUB_TOKEN) {
+    throw new Error('GITHUB_TOKEN environment variable undefined');
+  }
+  _octokat = new Octokat({
+    token: process.env.GITHUB_TOKEN,
+  });
+  return _octokat;
+}
+
+export function makeGitHubLog(
+  libraryName: string,
+  owner: string,
+  repo: string,
+  object: ?string | ?number
+): any {
+  let prefix = `${owner}/${repo}`;
+  if (object) {
+    prefix += `#${object}`;
+  }
+  prefix += `:`;
+
+  let obj = createLog(libraryName);
+  Object.keys(obj).forEach((level) => {
+    let func = obj[level];
+    obj[level] = (...args: Array<any>) => func(prefix, ...args);
+  });
+  return obj;
+}
+
+/**
+ * Read the contents of a file at a given commit.
+ */
+export async function readFileAtCommit(
+  owner: string,
+  repo: string,
+  sha: string,
+  filename: string
+): Promise<?string> {
+  let repository = getOctokat().repos(owner, repo);
+  let log = makeGitHubLog('github', owner, repo, sha);
+  let contents = null;
+  try {
+    contents = await repository.contents(filename).read({ref: sha});
+    log.info(`read ${filename}`);
+  } catch(ex) {
+    log.info(`could not read ${filename}`);
+  }
+  return contents;
+}
+
+/**
+ * Create a branch called `branch` off the given commit. The branch
+ * will be force-updated if it already exists.
+ */
+export async function createOrUpdateBranch(
+  owner: string,
+  repo: string,
+  branch: string,
+  sha: string
+): Promise<void> {
+  let repository = getOctokat().repos(owner, repo);
+  let log = makeGitHubLog('github', owner, repo, branch);
+
+  let ref = null;
+  try {
+    ref = await repository.git.refs.heads(branch).fetch();
+  } catch (err) { // eslint-disable-line no-empty
+    // Ignore.
+  }
+
+  if (!ref) {
+    log.info(`branch doesn't exist yet, creating it to point to ${sha}...`);
+    await repository.git.refs.create({
+      ref: 'refs/heads/' + branch,
+      sha,
+    });
+    return;
+  }
+  if (ref.object.sha !== sha) {
+    log.info(`branch exists, but is at ${ref.object.sha}, updating it to ${sha}...`);
+    await repository.git.refs.heads(branch).update({
+      sha,
+      force: true,
+    });
+    return;
+  }
+  log.info(`branch is up-to-date.`);
+}
+
+export async function deleteBranch(
+  owner: string,
+  repo: string,
+  branch: string
+): Promise<void> {
+  let repository = getOctokat().repos(owner, repo);
+  let log = makeGitHubLog('github', owner, repo, branch);
+
+  let branchExists = await repository.git.refs.heads.contains(branch);
+  if (!branchExists) {
+    log.info(`branch doesn't exist, nothing to delete`);
+    return;
+  }
+
+  await repository.git.refs.heads(branch).remove();
+  log.info(`branch deleted`);
+}
+
+export function createMilestone(
+  owner: string,
+  repo: string,
+  title: string,
+  dueDate: Date
+): Promise<any> {
+  let repository = getOctokat().repos(owner, repo);
+  let log = makeGitHubLog('github', owner, repo);
+  log.info(`Creating milestone '${title}', due on: ${dueDate.toISOString()}`);
+  return repository.milestones.create({
+    'title': title,
+    'due_on': dueDate.toISOString(),
+  });
+}

@@ -1,9 +1,10 @@
 {
   "silkDependencies": {
-    "silk-babeldeps": "/babeldeps",
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
+    "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/version",
+    "log": "/log",
     "silk-raygun": "/raygun"
   },
   "dependencies": {
@@ -23,7 +24,6 @@
     "json-loader": "^0.5.4",
     "localforage": "^1.2.10",
     "lodash.merge": "^3.3.2",
-    "log": "../log",
     "ms": "^0.7.1",
     "pbkdf2": "^3.0.4",
     "react": "^0.14.3",

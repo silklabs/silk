@@ -63,8 +63,8 @@ base)
   ;;
 mako)
   $make
-  BUILD_LATER_OTAPACKAGE=1
-  BUILD_LATER_SILKOTA=1
+  $make otapackage
+  $make silkota
   ;;
 *)
   $make
@@ -108,13 +108,5 @@ fi
 
 # Clear more space for Travis builds
 rm -rf vendor/silk/locked_node_modules/node_modules/modules
-
-if [ -n "$BUILD_LATER_OTAPACKAGE" ]; then
-  $make otapackage
-fi
-
-if [ -n "$BUILD_LATER_SILKOTA" ]; then
-  $make silkota
-fi
 
 exit 0

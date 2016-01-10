@@ -7,7 +7,7 @@
     "lint": "eslint lib",
     "flow": "flow check",
     "preinstall": "./bin/preinstall",
-    "postinstall": "webpack --progress",
+    "postinstall": "../tools/npm/postinstall.js && webpack --progress",
     "start": "DEBUG=* babel-node lib/server/main.js production",
     "dev": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "test": "npm run lint && npm run flow",
@@ -16,6 +16,13 @@
     "upliftall": "DEBUG=silk-* babel-node lib/uplifter.js"
   },
   "license": "proprietary",
+  "silkDependencies": {
+    "eslint-config-silk": "/eslint",
+    "silk-babeldeps": "/babeldeps",
+    "silk-core-version": "/version",
+    "log": "/log",
+    "silk-raygun": "/raygun"
+  },
   "dependencies": {
     "babel": "^5.8.9",
     "babel-core": "^5.8.23",
@@ -26,7 +33,6 @@
     "body-parser": "~1.13.3",
     "debug": "^2.2.0",
     "eslint": "^1.10.3",
-    "eslint-config-silk": "file:../eslint",
     "eslint-plugin-react": "^3.11.3",
     "event-to-promise": "^0.4.0",
     "express": "^4.12.3",
@@ -43,8 +49,6 @@
     "react-router": "1.0.2",
     "request-promise": "^0.4.3",
     "script-loader": "^0.6.1",
-    "silk-core-version": "file:../version",
-    "silk-raygun": "file:../raygun",
     "sort-json": "^1.1.1",
     "source-map-support": "^0.3.2",
     "travis-ci": "^2.0.3",

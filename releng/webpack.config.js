@@ -18,10 +18,8 @@ var config = {
       { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
-        include: [
-          path.resolve(__dirname, 'lib'),
-        ],
-        loaders: ['babel']
+        include: require('silk-babeldeps'),
+        loaders: ['babel-loader?stage=0&optional=runtime'],
       }
     ]
   },

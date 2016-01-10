@@ -37,12 +37,12 @@ import crypto from 'crypto';
 import { eddsa as EdDSA } from 'elliptic';
 
 const ed25519 = new EdDSA('ed25519');
-export const encodingLength = ed25519.encodingLength;
+const encodingLength = ed25519.encodingLength;
 
 /**
  * Generate and return a keypair as tuple (secret key, public key).
  */
-export function generateKeyPair(
+function generateKeyPair(
   options: {entropy?: Buffer;}
 ): [Buffer, Buffer] {
   const secret = options.entropy || crypto.randomBytes(encodingLength);
@@ -54,43 +54,58 @@ export function generateKeyPair(
 /**
  * Compute the public key given a secret key
  */
-export function publicKeyFromSecret(
+function publicKeyFromSecret(
   secretKey: Buffer
 ): Buffer {
-  invariant(secretKey.length === ed25519.encodingLength);
+  invariant(secretKey.length === encodingLength);
   const keyPair = ed25519.keyFromSecret(secretKey);
   return new Buffer(keyPair.getPublic());
 }
 
-export function sign(
+function sign(
   message: Buffer,
   secretKey: Buffer
 ): Buffer {
-  invariant(secretKey.length === ed25519.encodingLength);
+  invariant(secretKey.length === encodingLength);
   const key = ed25519.keyFromSecret(secretKey);
   const signature = key.sign(message);
   return new Buffer(signature.toBytes());
 }
 
-export function verify(
+function verify(
   message: Buffer,
   signature: Buffer,
   publicKey: Buffer
 ): boolean {
-  invariant(publicKey.length === ed25519.encodingLength);
-  invariant(signature.length === 2 * ed25519.encodingLength);
+  invariant(publicKey.length === encodingLength);
+  invariant(signature.length === 2 * encodingLength);
   // `elliptic` is usually fine eating Buffers where it expects arrays,
   // but here are two cases where we really need to pass arrays.
   const key = ed25519.keyFromPublic(Array.from(publicKey));
   return key.verify(message, Array.from(signature));
 }
 
-export function sha256(data: ?string): Buffer {
+function sha256(data: ?string): Buffer {
   const hasher = crypto.createHash('sha256');
   hasher.update(data || '');
   return hasher.digest();
 }
 
-export function sha256hex(data: ?string): string {
+function sha256hex(data: ?string): string {
   return sha256(data).toString('hex');
+}
+
+const API = {
+  encodingLength,
+  generateKeyPair,
+  publicKeyFromSecret,
+  sign,
+  verify,
+  sha256,
+  sha256hex,
+};
+export default API;
+
+export function overrideImplementation(overrides: typeof API) {
+  Object.assign(API, overrides);
 }

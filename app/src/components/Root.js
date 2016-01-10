@@ -11,6 +11,7 @@ let {
 // Include our own browser shim goop but after react-native has loaded for the
 // first time and created it's own shims.
 import '../libraries/BrowserShims';
+import '../libraries/CryptoSign';
 import Config from '../libraries/Config';
 import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';

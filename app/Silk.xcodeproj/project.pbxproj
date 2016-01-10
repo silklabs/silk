@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */; };
 		357D3F601C38AB44005BBEC8 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357D3F5E1C38AB2B005BBEC8 /* libsodium.a */; };
 		3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */; };
 		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; };
@@ -246,18 +247,20 @@
 			remoteInfo = RCTText;
 		};
 /* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
-               571B2F4F1B813046005A4460 /* Embed Frameworks */ = {
-                       isa = PBXCopyFilesBuildPhase;
-                       buildActionMask = 2147483647;
-                       dstPath = "";
-                       dstSubfolderSpec = 10;
-                       files = (
-                       );
-                       name = "Embed Frameworks";
-                       runOnlyForDeploymentPostprocessing = 0;
-               };
+		571B2F4F1B813046005A4460 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		00C302A71ABCB8CE00DB3ED1 /* RCTActionSheet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTActionSheet.xcodeproj; path = "node_modules/react-native/Libraries/ActionSheetIOS/RCTActionSheet.xcodeproj"; sourceTree = "<group>"; };
 		00C302B51ABCB90400DB3ED1 /* RCTGeolocation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTGeolocation.xcodeproj; path = "node_modules/react-native/Libraries/Geolocation/RCTGeolocation.xcodeproj"; sourceTree = "<group>"; };
@@ -273,6 +276,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCryptoSync.m; sourceTree = "<group>"; };
 		357D3F271C38AB2B005BBEC8 /* core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core.h; sourceTree = "<group>"; };
 		357D3F281C38AB2B005BBEC8 /* crypto_aead_aes256gcm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_aead_aes256gcm.h; sourceTree = "<group>"; };
 		357D3F291C38AB2B005BBEC8 /* crypto_aead_chacha20poly1305.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_aead_chacha20poly1305.h; sourceTree = "<group>"; };
@@ -670,6 +674,7 @@
 				577396141BA2914C00F900C6 /* AppCrypto.m */,
 				577396181BA29F8F00F900C6 /* AppCryptoTest.swift */,
 				577396161BA2921400F900C6 /* AppCrypto.swift */,
+				357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */,
 			);
 			path = AppCrypto;
 			sourceTree = "<group>";
@@ -870,7 +875,7 @@
 				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json / raygun.json) */,
 				5741E1471B5DA53300F9376C /* Conditionally react-native bundle */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
-        571B2F4F1B813046005A4460 /* Embed Frameworks */,
+				571B2F4F1B813046005A4460 /* Embed Frameworks */,
 				6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */,
 			);
 			buildRules = (
@@ -1194,6 +1199,7 @@
 				57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */,
 				573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */,
 				574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */,
+				357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */,
 				57BCE0F81B6960270047088B /* AppRCTConvert+NSData.m in Sources */,
 				57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */,
 			);
@@ -1333,6 +1339,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/node_modules/react-native/React/**",
 					"$(SRCROOT)/node_modules/react-native/Libraries/WebSocket/**",
+					"$(SRCROOT)/externals/libsodium-ios/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1366,6 +1373,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/node_modules/react-native/React/**",
 					"$(SRCROOT)/node_modules/react-native/Libraries/WebSocket/**",
+					"$(SRCROOT)/externals/libsodium-ios/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

@@ -1,0 +1,94 @@
+/**
+ * Replacement EdDSA / Ed25519 implementation that uses native libsodium.
+ * About 5x faster than the `elliptic` JS library when run on JavaScriptCore.
+ *
+ * @flow
+ */
+
+import invariant from 'assert';
+import { NativeModules } from 'react-native';
+import { overrideCryptoSignImplementation } from 'silk-api';
+
+const { AppCryptoSync } = NativeModules;
+
+const encodingLength = AppCryptoSync.EncodingLength;
+
+function generateKeyPair(
+  options: {entropy?: Buffer;}
+): [Buffer, Buffer] {
+  // libsodium can generate its own random seed, so we don't need any
+  // entropy passed in.
+  const [errorMsg, secretHex, publicKeyHex] = global._crypto_ed25519_generate_keypair();
+  if (errorMsg) {
+    throw new Error(errorMsg);
+  }
+  return [new Buffer(secretHex, 'hex'), new Buffer(publicKeyHex, 'hex')];
+}
+
+function publicKeyFromSecret(
+  secretKey: Buffer
+): Buffer {
+  invariant(secretKey.length === encodingLength);
+  const [errorMsg, pubKeyHex] = global._crypto_ed25519_pubkey_from_secret(
+    secretKey.toString('hex')
+  );
+  if (errorMsg) {
+    throw new Error(errorMsg);
+  }
+  return new Buffer(pubKeyHex, 'hex');
+}
+
+function sign(
+  message: Buffer,
+  secretKey: Buffer
+): Buffer {
+  invariant(secretKey.length === encodingLength);
+  const [errorMsg, signatureHex] = global._crypto_ed25519_sign_hex(
+    message.toString('hex'),
+    secretKey.toString('hex')
+  );
+  if (errorMsg) {
+    throw new Error(errorMsg);
+  }
+  return new Buffer(signatureHex, 'hex');
+}
+
+function verify(
+  message: Buffer,
+  signature: Buffer,
+  publicKey: Buffer
+): boolean {
+  invariant(publicKey.length === encodingLength);
+  invariant(signature.length === 2 * encodingLength);
+  const [errorMsg, verify] = global._crypto_ed25519_verify_hex(
+    message.toString('hex'),
+    signature.toString('hex'),
+    publicKey.toString('hex')
+  );
+  if (errorMsg) {
+    throw new Error(errorMsg);
+  }
+  return verify === 'true';
+}
+
+function sha256(data: ?string): Buffer {
+  return new Buffer(sha256hex(data), 'hex');
+}
+
+function sha256hex(data: ?string): string {
+  const [errorMsg, hash] = global._crypto_sha256_hex(data || '');
+  if (errorMsg) {
+    throw new Error(errorMsg);
+  }
+  return hash;
+}
+
+overrideCryptoSignImplementation({
+  encodingLength,
+  generateKeyPair,
+  publicKeyFromSecret,
+  sign,
+  verify,
+  sha256,
+  sha256hex,
+});

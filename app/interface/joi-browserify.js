@@ -2,6 +2,9 @@
 
 declare module 'joi-browserify' {
   // This is pretty lame, but good enough for now to get Flow to pass.
+  declare var array: any;
+  declare var boolean: any;
+  declare var number: any;
   declare var object: any;
   declare var string: any;
   declare var validate: (

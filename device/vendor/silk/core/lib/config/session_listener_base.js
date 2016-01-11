@@ -233,11 +233,14 @@ export default class SessionListenerBase extends EventEmitter {
     socketSession.addListener(`data`, sessionDataListener);
     const sessionRssiListener = rssi => this._onRssiUpdate(rssi);
     socketSession.addListener(`rssiUpdate`, sessionRssiListener);
+    const wifiScanResultsListener = scanResults => this._onWifiScanResults(scanResults);
+    wifi.addListener(`scanResults`, wifiScanResultsListener);
 
     this._removeSessionListeners = () => {
       socketSession.removeListener(`error`, sessionErrorListener);
       socketSession.removeListener(`data`, sessionDataListener);
       socketSession.removeListener(`rssiUpdate`, sessionRssiListener);
+      wifi.removeListener(`scanResults`, wifiScanResultsListener);
     };
 
     this._socketSession = socketSession;
@@ -293,6 +296,15 @@ export default class SessionListenerBase extends EventEmitter {
     }
 
     this._sendStatus(status);
+  }
+
+  _onWifiScanResults(scanResults) {
+    log.debug(`SessionListenerBase._onWifiScanResults()`);
+
+    this._send({
+      name: `wifiscan`,
+      networks: scanResults,
+    });
   }
 
   _onWifiError(error) {

@@ -26,6 +26,7 @@ install: | .repo/.repo_fetchtimes.json
 .PHONY: clean
 clean:
 	rm -rf out
+	find vendor/silk -type d -name node_modules | xargs rm -rf
 
 # Kills "99.99%" of bugs.
 # (Be very careful!)

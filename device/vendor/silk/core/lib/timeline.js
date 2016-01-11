@@ -10,6 +10,7 @@ import assert from 'assert';
 import { EventEmitter } from 'events';
 
 import BufferStream from './streams/buffer';
+import CBuffer from 'CBuffer';
 import EventTracker from './eventtracker';
 import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import createLog from './log';
@@ -26,6 +27,14 @@ const DEFAULT_VIDEOUPLOADTYPE = 'events';
 
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_MS = util.getintprop('persist.silk.prvupload.interval', 1) * 1000;
+
+// Time between preview image "keyframes".  These are uploaded regardless of the
+// value of VIDEOUPLOADTYPE_PROP.
+const PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS = 5 * 60 * 1000; /* 5 minutes */
+
+// When VIDEOUPLOADTYPE_PROP === 'events', this indicates how much video data
+// should be uploaded before the event officially started.
+const PRE_EVENT_UPLOAD_MS = 5000;
 
 import type { Socket } from 'socket.io-client';
 import type { Outbox } from './outbox/manager';
@@ -62,11 +71,14 @@ export default class Timeline extends EventEmitter {
   cachedObjs: Array<TimelineEventObject>;
   eventTracker: EventTracker;
   eventTrackerActive: boolean;
+  uploadOpQueue: Array<[number, () => void]>;
+
   liveVideo: boolean;
   livePreview: boolean;
   lastPreviewFrame: ?Buffer;
   lastPreviewFrameWhen: number;
   lastPreviewUploadWhenMs: number;
+  lastPreviewKeyframeWhen: number;
   acks: {
     pending: {
       jpeg: number;
@@ -96,19 +108,14 @@ export default class Timeline extends EventEmitter {
     this.cachedObjs = [];
 
     this.eventTracker = new EventTracker(this.outbox);
-
-    this.eventTracker.on('active', (date) => {
-      log.verbose('event tracker active');
-      this.eventTrackerActive = true;
-    });
-    this.eventTracker.on('inactive', (date) => {
-      log.verbose('event tracker inactive');
-      this.eventTrackerActive = false;
-    });
+    this.eventTracker.on('active', this._onEventTrackerActive);
+    this.eventTracker.on('active', this._onEventTrackerInActive);
 
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
+    this.lastPreviewKeyframeWhen = 0;
     this.lastPreviewUploadWhenMs = 0;
+    this.uploadOpQueue = new CBuffer(PRE_EVENT_UPLOAD_MS / 250); // Hold up to 4 ops per second
 
     this.liveVideo = false;
     this.livePreview = false;
@@ -128,6 +135,28 @@ export default class Timeline extends EventEmitter {
 
     this._resetAcks();
   }
+
+  _onEventTrackerActive: ((eventStartWhen: number) => void) = (eventStartWhen) => {
+    log.verbose(`event tracker active at ${eventStartWhen}`);
+    this.eventTrackerActive = true;
+
+    this.uploadOpQueue.forEach((op, i) => {
+      if (!op) {
+        return;
+      }
+      const [when, enqueueOp] = op;
+      if (when >= eventStartWhen - PRE_EVENT_UPLOAD_MS) {
+        enqueueOp();
+      }
+    });
+    this.uploadOpQueue.empty();
+  };
+
+  _onEventTrackerInActive: ((eventStopWhen: number) => void) = (eventStopWhen) => {
+    log.verbose(`event tracker inactive at ${eventStopWhen}`);
+    this.eventTrackerActive = false;
+  };
+
 
   /**
    * Provide the timeline with a socket to use
@@ -333,6 +362,23 @@ export default class Timeline extends EventEmitter {
     });
   }
 
+  _addUploadOp(when: number, enqueueOp: (() => void)) {
+    switch (this.videoUploadType) {
+    case 'all':
+      enqueueOp();
+      break;
+    case 'events':
+      if (this.eventTrackerActive) {
+        enqueueOp();
+      } else {
+        this.uploadOpQueue.push([when, enqueueOp]);
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
   _pushPreview(when: number, durationMs: number, frame: ?Buffer) {
     // Intentionally delay the preview image by one cycle to ensure
     // that the previewObjects are transmitted with their corresponding image.
@@ -361,30 +407,42 @@ export default class Timeline extends EventEmitter {
                        this.previewObjects, 'jpeg');
     }
 
-    if (this.videoUploadType !== 'none' &&
-        this.lastPreviewFrame &&
-        Date.now() - this.lastPreviewUploadWhenMs >= PREVIEW_UPLOAD_INTERVAL_MS) {
+    const now = Date.now();
+    if (this.lastPreviewFrame &&
+        now - this.lastPreviewUploadWhenMs >= PREVIEW_UPLOAD_INTERVAL_MS) {
 
-      if (this.videoUploadType !== 'events' || this.eventTrackerActive) {
+      const lastPreviewFrame = this.lastPreviewFrame;
+      const lastPreviewFrameWhen = this.lastPreviewFrameWhen;
+      const previewObjects = this.previewObjects;
+      this.lastPreviewUploadWhenMs = now;
+
+      const enqueueOp = () => {
         const op = new PreviewUploadOp({
-          size: this.lastPreviewFrame.length,
+          size: lastPreviewFrame.length,
           metadata: {
             metaType: 'preview',
-            startUTC: this.lastPreviewFrameWhen,
-            endUTC: this.lastPreviewFrameWhen + durationMs,
+            startUTC: lastPreviewFrameWhen,
+            endUTC: lastPreviewFrameWhen + durationMs,
             data: {
               frameWidth: this._previewSize.width,
               frameHeight: this._previewSize.height,
-              objects: this.previewObjects,
+              objects: previewObjects,
             },
           },
         });
         this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
-          op, new BufferStream(this.lastPreviewFrame));
-      }
-      this.lastPreviewUploadWhenMs = Date.now();
-    }
+          op, new BufferStream(lastPreviewFrame));
+      };
 
+      if (now - this.lastPreviewKeyframeWhen >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
+        // This is a preview keyframe, enqueue it right away
+        enqueueOp();
+        this.lastPreviewKeyframeWhen = now;
+      } else {
+        // This is not a preview keyframe, maybe enqueue it
+        this._addUploadOp(lastPreviewFrameWhen, enqueueOp);
+      }
+    }
     this.lastPreviewFrame = frame;
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
@@ -402,23 +460,27 @@ export default class Timeline extends EventEmitter {
       return;
     }
 
-    const op = new VideoUploadOp({
-      size: frame.length,
-      metadata: {
-        metaType: 'video',
-        startUTC: when,
-        endUTC: when + durationMs,
-        data: {
-          frameWidth: this._previewSize.width,
-          frameHeight: this._previewSize.height
-        },
-      },
-    });
+    this._addUploadOp(when,
+      () => {
+        const op = new VideoUploadOp({
+          size: frame.length,
+          metadata: {
+            metaType: 'video',
+            startUTC: when,
+            endUTC: when + durationMs,
+            data: {
+              frameWidth: this._previewSize.width,
+              frameHeight: this._previewSize.height
+            },
+          },
+        });
 
-    // If for whatever reason this fails it will bubble up to the crash
-    // reporter...
-    this.outbox.enqueue(this.eventTrackerActive ? 'event_video' : 'video',
-      op, new BufferStream(frame));
+        // If for whatever reason this fails it will bubble up to the crash
+        // reporter...
+        this.outbox.enqueue(this.eventTrackerActive ? 'event_video' : 'video',
+          op, new BufferStream(frame));
+      }
+    );
   }
 
   _pushPacket(

@@ -1,6 +1,6 @@
 {
   "name": "api-schema",
-  "version": "1.0.0",
+  "version": "0.11.0",
   "description": "",
   "scripts": {
     "test": "flow check && mocha $(find test -name '*_test.js')"

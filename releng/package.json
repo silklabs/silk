@@ -1,6 +1,6 @@
 {
   "name": "releng",
-  "version": "0.0.1",
+  "version": "0.11.0",
   "description": "releng<3dev",
   "scripts": {
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",

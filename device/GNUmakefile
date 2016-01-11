@@ -31,14 +31,20 @@ clean:
 # (Be very careful!)
 .PHONY: purell
 purell:
-	rm -rf * && git reset --hard HEAD && ./repo sync -l
+	@{ \
+    set -x; \
+    rm -rf $$(repo forall -c 'echo $$REPO_PATH'); \
+    git reset --hard HEAD; \
+    git -C .. clean -dxf; \
+    ./repo sync -l; \
+  }
 	touch .repo/.repo_fetchtimes.json
 
 # https://youtu.be/1r_2fNiYkyE
 # (Be certain!)
 .PHONY: zest
 zest:
-	git reset --hard HEAD && git clean -dx -f -f
+	git reset --hard HEAD && git -C .. clean -dxff
 
 .PHONY: sync
 sync: | .repo/manifest.xml
@@ -176,7 +182,7 @@ REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 REPO_VERSION=--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-stable
 
 .repo/manifest.xml: GONK=base# default gonk manifest
-.repo/manifest.xml: | .repo/manifest_upstream
+.repo/manifest.xml: | .repo/manifest_upstream .repo/.git
 	./repo init -u $(PWD)/.repo/manifest_upstream \
     -m $(GONK).xml -b $(BRANCH) $(REPO_INIT_ARGS) \
     -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-manta,$(REPO_INIT_HOST) \
@@ -191,6 +197,18 @@ REPO_VERSION=--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-st
       echo ======================================================; \
     fi; \
   fi
+
+.repo/.git:
+# Construct an empty .git in .repo/ to prevent |git clean -dfx| from removing
+# the hard-earned projects in .repo/{projects,project-objects}
+	@echo Creating empty .repo/.git
+	@{ \
+    set -e; \
+    mkdir -p .repo; \
+    cd .repo; \
+    git init --quiet . ; \
+    git commit --allow-empty -m 'Empty'; \
+  }
 
 .repo/manifest_upstream:
 # Construct a faux 'upstream' manifest project to keep repo content.  Its

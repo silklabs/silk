@@ -45,7 +45,7 @@ const buildList = [
       },
     },
   },
-/*  
+/*
   {
     repo: 'silk-core',
     project: 'device',

@@ -47,4 +47,8 @@ fi
 
 sed -e "s/$appver/$SILK_CORE_VERSION/" -i app/iOS/Info.plist
 
+for package in $(find . -maxdepth 2 -name package.json); do
+  sed -e "s/\"version\": \".*\"/\"version\": \"$SILK_CORE_VERSION\"/" -i $package
+done
+
 git commit --all -m "$SILK_CORE_VERSION"

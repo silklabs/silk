@@ -37,8 +37,7 @@ const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
-const PREVIEW_SKIP_COUNT = util.getintprop('ro.silk.camera.preview_skip_cnt', 12);
-const PREVIEW_DELAY_MS = 1000 / (FPS / PREVIEW_SKIP_COUNT);
+const PREVIEW_DELAY_MS = 250;
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -441,17 +440,31 @@ class CameraStream extends EventEmitter {
   }
 
   _scheduleNextPreviewFrame() {
+    // Preview frames are scheduled every PREVIEW_DELAY_MS wall clock
+    const spilloverMs = Date.now() % PREVIEW_DELAY_MS;
+
+    // Reduce PREVIEW_DELAY_MS by the spillover to get the next frame as close
+    // as possible to +PREVIEW_DELAY_MS.
+    // (+5 to ensure the timeout doesn't fire early by ~1ms)
+    const requestedDelayMs = PREVIEW_DELAY_MS - spilloverMs + 5;
+
+    const scheduledTime = Date.now();
     this._previewFrameTimeout = setTimeout(() => {
+      const realDelayMs = Date.now() - scheduledTime;
+      if (realDelayMs >= PREVIEW_DELAY_MS * 1.5) {
+        log.warn(`Preview frame was delayed by ${realDelayMs - requestedDelayMs}ms`);
+      }
+
       this._previewFrameTimeout = null;
+      this._scheduleNextPreviewFrame();
       this._readPreviewFrame();
-    }, PREVIEW_DELAY_MS);
+    }, requestedDelayMs);
   }
 
   /**
    * Read the next frame
    */
   _readPreviewFrame() {
-    this._scheduleNextPreviewFrame();
     if (!this._cvVideoCapture || !this._recording) {
       return;
     }
@@ -466,6 +479,7 @@ class CameraStream extends EventEmitter {
     }
     this._noPreviewCount = 0;
     this._cvVideoCaptureBusy = true;
+    const when = Date.now();
 
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
     // image
@@ -489,9 +503,8 @@ class CameraStream extends EventEmitter {
 
         // Encode preview as JPEG to be sent to the server
         imScaled.toBufferAsync((err, pkt) =>{
-          let when = Date.now();
           // Cache preview frames
-          this._imagecache.push({when: when, orig: im, rgb: imScaled});
+          this._imagecache.push({when, orig: im, rgb: imScaled});
 
           // Add frames to the timeline
           this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);

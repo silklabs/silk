@@ -6,13 +6,10 @@
 
 /* eslint-disable no-console */
 
-import crypto from 'crypto';
 import createLog from 'log';
-import {default as createApi, AccessToken } from 'silk-api';
+import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('device');
-
-const SHA256_HMAC_STRENGTH = 192;
 
 const SILK_ID_FILEPATH = '/data/silk/config/id.json';
 const SILK_CONFIG_FILEPATH = '/data/silk/config/config.json';
@@ -24,8 +21,7 @@ export default class Device {
     this.adb = adb;
     this.serverUrl = options.serverUrl;
     this.api = createApi({serverUrl: this.serverUrl});
-    let entropy = crypto.randomBytes(SHA256_HMAC_STRENGTH);
-    this.api.accessToken = this.accessToken = AccessToken.create({entropy});
+    this.api.accessToken = this.accessToken = AccessToken.create();
   }
 
   async pullDeviceId() {

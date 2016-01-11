@@ -91,6 +91,12 @@ updatebranch__silk_core() {
     sed -i version/branch -e s/${from}/${to}/g
     local msg="Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
+
+    if [[ $from == master ]]; then
+      # Bump version of the next branch as well, so that stabilization branches
+      # always have a nonzero patch version number
+      ./releng/version_bump patch
+    fi
   )
   popd > /dev/null
 }

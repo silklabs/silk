@@ -78,12 +78,11 @@ updatebranch__silk_core() {
     set -ex
 
     git checkout $from
-    # Bump the version on the origin branch.  If branching from master, bump
-    # the new master by a minor version.  Otherwise just bump the patch version.
+
+    # If branching from master, bump the master minor version for the next
+    # release cycle.
     if [[ $from == master ]]; then
       ./releng/version_bump minor
-    else
-      ./releng/version_bump patch
     fi
 
     git checkout $to
@@ -92,11 +91,9 @@ updatebranch__silk_core() {
     local msg="Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
 
-    if [[ $from == master ]]; then
-      # Bump version of the next branch as well, so that stabilization branches
-      # always have a nonzero patch version number
-      ./releng/version_bump patch
-    fi
+    # Bump patch version of the destination branch to ensure it has a
+    # greater version than the origin branch.
+    ./releng/version_bump patch
   )
   popd > /dev/null
 }

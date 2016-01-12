@@ -2,13 +2,30 @@
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ *  @flow
  */
 
 import pocketsphinx from 'pocketsphinx';
 import events from 'events';
 
+import type { Env, Log } from 'silk-sdk-glue/interface/env';
+
 let ps = pocketsphinx.ps;
-let log;
+let log: Log;
+
+type Config = {
+  sampleRate: number;
+  bytesPerSample: number;
+  numChannels: number;
+};
+
+type MicData = {
+  when: number;
+  frames: Buffer;
+};
+
+type MicDataCallback = (pkt: MicData) => void;
 
 /**
  * Implementattion of speech recognition library using pocketsphinx. This class
@@ -16,12 +33,28 @@ let log;
  * events are passed to a client using events.
  */
 export default class SpeechRecognizer extends events.EventEmitter {
-  constructor(env, cfg) {
+
+  _env: Env;
+  _decoder: any;
+  _config: any;
+  _onMicData: MicDataCallback;
+  _listening: boolean;
+  _sampleRate:number;
+  _bytesPerSample: number;
+  _numChannels: number;
+  _pcmDataQueue: Array<[number, Buffer]>;
+  _pcmDataQueueSizeInBytes: number;
+  _processingInProgress: boolean;
+  _backlogMinSizeInBytes: number;
+  _inSpeech: boolean;
+  _listening: boolean;
+  _listenTimeout: ?number;
+
+  constructor(env: Env, cfg: Config) {
     super();
     this._env = env;
     log = env.log;
     this._decoder = null;
-    this._onMicData = null;
     this._listening = false;
 
     let params = ['sampleRate', 'bytesPerSample', 'numChannels'];
@@ -51,20 +84,22 @@ export default class SpeechRecognizer extends events.EventEmitter {
    * Called when extension is about to be unloaded
    */
   willUnload() {
-    this._env.camera.removeListener('mic-data', this._onMicData);
+    if (this._onMicData) {
+      this._env.camera.removeListener('mic-data', this._onMicData);
+    }
   }
 
   /**
    * Set loction of directory containing acoustic model files
    */
-  setAcousticModel(model) {
+  setAcousticModel(model: string) {
     this._config.setString('-hmm', model);
   }
 
   /**
    * Set location of main pronunciation dictionary (lexicon) input file
    */
-  setDictionary(dictionary) {
+  setDictionary(dictionary: string) {
     this._config.setString('-dict', dictionary);
   }
 
@@ -72,36 +107,35 @@ export default class SpeechRecognizer extends events.EventEmitter {
    * Set sampling rate option. Sample rate of the recognizer should match
    * the sample rate of the incoming audio
    */
-  setSampleRate(rate) {
+  setSampleRate(rate: number) {
     this._config.setFloat('-samprate', rate);
   }
 
   /**
    * Set threshold for p(hyp)/p(alternatives) ratio
    */
-  setKeywordThreshold(threshold) {
+  setKeywordThreshold(threshold: number) {
     this._config.setFloat('-kws_threshold', threshold);
   }
 
   /**
    * Set configuration option as boolean
    */
-  setBoolean(key, value) {
+  setBoolean(key: string, value: boolean) {
     this._config.setBoolean(key, value);
   }
 
   /**
    * Set configuration option as integer
    */
-  setInteger(key, value) {
+  setInteger(key: string, value: number) {
     this._config.setInt(key, value);
   }
-
 
   /**
    * Set configuration option as float
    */
-  setFloat(key, value) {
+  setFloat(key: string, value: number) {
     this._config.setFloat(key, value);
   }
 
@@ -120,7 +154,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    *
    * @return active search name or null if no search was started
    */
-  getSearchName() {
+  getSearchName(): string {
     return this._decoder.getSearch();
   }
 
@@ -130,7 +164,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    * @param name search name
    * @param phrase search phrase
    */
-  addKeyphraseSearch(name, phrase) {
+  addKeyphraseSearch(name: string, phrase: string) {
     this._decoder.setKeyphrase(name, phrase);
   }
 
@@ -146,7 +180,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    *        how do you do /1e-10/
    *        </code>
    */
-  addKeywordSearch(name, file) {
+  addKeywordSearch(name: string, file: string) {
     log.verbose(`Load keytword file ${file}`);
     this._decoder.setKws(name, file);
   }
@@ -157,7 +191,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    * @param name search name
    * @param file JSGF file
    */
-  addGrammarSearch(name, file) {
+  addGrammarSearch(name: string, file: string) {
     log.verbose(`Load JSGF file ${file}`);
     this._decoder.setJsgfFile(name, file);
   }
@@ -168,7 +202,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    * @param name search name
    * @param file N-gram model file
    */
-  addNgramSearch(name, file) {
+  addNgramSearch(name: string, file: string) {
     log.verbose(`Load N-gram model ${file}`);
     this._decoder.setLmFile(name, file);
   }
@@ -178,7 +212,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    *
    * @return true if recognition was actually started
    */
-  startListening(searchName) {
+  startListening(searchName: string): boolean {
     if (this._listening) {
       return false;
     }
@@ -206,7 +240,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
    *
    * @return true if recognition was actually started
    */
-  startListeningTimeout(searchName, timeout) {
+  startListeningTimeout(searchName: string, timeout: number): boolean {
     log.debug(`Start recognition ${searchName} with timeout ${timeout}`);
     if (this.startListening(searchName)) {
       // Stop listening after the provided timeout
@@ -250,7 +284,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
   /**
    * Stop listening for the utterance
    */
-  _stopListening() {
+  _stopListening(): boolean {
     if (!this._listening) {
       return false;
     }
@@ -269,7 +303,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
   /**
    * Receive  mic data and buffer it to be processed at a later time
    */
-  _handleMicData(when, pcmData) {
+  _handleMicData(when: number, pcmData: Buffer) {
     this._pcmDataQueue.push([when, pcmData]);
     this._pcmDataQueueSizeInBytes += pcmData.length;
 

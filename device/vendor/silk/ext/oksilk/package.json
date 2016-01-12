@@ -5,7 +5,8 @@
   "main": "oksilk.js",
   "scripts": {
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
-    "postinstall": "./bin/postinstall"
+    "postinstall": "./bin/postinstall",
+    "clean": "rm -rf node_modules oksilk.js oksilk.js.map"
   },
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
@@ -15,10 +16,11 @@
   "dependencies": {
     "babel-runtime": "^5.8.20"
   },
+  "optionalDependencies": {
+    "flow-bin": "^0.20.1"
+  },
   "devDependencies": {
-    "babel": "^5.8.23",
-    "event-to-promise": "^0.4.0",
-    "mocha": "^2.3.3"
+    "babel": "^5.8.23"
   },
   "private": true
 }

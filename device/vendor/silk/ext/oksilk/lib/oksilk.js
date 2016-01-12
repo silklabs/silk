@@ -2,6 +2,8 @@
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ *  @flow
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the
@@ -10,7 +12,9 @@ import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
 import SpeechRecognizer from './speechrecognizer';
-let log;
+import type { Env, Util, Say, Log } from 'silk-sdk-glue/interface/env';
+
+let log: Log;
 
 const MODEL_DIR = '/system/silk/media/pocketsphinx/';
 const AUDIO_SAMPLE_RATE = 8000;
@@ -26,12 +30,16 @@ const KEYPHRASE = 'ok sense';
  * This class adds voice recognition functionality to silk devices
  */
 class OkSilk {
+  _env: Env;
+  _util: Util;
+  _say: Say;
+  _speechRecognizer: SpeechRecognizer;
+
   constructor(env) {
     this._env = env;
     this._util = env.util;
     this._say = env.say;
     log = this._env.log;
-    this._speechRecognizer = null;
     this._setupRecognizer();
   }
 
@@ -216,4 +224,4 @@ class OkSilk {
   }
 }
 
-module.exports = env => new OkSilk(env);
+module.exports = (env: Env): any => new OkSilk(env);

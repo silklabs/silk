@@ -477,6 +477,11 @@ export class Wifi extends events.EventEmitter {
       }
       const [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
 
+      if (ssid.length === 0) {
+        // Ignore zero-length SSID names
+        continue;
+      }
+
       // Search |flags| for:
       // 1. "WPA-PSK" or "WPA2-PSK"
       // 2. No "WEP"
@@ -497,6 +502,7 @@ export class Wifi extends events.EventEmitter {
         psk,
       });
     }
+    log.debug('scanResults', JSON.stringify(scanResults));
     this.emit('scanResults', scanResults);
   }
 

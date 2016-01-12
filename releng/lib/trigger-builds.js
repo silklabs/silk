@@ -227,12 +227,18 @@ import { triggerBuildForProject } from './github-travis-integration';
 async function main() {
   try {
     for (const { repo, project, message, branch, config } of buildList) {
-      let request = { message, branch, config };
       let result;
       if (project) {
-        result = await triggerBuildForProject('silklabs', repo, project, request);
+        let request = {
+          project,
+          travis_yml: `${project}/.travis.yml`,
+          message,
+          branch,
+          config,
+        };
+        result = await triggerBuildForProject('silklabs', repo, request);
       } else {
-        result = await triggerBuild('silklabs', repo, request);
+        result = await triggerBuild('silklabs', repo, {message, branch, config});
       }
       log.debug(result);
 

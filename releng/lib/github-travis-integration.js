@@ -67,6 +67,9 @@ type PushEvent = Object;
 type TravisWebhookPayload = Object;
 type PullRequest = Object;
 type ProjectBuildRequest = TravisBuildRequest & {
+  project: string;
+  travis_yml: string;
+  cwd?: string;
   sha?: string;
   commitRange?: string;
   pullRequest?: number;
@@ -185,11 +188,10 @@ export function getProjectFromBuildMessage(message: string): ?string {
 export async function triggerBuildForProject(
   owner_name: string,
   repo_name: string,
-  project: string,
   request: ProjectBuildRequest
 ): Promise<?TravisBuildResponse> {
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name);
-  log.info(`Going to build project ${project}`);
+  log.info(`Going to build project ${request.project}`);
 
   // If a commit was not explicitly provided, build the tip of the specified branch.
   let repo = getOctokat().repos(owner_name, repo_name);
@@ -205,10 +207,10 @@ export async function triggerBuildForProject(
     owner_name,
     repo_name,
     sha,
-    project + '/.travis.yml'
+    request.travis_yml
   );
   if (!travis_yml) {
-    log.info(`No .travis.yml found in ${project}/, skipping.`);
+    log.info(`Travis configuration not found at ${request.travis_yml}/, skipping.`);
     return null;
   }
   let config = YAML.parse(travis_yml);
@@ -233,12 +235,12 @@ export async function triggerBuildForProject(
     config.before_install.unshift(
       `git fetch origin +refs/pull/${request.pullRequest}/merge:`,
       `git checkout -qf FETCH_HEAD`,
-      `cd ${project}`
+      `cd ${request.cwd || '.'}`
     );
   } else {
     config.before_install.unshift(
       `git checkout -qf ${sha}`,
-      `cd ${project}`
+      `cd ${request.cwd || '.'}`
     );
   }
 
@@ -274,7 +276,7 @@ export async function triggerBuildForProject(
   config.notifications.webhooks.on_start = 'always';
 
   let build_request = {
-    message: `[${project}] ${request.message}`,
+    message: `[${request.project}] ${request.message}`,
     branch: request.branch,
     config,
   };
@@ -399,8 +401,10 @@ async function triggerBuildsForPullRequest(
       (project) => triggerBuildForProject(
         owner_name,
         repo_name,
-        project,
         {
+          project,
+          travis_yml: `${project}/.travis.yml`,
+          cwd: project,
           message: `#${pr.number}: ${pr.title}`,
           branch,
           sha: pr.mergeCommitSha,
@@ -495,8 +499,10 @@ export async function handleGitHubPushEvent(
       (project) => triggerBuildForProject(
         owner_name,
         repo_name,
-        project,
         {
+          project,
+          travis_yml: `${project}/.travis.yml`,
+          cwd: project,
           message: event.head_commit.message,
           branch,
           sha: event.after,

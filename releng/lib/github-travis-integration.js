@@ -52,6 +52,7 @@ import createLog from 'log';
 
 import {
   getOctokat,
+  filenamesTouchedByCommit,
   readFileAtCommit,
   createOrUpdateBranch,
   deleteBranch,
@@ -130,14 +131,12 @@ async function determineProjectsToBuildForCommit(
   repo_name: string,
   sha: string
 ): Promise<Array<string>> {
-  let repo = getOctokat().repos(owner_name, repo_name);
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, sha);
-
   let unique_projects = new Set();
-  let commit = await repo.commits(sha).fetch();
-  commit.files.forEach((file) => populateProjectsFromFilename(unique_projects, file.filename));
+  let filesChanged = await filenamesTouchedByCommit(owner_name, repo_name, sha);
+  filesChanged.forEach((file) => populateProjectsFromFilename(unique_projects, file));
   let projects = Array.from(unique_projects);
-  log.info(`Projects touched by commit ${sha}: ${projects}`);
+  log.info(`Projects touched: ${projects}`);
   return projects;
 }
 

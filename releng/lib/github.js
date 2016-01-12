@@ -63,6 +63,19 @@ export async function readFileAtCommit(
 }
 
 /**
+ * Get files changed, added, or deleted in a given commit.
+ */
+export async function filenamesTouchedByCommit(
+  owner: string,
+  repo: string,
+  sha: string
+): Promise<Array<string>> {
+  let repository = getOctokat().repos(owner, repo);
+  let commit = await repository.commits(sha).fetch();
+  return commit.files.map((file) => file.filename);
+}
+
+/**
  * Create a branch called `branch` off the given commit. The branch
  * will be force-updated if it already exists.
  */

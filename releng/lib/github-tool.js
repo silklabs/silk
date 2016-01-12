@@ -113,18 +113,18 @@ export function autoMergePullRequest(
 
     if (!result.pullRequest) {
       log.info(`this is an issue, not a pull request.`);
-      return Promise.reject();
+      return Promise.resolve();
     }
 
     if (result.state !== 'open') {
       log.info(`pull request is not open.`);
-      return Promise.reject();
+      return Promise.resolve();
     }
 
     var label = result.labels.find((label) => label.name === 'automerge');
     if (!label) {
       log.info(`missing the 'automerge' label.`);
-      return Promise.reject();
+      return Promise.resolve();
     }
     log.debug(`fetching info`);
     return r.pulls(result.number).fetch(); // Switch to the 'pull' API to get CI status
@@ -133,7 +133,7 @@ export function autoMergePullRequest(
     if (result.mergeable === null) {
       // Ref: https://developer.github.com/v3/pulls/#response-1
       log.info(`mergeable state is not yet known.`);
-      return Promise.reject();
+      return Promise.resolve();
     }
 
     if (result.mergeable === false) {

@@ -42,6 +42,7 @@
     "url": "git@github.com:silklabs/silk-api.git"
   },
   "scripts": {
+    "preinstall": "../preinstall",
     "postinstall": "../tools/npm/postinstall.js && ./bin/gen.js",
     "mocha": "mocha $(find ./test -name '*_test.js')",
     "lint": "eslint test src",

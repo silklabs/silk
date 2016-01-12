@@ -1,0 +1,5 @@
+language: node_js
+node_js: 4.2
+dist: trusty
+
+script: ls -lah && cd node_modules_cache && npm i && ./bin/upload.sh

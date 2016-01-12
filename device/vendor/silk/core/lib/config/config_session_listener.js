@@ -60,17 +60,43 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
   _wifiErrorCount = 0;
+  _wifiScanResults = null;
 
-  constructor(deviceConfig) {
+  constructor(deviceConfig, socketSession) {
     log.debug(`ConfigSessionListener()`);
 
-    super(deviceConfig);
+    // We're attempting to configure this device so we can't use authenticated
+    // streams yet.
+    socketSession.allowUnauthenticated();
+
+    super(deviceConfig, socketSession);
+
+    // Tell the app that we need to be configured.
+    this._sendRegister();
   }
 
-  _resetState() {
-    this._state = ConfigSessionListener.STATE_IDLE;
-    this._wifiErrorCount = 0;
+  sendStatus(status) {
+    if (this._state !== ConfigSessionListener.STATE_REGISTERED) {
+      return;
+    }
+    super.sendStatus(status);
+  }
 
+  sendWifiScanResults(scanResults) {
+    // Hang on to these results but don't send them until we have passed the
+    // proximity gate.
+    this._wifiScanResults = scanResults;
+
+    if (this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
+      return;
+    }
+
+    // XXX We should try to not send results if the previous results haven't
+    //     been received by the app yet.
+    super.sendWifiScanResults(scanResults);
+  }
+
+  _clearDismissTimeout() {
     if (this._dismissTimeout) {
       clearTimeout(this._dismissTimeout);
       this._dismissTimeout = null;
@@ -83,7 +109,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
   }
 
   _validateData(data) {
-    log.debug(`ConfigSessionListener._validateData(%j)`, data);
+    log.debug(`ConfigSessionListener._validateData()`, data);
 
     if (!data || (typeof data !== `object`)) {
       return null;
@@ -117,6 +143,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
   }
 
   _sendRegister() {
+    log.debug(`ConfigSessionListener._sendRegister()`);
+
     assert(this._state === ConfigSessionListener.STATE_IDLE ||
            this._state === ConfigSessionListener.STATE_REGISTERING ||
            this._state === ConfigSessionListener.STATE_REGISTERING_PROXIMITY);
@@ -134,8 +162,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
     assert(this._state === ConfigSessionListener.STATE_REGISTERING_PROXIMITY);
 
     this._state = ConfigSessionListener.STATE_REGISTERED;
-
-    this.addStatusListeners();
 
     this._deviceConfig._onConfigured(secret);
   }
@@ -160,24 +186,17 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._deviceConfig._onDismissed();
   }
 
-  _onConnect(socketSession) {
-    log.debug(`ConfigSessionListener._onConnect()`);
-    assert(this._state === ConfigSessionListener.STATE_IDLE);
+  _onError(error) {
+    log.debug(`ConfigSessionListener._onError('${error.toString()}')`);
 
-    socketSession.allowUnauthenticated();
+    super._onError(error);
 
-    super._onConnect(socketSession);
+    this._clearDismissTimeout();
 
-    this._sendRegister();
-  }
+    // Set the STATE_ERROR state so that we ignore any further data.
+    this._state = ConfigSessionListener.STATE_ERROR;
 
-  _onDisconnect(socketSession) {
-    log.debug(`ConfigSessionListener._onDisconnect()`);
-
-    super._onDisconnect(socketSession);
-
-    this._resetState();
-    this._deviceConfig._stopRetryingWifiConnection(new Error(`Disconnected`));
+    this._deviceConfig._stopRetryingWifiConnection(error);
   }
 
   _onData(data) {
@@ -219,6 +238,9 @@ export default class ConfigSessionListener extends SessionListenerBase {
       assert(!this._wifiErrorCount);
 
       log.info(`App agreed to register this device`);
+
+      this._deviceConfig._beginConfigure(this);
+
       this._state = ConfigSessionListener.STATE_REGISTERING;
       this._socketSession.rssiUpdatesEnabled = true;
       return;
@@ -236,6 +258,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
       log.info(`App canceled registration of this device`);
       this._socketSession.rssiUpdatesEnabled = false;
 
+      this._deviceConfig._cancelConfigure();
       this._sendRegister();
       return;
 
@@ -272,7 +295,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
 
     default:
-      log.warn(`Unknown message: %j`, data);
+      log.warn(`Unknown message`, data);
     }
 
     this._socketSession.skip();
@@ -303,30 +326,9 @@ export default class ConfigSessionListener extends SessionListenerBase {
       name: `secret`,
       deviceId: this._deviceConfig._deviceId,
     });
-  }
 
-  _onWifiError(error) {
-    log.debug(`ConfigSessionListener._onWifiError('${error.toString()}')`);
-
-    super._onWifiError(error);
-
-    if (this._state !== ConfigSessionListener.STATE_REGISTERED) {
-      return;
-    }
-
-    this._wifiErrorCount++;
-
-    if (this._wifiErrorCount === ConfigSessionListener.MAX_WIFI_ERRORS) {
-      this.removeStatusListeners();
-
-      const errorString = error.toString();
-      const errorObject =
-        new Error(`Wifi unable to connect after ${this._wifiErrorCount} ` +
-                  `attempts: '${errorString}'`);
-      const errorCode = SessionListenerBase.ERROR_CODE_MAP.get(errorString);
-      assert(errorCode, `No error code for '${errorString}'`);
-      this._sendError(errorCode);
-      this._deviceConfig._stopRetryingWifiConnection(errorObject);
+    if (this._wifiScanResults) {
+      super.sendWifiScanResults(this._wifiScanResults);
     }
   }
 
@@ -347,7 +349,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
     }
 
-    this._resetState();
     // Set the STATE_ERROR state so that we ignore any further data.
     this._state = ConfigSessionListener.STATE_ERROR;
 
@@ -395,5 +396,24 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     this._wifiErrorCount = 0;
     this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+  }
+
+  onWifiError(errorCode) {
+    log.debug(`ConfigSessionListener.onWifiError('${errorCode}')`);
+
+    if (this._state !== ConfigSessionListener.STATE_REGISTERED) {
+      return;
+    }
+
+    this._wifiErrorCount++;
+
+    if (this._wifiErrorCount === ConfigSessionListener.MAX_WIFI_ERRORS) {
+      this.sendError(errorCode);
+
+      const error =
+        new Error(`Wifi unable to connect after ${this._wifiErrorCount} ` +
+                  `attempts: '${errorCode}'`);
+      this._deviceConfig._stopRetryingWifiConnection(error);
+    }
   }
 }

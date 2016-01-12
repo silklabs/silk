@@ -38,10 +38,76 @@ const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
     }),
 }).required();
 
+// maps wifi states to a connection status string that is sent to the app
+const WIFI_STATE_MAP = new Map([
+  [ 'scanning', 'wifi_scanning' ],
+  [ 'associating', 'wifi_associating' ],
+  [ 'associated', 'wifi_associated' ],
+  [ 'four_way_handshake', 'wifi_authenticating' ],
+  [ 'group_handshake', 'wifi_authenticating' ],
+  [ 'completed', 'wifi_connected' ],
+  // The following values are not part of WIFI_STATES (wifi.js).
+  // This next value is emitted by WpaMonitor manually as it initializes
+  // the DHCP process.
+  [ 'dhcping', 'wifi_dhcping' ],
+  // These two values correspond to the 'online' and 'offline' events of
+  // WpaMonitor and represent the overall state of the internet uplink.
+  [ 'online', 'wifi_online' ],
+  [ 'offline', 'wifi_offline' ],
+]);
+
+// maps wifi errors to a connection status string that is sent to the app
+const WIFI_ERROR_MAP = new Map([
+  [ 'invalid_0', 'wifi_error (0)' ],
+  [ 'unspecified', 'wifi_error (1)' ],
+  [ 'prev_auth_not_valid', 'wifi_wrong_password (2)' ],
+  [ 'deauth_leaving', 'wifi_deauth_leaving (3)' ],
+  [ 'disassoc_due_to_inactivity', 'wifi_disassoc_due_to_inactivity (4)' ],
+  [ 'disassoc_ap_busy', 'wifi_disassoc_ap_busy (5)' ],
+  [ 'class2_frame_from_nonauth_sta', 'wifi_class2_frame_from_nonauth_sta (6)' ],
+  [ 'class3_frame_from_nonassoc_sta', 'wifi_class3_frame_from_nonassoc_sta (7)' ],
+  [ 'disassoc_sta_has_left', 'wifi_disassoc_sta_has_left (8)' ],
+  [ 'sta_req_assoc_without_auth', 'wifi_sta_req_assoc_without_auth (9)' ],
+  [ 'pwr_capability_not_valid', 'wifi_pwr_capability_not_valid (10)' ],
+  [ 'supported_channel_not_valid', 'wifi_supported_channel_not_valid (11)' ],
+  [ 'invalid_12', 'wifi_error (12)' ],
+  [ 'invalid_ie', 'wifi_error (13)' ],
+  [ 'michael_mic_failure', 'wifi_michael_mic_failure (14)' ],
+  [ '4way_handshake_timeout', 'wifi_wrong_password (15)' ],
+  [ 'group_key_update_timeout', 'wifi_group_key_update_timeout (16)' ],
+  [ 'ie_in_4way_differs', 'wifi_ie_in_4way_differs (17)' ],
+  [ 'group_cipher_not_valid', 'wifi_group_cipher_not_valid (18)' ],
+  [ 'pairwise_cipher_not_valid', 'wifi_pairwise_cipher_not_valid (19)' ],
+  [ 'akmp_not_valid', 'wifi_akmp_not_valid (20)' ],
+  [ 'unsupported_rsn_ie_version', 'wifi_unsupported_rsn_ie_version (21)'],
+  [ 'invalid_rsn_ie_capab', 'wifi_invalid_rsn_ie_capab (22)' ],
+  [ 'ieee_802_1x_auth_failed', 'wifi_ieee_802_1x_auth_failed (23)' ],
+  [ 'cipher_suite_rejected', 'wifi_cipher_suite_rejected (24)' ],
+  [ 'tdls_teardown_unreachable', 'wifi_tdls_teardown_unreachable (25)' ],
+  [ 'tdls_teardown_unspecified', 'wifi_tdls_teardown_unspecified (26)' ],
+  [ 'invalid_27', 'wifi_error (27)' ],
+  [ 'invalid_28', 'wifi_error (28)' ],
+  [ 'invalid_29', 'wifi_error (29)' ],
+  [ 'invalid_30', 'wifi_error (30)' ],
+  [ 'invalid_31', 'wifi_error (31)' ],
+  [ 'invalid_32', 'wifi_error (32)' ],
+  [ 'invalid_33', 'wifi_error (33)' ],
+  [ 'disassoc_low_ack', 'wifi_disassoc_low_ack (34)' ],
+]);
+
+// maps server states to a connection status string that is sent to the app
+const SERVER_STATE_MAP = new Map([
+  [ 'connecting', 'server_connecting' ],
+  [ 'connected', 'server_connected' ],
+  [ 'disconnected', 'server_disconnected' ],
+  [ 'reconnecting', 'server_reconnecting' ],
+]);
+
 /**
  *
  */
 class DeviceConfig extends EventEmitter {
+
   static CONFIG_BEACON_INFO = {
     uuid: BTLE_SOCKET_UUIDS.service,
     major: 0,
@@ -54,10 +120,13 @@ class DeviceConfig extends EventEmitter {
   _btle = null;
   _wifiAbortConnection = null;
   _unconfigurePromise = null;
-  _socketSessionListener = null;
   _config = null;
   _serverConnected = false;
   _server: Server = null;
+  _socketSessionListeners = [ ];
+  _configuringSocketSessionListener = null;
+  _sessionStatus = ``;
+  _sessionErrorCode = ``;
 
   async _writeConfig(config) {
     fs.writeFile(CONFIG_PATH, JSON.stringify(config));
@@ -93,6 +162,44 @@ class DeviceConfig extends EventEmitter {
     }
   }
 
+  _beginConfigure(sessionListener) {
+    log.debug(`DeviceConfig._beginConfigure()`);
+
+    assert(sessionListener instanceof ConfigSessionListener);
+    assert(!this._config);
+    assert(!this._configuringSocketSessionListener);
+    assert(this._socketSessionListeners.length);
+
+    this._btle.pauseScan();
+
+    this._configuringSocketSessionListener = sessionListener;
+
+    // Disconnect all other sessions.
+    if (this._socketSessionListeners.length > 1) {
+      let existingListeners = this._socketSessionListeners;
+      this._socketSessionListeners = [ sessionListener ];
+
+      for (let listener of existingListeners) {
+        if (listener !== sessionListener) {
+          listener.disconnect();
+        }
+      }
+    } else {
+      assert(this._socketSessionListeners[0] === sessionListener);
+    }
+  }
+
+  _cancelConfigure(s) {
+    log.debug(`DeviceConfig._cancelConfigure()`);
+
+    assert(this._configuringSocketSessionListener);
+    this._configuringSocketSessionListener = null;
+
+    if (!this._config || !this._config.success) {
+      this._btle.resumeScan();
+    }
+  }
+
   async _registerDevice(secret, timeoutMS = 3 * 1000, max = 5, retry = 0) {
     if (retry > max) {
       throw new Error(`Exhausted retries for device registration...`);
@@ -114,6 +221,7 @@ class DeviceConfig extends EventEmitter {
   _onConfigured = async secret => {
     log.debug(`DeviceConfig._onConfigured()`);
 
+    assert(this._configuringSocketSessionListener);
     assert(secret.publicKey);
     assert(secret.regToken);
 
@@ -197,13 +305,17 @@ class DeviceConfig extends EventEmitter {
       ]);
 
       // If we're still connected then we can try again.
-      this._socketSessionListener.maybeSendRestart(error.toString());
+      if (this._configuringSocketSessionListener) {
+        const reason = error.toString();
+        this._configuringSocketSessionListener.maybeSendRestart(reason);
+      }
       return;
     }
 
     assert(!this._wifiAbortConnection);
+    assert(this._configuringSocketSessionListener);
 
-    this._socketSessionListener.sendComplete();
+    this._configuringSocketSessionListener.sendComplete();
 
     log.info('Configured');
     this.emit('configured');
@@ -223,19 +335,19 @@ class DeviceConfig extends EventEmitter {
   _onDismissed() {
     log.debug(`DeviceConfig._onDismissed()`);
 
-    this._socketSessionListener.disconnect();
-    this._socketSessionListener = null;
+    this._configuringSocketSessionListener.disconnect();
+    this._configuringSocketSessionListener = null;
 
     this._btle.publicKeys = [ this._config.registrarPublicKey ];
 
-    this._server.addListener(`connect`, this._onServerConnect);
-    this._server.addListener(`disconnect`, this._onServerDisconnect);
+    this._server.addListener(`connect`, this._onConfiguredServerConnect);
+    this._server.addListener(`disconnect`, this._onConfiguredServerDisconnect);
 
     this._btle.changeMode(this._btle.MODE_OFF);
   }
 
-  _onServerConnect = async () => {
-    log.debug(`DeviceConfig._onServerConnect()`);
+  _onConfiguredServerConnect = async () => {
+    log.debug(`DeviceConfig._onConfiguredServerConnect()`);
 
     assert(this._config);
     assert(this._config.beaconUUID);
@@ -243,16 +355,20 @@ class DeviceConfig extends EventEmitter {
 
     this._serverConnected = true;
 
-    if (this._socketSessionListener) {
-      this._socketSessionListener.disconnect();
-      this._socketSessionListener = null;
+    if (this._socketSessionListeners.length) {
+      let existingListeners = this._socketSessionListeners;
+      this._socketSessionListeners = [ ];
+
+      for (let listener of existingListeners) {
+        listener.disconnect();
+      }
     }
 
     await this._btle.changeMode(this._btle.MODE_OFF);
   };
 
-  _onServerDisconnect = async () => {
-    log.debug(`DeviceConfig._onServerDisconnect()`);
+  _onConfiguredServerDisconnect = async () => {
+    log.debug(`DeviceConfig._onConfiguredServerDisconnect()`);
 
     assert(this._config);
     assert(this._config.beaconUUID);
@@ -268,10 +384,6 @@ class DeviceConfig extends EventEmitter {
     }
 
     this._btle.beaconInfo = this._getBeaconInfo();
-
-    this._socketSessionListener = new NormalSessionListener(this);
-    this._btle.socketSessionListener = this._socketSessionListener;
-
     await this._btle.changeMode(this._btle.MODE_SCAN);
   };
 
@@ -306,7 +418,133 @@ class DeviceConfig extends EventEmitter {
     api.loadConfig({serverUrl: serverUrl});
   }
 
+  _nofityListenersOfStatus(status) {
+    log.debug(`DeviceConfig._nofityListenersOfStatus('${status}')`);
+
+    if (this._sessionStatus === status) {
+      return;
+    }
+
+    this._sessionStatus = status;
+
+    if (this._configuringSocketSessionListener) {
+      assert(this._socketSessionListeners.length === 1);
+      this._configuringSocketSessionListener.sendStatus(status);
+    } else {
+      for (let listener of this._socketSessionListeners) {
+        listener.sendStatus(status);
+      }
+    }
+  }
+
+  _onWifiStateChange(state) {
+    log.debug(`DeviceConfig._onWifiStateChange('${state}')`);
+
+    let status = WIFI_STATE_MAP.get(state);
+    if (!status) {
+      log.error(`No status mapping for wifi state '${state}'`);
+      status = `wifi_${state}`;
+    }
+
+    this._nofityListenersOfStatus(status);
+  }
+
+  _onWifiScanResults(scanResults) {
+    log.debug(`DeviceConfig._onWifiScanResults()`);
+
+    if (this._configuringSocketSessionListener) {
+      assert(this._socketSessionListeners.length === 1);
+      this._configuringSocketSessionListener.sendWifiScanResults(scanResults);
+    } else {
+      for (let listener of this._socketSessionListeners) {
+        listener.sendWifiScanResults(scanResults);
+      }
+    }
+  }
+
+  _onWifiError(error) {
+    error = error.toString();
+    log.debug(`DeviceConfig._onWifiError('${error}')`);
+
+    let status = WIFI_ERROR_MAP.get(error);
+    if (!status) {
+      log.error(`No error message mapping for wifi error '${status}'`);
+      status = error;
+    }
+
+    this._nofityListenersOfStatus(status);
+
+    // Special hook for wifi failures during configure.
+    if (this._configuringSocketSessionListener) {
+      const errorCode = WIFI_ERROR_MAP.get(error);
+      assert(errorCode, `No error code for '${error}'`);
+      this._configuringSocketSessionListener.onWifiError(errorCode);
+    }
+  }
+
+  _onServerStateChange(state) {
+    log.debug(`DeviceConfig._onServerStateChange('${state}')`);
+
+    let status = SERVER_STATE_MAP.get(state);
+    if (!status) {
+      log.error(`No status mapping for server state '${state}'`);
+      status = `server_${state}`;
+    }
+
+    if (wifi.isOnline()) {
+      this._nofityListenersOfStatus(status);
+    }
+  }
+
+  _onServerError(error) {
+    error = error.toString();
+    log.debug(`DeviceConfig._onServerError('${error}')`);
+
+    // XXX Need some mappings here someday.
+    const status = error;
+
+    this._nofityListenersOfStatus(status);
+  }
+
+  _onSocketSession(socketSession) {
+    log.debug(`DeviceConfig._onSocketSession()`);
+
+    if (this._configuringSocketSessionListener) {
+      log.info(`Ignoring socket session because another is configuring ` +
+               `already`);
+      socketSession.end();
+      return;
+    }
+
+    const listener = (this._config && this._config.success) ?
+                     new NormalSessionListener(this, socketSession) :
+                     new ConfigSessionListener(this, socketSession);
+    this._socketSessionListeners.push(listener);
+
+    socketSession.once(`close`,
+                       () => this._onSocketSessionClosed(socketSession,
+                                                         listener));
+  }
+
+  _onSocketSessionClosed(socketSession, listener) {
+    if (this._socketSessionListeners.length > 1) {
+      const index = this._socketSessionListeners.indexOf(listener);
+      if (index > -1) {
+        this._socketSessionListeners.splice(index, 1);
+      }
+    } else if (this._socketSessionListeners.length &&
+               this._socketSessionListeners[0] === listener) {
+      this._socketSessionListeners = [ ];
+    }
+
+    if (this._configuringSocketSessionListener === listener) {
+      this._cancelConfigure();
+    }
+  }
+
   async init(server: Server) {
+    assert(server);
+
     if (this._initialized) {
       return Promise.reject(new Error('Already initialized'));
     }
@@ -318,6 +556,25 @@ class DeviceConfig extends EventEmitter {
     this._initializing = true;
     log.info('Initializing config service');
 
+    wifi.addListener(`online`, () => this._onWifiStateChange(`online`));
+    wifi.addListener(`offline`, () => this._onWifiStateChange(`offline`));
+    wifi.addListener(`stateChange`, (state) => this._onWifiStateChange(state));
+    wifi.addListener(`scanResults`,
+                     (scanResults) => this._onWifiScanResults(scanResults));
+    wifi.addListener(`error`, (error) => this._onWifiError(error));
+
+    server.addListener(`connecting`,
+                       () => this._onServerStateChange(`connecting`));
+    server.addListener(`reconnecting`,
+                       () => this._onServerStateChange(`reconnecting`));
+    server.addListener(`connect`,
+                       () => this._onServerStateChange(`connected`));
+    server.addListener(`disconnect`,
+                       () => this._onServerStateChange(`disconnected`));
+    server.addListener(`stateChange`,
+                       (state) => this._onServerStateChange(state));
+    server.addListener(`error`, (error) => this._onServerError(error));
+
     let [ deviceId, btle ] = await Promise.all([
       getDeviceId(),
       getBTLE(),
@@ -327,7 +584,6 @@ class DeviceConfig extends EventEmitter {
     assert(deviceId);
     assert(btle);
     assert(btle.mode === btle.MODE_OFF);
-    assert(server);
 
     this._deviceId = deviceId.pub;
     api.accessToken = deviceId;
@@ -336,6 +592,8 @@ class DeviceConfig extends EventEmitter {
 
     log.info('Device configuration', this._config);
 
+    this._btle.on(`socketSession`,
+                  (socketSession) => this._onSocketSession(socketSession));
     this._btle.beaconInfo = this._getBeaconInfo();
 
     if (this._config && this._config.success) {
@@ -343,19 +601,13 @@ class DeviceConfig extends EventEmitter {
 
       this._setApiServerUrl();
 
-      this._socketSessionListener = new NormalSessionListener(this);
-      this._btle.socketSessionListener = this._socketSessionListener;
-
       await this._btle.changeMode(this._btle.MODE_SCAN);
       this.emit('configured');
 
-      this._server.addListener(`connect`, this._onServerConnect);
-      this._server.addListener(`disconnect`, this._onServerDisconnect);
+      server.addListener(`connect`, this._onConfiguredServerConnect);
+      server.addListener(`disconnect`, this._onConfiguredServerDisconnect);
     } else {
       this._config = null;
-
-      this._socketSessionListener = new ConfigSessionListener(this);
-      this._btle.socketSessionListener = this._socketSessionListener;
 
       // Ensure we don't have any stale state lying around...
       await Promise.all([
@@ -392,8 +644,9 @@ class DeviceConfig extends EventEmitter {
   async _unconfigureNetwork() {
     log.info('Unconfigure network...');
 
-    this._server.removeListener(`connect`, this._onServerConnect);
-    this._server.removeListener(`disconnect`, this._onServerDisconnect);
+    this._server.removeListener(`connect`, this._onConfiguredServerConnect);
+    this._server.removeListener(`disconnect`,
+                                this._onConfiguredServerDisconnect);
 
     if (this._server.connected) {
       this._server.disconnect();
@@ -405,9 +658,17 @@ class DeviceConfig extends EventEmitter {
   }
 
   async _unconfigureBTLE() {
-    if (this._socketSessionListener) {
-      this._socketSessionListener.disconnect();
-      this._socketSessionListener = null;
+    log.debug(`DeviceConfig._unconfigureBTLE()`);
+
+    this._configuringSocketSessionListener = null;
+
+    if (this._socketSessionListeners.length) {
+      const existingListeners = this._socketSessionListeners;
+      this._socketSessionListeners = [ ];
+
+      for (let listener of existingListeners) {
+        listener.disconnect();
+      }
     }
 
     log.debug(`Turning off bluetooth`);
@@ -418,9 +679,6 @@ class DeviceConfig extends EventEmitter {
 
     this._btle.beaconInfo = beaconInfo;
     this._btle.publicKeys = null;
-
-    this._socketSessionListener = new ConfigSessionListener(this);
-    this._btle.socketSessionListener = this._socketSessionListener;
 
     log.debug(`Turning bluetooth back on`);
     await this._btle.changeMode(this._btle.MODE_SCAN);

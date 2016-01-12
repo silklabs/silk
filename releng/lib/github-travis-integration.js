@@ -44,7 +44,7 @@
  * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import YAML from 'yamljs';
 import merge from 'lodash.merge';
 import cb2promise from 'promise-callback';
@@ -56,6 +56,7 @@ import {
   readFileAtCommit,
   createOrUpdateBranch,
   deleteBranch,
+  getBranchHeadCommit,
   makeGitHubLog,
 } from './github';
 import { genTravis, triggerBuild } from './travis';
@@ -194,12 +195,11 @@ export async function triggerBuildForProject(
   log.info(`Going to build project ${request.project}`);
 
   // If a commit was not explicitly provided, build the tip of the specified branch.
-  let repo = getOctokat().repos(owner_name, repo_name);
   let sha = request.sha;
-  if (!sha) {
-    let info = await repo.git.refs.heads(request.branch).fetch();
-    sha = info.object.sha;
+  if (!sha && request.branch) {
+    sha = await getBranchHeadCommit(owner_name, repo_name, request.branch);
   }
+  invariant(sha, `'${request.branch}' is an invalid branch`);
 
   // Use the existing .travis.yml as a template. If the request contains
   // any additional configuration,
@@ -438,7 +438,7 @@ async function triggerBuildsForPullRequest(
   let response = await cb2promise(travis.repos(owner_name, repo_name).builds.get);
   let queuedBuilds = response.builds.filter((build, index) => {
     build.commit = response.commits[index];
-    assert(build.commit.id === build.commit_id);
+    invariant(build.commit.id === build.commit_id);
     // Only consider builds that were just created. If they've been
     // started by now, we will have been notified via the webhook
     // already, and we don't need to update commit status twice.

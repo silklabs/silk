@@ -132,6 +132,29 @@ export async function deleteBranch(
   log.info(`branch deleted`);
 }
 
+/**
+ * Return the SHA of the head commit for the given branch, or null if
+ * the branch is invalid (or the information can't be retrieved for
+ * any other reason.)
+ */
+export async function getBranchHeadCommit(
+  owner: string,
+  repo: string,
+  branch: string
+): Promise<?string> {
+  const repository = getOctokat().repos(owner, repo);
+  const log = makeGitHubLog('github', owner, repo, branch);
+
+  let sha = null;
+  try {
+    let info = await repository.git.refs.heads(branch).fetch();
+    sha = info.object.sha;
+  } catch (ex) {
+    log.info(`could not find head commit for this branch`);
+  }
+  return sha;
+}
+
 export function createMilestone(
   owner: string,
   repo: string,

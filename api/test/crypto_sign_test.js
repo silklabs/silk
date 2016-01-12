@@ -1,5 +1,5 @@
 import assert from 'assert';
-import * as cryptoSign from '../src/crypto_sign';
+import cryptoSign from '../src/crypto_sign';
 
 function b(hexString) {
   return new Buffer(hexString, 'hex');

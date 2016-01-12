@@ -7,7 +7,7 @@
  */
 
 import base64url from 'base64url';
-import * as cryptoSign from './crypto_sign';
+import cryptoSign from './crypto_sign';
 
 const ALGO = 'ed25519';
 

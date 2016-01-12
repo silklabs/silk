@@ -8,7 +8,7 @@ import {sign} from 'jsonwebtoken';
 import uuid from 'uuid';
 
 import jwa from './jwa';
-import { sha256hex } from './crypto_sign';
+import cryptoSign from './crypto_sign';
 
 import type AccessToken from './access_token';
 import type {SignPayload} from 'jsonwebtoken';
@@ -20,7 +20,7 @@ function jwtPayload(canonicalReq: string): SignPayload {
     // JSON representation of a string...
     iat: new Date().toJSON(),
     // sha256 of the json body...
-    requestHash: sha256hex(canonicalReq)
+    requestHash: cryptoSign.sha256hex(canonicalReq)
   };
 }
 
@@ -64,7 +64,7 @@ export function bodySignature(
     throw new Error(`Access token must have private key`);
   }
   let priv: string = accessToken.priv;
-  let canonicalReq = `${url}\n${method.toLowerCase()}\n${sha256hex(body)}`;
+  let canonicalReq = `${url}\n${method.toLowerCase()}\n${cryptoSign.sha256hex(body)}`;
   return sign(jwtPayload(canonicalReq), priv, {
     /**
      * Remember headers are _not_ signed do not trust them and do not put

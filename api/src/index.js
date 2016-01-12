@@ -25,7 +25,7 @@ import makeStreams from './streams';
 
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;
-export { default as RssiSmoother } from './rssi_smoother';
+export { overrideImplementation as overrideCryptoSignImplementation } from './crypto_sign';
 export { default as Metric, Integer, Float } from './metric';
 
 export const BTLE_SOCKET_UUIDS = {

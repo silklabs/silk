@@ -4,7 +4,7 @@
  * @flow
  */
 import invariant from 'assert';
-import * as cryptoSign from './crypto_sign';
+import cryptoSign from './crypto_sign';
 
 export default class AccessToken {
 

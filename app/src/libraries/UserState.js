@@ -18,10 +18,7 @@ import {
 import createLog from 'log';
 import { AccessToken } from 'silk-api';
 
-import {
-  getRandomBytes,
-  pbkdf2KeyDerivation,
-} from './Crypto';
+import { pbkdf2KeyDerivation } from './Crypto';
 
 const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;
@@ -65,11 +62,6 @@ export class UserState extends EventEmitter {
     });
     await AsyncStorage.setItem(ACCESS_TOKEN_KEY, json);
     this.emit('authenticated', accessToken);
-  }
-
-  async _createAccessToken() {
-    let entropy = await getRandomBytes(AccessToken.ENTROPY_BYTES);
-    return AccessToken.create({ entropy });
   }
 
   /**
@@ -139,7 +131,7 @@ export class UserState extends EventEmitter {
   async attemptSignIn(email, password) {
     log.info('Attempting user sign in');
     // Always create a new token when we attempt a sign up...
-    let accessToken = await this._createAccessToken();
+    let accessToken = AccessToken.create();
     this.accessToken = this.api.accessToken = accessToken;
 
     let passwordHash = await pbkdf2KeyDerivation(
@@ -182,7 +174,7 @@ export class UserState extends EventEmitter {
   async attemptSignup(email, password) {
     log.info('Attempting user sign up');
     // Always create a new token when we attempt a sign up...
-    let accessToken = await this._createAccessToken();
+    let accessToken = AccessToken.create();
     this.accessToken = this.api.accessToken = accessToken;
 
     let passwordHash = await pbkdf2KeyDerivation(
@@ -218,7 +210,7 @@ export class UserState extends EventEmitter {
 
   async forgotPassword(email) {
     // XXX: Semi-nasty hacks to ensure we use an access token for password reset.
-    this.api.accessToken = await this._createAccessToken();
+    this.api.accessToken = AccessToken.create();
     let res;
     try {
       res = await this.api.vip.resetPassword({ email });

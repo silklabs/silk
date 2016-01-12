@@ -60,13 +60,29 @@ import {
   makeGitHubLog,
 } from './github';
 import { genTravis, triggerBuild } from './travis';
+import { determineBuildsForEvent } from './build-determinator';
 
 import type { TravisBuildRequest, TravisBuildResponse } from './travis';
+import type { BuildTriggerEvent } from './build-determinator';
 
 type PullRequestEvent = Object;
 type PushEvent = Object;
 type TravisWebhookPayload = Object;
 type PullRequest = Object;
+
+/**
+ * An extension of BuildTriggerEvent that contains information
+ * necessary to create kick off ProjectBuildRequest with Travis for
+ * each build.
+ */
+type TravisBuildTriggerEvent = BuildTriggerEvent & {
+  message?: string;
+  buildBranch?: string; // Branch to build, defaults to `branch` if missing.
+  commitRange?: string;
+  pullRequest?: number;
+  pullRequestBaseBranch?: string;
+};
+
 type ProjectBuildRequest = TravisBuildRequest & {
   project: string;
   travis_yml: string;
@@ -127,6 +143,24 @@ function populateProjectsFromFilename(projects: Set<string>, filename: string) {
 }
 
 /**
+ * Figure out whether we can use the new build determinator by
+ * checking for the existence of a top-level builds.js file.
+ */
+async function shouldUseBuildDeterminator(
+  owner_name: string,
+  repo_name: string,
+  sha: string
+): Promise<boolean> {
+  let builds_js = await readFileAtCommit(
+    owner_name,
+    repo_name,
+    sha,
+    'build.js'
+  );
+  return !!builds_js;
+}
+
+/**
  * Determine which top level directories ("projects") were affected by
  * a given single commit.
  */
@@ -178,6 +212,39 @@ export function getProjectFromBuildMessage(message: string): ?string {
     return null;
   }
   return matches[1];
+}
+
+/**
+ * Trigger builds given a trigger event.
+ *
+ * A trigger event could be a PR, push, nightly script, etc. The event
+ * object contains information about the circumstances (the commit,
+ * branch, etc. to build), according to which the build determinator
+ * can figure out which builds to trigger.
+ */
+export async function triggerBuildsForEvent(
+  owner_name: string,
+  repo_name: string,
+  event: TravisBuildTriggerEvent
+): Promise<Array<?TravisBuildResponse>> {
+  let builds = await determineBuildsForEvent(owner_name, repo_name, event);
+  let buildRequests = builds.map((build) => {
+    return {
+      project: build.name,
+      travis_yml: build.travis_yml,
+      config: build.travis_config,
+      cwd: build.cwd,
+      sha: event.sha,
+      branch: event.buildBranch || event.branch,
+      message: event.message || build.title,
+      commitRange: event.commitRange,
+      pullRequest: event.pullRequest,
+      pullRequestBaseBranch: event.pullRequestBaseBranch,
+    };
+  });
+  return await Promise.all(buildRequests.map(
+    (request) => triggerBuildForProject(owner_name, repo_name, request)
+  ));
 }
 
 /**
@@ -391,30 +458,63 @@ async function triggerBuildsForPullRequest(
   let branch = getCIBranchForPR(pr.number);
 
   await createOrUpdateBranch(owner_name, repo_name, branch, pr.mergeCommitSha);
-  let projects = await determineProjectsToBuildForCommit(
+
+  let useBuildDeterminator = await shouldUseBuildDeterminator(
     owner_name,
     repo_name,
     pr.mergeCommitSha
   );
-  let travisResponses = await Promise.all(
-    projects.map(
-      (project) => triggerBuildForProject(
-        owner_name,
-        repo_name,
-        {
-          project,
-          travis_yml: `${project}/.travis.yml`,
-          cwd: project,
-          message: `#${pr.number}: ${pr.title}`,
-          branch,
-          sha: pr.mergeCommitSha,
-          commitRange: `${pr.base.sha}...${pr.head.sha}`,
-          pullRequest: pr.number,
-          pullRequestBaseBranch: pr.base.ref,
-        }
+
+  let travisResponses;
+  if (useBuildDeterminator) {
+    log.info('Found build.js! Using build determinator to trigger builds.');
+    let filesChanged = await filenamesTouchedByCommit(
+      owner_name,
+      repo_name,
+      pr.mergeCommitSha
+    );
+    travisResponses = await triggerBuildsForEvent(
+      owner_name,
+      repo_name,
+      {
+        type: 'pr',
+        sha: pr.mergeCommitSha,
+        branch: pr.base.ref,
+        buildBranch: branch,
+        filesChanged,
+        message: `#${pr.number}: ${pr.title}`,
+        commitRange: `${pr.base.sha}...${pr.head.sha}`,
+        pullRequest: pr.number,
+        pullRequestBaseBranch: pr.base.ref,
+      }
+    );
+  } else {
+    log.info('Did not find build.js, not using build determinator.');
+    let projects = await determineProjectsToBuildForCommit(
+      owner_name,
+      repo_name,
+      pr.mergeCommitSha
+    );
+    travisResponses = await Promise.all(
+      projects.map(
+        (project) => triggerBuildForProject(
+          owner_name,
+          repo_name,
+          {
+            project,
+            travis_yml: `${project}/.travis.yml`,
+            cwd: project,
+            message: `#${pr.number}: ${pr.title}`,
+            branch,
+            sha: pr.mergeCommitSha,
+            commitRange: `${pr.base.sha}...${pr.head.sha}`,
+            pullRequest: pr.number,
+            pullRequestBaseBranch: pr.base.ref,
+          }
+        )
       )
-    )
-  );
+    );
+  }
 
   // triggerBuildForProject() will return null if a build couldn't be
   // triggered for a given project. Filter those out to see how many
@@ -484,6 +584,33 @@ export async function handleGitHubPushEvent(
   }
 
   log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, branch);
+
+  let useBuildDeterminator = await shouldUseBuildDeterminator(
+    owner_name,
+    repo_name,
+    event.after
+  );
+
+  if (useBuildDeterminator) {
+    log.info('Found build.js! Using build determinator to trigger builds.');
+    let filesChangedGroupedByCommit = event.commits.map(
+      (commit) => commit.added.concat(commit.removed, commit.modified)
+    );
+    let filesChanged = [].concat(...filesChangedGroupedByCommit);
+    await triggerBuildsForEvent(
+      owner_name,
+      repo_name,
+      {
+        type: 'push',
+        sha: event.after,
+        branch,
+        filesChanged,
+        message: event.head_commit.message,
+        commitRange: `${event.before}...${event.after}`,
+      }
+    );
+    return;
+  }
 
   let unique_projects = new Set();
   event.commits.forEach((commit) => {

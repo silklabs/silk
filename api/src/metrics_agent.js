@@ -27,7 +27,7 @@
 
   constructor(metricsApi: MetricsApi) {
     // In theory we could use a circular reference here to silk-api but that is
-    // not nessisary as we only need this one api.
+    // not necessary as we only need this one api.
     this.metricsApi = metricsApi;
   }
 
@@ -53,7 +53,7 @@
   }
 
   clear() {
-    log.info(`Clearning points...`);
+    log.info(`Clearing points...`);
     this._points = [];
   }
 }

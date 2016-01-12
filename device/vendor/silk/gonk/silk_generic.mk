@@ -17,6 +17,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.services=bledroid,silk-sensors,capture,silk \
   ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json \
   ro.silk.update.poll_hours=3 \
+  persist.silk.extensions=*,-oksilk \
 
 # Properties only for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

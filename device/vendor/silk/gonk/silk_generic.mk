@@ -57,6 +57,10 @@ SILK_EXT := \
   knockknock \
   detectcat-cascade \
   detectcat \
+  oksilk \
+  oksilk-pocketsphinx-dict \
+  oksilk-pocketsphinx-grammar \
+  oksilk-hotkeyword-sound \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 
@@ -116,6 +120,7 @@ PRODUCT_PACKAGES += \
   kissfft \
   v8-profiler \
   libttspico \
+  pocketsphinx \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

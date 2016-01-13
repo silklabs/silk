@@ -93,6 +93,8 @@ SILK_GONK_PROGIES := \
   silk-sensors \
   silk-time_genoff \
   silk-tts \
+  tts-cereproc-heather-license \
+  tts-cereproc-heather-voice \
 
 SILK_UI_PACKAGES := \
   logo.png \
@@ -122,6 +124,7 @@ PRODUCT_PACKAGES += \
   v8-profiler \
   libttspico \
   pocketsphinx \
+  libttscereproc \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

@@ -86,6 +86,10 @@
            path="external/node-pocketsphinx"
            remote="github"
            revision="1a469adcec7ff26c6f6968e7e44b1d0ed4ab95ed" clone-depth="1"/>
+  <project name="cereproc"
+           path="external/cereproc"
+           remote="silk"
+           revision="master"/>
 
   <!-- Locked npm dependencies -->
   <project name="silk-device-locked-node-modules"

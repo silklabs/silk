@@ -1,7 +1,8 @@
 {
   "extends": "eslint-config-silk/react",
   "env": {
-    "browser": true
+    "browser": true,
+    "mocha": true
   },
   "rules": {
     "camelcase": 0,

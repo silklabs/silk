@@ -1,0 +1,7 @@
+{
+  "name": "silk-app",
+  "silkDependencies": {
+    "silk-api": "/api",
+    "silk-log": "/log"
+  }
+}

@@ -1,7 +1,6 @@
-
-'use strict';
-
+import moment from 'moment';
 import React from 'react-native';
+import silkVersion from 'silk-core-version';
 
 import { UserState } from '../libraries/UserState';
 
@@ -41,8 +40,7 @@ export default class WifiSettings extends AsyncComponent {
 
   _renderAccountSettings() {
     return (
-      <View
-        style={FormStyles.form}>
+      <View style={FormStyles.form}>
         <TouchableHighlight
           underlayColor="lightgrey"
           onPress={this.signOut}
@@ -51,6 +49,25 @@ export default class WifiSettings extends AsyncComponent {
             Sign Out
           </Text>
         </TouchableHighlight>
+      </View>
+    );
+  }
+
+  _renderVersion() {
+    let buildDate = new Date(parseInt(silkVersion.buildtime, 0));
+    return (
+      <View style={FormStyles.form}>
+        <View style={styles.versionContainer}>
+          <Text style={FormStyles.formRowLabel}>
+            {silkVersion.semver}
+          </Text>
+          <Text style={styles.formRowSublabel}>
+            Commit: {silkVersion.sha.slice(0, 8)}
+          </Text>
+          <Text style={styles.formRowSublabel}>
+            Build Date: {moment(buildDate).format('L LT')}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -67,6 +84,8 @@ export default class WifiSettings extends AsyncComponent {
           style={styles.scrollView}>
           <Text style={FormStyles.formHeader}>ACCOUNT</Text>
           {this._renderAccountSettings()}
+          <Text style={FormStyles.formHeader}>VERSION</Text>
+          {this._renderVersion()}
         </ScrollView>
       </View>
     );
@@ -92,5 +111,14 @@ const styles = StyleSheet.create({
     borderColor: '#a7a7aa',
     borderTopWidth: 1 / PixelRatio.get(),
     flex: 1,
+  },
+  formRowSublabel: {
+    fontSize: 12,
+  },
+  versionContainer: {
+    flex: 1,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 12,
   },
 });

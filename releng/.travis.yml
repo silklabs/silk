@@ -5,7 +5,7 @@ before_install:
   - source .travis_before_install.sh
 
 script:
-  - npm run lint && npm run flow
+  - npm run test
 
 before_deploy:
   - cd ..

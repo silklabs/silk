@@ -72,4 +72,32 @@ suite('build determinator', () => {
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.strictEqual(builds.length, 0);
   });
+
+  test('change to Travis configuration and package.json triggers build', async () => {
+    let event = {
+      type: 'push',
+      sha: 'abcdef',
+      branch: 'master',
+      filesChanged: ['webapp/.travis.yml'],
+    };
+    let builds = await determineBuildsForEvent('silklabs', 'repo', event);
+    assert.strictEqual(builds.length, 1);
+    assert.strictEqual(builds[0].name, 'webapp');
+
+    event.filesChanged = ['server/package.json'];
+    builds = await determineBuildsForEvent('silklabs', 'repo', event);
+    assert.strictEqual(builds.length, 1);
+    assert.strictEqual(builds[0].name, 'server');
+  });
+
+  test('build without file dependencies', async () => {
+    let event = {
+      type: 'nightly',
+      sha: 'abcdef',
+      branch: 'master',
+    };
+    let builds = await determineBuildsForEvent('silklabs', 'repo', event);
+    assert.strictEqual(builds.length, 1);
+    assert.strictEqual(builds[0].name, 'device-nightly');
+  });
 });

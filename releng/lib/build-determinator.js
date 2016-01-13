@@ -4,7 +4,6 @@
  * @flow
  */
 
-import invariant from 'assert';
 import path from 'path';
 import minimatch from 'minimatch';
 import requireFromString from 'require-from-string';
@@ -33,7 +32,7 @@ export type BuildTriggerEvent = {
   type: EventType;
   sha: string;
   branch: string;
-  filesChanged: Array<string>;
+  filesChanged?: Array<string>;
 };
 
 const LOG_PREFIX = 'build-determinator';
@@ -41,53 +40,72 @@ const LOG_PREFIX = 'build-determinator';
 export const BUILDS_DEFINITION_FILE = 'builds.js';
 
 /**
- * For a given build, look at dependencies declared in package.json
- * and determine any additional files that, when changed, should
- * trigger that build.
+ * Determine any additional files that, when changed, should trigger a
+ * given build.
+ *
  */
-async function resolveBuildDependencies(
+async function resolveAdditionalFileDependencies(
   owner_name: string,
   repo_name: string,
   sha: string,
   build: BuildConfig
 ): Promise<void> {
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, sha);
-  if (!build.package_json) {
-    log.info(`Build '${build.name}' does not specify a package.json file.`);
+
+  // If a build does not declare any file dependencies, then it wants
+  // to not filter based on files changed. IOW, it wants to get run on
+  // every event that matches its other filters (e.g. it's a nightly
+  // build.) In this case, we won't add any additional file dependencies
+  // as that would restrict when the build gets run greatly.
+  if (!build.files) {
+    log.info(`Build '${build.name}' does not specify any file dependencies. ` +
+             `Not adding any.`);
     return;
   }
 
-  let package_json = await readFileAtCommit(
+  // Changing the build's own Travis configuration will trigger it.
+  let buildFiles = build.files;
+  buildFiles.push(build.travis_yml);
+
+  if (!build.package_json) {
+    log.info(`Build '${build.name}' does not specify a package.json file. ` +
+             `Not adding npm dependencies.`);
+    return;
+  }
+
+  // An npm project's package.json is an implicit file dependency. Any
+  // local silkDependencies that are listed within are added to this
+  // build's files as well.
+  // TODO: we don't do this recursively yet
+  let package_json = build.package_json;
+  let packageJSON = await readFileAtCommit(
     owner_name,
     repo_name,
     sha,
     build.package_json
   );
-  if (!package_json) {
-    log.info(`Could not read ${build.package_json} for build '${build.name}'.`);
+  if (!packageJSON) {
+    log.info(`Could not read ${package_json} for build '${build.name}'.`);
     return;
   }
+  buildFiles.push(package_json);
 
-  let package_config = JSON.parse(package_json);
-  let localDeps = package_config.silkDependencies;
+  let packageConfig = JSON.parse(packageJSON);
+  let localDeps = packageConfig.silkDependencies;
   if (!localDeps) {
-    log.info(`${build.package_json} does not define any silkDependencies.`);
+    log.info(`${package_json} does not define any silkDependencies.`);
     return;
   }
 
-  if (!build.files) {
-    build.files = [];
-  }
   for (let packageName in localDeps) {
     let depPath = localDeps[packageName];
     let absPath;
     if (depPath[0] === '/') {
       absPath = depPath.slice(1);
     } else {
-      invariant(build.package_json);
-      absPath = path.resolve(build.package_json, depPath);
+      absPath = path.resolve(package_json, depPath);
     }
-    build.files.push(absPath + '/**');
+    buildFiles.push(path.join(absPath, '**'));
   }
 }
 
@@ -126,7 +144,7 @@ export async function determineBuildsForEvent(
     };
   });
   await Promise.all(builds.map(
-    (build) => resolveBuildDependencies(owner_name, repo_name, event.sha, build)
+    (build) => resolveAdditionalFileDependencies(owner_name, repo_name, event.sha, build)
   ));
 
   return builds.filter((build) => {
@@ -141,7 +159,7 @@ export async function determineBuildsForEvent(
     }
 
     // Step 3: Filter by files changed.
-    if (build.files) {
+    if (build.files && event.filesChanged) {
       let filesForThisBuild = event.filesChanged.slice();
 
       // First remove any files that are in the ignore list.

@@ -97,77 +97,81 @@ function maybeCreateAllRepoPullRequests(
 }
 
 
-export function autoMergePullRequest(
+export async function autoMergePullRequest(
   owner: string,
   repo: string,
   pr: number
 ): Promise<void> {
   const r = getOctokat().repos(owner, repo);
   const log = makeGitHubLog(LOG_PREFIX, owner, repo, pr);
+
   log.info(`fetching info`);
+  let result = await r.issues(pr).fetch();
+  log.debug(`title: ${result.title}`);
+  log.debug(`number: ${result.number}`);
+  log.debug(`state: ${result.state}`);
 
-  return r.issues(pr).fetch().then(result => {
-    log.debug(`title: ${result.title}`);
-    log.debug(`number: ${result.number}`);
-    log.debug(`state: ${result.state}`);
+  if (!result.pullRequest) {
+    log.info(`this is an issue, not a pull request.`);
+    return;
+  }
 
-    if (!result.pullRequest) {
-      log.info(`this is an issue, not a pull request.`);
-      return Promise.resolve();
-    }
+  if (result.state !== 'open') {
+    log.info(`pull request is not open.`);
+    return;
+  }
 
-    if (result.state !== 'open') {
-      log.info(`pull request is not open.`);
-      return Promise.resolve();
-    }
+  var label = result.labels.find((label) => label.name === 'automerge');
+  if (!label) {
+    log.info(`missing the 'automerge' label.`);
+    return;
+  }
 
-    var label = result.labels.find((label) => label.name === 'automerge');
-    if (!label) {
-      log.info(`missing the 'automerge' label.`);
-      return Promise.resolve();
-    }
-    log.debug(`fetching info`);
-    return r.pulls(result.number).fetch(); // Switch to the 'pull' API to get CI status
-  })
-  .then(result => {
-    if (result.mergeable === null) {
-      // Ref: https://developer.github.com/v3/pulls/#response-1
-      log.info(`mergeable state is not yet known.`);
-      return Promise.resolve();
-    }
+  // Switch to the 'pull' API to get CI status
+  log.debug(`fetching info`);
+  result = await r.pulls(result.number).fetch();
 
-    if (result.mergeable === false) {
-      log.info(`not mergeable`);
-      return r.issues(result.number).comments.create({
-        'body': ':broken_heart: Unable to automerge due to merge conflict',
-      }).then(() => r.issues(result.number).labels('automerge').remove());
-    }
+  if (result.mergeable === null) {
+    // Ref: https://developer.github.com/v3/pulls/#response-1
+    log.info(`mergeable state is not yet known.`);
+    return;
+  }
 
-    log.debug(`fetching CI status for head SHA ${result.head.sha}`);
-    // Check the CI status of the head SHA
-    return r.commits(result.head.sha).status.fetch()
-    .then(status => {
-      log.info(`CI status: ${status.state}`);
-
-      switch (status.state) {
-      case 'success':
-        log.info(`CI status is success, trying to merge...`);
-        return r.pulls(result.number).merge.add({
-          sha: result.head.sha,
-          commit_message: 'automerge',
-        }).then(mergeResult => log.info(`successfully merged: ${mergeResult}`));
-
-      case 'failure':
-        log.info(`CI status is failure, not going to merge.`);
-        return r.issues(result.number).comments.create({
-          'body': ':broken_heart: Unable to automerge due to CI failure'}
-        ).then(() => r.issues(result.number).labels('automerge').remove());
-
-      default:
-        return Promise.resolve();
-      }
+  if (result.mergeable === false) {
+    log.info(`not mergeable`);
+    await r.issues(result.number).comments.create({
+      'body': ':broken_heart: Unable to automerge due to merge conflict',
     });
-  });
+    await r.issues(result.number).labels('automerge').remove();
+    return;
+  }
+
+  // Check the CI status of the head SHA
+  log.debug(`fetching CI status for head SHA ${result.head.sha}`);
+  let status = await r.commits(result.head.sha).status.fetch();
+  log.info(`CI status: ${status.state}`);
+
+  switch (status.state) {
+  case 'success':
+    log.info(`CI status is success, trying to merge...`);
+    let mergeResult = await r.pulls(result.number).merge.add({
+      sha: result.head.sha,
+      commit_message: 'automerge',
+    });
+    log.info(`successfully merged: ${mergeResult}`);
+    return;
+
+  case 'failure':
+    log.info(`CI status is failure, not going to merge.`);
+    await r.issues(result.number).comments.create({
+      'body': ':broken_heart: Unable to automerge due to CI failure',
+    });
+    await r.issues(result.number).labels('automerge').remove();
+    return;
+
+  default:
+    return;
+  }
 }
 
 
@@ -210,7 +214,11 @@ export function autoMergePullRequests(
 }
 
 
-function handleCommitsPushedToPullRequest(owner, repo, pr) {
+function handleCommitsPushedToPullRequest(
+  owner: string,
+  repo: string,
+  pr: number
+): Promise<void> {
   const r = getOctokat().repos(owner, repo);
   const log = makeGitHubLog(LOG_PREFIX, owner, repo, pr);
   log.debug(`fetching info`);

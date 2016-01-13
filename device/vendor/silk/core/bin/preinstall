@@ -1,6 +1,11 @@
 #!/bin/bash -ex
+#
+# Copyright (c) 2015-2016 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
 
-# Fetch locked node_modules if present
-if [[ -d ../locked_node_modules ]]; then
-  ../locked_node_modules/fetch.sh
+if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
+  ../../../../preinstall
+else
+  $ANDROID_BUILD_TOP/../preinstall
 fi

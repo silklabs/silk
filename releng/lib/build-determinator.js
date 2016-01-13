@@ -38,6 +38,8 @@ export type BuildTriggerEvent = {
 
 const LOG_PREFIX = 'build-determinator';
 
+export const BUILDS_DEFINITION_FILE = 'builds.js';
+
 /**
  * For a given build, look at dependencies declared in package.json
  * and determine any additional files that, when changed, should
@@ -109,10 +111,10 @@ export async function determineBuildsForEvent(
     owner_name,
     repo_name,
     event.sha,
-    'builds.js'
+    BUILDS_DEFINITION_FILE
   );
   if (!builds_js) {
-    log.info(`Could not read 'builds.js' file, aborting.`);
+    log.info(`Could not read '${BUILDS_DEFINITION_FILE}' file, aborting.`);
     return [];
   }
 

@@ -59,8 +59,14 @@ import {
   getBranchHeadCommit,
   makeGitHubLog,
 } from './github';
-import { genTravis, triggerBuild } from './travis';
-import { determineBuildsForEvent } from './build-determinator';
+import {
+  genTravis,
+  triggerBuild,
+} from './travis';
+import {
+  BUILDS_DEFINITION_FILE,
+  determineBuildsForEvent,
+} from './build-determinator';
 
 import type { TravisBuildRequest, TravisBuildResponse } from './travis';
 import type { BuildTriggerEvent } from './build-determinator';
@@ -155,7 +161,7 @@ async function shouldUseBuildDeterminator(
     owner_name,
     repo_name,
     sha,
-    'build.js'
+    BUILDS_DEFINITION_FILE
   );
   return !!builds_js;
 }
@@ -467,7 +473,7 @@ async function triggerBuildsForPullRequest(
 
   let travisResponses;
   if (useBuildDeterminator) {
-    log.info('Found build.js! Using build determinator to trigger builds.');
+    log.info(`Found '${BUILDS_DEFINITION_FILE}'! Using build determinator to trigger builds.`);
     let filesChanged = await filenamesTouchedByCommit(
       owner_name,
       repo_name,
@@ -489,7 +495,7 @@ async function triggerBuildsForPullRequest(
       }
     );
   } else {
-    log.info('Did not find build.js, not using build determinator.');
+    log.info(`Did not find '${BUILDS_DEFINITION_FILE}', not using build determinator.`);
     let projects = await determineProjectsToBuildForCommit(
       owner_name,
       repo_name,
@@ -592,7 +598,7 @@ export async function handleGitHubPushEvent(
   );
 
   if (useBuildDeterminator) {
-    log.info('Found build.js! Using build determinator to trigger builds.');
+    log.info(`Found '${BUILDS_DEFINITION_FILE}'! Using build determinator to trigger builds.`);
     let filesChangedGroupedByCommit = event.commits.map(
       (commit) => commit.added.concat(commit.removed, commit.modified)
     );

@@ -61,8 +61,6 @@ import JSStartup from './metrics/js_startup';
 initProfiler();
 
 api.deviceMetrics.add(new JSStartup({
-  version: version.semver,
-  type: 'camera', // TODO: Make this more specific
   startupMS: new Integer(process.uptime() * 1000)
 }));
 

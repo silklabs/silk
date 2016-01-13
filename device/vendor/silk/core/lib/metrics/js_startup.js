@@ -1,28 +1,26 @@
 /**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
  * @flow
  */
 
-import {Metric, Integer} from 'silk-api';
+import DeviceMetric from './device_metric.js';
+import {Integer} from 'silk-api';
 
 type Props = {
-  // Type of device.
-  type: string;
-  // Version of the device.
-  version: string;
   // How long it takes to load js deps.
   startupMS: Integer;
-
 }
 
-export default class JSStartup extends Metric {
+export default class JSStartup extends DeviceMetric {
 
   static NAME = 'js_startup';
   static DESC = `
     Measures time between when core.js is loaded and when we begin running main.js
   `;
-  static INDEX = new Set(['type', 'version']);
 
-  properties: Props;
   constructor(props: Props) {
     super(props);
   }

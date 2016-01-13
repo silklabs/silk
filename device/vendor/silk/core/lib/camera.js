@@ -10,6 +10,8 @@ import * as util from './sysutils';
 import net from 'net';
 import cv from 'opencv';
 import CBuffer from 'CBuffer';
+import api from './api';
+import CameraRestart from './metrics/camera_restart';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -234,6 +236,10 @@ class CameraStream extends EventEmitter {
     }
 
     log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
+    api.deviceMetrics.add(new CameraRestart({
+      reason: why,
+      captureRestart: restartCaptureProcess
+    }));
     this._ready = false;
 
     if (this._previewFrameTimeout) {

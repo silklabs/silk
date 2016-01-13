@@ -10,56 +10,66 @@
 
 const debug = require('debug');
 const os = require('os');
+const util = require('util');
 
-module.exports = function createLog(libraryName) {
+const isAndroid = os.platform() === 'android';
 
-  function formatArgs() {
-    let args = arguments;
-    const diff = debug.humanize(this.diff);
+const alog = isAndroid ? require('silk-alog') : undefined;
 
-    if (this.useColors) {
-      args[0] = `\u001b[3${this.color}m(+${diff}) ${args[0]}`;
-      args[args.length-1] += '\u001b[0m';
+debug.formatArgs = function() {
+  const args = Array.prototype.slice.call(arguments);
+  const diff = debug.humanize(this.diff);
+
+  if (this.useColors) {
+    args[0] = `\u001b[3${this.color}m(+${diff}) ${args[0]}`;
+
+    const colorSuffix = `\u001b[0m`;
+    const lastArgIndex = args.length - 1;
+    if (typeof args[lastArgIndex] === `string`) {
+      args[lastArgIndex] = `${args[lastArgIndex]}${colorSuffix}`;
     } else {
-      args[0] = `(+${diff}) ` + args[0];
+      args.push(colorSuffix);
     }
-
-    return args;
+  } else {
+    args[0] = `(+${diff}) ${args[0]}`;
   }
 
-  debug.formatArgs = formatArgs;
+  return args;
+};
 
-  libraryName = 'silk-' + libraryName;
+// Expected use:
+//
+//   import createLog from './log';
+//   const log = createLog('coolfeature');
+module.exports = function createLog(libraryName) {
+  libraryName = `silk-${libraryName}`;
 
   function makeLogFunction(consoleFuncName, alogFuncName) {
-    if (!alogFuncName) {
-      alogFuncName = consoleFuncName;
-    }
-    let func;
+    alogFuncName = alogFuncName || consoleFuncName;
+
     const prefix = `${libraryName}:${alogFuncName}`;
     const consoleFunc = console[consoleFuncName]; // eslint-disable-line
-    if (os.platform() === 'android') {
-      const alog = require('silk-alog');
-      const util = require('util');
+
+    let func;
+    if (isAndroid) {
       const alogFunc = alog[alogFuncName];
 
       func = debug(prefix);
       func.log = function() {
-        let args = Array.prototype.slice.call(arguments);
+        const args = Array.prototype.slice.call(arguments);
 
         if (!process.env.LOGWRAPPER) {
-          consoleFunc.apply(consoleFunc, [prefix, ':'].concat(args));
+          consoleFunc.apply(consoleFunc, [`${prefix}:`].concat(args));
         }
 
         // Mimic console.* functions by treating additional arguments as
         // printf-style arguments.
-        const msg = util.format.apply(this, args);
-        alogFunc(libraryName, msg);
+        alogFunc(libraryName, util.format.apply(this, args));
       };
     } else {
       func = function() {
-        let args = Array.prototype.slice.call(arguments);
-        consoleFunc.apply(consoleFunc, [prefix, ':'].concat(args));
+        const args = Array.prototype.slice.call(arguments);
+        consoleFunc.apply(consoleFunc, [`${prefix}:`].concat(args));
       };
     }
     return func;

@@ -4,13 +4,15 @@
   "description": "releng<3dev",
   "scripts": {
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
-    "lint": "eslint lib",
+    "lint": "eslint lib test",
     "flow": "flow check",
+    "mocha": "DEBUG=* mocha $(find ./test -name '*test.js')",
     "preinstall": "./bin/preinstall",
     "postinstall": "../tools/npm/postinstall.js && webpack --progress",
     "start": "DEBUG=* babel-node lib/server/main.js production",
     "dev": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
-    "test": "npm run lint && npm run flow",
+    "test": "npm run lint && npm run flow && npm run mocha",
+    "buildtrigger": "DEBUG=silk-*,-silk-*:debug babel-node lib/build-trigger.js",
     "triggerbuilds": "DEBUG=silk-*,-silk-*:debug babel-node lib/trigger-builds.js",
     "issuemover": "DEBUG=silk-* babel-node lib/issue-mover.js",
     "upliftall": "DEBUG=silk-* babel-node lib/uplifter.js"
@@ -39,7 +41,7 @@
     "github-webhook-middleware": "0.0.2",
     "json-loader": "^0.5.4",
     "lodash.merge": "^3.3.2",
-    "log": "../log",
+    "minimatch": "^3.0.0",
     "node-localstorage": "^0.6.0",
     "octokat": "^0.4.14",
     "promise-callback": "^3.0.3",
@@ -48,6 +50,7 @@
     "react-dom": "^0.14.3",
     "react-router": "1.0.2",
     "request-promise": "^0.4.3",
+    "require-from-string": "^1.1.0",
     "script-loader": "^0.6.1",
     "sort-json": "^1.1.1",
     "source-map-support": "^0.3.2",
@@ -57,6 +60,7 @@
   },
   "devDependencies": {
     "flow-bin": "0.20.1",
+    "mocha": "^2.3.4",
     "webpack-dev-server": "^1.10.1",
     "webpack-hot-middleware": "^2.0.0"
   },

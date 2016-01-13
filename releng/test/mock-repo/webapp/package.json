@@ -1,0 +1,6 @@
+{
+  "name": "silk-webapp",
+  "silkDependencies": {
+    "silk-api": "/api"
+  }
+}

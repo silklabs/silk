@@ -16,7 +16,7 @@ import {
 
 import type { TravisBuildConfig } from './travis';
 
-export type EventType = 'push' | 'pr' | 'nightly';
+export type EventType = 'push' | 'pr' | 'nightly' | string;
 export type BuildConfig = {
   name: string;
   title?: string;

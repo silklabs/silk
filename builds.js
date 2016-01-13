@@ -68,6 +68,7 @@ module.exports = {
     events: ['push'],
   }),
   'cli': npmPackageBuild('cli'),
+  'log': npmPackageBuild('log'),
   'sim': npmPackageBuild('sim', {
     files: [
       'device/**',

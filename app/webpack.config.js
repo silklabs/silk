@@ -49,6 +49,7 @@ if (process.env.CONFIGURATION === 'Release') {
   // with the `false` literal and then having uglify eliminate the resulting
   // dead code.)
   config.module.loaders[1].query.plugins.push('./src/transforms/__DEV__-to-false');
+  config.module.loaders[1].query.plugins.push('./src/transforms/remove-logging');
   config.plugins.push(new webpack.optimize.DedupePlugin());
   config.plugins.push(new webpack.optimize.UglifyJsPlugin());
 }

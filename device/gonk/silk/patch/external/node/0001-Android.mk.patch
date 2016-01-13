@@ -1,16 +1,16 @@
-From dd21bce74e587159e103906d74de3855865175bc Mon Sep 17 00:00:00 2001
+From 7dbab1d811e4e5145e7b0f197f97d0ab1d94c88c Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 65 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 65 insertions(+)
+ Android.mk | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..888e969
+index 0000000..f645ced
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,63 @@
@@ -73,7 +73,7 @@ index 0000000..888e969
 +	$(hide) mkdir -p $(node_BUILD_DIR)
 +	$(hide) ln -s $(node_BUILD_DIR) $(<D)/out
 +	$(hide) cd $(<D) && ./configure --prefix=/ \
-+    --without-snapshot --without-npm --dest-cpu=arm --dest-os=android
++    --without-snapshot --without-npm --dest-cpu=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) --dest-os=android
 +	$(hide) cd $(<D) && $(MAKE) V=$(if $(SHOW_COMMANDS),1)
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=

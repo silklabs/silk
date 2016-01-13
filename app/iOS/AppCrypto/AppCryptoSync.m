@@ -63,10 +63,14 @@ RCT_EXPORT_MODULE()
 {
   _bridge = bridge;
 
-  if (sodium_init() != 0) {
+  // This module may get reinstantiated if the bridge reloads, but we can't
+  // initialize sodium more than once.
+  static BOOL sodiumInitialized = NO;
+  if (!sodiumInitialized && sodium_init() != 0) {
     NSLog(@"Could not initialize libsodium!");
     return;
   }
+  sodiumInitialized = YES;
 
   id<RCTJavaScriptExecutor> executor = [bridge valueForKey:@"javaScriptExecutor"];
   if (![executor isKindOfClass:[RCTJSCExecutor class]]) {

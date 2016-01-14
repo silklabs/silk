@@ -31,11 +31,11 @@ class Camera extends EventEmitter {
     const logo = opts.logo;
     this.previewSize = opts.previewSize;
 
+    this.logoImage = document.createElement('img');
     if (logo) {
       let logoArray = new Uint8Array(logo);
       if (logoArray.length > 0) {
         let blob = new Blob([logoArray], { type: 'image/png' });
-        this.logoImage = document.createElement('img');
         this.logoImage.src = URL.createObjectURL(blob);
       }
     }

@@ -1,31 +1,9 @@
 #!/bin/bash
 
-source .travis/determine_files_changed.sh
-
-if [[ "$TEST_TYPE" = lint ]]; then
-  if [[ -z "$JS_CHANGES" ]]; then
-    # Flow should technically still be triggered for changes to
-    # package.json, .flowconfig, and interface/*. But rather than
-    # hacking that into the existing machinery, let's hold out for a
-    # better mechanism in silk-core, e.g. perhaps
-    # https://github.com/silklabs/releng/issues/73.
-    echo "No JS changes detected, aborting $TEST_TYPE."
-    exit 0
-  fi
-  npm run lint && npm run flow
-
-elif [[ "$TEST_TYPE" = objc-test ]]; then
-  if [[ -z "$NON_JS_CHANGES" ]]; then
-    echo "Only JS changes detected, aborting Objective-C tests."
-    exit 0
-  fi
+if [[ "$TEST_TYPE" = objc-test ]]; then
   .travis/objc-test.sh
 
 elif [[ "$TEST_TYPE" = build-dist ]]; then
-  if [[ -z "$NON_JS_CHANGES" && "$TRAVIS_PULL_REQUEST" != "false"  ]]; then
-    echo "Pull Request with only JS changes detected, aborting build."
-    exit 0
-  fi
   .travis/build-dist.sh
 
 else

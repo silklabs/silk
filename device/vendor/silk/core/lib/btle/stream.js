@@ -66,6 +66,8 @@ export default class Stream extends Duplex {
   _finished: boolean = false;
   _closed: boolean = false;
 
+  _disconnectHandler: ?(() => void) = null;
+
   constructor(
     peripheral: Peripheral,
     serviceUuid: string,
@@ -216,13 +218,22 @@ export default class Stream extends Duplex {
 
     const eventName = `notify`;
 
+    let listener;
     let timeout;
+    let disconnectHandler;
 
-    const listener = (state) => {
-      log.debug(`Notifications %sabled`, state ? `en` : `dis`);
-
+    const cleanup = () => {
       this._readCharacteristic.removeListener(eventName, listener);
       clearTimeout(timeout);
+      if (this._disconnectHandler === disconnectHandler) {
+        this._disconnectHandler = null;
+      }
+    };
+
+    listener = (state) => {
+      log.debug(`Notifications ${state ? 'en' : 'dis'}abled`);
+
+      cleanup();
 
       if (this._disconnected) {
         return;
@@ -246,11 +257,18 @@ export default class Stream extends Duplex {
     };
 
     timeout = setTimeout(() => {
-      this._readCharacteristic.removeListener(eventName, listener);
+      cleanup();
       this._emitError(new Error(`Timed out while enabling notifications`));
     }, TIMEOUT_MS);
 
+    disconnectHandler = () => {
+      cleanup();
+      this._emitError(new Error(`Disconnected while enabling notifications`));
+    };
+
     this._readCharacteristic.addListener(eventName, listener);
+    this._disconnectHandler = disconnectHandler;
+
     this._readCharacteristic.notify(true);
   }
 
@@ -275,20 +293,23 @@ export default class Stream extends Duplex {
 
     const eventName = `notify`;
 
-    let finish;
+    let listener;
     let timeout;
 
-    const listener = (state) => {
-      log.debug(`Notifications %sabled`, state ? `en` : `dis`);
-      clearTimeout(timeout);
-      finish();
-    };
-
-    finish = () => {
+    const finish = () => {
       this._readCharacteristic.removeListener(eventName, listener);
+      clearTimeout(timeout);
+      if (this._disconnectHandler === finish) {
+        this._disconnectHandler = null;
+      }
 
       this.emit(`finish`);
       this.push(null);
+    };
+
+    listener = (state) => {
+      log.debug(`Notifications ${state ? 'en' : 'dis'}abled`);
+      finish();
     };
 
     timeout = setTimeout(() => {
@@ -297,6 +318,8 @@ export default class Stream extends Duplex {
     }, TIMEOUT_MS);
 
     this._readCharacteristic.addListener(eventName, listener);
+    this._disconnectHandler = finish;
+
     this._readCharacteristic.notify(false);
   }
 
@@ -419,6 +442,11 @@ export default class Stream extends Duplex {
 
     clearTimeout(this._writeTimeout);
     this._writeTimeout = null;
+
+    if (this._disconnectHandler) {
+      this._disconnectHandler();
+      this._disconnectHandler = null;
+    }
 
     if (this._finished) {
       invariant(this._ended);

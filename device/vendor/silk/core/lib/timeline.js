@@ -483,8 +483,12 @@ export default class Timeline extends EventEmitter {
             JSON.stringify(obj));
         }
       }
-      this._pushSocketIoPacket(this.lastPreviewFrameWhen, this.lastPreviewFrame,
-        this.previewObjects, 'jpeg');
+      this._pushSocketIOPacket(
+        this.lastPreviewFrameWhen,
+        this.lastPreviewFrame,
+        this.previewObjects,
+        'jpeg'
+     );
 
       // Storage
       const lastPreviewFrame = this.lastPreviewFrame;
@@ -531,7 +535,7 @@ export default class Timeline extends EventEmitter {
    * @private
    */
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
-    this._pushSocketIoPacket(when, frame, null, 'mp4', durationMs);
+    this._pushSocketIOPacket(when, frame, null, 'mp4', durationMs);
 
     // Only queue the video to be sent to the outbox if uploads are enabled...
     if (this.videoUploadType === 'none') {
@@ -568,7 +572,7 @@ export default class Timeline extends EventEmitter {
   /**
    * @private
    */
-  _pushSocketIoPacket(
+  _pushSocketIOPacket(
     when: number,
     frame: Buffer,
     objects: ?Array<TimelineEventObject>,

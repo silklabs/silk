@@ -19,6 +19,8 @@ interface with via swift need to be imported here.
 #import "RCTTouchHandler.h"
 #import "RCTView.h"
 
-#import <RCTWebSocketModule.h>
+#import "AppRCTWebSocketModule.h"
+
 #import <Raygun4iOS/Raygun4iOS.h>
+
 #endif

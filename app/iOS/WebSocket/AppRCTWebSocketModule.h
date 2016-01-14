@@ -7,9 +7,12 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#import "RCTBridgeModule.h"
 #import "RCTWebSocketModule.h"
-#import "Silk-Swift.h"
+#import "RCTSRWebSocket.h"
+
+// See https://github.com/facebook/react-native/pull/5321
+@interface RCTWebSocketModule () <RCTSRWebSocketDelegate>
+@end
 
 @interface AppRCTWebSocketModule : RCTWebSocketModule
 @end

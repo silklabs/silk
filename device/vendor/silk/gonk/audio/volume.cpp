@@ -31,7 +31,7 @@ int clampVolume(int v) {
 
 int main(int argc, char **argv)
 {
-  int volume = VOLUME_MAX_LEVEL * 0.75; // Default volume
+  int volume = VOLUME_MAX_LEVEL; // Default volume
 
   if (argc == 1) {
     ALOGV("Initializing audio system");

@@ -18,6 +18,7 @@
 #include <utils/List.h>
 #include <utils/Condition.h>
 #include <dlfcn.h>
+#include <sstream>
 
 #include "AudioPlayer.h"
 #include "EqualizeFilter.h"
@@ -54,6 +55,14 @@ using namespace std;
       return 1; \
     } \
   } while(0)
+
+namespace std {
+  template<typename T> std::string to_string(const T& n) {
+    std::ostringstream ss;
+    ss << n;
+    return ss.str();
+  }
+}
 
 //
 // Forward declarations
@@ -299,7 +308,9 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
     pitch = cmdData["pitch"].asString();
   }
   if (!cmdData["volume"].isNull()) {
-    volume = cmdData["volume"].asString();
+    float volumeLevel = cmdData["volume"].asFloat();
+    volume = to_string(atoi(PICO_MAX_VOLUME) * volumeLevel);
+    ALOGD("Volume is %s", volume.c_str());
   }
 
   if (mInitialized) {

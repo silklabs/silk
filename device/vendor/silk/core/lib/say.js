@@ -26,7 +26,8 @@ export default class Say extends events.EventEmitter {
       lang: 'eng',
       country: 'GBR',
       pitch: '90',
-      rate: '90'
+      rate: '90',
+      volume: 0.3
     };
   }
 

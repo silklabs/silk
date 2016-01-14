@@ -35,7 +35,7 @@ using namespace std;
 #define TTS_COMMAND_NAME "ttsCommand"
 #define MAX_MSG_SIZE 128
 
-#define TTS_ENGINE_LIB          "libttspico.so"
+#define TTS_ENGINE_LIB          "libttscereproc.so"
 #define DEFAULT_TTS_BUFFERSIZE  2048
 #define DEFAULT_SPEECH_RATE     "100"
 #define DEFAULT_PITCH           "100"
@@ -92,7 +92,8 @@ public:
       mPlaybackHandler(NULL),
       mTextToSpeechListener(ttsListener),
       ttsEngine(NULL),
-      mBuffer(new int8_t[DEFAULT_TTS_BUFFERSIZE]) {
+      mBuffer(new int8_t[DEFAULT_TTS_BUFFERSIZE]),
+      mInitialized(false) {
   }
 
   virtual ~TextToSpeechCommand() {
@@ -114,6 +115,7 @@ private:
   Reader mJsonReader;
   android_tts_engine_t* ttsEngine;
   int8_t *mBuffer;
+  bool mInitialized;
 };
 
 /**
@@ -269,14 +271,43 @@ android_tts_callback_status_t synthesis_callback(void ** pUserData,
  */
 int TextToSpeechCommand::tts_init(Value& cmdData) {
   ALOGV("%s", __PRETTY_FUNCTION__);
+  string lib = TTS_ENGINE_LIB;
   string lang = "eng";
   string country = "USA";
   string rate = DEFAULT_SPEECH_RATE;
   string pitch = DEFAULT_PITCH;
   string volume = PICO_MAX_VOLUME;
 
+  /* Get command parameters */
+  if (!cmdData["lib"].isNull()) {
+    lib = "lib";
+    lib += cmdData["lib"].asString();
+    lib += ".so";
+  }
+  if (!cmdData["lang"].isNull()) {
+    lang = cmdData["lang"].asString();
+  }
+  if (!cmdData["country"].isNull()) {
+    country = cmdData["country"].asString();
+  }
+  if (!cmdData["rate"].isNull()) {
+    rate = cmdData["rate"].asString();
+  }
+  if (!cmdData["pitch"].isNull()) {
+    pitch = cmdData["pitch"].asString();
+  }
+  if (!cmdData["volume"].isNull()) {
+    volume = cmdData["volume"].asString();
+  }
+
+  if (mInitialized) {
+    ALOGW("TTS engine already initialized");
+    return 0;
+  }
+
   // Load TTS engine specified by {@code TTS_ENGINE_LIB} dynamically
-  void *engineLibHandle = dlopen(TTS_ENGINE_LIB, RTLD_NOW | RTLD_LOCAL);
+  ALOGD("Opening TTS lib %s", lib.c_str());
+  void *engineLibHandle = dlopen(lib.c_str(), RTLD_NOW | RTLD_LOCAL);
   LOG_ERROR((engineLibHandle == NULL), "%s engineLibHandle == NULL", __FUNCTION__);
 
   android_tts_entrypoint getTtsEngine =
@@ -300,23 +331,6 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
       result);
 
   initializeEQ();
-
-  /* Get command parameters */
-  if (!cmdData["lang"].isNull()) {
-    lang = cmdData["lang"].asString();
-  }
-  if (!cmdData["country"].isNull()) {
-    country = cmdData["country"].asString();
-  }
-  if (!cmdData["rate"].isNull()) {
-    rate = cmdData["rate"].asString();
-  }
-  if (!cmdData["pitch"].isNull()) {
-    pitch = cmdData["pitch"].asString();
-  }
-  if (!cmdData["volume"].isNull()) {
-    volume = cmdData["volume"].asString();
-  }
 
   // Check if language is available
   android_tts_support_result_t langAvailable =
@@ -353,6 +367,7 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
   jsonMsg["eventName"] = "initialized";
   mTextToSpeechListener->sendEvent(jsonMsg);
 
+  mInitialized = true;
   return 0;
 }
 
@@ -387,8 +402,10 @@ int TextToSpeechCommand::tts_synthesizeText(Value& text) {
   LOG_ERROR((ttsEngine == NULL), "ttsEngine not initialized");
 
   // Stop the previous playback session if any
-  tts_stop();
   if (mPlaybackHandler != NULL) {
+    tts_stop();
+
+
     ALOGV("Stopping previous tts session");
     mPlaybackHandler->stop();
     mPlaybackHandler = NULL;

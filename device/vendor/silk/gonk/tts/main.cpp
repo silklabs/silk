@@ -208,6 +208,8 @@ int TextToSpeechCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     tts_init(cmdJson);
   } else if (cmdName == "speak") {
     tts_synthesizeText(cmdJson["text"]);
+  } else if (cmdName == "close") {
+    tts_shutdown();
   } else {
     LOG_ERROR(true, "Invalid command %s", argv[1]);
   }
@@ -302,6 +304,10 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
 
   if (mInitialized) {
     ALOGW("TTS engine already initialized");
+
+    Json::Value jsonMsg;
+    jsonMsg["eventName"] = "initialized";
+    mTextToSpeechListener->sendEvent(jsonMsg);
     return 0;
   }
 
@@ -378,6 +384,7 @@ int TextToSpeechCommand::tts_shutdown() {
   if (ttsEngine != NULL) {
     ttsEngine->funcs->shutdown(ttsEngine);
   }
+  mInitialized = false;
   return 0;
 }
 

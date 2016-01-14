@@ -20,6 +20,14 @@ export default class Say extends events.EventEmitter {
   constructor() {
     super();
     this._ready = false;
+    this._initConfig = {
+      cmdName: 'init',
+      lib: 'ttscereproc',
+      lang: 'eng',
+      country: 'GBR',
+      pitch: '90',
+      rate: '90'
+    };
   }
 
   /**
@@ -31,8 +39,7 @@ export default class Say extends events.EventEmitter {
       log.verbose(`connected to ${TTS_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
-      this._command({cmdName: 'init', lib: 'ttscereproc', lang: 'eng',
-        country: 'GBR', pitch: '90', rate: '90'});
+      this._command(this._initConfig);
     });
     this._socket.on('data', data => this._onData(data));
     this._socket.on('error', err => {
@@ -49,10 +56,33 @@ export default class Say extends events.EventEmitter {
    * Speak the provided text
    *
    * @param text to speak
+   * @param optionally provide the tts engine to use
    * @return Promise that would be resolved once the text has finished speaking
    */
-  speak(text) {
-    return new Promise((resolve, reject) => {
+  speak(text, lib) {
+    let initializePromise = Promise.resolve();
+
+    // If user requested for a different library than is currently being used
+    // Re-initialize the tts engine with the new library
+    if (lib && (lib !== this._initConfig.lib)) {
+      this._initConfig.lib = lib;
+
+      initializePromise = new Promise((resolve, reject) => {
+        this.once('initialize', () => {
+          log.verbose(`Received event intialize`);
+          this.removeAllListeners('error');
+          resolve();
+        });
+        this.once('error', (msg) => {
+          this.removeAllListeners('done');
+          reject(msg);
+        });
+        this._command({cmdName: 'close'});
+        this._command(this._initConfig);
+      });
+    }
+
+    return initializePromise.then((resolve, reject) => {
       this.once('done', () => {
         this.removeAllListeners('error');
         resolve();
@@ -62,6 +92,9 @@ export default class Say extends events.EventEmitter {
         reject(msg);
       });
       this._command({cmdName: 'speak', text});
+    })
+    .catch(msg => {
+      throw new Error(msg);
     });
   }
 

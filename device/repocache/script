@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Run from releng/
+# Run from silk-core
 #
 
 if [[ -n $1 ]]; then
@@ -16,7 +16,6 @@ if [[ -z $GONK ]]; then
 fi
 
 set -x
-cd ..
 npm run zest
 if [[ -n "$GONK_REPO" ]]; then
   ( set -x; time git clone $GONK_REPO device/gonk/$GONK )

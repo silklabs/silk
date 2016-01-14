@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Alert, Button, Glyphicon } from 'react-bootstrap';
+import { Alert, Button, Glyphicon, DropdownButton, MenuItem } from 'react-bootstrap';
 import { Link } from 'react-router';
 
 import Api from '../libraries/Api';
@@ -35,6 +35,11 @@ const styles = {
 export class OnlineCamera extends React.Component {
   state = { crashesState: 'default' };
 
+  constructor() {
+    super();
+    this.speakText = '';
+  }
+
   componentWillMount() {
     Reports.findByDeviceId(this.deviceId)
       .then(crashes => {
@@ -47,6 +52,14 @@ export class OnlineCamera extends React.Component {
   get deviceId() {
     return this.props.params.deviceId;
   }
+
+  handleTextChange = e => {
+    this.speakText = e.target.value;
+  };
+
+  onSpeak = (e, ttsEngine) => {
+    this.props.camera.speak(ttsEngine, this.speakText);
+  };
 
   render() {
     return (
@@ -80,7 +93,19 @@ export class OnlineCamera extends React.Component {
             </div>
           </div>
         </div>
-      </div>
+        <div style={styles.toolbar}>
+          <div style={styles.flexRow}>
+            <DropdownButton bsSize="small" title="Speak with" id="speak"
+              disabled={!this.props.online} onSelect={this.onSpeak}>
+              <MenuItem eventKey="ttscereproc">ttscereproc</MenuItem>
+              <MenuItem eventKey="ttspico">ttspico</MenuItem>
+            </DropdownButton>
+            <input type="text" placeholder="Enter the text to speak"
+              onChange={this.handleTextChange}>
+            </input>
+          </div>
+        </div>
+    </div>
     );
   }
 }
@@ -106,6 +131,8 @@ export class OnlineCameras extends React.Component {
       <OnlineCamera
         key={id}
         params={{deviceId: id}}
+        camera={this.state.cameras[id]}
+        online={this.state.cameras[id].online}
       />
     ));
     return (

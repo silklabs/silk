@@ -134,6 +134,13 @@ class Camera extends EventEmitter {
     this._socket.emit('cmd', cmd);
   }
 
+  speak(lib, text) {
+    let cmd = { id: this.id, msg: 'speak' };
+    cmd.lib = lib;
+    cmd.text = text;
+    this._socket.emit('cmd', cmd);
+  }
+
   removeListener(event, listener) {
     let ret = super.removeListener(event, listener);
     this._adjustRooms(event);

@@ -296,6 +296,10 @@ server.on('cmd', cmd => {
     log.info('  rebooting ...');
     util.setprop('sys.powerctl', 'reboot');
     break;
+  case 'speak':
+    log.info('speak command:', JSON.stringify(cmd));
+    say.speak(cmd.text, cmd.lib);
+    break;
   default:
     log.error('Unknown command:', JSON.stringify(cmd));
     break;

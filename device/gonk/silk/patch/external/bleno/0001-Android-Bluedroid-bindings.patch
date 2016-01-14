@@ -1,4 +1,4 @@
-From 3823d5129db60d6deddca7cb7006b884211af3ae Mon Sep 17 00:00:00 2001
+From 7d554267879405b3bbbc0f2d723a1c6b9f7dda2b Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sun, 21 Jun 2015 22:14:38 -0700
 Subject: [PATCH] Android Bluedroid bindings
@@ -6,11 +6,11 @@ Subject: [PATCH] Android Bluedroid bindings
 ---
  Android.mk              |   7 +
  binding.gyp             |  38 -----
- lib/android/bindings.js | 366 ++++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 371 ++++++++++++++++++++++++++++++++++++++++++++++++
  lib/bleno.js            |   2 +
  package.json            |  13 +-
  test.js                 |   3 +-
- 6 files changed, 383 insertions(+), 46 deletions(-)
+ 6 files changed, 388 insertions(+), 46 deletions(-)
  create mode 100644 Android.mk
  delete mode 100644 binding.gyp
  create mode 100644 lib/android/bindings.js
@@ -74,10 +74,10 @@ index 99c8e32..0000000
 -}
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..8e26d8a
+index 0000000..79fa377
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,366 @@
+@@ -0,0 +1,371 @@
 +/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 +/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 +
@@ -242,6 +242,11 @@ index 0000000..8e26d8a
 +
 +blenoBindings.onStateChange = function(state) {
 +  if (state !== 'poweredOn') {
++    debug('Adapter state changed to \'%s\'', state);
++    if (this.acceptedAddress) {
++      debug('Disconnecting existing connection');
++      this.onDisconnect(this.acceptedAddress);
++    }
 +    this.reset();
 +  }
 +  this.emit('stateChange', state);
@@ -516,5 +521,5 @@ index d1c8ea1..9b3284f 100644
      bleno.stopAdvertising();
    }
 -- 
-2.5.3
+2.7.0
 

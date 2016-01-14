@@ -113,6 +113,9 @@ module.exports = {
     ],
     events: ['push'],
   }),
+  'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
+    files: ['**/package.json']
+  }),
 
   // Nightly device builds
   'device-qemu-nightly': nightlyBuild('device', {

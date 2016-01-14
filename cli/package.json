@@ -8,7 +8,6 @@
   },
   "scripts": {
     "lint": "eslint build lib",
-<<<<<<< HEAD
     "postinstall": "../tools/npm/postinstall.js && ./build/build",
     "preinstall": "../preinstall",
     "test": "npm run lint"

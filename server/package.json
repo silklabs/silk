@@ -6,6 +6,7 @@
     "silk-core-version": "/version",
     "silk-raygun": "/raygun",
     "eslint-config-silk": "/eslint",
+    "log": "/log",
     "jsonwebtoken": "/jsonwebtoken"
   },
   "dependencies": {
@@ -27,7 +28,6 @@
     "joi": "^6.6.1",
     "localStorage": "^1.0.3",
     "lodash.merge": "^3.3.2",
-    "log": "../log",
     "mkdirp": "^0.5.1",
     "msgpack-lite": "^0.1.13",
     "mz": "^2.0.0",

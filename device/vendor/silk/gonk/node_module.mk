@@ -167,7 +167,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
       "\ && \
     export V=$(if $(SHOW_COMMANDS),1) \
     export BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" &&  \
-    export NPM_CONFIG_ARCH=arm &&  \
+    export NPM_CONFIG_ARCH=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) &&  \
     export NPM_CONFIG_PLATFORM=android && \
     export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
     export CXX="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \

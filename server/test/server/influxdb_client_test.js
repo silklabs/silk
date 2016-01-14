@@ -31,7 +31,7 @@ suite('influxdb client', function() {
     }
 
     let query = await client.query(`
-      SELECT * FROM ${series}
+      SELECT * FROM "${series}"
     `);
     assert(query.results, 'can query');
   });

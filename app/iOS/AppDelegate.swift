@@ -155,7 +155,7 @@ class AppDelegate : UIResponder,
 
   func extraModulesForBridge(bridge: RCTBridge!) -> [AnyObject]! {
     return [
-      AppRCTWebSocketModule()
+      SLKWebSocketModule()
     ]
   }
 }

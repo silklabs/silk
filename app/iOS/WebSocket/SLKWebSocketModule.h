@@ -14,5 +14,5 @@
 @interface RCTWebSocketModule () <RCTSRWebSocketDelegate>
 @end
 
-@interface AppRCTWebSocketModule : RCTWebSocketModule
+@interface SLKWebSocketModule : RCTWebSocketModule
 @end

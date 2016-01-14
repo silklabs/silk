@@ -7,12 +7,12 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#import "AppRCTWebSocketModule.h"
+#import "SLKWebSocketModule.h"
 #import "RCTBridgeModule.h"
 
 #import "Silk-Swift.h"
 
-@implementation AppRCTWebSocketModule
+@implementation SLKWebSocketModule
 
 // Don't rely on the RCT_EXPORT_MODULE macro for this because we want to replace
 // the existing RCTWebSocketModule.

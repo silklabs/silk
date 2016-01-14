@@ -2,8 +2,7 @@
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 $ROOT/tools/node_modules_cache/bin/bootstrap
-$ROOT/tools/node_modules_cache/node_modules/.bin/babel-node \
-  $ROOT/tools/node_modules_cache/src \
+$ROOT/tools/node_modules_cache/bin/cli \
   download \
   $PWD
 

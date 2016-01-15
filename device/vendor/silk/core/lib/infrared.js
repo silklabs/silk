@@ -9,6 +9,9 @@
 import * as sysutils from './sysutils';
 import createLog from './log';
 
+/**
+ * Infrared mode. Possible values are "day", "night" and "manual"
+ */
 type Mode = 'day' | 'night' | 'manual';
 
 const log = createLog('infrared');

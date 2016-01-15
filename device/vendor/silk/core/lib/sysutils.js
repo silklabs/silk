@@ -26,19 +26,37 @@ if (process.env.SILK_TEST === 'unit') {
 
 const SOUND_DIR = '/system/silk/media/sound/';
 
-// Throws an exception to the top level process exception handler, escaping any
-// Promises that might otherwise consume the exception.
+/**
+ * Throws an exception to the top level process exception handler, escaping any
+ * Promises that might otherwise consume the exception.
+ * @param e Error string
+ * @memberof sysutils
+ */
 export function processthrow(e: string) {
   process.emit('uncaughtException', e);
 }
 
+/**
+ * Output of exec command
+ *
+ * @property {number} code result code
+ * @property {string} stdout standard out stream
+ * @property {string} stderr standard error stream
+ */
 type ExecOutput = {
   code: number;
   stdout: string;
   stderr: string;
 };
 
-export function exec(cmd: string, args: [string]): Promise<ExecOutput> {
+/**
+ * Execute a command
+ *
+ * @param cmd Command to execute
+ * @param args Arguments for the command
+ * @memberof sysutils
+ */
+export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
   return new Promise((resolve, reject) => {
     execFile(cmd, args, (err, stdout, stderr) => {
       let code = err ? err.code : 0;
@@ -52,12 +70,20 @@ export function exec(cmd: string, args: [string]): Promise<ExecOutput> {
   });
 }
 
+/**
+ * Execute a command. Retry if it fails
+ *
+ * @param cmd Command to execute
+ * @param args Arguments for the command
+ * @param retries Number of retries
+ * @param delayMs Delay in ms between each retry
+ * @memberof sysutils
+ */
 export function execRetry(
-  cmd: string,
-  args: [string],
-  retries: number,
-  delayMs: number
-): Promise<ExecOutput> {
+    cmd: string,
+    args: Array<string>,
+    retries: number,
+    delayMs: number): Promise<ExecOutput> {
   return exec(cmd, args).then(result => {
     if (0 === result.code) {
       return result;
@@ -69,9 +95,24 @@ export function execRetry(
   });
 }
 
+/**
+ * Type of Android property
+ * @property {string | bool | number}
+ */
 type ScalarPropTypes = string | bool | number;
+
+/**
+ * Type of Android property
+ */
 type PropTypes = Array<PropTypes> | ScalarPropTypes;
 
+/**
+ * Get value of an android property as string
+ *
+ * @param prop Name of the property to fetch
+ * @param [defaultValue=null] Default value to use if property is not available
+ * @memberof sysutils
+ */
 export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   let value = props.get(prop);
   if (value === '') {
@@ -82,10 +123,24 @@ export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   return value;
 }
 
+/**
+ * Get value of an android property as string
+ *
+ * @param prop Name of the property to fetch
+ * @param [defaultValue=null] Default value to use if property is not available
+ * @memberof sysutils
+ */
 export function getstrprop(prop: string, defaultValue?: string): string {
   return String(getprop(prop, defaultValue));
 }
 
+/**
+ * Get value of an android property as boolean
+ *
+ * @param prop Name of the property to fetch
+ * @param [defaultValue=false] Default value to use if property is not available
+ * @memberof sysutils
+ */
 export function getboolprop(prop: string, defaultValue: bool = false): bool {
   let value = getprop(prop, defaultValue);
   if ((value === 'true') || (value === true) ||
@@ -96,6 +151,13 @@ export function getboolprop(prop: string, defaultValue: bool = false): bool {
   }
 }
 
+/**
+ * Get value of an android property as integer
+ *
+ * @param prop Name of the property to fetch
+ * @param [defaultValue=0] Default value to use if property is not available
+ * @memberof sysutils
+ */
 export function getintprop(prop: string, defaultValue: number = 0): number {
   let value = parseInt(String(getprop(prop, defaultValue)), 10);
   if (isNaN(value)) {
@@ -104,21 +166,47 @@ export function getintprop(prop: string, defaultValue: number = 0): number {
   return value;
 }
 
+/**
+ * Get value of an android property as string array
+ *
+ * @param prop Name of the property to fetch
+ * @param [defaultValue=[]] Default value to use if property is not available
+ * @memberof sysutils
+ */
 export function getlistprop(
   prop: string,
-  defaultValue: Array<string> = []
-): Array<string> {
+  defaultValue: Array<string> = []): Array<string> {
   let value = getprop(prop, '');
   return (value === '') ? defaultValue : String(value).split(',');
 }
 
-// TODO shouldn't we better throw `result.error`?
+/**
+ * Set value of an android property as boolean
+ *
+ * @param prop Name of the property to set
+ * @param value Property value
+ * @memberof sysutils
+ */
 export function setprop(prop: string, value: PropTypes): ?Error {
   let result = spawnSync('setprop', [prop, value.toString()]);
   return result.error;
 }
 
+/**
+ * This class provides helper utility to watch an android property and notify
+ * via an event if the specified property has changed
+ * @memberof sysutils
+ */
 class PropWatcher extends events.EventEmitter {
+  /**
+   * Property changed event. This event is emiited when the property being
+   * watched has changed.
+   *
+   * @event <property_name>
+   * @memberof sysutils.PropWatcher
+   * @type {Object}
+   * @property {string} Property value
+   */
   constructor() {
     super();
     let spawnWatchprops = () => {
@@ -141,10 +229,22 @@ class PropWatcher extends events.EventEmitter {
 
 export let propWatcher = new PropWatcher();
 
+/**
+ * Returns a promise that expires after the specified interval
+ *
+ * @param ms Expiry interval
+ * @memberof sysutils
+ */
 export function timeout(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Play a sound file
+ *
+ * @param fileName Name of the audio file to play
+ * @memberof sysutils
+ */
 export function playSound(fileName: string): Promise<void> {
   const BINARY = 'player';
 
@@ -164,6 +264,13 @@ export function playSound(fileName: string): Promise<void> {
   });
 }
 
+/**
+ * Returns a random number between the provided range
+ *
+ * @param min Minimum number
+ * @param max Maximum number
+ * @memberof sysutils
+ */
 export function randBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }

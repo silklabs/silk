@@ -8,6 +8,7 @@
     "postinstall": "./bin/postinstall && ./build",
     "test": "./bin/test",
     "posttest": "flow check",
+    "docs": "documentation lib/*.js --project-version 0.0.1 --shallow -f html -o ../../../../docs/api/device --name silk-device ",
     "clean": "rm -rf node_modules core.js core.js.map"
   },
   "silkDependencies": {
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "babel": "^5.8.23",
+    "documentation": "^3.0.4",
     "mocha": "^2.3.3",
     "node-fetch": "^1.3.3"
   },

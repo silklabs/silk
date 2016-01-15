@@ -8,25 +8,39 @@ import createLog from 'silk-log';
 import childProcess from 'child_process';
 import tmp from 'tmp';
 import fs from 'mz/fs';
+import { statSync } from 'fs';
 
 const log = createLog('adb');
 
 class Adb {
   constructor(device) {
-    this.device = device;
-    this._root = false;
+    if (device === 'sim') { // TODO: Don't be so sneaky...
+      [ 'data', 'system/silk' ].forEach((dir) => {
+        // Ensure that the current working directory is the root of a simulated
+        // device tree.
+        let stats = null;
+        try {
+          stats = statSync(dir);
+        } catch (err) {
+          log.error(err);
+        }
+        if (!stats || !stats.isDirectory()) {
+          throw new Error(`${dir} is not a directory`);
+        }
+      });
+      this.sim = true;
+    } else {
+      this.device = device;
+    }
+    this._root = this.sim;
   }
 
-  async cmd(args = []) {
+  _spawn(cmd, args) {
     let stdout = '';
     let stderr = '';
-    if (this.device) {
-      args = ['-s', this.device].concat(args);
-    }
 
-    log.debug(`cmd: adb ${args.join(' ')}`);
     return new Promise((resolve, reject) => {
-      let helper = childProcess.spawn('adb', args);
+      let helper = childProcess.spawn(cmd, args);
       helper.stdout.on('data', chunk => stdout += chunk.toString());
       helper.stderr.on('data', chunk => stderr += chunk.toString());
       helper.on('close', code => {
@@ -37,6 +51,16 @@ class Adb {
         resolve(stdout);
       });
     });
+  }
+
+  async cmd(args = []) {
+    if (this.device) {
+      args = ['-s', this.device].concat(args);
+    }
+
+    log.debug(`cmd: adb ${args.join(' ')}`);
+    return this._spawn('adb', args);
+
   }
 
   async listDevices() {
@@ -65,6 +89,11 @@ class Adb {
   }
 
   async shell(args) {
+    if (this.sim) {
+      const cmd = args.shift();
+      return await this._spawn(cmd, args);
+    }
+
     args = ['shell'].concat(args);
     return await this.cmd(args);
   }
@@ -82,19 +111,26 @@ class Adb {
   }
 
   async push(filepath, data) {
-    await this.root();
+    if (this.sim) {
+      await fs.writeFile(filepath, data);
+      return;
+    }
 
-    let tmpFilename = await this.getTmpFilename();
+    await this.root();
+    const tmpFilename = await this.getTmpFilename();
     await fs.writeFile(tmpFilename, data);
     await this.cmd(['push', tmpFilename, filepath]);
     await fs.unlink(tmpFilename);
-    return;
   }
 
   async pull(filepath) {
-    await this.root();
+    if (this.sim) {
+      await fs.readFile(filepath, data);
+      return data;
+    }
 
-    let tmpFilename = await this.getTmpFilename();
+    await this.root();
+    const tmpFilename = await this.getTmpFilename();
     await this.cmd(['pull', filepath, tmpFilename]);
     let data = await fs.readFile(tmpFilename);
     await fs.unlink(tmpFilename);

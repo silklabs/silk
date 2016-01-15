@@ -11,8 +11,8 @@ import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('device');
 
-const SILK_ID_FILEPATH = '/data/silk/config/id.json';
-const SILK_CONFIG_FILEPATH = '/data/silk/config/config.json';
+const SILK_ID_FILEPATH = 'data/silk/config/id.json';
+const SILK_CONFIG_FILEPATH = 'data/silk/config/config.json';
 
 export default class Device {
   constructor(options, adb) {
@@ -68,6 +68,9 @@ export default class Device {
   }
 
   async updateWifi(ssid, password) {
+    if (this.adb.sim) {
+      return true; // Nothing to update on simulator
+    }
     log.debug(`update wifi with ${ssid} and ${password}`);
 
     let stdout = await this.adb.shell(['getprop', 'wifi.interface']);

@@ -1,3 +1,4 @@
 node_modules/
 .gulpcache/
-silk*
+silk.js
+silk.js.map

@@ -1,14 +1,4 @@
 #! /bin/bash -ex
 
-set -x
-# current module...
-MOD=$PWD
-# path to the sdk...
-SDK=$MOD/.
-
-# Move into the sdk...
-cd $SDK
-export BASEDIR=$MOD
+export BASEDIR=$PWD
 exec ./node_modules/.bin/gulp --gulpfile ./build/gulpfile.babel.js $@
-
-set +x

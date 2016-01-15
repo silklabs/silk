@@ -26,7 +26,10 @@ RCT_EXTERN_METHOD(close:(nonnull NSNumber *)socketID)
     return;
   }
   #endif
-  message = [TypeTransfer convert:message];
+  if ([message isKindOfClass:[NSData class]]) {
+    SLKBlobManager *blobManager = [[self bridge] moduleForClass:[SLKBlobManager class]];
+    message = [blobManager store:message];
+  }
   [super webSocket:webSocket didReceiveMessage:message];
 }
 

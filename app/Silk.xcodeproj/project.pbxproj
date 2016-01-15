@@ -61,8 +61,6 @@
 		57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */; };
 		57BCE0F81B6960270047088B /* AppRCTConvert+NSData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */; };
 		57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F91B6962ED0047088B /* BlobManager.swift */; };
-		57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0FB1B6984360047088B /* TypeTransfer.swift */; };
-		57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE1081B69867F0047088B /* TypeTransferTest.swift */; };
 		57BCE10D1B6991520047088B /* SLKBlobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* SLKBlobManager.m */; };
 		57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C2F1B92CE01003F9EFF /* DebugLog.swift */; };
 		57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C311B92CE10003F9EFF /* DebugLogTest.swift */; };
@@ -376,8 +374,6 @@
 		57BCE0F61B695FDC0047088B /* AppRCTConvert+NSData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AppRCTConvert+NSData.h"; sourceTree = "<group>"; };
 		57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "AppRCTConvert+NSData.m"; sourceTree = "<group>"; };
 		57BCE0F91B6962ED0047088B /* BlobManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlobManager.swift; sourceTree = "<group>"; };
-		57BCE0FB1B6984360047088B /* TypeTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransfer.swift; sourceTree = "<group>"; };
-		57BCE1081B69867F0047088B /* TypeTransferTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransferTest.swift; sourceTree = "<group>"; };
 		57BCE10C1B6991520047088B /* SLKBlobManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKBlobManager.m; sourceTree = "<group>"; };
 		57C30C2F1B92CE01003F9EFF /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		57C30C311B92CE10003F9EFF /* DebugLogTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLogTest.swift; sourceTree = "<group>"; };
@@ -715,8 +711,6 @@
 				5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */,
 				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
 				5758F23A1B5EFE7600C18E5D /* Sync.swift */,
-				57BCE0FB1B6984360047088B /* TypeTransfer.swift */,
-				57BCE1081B69867F0047088B /* TypeTransferTest.swift */,
 				5714A0641B734C4A00B0630C /* VideoSegment.swift */,
 				F9E92CCC1B38642000C10C24 /* SLKUtil.h */,
 				F9E92CD71B3864A100C10C24 /* SLKUtil.m */,
@@ -1148,7 +1142,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */,
 				573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */,
 				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
 				5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */,
@@ -1185,7 +1178,6 @@
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
 				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
 				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
-				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
 				5758F2601B600AF500C18E5D /* ImageViewManager.m in Sources */,
 				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,

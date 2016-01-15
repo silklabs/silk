@@ -9,13 +9,6 @@ public class BlobManager : NSObject {
   static let sharedInstance = BlobManager()
 
   /**
-  Helper method to make calling this from objective-c easier.
-  */
-  public class func store(blob: NSData) -> Dictionary<String, AnyObject> {
-    return BlobManager.sharedInstance.store(blob)
-  }
-
-  /**
    * Release a blob by id and return it as specific offset if found.
    */
   public class func releaseWithOffset(id: String, offset: NSNumber) -> NSData? {
@@ -44,6 +37,10 @@ public class BlobManager : NSObject {
    * This method is threadsafe.
    */
   func store(blob: NSData) -> JSONDict {
+    if (self != BlobManager.sharedInstance) {
+      return BlobManager.sharedInstance.store(blob)
+    }
+
     var result: JSONDict = [:]
     let id =  NSUUID().UUIDString
     objSync(self) {

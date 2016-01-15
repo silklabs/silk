@@ -6,7 +6,7 @@ import invariant from 'assert';
 import { EventEmitter } from 'events';
 import getSocketManager from './SocketManager';
 import * as Joi from 'joi-browserify';
-import mklog from 'log';
+import mklog from 'silk-log';
 import SocketSession from './SocketSession';
 
 import type { DeviceRecord } from '../../components/abstract/Devices';

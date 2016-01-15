@@ -10,7 +10,7 @@
 
 import fetch from 'node-fetch';
 import URL from 'url';
-import createLog from 'log';
+import createLog from 'silk-log';
 import type {Config as FetchConfig, Response} from 'node-fetch';
 
 const log = createLog('influxdb_client');

@@ -6,7 +6,7 @@
 
 /* eslint-disable no-console */
 
-import createLog from 'log';
+import createLog from 'silk-log';
 import fs from 'mz/fs';
 
 const log = createLog('dot-config');

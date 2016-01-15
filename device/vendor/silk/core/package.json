@@ -12,7 +12,7 @@
   },
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
-    "log": "/log",
+    "silk-log": "/log",
     "silk-api": "/api",
     "silk-raygun": "/raygun",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",

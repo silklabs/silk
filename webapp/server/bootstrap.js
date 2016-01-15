@@ -1,7 +1,8 @@
-
-import loadConfig from './config';
+import createLog from 'silk-log';
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
+
+import loadConfig from './config';
 
 export default function(createServer) {
   if (version.official) {
@@ -14,7 +15,7 @@ export default function(createServer) {
     });
   }
 
-  let log = require('log')('main');
+  const log = createLog('main');
   let profile = process.argv[2];
   let config = loadConfig(profile);
 

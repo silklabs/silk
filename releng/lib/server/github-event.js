@@ -1,5 +1,5 @@
 
-import makeLog from 'log';
+import makeLog from 'silk-log';
 let log = makeLog('github-event');
 
 import * as githubTool from '../github-tool.js';

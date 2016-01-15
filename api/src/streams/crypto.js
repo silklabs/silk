@@ -9,7 +9,7 @@ import ClosingTransform from './closing_transform';
 import crypto from 'crypto';
 import { DuplexTransform } from './duplex_transform';
 import { ec as ECDH } from 'elliptic';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 const log = makeLog(`api-streams-crypto`);
 

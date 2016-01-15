@@ -3,7 +3,7 @@
  *
  * Expected use:
  *
- *   import createLog from 'log';
+ *   import createLog from 'silk-log';
  *   const log = createLog('coolfeature');
  *
  *   log.verbose('useless');

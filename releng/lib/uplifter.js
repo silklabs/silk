@@ -4,7 +4,7 @@
  * @flow
  */
 
-import makeLog from 'log';
+import makeLog from 'silk-log';
 const log = makeLog('main');
 import silkrepos from './repos';
 import Octokat from 'octokat'; // Ref: https://www.npmjs.com/package/octokat

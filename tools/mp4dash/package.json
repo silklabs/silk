@@ -4,10 +4,15 @@
   "version": "0.0.1",
   "license": "proprietary",
   "scripts": {
+    "postinstall": "../npm/postinstall.js",
     "start": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/server.js",
     "cat": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js cat",
     "segments": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js segments",
     "file": "DEBUG=silk-* babel-node --presets es2015,stage-0,react --only src/**,node_modules/silk-api/src/** src/file_writer.js cat"
+  },
+  silkDependencies: {
+    "silk-api": "/api",
+    "silk-log": "/log"
   },
   "dependencies": {
     "babel-cli": "^6.0.0",
@@ -15,8 +20,6 @@
     "babel-preset-stage-0": "^6.0.0",
     "babel-preset-react": "^6.0.0",
     "fs-extra": "^0.26.2",
-    "log": "file:../../log",
-    "silk-api": "git@github.com:silklabs/silk-api-node.git#master",
     "socket.io-client": "^1.3.6"
   },
   "babel": {

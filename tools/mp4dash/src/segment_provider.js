@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import prepareSegment from './dash_segment';
 

@@ -1,7 +1,8 @@
 /* @flow */
 import * as Joi from 'joi';
+import createLog from 'silk-log';
 
-let log = require('log')('models:base');
+const log = createLog('models:base');
 
 // XXX: Sadly we need to re-declare Error to add captureStackTrace.
 declare class Error {

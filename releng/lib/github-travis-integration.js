@@ -48,7 +48,7 @@ import invariant from 'assert';
 import YAML from 'yamljs';
 import merge from 'lodash.merge';
 import cb2promise from 'promise-callback';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import {
   getOctokat,

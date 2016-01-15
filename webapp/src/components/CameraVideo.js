@@ -4,9 +4,11 @@ import ReactDOM from 'react-dom';
 import { Button, ButtonGroup, Glyphicon, Label, ProgressBar } from 'react-bootstrap';
 import { Link } from 'react-router';
 import { EventEmitter } from 'events';
-import mklog from 'log'; const log = mklog('CameraVideo');
+import createLog from 'silk-log';
 
 import Cameras from '../libraries/Cameras';
+
+const log = createLog('CameraVideo');
 
 class VideoTag extends EventEmitter {
 

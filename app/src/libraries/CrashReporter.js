@@ -8,7 +8,7 @@
 
 import version from 'silk-core-version';
 import RaygunApi from 'silk-raygun/api';
-import createLog from 'log';
+import createLog from 'silk-log';
 import { parse } from 'stacktrace-parser';
 
 import { exitApp } from './Util';

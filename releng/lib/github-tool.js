@@ -1,7 +1,7 @@
 /**
  * @flow
  */
-import createLog from 'log';
+import createLog from 'silk-log';
 import { getOctokat, makeGitHubLog } from './github';
 
 type PullRequest = Object;

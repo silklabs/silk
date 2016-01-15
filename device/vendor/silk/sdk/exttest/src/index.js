@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import createLog from 'log';
+import createLog from 'silk-log';
 import createOutbox from 'silk-core/lib/outbox';
 import NetworkStatus from 'silk-core/lib/network_status';
 import Timeline from 'silk-core/lib/timeline';

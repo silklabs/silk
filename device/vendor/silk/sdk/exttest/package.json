@@ -7,7 +7,7 @@
     "postinstall": "../../../../../tools/npm/postinstall.js"
   },
   "silkDependencies": {
-    "log": "/log",
+    "silk-log": "/log",
     "silk-core": "/device/vendor/silk/core"
   }
 }

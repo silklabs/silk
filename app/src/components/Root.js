@@ -17,7 +17,7 @@ import Config from '../libraries/Config';
 import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
-import createLog from 'log';
+import createLog from 'silk-log';
 import createAPI from 'silk-api';
 import version from 'silk-core-version';
 

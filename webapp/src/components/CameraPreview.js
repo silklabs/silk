@@ -1,8 +1,11 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import createLog from 'silk-log';
+
 import Cameras from '../libraries/Cameras';
-import mklog from 'log'; const log = mklog('CameraPreview');
+
+const log = createLog('CameraPreview');
 
 export default class CameraPreview extends React.Component {
   static propTypes = {

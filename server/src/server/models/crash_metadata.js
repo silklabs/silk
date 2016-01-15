@@ -3,8 +3,9 @@
 import * as Joi from 'joi';
 import mongo from 'promised-mongo';
 import Base from './base';
+import createLog from 'silk-log';
 
-let log = require('log')('models-crashreport');
+const log = createLog('models-crashreport');
 
 const TYPE_DEVICEID = Joi.string().lowercase().trim().hex();
 

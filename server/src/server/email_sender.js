@@ -3,8 +3,9 @@ import { SES } from 'aws-sdk-promise';
 import { readdirSync } from 'fs';
 import path from 'path';
 import * as Joi from 'joi';
+import createLog from 'silk-log';
 
-let log = require('log')('email-sender');
+const log = createLog('email-sender');
 
 const TEMPLATE_SRC = path.join(__dirname, 'emails');
 const ASSET_SRC = path.join(__dirname, '../../assets/emails/');

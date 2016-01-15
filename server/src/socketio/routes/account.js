@@ -7,7 +7,7 @@ import {
   DEVICE_ONLINE_EVENT
 } from '../account_room';
 
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import type {Record as AccountRecord} from '../../server/models/accounts';
 import type {Socket} from 'socket.io';

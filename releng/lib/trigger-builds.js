@@ -5,7 +5,7 @@
  * @flow
  */
 
-import makeLog from 'log';
+import makeLog from 'silk-log';
 const log = makeLog('main');
 
 const buildList = [

@@ -15,13 +15,13 @@
     "test": "./bin/networkTest.js"
   },
   "silkDependencies": {
+    "eslint-config-silk": "/eslint",
+    "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
     "silk-core": "/device/vendor/silk/core",
     "silk-core-version": "/version",
-    "silk-api": "/api",
-    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
-    "eslint-config-silk": "/eslint",
-    "log": "/log"
+    "silk-log": "/log",
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue"
   },
   "dependencies": {
     "easy-table": "^1.0.0",

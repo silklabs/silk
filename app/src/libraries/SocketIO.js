@@ -1,5 +1,5 @@
 import { NativeModules } from 'react-native';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 const log = createLog('SocketIO');
 

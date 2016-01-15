@@ -5,7 +5,7 @@ import {
   EventEmitter,
 } from 'events';
 import merge from 'lodash.merge';
-import mklog from 'log'; const log = mklog('Config');
+import mklog from 'silk-log'; const log = mklog('Config');
 
 // Default configuration...
 const DEFAULT = {

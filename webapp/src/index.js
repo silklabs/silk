@@ -19,7 +19,7 @@ import Cameras from './libraries/Cameras';
 import api from './libraries/Api';
 import loadUserState from './libraries/UserState';
 
-import { configureLog } from 'log';
+import { configureLog } from 'silk-log';
 configureLog(Config.debug);
 
 import React from 'react'; //eslint-disable-line no-unused-vars

@@ -1,7 +1,8 @@
-
-import loadConfig from './server/config';
+import createLog from 'silk-log';
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
+
+import loadConfig from './server/config';
 
 import v8 from 'v8';
 v8.setFlagsFromString('--trace_gc');
@@ -18,7 +19,7 @@ export default function(createServer) {
     });
   }
 
-  let log = require('log')('main');
+  const log = createLog('main');
   let profile = process.argv[2];
   let config = loadConfig(profile);
 

@@ -15,7 +15,9 @@ import eventToPromise from 'event-to-promise';
 import { Server as Static } from 'node-static';
 import http from 'http';
 
-let log = require('log')('email_generate');
+import createLog from 'silk-log';
+
+const log = createLog('email_generate');
 
 const SRC = path.join(__dirname, '../assets/emails');
 const DEST = path.join(__dirname, '/server/emails');

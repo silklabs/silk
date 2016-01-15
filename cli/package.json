@@ -19,7 +19,7 @@
   },
   "silkDependencies": {
     "eslint-config-silk": "/eslint",
-    "log": "/log",
+    "silk-log": "/log",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps"
   },

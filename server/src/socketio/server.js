@@ -8,7 +8,7 @@ import authorizeDevice from '../server/authorize_device';
 import authorizeAccount from '../server/authorize_account';
 import {listen as createSocketio} from 'socket.io';
 import deviceRoutes from './routes/device';
-import createLog from 'log';
+import createLog from 'silk-log';
 import accountRoutes from './routes/account';
 
 import URL from 'url';

@@ -14,7 +14,7 @@
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/sdk/exttest",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
-    "log": "/log"
+    "silk-log": "/log"
   },
   "dependencies": {
     "mz": "2.0.0",

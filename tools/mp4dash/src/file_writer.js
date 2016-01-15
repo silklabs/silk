@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import process from 'process';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import connectToSocketIO from './socketio';
 import SegmentProvider from './segment_provider';

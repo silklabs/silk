@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import makeLog from 'log';
+import makeLog from 'silk-log';
 import { Transform } from 'stream';
 
 const EVENT_NAME_CLOSE = `close`;

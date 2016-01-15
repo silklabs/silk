@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import process from 'process';
 import createApi from 'silk-api';
-import createLog from 'log';
+import createLog from 'silk-log';
 import socketio from 'socket.io-client';
 
 import config from './config';

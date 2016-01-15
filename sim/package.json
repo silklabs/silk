@@ -1,0 +1,12 @@
+{
+  "name": "silk-sim",
+  "version": "0.11.0",
+  "description": "Silk Device Simulator",
+  "scripts": {
+    "postinstall": "cd system/silk && npm install",
+    "start": "./start",
+    "test": "./test/boot_test"
+  },
+  "author": "Silk Labs Inc.",
+  "private": true
+}

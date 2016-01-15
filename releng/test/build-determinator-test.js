@@ -100,4 +100,16 @@ suite('build determinator', () => {
     assert.strictEqual(builds.length, 1);
     assert.strictEqual(builds[0].name, 'device-nightly');
   });
+
+  test('determine builds by name wildcard', async () => {
+    let event = {
+      name: 'app-*',
+      sha: 'abcdef',
+      branch: 'master',
+    };
+    let builds = await determineBuildsForEvent('silklabs', 'repo', event);
+    let buildNames = builds.map((build) => build.name).sort();
+    assert.deepEqual(buildNames, ['app-build-pr', 'app-build-push', 'app-lint']);
+  });
+
 });

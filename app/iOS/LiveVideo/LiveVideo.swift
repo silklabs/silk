@@ -115,7 +115,7 @@ class LiveVideo : UIView {
   static let TIME_EVENT_INTERVAL = 100
 
   var loader: SocketIOAVAssetLoaderDelegate! = SocketIOAVAssetLoaderDelegate()
-  var eventDispatcher: RCTEventDispatcher!
+  var bridge: RCTBridge!
 
   var rate: NSNumber = 1.0 {
     didSet {
@@ -166,10 +166,10 @@ class LiveVideo : UIView {
   private var playing = false
   private var pendingPlay: PropertyObserverKey?
 
-  init(eventDispatcher: RCTEventDispatcher) {
+  init(bridge: RCTBridge) {
     super.init(frame: CGRectZero)
     self.player = AVQueuePlayer()
-    self.eventDispatcher = eventDispatcher
+    self.bridge = bridge
     self.playerLayer = AVPlayerLayer(player: self.player)
     self.playerLayer.frame = self.bounds
     self.layer.addSublayer(self.playerLayer)
@@ -388,7 +388,7 @@ class LiveVideo : UIView {
     switch(segment.type) {
     case "url":
       operation = GetAVAssetURLOperation(url: segment.url!)
-    case "data":
+    case "blob":
       operation = self.buildVideoDataOperation(segment)
     default:
       NSLog("Unknown segment type \(segment.type) this should be impossible!");
@@ -422,16 +422,14 @@ class LiveVideo : UIView {
   */
   private func buildVideoDataOperation(segment: VideoSegment) -> GetAVAssetURLOperation {
     Assertion({
-        segment.data != nil
+        segment.blob != nil
       },
       message: "Attempted to use null data for segment: \(segment.id)"
     )
 
-    // Consume segment data and ensure the container does not keep a reference to it.
-    let data = segment.data!
-    segment.data = nil
-
-    let (_, url) = self.loader.add(data)
+    let blobManager = bridge.moduleForClass(BlobManager) as! BlobManager
+    let data = blobManager.resolveAndReleaseBlob(segment.blob!)
+    let (_, url) = self.loader.add(data!)
     return GetAVAssetURLOperation(url: url, loader: self.loader, queue: self.assetLoaderQueue)
   }
 
@@ -516,7 +514,7 @@ class LiveVideo : UIView {
       "startUTC": NSNumber(longLong: item.start)
     ]
 
-    self.eventDispatcher.sendInputEventWithName(type, body: eventBody)
+    self.bridge.eventDispatcher.sendInputEventWithName(type, body: eventBody)
   }
 
   func sendSegmentErrorEvent(item: VideoSegment, error: NSError) {
@@ -526,7 +524,7 @@ class LiveVideo : UIView {
       "id": item.id
     ]
 
-    self.eventDispatcher.sendInputEventWithName("segmentError", body: eventBody)
+    self.bridge.eventDispatcher.sendInputEventWithName("segmentError", body: eventBody)
 
   }
 
@@ -565,7 +563,7 @@ class LiveVideo : UIView {
       "time":  NSNumber(longLong: currentTime)
     ]
 
-    self.eventDispatcher.sendInputEventWithName(
+    self.bridge.eventDispatcher.sendInputEventWithName(
       "timeChange", body: eventBody
     )
   }
@@ -647,7 +645,7 @@ class LiveVideo : UIView {
     // Note: This is an intentional pattern to catch any subtle leaks these should
     // always be available unless something in our logic is broken or not cleaned up.
     self.itemPlayedToEndObserver = nil
-    self.eventDispatcher = nil
+    self.bridge = nil
     self.player = nil
     self.playerLayer = nil
     self.loader = nil

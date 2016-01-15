@@ -2,6 +2,6 @@
 class ImageViewManager:  RCTViewManager {
 
   override func view() -> UIView! {
-    return ImageView()
+    return ImageView(bridge: self.bridge!)
   }
 }

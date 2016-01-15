@@ -32,14 +32,10 @@ class VideoSegment: NSObject {
       )
     }
 
-    if type == "data" {
-      let bridgedData = dict["data"] as! Dictionary<String, AnyObject>
-      let dataId = bridgedData["id"] as! String
-      let offset = bridgedData["offset"] as! NSNumber
-      let data = BlobManager.releaseWithOffset(dataId, offset: offset)
-
+    if type == "blob" {
+      let blob = dict["blob"] as! Dictionary<String, AnyObject>
       return VideoSegment(
-        data: data,
+        blob: blob,
         id: id,
         previousId: previousId,
         startUTC: startUTC,
@@ -64,7 +60,7 @@ class VideoSegment: NSObject {
   */
   var type: String
   var url: NSURL?
-  var data: NSData?
+  var blob: Dictionary<String, AnyObject>?
   var id: String
   var previousId: String?
 
@@ -87,11 +83,11 @@ class VideoSegment: NSObject {
     self.endUTC = endUTC
   }
 
-  init(data: NSData?, id: String, previousId: String?, startUTC: Int64, endUTC: Int64) {
-    self.type = "data"
+  init(blob: Dictionary<String, AnyObject>?, id: String, previousId: String?, startUTC: Int64, endUTC: Int64) {
+    self.type = "blob"
     self.id = id
     self.previousId = previousId
-    self.data = data
+    self.blob = blob
     self.startUTC = startUTC
     self.endUTC = endUTC
   }

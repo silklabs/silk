@@ -1,11 +1,8 @@
 /* @flow */
 
 import assert from 'assert';
-import {
-  Float,
-  Integer,
-  default as BaseMetric,
-} from '../src/metric';
+import BaseMetric from '../src/metric';
+import {Float, Integer} from '../src/metric_types';
 
 suite('metrics', function() {
 

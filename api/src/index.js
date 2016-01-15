@@ -26,7 +26,9 @@ import makeStreams from './streams';
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;
 export { overrideImplementation as overrideCryptoSignImplementation } from './crypto_sign';
-export { default as Metric, Integer, Float } from './metric';
+export { default as RssiSmoother } from './rssi_smoother';
+export { default as Metric } from './metric';
+export { default as MetricTypes } from './metric_types';
 
 export const BTLE_SOCKET_UUIDS = {
   service: '78955692-e50a-4dfd-b1f0-f59303ebf4cb',
@@ -147,8 +149,8 @@ export class SilkApi {
     this.metadata = new Metadata(state);
     this.streams = makeStreams(config);
 
-    this.deviceMetrics = new MetricsAgent(this.device);
-    this.accountMetrics = new MetricsAgent(this.account);
+    this.deviceMetrics = new MetricsAgent(this.device, this.canReachServer);
+    this.accountMetrics = new MetricsAgent(this.account, this.canReachServer);
   }
 
   /**
@@ -210,7 +212,7 @@ export class SilkApi {
     return socket;
   }
 
-  async canReachServer(): Promise<bool> {
+  canReachServer: () => Promise<bool> = async () => {
     let path = '/v1/account/socketio/url';
     let url = URL.resolve(this.config.serverUrl, path);
     try {
@@ -221,7 +223,7 @@ export class SilkApi {
       log.info('canReachServer(): false');
       return false;
     }
-  }
+  };
 }
 
 export default function (config: Config): SilkApi {

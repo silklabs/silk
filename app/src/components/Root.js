@@ -3,6 +3,7 @@ CrashReporter.start();
 
 import React from 'react-native';
 let {
+  NetInfo,
   StyleSheet,
   Text,
   View,
@@ -77,8 +78,22 @@ export default class Root extends AsyncComponent {
     if (serverUrl !== '' /* use API default server */) {
       apiOptions.serverUrl = serverUrl;
     }
+
     let api = createAPI(apiOptions);
+
+    // Hook up metrics to network state. This will give the metrics agent a kick
+    // each time network state changes (offline/online).
+    NetInfo.isConnected.addEventListener(
+      'change',
+      api.accountMetrics.onConnectivityChange
+    );
+
     userState = await loadUserState(api);
+
+    // If we already are logged in immediately start metrics agent.
+    if (userState.accessToken) {
+      api.accountMetrics.start();
+    }
 
     userState.on('authenticated', this.onAuthenticated);
     userState.on('unauthenticated', this.onUnauthenticated);
@@ -93,10 +108,12 @@ export default class Root extends AsyncComponent {
 
   onAuthenticated = (accessToken) => {
     this.setStateAsync({accessToken});
+    this.state.api.accountMetrics.start();
   };
 
   onUnauthenticated = () => {
     this.setStateAsync({accessToken: null});
+    this.state.api.accountMetrics.stop();
   };
 
   render() {

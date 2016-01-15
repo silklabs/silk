@@ -8,42 +8,7 @@
  * @flow
  */
 
-import assert from 'assert';
-
-export class Float {
-  value: number;
-  constructor(value: number) {
-    this.value = value;
-  }
-
-  toString(): string {
-    if (Number.isInteger(this.value)) {
-      return `${this.value}.0`;
-    }
-
-    return String(this.value);
-  }
-
-  toJSON(): string {
-    return this.toString();
-  }
-}
-
-export class Integer {
-  value: number;
-  constructor(value: number) {
-    assert(Number.isInteger(value));
-    this.value = value;
-  }
-
-  toString(): string {
-    return this.value.toFixed();
-  }
-
-  toJSON(): string {
-    return this.toString();
-  }
-}
+import { Float, Integer } from './metric_types';
 
 // XXX: Is regex fast enough?
 const TAG_SANITIZE = /(,|=|\s)/g;
@@ -93,7 +58,7 @@ export default class BaseMetric {
 
     // XXX: Does not appear to be a way to staticly check that the subclass has
     // not changed the type of INDEX so we verify it here.
-    if (!(this.constructor.INDEX instanceof Set)) {
+    if (!(this.constructor.INDEX.constructor.name === 'Set')) {
       throw new Error('.INDEX must be an instanceof Set.');
     }
 

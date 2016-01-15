@@ -36,4 +36,18 @@ RCT_EXPORT_METHOD(exitApp) {
   @throw [NSException exceptionWithName:@"NotAllowedToExitException" reason:@"Attempted exit" userInfo:nil];
 }
 
+- (NSDictionary *)constantsToExport {
+  NSString *model = [[UIDevice currentDevice] model];
+  NSString *name = [[UIDevice currentDevice] name];
+  NSString *systemName = [[UIDevice currentDevice] systemName];
+  NSString *systemVersion = [[UIDevice currentDevice] systemVersion];
+
+  return @{
+    @"model" : (model),
+    @"name" : (name),
+    @"systemName" : (systemName),
+    @"systemVersion" : (systemVersion)
+  };
+}
+
 @end

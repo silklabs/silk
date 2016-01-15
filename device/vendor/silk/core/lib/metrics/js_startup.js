@@ -7,11 +7,11 @@
  */
 
 import DeviceMetric from './device_metric.js';
-import {Integer} from 'silk-api';
+import {MetricTypes} from 'silk-api';
 
 type Props = {
   // How long it takes to load js deps.
-  startupMS: Integer;
+  startupMS: MetricTypes.Integer;
 }
 
 export default class JSStartup extends DeviceMetric {

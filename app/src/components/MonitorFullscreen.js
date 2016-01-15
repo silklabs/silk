@@ -12,6 +12,10 @@ import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import DateOverlay from './DateOverlay';
 
+import {MetricTypes} from 'silk-api';
+import FullScreenVideoLaunch from '../metrics/FullScreenVideoLaunch';
+import FullScreenVideoDuration from '../metrics/FullScreenVideoDuration';
+
 const log = createLog('MonitorFullscreen');
 
 const {
@@ -222,6 +226,8 @@ export default class MonitorFullscreen extends React.Component {
 
   componentWillMount() {
     this.mounted = true;
+    this._watchStart = Date.now();
+    this.props.api.accountMetrics.add(new FullScreenVideoLaunch());
 
     this._liveSegmentProvider = new LiveSegmentProvider(this.onLiveSegment);
     if (this.props.startAtTime) {
@@ -782,6 +788,11 @@ export default class MonitorFullscreen extends React.Component {
 
   close = () => {
     var overlay = this.refs.overlay;
+    var duration = Date.now() - this._watchStart;
+    this.props.api.accountMetrics.add(new FullScreenVideoDuration({
+      durationMs: new MetricTypes.Integer(duration),
+    }));
+
     // Signal dismissal of the view (but let it animate closed).
     // After the animation allow any parent views to cleanup.
     return overlay.dismiss().then(() => {

@@ -87,6 +87,9 @@ module.exports = {
         global: ['GONK=mako'],
       },
     },
+    ignore_files: [
+      'device/repocache/**/*',
+    ],
     events: ['push'],
   }),
   'networktest': npmPackageBuild('networktest'),

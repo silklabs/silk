@@ -97,7 +97,7 @@ module.exports = {
   // Nightly device builds
   'device-qemu-nightly': nightlyBuild('device', {
     branches: ['master', 'next'],
-    message: 'qemu nightly',
+    title: 'qemu nightly',
     travis_config: {
       env: {
         global: ['GONK=qemu'],
@@ -109,7 +109,7 @@ module.exports = {
     events: ['nightly', 'push'],
   }),
   'device-hammerhead-nightly': nightlyBuild('device', {
-    message: 'hammerhead nightly',
+    title: 'hammerhead nightly',
     travis_config: {
       env: {
         global: ['GONK=hammerhead'],
@@ -117,7 +117,7 @@ module.exports = {
     },
   }),
   'device-osx-nightly': nightlyBuild('device', {
-    message: 'OS X base nightly',
+    title: 'OS X base nightly',
     travis_config: {
       env: {
         global: ['GONK=base'],
@@ -126,7 +126,7 @@ module.exports = {
   }),
   'device-base.msm8916-nightly': nightlyBuild('device', {
     branches: ['master', 'next'],
-    message: 'base.msm8916 nightly',
+    title: 'base.msm8916 nightly',
     travis_config: {
       env: {
         global: ['GONK=base.msm8916'],
@@ -136,7 +136,7 @@ module.exports = {
 
   // Nightly repocache deploys to S3
   'repocache-base-nightly': {
-    message: 'Updating repocache for base gonk',
+    title: 'Updating repocache for base gonk',
     travis_yml: 'device/repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
@@ -148,7 +148,7 @@ module.exports = {
     branches: ['master'],
   },
   'repocache-mako-nightly': {
-    message: 'Updating repocache for mako gonk',
+    title: 'Updating repocache for mako gonk',
     travis_yml: 'device/repocache/travis.yml',
     travis_config: {
       env: {
@@ -159,7 +159,7 @@ module.exports = {
     branches: ['master'],
   },
   'repocache-hammerhead-nightly': {
-    message: 'Updating repocache for hammerhead gonk',
+    title: 'Updating repocache for hammerhead gonk',
     travis_yml: 'device/repocache/travis.yml',
     travis_config: {
       env: {
@@ -170,7 +170,7 @@ module.exports = {
     branches: ['master'],
   },
   'repocache-qemu-nightly': {
-    message: 'Updating repocache for qemu gonk',
+    title: 'Updating repocache for qemu gonk',
     travis_yml: 'device/repocache/travis.yml',
     travis_config: {
       env: {

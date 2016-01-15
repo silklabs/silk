@@ -30,6 +30,6 @@ class LiveVideoManager:  RCTViewManager {
   }
 
   override func view() -> UIView! {
-    return LiveVideo(eventDispatcher: self.bridge!.eventDispatcher)
+    return LiveVideo(bridge: self.bridge!)
   }
 }

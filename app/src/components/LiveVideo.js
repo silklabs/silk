@@ -6,7 +6,7 @@ const RCT_NATIVE_REF = 'livevideo';
 
 const SEGMENT_PROPS = [
   'type',
-  'data',
+  'blob',
   'url',
   'startUTC',
   'endUTC',

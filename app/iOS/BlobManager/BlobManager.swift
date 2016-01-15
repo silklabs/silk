@@ -6,25 +6,26 @@
 @objc(SLKBlobManager)
 public class BlobManager : NSObject {
   internal typealias JSONDict = Dictionary<String, AnyObject>
-  static let sharedInstance = BlobManager()
+
+  public func resolveAndReleaseBlob(blob: Dictionary<String, AnyObject>) -> NSData? {
+    let blobID = blob["id"] as! String
+    var blobOffset: NSNumber = 0
+    if let offset = blob["offset"] as? NSNumber {
+      blobOffset = offset
+    }
+    return self.releaseWithOffset(blobID, offset: blobOffset)
+  }
 
   /**
    * Release a blob by id and return it as specific offset if found.
    */
-  public class func releaseWithOffset(id: String, offset: NSNumber) -> NSData? {
+  public func releaseWithOffset(id: String, offset: NSNumber) -> NSData? {
     if let data = self.release(id) {
       Assertion({ data.length > offset.integerValue }, message: "data offset < length")
       let range = NSMakeRange(offset.integerValue, data.length - offset.integerValue)
       return data.subdataWithRange(range)
     }
     return nil
-  }
-
-  /**
-   * Helper method to make calling this from objective-c easier.
-   */
-  public class func release(id: String) -> NSData? {
-    return BlobManager.sharedInstance.release(id)
   }
 
   var blobs: Dictionary<String, NSData> = [:]
@@ -37,10 +38,6 @@ public class BlobManager : NSObject {
    * This method is threadsafe.
    */
   func store(blob: NSData) -> JSONDict {
-    if (self != BlobManager.sharedInstance) {
-      return BlobManager.sharedInstance.store(blob)
-    }
-
     var result: JSONDict = [:]
     let id =  NSUUID().UUIDString
     objSync(self) {

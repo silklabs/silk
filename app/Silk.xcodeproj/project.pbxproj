@@ -59,7 +59,6 @@
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
 		57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */; };
 		57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */; };
-		57BCE0F81B6960270047088B /* AppRCTConvert+NSData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */; };
 		57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F91B6962ED0047088B /* BlobManager.swift */; };
 		57BCE10D1B6991520047088B /* SLKBlobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* SLKBlobManager.m */; };
 		57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C2F1B92CE01003F9EFF /* DebugLog.swift */; };
@@ -371,8 +370,6 @@
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LiveVideoManager.m; sourceTree = "<group>"; };
 		57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideoManager.swift; sourceTree = "<group>"; };
-		57BCE0F61B695FDC0047088B /* AppRCTConvert+NSData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AppRCTConvert+NSData.h"; sourceTree = "<group>"; };
-		57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "AppRCTConvert+NSData.m"; sourceTree = "<group>"; };
 		57BCE0F91B6962ED0047088B /* BlobManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlobManager.swift; sourceTree = "<group>"; };
 		57BCE10C1B6991520047088B /* SLKBlobManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKBlobManager.m; sourceTree = "<group>"; };
 		57C30C2F1B92CE01003F9EFF /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
@@ -737,8 +734,6 @@
 		57BCE0F51B695FB10047088B /* RCTConvert */ = {
 			isa = PBXGroup;
 			children = (
-				57BCE0F61B695FDC0047088B /* AppRCTConvert+NSData.h */,
-				57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */,
 				5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */,
 				5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */,
 			);
@@ -1192,7 +1187,6 @@
 				573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */,
 				574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */,
 				357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */,
-				57BCE0F81B6960270047088B /* AppRCTConvert+NSData.m in Sources */,
 				57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

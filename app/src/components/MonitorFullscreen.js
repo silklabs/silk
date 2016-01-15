@@ -116,8 +116,8 @@ class LiveSegmentProvider {
     // Create the segment from the frame.
     let id = uuid.v1();
     let segment = new LiveVideo.Segment({
-      type: 'data',
-      data: message.frame,
+      type: 'blob',
+      blob: message.frame,
       id,
       previousId: this.lastId,
       startUTC: message.when,

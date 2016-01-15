@@ -29,7 +29,8 @@ export type BuildConfig = {
   branches?: Array<string>;
 };
 export type BuildTriggerEvent = {
-  type: EventType;
+  name?: string;
+  type?: EventType;
   sha: string;
   branch: string;
   filesChanged?: Array<string>;
@@ -148,17 +149,22 @@ export async function determineBuildsForEvent(
   ));
 
   return builds.filter((build) => {
-    // Step 1: Filter by events
-    if (build.events && build.events.indexOf(event.type) === -1) {
+    // Step 1: Filter by name
+    if (event.name && !minimatch(build.name, event.name)) {
       return false;
     }
 
-    // Step 2: Filter by branches
+    // Step 2: Filter by events
+    if (build.events && event.type && build.events.indexOf(event.type) === -1) {
+      return false;
+    }
+
+    // Step 3: Filter by branches
     if (build.branches && build.branches.indexOf(event.branch) === -1) {
       return false;
     }
 
-    // Step 3: Filter by files changed.
+    // Step 4: Filter by files changed
     if (build.files && event.filesChanged) {
       let filesForThisBuild = event.filesChanged.slice();
 

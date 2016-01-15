@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
+ * Confidential and Proprietary - Silk Labs, Inc
  */
 
 import createLog from './log';
@@ -18,8 +18,25 @@ const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 
-class Env extends EventEmitter {
+/**
+ * Type representing the camera preview frame callback
+ *
+ * @property {boolean} err True if the frame is retrieved succesfully, false
+ *                         otherwise
+ * @property {object} image Requested preivew image as per the specified channel
+ * @property {object} orig Original unmodified image from the sensor
+ */
+/*eslint-disable no-unused-vars*/
+type CameraCallback = (err: boolean, image: any, orig: any) => void;
+/*eslint-enable no-unused-vars*/
 
+/**
+ * Class that provides Silk SDK APIs to extensions/behaviors
+ *
+ * @param {string} name Name of the extension/behavior
+ * @param {Array<objects>} deviceObjects List of available device modules
+ */
+class Env extends EventEmitter {
   constructor(name, deviceObjects) {
     super();
     this._name = name;
@@ -30,6 +47,7 @@ class Env extends EventEmitter {
   /**
    * Helper routine to register for device events and emit them to the
    * extension device, and properly save listeners.
+   * @private
    */
   _addEvents(deviceName, device, extDevice, events) {
     events.forEach(event => {
@@ -41,6 +59,7 @@ class Env extends EventEmitter {
 
   /**
    * Save enough event listener info so that we can remove during cleanup
+   * @private
    */
   _saveListener(device, event, listener) {
     this._listenerObjects.push({device, event, listener});
@@ -49,11 +68,35 @@ class Env extends EventEmitter {
   /**
    * Builds the interface into the device functions that are available to
    * extensions.
+   * @private
    */
   _addDeviceAPIs(deviceObjects) {
+
+    /**
+     * This module exposes functionality to activate/deactivate and read sensors
+     * data from various sensors avaialble on the device.
+     * @memberof Env
+     */
     let sensors = deviceObjects.sensors;
     if (sensors) {
+      /**
+       * Light event. This event is emiited when light sensor level is available
+       *
+       * @event light
+       * @memberof Env.sensors
+       * @type {Object}
+       * @property {number} level Light level in SI lux units
+       */
       this.sensors = new EventEmitter();
+
+      /**
+       * Enable/Disable light sensor
+       *
+       * @param {number} pollInterval Interval in ms at which to poll for light
+       *        values
+       * @memberof Env.sensors
+       * @instance
+       */
       this.sensors.light = pollInterval => {
         if (!pollInterval) {
           sensors.deactivate(sensors.SENSOR_TYPE.LIGHT);
@@ -61,6 +104,7 @@ class Env extends EventEmitter {
           sensors.activate(sensors.SENSOR_TYPE.LIGHT, pollInterval);
         }
       };
+
       let listener = sensorEvent => {
         if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
           return;
@@ -71,38 +115,154 @@ class Env extends EventEmitter {
       this._saveListener(sensors, 'data', listener);
     }
 
+    /**
+     * Class that provides functionality to interact with camera module on the
+     * device
+     * @memberof Env
+     */
     let camera = deviceObjects.camera;
     if (camera) {
       this.camera = new EventEmitter();
 
       this._addEvents('camera', camera, this.camera, ['mic-data']);
 
+      /**
+       * Turn on/off torch light
+       *
+       * @param {boolean} state Turn on/off the torch light
+       * @memberof Env.camera
+       * @instance
+       */
       this.camera.torch = state => {
         camera.flash(state ? camera.FLASH_MODE.TORCH : camera.FLASH_MODE.OFF);
       };
+
+      /**
+       * Get preview frame
+       *
+       * @param {CameraCallback} userCb Callback that receives the requested frames
+       * @param {number} when Timestamp of when the camera frame was fetched
+       *        from the camera sensor
+       * @param {number} channel 0 for RGB
+       *                         1 for grayscale equalized
+       * @memberof Env.camera
+       * @instance
+       */
       this.camera.getPreviewFrame = (userCb, when, channel) => {
         camera.getPreviewFrame(userCb, when, channel);
       };
+
+      /**
+       * Get camera parameter as integer. This function returns a Promise that resolves
+       * when the parameter value is successfully retrieved
+       *
+       * @param {string} name Name of the parameter
+       * @return {Promise}
+       * @memberof Env.camera
+       * @instance
+       */
       this.camera.getParameterInt = /* async */ (name) => {
         return camera.ready()
         .then(() => camera.getParameterInt(name));
       };
+
+      /**
+       * Get camera parameter as string. This function returns a Promise that resolves
+       * when the parameter value is successfully retrieved
+       *
+       * @param {string} name Name of the parameter
+       * @return {Promise}
+       * @memberof Env.camera
+       * @instance
+       */
       this.camera.getParameterStr = /* async */ (name) => {
         return camera.ready()
         .then(() => camera.getParameterStr(name));
       };
     }
 
+    /**
+     * Class that provides functionlity to send and receive objects to the
+     * timeline
+     * @memberof Env
+     */
     let timeline = deviceObjects.timeline;
     if (timeline) {
       this.timeline = new EventEmitter();
 
+      /**
+       * Preview event. This event is emiited when a preview is available
+       *
+       * @event preview
+       * @memberof Env.timeline
+       * @type {Object}
+       * @property {number} when Time when the preview was generated
+       */
+
+      /**
+       * Face event. This event is emiited when a face is detected by the device
+       *
+       * @event face
+       * @memberof Env.timeline
+       * @type {Object}
+       * @property {number} when Timestamp of when the face was seen
+       * @property {Array<Rect>} faces Rectangle co-ordinates of the faces
+       * @property {string} source Who found this face (ex HAL)
+       */
+
+      /**
+       * Clap event. This event is emiited when a clap is heard by the device
+       *
+       * @event clap
+       * @memberof Env.timeline
+       * @type {Object}
+       * @property {number} count of number of claps heard
+       */
+
+      /**
+       * Motion event. This event is emiited when motion is detected by the device
+       *
+       * @event motion
+       * @memberof Env.timeline
+       * @type {Object}
+       * @property {number} when Timestamp of when the face was seen
+       * @property {Array<Rect>} rects Rectangle co-ordinates of the motion
+       * @property {string} source Who found this face (ex HAL)
+       */
+
+      /**
+       * No motion event. This event is emiited when no motion is detected in
+       * the last preview frame
+       *
+       * @event no-motion
+       * @memberof Env.timeline
+       * @type {Object}
+       * @property {number} when Timestamp of when the face was seen
+       */
       this._addEvents('timeline', timeline, this.timeline,
           ['preview', 'face', 'clap', 'motion', 'no-motion']);
 
+      /**
+       * Add an object to timeline
+       *
+       * @param {string} tag Type of the object detected
+       * @param {number} when [] Time when the object was detected
+       * @param {Rect} rect [] Rectangle co-ordinates of the object
+       * @memberof Env.timeline
+       * @instance
+       */
       this.timeline.addObject = (tag, when, rect) => {
         timeline.addObject(tag, when, rect, this._name);
       };
+
+      /**
+       * Add objects to timeline
+       *
+       * @param {Array<TimelineEventObject>} objs List of objects to be
+       *                                     added to the timeline
+       * @memberof Env.timeline
+       * @instance
+       */
       this.timeline.addObjects = objs => {
         let newObjs = null;
         if (objs && (objs.length > 0)) {
@@ -115,32 +275,122 @@ class Env extends EventEmitter {
 
         timeline.addObjects(newObjs);
       };
+
+      /**
+       * Report that there is no motion detected in the preview image
+       *
+       * @param {number} when Timestamp of the preview image
+       * @memberof Env.timeline
+       * @instance
+       */
       this.timeline.noMotion = when => {
         timeline.noMotion(when);
       };
     }
 
+    /**
+     * Class that provides functionlity to control Hue lights
+     * @memberof Env
+     */
     let hue = deviceObjects.hue;
     if (hue) {
       this.hue = {
+        /**
+         * Set the state of hue lights
+         *
+         * @param {Object} state of hue lights to set
+         * @memberof Env.hue
+         * @instance
+         */
         setState: state => {
           hue.setState(state);
         },
       };
     }
 
+    /**
+     * Class that provides functionlity to control the infrared module on the
+     * device
+     * @memberof Env
+     */
     let infrared = deviceObjects.infrared;
     if (infrared) {
       this.infrared = {
+        /**
+         * @property {Mode} MODE Infrared mode
+         * @memberof Env.infrared
+         */
         MODE: infrared.MODE,
+
+        /**
+         * Set infrared mode
+         *
+         * @param {Mode} mode Set infrared mode
+         * @memberof Env.infrared
+         * @instance
+         */
         setMode: mode => {
           infrared.setMode(mode);
         },
       };
     }
 
+    /**
+     * @name ranger
+     * @namespace
+     * Class that that provides functionlity to control Bluetooth low energy
+     * module on the device
+     * @memberof Env
+     */
     let btle = deviceObjects.btle;
     if (btle) {
+      /**
+       * Start event. This event is emitted when BTLE ranger has started
+       *
+       * @event start
+       * @memberof Env.ranger
+       * @type {Object}
+       */
+
+      /**
+       * Entered event. This event is emitted when a beacon has entered the region
+       *
+       * @event entered
+       * @memberof Env.ranger
+       * @type {Object}
+       * @property {number} Unique ID of the beacon
+       * @property {number} RSSI signal strength of the beacon
+       */
+
+      /**
+       * Range event. This event is emitted to report the RSSI of the beacon in
+       * range
+       *
+       * @event range
+       * @memberof Env.ranger
+       * @type {Object}
+       * @property {number} Unique ID of the beacon
+       * @property {number} RSSI signal strength of the beacon
+       */
+
+      /**
+       * Exited event. This event is emitted when beacon has exited the region
+       * range
+       *
+       * @event exited
+       * @memberof Env.ranger
+       * @type {Object}
+       * @property {number} Unique ID of the beacon
+       */
+
+      /**
+       * Stop event. This event is emitted when BTLE ranger has stopped
+       *
+       * @event stop
+       * @memberof Env.ranger
+       * @type {Object}
+       */
+
       this.ranger = new EventEmitter();
       ['start', 'entered', 'range', 'exited', 'stop'].forEach(event => {
         let listener = (...args) => this.ranger.emit(event, ...args);
@@ -150,31 +400,103 @@ class Env extends EventEmitter {
       });
     }
 
+    /**
+     * Class that that provides functionlity to convert text to speech
+     * @memberof Env
+     */
     let say = deviceObjects.say;
     if (say) {
       this.say = {
+        /**
+         * Speak the provided text
+         *
+         * @param {string} text Text to convert to speech
+         * @memberof Env.say
+         * @instance
+         */
         speak: text => {
           say.speak(text);
         },
       };
     }
 
+    /**
+     * Class that provides utiltiy methods
+     * @memberof Env
+     */
     this.util = {
+     /**
+       * Play a sound file
+       *
+       * @param {string} fileName Name of the audio file to play
+       * @memberof Env.util
+       * @instance
+       */
       playSound: fileName => {
         util.playSound(fileName);
       },
+
+      /**
+       * Get value of an android property as boolean
+       *
+       * @param {string} prop Name of the property to fetch
+       * @param {boolean} defaultValue Default value to use if property is not
+       *                  available
+       * @return {boolean}
+       * @memberof Env.util
+       * @instance
+       */
       getboolprop: (prop, defaultValue) => {
         return util.getboolprop(prop, defaultValue);
       },
+
+      /**
+       * Get value of an android property as integer
+       *
+       * @param {string} prop Name of the property to fetch
+       * @param {integer} defaultValue Default value to use if property is not
+       *                  available
+       * @return {integer}
+       * @memberof Env.util
+       * @instance
+       */
       getintprop: (prop, defaultValue) => {
         return util.getintprop(prop, defaultValue);
       },
+
+      /**
+       * Get value of an android property
+       *
+       * @param {string} prop Name of the property to fetch
+       * @param {string} defaultValue Default value to use if property is not
+       *                  available
+       * @return {PropTypes}
+       * @memberof Env.util
+       * @instance
+       */
       getprop: (prop, defaultValue) => {
         return util.getprop(prop, defaultValue);
       },
+
+      /**
+       * Set value of an android property as boolean
+       *
+       * @param {string} prop Name of the property to set
+       * @param {PropTypes} value Property value
+       * @memberof Env.util
+       * @instance
+       */
       setprop: (prop, value) => {
         util.setprop(prop, value);
       },
+
+      /**
+       * Get an instance of property wathcer
+       *
+       * @property {PropWatcher} propWatcher
+       * @memberof Env.util
+       * @instance
+       */
       propWatcher: util.propWatcher,
     };
   }
@@ -188,6 +510,11 @@ class Env extends EventEmitter {
     });
   }
 
+  /**
+   * Get the instance of log object
+   *
+   * @return {object}
+   */
   get log() {
     if (!this._log) {
       this._log = createLog(this._name);
@@ -195,12 +522,20 @@ class Env extends EventEmitter {
     return this._log;
   }
 
+  /**
+   * Get the name of the extension
+   * @return {string}
+   */
   get name() {
     return this._name;
   }
 }
 
-
+/**
+ * Class that looks for all available extensions/behaviors and loads them
+ *
+ * @param {Array<objects>} deviceObjects List of available device modules
+ */
 class Extensions {
   static async load(deviceObjects) {
     let ext = new Extensions(deviceObjects);
@@ -220,6 +555,9 @@ class Extensions {
     this._enable(ENABLED_SILK_EXTENSIONS);
   }
 
+  /**
+   * @private
+   */
   async _init() {
     for (const dir of extDirs) {
       const files = await wrapNoEntity(fs.readdir(dir), []);
@@ -234,12 +572,18 @@ class Extensions {
     util.propWatcher.on(RELOAD_EXT_PROP, () => this._onReloadRequested());
   }
 
+  /**
+   * @private
+   */
   _isModuleNameValid(file) {
     // module names must end in .js, .json, .node or nothing
     let ext = path.extname(file);
     return !ext.length || ext === '.js' || ext === '.json' || ext === '.node';
   }
 
+  /**
+   * @private
+   */
   _onReloadRequested() {
     // When reload prop changes to non empty string, reload module file
     // specified by prop. When done, clear prop to empty string to indicate done
@@ -259,6 +603,8 @@ class Extensions {
   /**
    * Send the received command to the loaded extensions. Called when a command
    * intended for extensions is received by the device
+   *
+   * @param {object} cmd Command to be sent to the specified extension
    */
   onCommand(cmd) {
     for (let key in this._loaded) {
@@ -273,6 +619,9 @@ class Extensions {
     }
   }
 
+  /**
+   * @private
+   */
   _reloadExtension(file) {
     fs.stat(file)
     .then(() => {
@@ -291,11 +640,17 @@ class Extensions {
     .catch(util.processthrow);
   }
 
+  /**
+   * @private
+   */
   _getModulePath(file) {
     let ext = path.extname(file);
     return ext.length > 0 ? file.slice(0, -ext.length) : file;
   }
 
+  /**
+   * @private
+   */
   _loadExtension(file) {
     if (!this._isModuleNameValid(file)) {
       return false;
@@ -322,6 +677,9 @@ class Extensions {
     return true;
   }
 
+  /**
+   * @private
+   */
   _removeExtensionFromCache(file) {
     if (require.cache === undefined) {
       // require.cache alias not present for some reason, let's add it
@@ -330,6 +688,9 @@ class Extensions {
     delete require.cache[file];
   }
 
+  /**
+   * @private
+   */
   _unloadExtension(file) {
     let modulePath = this._getModulePath(file);
     let module = this._loaded[modulePath];
@@ -361,6 +722,7 @@ class Extensions {
 
   /**
    * Enables/disables extensions using regular expressions
+   * @private
    */
   _enable(namespaces) {
     let split = (namespaces || '').split(/[\s,]+/);
@@ -384,6 +746,7 @@ class Extensions {
    *
    * @param {String} name
    * @return {Boolean}
+   * @private
    */
   _isEnabled(name) {
     let i, len;

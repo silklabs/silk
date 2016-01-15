@@ -169,6 +169,7 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
 
 /**
  * Class that talks to capture service to receive camera frames
+ * @param {Timeline} timeline instance of Timeline class
  */
 class CameraStream extends EventEmitter {
   constructor(timeline) {
@@ -210,6 +211,7 @@ class CameraStream extends EventEmitter {
   /**
    * Releases cached preview images when the preview object is removed from the
    * cache
+   * @private
    */
   _releasePreviewImages(item) {
     for (let key in item) {
@@ -228,6 +230,7 @@ class CameraStream extends EventEmitter {
    * In certain error conditions, it can also be beneficial to restart the
    * capture process (such as when it is not providing the expected video data)
    * an attempt to recover the system.
+   * @private
    */
   _restart(why, restartCaptureProcess = false) {
     if (this._restartTimeout) {
@@ -275,6 +278,9 @@ class CameraStream extends EventEmitter {
     }, CAPTURE_RESTART_DELAY_MS);
   }
 
+  /**
+   * @private
+   */
   _init() {
     if (this._ready) {
       log.warn(`camera already initialized`);
@@ -345,6 +351,9 @@ class CameraStream extends EventEmitter {
     });
   }
 
+  /**
+   * @private
+   */
   _tagMonitor = () => {
     if (this._videoTagReceived && (this._micTagReceived || !AUDIO_HW_ENABLED)) {
       this._videoTagReceived = this._micTagReceived = null;
@@ -356,6 +365,9 @@ class CameraStream extends EventEmitter {
                   true);
   };
 
+  /**
+   * @private
+   */
   _onCtlSocketRead(data) {
     log.verbose(`received ctl data: ${data.toString()}`);
     this._buffer += data.toString();
@@ -401,6 +413,9 @@ class CameraStream extends EventEmitter {
     }
   }
 
+  /**
+   * @private
+   */
   _retrieveNextFrame() {
     if (this._queue.length === 0) {
       return;
@@ -445,6 +460,9 @@ class CameraStream extends EventEmitter {
     userCb('image not available in the cache', null);
   }
 
+  /**
+   * @private
+   */
   _scheduleNextPreviewFrame() {
     // Preview frames are scheduled every PREVIEW_DELAY_MS wall clock
     const spilloverMs = Date.now() % PREVIEW_DELAY_MS;
@@ -469,6 +487,7 @@ class CameraStream extends EventEmitter {
 
   /**
    * Read the next frame
+   * @private
    */
   _readPreviewFrame() {
     if (!this._cvVideoCapture || !this._recording) {
@@ -534,6 +553,9 @@ class CameraStream extends EventEmitter {
     });
   }
 
+  /**
+   * @private
+   */
   _onDataSocketRead(newdata) {
     let buf;
     if (this._dataBuffer) {
@@ -594,6 +616,9 @@ class CameraStream extends EventEmitter {
     }
   }
 
+  /**
+   * @private
+   */
   _command(cmd) {
     // Camera socket expects the command data in the following format
     let event = JSON.stringify(cmd) + '\0';
@@ -603,7 +628,7 @@ class CameraStream extends EventEmitter {
   }
 
   /**
-   * Initialize camera
+   * Initialize camera stream
    */
   async init() {
     this._init();
@@ -624,6 +649,9 @@ class CameraStream extends EventEmitter {
     });
   }
 
+  /**
+   * Start camera recording
+   */
   startRecording() {
     if (!this._recording) {
       this._recording = true;
@@ -631,6 +659,9 @@ class CameraStream extends EventEmitter {
     }
   }
 
+  /**
+   * Stop camera recording
+   */
   stopRecording() {
     if (this._recording) {
       this._recording = false;
@@ -640,6 +671,8 @@ class CameraStream extends EventEmitter {
 
   /**
    * Set flash mode as specified by flashMode parameter
+   *
+   * @param {string} flashMode flash-mode parameter to set in camera
    */
   flash(flashMode) {
     if (!FLASH_LIGHT_ENABLED) {
@@ -655,6 +688,8 @@ class CameraStream extends EventEmitter {
 
   /**
    * Set mute mode
+   *
+   * @param {boolean} mute Mute mic true or false
    */
   setMute(mute) {
     // Persist mute setting if changed
@@ -671,7 +706,11 @@ class CameraStream extends EventEmitter {
   }
 
   /**
-   * Get integer camera parameter
+   * Get integer camera parameter. This function returns a Promise that resolves
+   * when the parameter value is successfully retrieved
+   *
+   * @param {string} name of camera parameter to get
+   * @return {Promise}
    */
   async getParameterInt(name) {
     if (this._getParameterCallback) {
@@ -689,7 +728,11 @@ class CameraStream extends EventEmitter {
   }
 
   /**
-   * Get string camera parameter
+   * Get string camera parameter. This function returns a Promise that resolves
+   * when the parameter value is successfully retrieved
+   *
+   * @param {string} name of camera parameter to get
+   * @return {Promise}
    */
   async getParameterStr(name) {
     if (this._getParameterCallback) {
@@ -710,6 +753,7 @@ class CameraStream extends EventEmitter {
    * Returns the camera preview size (or null until the camera has successfully
    * initialized once)
    *
+   * @return {Size}
    */
   get previewSize() {
     if (PREVIEW_WIDTH === 0) {
@@ -720,10 +764,11 @@ class CameraStream extends EventEmitter {
 
   /**
    * Invoke this function to obtain the preview frame
-   *    userCb   - the callback that receives an error object, scaled image
+   *
+   * @param {CameraCallback} userCb - the callback that receives an error object, scaled image
    *               as an OpenCV matrix and the original image
-   *    when     - timestamp of the frame to get
-   *    channel  - 0 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
+   * @param {number} when     - timestamp of the frame to get
+   * @param {number} channel  - 0 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
    *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)
    */
   getPreviewFrame(userCb, when, channel = 0) {

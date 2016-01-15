@@ -47,6 +47,7 @@ class Server extends events.EventEmitter {
 
   /**
    * XXX: The extra wrapping here might be useless since the api does retries.
+   * @private
    */
   _connect() {
     this.socket = api.socketioClient(require('silk-socket.io-client-node'), 'device', {

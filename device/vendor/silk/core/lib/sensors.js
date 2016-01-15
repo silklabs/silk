@@ -46,7 +46,7 @@ let SENSOR_TYPE = {
 
 /**
  * This module exposes functionality to activate/deactivate and read sensors
- * data from various sensors avaialble on the device.
+ * data from various sensors available on the device.
  *
  * The sensor data is returned as a JSON object in the following format
  *   sensorType: One of the SENSOR_TYPE.* constants
@@ -62,7 +62,7 @@ class Sensors extends events.EventEmitter {
   }
 
   /**
-   * Initialize the {@code Sensors} module
+   * Initialize the Sensors module
    */
   init() {
     log.verbose(`connecting to ${SENSORS_SOCKET_NAME} socket`);
@@ -86,8 +86,8 @@ class Sensors extends events.EventEmitter {
   /**
    * Activate a given sensor
    *
-   * @param sensorType string SENSOR_TYPE.* constant
-   * @param rate int sensor polling rate in milliseconds
+   * @param {number} sensorType SENSOR_TYPE.* constant
+   * @param {number} rate Sensor polling rate in milliseconds
    */
   activate(sensorType, rate) {
     this._active = true;
@@ -97,13 +97,16 @@ class Sensors extends events.EventEmitter {
   /**
    * Dectivate a given sensor
    *
-   * @param sensorType string SENSOR_TYPE.* constant
+   * @param {number} sensorType SENSOR_TYPE.* constant
    */
   deactivate(sensorType) {
     this._active = false;
     this._command({cmdName: 'deactivate', sensorType});
   }
 
+  /**
+   * @private
+   */
   _restart(why) {
     if (this._socket) {
       this._ready = false;
@@ -118,6 +121,9 @@ class Sensors extends events.EventEmitter {
     log.info(`sensors restart pending (ignored "${why}")`);
   }
 
+  /**
+   * @private
+   */
   _onData(data) {
     log.debug(`received data: ${data.toString()}`);
     this._buffer += data.toString();
@@ -151,6 +157,9 @@ class Sensors extends events.EventEmitter {
     }
   }
 
+  /**
+   * @private
+   */
   _command(cmd) {
     if (!this._ready) {
       log.warn(`sensors service not ready, ignoring the command`);

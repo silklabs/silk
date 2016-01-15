@@ -39,17 +39,40 @@ const PRE_EVENT_UPLOAD_MS = 5000;
 import type { Socket } from 'socket.io-client';
 import type { Outbox } from './outbox/manager';
 
+/**
+ * Type representing a timeline event object
+ *
+ *  @property {string} tag Name of the object
+ *  @property {number} when Timestamp the object(s) manifested in the stream
+ *  @property {Array<Rect>} rects one or more bounding rectangles for where the
+ *            object appeared. The video preview image dimensions are used as
+ *            the scale for these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT).
+ */
 export type TimelineEventObject = {
   tag: string;
   when: number;
   [arbitraryKeys: string]: any;
 };
 
+/**
+ * Type representing the preview size in width and height
+ *
+ * @property {number} width preview image width
+ * @property {number} height preiview image height
+ */
 type Size = {
   width: number;
   height: number;
 };
 
+/**
+ * Type representing an object rectangle
+ *
+ * @property {number} x x co-ordinate of the object rectangle
+ * @property {number} y y co-ordinate of the object rectangle
+ * @property {number} width width of the object rectangle
+ * @property {number} height height of the object rectangle
+ */
 type Rect = {
   x: number;
   y: number;
@@ -61,9 +84,9 @@ type Rect = {
  * Class that receives events from various components synchronizes them and send
  * to the server
  *
+ * @param outbox Instance of outbox class
  */
 export default class Timeline extends EventEmitter {
-
   outbox: Outbox;
   serverSocket: ?Socket;
   _previewSize: Size;
@@ -138,6 +161,9 @@ export default class Timeline extends EventEmitter {
     this._resetAcks();
   }
 
+  /**
+   * @private
+   */
   _onEventTrackerActive: ((eventStartWhen: number) => void) = (eventStartWhen) => {
     log.verbose(`event tracker active at ${eventStartWhen}`);
     this.eventTrackerActive = true;
@@ -154,6 +180,9 @@ export default class Timeline extends EventEmitter {
     this.uploadOpQueue.empty();
   };
 
+  /**
+   * @private
+   */
   _onEventTrackerInActive: ((eventStopWhen: number) => void) = (eventStopWhen) => {
     log.verbose(`event tracker inactive at ${eventStopWhen}`);
     this.eventTrackerActive = false;
@@ -162,6 +191,8 @@ export default class Timeline extends EventEmitter {
 
   /**
    * Provide the timeline with a socket to use
+   *
+   * @param socket Socket to use
    */
   set socket(socket: ?Socket) {
     if (socket) {
@@ -171,6 +202,9 @@ export default class Timeline extends EventEmitter {
     this.serverSocket = socket;
   }
 
+  /**
+   * @private
+   */
   _resetAcks() {
     this.acks = {
       pending: { jpeg: 0, mp4: 0 },
@@ -183,6 +217,9 @@ export default class Timeline extends EventEmitter {
   /**
    * Selects if transition of the live preview images and/or video should be
    * enabled or not.
+   *
+   * @param preview Should preview be enabled or not
+   * @param video Should video be enabled or not
    */
   configLiveStream(preview: boolean, video: boolean) {
     if (this.livePreview !== preview) {
@@ -198,7 +235,9 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
+   * Set size of the preview image
    *
+   * @param size Size of the preview image
    */
   set previewSize(size: Size) {
     this._previewSize = size;
@@ -206,6 +245,10 @@ export default class Timeline extends EventEmitter {
 
   /**
    * JPEG-encoded preview image
+   *
+   * @param when Timestamp of when the JPEG was generated
+   * @param durationMs Duration of the JPEG
+   * @param jpeg Buffer containing raw jpeg data
    */
   addPreviewJPEG(when: number, durationMs: number, jpeg: Buffer) {
     this._pushPreview(when, durationMs, jpeg);
@@ -213,13 +256,19 @@ export default class Timeline extends EventEmitter {
 
   /**
    * OpenCV preview frame
+   *
+   * @param when Timestamp of when the preview frame was generated
    */
   addPreviewFrame(when: number) {
     this.emit('preview', when);
   }
 
   /**
+   * Add video packet to timeline
    *
+   * @param when Timestamp of when the video was generated
+   * @param durationMs Duration of the video
+   * @param pkt Buffer containing raw video frames
    */
   addVideo(when: number, durationMs: number, pkt: Buffer) {
     this._pushVideo(when, durationMs, pkt);
@@ -227,6 +276,10 @@ export default class Timeline extends EventEmitter {
 
   /**
    * Handle faces returned by camera HAL
+   *
+   * @param when Timestamp of when the face was seen
+   * @param faces Rectangle co-ordinates of the faces
+   * @param source Who found this face, in this case it is always HAL
    */
   addFace(when: number, faces: Array<Rect>, source: string) {
     // Run facial recognition on the detected faces before recording the event
@@ -234,7 +287,8 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   *
+   * Add a clap object to timeline
+   * @param count of number of claps heard
    */
   addClap(count: number) {
     this.emit('clap', count);
@@ -248,13 +302,7 @@ export default class Timeline extends EventEmitter {
   /**
    * Inject objects into the video stream.
    *
-   * Each object in the provided array should contain the following fields:
-   *   tag: object type (string)
-   *   when: timestamp the object(s) manifested in the stream
-   *   rects: one or more bounding rectangles for where the object appeared:
-   *            {x, y, width, height}.
-   *          The video preview image dimensions are used as the scale for
-   *          these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT)
+   * @param objects List of objects to be added to the timeline
    */
   addObjects(objects: Array<TimelineEventObject>) {
     if (!objects) {
@@ -276,6 +324,9 @@ export default class Timeline extends EventEmitter {
     this._processEvents(objects);
   }
 
+  /**
+   * @private
+   */
   _processEvents(objects: Array<TimelineEventObject>) {
     objects.forEach((object) => {
       if (object.tag !== 'face') {
@@ -288,10 +339,10 @@ export default class Timeline extends EventEmitter {
   /**
    * Inject an object into the video stream.
    *
-   *   tag: object type (string)
-   *   when: optional timestamp
-   *   rect: optional rectangle
-   *
+   * @param tag Type of the object detected
+   * @param [when=last preview timestamp] Time when the object was detected
+   * @param [rect=size of preview rectangle] Rectangle co-ordinates of the object
+   * @param source Which component is responsible for adding this object
    */
   addObject(tag: string, when: number, rect: Rect, source: string) {
     if (!when) {
@@ -319,6 +370,8 @@ export default class Timeline extends EventEmitter {
   /**
    * Notify timeline that there is no motion in the image as compared to the
    * previous image.
+   *
+   * @param when Timestamp of the preview image in which no motion was detected
    */
   noMotion(when: number) {
     this.emit('no-motion', when);
@@ -328,6 +381,7 @@ export default class Timeline extends EventEmitter {
    * Add the last cached objects to the provided list of objects
    *
    * @return original objects + cached objects if any
+   * @private
    */
   _addCachedObjects(
     origObjects: ?Array<TimelineEventObject>,
@@ -353,6 +407,9 @@ export default class Timeline extends EventEmitter {
     return origObjects;
   }
 
+  /**
+   * @private
+   */
   _emitEvents(objects: Array<TimelineEventObject>) {
     objects.forEach(object => {
       this.emit(object.tag, object.when, object.rects, object.source);
@@ -364,6 +421,9 @@ export default class Timeline extends EventEmitter {
     });
   }
 
+  /**
+   * @private
+   */
   _addUploadOp(when: number, enqueueOp: (() => void)) {
     switch (this.videoUploadType) {
     case 'all':
@@ -381,6 +441,9 @@ export default class Timeline extends EventEmitter {
     }
   }
 
+  /**
+   * @private
+   */
   _pushPreview(when: number, durationMs: number, frame: ?Buffer) {
     // Intentionally delay the preview image by one cycle to ensure
     // that the previewObjects are transmitted with their corresponding image.
@@ -457,6 +520,9 @@ export default class Timeline extends EventEmitter {
     this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
   }
 
+  /**
+   * @private
+   */
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
     this._pushSocketIoPacket(when, frame, null, 'mp4', durationMs);
 
@@ -492,6 +558,9 @@ export default class Timeline extends EventEmitter {
     );
   }
 
+  /**
+   * @private
+   */
   _pushSocketIoPacket(
     when: number,
     frame: Buffer,
@@ -570,6 +639,7 @@ export default class Timeline extends EventEmitter {
   /**
    * Note to AV pipeline diag clients that event `what` happened for
    * object `id` at timestamp `whenMs`.
+   * @private
    */
   _meter(what: string, id: string, whenMs: number = Date.now()) {
     if (!this.serverSocket || !this.serverSocket.connected) {

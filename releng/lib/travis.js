@@ -6,7 +6,7 @@
 import Travis from 'travis-ci';
 import cb2promise from 'promise-callback';
 import request from 'request-promise';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 export type TravisBuildConfig = {
   os?: Array<string>;

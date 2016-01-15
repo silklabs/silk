@@ -1,4 +1,3 @@
-
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
 if (version.official) {
@@ -11,10 +10,11 @@ if (version.official) {
   });
 }
 
+import createLog from 'silk-log';
 import createServer from './server';
 import loadConfig from './config';
 
-let log = require('log')('main');
+const log = createLog('main');
 let profile = process.argv[2];
 let config = loadConfig(profile);
 

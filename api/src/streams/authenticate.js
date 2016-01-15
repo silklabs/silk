@@ -9,7 +9,7 @@ import ClosingTransform from './closing_transform';
 import { CryptoDuplexStream } from './crypto';
 import { DuplexTransform } from './duplex_transform';
 import Id from '../access_token';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 const log = makeLog(`api-streams-authenticate`);
 

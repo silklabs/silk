@@ -4,7 +4,7 @@
 
 
 import { NativeModules } from 'react-native';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 const { AppCrypto } = NativeModules;
 const log = createLog('Crypto');

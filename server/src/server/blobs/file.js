@@ -1,4 +1,4 @@
-
+import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import fs from 'mz/fs';
 import path from 'path';
@@ -6,7 +6,7 @@ import url from 'url';
 import uuid from 'uuid';
 import assert from 'assert';
 
-let log = require('log')('blob-file');
+const log = createLog('blob-file');
 
 const KEY_GENERATOR_ATTEMPTS_MAX = 10;
 

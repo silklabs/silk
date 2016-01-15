@@ -5,7 +5,7 @@
     "silk-api": "/api",
     "silk-core-version": "/version",
     "silk-raygun": "/raygun",
-    "log": "/log"
+    "silk-log": "/log"
   },
   "dependencies": {
     "babel-plugin-transform-runtime": "^6.4.3",

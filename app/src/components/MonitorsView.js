@@ -1,6 +1,6 @@
 
 import React from 'react-native';
-import createLog from 'log';
+import createLog from 'silk-log';
 import { OrderedMap, OrderedSet } from 'immutable';
 import { SilkApi } from 'silk-api';
 

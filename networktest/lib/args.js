@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
-import createLog from 'log';
+import createLog from 'silk-log';
 import program from 'commander';
 import version from 'silk-core-version';
 

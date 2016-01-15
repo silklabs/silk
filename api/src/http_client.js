@@ -5,7 +5,7 @@
  * @flow
  */
 import assert from 'assert';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import fetch from './fetch';
 import URL from 'url';

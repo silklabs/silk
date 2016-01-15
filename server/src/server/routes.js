@@ -1,3 +1,4 @@
+import createLog from 'silk-log';
 
 import vipRoutes from './routes/vip';
 import accountRoutes from './routes/account';
@@ -8,7 +9,7 @@ import metadataPublisherRoutes from './routes/metadata_publisher';
 import metadataRoutes from './routes/metadata';
 import crashRoutes from './routes/crash';
 
-let log = require('log')('routes');
+const log = createLog('routes');
 
 module.exports = function(opts) {
   let {

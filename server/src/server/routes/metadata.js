@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import authorizeAccount from '../authorize_account';
 import decorateUrl from '../decorate_url';

@@ -4,7 +4,7 @@
 
 import invariant from 'assert';
 import { NativeModules } from 'react-native';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 const { SLKUtil } = NativeModules;
 

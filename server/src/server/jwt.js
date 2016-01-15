@@ -3,7 +3,7 @@
 import jwa from 'silk-api/src/jwa';
 import jwt from 'jsonwebtoken';
 import * as Joi from 'joi';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import type Nonce from './models/nonce';
 import type { RouteNextFn, MiddlewareFn } from './express_types';

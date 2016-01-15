@@ -6,7 +6,7 @@
 
 import assert from 'assert';
 import MotionZone from '../lib/motionzone';
-import createLog from 'log';
+import createLog from 'silk-log';
 const log = createLog('motionzone');
 
 suite('Motion zone', () => {

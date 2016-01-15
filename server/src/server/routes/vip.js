@@ -10,7 +10,7 @@
 import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import createLog from 'log';
+import createLog from 'silk-log';
 import URL from 'url';
 import querystring from 'querystring';
 

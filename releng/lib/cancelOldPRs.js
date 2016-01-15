@@ -6,7 +6,7 @@
 
 import assert from 'assert';
 import cb2promise from 'promise-callback';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import repos from './repos';
 import { genTravis } from './travis';

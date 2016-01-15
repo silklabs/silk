@@ -29,7 +29,7 @@ import Login from './components/Login';
 import Prd from './components/Prd';
 import Octokat from 'octokat'; // Ref: https://www.npmjs.com/package/octokat
 
-import createLog from 'log';
+import createLog from 'silk-log';
 const log = createLog('main');
 
 class UserState {

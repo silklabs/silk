@@ -5,7 +5,7 @@
  */
 
 import assert from 'assert';
-import createLog from 'log';
+import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 import opencv from 'opencv';

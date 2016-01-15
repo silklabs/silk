@@ -7,7 +7,7 @@
 import assert from 'assert';
 import ClosingPassThrough from './closing_passthrough';
 import { Duplex } from 'stream';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 const log = makeLog(`api-streams-duplex-transform`);
 

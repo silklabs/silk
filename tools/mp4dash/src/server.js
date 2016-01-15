@@ -2,7 +2,7 @@ import assert from 'assert';
 import http from 'http';
 import process from 'process';
 import url from 'url';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import connectToSocketIO from './socketio';
 import SegmentProvider from './segment_provider';

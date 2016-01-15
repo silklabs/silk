@@ -5,7 +5,7 @@
  */
 
 import Octokat from 'octokat';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 let _octokat = null;
 export function getOctokat(): Octokat {

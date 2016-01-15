@@ -1,8 +1,8 @@
-
+import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 
 export default async function main (config) {
-  let log = require('log')('server');
+  const log = createLog('server');
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);

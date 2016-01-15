@@ -1,4 +1,4 @@
-
+import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import makeGithubMiddleware from 'github-webhook-middleware';
 import makeTravisMiddleware from './travis-webhook-middleware';
@@ -6,7 +6,7 @@ import * as githubEvent from './github-event';
 import * as githubTravisIntegration from '../github-travis-integration.js';
 
 export default async function main (config) {
-  let log = require('log')('server');
+  const log = createLog('server');
   let express = require('express');
   let app = express();
   let http = require('http').createServer(app);

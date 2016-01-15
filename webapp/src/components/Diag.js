@@ -5,10 +5,12 @@ import ReactDOM from 'react-dom';
 import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon,
          Input, MenuItem } from 'react-bootstrap';
 import { Link } from 'react-router';
+import createLog from 'silk-log';
 
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
-import mklog from 'log'; const log = mklog('diag');
+
+const log = createLog('diag');
 
 export default class Diag extends React.Component {
   state = { camera: null, paused: false };

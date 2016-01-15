@@ -1,7 +1,7 @@
 import OSS from 'aliyun-oss';
 import uuid from 'uuid';
 import url from 'url';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 const log = createLog('blob-aliyun');
 

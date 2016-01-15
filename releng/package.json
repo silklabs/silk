@@ -22,7 +22,7 @@
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/version",
-    "log": "/log",
+    "silk-log": "/log",
     "silk-raygun": "/raygun"
   },
   "dependencies": {

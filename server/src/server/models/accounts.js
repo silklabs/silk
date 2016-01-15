@@ -4,12 +4,13 @@
  * @flow
  */
 import * as Joi from 'joi';
+import uuid from 'uuid';
+import {ObjectId} from 'promised-mongo';
+import AccessToken from 'silk-api/src/access_token';
+import createLog from 'silk-log';
+
 import Base from './base';
 import scrypt from '../scrypt';
-import uuid from 'uuid';
-
-import AccessToken from 'silk-api/src/access_token';
-import {ObjectId} from 'promised-mongo';
 
 /**
  * Password reset expires in 4 hours...
@@ -80,7 +81,7 @@ export type Record = {
   // TODO: finish type...
 }
 
-const log = require('log')('models:accounts');
+const log = createLog('models:accounts');
 
 /**
  * The time in MS which a password check is valid.

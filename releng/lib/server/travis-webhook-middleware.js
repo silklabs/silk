@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser';
 import crypto from 'crypto';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 const log = createLog('travis-webhook-middleware');
 

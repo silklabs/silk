@@ -4,7 +4,7 @@
  */
 
 import jwtMiddleware from './jwt';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import type Devices from './models/devices';
 import type Nonce from './models/nonce';

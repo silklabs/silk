@@ -4,7 +4,7 @@
 
 import invariant from 'assert';
 import { Duplex } from 'stream';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 import type { Socket } from './SocketManager';
 

@@ -4,7 +4,7 @@
 import * as Joi from 'joi';
 import URL from 'url';
 import path from 'path';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import type { ExpressRoutes } from 'api-schema';
 import type {RouteContext} from '../server';

@@ -1,6 +1,6 @@
 import React from 'react-native';
 import uuid from 'uuid';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 import Config from '../libraries/Config';

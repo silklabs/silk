@@ -1,13 +1,13 @@
 {
   "silkDependencies": {
     "api-schema": "/api-schema",
-    "silk-babeldeps": "/babeldeps",
-    "silk-api": "/api",
-    "silk-core-version": "/version",
-    "silk-raygun": "/raygun",
     "eslint-config-silk": "/eslint",
-    "log": "/log",
-    "jsonwebtoken": "/jsonwebtoken"
+    "jsonwebtoken": "/jsonwebtoken",
+    "silk-api": "/api",
+    "silk-babeldeps": "/babeldeps",
+    "silk-core-version": "/version",
+    "silk-log": "/log",
+    "silk-raygun": "/raygun"
   },
   "dependencies": {
     "aliyun-oss": "^1.1.0",

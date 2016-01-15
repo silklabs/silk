@@ -2,7 +2,7 @@
 // https://github.com/silklabs/silk-webapp/blob/master/src/components/CameraVideoMSE.js
 
 import assert from 'assert';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 const log = createLog('dash_segment');
 

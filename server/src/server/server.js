@@ -3,15 +3,16 @@
  */
 
 import cors from 'cors';
-import createDb from './db';
 import eventToPromise from 'event-to-promise';
+import url from 'url';
+import devAccount from 'silk-api/src/dev_account';
+import createLog from 'silk-log';
+
+import createDb from './db';
 import createS3Blob from './blobs/s3';
 import createAliyunBlob from './blobs/aliyun';
 import createFileBlob from './blobs/file';
-import url from 'url';
 import jsonParser from './json';
-import devAccount from 'silk-api/src/dev_account';
-
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
 import Accounts from './models/accounts';
@@ -41,7 +42,7 @@ export default async function main (config: any): any {
   let app = express();
   let http = require('http').createServer(app);
   let path = require('path');
-  let log = require('log')('server');
+  let log = createLog('server');
 
   let publicPath = path.join(__dirname, '/../../public');
 

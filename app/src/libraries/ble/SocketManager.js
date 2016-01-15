@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import invariant from 'assert';
 import { EventEmitter } from 'events';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 type ConnectMessage = {
   id: number;

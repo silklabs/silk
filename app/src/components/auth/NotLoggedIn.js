@@ -1,5 +1,5 @@
 import React from 'react-native';
-import createLog from 'log';
+import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
 
 import Config from '../../libraries/Config';

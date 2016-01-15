@@ -20,7 +20,7 @@ import {
   AsyncStorage,
   NativeModules,
 } from 'react-native';
-import createLog from 'log';
+import createLog from 'silk-log';
 import { AccessToken } from 'silk-api';
 
 import {

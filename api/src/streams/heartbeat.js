@@ -7,7 +7,7 @@
 import assert from 'assert';
 import ClosingPassThrough from './closing_passthrough';
 import { DuplexTransform } from './duplex_transform';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 
 const log = makeLog(`api-streams-heartbeat`);
 

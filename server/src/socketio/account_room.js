@@ -15,7 +15,7 @@
  *
  * @flow
  */
-import createLog from 'log';
+import createLog from 'silk-log';
 import denodeify from 'denodeify';
 
 import type {Socket, Manager} from 'socket.io';

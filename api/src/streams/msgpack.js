@@ -6,7 +6,7 @@
 
 import ClosingTransform from './closing_transform';
 import { DuplexTransform } from './duplex_transform';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 import msgpack from 'msgpack-lite';
 
 const EVENT_NAME_CLOSE = `close`;

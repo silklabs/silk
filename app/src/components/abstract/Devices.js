@@ -1,6 +1,6 @@
 import React from 'react-native';
 import { OrderedMap, OrderedSet, Record } from 'immutable';
-import createLog from 'log';
+import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
 
 import getDeviceManager from '../../libraries/ble/DeviceManager';

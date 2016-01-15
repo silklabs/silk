@@ -6,7 +6,7 @@
 
 /* eslint-disable no-console */
 
-import createLog from 'log';
+import createLog from 'silk-log';
 import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('device');

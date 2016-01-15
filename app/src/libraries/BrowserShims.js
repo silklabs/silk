@@ -2,7 +2,7 @@
  * Configure debug prior to entrypoint so it is ready for other modules.
  */
 import Config from './Config';
-import { configureLog } from 'log';
+import { configureLog } from 'silk-log';
 configureLog(Config.getDefault().debug);
 
 /**

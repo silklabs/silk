@@ -13,7 +13,7 @@ import {
   ProgressBar,
   Well,
 } from 'react-bootstrap';
-import createLog from 'log';
+import createLog from 'silk-log';
 const log = createLog('prd');
 
 import * as prd from '../prdlib';

@@ -9,7 +9,7 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
-import createLog from 'log';
+import createLog from 'silk-log';
 import * as util from './sysutils';
 import ServerTester from './serverTester';
 import network from './network';

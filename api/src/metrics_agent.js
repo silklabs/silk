@@ -7,7 +7,7 @@
  * @flow
  */
 
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import type {default as Metric} from './metric';
 import type AccountApi from './gen/account';
@@ -15,9 +15,9 @@ import type DeviceApi from './gen/device';
 
 export type MetricsApi = AccountApi | DeviceApi;
 
-const log = createLog('api:metrics-agent');
-
 type ConnectivityCheck = () => Promise<boolean>;
+
+const log = createLog('api:metrics-agent');
 
 /**
  * If server is offline when availability check is run we still want to continue

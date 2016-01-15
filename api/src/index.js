@@ -3,7 +3,7 @@
  */
 import invariant from 'assert';
 import URL from 'url';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import loadConfig from './config';
 import VIP from './vip';

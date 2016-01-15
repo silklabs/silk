@@ -5,7 +5,7 @@
 import invariant from 'assert';
 import { createStreams, RssiSmoother } from 'silk-api';
 import { getRandomBytes } from '../Crypto';
-import makeLog from 'log';
+import makeLog from 'silk-log';
 import Stream from './Stream';
 
 import type { Socket } from './SocketManager';

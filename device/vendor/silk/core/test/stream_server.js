@@ -13,7 +13,7 @@ import http from 'http';
 import net from 'net';
 import eventToPromise from 'event-to-promise';
 import assert from 'assert';
-import createLog from 'log';
+import createLog from 'silk-log';
 
 import StoringStream from '../lib/streams/store';
 import { EventEmitter } from 'events';

@@ -7,7 +7,7 @@
   "silkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-core-version": "/version",
-    "log": "/log",
+    "silk-log": "/log",
     "api-schema": "/api-schema",
     "silk-babeldeps": "/babeldeps",
     "silk-server": "/server",

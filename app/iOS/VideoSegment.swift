@@ -36,7 +36,7 @@ class VideoSegment: NSObject {
       let bridgedData = dict["data"] as! Dictionary<String, AnyObject>
       let dataId = bridgedData["id"] as! String
       let offset = bridgedData["offset"] as! NSNumber
-      let data = NSDataBridge.releaseWithOffset(dataId, offset: offset)
+      let data = BlobManager.releaseWithOffset(dataId, offset: offset)
 
       return VideoSegment(
         data: data,

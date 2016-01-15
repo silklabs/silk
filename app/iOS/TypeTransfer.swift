@@ -32,7 +32,7 @@ public class TypeTransfer: NSObject {
     case is List:
       return convertArray(obj as! List)
     case is NSData:
-        return NSDataBridge.store(obj as! NSData)
+        return BlobManager.store(obj as! NSData)
     default:
       return obj
     }

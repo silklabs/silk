@@ -9,7 +9,7 @@ class NativeBlob {
   }
 
   release() {
-    NativeModules.BlobBridge.release(this.id);
+    NativeModules.BlobManager.release(this.id);
   }
 }
 

@@ -21,7 +21,7 @@ class TypeTransferTest: XCTestCase {
     let wootbar = transferDict["wootbar"] as! Dictionary<String, AnyObject>
 
     let blob = wootbar["blob"] as! Dictionary<String, AnyObject>
-    let blobValue = NSDataBridge.release(blob["id"] as! String)
+    let blobValue = BlobManager.release(blob["id"] as! String)
     XCTAssert(bin === blobValue, "returns equal blob")
   }
   

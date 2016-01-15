@@ -15,7 +15,7 @@
     }
 
     // The JSON Data is actually a dictionary...
-    return [NSDataBridge releaseWithOffset: blobID offset: offset];
+    return [SLKBlobManager releaseWithOffset: blobID offset: offset];
   }
 
   // Vanilla react-native case convert a string to NSData.

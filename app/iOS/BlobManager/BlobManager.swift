@@ -1,19 +1,18 @@
-
 /**
-NSData bridge utility manages state for NSData blobs which get passed to JS.
-
-This class is thread safe.
-*/
-@objc(NSDataBridge)
-public class NSDataBridge : NSObject {
+ * NSData bridge utility manages state for NSData blobs which get passed to JS.
+ *
+ * This class is thread safe.
+ */
+@objc(SLKBlobManager)
+public class BlobManager : NSObject {
   internal typealias JSONDict = Dictionary<String, AnyObject>
-  static let sharedInstance = NSDataBridge()
+  static let sharedInstance = BlobManager()
 
   /**
   Helper method to make calling this from objective-c easier.
   */
   public class func store(blob: NSData) -> Dictionary<String, AnyObject> {
-    return NSDataBridge.sharedInstance.store(blob)
+    return BlobManager.sharedInstance.store(blob)
   }
 
   /**
@@ -32,17 +31,18 @@ public class NSDataBridge : NSObject {
    * Helper method to make calling this from objective-c easier.
    */
   public class func release(id: String) -> NSData? {
-    return NSDataBridge.sharedInstance.release(id)
+    return BlobManager.sharedInstance.release(id)
   }
 
   var blobs: Dictionary<String, NSData> = [:]
 
   /**
-  Store an object into the data bridge... This object will _never_ be released automatically
-  so you must call release at some point.
-  
-  This method is threadsafe.
-  */
+   * Store an object into the data bridge... This object will _never_ be
+   * released automatically
+   * so you must call release at some point.
+   *
+   * This method is threadsafe.
+   */
   func store(blob: NSData) -> JSONDict {
     var result: JSONDict = [:]
     let id =  NSUUID().UUIDString
@@ -69,11 +69,11 @@ public class NSDataBridge : NSObject {
   }
 
   /**
-  Attempt to find and release a value from the bridge. This will return the NSData and
-  remove the strongly held reference to it.
-  
-  This method is threadsafe.
-  */
+   * Attempt to find and release a value from the bridge. This will return the
+   * NSData and remove the strongly held reference to it.
+   *
+   * This method is threadsafe.
+   */
   func release(id: String) -> NSData? {
     var result: NSData?
     objSync(self) {

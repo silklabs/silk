@@ -166,7 +166,7 @@ echo
 expected_silk_boot_completed=$(( 1 + $(getprop silk.boot_completed "0") ))
 
 nodepid=0
-findprocess /system/silk/bin/node nodepid 45
+findprocess system/silk/bin/node nodepid 45
 
 waitforprop sys.boot_completed 1 60
 
@@ -180,7 +180,7 @@ while [[ $attempt -lt $STABILITY_RETRIES ]]; do
   echo "Device stability check. $attempt/$STABILITY_RETRIES"
   echo -----------------------------------------------------------------------------
   newnodepid=0
-  findprocess /system/silk/bin/node newnodepid 45
+  findprocess system/silk/bin/node newnodepid 45
   if [[ "$nodepid" != "$newnodepid" ]]; then
     echo pid changed from $nodepid to $newnodepid.  Crash?
     cleanup

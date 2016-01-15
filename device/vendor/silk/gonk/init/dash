@@ -3,38 +3,44 @@
 # Brief system state dashboard.
 #
 
+if [ -f /init ]; then
+  cd /
+fi
+
 uptime
 echo -n "Date: "; date
 echo -n "Gonk: "; getprop ro.build.fingerprint
 node -p "\
-  v=require('/system/silk/node_modules/silk-core-version'); \
+  v=require('silk-core-version'); \
   'Silk: ' + v.fingerprint + '\n' + \
   '      ' + v.branch + ' ' + v.semver + ' (' + v.sha.substr(0,7) + ')' + ' official=' + v.official \
 "
 echo
 
-if [ -d /data/tombstones ]; then
-  tombstones=$(ls /data/tombstones)
+if [ -d data/tombstones ]; then
+  tombstones=$(ls data/tombstones)
   if [ "$tombstones" != "" ]; then
-    echo "TOMBSTONES (/data/tombstones):"
-    ls -l /data/tombstones
+    echo "TOMBSTONES (data/tombstones):"
+    ls -l data/tombstones
     echo
   fi
 fi
 
-echo Battery:
-echo -n "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%, "
-echo "$(cat /sys/class/power_supply/battery/status), $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null), $(cat /sys/class/power_supply/battery/health 2> /dev/null)"
-if [ -f /sys/class/power_supply/battery/current_now ]; then
-  echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
+if [ -d /sys/class/power_supply/battery ]; then
+  echo Battery:
+  echo -n "  Capacity: $(cat /sys/class/power_supply/battery/capacity)%, "
+  echo "$(cat /sys/class/power_supply/battery/status), $(cat /sys/class/power_supply/battery/charge_type 2> /dev/null), $(cat /sys/class/power_supply/battery/health 2> /dev/null)"
+  if [ -f /sys/class/power_supply/battery/current_now ]; then
+    echo "  Current (Now): $(cat /sys/class/power_supply/battery/current_now)uA"
+  fi
+  if [ -f /sys/class/power_supply/usb/current_max ]; then
+    echo "  USB Max Current: $(cat /sys/class/power_supply/usb/current_max)mA"
+  fi
+  echo
 fi
-if [ -f /sys/class/power_supply/usb/current_max ]; then
-  echo "  USB Max Current: $(cat /sys/class/power_supply/usb/current_max)mA"
-fi
-echo
 
-if [ -d /data/outbox ]; then
-  cd /data/outbox/
+if [ -d data/outbox ]; then
+  cd data/outbox/
   queues=$(ls)
   if [ "$queues" != "" ]; then
     echo Outbox:
@@ -45,6 +51,7 @@ if [ -d /data/outbox ]; then
     done
     echo
   fi
+  cd ../..
 fi
 
 if [ -d /sys/class/thermal ]; then
@@ -66,11 +73,15 @@ if [ -d /sys/class/thermal ]; then
 fi
 
 echo "Open File Descriptors:"
-nodepid=$(ps node | busybox tail -n1 | busybox cut -c11-15)
-if [ $nodepid -gt 1 ]; then
-  echo -n "  node: "; lsof $nodepid | busybox wc -l
+if [ -f /init ]; then
+  nodepid=$(ps node | busybox tail -n1 | busybox cut -c11-15)
+  if [ $nodepid -gt 1 ]; then
+    echo -n "  node: "; lsof $nodepid | busybox wc -l
+  fi
+  echo -n "     *: "; lsof | busybox wc -l
+else
+  echo -n "     TODO"
 fi
-echo -n "     *: "; lsof | busybox wc -l
 echo
 
 echo "Procrank (top 5 Pss)":

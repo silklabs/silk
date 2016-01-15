@@ -91,7 +91,7 @@ async function readLogo() {
   if (logo) {
     return;
   }
-  for (const root of ['/data', '/system']) {
+  for (const root of ['data', 'system']) {
     const logoFile = root + '/silk/media/logo.png';
     try {
       logo = await fs.readFile(logoFile);
@@ -156,7 +156,9 @@ function main() {
 
   // It's preferable to kill this process over system daemons
   // (usually running as -17) in out of memory situations.
-  fs.writeFile('/proc/self/oom_adj', 0);
+  if (['linux', 'android'].some(platform => platform === process.platform)) {
+    fs.writeFile('/proc/self/oom_adj', 0);
+  }
 
   // If no time zone is set select Pacific time.  The device currently
   // doesn't really care what time zone it's in, all operations are done
@@ -186,31 +188,38 @@ function main() {
       timeline = new Timeline(outbox);
       camera = require('./camera')(timeline);
 
-      return Promise.all([
+      let hw = [
         camera.init(),
         wifi.init(),
         getBTLE().then(btleInstance => {
           btle = btleInstance;
         }),
-        sensors.init(),
         infrared.init(),
-        say.init(),
         readLogo(),
-      ]);
+      ];
+      if (process.platform === 'android') {
+        hw = hw.concat([
+          sensors.init(),
+          say.init(),
+        ]);
+      }
+      return Promise.all(hw);
     })
     .then(maybeAbortBoot)
     .then(() => {
       diag = new Diag();
 
-      btle.on('region-entered', (uuid, rssi) => {
-        log.info('Device \'%s\' entered range %d', uuid, rssi);
-      });
-      btle.on('region-range', (uuid, rssi) => {
-        log.info('Device \'%s\' range %d', uuid, rssi);
-      });
-      btle.on('region-exited', uuid => {
-        log.info('Device \'%s\' exited range', uuid);
-      });
+      if (btle) {
+        btle.on('region-entered', (uuid, rssi) => {
+          log.info('Device \'%s\' entered range %d', uuid, rssi);
+        });
+        btle.on('region-range', (uuid, rssi) => {
+          log.info('Device \'%s\' range %d', uuid, rssi);
+        });
+        btle.on('region-exited', uuid => {
+          log.info('Device \'%s\' exited range', uuid);
+        });
+      }
 
       log.info('Load configuration');
       return config.init();

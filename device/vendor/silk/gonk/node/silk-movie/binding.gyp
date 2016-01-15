@@ -16,6 +16,7 @@
               "<!(echo $Android_mk__LIBRARIES)"
             ],
             "cflags" : [
+              "-DANDROID",
               "-DGL_GLEXT_PROTOTYPES",
               "-DEGL_EGLEXT_PROTOTYPES",
               "-isystem <!(echo $ANDROID_BUILD_TOP/external/skia/include/core)",

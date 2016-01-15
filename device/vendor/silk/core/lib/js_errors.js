@@ -34,7 +34,7 @@ async function drainLogcat(destination) {
     // -d will drain the current log without tailing.
     // TODO: These logs would be way nicer if they where in descending order
     // rather then ascending.
-    let proc = spawn('/system/bin/logcat', ['-d', '-v', 'threadtime']);
+    let proc = spawn('system/bin/logcat', ['-d', '-v', 'threadtime']);
     proc.on('error', err => {
       log.warn(`drainLogcat() failed: ${err.stack}`);
     });

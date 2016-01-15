@@ -30,7 +30,8 @@ type BeaconInfo = {
 const DEFAULT_BEACON_MAJOR = 0;
 const DEFAULT_BEACON_MINOR = 0;
 
-const btHwAvailable = getboolprop(`ro.silk.bt.hw.enabled`, true);
+const btHwAvailable = getboolprop(`ro.silk.bt.hw.enabled`,
+  process.platform === 'android');
 
 const log = makeLog(`btle`);
 

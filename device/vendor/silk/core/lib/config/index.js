@@ -22,7 +22,7 @@ import wifi from '../wifi';
 
 const log = createLog('config');
 
-const CONFIG_PATH = '/data/silk/config/config.json';
+const CONFIG_PATH = 'data/silk/config/config.json';
 
 const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
   success:

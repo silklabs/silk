@@ -20,7 +20,7 @@ import APICallOp from './outbox/api_call_operation';
 import type NetworkStatus from './network_status';
 import type { Outbox } from './outbox/manager';
 
-const STORAGE_PATH = path.join('/data', 'outbox');
+const STORAGE_PATH = path.join('data', 'outbox');
 
 export default function(networkStatus: NetworkStatus): Outbox {
   let outbox = createOutbox({

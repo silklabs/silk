@@ -29,8 +29,8 @@ if (CRASHREPORT_ENABLED) {
   raygun.enable('device', version.semver);
 }
 
-const TOMBSTONE_PATH = '/data/tombstones/';
-const DEBUGGERD_SOCKET_PATH = '/data/system/ndebugsocket';
+const TOMBSTONE_PATH = 'data/tombstones/';
+const DEBUGGERD_SOCKET_PATH = 'data/system/ndebugsocket';
 const TOMBSTONE_FILE_REGEXP = new RegExp(/^tombstone_\d+$/); // 'tombstone_03'
 
 /**
@@ -292,10 +292,14 @@ export class CrashReporter {
     // tombstones...
     if (doUploads) {
       log.info('Crash reporting uploads enabled');
-      // We only listen for tombstone creation if we are actively doing uploads.
-      debuggerd.on('tombstone written', () => {
-        tombstones.update();
-      });
+
+      if (debuggerd) {
+        // We only listen for tombstone creation if we are actively doing uploads.
+        debuggerd.on('tombstone written', () => {
+          tombstones.update();
+        });
+      }
+
       /**
        * The tombstone event is emitted only when a new tombstone has been added
        * to the file queue...
@@ -438,8 +442,10 @@ export class CrashReporter {
   }
 
   async start() {
-    // start the debuggerd socket...
-    await this.debuggerd.start();
+    if (this.debuggerd) {
+      await this.debuggerd.start();
+    }
+
     // If we have the device id by this point kick off the scan for tombstones.
     if (this.deviceId) {
       this.tombstones.update();
@@ -449,7 +455,7 @@ export class CrashReporter {
   async shutdown() {
     await Promise.all([
       this.tombstones.shutdown(),
-      this.debuggerd.shutdown()
+      this.debuggerd ? this.debuggerd.shutdown() : Promise.resolve()
     ]);
   }
 
@@ -482,9 +488,14 @@ export default function(outbox, options = {}) {
     options.tombstonePath || TOMBSTONE_PATH
   );
 
-  let debuggerd = new Debuggerd(
-    options.debuggerdSocketPath || DEBUGGERD_SOCKET_PATH
-  );
+  let debuggerd = null;
+  if (process.platform === 'android' || options.debuggerdSocketPath) {
+    debuggerd = new Debuggerd(
+      options.debuggerdSocketPath || DEBUGGERD_SOCKET_PATH
+    );
+  } else {
+    log.verbose('No debuggerd');
+  }
 
   let doUploads = CRASHREPORT_ENABLED;
   if ('crashReporterEnabled' in options) {

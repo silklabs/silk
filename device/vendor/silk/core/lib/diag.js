@@ -108,14 +108,14 @@ export default class Diag {
 
     this.loggers = [
       new DiagLogger('logcat',
-        '/system/bin/logcat',
+        'system/bin/logcat',
         /* "-T 0" to skip to the current tip of logcat data. Diag starts up
            immediately at boot before the device connects to the server so any
            existing scroll back will be lost anyway (as there's no socket yet) */
         ['-v', 'threadtime', '-T', '0']),
 
       new DiagLogger('dash',
-        '/system/silk/bin/dash', [], 60),
+        'system/silk/bin/dash', [], 60),
     ];
   }
 

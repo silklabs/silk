@@ -22,7 +22,7 @@ import type { AccessToken } from 'silk-api';
 const log = makeLog('deviceid');
 
 // Where the ID export for this device lives.
-const ID_DIR = '/data/silk/config/';
+const ID_DIR = 'data/silk/config/';
 const ID_PATH = path.join(ID_DIR, 'id.json');
 
 let deviceId;

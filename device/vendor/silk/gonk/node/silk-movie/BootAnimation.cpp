@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#ifdef ANDROID
+
 #define LOG_TAG "GonkAnimation"
 #include "BootAnimation.h"
 
@@ -558,3 +560,6 @@ void BootAnimation::run()
 
 }
 ; // namespace android
+
+#endif /* ANDROID */
+

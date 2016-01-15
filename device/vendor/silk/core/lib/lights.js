@@ -71,7 +71,6 @@ class Light extends events.EventEmitter {
         let msg = `'${binary}' returned error code ${result.code}: ` +
                   result.stderr;
         log.error(msg);
-        throw new Error(msg);
       }
       this.emit('change', state);
     });

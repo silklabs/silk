@@ -10,6 +10,7 @@ interface with via swift need to be imported here.
 #import <CommonCrypto/CommonCryptor.h>
 #import "RCTEventDispatcher.h"
 #import "RCTBridge.h"
+#import "RCTBridgeDelegate.h"
 #import "RCTRootView.h"
 #import "RCTViewManager.h"
 #import "RCTUIManager.h"
@@ -18,6 +19,8 @@ interface with via swift need to be imported here.
 #import "RCTTouchHandler.h"
 #import "RCTView.h"
 
-#import <RCTWebSocketModule.h>
+#import "SLKWebSocketModule.h"
+
 #import <Raygun4iOS/Raygun4iOS.h>
+
 #endif

@@ -5,8 +5,12 @@ import UIKit
 private let log = DebugLog.create("silk-app")
 
 @UIApplicationMain
-class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
+class AppDelegate : UIResponder,
+                    UIApplicationDelegate,
+                    RegionMonitorDelegate,
+                    RCTBridgeDelegate {
 
+  var config: Config?
   var regionMonitor: RegionMonitor?
   var bleSocketPeripheral: BLESocketPeripheral?
   var window: UIWindow?
@@ -17,9 +21,14 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
   }
 
   func loadConfig() -> Config {
+    if let config = self.config {
+      return config
+    }
+
     let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
     if url == nil {
-      return Config()
+      self.config = Config()
+      return self.config!
     }
 
     // If your specify a url your responsible for validating its json
@@ -29,6 +38,7 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
       // This is on boot and should only be in the development path so raise...
       NSException.raise("Exception", format:"Error: %@", arguments:getVaList([err!]))
     }
+    self.config = config
     return config!
   }
 
@@ -44,23 +54,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     // uses it.
 
     self.regionMonitor = RegionMonitor(delegate: self)
-
-    var reactViewURL: NSURL
-    let reactNativeType = config.reactNative.type
-    let reactNativeUrl = config.reactNative.url!
-
-    if reactNativeType == "bundle" || reactNativeType == "local" {
-      reactViewURL = NSBundle.mainBundle().URLForResource(reactNativeUrl, withExtension: "")!
-      NSLog("Starting react-native with bundle: \(reactNativeUrl)")
-    } else {
-      reactViewURL = NSURL(string: reactNativeUrl)!
-      NSLog("Starting react-native with remote url: \(reactNativeUrl)")
-    }
-
-    let rootView = RCTRootView(bundleURL: reactViewURL, moduleName: "Silk", initialProperties: nil, launchOptions: launchOptions)
+    let bridge = RCTBridge(delegate: self, launchOptions: launchOptions)
+    let rootView = RCTRootView(bridge: bridge, moduleName: "Silk", initialProperties: nil)
 
     // This must not be created until *after* ReactNative has loaded all its
-    // modules during the |RCTRootView| initializer.
+    // modules during the |RCTBridge| initializer.
     self.bleSocketPeripheral =
       BLESocketPeripheral(regionMonitor: self.regionMonitor!)
 
@@ -111,6 +109,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     UIApplication.sharedApplication().scheduleLocalNotification(notification)
   }
 
+  // RegionMonitorDelegate
+
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
     assert(self.bleSocketPeripheral != nil)
@@ -136,5 +136,26 @@ class AppDelegate : UIResponder, UIApplicationDelegate, RegionMonitorDelegate {
     assert(regionMonitor === self.regionMonitor!)
     assert(self.bleSocketPeripheral != nil)
     self.bleSocketPeripheral!.stopAdvertisingServiceUuid(uuid)
+  }
+
+  // RCTBridgeDelegate
+
+  func sourceURLForBridge(bridge: RCTBridge!) -> NSURL! {
+    let config = self.loadConfig()
+    let reactNativeType = config.reactNative.type
+    let reactNativeUrl = config.reactNative.url!
+
+    if reactNativeType == "bundle" || reactNativeType == "local" {
+      NSLog("Starting react-native with bundle: \(reactNativeUrl)")
+      return NSBundle.mainBundle().URLForResource(reactNativeUrl, withExtension: "")!
+    }
+    NSLog("Starting react-native with remote url: \(reactNativeUrl)")
+    return NSURL(string: reactNativeUrl)!
+  }
+
+  func extraModulesForBridge(bridge: RCTBridge!) -> [AnyObject]! {
+    return [
+      SLKWebSocketModule()
+    ]
   }
 }

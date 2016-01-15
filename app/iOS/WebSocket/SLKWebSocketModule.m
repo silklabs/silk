@@ -7,14 +7,19 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#import "RCTSRWebSocket.h"
-#import "RCTWebSocketModule.h"
-#import "AppRCTWebSocketModule.h"
+#import "SLKWebSocketModule.h"
+#import "RCTBridgeModule.h"
 
-@implementation AppRCTWebSocketModule
+#import "Silk-Swift.h"
 
-RCT_EXPORT_MODULE(AppWebSocketModule)
+@implementation SLKWebSocketModule
 
+// Don't rely on the RCT_EXPORT_MODULE macro for this because we want to replace
+// the existing RCTWebSocketModule.
++ (NSString *)moduleName
+{
+  return @"RCTWebSocketModule";
+}
 
 RCT_EXTERN_METHOD(connect:(NSURL *)URL socketID:(nonnull NSNumber *)socketID)
 RCT_EXTERN_METHOD(send:(NSString *)message socketID:(nonnull NSNumber *)socketID)
@@ -30,9 +35,8 @@ RCT_EXTERN_METHOD(close:(nonnull NSNumber *)socketID)
     return;
   }
   #endif
-  id data;
-  data = [TypeTransfer convert:message];
-  [super webSocket:webSocket didReceiveMessage:data];
+  message = [TypeTransfer convert:message];
+  [super webSocket:webSocket didReceiveMessage:message];
 }
 
 @end

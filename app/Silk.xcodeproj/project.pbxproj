@@ -60,10 +60,10 @@
 		57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */; };
 		57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */; };
 		57BCE0F81B6960270047088B /* AppRCTConvert+NSData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */; };
-		57BCE0FA1B6962ED0047088B /* NSDataBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F91B6962ED0047088B /* NSDataBridge.swift */; };
+		57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F91B6962ED0047088B /* BlobManager.swift */; };
 		57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0FB1B6984360047088B /* TypeTransfer.swift */; };
 		57BCE10A1B6986B70047088B /* TypeTransferTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE1081B69867F0047088B /* TypeTransferTest.swift */; };
-		57BCE10D1B6991520047088B /* BlobBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* BlobBridge.m */; };
+		57BCE10D1B6991520047088B /* SLKBlobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* SLKBlobManager.m */; };
 		57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C2F1B92CE01003F9EFF /* DebugLog.swift */; };
 		57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C311B92CE10003F9EFF /* DebugLogTest.swift */; };
 		6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5839001C1D04610004EC78 /* CrashReporter.swift */; };
@@ -375,10 +375,10 @@
 		57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideoManager.swift; sourceTree = "<group>"; };
 		57BCE0F61B695FDC0047088B /* AppRCTConvert+NSData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AppRCTConvert+NSData.h"; sourceTree = "<group>"; };
 		57BCE0F71B6960270047088B /* AppRCTConvert+NSData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "AppRCTConvert+NSData.m"; sourceTree = "<group>"; };
-		57BCE0F91B6962ED0047088B /* NSDataBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDataBridge.swift; sourceTree = "<group>"; };
+		57BCE0F91B6962ED0047088B /* BlobManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlobManager.swift; sourceTree = "<group>"; };
 		57BCE0FB1B6984360047088B /* TypeTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransfer.swift; sourceTree = "<group>"; };
 		57BCE1081B69867F0047088B /* TypeTransferTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeTransferTest.swift; sourceTree = "<group>"; };
-		57BCE10C1B6991520047088B /* BlobBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BlobBridge.m; sourceTree = "<group>"; };
+		57BCE10C1B6991520047088B /* SLKBlobManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKBlobManager.m; sourceTree = "<group>"; };
 		57C30C2F1B92CE01003F9EFF /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		57C30C311B92CE10003F9EFF /* DebugLogTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLogTest.swift; sourceTree = "<group>"; };
 		6C5839001C1D04610004EC78 /* CrashReporter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
@@ -696,7 +696,7 @@
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
-				57BCE10B1B69910C0047088B /* NSDataBridge */,
+				57BCE10B1B69910C0047088B /* BlobManager */,
 				57BCE0F51B695FB10047088B /* RCTConvert */,
 				5758F25E1B600AD300C18E5D /* PreviewImage */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
@@ -751,13 +751,13 @@
 			path = RCTConvert;
 			sourceTree = "<group>";
 		};
-		57BCE10B1B69910C0047088B /* NSDataBridge */ = {
+		57BCE10B1B69910C0047088B /* BlobManager */ = {
 			isa = PBXGroup;
 			children = (
-				57BCE0F91B6962ED0047088B /* NSDataBridge.swift */,
-				57BCE10C1B6991520047088B /* BlobBridge.m */,
+				57BCE0F91B6962ED0047088B /* BlobManager.swift */,
+				57BCE10C1B6991520047088B /* SLKBlobManager.m */,
 			);
-			path = NSDataBridge;
+			path = BlobManager;
 			sourceTree = "<group>";
 		};
 		57C30C2D1B92CDF4003F9EFF /* DebugLog */ = {
@@ -1166,7 +1166,7 @@
 				5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */,
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
 				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
-				57BCE10D1B6991520047088B /* BlobBridge.m in Sources */,
+				57BCE10D1B6991520047088B /* SLKBlobManager.m in Sources */,
 				5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */,
 				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
 				5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */,
@@ -1188,7 +1188,7 @@
 				57BCE0FC1B6984360047088B /* TypeTransfer.swift in Sources */,
 				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
 				5758F2601B600AF500C18E5D /* ImageViewManager.m in Sources */,
-				57BCE0FA1B6962ED0047088B /* NSDataBridge.swift in Sources */,
+				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
 				5758F2621B600B0200C18E5D /* ImageViewManager.swift in Sources */,
 				5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */,

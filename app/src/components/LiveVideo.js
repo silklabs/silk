@@ -4,7 +4,7 @@ let LiveVideoNative = React.requireNativeComponent('LiveVideo');
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'livevideo';
 
-const SegmentProps = [
+const SEGMENT_PROPS = [
   'type',
   'data',
   'url',
@@ -19,9 +19,9 @@ const SegmentProps = [
 class Segment {
   constructor(options = {}) {
     // TODO: type checks.
-    for (var prop of SegmentProps) {
+    SEGMENT_PROPS.forEach((prop) => {
       this[prop] = options[prop];
-    }
+    });
 
     /**
      * We provide custom functions for managing state here since we _must_ not
@@ -43,9 +43,9 @@ class Segment {
    */
   toJSON() {
     let result = {};
-    for (var prop of SegmentProps) {
+    SEGMENT_PROPS.forEach((prop) => {
       result[prop] = this[prop];
-    }
+    });
     return result;
   }
 }

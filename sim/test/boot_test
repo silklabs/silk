@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# Basic boot test
+#
+
+cd $(dirname $0)/..
+
+# Populate the simulator with test /data
+cp -rav test/data .
+
+rm -rf data/tombstones
+
+timeout 60s npm run start
+err=$?
+echo Simulator terminated with exit code $err
+
+if [ $err -ne 0 ]; then
+  if [ $err -eq 124 ]; then
+    echo Timeout
+  fi
+  echo
+  echo Error: non-zero exit code
+  exit 1
+fi
+
+if [ -d data/tombstones ]; then
+  echo
+  ls -l data/tombstones
+  for tombstone in data/tombstones/*; do
+    if [ -f $tombstone ]; then
+      echo =====[ $tombstone ]=================
+      cat $tombstone
+    fi
+  done
+  echo Warning: Found tombstones
+fi
+
+boot_completed=$(system/bin/getprop silk.boot_completed)
+if [ "$boot_completed" != "1" ]; then
+  echo Error: sys.boot_completed expected to be 1. value: $boot_completed
+  exit 1
+fi
+
+echo PASS
+exit 0

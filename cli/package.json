@@ -3,9 +3,12 @@
   "version": "0.11.0",
   "description": "Silk command line tool",
   "main": "silk.js",
+  "bin": {
+    "silk-cli": "silk"
+  },
   "scripts": {
     "lint": "eslint build lib",
-    "postinstall": "../tools/npm/postinstall.js && ( ./build/build && echo \"#!/usr/bin/env node\" > silk && cat silk.js >> silk && chmod u+x silk && rm silk.js )",
+    "postinstall": "../tools/npm/postinstall.js && ./build/build",
     "test": "npm run lint"
   },
   "dependencies": {

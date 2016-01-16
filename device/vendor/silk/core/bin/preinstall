@@ -1,22 +1,5 @@
 #!/bin/bash -ex
 
-SCROOT=../../../..
-if [[ -f $SCROOT/tools/gnu.sh ]]; then
-  source $SCROOT/tools/gnu.sh
-fi
-
-# Delete previously copied "local" node modules
-for file in local_node_modules/*
-do
-  module=$(basename $file)
-  if [[ -d node_modules/$module ]]; then
-    rm -rf node_modules/$module
-  fi
-done
-
-# Copy "local" node modules into node_modules/
-mkdir -p node_modules
-
 # Fetch locked node_modules if present
 if [[ -d ../locked_node_modules ]]; then
   ../locked_node_modules/fetch.sh

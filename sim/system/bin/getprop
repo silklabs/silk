@@ -1,0 +1,2 @@
+#!/bin/sh
+cat data/properties/$1

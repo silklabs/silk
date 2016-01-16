@@ -4,7 +4,11 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 #include <nan.h>
+#ifdef ANDROID
 #include <cutils/properties.h>
+#else
+#define PROPERTY_VALUE_MAX 92
+#endif
 
 NAN_METHOD(GetProperty) {
   Nan::HandleScope scope;
@@ -15,8 +19,15 @@ NAN_METHOD(GetProperty) {
 
   char property_value[PROPERTY_VALUE_MAX];
   const char* default_value = "";
+  int len;
+#ifdef ANDROID
   char *property_name = *Nan::Utf8String(info[0]);
-  int len = property_get(property_name, property_value, default_value);
+  len = property_get(property_name, property_value, default_value);
+#else
+  strncpy(property_value, default_value, sizeof(property_value) - 1);
+  property_value[sizeof(property_value)-1] = '\0';
+  len = strlen(property_value);
+#endif
 
   info.GetReturnValue().Set(
       Nan::New<v8::String>(property_value, len).ToLocalChecked()

@@ -1,0 +1,17 @@
+#!/bin/bash -ex
+
+cd $(dirname $0)
+
+mkdir -p ../node_modules
+cp -f node_modules/silk-device/lib/base_version.js ../node_modules/
+
+ln -sf $(which node) bin/node
+
+# TODO: Move these things out of device/vendor/gonk/init for better sharing
+for cmd in dash silk-core; do
+  echo "#!/bin/bash" > bin/$cmd
+  cat ../../../device/vendor/silk/gonk/init/$cmd >> bin/$cmd
+  chmod +x bin/$cmd
+done
+
+./ext/install

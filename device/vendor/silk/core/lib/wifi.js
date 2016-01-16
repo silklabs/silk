@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Silk Labs, Inc.
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -13,7 +13,8 @@ import createLog from './log';
 import type {Socket} from 'socket.io-client';
 
 const log = createLog('wifi');
-const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu', false);
+const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu',
+  process.platform !== 'android');
 
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;

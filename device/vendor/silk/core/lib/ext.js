@@ -13,7 +13,7 @@ import * as util from './sysutils';
 import wrapNoEntity from './fs/wrap_no_entity';
 
 const log = createLog('ext');
-const extDirs = [ '/system/silk/ext', '/data/silk/ext' ];
+const extDirs = [ 'system/silk/ext', 'data/silk/ext' ];
 
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
@@ -338,7 +338,7 @@ class Env extends EventEmitter {
     /**
      * @name ranger
      * @namespace
-     * Class that that provides functionlity to control Bluetooth low energy
+     * Class that that provides functionality to control Bluetooth low energy
      * module on the device
      * @memberof Env
      */
@@ -562,7 +562,7 @@ class Extensions {
     for (const dir of extDirs) {
       const files = await wrapNoEntity(fs.readdir(dir), []);
       for (const file of files) {
-        if (this._loadExtension(path.join(dir, file))) {
+        if (await this._loadExtension(path.join(dir, file))) {
           // The timeout here was selected by monitoring 'main thread bogged
           // down' log messages
           await util.timeout(100);
@@ -576,7 +576,7 @@ class Extensions {
    * @private
    */
   _isModuleNameValid(file) {
-    // module names must end in .js, .json, .node or nothing
+    // module names must end in .js, .json, .node or nothing (directory)
     let ext = path.extname(file);
     return !ext.length || ext === '.js' || ext === '.json' || ext === '.node';
   }
@@ -627,12 +627,13 @@ class Extensions {
     .then(() => {
       log.info('Extension changed', file);
       this._unloadExtension(file)
-      .then(() => this._loadExtension(file),
-          () => log.warn('Not reloading', file));
+      .then(() => this._loadExtension(file))
+      .catch(() => log.warn('Not reloading', file));
     }, err => {
       if (err.code === 'ENOENT') {
         log.info('Extension removed', file);
-        this._unloadExtension(file);
+        this._unloadExtension(file)
+        .catch(() => log.warn('Error unloading', file));
       } else {
         log.warn('Unexpected file error', file, err.code);
       }
@@ -645,13 +646,13 @@ class Extensions {
    */
   _getModulePath(file) {
     let ext = path.extname(file);
-    return ext.length > 0 ? file.slice(0, -ext.length) : file;
+    return path.resolve(ext.length > 0 ? file.slice(0, -ext.length) : file);
   }
 
   /**
    * @private
    */
-  _loadExtension(file) {
+  async _loadExtension(file) {
     if (!this._isModuleNameValid(file)) {
       return false;
     }

@@ -1,0 +1,12 @@
+language: node_js
+node_js: 4.2
+sudo: required
+dist: trusty
+
+addons:
+  apt:
+    packages:
+      - libopencv-dev
+      - libudev-dev
+
+script: npm test

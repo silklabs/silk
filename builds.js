@@ -68,6 +68,12 @@ module.exports = {
     events: ['push'],
   }),
   'cli': npmPackageBuild('cli'),
+  'sim': npmPackageBuild('sim', {
+    files: [
+      'device/**',
+      'sim/**',
+    ],
+  }),
   'device-pr': npmPackageBuild('device', {
     // Build a quick "base" device build on PRs.
     package_json: 'device/vendor/silk/core/package.json',

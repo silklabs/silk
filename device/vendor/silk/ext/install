@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+cd $(dirname $0)
+for mod in */package.json; do
+  ( set -ex; cd $(dirname $mod); npm install )
+done

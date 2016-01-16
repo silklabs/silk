@@ -281,6 +281,29 @@ class CameraStream extends EventEmitter {
   /**
    * @private
    */
+  _initCVVideoCapture() {
+    if (!this._cvVideoCapture) {
+      try {
+        this._cvVideoCapture = new cv.VideoCapture(0);
+      } catch (err) {
+        throw err;
+      }
+    }
+    PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
+    PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
+    this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
+    this._scheduleNextPreviewFrame();
+
+    clearTimeout(this._initTimeout);
+    this._initTimeout = null;
+
+    this._ready = true;
+    this.emit('ready');
+  }
+
+  /**
+   * @private
+   */
   _init() {
     if (this._ready) {
       log.warn(`camera already initialized`);
@@ -294,6 +317,15 @@ class CameraStream extends EventEmitter {
       this._initTimeout = null;
       this._restart('failed to initialize in a timely fashion', true);
     }, CAPTURE_INIT_TIMEOUT_MS);
+
+    if (process.platform !== 'android') {
+      // The capture process is currently gonk only.  For other platforms only initialize
+      // OpenCV video capture.
+      process.nextTick(() => {
+        this._initCVVideoCapture();
+      });
+      return;
+    }
 
     // Connecting to data socket
     this._dataBuffer = null;
@@ -316,17 +348,6 @@ class CameraStream extends EventEmitter {
     log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
     this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
-
-      if (!this._cvVideoCapture) {
-        // Initialize the OpenCV video capture before sending 'init' to the
-        // capture process to enable capture's 'init' implementation to run more
-        // efficiently.
-        try {
-          this._cvVideoCapture = new cv.VideoCapture(0);
-        } catch (err) {
-          throw err;
-        }
-      }
 
       this._buffer = '';
       const cmdData = {
@@ -386,20 +407,10 @@ class CameraStream extends EventEmitter {
       if (captureEvent.eventName === 'error') {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
-        PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
-        PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
-        this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
-
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
-        this._scheduleNextPreviewFrame();
-
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
 
-        clearTimeout(this._initTimeout);
-        this._initTimeout = null;
-
-        this._ready = true;
-        this.emit('ready');
+        this._initCVVideoCapture();
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);

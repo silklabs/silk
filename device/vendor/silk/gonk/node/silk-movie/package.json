@@ -7,7 +7,6 @@
     "test": "./node_modules/nodeunit/bin/nodeunit test.js",
     "install": "node-gyp rebuild"
   },
-  "os": [ "android" ],
   "author": {
     "name": "Chris Jones",
     "email": "chris@silklabs.com"

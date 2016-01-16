@@ -9,11 +9,10 @@ info() {
   log -p i -t silk-init $@
 }
 
-NODE=/system/silk/bin/node
-if [ ! -x $NODE ]; then
-  info Node engine not found.
-  exit 1
+if [ -f /init ]; then
+  cd /
 fi
+
 
 NODE_ARGS="--harmony"
 if [ "$1" = "--debug-brk" ]; then
@@ -43,8 +42,8 @@ if [ -z $1 ]; then
   # listen on it.
   setprop sys.boot_completed 1
 
-  exec $NODE $NODE_ARGS /system/silk/core.js
+  exec system/silk/bin/node $NODE_ARGS system/silk/core.js
   exit 1
 fi
 
-exec $NODE $NODE_ARGS "$@"
+exec node $NODE_ARGS "$@"

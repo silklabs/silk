@@ -4,17 +4,42 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+#include <nan.h>
+
+#ifdef ANDROID
 #define LOG_NDEBUG 0
 #define LOG_TAG "gonkmovie"
 #include <utils/Log.h>
 
 #include <binder/ProcessState.h>
-#include <nan.h>
-
 #include "BootAnimation.h"
 
-using namespace v8;
+#else
+
+namespace android {
+class BootAnimation
+{
+public:
+  bool load(char const *zipFile) { return true; };
+  void run() {};
+  void requestStop(bool block = false) {};
+};
+
+template <class T>
+class sp {
+  T *p;
+public:
+  sp(T* p) : p(p) {};
+  T* operator -> () const { return p; }
+  bool operator == (const T* o) const { return p == o; }
+  bool operator != (const T* o) const { return p != o; }
+};
+} // namespace android
+
+#endif
+
 using namespace android;
+using namespace v8;
 
 
 class MovieWorker : public Nan::AsyncWorker
@@ -55,10 +80,11 @@ public:
 private:
   explicit Movie()
     : mAnim(NULL)
-    , movieDoneCallback(NULL)
   {
+#ifdef ANDROID
     sp<ProcessState> ps = ProcessState::self();
     ps->startThreadPool();
+#endif
   }
 
   ~Movie() {}
@@ -122,7 +148,6 @@ private:
   }
 
   sp<BootAnimation> mAnim;
-  Nan::Callback *movieDoneCallback;
 
   static Nan::Persistent<v8::Function> constructor;
 };

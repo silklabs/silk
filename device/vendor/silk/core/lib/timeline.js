@@ -412,7 +412,14 @@ export default class Timeline extends EventEmitter {
    */
   _emitEvents(objects: Array<TimelineEventObject>) {
     objects.forEach(object => {
-      this.emit(object.tag, object.when, object.rects, object.source);
+      try {
+        this.emit(object.tag, object.when, object.rects, object.source);
+      } catch(err) {
+        // Escape this call stack then re-throw
+        process.nextTick(() => {
+          throw err;
+        });
+      }
 
       // Clear the cached object list as new objects would be received
       if (object.tag === 'motion') {

@@ -84,3 +84,22 @@ export function shouldPureComponentUpdate(
   }
   return shouldUpdate;
 }
+
+export type NativeBlob = {
+  __native_type: 'NSData';
+  id: string;
+  length: number;
+  firstByte?: number;
+  offset?: number;
+};
+
+export function blobURI(blob: ?NativeBlob): ?string {
+  if (!blob) {
+    return null;
+  }
+  let uri = `silk-blob://${blob.id}/`;
+  if (blob.offset) {
+    uri += `?offset=${blob.offset}`;
+  }
+  return uri;
+}

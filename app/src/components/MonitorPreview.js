@@ -3,9 +3,8 @@ import React from 'react-native';
 import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
-import { shouldPureComponentUpdate } from '../libraries/Util';
+import { shouldPureComponentUpdate, blobURI } from '../libraries/Util';
 
-import ImageView from './ImageView';
 import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
@@ -14,6 +13,7 @@ const {
   ActionSheetIOS,
   ActivityIndicatorIOS,
   AlertIOS,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -243,7 +243,12 @@ export default class MonitorPreview extends SocketIOComponent {
     // TODO: display this.props.haveVideoStream visually in some way.
     // See https://github.com/silklabs/silk-app/issues/526
     if (this.state.blob) {
-      return <ImageView style={styles.preview} blob={this.state.blob} />;
+      return (
+        <Image
+          style={styles.preview}
+          source={{uri: blobURI(this.state.blob)}}
+        />
+      );
     }
     if (this.props.configurable) {
       return (
@@ -271,9 +276,9 @@ export default class MonitorPreview extends SocketIOComponent {
     let logo = null;
     if (this.props.logo) {
       logo = (
-        <ImageView
+        <Image
           style={styles.logo}
-          blob={this.props.logo}
+          source={{uri: blobURI(this.props.logo)}}
         />
       );
     }
@@ -416,6 +421,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 15,
     opacity: 0.5,
+    resizeMode: 'stretch',
   },
 
   timedOutLabel: {

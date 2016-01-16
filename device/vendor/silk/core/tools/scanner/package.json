@@ -24,6 +24,6 @@
     "silk-api": "file:../../local_node_modules/silk-api"
   },
   "engines": {
-    "node": "0.12.2"
+    "node": "4.2"
   }
 }

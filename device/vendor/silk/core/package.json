@@ -55,7 +55,7 @@
     "iot"
   ],
   "engines": {
-    "node": "0.12.2"
+    "node": "4.2"
   },
   "private": true
 }

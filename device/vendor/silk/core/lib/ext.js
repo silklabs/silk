@@ -569,7 +569,7 @@ class Extensions {
         }
       }
     }
-    util.propWatcher.on(RELOAD_EXT_PROP, () => this._onReloadRequested());
+    util.propWatcher.on(RELOAD_EXT_PROP, this._onReloadRequested);
   }
 
   /**
@@ -584,7 +584,7 @@ class Extensions {
   /**
    * @private
    */
-  _onReloadRequested() {
+  _onReloadRequested = () => {
     // When reload prop changes to non empty string, reload module file
     // specified by prop. When done, clear prop to empty string to indicate done
     let clearReloadProp = () => util.setprop(RELOAD_EXT_PROP, '');
@@ -598,7 +598,7 @@ class Extensions {
       .then(() => clearReloadProp())
       .catch(() => clearReloadProp());
     }
-  }
+  };
 
   /**
    * Send the received command to the loaded extensions. Called when a command

@@ -1,6 +1,0 @@
-#!/bin/sh
-
-# imastub
-while true; do
-  sleep 3600
-done

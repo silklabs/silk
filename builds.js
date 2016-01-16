@@ -101,12 +101,17 @@ module.exports = {
   'networktest': npmPackageBuild('networktest'),
   'releng': npmPackageBuild('releng'),
   'server': npmPackageBuild('server'),
-  'webapp': npmPackageBuild('webapp', {
-    // There might be a documentation update in the following files so
-    // redeploy webapp
+  'webapp-pr': npmPackageBuild('webapp', {
+    events: ['pr'],
+  }),
+  'webapp-push': npmPackageBuild('webapp', {
     files: [
+      'webapp/**',
+      // These files feed into API documentation, redeploy webapp upon changes.
+      'docs/**',
       'device/vendor/silk/core/lib/**/*.js',
     ],
+    events: ['push'],
   }),
 
   // Nightly device builds

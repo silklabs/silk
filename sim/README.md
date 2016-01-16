@@ -11,6 +11,7 @@ $ brew install opencv
 Linux:
 ```
 $ sudo apt-get install libopencv-dev libudev-dev
+$ sudo usermod -a -G video $(whoami)  # Ensure you have access to the camera at /dev/video0
 ```
 
 # Install/Run

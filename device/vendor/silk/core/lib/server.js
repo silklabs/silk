@@ -1,14 +1,15 @@
 /**
- * Server socket.io connection
- *
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
  */
 
- /**
-  * @flow
-  */
+/**
+ * @flow
+ */
+
 import api from './api';
 import events from 'events';
 import createLog from './log';
@@ -17,6 +18,9 @@ import type { Socket } from 'socket.io-client';
 
 const log = createLog('server');
 
+/**
+ * Server socket.io connection
+ */
 class Server extends events.EventEmitter {
   socket: Socket;
 

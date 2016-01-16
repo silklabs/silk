@@ -6,6 +6,7 @@
  * The Deferred pattern is considered "legacy" don't use it unless you
  * need to do something awkward like loop promises with timers.
  *
+ * @private
  * @flow
  */
 

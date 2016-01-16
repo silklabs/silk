@@ -1,4 +1,12 @@
 /**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
+ */
+
+/**
  * This module is responsible for handling the various types of JS runtime
  * errors that may occur (such as uncaught exceptions and promise chain
  * rejections that are not handled).

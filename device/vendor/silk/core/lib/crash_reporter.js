@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Laboratories, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Laboratories, Inc.
+ *
+ * @private
  */
 
 import assert from 'assert';

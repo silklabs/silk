@@ -8,6 +8,7 @@
  * have a wifi connection" as you can still be connected to wifi and have no
  * connection.
  *
+ * @private
  * @flow
  */
 

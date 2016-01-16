@@ -4,6 +4,7 @@
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/version",
+    "silk-docs": "/docs",
     "silk-log": "/log",
     "silk-raygun": "/raygun"
   },

@@ -122,6 +122,7 @@ module.exports = {
   'device-osx-nightly': nightlyBuild('device', {
     title: 'OS X base nightly',
     travis_config: {
+      os: ['osx'],
       env: {
         global: ['GONK=base'],
       },

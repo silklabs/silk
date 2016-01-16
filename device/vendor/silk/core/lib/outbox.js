@@ -7,9 +7,6 @@
  * @flow
  */
 
-/**
- * Helper to initialize outbox and various operations...
- */
 import path from 'path';
 import createOutbox from './outbox/manager';
 
@@ -23,15 +20,17 @@ import type { Outbox } from './outbox/manager';
 
 const STORAGE_PATH = path.join('data', 'outbox');
 
+/**
+ * Helper to initialize outbox and various operations...
+ * @private
+ */
 export default function(networkStatus: NetworkStatus): Outbox {
   let outbox = createOutbox({
     storagePath: STORAGE_PATH,
   });
 
-  /**
-   * The outbox has special queues specific to blob uploads so we don't clog
-   * up the main queue with video/previews (which are running constantly).
-   */
+  // The outbox has special queues specific to blob uploads so we don't clog
+  // up the main queue with video/previews (which are running constantly).
   const videoOptions = {
     // TODO: This should be computed somehow, and dynamically adjusted
     concurrency: 8,
@@ -48,9 +47,7 @@ export default function(networkStatus: NetworkStatus): Outbox {
   outbox.registerQueue('event_preview', previewOptions);
   outbox.registerQueue('preview', previewOptions, 'event_preview');
 
-  /**
-   * Register all known operations so we can create them from disk as needed...
-   */
+  // Register all known operations so we can create them from disk as needed...
   outbox.registerOperation(CrashReportOp);
   outbox.registerOperation(PapertrailOp);
   outbox.registerOperation(VideoUploadOp);

@@ -43,11 +43,11 @@ import type { Outbox } from './outbox/manager';
 /**
  * Type representing a timeline event object
  *
- *  @property {string} tag Name of the object
- *  @property {number} when Timestamp the object(s) manifested in the stream
- *  @property {Array<Rect>} rects one or more bounding rectangles for where the
- *            object appeared. The video preview image dimensions are used as
- *            the scale for these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT).
+ * @property {string} tag Name of the object
+ * @property {number} when Timestamp the object(s) manifested in the stream
+ * @property {Array<Rect>} rects one or more bounding rectangles for where the
+ *           object appeared. The video preview image dimensions are used as
+ *           the scale for these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT).
  */
 export type TimelineEventObject = {
   tag: string;

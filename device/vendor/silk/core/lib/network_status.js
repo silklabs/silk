@@ -41,7 +41,7 @@ const IS_ONLINE = (): Promise<bool> => {
  * To provide the best network accuracy we need both a hint socket and a
  * function to really validate if we are online.
  *
- * ```js
+ * @example
  * import NetworkStatus from '...';
  * let networkStatus = new NetworkStatus(wifi, socket, () => {
  *   return new Promise((accept) => {
@@ -49,7 +49,6 @@ const IS_ONLINE = (): Promise<bool> => {
  *      accept(false);
  *   })
  * })
- * ```
  *
  */
 export default class NetworkStatus extends EventEmitter {

@@ -12,9 +12,7 @@ import createLog from '../log';
 
 import StreamOperation from './stream_operation';
 
-/**
- * TODO: Use some other not-hardcoded mechanism for log upload.
- */
+// TODO: Use some other not-hardcoded mechanism for log upload.
 const HOST = 'logs3.papertrailapp.com';
 const PORT = 45075;
 

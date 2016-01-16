@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Generates documentation for silk modules",
   "scripts": {
-    "postinstall": "documentation ../device/vendor/silk/core/lib/*.js --project-version `node -p \"require('./package.json').version\"` --shallow -f html -o dist/api/device --name silk-device"
+    "postinstall": "documentation ../device/vendor/silk/core/lib/*.js --project-version `node -p \"require('./package.json').version\"` -f html -o dist/api/device --name silk-device"
   },
   "dependencies": {
     "documentation": "^3.0.4"

@@ -7,6 +7,7 @@
  */
 
 /**
+ * @private
  * @flow
  */
 

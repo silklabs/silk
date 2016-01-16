@@ -15,6 +15,9 @@ import assert from 'assert';
 
 const log = createLog('operation:blob_upload_operation');
 
+/**
+ *
+ */
 export class BlobUploadOperation extends StreamOperation {
 
   metadata = null;
@@ -50,6 +53,7 @@ export class BlobUploadOperation extends StreamOperation {
   /**
    * Unlike most operations this accepts a _path_ to a file on disk so we can
    * avoid buffering the contents into memory...
+   * @private
    */
   async _write(path) {
     let result = await super._write(path);

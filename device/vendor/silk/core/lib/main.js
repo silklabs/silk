@@ -88,6 +88,7 @@ let configured = false;
 
 /**
  * Read vendor specific logo
+ * @private
  */
 async function readLogo() {
   if (logo) {
@@ -106,7 +107,9 @@ async function readLogo() {
 }
 
 /**
- * Wait for bootup and initialize the device.
+ * This module is an entry point into core process. It waits for bootup and
+ * initialize the device.
+ * @private
  */
 function main() {
   // Start these ASAP so that unhandled exceptions in the boot sequence will

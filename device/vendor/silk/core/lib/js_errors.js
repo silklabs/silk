@@ -10,6 +10,8 @@
  * This module is responsible for handling the various types of JS runtime
  * errors that may occur (such as uncaught exceptions and promise chain
  * rejections that are not handled).
+ * @name js_errors
+ * @namespace
  */
 
 import { getprop } from './sysutils';

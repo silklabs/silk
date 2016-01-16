@@ -6,17 +6,18 @@
  * @private
  */
 
+import URL from 'url';
+
 /**
  * Helper for constructing http requests via nodes standard low level
  * mechanisms.
  *
- * ```js
+ * @example
  * let stream = httpStream('http://google.com', { method: 'put' });
- * ``
+ *
+ * @name http
+ * @namespace
  */
-
-import URL from 'url';
-
 export default function(url, overrides = {}) {
   let params = URL.parse(url);
   Object.assign(params, overrides);

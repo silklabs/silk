@@ -6,19 +6,6 @@
  * @private
  */
 
-/**
- * Another base class for operations which do an all-or-nothing write to an
- * underlying writable stream
- *
- * ```js
- * class MyStreamOperation extends StreamOperation {
- *   static NAME = 'my-stream-op'
- *   static StreamClass = streams.PipeThrough
- * }
- * ```
- *
- * NOTE: The stream class _must_ also emit 'close' events in addition to finish.
- */
 import TeeStream from '../streams/tee';
 import StoringStream from '../streams/store';
 import Operation from './operation';
@@ -33,6 +20,7 @@ const log = createLog('outbox:stream_operation');
  * Maximum time for any stream based upload...
  *
  * (Note: 5 minutes is pretty arbitrary.)
+ * @private
  */
 const MAX_UPLOAD_TIME = 60 * 1000 * 5;
 
@@ -42,6 +30,7 @@ const MAX_UPLOAD_TIME = 60 * 1000 * 5;
  *
  * NOTE: Only use this in combination with Promise.race this will not resolve
  * only reject!
+ * @private
  */
 async function streamTimeout(writer, readable, timeout) {
   return new Promise((accept, reject) => {
@@ -65,6 +54,18 @@ async function streamTimeout(writer, readable, timeout) {
   });
 }
 
+/**
+ * Another base class for operations which do an all-or-nothing write to an
+ * underlying writable stream
+ *
+ * @example
+ * class MyStreamOperation extends StreamOperation {
+ *   static NAME = 'my-stream-op'
+ *   static StreamClass = streams.PipeThrough
+ * }
+ *
+ * NOTE: The stream class _must_ also emit 'close' events in addition to finish.
+ */
 export default class StreamOperation extends Operation {
 
   static MAX_UPLOAD_TIME = MAX_UPLOAD_TIME;
@@ -80,7 +81,8 @@ export default class StreamOperation extends Operation {
   }
 
   /**
-   * Get the writable destination.
+   * Get the writable destination
+   * @private
    */
   async _getDestination() {
     if (!this.constructor.StreamClass) {
@@ -97,6 +99,7 @@ export default class StreamOperation extends Operation {
    * reason we fail to complete the write this will resolve with a "remainder"
    * stream which can be persisted (via persistToDisk) for later retry of the
    * operation.
+   * @private
    */
   async _write(readable) {
     if (this.writing) {
@@ -156,6 +159,7 @@ export default class StreamOperation extends Operation {
      * For example a http request will "finish" once all bytes have been
      * consumed from the readable side but unless "close" has been emitted there
      * still may be network errors/etc..
+     * @private
      */
     try {
       await Promise.race([

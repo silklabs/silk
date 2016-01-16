@@ -11,7 +11,8 @@ import * as sysutils from './sysutils';
 import createLog from './log';
 
 /**
- * Infrared mode. Possible values are "day", "night" and "manual"
+ * Type of infrared modes
+ * @property {day|night|manual} Mode Possible infrared modes
  */
 type Mode = 'day' | 'night' | 'manual';
 

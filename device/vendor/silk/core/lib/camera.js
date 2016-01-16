@@ -15,6 +15,16 @@ import CBuffer from 'CBuffer';
 import api from './api';
 import CameraRestart from './metrics/camera_restart';
 
+/**
+ * Type representing the camera preview frame callback
+ *
+ * @property {boolean} err True if the frame is retrieved succesfully, false
+ *                         otherwise
+ * @property {object} image Requested preivew image as per the specified channel
+ * @property {object} orig Original unmodified image from the sensor
+ */
+export type CameraCallback = (err: boolean, image: any, orig: any) => void;
+
 type RawHalFace = {
   rect: [number, number, number, number];
   score: number;
@@ -88,6 +98,7 @@ const NUM_IMAGES_TO_CACHE = 10;
 
 /**
  * Flash modes as defined in <camera/CameraParameters.cpp>
+ * @memberof CameraStream
  */
 let FLASH_MODE = {
   OFF: 'off',
@@ -101,6 +112,7 @@ let FLASH_MODE = {
  * Return the raw Buffer of bytes `buf` parsed into array of face
  * objects with fields named after `camera_face_t` in
  * system/core/include/system/camera.h.
+ * @private
  */
 function rawFaceArrayToFaces(buf): Array<RawHalFace> {
   const SIZEOF_CAMERA_FACE_T = 12 * 4;
@@ -130,6 +142,7 @@ function rawFaceArrayToFaces(buf): Array<RawHalFace> {
  * Set the fields `{ x, y, width, height }` in `face` representing the
  * `face.rect` rectangle mapped into mako screen space IN THE
  * ORIENTATION WHERE FRONT CAMERA IS BOTTOM RIGHT FACING YOU.
+ * @private
  */
 let PREVIEW_WIDTH = 0;
 let PREVIEW_HEIGHT = 0;

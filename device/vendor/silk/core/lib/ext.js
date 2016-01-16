@@ -21,18 +21,6 @@ const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 
 /**
- * Type representing the camera preview frame callback
- *
- * @property {boolean} err True if the frame is retrieved succesfully, false
- *                         otherwise
- * @property {object} image Requested preivew image as per the specified channel
- * @property {object} orig Original unmodified image from the sensor
- */
-/*eslint-disable no-unused-vars*/
-type CameraCallback = (err: boolean, image: any, orig: any) => void;
-/*eslint-enable no-unused-vars*/
-
-/**
  * Class that provides Silk SDK APIs to extensions/behaviors
  *
  * @param {string} name Name of the extension/behavior
@@ -338,10 +326,10 @@ class Env extends EventEmitter {
     }
 
     /**
+     * Class that provides functionality to control Bluetooth low energy
+     * module on the device
      * @name ranger
      * @namespace
-     * Class that that provides functionality to control Bluetooth low energy
-     * module on the device
      * @memberof Env
      */
     let btle = deviceObjects.btle;
@@ -403,7 +391,7 @@ class Env extends EventEmitter {
     }
 
     /**
-     * Class that that provides functionlity to convert text to speech
+     * Class that provides functionlity to convert text to speech
      * @memberof Env
      */
     let say = deviceObjects.say;
@@ -606,7 +594,7 @@ class Extensions {
    * Send the received command to the loaded extensions. Called when a command
    * intended for extensions is received by the device
    *
-   * @param {object} cmd Command to be sent to the specified extension
+   * @param {Object} cmd Command to be sent to the specified extension
    */
   onCommand(cmd) {
     for (let key in this._loaded) {
@@ -747,8 +735,8 @@ class Extensions {
   /**
    * Returns true if the given extension is enabled, false otherwise
    *
-   * @param {String} name
-   * @return {Boolean}
+   * @param {string} name
+   * @return {boolean}
    * @private
    */
   _isEnabled(name) {

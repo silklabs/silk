@@ -36,7 +36,8 @@ const DEBUGGERD_SOCKET_PATH = 'data/system/ndebugsocket';
 const TOMBSTONE_FILE_REGEXP = new RegExp(/^tombstone_\d+$/); // 'tombstone_03'
 
 /**
- * Represents tombstones on disk and manages races around them.
+ * This class represents tombstones on disk and manages races around them
+ * @private
  */
 export class Tombstones extends EventEmitter {
   fileQueue = [];
@@ -206,6 +207,7 @@ export class Tombstones extends EventEmitter {
 
 /**
  * DebuggerD server used to hint when new tombstones have been created.
+ * @private
  */
 export class Debuggerd extends EventEmitter {
 
@@ -277,6 +279,9 @@ export class Debuggerd extends EventEmitter {
   }
 }
 
+/**
+ * @private
+ */
 export class CrashReporter {
   outbox = null;
   tombstones = null;
@@ -303,8 +308,11 @@ export class CrashReporter {
       }
 
       /**
-       * The tombstone event is emitted only when a new tombstone has been added
-       * to the file queue...
+       * Tombstone event. The tombstone event is emitted only when a new
+       * tombstone has been added to the file queue...
+       *
+       * @event tombstone
+       * @memberof CrashReporter
        */
       tombstones.on('tombstone', this.uploadTombstone);
     } else {

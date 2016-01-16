@@ -31,15 +31,14 @@ const DEFAULT_QUEUE_MAX_RETRIES = 128;
 // ('dir_nlink' is not enabled for /data it seems)
 const DEFAULT_QUEUE_MAX_ENTRIES = 64800; // ~18 hours of video (60 * 60 * 18)
 
-/**
- * Maximum amount of time to stagger the queue polling intervals.
- */
+// Maximum amount of time to stagger the queue polling intervals.
 const QUEUE_CHECK_STAGGER_MS = DEFAULT_POLL_INTERVAL * 0.1;
 
+/**
+ *
+ */
 export class Outbox {
-  /**
-   * Where on disk we will store outstanding uploads.
-   */
+   // Where on disk we will store outstanding uploads.
   storagePath = DEFAULT_STORAGE_PATH;
 
   // Default queue
@@ -83,6 +82,7 @@ export class Outbox {
    * Reset any backoff in pending operations...
    *
    * (implicitly bound to self so we can remove it later from hint)
+   * @memberof Outbox
    */
   resetBackOff = () => {
     for (let [, queue] of this.queues) {

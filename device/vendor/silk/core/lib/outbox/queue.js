@@ -46,25 +46,19 @@ export default class Queue extends EventEmitter {
   // Only used in logging...
   name = 'default-queue';
 
-  /**
-   * Location where we persist data on disk.
-   */
+  // Location where we persist data on disk.
   storagePath = null;
   operations = {};
 
-  /**
-   * An array of promises holding all running "live" operations only used to
-   * facilitate clean shutdowns.
-   */
+   // An array of promises holding all running "live" operations only used to
+   // facilitate clean shutdowns.
   liveOperations = [];
 
   // Promise when loading disk queue...
   _pendingDiskQueueLoad = null;
 
-  /**
-   * An array of directory names which are pending upload once the queue is
-   * online.
-   */
+  // An array of directory names which are pending upload once the queue is
+  // online
   diskQueue = [];
   diskQueueState = new Map();
 
@@ -92,10 +86,8 @@ export default class Queue extends EventEmitter {
   // operations regardless of its current concurrency count
   throttledCallback: ThrottledCallbackType = null;
 
-  /**
-   * When online the queue will attempt to write operations to their
-   * destination. When false everything is immediately stored to disk.
-   */
+  // When online the queue will attempt to write operations to their
+  // destination. When false everything is immediately stored to disk.
   online = true;
 
   /**
@@ -149,11 +141,9 @@ export default class Queue extends EventEmitter {
     assert.ok(this.maxEntries && this.maxEntries > 0);
     assert.ok(this.storagePath);
 
-    /**
-     * It's very important we start outbox synchronously so we can immediately
-     * begin queuing items (like in the case of crash on startup) so we load
-     * pending items asynchronously.
-     */
+    // It's very important we start outbox synchronously so we can immediately
+    // begin queuing items (like in the case of crash on startup) so we load
+    // pending items asynchronously.
     this._pendingDiskQueueLoad = this._loadDiskQueue().then(() => {
       this._pendingDiskQueueLoad = null;
     }).catch((err) => {
@@ -354,11 +344,9 @@ export default class Queue extends EventEmitter {
     this.backoffInterval = interval;
     this.diskCheckRunning = true;
 
-    /**
-     * This could potentially be more efficient by polling less or being
-     * completely event oriented (somehow) but polling here is very reliable and
-     * fairly cheap/easy.
-     */
+    // This could potentially be more efficient by polling less or being
+    // completely event oriented (somehow) but polling here is very reliable and
+    // fairly cheap/easy.
     log.info(`Starting polling of pending operations...`);
     this.workDiskQueue();
   }

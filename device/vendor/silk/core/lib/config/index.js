@@ -37,6 +37,9 @@ const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
     }),
 }).required();
 
+/**
+ *
+ */
 class DeviceConfig extends EventEmitter {
   static CONFIG_BEACON_INFO = {
     uuid: BTLE_SOCKET_UUIDS.service,
@@ -61,6 +64,7 @@ class DeviceConfig extends EventEmitter {
 
   /**
    * Persist the configuration after the device has completed registration.
+   * @private
    */
   async _persistConfig(secret, response = { }) {
     const config = {

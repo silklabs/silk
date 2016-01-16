@@ -101,7 +101,13 @@ module.exports = {
   'networktest': npmPackageBuild('networktest'),
   'releng': npmPackageBuild('releng'),
   'server': npmPackageBuild('server'),
-  'webapp': npmPackageBuild('webapp'),
+  'webapp': npmPackageBuild('webapp', {
+    // There might be a documentation update in the following files so
+    // redeploy webapp
+    files: [
+      'device/vendor/silk/core/lib/**/*.js',
+    ],
+  }),
 
   // Nightly device builds
   'device-qemu-nightly': nightlyBuild('device', {

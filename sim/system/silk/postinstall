@@ -5,6 +5,13 @@ cd $(dirname $0)
 mkdir -p ../node_modules
 cp -f node_modules/silk-device/lib/base_version.js ../node_modules/
 
+# Default system properties
+../bin/setprop persist.silk.debug "silk-*,-silk-*:debug"
+../bin/setprop persist.silk.debug.colors true
+../bin/setprop ro.silk.update.manifest_url "https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json"
+../bin/setprop ro.silk.update.poll_hours 3
+
+
 ln -sf $(which node) bin/node
 
 # TODO: Move these things out of device/vendor/gonk/init for better sharing

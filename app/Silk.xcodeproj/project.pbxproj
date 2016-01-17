@@ -1114,7 +1114,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -x\nno_optimize=--no-optimize\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n  no_optimize=\nfi\n\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n  npm run bundle -- $no_optimize\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localBundle\nfi";
+			shellScript = "set -x\nno_optimize=--no-optimize\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n  no_optimize=\nfi\n\nbundle_type=\"$(./tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n  npm run bundle -- $no_optimize\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localbundle\nelse\n  # Ensure bundle file exists. It's packaged, even if it isn't being used.\n  touch iOS/main.jsbundle\nfi";
 		};
 		6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */ = {
 			isa = PBXShellScriptBuildPhase;

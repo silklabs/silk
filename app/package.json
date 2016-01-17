@@ -19,7 +19,7 @@
     "react-native": "^0.18.0-rc",
     "react-native-device": "^1.0.1",
     "react-native-webpack-server": "git@github.com:philikon/react-native-webpack-server.git#2d6269a67549edd91e01173eb9b193e324ad893d",
-    "socket.io-client-react-native": "git@github.com:silklabs/socket.io-client-react-native.git#3fcd84b345200ee9f3c03107412e33e72da19a4a",
+    "socket.io-client": "1.4.4",
     "stacktrace-parser": "^0.1.3",
     "uuid": "^2.0.1"
   },

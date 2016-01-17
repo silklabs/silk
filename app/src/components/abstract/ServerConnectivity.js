@@ -1,6 +1,6 @@
 import React from 'react-native';
 import { SilkApi } from 'silk-api';
-import socketIOClient from 'socket.io-client-react-native';
+import socketIOClient from 'socket.io-client';
 import createLog from 'silk-log';
 
 import SocketIO from '../../libraries/SocketIO';

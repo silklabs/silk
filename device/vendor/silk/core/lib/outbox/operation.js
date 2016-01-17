@@ -2,15 +2,25 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
  */
+
+import assert from 'assert';
+import createLog from '../log';
+import fs from 'mz/fs';
+import path from 'path';
+import eventToPromise from 'event-to-promise';
+import mkdirp from 'mkdirp-promise';
+
+const log = createLog('outbox:operation');
 
 /**
  * Base class for our "operations" this deals with cleaning up and persisting
  * state to disk when operations fail... Individual subclasses must implement
  * the important bits of actually writing to streams.
  *
- *
- * ```js
+ * @example
  *
  * // bare minimum implementation
  * class MyOperation extends Operation {
@@ -26,17 +36,7 @@
  *   }
  * }
  *
- * ```
  */
-import assert from 'assert';
-import createLog from '../log';
-import fs from 'mz/fs';
-import path from 'path';
-import eventToPromise from 'event-to-promise';
-import mkdirp from 'mkdirp-promise';
-
-const log = createLog('outbox:operation');
-
 export default class Operation {
 
   static BLOB_NAME = 'blob';

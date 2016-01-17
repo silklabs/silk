@@ -5,6 +5,7 @@
  *
  * Base class for all device metrics
  *
+ * @private
  * @flow
  */
 

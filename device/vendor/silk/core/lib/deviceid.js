@@ -8,6 +8,7 @@
  * Note: This current pattern of storing to disk may not be secure enough for
  * production.
  *
+ * @private
  * @flow
  */
 

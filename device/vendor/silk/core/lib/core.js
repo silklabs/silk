@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the

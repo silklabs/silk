@@ -2,11 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
- */
-
-/**
- * This module is responsible for keeping a logcat process alive and "chunking"
- * the stream into smaller substreams which are suitable for use with outbox.
+ *
+ * @private
  */
 
 // This number is totally made up...
@@ -28,6 +25,10 @@ const log = createLog('logcat');
 
 const ENABLED = getboolprop('persist.silk.logupload.enabled');
 
+/**
+ * This module is responsible for keeping a logcat process alive and "chunking"
+ * the stream into smaller substreams which are suitable for use with outbox.
+ */
 export default class LogcatManager {
 
   process = null
@@ -115,6 +116,7 @@ export default class LogcatManager {
        * Immediately start the upload with the empty stream (do not wait for a
        * fully buffered stream) this will allow the reader to be drained as it
        * is being written to.
+       * @private
        */
       this.uploadLogStream(segment);
     };

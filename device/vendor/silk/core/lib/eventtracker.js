@@ -3,6 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
+ * @private
  * @flow
  */
 
@@ -52,7 +53,7 @@ function generateRecordID(): Promise<string> {
 }
 
 /**
- * Record event bursts from the camera and microphone and assemble
+ * This class records event bursts from the camera and microphone and assemble
  * potentially long-living events from them. For instance, prolonged
  * motion detection over multiple 1s periods will be tracked as a
  * single motion event lasting several seconds.

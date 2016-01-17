@@ -1,12 +1,18 @@
+/**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
+ */
+
 import net from 'net';
 import { TLSSocket } from 'tls';
 import createLog from '../log';
 
 import StreamOperation from './stream_operation';
 
-/**
- * TODO: Use some other not-hardcoded mechanism for log upload.
- */
+// TODO: Use some other not-hardcoded mechanism for log upload.
 const HOST = 'logs3.papertrailapp.com';
 const PORT = 45075;
 

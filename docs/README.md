@@ -72,3 +72,4 @@ with comments show up by default in the API documentation otherwise.
   _internalFuncs() {
   }
 ```
+* Please be wary of using C++ style code block comments to comment on a block of code as anything with code block comments get generated in sdk-docs. Alternatively mark the comment as private by using ```@private``` annotation to prevent ```documentationjs``` to document your comment in the generated documentation.

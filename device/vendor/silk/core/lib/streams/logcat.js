@@ -1,9 +1,17 @@
 /**
- * Transforms logcat streams into something nicer...
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
  */
+
 
 import { Transform } from 'stream';
 
+/**
+ * Transforms logcat streams into something nicer...
+ */
 export default class Logcat extends Transform {
 
   // Buffer up messages which do not have any date of their own so we can
@@ -52,6 +60,7 @@ export default class Logcat extends Transform {
      * 5: Single char for priority
      *
      * @see https://github.com/android/platform_system_core/blob/android-sdk-4.0.3_r1/liblog/logprint.c
+     * @private
      */
 
     let string = chunk.toString();

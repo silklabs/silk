@@ -2,11 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
- */
-
-/**
- * This module exposes various bits of the v8 profiler over an http interface
- * which can be used via our CLI tools (and in the future even remotely).
+ *
+ * @private
  */
 
 import http from 'http';
@@ -48,6 +45,10 @@ function sendJSON(res, code, body, headers = {}) {
   res.end(content);
 }
 
+/**
+ * This module exposes various bits of the v8 profiler over an http interface
+ * which can be used via our CLI tools (and in the future even remotely).
+ */
 class ProfileServer {
 
   // current cpu profile

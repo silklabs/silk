@@ -3,7 +3,14 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
+ * @private
  * @flow
+ */
+
+/**
+ * This module provides utility functions
+ * @name sysutils
+ * @namespace
  */
 
 import { execFile, spawn, spawnSync } from 'child_process';
@@ -37,11 +44,12 @@ export function processthrow(e: string) {
 }
 
 /**
- * Output of exec command
+ * Type representing output of exec command
  *
  * @property {number} code result code
  * @property {string} stdout standard out stream
  * @property {string} stderr standard error stream
+ * @memberof sysutils
  */
 type ExecOutput = {
   code: number;
@@ -95,14 +103,17 @@ export function execRetry(
   });
 }
 
+
 /**
- * Type of Android property
- * @property {string | bool | number}
+ * Type of Android scalar property
+ * @property {(number|string|boolean)} ScalarPropTypes
+ * @memberof sysutils
  */
 type ScalarPropTypes = string | bool | number;
 
 /**
  * Type of Android property
+ * @property {(Array<PropTypes> | ScalarPropTypes)} PropTypes
  */
 type PropTypes = Array<PropTypes> | ScalarPropTypes;
 

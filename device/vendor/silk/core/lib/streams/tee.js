@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
  */
 
 /* eslint no-loop-func:0 */
@@ -82,6 +84,7 @@ export default class TeeStream extends Writable {
 
   /**
    * Wrapper to ensure we correctly capture any possible type of stream error.
+   * @private
    */
   _writeStream(handle, chunk, encoding, callback) {
     /**
@@ -93,6 +96,7 @@ export default class TeeStream extends Writable {
      *
      *  In the first case we _only_ get the error event but in the second we get
      *  both the callback and the error event.
+     *  @private
      */
     let cb = (err) => {
       if (!callback) {

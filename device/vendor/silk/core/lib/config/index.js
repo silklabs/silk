@@ -18,9 +18,10 @@ import getDeviceId from '../deviceid';
 import * as Joi from 'joi';
 import makeDeferred from '../deferred';
 import NormalSessionListener from './normal_session_listener';
-import server from '../server';
 import * as util from '../sysutils';
 import wifi from '../wifi';
+
+import type Server from '../server';
 
 const log = createLog('config');
 
@@ -56,6 +57,7 @@ class DeviceConfig extends EventEmitter {
   _socketSessionListener = null;
   _config = null;
   _serverConnected = false;
+  _server: Server = null;
 
   async _writeConfig(config) {
     fs.writeFile(CONFIG_PATH, JSON.stringify(config));
@@ -226,8 +228,8 @@ class DeviceConfig extends EventEmitter {
 
     this._btle.publicKeys = [ this._config.registrarPublicKey ];
 
-    server.addListener(`connect`, this._onServerConnect);
-    server.addListener(`disconnect`, this._onServerDisconnect);
+    this._server.addListener(`connect`, this._onServerConnect);
+    this._server.addListener(`disconnect`, this._onServerDisconnect);
 
     this._btle.changeMode(this._btle.MODE_OFF);
   }
@@ -304,7 +306,7 @@ class DeviceConfig extends EventEmitter {
     api.loadConfig({serverUrl: serverUrl});
   }
 
-  async init() {
+  async init(server: Server) {
     if (this._initialized) {
       return Promise.reject(new Error('Already initialized'));
     }
@@ -325,10 +327,12 @@ class DeviceConfig extends EventEmitter {
     assert(deviceId);
     assert(btle);
     assert(btle.mode === btle.MODE_OFF);
+    assert(server);
 
     this._deviceId = deviceId.pub;
     api.accessToken = deviceId;
     this._btle = btle;
+    this._server = server;
 
     log.info('Device configuration', this._config);
 
@@ -345,8 +349,8 @@ class DeviceConfig extends EventEmitter {
       await this._btle.changeMode(this._btle.MODE_SCAN);
       this.emit('configured');
 
-      server.addListener(`connect`, this._onServerConnect);
-      server.addListener(`disconnect`, this._onServerDisconnect);
+      this._server.addListener(`connect`, this._onServerConnect);
+      this._server.addListener(`disconnect`, this._onServerDisconnect);
     } else {
       this._config = null;
 
@@ -388,11 +392,11 @@ class DeviceConfig extends EventEmitter {
   async _unconfigureNetwork() {
     log.info('Unconfigure network...');
 
-    server.removeListener(`connect`, this._onServerConnect);
-    server.removeListener(`disconnect`, this._onServerDisconnect);
+    this._server.removeListener(`connect`, this._onServerConnect);
+    this._server.removeListener(`disconnect`, this._onServerDisconnect);
 
-    if (server.connected) {
-      server.disconnect();
+    if (this._server.connected) {
+      this._server.disconnect();
       log.info('Unconfigure - Disconnected from server');
     }
 

@@ -37,8 +37,8 @@ const PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS = 5 * 60 * 1000; /* 5 minutes */
 // should be uploaded before the event officially started.
 const PRE_EVENT_UPLOAD_MS = 5000;
 
-import type { Socket } from 'socket.io-client';
 import type { Outbox } from './outbox/manager';
+import type Server from './server.js';
 
 /**
  * Type representing a timeline event object
@@ -54,6 +54,12 @@ export type TimelineEventObject = {
   when: number;
   [arbitraryKeys: string]: any;
 };
+
+type DiagJpegFrame = {
+  id: string;
+  when: number;
+  jpeg: any; // jpeg image data
+}
 
 /**
  * Type representing the preview size in width and height
@@ -89,14 +95,16 @@ type Rect = {
  */
 export default class Timeline extends EventEmitter {
   outbox: Outbox;
-  serverSocket: ?Socket;
+  server: Server;
   _previewSize: Size;
   previewObjects: Array<TimelineEventObject>;
+  diagJpegFrames: Array<DiagJpegFrame>;
   cachedObjs: Array<TimelineEventObject>;
   eventTracker: EventTracker;
   eventTrackerActive: boolean;
   uploadOpQueue: Array<[number, () => void]>;
 
+  liveDiag: boolean;
   liveVideo: boolean;
   livePreview: boolean;
   lastPreviewFrame: ?Buffer;
@@ -104,30 +112,22 @@ export default class Timeline extends EventEmitter {
   lastPreviewKeyframeWhen: number;
   lastPreviewEmitSeconds: number;
   secondsUntilNextPreviewEmit: number;
-  acks: {
-    pending: {
-      jpeg: number;
-      mp4: number;
-    };
-    maxPending: {
-      jpeg: number;
-      mp4: number;
-    }
-  };
   videoUploadType: string;
 
-  constructor(outbox: Outbox) {
+  constructor(server: Server, outbox: Outbox) {
     super();
     invariant(outbox, 'must pass outbox...');
 
     this.outbox = outbox;
-    this.serverSocket = null;
+    this.server = server;
     this._previewSize = {width: 0, height: 0};
 
     // Keep track of all objects and upload them along with the
     // metadata for previews (TODO: it would be nice to integrate this into the
     // event system)
     this.previewObjects = [];
+
+    this.diagJpegFrames = [];
 
     // Keeps a copy of previous objects to be sent when there is no motion detected
     this.cachedObjs = [];
@@ -158,8 +158,6 @@ export default class Timeline extends EventEmitter {
       break;
     }
     log.info('AV upload type:', this.videoUploadType);
-
-    this._resetAcks();
   }
 
   /**
@@ -189,40 +187,15 @@ export default class Timeline extends EventEmitter {
     this.eventTrackerActive = false;
   };
 
-
-  /**
-   * Provide the timeline with a socket to use
-   *
-   * @param socket Socket to use
-   */
-  set socket(socket: ?Socket) {
-    if (socket) {
-      log.info(`server socket connected`);
-      this._resetAcks();
-    }
-    this.serverSocket = socket;
-  }
-
-  /**
-   * @private
-   */
-  _resetAcks() {
-    this.acks = {
-      pending: { jpeg: 0, mp4: 0 },
-      // Number of acks that can be pending before starting to drop live
-      // preview images/video chunks.
-      maxPending: { jpeg: 4, mp4: 2 },
-    };
-  }
-
   /**
    * Selects if transition of the live preview images and/or video should be
    * enabled or not.
    *
    * @param preview Should preview be enabled or not
    * @param video Should video be enabled or not
+   * @param diag Should diagnostics be enabled or not
    */
-  configLiveStream(preview: boolean, video: boolean) {
+  configLiveStream(preview: boolean, video: boolean, diag: boolean) {
     if (this.livePreview !== preview) {
       this.livePreview = preview;
       if (this.livePreview) {
@@ -233,6 +206,7 @@ export default class Timeline extends EventEmitter {
       }
     }
     this.liveVideo = video;
+    this.liveDiag = diag;
   }
 
   /**
@@ -245,23 +219,31 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   * JPEG-encoded preview image
+   * Add a new preview frame
    *
-   * @param when Timestamp of when the JPEG was generated
-   * @param durationMs Duration of the JPEG
-   * @param jpeg Buffer containing raw jpeg data
+   * @param when Timestamp of when the preview frame was generated
+   * @param durationMs Expected duration until the next preview frame
+   * @param jpeg Buffer containing the preview frame encoded as JPEG
    */
-  addPreviewJPEG(when: number, durationMs: number, jpeg: Buffer) {
+  addPreviewFrame(when: number, durationMs: number, jpeg: Buffer) {
     this._pushPreview(when, durationMs, jpeg);
+    this.emit('preview', when);
   }
 
   /**
-   * OpenCV preview frame
+   * Add a processed frame
    *
-   * @param when Timestamp of when the preview frame was generated
+   * @param id  A simple string to associated with this processed frame
+   * @param when Timestamp that the frame is correlated with
+   * @param frame OpenCV matrix
    */
-  addPreviewFrame(when: number) {
-    this.emit('preview', when);
+  addDiagFrame(id: string, when: number, frame: any) {
+    if (!this.liveDiag) {
+      return;
+    }
+
+    const jpeg = frame.toBuffer({ext: '.jpg', jpegQuality: 100});
+    this.diagJpegFrames.push({id, when, jpeg});
   }
 
   /**
@@ -484,12 +466,24 @@ export default class Timeline extends EventEmitter {
             JSON.stringify(obj));
         }
       }
-      this._pushSocketIOPacket(
-        this.lastPreviewFrameWhen,
-        this.lastPreviewFrame,
-        this.previewObjects,
-        'jpeg'
-     );
+
+      if (this.livePreview) {
+        this.server.send('video', {
+          contents: 'jpeg',
+          when: this.lastPreviewFrameWhen,
+          frame: this.lastPreviewFrame,
+          objects: this._addCachedObjects(this.previewObjects, when),
+          durationMs: 0,
+        });
+      }
+
+      if (this.diagJpegFrames.length > 0) {
+        this.server.send('diag', {
+          type: 'jpegs',
+          log: this.diagJpegFrames,
+        });
+        this.diagJpegFrames = [];
+      }
 
       // Storage
       const lastPreviewFrame = this.lastPreviewFrame;
@@ -536,7 +530,15 @@ export default class Timeline extends EventEmitter {
    * @private
    */
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
-    this._pushSocketIOPacket(when, frame, null, 'mp4', durationMs);
+    if (this.liveVideo) {
+      this.server.emit('video', {
+        contents: 'mp4',
+        when,
+        frame,
+        durationMs,
+      });
+    }
+
     this._addUploadOp(when,
       () => {
         const op = new VideoUploadOp({
@@ -558,100 +560,5 @@ export default class Timeline extends EventEmitter {
           op, new BufferStream(frame));
       }
     );
-  }
-
-  /**
-   * @private
-   */
-  _pushSocketIOPacket(
-    when: number,
-    frame: Buffer,
-    objects: ?Array<TimelineEventObject>,
-    type: string,
-    durationMs: number = 0
-  ) {
-    let wouldTransmit = this.serverSocket && this.serverSocket.connected;
-    let allObjects;
-    switch (type) {
-    case 'jpeg':
-      wouldTransmit = wouldTransmit && this.livePreview;
-      allObjects = this._addCachedObjects(objects, when);
-      break;
-    case 'mp4':
-      wouldTransmit = wouldTransmit && this.liveVideo;
-      break;
-    default:
-      util.processthrow(`Unknown packet type: ${type}`);
-    }
-    let willTransmit = wouldTransmit;
-    let str = `${type} size:${frame ? frame.length : 0} when:${when}ms`;
-    if (durationMs) {
-      str += ` durationMs:${durationMs}`;
-    }
-    str += ` lag:${Date.now() - when}ms ` +
-           ` objects:${(allObjects ? allObjects.length : 0)}`;
-
-    if (willTransmit) {
-      if (this.acks.pending[type] >= this.acks.maxPending[type]) {
-        log.warn(`Too many pending acks for ${type}`);
-        willTransmit = false;
-      }
-      str = str + ` acks:${this.acks.pending[type]}`;
-    }
-    if (willTransmit) {
-      log.verbose(str);
-      let queued = Date.now();
-      // Flow isn't smart enough to realize that `willTransmit`
-      // guarantees that `this.serverSocket` is truthy, too.
-      // See https://github.com/facebook/flow/issues/998
-      this.serverSocket && this.serverSocket.emit('video', {
-        objects: allObjects,
-        frame,
-        contents: type,
-        when,
-        durationMs,
-        deviceEmitMs: queued,
-      }, () => {
-        this.acks.pending[type] -= 1;
-        if (this.acks.pending[type] < 0) {
-          throw new Error(`pending acks for ${type} < 0`);
-        }
-        log.info(`ack in ${Date.now() - queued}ms for ${str}`);
-      });
-      this.acks.pending[type] += 1;
-    } else {
-      log.verbose(`dropped ${str}`);
-      if (wouldTransmit && 'mp4' === type) {
-        // In the normal success case, the app meters the `record*`
-        // events below.  But for dropped segments, we have to meter
-        // these from device.
-        //
-        // TODO: should we always meter these record events from the
-        // device side?
-        let segmentId = '' + when;
-        this._meter('recordStart', segmentId, when);
-        this._meter('recordEnd', segmentId, when + durationMs);
-        // Note to clients that the device decided to drop this
-        // segment.
-        this._meter('deviceDrop', segmentId);
-      }
-    }
-  }
-
-  /**
-   * Note to AV pipeline diag clients that event `what` happened for
-   * object `id` at timestamp `whenMs`.
-   * @private
-   */
-  _meter(what: string, id: string, whenMs: number = Date.now()) {
-    if (!this.serverSocket || !this.serverSocket.connected) {
-      log.debug(`Not metering '${what}' event, socket.io connection not available.`);
-      return;
-    }
-    // TODO: de-dup with app side
-    this.serverSocket.emit('diag', {
-      type: 'avpipeline',
-      log: { id, what, whenMs },
-    });
   }
 }

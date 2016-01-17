@@ -8,6 +8,7 @@
 
 import createLog from './log';
 const log = createLog('diag');
+import type Server from './server.js';
 
 
 class DiagLogger {
@@ -18,7 +19,7 @@ class DiagLogger {
     this.type = type;
     this.respawnTimer = null;
     this.helper = null;
-    this.socket = null;
+    this.server = null;
     this.data = '';
     this.config(cmd, params, respawnDelaySecs);
   }
@@ -31,8 +32,8 @@ class DiagLogger {
     if (!this.respawnDelaySecs) {
       // For a streaming log (eg, logcat) send data as fast as it arrives
       helper.stdout.on('data', data => {
-        if (this.socket) {
-          this.socket.emit('diag', {
+        if (this.server) {
+          this.server.send('diag', {
             type: this.type,
             log: data.toString()
           });
@@ -66,8 +67,8 @@ class DiagLogger {
       return;
     }
 
-    if (this.socket) {
-      this.socket.emit('diag', {
+    if (this.server) {
+      this.server.send('diag', {
         type: this.type,
         log: this.data
       });
@@ -90,7 +91,7 @@ class DiagLogger {
   }
 
   deinit() {
-    this.socket = null;
+    this.server = null;
     if (this.helper) {
       this.helper.removeAllListeners('close'); // to not respawn on close event
       this.helper.kill();
@@ -104,8 +105,10 @@ class DiagLogger {
 }
 
 export default class Diag {
-  constructor() {
-    this.socket = null;
+  server: Server;
+
+  constructor(server: Server) {
+    this.server = server;
     this.cfg = [];
 
     this.loggers = [
@@ -113,7 +116,7 @@ export default class Diag {
         'system/bin/logcat',
         /* "-T 0" to skip to the current tip of logcat data. Diag starts up
            immediately at boot before the device connects to the server so any
-           existing scroll back will be lost anyway (as there's no socket yet) */
+           existing scroll back will be lost anyway */
         ['-v', 'threadtime', '-T', '0']),
 
       new DiagLogger('dash',
@@ -121,16 +124,14 @@ export default class Diag {
     ];
   }
 
-  start(socket) {
+  start() {
     log.info('Starting diag service');
-    this.socket = socket;
     this._applyConfig();
   }
 
   stop() {
     log.info('Stopping diag service');
-    this.loggers.map( logger => logger.socket = null );
-    this.socket = null;
+    this.loggers.map( logger => logger.server = null );
   }
 
   setConfig(cfg) {
@@ -149,11 +150,11 @@ export default class Diag {
       if (type in this.cfg) {
         if (this.cfg[type] === 1) {
           log.info('Enabling', type);
-          logger.socket = this.socket;
+          logger.server = this.server;
           logger.send(); // Send the latest data immediately
         } else {
           log.info('Disabling', type);
-          logger.socket = null;
+          logger.server = null;
         }
       }
     });

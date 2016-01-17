@@ -11,7 +11,6 @@
 import assert from 'assert';
 import createLog from '../log';
 import { EventEmitter } from 'events';
-import server from '../server';
 import version from 'silk-core-version';
 import wifi from '../wifi';
 
@@ -106,6 +105,7 @@ export default class SessionListenerBase extends EventEmitter {
     super();
 
     this._deviceConfig = deviceConfig;
+    let server = deviceConfig._server;
 
     this.addListener(`connect`,
                      socketSession => this._onConnect(socketSession));

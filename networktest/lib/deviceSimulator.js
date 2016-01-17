@@ -5,7 +5,7 @@
  */
 
 import api from 'silk-core/lib/api';
-import server from 'silk-core/lib/server';
+import Server from 'silk-core/lib/server';
 import * as util from './sysutils';
 import https from 'https';
 import URL from 'url';
@@ -36,23 +36,24 @@ export default class DeviceSimulator {
 
   constructor(accessToken) {
     this.accessToken = accessToken;
+    this.server = new Server();
   }
 
   connect() {
     return new Promise(resolve => {
-      server.once('connect', () => resolve());
-      server.connect();
+      this.server.once('connect', () => resolve());
+      this.server.connect();
     });
   }
 
   disconnect() {
     return new Promise(resolve => {
-      server.once('disconnect', () => {
+      this.server.once('disconnect', () => {
         util.timeout(0) // need break, otherwise socket gets in bad state
         .then(() => resolve())
         .catch(util.processthrow);
       });
-      server.disconnect();
+      this.server.disconnect();
     });
   }
 
@@ -62,7 +63,7 @@ export default class DeviceSimulator {
         logo: this._logo, previewSize: this._previewSize };
 
     return new Promise(resolve => {
-      server.socket.emit('info', info, () => resolve());
+      this.server.socket.emit('info', info, () => resolve());
     });
   }
 
@@ -73,7 +74,7 @@ export default class DeviceSimulator {
         durationMs: durationMs, deviceEmitMs: now };
 
     return new Promise(resolve => {
-      server.socket.emit('video', data, () => resolve());
+      this.server.socket.emit('video', data, () => resolve());
     });
   }
 

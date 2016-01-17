@@ -564,8 +564,7 @@ class CameraStream extends EventEmitter {
           this._imagecache.push({when, orig: im, rgb: imScaled});
 
           // Add frames to the timeline
-          this.timeline.addPreviewJPEG(when, PREVIEW_DELAY_MS, pkt);
-          this.timeline.addPreviewFrame(when);
+          this.timeline.addPreviewFrame(when, PREVIEW_DELAY_MS, pkt);
 
           // Only emit the latest set of HAL-detected faces
           // (HAL can return multiple faces per preview, but it's not helpful to show

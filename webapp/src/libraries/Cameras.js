@@ -83,6 +83,9 @@ class Camera extends EventEmitter {
       }
       this.logs.logcat = logcat;
       break;
+    case 'jpegs':
+      this.emit('diagJpegFrames', data);
+      break;
     default:
       log.warn(`Unknown log type: ${type}`);
       break;

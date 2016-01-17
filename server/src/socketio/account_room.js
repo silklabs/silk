@@ -57,8 +57,11 @@ type DeviceLiveStream = {
 const VIDEO_IDLE_TIMEOUT_MS = 10000;
 
 // Only permit this number of unacknowledged livestream messages
-// (preview/video/diag) to each client.
+// (preview/video) to each client.
+// Diag events get more leeway because dropping diag packets during a debug
+// session can be very undesirable.
 const MAX_PENDING_ACKS = 3;
+const MAX_PENDING_DIAG_ACKS = 10;
 
 /**
  * Manages the global state of devices...
@@ -213,8 +216,10 @@ export default class AccountRoom {
     log.info(`Live data to ${prefixedRoom}: ${clients.length} client(s)`);
     clients.forEach(id => {
       const ackId = this._pendingAckId(room, id);
-      if (this.pendingAcks[ackId] >= MAX_PENDING_ACKS) {
-        log.warn(`  Skipping client ${id}, too many outstanding ack`);
+      const maxAcks = room.startsWith('diag-') ? MAX_PENDING_DIAG_ACKS : MAX_PENDING_ACKS;
+
+      if (this.pendingAcks[ackId] >= maxAcks) {
+        log.warn(`  Skipping client ${id}. too many outstanding acks in ${room}.  max=${maxAcks}`);
         return;
       }
       ++this.pendingAcks[ackId];

@@ -14,6 +14,7 @@ import MotionZone from './motionzone';
 
 let log;
 let util;
+let timeline;
 let prevFrame = null, currentFrame = null, nextFrame = null;
 
 /**
@@ -41,7 +42,7 @@ const GAUSSIAN_KERNEL_SIZE = 21;
  *
  * Reference: https://kerberos.io/
  */
-function _detectMotion(image, motionZone, callback) {
+function _detectMotion(when, image, motionZone, callback) {
   // d1 and d2 for calculating the differences
   // motion, the result of "and" operation, calculated on d1 and d2
   // numChanges, the amount of changes in the result matrix.
@@ -51,16 +52,20 @@ function _detectMotion(image, motionZone, callback) {
   let xStop = image.width();
   let yStop = image.height();
 
+  timeline.addDiagFrame('bw', when, image);
+
   // Apply Gaussian smoothing to average pixel intensities due to tiny
   // variations in the digital camera sensor
   image.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
+
+  timeline.addDiagFrame('blur', when, image);
 
   // Take a new image
   prevFrame = currentFrame;
   currentFrame = nextFrame;
   nextFrame = image;
 
-  // Check if atleast three frames are available
+  // Check if at least three frames are available
   if (!prevFrame || !currentFrame) {
     callback(0);
     return;
@@ -74,12 +79,18 @@ function _detectMotion(image, motionZone, callback) {
   motion = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
   motion.bitwiseAnd(d1, d2);
 
+  timeline.addDiagFrame('diff', when, motion);
+
   // Threshold the image, low differences are ignored (ex. contrast change due
   // to sunlight)
   motion = motion.threshold(THRESHOLD, MAX_THRESHOLD_VAL, 'Binary');
 
+  timeline.addDiagFrame('threshold', when, motion);
+
   // Dilate the thresholded image to fill in holes
   motion.dilate(NUM_ITERATIONS_DILATE);
+
+  timeline.addDiagFrame('dilate', when, motion);
 
   // Find contours on thresholded image
   let contours = motion.findContours();
@@ -129,7 +140,7 @@ class TrackObject {
     log = this._env.log;
     util = this._env.util;
     let working = false;
-    let timeline = this._env.timeline;
+    timeline = this._env.timeline;
     soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
     this._motionzone = new MotionZone(this._env);
 
@@ -150,7 +161,7 @@ class TrackObject {
 
         let start = Date.now();
 
-        _detectMotion(image, this._motionzone, (rects) => {
+        _detectMotion(when, image, this._motionzone, (rects) => {
           let diff = Date.now() - start;
           log.verbose(`Motion detection ran for ${diff}ms`);
 

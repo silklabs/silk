@@ -7,6 +7,7 @@
  * @flow
  */
 
+import { getintprop } from '../sysutils';
 import invariant from 'assert';
 import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import { EventEmitter } from 'events';
@@ -32,9 +33,23 @@ const log = makeLog(`btle-socketscanner`);
 
 const DEFAULT_LOCALNAME = `Silk-app`;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
-const DEFAULT_SCAN_DURATION_MS = 5000;
-const DEFAULT_SCAN_INTERVAL_MS = 100;
-const MAX_SIMULTANEOUS_CONNECTIONS = 4;
+
+const SCAN_DURATION_OVERRIDE =
+  getintprop(`persist.silk.bt.socket.scandur`, -1);
+const SCAN_DURATION_MS =
+  SCAN_DURATION_OVERRIDE > 0 ?
+  SCAN_DURATION_OVERRIDE :
+  getintprop(`ro.silk.bt.socket.scan_dur_sec`, 5) * 1000;
+
+const SCAN_INTERVAL_MS =
+  getintprop(`persist.silk.bt.socket.scanint`, 500);
+
+const MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE =
+  getintprop(`persist.silk.bt.socket.max`, -1);
+const MAX_SIMULTANEOUS_CONNECTIONS =
+  MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE > 1 ?
+  MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE :
+  getintprop(`ro.silk.bt.socket.max_simul`, 4);
 
 export default class SocketScanner extends EventEmitter {
 
@@ -219,8 +234,7 @@ export default class SocketScanner extends EventEmitter {
     log.debug(`Scanning started`);
 
     log.debug(`Setting toggle duration timer`);
-    this._timeout =
-      setTimeout(() => this._toggleScan(), DEFAULT_SCAN_DURATION_MS);
+    this._timeout = setTimeout(() => this._toggleScan(), SCAN_DURATION_MS);
 
     this._noble.addListener(`discover`, this._onDiscover);
   }
@@ -309,9 +323,8 @@ export default class SocketScanner extends EventEmitter {
       }
 
       log.debug(`Setting toggle duration timer`);
-      this._timeout =
-        setTimeout(() => this._toggleScan(), DEFAULT_SCAN_DURATION_MS);
-    }, DEFAULT_SCAN_INTERVAL_MS);
+      this._timeout = setTimeout(() => this._toggleScan(), SCAN_DURATION_MS);
+    }, SCAN_INTERVAL_MS);
   }
 
   async _connect(peripheral: Peripheral): Promise<void> {
@@ -390,7 +403,7 @@ export default class SocketScanner extends EventEmitter {
       return;
     }
 
-    if (this._connectionsInProgress.length >= MAX_SIMULTANEOUS_CONNECTIONS) {
+    if (this._connectionsInProgress.length > MAX_SIMULTANEOUS_CONNECTIONS) {
       log.info(`Reached maximum number of simultaneous connections`);
       return;
     }

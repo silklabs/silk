@@ -1,0 +1,3 @@
+# `npm install` build products
+/silk-*/build/
+/silk-*/silk-*.node

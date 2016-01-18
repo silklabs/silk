@@ -31,8 +31,7 @@ type BeaconInfo = {
 const DEFAULT_BEACON_MAJOR = 0;
 const DEFAULT_BEACON_MINOR = 0;
 
-const btHwAvailable = getboolprop(`ro.silk.bt.hw.enabled`,
-  process.platform === 'android');
+const btHwAvailable = getboolprop('ro.silk.bt.hw.enabled', true);
 
 const log = makeLog(`btle`);
 
@@ -78,15 +77,17 @@ class BluetoothLE extends EventEmitter {
 
     this._privateKey = privateKey;
 
-    invariant(bleno.state === noble.state);
-    this._adapterState = noble.state;
+    this._adapterState = btHwAvailable ? noble.state : 'poweredOff';
 
-    if (noble.state === `poweredOn`) {
+    if (this._adapterState === 'poweredOn') {
+      invariant(bleno.state === noble.state);
       this._adapterStateDeferred.accept();
       this._adapterStateDeferredAccepted = true;
     }
 
-    noble.addListener(`stateChange`, this._onAdapterStateChange);
+    if (btHwAvailable) {
+      noble.addListener(`stateChange`, this._onAdapterStateChange);
+    }
   }
 
   get mode(): BluetoothMode {
@@ -439,10 +440,8 @@ let initPromiseComplete = false;
 async function init(): Promise<any> {
   invariant(!initPromiseComplete);
 
-  const stateChange = `stateChange`;
-  const expectedState = btHwAvailable ? `poweredOn` : `poweredOff`;
-
-  function waitForState(api: any, apiName: string): Promise<void> {
+  function waitForPoweredOn(api: any, apiName: string): Promise<void> {
+    const expectedState = 'poweredOn';
     return new Promise(resolve => {
       if (api.state === expectedState) {
         log.debug(`${apiName} is already '${expectedState}'`);
@@ -450,10 +449,10 @@ async function init(): Promise<any> {
         return;
       }
       log.debug(`${apiName} waiting for '${expectedState}'`);
-      api.addListener(stateChange, function listener(state) {
-        log.debug(`${apiName} '${stateChange}': '${state}'`);
+      api.addListener('stateChange', function listener(state) {
+        log.debug(`${apiName} stateChange: '${state}'`);
         if (state === expectedState) {
-          api.removeListener(stateChange, listener);
+          api.removeListener('stateChange', listener);
           resolve();
         }
       });
@@ -466,17 +465,16 @@ async function init(): Promise<any> {
     log.warn(message);
   });
 
-  let deviceId;
-  await Promise.all([
-    // We can't just `await getDeviceId()` and use the return value
-    // because Flow doesn't like bunching up promises of different
-    // return types in Promise.all().
-    getDeviceId().then((id) => deviceId = id),
-    waitForState(bleno, `bleno`),
-    waitForState(noble, `noble`),
-  ]);
+  const deviceId = await getDeviceId();
+  if (btHwAvailable) {
+    await Promise.all([
+      waitForPoweredOn(bleno, `bleno`),
+      waitForPoweredOn(noble, `noble`),
+    ]);
+  }
 
   invariant(deviceId);
+  invariant(deviceId.priv);
   // TODO: remove 'any'
   let instance: any = new BluetoothLE(deviceId.priv);
   initPromiseComplete = true;

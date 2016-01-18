@@ -13,6 +13,7 @@ system/bin/setprop persist.silk.debug "silk-*,-silk-*:debug"
 system/bin/setprop persist.silk.debug.colors true
 system/bin/setprop ro.silk.update.manifest_url "https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json"
 system/bin/setprop ro.silk.update.poll_hours 3
+system/bin/setprop ro.silk.bt.hw.enabled false
 
 # TODO: Move these things out of device/vendor/gonk/init for better sharing
 for cmd in dash silk-core; do

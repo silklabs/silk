@@ -77,6 +77,7 @@
     "flow": "flow check",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 5000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
+    "preinstall": "../preinstall",
     "postinstall": "../tools/npm/postinstall.js && babel-node src/email_generate.js",
     "pretest": "./node_modules/silk-api/bin/gen.js",
     "start": "./bin/start.sh",

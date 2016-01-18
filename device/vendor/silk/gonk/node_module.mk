@@ -165,6 +165,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
       $(and $(my_ndk_sysroot_lib),-L$(abspath $(my_ndk_sysroot_lib))) \
       -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       "\ && \
+		export SILK_ALLOW_REBUILD_FAIL=1 \
     export V=$(if $(SHOW_COMMANDS),1) \
     export BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" &&  \
     export NPM_CONFIG_ARCH=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) &&  \

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "preinstall": "../preinstall",
     "postinstall": "../tools/npm/postinstall.js"
   },
   "dependencies": {

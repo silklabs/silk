@@ -49,7 +49,7 @@
     "bundle": "./tools/rnws bundle --iosBundlePath iOS/main.jsbundle",
     "flow": "flow check",
     "lint": "eslint src",
-    "localBundle": "./tools/local_bundle",
+    "localbundle": "./tools/local_bundle",
     "postinstall": "../tools/npm/postinstall.js && ./tools/postinstall",
     "start": "./tools/rnws start",
     "test": "npm run lint && npm run flow",

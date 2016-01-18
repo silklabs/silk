@@ -51,80 +51,58 @@ To develop the app, open `Silk.xcodeproj` in Xcode.  You'll want to do most deve
 
 ## Development cycle
 
-react-native supports two development modes:
+React Native supports two development modes:
 
 0. Fetch resources from external server (save-reload mode from host)
 0. Package resources into app package (deploy-to-device mode)
 
-By default, silk-app is configured for deploy-to-device mode.  In this mode, whenever you change a react-native .js file, you must rebuild the JS bundle that's built into the app. This is done each time you build and redeploy the app by pressing Ctrl-r from within Xcode.
+### Packaged JS bundle
 
-However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you probably want to switch to save-reload mode.  To do so, add `config.local.json` to the root of `silk-app`.
+By default, the app is configured for deploy-to-device mode.  In this mode, whenever you change a Javascript file, the JS bundle that's packaged with the app needs to be rebuilt. XCode will do this automatically each time the app is (re-)run on device.
 
-The most basic version looks like this:
+### JS bundle loaded from remote packager server
+
+However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you might want to consider loading the JS bundle from a local server rather than packaging it with the app.  To do so, start the JS packaging server with `npm start` and add the following stanza to `config.local.json` in the `app/` directory (you'll have to create the file if it doesn't exist yet) before you run the app:
 
 ```js
 {
   "react-native": {
     "type": "remote",
-    "url": "http://localhost:8082/index.ios.bundle?platform=ios&dev=true"
-  },
-
-  // You may also pass a config to override the default silk-server instance.
-  "serverUrl": "http://localhost:5000"
-}
-```
-
-When rapidly deploying new changes to the phone using the bundle is the
-best option (you do not need to figure out your public ip). There is a
-special mode in the build system where we hit an existing bundle server
-to speed this process up:
-
-```
-# Ensure server is running...
-npm start
-```
-
-(Configure bundle to hit an existing server)
-
-```js
-{
-  "react-native": {
-    "type": "bundle",
-    "local": {
-      "url": "http://localhost:8082/index.ios.bundle?platform=ios"
-    }
+    "url": "http://<your computer's IP address>:8082/index.ios.bundle?platform=ios&dev=true"
   }
 }
 ```
 
+If you're running the app in the simulator, you can use `localhost` for your computer's IP address. Use Cmd+R in the simulator to reload the JS whenever you've made changes without having to re-run in Xcode. If you're running the app on a real device, you'll have to make sure that that device is on the same network as your computer, and you'll have to use your computer's IP address in the URL. Shake the device and pick "Reload JS" from the menu that appears whenever you want to reload the JavaScript code.
 
-See: [The config file](./Libraries/Config) for all options.
+### Hybrid approach: packaged JS bundle generated from packager server
 
-In addition to the config file you must ensure you have `watchman`
-installed:
+It may not always be convenient or possible to have the app load its JS bundle from the packager server on your computer. However, re-generating the entire bundle each time you re-run the app takes a long time, and makes testing changes to the JS code impossible to do rapidly. To solve this problem, you can start the JS packaging server with `npm start` and configure the app to generate a bundle each time you run it, but generate it from that server:
 
-```sh
-brew install watchman
+```js
+{
+  "react-native": {
+    "type": "local",
+    "url": "http://localhost:8082/index.ios.bundle?platform=ios&dev=true"
+  }
+}
 ```
 
-Then run:
+By leaving an instance of the packager server running and using it to generate updated bundles, subsequent re-runs of the app will be able to generate a packaged bundle much more quickly.
 
-```sh
-npm start
-```
+### Lint and Flow
 
-From the root of the project.
-
-Now, after making a change to a react-native .js file, simply press Ctrl-r in the simulator (or use the developer menu on device) to apply the change.  You can always press Ctrl-r in Xcode to rebuild/redeploy the entire app, but this rarely needed.
-
-However, if you're editing a "web" file in `web/`, you need to rebuild the *project* and relaunch the app from inside Xcode by pressing Ctrl-r.  If in doubt about which to use, the full Ctrl-r rebuild/redeploy from within Xcode always works.
-
-### Lint
-
-Coding style is enforced by Travis CI. You can run the linter locally with the following command:
+Coding style and static type checking (on a per-file opt-in basis) are enforced by Travis CI. You can run the linter and type checker locally with the following commands:
 
 ```sh
 npm run lint
+npm run flow
+```
+
+Or in one go:
+
+```sh
+npm run test
 ```
 
 ### Default User, Password, Server URL
@@ -172,8 +150,8 @@ To avoid having to re-enter WiFi credentials every time the app was restarted (n
 
 0. Close Xcode
 0. Close any react-native package servers that might be running
-0. Create a fresh clone of `silk-app`
-0. `cd` into your fresh clone and then `npm install`
+0. Create a fresh clone of `silk-clone` or run `npm run zest` at the top level of an existing clone (Warning! That will strip every file not managed by git, e.g. `config.local.js`, the repo cache, etc.)
+0. `cd` into the `app/` directory of the clean clone and run `npm install`
 0. Open Xcode
 0. Set the build/run target to "iPhone 5s" simulator
 0. Press Ctrl-r to build and launch the Silk app.  Perform quick sanity test by ensuring it connects to the silk-test-server and can show video previews and streams.

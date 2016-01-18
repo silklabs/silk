@@ -25,14 +25,11 @@ class AppDelegate : UIResponder,
       return config
     }
 
+    var data: NSData? = nil
     let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
-    if url == nil {
-      self.config = Config()
-      return self.config!
+    if let url = url {
+      data = NSData(contentsOfURL: url)
     }
-
-    // If your specify a url your responsible for validating its json
-    let data = NSData(contentsOfURL: url!)!
     let (config, err) = LoadConfig.load(data)
     if err != nil {
       // This is on boot and should only be in the development path so raise...
@@ -141,16 +138,7 @@ class AppDelegate : UIResponder,
   // RCTBridgeDelegate
 
   func sourceURLForBridge(bridge: RCTBridge!) -> NSURL! {
-    let config = self.loadConfig()
-    let reactNativeType = config.reactNative.type
-    let reactNativeUrl = config.reactNative.url!
-
-    if reactNativeType == "bundle" || reactNativeType == "local" {
-      NSLog("Starting react-native with bundle: \(reactNativeUrl)")
-      return NSBundle.mainBundle().URLForResource(reactNativeUrl, withExtension: "")!
-    }
-    NSLog("Starting react-native with remote url: \(reactNativeUrl)")
-    return NSURL(string: reactNativeUrl)!
+    return self.loadConfig().bundleURL!
   }
 
   func extraModulesForBridge(bridge: RCTBridge!) -> [AnyObject]! {

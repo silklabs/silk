@@ -1,12 +1,13 @@
-
-//
-// PreviewQueue attempts to smooth out the preview frames received over the
-// network.
-//
-// Preview frames should be provided to PreviewQueue.push() as quickly as they
-// arrive, and the onDisplay() callback will be invoked if/when the time is
-// right to display the frame to the user.
-//
+/**
+ * PreviewQueue attempts to smooth out the preview frames received over the
+ * network.
+ *
+ * Preview frames should be provided to PreviewQueue.push() as quickly as they
+ * arrive, and the onDisplay() callback will be invoked if/when the time is
+ * right to display the frame to the user.
+ *
+ * @flow
+ */
 
 import createLog from 'silk-log';
 const log = createLog('PreviewQueue');
@@ -20,21 +21,47 @@ const log = createLog('PreviewQueue');
 //       current network conditions.
 const PREVIEW_LAG_MS = 500;
 
+// Dedupe from device timeline.js
+type TimelineEventObject = {
+  tag: string;
+  when: number;
+  [arbitraryKeys: string]: any;
+};
+
+// This should probably live in device timeline.js as well.
+type DeviceVideoMessage = {
+  objects: Array<TimelineEventObject>;
+  frame: any;
+  contents: 'jpeg' | 'mp4';
+  when: number;
+  durationMs: number;
+  deviceEmitMs: number;
+};
+
+type DisplayCallback = (message: DeviceVideoMessage) => void;
+
 export default class PreviewQueue {
-  constructor(name, onDisplay) {
+  _name: string;
+  _onDisplay: DisplayCallback;
+
+  // The device time of the preview image that is currently being displayed to the user
+  // (sometime <= this._deviceTime)
+  _lastDevicePreviewTime: ?number = null;
+  _lastPreviewArrival: {
+    now: number;
+    when: number;
+  };
+
+  // The current device time that the app is attempting to best represent in
+  // the preview.  This is usually in the past around -PREVIEW_LAG_MS
+  _deviceTime: ?number = null;
+
+  _previewTimeoutId: ?number = null;
+  _previewQueue: Array<DeviceVideoMessage> = [];
+
+  constructor(name: string, onDisplay: DisplayCallback) {
     this._name = name;
     this._onDisplay = onDisplay;
-
-    // The device time of the preview image that is currently being displayed to the user
-    // (sometime <= this._deviceTime)
-    this._lastDevicePreviewTime = null;
-
-    // The current device time that the app is attempting to best represent in
-    // the preview.  This is usually in the past around -PREVIEW_LAG_MS
-    this._deviceTime = null;
-
-    this._previewTimeoutId = null;
-    this._previewQueue = [];
   }
 
   deinit() {
@@ -44,25 +71,29 @@ export default class PreviewQueue {
     }
   }
 
-  push(msg) {
+  push(msg: DeviceVideoMessage) {
     let previewArrival = { now: Date.now(), when: msg.when };
-    if (this._lastPreviewArrival) {
-      let queueTimeRange = '';
-      if (this._previewQueue.length > 0) {
-        queueTimeRange = ', queueRange=' +
-          (previewArrival.when - this._previewQueue[0].when) + 'ms';
+    if (global.__DEV___ && this._lastPreviewArrival) {
+      // Elapsed time on device since last preview
+      let deviceElapsed = previewArrival.when - this._lastPreviewArrival.when;
+      // Elapsed time on app since last preview
+      let appElapsed = previewArrival.now - this._lastPreviewArrival.now;
+      // How far behind the app is from this preview image
+      let deviceToAppLag = previewArrival.when - (this._deviceTime || 0);
+      // How far apart the first/last items in the queue are
+      let queueTimeRange = null;
+      if (this._previewQueue.length) {
+        queueTimeRange = previewArrival.when - this._previewQueue[0].when;
       }
 
-      log.debug(`preview ${this._name}:` +
-       ' queueDepth=' + this._previewQueue.length +
-       ', device elapsed=' + // Elapsed time on device since last preview
-          (previewArrival.when - this._lastPreviewArrival.when) + 'ms' +
-        ', app elapsed=' + // Elapsed time on app since last preview
-          (previewArrival.now - this._lastPreviewArrival.now) + 'ms' +
-        ', device2app lag=' + // How far behind the app is from this preview image
-          (previewArrival.when - this._deviceTime) +
-        queueTimeRange // How far apart the first/last items in the queue are
-      );
+      log.debug(`\
+preview ${this._name}: \
+queueDepth=${this._previewQueue.length} \
+device elapsed=${deviceElapsed} ms \
+app elapsed=${appElapsed} ms \
+device to app lag=${deviceToAppLag} ms \
+queueRange=${queueTimeRange} ms \
+`);
     }
     this._lastPreviewArrival = previewArrival;
 
@@ -73,12 +104,12 @@ export default class PreviewQueue {
   }
 
   _setNextPreviewFrameTimeout() {
-    let diff = this._previewQueue[0].when - this._deviceTime;
+    let diff = this._previewQueue[0].when - (this._deviceTime || 0);
     log.debug(`Time to next frame: ${diff}ms`);
     this._previewTimeoutId = setTimeout(this._advancePreviewImage, diff);
   }
 
-  _advancePreviewImage = () => {
+  _advancePreviewImage: (() => void) = () => {
     if (this._previewQueue.length === 0) {
       log.error('Empty previewQueue');
       return;

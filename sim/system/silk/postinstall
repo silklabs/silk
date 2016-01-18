@@ -1,24 +1,25 @@
 #!/bin/bash -ex
 
-cd $(dirname $0)
+cd $(dirname $0)/../..
 
-mkdir -p ../node_modules
-cp -f node_modules/silk-device/lib/base_version.js ../node_modules/
+mkdir -p system/node_modules
+cp -f system/silk/node_modules/silk-device/lib/base_version.js system/node_modules/
+
+mkdir -p system/silk/bin
+ln -sf $(which node) system/silk/bin/node
 
 # Default system properties
-../bin/setprop persist.silk.debug "silk-*,-silk-*:debug"
-../bin/setprop persist.silk.debug.colors true
-../bin/setprop ro.silk.update.manifest_url "https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json"
-../bin/setprop ro.silk.update.poll_hours 3
-
-
-ln -sf $(which node) bin/node
+system/bin/setprop persist.silk.debug "silk-*,-silk-*:debug"
+system/bin/setprop persist.silk.debug.colors true
+system/bin/setprop ro.silk.update.manifest_url "https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json"
+system/bin/setprop ro.silk.update.poll_hours 3
 
 # TODO: Move these things out of device/vendor/gonk/init for better sharing
 for cmd in dash silk-core; do
-  echo "#!/bin/bash" > bin/$cmd
-  cat ../../../device/vendor/silk/gonk/init/$cmd >> bin/$cmd
-  chmod +x bin/$cmd
+  simcmd=system/silk/bin/$cmd
+  echo "#!/bin/bash" > $simcmd
+  cat ../device/vendor/silk/gonk/init/$cmd >> $simcmd
+  chmod +x $simcmd
 done
 
-./ext/install
+system/silk/ext/install

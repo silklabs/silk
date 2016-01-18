@@ -535,7 +535,7 @@ class CameraStream extends EventEmitter {
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
     // image
     this._cvVideoCapture.grab(errGrab => {
-      if (errGrab) {
+      if (errGrab || this._cvVideoCapture === null) {
         log.error(`Grab failed: ${errGrab}`);
         this._cvVideoCaptureBusy = false;
         return;

@@ -1,6 +1,6 @@
 /**
-Deal with loading configuration profiles for the project.
-*/
+ * Deal with loading configuration profiles for the project.
+ */
 
 import path from 'path';
 import merge from 'lodash.merge';

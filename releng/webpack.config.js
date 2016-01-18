@@ -1,14 +1,13 @@
 var path = require('path');
 var webpack = require('webpack');
 
-
 var config = {
   devServer : {
     contentBase: './public',
     publicPath: '/js/',
   },
   devtool: "source-map",
-  entry: './lib/www/index',
+  entry: ['babel-polyfill', './lib/www/index'],
   output: {
     path: 'public/js',
     filename: 'bundle.js'
@@ -18,8 +17,11 @@ var config = {
       { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
+        loader: 'babel',
+        query: {
+          presets: ['es2015', 'stage-0', 'react'],
+        },
         include: require('silk-babeldeps'),
-        loaders: ['babel-loader?stage=0&optional=runtime'],
       }
     ]
   },

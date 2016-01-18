@@ -2,6 +2,6 @@
  * Configuration profile used in development.
  */
 
-export default {
+module.exports = {
 };
 

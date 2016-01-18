@@ -7,7 +7,7 @@
 // Provide default connection string...
 const PORT = process.env.PORT || 8000;
 
-export default {
+module.exports = {
   server: {
     // location where to start the http server.
     port: PORT,

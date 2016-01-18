@@ -1,7 +1,7 @@
 /**
  * Production configuration profile.
  */
-export default {
+module.exports = {
 
   testing: {
     value: false,

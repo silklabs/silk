@@ -3,6 +3,7 @@ lib/
 
 [ignore]
 .*/node_modules/fbjs/.*
+.*/node_modules/babel.*
 
 [options]
 module.system=node

@@ -26,4 +26,3 @@ createServer(config).then(() => {
     throw e;
   });
 });
-

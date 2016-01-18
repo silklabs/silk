@@ -1,0 +1,26 @@
+--- node_modules/socket.io-client/node_modules/engine.io-client/node_modules/engine.io-parser/lib/browser.js.orig	2016-01-17 16:59:27.000000000 -0800
++++ node_modules/socket.io-client/node_modules/engine.io-client/node_modules/engine.io-parser/lib/browser.js	2016-01-17 17:28:23.000000000 -0800
+@@ -244,6 +244,11 @@
+     }
+   }
+ 
++  if (typeof data === 'object' && data.__native_type === 'Blob') {
++    data.offset = 1;
++    return { type: packetslist[data.firstByte], data: data };
++  }
++
+   var asArray = new Uint8Array(data);
+   var type = asArray[0];
+   var rest = sliceBuffer(data, 1);
+--- node_modules/socket.io-client/node_modules/socket.io-parser/is-buffer.js.orig	2016-01-17 17:02:20.000000000 -0800
++++ node_modules/socket.io-client/node_modules/socket.io-parser/is-buffer.js	2016-01-17 17:28:30.000000000 -0800
+@@ -8,6 +8,9 @@
+  */
+ 
+ function isBuf(obj) {
++  if (typeof obj === 'object' && obj.__native_type === 'Blob') {
++    return true;
++  }
+   return (global.Buffer && global.Buffer.isBuffer(obj)) ||
+          (global.ArrayBuffer && obj instanceof ArrayBuffer);
+ }

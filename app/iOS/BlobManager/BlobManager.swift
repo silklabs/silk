@@ -46,7 +46,7 @@ public class BlobManager : NSObject {
       self.blobs[id] = blob
       result["length"] = length
       result["id"] = id;
-      result["__native_type"] = "NSData"
+      result["__native_type"] = "Blob"
 
       // First byte read as uint8 this is mostly useful for socket.io.
       if length > 0 {

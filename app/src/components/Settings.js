@@ -55,6 +55,16 @@ export default class WifiSettings extends AsyncComponent {
 
   _renderVersion() {
     let buildDate = new Date(parseInt(silkVersion.buildtime, 0));
+
+    let devBuild = null;
+    if (!silkVersion.official) {
+      devBuild = (
+        <Text style={styles.formRowSublabel}>
+          Development Build
+        </Text>
+      );
+    }
+
     return (
       <View style={FormStyles.form}>
         <View style={styles.versionContainer}>
@@ -65,8 +75,9 @@ export default class WifiSettings extends AsyncComponent {
             Commit: {silkVersion.sha.slice(0, 8)}
           </Text>
           <Text style={styles.formRowSublabel}>
-            Build Date: {moment(buildDate).format('L LT')}
+            Date: {moment(buildDate).format('L LT')}
           </Text>
+          {devBuild}
         </View>
       </View>
     );

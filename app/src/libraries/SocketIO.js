@@ -1,68 +1,9 @@
-import { NativeModules } from 'react-native';
 import createLog from 'silk-log';
 
 const log = createLog('SocketIO');
 
-class NativeBlob {
-  constructor(data) {
-    Object.assign(this, data);
-  }
-
-  release() {
-    NativeModules.BlobManager.release(this.id);
-  }
-}
-
 /**
- * Construct one of our custom types given the name of the type and a payload.
- */
-function createNativeType(type, payload) {
-  switch (type) {
-  case 'NSData':
-    // SocketIO pads the first byte of all binary data to indicate what type
-    // of data it is... This is only useful internally to socket.io so we
-    // strip the byte.
-    payload.offset = 1;
-    return new NativeBlob(payload);
-  default:
-    throw new Error(`Unknown custom native type: ${type}`);
-  }
-}
-
-/**
- * Helper to convert specialized native types.
- */
-function convertTypes(items) {
-  if (Array.isArray(items)) {
-    return items.map(convertTypes);
-  }
-
-  if (items && typeof items === 'object') {
-    // Don't use dot notation to prevent name mangling.
-    /* eslint dot-notation:0 */
-    if (items['__native_type']) {
-      return createNativeType(items['__native_type'], items);
-    }
-
-    let result = {};
-    for (var key in items) {
-      result[key] = convertTypes(items[key]);
-    }
-    return result;
-  }
-
-  return items;
-}
-
-function wrapEvent(method) {
-  return (...items) => {
-    method(...convertTypes(items));
-  };
-}
-
-/**
- * Our custom implementation of the react-native-socket.io interface. The API
- * closely follows the original but uses our SocketIO native manager classes.
+ * Wrap socket-io.client and rejoin rooms upon socket reconnects.
  */
 export default class SocketIO {
   constructor(socket) {
@@ -71,10 +12,8 @@ export default class SocketIO {
 
     this._needsRoomReconnect = false;
 
-    /**
-     * To reduce complexity we do not persist room settings on the server side
-     * so we must reconnect manually here.
-     */
+    // To reduce complexity we do not persist room settings on the server side
+    // so we must reconnect manually here.
     this.socket.on('reconnect', () => {
       log.info('Disconnect detected will need to rejoin rooms.');
       this._needsRoomReconnect = true;
@@ -96,9 +35,7 @@ export default class SocketIO {
   }
 
   on(event, listener) {
-    // Wrap the object and keep a reference for 'off'.
-    let fn = wrapEvent(listener);
-    this.socket.on(event, fn);
+    this.socket.on(event, listener);
   }
 
   off(event) {

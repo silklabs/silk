@@ -43,6 +43,13 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(RegionMonitor.instance === nil,
            "RegionMonitor can't handle more than one instance!")
 
+    let backgroundRefreshStatus =
+      UIApplication.sharedApplication().backgroundRefreshStatus
+    if backgroundRefreshStatus != .Available {
+      log.error("Background refresh not available, region monitoring might " +
+                "fail")
+    }
+
     self.delegate = delegate
 
     if CLLocationManager.isMonitoringAvailableForClass(CLBeaconRegion) {
@@ -96,6 +103,27 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     }
   }
 
+  private func startMonitoringRegion(region: CLRegion) {
+    log.debug("startMonitoringRegion('\(region.identifier)'")
+
+    assert(self.locationManager != nil)
+    assert(self.regions[region.identifier] != nil)
+
+    let locationManager = self.locationManager!
+
+    var alreadyMonitoring = false
+    for monitoredRegion in locationManager.monitoredRegions {
+      if monitoredRegion.identifier == region.identifier {
+        alreadyMonitoring = true
+        break
+      }
+    }
+
+    if !alreadyMonitoring {
+      locationManager.startMonitoringForRegion(region)
+    }
+  }
+
   private func startMonitoringAllRegions() {
     log.debug("startMonitoringAllRegions()")
 
@@ -111,13 +139,13 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     for (identifier, regionInfo) in self.regions {
       log.info("Starting to monitor region '\(identifier)'")
 
-      locationManager.startMonitoringForRegion(regionInfo.region)
-
-      // Make sure we always get at least one notification, regardless of
-      // whether we are currently in the region or not.
-      locationManager.requestStateForRegion(regionInfo.region)
+      let region = regionInfo.region
+      self.startMonitoringRegion(region)
 
       self.delegate.regionAdded(self, uuid: regionInfo.uuid)
+
+      log.info("Requesting update for region '\(identifier)'")
+      locationManager.requestStateForRegion(region)
     }
   }
 
@@ -291,10 +319,37 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
                        monitoringDidFailForRegion region: CLRegion?,
                        withError error: NSError) {
     assert(manager === self.locationManager!)
+
     if region == nil {
       log.error("Failed to monitor region: \(error)")
-    } else {
-      log.error("Failed to monitor region \(region!): \(error)")
+      return
+    }
+
+    let identifier = region!.identifier
+    log.error("Failed to monitor region '\(identifier)': \(error)")
+
+    // Retry if we got a generic iOS failure code. On iOS 9.2 this happens
+    // reliably just after a device reboot.
+    if error.domain == kCLErrorDomain &&
+       error.code == CLError.RegionMonitoringFailure.rawValue {
+      let queue = dispatch_get_main_queue()
+      let delay = Int64(NSEC_PER_SEC) * 2
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay), queue) {
+        // Check to make sure that we're still supposed to be monitoring this
+        // region.
+        if let regionInfo = self.regions[identifier] {
+          self.startMonitoringRegion(regionInfo.region)
+        }
+      }
+    }
+
+    // For now if we're still supposed to be monitoring this region we will
+    // pretend that we're 'inside'.
+    if let regionInfo = self.regions[identifier] {
+      if regionInfo.state != .Inside {
+        regionInfo.state = .Inside
+        self.delegate.regionEntered(self, uuid: regionInfo.uuid)
+      }
     }
   }
 
@@ -308,8 +363,10 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     if let regionInfo = self.regions[region.identifier] {
       log.info("didDetermineState(\(state.rawValue), \(region.identifier))")
 
-      // Assume unknown means outside.
-      let stateToReport = state == .Unknown ? .Outside : state
+      // Assume 'unknown' means 'inside' because we would rather advertise our
+      // bluetooth services needlessly than not advertise when a user is trying
+      // to use those services.
+      let stateToReport = state == .Unknown ? .Inside : state
 
       if regionInfo.state != stateToReport {
         regionInfo.state = stateToReport

@@ -134,7 +134,7 @@ export default class Timeline extends EventEmitter {
 
     this.eventTracker = new EventTracker(this.outbox);
     this.eventTracker.on('active', this._onEventTrackerActive);
-    this.eventTracker.on('active', this._onEventTrackerInActive);
+    this.eventTracker.on('inactive', this._onEventTrackerInactive);
 
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
@@ -184,7 +184,7 @@ export default class Timeline extends EventEmitter {
   /**
    * @private
    */
-  _onEventTrackerInActive: ((eventStopWhen: number) => void) = (eventStopWhen) => {
+  _onEventTrackerInactive: ((eventStopWhen: number) => void) = (eventStopWhen) => {
     log.verbose(`event tracker inactive at ${eventStopWhen}`);
     this.eventTrackerActive = false;
   };
@@ -537,16 +537,6 @@ export default class Timeline extends EventEmitter {
    */
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
     this._pushSocketIOPacket(when, frame, null, 'mp4', durationMs);
-
-    // Only queue the video to be sent to the outbox if uploads are enabled...
-    if (this.videoUploadType === 'none') {
-      return;
-    }
-
-    if (this.videoUploadType === 'events' && !this.eventTrackerActive) {
-      return;
-    }
-
     this._addUploadOp(when,
       () => {
         const op = new VideoUploadOp({

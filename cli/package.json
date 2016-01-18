@@ -8,8 +8,8 @@
   },
   "scripts": {
     "lint": "eslint build lib",
-    "postinstall": "../tools/npm/postinstall.js",
-    "preinstall": "../preinstall",
+    "postinstall": "../npm_postinstall",
+    "preinstall": "../npm_preinstall",
     "test": "npm run lint"
   },
   "dependencies": {

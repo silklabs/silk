@@ -49,8 +49,8 @@
     "flow": "flow check",
     "lint": "eslint src",
     "localbundle": "./tools/local_bundle",
-    "preinstall": "../preinstall",
-    "postinstall": "../tools/npm/postinstall.js && ./tools/postinstall",
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall && ./tools/postinstall",
     "start": "./tools/rnws start",
     "test": "npm run lint && npm run flow",
     "update": "./tools/update"

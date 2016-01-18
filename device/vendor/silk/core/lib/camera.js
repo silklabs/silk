@@ -304,6 +304,9 @@ class CameraStream extends EventEmitter {
         throw err;
       }
     }
+  }
+
+  _initStartPreview() {
     PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
     PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
     this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
@@ -338,6 +341,7 @@ class CameraStream extends EventEmitter {
       // OpenCV video capture.
       process.nextTick(() => {
         this._initCVVideoCapture();
+        this._initStartPreview();
       });
       return;
     }
@@ -363,6 +367,8 @@ class CameraStream extends EventEmitter {
     log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
     this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+
+      this._initCVVideoCapture();
 
       this._buffer = '';
       const cmdData = {
@@ -425,7 +431,7 @@ class CameraStream extends EventEmitter {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
 
-        this._initCVVideoCapture();
+        this._initStartPreview();
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);

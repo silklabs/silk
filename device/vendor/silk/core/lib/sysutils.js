@@ -23,12 +23,20 @@ const log = createLog('sysutils');
 // Hack for flow...
 let _require = require;
 
-// TODO: Ideally silk-properties would work on the host via shim.
 let props;
-if (process.env.SILK_TEST === 'unit') {
-  props = { get: () => '' };
-} else {
+if (process.platform === 'android') {
   props = _require('silk-properties'); //eslint-disable-line
+} else {
+  // TODO: Ideally silk-properties as is would work on the host
+  props = {
+    get(prop: string): string {
+      let result = spawnSync('getprop', [prop], {encoding: 'utf8'});
+      if (result.stdout) {
+        return result.stdout.toString();
+      }
+      return '';
+    }
+  };
 }
 
 const SOUND_DIR = '/system/silk/media/sound/';
@@ -199,7 +207,7 @@ export function getlistprop(
  * @memberof sysutils
  */
 export function setprop(prop: string, value: PropTypes): ?Error {
-  let result = spawnSync('setprop', [prop, value.toString()]);
+  const result = spawnSync('setprop', [prop, value.toString()]);
   return result.error;
 }
 
@@ -220,22 +228,22 @@ class PropWatcher extends events.EventEmitter {
    */
   constructor() {
     super();
-    let spawnWatchprops = () => {
-      let cmd = spawn('watchprops', []);
-      cmd.stderr.on('data', data => {
-        let match = data.toString().match(/^\d+ ([^ ]+) /);
-        if (match && match[1]) {
-          this.emit(match[1]);
-        }
-      });
-
-      // respawn if dies for some reason
-      cmd.on('close', () => spawnWatchprops());
-    };
-
     // Spawn process only if there is someone watching
-    this.once('newListener', () => spawnWatchprops());
+    this.once('newListener', this._spawnWatchprops);
   }
+
+  _spawnWatchprops: (() => void) = () => {
+    let cmd = spawn('watchprops', []);
+    cmd.stderr.on('data', data => {
+      let match = data.toString().match(/^\d+ ([^ ]+) /);
+      if (match && match[1]) {
+        this.emit(match[1]);
+      }
+    });
+
+    // respawn if dies for some reason
+    cmd.on('close', this._spawnWatchprops);
+  };
 }
 
 export let propWatcher = new PropWatcher();

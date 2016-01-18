@@ -38,6 +38,7 @@ class Adb {
   _spawn(cmd, args) {
     let stdout = '';
     let stderr = '';
+    log.debug(`_spawn: ${cmd} ${args.join(' ')}`);
 
     return new Promise((resolve, reject) => {
       let helper = childProcess.spawn(cmd, args);
@@ -45,9 +46,11 @@ class Adb {
       helper.stderr.on('data', chunk => stderr += chunk.toString());
       helper.on('close', code => {
         if (code !== 0) {
+          log.debug(`_spawn: err=${code}, stderr=${stderr}`);
           reject(new Error(stderr));
           return;
         }
+        log.debug(`_spawn: err=0, stdout=${stdout}`);
         resolve(stdout);
       });
     });
@@ -58,7 +61,6 @@ class Adb {
       args = ['-s', this.device].concat(args);
     }
 
-    log.debug(`cmd: adb ${args.join(' ')}`);
     return this._spawn('adb', args);
 
   }

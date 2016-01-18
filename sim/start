@@ -1,6 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
-cd $(dirname $0)
-export NODE_PATH=$PWD/system/silk/node_modules:$PWD/system/node_modules
-export PATH=$PWD/system/silk/bin:$PWD/system/bin:$PATH
+source $(dirname $0)/envsetup.sh
 exec system/silk/bin/silk-core $@

@@ -67,7 +67,8 @@ module.exports = function createLog(libraryName) {
         alogFunc(libraryName, util.format.apply(this, args));
       };
     } else {
-      func = function() {
+      func = debug(prefix);
+      func.log = function() {
         const args = Array.prototype.slice.call(arguments);
         consoleFunc.apply(consoleFunc, [`${prefix}:`].concat(args));
       };

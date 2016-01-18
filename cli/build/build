@@ -1,4 +1,0 @@
-#! /bin/bash -ex
-
-export BASEDIR=$PWD
-exec ./node_modules/.bin/gulp --gulpfile ./build/gulpfile.babel.js $@

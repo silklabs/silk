@@ -72,7 +72,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "com.silk"
+        applicationId "com.silklabs.app"
         minSdkVersion 16
         targetSdkVersion 22
         versionCode 1

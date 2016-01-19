@@ -1,4 +1,4 @@
-package com.silk;
+package com.silklabs.app;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactPackage;

@@ -1,5 +1,14 @@
-#! /bin/bash -e
-ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#! /bin/bash -xe
+
+
+# Resolve to realpath....
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 $ROOT/tools/node_modules_cache/bin/bootstrap
 $ROOT/tools/node_modules_cache/bin/cli \

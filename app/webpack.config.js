@@ -35,7 +35,6 @@ var config = {
         include: [
           require('silk-babeldeps'),
           path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native'),
-          path.resolve(__dirname, 'node_modules/react-native-device'),
         ]
       },
     ],

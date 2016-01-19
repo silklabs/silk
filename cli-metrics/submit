@@ -1,0 +1,137 @@
+#! /usr/bin/env node
+/**
+ * As simple as possible way to submit metrics to influxdb for developer
+ * metrics.
+ */
+
+"use strict";
+
+let url = require('url');
+let https = require('https');
+let os = require('os');
+let spawn = require('child_process').spawn;
+
+const DB_USER = 'silk-dev';
+const DB_PASSWORD = 'yUPResTub*#nUrUtreyAsPe4';
+const DB_URL = 'https://hilldale-delorean-43.c.influxdb.com:8086';
+const DB_NAME = 'silk-dev';
+
+// HTTP status code returned when write works...
+const INFLUXDB_WRITE_SUCCESS = 204;
+
+const TAGS = {
+  os: os.type(),
+};
+
+const DEFAULT_VALUES = [
+  `hostname="${os.hostname()}"`,
+  `type="${os.platform()}"`,
+  `cpus=${os.cpus().length}i`,
+  `totalmem=${os.totalmem()}i`,
+  `arch="${os.arch()}"`,
+];
+
+function submit(series, values) {
+  return new Promise((accept, reject) => {
+    let auth = new Buffer(`${DB_USER}:${DB_PASSWORD}`).toString('base64');
+    let headers = {
+      authorization: `Basic ${auth}`
+    };
+
+    let parsed = url.parse(DB_URL, true);
+    parsed.path = `/write?db=${DB_NAME}`;
+    parsed.headers = headers;
+    delete parsed.search;
+    delete parsed.pathname;
+
+    parsed.method = 'POST';
+
+    // TODO: Allow passing tags...
+    let influxTags = Object.keys(TAGS).map((name) => {
+      return `${name}=${TAGS[name]}`;
+    });
+
+    let influxValues = DEFAULT_VALUES.concat(values).join(',');
+    let line = `${series},${influxTags} ${influxValues}`;
+
+    var req = https.request(parsed);
+    req.on('response', (res) => {
+      if (res.statusCode !== INFLUXDB_WRITE_SUCCESS) {
+        console.warn('Failed to write to influxdb error below...');
+        res.pipe(process.stdout);
+      } else {
+        res.resume();
+      }
+      accept();
+    });
+
+    // This should handle the offline case (either the client is offline or
+    // server). When you turn wifi off locally this should result in a DNS error
+    // getting printed.
+    req.on('error', (err) => {
+      console.warn('Error submitting metrics (will continue)', err.stack);
+      accept();
+    });
+
+    // Ensure that we eventually timeout if for some reason we cannot connect to
+    // the server...
+    req.setTimeout(500);
+    req.end(line);
+  })
+}
+
+function main(input) {
+  input = input || process.argv.slice(2);
+
+  let series = input.shift();
+  let command = [];
+  let values = [];
+  let seenDash = false;
+
+  // Split on -- to allow scripts to add values...
+  let dashIdx = input.indexOf('--');
+  if (dashIdx !== -1) {
+    values = input.slice(0, dashIdx);
+    command = input.slice(dashIdx + 1);
+  } else {
+    command = input;
+  }
+
+  let start = Date.now();
+  let aborted = false;
+  console.log(command, '<<<!?');
+  let proc = spawn('/bin/bash', ['-c'].concat(command.join(' ')), {
+    cwd: process.cwd(),
+    stdio: 'inherit'
+  });
+
+  process.on('SIGINT', () => {
+    aborted = true;
+    proc.exit();
+    proc.once('exit', () => {
+      process.exit(1);
+    });
+  });
+
+  proc.on('exit', (code) => {
+    if (!aborted) {
+      let duration = Date.now() - start;
+      values.push(`durationMs=${duration}i`);
+      // Submit should never return an error...
+      submit(series, values).
+        then(() => {
+          process.exit(code);
+        }).
+        catch((err) => {
+          console.error(`This should never happen file an issue...`, err.stack);
+        });
+    }
+  });
+}
+
+module.exports = submit;
+
+if (module === process.mainModule) {
+  main();
+}
+

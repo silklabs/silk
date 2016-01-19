@@ -15,6 +15,7 @@
 let fs = require('fs');
 let path = require('path');
 
+let submitMetrics = require('../../cli-metrics/submit');
 let ConditionalInstall = require('./conditional_install');
 
 /**
@@ -263,7 +264,15 @@ function findPackageJSON(cwd) {
   });
 }
 
-findPackageJSON(process.cwd()).catch((err) => {
+let start = Date.now();
+findPackageJSON(process.cwd()).then(() => {
+  let corePath = path.resolve(process.cwd()).replace(CORE, '');
+  let duration = Date.now() - start;
+  return submitMetrics('npm_install_silk_dependencies', [
+    `path="${corePath}"`,
+    `durationMs=${duration}i`
+  ]);
+}).catch((err) => {
   log(`Preinstall has failed ${err.stack || err}`);
   destroyUnownedLocks();
   process.exit(1);

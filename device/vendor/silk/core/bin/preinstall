@@ -5,7 +5,7 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
-  ../../../../preinstall
+  ../../../../npm_preinstall
 else
-  $ANDROID_BUILD_TOP/../preinstall
+  $ANDROID_BUILD_TOP/../npm_preinstall
 fi

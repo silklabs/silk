@@ -4,7 +4,7 @@
   "description": "Silk Device Simulator",
   "main": "core.js",
   "scripts": {
-    "postinstall": "../../../tools/npm/postinstall.js && ./postinstall"
+    "postinstall": "../../../npm_postinstall && ./postinstall"
   },
   "author": "Silk Labs Inc.",
   "silkDependencies": {

@@ -10,8 +10,8 @@
     "networkTest": "./bin/networkTest"
   },
   "scripts": {
-    "preinstall": "../preinstall",
-    "postinstall": "../tools/npm/postinstall.js",
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
     "lint": "eslint lib",
     "test": "./bin/networkTest.js"
   },

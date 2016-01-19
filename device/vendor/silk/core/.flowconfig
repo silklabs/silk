@@ -13,8 +13,7 @@ node_modules/silk-core-version
 .*/node_modules/watchify.*
 
 .*/server/test/.*
-.*/server/src/server/.*
-.*/server/src/socketio/.*
+.*/server/src/.*
 .*/api/test/.*
 
 [libs]

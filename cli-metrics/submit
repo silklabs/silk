@@ -99,7 +99,6 @@ function main(input) {
 
   let start = Date.now();
   let aborted = false;
-  console.log(command, '<<<!?');
   let proc = spawn('/bin/bash', ['-c'].concat(command.join(' ')), {
     cwd: process.cwd(),
     stdio: 'inherit'

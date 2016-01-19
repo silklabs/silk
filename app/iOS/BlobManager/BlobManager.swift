@@ -1,11 +1,17 @@
+import Foundation
+
 /**
  * NSData bridge utility manages state for NSData blobs which get passed to JS.
  *
  * This class is thread safe.
  */
 @objc(SLKBlobManager)
-public class BlobManager : NSObject {
+public class BlobManager : NSObject, RCTBridgeModule, RCTURLRequestHandler {
   internal typealias JSONDict = Dictionary<String, AnyObject>
+
+  var blobs: Dictionary<String, NSData> = [:]
+
+  var _queue: NSOperationQueue?
 
   public func resolveAndReleaseBlob(blob: Dictionary<String, AnyObject>) -> NSData? {
     let blobID = blob["id"] as! String
@@ -28,18 +34,15 @@ public class BlobManager : NSObject {
     return nil
   }
 
-  var blobs: Dictionary<String, NSData> = [:]
-
   /**
    * Store an object into the data bridge... This object will _never_ be
-   * released automatically
-   * so you must call release at some point.
+   * released automatically, so you must call release at some point.
    *
    * This method is threadsafe.
    */
   func store(blob: NSData) -> JSONDict {
     var result: JSONDict = [:]
-    let id =  NSUUID().UUIDString
+    let id = NSUUID().UUIDString
     objSync(self) {
       let length = blob.length
 
@@ -76,6 +79,68 @@ public class BlobManager : NSObject {
       }
     }
     return result
+  }
+
+  // RCTBridgeModule
+
+  public class func moduleName() -> String {
+    return "BlobManager"
+  }
+
+  public func constantsToExport() -> [String: AnyObject] {
+    return [:]
+  }
+
+  // RCTURLRequestHandler
+
+  public func canHandleRequest(request: NSURLRequest!) -> Bool {
+    return request.URL?.scheme == "silk-blob"
+  }
+
+  public func sendRequest(request: NSURLRequest!, withDelegate delegate: RCTURLRequestDelegate!) -> AnyObject! {
+    if (_queue == nil) {
+      _queue = NSOperationQueue()
+    }
+
+    weak var weakOp: NSBlockOperation? = nil
+    let op = NSBlockOperation(block: {
+      if let url = request.URL,
+             components = NSURLComponents(URL: url, resolvingAgainstBaseURL: false),
+             blobID = components.host {
+        var offset: Int = 0
+        if let queryItems = components.queryItems {
+          for queryItem in queryItems {
+            if queryItem.name == "offset" {
+              if let value = queryItem.value {
+                offset = Int(value) ?? 0
+              }
+            }
+          }
+        }
+        if let data = self.releaseWithOffset(blobID, offset: offset) {
+          let response = NSURLResponse(
+            URL: url,
+            MIMEType: nil,
+            expectedContentLength: data.length,
+            textEncodingName: nil
+          )
+          delegate.URLRequest(weakOp, didReceiveResponse: response)
+          delegate.URLRequest(weakOp, didReceiveData: data)
+          delegate.URLRequest(weakOp, didCompleteWithError: nil)
+          return
+        }
+      }
+      let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorBadURL, userInfo: nil)
+      delegate.URLRequest(weakOp, didCompleteWithError: error)
+    })
+    weakOp = op
+    _queue!.addOperation(op)
+    return weakOp
+  }
+
+  public func cancelRequest(requestToken: AnyObject!) {
+    let op = requestToken as? NSOperation
+    op?.cancel()
   }
 
 }

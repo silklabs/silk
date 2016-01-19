@@ -17,6 +17,7 @@ interface with via swift need to be imported here.
 #import "UIView+React.h"
 #import "RCTComponent.h"
 #import "RCTTouchHandler.h"
+#import "RCTURLRequestHandler.h"
 #import "RCTView.h"
 
 #import "SLKWebSocketModule.h"

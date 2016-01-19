@@ -1,13 +1,12 @@
 var fs = require('fs');
 var path = require('path');
 var webpack = require('webpack');
+var cloneDeep = require('lodash.clonedeep');
 
-var config = {
+var base = {
   debug: true,
   devtool: 'source-map',
-  entry: {
-    'index.ios': ['./src/index.ios.js'],
-  },
+  entry: {},
   watch: true,
   output: {
     path: path.resolve(__dirname, 'build'),
@@ -19,6 +18,9 @@ var config = {
     modulesDirectories: [
       path.join(__dirname, 'node_modules'),
     ]
+  },
+  resolve: {
+    extensions: ['', '.js', '.json'],
   },
   module: {
     loaders: [
@@ -42,8 +44,10 @@ var config = {
   plugins: [],
 };
 
-// Production config
-if (process.env.CONFIGURATION === 'Release') {
+function addPlugins(config, platform) {
+  if (process.env.CONFIGURATION !== 'Release') {
+    return;
+  }
   // React Native 0.16+ transforms `__DEV__` out of the minified production
   // bundles, so we should do the same (by replacing the `__DEV__` identifier
   // with the `false` literal and then having uglify eliminate the resulting
@@ -54,4 +58,10 @@ if (process.env.CONFIGURATION === 'Release') {
   config.plugins.push(new webpack.optimize.UglifyJsPlugin());
 }
 
-module.exports = config;
+module.exports = ['ios', 'android'].map(function (platform) {
+  var config = cloneDeep(base);
+  addPlugins(config, platform);
+  config.entry['index.' + platform] = ['./src/index.js'];
+  config.resolve.extensions.push('.' + platform + '.js');
+  return config;
+});

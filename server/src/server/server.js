@@ -19,7 +19,7 @@ import Accounts from './models/accounts';
 import Devices from './models/devices';
 import Nonce from './models/nonce';
 import EmailSender from './email_sender';
-import InfluxDB from './influxdb_client';
+import InfluxDB from '../influxdb_client';
 import Scopes from './scopes';
 
 export type RouteContext = {

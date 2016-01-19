@@ -21,6 +21,7 @@ const INFLUXDB_WRITE_SUCCESS = 204;
 
 const TAGS = {
   os: os.type(),
+  ci: process.env.CI === 'true' ? 1 : 0,
 };
 
 const DEFAULT_VALUES = [

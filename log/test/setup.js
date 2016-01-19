@@ -1,0 +1,7 @@
+require('babel/register')(
+  {
+    "breakConfig": true,
+    "stage": "1",
+    "optional": ["regenerator", "asyncToGenerator", "es7.classProperties"]
+  }
+);

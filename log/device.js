@@ -20,21 +20,18 @@ debug.formatArgs = function() {
   const args = Array.prototype.slice.call(arguments);
   const diff = debug.humanize(this.diff);
 
-  if (this.useColors) {
-    args[0] = `\u001b[3${this.color}m(+${diff}) ${args[0]}`;
+  // Mimic console.* functions by treating additional arguments as
+  // printf-style arguments.
+  let msg = util.format.apply(this, args);
 
-    const colorSuffix = `\u001b[0m`;
-    const lastArgIndex = args.length - 1;
-    if (typeof args[lastArgIndex] === `string`) {
-      args[lastArgIndex] = `${args[lastArgIndex]}${colorSuffix}`;
-    } else {
-      args.push(colorSuffix);
-    }
+  const format = `(+${diff}) ${msg}`;
+  if (this.useColors) {
+    msg = `\u001b[3${this.color}m${format}\u001b[0m`;
   } else {
-    args[0] = `(+${diff}) ${args[0]}`;
+    msg = format;
   }
 
-  return args;
+  return [ msg ];
 };
 
 // Expected use:
@@ -50,27 +47,23 @@ module.exports = function createLog(libraryName) {
     const prefix = `${libraryName}:${alogFuncName}`;
     const consoleFunc = console[consoleFuncName]; // eslint-disable-line
 
-    let func;
+    const func = debug(prefix);
+
     if (isAndroid) {
       const alogFunc = alog[alogFuncName];
-
-      func = debug(prefix);
       func.log = function() {
         const args = Array.prototype.slice.call(arguments);
 
         if (!process.env.LOGWRAPPER) {
-          consoleFunc.apply(consoleFunc, [`${prefix}:`].concat(args));
+          consoleFunc.call(consoleFunc, `${prefix} ${args[0]}`);
         }
 
-        // Mimic console.* functions by treating additional arguments as
-        // printf-style arguments.
-        alogFunc(libraryName, util.format.apply(this, args));
+        alogFunc(libraryName, args[0]);
       };
     } else {
-      func = debug(prefix);
       func.log = function() {
         const args = Array.prototype.slice.call(arguments);
-        consoleFunc.apply(consoleFunc, [`${prefix}:`].concat(args));
+        consoleFunc.call(consoleFunc, `${prefix} ${args[0]}`);
       };
     }
     return func;

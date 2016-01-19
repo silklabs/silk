@@ -4,7 +4,7 @@
   "description": "Logger conventions built around debug",
   "main": "index.js",
   "scripts": {
-    "test": "DEBUG=* node test.js"
+    "test": "DEBUG=silk-log* mocha --harmony --ui tdd --compilers js:babel/register --timeout 45000 --require test/setup.js test/index_test.js test/device_test.js"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,9 @@
   "homepage": "https://github.com/silklabs/log#readme",
   "dependencies": {
     "debug": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel": "^5.8.23",
+    "mocha": "^2.3.3"
   }
 }

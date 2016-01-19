@@ -8,7 +8,7 @@ import createLog from 'silk-log';
 
 import type { ExpressRoutes } from 'api-schema';
 import type {RouteContext} from '../server';
-import InfluxDB from '../influxdb_client';
+import InfluxDB from '../../influxdb_client';
 
 const log = createLog('routes:account');
 

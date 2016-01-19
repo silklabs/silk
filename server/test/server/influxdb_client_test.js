@@ -1,6 +1,6 @@
 /* @flow */
 import assert from 'assert';
-import Influx from '../../src/server/influxdb_client';
+import Influx from '../../src/influxdb_client';
 import uuid from 'uuid';
 
 suite('influxdb client', function() {

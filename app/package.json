@@ -14,10 +14,11 @@
     "events": "^1.0.2",
     "immutable": "^3.7.5",
     "joi-browserify": "git@github.com:fhemberger/joi-browserify.git#v0.0.2",
-    "lodash.merge": "^3.3.2",
+    "lodash.clonedeep": "^4.0.1",
+    "lodash.merge": "^4.0.1",
     "moment": "^2.10.3",
     "react-native": "^0.18.0",
-    "react-native-webpack-server": "0.8.3",
+    "react-native-webpack-server": "0.8.4",
     "socket.io-client": "1.4.4",
     "stacktrace-parser": "^0.1.3",
     "uuid": "^2.0.1"
@@ -45,7 +46,7 @@
   "name": "Silk",
   "private": true,
   "scripts": {
-    "bundle": "./tools/rnws bundle --iosBundlePath iOS/main.jsbundle",
+    "bundle": "./tools/rnws bundle --no-android --iosBundlePath iOS/main.jsbundle",
     "flow": "flow check",
     "lint": "eslint src",
     "localbundle": "./tools/local_bundle",

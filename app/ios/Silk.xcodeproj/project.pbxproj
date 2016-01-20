@@ -11,6 +11,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */; };
 		357D3F601C38AB44005BBEC8 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357D3F5E1C38AB2B005BBEC8 /* libsodium.a */; };
+		35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35DABDA41C5045FB005F479F /* VBPlayer.a */; };
 		3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */; };
 		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; };
 		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
@@ -326,6 +327,9 @@
 		357D3F5B1C38AB2B005BBEC8 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		357D3F5C1C38AB2B005BBEC8 /* sodium.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sodium.h; sourceTree = "<group>"; };
 		357D3F5E1C38AB2B005BBEC8 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
+		35DABDA31C5045FB005F479F /* VBDisplayLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBDisplayLayer.h; sourceTree = "<group>"; };
+		35DABDA41C5045FB005F479F /* VBPlayer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = VBPlayer.a; sourceTree = "<group>"; };
+		35DABDA51C5045FB005F479F /* VBPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBPlayer.h; sourceTree = "<group>"; };
 		3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketPeripheral.swift; sourceTree = "<group>"; };
 		3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketManager.swift; sourceTree = "<group>"; };
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
@@ -402,6 +406,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6C5839051C1D15380004EC78 /* libc++.tbd in Frameworks */,
+				35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */,
 				357D3F601C38AB44005BBEC8 /* libsodium.a in Frameworks */,
 				5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */,
 				5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */,
@@ -588,6 +593,17 @@
 			path = lib;
 			sourceTree = "<group>";
 		};
+		35DABDA21C5045FB005F479F /* Viblast */ = {
+			isa = PBXGroup;
+			children = (
+				35DABDA31C5045FB005F479F /* VBDisplayLayer.h */,
+				35DABDA41C5045FB005F479F /* VBPlayer.a */,
+				35DABDA51C5045FB005F479F /* VBPlayer.h */,
+			);
+			name = Viblast;
+			path = external/Viblast;
+			sourceTree = "<group>";
+		};
 		3CFBF22B1BBF41ED00A7AF67 /* BLE */ = {
 			isa = PBXGroup;
 			children = (
@@ -772,6 +788,7 @@
 				6C5839041C1D15380004EC78 /* libc++.tbd */,
 				357D3F241C38AB2B005BBEC8 /* libsodium-ios */,
 				6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */,
+				35DABDA21C5045FB005F479F /* Viblast */,
 				F91A54EA1B8B9D48009C75C9 /* Resources */,
 				57AC68811B4F0CE6009B70A3 /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
@@ -1287,6 +1304,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Raygun4iOS",
@@ -1303,6 +1321,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/libsodium-ios/lib",
+					"$(PROJECT_DIR)/external/Viblast",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG -DRCT_DEBUG -DRCT_DEV";
@@ -1321,6 +1340,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Raygun4iOS",
@@ -1337,6 +1357,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/libsodium-ios/lib",
+					"$(PROJECT_DIR)/external/Viblast",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "";

@@ -11,15 +11,16 @@
 import fetch from 'node-fetch';
 import URL from 'url';
 import createLog from 'silk-log';
-import type {Config as FetchConfig, Response} from 'node-fetch';
 
-const log = createLog('influxdb_client');
+import type {Config as FetchConfig, Response} from 'node-fetch';
 
 export type Point = [
   string, // series
   {[key: string]: string},  // tags
-  {[key: string]: string}  // points
-]
+  {[key: string]: string},  // points
+];
+
+const log = createLog('influxdb_client');
 
 function formatFields(fields: Object): string {
   let result = [];
@@ -65,7 +66,7 @@ export default class InfluxDB {
     }
 
     this.host = host;
-    this.protocol = protocol;
+    this.protocol = protocol || 'http';
     this.db = pathname.slice(1);
 
     if (auth) {
@@ -113,8 +114,8 @@ export default class InfluxDB {
     return { version };
   }
 
-  async write(point: Point): Promise<any> {
-    return await this.writeAll([point]);
+  write(point: Point): Promise<Response> {
+    return this.writeAll([point]);
   }
 
   /**
@@ -123,7 +124,7 @@ export default class InfluxDB {
    * Note that this method will not tranform number types. All values must be
    * processed into their string form prior to calling this method.
    */
-  async writeAll(points: Array<Point>): Promise<Response> {
+  writeAll(points: Array<Point>): Promise<Response> {
     let body = [];
     for (let point of points) {
       let [series, tags, points] = point;
@@ -138,7 +139,7 @@ export default class InfluxDB {
 
     log.verbose('writeAll', body);
 
-    return await this.request('write', { db: this.db }, {
+    return this.request('write', { db: this.db }, {
       headers: {
         'content-type': 'application/x-www-form-urlencoded'
       },

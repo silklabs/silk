@@ -24,4 +24,7 @@ interface with via swift need to be imported here.
 
 #import <Raygun4iOS/Raygun4iOS.h>
 
+#import "VBDisplayLayer.h"
+#import "VBPlayer.h"
+
 #endif

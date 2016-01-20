@@ -56,7 +56,7 @@ class VideoSegment: NSObject {
   }
 
   /**
-  type of the video segement should be "url" or "data".
+  type of the video segement should be "url" or "blob".
   */
   var type: String
   var url: NSURL?

@@ -268,10 +268,10 @@ let start = Date.now();
 findPackageJSON(process.cwd()).then(() => {
   let corePath = path.resolve(process.cwd()).replace(CORE, '');
   let duration = Date.now() - start;
-  return submitMetrics('npm_install_silk_dependencies', [
-    `path="${corePath}"`,
-    `durationMs=${duration}i`
-  ]);
+  return submitMetrics('npm_install_silk_dependencies',
+    `durationMs=${duration}i`,
+    `corePath=${corePath}`
+  );
 }).catch((err) => {
   log(`Preinstall has failed ${err.stack || err}`);
   destroyUnownedLocks();

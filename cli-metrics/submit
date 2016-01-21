@@ -32,7 +32,7 @@ const DEFAULT_VALUES = [
   `arch="${os.arch()}"`,
 ];
 
-function submit(series, values) {
+function submit(series, values, tags) {
   return new Promise((accept, reject) => {
     let auth = new Buffer(`${DB_USER}:${DB_PASSWORD}`).toString('base64');
     let headers = {
@@ -51,8 +51,15 @@ function submit(series, values) {
     let influxTags = Object.keys(TAGS).map((name) => {
       return `${name}=${TAGS[name]}`;
     });
+    if (tags) {
+      influxTags += `,${tags}`;
+    }
 
-    let influxValues = DEFAULT_VALUES.concat(values).join(',');
+    let influxValues = DEFAULT_VALUES.join(',');
+    if (values) {
+      influxValues += `,${values}`;
+    }
+
     let line = `${series},${influxTags} ${influxValues}`;
 
     var req = https.request(parsed);
@@ -81,21 +88,39 @@ function submit(series, values) {
   })
 }
 
+const USAGE = `
+
+Submit metrics to influxdb developer database:
+
+  submit <series> <values> [tags] -- <command>
+
+
+Examples:
+
+  submit my_series 'durationMs=10i' 'foo=bar,baz=true' -- ls
+
+`;
+
 function main(input) {
   input = input || process.argv.slice(2);
 
   let series = input.shift();
-  let command = [];
-  let values = [];
-  let seenDash = false;
+  if (!series || series.indexOf('-h') === 0) {
+    process.stdout.write(USAGE);
+    process.exit(0);
+  }
 
   // Split on -- to allow scripts to add values...
+  let command, values, tags;
   let dashIdx = input.indexOf('--');
   if (dashIdx !== -1) {
-    values = input.slice(0, dashIdx);
+    let rest = input.slice(0, dashIdx);
+    values = rest.shift();
+    tags = rest.shift();
     command = input.slice(dashIdx + 1);
   } else {
-    command = input;
+    process.stderr.write(USAGE);
+    process.exit(1);
   }
 
   let start = Date.now();
@@ -115,10 +140,12 @@ function main(input) {
 
   proc.on('exit', (code) => {
     if (!aborted) {
-      let duration = Date.now() - start;
-      values.push(`durationMs=${duration}i`);
+      let duration = `durationMs=${Date.now() - start}i`;
+
+      values ? values += `,${duration}` : values = duration;
+
       // Submit should never return an error...
-      submit(series, values).
+      submit(series, values, tags).
         then(() => {
           process.exit(code);
         }).

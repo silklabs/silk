@@ -1,9 +1,10 @@
 
 import ansiUp from 'ansi_up';
+import moment from 'moment';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon,
-         Input, MenuItem } from 'react-bootstrap';
+         Input, MenuItem, Table } from 'react-bootstrap';
 import { Link } from 'react-router';
 import createLog from 'silk-log';
 
@@ -12,8 +13,162 @@ import CameraPreview from './CameraPreview';
 
 const log = createLog('diag');
 
+/**
+ * Manages an <img> tag with jpeg data URL
+ */
+class JpegImgTag {
+  tag: any; // The <img> DOM element
+  constructor(jpeg: Buffer, onload: (() => void)) {
+    const view = new Uint8Array(jpeg);
+    const blob = new Blob([view], { type: 'image/jpg' });
+
+    this.tag = document.createElement('img');
+    this.tag.onload = onload;
+    this.tag.src = URL.createObjectURL(blob);
+  }
+
+  deinit() {
+    URL.revokeObjectURL(this.tag.src);
+  }
+}
+
+// TODO: dedup with device/../timeline.js
+type DiagJpegFrame = {
+  id: string;
+  when: number;
+  jpeg: Buffer; // jpeg image data
+}
+
+type DiagImgFrame = {
+  id: string;
+  when: number;
+  img: JpegImgTag;
+}
+
+class DiagImageTable extends React.Component {
+  static propTypes = {
+    camera: React.PropTypes.object.isRequired,
+    paused: React.PropTypes.bool,
+  };
+
+  MAX_IMAGE_ROWS = 30 * 4; // = 30 seconds * 4 preview frames/second
+
+  state = {
+    images: {},
+    imageKeys: [],
+  };
+
+  shouldComponentUpdate() {
+    return !this.props.paused;
+  }
+
+  componentWillMount() {
+    this.props.camera.on('diagJpegFrames', this.onDiagJpegFrames);
+  }
+
+  componentWillUnmount() {
+    this.props.camera.removeListener('diagJpegFrames',
+      this.onDiagJpegFrames);
+
+    const { images, imageKeys } = this.state;
+    imageKeys.forEach(key => {
+      images[key].forEach(info => info.img.deinit());
+    });
+  }
+
+
+  addNewJpegs(loadedJpegs: Array<DiagImgFrame>) {
+    let images = this.state.images;
+
+    loadedJpegs.forEach(info => {
+      const {id, when, img} = info;
+      if (images[when]) {
+        images[when].push({id, img});
+      } else {
+        images[when] = [{id, img}];
+      }
+    });
+
+    const imageKeys = Object.keys(images).sort((a, b) => b - a);
+
+    // Prune older images
+    while (imageKeys.length > this.MAX_IMAGE_ROWS) {
+      let oldestWhen = imageKeys[imageKeys.length - 1];
+      images[oldestWhen].forEach((info) => info.img.deinit());
+      delete images[oldestWhen];
+      imageKeys.pop();
+    }
+
+    this.setState({images, imageKeys});
+  }
+
+  onDiagJpegFrames = (newFrames: Array<DiagJpegFrame>) => {
+    const loadingJpegs = [];
+    let loaded = 0;
+
+    // Load each image via JpegImgTag
+    newFrames.forEach(info => {
+      const {id, when, jpeg} = info;
+
+      let img = new JpegImgTag(jpeg, () => {
+        loaded++;
+        if (loaded === loadingJpegs.length) {
+          // Now that all the images are loaded, add them to the component state
+          // for rendering.
+          this.addNewJpegs(loadingJpegs);
+        }
+      });
+      loadingJpegs.push({id, when, img});
+    });
+  }
+
+  render() {
+    let { images, imageKeys } = this.state;
+    return (
+        <Table striped bordered condensed hover>
+          <thead>
+            <tr>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+          {
+            imageKeys.map(key => {
+              const time = moment(parseInt(key, 10)).format('hh:mm:ss.SSS');
+              return (
+                <tr key={key}>
+                  <td style={{verticalAlign: 'middle'}}>{time}</td>
+                  {
+                    images[key].map(info => {
+                      let {id, img} = info;
+                      return (
+                        <td key={id}>
+                          {id}<br/>
+                          <img
+                            src={img.tag.src}
+                            width={img.tag.width}
+                            height={img.tag.height}
+                          />
+                        </td>
+                      );
+                    })
+                  }
+                </tr>
+              );
+            })
+          }
+          </tbody>
+        </Table>
+    );
+  }
+}
+
 export default class Diag extends React.Component {
-  state = { camera: null, paused: false };
+  state = {
+    camera: null,
+    paused: false,
+    view: 'Summary',
+  };
 
   get deviceId() {
     return this.props.params.deviceId;
@@ -65,6 +220,10 @@ export default class Diag extends React.Component {
     this.state.camera.reboot(channel);
   };
 
+  onView = (e, view) => {
+    this.setState({view});
+  };
+
   render() {
     let style = {
       margin: 0,
@@ -81,7 +240,31 @@ export default class Diag extends React.Component {
       return <div>Waiting for camera {this.deviceId} to connect ...</div>;
     }
 
-    let logs = camera.logs;
+    let view;
+    switch (this.state.view) {
+    case 'Summary':
+      view = (
+        <DiagLog
+          logName="dash"
+          log={camera.logs.dash}
+          paused={paused}
+        />
+      );
+      break;
+    case 'Images':
+      view = (
+        <DiagImageTable
+          style={{ overflowX: 'scroll'}}
+          camera={camera}
+          paused={paused}
+        />
+      );
+      break;
+    default:
+      view = <b>Unknown view: {this.state.view}</b>;
+      break;
+    }
+
     return (
       <div style={style}>
         <ButtonToolbar>
@@ -95,6 +278,13 @@ export default class Diag extends React.Component {
           </ButtonGroup>
           <ButtonGroup>
             <DropdownButton
+              id="view" title={`View: ${this.state.view}`} onSelect={this.onView}>
+              <MenuItem eventKey="Summary">Summary</MenuItem>
+              <MenuItem eventKey="Images">Images</MenuItem>
+            </DropdownButton>
+          </ButtonGroup>
+          <ButtonGroup>
+            <DropdownButton
               id="reboot" title="Reboot to" onSelect={this.onReboot}>
               <MenuItem eventKey="">Current channel</MenuItem>
               <MenuItem eventKey="master">master</MenuItem>
@@ -103,18 +293,21 @@ export default class Diag extends React.Component {
             </DropdownButton>
           </ButtonGroup>
         </ButtonToolbar>
-        <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
-          <DiagLog logName="dash" log={logs.dash} paused={paused}/>
-          <div>
-            <CameraPreview deviceId={this.deviceId}/>
+        <div style={style}>
+          <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
+            <DiagLogcat logName="logcat" log={camera.logs.logcat} paused={paused}/>
+            <div>
+              <CameraPreview deviceId={this.deviceId} paused={paused}/>
+            </div>
+          </div>
+          <div style={{flex: 2}}>
+            {view}
           </div>
         </div>
-        <DiagLogcat logName="logcat" log={logs.logcat} paused={paused}/>
       </div>
     );
   }
 }
-
 
 class DiagLog extends React.Component {
   static propTypes = {
@@ -124,8 +317,9 @@ class DiagLog extends React.Component {
   };
 
   style = {
-    flex: 1,
+    flex: 2,
     fontFamily: 'monospace',
+    fontSize: '8',
     overflowY: 'scroll',
     overflowX: 'hidden',
     margin: 2,
@@ -155,7 +349,7 @@ class DiagLogcat extends DiagLog {
   constructor(props) {
     super(props);
     this.state = { filter: '' };
-    this.style.flex = 2;
+    this.style.flex = 1;
   }
 
   onFilterChange = e => {
@@ -189,6 +383,7 @@ class DiagLogcat extends DiagLog {
              })
         }
         <Input
+          style={this.style}
           ref="filter"
           type="text"
           placeholder="Filter regexp"

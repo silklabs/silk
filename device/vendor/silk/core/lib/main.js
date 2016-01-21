@@ -40,7 +40,7 @@ import update from './update';
 import config from './config';
 import sensors from './sensors';
 import infrared from './infrared';
-import server from './server';
+import Server from './server';
 import fs from 'mz/fs';
 import Say from './say';
 
@@ -74,6 +74,7 @@ let btle = null;
 let timeline;
 let camera;
 let logo = null;
+let server = null;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
@@ -112,6 +113,8 @@ async function readLogo() {
  * @private
  */
 function main() {
+  server = new Server();
+
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
   networkStatus = new NetworkStatus(wifi,
@@ -190,7 +193,7 @@ function main() {
       say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
-      timeline = new Timeline(outbox);
+      timeline = new Timeline(server, outbox);
       camera = require('./camera')(timeline);
 
       let hw = [
@@ -212,7 +215,7 @@ function main() {
     })
     .then(maybeAbortBoot)
     .then(() => {
-      diag = new Diag();
+      diag = new Diag(server);
 
       if (btle) {
         btle.on('region-entered', (uuid, rssi) => {
@@ -227,7 +230,7 @@ function main() {
       }
 
       log.info('Load configuration');
-      return config.init();
+      return config.init(server);
     })
     .then(maybeAbortBoot)
     .then(() => {
@@ -253,7 +256,7 @@ main();
 
 function emitDeviceInfo() {
   if (server.connected) {
-    server.socket.emit('info', {
+    server.send('info', {
       logo,
       now: Date.now(),
       previewSize: camera.previewSize,
@@ -268,13 +271,13 @@ server.on('connect', () => {
 
   emitDeviceInfo();
 
-  diag.start(server.socket);
-  timeline.socket = server.socket;
+  diag.start();
+  timeline.server = server;
 });
 
 server.on('disconnect', () => {
   diag.stop();
-  timeline.socket = null;
+  timeline.server = null;
 });
 
 server.on('reconnecting', () => ui.goto('connecting'));
@@ -295,8 +298,9 @@ server.on('cmd', cmd => {
   case 'livestream':
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
+    // TODO: previews in a different diag room
     diag.setConfig({dash: flag, logcat: flag});
-    timeline.configLiveStream(!!cmd.preview, !!cmd.video);
+    timeline.configLiveStream(!!cmd.preview, !!cmd.video, !!cmd.diag);
     break;
   case 'reboot':
     log.info('reboot command:', JSON.stringify(cmd));

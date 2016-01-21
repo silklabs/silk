@@ -4,13 +4,10 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
- */
-
-/**
- * @private
  * @flow
  */
 
+import invariant from 'assert';
 import api from './api';
 import events from 'events';
 import createLog from './log';
@@ -19,14 +16,40 @@ import type { Socket } from 'socket.io-client';
 
 const log = createLog('server');
 
+type ServerAckType = 'diag' | 'info' | 'jpeg' | 'mp4';
+type ServerAcks = {[key: ServerAckType]: number};
+
 /**
  * Server socket.io connection
  */
-class Server extends events.EventEmitter {
+export default class Server extends events.EventEmitter {
   socket: Socket;
+  pendingAcks: ServerAcks;
+  maxPendingAcks: ServerAcks;
 
   constructor() {
     super();
+
+    // Number of acks that can be pending before starting to drop messages
+    this.maxPendingAcks = {
+      diag: 10,
+      info: 1,
+      jpeg: 4,
+      mp4: 2,
+    };
+    this._resetAcks();
+  }
+
+  /**
+   * @private
+   */
+  _resetAcks(): void {
+    this.pendingAcks = {
+      diag: 0,
+      info: 0,
+      jpeg: 0,
+      mp4: 0,
+    };
   }
 
   get connected(): bool {
@@ -62,6 +85,7 @@ class Server extends events.EventEmitter {
 
     this.socket.on('connect', () => {
       log.info(`server socket connected`);
+      this._resetAcks();
       this.emit('connect');
     });
 
@@ -109,6 +133,113 @@ class Server extends events.EventEmitter {
       this.socket.disconnect();
     }
   }
-}
 
-module.exports = new Server();
+  /**
+   * Note to AV pipeline diag clients that event `what` happened for
+   * object `id` at timestamp `whenMs`.
+   * @private
+   */
+  _meter(what: string, id: string, whenMs: number = Date.now()) {
+    this.send('diag', {
+      type: 'avpipeline',
+      log: { id, what, whenMs },
+    });
+  }
+
+  /**
+   * Send a socket.io message.
+   *
+   * @param event Name of the event to send
+   * @param data Event payload.
+   */
+  send(event: string, data: any) {
+    // TODO: Validate message payload using common module for device, server, app.
+    let str = event;
+    let ackType: ServerAckType;
+    switch (event) {
+    case 'info':
+      str += ` logo:${data.logo ? 'yes' : 'no'}` +
+             ` previewSize:${JSON.stringify(data.previewSize)}`;
+      ackType = 'info';
+      break;
+    case 'video':
+      ackType = data.contents;
+      switch (data.contents) {
+      case 'mp4':
+      case 'jpeg':
+        break;
+      default:
+        log.error('Unknown video subtype', data.type);
+        return;
+      }
+      str += `/${data.contents} size:${data.frame ? data.frame.length : 0}` +
+            `when:${data.when}ms`;
+      if (data.durationMs) {
+        str += ` durationMs:${data.durationMs}`;
+      }
+      str += ` lag:${Date.now() - data.when}ms ` +
+             ` objects:${(data.objects ? data.objects.length : 0)}`;
+      break;
+    case 'diag':
+      ackType = 'diag';
+      switch (data.type) {
+      case 'avpipeline':
+      case 'dash':
+      case 'logcat':
+      case 'jpegs':
+        break;
+      default:
+        log.error('Unknown diag subtype', data.type);
+        return;
+      }
+      str += `/${data.type}`;
+      break;
+    default:
+      log.error('Unknown event type', event);
+      return;
+    }
+    invariant(ackType !== undefined);
+
+    let wouldTransmit = this.connected;
+    let willTransmit = wouldTransmit;
+    if (willTransmit) {
+      if (this.pendingAcks[ackType] >= this.maxPendingAcks[ackType]) {
+        log.warn(`Too many pending acks for ${ackType}`);
+        willTransmit = false;
+      }
+    }
+    str = str + ` acks:${this.pendingAcks[ackType]}`;
+
+    if (willTransmit) {
+      log.verbose(str);
+      const queued = Date.now();
+      data.deviceEmitMs = queued;
+      this.socket.emit(event, data,
+        () => {
+          this.pendingAcks[ackType] -= 1;
+          if (this.pendingAcks[ackType] < 0) {
+            throw new Error(`pending acks for ${ackType} < 0`);
+          }
+          log.info(`ack in ${Date.now() - queued}ms for ${str}`);
+        }
+      );
+      this.pendingAcks[ackType] += 1;
+    } else {
+      log.verbose(`dropped ${str}`);
+      if (wouldTransmit && event === 'video' && data.contents === 'mp4') {
+        // In the normal success case, the app meters the `record*`
+        // events below.  But for dropped segments, we have to meter
+        // these from device.
+        //
+        // TODO: should we always meter these record events from the
+        // device side?
+        let segmentId = '' + data.when;
+        this._meter('recordStart', segmentId, data.when);
+        this._meter('recordEnd', segmentId, data.when + data.durationMs);
+        // Note to clients that the device decided to drop this
+        // segment.
+        this._meter('deviceDrop', segmentId);
+      }
+    }
+  }
+}

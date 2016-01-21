@@ -181,7 +181,7 @@ class Env extends EventEmitter {
       this.timeline = new EventEmitter();
 
       /**
-       * Preview event. This event is emiited when a preview is available
+       * Preview event. This event is emitted when a preview is available
        *
        * @event preview
        * @memberof Env.timeline
@@ -190,7 +190,7 @@ class Env extends EventEmitter {
        */
 
       /**
-       * Face event. This event is emiited when a face is detected by the device
+       * Face event. This event is emitted when a face is detected by the device
        *
        * @event face
        * @memberof Env.timeline
@@ -201,7 +201,7 @@ class Env extends EventEmitter {
        */
 
       /**
-       * Clap event. This event is emiited when a clap is heard by the device
+       * Clap event. This event is emitted when a clap is heard by the device
        *
        * @event clap
        * @memberof Env.timeline
@@ -231,6 +231,22 @@ class Env extends EventEmitter {
        */
       this._addEvents('timeline', timeline, this.timeline,
           ['preview', 'face', 'clap', 'motion', 'no-motion']);
+
+      /**
+       * Add a processed frame
+       *
+       * @param id  A simple string to associated with this processed frame
+       * @param when Timestamp that the frame is correlated with
+       * @param frame OpenCV matrix
+       * @memberof Env.timeline
+       * @instance
+       */
+      this.timeline.addDiagFrame = (id: string, when: number, frame: any) => {
+        // TODO: It would be better to pass this into diag instead of timeline.
+        //       Do this once more ext-facing Diag features are enabled (such as
+        //       toggling diag frames on an extension basis)
+        timeline.addDiagFrame(`${this._name}:${id}`, when, frame);
+      };
 
       /**
        * Add an object to timeline

@@ -116,6 +116,7 @@ export default class Timeline extends EventEmitter {
 
   constructor(server: Server, outbox: Outbox) {
     super();
+    invariant(server, 'must pass server...');
     invariant(outbox, 'must pass outbox...');
 
     this.outbox = outbox;

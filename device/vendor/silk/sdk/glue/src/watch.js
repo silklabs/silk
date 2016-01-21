@@ -41,6 +41,8 @@ async function update() {
   let start = Date.now();
   let times = {};
 
+  console.log('Update started');
+
   let browserifyOp = commands.build(bundle);
 
   /**

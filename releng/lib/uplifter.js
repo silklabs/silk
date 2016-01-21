@@ -31,7 +31,7 @@ let octo = new Octokat({
  * the HEAD of the destination branch.
  *
  * 2. Creating a new Issue to track the uplift, assigning it to the owner of the
- * original Pull Request for accountability.  The <destination branch>+ label is
+ * original Pull Request on merge conflicts.  The <destination branch>+ label is
  * then removed from the original Pull Request so that it won't be considered in
  * the future for uplift.
  *
@@ -100,7 +100,6 @@ git push --force stooge ${upliftPrBranchName}`;
     body: `Uplift of #${pr} to **${destBranch}** ` +
             `via https://github.com/${owner}/${repo}/tree/${upliftPrBranchName}:\n` +
           '```\n' + upliftCommand + '\n```',
-    assignee: pull.user.login,
   });
   log.verbose(`Created Issue #${newissue.number}`);
 
@@ -119,6 +118,10 @@ git push --force stooge ${upliftPrBranchName}`;
   if (foundMergeCommit) {
     sharedRepo.issues(newissue.number).comments.create({
       'body': `:no_good: #${pr} contains merge commits, manual uplift is required. ${halp}`,
+    });
+    // Assign the issue to the original PR owner for assistance.
+    await sharedRepo.issues(newissue.number).update({
+      assignee: pull.user.login,
     });
   } else {
     log.verbose(`Starting uplift: ${upliftCommand}`);
@@ -149,9 +152,18 @@ git push --force stooge ${upliftPrBranchName}`;
     }
 
     log.info(`Uplift result: ${upliftComment}`);
-    sharedRepo.issues(newissue.number).comments.create({
-      'body': upliftComment,
-    });
+
+    if (upliftResult.err) {
+      // Only comment on error, nobody cares about the success case
+      sharedRepo.issues(newissue.number).comments.create({
+        'body': upliftComment,
+      });
+
+      // Assign the issue to the original PR owner for assistance.
+      await sharedRepo.issues(newissue.number).update({
+        assignee: pull.user.login,
+      });
+    }
   }
 
   // Convert the Issue into a Pull Request on success

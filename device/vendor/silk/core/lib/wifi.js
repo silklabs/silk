@@ -7,15 +7,26 @@
  * @flow
  */
 
-import * as util from './sysutils';
+import invariant from 'assert';
 import events from 'events';
 import net from 'net';
+
+import * as util from './sysutils';
 import createLog from './log';
-import type {Socket} from 'socket.io-client';
+
+import type { Socket } from 'net';
+
+type WifiScanResult = {
+  level: number;
+  psk: boolean;
+  ssid: string;
+};
 
 const log = createLog('wifi');
-const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu',
-  process.platform !== 'android');
+const USE_QEMU_WIFI = util.getboolprop(
+  'ro.silk.wifi.qemu',
+  process.platform !== 'android'
+);
 
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;
@@ -81,13 +92,6 @@ let iface = util.getstrprop('wifi.interface');
 let monitor;
 
 
-type WifiScanResult = {
-  level: number;
-  psk: boolean;
-  ssid: string;
-};
-
-
 /**
  * Unescape SSID strings as spat out by wpa_cli
  */
@@ -109,13 +113,12 @@ function unescapeSSID(ssid: string): string {
  */
 class WpaMonitor extends events.EventEmitter {
 
-  _ready: bool;
-  _socket: Socket;
-  _buffer: string;
+  _ready: bool = false;
+  _socket: ?Socket;
+  _buffer: string = '';
 
   constructor() {
     super();
-    this._ready = false;
     this._init();
   }
 
@@ -138,15 +141,15 @@ class WpaMonitor extends events.EventEmitter {
   }
 
   _init() {
-    this._socket = net.createConnection('/dev/socket/wpad', () => {
+    let socket = this._socket = net.createConnection('/dev/socket/wpad', () => {
       this._buffer = '';
       this._ready = true;
     });
-    this._socket.on('data', data => this._onData(data));
-    this._socket.on('error', err => {
+    socket.on('data', data => this._onData(data));
+    socket.on('error', err => {
       this._restart(`wpad error, reason=${err}`);
     });
-    this._socket.on('close', hadError => {
+    socket.on('close', hadError => {
       if (!hadError) {
         this._restart(`wpad close`);
       }

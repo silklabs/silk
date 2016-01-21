@@ -12,7 +12,7 @@ import api from './api';
 import events from 'events';
 import createLog from './log';
 
-import type { Socket } from 'socket.io-client';
+import type { Socket } from 'silk-socket.io-client-node';
 
 const log = createLog('server');
 
@@ -23,7 +23,7 @@ type ServerAcks = {[key: ServerAckType]: number};
  * Server socket.io connection
  */
 export default class Server extends events.EventEmitter {
-  socket: Socket;
+  socket: ?Socket;
   pendingAcks: ServerAcks;
   maxPendingAcks: ServerAcks;
 
@@ -53,18 +53,18 @@ export default class Server extends events.EventEmitter {
   }
 
   get connected(): bool {
-    if (this.socket) {
-      return this.socket.connected;
-    } else {
+    if (!this.socket) {
       return false;
     }
+    return this.socket.connected;
   }
 
   connect() {
-    if (this.socket) {
-      if(!this.socket.connected) {
+    let socket = this.socket;
+    if (socket) {
+      if (!socket.connected) {
         this.emit('stateChange', 'connecting');
-        this.socket.connect();
+        socket.connect();
       }
       return;
     }
@@ -78,18 +78,20 @@ export default class Server extends events.EventEmitter {
    * @private
    */
   _connect() {
-    this.socket = api.socketioClient(require('silk-socket.io-client-node'), 'device', {
-      forceNew: true,
-    });
-    this.socket.open();
+    let socket = this.socket = api.socketioClient(
+      require('silk-socket.io-client-node'),
+      'device',
+      { forceNew: true }
+    );
+    socket.open();
 
-    this.socket.on('connect', () => {
+    socket.on('connect', () => {
       log.info(`server socket connected`);
       this._resetAcks();
       this.emit('connect');
     });
 
-    this.socket.on('disconnect', e => {
+    socket.on('disconnect', e => {
       log.warn(`server socket disconnect: ${e}`);
       this.emit('disconnect');
 
@@ -110,14 +112,14 @@ export default class Server extends events.EventEmitter {
       }
     });
 
-    this.socket.on('cmd', data => this.emit('cmd', data));
+    socket.on('cmd', data => this.emit('cmd', data));
 
     let errors = ['connect_error', 'connect_timeout', 'error',
         'reconnect_attempt', 'reconnect_error', 'reconnect_failed',
         'reconnecting'];
 
     errors.forEach(error => {
-      this.socket.on(error, e => {
+      socket.on(error, e => {
         log.warn(`socket ${error}: ${e}`);
         this.emit('error', error);
       });
@@ -128,9 +130,10 @@ export default class Server extends events.EventEmitter {
   }
 
   disconnect() {
-    if (this.socket) {
+    let socket = this.socket;
+    if (socket) {
       log.warn('Disconnecting from server');
-      this.socket.disconnect();
+      socket.disconnect();
     }
   }
 
@@ -214,7 +217,10 @@ export default class Server extends events.EventEmitter {
       log.verbose(str);
       const queued = Date.now();
       data.deviceEmitMs = queued;
-      this.socket.emit(event, data,
+      invariant(this.socket);
+      this.socket.emit(
+        event,
+        data,
         () => {
           this.pendingAcks[ackType] -= 1;
           if (this.pendingAcks[ackType] < 0) {

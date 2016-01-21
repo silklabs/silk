@@ -23,6 +23,8 @@ public:
       camera_frame_metadata_t *metadata);
   void postDataTimestamp(nsecs_t timestamp, int32_t msgType,
       const sp<IMemory>& dataPtr);
+private:
+  bool focusMoving;
 };
 
 

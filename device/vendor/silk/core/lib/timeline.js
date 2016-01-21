@@ -532,7 +532,7 @@ export default class Timeline extends EventEmitter {
    */
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
     if (this.liveVideo) {
-      this.server.emit('video', {
+      this.server.send('video', {
         contents: 'mp4',
         when,
         frame,

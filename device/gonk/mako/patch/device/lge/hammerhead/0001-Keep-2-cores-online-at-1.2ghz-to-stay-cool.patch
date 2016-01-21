@@ -1,0 +1,31 @@
+From 433217bbe0582563da986f4a2ddc8e82ba793224 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 22 Oct 2015 20:51:36 -0700
+Subject: [PATCH] Keep 2 cores online at ~1.2ghz to stay cool
+
+---
+ init.hammerhead.rc | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/init.hammerhead.rc b/init.hammerhead.rc
+index 8ddc864..ecaa887 100644
+--- a/init.hammerhead.rc
++++ b/init.hammerhead.rc
+@@ -277,7 +277,13 @@ on property:sys.boot_completed=1
+     write /sys/module/pm_8x60/modes/cpu1/retention/idle_enabled 1
+     write /sys/module/pm_8x60/modes/cpu2/retention/idle_enabled 1
+     write /sys/module/pm_8x60/modes/cpu3/retention/idle_enabled 1
+-    start mpdecision
++
++    write /sys/devices/system/cpu/cpu0/online 1
++    write /sys/devices/system/cpu/cpu1/online 1
++    write /sys/devices/system/cpu/cpu2/online 0
++    write /sys/devices/system/cpu/cpu3/online 0
++    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 1267200
++    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq 1267200
+ 
+     # enable slimport detection
+     write /sys/module/slimport/parameters/enable_irq 1
+-- 
+1.9.1
+

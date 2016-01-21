@@ -7,11 +7,11 @@
  * @flow
  */
 
-import assert from 'assert';
+import { getintprop } from '../sysutils';
+import invariant from 'assert';
 import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import { EventEmitter } from 'events';
 import makeLog from '../log';
-import SocketSession from './socket_session';
 
 import type { Noble, Peripheral, Characteristic, Service } from 'noble';
 
@@ -33,7 +33,23 @@ const log = makeLog(`btle-socketscanner`);
 
 const DEFAULT_LOCALNAME = `Silk-app`;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
-const DEFAULT_CONNECTION_RETRY_TIMEOUT_MS = 1000;
+
+const SCAN_DURATION_OVERRIDE =
+  getintprop(`persist.silk.bt.socket.scandur`, -1);
+const SCAN_DURATION_MS =
+  SCAN_DURATION_OVERRIDE > 0 ?
+  SCAN_DURATION_OVERRIDE :
+  getintprop(`ro.silk.bt.socket.scan_dur_sec`, 5) * 1000;
+
+const SCAN_INTERVAL_MS =
+  getintprop(`persist.silk.bt.socket.scanint`, 500);
+
+const MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE =
+  getintprop(`persist.silk.bt.socket.max`, -1);
+const MAX_SIMULTANEOUS_CONNECTIONS =
+  MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE > 1 ?
+  MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE :
+  getintprop(`ro.silk.bt.socket.max_simul`, 4);
 
 export default class SocketScanner extends EventEmitter {
 
@@ -43,7 +59,6 @@ export default class SocketScanner extends EventEmitter {
   _localName: string = DEFAULT_LOCALNAME;
   _serviceUuid: string = BTLE_SOCKET_UUIDS.service;
   _enabled: boolean = false;
-  _scanning: boolean = false;
   _scanPromise: Promise<void> = Promise.resolve();
   _timeout: ?number = null;
   _blackList: Set<string> = new Set();
@@ -51,12 +66,13 @@ export default class SocketScanner extends EventEmitter {
 
   _connectionQueue: Array<ConnectionInfo> = [];
   _connectionMap: Map<string, ConnectionInfo> = new Map();
+  _connectionsInProgress: Array<ConnectionInfo> = [];
 
   constructor(noble: Noble, privateKey: string, options?: ScannerOptions = {}) {
     log.debug(`SocketScanner()`);
 
-    assert(noble);
-    assert(privateKey);
+    invariant(noble);
+    invariant(privateKey);
 
     super();
 
@@ -74,125 +90,6 @@ export default class SocketScanner extends EventEmitter {
     }
   }
 
-  _onDiscover: ((peripheral: Peripheral) => Promise<void>) = async (peripheral) => {
-    if (!this._enabled || !this._scanning) {
-      return;
-    }
-
-    log.debug(`Discovered '%s'`, peripheral.uuid);
-
-    if (peripheral.state !== `disconnected` && peripheral.state !== `error`) {
-      log.debug(`Ignoring '${peripheral.uuid}' because its state is ` +
-                `'${peripheral.state}'`);
-      return;
-    }
-
-    if (this._skipList.has(peripheral.uuid)) {
-      log.debug(`Ignoring '${peripheral.uuid}' because it is marked to skip`);
-      return;
-    }
-
-    const localName = peripheral.advertisement.localName;
-    const hasService =
-      peripheral.advertisement.serviceUuids.indexOf(this._serviceUuid) !== -1;
-    const manufacturerData = peripheral.advertisement.manufacturerData;
-
-    if (this._blackList.has(peripheral.uuid)) {
-      if (localName !== this._localName && !hasService) {
-        log.debug(`Ignoring '${peripheral.uuid}' because it is blacklisted`);
-        return;
-      }
-
-      log.debug(`Previously blacklisted peripheral '${peripheral.uuid}' now ` +
-                `advertising our service, removing from blacklist`);
-      this._blackList.delete(peripheral.uuid);
-    } else if (localName !== this._localName &&
-               !hasService &&
-               !(manufacturerData &&
-                 manufacturerData.length > 3 &&
-                 manufacturerData[0] === 0x4c /* Apple LSB */ &&
-                 manufacturerData[1] === 0x00 /* Apple MSB */ &&
-                 manufacturerData[2] === 0x01 /* iPhone */)) {
-      log.debug(`Blacklisting '${peripheral.uuid}' due to advertisement ` +
-                `mismatch`);
-      this._blackList.add(peripheral.uuid);
-      return;
-    }
-
-    let queueInfo = this._connectionMap.get(peripheral.uuid);
-    if (queueInfo) {
-      queueInfo.averageRssi = (queueInfo.averageRssi + peripheral.rssi) / 2;
-    } else {
-      queueInfo = {
-        averageRssi: peripheral.rssi,
-        peripheral,
-      };
-      this._connectionQueue.push(queueInfo);
-      this._connectionMap.set(peripheral.uuid, queueInfo);
-
-      if (this._connectionQueue.length === 1) {
-        this._attemptNextConnection();
-      }
-    }
-  };
-
-  async _startScan(): Promise<void> {
-    log.debug(`_startScan()`);
-    assert(this._enabled);
-
-    try {
-      await this._scanPromise;
-    } catch(error) {                             // eslint-disable-line no-empty
-      // Assume error is already reported.
-    }
-
-    if (!this._enabled || this._scanning) {
-      return;
-    }
-
-    this._scanPromise = new Promise((resolve, reject) => {
-      this._noble.startScanning([ ], true, function (error) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
-    await this._scanPromise;
-
-    this._noble.addListener(`discover`, this._onDiscover);
-    this._scanning = true;
-  }
-
-  async _stopScan(): Promise<void> {
-    log.debug(`_stopScan()`);
-
-    try {
-      await this._scanPromise;
-    } catch(error) {                             // eslint-disable-line no-empty
-      // Assume error is already reported.
-    }
-
-    if (!this._scanning) {
-      return;
-    }
-
-    this._noble.removeListener(`discover`, this._onDiscover);
-    this._scanning = false;
-
-    this._scanPromise = new Promise((resolve, reject) => {
-      this._noble.stopScanning(error => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
-    await this._scanPromise;
-  }
-
   async _waitForEventWithTimeout(
     emitter: EventEmitter,
     eventName: string,
@@ -200,8 +97,6 @@ export default class SocketScanner extends EventEmitter {
     stop: () => void,
     errorString: string
   ): Promise<any> {
-    assert(this._enabled);
-
     return await new Promise((resolve, reject) => {
       let timeout = null;
 
@@ -225,6 +120,213 @@ export default class SocketScanner extends EventEmitter {
     });
   }
 
+  get _scanning(): boolean {
+    return !!this._timeout;
+  }
+
+  _onDiscover: ((peripheral: Peripheral) => Promise<void>) = async (peripheral) => {
+    log.debug(`_onDiscover('${peripheral.uuid}')`);
+
+    invariant(this._scanning);
+
+    if (!this._enabled) {
+      log.debug(`No longer enabled`);
+      return;
+    }
+
+    if (peripheral.state !== `disconnected` && peripheral.state !== `error`) {
+      log.debug(`Ignoring peripheral '${peripheral.uuid}' because its state ` +
+                `is '${peripheral.state}'`);
+      return;
+    }
+
+    if (this._skipList.has(peripheral.uuid)) {
+      log.debug(`Ignoring peripheral '${peripheral.uuid}' because it is ` +
+                `marked to skip`);
+      return;
+    }
+
+    const localName = peripheral.advertisement.localName;
+    const hasService =
+      peripheral.advertisement.serviceUuids.indexOf(this._serviceUuid) !== -1;
+    const manufacturerData = peripheral.advertisement.manufacturerData;
+
+    if (this._blackList.has(peripheral.uuid)) {
+      if (localName !== this._localName && !hasService) {
+        log.debug(`Ignoring peripheral '${peripheral.uuid}' because it is ` +
+                  `blacklisted`);
+        return;
+      }
+
+      log.info(`Previously blacklisted peripheral '${peripheral.uuid}' now ` +
+               `advertising our service, removing from blacklist`);
+      this._blackList.delete(peripheral.uuid);
+    } else if (localName !== this._localName &&
+               !hasService &&
+               !(manufacturerData &&
+                 manufacturerData.length > 3 &&
+                 manufacturerData[0] === 0x4c /* Apple LSB */ &&
+                 manufacturerData[1] === 0x00 /* Apple MSB */ &&
+                 manufacturerData[2] === 0x01 /* iPhone */)) {
+      log.debug(`Blacklisting peripheral '${peripheral.uuid}' due to ` +
+                `advertisement mismatch`);
+      this._blackList.add(peripheral.uuid);
+      return;
+    }
+
+    let queueInfo = this._connectionMap.get(peripheral.uuid);
+    if (queueInfo) {
+      queueInfo.averageRssi = (queueInfo.averageRssi + peripheral.rssi) / 2;
+    } else {
+      queueInfo = {
+        averageRssi: peripheral.rssi,
+        peripheral,
+      };
+      this._connectionQueue.push(queueInfo);
+      this._connectionMap.set(peripheral.uuid, queueInfo);
+    }
+
+    if (this._connectionQueue.length &&
+        this._connectionsInProgress.length <= MAX_SIMULTANEOUS_CONNECTIONS) {
+      this._attemptMoreConnections();
+    }
+  };
+
+  async _nobleStartScan(): Promise<void> {
+    const noble = this._noble;
+    return this._waitForEventWithTimeout(
+      noble,
+      `scanStart`,
+      () => noble.startScanning([], true),
+      () => noble.stopScanning(),
+      `Timed out while starting scan`
+    );
+  }
+
+  async _nobleStopScan(): Promise<void> {
+    const noble = this._noble;
+    return this._waitForEventWithTimeout(
+      noble,
+      `scanStop`,
+      () => noble.stopScanning(),
+      () => {},
+      `Timed out while stopping scan`
+    );
+  }
+
+  async _startScan(): Promise<void> {
+    log.debug(`_startScan()`);
+    invariant(this._enabled);
+
+    try {
+      await this._scanPromise;
+    } catch(error) {                             // eslint-disable-line no-empty
+      // Assume error is already reported.
+    }
+
+    if (!this._enabled || this._scanning) {
+      return;
+    }
+
+    this._scanPromise = this._nobleStartScan();
+    await this._scanPromise;
+
+    log.debug(`Scanning started`);
+
+    log.debug(`Setting toggle duration timer`);
+    this._timeout = setTimeout(() => this._toggleScan(), SCAN_DURATION_MS);
+
+    this._noble.addListener(`discover`, this._onDiscover);
+  }
+
+  async _stopScan(): Promise<void> {
+    log.debug(`_stopScan()`);
+
+    try {
+      await this._scanPromise;
+    } catch(error) {                             // eslint-disable-line no-empty
+      // Assume error is already reported.
+    }
+
+    if (!this._scanning) {
+      return;
+    }
+
+    this._noble.removeListener(`discover`, this._onDiscover);
+
+    log.debug(`Clearing toggle timer`);
+    clearTimeout(this._timeout);
+    this._timeout = null;
+
+    this._scanPromise = this._nobleStopScan();
+    await this._scanPromise;
+
+    log.debug(`Scan stopped`);
+  }
+
+  async _toggleScan(): Promise<void> {
+    log.debug(`_toggleScan()`);
+
+    invariant(this._scanning);
+
+    if (!this._enabled) {
+      log.debug(`No longer enabled`);
+      return;
+    }
+
+    const timeoutOff = this._timeout;
+    invariant(timeoutOff);
+
+    log.debug(`Toggling scan off`);
+    await this._nobleStopScan();
+
+    log.debug(`Scan toggled off`);
+
+    if (!this._enabled) {
+      log.debug(`No longer enabled`);
+      return;
+    }
+
+    if (this._timeout !== timeoutOff) {
+      log.debug(`Other timeout activity, bailing`);
+      return;
+    }
+
+    log.debug(`Setting toggle interval timer`);
+
+    this._timeout = setTimeout(async () => {
+      log.debug(`Interval timer expired`);
+
+      invariant(this._scanning);
+
+      if (!this._enabled) {
+        log.debug(`No longer enabled`);
+        return;
+      }
+
+      const timeoutOn = this._timeout;
+      invariant(timeoutOn);
+
+      log.debug(`Toggling scan on`);
+      await this._nobleStartScan();
+
+      log.debug(`Scan toggled on`);
+
+      if (!this._enabled) {
+        log.debug(`No longer enabled`);
+        return;
+      }
+
+      if (this._timeout !== timeoutOn) {
+        log.debug(`Other timeout activity, bailing`);
+        return;
+      }
+
+      log.debug(`Setting toggle duration timer`);
+      this._timeout = setTimeout(() => this._toggleScan(), SCAN_DURATION_MS);
+    }, SCAN_INTERVAL_MS);
+  }
+
   async _connect(peripheral: Peripheral): Promise<void> {
     log.debug(`_connect('${peripheral.uuid}'`);
 
@@ -233,7 +335,7 @@ export default class SocketScanner extends EventEmitter {
       `connect`,
       () => peripheral.connect(),
       () => peripheral.disconnect(),
-      `Timed out connecting to '${peripheral.uuid}'`
+      `Timed out connecting to peripheral '${peripheral.uuid}'`
     );
     if (error) {
       throw error;
@@ -248,7 +350,7 @@ export default class SocketScanner extends EventEmitter {
       `servicesDiscover`,
       () => peripheral.discoverServices([ this._serviceUuid ]),
       () => peripheral.disconnect(),
-      `Timed out discovering services for '${peripheral.uuid}'`
+      `Timed out discovering services for peripheral '${peripheral.uuid}'`
     );
   }
 
@@ -267,7 +369,8 @@ export default class SocketScanner extends EventEmitter {
         BTLE_SOCKET_UUIDS.write,
       ]),
       () => peripheral.disconnect(),
-      `Timed out discovering characteristics for '${peripheral.uuid}'`
+      `Timed out discovering characteristics for peripheral ` +
+      `'${peripheral.uuid}'`
     );
   }
 
@@ -283,14 +386,25 @@ export default class SocketScanner extends EventEmitter {
       `descriptorsDiscover`,
       () => characteristic.discoverDescriptors(),
       () => peripheral.disconnect(),
-      `Timed out discovering descriptors for '${peripheral.uuid}'`
+      `Timed out discovering descriptors for peripheral '${peripheral.uuid}'`
     );
   }
 
-  async _attemptNextConnection(): Promise<void> {
-    log.debug(`_attemptNextConnection(): ${this._connectionQueue.length}`);
+  _attemptMoreConnections(): void {
+    log.debug(`_attemptMoreConnections(): ${this._connectionQueue.length}`);
 
-    if (!this._enabled || !this._connectionQueue.length) {
+    if (!this._enabled) {
+      log.debug(`No longer enabled`);
+      return;
+    }
+
+    if (!this._connectionQueue.length) {
+      log.debug(`No peripherals to connect`);
+      return;
+    }
+
+    if (this._connectionsInProgress.length > MAX_SIMULTANEOUS_CONNECTIONS) {
+      log.info(`Reached maximum number of simultaneous connections`);
       return;
     }
 
@@ -302,60 +416,28 @@ export default class SocketScanner extends EventEmitter {
       return (a.averageRssi < b.averageRssi) ? 1 : -1;
     });
 
-    const peripheral = this._connectionQueue[0].peripheral;
-    const connected = await this._attemptConnection(peripheral);
+    // Figure out how many connections we're going to start here.
+    const maxNewConnections =
+      Math.min(this._connectionQueue.length, MAX_SIMULTANEOUS_CONNECTIONS);
 
-    const queueInfo = this._connectionQueue.shift();
-    this._connectionMap.delete(peripheral.uuid);
+    // Pull the new connections out of the queue.
+    const connections = this._connectionQueue.splice(0, maxNewConnections);
 
-    if (connected) {
-      assert(peripheral.state === `connected`);
+    // And put them into the in-progress list.
+    this._connectionsInProgress.push(...connections);
 
-      await this._stopScan();
-      this._connectionQueue = [ ];
-      this._connectionMap.clear();
-
-      // It's possible that the device disconnected while waiting for the scan
-      // to stop, so make sure it's still connected.
-      if (peripheral.state === `connected`) {
-        // Make sure we restart scanning when the session ends.
-        const session = new SocketSession(this, peripheral);
-        session.once(`close`, async () => {
-          log.debug(`Session closed`);
-          if (this._enabled) {
-            try {
-              await this._startScan();
-            } catch(error) {
-              log.warn(error);
-            }
-          }
-        });
-
-        this.emit(`connect`, session);
-      } else {
-        await this._startScan();
-      }
-    } else {
-      peripheral.disconnect();
-
-      // If we added the peripheral to the blacklist then we shouldn't try to
-      // reconnect to it again. If the failure was spurious, though, we will put
-      // the peripheral back in the list.
-      if (!this._blackList.has(peripheral.uuid)) {
-        log.debug(`Connection to peripheral '${peripheral.uuid}' failed for ` +
-                  `(hopefully) spurious reasons. It will be added back to ` +
-                  `the queue after a short delay`);
-        setTimeout(() => {
-          this._onDiscover(queueInfo.peripheral);
-        }, DEFAULT_CONNECTION_RETRY_TIMEOUT_MS);
-      }
+    // Then start each one.
+    for (let connectionInfo of connections) {
+      this._attemptConnection(connectionInfo);
     }
-
-    this._attemptNextConnection();
   }
 
-  async _attemptConnection(peripheral: Peripheral): Promise<boolean> {
+  async _attemptConnection(connectionInfo: ConnectionInfo): Promise<void> {
+    const { peripheral } = connectionInfo;
     log.debug(`_attemptConnection('${peripheral.uuid}')`);
+
+    invariant(this._connectionQueue.indexOf(connectionInfo) === -1);
+    invariant(this._connectionsInProgress.indexOf(connectionInfo) > -1);
 
     const closure: PeripheralState = {
       peripheral,
@@ -364,28 +446,44 @@ export default class SocketScanner extends EventEmitter {
     let disconnectListener;
 
     const eventName = `disconnect`;
-    const cleanupListener = () => {
-      peripheral.removeListener(eventName, disconnectListener);
-    };
     disconnectListener = () => {
       log.info(`Peripheral '${peripheral.uuid}' disconnected while ` +
                `attempting to connect`);
-      cleanupListener();
+      peripheral.removeListener(eventName, disconnectListener);
       closure.disconnected = true;
     };
     peripheral.addListener(eventName, disconnectListener);
 
-    let result;
+    let connected;
     try {
-      result = await this._attemptConnectionInternal(closure);
+      connected = await this._attemptConnectionInternal(closure) &&
+                  this._enabled &&
+                  !closure.disconnected;
     } catch(error) {
       log.warn(error.toString());
-      result = false;
+      connected = false;
     }
 
-    cleanupListener();
+    peripheral.removeListener(eventName, disconnectListener);
 
-    return result;
+    if (connected) {
+      invariant(peripheral.state === `connected`);
+
+      peripheral.once(`disconnect`, () => {
+        this._onDisconnect(connectionInfo);
+      });
+
+      this.emit(`discover`, peripheral);
+    } else {
+      // Make sure we clean up.
+      process.nextTick(() => this._onDisconnect(connectionInfo));
+
+      if (peripheral.state !== `disconnected`) {
+        peripheral.disconnect();
+      }
+    }
+
+    this._attemptMoreConnections();
   }
 
   async _attemptConnectionInternal(closure: PeripheralState): Promise<boolean> {
@@ -408,7 +506,7 @@ export default class SocketScanner extends EventEmitter {
       services.find((service) => service.uuid.toLowerCase() === serviceUuid);
     if (!socketService) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide ` +
-               `socket service`);
+               `socket service '${this._serviceUuid}'`);
       this._blackList.add(peripheral.uuid);
       return false;
     }
@@ -426,7 +524,7 @@ export default class SocketScanner extends EventEmitter {
         readCharacteristic.properties.indexOf(`read`) === -1 ||
         readCharacteristic.properties.indexOf(`write`) === -1) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide socket ` +
-               `read characteristic`);
+               `read characteristic '${BTLE_SOCKET_UUIDS.read}'`);
       this._blackList.add(peripheral.uuid);
       return false;
     }
@@ -436,7 +534,7 @@ export default class SocketScanner extends EventEmitter {
     if (!writeCharacteristic ||
         writeCharacteristic.properties.indexOf(`write`) === -1) {
       log.info(`Peripheral '${peripheral.uuid}' does not provide socket ` +
-               `write characteristic`);
+               `write characteristic '${BTLE_SOCKET_UUIDS.write}'`);
       this._blackList.add(peripheral.uuid);
       return false;
     }
@@ -446,7 +544,38 @@ export default class SocketScanner extends EventEmitter {
       return false;
     }
 
+    log.info(`Discovered socket on peripheral '${peripheral.uuid}'`);
     return true;
+  }
+
+  _onDisconnect(connectionInfo: ConnectionInfo): void {
+    const peripheral = connectionInfo.peripheral;
+    log.info(`Peripheral '${peripheral.uuid}' disconnected`);
+
+    if (!this._enabled) {
+      log.debug(`No longer enabled`);
+      invariant(!this._connectionQueue.length);
+      invariant(!this._connectionMap.size);
+      invariant(!this._connectionsInProgress.length);
+      return;
+    }
+
+    if (this._connectionsInProgress.indexOf(connectionInfo) === -1) {
+      log.debug(`Connection already removed from the list`);
+      return;
+    }
+
+    // Remove from the in-progress list.
+    if (this._connectionsInProgress.length > 1) {
+      const index = this._connectionsInProgress.indexOf(connectionInfo);
+      invariant(index > -1);
+      this._connectionsInProgress.splice(index, 1);
+    } else {
+      invariant(this._connectionsInProgress[0] === connectionInfo);
+      this._connectionsInProgress = [];
+    }
+
+    this._connectionMap.delete(peripheral.uuid);
   }
 
   async start(): Promise<void> {
@@ -454,6 +583,7 @@ export default class SocketScanner extends EventEmitter {
 
     if (!this._enabled) {
       this._enabled = true;
+      log.info(`Starting scan for socket service '${this._serviceUuid}'`);
       await this._startScan();
     }
   }
@@ -463,27 +593,66 @@ export default class SocketScanner extends EventEmitter {
 
     if (this._enabled) {
       this._enabled = false;
+
+      log.info(`Stopping scan`);
       await this._stopScan();
+
+      this._blackList.clear();
+      this._connectionQueue = [];
+      this._connectionMap.clear();
+      this._connectionsInProgress = [];
+    } else {
+      invariant(!this._blackList.size);
+      invariant(!this._connectionQueue.length);
+      invariant(!this._connectionMap.size);
+      invariant(!this._connectionsInProgress.length);
     }
   }
 
-  addToSkipList(peripheral: Peripheral) {
-    log.debug(`addToSkipList('${peripheral.uuid}')`);
+  addToSkipList(peripheral: Peripheral): void {
+    log.info(`Adding peripheral '${peripheral.uuid}' to skipList`);
 
     if (!this._skipList.has(peripheral.uuid)) {
       this._skipList.add(peripheral.uuid);
     }
   }
 
-  removeFromSkipList(peripheral: Peripheral) {
-    log.debug(`removeFromSkipList('${peripheral.uuid}')`);
+  removeFromSkipList(peripheral: Peripheral): void {
+    log.info(`Removing peripheral '${peripheral.uuid}' from skipList`);
 
     this._skipList.delete(peripheral.uuid);
   }
 
-  clearSkipList() {
-    log.debug(`clearSkipList()`);
+  clearSkipList(): void {
+    log.info(`Clearing skipList`);
 
     this._skipList.clear();
+  }
+
+  async pause(): Promise<void> {
+    log.debug(`pause()`);
+
+    if (!this._scanning) {
+      return;
+    }
+
+    log.info(`Pausing scan`);
+    await this._stopScan();
+  }
+
+  async resume(): Promise<void> {
+    log.debug(`resume()`);
+
+    if (this._scanning) {
+      return;
+    }
+
+    if (!this._enabled) {
+      log.debug(`No longer enabled`);
+      return;
+    }
+
+    log.info(`Resuming scan`);
+    await this._startScan();
   }
 }

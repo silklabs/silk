@@ -16,9 +16,10 @@ import makeDeferred from '../deferred';
 import makeLog from '../log';
 import noble from 'noble';
 import SocketScanner from './socket_scanner';
+import SocketSession from './socket_session';
 
-import type SocketSession from './socket_session';
 import type { Deferred } from '../deferred';
+import type { Peripheral } from 'noble';
 
 type BluetoothMode = 'off' | 'scan' | 'beacon';
 type BeaconInfo = {
@@ -62,8 +63,7 @@ class BluetoothLE extends EventEmitter {
   _bledroidCrashDeferred: ?Deferred<void> = null;
 
   _socketScanner: ?SocketScanner = null;
-  _socketSession: ?SocketSession = null;
-  _socketSessionListener: ?EventEmitter = null;
+  _socketSessions: Array<SocketSession> = [ ];
 
   _privateKey: string;
   _publicKeys: Array<string> = [];
@@ -127,18 +127,6 @@ class BluetoothLE extends EventEmitter {
     this._beaconInfo = info;
   }
 
-  get socketSessionListener(): ?EventEmitter {
-    return this._socketSessionListener;
-  }
-
-  set socketSessionListener(val: ?EventEmitter) {
-    if (this._mode !== BluetoothLE.MODE_OFF) {
-      throw new Error(`Must be 'off' before changing socket listener`);
-    }
-
-    this._socketSessionListener = val;
-  }
-
   async changeMode(mode: BluetoothMode): Promise<void> {
     log.debug(`BluetoothLE.changeMode('${mode}')`);
 
@@ -189,6 +177,30 @@ class BluetoothLE extends EventEmitter {
     await this._changeStatePromise;
   }
 
+  async pauseScan() {
+    log.debug(`BluetoothLE.pauseScan()`);
+
+    if (this._mode !== BluetoothLE.MODE_SCAN) {
+      throw new Error(`Must be in scanning mode`);
+    }
+
+    invariant(this._socketScanner);
+
+    return this._socketScanner.pause();
+  }
+
+  async resumeScan() {
+    log.debug(`BluetoothLE.resumeScan()`);
+
+    if (this._mode !== BluetoothLE.MODE_SCAN) {
+      throw new Error(`Must be in scanning mode`);
+    }
+
+    invariant(this._socketScanner);
+
+    return this._socketScanner.resume();
+  }
+
   async _changeMode(mode: BluetoothMode): Promise<void> {
     log.debug(`BluetoothLE._changeMode('${mode}')`);
 
@@ -217,21 +229,22 @@ class BluetoothLE extends EventEmitter {
 
     let promises = [ ];
 
-    if (this._socketSession) {
-      log.info(`Waiting for socket session to disconnect`);
-      promises.push(new Promise(resolve => {
-        let socketSession = this._socketSession;
-        invariant(socketSession);
-        socketSession.once(`close`, () => resolve());
-        socketSession.end();
-      }));
+    if (this._socketSessions.length) {
+      log.info(`Waiting for ${this._socketSessions.length} socket sessions ` +
+               `to close`);
+      this._socketSessions.forEach((socketSession) => {
+        promises.push(new Promise((resolve) => {
+          socketSession.once(`close`, resolve);
+          socketSession.end();
+        }));
+      });
     }
 
     let socketScanner = this._socketScanner;
     if (socketScanner) {
       log.info(`Waiting for socket scanner to stop`);
-      socketScanner.removeListener(`connect`, this._onSocketSessionConnect);
       promises.push(socketScanner.stop());
+      socketScanner.removeListener(`discover`, this._onSocketDiscover);
     }
 
     if (this._advertising && this._adapterState === `poweredOn`) {
@@ -255,7 +268,7 @@ class BluetoothLE extends EventEmitter {
       log.info(`Done waiting`);
     }
 
-    this._socketSession = null;
+    this._socketSessions = [ ];
     this._socketScanner = null;
     this._advertising = false;
     this._bledroidCrashDeferred = null;
@@ -326,7 +339,7 @@ class BluetoothLE extends EventEmitter {
       scanner.start(),
     ]);
 
-    scanner.addListener(`connect`, this._onSocketSessionConnect);
+    scanner.addListener(`discover`, this._onSocketDiscover);
 
     this._socketScanner = scanner;
     this._bledroidCrashDeferred = null;
@@ -385,9 +398,11 @@ class BluetoothLE extends EventEmitter {
 
     // Pretend like we're just changing to OFF.
     try {
-      if (this._socketSession) {
-        this._socketSession.end();
-        this._socketSession = null;
+      if (this._socketSessions.length) {
+        this._socketSessions.forEach((socketSession) => {
+          socketSession.end();
+        });
+        this._socketSessions = [ ];
       }
       if (this._socketScanner) {
         this._socketScanner.stop();
@@ -399,7 +414,7 @@ class BluetoothLE extends EventEmitter {
       this.emit(`modeChanged`, BluetoothLE.MODE_OFF);
     } catch(error) {
       // Ensure that our state is correct even if something above failed.
-      this._socketSession = null;
+      this._socketSessions = [ ];
       this._socketScanner = null;
       this._advertising = false;
       this._mode = BluetoothLE.MODE_OFF;
@@ -408,26 +423,30 @@ class BluetoothLE extends EventEmitter {
     }
   };
 
-  _onSocketSessionConnect: ((socketSession: SocketSession) => void) = (socketSession) => {
-    log.debug(`BluetoothLE._onSocketSessionConnect()`);
+  _onSocketDiscover: ((peripheral: Peripheral) => void) = (peripheral) => {
+    log.debug(`BluetoothLE._onSocketDiscover()`);
 
-    // This won't be true always, but right now we only support one connection
-    // at a time.
-    invariant(!this._socketSession);
+    invariant(peripheral.state === `connected`);
+    invariant(this._socketScanner);
 
-    const listener = this._socketSessionListener;
-    invariant(listener);
+    const socketSession = new SocketSession(this._socketScanner, peripheral);
 
     socketSession.once(`close`, () => {
-      listener.emit(`disconnect`, socketSession);
-
-      if (this._socketSession === socketSession) {
-        this._socketSession = null;
+      if (this._socketSessions.length > 1) {
+        const index = this._socketSessions.indexOf(socketSession);
+        if (index > -1) {
+          this._socketSessions.splice(index, 1);
+        }
+      } else if (this._socketSessions.length === 1 &&
+                 this._socketSessions[0] === socketSession) {
+        this._socketSessions = [ ];
       }
     });
 
-    this._socketSession = socketSession;
-    listener.emit(`connect`, socketSession);
+    this._socketSessions.push(socketSession);
+
+    invariant(this.listenerCount(`socketSession`));
+    this.emit(`socketSession`, socketSession);
   };
 }
 

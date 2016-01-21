@@ -13,44 +13,38 @@ const log = createLog('normal-session-listener');
 
 export default class NormalSessionListener extends SessionListenerBase {
 
-  constructor(deviceConfig) {
+  constructor(deviceConfig, socketSession) {
     log.debug(`NormalSessionListener()`);
 
-    super(deviceConfig);
-
-    this.addStatusListeners();
-  }
-
-  _onConnect(socketSession) {
-    log.debug(`NormalSessionListener._onConnect()`);
-
-    super._onConnect(socketSession);
+    super(deviceConfig, socketSession);
 
     this._send({
       name: `registered`,
       deviceId: this._deviceConfig._deviceId,
     });
 
-    if (this._errorCode) {
-      this._sendError(this._errorCode, /* force */ true);
+    if (this._deviceConfig._sessionErrorCode) {
+      this.sendError(this._deviceConfig._sessionErrorCode);
     }
 
-    if (this._status) {
-      this._sendStatus(this._status, /* force */ true);
+    if (this._deviceConfig._sessionStatus) {
+      this.sendStatus(this._deviceConfig._sessionStatus);
     }
   }
 
   _onData(data) {
-    log.debug(`NormalSessionListener._onData(%j)`, data);
+    log.warn(`Unexpected data from app, disconnecting`, data);
 
-    log.warn(`Unexpected data from app, disconnecting: %j`, data);
+    // Don't allow this peripheral to get connected again.
     this._socketSession.skip();
     this.disconnect();
   }
 
-  _onRssiUpdate(rssi) {
-    log.debug(`NormalSessionListener._onRssiUpdate(${rssi})`);
+  _onRssiUpdate(/* rssi */) {
+    log.warn(`Unexpected rssi update, disconnecting`);
 
-    // Ignore.
+    // Don't allow this peripheral to get connected again.
+    this._socketSession.skip();
+    this.disconnect();
   }
 }

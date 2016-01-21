@@ -17,7 +17,8 @@
     "silk-raygun": "/raygun",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
     "silk-server": "/server",
-    "silk-core-version": "/version"
+    "silk-core-version": "/version",
+    "eslint-config-silk": "/eslint"
   },
   "dependencies": {
     "CBuffer": "1.1.0",

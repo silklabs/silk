@@ -50,12 +50,13 @@ class HeartbeatStreamBase extends ClosingPassThrough {
   end(chunk, encoding, callback) {
     log.debug(`[${this.constructor.name}] HeartbeatStreamBase.end()`);
 
-    assert(!this._ending);
-    this._ending = true;
+    if (!this._ending) {
+      this._ending = true;
 
-    if (this._timeout) {
-      clearTimeout(this._timeout);
-      this._timeout = null;
+      if (this._timeout) {
+        clearTimeout(this._timeout);
+        this._timeout = null;
+      }
     }
 
     super.end(chunk, encoding, callback);

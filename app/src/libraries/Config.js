@@ -1,11 +1,11 @@
 import {
   AsyncStorage,
 } from 'react-native';
-import {
-  EventEmitter,
-} from 'events';
+import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
-import mklog from 'silk-log'; const log = mklog('Config');
+import createLog from 'silk-log';
+
+const log = createLog('Config');
 
 // Default configuration...
 const DEFAULT = {
@@ -119,7 +119,7 @@ class Config extends EventEmitter {
     if (!this._initialized) {
       throw new Error('Not initialized yet.');
     }
-    let newUserConfig = merge({}, this.userConfig, customization);
+    let newUserConfig = merge({}, this._userConfig, customization);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newUserConfig));
 
     this._userConfig = newUserConfig;

@@ -73,6 +73,10 @@ const WIFI_DISCONNECT_REASONS = [
   'disassoc_low_ack',
 ];
 
+// TODO: this currently also means we ignore non-ASCII SSIDs.
+// See https://github.com/silklabs/silk-core/issues/357.
+const CTRL_CHARS_REGEX = /[\x00-\x1f\x80-\xff]/;
+
 let iface = util.getstrprop('wifi.interface');
 let monitor;
 
@@ -83,6 +87,26 @@ type WifiScanResult = {
   ssid: string;
 };
 
+
+/**
+ * Unescape SSID strings as spat out by wpa_cli
+ */
+function unescapeSSID(ssid: string): string {
+  // To unescape sequences like \xAB, we convert them to \u00AB and
+  // then feed them to JSON.parse (making sure that double quotes are
+  // escaped). Bit of a hack, but works reliably.
+  ssid = JSON.parse(
+    '"' +
+    ssid.replace('"', '\\"').replace('\\x', '\\u00') +
+    '"'
+  );
+  invariant(typeof ssid === 'string');
+  return ssid;
+}
+
+/**
+ * Wrapper around Gonk's WiFi daemons.
+ */
 class WpaMonitor extends events.EventEmitter {
 
   _ready: bool;
@@ -477,10 +501,11 @@ export class Wifi extends events.EventEmitter {
         log.warning(`Unexpected wpa_cli scan result: "${line}"`);
         continue;
       }
-      const [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
+      let [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
+      ssid = unescapeSSID(ssid);
 
-      if (ssid.length === 0) {
-        // Ignore zero-length SSID names
+      if (ssid.length === 0 || CTRL_CHARS_REGEX.test(ssid)) {
+        // Ignore zero-length SSID names or SSIDs with funky characters.
         continue;
       }
 

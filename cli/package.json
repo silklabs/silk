@@ -10,7 +10,7 @@
     "lint": "eslint build lib",
     "postinstall": "../npm_postinstall",
     "preinstall": "../npm_preinstall",
-    "test": "npm run lint"
+    "test": "npm run lint && ./silk"
   },
   "dependencies": {
     "babel-eslint": "^4.1.6",

@@ -19,7 +19,7 @@ import checkOnline from 'is-online';
 import { EventEmitter } from 'events';
 
 import type { Wifi } from './wifi';
-import type { Socket } from 'socket.io-client';
+import type Server from './server';
 
 const log = createLog('network_status');
 
@@ -54,12 +54,12 @@ const IS_ONLINE = (): Promise<bool> => {
 export default class NetworkStatus extends EventEmitter {
 
   // wifi module...
-  _wifi: Wifi = null;
+  _wifi: Wifi;
   // function to check if we are online or not ...
-  _isOnlineFn: (() => Promise<bool>);
+  _isOnlineFn: () => Promise<bool>;
 
   // hint socket ...
-  _hintSocket: ?Socket = null;
+  _hintSocket: ?Server = null;
 
   set hintSocket(socket) {
     if (this._hintSocket) {
@@ -75,7 +75,7 @@ export default class NetworkStatus extends EventEmitter {
 
     this._hintSocket = socket;
   }
-  get hintSocket(): ?Socket {
+  get hintSocket(): ?Server {
     return this._hintSocket;
   }
 

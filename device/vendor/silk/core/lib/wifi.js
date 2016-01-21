@@ -7,15 +7,26 @@
  * @flow
  */
 
-import * as util from './sysutils';
+import invariant from 'assert';
 import events from 'events';
 import net from 'net';
+
+import * as util from './sysutils';
 import createLog from './log';
-import type {Socket} from 'socket.io-client';
+
+import type { Socket } from 'net';
+
+type WifiScanResult = {
+  level: number;
+  psk: boolean;
+  ssid: string;
+};
 
 const log = createLog('wifi');
-const USE_QEMU_WIFI = util.getboolprop('ro.silk.wifi.qemu',
-  process.platform !== 'android');
+const USE_QEMU_WIFI = util.getboolprop(
+  'ro.silk.wifi.qemu',
+  process.platform !== 'android'
+);
 
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;
@@ -73,25 +84,41 @@ const WIFI_DISCONNECT_REASONS = [
   'disassoc_low_ack',
 ];
 
+// TODO: this currently also means we ignore non-ASCII SSIDs.
+// See https://github.com/silklabs/silk-core/issues/357.
+const CTRL_CHARS_REGEX = /[\x00-\x1f\x80-\xff]/;
+
 let iface = util.getstrprop('wifi.interface');
 let monitor;
 
 
-type WifiScanResult = {
-  level: number;
-  psk: boolean;
-  ssid: string;
-};
+/**
+ * Unescape SSID strings as spat out by wpa_cli
+ */
+function unescapeSSID(ssid: string): string {
+  // To unescape sequences like \xAB, we convert them to \u00AB and
+  // then feed them to JSON.parse (making sure that double quotes are
+  // escaped). Bit of a hack, but works reliably.
+  ssid = JSON.parse(
+    '"' +
+    ssid.replace('"', '\\"').replace('\\x', '\\u00') +
+    '"'
+  );
+  invariant(typeof ssid === 'string');
+  return ssid;
+}
 
+/**
+ * Wrapper around Gonk's WiFi daemons.
+ */
 class WpaMonitor extends events.EventEmitter {
 
-  _ready: bool;
-  _socket: Socket;
-  _buffer: string;
+  _ready: bool = false;
+  _socket: ?Socket;
+  _buffer: string = '';
 
   constructor() {
     super();
-    this._ready = false;
     this._init();
   }
 
@@ -114,15 +141,15 @@ class WpaMonitor extends events.EventEmitter {
   }
 
   _init() {
-    this._socket = net.createConnection('/dev/socket/wpad', () => {
+    let socket = this._socket = net.createConnection('/dev/socket/wpad', () => {
       this._buffer = '';
       this._ready = true;
     });
-    this._socket.on('data', data => this._onData(data));
-    this._socket.on('error', err => {
+    socket.on('data', data => this._onData(data));
+    socket.on('error', err => {
       this._restart(`wpad error, reason=${err}`);
     });
-    this._socket.on('close', hadError => {
+    socket.on('close', hadError => {
       if (!hadError) {
         this._restart(`wpad close`);
       }
@@ -477,10 +504,11 @@ export class Wifi extends events.EventEmitter {
         log.warning(`Unexpected wpa_cli scan result: "${line}"`);
         continue;
       }
-      const [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
+      let [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
+      ssid = unescapeSSID(ssid);
 
-      if (ssid.length === 0) {
-        // Ignore zero-length SSID names
+      if (ssid.length === 0 || CTRL_CHARS_REGEX.test(ssid)) {
+        // Ignore zero-length SSID names or SSIDs with funky characters.
         continue;
       }
 

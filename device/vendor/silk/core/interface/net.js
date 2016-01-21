@@ -5,8 +5,9 @@
  */
 
 declare module "net" {
+  declare class Socket extends net$Socket {}
   declare function createConnection(
     pathOrHost: string|number,
     handler: () => void,
-  ): net$Socket;
+  ): Socket;
 }

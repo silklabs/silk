@@ -137,9 +137,10 @@ class ConditionalInstall {
     ) {
       log(`Hash matches in ${installModulePath} skipping...`);
       let corePath = installModulePath.replace(CORE, '');
-      return submitMetrics(`npm_install_silk_dependencies_cache_hit`, [
-        `path="${corePath}"`
-      ]);
+      return submitMetrics(`npm_install_silk_dependencies_cache_hit`,
+        'count=1i',
+        `corePath=${corePath}`
+      );
     }
 
     log(`Installing ${installModulePath}`);

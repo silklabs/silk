@@ -74,7 +74,7 @@ const SCHEMA = {
         ssid: Joi.string().required(),
         level: Joi.number().integer().min(-100).max(-10).required(),
         psk: Joi.boolean().required(),
-      }).required(),
+      }),
     ).required(),
   }).required(),
 

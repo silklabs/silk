@@ -555,9 +555,6 @@ internal class BLESocketPeripheral: NSObject,
     self.connectionsByPeripheral[centralAsPeripheral] = connection
     self.connectionsByService[serviceUuid] = connection
 
-    self.peripheralManager.setDesiredConnectionLatency(.Low,
-                                                       forCentral: central)
-
     self.socketManager.connect(connection.id)
     return connection
   }

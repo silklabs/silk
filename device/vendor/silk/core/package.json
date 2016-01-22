@@ -4,7 +4,7 @@
   "description": "The common control software on each silk node",
   "main": "core.js",
   "scripts": {
-    "preinstall": "mkdir -p local_node_modules && ./bin/preinstall",
+    "preinstall": "./bin/preinstall",
     "postinstall": "./bin/postinstall && ./build",
     "build": "./build",
     "lax": "LAX=1 ./build",

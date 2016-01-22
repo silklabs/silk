@@ -268,16 +268,7 @@ ntp.on('time', emitDeviceInfo);
 // Server related...
 server.on('connect', () => {
   ui.goto('online');
-
   emitDeviceInfo();
-
-  diag.start();
-  timeline.server = server;
-});
-
-server.on('disconnect', () => {
-  diag.stop();
-  timeline.server = null;
 });
 
 server.on('reconnecting', () => ui.goto('connecting'));
@@ -295,10 +286,12 @@ server.on('cmd', cmd => {
   // The 'livestream' command is sent by the server to request live streaming
   // data from this device.  Supported streams: preview, video, diag
   //
+  // TODO: once the 'livestream' command is strongly typed between
+  // server/device, move this processing into the diag/timeline objects
+  // themselves.
   case 'livestream':
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
-    // TODO: previews in a different diag room
     diag.setConfig({dash: flag, logcat: flag});
     timeline.configLiveStream(!!cmd.preview, !!cmd.video, !!cmd.diag);
     break;

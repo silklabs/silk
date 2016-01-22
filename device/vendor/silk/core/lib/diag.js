@@ -122,6 +122,14 @@ export default class Diag {
       new DiagLogger('dash',
         'system/silk/bin/dash', [], 60),
     ];
+
+    server.on('connect', () => {
+      this.start();
+    });
+
+    server.on('disconnect', () => {
+      this.stop();
+    });
   }
 
   start() {

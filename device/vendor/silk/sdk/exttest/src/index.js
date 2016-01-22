@@ -8,6 +8,7 @@ import createLog from 'silk-log';
 import createOutbox from 'silk-core/lib/outbox';
 import NetworkStatus from 'silk-core/lib/network_status';
 import Timeline from 'silk-core/lib/timeline';
+import Server from 'silk-core/lib/server';
 import * as util from 'silk-core/lib/sysutils';
 import wifi from 'silk-core/lib/wifi';
 
@@ -59,8 +60,9 @@ export default class Framework {
   constructor(name, opencv) {
     this._name = name;
     this.networkStatus = new NetworkStatus(wifi);
+    this.server = new Server(wifi);
     this.outbox = createOutbox(this.networkStatus);
-    this.timeline = new Timeline('test_id', this.outbox);
+    this.timeline = new Timeline(this.server, this.outbox);
     this.camera = new FakeCamera(opencv);
     this.util = util;
   }

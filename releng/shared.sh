@@ -26,7 +26,7 @@ fi
 #
 # GITS: List of all projects that are branched.
 #
-"
+
 GITS="\
   silk-core \
   silk-device-locked-node-modules \
@@ -115,6 +115,16 @@ updatebranch__silk_device() {
       exit 1
     fi
     for p in $(xmlstarlet sel -t -v "//project[@revision='$from']/@name" $silk_xml); do
+
+      # All the silk.xml projects that are about to get their revisions updated
+      # should be in the list of projects that are getting branched, to ensure
+      # the updated revision actually exists.
+      if [ ! -d ../../$p ]; then
+        echo "Error: $p not listed in GITS variable?"
+        echo "       ../../$p not a directory ($(readlink -f ../../$p))"
+        exit 1
+      fi
+
       local HEAD=$to
       if [[ $to == release ]]; then
         # Lock to SHA1 for release branch

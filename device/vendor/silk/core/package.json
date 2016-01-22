@@ -6,6 +6,8 @@
   "scripts": {
     "preinstall": "mkdir -p local_node_modules && ./bin/preinstall",
     "postinstall": "./bin/postinstall && ./build",
+    "build": "./build",
+    "lax": "LAX=1 ./build",
     "test": "./bin/test",
     "posttest": "flow check",
     "clean": "rm -rf node_modules core.js core.js.map"

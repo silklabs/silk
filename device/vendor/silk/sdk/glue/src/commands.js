@@ -165,7 +165,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
       .pipe(source(pkg.main))
       .pipe(buffer())
       .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-      .pipe(gulpif(!(process.env.NO_UGLY === '1'), uglify(uglifyCfg)))
+      .pipe(gulpif(!(process.env.NO_UGLY === '1' || process.env.LAX === '1'), uglify(uglifyCfg)))
       .on('error', err => {
         gutil.log('(uglify)', gutil.colors.red('Uglify Error'));
         gutil.log('(uglify)', err.message);

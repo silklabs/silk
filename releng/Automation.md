@@ -11,7 +11,7 @@ Releng runs a Github webhook, implemented on a Heroku server, that provides its 
 
 Nightly automation is run to update the "repocache" tarballs used to speed up
 device developer sync times, and other useful tasks.
-To trigger manually run `npm run triggerbuilds`.
+To trigger manually run `npm run buildtrigger`.
 
 ## Status
 
@@ -41,7 +41,7 @@ The nightly repocache builds are visible at https://magnum.travis-ci.com/silklab
   * Create a GITHUB_SECRET token that matches the Github webhook secret
 * Resources Tab -> Add-ons:
   * Add 'Heroku Scheduler'
-  * Configure the scheduler to run `npm run triggerbuilds` every day
+  * Configure the scheduler to run `npm run buildtrigger -- master nightly` and `npm run buildtrigger -- next nightly` every day
 
 ### Github WebHook
 

@@ -552,30 +552,23 @@ export default class SocketScanner extends EventEmitter {
     const peripheral = connectionInfo.peripheral;
     log.info(`Peripheral '${peripheral.uuid}' disconnected`);
 
-    if (!this._enabled) {
-      log.debug(`No longer enabled`);
-      invariant(!this._connectionQueue.length);
-      invariant(!this._connectionMap.size);
-      invariant(!this._connectionsInProgress.length);
-      return;
-    }
+    this._connectionMap.delete(peripheral.uuid);
 
-    if (this._connectionsInProgress.indexOf(connectionInfo) === -1) {
+    const index = this._connectionsInProgress.indexOf(connectionInfo);
+    if (index === -1) {
       log.debug(`Connection already removed from the list`);
       return;
     }
 
+    invariant(index > -1);
+
     // Remove from the in-progress list.
     if (this._connectionsInProgress.length > 1) {
-      const index = this._connectionsInProgress.indexOf(connectionInfo);
-      invariant(index > -1);
       this._connectionsInProgress.splice(index, 1);
     } else {
       invariant(this._connectionsInProgress[0] === connectionInfo);
       this._connectionsInProgress = [];
     }
-
-    this._connectionMap.delete(peripheral.uuid);
   }
 
   async start(): Promise<void> {

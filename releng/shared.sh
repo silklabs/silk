@@ -85,7 +85,9 @@ updatebranch__silk_core() {
       ./releng/version_bump minor
     fi
 
-    git checkout $to
+    if [[ $to != release ]]; then
+      git checkout $to
+    fi
     # Update version/branch to match the destination branch
     sed -i version/branch -e s/${from}/${to}/g
     local msg="Automated branch update from ${from} to ${to}"

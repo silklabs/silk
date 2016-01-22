@@ -51,15 +51,12 @@ push release
 
 set +x
 echo
+RELEASE_SHA1=$(git -C silk-core rev-parse --short HEAD)
 echo Released to:
-for g in $MERGE_GITS; do
-  echo "https://github.com/silklabs/$g/commit/$(git -C $g rev-parse --short HEAD)"
-done
+echo "* https://github.com/silklabs/silk-core/commit/$RELEASE_SHA1"
 echo
 echo To reproduce this release:
-for g in $MERGE_GITS; do
-  echo "git clone --no-checkout git@github.com:silklabs/$g.git"
-  echo "git -C $g checkout $(git -C $g rev-parse --short HEAD)"
-done
+echo "  git clone --no-checkout git@github.com:silklabs/silk-core.git"
+echo "  git -C silk-core checkout $RELEASE_SHA1"
 
 exit 0

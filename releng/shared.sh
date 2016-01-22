@@ -24,18 +24,15 @@ if [[ -z $SKIP_TOOL_CHECK ]]; then
 fi
 
 #
-# GITS: List of projects that are branched.
-# MERGE_GITS: Subset of GITS that need commits merged back to master
-#             (TODO: Merge this with lib/repos.js)
+# GITS: List of all projects that are branched.
 #
-MERGE_GITS="\
-  silk-core \
-  gonk-alto \
 "
 GITS="\
+  silk-core \
   silk-device-locked-node-modules \
   silk-trainingset \
-  $MERGE_GITS \
+  cereproc \
+  gonk-alto \
 "
 
 # Fetch all the silk projects

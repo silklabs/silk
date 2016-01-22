@@ -1,8 +1,12 @@
 /**
+ * List of silklabs projects where active development occurs.  These
+ * projects receive service from:
+ *  * the uplifter
+ *  * the old PR canceller
+ *
  * @flow
  */
 
-// TODO: Merge this with MERGE_GITS in ../shared.sh
 module.exports = [
   'silk-core',
   'gonk-alto',

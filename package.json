@@ -1,6 +1,6 @@
 {
   "name": "silk-core",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Heroku shim and nothing more",
   "scripts": {
     "preinstall": "./tools/heroku/deploy.sh",

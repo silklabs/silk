@@ -1,6 +1,6 @@
 {
   "name": "silk-docs",
-  "version": "0.0.1",
+  "version": "0.12.0",
   "description": "Generates documentation for silk modules",
   "scripts": {
     "postinstall": "documentation ../device/vendor/silk/core/lib/*.js --project-version `node -p \"require('./package.json').version\"` -f html -o dist/api/device --name silk-device"

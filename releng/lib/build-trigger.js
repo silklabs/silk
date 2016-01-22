@@ -29,7 +29,7 @@ export async function triggerBuilds(
       type,
       sha,
       branch,
-      filesChanged: [],
+      message: `Manual trigger: ${branch} ${type} ${name}`,
     }
   );
   return responses.filter((response) => !!response).length;

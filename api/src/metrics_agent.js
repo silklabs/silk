@@ -38,6 +38,7 @@ const DEFAULT_POLLING_INTERVAL = 60 * 1000;
 
 export default class MetricsAgent {
 
+  _running: boolean = false;
   _timerId: ?number;
   _online: boolean = false;
 
@@ -86,6 +87,7 @@ export default class MetricsAgent {
   };
 
   start(interval?: number = DEFAULT_POLLING_INTERVAL): void {
+    this._running = true;
     this.interval = interval;
     this.onConnectivityChange();
     log.info(`Will submit metrics every ${this.interval} ms`);
@@ -98,9 +100,13 @@ export default class MetricsAgent {
       this._timerId = null;
     }
     this._online = false;
+    this._running = false;
   }
 
   add(metric: Metric): void {
+    if (!this._running) {
+      return;
+    }
     log.info(`Adding one metric to the queue`);
     if (this._points.length > MAX_METRICS) {
       this._points.shift();

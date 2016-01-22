@@ -15,6 +15,7 @@ import DateOverlay from './DateOverlay';
 import {MetricTypes} from 'silk-api';
 import FullScreenVideoLaunch from '../metrics/FullScreenVideoLaunch';
 import FullScreenVideoDuration from '../metrics/FullScreenVideoDuration';
+import * as VideoMetrics from '../metrics/Video';
 
 const log = createLog('MonitorFullscreen');
 
@@ -68,11 +69,40 @@ function segmentMeterId(segment) {
   return '' + segment.startUTC;
 }
 
+class MetricsData {
+  _map = new Map();
+
+  get(id, key) {
+    const data = this._map.get(id);
+    return data ? data.get(key) : undefined;
+  }
+
+  set(id, key, value) {
+    const data = this._map.get(id);
+    if (data) {
+      data.set(key, value);
+    } else {
+      this._map.set(id, new Map([[key, value]]));
+    }
+  }
+
+  delete(id, key) {
+    if (arguments.length < 2) {
+      this._map.delete(id);
+    } else {
+      const data = this._map.get(id);
+      data.delete(key);
+    }
+  }
+}
+
 class Meter {
   constructor(tag, socket, deviceId) {
     this.tag = tag;
     this.socket = socket;
     this.deviceId = deviceId;
+    this.metricsData = new MetricsData();
+    this.lingeringSegmentId = 0;
   }
 
   meter(what, id = '', whenMs = Date.now()) {
@@ -96,12 +126,12 @@ class Meter {
 }
 
 class LiveSegmentProvider {
-  constructor(onSegment) {
+  constructor(monitor) {
     this.socket = null;
     this.id = null;
     this.lastId = null;
 
-    this.onSegment = onSegment;
+    this.monitor = monitor;
 
     // Ensure _provideSegment is consistently bound to this.
     this._provideSegment = this._provideSegment.bind(this);
@@ -117,6 +147,8 @@ class LiveSegmentProvider {
       return;
     }
 
+    const now = Date.now();
+
     // Create the segment from the frame.
     let id = uuid.v1();
     let segment = new LiveVideo.Segment({
@@ -131,7 +163,22 @@ class LiveSegmentProvider {
 
     // Keep track of the previous id (required for state tracking).
     this.lastId = id;
-    this.onSegment(segment, message);
+    this.monitor.onLiveSegment(segment, message);
+
+    const meterId = segmentMeterId(segment);
+    this.monitor.meter.metricsData.set(meterId, `arriveApp`, now);
+
+    let networkDuration = now - message.serverEmitMs;
+
+    // This seems really unlikely but if the clock isn't perfect...
+    if (networkDuration < 0) {
+      log.warn(`Bad networkDuration: ${networkDuration}`);
+      networkDuration = 0;
+    }
+
+    this.monitor.props.api.accountMetrics.add(
+      new VideoMetrics.Network(networkDuration)
+    );
   }
 
   start(socket, id) {
@@ -229,7 +276,7 @@ export default class MonitorFullscreen extends React.Component {
     this._watchStart = Date.now();
     this.props.api.accountMetrics.add(new FullScreenVideoLaunch());
 
-    this._liveSegmentProvider = new LiveSegmentProvider(this.onLiveSegment);
+    this._liveSegmentProvider = new LiveSegmentProvider(this);
     if (this.props.startAtTime) {
       this._playRecorded(this.props.startAtTime);
     } else {
@@ -283,13 +330,15 @@ export default class MonitorFullscreen extends React.Component {
     this.appendSegment(segment);
     this.setState({ maxTime: segment.startUTC });
 
-    let meterId = segmentMeterId(segment);
+    const meterId = segmentMeterId(segment);
     // TODO: we could batch meters if it's more efficient
     this.meter.meter('recordStart', meterId, segment.startUTC);
     this.meter.meter('recordEnd', meterId, segment.endUTC);
     this.meter.meter('deviceEmit', meterId, message.deviceEmitMs);
     this.meter.meter('serverEmit', meterId, message.serverEmitMs);
-    this.meter.meter('arriveApp', meterId);
+    this.meter.meter('arriveApp',
+                     meterId,
+                     this.meter.metricsData.get(meterId, `arriveApp`));
   };
 
   /**
@@ -362,7 +411,18 @@ export default class MonitorFullscreen extends React.Component {
    */
   onSegmentEnqueued = (event) => {
     if (this.meter) {
-      this.meter.meter('playbackEnqueued', segmentMeterId(event.nativeEvent));
+      const now = Date.now();
+      const meterId = segmentMeterId(event.nativeEvent);
+      const key = `playbackEnqueued`;
+
+      this.meter.meter(key, meterId, now);
+
+      const metricsData = this.meter.metricsData;
+      metricsData.set(meterId, key, now);
+
+      this.props.api.accountMetrics.add(
+        new VideoMetrics.Load(now - metricsData.get(meterId, `arriveApp`))
+      );
     }
   };
 
@@ -375,7 +435,19 @@ export default class MonitorFullscreen extends React.Component {
     let current = segments[0];
 
     if (this.meter) {
-      this.meter.meter('playbackEnd', segmentMeterId(event.nativeEvent));
+      const now = Date.now();
+      const meterId = segmentMeterId(event.nativeEvent);
+      const key = `playbackEnd`;
+
+      this.meter.meter(key, meterId, now);
+
+      this.meter.lingeringSegmentId = meterId;
+
+      const metricsData = this.meter.metricsData;
+      metricsData.set(meterId, key, now);
+
+      const duration = now - metricsData.get(meterId, `playbackStart`);
+      this.props.api.accountMetrics.add(new VideoMetrics.Play(duration));
     }
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
@@ -402,11 +474,38 @@ export default class MonitorFullscreen extends React.Component {
     let segment = this._videoSegments[0];
 
     if (segment && this.meter) {
-      let meterId = segmentMeterId(segment);
-      let startMs = Date.now();
-      let durationMs = segment.endUTC - segment.startUTC;
-      this.meter.meter('playbackStart', meterId, startMs);
-      this.meter.meter('segmentDuration', meterId, startMs + durationMs);
+      const now = Date.now();
+      const meterId = segmentMeterId(segment);
+      const durationMs = segment.endUTC - segment.startUTC;
+      const key = `playbackStart`;
+
+      this.meter.meter(key, meterId, now);
+      this.meter.meter('segmentDuration', meterId, now + durationMs);
+
+      const metricsData = this.meter.metricsData;
+      metricsData.set(meterId, key, now);
+
+      const queuedTime = metricsData.get(meterId, `playbackEnqueued`);
+      if (queuedTime) {
+        this.props.api.accountMetrics.add(
+          new VideoMetrics.Queue(now - queuedTime)
+        );
+      } else {
+        this.props.api.accountMetrics.add(
+          new VideoMetrics.Load(now - metricsData.get(meterId, `arriveApp`))
+        );
+      }
+
+      const lingeringSegmentId = this.meter.lingeringSegmentId;
+      if (lingeringSegmentId) {
+        const end = metricsData.get(lingeringSegmentId, `playbackEnd`);
+        const lingerDuration = now - end;
+        this.props.api.accountMetrics.add(
+          new VideoMetrics.Linger(lingerDuration)
+        );
+
+        metricsData.delete(lingeringSegmentId);
+      }
     }
     // Emit a segment start event so we can do processing based on segment
     // specific events.

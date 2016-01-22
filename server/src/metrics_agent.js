@@ -33,6 +33,9 @@ export default class MetricAgent {
   }
 
   add(metric: Metric) {
+    if (!this._influxdb) {
+      return;
+    }
     if (this._points.length > MAX_METRICS) {
       log.verbose(`Dropping metric... (reached MAX_METRICS)`);
       this._points.shift();

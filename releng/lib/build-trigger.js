@@ -21,6 +21,10 @@ export async function triggerBuilds(
 ): Promise<number> {
   let sha = await getBranchHeadCommit(owner, repo, branch);
   invariant(sha, `Could not find '${branch}!`);
+  let message = `build-trigger ${branch} ${type} `;
+  if (name) {
+    message += name;
+  }
   let responses = await triggerBuildsForEvent(
     owner,
     repo,
@@ -29,7 +33,7 @@ export async function triggerBuilds(
       type,
       sha,
       branch,
-      message: `Manual trigger: ${branch} ${type} ${name}`,
+      message,
     }
   );
   return responses.filter((response) => !!response).length;

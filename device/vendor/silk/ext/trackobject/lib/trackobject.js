@@ -54,16 +54,16 @@ function _detectMotion(when, image, motionZone, callback) {
 
   timeline.addDiagFrame('bw', when, image);
 
-  // Apply Gaussian smoothing to average pixel intensities due to tiny
-  // variations in the digital camera sensor
-  image.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
-
-  timeline.addDiagFrame('blur', when, image);
-
   // Take a new image
   prevFrame = currentFrame;
   currentFrame = nextFrame;
-  nextFrame = image;
+  nextFrame = image.copy();
+
+  // Apply Gaussian smoothing to average pixel intensities due to tiny
+  // variations in the digital camera sensor
+  nextFrame.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
+
+  timeline.addDiagFrame('blur', when, nextFrame);
 
   // Check if at least three frames are available
   if (!prevFrame || !currentFrame) {

@@ -159,6 +159,11 @@ export default class Timeline extends EventEmitter {
       break;
     }
     log.info('AV upload type:', this.videoUploadType);
+
+    server.on('disconnect', () => {
+      log.info('Turning off any live streaming');
+      this.configLiveStream(false, false, false);
+    });
   }
 
   /**

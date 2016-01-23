@@ -1,0 +1,18 @@
+{
+  "name": "silk-cmt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "./preinstall",
+    "install": "node-gyp rebuild",
+    "postinstall": "touch index.js",
+    "test": "node test/test.js"
+  },
+  "license": "proprietary",
+  "dependencies": {
+    "nan": "^2.2.0"
+  },
+  "gypfile": true,
+  "private": true
+}

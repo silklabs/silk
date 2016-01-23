@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [[ "$NPM_CONFIG_PLATFORM" != "android" ]]; then
+  if [[ ! -d node_modules/opencv ]]; then
+    npm install mvines/node-opencv#c4573104976b90ea7591ee1ee160b325c302695d
+  fi
+fi

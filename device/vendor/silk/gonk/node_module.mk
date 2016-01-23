@@ -226,7 +226,7 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR
     $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST ; \
     $(and $(TARGET_STRIP_EXTRA), $(PRIVATE_OBJCOPY) --add-gnu-debuglink=$$SRC $$DST ; ) \
     mkdir -p $(PRIVATE_UNSTRIPPED_PATH)/build ; \
-    cp $$SRC $(PRIVATE_UNSTRIPPED_PATH)/build/`basename $$binding` ; \
+    cp -v $$SRC $(PRIVATE_UNSTRIPPED_PATH)/build/`basename $$binding` ; \
   done
 
 endif # .js module

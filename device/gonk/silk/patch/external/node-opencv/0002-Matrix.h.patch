@@ -1,0 +1,117 @@
+From c4573104976b90ea7591ee1ee160b325c302695d Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 20 Jan 2016 20:42:41 -0800
+Subject: [PATCH] Define a native interface for unwrapping the cv:Mat from a
+ Matrix object
+
+---
+ inc/Matrix.h    | 28 ++++++++++++++++++++++++++++
+ include_dirs.js | 14 ++++++++++++++
+ src/Matrix.cc   |  8 ++++----
+ src/Matrix.h    |  6 +++---
+ 4 files changed, 49 insertions(+), 7 deletions(-)
+ create mode 100755 inc/Matrix.h
+ create mode 100644 include_dirs.js
+
+diff --git a/inc/Matrix.h b/inc/Matrix.h
+new file mode 100755
+index 0000000..beed998
+--- /dev/null
++++ b/inc/Matrix.h
+@@ -0,0 +1,28 @@
++/*
++  This file defines the public native interface into an node-opencv Matrix
++  object.  This is used to retrieve the wrapped OpenCV cv:Mat object from other
++  native code:
++
++  NAN_METHOD(UnwrapMatrix) {
++    cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(info[0]->ToObject())->mat;
++    // ...
++  }
++
++ */
++#ifndef NODE_OPENCV_MATRIX_H
++#define NODE_OPENCV_MATRIX_H
++#include <opencv/cv.h>
++#include <node_object_wrap.h>
++
++namespace node_opencv {
++
++class Matrix: public Nan::ObjectWrap {
++public:
++  cv::Mat mat;
++protected:
++  Matrix(): Nan::ObjectWrap() {};
++};
++
++}
++
++#endif // NODE_OPENCV_MATRIX_H
+diff --git a/include_dirs.js b/include_dirs.js
+new file mode 100644
+index 0000000..8d72392
+--- /dev/null
++++ b/include_dirs.js
+@@ -0,0 +1,14 @@
++// Outputs the path to public node-opencv header files.  This is used when
++// building other native node modules that require access to the
++// node-opencv Matrix base class.
++//
++// To use this file, add something like the following to your binding.gyp:
++//
++//      "include_dirs": [
++//        "<!@(pkg-config --cflags opencv)",
++//        "<!(node -e \"require('nan')\")",
++//        "<!(node -e \"require('opencv/include_dirs')\")"
++//      ],
++//
++var path = require('path');
++console.log(path.relative('.', path.join(__dirname, 'inc')));
+diff --git a/src/Matrix.cc b/src/Matrix.cc
+index 41a2fa9..6d9eaca 100755
+--- a/src/Matrix.cc
++++ b/src/Matrix.cc
+@@ -145,22 +145,22 @@ NAN_METHOD(Matrix::New) {
+ }
+ 
+ Matrix::Matrix() :
+-    Nan::ObjectWrap() {
++    node_opencv::Matrix() {
+   mat = cv::Mat();
+ }
+ 
+ Matrix::Matrix(int rows, int cols) :
+-    Nan::ObjectWrap() {
++    node_opencv::Matrix() {
+   mat = cv::Mat(rows, cols, CV_32FC3);
+ }
+ 
+ Matrix::Matrix(int rows, int cols, int type) :
+-    Nan::ObjectWrap() {
++    node_opencv::Matrix() {
+   mat = cv::Mat(rows, cols, type);
+ }
+ 
+ Matrix::Matrix(cv::Mat m, cv::Rect roi) :
+-    Nan::ObjectWrap() {
++    node_opencv::Matrix() {
+   mat = cv::Mat(m, roi);
+ }
+ 
+diff --git a/src/Matrix.h b/src/Matrix.h
+index b26046f..5669b4f 100755
+--- a/src/Matrix.h
++++ b/src/Matrix.h
+@@ -1,9 +1,9 @@
++
+ #include "OpenCV.h"
++#include "../inc/Matrix.h"
+ 
+-class Matrix: public Nan::ObjectWrap {
++class Matrix: public node_opencv::Matrix{
+ public:
+-
+-  cv::Mat mat;
+   static Nan::Persistent<FunctionTemplate> constructor;
+   static void Init(Local<Object> target);
+   static NAN_METHOD(New);

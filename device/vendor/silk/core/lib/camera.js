@@ -194,6 +194,8 @@ class CameraStream extends EventEmitter {
     this._recording = false;
     this._cvVideoCapture = null;
     this._cvVideoCaptureBusy = false;
+    this._ctlSocket = null;
+    this._dataSocket = null;
     this._queue = []; // Queue of pending preview frame requests
     this._motion = true;
 
@@ -651,11 +653,17 @@ class CameraStream extends EventEmitter {
    * @private
    */
   _command(cmd) {
+    if (this._ctlSocket === null) {
+      log.warn(`Null ctlSocket, ignoring ${cmd}`);
+      return false;
+    }
+
     // Camera socket expects the command data in the following format
     let event = JSON.stringify(cmd) + '\0';
 
     this._ctlSocket.write(event);
     log.verbose(`camera << ${event}`);
+    return true;
   }
 
   /**
@@ -751,10 +759,17 @@ class CameraStream extends EventEmitter {
       throw new Error(`camera not ready, ignoring getParameterInt command`);
     }
 
+    if (!this._command({cmdName: 'getParameterInt', name})) {
+      if (process.platform !== 'android') {
+        if (name === 'max-num-detected-faces-hw') {
+          return 0;
+        }
+      }
+      throw new Error('Unable to issue command');
+    }
     let getParamPromise = new Promise((resolve, reject) => {
       this._getParameterCallback = { resolve, reject };
     });
-    this._command({cmdName: 'getParameterInt', name});
     return await getParamPromise;
   }
 
@@ -773,10 +788,12 @@ class CameraStream extends EventEmitter {
       throw new Error(`camera not ready, ignoring getParameterStr command`);
     }
 
+    if (!this._command({cmdName: 'getParameterStr', name})) {
+      throw new Error('Unable to issue command');
+    }
     let getParamPromise = new Promise((resolve, reject) => {
       this._getParameterCallback = { resolve, reject };
     });
-    this._command({cmdName: 'getParameterStr', name});
     return await getParamPromise;
   }
 

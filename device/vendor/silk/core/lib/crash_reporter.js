@@ -414,6 +414,8 @@ export class CrashReporter {
         raygunMessage = raygun.buildMessage(null, {version});
         raygunMessage.details.error = await CrashReporter._tombstoneToRaygunError(tombstonePath);
       } catch (err) {
+        log.warn(`Failed to parse '${tombstonePath}'`, err);
+
         // If _tombstoneToRaygunError fails, report the failure to raygun
         raygunMessage = raygun.buildMessage(err, {version});
       }
@@ -469,12 +471,13 @@ export class CrashReporter {
     ]);
   }
 
-  async reportJSError(error, type, readable, readableSize) {
+  async reportJSError(error, type, readable, readableSize, customData = { }) {
     if (this.doUploads) {
-      let raygunMessage = raygun.buildMessage(error, {
+      customData = Object.assign({
         jsErrorType: type,
         version,
-      });
+      }, customData);
+      const raygunMessage = raygun.buildMessage(error, customData);
 
       let operation = new CrashReportOp({
         size: readableSize,

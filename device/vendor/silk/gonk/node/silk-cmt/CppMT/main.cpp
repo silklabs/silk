@@ -64,14 +64,22 @@ int display(Mat im, CMT & cmt)
     //It is ok to draw on im itself, as CMT only uses the grayscale image
     for(size_t i = 0; i < cmt.points_active.size(); i++)
     {
-        circle(im, cmt.points_active[i], 2, Scalar(255,0,0));
+        circle(im, cmt.points_active[i], 2, Scalar(0, 255, 0));
     }
 
+    Scalar color;
+    if (cmt.confidence < 0.3) {
+      color = Scalar(0, 0, 255);
+    } else if (cmt.confidence < 0.4) {
+      color = Scalar(0, 255, 255);
+    } else {
+      color = Scalar(255, 0, 0);
+    }
     Point2f vertices[4];
     cmt.bb_rot.points(vertices);
     for (int i = 0; i < 4; i++)
     {
-        line(im, vertices[i], vertices[(i+1)%4], Scalar(255,0,0));
+        line(im, vertices[i], vertices[(i+1)%4], color);
     }
 
     imshow(WIN_NAME, im);
@@ -444,6 +452,7 @@ int main(int argc, char **argv)
         {
             //TODO: Provide meaningful output
             FILE_LOG(logINFO) << "#" << frame << " active: " << cmt.points_active.size();
+            FILE_LOG(logINFO) << "confidence: " << cmt.confidence;
         }
 
         //Display image and then quit if requested.

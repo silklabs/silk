@@ -7,27 +7,27 @@ import com.facebook.react.bridge.ReactMethod;
 
 public class AppCrypto extends ReactContextBaseJavaModule {
 
-    public AppCrypto(ReactApplicationContext reactContext) {
-        super(reactContext);
-    }
+  public AppCrypto(ReactApplicationContext reactContext) {
+    super(reactContext);
+  }
 
-    @Override
-    public String getName() {
-        return "AppCrypto";
-    }
+  @Override
+  public String getName() {
+    return "AppCrypto";
+  }
 
-    @ReactMethod
-    public void PBKDF2KeyDerivation(
-        String input,
-        String salt,
-        int rounds,
-        Callback callback) {
-        // TODO
-    }
+  @ReactMethod
+  public void PBKDF2KeyDerivation(
+    String input,
+    String salt,
+    int rounds,
+    Callback callback) {
+    // TODO
+  }
 
-    @ReactMethod
-    public void getRandomBytes(int length, Callback callback) {
-        // TODO
-    }
+  @ReactMethod
+  public void getRandomBytes(int length, Callback callback) {
+    // TODO
+  }
 
 }

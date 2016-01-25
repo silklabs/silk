@@ -64,7 +64,7 @@ function drainLogcat(destination) {
 }
 
 export async function buildJSTombstone(type, err) {
-  let stream = new Store();
+  const stream = new Store();
   const header = tombstoneHeader(type, err);
   stream.write(header);
   drainLogcat(stream);
@@ -73,26 +73,34 @@ export async function buildJSTombstone(type, err) {
 }
 
 export default function(crashreporter) {
-  process.on('uncaughtException', async (err) => {
-    log.info('uncaughtException', err);
+  const handleError = async (type, err) => {
+    log.info(type, err.stack);
     try {
-      let stream = await buildJSTombstone('uncaughtException', err);
-      await crashreporter.reportJSError(err, 'uncaughtException', stream, stream.getStoreSize());
+      const stream = await buildJSTombstone(type, err);
+      return crashreporter.reportJSError(err,
+                                         type,
+                                         stream,
+                                         stream.getStoreSize());
     } catch (ex) {
-      log.error('Failed to report uncaughtException', ex.stack);
-    }
-  });
+      log.error('Failed to report ${type}', ex);
 
-  process.on('unhandledRejection', async (err) => {
-    log.info('unhandledRejection', err);
-    try {
-      if (!err) {
-        err = new Error(`Unhandled rejection without an error...`);
+      try {
+        const stream2 = await buildJSTombstone(type, ex);
+        return crashreporter.reportJSError(ex,
+                                           'uncaughtException',
+                                           stream2,
+                                           stream2.getStoreSize(),
+                                           { failedStack: err.stack }
+                                          );
+      } catch(ex2) {
+        log.error('Failed to report exception while reporting ${type}', ex2);
       }
-      let stream = await buildJSTombstone('unhandledRejection', err);
-      await crashreporter.reportJSError(err, 'unhandledRejection', stream, stream.getStoreSize());
-    } catch (ex) {
-      log.error('Failed to report unhandledRejection', ex.stack);
     }
-  });
+  };
+
+  process.on('uncaughtException',
+             async (err) => handleError('uncaughtException', err));
+
+  process.on('unhandledRejection',
+             async (err) => handleError('unhandledRejection', err));
 }

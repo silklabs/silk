@@ -187,7 +187,7 @@ export default class SocketScanner extends EventEmitter {
     }
 
     if (this._connectionQueue.length &&
-        this._connectionsInProgress.length <= MAX_SIMULTANEOUS_CONNECTIONS) {
+        this._connectionsInProgress.length < MAX_SIMULTANEOUS_CONNECTIONS) {
       this._attemptMoreConnections();
     }
   };
@@ -403,7 +403,7 @@ export default class SocketScanner extends EventEmitter {
       return;
     }
 
-    if (this._connectionsInProgress.length > MAX_SIMULTANEOUS_CONNECTIONS) {
+    if (this._connectionsInProgress.length >= MAX_SIMULTANEOUS_CONNECTIONS) {
       log.info(`Reached maximum number of simultaneous connections`);
       return;
     }

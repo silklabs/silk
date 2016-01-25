@@ -72,7 +72,7 @@ export default class Say extends events.EventEmitter {
 
       initializePromise = new Promise((resolve, reject) => {
         this.once('initialize', () => {
-          log.verbose(`Received event intialize`);
+          log.verbose(`Received event initialize`);
           this.removeAllListeners('error');
           resolve();
         });
@@ -85,7 +85,7 @@ export default class Say extends events.EventEmitter {
       });
     }
 
-    return initializePromise.then((resolve, reject) => {
+    let ttsPromise = new Promise((resolve, reject) => {
       this.once('done', () => {
         this.removeAllListeners('error');
         resolve();
@@ -95,9 +95,10 @@ export default class Say extends events.EventEmitter {
         reject(msg);
       });
       this._command({cmdName: 'speak', text});
-    })
-    .catch(msg => {
-      throw new Error(msg);
+    });
+
+    return initializePromise.then(() => {
+      return ttsPromise;
     });
   }
 

@@ -39,8 +39,10 @@ ${formatError(err)}
 `;
 }
 
-async function drainLogcat(destination) {
+function drainLogcat(destination) {
   try {
+    const start = Date.now();
+
     // -d will drain the current log without tailing.
     // TODO: These logs would be way nicer if they where in descending order
     // rather then ascending.
@@ -48,14 +50,14 @@ async function drainLogcat(destination) {
     proc.on('error', err => {
       log.warn(`drainLogcat() failed: ${err.stack}`);
     });
-    let start = Date.now();
     log.info('draining logcat...');
     proc.stdout.pipe(destination);
 
     // Unlike elsewhere we simply wait for `finish` (all the data has been
     // drained).
-    await eventToPromise(proc.stdout, 'finish');
-    log.verbose(`Took ${Date.now() - start}ms to drain logcat`);
+    proc.stdout.once('finish', () => {
+      log.verbose(`Took ${Date.now() - start}ms to drain logcat`);
+    });
   } catch (err) {
     log.warn(`Failed to drain logcat: ${err.stack || err}`);
   }
@@ -64,9 +66,9 @@ async function drainLogcat(destination) {
 export async function buildJSTombstone(type, err) {
   let stream = new Store();
   const header = tombstoneHeader(type, err);
-  log.error(header);
   stream.write(header);
-  await drainLogcat(stream);
+  drainLogcat(stream);
+  await eventToPromise(stream, 'finish');
   return stream;
 }
 

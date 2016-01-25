@@ -13,25 +13,32 @@ import streams from 'stream';
  */
 export default class StoringStream extends streams.Duplex {
   _writes = []
+  _size = 0
 
   constructor(...args) {
     super(...args);
     this.once('finish', () => {
-      this.emit('close');
+      process.nextTick(() => this.emit('close'));
     });
   }
 
   _write(chunk, enc, callback) {
     this._writes.push(chunk);
+    this._size += chunk.length;
     callback();
   }
 
   _read() {
     let write = this._writes.shift();
-    this.push(write ? write : null);
+    if (write) {
+      this._size -= write.length;
+      this.push(write);
+    } else {
+      this.push(null);
+    }
   }
 
   getStoreSize() {
-    return this._writes.reduce((size, item) => size + item.length, 0);
+    return this._size;
   }
 }

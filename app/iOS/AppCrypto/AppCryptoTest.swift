@@ -7,12 +7,15 @@ class AppCryptoTest: XCTestCase {
   func testAppCrypto() {
     let subject = AppCrypto()
     var result: [UInt8] = []
-    subject.getRandomBytes(32, callback: {
+    subject.getRandomBytes(32, resolver: {
       (value) in
-      let numbers = value[0] as! [NSNumber]
+      let numbers = value as! [NSNumber]
       for number in numbers {
         result.append(number.unsignedCharValue)
       }
+    }, rejecter: {
+      (error) in
+      XCTAssert(false, "getRandomBytes should not fail!")
     })
     XCTAssert(result.count == 32, "Returns right number of bytes")
   }
@@ -26,9 +29,12 @@ class AppCryptoTest: XCTestCase {
     let rounds = 64000
     var out: String = ""
 
-    subject.PBKDF2KeyDerivation(password, salt: salt, rounds: rounds, callback: {
+    subject.pbkdf2KeyDerivation(password, salt: salt, rounds: rounds, resolver: {
       (value) in
-      out = value[0] as! String
+      out = value as! String
+    }, rejecter: {
+      (error) in
+      XCTAssert(false, "getRandomBytes should not fail!")
     })
 
     // https://github.com/silklabs/silk-server/blob/337920132ce6b9712bb5fa50e08811151f8ec906/src/api/dev_account.js#L15

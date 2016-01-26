@@ -26,7 +26,7 @@ export default class TopBar extends React.Component {
             <TouchableOpacity onPress={this._openSettings}>
               <View style={styles.settings}>
                 <Image
-                  source={require('image!Menu')}
+                  source={require('image!menu')}
                   style={styles.icon}
                 />
               </View>
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
   },
   icon: {
     // TODO: shouldn't have to specify this?
-    width: 24,
-    height: 24,
+    width: 25,
+    height: 25,
   },
   spacer: {
     flex: 1,

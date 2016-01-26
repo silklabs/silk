@@ -209,7 +209,7 @@ export default class HttpClient {
     headDetails += `status=${res.status} `;
     headDetails += `length=${res.headers.get('content-length')} `;
     headDetails += `duration=${Date.now() - start}ms`;
-    this._log(`Headers (${id}) ${method} ${absURL} [${headDetails}]`);
+    this._log(`Response Headers (${id}) ${method} ${absURL} [${headDetails}]`);
 
     if (!res.ok) {
       await throwError(res);

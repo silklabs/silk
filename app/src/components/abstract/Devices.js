@@ -11,7 +11,7 @@ import AsyncComponent from './AsyncComponent';
 
 const log = createLog('Devices');
 const {
-  AlertIOS,
+  Alert,
   InteractionManager,
   NativeModules,
 } = React;
@@ -459,7 +459,7 @@ export default class Devices extends AsyncComponent {
   }
 
   _showConfigError() {
-    AlertIOS.alert(
+    Alert.alert(
       'Error Configuring Device',
       'The device could not be configured. Ensure that it is turned on and nearby.'
     );

@@ -16,7 +16,7 @@ import LoginMetric from '../../metrics/Login';
 const log = createLog('NotLoggedIn');
 
 const {
-  AlertIOS,
+  Alert,
   DeviceEventEmitter,
   LayoutAnimation,
   Navigator,
@@ -171,7 +171,7 @@ export default class NotLoggedIn extends AsyncComponent {
     } catch (err) {
       log.info('Failed to sign up', err);
     }
-    AlertIOS.alert(
+    Alert.alert(
       'Error',
       'Something went wrong. Please try again.'
     );
@@ -233,13 +233,13 @@ export default class NotLoggedIn extends AsyncComponent {
         this.props.api.accountMetrics.add(new LoginMetric());
         return;
       }
-      AlertIOS.alert(
+      Alert.alert(
         'Error',
         'Invalid username or password. Please try again'
       );
     } catch (err) {
       log.info('Failed to sign in', err);
-      AlertIOS.alert(
+      Alert.alert(
         'Error',
         'Could not connect to server. Please try again.'
       );
@@ -271,7 +271,7 @@ export default class NotLoggedIn extends AsyncComponent {
       }
     } finally {
       this.setStateAsync({ inProgress: false });
-      AlertIOS.alert(title, message);
+      Alert.alert(title, message);
     }
   };
 

@@ -12,7 +12,7 @@ import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 const {
   ActionSheetIOS,
   ActivityIndicatorIOS,
-  AlertIOS,
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -349,7 +349,7 @@ export default class MonitorPreview extends SocketIOComponent {
       try {
         await this.context.silkDevices.unregisterDevice(this.props.deviceId);
       } catch(ex) {
-        AlertIOS.alert(
+        Alert.alert(
           'Error Unregistering Device',
           'The device could not be unregistered. Please try again.'
         );

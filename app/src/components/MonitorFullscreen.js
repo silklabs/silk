@@ -1,10 +1,15 @@
 import React from 'react-native';
 import uuid from 'uuid';
+import { MetricTypes } from 'silk-api';
 import createLog from 'silk-log';
 
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 import Config from '../libraries/Config';
 import * as DateUtil from '../libraries/DateUtil';
+
+import FullScreenVideoLaunch from '../metrics/FullScreenVideoLaunch';
+import FullScreenVideoDuration from '../metrics/FullScreenVideoDuration';
+import * as VideoMetrics from '../metrics/Video';
 
 import LiveVideo from './LiveVideo';
 import OverlayModal from './OverlayModal';
@@ -12,16 +17,11 @@ import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import DateOverlay from './DateOverlay';
 
-import {MetricTypes} from 'silk-api';
-import FullScreenVideoLaunch from '../metrics/FullScreenVideoLaunch';
-import FullScreenVideoDuration from '../metrics/FullScreenVideoDuration';
-import * as VideoMetrics from '../metrics/Video';
-
 const log = createLog('MonitorFullscreen');
 
 const {
   ActivityIndicatorIOS,
-  AlertIOS,
+  Alert,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -573,7 +573,7 @@ export default class MonitorFullscreen extends React.Component {
     }, (err) => {
       log.info('Could not buffer next recorded segment: ', err);
       this.close().then(() => {
-        AlertIOS.alert(
+        Alert.alert(
           'Video Playback Failed',
           'Could not fetch video data.'
         );
@@ -700,7 +700,7 @@ export default class MonitorFullscreen extends React.Component {
       }
 
       this.close().then(() => {
-        AlertIOS.alert(
+        Alert.alert(
           'Recorded Video Unavailable',
           'Could not find recorded video for the specified time.'
         );

@@ -7,6 +7,7 @@
 /* eslint-disable no-console */
 
 import createLog from 'silk-log';
+import invariant from 'assert';
 import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('device');
@@ -76,7 +77,8 @@ export default class Device {
     let stdout = await this.adb.shell(['getprop', 'wifi.interface']);
     let iface = stdout.replace(/\r?\n$/, '');
 
-    let wpaCli = async (args, expectRegex = /(.*)/) => {
+    let wpaCli = async (args, expectRegex) => {
+      invariant(expectRegex);
       args = ['wpa_cli', `-i${iface}`, `IFNAME=${iface}`].concat(args);
 
       let stdout = await this.adb.shell(args);

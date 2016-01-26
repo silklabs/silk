@@ -16,6 +16,8 @@ import Devices from '../server/models/devices';
 import Accounts from '../server/models/accounts';
 import Nonce from '../server/models/nonce';
 import AccountRoom from './account_room';
+import InfluxDB from '../influxdb_client';
+import MetricsAgent from '../metrics_agent';
 
 import type {Socket, Manager} from 'socket.io';
 
@@ -24,7 +26,9 @@ export type RouteContext = {
   nonce: Nonce;
   accounts: Accounts;
   io: Manager;
-}
+  influxdb: ?InfluxDB;
+  metricsAgent: MetricsAgent;
+};
 
 export type EventHandlers = {
   [key: string]: (...any: any) => Promise<any>
@@ -46,7 +50,23 @@ export default async function main (config: any): any {
   let nonce = new Nonce(db);
   let devices = new Devices(db);
   let accounts = new Accounts(db);
-  let ctx: RouteContext = { nonce, devices, accounts, io };
+
+  let metricsAgent = new MetricsAgent();
+
+  let influxdb = null;
+  if (config.metrics.influxdb.connectionString) {
+    influxdb = new InfluxDB(config.metrics.influxdb.connectionString);
+    metricsAgent.start(influxdb);
+  }
+
+  const ctx: RouteContext = {
+    nonce,
+    devices,
+    accounts,
+    io,
+    influxdb,
+    metricsAgent,
+  };
   let rooms: Map<string, AccountRoom> = new Map();
 
   function signatureProvider(req: any): ?string {

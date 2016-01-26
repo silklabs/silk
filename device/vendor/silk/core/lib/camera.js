@@ -6,6 +6,7 @@
  * @private
  */
 
+import invariant from 'assert';
 import createLog from './log';
 import { EventEmitter } from 'events';
 import * as util from './sysutils';
@@ -14,6 +15,7 @@ import cv from 'opencv';
 import CBuffer from 'CBuffer';
 import api from './api';
 import CameraRestart from './metrics/camera_restart';
+import * as VideoMetrics from './metrics/video';
 
 /**
  * Type representing the camera preview frame callback
@@ -605,6 +607,7 @@ class CameraStream extends EventEmitter {
         break; // Incomplete packet received
       }
       let tag = buf.readInt32LE(pos + 4);
+      let now = tag === TAG_VIDEO ? Date.now() : null;
       let sec = buf.readInt32LE(pos + 8);   // timeval.tv_sec
       let usec = buf.readInt32LE(pos + 12); // timeval.tv_usec
       let durationMs = buf.readInt32LE(pos + 16);
@@ -620,6 +623,18 @@ class CameraStream extends EventEmitter {
         if (this._recording) {
           this.timeline.addVideo(when, durationMs, pkt);
         }
+
+        invariant(now);
+        let socketDuration = now - when - durationMs;
+
+        // This seems really unlikely but if the clock isn't perfect...
+        if (socketDuration < 0) {
+          log.warn(`Bad socketDuration: ${socketDuration}`);
+          socketDuration = 0;
+        }
+
+        api.deviceMetrics.add(new VideoMetrics.Record(durationMs));
+        api.deviceMetrics.add(new VideoMetrics.CaptureToNode(socketDuration));
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`, tagInfo);

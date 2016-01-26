@@ -11,6 +11,7 @@ import invariant from 'assert';
 import api from './api';
 import events from 'events';
 import createLog from './log';
+import * as VideoMetrics from './metrics/video';
 
 import type { Socket } from 'silk-socket.io-client-node';
 
@@ -226,7 +227,9 @@ export default class Server extends events.EventEmitter {
           if (this.pendingAcks[ackType] < 0) {
             throw new Error(`pending acks for ${ackType} < 0`);
           }
-          log.info(`ack in ${Date.now() - queued}ms for ${str}`);
+          const networkDuration = Date.now() - queued;
+          log.info(`ack in ${networkDuration}ms for ${str}`);
+          api.deviceMetrics.add(new VideoMetrics.Network(networkDuration));
         }
       );
       this.pendingAcks[ackType] += 1;
@@ -245,6 +248,7 @@ export default class Server extends events.EventEmitter {
         // Note to clients that the device decided to drop this
         // segment.
         this._meter('deviceDrop', segmentId);
+        api.deviceMetrics.add(new VideoMetrics.Dropped());
       }
     }
   }

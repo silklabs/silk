@@ -8,11 +8,12 @@ import {
   DEVICE_ONLINE_EVENT,
   DEVICE_OFFLINE_EVENT,
 } from '../account_room';
+import * as VideoMetrics from '../../metrics/video';
 
 import type {default as AccountRoom, DeviceInfo} from '../account_room';
 import type {Record as DeviceRecord} from '../../server/models/devices';
 import type {Socket} from 'socket.io';
-import type {EventHandlers} from '../server';
+import type {EventHandlers, RouteContext} from '../server';
 
 const log = createLog('socketio:routes:device');
 
@@ -38,22 +39,31 @@ export function deviceRoom(deviceId: string, name: string): string {
   return `${name}-${deviceId}`;
 }
 
-export default function(session: Session): EventHandlers {
+export default function(session: Session, ctx: RouteContext): EventHandlers {
 
   const deviceId = session.publicKey;
 
-  function sendToDeviceRoom(roomType, msg) {
+  function ensureValidDevice() {
     let device = session.room.devices.get(deviceId);
     if (!device) {
       log.error(`Disconnecting bad device ("info" packet expected first): ` +
                 `io=${session.socket.id} id=${deviceId}`);
       session.socket.disconnect(false);
+      return null;
+    }
+    return device;
+  }
+
+  function sendToDeviceRoom(roomType, msg, device = null, received = 0) {
+    received = received || Date.now();
+    device = device || ensureValidDevice();
+    if (!device) {
       return;
     }
     let room = deviceRoom(deviceId, roomType);
-    let lag = '';
+    let lag = ``;
     if (msg.when) {
-      lag = `lag=${Date.now() - msg.when - device.timeOffset}ms`;
+      lag = `lag=${received - msg.when - device.timeOffset}ms`;
     }
     log.verbose(`io=${session.socket.id} dest:${room} ${lag}`);
 
@@ -97,7 +107,23 @@ export default function(session: Session): EventHandlers {
         sendToDeviceRoom('preview', video);
         break;
       case 'mp4':
-        sendToDeviceRoom('video', video);
+        const received = Date.now();
+        const device = ensureValidDevice();
+        if (!device) {
+          return;
+        }
+        sendToDeviceRoom('video', video, device, received);
+
+        let networkDuration = received - video.deviceEmitMs - device.timeOffset;
+
+        // This seems really unlikely but if the clock isn't perfect...
+        if (networkDuration < 0) {
+          log.warn(`Bad networkDuration: ${networkDuration}`);
+          networkDuration = 0;
+        }
+
+        ctx.metricsAgent.add(new VideoMetrics.Network(networkDuration));
+
         break;
       default:
         log.error(`Unknown video type ${video.contents}`);

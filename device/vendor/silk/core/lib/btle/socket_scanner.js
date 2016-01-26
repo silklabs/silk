@@ -63,6 +63,7 @@ export default class SocketScanner extends EventEmitter {
   _timeout: ?number = null;
   _blackList: Set<string> = new Set();
   _skipList: Set<string> = new Set();
+  _toggled: boolean = false;
 
   _connectionQueue: Array<ConnectionInfo> = [];
   _connectionMap: Map<string, ConnectionInfo> = new Map();
@@ -228,6 +229,8 @@ export default class SocketScanner extends EventEmitter {
       return;
     }
 
+    invariant(!this._toggled);
+
     this._scanPromise = this._nobleStartScan();
     await this._scanPromise;
 
@@ -258,8 +261,12 @@ export default class SocketScanner extends EventEmitter {
     clearTimeout(this._timeout);
     this._timeout = null;
 
-    this._scanPromise = this._nobleStopScan();
-    await this._scanPromise;
+    if (this._toggled) {
+      this._toggled = false;
+    } else {
+      this._scanPromise = this._nobleStopScan();
+      await this._scanPromise;
+    }
 
     log.debug(`Scan stopped`);
   }
@@ -276,6 +283,9 @@ export default class SocketScanner extends EventEmitter {
 
     const timeoutOff = this._timeout;
     invariant(timeoutOff);
+
+    invariant(!this._toggled);
+    this._toggled = true;
 
     log.debug(`Toggling scan off`);
     await this._nobleStopScan();
@@ -306,6 +316,9 @@ export default class SocketScanner extends EventEmitter {
 
       const timeoutOn = this._timeout;
       invariant(timeoutOn);
+
+      invariant(this._toggled);
+      this._toggled = false;
 
       log.debug(`Toggling scan on`);
       await this._nobleStartScan();
@@ -574,32 +587,30 @@ export default class SocketScanner extends EventEmitter {
   async start(): Promise<void> {
     log.debug('start()');
 
-    if (!this._enabled) {
-      this._enabled = true;
-      log.info(`Starting scan for socket service '${this._serviceUuid}'`);
-      await this._startScan();
+    if (this._enabled) {
+      return;
     }
+    this._enabled = true;
+
+    log.info(`Starting scan for socket service '${this._serviceUuid}'`);
+    await this._startScan();
   }
 
   async stop(): Promise<void> {
     log.debug('stop()');
 
-    if (this._enabled) {
-      this._enabled = false;
-
-      log.info(`Stopping scan`);
-      await this._stopScan();
-
-      this._blackList.clear();
-      this._connectionQueue = [];
-      this._connectionMap.clear();
-      this._connectionsInProgress = [];
-    } else {
-      invariant(!this._blackList.size);
-      invariant(!this._connectionQueue.length);
-      invariant(!this._connectionMap.size);
-      invariant(!this._connectionsInProgress.length);
+    if (!this._enabled) {
+      return;
     }
+    this._enabled = false;
+
+    log.info(`Stopping scan`);
+    await this._stopScan();
+
+    this._blackList.clear();
+    this._connectionQueue = [];
+    this._connectionMap.clear();
+    this._connectionsInProgress = [];
   }
 
   addToSkipList(peripheral: Peripheral): void {

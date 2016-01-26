@@ -47,12 +47,14 @@ void Matcher::matchGlobal(const vector<KeyPoint> & keypoints, const Mat descript
 
     if (keypoints.size() == 0)
     {
-        FILE_LOG(logDEBUG) << "Matcher::matchGlobal() return";
+        FILE_LOG(logDEBUG) << "Matcher::matchGlobal() return (size=0)";
         return;
     }
 
     vector<vector<DMatch> > matches;
     bfmatcher->knnMatch(descriptors, database, matches, 2);
+
+    FILE_LOG(logDEBUG) << "Matcher::matchGlobal() post knnMatch. keypoints=" << keypoints.size() << ", matches=" << matches.size();
 
     for (size_t i = 0; i < matches.size(); i++)
     {

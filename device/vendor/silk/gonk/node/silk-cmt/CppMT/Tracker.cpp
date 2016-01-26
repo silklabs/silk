@@ -16,12 +16,16 @@ void Tracker::track(const Mat im_prev, const Mat im_gray, const vector<Point2f> 
         //Calculate forward optical flow for prev_location
         calcOpticalFlowPyrLK(im_prev, im_gray, points_prev, points_tracked, status, err);
 
+        FILE_LOG(logDEBUG) << "Tracker::track() done forward optical flow";
+
         vector<Point2f> points_back;
         vector<unsigned char> status_back;
         vector<float> err_back; //Needs to be float
 
         //Calculate backward optical flow for prev_location
         calcOpticalFlowPyrLK(im_gray, im_prev, points_tracked, points_back, status_back, err_back);
+
+        FILE_LOG(logDEBUG) << "Tracker::track() done backward optical flow";
 
         //Traverse vector backward so we can remove points on the fly
         for (int i = points_prev.size()-1; i >= 0; i--)

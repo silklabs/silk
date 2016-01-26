@@ -10,18 +10,17 @@
     "lint": "eslint build lib",
     "postinstall": "../npm_postinstall",
     "preinstall": "../npm_preinstall",
-    "test": "npm run lint && ./silk"
+    "test": "npm run lint"
   },
   "dependencies": {
     "babel-eslint": "^4.1.6",
-    "babel-plugin-transform-es2015-object-super": "6.3.13",
-    "babel-plugin-transform-runtime": "6.3.13",
-    "babel-preset-es2015": "6.3.13",
-    "babel-preset-es2015-node4": "2.0.2",
-    "babel-preset-react": "6.3.13",
-    "babel-preset-stage-0": "6.3.13",
-    "babel-register": "6.3.13",
-    "babel-runtime": "6.3.13",
+    "babel-plugin-transform-es2015-object-super": "^6.4.0",
+    "babel-plugin-transform-runtime": "^6.4.3",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-react": "^6.3.13",
+    "babel-preset-stage-0": "^6.3.13",
+    "babel-register": "^6.4.3",
+    "babel-runtime": "^6.3.19",
     "event-to-promise": "^0.6.0",
     "mz": "^2.0.0",
     "tmp": "^0.0.28"

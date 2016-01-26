@@ -51,6 +51,7 @@ export default class Stream extends Duplex {
 
   _disconnected: boolean = false;
   _subscribed: boolean = false;
+  _subscribedChanging: boolean = false;
 
   _readTimeout: ?number = null;
   _readAckTimeout: ?number = null;
@@ -216,6 +217,9 @@ export default class Stream extends Duplex {
   _enableNotifications() {
     log.debug(`Stream._enableNotifications()`);
 
+    invariant(!this._subscribed);
+    invariant(!this._subscribedChanging);
+
     const eventName = `notify`;
 
     let listener;
@@ -228,6 +232,8 @@ export default class Stream extends Duplex {
       if (this._disconnectHandler === disconnectHandler) {
         this._disconnectHandler = null;
       }
+      invariant(this._subscribedChanging);
+      this._subscribedChanging = false;
     };
 
     listener = (state) => {
@@ -269,6 +275,7 @@ export default class Stream extends Duplex {
     this._readCharacteristic.addListener(eventName, listener);
     this._disconnectHandler = disconnectHandler;
 
+    this._subscribedChanging = true;
     this._readCharacteristic.notify(true);
   }
 
@@ -278,10 +285,14 @@ export default class Stream extends Duplex {
     invariant(!this._disconnected);
 
     if (!this._subscribed) {
+      log.debug(`Already unsubscribed`);
       return;
     }
 
-    this._subscribed = false;
+    if (this._subscribedChanging) {
+      log.debug(`Already unsubscribing`);
+      return;
+    }
 
     this._readCharacteristic.removeListener(`data`, this._onData);
     clearTimeout(this._readTimeout);
@@ -303,6 +314,12 @@ export default class Stream extends Duplex {
         this._disconnectHandler = null;
       }
 
+      invariant(this._subscribed);
+      invariant(this._subscribedChanging);
+
+      this._subscribed = false;
+      this._subscribedChanging = false;
+
       this.emit(`finish`);
       this.push(null);
     };
@@ -318,8 +335,12 @@ export default class Stream extends Duplex {
     }, TIMEOUT_MS);
 
     this._readCharacteristic.addListener(eventName, listener);
-    this._disconnectHandler = finish;
+    this._disconnectHandler = () => {
+      log.warn(`Disconnected while disabling notifications`);
+      finish();
+    };
 
+    this._subscribedChanging = true;
     this._readCharacteristic.notify(false);
   }
 
@@ -432,8 +453,6 @@ export default class Stream extends Duplex {
     invariant(!this._disconnected);
     this._disconnected = true;
 
-    this._subscribed = false;
-
     clearTimeout(this._readTimeout);
     this._readTimeout = null;
 
@@ -447,6 +466,9 @@ export default class Stream extends Duplex {
       this._disconnectHandler();
       this._disconnectHandler = null;
     }
+
+    this._subscribed = false;
+    this._subscribedChanging = false;
 
     if (this._finished) {
       invariant(this._ended);

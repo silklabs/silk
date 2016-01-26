@@ -92,6 +92,7 @@ export default class SocketScanner extends EventEmitter {
   }
 
   async _waitForEventWithTimeout(
+    peripheral: ?Peripheral,
     emitter: EventEmitter,
     eventName: string,
     start: () => void,
@@ -99,24 +100,43 @@ export default class SocketScanner extends EventEmitter {
     errorString: string
   ): Promise<any> {
     return await new Promise((resolve, reject) => {
-      let timeout = null;
+      let disconnectListener;
+      let eventListener;
+      let timeout;
 
-      const listener = results => {
+      const disconnectName = `disconnect`;
+
+      const cleanup = () => {
         if (timeout) {
           clearTimeout(timeout);
           timeout = null;
         }
-        emitter.removeListener(eventName, listener);
+        if (peripheral) {
+          peripheral.removeListener(disconnectName, disconnectListener);
+        }
+        emitter.removeListener(eventName, eventListener);
+      };
+
+      disconnectListener = () => {
+        cleanup();
+        reject(new Error(`Peripheral disconnected while ${errorString}`));
+      };
+
+      eventListener = results => {
+        cleanup();
         resolve(results);
       };
 
       timeout = setTimeout(() => {
+        cleanup();
         stop();
-        emitter.removeListener(eventName, listener);
-        reject(new Error(errorString));
+        reject(new Error(`Timed out while ${errorString}`));
       }, DEFAULT_CONNECTION_TIMEOUT_MS);
 
-      emitter.addListener(eventName, listener);
+      if (peripheral) {
+        peripheral.addListener(disconnectName, disconnectListener);
+      }
+      emitter.addListener(eventName, eventListener);
       start();
     });
   }
@@ -196,22 +216,24 @@ export default class SocketScanner extends EventEmitter {
   async _nobleStartScan(): Promise<void> {
     const noble = this._noble;
     return this._waitForEventWithTimeout(
+      null,
       noble,
       `scanStart`,
       () => noble.startScanning([], true),
       () => noble.stopScanning(),
-      `Timed out while starting scan`
+      `starting scan`
     );
   }
 
   async _nobleStopScan(): Promise<void> {
     const noble = this._noble;
     return this._waitForEventWithTimeout(
+      null,
       noble,
       `scanStop`,
       () => noble.stopScanning(),
       () => {},
-      `Timed out while stopping scan`
+      `stopping scan`
     );
   }
 
@@ -345,10 +367,11 @@ export default class SocketScanner extends EventEmitter {
 
     let error = await this._waitForEventWithTimeout(
       peripheral,
+      peripheral,
       `connect`,
       () => peripheral.connect(),
       () => peripheral.disconnect(),
-      `Timed out connecting to peripheral '${peripheral.uuid}'`
+      `connecting to peripheral '${peripheral.uuid}'`
     );
     if (error) {
       throw error;
@@ -360,10 +383,11 @@ export default class SocketScanner extends EventEmitter {
 
     return await this._waitForEventWithTimeout(
       peripheral,
+      peripheral,
       `servicesDiscover`,
       () => peripheral.discoverServices([ this._serviceUuid ]),
       () => peripheral.disconnect(),
-      `Timed out discovering services for peripheral '${peripheral.uuid}'`
+      `discovering services for peripheral '${peripheral.uuid}'`
     );
   }
 
@@ -375,6 +399,7 @@ export default class SocketScanner extends EventEmitter {
               `'${service.uuid}')`);
 
     return await this._waitForEventWithTimeout(
+      peripheral,
       service,
       `characteristicsDiscover`,
       () => service.discoverCharacteristics([
@@ -382,8 +407,7 @@ export default class SocketScanner extends EventEmitter {
         BTLE_SOCKET_UUIDS.write,
       ]),
       () => peripheral.disconnect(),
-      `Timed out discovering characteristics for peripheral ` +
-      `'${peripheral.uuid}'`
+      `discovering characteristics for peripheral '${peripheral.uuid}'`
     );
   }
 
@@ -395,11 +419,12 @@ export default class SocketScanner extends EventEmitter {
               `'${characteristic.uuid}')`);
 
     return await this._waitForEventWithTimeout(
+      peripheral,
       characteristic,
       `descriptorsDiscover`,
       () => characteristic.discoverDescriptors(),
       () => peripheral.disconnect(),
-      `Timed out discovering descriptors for peripheral '${peripheral.uuid}'`
+      `discovering descriptors for peripheral '${peripheral.uuid}'`
     );
   }
 

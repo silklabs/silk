@@ -1,14 +1,14 @@
-From 1794e011d5bef09c8cfe12727a2dae48d916bca4 Mon Sep 17 00:00:00 2001
+From 7af361c50d8d1b8b21149df92eacb73c9d819798 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Wed, 12 Aug 2015 12:54:57 -0700
 Subject: [PATCH] Add noble bindings for bledroid
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2834 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2848 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/noble.js            |    2 +
  package.json            |   13 +-
- 4 files changed, 2851 insertions(+), 4 deletions(-)
+ 4 files changed, 2865 insertions(+), 4 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..e32c4a7
+index 0000000..fd9a05c
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2834 @@
+@@ -0,0 +1,2848 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -706,22 +706,34 @@ index 0000000..e32c4a7
 +  var peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
 +    log.debug('Unknown peripheral \'%s\', ignoring', address);
++    assert(!this.peripheralMap.has(connectionId));
 +    return;
 +  }
 +
 +  var error;
 +  if (status) {
-+    if (peripheralInfo.connectionId) {
++    if (peripheralInfo.connectionId !== null) {
 +      this.peripheralMap.delete(peripheralInfo.connectionId);
 +    }
++    assert(!this.peripheralMap.has(connectionId));
 +
 +    peripheralInfo.interfaceId = null;
 +    peripheralInfo.connectionId = null;
 +
 +    error = new Error('Connection error: ' + status);
 +  } else {
-+    assert(!this.peripheralMap.has(connectionId),
-+           'Map already has an entry for connectionId ' + connectionId + '!');
++    if (peripheralInfo.connectionId !== null) {
++      assert(peripheralInfo.interfaceId === interfaceId);
++      assert(peripheralInfo.connectionId === connectionId);
++      assert(this.peripheralMap.get(connectionId) === peripheralInfo);
++
++      log.debug('Already connected to peripheral \'%s\', skipping duplicate ' +
++                'notification',
++                address);
++      return;
++    }
++
++    assert(!this.peripheralMap.has(connectionId));
 +    this.peripheralMap.set(connectionId, peripheralInfo);
 +
 +    peripheralInfo.interfaceId = interfaceId;
@@ -799,12 +811,14 @@ index 0000000..e32c4a7
 +  var peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
 +    log.debug('Unknown peripheral \'%s\', ignoring', address);
++    assert(!this.peripheralMap.has(connectionId));
 +    return;
 +  }
 +
 +  if (!peripheralInfo.connectionId) {
 +    log.debug('Peripheral \'%s\' is not currently connected',
 +              peripheralInfo.uuid);
++    assert(!this.peripheralMap.has(connectionId));
 +    return;
 +  }
 +

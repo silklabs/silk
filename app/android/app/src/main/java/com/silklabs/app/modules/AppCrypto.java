@@ -5,20 +5,23 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
+import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 import java.lang.StringBuilder;
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
+import java.io.UnsupportedEncodingException;
+import java.security.Security;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 
 public class AppCrypto extends ReactContextBaseJavaModule {
 
-  private static final String PBKDF2_ALGO = "PBKDF2WithHmacSHA256";
+  static {
+    Security.insertProviderAt(new BouncyCastleProvider(), 1);
+  }
+
+  //private static final String PBKDF2_ALGO = "PBKDF2WithHmacSHA256";
   private static final int PBKDF2_KEY_BITS = 256;
 
   public AppCrypto(ReactApplicationContext reactContext) {
@@ -36,18 +39,12 @@ public class AppCrypto extends ReactContextBaseJavaModule {
     String salt,
     int rounds,
     Promise promise) {
-    char[] inputChars = input.toCharArray(); // TODO: how does this deal with >ASCII chars?
-    byte[] saltBytes = salt.getBytes(StandardCharsets.UTF_8);
     byte[] keyBytes;
     try {
-      SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(PBKDF2_ALGO);
-      KeySpec keySpec = new PBEKeySpec(inputChars, saltBytes, rounds, PBKDF2_KEY_BITS);
-      SecretKey secretKey = secretKeyFactory.generateSecret(keySpec);
-      keyBytes = secretKey.getEncoded();
-    } catch (NoSuchAlgorithmException exception) {
-      promise.reject(exception);
-      return;
-    } catch (InvalidKeySpecException exception) {
+      PKCS5S2ParametersGenerator gen = new PKCS5S2ParametersGenerator(new SHA256Digest());
+      gen.init(input.getBytes("UTF-8"), salt.getBytes(), rounds);
+      keyBytes = ((KeyParameter) gen.generateDerivedParameters(PBKDF2_KEY_BITS)).getKey();
+    } catch (UnsupportedEncodingException exception) {
       promise.reject(exception);
       return;
     }

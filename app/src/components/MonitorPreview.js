@@ -8,10 +8,10 @@ import { shouldPureComponentUpdate, blobURI } from '../libraries/Util';
 import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
+import Spinner from './Spinner';
 
 const {
   ActionSheetIOS,
-  ActivityIndicatorIOS,
   Alert,
   Image,
   StyleSheet,
@@ -262,7 +262,7 @@ export default class MonitorPreview extends SocketIOComponent {
         </Text>
       );
     }
-    return <ActivityIndicatorIOS color="white" />;
+    return <Spinner color="white" />;
   }
 
   render() {

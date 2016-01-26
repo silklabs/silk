@@ -16,11 +16,11 @@ import OverlayModal from './OverlayModal';
 import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import DateOverlay from './DateOverlay';
+import Spinner from './Spinner';
 
 const log = createLog('MonitorFullscreen');
 
 const {
-  ActivityIndicatorIOS,
   Alert,
   StyleSheet,
   TouchableWithoutFeedback,
@@ -882,7 +882,7 @@ export default class MonitorFullscreen extends React.Component {
     if (this.state.videoSegments.length) {
       return <View />;
     }
-    return <ActivityIndicatorIOS color="white" />;
+    return <Spinner color="white" />;
   }
 
   close = () => {

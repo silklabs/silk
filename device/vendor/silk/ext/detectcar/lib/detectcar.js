@@ -18,7 +18,7 @@ let timeline;
 const REPORT_OBJECT_DIR = '/data/silk/opencv/';
 
 const cascade = {
-  tag: 'car', file: '/system/silk/media/opencv/hogcascade_cars_sideview.xml',
+  tag: 'car', file: 'system/silk/media/opencv/hogcascade_cars_sideview.xml',
   opts: {
     scale: 1.2,
     neighbors: 2,
@@ -46,6 +46,11 @@ function detectCars(im, when, cb) {
     } else {
       log.verbose(msg);
     }
+
+    rects.forEach(rect => {
+      const roi = im.roi(rect.x, rect.y, rect.width, rect.height);
+      timeline.addDiagFrame(cascade.tag, when, roi);
+    });
     cb({tag: cascade.tag, when, rects});
   });
 }

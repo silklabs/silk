@@ -52,7 +52,6 @@ function _detectMotion(when, image, motionZone, callback) {
   let xStop = image.width();
   let yStop = image.height();
 
-  timeline.addDiagFrame('bw', when, image);
 
   // Take a new image
   prevFrame = currentFrame;
@@ -62,8 +61,6 @@ function _detectMotion(when, image, motionZone, callback) {
   // Apply Gaussian smoothing to average pixel intensities due to tiny
   // variations in the digital camera sensor
   nextFrame.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
-
-  timeline.addDiagFrame('blur', when, nextFrame);
 
   // Check if at least three frames are available
   if (!prevFrame || !currentFrame) {
@@ -79,18 +76,15 @@ function _detectMotion(when, image, motionZone, callback) {
   motion = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
   motion.bitwiseAnd(d1, d2);
 
-  timeline.addDiagFrame('diff', when, motion);
-
   // Threshold the image, low differences are ignored (ex. contrast change due
   // to sunlight)
   motion = motion.threshold(THRESHOLD, MAX_THRESHOLD_VAL, 'Binary');
 
-  timeline.addDiagFrame('threshold', when, motion);
-
   // Dilate the thresholded image to fill in holes
   motion.dilate(NUM_ITERATIONS_DILATE);
 
-  timeline.addDiagFrame('dilate', when, motion);
+  // |findContours| destroys the contents of the |motion| matrix, so make a copy
+  let changedPixels = motion.copy();
 
   // Find contours on thresholded image
   let contours = motion.findContours();
@@ -108,7 +102,14 @@ function _detectMotion(when, image, motionZone, callback) {
 
   // Group rectangles that intersect with each other or are contained within
   // each other
+
   if (rects.length > 0) {
+    // TODO: Add these additional diag frames back once there's a way to
+    // dynamically toggle sending them.
+    //timeline.addDiagFrame('grayscale', when, image);
+    //timeline.addDiagFrame('blurred', when, nextFrame);
+    timeline.addDiagFrame('changes', when, changedPixels);
+
     motionZone.groupRectangles(rects);
     log.debug(`group rects: ${JSON.stringify(rects)}`);
 

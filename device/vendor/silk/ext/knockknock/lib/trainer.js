@@ -452,6 +452,7 @@ export default class Trainer {
                  `count: ${faceCount}`);
             faceim.save(`${facePath}/${person}_${Date.now()}.png`);
             faceCount++;
+            this._env.timeline.addDiagFrame(`face #${faceCount}`, when, faceim);
 
             oldPreprocessedFaceImg = faceim;
             oldTime = currentTime;

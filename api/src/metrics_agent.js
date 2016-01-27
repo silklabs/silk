@@ -8,8 +8,9 @@
  */
 
 import createLog from 'silk-log';
+import invariant from 'assert';
 
-import type {default as Metric} from './metric';
+import type {default as Metric, Point} from './metric';
 import type AccountApi from './gen/account';
 import type DeviceApi from './gen/device';
 
@@ -45,7 +46,12 @@ export default class MetricsAgent {
   /**
    * All the accumulated points.
    */
-  _points: Array<Metric> = [];
+  _points: Array<Point> = [];
+
+  /**
+   * Timestamp at which first point was added.
+   */
+  _firstPointTimestamp: number = 0;
 
   metricsApi: MetricsApi;
   interval: number = 1000 * 60;
@@ -107,26 +113,57 @@ export default class MetricsAgent {
     if (!this._running) {
       return;
     }
-    log.info(`Adding one metric to the queue`);
-    if (this._points.length > MAX_METRICS) {
-      this._points.shift();
+
+    const now = Date.now();
+
+    let timeOffset = 0;
+    if (this._points.length) {
+      timeOffset = now - this._firstPointTimestamp;
+      if (this._points.length > MAX_METRICS) {
+        const dropped = this._points.shift();
+        log.warn(`Dropping metric because we have reached MAX_METRICS ` +
+                 `(${MAX_METRICS})`,
+                 dropped);
+      }
+    } else {
+      this._firstPointTimestamp = now;
     }
-    this._points.push(metric);
+
+    log.debug(`Adding metric: ${metric.constructor.NAME}`, metric);
+
+    const point = metric.toJSON().concat(timeOffset);
+    this._points.push(point);
   }
 
   async submit(): Promise<void> {
-    let points = this._points;
+    const firstPointTimestamp = this._firstPointTimestamp;
+    if (!firstPointTimestamp) {
+      invariant(!this._points.length);
+      log.info(`No points to submit`);
+      return;
+    }
+
+    this._firstPointTimestamp = 0;
+
+    const points = this._points;
     this._points = [];
 
+    invariant(points.length);
+
     // NOTE: That it is intentional that if this fails we drop metrics.
-    log.info(`Submitting ${points.length}`);
+    log.info(`Submitting ${points.length} points`);
     await this.metricsApi.writeMetrics({
+      firstPointTimestamp,
+      submissionTimestamp: Date.now(),
       points
     });
   }
 
   clear() {
-    log.info(`Clearing points...`);
-    this._points = [];
+    log.info(`Clearing points`);
+    this._firstPointTimestamp = 0;
+    if (this._points.length) {
+      this._points = [];
+    }
   }
 }

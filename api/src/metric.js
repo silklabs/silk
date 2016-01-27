@@ -18,6 +18,7 @@ function sanitizeTagValue(value: string): string {
 }
 
 export type Convertable = string|Integer|Float;
+export type Point = [string, Object, Object, number];
 
 function convertType(input: Convertable): string {
   if (input instanceof Float) {

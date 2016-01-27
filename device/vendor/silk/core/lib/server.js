@@ -84,7 +84,6 @@ export default class Server extends events.EventEmitter {
       'device',
       { forceNew: true }
     );
-    socket.open();
 
     socket.on('connect', () => {
       log.info(`server socket connected`);
@@ -115,19 +114,25 @@ export default class Server extends events.EventEmitter {
 
     socket.on('cmd', data => this.emit('cmd', data));
 
-    let errors = ['connect_error', 'connect_timeout', 'error',
-        'reconnect_attempt', 'reconnect_error', 'reconnect_failed',
-        'reconnecting'];
-
-    errors.forEach(error => {
-      socket.on(error, e => {
-        log.warn(`socket ${error}: ${e}`);
-        this.emit('error', error);
+    ['connect_error', 'connect_timeout'].forEach(event => {
+      socket.on(event, err => {
+        log.warn(`socket ${event}: retrying connection: ${err}`);
+        this.socket = null;
+        this.connect();
+        this.emit('reconnecting');
       });
     });
 
+    socket.on('error', err => {
+      log.warn(`socket error: ${err}`);
+      this.emit('error', err);
+    });
+
+
     // add 'error' listener in case no one else is, else node throws exception
     this.on('error', () => {});
+
+    socket.open();
   }
 
   disconnect() {

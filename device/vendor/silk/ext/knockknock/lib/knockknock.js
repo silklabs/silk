@@ -291,6 +291,7 @@ class FindFace {
             // Add the person to timeline
             let name = this._matchIdWithName(id);
             this._env.timeline.addObject(name, when, face);
+            this._env.timeline.addDiagFrame(name, when, faceim);
 
             // Cache name with face.id to skip face recognition next time
             // a face with the same ID is reported by HAL
@@ -301,6 +302,7 @@ class FindFace {
             // Unknown face
             log.debug(`Unknown face detected: why=${ex}`);
             this._env.timeline.addObject('a face', when, face); // See #1306 for 'a face' vs 'face'
+            this._env.timeline.addDiagFrame('unknown', when, faceim);
           }
         });
         let diff = Date.now() - start;

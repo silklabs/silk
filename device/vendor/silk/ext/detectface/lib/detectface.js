@@ -17,7 +17,7 @@ let timeline;
 let previewScale = 0;
 
 const facecascade = {
-  tag: 'face', file: '/system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
+  tag: 'face', file: 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
   opts: {
     scale: 1.2,
     neighbors: 2,
@@ -37,8 +37,8 @@ const EYE_SY = 0.26;
 const EYE_SW = 0.30;
 const EYE_SH = 0.28;
 
-const EYE_CASCADE1 = '/system/silk/media/opencv/haarcascade_eye.xml';
-const EYE_CASCADE2 = '/system/silk/media/opencv/haarcascade_eye_tree_eyeglasses.xml';
+const EYE_CASCADE1 = 'system/silk/media/opencv/haarcascade_eye.xml';
+const EYE_CASCADE2 = 'system/silk/media/opencv/haarcascade_eye_tree_eyeglasses.xml';
 
 /**
  * Call opencv methods to detect faces as defined by {@code cascades}
@@ -249,6 +249,9 @@ class DetectFace {
               faceRect.leftEye = [leftEye.x, leftEye.y];
               faceRect.rightEye = [rightEye.x, rightEye.y];
               faces.push(faceRect);
+
+              const roi = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+              timeline.addDiagFrame('face', when, roi);
             }
           }
 

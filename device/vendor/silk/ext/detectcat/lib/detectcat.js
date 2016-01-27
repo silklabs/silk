@@ -13,7 +13,7 @@ let log;
 let timeline;
 
 const cascade = {
-  tag: 'cat', file: '/system/silk/media/opencv/lbpcascade_cat.xml',
+  tag: 'cat', file: 'system/silk/media/opencv/lbpcascade_cat.xml',
   opts: {
     scale: 1.2,
     neighbors: 2,
@@ -41,6 +41,10 @@ function detectCats(im, when, cb) {
     } else {
       log.verbose(msg);
     }
+    rects.forEach(rect => {
+      const roi = im.roi(rect.x, rect.y, rect.width, rect.height);
+      timeline.addDiagFrame(cascade.tag, when, roi);
+    });
     cb({tag: cascade.tag, when, rects});
   });
 }

@@ -207,6 +207,7 @@ export class SilkApi {
         superOpen.call(manager, fn);
       } catch (err) {
         fn && fn(err);
+        socket.emit('connect_error', err);
       }
     };
     return socket;

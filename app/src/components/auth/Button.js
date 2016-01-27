@@ -1,11 +1,12 @@
 import React from 'react-native';
 let {
-  ActivityIndicatorIOS,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } = React;
+
+import Spinner from '../Spinner';
 
 export default class Button extends React.Component {
   static propTypes = {
@@ -19,7 +20,7 @@ export default class Button extends React.Component {
   render() {
     let label;
     if (this.props.inProgress) {
-      label = <ActivityIndicatorIOS color="white" />;
+      label = <Spinner color="white" />;
     } else {
       label = <Text style={styles.buttonLabel}>{this.props.label}</Text>;
     }

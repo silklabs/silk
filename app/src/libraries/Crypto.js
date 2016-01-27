@@ -3,10 +3,7 @@
  */
 
 import { NativeModules } from 'react-native';
-import createLog from 'silk-log';
-
 const { AppCrypto } = NativeModules;
-const log = createLog('Crypto');
 
 /**
  * Requests a number of random bytes from the native layer.
@@ -16,45 +13,38 @@ const log = createLog('Crypto');
  *
  * Also supports node-style callback argument. The callback function should be
  * of the form |function callback(error, result) { ... }|.
- *
- * @return {UInt8Array}
  */
 export function getRandomBytes(
   numberOfBytes: number,
   callback: ?((error: ?Error, result: ?Buffer) => void) = null
 ): Promise<Buffer> {
-  return new Promise((accept) => {
-    let start = Date.now();
-    AppCrypto.getRandomBytes(numberOfBytes, function(bytes) {
-      /**
-       * The native side cannot send typed arrays so it instead sends an array
-       * of numbers (which are enforced as UInt8 on the native side) which we
-       * can then properly convert into a typed array.
-       */
-      let result = new Buffer(numberOfBytes);
-      for (let i = 0; i < numberOfBytes; i++) {
-        result[i] = bytes[i];
-      }
-      log.debug(`Got ${numberOfBytes} random bytes in ${Date.now() - start} ms`);
-      if (callback) {
-        // First argument is an error object.
-        callback(null, result);
-      }
-      accept(result);
-    });
+  return AppCrypto.getRandomBytes(numberOfBytes).catch((error) => {
+    if (callback) {
+      callback(error);
+    }
+    throw error;
+  }).then((result) => {
+    // The native side cannot send typed arrays so it instead sends a JS array of
+    // numbers  which we can then properly convert into a typed array / Buffer.
+    let buffer = new Buffer(numberOfBytes);
+    for (let i = 0; i < numberOfBytes; i++) {
+      buffer[i] = result[i];
+    }
+    if (callback) {
+      // First argument is an error object.
+      callback(null, buffer);
+    }
+    return buffer;
   });
 }
 
+/**
+ * Derive a 256 bit key from a password using PBKDF2 and HMAC-SHA256.
+ */
 export function pbkdf2KeyDerivation(
   input: string,
   salt: string,
   rounds: number
 ): Promise<string> {
-  return new Promise((accept) => {
-    let start = Date.now();
-    AppCrypto.PBKDF2KeyDerivation(input, salt, rounds, (hexString) => { // eslint-disable-line new-cap
-      log.debug(`Generated PBKDF2KeyDerivation (${rounds}) in ${Date.now() - start} ms`);
-      accept(hexString);
-    });
-  });
+  return AppCrypto.pbkdf2KeyDerivation(input, salt, rounds);
 }

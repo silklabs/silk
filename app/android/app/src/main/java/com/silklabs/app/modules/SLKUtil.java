@@ -11,24 +11,24 @@ import java.util.HashMap;
 
 public class SLKUtil extends ReactContextBaseJavaModule {
 
-    public SLKUtil(ReactApplicationContext reactContext) {
-        super(reactContext);
-    }
+  public SLKUtil(ReactApplicationContext reactContext) {
+    super(reactContext);
+  }
 
-    @Override
-    public String getName() {
-        return "SLKUtil";
-    }
+  @Override
+  public String getName() {
+    return "SLKUtil";
+  }
 
-    @Override
-    public Map<String, Object> getConstants() {
-        final Map<String, Object> constants = new HashMap<>();
-        // TODO verify
-        constants.put("model", Build.MODEL);
-        constants.put("name", Build.DEVICE);
-        constants.put("systemName", "Android");
-        constants.put("systemVersion", Build.VERSION.RELEASE);
-        return constants;
+  @Override
+  public Map<String, Object> getConstants() {
+    final Map<String, Object> constants = new HashMap<>();
+    // TODO verify
+    constants.put("model", Build.MODEL);
+    constants.put("name", Build.DEVICE);
+    constants.put("systemName", "Android");
+    constants.put("systemVersion", Build.VERSION.RELEASE);
+    return constants;
   }
 
 }

@@ -8,11 +8,11 @@ import { shouldPureComponentUpdate, blobURI } from '../libraries/Util';
 import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
+import Spinner from './Spinner';
 
 const {
   ActionSheetIOS,
-  ActivityIndicatorIOS,
-  AlertIOS,
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -262,7 +262,7 @@ export default class MonitorPreview extends SocketIOComponent {
         </Text>
       );
     }
-    return <ActivityIndicatorIOS color="white" />;
+    return <Spinner color="white" />;
   }
 
   render() {
@@ -349,7 +349,7 @@ export default class MonitorPreview extends SocketIOComponent {
       try {
         await this.context.silkDevices.unregisterDevice(this.props.deviceId);
       } catch(ex) {
-        AlertIOS.alert(
+        Alert.alert(
           'Error Unregistering Device',
           'The device could not be unregistered. Please try again.'
         );

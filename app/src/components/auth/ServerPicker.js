@@ -97,7 +97,7 @@ export default class ServerPicker extends React.Component {
       if (server.value === this.state.serverUrl) {
         checkmark = (
           <Image
-            source={require('image!Checkmark')}
+            source={require('image!checkmark')}
             style={styles.checkmark}
           />
         );
@@ -125,7 +125,7 @@ export default class ServerPicker extends React.Component {
     if (haveCustomServer) {
       customCheckmark = (
         <Image
-          source={require('image!Checkmark')}
+          source={require('image!checkmark')}
           style={styles.checkmark}
         />
       );

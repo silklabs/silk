@@ -15,9 +15,9 @@ import { PlaceholderText } from './Text';
 import MonitorFullscreen from './MonitorFullscreen';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
+import Spinner from './Spinner';
 
 const {
-  ActivityIndicatorIOS,
   AppStateIOS,
   PixelRatio,
   ScrollView,
@@ -220,7 +220,7 @@ class MonitorsView extends AsyncComponent {
 
   _renderSpinner() {
     return (
-      <ActivityIndicatorIOS
+      <Spinner
         size="large"
         style={styles.loadingSpinner}
       />

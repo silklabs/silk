@@ -154,7 +154,7 @@ export default class Activity extends AsyncComponent {
         <View style={[styles.actionBox, actionBoxStyle]}>
           {previewImage}
           <Image
-            source={require('image!PlayButton')}
+            source={require('image!play_button')}
             style={styles.actionPlayButton}
           />
         </View>

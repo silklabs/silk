@@ -3,17 +3,18 @@
  */
 
 import React from 'react-native';
+
 import Config from '../../libraries/Config';
 
-let {
-  AlertIOS,
+import AsyncComponent from '../abstract/AsyncComponent';
+import Button from './Button';
+
+const {
+  Alert,
   StyleSheet,
   TextInput,
   View,
 } = React;
-
-import AsyncComponent from '../abstract/AsyncComponent';
-import Button from './Button';
 
 const inputStyles = StyleSheet.create({
   text: {
@@ -89,7 +90,7 @@ export default class AuthForm extends AsyncComponent {
     if (this.haveInvalidInputs()) {
       // It's very unlikely that users will hit this given that the
       // submit button and the return key are disabled in most cases.
-      AlertIOS.alert(
+      Alert.alert(
         'All fields are required',
         'Please fill out all fields.'
       );
@@ -99,7 +100,7 @@ export default class AuthForm extends AsyncComponent {
     if (this.props.password &&
         this.props.verifyPassword &&
         this.state.password !== this.state.passwordVerification) {
-      AlertIOS.alert(
+      Alert.alert(
         'Password mismatch',
         'Your password did not match its verification.'
       );

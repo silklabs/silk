@@ -105,13 +105,22 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
 
       @Override
       public void onMessage(BufferedSource bufferedSource, WebSocket.PayloadType payloadType) {
-        String message;
-        try {
-          message = bufferedSource.readUtf8();
-        } catch (IOException e) {
-          notifyWebSocketFailed(id, e.getMessage());
-          return;
+        WritableMap params = Arguments.createMap();
+        params.putInt("id", id);
+
+        if (payloadType == WebSocket.PayloadType.BINARY) {
+          params.putString("data", "");
+        } else {
+          String message;
+          try {
+            message = bufferedSource.readUtf8();
+          } catch (IOException e) {
+            notifyWebSocketFailed(id, e.getMessage());
+            return;
+          }
+          params.putString("data", message);
         }
+
         try {
           bufferedSource.close();
         } catch (IOException e) {
@@ -121,9 +130,6 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
             e);
         }
 
-        WritableMap params = Arguments.createMap();
-        params.putInt("id", id);
-        params.putString("data", message);
         sendEvent("websocketMessage", params);
       }
     });

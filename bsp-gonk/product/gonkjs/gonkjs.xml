@@ -38,7 +38,7 @@
   <project name="sandeepmistry/bleno"
            path="external/bleno"
            remote="github"
-           revision="refs/tags/0.1.13" clone-depth="1"/>
+           revision="refs/tags/0.4.0" clone-depth="1"/>
 
   <project name="libusb/libusb"
            path="external/libusb1.0"

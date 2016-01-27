@@ -1,4 +1,9 @@
 /**
+ * This is a modified version of React Native's WebSocketModule that
+ * understand binary blobs.
+ */
+
+/**
  * Copyright (c) 2015-present, Facebook, Inc.
  * All rights reserved.
  *
@@ -7,7 +12,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-package com.facebook.react.modules.websocket;
+package com.silklabs.app.modules;
 
 import java.io.IOException;
 
@@ -172,4 +177,10 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     params.putString("message", message);
     sendEvent("websocketFailed", params);
   }
+
+  @Override
+  public boolean canOverrideExistingModule() {
+    return true;
+  }
+
 }

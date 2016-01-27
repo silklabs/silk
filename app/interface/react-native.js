@@ -21,4 +21,5 @@ declare module 'react-native' {
   // This is pretty lame, but good enough for now to get Flow to pass.
   declare var DeviceEventEmitter: any;
   declare var NativeModules: any;
+  declare var Platform: any;
 }

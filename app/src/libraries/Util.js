@@ -3,7 +3,7 @@
  */
 
 import invariant from 'assert';
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import makeLog from 'silk-log';
 
 const { SLKUtil } = NativeModules;
@@ -86,7 +86,7 @@ export function shouldPureComponentUpdate(
 }
 
 export type NativeBlob = {
-  __native_type: 'NSData';
+  __native_type: 'Blob';
   id: string;
   length: number;
   firstByte?: number;
@@ -97,9 +97,18 @@ export function blobURI(blob: ?NativeBlob): ?string {
   if (!blob) {
     return null;
   }
-  let uri = `silk-blob://${blob.id}/`;
-  if (blob.offset) {
-    uri += `?offset=${blob.offset}`;
+  if (Platform.OS === 'ios') {
+    let uri = `silk-blob://${blob.id}/`;
+    if (blob.offset) {
+      uri += `?offset=${blob.offset}`;
+    }
+    return uri;
+  } else if (Platform.OS === 'android') {
+    let uri = `content://com.silklabs.app.blobs/${blob.id}`;
+    if (blob.offset) {
+      uri += `?offset=${blob.offset}`;
+    }
+    return uri;
   }
-  return uri;
+  return null;
 }

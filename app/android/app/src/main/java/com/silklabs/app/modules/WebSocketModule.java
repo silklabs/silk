@@ -14,6 +14,9 @@
 
 package com.silklabs.app.modules;
 
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
+
 import java.io.IOException;
 
 import com.facebook.common.logging.FLog;
@@ -25,6 +28,8 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.ReactConstants;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+
+import com.silklabs.app.BlobProvider;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -44,10 +49,22 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
 
   private Map<Integer, WebSocket> mWebSocketConnections = new HashMap<>();
   private ReactContext mReactContext;
+  private BlobProvider mBlobProvider;
 
   public WebSocketModule(ReactApplicationContext context) {
     super(context);
     mReactContext = context;
+    initializeBlobProvider();
+  }
+
+  private void initializeBlobProvider() {
+    ContentResolver resolver = mReactContext.getContentResolver();
+    ContentProviderClient client = resolver.acquireContentProviderClient(BlobProvider.AUTHORITY);
+    if (client == null) {
+      return;
+    }
+    mBlobProvider = (BlobProvider)client.getLocalContentProvider();
+    client.release();
   }
 
   private void sendEvent(String eventName, WritableMap params) {
@@ -109,7 +126,14 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
         params.putInt("id", id);
 
         if (payloadType == WebSocket.PayloadType.BINARY) {
-          params.putString("data", "");
+          byte[] data;
+          try {
+            data = bufferedSource.readByteArray();
+          } catch (IOException e) {
+            notifyWebSocketFailed(id, e.getMessage());
+            return;
+          }
+          params.putMap("data", mBlobProvider.store(data));
         } else {
           String message;
           try {

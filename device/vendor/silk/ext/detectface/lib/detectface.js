@@ -191,6 +191,7 @@ class DetectFace {
     log = this._env.log;
     let working = false;
 
+    /*
     try {
       const halFaces = await this._env.camera.getParameterInt('max-num-detected-faces-hw');
       log.verbose(`HAL faces: ${halFaces}`);
@@ -202,6 +203,7 @@ class DetectFace {
       log.error(`${err}`);
       return;
     }
+    */
 
     this._onMotion = when => {
       if (working) {

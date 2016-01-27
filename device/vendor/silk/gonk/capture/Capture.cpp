@@ -440,7 +440,8 @@ status_t CaptureCommand::initThread() {
 
   sOpenCVCameraCapture->setPreviewProducerListener(this);
   CHECK(setPreviewTarget() == 0);
-  CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
+
+  //CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
   CHECK(mCamera->sendCommand(CAMERA_CMD_ENABLE_FOCUS_MOVE_MSG, 1, 0) == 0);
 
   // Start recording stream

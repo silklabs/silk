@@ -8,6 +8,11 @@ import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon,
 import { Link } from 'react-router';
 import createLog from 'silk-log';
 
+// XXX: Nasty hack to load localforage it does not load as a normal
+// es6 module sadly with webpack...
+require('script!localforage');
+const localforage = window.localforage;
+
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
 
@@ -170,6 +175,18 @@ export default class Diag extends React.Component {
     view: 'Summary',
   };
 
+  constructor() {
+    super();
+    localforage.getItem("diag-active-view").then((view) => {
+      // TODO: This is a little racy but probably ok.  If this promise doesn't
+      // resolve before the component is first rendered (unlikely) then the
+      // incorrect view will be shown.
+      if (view) {
+        this.state.view = view;
+      }
+    });
+  }
+
   get deviceId() {
     return this.props.params.deviceId;
   }
@@ -221,6 +238,7 @@ export default class Diag extends React.Component {
   };
 
   onView = (e, view) => {
+    localforage.setItem("diag-active-view", view);
     this.setState({view});
   };
 

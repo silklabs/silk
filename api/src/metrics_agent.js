@@ -53,6 +53,11 @@ export default class MetricsAgent {
    */
   _firstPointTimestamp: number = 0;
 
+  /**
+   * The number of metrics that have been dropped since the last submission.
+   */
+  _droppedCount: number = 0;
+
   metricsApi: MetricsApi;
   interval: number = 1000 * 60;
   connectivityCheck: ConnectivityCheck;
@@ -120,6 +125,7 @@ export default class MetricsAgent {
     if (this._points.length) {
       timeOffset = now - this._firstPointTimestamp;
       if (this._points.length > MAX_METRICS) {
+        this._droppedCount++;
         const dropped = this._points.shift();
         log.warn(`Dropping metric because we have reached MAX_METRICS ` +
                  `(${MAX_METRICS})`,
@@ -150,11 +156,15 @@ export default class MetricsAgent {
 
     invariant(points.length);
 
+    const droppedCount = this._droppedCount;
+    this._droppedCount = 0;
+
     // NOTE: That it is intentional that if this fails we drop metrics.
     log.info(`Submitting ${points.length} points`);
     await this.metricsApi.writeMetrics({
       firstPointTimestamp,
       submissionTimestamp: Date.now(),
+      droppedCount,
       points
     });
   }
@@ -162,6 +172,7 @@ export default class MetricsAgent {
   clear() {
     log.info(`Clearing points`);
     this._firstPointTimestamp = 0;
+    this._droppedCount = 0;
     if (this._points.length) {
       this._points = [];
     }

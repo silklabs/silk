@@ -34,7 +34,7 @@ node_modules/
 npm-debug.log
 
 # XXX ignoring this for now because of massive churn.
-iOS/*.jsbundle
+Silk/*.jsbundle
 
 # Pods
 /Pods/

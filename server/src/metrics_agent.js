@@ -8,7 +8,7 @@
 import createLog from 'silk-log';
 
 import type InfluxDBClient from './influxdb_client';
-import type Metric from 'silk-api/src/metric';
+import type {default as Metric, Point} from 'silk-api/src/metric';
 
 const log = createLog('server:metrics-agent');
 
@@ -25,7 +25,7 @@ const SUBMIT_INTERVAL = 1000 * 60;
 export default class MetricAgent {
 
   _influxdb: InfluxDBClient;
-  _points: Array<Metric> = [];
+  _points: Array<Point> = [];
 
   start(client: InfluxDBClient) {
     this._influxdb = client;
@@ -37,25 +37,29 @@ export default class MetricAgent {
       return;
     }
     if (this._points.length > MAX_METRICS) {
-      log.verbose(`Dropping metric... (reached MAX_METRICS)`);
-      this._points.shift();
+      const dropped = this._points.shift();
+      log.warn(`Dropping metric because we have reached MAX_METRICS ` +
+               `(${MAX_METRICS})`,
+               dropped);
     }
-    this._points.push(metric);
+
+    log.debug(`Adding metric: ${metric.constructor.NAME}`, metric);
+
+    // Cast explicitly from Metric -> Point by running the toJSON function.
+    // InfluxDB wants the timestamp to be in nanoseconds
+    const point = metric.toJSON().concat(`${Date.now()}000000`);
+    this._points.push(point);
   }
 
   _poll: () => Promise<void> = async() => {
     try {
       if (this._points.length > 0) {
-        let points = this._points;
+        const points = this._points;
         this._points = [];
-        log.info(`Submitting: ${points.length} points`);
-        // Cast explicitly from Metric -> Point by running the toJSON function.
-        let influxdbPoints = points.map((point) => {
-          return point.toJSON();
-        });
-        await this._influxdb.writeAll(influxdbPoints);
+        log.info(`Submitting ${points.length} points`);
+        await this._influxdb.writeAll(points);
       } else {
-        log.info(`No metrics to submit`);
+        log.info(`No points to submit`);
       }
     } catch (err) {
       log.warn('Error submitting metrics', err.stack);

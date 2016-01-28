@@ -18,6 +18,7 @@ export type Point = [
   string, // series
   {[key: string]: string},  // tags
   {[key: string]: string},  // points
+  string, // timestamp
 ];
 
 const log = createLog('influxdb_client');
@@ -127,14 +128,21 @@ export default class InfluxDB {
   writeAll(points: Array<Point>): Promise<Response> {
     let body = [];
     for (let point of points) {
-      let [series, tags, points] = point;
+      let [series, tags, points, timestamp] = point;
+
       let tagString = formatFields(tags);
       if (tagString) {
         tagString = `,${tagString}`;
       }
-      // NOTE: This intentionally omits the timestamp values so the server can
-      // assign them uniformly.
-      body.push(`${series}${tagString} ${formatFields(points)}`);
+
+      // For a little while we need to accept metrics without timestamps.
+      if (timestamp) {
+        timestamp = ` ${timestamp}`;
+      } else {
+        timestamp = ``;
+      }
+
+      body.push(`${series}${tagString} ${formatFields(points)}${timestamp}`);
     }
 
     log.verbose('writeAll', body);

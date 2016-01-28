@@ -28,6 +28,7 @@ type VideoMessage = {
   contents: string;
   when: number;
   serverEmitMs: ?number;
+  deviceEmitMs: number;
 }
 
 type DiagMessage = {
@@ -114,7 +115,7 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
         }
         sendToDeviceRoom('video', video, device, received);
 
-        let networkDuration = received - video.deviceEmitMs - device.timeOffset;
+        let networkDuration = received - video.deviceEmitMs;
 
         // This seems really unlikely but if the clock isn't perfect...
         if (networkDuration < 0) {

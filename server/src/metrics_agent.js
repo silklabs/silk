@@ -22,10 +22,16 @@ const MAX_METRICS = 3000;
  */
 const SUBMIT_INTERVAL = 1000 * 60;
 
+
+function nowInNanoSeconds(): string {
+  return `${Date.now()}000000`;
+}
+
 export default class MetricAgent {
 
   _influxdb: InfluxDBClient;
   _points: Array<Point> = [];
+  _droppedCount: number = 0;
 
   start(client: InfluxDBClient) {
     this._influxdb = client;
@@ -37,6 +43,7 @@ export default class MetricAgent {
       return;
     }
     if (this._points.length > MAX_METRICS) {
+      this._droppedCount++;
       const dropped = this._points.shift();
       log.warn(`Dropping metric because we have reached MAX_METRICS ` +
                `(${MAX_METRICS})`,
@@ -47,7 +54,7 @@ export default class MetricAgent {
 
     // Cast explicitly from Metric -> Point by running the toJSON function.
     // InfluxDB wants the timestamp to be in nanoseconds
-    const point = metric.toJSON().concat(`${Date.now()}000000`);
+    const point = metric.toJSON().concat(nowInNanoSeconds());
     this._points.push(point);
   }
 
@@ -56,7 +63,23 @@ export default class MetricAgent {
       if (this._points.length > 0) {
         const points = this._points;
         this._points = [];
+
+        const droppedCount = this._droppedCount;
+        this._droppedCount = 0;
+
         log.info(`Submitting ${points.length} points`);
+
+        if (droppedCount) {
+          log.warn(`Dropped ${droppedCount} metrics`);
+
+          points.push([
+            `server_dropped`,
+            /* No tags */ {},
+            {count: `${droppedCount}i`},
+            nowInNanoSeconds(),
+          ]);
+        }
+
         await this._influxdb.writeAll(points);
       } else {
         log.info(`No points to submit`);

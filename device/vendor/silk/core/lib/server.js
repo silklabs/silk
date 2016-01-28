@@ -209,16 +209,6 @@ export default class Server extends events.EventEmitter {
       break;
     case 'diag':
       ackType = 'diag';
-      switch (data.type) {
-      case 'avpipeline':
-      case 'dash':
-      case 'logcat':
-      case 'jpegs':
-        break;
-      default:
-        log.error('Unknown diag subtype', data.type);
-        return;
-      }
       str += `/${data.type}`;
       break;
     default:

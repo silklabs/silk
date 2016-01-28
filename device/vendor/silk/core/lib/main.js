@@ -55,6 +55,7 @@ import NetworkStatus from './network_status';
 import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
+import Camera from './camera';
 import makeExtensions from './ext';
 import JSStartup from './metrics/js_startup';
 import startCollectingProcessMetrics from './process_metrics';
@@ -197,7 +198,7 @@ function main() {
 
       assert(outbox, 'must have outbox when initializing timeline');
       timeline = new Timeline(server, outbox);
-      camera = require('./camera')(timeline);
+      camera = new Camera(server, timeline);
 
       let hw = [
         camera.init(),
@@ -274,9 +275,13 @@ server.on('connect', () => {
   emitDeviceInfo();
 });
 
-server.on('reconnecting', () => ui.goto('connecting'));
+server.on('reconnecting', () => {
+  ui.goto('connecting');
+});
 
 server.on('cmd', cmd => {
+  // TODO: Use Joi to validate the inbound command
+
   // Check if the command is intended for extensions
   if (cmd.msgTarget === 'extensions') {
     if (ext) {
@@ -290,13 +295,14 @@ server.on('cmd', cmd => {
   // data from this device.  Supported streams: preview, video, diag
   //
   // TODO: once the 'livestream' command is strongly typed between
-  // server/device, move this processing into the diag/timeline objects
+  // server/device, move this processing into the diag/timeline/camera objects
   // themselves.
   case 'livestream':
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
     diag.setConfig({dash: flag, logcat: flag});
     timeline.configLiveStream(!!cmd.preview, !!cmd.video, !!cmd.diag);
+    camera.setDiag(!!cmd.diag);
     break;
   case 'reboot':
     log.info('reboot command:', JSON.stringify(cmd));
@@ -313,9 +319,23 @@ server.on('cmd', cmd => {
     log.info('  rebooting ...');
     util.setprop('sys.powerctl', 'reboot');
     break;
-  case 'speak':
-    log.info('speak command:', JSON.stringify(cmd));
-    say.speak(cmd.text, cmd.lib);
+  case 'diagCommand':
+    log.info('diagCommand:', JSON.stringify(cmd));
+    switch (cmd.subsystem) {
+    case 'timeline':
+      timeline.diagCommand(cmd.name, cmd.arg);
+      break;
+    case 'camera':
+      camera.diagCommand(cmd.name, cmd.arg);
+      break;
+    case 'speak':
+      log.info('speak command:', JSON.stringify(cmd));
+      say.speak(cmd.name, cmd.arg);
+      break;
+    default:
+      log.warn('Unknown diag subsystem:', cmd.subsystem);
+      break;
+    }
     break;
   default:
     log.error('Unknown command:', JSON.stringify(cmd));

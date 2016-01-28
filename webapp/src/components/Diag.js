@@ -3,8 +3,18 @@ import ansiUp from 'ansi_up';
 import moment from 'moment';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Button, ButtonGroup, ButtonToolbar, DropdownButton, Glyphicon,
-         Input, MenuItem, Table } from 'react-bootstrap';
+import {
+  Button,
+  ButtonGroup,
+  ButtonToolbar,
+  DropdownButton,
+  Glyphicon,
+  Input,
+  Label,
+  MenuItem,
+  Modal,
+  Table,
+} from 'react-bootstrap';
 import { Link } from 'react-router';
 import createLog from 'silk-log';
 
@@ -61,7 +71,21 @@ class DiagImageTable extends React.Component {
   state = {
     images: {},
     imageKeys: [],
+    imageFilter: '',
   };
+
+  constructor() {
+    super();
+    localforage.getItem('diag-image-filter').then((imageFilter) => {
+      // TODO: This is a little racy but probably ok.  If this promise doesn't
+      // resolve before the component is first rendered (unlikely) then the
+      // incorrect view will be shown.
+      if (imageFilter) {
+        this.state.imageFilter = imageFilter;
+        this.onDiagFrameFilterApply();
+      }
+    });
+  }
 
   shouldComponentUpdate() {
     return !this.props.paused;
@@ -69,17 +93,25 @@ class DiagImageTable extends React.Component {
 
   componentWillMount() {
     this.props.camera.on('diagJpegFrames', this.onDiagJpegFrames);
+    this.props.camera.on('diagState:timeline', this.onDiagTimelineState);
   }
 
   componentWillUnmount() {
     this.props.camera.removeListener('diagJpegFrames',
       this.onDiagJpegFrames);
+    this.props.camera.removeListener('diagState:timeline',
+      this.onDiagTimelineState);
 
     const { images, imageKeys } = this.state;
     imageKeys.forEach(key => {
       images[key].forEach(info => info.img.deinit());
     });
   }
+
+  onDiagTimelineState = (state) => {
+    log.error('diagState:timeline', JSON.stringify(state));
+    this.setState({imageFilter: state.imageFilter});
+  };
 
 
   addNewJpegs(loadedJpegs: Array<DiagImgFrame>) {
@@ -88,7 +120,14 @@ class DiagImageTable extends React.Component {
     loadedJpegs.forEach(info => {
       const {id, when, img} = info;
       if (images[when]) {
-        images[when].push({id, img});
+        // Replace the image with the same |id| if it exists (this can happen
+        // often if a clip is set for repeating)
+        let index = images[when].findIndex(elem => elem.id === id);
+        if (index > -1) {
+          images[when][index] = {id, img};
+        } else {
+          images[when].push({id, img});
+        }
       } else {
         images[when] = [{id, img}];
       }
@@ -127,27 +166,50 @@ class DiagImageTable extends React.Component {
     });
   };
 
+  onDiagFrameFilterChange = (e) => {
+    this.setState({ imageFilter: e.target.value });
+  };
+
+  onClear = () => {
+    this.setState({ images: {}, imageKeys: [] });
+  };
+
+  onDiagFrameFilterApply = () => {
+    this.props.camera.diagCommand('timeline', 'imageFilter', this.state.imageFilter);
+    localforage.setItem('diag-image-filter', this.state.imageFilter);
+  };
+
   render() {
     let { images, imageKeys } = this.state;
+    const filterApplyButton = (
+      <Button onClick={this.onDiagFrameFilterApply}>Apply</Button>
+    );
     return (
+      <div>
+        <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
+          <Button onClick={this.onClear}>Clear</Button>
+          <Input
+            type="text"
+            bsSize="small"
+            value={this.state.imageFilter}
+            placeholder="Image filter. Example: '*', 'knockknock:*,cmt:*,-cmt:cat*'"
+            onChange={this.onDiagFrameFilterChange}
+            buttonBefore={filterApplyButton}
+          />
+        </div>
         <Table striped bordered condensed hover>
-          <thead>
-            <tr>
-              <th>Time</th>
-            </tr>
-          </thead>
           <tbody>
           {
-            imageKeys.map(key => {
+            imageKeys.map((key, index) => {
               const time = moment(parseInt(key, 10)).format('hh:mm:ss.SSS');
               return (
-                <tr key={key}>
+                <tr key={key + index}>
                   <td style={{verticalAlign: 'middle'}}>{time}</td>
                   {
-                    images[key].map(info => {
+                    images[key].map((info, index) => {
                       let {id, img} = info;
                       return (
-                        <td key={id}>
+                        <td key={id + index}>
                           {id}<br/>
                           <img
                             src={img.tag.src}
@@ -164,6 +226,249 @@ class DiagImageTable extends React.Component {
           }
           </tbody>
         </Table>
+      </div>
+    );
+  }
+}
+
+
+class DiagCameraToolbar extends React.Component {
+  static propTypes = {
+    camera: React.PropTypes.object.isRequired,
+  };
+
+  state = {
+    device: { // see CameraClipRecorderState in device/vendor/silk/core/lib/camera.js
+      mode: 'live',
+      availableClips: [],
+      msg: '',
+      repeat: true,
+    },
+    showSaveDialog: false,
+  };
+
+  componentWillMount() {
+    this.props.camera.on('diagState:camera',
+      this.onDiagCameraState);
+    this.sendCommand('hi');
+  }
+
+  componentWillUnmount() {
+    this.props.camera.removeListener('diagState:camera',
+      this.onDiagCameraState);
+  }
+
+  onDiagCameraState = (state) => {
+    log.error('diagState:camera', JSON.stringify(state));
+    this.setState({device: state.clipRecorder});
+  };
+
+  sendCommand(name, arg) {
+    this.props.camera.diagCameraCommand(name, arg);
+  }
+
+  onRecordingStart = () => {
+    this.sendCommand('record', 'start');
+  };
+
+  onRecordingStop = () => {
+    this.sendCommand('record', 'stop');
+  };
+
+  onResumeLive = () => {
+    this.sendCommand('live');
+  };
+
+  onPlayOrStop = () => {
+    this.sendCommand('playback', this.state.device.mode === 'pause' ? 'start' : 'stop');
+  };
+
+  onGotoStart = () => {
+    this.sendCommand('goto start');
+  };
+
+  onRewind = () => {
+    this.sendCommand('rewind');
+  };
+
+  onFastForward = () => {
+    this.sendCommand('fastforward');
+  };
+
+  onGotoEnd = () => {
+    this.sendCommand('goto end');
+  };
+
+  onToggleRepeat = () => {
+    this.sendCommand('repeat', !this.state.device.repeat);
+  };
+
+  onSelectTrim = (object, key) => {
+    switch (key) {
+    case 'before':
+    case 'after':
+      this.sendCommand('trim', key);
+      break;
+    default:
+      log.error(`Unknown trim type: ${key}`);
+      break;
+    }
+  };
+
+  onSelectLoadClip = (object, key) => {
+    this.sendCommand('load', key);
+  };
+
+  clipNameValid = () => {
+    if (!this.refs.saveClipName) {
+      return false;
+    }
+    const name = this.refs.saveClipName.getValue();
+    if (name.length <= 0) {
+      return false;
+    }
+    const validClipRegex = /^[A-Z0-9-@#()$^'"]*$/i;
+    return validClipRegex.test(name);
+  };
+
+  onSaveClip = () => {
+    if (this.clipNameValid()) {
+      const name = this.refs.saveClipName.getValue();
+      this.setState({showSaveDialog: false});
+      this.sendCommand('save', name);
+    }
+  };
+
+  onShowSaveDialog = () => {
+    this.setState({showSaveDialog: true});
+  };
+
+  onHideSaveDialog = () => {
+    this.setState({showSaveDialog: false});
+  };
+
+  render() {
+    const scissorsGlpyhicon = <Glyphicon glyph="scissors"/>;
+    const floppyOpenGlpyhicon = <Glyphicon glyph="floppy-save"/>;
+    let loadClipDropdown;
+    if (this.state.device.availableClips.length > 0) {
+      loadClipDropdown = (
+        <DropdownButton
+          title={floppyOpenGlpyhicon}
+          onSelect={this.onSelectLoadClip}>
+          {this.state.device.availableClips.map(name => <MenuItem eventKey={name}>{name}</MenuItem>)}
+        </DropdownButton>
+      );
+    }
+
+    if (this.state.device.mode === 'live') {
+      return (
+        <ButtonToolbar>
+          <ButtonGroup>
+            <Button onClick={this.onRecordingStart}>
+              <Glyphicon glyph="record"/>
+            </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            {loadClipDropdown}
+          </ButtonGroup>
+          <Label>{this.state.device.msg}</Label>
+        </ButtonToolbar>
+      );
+    }
+
+    if (this.state.device.mode === 'record') {
+      return (
+        <ButtonToolbar>
+          <ButtonGroup>
+            <Button active onClick={this.onRecordingStop}>
+              <Glyphicon glyph="record"/>
+            </Button>
+          </ButtonGroup>
+          <Label>{this.state.device.msg}</Label>
+        </ButtonToolbar>
+      );
+    }
+
+    let activeDialog;
+    if (this.state.showSaveDialog) {
+      activeDialog = (
+        <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Title>Save Clip</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <Input
+              bsStyle={this.clipNameValid() ? 'success' : 'warning'}
+              hasFeedback
+              ref="saveClipName"
+              type="text"
+              placeholder="clip name"
+            />
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button onClick={this.onHideSaveDialog}>Close</Button>
+            <Button onClick={this.onSaveClip} bsStyle="primary">Save</Button>
+          </Modal.Footer>
+
+        </Modal.Dialog>
+      );
+    }
+
+    return (
+      <div>
+        <ButtonToolbar>
+          <ButtonGroup>
+            <Button bsStyle="danger" onClick={this.onResumeLive}>
+              <Glyphicon glyph="remove" />
+            </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <Button onClick={this.onGotoStart}>
+              <Glyphicon glyph="step-backward"/>
+            </Button>
+            <Button onClick={this.onRewind}>
+              <Glyphicon glyph="backward"/>
+            </Button>
+            <Button
+              onClick={this.onPlayOrStop}
+              bsStyle={this.state.device.mode === 'play' ? 'primary' : 'default'}>
+              <Glyphicon glyph={this.state.device.mode === 'play' ? 'stop' : 'play'}/>
+            </Button>
+            <Button onClick={this.onFastForward}>
+              <Glyphicon glyph="forward"/>
+            </Button>
+            <Button onClick={this.onGotoEnd}>
+              <Glyphicon glyph="step-forward"/>
+            </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <Button
+              onClick={this.onToggleRepeat}
+              bsStyle={this.state.device.repeat ? 'info' : 'default'}>
+              <Glyphicon glyph="repeat" active="true"/>
+            </Button>
+          </ButtonGroup>
+          <ButtonGroup>
+            <DropdownButton
+              title={scissorsGlpyhicon}
+              onSelect={this.onSelectTrim}>
+              <MenuItem eventKey="before">Trim from Start</MenuItem>
+              <MenuItem eventKey="after">Trim to End</MenuItem>
+            </DropdownButton>
+          </ButtonGroup>
+          <ButtonGroup>
+            {loadClipDropdown}
+            <Button onClick={this.onShowSaveDialog}>
+              <Glyphicon glyph="floppy-open"/>
+            </Button>
+          </ButtonGroup>
+          <Label>{this.state.device.msg}</Label>
+        </ButtonToolbar>
+        {activeDialog}
+      </div>
     );
   }
 }
@@ -177,7 +482,7 @@ export default class Diag extends React.Component {
 
   constructor() {
     super();
-    localforage.getItem("diag-active-view").then((view) => {
+    localforage.getItem('diag-active-view').then((view) => {
       // TODO: This is a little racy but probably ok.  If this promise doesn't
       // resolve before the component is first rendered (unlikely) then the
       // incorrect view will be shown.
@@ -238,7 +543,7 @@ export default class Diag extends React.Component {
   };
 
   onView = (e, view) => {
-    localforage.setItem("diag-active-view", view);
+    localforage.setItem('diag-active-view', view);
     this.setState({view});
   };
 
@@ -310,17 +615,16 @@ export default class Diag extends React.Component {
               <MenuItem eventKey="release">release</MenuItem>
             </DropdownButton>
           </ButtonGroup>
+          <DiagCameraToolbar camera={camera} />
         </ButtonToolbar>
-        <div style={style}>
+        <div>
           <div style={{flex: 1, display: 'flex', flexDirection: 'row'}}>
             <DiagLogcat logName="logcat" log={camera.logs.logcat} paused={paused}/>
             <div>
               <CameraPreview deviceId={this.deviceId} paused={paused}/>
             </div>
           </div>
-          <div style={{flex: 2}}>
-            {view}
-          </div>
+          {view}
         </div>
       </div>
     );
@@ -367,7 +671,8 @@ class DiagLogcat extends DiagLog {
   constructor(props) {
     super(props);
     this.state = { filter: '' };
-    this.style.flex = 1;
+    this.style.height = '200px'; // TODO: Use camera preview height or something
+    this.style.display = 'block';
   }
 
   onFilterChange = e => {
@@ -400,8 +705,7 @@ class DiagLogcat extends DiagLog {
                return <div dangerouslySetInnerHTML={{__html: html}} />;
              })
         }
-        <Input
-          style={this.style}
+        <Input style={{fontFamily: 'monospace', fontSize: '8'}}
           ref="filter"
           type="text"
           placeholder="Filter regexp"

@@ -493,14 +493,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		13B07FAE1A68108700A75B9A /* Silk */ = {
-			isa = PBXGroup;
-			children = (
-				57AC68811B4F0CE6009B70A3 /* iOS */,
-			);
-			name = Silk;
-			sourceTree = "<group>";
-		};
 		146834001AC3E56700842450 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -665,7 +657,7 @@
 			path = WebSocket;
 			sourceTree = "<group>";
 		};
-		57AC68811B4F0CE6009B70A3 /* iOS */ = {
+		57AC68811B4F0CE6009B70A3 /* Silk */ = {
 			isa = PBXGroup;
 			children = (
 				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
@@ -701,6 +693,7 @@
 				13B07FB11A68108700A75B9A /* LaunchScreen.xib */,
 				6C5839001C1D04610004EC78 /* CrashReporter.swift */,
 			);
+			name = Silk;
 			path = iOS;
 			sourceTree = "<group>";
 		};
@@ -782,7 +775,7 @@
 				357D3F241C38AB2B005BBEC8 /* libsodium-ios */,
 				6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */,
 				F91A54EA1B8B9D48009C75C9 /* Resources */,
-				13B07FAE1A68108700A75B9A /* Silk */,
+				57AC68811B4F0CE6009B70A3 /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* SilkTests */,
 				83CBBA001A601CBA00E9B192 /* Products */,

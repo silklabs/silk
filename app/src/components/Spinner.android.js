@@ -3,7 +3,7 @@ const { ProgressBarAndroid } = React;
 
 const SIZE_TO_ANDROID_STYLE_ATTR = {
   small: 'Small',
-  large: 'Normal',
+  large: 'Large',
 };
 
 export default class Spinner extends React.Component {

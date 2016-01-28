@@ -18,6 +18,10 @@
         </intent-filter>
       </activity>
       <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" />
+      <provider
+        android:authorities="com.silklabs.app.blobs"
+        android:name="com.silklabs.app.BlobProvider"
+        />
     </application>
 
 </manifest>

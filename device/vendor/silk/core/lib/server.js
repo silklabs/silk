@@ -87,13 +87,14 @@ export default class Server extends events.EventEmitter {
 
     socket.on('connect', () => {
       log.info(`server socket connected`);
-      this._resetAcks();
       this.emit('connect');
     });
 
     socket.on('disconnect', e => {
       log.warn(`server socket disconnect: ${e}`);
       this.emit('disconnect');
+
+      this._resetAcks();
 
       switch (e) {
       case 'io client disconnect':

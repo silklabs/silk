@@ -6,7 +6,7 @@ var fs = require('fs');
 var path = require('path');
 
 var rn = config['react-native'];
-var bundleFile = path.join(__dirname, '../Silk/main.jsbundle');
+var bundleFile = path.join(__dirname, '../ios/Silk/main.jsbundle');
 
 if (!rn || rn.type !== 'local' || !rn.url) {
   throw new Error('Invalid "react-native" section for local bundle in config.local.json');

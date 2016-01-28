@@ -9,7 +9,7 @@ export NODE_DEBUG=http
 
 mkdir -p build
 xctool \
-  -project $PROJECT.xcodeproj \
+  -project ios/$PROJECT.xcodeproj \
   -scheme $PROJECT \
   -sdk iphoneos \
   EXFILTRATED_DSYM_ZIP=$(pwd)/dsym.zip \

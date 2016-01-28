@@ -45,26 +45,26 @@ module.exports = {
   // Push and PR builds
   'api': npmPackageBuild('api'),
   'api-schema': npmPackageBuild('api-schema'),
-  'app-lint': npmPackageBuild('app', {
+  'app-js-lint': npmPackageBuild('app', {
     // Always run lint when JS files change.
-    travis_yml: 'app/.travis/lint.yml',
+    travis_yml: 'app/.travis-lint.yml',
     files: [
       'app/.flowconfig',
       'app/.eslintrc',
       'app/**/*.js',
     ],
   }),
-  'app-pr': npmPackageBuild('app', {
-     // On PRs only build the entire app if non-JS files changed.
-    ignore_files: [
-      'app/.flowconfig',
-      'app/.eslintrc',
-      'app/**/*.js',
+  'app-ios-pr': npmPackageBuild('app', {
+    // On PRs only build the entire iOS app if relevant files changed.
+    travis_yml: 'app/ios/.travis.yml',
+    files: [
+      'app/ios/**',
     ],
     events: ['pr'],
   }),
-  'app-push': npmPackageBuild('app', {
+  'app-ios-push': npmPackageBuild('app', {
     // Always build the app on a branch push, no matter what changed.
+    travis_yml: 'app/ios/.travis.yml',
     events: ['push'],
   }),
   'cli': npmPackageBuild('cli'),

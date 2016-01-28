@@ -1,10 +1,10 @@
 #!/bin/bash
 
 if [[ "$TEST_TYPE" = objc-test ]]; then
-  .travis/objc-test.sh
+  ios/.travis/objc-test.sh
 
 elif [[ "$TEST_TYPE" = build-dist ]]; then
-  .travis/build-dist.sh
+  ios/.travis/build-dist.sh
 
 else
   echo "Unknown test type: $TEST_TYPE"

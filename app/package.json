@@ -46,7 +46,7 @@
   "name": "Silk",
   "private": true,
   "scripts": {
-    "bundle": "./tools/rnws bundle --no-android --iosBundlePath iOS/main.jsbundle",
+    "bundle": "./tools/rnws bundle --no-android --iosBundlePath ios/Silk/main.jsbundle",
     "flow": "flow check",
     "lint": "eslint src",
     "localbundle": "./tools/local_bundle",

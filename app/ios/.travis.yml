@@ -7,7 +7,7 @@ before_install:
   - brew update; brew update
 
 install:
-  - .travis/install
+  - ios/.travis/install
 
 env:
   matrix:
@@ -18,15 +18,15 @@ env:
 before_script:
   - node --version
   - npm --version
-  - source .travis/env.sh
-  - .travis/add-key.sh
+  - source ios/.travis/env.sh
+  - ios/.travis/add-key.sh
 
 script:
-  - .travis/script
+  - ios/.travis/script
 
 after_script:
-  - .travis/remove-key.sh
-  - .travis/raygun-dsym.sh
+  - ios/.travis/remove-key.sh
+  - ios/.travis/raygun-dsym.sh
 
 deploy:
   provider: s3

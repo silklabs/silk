@@ -284,6 +284,10 @@ export default class Timeline extends EventEmitter {
       return;
     }
 
+    if (frame === null) {
+      return;
+    }
+
     const jpeg = frame.toBuffer({ext: '.jpg', jpegQuality: 100});
     this.diagJpegFrames.push({id, when, jpeg});
   }

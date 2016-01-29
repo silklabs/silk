@@ -7,6 +7,7 @@
       ],
       'include_dirs': [
         '<!(node -e "require(\'nan\')")',
+        '<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")'
       ],
       'cflags_cc': [
         '-fexceptions',

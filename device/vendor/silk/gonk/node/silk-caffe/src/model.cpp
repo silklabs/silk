@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+//#define LOG_NDEBUG 0
 #define LOG_TAG "silk-caffe"
 #include <utils/Log.h>
 #include <vector>
@@ -14,6 +15,7 @@
 
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"
+#include "Matrix.h"
 
 Nan::Persistent<Function> Model::constructor;
 
@@ -110,11 +112,8 @@ public:
   void Execute() {
     Caffe::set_mode(Caffe::CPU);
 
-    clock_t t_start = clock();
     model->mCaffeNet.reset(new Net<float>(modelPath, caffe::TEST));
     model->mCaffeNet->CopyTrainedLayersFrom(weightsPath);
-    clock_t t_end = clock();
-    ALOGD("Loading time: %fms", 1000.0 * (t_end - t_start) / CLOCKS_PER_SEC);
 
     if (model->mCaffeNet->num_inputs() != 1) {
       SetErrorMessage("Network should have exactly one input");
@@ -265,21 +264,15 @@ NAN_METHOD(Model::SetLabels) {
 class PredictAsyncWorker: public Nan::AsyncWorker {
 public:
   PredictAsyncWorker(Nan::Callback *callback, Model* model,
-      string imagePath, int topK) :
+      cv::Mat mat, int topK) :
     Nan::AsyncWorker(callback),
     model(model),
-    imagePath(imagePath),
+    mat(mat),
     topK(topK) {
   }
 
   void Execute() {
-    cv::Mat img = cv::imread(imagePath, -1);
-    if (img.empty()) {
-      SetErrorMessage("Unable to decode image");
-      return;
-    }
-
-    output = model->Predict(img);
+    output = model->Predict(mat);
     topK = min<int>(model->mLabels.size(), topK);
     maxK = Argmax(output, topK);
   }
@@ -309,7 +302,7 @@ public:
 
 private:
   Model* model;
-  string imagePath;
+  cv::Mat mat;
   int topK;
   vector<float> output;
   vector<int> maxK;
@@ -326,8 +319,7 @@ NAN_METHOD(Model::PredictTopK) {
     JSTHROW("Image filename and callback function must be provided");
   }
 
-  string imagePath;
-  STRING_FROM_ARGS(imagePath, 0);
+  cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(info[0]->ToObject())->mat;
 
   int topK = 0;
   if (info.Length() > 1) {
@@ -337,7 +329,7 @@ NAN_METHOD(Model::PredictTopK) {
   REQ_FUN_ARG(2, cb);
 
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
-  Nan::AsyncQueueWorker(new PredictAsyncWorker(callback, self, imagePath,
+  Nan::AsyncQueueWorker(new PredictAsyncWorker(callback, self, mat,
       topK));
 }
 

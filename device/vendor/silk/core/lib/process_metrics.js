@@ -1,0 +1,94 @@
+/**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @private
+ * @flow
+ */
+
+import api from './api';
+import createLog from './log';
+import {exec} from './sysutils';
+import invariant from 'assert';
+import * as Metrics from './metrics/process.js';
+
+const log = createLog(`process-metrics`);
+
+const DEFAULT_PROBE_INTERVAL_MS = 5 * 60 * 1000;
+
+const PROCRANK_NUMBER_OF_PROCESSES_TO_REPORT = 5;
+const PROCRANK_HEADER = `  PID       Vss      Rss      Pss      Uss  cmdline`;
+
+const LSOF_HEADER =
+  `COMMAND     PID       USER   FD      TYPE             DEVICE  ` +
+  `SIZE/OFF       NODE NAME`;
+
+const metrics = api.deviceMetrics;
+
+async function launch(cmd: string, args: Array<any> = []): Promise<Array<string>> {
+  log.debug(`Launching '${cmd}'`);
+  let { code, stdout, stderr } = await exec(cmd, args);
+  if (code) {
+    throw new Error(`'${cmd}' failed with return code ${code}: ${stderr}`);
+  }
+  log.debug(`'${cmd}' finished successfully`);
+  return stdout.split(`\n`);
+}
+
+async function procrank(): Promise<void> {
+  const stdout = await launch(`procrank`);
+  invariant(stdout[0] === PROCRANK_HEADER);
+
+  for (let i = 1; i <= PROCRANK_NUMBER_OF_PROCESSES_TO_REPORT; i++) {
+    let line = stdout[i];
+    if (!line) {
+      break;
+    }
+
+    let values = line.trim().split(/\s+/);
+    if (values.length !== 6) {
+      break;
+    }
+
+    let name = values[5].split(`/`).pop();
+
+    metrics.add(new Metrics.MemoryVss(name, parseInt(values[1])));
+    metrics.add(new Metrics.MemoryRss(name, parseInt(values[2])));
+    metrics.add(new Metrics.MemoryPss(name, parseInt(values[3])));
+    metrics.add(new Metrics.MemoryUss(name, parseInt(values[4])));
+  }
+}
+
+async function lsof(): Promise<void> {
+  const stdout = await launch(`lsof`, [process.pid]);
+  invariant(stdout[0] === LSOF_HEADER);
+
+  metrics.add(new Metrics.OpenFileDescriptors(`node`, stdout.length - 1));
+}
+
+export default function startCollectingProcessMetrics(): void {
+  log.info(`Waiting for ${DEFAULT_PROBE_INTERVAL_MS}ms before next probe`);
+
+  setTimeout(async () => {
+    log.info(`Probing`);
+
+    let error;
+    try {
+      await Promise.all([
+        procrank(),
+        lsof(),
+      ]);
+    } catch(err) {
+      error = err;
+    }
+
+    if (error) {
+      log.warn(`Probe failed`, error);
+    } else {
+      log.info(`Probe finished`);
+    }
+
+    startCollectingProcessMetrics();
+  }, DEFAULT_PROBE_INTERVAL_MS);
+}

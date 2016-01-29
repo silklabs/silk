@@ -253,7 +253,7 @@ index a56cd97..784c9d1 100644
 +  PowerTestHelper acp android-support-test antlr apicheck asm-4.0 atree \
 +  bionic-benchmarks bionic-unit-tests bionic-unit-tests-static busybox \
 +  check_prereq com.android.uiautomator.platform.common commons-cli-1.2 \
-+  cpufeatures ddmlib-prebuilt espresso-core fortify1-tests-clang \
++  ddmlib-prebuilt espresso-core fortify1-tests-clang \
 +  fortify1-tests-gcc fortify2-tests-clang fortify2-tests-gcc fs_config \
 +  fs_get_stats gdbserver groovy-all-1.7.0 icu4j json-prebuilt jython kxml2-2.3.0 \
 +  layoutlib_api-prebuilt libBionicStandardTests libBionicTests libbfd libc \

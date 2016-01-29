@@ -125,6 +125,7 @@ PRODUCT_PACKAGES += \
   libttspico \
   pocketsphinx \
   libttscereproc \
+  libwebrtc
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

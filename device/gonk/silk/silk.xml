@@ -98,6 +98,12 @@
            remote="silk"
            revision="master"/>
 
+  <project name="xianyi/OpenBLAS"
+           path="external/OpenBLAS"
+           remote="github"
+           revision="optimized_for_deeplearning"
+           clone-depth="1"/>
+
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

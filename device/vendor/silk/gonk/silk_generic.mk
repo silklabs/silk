@@ -40,6 +40,7 @@ SILK_CORE := \
   silk-gc1 \
   silk-movie \
   silk-properties \
+  silk-caffe \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
 

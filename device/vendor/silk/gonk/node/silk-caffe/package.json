@@ -1,0 +1,32 @@
+{
+  "name": "silk-caffe",
+  "version": "1.0.0",
+  "description": "Caffe Deep Learning for Node",
+  "main": "dist/index.js",
+  "author": "Anshul Jain <anshul@silklabs.com>",
+  "os": [
+    "android"
+  ],
+  "dependencies": {
+    "browserify": "^10.2.1",
+    "nan": "^2.0.9"
+  },
+  "scripts": {
+    "postinstall": "mkdir -p dist/ ; browserify lib/caffe.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
+  },
+  "keywords": [
+    "caffe",
+    "deep",
+    "learning",
+    "neural",
+    "nets",
+    "ai",
+    "machine",
+    "learning"
+  ],
+  "engines": {
+    "node": "4.2"
+  },
+  "gypfile": true,
+  "private": true
+}

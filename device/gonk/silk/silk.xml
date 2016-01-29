@@ -79,6 +79,14 @@
            upstream="master"
            clone-depth="42"/>
 
+  <!-- Caffe and its dependent modules -->
+  <project name="taka-no-me/android-cmake"
+           path="external/android-cmake"
+           remote="github"
+           revision="556cc14296c226f753a3778d99d8b60778b7df4f"
+           upstream="master"
+           clone-depth="42"/>
+
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

@@ -27,6 +27,7 @@ addons:
       - libopencv-dev
       - linux-libc-dev
       - openjdk-7-jdk
+      - openjdk-7-jre-headless
 
 before_script:
   source .travis/before_script

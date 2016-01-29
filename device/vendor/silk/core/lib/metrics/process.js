@@ -69,12 +69,34 @@ export class MemoryUss extends MemoryMetric {
 
 export class OpenFileDescriptors extends ProcessMetric {
   static NAME = `open_file_descriptors`;
-  static DESC = `The number of file descriptors `;
+  static DESC = `The number of file descriptors`;
 
   constructor(processName: string, count: number) {
     invariant(count >= 0, `Invalid count ${count}`);
     super(processName, {
       count: new MetricTypes.Integer(count),
+    });
+  }
+}
+
+export class MemoryHeap extends ProcessMetric {
+  static NAME = `process_heap`;
+  static DESC =
+    `The rss of the process and the total and used portion of the v8 heap`;
+
+  constructor(
+    processName: string,
+    rssBytes: number,
+    totalBytes: number,
+    usedBytes: number
+  ) {
+    invariant(rssBytes >= 0, `Invalid rss ${rssBytes}`);
+    invariant(totalBytes >= 0, `Invalid total ${totalBytes}`);
+    invariant(usedBytes >= 0, `Invalid used ${usedBytes}`);
+    super(processName, {
+      rssBytes: new MetricTypes.Integer(rssBytes),
+      totalBytes: new MetricTypes.Integer(totalBytes),
+      usedBytes: new MetricTypes.Integer(usedBytes),
     });
   }
 }

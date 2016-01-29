@@ -16,6 +16,7 @@ import * as Metrics from './metrics/process.js';
 const log = createLog(`process-metrics`);
 
 const DEFAULT_PROBE_INTERVAL_MS = 5 * 60 * 1000;
+const MAIN_PROCESS_NAME = `silk-core`;
 
 const PROCRANK_NUMBER_OF_PROCESSES_TO_REPORT = 5;
 const PROCRANK_HEADER = `  PID       Vss      Rss      Pss      Uss  cmdline`;
@@ -67,6 +68,21 @@ async function lsof(): Promise<void> {
   metrics.add(new Metrics.OpenFileDescriptors(`node`, stdout.length - 1));
 }
 
+async function probe(): Promise<any> {
+  const asyncWork = Promise.all([
+    procrank(),
+    lsof(),
+  ]);
+
+  const usage = process.memoryUsage();
+  metrics.add(new Metrics.MemoryHeap(MAIN_PROCESS_NAME,
+                                     usage.rss,
+                                     usage.heapTotal,
+                                     usage.heapUsed));
+
+  return asyncWork;
+}
+
 export default function startCollectingProcessMetrics(): void {
   log.info(`Waiting for ${DEFAULT_PROBE_INTERVAL_MS}ms before next probe`);
 
@@ -75,10 +91,7 @@ export default function startCollectingProcessMetrics(): void {
 
     let error;
     try {
-      await Promise.all([
-        procrank(),
-        lsof(),
-      ]);
+      await probe();
     } catch(err) {
       error = err;
     }

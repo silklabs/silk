@@ -26,6 +26,23 @@ const LSOF_HEADER =
 
 const metrics = api.deviceMetrics;
 
+function procrankStringToBytes(str: string): number {
+  invariant(str.length > 1);
+
+  let bytes = parseInt(str.slice(0, str.length - 1));
+
+  switch (str[str.length - 1]) {
+  case `K`:
+    bytes *= 1024;
+    break;
+
+  default:
+    throw new Error(`Can't convert string to bytes: '${str}'`);
+  }
+
+  return bytes;
+}
+
 async function launch(cmd: string, args: Array<any> = []): Promise<Array<string>> {
   log.debug(`Launching '${cmd}'`);
   let { code, stdout, stderr } = await exec(cmd, args);
@@ -53,10 +70,10 @@ async function procrank(): Promise<void> {
 
     let name = values[5].split(`/`).pop();
 
-    metrics.add(new Metrics.MemoryVss(name, parseInt(values[1])));
-    metrics.add(new Metrics.MemoryRss(name, parseInt(values[2])));
-    metrics.add(new Metrics.MemoryPss(name, parseInt(values[3])));
-    metrics.add(new Metrics.MemoryUss(name, parseInt(values[4])));
+    metrics.add(new Metrics.MemoryVss(name, procrankStringToBytes(values[1])));
+    metrics.add(new Metrics.MemoryRss(name, procrankStringToBytes(values[2])));
+    metrics.add(new Metrics.MemoryPss(name, procrankStringToBytes(values[3])));
+    metrics.add(new Metrics.MemoryUss(name, procrankStringToBytes(values[4])));
   }
 }
 

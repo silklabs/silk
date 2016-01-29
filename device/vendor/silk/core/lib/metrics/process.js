@@ -21,49 +21,28 @@ class ProcessMetric extends DeviceMetric {
     invariant(processName, `${this.constructor.NAME}: empty processName`);
   }
 }
+export class ProcessMemory extends ProcessMetric {
+  static NAME = `process_memory`;
+  static DESC = `The amount of memory used by a process`;
 
-class MemoryMetric extends ProcessMetric {
-  constructor(processName: string, bytes: number) {
+  constructor(
+    processName: string,
+    vssBytes: number,
+    rssBytes: number,
+    pssBytes: number,
+    ussBytes: number
+  ) {
+    invariant(vssBytes >= 0, `Invalid vss ${vssBytes}`);
+    invariant(rssBytes >= 0, `Invalid rss ${rssBytes}`);
+    invariant(pssBytes >= 0, `Invalid pss ${pssBytes}`);
+    invariant(ussBytes >= 0, `Invalid uss ${ussBytes}`);
+
     super(processName, {
-      bytes: new MetricTypes.Integer(bytes),
+      vssBytes: new MetricTypes.Integer(vssBytes),
+      rssBytes: new MetricTypes.Integer(rssBytes),
+      pssBytes: new MetricTypes.Integer(pssBytes),
+      ussBytes: new MetricTypes.Integer(ussBytes),
     });
-    invariant(bytes >= 0, `${this.constructor.NAME}: invalid bytes ${bytes}`);
-  }
-}
-
-export class MemoryVss extends MemoryMetric {
-  static NAME = `memory_vss`;
-  static DESC = `Virtual Set Size`;
-
-  constructor(processName: string, bytes: number) {
-    super(processName, bytes);
-  }
-}
-
-export class MemoryRss extends MemoryMetric {
-  static NAME = `memory_rss`;
-  static DESC = `Resident Set Size`;
-
-  constructor(processName: string, bytes: number) {
-    super(processName, bytes);
-  }
-}
-
-export class MemoryPss extends MemoryMetric {
-  static NAME = `memory_pss`;
-  static DESC = `Proportional Set Size`;
-
-  constructor(processName: string, bytes: number) {
-    super(processName, bytes);
-  }
-}
-
-export class MemoryUss extends MemoryMetric {
-  static NAME = `memory_uss`;
-  static DESC = `Unique Set Size`;
-
-  constructor(processName: string, bytes: number) {
-    super(processName, bytes);
   }
 }
 

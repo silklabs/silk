@@ -68,12 +68,13 @@ async function procrank(): Promise<void> {
       break;
     }
 
-    let name = values[5].split(`/`).pop();
-
-    metrics.add(new Metrics.MemoryVss(name, procrankStringToBytes(values[1])));
-    metrics.add(new Metrics.MemoryRss(name, procrankStringToBytes(values[2])));
-    metrics.add(new Metrics.MemoryPss(name, procrankStringToBytes(values[3])));
-    metrics.add(new Metrics.MemoryUss(name, procrankStringToBytes(values[4])));
+    metrics.add(new Metrics.ProcessMemory(
+      values[5].split(`/`).pop(),
+      procrankStringToBytes(values[1]),
+      procrankStringToBytes(values[2]),
+      procrankStringToBytes(values[3]),
+      procrankStringToBytes(values[4]),
+    ));
   }
 }
 

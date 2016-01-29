@@ -133,6 +133,7 @@ export default React.createClass({
     if (this.props.playing) {
       playOrPause = (
         <SystemButton
+          color="black"
           onPress={this.props.onPause}
           style={styles.pause}
           type={SystemButton.Pause}
@@ -141,6 +142,7 @@ export default React.createClass({
     } else {
       playOrPause = (
         <SystemButton
+          color="black"
           onPress={this.props.onPlay}
           style={styles.play}
           type={SystemButton.Play}
@@ -156,6 +158,7 @@ export default React.createClass({
     return (
       <View style={styles.controlToolbar}>
         <SystemButton
+          color="black"
           enabled={canRewind}
           onPress={this.props.onRewind}
           style={styles.rewind}
@@ -163,6 +166,7 @@ export default React.createClass({
         />
         {playOrPause}
         <SystemButton
+          color="black"
           onPress={this.props.onFastForward}
           style={styles.fastforward}
           type={SystemButton.FastForward}
@@ -222,6 +226,7 @@ export default React.createClass({
       <View style={[styles.top]}>
         <View style={styles.seekRow}>
           <SystemButton
+            color="black"
             style={styles.done}
             onPress={this.props.onDone}
             type={SystemButton.Done}
@@ -277,7 +282,6 @@ var styles = StyleSheet.create({
   },
 
   done: {
-    color: 'black',
     flex: 0.1,
     height: 35,
   },
@@ -320,19 +324,16 @@ var styles = StyleSheet.create({
   },
 
   pause: {
-    color: 'black',
     height: 35,
     width: 50,
   },
 
   play: {
-    color: 'black',
     height: 35,
     width: 50,
   },
 
   fastforward: {
-    color: 'black',
     height: 35,
     width: 50,
   },
@@ -348,7 +349,6 @@ var styles = StyleSheet.create({
   },
 
   rewind: {
-    color: 'black',
     height: 35,
     width: 50,
   },

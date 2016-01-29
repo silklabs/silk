@@ -93,6 +93,11 @@
            revision="refs/tags/v2.1.2"
            clone-depth="1"/>
 
+  <project name="boost"
+           path="external/boost"
+           remote="silk"
+           revision="master"/>
+
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

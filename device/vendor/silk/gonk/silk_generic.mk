@@ -130,6 +130,7 @@ PRODUCT_PACKAGES += \
   libgflags \
   libprotobuf-cpp-2.3.0-full-gnustl-rtti \
   aprotoc \
+  libboost \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

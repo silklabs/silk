@@ -87,6 +87,12 @@
            upstream="master"
            clone-depth="42"/>
 
+  <project name="gflags/gflags"
+           path="external/gflags"
+           remote="github"
+           revision="refs/tags/v2.1.2"
+           clone-depth="1"/>
+
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

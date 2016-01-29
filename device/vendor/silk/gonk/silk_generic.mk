@@ -128,6 +128,8 @@ PRODUCT_PACKAGES += \
   libttscereproc \
   libwebrtc \
   libgflags \
+  libprotobuf-cpp-2.3.0-full-gnustl-rtti \
+  aprotoc \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

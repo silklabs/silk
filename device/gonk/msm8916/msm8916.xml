@@ -266,6 +266,7 @@
   <project groups="pdk-cw-fs" name="platform/external/ppp" path="external/ppp" revision="8b58d9bd02e2c55f547fafbe9ba55b1160665761" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk-java" name="platform/external/proguard" path="external/proguard" revision="9961286c06c25cd03464d3e2b00bd9b9dedf96ba" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk" name="platform/external/protobuf" path="external/protobuf" revision="c6d612ac7b18ba758c9067136c1217589aa5796f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/zlib" path="external/zlib" upstream="LA.BR.1.1.2_rb1.9"/>  
   <project name="platform/external/protobuf-c" path="external/protobuf-c" revision="f5acb16b4e8b57f5be4083960023982443bddbca" upstream="LA.BR.1.1.2_rb1.9"/>
   <!-- <project groups="pdk-cw-fs" name="platform/external/qemu" path="external/qemu" revision="006a174244e336c578f45bf78a9dbdbd890c217d" upstream="LA.BR.1.1.2_rb1.9"/> -->
   <!-- <project groups="pdk-cw-fs" name="platform/external/qemu-pc-bios" path="external/qemu-pc-bios" revision="20349dae98d7de09a7e390d4a706c64f1db6edc2" upstream="LA.BR.1.1.2_rb1.9"/> -->

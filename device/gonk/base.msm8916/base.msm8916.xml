@@ -64,4 +64,10 @@
   <project name="platform/hardware/libhardware_legacy"
            path="hardware/libhardware_legacy" clone-depth="1"/>
 
+  <project path="external/protobuf"
+           name="platform/external/protobuf"
+           groups="pdk" clone-depth="1"/>
+  <project path="external/zlib"
+           name="platform/external/zlib"
+           groups="pdk" clone-depth="1"/>
 </manifest>

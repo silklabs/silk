@@ -57,6 +57,7 @@ import Logcat from './logcat';
 import Timeline from './timeline';
 import makeExtensions from './ext';
 import JSStartup from './metrics/js_startup';
+import startCollectingProcessMetrics from './process_metrics';
 
 // Start the profile server ASAP.
 initProfiler();
@@ -147,13 +148,15 @@ function main() {
   networkStatus.hintSocket = server;
   outbox = initOutbox(networkStatus);
 
+  crashreporter = makeCrashReporter(outbox);
+  jsErrors(crashreporter);
+
   // Init metrics...
   networkStatus.on('online', api.deviceMetrics.onConnectivityChange);
   networkStatus.on('offline', api.deviceMetrics.onConnectivityChange);
   api.deviceMetrics.start();
 
-  crashreporter = makeCrashReporter(outbox);
-  jsErrors(crashreporter);
+  startCollectingProcessMetrics();
 
   const bootAbortedFlag = Symbol();
   const maybeAbortBoot = () => {

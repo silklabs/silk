@@ -101,7 +101,7 @@ function unescapeSSID(ssid: string): string {
   // escaped). Bit of a hack, but works reliably.
   ssid = JSON.parse(
     '"' +
-    ssid.replace('"', '\\"').replace('\\x', '\\u00') +
+    ssid.replace('"', '\\"').replace(/\\x/g, '\\u00') +
     '"'
   );
   invariant(typeof ssid === 'string');

@@ -10,7 +10,7 @@ import type {ServerType} from '../metrics_agent';
 
 export class Heap extends ServerMetric {
 
-  static NAME = 'server_process_heap';
+  static NAME = 'process_heap';
   static DESC =
     `The rss of the process and the total and used portion of the v8 heap`;
   static INDEX = new Set([

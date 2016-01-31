@@ -6,11 +6,16 @@ import URL from 'url';
 import path from 'path';
 import createLog from 'silk-log';
 import invariant from 'assert';
+import version from 'silk-core-version';
 
 import type { ExpressRoutes } from 'api-schema';
 import type {RouteContext} from '../server';
 
 const log = createLog('routes:account');
+
+const COMMON_TAGS = {
+  branch: version.branch,
+};
 
 function milliSecondsToNanoSeconds(ms: number): string {
   return `${ms}000000`;
@@ -109,16 +114,15 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
     // somehow... Ideally we could do this against a known list of series names
     // but for now we simply prefix it by type.
     let metrics = req.body.points.reduce((final, value) => {
-      if (Array.isArray(value)) {
-        if (value.length >= 1) {
-          // series
-          value[0] = `${type}_${value[0]}`;
+      if (Array.isArray(value) && value.length >= 3) {
+        // series
+        value[0] = `${type}_${value[0]}`;
+        value[1] = Object.assign(value[1], COMMON_TAGS);
 
-          if (value.length >= 4) {
-            // We should be receiving milliseconds but influxDB wants
-            // nanoseconds
-            value[3] = milliSecondsToNanoSeconds(value[3] + startTime);
-          }
+        if (value.length >= 4) {
+          // We should be receiving milliseconds but influxDB wants
+          // nanoseconds
+          value[3] = milliSecondsToNanoSeconds(value[3] + startTime);
         }
         final.push(value);
       } else {
@@ -133,7 +137,7 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
 
       metrics.push([
         `${type}_dropped`,
-        /* No tags */ {},
+        COMMON_TAGS,
         {count: `${dropped}i`},
         milliSecondsToNanoSeconds(now),
       ]);

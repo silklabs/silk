@@ -7,7 +7,7 @@ import MetricTypes from 'silk-api/src/metric_types';
 
 export default class StartServerMetric extends ServerMetric {
 
-  static NAME = 'server_start_server';
+  static NAME = 'start_server';
   static DESC = `
     Counter for when http server starts...
   `;

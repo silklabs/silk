@@ -67,6 +67,19 @@ module.exports = {
     travis_yml: 'app/ios/.travis.yml',
     events: ['push'],
   }),
+  'app-android-pr': npmPackageBuild('app', {
+    // On PRs only build the entire Android app if relevant files changed.
+    travis_yml: 'app/android/.travis.yml',
+    files: [
+      'app/android/**',
+    ],
+    events: ['pr'],
+  }),
+  'app-android-push': npmPackageBuild('app', {
+    // Always build the app on a branch push, no matter what changed.
+    travis_yml: 'app/android/.travis.yml',
+    events: ['push'],
+  }),
   'cli': npmPackageBuild('cli'),
   'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
   'log': npmPackageBuild('log'),

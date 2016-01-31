@@ -1,0 +1,13 @@
+#!/bin/bash -ex
+
+source ~/.nvm/nvm.sh
+nvm use 4.2
+
+node --version
+npm --version
+
+# Ensure we don't run out of file watches.
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+export NODE_DEBUG=http
+./gradlew assembleRelease

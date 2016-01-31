@@ -21,6 +21,7 @@
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/version",
+    "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "silk-raygun": "/raygun"
   },
@@ -60,7 +61,6 @@
     "babel-eslint": "4.1.6",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1",
-    "flow-bin": "0.20.1",
     "mocha": "2.4.5",
     "webpack-dev-server": "1.14.1",
     "webpack-hot-middleware": "2.6.4"

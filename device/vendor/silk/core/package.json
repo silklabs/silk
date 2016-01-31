@@ -14,6 +14,7 @@
   },
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
+    "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "silk-api": "/api",
     "silk-raygun": "/raygun",
@@ -41,9 +42,6 @@
     "source-map-support": "0.3.3",
     "split": "1.0.0",
     "validator": "3.41.2"
-  },
-  "optionalDependencies": {
-    "flow-bin": "0.20.1"
   },
   "devDependencies": {
     "babel": "5.8.35",

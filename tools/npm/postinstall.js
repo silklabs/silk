@@ -170,6 +170,28 @@ function installDeps(cwd, nodeModules, dependencies) {
       process.chdir(nodeModules)
       fs.symlinkSync(path.relative(nodeModules, pkgSource), pkg);
       process.chdir(oldCWD);
+
+      // Symlink package binaries into node_modules/.bin/
+      let packageJson = JSON.parse(fs.readFileSync(path.join(pkgSource, 'package.json'), 'utf8'));
+      if (packageJson.bin) {
+        let nodeModulesBin = path.join(nodeModules, '.bin');
+        if (!fs.existsSync(nodeModulesBin)) {
+          fs.mkdirSync(nodeModulesBin);
+        }
+
+        for (let binName in packageJson.bin) {
+          let binTarget = path.join('..', pkg, packageJson.bin[binName]);
+          log(`${nodeModulesBin}/${binName} => ${binTarget}`);
+
+          let oldCWD = process.cwd();
+          process.chdir(nodeModulesBin);
+          if (fs.existsSync(binName)) {
+            fs.unlinkSync(binName);
+          }
+          fs.symlinkSync(binTarget, path.join(nodeModulesBin, binName));
+          process.chdir(oldCWD);
+        }
+      }
     }
 
     if (INVOKE_TYPE === 'symlink') {

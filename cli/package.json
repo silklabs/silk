@@ -28,6 +28,7 @@
   "silkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",
+    "silk-flow-bin": "/flow-bin",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps"
   },

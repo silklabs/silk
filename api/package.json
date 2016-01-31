@@ -7,6 +7,7 @@
   "silkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-core-version": "/version",
+    "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "api-schema": "/api-schema",
     "silk-babeldeps": "/babeldeps",
@@ -60,7 +61,6 @@
     "babel-preset-stage-0": "6.3.13",
     "eslint": "1.10.3",
     "express": "4.13.3",
-    "flow-bin": "0.20.1",
     "mocha": "2.3.4"
   }
 }

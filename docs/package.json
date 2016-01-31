@@ -3,10 +3,11 @@
   "version": "0.12.0",
   "description": "Generates documentation for silk modules",
   "scripts": {
-    "postinstall": "documentation ../device/vendor/silk/core/lib/*.js --project-version `node -p \"require('./package.json').version\"` -f html -o dist/api/device --name silk-device"
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall && documentation ../device/vendor/silk/core/lib/*.js --project-version `node -p \"require('./package.json').version\"` -f html -o dist/api/device --name silk-device"
   },
   "dependencies": {
-    "documentation": "^3.0.4"
+    "documentation": "3.0.4"
   },
   "engines": {
     "node": "4.2"

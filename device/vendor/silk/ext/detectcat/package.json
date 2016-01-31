@@ -17,13 +17,13 @@
     "silk-log": "/log"
   },
   "dependencies": {
-    "babel-runtime": "^5.8.20"
+    "babel-runtime": "5.8.35"
   },
   "devDependencies": {
-    "babel": "^5.8.23",
-    "event-to-promise": "^0.4.0",
-    "mocha": "^2.3.3",
-    "mz": "2.0.0"
+    "babel": "5.8.35",
+    "event-to-promise": "0.4.0",
+    "mocha": "2.4.2",
+    "mz": "2.2.0"
   },
   "private": true
 }

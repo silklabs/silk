@@ -16,10 +16,10 @@
   },
   "homepage": "https://github.com/silklabs/log#readme",
   "dependencies": {
-    "debug": "^2.2.0"
+    "debug": "2.2.0"
   },
   "devDependencies": {
-    "babel": "^5.8.23",
-    "mocha": "^2.3.3"
+    "babel": "5.8.35",
+    "mocha": "2.3.4"
   }
 }

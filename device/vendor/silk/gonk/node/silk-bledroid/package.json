@@ -13,8 +13,8 @@
   },
   "license": "Proprietary",
   "dependencies": {
-    "babel-runtime": "^5.8.20",
-    "debug": "~2.2.0",
+    "babel-runtime": "5.8.35",
+    "debug": "2.2.0",
     "silk-sdk-glue": "0.0.1",
     "uuid": "2.0.1"
   },

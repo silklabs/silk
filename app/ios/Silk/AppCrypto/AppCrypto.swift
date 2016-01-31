@@ -40,12 +40,13 @@ public class AppCrypto : NSObject {
     )
 
     if (result != 0) {
+      let message = "Could not derive key."
       let userInfo = [
-        NSLocalizedDescriptionKey: "Could not derive key.",
+        NSLocalizedDescriptionKey: message,
         NSLocalizedFailureReasonErrorKey: "CCKeyDerivationPBKDF failed with code \(result).",
       ]
       let error = NSError(domain: "com.silklabs.app", code: Int(result), userInfo: userInfo)
-      rejecter(error)
+      rejecter("E_PBKDF2_FAILED", message, error)
       return
     }
 
@@ -61,12 +62,13 @@ public class AppCrypto : NSObject {
     let result = SecRandomCopyBytes(kSecRandomDefault, Int(length), UnsafeMutablePointer<UInt8>(bytes))
 
     if (result != 0) {
+      let message = "Could not generate random bytes."
       let userInfo = [
-        NSLocalizedDescriptionKey: "Could not generate random bytes.",
+        NSLocalizedDescriptionKey: message,
         NSLocalizedFailureReasonErrorKey: "SecRandomCopyBytes failed with code \(result).",
       ]
       let error = NSError(domain: "com.silklabs.app", code: Int(result), userInfo: userInfo)
-      rejecter(error)
+      rejecter("E_RAND_BYTES_FAILED", message, error)
       return
     }
 

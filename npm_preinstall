@@ -1,6 +1,23 @@
-#! /bin/bash -xe
+#! /bin/bash -e
 
+# The default cache-min of 10 (seconds) doesn't really make sense in our
+# environment.  There's no need to check the registry that often to confirm that
+# the package already in the local npm cache hasn't changed.
+cache_min=$(npm config get cache-min)
+if [ $cache_min -lt 99999999 ]; then
+  echo "!!!!!!!!! ACHTUNG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  echo
+  echo The npm cache minimum time on this machine is very low: $cache_min
+  echo
+  echo For a much faster npm experience, run:
+  echo
+  echo "  $ npm config set cache-min 99999999"
+  echo
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  echo
+fi
 
+set -x
 # Resolve to realpath....
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do

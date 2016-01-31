@@ -51,7 +51,7 @@ export default async function main (config: any): any {
   let devices = new Devices(db);
   let accounts = new Accounts(db);
 
-  let metricsAgent = new MetricsAgent();
+  let metricsAgent = new MetricsAgent('socketio');
 
   let influxdb = null;
   if (config.metrics.influxdb.connectionString) {

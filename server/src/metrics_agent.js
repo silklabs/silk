@@ -6,9 +6,12 @@
  */
 
 import createLog from 'silk-log';
+import * as MemoryMetrics from './metrics/memory';
 
 import type InfluxDBClient from './influxdb_client';
 import type {default as Metric, Point} from 'silk-api/src/metric';
+
+export type ServerType = 'server' | 'socketio';
 
 const log = createLog('server:metrics-agent');
 
@@ -22,6 +25,10 @@ const MAX_METRICS = 3000;
  */
 const SUBMIT_INTERVAL = 1000 * 60;
 
+/**
+ * How often to submit memory metrics/
+ */
+const MEMORY_METRICS_INTERVAL = 5 * 60 * 1000;
 
 function nowInNanoSeconds(): string {
   return `${Date.now()}000000`;
@@ -32,10 +39,16 @@ export default class MetricAgent {
   _influxdb: InfluxDBClient;
   _points: Array<Point> = [];
   _droppedCount: number = 0;
+  _serverType: ServerType;
+
+  constructor(serverType: ServerType) {
+    this._serverType = serverType;
+  }
 
   start(client: InfluxDBClient) {
     this._influxdb = client;
     this._poll();
+    this._scheduleMemoryMetric();
   }
 
   add(metric: Metric) {
@@ -91,5 +104,16 @@ export default class MetricAgent {
       setTimeout(this._poll, SUBMIT_INTERVAL);
     }
   };
+
+  _scheduleMemoryMetric(): void {
+    setTimeout(() => {
+      const usage = process.memoryUsage();
+      this.add(new MemoryMetrics.Heap(this._serverType,
+                                      usage.rss,
+                                      usage.heapTotal,
+                                      usage.heapUsed));
+      this._scheduleMemoryMetric();
+    }, MEMORY_METRICS_INTERVAL);
+  }
 
 }

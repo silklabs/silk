@@ -113,13 +113,14 @@ export default async function main (config: any): any {
 
   let emailSender = new EmailSender(config);
   let scopes = new Scopes(config.scopes);
-  let metricsAgent = new MetricsAgent();
-  metricsAgent.add(new StartMetric());
+  let metricsAgent = new MetricsAgent('server');
 
   let influxdb = null;
   if (config.metrics.influxdb.connectionString) {
     influxdb = new InfluxDB(config.metrics.influxdb.connectionString);
     metricsAgent.start(influxdb);
+
+    metricsAgent.add(new StartMetric());
   }
 
   const context: RouteContext = {

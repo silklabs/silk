@@ -299,6 +299,9 @@ export default class Timeline extends EventEmitter {
     }
 
     objects.forEach((object) => {
+      if (object.tag === 'car') {
+        this.emit('car', object.when, object.rects);
+      }
       // Run facial recognition on the detected faces before adding them
       if (object.tag !== 'face') {
         // Store objects to be used later when there is no motion. Following

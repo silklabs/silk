@@ -12,8 +12,8 @@ import streams from 'stream';
  * A dumb stream which simply holds the contents of the writes to it.
  */
 export default class StoringStream extends streams.Duplex {
-  _writes = []
-  _size = 0
+  _writes = [];
+  _size = 0;
 
   constructor(...args) {
     super(...args);

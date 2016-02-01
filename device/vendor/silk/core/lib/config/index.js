@@ -319,7 +319,7 @@ class DeviceConfig extends EventEmitter {
 
     log.info('Configured');
     this.emit('configured');
-  }
+  };
 
   _stopRetryingWifiConnection(error) {
     log.debug(`DeviceConfig._stopRetryingWifiConnection(` +

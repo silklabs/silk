@@ -23,7 +23,7 @@ import { Writable } from 'stream';
  */
 export default class TeeStream extends Writable {
 
-  _streamHandles = []
+  _streamHandles = [];
 
   constructor(...list) {
     super();

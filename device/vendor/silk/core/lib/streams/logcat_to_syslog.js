@@ -22,7 +22,7 @@ const PRIORITY = 34;
 export default class LogcatToSyslog extends Transform {
 
   // hostname to send in syslog message...
-  host = ''
+  host = '';
 
   constructor(host) {
     super({

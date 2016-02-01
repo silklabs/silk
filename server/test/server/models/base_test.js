@@ -11,7 +11,7 @@ suite('base model', () => {
 
     static ERROR = {
       foo: 'FOO'
-    }
+    };
 
     static INDEX = [
       {
@@ -20,13 +20,13 @@ suite('base model', () => {
         },
         options: { unique: true }
       }
-    ]
+    ];
 
     static SCHEMA = {
       model: Joi.object({
         foo: Joi.boolean().required(),
       })
-    }
+    };
 
     static COLLECTION = 'sub';
   }

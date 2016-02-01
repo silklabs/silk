@@ -12,7 +12,7 @@ import assert from 'assert';
 suite('tee stream', () => {
 
   class StoreStream extends streams.Writable {
-    content = []
+    content = [];
     _write(chunk, enc, cb) {
       this.content.push(chunk);
       cb();

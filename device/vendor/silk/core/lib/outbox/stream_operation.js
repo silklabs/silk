@@ -70,9 +70,9 @@ export default class StreamOperation extends Operation {
 
   static MAX_UPLOAD_TIME = MAX_UPLOAD_TIME;
 
-  createdAt = null
-  arguments = {}
-  writing = false
+  createdAt = null;
+  arguments = {};
+  writing = false;
   error = null;
 
   constructor(options) {

@@ -52,7 +52,7 @@ function sendJSON(res, code, body, headers = {}) {
 class ProfileServer {
 
   // current cpu profile
-  cpuProfile = false
+  cpuProfile = false;
 
   /**
    * Start the v8 cpu sampling profiler...
@@ -164,7 +164,7 @@ class ProfileServer {
     } catch (err) {
       sendJSON(res, 500, { error: err.stack });
     }
-  }
+  };
 
 }
 

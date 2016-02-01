@@ -159,7 +159,7 @@ class Slider extends React.Component {
   onChange = e => {
     this.setState({ value: e.target.value });
     this.props.onChange(this.state.value);
-  }
+  };
 
   render() {
     return (
@@ -332,7 +332,7 @@ export default class AVPipeline extends React.Component {
 
   onMaxSegmentsChange = value => {
     this.setState({ maxNrSegments: parseInt(value) });
-  }
+  };
 
   onPause = () => {
     alert('NYI: real pause');   // eslint-disable-line

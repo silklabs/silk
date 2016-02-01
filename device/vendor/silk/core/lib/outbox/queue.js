@@ -388,7 +388,7 @@ export default class Queue extends EventEmitter {
 
       ++this.running;
       handle.running = true;
-      handle.promise = async () => {
+      handle.promise = (async () => {
         try {
           await this._workDiskQueueItem(handle);
         } catch(err) {
@@ -401,7 +401,7 @@ export default class Queue extends EventEmitter {
         if (this.diskCheckRunning) {
           this.workDiskQueue();
         }
-      }();
+      })();
     }
 
     // Periodic timer to catch retries and new additions to the work queue

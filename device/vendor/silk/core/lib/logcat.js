@@ -31,10 +31,10 @@ const ENABLED = getboolprop('persist.silk.logupload.enabled');
  */
 export default class LogcatManager {
 
-  process = null
+  process = null;
 
-  outbox = null
-  hostname = null
+  outbox = null;
+  hostname = null;
 
   _maxReadTimer = null;
 
@@ -50,7 +50,7 @@ export default class LogcatManager {
     log.info(`Error in logcat process`, err);
     this.stop();
     this.start();
-  }
+  };
 
   onLogcatExit = () => {
     log.info(`Logcat process exit!`);

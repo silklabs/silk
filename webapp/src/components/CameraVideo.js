@@ -35,17 +35,17 @@ class VideoTag extends EventEmitter {
       `startTime=${this.when.toLocaleDateString()} ${this.when.toLocaleTimeString()}`);
     this.state = 'ready';
     this.emit('stateChanged');
-  }
+  };
 
   _onVideoPlaying = () => {
     this.state = 'playing';
     this.emit('stateChanged');
-  }
+  };
 
   _onVideoEnded = () => {
     this.state = 'idle';
     this.emit('stateChanged');
-  }
+  };
 
   load(url, when) {
     this.state = 'loading';
@@ -109,7 +109,7 @@ export default class CameraVideo extends React.Component {
     if (activeVideo.state === 'playing') {
       this.setState({currentDeviceTime: activeVideo.currentTime.toString()});
     }
-  }
+  };
 
   componentWillUnmount() {
     clearInterval(this.intervalId);
@@ -176,7 +176,7 @@ export default class CameraVideo extends React.Component {
       buffering: false,
       activeVideoIndex: this.state.activeVideoIndex === 0 ? 1 : 0,
     });
-  }
+  };
 
   render() {
     let buffering;

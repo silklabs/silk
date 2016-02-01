@@ -33,20 +33,20 @@ async function getPort() {
 
 class StreamHandle extends EventEmitter {
   // Set to true when server gets full request and responds with 200.
-  success = false
+  success = false;
 
   // Content buffer (only set when success = true)
-  content = null
+  content = null;
 
   // Each attempt to finish the request.
   attempts = [];
 
   // When true will destroy the client side of the socket upon receiving this
   // request...
-  forceAbort = false
+  forceAbort = false;
 
   // Amount of time to delay before responding to request.
-  delay = 0
+  delay = 0;
 
   url = null;
 

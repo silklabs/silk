@@ -98,7 +98,7 @@ class ConditionalInstall {
         });
 
         if (!hasModules) {
-          log(`${installModulePath} has no node_modules folder after successful install skipping hash.`);
+          log(`${installModulePath} has no node_modules folder after successful install, skipping hash.`);
           accept();
           return;
         }

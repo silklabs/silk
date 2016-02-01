@@ -7,9 +7,17 @@
 
 import createLog from 'silk-log';
 import * as MemoryMetrics from './metrics/memory';
+import version from 'silk-core-version';
 
 import type InfluxDBClient from './influxdb_client';
-import type {default as Metric, Point} from 'silk-api/src/metric';
+import type {default as Metric} from 'silk-api/src/metric';
+
+type Point = [
+  string,
+  {[key: string]: string},
+  {[key: string]: string},
+  string,
+];
 
 export type ServerType = 'server' | 'socketio';
 
@@ -29,6 +37,13 @@ const SUBMIT_INTERVAL = 1000 * 60;
  * How often to submit memory metrics/
  */
 const MEMORY_METRICS_INTERVAL = 5 * 60 * 1000;
+
+const SERVER_PREFIX = `server_`;
+
+const COMMON_TAGS = {
+  version: version.semver,
+  branch: version.branch,
+};
 
 function nowInNanoSeconds(): string {
   return `${Date.now()}000000`;
@@ -67,7 +82,9 @@ export default class MetricAgent {
 
     // Cast explicitly from Metric -> Point by running the toJSON function.
     // InfluxDB wants the timestamp to be in nanoseconds
-    const point = metric.toJSON().concat(nowInNanoSeconds());
+    const point: Point = metric.toJSON().concat(nowInNanoSeconds());
+    point[0] = `${SERVER_PREFIX}${point[0]}`;
+    point[1] = Object.assign(point[1], COMMON_TAGS);
     this._points.push(point);
   }
 
@@ -86,8 +103,8 @@ export default class MetricAgent {
           log.warn(`Dropped ${droppedCount} metrics`);
 
           points.push([
-            `server_dropped`,
-            /* No tags */ {},
+            `${SERVER_PREFIX}dropped`,
+            COMMON_TAGS,
             {count: `${droppedCount}i`},
             nowInNanoSeconds(),
           ]);

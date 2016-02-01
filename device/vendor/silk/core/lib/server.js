@@ -19,6 +19,7 @@ const log = createLog('server');
 
 type ServerAckType = 'diag' | 'info' | 'jpeg' | 'mp4';
 type ServerAcks = {[key: ServerAckType]: number};
+type ServerState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 
 /**
  * Server socket.io connection
@@ -27,6 +28,7 @@ export default class Server extends events.EventEmitter {
   socket: ?Socket;
   pendingAcks: ServerAcks;
   maxPendingAcks: ServerAcks;
+  lastEmittedState: ServerState = 'disconnected';
 
   constructor() {
     super();
@@ -61,17 +63,18 @@ export default class Server extends events.EventEmitter {
   }
 
   connect() {
-    let socket = this.socket;
-    if (socket) {
-      if (!socket.connected) {
+    const socket = this.socket;
+    if (!socket || !socket.connected) {
+      if (this.lastEmittedState !== 'connecting') {
+        this.lastEmittedState = 'connecting';
         this.emit('stateChange', 'connecting');
-        socket.connect();
       }
-      return;
+      if (socket) {
+        socket.connect();
+      } else {
+        this._connect();
+      }
     }
-
-    this.emit('stateChange', 'connecting');
-    this._connect();
   }
 
   /**
@@ -87,12 +90,20 @@ export default class Server extends events.EventEmitter {
 
     socket.on('connect', () => {
       log.info(`server socket connected`);
-      this.emit('connect');
+
+      if (this.lastEmittedState !== 'connected') {
+        this.lastEmittedState = 'connected';
+        this.emit('connect');
+      }
     });
 
     socket.on('disconnect', e => {
       log.warn(`server socket disconnect: ${e}`);
-      this.emit('disconnect');
+
+      if (this.lastEmittedState !== 'disconnected') {
+        this.lastEmittedState = 'disconnected';
+        this.emit('disconnect');
+      }
 
       this._resetAcks();
 
@@ -108,7 +119,10 @@ export default class Server extends events.EventEmitter {
         this.connect();
         // falls through
       default:
-        this.emit('reconnecting');
+        if (this.lastEmittedState !== 'reconnecting') {
+          this.lastEmittedState = 'reconnecting';
+          this.emit('reconnecting');
+        }
         break;
       }
     });
@@ -120,7 +134,10 @@ export default class Server extends events.EventEmitter {
         log.warn(`socket ${event}: retrying connection: ${err}`);
         this.socket = null;
         this.connect();
-        this.emit('reconnecting');
+        if (this.lastEmittedState !== 'reconnecting') {
+          this.lastEmittedState = 'reconnecting';
+          this.emit('reconnecting');
+        }
       });
     });
 

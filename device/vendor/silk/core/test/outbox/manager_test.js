@@ -24,7 +24,7 @@ suite('outbox manager', () => {
     static NAME = 'http';
     static StreamClass = (url) => {
       return httpStream(url, { method: 'post' });
-    }
+    };
   }
 
   class NoBufferOp extends Operation {

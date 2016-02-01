@@ -14,26 +14,26 @@ suite('routes', () => {
     account = pair.account;
 
     await Promise.all([
-      async () => {
+      (async () => {
         deviceSocket = device.api.socketioClient(createSocketIO, 'device');
         deviceSocket.open();
         await eventToPromise(deviceSocket, 'connect');
-      }(),
+      })(),
 
-      async () => {
+      (async () => {
         accountSocket = account.api.socketioClient(createSocketIO, 'account');
         accountSocket.open();
         await eventToPromise(accountSocket, 'connect');
-      }(),
+      })(),
 
-      async() => {
+      (async() => {
         let secondDevice = await context.registeredDevice(
           account.api.accessToken
         );
         secondDeviceSocket = secondDevice.api.socketioClient(createSocketIO, 'device');
         secondDeviceSocket.open();
         await eventToPromise(secondDeviceSocket, 'connect');
-      }()
+      })()
     ]);
   });
 

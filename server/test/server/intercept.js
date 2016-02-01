@@ -50,7 +50,7 @@ class Request {
 
 class Intercept extends EventEmitter {
 
-  requests = []
+  requests = [];
 
   constructor(app) {
     super();

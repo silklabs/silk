@@ -35,13 +35,13 @@ suite('outbox stream', () => {
   }
 
   class TestOp extends StreamOperation {
-    static NAME = 'test'
-    static StreamClass = TestWriter
+    static NAME = 'test';
+    static StreamClass = TestWriter;
   }
 
   class FailableWriter extends TestWriter {
-    failOnNth = 5
-    nth = 0
+    failOnNth = 5;
+    nth = 0;
 
     constructor(opts) {
       super(opts);
@@ -62,7 +62,7 @@ suite('outbox stream', () => {
 
   class FailableOp extends StreamOperation {
     static NAME = 'failable';
-    static StreamClass = FailableWriter
+    static StreamClass = FailableWriter;
   }
 
   class ImmediateFail extends StreamOperation {
@@ -73,7 +73,7 @@ suite('outbox stream', () => {
         stream.emit('error', new Error('throw!'));
       });
       return stream;
-    }
+    };
   }
 
   class TimeoutOp extends StreamOperation {
@@ -85,7 +85,7 @@ suite('outbox stream', () => {
         stream.emit('close');
       }, 100);
       return stream;
-    }
+    };
   }
 
   async function cleanup() {

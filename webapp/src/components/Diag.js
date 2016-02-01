@@ -120,7 +120,7 @@ class DiagImageTable extends React.Component {
       });
       loadingJpegs.push({id, when, img});
     });
-  }
+  };
 
   render() {
     let { images, imageKeys } = this.state;
@@ -344,7 +344,7 @@ class DiagLogcat extends DiagLog {
     logName: React.PropTypes.string.isRequired,
     log: React.PropTypes.array,
     paused: React.PropTypes.bool,
-  }
+  };
 
   constructor(props) {
     super(props);

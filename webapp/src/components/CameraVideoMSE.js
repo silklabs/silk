@@ -238,7 +238,7 @@ export default class CameraVideo extends React.Component {
       // TODO: why is this timestamp wrong ...
       this.setState({ currentDeviceTime: this.video.currentTime.toString() });
     }
-  }
+  };
 
   render() {
     return (

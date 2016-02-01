@@ -20,7 +20,7 @@ dependency and declare the necessary peer dependencies as well, e.g.:
     "babel-eslint": "^4.1.6",
     "eslint": "^1.10.3",
     "eslint-config-silk": "file:../eslint",
-    "eslint-plugin-react": "^3.11.3",
+    "eslint-plugin-react": "3.16.1"
   },
   "scripts": {
     "lint": "eslint src"

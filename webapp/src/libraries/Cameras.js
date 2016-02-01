@@ -121,7 +121,7 @@ class Camera extends EventEmitter {
     }
     this._feedNewLog(msg.type, msg.log);
     this.emit('diag', msg);
-  }
+  };
 
   on(event, listener) {
     let ret = super.on(event, listener);
@@ -222,7 +222,7 @@ class Camera extends EventEmitter {
     }
     log.debug('preview', msg);
     this._queue.push(msg);
-  }
+  };
 
   _updateVideoClipStream() {
     const enabled = this._requestedRooms.videoClip;
@@ -268,7 +268,7 @@ class Camera extends EventEmitter {
     }
     this.videoClip = URL.createObjectURL(blob);
     this.emit('videoClip', this.videoClip, new Date(msg.when), view);
-  }
+  };
 }
 
 class Cameras extends EventEmitter {

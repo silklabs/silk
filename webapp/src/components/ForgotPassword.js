@@ -32,7 +32,7 @@ export default class ForgotPassword extends React.Component {
     if (Config.defaultUser && Config.defaultPassword) {
       this.setState({ submitDisabled: false });
     }
-  }
+  };
 
   doPasswordReset = async(password) => {
     try {
@@ -50,7 +50,7 @@ export default class ForgotPassword extends React.Component {
     } finally {
       this.setState({ signingIn: false });
     }
-  }
+  };
 
   componentWillMount() {
     this.resetForm();
@@ -62,13 +62,13 @@ export default class ForgotPassword extends React.Component {
 
     const pass = this.refs.pass.getValue();
     this.doPasswordReset(pass);
-  }
+  };
 
   handleChange = () => {
     const pass = this.refs.pass.getValue();
     // Don't bother the server for clearly invalid emails and passwords
     this.setState({ submitDisabled: pass.length < 4 });
-  }
+  };
 
   render() {
     if (this.state.token && this.state.email) {

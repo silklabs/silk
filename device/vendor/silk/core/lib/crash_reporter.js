@@ -116,7 +116,7 @@ export class Tombstones extends EventEmitter {
 
     let statPromises = [];
     for (let i = start; i < end; i++) {
-      statPromises.push(async () => { // eslint-disable-line
+      statPromises.push((async () => { // eslint-disable-line no-loop-func
         let tombstonePath = path.join(this.tombstonePath, `tombstone_${i}`);
         let stat;
         try {
@@ -131,7 +131,7 @@ export class Tombstones extends EventEmitter {
           }
         }
         return stat;
-      }());
+      })());
     }
 
     let tombstones = await Promise.all(statPromises);
@@ -211,9 +211,9 @@ export class Tombstones extends EventEmitter {
  */
 export class Debuggerd extends EventEmitter {
 
-  socketPath = null
-  server = null
-  connectionCounter = 0
+  socketPath = null;
+  server = null;
+  connectionCounter = 0;
 
   _startPromise = null;
 
@@ -236,7 +236,7 @@ export class Debuggerd extends EventEmitter {
       log.debug(`Connection ${id} ended`);
       this.emit('tombstone written');
     });
-  }
+  };
 
   start() {
     if (this._startPromise) {
@@ -436,7 +436,7 @@ export class CrashReporter {
       await this.outbox.addToQueue(operation, tombstonePath);
       this.tombstones.removeFromQueue(tombstonePath);
     });
-  }
+  };
 
   getDeviceId() {
     if (this.deviceId) {

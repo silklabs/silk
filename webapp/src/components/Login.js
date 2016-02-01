@@ -22,11 +22,11 @@ export default class Login extends React.Component {
     if (Config.defaultUser && Config.defaultPassword) {
       this.setState({ submitDisabled: false });
     }
-  }
+  };
 
   doSignOut = async () => {
     await this.props.route.userState.signOut();
-  }
+  };
 
   doSignIn = async(email, pass) => {
     try {
@@ -45,7 +45,7 @@ export default class Login extends React.Component {
       this.setState({ alertMessage: err.message });
       this.setState({ signingIn: false, submitDisabled: false});
     }
-  }
+  };
 
   componentWillMount() {
     this.doSignOut();
@@ -59,14 +59,14 @@ export default class Login extends React.Component {
     const email = this.refs.email.getValue();
     const pass = this.refs.pass.getValue();
     this.doSignIn(email, pass);
-  }
+  };
 
   handleChange = () => {
     const email = this.refs.email.getValue();
     const pass = this.refs.pass.getValue();
     // Don't bother the server for clearly invalid emails and passwords
     this.setState({ submitDisabled: email.length < 3 || pass.length < 4 });
-  }
+  };
 
   render() {
     const panelStyle = {maxWidth: 400, margin: '10px auto 10px'};

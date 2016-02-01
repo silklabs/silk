@@ -18,6 +18,7 @@ class DiagLogger {
   constructor(type, cmd, params, respawnDelaySecs) {
     this.type = type;
     this.respawnTimer = null;
+    this.sendIntervalId = null;
     this.helper = null;
     this.server = null;
     this.data = '';
@@ -29,25 +30,17 @@ class DiagLogger {
     let spawn = require('child_process').spawn;
     let helper = spawn(this.cmd, this.params);
 
-    if (!this.respawnDelaySecs) {
-      // For a streaming log (eg, logcat) send data as fast as it arrives
-      helper.stdout.on('data', data => {
-        if (this.server) {
-          this.server.send('diag', {
-            type: this.type,
-            log: data.toString()
-          });
-        }
-      });
-    } else {
-      this.data = '';
+    this.data = '';
+    helper.stdout.on('data', data => {
+      this.data += data.toString();
+    });
 
+    if (!this.respawnDelaySecs) {
+      // For a streaming log (eg, logcat) send data once a second
+      this.sendIntervalId = setInterval(this.send, 1000);
+    } else {
       // For a non-streaming log (eg, dash) collect all the data and send it
       // in one shot once the process exits.
-      helper.stdout.on('data', data => {
-        this.data += data.toString();
-      });
-
       helper.on('close', () => {
         this.send(true);
         if (this.respawnDelaySecs) {
@@ -62,7 +55,7 @@ class DiagLogger {
     this.helper = helper;
   }
 
-  send(dumpTologcat = false) {
+  send = (dumpTologcat = false) => {
     if (this.data.length === 0) {
       return;
     }
@@ -80,7 +73,7 @@ class DiagLogger {
       log.info(`${this.cmd}:`);
       lines.forEach(l => log.verbose(l));
     }
-  }
+  };
 
   config(cmd, params, respawnDelaySecs) {
     this.cmd = cmd;
@@ -100,6 +93,10 @@ class DiagLogger {
     if (this.respawnTimer) {
       clearTimeout(this.respawnTimer);
       this.respawnTimer = null;
+    }
+    if (this.sendIntervalId) {
+      clearInterval(this.sendIntervalId);
+      this.sendIntervalId = null;
     }
   }
 }

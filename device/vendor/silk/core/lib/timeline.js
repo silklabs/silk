@@ -412,6 +412,9 @@ export default class Timeline extends EventEmitter {
       }
       invariant(object.source);
       invariant(object.tag);
+      if (!object.name) {
+        object.name = object.tag; // use tag as name if not specified
+      }
       if (!object.when) {
         object.when = this.lastPreviewFrameWhen; // best guess
       }
@@ -480,7 +483,8 @@ export default class Timeline extends EventEmitter {
   _emitEvents(objects: Array<TimelineEventObject>) {
     objects.forEach(object => {
       try {
-        this.emit(object.tag, object.when, object.rects, object.source);
+        this.emit(object.tag, object.when, object.rects, object.source,
+            object.name);
       } catch(err) {
         // Escape this call stack then re-throw
         process.nextTick(() => {

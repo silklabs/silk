@@ -114,10 +114,7 @@ export default class EventTracker extends EventEmitter {
       tag: event.tag,
       startUTC: event.when,
       endUTC: event.when + DEFAULT_EVENT_LENGTH_MS,
-      // TODO: we might be able to pile more stuff into the `data`
-      // field later on, such as which face was detected, direction of
-      // the motion across the screen, etc.
-      data: {tag: event.tag},
+      data: {tag: event.tag, name: event.name}
     };
     log.info(`Recorded event '${record.tag}'`);
 

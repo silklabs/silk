@@ -12,7 +12,7 @@
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue"
   },
   "dependencies": {
-    "babel-runtime": "^5.8.20"
+    "babel-runtime": "5.8.35"
   },
   "private": true
 }

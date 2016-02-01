@@ -11,16 +11,14 @@
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-flow-bin": "/flow-bin",
     "silk-log": "/log"
   },
   "dependencies": {
-    "babel-runtime": "^5.8.20"
-  },
-  "optionalDependencies": {
-    "flow-bin": "^0.20.1"
+    "babel-runtime": "5.8.35"
   },
   "devDependencies": {
-    "babel": "^5.8.23"
+    "babel": "5.8.35"
   },
   "private": true
 }

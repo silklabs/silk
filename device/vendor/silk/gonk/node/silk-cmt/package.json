@@ -11,7 +11,7 @@
   },
   "license": "proprietary",
   "dependencies": {
-    "nan": "^2.2.0"
+    "nan": "2.2.0"
   },
   "gypfile": true,
   "private": true

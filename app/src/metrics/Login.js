@@ -2,16 +2,14 @@
  * @flow
  */
 
-import AppMetric from './AppMetric';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
-export default class LoginMetric extends AppMetric {
+export default class LoginMetric extends Metric {
 
   static NAME = 'ios_login';
   static DESC = `
     A login event to an iOS device.
   `;
-  static INDEX = new Set([...AppMetric.INDEX]);
 
   constructor() {
     super({

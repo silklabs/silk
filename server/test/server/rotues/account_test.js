@@ -13,7 +13,13 @@ suite('account auth', () => {
   let accountOne, accountTwo;
   setup(async () => {
     devices = new Devices(context.db);
-    api = createApi({ serverUrl: context.url });
+    api = createApi({
+      serverUrl: context.url,
+      metrics: {
+        type: 'account',
+        tags: { },
+      },
+    });
 
     accountOne = await context.testAccount();
     accountTwo = await context.testAccount();

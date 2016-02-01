@@ -8,10 +8,9 @@
  */
 
 import invariant from 'assert';
-import AppMetric from './AppMetric';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
-export class Network extends AppMetric {
+export class Network extends Metric {
   static NAME = `video_network_server_to_app`;
   static DESC =
     `"Dark matter", unclassified time, between 'socket.emit(segment)' on the ` +
@@ -26,7 +25,7 @@ export class Network extends AppMetric {
   }
 }
 
-export class Load extends AppMetric {
+export class Load extends Metric {
   static NAME = `video_app_load`;
   static DESC =
     `Time spent loading and processing the segment before it's enqueued for ` +
@@ -40,7 +39,7 @@ export class Load extends AppMetric {
   }
 }
 
-export class Queue extends AppMetric {
+export class Queue extends Metric {
   static NAME = `video_app_queue`;
   static DESC =
     `Time the AV segment spends in the playback queue before being played`;
@@ -53,7 +52,7 @@ export class Queue extends AppMetric {
   }
 }
 
-export class Play extends AppMetric {
+export class Play extends Metric {
   static NAME = `video_app_play`;
   static DESC =
     `Time the segment is actually being played in the playback widget`;
@@ -66,7 +65,7 @@ export class Play extends AppMetric {
   }
 }
 
-export class Linger extends AppMetric {
+export class Linger extends Metric {
   static NAME = `video_app_linger`;
   static DESC =
     `Time the already-played segment "lingers" in the playback widget ` +

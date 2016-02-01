@@ -176,7 +176,7 @@ class LiveSegmentProvider {
       networkDuration = 0;
     }
 
-    this.monitor.props.api.accountMetrics.add(
+    this.monitor.props.api.metrics.add(
       new VideoMetrics.Network(networkDuration)
     );
   }
@@ -274,7 +274,7 @@ export default class MonitorFullscreen extends React.Component {
   componentWillMount() {
     this.mounted = true;
     this._watchStart = Date.now();
-    this.props.api.accountMetrics.add(new FullScreenVideoLaunch());
+    this.props.api.metrics.add(new FullScreenVideoLaunch());
 
     this._liveSegmentProvider = new LiveSegmentProvider(this);
     if (this.props.startAtTime) {
@@ -420,7 +420,7 @@ export default class MonitorFullscreen extends React.Component {
       const metricsData = this.meter.metricsData;
       metricsData.set(meterId, key, now);
 
-      this.props.api.accountMetrics.add(
+      this.props.api.metrics.add(
         new VideoMetrics.Load(now - metricsData.get(meterId, `arriveApp`))
       );
     }
@@ -447,7 +447,7 @@ export default class MonitorFullscreen extends React.Component {
       metricsData.set(meterId, key, now);
 
       const duration = now - metricsData.get(meterId, `playbackStart`);
-      this.props.api.accountMetrics.add(new VideoMetrics.Play(duration));
+      this.props.api.metrics.add(new VideoMetrics.Play(duration));
     }
     // If a different than expected segment ended.
     if ((!current || current.id !== event.nativeEvent.id) && segments.length) {
@@ -487,11 +487,9 @@ export default class MonitorFullscreen extends React.Component {
 
       const queuedTime = metricsData.get(meterId, `playbackEnqueued`);
       if (queuedTime) {
-        this.props.api.accountMetrics.add(
-          new VideoMetrics.Queue(now - queuedTime)
-        );
+        this.props.api.metrics.add(new VideoMetrics.Queue(now - queuedTime));
       } else {
-        this.props.api.accountMetrics.add(
+        this.props.api.metrics.add(
           new VideoMetrics.Load(now - metricsData.get(meterId, `arriveApp`))
         );
       }
@@ -500,9 +498,7 @@ export default class MonitorFullscreen extends React.Component {
       if (lingeringSegmentId) {
         const end = metricsData.get(lingeringSegmentId, `playbackEnd`);
         const lingerDuration = now - end;
-        this.props.api.accountMetrics.add(
-          new VideoMetrics.Linger(lingerDuration)
-        );
+        this.props.api.metrics.add(new VideoMetrics.Linger(lingerDuration));
 
         metricsData.delete(lingeringSegmentId);
       }
@@ -888,7 +884,7 @@ export default class MonitorFullscreen extends React.Component {
   close = () => {
     var overlay = this.refs.overlay;
     var duration = Date.now() - this._watchStart;
-    this.props.api.accountMetrics.add(new FullScreenVideoDuration({
+    this.props.api.metrics.add(new FullScreenVideoDuration({
       durationMs: new MetricTypes.Integer(duration),
     }));
 

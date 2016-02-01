@@ -68,7 +68,13 @@ suite('security validation tests', () => {
 
   setup(async () => {
     // Setup public api...
-    api = createApi({ serverUrl: context.url });
+    api = createApi({
+      serverUrl: context.url,
+      metrics: {
+        type: 'account',
+        tags: { },
+      },
+    });
 
     for (var userKey in users) {
       let user = users[userKey];

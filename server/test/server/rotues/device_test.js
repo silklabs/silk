@@ -8,7 +8,13 @@ suite('device routes', () => {
 
   let api, account, device;
   setup(async () => {
-    api = createApi({ serverUrl: context.url });
+    api = createApi({
+      serverUrl: context.url,
+      metrics: {
+        type: 'account',
+        tags: { },
+      },
+    });
 
     account = await context.testAccount();
     device = await context.registeredDevice(account.accessToken);

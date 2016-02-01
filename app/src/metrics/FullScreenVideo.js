@@ -2,16 +2,14 @@
  * @flow
  */
 
-import AppMetric from './AppMetric';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
-export default class FullScreenVideoLaunch extends AppMetric {
+export default class FullScreenVideoLaunch extends Metric {
 
   static NAME = 'ios_fullscreen_video_launch';
   static DESC = `
     Number of times the user launches fullscreen video
   `;
-  static INDEX = new Set([...AppMetric.INDEX]);
 
   constructor() {
     super({

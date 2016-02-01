@@ -62,7 +62,7 @@ import startCollectingProcessMetrics from './process_metrics';
 // Start the profile server ASAP.
 initProfiler();
 
-api.deviceMetrics.add(new JSStartup({
+api.metrics.add(new JSStartup({
   startupMS: new MetricTypes.Integer(process.uptime() * 1000)
 }));
 
@@ -152,9 +152,9 @@ function main() {
   jsErrors(crashreporter);
 
   // Init metrics...
-  networkStatus.on('online', api.deviceMetrics.onConnectivityChange);
-  networkStatus.on('offline', api.deviceMetrics.onConnectivityChange);
-  api.deviceMetrics.start();
+  networkStatus.on('online', api.metrics.onConnectivityChange);
+  networkStatus.on('offline', api.metrics.onConnectivityChange);
+  api.metrics.start();
 
   startCollectingProcessMetrics();
 

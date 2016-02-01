@@ -92,7 +92,13 @@ export async function testAccount(context, overrides = {}) {
     publicKey: id.toString()
   });
 
-  let api = createApi({ serverUrl: context.url });
+  let api = createApi({
+    serverUrl: context.url,
+    metrics: {
+      type: 'account',
+      tags: { },
+    },
+  });
   // Fail fast...
   api.maxRetries = 0;
   api.accessToken = id;
@@ -117,7 +123,13 @@ export async function testPair(context) {
 }
 
 export async function registeredDevice(ctx, accountAccessToken) {
-  let api = createApi({ serverUrl: ctx.url });
+  let api = createApi({
+    serverUrl: ctx.url,
+    metrics: {
+      type: 'account',
+      tags: { },
+    },
+  });
   let devices = new Devices(ctx.db);
   let deviceAccessToken = api.id.create();
 
@@ -173,7 +185,13 @@ export default function createContext(overrides = {}) {
     context.blobHandler = server.context.blobHandler;
     context.socketio = socketioServer;
     context.url = `http://localhost:${server.port}`;
-    context.api = createApi({ serverUrl: context.url });
+    context.api = createApi({
+      serverUrl: context.url,
+      metrics: {
+        type: 'account',
+        tags: { },
+      },
+    });
 
     // assign methods for convenience...
     for (let name in module.exports) {

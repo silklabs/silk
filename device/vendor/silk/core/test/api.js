@@ -3,7 +3,12 @@ import realAPI from '../lib/api';
 
 // Helper will use developer account and register a device...
 export default async function() {
-  let api = createApi();
+  let api = createApi({
+    metrics: {
+      type: 'device',
+      tags: { },
+    },
+  });
   api.accessToken = api.id.create();
 
   // Semi-nasty hack where we set the accessToken that the lib code will use.
@@ -15,7 +20,12 @@ export default async function() {
   );
 
   // API as the developer account...
-  let accountApi = createApi();
+  let accountApi = createApi({
+    metrics: {
+      type: 'account',
+      tags: { },
+    },
+  });
   accountApi.accessToken = accessToken;
 
   // register the device...

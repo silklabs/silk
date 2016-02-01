@@ -10,14 +10,9 @@ import * as MemoryMetrics from './metrics/memory';
 import version from 'silk-core-version';
 
 import type InfluxDBClient from './influxdb_client';
-import type {default as Metric} from 'silk-api/src/metric';
+import type {default as Metric, StringToStringDict} from 'silk-api/src/metric';
 
-type Point = [
-  string,
-  {[key: string]: string},
-  {[key: string]: string},
-  string,
-];
+type Point = [string, StringToStringDict, StringToStringDict, string];
 
 export type ServerType = 'server' | 'socketio';
 
@@ -80,11 +75,10 @@ export default class MetricAgent {
 
     log.debug(`Adding metric: ${metric.constructor.NAME}`, metric);
 
-    // Cast explicitly from Metric -> Point by running the toJSON function.
     // InfluxDB wants the timestamp to be in nanoseconds
-    const point: Point = metric.toJSON().concat(nowInNanoSeconds());
+    const point: Point =
+      metric.serialize(COMMON_TAGS).concat(nowInNanoSeconds());
     point[0] = `${SERVER_PREFIX}${point[0]}`;
-    point[1] = Object.assign(point[1], COMMON_TAGS);
     this._points.push(point);
   }
 

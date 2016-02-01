@@ -89,7 +89,8 @@ suite('routes', () => {
     await emit(accountSocket, 'leave', room);
     await emit(deviceSocket, 'video', {
       when: Date.now(),
-      contents: 'mp4'
+      contents: 'mp4',
+      deviceEmitMs: Date.now(),
     });
 
     // Turns off video nobody is listening...
@@ -115,7 +116,8 @@ suite('routes', () => {
     let event = {
       id: device.record.accessToken.publicKey,
       contents: 'mp4',
-      when: Date.now()
+      when: Date.now(),
+      deviceEmitMs: Date.now(),
     };
     await emit(deviceSocket, 'video', event);
     let [result, ack] = await videoEvent;

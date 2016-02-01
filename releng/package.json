@@ -58,7 +58,7 @@
     "yamljs": "0.2.4"
   },
   "devDependencies": {
-    "babel-eslint": "4.1.6",
+    "babel-eslint": "5.0.0beta9",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1",
     "mocha": "2.4.5",

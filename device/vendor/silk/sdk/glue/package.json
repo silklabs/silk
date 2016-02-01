@@ -20,7 +20,7 @@
     "ascii-table": "0.0.8",
     "babel": "5.8.35",
     "babel-core": "5.8.35",
-    "babel-eslint": "4.1.6",
+    "babel-eslint": "5.0.0beta9",
     "babelify": "6.4.0",
     "browserify": "11.2.0",
     "event-to-promise": "0.4.0",

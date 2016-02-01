@@ -3,11 +3,13 @@ CrashReporter.start();
 
 import React from 'react-native';
 let {
+  NativeModules,
   NetInfo,
   StyleSheet,
   Text,
   View,
 } = React;
+let { SLKUtil } = NativeModules;
 
 // Include our own browser shim goop but after react-native has loaded for the
 // first time and created it's own shims.
@@ -74,7 +76,18 @@ export default class Root extends AsyncComponent {
       userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
 
-    let apiOptions = {getRandomBytes};
+    let apiOptions = {
+      getRandomBytes,
+      metrics: {
+        type: `account`,
+        tags: {
+          version: version.semver,
+          iosSystemName: SLKUtil.systemName,
+          iosSystemVersion: SLKUtil.systemVersion,
+          iosModel: SLKUtil.model,
+        },
+      },
+    };
     if (serverUrl !== '' /* use API default server */) {
       apiOptions.serverUrl = serverUrl;
     }

@@ -37,7 +37,10 @@ class DiagLogger {
 
     if (!this.respawnDelaySecs) {
       // For a streaming log (eg, logcat) send data once a second
-      this.sendIntervalId = setInterval(this.send, 1000);
+      this.sendIntervalId = setInterval(() => {
+        this.send();
+        this.data = '';
+      }, 1000);
     } else {
       // For a non-streaming log (eg, dash) collect all the data and send it
       // in one shot once the process exits.
@@ -55,7 +58,7 @@ class DiagLogger {
     this.helper = helper;
   }
 
-  send = (dumpTologcat = false) => {
+  send(dumpTologcat = false) {
     if (this.data.length === 0) {
       return;
     }
@@ -73,7 +76,7 @@ class DiagLogger {
       log.info(`${this.cmd}:`);
       lines.forEach(l => log.verbose(l));
     }
-  };
+  }
 
   config(cmd, params, respawnDelaySecs) {
     this.cmd = cmd;

@@ -2,7 +2,7 @@
 
 PATH=./node_modules/.bin/:$PATH
 
-./bin/babel-node ./src/server/main.js development &
-./bin/babel-node ./src/socketio/main.js development &
+babel-node ./src/server/main.js development &
+babel-node ./src/socketio/main.js development &
 
 wait

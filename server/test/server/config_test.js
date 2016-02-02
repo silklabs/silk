@@ -1,7 +1,7 @@
 import assert from 'assert';
 import loadConfig from '../../src/server/config';
 
-const DEFAULT_CONFIG = require('../../config/default');
+import DEFAULT_CONFIG from '../../config/default';
 
 suite('config', () => {
 

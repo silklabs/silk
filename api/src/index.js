@@ -19,6 +19,7 @@ import RssiSmoother from './rssi_smoother';
 import {StateContainer} from './http_client';
 import MetricsAgent from './metrics_agent';
 
+import devAccount from './dev_account';
 import fetch from './fetch';
 import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
@@ -123,7 +124,7 @@ export class SilkApi {
   id: Function = Id;
   // Export the developer account
   // TODO: Remove prior to production!
-  devAccount: Object = require('./dev_account');
+  devAccount: Object = devAccount;
 
   set accessToken(accessToken: ?Id) {
     this.config.accessToken = accessToken;

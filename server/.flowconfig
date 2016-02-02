@@ -7,7 +7,7 @@
 .*/node_modules/socket.io-client/.*
 .*/node_modules/node-fetch/.*
 .*/node_modules/silk-api/node_modules/babel.*
-.*/api/node_modules/babel.*
+.*/node_modules/babel.*
 .*babel-eslint.*
 .*api-schema.*
 

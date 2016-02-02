@@ -82,7 +82,7 @@ export default class MetricAgent {
     this._points.push(point);
   }
 
-  _poll: () => Promise<void> = async() => {
+  _poll: () => Promise<void> = async () => {
     try {
       if (this._points.length > 0) {
         const points = this._points;

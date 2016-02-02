@@ -1,7 +1,3 @@
 {
-  "stage": "0",
-  "optional": [
-    "es7.classProperties",
-    "runtime"
-  ]
+  "presets": ["es2015-node4", "stage-0", "react"]
 }

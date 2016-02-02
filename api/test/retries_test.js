@@ -4,6 +4,7 @@ import createContext from 'silk-server/test/server/context';
 import launchApp from 'silk-server/test/server/launch_app';
 import express from 'express';
 import testRoutes from 'silk-server/src/server/routes/test';
+import jsonParser from 'silk-server/src/server/json';
 import {StateContainer} from '../src/http_client';
 import TestAPI from '../src/gen/test';
 
@@ -36,7 +37,7 @@ suite('api call retries', () => {
   let account, app, testServerURL, testModel;
   setup(async () => {
     app = express();
-    app.use(require('silk-server/src/server/json'));
+    app.use(jsonParser);
     testModel = new TestModel();
 
     // XXX: A little yucky but copies the proper context from the real server

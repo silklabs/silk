@@ -1,17 +1,20 @@
-import createApi from '../../src/server/express';
-import eventToPromise from 'event-to-promise';
-import fetch from 'node-fetch';
 import assert from 'assert';
-import * as Joi from 'joi';
-import gen from '../../src/gen';
+import bodyParser from 'body-parser';
+import eventToPromise from 'event-to-promise';
+import express from 'express';
+import fetch from 'node-fetch';
 import fs from 'mz/fs';
+import * as Joi from 'joi';
+
+import createApi from '../../src/server/express';
+import gen from '../../src/gen';
 
 suite('express', () => {
 
   let app, url;
   setup(async () => {
-    app = require('express')();
-    app.use(require('body-parser').json());
+    app = express();
+    app.use(bodyParser.json());
 
     let http = app.listen(0);
     await eventToPromise(http, 'listening');
@@ -61,7 +64,7 @@ suite('express', () => {
         baseClassPath: `${__dirname}/client`
       });
       await fs.writeFile(clientPath, generated);
-      let Client = require(clientPath);
+      let Client = require(clientPath).default;
       client = new Client(url);
     });
 
@@ -146,7 +149,7 @@ suite('express', () => {
         baseClassPath: `${__dirname}/client`
       });
       await fs.writeFile(clientPath, generated);
-      let Client = require(clientPath);
+      let Client = require(clientPath).default;
       client = new Client(url);
     });
 

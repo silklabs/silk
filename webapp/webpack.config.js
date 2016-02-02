@@ -17,7 +17,7 @@ var config = {
   resolveLoader: {
     modulesDirectories: [
       path.join(__dirname, 'node_modules'),
-    ]
+    ],
   },
   resolve: {
     alias : {
@@ -31,7 +31,11 @@ var config = {
       {
         test: /\.js$/,
         include: require('silk-babeldeps'),
-        loaders: ['babel-loader?stage=0&optional=runtime'],
+        loader: 'babel',
+        query: {
+          presets: ['es2015', 'stage-0', 'react'],
+          plugins: ['transform-runtime'],
+        },
       }
     ]
   },

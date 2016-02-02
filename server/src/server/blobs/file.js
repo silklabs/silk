@@ -6,6 +6,8 @@ import url from 'url';
 import uuid from 'uuid';
 import assert from 'assert';
 
+import makeCommonHelpers from './common';
+
 const log = createLog('blob-file');
 
 const KEY_GENERATOR_ATTEMPTS_MAX = 10;
@@ -111,7 +113,7 @@ class FileBlobHandler {
     this.keyMap = new Map();
     this.putUrlMap = new Map();
 
-    this.common = require('./common')(config);
+    this.common = makeCommonHelpers(config);
   }
 
   async postBlob(req, res) {

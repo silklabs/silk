@@ -5,11 +5,15 @@
   "scripts": {
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall",
-    "test": "flow check && mocha $(find test -name '*_test.js')"
+    "lint": "eslint test src",
+    "flow": "flow check",
+    "mocha": "mocha $(find test -name '*_test.js')",
+    "test": "npm run lint && npm run mocha && npm run flow"
   },
   "author": "James Lal [:lightsofapollo]",
   "license": "",
   "silkDependencies": {
+    "eslint-config-silk": "/eslint",
     "silk-flow-bin": "/flow-bin"
   },
   "dependencies": {
@@ -25,5 +29,9 @@
     "joi": "6.10.1",
     "joi-to-json-schema": "2.0.5",
     "uuid": "2.0.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0-beta9",
+    "eslint": "1.10.3"
   }
 }

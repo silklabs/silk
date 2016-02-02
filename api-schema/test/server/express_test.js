@@ -190,7 +190,6 @@ suite('express', () => {
     });
 
     test('invalid requests', async () => {
-      let token = 'xfoo';
       let response = await client.doFoo('foot', 1, {});
       assert.equal(response.status, 400);
       assert.equal(response.body.code, 400);

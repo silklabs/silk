@@ -10,22 +10,22 @@ export default class Client {
     body = JSON.stringify(body);
 
     let headers = {
-      'content-type': 'application/json'
+      'content-type': 'application/json',
     };
 
     let res = await fetch(URL.resolve(this.baseUrl, url), {
       method,
-      body: body,
-      headers: headers
+      body,
+      headers,
     });
 
-    let json = await res.json()
+    let json = await res.json();
     return { status: res.status, body: json };
   }
 
   async request(method, url) {
     let res = await fetch(URL.resolve(this.baseUrl, url), { method });
-    let json = await res.json()
+    let json = await res.json();
     return { status: res.status, body: json };
   }
 }

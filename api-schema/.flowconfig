@@ -1,5 +1,6 @@
 [ignore]
 .*/build/.*
+.*/node_modules/babel*
 
 [options]
 esproposal.class_instance_fields=ignore

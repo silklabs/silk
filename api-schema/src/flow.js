@@ -8,7 +8,6 @@
 
 import camelcase from 'camel-case';
 
-const INDENT = '  ';
 const DEFAULT_TYPE = 'any';
 const TRIVIAL_TYPES = {
   // JSON Schema type to flow type...
@@ -96,8 +95,8 @@ export function convertObject(
 
   return {
     flow: template,
-    types: types,
-    typeName
+    types,
+    typeName,
   };
 }
 
@@ -106,7 +105,7 @@ function convertArray(name: string, input: any): ConvertArrayType {
   if (prop && prop.type in TRIVIAL_TYPES) {
     return {
       typeName: `Array<${convertTrivial(prop)}>`,
-      types: []
+      types: [],
     };
   }
 
@@ -114,7 +113,7 @@ function convertArray(name: string, input: any): ConvertArrayType {
     let { typeName: innerType, types } = convertObject(name, prop);
     return {
       typeName: `Array<${innerType}>`,
-      types: types
+      types,
     };
   }
 
@@ -122,8 +121,8 @@ function convertArray(name: string, input: any): ConvertArrayType {
     let { typeName: innerType, flow, types } = convertObject(name, prop);
     return {
       typeName: `Array<${innerType}>`,
-      types: [flow].concat(types)
-    }
+      types: [flow].concat(types),
+    };
   }
   return { typeName: 'Array<any>', types: [] };
 }
@@ -137,12 +136,12 @@ function convertTrivial(input: any): string {
 
 export default function convert(name: string, input: any): string {
   switch(input.type) {
-    case 'object':
-      let res = convertObject(name, input);
-      return `${res.types.join('\n')}\n${res.flow}`;
-    case 'array':
-      return convertArray(name, input).typeName;
-    default:
-      return convertTrivial(input);
+  case 'object':
+    let res = convertObject(name, input);
+    return `${res.types.join('\n')}\n${res.flow}`;
+  case 'array':
+    return convertArray(name, input).typeName;
+  default:
+    return convertTrivial(input);
   }
-};
+}

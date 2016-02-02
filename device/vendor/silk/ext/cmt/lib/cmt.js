@@ -192,6 +192,8 @@ class ObjectTracker {
           const roi = localImage.roi(boundingRect.x, boundingRect.y,
             boundingRect.width, boundingRect.height);
           env.timeline.addDiagFrame(`${object.tag}:${id}:${elapsedTime}ms`, when, roi);
+          roi.release();
+          localImage.release();
         });
       });
     }, when, 1 /* == 1 channel image (RGB not required) */);

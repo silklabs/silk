@@ -66,6 +66,6 @@ Examples:
     .catch((err) => console.error(err.stack));
 }
 
-if (require.main === module) {
+if ((require: any).main === module) {
   cli();
 }

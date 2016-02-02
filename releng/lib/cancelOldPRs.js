@@ -80,7 +80,7 @@ export async function cancelAllOldPRBuilds(): Promise<void> {
   }
 }
 
-if (require.main === module) {
+if ((require: any).main === module) {
   (async function main() {
     try {
       await cancelAllOldPRBuilds();

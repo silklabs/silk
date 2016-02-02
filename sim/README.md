@@ -2,10 +2,12 @@
 
 Assuming the system is already configured from a silk device build, the
 following additional packages should be installed:
+
 OSX:
 ```
 $ brew tap homebrew/science
 $ brew install opencv
+$ brew install pkg-config
 ```
 
 Linux:

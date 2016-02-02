@@ -1,17 +1,18 @@
 /**
  * @flow
  */
+import http from 'http';
 import eventToPromise from 'event-to-promise';
+import URL from 'url';
+import {listen as createSocketio} from 'socket.io';
+import createLog from 'silk-log';
+
+import deviceRoutes from './routes/device';
+import accountRoutes from './routes/account';
 import createDb from '../server/db';
 import sha256 from '../server/sha256';
 import authorizeDevice from '../server/authorize_device';
 import authorizeAccount from '../server/authorize_account';
-import {listen as createSocketio} from 'socket.io';
-import deviceRoutes from './routes/device';
-import createLog from 'silk-log';
-import accountRoutes from './routes/account';
-
-import URL from 'url';
 import Devices from '../server/models/devices';
 import Accounts from '../server/models/accounts';
 import Nonce from '../server/models/nonce';
@@ -37,8 +38,8 @@ export type EventHandlers = {
 const log = createLog('socketio:server');
 
 export default async function main (config: any): any {
-  let http = require('http').createServer(() => {} /* make flow happy */);
-  let io = createSocketio(http, {
+  const server = http.createServer(() => {} /* make flow happy */);
+  let io = createSocketio(server, {
     path: '/',
     // Clients must bring their own socket.io package.
     serveClient: false,
@@ -242,15 +243,15 @@ export default async function main (config: any): any {
     next();
   }));
 
-  http.listen(config.socketio.port);
-  let errorEvent = eventToPromise(http, 'error').then(err => {
+  server.listen(config.socketio.port);
+  let errorEvent = eventToPromise(server, 'error').then(err => {
     throw err;
   });
 
-  let connected = eventToPromise(http, 'listening').then(() => {
+  let connected = eventToPromise(server, 'listening').then(() => {
     // XXX: This is sorta a hack and only intended for development/testing...
     if (!config.socketio.publicUrl) {
-      config.socketio.publicUrl = `http://localhost:${http.address().port}`;
+      config.socketio.publicUrl = `http://localhost:${server.address().port}`;
     }
   });
 
@@ -261,13 +262,13 @@ export default async function main (config: any): any {
   return {
     // Useful because tests bind on 0 we don't know which port we are using
     // until this is done.
-    port: http.address().port,
+    port: server.address().port,
 
     // Do any cleanup here that would normally happen because of the server
     // process being killed. We do this instead of closing the process mostly
     // for performance.
     close: async() => {
-      http.close();
-    }
+      server.close();
+    },
   };
 }

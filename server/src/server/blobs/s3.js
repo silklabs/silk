@@ -3,6 +3,8 @@ import { S3 } from 'aws-sdk-promise';
 import url from 'url';
 import uuid from 'uuid';
 
+import makeCommonHelpers from './common';
+
 const log = createLog('blob-s3');
 
 class S3Blobs {
@@ -10,7 +12,7 @@ class S3Blobs {
     log.debug('Created');
     this.config = config;
 
-    this.common = require('./common')(config);
+    this.common = makeCommonHelpers(config);
 
     this.s3Map = new Map();
   }

@@ -3,6 +3,8 @@ import uuid from 'uuid';
 import url from 'url';
 import createLog from 'silk-log';
 
+import makeCommonHelpers from './common';
+
 const log = createLog('blob-aliyun');
 
 class AliyunBlobs {
@@ -10,7 +12,7 @@ class AliyunBlobs {
     log.debug('Created');
     this.config = config;
 
-    this.common = require('./common')(config);
+    this.common = makeCommonHelpers(config);
 
     this.aliyunMap = new Map();
   }

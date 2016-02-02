@@ -30,6 +30,15 @@
     "promise": "6.1.0",
     "uuid": "2.0.1"
   },
+  "devDependencies": {
+    "babel-eslint": "5.0.0beta9",
+    "babel-preset-es2015": "6.3.13",
+    "babel-preset-react": "6.3.13",
+    "babel-preset-stage-0": "6.3.13",
+    "eslint": "1.10.3",
+    "express": "4.13.3",
+    "mocha": "2.3.4"
+  },
   "browserify": {
     "transform": [
       "babelify"
@@ -53,14 +62,5 @@
   "keywords": [
     "iot"
   ],
-  "private": true,
-  "devDependencies": {
-    "babel-eslint": "5.0.0-beta6",
-    "babel-preset-es2015": "6.3.13",
-    "babel-preset-react": "6.3.13",
-    "babel-preset-stage-0": "6.3.13",
-    "eslint": "1.10.3",
-    "express": "4.13.3",
-    "mocha": "2.3.4"
-  }
+  "private": true
 }

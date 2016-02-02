@@ -4,6 +4,9 @@
 
 import cors from 'cors';
 import eventToPromise from 'event-to-promise';
+import express from 'express';
+import http from 'http';
+import path from 'path';
 import url from 'url';
 import devAccount from 'silk-api/src/dev_account';
 import createLog from 'silk-log';
@@ -13,6 +16,7 @@ import createS3Blob from './blobs/s3';
 import createAliyunBlob from './blobs/aliyun';
 import createFileBlob from './blobs/file';
 import jsonParser from './json';
+import createRoutes from './routes';
 import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
 import Accounts from './models/accounts';
@@ -41,11 +45,9 @@ export type RouteContext = {
 };
 
 export default async function main (config: any): any {
-  let express = require('express');
-  let app = express();
-  let http = require('http').createServer(app);
-  let path = require('path');
-  let log = createLog('server');
+  const app = express();
+  const server = http.createServer(app);
+  const log = createLog('server');
 
   let publicPath = path.join(__dirname, '/../../public');
 
@@ -141,17 +143,17 @@ export default async function main (config: any): any {
   };
 
   // Install the routes.
-  require('./routes')(context);
+  createRoutes(context);
 
-  http.listen(config.server.port);
-  let errorEvent = eventToPromise(http, 'error').then(err => {
+  server.listen(config.server.port);
+  let errorEvent = eventToPromise(server, 'error').then(err => {
     throw err;
   });
 
-  let connected = eventToPromise(http, 'listening').then(() => {
+  let connected = eventToPromise(server, 'listening').then(() => {
     // XXX: This is sorta a hack and only intended for development/testing...
     if (!config.server.publicUrl) {
-      config.server.publicUrl = `http://localhost:${http.address().port}`;
+      config.server.publicUrl = `http://localhost:${server.address().port}`;
     }
 
     // Configure socket.io public url for local development.
@@ -171,7 +173,7 @@ export default async function main (config: any): any {
   return {
     // Useful because tests bind on 0 we don't know which port we are using
     // until this is done.
-    port: http.address().port,
+    port: server.address().port,
 
     context,
 
@@ -180,7 +182,7 @@ export default async function main (config: any): any {
     // for performance.
     close: async() => {
       await db.close();
-      http.close();
+      server.close();
     }
   };
 }

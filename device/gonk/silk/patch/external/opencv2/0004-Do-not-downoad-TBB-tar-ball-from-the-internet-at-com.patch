@@ -1,0 +1,78 @@
+From 12d59add41aec021eb65318c6b71b6cf4b545ea6 Mon Sep 17 00:00:00 2001
+From: Travis CI <engineering@silklabs.com>
+Date: Sun, 31 Jan 2016 13:27:48 -0800
+Subject: [PATCH] Do not downoad TBB tar ball from the internet at compile time
+
+---
+ 3rdparty/tbb/CMakeLists.txt | 40 ----------------------------------------
+ Android.mk                  |  3 ++-
+ 2 files changed, 2 insertions(+), 41 deletions(-)
+
+diff --git a/3rdparty/tbb/CMakeLists.txt b/3rdparty/tbb/CMakeLists.txt
+index 1fd31fa..f0418b1 100644
+--- a/3rdparty/tbb/CMakeLists.txt
++++ b/3rdparty/tbb/CMakeLists.txt
+@@ -103,46 +103,6 @@ macro(getMD5 filename varname)
+   endif()
+ endmacro()
+ 
+-if(EXISTS "${tbb_tarball}")
+-  getMD5("${tbb_tarball}" tbb_local_md5)
+-  if(NOT tbb_local_md5 STREQUAL tbb_md5)
+-    message(WARNING "Local copy of TBB source tarball has invalid MD5 hash: ${tbb_local_md5} (expected: ${tbb_md5})")
+-    file(REMOVE "${tbb_tarball}")
+-    if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${tbb_ver}")
+-      file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/${tbb_ver}")
+-    endif()
+-  endif()
+-endif()
+-
+-if(NOT EXISTS "${tbb_tarball}")
+-  message(STATUS "Downloading ${tbb_ver}_src.tgz")
+-  file(DOWNLOAD "${tbb_url}" "${tbb_tarball}" TIMEOUT 600 STATUS __statvar)
+-  if(NOT __statvar EQUAL 0)
+-    message(FATAL_ERROR "Failed to download TBB sources (${__statvar}): ${tbb_url}")
+-  endif()
+-  getMD5("${tbb_tarball}" tbb_local_md5)
+-  if(NOT tbb_local_md5 STREQUAL tbb_md5)
+-    file(REMOVE "${tbb_tarball}")
+-    message(FATAL_ERROR "Downloaded TBB source tarball has invalid MD5 hash: ${tbb_local_md5} (expected: ${tbb_md5})")
+-  endif()
+-
+-  if(EXISTS "${tbb_src_dir}")
+-    file(REMOVE_RECURSE "${tbb_src_dir}")
+-  endif()
+-endif()
+-
+-# untar TBB sources
+-if(NOT EXISTS "${tbb_src_dir}")
+-  message(STATUS "Unpacking ${tbb_ver}_src.tgz to ${tbb_src_dir}")
+-  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xz "${tbb_tarball}"
+-              WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+-              RESULT_VARIABLE tbb_untar_RESULT)
+-
+-  if(NOT tbb_untar_RESULT EQUAL 0 OR NOT EXISTS "${tbb_src_dir}")
+-    message(FATAL_ERROR "Failed to unpack TBB sources from ${tbb_tarball} to ${tbb_src_dir} with error ${tbb_untar_RESULT}")
+-  endif()
+-endif()
+-
+ set(TBB_INCLUDE_DIRS "${tbb_src_dir}/include" PARENT_SCOPE)
+ 
+ ocv_include_directories("${tbb_src_dir}/include"
+diff --git a/Android.mk b/Android.mk
+index c82e4b1..9eb279c 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -64,7 +64,8 @@ OPENCV_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
+ $(OPENCV_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
+ $(OPENCV_MAKEFILE): $(LOCAL_PATH)/Android.mk
+ 	@echo Configure: $@
+-	$(hide) mkdir -p $(@D)
++	$(hide) mkdir -p $(@D)/3rdparty/tbb/tbb43_20141204oss
++	$(hide) cp -r $(ANDROID_BUILD_TOP)/external/intel-tbb/* $(@D)/3rdparty/tbb/tbb43_20141204oss
+ 	cd $(@D) && cmake \
+  -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+-- 
+2.4.5
+

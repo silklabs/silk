@@ -101,13 +101,26 @@ export default function config(
   cwd = process.cwd(),
   global = GLOBAL_ROOT
 ): Config {
-
+  debug('config', cwd);
   let globalConfigPath = path.join(global, SILKRC);
   let globalConfig = { plugins: [] };
   if (fs.existsSync(globalConfigPath)) {
     globalConfig = loadAndResolveConfig(globalConfigPath);
   }
-  let projectConfig = loadAndResolveConfig(path.resolve(lookup(SILKRC)));
+
+  // If a SILKRC is given we use this as the project config.
+  let projectConfigPath;
+  if (process.env.SILKRC) {
+    projectConfigPath = process.env.SILKRC;
+  } else {
+    projectConfigPath = lookup(SILKRC, { cwd });
+  }
+
+  debug('resolved project config', projectConfigPath);
+  let projectConfig = { plugins: [] };
+  if (projectConfigPath) {
+    projectConfig = loadAndResolveConfig(path.resolve(projectConfigPath));
+  }
 
   // Dedupe via Set.
   let plugins = Array.from(new Set([

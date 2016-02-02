@@ -168,6 +168,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
 		export SILK_ALLOW_REBUILD_FAIL=1 \
     export V=$(if $(SHOW_COMMANDS),1) \
     export BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" &&  \
+    export TARGET_OUT_HEADERS="$(TARGET_OUT_HEADERS)" &&  \
     export NPM_CONFIG_ARCH=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) &&  \
     export NPM_CONFIG_PLATFORM=android && \
     export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \

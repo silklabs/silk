@@ -21,7 +21,11 @@ if [[ $TRAVIS_OS_NAME == osx ]]; then
   source $(brew --prefix nvm)/nvm.sh
   npm config set spin=false
   export CI_IGNORE_CASE_INSENSITIVE_FS=please
+else
+  # Required to compile zlib on travis
+  sudo ln -s /usr/include/asm-generic /usr/include/asm
 fi
+cmake -version
 java -version
 javac -version
 nvm install 4.2

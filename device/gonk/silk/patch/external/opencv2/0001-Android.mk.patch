@@ -1,16 +1,16 @@
-From 095bee3c34a921c7ae49150ce73998e24323dd07 Mon Sep 17 00:00:00 2001
+From 3ba892fa36694b16f1aace62df7bb121113559a3 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                                | 96 +++++++++++++++++++++++++++++++
- apps/Android.mk                           |  1 +
- apps/haartraining/Android.mk              | 16 ++++++
- apps/traincascade/Android.mk              | 19 ++++++
- opencv.mk                                 | 39 +++++++++++++
- platforms/android/android.toolchain.cmake | 17 +++++-
- 6 files changed, 186 insertions(+), 2 deletions(-)
+ Android.mk                                | 100 ++++++++++++++++++++++++++++++
+ apps/Android.mk                           |   1 +
+ apps/haartraining/Android.mk              |  16 +++++
+ apps/traincascade/Android.mk              |  19 ++++++
+ opencv.mk                                 |  39 ++++++++++++
+ platforms/android/android.toolchain.cmake |  17 ++++-
+ 6 files changed, 190 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 apps/Android.mk
  create mode 100644 apps/haartraining/Android.mk
@@ -19,10 +19,10 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..16f5210
+index 0000000..1cb8625
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,100 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -77,13 +77,13 @@ index 0000000..16f5210
 +$(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A):
 +	@echo Symlink: $@
 +	$(hide) mkdir -p $(@D)
-+	$(hide) ln -sf ../libopencv_core_intermediates/install/sdk/native/3rdparty/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv_,lib,$(notdir $@)) $@
++	$(hide) ln -sf ../libopencv_core_intermediates/sdk/native/3rdparty/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv_,lib,$(notdir $@)) $@
 +
 +$(__FAKE_OPENCV_MODULES_A): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(__FAKE_OPENCV_MODULES_A):
 +	@echo Symlink: $@
 +	$(hide) mkdir -p $(@D)
-+	$(hide) ln -sf ../libopencv_core_intermediates/install/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
++	$(hide) ln -sf ../libopencv_core_intermediates/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
 +
 +OPENCV_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(OPENCV_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
@@ -106,15 +106,19 @@ index 0000000..16f5210
 + -DANDROID_NDK=$(abspath prebuilts/ndk/current) \
 + -DANDROID_NDK_LAYOUT=ANDROID \
 + -DWITH_TBB=true \
++ -DCMAKE_INSTALL_PREFIX="$(ANDROID_BUILD_TOP)/$(dir $@)" \
 + $(LOCAL_PATH)
 +
 +$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
++$(LOCAL_BUILT_MODULE): LOCAL_MODULE := $(LOCAL_MODULE)
 +$(LOCAL_BUILT_MODULE): $(OPENCV_MAKEFILE) \
 +  $(__FAKE_OPENCV_EXPORT_INCLUDES) \
 +  $(__FAKE_OPENCV_MODULES_A) $(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A)
 +	@echo Build: $@
 +	$(hide) time $(MAKE) -C $(@D) install
-+	$(hide) cp $(dir $@)install/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
++	$(hide) cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
++	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
++	$(hide) cp -r $(dir $@)sdk/native/jni/* $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 +
@@ -219,7 +223,7 @@ index 0000000..908b7f8
 +
 +endif
 diff --git a/platforms/android/android.toolchain.cmake b/platforms/android/android.toolchain.cmake
-index b540ea4..25e5bc8 100644
+index b540ea4..9dbd3d8 100644
 --- a/platforms/android/android.toolchain.cmake
 +++ b/platforms/android/android.toolchain.cmake
 @@ -512,7 +512,12 @@ if( BUILD_WITH_ANDROID_NDK )
@@ -268,5 +272,5 @@ index b540ea4..25e5bc8 100644
   # this is *required* to use the following linker flags that routes around
   # a CPU bug in some Cortex-A8 implementations:
 -- 
-1.9.1
+2.4.5
 

@@ -79,6 +79,38 @@
            upstream="master"
            clone-depth="42"/>
 
+  <!-- Caffe and its dependent modules -->
+  <project name="taka-no-me/android-cmake"
+           path="external/android-cmake"
+           remote="github"
+           revision="556cc14296c226f753a3778d99d8b60778b7df4f"
+           upstream="master"
+           clone-depth="42"/>
+
+  <project name="gflags/gflags"
+           path="external/gflags"
+           remote="github"
+           revision="refs/tags/v2.1.2"
+           clone-depth="1"/>
+
+  <project name="boost"
+           path="external/boost"
+           remote="silk"
+           revision="master"/>
+
+  <project name="xianyi/OpenBLAS"
+           path="external/OpenBLAS"
+           remote="github"
+           revision="optimized_for_deeplearning"
+           clone-depth="1"/>
+
+  <project name="BVLC/caffe"
+           path="external/caffe"
+           remote="github"
+           revision="813c3c9bb02a7e8b3899e7cfd6db1885228fb914"
+           upstream="master"
+           clone-depth="42"/>
+
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

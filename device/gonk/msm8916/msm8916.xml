@@ -266,6 +266,7 @@
   <project groups="pdk-cw-fs" name="platform/external/ppp" path="external/ppp" revision="8b58d9bd02e2c55f547fafbe9ba55b1160665761" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk-java" name="platform/external/proguard" path="external/proguard" revision="9961286c06c25cd03464d3e2b00bd9b9dedf96ba" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk" name="platform/external/protobuf" path="external/protobuf" revision="c6d612ac7b18ba758c9067136c1217589aa5796f" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/external/zlib" path="external/zlib" upstream="LA.BR.1.1.2_rb1.9"/>  
   <project name="platform/external/protobuf-c" path="external/protobuf-c" revision="f5acb16b4e8b57f5be4083960023982443bddbca" upstream="LA.BR.1.1.2_rb1.9"/>
   <!-- <project groups="pdk-cw-fs" name="platform/external/qemu" path="external/qemu" revision="006a174244e336c578f45bf78a9dbdbd890c217d" upstream="LA.BR.1.1.2_rb1.9"/> -->
   <!-- <project groups="pdk-cw-fs" name="platform/external/qemu-pc-bios" path="external/qemu-pc-bios" revision="20349dae98d7de09a7e390d4a706c64f1db6edc2" upstream="LA.BR.1.1.2_rb1.9"/> -->
@@ -490,6 +491,7 @@
   <!-- <project groups="pdk,linux,arm" name="platform/prebuilts/x86_64-linux-glibc2.11-4.8/linux-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" revision="c90639ed43dab87c7b54b451fb62cbd972c06b64" upstream="LA.BR.1.1.2_rb1.9"/> -->
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" revision="26e93f6af47f7bd3a9beb5c102a5f45e19bfa38a" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" revision="d9735fc81434f2af2c44d86ca57740c673c8d9bc" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9" revision="d9735fc81434f2af2c44d86ca57740c673c8d9bc" upstream="LA.BR.1.1.2_rb1.9"/>
   <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" revision="760ff3483e3774e00370105c2dcffa0c0106c234" upstream="LA.BR.1.1.2_rb1.9"/>
   <!-- <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" revision="1b0544da652fda90a41a1f69889d6b137ce20fb9" upstream="LA.BR.1.1.2_rb1.9"/> -->
   <!-- <project name="platform/prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" revision="bb1b0b00a64606868b820c219a0e94059c2cd42c" upstream="LA.BR.1.1.2_rb1.9"/> -->

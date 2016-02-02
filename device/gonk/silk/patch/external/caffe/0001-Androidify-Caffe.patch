@@ -1,0 +1,93 @@
+From d743350f24d52740158dfbfb3ba85c97d6a5a0c2 Mon Sep 17 00:00:00 2001
+From: Travis CI <engineering@silklabs.com>
+Date: Fri, 22 Jan 2016 11:53:59 -0800
+Subject: [PATCH] Androidify Caffe
+
+---
+ Android.mk | 74 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 74 insertions(+)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..fac4e36
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,74 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE := libcaffe
++LOCAL_MODULE_TAGS := optional
++LOCAL_MODULE_CLASS := SHARED_LIBRARIES
++LOCAL_MODULE_SUFFIX := .so
++LOCAL_CUSTOM_BUILT_MODULE := true
++LOCAL_32_BIT_ONLY := true
++LOCAL_STATIC_LIBRARIES := \
++  libboost \
++  libgflags \
++  libopenblas \
++  libprotobuf-cpp-2.3.0-full-gnustl-rtti \
++
++include external/opencv2/opencv.mk
++include $(BUILD_PREBUILT)
++
++# Explicitly add the dependencies as Android make system ignores resolving
++# the LOCAL_STATIC_LIBRARIES dependencies for prebuilt modules
++STATIC_LIBRARIES := $(foreach lib,$(LOCAL_STATIC_LIBRARIES), \
++  $(call intermediates-dir-for, \
++  STATIC_LIBRARIES,$(lib),,,$(LOCAL_2ND_ARCH_VAR_PREFIX))/$(lib).a)
++
++CAFFE_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
++$(CAFFE_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(CAFFE_MAKEFILE): BOOST_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libboost))
++$(CAFFE_MAKEFILE): GFLAGS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags))
++$(CAFFE_MAKEFILE): PROTOBUF_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libprotobuf-cpp-2.3.0-full-gnustl-rtti))
++$(CAFFE_MAKEFILE): OPENCV_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopencv_core)/sdk/native/jni)
++$(CAFFE_MAKEFILE): BLAS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopenblas))
++$(CAFFE_MAKEFILE): PROTOBUF_HOST := $(abspath $(PROTOC))
++$(CAFFE_MAKEFILE): | $(PROTOC)
++$(CAFFE_MAKEFILE): $(STATIC_LIBRARIES)
++$(CAFFE_MAKEFILE): $(LOCAL_PATH)/Android.mk
++	@echo Configure: $@
++	ls -l $(PROTOBUF_HOST)
++	$(hide) mkdir -p $(@D)
++	cd $(@D) && cmake \
++	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_TOOLCHAIN_CMAKE) \
++	-DANDROID_NDK=$(abspath prebuilts/ndk/current) \
++	-DCMAKE_BUILD_TYPE=Release \
++	-DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
++	-DANDROID_NATIVE_API_LEVEL=19 \
++	-DADDITIONAL_FIND_PATH="$(BOOST_HOME);$(BLAS_HOME)" \
++	-DBUILD_python=OFF \
++	-DBUILD_docs=OFF \
++	-DCPU_ONLY=ON \
++	-DUSE_GLOG=OFF \
++	-DUSE_LMDB=OFF \
++	-DUSE_LEVELDB=OFF \
++	-DUSE_HDF5=OFF \
++	-DBLAS=open \
++	-DBoost_DEBUG=ON \
++	-DBOOST_ROOT=$(BOOST_HOME) \
++	-DGFLAGS_INCLUDE_DIR=$(GFLAGS_HOME)/include \
++	-DGFLAGS_LIBRARY=$(GFLAGS_HOME)/lib/libgflags.a \
++	-DOpenCV_DIR=$(OPENCV_ROOT) \
++	-DPROTOBUF_PROTOC_EXECUTABLE=$(PROTOBUF_HOST) \
++	-DPROTOBUF_INCLUDE_DIR=$(ANDROID_BUILD_TOP)/external/protobuf/src \
++	-DPROTOBUF_LIBRARY=$(PROTOBUF_ROOT)/libprotobuf-cpp-2.3.0-full-gnustl-rtti.a \
++	-DTHREADS_PTHREAD_ARG=OFF \
++	-DCMAKE_INSTALL_PREFIX=$(ANDROID_BUILD_TOP)/$(dir $@) \
++	$(LOCAL_PATH)
++
++$(LOCAL_BUILT_MODULE): LOCAL_MODULE := $(LOCAL_MODULE)
++$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(LOCAL_BUILT_MODULE): $(CAFFE_MAKEFILE)
++	@echo Build: $@
++	$(hide) time $(MAKE) -C $(@D) install
++	$(hide) cp $(dir $@)lib/$(notdir $@) $@
++	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
++	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
+-- 
+2.7.0
+

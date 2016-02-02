@@ -40,6 +40,7 @@ SILK_CORE := \
   silk-gc1 \
   silk-movie \
   silk-properties \
+  silk-caffe \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
 
@@ -126,7 +127,13 @@ PRODUCT_PACKAGES += \
   libttspico \
   pocketsphinx \
   libttscereproc \
-  libwebrtc
+  libwebrtc \
+  libgflags \
+  libprotobuf-cpp-2.3.0-full-gnustl-rtti \
+  aprotoc \
+  libboost \
+  libopenblas \
+  libcaffe \
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

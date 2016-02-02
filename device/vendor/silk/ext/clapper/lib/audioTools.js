@@ -87,8 +87,10 @@ class FftProcessor extends EventEmitter {
     this._pcmDataPosInBytes = 0; // Current window position in _pcmData
 
     // Emit a periodic log warning when _pcmDataQueue is holding more than
-    // 1 second worth of data
+    // 1 second worth of data:
     this._backlogMinSizeInBytes = 1 * this._sampleRate * this._bytesPerSample * this._numChannels;
+    // Start dumping PCM data when the backlog exceeds 15 seconds
+    this._backlogDumpSizeInBytes = 15 * this._backlogMinSizeInBytes;
     this._lastBacklogWarningTime = process.hrtime();
 
     // fft routine will use optimized algorithm if window size is power of 2
@@ -211,17 +213,25 @@ class FftProcessor extends EventEmitter {
         `Expecting length >= ${this._windowSizeInBytes} but got ${pcmData.length}`);
     }
 
-    this._pcmDataQueue.push([when, pcmData]);
-    this._pcmDataQueueSizeInBytes += pcmData.length;
     if (this._pcmDataQueueSizeInBytes >= this._backlogMinSizeInBytes) {
-      let delta = process.hrtime(this._lastBacklogWarningTime );
+      let delta = process.hrtime(this._lastBacklogWarningTime);
       if (delta[0] >= 1) { // Cry once a second
-        const backlogMs = this._pcmDataQueueSizeInBytes / this._fftWindowStep * this._fftWindowStepDurationMs;
-        log.warn(`Warning: PCM data backlog of ${backlogMs}ms`);
+        const backlogMs = this._pcmDataQueueSizeInBytes /
+          this._windowStepInBytes * this._fftWindowStepDurationMs;
+        log.warn(`PCM data backlog of ${backlogMs}ms`);
         this._lastBacklogWarningTime = process.hrtime();
+      }
+      if (this._pcmDataQueueSizeInBytes >= this._backlogDumpSizeInBytes) {
+        // At this point we've lost as audio analysis needs to keep up with
+        // real time.  Start dumping packets to avoid unbounded memory growth
+        // and hope the system gets less busy soon...
+        log.error(`Cannot keep up, PCM data dropped!`);
+        return;
       }
     }
 
+    this._pcmDataQueue.push([when, pcmData]);
+    this._pcmDataQueueSizeInBytes += pcmData.length;
     if (!this._processingInProgress) {
       this._processingInProgress = true;
       this._processNextFft();

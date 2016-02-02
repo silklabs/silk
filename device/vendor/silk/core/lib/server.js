@@ -199,7 +199,7 @@ export default class Server extends events.EventEmitter {
         log.error('Unknown video subtype', data.type);
         return;
       }
-      str += `/${data.contents} size:${data.frame ? data.frame.length : 0}` +
+      str += `/${data.contents} size:${data.frame ? data.frame.length : 0} ` +
             `when:${data.when}ms`;
       if (data.durationMs) {
         str += ` durationMs:${data.durationMs}`;
@@ -220,6 +220,9 @@ export default class Server extends events.EventEmitter {
         return;
       }
       str += `/${data.type}`;
+      if (data.log) {
+        str += `/${data.name} size:${data.log.length}`;
+      }
       break;
     default:
       log.error('Unknown event type', event);

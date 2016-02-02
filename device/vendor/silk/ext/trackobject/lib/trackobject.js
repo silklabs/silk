@@ -52,8 +52,10 @@ function _detectMotion(when, image, motionZone, callback) {
   let xStop = image.width();
   let yStop = image.height();
 
-
   // Take a new image
+  if (prevFrame) {
+    prevFrame.release();
+  }
   prevFrame = currentFrame;
   currentFrame = nextFrame;
   nextFrame = image.copy();
@@ -75,6 +77,8 @@ function _detectMotion(when, image, motionZone, callback) {
   d2.absDiff(nextFrame, currentFrame);
   motion = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
   motion.bitwiseAnd(d1, d2);
+  d1.release();
+  d2.release();
 
   // Threshold the image, low differences are ignored (ex. contrast change due
   // to sunlight)
@@ -118,6 +122,7 @@ function _detectMotion(when, image, motionZone, callback) {
     log.debug(`pruned rects: ${JSON.stringify(rects)}`);
   }
 
+  motion.release();
   callback(rects);
 }
 

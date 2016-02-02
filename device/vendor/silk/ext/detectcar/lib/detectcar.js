@@ -50,6 +50,7 @@ function detectCars(im, when, cb) {
     rects.forEach(rect => {
       const roi = im.roi(rect.x, rect.y, rect.width, rect.height);
       timeline.addDiagFrame(cascade.tag, when, roi);
+      roi.release();
     });
     cb({tag: cascade.tag, when, rects});
   });

@@ -8,11 +8,10 @@
  */
 
 import invariant from 'assert';
-import DeviceMetric from './device_metric.js';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
-class ProcessMetric extends DeviceMetric {
-  static INDEX = new Set([`type`, `version`, `processName`]);
+class ProcessMetric extends Metric {
+  static INDEX = new Set([`processName`]);
 
   constructor(processName: string, props: any) {
     super(Object.assign({

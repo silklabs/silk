@@ -8,17 +8,21 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Float, Integer } from './metric_types';
 
 // XXX: Is regex fast enough?
 const TAG_SANITIZE = /(,|=|\s)/g;
 
-function sanitizeTagValue(value: string): string {
+export function sanitizeTagValue(value: string): string {
   return value.replace(TAG_SANITIZE, '\\$1');
 }
 
-export type Convertable = string|Integer|Float;
-export type Point = [string, Object, Object, number];
+export type Convertable = string|boolean|Integer|Float;
+export type StringToConvertableDict = {[key: string]: Convertable};
+export type StringToStringDict = {[key: string]: string};
+export type Point =
+  [string, StringToConvertableDict, StringToConvertableDict, number];
 
 function convertType(input: Convertable): string {
   if (input instanceof Float) {
@@ -37,61 +41,67 @@ function convertType(input: Convertable): string {
 }
 
 export default class BaseMetric {
-  static INDEX: Set<string> = new Set();
   static NAME: string;
   static DESC: string;
+  static INDEX: ?Set<string> = null;
 
   /**
    * We store the map of properties here not because it's hard to do this with
    * ES6 classes but to reduce the amount of flow boilerplate. The type can be
    * declared once and used both in .properties and again in the constructor.
    */
-  properties: Object;
+  properties: StringToConvertableDict;
 
-  constructor(props: Object) {
-    if (!this.constructor.NAME) {
-      throw new Error('Please assign a name to your metric');
-    }
+  constructor(props: StringToConvertableDict) {
+    invariant(this.constructor.NAME, 'Please assign a name to your metric');
+    invariant(this.constructor.DESC, 'Please add a .DESC static property.');
 
-    if (!this.constructor.DESC) {
-      throw new Error('Please add a .DESC static property.');
-    }
-
-    // XXX: Does not appear to be a way to staticly check that the subclass has
-    // not changed the type of INDEX so we verify it here.
-    if (!(this.constructor.INDEX.constructor.name === 'Set')) {
+    const index = this.constructor.INDEX;
+    if (index) {
       // XXX: Turn this back on once we figure out why it fails sometimes for
       // travis app builds...
-      //throw new Error('.INDEX must be an instanceof Set.');
+      //invariant(index.constructor.name === 'Set',
+      //          '.INDEX must be an instanceof Set.');
+    }
+
+    const keys = Object.keys(props);
+    invariant(keys.length, 'Empty properties');
+
+    if (index) {
+      keys.forEach((propName)=> {
+        if (index.has(propName)) {
+          invariant(typeof props[propName] === 'string');
+        }
+      });
     }
 
     this.properties = props;
   }
 
-  toJSON(): [string, Object, Object] {
-    // We write out a json version of the influxdb line syntax
-    // [$series, $tags, $properties].
-    let tags = {};
-    for (let propName of this.constructor.INDEX) {
-      if (propName in this.properties) {
-        tags[propName] = sanitizeTagValue(this.properties[propName]);
-      }
-    }
+  serialize(
+    commonTags: StringToStringDict = {}
+  ): [string, StringToStringDict, StringToStringDict] {
+    // We return an array that is similar to the influxdb line syntax:
+    //   [$series, $tags, $properties].
+    const tags = Object.assign({}, commonTags);
+    const measurements = {};
 
-    let measurements = Object.keys(this.properties).reduce((result, propName) => {
-      // XXX: Suboptimal... Do not process tags twice.
-      if (this.constructor.INDEX.has(propName)) {
-        return result;
-      }
+    Object.keys(this.properties).forEach((propName) => {
+      const value = this.properties[propName];
 
       // XXX: Should we warn on missing? Should not happen /w flow.
-      if (this.properties[propName]) {
-        result[propName] = convertType(this.properties[propName]);
+      if (this.constructor.INDEX && this.constructor.INDEX.has(propName)) {
+        invariant(typeof value === 'string');
+        tags[propName] = sanitizeTagValue(value);
+      } else {
+        measurements[propName] = convertType(value);
       }
-
-      return result;
-    }, {});
+    });
 
     return [this.constructor.NAME, tags, measurements];
+  }
+
+  toJSON(): [string, StringToStringDict, StringToStringDict] {
+    return this.serialize();
   }
 }

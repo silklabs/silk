@@ -2,10 +2,9 @@
  * @flow
  */
 
-import ServerMetric from './server_metric';
-import MetricTypes from 'silk-api/src/metric_types';
+import {Metric, MetricTypes} from 'silk-api';
 
-export default class StartServerMetric extends ServerMetric {
+export default class StartServerMetric extends Metric {
 
   static NAME = 'start_server';
   static DESC = `

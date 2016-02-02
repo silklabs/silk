@@ -3,10 +3,9 @@
  */
 
 import invariant from 'assert';
-import ServerMetric from './server_metric';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
-export class Network extends ServerMetric {
+export class Network extends Metric {
   static NAME = `video_network_device_to_server`;
   static DESC =
     `"Dark matter", unclassified time, between 'socket.emit(segment)' on the ` +

@@ -3,11 +3,13 @@ CrashReporter.start();
 
 import React from 'react-native';
 let {
+  NativeModules,
   NetInfo,
   StyleSheet,
   Text,
   View,
 } = React;
+let { SLKUtil } = NativeModules;
 
 // Include our own browser shim goop but after react-native has loaded for the
 // first time and created it's own shims.
@@ -74,7 +76,18 @@ export default class Root extends AsyncComponent {
       userState.removeListener('unauthenticated', this.onUnauthenticated);
     }
 
-    let apiOptions = {getRandomBytes};
+    let apiOptions = {
+      getRandomBytes,
+      metrics: {
+        type: `account`,
+        tags: {
+          version: version.semver,
+          iosSystemName: SLKUtil.systemName,
+          iosSystemVersion: SLKUtil.systemVersion,
+          iosModel: SLKUtil.model,
+        },
+      },
+    };
     if (serverUrl !== '' /* use API default server */) {
       apiOptions.serverUrl = serverUrl;
     }
@@ -85,14 +98,14 @@ export default class Root extends AsyncComponent {
     // each time network state changes (offline/online).
     NetInfo.isConnected.addEventListener(
       'change',
-      api.accountMetrics.onConnectivityChange
+      api.metrics.onConnectivityChange
     );
 
     userState = await loadUserState(api);
 
     // If we already are logged in immediately start metrics agent.
     if (userState.accessToken) {
-      api.accountMetrics.start();
+      api.metrics.start();
     }
 
     userState.on('authenticated', this.onAuthenticated);
@@ -108,12 +121,12 @@ export default class Root extends AsyncComponent {
 
   onAuthenticated = (accessToken) => {
     this.setStateAsync({accessToken});
-    this.state.api.accountMetrics.start();
+    this.state.api.metrics.start();
   };
 
   onUnauthenticated = () => {
     this.setStateAsync({accessToken: null});
-    this.state.api.accountMetrics.stop();
+    this.state.api.metrics.stop();
   };
 
   render() {

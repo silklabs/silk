@@ -7,15 +7,14 @@
  * @flow
  */
 
-import DeviceMetric from './device_metric.js';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
 type Props = {
   // How long it takes to load js deps.
   startupMS: MetricTypes.Integer;
 }
 
-export default class JSStartup extends DeviceMetric {
+export default class JSStartup extends Metric {
 
   static NAME = 'js_startup';
   static DESC = `

@@ -7,4 +7,15 @@
  */
 
 import createApi from 'silk-api';
-export default createApi();
+import {getprop} from './sysutils';
+import version from 'silk-core-version';
+
+export default createApi({
+  metrics: {
+    type: `device`,
+    tags: {
+      version: version.semver,
+      deviceType: getprop('ro.product.device'),
+    },
+  }
+});

@@ -258,7 +258,7 @@ class CameraStream extends EventEmitter {
     }
 
     log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
-    api.deviceMetrics.add(new CameraRestart({
+    api.metrics.add(new CameraRestart({
       reason: why,
       captureRestart: restartCaptureProcess
     }));
@@ -633,8 +633,8 @@ class CameraStream extends EventEmitter {
           socketDuration = 0;
         }
 
-        api.deviceMetrics.add(new VideoMetrics.Record(durationMs));
-        api.deviceMetrics.add(new VideoMetrics.CaptureToNode(socketDuration));
+        api.metrics.add(new VideoMetrics.Record(durationMs));
+        api.metrics.add(new VideoMetrics.CaptureToNode(socketDuration));
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`, tagInfo);

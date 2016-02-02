@@ -113,7 +113,8 @@ export default async function main (config: any): any {
 
   let emailSender = new EmailSender(config);
   let scopes = new Scopes(config.scopes);
-  let metricsAgent = new MetricsAgent('server');
+  let metricsAgent =
+    new MetricsAgent('server');
 
   let influxdb = null;
   if (config.metrics.influxdb.connectionString) {

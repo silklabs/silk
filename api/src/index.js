@@ -23,6 +23,8 @@ import fetch from './fetch';
 import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
 
+import type {StringToStringDict} from './metric';
+
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;
 export { overrideImplementation as overrideCryptoSignImplementation } from './crypto_sign';
@@ -42,7 +44,7 @@ export { default as RssiSmoother } from './rssi_smoother';
 type SocketioConfig = [string, {
   transports: Array<string>;
   path: string;
-  query: {[key: string]: string};
+  query: StringToStringDict;
 }]
 
 const log = createLog('api');
@@ -79,6 +81,10 @@ export type Config = {
     callback: (err: ?Error, buffer: Buffer) => void
   ) => void;
   serverUrl?: string;
+  metrics: {
+    type: 'account' | 'device';
+    tags: StringToStringDict;
+  };
 };
 
 export class SilkApi {
@@ -94,11 +100,7 @@ export class SilkApi {
   crashPublisher: CrashPublisher;
   metadataPublisher: MetadataPublisher;
   metadata: Metadata;
-
-  // NOTE: This really shows how we may want to split these up or make some of our
-  // endpoints "polymorphic" so we can allow both account and device clients.
-  deviceMetrics: MetricsAgent;
-  accountMetrics: MetricsAgent;
+  metrics: MetricsAgent;
 
   config: StateContainer;
 
@@ -149,14 +151,17 @@ export class SilkApi {
     this.metadata = new Metadata(state);
     this.streams = makeStreams(config);
 
-    this.deviceMetrics = new MetricsAgent(this.device, this.canReachServer);
-    this.accountMetrics = new MetricsAgent(this.account, this.canReachServer);
+
+    const metricsApi =
+      config.metrics.type === `device` ? this.device : this.account;
+    this.metrics =
+      new MetricsAgent(metricsApi, this.canReachServer, config.metrics.tags);
   }
 
   /**
    * Update the serverUrl or accessToken for all services.
    */
-  loadConfig(config: Config = {}) {
+  loadConfig(config: Config) {
     config = loadConfig(config);
     this.config.update({
       serverUrl: config.serverUrl || this.config.serverUrl,

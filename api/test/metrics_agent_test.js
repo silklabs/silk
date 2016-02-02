@@ -36,7 +36,7 @@ suite('metrics agent', function() {
   }
 
   test('submit metrics', async () => {
-    account.api.accountMetrics.add([
+    account.api.metrics.add([
       new CpuMetric({
         server: '1',
         load: new MetricTypes.Float(0.7),
@@ -47,7 +47,7 @@ suite('metrics agent', function() {
       }),
     ]);
 
-    await account.api.accountMetrics.submit();
+    await account.api.metrics.submit();
 
     let {results} = await account.api.account.queryMetrics({
       // XXX: Remember that we prefix the series with the metric submitter type.

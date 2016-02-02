@@ -252,7 +252,7 @@ export default class Server extends events.EventEmitter {
           }
           const networkDuration = Date.now() - queued;
           log.info(`ack in ${networkDuration}ms for ${str}`);
-          api.deviceMetrics.add(new VideoMetrics.Network(networkDuration));
+          api.metrics.add(new VideoMetrics.Network(networkDuration));
         }
       );
       this.pendingAcks[ackType] += 1;
@@ -271,7 +271,7 @@ export default class Server extends events.EventEmitter {
         // Note to clients that the device decided to drop this
         // segment.
         this._meter('deviceDrop', segmentId);
-        api.deviceMetrics.add(new VideoMetrics.Dropped());
+        api.metrics.add(new VideoMetrics.Dropped());
       }
     }
   }

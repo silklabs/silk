@@ -10,7 +10,13 @@ suite('account auth', () => {
   let id, api, accounts;
   setup(async () => {
     accounts = new Account(context.db);
-    api = createApi({ serverUrl: context.url });
+    api = createApi({
+      serverUrl: context.url,
+      metrics: {
+        type: 'account',
+        tags: { },
+      },
+    });
     id = api.id.create();
     api.accessToken = id;
   });

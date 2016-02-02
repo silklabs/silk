@@ -3,21 +3,16 @@
  */
 
 import invariant from 'assert';
-import ServerMetric from './server_metric';
-import MetricTypes from 'silk-api/src/metric_types';
+import {Metric, MetricTypes} from 'silk-api';
 
 import type {ServerType} from '../metrics_agent';
 
-export class Heap extends ServerMetric {
+export class Heap extends Metric {
 
   static NAME = 'process_heap';
   static DESC =
     `The rss of the process and the total and used portion of the v8 heap`;
-  static INDEX = new Set([
-    'version',
-    'branch',
-    'serverType',
-  ]);
+  static INDEX = new Set(['serverType']);
 
   constructor(
     serverType: ServerType,

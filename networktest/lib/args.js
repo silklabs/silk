@@ -13,6 +13,10 @@ const log = createLog('args');
 let config = {
   api: {
     serverUrl: `https://silk-server-${version.branch}.herokuapp.com`,
+    metrics: {
+      type: 'account',
+      tags: { },
+    },
   },
   tests: {
     traceroute: false,

@@ -230,7 +230,7 @@ export default class NotLoggedIn extends AsyncComponent {
     try {
       const success = await userState.attemptSignIn(credentials.email, credentials.password);
       if (success) {
-        this.props.api.accountMetrics.add(new LoginMetric());
+        this.props.api.metrics.add(new LoginMetric());
         return;
       }
       Alert.alert(

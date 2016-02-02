@@ -4,7 +4,12 @@ import createApi from '../src/';
 suite('loadConfig', () => {
   test('reload', async () => {
 
-    let api = createApi();
+    let api = createApi({
+      metrics: {
+        type: 'account',
+        tags: { },
+      }
+    });
     const defaultUrl = api.config.serverUrl;
     api.accessToken = 'Open Sesame';
 

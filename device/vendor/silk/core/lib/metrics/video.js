@@ -8,10 +8,9 @@
  */
 
 import invariant from 'assert';
-import DeviceMetric from './device_metric.js';
-import {MetricTypes} from 'silk-api';
+import {Metric, MetricTypes} from 'silk-api';
 
-export class Record extends DeviceMetric {
+export class Record extends Metric {
   static NAME = `video_device_record`;
   static DESC = `Time between AV segment recording start / stop`;
 
@@ -23,7 +22,7 @@ export class Record extends DeviceMetric {
   }
 }
 
-export class CaptureToNode extends DeviceMetric {
+export class CaptureToNode extends Metric {
   static NAME = `video_device_capture_to_node`;
   static DESC =
     `Time between segment enqueued in 'capture' process to be sent over ` +
@@ -38,7 +37,7 @@ export class CaptureToNode extends DeviceMetric {
   }
 }
 
-export class Dropped extends DeviceMetric {
+export class Dropped extends Metric {
   static NAME = `video_device_dropped`;
   static DESC =
     `Segment was dropped on the floor because too many server acks became ` +
@@ -51,7 +50,7 @@ export class Dropped extends DeviceMetric {
   }
 }
 
-export class Network extends DeviceMetric {
+export class Network extends Metric {
   static NAME = `video_network_server_to_device`;
   static DESC =
     `"Dark matter", unclassified time, between 'socket.emit(segment)' on the ` +

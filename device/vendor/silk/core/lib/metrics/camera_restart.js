@@ -7,7 +7,7 @@
  * @flow
  */
 
-import DeviceMetric from './device_metric.js';
+import {Metric} from 'silk-api';
 
 type Props = {
   // Why the restart occurred
@@ -16,11 +16,11 @@ type Props = {
   captureRestart: boolean;
 }
 
-export default class CameraRestart extends DeviceMetric {
+export default class CameraRestart extends Metric {
 
   static NAME = 'camera_restart';
   static DESC = 'Notes when the camera service was restarted';
-  static INDEX = new Set(['reason', ...DeviceMetric.INDEX]);
+  static INDEX = new Set(['reason']);
 
   constructor(props: Props) {
     super(props);

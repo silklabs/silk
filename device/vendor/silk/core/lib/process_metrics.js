@@ -25,7 +25,7 @@ const LSOF_HEADER =
   `COMMAND     PID       USER   FD      TYPE             DEVICE  ` +
   `SIZE/OFF       NODE NAME`;
 
-const metrics = api.deviceMetrics;
+const metrics = api.metrics;
 
 function procrankStringToBytes(str: string): number {
   invariant(str.length > 1);

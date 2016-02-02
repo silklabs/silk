@@ -9,8 +9,9 @@
 
 import createLog from 'silk-log';
 import invariant from 'assert';
+import {sanitizeTagValue} from './metric';
 
-import type {default as Metric, Point} from './metric';
+import type {default as Metric, Point, StringToStringDict} from './metric';
 import type AccountApi from './gen/account';
 import type DeviceApi from './gen/device';
 
@@ -61,15 +62,22 @@ export default class MetricsAgent {
   metricsApi: MetricsApi;
   interval: number = 1000 * 60;
   connectivityCheck: ConnectivityCheck;
+  _commonTags: StringToStringDict;
 
   constructor(
     metricsApi: MetricsApi,
     connectivityCheck: ConnectivityCheck,
+    commonTags: StringToStringDict,
   ) {
     // In theory we could use a circular reference here to silk-api but that is
     // not necessary as we only need this one api.
     this.metricsApi = metricsApi;
     this.connectivityCheck = connectivityCheck;
+
+    this._commonTags = Object.keys(commonTags).reduce((result, propName) => {
+      result[propName] = sanitizeTagValue(commonTags[propName]);
+      return result;
+    }, {});
   }
 
   onConnectivityChange: () => Promise<void> = async () => {
@@ -137,7 +145,7 @@ export default class MetricsAgent {
 
     log.debug(`Adding metric: ${metric.constructor.NAME}`, metric);
 
-    const point = metric.toJSON().concat(timeOffset);
+    const point = metric.serialize(this._commonTags).concat(timeOffset);
     this._points.push(point);
   }
 

@@ -2,9 +2,6 @@
 // https://github.com/silklabs/silk-webapp/blob/master/src/components/CameraVideoMSE.js
 
 import assert from 'assert';
-import createLog from 'silk-log';
-
-const log = createLog('dash_segment');
 
 // NB: these values are defined in the init header.  While the init
 // header is hard coded, so are these constants for convenience.  If
@@ -64,7 +61,7 @@ export default function prepareSegment(m4s: Buffer, state) {
   let seqno = state.seqno;
   let startTime = state.startTime;
 
-  let {offsets, mute} = findMetadataBox(m4s);
+  let {offsets} = findMetadataBox(m4s);
   // Duration is 16 bytes after earliest_presentation_time in "sidx".
   let durationTicks = m4s.readInt32BE(offsets.presentationTime + 16);
 

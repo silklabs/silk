@@ -6,6 +6,8 @@ import socketio from 'socket.io-client';
 
 import config from './config';
 
+import type { Socket } from 'socket-io.client';
+
 const log = createLog('socketio');
 
 const DEFAULT_ROUNDS = 64000;
@@ -34,13 +36,13 @@ export default async function connectToSocketIO(): Promise<Socket> {
       userAgent: 'node',
     });
   } catch (error) {
-    console.error(error);
-    process.exit(1);
+    log.error(error);
+    process.exit(1); // eslint-disable-line no-process-exit
   }
 
   if (!result.success) {
-    console.error('Could not log in!', result);
-    process.exit(0);
+    log.error('Could not log in!', result);
+    process.exit(0); // eslint-disable-line no-process-exit
   }
 
   log.info('Connecting to socket.io');

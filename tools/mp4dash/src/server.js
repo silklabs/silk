@@ -156,11 +156,11 @@ function main() {
       log.info('video-stream-delete', message.id);
     });
 
-    let http_server = http.createServer();
-    http_server.on('request', (request, response) => {
+    let httpServer = http.createServer();
+    httpServer.on('request', (request, response) => {
       handleRequest(request, response, socket);
     });
-    http_server.listen(config.port, '0.0.0.0');
+    httpServer.listen(config.port, '0.0.0.0');
   });
 
   // Prime the init segment.

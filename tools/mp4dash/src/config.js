@@ -3,6 +3,6 @@ const config = {
   serverUrl: 'http://localhost:5000/',
   user: 'e@silk.io',
   password: 'bbb',
-  deviceId: '032aa987ce505299f31b5317ecd1ca774e4e9a411ad81bc90aec177b9bd935883b',
+  deviceId: '993d84007b2fe791d68ab6f7eaead04f21d29e46617225b64bd252047cd8bfba',
 };
 export default config;

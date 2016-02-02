@@ -27,7 +27,7 @@ export default class SegmentProvider extends EventEmitter {
   }
 
   static _streams = {};
-  static get(socket, deviceId): LiveVideoStream {
+  static get(socket, deviceId): SegmentProvider {
     let stream = SegmentProvider._streams[deviceId];
     if (stream) {
       return stream;
@@ -57,7 +57,7 @@ export default class SegmentProvider extends EventEmitter {
 
   // TODO use this
   close() {
-    let stream = `video-${deviceId}`;
+    let stream = `video-${this.deviceId}`;
     this.socket.removeListener(stream, this.onDeviceVideoSegment);
     this.removeAllListeners();
     delete SegmentProvider._streams[this.deviceId];

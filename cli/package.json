@@ -2,13 +2,16 @@
   "name": "silk-cli",
   "version": "1.0.0",
   "description": "Silk CLI developer tools",
-  "main": "index.js",
+  "main": "silk-cli",
   "scripts": {
     "test": "mocha $(find test -name '*_test.js')",
+    "lint": "eslint src test",
+    "flow": "flow check",
+    "posttest": "npm run lint && npm run flow",
     "prepublish": "./node_modules/.bin/babel -d build src"
   },
   "bin": {
-    "silk-cli": "./"
+    "silk": "./silk-cli"
   },
   "keywords": [
     "cli",
@@ -19,14 +22,20 @@
   "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.4.5",
+    "babel-eslint": "^4.1.8",
+    "babel-plugin-transform-runtime": "^6.4.3",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-react": "^6.3.13",
     "babel-preset-stage-0": "^6.3.13",
     "babel-register": "^6.4.3",
-    "mocha": "^2.4.5"
+    "eslint": "^1.10.3",
+    "flow-bin": "^0.21.0",
+    "mocha": "^2.4.5",
+    "mz": "^2.3.1"
   },
   "dependencies": {
     "argparse": "^1.0.4",
+    "babel-runtime": "^6.3.19",
     "cli-color": "^1.1.0",
     "debug": "^2.2.0",
     "json5": "^0.4.0",

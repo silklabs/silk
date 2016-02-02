@@ -1,22 +1,28 @@
 import assert from 'assert';
 import path from 'path';
 
+import * as fixture from './fixture';
 import config from '../src/config';
 
 suite('config', () => {
-  let cwd;
-  suiteSetup(() => {
+  let cwd, fixtureDir;
+  suiteSetup(async () => {
     cwd = process.cwd();
+    fixtureDir = await fixture.create();
+  });
+
+  suiteTeardown(async() => {
+    await fixture.destroy(fixtureDir);
   });
 
   // Always revert to initial cwd
-  teardown(() => {
+  teardown(async () => {
     delete process.env.SILKRC;
     process.chdir(cwd);
   });
 
   test('project only resolve', () => {
-    let fixture = path.join(__dirname, 'fixtures/project_1');
+    let fixture = path.join(fixtureDir, 'project_1');
     process.chdir(fixture);
     let result = config();
     let expected = [
@@ -32,21 +38,21 @@ suite('config', () => {
   });
 
   test('global only resolve', () => {
-    let fixture = path.join(__dirname, 'fixtures/project_empty');
+    let fixture = path.join(fixtureDir, 'project_empty');
     process.chdir(fixture);
-    let result = config(process.cwd(), path.join(__dirname, 'fixtures/global'));
+    let result = config(fixtureDir, path.join(fixtureDir, 'global'));
     let expected = [
-      path.join(__dirname, 'fixtures/global/node_modules/silk-plugin-internal/index.js')
+      path.join(fixtureDir, 'global/node_modules/silk-plugin-internal/index.js'),
     ];
     assert.deepEqual(result.plugins, expected);
   });
 
   test('project + global resolve', () => {
-    let fixture = path.join(__dirname, 'fixtures/project_1');
+    let fixture = path.join(fixtureDir, 'project_1');
     process.chdir(fixture);
-    let result = config(process.cwd(), path.join(__dirname, 'fixtures/global'));
+    let result = config(process.cwd(), path.join(fixtureDir, 'global'));
     let expected = [
-      path.join(__dirname, 'fixtures/global/node_modules/silk-plugin-internal/index.js'),
+      path.join(fixtureDir, 'global/node_modules/silk-plugin-internal/index.js'),
       path.resolve(fixture, 'node_modules/silk-plugin-a/index.js'),
       path.resolve(fixture, 'node_modules/b/index.js'),
     ];
@@ -54,11 +60,11 @@ suite('config', () => {
   });
 
   test('Use explicit .silkrc via environment variable', () => {
-    let fixture = path.join(__dirname, 'fixtures/global');
+    let fixture = path.join(fixtureDir, 'global');
     process.env.SILKRC = path.join(fixture, '.silkrc');
     let result = config();
     let expected = [
-      path.join(__dirname, 'fixtures/global/node_modules/silk-plugin-internal/index.js')
+      path.join(fixtureDir, 'global/node_modules/silk-plugin-internal/index.js'),
     ];
     assert.deepEqual(result.plugins, expected);
   });

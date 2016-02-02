@@ -19,11 +19,11 @@ import * as log from './logs';
 // Internal type for config files loaded from disk.
 type InputConfig = {
   // name to path for plugins...
-  plugins?: Array<string>
+  plugins: ?Array<string>;
 };
 
 export type Config = {
-  plugins: Array<string>
+  plugins: Array<string>;
 }
 
 const GLOBAL_ROOT = path.resolve('~/.silk/');
@@ -45,6 +45,8 @@ function requireConfig(pathName: string): InputConfig {
     return json5.parse(content);
   } catch (err) {
     log.fatal(`Failed to parse json file: '${pathName}': ${err.toString()}`);
+    // XXX: Impossible to reach since fatal will exit process this is for flow.
+    throw new Error('unreachable...');
   }
 }
 
@@ -54,29 +56,27 @@ function requireConfig(pathName: string): InputConfig {
  */
 function loadAndResolveConfig(pathName: string): Config {
   debug('resolve', pathName);
-  let config = requireConfig(pathName);
+  let loadedConfig = requireConfig(pathName);
+  let config = {};
 
   // Resolve the plugin require paths...
-  config.plugins = (config.plugins || []).reduce((list, entry) => {
-
+  config.plugins = (loadedConfig.plugins || []).reduce((list, entry) => {
     // Check if the plugin is referencing a path or a plugin name. If this is a
     // plugin name prefix it.
     if (entry.indexOf('/') === -1) {
       entry = `${PLUGIN_PREFIX}${entry}`;
     }
 
-    let resolvedModule;
     try {
       debug('resolve module', entry);
       list.push(resolve.sync(entry, {
-        basedir: path.dirname(pathName)
+        basedir: path.dirname(pathName),
       }));
     } catch (err) {
       log.warn(err.message);
     }
 
     return list;
-
   }, []);
 
   return config;
@@ -85,7 +85,7 @@ function loadAndResolveConfig(pathName: string): Config {
 // XXX: We likely want to figure out how to bundle/configure our cli with some
 // default plugins and settings but that is for later...
 const DEFAULT_CONFIG = {
-  plugins: []
+  plugins: [],
 };
 
 /**
@@ -98,8 +98,8 @@ const DEFAULT_CONFIG = {
  *  - Default : DEFAULT_CONFIG
  */
 export default function config(
-  cwd = process.cwd(),
-  global = GLOBAL_ROOT
+  cwd: string = process.cwd(),
+  global: string = GLOBAL_ROOT
 ): Config {
   debug('config', cwd);
   let globalConfigPath = path.join(global, SILKRC);
@@ -130,6 +130,6 @@ export default function config(
   ]));
 
   return {
-    plugins
-  }
+    plugins,
+  };
 }

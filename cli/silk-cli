@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 /**
  * Bootstrap the CLI note that this might be run with babel-node OR inside a
  * production environment with babel assets compiled so we detect this and run

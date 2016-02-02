@@ -1,0 +1,9 @@
+{
+  // Some example plugins for tests and for self-documentation
+  plugins: [
+    // While most will put modules in the `node_modules` folder this is
+    // perfectly valid...
+    './examples/cat',
+    './examples/multicommand',
+  ]
+}

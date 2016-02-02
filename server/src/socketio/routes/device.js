@@ -51,6 +51,7 @@ type TimelineEventObject = {
 
 type ObjectsMessage = {
   objects: Array<TimelineEventObject>;
+  serverEmitMs: ?number;
 }
 
 export function deviceRoom(deviceId: string, name: string): string {
@@ -152,7 +153,7 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
       sendToDeviceRoom('mic', msg);
     },
 
-    objects: async(msg: ObjectsMessage) => {
+    objects: async (msg: ObjectsMessage) => {
       sendToDeviceRoom('objects', msg);
     },
 

@@ -80,6 +80,7 @@ module.exports = {
     travis_yml: 'app/android/.travis.yml',
     events: ['push'],
   }),
+  'cam': npmPackageBuild('cam'),
   'cli': npmPackageBuild('cli'),
   'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
   'log': npmPackageBuild('log'),

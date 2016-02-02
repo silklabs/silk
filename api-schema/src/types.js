@@ -4,7 +4,6 @@
  */
 
 import * as Joi from 'joi';
-import assert from 'assert';
 import URL from 'url';
 import joiToJSONSchema from 'joi-to-json-schema';
 
@@ -13,7 +12,7 @@ const PARAM = /:[^/]+/g;
 const PARAMS = Joi.array().items(Joi.object().keys({
   name: Joi.string().required(),
   description: Joi.string()
-}).unknown(false))
+}).unknown(false));
 
 /**
  * A representation of a single http action:
@@ -28,46 +27,46 @@ export class HttpAction {
     input: Joi.object().description('Joi instance'),
     output: Joi.object().description('Joi instance'),
     params: PARAMS
-  }).required()
+  }).required();
 
   /**
    * The http method used by this route.
    */
-  method = 'GET'
+  method = 'GET';
 
   /**
    * Path for the action.
    */
-  path = ''
+  path = '';
 
   /**
    * A human readable name for the route (like: "createAccount")
    */
-  name = ''
+  name = '';
 
-  params = []
+  params = [];
 
   /**
    * Human readable description of what this route does.
    */
-  description = ''
+  description = '';
 
   /**
    * The Joi reference to the input allowed to this route.
    */
-  input = null
+  input = null;
 
   /**
    * The Joi reference to the output of this route.
    */
-  output = null
+  output = null;
 
   constructor(options = {}) {
     Joi.assert(options, this.constructor.OPTIONS);
     Object.assign(this, options);
 
     let paramCount = this.path.match(PARAM);
-    if (paramCount && paramCount.length != this.params.length) {
+    if (paramCount && paramCount.length !== this.params.length) {
       throw new Error(`
         Parameter mismatch for ${this.name} action (${this.method} ${this.path})
 
@@ -82,7 +81,7 @@ export class HttpAction {
       // id is param name with leading : sliced off...
       current.id = paramCount[idx].slice(1);
       return current;
-    })
+    });
   }
 
   toJSON() {
@@ -109,23 +108,23 @@ export class HttpApi {
     description: Joi.string(),
     prefix: Joi.string(),
     params: PARAMS
-  }).required()
+  }).required();
 
   /**
    * The name of this http api:
    */
-  name = ''
+  name = '';
 
   /**
    * The description of what this api does.
    */
-  description = ''
+  description = '';
 
   /**
    * The prefix path which this http api operates under. This may include
    * params.
    */
-  prefix = '/'
+  prefix = '/';
 
   /**
    * Global param values for this api (see http action).
@@ -133,10 +132,10 @@ export class HttpApi {
    * Note: Whoever creates the actions _must_ prepend these values to the
    * individual actions...
    */
-  params = []
+  params = [];
 
   // list of actions
-  actions = []
+  actions = [];
 
   constructor(options = {}) {
     Joi.assert(options, this.constructor.OPTIONS);
@@ -147,8 +146,6 @@ export class HttpApi {
    * Add a http route to this api.
    */
   add(actionParams) {
-    assert(!(action instanceof HttpAction), 'must not be an existing action')
-
     let action = Object.assign({}, actionParams);
     action.path = URL.resolve(this.prefix, action.path);
     action.params = this.params.concat(action.params || []);

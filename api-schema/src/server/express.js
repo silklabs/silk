@@ -3,7 +3,7 @@ import makeDebug from 'debug';
 import { validate } from 'joi';
 import uuid from 'uuid';
 
-import { HttpAction, HttpApi } from '../types';
+import { HttpApi } from '../types';
 
 const debug = makeDebug('express-schema');
 
@@ -30,10 +30,10 @@ export class ExpressRoutes {
             let error = {
               code: 400,
               type: 'InputError',
-              message: 'Body is required'
+              message: 'Body is required',
             };
             res.status(400).send(error);
-            return;
+            return null;
           }
 
           let validation = validate(body, action.input);
@@ -41,10 +41,10 @@ export class ExpressRoutes {
             let error = {
               code: 400,
               type: 'InputError',
-              message: validation.error.message
+              message: validation.error.message,
             };
             res.status(400).send(error);
-            return;
+            return null;
           }
         }
 
@@ -85,7 +85,7 @@ export class ExpressRoutes {
         res.status(500).send({
           code: 500,
           id,
-          message: `Internal error (id: ${id})`
+          message: `Internal error (id: ${id})`,
         });
         return res;
       }

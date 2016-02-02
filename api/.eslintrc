@@ -1,6 +1,5 @@
 {
   "extends": "eslint-config-silk",
-  "parser": "babel-eslint",
   "env": {
     "mocha": true
   },

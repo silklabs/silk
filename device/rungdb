@@ -106,9 +106,12 @@ if [ ! -f $PROG ]; then
   if [ ! -f $PROG ]; then
     PROG=${SYMDIR}/system/bin/${DEBUG_BIN}
     if [ ! -f $PROG ]; then
-      # TODO: Make this search smarter
-      echo Error: Unable to find symbols for $DEBUG_BIN
-      exit 1
+      PROG=${SYMDIR}/${DEBUG_BIN}
+      if [ ! -f $PROG ]; then
+        # TODO: Make this search smarter
+        echo Error: Unable to find symbols for $DEBUG_BIN
+        exit 1
+      fi
     fi
   fi
 fi

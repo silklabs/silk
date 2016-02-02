@@ -117,6 +117,7 @@ module.exports = {
   'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
     files: ['**/package.json']
   }),
+  'mp4dash': npmPackageBuild('tools/mp4dash'),
 
   // Nightly device builds
   'device-qemu-nightly': nightlyBuild('device', {

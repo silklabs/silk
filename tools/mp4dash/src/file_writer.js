@@ -42,23 +42,23 @@ function startSegmentsWriter(provider) {
   provider.segments.forEach(writeSegmentToFile);
   provider.on('segment', writeSegmentToFile);
 }
-    
+
 function startRecording(socket, fileMode) {
   log.info(`startRecording(${deviceId}`);
   let provider = SegmentProvider.get(socket, deviceId);
   switch (fileMode) {
   case 'segments':
-      return startSegmentsWriter(provider);
+    return startSegmentsWriter(provider);
   case 'cat':
-      return startConcatenateWriter(provider);
+    return startConcatenateWriter(provider);
   default:
-      throw new Error (`Invalid file-writer mode ${fileMode}`);
+    throw new Error(`Invalid file-writer mode ${fileMode}`);
   }
 }
 
 function main() {
   let fileMode = process.argv.slice(-1)[0];
-  log.info(`Using file-writer mode ${fileMode}.`);      
+  log.info(`Using file-writer mode ${fileMode}.`);
 
   connectToSocketIO().then((socket) => {
     log.info('Connected to socket.io');

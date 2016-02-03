@@ -72,6 +72,8 @@ function main() {
     socket.on('video-stream-delete', (message) => {
       log.info('video-stream-delete', message.id);
     });
+  }).catch((error) => {
+    log.error('Connecting to socket.io failed:', error.stack);
   });
 
   process.on('exit', (code) => {

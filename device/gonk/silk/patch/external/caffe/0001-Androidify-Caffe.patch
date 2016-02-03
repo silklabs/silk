@@ -1,19 +1,19 @@
-From d743350f24d52740158dfbfb3ba85c97d6a5a0c2 Mon Sep 17 00:00:00 2001
+From ab7f958d65d965bcf261b349bb59a6704ef04076 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Fri, 22 Jan 2016 11:53:59 -0800
 Subject: [PATCH] Androidify Caffe
 
 ---
- Android.mk | 74 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 74 insertions(+)
+ Android.mk | 78 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 78 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..fac4e36
+index 0000000..46c046e
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,78 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -40,20 +40,22 @@ index 0000000..fac4e36
 +  STATIC_LIBRARIES,$(lib),,,$(LOCAL_2ND_ARCH_VAR_PREFIX))/$(lib).a)
 +
 +CAFFE_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
++$(CAFFE_MAKEFILE): LOCAL_MODULE := $(LOCAL_MODULE)
 +$(CAFFE_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
 +$(CAFFE_MAKEFILE): BOOST_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libboost))
 +$(CAFFE_MAKEFILE): GFLAGS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags))
 +$(CAFFE_MAKEFILE): PROTOBUF_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libprotobuf-cpp-2.3.0-full-gnustl-rtti))
 +$(CAFFE_MAKEFILE): OPENCV_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopencv_core)/sdk/native/jni)
 +$(CAFFE_MAKEFILE): BLAS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopenblas))
++$(CAFFE_MAKEFILE): CAFFE_HOME := $(call intermediates-dir-for, SHARED_LIBRARIES,$(LOCAL_MODULE))
 +$(CAFFE_MAKEFILE): PROTOBUF_HOST := $(abspath $(PROTOC))
 +$(CAFFE_MAKEFILE): | $(PROTOC)
 +$(CAFFE_MAKEFILE): $(STATIC_LIBRARIES)
 +$(CAFFE_MAKEFILE): $(LOCAL_PATH)/Android.mk
-+	@echo Configure: $@
++	@echo Configure: $(CAFFE_HOME)
 +	ls -l $(PROTOBUF_HOST)
-+	$(hide) mkdir -p $(@D)
-+	cd $(@D) && cmake \
++	$(hide) mkdir -p $(CAFFE_HOME)
++	cd $(CAFFE_HOME) && cmake \
 +	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_TOOLCHAIN_CMAKE) \
 +	-DANDROID_NDK=$(abspath prebuilts/ndk/current) \
 +	-DCMAKE_BUILD_TYPE=Release \
@@ -77,17 +79,19 @@ index 0000000..fac4e36
 +	-DPROTOBUF_INCLUDE_DIR=$(ANDROID_BUILD_TOP)/external/protobuf/src \
 +	-DPROTOBUF_LIBRARY=$(PROTOBUF_ROOT)/libprotobuf-cpp-2.3.0-full-gnustl-rtti.a \
 +	-DTHREADS_PTHREAD_ARG=OFF \
-+	-DCMAKE_INSTALL_PREFIX=$(ANDROID_BUILD_TOP)/$(dir $@) \
++	-DCMAKE_INSTALL_PREFIX=$(ANDROID_BUILD_TOP)/$(CAFFE_HOME) \
 +	$(LOCAL_PATH)
 +
 +$(LOCAL_BUILT_MODULE): LOCAL_MODULE := $(LOCAL_MODULE)
 +$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(LOCAL_BUILT_MODULE): CAFFE_HOME := $(call intermediates-dir-for, SHARED_LIBRARIES,$(LOCAL_MODULE))
 +$(LOCAL_BUILT_MODULE): $(CAFFE_MAKEFILE)
-+	@echo Build: $@
-+	$(hide) time $(MAKE) -C $(@D) install
-+	$(hide) cp $(dir $@)lib/$(notdir $@) $@
++	@echo Build: $(CAFFE_HOME)
++	$(hide) time $(MAKE) -C $(CAFFE_HOME) install
++	$(hide) cp $(CAFFE_HOME)/lib/$(notdir $@) $(CAFFE_HOME)
++	$(hide) cp $(CAFFE_HOME)/lib/$(notdir $@) $(TARGET_OUT_INTERMEDIATE_LIBRARIES)
 +	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
-+	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
++	$(hide) cp -fr $(CAFFE_HOME)/include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 -- 
 2.7.0
 

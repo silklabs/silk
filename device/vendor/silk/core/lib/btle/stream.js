@@ -306,11 +306,12 @@ export default class Stream extends Duplex {
 
     let listener;
     let timeout;
+    let disconnectHandler;
 
     const finish = () => {
       this._readCharacteristic.removeListener(eventName, listener);
       clearTimeout(timeout);
-      if (this._disconnectHandler === finish) {
+      if (this._disconnectHandler === disconnectHandler) {
         this._disconnectHandler = null;
       }
 
@@ -334,11 +335,13 @@ export default class Stream extends Duplex {
       finish();
     }, TIMEOUT_MS);
 
-    this._readCharacteristic.addListener(eventName, listener);
-    this._disconnectHandler = () => {
+    disconnectHandler = () => {
       log.warn(`Disconnected while disabling notifications`);
       finish();
     };
+
+    this._readCharacteristic.addListener(eventName, listener);
+    this._disconnectHandler = disconnectHandler;
 
     this._subscribedChanging = true;
     this._readCharacteristic.notify(false);

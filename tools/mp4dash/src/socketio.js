@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import process from 'process';
-import createApi from 'silk-api';
+import {default as createApi, AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 import socketio from 'socket.io-client';
 
@@ -10,22 +10,26 @@ import type { Socket } from 'socket-io.client';
 
 const log = createLog('socketio');
 
-const DEFAULT_ROUNDS = 64000;
 const SHA256_KEYLENGTH = 32;
-const SHA256_HMAC_STRENGTH = 192;
 
 export default async function connectToSocketIO(): Promise<Socket> {
-  let api = createApi({ serverUrl: config.serverUrl });
+  let api = createApi({
+    serverUrl: config.serverUrl,
+    metrics: {
+      type: 'account',
+      tags: {},
+    },
+  });
   let passwordHash = crypto.pbkdf2Sync(
     config.password,
     config.user,
-    DEFAULT_ROUNDS,
+    api.vip.PBKDF2_ROUNDS,
     SHA256_KEYLENGTH,
     'sha256'
   );
 
-  let entropy = crypto.randomBytes(SHA256_HMAC_STRENGTH);
-  api.accessToken = api.id.create({ entropy });
+  let entropy = crypto.randomBytes(AccessToken.ENTROPY_BYTES);
+  api.accessToken = AccessToken.create({ entropy });
 
   log.info('Attempting to authenticate with server.');
   let result;

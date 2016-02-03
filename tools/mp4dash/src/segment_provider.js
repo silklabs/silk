@@ -68,7 +68,11 @@ export default class SegmentProvider extends EventEmitter {
     startTime: 0,
   };
 
-  onDeviceVideoSegment = (message) => {
+  onDeviceVideoSegment = (message, ack) => {
+    if (typeof ack === 'function') {
+      ack();
+    }
+
     log.info(`onDeviceVideoSegment(${message.frame.length})`);
     let prevSegment = this.segments[this.segments.length - 1];
     let segment = {

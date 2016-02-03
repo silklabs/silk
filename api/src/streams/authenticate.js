@@ -10,6 +10,7 @@ import { CryptoDuplexStream } from './crypto';
 import { DuplexTransform } from './duplex_transform';
 import Id from '../access_token';
 import makeLog from 'silk-log';
+import * as Metrics from '../metrics/streams';
 
 const log = makeLog(`api-streams-authenticate`);
 
@@ -141,11 +142,13 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
   _sessionKey = ``;
   _authData = null;
   _authError = null;
+  _metrics = null;
 
-  constructor(cryptoStream, publicKeys, options) {
+  constructor(cryptoStream, publicKeys, metrics, options) {
     log.debug(`AuthenticateReadStream()`);
 
     assert(publicKeys);
+    assert(metrics);
     if (!Array.isArray(publicKeys)) {
       publicKeys = [ publicKeys ];
     }
@@ -156,6 +159,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     super(cryptoStream, options);
 
     this._publicKeys = publicKeys;
+    this._metrics = metrics;
   }
 
   _transform(chunk, encoding, callback) {
@@ -220,6 +224,8 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
       log.warn(this._authError);
       this._discardQueue();
       callback(this._authError);
+
+      this._metrics.add(new Metrics.AuthFailure(this._authError.toString()));
       return;
     }
 
@@ -354,11 +360,12 @@ export class AuthenticateDuplexStream extends DuplexTransform {
               cryptoStream,
               privateKey,
               publicKeys,
+              metrics,
               options = { }) {
     log.debug(`AuthenticateDuplexStream()`);
 
     const reader =
-      new AuthenticateReadStream(cryptoStream, publicKeys, options);
+      new AuthenticateReadStream(cryptoStream, publicKeys, metrics, options);
     const writer =
       new AuthenticateWriteStream(cryptoStream, privateKey, options);
 

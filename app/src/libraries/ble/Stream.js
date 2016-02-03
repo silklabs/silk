@@ -17,6 +17,13 @@ export default class Stream extends Duplex {
   _ended: boolean = false;
   _finished: boolean = false;
 
+  // Tell flow that the |write| method can be hooked.
+  write: (
+    chunk?: string | Buffer,
+    encodingOrCallback?: string | Function,
+    callback?: Function
+  ) => boolean;
+
   constructor(socket: Socket) {
     log.debug(`Stream()`);
 

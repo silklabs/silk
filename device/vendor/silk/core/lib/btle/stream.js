@@ -8,9 +8,11 @@
  */
 
 import invariant from 'assert';
+import api from '../api';
 import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import { Duplex } from 'stream';
 import makeLog from '../log';
+import * as Metrics from '../metrics/btle';
 
 import type { Peripheral, Characteristic } from 'noble';
 
@@ -57,7 +59,10 @@ export default class Stream extends Duplex {
   _readAckTimeout: ?number = null;
 
   _outgoing: Array<Buffer> = [];
+  _outgoingLength: number = 0;
   _writeTimeout: ?number = null;
+  _writeChunkSize: number = 0;
+  _writeChunkStartTime: number = 0;
 
   _error: ?Error = null;
 
@@ -68,6 +73,13 @@ export default class Stream extends Duplex {
   _closed: boolean = false;
 
   _disconnectHandler: ?(() => void) = null;
+
+  // Tell flow that the |write| method can be hooked.
+  write: (
+    chunk?: string | Buffer,
+    encodingOrCallback?: string | Function,
+    callback?: Function
+  ) => boolean;
 
   constructor(
     peripheral: Peripheral,
@@ -190,6 +202,7 @@ export default class Stream extends Duplex {
     }
 
     this._outgoing.push(data);
+    this._outgoingLength += data.length;
 
     if (this._outgoing.length === 1 &&
         this._subscribed &&
@@ -247,6 +260,7 @@ export default class Stream extends Duplex {
 
       if (!state) {
         this._emitError(new Error(`Failed to enable notifications`));
+        api.metrics.add(new Metrics.StreamSubscribeFailure());
         return;
       }
 
@@ -371,6 +385,7 @@ export default class Stream extends Duplex {
     }
 
     invariant(this._outgoing.length);
+    invariant(this._outgoingLength);
     invariant(!this._writeTimeout);
 
     let chunksToSend = [ ];
@@ -404,6 +419,7 @@ export default class Stream extends Duplex {
 
     invariant(chunksToSend.length);
     invariant(chunksToSendLength <= WRITE_MAX_BYTES);
+    invariant(chunksToSendLength <= this._outgoingLength);
 
     if (outgoingIndex) {
       this._outgoing.splice(0, outgoingIndex);
@@ -413,6 +429,10 @@ export default class Stream extends Duplex {
                  chunksToSend[0] :
                  Buffer.concat(chunksToSend);
     invariant(data.length === chunksToSendLength);
+
+    this._outgoingLength -= data.length;
+    this._writeChunkSize = data.length;
+    this._writeChunkStartTime = Date.now();
 
     this._writeCharacteristic.write(data, /* withoutResponse */ false);
 
@@ -543,6 +563,14 @@ export default class Stream extends Duplex {
     clearTimeout(this._writeTimeout);
     this._writeTimeout = null;
 
+    invariant(this._writeChunkSize);
+    const chunkSize = this._writeChunkSize;
+    this._writeChunkSize = 0;
+
+    invariant(this._writeChunkStartTime);
+    const startTime = this._writeChunkStartTime;
+    this._writeChunkStartTime = 0;
+
     if (error) {
       this._emitError(error);
       return;
@@ -551,6 +579,12 @@ export default class Stream extends Duplex {
     if (this._error || !this._subscribed) {
       return;
     }
+
+    api.metrics.add(
+      new Metrics.StreamWrite(Date.now() - startTime,
+                              chunkSize,
+                              this._outgoingLength)
+    );
 
     if (this._outgoing.length) {
       this._sendOutgoing();

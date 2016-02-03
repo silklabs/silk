@@ -7,9 +7,11 @@ import { EventEmitter } from 'events';
 import getSocketManager from './SocketManager';
 import * as Joi from 'joi-browserify';
 import mklog from 'silk-log';
+import * as Metrics from '../../metrics/BTLE';
 import SocketSession from './SocketSession';
 
 import type { DeviceRecord } from '../../components/abstract/Devices';
+import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type { Socket, SocketManager } from './SocketManager';
 import type { UserState } from '../UserState';
 
@@ -138,8 +140,14 @@ export class DeviceSession extends EventEmitter {
   _secretEmitted: boolean = false;
   _acceptRegistrationPending: boolean = false;
 
-  constructor(socket: Socket) {
+  _metrics: MetricsAgent;
+  _forceDisconnectReported: boolean = false;
+
+  constructor(socket: Socket, metrics: MetricsAgent) {
     log.debug(`DeviceSession()`);
+
+    invariant(socket);
+    invariant(metrics);
 
     super();
 
@@ -147,12 +155,14 @@ export class DeviceSession extends EventEmitter {
     const privateKey = singletonInstance._privateKey;
     const publicKeys = singletonInstance._registeredDevicePublicKeys;
 
-    const socketSession = new SocketSession(socket, privateKey, publicKeys);
+    const socketSession =
+      new SocketSession(socket, privateKey, publicKeys, metrics);
     socketSession.addListener(`error`, this._onError);
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
 
     this._socketSession = socketSession;
+    this._metrics = metrics;
   }
 
   _validateData(data: MessageData): boolean {
@@ -191,6 +201,11 @@ export class DeviceSession extends EventEmitter {
     this._state = DeviceSession.STATE_ERROR;
     this._socketSession.rssiUpdatesEnabled = false;
     this._socketSession.disconnect();
+
+    if (!this._forceDisconnectReported) {
+      this._forceDisconnectReported = true;
+      this._metrics.add(new Metrics.ForceDisconnect());
+    }
   }
 
   _emitConnect() {
@@ -600,10 +615,13 @@ class DeviceManager extends EventEmitter {
   _privateKey: string = ``;
   _registeredDevicePublicKeys: Array<string> = [ ];
 
-  constructor(userState: UserState) {
+  _metrics: MetricsAgent;
+
+  constructor(userState: UserState, metrics: MetricsAgent) {
     log.debug(`DeviceManager()`);
 
     invariant(userState);
+    invariant(metrics);
 
     const accessToken = userState.accessToken;
     invariant(accessToken.priv);
@@ -611,6 +629,7 @@ class DeviceManager extends EventEmitter {
 
     super();
 
+    this._metrics = metrics;
     this._socketManager = getSocketManager();
     this._socketManager.on(`connect`, this._onConnect);
     this._socketManager.on(`disconnect`, this._onDisconnect);
@@ -626,7 +645,7 @@ class DeviceManager extends EventEmitter {
 
     invariant(!this._devices.has(socket));
 
-    let device = new DeviceSession(socket);
+    let device = new DeviceSession(socket, this._metrics);
     this._devices.set(socket, device);
   };
 
@@ -650,9 +669,10 @@ class DeviceManager extends EventEmitter {
   };
 }
 
-export default function getDeviceManager(userState: UserState): EventEmitter {
+export default function getDeviceManager(userState: UserState,
+                                         metrics: MetricsAgent): EventEmitter {
   if (!singletonInstance) {
-    singletonInstance = new DeviceManager(userState);
+    singletonInstance = new DeviceManager(userState, metrics);
   }
 
   let emitter = new EventEmitter();

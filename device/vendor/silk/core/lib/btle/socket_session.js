@@ -11,6 +11,8 @@ import assert from 'assert';
 import Stream from './stream';
 import { createStreams, RssiSmoother } from 'silk-api';
 import makeLog from '../log';
+import api from '../api';
+import * as Metrics from '../metrics/btle';
 
 import type { Peripheral } from 'noble';
 import type SocketScanner from './socket_scanner';
@@ -46,20 +48,27 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _rssiValue: number = 0;
   _rssiTimeout: ?number = null;
 
+  // Stuff that gets tracked for metrics.
+  _startTime: number = Date.now();
+  _receivedBytes: number = 0;
+  _sentBytes: number = 0;
+  _flatlined: boolean = false;
+  _errorMessage: string = ``;
+
   constructor(scanner: SocketScanner, peripheral: Peripheral) {
     log.debug(`SocketSession()`);
 
     const socketStream = new Stream(peripheral, scanner._serviceUuid);
-    const cryptoStream = new CryptoDuplexStream(socketStream);
+    const cryptoStream = new CryptoDuplexStream(socketStream, api.metrics);
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
       log.verbose(`Received`, data);
     });
-    const oldWrite = msgpackStream.write;
+    const msgpackOldWrite = msgpackStream.write;
     msgpackStream.write = (data, ...args) => {
       log.verbose(`Sending`, data);
-      return oldWrite.call(msgpackStream, data, ...args);
+      return msgpackOldWrite.call(msgpackStream, data, ...args);
     };
 
     const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
@@ -67,7 +76,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
     super(heartbeatStream,
           cryptoStream,
           scanner._privateKey,
-          scanner._publicKeys);
+          scanner._publicKeys,
+          api.metrics);
 
     this._scanner = scanner;
 
@@ -79,6 +89,18 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this.once(`end`, this._onEnd);
     this.once(`error`, this._onError);
+    this.once(`close`, this._onClose);
+
+    socketStream.on(`data`, (data) => {
+      this._receivedBytes += data.length;
+    });
+    const socketOldWrite = socketStream.write;
+    socketStream.write = (data, encoding, callback) => {
+      if (data) {
+        this._sentBytes += data.length;
+      }
+      return socketOldWrite.call(socketStream, data, encoding, callback);
+    };
 
     heartbeatStream.once(`data`, () => {
       log.debug(`Heartbeat stream received first data event, starting monitoring`);
@@ -131,6 +153,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _onFlatline: (() => void) = () => {
     log.debug(`SocketSession._onFlatline()`);
 
+    this._flatlined = true;
+
     const error = new Error(`Failed to receive heartbeat message in expected ` +
                             `time`);
     log.warn(error);
@@ -148,6 +172,10 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _onError: ((error: Error) => void) = (error) => {
     log.debug(`SocketSession._onError('${error.toString()}')`);
 
+    if (!this._errorMessage) {
+      this._errorMessage = error.toString();
+    }
+
     this._ended = true;
 
     this._killRssiUpdates();
@@ -155,6 +183,29 @@ export default class SocketSession extends AuthenticateDuplexStream {
     // Force-close both ends of the stream.
     this.end();
     this.push(null);
+  };
+
+  _onClose: (() => void) = () => {
+    log.debug(`SocketSession._onClose()`);
+
+    const commonArgs = [
+      Date.now() - this._startTime,
+      this._receivedBytes,
+      this._sentBytes,
+      this.authenticated,
+    ];
+
+    let metric;
+    if (this._flatlined) {
+      metric = new Metrics.SocketSessionFlatline(...commonArgs);
+    } else if (this._errorMessage) {
+      metric = new Metrics.SocketSessionError(...commonArgs,
+                                              this._errorMessage);
+    } else {
+      metric = new Metrics.SocketSession(...commonArgs);
+    }
+
+    api.metrics.add(metric);
   };
 
   _killRssiUpdates() {

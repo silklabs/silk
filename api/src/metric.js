@@ -64,13 +64,29 @@ export default class BaseMetric {
       //          '.INDEX must be an instanceof Set.');
     }
 
+    props = Object.assign({}, props);
+
     const keys = Object.keys(props);
     invariant(keys.length, 'Empty properties');
 
     if (index) {
-      keys.forEach((propName)=> {
+      keys.forEach((propName) => {
         if (index.has(propName)) {
-          invariant(typeof props[propName] === 'string');
+          const value = props[propName];
+          const type = typeof value;
+          invariant(type === 'string' ||
+                    type === 'boolean' ||
+                    type === 'number',
+                    `Tag value for '${propName}' is invalid: ` +
+                    `${value} (${type})`);
+          if (type === 'string') {
+            if (!value) {
+              // Empty tags get rejected by InfluxDB so just delete them.
+              delete props[propName];
+            }
+          } else {
+            props[propName] = String(value);
+          }
         }
       });
     }

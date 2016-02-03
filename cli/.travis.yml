@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - "4" # LTS
+  - "5" # Development
+  - "0.12" # Crazy old but on a lot of distros
+dist: trusty
+
+script:
+  - ./test/install_test.sh && npm test

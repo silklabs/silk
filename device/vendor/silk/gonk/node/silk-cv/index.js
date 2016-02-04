@@ -2,8 +2,8 @@
 
 let nativepath;
 if (process.platform === 'android') {
-  nativepath = './build/silk-cmt.node';
+  nativepath = './build/silk-cv.node';
 } else {
-  nativepath = './build/Release/silk-cmt.node';
+  nativepath = './build/Release/silk-cv.node';
 }
 module.exports = require(nativepath).NodeCmt;

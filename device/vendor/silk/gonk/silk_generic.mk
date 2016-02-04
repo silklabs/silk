@@ -36,7 +36,7 @@ SILK_CORE := \
   silk-core-version \
   silk-alog \
   silk-bledroid \
-  silk-cmt \
+  silk-cv \
   silk-gc1 \
   silk-movie \
   silk-properties \

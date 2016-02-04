@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "silk-cmt",
+      "target_name": "silk-cv",
       "sources": [
         "bindings.cpp",
         "CppMT/CMT.cpp",

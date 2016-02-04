@@ -7,6 +7,17 @@ module.exports.install = {
   },
 };
 
+
+module.exports.listModules = {
+  name: 'list-modules',
+  help: 'List fake modules...',
+  main: function (args) {
+    console.log('one');
+    console.log('two');
+    console.log('three');
+  },
+};
+
 module.exports.publish = {
   help: `Publish fake applications to the interwebs`,
   arguments: [

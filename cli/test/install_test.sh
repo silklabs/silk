@@ -17,3 +17,4 @@ assert_contains Silk
 assert_contains cat
 assert_contains install
 assert_contains publish
+assert_contains list-modules

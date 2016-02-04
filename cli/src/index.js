@@ -77,8 +77,9 @@ function loadPlugins(config: Config): {[key: string]: SubCommand} {
 
     for (let cliName in module) {
       let cli = module[cliName];
-      subcommands[cliName] = { main: cli.main, path: pluginPath };
-      let subcommandParser = sub.addParser(cliName, {
+      let subcommandName = cli.name || cliName;
+      subcommands[subcommandName] = { main: cli.main, path: pluginPath };
+      let subcommandParser = sub.addParser(subcommandName, {
         addHelp: cli.help ? true : false,
         help: cli.help,
       });

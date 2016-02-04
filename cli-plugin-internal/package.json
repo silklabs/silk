@@ -6,7 +6,7 @@
     "lint": "eslint build lib",
     "postinstall": "../npm_postinstall",
     "preinstall": "../npm_preinstall",
-    "test": "node ./node_modules/cli/silk-cli -h",
+    "test": "node ./node_modules/cli/silk -h",
     "posttest": "npm run lint"
   },
   "dependencies": {

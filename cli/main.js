@@ -1,11 +1,9 @@
 #! /usr/bin/env node
+
 /**
  * Bootstrap the CLI note that this might be run with babel-node OR inside a
  * production environment with babel assets compiled so we detect this and run
  * the appropriate steps.
- *
- * NOTE: We do not assume node 4 >= environment at this point so we use var and
- * avoid anything that ships in later nodes.
  */
 
 var fs = require('fs');
@@ -21,3 +19,4 @@ if (fs.existsSync(REGISTER_PATH)) {
 } else {
   require('./build');
 }
+

@@ -24,6 +24,7 @@ export default async function main (config) {
 
   let githubMiddleware = makeGithubMiddleware({
     secret: process.env.GITHUB_SECRET || 'mousenuts',
+    limit: '10mb', // Allow really big payloads (ie, release commits)
   });
   app.post('/hooks/github/', githubMiddleware, (req, res) => {
 

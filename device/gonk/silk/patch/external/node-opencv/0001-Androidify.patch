@@ -1,16 +1,16 @@
-From ef0c63890f8c2e2b297be1b3dbb4f71ad253bbef Mon Sep 17 00:00:00 2001
+From 909b26383af79ea90b57d0b4aec27ed1c34cff40 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
-Date: Mon, 10 Aug 2015 15:06:39 -0700
+Date: Thu, 4 Feb 2016 11:43:29 -0800
 Subject: [PATCH] Androidify
 
 ---
  Android.mk                 |  7 +++++++
- binding.gyp                | 14 +-------------
+ binding.gyp                | 16 ++--------------
  examples/car-detection.js  | 12 +++++-------
  examples/face-detection.js | 10 +++++-----
  lib/opencv.js              |  2 +-
  package.json               | 23 ++++++++---------------
- 6 files changed, 27 insertions(+), 41 deletions(-)
+ 6 files changed, 28 insertions(+), 42 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
@@ -27,24 +27,33 @@ index 0000000..76f0224
 +include external/opencv2/opencv.mk
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp
-index 8cd66bf..e241f2c 100755
+index b89d3e0..d6a424a 100755
 --- a/binding.gyp
 +++ b/binding.gyp
 @@ -24,12 +24,11 @@
        ],
  
        "libraries": [
--        "<!@(pkg-config --libs opencv)"
+-        "<!@(node utils/find-opencv.js --libs)"
 +        '<!(echo $Android_mk__LIBRARIES)'
        ],
        # For windows
  
        "include_dirs": [
--        "<!@(pkg-config --cflags opencv)",
+-        "<!@(node utils/find-opencv.js --cflags)",
          "<!(node -e \"require('nan')\")"
        ],
  
-@@ -69,16 +68,5 @@
+@@ -80,7 +79,7 @@
+       ],
+ 
+       "libraries": [
+-        "<!@(node utils/find-opencv.js --libs)"
++        '<!(echo $Android_mk__LIBRARIES)'
+       ],
+       # For windows
+ 
+@@ -128,16 +127,5 @@
            }
          }]
      ]
@@ -193,5 +202,5 @@ index cd735a3..912f986 100644
 +  "gypfile": true
  }
 -- 
-2.4.5
+1.9.1
 

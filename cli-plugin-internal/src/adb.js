@@ -13,7 +13,12 @@ import { statSync } from 'fs';
 const log = createLog('adb');
 
 class Adb {
+
+  sim: false;
+
   constructor(device) {
+    this.device = device;
+
     if (device === 'sim') { // TODO: Don't be so sneaky...
       [ 'data', 'system/silk' ].forEach((dir) => {
         // Ensure that the current working directory is the root of a simulated
@@ -29,9 +34,8 @@ class Adb {
         }
       });
       this.sim = true;
-    } else {
-      this.device = device;
     }
+
     this._root = this.sim;
   }
 
@@ -62,7 +66,6 @@ class Adb {
     }
 
     return this._spawn('adb', args);
-
   }
 
   async listDevices() {
@@ -127,8 +130,7 @@ class Adb {
 
   async pull(filepath) {
     if (this.sim) {
-      await fs.readFile(filepath, data);
-      return data;
+      return await fs.readFile(filepath);
     }
 
     await this.root();

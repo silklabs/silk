@@ -1,0 +1,15 @@
+SOURCE="${BASH_SOURCE[0]}"
+if [ -z $SOURCE ];
+then
+  # zsh support....
+  SOURCE=${(%):-%N}
+fi
+
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+export SILKRC=$ROOT/.silkrc

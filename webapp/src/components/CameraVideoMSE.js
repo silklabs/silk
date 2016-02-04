@@ -149,7 +149,7 @@ export default class CameraVideo extends React.Component {
     }
     Cameras.removeListener('stateChanged', this._onCamerasStateChanged);
     if (this.mediaSource) {
-      this.mediaSource.addEventListener('sourceopen', this._onSourceOpen);
+      this.mediaSource.removeEventListener('sourceopen', this._onSourceOpen);
     }
     if (this.sourceBuffer) {
       this.sourceBuffer.removeEventListener('updateend', this._feedPlayer);

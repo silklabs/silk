@@ -7,6 +7,9 @@ import config from '../src/config';
 suite('config', () => {
   let cwd, fixtureDir;
   suiteSetup(async () => {
+    // Ensure we don't keep around global SILKRC from elsewhere...
+    delete process.env.SILKRC;
+
     cwd = process.cwd();
     fixtureDir = await fixture.create();
   });

@@ -68,6 +68,7 @@ module.exports = {
     events: ['push'],
   }),
   'cli': npmPackageBuild('cli'),
+  'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
   'log': npmPackageBuild('log'),
   'sim': npmPackageBuild('sim', {
     files: [

@@ -6,7 +6,8 @@
     "lint": "eslint build lib",
     "postinstall": "../npm_postinstall",
     "preinstall": "../npm_preinstall",
-    "test": "npm run lint && node ./node_modules/cli/silk"
+    "test": "node ./node_modules/cli/silk-cli -h",
+    "posttest": "npm run lint"
   },
   "dependencies": {
     "babel-eslint": "5.0.0beta9",

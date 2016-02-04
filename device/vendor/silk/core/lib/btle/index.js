@@ -8,12 +8,14 @@
  */
 
 import invariant from 'assert';
+import api from '../api';
 import bleno from 'bleno';
 import { EventEmitter } from 'events';
 import { getboolprop } from '../sysutils';
 import getDeviceId from '../deviceid';
 import makeDeferred from '../deferred';
 import makeLog from '../log';
+import * as Metrics from '../metrics/btle';
 import noble from 'noble';
 import SocketScanner from './socket_scanner';
 import SocketSession from './socket_session';
@@ -355,6 +357,7 @@ class BluetoothLE extends EventEmitter {
     const justCrashed = this._adapterState === `poweredOn`;
     if (justCrashed) {
       log.warn(`Bledroid crashed`);
+      api.metrics.add(new Metrics.BledroidCrash());
     }
 
     log.info(`Adapter state changed to '${adapterState}'`);

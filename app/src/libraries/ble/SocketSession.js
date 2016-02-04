@@ -6,8 +6,10 @@ import invariant from 'assert';
 import { createStreams, RssiSmoother } from 'silk-api';
 import { getRandomBytes } from '../Crypto';
 import makeLog from 'silk-log';
+import * as Metrics from '../../metrics/BTLE';
 import Stream from './Stream';
 
+import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type { Socket } from './SocketManager';
 
 const streams = createStreams({
@@ -41,20 +43,33 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _rssiValue: number = 0;
   _rssiTimeout: ?number = null;
 
-  constructor(socket: Socket, privateKey: string, publicKeys: Array<string>) {
+  _metrics: MetricsAgent;
+
+  // Stuff that gets tracked for metrics.
+  _startTime: number = Date.now();
+  _receivedBytes: number = 0;
+  _sentBytes: number = 0;
+  _errorMessage: string = ``;
+
+  constructor(socket: Socket,
+              privateKey: string,
+              publicKeys: Array<string>,
+              metrics: MetricsAgent) {
     log.debug(`SocketSession()`);
 
+    invariant(metrics);
+
     const socketStream = new Stream(socket);
-    const cryptoStream = new CryptoDuplexStream(socketStream);
+    const cryptoStream = new CryptoDuplexStream(socketStream, metrics);
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
       log.verbose(`Received`, data);
     });
-    const oldWrite = msgpackStream._write;
+    const msgpackOldWrite = msgpackStream._write;
     msgpackStream._write = (data, encoding, callback) => {
       log.verbose(`Sending`, data);
-      oldWrite.call(msgpackStream, data, encoding, callback);
+      msgpackOldWrite.call(msgpackStream, data, encoding, callback);
     };
 
     const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
@@ -63,6 +78,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
           cryptoStream,
           privateKey,
           publicKeys,
+          metrics,
           { autoClose: false });
 
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
@@ -73,11 +89,25 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._heartbeatStream = heartbeatStream;
 
     this.once(`end`, this._onEnd);
+    this.once(`error`, this._onError);
     this.once(`finish`, this._onFinish);
+    this.once(`close`, this._onClose);
+
     this.once(`unauthenticated`, () => {
       log.info(`Receiving unauthenticated data`);
       this.allowUnauthenticated();
     });
+
+    socketStream.on(`data`, (data) => {
+      this._receivedBytes += data.length;
+    });
+    const socketOldWrite = socketStream.write;
+    socketStream.write = (data, encoding, callback) => {
+      if (data) {
+        this._sentBytes += data.length;
+      }
+      return socketOldWrite.call(socketStream, data, encoding, callback);
+    };
   }
 
   _onSocketRssiUpdate: ((rssi: number) => void) = (rssi) => {
@@ -110,6 +140,14 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._killRssiUpdates();
   };
 
+  _onError: ((error: Error) => void) = (error) => {
+    log.debug(`SocketSession._onEnd()`);
+
+    if (!this._errorMessage) {
+      this._errorMessage = error.toString();
+    }
+  };
+
   _onFinish: (() => void) = () => {
     log.debug(`SocketSession._onFinish()`);
 
@@ -117,6 +155,23 @@ export default class SocketSession extends AuthenticateDuplexStream {
     invariant(!this._finished);
 
     this._finished = true;
+  };
+
+  _onClose: (() => void) = () => {
+    log.debug(`SocketSession._onClose()`);
+
+    const commonArgs = [
+      Date.now() - this._startTime,
+      this._receivedBytes,
+      this._sentBytes,
+      this.authenticated,
+    ];
+
+    const metric = this._errorMessage ?
+                   new Metrics.SocketSessionError(...commonArgs,
+                                                  this._errorMessage) :
+                   new Metrics.SocketSession(...commonArgs);
+    this._metrics.add(metric);
   };
 
   _killRssiUpdates() {

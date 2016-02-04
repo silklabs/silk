@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import { DuplexTransform } from './duplex_transform';
 import { ec as ECDH } from 'elliptic';
 import makeLog from 'silk-log';
+import * as Metrics from '../metrics/streams';
 
 const log = makeLog(`api-streams-crypto`);
 
@@ -34,15 +35,17 @@ class CryptoStreamBase extends ClosingTransform {
   static IV_LENGTH = 16;
 
   _ec = null;
+  _metrics = null;
   _sharedSecret = null;
   _error = null;
 
-  constructor(ec, options) {
+  constructor(ec, metrics, options) {
     log.debug(`CryptoStreamBase()`);
 
     super(options);
 
     this._ec = ec;
+    this._metrics = metrics;
   }
 
   _endWithError(error) {
@@ -80,10 +83,10 @@ export class EncryptStream extends CryptoStreamBase {
   _randomBytes = [ ];
   _pushedPublicKey = false;
 
-  constructor(ec, options) {
+  constructor(ec, metrics, options) {
     log.debug(`EncryptStream()`);
 
-    super(ec, options);
+    super(ec, metrics, options);
 
     // Our sequence counter is just a single byte.
     this._sequenceBuffer = new Buffer([this._insecureRandomInt(0, 0xff)]);
@@ -161,6 +164,8 @@ export class EncryptStream extends CryptoStreamBase {
     log.debug(`Sending sequence number 0x` +
               this._sequenceBuffer.toString('hex'));
 
+    const startTime = Date.now();
+
     cipher.write(this._sequenceBuffer);
     this._sequenceBuffer[0]++;
 
@@ -181,6 +186,8 @@ export class EncryptStream extends CryptoStreamBase {
         messageSize += data.length;
       }
 
+      const duration = Date.now() - startTime;
+
       log.debug(`Sending encrypted message of size ${messageSize}`);
 
       // Send the message size unencrypted.
@@ -197,6 +204,10 @@ export class EncryptStream extends CryptoStreamBase {
       }
 
       callback(this._error);
+
+
+      const plaintextSize = chunk.length + this._sequenceBuffer.length;
+      this._metrics.add(new Metrics.Encrypt(plaintextSize, duration));
     });
   }
 
@@ -306,16 +317,19 @@ export class DecryptStream extends CryptoStreamBase {
   _encryptedChunkSize = 0;
   _decipher = null;
 
+  _plaintextSize = 0;
+  _decryptDuration = 0;
+
   _otherSequenceNumber = undefined;
 
   _keyPair = null;
   _otherPublicKeyBuffer = null;
   _otherPublicKeyBufferIndex = 0;
 
-  constructor(ec, options) {
+  constructor(ec, metrics, options) {
     log.debug(`DecryptStream()`);
 
-    super(ec, options);
+    super(ec, metrics, options);
   }
 
   _deriveKey(chunk) {
@@ -474,6 +488,8 @@ export class DecryptStream extends CryptoStreamBase {
   _createDecipher() {
     assert(this._sharedSecret);
     assert(!this._decipher);
+    assert(!this._plaintextSize);
+    assert(!this._decryptDuration);
 
     if (this._dataLength < CryptoStreamBase.IV_LENGTH) {
       return false;
@@ -519,6 +535,8 @@ export class DecryptStream extends CryptoStreamBase {
     let firstData = true;
 
     decipher.addListener(`data`, data => {
+      this._plaintextSize += data.length;
+
       if (firstData) {
         firstData = false;
 
@@ -569,6 +587,8 @@ export class DecryptStream extends CryptoStreamBase {
 
     let remaining = sizeToPush;
 
+    const start = Date.now();
+
     while (remaining) {
       let buffer = this._data[0];
       if (buffer.length < remaining) {
@@ -584,6 +604,8 @@ export class DecryptStream extends CryptoStreamBase {
         break;
       }
     }
+
+    this._decryptDuration += Date.now() - start;
 
     this._dataLength -= sizeToPush;
     this._encryptedChunkSize -= sizeToPush;
@@ -616,8 +638,22 @@ export class DecryptStream extends CryptoStreamBase {
       return false;
     }
 
+    const start = Date.now();
+
     this._decipher.end();
+
+    const duration = Date.now() - start + this._decryptDuration;
+    const plaintextSize = this._plaintextSize;
+
     this._decipher = null;
+    this._plaintextSize = 0;
+    this._decryptDuration = 0;
+
+    // This method can be called in a loop and the metrics aren't perf-critical
+    // so just do this on the next tick.
+    process.nextTick(() => {
+      this._metrics.add(new Metrics.Decrypt(plaintextSize, duration));
+    });
 
     return true;
   }
@@ -699,13 +735,13 @@ export class CryptoDuplexStream extends DuplexTransform {
 
   _sharedSecret = null;
 
-  constructor(stream, options = { }) {
+  constructor(stream, metrics, options = { }) {
     log.debug(`CryptoDuplexStream()`);
 
     const ecdh = new ECDH(CryptoStreamBase.CURVE_NAME);
 
-    const decrypt = new DecryptStream(ecdh);
-    const encrypt = new EncryptStream(ecdh);
+    const decrypt = new DecryptStream(ecdh, metrics);
+    const encrypt = new EncryptStream(ecdh, metrics);
 
     const randomByteCountNeeded = ecdh.hash.hmacStrength;
     assert(randomByteCountNeeded);
@@ -718,9 +754,16 @@ export class CryptoDuplexStream extends DuplexTransform {
         return;
       }
 
+      const start = Date.now();
+
       const keyPair = ecdh.genKeyPair({ entropy: bytes });
+
+      const stop = Date.now();
+
       encrypt.setKeyPair(keyPair);
       decrypt.setKeyPair(keyPair);
+
+      metrics.add(new Metrics.CryptoKeyPair(stop - start));
     });
 
     decrypt.once(`sharedSecret`, sharedSecret => {

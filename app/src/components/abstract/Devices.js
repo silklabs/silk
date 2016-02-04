@@ -75,7 +75,8 @@ export default class Devices extends AsyncComponent {
 
   componentWillMount() {
     this.mounted = true;
-    this.bleDeviceManager = getDeviceManager(this.props.userState);
+    this.bleDeviceManager =
+      getDeviceManager(this.props.userState, this.props.api.metrics);
     this.bleDeviceManager.on('connect', this.onBLEDeviceConnect);
     BLESocketManager.start();
 

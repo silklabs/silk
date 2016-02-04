@@ -11,8 +11,9 @@ extensions. This repository contains a number of "internal" plugins
 which can be loaded from the silk-cli.
 
 ```sh
-# In the future this will be replace by `npm install -g silk-cli`
-npm install -g ./cli && source setup
+source setup
+cd cli-plugin-internal
+npm install
 silk --help
 ```
 

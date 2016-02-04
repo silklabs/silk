@@ -38,8 +38,14 @@ const COMMON_ARGS = {
 // OSS land so if it's a file we move it into ~/.silk as a directory.
 {
   // new scope so we don't leak globals...
-  let stat = fs.lstatSync(OLD_CONFIG_FILEPATH);
-  if (stat.isFile()) {
+  let stat;
+  try {
+    stat = fs.lstatSync(OLD_CONFIG_FILEPATH);
+  } catch (err) {
+    // eat the error we don't care...
+  }
+
+  if (stat && stat.isFile()) {
     let contents = fs.readFileSync(OLD_CONFIG_FILEPATH);
     fs.unlinkSync(OLD_CONFIG_FILEPATH);
     fs.mkdirSync(OLD_CONFIG_FILEPATH);

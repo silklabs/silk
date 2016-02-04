@@ -1,4 +1,4 @@
-From 2aa0f77ef97dd875237e78aee3ade2138a69a729 Mon Sep 17 00:00:00 2001
+From 152b4956eaeafe8fad7b8036acb0b4781d2f0760 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Thu, 21 Jan 2016 16:48:52 -0800
 Subject: [PATCH] Androidify OpenBLAS
@@ -10,7 +10,7 @@ Subject: [PATCH] Androidify OpenBLAS
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..0b4782f
+index 0000000..fe94b32
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,34 @@
@@ -39,7 +39,7 @@ index 0000000..0b4782f
 +	CROSS_SUFFIX="$(ARM_ABI)/bin/arm-linux-androideabi-" \
 +	HOSTCC=gcc \
 +	NO_LAPACK=1 \
-+	TARGET=ARMV7 \
++	TARGET=ARMV5 \
 +	USE_THREAD=1 \
 +	NUM_THREADS=8 \
 +	USE_OPENMP=0
@@ -49,5 +49,5 @@ index 0000000..0b4782f
 +	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 -- 
-2.7.0
+2.4.5
 

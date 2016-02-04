@@ -2,15 +2,11 @@
   "name": "silk",
   "version": "0.12.0",
   "description": "Silk command line tool",
-  "main": "./lib/silk.js",
-  "bin": {
-    "silk-cli": "silk"
-  },
   "scripts": {
     "lint": "eslint build lib",
     "postinstall": "../npm_postinstall",
     "preinstall": "../npm_preinstall",
-    "test": "npm run lint && ./silk"
+    "test": "npm run lint && node ./node_modules/cli/silk"
   },
   "dependencies": {
     "babel-eslint": "5.0.0beta9",
@@ -26,6 +22,7 @@
     "tmp": "0.0.28"
   },
   "silkDependencies": {
+    "cli": "/cli",
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",
     "silk-flow-bin": "/flow-bin",

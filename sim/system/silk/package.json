@@ -9,7 +9,7 @@
   },
   "author": "Silk Labs Inc.",
   "silkDependencies": {
-    "silk-cmt": "/device/vendor/silk/gonk/node/silk-cmt",
+    "silk-cmt": "/device/vendor/silk/gonk/node/silk-cv",
     "silk-core-version": "/version",
     "silk-device": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/silk/gonk/node/silk-gc1",

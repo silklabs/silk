@@ -9,7 +9,7 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
-import Cmt from 'silk-cmt';
+import Cmt from 'silk-cv';
 import invariant from 'assert';
 
 const MAX_TRACKED_OBJECTS = (process.platform === 'android' ? 1 : 10);

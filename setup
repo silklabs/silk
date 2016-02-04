@@ -13,3 +13,9 @@ done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export SILKRC=$ROOT/.silkrc
+export PATH=$ROOT/cli:$PATH
+
+if [ ! -d $ROOT/cli-plugin-internal/node_modules ];
+then
+  echo "Please run npm install inside of cli-plugin-internal for full CLI"
+fi

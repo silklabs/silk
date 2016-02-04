@@ -65,7 +65,7 @@ function loadPlugins(config: Config): {[key: string]: SubCommand} {
     try {
       module = require(pluginPath);
     } catch (err) {
-      log.warn(`Failed to load plugin: '${pluginPath}' ${err.stack}`);
+      log.warn(`Failed to load plugin: '${pluginPath}' (${err.message}) ${err.stack}`);
       continue;
     }
 
@@ -104,7 +104,15 @@ function main () {
   if (argv.subcommand) {
     let subcommand = subcommands[argv.subcommand];
     try {
-      subcommand.main(argv, context);
+      let result = subcommand.main(argv, context);
+      // Check if they return a promise?
+      if (typeof result === 'object' && typeof result.catch === 'function') {
+        result.catch((err) => {
+          log.fatal(
+            `Failed to execute '${argv.subcommand}' on plugin '${subcommand.path}' ${err.stack}`
+          );
+        });
+      }
     } catch (err) {
       log.fatal(
         `Failed to execute '${argv.subcommand}' on plugin '${subcommand.path}' ${err.stack}`

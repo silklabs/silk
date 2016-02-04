@@ -1,11 +1,11 @@
 'use strict';
 
-const fs = require('fs');
+var fs = require('fs');
 
 module.exports.cat = {
-  help: `You need catz`,
+  help: 'You need catz',
   arguments: [],
-  main: (args) => {
+  main: function (args) {
     process.stdout.write(fs.readFileSync(__dirname + '/cat.txt', 'ascii'));
   },
 };

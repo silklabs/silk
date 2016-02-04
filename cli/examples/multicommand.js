@@ -1,8 +1,8 @@
 'use strict';
 
 module.exports.install = {
-  help: `Install fake applications`,
-  main: (args) => {
+  help: 'Install fake applications',
+  main: function (args) {
     console.log('.... Done!');
   },
 };
@@ -19,16 +19,16 @@ module.exports.listModules = {
 };
 
 module.exports.publish = {
-  help: `Publish fake applications to the interwebs`,
+  help: 'Publish fake applications to the interwebs',
   arguments: [
     [['--fast'], {
       action: 'storeTrue',
       help: 'Disable checks',
     }],
   ],
-  main: (context, args) => {
+  main: function (args) {
     console.log('Starting to publish...', args.fast ? 'without checks' : '');
-    setTimeout(() => {
+    setTimeout(function () {
       console.log('.... Done!');
     }, 500);
   },

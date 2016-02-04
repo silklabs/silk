@@ -33,8 +33,12 @@ single, standalone mp4 file by simply calling
 npm run cat
 ```
 
-(or `npm run file`).  This will record to `out.mp4` in your current directory. Stop
-recording with Ctrl-C.
+(or `npm run file`).  This will record to `out.mp4` in your current
+directory. Stop recording with Ctrl-C.  You can also explicitly
+specify a device ID on the command line, as well as an output file:
+```
+npm run cat 993d84007b2fe791d68ab6f7eaead04f21d29e46617225b64bd252047cd8bfba try1.mp4
+```
 
 ## Saving individual segments to file
 
@@ -43,9 +47,14 @@ Alternatively, you can each individual segment sent from device by running
 npm run segments
 ```
 
-This commands saves the mp4 "initialization header" to `segments/seg-init.mp4`, and
-each successive segment to `segments/seg-%d.m4s`, where the `%d` is replaced with the
-segment sequence number, for example `segments/seg-1.m4s`.  Stop recording with Ctrl-C.
+This commands saves the mp4 "initialization header" to `segments/seg-init.mp4`,
+and each successive segment to `segments/seg-%d.m4s`, where the `%d` is replaced
+with the segment sequence number, for example `segments/seg-1.m4s`.  Stop
+recording with Ctrl-C.  As with `np run cat`, you can also specify the device ID
+and output directory explicitly:
+```
+npm run segments 993d84007b2fe791d68ab6f7eaead04f21d29e46617225b64bd252047cd8bfba run1
+```
 
 ## Streaming over HTTP
 

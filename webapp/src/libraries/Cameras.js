@@ -2,6 +2,7 @@
 import { EventEmitter } from 'events';
 import io from 'socket.io-client';
 import PreviewQueue from './PreviewQueue';
+import invariant from 'assert';
 
 import Api from './Api';
 import mklog from 'silk-log'; const log = mklog('Cameras');
@@ -64,34 +65,6 @@ class Camera extends EventEmitter {
     this.previewSize = null;
   }
 
-  _feedNewLog(type, data) {
-    switch (type) {
-    case 'dash':
-      this.logs[type] = data;
-      break;
-    case 'logcat':
-      const maxLines = 500;
-
-      let logcat = this.logs.logcat || [];
-      data.split(/\r?\n/).map(line => {
-        if (line.length > 0) {
-          logcat.push(line);
-        }
-      });
-      while (logcat.length > maxLines) {
-        logcat.shift();
-      }
-      this.logs.logcat = logcat;
-      break;
-    case 'jpegs':
-      this.emit('diagJpegFrames', data);
-      break;
-    default:
-      log.warn(`Unknown log type: ${type}`);
-      break;
-    }
-  }
-
   set logging(enabled) {
     this._requestedRooms.diag = enabled;
     this._updateDiagStream();
@@ -119,8 +92,50 @@ class Camera extends EventEmitter {
     if (typeof ack === 'function') {
       ack();
     }
-    this._feedNewLog(msg.type, msg.log);
-    this.emit('diag', msg);
+    switch (msg.type) {
+    case 'log':
+      switch (msg.name) {
+      case 'dash':
+        this.logs.dash = msg.log;
+        break;
+      case 'logcat':
+        const maxLines = 500;
+
+        let logcat = this.logs.logcat || [];
+        msg.log.split(/\r?\n/).map(line => {
+          if (line.length > 0) {
+            logcat.push(line);
+          }
+        });
+        while (logcat.length > maxLines) {
+          logcat.shift();
+        }
+        this.logs.logcat = logcat;
+        break;
+      default:
+        log.warn(`Unknown diag log name: ${msg.name}`);
+        return;
+      }
+      this.emit('diag');
+      break;
+    case 'jpegFrames':
+      this.emit('diagJpegFrames', msg.frames);
+      break;
+    case 'state':
+      switch (msg.name) {
+      case 'camera':
+      case 'timeline':
+        this.emit(`diagState:${msg.name}`, msg.state);
+        break;
+      default:
+        log.warn(`Unknown diag state name: ${msg.name}`);
+        break;
+      }
+      break;
+    default:
+      log.warn(`Unknown diag type: ${msg.type}`);
+      return;
+    }
   };
 
   on(event, listener) {
@@ -130,6 +145,9 @@ class Camera extends EventEmitter {
   }
 
   reboot(channel) {
+    if (!this.online) {
+      return;
+    }
     let cmd = { id: this.id, msg: 'reboot' };
     if (channel) {
       cmd.channel = channel;
@@ -137,11 +155,23 @@ class Camera extends EventEmitter {
     this._socket.emit('cmd', cmd);
   }
 
-  speak(lib, text) {
-    let cmd = { id: this.id, msg: 'speak' };
-    cmd.lib = lib;
-    cmd.text = text;
+  diagCommand(subsystem: string, name: string, arg: string = '') {
+    invariant(subsystem.length > 0);
+    invariant(name.length > 0);
+
+    if (!this.online) {
+      return;
+    }
+    let cmd = { id: this.id, msg: 'diagCommand', subsystem, name, arg };
     this._socket.emit('cmd', cmd);
+  }
+
+  diagCameraCommand(name: string, arg: string = '') {
+    this.diagCommand('camera', name, arg);
+  }
+
+  speak(lib: string, text: string) {
+    this.diagCommand('speak', text, lib);
   }
 
   removeListener(event, listener) {

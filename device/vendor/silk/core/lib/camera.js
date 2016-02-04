@@ -6,16 +6,21 @@
  * @private
  */
 
-import invariant from 'assert';
-import createLog from './log';
-import { EventEmitter } from 'events';
-import * as util from './sysutils';
-import net from 'net';
-import cv from 'opencv';
-import CBuffer from 'CBuffer';
-import api from './api';
-import CameraRestart from './metrics/camera_restart';
 import * as VideoMetrics from './metrics/video';
+import * as util from './sysutils';
+import CBuffer from 'CBuffer';
+import CameraRestart from './metrics/camera_restart';
+import api from './api';
+import createLog from './log';
+import cv from 'opencv';
+import fs from 'mz/fs';
+import invariant from 'assert';
+import mkdirp from 'mkdirp-promise';
+import net from 'net';
+import path from 'path';
+import type Server from './server.js';
+import wrapNoEntity from './fs/wrap_no_entity';
+import { EventEmitter } from 'events';
 
 /**
  * Type representing the camera preview frame callback
@@ -54,6 +59,9 @@ const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
 const PREVIEW_DELAY_MS = 250;
+
+const MAX_CLIP_DURATION = Math.max(1, util.getintprop('ro.silk.camera.max_clip_dur', 15 /*seconds*/));
+const CAMERA_CLIP_DIRECTORY = 'data/clips';
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -184,14 +192,308 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
   };
 }
 
+
+/**
+ * Current state of the CameraClipRecorder.
+ * live - normal camera mode
+ * record - actively recording frames into the circular buffer
+ * pause - paused in playback mode
+ * play - playback mode active
+ * busy - currently loading or saving a clip
+ */
+type CameraClipRecorderMode = 'live' | 'record' | 'pause' | 'play' | 'busy';
+
+/**
+ * CameraClipRecorder state
+ *
+ * This entire type is shared with the web app, so if you change it then
+ * update webapp/src/components/Diag.js too
+ */
+type CameraClipRecorderState = {
+  mode: CameraClipRecorderMode;
+  availableClips: Array<string>; // List of available clips to load
+  msg: string; // Something to display to the diag user (eg, result of last op)
+  repeat: bool; // True if the replay should repeat once at the end
+};
+
+type CameraClipPreviewFrame = [
+  number, // when
+  any,    // OpenCV matrix for this preview frame
+];
+
+/**
+ * Represents the "clip recorder", which enables the recording and replay of
+ * camera video streams
+ */
+class CameraClipRecorder {
+  state: CameraClipRecorderState;
+
+  _previews: CBuffer<CameraClipPreviewFrame>;
+  _previewPosition: number;
+  _onStateChange: Function;
+
+  constructor(onStateChange: Function) {
+    this._onStateChange = onStateChange;
+    this._previewPosition = 0;
+    this._previews = new CBuffer(MAX_CLIP_DURATION * 1000 / PREVIEW_DELAY_MS);
+    this._previews.overflow = this._releasePreviewFrame;
+
+    this.state = {
+      mode: 'live',
+      availableClips: [],
+      msg: '',
+      repeat: false,
+    };
+    this.reset();
+    this._loadAvailableClips();
+  }
+
+  _releasePreviewFrame: ((item: CameraClipPreviewFrame) => void) = (item) => {
+    item[1].release();
+  };
+
+  async _loadAvailableClips(): void {
+    this.state.availableClips = [];
+    const files = await wrapNoEntity(fs.readdir(CAMERA_CLIP_DIRECTORY), []);
+    for (const file of files) {
+      const ext = path.extname(file);
+      if (ext === '.json') {
+        this.state.availableClips.push(path.basename(file, ext));
+      }
+    }
+    if (this.state.availableClips.length > 0) {
+      log.info('Loaded clips:', this.state.availableClips);
+      this._onStateChange();
+    }
+  }
+
+  _loadImage(file: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      cv.readImage(file, (err, im) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(im);
+      });
+    });
+  }
+
+  /*
+   * Loads a clip
+   */
+  async load(name: string): void {
+    const clipMetadataFile = path.join(CAMERA_CLIP_DIRECTORY, name + '.json');
+    if (!await fs.exists(clipMetadataFile)) {
+      log.warn('Clip metadata does not exist:', clipMetadataFile);
+      return;
+    }
+
+    this.state.msg = `Loading ${name}...`;
+    this.state.mode = 'busy';
+    this._onStateChange();
+
+    const metadata = JSON.parse(await fs.readFile(clipMetadataFile, 'utf8'));
+    const previews = metadata.previews;
+    this._previews.empty();
+    this._previewPosition = 0;
+
+    await previews.forEach(async (when) => {
+      const imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
+      if (!await fs.exists(imageFile)) {
+        log.warn('Clip image does not exist:', imageFile);
+        return;
+      }
+      log.verbose('Loading', imageFile);
+      const im = await this._loadImage(imageFile);
+      this._previews.push([when, im]);
+    });
+    this.state.msg = `Loaded ${CAMERA_CLIP_DIRECTORY}/${name}`;
+    this.state.mode = 'pause';
+    this._onStateChange();
+  }
+
+  /*
+   * Saves the current clip
+   */
+  async save(name: string): void {
+    if (this.state.mode !== 'pause' && this.state.mode !== 'play') {
+      this._onStateChange();
+      return;
+    }
+
+    this.state.msg = `Saving ${name}...`;
+    this.state.mode = 'busy';
+    this._onStateChange();
+    const previews = this._previews.toArray();
+    let metadata = {
+      previews: previews.map(item => item[0]),
+    };
+
+    await mkdirp(path.join(CAMERA_CLIP_DIRECTORY, 'img'));
+    const clipMetadataFile = path.join(CAMERA_CLIP_DIRECTORY, name + '.json');
+    await fs.writeFile(clipMetadataFile, JSON.stringify(metadata, null, '  '));
+
+    await previews.forEach(async (item) => {
+      let [when, im] = item;
+      const imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
+      if (!await fs.exists(imageFile)) {
+        log.verbose('Saving', imageFile);
+        im.save(imageFile);
+      }
+    });
+    this.state.msg = `Saved ${CAMERA_CLIP_DIRECTORY}/${name}`;
+    this.state.mode = 'pause';
+    this.state.availableClips.push(name);
+    this._onStateChange();
+  }
+
+  /*
+   * Reset to the default/live state
+   */
+  reset(): void {
+    this.resumeLive();
+  }
+
+  previewFrame(when: number, im: any): [number, any] {
+    switch (this.state.mode) {
+    case 'record':
+      this._previews.push([when, im.copy()]);
+      // fall through
+    case 'live':
+      return [when, im];
+    default:
+      if (this._previewPosition >= this._previews.size) {
+        log.error('Invalid _previewPosition.',
+          `${this._previewPosition} >= ${this._previews.size}`);
+        this.stopPlayback();
+        return [when, im];
+      }
+
+      const preview = this._previews.get(this._previewPosition);
+
+      let nextPreviewPosition = this._previewPosition;
+      if (this.state.mode === 'play') {
+        nextPreviewPosition++;
+        if (nextPreviewPosition >= this._previews.size) {
+          if (this.state.repeat) {
+            nextPreviewPosition = 0;
+          } else {
+            nextPreviewPosition = this._previews.size - 1;
+            this.stopPlayback();
+          }
+        }
+      }
+      this._previewPosition = nextPreviewPosition;
+
+      im.release();
+      [when, im] = preview;
+      return [when, im.copy()];
+    }
+  }
+
+  resumeLive(): void {
+    if (this.state.mode !== 'busy') {
+      this.state.mode = 'live';
+      this.state.msg = '';
+      this._previews.empty();
+    }
+    this._onStateChange();
+  }
+
+  startRecording(): void {
+    if (this.state.mode === 'live') {
+      this.state.mode = 'record';
+      this.state.msg = 'Recording';
+    }
+    this._onStateChange();
+  }
+
+  stopRecording(): void {
+    if (this.state.mode === 'record') {
+      this.state.mode = 'pause';
+      this.seek(-Infinity);
+    } else {
+      this._onStateChange();
+    }
+  }
+
+
+  startPlayback(): void {
+    if (this.state.mode === 'pause') {
+      this.state.mode = 'play';
+      this.state.msg = 'Playing';
+    }
+    this._onStateChange();
+  }
+
+  stopPlayback(): void {
+    if (this.state.mode === 'play') {
+      this.state.mode = 'pause';
+      this.seek(0);
+    } else {
+      this._onStateChange();
+    }
+  }
+
+  setRepeat(enabled: bool): void {
+    this.state.repeat = enabled;
+    this._onStateChange();
+  }
+
+  _clamp(v: number, min: number, max: number): number {
+    return Math.min(max, Math.max(v, min));
+  }
+
+  seek(distance: number): void {
+    if (this.state.mode === 'pause' || this.state.mode === 'play') {
+      this._previewPosition = this._clamp(this._previewPosition + distance,
+        0, Math.max(0, this._previews.size - 1));
+      this.state.msg = `Seek to ${this._previewPosition}`;
+    }
+    this._onStateChange();
+  }
+
+  trimBefore(): void {
+    if (this.state.mode === 'pause') {
+      for (let i = 0; i < this._previewPosition; i++) {
+        this._previews.shift();
+      }
+      this.state.msg = `Trimmed before ${this._previewPosition}`;
+      this._previewPosition = 0;
+    }
+    this._onStateChange();
+  }
+
+  trimAfter(): void {
+    if (this.state.mode === 'pause') {
+      while (this._previews.size > this._previewPosition + 1) {
+        this._previews.pop();
+      }
+      this.state.msg = `Trimmed after ${this._previewPosition}`;
+      this._previewPosition = this._previews.size - 1;
+    }
+    this._onStateChange();
+  }
+}
+
+
 /**
  * Class that talks to capture service to receive camera frames
  * @param {Timeline} timeline instance of Timeline class
  */
-class CameraStream extends EventEmitter {
-  constructor(timeline) {
+export default class Camera extends EventEmitter {
+  _clipRecorder: CameraClipRecorder;
+  server: Server;
+  _liveDiag: bool;
+
+  constructor(server, timeline) {
     super();
+    invariant(server, 'must pass server...');
+    invariant(timeline, 'must pass timeline...');
+    this.server = server;
     this.timeline = timeline;
+
     this._ready = false;
     this._recording = false;
     this._cvVideoCapture = null;
@@ -200,6 +502,9 @@ class CameraStream extends EventEmitter {
     this._dataSocket = null;
     this._queue = []; // Queue of pending preview frame requests
     this._motion = true;
+
+    this._liveDiag = false;
+    this._clipRecorder = new CameraClipRecorder(this._diagEmitState);
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
@@ -339,6 +644,8 @@ class CameraStream extends EventEmitter {
       this._initTimeout = null;
       this._restart('failed to initialize in a timely fashion', true);
     }, CAPTURE_INIT_TIMEOUT_MS);
+
+    this._clipRecorder.reset();
 
     if (process.platform !== 'android') {
       // The capture process is currently gonk only.  For other platforms only initialize
@@ -540,7 +847,7 @@ class CameraStream extends EventEmitter {
     }
     this._noPreviewCount = 0;
     this._cvVideoCaptureBusy = true;
-    const when = Date.now();
+    let when = Date.now();
 
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
     // image
@@ -558,12 +865,14 @@ class CameraStream extends EventEmitter {
           return;
         }
 
+        [when, im] = this._clipRecorder.previewFrame(when, im);
+
         // Scaled preview
         let imScaled = im.copy();
         imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
         // Encode preview as JPEG to be sent to the server
-        imScaled.toBufferAsync((err, pkt) =>{
+        imScaled.toBufferAsync((err, pkt) => {
           // Cache preview frames
           this._imagecache.push({when, orig: im, rgb: imScaled});
 
@@ -838,7 +1147,98 @@ class CameraStream extends EventEmitter {
     this._queue.push([userCb, when, channel]); // Enqueue the frame request
     this._retrieveNextFrame();
   }
+
+  _diagEmitState = () => {
+    if (!this._liveDiag) {
+      return;
+    }
+    const state = {
+      clipRecorder: this._clipRecorder.state,
+    };
+    this.server.send('diag', {
+      type: 'state',
+      name: 'camera',
+      state,
+    });
+  };
+
+  setDiag(enabled: bool): void {
+    this._liveDiag = enabled;
+    this._diagEmitState();
+  }
+
+  diagCommand(name: string, arg: string): void {
+    switch (name) {
+    case 'hi':
+      break;
+    case 'record':
+      switch (arg) {
+      case 'start':
+        this._clipRecorder.startRecording();
+        break;
+      case 'stop':
+        this._clipRecorder.stopRecording();
+        break;
+      default:
+        log.error('Unknown record arg:', arg);
+        break;
+      }
+      break;
+    case 'live':
+      this._clipRecorder.resumeLive();
+      break;
+    case 'playback':
+      switch (arg) {
+      case 'start':
+        this._clipRecorder.startPlayback();
+        break;
+      case 'stop':
+        this._clipRecorder.stopPlayback();
+        break;
+      default:
+        log.error('Unknown playback arg:', arg);
+        break;
+      }
+      break;
+    case 'goto start':
+      this._clipRecorder.seek(-Infinity);
+      break;
+    case 'rewind':
+      this._clipRecorder.seek(-1000 / PREVIEW_DELAY_MS);
+      break;
+    case 'fastforward':
+      this._clipRecorder.seek(1000 / PREVIEW_DELAY_MS);
+      break;
+    case 'goto end':
+      this._clipRecorder.seek(Infinity);
+      break;
+    case 'repeat':
+      this._clipRecorder.setRepeat(!!arg);
+      break;
+    case 'trim':
+      switch (arg) {
+      case 'before':
+        this._clipRecorder.trimBefore();
+        break;
+      case 'after':
+        this._clipRecorder.trimAfter();
+        break;
+      default:
+        log.error('Unknown trim arg:', arg);
+        break;
+      }
+      break;
+    case 'load':
+      this._clipRecorder.load(arg);
+      break;
+    case 'save':
+      this._clipRecorder.save(arg);
+      break;
+    default:
+      log.error('Unknown command name:', name);
+      break;
+    }
+  }
 }
 
-CameraStream.prototype.FLASH_MODE = FLASH_MODE;
-module.exports = (timeline) => new CameraStream(timeline);
+Camera.prototype.FLASH_MODE = FLASH_MODE;

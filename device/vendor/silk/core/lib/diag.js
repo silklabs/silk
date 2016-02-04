@@ -15,8 +15,8 @@ class DiagLogger {
   // respawnDelay specifies amount of time to wait after process dies before
   // running the command again. Use null for "streaming logs" that should be
   // running at all times.
-  constructor(type, cmd, params, respawnDelaySecs) {
-    this.type = type;
+  constructor(name, cmd, params, respawnDelaySecs) {
+    this.name = name;
     this.respawnTimer = null;
     this.sendIntervalId = null;
     this.helper = null;
@@ -65,8 +65,9 @@ class DiagLogger {
 
     if (this.server) {
       this.server.send('diag', {
-        type: this.type,
-        log: this.data
+        log: this.data,
+        name: this.name,
+        type: 'log',
       });
     }
 
@@ -154,14 +155,14 @@ export default class Diag {
 
   _applyConfig() {
     this.loggers.map(logger => {
-      let type = logger.type;
-      if (type in this.cfg) {
-        if (this.cfg[type] === 1) {
-          log.info('Enabling', type);
+      let name = logger.name;
+      if (name in this.cfg) {
+        if (this.cfg[name] === 1) {
+          log.info('Enabling', name);
           logger.server = this.server;
           logger.send(); // Send the latest data immediately
         } else {
-          log.info('Disabling', type);
+          log.info('Disabling', name);
           logger.server = null;
         }
       }

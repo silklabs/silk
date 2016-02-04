@@ -107,6 +107,9 @@ export default class Timeline extends EventEmitter {
   liveDiag: boolean;
   liveVideo: boolean;
   livePreview: boolean;
+  diagFrameFilter: string;
+  diagFrameFilterSkips: Array<RegExp>;
+  diagFrameFilterNames: Array<RegExp>;
   lastPreviewFrame: ?Buffer;
   lastPreviewFrameWhen: number;
   lastPreviewKeyframeWhen: number;
@@ -129,6 +132,9 @@ export default class Timeline extends EventEmitter {
     this.previewObjects = [];
 
     this.diagJpegFrames = [];
+    this.diagFrameFilter = '';
+    this.diagFrameFilterNames = [];
+    this.diagFrameFilterSkips = [];
 
     // Keeps a copy of previous objects to be sent when there is no motion detected
     this.cachedObjs = [];
@@ -213,6 +219,20 @@ export default class Timeline extends EventEmitter {
     }
     this.liveVideo = video;
     this.liveDiag = diag;
+    if (this.liveDiag) {
+      this.diagEmitState();
+    }
+  }
+
+  diagEmitState(): void {
+    const state = {
+      imageFilter: this.diagFrameFilter,
+    };
+    this.server.send('diag', {
+      type: 'state',
+      name: 'timeline',
+      state,
+    });
   }
 
   /**
@@ -236,6 +256,13 @@ export default class Timeline extends EventEmitter {
     this.emit('preview', when);
   }
 
+  _diagFrameEnabled(id: string): bool {
+    if (this.diagFrameFilterSkips.some(regex => regex.test(id))) {
+      return false;
+    }
+    return this.diagFrameFilterNames.some(regex => regex.test(id));
+  }
+
   /**
    * Add a processed frame
    *
@@ -247,9 +274,50 @@ export default class Timeline extends EventEmitter {
     if (!this.liveDiag) {
       return;
     }
+    if (!this._diagFrameEnabled(id)) {
+      return;
+    }
 
     const jpeg = frame.toBuffer({ext: '.jpg', jpegQuality: 100});
     this.diagJpegFrames.push({id, when, jpeg});
+  }
+
+  /***
+   * Configure which "diag frames" (added by |addDiagFrame|) are transmitted.
+   *
+   * @param filter Comma-delimited list of names. The `*` character is wild,
+   *               prefix by `-` to exclude.  This is the same syntax as the
+   *               DEBUG environment variable used by the npm |debug| module.
+   */
+  setDiagFrameFilter(filter: string): void {
+    let split = filter.split(/[\s,]+/);
+
+    this.diagFrameFilter = filter;
+    this.diagFrameFilterNames = [];
+    this.diagFrameFilterSkips = [];
+    split.forEach((term) => {
+      if (!term) { // empty string
+        return;
+      }
+      term = term.replace(/\*/g, '.*?');
+      if (term[0] === '-') {
+        this.diagFrameFilterSkips.push(new RegExp('^' + term.substr(1) + '$'));
+      } else {
+        this.diagFrameFilterNames.push(new RegExp('^' + term + '$'));
+      }
+    });
+    this.diagEmitState();
+  }
+
+  diagCommand(name: string, arg: string): void {
+    switch (name) {
+    case 'imageFilter':
+      this.setDiagFrameFilter(arg);
+      break;
+    default:
+      log.warn('Unknown diag command', name);
+      break;
+    }
   }
 
   /**
@@ -488,8 +556,8 @@ export default class Timeline extends EventEmitter {
 
       if (this.diagJpegFrames.length > 0) {
         this.server.send('diag', {
-          type: 'jpegs',
-          log: this.diagJpegFrames,
+          type: 'jpegFrames',
+          frames: this.diagJpegFrames,
         });
         this.diagJpegFrames = [];
       }

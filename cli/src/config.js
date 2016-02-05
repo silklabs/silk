@@ -86,7 +86,7 @@ function loadAndResolveConfig(pathName: string): Config {
 // default plugins and settings but that is for later...
 const DEFAULT_CONFIG = {
   plugins: [
-    path.join(__dirname, 'init.js'),
+    path.join(__dirname, 'cmd/init.js'),
   ],
 };
 

@@ -31,6 +31,7 @@ suite('config', () => {
     let expected = [
       path.resolve(fixture, 'node_modules/silk-plugin-a/index.js'),
       path.resolve(fixture, 'node_modules/b/index.js'),
+      path.resolve(__dirname, '../src/cmd/init.js'),
     ];
     assert.deepEqual(result.plugins.sort(), expected.sort());
 
@@ -46,6 +47,7 @@ suite('config', () => {
     let result = config(fixtureDir, path.join(fixtureDir, 'global'));
     let expected = [
       path.join(fixtureDir, 'global/node_modules/silk-plugin-internal/index.js'),
+      path.resolve(__dirname, '../src/cmd/init.js'),
     ];
     assert.deepEqual(result.plugins, expected);
   });
@@ -58,6 +60,7 @@ suite('config', () => {
       path.join(fixtureDir, 'global/node_modules/silk-plugin-internal/index.js'),
       path.resolve(fixture, 'node_modules/silk-plugin-a/index.js'),
       path.resolve(fixture, 'node_modules/b/index.js'),
+      path.resolve(__dirname, '../src/cmd/init.js'),
     ];
     assert.deepEqual(result.plugins.sort(), expected.sort());
   });
@@ -68,6 +71,7 @@ suite('config', () => {
     let result = config();
     let expected = [
       path.join(fixtureDir, 'global/node_modules/silk-plugin-internal/index.js'),
+      path.resolve(__dirname, '../src/cmd/init.js'),
     ];
     assert.deepEqual(result.plugins, expected);
   });

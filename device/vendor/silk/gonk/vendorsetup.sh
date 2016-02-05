@@ -83,8 +83,7 @@ cmake_version_check()
     local minor=${BASH_REMATCH[2]}
     local patch=${BASH_REMATCH[3]}
 
-    [[ $major -eq 3 ]] && return
-    [[ $major -eq 2 ]] && [[ $minor -ge 8 ]] && return
+    [[ $major -eq 3 ]] && [[ $minor -ge 2 ]] && return
   fi
   poison_their_lunch Unsupported cmake version: $v
 }

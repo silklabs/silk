@@ -44,24 +44,29 @@ var base = {
   plugins: [],
 };
 
-function addPlugins(config, platform) {
-  if (process.env.CONFIGURATION !== 'Release') {
-    return;
-  }
-  // React Native 0.16+ transforms `__DEV__` out of the minified production
-  // bundles, so we should do the same (by replacing the `__DEV__` identifier
-  // with the `false` literal and then having uglify eliminate the resulting
-  // dead code.)
-  config.module.loaders[1].query.plugins.push('./src/transforms/__DEV__-to-false');
-  config.module.loaders[1].query.plugins.push('./src/transforms/remove-logging');
-  config.plugins.push(new webpack.optimize.DedupePlugin());
-  config.plugins.push(new webpack.optimize.UglifyJsPlugin());
-}
-
-module.exports = ['ios', 'android'].map(function (platform) {
+function makeConfig(platform) {
   var config = cloneDeep(base);
-  addPlugins(config, platform);
   config.entry['index.' + platform] = ['./src/index.js'];
   config.resolve.extensions.push('.' + platform + '.js');
+
+  if (process.env.CONFIGURATION === 'Release') {
+    // React Native 0.16+ transforms `__DEV__` out of the minified production
+    // bundles, so we should do the same (by replacing the `__DEV__` identifier
+    // with the `false` literal and then having uglify eliminate the resulting
+    // dead code.)
+    config.module.loaders[1].query.plugins.push('./src/transforms/__DEV__-to-false');
+    config.module.loaders[1].query.plugins.push('./src/transforms/remove-logging');
+    config.plugins.push(new webpack.optimize.DedupePlugin());
+    config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+  }
   return config;
-});
+}
+
+var configs = [];
+if (process.argv.indexOf('--no-ios') === -1) {
+  configs.push(makeConfig('ios'));
+}
+if (process.argv.indexOf('--no-android') === -1) {
+  configs.push(makeConfig('android'));
+}
+module.exports = configs;

@@ -3,7 +3,6 @@ import org.apache.tools.ant.taskdefs.condition.Os
 def config = project.hasProperty("react") ? project.react : [];
 
 def bundleAssetName = config.bundleAssetName ?: "index.android.bundle"
-def entryFile = config.entryFile ?: "index.android.js"
 
 // because elvis operator
 def elvisFile(thing) {
@@ -36,15 +35,11 @@ task bundleDebugJsAndAssets(type: Exec) {
     outputs.dir jsBundleDirDebug
     outputs.dir resourcesDirDebug
 
-    // set up the call to the react-native cli
     workingDir reactRoot
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "react-native", "bundle", "--platform", "android", "--dev", "true", "--entry-file",
-            entryFile, "--bundle-output", jsBundleFileDebug, "--assets-dest", resourcesDirDebug
-    } else {
-        commandLine "react-native", "bundle", "--platform", "android", "--dev", "true", "--entry-file",
-            entryFile, "--bundle-output", jsBundleFileDebug, "--assets-dest", resourcesDirDebug
-    }
+    // TODO: wrap this in a script and either download bundle or call
+    // `rnws bundle` depending based on config.local.json values like on iOS.
+    //commandLine "./tools/rnws", "bundle", "--no-ios", "--androidBundlePath", jsBundleFileDebug, "--no-optimize"
+    commandLine "wget", "-nv", "-O", jsBundleFileDebug, "http://localhost:8082/index.android.bundle?platform=android&dev=true&hot=false"
 
     enabled config.bundleInDebug ?: false
 }
@@ -61,15 +56,9 @@ task bundleReleaseJsAndAssets(type: Exec) {
     outputs.dir jsBundleDirRelease
     outputs.dir resourcesDirRelease
 
-    // set up the call to the react-native cli
     workingDir reactRoot
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd","/c", "react-native", "bundle", "--platform", "android", "--dev", "false", "--entry-file",
-            entryFile, "--bundle-output", jsBundleFileRelease, "--assets-dest", resourcesDirRelease
-    } else {
-        commandLine "react-native", "bundle", "--platform", "android", "--dev", "false", "--entry-file",
-            entryFile, "--bundle-output", jsBundleFileRelease, "--assets-dest", resourcesDirRelease
-    }
+    environment "CONFIGURATION", "Release"
+    commandLine "./tools/rnws", "bundle", "--no-ios", "--androidBundlePath", jsBundleFileRelease
 
     enabled config.bundleInRelease ?: true
 }

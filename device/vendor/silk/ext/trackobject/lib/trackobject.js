@@ -158,7 +158,7 @@ class TrackObject {
       }
 
       working = true;
-      this._env.camera.getPreviewFrame((err, image) => {
+      this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
@@ -179,7 +179,7 @@ class TrackObject {
           }
           working = false;
         });
-      }, when, 1 /* == 1 channel image (RGB not required) */);
+      });
     };
 
     timeline.on('preview', this._onPreview);

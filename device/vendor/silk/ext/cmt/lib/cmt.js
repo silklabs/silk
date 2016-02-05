@@ -70,7 +70,7 @@ class ObjectTracker {
       return;
     }
 
-    env.camera.getPreviewFrame((err, image, orig) => {
+    env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
       if (err) {
         log.warn(`Unable to fetch frame: ${err}`);
         return;
@@ -99,7 +99,7 @@ class ObjectTracker {
         });
       });
 
-    }, when, 1 /* == 1 channel image (RGB not required) */);
+    });
   }
 
   onFace = (when, rects) => {

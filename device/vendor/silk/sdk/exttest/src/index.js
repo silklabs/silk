@@ -11,6 +11,7 @@ import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
 import * as util from 'silk-core/lib/sysutils';
 import wifi from 'silk-core/lib/wifi';
+import invariant from 'assert';
 
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 180;
@@ -36,18 +37,33 @@ class FakeCamera {
     this._imgSrc = imgSrc;
   }
 
-  getPreviewFrame(userCb, when, channel = 0) {
-    log.info(`getPreviewFrame ${this._imgSrc} ${channel}`);
+  getPreviewFrame(when, format, userCb) {
+    // TODO: `when` is ignored...
+    log.info(`getPreviewFrame ${this._imgSrc} ${format}`);
     this.opencv.readImage(this._imgSrc, (err, im) => {
       if ((im.width() <= 0 ) || (im.height() <= 0 )) {
         userCb(true, null);
         return;
       }
-      if (1 === channel) {
+      switch (format) {
+      case 'rgb':
+        im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+        break;
+      case 'gray':
+        im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+        im.convertGrayscale();
+        break;
+      case 'grayeq':
+        im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
         im.convertGrayscale();
         im.equalizeHist();
+        break;
+      case 'full':
+        break;
+      default:
+        invariant(false);
       }
-      im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+
       userCb(err, im);
     });
   }

@@ -27,10 +27,19 @@ import { EventEmitter } from 'events';
  *
  * @property {boolean} err True if the frame is retrieved succesfully, false
  *                         otherwise
- * @property {object} image Requested preivew image as per the specified channel
- * @property {object} orig Original unmodified image from the sensor
+ * @property {object} image Requested preivew image as per the specified
+ *                          CameraPreviewFrameFormat format
  */
-export type CameraCallback = (err: boolean, image: any, orig: any) => void;
+export type CameraCallback = (err: boolean, image: any) => void;
+
+/**
+ * The available preview frame formats:
+ * rgb - downscaled RGB
+ * gray - downscaled grayscale
+ * grayeq - downscaled grayscale equalized
+ * full - full resolution RGB
+ */
+export type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -765,7 +774,7 @@ export default class Camera extends EventEmitter {
     }
 
     // Dequeue the next frame request
-    let [userCb, when, channel] = this._queue.shift();
+    let [userCb, when, format] = this._queue.shift();
 
     // Search the image in the cache
     let index = 0;
@@ -775,13 +784,23 @@ export default class Camera extends EventEmitter {
         continue;
       }
 
-      switch(channel) {
-      case 0:
-        userCb(false, image.rgb, image.orig);
+      switch(format) {
+      case 'rgb':
+        userCb(false, image.rgb);
         return;
-      case 1:
+      case 'gray':
         if (image.gray) {
-          userCb(false, image.gray, image.orig);
+          userCb(false, image.gray);
+        } else {
+          let grayImage = image.rgb.copy();
+          grayImage.convertGrayscale();
+          image.gray = grayImage;
+          userCb(false, image.gray);
+        }
+        return;
+      case 'grayeq':
+        if (image.grayeq) {
+          userCb(false, image.grayeq);
         } else {
           let grayImage = image.rgb.copy();
           grayImage.convertGrayscale();
@@ -791,12 +810,15 @@ export default class Camera extends EventEmitter {
           // downscaled image at the expense of time.  Is it worth it?
           grayImage.equalizeHist();
 
-          image.gray = grayImage;
-          userCb(false, image.gray, image.orig);
+          image.grayeq = grayImage;
+          userCb(false, image.grayeq);
         }
         return;
+      case 'full':
+        userCb(false, image.orig);
+        return;
       default:
-        userCb('unsupported channel', null);
+        userCb(`unsupported format: ${format}`, null);
         return;
       }
     }
@@ -1137,14 +1159,15 @@ export default class Camera extends EventEmitter {
   /**
    * Invoke this function to obtain the preview frame
    *
-   * @param {CameraCallback} userCb - the callback that receives an error object, scaled image
-   *               as an OpenCV matrix and the original image
-   * @param {number} when     - timestamp of the frame to get
-   * @param {number} channel  - 0 for RGB                 (CV_CAP_ANDROID_COLOR_FRAME_RGB)
-   *               1 for grayscale equalized (CV_CAP_ANDROID_GREY_FRAME + cv::equalizeHist)
+   * @param when   - timestamp of the frame to get
+   * @param format - requested format
+   * @param userCb - callback that receives an error object and the image
+   *                 as an OpenCV matrix
    */
-  getPreviewFrame(userCb, when, channel = 0) {
-    this._queue.push([userCb, when, channel]); // Enqueue the frame request
+  getPreviewFrame(when: number,
+                  format: CameraPreviewFrameFormat,
+                  userCb: CameraCallback): void {
+    this._queue.push([userCb, when, format]); // Enqueue the frame request
     this._retrieveNextFrame();
   }
 

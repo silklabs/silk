@@ -254,61 +254,68 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame((err, image, orig) => {
+      this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
         if (err) {
-          log.warn(`Unable to fetch frame: ${err}`);
+          log.warn(`Unable to fetch grayeq frame: ${err}`);
           this._working = false;
           return;
         }
-
-        // Run facial recognition on each of the detected faces
-        let start = Date.now();
-        faces.forEach(async (face) => {
-          // If a name with the id is available then no need to run facial
-          // recognition again
-          if (face.id) {
-            let name = this._idMap[face.id];
-            if (name) {
-              log.info(`face.id: ${face.id} name: ${name}`);
-              this._env.timeline.addObject(name, when, face);
-              return;
-            }
-          }
-
-          // Calculate preview scale
-          let previewScale = orig.width() / image.width();
-
-          let faceim = this._trainer.preprocessFace(orig, face, previewScale);
-          if (!faceim) {
+        this._env.camera.getPreviewFrame(when, 'full', (err2, orig) => {
+          if (err2) {
+            log.warn(`Unable to fetch full frame: ${err2}`);
+            this._working = false;
             return;
           }
-          try {
-            const [id, confidence] = await this._predict(faceim);
-            log.info(`face detected id:${id} ` +
-                `${this._matchIdWithName(id)} ` +
-                `confidence/similarity: ${confidence} source:${source}`);
 
-            // Add the person to timeline
-            let name = this._matchIdWithName(id);
-            this._env.timeline.addObject(name, when, face);
-            this._env.timeline.addDiagFrame(name, when, faceim);
-
-            // Cache name with face.id to skip face recognition next time
-            // a face with the same ID is reported by HAL
+          // Run facial recognition on each of the detected faces
+          let start = Date.now();
+          faces.forEach(async (face) => {
+            // If a name with the id is available then no need to run facial
+            // recognition again
             if (face.id) {
-              this._idMap[face.id] = name;
+              let name = this._idMap[face.id];
+              if (name) {
+                log.info(`face.id: ${face.id} name: ${name}`);
+                this._env.timeline.addObject(name, when, face);
+                return;
+              }
             }
-          } catch (ex) {
-            // Unknown face
-            log.debug(`Unknown face detected: why=${ex}`);
-            this._env.timeline.addObject('a face', when, face); // See #1306 for 'a face' vs 'face'
-            this._env.timeline.addDiagFrame('unknown', when, faceim);
-          }
+
+            // Calculate preview scale
+            let previewScale = orig.width() / image.width();
+
+            let faceim = this._trainer.preprocessFace(orig, face, previewScale);
+            if (!faceim) {
+              return;
+            }
+            try {
+              const [id, confidence] = await this._predict(faceim);
+              log.info(`face detected id:${id} ` +
+                  `${this._matchIdWithName(id)} ` +
+                  `confidence/similarity: ${confidence} source:${source}`);
+
+              // Add the person to timeline
+              let name = this._matchIdWithName(id);
+              this._env.timeline.addObject(name, when, face);
+              this._env.timeline.addDiagFrame(name, when, faceim);
+
+              // Cache name with face.id to skip face recognition next time
+              // a face with the same ID is reported by HAL
+              if (face.id) {
+                this._idMap[face.id] = name;
+              }
+            } catch (ex) {
+              // Unknown face
+              log.debug(`Unknown face detected: why=${ex}`);
+              this._env.timeline.addObject('a face', when, face); // See #1306 for 'a face' vs 'face'
+              this._env.timeline.addDiagFrame('unknown', when, faceim);
+            }
+          });
+          let diff = Date.now() - start;
+          log.verbose(`Face recognition finished in ${diff}ms`);
+          this._working = false;
         });
-        let diff = Date.now() - start;
-        log.verbose(`Face recognition finished in ${diff}ms`);
-        this._working = false;
-      }, when, 1 /* == 1 channel image (RGB not required) */);
+      });
     };
 
     this._env.timeline.on('face', this._onFace);

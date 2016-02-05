@@ -130,16 +130,16 @@ class Env extends EventEmitter {
       /**
        * Get preview frame
        *
-       * @param {CameraCallback} userCb Callback that receives the requested frames
-       * @param {number} when Timestamp of when the camera frame was fetched
-       *        from the camera sensor
-       * @param {number} channel 0 for RGB
-       *                         1 for grayscale equalized
+       * @param {number} when - timestamp of the frame to get
+       * @param {CameraPreviewFrameFormat} format - requested format
+       * @param {CameraCallback} userCb - callback that receives an error
+                                          object and the image as an OpenCV
+                                          matrix
        * @memberof Env.camera
        * @instance
        */
-      this.camera.getPreviewFrame = (userCb, when, channel) => {
-        camera.getPreviewFrame(userCb, when, channel);
+      this.camera.getPreviewFrame = (when, format, userCb) => {
+        camera.getPreviewFrame(when, format, userCb);
       };
 
       /**

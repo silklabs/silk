@@ -414,56 +414,63 @@ export default class Trainer {
         }
 
         this._working = true;
-        this._env.camera.getPreviewFrame((err, image, orig) => {
+        this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
           if (err) {
-            log.warn(`Unable to fetch frame: ${err}`);
+            log.warn(`Unable to fetch grayeq frame: ${err}`);
             this._working = false;
             return;
           }
+          this._env.camera.getPreviewFrame(when, 'full', (err2, orig) => {
+            if (err2) {
+              log.warn(`Unable to fetch full frame: ${err2}`);
+              this._working = false;
+              return;
+            }
 
-          // Calculate preview scale
-          let previewScale = orig.width() / image.width();
+            // Calculate preview scale
+            let previewScale = orig.width() / image.width();
 
-          // Save the face
-          let face = faces[0];
-          let faceim = this.preprocessFace(orig, face, previewScale);
-          if (!faceim) {
+            // Save the face
+            let face = faces[0];
+            let faceim = this.preprocessFace(orig, face, previewScale);
+            if (!faceim) {
+              this._working = false;
+              return;
+            }
+
+            // Check if this face looks somewhat different from the previously
+            // collected face
+            let imageDiff = Number.MAX_VALUE;
+            if (oldPreprocessedFaceImg) {
+              imageDiff = this.getSimilarity(faceim, oldPreprocessedFaceImg);
+              log.debug(`Image diff: ${imageDiff}`);
+            }
+
+            // Also record when it happened
+            let currentTime = Date.now();
+            let timeDiff = currentTime - oldTime;
+
+            // Only process the face if it is noticably different from the
+            // previous frame and there has been noticeable time gap
+            if ((imageDiff > CHANGE_IN_IMAGE_FOR_COLLECTION) &&
+                (timeDiff > CHANGE_IN_SECONDS_FOR_COLLECTION)) {
+              log.info(`Saving ${facePath}/${person}_${Date.now()}.png, ` +
+                   `count: ${faceCount}`);
+              faceim.save(`${facePath}/${person}_${Date.now()}.png`);
+              faceCount++;
+              this._env.timeline.addDiagFrame(`face #${faceCount}`, when, faceim);
+
+              oldPreprocessedFaceImg = faceim;
+              oldTime = currentTime;
+            }
+
+            if (faceCount >= FACE_COUNT) {
+              this._env.timeline.removeListener('face', this._onFace);
+              resolve();
+            }
             this._working = false;
-            return;
-          }
-
-          // Check if this face looks somewhat different from the previously
-          // collected face
-          let imageDiff = Number.MAX_VALUE;
-          if (oldPreprocessedFaceImg) {
-            imageDiff = this.getSimilarity(faceim, oldPreprocessedFaceImg);
-            log.debug(`Image diff: ${imageDiff}`);
-          }
-
-          // Also record when it happened
-          let currentTime = Date.now();
-          let timeDiff = currentTime - oldTime;
-
-          // Only process the face if it is noticably different from the
-          // previous frame and there has been noticeable time gap
-          if ((imageDiff > CHANGE_IN_IMAGE_FOR_COLLECTION) &&
-              (timeDiff > CHANGE_IN_SECONDS_FOR_COLLECTION)) {
-            log.info(`Saving ${facePath}/${person}_${Date.now()}.png, ` +
-                 `count: ${faceCount}`);
-            faceim.save(`${facePath}/${person}_${Date.now()}.png`);
-            faceCount++;
-            this._env.timeline.addDiagFrame(`face #${faceCount}`, when, faceim);
-
-            oldPreprocessedFaceImg = faceim;
-            oldTime = currentTime;
-          }
-
-          if (faceCount >= FACE_COUNT) {
-            this._env.timeline.removeListener('face', this._onFace);
-            resolve();
-          }
-          this._working = false;
-        }, when, 1 /* == 1 channel image (RGB not required) */);
+          });
+        });
       };
 
       this._env.timeline.on('face', this._onFace);

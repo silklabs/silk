@@ -1,0 +1,11 @@
+#!/bin/bash -ex
+
+if [ ! -d node_modules/node-pre-gyp ]; then
+  npm install node-pre-gyp@0.6.11
+fi
+
+if [ ! -d node_modules/opencv ]; then
+  npm install opencv@4.0.0
+fi
+
+exit 0

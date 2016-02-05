@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- *  @flow
+ * @flow
  */
 
 import pocketsphinx from 'pocketsphinx';
@@ -75,9 +75,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
     this._backlogMinSizeInBytes = 1 * this._sampleRate * this._bytesPerSample *
         this._numChannels;
 
-    /* eslint-disable new-cap */
-    this._config = new ps.Decoder.defaultConfig();
-    /* eslint-enable new-cap */
+    this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
   }
 
   /**

@@ -5,7 +5,7 @@
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the
-// core-js pollyfills which we don't actually need...
+// core-js polyfills which we don't actually need...
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
@@ -13,7 +13,8 @@ let log;
 let timeline;
 
 const cascade = {
-  tag: 'cat', file: 'system/silk/media/opencv/lbpcascade_cat.xml',
+  tag: 'cat',
+  file: 'system/silk/media/opencv/lbpcascade_cat.xml',
   opts: {
     scale: 1.2,
     neighbors: 2,

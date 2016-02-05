@@ -85,7 +85,9 @@ function loadAndResolveConfig(pathName: string): Config {
 // XXX: We likely want to figure out how to bundle/configure our cli with some
 // default plugins and settings but that is for later...
 const DEFAULT_CONFIG = {
-  plugins: [],
+  plugins: [
+    path.join(__dirname, 'init.js'),
+  ],
 };
 
 /**

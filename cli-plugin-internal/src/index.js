@@ -45,7 +45,9 @@ const COMMON_ARGS = {
     // eat the error we don't care...
   }
 
-  if (stat && stat.isFile()) {
+  if (!stat) {
+    fs.mkdirSync(OLD_CONFIG_FILEPATH);
+  } else if (stat.isFile()) {
     let contents = fs.readFileSync(OLD_CONFIG_FILEPATH);
     fs.unlinkSync(OLD_CONFIG_FILEPATH);
     fs.mkdirSync(OLD_CONFIG_FILEPATH);

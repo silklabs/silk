@@ -21,7 +21,13 @@ export default class Device {
 
     this.adb = adb;
     this.serverUrl = options.serverUrl;
-    this.api = createApi({serverUrl: this.serverUrl});
+    this.api = createApi({
+      serverUrl: this.serverUrl,
+      metrics: {
+        type: 'device',
+        tags: {},
+      },
+    });
     this.api.accessToken = this.accessToken = AccessToken.create();
   }
 

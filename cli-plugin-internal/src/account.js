@@ -17,7 +17,13 @@ export default class Account {
     log.debug(`new account using server: ${options.serverUrl}`);
 
     this.serverUrl = options.serverUrl;
-    this.api = createApi({serverUrl: this.serverUrl});
+    this.api = createApi({
+      serverUrl: this.serverUrl,
+      metrics: {
+        type: 'account',
+        tags: {},
+      },
+    });
 
     if (options.accessToken) {
       this.api.accessToken = this.accessToken =

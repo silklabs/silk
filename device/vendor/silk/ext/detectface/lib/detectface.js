@@ -212,65 +212,73 @@ class DetectFace {
       }
       working = true;
 
-      this._env.camera.getPreviewFrame(async (err, im, orig) => {
+      this._env.camera.getPreviewFrame(when, 'grayeq', (err, im) => {
         if (err) {
-          log.warn(`Unable to fetch frame: ${err}`);
+          log.warn(`Unable to fetch grayeq frame: ${err}`);
           working = false;
           return;
         }
-        // Calculate preview scale
-        previewScale = orig.width() / im.width();
+        this._env.camera.getPreviewFrame(when, 'full', async (err2, orig) => {
+          if (err2) {
+            log.warn(`Unable to fetch full frame: ${err2}`);
+            working = false;
+            return;
+          }
 
-        // Fake a "motion" rectangle since the "preview" timeline event is being
-        // used at the moment.
-        let rects = [{ x: 0, y: 0, width: im.width(), height: im.height() }];
+          // Calculate preview scale
+          previewScale = orig.width() / im.width();
 
-        // Restrict object detection to a section of the image that shows motion
-        if (rects.length > 1) {
-          log.warn(`More than one (${rects.length}) motion rectangles received`);
-        }
-        let motionRect = rects[0]; // Only one motion rectangle is supported right now
-        let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
+          // Fake a "motion" rectangle since the "preview" timeline event is being
+          // used at the moment.
+          let rects = [{ x: 0, y: 0, width: im.width(), height: im.height() }];
 
-        let start = Date.now();
-        let faces = [];
+          // Restrict object detection to a section of the image that shows motion
+          if (rects.length > 1) {
+            log.warn(`More than one (${rects.length}) motion rectangles received`);
+          }
+          let motionRect = rects[0]; // Only one motion rectangle is supported right now
+          let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
-        try {
-          // Find faces
-          let faceRects = await detectFaces(motion, motionRect.x, motionRect.y);
-          log.debug(`faces: ${JSON.stringify(faceRects)}`);
-          for (let i = 0; i < faceRects.length; i++) {
-            let faceRect = faceRects[i];
+          let start = Date.now();
+          let faces = [];
 
-            // Detect both eyes
-            let [leftEye, rightEye] = await _detectBothEyes(orig, faceRect,
-                EYE_CASCADE1, EYE_CASCADE2);
+          try {
+            // Find faces
+            let faceRects = await detectFaces(motion, motionRect.x, motionRect.y);
+            log.debug(`faces: ${JSON.stringify(faceRects)}`);
+            for (let i = 0; i < faceRects.length; i++) {
+              let faceRect = faceRects[i];
 
-            // Only if both the eyes are visible is when we say it is a face
-            if (leftEye && rightEye) {
-              faceRect.leftEye = [leftEye.x, leftEye.y];
-              faceRect.rightEye = [rightEye.x, rightEye.y];
-              faces.push(faceRect);
+              // Detect both eyes
+              let [leftEye, rightEye] = await _detectBothEyes(orig, faceRect,
+                  EYE_CASCADE1, EYE_CASCADE2);
 
-              const roi = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-              timeline.addDiagFrame('face', when, roi);
+              // Only if both the eyes are visible is when we say it is a face
+              if (leftEye && rightEye) {
+                faceRect.leftEye = [leftEye.x, leftEye.y];
+                faceRect.rightEye = [rightEye.x, rightEye.y];
+                faces.push(faceRect);
+
+                const roi = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+                timeline.addDiagFrame('face', when, roi);
+              }
             }
-          }
 
-          let diff = Date.now() - start;
-          let msg = `Cascade ran for ${diff}ms`;
-          if (diff > 500) {
-            log.warn(msg); // Time to optimize?
-          } else {
-            log.verbose(msg);
-          }
+            let diff = Date.now() - start;
+            let msg = `Cascade ran for ${diff}ms`;
+            if (diff > 500) {
+              log.warn(msg); // Time to optimize?
+            } else {
+              log.verbose(msg);
+            }
 
-          this._notifyObjs({tag: facecascade.tag, when, rects: faces});
-        } catch (e) {
-          log.error(`Error running face detection: ${e}`);
-        }
-        working = false;
-      }, when, 1 /* == 1 channel image (RGB not required) */);
+            this._notifyObjs({tag: facecascade.tag, when, rects: faces});
+          } catch (e) {
+            log.error(`Error running face detection: ${e}`);
+          }
+          working = false;
+        });
+      });
     };
 
     timeline.on('motion', this._onMotion);

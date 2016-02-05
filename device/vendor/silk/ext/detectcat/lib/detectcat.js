@@ -71,7 +71,7 @@ class DetectCat {
       }
       working = true;
 
-      this._env.camera.getPreviewFrame((err, im) => {
+      this._env.camera.getPreviewFrame(when, 'grayeq', (err, im) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
@@ -82,7 +82,7 @@ class DetectCat {
           this._notifyCats(cats);
           working = false;
         });
-      }, when, 1);
+      });
     });
   }
 

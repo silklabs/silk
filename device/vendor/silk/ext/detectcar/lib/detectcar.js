@@ -84,7 +84,7 @@ class DetectCar {
    * to be later used for opencv training
    */
   _reportObject(cmd) {
-    this._env.camera.getPreviewFrame((err, im) => {
+    this._env.camera.getPreviewFrame(cmd.when, 'grayeq', (err, im) => {
       if (err) {
         log.warn(`Unable to fetch frame: ${err}`);
         return;
@@ -101,7 +101,7 @@ class DetectCar {
 
       // Save the image
       im.save(`${dir}/no-${cmd.tag}-${cmd.when}.jpg`);
-    }, cmd.when, 1);
+    });
   }
 
   _init() {
@@ -116,7 +116,7 @@ class DetectCar {
       }
       working = true;
 
-      this._env.camera.getPreviewFrame((err, im) => {
+      this._env.camera.getPreviewFrame(when, 'grayeq', (err, im) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;
@@ -127,7 +127,7 @@ class DetectCar {
           this._notifyCars(cars);
           working = false;
         });
-      }, when, 1);
+      });
     });
   }
 

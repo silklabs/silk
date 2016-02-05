@@ -28,6 +28,12 @@ function log(msg) {
   console.log(`[npm conditional install] ${msg}`);
 }
 
+function debug(msg) {
+  if (process.env.V === '1') {
+    log(msg);
+  }
+}
+
 /**
  * Spawn a sub process and log it's output.
  */
@@ -98,14 +104,14 @@ class ConditionalInstall {
         });
 
         if (!hasModules) {
-          log(`${installModulePath} has no node_modules folder after successful install, skipping hash.`);
+          debug(`${installModulePath} has no node_modules folder after successful install, skipping hash.`);
           accept();
           return;
         }
 
         // Only write the hash out if it's given...
         if (hash) {
-          log(`writing hash for ${installModulePath}`);
+          debug(`writing hash for ${installModulePath}`);
           fs.writeFileSync(hashFile, hash);
         }
 
@@ -135,7 +141,7 @@ class ConditionalInstall {
       hasHash &&
       hash === fs.readFileSync(hashFile, 'utf8')
     ) {
-      log(`Hash matches in ${installModulePath} skipping...`);
+      debug(`Hash matches in ${installModulePath} skipping...`);
       let corePath = installModulePath.replace(CORE, '');
       return submitMetrics(`npm_install_silk_dependencies_cache_hit`,
         'count=1i',
@@ -143,7 +149,7 @@ class ConditionalInstall {
       );
     }
 
-    log(`Installing ${installModulePath}`);
+    debug(`Installing ${installModulePath}`);
     return this._install(
       installingFor,
       installModulePath,

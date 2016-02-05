@@ -52,6 +52,12 @@ function log(msg) {
   console.log(`[npm postinstall] ${msg}`);
 }
 
+function debug(msg) {
+  if (process.env.V === '1') {
+    log(msg);
+  }
+}
+
 function parseLockFile(content) {
   return content.split('\n').reduce((result, value) => {
     let type = value[0];
@@ -159,9 +165,9 @@ function installDeps(cwd, nodeModules, dependencies) {
     }
 
     if (fs.existsSync(pkgDest)) {
-      log(`${pkgDest} already present skipping symlink...`);
+      debug(`${pkgDest} already present skipping symlink...`);
     } else {
-      log(`symlinking ${pkgSource} into ${pkgDest}`);
+      debug(`symlinking ${pkgSource} into ${pkgDest}`);
 
       // XXX: Symlink is sketchy so we need to use relative paths... To do this
       // in a sane way we change into the correct directory to make the relative
@@ -181,7 +187,7 @@ function installDeps(cwd, nodeModules, dependencies) {
 
         for (let binName in packageJson.bin) {
           let binTarget = path.join('..', pkg, packageJson.bin[binName]);
-          log(`${nodeModulesBin}/${binName} => ${binTarget}`);
+          debug(`${nodeModulesBin}/${binName} => ${binTarget}`);
 
           let oldCWD = process.cwd();
           process.chdir(nodeModulesBin);
@@ -220,7 +226,7 @@ function installDeps(cwd, nodeModules, dependencies) {
         // Simple dependencies may not actually write to their lock file. If
         // it's empty delete it so we don't get held up.
         if (fs.existsSync(lock)) {
-          log(`Removing simple or stale lock ${lock}`);
+          debug(`Removing simple or stale lock ${lock}`);
           fs.unlinkSync(lock);
         }
       }

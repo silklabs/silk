@@ -6,6 +6,6 @@
   },
   "description": "",
   "dependencies": {
-    "flow-bin": "0.20.1"
+    "flow-bin": "0.21.0"
   }
 }

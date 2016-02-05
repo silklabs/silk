@@ -222,7 +222,7 @@ async function checkRepoForUplifts(
   await checkPulls(pulls);
 }
 
-if (require.main === module) {
+if ((require: any).main === module) {
   (async function main() {
     for (let repo of silkrepos) {
       try {

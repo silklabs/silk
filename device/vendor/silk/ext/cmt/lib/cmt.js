@@ -125,7 +125,7 @@ class ObjectTracker {
     log.verbose(`Tracking ${objects.length} objects`);
 
     const frameFetchStart = Date.now();
-    env.camera.getPreviewFrame((err, image) => {
+    env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
       if (err) {
         log.warn(`Unable to fetch frame: ${err}`);
         return;
@@ -196,7 +196,7 @@ class ObjectTracker {
           localImage.release();
         });
       });
-    }, when, 1 /* == 1 channel image (RGB not required) */);
+    });
   };
 
 

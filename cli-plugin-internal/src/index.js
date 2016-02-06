@@ -60,7 +60,7 @@ let dotConfig = new DotConfig(CONFIG_FILEPATH);
 function createAccount(args, isNew) {
   if (isNew) {
     let serverUrl = DEFAULT_SERVER_URL;
-    if ('serverUrl' in args) {
+    if (args.serverUrl != null) {
       serverUrl = args.serverUrl;
     }
     return new Account({serverUrl});

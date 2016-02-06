@@ -1,7 +1,7 @@
 From 12d59add41aec021eb65318c6b71b6cf4b545ea6 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Sun, 31 Jan 2016 13:27:48 -0800
-Subject: [PATCH] Do not downoad TBB tar ball from the internet at compile time
+Subject: [PATCH] Do not download TBB tar ball from the internet at compile time
 
 ---
  3rdparty/tbb/CMakeLists.txt | 40 ----------------------------------------

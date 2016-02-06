@@ -45,7 +45,7 @@ index 0000000..46c046e
 +$(CAFFE_MAKEFILE): BOOST_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libboost))
 +$(CAFFE_MAKEFILE): GFLAGS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags))
 +$(CAFFE_MAKEFILE): PROTOBUF_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libprotobuf-cpp-2.3.0-full-gnustl-rtti))
-+$(CAFFE_MAKEFILE): OPENCV_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopencv_core)/sdk/native/jni)
++$(CAFFE_MAKEFILE): OPENCV_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopencv2_core)/sdk/native/jni)
 +$(CAFFE_MAKEFILE): BLAS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopenblas))
 +$(CAFFE_MAKEFILE): CAFFE_HOME := $(call intermediates-dir-for, SHARED_LIBRARIES,$(LOCAL_MODULE))
 +$(CAFFE_MAKEFILE): PROTOBUF_HOST := $(abspath $(PROTOC))

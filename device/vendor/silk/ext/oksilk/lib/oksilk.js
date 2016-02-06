@@ -3,11 +3,11 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- *  @flow
+ * @flow
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the
-// core-js pollyfills which we don't actually need...
+// core-js polyfills which we don't actually need...
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
@@ -19,11 +19,11 @@ let log: Log;
 const MODEL_DIR = '/system/silk/media/pocketsphinx/';
 const AUDIO_SAMPLE_RATE = 8000;
 
-/* Named searches allow to quickly reconfigure the decoder */
+// Named searches allow to quickly reconfigure the decoder
 const HOTKEY_SEARCH = 'wakeup';
 const SILK_COMMANDS = 'commands';
 
-/* Keyword we are looking for to activate menu */
+// Keyword we are looking for to activate menu
 const KEYPHRASE = 'ok sense';
 
 /**
@@ -112,7 +112,7 @@ class OkSilk {
     // Add grammar-based search for selection between demos
     this._speechRecognizer.addGrammarSearch(SILK_COMMANDS, MODEL_DIR + 'silk.gram');
 
-    /* Setup listeners */
+    // Setup listeners
     this._speechRecognizer.on('result', hypothesis => {
       this._handleResult(hypothesis);
     });

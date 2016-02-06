@@ -5,7 +5,7 @@
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the
-// core-js pollyfills which we don't actually need...
+// core-js polyfills which we don't actually need...
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
@@ -13,7 +13,7 @@ import cv from 'opencv';
 import fs from 'mz/fs';
 import Trainer from './trainer';
 
-/* Face recognition parameters */
+// Face recognition parameters
 const RADIUS = 1;
 
 // Higher the value, more time it takes to train the recognizer. With value higher

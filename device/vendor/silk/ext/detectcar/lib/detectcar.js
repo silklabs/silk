@@ -5,7 +5,7 @@
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the
-// core-js pollyfills which we don't actually need...
+// core-js polyfills which we don't actually need...
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
@@ -18,7 +18,8 @@ let timeline;
 const REPORT_OBJECT_DIR = '/data/silk/opencv/';
 
 const cascade = {
-  tag: 'car', file: 'system/silk/media/opencv/hogcascade_cars_sideview.xml',
+  tag: 'car',
+  file: 'system/silk/media/opencv/hogcascade_cars_sideview.xml',
   opts: {
     scale: 1.2,
     neighbors: 2,

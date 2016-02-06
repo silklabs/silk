@@ -5,7 +5,7 @@
  */
 
 // Load the regnerator polyfill manually so we don't need to also load all the
-// core-js pollyfills which we don't actually need...
+// core-js polyfills which we don't actually need...
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
@@ -17,7 +17,8 @@ let timeline;
 let previewScale = 0;
 
 const facecascade = {
-  tag: 'face', file: 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
+  tag: 'face',
+  file: 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
   opts: {
     scale: 1.2,
     neighbors: 2,

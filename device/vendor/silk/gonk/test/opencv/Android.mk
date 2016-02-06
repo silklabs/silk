@@ -1,11 +1,18 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-
-LOCAL_MODULE       := cvtest_togray
+LOCAL_MODULE       := cvtest2_togray
 LOCAL_MODULE_TAGS  := optional eng
 LOCAL_SRC_FILES    := main.cpp
 
 include external/opencv2/opencv.mk
-
 include $(BUILD_SILK_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE       := cvtest3_togray
+LOCAL_MODULE_TAGS  := optional eng
+LOCAL_SRC_FILES    := main.cpp
+
+include external/opencv3/opencv.mk
+include $(BUILD_SILK_EXECUTABLE)
+

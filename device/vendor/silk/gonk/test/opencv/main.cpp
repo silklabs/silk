@@ -3,8 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
-#include <cv.h>
-#include <highgui.h>
+#include <opencv2/opencv.hpp>
 
 using namespace cv;
 

@@ -1,0 +1,163 @@
+From d522fb662d6341b8ace6c79673dc259b5525c423 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 5 Feb 2016 22:02:43 -0800
+Subject: [PATCH] Android.mk
+
+---
+ Android.mk | 97 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ opencv.mk  | 38 ++++++++++++++++++++++++
+ 2 files changed, 135 insertions(+)
+ create mode 100644 Android.mk
+ create mode 100644 opencv.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..e57ca2a
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,98 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE := libopencv3_core
++LOCAL_MODULE_TAGS := optional
++LOCAL_MODULE_CLASS := STATIC_LIBRARIES
++LOCAL_MODULE_SUFFIX := .a
++LOCAL_UNINSTALLABLE_MODULE := true
++LOCAL_CUSTOM_BUILT_MODULE := true
++LOCAL_32_BIT_ONLY := true
++
++include $(LOCAL_PATH)/opencv.mk
++LOCAL_EXPORT_C_INCLUDE_DIRS := \
++  $(LOCAL_PATH)/include \
++  $(LOCAL_PATH)/include/opencv \
++  $(foreach m,$(OPENCV3_MODULE_NAMES),$(LOCAL_PATH)/modules/$(m)/include)
++
++include $(BUILD_PREBUILT)
++
++define __FAKE_OPENCV3_NOTICE_RULES
++  .PHONY: NOTICE-TARGET-$(LOCAL_MODULE_CLASS)-$(1)
++  NOTICE-TARGET-$(LOCAL_MODULE_CLASS)-$(1):
++
++endef
++
++__FAKE_OPENCV3_NOTICE_TARGETS := \
++$(foreach l, $(filter-out $(LOCAL_MODULE),$(OPENCV3_MODULES)) $(OPENCV3_3RDPARTY_COMPONENTS), \
++   $(eval $(call __FAKE_OPENCV3_NOTICE_RULES,$(l))) \
++ )
++__FAKE_OPENCV3_EXPORT_INCLUDES = $(foreach l, $(filter-out $(LOCAL_MODULE),$(OPENCV3_MODULES)) $(OPENCV3_3RDPARTY_COMPONENTS), \
++  $(dir $(intermediates))$(l)_intermediates/export_includes)
++
++__FAKE_OPENCV3_MODULES_A = $(foreach l, $(filter-out $(LOCAL_MODULE),$(OPENCV3_MODULES)), \
++  $(dir $(intermediates))$(l)_intermediates/$(l).a)
++
++__FAKE_OPENCV3_3RDPARTY_COMPONENTS_A = $(foreach l, $(OPENCV3_3RDPARTY_COMPONENTS), \
++  $(dir $(intermediates))$(l)_intermediates/$(l).a)
++
++$(__FAKE_OPENCV3_EXPORT_INCLUDES):
++	@echo Stub export_includes: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) touch $@
++
++
++# If the 2nd arch exists assume it's 32bit and select it
++ifdef TARGET_2ND_ARCH
++LOCAL_2ND_ARCH_VAR_PREFIX := $(TARGET_2ND_ARCH_VAR_PREFIX)
++endif
++
++$(__FAKE_OPENCV3_3RDPARTY_COMPONENTS_A): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
++$(__FAKE_OPENCV3_3RDPARTY_COMPONENTS_A):
++	@echo Symlink: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) ln -sf ../libopencv3_core_intermediates/sdk/native/3rdparty/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,lib,$(notdir $@)) $@
++
++$(__FAKE_OPENCV3_MODULES_A): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
++$(__FAKE_OPENCV3_MODULES_A):
++	@echo Symlink: $@
++	$(hide) mkdir -p $(@D)
++	$(hide) ln -sf ../libopencv3_core_intermediates/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@
++
++OPENCV3_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
++$(OPENCV3_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(OPENCV3_MAKEFILE): $(LOCAL_PATH)/Android.mk
++	@echo Configure: $@
++	$(hide) mkdir -p $(@D)
++	cd $(@D) && cmake \
++ -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
++ -DCMAKE_BUILD_TYPE=RelWithDebInfo \
++ -DBUILD_TESTS=false \
++ -DWITH_TIFF=false \
++ -DWITH_OPENCL=true \
++ -DBUILD_ANDROID_EXAMPLES=false \
++ -DWITH_OPENEXR=false \
++ -DBUILD_PERF_TESTS=false \
++ -DBUILD_opencv_java=false \
++ -DANDROID_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8) \
++ -DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
++ -DANDROID_NATIVE_API_LEVEL=19 \
++ -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
++ -DANDROID_NDK=$(abspath prebuilts/ndk/current) \
++ -DANDROID_NDK_LAYOUT=ANDROID \
++ -DWITH_TBB=true \
++ -DCMAKE_INSTALL_PREFIX="$(ANDROID_BUILD_TOP)/$(dir $@)" \
++ $(LOCAL_PATH)
++
++$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
++$(LOCAL_BUILT_MODULE): $(OPENCV3_MAKEFILE) \
++  $(__FAKE_OPENCV3_EXPORT_INCLUDES) \
++  $(__FAKE_OPENCV3_MODULES_A) $(__FAKE_OPENCV3_3RDPARTY_COMPONENTS_A)
++	@echo Build: $@
++	$(hide) time $(MAKE) -C $(@D) install
++	$(hide) cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@
++
++LOCAL_2ND_ARCH_VAR_PREFIX :=
++
++include $(call all-makefiles-under,$(LOCAL_PATH))
+diff --git a/opencv.mk b/opencv.mk
+new file mode 100644
+index 0000000..cb12ec0
+--- /dev/null
++++ b/opencv.mk
+@@ -0,0 +1,38 @@
++# Include from your Android.mk to link with OpenCV, after defining LOCAL_MODULE
++OPENCV3_MODULE_NAMES := \
++  calib3d \
++  features2d \
++  flann \
++  highgui \
++  imgcodecs \
++  imgproc \
++  ml \
++  objdetect \
++  photo \
++  shape \
++  stitching \
++  superres \
++  video \
++  videoio \
++  videostab \
++  core \
++
++OPENCV3_3RDPARTY_COMPONENTS := \
++ libopencv3_libjasper \
++ libopencv3_libjpeg \
++ libopencv3_libpng \
++ libopencv3_libwebp \
++ libopencv3_tbb \
++
++OPENCV3_MODULES := $(addprefix libopencv3_,$(OPENCV3_MODULE_NAMES))
++
++ifneq ($(LOCAL_MODULE),libopencv3_core)
++LOCAL_CFLAGS += -Wno-non-virtual-dtor # Bug in include/opencv2/core/core.hpp?
++LOCAL_CFLAGS += -frtti -fexceptions
++LOCAL_NDK_STL_VARIANT := gnustl_static
++LOCAL_SDK_VERSION := 19
++LOCAL_32_BIT_ONLY := true
++LOCAL_STATIC_LIBRARIES += $(OPENCV3_MODULES) $(OPENCV3_3RDPARTY_COMPONENTS)
++LOCAL_SHARED_LIBRARIES += liblog libz libdl
++
++endif
+-- 
+2.7.0
+

@@ -37,7 +37,7 @@
     "netmask": "1.0.5",
     "ntp-client": "mvines/node-ntp-client#c9c4d65c2cf9c3dff1612ff80dc542a270bbdb4a",
     "request": "2.58.0",
-    "silk-socket.io-client-node": "silklabs/silk-socket.io-client-node#0.0.1",
+    "silk-socket.io-client-node": "git+ssh://git@github.com/silklabs/silk-socket.io-client-node#0.0.1",
     "socket.io-client": "1.4.4",
     "source-map-support": "0.3.3",
     "split": "1.0.0",

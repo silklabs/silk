@@ -51,7 +51,7 @@
   <project name="node-webrtc"
            path="external/libwebrtc/third_party/node-webrtc"
            remote="silk"
-           revision="develop" clone-depth="1"/>
+           revision="master" clone-depth="1"/>
 
   <project name="libwebrtc"
            path="external/libwebrtc"

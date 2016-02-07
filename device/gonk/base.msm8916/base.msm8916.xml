@@ -46,14 +46,14 @@
            groups="darwin,arm" clone-depth="1"/>
   <project name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.9"
            path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.9"
-           revision="master" groups="darwin,arm" clone-depth="1"/>
+           revision="master" remote="aosp" groups="darwin,arm" clone-depth="1"/>
 
   <project name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8"
            path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8"
            groups="linux,arm" clone-depth="1"/>
   <project name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9"
            path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9"
-           revision="master" groups="linux,arm" clone-depth="1"/>
+           revision="master" remote="aosp" groups="linux,arm" clone-depth="1"/>
 
   <project name="platform/prebuilts/python/darwin-x86/2.7.5"
            path="prebuilts/python/darwin-x86/2.7.5"

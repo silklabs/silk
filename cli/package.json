@@ -34,8 +34,7 @@
     "babel-register": "6.4.3",
     "eslint": "1.10.3",
     "flow-bin": "0.21.0",
-    "mocha": "2.4.5",
-    "mz": "2.3.1"
+    "mocha": "2.4.5"
   },
   "dependencies": {
     "argparse": "1.0.4",
@@ -45,6 +44,7 @@
     "json5": "0.4.0",
     "look-up": "0.8.3",
     "mkdirp-promise": "1.0.3",
+    "mz": "2.3.1",
     "prompt": "^0.2.14",
     "resolve": "1.1.7"
   }

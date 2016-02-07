@@ -97,7 +97,7 @@ export default function gen(schema, options = {}) {
   let body = `
 /* @flow */
 
-import BaseClass from '${options.baseClassPath}'
+import BaseClass from '${options.baseClassPath}';
 
 ${types.map((type) => {
   return `export ${type}`;

@@ -38,6 +38,11 @@
            upstream="master"
            clone-depth="42"/>
 
+  <project name="Itseez/opencv"
+           path="external/opencv3"
+           remote="github"
+           revision="refs/tags/3.1.0" clone-depth="100"/>
+
   <project name="silk-trainingset"
            path="vendor/silk/trainingset"
            remote="silk"

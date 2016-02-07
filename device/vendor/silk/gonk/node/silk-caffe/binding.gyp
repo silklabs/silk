@@ -31,7 +31,7 @@
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libprotobuf/include)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libcaffe/include)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libcaffe/include/ceres/internal/miniglog/)',
-        '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv_core/include/)',
+        '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv2_core/include/)',
       ],
       'ldflags': [
         '-Wl,--no-fatal-warnings'

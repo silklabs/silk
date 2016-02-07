@@ -1,4 +1,4 @@
-From 3ba892fa36694b16f1aace62df7bb121113559a3 Mon Sep 17 00:00:00 2001
+From 578eef74469f27c9835ad56ed892297dc05f2ec3 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
@@ -19,7 +19,7 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..1cb8625
+index 0000000..5debec0
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,100 @@
@@ -27,7 +27,7 @@ index 0000000..1cb8625
 +
 +include $(CLEAR_VARS)
 +
-+LOCAL_MODULE := libopencv_core
++LOCAL_MODULE := libopencv2_core
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 +LOCAL_MODULE_SUFFIX := .a
@@ -77,13 +77,13 @@ index 0000000..1cb8625
 +$(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A):
 +	@echo Symlink: $@
 +	$(hide) mkdir -p $(@D)
-+	$(hide) ln -sf ../libopencv_core_intermediates/sdk/native/3rdparty/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv_,lib,$(notdir $@)) $@
++	$(hide) ln -sf ../libopencv2_core_intermediates/sdk/native/3rdparty/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv2_,lib,$(notdir $@)) $@
 +
 +$(__FAKE_OPENCV_MODULES_A): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(__FAKE_OPENCV_MODULES_A):
 +	@echo Symlink: $@
 +	$(hide) mkdir -p $(@D)
-+	$(hide) ln -sf ../libopencv_core_intermediates/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
++	$(hide) ln -sf ../libopencv2_core_intermediates/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv2_,libopencv_,$(notdir $@)) $@
 +
 +OPENCV_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(OPENCV_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
@@ -116,7 +116,7 @@ index 0000000..1cb8625
 +  $(__FAKE_OPENCV_MODULES_A) $(__FAKE_OPENCV_3RDPARTY_COMPONENTS_A)
 +	@echo Build: $@
 +	$(hide) time $(MAKE) -C $(@D) install
-+	$(hide) cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(notdir $@) $@
++	$(hide) cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv2_,libopencv_,$(notdir $@)) $@
 +	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +	$(hide) cp -r $(dir $@)sdk/native/jni/* $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +
@@ -179,7 +179,7 @@ index 0000000..689ee6c
 +
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..908b7f8
+index 0000000..d220a9b
 --- /dev/null
 +++ b/opencv.mk
 @@ -0,0 +1,39 @@
@@ -205,14 +205,14 @@ index 0000000..908b7f8
 +  videostab \
 +
 +OPENCV_3RDPARTY_COMPONENTS := \
-+ libopencv_libjasper \
-+ libopencv_libjpeg \
-+ libopencv_libpng \
-+ libopencv_tbb \
++ libopencv2_libjasper \
++ libopencv2_libjpeg \
++ libopencv2_libpng \
++ libopencv2_tbb \
 +
-+OPENCV_MODULES := $(addprefix libopencv_,$(OPENCV_MODULE_NAMES))
++OPENCV_MODULES := $(addprefix libopencv2_,$(OPENCV_MODULE_NAMES))
 +
-+ifneq ($(LOCAL_MODULE),libopencv_core)
++ifneq ($(LOCAL_MODULE),libopencv2_core)
 +LOCAL_CFLAGS += -Wno-non-virtual-dtor # Bug in include/opencv2/core/core.hpp?
 +LOCAL_CFLAGS += -frtti -fexceptions
 +LOCAL_NDK_STL_VARIANT := gnustl_static
@@ -272,5 +272,5 @@ index b540ea4..9dbd3d8 100644
   # this is *required* to use the following linker flags that routes around
   # a CPU bug in some Cortex-A8 implementations:
 -- 
-2.4.5
+2.7.0
 

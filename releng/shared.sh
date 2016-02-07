@@ -33,6 +33,9 @@ GITS="\
   silk-trainingset \
   cereproc \
   gonk-alto \
+  node-webrtc \
+  libwebrtc \
+  boost \
 "
 
 # Fetch all the silk projects

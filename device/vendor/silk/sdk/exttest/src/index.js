@@ -29,7 +29,7 @@ class FakeCamera {
     this.opencv = opencv;
   }
 
-  get previewSize() {
+  previewSize() {
     return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 

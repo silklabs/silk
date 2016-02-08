@@ -143,14 +143,14 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Preview frame information
+       * Returns the camera preview size
        *
-       * @return {CameraPreviewInfo}
+       * @return {Size}
        * @memberof Env.camera
        * @instance
        */
-      this.camera.getPreviewInfo = () => {
-        return camera.getPreviewInfo();
+      this.camera.previewSize = () => {
+        return camera.previewSize;
       };
 
       /**

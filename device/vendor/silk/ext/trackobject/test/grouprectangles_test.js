@@ -6,12 +6,14 @@
 
 import assert from 'assert';
 import MotionZone from '../lib/motionzone';
-import createLog from 'silk-log';
-const log = createLog('motionzone');
+import opencv from 'opencv';
+import Framework from 'silk-exttest';
+
+const env = new Framework('trackobject', opencv);
 
 suite('Motion zone', () => {
   test('group rectangles', () => {
-    let motionzone = new MotionZone({log});
+    let motionzone = new MotionZone(env);
     assert.notEqual(motionzone, null);
 
     let rectangles = [

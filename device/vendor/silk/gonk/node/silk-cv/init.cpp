@@ -5,10 +5,12 @@
  */
 #include <nan.h>
 
-void Cmt_Init(v8::Local<v8::Object> exports); // from Cmt.cpp
+void Cmt_Init(v8::Local<v8::Object> exports);
+void Matrix_Init(v8::Local<v8::Object> exports);
 
 void Init(v8::Local<v8::Object> exports) {
   Cmt_Init(exports);
+  Matrix_Init(exports);
 }
 
 NODE_MODULE(bindings, Init)

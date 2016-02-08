@@ -10,6 +10,7 @@ import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
 import cv from 'opencv';
+import silkcv from 'silk-cv';
 import MotionZone from './motionzone';
 
 let log;
@@ -31,9 +32,9 @@ const MOTION_PLAY_SOUND_PROP = 'persist.silk.motion.sound';
 let soundEnabled = false;
 
 // Minimum rectangle size for motion
-const MIN_AREA = 500;
+const MIN_AREA = 5 * 5;
 
-const GAUSSIAN_KERNEL_SIZE = 21;
+const GAUSSIAN_KERNEL_SIZE = 15;
 
 /**
  * Compare three consecutive frames by diffing them and find out how many pixels
@@ -49,8 +50,8 @@ function _detectMotion(when, image, motionZone, callback) {
   let d1, d2, motion;
 
   // Window in which to detect for motion
-  let xStop = image.width();
-  let yStop = image.height();
+  let imageWidth = image.width();
+  let imageHeight = image.height();
 
   // Take a new image
   if (prevFrame) {
@@ -58,7 +59,7 @@ function _detectMotion(when, image, motionZone, callback) {
   }
   prevFrame = currentFrame;
   currentFrame = nextFrame;
-  nextFrame = image.copy();
+  nextFrame = motionZone.applyIgnoreMask(image);
 
   // Apply Gaussian smoothing to average pixel intensities due to tiny
   // variations in the digital camera sensor
@@ -69,59 +70,88 @@ function _detectMotion(when, image, motionZone, callback) {
     callback(0);
     return;
   }
+  timeline.addDiagFrame('blurred', when, nextFrame);
 
   // Calc differences between the images and do AND-operation
-  d1 = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
+  d1 = new cv.Matrix(imageHeight, imageWidth, cv.Constants.CV_8UC1);
   d1.absDiff(prevFrame, nextFrame);
-  d2 = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
+  d2 = new cv.Matrix(imageHeight, imageWidth, cv.Constants.CV_8UC1);
   d2.absDiff(nextFrame, currentFrame);
-  motion = new cv.Matrix(xStop, yStop, cv.Constants.CV_8UC1);
+  motion = new cv.Matrix(imageHeight, imageWidth, cv.Constants.CV_8UC1);
   motion.bitwiseAnd(d1, d2);
   d1.release();
   d2.release();
 
+  timeline.addDiagFrame('diff', when, motion);
+
   // Threshold the image, low differences are ignored (ex. contrast change due
   // to sunlight)
   motion = motion.threshold(THRESHOLD, MAX_THRESHOLD_VAL, 'Binary');
+  timeline.addDiagFrame('threshold', when, motion);
 
   // Dilate the thresholded image to fill in holes
   motion.dilate(NUM_ITERATIONS_DILATE);
+  timeline.addDiagFrame('dilate', when, motion);
 
-  // |findContours| destroys the contents of the |motion| matrix, so make a copy
-  let changedPixels = motion.copy();
+  // Compute edges by subtracting an eroded version of the image (the
+  // "gooeyInsides")
+  let gooeyInsides = motion.copy();
+  silkcv.Matrix.erodeWithBlackBorder(gooeyInsides, 2);
 
-  // Find contours on thresholded image
-  let contours = motion.findContours();
-  log.debug(`Contours # ${contours.size()}`);
+  let edges = new cv.Matrix();
+  edges.absDiff(motion, gooeyInsides);
 
+  timeline.addDiagFrame('edges', when, edges);
+
+  // Find contours (note that findContours() writes onto |edges|)
+  let contours = edges.findContours();
   let rects = [];
+  let diagEnabled = timeline.diagFrameEnabled(`contours`);
   for (let i = 0; i < contours.size(); i++) {
-    if (contours.area(i) < MIN_AREA) {
-      continue;
+    const rect = contours.boundingRect(i);
+    let color = [63, 63, 63];
+    if (contours.area(i) >= MIN_AREA) {
+      rects.push(rect);
+      color = [255, 255, 255];
     }
-    let rect = contours.boundingRect(i);
-    rects.push(rect);
-    log.debug(`${JSON.stringify(rect)}`);
+    if (diagEnabled) {
+      edges.rectangle(
+        [rect.x, rect.y],
+        [rect.width, rect.height],
+        color,
+        1
+      );
+    }
+  }
+
+  if (diagEnabled) {
+    timeline.addDiagFrame(`contours`, when, edges);
   }
 
   // Group rectangles that intersect with each other or are contained within
   // each other
 
   if (rects.length > 0) {
-    // TODO: Add these additional diag frames back once there's a way to
-    // dynamically toggle sending them.
-    //timeline.addDiagFrame('grayscale', when, image);
-    //timeline.addDiagFrame('blurred', when, nextFrame);
-    timeline.addDiagFrame('changes', when, changedPixels);
-
     motionZone.groupRectangles(rects);
-    log.debug(`group rects: ${JSON.stringify(rects)}`);
+    if (timeline.diagFrameEnabled(`pixels`)) {
+      log.debug(`group rects: ${JSON.stringify(rects)}`);
 
-    // Remove motion rectangles that fall with in the ignore motion zones
-    rects = motionZone.pruneMotionZones(rects);
-    log.debug(`pruned rects: ${JSON.stringify(rects)}`);
+      let motionMask = new cv.Matrix(imageHeight, imageWidth, cv.Constants.CV_8UC1, [0]);
+      rects.forEach(r => {
+        motionMask.rectangle([r.x, r.y], [r.width, r.height], [255, 255, 255], cv.Constants.CV_FILLED);
+      });
+      timeline.addDiagFrame(`mask`, when, motionMask);
+
+      let motionPixels = new cv.Matrix(imageHeight, imageWidth, cv.Constants.CV_8UC1, [0]);
+      image.copyWithMask(motionPixels, motionMask);
+      timeline.addDiagFrame(`pixels`, when, motionPixels);
+
+      motionPixels.release();
+      motionMask.release();
+    }
   }
 
+  edges.release();
   motion.release();
   callback(rects);
 }
@@ -158,7 +188,7 @@ class TrackObject {
       }
 
       working = true;
-      this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
+      this._env.camera.getPreviewFrame(when, 'gray', (err, image) => {
         if (err) {
           log.warn(`Unable to fetch frame: ${err}`);
           working = false;

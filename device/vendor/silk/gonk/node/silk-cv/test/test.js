@@ -3,7 +3,7 @@
 const path = require('path');
 const assert = require('assert');
 const cv = require('opencv');
-const Cmt = require('..');
+const Cmt = require('..').Cmt;
 
 cv.readImage(path.join(__dirname, 'input.jpg'), (err, im) => {
   if (err) throw err;

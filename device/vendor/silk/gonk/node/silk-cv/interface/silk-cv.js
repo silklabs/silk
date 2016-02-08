@@ -18,7 +18,6 @@ type Rect = {
   height: number;
 };
 
-
 type Options = {
   drawPoints?: bool;
 };
@@ -36,7 +35,6 @@ type FrameResults = {
 };
 
 declare class Cmt {
-
   constructor(
     trainingFrame: Matrix,
     objectRect: Rect,
@@ -52,5 +50,6 @@ declare class Cmt {
   busy(): bool;
 };
 
-declare var cmt: Cmt;
-declare export default typeof cmt;
+declare export default class {
+  Cmt: Cmt;
+};

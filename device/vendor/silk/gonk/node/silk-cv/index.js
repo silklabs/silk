@@ -6,4 +6,4 @@ if (process.platform === 'android') {
 } else {
   nativepath = './build/Release/silk-cv.node';
 }
-module.exports = require(nativepath).NodeCmt;
+module.exports = require(nativepath);

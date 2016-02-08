@@ -9,22 +9,22 @@
 
 
 /*
- * Implements the 'NodeCmt' Javascript class
+ * Implements the 'Cmt' Javascript class
  */
-class NodeCmt: public Nan::ObjectWrap {
+class Cmt: public Nan::ObjectWrap {
 friend class CmtInitWorker;
 friend class CmtFrameWorker;
 public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  explicit NodeCmt(int frameWidth, int frameHeight, bool drawPoints = false)
+  explicit Cmt(int frameWidth, int frameHeight, bool drawPoints = false)
     : frameWidth(frameWidth),
       frameHeight(frameHeight),
       drawPoints(drawPoints),
       initialized(false),
       processing(false) {}
-  ~NodeCmt() {}
+  ~Cmt() {}
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void NextFrame(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -45,7 +45,7 @@ private:
  */
 class CmtInitWorker : public Nan::AsyncWorker {
 public:
-  explicit CmtInitWorker(NodeCmt *nodeCmt, cv::Mat mat, cv::Rect rect, Nan::Callback *callback)
+  explicit CmtInitWorker(Cmt *nodeCmt, cv::Mat mat, cv::Rect rect, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
       rect(rect),
@@ -73,7 +73,7 @@ public:
 private:
   cv::Mat mat;
   cv::Rect rect;
-  NodeCmt *nodeCmt;
+  Cmt *nodeCmt;
 };
 
 
@@ -82,7 +82,7 @@ private:
  */
 class CmtFrameWorker : public Nan::AsyncWorker {
 public:
-  explicit CmtFrameWorker(NodeCmt *nodeCmt, cv::Mat mat, Nan::Callback *callback)
+  explicit CmtFrameWorker(Cmt *nodeCmt, cv::Mat mat, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
       nodeCmt(nodeCmt) {
@@ -165,29 +165,29 @@ public:
 
 private:
   cv::Mat mat;
-  NodeCmt *nodeCmt;
+  Cmt *nodeCmt;
 };
 
-Nan::Persistent<v8::Function> NodeCmt::constructor;
+Nan::Persistent<v8::Function> Cmt::constructor;
 
-void NodeCmt::Init(v8::Local<v8::Object> exports) {
+void Cmt::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
 
   // Prepare constructor template
   v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
-  tpl->SetClassName(Nan::New("NodeCmt").ToLocalChecked());
+  tpl->SetClassName(Nan::New("Cmt").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   Nan::SetPrototypeMethod(tpl, "nextFrame", NextFrame);
   Nan::SetPrototypeMethod(tpl, "busy", Busy);
 
   constructor.Reset(tpl->GetFunction());
-  exports->Set(Nan::New("NodeCmt").ToLocalChecked(), tpl->GetFunction());
+  exports->Set(Nan::New("Cmt").ToLocalChecked(), tpl->GetFunction());
 }
 
-NAN_METHOD(NodeCmt::New) {
+NAN_METHOD(Cmt::New) {
   if (!info.IsConstructCall()) {
-    // Invoked as plain function `NodeCmt(...)`, turn into construct call.
+    // Invoked as plain function `Cmt(...)`, turn into construct call.
     const int argc = 4;
     v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2], info[3] };
     v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
@@ -195,7 +195,7 @@ NAN_METHOD(NodeCmt::New) {
     return;
   }
 
-  // Invoked as constructor: `new NodeCmt(...)`
+  // Invoked as constructor: `new Cmt(...)`
   if (!info[0]->IsObject()) {
     Nan::ThrowTypeError("Argument 1 not a cv::Matrix");
     return;
@@ -233,7 +233,7 @@ NAN_METHOD(NodeCmt::New) {
       Nan::New<v8::String>("drawPoints").ToLocalChecked())->BooleanValue();
   }
 
-  NodeCmt* obj = new NodeCmt(frameWidth, frameHeight, drawPoints);
+  Cmt* obj = new Cmt(frameWidth, frameHeight, drawPoints);
 
   Nan::AsyncQueueWorker(new CmtInitWorker(obj, mat, objectRect, callback));
 
@@ -242,14 +242,14 @@ NAN_METHOD(NodeCmt::New) {
 }
 
 
-NAN_METHOD(NodeCmt::Busy) {
-  NodeCmt* obj = ObjectWrap::Unwrap<NodeCmt>(info.Holder());
+NAN_METHOD(Cmt::Busy) {
+  Cmt* obj = ObjectWrap::Unwrap<Cmt>(info.Holder());
   info.GetReturnValue().Set(
     Nan::New<v8::Boolean>(!obj->initialized || obj->processing));
 }
 
-NAN_METHOD(NodeCmt::NextFrame) {
-  NodeCmt* obj = ObjectWrap::Unwrap<NodeCmt>(info.Holder());
+NAN_METHOD(Cmt::NextFrame) {
+  Cmt* obj = ObjectWrap::Unwrap<Cmt>(info.Holder());
 
   if (!obj->initialized) {
     Nan::ThrowTypeError("Not initialized");
@@ -283,8 +283,6 @@ NAN_METHOD(NodeCmt::NextFrame) {
   info.GetReturnValue().Set(Nan::Null());
 }
 
-void Init(v8::Local<v8::Object> exports) {
-  NodeCmt::Init(exports);
+void Cmt_Init(v8::Local<v8::Object> exports) {
+  Cmt::Init(exports);
 }
-
-NODE_MODULE(bindings, Init)

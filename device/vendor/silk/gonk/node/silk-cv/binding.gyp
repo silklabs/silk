@@ -3,7 +3,8 @@
     {
       "target_name": "silk-cv",
       "sources": [
-        "bindings.cpp",
+        "init.cpp",
+        "cmt.cpp",
         "CppMT/CMT.cpp",
         "CppMT/Consensus.cpp",
         "CppMT/Fusion.cpp",

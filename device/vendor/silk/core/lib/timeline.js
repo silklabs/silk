@@ -256,7 +256,13 @@ export default class Timeline extends EventEmitter {
     this.emit('preview', when);
   }
 
-  _diagFrameEnabled(id: string): bool {
+  /**
+   * Checks if a diag frame for the given id is enabled.
+   * If disabled, calling addDiagFrame() with the given id will be a no-op.
+   *
+   * @param id  A simple string to associated with this processed frame
+   */
+  diagFrameEnabled(id: string): bool {
     if (this.diagFrameFilterSkips.some(regex => regex.test(id))) {
       return false;
     }
@@ -274,7 +280,7 @@ export default class Timeline extends EventEmitter {
     if (!this.liveDiag) {
       return;
     }
-    if (!this._diagFrameEnabled(id)) {
+    if (!this.diagFrameEnabled(id)) {
       return;
     }
 

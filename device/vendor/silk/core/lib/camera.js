@@ -41,6 +41,14 @@ export type CameraCallback = (err: boolean, image: any) => void;
  */
 export type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
 
+export type CameraPreviewInfo = {
+  width: number;
+  height: number;
+  downScale: number;
+  fullWidth: number;
+  fullHeight: number;
+};
+
 type RawHalFace = {
   rect: [number, number, number, number];
   score: number;
@@ -1169,6 +1177,19 @@ export default class Camera extends EventEmitter {
                   userCb: CameraCallback): void {
     this._queue.push([userCb, when, format]); // Enqueue the frame request
     this._retrieveNextFrame();
+  }
+
+  /**
+   * Provides information about the camera preview frames
+   */
+  getPreviewInfo(): CameraPreviewInfo {
+    return {
+      width: PREVIEW_WIDTH,
+      height: PREVIEW_HEIGHT,
+      downScale: PREVIEW_SCALE,
+      fullWidth: WIDTH,
+      fullHeight: HEIGHT,
+    };
   }
 
   _diagEmitState = () => {

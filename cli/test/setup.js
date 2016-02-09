@@ -1,7 +1,5 @@
-var presetPath = require('../babel_preset')();
-var preset = require(presetPath);
-require('babel-register')({
-  options: {
-    presets: [preset],
-  },
+var config = require('../babelconfig')();
+var preset = require(config.preset);
+require(config.register)({
+  presets: [preset],
 });

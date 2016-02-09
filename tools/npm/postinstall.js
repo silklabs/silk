@@ -26,6 +26,12 @@ const LOCK_FILE = 'node_modules/.__silk_npm_lock';
 const LOCK_POLL_MS = 500;
 const NPM_CONFIG = path.join(__dirname, '.npmrc');
 
+// Yet another nasty hack to ensure we don't run dependant install for these
+// modules...
+const NEVER_RUN_NPM_INSTALL = new Set([
+  path.join(CORE, 'babel-preset-silk-node4')
+]);
+
 let currentModule;
 let selfLock;
 let pendingLocks = [];
@@ -200,7 +206,7 @@ function installDeps(cwd, nodeModules, dependencies) {
       }
     }
 
-    if (INVOKE_TYPE === 'symlink') {
+    if (INVOKE_TYPE === 'symlink' || NEVER_RUN_NPM_INSTALL.has(pkgSource)) {
       continue;
     }
 

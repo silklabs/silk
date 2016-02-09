@@ -22,6 +22,12 @@ const PACKAGE_ROOTS = pkgFinder();
   path.join(__dirname, '..', 'raygun'),
   path.join(__dirname, '..', 'log'),
   path.join(__dirname, '..', 'jsonwebtoken'),
+
+  // Do not accidentally assume CLI is babelified it should be doing this
+  // internally so it works the same under OSS environments...
+  path.join(__dirname, '..', 'cli'),
+  path.join(__dirname, '..', 'sdk'),
+
 ].forEach((path) => {
   let idx = PACKAGE_ROOTS.indexOf(path);
   if (idx !== -1) {

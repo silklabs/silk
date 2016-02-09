@@ -33,8 +33,18 @@ var config = {
         include: require('silk-babeldeps'),
         loader: 'babel',
         query: {
-          presets: ['es2015', 'stage-0', 'react'],
-          plugins: ['transform-runtime'],
+          babelrc: false,
+          // NOTE: require.resolve will return an absolute path to our babel
+          // modules. If we use shorthand or relative path here every module we
+          // include must also provide their own version of these presets.
+          presets: [
+            require.resolve('babel-preset-es2015'),
+            require.resolve('babel-preset-stage-0'),
+            require.resolve('babel-preset-react'),
+          ],
+          plugins: [
+            require.resolve('babel-plugin-transform-runtime')
+          ]
         },
       }
     ]

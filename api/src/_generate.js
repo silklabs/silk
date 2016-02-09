@@ -51,8 +51,3 @@ export default function generate() {
     }));
   }
 }
-
-if (process.mainModule === module) {
-  console.log('Building auto generated files');
-  generate();
-}

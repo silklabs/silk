@@ -15,10 +15,12 @@
 
 import { execFile, spawn, spawnSync } from 'child_process';
 import events from 'events';
+import fs from 'fs';
 
 import createLog from './log';
 
 const log = createLog('sysutils');
+const SILK_PROPS = 'system/silk/silk-props.json';
 
 // Hack for flow...
 let _require = require;
@@ -37,6 +39,16 @@ if (process.platform === 'android') {
       return '';
     }
   };
+}
+
+// Read silk.prop file
+let silkProps = {};
+try {
+  let silkPropsJson = fs.readFileSync(SILK_PROPS);
+  silkProps = JSON.parse(silkPropsJson);
+  log.debug(`silkProps: ${JSON.stringify(silkProps)}`);
+} catch (err) {
+  log.error('Invalid ${SILK_PROPS} file');
 }
 
 const SOUND_DIR = '/system/silk/media/sound/';
@@ -126,7 +138,8 @@ type ScalarPropTypes = string | bool | number;
 type PropTypes = Array<PropTypes> | ScalarPropTypes;
 
 /**
- * Get value of an android property as string
+ * Get value of an android property. Check to see if android property
+ * is available. If property is not available check silk.prop file instead.
  *
  * @param prop Name of the property to fetch
  * @param [defaultValue=null] Default value to use if property is not available
@@ -135,9 +148,12 @@ type PropTypes = Array<PropTypes> | ScalarPropTypes;
 export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   let value = props.get(prop);
   if (value === '') {
-    return (defaultValue === null || defaultValue === undefined) ?
-      '' :
-      defaultValue;
+    // Check silk.prop to see if the property is available
+    if (prop in silkProps) {
+      return silkProps[prop];
+    }
+    return (defaultValue === null || defaultValue === undefined) ? '' :
+        defaultValue;
   }
   return value;
 }

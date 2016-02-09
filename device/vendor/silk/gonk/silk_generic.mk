@@ -8,24 +8,12 @@
 # Add branch name to ro.build.fingerprint
 BUILD_VERSION_TAGS += $(BRANCH)
 
-PRODUCT_PROPERTY_OVERRIDES += \
-  persist.silk.debug=silk-*,-silk-*:debug \
-  persist.silk.debug.colors=true \
-  persist.silk.ranger.enabled=false \
-  persist.silk.eventtrk.enabled=true \
-  persist.silk.capture.mute=true \
-  ro.silk.services=bledroid,silk-sensors,capture,silk \
-  ro.silk.update.manifest_url=https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json \
-  ro.silk.update.poll_hours=3 \
-  persist.silk.extensions=*,-oksilk,-cmt,-detectcat \
-
 # Properties only for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PROPERTY_OVERRIDES += \
   persist.logd.size=16M \
 
 endif
-
 
 PRODUCT_PACKAGES += node
 
@@ -81,6 +69,7 @@ SILK_INIT := \
   silk-service \
   silk-dashboard \
   silk-debug-wrapper \
+  silk-props.json \
 
 SILK_GONK_PROGIES := \
   bledroid \

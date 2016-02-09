@@ -12,7 +12,7 @@
     "flow": "flow check",
     "postinstall": "./bootstrap",
     "posttest": "npm run lint && npm run flow",
-    "prepublish": "PATH=$PWD/node_modules/.silk-node/bin:$PATH babel --presets $(./babel_preset.js) -d build src"
+    "prepublish": "./node_modules/.bin/babel -d build src"
   },
   "bin": {
     "silk": "./silk"

@@ -28,12 +28,10 @@
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libgflags/include/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopenblas/include)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/protobuf/src)',
-        '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libboost/include)',
-        '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libprotobuf/include)',
+        '-isystem <!(echo $ANDROID_BUILD_TOP/external/boost/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/src/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/ceres/internal/miniglog/)',
-        '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libcaffe/include/ceres/internal/miniglog/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv2_core/include/)',
       ],
       'ldflags': [

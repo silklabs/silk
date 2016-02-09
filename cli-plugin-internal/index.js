@@ -8,7 +8,7 @@
 // Must require above babel-register...
 var preset = require(__dirname + '/../babel-preset-silk-node4');
 
-require('babel-register')({
+require(__dirname + '/../babel/register')({
   presets: [preset],
   only: require('silk-babeldeps'),
 });

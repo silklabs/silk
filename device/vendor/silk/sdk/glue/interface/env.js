@@ -29,7 +29,16 @@ declare export class Log {
   info(log: string): void;
 }
 
+type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
+type CameraCallback = (err: boolean, image: any) => void;
+
 declare export class Camera extends EventEmitter {
+  getPreviewFrame(when: number, format: CameraPreviewFrameFormat,
+      userCb: CameraCallback): void;
+}
+
+declare export class Timeline extends EventEmitter {
+  addDiagFrame (id: string, when: number, frame: any): void;
 }
 
 declare export class Env extends EventEmitter {
@@ -37,6 +46,7 @@ declare export class Env extends EventEmitter {
   say: Say;
   log: Log;
   camera: Camera;
+  timeline: Timeline;
 }
 
 declare var env: Env;

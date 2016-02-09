@@ -34,10 +34,12 @@ using namespace node;
   static NAN_METHOD(NAME);
 
 #define JSTHROW_TYPE(ERR) \
-  Nan::ThrowTypeError(ERR);
+  Nan::ThrowTypeError(ERR); \
+  return
 
 #define JSTHROW(ERR) \
-  Nan::ThrowError(ERR);
+  Nan::ThrowError(ERR); \
+  return
 
 #define INT_FROM_ARGS(NAME, IND) \
   if (info[IND]->IsInt32()) { \

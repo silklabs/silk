@@ -1,0 +1,25 @@
+{
+  "name": "dnn",
+  "version": "0.0.1",
+  "description": "Deep neural network example",
+  "main": "dnn.js",
+  "scripts": {
+    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
+    "postinstall": "./bin/postinstall",
+    "clean": "rm -rf node_modules dnn.js dnn.js.map"
+  },
+  "silkDependencies": {
+    "silk-babeldeps": "/babeldeps",
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-flow-bin": "/flow-bin",
+    "silk-log": "/log"
+  },
+  "dependencies": {
+    "babel-runtime": "5.8.35"
+  },
+  "devDependencies": {
+    "babel": "5.8.35",
+    "mz": "2.0.0"
+  },
+  "private": true
+}

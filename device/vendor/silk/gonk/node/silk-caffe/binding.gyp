@@ -7,6 +7,7 @@
       ],
       'include_dirs': [
         '<!(node -e "require(\'nan\')")',
+        '<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")'
       ],
       'cflags_cc': [
         '-fexceptions',
@@ -29,7 +30,9 @@
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/protobuf/src)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libboost/include)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libprotobuf/include)',
-        '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libcaffe/include)',
+        '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/src/)',
+        '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/)',
+        '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/ceres/internal/miniglog/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libcaffe/include/ceres/internal/miniglog/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv2_core/include/)',
       ],

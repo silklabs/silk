@@ -17,6 +17,10 @@ const PACKAGE_ROOTS = pkgFinder();
   // everything anyhow.
   path.join(__dirname, '..'),
 
+  // babel bootstrapping ...
+  path.join(__dirname, '..', 'babel'),
+  path.join(__dirname, '..', 'babel-preset-silk-node4'),
+
   // Created when babel was harder to use and makes supporting app harder since
   // it requires relative plugins for in tree stuff (yay babel6).
   path.join(__dirname, '..', 'raygun'),

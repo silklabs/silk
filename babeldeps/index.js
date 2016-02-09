@@ -26,6 +26,7 @@ const PACKAGE_ROOTS = pkgFinder();
   // Do not accidentally assume CLI is babelified it should be doing this
   // internally so it works the same under OSS environments...
   path.join(__dirname, '..', 'cli'),
+  path.join(__dirname, '..', 'sdk'),
 
 ].forEach((path) => {
   let idx = PACKAGE_ROOTS.indexOf(path);

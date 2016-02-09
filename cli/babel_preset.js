@@ -2,19 +2,17 @@
 
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
+var path = require('path');
+var fs = require('fs');
 
-const ROOT = __dirname;
-const PRESET = 'babel-preset-silk-node4';
+var ROOT = __dirname;
+var PRESET = 'babel-preset-silk-node4';
 
-// In our tree we have this in the immediate parent directory and use same
-// preset for multiple modules (faster boot times).
-const INTERNAL_PATH = path.join(ROOT, '..', PRESET);
+var ROOT_DIR = path.join(ROOT, '..', PRESET);
 
 function main() {
-  if (fs.existsSync(INTERNAL_PATH)) {
-    return INTERNAL_PATH;
+  if (fs.existsSync(ROOT_DIR)) {
+    return ROOT_DIR;
   } else {
     return 'silk-node4';
   }

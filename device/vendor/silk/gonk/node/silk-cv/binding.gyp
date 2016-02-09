@@ -4,6 +4,7 @@
       "target_name": "silk-cv",
       "sources": [
         "init.cpp",
+        "matrix.cpp",
         "cmt.cpp",
         "CppMT/CMT.cpp",
         "CppMT/Consensus.cpp",

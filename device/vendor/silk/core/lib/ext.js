@@ -143,6 +143,17 @@ class Env extends EventEmitter {
       };
 
       /**
+       * Returns the camera preview size
+       *
+       * @return {Size}
+       * @memberof Env.camera
+       * @instance
+       */
+      this.camera.previewSize = () => {
+        return camera.previewSize;
+      };
+
+      /**
        * Get camera parameter as integer. This function returns a Promise that resolves
        * when the parameter value is successfully retrieved
        *
@@ -246,6 +257,19 @@ class Env extends EventEmitter {
         //       Do this once more ext-facing Diag features are enabled (such as
         //       toggling diag frames on an extension basis)
         timeline.addDiagFrame(`${this._name}:${id}`, when, frame);
+      };
+
+      /**
+       * Checks if a diag frame for the given id is enabled.
+       * If disabled, calling addDiagFrame() with the given id will be a no-op.
+       *
+       * @param id  A simple string to associated with this processed frame
+       * @return {boolean}
+       * @memberof Env.timeline
+       * @instance
+       */
+      this.timeline.diagFrameEnabled = (id: string) => {
+        return timeline.diagFrameEnabled(`${this._name}:${id}`);
       };
 
       /**

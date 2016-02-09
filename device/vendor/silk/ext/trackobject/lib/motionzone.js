@@ -5,8 +5,9 @@
  */
 
 import fs from 'mz/fs';
+import cv from 'opencv';
 
-const MOTION_ZONES_FILE = '/data/silk/opencv/motion_zones.json';
+const MOTION_ZONES_FILE = 'data/silk/opencv/motion_zones.json';
 let log;
 
 /**
@@ -17,7 +18,33 @@ export default class MotionZone {
     this._env = env;
     log = this._env.log;
     this._ignoredZones = [];
-    this._parseMotionZones();
+
+    const size = env.camera.previewSize();
+    this._ignoredZoneMask = new cv.Matrix(size.height, size.width, cv.Constants.CV_8UC1, [255]);
+
+    this._parseMotionZones()
+    .then(() => {
+      if (this._ignoredZones.length > 0) {
+        this._ignoredZones.forEach(zone => {
+          this._ignoredZoneMask.rectangle(
+            [zone.x, zone.y],
+            [zone.width, zone.height],
+            [0, 0, 0],
+            cv.Constants.CV_FILLED,
+          );
+        });
+      }
+    });
+  }
+
+  /**
+   * Applies the ignore mask to the provided matrix returning a new matrix.
+   * Pixels that are within the boundaries of the ignore mask will be set to 0.
+   */
+  applyIgnoreMask(im) {
+    let maskedIm = new cv.Matrix();
+    im.copyWithMask(maskedIm, this._ignoredZoneMask);
+    return maskedIm;
   }
 
   /**
@@ -73,37 +100,6 @@ export default class MotionZone {
         }
       }
     } while (didMerge);
-  }
-
-  /**
-   * Compare the motion rectangle provided with the available list of motion
-   * zones to ignore and remove motion rectangles that fall with in the list
-   * of ignored motion zones
-   *
-   * @param rects List of motion rectangles to prune
-   * @return array of pruned rectangles
-   */
-  pruneMotionZones(rects) {
-    let prunedRects = [];
-    if (this._ignoredZones.length === 0) {
-      return rects;
-    }
-
-    for (let i = 0; i < rects.length; i++) {
-      let ignore = false;
-      for (let j = 0; j < this._ignoredZones.length; j++) {
-        if (this._contains(this._ignoredZones[j], rects[i])) {
-          log.debug(`Ignoring ${JSON.stringify(rects[i])} as it falls within ` +
-            ` the zone ${JSON.stringify(this._ignoredZones[j])}`);
-          ignore = true;
-          break;
-        }
-      }
-      if (!ignore) {
-        prunedRects.push(rects[i]);
-      }
-    }
-    return prunedRects;
   }
 
   /**

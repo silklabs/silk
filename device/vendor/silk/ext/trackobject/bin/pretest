@@ -1,0 +1,5 @@
+#!/bin/bash -ex
+
+npm install node-pre-gyp@0.6.11
+npm install opencv@4.0.0
+npm install ../../gonk/node/silk-cv/

@@ -3,7 +3,9 @@
 const path = require('path');
 const assert = require('assert');
 const cv = require('opencv');
-const Cmt = require('..').Cmt;
+const silkcv = require('..');
+
+assert(typeof silkcv.Matrix.erodeWithBlackBorder === 'function');
 
 cv.readImage(path.join(__dirname, 'input.jpg'), (err, im) => {
   if (err) throw err;
@@ -13,7 +15,7 @@ cv.readImage(path.join(__dirname, 'input.jpg'), (err, im) => {
   let cmtInitOptions = {
     drawPoints: true,
   };
-  const cmt = Cmt(im, {x:0, y:0, width:140, height:170},
+  const cmt = silkcv.Cmt(im, {x:0, y:0, width:140, height:170},
     (err) => {
       console.log('Cmt ready');
       assert(!cmt.busy());

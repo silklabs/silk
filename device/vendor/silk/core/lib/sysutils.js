@@ -44,7 +44,7 @@ if (process.platform === 'android') {
 // Read silk.prop file
 let silkProps = {};
 try {
-  let silkPropsJson = fs.readFileSync(SILK_PROPS);
+  let silkPropsJson = fs.readFileSync(SILK_PROPS, {encoding: 'utf8'});
   silkProps = JSON.parse(silkPropsJson);
   log.debug(`silkProps: ${JSON.stringify(silkProps)}`);
 } catch (err) {

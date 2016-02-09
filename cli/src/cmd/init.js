@@ -110,6 +110,23 @@ export let init = {
 
     pkg.name = result.name;
 
+    if (!pkg.dependencies) {
+      pkg.dependencies = {};
+    }
+
+    // TODO: until we have published the 'silk' package to npmjs.com,
+    // simply reference it locally.
+    const silkPath = path.resolve(__dirname, '../../../sdk');
+    await mkdirp(path.join(argv.destination, 'node_modules'));
+    await fs.symlink(silkPath, path.join(argv.destination, 'node_modules', 'silk'));
+
     await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
+
+    let rcPath = path.join(argv.destination, '.silkrc');
+    await fs.writeFile(rcPath, JSON.stringify({
+      plugins: [
+        'silk/cli',
+      ],
+    }, null, 2));
   },
 };

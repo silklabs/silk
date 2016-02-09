@@ -1,16 +1,22 @@
 {
-  "name": "silk-sdk",
+  "name": "silk",
   "version": "0.13.0",
   "description": "Silk SDK",
-  "bin": {
-    "silk-debugger": "./debugger"
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Silk Labs Inc.",
   "license": "ISC",
   "dependencies": {
+    "babel-runtime": "6.3.19",
     "node-inspector": "0.12.5"
+  },
+  "devDependencies": {
+    "babel-eslint": "4.1.8",
+    "babel-plugin-transform-runtime": "6.4.3",
+    "babel-preset-es2015": "6.3.13",
+    "babel-preset-react": "6.3.13",
+    "babel-preset-stage-0": "6.3.13",
+    "babel-register": "6.4.3",
+    "eslint": "1.10.3"
   }
 }

@@ -13,6 +13,7 @@ import cv from 'opencv';
 import silkcv from 'silk-cv';
 import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
+import Mog2Subtractor from './mog2subtractor';
 
 let log;
 let util;
@@ -29,6 +30,7 @@ const NUM_ITERATIONS_DILATE = 2;
 
 // Enable sound when motion is detected
 const MOTION_PLAY_SOUND_PROP = 'persist.silk.motion.sound';
+const MOTION_SUBTRACTOR_PROP = 'persist.silk.motion.subtractor';
 let soundEnabled = false;
 
 // Minimum rectangle size for motion
@@ -47,7 +49,7 @@ function _playSound() {
 }
 
 /**
- * This class tracks any motion in the preview image and repots discrete motion
+ * This class tracks any motion in the preview image and reports discrete motion
  * rectangles
  */
 class TrackObject {
@@ -59,8 +61,21 @@ class TrackObject {
     soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 
     this.working = false;
-    this.motionzone = new MotionZone(this._env);
-    this.subtractor = new DiffSubtractor();
+    this.motionzone = new MotionZone(env);
+
+    const subtractorName = util.getprop(MOTION_SUBTRACTOR_PROP, 'mog2');
+    switch (subtractorName) {
+    default:
+      log.warn('Unknown', MOTION_SUBTRACTOR_PROP, 'value:', subtractorName);
+      //fall through
+    case 'mog2':
+      this.subtractor = new Mog2Subtractor(env);
+      break;
+    case 'diff':
+      this.subtractor = new DiffSubtractor(env);
+      break;
+    }
+
     timeline.on('preview', this._onPreview);
   }
 
@@ -92,7 +107,7 @@ class TrackObject {
     maskedImage.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
     timeline.addDiagFrame('blurred', when, maskedImage);
 
-    this.subtractor.apply(maskedImage, (motion) => {
+    this.subtractor.apply(when, maskedImage, (motion) => {
       maskedImage.release();
 
       timeline.addDiagFrame('diff', when, motion);

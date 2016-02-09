@@ -7,10 +7,12 @@
 
 void Cmt_Init(v8::Local<v8::Object> exports);
 void Matrix_Init(v8::Local<v8::Object> exports);
+void Mog2_Init(v8::Local<v8::Object> exports);
 
 void Init(v8::Local<v8::Object> exports) {
   Cmt_Init(exports);
   Matrix_Init(exports);
+  Mog2_Init(exports);
 }
 
 NODE_MODULE(bindings, Init)

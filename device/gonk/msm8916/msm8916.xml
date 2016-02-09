@@ -504,7 +504,7 @@
   <project groups="pdk-cw-fs" name="platform/prebuilts/libs/libedit" path="prebuilts/libs/libedit" revision="d32685dba4011664b590b94ad156bc734c2c9bb5" upstream="LA.BR.1.1.2_rb1.9"/>
   <!-- <project groups="pdk-cw-fs" name="platform/prebuilts/maven_repo/android" path="prebuilts/maven_repo/android" revision="12a24bf4124f5a9fb2f21950568502ef7f8a55e3" upstream="LA.BR.1.1.2_rb1.9"/> -->
   <project groups="pdk" name="platform/prebuilts/misc" path="prebuilts/misc" revision="522821b01226841baa165dbc5416cd0f29652353" upstream="LA.BR.1.1.2_rb1.9"/>
-  <project groups="pdk" name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="43c795dbce01fabbf15c8239b0cf8389f02a1fb4" upstream="LA.BR.1.1.2_rb1.9"/>
+  <project groups="pdk" name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="refs/tags/android-5.1.1_r1" remote="aosp"/>
   <!-- <project groups="darwin,pdk-cw-fs" name="platform/prebuilts/python/darwin-x86/2.7.5" path="prebuilts/python/darwin-x86/2.7.5" revision="2bdd4fd418614c7c0101147d02199d0e47c4980e" upstream="LA.BR.1.1.2_rb1.9"/> -->
   <project groups="linux,pdk-cw-fs" name="platform/prebuilts/python/linux-x86/2.7.5" path="prebuilts/python/linux-x86/2.7.5" revision="6fbc8802b3b68d24a4ee83f164b22490cf702ff2" upstream="LA.BR.1.1.2_rb1.9"/>
   <!-- <project groups="pdk" name="platform/prebuilts/qemu-kernel" path="prebuilts/qemu-kernel" revision="1dffc580d656397f0ffca65820aac524a7ba6f77" upstream="LA.BR.1.1.2_rb1.9"/> -->

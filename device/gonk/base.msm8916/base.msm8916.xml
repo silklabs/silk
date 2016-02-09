@@ -62,7 +62,7 @@
            path="prebuilts/python/linux-x86/2.7.5"
            groups="linux,arm" clone-depth="1"/>
 
-  <project name="platform/prebuilts/ndk" path="prebuilts/ndk" clone-depth="1"/>
+  <project name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="refs/tags/android-5.1.1_r1" remote="aosp" clone-depth="1"/>
   <project name="platform/ndk" path="ndk" clone-depth="1"/>
   <project path="prebuilts/misc" name="platform/prebuilts/misc" clone-depth="1"/>
 

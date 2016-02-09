@@ -3,7 +3,7 @@
   "version": "0.13.0",
   "description": "Silk SDK",
   "scripts": {
-    "prepublish": "babel --presets $(./babel_preset.js) -d build src"
+    "prepublish": "babel --presets $(./babelconfig.js preset) -d build src"
   },
   "author": "Silk Labs Inc.",
   "license": "MIT",

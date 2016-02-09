@@ -1,6 +1,0 @@
-{
-  "presets": ["es2015", "stage-0", "react"],
-  // We want to support a wide range of node environments. This will pollyfill
-  // any JS primitives that might be missing on those platforms (like Set).
-  "plugins": ["transform-runtime"]
-}

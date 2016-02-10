@@ -1,5 +1,4 @@
 LOCAL_PATH:= $(call my-dir)
-ROOT := vendor/silk/gonk
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := capture
@@ -16,7 +15,7 @@ LOCAL_SRC_FILES := \
 	Channel.cpp \
 	FaceDetection.cpp \
 	IOpenCVCameraCapture.cpp \
-	MediaCodecSource.cpp \
+	5.1.1_r6/MediaCodecSource.cpp \
 	MPEG4MemoryWriter.cpp \
 	MPEG4SegmentDASHWriter.cpp \
 	MPEG4SegmenterDASH.cpp \
@@ -28,13 +27,13 @@ LOCAL_SHARED_LIBRARIES := \
 	libgui libcamera_client libcutils libsysutils
 
 LOCAL_C_INCLUDES := \
-	frameworks/av/media/libstagefright \
-	frameworks/av/media/libstagefright/include \
-	frameworks/native/include/media/openmax \
-	. \
+  frameworks/av/media/libstagefright \
+  frameworks/av/media/libstagefright/include \
+  frameworks/native/include/media/openmax \
+  vendor/silk/gonk/jsoncpp \
+  vendor/silk/gonk/SocketListener \
 
-LOCAL_C_INCLUDES += $(ROOT)/jsoncpp
-LOCAL_C_INCLUDES += $(ROOT)/SocketListener
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/5.1.1_r6
 
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0

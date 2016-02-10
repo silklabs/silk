@@ -50,6 +50,7 @@ type DeviceLiveStream = {
   video: bool;
   diag: bool;
   preview: bool;
+  mic: bool;
 }
 
 // How long a device has to send a livestream message when the server is
@@ -61,7 +62,7 @@ const VIDEO_IDLE_TIMEOUT_MS = 10000;
 // Diag events get more leeway because dropping diag packets during a debug
 // session can be very undesirable.
 const MAX_PENDING_ACKS = 3;
-const MAX_PENDING_DIAG_ACKS = 10;
+const MAX_PENDING_DIAG_MIC_ACKS = 10;
 
 /**
  * Manages the global state of devices...
@@ -79,6 +80,7 @@ class Device {
     video: false,
     diag: false,
     preview: false,
+    mic: false,
   };
 
   constructor(socket: Socket, id: string) {
@@ -121,7 +123,7 @@ class Device {
     }
 
     if (this.livestream.diag ||
-        (this.info.previewSize && (this.livestream.preview || this.livestream.video))) {
+        (this.info.previewSize && (this.livestream.preview || this.livestream.video || this.livestream.mic))) {
       this.timeout = setTimeout(() => {
         log.info(`Device packet timeout. Disconnecting io=${this.socket.id} id=${this.id}`);
         this.socket.disconnect(true);
@@ -216,7 +218,7 @@ export default class AccountRoom {
     log.info(`Live data to ${prefixedRoom}: ${clients.length} client(s)`);
     clients.forEach(id => {
       const ackId = this._pendingAckId(room, id);
-      const maxAcks = room.startsWith('diag-') ? MAX_PENDING_DIAG_ACKS : MAX_PENDING_ACKS;
+      const maxAcks = (room.startsWith('diag-') || room.startsWith('mic-')) ? MAX_PENDING_DIAG_MIC_ACKS : MAX_PENDING_ACKS;
 
       if (this.pendingAcks[ackId] >= maxAcks) {
         log.warn(`  Skipping client ${id}. too many outstanding acks in ${room}.  max=${maxAcks}`);

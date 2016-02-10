@@ -451,6 +451,25 @@ class Env extends EventEmitter {
     }
 
     /**
+     * Send and receive events to and from server.
+     */
+    let server = deviceObjects.server;
+    if (server) {
+      this.server = new EventEmitter();
+
+      this._addEvents('server', server, this.server, ['disconnect']);
+
+      /**
+       * Send the event named `event` with payload `data` to the
+       * server.
+       */
+      this.server.send = (event, data) => {
+        // `server` validates the data being sent.
+        server.send(event, data);
+      };
+    }
+
+    /**
      * Class that provides utiltiy methods
      * @memberof Env
      */

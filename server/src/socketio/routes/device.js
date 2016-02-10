@@ -36,6 +36,15 @@ type DiagMessage = {
   serverEmitMs: ?number;
 }
 
+type MicMessage = {
+  when: number;
+  serverEmitMs: ?number;
+  numChannels: number;
+  bytesPerSample: number;
+  sampleRate: number;
+  samples: Buffer;
+}
+
 export function deviceRoom(deviceId: string, name: string): string {
   return `${name}-${deviceId}`;
 }
@@ -129,6 +138,10 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
       default:
         log.error(`Unknown video type ${video.contents}`);
       }
+    },
+
+    mic: async (msg: MicMessage) => {
+      sendToDeviceRoom('mic', msg);
     },
 
     disconnect: async () => {

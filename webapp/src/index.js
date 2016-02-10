@@ -29,6 +29,7 @@ import { Alert } from 'react-bootstrap';
 
 import 'whatwg-fetch'; // window.fetch() polyfill for iOS
 
+import AudioStudio from './components/AudioStudio';
 import AVPipeline from './components/AVPipeline';
 import CameraVideo from './components/CameraVideo';
 import CameraVideoMSE from './components/CameraVideoMSE';
@@ -79,6 +80,7 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />
         <Route onEnter={loginCheck} path="/video/:deviceId" component={videoWidget} />
+        <Route onEnter={loginCheck} path="/audiostudio/:deviceId" component={AudioStudio} />
         <Route path="/forgot_password" component={ForgotPassword} userState={userState} />
       </Router>
     ), document.getElementById('root'));

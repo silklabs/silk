@@ -90,6 +90,11 @@ export class OnlineCamera extends React.Component {
                   <Glyphicon glyph="list" style={styles.glyphicon} />
                 </Button>
               </Link>
+              <Link to={`/audiostudio/${this.deviceId}`}>
+                <Button bsSize="large">
+                  <Glyphicon glyph="headphones" style={styles.glyphicon} />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -32,7 +32,7 @@
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/MediaErrors.h>
 #include <media/stagefright/MediaSource.h>
-#include <media/stagefright/MediaCodecSource.h>
+#include "MediaCodecSource.h"
 #include <media/stagefright/Utils.h>
 
 namespace android {
@@ -826,6 +826,10 @@ void MediaCodecSource::onMessageReceived(const sp<AMessage> &msg) {
     default:
         TRESPASS();
     }
+}
+
+status_t MediaCodecSource::requestIDRFrame() {
+  return mEncoder->requestIDRFrame();
 }
 
 } // namespace android

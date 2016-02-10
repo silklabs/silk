@@ -292,7 +292,7 @@ server.on('cmd', cmd => {
 
   switch (cmd.msg) {
   // The 'livestream' command is sent by the server to request live streaming
-  // data from this device.  Supported streams: preview, video, diag
+  // data from this device.  Supported streams: preview, video, diag, mic
   //
   // TODO: once the 'livestream' command is strongly typed between
   // server/device, move this processing into the diag/timeline/camera objects
@@ -303,6 +303,13 @@ server.on('cmd', cmd => {
     diag.setConfig({dash: flag, logcat: flag});
     timeline.configLiveStream(!!cmd.preview, !!cmd.video, !!cmd.diag);
     camera.setDiag(!!cmd.diag);
+
+    // FIXME/TODO: we want to notify the audio assistant extension
+    // that livestream state has changed, but we don't want to notify
+    // *all* extensions ... so explicitly target the audio extension
+    // for now (if it happens to be loaded).
+    cmd.targetName = 'samsungtv';
+    ext.onCommand(cmd);
     break;
   case 'reboot':
     log.info('reboot command:', JSON.stringify(cmd));
@@ -369,6 +376,7 @@ config.on('configured', async () => {
       infrared: infrared,
       timeline: timeline,
       say: say,
+      server: server,
     });
   } else {
     extPromise = Promise.resolve(ext);

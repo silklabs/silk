@@ -17,7 +17,7 @@ import type { Socket } from 'silk-socket.io-client-node';
 
 const log = createLog('server');
 
-type ServerAckType = 'diag' | 'info' | 'jpeg' | 'mp4';
+type ServerAckType = 'diag' | 'info' | 'jpeg' | 'mp4' | 'mic';
 type ServerAcks = {[key: ServerAckType]: number};
 type ServerState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 
@@ -39,6 +39,7 @@ export default class Server extends events.EventEmitter {
       info: 1,
       jpeg: 4,
       mp4: 2,
+      mic: 10,
     };
     this._resetAcks();
   }
@@ -52,6 +53,7 @@ export default class Server extends events.EventEmitter {
       info: 0,
       jpeg: 0,
       mp4: 0,
+      mic: 0,
     };
   }
 
@@ -212,6 +214,15 @@ export default class Server extends events.EventEmitter {
       str += `/${data.type}`;
       if (data.log) {
         str += `/${data.name} size:${data.log.length}`;
+      }
+      break;
+    case 'mic':
+      ackType = 'mic';
+      if (data.samples) {
+        str += ` ${data.samples.length} samples`;
+      }
+      if (data.sampleRate) {
+        str += ` at ${data.sampleRate} Hz`;
       }
       break;
     default:

@@ -104,7 +104,7 @@ export default class Base {
    * @param {String} schema Name of schema (constructor.SCHEMA[name]).
    * @param {Bool} strict when true will disallow unknown properties.
    */
-  validate(object: any, schema: string, strict: bool = true) {
+  validate(object: any, schema: string, strict: bool = true): any {
     let schemaObject = this.constructor.SCHEMA[schema];
     if (!schemaObject) {
       throw new Error(`Attempted to use unknown schema: ${schema}`);

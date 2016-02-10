@@ -28,7 +28,7 @@ type CommandMessage = {
 }
 
 // XXX: Should this name be namespaced?
-const ROOM_NAMES_REGEX = /(diag|video|preview)-([0-9a-f]+)/;
+const ROOM_NAMES_REGEX = /(diag|video|preview|mic)-([0-9a-f]+)/;
 
 export function parseRoomName(name: string): Array<string> {
   let found = name.match(ROOM_NAMES_REGEX);

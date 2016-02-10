@@ -40,9 +40,7 @@ class Camera extends EventEmitter {
         this.logoImage.src = URL.createObjectURL(blob);
       }
     }
-    this._updateDiagStream();
-    this._updatePreviewImageStream();
-    this._updateVideoClipStream();
+    this._updateStreams();
   }
 
   setOffline() {
@@ -52,9 +50,7 @@ class Camera extends EventEmitter {
     this.online = false;
 
     if (this._socket) {
-      this._updateDiagStream();
-      this._updatePreviewImageStream();
-      this._updateVideoClipStream();
+      this._updateStreams();
     }
 
     if (this.logoImage) {
@@ -68,6 +64,13 @@ class Camera extends EventEmitter {
   set logging(enabled) {
     this._requestedRooms.diag = enabled;
     this._updateDiagStream();
+  }
+
+  _updateStreams() {
+    this._updateDiagStream();
+    this._updatePreviewImageStream();
+    this._updateVideoClipStream();
+    this._updateMicStream();
   }
 
   _updateDiagStream() {
@@ -187,9 +190,11 @@ class Camera extends EventEmitter {
     switch (event) {
     case 'previewImage':
     case 'videoClip':
+    case 'micData':
       this._requestedRooms[event] = enabled;
       this._updatePreviewImageStream();
       this._updateVideoClipStream();
+      this._updateMicStream();
       break;
     default:
       log.verbose(`Unhandled event: ${event}`);
@@ -298,6 +303,39 @@ class Camera extends EventEmitter {
     }
     this.videoClip = URL.createObjectURL(blob);
     this.emit('videoClip', this.videoClip, new Date(msg.when), view);
+  };
+
+  _updateMicStream() {
+    const enabled = this._requestedRooms.micData;
+    let stream = 'mic-' + this.id;
+
+    if (this.micData) {
+      this.micData = null;
+    }
+
+    if (this.online && enabled) {
+      log.info('Joining mic stream ' + stream);
+      this._socket.on(stream, this._onMicStream);
+      this._socket.emit('join', stream);
+    } else {
+      log.info('Leaving mic stream ' + stream);
+      if (this._socket) {
+        this._socket.removeListener(stream, this._onMicStream);
+        this._socket.emit('leave', stream);
+      }
+    }
+  }
+
+  _onMicStream = (msg, ack) => {
+    if (typeof ack === 'function') {
+      ack();
+    }
+    if (!msg) {
+      log.warn('_onMicStream: null msg');
+      return;
+    }
+    this.micData = msg;
+    this.emit('micData', msg);
   };
 }
 

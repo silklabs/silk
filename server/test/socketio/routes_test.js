@@ -81,6 +81,7 @@ suite('routes', () => {
       video: true,
       diag: false,
       preview: false,
+      mic: false,
       msg: 'livestream'
     });
 
@@ -99,6 +100,7 @@ suite('routes', () => {
       video: false,
       diag: false,
       preview: false,
+      mic: false,
       msg: 'livestream'
     });
 

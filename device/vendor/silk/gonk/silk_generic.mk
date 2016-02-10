@@ -8,6 +8,11 @@
 # Add branch name to ro.build.fingerprint
 BUILD_VERSION_TAGS += $(BRANCH)
 
+# Properties that are read using getprop in sysutils.js
+# should be added to vendor/silk/gonk/init/silk-props.json instead
+PRODUCT_PROPERTY_OVERRIDES += \
+ ro.silk.services=bledroid,silk-sensors,capture,silk \
+
 # Properties only for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PROPERTY_OVERRIDES += \

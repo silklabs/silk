@@ -431,12 +431,25 @@ SlicedMP4Encoder::SlicedMP4Encoder(sp<ALooper> looper, Channel *channel,
   videoFormat->setFloat("frame-rate", sFPS);
   videoFormat->setInt32("i-frame-interval", sIFrameIntervalSec);
 
-  mVideoEncoder = MediaCodecSource::Create(mLooper, videoFormat, cameraSource,
-    sUseMetaDataMode ? MediaCodecSource::FLAG_USE_METADATA_INPUT : 0);
+  mVideoEncoder = MediaCodecSource::Create(
+    mLooper,
+    videoFormat,
+    cameraSource,
+#ifdef TARGET_GE_MARSHMALLOW
+    NULL,
+#endif
+    sUseMetaDataMode ? MediaCodecSource::FLAG_USE_METADATA_INPUT : 0
+  );
 
   // Setup audio
-  sp<MediaSource> audioSource = new AudioSource(AUDIO_SOURCE_MIC,
-      sAudioSampleRate, sAudioChannels);
+  sp<MediaSource> audioSource = new AudioSource(
+    AUDIO_SOURCE_MIC,
+#ifdef TARGET_GE_MARSHMALLOW
+    String16("silk-capture-SlicedMP4Encoder"),
+#endif
+    sAudioSampleRate,
+    sAudioChannels
+  );
 
   int32_t maxInputSize, channels, sampleRate, bitrate;
   CHECK(audioSource->getFormat()->findInt32(kKeyMaxInputSize, &maxInputSize));

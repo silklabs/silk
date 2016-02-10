@@ -84,13 +84,21 @@ void OpenCVCameraCapture::setPreviewProducer(const sp<IGraphicBufferProducer>& p
   Mutex::Autolock autoLock(mLock);
 
   if (mPreviewProducer != NULL) {
+#ifdef TARGET_GE_MARSHMALLOW
+    sp<IBinder> binder = IInterface::asBinder(mPreviewProducer);
+#else
     sp<IBinder> binder = mPreviewProducer->asBinder();
+#endif
     binder->unlinkToDeath(this);
     mPreviewProducer = NULL;
   }
   if (producer != NULL) {
     mPreviewProducer = producer;
+#ifdef TARGET_GE_MARSHMALLOW
+    sp<IBinder> binder = IInterface::asBinder(mPreviewProducer);
+#else
     sp<IBinder> binder = mPreviewProducer->asBinder();
+#endif
     binder->linkToDeath(this);
   }
 

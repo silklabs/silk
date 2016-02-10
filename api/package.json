@@ -15,6 +15,7 @@
     "jsonwebtoken": "/jsonwebtoken"
   },
   "dependencies": {
+    "babel-runtime": "5.8.35",
     "babel-eslint": "5.0.0beta9",
     "base64url": "1.0.5",
     "elliptic": "5.2.1",

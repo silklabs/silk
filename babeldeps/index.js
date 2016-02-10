@@ -17,11 +17,21 @@ const PACKAGE_ROOTS = pkgFinder();
   // everything anyhow.
   path.join(__dirname, '..'),
 
+  // babel bootstrapping ...
+  path.join(__dirname, '..', 'babel'),
+  path.join(__dirname, '..', 'babel-preset-silk-node4'),
+
   // Created when babel was harder to use and makes supporting app harder since
   // it requires relative plugins for in tree stuff (yay babel6).
   path.join(__dirname, '..', 'raygun'),
   path.join(__dirname, '..', 'log'),
   path.join(__dirname, '..', 'jsonwebtoken'),
+
+  // Do not accidentally assume CLI is babelified it should be doing this
+  // internally so it works the same under OSS environments...
+  path.join(__dirname, '..', 'cli'),
+  path.join(__dirname, '..', 'sdk'),
+
 ].forEach((path) => {
   let idx = PACKAGE_ROOTS.indexOf(path);
   if (idx !== -1) {

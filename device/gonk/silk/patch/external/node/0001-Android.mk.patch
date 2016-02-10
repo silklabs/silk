@@ -25,7 +25,7 @@ index 0000000..f645ced
 +LOCAL_32_BIT_ONLY := true
 +LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/out/Release/$(LOCAL_MODULE)
 +
-+include external/stlport/libstlport.mk
++-include external/stlport/libstlport.mk
 +include $(BUILD_PREBUILT)
 +
 +# If the 2nd arch exists assume it's 32bit and select it

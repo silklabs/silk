@@ -26,7 +26,7 @@ LOCAL_C_INCLUDES += hardware/libhardware/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_REQUIRED_MODULES := bluetooth.default
 
-include external/stlport/libstlport.mk
+-include external/stlport/libstlport.mk
 LOCAL_CFLAGS += -std=c++11
 
 include $(BUILD_SILK_EXECUTABLE)

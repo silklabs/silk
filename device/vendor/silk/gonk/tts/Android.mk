@@ -29,6 +29,6 @@ LOCAL_C_INCLUDES += hardware/libhardware/include \
 
 LOCAL_MODULE_TAGS := optional
 
-include external/stlport/libstlport.mk
+-include external/stlport/libstlport.mk
 
 include $(BUILD_SILK_EXECUTABLE)

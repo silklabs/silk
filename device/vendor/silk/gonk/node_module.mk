@@ -24,7 +24,7 @@
 #    bindings.gyp via the environment variable Android_mk__LIBRARIES.
 #
 # 6. external/stlport/libstlport.mk is activated if an alternate STL is not
-#    selected via Android.mk in the usage manner:
+#    selected via Android.mk in the usage manner (<= M):
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
@@ -66,7 +66,7 @@ endif
 endif
 
 ifeq (,$(strip $(LOCAL_NDK_STL_VARIANT)))
-include external/stlport/libstlport.mk
+-include external/stlport/libstlport.mk
 endif
 
 # Shotgun approach to ensuring that the module is rebuilt when local source

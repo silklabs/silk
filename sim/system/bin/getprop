@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cd $(dirname $0)/../..
 mkdir -p data/properties/
@@ -17,4 +17,5 @@ if [ -f data/properties/$1 ]; then
 fi
 
 # Property does not exist
+echo -n $2
 exit 0

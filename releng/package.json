@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "babel-cli": "6.3.13",
+    "babel-core": "6.3.13",
     "babel-loader": "6.2.0",
     "babel-polyfill": "6.3.13",
     "babel-preset-es2015-node4": "2.0.2",
@@ -59,6 +60,7 @@
   },
   "devDependencies": {
     "babel-eslint": "5.0.0beta9",
+    "babel-register": "6.3.13",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1",
     "mocha": "2.4.5",

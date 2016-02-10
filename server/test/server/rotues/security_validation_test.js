@@ -1,20 +1,21 @@
-
 import assert from 'assert';
-import createContext from '../context';
 import createApi from 'silk-api';
-import launchApp from '../launch_app';
-import createIntercept from '../intercept';
 import timekeeper from 'timekeeper';
 import express from 'express';
-import testRoutes from '../../../src/server/routes/test';
 import eventToPromise from 'event-to-promise';
-import mutateJWT from '../mutate_jwt';
 import uuid from 'uuid';
-
-import Accounts from '../../../src/server/models/accounts';
-import Nonce from '../../../src/server/models/nonce';
 import TestAPI from 'silk-api/src/gen/test';
 import {StateContainer} from 'silk-api/src/http_client';
+
+import createContext from '../context';
+import createIntercept from '../intercept';
+import launchApp from '../launch_app';
+import mutateJWT from '../mutate_jwt';
+import testRoutes from '../../../src/server/routes/test';
+import jsonParser from '../../../src/server/json';
+import Accounts from '../../../src/server/models/accounts';
+import Nonce from '../../../src/server/models/nonce';
+
 
 /**
  * Basic suite of security validation tests... These are intended to be a
@@ -33,7 +34,7 @@ suite('security validation tests', () => {
     nonce = new Nonce(context.db);
     accounts = new Accounts(context.db);
     app = express();
-    app.use(require('../../../src/server/json'));
+    app.use(jsonParser);
     app.use(testRoutes({
       accounts,
       nonce

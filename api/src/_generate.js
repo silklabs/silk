@@ -33,7 +33,7 @@ export default function generate() {
     let routePath = path.join(ROUTE_PATH, name);
     let route;
     try {
-      route = require(routePath);
+      route = require(routePath).default;
     } catch (err) {
       console.error('Error building client for route', routePath);
       throw err;
@@ -50,9 +50,4 @@ export default function generate() {
       baseClassPath: CLIENT_MODULE
     }));
   }
-}
-
-if (process.mainModule === module) {
-  console.log('Building auto generated files');
-  generate();
 }

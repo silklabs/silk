@@ -17,7 +17,7 @@ var config = {
   resolveLoader: {
     modulesDirectories: [
       path.join(__dirname, 'node_modules'),
-    ]
+    ],
   },
   resolve: {
     alias : {
@@ -31,7 +31,21 @@ var config = {
       {
         test: /\.js$/,
         include: require('silk-babeldeps'),
-        loaders: ['babel-loader?stage=0&optional=runtime'],
+        loader: 'babel',
+        query: {
+          babelrc: false,
+          // NOTE: require.resolve will return an absolute path to our babel
+          // modules. If we use shorthand or relative path here every module we
+          // include must also provide their own version of these presets.
+          presets: [
+            require.resolve('babel-preset-es2015'),
+            require.resolve('babel-preset-stage-0'),
+            require.resolve('babel-preset-react'),
+          ],
+          plugins: [
+            require.resolve('babel-plugin-transform-runtime')
+          ]
+        },
       }
     ]
   },

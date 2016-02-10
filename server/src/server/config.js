@@ -1,6 +1,6 @@
 /**
-Deal with loading configuration profiles for the project.
-*/
+ * Deal with loading configuration profiles for the project.
+ */
 
 import path from 'path';
 import merge from 'lodash.merge';
@@ -16,11 +16,11 @@ export default function loadConfig(profile = 'production', cwd) {
   // 1. default
   // 2. <profile>
   // 3. $cwd/config.local.json
-  let defaultConfig = require('../../config/default');
-  let profileConfig = require(`../../config/${profile}`);
+  let defaultConfig = require('../../config/default').default;
+  let profileConfig = require(`../../config/${profile}`).default;
   let localConfig;
   try {
-    localConfig = require(`${path.join(cwd, LOCAL_CONFIG)}`);
+    localConfig = require(`${path.join(cwd, LOCAL_CONFIG)}`).default;
   } catch (e) {
     // If there is a syntax error or something we want to raise it.
     if (e.code !== 'MODULE_NOT_FOUND') {

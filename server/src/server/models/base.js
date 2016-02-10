@@ -67,13 +67,13 @@ export default class Base {
       return;
     }
 
-    await Promise.all(indexes.map(async (idx) => {
+    await Promise.all(indexes.map((idx) => {
       log.info(`Adding index to ${desc}`, idx);
       let { props, options } = idx;
       if (!props) {
         throw new Error(`Error adding index to ${desc} you must have .props`);
       }
-      await this.collection.ensureIndex(props, options || []);
+      return this.collection.ensureIndex(props, options || []);
     }));
   }
 

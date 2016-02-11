@@ -17,11 +17,15 @@ export default class DiffSubtractor {
   currentFrame = null;
   nextFrame = null;
 
+  constructor(env) {
+    this.env = env;
+  }
+
   /**
    * Apply the subtractor over the provided image, and return the motion
    * diff via the callback function
    */
-  apply(image, cb) {
+  apply(when, image, cb) {
     const imageWidth = image.width();
     const imageHeight = image.height();
 

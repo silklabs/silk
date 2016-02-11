@@ -16,6 +16,8 @@
 #include <hardware_legacy/wifi.h>
 #include <poll.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <sysutils/FrameworkListener.h>
 #include <private/android_filesystem_config.h>  // for AID_WIFI
 

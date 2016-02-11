@@ -19,6 +19,9 @@
 #include <binder/ProcessState.h>
 #include <binder/IServiceManager.h>
 #include <binder/IAppOpsService.h>
+#ifdef TARGET_GE_MARSHMALLOW
+#include <binder/AppOpsManager.h>
+#endif
 
 
 namespace android {
@@ -46,6 +49,9 @@ public:
     virtual void startWatchingMode(int32_t op, const String16& packageName,
             const sp<IAppOpsCallback>& callback);
     virtual void stopWatchingMode(const sp<IAppOpsCallback>& callback);
+#ifdef TARGET_GE_MARSHMALLOW
+    virtual int32_t permissionToOpCode(const String16& permission);
+#endif
 };
 
 FakeAppOpsService::FakeAppOpsService()
@@ -105,6 +111,14 @@ FakeAppOpsService::getToken(const sp<IBinder>& clientToken)
   (void) clientToken;
   return NULL;
 }
+
+#ifdef TARGET_GE_MARSHMALLOW
+int32_t FakeAppOpsService::permissionToOpCode(const String16& permission)
+{
+  (void) permission;
+  return AppOpsManager::OP_NONE;
+}
+#endif
 
 void
 FakeAppOpsService::startWatchingMode(int32_t op, const String16& packageName, const sp<IAppOpsCallback>& callback)

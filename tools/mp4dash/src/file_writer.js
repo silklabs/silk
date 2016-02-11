@@ -1,55 +1,69 @@
+/*
+ * @flow
+ */
+
 import path from 'path';
 import fs from 'fs-extra';
 import process from 'process';
 import createLog from 'silk-log';
 
 import connectToSocketIO from './socketio';
-import SegmentProvider from './segment_provider';
+import SegmentProviderSocketIO from './segment_provider_socketio';
 import config from './config';
+
+import type SegmentProvider from './segment_provider';
 
 const log = createLog('file-writer');
 
-function startConcatenateWriter(provider, outFile) {
+export function startConcatenateWriter(
+  provider: SegmentProvider,
+  outFile: string
+) {
   log.info(`startConcatenateWriter()`);
   if (!outFile) {
     outFile = 'out.mp4';
   }
   let fileStream = fs.createWriteStream(outFile, { flags: 'w' });
-  let writeSegmentToFile = (segment) => {
+  provider.on('init-segment', (segment) => {
+    log.info(`Writing initial segment to file.`);
+    fileStream.write(segment.buffer);
+  });
+  provider.on('segment', (segment) => {
     log.info(`Writing segment ${segment.seqno} to file.`);
     fileStream.write(segment.buffer);
-  };
-  provider.segments.forEach(writeSegmentToFile);
-  provider.on('segment', writeSegmentToFile);
+  });
+  provider.on(`close`, () => {
+    log.info(`Finished writing`);
+    fileStream.end();
+  });
 }
 
-function startSegmentsWriter(provider, outDir) {
+export function startSegmentsWriter(
+  provider: SegmentProvider,
+  outDir: string
+) {
   log.info(`startSegmentsWriter()`);
   if (!outDir) {
     outDir = 'segments';
   }
-  let writeSegmentToFile = (segment) => {
-    // DASH tools like to name the first segment "1".
-    let seqno = segment.seqno + 1;
-    if (0 === seqno) {
-      let file = path.join(outDir, 'seg-init.mp4');
-      log.info(`Writing init segment '${path}'.`);
-      fs.writeFile(file, segment.buffer);
-      return;
-    }
-    let file = path.join(outDir, `seg-${seqno}.m4s`);
-    log.info(`Writing segment '${file}'.`);
-    fs.writeFile(file, segment.buffer);
-  };
   fs.removeSync(outDir);
   fs.mkdirSync(outDir);
-  provider.segments.forEach(writeSegmentToFile);
-  provider.on('segment', writeSegmentToFile);
+  provider.on('init-segment', (segment) => {
+    let file = path.join(outDir, 'seg-init.mp4');
+    log.info(`Writing init segment '${path}'.`);
+    fs.writeFile(file, segment.buffer);
+  });
+  provider.on('segment', (segment) => {
+    let num = segment.seqno >= 10 ? String(segment.seqno) : `0${segment.seqno}`;
+    let file = path.join(outDir, `seg-${num}.m4s`);
+    log.info(`Writing segment '${file}'.`);
+    fs.writeFile(file, segment.buffer);
+  });
 }
 
 function startRecording(socket, fileMode, deviceId, outFileOrDir) {
   log.info(`startRecording(${deviceId}`);
-  let provider = SegmentProvider.get(socket, deviceId);
+  let provider = SegmentProviderSocketIO.getOrCreate(socket, deviceId);
   switch (fileMode) {
   case 'segments':
     return startSegmentsWriter(provider, outFileOrDir);
@@ -88,4 +102,6 @@ function main() {
   });
 }
 
-main();
+if ((require: any).main === module) {
+  main();
+}

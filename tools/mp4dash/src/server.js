@@ -1,12 +1,17 @@
-import assert from 'assert';
+/*
+ * @flow
+ */
+
+import invariant from 'assert';
 import http from 'http';
 import process from 'process';
 import url from 'url';
 import createLog from 'silk-log';
 
-import connectToSocketIO from './socketio';
-import SegmentProvider from './segment_provider';
 import config from './config';
+import connectToSocketIO from './socketio';
+import { getInitSegment } from './segment_provider';
+import SegmentProviderSocketIo from './segment_provider_socketio';
 
 const log = createLog('server');
 
@@ -17,7 +22,7 @@ function parseRange(request): [?number, ?number] {
   if (!range) {
     return [0, null];
   }
-  assert.strictEqual(range.indexOf('bytes='), 0);
+  invariant.strictEqual(range.indexOf('bytes='), 0);
   range = range.slice('bytes='.length);
   let [startStr, endStr] = range.split('-');
   let start = null;
@@ -35,24 +40,25 @@ function parseRange(request): [?number, ?number] {
   return [start, end];
 }
 
-function handleOpenEndRequest(provider, request, response, offset) {
+function handleOpenEndRequest(provider, request, response, offset): void {
   log.info(`handleOpenEndRequest(${offset})`);
-  if (offset === null) {
-    offset = 0;
-    response.writeHead(200, {
-      'content-type': 'video/mp4',
-      'content-length': PRETEND_CONTENT_LENGTH,
-    });
-  } else {
+  if (typeof offset === 'number') {
     response.writeHead(206, {
       'content-type': 'video/mp4',
       'content-length': PRETEND_CONTENT_LENGTH - offset,
       'content-range': `bytes ${offset}-${PRETEND_CONTENT_LENGTH - 1}/${PRETEND_CONTENT_LENGTH}`,
     });
+  } else {
+    offset = 0;
+    response.writeHead(200, {
+      'content-type': 'video/mp4',
+      'content-length': PRETEND_CONTENT_LENGTH,
+    });
   }
 
   let totalBytesWritten = 0;
   let writeSegmentToResponse = (segment) => {
+    invariant(typeof offset === 'number');
     let buffer = segment.buffer;
     if (segment.offset + buffer.length <= offset) {
       log.info(`  ignoring segment #${segment.seqno} at ${segment.offset}-${segment.offset + buffer.length} (length ${buffer.length})`);
@@ -71,8 +77,6 @@ function handleOpenEndRequest(provider, request, response, offset) {
       totalBytesWritten += buffer.length;
     });
   };
-  // Write all the already existing and any upcoming segments to the response.
-  provider.segments.forEach(writeSegmentToResponse);
   provider.on('segment', writeSegmentToResponse);
 
   // ...until the other side has enough.
@@ -86,13 +90,13 @@ function handleOpenEndRequest(provider, request, response, offset) {
   });
 }
 
-function handleRangeRequest(provider, request, response, start, end) {
+function handleRangeRequest(provider, request, response, start, end): void {
   log.info(`handleRangeRequest(${start}, ${end})`);
   start = start || 0;
   let segment = provider.findSegmentClosestToOffset(start);
   if (end) {
     // TODO probably have to fix that
-    assert(
+    invariant(
       end - start + 1 < segment.buffer.length,
       'Range request must be satisfiable within a single segment'
     );
@@ -121,7 +125,7 @@ function handleRangeRequest(provider, request, response, start, end) {
 
 function handleRequest(request, response, socket) {
   log.info('Incoming request', request.method, request.url, request.headers.range);
-  assert.strictEqual(request.method, 'GET');
+  invariant.strictEqual(request.method, 'GET');
   let urlInfo = url.parse(request.url);
   let [deviceId, extension] = urlInfo.pathname.split('.');
   if (extension !== 'mp4') {
@@ -136,12 +140,12 @@ function handleRequest(request, response, socket) {
   if (deviceId === 'default') {
     deviceId = config.deviceId;
   }
-  let provider = SegmentProvider.get(socket, deviceId);
+  let provider = SegmentProviderSocketIo.getOrCreate(socket, deviceId);
   let [start, end] = parseRange(request);
-  if (end === null) {
-    handleOpenEndRequest(provider, request, response, start);
-  } else {
+  if (typeof end === 'number') {
     handleRangeRequest(provider, request, response, start, end);
+  } else {
+    handleOpenEndRequest(provider, request, response, start);
   }
 }
 
@@ -156,15 +160,14 @@ function main() {
       log.info('video-stream-delete', message.id);
     });
 
-    let httpServer = http.createServer();
-    httpServer.on('request', (request, response) => {
+    let httpServer = http.createServer((request, response) => {
       handleRequest(request, response, socket);
     });
     httpServer.listen(config.port, '0.0.0.0');
   });
 
   // Prime the init segment.
-  SegmentProvider.getInitSegment();
+  getInitSegment();
 
   process.on('exit', (code) => {
     log.info(`Exiting with code ${code}`);

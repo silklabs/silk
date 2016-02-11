@@ -721,8 +721,11 @@ void bt_discovery_state_changed_cb(bt_discovery_state_t state) {
  */
 void bt_pin_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
     uint32_t cod
-#ifdef QBLUETOOTH
+#ifdef QBLUETOOTH_L
     , uint8_t secure
+#endif
+#ifdef TARGET_GE_MARSHMALLOW
+    , bool min_16_digit
 #endif
   ) {
   ALOGE("bt_pin_request_callback");
@@ -797,7 +800,7 @@ void bt_energy_info_callback(bt_activity_energy_info *energy_info) {
   ALOGE("bt_energy_info_callback");
 }
 
-#ifdef QBLUETOOTH
+#ifdef QBLUETOOTH_L
 /**
  *  Callback invoked when write rssi threshold command complete
  */
@@ -854,7 +857,7 @@ bt_callbacks_t bt_callbacks = {
   bt_dut_mode_recv_callback,
   bt_le_test_mode_callback,
   bt_energy_info_callback,
-#ifdef QBLUETOOTH
+#ifdef QBLUETOOTH_L
   bt_le_lpp_write_rssi_thresh_callback,
   bt_le_lpp_read_rssi_thresh_callback,
   bt_le_lpp_enable_rssi_monitor_callback,
@@ -1674,6 +1677,9 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   NULL, // batchscan_reports_callback
   NULL, // batchscan_threshold_callback
   NULL  // track_adv_event_callback
+#ifdef TARGET_GE_MARSHMALLOW
+ ,NULL  // scan_parameter_setup_completed_callback
+#endif
 };
 
 
@@ -2269,18 +2275,47 @@ int bt_start_scan(char *&saveptr) {
   // This only needs to be done once, I think.
   static bool scanFilterSetup = false;
   if (!scanFilterSetup) {
-    err = gatt->client->set_scan_parameters(kScanModeWindow,
-                                            kScanModeInterval);
+    err = gatt->client->set_scan_parameters(
+#ifdef TARGET_GE_MARSHMALLOW
+      gatt_client_listen_scan_if,
+#endif
+      kScanModeWindow,
+      kScanModeInterval
+    );
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to set scan parameters");
 
     CALL_AND_WAIT(gatt->client->scan_filter_enable(gatt_client_listen_scan_if,
                                                    true),
                   WaitScanFilterEnable);
 
-    static const int kListLogicType = 0x1111111;
     static const int kFilterLogicType = 1;
-    static const int kRssiThreshold = -127;
 
+#ifdef TARGET_GE_MARSHMALLOW
+#pragma message "TODO: These params need to be inspected for accuracy"
+    static const uint16_t kListLogicType = 0x1111;
+    static const int kRssiThreshold = 0x80; // -127, :scream_cat:
+
+    btgatt_filt_param_setup_t filter_parms = {
+      static_cast<uint8_t>(gatt_client_listen_scan_if),
+      ScanFilterActionAdd,
+      kScanFilterIndex,
+      ScanFeatureSelectionAllPass,
+      kListLogicType,
+      kFilterLogicType,
+      kRssiThreshold,
+      kRssiThreshold,
+      ScanDeliveryModeImmediate,
+      kScanLostFoundTimeout,
+      kScanLostFoundTimeout,
+      kScanFoundSightings,
+      1,
+    };
+    CALL_AND_WAIT(
+      gatt->client->scan_filter_param_setup(filter_parms),
+      WaitScanFilterParamSetup);
+#else
+    static const int kListLogicType = 0x1111111;
+    static const int kRssiThreshold = -127;
     CALL_AND_WAIT(
       gatt->client->scan_filter_param_setup(gatt_client_listen_scan_if,
                                             ScanFilterActionAdd,
@@ -2295,7 +2330,7 @@ int bt_start_scan(char *&saveptr) {
                                             kScanLostFoundTimeout,
                                             kScanFoundSightings),
       WaitScanFilterParamSetup);
-
+#endif
     scanFilterSetup = true;
   }
 

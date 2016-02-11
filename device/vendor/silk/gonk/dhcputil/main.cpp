@@ -13,6 +13,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <cutils/properties.h>
 #include <netutils/dhcp.h>
@@ -36,9 +37,13 @@ int main(int argc, char **argv)
     uint32_t ignoredUInt32;
     char *ignoredArray[1] = { NULL };
 
+#ifdef TARGET_GE_MARSHMALLOW
+    int err = dhcp_start(ifname);
+#else
     int err = dhcp_do_request(ifname,
       ignored, ignored, &ignoredUInt32, ignoredArray, ignored,
       &ignoredUInt32, ignored, ignored, ignored);
+#endif
     if (err != 0) {
       printf("%s\n", dhcp_get_errmsg());
       exit(1);
@@ -51,9 +56,13 @@ int main(int argc, char **argv)
     uint32_t ignoredUInt32;
     char *ignoredArray[1] = { NULL };
 
+#ifdef TARGET_GE_MARSHMALLOW
+    int err = dhcp_start_renew(ifname);
+#else
     int err = dhcp_do_request_renew(ifname,
       ignored, ignored, &ignoredUInt32, ignoredArray, ignored,
       &ignoredUInt32, ignored, ignored, ignored);
+#endif
     if (err != 0) {
       printf("%s\n", dhcp_get_errmsg());
       exit(1);

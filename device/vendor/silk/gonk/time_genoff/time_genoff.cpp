@@ -8,6 +8,7 @@
 #define LOG_TAG "silk-time_genoff"
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <linux/rtc.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>

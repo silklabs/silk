@@ -17,6 +17,7 @@
             ],
             "cflags" : [
               "-DANDROID",
+              "<!(echo $SILK_MOVIE_EXTRA_CFLAGS)",
               "-DGL_GLEXT_PROTOTYPES",
               "-DEGL_EGLEXT_PROTOTYPES",
               "-isystem <!(echo $ANDROID_BUILD_TOP/external/skia/include/core)",

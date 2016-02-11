@@ -7,7 +7,7 @@
       ],
       'include_dirs': [
         '<!(node -e "require(\'nan\')")',
-        '<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")'
+        '<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")',
       ],
       'cflags_cc': [
         '-fexceptions',
@@ -35,11 +35,11 @@
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv2_core/include/)',
       ],
       'ldflags': [
-        '-Wl,--no-fatal-warnings'
+        '-Wl,--no-fatal-warnings',
       ],
       "libraries": [
-        '<!(echo $Android_mk__LIBRARIES)'
+        '<!(echo $Android_mk__LIBRARIES)',
       ],
-    }
-  ]
+    },
+  ],
 }

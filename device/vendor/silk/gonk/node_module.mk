@@ -23,8 +23,8 @@
 #    Make can manage dependencies properly.  These libraries will be passed to
 #    bindings.gyp via the environment variable Android_mk__LIBRARIES.
 #
-# 6. external/stlport/libstlport.mk is activated if an alternate STL is not
-#    selected via Android.mk in the usage manner (<= M):
+# 6. stlport_shared is the default STL if an alternate STL is not
+#    selected via Android.mk:
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
@@ -65,8 +65,19 @@ $(error $(LOCAL_PATH)/package.json is missing a "main" attribute)
 endif
 endif
 
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+# M-era default STL handling
+ifeq (,$(strip $(LOCAL_SDK_VERSION)))
+LOCAL_SDK_VERSION := 21
+endif
 ifeq (,$(strip $(LOCAL_NDK_STL_VARIANT)))
--include external/stlport/libstlport.mk
+LOCAL_NDK_STL_VARIANT := stlport_shared
+endif
+else
+# L-era default STL handling
+ifeq (,$(strip $(LOCAL_NDK_STL_VARIANT)))
+include external/stlport/libstlport.mk
+endif
 endif
 
 # Shotgun approach to ensuring that the module is rebuilt when local source

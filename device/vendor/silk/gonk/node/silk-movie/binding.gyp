@@ -7,13 +7,13 @@
         "BootAnimation.cpp",
       ],
       "include_dirs" : [
-        "<!(node -e \"require('nan')\")"
+        "<!(node -e \"require('nan')\")",
       ],
       "conditions": [
         [
           "OS=='android'", {
             "libraries" : [
-              "<!(echo $Android_mk__LIBRARIES)"
+              "<!(echo $Android_mk__LIBRARIES)",
             ],
             "cflags" : [
               "-DANDROID",
@@ -26,11 +26,11 @@
               "-isystem <!(echo $ANDROID_BUILD_TOP/frameworks/native/include)",
               "-isystem <!(echo $ANDROID_BUILD_TOP/frameworks/native/opengl/include)",
               "-isystem <!(echo $ANDROID_BUILD_TOP/hardware/libhardware/include)",
-              "-isystem <!(echo $ANDROID_BUILD_TOP/system/core/include)"
-            ]
-          }
-        ]
-      ]
+              "-isystem <!(echo $ANDROID_BUILD_TOP/system/core/include)",
+            ],
+          },
+        ],
+      ],
     },
     {
       "target_name": "action_after_build",
@@ -39,9 +39,9 @@
       "copies": [
         {
           "files": [ "<(PRODUCT_DIR)/silk-movie.node" ],
-          "destination": "."
-        }
-      ]
-    }
-  ]
+          "destination": ".",
+        },
+      ],
+    },
+  ],
 }

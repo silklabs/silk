@@ -6,7 +6,6 @@ import { Link } from 'react-router';
 import Api from '../libraries/Api';
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
-import Reports from '../libraries/CrashReports';
 
 import version from 'silk-core-version';
 
@@ -33,20 +32,9 @@ const styles = {
 };
 
 export class OnlineCamera extends React.Component {
-  state = { crashesState: 'default' };
-
   constructor() {
     super();
     this.speakText = '';
-  }
-
-  componentWillMount() {
-    Reports.findByDeviceId(this.deviceId)
-      .then(crashes => {
-        let crashesState = crashes.some(c => !c.old) ? 'danger' : 'info';
-        this.setState({ crashesState });
-      })
-      .catch(err => console.error('Failed to fetch crash reports:', err));
   }
 
   get deviceId() {
@@ -73,11 +61,6 @@ export class OnlineCamera extends React.Component {
               <Link to={`/diag/${this.deviceId}`}>
                 <Button bsSize="large" bsStyle="info">
                   <Glyphicon glyph="info-sign" style={styles.glyphicon} />
-                </Button>
-              </Link>
-              <Link to={`/crashes/${this.deviceId}`}>
-                <Button bsSize="large" bsStyle={this.state.crashesState}>
-                  <Glyphicon glyph="fire" style={styles.glyphicon} />
                 </Button>
               </Link>
               <Link to={`/avpipeline/${this.deviceId}`}>

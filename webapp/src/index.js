@@ -33,7 +33,6 @@ import AudioStudio from './components/AudioStudio';
 import AVPipeline from './components/AVPipeline';
 import CameraVideo from './components/CameraVideo';
 import CameraVideoMSE from './components/CameraVideoMSE';
-import CrashReports from './components/CrashReports';
 import FindCrashById from './components/FindCrashById';
 import Diag from './components/Diag';
 import Login from './components/Login';
@@ -75,7 +74,6 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/" component={OnlineCameras} />
         <Route onEnter={loginCheck} path="/avpipeline/:deviceId" component={AVPipeline} />
         <Route onEnter={loginCheck} path="/chunks/:deviceId" component={MissingChunks} />
-        <Route onEnter={loginCheck} path="/crashes/:deviceId" component={CrashReports} />
         <Route onEnter={loginCheck} path="/crashById/:crashId" component={FindCrashById} />
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />

@@ -1,21 +1,21 @@
-From d522fb662d6341b8ace6c79673dc259b5525c423 Mon Sep 17 00:00:00 2001
+From 4de506aaa54fa1eead5284b874ca6f3825a4ad8c Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 5 Feb 2016 22:02:43 -0800
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 97 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- opencv.mk  | 38 ++++++++++++++++++++++++
- 2 files changed, 135 insertions(+)
+ Android.mk | 105 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ opencv.mk  |  38 ++++++++++++++++++++++
+ 2 files changed, 143 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..e57ca2a
+index 0000000..f9578e9
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,105 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -78,8 +78,15 @@ index 0000000..e57ca2a
 +	$(hide) mkdir -p $(@D)
 +	$(hide) ln -sf ../libopencv3_core_intermediates/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@
 +
++ifneq ($(TARGET_GE_MARSHMALLOW),)
++OPENCV3_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.9,arm-linux-androideabi-4.9)
++else
++OPENCV3_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8)
++endif
++
 +OPENCV3_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(OPENCV3_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(OPENCV3_MAKEFILE): OPENCV3_TOOLCHAIN_NAME := $(OPENCV3_TOOLCHAIN_NAME)
 +$(OPENCV3_MAKEFILE): $(LOCAL_PATH)/Android.mk
 +	@echo Configure: $@
 +	$(hide) mkdir -p $(@D)
@@ -93,7 +100,7 @@ index 0000000..e57ca2a
 + -DWITH_OPENEXR=false \
 + -DBUILD_PERF_TESTS=false \
 + -DBUILD_opencv_java=false \
-+ -DANDROID_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8) \
++ -DANDROID_TOOLCHAIN_NAME=$(OPENCV3_TOOLCHAIN_NAME) \
 + -DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
 + -DANDROID_NATIVE_API_LEVEL=19 \
 + -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
@@ -116,7 +123,7 @@ index 0000000..e57ca2a
 +include $(call all-makefiles-under,$(LOCAL_PATH))
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..cb12ec0
+index 0000000..e3d095d
 --- /dev/null
 +++ b/opencv.mk
 @@ -0,0 +1,38 @@
@@ -159,5 +166,5 @@ index 0000000..cb12ec0
 +
 +endif
 -- 
-2.7.0
+1.9.1
 

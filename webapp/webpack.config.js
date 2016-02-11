@@ -1,5 +1,9 @@
-var path = require('path');
-var webpack = require('webpack');
+'use strict';
+
+const path = require('path');
+const webpack = require('webpack');
+
+const EXTERNAL_DIR = path.join(__dirname, 'external');
 
 var config = {
   devServer : {
@@ -21,6 +25,7 @@ var config = {
   },
   resolve: {
     alias : {
+      'fs': path.resolve(__dirname, 'src/shim/fs.js'),
       'react-native': path.resolve(__dirname, 'src', 'shim', 'ReactNative.js'),
       'NativeModules': path.resolve(__dirname, 'src', 'shim', 'NativeModules.js'),
     },
@@ -30,7 +35,12 @@ var config = {
       { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
-        include: require('silk-babeldeps'),
+        include: (filename) => {
+          if (filename.indexOf(EXTERNAL_DIR) === 0) {
+            return false;
+          }
+          return require('silk-babeldeps')(filename);
+        },
         loader: 'babel',
         query: {
           babelrc: false,

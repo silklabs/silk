@@ -37,7 +37,7 @@ export default class GaplessWAVPlayer extends React.Component {
     // successive buffers enqueued quickly could finish decoding in
     // the opposite order that decoding begins, and then be swapped in
     // the playback queue.  This seems unlikely though.
-    this.audioCtx.decodeAudioData(wav).then((buffer) => {
+    this.audioCtx.decodeAudioData(wav, (buffer) => {
       // We decode and prepare the next buffer source so that all we
       // have to do is call |source.start()| below when the previous
       // source finishes.  This was found to reduce gap latency.

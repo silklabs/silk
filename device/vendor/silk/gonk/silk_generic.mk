@@ -61,6 +61,7 @@ SILK_EXT := \
   dnn-googlenet-proto \
   dnn-imagenet-mean \
   dnn-imagenet-dictionary \
+  samsungtv \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

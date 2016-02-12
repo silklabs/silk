@@ -19,10 +19,10 @@ import type { Env, Log } from 'silk-sdk-glue/interface/env';
 
 let log: Log;
 
-const MODEL_PROTO = '/system/silk/media/dnn/model/deploy.prototxt';
-const MODEL_BIN = '/system/silk/media/dnn/model/bvlc_googlenet.caffemodel';
-const MODEL_DICTIONARY = '/system/silk/media/dnn/model/imagenet_dictionary.txt';
-const MODEL_MEAN = '/system/silk/media/dnn/model/imagenet_mean.binaryproto';
+const MODEL_PROTO = 'system/silk/media/dnn/model/deploy.prototxt';
+const MODEL_BIN = 'system/silk/media/dnn/model/bvlc_googlenet.caffemodel';
+const MODEL_DICTIONARY = 'system/silk/media/dnn/model/imagenet_dictionary.txt';
+const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
 const TOPK = 5; // Return top K predictions for the given image
 
 /**

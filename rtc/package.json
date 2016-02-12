@@ -1,0 +1,28 @@
+{
+  "name": "rtc",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "author": "Silk Labs, Inc",
+  "silkDependencies": {
+    "eslint-config-silk": "/eslint",
+    "silk-flow-bin": "/flow-bin",
+    "silk-log": "/log"
+  },
+  "dependencies": {
+    "event-to-promise": "^0.7.0",
+    "msgpack-lite": "0.1.13"
+  },
+  "devDependencies": {
+    "babel-eslint": "^5.0.0-beta9",
+    "eslint": "^1.10.3",
+    "mocha": "^2.4.5"
+  },
+  "scripts": {
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
+    "lint": "eslint test src",
+    "flow": "flow check",
+    "mocha": "mocha $(find ./test -name '*_test.js')",
+    "test": "npm i silklabs/node-webrtc && npm run lint && npm run mocha && npm run flow"
+  }
+}

@@ -23,7 +23,7 @@ const parser = new ArgumentParser({
   prog: 'silk', // Hard code usage to ensure it works when invoked elsewhere.
   version: require('../package.json').version,
   description: `
-    Silk Developer CLI tools
+    Silk Developer CLI
   `,
 });
 

@@ -1,0 +1,64 @@
+#!/bin/bash -e
+#
+# Ships cli/ and sdk/ to npmjs and github
+#
+# NOTE: Run this script mindfully.  It'll ship whatever you have in your
+# current workspace to the world...
+#
+
+if [[ $(who wants cookies | cut -f1 -d\ ) != 'mvines' ]]; then
+  echo Want to publish? Give mvines a cookie.
+  exit 1
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo You have a dirty tree.
+  exit 1
+fi
+
+if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
+  echo "You don't know what you're doing."
+  exit 1
+fi
+
+
+shopt -s nullglob
+cd $(dirname $(readlink -f $0))/..
+
+set -x
+for dir in sdk cli; do
+  pushd $dir
+  npm install .
+  popd
+done
+
+for dir in sdk cli; do
+  pushd $dir
+
+  name=$(node -p "require('./package.json').name")
+  version=$(node -p "require('./package.json').version")
+  tarball=${name}-${version}.tgz
+  repo=git@github.com:silklabs/node-${name}.git
+
+  rm -rf package/ repo/ $tarball
+
+  # To npmjs
+  npm publish .
+
+  # To github
+  # (TODO: this goes away once we start getting external interest/contributors)
+  npm pack
+  tar zxvf $tarball
+  git clone $repo repo
+  cd repo
+  [ -z * ] || git rm -r *
+  cp -ra ../package/* .
+  git add *
+  git commit -m "v${version}"
+  git tag "v${version}"
+  git push
+  git push --tags
+  cd ..
+
+  popd
+done

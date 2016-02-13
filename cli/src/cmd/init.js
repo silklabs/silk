@@ -5,6 +5,7 @@
  */
 import invariant from 'assert';
 import path from 'path';
+import childProcess from 'child_process';
 
 import * as prompt from 'prompt';
 import mkdirp from 'mkdirp-promise';
@@ -114,11 +115,9 @@ export let init = {
       pkg.dependencies = {};
     }
 
-    // TODO: until we have published the 'silk' package to npmjs.com,
-    // simply reference it locally.
-    const silkPath = path.resolve(__dirname, '../../../sdk');
-    await mkdirp(path.join(argv.destination, 'node_modules'));
-    await fs.symlink(silkPath, path.join(argv.destination, 'node_modules', 'silk'));
+    if (!pkg.dependencies.silk) {
+      pkg.dependencies.silk = '^0.12.0';
+    }
 
     await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
 
@@ -128,5 +127,19 @@ export let init = {
         'silk/cli',
       ],
     }, null, 2));
+
+    console.log('Running npm install...');
+    let npmResult = childProcess.spawnSync(
+      'npm', [ 'install' ],
+      {
+        cwd: argv.destination,
+        stdio: 'inherit',
+      }
+    );
+    if (npmResult.error || npmResult.status !== 0) {
+      console.log('\n\n...npm install failed with:',
+        npmResult.error || `error: ${npmResult.status}`);
+      process.exit(1);
+    }
   },
 };

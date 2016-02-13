@@ -637,6 +637,27 @@ export default class Camera extends EventEmitter {
     this.emit('ready');
   }
 
+  _startSimMicCapture() {
+    const mic = require('mic');
+    // TODO: get audio params from global config
+    let simMic = mic({
+      bitwidth: 16,
+      channels: 1,
+      encoding: 'signed-integer',
+      endian: 'little',
+      rate: 8000,
+    });
+    let micInput = simMic.getAudioStream();
+    micInput.on('data', (data) => {
+      this.emit('mic-data', { when: Date.now(), frames: data });
+    });
+    micInput.on('error', (error) => {
+      // TODO: what should we do on errors ...
+      log.error(`Sim mic error: ${error}`);
+    });
+    simMic.start();
+  }
+
   /**
    * @private
    */
@@ -662,6 +683,7 @@ export default class Camera extends EventEmitter {
       process.nextTick(() => {
         this._initCVVideoCapture();
         this._initStartPreview();
+        this._startSimMicCapture();
       });
       return;
     }

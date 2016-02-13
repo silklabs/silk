@@ -8,6 +8,7 @@ OSX:
 $ brew tap homebrew/science
 $ brew install opencv
 $ brew install pkg-config
+$ brew install sox
 ```
 
 Linux:

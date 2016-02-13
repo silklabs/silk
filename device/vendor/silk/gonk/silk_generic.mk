@@ -57,6 +57,7 @@ SILK_EXT := \
   oksilk-pocketsphinx-dict \
   oksilk-pocketsphinx-grammar \
   oksilk-hotkeyword-sound \
+  dnn \
   dnn-googlenet-model \
   dnn-googlenet-proto \
   dnn-imagenet-mean \

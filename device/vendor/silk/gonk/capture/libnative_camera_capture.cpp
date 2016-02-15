@@ -119,12 +119,20 @@ PreviewFrameGrabber::PreviewFrameGrabber(CameraCallback cameraCallback,
   mCpuConsumer->setFrameAvailableListener(this);
 
   mDeathRecipient = new DeathRecipient(this);
+#ifdef TARGET_GE_MARSHMALLOW
+  IInterface::asBinder(mCapture)->linkToDeath(mDeathRecipient);
+#else
   mCapture->asBinder()->linkToDeath(mDeathRecipient);
+#endif
 }
 
 PreviewFrameGrabber::~PreviewFrameGrabber() {
   binderDied();
+#ifdef TARGET_GE_MARSHMALLOW
+  IInterface::asBinder(mCapture)->unlinkToDeath(mDeathRecipient);
+#else
   mCapture->asBinder()->unlinkToDeath(mDeathRecipient);
+#endif
   mCapture->closeCamera();
 }
 

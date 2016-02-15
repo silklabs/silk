@@ -1,0 +1,24 @@
+From d8c4ea358288793152a68769a5479f44b5f5d67d Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Mon, 19 Oct 2015 16:47:11 -0700
+Subject: [PATCH] Add stub func to MediaSource needed by platform
+
+---
+ include/media/stagefright/MediaSource.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/media/stagefright/MediaSource.h b/include/media/stagefright/MediaSource.h
+index a653db9..52528a0 100644
+--- a/include/media/stagefright/MediaSource.h
++++ b/include/media/stagefright/MediaSource.h
+@@ -58,6 +58,7 @@ struct MediaSource : public virtual RefBase {
+     // but should be prepared for buffers of the new configuration.
+     virtual status_t read(
+             MediaBuffer **buffer, const ReadOptions *options = NULL) = 0;
++    virtual void vtableStub() {}
+ 
+     // Options that modify read() behaviour. The default is to
+     // a) not request a seek
+-- 
+2.5.0
+

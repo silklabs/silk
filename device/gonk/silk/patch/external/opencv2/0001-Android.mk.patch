@@ -1,16 +1,16 @@
-From 578eef74469f27c9835ad56ed892297dc05f2ec3 Mon Sep 17 00:00:00 2001
+From 2f4602eec62a33e3f9f7c70a0c53dfe096cf01ac Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 7 Aug 2015 12:00:23 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                                | 100 ++++++++++++++++++++++++++++++
+ Android.mk                                | 107 ++++++++++++++++++++++++++++++
  apps/Android.mk                           |   1 +
  apps/haartraining/Android.mk              |  16 +++++
  apps/traincascade/Android.mk              |  19 ++++++
- opencv.mk                                 |  39 ++++++++++++
+ opencv.mk                                 |  39 +++++++++++
  platforms/android/android.toolchain.cmake |  17 ++++-
- 6 files changed, 190 insertions(+), 2 deletions(-)
+ 6 files changed, 197 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 apps/Android.mk
  create mode 100644 apps/haartraining/Android.mk
@@ -19,10 +19,10 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..5debec0
+index 0000000..cbff6c5
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,107 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -85,8 +85,15 @@ index 0000000..5debec0
 +	$(hide) mkdir -p $(@D)
 +	$(hide) ln -sf ../libopencv2_core_intermediates/sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv2_,libopencv_,$(notdir $@)) $@
 +
++ifneq ($(TARGET_GE_MARSHMALLOW),)
++OPENCV_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.9,arm-linux-androideabi-4.9)
++else
++OPENCV_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8)
++endif
++
 +OPENCV_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(OPENCV_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++$(OPENCV_MAKEFILE): OPENCV_TOOLCHAIN_NAME := $(OPENCV_TOOLCHAIN_NAME)
 +$(OPENCV_MAKEFILE): $(LOCAL_PATH)/Android.mk
 +	@echo Configure: $@
 +	$(hide) mkdir -p $(@D)
@@ -99,7 +106,7 @@ index 0000000..5debec0
 + -DWITH_OPENEXR=false \
 + -DBUILD_PERF_TESTS=false \
 + -DBUILD_opencv_java=false \
-+ -DANDROID_TOOLCHAIN_NAME=$(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8) \
++ -DANDROID_TOOLCHAIN_NAME=$(OPENCV_TOOLCHAIN_NAME) \
 + -DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
 + -DANDROID_NATIVE_API_LEVEL=19 \
 + -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
@@ -272,5 +279,5 @@ index b540ea4..9dbd3d8 100644
   # this is *required* to use the following linker flags that routes around
   # a CPU bug in some Cortex-A8 implementations:
 -- 
-2.7.0
+1.9.1
 

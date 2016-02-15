@@ -44,6 +44,7 @@ class TraceConverter:
   value_lines = []
   last_frame = -1
   width = "{8}"
+  spacing = ""
 
   def __init__(self):
     self.UpdateAbiRegexes()
@@ -52,6 +53,7 @@ class TraceConverter:
     "arm": "r0|r1|r2|r3|r4|r5|r6|r7|r8|r9|sl|fp|ip|sp|lr|pc|cpsr",
     "arm64": "x0|x1|x2|x3|x4|x5|x6|x7|x8|x9|x10|x11|x12|x13|x14|x15|x16|x17|x18|x19|x20|x21|x22|x23|x24|x25|x26|x27|x28|x29|x30|sp|pc|pstate",
     "mips": "zr|at|v0|v1|a0|a1|a2|a3|t0|t1|t2|t3|t4|t5|t6|t7|s0|s1|s2|s3|s4|s5|s6|s7|t8|t9|k0|k1|gp|sp|s8|ra|hi|lo|bva|epc",
+    "mips64": "zr|at|v0|v1|a0|a1|a2|a3|a4|a5|a6|a7|t0|t1|t2|t3|s0|s1|s2|s3|s4|s5|s6|s7|t8|t9|k0|k1|gp|sp|s8|ra|hi|lo|bva|epc",
     "x86": "eax|ebx|ecx|edx|esi|edi|x?cs|x?ds|x?es|x?fs|x?ss|eip|ebp|esp|flags",
     "x86_64": "rax|rbx|rcx|rdx|rsi|rdi|r8|r9|r10|r11|r12|r13|r14|r15|cs|ss|rip|rbp|rsp|eflags",
   }
@@ -59,8 +61,10 @@ class TraceConverter:
   def UpdateAbiRegexes(self):
     if symbol.ARCH == "arm64" or symbol.ARCH == "mips64" or symbol.ARCH == "x86_64":
       self.width = "{16}"
+      self.spacing = "        "
     else:
       self.width = "{8}"
+      self.spacing = ""
 
     self.register_line = re.compile("(([ ]*\\b(" + self.register_names[symbol.ARCH] + ")\\b +[0-9a-f]" + self.width + "){2,5})")
 
@@ -104,12 +108,9 @@ class TraceConverter:
   def PrintTraceLines(self, trace_lines):
     """Print back trace."""
     maxlen = max(map(lambda tl: len(tl[1]), trace_lines))
-    spacing = ""
-    if symbol.ARCH == "arm64" or symbol.ARCH == "mips64" or symbol.ARCH == "x86_64":
-      spacing = "        "
     print
     print "Stack Trace:"
-    print "  RELADDR   " + spacing + "FUNCTION".ljust(maxlen) + "  FILE:LINE"
+    print "  RELADDR   " + self.spacing + "FUNCTION".ljust(maxlen) + "  FILE:LINE"
     for tl in self.trace_lines:
       (addr, symbol_with_offset, location) = tl
       print "  %8s  %s  %s" % (addr, symbol_with_offset.ljust(maxlen), location)
@@ -120,7 +121,7 @@ class TraceConverter:
     maxlen = max(map(lambda tl: len(tl[2]), self.value_lines))
     print
     print "Stack Data:"
-    print "  ADDR      VALUE     " + "FUNCTION".ljust(maxlen) + "  FILE:LINE"
+    print "  ADDR      " + self.spacing + "VALUE     " + "FUNCTION".ljust(maxlen) + "  FILE:LINE"
     for vl in self.value_lines:
       (addr, value, symbol_with_offset, location) = vl
       print "  %8s  %8s  %s  %s" % (addr, value, symbol_with_offset.ljust(maxlen), location)
@@ -256,12 +257,12 @@ class TraceConverter:
 class RegisterPatternTests(unittest.TestCase):
   def assert_register_matches(self, abi, example_crash, stupid_pattern):
     tc = TraceConverter()
-    symbol.ARCH = abi
-    tc.UpdateAbiRegexes()
     for line in example_crash.split('\n'):
+      tc.ProcessLine(line)
       is_register = (re.search(stupid_pattern, line) is not None)
       matched = (tc.register_line.search(line) is not None)
       self.assertEquals(matched, is_register, line)
+    tc.PrintOutput(tc.trace_lines, tc.value_lines)
 
   def test_arm_registers(self):
     self.assert_register_matches("arm", example_crashes.arm, '\\b(r0|r4|r8|ip)\\b')

@@ -12,4 +12,9 @@ LOCAL_SHARED_LIBRARIES += \
   libskia \
   libui \
   libutils
+
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+export SILK_MOVIE_EXTRA_CFLAGS=-DM_FILEMAP
+endif
+
 include $(BUILD_NODE_MODULE)

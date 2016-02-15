@@ -1,7 +1,8 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE       := player
+LOCAL_MODULE       := silk-player
+LOCAL_MODULE_STEM  := player
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := player.cpp
@@ -11,7 +12,8 @@ LOCAL_C_INCLUDES := frameworks/av/include
 include $(BUILD_SILK_EXECUTABLE)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE       := volume
+LOCAL_MODULE       := silk-volume
+LOCAL_MODULE_STEM  := volume
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := volume.cpp

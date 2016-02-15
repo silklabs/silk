@@ -37,7 +37,11 @@ public:
     Parcel data, reply;
     data.writeInterfaceToken(IOpenCVCameraCapture::getInterfaceDescriptor());
     data.writeInt32(cameraId);
+#ifdef TARGET_GE_MARSHMALLOW
+    data.writeStrongBinder(IInterface::asBinder(producer));
+#else
     data.writeStrongBinder(producer->asBinder());
+#endif
     remote()->transact(INIT_CAMERA, data, &reply);
     return reply.readInt32();
   }

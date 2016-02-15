@@ -2,6 +2,28 @@
 
 # repo projects from base gonk
 /Makefile
+/art/
+/cts/
+/dalvik/
+/developers/
+/development
+!/development/tools/emulator/skins/HVGA
+!/development/scripts/example_crashes.py
+!/development/scripts/stack
+!/development/scripts/stack_core.py
+!/development/scripts/symbol.py
+/packages/
+/libcore/
+/gonk/msm8956/
+/platform_testing/
+/prebuilts/devtools/
+/prebuilts/eclipse/
+/prebuilts/gradle-plugin/
+/prebuilts/maven_repo/
+/prebuilts/sdk/
+/prebuilts/tools/
+/docs/
+/pdk/
 /abi/
 /bionic/
 /bootable/

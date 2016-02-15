@@ -12,18 +12,17 @@
         [
           "OS=='android'", {
             "libraries" : [
-              "<!(echo $Android_mk__LIBRARIES)"
+              "<!(echo $Android_mk__LIBRARIES)",
             ],
             "cflags" : [
               "-DANDROID",
             ],
             "include_dirs": [
-              "<!(node -e \"require('nan')\")",
+              "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
             ],
-          }
-        ]
-      ]
-
-    }
-  ]
+          },
+        ],
+      ],
+    },
+  ],
 }

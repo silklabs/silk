@@ -83,15 +83,15 @@ SILK_INIT := \
   silk-props.json \
 
 SILK_GONK_PROGIES := \
-  bledroid \
-  capture \
+  silk-bledroid \
+  silk-capture \
   libnative_camera_capture \
-  dhcputil \
-  ir \
-  lights \
-  player \
-  volume \
-  wpad \
+  silk-dhcputil \
+  silk-ir \
+  silk-lights \
+  silk-player \
+  silk-volume \
+  silk-wpad \
   silk-sensors \
   silk-time_genoff \
   silk-tts \

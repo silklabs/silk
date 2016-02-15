@@ -23,8 +23,8 @@
 #    Make can manage dependencies properly.  These libraries will be passed to
 #    bindings.gyp via the environment variable Android_mk__LIBRARIES.
 #
-# 6. external/stlport/libstlport.mk is activated if an alternate STL is not
-#    selected via Android.mk in the usage manner:
+# 6. stlport_shared is the default STL if an alternate STL is not
+#    selected via Android.mk:
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
@@ -65,8 +65,19 @@ $(error $(LOCAL_PATH)/package.json is missing a "main" attribute)
 endif
 endif
 
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+# M-era default STL handling
+ifeq (,$(strip $(LOCAL_SDK_VERSION)))
+LOCAL_SDK_VERSION := 21
+endif
+ifeq (,$(strip $(LOCAL_NDK_STL_VARIANT)))
+LOCAL_NDK_STL_VARIANT := stlport_shared
+endif
+else
+# L-era default STL handling
 ifeq (,$(strip $(LOCAL_NDK_STL_VARIANT)))
 include external/stlport/libstlport.mk
+endif
 endif
 
 # Shotgun approach to ensuring that the module is rebuilt when local source
@@ -82,6 +93,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f \
 )
 
 LOCAL_32_BIT_ONLY := true
+LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
 ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
@@ -171,8 +183,8 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
     export TARGET_OUT_HEADERS="$(TARGET_OUT_HEADERS)" &&  \
     export NPM_CONFIG_ARCH=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) &&  \
     export NPM_CONFIG_PLATFORM=android && \
-    export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
-    export CXX="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
+    export CC="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
+    export CXX="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
     export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$LD_FLAGS" && \
     export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
     export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \

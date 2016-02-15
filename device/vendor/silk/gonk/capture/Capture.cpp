@@ -380,8 +380,15 @@ sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
   format->setFloat("frame-rate", sFPS);
   format->setInt32("i-frame-interval", sIFrameIntervalSec);
 
-  return MediaCodecSource::Create(looper, format, source,
-    sUseMetaDataMode ? MediaCodecSource::FLAG_USE_METADATA_INPUT : 0);
+  return MediaCodecSource::Create(
+    looper,
+    format,
+    source,
+#ifdef TARGET_GE_MARSHMALLOW
+    NULL,
+#endif
+    sUseMetaDataMode ? MediaCodecSource::FLAG_USE_METADATA_INPUT : 0
+  );
 }
 
 sp<MediaSource> prepareAudioEncoder(const sp<ALooper>& looper,
@@ -468,7 +475,15 @@ status_t CaptureCommand::initThread() {
       sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
 
       sp<MediaSource> audioSource(
-          new AudioSource(AUDIO_SOURCE_MIC, sAudioSampleRate, sAudioChannels));
+          new AudioSource(
+            AUDIO_SOURCE_MIC,
+#ifdef TARGET_GE_MARSHMALLOW
+            String16("silk-capture"),
+#endif
+            sAudioSampleRate,
+            sAudioChannels
+          )
+      );
       sp<MediaSource> audioSourceEmitter =
           new AudioSourceEmitter(&mChannel, audioSource);
       sp<MediaSource> audioMutter =

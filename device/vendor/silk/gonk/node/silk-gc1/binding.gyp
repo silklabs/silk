@@ -6,7 +6,7 @@
         "bindings.cpp",
       ],
       "include_dirs" : [
-        "<!(node -e \"require('nan')\")"
+        "<!(node -e \"require('nan')\")",
       ],
     },
     {
@@ -16,9 +16,9 @@
       "copies": [
         {
           "files": [ "<(PRODUCT_DIR)/silk-gc1.node" ],
-          "destination": "."
-        }
-      ]
-    }
-  ]
+          "destination": ".",
+        },
+      ],
+    },
+  ],
 }

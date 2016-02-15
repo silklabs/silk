@@ -292,7 +292,11 @@ bool AnimationThread::threadLoop()
     String8 desString((char const*)descMap->getDataPtr(),
             descMap->getDataLength());
     char const* s = desString.string();
+#ifdef M_FILEMAP
+    delete descMap;
+#else
     descMap->release();
+#endif
 
     Animation animation;
 
@@ -353,7 +357,11 @@ bool AnimationThread::threadLoop()
         if (leaf.size() > 0) {
             for (size_t j=0 ; j<pcount ; j++) {
                 if (path == animation.parts[j].path) {
+#ifdef M_FILEMAP
+                    uint16_t method;
+#else
                     int method;
+#endif
                     // supports only stored png files
                     if (mZip->getEntryInfo(entry, &method, 0, 0, 0, 0, 0)) {
                         if (method == ZipFileRO::kCompressStored) {
@@ -472,7 +480,11 @@ bool AnimationThread::threadLoop()
         }
         // free file maps for this part
         for (size_t j=0 ; j<fcount ; j++) {
+#ifdef M_FILEMAP
+            delete part.frames[j].map;
+#else
             part.frames[j].map->release();
+#endif
         }
     }
 

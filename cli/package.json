@@ -15,7 +15,7 @@
     "lint": "eslint src test main.js bootstrap",
     "flow": "flow check",
     "postinstall": "./bootstrap",
-    "posttest": "npm run lint && npm run flow",
+    "posttest": "./posttest",
     "prepublish": "PATH=$PWD/node_modules/.silk-node/bin:$PATH babel --presets $(./babelconfig.js preset) -d build src"
   },
   "bin": {

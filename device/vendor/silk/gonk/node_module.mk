@@ -183,8 +183,8 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
     export TARGET_OUT_HEADERS="$(TARGET_OUT_HEADERS)" &&  \
     export NPM_CONFIG_ARCH=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) &&  \
     export NPM_CONFIG_PLATFORM=android && \
-    export CC="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
-    export CXX="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
+    export CC="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
+    export CXX="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
     export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$LD_FLAGS" && \
     export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
     export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \

@@ -17,39 +17,87 @@ const LINEAR_SCALE = { min: 0, max: 0.05 };
 const DECIBEL_SCALE = { min: -80, max: -20 };
 
 const ColorModels = {
-  // This model is broken --- low-energy values are supposed to be
-  // colored red, but show up as black.
   hsv: {
-    red: { l1: 2 / 3, l2: 85 / 100, u1: 1 / 5, u2: 1 / 3 },
-    green: { l1: 0, l2: 1 / 5, u1: 1 / 2, u2: 2 / 3 },
-    blue: { l1: 1 / 3, l2: 1 / 2, u1: 85 / 100, u2: 1 },
+    //red: { l1: 2 / 3, l2: 85 / 100, u1: 1 / 5, u2: 1 / 3 },
+    r: {
+      L: 1, M: 0, R: 1,
+      lm: 1 / 5, m1: 1 / 3,
+      m2: 2 / 3, mr: 85 / 100,
+    },
+    //green: { l1: 0, l2: 1 / 5, u1: 1 / 2, u2: 2 / 3 },
+    g: {
+      L: 0, M: 1, R: 0,
+      lm: 0, m1: 1 / 5,
+      m2: 1 / 2, mr: 2 / 3,
+    },
+    //blue: { l1: 1 / 3, l2: 1 / 2, u1: 85 / 100, u2: 1 },
+    b: {
+      L: 0, M: 1, R: 0,
+      lm: 1 / 3, m1: 1 / 2,
+      m2: 85 / 100, mr: 1,
+    },
   },
   jet: {
-    red: { l1: 3 / 8, l2: 5 / 8, u1: 7 / 8, u2: 9 / 8 },
-    green: { l1: 1 / 8, l2: 3 / 8, u1: 5 / 8, u2: 7 / 8 },
-    blue: { l1: -1 / 8, l2: 1 / 8, u1: 3 / 8, u2: 5 / 8 },
+    r: {
+      //red: { l1: 3 / 8, l2: 5 / 8, u1: 7 / 8, u2: 9 / 8 },
+      L: 0, M: 1, R: 0,
+      lm: 3 / 8, m1: 5 / 8,
+      m2: 7 / 8, mr: 9 / 8,
+    },
+    g: {
+      //green: { l1: 1 / 8, l2: 3 / 8, u1: 5 / 8, u2: 7 / 8 },
+      L: 0, M: 1, R: 0,
+      lm: 1 / 8, m1: 3 / 8,
+      m2: 5 / 8, mr: 7 / 8,
+    },
+    b: {
+      //blue: { l1: -1 / 8, l2: 1 / 8, u1: 3 / 8, u2: 5 / 8 },
+      L: 0, M: 1, R: 0,
+      lm: -1 / 8, m1: 1 / 8,
+      m2: 3 / 8, mr: 5 / 8,
+    },
+  },
+  grayscale: {
+    r: {
+      L: 1, M: 0, R: 0,
+      lm: 0, m1: 1.0, m2: 1.0, mr: 1.0
+    },
+    g: {
+      L: 1, M: 0, R: 0,
+      lm: 0, m1: 1.0, m2: 1.0, mr: 1.0
+    },
+    b: {
+      L: 1, M: 0, R: 0,
+      lm: 0, m1: 1.0, m2: 1.0, mr: 1.0
+    },
   },
 };
 
 let computeColor = (I, model) => {
-  let { l1, l2, u1, u2 } = model;
-  if (l1 < I && I < l2) {
-    return (I - l1) / (l2 - l1);
+  let { L, M, R, lm, m1, m2, mr } = model;
+  if (I < lm) {
+    return L;
   }
-  if (l2 <= I && I <= u1) {
-    return 1;
+  if (lm <= I && I <= m1) {
+    return L + (M - L) * (I - lm) / (m1 - lm);
   }
-  if (u1 < I && I < u2) {
-    return (u2 - I) / (u2 - u1);
+  if (m1 < I && I < m2) {
+    return M;
   }
-  return 0;
+  if (m2 <= I && I <= mr) {
+    return M + (R - M) * (I - m2) / (mr - m2);
+  }
+  if (mr < I) {
+    return R;
+  }
+  throw `Intensity ${I} should have been mapped`;
 };
 
 let cssColor = (I, model) => {
   I = Math.min(Math.max(I, 0), 1.0);
-  let r = (255 * computeColor(I, model.red)) | 0;
-  let g = (255 * computeColor(I, model.green)) | 0;
-  let b = (255 * computeColor(I, model.blue)) | 0;
+  let r = (255 * computeColor(I, model.r)) | 0;
+  let g = (255 * computeColor(I, model.g)) | 0;
+  let b = (255 * computeColor(I, model.b)) | 0;
   return `rgb(${r},${g},${b})`;
 };
 
@@ -115,7 +163,6 @@ export default class AudioVisualizer extends React.Component {
       ctx: null,
     },
   };
-  colorModel = null;
   spectrogramLinear = null;
   spectrogramDecibel = null;
 
@@ -140,7 +187,6 @@ export default class AudioVisualizer extends React.Component {
       this.canvas[canvasRef].canvas = canvas;
       this.canvas[canvasRef].ctx = canvas.getContext('2d');
     }
-    this.colorModel = ColorModels[this.props.colorModel] || ColorModels.jet;
     this.spectrogramLinear = new Spectrogram(this.props.spectrogramFrames,
                                              this.analyzer.frequencyBinCount);
     this.spectrogramDecibel = new Spectrogram(this.props.spectrogramFrames,
@@ -154,6 +200,10 @@ export default class AudioVisualizer extends React.Component {
 
   appendSamples(samples) {
     this.analyzer.appendSamples(samples);
+  }
+
+  get _colorModel() {
+    return ColorModels[this.props.colorModel] || ColorModels.jet;
   }
 
   get _nyquistFrequency() {
@@ -200,7 +250,7 @@ export default class AudioVisualizer extends React.Component {
       let i = spect.length - 1;
       for (let freqBin = 0; freqBin < mags.length; ++freqBin) {
         let mag = scale * (mags[freqBin] - min);
-        ctx.fillStyle = cssColor(mag, this.colorModel);
+        ctx.fillStyle = cssColor(mag, this._colorModel);
         ctx.fillRect(i * frameWidth, freqBin * binHeight,
                      frameWidth - 1, binHeight);
       }

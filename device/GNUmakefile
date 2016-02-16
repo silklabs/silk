@@ -253,6 +253,7 @@ ifndef NO_REPOCACHE
 REPOCACHE_URLPREFIX := https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/repocache-
 
 REPOCACHE_base := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-base.tgz
+REPOCACHE_base.msm8956 := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-base.msm8956.tgz
 ifeq ($(REPO_INIT_HOST),linux)
 REPOCACHE_410c := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-410c.tgz
 REPOCACHE_hammerhead := $(REPOCACHE_URLPREFIX)$(REPO_INIT_HOST)-hammerhead.tgz

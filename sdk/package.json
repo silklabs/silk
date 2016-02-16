@@ -1,6 +1,6 @@
 {
   "name": "silk",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Silk SDK",
   "repository": "silklabs/node-silk",
   "bugs": {
@@ -11,6 +11,10 @@
   },
   "author": "Silk Labs Inc.",
   "license": "MIT",
+  "keywords": [
+    "silk",
+    "iot"
+  ],
   "dependencies": {
     "node-inspector": "0.12.5"
   },

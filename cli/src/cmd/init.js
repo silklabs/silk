@@ -116,7 +116,7 @@ export let init = {
     }
 
     if (!pkg.dependencies.silk) {
-      pkg.dependencies.silk = '^0.12.0';
+      pkg.dependencies.silk = '>=0.13.0 <1.0.0';
     }
 
     await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
@@ -128,9 +128,9 @@ export let init = {
       ],
     }, null, 2));
 
-    console.log('Running npm install...');
+    console.log('Running: npm install silk...');
     let npmResult = childProcess.spawnSync(
-      'npm', [ 'install' ],
+      'npm', [ 'install', 'silk' ],
       {
         cwd: argv.destination,
         stdio: 'inherit',

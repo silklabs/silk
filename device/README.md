@@ -46,6 +46,8 @@ hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 30g -volna
 0. Install [Java SDK 7.x](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
 0. Install Node by running |brew install node|
 
+**Tip**: Sparse disk can grow in size as needed automatically when you add files to the image. However they don't shrink in size when you remove files. Every now and then you would need to compact the disk to reclaim the disk space. The tool such as Free DMG does a good job at that. Open the tool, go to images menu and click on compact.
+
 ## Syncing
 0. Follow instructions at [fork a repo](https://help.github.com/articles/fork-a-repo/) to fork and clone the git repository.
 

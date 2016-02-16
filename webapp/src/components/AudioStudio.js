@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup, Glyphicon } from 'react-bootstrap';
+import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
@@ -36,6 +36,7 @@ function makeWAVFromMicData(micData) {
 export default class AudioStudio extends React.Component {
   state = {
     camera: null,
+    colorModel: 'jet',
     playing: false,
   };
 
@@ -85,6 +86,10 @@ export default class AudioStudio extends React.Component {
     this.refs.visualizer.appendSamples(micData.samples);
   };
 
+  _onSelectColorModel = (e) => {
+    this.setState({ colorModel: this.refs.colorModel.getValue() });
+  };
+
   _togglePlayback = () => {
     this.setState({ playing: !this.state.playing });
   };
@@ -106,8 +111,20 @@ export default class AudioStudio extends React.Component {
             spectrogramFrames={64}
             graphWidth={1024}
             graphHeight={512}
-            colorModel="jet"
+            colorModel={this.state.colorModel}
           />
+          <ButtonGroup>
+            <Input
+              ref="colorModel"
+              type="select"
+              label="Color Model"
+              placeholder="jet"
+              onChange={this._onSelectColorModel}>
+              <option value="jet">Jet</option>
+              <option value="hsv">HSV</option>
+              <option value="grayscale">None (grayscale)</option>
+            </Input>
+          </ButtonGroup>
           <GaplessWAVPlayer ref="wavPlayer" />
       </div>
     );

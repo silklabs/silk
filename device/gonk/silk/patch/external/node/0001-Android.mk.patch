@@ -1,19 +1,19 @@
-From 38b008f1c2956d21ed3732a9ced9337140ad5f78 Mon Sep 17 00:00:00 2001
+From 39f8e967e3bceea72872659272c240b5b99d7a89 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 120 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 120 insertions(+)
+ Android.mk | 121 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 121 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..2c37c7f
+index 0000000..3668af0
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,121 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -80,17 +80,16 @@ index 0000000..2c37c7f
 +    export CFLAGS="\
 +      $$_C_INCLUDES \
 +      $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
-+          $(PRIVATE_TARGET_GLOBAL_CFLAGS) \
++          $(subst -mcpu=cortex-a15,-march=armv7-a,$(PRIVATE_TARGET_GLOBAL_CFLAGS)) \
 +          $(PRIVATE_ARM_CFLAGS) \
 +       ) \
 +      $(PRIVATE_CFLAGS) \
 +      $(PRIVATE_DEBUG_CFLAGS) \
 +      "\ && \
-+    echo $$CFLAGS && \
 +    export CXXFLAGS="\
 +      $$_C_INCLUDES \
 +      $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
-+          $(PRIVATE_TARGET_GLOBAL_CFLAGS) \
++          $(subst -mcpu=cortex-a15,-march=armv7-a,$(PRIVATE_TARGET_GLOBAL_CFLAGS)) \
 +          $(PRIVATE_TARGET_GLOBAL_CPPFLAGS) \
 +          $(PRIVATE_ARM_CFLAGS) \
 +       ) \
@@ -120,6 +119,8 @@ index 0000000..2c37c7f
 +    ./configure --prefix=/ \
 +                --without-snapshot \
 +                --without-npm \
++                --with-arm-float-abi=softfp \
++                --with-arm-fpu=neon \
 +                --dest-cpu=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) \
 +                --dest-os=android && \
 +    $(MAKE) V=$(if $(SHOW_COMMANDS),1)
@@ -135,5 +136,5 @@ index 0000000..2c37c7f
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-2.5.4 (Apple Git-61)
+1.9.1
 

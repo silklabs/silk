@@ -1,16 +1,15 @@
 import React from 'react';
-import { Button, Glyphicon } from 'react-bootstrap';
+import { Button, ButtonGroup, Glyphicon } from 'react-bootstrap';
 
+import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 
 function makeWAVFromMicData(micData) {
   let { numChannels, bytesPerSample, sampleRate, samples } = micData;
-  samples = new Buffer(samples);
-
+  samples = new Buffer(samples.buffer);
   let dataSize = samples.length;
   let chunkSize = 36 + dataSize;
-
   let byteRate = sampleRate * bytesPerSample * numChannels;
   let blockAlign = numChannels * bytesPerSample;
   let bitsPerSample = bytesPerSample * 8;
@@ -37,7 +36,7 @@ function makeWAVFromMicData(micData) {
 export default class AudioStudio extends React.Component {
   state = {
     camera: null,
-    playing: true,
+    playing: false,
   };
 
   get deviceId() {
@@ -83,6 +82,7 @@ export default class AudioStudio extends React.Component {
     if (this.state.playing) {
       this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
     }
+    this.refs.visualizer.appendSamples(micData.samples);
   };
 
   _togglePlayback = () => {
@@ -91,12 +91,24 @@ export default class AudioStudio extends React.Component {
 
   render() {
     let buttonGlyph = this.state.playing ? 'pause' : 'play';
+    // TODO: get sampleRate from global audio configuration
     return (
-      <div>
-        <Button onClick={this._togglePlayback}>
-          <Glyphicon glyph={buttonGlyph} />
-        </Button>
-        <GaplessWAVPlayer ref="wavPlayer" />
+        <div>
+          <ButtonGroup>
+            <Button onClick={this._togglePlayback}>
+              <Glyphicon glyph={buttonGlyph} />
+            </Button>
+          </ButtonGroup>
+          <AudioVisualizer ref="visualizer"
+            sampleRate={8000}
+            fftSize={256}
+            windowOverlap={128}
+            spectrogramFrames={64}
+            graphWidth={1024}
+            graphHeight={512}
+            colorModel="jet"
+          />
+          <GaplessWAVPlayer ref="wavPlayer" />
       </div>
     );
   }

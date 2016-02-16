@@ -7,6 +7,12 @@ import invariant from 'assert';
 import Api from './Api';
 import mklog from 'silk-log'; const log = mklog('Cameras');
 
+// We assume 16-bit signed samples from the mic stream.
+//
+// TODO: get me from global audio config
+const SAMPLE_ARRAY_VIEW = Int16Array;
+const SAMPLE_NUM_BYTES = 2;
+
 class Camera extends EventEmitter {
   constructor(name, id) {
     super();
@@ -334,8 +340,13 @@ class Camera extends EventEmitter {
       log.warn('_onMicStream: null msg');
       return;
     }
+    if (SAMPLE_NUM_BYTES !== msg.bytesPerSample) {
+      throw `Unexpected sample size ${msg.bytesPerSample} bytes`;
+    }
+    msg.samples = new SAMPLE_ARRAY_VIEW(msg.samples);
+
     this.micData = msg;
-    this.emit('micData', msg);
+    this.emit('micData', this.micData);
   };
 }
 

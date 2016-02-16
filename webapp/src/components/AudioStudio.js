@@ -89,7 +89,7 @@ export default class AudioStudio extends React.Component {
   _onSelectColorModel = (e) => {
     this.setState({ colorModel: this.refs.colorModel.getValue() });
   };
-  
+
   _togglePlayback = () => {
     this.setState({ playing: !this.state.playing });
   };

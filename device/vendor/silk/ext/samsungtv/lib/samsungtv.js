@@ -12,6 +12,8 @@ global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 let log;
 
 class MicStreamer {
+  micEnabled = false;
+
   constructor(env) {
     log = env.log;
 
@@ -23,18 +25,21 @@ class MicStreamer {
   }
 
   onCommand(cmd) {
-    switch (cmd.msg) {
-    case 'livestream':
-      if (cmd.mic) {
-        log.info('Enabling mic stream');
-        this.camera.on('mic-data', this.onMicData);
-      } else {
-        log.info('Disabling mic stream');
-        this.camera.removeListener('mic-data', this.onMicData);
-      }
-      break;
-    default:
-      log.warn(`Unknown command ${cmd.msg}`);
+    if ('livestream' !== cmd.msg) {
+      return;
+    }
+    let enableMicStream = !!cmd.mic;
+    log.info(`Got livestream request with cmd.mic=${cmd.mic}`);
+    if (enableMicStream === this.micEnabled) {
+      return;
+    }
+    this.micEnabled = enableMicStream;
+    if (this.micEnabled) {
+      log.info('Enabling mic stream');
+      this.camera.on('mic-data', this.onMicData);
+    } else {
+      log.info('Disabling mic stream');
+      this.camera.removeListener('mic-data', this.onMicData);
     }
   }
 

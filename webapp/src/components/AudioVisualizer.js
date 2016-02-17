@@ -159,6 +159,7 @@ export default class AudioVisualizer extends React.Component {
   };
   spectrogramLinear = null;
   spectrogramDecibel = null;
+  track = null;
 
   componentDidMount() {
     this.analyzer = createAudioAnalyzer({
@@ -167,6 +168,7 @@ export default class AudioVisualizer extends React.Component {
       sampleMin: SAMPLE_MIN,
       sampleMax: SAMPLE_MAX,
     });
+    this._attachTrack(this.props.track);
     this.analyzer.on('timeDomain', this._onTimeDomain);
     this.analyzer.on('fftMagnitudeLinear', this._onFFTMagnitudeLinear);
     this.analyzer.on('fftMagnitudeDecibel', this._onFFTMagnitudeDecibel);
@@ -187,13 +189,13 @@ export default class AudioVisualizer extends React.Component {
                                               this.analyzer.frequencyBinCount);
   }
 
+  componentWillReceiveProps(newProps) {
+    console.log('NEW PROPS');
+  }
+  
   componentWillUnmount() {
     this.analyzer.removeAllListeners();
     this.analyzer = null;
-  }
-
-  appendSamples(samples) {
-    this.analyzer.appendSamples(samples);
   }
 
   get _colorModel() {
@@ -201,9 +203,17 @@ export default class AudioVisualizer extends React.Component {
   }
 
   get _nyquistFrequency() {
-    return this.props.sampleRate / 2;
+    return this.track.sampleRate / 2;
   }
 
+  _attachTrack(track) {
+    if (this.track) {
+      this.track.removeListener('progress', this._onProgress);
+    }
+    track.on('progress', this._onProgress);
+    this.track = track;
+  }
+  
   _computeFreqParams(graph) {
     let maxFreq = this._nyquistFrequency;
     let hzPerBin = maxFreq / this.analyzer.frequencyBinCount;
@@ -257,6 +267,10 @@ export default class AudioVisualizer extends React.Component {
     }, false);
   }
 
+  _onProgress = (samples, currentTime) => {
+    this.analyzer.appendSamples(samples);
+  };
+  
   _onFFTMagnitudeLinear = (magnitudes) => {
     this.spectrogramLinear.accumulate(magnitudes);
     switch (this.state.graphView) {

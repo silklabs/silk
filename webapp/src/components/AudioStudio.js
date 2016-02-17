@@ -4,6 +4,7 @@ import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
 import FileDrop from './FileDrop';
+import { LiveTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
 
@@ -41,19 +42,33 @@ function getAudioDataFromWAV(wav) {
   return new Int16Array(data);
 }
 
+const SAMPLE_RATE = 8000;
+const FFT_SIZE = 256;
+const WINDOW_OVERLAP = 128;
+const SPECTROGRAM_FRAMES = 64;
+
 export default class AudioStudio extends React.Component {
   state = {
     camera: null,
     colorModel: 'jet',
     droppingFile: false,
     playing: false,
+    track: null,
   };
+  liveTrack = null;
 
+  constructor() {
+    super();
+    this.state.track = this.liveTrack =
+      new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE, SAMPLE_RATE);
+  }
+  
   get deviceId() {
     return this.props.params.deviceId;
   }
 
   componentDidMount() {
+    this.state.track = this.liveTrack;
     Cameras.on('stateChanged', this._onCamerasStateChanged);
     this._onCamerasStateChanged(Cameras);
   }
@@ -118,7 +133,7 @@ export default class AudioStudio extends React.Component {
     if (this.state.playing) {
       this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
     }
-    this.refs.visualizer.appendSamples(micData.samples);
+    this.liveTrack.appendSamples(micData.samples);
   };
 
   _onSelectColorModel = (e) => {
@@ -139,11 +154,12 @@ export default class AudioStudio extends React.Component {
             <Glyphicon glyph={buttonGlyph} />
           </Button>
         </ButtonGroup>
-        <AudioVisualizer ref="visualizer"
-          sampleRate={8000}
-          fftSize={256}
-          windowOverlap={128}
-          spectrogramFrames={64}
+        <AudioVisualizer
+          ref="visualizer"
+          track={this.state.track}
+          fftSize={FFT_SIZE}
+          windowOverlap={WINDOW_OVERLAP}
+          spectrogramFrames={SPECTROGRAM_FRAMES}
           graphWidth={1024}
           graphHeight={512}
           colorModel={this.state.colorModel}

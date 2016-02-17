@@ -35,6 +35,12 @@ function makeWAVFromMicData(micData) {
   return wav.toArrayBuffer();
 }
 
+function getAudioDataFromWAV(wav) {
+  // TODO: validate WAV format etc.
+  let data = (new Uint8Array(wav)).slice(44).buffer;
+  return new Int16Array(data);
+}
+
 export default class AudioStudio extends React.Component {
   state = {
     camera: null,
@@ -92,8 +98,20 @@ export default class AudioStudio extends React.Component {
   };
 
   _onFileDrop = (files) => {
-    console.log('DROP', files);
     this._onFileDropCancel();
+    let file = files[0];
+    let samples = getAudioDataFromWAV(file);
+    let index = 0;
+    let feedChunk = () => {
+      let chunk = samples.slice(index, index + 256);
+      if (chunk.length === 0) {
+        return;
+      }
+      index += 256;
+      this.refs.visualizer.appendSamples(chunk);
+      setTimeout(feedChunk, 100);
+    };
+    setTimeout(feedChunk, 100);
   };
 
   _onNextMicData = (micData) => {

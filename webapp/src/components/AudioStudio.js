@@ -130,7 +130,7 @@ export default class AudioStudio extends React.Component {
   };
 
   render() {
-    let buttonGlyph = this.state.playing ? 'pause' : 'play';
+    let buttonGlyph = this.state.playing ? 'volume-off' : 'volume-up';
     // TODO: get sampleRate from global audio configuration
     return (
       <div>

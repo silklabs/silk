@@ -3,7 +3,9 @@ import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
+import FileDrop from './FileDrop';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
+import Lightbox from './Lightbox';
 
 function makeWAVFromMicData(micData) {
   let { numChannels, bytesPerSample, sampleRate, samples } = micData;
@@ -37,6 +39,7 @@ export default class AudioStudio extends React.Component {
   state = {
     camera: null,
     colorModel: 'jet',
+    droppingFile: false,
     playing: false,
   };
 
@@ -79,6 +82,20 @@ export default class AudioStudio extends React.Component {
     this.setState({ camera: newCamera });
   };
 
+
+  _onFileDropStart = () => {
+    this.setState({ droppingFile: true });
+  };
+
+  _onFileDropCancel = () => {
+    this.setState({ droppingFile: false });
+  };
+
+  _onFileDrop = (files) => {
+    console.log('DROP', files);
+    this._onFileDropCancel();
+  };
+
   _onNextMicData = (micData) => {
     if (this.state.playing) {
       this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
@@ -98,34 +115,41 @@ export default class AudioStudio extends React.Component {
     let buttonGlyph = this.state.playing ? 'pause' : 'play';
     // TODO: get sampleRate from global audio configuration
     return (
-        <div>
-          <ButtonGroup>
-            <Button onClick={this._togglePlayback}>
-              <Glyphicon glyph={buttonGlyph} />
-            </Button>
-          </ButtonGroup>
-          <AudioVisualizer ref="visualizer"
-            sampleRate={8000}
-            fftSize={256}
-            windowOverlap={128}
-            spectrogramFrames={64}
-            graphWidth={1024}
-            graphHeight={512}
-            colorModel={this.state.colorModel}
-          />
-          <ButtonGroup>
-            <Input
-              ref="colorModel"
-              type="select"
-              label="Color Model"
-              placeholder="jet"
-              onChange={this._onSelectColorModel}>
-              <option value="jet">Jet</option>
-              <option value="hsv">HSV</option>
-              <option value="grayscale">None (grayscale)</option>
-            </Input>
-          </ButtonGroup>
-          <GaplessWAVPlayer ref="wavPlayer" />
+      <div>
+        <ButtonGroup>
+          <Button onClick={this._togglePlayback}>
+            <Glyphicon glyph={buttonGlyph} />
+          </Button>
+        </ButtonGroup>
+        <AudioVisualizer ref="visualizer"
+          sampleRate={8000}
+          fftSize={256}
+          windowOverlap={128}
+          spectrogramFrames={64}
+          graphWidth={1024}
+          graphHeight={512}
+          colorModel={this.state.colorModel}
+        />
+        <ButtonGroup>
+          <Input
+            ref="colorModel"
+            type="select"
+            label="Color Model"
+            placeholder="jet"
+            onChange={this._onSelectColorModel}>
+            <option value="jet">Jet</option>
+            <option value="hsv">HSV</option>
+            <option value="grayscale">None (grayscale)</option>
+          </Input>
+        </ButtonGroup>
+        <GaplessWAVPlayer ref="wavPlayer" />
+
+        <FileDrop
+          onStart={this._onFileDropStart}
+          onCancel={this._onFileDropCancel}
+          onDrop={this._onFileDrop}
+        />
+        <Lightbox visible={this.state.droppingFile} />
       </div>
     );
   }

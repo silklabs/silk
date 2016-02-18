@@ -75,7 +75,7 @@
     "lint": "eslint src",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall && ./tools/patch && webpack --progress",
-    "start": "webpack-dev-server --host 0.0.0.0 --port 8080 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
+    "start": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
     "start-server": "babel-node --harmony server/main.js production",
     "test": "npm run-script lint && webpack --progress"
   },

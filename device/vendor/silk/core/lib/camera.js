@@ -69,6 +69,9 @@ const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
 const PREVIEW_DELAY_MS = 250;
 
+const PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
+const PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
+
 const MAX_CLIP_DURATION = Math.max(1, util.getintprop('ro.silk.camera.max_clip_dur', 15 /*seconds*/));
 const CAMERA_CLIP_DIRECTORY = 'data/clips';
 
@@ -163,8 +166,6 @@ function rawFaceArrayToFaces(buf): Array<RawHalFace> {
  * ORIENTATION WHERE FRONT CAMERA IS BOTTOM RIGHT FACING YOU.
  * @private
  */
-let PREVIEW_WIDTH = 0;
-let PREVIEW_HEIGHT = 0;
 function normalizeFace(face) { //eslint-disable-line no-unused-vars
 
   // These params are defined by the long comment just below the
@@ -625,8 +626,6 @@ export default class Camera extends EventEmitter {
   }
 
   _initStartPreview() {
-    PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
-    PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
     this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
     this._scheduleNextPreviewFrame();
 
@@ -1172,9 +1171,6 @@ export default class Camera extends EventEmitter {
    * @return {Size}
    */
   get previewSize() {
-    if (PREVIEW_WIDTH === 0) {
-      return null;
-    }
     return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 

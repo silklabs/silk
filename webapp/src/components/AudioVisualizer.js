@@ -195,7 +195,7 @@ export default class AudioVisualizer extends React.Component {
     }
     this._attachTrack(newProps.track);
   }
-  
+
   componentWillUnmount() {
     this.analyzer.removeAllListeners();
     this.analyzer = null;
@@ -226,7 +226,7 @@ export default class AudioVisualizer extends React.Component {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   }
-  
+
   _computeFreqParams(graph) {
     let maxFreq = this._nyquistFrequency;
     let hzPerBin = maxFreq / this.analyzer.frequencyBinCount;
@@ -283,7 +283,7 @@ export default class AudioVisualizer extends React.Component {
   _onProgress = (samples, currentTime) => {
     this.analyzer.appendSamples(samples);
   };
-  
+
   _onFFTMagnitudeLinear = (magnitudes) => {
     this.spectrogramLinear.accumulate(magnitudes);
     switch (this.state.graphView) {

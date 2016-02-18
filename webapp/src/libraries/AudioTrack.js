@@ -26,7 +26,7 @@ export class LiveTrack extends EventEmitter {
   stop() {
     console.log('stop()ing a live track is a no-op');
   }
-  
+
   appendSamples(samples) {
     if (this.nrSamples === 0) {
       this.emit('playing');
@@ -59,7 +59,7 @@ export class LiveTrack extends EventEmitter {
   get currentTime() {
     return this.startTime + this.currentSample / this.sampleRate;
   }
-  
+
   get startTime() {
     return this.bufferStartTime;
   }
@@ -127,7 +127,7 @@ export class StaticTrack extends EventEmitter {
   get currentTime() {
     return this.currentSample / this.sampleRate;
   }
-  
+
   get startTime() {
     return 0.0;
   }

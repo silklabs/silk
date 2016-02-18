@@ -60,7 +60,7 @@ export default class AudioStudio extends React.Component {
   constructor() {
     super();
   }
-  
+
   get deviceId() {
     return this.props.params.deviceId;
   }
@@ -136,7 +136,7 @@ export default class AudioStudio extends React.Component {
     let samples = getAudioDataFromWAV(file);
     this._attachTrack(new StaticTrack(samples, SAMPLE_RATE));
   };
-  
+
   _onNextMicData = (micData) => {
     this.liveTrack.appendSamples(micData.samples);
   };
@@ -149,7 +149,7 @@ export default class AudioStudio extends React.Component {
         numChannels: 1,
         bytesPerSample: 2,
         sampleRate: this.state.track.sampleRate,
-        samples: wavData
+        samples: wavData,
       };
       this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
     }

@@ -107,6 +107,10 @@ class AudioAnalyzer extends EventEmitter {
     }
   }
 
+  reset() {
+    this.inputToFill = this.fftSize;
+  }
+
   // Run audio analyses on the current full sample window and deliver
   // results to clients.
   _emitFFT() {

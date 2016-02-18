@@ -2,7 +2,7 @@ import React from 'react';
 
 export default class FileDrop extends React.Component {
   entered = new Set();
-  
+
   componentDidMount() {
     document.ondragenter = this._onDragEnter;
     document.ondragover = this._onDragOver;

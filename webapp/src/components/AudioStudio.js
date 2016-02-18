@@ -97,10 +97,10 @@ export default class AudioStudio extends React.Component {
       return;
     }
     if (this.state.track) {
-      this.state.track.removeListener('progress', this._onProgress);
+      this.state.track.removeListener('timeupdate', this._onTimeUpdate);
     }
     if (track) {
-      track.on('progress', this._onProgress);
+      track.on('timeupdate', this._onTimeUpdate);
     }
     this.setState({ track });
   }
@@ -141,8 +141,9 @@ export default class AudioStudio extends React.Component {
     this.liveTrack.appendSamples(micData.samples);
   };
 
-  _onProgress = (samples, currentTime) => {
+  _onTimeUpdate = (lastTime, currentTime) => {
     if (this.state.playing) {
+      let samples = this.state.track.getSamples(lastTime, currentTime);
       let wavData = new Int16Array(samples.length);
       wavData.set(samples);
       let micData = {

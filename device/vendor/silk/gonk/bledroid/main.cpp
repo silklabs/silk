@@ -1644,6 +1644,15 @@ void gatt_client_congestion_callback(int conn_id, bool congested) {
         congested ? "true" : "false");
 }
 
+#ifdef TARGET_GE_MARSHMALLOW
+void gatt_scan_parameter_setup_completed_callback(int client_if,
+                                                  btgattc_error_t status) {
+  ALOGV("gatt_scan_parameter_setup_completed_callback: client_if=%d status=%d",
+        client_if, status);
+}
+#endif
+
+
 btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   gatt_register_client_callback,
   gatt_client_scan_result_callback,
@@ -1678,7 +1687,7 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   NULL, // batchscan_threshold_callback
   NULL  // track_adv_event_callback
 #ifdef TARGET_GE_MARSHMALLOW
- ,NULL  // scan_parameter_setup_completed_callback
+ ,gatt_scan_parameter_setup_completed_callback
 #endif
 };
 

@@ -59,21 +59,26 @@ export default class AudioStudio extends React.Component {
 
   constructor() {
     super();
-    this.state.track = this.liveTrack =
-      new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE, SAMPLE_RATE);
   }
   
   get deviceId() {
     return this.props.params.deviceId;
   }
 
-  componentDidMount() {
+  componentWillMount() {
+    this.liveTrack = new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE, SAMPLE_RATE);
+    this._attachTrack(this.liveTrack);
     this.state.track = this.liveTrack;
+  }
+
+  componentDidMount() {
     Cameras.on('stateChanged', this._onCamerasStateChanged);
     this._onCamerasStateChanged(Cameras);
   }
 
   componentWillUnmount() {
+    this._attachTrack(null);
+    this.liveTrack = null;
     let camera = this.state.camera;
     if (camera) {
       camera.removeListener('micData', this._onNextMicData);
@@ -85,6 +90,19 @@ export default class AudioStudio extends React.Component {
     if (this.sourceBuffer) {
       this.sourceBuffer.removeEventListener('updateend', this._feedPlayer);
     }
+  }
+
+  _attachTrack(track) {
+    if (this.state.track === track) {
+      return;
+    }
+    if (this.state.track) {
+      this.state.track.removeListener('progress', this._onProgress);
+    }
+    if (track) {
+      track.on('progress', this._onProgress);
+    }
+    this.setState({ track });
   }
 
   _onCamerasStateChanged = state => {
@@ -116,15 +134,25 @@ export default class AudioStudio extends React.Component {
     this._onFileDropCancel();
     let file = files[0];
     let samples = getAudioDataFromWAV(file);
-    let track = new StaticTrack(samples, SAMPLE_RATE);
-    this.setState({ track });
+    this._attachTrack(new StaticTrack(samples, SAMPLE_RATE));
+  };
+  
+  _onNextMicData = (micData) => {
+    this.liveTrack.appendSamples(micData.samples);
   };
 
-  _onNextMicData = (micData) => {
+  _onProgress = (samples, currentTime) => {
     if (this.state.playing) {
+      let wavData = new Int16Array(samples.length);
+      wavData.set(samples);
+      let micData = {
+        numChannels: 1,
+        bytesPerSample: 2,
+        sampleRate: this.state.track.sampleRate,
+        samples: wavData
+      };
       this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
     }
-    this.liveTrack.appendSamples(micData.samples);
   };
 
   _onSelectColorModel = (e) => {

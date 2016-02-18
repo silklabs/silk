@@ -168,7 +168,6 @@ export default class AudioVisualizer extends React.Component {
       sampleMin: SAMPLE_MIN,
       sampleMax: SAMPLE_MAX,
     });
-    this._attachTrack(this.props.track);
     this.analyzer.on('timeDomain', this._onTimeDomain);
     this.analyzer.on('fftMagnitudeLinear', this._onFFTMagnitudeLinear);
     this.analyzer.on('fftMagnitudeDecibel', this._onFFTMagnitudeDecibel);
@@ -187,10 +186,14 @@ export default class AudioVisualizer extends React.Component {
                                              this.analyzer.frequencyBinCount);
     this.spectrogramDecibel = new Spectrogram(this.props.spectrogramFrames,
                                               this.analyzer.frequencyBinCount);
+    this._attachTrack(this.props.track);
   }
 
   componentWillReceiveProps(newProps) {
-    console.log('NEW PROPS');
+    if (this.track === newProps.track) {
+      return;
+    }
+    this._attachTrack(newProps.track);
   }
   
   componentWillUnmount() {
@@ -208,10 +211,20 @@ export default class AudioVisualizer extends React.Component {
 
   _attachTrack(track) {
     if (this.track) {
+      this.track.stop();
       this.track.removeListener('progress', this._onProgress);
     }
+    this._clearAllGraphs();
     track.on('progress', this._onProgress);
+    track.play();
     this.track = track;
+  }
+
+  _clearAllGraphs() {
+    for (let canvasRef in this.canvas) {
+      let { canvas, ctx } = this.canvas[canvasRef];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
   }
   
   _computeFreqParams(graph) {

@@ -19,6 +19,14 @@ export class LiveTrack extends EventEmitter {
     this.sampleRate = sampleRate;
   }
 
+  play() {
+    console.log('play()ing a live track is a no-op');
+  }
+
+  stop() {
+    console.log('stop()ing a live track is a no-op');
+  }
+  
   appendSamples(samples) {
     if (this.nrSamples === 0) {
       this.emit('playing');
@@ -61,6 +69,74 @@ export class LiveTrack extends EventEmitter {
   }
 
   sliceSamples(startTime, endTime) {
+    throw 'NYI';
+  }
+}
+
+/**
+ * Audio track wrapped around a statically-sized buffer, for example,
+ * the samples from a WAV file read from disk.
+ */
+const CHUNK_DURATION = 0.1;
+export class StaticTrack extends EventEmitter {
+  buffer = null;
+  sampleRate = 0;
+  currentSample = 0;
+  progressInterval = null;
+
+  constructor(samples, sampleRate) {
+    super();
+    this.buffer = new Float32Array(samples.length);
+    this.buffer.set(samples);
+    this.sampleRate = sampleRate;
+  }
+
+  play() {
+    if (this.progressInterval) {
+      console.log('Already playing');
+      return;
+    }
+    this.progressInterval = setInterval(this._onProgress, 1000 * CHUNK_DURATION);
+    this.emit('playing');
+  }
+
+  stop() {
+    clearInterval(this.progressInterval);
+    this.progressInterval = null;
+    this.currentSample = 0;
+  }
+
+  _onProgress = () => {
+    let chunkSamples = (CHUNK_DURATION * this.sampleRate) | 0;
+    let chunk = this.buffer.subarray(this.currentSample,
+                                     this.currentSample + chunkSamples);
+    if (chunk.length === 0) {
+      this.emit('ended');
+      this.stop();
+      return;
+    }
+    this.emit('progress', chunk,
+              this.currentTime, this.startTime, this.endTime);
+    this.currentSample += chunk.length;
+  };
+
+  get duration() {
+    return this.endTime - this.startTime;
+  }
+
+  get currentTime() {
+    return this.currentSample / this.sampleRate;
+  }
+  
+  get startTime() {
+    return 0.0;
+  }
+
+  get endTime() {
+    return this.buffer.length / this.sampleRate;
+  }
+
+  sliceSamples(start, end) {
     throw 'NYI';
   }
 }

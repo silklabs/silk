@@ -4,7 +4,7 @@ import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
 import FileDrop from './FileDrop';
-import { LiveTrack } from '../libraries/AudioTrack';
+import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
 
@@ -116,17 +116,8 @@ export default class AudioStudio extends React.Component {
     this._onFileDropCancel();
     let file = files[0];
     let samples = getAudioDataFromWAV(file);
-    let index = 0;
-    let feedChunk = () => {
-      let chunk = samples.slice(index, index + 256);
-      if (chunk.length === 0) {
-        return;
-      }
-      index += 256;
-      this.refs.visualizer.appendSamples(chunk);
-      setTimeout(feedChunk, 100);
-    };
-    setTimeout(feedChunk, 100);
+    let track = new StaticTrack(samples, SAMPLE_RATE);
+    this.setState({ track });
   };
 
   _onNextMicData = (micData) => {

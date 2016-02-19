@@ -201,7 +201,7 @@ export default class AudioVisualizer extends React.Component {
 
   componentWillReceiveProps(newProps) {
     this._attachTrack(newProps.track);
-    if (this.props.drawGrid != newProps.drawGrid) {
+    if (this.props.drawGrid !== newProps.drawGrid) {
       this._clearAllGraphs();
     }
   }

@@ -4,6 +4,7 @@ import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
 import FileDrop from './FileDrop';
+import Files from '../libraries/Files';
 import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
@@ -47,18 +48,29 @@ const FFT_SIZE = 256;
 const WINDOW_OVERLAP = 128;
 const SPECTROGRAM_FRAMES = 64;
 
+const PREF_FILE = 'prefs.json';
+const DEFAULT_PREFS = {
+  colorModel: 'jet',
+  drawGrid: false,
+};
+
 export default class AudioStudio extends React.Component {
   state = {
     camera: null,
-    colorModel: 'jet',
     droppingFile: false,
     playing: false,
     track: null,
   };
+  prefs = DEFAULT_PREFS;
+  files = null;
   liveTrack = null;
 
   constructor() {
     super();
+    this.files = new Files();
+    this.files.read(PREF_FILE)
+      .then((data) => this._setPrefs(JSON.parse(data)))
+      .catch((err) => console.log('(No prefs set yet)'));
   }
 
   get deviceId() {
@@ -69,6 +81,9 @@ export default class AudioStudio extends React.Component {
     this.liveTrack = new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE, SAMPLE_RATE);
     this._attachTrack(this.liveTrack);
     this.state.track = this.liveTrack;
+    // We may still be loading prefs from file, but in that case state
+    // will directly be updated when that finishes.
+    Object.assign(this.state, this.prefs);
   }
 
   componentDidMount() {
@@ -158,13 +173,21 @@ export default class AudioStudio extends React.Component {
   };
 
   _onSelectColorModel = (e) => {
-    this.setState({ colorModel: this.refs.colorModel.getValue() });
+    this._setPrefs({ colorModel: this.refs.colorModel.getValue() });
   };
 
   _onChangeGridDrawing = (e) => {
-    this.setState({ drawGrid: this.refs.drawGrid.getChecked() });
+    this._setPrefs({ drawGrid: this.refs.drawGrid.getChecked() });
   };
-  
+
+  _setPrefs(newPrefs) {
+    Object.assign(this.prefs, newPrefs);
+    this.setState(this.prefs);
+    this.files.write(PREF_FILE, JSON.stringify(this.prefs))
+      .then(() => console.log('Updated prefs'))
+      .catch((err) => console.log('Error saving prefs', err));
+  }
+
   _togglePlayback = () => {
     this.setState({ playing: !this.state.playing });
   };
@@ -190,12 +213,12 @@ export default class AudioStudio extends React.Component {
           colorModel={this.state.colorModel}
           drawGrid={this.state.drawGrid}
         />
-        <ButtonGroup style={{display: 'flex', flexDirection:'horizontal'}}>
+        <ButtonGroup style={{display: 'flex', flexDirection: 'horizontal'}}>
           <Input
             ref="colorModel"
             type="select"
             label="Color Model"
-            placeholder="jet"
+            value={this.state.colorModel}
             onChange={this._onSelectColorModel}>
             <option value="jet">Jet</option>
             <option value="hsv">HSV</option>
@@ -205,6 +228,7 @@ export default class AudioStudio extends React.Component {
             ref="drawGrid"
             type="checkbox"
             label="Draw Grid"
+            checked={this.state.drawGrid}
             onChange={this._onChangeGridDrawing}
           />
         </ButtonGroup>

@@ -52,6 +52,7 @@ const PREF_FILE = 'prefs.json';
 const DEFAULT_PREFS = {
   colorModel: 'jet',
   drawGrid: false,
+  graphView: 'spectLinear',
 };
 
 export default class AudioStudio extends React.Component {
@@ -172,6 +173,10 @@ export default class AudioStudio extends React.Component {
     this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
   };
 
+  _onSelectGraphView = (e) => {
+    this._setPrefs({ graphView: this.refs.graphView.getValue() });
+  };
+
   _onSelectColorModel = (e) => {
     this._setPrefs({ colorModel: this.refs.colorModel.getValue() });
   };
@@ -196,44 +201,60 @@ export default class AudioStudio extends React.Component {
     let buttonGlyph = this.state.playing ? 'volume-off' : 'volume-up';
     // TODO: get sampleRate from global audio configuration
     return (
-      <div>
-        <ButtonGroup>
-          <Button onClick={this._togglePlayback}>
-            <Glyphicon glyph={buttonGlyph} />
-          </Button>
-        </ButtonGroup>
-        <AudioVisualizer
-          ref="visualizer"
-          track={this.state.track}
-          fftSize={FFT_SIZE}
-          windowOverlap={WINDOW_OVERLAP}
-          spectrogramFrames={SPECTROGRAM_FRAMES}
-          graphWidth={1024}
-          graphHeight={512}
-          colorModel={this.state.colorModel}
-          drawGrid={this.state.drawGrid}
-        />
-        <ButtonGroup style={{display: 'flex', flexDirection: 'horizontal'}}>
-          <Input
-            ref="colorModel"
-            type="select"
-            label="Color Model"
-            value={this.state.colorModel}
-            onChange={this._onSelectColorModel}>
-            <option value="jet">Jet</option>
-            <option value="hsv">HSV</option>
-            <option value="grayscale">None (grayscale)</option>
-          </Input>
-          <Input
-            ref="drawGrid"
-            type="checkbox"
-            label="Draw Grid"
-            checked={this.state.drawGrid}
-            onChange={this._onChangeGridDrawing}
-          />
-        </ButtonGroup>
+      <div style={{padding: '5px'}}>
+        <div style={{display: 'flex', flexDirection: 'horizontal'}}>
+          <div>
+            <AudioVisualizer
+              ref="visualizer"
+              graphView={this.state.graphView}
+              track={this.state.track}
+              fftSize={FFT_SIZE}
+              windowOverlap={WINDOW_OVERLAP}
+              spectrogramFrames={SPECTROGRAM_FRAMES}
+              graphWidth={1024}
+              graphHeight={512}
+              colorModel={this.state.colorModel}
+              drawGrid={this.state.drawGrid}
+            />
+            <ButtonGroup>
+              <Button onClick={this._togglePlayback}>
+                <Glyphicon glyph={buttonGlyph} />
+              </Button>
+            </ButtonGroup>
+          </div>
+          <ButtonGroup style={{paddingLeft: '5px'}}>
+            <Input
+              ref="graphView"
+              type="select"
+              label="Graph View"
+              value={this.state.graphView}
+              onChange={this._onSelectGraphView}>
+              <option value="spectLinear">Spectrogram (Linear)</option>
+              <option value="spectDecibel">Spectrogram (Decibel)</option>
+              <option value="freqLinear">Frequency Domain (Linear)</option>
+              <option value="freqDecibel">Frequency Domain (Decibel)</option>
+              <option value="time">Time Domain</option>
+            </Input>
+            <Input
+              ref="colorModel"
+              type="select"
+              label="Color Model"
+              value={this.state.colorModel}
+              onChange={this._onSelectColorModel}>
+              <option value="jet">Jet</option>
+              <option value="hsv">HSV</option>
+              <option value="grayscale">None (grayscale)</option>
+            </Input>
+            <Input
+              ref="drawGrid"
+              type="checkbox"
+              label="Draw Grid"
+              checked={this.state.drawGrid}
+              onChange={this._onChangeGridDrawing}
+            />
+          </ButtonGroup>
+        </div>
         <GaplessWAVPlayer ref="wavPlayer" />
-
         <FileDrop
           onStart={this._onFileDropStart}
           onCancel={this._onFileDropCancel}

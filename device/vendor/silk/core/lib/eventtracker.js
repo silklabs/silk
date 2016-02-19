@@ -27,8 +27,12 @@ type LocalEventRecord = {
 };
 
 const DEFAULT_DEBOUNCE_MS = 5000;
+
+// TODO: Event deboucing constants should move from here into the component
+// that's generating the event.
 const DEBOUNCE_MS_BY_EVENT_TAG = {
   motion: 10000,
+  'device moved': 1000,
 };
 
 const RECURRING_TIMER_INTERVAL_MS = 1000;

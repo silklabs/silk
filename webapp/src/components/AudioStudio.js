@@ -141,19 +141,20 @@ export default class AudioStudio extends React.Component {
     this.liveTrack.appendSamples(micData.samples);
   };
 
-  _onTimeUpdate = (lastTime, currentTime) => {
-    if (this.state.playing) {
-      let samples = this.state.track.getSamples(lastTime, currentTime);
-      let wavData = new Int16Array(samples.length);
-      wavData.set(samples);
-      let micData = {
-        numChannels: 1,
-        bytesPerSample: 2,
-        sampleRate: this.state.track.sampleRate,
-        samples: wavData,
-      };
-      this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
+  _onTimeUpdate = (currentTime, startTime, endTime, lastTime) => {
+    if (!this.state.playing) {
+      return;
     }
+    let samples = this.state.track.getSamples(lastTime, currentTime);
+    let wavData = new Int16Array(samples.length);
+    wavData.set(samples);
+    let micData = {
+      numChannels: 1,
+      bytesPerSample: 2,
+      sampleRate: this.state.track.sampleRate,
+      samples: wavData,
+    };
+    this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
   };
 
   _onSelectColorModel = (e) => {

@@ -201,6 +201,9 @@ export default class AudioVisualizer extends React.Component {
 
   componentWillReceiveProps(newProps) {
     this._attachTrack(newProps.track);
+    if (this.props.drawGrid != newProps.drawGrid) {
+      this._clearAllGraphs();
+    }
   }
 
   componentWillUnmount() {
@@ -257,12 +260,16 @@ export default class AudioVisualizer extends React.Component {
   _drawFFTMagnitudes(graph, magnitudes) {
     let freqBins = this.analyzer.frequencyBinCount;
     let binWidth = this.props.graphWidth / freqBins;
+    let spacer = this.props.drawGrid ? 1 : 0;
     let { min, scale, hzPerBin, maxFreq } = this._computeFreqParams(graph);
     this._drawInCartesianCoords(graph, (ctx, width, height) => {
       ctx.fillStyle = 'blue';
       for (let i = 0; i < freqBins; ++i) {
         let mag = scale * (magnitudes[i] - min);
-        ctx.fillRect(i * binWidth, 0, binWidth - 1, height * mag);
+        ctx.fillRect(i * binWidth, 0, binWidth - spacer, height * mag);
+      }
+      if (!this.props.drawGrid) {
+        return;
       }
       ctx.fillStyle = 'black';
       for (let hz = 500; hz <= maxFreq; hz += 500) {
@@ -278,6 +285,7 @@ export default class AudioVisualizer extends React.Component {
     // of them on each new FFT.
     let frameWidth = this.props.graphWidth / this.props.spectrogramFrames;
     let binHeight = this.props.graphHeight / this.analyzer.frequencyBinCount;
+    let spacer = this.props.drawGrid ? 1 : 0;
     this._copyTranslated(graph, -frameWidth, 0);
 
     let { min, scale, hzPerBin, maxFreq } = this._computeFreqParams(graph);
@@ -288,7 +296,10 @@ export default class AudioVisualizer extends React.Component {
         let mag = scale * (mags[freqBin] - min);
         ctx.fillStyle = cssColor(mag, this._colorModel);
         ctx.fillRect(i * frameWidth, freqBin * binHeight,
-                     frameWidth - 1, binHeight);
+                     frameWidth - spacer, binHeight);
+      }
+      if (!this.props.drawGrid) {
+        return;
       }
       ctx.fillStyle = 'white';
       for (let hz = 0; hz <= maxFreq; hz += 500) {

@@ -160,6 +160,10 @@ export default class AudioStudio extends React.Component {
     this.setState({ colorModel: this.refs.colorModel.getValue() });
   };
 
+  _onChangeGridDrawing = (e) => {
+    this.setState({ drawGrid: this.refs.drawGrid.getChecked() });
+  };
+  
   _togglePlayback = () => {
     this.setState({ playing: !this.state.playing });
   };
@@ -183,8 +187,9 @@ export default class AudioStudio extends React.Component {
           graphWidth={1024}
           graphHeight={512}
           colorModel={this.state.colorModel}
+          drawGrid={this.state.drawGrid}
         />
-        <ButtonGroup>
+        <ButtonGroup style={{display: 'flex', flexDirection:'horizontal'}}>
           <Input
             ref="colorModel"
             type="select"
@@ -195,6 +200,12 @@ export default class AudioStudio extends React.Component {
             <option value="hsv">HSV</option>
             <option value="grayscale">None (grayscale)</option>
           </Input>
+          <Input
+            ref="drawGrid"
+            type="checkbox"
+            label="Draw Grid"
+            onChange={this._onChangeGridDrawing}
+          />
         </ButtonGroup>
         <GaplessWAVPlayer ref="wavPlayer" />
 

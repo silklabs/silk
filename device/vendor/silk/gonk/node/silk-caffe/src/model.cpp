@@ -17,6 +17,10 @@
 #include "caffe/layers/memory_data_layer.hpp"
 #include "Matrix.h"
 
+#include <dlib/matrix/matrix_utilities.h>
+#include <dlib/image_transforms/segment_image.h>
+#include <dlib/opencv/cv_image.h>
+
 Nan::Persistent<Function> Model::constructor;
 
 /**
@@ -61,6 +65,7 @@ void Model::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "setScale", SetScale);
   Nan::SetPrototypeMethod(ctor, "setLabels", SetLabels);
   Nan::SetPrototypeMethod(ctor, "predictTopK", PredictTopK);
+  Nan::SetPrototypeMethod(ctor, "predictRegions", PredictRegions);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Model").ToLocalChecked(), ctor->GetFunction());
@@ -246,7 +251,7 @@ NAN_METHOD(Model::SetLabels) {
 
   string line;
   int count = 0;
-  while (std::getline(labels, line)) {
+  while (getline(labels, line)) {
     self->mLabels.push_back(line);
   }
 
@@ -263,8 +268,8 @@ NAN_METHOD(Model::SetLabels) {
  */
 class PredictAsyncWorker: public Nan::AsyncWorker {
 public:
-  PredictAsyncWorker(Nan::Callback *callback, Model* model,
-      cv::Mat mat, int topK) :
+  PredictAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
+      int topK):
     Nan::AsyncWorker(callback),
     model(model),
     mat(mat),
@@ -272,20 +277,17 @@ public:
   }
 
   void Execute() {
-    output = model->Predict(mat);
-    topK = min<int>(model->mLabels.size(), topK);
-    maxK = Argmax(output, topK);
+    mPredictions = model->Classify(mat, topK);
   }
 
   void HandleOKCallback() {
     Local<Array> predictions = Nan::New<Array>(topK);
-    for (int i = 0; i < topK; ++i) {
-      int idx = maxK[i];
+    for (int i = 0; i < mPredictions.size(); ++i) {
       Local<Object> prediction = Nan::New<Object>();
       prediction->Set(Nan::New<String>("label").ToLocalChecked(),
-          Nan::New<String>(model->mLabels[idx]).ToLocalChecked());
+          Nan::New<String>(mPredictions[i].first).ToLocalChecked());
       prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
-          Nan::New<Number>(output[idx]));
+          Nan::New<Number>(mPredictions[i].second));
       predictions->Set(i, prediction);
     }
 
@@ -304,10 +306,8 @@ private:
   Model* model;
   cv::Mat mat;
   int topK;
-  vector<float> output;
-  vector<int> maxK;
+  vector<Prediction> mPredictions;
 };
-
 
 /**
  * Return the top K predictions for the provided image asynchronously
@@ -316,21 +316,181 @@ NAN_METHOD(Model::PredictTopK) {
   SETUP_FUNCTION(Model)
 
   if (info.Length() < 3) {
-    JSTHROW("Image filename and callback function must be provided");
+    JSTHROW("Image matrix, topK and callback function must be provided");
   }
 
-  cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(info[0]->ToObject())->mat;
+  cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
+      info[0]->ToObject())->mat;
 
   int topK = 0;
-  if (info.Length() > 1) {
-    INT_FROM_ARGS(topK, 1);
-  }
+  INT_FROM_ARGS(topK, 1);
 
   REQ_FUN_ARG(2, cb);
 
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
-  Nan::AsyncQueueWorker(new PredictAsyncWorker(callback, self, mat,
-      topK));
+  Nan::AsyncQueueWorker(new PredictAsyncWorker(callback, self, mat, topK));
+}
+
+/**
+ * Get object proposals based on the input image
+ *
+ * @param inputImage
+ * @param kvals The basic segmentation is performed kvals.size() times, each
+ *              time with the k parameter (see the Felzenszwalb paper for
+ *              details on k)
+ * @param minSize When doing the basic segmentations prior to any box merging,
+ *              all rectangles that have an area < min_size are discarded.
+ *              Therefore, all outputs and subsequent merged rectangles are
+ *              built out of rectangles that contain at least min_size pixels
+ * @param maxMergingIterations There are maxMergingIterations rounds of
+ *              neighboring blob merging. Therefore, this parameter has some
+ *              effect on the number of output rectangles you get, with larger
+ *              values of the parameter giving more output rectangles
+ */
+vector<dlib::rectangle> getObjectProposals(const cv::Mat& inputImage,
+    const dlib::matrix_range_exp<double>& kvals, const unsigned long minSize,
+    const unsigned long maxMergingIterations) {
+  dlib::cv_image <dlib::rgb_pixel> image(inputImage);
+
+  // Find candidate objects
+  vector<dlib::rectangle> rects;
+  dlib::find_candidate_object_locations(image, rects, kvals, minSize,
+      maxMergingIterations);
+  return rects;
+}
+
+/**
+ * Async wrapper for predictRegions API
+ */
+class PredictRegionsAsyncWorker: public Nan::AsyncWorker {
+public:
+  PredictRegionsAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
+      int minSize, int maxMergingIterations) :
+    Nan::AsyncWorker(callback),
+    model(model),
+    mat(mat),
+    mMinSize(minSize),
+    mMaxMergingIterations(maxMergingIterations) {
+  }
+
+  void Execute() {
+    // Run selective search to get all the regions of the image and run
+    // prediction on each of the regions
+    dlib::matrix_range_exp<double> kvals = dlib::linspace(50, 200, 3);
+    vector<dlib::rectangle> rects = getObjectProposals(mat, kvals, mMinSize,
+        mMaxMergingIterations);
+    ALOGD("# proposals: %d", rects.size());
+
+    for (int count = 0; count < rects.size(); count++) {
+      dlib::rectangle dlibrect = rects[count];
+      cv::Rect regionRect(dlibrect.left(), dlibrect.top(), dlibrect.width(),
+          dlibrect.height());
+      cv::Mat region = mat(regionRect);
+
+      // Only return the top most prediction
+      vector<Prediction> prediction = model->Classify(region, 1);
+      mPredictions.insert(mPredictions.end(), prediction.begin(),
+          prediction.end());
+      mRegions.push_back(regionRect);
+
+      ALOGV("Prediction for region %d %f %s [%d, %d, %d, %d]", count,
+          prediction[0].second, prediction[0].first.c_str(), regionRect.x,
+          regionRect.y, regionRect.width, regionRect.height);
+    }
+  }
+
+  void HandleOKCallback() {
+    Local<Array> predictions = Nan::New<Array>(mPredictions.size());
+    for (int i = 0; i < mPredictions.size(); ++i) {
+      Local<Object> prediction = Nan::New<Object>();
+      prediction->Set(Nan::New<String>("label").ToLocalChecked(),
+          Nan::New<String>(mPredictions[i].first).ToLocalChecked());
+      prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
+          Nan::New<Number>(mPredictions[i].second));
+
+      // Add region rectangle
+      Local<Object> rect = Nan::New<Object>();
+      rect->Set(Nan::New<String>("x").ToLocalChecked(),
+          Nan::New<Number>(mRegions[i].x));
+      rect->Set(Nan::New<String>("y").ToLocalChecked(),
+          Nan::New<Number>(mRegions[i].y));
+      rect->Set(Nan::New<String>("width").ToLocalChecked(),
+          Nan::New<Number>(mRegions[i].width));
+      rect->Set(Nan::New<String>("height").ToLocalChecked(),
+          Nan::New<Number>(mRegions[i].height));
+      prediction->Set(Nan::New<String>("rect").ToLocalChecked(), rect);
+
+      predictions->Set(i, prediction);
+    }
+
+    Local<Value> argv[2];
+    argv[0] = Nan::Null();
+    argv[1] = predictions;
+
+    Nan::TryCatch try_catch;
+    callback->Call(2, argv);
+    if (try_catch.HasCaught()) {
+      Nan::FatalException(try_catch);
+    }
+  }
+
+private:
+  Model* model;
+  cv::Mat mat;
+  int mMinSize;
+  int mMaxMergingIterations;
+  vector<Prediction> mPredictions;
+  vector<cv::Rect> mRegions;
+};
+
+/**
+ * Return top prediction for all the regions with in the input image. This
+ * function could be used to classify multiple objects with in an image. Please
+ * note that this function first computes the regions with in an image and then
+ * run prediction on each one of them and therefore this function is very slow.
+ */
+NAN_METHOD(Model::PredictRegions) {
+  SETUP_FUNCTION(Model)
+
+  if (info.Length() < 2) {
+    JSTHROW("Image matrix and callback function must be provided");
+  }
+
+  cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
+      info[0]->ToObject())->mat;
+
+  REQ_FUN_ARG(1, cb);
+
+  int minSize = 100;
+  if (info.Length() >= 3) {
+    INT_FROM_ARGS(minSize, 2);
+  }
+
+  int maxMergingIterations = 1;
+  if (info.Length() >= 4) {
+    INT_FROM_ARGS(maxMergingIterations, 3);
+  }
+
+  Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
+  Nan::AsyncQueueWorker(new PredictRegionsAsyncWorker(callback, self, mat,
+      minSize, maxMergingIterations));
+}
+
+/**
+ * Return the top K predictions
+ */
+vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
+  vector<float> output = Predict(img);
+
+  topK = min<int>(mLabels.size(), topK);
+  vector<int> maxK = Argmax(output, topK);
+  vector<Prediction> predictions;
+  for (int i = 0; i < topK; ++i) {
+    int idx = maxK[i];
+    predictions.push_back(make_pair(mLabels[idx], output[idx]));
+  }
+
+  return predictions;
 }
 
 /**
@@ -351,7 +511,7 @@ vector<float> Model::Predict(const cv::Mat& img) {
 
   mCaffeNet->ForwardPrefilled();
 
-  // Copy the output layer to a std::vector
+  // Copy the output layer to a vector
   Blob<float>* output_layer = mCaffeNet->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
@@ -365,7 +525,7 @@ vector<float> Model::Predict(const cv::Mat& img) {
  * operation will write the separate channels directly to the input
  * layer
  */
-void Model::WrapInputLayer(std::vector<cv::Mat>* inputChannels) {
+void Model::WrapInputLayer(vector<cv::Mat>* inputChannels) {
   Blob<float>* inputLayer = mCaffeNet->input_blobs()[0];
 
   int width = inputLayer->width();
@@ -382,7 +542,7 @@ void Model::WrapInputLayer(std::vector<cv::Mat>* inputChannels) {
  *
  */
 void Model::Preprocess(const cv::Mat& img,
-    std::vector<cv::Mat>* inputChannels) {
+    vector<cv::Mat>* inputChannels) {
   // Convert the input image to the input image format of the network
   cv::Mat sample;
   if (img.channels() == 3 && mNumChannels == 1) {

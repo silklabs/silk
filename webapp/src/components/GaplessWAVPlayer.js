@@ -71,7 +71,7 @@ export default class GaplessWAVPlayer extends React.Component {
       return;
     }
     nextSource.start();
-    this.bufferSource = source;
+    this.bufferSource = nextSource;
   }
 
   render() {

@@ -33,6 +33,7 @@
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/ceres/internal/miniglog/)',
         '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv2_core/include/)',
+        '-isystem <!(echo $ANDROID_BUILD_TOP/external/dlib/)',
       ],
       'ldflags': [
         '-Wl,--no-fatal-warnings',

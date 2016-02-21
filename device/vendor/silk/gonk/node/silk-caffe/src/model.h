@@ -20,6 +20,9 @@ using namespace caffe;
 using namespace v8;
 using namespace node;
 
+/* Pair (label, confidence) representing a prediction. */
+typedef std::pair<string, float> Prediction;
+
 #define REQ_FUN_ARG(I, VAR) \
   if (info.Length() <= (I) || !info[I]->IsFunction()) { \
     return Nan::ThrowTypeError("Argument " #I " must be a function"); \
@@ -51,19 +54,25 @@ using namespace node;
     NAME = string(*Nan::Utf8String(info[IND]->ToString())); \
   }
 
+#define BOOL_FROM_ARGS(NAME, IND) \
+  if (info[IND]->IsBoolean()) { \
+    NAME = info[IND]->BooleanValue(); \
+  }
+
 /**
  * This class is a wrapper around Caffe DNN library
  */
 class Model : public Nan::ObjectWrap {
 public:
   static void Init(v8::Local<v8::Object> exports);
-  vector<float> Predict(const cv::Mat& img);
+  vector<Prediction> Classify(const cv::Mat& img, int topK);
 
 private:
   explicit Model();
   ~Model();
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
+  vector<float> Predict(const cv::Mat& img);
   void WrapInputLayer(vector<cv::Mat>* inputChannels);
   void Preprocess(const cv::Mat& img, vector<cv::Mat>* inputChannels);
 
@@ -72,6 +81,7 @@ private:
   JSFUNC(SetScale);
   JSFUNC(SetLabels);
   JSFUNC(PredictTopK);
+  JSFUNC(PredictRegions);
 
 public:
   boost::shared_ptr<Net<float>> mCaffeNet;

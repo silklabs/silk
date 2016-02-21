@@ -75,5 +75,5 @@
     "start-server": "babel-node --harmony server/main.js production",
     "test": "npm run-script lint && webpack --progress"
   },
-  "version": "0.13.0"
+  "version": "0.14.0"
 }

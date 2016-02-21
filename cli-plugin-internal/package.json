@@ -1,6 +1,6 @@
 {
   "name": "silk",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Silk command line tool",
   "scripts": {
     "lint": "eslint build lib",

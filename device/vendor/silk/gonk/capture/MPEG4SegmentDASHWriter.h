@@ -41,6 +41,8 @@ public:
     virtual status_t stop() { return reset(); }
     virtual status_t pause();
     virtual bool reachedEOS();
+    virtual void setStartTimeOffsetMs(int ms);
+    virtual int32_t getStartTimeOffsetMs() const { return mStartTimeOffsetMs; }
 
     int32_t getTimeScale() const { return mTimeScale; }
     int64_t getKeyTrackDurationUs() const;
@@ -65,11 +67,13 @@ private:
     off_t mMdatOffset;
     int64_t mStartTimestampUs;
     int32_t mTimeScale;
+    int32_t mStartTimeOffsetMs;
     status_t mInitCheck;
     bool mUse4ByteNalLength;    
     bool mSelfContainedMp4;
     bool mPaused;
     bool mStarted;  // Track threads started successfully
+    bool mIsRealTimeRecording;
     volatile bool   mDone;                  // Writer thread is done?
 
     void setStartTimestampUs(int64_t timeUs);
@@ -82,6 +86,10 @@ private:
     // Return whether the nal length is 4 bytes or 2 bytes
     // Only makes sense for H.264/AVC
     bool useNalLengthFour() const;
+
+    // Return whether the writer is used for real time recording.
+    // By default, real time recording is on.
+    bool isRealTimeRecording() const { return mIsRealTimeRecording; }
 
     void trackProgressStatus(size_t trackId, int64_t timeUs, status_t err = OK);
     status_t reset();

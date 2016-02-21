@@ -339,6 +339,14 @@ status_t AudioSegmenter::read(MediaBuffer **buffer,
   int64_t startTimeUs;
   // Can we ever see an encoded sample buffer without a timestamp?
   CHECK((*buffer)->meta_data()->findInt64(kKeyTime, &startTimeUs));
+
+  int64_t driftTimeUs;
+  if ((*buffer)->meta_data()->findInt64(kKeyDriftTime, &driftTimeUs) &&
+      driftTimeUs) {
+    ALOGV("Adjusting time (%lld) by drift (%lld)", startTimeUs, driftTimeUs);
+    startTimeUs += driftTimeUs;
+  }
+
   ALOGV("  AAC progress: startTimeUs is %lld", startTimeUs);
   int64_t frameDurationUs = kNumSamplesPerFrame * 1e6 / mSampleRate;
   mAudioReadTimeUs = startTimeUs + frameDurationUs;
@@ -371,6 +379,8 @@ MPEG4SegmenterDASH::MPEG4SegmenterDASH(const sp<MediaSource>& videoEncoder,
 { }
 
 bool MPEG4SegmenterDASH::threadLoop() {
+  bool firstSegment = true;
+
   while (true) {
     sp<VideoSegmenter> videoSource(new VideoSegmenter(mVideoSource));
     sp<MediaSource> audioSource(new AudioSegmenter(mAudioSource,
@@ -380,7 +390,6 @@ bool MPEG4SegmenterDASH::threadLoop() {
     
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
-    params->setInt32(kKeyRealTimeRecording, false);
 
     timeval when;
     gettimeofday(&when, NULL);
@@ -390,6 +399,13 @@ bool MPEG4SegmenterDASH::threadLoop() {
 
     status_t err = writer->stop();
     if (err == ::OK) {
+      // Always skip the first segment because the audio offset is likely larger
+      // than a frame and that confuses some playback implementations.
+      if (firstSegment) {
+        firstSegment = false;
+        continue;
+      }
+
       // The "key track" is the video track.  The key track starts at
       // time 0 in the segment.  The duration isn't particularly
       // meaningful for DASH playback because segments overlap during

@@ -52,7 +52,8 @@ static const int64_t kMax32BitFileSize = 0x00ffffffffLL; // 2^32-1 : max FAT32
                                                          // used by most SD cards
 static const uint8_t kNalUnitTypeSeqParamSet = 0x07;
 static const uint8_t kNalUnitTypePicParamSet = 0x08;
-static const int64_t kInitialDelayTimeUs     = 700000LL;
+static const int32_t kInitialDelayTimeMs     = 700;
+static const int64_t kExtraAudioDelayTimeUs  = 200000;
 
 typedef MPEG4SegmentDASHWriter::Track Track;
 
@@ -405,8 +406,6 @@ private:
     pthread_t mThread;
     int64_t mTrackDurationUs;
     int64_t mStartTimestampUs;
-    int64_t mStartTimeRealUs;
-    int64_t mFirstSampleTimeRealUs;
     int64_t mPreviousTrackTimeUs;
     int64_t mTrackEveryTimeDurationUs;
     void* mCodecSpecificData;
@@ -537,7 +536,6 @@ status_t Track::start(MetaData *params) {
     if (params == NULL || !params->findInt64(kKeyTime, &startTimeUs)) {
         startTimeUs = 0;
     }
-    mStartTimeRealUs = startTimeUs;
 
     int32_t rotationDegrees;
     if (!mIsAudio && params && params->findInt32(kKeyRotation, &rotationDegrees)) {
@@ -547,6 +545,23 @@ status_t Track::start(MetaData *params) {
     initTrackingProgressStatus(params);
 
     sp<MetaData> meta = new MetaData;
+    if (mOwner->isRealTimeRecording() && mOwner->numTracks() > 1) {
+        /*
+         * This extra delay of accepting incoming audio/video signals
+         * helps to align a/v start time at the beginning of a recording
+         * session, and it also helps eliminate the "recording" sound for
+         * camcorder applications.
+         */
+        int64_t startTimeOffsetUs = mOwner->getStartTimeOffsetMs() * 1000LL;
+        if (mIsAudio) {
+            // XXX Audio needs an extra bump for some reason.
+            startTimeOffsetUs += kExtraAudioDelayTimeUs;
+        }
+
+        ALOGI("Start time offset: %" PRId64 " us", startTimeOffsetUs);
+        startTimeUs += startTimeOffsetUs;
+    }
+
     meta->setInt64(kKeyTime, startTimeUs);
 
     status_t err = mSource->start(meta.get());
@@ -636,15 +651,20 @@ void Track::writeTrafBox(AutoBox& parent, const StashedOffsets& offsets,
     AutoBox traf("traf", parent);
     {
         AutoBox tfhd("tfhd", traf);
+        // Version and flags.
+        tfhd.writeInt32((0x00 << 24) | // version 0
+                        0x00000020   | // "default flags present"
+                        0x00020000);   // "default base is moof"
+
+        // Track id.
+        tfhd.writeInt32(mTrackId);
+
+        // Default sample flags.
         if (mIsAudio) {
-            // version = 0x00, flags = 0x020020
-            tfhd.writeInt32(0x00020020);
-            tfhd.writeInt32(mTrackId);
-            tfhd.writeInt32(0x02000000); // default sample flags
+            tfhd.writeInt32(0x02000000); // "sample depends no"
         } else {
-            // version = 0x00, flags = 0x020000
-            tfhd.writeInt32(0x00020000);
-            tfhd.writeInt32(mTrackId);
+            tfhd.writeInt32(0x00010000 | // "sample is non-sync"
+                            0x01000000); // "sample depends yes"
         }
     }
     {
@@ -663,20 +683,42 @@ void Track::writeTrafBox(AutoBox& parent, const StashedOffsets& offsets,
     }
     {
         AutoBox trun("trun", traf);
-        int32_t flags = mIsAudio ? 0x301 : 0x305;
-        trun.writeInt32(0 | flags); // version = 0x00, flags
-        trun.writeInt32(mSamples.size()); // num samples
+
+        int flags =
+            0x00000001 | // "data offset present"
+            0x00000100 | // "sample duration present"
+            0x00000200;  // "sample size present"
+        if (!mIsAudio) {
+            flags |= 0x00000004; // "first sample flags"
+        }
+
+        // Version and flags.
+        trun.writeInt32((0x00 << 24) | // version 0
+                        flags);
+
+        // Sample count.
+        trun.writeInt32(mSamples.size());
+
         // We'll fill in the mdat offset we're ready to write our
         // mdat.
         mDatOffsetOffset = trun.offset();
+
+        // Data offset.
         trun.writeFourcc("?off");
-        if (flags & 0x4) {
-            trun.writeInt32(0);     // ???
+
+        // First sample flags.
+        if (flags & 0x00000004) {
+            trun.writeInt32(0x02000000); // "sample depends no"
         }
+
         typedef List<SampleBuffer*>::iterator It;
         for (It it = mSamples.begin(); it != mSamples.end(); ++it) {
             const SampleBuffer* buf = *it;
+
+            // Sample duration.
             trun.writeInt32(buf->scaledDuration);
+
+            // Sample size.
             size_t extraBytes = isAvc() ? (use4ByteNalLength ? 4 : 2) : 0;
             trun.writeInt32(buf->size + extraBytes);
         }
@@ -781,6 +823,10 @@ status_t Track::threadEntry() {
         prctl(PR_SET_NAME, (unsigned long)"VideoTrackEncoding", 0, 0, 0);
     }
 
+    if (mOwner->isRealTimeRecording()) {
+        androidSetThreadPriority(0, ANDROID_PRIORITY_AUDIO);
+    }
+
     sp<MetaData> meta_data;
 
     status_t err = OK;
@@ -860,7 +906,6 @@ status_t Track::threadEntry() {
 
 ////////////////////////////////////////////////////////////////////////////////
         if (mSamples.size() == 0) {
-            mFirstSampleTimeRealUs = systemTime() / 1000;
             mStartTimestampUs = timestampUs;
             mOwner->setStartTimestampUs(mStartTimestampUs);
             previousPausedDurationUs = mStartTimestampUs;
@@ -1527,11 +1572,13 @@ MPEG4SegmentDASHWriter::MPEG4SegmentDASHWriter()
     , mMdatOffset(0)
     , mStartTimestampUs(0)
     , mTimeScale(0)
+    , mStartTimeOffsetMs(kInitialDelayTimeMs)
     , mInitCheck(NO_INIT)
     , mUse4ByteNalLength(true)
     , mSelfContainedMp4(false)
     , mPaused(false)
     , mStarted(false)
+    , mIsRealTimeRecording(true)
     , mDone(false)
 {
     mInitCheck = OK;
@@ -1589,6 +1636,12 @@ status_t MPEG4SegmentDASHWriter::start(MetaData *param) {
         param->findInt32(kKey2ByteNalLength, &use2ByteNalLength) &&
         use2ByteNalLength) {
         mUse4ByteNalLength = false;
+    }
+
+    int32_t isRealTimeRecording;
+    if (param &&
+        param->findInt32(kKeyRealTimeRecording, &isRealTimeRecording)) {
+        mIsRealTimeRecording = !!isRealTimeRecording;
     }
 
     mStartTimestampUs = -1;
@@ -1706,6 +1759,11 @@ status_t Track::makeAVCCodecSpecificData(const uint8_t *data, size_t size) {
 bool MPEG4SegmentDASHWriter::reachedEOS() {
     return (mVideoTrack->reachedEOS()
             && (!mAudioTrack || mAudioTrack->reachedEOS()));
+}
+
+void MPEG4SegmentDASHWriter::setStartTimeOffsetMs(int ms) {
+    ALOGI("setStartTimeOffsetMs(%lld)", ms);
+    mStartTimeOffsetMs = ms;
 }
 
 int64_t MPEG4SegmentDASHWriter::getKeyTrackDurationUs() const {

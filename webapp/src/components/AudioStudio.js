@@ -4,6 +4,7 @@ import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
 import FileDrop from './FileDrop';
+import Files from '../libraries/Files';
 import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
@@ -47,18 +48,30 @@ const FFT_SIZE = 256;
 const WINDOW_OVERLAP = 128;
 const SPECTROGRAM_FRAMES = 64;
 
+const PREF_FILE = 'prefs.json';
+const DEFAULT_PREFS = {
+  colorModel: 'jet',
+  drawGrid: false,
+  graphView: 'spectLinear',
+};
+
 export default class AudioStudio extends React.Component {
   state = {
     camera: null,
-    colorModel: 'jet',
     droppingFile: false,
     playing: false,
     track: null,
   };
+  prefs = DEFAULT_PREFS;
+  files = null;
   liveTrack = null;
 
   constructor() {
     super();
+    this.files = new Files();
+    this.files.read(PREF_FILE)
+      .then((data) => this._setPrefs(JSON.parse(data)))
+      .catch((err) => console.log('(No prefs set yet)'));
   }
 
   get deviceId() {
@@ -69,6 +82,9 @@ export default class AudioStudio extends React.Component {
     this.liveTrack = new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE, SAMPLE_RATE);
     this._attachTrack(this.liveTrack);
     this.state.track = this.liveTrack;
+    // We may still be loading prefs from file, but in that case state
+    // will directly be updated when that finishes.
+    Object.assign(this.state, this.prefs);
   }
 
   componentDidMount() {
@@ -141,24 +157,41 @@ export default class AudioStudio extends React.Component {
     this.liveTrack.appendSamples(micData.samples);
   };
 
-  _onTimeUpdate = (lastTime, currentTime) => {
-    if (this.state.playing) {
-      let samples = this.state.track.getSamples(lastTime, currentTime);
-      let wavData = new Int16Array(samples.length);
-      wavData.set(samples);
-      let micData = {
-        numChannels: 1,
-        bytesPerSample: 2,
-        sampleRate: this.state.track.sampleRate,
-        samples: wavData,
-      };
-      this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
+  _onTimeUpdate = (currentTime, startTime, endTime, lastTime) => {
+    if (!this.state.playing) {
+      return;
     }
+    let samples = this.state.track.getSamples(lastTime, currentTime);
+    let wavData = new Int16Array(samples.length);
+    wavData.set(samples);
+    let micData = {
+      numChannels: 1,
+      bytesPerSample: 2,
+      sampleRate: this.state.track.sampleRate,
+      samples: wavData,
+    };
+    this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
+  };
+
+  _onSelectGraphView = (e) => {
+    this._setPrefs({ graphView: this.refs.graphView.getValue() });
   };
 
   _onSelectColorModel = (e) => {
-    this.setState({ colorModel: this.refs.colorModel.getValue() });
+    this._setPrefs({ colorModel: this.refs.colorModel.getValue() });
   };
+
+  _onChangeGridDrawing = (e) => {
+    this._setPrefs({ drawGrid: this.refs.drawGrid.getChecked() });
+  };
+
+  _setPrefs(newPrefs) {
+    Object.assign(this.prefs, newPrefs);
+    this.setState(this.prefs);
+    this.files.write(PREF_FILE, JSON.stringify(this.prefs))
+      .then(() => console.log('Updated prefs'))
+      .catch((err) => console.log('Error saving prefs', err));
+  }
 
   _togglePlayback = () => {
     this.setState({ playing: !this.state.playing });
@@ -168,36 +201,60 @@ export default class AudioStudio extends React.Component {
     let buttonGlyph = this.state.playing ? 'volume-off' : 'volume-up';
     // TODO: get sampleRate from global audio configuration
     return (
-      <div>
-        <ButtonGroup>
-          <Button onClick={this._togglePlayback}>
-            <Glyphicon glyph={buttonGlyph} />
-          </Button>
-        </ButtonGroup>
-        <AudioVisualizer
-          ref="visualizer"
-          track={this.state.track}
-          fftSize={FFT_SIZE}
-          windowOverlap={WINDOW_OVERLAP}
-          spectrogramFrames={SPECTROGRAM_FRAMES}
-          graphWidth={1024}
-          graphHeight={512}
-          colorModel={this.state.colorModel}
-        />
-        <ButtonGroup>
-          <Input
-            ref="colorModel"
-            type="select"
-            label="Color Model"
-            placeholder="jet"
-            onChange={this._onSelectColorModel}>
-            <option value="jet">Jet</option>
-            <option value="hsv">HSV</option>
-            <option value="grayscale">None (grayscale)</option>
-          </Input>
-        </ButtonGroup>
+      <div style={{padding: '5px'}}>
+        <div style={{display: 'flex', flexDirection: 'horizontal'}}>
+          <div>
+            <AudioVisualizer
+              ref="visualizer"
+              graphView={this.state.graphView}
+              track={this.state.track}
+              fftSize={FFT_SIZE}
+              windowOverlap={WINDOW_OVERLAP}
+              spectrogramFrames={SPECTROGRAM_FRAMES}
+              graphWidth={1024}
+              graphHeight={512}
+              colorModel={this.state.colorModel}
+              drawGrid={this.state.drawGrid}
+            />
+            <ButtonGroup>
+              <Button onClick={this._togglePlayback}>
+                <Glyphicon glyph={buttonGlyph} />
+              </Button>
+            </ButtonGroup>
+          </div>
+          <ButtonGroup style={{paddingLeft: '5px'}}>
+            <Input
+              ref="graphView"
+              type="select"
+              label="Graph View"
+              value={this.state.graphView}
+              onChange={this._onSelectGraphView}>
+              <option value="spectLinear">Spectrogram (Linear)</option>
+              <option value="spectDecibel">Spectrogram (Decibel)</option>
+              <option value="freqLinear">Frequency Domain (Linear)</option>
+              <option value="freqDecibel">Frequency Domain (Decibel)</option>
+              <option value="time">Time Domain</option>
+            </Input>
+            <Input
+              ref="colorModel"
+              type="select"
+              label="Color Model"
+              value={this.state.colorModel}
+              onChange={this._onSelectColorModel}>
+              <option value="jet">Jet</option>
+              <option value="hsv">HSV</option>
+              <option value="grayscale">None (grayscale)</option>
+            </Input>
+            <Input
+              ref="drawGrid"
+              type="checkbox"
+              label="Draw Grid"
+              checked={this.state.drawGrid}
+              onChange={this._onChangeGridDrawing}
+            />
+          </ButtonGroup>
+        </div>
         <GaplessWAVPlayer ref="wavPlayer" />
-
         <FileDrop
           onStart={this._onFileDropStart}
           onCancel={this._onFileDropCancel}

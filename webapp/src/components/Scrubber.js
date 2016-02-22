@@ -8,8 +8,7 @@ export default class Scrubber extends React.Component {
 
   render() {
     let style = {
-      width: (this.props.width + 15) + 'px',
-      paddingLeft: '15px',
+      width: this.props.width + 'px',
     };
     return (
       <div style={style}>

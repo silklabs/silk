@@ -1,6 +1,5 @@
 import invariant from 'assert';
 import React from 'react';
-import { Tabs, Tab } from 'react-bootstrap';
 
 import createAudioAnalyzer from '../libraries/AudioAnalyzer';
 import Scrubber from './Scrubber';
@@ -124,7 +123,6 @@ class Spectrogram {
 
 export default class AudioVisualizer extends React.Component {
   state = {
-    graphView: 'spectLinear',
     currentTime: 0,
     startTime: 0,
     endTime: 0,
@@ -132,38 +130,11 @@ export default class AudioVisualizer extends React.Component {
   };
 
   analyzer = null;
-  canvas = {
-    time: {
-      canvas: null,
-      ctx: null,
-    },
-    freqLinear: {
-      canvas: null,
-      ctx: null,
-      scale: LINEAR_SCALE,
-    },
-    freqDecibel: {
-      canvas: null,
-      ctx: null,
-      scale: DECIBEL_SCALE,
-    },
-    spectLinear: {
-      canvas: null,
-      ctx: null,
-      scale: LINEAR_SCALE,
-    },
-    spectDecibel: {
-      canvas: null,
-      ctx: null,
-      scale: DECIBEL_SCALE,
-    },
-    temp: {
-      canvas: null,
-      ctx: null,
-    },
-  };
+  ctx = null;
   spectrogramLinear = null;
   spectrogramDecibel = null;
+  tempCanvas = null;
+  tempCtx = null;
   track = null;
   windowStart = 0;
   windowEnd = 0;
@@ -182,25 +153,22 @@ export default class AudioVisualizer extends React.Component {
     this.analyzer.on('timeDomain', this._onTimeDomain);
     this.analyzer.on('fftMagnitudeLinear', this._onFFTMagnitudeLinear);
     this.analyzer.on('fftMagnitudeDecibel', this._onFFTMagnitudeDecibel);
-    for (let canvasRef in this.canvas) {
-      let canvas = this.refs[canvasRef];
-      if (!canvas) {
-        console.log(`Creating offscreen canvas ${canvasRef}`);
-        canvas = document.createElement('canvas');
-        canvas.width = this.props.graphWidth;
-        canvas.height = this.props.graphHeight;
-      }
-      this.canvas[canvasRef].canvas = canvas;
-      this.canvas[canvasRef].ctx = canvas.getContext('2d');
-    }
+    this.ctx = this.refs.canvas.getContext('2d');
     this.spectrogramLinear = new Spectrogram(this.props.spectrogramFrames,
                                              this.analyzer.frequencyBinCount);
     this.spectrogramDecibel = new Spectrogram(this.props.spectrogramFrames,
                                               this.analyzer.frequencyBinCount);
+    this.tempCanvas = document.createElement('canvas');
+    this.tempCanvas.width = this.props.graphWidth;
+    this.tempCanvas.height = this.props.graphHeight;
+    this.tempCtx = this.tempCanvas.getContext('2d');
   }
 
   componentWillReceiveProps(newProps) {
     this._attachTrack(newProps.track);
+    if (this.props.drawGrid !== newProps.drawGrid) {
+      this._clearGraph();
+    }
   }
 
   componentWillUnmount() {
@@ -237,32 +205,36 @@ export default class AudioVisualizer extends React.Component {
     this._reset();
   }
 
-  _clearAllGraphs() {
-    for (let canvasRef in this.canvas) {
-      let { canvas, ctx } = this.canvas[canvasRef];
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+  _clearGraph() {
+    if (this.ctx) {
+      this.ctx.clearRect(0, 0, this.refs.canvas.width, this.refs.canvas.height);
+    }
+    if (this.tempCtx) {
+      this.tempCtx.clearRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
     }
   }
 
-  _computeFreqParams(graph) {
+  _computeFreqParams(scaleType) {
     let maxFreq = this._nyquistFrequency;
     let hzPerBin = maxFreq / this.analyzer.frequencyBinCount;
-    let { max, min } = graph.scale;
+    let { max, min } = scaleType;
     let scale = 1.0 / (max - min);
     return { min, max, scale, hzPerBin, maxFreq };
   }
 
-  _drawFFTMagnitudes(graph, magnitudes) {
+  _drawFFTMagnitudes(scaleType, magnitudes) {
     let freqBins = this.analyzer.frequencyBinCount;
     let binWidth = this.props.graphWidth / freqBins;
-    let { min, scale, hzPerBin, maxFreq } = this._computeFreqParams(graph);
-    this._drawInCartesianCoords(graph, (ctx, width, height) => {
+    let spacer = this.props.drawGrid ? 1 : 0;
+    let { min, scale, hzPerBin, maxFreq } = this._computeFreqParams(scaleType);
+    this._drawInCartesianCoords((ctx, width, height) => {
       ctx.fillStyle = 'blue';
       for (let i = 0; i < freqBins; ++i) {
         let mag = scale * (magnitudes[i] - min);
-        ctx.fillRect(i * binWidth, 0, binWidth - 1, height * mag);
+        ctx.fillRect(i * binWidth, 0, binWidth - spacer, height * mag);
+      }
+      if (!this.props.drawGrid) {
+        return;
       }
       ctx.fillStyle = 'black';
       for (let hz = 500; hz <= maxFreq; hz += 500) {
@@ -273,22 +245,25 @@ export default class AudioVisualizer extends React.Component {
     });
   }
 
-  _drawSpectrogram(graph, spect) {
+  _drawSpectrogram(scaleType, spect) {
     // Preserve already-drawn frames: it's too expensive to redraw all
     // of them on each new FFT.
     let frameWidth = this.props.graphWidth / this.props.spectrogramFrames;
     let binHeight = this.props.graphHeight / this.analyzer.frequencyBinCount;
-    this._copyTranslated(graph, -frameWidth, 0);
-
-    let { min, scale, hzPerBin, maxFreq } = this._computeFreqParams(graph);
-    this._drawInCartesianCoords(graph, (ctx, width, height, canvas) => {
+    let spacer = this.props.drawGrid ? 1 : 0;
+    this._copyTranslated(-frameWidth, 0);
+    let { min, scale, hzPerBin, maxFreq } = this._computeFreqParams(scaleType);
+    this._drawInCartesianCoords((ctx, width, height, canvas) => {
       let mags = spect.latest;
       let i = spect.length - 1;
       for (let freqBin = 0; freqBin < mags.length; ++freqBin) {
         let mag = scale * (mags[freqBin] - min);
         ctx.fillStyle = cssColor(mag, this._colorModel);
         ctx.fillRect(i * frameWidth, freqBin * binHeight,
-                     frameWidth - 1, binHeight);
+                     frameWidth - spacer, binHeight);
+      }
+      if (!this.props.drawGrid) {
+        return;
       }
       ctx.fillStyle = 'white';
       for (let hz = 0; hz <= maxFreq; hz += 500) {
@@ -313,12 +288,12 @@ export default class AudioVisualizer extends React.Component {
 
   _onFFTMagnitudeLinear = (magnitudes) => {
     this.spectrogramLinear.accumulate(magnitudes);
-    switch (this.state.graphView) {
+    switch (this.props.graphView) {
     case 'freqLinear':
-      this._drawFFTMagnitudes(this.canvas.freqLinear, magnitudes);
+      this._drawFFTMagnitudes(LINEAR_SCALE, magnitudes);
       return;
     case 'spectLinear':
-      this._drawSpectrogram(this.canvas.spectLinear, this.spectrogramLinear);
+      this._drawSpectrogram(LINEAR_SCALE, this.spectrogramLinear);
       return;
     default:
       return;
@@ -327,12 +302,12 @@ export default class AudioVisualizer extends React.Component {
 
   _onFFTMagnitudeDecibel = (magnitudes) => {
     this.spectrogramDecibel.accumulate(magnitudes);
-    switch (this.state.graphView) {
+    switch (this.props.graphView) {
     case 'freqDecibel':
-      this._drawFFTMagnitudes(this.canvas.freqDecibel, magnitudes);
+      this._drawFFTMagnitudes(DECIBEL_SCALE, magnitudes);
       return;
     case 'spectDecibel':
-      this._drawSpectrogram(this.canvas.spectDecibel, this.spectrogramDecibel);
+      this._drawSpectrogram(DECIBEL_SCALE, this.spectrogramDecibel);
       return;
     default:
       return;
@@ -340,11 +315,11 @@ export default class AudioVisualizer extends React.Component {
   };
 
   _onTimeDomain = (data) => {
-    if (this.state.graphView !== 'time') {
+    if (this.props.graphView !== 'time') {
       return;
     }
     let pointSize = this.props.graphWidth / data.length;
-    this._drawInCartesianCoords(this.canvas.time, (ctx, width, height) => {
+    this._drawInCartesianCoords((ctx, width, height) => {
       ctx.fillStyle = 'black';
       ctx.fillRect(0, height / 2, width, 1);
       ctx.fillStyle = 'blue';
@@ -359,11 +334,10 @@ export default class AudioVisualizer extends React.Component {
     this.setState({ graphView: key });
   };
 
-  _copyTranslated(graph, dx, dy) {
-    let { canvas, ctx } = graph;
+  _copyTranslated(dx, dy) {
+    let [ canvas, ctx ] = [ this.refs.canvas, this.ctx ];
     let [ width, height ] = [ canvas.width, canvas.height ];
-    let tempCanvas = this.canvas.temp.canvas;
-    let tempCtx = this.canvas.temp.ctx;
+    let [ tempCanvas, tempCtx ] = [ this.tempCanvas, this.tempCtx ];
     tempCtx.drawImage(canvas, 0, 0, width, height);
     ctx.save();
     ctx.translate(dx, dy);
@@ -371,8 +345,8 @@ export default class AudioVisualizer extends React.Component {
     ctx.restore();
   }
 
-  _drawInCartesianCoords(canvasAndCtx, drawFunc, clear = true) {
-    let { canvas, ctx } = canvasAndCtx;
+  _drawInCartesianCoords(drawFunc, clear = true) {
+    let [ canvas, ctx ] = [ this.refs.canvas, this.ctx ];
     let [ width, height ] = [ canvas.width, canvas.height ];
     ctx.save();
 
@@ -412,7 +386,7 @@ export default class AudioVisualizer extends React.Component {
   }
 
   _reset() {
-    this._clearAllGraphs();
+    this._clearGraph();
     if (this.analyzer) {
       this.analyzer.reset();
     }
@@ -427,25 +401,7 @@ export default class AudioVisualizer extends React.Component {
     let height = this.props.graphHeight;
     return (
       <div>
-        <Tabs position="right"
-          activeKey={this.state.graphView}
-          onSelect={this._onTabSelect}>
-          <Tab eventKey={'spectLinear'} title="Spectrogram (Linear)">
-            <canvas ref="spectLinear" width={width} height={height} />
-          </Tab>
-          <Tab eventKey={'spectDecibel'} title="Spectrogram (Decibel)">
-            <canvas ref="spectDecibel" width={width} height={height} />
-          </Tab>
-          <Tab eventKey={'freqLinear'} title="Frequency Domain (Linear)">
-            <canvas ref="freqLinear" width={width} height={height} />
-          </Tab>
-          <Tab eventKey={'freqDecibel'} title="Frequency Domain (Decibel)">
-            <canvas ref="freqDecibel" width={width} height={height} />
-          </Tab>
-          <Tab eventKey={'time'} title="Time Domain">
-            <canvas ref="time" width={width} height={height} />
-          </Tab>
-        </Tabs>
+        <canvas ref="canvas" width={width} height={height} />
         <Scrubber
           disabled={this.state.playing}
           width={width}

@@ -159,6 +159,7 @@ export default class AudioVisualizer extends React.Component {
   };
   spectrogramLinear = null;
   spectrogramDecibel = null;
+  track = null;
 
   componentDidMount() {
     this.analyzer = createAudioAnalyzer({
@@ -185,6 +186,14 @@ export default class AudioVisualizer extends React.Component {
                                              this.analyzer.frequencyBinCount);
     this.spectrogramDecibel = new Spectrogram(this.props.spectrogramFrames,
                                               this.analyzer.frequencyBinCount);
+    this._attachTrack(this.props.track);
+  }
+
+  componentWillReceiveProps(newProps) {
+    if (this.track === newProps.track) {
+      return;
+    }
+    this._attachTrack(newProps.track);
   }
 
   componentWillUnmount() {
@@ -192,16 +201,30 @@ export default class AudioVisualizer extends React.Component {
     this.analyzer = null;
   }
 
-  appendSamples(samples) {
-    this.analyzer.appendSamples(samples);
-  }
-
   get _colorModel() {
     return ColorModels[this.props.colorModel] || ColorModels.jet;
   }
 
   get _nyquistFrequency() {
-    return this.props.sampleRate / 2;
+    return this.track.sampleRate / 2;
+  }
+
+  _attachTrack(track) {
+    if (this.track) {
+      this.track.stop();
+      this.track.removeListener('progress', this._onProgress);
+    }
+    this._clearAllGraphs();
+    track.on('progress', this._onProgress);
+    track.play();
+    this.track = track;
+  }
+
+  _clearAllGraphs() {
+    for (let canvasRef in this.canvas) {
+      let { canvas, ctx } = this.canvas[canvasRef];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
   }
 
   _computeFreqParams(graph) {
@@ -256,6 +279,10 @@ export default class AudioVisualizer extends React.Component {
       }
     }, false);
   }
+
+  _onProgress = (samples, currentTime) => {
+    this.analyzer.appendSamples(samples);
+  };
 
   _onFFTMagnitudeLinear = (magnitudes) => {
     this.spectrogramLinear.accumulate(magnitudes);

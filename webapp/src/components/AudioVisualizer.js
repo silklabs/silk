@@ -3,6 +3,7 @@ import React from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
 
 import createAudioAnalyzer from '../libraries/AudioAnalyzer';
+import Scrubber from './Scrubber';
 
 // We assume 16-bit signed samples from the mic stream.
 //
@@ -124,6 +125,10 @@ class Spectrogram {
 export default class AudioVisualizer extends React.Component {
   state = {
     graphView: 'spectLinear',
+    currentTime: 0,
+    startTime: 0,
+    endTime: 0,
+    playing: false,
   };
 
   analyzer = null;
@@ -160,6 +165,12 @@ export default class AudioVisualizer extends React.Component {
   spectrogramLinear = null;
   spectrogramDecibel = null;
   track = null;
+  windowStart = 0;
+  windowEnd = 0;
+
+  componentWillMount() {
+    this._attachTrack(this.props.track);
+  }
 
   componentDidMount() {
     this.analyzer = createAudioAnalyzer({
@@ -186,17 +197,14 @@ export default class AudioVisualizer extends React.Component {
                                              this.analyzer.frequencyBinCount);
     this.spectrogramDecibel = new Spectrogram(this.props.spectrogramFrames,
                                               this.analyzer.frequencyBinCount);
-    this._attachTrack(this.props.track);
   }
 
   componentWillReceiveProps(newProps) {
-    if (this.track === newProps.track) {
-      return;
-    }
     this._attachTrack(newProps.track);
   }
 
   componentWillUnmount() {
+    this._attachTrack(null);
     this.analyzer.removeAllListeners();
     this.analyzer = null;
   }
@@ -210,20 +218,31 @@ export default class AudioVisualizer extends React.Component {
   }
 
   _attachTrack(track) {
+    if (this.track === track) {
+      return;
+    }
     if (this.track) {
       this.track.stop();
-      this.track.removeListener('progress', this._onProgress);
+      this.track.removeListener('timeupdate', this._onTimeUpdate);
+      this.track.removeListener('playing', this._onTimeUpdate);
+      this.track.removeListener('ended', this._onTimeUpdate);
     }
-    this._clearAllGraphs();
-    track.on('progress', this._onProgress);
-    track.play();
+    if (track) {
+      track.on('timeupdate', this._onTimeUpdate);
+      track.on('playing', this._onPlaying);
+      track.on('ended', this._onEnded);
+      track.play();
+    }
     this.track = track;
+    this._reset();
   }
 
   _clearAllGraphs() {
     for (let canvasRef in this.canvas) {
       let { canvas, ctx } = this.canvas[canvasRef];
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (canvas && ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     }
   }
 
@@ -280,8 +299,16 @@ export default class AudioVisualizer extends React.Component {
     }, false);
   }
 
-  _onProgress = (samples, currentTime) => {
-    this.analyzer.appendSamples(samples);
+  _onPlaying = () => {
+    this.setState({ playing: true });
+  };
+
+  _onEnded = () => {
+    this.setState({ playing: false });
+  };
+
+  _onTimeUpdate = (currentTime, startTime, endTime) => {
+    this._seek(currentTime, startTime, endTime);
   };
 
   _onFFTMagnitudeLinear = (magnitudes) => {
@@ -359,12 +386,48 @@ export default class AudioVisualizer extends React.Component {
     ctx.restore();
   }
 
+  _onScrub = (value) => {
+    this._seek(value, this.state.startTime, this.state.endTime);
+  };
+
+  _seek(currentTime, startTime, endTime) {
+    let [ lastStart, lastEnd ] = [ this.windowStart, this.windowEnd ];
+    this.windowEnd = currentTime;
+    this.windowStart = Math.max(0.0, currentTime - this._windowDuration);
+    let fetchStart, fetchEnd;
+    if (lastStart <= this.windowStart && this.windowStart < lastEnd
+        && lastEnd < this.windowEnd) {
+      // Fast path: we're playing back forwards in time, so we can
+      // preserve content already in the display by just shifting it
+      // (analyzer handles this).
+      [ fetchStart, fetchEnd ] = [ lastEnd, this.windowEnd ];
+    } else {
+      // Drat, we give up.  Fetch the entire window.
+      [ fetchStart, fetchEnd ] = [ this.windowStart, this.windowEnd ];
+      this._reset();
+    }
+    let newSamples = this.track.getSamples(fetchStart, fetchEnd);
+    this.analyzer.appendSamples(newSamples);
+    this.setState({ currentTime, startTime, endTime });
+  }
+
+  _reset() {
+    this._clearAllGraphs();
+    if (this.analyzer) {
+      this.analyzer.reset();
+    }
+  }
+
+  get _windowDuration() {
+    return (this.props.fftSize - this.props.windowOverlap) * this.props.spectrogramFrames / this.track.sampleRate;
+  }
+
   render() {
     let width = this.props.graphWidth;
     let height = this.props.graphHeight;
     return (
       <div>
-        <Tabs position="left"
+        <Tabs position="right"
           activeKey={this.state.graphView}
           onSelect={this._onTabSelect}>
           <Tab eventKey={'spectLinear'} title="Spectrogram (Linear)">
@@ -383,6 +446,14 @@ export default class AudioVisualizer extends React.Component {
             <canvas ref="time" width={width} height={height} />
           </Tab>
         </Tabs>
+        <Scrubber
+          disabled={this.state.playing}
+          width={width}
+          pos={this.state.currentTime}
+          start={this.state.startTime}
+          end={this.state.endTime}
+          onScrub={this._onScrub}
+        />
       </div>
     );
   }

@@ -80,7 +80,10 @@ class Env extends EventEmitter {
       this.sensors = new EventEmitter();
 
       /**
-       * Enable/Disable light sensor
+       * Enable/Disable light sensor.
+       *
+       * TODO: Probably remove this method and enable/disable light sensor in
+       *       main.js just like accelerometer
        *
        * @param {number} pollInterval Interval in ms at which to poll for light
        *        values
@@ -95,14 +98,26 @@ class Env extends EventEmitter {
         }
       };
 
-      let listener = sensorEvent => {
-        if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.LIGHT) {
-          return;
-        }
-        this.sensors.emit('light', sensorEvent.values[0]);
-      };
-      sensors.on('data', listener);
-      this._saveListener(sensors, 'data', listener);
+      this.sensors.once('newListener', () => {
+        const listener = sensorEvent => {
+          switch (sensorEvent.sensorType) {
+          case sensors.SENSOR_TYPE.ACCELEROMETER:
+            this.sensors.emit('accel',
+              sensorEvent.values[0],
+              sensorEvent.values[1],
+              sensorEvent.values[2],
+            );
+            break;
+          case sensors.SENSOR_TYPE.LIGHT:
+            this.sensors.emit('light', sensorEvent.values[0]);
+            break;
+          default:
+            break;
+          }
+        };
+        sensors.on('data', listener);
+        this._saveListener(sensors, 'data', listener);
+      });
     }
 
     /**
@@ -422,11 +437,13 @@ class Env extends EventEmitter {
        */
 
       this.ranger = new EventEmitter();
-      ['start', 'entered', 'range', 'exited', 'stop'].forEach(event => {
-        let listener = (...args) => this.ranger.emit(event, ...args);
-        let eventName = 'region-' + event;
-        btle.on(eventName, listener);
-        this._saveListener(btle, eventName, listener);
+      this.ranger.once('newListener', () => {
+        ['start', 'entered', 'range', 'exited', 'stop'].forEach(event => {
+          let listener = (...args) => this.ranger.emit(event, ...args);
+          let eventName = 'region-' + event;
+          btle.on(eventName, listener);
+          this._saveListener(btle, eventName, listener);
+        });
       });
     }
 

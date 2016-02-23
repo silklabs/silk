@@ -221,6 +221,10 @@ function main() {
     .then(() => {
       diag = new Diag(server);
 
+      // Activate the accelerometer once for the entire system (issue #876),
+      // polling every 250ms as we don't need super-high accuracy.
+      sensors.activate(sensors.SENSOR_TYPE.ACCELEROMETER, 250);
+
       if (btle) {
         btle.on('region-entered', (uuid, rssi) => {
           log.info('Device \'%s\' entered range %d', uuid, rssi);

@@ -10,6 +10,7 @@ import assert from 'assert';
 import createLog from '../log';
 import * as Joi from 'joi';
 import SessionListenerBase from './session_listener_base';
+import sensors from '../sensors';
 
 const log = createLog('config-session-listener');
 
@@ -56,6 +57,11 @@ export default class ConfigSessionListener extends SessionListenerBase {
   static DISMISS_TIMEOUT_MS = 15000;
   static MAX_WIFI_ERRORS = 3;
   static RSSI_THRESHOLD = -40;
+
+  // Minimum acceleration for "device motion" threshold (units are m/s^2).
+  // This threshold was obtained by nudging a device IRL and may need to be
+  // tuned and/or made device specific.
+  static MOTION_THRESHOLD = 0.03;
 
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
@@ -197,6 +203,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._state = ConfigSessionListener.STATE_ERROR;
 
     this._deviceConfig._stopRetryingWifiConnection(error);
+    sensors.removeListener('data', this._onAccelerometer);
   }
 
   _onData(data) {
@@ -257,6 +264,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
       log.info(`App canceled registration of this device`);
       this._socketSession.rssiUpdatesEnabled = false;
+      sensors.removeListener('data', this._onAccelerometer);
 
       this._deviceConfig._cancelConfigure();
       this._sendRegister();
@@ -318,19 +326,40 @@ export default class ConfigSessionListener extends SessionListenerBase {
     }
 
     log.info(`Passed proximity gate`);
-
     this._socketSession.rssiUpdatesEnabled = false;
-    this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
 
-    this._send({
-      name: `secret`,
-      deviceId: this._deviceConfig._deviceId,
-    });
-
-    if (this._wifiScanResults) {
-      super.sendWifiScanResults(this._wifiScanResults);
-    }
+    this.lastx = this.lasty = this.lastz = NaN;
+    sensors.on('data', this._onAccelerometer);
   }
+
+  _onAccelerometer = (sensorEvent) => {
+    if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.ACCELEROMETER) {
+      return;
+    }
+    let [x, y, z] = sensorEvent.values;
+    const motion = Math.abs(x - this.lastx) +
+                   Math.abs(y - this.lasty) +
+                   Math.abs(z - this.lastz);
+    this.lastx = x;
+    this.lasty = y;
+    this.lastz = z;
+
+    log.debug(`Current motion is ~${motion} m/s^2`);
+    if (motion > ConfigSessionListener.MOTION_THRESHOLD) {
+      log.info(`Passed motion gate.  Device moved ~${motion} m/s^2`);
+      sensors.removeListener('data', this._onAccelerometer);
+      this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+
+      this._send({
+        name: `secret`,
+        deviceId: this._deviceConfig._deviceId,
+      });
+
+      if (this._wifiScanResults) {
+        this.sendWifiScanResults(this._wifiScanResults);
+      }
+    }
+  };
 
   _onDismissTimeout() {
     log.debug(`ConfigSessionListener._onDismissTimeout()`);

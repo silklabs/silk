@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
     borderWidth: 25,
   },
   thereColor: {
-    borderColor: 'black',
+    borderColor: '#ed734c',
   },
   notThereColor: {
-    borderColor: 'grey',
+    borderColor: '#dce6e6',
   },
 });

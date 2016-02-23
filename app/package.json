@@ -14,7 +14,7 @@
     "buffer": "3.6.0",
     "events": "1.1.0",
     "immutable": "3.7.6",
-    "joi-browserify": "git@github.com:fhemberger/joi-browserify.git#v0.0.2",
+    "joi": "6.10.1",
     "lodash.clonedeep": "4.0.1",
     "lodash.merge": "4.0.1",
     "moment": "2.11.1",

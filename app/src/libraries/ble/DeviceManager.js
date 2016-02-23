@@ -5,7 +5,7 @@
 import invariant from 'assert';
 import { EventEmitter } from 'events';
 import getSocketManager from './SocketManager';
-import * as Joi from 'joi-browserify';
+import * as Joi from 'joi';
 import mklog from 'silk-log';
 import * as Metrics from '../../metrics/BTLE';
 import SocketSession from './SocketSession';

@@ -21,6 +21,11 @@ var base = {
   },
   resolve: {
     extensions: ['', '.js', '.json'],
+    alias: {
+      // joi imports 'net' and 'dns' which webpack doesn't automatically browserify.
+      dns: require.resolve('./src/shims/dns.js'),
+      net: require.resolve('./src/shims/net.js'),
+    },
   },
   module: {
     loaders: [

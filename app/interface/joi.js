@@ -1,6 +1,6 @@
 /* @flow */
 
-declare module 'joi-browserify' {
+declare module 'joi' {
   // This is pretty lame, but good enough for now to get Flow to pass.
   declare var array: any;
   declare var boolean: any;

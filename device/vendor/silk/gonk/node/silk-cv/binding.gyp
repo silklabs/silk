@@ -21,13 +21,13 @@
       "cflags_cc!": [ "-fno-rtti",  "-fno-exceptions"],
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
-        "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
       ],
 
       "conditions": [
         [ "OS==\"android\"", {
           "include_dirs": [
             "<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")",
+            "<!(echo $ANDROID_BUILD_TOP/vendor/silk/gonk/capture)",
           ],
           "libraries": [
             '<!(echo $Android_mk__LIBRARIES)',

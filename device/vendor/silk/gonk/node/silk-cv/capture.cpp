@@ -1,4 +1,9 @@
 /**
+ * Provides a simple video capture class tailored to the needs of camera.js
+ *
+ * On device libpreview is used as the backend, while on simulator the OpenCV
+ * VideoCapture API is used.
+ *
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
@@ -6,6 +11,9 @@
 #include <nan.h>
 #include "Matrix.h"
 #include <opencv/highgui.h>
+#ifdef ANDROID
+#include <libpreview.h>
+#endif
 
 /*
  * Implements the 'VideoCapture' Javascript class
@@ -16,16 +24,8 @@ public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  explicit VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
-    : processing(false),
-      scaledWidth(scaledWidth),
-      scaledHeight(scaledHeight) {
-    cap.open(deviceId);
-    if (!cap.isOpened()) {
-      processing = true;
-      Nan::ThrowError("Camera could not be opened");
-    }
-  }
+  explicit VideoCapture(int deviceId, int scaledWidth, int scaledHeight);
+  ~VideoCapture();
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Read(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Close(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -33,7 +33,21 @@ private:
   bool processing;
   int scaledWidth;
   int scaledHeight;
+
+#ifdef ANDROID
+  uv_mutex_t frameDataLock;
+  libpreview::FrameFormat frameFormat;
+  int frameWidth;
+  int frameHeight;
+  void *frameBuffer;
+  static void OnFrameCallback(void *userData,
+                              void* buffer,
+                              libpreview::FrameFormat format,
+                              size_t width,
+                              size_t height);
+#else
   cv::VideoCapture cap;
+#endif
 };
 
 
@@ -55,14 +69,38 @@ public:
   virtual ~VideoCaptureFrameWorker() {}
 
   void Execute() {
-    if (!this->videoCapture->cap.grab()) {
+#ifdef ANDROID
+    if (videoCapture->frameBuffer == NULL) {
+      SetErrorMessage("no frame yet");
+      return;
+    }
+    uv_mutex_lock(&videoCapture->frameDataLock);
+    if (videoCapture->frameFormat != libpreview::FRAMEFORMAT_YVU420SP) {
+      // Porting error.  Nothing to do but soldier on...
+      printf("Warning: Unknown frame format: %d\n", videoCapture->frameFormat);
+    }
+
+    cv::Mat remote(
+      videoCapture->frameHeight * 3 / 2,
+      videoCapture->frameWidth,
+      CV_8UC1,
+      videoCapture->frameBuffer
+    );
+
+    // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
+    //                 ^^      ^ ^             ^^      ^ ^
+    cv::cvtColor(remote, full, CV_YUV420sp2BGR, 0);
+    uv_mutex_unlock(&videoCapture->frameDataLock);
+#else
+    if (!videoCapture->cap.grab()) {
       SetErrorMessage("grab failed");
       return;
     }
-    if (!this->videoCapture->cap.retrieve(full, CV_CAP_ANDROID_COLOR_FRAME_RGB)) {
+    if (!videoCapture->cap.retrieve(full, CV_CAP_ANDROID_COLOR_FRAME_RGB)) {
       SetErrorMessage("retrieve failed");
       return;
     }
+#endif
     cv::resize(
       full,
       scaled,
@@ -115,6 +153,32 @@ private:
 
 Nan::Persistent<v8::Function> VideoCapture::constructor;
 
+VideoCapture::VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
+    : processing(false),
+      scaledWidth(scaledWidth),
+      scaledHeight(scaledHeight) {
+  bool ok;
+#ifdef ANDROID
+  uv_mutex_init(&frameDataLock);
+  frameWidth = frameHeight = 0;
+  frameBuffer = NULL;
+  ok = libpreview::open(OnFrameCallback, this);
+#else
+  cap.open(deviceId);
+  ok = cap.isOpened();
+#endif
+  if (!ok) {
+    processing = true;
+    Nan::ThrowError("Camera could not be opened");
+  }
+}
+
+VideoCapture::~VideoCapture() {
+#ifdef ANDROID
+  uv_mutex_destroy(&frameDataLock);
+  libpreview::close();
+#endif
+}
 
 void VideoCapture::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
@@ -196,6 +260,31 @@ NAN_METHOD(VideoCapture::Close) {
 
   self->processing = true;
 }
+
+
+#ifdef ANDROID
+void VideoCapture::OnFrameCallback(void *userData,
+                                   void* buffer,
+                                   libpreview::FrameFormat format,
+                                   size_t width,
+                                   size_t height) {
+
+  VideoCapture *that = static_cast<VideoCapture *>(userData);
+  void *lastFrameBuffer;
+
+  uv_mutex_lock(&that->frameDataLock);
+  lastFrameBuffer = that->frameBuffer;
+  that->frameBuffer = buffer;
+  that->frameFormat = format;
+  that->frameWidth = width;
+  that->frameHeight = height;
+  uv_mutex_unlock(&that->frameDataLock);
+
+  if (lastFrameBuffer) {
+    libpreview::releaseFrame(lastFrameBuffer);
+  }
+}
+#endif
 
 void Capture_Init(v8::Local<v8::Object> exports) {
   VideoCapture::Init(exports);

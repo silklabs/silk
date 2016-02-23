@@ -59,9 +59,8 @@ include $(BUILD_SILK_EXECUTABLE)
 
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libnative_camera_capture
+LOCAL_MODULE := libpreview
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)/build #<-- where OpenCV looks for "libnative_camera" shared objects
 
 LOCAL_SRC_FILES := \
   IOpenCVCameraCapture.cpp \

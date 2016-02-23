@@ -4,6 +4,7 @@
       "target_name": "silk-cv",
       "sources": [
         "init.cpp",
+        "capture.cpp",
         "cmt.cpp",
         "matrix.cpp",
         "mog2.cpp",
@@ -20,6 +21,7 @@
       "cflags_cc!": [ "-fno-rtti",  "-fno-exceptions"],
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
+        "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
       ],
 
       "conditions": [

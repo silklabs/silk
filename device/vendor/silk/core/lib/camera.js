@@ -13,6 +13,7 @@ import CameraRestart from './metrics/camera_restart';
 import api from './api';
 import createLog from './log';
 import cv from 'opencv';
+import silkcv from 'silk-cv';
 import fs from 'mz/fs';
 import invariant from 'assert';
 import mkdirp from 'mkdirp-promise';
@@ -108,7 +109,7 @@ const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
 
 // If there is still not a preview frame after this number of attempts assume the
 // capture process is wedged and restart it.
-const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 10;
+const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 5 * (1000 / PREVIEW_DELAY_MS);
 
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
@@ -228,7 +229,8 @@ type CameraClipRecorderState = {
 
 type CameraClipPreviewFrame = [
   number, // when
-  any,    // OpenCV matrix for this preview frame
+  any,    // Full OpenCV matrix for this preview frame
+  any,    // Scaled OpenCV matrix for this preview frame
 ];
 
 /**
@@ -260,6 +262,7 @@ class CameraClipRecorder {
 
   _releasePreviewFrame: ((item: CameraClipPreviewFrame) => void) = (item) => {
     item[1].release();
+    item[2].release();
   };
 
   async _loadAvailableClips(): void {
@@ -315,8 +318,10 @@ class CameraClipRecorder {
         return;
       }
       log.verbose('Loading', imageFile);
-      const im = await this._loadImage(imageFile);
-      this._previews.push([when, im]);
+      const imFull = await this._loadImage(imageFile);
+      let imScaled = imFull.copy();
+      imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+      this._previews.push([when, imFull, imScaled]);
     });
     this.state.msg = `Loaded ${CAMERA_CLIP_DIRECTORY}/${name}`;
     this.state.mode = 'pause';
@@ -345,11 +350,11 @@ class CameraClipRecorder {
     await fs.writeFile(clipMetadataFile, JSON.stringify(metadata, null, '  '));
 
     await previews.forEach(async (item) => {
-      let [when, im] = item;
+      let [when, imFull] = item;
       const imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
       if (!await fs.exists(imageFile)) {
         log.verbose('Saving', imageFile);
-        im.save(imageFile);
+        imFull.save(imageFile);
       }
     });
     this.state.msg = `Saved ${CAMERA_CLIP_DIRECTORY}/${name}`;
@@ -365,19 +370,19 @@ class CameraClipRecorder {
     this.resumeLive();
   }
 
-  previewFrame(when: number, im: any): [number, any] {
+  previewFrame(when: number, imFull: any, imScaled: any): [number, any, any] {
     switch (this.state.mode) {
     case 'record':
-      this._previews.push([when, im.copy()]);
+      this._previews.push([when, imFull.copy(), imScaled.copy()]);
       // fall through
     case 'live':
-      return [when, im];
+      return [when, imFull, imScaled];
     default:
       if (this._previewPosition >= this._previews.size) {
         log.error('Invalid _previewPosition.',
           `${this._previewPosition} >= ${this._previews.size}`);
         this.stopPlayback();
-        return [when, im];
+        return [when, imFull, imScaled];
       }
 
       const preview = this._previews.get(this._previewPosition);
@@ -396,9 +401,11 @@ class CameraClipRecorder {
       }
       this._previewPosition = nextPreviewPosition;
 
-      im.release();
-      [when, im] = preview;
-      return [when, im.copy()];
+      imFull.release();
+      imScaled.release();
+
+      [when, imFull, imScaled] = preview;
+      return [when, imFull.copy(), imScaled.copy()];
     }
   }
 
@@ -552,8 +559,15 @@ export default class Camera extends EventEmitter {
       if (!item.hasOwnProperty(key)) {
         continue;
       }
-      if ((key !== 'when') && item[key]) {
-        item[key].release();
+      switch (key) {
+      case 'when':
+        break;
+      default:
+        // Release node-opencv Matrix objects immediately rather than
+        // waiting for the GC to claim them.
+        if (item[key]) {
+          item[key].release();
+        }
       }
     }
   }
@@ -618,7 +632,7 @@ export default class Camera extends EventEmitter {
   _initCVVideoCapture() {
     if (!this._cvVideoCapture) {
       try {
-        this._cvVideoCapture = new cv.VideoCapture(0);
+        this._cvVideoCapture = new silkcv.VideoCapture(0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
       } catch (err) {
         throw err;
       }
@@ -823,12 +837,13 @@ export default class Camera extends EventEmitter {
         if (image.grayeq) {
           userCb(false, image.grayeq);
         } else {
-          let grayImage = image.rgb.copy();
-          grayImage.convertGrayscale();
+          if (!image.gray) {
+            let grayImage = image.rgb.copy();
+            grayImage.convertGrayscale();
+            image.gray = grayImage;
+          }
 
-          // TODO: Running equalizeHist() on the full resolution image
-          // could produce a better result than running it here on the
-          // downscaled image at the expense of time.  Is it worth it?
+          let grayImage = image.gray.copy();
           grayImage.equalizeHist();
 
           image.grayeq = grayImage;
@@ -894,49 +909,38 @@ export default class Camera extends EventEmitter {
 
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
     // image
-    this._cvVideoCapture.grab(errGrab => {
-      if (errGrab || this._cvVideoCapture === null) {
-        log.error(`Grab failed: ${errGrab}`);
+    let imFull = new cv.Matrix();
+    let imScaled = new cv.Matrix();
+
+    this._cvVideoCapture.read(imFull, imScaled, (err) => {
+      if (err) {
+        log.error(`Unable to fetch frame: err=${err}`);
         this._cvVideoCaptureBusy = false;
         return;
       }
-      this._cvVideoCapture.retrieve((err, im) => {
-        this._cvVideoCaptureBusy = false;
+      [when, imFull, imScaled] = this._clipRecorder.previewFrame(when, imFull, imScaled);
 
-        if (err || (im.width() <= 0) || (im.height() <= 0)) {
-          log.error(`Unable to fetch frame: err=${err} width=${im.width()} height=${im.height()}`);
-          return;
-        }
+      // Cache preview frames
+      this._imagecache.push({when, orig: imFull, rgb: imScaled});
 
-        [when, im] = this._clipRecorder.previewFrame(when, im);
+      log.debug(`Grab time: ${Date.now() - when}ms`);
+      this._cvVideoCaptureBusy = false;
 
-        // Scaled preview
-        let imScaled = im.copy();
-        imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+      // Add frames to the timeline
+      this.timeline.addPreviewFrame(when, imScaled);
 
-        // Encode preview as JPEG to be sent to the server
-        imScaled.toBufferAsync((err, pkt) => {
-          // Cache preview frames
-          this._imagecache.push({when, orig: im, rgb: imScaled});
-
-          // Add frames to the timeline
-          this.timeline.addPreviewFrame(when, PREVIEW_DELAY_MS, pkt);
-
-          // Only emit the latest set of HAL-detected faces
-          // (HAL can return multiple faces per preview, but it's not helpful to show
-          //  them all on the preview)
-          if (this.faces) {
-            // Add faces only if there is motion
-            if (this._motion) {
-              if (this.faces.length > 0) {
-                log.info(`Detected face=${this.faces.length}`);
-              }
-              this.timeline.addFace(when, this.faces, 'hal');
-            }
+      // Only emit the latest set of HAL-detected faces
+      // (HAL can return multiple faces per preview, but it's not helpful to show
+      //  them all on the preview)
+      if (this.faces) {
+        // Add faces only if there is motion
+        if (this._motion) {
+          if (this.faces.length > 0) {
+            log.info(`Detected face=${this.faces.length}`);
           }
-
-        }, {ext: '.jpg', jpegQuality: 100});
-      }, 2 /* = CV_CAP_ANDROID_COLOR_FRAME_RGB */);
+          this.timeline.addFace(when, this.faces, 'hal');
+        }
+      }
     });
   }
 

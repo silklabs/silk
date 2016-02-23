@@ -7,7 +7,6 @@
       ],
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
-        "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
       ],
       "libraries": [
         "<!(echo $Android_mk__LIBRARIES)",

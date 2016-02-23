@@ -411,8 +411,7 @@ sp<MediaSource> prepareAudioEncoder(const sp<ALooper>& looper,
 }
 
 static bool useDASHSegmenter() {
-  char value[PROPERTY_VALUE_MAX];
-  return property_get("persist.silk.dashSegmenter", value, "") > 0;
+  return !!property_get_bool("persist.silk.capture.dash", 1);
 }
 
 /**

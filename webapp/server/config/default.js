@@ -13,8 +13,6 @@ export default {
     port: PORT
   },
 
-  dashSegmenter: true,
-
   testing: {
     value: true
   }

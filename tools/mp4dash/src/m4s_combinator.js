@@ -1,4 +1,4 @@
-/*
+/**
  * @flow
  */
 
@@ -171,11 +171,9 @@ function main(): void {
   }
 }
 
-if ((require: any).main === module) {
-  try {
-    main();
-  } catch(err) {
-    log.error(err.stack);
-    process.exit(1);                      // eslint-disable-line no-process-exit
-  }
+try {
+  main();
+} catch(err) {
+  log.error(err.stack);
+  process.exit(1); // eslint-disable-line no-process-exit
 }

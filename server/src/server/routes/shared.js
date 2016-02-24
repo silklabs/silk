@@ -8,7 +8,7 @@ import createLog from 'silk-log';
 import invariant from 'assert';
 import version from 'silk-core-version';
 
-import type { ExpressRoutes } from 'api-schema';
+import type {ExpressRoutes} from 'api-schema';
 import type {RouteContext} from '../server';
 
 const log = createLog('routes:account');
@@ -34,7 +34,7 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
    * The base socket.io url must be annotated with some special details in particular:
    *
    *  - encode websocket transport
-   *  - encode type of connection (deivce/account)
+   *  - encode type of connection (device/account)
    *
    * This ensures that the socket.io server has enough information to authenticate.
    */
@@ -44,6 +44,7 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
       return url;
     }
     let parsed = URL.parse(ctx.config.socketio.publicUrl, true);
+    invariant(parsed.pathname);
     parsed.pathname = path.join(parsed.pathname, './');
     delete parsed.search;
 
@@ -53,7 +54,8 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
     query.transport = 'websocket';
     parsed.query = query;
 
-    url = URL.format(parsed);
+    // Cast to 'any' to work around https://github.com/facebook/flow/issues/908
+    url = URL.format((parsed: any));
     return url;
   }
 

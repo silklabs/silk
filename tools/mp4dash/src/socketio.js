@@ -1,10 +1,9 @@
-/*
+/**
  * @flow
  */
 
 import invariant from 'assert';
 import crypto from 'crypto';
-import process from 'process';
 import {default as createApi, AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 import socketio from 'socket.io-client';

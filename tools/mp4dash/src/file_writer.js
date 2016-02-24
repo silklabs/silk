@@ -1,10 +1,9 @@
-/*
+/**
  * @flow
  */
 
 import path from 'path';
 import fs from 'fs-extra';
-import process from 'process';
 import createLog from 'silk-log';
 
 import connectToSocketIO from './socketio';
@@ -102,6 +101,4 @@ function main() {
   });
 }
 
-if ((require: any).main === module) {
-  main();
-}
+main();

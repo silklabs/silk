@@ -1,4 +1,4 @@
-/*
+/**
  * @flow
  */
 
@@ -44,12 +44,11 @@ export default class SegmentProviderSocketIO extends SegmentProvider {
   // TODO use this
   close(): void {
     log.debug(`['${this._id}']: close()`);
-    this._socket.removeListener(`video-${this._id}`,
-                                this._onDeviceVideoSegment);
+    this._socket.removeListener(`video-${this._id}`, this._onDeviceVideoSegment);
     super.close();
   }
 
-  onDeviceVideoSegment: Listener = (message: FrameMessage, ack: ?Function) => {
+  _onDeviceVideoSegment: Listener = (message: FrameMessage, ack: ?Function) => {
     log.debug(`['${this._id}']: onDeviceVideoSegment(${message.frame.length})`);
 
     if (ack) {

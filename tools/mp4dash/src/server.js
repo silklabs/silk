@@ -1,10 +1,9 @@
-/*
+/**
  * @flow
  */
 
 import invariant from 'assert';
 import http from 'http';
-import process from 'process';
 import url from 'url';
 import createLog from 'silk-log';
 
@@ -127,6 +126,7 @@ function handleRequest(request, response, socket) {
   log.info('Incoming request', request.method, request.url, request.headers.range);
   invariant.strictEqual(request.method, 'GET');
   let urlInfo = url.parse(request.url);
+  invariant(urlInfo.pathname);
   let [deviceId, extension] = urlInfo.pathname.split('.');
   if (extension !== 'mp4') {
     response.writeHead(404);

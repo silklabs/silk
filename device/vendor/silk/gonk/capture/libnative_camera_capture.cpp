@@ -203,14 +203,7 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
       //
       switch (img.format) {
       case HAL_PIXEL_FORMAT_RGBA_8888: // QEmu
-        // TODO: Either fix the emulator to return yuv420sp/yvu420sp, perform a
-        // RGB to YUV conversion here, or fix OpenCV to understand RGB frames.
-        // In the meantime this little hack enables at least some data to flow
-        // through the OpenCV camera subsystem in the emulator, which is better
-        // than nothing.
-        //hack.str = "rgba8888";
-        ALOGW("QEmu hack: pretending rgba8888 frame is yuv420sp...");
-        frameformat = FRAMEFORMAT_YVU420SP;
+        frameformat = FRAMEFORMAT_RGB;
         break;
 
       case HAL_PIXEL_FORMAT_YCrCb_420_SP: // Nexus 4

@@ -75,21 +75,36 @@ public:
       return;
     }
     uv_mutex_lock(&videoCapture->frameDataLock);
-    if (videoCapture->frameFormat != libpreview::FRAMEFORMAT_YVU420SP) {
+    switch (videoCapture->frameFormat) {
+    default:
       // Porting error.  Nothing to do but soldier on...
       printf("Warning: Unknown frame format: %d\n", videoCapture->frameFormat);
+      //fall through
+    case libpreview::FRAMEFORMAT_YVU420SP:
+      {
+        cv::Mat remote(
+          videoCapture->frameHeight * 3 / 2,
+          videoCapture->frameWidth,
+          CV_8UC1,
+          videoCapture->frameBuffer
+        );
+        // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
+        //                 ^^      ^ ^             ^^      ^ ^
+        cv::cvtColor(remote, full, CV_YUV420sp2BGR, 0);
+        break;
+      }
+    case libpreview::FRAMEFORMAT_RGB:
+      {
+        cv::Mat remote(
+          videoCapture->frameHeight,
+          videoCapture->frameWidth,
+          CV_8UC3,
+          videoCapture->frameBuffer
+        );
+        cv::cvtColor(remote, full, CV_BGR2RGB, 0);
+        break;
+      }
     }
-
-    cv::Mat remote(
-      videoCapture->frameHeight * 3 / 2,
-      videoCapture->frameWidth,
-      CV_8UC1,
-      videoCapture->frameBuffer
-    );
-
-    // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
-    //                 ^^      ^ ^             ^^      ^ ^
-    cv::cvtColor(remote, full, CV_YUV420sp2BGR, 0);
     uv_mutex_unlock(&videoCapture->frameDataLock);
 #else
     if (!videoCapture->cap.grab()) {

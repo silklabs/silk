@@ -14,6 +14,7 @@ namespace libpreview {
 
 typedef enum {
   FRAMEFORMAT_INVALID,
+  FRAMEFORMAT_RGB,
   FRAMEFORMAT_YVU420SP,
 } FrameFormat;
 

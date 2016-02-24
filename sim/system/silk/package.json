@@ -19,8 +19,8 @@
   "dependencies": {
     "bleno": "0.3.4",
     "mic": "2.0.1",
-    "noble": "1.3.0",      
-    "opencv": "peterbraden/node-opencv#090e9d727664b5211776a14d2f44ff87b6ea07c4"
+    "noble": "1.3.0",
+    "opencv": "peterbraden/node-opencv#d7b7161871499871e539945a4d33cb1b5fe0956e"
   },
   "private": true
 }

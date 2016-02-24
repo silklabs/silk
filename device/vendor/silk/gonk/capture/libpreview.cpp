@@ -13,8 +13,6 @@
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <camera/ICameraRecordingProxyListener.h>
-#include <external/opencv2/modules/androidcamera/camera_wrapper/camera_wrapper.h>
-#include <external/opencv2/modules/androidcamera/include/camera_properties.h>
 #include <gui/CpuConsumer.h>
 #include <media/openmax/OMX_IVCommon.h>
 #include <system/camera.h>

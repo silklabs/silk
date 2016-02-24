@@ -4,6 +4,10 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 #include <nan.h>
+#include <opencv2/opencv.hpp>
+#if CV_MAJOR_VERSION >= 3
+#include <opencv2/imgproc.hpp>
+#endif
 #include "Matrix.h"
 #include "CppMT/CMT.h"
 
@@ -101,14 +105,14 @@ public:
     if (nodeCmt->drawPoints) {
       // Active points
       for (size_t i = 0; i < nodeCmt->cmt.points_active.size(); i++) {
-        circle(mat, nodeCmt->cmt.points_active[i], 2, cvScalar(255,0,0));
+        cv::circle(mat, nodeCmt->cmt.points_active[i], 2, cvScalar(255,0,0));
       }
 
       // Tracked rectangle
       Point2f vertices[4];
       nodeCmt->cmt.bb_rot.points(vertices);
       for (int i = 0; i < 4; i++) {
-        line(mat, vertices[i], vertices[(i+1) % 4], cvScalar(255,0,0));
+        cv::line(mat, vertices[i], vertices[(i+1) % 4], cvScalar(255,0,0));
       }
     }
   }

@@ -1,21 +1,23 @@
-From 4de506aaa54fa1eead5284b874ca6f3825a4ad8c Mon Sep 17 00:00:00 2001
+From 5f4ab873a3a0d0bf47952cf98d9746a07adc43f4 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 5 Feb 2016 22:02:43 -0800
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 105 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- opencv.mk  |  38 ++++++++++++++++++++++
- 2 files changed, 143 insertions(+)
+ Android.mk                   | 106 +++++++++++++++++++++++++++++++++++++++++++
+ apps/traincascade/Android.mk |  19 ++++++++
+ opencv.mk                    |  38 ++++++++++++++++
+ 3 files changed, 163 insertions(+)
  create mode 100644 Android.mk
+ create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..f9578e9
+index 0000000..12d8ba4
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,106 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -32,6 +34,7 @@ index 0000000..f9578e9
 +LOCAL_EXPORT_C_INCLUDE_DIRS := \
 +  $(LOCAL_PATH)/include \
 +  $(LOCAL_PATH)/include/opencv \
++  $(call local-intermediates-dir,,$(TARGET_2ND_ARCH))/opencv2 \
 +  $(foreach m,$(OPENCV3_MODULE_NAMES),$(LOCAL_PATH)/modules/$(m)/include)
 +
 +include $(BUILD_PREBUILT)
@@ -121,6 +124,31 @@ index 0000000..f9578e9
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 +
 +include $(call all-makefiles-under,$(LOCAL_PATH))
+diff --git a/apps/traincascade/Android.mk b/apps/traincascade/Android.mk
+new file mode 100644
+index 0000000..71fef7c
+--- /dev/null
++++ b/apps/traincascade/Android.mk
+@@ -0,0 +1,19 @@
++LOCAL_PATH := $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE := opencv_traincascade
++
++LOCAL_SRC_FILES := \
++  traincascade.cpp \
++  cascadeclassifier.cpp \
++  boost.cpp \
++  features.cpp \
++  haarfeatures.cpp \
++  lbpfeatures.cpp \
++  HOGfeatures.cpp \
++  imagestorage.cpp \
++
++LOCAL_MODULE_TAGS := optional
++include external/opencv3/opencv.mk
++include $(BUILD_SILK_EXECUTABLE)
++
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
 index 0000000..e3d095d

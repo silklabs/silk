@@ -12,6 +12,7 @@
 #include <iosfwd>
 #include <memory>
 #include <utility>
+#include <opencv2/imgproc.hpp>
 
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"

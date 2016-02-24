@@ -26,11 +26,6 @@
            remote="github"
            revision="v2.2" clone-depth="1"/>
 
-  <project name="Itseez/opencv"
-           path="external/opencv2"
-           remote="github"
-           revision="refs/tags/2.4.12" clone-depth="1"/>
-
   <project name="intel-tbb/intel-tbb"
            path="external/intel-tbb"
            remote="github"

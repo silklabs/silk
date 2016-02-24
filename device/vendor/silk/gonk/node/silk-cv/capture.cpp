@@ -11,6 +11,12 @@
 #include <nan.h>
 #include "Matrix.h"
 #include <opencv/highgui.h>
+
+#if CV_MAJOR_VERSION >= 3
+#include <opencv2/imgproc.hpp>
+#include <opencv2/videoio.hpp>
+#endif
+
 #ifdef ANDROID
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-cv:capture"
@@ -58,7 +64,6 @@ private:
 #endif
 };
 
-
 /*
  * Async worker used to process the next frame
  */
@@ -92,6 +97,8 @@ public:
       //fall through
     case libpreview::FRAMEFORMAT_YVU420SP:
       {
+        // Setup a Matrix object to store the remote image using the
+        // height/width that OpenCV expects for a YVU420 semi-planar format
         cv::Mat remote(
           videoCapture->frameHeight * 3 / 2,
           videoCapture->frameWidth,
@@ -131,7 +138,7 @@ public:
       SetErrorMessage("grab failed");
       return;
     }
-    if (!videoCapture->cap.retrieve(rgb, CV_CAP_ANDROID_COLOR_FRAME_RGB)) {
+    if (!videoCapture->cap.retrieve(rgb)) {
       SetErrorMessage("retrieve failed");
       return;
     }

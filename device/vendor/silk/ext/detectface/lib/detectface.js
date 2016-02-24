@@ -102,7 +102,7 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
   // was run on scaled image
   let face = orig.roi(faceRect.x * previewScale, faceRect.y * previewScale,
       faceRect.width * previewScale, faceRect.height * previewScale);
-  face.convertGrayscale();
+  face = face.copy();
   face.equalizeHist();
 
   let cols = face.width();
@@ -219,7 +219,7 @@ class DetectFace {
           working = false;
           return;
         }
-        this._env.camera.getPreviewFrame(when, 'full', async (err2, orig) => {
+        this._env.camera.getPreviewFrame(when, 'fullgray', async (err2, orig) => {
           if (err2) {
             log.warn(`Unable to fetch full frame: ${err2}`);
             working = false;

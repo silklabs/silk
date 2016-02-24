@@ -254,13 +254,13 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
+      this._env.camera.getPreviewFrame(when, 'gray', (err, image) => {
         if (err) {
           log.warn(`Unable to fetch grayeq frame: ${err}`);
           this._working = false;
           return;
         }
-        this._env.camera.getPreviewFrame(when, 'full', (err2, orig) => {
+        this._env.camera.getPreviewFrame(when, 'fullgray', (err2, orig) => {
           if (err2) {
             log.warn(`Unable to fetch full frame: ${err2}`);
             this._working = false;

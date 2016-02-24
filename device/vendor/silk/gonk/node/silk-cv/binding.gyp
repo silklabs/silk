@@ -27,6 +27,7 @@
         [ "OS==\"android\"", {
           "include_dirs": [
             "<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")",
+            "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
             "<!(echo $ANDROID_BUILD_TOP/vendor/silk/gonk/capture)",
           ],
           "libraries": [

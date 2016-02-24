@@ -8,6 +8,7 @@ import cv from 'opencv';
 import fs from 'mz/fs';
 import path from 'path';
 import imageSize from 'fast-image-size';
+import assert from 'assert';
 
 const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
 const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
@@ -226,9 +227,7 @@ export default class Trainer {
     const rightEye = {x: face.rightEye[0] - face.x, y: face.rightEye[1] - face.y};
 
     // Convert to grayscale if not already
-    if (im.channels() === 3) {
-      im.convertGrayscale();
-    }
+    assert(im.channels() === 1);
 
     // Sanity checks
     if ((face.x + face.width > im.width()) ||
@@ -420,7 +419,7 @@ export default class Trainer {
             this._working = false;
             return;
           }
-          this._env.camera.getPreviewFrame(when, 'full', (err2, orig) => {
+          this._env.camera.getPreviewFrame(when, 'fullgray', (err2, orig) => {
             if (err2) {
               log.warn(`Unable to fetch full frame: ${err2}`);
               this._working = false;

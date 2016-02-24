@@ -12,7 +12,13 @@
 #include "Matrix.h"
 #include <opencv/highgui.h>
 #ifdef ANDROID
+//#define LOG_NDEBUG 0
+#define LOG_TAG "silk-cv:capture"
+#include <utils/Log.h>
+
 #include <libpreview.h>
+#else
+#define ALOGE(fmt, args...) printf(fmt, ##args)
 #endif
 
 /*
@@ -35,6 +41,8 @@ private:
   int scaledHeight;
 
 #ifdef ANDROID
+  libpreview::vtable preview;
+
   uv_mutex_t frameDataLock;
   libpreview::FrameFormat frameFormat;
   int frameWidth;
@@ -57,14 +65,16 @@ private:
 class VideoCaptureFrameWorker : public Nan::AsyncWorker {
 public:
   explicit VideoCaptureFrameWorker(VideoCapture *videoCapture,
-                                   v8::Local<v8::Object> imFull,
-                                   v8::Local<v8::Object> imScaled,
+                                   v8::Local<v8::Object> imRGB,
+                                   v8::Local<v8::Object> imGray,
+                                   v8::Local<v8::Object> imScaledGray,
                                    Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       videoCapture(videoCapture) {
     videoCapture->processing = true;
-    destFull.Reset(imFull);
-    destScaled.Reset(imScaled);
+    destRGB.Reset(imRGB);
+    destGray.Reset(imGray);
+    destScaledGray.Reset(imScaledGray);
   }
   virtual ~VideoCaptureFrameWorker() {}
 
@@ -78,7 +88,7 @@ public:
     switch (videoCapture->frameFormat) {
     default:
       // Porting error.  Nothing to do but soldier on...
-      printf("Warning: Unknown frame format: %d\n", videoCapture->frameFormat);
+      ALOGE("Warning: Unknown frame format: %d\n", videoCapture->frameFormat);
       //fall through
     case libpreview::FRAMEFORMAT_YVU420SP:
       {
@@ -88,9 +98,18 @@ public:
           CV_8UC1,
           videoCapture->frameBuffer
         );
+
         // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
         //                 ^^      ^ ^             ^^      ^ ^
-        cv::cvtColor(remote, full, CV_YUV420sp2BGR, 0);
+        cv::cvtColor(remote, rgb, CV_YUV420sp2BGR, 0);
+
+        cv::Mat remoteGray(
+          videoCapture->frameHeight,
+          videoCapture->frameWidth,
+          CV_8UC1,
+          videoCapture->frameBuffer
+        );
+        gray = remoteGray.clone();
         break;
       }
     case libpreview::FRAMEFORMAT_RGB:
@@ -101,7 +120,8 @@ public:
           CV_8UC3,
           videoCapture->frameBuffer
         );
-        cv::cvtColor(remote, full, CV_BGR2RGB, 0);
+        rgb = remote.clone();
+        cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
         break;
       }
     }
@@ -111,14 +131,16 @@ public:
       SetErrorMessage("grab failed");
       return;
     }
-    if (!videoCapture->cap.retrieve(full, CV_CAP_ANDROID_COLOR_FRAME_RGB)) {
+    if (!videoCapture->cap.retrieve(rgb, CV_CAP_ANDROID_COLOR_FRAME_RGB)) {
       SetErrorMessage("retrieve failed");
       return;
     }
+    cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
 #endif
+
     cv::resize(
-      full,
-      scaled,
+      gray,
+      scaledGray,
       cv::Size(videoCapture->scaledWidth, videoCapture->scaledHeight),
       0, 0,
       cv::INTER_LINEAR
@@ -136,32 +158,33 @@ public:
 
     videoCapture->processing = false;
 
-    v8::Local<v8::Object> localFull = Nan::New(destFull);
-    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localFull);
-    mat->mat = full;
+    v8::Local<v8::Object> localRGB = Nan::New(destRGB);
+    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localRGB);
+    mat->mat = rgb;
 
-    v8::Local<v8::Object> localScaled = Nan::New(destScaled);
-    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localScaled);
-    mat->mat = scaled;
+    v8::Local<v8::Object> localGray = Nan::New(destGray);
+    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localGray);
+    mat->mat = gray;
 
-    destFull.Reset();
-    destScaled.Reset();
+    v8::Local<v8::Object> localScaledGray = Nan::New(destScaledGray);
+    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localScaledGray);
+    mat->mat = scaledGray;
 
-    v8::Local<v8::Value> argv[] = {
-      Nan::Null(),
-      localFull,
-      localScaled,
-    };
+    destGray.Reset();
+    destScaledGray.Reset();
+    destRGB.Reset();
 
-    callback->Call(3, argv);
+    Nan::AsyncWorker::HandleOKCallback();
   }
 
 private:
-  cv::Mat full;
-  cv::Mat scaled;
+  cv::Mat rgb;
+  cv::Mat gray;
+  cv::Mat scaledGray;
 
-  Nan::Persistent<v8::Object> destFull;
-  Nan::Persistent<v8::Object> destScaled;
+  Nan::Persistent<v8::Object> destRGB;
+  Nan::Persistent<v8::Object> destGray;
+  Nan::Persistent<v8::Object> destScaledGray;
   VideoCapture* videoCapture;
 };
 
@@ -177,7 +200,10 @@ VideoCapture::VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
   uv_mutex_init(&frameDataLock);
   frameWidth = frameHeight = 0;
   frameBuffer = NULL;
-  ok = libpreview::open(OnFrameCallback, this);
+  ok = libpreview::load(&preview);
+  if (ok) {
+    ok = preview.open(OnFrameCallback, this);
+  }
 #else
   cap.open(deviceId);
   ok = cap.isOpened();
@@ -191,7 +217,7 @@ VideoCapture::VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
 VideoCapture::~VideoCapture() {
 #ifdef ANDROID
   uv_mutex_destroy(&frameDataLock);
-  libpreview::close();
+  preview.close();
 #endif
 }
 
@@ -253,13 +279,18 @@ NAN_METHOD(VideoCapture::Read) {
     Nan::ThrowTypeError("Argument 2 not a cv::Matrix");
     return;
   }
+  if (!info[2]->IsObject()) {
+    Nan::ThrowTypeError("Argument 2 not a cv::Matrix");
+    return;
+  }
 
-  Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
+  Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
   Nan::AsyncQueueWorker(
     new VideoCaptureFrameWorker(
       self,
       info[0]->ToObject(),
       info[1]->ToObject(),
+      info[2]->ToObject(),
       callback
     )
   );
@@ -296,7 +327,7 @@ void VideoCapture::OnFrameCallback(void *userData,
   uv_mutex_unlock(&that->frameDataLock);
 
   if (lastFrameBuffer) {
-    libpreview::releaseFrame(lastFrameBuffer);
+    that->preview.releaseFrame(lastFrameBuffer);
   }
 }
 #endif

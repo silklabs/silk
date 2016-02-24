@@ -35,12 +35,12 @@ export type CameraCallback = (err: boolean, image: any) => void;
 
 /**
  * The available preview frame formats:
- * rgb - downscaled RGB
+ * fullgray - full resolution grayscale
+ * fullrgb - full resolution rgb
  * gray - downscaled grayscale
  * grayeq - downscaled grayscale equalized
- * full - full resolution RGB
  */
-export type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
+export type CameraPreviewFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -229,8 +229,9 @@ type CameraClipRecorderState = {
 
 type CameraClipPreviewFrame = [
   number, // when
-  any,    // Full OpenCV matrix for this preview frame
-  any,    // Scaled OpenCV matrix for this preview frame
+  any,   // Full rgb matrix for this preview frame
+  any,   // Full grayscale matrix for this preview frame
+  any,   // Scaled grayscale matrix for this preview frame
 ];
 
 /**
@@ -263,6 +264,7 @@ class CameraClipRecorder {
   _releasePreviewFrame: ((item: CameraClipPreviewFrame) => void) = (item) => {
     item[1].release();
     item[2].release();
+    item[3].release();
   };
 
   async _loadAvailableClips(): void {
@@ -312,16 +314,21 @@ class CameraClipRecorder {
     this._previewPosition = 0;
 
     await previews.forEach(async (when) => {
-      const imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
+      let imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
       if (!await fs.exists(imageFile)) {
         log.warn('Clip image does not exist:', imageFile);
         return;
       }
       log.verbose('Loading', imageFile);
-      const imFull = await this._loadImage(imageFile);
-      let imScaled = imFull.copy();
-      imScaled.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-      this._previews.push([when, imFull, imScaled]);
+      const imRGB = await this._loadImage(imageFile);
+
+      let imGray = imRGB.copy();
+      imGray.cvtColor('CV_BGR2GRAY');
+
+      let imScaledGray = imGray.copy();
+      imScaledGray.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+
+      this._previews.push([when, imRGB, imGray, imScaledGray]);
     });
     this.state.msg = `Loaded ${CAMERA_CLIP_DIRECTORY}/${name}`;
     this.state.mode = 'pause';
@@ -350,11 +357,12 @@ class CameraClipRecorder {
     await fs.writeFile(clipMetadataFile, JSON.stringify(metadata, null, '  '));
 
     await previews.forEach(async (item) => {
-      let [when, imFull] = item;
-      const imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
+      let [when, imRGB] = item;
+
+      let imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
       if (!await fs.exists(imageFile)) {
         log.verbose('Saving', imageFile);
-        imFull.save(imageFile);
+        imRGB.save(imageFile);
       }
     });
     this.state.msg = `Saved ${CAMERA_CLIP_DIRECTORY}/${name}`;
@@ -370,19 +378,24 @@ class CameraClipRecorder {
     this.resumeLive();
   }
 
-  previewFrame(when: number, imFull: any, imScaled: any): [number, any, any] {
+  previewFrame(when: number, imRGB: any, imGray: any, imScaledGray: any): CameraClipPreviewFrame {
     switch (this.state.mode) {
     case 'record':
-      this._previews.push([when, imFull.copy(), imScaled.copy()]);
+      this._previews.push([
+        when,
+        imRGB.copy(),
+        imGray.copy(),
+        imScaledGray.copy(),
+      ]);
       // fall through
     case 'live':
-      return [when, imFull, imScaled];
+      return [when, imRGB, imGray, imScaledGray];
     default:
       if (this._previewPosition >= this._previews.size) {
         log.error('Invalid _previewPosition.',
           `${this._previewPosition} >= ${this._previews.size}`);
         this.stopPlayback();
-        return [when, imFull, imScaled];
+        return [when, imRGB, imGray, imScaledGray];
       }
 
       const preview = this._previews.get(this._previewPosition);
@@ -401,11 +414,12 @@ class CameraClipRecorder {
       }
       this._previewPosition = nextPreviewPosition;
 
-      imFull.release();
-      imScaled.release();
+      imRGB.release();
+      imGray.release();
+      imScaledGray.release();
 
-      [when, imFull, imScaled] = preview;
-      return [when, imFull.copy(), imScaled.copy()];
+      [when, imRGB, imGray, imScaledGray] = preview;
+      return [when, imRGB.copy(), imGray.copy(), imScaledGray.copy()];
     }
   }
 
@@ -525,12 +539,7 @@ export default class Camera extends EventEmitter {
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
-    // frame multiple times. Image cache object has the following fields
-    //   when:    timestamp
-    //   orig:    original unmodified frame from camera
-    //   default: default image // CV_CAP_ANDROID_COLOR_FRAME_BGR resized
-    //   gray:    grayscale image // CV_CAP_ANDROID_GREY_FRAME resized
-    //   rgb:     RGB image // CV_CAP_ANDROID_COLOR_FRAME_RGB resized
+    // frame multiple times. Image cache entry is of type CameraClipPreviewFrame
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releasePreviewImages(item);
 
@@ -820,38 +829,24 @@ export default class Camera extends EventEmitter {
       }
 
       switch(format) {
-      case 'rgb':
-        userCb(false, image.rgb);
+      case 'fullrgb':
+        userCb(false, image.fullrgb);
+        return;
+      case 'fullgray':
+        userCb(false, image.fullgray);
         return;
       case 'gray':
-        if (image.gray) {
-          userCb(false, image.gray);
-        } else {
-          let grayImage = image.rgb.copy();
-          grayImage.convertGrayscale();
-          image.gray = grayImage;
-          userCb(false, image.gray);
-        }
+        userCb(false, image.gray);
         return;
       case 'grayeq':
         if (image.grayeq) {
           userCb(false, image.grayeq);
         } else {
-          if (!image.gray) {
-            let grayImage = image.rgb.copy();
-            grayImage.convertGrayscale();
-            image.gray = grayImage;
-          }
-
           let grayImage = image.gray.copy();
           grayImage.equalizeHist();
-
           image.grayeq = grayImage;
           userCb(false, image.grayeq);
         }
-        return;
-      case 'full':
-        userCb(false, image.orig);
         return;
       default:
         userCb(`unsupported format: ${format}`, null);
@@ -909,25 +904,32 @@ export default class Camera extends EventEmitter {
 
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
     // image
-    let imFull = new cv.Matrix();
-    let imScaled = new cv.Matrix();
+    let imRGB = new cv.Matrix();
+    let imGray = new cv.Matrix();
+    let imScaledGray = new cv.Matrix();
 
-    this._cvVideoCapture.read(imFull, imScaled, (err) => {
+    this._cvVideoCapture.read(imRGB, imGray, imScaledGray, (err) => {
       if (err) {
         log.error(`Unable to fetch frame: err=${err}`);
         this._cvVideoCaptureBusy = false;
         return;
       }
-      [when, imFull, imScaled] = this._clipRecorder.previewFrame(when, imFull, imScaled);
+      [when, imRGB, imGray, imScaledGray] =
+        this._clipRecorder.previewFrame(when, imRGB, imGray, imScaledGray);
 
       // Cache preview frames
-      this._imagecache.push({when, orig: imFull, rgb: imScaled});
+      this._imagecache.push({
+        when,
+        fullgray: imGray,
+        fullrgb: imRGB,
+        gray: imScaledGray,
+      });
 
       log.debug(`Grab time: ${Date.now() - when}ms`);
       this._cvVideoCaptureBusy = false;
 
       // Add frames to the timeline
-      this.timeline.addPreviewFrame(when, imScaled);
+      this.timeline.addPreviewFrame(when, imRGB, PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
       // Only emit the latest set of HAL-detected faces
       // (HAL can return multiple faces per preview, but it's not helpful to show

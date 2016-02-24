@@ -215,7 +215,7 @@ export default class Timeline extends EventEmitter {
         // Force the last preview image to be transmitted immediately, to provide
         // the client with a preview image as quick as possible when the camera
         // first connects.
-        this._pushPreview(0, null);
+        this._pushPreview(0, null, 0, 0);
       }
     }
     this.liveVideo = video;
@@ -249,10 +249,12 @@ export default class Timeline extends EventEmitter {
    * Add a new preview frame
    *
    * @param when    Timestamp of when the preview frame was generated
-   * @param preview OpenCV RGB matrix containing the preview frame
+   * @param preview OpenCV RGB matrix containing the full resolution preview frame
+   * @param previewWidth Suggested preview width
+   * @param previewHeight Suggested preview height
    */
-  addPreviewFrame(when: number, preview: any) {
-    this._pushPreview(when, preview);
+  addPreviewFrame(when: number, preview: any, previewWidth: number, previewHeight: number) {
+    this._pushPreview(when, preview, previewWidth, previewHeight);
     this.emit('preview', when);
   }
 
@@ -521,7 +523,7 @@ export default class Timeline extends EventEmitter {
   /**
    * @private
    */
-  _pushPreview(when: number, preview: ?any) {
+  _pushPreview(when: number, preview: any, previewWidth: number, previewHeight: number) {
     // Intentionally delay the preview image by one cycle to ensure
     // that the previewObjects are transmitted with their corresponding image.
     //
@@ -609,6 +611,10 @@ export default class Timeline extends EventEmitter {
     if (!preview) {
       return;
     }
+
+    // TODO: Consider moving this image resize off the main thread...
+    preview.resize(previewWidth, previewHeight);
+
     preview.toBufferAsync((err, frame) => {
       if (err) {
         this.lastPreviewFrame = null;

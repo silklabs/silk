@@ -4,6 +4,5 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
 LOCAL_NODE_MODULE_TYPE := file
 include external/opencv2/opencv.mk
-LOCAL_SHARED_LIBRARIES += libpreview
 
 include $(BUILD_NODE_MODULE)

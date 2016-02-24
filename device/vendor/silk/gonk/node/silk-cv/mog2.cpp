@@ -123,7 +123,7 @@ NAN_METHOD(Mog2::Apply) {
   Mog2* self = ObjectWrap::Unwrap<Mog2>(info.Holder());
 
   if (self->processing) {
-    Nan::ThrowTypeError("Busy");
+    Nan::ThrowError("Busy");
     return;
   }
 

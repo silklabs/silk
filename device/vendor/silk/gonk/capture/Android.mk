@@ -64,7 +64,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
   IOpenCVCameraCapture.cpp \
-  libnative_camera_capture.cpp \
+  libpreview.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
   libbinder \

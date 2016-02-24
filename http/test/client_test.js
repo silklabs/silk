@@ -1,15 +1,28 @@
-
 import assert from 'assert';
-import createContext from 'silk-server/test/server/context';
-import launchApp from 'silk-server/test/server/launch_app';
 import express from 'express';
-import testRoutes from 'silk-server/src/server/routes/test';
-import jsonParser from 'silk-server/src/server/json';
-import {StateContainer} from '../src/http_client';
-import TestAPI from '../src/gen/test';
+import {json as jsonParser} from 'body-parser';
+import URL from 'url';
+
+import Client from '../src/client';
+
+function sleep(amount) {
+  return new Promise((accept) => {
+    setTimeout(accept, amount);
+  });
+}
 
 suite('api call retries', () => {
-  let context = createContext();
+
+  class TestClient extends Client {
+    name: string = 'test-client';
+
+    retryMe(body?: Object = {}): Promise<any> {
+      return this.request(['/test', {
+        method: 'post',
+        body,
+      }]);
+    }
+  }
 
   /**
    * Small model to manage internal state so we can simulate all the various
@@ -33,34 +46,72 @@ suite('api call retries', () => {
     }
   }
 
-  // Setup the canonical server resources...
-  let account, app, testServerURL, testModel;
+  let testModel, app, server, serverUrl;
   setup(async () => {
-    app = express();
-    app.use(jsonParser);
     testModel = new TestModel();
 
-    // XXX: A little yucky but copies the proper context from the real server
-    // copy.
-    let appContext = Object.assign(
-      {},
-      context.server.context,
-      {
-        test: testModel
-      }
-    );
-    app.use(testRoutes(appContext).app);
+    app = express();
+    app.use(jsonParser());
+    app.post('/test', async (req, res) => {
+      /**
+       * There are a number of important conditions which can fail under:
+       *
+       *  - 500 errors (internal server errors)
+       *  - Takes too long to send a response (timeout getting initial response)
+       *  - Takes too long getting the body (waiting for content length amount of
+       *    bytes)
+       */
 
-    testServerURL = await launchApp(app);
-    account = await context.testAccount();
+      let command = testModel.shift();
+      if (!command) {
+        res.sendStatus(500);
+        return;
+      }
+
+      let { status, delayBody, delayRes, body } = command;
+      await sleep(delayRes);
+
+      // We don't actually use out helpers with the outgoing body so we can more
+      // strictly control the various error conditions.
+      assert(Buffer.isBuffer(body));
+      let contentLength = body.length;
+
+      res.set('Content-Length', contentLength);
+      res.set('Content-Type', 'application/json');
+      res.writeHead(status, {
+        'Content-Length': contentLength,
+        'Content-Type': 'application/json'
+      });
+      await sleep(delayBody);
+      res.end(body);
+    });
+
+    server = app.listen(0);
+    serverUrl = `http://0.0.0.0:${server.address().port}/`;
   });
 
-  function buildTestApi(options = {}) {
-    return new TestAPI(new StateContainer({
-      serverUrl: testServerURL,
-      accessToken: account.accessToken,
-    }), options);
+  function buildTestApi(options: Object): Client {
+    let requestTransformer = (req) => {
+      let [url, options] = req;
+      url = URL.resolve(serverUrl, url);
+
+      if (typeof options.body !== 'string') {
+        options.body = JSON.stringify(options.body);
+      }
+
+      options.headers = options.headers || {};
+      options.headers['Content-Type'] = 'application/json';
+
+      return [url, options];
+    };
+
+    return new TestClient(Object.assign({}, options, { requestTransformer }));
   }
+
+
+  teardown(() => {
+    server.close();
+  });
 
   test('immediate success', async () => {
     let api = buildTestApi();
@@ -116,6 +167,10 @@ suite('api call retries', () => {
     });
 
     testModel.push(200, 5000, 0);
+    testModel.push(200, 5000, 0);
+    testModel.push(200, 5000, 0);
+    testModel.push(200, 5000, 0);
+
     try {
       await api.retryMe();
     } catch (err) {
@@ -129,7 +184,7 @@ suite('api call retries', () => {
   test('timeout during response body', async () => {
     let api = buildTestApi({
       // Shorter tests...
-      maxRetries: 3,
+      maxRetries: 1,
       // Zero delay ...
       retryDelayMinMs: 0,
       retryDelayMaxMs: 0,
@@ -138,6 +193,8 @@ suite('api call retries', () => {
     });
 
     testModel.push(200, 0, 50000);
+    testModel.push(200, 0, 50000);
+
     try {
       await api.retryMe();
     } catch (err) {

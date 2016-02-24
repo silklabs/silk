@@ -95,10 +95,13 @@ suite('security validation tests', () => {
     intercept = mitm.intercept;
     interceptURL = mitm.url;
     // Setup security testing api
-    testApi = new TestAPI(new StateContainer({
+    api.loadConfig({
       serverUrl: interceptURL,
       accessToken: users.one.id,
-    }));
+    });
+    testApi = new TestAPI({
+      requestTransformer: api.config.requestTransformer
+    });
   });
 
   teardown(() => {

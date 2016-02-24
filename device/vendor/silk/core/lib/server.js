@@ -188,6 +188,7 @@ export default class Server extends events.EventEmitter {
     switch (event) {
     case 'info':
       str += ` logo:${data.logo ? 'yes' : 'no'}` +
+             ` videoSize:${JSON.stringify(data.videoSize)}` +
              ` previewSize:${JSON.stringify(data.previewSize)}`;
       ackType = 'info';
       break;

@@ -29,6 +29,10 @@ export default class DeviceSimulator {
   _logo = logoData;
   _previewFrame = previewData;
   _videoFrame = videoData;
+  _videoSize = {
+    width: VIDEO_WIDTH,
+    height: VIDEO_HEIGHT,
+  };
   _previewSize = {
     width: VIDEO_WIDTH / PREVIEW_SCALE,
     height: VIDEO_HEIGHT / PREVIEW_SCALE
@@ -59,8 +63,14 @@ export default class DeviceSimulator {
 
   emitInfo() {
     let now = Date.now();
-    let info = { id: this.accessToken.toString(), name: DEVICE_NAME, now,
-        logo: this._logo, previewSize: this._previewSize };
+    let info = {
+      id: this.accessToken.toString(),
+      name: DEVICE_NAME,
+      now,
+      logo: this._logo,
+      videoSize: this._videoSize,
+      previewSize: this._previewSize,
+    };
 
     return new Promise(resolve => {
       this.server.socket.emit('info', info, () => resolve());

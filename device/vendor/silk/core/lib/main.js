@@ -272,6 +272,7 @@ function emitDeviceInfo() {
     server.send('info', {
       logo,
       now: Date.now(),
+      videoSize: camera.videoSize,
       previewSize: camera.previewSize,
     });
   }

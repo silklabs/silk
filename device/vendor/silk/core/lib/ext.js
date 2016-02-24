@@ -166,6 +166,17 @@ class Env extends EventEmitter {
       };
 
       /**
+       * Returns the camera video size
+       *
+       * @return {Size}
+       * @memberof Env.camera
+       * @instance
+       */
+      this.camera.videoSize = () => {
+        return camera.videoSize;
+      };
+
+      /**
        * Returns the camera preview size
        *
        * @return {Size}

@@ -23,14 +23,15 @@ import type {Record as DeviceRecord} from '../server/models/devices';
 
 const log = createLog('socketio:account_room');
 
-type DevicePreviewInfo = {
+type Dimensions = {
   width: number;
   height: number;
 }
 
 export type DeviceInfo = {
   id: string;
-  previewSize: ?DevicePreviewInfo;
+  videoSize: ?Dimensions;
+  previewSize: ?Dimensions;
   logo: ?any;
   now: number;
 }
@@ -100,6 +101,10 @@ class Device {
 
     if (typeof info.logo === 'object') {
       this.info.logo = info.logo;
+    }
+
+    if (typeof info.videoSize === 'object') {
+      this.info.videoSize = info.videoSize;
     }
 
     if (typeof info.previewSize === 'object') {

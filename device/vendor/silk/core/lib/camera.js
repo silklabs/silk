@@ -1182,8 +1182,16 @@ export default class Camera extends EventEmitter {
   }
 
   /**
-   * Returns the camera preview size (or null until the camera has successfully
-   * initialized once)
+   * Returns the camera video size.
+   *
+   * @return {Size}
+   */
+  get videoSize() {
+    return { width: WIDTH, height: HEIGHT };
+  }
+
+  /**
+   * Returns the camera preview size.
    *
    * @return {Size}
    */

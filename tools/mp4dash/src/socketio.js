@@ -1,12 +1,16 @@
+/**
+ * @flow
+ */
+
+import invariant from 'assert';
 import crypto from 'crypto';
-import process from 'process';
 import {default as createApi, AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 import socketio from 'socket.io-client';
 
 import config from './config';
 
-import type { Socket } from 'socket-io.client';
+import type { Socket } from 'socket.io-client';
 
 const log = createLog('socketio');
 
@@ -44,13 +48,15 @@ export default async function connectToSocketIO(): Promise<Socket> {
     process.exit(1); // eslint-disable-line no-process-exit
   }
 
+  invariant(result);
+
   if (!result.success) {
     log.error('Could not log in!', result);
     process.exit(0); // eslint-disable-line no-process-exit
   }
 
   log.info('Connecting to socket.io');
-  let socket = api.socketioClient(socketio, 'account');
+  let socket = api.socketioClient(socketio, 'account', {});
   socket.connect();
   await new Promise((resolve) => socket.once('connect', resolve));
   return socket;

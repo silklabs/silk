@@ -1,7 +1,34 @@
+/**
+ * @flow
+ */
+
 // Copied almost verbatimly from
 // https://github.com/silklabs/silk-webapp/blob/master/src/components/CameraVideoMSE.js
 
 import assert from 'assert';
+
+export type SegmentState = {
+  seqno: number;
+  startTime: number;
+};
+
+type Box = {
+  fourcc: string;
+  size: number;
+  offset: number;
+};
+
+type Offsets = {
+  seqno: number;
+  presentationTime: number;
+  videoDecodeTime: number;
+  audioDecodeTime: number;
+};
+
+type Metadata = {
+  offsets: Offsets;
+  mute: number;
+}
 
 // NB: these values are defined in the init header.  While the init
 // header is hard coded, so are these constants for convenience.  If
@@ -12,7 +39,7 @@ const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 
 const BOX_HDR_SIZE = 8;
 
-function readFourcc(buf, offset) {
+function readFourcc(buf: Buffer, offset: number): string {
   let fourcc = '';
   for (let i = 0; i < 4; ++i) {
     fourcc += String.fromCharCode(buf[offset + i]);
@@ -20,7 +47,7 @@ function readFourcc(buf, offset) {
   return fourcc;
 }
 
-function findNextBox(mp4, box = { fourcc: '', size: 0, offset: 0 }) {
+function findNextBox(mp4, box: Box = { fourcc: '', size: 0, offset: 0 }): Box {
   let pos = box.offset = box.offset + box.size;
   box.size = mp4.readInt32BE(pos);
   pos += 4;
@@ -28,7 +55,7 @@ function findNextBox(mp4, box = { fourcc: '', size: 0, offset: 0 }) {
   return box;
 }
 
-function findMetadataBox(m4s) {
+function findMetadataBox(m4s: Buffer): Metadata {
   let offsets = { };
   // Find the "free" box where our metadata is stashed in.
   let box = findNextBox(m4s);
@@ -57,7 +84,10 @@ function findMetadataBox(m4s) {
   return {offsets, mute};
 }
 
-export default function prepareSegment(m4s: Buffer, state) {
+export default function prepareSegment(
+  m4s: Buffer,
+  state: SegmentState
+): Buffer {
   let seqno = state.seqno;
   let startTime = state.startTime;
 

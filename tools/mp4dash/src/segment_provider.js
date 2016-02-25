@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
@@ -5,93 +9,102 @@ import createLog from 'silk-log';
 
 import prepareSegment from './dash_segment';
 
-const log = createLog('segment-provider');
+import type {SegmentState} from './dash_segment';
 
-//const PRETEND_VIDEO_DURATION_MS = 5000;
+export type Segment = {
+  offset: number;
+  seqno: number;
+  buffer: Buffer;
+  served: boolean;
+};
+
+const log = createLog('segment-provider');
+const providerMap = new Map();
+
+let initSegment = null;
+
+export function getInitSegment(): Buffer {
+  if (!initSegment) {
+    const initSegmentFilename = path.join(
+      __dirname,
+      '../../../webapp/public/media/default-segment-init.mp4'
+    );
+    initSegment = fs.readFileSync(initSegmentFilename);
+  }
+  return initSegment;
+}
 
 export default class SegmentProvider extends EventEmitter {
 
-  static _initSegment = null;
-  static getInitSegment(): Buffer {
-    if (SegmentProvider._initSegment === null) {
-      let initSegmentFilename = path.join(
-        __dirname,
-        '../../../webapp/public/media/default-segment-init.mp4'
-      );
-      SegmentProvider._initSegment = fs.readFileSync(initSegmentFilename);
-      //let durationOffset = 0x2c + 4/*size*/ + 4/*fourcc*/ + 4/*version+flags*/ +
-      //    4/*creation*/ + 4/*modification*/ + 4/*timescale*/;
-      //_initSegment.writeInt32BE(PRETEND_VIDEO_DURATION_MS, durationOffset);
-    }
-    return SegmentProvider._initSegment;
+  static get(id: string): ?SegmentProvider {
+    return providerMap.get(id);
   }
 
-  static _streams = {};
-  static get(socket, deviceId): SegmentProvider {
-    let stream = SegmentProvider._streams[deviceId];
-    if (stream) {
-      return stream;
-    }
-    stream = SegmentProvider._streams[deviceId] = new SegmentProvider(socket, deviceId);
-    return stream;
-  }
-
-  constructor(socket, deviceId) {
-    log.info(`SegmentProvider(${deviceId})`);
-
-    super();
-    this.socket = socket;
-    this.deviceId = deviceId;
-
-    this.segments = [{
-      offset: 0,
-      seqno: -1,
-      buffer: SegmentProvider.getInitSegment(),
-      served: false,
-    }];
-
-    let stream = `video-${deviceId}`;
-    socket.on(stream, this.onDeviceVideoSegment);
-    socket.emit('join', stream);
-  }
-
-  // TODO use this
-  close() {
-    let stream = `video-${this.deviceId}`;
-    this.socket.removeListener(stream, this.onDeviceVideoSegment);
-    this.removeAllListeners();
-    delete SegmentProvider._streams[this.deviceId];
-  }
-
-  segmentState = {
+  _id: string;
+  _segments: Array<Segment>;
+  _segmentState: SegmentState = {
     seqno: 0,
     startTime: 0,
   };
 
-  onDeviceVideoSegment = (message, ack) => {
-    if (typeof ack === 'function') {
-      ack();
-    }
+  constructor(id: string) {
+    log.debug(`['${id}']: constructor()`);
 
-    log.info(`onDeviceVideoSegment(${message.frame.length})`);
-    let prevSegment = this.segments[this.segments.length - 1];
-    let segment = {
-      offset: prevSegment.offset + prevSegment.buffer.length,
-      seqno: this.segmentState.seqno,
-      buffer: prepareSegment(message.frame, this.segmentState),
+    const firstSegment: Segment = {
+      offset: 0,
+      seqno: -1,
+      buffer: getInitSegment(),
       served: false,
     };
-    this.segments.push(segment);
-    this.emit('segment', segment);
-  };
 
-  findSegmentClosestToOffset(offset) {
-    log.info(`findSegmentClosestToOffset(${offset})`);
+    super();
+
+    this._id = id;
+    this._segments = [firstSegment];
+
+    providerMap.set(id, this);
+
+    process.nextTick(() => {
+      this.emit('init-segment', firstSegment);
+    });
+  }
+
+  // TODO use this
+  close(): void {
+    log.debug(`['${this._id}']: close()`);
+    this.removeAllListeners();
+    providerMap.delete(this._id);
+  }
+
+  pushFrame(frame: Buffer): void {
+    log.debug(`['${this._id}']: pushFrame(<Buffer ${frame.length}>)`);
+
+    try {
+      frame = prepareSegment(frame, this._segmentState);
+    } catch(err) {
+      log.error(err);
+      throw err;
+    }
+
+    const prev = this._segments[this._segments.length - 1];
+    const segment = {
+      offset: prev.offset + prev.buffer.length,
+      seqno: this._segmentState.seqno,
+      buffer: frame,
+      served: false,
+    };
+    this._segments.push(segment);
+    this.emit('segment', segment);
+  }
+
+  findSegmentClosestToOffset(offset: number): Segment {
     let i = 0;
-    while (i + 1 < this.segments.length && this.segments[i + 1].offset <= offset) {
+    while (i + 1 < this._segments.length &&
+           this._segments[i + 1].offset <= offset) {
       i += 1;
     }
-    log.info(`  found segment at ${this.segments[i].offset}`);
-    return this.segments[i];
+    log.debug(`['${this._id}']: findSegmentClosestToOffset(${offset}) -> ` +
+              `${this._segments[i].offset}`);
+    return this._segments[i];
   }
 }

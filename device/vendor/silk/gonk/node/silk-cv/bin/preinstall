@@ -2,6 +2,6 @@
 
 if [[ "$NPM_CONFIG_PLATFORM" != "android" ]]; then
   if [[ ! -d node_modules/opencv ]]; then
-    npm install peterbraden/node-opencv#090e9d727664b5211776a14d2f44ff87b6ea07c4
+    npm install peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c
   fi
 fi

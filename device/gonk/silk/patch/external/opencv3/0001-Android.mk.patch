@@ -1,23 +1,23 @@
-From 5f4ab873a3a0d0bf47952cf98d9746a07adc43f4 Mon Sep 17 00:00:00 2001
+From 9ddb1fe8de1302bcb775026fd43828d9ee52e2e7 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 5 Feb 2016 22:02:43 -0800
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 106 +++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 109 +++++++++++++++++++++++++++++++++++++++++++
  apps/traincascade/Android.mk |  19 ++++++++
- opencv.mk                    |  38 ++++++++++++++++
- 3 files changed, 163 insertions(+)
+ opencv.mk                    |  44 +++++++++++++++++
+ 3 files changed, 172 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..12d8ba4
+index 0000000..fa4efa0
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,109 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -34,8 +34,9 @@ index 0000000..12d8ba4
 +LOCAL_EXPORT_C_INCLUDE_DIRS := \
 +  $(LOCAL_PATH)/include \
 +  $(LOCAL_PATH)/include/opencv \
-+  $(call local-intermediates-dir,,$(TARGET_2ND_ARCH))/opencv2 \
-+  $(foreach m,$(OPENCV3_MODULE_NAMES),$(LOCAL_PATH)/modules/$(m)/include)
++  $(call local-intermediates-dir,,$(TARGET_2ND_ARCH)) \
++  $(foreach m,$(OPENCV3_CORE_MODULES),$(LOCAL_PATH)/modules/$(m)/include) \
++  $(foreach m,$(OPENCV3_CONTRIB_MODULES),external/opencv3_contrib/modules/$(m)/include) \
 +
 +include $(BUILD_PREBUILT)
 +
@@ -93,25 +94,27 @@ index 0000000..12d8ba4
 +$(OPENCV3_MAKEFILE): $(LOCAL_PATH)/Android.mk
 +	@echo Configure: $@
 +	$(hide) mkdir -p $(@D)
-+	cd $(@D) && cmake \
-+ -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
-+ -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-+ -DBUILD_TESTS=false \
-+ -DWITH_TIFF=false \
-+ -DWITH_OPENCL=true \
-+ -DBUILD_ANDROID_EXAMPLES=false \
-+ -DWITH_OPENEXR=false \
-+ -DBUILD_PERF_TESTS=false \
-+ -DBUILD_opencv_java=false \
-+ -DANDROID_TOOLCHAIN_NAME=$(OPENCV3_TOOLCHAIN_NAME) \
-+ -DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
-+ -DANDROID_NATIVE_API_LEVEL=19 \
-+ -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
-+ -DANDROID_NDK=$(abspath prebuilts/ndk/current) \
-+ -DANDROID_NDK_LAYOUT=ANDROID \
-+ -DWITH_TBB=true \
-+ -DCMAKE_INSTALL_PREFIX="$(ANDROID_BUILD_TOP)/$(dir $@)" \
-+ $(LOCAL_PATH)
++	cd $(@D) && \
++  export ANDROID_NDK=$(abspath prebuilts/ndk/current) && \
++  cmake \
++   -Wno-dev \
++   -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
++   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
++   -DBUILD_TESTS=false \
++   -DWITH_TIFF=false \
++   -DWITH_OPENCL=true \
++   -DBUILD_ANDROID_EXAMPLES=false \
++   -DWITH_OPENEXR=false \
++   -DBUILD_PERF_TESTS=false \
++   -DBUILD_opencv_java=false \
++   -DANDROID_TOOLCHAIN_NAME=$(OPENCV3_TOOLCHAIN_NAME) \
++   -DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
++   -DANDROID_NATIVE_API_LEVEL=19 \
++   -DNDK_CCACHE=$(abspath $(CC_WRAPPER)) \
++   -DWITH_TBB=true \
++   -DCMAKE_INSTALL_PREFIX="$(ANDROID_BUILD_TOP)/$(dir $@)" \
++   -DOPENCV_EXTRA_MODULES_PATH=$(ANDROID_BUILD_TOP)/external/opencv3_contrib/modules \
++   $(LOCAL_PATH)
 +
 +$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(LOCAL_BUILT_MODULE): $(OPENCV3_MAKEFILE) \
@@ -151,12 +154,12 @@ index 0000000..71fef7c
 +
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..e3d095d
+index 0000000..8a656f1
 --- /dev/null
 +++ b/opencv.mk
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,44 @@
 +# Include from your Android.mk to link with OpenCV, after defining LOCAL_MODULE
-+OPENCV3_MODULE_NAMES := \
++OPENCV3_CORE_MODULES := \
 +  calib3d \
 +  features2d \
 +  flann \
@@ -174,6 +177,12 @@ index 0000000..e3d095d
 +  videostab \
 +  core \
 +
++OPENCV3_CONTRIB_MODULES := \
++  bgsegm \
++  dnn \
++  face \
++  optflow \
++
 +OPENCV3_3RDPARTY_COMPONENTS := \
 + libopencv3_libjasper \
 + libopencv3_libjpeg \
@@ -181,10 +190,10 @@ index 0000000..e3d095d
 + libopencv3_libwebp \
 + libopencv3_tbb \
 +
-+OPENCV3_MODULES := $(addprefix libopencv3_,$(OPENCV3_MODULE_NAMES))
++OPENCV3_MODULES := $(addprefix libopencv3_,$(OPENCV3_CORE_MODULES) $(OPENCV3_CONTRIB_MODULES))
 +
 +ifneq ($(LOCAL_MODULE),libopencv3_core)
-+LOCAL_CFLAGS += -Wno-non-virtual-dtor # Bug in include/opencv2/core/core.hpp?
++#LOCAL_CFLAGS += -Wno-non-virtual-dtor # Bug in include/opencv2/core/core.hpp?
 +LOCAL_CFLAGS += -frtti -fexceptions
 +LOCAL_NDK_STL_VARIANT := gnustl_static
 +LOCAL_SDK_VERSION := 19

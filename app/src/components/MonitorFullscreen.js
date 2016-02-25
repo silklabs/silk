@@ -4,7 +4,6 @@ import { MetricTypes } from 'silk-api';
 import createLog from 'silk-log';
 
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
-import Config from '../libraries/Config';
 import * as DateUtil from '../libraries/DateUtil';
 
 import FullScreenVideoLaunch from '../metrics/FullScreenVideoLaunch';
@@ -13,7 +12,6 @@ import * as VideoMetrics from '../metrics/Video';
 
 import LiveVideo from './LiveVideo';
 import OverlayModal from './OverlayModal';
-import ObjectBoxes from './ObjectBoxes';
 import VideoControls from './VideoControls';
 import DateOverlay from './DateOverlay';
 import Spinner from './Spinner';
@@ -158,7 +156,6 @@ class LiveSegmentProvider {
       previousId: this.lastId,
       startUTC: message.when,
       endUTC: message.when + (message.durationMs || 0),
-      objects: message.objects,
     });
 
     // Keep track of the previous id (required for state tracking).
@@ -254,13 +251,6 @@ export default class MonitorFullscreen extends React.Component {
     maxTime: Date.now(),
     minTime: DateUtil.startOfDay().getTime(),
     videoSegments: [],
-
-    /**
-     * Set of detected objects (faces, cars, motion, etc) that have
-     * been detected for the currently-playing segment at the
-     * current time point (give or take some milliseconds).
-     */
-    objects: [],
   };
 
   getInitialProps() {
@@ -397,7 +387,6 @@ export default class MonitorFullscreen extends React.Component {
       endUTC: result.endUTC,
       id: result.id,
       previousId: previousSegment ? previousSegment.id : null,
-      objects: result.data.objects,
     });
   }
 
@@ -523,12 +512,6 @@ export default class MonitorFullscreen extends React.Component {
       // Ignore
       break;
     }
-
-    if (segment) {
-      this.setState({
-        objects: this.getActiveObjects(segment, segment.startUTC),
-      });
-    }
   };
 
   bufferNextRecordedSegment() {
@@ -606,7 +589,6 @@ export default class MonitorFullscreen extends React.Component {
 
     this.setState({
       currentTime: time,
-      objects: this.getActiveObjects(segment, time),
     });
   };
 
@@ -730,31 +712,6 @@ export default class MonitorFullscreen extends React.Component {
     return PLAYBACK_STEPS[nextId];
   }
 
-  getActiveObjects(segment, timeUTC) {
-    if (!segment || !segment.objects) {
-      return [];
-    }
-    return segment.objects.filter(obj => {
-      // TODO/FIXME: it's super gross that we're guessing this
-      // information on the client side.  When we track a real event
-      // timeline and have start/end for each event, this code should
-      // diaf.
-      switch (obj.tag) {
-      case 'hal':
-        // hal-detected faces can happen multiple times per frame.  We
-        // guess that any given detection event is about 75ms, but of
-        // course in reality it's far more variable.  (See above.)
-        const HAL_PERIOD_MS = 75;
-        return (obj.when <= timeUTC
-                && timeUTC <= (obj.when + HAL_PERIOD_MS));
-      default:
-        // Assume other events occur just once per frame.  (See
-        // above.)
-        return true;
-      }
-    });
-  }
-
   onFastForward = () => {
     let rate = this.getPlaybackStep(1);
     this.setState({ rate });
@@ -818,21 +775,6 @@ export default class MonitorFullscreen extends React.Component {
       controls = this.buildControls();
     }
 
-    let objects = null;
-    if (Config.get().preferences.drawObjectBoxesFullscreenVideo
-        && this.state.objects.length) {
-      objects = (
-        <ObjectBoxes
-          deviceId={this.props.deviceId}
-          socket={this.props.socket}
-          width={width}
-          height={height}
-          objects={this.state.objects}
-          previewSize={this.props.previewSize}
-        />
-      );
-    }
-
     let showTimeJump;
     if (this.state.showTimeJump) {
       showTimeJump = (
@@ -867,7 +809,6 @@ export default class MonitorFullscreen extends React.Component {
           <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
             {showTimeJump}
             {controls}
-            {objects}
           </View>
         </View>
       </OverlayModal>

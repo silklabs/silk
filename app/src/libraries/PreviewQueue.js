@@ -21,16 +21,8 @@ const log = createLog('PreviewQueue');
 //       current network conditions.
 const PREVIEW_LAG_MS = 500;
 
-// Dedupe from device timeline.js
-type TimelineEventObject = {
-  tag: string;
-  when: number;
-  [arbitraryKeys: string]: any;
-};
-
 // This should probably live in device timeline.js as well.
 type DeviceVideoMessage = {
-  objects: Array<TimelineEventObject>;
   frame: any;
   contents: 'jpeg' | 'mp4';
   when: number;
@@ -72,30 +64,30 @@ export default class PreviewQueue {
   }
 
   push(msg: DeviceVideoMessage) {
-    let previewArrival = { now: Date.now(), when: msg.when };
-    if (global.__DEV___ && this._lastPreviewArrival) {
-      // Elapsed time on device since last preview
-      let deviceElapsed = previewArrival.when - this._lastPreviewArrival.when;
-      // Elapsed time on app since last preview
-      let appElapsed = previewArrival.now - this._lastPreviewArrival.now;
-      // How far behind the app is from this preview image
-      let deviceToAppLag = previewArrival.when - (this._deviceTime || 0);
-      // How far apart the first/last items in the queue are
-      let queueTimeRange = null;
-      if (this._previewQueue.length) {
-        queueTimeRange = previewArrival.when - this._previewQueue[0].when;
-      }
+    if (global.__DEV__) {
+      let previewArrival = { now: Date.now(), when: msg.when };
+      if (this._lastPreviewArrival) {
+        // Elapsed time on device since last preview
+        let deviceElapsed = previewArrival.when - this._lastPreviewArrival.when;
+        // Elapsed time on app since last preview
+        let appElapsed = previewArrival.now - this._lastPreviewArrival.now;
+        // How far behind the app is from this preview image
+        let deviceToAppLag = previewArrival.when - (this._deviceTime || 0);
+        // How far apart the first/last items in the queue are
+        let queueTimeRange = null;
+        if (this._previewQueue.length) {
+          queueTimeRange = previewArrival.when - this._previewQueue[0].when;
+        }
 
-      log.debug(`\
-preview ${this._name}: \
-queueDepth=${this._previewQueue.length} \
-device elapsed=${deviceElapsed} ms \
-app elapsed=${appElapsed} ms \
-device to app lag=${deviceToAppLag} ms \
-queueRange=${queueTimeRange} ms \
-`);
+        log.debug(`preview ${this._name}: ` +
+                  `queueDepth=${this._previewQueue.length} ` +
+                  `device elapsed=${deviceElapsed} ms ` +
+                  `app elapsed=${appElapsed} ms ` +
+                  `device to app lag=${deviceToAppLag} ms ` +
+                  `queueRange=${queueTimeRange} ms`);
+      }
+      this._lastPreviewArrival = previewArrival;
     }
-    this._lastPreviewArrival = previewArrival;
 
     this._previewQueue.push(msg);
     if (this._previewTimeoutId === null) {
@@ -177,4 +169,3 @@ queueRange=${queueTimeRange} ms \
     this._onDisplay(preview);
   };
 }
-

@@ -5,7 +5,6 @@ import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
 import { shouldPureComponentUpdate, blobURI } from '../libraries/Util';
 
-import ObjectBoxes from './ObjectBoxes';
 import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 import Spinner from './Spinner';
@@ -66,7 +65,6 @@ export default class MonitorPreview extends SocketIOComponent {
 
   state = {
     blob: null,
-    objects: [],
     registered: false,
     serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
     timedOut: false,
@@ -84,7 +82,6 @@ export default class MonitorPreview extends SocketIOComponent {
       this.setStateAsync({
         timedOut: false,
         blob: message.frame,
-        objects: message.objects || [],
       });
     });
 
@@ -110,7 +107,7 @@ export default class MonitorPreview extends SocketIOComponent {
       // timeout state.
       this.unsubscribeFromSocket(this.props.socket);
       this.startTimeoutTimer();
-      this.setState({timedOut: false, blob: null, objects: []});
+      this.setState({timedOut: false, blob: null});
       setTimeout(() => {
         this.subscribeToSocket(this.props.socket);
       }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
@@ -171,7 +168,7 @@ export default class MonitorPreview extends SocketIOComponent {
         if (!this.props.hasNetwork) {
           return;
         }
-        this.setStateAsync({timedOut: true, blob: null, objects: []});
+        this.setStateAsync({timedOut: true, blob: null});
       },
       timeOut
     );
@@ -283,21 +280,6 @@ export default class MonitorPreview extends SocketIOComponent {
       );
     }
 
-    let objects = null;
-    if (this.state.objects.length) {
-      objects = (
-        <ObjectBoxes
-          deviceId={this.props.deviceId}
-          socket={this.props.socket}
-          width={previewStyle.width}
-          height={previewStyle.height}
-          objects={this.state.objects}
-          previewSize={previewSize}
-          style={styles.preview}
-        />
-      );
-    }
-
     return (
       <View style={[
         styles.monitorContainer,
@@ -310,7 +292,6 @@ export default class MonitorPreview extends SocketIOComponent {
           {this._renderPreview()}
           {logo}
           {this._renderLabel()}
-          {objects}
         </TouchableOpacity>
       </View>
     );

@@ -5,15 +5,19 @@ following additional packages should be installed:
 
 OSX:
 ```
-$ brew tap homebrew/science
-$ brew install opencv
 $ brew install pkg-config
 $ brew install sox
+$ brew tap homebrew/science
+$ brew install opencv3 --with-contrib
+$ cp /usr/local/Cellar/opencv3/3.1.0_1/lib/pkgconfig/opencv.pc /usr/local/lib/pkgconfig/opencv.pc
+$ cp /usr/local/Cellar/opencv3/3.1.0_1/share/OpenCV/3rdparty/lib/libippicv.a /usr/local/Cellar/opencv3/3.1.0_1/lib/
+$ pkg-config --modversion opencv
 ```
 
 Linux:
+For Linux it's necessary to compile OpenCV3 from source to build
+opencv_contrib, these steps are TDB.
 ```
-$ sudo apt-get install libopencv-dev libudev-dev
 $ sudo usermod -a -G video $(whoami)  # Ensure you have access to the camera at /dev/video0
 ```
 

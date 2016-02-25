@@ -26,6 +26,7 @@ import version from 'silk-core-version';
 import AsyncComponent from './abstract/AsyncComponent';
 import AsyncNavigator from './abstract/AsyncNavigator';
 import DeviceConfig from './setup/DeviceConfig';
+import DevicePadlock from './setup/DevicePadlock';
 import DeviceTouch from './setup/DeviceTouch';
 import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
@@ -40,6 +41,7 @@ const routeToComponentMap = {
   Main,
   Settings,
   DeviceTouch,
+  DevicePadlock,
   DeviceConfig,
 };
 

@@ -16,7 +16,7 @@ const RSSI_CLOSE = -50;
 const RSSI_NEAR = -60;
 const RSSI_FAR = -70;
 
-const AFTER_TOUCH_WAIT_MS = 500;
+const AFTER_TOUCH_WAIT_MS = 250;
 
 export default class DeviceTouch extends AsyncComponent {
 
@@ -66,7 +66,7 @@ export default class DeviceTouch extends AsyncComponent {
         return;
       }
       this.props.navigator.pushAsync({
-        name: 'DeviceConfig',
+        name: 'DevicePadlock',
         props: {
           ...this.props,
           deviceSecret: this.state.deviceSecret,
@@ -90,12 +90,6 @@ export default class DeviceTouch extends AsyncComponent {
   };
 
   render() {
-    let label;
-    if (this.state.touched) {
-      label = 'Success! Let\'s configure your new device!';
-    } else {
-      label = 'Touch the device with your phone.';
-    }
     return (
       <View style={styles.container}>
         <View style={LayoutStyles.statusBarPlaceholder} />
@@ -108,7 +102,9 @@ export default class DeviceTouch extends AsyncComponent {
           <Text style={TitleBarStyles.titleBarLabel}>Device Setup</Text>
         </View>
         <View style={styles.contentContainer}>
-          <Text style={styles.label}>{label}</Text>
+          <Text style={styles.label}>
+            Touch the device with your phone.
+          </Text>
           <ProximityMeter proximity={this.state.proximity} />
         </View>
       </View>
@@ -128,9 +124,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
+    color: '#424242',
     fontSize: 20,
-    marginHorizontal: 25,
-    marginVertical: 50,
+    marginHorizontal: 50,
+    marginBottom: 50,
     textAlign: 'center',
   },
 });

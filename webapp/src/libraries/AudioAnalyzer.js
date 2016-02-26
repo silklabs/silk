@@ -43,17 +43,20 @@ class AudioAnalyzer extends EventEmitter {
   fftInput: Float32Array;
   fftSize: number;
   inputWindow: Float32Array;
+  inputWindowStartTime: number;
   inputToFill: number;
   outputMagnitudes: Float32Array;
+  sampleRate: number;
   windowOverlap: number;
   // TODO: let the caller specify the windowing function?
   // TODO: smoothing?
 
   // This is a private API.  Use `createAudioAnalyzer()` below.
-  constructor(fftSize, windowOverlap, sampleScale, sampleOffset) {
+  constructor(fftSize, windowOverlap, sampleRate, sampleScale, sampleOffset) {
     super();
     this.fftSize = fftSize;
     this.windowOverlap = windowOverlap;
+    this.sampleRate = sampleRate;
     this.sampleScale = sampleScale;
     this.sampleOffset = sampleOffset;
 
@@ -81,8 +84,12 @@ class AudioAnalyzer extends EventEmitter {
    * results in filling one or more FFT windows, then the FFTs will be
    * computed and resulting events delivered to clients.
    */
-  appendSamples(samples) {
+  appendSamples(samples, startTime) {
     let inputWindowLength = this.inputWindow.length;
+    if (this.inputToFill === inputWindowLength) {
+      console.log('First appendSamples() after reset');
+      this.inputWindowStartTime = startTime;
+    }
     let samplesIndex = 0;
     while (true) {              //eslint-disable-line no-constant-condition
       let samplesBatch = samples.slice(samplesIndex,
@@ -104,6 +111,8 @@ class AudioAnalyzer extends EventEmitter {
       this.inputWindow.copyWithin(0, -this.windowOverlap);
       // And reset the number of samples we're awaiting.
       this.inputToFill = inputWindowLength - this.windowOverlap;
+      this.inputWindowStartTime +=
+        (inputWindowLength - this.windowOverlap) / this.sampleRate;
     }
   }
 
@@ -125,12 +134,15 @@ class AudioAnalyzer extends EventEmitter {
       console.warn('No listeners for any audio analyses ...');
       return;
     }
+
+    let startTime = this.inputWindowStartTime;
+    let endTime = startTime + this.inputWindow.length / this.sampleRate;
     // Normalize samples to the range [ -1.0, 1.0 ].
     let [ scale, offset ] = [ this.sampleScale, this.sampleOffset ];
     for (let i = 0; i < this.fftInput.length; ++i) {
       this.fftInput[i] = this.inputWindow[i] * scale + offset;
     }
-    this.emit('timeDomain', this.fftInput);
+    this.emit('timeDomain', this.fftInput, startTime, endTime);
 
     if (!doFFT) {
       return;
@@ -147,7 +159,7 @@ class AudioAnalyzer extends EventEmitter {
 
     // Run the forward FFT on the normalized and windowed samples.
     let output = this.fft.forward(this.fftInput);
-    this.emit('fft', output);
+    this.emit('fft', output, startTime, endTime);
 
     if (!doFFTMagnitudeLinear) {
       return;
@@ -160,7 +172,8 @@ class AudioAnalyzer extends EventEmitter {
     }
     let dc = output[2 * i];
     let nyquist = output[2 * i + 1];
-    this.emit('fftMagnitudeLinear', this.outputMagnitudes, dc, nyquist);
+    this.emit('fftMagnitudeLinear', this.outputMagnitudes, startTime, endTime,
+              dc, nyquist);
 
     if (!doFFTMagnitudeDecibel) {
       return;
@@ -191,7 +204,7 @@ class AudioAnalyzer extends EventEmitter {
     // time-domain data and feeding it through our AudioAnalyzer, and
     // comparing to the AnalyserNode's own computed frequency-domain
     // data.
-    this.emit('fftMagnitudeDecibel', this.outputMagnitudes);
+    this.emit('fftMagnitudeDecibel', this.outputMagnitudes, startTime, endTime);
   }
 }
 
@@ -215,7 +228,7 @@ class AudioAnalyzer extends EventEmitter {
  * If `params` are invalid, null is returned.
  */
 export default function createAudioAnalyzer(params) {
-  let { fftSize, windowOverlap, sampleMin, sampleMax } = params;
+  let { fftSize, windowOverlap, sampleRate, sampleMin, sampleMax } = params;
   if (!(0 <= fftSize
         && fftSize === (fftSize | 0)
         && isPowerOfTwo(fftSize))) {
@@ -233,5 +246,5 @@ export default function createAudioAnalyzer(params) {
   let range = (sampleMax - sampleMin);
   let scale = 2.0 / range;
   let offset = -(sampleMax + sampleMin) / range;
-  return new AudioAnalyzer(fftSize, windowOverlap, scale, offset);
+  return new AudioAnalyzer(fftSize, windowOverlap, sampleRate, scale, offset);
 }

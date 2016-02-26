@@ -82,17 +82,24 @@ export class LiveTrack extends EventEmitter {
  * Audio track wrapped around a statically-sized buffer, for example,
  * the samples from a WAV file read from disk.
  */
-const CHUNK_DURATION = 0.1;
+const DEFAULT_CHUNK_BUFFER = 0.1;
+const DEFAULT_CHUNK_DURATION = 0.5;
 export class StaticTrack extends EventEmitter {
   buffer = null;
+  chunkBufferSec = 0;
+  chunkDurationSec = 0;
   sampleRate = 0;
   timePosition = 0;
   timeUpdateInterval = null;
 
-  constructor(samples, sampleRate) {
+  constructor(samples, sampleRate,
+              chunkDurationSec = DEFAULT_CHUNK_DURATION,
+              chunkBufferSec = DEFAULT_CHUNK_BUFFER) {
     super();
     this.buffer = new Float32Array(samples.length);
     this.buffer.set(samples);
+    this.chunkBufferSec = chunkBufferSec;
+    this.chunkDurationSec = chunkDurationSec;
     this.sampleRate = sampleRate;
   }
 
@@ -101,7 +108,9 @@ export class StaticTrack extends EventEmitter {
       console.log('Already playing');
       return;
     }
-    this.timeUpdateInterval = setInterval(this._onTimeUpdate, 1000 * CHUNK_DURATION);
+    setTimeout(this._onTimeUpdate, 1000 * this.chunkBufferSec);
+    this.timeUpdateInterval = setInterval(this._onTimeUpdate,
+                                          1000 * this.chunkDurationSec);
     this.emit('playing');
   }
 
@@ -118,7 +127,7 @@ export class StaticTrack extends EventEmitter {
 
   _onTimeUpdate = () => {
     let lastTime = this.currentTime;
-    this.timePosition += CHUNK_DURATION;
+    this.timePosition += this.chunkDurationSec;
     if (this.timePosition >= this.endTime) {
       this.timePosition = this.endTime;
       this.emit('ended');

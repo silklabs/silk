@@ -147,6 +147,7 @@ export default class AudioVisualizer extends React.Component {
     this.analyzer = createAudioAnalyzer({
       fftSize: this.props.fftSize,
       windowOverlap: this.props.windowOverlap,
+      sampleRate: this.props.track.sampleRate,
       sampleMin: SAMPLE_MIN,
       sampleMax: SAMPLE_MAX,
     });
@@ -286,8 +287,11 @@ export default class AudioVisualizer extends React.Component {
     this._seek(currentTime, startTime, endTime);
   };
 
-  _onFFTMagnitudeLinear = (magnitudes) => {
+  _onFFTMagnitudeLinear = (magnitudes, startTime, endTime) => {
     this.spectrogramLinear.accumulate(magnitudes);
+    if (this.props.onFFTMagnitudeLinear) {
+      this.props.onFFTMagnitudeLinear(magnitudes, startTime, endTime);
+    }
     switch (this.props.graphView) {
     case 'freqLinear':
       this._drawFFTMagnitudes(LINEAR_SCALE, magnitudes);
@@ -300,8 +304,11 @@ export default class AudioVisualizer extends React.Component {
     }
   };
 
-  _onFFTMagnitudeDecibel = (magnitudes) => {
+  _onFFTMagnitudeDecibel = (magnitudes, startTime, endTime) => {
     this.spectrogramDecibel.accumulate(magnitudes);
+    if (this.props.onFFTMagnitudeDecibel) {
+      this.props.onFFTMagnitudeDecibel(magnitudes, startTime, endTime);
+    }
     switch (this.props.graphView) {
     case 'freqDecibel':
       this._drawFFTMagnitudes(DECIBEL_SCALE, magnitudes);
@@ -381,7 +388,7 @@ export default class AudioVisualizer extends React.Component {
       this._reset();
     }
     let newSamples = this.track.getSamples(fetchStart, fetchEnd);
-    this.analyzer.appendSamples(newSamples);
+    this.analyzer.appendSamples(newSamples, fetchStart);
     this.setState({ currentTime, startTime, endTime });
   }
 

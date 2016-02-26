@@ -20,10 +20,18 @@ const facecascade = {
   tag: 'face',
   file: 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
   opts: {
-    scale: 1.2,
+    scale: 1.1,
     neighbors: 2,
+    min: [ 15, 15 ],
   },
 };
+
+const eyecascadeOpts = {
+  scale: 1.1,
+  neighbors: 2,
+  min: [ 15, 15 ],
+};
+
 
 // For eye detection, it is important to crop the input image to just show the
 // approximate eye region. If we just do eye detection on a whole face or whole
@@ -75,7 +83,7 @@ function detectFaces(im, motionx, motiony) {
  */
 function _runEyeCascasde(face, cascade) {
   return new Promise((resolve, reject) => {
-    face.detectObject(cascade, {}, (err, rects) => {
+    face.detectObject(cascade, eyecascadeOpts, (err, rects) => {
       if (err) {
         reject(err);
         return;
@@ -96,7 +104,7 @@ function _runEyeCascasde(face, cascade) {
  *
  * Reference: http://image2measure.net/files/Mastering_OpenCV.pdf
  */
-function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
+function _detectBothEyes(when, orig, faceRect, eyeCascade1, eyeCascade2) {
   // Eye detection requires fullsize image for better detection
   // Adjust face rectangle to scale up to the original size as face detection
   // was run on scaled image
@@ -104,6 +112,7 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
       faceRect.width * previewScale, faceRect.height * previewScale);
   face.convertGrayscale();
   face.equalizeHist();
+  timeline.addDiagFrame('fullrescandidate', when, face);
 
   let cols = face.width();
   let rows = face.height();
@@ -127,15 +136,21 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
         leftEyeRect = await _runEyeCascasde(topLeftOfFace, eyeCascade2);
       }
 
-      // Find right eye. If the eye was not detected, try a different cascade
-      let rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade1);
-      if (!rightEyeRect && eyeCascade2) {
-        rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade2);
+      let rightEyeRect;
+      if (leftEyeRect) {
+        // Find right eye. If the eye was not detected, try a different cascade
+        rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade1);
+        if (!rightEyeRect && eyeCascade2) {
+          rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade2);
+        }
       }
 
-      // Adjust the eye rectangles because the face border was removed
-      // Also scale down the eye rectangles to match preview size
-      if (leftEyeRect) {
+      timeline.addDiagFrame(`lefteye:${!!leftEyeRect}`, when, topLeftOfFace);
+      timeline.addDiagFrame(`righteye:${!!rightEyeRect}`, when, topRightOfFace);
+
+      if (rightEyeRect) {
+        // Adjust the eye rectangles because the face border was removed
+        // Also scale down the eye rectangles to match preview size
         leftEyeRect.x += leftX;
         leftEyeRect.y += topY;
 
@@ -146,9 +161,7 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
 
         leftEye = new cv.Point(faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
             faceRect.y + leftEyeRect.y + leftEyeRect.height / 2);
-      }
 
-      if (rightEyeRect) {
         rightEyeRect.x += rightX;
         rightEyeRect.y += topY;
 
@@ -166,6 +179,7 @@ function _detectBothEyes(orig, faceRect, eyeCascade1, eyeCascade2) {
     } catch (e) {
       reject(e);
     }
+    face.release();
   });
 }
 
@@ -229,31 +243,24 @@ class DetectFace {
           // Calculate preview scale
           previewScale = orig.width() / im.width();
 
-          // Fake a "motion" rectangle since the "preview" timeline event is being
-          // used at the moment.
-          let rects = [{ x: 0, y: 0, width: im.width(), height: im.height() }];
-
-          // Restrict object detection to a section of the image that shows motion
-          if (rects.length > 1) {
-            log.warn(`More than one (${rects.length}) motion rectangles received`);
-          }
-          let motionRect = rects[0]; // Only one motion rectangle is supported right now
-          let motion = im.roi(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
-
           let start = Date.now();
           let faces = [];
 
           try {
             // Find faces
-            let faceRects = await detectFaces(motion, motionRect.x, motionRect.y);
+            let faceRects = await detectFaces(im, 0, 0);
             log.debug(`faces: ${JSON.stringify(faceRects)}`);
             for (let i = 0; i < faceRects.length; i++) {
               let faceRect = faceRects[i];
 
+              let weakface = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+              timeline.addDiagFrame('candidate', when, weakface);
+
               // Detect both eyes
-              let [leftEye, rightEye] = await _detectBothEyes(orig, faceRect,
+              let [leftEye, rightEye] = await _detectBothEyes(when, orig, faceRect,
                   EYE_CASCADE1, EYE_CASCADE2);
 
+              log.warn('Detect eyes', leftEye, rightEye);
               // Only if both the eyes are visible is when we say it is a face
               if (leftEye && rightEye) {
                 faceRect.leftEye = [leftEye.x, leftEye.y];

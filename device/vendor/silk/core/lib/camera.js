@@ -10,6 +10,7 @@ import * as VideoMetrics from './metrics/video';
 import * as util from './sysutils';
 import CBuffer from 'CBuffer';
 import CameraRestart from './metrics/camera_restart';
+import config from 'silk-config';
 import api from './api';
 import createLog from './log';
 import cv from 'opencv';
@@ -661,13 +662,12 @@ export default class Camera extends EventEmitter {
 
   _startSimMicCapture() {
     const mic = require('mic');
-    // TODO: get audio params from global config
     let simMic = mic({
-      bitwidth: 16,
-      channels: 1,
-      encoding: 'signed-integer',
-      endian: 'little',
-      rate: 8000,
+      bitwidth: 8 * config.deviceMic.bytesPerSample,
+      channels: config.deviceMic.numChannels,
+      encoding: config.deviceMic.encoding,
+      endian: config.deviceMic.endian,
+      rate: config.deviceMic.sampleRate,
     });
     let micInput = simMic.getAudioStream();
     micInput.on('data', (data) => {
@@ -742,6 +742,8 @@ export default class Camera extends EventEmitter {
         fps: FPS,
         vbr: VBR,
         audioMute,
+        audioSampleRate: config.deviceMic.sampleRate,
+        audioChannels: config.deviceMic.numChannels
       };
 
       this._command({cmdName: 'init', cmdData});

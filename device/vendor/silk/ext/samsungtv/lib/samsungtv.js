@@ -46,10 +46,6 @@ class MicStreamer {
   onMicData = (msg) => {
     this.server.send('mic', {
       when: msg.when,
-      // TODO: don't hard-code these
-      numChannels: 1,
-      bytesPerSample: 2,
-      sampleRate: 8000,
       samples: msg.frames,
     });
   };

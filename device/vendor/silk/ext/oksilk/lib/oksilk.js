@@ -11,13 +11,13 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
+import config from 'silk-config';
 import SpeechRecognizer from './speechrecognizer';
 import type { Env, Util, Say, Log } from 'silk-sdk-glue/interface/env';
 
 let log: Log;
 
 const MODEL_DIR = '/system/silk/media/pocketsphinx/';
-const AUDIO_SAMPLE_RATE = 8000;
 
 // Named searches allow to quickly reconfigure the decoder
 const HOTKEY_SEARCH = 'wakeup';
@@ -67,11 +67,7 @@ class OkSilk {
 
     // Configure with audio properties of the input data from mic. These
     // properties must match the audio properties set in camera
-    this._speechRecognizer = new SpeechRecognizer(this._env, {
-      sampleRate: AUDIO_SAMPLE_RATE,
-      bytesPerSample: 2,
-      numChannels: 1,
-    });
+    this._speechRecognizer = new SpeechRecognizer(this._env, config.deviceMic);
 
     // Bandwidth of Audio recorded from capture process is 8khz so use
     // en-us-8khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
@@ -83,7 +79,7 @@ class OkSilk {
 
     // Audio from capture process is recorded at 8khz samling rate so set
     // the speechrecognizer's sample rate accordingly
-    this._speechRecognizer.setSampleRate(AUDIO_SAMPLE_RATE);
+    this._speechRecognizer.setSampleRate(config.deviceMic.sampleRate);
 
     // Threshold to tune for keyphrase to balance between false alarms and misses
     // Higher the number more false alarms and less misses, lower the number

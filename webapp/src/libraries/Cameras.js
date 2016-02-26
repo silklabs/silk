@@ -1,4 +1,5 @@
 
+import config from 'silk-config';
 import { EventEmitter } from 'events';
 import io from 'socket.io-client';
 import PreviewQueue from './PreviewQueue';
@@ -6,12 +7,6 @@ import invariant from 'assert';
 
 import Api from './Api';
 import mklog from 'silk-log'; const log = mklog('Cameras');
-
-// We assume 16-bit signed samples from the mic stream.
-//
-// TODO: get me from global audio config
-const SAMPLE_ARRAY_VIEW = Int16Array;
-const SAMPLE_NUM_BYTES = 2;
 
 class Camera extends EventEmitter {
   constructor(name, id) {
@@ -340,13 +335,15 @@ class Camera extends EventEmitter {
       log.warn('_onMicStream: null msg');
       return;
     }
-    if (SAMPLE_NUM_BYTES !== msg.bytesPerSample) {
-      throw `Unexpected sample size ${msg.bytesPerSample} bytes`;
+    if (config.deviceMic.bytesPerSample === 2
+        && config.deviceMic.encoding === 'signed-integer'
+        && config.deviceMic.endian === 'little') {
+      msg.samples = new Int16Array(msg.samples);
+    } else {
+      throw `Unhandled deviceMic configuration: ${config.deviceMic}`;
     }
-    msg.samples = new SAMPLE_ARRAY_VIEW(msg.samples);
-
     this.micData = msg;
-    this.emit('micData', this.micData);
+    this.emit('micData', msg);
   };
 }
 

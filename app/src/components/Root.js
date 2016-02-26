@@ -25,6 +25,7 @@ import version from 'silk-core-version';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import AsyncNavigator from './abstract/AsyncNavigator';
+import CameraLiveVideo from './CameraLiveVideo';
 import DeviceConfig from './setup/DeviceConfig';
 import DevicePadlock from './setup/DevicePadlock';
 import DeviceTouch from './setup/DeviceTouch';
@@ -40,6 +41,7 @@ const routeToComponentMap = {
   ServerPicker,
   Main,
   Settings,
+  CameraLiveVideo,
   DeviceTouch,
   DevicePadlock,
   DeviceConfig,

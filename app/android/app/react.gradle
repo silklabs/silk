@@ -36,10 +36,7 @@ task bundleDebugJsAndAssets(type: Exec) {
     outputs.dir resourcesDirDebug
 
     workingDir reactRoot
-    // TODO: wrap this in a script and either download bundle or call
-    // `rnws bundle` depending based on config.local.json values like on iOS.
-    //commandLine "./tools/rnws", "bundle", "--no-ios", "--androidBundlePath", jsBundleFileDebug, "--no-optimize"
-    commandLine "wget", "-nv", "-O", jsBundleFileDebug, "http://localhost:8082/index.android.bundle?platform=android&dev=true&hot=false"
+    commandLine "./tools/android_debug_bundle", jsBundleFileDebug
 
     enabled config.bundleInDebug ?: false
 }
@@ -63,6 +60,29 @@ task bundleReleaseJsAndAssets(type: Exec) {
     enabled config.bundleInRelease ?: true
 }
 
+def webappRoot = file("../../../webapp")
+
+task copyMSEWebviewDebugJs(type: Copy) {
+    // create dirs if they are not there (e.g. the "clean" task just ran)
+    doFirst {
+        jsBundleDirDebug.mkdirs()
+    }
+    from "$webappRoot/public/js/android.js"
+    into jsBundleDirDebug
+    rename "android.js", "mse.js"
+}
+
+// TODO: we'll need a solution here that gets us a minified and optimized bundle
+task copyMSEWebviewReleaseJs(type: Copy) {
+    // create dirs if they are not there (e.g. the "clean" task just ran)
+    doFirst {
+        jsBundleDirRelease.mkdirs()
+    }
+    from "$webappRoot/public/js/android.js"
+    into jsBundleDirRelease
+    rename "android.js", "mse.js"
+}
+
 void runBefore(String dependentTaskName, Task task) {
     Task dependentTask = tasks.findByPath(dependentTaskName);
     if (dependentTask != null) {
@@ -76,6 +96,7 @@ gradle.projectsEvaluated {
 
     bundleDebugJsAndAssets.dependsOn mergeDebugResources
     bundleDebugJsAndAssets.dependsOn mergeDebugAssets
+    bundleDebugJsAndAssets.dependsOn copyMSEWebviewDebugJs
 
     runBefore('processArmeabi-v7aDebugResources', bundleDebugJsAndAssets)
     runBefore('processX86DebugResources', bundleDebugJsAndAssets)
@@ -86,6 +107,7 @@ gradle.projectsEvaluated {
 
     bundleReleaseJsAndAssets.dependsOn mergeReleaseResources
     bundleReleaseJsAndAssets.dependsOn mergeReleaseAssets
+    bundleReleaseJsAndAssets.dependsOn copyMSEWebviewReleaseJs
 
     runBefore('processArmeabi-v7aReleaseResources', bundleReleaseJsAndAssets)
     runBefore('processX86ReleaseResources', bundleReleaseJsAndAssets)

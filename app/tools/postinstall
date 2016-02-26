@@ -14,3 +14,10 @@ do
   echo $patch
   patch -N -p0 -i $patch || echo
 done
+
+# We need the webapp for the Android webview, but we can't list it as
+# a silkDependecy in package.json because it trips up Flow on Linux
+# somehow.
+pushd ../webapp
+npm install
+popd

@@ -15,7 +15,12 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export SILKRC=$ROOT/.silkrc
 export PATH=$ROOT/cli:$PATH
 
-if [ ! -d $ROOT/cli-plugin-internal/node_modules ];
-then
-  echo "Please run npm install inside of cli-plugin-internal for full CLI"
-fi
+for subdir in sdk cli-plugin-internal; do
+  if [ ! -d $ROOT/$subdir/node_modules ]; then
+    if [ -z $GET_OFF_MY_LAWN ]; then
+      ( cd $ROOT/$subdir; npm install )
+    else
+      echo "Please run npm install inside of $subdir/ for full CLI"
+    fi
+  fi
+done

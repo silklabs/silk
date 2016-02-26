@@ -47,12 +47,7 @@ export default class FileDrop extends React.Component {
     }
     let file = e.dataTransfer.files[0];
     let reader = new FileReader();
-    reader.onload = (e) => (
-      this.props.onDrop([ {
-        name: file.name,
-        data: e.target.result,
-      } ])
-    );
+    reader.onload = (e) => this.props.onDrop([ e.target.result ]);
     return reader.readAsArrayBuffer(file);
   };
 

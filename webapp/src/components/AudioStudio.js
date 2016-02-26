@@ -1,7 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup, Glyphicon, Input,
-         Modal, OverlayTrigger, Panel, Popover } from 'react-bootstrap';
-import tar from 'tar-stream';
+import { Button, ButtonGroup, Glyphicon, Input } from 'react-bootstrap';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
@@ -11,9 +9,10 @@ import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
 
-function makeWAVHeader(params, samplesLength) {
-  let { numChannels, bytesPerSample, sampleRate } = params;
-  let dataSize = samplesLength;
+function makeWAVFromMicData(micData) {
+  let { numChannels, bytesPerSample, sampleRate, samples } = micData;
+  samples = new Buffer(samples.buffer);
+  let dataSize = samples.length;
   let chunkSize = 36 + dataSize;
   let byteRate = sampleRate * bytesPerSample * numChannels;
   let blockAlign = numChannels * bytesPerSample;
@@ -33,37 +32,15 @@ function makeWAVHeader(params, samplesLength) {
   hdr.writeUInt16LE(bitsPerSample, 34); // bits per sample
   hdr.writeUInt32BE(0x64617461, 36);    // subchunk2 id - "data"
   hdr.writeUInt32LE(dataSize, 40);      // data size
-  return hdr;
-}
 
-function makeWAVFromMicData(micData) {
-  let { samples } = micData;
-  samples = new Buffer(samples.buffer);
-  let hdr = makeWAVHeader(micData, samples.length);
   let wav = Buffer.concat([ hdr, samples ]);
   return wav.toArrayBuffer();
 }
 
 function getAudioDataFromWAV(wav) {
   // TODO: validate WAV format etc.
-  let data = wav.slice(44).buffer;
+  let data = (new Uint8Array(wav)).slice(44).buffer;
   return new Int16Array(data);
-}
-
-function isTARFilename(name) {
-  return name.endsWith('.tar');
-}
-
-function isWAVFilename(name) {
-  return name.endsWith('.wav');
-}
-
-function zeroPad(number, width) {
-  let string = number.toString();
-  if (string.length < width) {
-    string = '0'.repeat(width - string.length) + string;
-  }
-  return string;
 }
 
 const SAMPLE_RATE = 8000;
@@ -78,96 +55,16 @@ const DEFAULT_PREFS = {
   graphView: 'spectLinear',
 };
 
-class TrackFile extends React.Component {
-  _onClick = (e) => {
-    if (this.props.onPick) {
-      this.props.onPick(this.props);
-    }
-  };
-
-  _onDelete = (e) => {
-    e.stopPropagation();
-    this.props.onDelete(this.props);
-  };
-
-  _onDownload = (e) => {
-    e.stopPropagation();
-    this.props.onDownload(this.props);
-  };
-
-  render() {
-    let size = '';
-    if (this.props.stats) {
-      size = (this.props.stats.size / 1000).toFixed(2) + 'KB';
-    }
-    return (
-      <Panel onClick={this._onClick}>
-        <div>{this.props.name}</div>
-        <div>{size}</div>
-        <ButtonGroup>
-          <Button onClick={this._onDownload}>
-            <Glyphicon glyph="download" />
-          </Button>
-          <Button bsStyle="danger" onClick={this._onDelete}>
-            <Glyphicon glyph="trash" />
-          </Button>
-        </ButtonGroup>
-      </Panel>
-    );
-  }
-}
-
-class TrackPicker extends React.Component {
-  _onDeleteAll = () => {
-    let result = window.confirm('Really, delete all the tracks?'); //eslint-disable-line no-alert
-    if (!result) {
-      return;
-    }
-    this.props.onDeleteAll();
-  };
-
-  render() {
-    let trackFiles = this.props.tracks.map((track) => (
-      <TrackFile
-        key={track.path}
-        onDelete={this.props.onDelete}
-        onDownload={this.props.onDownload}
-        onPick={this.props.onPick}
-        {...track}
-      />
-    ));
-    trackFiles.unshift(
-      <TrackFile
-        key="all"
-        name="(All)"
-        onDelete={this._onDeleteAll}
-        onDownload={this.props.onDownloadAll}
-      />
-    );
-    return (
-      <div style={{ display: 'flex', flexDirection: 'horizontal' }}>
-        {trackFiles}
-      </div>
-    );
-  }
-}
-
 export default class AudioStudio extends React.Component {
   state = {
-    awaitingRecordingName: false,
     camera: null,
     droppingFile: false,
     playing: false,
-    recording: false,
-    recordingName: '',
-    savingRecording: false,
     track: null,
   };
   prefs = DEFAULT_PREFS;
   files = null;
   liveTrack = null;
-  recordingSamples = null;
-  savedTracks = [ ];
 
   constructor() {
     super();
@@ -175,7 +72,6 @@ export default class AudioStudio extends React.Component {
     this.files.read(PREF_FILE)
       .then((data) => this._setPrefs(JSON.parse(data)))
       .catch((err) => console.log('(No prefs set yet)'));
-    this._refreshSavedTracks();
   }
 
   get deviceId() {
@@ -217,58 +113,12 @@ export default class AudioStudio extends React.Component {
       return;
     }
     if (this.state.track) {
-      this.state.track.stop();
       this.state.track.removeListener('timeupdate', this._onTimeUpdate);
     }
     if (track) {
       track.on('timeupdate', this._onTimeUpdate);
     }
     this.setState({ track });
-  }
-
-  _finishRecording() {
-    console.log('Finishing recording, got', this.recordingSamples.length, 'sample buffers');
-    if (this.recordingSamples.length === 0) {
-      console.log('(Nothing to save, bailing)');
-      return;
-    }
-    this.setState({ awaitingRecordingName: true,
-                    recording: false,
-                    recordingName: this._getNextIncrementalFileName() });
-  }
-
-  _getNextIncrementalFileName() {
-    let max = this.savedTracks.reduce((accum, track) => {
-      if (!/^\d{5}.wav$/.test(track.name)) {
-        return accum;
-      }
-      // A little sneaky ... we rely on `parseInt('00001.wav') -> 1`.
-      return Math.max(accum, parseInt(track.name));
-    }, -1);
-    return zeroPad(max + 1, 5);
-  }
-
-  _importTar(file) {
-    let extract = tar.extract();
-    extract.on('entry', (header, stream, callback) => {
-      this._readEntireStream(stream)
-        .then((data) => this.files.write(header.name, data))
-        .then(() => callback())
-        .catch((err) => console.error('Error extracting TAR', err));
-    });
-    extract.on('finish', () => this._refreshSavedTracks());
-    extract.end(new Buffer(file.data));
-  }
-
-  _loadTrackFile(filename) {
-    return this.files.read(filename)
-      .then((data) => {
-        let samples = getAudioDataFromWAV(data);
-        this._attachTrack(new StaticTrack(samples, SAMPLE_RATE));
-      })
-      .catch((err) => {
-        console.error('Failed to read track', filename, err);
-      });
   }
 
   _onCamerasStateChanged = state => {
@@ -299,20 +149,8 @@ export default class AudioStudio extends React.Component {
   _onFileDrop = (files) => {
     this._onFileDropCancel();
     let file = files[0];
-    if (isTARFilename(file.name)) {
-      this._importTar(file);
-      return;
-    }
-    if (!isWAVFilename(file.name)) {
-      console.warn(file.name, 'does not look like a WAV file, refusing to import it');
-      return;
-    }
-    this.files.write(file.name, file.data)
-      .then(() => {
-        this._loadTrackFile(file.name);
-        this._refreshSavedTracks();
-      })
-      .catch(() => console.error('Failed to save file', file.name));
+    let samples = getAudioDataFromWAV(file);
+    this._attachTrack(new StaticTrack(samples, SAMPLE_RATE));
   };
 
   _onNextMicData = (micData) => {
@@ -320,63 +158,19 @@ export default class AudioStudio extends React.Component {
   };
 
   _onTimeUpdate = (currentTime, startTime, endTime, lastTime) => {
-    if (!(this.state.playing || this.state.recording)) {
+    if (!this.state.playing) {
       return;
     }
     let samples = this.state.track.getSamples(lastTime, currentTime);
     let wavData = new Int16Array(samples.length);
     wavData.set(samples);
-    if (this.state.playing) {
-      // TODO: don't hard-code this
-      let micData = {
-        numChannels: 1,
-        bytesPerSample: 2,
-        sampleRate: this.state.track.sampleRate,
-        samples: wavData,
-      };
-      this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
-    }
-    if (this.state.recording) {
-      let data = new Uint8Array(wavData.buffer);
-      this.recordingSamples.push(data);
-    }
-  };
-
-  _onDeleteTrack = (track) => {
-    this.files.unlink(track.name)
-      .then(() => this._refreshSavedTracks())
-      .catch((err) => console.error('Failed to unlink()', track.name, err));
-  };
-
-  _onDeleteAllTracks = () => {
-    Promise.all(this.savedTracks.map((track) => this.files.unlink(track.name)))
-      .then(() => this._refreshSavedTracks())
-      .catch((err) => console.error('Failed to unlink() all tracks', err));
-  };
-
-  _onDownloadTrack = (track) => {
-    this.files.read(track.name)
-      .then((data) => this._sendFileToUser(data))
-      .catch((err) => console.error('Failed to download', track.name, err));
-  };
-
-  _onDownloadAllTracks = () => {
-    let pack = tar.pack();
-    return Promise.all(this.savedTracks.map((track) => (
-      this.files.read(track.name)
-        .then((data) => pack.entry({ name: track.name }, new Buffer(data)))
-    )))
-      .then(() => {
-        pack.finalize();
-        return this._readEntireStream(pack);
-      })
-      .then((data) => this._sendFileToUser(data))
-      .catch((err) => console.error('Failed to send TAR', err));
-  };
-
-  _onPickTrack = (track) => {
-    this.refs.pickerTrigger.hide();
-    this._loadTrackFile(track.name);
+    let micData = {
+      numChannels: 1,
+      bytesPerSample: 2,
+      sampleRate: this.state.track.sampleRate,
+      samples: wavData,
+    };
+    this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
   };
 
   _onSelectGraphView = (e) => {
@@ -391,78 +185,6 @@ export default class AudioStudio extends React.Component {
     this._setPrefs({ drawGrid: this.refs.drawGrid.getChecked() });
   };
 
-  _onRecordingNameChange = () => {
-    this.setState({ recordingName: this.refs.recordingName.getValue() });
-  };
-
-  _onSubmitRecordingName = () => {
-    let name = this.refs.recordingName.getValue();
-    if (!name.length) {
-      console.log('No name set');
-      return;
-    }
-    name += '.wav';
-    console.log('Writing recording with name', name);
-    this.setState({ awaitingRecordingName: false, savingRecording: true });
-    // TODO: don't hard-code these
-    let audioParams = {
-      numChannels: 1,
-      bytesPerSample: 2,
-      sampleRate: this.state.track.sampleRate,
-    };
-    let totalSampleBytes = this.recordingSamples.reduce(
-      (accum, data) => {
-        return accum + data.length;
-      }, 0);
-    let wavHeader = makeWAVHeader(audioParams, totalSampleBytes);
-    this.recordingSamples.unshift(wavHeader.toArrayBuffer());
-    this.files.writev(name, this.recordingSamples)
-      .then(() => {
-        console.log(' ... finished writing');
-        this.setState({ savingRecording: false });
-        this._refreshSavedTracks();
-      })
-      .catch((err) => {
-        console.error('Error writing recording file:', err);
-      });
-  };
-
-  _onOpenLiveStream = () => {
-    this._attachTrack(this.liveTrack);
-  };
-
-  get _playingLiveTrack() {
-    return this.state.track === this.liveTrack;
-  }
-
-  _readEntireStream(stream) {
-    return new Promise((resolve, reject) => {
-      let buffer = new Buffer(0);
-      stream.on('data', (data) => buffer = Buffer.concat([ buffer, data ]));
-      stream.on('end', () => resolve(buffer));
-    });
-  }
-
-  _refreshSavedTracks() {
-    this.files.enumerate()
-      .then((files) => Promise.all(files.map((file) => this.files.stat(file))))
-      .then((files) => {
-        this.savedTracks = files.filter((file) => isWAVFilename(file.name));
-        // Sort descending by access time.
-        this.savedTracks.sort((a, b) => b.stats.atime - a.stats.atime);
-        // TODO: we should efficiently store `savedTracks` in this.state
-        this.forceUpdate();
-      })
-      .catch((err) => console.log('Failed to fetch list of saved tracks'));
-  }
-
-  _sendFileToUser(data) {
-    let blob = new Blob([ data ]);
-    let url = URL.createObjectURL(blob);
-    window.open(url);
-    URL.revokeObjectURL(url);
-  }
-
   _setPrefs(newPrefs) {
     Object.assign(this.prefs, newPrefs);
     this.setState(this.prefs);
@@ -475,65 +197,8 @@ export default class AudioStudio extends React.Component {
     this.setState({ playing: !this.state.playing });
   };
 
-  _toggleRecording = () => {
-    let recording = !this.state.recording;
-    this.setState({ recording });
-    if (recording) {
-      console.log('Starting recording ...');
-      this.recordingSamples = [ ];
-    } else {
-      this._finishRecording();
-    }
-  };
-
   render() {
-    if (this.state.awaitingRecordingName) {
-      return (
-        <Modal show={true}>
-          <Modal.Body>
-            <Input
-              ref="recordingName"
-              type="text"
-              label="Name the recording"
-              value={this.state.recordingName}
-              onChange={this._onRecordingNameChange}
-            /> .wav
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this._onSubmitRecordingName}>
-              Submit
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-    if (this.state.savingRecording) {
-      return (
-        <Modal show={true}>
-          <Modal.Header>
-            <Modal.Title>Saving recording ...</Modal.Title>
-          </Modal.Header>
-        </Modal>
-      );
-    }
-    let muteUnmuteGlyph = this.state.playing ? 'volume-off' : 'volume-up';
-    let recordButton = null;
-    if (this._playingLiveTrack) {
-      let recordStopGlyph = this.state.recording ? 'stop' : 'record';
-      recordButton = (
-        <Button title="Record live stream" onClick={this._toggleRecording}>
-          <Glyphicon glyph={recordStopGlyph} />
-        </Button>
-      );
-    }
-    let goLiveButton = null;
-    if (!this._playingLiveTrack) {
-      goLiveButton = (
-        <Button title="Open live stream" onClick={this._onOpenLiveStream}>
-          <Glyphicon glyph="fast-forward" />
-        </Button>
-      );
-    }
+    let buttonGlyph = this.state.playing ? 'volume-off' : 'volume-up';
     // TODO: get sampleRate from global audio configuration
     return (
       <div style={{padding: '5px'}}>
@@ -552,32 +217,9 @@ export default class AudioStudio extends React.Component {
               drawGrid={this.state.drawGrid}
             />
             <ButtonGroup>
-              <OverlayTrigger
-                ref="pickerTrigger"
-                trigger="click"
-                placement="top"
-                rootClose={true}
-                overlay={<Popover title="Open a track">
-                           <TrackPicker
-                             onDelete={this._onDeleteTrack}
-                             onDeleteAll={this._onDeleteAllTracks}
-                             onDownload={this._onDownloadTrack}
-                             onDownloadAll={this._onDownloadAllTracks}
-                             onPick={this._onPickTrack}
-                             tracks={this.savedTracks}
-                           />
-                         </Popover>}>
-                <Button>
-                  <Glyphicon glyph="folder-open" />
-                </Button>
-              </OverlayTrigger>
-            </ButtonGroup>
-            <ButtonGroup>
               <Button onClick={this._togglePlayback}>
-                <Glyphicon glyph={muteUnmuteGlyph} />
+                <Glyphicon glyph={buttonGlyph} />
               </Button>
-            {recordButton}
-            {goLiveButton}
             </ButtonGroup>
           </div>
           <ButtonGroup style={{paddingLeft: '5px'}}>

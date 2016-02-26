@@ -1,18 +1,18 @@
 /**
+ * Implementation of libpreview.h
+ *
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "libnative_camera_capture"
+#define LOG_TAG "silk-libpreview"
 
 #include <binder/IMemory.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <camera/ICameraRecordingProxyListener.h>
-#include <external/opencv2/modules/androidcamera/camera_wrapper/camera_wrapper.h>
-#include <external/opencv2/modules/androidcamera/include/camera_properties.h>
 #include <gui/CpuConsumer.h>
 #include <media/openmax/OMX_IVCommon.h>
 #include <system/camera.h>
@@ -22,23 +22,22 @@
 #include "IOpenCVCameraCapture.h"
 #include "OpenCVCameraCapture.h"
 
+#include "libpreview.h"
+
 using namespace android;
 
+namespace {
+using namespace libpreview;
 
 class PreviewFrameGrabber: public ConsumerBase::FrameAvailableListener {
 public:
-  static sp<PreviewFrameGrabber> create(int cameraId,
-    CameraCallback cameraCallback, void *userData);
-
-  ~PreviewFrameGrabber();
-
-  void requestFrame() {
-    mGrabFrame = true;
-  }
+  static bool open(FrameCallback frameCallback, void *userData);
+  static void close();
+  static void releaseFrame(void *frameBuffer);
 
   size_t framewidth;
   size_t frameheight;
-  char const *frameformat;
+  FrameFormat frameformat;
 
 #ifdef CAF_CPUCONSUMER
   virtual void onFrameAvailable();
@@ -47,8 +46,8 @@ public:
 #endif
 
 private:
-  PreviewFrameGrabber(CameraCallback cameraCallback, void *userData,
-    sp<IOpenCVCameraCapture> capture);
+  PreviewFrameGrabber(FrameCallback frameCallback, void *userData, sp<IOpenCVCameraCapture> capture);
+  ~PreviewFrameGrabber();
 
   class DeathRecipient: public IBinder::DeathRecipient {
   public:
@@ -69,52 +68,71 @@ private:
 
   sp<CpuConsumer> mCpuConsumer;
   sp<IGraphicBufferProducer> mProducer;
-  CameraCallback mCameraCallback;
+  FrameCallback mFrameCallback;
   void *mUserData;
   sp<IOpenCVCameraCapture> mCapture;
-  bool mGrabFrame;
   sp<DeathRecipient> mDeathRecipient;
+  static sp<PreviewFrameGrabber> sPreviewFrameGrabber;
 };
 
-sp<PreviewFrameGrabber> PreviewFrameGrabber::create(int cameraId,
-  CameraCallback cameraCallback, void *userData)
+bool PreviewFrameGrabber::open(FrameCallback frameCallback, void *userData)
 {
+  if (sPreviewFrameGrabber != NULL) {
+    ALOGE("EUSERS");
+    return false;
+  }
+
   sp<IServiceManager> sm = defaultServiceManager();
   sp<IBinder> binder = sm->getService(
     String16(OpenCVCameraCapture::getServiceName()));
   if (binder == NULL) {
     ALOGE("Unable to connect with capture preview service");
-    return NULL;
+    return false;
   }
 
   sp<IOpenCVCameraCapture> capture =
     interface_cast<IOpenCVCameraCapture>(binder);
 
-  sp<PreviewFrameGrabber> pfg = new PreviewFrameGrabber(
-    (CameraCallback) cameraCallback, userData, capture);
+  sp<PreviewFrameGrabber> pfg = new PreviewFrameGrabber(frameCallback, userData, capture);
 
-  status_t err = capture->initCamera(cameraId, pfg->mProducer);
+  status_t err = capture->initCamera(0, pfg->mProducer);
   if (err != OK) {
     ALOGW("IOpenCVCameraCapture::init failed: %d", err);
-    return NULL;
+    return false;
   }
 
-  return pfg;
+  sPreviewFrameGrabber = pfg;
+  return true;
+}
+
+void PreviewFrameGrabber::close()
+{
+  if (sPreviewFrameGrabber != NULL) {
+    sPreviewFrameGrabber = NULL;
+  }
+}
+
+void PreviewFrameGrabber::releaseFrame(void *frameBuffer) {
+  CpuConsumer::LockedBuffer img;
+  img.data = static_cast<uint8_t*>(frameBuffer);
+
+  status_t err = sPreviewFrameGrabber->mCpuConsumer->unlockBuffer(img);
+  if (err != 0) {
+    ALOGE("Unable to unlock buffer, err=%d", err);
+  }
 }
 
 
-PreviewFrameGrabber::PreviewFrameGrabber(CameraCallback cameraCallback,
-  void *userData, sp<IOpenCVCameraCapture> capture)
-    : mCameraCallback(cameraCallback), mUserData(userData), mCapture(capture)
+PreviewFrameGrabber::PreviewFrameGrabber(FrameCallback frameCallback,
+                                         void *userData,
+                                         sp<IOpenCVCameraCapture> capture)
+    : mFrameCallback(frameCallback), mUserData(userData), mCapture(capture)
 {
-  frameformat = NULL;
-
-  // Always grab the first frame to obtain the frame width/height/format
-  mGrabFrame = true;
+  frameformat = FRAMEFORMAT_INVALID;
 
   sp<IGraphicBufferConsumer> consumer;
   BufferQueue::createBufferQueue(&mProducer, &consumer);
-  mCpuConsumer = new CpuConsumer(consumer, 1, true);
+  mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMEBUFFERS + 1, true);
   mCpuConsumer->setName(String8("OpenCVCpuConsumer"));
   mCpuConsumer->setFrameAvailableListener(this);
 
@@ -160,18 +178,6 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
       continue;
     }
 
-    if (!mGrabFrame) {
-      // TODO: Don't bother mapping the buffer via CpuConsumer when a frame
-      // is not requested.
-      err = mCpuConsumer->unlockBuffer(img);
-      if (err) {
-        ALOGE("PreviewFrameGrabber: unlockBuffer error: %d", err);
-      }
-      continue;
-    }
-
-    mGrabFrame = false;
-
 #ifdef CAF_CPUCONSUMER
     ALOGV("Frame: data=%p %ux%u  fmt=%x",
       img.data, img.width, img.height, img.format);
@@ -186,7 +192,7 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
     ALOGV("Frame: frameNumber=%lld, timestamp=%lld",
       img.frameNumber, img.timestamp);
 
-    if (frameformat == NULL) {
+    if (frameformat == FRAMEFORMAT_INVALID) {
       framewidth = img.width;
       frameheight = img.height;
 
@@ -195,109 +201,53 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
       //
       switch (img.format) {
       case HAL_PIXEL_FORMAT_RGBA_8888: // QEmu
-        // TODO: Either fix the emulator to return yuv420sp/yvu420sp, perform a
-        // RGB to YUV conversion here, or fix OpenCV to understand RGB frames.
-        // In the meantime this little hack enables at least some data to flow
-        // through the OpenCV camera subsystem in the emulator, which is better
-        // than nothing.
-        //hack.str = "rgba8888";
-        ALOGW("QEmu hack: pretending rgba8888 frame is yuv420sp...");
-        frameformat = "yuv420sp";
+        frameformat = FRAMEFORMAT_RGB;
         break;
 
       case HAL_PIXEL_FORMAT_YCrCb_420_SP: // Nexus 4
-        frameformat = "yvu420sp";
+        frameformat = FRAMEFORMAT_YVU420SP;
         break;
 
 #ifndef CAF_CPUCONSUMER // "flexFormat" is in AOSP but not CAF
       case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED: // Nexus 5
         if (img.flexFormat == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-          frameformat = "yvu420sp";
+          frameformat = FRAMEFORMAT_YVU420SP;
           break;
         }
 #endif
         //fall through
       default:
         ALOGW("Unsupported preview format: 0x%x", img.format);
-        frameformat = "unknown";
+        break;
       }
     }
 
-    // OpenCV currently always expects YUV420-sized frames.
-    size_t expectedFrameDataSize = framewidth * (3 * frameheight / 2);
-
-    mCameraCallback(img.data, expectedFrameDataSize, mUserData);
-    // OpenCV just made a copy of the image data in mCameraCallback() so release
-    // the buffer.  TODO: Avoid this unnecessary memcpy.
-    mCpuConsumer->unlockBuffer(img);
+    mFrameCallback(mUserData, img.data, frameformat, framewidth, frameheight);
   }
 }
 
-static sp<PreviewFrameGrabber> sPreviewFrameGrabber;
+sp<PreviewFrameGrabber> PreviewFrameGrabber::sPreviewFrameGrabber = NULL;
 
-void* initCameraConnectC(void* cameraCallback, int cameraId, void* userData)
+}
+
+namespace libpreview {
+
+bool open(FrameCallback frameCallback, void *userData)
 {
   sp<ProcessState> ps = ProcessState::self();
   ps->startThreadPool();
 
-  if (sPreviewFrameGrabber != NULL) {
-    ALOGE("EUSERS");
-    return NULL;
-  }
-
-  sPreviewFrameGrabber = PreviewFrameGrabber::create(cameraId,
-    (CameraCallback) cameraCallback, userData);
-
-  if (sPreviewFrameGrabber == NULL) {
-    return NULL;
-  }
-  // Any non-null value will do. Only one camera is supported and its state is
-  // held by sPreviewFrameGrabber.
-  return (void *) 42;
+  return PreviewFrameGrabber::open(frameCallback, userData);
 }
 
-void closeCameraConnectC(void** camera __unused)
+void close()
 {
-  sPreviewFrameGrabber = NULL;
+  PreviewFrameGrabber::close();
 }
 
-double getCameraPropertyC(void* camera __unused, int id __unused)
+void releaseFrame(void *frameBuffer)
 {
-  if (sPreviewFrameGrabber == NULL) {
-    return 0;
-  }
-
-  switch (id) {
-  case ANDROID_CAMERA_PROPERTY_FRAMEWIDTH:
-    return sPreviewFrameGrabber->framewidth;
-    break;
-  case ANDROID_CAMERA_PROPERTY_FRAMEHEIGHT:
-    return sPreviewFrameGrabber->frameheight;
-    break;
-  case ANDROID_CAMERA_PROPERTY_PREVIEW_FORMAT_STRING:
-    // String within a double!
-    union {double d; const char *str;} hack;
-    hack.str = sPreviewFrameGrabber->frameformat;
-    return hack.d;
-  default:
-    return 0;
-  }
+  PreviewFrameGrabber::releaseFrame(frameBuffer);
 }
 
-void setCameraPropertyC(void* camera __unused, int id __unused,
-  double value __unused)
-{
 }
-
-void applyCameraPropertiesC(void** camera __unused)
-{
-}
-
-void requestFrameC(void** camera __unused)
-{
-  if (sPreviewFrameGrabber != NULL) {
-    ALOGV("requestFrameC");
-    sPreviewFrameGrabber->requestFrame();
-  }
-}
-

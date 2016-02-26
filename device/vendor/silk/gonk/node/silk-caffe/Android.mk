@@ -56,5 +56,5 @@ LOCAL_SHARED_LIBRARIES := \
   liblog \
   libcaffe \
 
-include external/opencv2/opencv.mk
+include external/opencv3/opencv.mk
 include $(BUILD_NODE_MODULE)

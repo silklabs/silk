@@ -28,6 +28,7 @@ const DEFAULT_VIDEOUPLOADTYPE = 'events';
 
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_S = util.getintprop('persist.silk.prvupload.interval', 1);
+const PREVIEW_UPLOAD_INTERVAL_MS = PREVIEW_UPLOAD_INTERVAL_S * 1000;
 
 // Time between preview image "keyframes".  These are uploaded regardless of the
 // value of VIDEOUPLOADTYPE_PROP.
@@ -214,7 +215,7 @@ export default class Timeline extends EventEmitter {
         // Force the last preview image to be transmitted immediately, to provide
         // the client with a preview image as quick as possible when the camera
         // first connects.
-        this._pushPreview(0, 0, null);
+        this._pushPreview(0, null, 0, 0);
       }
     }
     this.liveVideo = video;
@@ -247,12 +248,13 @@ export default class Timeline extends EventEmitter {
   /**
    * Add a new preview frame
    *
-   * @param when Timestamp of when the preview frame was generated
-   * @param durationMs Expected duration until the next preview frame
-   * @param jpeg Buffer containing the preview frame encoded as JPEG
+   * @param when    Timestamp of when the preview frame was generated
+   * @param preview OpenCV RGB matrix containing the full resolution preview frame
+   * @param previewWidth Suggested preview width
+   * @param previewHeight Suggested preview height
    */
-  addPreviewFrame(when: number, durationMs: number, jpeg: Buffer) {
-    this._pushPreview(when, durationMs, jpeg);
+  addPreviewFrame(when: number, preview: any, previewWidth: number, previewHeight: number) {
+    this._pushPreview(when, preview, previewWidth, previewHeight);
     this.emit('preview', when);
   }
 
@@ -521,7 +523,7 @@ export default class Timeline extends EventEmitter {
   /**
    * @private
    */
-  _pushPreview(when: number, durationMs: number, frame: ?Buffer) {
+  _pushPreview(when: number, preview: any, previewWidth: number, previewHeight: number) {
     // Intentionally delay the preview image by one cycle to ensure
     // that the previewObjects are transmitted with their corresponding image.
     //
@@ -560,7 +562,7 @@ export default class Timeline extends EventEmitter {
           when: this.lastPreviewFrameWhen,
           frame: this.lastPreviewFrame,
           objects: this._addCachedObjects(this.previewObjects, when),
-          durationMs: 0,
+          durationMs: PREVIEW_UPLOAD_INTERVAL_MS,
         });
       }
 
@@ -584,7 +586,7 @@ export default class Timeline extends EventEmitter {
           metadata: {
             metaType: 'preview',
             startUTC: lastPreviewFrameWhen,
-            endUTC: lastPreviewFrameWhen + durationMs,
+            endUTC: lastPreviewFrameWhen + PREVIEW_UPLOAD_INTERVAL_MS,
             data: {
               frameWidth: this._previewSize.width,
               frameHeight: this._previewSize.height,
@@ -606,7 +608,20 @@ export default class Timeline extends EventEmitter {
       }
     }
 
-    this.lastPreviewFrame = frame;
+    if (!preview) {
+      return;
+    }
+
+    // TODO: Consider moving this image resize off the main thread...
+    preview.resize(previewWidth, previewHeight);
+
+    preview.toBufferAsync((err, frame) => {
+      if (err) {
+        this.lastPreviewFrame = null;
+        throw err; // TODO: If/when can this actually happen?
+      }
+      this.lastPreviewFrame = frame;
+    }, {ext: '.jpg', jpegQuality: 100});
     this.lastPreviewFrameWhen = when;
     this.previewObjects = [];
     this.lastPreviewEmitSeconds = nowSeconds;

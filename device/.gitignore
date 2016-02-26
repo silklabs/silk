@@ -65,7 +65,6 @@
 /vendor/silk/ext/**/npm-debug.log
 vendor/silk/ext/clapper/clapper.js
 vendor/silk/ext/detectface/detectface.js
-vendor/silk/ext/detectcar/detectcar.js
 vendor/silk/ext/knockknock/knockknock.js
 vendor/silk/ext/nightlight/nightlight.js
 vendor/silk/ext/trackobject/trackobject.js

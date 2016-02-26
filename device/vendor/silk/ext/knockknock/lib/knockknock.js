@@ -26,9 +26,9 @@ const GRID_Y = 8;
 
 // Represents the threshold for the confidence value returned by the model. If
 // the confidence is more than the threshold, model returns an unknown person.
-// Higher the threshold more false postives the model returns. Lower the threshold
+// Higher the threshold more false positives the model returns. Lower the threshold
 // bigger the face rectangle required for successful recognition.
-const THRESHOLD = 60;
+const THRESHOLD = 40;
 
 // Used by Eigenface and Fisherface algorithms
 // Sets how confident the Face Verification algorithm should be to decide if it
@@ -254,13 +254,13 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
+      this._env.camera.getPreviewFrame(when, 'gray', (err, image) => {
         if (err) {
           log.warn(`Unable to fetch grayeq frame: ${err}`);
           this._working = false;
           return;
         }
-        this._env.camera.getPreviewFrame(when, 'full', (err2, orig) => {
+        this._env.camera.getPreviewFrame(when, 'fullgray', (err2, orig) => {
           if (err2) {
             log.warn(`Unable to fetch full frame: ${err2}`);
             this._working = false;
@@ -290,14 +290,13 @@ class FindFace {
             }
             try {
               const [id, confidence] = await this._predict(faceim);
-              log.info(`face detected id:${id} ` +
-                  `${this._matchIdWithName(id)} ` +
-                  `confidence/similarity: ${confidence} source:${source}`);
+              const name = this._matchIdWithName(id);
+              log.info(`face detected id:${id} ${name} ` +
+                       `confidence/similarity: ${confidence} source:${source}`);
 
               // Add the person to timeline
-              let name = this._matchIdWithName(id);
               this._env.timeline.addObject(name, when, face);
-              this._env.timeline.addDiagFrame(name, when, faceim);
+              this._env.timeline.addDiagFrame(`${name}:${confidence.toFixed()}`, when, faceim);
 
               // Cache name with face.id to skip face recognition next time
               // a face with the same ID is reported by HAL

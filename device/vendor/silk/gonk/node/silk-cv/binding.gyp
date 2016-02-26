@@ -4,6 +4,7 @@
       "target_name": "silk-cv",
       "sources": [
         "init.cpp",
+        "capture.cpp",
         "cmt.cpp",
         "matrix.cpp",
         "mog2.cpp",
@@ -26,6 +27,8 @@
         [ "OS==\"android\"", {
           "include_dirs": [
             "<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")",
+            "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
+            "<!(echo $ANDROID_BUILD_TOP/vendor/silk/gonk/capture)",
           ],
           "libraries": [
             '<!(echo $Android_mk__LIBRARIES)',

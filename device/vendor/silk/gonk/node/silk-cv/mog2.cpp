@@ -17,7 +17,11 @@ public:
 
 private:
   explicit Mog2(int history, float varThreshold) {
+#if CV_MAJOR_VERSION >= 3
+    subtractor = cv::createBackgroundSubtractorMOG2(history, varThreshold, false);
+#else
     subtractor = new cv::BackgroundSubtractorMOG2(history, varThreshold, false);
+#endif
     processing = false;
   }
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -47,7 +51,11 @@ public:
   virtual ~Mog2FrameWorker() {}
 
   void Execute() {
+#if CV_MAJOR_VERSION >= 3
+    mog2->subtractor->apply(image, fgMask);
+#else
     mog2->subtractor->operator()(image, fgMask);
+#endif
   }
 
   void HandleOKCallback() {
@@ -123,7 +131,7 @@ NAN_METHOD(Mog2::Apply) {
   Mog2* self = ObjectWrap::Unwrap<Mog2>(info.Holder());
 
   if (self->processing) {
-    Nan::ThrowTypeError("Busy");
+    Nan::ThrowError("Busy");
     return;
   }
 

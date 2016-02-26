@@ -26,11 +26,6 @@
            remote="github"
            revision="v2.2" clone-depth="1"/>
 
-  <project name="Itseez/opencv"
-           path="external/opencv2"
-           remote="github"
-           revision="refs/tags/2.4.12" clone-depth="1"/>
-
   <project name="intel-tbb/intel-tbb"
            path="external/intel-tbb"
            remote="github"
@@ -40,6 +35,11 @@
 
   <project name="Itseez/opencv"
            path="external/opencv3"
+           remote="github"
+           revision="refs/tags/3.1.0" clone-depth="100"/>
+
+  <project name="Itseez/opencv_contrib"
+           path="external/opencv3_contrib"
            remote="github"
            revision="refs/tags/3.1.0" clone-depth="100"/>
 
@@ -130,7 +130,7 @@
   <project name="peterbraden/node-opencv"
            path="external/node-opencv"
            remote="github"
-           revision="090e9d727664b5211776a14d2f44ff87b6ea07c4"
+           revision="ead733ba3410ed6112ba6e19552c99db2d21359c"
            upstream="master"
            clone-depth="42"/>
   <project name="silklabs/node-kissfft"

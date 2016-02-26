@@ -87,7 +87,7 @@ SILK_INIT := \
 SILK_GONK_PROGIES := \
   silk-bledroid \
   silk-capture \
-  libnative_camera_capture \
+  libpreview \
   silk-dhcputil \
   silk-ir \
   silk-lights \

@@ -1,6 +1,6 @@
-From 4604a464f5bb8283498e12528ba7bf9983ba3d43 Mon Sep 17 00:00:00 2001
+From 1cdfe7e2391602f39b8f0202b97e822383415420 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
-Date: Fri, 5 Feb 2016 22:05:38 -0800
+Date: Wed, 24 Feb 2016 20:32:54 -0800
 Subject: [PATCH] Do not download TBB tarball from the internet at compile time
 
 ---
@@ -8,18 +8,18 @@ Subject: [PATCH] Do not download TBB tarball from the internet at compile time
  1 file changed, 2 insertions(+)
 
 diff --git a/Android.mk b/Android.mk
-index f9578e9..0ac8ef2 100644
+index fa4efa0..f64591f 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -72,6 +72,8 @@ $(OPENCV3_MAKEFILE): OPENCV3_TOOLCHAIN_NAME := $(OPENCV3_TOOLCHAIN_NAME)
+@@ -74,6 +74,8 @@ $(OPENCV3_MAKEFILE): OPENCV3_TOOLCHAIN_NAME := $(OPENCV3_TOOLCHAIN_NAME)
  $(OPENCV3_MAKEFILE): $(LOCAL_PATH)/Android.mk
  	@echo Configure: $@
  	$(hide) mkdir -p $(@D)
 +	$(hide) mkdir -p $(@D)/3rdparty/tbb/tbb43_20141204oss
 +	$(hide) cp -r $(ANDROID_BUILD_TOP)/external/intel-tbb/* $(@D)/3rdparty/tbb/tbb43_20141204oss
- 	cd $(@D) && cmake \
-  -DCMAKE_TOOLCHAIN_FILE=$(LOCAL_PATH)/platforms/android/android.toolchain.cmake \
-  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+ 	cd $(@D) && \
+   export ANDROID_NDK=$(abspath prebuilts/ndk/current) && \
+   cmake \
 -- 
 1.9.1
 

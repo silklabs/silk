@@ -6,7 +6,7 @@ LOCAL_INSTALLED_MODULE_STEM := haarcascade_eye.xml
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/opencv
-LOCAL_PREBUILT_MODULE_FILE := external/opencv2/data/haarcascades/haarcascade_eye.xml
+LOCAL_PREBUILT_MODULE_FILE := external/opencv3/data/haarcascades/haarcascade_eye.xml
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -15,7 +15,7 @@ LOCAL_INSTALLED_MODULE_STEM := haarcascade_eye_tree_eyeglasses.xml
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/opencv
-LOCAL_PREBUILT_MODULE_FILE := external/opencv2/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml
+LOCAL_PREBUILT_MODULE_FILE := external/opencv3/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -24,7 +24,7 @@ LOCAL_INSTALLED_MODULE_STEM := haarcascade_frontalface_alt2.xml
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/opencv
-LOCAL_PREBUILT_MODULE_FILE := external/opencv2/data/haarcascades/haarcascade_frontalface_alt2.xml
+LOCAL_PREBUILT_MODULE_FILE := external/opencv3/data/haarcascades/haarcascade_frontalface_alt2.xml
 include $(BUILD_PREBUILT)
 
 ifneq ($(ONE_SHOT_MAKEFILE),)

@@ -1,21 +1,21 @@
-From 909b26383af79ea90b57d0b4aec27ed1c34cff40 Mon Sep 17 00:00:00 2001
+From ab7a34369e0ff67bafb49fbd1566cf3a5f22b4d6 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
-Date: Thu, 4 Feb 2016 11:43:29 -0800
+Date: Wed, 24 Feb 2016 13:58:05 -0800
 Subject: [PATCH] Androidify
 
 ---
  Android.mk                 |  7 +++++++
- binding.gyp                | 16 ++--------------
+ binding.gyp                | 17 ++---------------
  examples/car-detection.js  | 12 +++++-------
  examples/face-detection.js | 10 +++++-----
  lib/opencv.js              |  2 +-
- package.json               | 23 ++++++++---------------
- 6 files changed, 28 insertions(+), 42 deletions(-)
+ package.json               | 20 ++++++++------------
+ 6 files changed, 28 insertions(+), 40 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..76f0224
+index 0000000..30ccb67
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,7 @@
@@ -24,10 +24,10 @@ index 0000000..76f0224
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_NODE_MODULE_TYPE := file
-+include external/opencv2/opencv.mk
++include external/opencv3/opencv.mk
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp
-index b89d3e0..d6a424a 100755
+index 1d5e1c3..219f98b 100755
 --- a/binding.gyp
 +++ b/binding.gyp
 @@ -24,12 +24,11 @@
@@ -44,16 +44,21 @@ index b89d3e0..d6a424a 100755
          "<!(node -e \"require('nan')\")"
        ],
  
-@@ -80,7 +79,7 @@
+@@ -80,12 +79,11 @@
        ],
  
        "libraries": [
--        "<!@(node utils/find-opencv.js --libs)"
+-        "<!@(node utils/find-opencv.js --libs)",
 +        '<!(echo $Android_mk__LIBRARIES)'
        ],
        # For windows
  
-@@ -128,16 +127,5 @@
+       "include_dirs": [
+-        "<!@(node utils/find-opencv.js --cflags)",
+         "<!(node -e \"require('nan')\")",
+         "<!(node -e \"require('./include_dirs')\")"
+       ],
+@@ -128,16 +126,5 @@
            }
          }]
      ]
@@ -144,11 +149,11 @@ index dc043a0..f746093 100755
  var Matrix = cv.Matrix
    , VideoCapture = cv.VideoCapture
 diff --git a/package.json b/package.json
-index cd735a3..912f986 100644
+index 0c3e7d4..a93ad0c 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,25 +3,24 @@
-   "version": "4.0.0",
+@@ -3,12 +3,16 @@
+   "version": "5.0.0",
    "description": "Node Bindings to OpenCV",
    "author": "Peter Braden <peterbraden@peterbraden.co.uk>",
 +  "os": [
@@ -165,11 +170,8 @@ index cd735a3..912f986 100644
      "tape": "^3.0.0",
      "aws-sdk": "~2.1.20",
      "glob": "^5.0.3",
-     "request": "^2.44.0"
-   },
--  "bundledDependencies": [
--    "node-pre-gyp"
--  ],
+@@ -19,9 +23,7 @@
+   ],
    "license": "MIT",
    "scripts": {
 -    "build": "node-gyp build",
@@ -179,7 +181,7 @@ index cd735a3..912f986 100644
    },
    "keywords": [
      "opencv",
-@@ -29,7 +28,7 @@
+@@ -29,7 +31,7 @@
      "vision",
      "quadrocopter"
    ],
@@ -188,7 +190,7 @@ index cd735a3..912f986 100644
    "repository": {
      "type": "git",
      "url": "https://github.com/peterbraden/node-opencv.git"
-@@ -37,11 +36,5 @@
+@@ -37,11 +39,5 @@
    "engines": {
      "node": ">=0.12"
    },

@@ -54,7 +54,7 @@ index 94bbe82..2058ab6 100644
 +            '-std=c++11',
 +            '-Wno-non-virtual-dtor',
 +            '-Wno-strict-aliasing',
-+            "-isystem <!(echo $ANDROID_BUILD_TOP/external/opencv2/3rdparty/include/opencl/1.2)",]
++            "-isystem <!(echo $ANDROID_BUILD_TOP/external/opencv3/3rdparty/include/opencl/1.2)",]
 +        }],
          ['OS=="win"', {
            'variables' :

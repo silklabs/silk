@@ -5,6 +5,7 @@ following additional packages should be installed:
 
 OSX:
 ```
+$ brew update
 $ brew install pkg-config
 $ brew install sox
 $ brew tap homebrew/science

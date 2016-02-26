@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 #include <nan.h>
+#include <opencv2/opencv.hpp>
 
 #if CV_MAJOR_VERSION < 3
 #warning Building with OpenCV 2.x, please install OpenCV 3.x

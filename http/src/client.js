@@ -11,16 +11,13 @@ import fetch from './fetch';
 import URL from 'url';
 import throwError from './fetch_error';
 
-export type RequestBody = Buffer | string | Object;
-
-export type RequestOptions = {
-  method: string;
-  headers?: {[key: string]: string};
-  body?: RequestBody;
-};
+import type {
+  Headers,
+  FetchOptions,
+} from './fetch';
 
 // Tuple representing an outgoing request url, options ...
-export type Request = [string, RequestOptions];
+export type Request = [string, FetchOptions];
 export type RequestTransformerInterface = (request: Request) => Request;
 export type ClientOptions = {
   maxiumRetryDelayMs?: number;

@@ -9,7 +9,7 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
-import Cmt from 'silk-cv';
+import silkcv from 'silk-cv';
 import invariant from 'assert';
 
 const MAX_TRACKED_OBJECTS = (process.platform === 'android' ? 1 : 10);
@@ -20,7 +20,7 @@ type TrackedObject = {
   cx: number;
   cy: number;
   when: number; // time of last cx, cy update
-  cmt: Cmt;
+  cmt: any;
 };
 let objects: Array<TrackedObject> = [];
 let nextObjectId = 0;
@@ -95,7 +95,7 @@ class ObjectTracker {
           cy: rect.y + rect.height / 2,
           width: rect.width,
           height: rect.height,
-          cmt: new Cmt(image, rect, () => null, cmtInitOptions),
+          cmt: new silkcv.Cmt(image, rect, () => null, cmtInitOptions),
         });
       });
 

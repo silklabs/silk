@@ -3,11 +3,12 @@
     {
       "target_name": "silk-cv",
       "sources": [
-        "init.cpp",
         "capture.cpp",
         "cmt.cpp",
+        "init.cpp",
         "matrix.cpp",
         "mog2.cpp",
+        "tracker.cpp",
         "CppMT/CMT.cpp",
         "CppMT/Consensus.cpp",
         "CppMT/Fusion.cpp",

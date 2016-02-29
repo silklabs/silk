@@ -32,7 +32,6 @@ const eyecascadeOpts = {
   min: [ 15, 15 ],
 };
 
-
 // For eye detection, it is important to crop the input image to just show the
 // approximate eye region. If we just do eye detection on a whole face or whole
 // photo then it will be much slower and less reliable. Different eye detectors
@@ -47,7 +46,10 @@ const EYE_SW = 0.30;
 const EYE_SH = 0.28;
 
 const EYE_CASCADE1 = 'system/silk/media/opencv/haarcascade_eye.xml';
-const EYE_CASCADE2 = 'system/silk/media/opencv/haarcascade_eye_tree_eyeglasses.xml';
+
+// #906 - haarcascade_eye_tree_eyeglasses.xml blows up on OS X?!
+const EYE_CASCADE2 = process.platform === 'android' &&
+  'system/silk/media/opencv/haarcascade_eye_tree_eyeglasses.xml';
 
 /**
  * Call opencv methods to detect faces as defined by {@code cascades}
@@ -260,7 +262,6 @@ class DetectFace {
               let [leftEye, rightEye] = await _detectBothEyes(when, orig, faceRect,
                   EYE_CASCADE1, EYE_CASCADE2);
 
-              log.warn('Detect eyes', leftEye, rightEye);
               // Only if both the eyes are visible is when we say it is a face
               if (leftEye && rightEye) {
                 faceRect.leftEye = [leftEye.x, leftEye.y];

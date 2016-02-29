@@ -4,7 +4,6 @@
       "target_name": "silk-cv",
       "sources": [
         "capture.cpp",
-        "cmt.cpp",
         "init.cpp",
         "matrix.cpp",
         "mog2.cpp",

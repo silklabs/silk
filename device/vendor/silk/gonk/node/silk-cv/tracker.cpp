@@ -15,7 +15,7 @@ void Tracker_Init(v8::Local<v8::Object> exports) {
 #include <opencv2/tracking.hpp>
 #include <opencv2/imgproc.hpp>
 #include "Matrix.h"
-
+#include "trackerCMT.hpp"
 
 /*
  * Implements the 'Tracker' Javascript class
@@ -185,7 +185,12 @@ NAN_METHOD(Tracker::New) {
     return;
   }
   v8::String::Utf8Value trackerName(info[0]->ToString());
-  cv::Ptr<cv::Tracker> tracker = cv::Tracker::create(*trackerName);
+  cv::Ptr<cv::Tracker> tracker;
+  if (0 == strcmp(*trackerName, "CMT")) {
+    tracker = new CmtTracker();
+  } else {
+    tracker = cv::Tracker::create(*trackerName);
+  }
   if (tracker == NULL) {
     Nan::ThrowError("Unable to create tracker");
     return;

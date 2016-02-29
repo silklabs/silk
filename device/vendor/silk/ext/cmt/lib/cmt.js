@@ -20,7 +20,7 @@ type TrackedObject = {
   cx: number;
   cy: number;
   when: number; // time of last cx, cy update
-  cmt: any;
+  tracker: any;
 };
 let objects: Array<TrackedObject> = [];
 let nextObjectId = 0;
@@ -82,10 +82,6 @@ class ObjectTracker {
           return;
         }
 
-        let cmtInitOptions = {
-          drawPoints: true,
-        };
-
         log.info(`Tracking new ${tag} at ${JSON.stringify(rect)}`);
         objects.push({
           id: nextObjectId++,
@@ -95,7 +91,8 @@ class ObjectTracker {
           cy: rect.y + rect.height / 2,
           width: rect.width,
           height: rect.height,
-          cmt: new silkcv.Cmt(image, rect, () => null, cmtInitOptions),
+          //tracker: new silkcv.Tracker('MEDIANFLOW', image, rect, () => null),
+          tracker: new silkcv.Tracker('CMT', image, rect, () => null),
         });
       });
 
@@ -110,10 +107,10 @@ class ObjectTracker {
     this.onObjects('car', when, rects);
   };
 
-  // Feed each new preview frame into each CMT tracker object
+  // Feed each new preview frame into each tracker object
   onPreview = (when) => {
     // Filter out any stale objects
-    objects = objects.filter((object) => object.cmt !== null);
+    objects = objects.filter((object) => object.tracker !== null);
 
     // TODO: Check the center/size of the remaining tracked objects.  If they
     // overlap too much then they're probably tracking the same object...
@@ -132,66 +129,77 @@ class ObjectTracker {
       }
       log.verbose(`fetched preview frame in ${Date.now() - frameFetchStart}ms`);
 
-      // Make a local copy of the image because |drawPoints=true|, so
-      // |cmt.nextFrame| will draw the feature points and bounding rectangle
-      // over the image.
+      // Make a local copy of the image because some |tracker.update|
+      // implementations (CMT) can draw the feature points and bounding
+      // rectangle over the image.
       let localImage = image.copy();
       objects.forEach(object => {
-        if (object.cmt === null) {
+        if (object.tracker === null) {
           // Old entry that hasn't been cleaned yet..
           return;
         }
         const id = object.id;
-        if (object.cmt.busy()) {
-          log.error(`CMT still busy for id=${id}`);
+        if (object.tracker.busy()) {
+          log.error(`Tracker still busy for id=${id}`);
           return;
         }
 
         const startTime = Date.now();
-        object.cmt.nextFrame(localImage, (err, results) => {
-          invariant(!object.cmt.busy());
+        object.tracker.update(localImage, (err, found, rect) => {
+          invariant(!object.tracker.busy());
           if (err) {
             // TODO: Figure out why CppMT/fastcluser/fastcluster.cpp throws sometimes :-/
-            log.error('CMT failed', err.stack || err);
+            log.error('Tracker failed', err.stack || err);
             return;
           }
 
-          log.debug('CMT results', JSON.stringify(results));
-          if (results.confidence < 0.3) {
-            log.info('Lost confidence, releasing object', id);
-            object.cmt = null;
+          log.debug('Tracker results', found, JSON.stringify(rect));
+          if (!found) {
+            log.info('Lost object, releasing object', id);
+            object.tracker = null;
             return;
           }
-          const boundingRect = results.boundingRect;
-          object.cx = boundingRect.x + boundingRect.width / 2;
-          object.cy = boundingRect.y + boundingRect.height / 2;
+          object.cx = rect.x + rect.width / 2;
+          object.cy = rect.y + rect.height / 2;
           object.when = when;
-          object.height = results.size.height;
-          object.width = results.size.width;
+          object.height = rect.height;
+          object.width = rect.width;
 
           const elapsedTime = Date.now() - startTime;
           log.verbose(`Tracking took ${elapsedTime}ms for id=${id}: ${JSON.stringify(object)}`);
+
+          if (object.width < 0 || object.height < 0) {
+            log.info('Invalid object width or height');
+            object.tracker = null;
+            return;
+          }
+
           // boundingRect must be fully contained within localImage or OpenCV will
           // assert within the |.roi| method.
-          if (boundingRect.x < 0) {
-            boundingRect.width += boundingRect.x;
-            boundingRect.x = 0;
+          if (rect.x < 0) {
+            rect.width += rect.x;
+            rect.x = 0;
           }
-          if (boundingRect.y < 0) {
-            boundingRect.height += boundingRect.y;
-            boundingRect.y = 0;
+          if (rect.y < 0) {
+            rect.height += rect.y;
+            rect.y = 0;
           }
           let [ maxHeight, maxWidth ] = localImage.size();
-          if (boundingRect.x + boundingRect.width >= maxWidth) {
-            boundingRect.width = maxWidth - boundingRect.x;
+          if (rect.x + rect.width >= maxWidth) {
+            rect.width = maxWidth - rect.x;
           }
-          if (boundingRect.y + boundingRect.height >= maxHeight) {
-            boundingRect.height = maxHeight - boundingRect.y;
+          if (rect.y + rect.height >= maxHeight) {
+            rect.height = maxHeight - rect.y;
           }
-          log.verbose(`im: ${maxWidth}x${maxHeight}, boundingRect: ${JSON.stringify(boundingRect)}`);
-          const roi = localImage.roi(boundingRect.x, boundingRect.y,
-            boundingRect.width, boundingRect.height);
-          env.timeline.addDiagFrame(`${object.tag}:${id}:${elapsedTime}ms`, when, roi);
+
+          log.verbose(`im: ${maxWidth}x${maxHeight}, rect: ${JSON.stringify(rect)}`);
+          const roi = localImage.roi(rect.x, rect.y,
+            rect.width, rect.height);
+          env.timeline.addDiagFrame(
+            `${object.tag}:${id}:${elapsedTime}ms`,
+            when,
+            roi
+          );
           roi.release();
           localImage.release();
         });

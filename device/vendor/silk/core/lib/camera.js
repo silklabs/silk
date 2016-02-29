@@ -40,8 +40,9 @@ export type CameraCallback = (err: boolean, image: any) => void;
  * fullrgb - full resolution rgb
  * gray - downscaled grayscale
  * grayeq - downscaled grayscale equalized
+ * rgb - downscaled resolution rgb
  */
-export type CameraPreviewFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq';
+export type CameraPreviewFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq' | 'rgb';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -833,6 +834,16 @@ export default class Camera extends EventEmitter {
       switch(format) {
       case 'fullrgb':
         userCb(false, image.fullrgb);
+        return;
+      case 'rgb':
+        if (image.rgb) {
+          userCb(false, image.rgb);
+        } else {
+          let rgb = image.fullrgb.copy();
+          rgb.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+          image.rgb = rgb;
+          userCb(false, image.rgb);
+        }
         return;
       case 'fullgray':
         userCb(false, image.fullgray);

@@ -6,7 +6,7 @@ const cv = require('opencv');
 const silkcv = require('..');
 
 suite('Tracker', () => {
-  test('Basic', () => new Promise(resolve => {
+  test('MEDIANFLOW', () => new Promise(resolve => {
     cv.readImage(path.join(__dirname, 'fixtures/tracker/t0.jpg'), (err, im) => {
       if (err) {
         throw err;
@@ -22,7 +22,7 @@ suite('Tracker', () => {
             if (err) {
               throw err;
             }
-            if (im.width() < 1 || im.height() < 1) {
+            if (im_test.width() < 1 || im_test.height() < 1) {
               throw new Error('Test image has no size');
             }
 

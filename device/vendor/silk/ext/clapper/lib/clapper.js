@@ -48,8 +48,8 @@ class Clapper {
       sampleRate: config.deviceMic.sampleRate,
       bytesPerSample: config.deviceMic.bytesPerSample,
       numChannels: config.deviceMic.numChannels,
-      fftWindowSize: 256, // 32ms - units of samples @ 8KHz
-      fftWindowStep: 64,  // 8ms - units of samples @ 8KHz
+      fftWindowSize: 512, // 32ms - units of samples @ 16KHz
+      fftWindowStep: 128, // 8ms - units of samples @ 16KHz
     };
 
     let audioTools = require('./audioTools')(env);

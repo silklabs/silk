@@ -91,8 +91,8 @@ function zeroPad(number, width) {
   return string;
 }
 
-const FFT_SIZE = 256;
-const WINDOW_OVERLAP = 128;
+const FFT_SIZE = 512;
+const WINDOW_OVERLAP = 256;
 const SPECTROGRAM_FRAMES = 64;
 
 const LOUD_SOUND_THRESHOLD_DB = -40;

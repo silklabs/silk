@@ -113,6 +113,15 @@ suite('account auth', () => {
         devices[0].publicKey,
         deviceTwo.accessToken.toString()
       );
+
+      // Make sure that the device can no longer make api calls.
+      let err;
+      try {
+        await api.device.socketioURL();
+      } catch(error) {
+        err = error;
+      }
+      assert.equal(err.code, 403);
     });
   });
 

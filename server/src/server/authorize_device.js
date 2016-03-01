@@ -24,8 +24,19 @@ export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrid
       publicKey
     });
 
-    if (!device || device .error) {
-      log.info(`Unauthorized public key at ${req.url}`, publicKey);
+    if (!device) {
+      log.warn(`${req.url}: Unauthorized device '${publicKey}'`);
+      return null;
+    }
+
+    if (device.error) {
+      log.error(`${req.url}: Device '${publicKey}' has an error: ` +
+                `${device.error}`);
+      return null;
+    }
+
+    if (!device.registered) {
+      log.warn(`${req.url}: Device '${publicKey}' is no longer registered`);
       return null;
     }
 

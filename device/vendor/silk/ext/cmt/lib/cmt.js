@@ -12,6 +12,9 @@ global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 import silkcv from 'silk-cv';
 import invariant from 'assert';
 
+const TRACKER_NAME = 'MEDIANFLOW';
+//const TRACKER_NAME = 'CMT';
+
 const MAX_TRACKED_OBJECTS = (process.platform === 'android' ? 1 : 10);
 
 type TrackedObject = {
@@ -91,8 +94,7 @@ class ObjectTracker {
           cy: rect.y + rect.height / 2,
           width: rect.width,
           height: rect.height,
-          //tracker: new silkcv.Tracker('MEDIANFLOW', image, rect, () => null),
-          tracker: new silkcv.Tracker('CMT', image, rect, () => null),
+          tracker: new silkcv.Tracker(TRACKER_NAME, image, rect, () => null),
         });
       });
 

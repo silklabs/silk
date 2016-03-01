@@ -124,7 +124,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
 
     let publicKey = await publicKeyProvider(jwtHeader.id, req, res);
     if (!publicKey) {
-      log.error('Missing public key', req.path, req.method);
+      log.debug('Missing public key', req.path, req.method);
       res.sendStatus(403);
       return;
     }

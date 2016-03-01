@@ -24,8 +24,14 @@ export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOver
       publicKey
     });
 
-    if (!account || account.error) {
-      log.info(`Unauthorized public key at ${req.url}`, publicKey);
+    if (!account) {
+      log.warn(`${req.url}: Unauthorized account '${publicKey}'`);
+      return null;
+    }
+
+    if (account.error) {
+      log.error(`${req.url}: Account '${publicKey}' has an error: ` +
+                `${account.error}`);
       return null;
     }
 

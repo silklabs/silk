@@ -14,8 +14,9 @@ suite('Tracker', () => {
       if (im.width() < 1 || im.height() < 1) {
         throw new Error('Input image has no size');
       }
+      im.convertGrayscale();
 
-      const tracker = new silkcv.Tracker("MEDIANFLOW", im, {x:0, y:0, width:80, height:80},
+      const tracker = new silkcv.Tracker('MEDIANFLOW', im, {x:0, y:0, width:80, height:80},
         (err) => {
           assert(!tracker.busy(), 'Tracker not expected to be busy');
           cv.readImage(path.join(__dirname, 'fixtures/tracker/t1.jpg'), (err, im_test) => {
@@ -25,6 +26,7 @@ suite('Tracker', () => {
             if (im_test.width() < 1 || im_test.height() < 1) {
               throw new Error('Test image has no size');
             }
+            im_test.convertGrayscale();
 
             let r = tracker.update(im_test, (err, found, rect) => {
               assert(!tracker.busy(), 'Tracker not expected to be busy');

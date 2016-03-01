@@ -188,6 +188,8 @@ NAN_METHOD(Tracker::New) {
   cv::Ptr<cv::Tracker> tracker;
   if (0 == strcmp(*trackerName, "CMT")) {
     tracker = new CmtTracker();
+  } else if (0 == strcmp(*trackerName, "MEDIANFLOW")) {
+    tracker = cv::TrackerMedianFlow::createTracker();
   } else {
     tracker = cv::Tracker::create(*trackerName);
   }

@@ -8,6 +8,7 @@
         "matrix.cpp",
         "mog2.cpp",
         "tracker.cpp",
+        "trackerMedianFlow.cpp",
         "CppMT/CMT.cpp",
         "CppMT/Consensus.cpp",
         "CppMT/Fusion.cpp",

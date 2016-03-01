@@ -39,7 +39,12 @@
  //
  //M*/
 
-#include "precomp.hpp"
+#include <opencv2/opencv.hpp>
+
+#if CV_MAJOR_VERSION >= 3
+#include "opencv2/tracking.hpp"
+#include "opencv2/core/utility.hpp"
+#include "opencv2/core/ocl.hpp"
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/imgproc.hpp"
 #include <algorithm>
@@ -47,7 +52,6 @@
 
 namespace cv
 {
-
 #undef ALEX_DEBUG
 #ifdef ALEX_DEBUG
 #define dfprintf(x) fprintf x
@@ -189,10 +193,6 @@ std::string TrackerMedianFlowImpl::type2str(int type) {
 bool TrackerMedianFlowImpl::medianFlowImpl(Mat oldImage,Mat newImage,Rect2d& oldBox){
     std::vector<Point2f> pointsToTrackOld,pointsToTrackNew;
 
-    Mat oldImage_gray,newImage_gray;
-    cvtColor( oldImage, oldImage_gray, COLOR_BGR2GRAY );
-    cvtColor( newImage, newImage_gray, COLOR_BGR2GRAY );
-
     //"open ended" grid
     for(int i=0;i<params.pointsInGrid;i++){
         for(int j=0;j<params.pointsInGrid;j++){
@@ -204,7 +204,7 @@ bool TrackerMedianFlowImpl::medianFlowImpl(Mat oldImage,Mat newImage,Rect2d& old
 
     std::vector<uchar> status(pointsToTrackOld.size());
     std::vector<float> errors(pointsToTrackOld.size());
-    calcOpticalFlowPyrLK(oldImage_gray, newImage_gray,pointsToTrackOld,pointsToTrackNew,status,errors,Size(3,3),5,termcrit,0);
+    calcOpticalFlowPyrLK(oldImage, newImage,pointsToTrackOld,pointsToTrackNew,status,errors,Size(3,3),5,termcrit,0);
     dprintf(("\t%d after LK forward\n",(int)pointsToTrackOld.size()));
 
     std::vector<Point2f> di;
@@ -215,8 +215,8 @@ bool TrackerMedianFlowImpl::medianFlowImpl(Mat oldImage,Mat newImage,Rect2d& old
     }
 
     std::vector<bool> filter_status;
-    check_FB(oldImage_gray,newImage_gray,pointsToTrackOld,pointsToTrackNew,filter_status);
-    check_NCC(oldImage_gray,newImage_gray,pointsToTrackOld,pointsToTrackNew,filter_status);
+    check_FB(oldImage,newImage,pointsToTrackOld,pointsToTrackNew,filter_status);
+    check_NCC(oldImage,newImage,pointsToTrackOld,pointsToTrackNew,filter_status);
 
     // filter
     for(int i=0;i<(int)pointsToTrackOld.size();i++){
@@ -386,3 +386,5 @@ void TrackerMedianFlowImpl::check_NCC(const Mat& oldImage,const Mat& newImage,
 	}
 }
 } /* namespace cv */
+
+#endif

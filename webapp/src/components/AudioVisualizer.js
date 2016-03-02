@@ -1,4 +1,3 @@
-import config from 'silk-config';
 import invariant from 'assert';
 import React from 'react';
 

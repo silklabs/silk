@@ -1,5 +1,9 @@
+import createLog from 'silk-log';
 import { EventEmitter} from 'events';
+
 import { KissFFTR } from '../../external/js-kissfft';
+
+const log = createLog('AudioAnalyzer');
 
 // Constants used to compute the Blackman windowing function below.
 // See WebAudio specification, section 2.23.3 "FFT Windowing and
@@ -87,7 +91,7 @@ class AudioAnalyzer extends EventEmitter {
   appendSamples(samples, startTime) {
     let inputWindowLength = this.inputWindow.length;
     if (this.inputToFill === inputWindowLength) {
-      console.log('First appendSamples() after reset');
+      log.debug('First appendSamples() after reset');
       this.inputWindowStartTime = startTime;
     }
     let samplesIndex = 0;
@@ -131,7 +135,7 @@ class AudioAnalyzer extends EventEmitter {
     let doNormalization = doFFT || this.listenerCount('timeDomain') > 0;
 
     if (!doNormalization) {
-      console.warn('No listeners for any audio analyses ...');
+      log.warn('No listeners for any audio analyses ...');
       return;
     }
 

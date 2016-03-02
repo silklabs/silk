@@ -1,17 +1,23 @@
 import config from 'silk-config';
+import createLog from 'silk-log';
 import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Input,
          Modal, OverlayTrigger, Panel, Popover } from 'react-bootstrap';
 import path from 'path';
+import svmjs from 'svm';
 import tar from 'tar-stream';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
+import ClapDetectorSVM from '../libraries/ClapDetectorSVM';
+import createAudioAnalyzer from '../libraries/AudioAnalyzer';
 import FileDrop from './FileDrop';
 import Files from '../libraries/Files';
 import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
+
+const log = createLog('AudioStudio');
 
 function forEachFileInTAR(tag, fileData, forEach) {
   return new Promise((resolve, reject) => {
@@ -96,6 +102,7 @@ const WINDOW_OVERLAP = 256;
 const SPECTROGRAM_FRAMES = 64;
 
 const LOUD_SOUND_THRESHOLD_DB = -40;
+const LOUD_SOUND_THRESHOLD_LINEAR = 0.01;
 const LOUD_SOUND_START_PAD = 0.256;
 const LOUD_SOUND_MIN_DURATION = 0.512;
 
@@ -104,6 +111,32 @@ const DEFAULT_PREFS = {
   colorModel: 'jet',
   drawGrid: false,
   graphView: 'spectLinear',
+};
+
+const clapSVMConfig = {
+  model: 'clap-svm.json',
+  // This defines which FFT result type we'll use for SVM
+  // classification.  It's been found empirically that linear magnitudes
+  // are much more discriminative than decibel magnitudes (which aren't
+  // discriminative with basic SVM params).  This is most likely because
+  // linear magnitudes are "more normalized" than log-decibel, but no
+  // effort was spent investigating this.
+  fftType: 'fftMagnitudeLinear',
+  loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
+  fftSize: 512,
+  windowOverlap: 256,
+  // How many consecutive FFT frames we collect for the loud sound
+  // that we're going to classify.  This is a magic number created by
+  // eyeballing the spectrograms of some recorded clap sounds.  16 is
+  // about a quarter second of (overlapped) spectrogram frames with
+  // 16KHz sampling and the FFT params above, and is short enough that
+  // fairly quick repeated clappings can be reliably detected (but not
+  // /really/ quick ones).  No effort has been made to optimize this
+  // value.
+  featureVectorFrameCount: 16,
+  sampleRate: config.deviceMic.sampleRate,
+  sampleMin: config.deviceMic.sampleMin,
+  sampleMax: config.deviceMic.sampleMax,
 };
 
 class TrackFile extends React.Component {
@@ -205,7 +238,7 @@ export default class AudioStudio extends React.Component {
     this.files = new Files();
     this.files.read(PREF_FILE)
       .then((data) => this._setPrefs(JSON.parse(data)))
-      .catch((err) => console.log('(No prefs set yet)'));
+      .catch((err) => log.debug('(No prefs set yet)'));
     this._refreshSavedTracks();
   }
 
@@ -251,18 +284,25 @@ export default class AudioStudio extends React.Component {
     if (this.state.track) {
       this.state.track.stop();
       this.state.track.removeListener('timeupdate', this._onTimeUpdate);
+
+      this.clapDetectorSVM.destructor();
+      this.clapDetectorSVM = null;
+
     }
     if (track) {
       track.on('timeupdate', this._onTimeUpdate);
+
+      this.clapDetectorSVM = new ClapDetectorSVM(track, clapSVMConfig);
+      this.clapDetectorSVM.on('clap', this._onClapSVM);
     }
     this.setState({ track });
   }
 
   _finishRecording(why) {
-    console.log('Finishing recording because of', why,
+    log.debug('Finishing recording because of', why,
                 'got', this.recordingSamples.length, 'sample buffers');
     if (this.recordingSamples.length === 0) {
-      console.log('(Nothing to save, bailing)');
+      log.info('(Nothing to save, bailing)');
       return;
     }
     let suggestedName = this._getNextIncrementalFileName();
@@ -274,7 +314,7 @@ export default class AudioStudio extends React.Component {
     }
     this.setState({ recording: 'set-name',
                     recordingName: suggestedName });
-    console.log('Getting final recording name; suggesting', suggestedName);
+    log.debug('Getting final recording name; suggesting', suggestedName);
   }
 
   _getNextIncrementalFileName() {
@@ -291,7 +331,7 @@ export default class AudioStudio extends React.Component {
   _importTar(file) {
     forEachFileInTAR('', file.data, (tag, header, fileData) => {
       this.files.write(header.name, fileData);
-      console.log('Imported', header.name);
+      log.info('Imported', header.name);
     })
       .then(() => this._refreshSavedTracks());
   }
@@ -302,9 +342,7 @@ export default class AudioStudio extends React.Component {
         let samples = getAudioDataFromWAV(data);
         this._attachTrack(new StaticTrack(samples, config.deviceMic.sampleRate));
       })
-      .catch((err) => {
-        console.error('Failed to read track', filename, err);
-      });
+      .catch((err) => log.error('Failed to read track', filename, err));
   }
 
   _onCamerasStateChanged = state => {
@@ -323,20 +361,24 @@ export default class AudioStudio extends React.Component {
     this.setState({ camera: newCamera });
   };
 
+  _onClapSVM = (startTime) => {
+    log.info('ClapDetectorSVM detected clap starting at', startTime);
+  };
+
   _onFFTMagnitudeDecibel = (magnitudes, startTime, endTime) => {
     let isLoud = Math.max(...magnitudes) > LOUD_SOUND_THRESHOLD_DB;
     if (isLoud && this.loudSoundStartTime === 0.0) {
       // This is the first sample window that we heard the lound
       // sound.  Now we kick off recording, starting from just before
       // current time.
-      console.log('Heard start of loud sound ...');
+      //log.debug('Heard start of loud sound ...');
       this.loudSoundStartTime = this.loudSoundEndTime =
         startTime - LOUD_SOUND_START_PAD;
       if (this.state.recordingMode === 'auto'
           && this.state.recording === '') {
         this.recordingSamples = [ ];
         this.setState({ recording: 'recording' });
-        console.log('  started auto-recording');
+        log.info('  started auto-recording');
       }
     }
     if (this.loudSoundStartTime === 0.0) {
@@ -361,8 +403,8 @@ export default class AudioStudio extends React.Component {
     if (endTime - this.loudSoundLastDetectTime > LOUD_SOUND_MIN_DURATION) {
       // Haven't heard a loud sound window for long enough, consider
       // the event as ended.
-      console.log('  loud sound lasted',
-                  (endTime - this.loudSoundStartTime).toFixed(3));
+      //log.debug('  loud sound lasted',
+      //          (endTime - this.loudSoundStartTime).toFixed(3));
       this.loudSoundStartTime = this.loudSoundLastDetectTime = 0.0;
       if (this.state.recordingMode === 'auto'
           && this.state.recording === 'recording') {
@@ -391,7 +433,7 @@ export default class AudioStudio extends React.Component {
       return;
     }
     if (!isWAVFilename(file.name)) {
-      console.warn(file.name, 'does not look like a WAV file, refusing to import it');
+      log.warn(file.name, 'does not look like a WAV file, refusing to import it');
       return;
     }
     this.files.write(file.name, file.data)
@@ -399,7 +441,7 @@ export default class AudioStudio extends React.Component {
         this._loadTrackFile(file.name);
         this._refreshSavedTracks();
       })
-      .catch(() => console.error('Failed to save file', file.name));
+      .catch(() => log.error('Failed to save file', file.name));
   };
 
   _onNextMicData = (micData) => {
@@ -426,19 +468,19 @@ export default class AudioStudio extends React.Component {
   _onDeleteTrack = (track) => {
     this.files.unlink(track.name)
       .then(() => this._refreshSavedTracks())
-      .catch((err) => console.error('Failed to unlink()', track.name, err));
+      .catch((err) => log.error('Failed to unlink()', track.name, err));
   };
 
   _onDeleteAllTracks = () => {
     Promise.all(this.savedTracks.map((track) => this.files.unlink(track.name)))
       .then(() => this._refreshSavedTracks())
-      .catch((err) => console.error('Failed to unlink() all tracks', err));
+      .catch((err) => log.error('Failed to unlink() all tracks', err));
   };
 
   _onDownloadTrack = (track) => {
     this.files.read(track.name)
       .then((data) => this._sendFileToUser(data))
-      .catch((err) => console.error('Failed to download', track.name, err));
+      .catch((err) => log.error('Failed to download', track.name, err));
   };
 
   _onDownloadAllTracks = () => {
@@ -452,7 +494,7 @@ export default class AudioStudio extends React.Component {
         return readEntireStream(pack);
       })
       .then((data) => this._sendFileToUser(data))
-      .catch((err) => console.error('Failed to send TAR', err));
+      .catch((err) => log.error('Failed to send TAR', err));
   };
 
   _onPickTrack = (track) => {
@@ -477,19 +519,19 @@ export default class AudioStudio extends React.Component {
     // sound is detected.  This call just arms the auto-recording
     // logic.
     this.setState({ recordingMode: 'auto' });
-    console.log('Entered auto-recording mode');
+    log.debug('Entered auto-recording mode');
   };
 
   _onStartRecording = () => {
     this.recordingSamples = [ ];
     this.setState({ recordingMode: 'human', recording: 'recording' });
-    console.log('Starting human-triggered recording');
+    log.debug('Starting human-triggered recording');
   };
 
   _onStopRecording = () => {
     if (!this.state.recording) {
-      console.log('No active recording, immediately exiting mode',
-                  this.state.recordingMode);
+      log.debug('No active recording, immediately exiting mode',
+                this.state.recordingMode);
       this.setState({ recordingMode: '', recording: '' });
       return;
     }
@@ -503,7 +545,7 @@ export default class AudioStudio extends React.Component {
   _onSubmitRecordingName = () => {
     let name = this.refs.recordingName.getValue();
     if (!name.length) {
-      console.log('No name set');
+      log.debug('No name set');
       return;
     }
     // Whenever the user has explicitly set a recording name, it's
@@ -529,7 +571,7 @@ export default class AudioStudio extends React.Component {
         // TODO: we should efficiently store `savedTracks` in this.state
         this.forceUpdate();
       })
-      .catch((err) => console.log('Failed to fetch list of saved tracks'));
+      .catch((err) => log.error('Failed to fetch list of saved tracks'));
   }
 
   _runBenchmark(benchmarkTAR) {
@@ -548,10 +590,23 @@ export default class AudioStudio extends React.Component {
     let clapperTest = require('../libraries/ClapperTester');
     let benchmark = {
       totalTests: 0,
+      claps: 0,
       miss: [ ],
       falseAccept: [ ],
     };
-    console.log('Running benchmark ...');
+
+    // We run through the set of benchmark tests below and extract the
+    // first loud sound heard in each test.  From the extracted loud
+    // sound, we compute a feature vector --- 25 consecutive
+    // spectrogram frames concatenated together --- and a vector label
+    // --- 1 for claps and -1 for non-claps.
+    let trainingData = [ ];
+    let trainingLabels = [ ];
+    let validationData = [ ];
+    let validationLabels = [ ];
+
+    let benchmarkStartMs = Date.now();
+    log.info('Running benchmark ...');
     let runTestOrSuite = (tag, header, fileData) => {
       if (header.type !== 'file') {
         return Promise.resolve();
@@ -567,37 +622,203 @@ export default class AudioStudio extends React.Component {
                                 runTestOrSuite);
       }
       let event = tag.split('-')[0];
+      let isClap = event === 'clap';
       let samples = getAudioDataFromWAV(fileData);
       let detectedEvents = clapperTest(samples);
 
+      // Now we run the loud-sound extraction on the test case.
+      // (Clapper does its own version of this in the `clapperTest()`
+      // call above.)
+      let isValidationData;
+      let analyzer = createAudioAnalyzer({
+        fftSize: clapSVMConfig.fftSize,
+        windowOverlap: clapSVMConfig.windowOverlap,
+        sampleRate: config.deviceMic.sampleRate,
+        sampleMin: config.deviceMic.sampleMin,
+        sampleMax: config.deviceMic.sampleMax,
+      });
+      let featureVector = new
+        Float32Array(analyzer.frequencyBinCount *
+                     clapSVMConfig.featureVectorFrameCount);
+      let vectorOffset = 0;
+      let extractLoudSounds = (magnitudes) => {
+        if (vectorOffset === 0) {
+          let isLoud = Math.max(...magnitudes) > clapSVMConfig.loudThreshold;
+          if (!isLoud) {
+            return;
+          }
+        }
+        featureVector.set(magnitudes, vectorOffset);
+        vectorOffset += analyzer.frequencyBinCount;
+        if (vectorOffset === featureVector.length) {
+          analyzer.removeListener('fftMagnitudeDecibel', extractLoudSounds);
+          let label = isClap ? 1 : -1;
+          let forTraining = (Math.random() < 0.5);
+          isValidationData = !forTraining;
+
+          // Uncomment this to train the SVM on the entire data set.
+          //forTraining = isValidationData = true;
+
+          if (forTraining) {
+            trainingData.push(featureVector);
+            trainingLabels.push(label);
+          }
+          if (isValidationData) {
+            validationData.push(featureVector);
+            validationLabels.push(label);
+          }
+          // We've extracted all we need from the test case and don't
+          // care about the rest of the samples that are going to be
+          // processed. We don't have a convenient way to stop further
+          // processing, so just throw an exception to pop back out to
+          // `appendSamples()` code below.
+          throw 'done';
+        }
+      };
+      analyzer.on(clapSVMConfig.fftType, extractLoudSounds);
+      let detectedLoudSound = false;
+      try {
+        analyzer.appendSamples(samples, 0);
+      } catch (e) {
+        if (e !== 'done') {
+          throw e;
+        }
+        detectedLoudSound = true;
+      }
+      if (!detectedLoudSound) {
+        throw `Failed to extract loud sound from clip ${tag}-${header.name}`;
+      }
+      if (!isValidationData) {
+        // If this vector wasn't chosen for SVM validation, then we
+        // won't count its result against the clapper tally either.
+        // This allows the clapper results to be directly compared to
+        // the SVM validation, although the fairness is debatable.
+        return Promise.resolve();
+      }
+      // Add this test case to the clapper validation results.
       benchmark.totalTests += 1;
       if (benchmark.totalTests % 25 === 0) {
-        console.log('... test', benchmark.totalTests);
+        log.info(`... test ${benchmark.totalTests}`);
       }
       let testId = (tag + '/' + leafName);
       let detectedClap = (detectedEvents.indexOf('clap') >= 0);
-      if (event === 'clap' && !detectedClap) {
+      if (isClap) {
+        benchmark.claps += 1;
+      }
+      if (isClap && !detectedClap) {
         benchmark.miss.push(testId);
       }
-      if (event !== 'clap' && detectedClap) {
+      if (!isClap && detectedClap) {
         benchmark.falseAccept.push(testId);
       }
       return Promise.resolve();
     };
+    // Extract all the WAV test cases out of this (recursive) TAR
+    // file.
     forEachFileInTAR(null, benchmarkTAR, runTestOrSuite)
       .then(() => {
         let nrTests = benchmark.totalTests;
-        let detectRate = (1 - benchmark.miss.length / nrTests);
-        let faRate = benchmark.falseAccept.length / nrTests;
-        console.log(`Ran ${nrTests} tests: detected ${(100 * detectRate).toFixed(2)}% of claps and falsely accepted ${(100 * faRate).toFixed(2)}% non-claps`);
-        console.log('Misses:', benchmark.miss);
-        console.log('False-accepts:', benchmark.falseAccept);
+        let claps = benchmark.claps;
+        let nonClaps = nrTests - claps;
+        let detectRate = (1 - benchmark.miss.length / claps);
+        let faRate = benchmark.falseAccept.length / nonClaps;
+        let elapsedTimeSec = (Date.now() - benchmarkStartMs) / 1000;
+        let msPerTest = 1000.0 * elapsedTimeSec / nrTests;
+        log.info(`Ran ${nrTests} tests in ${elapsedTimeSec.toFixed(2)}s (${msPerTest.toFixed(1)}ms per test)`);
+        log.info(`  detected ${(100 * detectRate).toFixed(2)}% of claps and falsely accepted ${(100 * faRate).toFixed(2)}% non-claps`);
+        log.info(`  misses: ${benchmark.miss}`);
+        log.info(`  false-accepts: ${benchmark.falseAccept}`);
+      })
+      .then(() => {
+        this._trainSVM(trainingData, trainingLabels,
+                       validationData, validationLabels);
       });
+  }
+
+  _trainSVM(trainingData, trainingLabels, validationData, validationLabels) {
+    let svm = new svmjs.SVM();
+    let options = {
+      // These magic SVM params are the default for svmjs.
+      C: 1e0,
+      maxiter: 1e4,
+      numpasses: 1e1,
+      // Linear kernels are broken in svmjs, which is very concerning.
+      //svmjs should not be used in production code, at least not for
+      //training.
+      //
+      //kernel: 'linear',
+      kernel: 'rbf',
+      rbfsigma: 0.5,
+      tol: 1e-4,
+      alphatol: 1e-7,
+    };
+
+    let start;
+
+    log.info(`Beginning training on ${trainingData.length} points ... this will take a while`);
+    start = Date.now();
+    svm.train(trainingData, trainingLabels, options);
+    let trainSecs = (Date.now() - start) / 1000;
+    log.info(`  finished in ${trainSecs} seconds`);
+
+    log.info(`Generating predictions on ${validationData.length} points ...`);
+    start = Date.now();
+    let predictions = svm.predict(validationData);
+    let predictSecs = (Date.now() - start) / 1000;
+    log.info(`  finished in ${predictSecs} seconds`);
+
+    let nrTests = predictions.length;
+    let claps = 0;
+    let nonClaps = 0;
+    let miss = 0;
+    let falseAccept = 0;
+    for (let i = 0; i < validationLabels.length; ++i) {
+      let [ expected, actual ] = [ validationLabels[i], predictions[i] ];
+      if (expected === 1) {
+        claps++;
+        if (actual !== expected) {
+          miss++;
+        }
+        continue;
+      }
+      if (expected === -1) {
+        nonClaps++;
+        if (actual !== expected) {
+          falseAccept++;
+        }
+        continue;
+      }
+      console.log('WTF', expected, actual);
+      throw 'WTF';
+    }
+    let detectRate = (1 - miss / claps);
+    let faRate = falseAccept / nonClaps;
+    let msPerTest = 1000.0 * predictSecs / nrTests;
+    log.info(`SVM ran ${nrTests} validations in predictions took ${predictSecs} seconds (${msPerTest.toFixed(1)}ms per test)`);
+    log.info(`  detected ${(100 * detectRate).toFixed(2)}% of claps(${claps}) and falsely accepted ${(100 * faRate).toFixed(2)}% non-claps(${nonClaps})`);
+    log.info(`  params: C:${options.C} maxiter:${options.maxiter} rbfsigma:${options.rbfsigma} numpasses:${options.numpasses}`);
+
+    let json = svm.toJSON();
+    let svm2 = new svmjs.SVM();
+    svm2.fromJSON(json);
+    let differentPrediction = false;
+    let predictions2 = svm2.predict(validationData);
+    for (let i = 0; i < predictions.length; ++i) {
+      if (predictions[i] !== predictions2[i]) {
+        console.log('FAIL');
+        differentPrediction = true;
+      }
+    }
+    if (differentPrediction) {
+      throw 'JSON exported SVM failed to match original SVM';
+    }
+    log.info(`Exporting trained SVM to new window ...`);
+    this._sendFileToUser(JSON.stringify(json));
   }
 
   _saveRecording(name, why) {
     name += '.wav';
-    console.log('Saving recording to name', name);
+    log.info(`Saving recording to name ${name}`);
     this.setState({ recording: 'saving' });
     // TODO: don't hard-code these
     let audioParams = {
@@ -618,11 +839,11 @@ export default class AudioStudio extends React.Component {
         let nextMode = (why === 'stop') ? '' : this.state.recordingMode;
         this.setState({ recording: '',
                         recordingMode: nextMode });
-        console.log(' ... finished writing because of', why, 'entering idle state and mode', nextMode);
+        log.debug(' ... finished writing because of', why, 'entering idle state and mode', nextMode);
         this._refreshSavedTracks();
       })
       .catch((err) => {
-        console.error('Error writing recording file:', err);
+        log.error('Error writing recording file:', err);
       });
   }
 
@@ -637,8 +858,8 @@ export default class AudioStudio extends React.Component {
     Object.assign(this.prefs, newPrefs);
     this.setState(this.prefs);
     this.files.write(PREF_FILE, JSON.stringify(this.prefs))
-      .then(() => console.log('Updated prefs'))
-      .catch((err) => console.log('Error saving prefs', err));
+      .then(() => log.debug('Updated prefs'))
+      .catch((err) => log.error('Error saving prefs', err));
   }
 
   _togglePlayback = () => {

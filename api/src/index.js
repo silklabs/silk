@@ -26,6 +26,7 @@ import makeStreams from './streams';
 
 import type {StringToStringDict} from './metric';
 import type {Request} from 'silk-http/src/client';
+import type AccessToken from './access_token';
 
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;

@@ -7,6 +7,7 @@ import path from 'path';
 import createLog from 'silk-log';
 import invariant from 'assert';
 import version from 'silk-core-version';
+import formatURL from 'silk-utils/url_format';
 
 import type {ExpressRoutes} from 'api-schema';
 import type {RouteContext} from '../server';
@@ -54,9 +55,7 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
     query.transport = 'websocket';
     parsed.query = query;
 
-    // Cast to 'any' to work around https://github.com/facebook/flow/issues/908
-    url = URL.format((parsed: any));
-    return url;
+    return formatURL(parsed);
   }
 
   api.define({

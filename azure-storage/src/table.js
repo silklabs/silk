@@ -11,6 +11,7 @@ import URL from 'url';
 import qs from 'querystring';
 import HttpClient from 'silk-http/src/client';
 import { Headers } from 'silk-http/src/fetch';
+import formatURL from 'silk-utils/url_format';
 
 import * as tableSigner from './signer/table';
 import tableFilter from './table_filter';
@@ -41,24 +42,6 @@ type TableClientOptions = {
   name?: string;
   requestId?: RequestIdFactory;
 };
-
-function formatURL(parsed: {
-  protocol?: string;
-  slashes?: bool;
-  host?: string;
-  pathname?: string;
-  search?: string;
-  query?: Object;
-}): string {
-  return URL.format({
-    protocol: parsed.protocol,
-    slashes: parsed.slashes,
-    host: parsed.host,
-    query: parsed.query,
-    pathname: parsed.pathname,
-    search: parsed.search,
-  });
-}
 
 /**
  * Azure table entities are very flexible but require RowKey and PartitionKey

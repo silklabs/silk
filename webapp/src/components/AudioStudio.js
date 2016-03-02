@@ -745,6 +745,8 @@ export default class AudioStudio extends React.Component {
               track={this.state.track}
               fftSize={FFT_SIZE}
               windowOverlap={WINDOW_OVERLAP}
+              sampleMin={config.deviceMic.sampleMin}
+              sampleMax={config.deviceMic.sampleMax}
               spectrogramFrames={SPECTROGRAM_FRAMES}
               graphWidth={1024}
               graphHeight={512}

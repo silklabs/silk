@@ -1,3 +1,4 @@
+import config from 'silk-config';
 import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Input,
          Modal, OverlayTrigger, Panel, Popover } from 'react-bootstrap';
@@ -67,10 +68,9 @@ function makeWAVHeader(params, samplesLength) {
   return hdr;
 }
 
-function makeWAVFromMicData(micData) {
-  let { samples } = micData;
+function makeWAVFromMicData(samples, params = config.deviceMic) {
   samples = new Buffer(samples.buffer);
-  let hdr = makeWAVHeader(micData, samples.length);
+  let hdr = makeWAVHeader(params, samples.length);
   let wav = Buffer.concat([ hdr, samples ]);
   return wav.toArrayBuffer();
 }
@@ -91,7 +91,6 @@ function zeroPad(number, width) {
   return string;
 }
 
-const SAMPLE_RATE = 8000;
 const FFT_SIZE = 256;
 const WINDOW_OVERLAP = 128;
 const SPECTROGRAM_FRAMES = 64;
@@ -127,7 +126,8 @@ class TrackFile extends React.Component {
   render() {
     let duration = '';
     if (this.props.stats) {
-      duration = ((this.props.stats.size - 44) / 2 / 8000).toFixed(3) + 'sec';
+      let sampleRate = parseInt(config.deviceMic.sampleRate);
+      duration = ((this.props.stats.size - 44) / 2 / sampleRate).toFixed(3) + 'sec';
     }
     return (
       <Panel onClick={this._onClick}>
@@ -214,7 +214,8 @@ export default class AudioStudio extends React.Component {
   }
 
   componentWillMount() {
-    this.liveTrack = new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE, SAMPLE_RATE);
+    this.liveTrack = new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE,
+                                   config.deviceMic.sampleRate);
     this._attachTrack(this.liveTrack);
     this.state.track = this.liveTrack;
     // We may still be loading prefs from file, but in that case state
@@ -299,7 +300,7 @@ export default class AudioStudio extends React.Component {
     return this.files.read(filename)
       .then((data) => {
         let samples = getAudioDataFromWAV(data);
-        this._attachTrack(new StaticTrack(samples, SAMPLE_RATE));
+        this._attachTrack(new StaticTrack(samples, config.deviceMic.sampleRate));
       })
       .catch((err) => {
         console.error('Failed to read track', filename, err);
@@ -413,14 +414,7 @@ export default class AudioStudio extends React.Component {
     let wavData = new Int16Array(samples.length);
     wavData.set(samples);
     if (this.state.playing) {
-      // TODO: don't hard-code this
-      let micData = {
-        numChannels: 1,
-        bytesPerSample: 2,
-        sampleRate: this.state.track.sampleRate,
-        samples: wavData,
-      };
-      this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(micData));
+      this.refs.wavPlayer.appendBuffer(makeWAVFromMicData(wavData));
     }
     if (this.state.recordingMode === 'human'
         && this.state.recording === 'recording') {

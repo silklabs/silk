@@ -3,6 +3,7 @@
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
+    "silk-config": "/config",
     "silk-core-version": "/version",
     "silk-docs": "/docs",
     "silk-flow-bin": "/flow-bin",

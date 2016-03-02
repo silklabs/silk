@@ -1,5 +1,6 @@
 
 import assert from 'assert';
+import config from 'silk-config';
 import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Label } from 'react-bootstrap';
 import { Link } from 'react-router';
@@ -11,7 +12,7 @@ const CODEC_DESCRIPTOR = 'video/mp4;codecs=avc1.42c01f,mp4a.40.2';
 // header is hard coded, so are these constants for convenience.  If
 // we ever support multiple init header types with different sample
 // rates, then we'll want to read these constants from the header.
-const AUDIO_TICKS_PER_SEC = 8000;  // 8KHz = audio sampling rate
+const AUDIO_TICKS_PER_SEC = config.deviceMic.sampleRate;
 const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 
 // Each MP4 box contains:

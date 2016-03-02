@@ -39,9 +39,6 @@ type DiagMessage = {
 type MicMessage = {
   when: number;
   serverEmitMs: ?number;
-  numChannels: number;
-  bytesPerSample: number;
-  sampleRate: number;
   samples: Buffer;
 }
 

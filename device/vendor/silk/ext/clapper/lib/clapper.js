@@ -9,6 +9,8 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
+import config from 'silk-config';
+
 let log;
 let util;
 
@@ -43,13 +45,11 @@ class Clapper {
         `and minEnergyThreshold: ${this._minEnergyThreshold}`);
 
     let fftCfg = {
-      // TODO: hard coded audio constants assumed.  Changing these will also
-      //       affect AudioSourceEmitter.cpp
-      sampleRate: 8000,
-      bytesPerSample: 2,
-      numChannels: 1,
-      fftWindowSize: 256, // 32ms - units of samples
-      fftWindowStep: 64,  // 8ms - units of samples
+      sampleRate: config.deviceMic.sampleRate,
+      bytesPerSample: config.deviceMic.bytesPerSample,
+      numChannels: config.deviceMic.numChannels,
+      fftWindowSize: 256, // 32ms - units of samples @ 8KHz
+      fftWindowStep: 64,  // 8ms - units of samples @ 8KHz
     };
 
     let audioTools = require('./audioTools')(env);

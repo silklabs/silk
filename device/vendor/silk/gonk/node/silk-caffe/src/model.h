@@ -59,6 +59,9 @@ typedef std::pair<string, float> Prediction;
     NAME = info[IND]->BooleanValue(); \
   }
 
+#define FLOAT_FROM_ARGS(NAME, IND) \
+  NAME = info[IND]->NumberValue(); \
+
 /**
  * This class is a wrapper around Caffe DNN library
  */
@@ -81,7 +84,7 @@ private:
   JSFUNC(SetScale);
   JSFUNC(SetLabels);
   JSFUNC(PredictTopK);
-  JSFUNC(PredictRegions);
+  JSFUNC(Rcnn);
 
 public:
   boost::shared_ptr<Net<float>> mCaffeNet;

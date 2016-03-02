@@ -84,12 +84,12 @@ class Dnn {
   }
 
   /**
-   * Make region prediction asynchronously
+   * Make regional CNN prediction asynchronously
    * @private
    */
-  _predictRegionsAsync(mat) {
+  _rcnnAsync(mat) {
     return new Promise((resolve, reject) => {
-      this._netCaffe.predictRegions(mat, (err, predictions) => {
+      this._netCaffe.rcnn(mat, 'pedestrian', (err, predictions) => {
         if (err) {
           reject(err);
         } else {
@@ -147,24 +147,48 @@ class Dnn {
   /**
    * @private
    */
-  predict(testImage) {
+  predict(testImage, useRcnn) {
     // Fetch camera preview image
     this._readImageAsync(testImage)
     .then(im => {
       // Run DNN prediction
       console.log(`Running predition for ${testImage} ...`);
       let start = Date.now();
-      this._predictAsync(im)
-      .then(predictions => {
-        let diff = Date.now() - start;
-        console.log(`Top ${TOPK} predictions in ${diff}ms: `);
 
-        for (let i = 0; i < predictions.length; i++) {
-          const indexLabel = predictions[i].label.indexOf(' ');
-          const id = predictions[i].label.substring(0, indexLabel);
-          const label = predictions[i].label.substring(indexLabel + 1);
-          const probability = (predictions[i].confidence * 100).toFixed(2);
-          console.log(`label: \"${label}\" Probability: ${probability}% id: ${id}`);
+      let predictPromise;
+      if (useRcnn === 'true') {
+        console.log(`using RCNN: ${useRcnn}`);
+        predictPromise = this._rcnnAsync(im);
+      } else {
+        predictPromise = this._predictAsync(im);
+      }
+      predictPromise.then(predictions => {
+        let diff = Date.now() - start;
+        console.log(`Top ${TOPK} predictions in ${diff}ms:`);
+
+        try {
+          for (let i = 0; i < predictions.length; i++) {
+            const indexLabel = predictions[i].label.indexOf(' ');
+            let id = -1;
+            if (indexLabel != -1) {
+              id = predictions[i].label.substring(0, indexLabel);
+            }
+            const label = predictions[i].label.substring(indexLabel + 1);
+            const probability = (predictions[i].confidence * 100).toFixed(2);
+            const rect = (predictions[i].rect ? predictions[i].rect : []);
+            console.log(`label: \"${label}\" Probability: ${probability}% ` +
+                `id: ${id} rect: ${JSON.stringify(rect)}`);
+            if (predictions[i].rect) {
+              im.rectangle([rect.x, rect.y], [rect.width, rect.height]);
+            }
+          }
+          const resultFileName = 'result.jpg';
+          if (useRcnn === 'true') {
+            console.log(`Saving RCCN result in ${resultFileName}`);
+            im.save(resultFileName);
+          }
+        } catch (err) {
+          console.error(`JS error ${err}`);
         }
       });
     })
@@ -179,28 +203,30 @@ let modelBin = MODEL_BIN;
 let modelMean = MODEL_MEAN;
 let modelDictionary = MODEL_DICTIONARY;
 let testImage = TEST_IMAGE;
+let useRcnn = false;
 
-if ((process.argv.length > 2) && (process.argv.length < 7)) {
-  console.log(`Usage: deploy.prototxt network.caffemodel mean.binaryproto labels.txt img.jpg`);
+if ((process.argv.length > 2) && (process.argv.length < 8)) {
+  console.log(`Usage: deploy.prototxt network.caffemodel mean.binaryproto labels.txt img.jpg useRcnn(true|false)`);
   process.exit(1); //eslint-disable-line no-process-exit
 }
 
-if (process.argv.length >= 7) {
+if (process.argv.length >= 8) {
   modelProto = process.argv[2];
   modelBin = process.argv[3];
   modelMean = process.argv[4]
   modelDictionary = process.argv[5];
   testImage = process.argv[6];
+  useRcnn = process.argv[7];
 }
 
 // Run test
 let dnn = new Dnn();
 dnn.init(modelProto, modelBin, modelMean, modelDictionary)
 .then(() => {
-  return dnn.predict(testImage);
+  return dnn.predict(testImage, useRcnn);
 })
 .catch(error => {
-  console.error(`Error running test: ${error}`);
+  console.error(`Error running test: ${err.stack || err}`);
 });
 
 /* eslint-enable no-console */

@@ -3,6 +3,7 @@
       'target_name': 'caffe',
       'sources': [
           'src/caffe.cpp',
+          'src/cvutils.cpp',
           'src/model.cpp',
       ],
       'include_dirs': [

@@ -16,18 +16,24 @@ const styles = {
   },
   flexRow: {
     display: 'flex',
-    flexDirection: 'row',
     flexWrap: 'wrap',
   },
   glyphicon: {
     fontSize: '20px',
   },
   onlineCamera: {
-    padding: '10px 0 10px 10px',
+    padding: '10px',
   },
   toolbar: {
     border: '1px solid gray',
     borderRadius: '5px',
+    display: 'flex',
+  },
+  toolbarCenter: {
+    'justifyContent': 'center',
+  },
+  speechText: {
+    flex: 1,
   },
 };
 
@@ -55,43 +61,37 @@ export class OnlineCamera extends React.Component {
         <Link to={`/video/${this.deviceId}`}>
           <CameraPreview deviceId={this.deviceId} />
         </Link>
-        <div style={styles.toolbar}>
-          <div style={styles.flexRow}>
-            <div style={styles.center}>
-              <Link to={`/diag/${this.deviceId}`}>
-                <Button bsSize="large" bsStyle="info">
-                  <Glyphicon glyph="info-sign" style={styles.glyphicon} />
-                </Button>
-              </Link>
-              <Link to={`/avpipeline/${this.deviceId}`}>
-                <Button bsSize="large">
-                  <Glyphicon glyph="indent-left" style={styles.glyphicon} />
-                </Button>
-              </Link>
-              <Link to={`/chunks/${this.deviceId}`}>
-                <Button bsSize="large">
-                  <Glyphicon glyph="list" style={styles.glyphicon} />
-                </Button>
-              </Link>
-              <Link to={`/audiostudio/${this.deviceId}`}>
-                <Button bsSize="large">
-                  <Glyphicon glyph="headphones" style={styles.glyphicon} />
-                </Button>
-              </Link>
-            </div>
-          </div>
+        <div style={{...styles.toolbar, ...styles.toolbarCenter}}>
+          <Link to={`/diag/${this.deviceId}`}>
+            <Button bsSize="large" bsStyle="info">
+              <Glyphicon glyph="info-sign" style={styles.glyphicon} />
+            </Button>
+          </Link>
+          <Link to={`/avpipeline/${this.deviceId}`}>
+            <Button bsSize="large">
+              <Glyphicon glyph="indent-left" style={styles.glyphicon} />
+            </Button>
+          </Link>
+          <Link to={`/chunks/${this.deviceId}`}>
+            <Button bsSize="large">
+              <Glyphicon glyph="list" style={styles.glyphicon} />
+            </Button>
+          </Link>
+          <Link to={`/audiostudio/${this.deviceId}`}>
+            <Button bsSize="large">
+              <Glyphicon glyph="headphones" style={styles.glyphicon} />
+            </Button>
+          </Link>
         </div>
         <div style={styles.toolbar}>
-          <div style={styles.flexRow}>
-            <DropdownButton bsSize="small" title="Speak with" id="speak"
-              disabled={!this.props.online} onSelect={this.onSpeak}>
-              <MenuItem eventKey="ttscereproc">ttscereproc</MenuItem>
-              <MenuItem eventKey="ttspico">ttspico</MenuItem>
-            </DropdownButton>
-            <input type="text" placeholder="Enter the text to speak"
-              onChange={this.handleTextChange}>
-            </input>
-          </div>
+          <DropdownButton bsSize="small" title="Speak with" id="speak"
+            disabled={!this.props.online} onSelect={this.onSpeak}>
+            <MenuItem eventKey="ttscereproc">ttscereproc</MenuItem>
+            <MenuItem eventKey="ttspico">ttspico</MenuItem>
+          </DropdownButton>
+          <input type="text" placeholder="Enter the text to speak" style={styles.speechText}
+            onChange={this.handleTextChange}>
+          </input>
         </div>
     </div>
     );

@@ -42,6 +42,17 @@ type MicMessage = {
   samples: Buffer;
 }
 
+// TODO dedupe from timeline.js
+type TimelineEventObject = {
+  tag: string;
+  when: number;
+  [arbitraryKeys: string]: any;
+}
+
+type ObjectsMessage = {
+  objects: Array<TimelineEventObject>;
+}
+
 export function deviceRoom(deviceId: string, name: string): string {
   return `${name}-${deviceId}`;
 }
@@ -139,6 +150,10 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
 
     mic: async (msg: MicMessage) => {
       sendToDeviceRoom('mic', msg);
+    },
+
+    objects: async(msg: ObjectsMessage) => {
+      sendToDeviceRoom('objects', msg);
     },
 
     disconnect: async () => {

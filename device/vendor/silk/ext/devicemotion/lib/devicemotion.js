@@ -32,7 +32,11 @@ class DeviceMotion {
 
     if (motion > MOTION_THRESHOLD) {
       log.info(`device moved ~${motion} m/s^2`);
-      timeline.addObject('device moved', Date.now());
+      timeline.addObjects([{
+        tag: 'device moved',
+        when: Date.now(),
+        durationMs: 250,
+      }]);
     }
   };
 

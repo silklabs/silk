@@ -47,7 +47,7 @@ function detectCats(im, when, cb) {
       timeline.addDiagFrame(cascade.tag, when, roi);
       roi.release();
     });
-    cb({tag: cascade.tag, when, rects});
+    cb(rects);
   });
 }
 
@@ -74,26 +74,23 @@ class DetectCat {
 
       let [im] = await this._env.camera.getPreviewFrames(when, ['grayeq']);
 
-      detectCats(im, when, cats => {
-        this._notifyCats(cats);
+      detectCats(im, when, (rects) => {
+        let what;
+        if (rects.length > 0) {
+          what = `${rects.length}`;
+          timeline.addObjects([{
+            source: 'detectcat',
+            tag: cascade.tag,
+            when,
+            rects,
+          }]);
+        } else {
+          what = ' -';
+        }
+        log.info(`Detected cats: ${what}`);
         working = false;
       });
     });
-  }
-
-  /**
-   * Notify timeline of the new cats detected
-   * @param cats
-   */
-  _notifyCats(cats) {
-    let what;
-    if (cats.rects.length > 0) {
-      what = `${cats.rects.length}`;
-      timeline.addObjects([cats]);
-    } else {
-      what = ' -';
-    }
-    log.info(`Detected cats: ${what}`);
   }
 }
 

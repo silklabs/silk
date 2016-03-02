@@ -2,21 +2,34 @@
 import config from 'silk-config';
 import { EventEmitter } from 'events';
 import io from 'socket.io-client';
-import PreviewQueue from './PreviewQueue';
 import invariant from 'assert';
+import mklog from 'silk-log';
 
 import Api from './Api';
-import mklog from 'silk-log'; const log = mklog('Cameras');
+import ObjectCollector from './ObjectCollector';
+import PreviewQueue from './PreviewQueue';
+
+const log = mklog('Cameras');
 
 class Camera extends EventEmitter {
+  id = '';
+  logoImage = null;
+  logs = {};
+  name = '';
+  objects = new ObjectCollector();
+  online = false;
+  previewImage = null;
+  previewSize = null;
+  previewTimestamp = null;
+
+  _requestedRooms = { };
+  _socket = null;
+  _queue = null;
+
   constructor(name, id) {
     super();
-    Object.assign(this, {
-      name,
-      id,
-      logs: {},
-      _requestedRooms: {},
-    });
+    this.name = name;
+    this.id = id;
     this.setOffline();
   }
 
@@ -30,15 +43,13 @@ class Camera extends EventEmitter {
     }
     this.online = true;
     this._socket = socket;
-    const logo = opts.logo;
     this.previewSize = opts.previewSize;
 
-    this.logoImage = document.createElement('img');
+    const logo = opts.logo;
     if (logo) {
-      let logoArray = new Uint8Array(logo);
-      if (logoArray.length > 0) {
-        let blob = new Blob([logoArray], { type: 'image/png' });
-        this.logoImage.src = URL.createObjectURL(blob);
+      const view = new Uint8Array(logo);
+      if (view.length) {
+        this.logoImage = new Blob([view], { type: 'image/png' });
       }
     }
     this._updateStreams();
@@ -54,12 +65,10 @@ class Camera extends EventEmitter {
       this._updateStreams();
     }
 
-    if (this.logoImage) {
-      URL.revokeObjectURL(this.logoImage.src);
-      this.logoImage = null;
-    }
+    this.logoImage = null;
+    this.objects.clear();
+    this.previewImage = null;
     this._socket = null;
-    this.previewSize = null;
   }
 
   set logging(enabled) {
@@ -72,6 +81,7 @@ class Camera extends EventEmitter {
     this._updatePreviewImageStream();
     this._updateVideoClipStream();
     this._updateMicStream();
+    this._updateObjectStream();
   }
 
   _updateDiagStream() {
@@ -178,6 +188,12 @@ class Camera extends EventEmitter {
     this.diagCommand('speak', text, lib);
   }
 
+  addListener(event, listener) {
+    let ret = super.addListener(event, listener);
+    this._adjustRooms(event);
+    return ret;
+  }
+
   removeListener(event, listener) {
     let ret = super.removeListener(event, listener);
     this._adjustRooms(event);
@@ -196,6 +212,7 @@ class Camera extends EventEmitter {
       this._updatePreviewImageStream();
       this._updateVideoClipStream();
       this._updateMicStream();
+      this._updateObjectStream();
       break;
     default:
       log.verbose(`Unhandled event: ${event}`);
@@ -206,29 +223,20 @@ class Camera extends EventEmitter {
     const enabled = this._requestedRooms.previewImage;
     const previewStream = 'preview-' + this.id;
 
-    if (this.previewImage) {
-      URL.revokeObjectURL(this.previewImage.src);
-      this.previewImage = null;
-    }
+    this.previewImage = null;
 
     if (this.online && enabled) {
       log.info('Joining preview stream ' + previewStream);
-      this.previewImage = document.createElement('img');
       this._socket.on(previewStream, this._onPreviewStream);
       this._socket.emit('join', previewStream);
 
       this._queue = new PreviewQueue(this.name, msg => {
-        this.previewTimestamp = new Date(msg.when);
-        this.previewObjects = msg.objects;
-
-        let view = new Uint8Array(msg.frame);
-        let blob = new Blob([view], { type: 'image/jpg' });
-
-        if (this.previewImage) {
-          URL.revokeObjectURL(this.previewImage.src);
+        const view = new Uint8Array(msg.frame);
+        if (view.length) {
+          this.previewImage = new Blob([view], { type: 'image/jpg' });
+          this.previewTimestamp = new Date(msg.when);
+          this.emit('previewImage', this.previewImage);
         }
-        this.previewImage.onload = () => this.emit('previewImage');
-        this.previewImage.src = URL.createObjectURL(blob);
       });
 
     } else {
@@ -248,15 +256,11 @@ class Camera extends EventEmitter {
     if (typeof ack === 'function') {
       ack();
     }
-    if (!msg) {
-      log.warn('_onPreviewStream: null msg');
+    if (!msg || !msg.frame || !msg.frame.byteLength || !msg.when) {
+      log.warn('Received bad preview message', msg);
       return;
     }
-    if (!msg.frame) {
-      log.warn('_onPreviewStream: null msg.frame');
-      return;
-    }
-    log.debug('preview', msg);
+    log.debug('Received preview message', msg);
     this._queue.push(msg);
   };
 
@@ -344,6 +348,40 @@ class Camera extends EventEmitter {
     }
     this.micData = msg;
     this.emit('micData', msg);
+  };
+
+  _updateObjectStream() {
+    const enabled =
+      this._requestedRooms.videoClip || this._requestedRooms.previewImage;
+    const stream = 'objects-' + this.id;
+
+    if (this.online && enabled) {
+      log.info(`Joining '${stream}'`);
+      this._socket.on(stream, this._onObjectStream);
+      this._socket.emit('join', stream);
+    } else {
+      log.info(`Leaving '${stream}'`);
+      if (this._socket) {
+        this._socket.removeListener(stream, this._onObjectStream);
+        this._socket.emit('leave', stream);
+      }
+    }
+  }
+
+  _onObjectStream = (msg, ack) => {
+    log.debug(`_onObjectStream`, msg);
+
+    if (typeof ack === 'function') {
+      ack();
+    }
+
+    if (!msg || !(`objects` in msg) || !Array.isArray(msg.objects)) {
+      log.warn(`Bad objects`, msg);
+      return;
+    }
+
+    this.objects.push(msg.objects);
+    this.emit('objects', this.objects);
   };
 }
 

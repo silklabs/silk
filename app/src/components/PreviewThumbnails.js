@@ -76,6 +76,7 @@ export default class PreviewThumbnails extends AsyncComponent {
         <MonitorPreview
           key={configuringDevice.deviceId}
           deviceId={configuringDevice.deviceId}
+          logo={null}
           label={configuringDevice.name || `${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
           previewSize={DEFAULT_PREVIEW_SIZE}
           width={thumbnailWidth}

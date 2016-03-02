@@ -7,124 +7,205 @@ import Cameras from '../libraries/Cameras';
 
 const log = createLog('CameraPreview');
 
+const styles = {
+  container: {
+    position: 'relative',
+  },
+  img: {
+    display: 'block',
+  },
+  canvas: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+};
+
 export default class CameraPreview extends React.Component {
   static propTypes = {
     deviceId: React.PropTypes.string,
   };
 
-  state = { camera: null };
+  _img = null;
+  _canvas = null;
+  _context = null;
+  _logoImg = null;
+
+  _previewTimestamp = 0;
+  _logoImgLoaded = false;
+
+  _renderedSize = null;
+
+  state = {
+    camera: null,
+  };
 
   get deviceId() {
     return this.props.deviceId;
   }
 
   componentWillMount() {
-    Cameras.on('stateChanged', this.onCamerasStateChanged);
-    this.onCamerasStateChanged(Cameras);
+    Cameras.on('stateChanged', this._onCamerasStateChanged);
+    this._onCamerasStateChanged();
   }
 
   componentDidMount() {
-    this._canvas = ReactDOM.findDOMNode(this);
+    this._img = ReactDOM.findDOMNode(this.refs.img);
+    this._canvas = ReactDOM.findDOMNode(this.refs.canvas);
     this._context = this._canvas.getContext('2d');
+    this._logoImg = document.createElement(`img`);
+
+    this._renderImg();
   }
 
   componentWillUnmount() {
-    let camera = this.state.camera;
+    const camera = this.state.camera;
     if (camera) {
-      camera.removeListener('previewImage', this.onPreviewImage);
+      camera.removeListener('previewImage', this._renderImg);
+      camera.removeListener('objects', this._renderCanvas);
     }
-    Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
+    if (this._logoImg.src) {
+      URL.revokeObjectURL(this._logoImg.src);
+    }
+    Cameras.removeListener('stateChanged', this._onCamerasStateChanged);
   }
 
-  shouldComponentUpdate() {
-    // render() only if the camera has changed.  For normal state updates, the
-    // onPreviewImage() listener manages updating the canvas outside of React.
-    const update = this._shouldComponentUpdate;
-    this._shouldComponentUpdate = false;
-    return update;
+  componentDidUpdate(prevProps, prevState) {
+    const camera = this.state.camera;
+    if (camera) {
+      this._renderedSize = camera.previewSize;
+    } else {
+      this._renderedSize = null;
+    }
+    this._renderImg();
   }
 
   render() {
-    let camera = this.state.camera;
-    if (!camera || !camera.previewSize) {
-      return <canvas />;
-    }
-    let {width, height} = camera.previewSize;
-    return <canvas width={width} height={height} style={{backgroundColor: 'lightgray'}} />;
-  }
+    const camera = this.state.camera;
 
-  componentDidUpdate() {
-    this.renderPreview();
-  }
+    let width;
+    let height;
 
-  onCamerasStateChanged = state => {
-    let oldCamera = this.state.camera;
-    let newCamera = state.cameras[this.deviceId];
-
-    if (oldCamera === newCamera) {
-      // If the camera is the same but the online state has changed, this
-      // component should be re-rendered as the preview window size may have
-      // changed.
-      if (this.state.online === newCamera.online) {
-        return;
-      }
+    if (camera && camera.previewSize) {
+      width = camera.previewSize.width;
+      height = camera.previewSize.height;
     } else {
+      // XXX Lame but we need some kind of default placeholder.
+      width = 320;
+      height = 180;
+    }
+
+    return (
+      <div style={styles.container}>
+        <img width={width} height={height} style={styles.img} ref="img" />
+        <canvas width={width} height={height} style={styles.canvas} ref="canvas" />
+      </div>
+    );
+  }
+
+  _onCamerasStateChanged = () => {
+    const oldCamera = this.state.camera;
+    const newCamera = Cameras.cameras[this.deviceId];
+
+    if (oldCamera !== newCamera) {
       if (oldCamera) {
-        oldCamera.removeListener('previewImage', this.onPreviewImage);
+        oldCamera.removeListener('previewImage', this._renderImg);
+        oldCamera.removeListener('objects', this._renderCanvas);
       }
       if (newCamera) {
-        newCamera.on('previewImage', this.onPreviewImage);
+        newCamera.addListener('previewImage', this._renderImg);
+        newCamera.addListener('objects', this._renderCanvas);
       }
-    }
-    this._shouldComponentUpdate = true;
-    this.setState({ camera: newCamera, online: newCamera && newCamera.online });
-  };
-
-  onPreviewImage = () => this.renderPreview();
-
-  renderPreview() {
-    let canvas = this._canvas;
-    if (!canvas) {
+      this._resetLogoImg();
+      this.setState({camera: newCamera});
       return;
     }
-    let context = this._context;
 
-    context.save();
-    context.globalAlpha = 1;
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (newCamera.previewSize !== this._renderedSize) {
+      this._img.width = this._canvas.width = newCamera.previewSize.width;
+      this._img.height = this._canvas.height = newCamera.previewSize.height;
+      this._renderedSize = newCamera.previewSize;
+      this._renderImg();
+      return;
+    }
+  };
 
-    let camera = this.state.camera;
-    if (camera) {
-      // Preview image
-      if (camera.online && camera.previewImage.src !== '') {
-        try {
-          context.drawImage(camera.previewImage, 0, 0);
-        } catch (err) {
-          if (err.name === 'NS_ERROR_NOT_AVAILABLE') {
-            // Ignore the occasional Firefox "NS_ERROR_NOT_AVAILABLE: Component is
-            // not available" complaint
-            log.warn('Error:', err.stack || err);
-          } else {
-            throw err;
-          }
-        }
-      } else {
-        context.fillStyle = 'grey';
-        context.fillRect(0, 0, canvas.width, canvas.height);
+  _resetLogoImg() {
+    this._logoImgLoaded = false;
+    if (this._logoImg) {
+      this._logoImg.onload = null;
+      if (this._logoImg.src) {
+        URL.revokeObjectURL(this._logoImg.src);
+        this._logoImg.src = ``;
+      }
+    }
+  }
 
-        if (!camera.online) {
-          context.fillStyle = 'white';
-          context.font = '12px serif';
-          context.textAlign = 'start';
-          context.textBaseline = 'top';
-          context.fillText('Offline', 5, 5);
-        }
+  _renderImg = () => {
+    const img = this._img;
+    const camera = this.state.camera;
+
+    if (img.src) {
+      URL.revokeObjectURL(img.src);
+    }
+
+    if (camera && camera.previewImage) {
+      const src = URL.createObjectURL(camera.previewImage);
+      const timestamp = camera.previewTimestamp;
+      img.onload = () => {
+        URL.revokeObjectURL(src);
+        this._previewTimestamp = timestamp;
+        this._renderCanvas();
+      };
+      img.src = src;
+    } else {
+      img.src = ``;
+      this._previewTimestamp = 0;
+    }
+    this._renderCanvas();
+  };
+
+  _renderCanvas = () => {
+    requestAnimationFrame(() => {
+      const canvas = this._canvas;
+      const context = this._context;
+
+      context.save();
+
+      try {
+        this._renderCanvasInternal(context, canvas.width, canvas.height);
+      } catch(err) {
+        log.warn(err);
       }
 
-      // Objects
-      let objects = camera.online && camera.previewObjects;
-      if (objects) {
-        let objectColors = [
+      context.restore();
+    });
+  };
+
+  _renderCanvasInternal(context, width, height) {
+    context.clearRect(0, 0, width, height);
+
+    const camera = this.state.camera;
+    if (!camera) {
+      // XXX Leave transparent?
+      return;
+    }
+
+    const defaultFont = '12px sans-serif';
+
+    context.globalAlpha = 1;
+
+    if (!camera.online || !this._previewTimestamp) {
+      context.fillStyle = camera.online ? 'lightgrey' : 'grey';
+      context.fillRect(0, 0, width, height);
+    }
+
+    // Objects.
+    if (this._previewTimestamp) {
+      const time = this._previewTimestamp.getTime();
+      const objects = camera.objects.collect(time - 250, time + 750);
+      if (objects.length) {
+        const objectColors = [
           'red',
           'lightgreen',
           'lightblue',
@@ -135,54 +216,65 @@ export default class CameraPreview extends React.Component {
 
         context.lineWidth = 1;
         context.font = '10px sans-serif';
+        context.fillStyle = 'black';
 
-        for (var i = 0; i < objects.length; ++i) {
-          context.fillStyle = context.strokeStyle = objectColors[i % objectColors.length];
-          context.fillStyle = 'black';
+        objects.forEach((object, index) => {
+          const tag = object.tag;
+          context.strokeStyle = objectColors[index % objectColors.length];
 
-          var tag = objects[i].tag;
-          var rects = objects[i].rects;
-          for (var j = 0; j < rects.length; ++j) {
-            var rect = rects[j];
+          object.rects.forEach((rect) => {
             context.strokeRect(rect.x, rect.y, rect.width, rect.height);
             context.fillText(tag, rect.x, rect.y + rect.height + 10);
-          }
-        }
+          });
+        });
       }
+    }
 
-      context.font = '12px serif';
-      context.fillStyle = 'white';
-      context.textBaseline = 'bottom';
+    // Camera name
+    context.font = defaultFont;
+    context.fillStyle = 'white';
+    context.textAlign = 'end';
+    context.textBaseline = 'bottom';
+    context.fillText(camera.name, width - 5, height - 5);
 
-      // Camera name
-      context.textAlign = 'end';
-      context.fillText(camera.name, canvas.width - 5, canvas.height - 5);
-
+    if (camera.online) {
       // Timestamp
-      let when = camera.online && camera.previewTimestamp;
-      if (when) {
-        context.textAlign = 'start';
-        context.fillText(when.toLocaleDateString() + ' ' + when.toLocaleTimeString(),
-          5, canvas.height - 5);
-      }
+      if (this._previewTimestamp) {
+        const dateString = this._previewTimestamp.toLocaleDateString();
+        const timeString = this._previewTimestamp.toLocaleTimeString();
 
-      // Logo
-      if (camera.online && camera.logoImage.src !== '') {
-        context.globalAlpha = 0.50;
-        try {
-          context.drawImage(camera.logoImage, 0, 0);
-        } catch (err) {
-          if (err.name !== 'NS_ERROR_NOT_AVAILABLE') {
-            // Ignore the occasional Firefox "NS_ERROR_NOT_AVAILABLE: Component is
-            // not available" complaint
-            log.warn('Error:', err.stack || err);
-          } else {
-            throw err;
-          }
+        context.textAlign = 'start';
+        context.fillText(`${dateString} ${timeString}`, 5, height - 5);
+      }
+    } else {
+      // Offline indicator.
+      context.textAlign = 'end';
+      context.textBaseline = 'top';
+      context.fillText('Offline', width - 5, 5);
+    }
+
+    // Logo
+    if (this._logoImgLoaded) {
+      context.globalAlpha = 0.50;
+      try {
+        context.drawImage(this._logoImg, 0, 0);
+      } catch (err) {
+        if (err.name === 'NS_ERROR_NOT_AVAILABLE') {
+          // Ignore the occasional Firefox "NS_ERROR_NOT_AVAILABLE: Component is
+          // not available" complaint
+          log.warn(err);
+        } else {
+          throw err;
         }
       }
-      context.restore();
+    } else if (camera.logoImage && !this._logoImg.src) {
+      const src = URL.createObjectURL(camera.logoImage);
+      this._logoImg.onload = () => {
+        this._logoImg.onload = null;
+        URL.revokeObjectURL(src);
+        this._logoImgLoaded = true;
+      };
+      this._logoImg.src = src;
     }
   }
 }
-

@@ -24,6 +24,20 @@ const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 //
 const BOX_HDR_SIZE = 8;
 
+const styles = {
+  container: {
+    position: 'relative',
+  },
+  video: {
+    width: '100%',
+  },
+  canvas: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+};
+
 function readFourcc(buf, offset) {
   let fourcc = '';
   for (let i = 0; i < 4; ++i) {
@@ -131,9 +145,16 @@ export default class CameraVideo extends React.Component {
       });
 
     this.video = React.findDOMNode(this.refs.video);
+    this.canvas = React.findDOMNode(this.refs.canvas);
+
+    window.addEventListener('resize', this._updateCanvasSize);
+    this.video.addEventListener('resize', this._updateCanvasSize);
+
     this.mediaSource = new MediaSource();
     this.video.src = URL.createObjectURL(this.mediaSource);
     this.mediaSource.addEventListener('sourceopen', this._onSourceOpen);
+
+    this.context = this.canvas.getContext('2d');
 
     Cameras.on('stateChanged', this._onCamerasStateChanged);
     this._onCamerasStateChanged(Cameras);
@@ -142,6 +163,8 @@ export default class CameraVideo extends React.Component {
   }
 
   componentWillUnmount() {
+    window.removeEventListener('resize', this._updateCanvasSize);
+    this.video.removeEventListener('resize', this._updateCanvasSize);
     clearInterval(this.timeUpdateInterval);
 
     let camera = this.state.camera;
@@ -156,6 +179,18 @@ export default class CameraVideo extends React.Component {
       this.sourceBuffer.removeEventListener('updateend', this._feedPlayer);
     }
   }
+
+  _updateCanvasSize = () => {
+    const rect = this.video.getBoundingClientRect();
+    this.canvas.width = Math.floor(rect.width);
+    this.canvas.height = Math.floor(rect.height);
+
+
+    this.context.save();
+    this.context.fillStyle = 'rgba(0, 0, 200, 0.5)';
+    this.context.fillRect(0, 0, 200, 200);
+    this.context.restore();
+  };
 
   _onCamerasStateChanged = state => {
     let oldCamera = this.state.camera;
@@ -180,7 +215,7 @@ export default class CameraVideo extends React.Component {
   _onSourceOpen = () => {
     this.sourceBuffer = this.mediaSource.addSourceBuffer(CODEC_DESCRIPTOR);
     this.sourceBuffer.addEventListener('updateend', this._feedPlayer);
-    this.mediaSource.removeEventListener(this._onSourceOpen);
+    this.mediaSource.removeEventListener('sourceopen', this._onSourceOpen);
     this._feedPlayer();
   };
 
@@ -249,9 +284,11 @@ export default class CameraVideo extends React.Component {
             <Link to="/"><Glyphicon glyph="home" /></Link>
           </Button>
         </ButtonGroup>
-        &nbsp; <Label>{this.state.currentDeviceTime}</Label>
-        <br/>
-        <video ref="video" />
+        <Label>{this.state.currentDeviceTime}</Label>
+        <div style={styles.container}>
+          <video style={styles.video} ref="video" />
+          <canvas style={styles.canvas} ref="canvas"></canvas>
+        </div>
       </div>
     );
   }

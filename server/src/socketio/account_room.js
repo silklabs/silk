@@ -52,6 +52,7 @@ type DeviceLiveStream = {
   diag: bool;
   preview: bool;
   mic: bool;
+  objects: bool;
 }
 
 // How long a device has to send a livestream message when the server is
@@ -82,6 +83,7 @@ class Device {
     diag: false,
     preview: false,
     mic: false,
+    objects: false,
   };
 
   constructor(socket: Socket, id: string) {
@@ -128,7 +130,11 @@ class Device {
     }
 
     if (this.livestream.diag ||
-        (this.info.previewSize && (this.livestream.preview || this.livestream.video || this.livestream.mic))) {
+        (this.info.previewSize &&
+         (this.livestream.preview ||
+          this.livestream.video ||
+          this.livestream.mic ||
+          this.livestream.objects))) {
       this.timeout = setTimeout(() => {
         log.info(`Device packet timeout. Disconnecting io=${this.socket.id} id=${this.id}`);
         this.socket.disconnect(true);

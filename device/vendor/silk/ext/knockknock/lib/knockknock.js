@@ -254,15 +254,12 @@ class FindFace {
       }
 
       this._working = true;
-      this._env.camera.getPreviewFrame(when, 'gray', (err, image) => {
-        if (err) {
-          log.warn(`Unable to fetch grayeq frame: ${err}`);
-          this._working = false;
-          return;
-        }
-        this._env.camera.getPreviewFrame(when, 'fullgray', (err2, orig) => {
-          if (err2) {
-            log.warn(`Unable to fetch full frame: ${err2}`);
+      this._env.camera.getPreviewFrames(
+        when,
+        ['gray', 'fullgray'],
+        (err, image, orig) => {
+          if (err) {
+            log.warn(`Unable to fetch grayeq frame: ${err}`);
             this._working = false;
             return;
           }
@@ -313,8 +310,8 @@ class FindFace {
           let diff = Date.now() - start;
           log.verbose(`Face recognition finished in ${diff}ms`);
           this._working = false;
-        });
-      });
+        },
+      );
     };
 
     this._env.timeline.on('face', this._onFace);

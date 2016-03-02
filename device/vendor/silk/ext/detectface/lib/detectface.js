@@ -229,15 +229,12 @@ class DetectFace {
       }
       working = true;
 
-      this._env.camera.getPreviewFrame(when, 'grayeq', (err, im) => {
-        if (err) {
-          log.warn(`Unable to fetch grayeq frame: ${err}`);
-          working = false;
-          return;
-        }
-        this._env.camera.getPreviewFrame(when, 'fullgray', async (err2, orig) => {
-          if (err2) {
-            log.warn(`Unable to fetch full frame: ${err2}`);
+      this._env.camera.getPreviewFrames(
+        when,
+        ['grayeq', 'fullgray'],
+        async (err, im, orig) => {
+          if (err) {
+            log.warn(`Unable to fetch frames: ${err}`);
             working = false;
             return;
           }
@@ -286,8 +283,8 @@ class DetectFace {
             log.error(`Error running face detection: ${e}`);
           }
           working = false;
-        });
-      });
+        },
+      );
     };
 
     timeline.on('motion', this._onMotion);

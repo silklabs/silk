@@ -413,15 +413,12 @@ export default class Trainer {
         }
 
         this._working = true;
-        this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
-          if (err) {
-            log.warn(`Unable to fetch grayeq frame: ${err}`);
-            this._working = false;
-            return;
-          }
-          this._env.camera.getPreviewFrame(when, 'fullgray', (err2, orig) => {
-            if (err2) {
-              log.warn(`Unable to fetch full frame: ${err2}`);
+        this._env.camera.getPreviewFrames(
+          when,
+          ['grayeq', 'fullgray'],
+          (err, image, orig) => {
+            if (err) {
+              log.warn(`Unable to fetch grayeq frame: ${err}`);
               this._working = false;
               return;
             }
@@ -468,8 +465,8 @@ export default class Trainer {
               resolve();
             }
             this._working = false;
-          });
-        });
+          },
+        );
       };
 
       this._env.timeline.on('face', this._onFace);

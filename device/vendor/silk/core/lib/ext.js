@@ -158,6 +158,21 @@ class Env extends EventEmitter {
       };
 
       /**
+       * Get preview frames
+       *
+       * @param {number} when - timestamp of the frame to get
+       * @param {Array<CameraPreviewFrameFormat>} formats - requested formats
+       * @param {CameraCallback} userCb - callback that receives an error
+                                          object and the image as an OpenCV
+                                          matrix
+       * @memberof Env.camera
+       * @instance
+       */
+      this.camera.getPreviewFrames = (when, formats, userCb) => {
+        camera.getPreviewFrames(when, formats, userCb);
+      };
+
+      /**
        * Returns the camera preview size
        *
        * @return {Size}

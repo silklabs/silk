@@ -79,13 +79,8 @@ vendor/silk/ext/dnn/dnn.js
 # |adb sync| generates this
 /filelist
 
-# vim droppings
-*.swp
-
 # eclipse droppings
 .cproject
 .project
 /.settings/
 
-# Mac OSX droppings
-.DS_Store

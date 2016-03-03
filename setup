@@ -14,6 +14,7 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export SILKRC=$ROOT/.silkrc
 export PATH=$ROOT/cli:$PATH
+export DEVICE_PATCH_TREE=$ROOT/device/gonk/silk/patch/external
 
 for subdir in sdk cli-plugin-internal; do
   if [ ! -d $ROOT/$subdir/node_modules ]; then
@@ -24,3 +25,15 @@ for subdir in sdk cli-plugin-internal; do
     fi
   fi
 done
+
+# Following packages are needed by caffe module
+brew install -vd snappy leveldb gflags glog szip lmdb
+brew install hdf5
+
+brew install -vd openblas
+brew link --force --overwrite openblas
+
+BOOST="$(brew list -1 | grep -i "^boost\$")"
+if [[ -z BOOST ]]; then
+  brew install boost
+fi

@@ -16,7 +16,7 @@
 #include "Channel.h"
 
 // TODO: This hard code must match ext/clapper
-#define FFT_WINDOW_SIZE 512    // 32ms - units of samples
+#define FFT_WINDOW_SIZE 256    // 32ms - units of samples
 
 // Batch this number of audio sample windows before sending off to node. Else,
 // we'd be flooding node with data every 20ms, which incurs lots o overhead.
@@ -30,6 +30,7 @@ using namespace android;
 AudioSourceEmitter::AudioSourceEmitter(Channel* channel, const sp<MediaSource> &source) :
     mChannel(channel),
     mSource(source) {
+  CHECK(sAudioSampleRate == 8000); // Hardcoded assumption that must match ext/clapper extension
   mAudioBufferIdx = 0;
 
   mAudioBufferLen = FFT_WINDOW_SIZE * BYTES_PER_SAMPLE *

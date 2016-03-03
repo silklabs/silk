@@ -1,4 +1,0 @@
-#! /usr/bin/env node
-
-const os = require('os');
-console.log('%s-%s', os.platform(), os.arch());

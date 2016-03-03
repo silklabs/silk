@@ -1,7 +1,8 @@
 #! /bin/bash -ex
-target=$1
 
-docker build -t node-build .
-./build.sh $target node-build
+pushd builder/tests
+npm install --ignore-scripts
+mkdir out
+pushd
 
-test -f "tests/out/$target/$target.node"
+mocha $(find test -name '*_test.js' )

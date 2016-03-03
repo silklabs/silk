@@ -1,0 +1,30 @@
+{
+  "name": "face",
+  "version": "0.0.1",
+  "description": "Face",
+  "main": "main.js",
+  "scripts": {
+    "preinstall": "./bin/preinstall",
+    "postinstall": "./bin/postinstall",
+    "test": "./bin/test",
+    "clean": "rm -rf node_modules"
+  },
+  "silkDependencies": {
+    "silk-babeldeps": "/babeldeps",
+    "silk-exttest": "/device/vendor/silk/sdk/exttest",
+    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-log": "/log"
+  },
+  "dependencies": {
+    "CBuffer": "1.1.0",
+    "babel-runtime": "5.8.35",
+    "fast-image-size": "0.1.2",
+    "mz": "2.2.0"
+  },
+  "devDependencies": {
+    "babel": "5.8.23",
+    "event-to-promise": "0.4.0",
+    "mocha": "2.4.2"
+  },
+  "private": true
+}

@@ -79,7 +79,7 @@ class TrackObject {
     timeline.on('preview', this._onPreview);
   }
 
-  _onPreview = (when) => {
+  _onPreview = async (when) => {
     log.debug(`Retrieving frame ${when}`);
     if (this.working) {
       log.error('Still busy, unable to process next preview image');
@@ -87,110 +87,107 @@ class TrackObject {
     }
 
     this.working = true;
-    this.when = when;
-    this._env.camera.getPreviewFrame(when, 'gray', this._onPreviewFrame);
-  };
+    try {
+      let [image] = await this._env.camera.getPreviewFrames(when, ['gray']);
 
-  _onPreviewFrame = (err, image) => {
-    if (err) {
-      log.warn(`Unable to fetch frame: ${err}`);
-      this.working = false;
-      return;
-    }
-    const when = this.when;
-    const start = Date.now();
+      const start = Date.now();
 
-    let maskedImage = this.motionzone.applyIgnoreMask(image);
+      let maskedImage = this.motionzone.applyIgnoreMask(image);
 
-    // Apply Gaussian smoothing to average pixel intensities due to tiny
-    // variations in the digital camera sensor
-    maskedImage.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
-    timeline.addDiagFrame('blurred', when, maskedImage);
+      // Apply Gaussian smoothing to average pixel intensities due to tiny
+      // variations in the digital camera sensor
+      maskedImage.gaussianBlur([GAUSSIAN_KERNEL_SIZE, GAUSSIAN_KERNEL_SIZE]);
+      timeline.addDiagFrame('blurred', when, maskedImage);
 
-    this.subtractor.apply(when, maskedImage, (motion) => {
-      maskedImage.release();
+      this.subtractor.apply(when, maskedImage, (motion) => {
+        maskedImage.release();
 
-      timeline.addDiagFrame('diff', when, motion);
+        timeline.addDiagFrame('diff', when, motion);
 
-      // Threshold the image, low differences are ignored (ex. contrast change due
-      // to sunlight)
-      motion = motion.threshold(THRESHOLD, MAX_THRESHOLD_VAL, 'Binary');
-      timeline.addDiagFrame('threshold', when, motion);
+        // Threshold the image, low differences are ignored (ex. contrast change due
+        // to sunlight)
+        motion = motion.threshold(THRESHOLD, MAX_THRESHOLD_VAL, 'Binary');
+        timeline.addDiagFrame('threshold', when, motion);
 
-      // Dilate the thresholded image to fill in holes
-      motion.dilate(NUM_ITERATIONS_DILATE);
-      timeline.addDiagFrame('dilate', when, motion);
+        // Dilate the thresholded image to fill in holes
+        motion.dilate(NUM_ITERATIONS_DILATE);
+        timeline.addDiagFrame('dilate', when, motion);
 
-      // Compute edges by subtracting an eroded version of the image
-      let gooeyInsides = motion.copy();
-      silkcv.Matrix.erodeWithBlackBorder(gooeyInsides, 2);
+        // Compute edges by subtracting an eroded version of the image
+        let gooeyInsides = motion.copy();
+        silkcv.Matrix.erodeWithBlackBorder(gooeyInsides, 2);
 
-      let edges = new cv.Matrix();
-      edges.absDiff(motion, gooeyInsides);
-      gooeyInsides.release();
+        let edges = new cv.Matrix();
+        edges.absDiff(motion, gooeyInsides);
+        gooeyInsides.release();
 
-      timeline.addDiagFrame('edges', when, edges);
+        timeline.addDiagFrame('edges', when, edges);
 
-      // Find contours (note that findContours() writes onto |edges|)
-      let contours = edges.findContours();
-      let rects = [];
-      let diagEnabled = timeline.diagFrameEnabled(`contours`);
-      for (let i = 0; i < contours.size(); i++) {
-        const rect = contours.boundingRect(i);
-        let color = [63, 63, 63];
-        if (contours.area(i) >= MIN_AREA) {
-          rects.push(rect);
-          color = [255, 255, 255];
+        // Find contours (note that findContours() writes onto |edges|)
+        let contours = edges.findContours();
+        let rects = [];
+        let diagEnabled = timeline.diagFrameEnabled(`contours`);
+        for (let i = 0; i < contours.size(); i++) {
+          const rect = contours.boundingRect(i);
+          let color = [63, 63, 63];
+          if (contours.area(i) >= MIN_AREA) {
+            rects.push(rect);
+            color = [255, 255, 255];
+          }
+          if (diagEnabled) {
+            edges.rectangle(
+              [rect.x, rect.y],
+              [rect.width, rect.height],
+              color,
+              1
+            );
+          }
         }
+
         if (diagEnabled) {
-          edges.rectangle(
-            [rect.x, rect.y],
-            [rect.width, rect.height],
-            color,
-            1
-          );
+          timeline.addDiagFrame(`contours`, when, edges);
         }
-      }
 
-      if (diagEnabled) {
-        timeline.addDiagFrame(`contours`, when, edges);
-      }
+        // Group rectangles that intersect with each other or are contained within
+        // each other
+        if (rects.length > 0) {
+          this.motionzone.groupRectangles(rects);
+          if (timeline.diagFrameEnabled(`pixels`)) {
+            log.debug(`group rects: ${JSON.stringify(rects)}`);
 
-      // Group rectangles that intersect with each other or are contained within
-      // each other
-      if (rects.length > 0) {
-        this.motionzone.groupRectangles(rects);
-        if (timeline.diagFrameEnabled(`pixels`)) {
-          log.debug(`group rects: ${JSON.stringify(rects)}`);
+            let motionMask = new cv.Matrix(image.height(), image.width(), cv.Constants.CV_8UC1, [0]);
+            rects.forEach(r => {
+              motionMask.rectangle([r.x, r.y], [r.width, r.height], [255, 255, 255], cv.Constants.CV_FILLED);
+            });
+            timeline.addDiagFrame(`mask`, when, motionMask);
 
-          let motionMask = new cv.Matrix(image.height(), image.width(), cv.Constants.CV_8UC1, [0]);
-          rects.forEach(r => {
-            motionMask.rectangle([r.x, r.y], [r.width, r.height], [255, 255, 255], cv.Constants.CV_FILLED);
-          });
-          timeline.addDiagFrame(`mask`, when, motionMask);
+            let motionPixels = new cv.Matrix(image.height(), image.width(), cv.Constants.CV_8UC1, [0]);
+            image.copyWithMask(motionPixels, motionMask);
+            timeline.addDiagFrame(`pixels`, when, motionPixels);
 
-          let motionPixels = new cv.Matrix(image.height(), image.width(), cv.Constants.CV_8UC1, [0]);
-          image.copyWithMask(motionPixels, motionMask);
-          timeline.addDiagFrame(`pixels`, when, motionPixels);
-
-          motionPixels.release();
-          motionMask.release();
+            motionPixels.release();
+            motionMask.release();
+          }
         }
-      }
 
-      edges.release();
+        edges.release();
 
-      let diff = Date.now() - start;
-      log.verbose(`Motion detection ran for ${diff}ms`);
+        let diff = Date.now() - start;
+        log.verbose(`Motion detection ran for ${diff}ms`);
 
-      if (rects && (rects.length > 0)) {
-        timeline.addObjects([{tag: 'motion', when, rects}]);
-        _playSound();
-      } else {
-        timeline.noMotion(when);
-      }
+        if (rects && (rects.length > 0)) {
+          //timeline.addObjects([{tag: 'motion', when, rects}]);
+          timeline.addObject('motion', when);
+          _playSound();
+        } else {
+          timeline.noMotion(when);
+        }
+        this.working = false;
+      });
+    } catch (err) {
+      log.error(err);
       this.working = false;
-    });
+    }
   };
 
   /**

@@ -33,8 +33,10 @@ type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
 type CameraCallback = (err: boolean, image: any) => void;
 
 declare export class Camera extends EventEmitter {
-  getPreviewFrame(when: number, format: CameraPreviewFrameFormat,
-      userCb: CameraCallback): void;
+  getPreviewFrames(
+    when: number,
+    formats: Array<CameraPreviewFrameFormat>
+  ): Promise<Array<any>>;
 }
 
 declare export class Timeline extends EventEmitter {

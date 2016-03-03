@@ -861,7 +861,7 @@ export default class Camera extends EventEmitter {
         }
       });
 
-      userCb(err, ...frames);
+      userCb(err, frames);
       return;
     }
     userCb('image not available in the cache', null);

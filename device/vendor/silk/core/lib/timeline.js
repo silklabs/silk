@@ -379,19 +379,13 @@ export default class Timeline extends EventEmitter {
     }
 
     objects.forEach((object) => {
-      if (object.tag === 'car') {
-        this.emit('car', object.when, object.rects);
+      // Store objects to be used later when there is no motion. Following
+      // objects are agnostic to motion so ignore them
+      if ((object.source !== 'hal') && (object.source !== 'clapper') &&
+          (object.source !== 'trackobject')) {
+        this.cachedObjs.push(object);
       }
-      // Run facial recognition on the detected faces before adding them
-      if (object.tag !== 'face') {
-        // Store objects to be used later when there is no motion. Following
-        // objects are agnostic to motion so ignore them
-        if ((object.source !== 'hal') && (object.source !== 'clapper') &&
-            (object.source !== 'trackobject')) {
-          this.cachedObjs.push(object);
-        }
-        this.previewObjects.push(object);
-      }
+      this.previewObjects.push(object);
     });
     this._processEvents(objects);
   }
@@ -400,11 +394,7 @@ export default class Timeline extends EventEmitter {
    * @private
    */
   _processEvents(objects: Array<TimelineEventObject>) {
-    objects.forEach((object) => {
-      if (object.tag !== 'face') {
-        this.eventTracker.record(object);
-      }
-    });
+    objects.forEach(object => this.eventTracker.record(object));
     this._emitEvents(objects);
   }
 

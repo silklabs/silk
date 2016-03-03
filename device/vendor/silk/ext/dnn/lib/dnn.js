@@ -84,22 +84,6 @@ class Dnn {
   }
 
   /**
-   * Get camera preview frame asynchronously
-   * @private
-   */
-  _getPreviewFrameAsync(camera, when, format) {
-    return new Promise((resolve, reject) => {
-      camera.getPreviewFrame(when, format, (err, im) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(im);
-        }
-      });
-    });
-  }
-
-  /**
    * @private
    */
   async _init() {
@@ -153,7 +137,7 @@ class Dnn {
 
       try {
         // Fetch camera preview image
-        let im = await this._getPreviewFrameAsync(this._env.camera, when, 'gray');
+        let [im] = await this._env.camera.getPreviewFrames(when, ['gray']);
 
         // By the time prediction finishes camera might have evicted the image
         // from its cache, so make a local copy of the image

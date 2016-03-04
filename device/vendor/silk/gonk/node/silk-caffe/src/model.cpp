@@ -4,9 +4,16 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+#ifdef ANDROID
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-caffe"
 #include <utils/Log.h>
+#else
+#define ALOGV(fmt, args...) printf(fmt, ##args); printf("\n");
+#define ALOGE ALOGV
+#define ALOGD ALOGV
+#endif
+
 #include <vector>
 #include <algorithm>
 #include <iosfwd>
@@ -251,14 +258,13 @@ NAN_METHOD(Model::SetLabels) {
   }
 
   string line;
-  int count = 0;
   while (getline(labels, line)) {
     self->mLabels.push_back(line);
   }
 
   Blob<float>* outputLayer = self->mCaffeNet->output_blobs()[0];
   if (self->mLabels.size() != outputLayer->channels()) {
-    ALOGD("Labels size: %d channels: %d", self->mLabels.size(),
+    ALOGD("Labels size: %lu channels: %d", self->mLabels.size(),
         outputLayer->channels());
     JSTHROW("Number of labels is different from the output layer dimension");
   }
@@ -380,7 +386,7 @@ public:
     dlib::matrix_range_exp<double> kvals = dlib::linspace(50, 200, 3);
     vector<dlib::rectangle> rects = getObjectProposals(mat, kvals, mMinSize,
         mMaxMergingIterations);
-    ALOGD("# proposals: %d", rects.size());
+    ALOGD("# proposals: %lu", rects.size());
 
     for (int count = 0; count < rects.size(); count++) {
       dlib::rectangle dlibrect = rects[count];

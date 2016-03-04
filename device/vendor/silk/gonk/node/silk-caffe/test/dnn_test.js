@@ -20,7 +20,7 @@
 'use strict';
 /* eslint-disable no-console */
 
-const caffe = require('silk-caffe');
+const caffe = require('..');
 const fs = require('fs');
 const opencv = require('opencv');
 

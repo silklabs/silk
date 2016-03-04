@@ -25,7 +25,6 @@ async function main() {
   });
   log.info(`Found ${issues.totalCount} issues`);
   await Promise.all(issues.items.map(async (issue) => {
-
     let issueContents = {
       title: issue.title,
       labels: issue.labels.map(label => label.name).filter(name => name !== 'silk-core+'),

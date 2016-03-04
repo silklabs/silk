@@ -103,12 +103,13 @@ export default async function main (config: any): any {
   let accounts = new Accounts(db);
   let devices = new Devices(db);
 
-  // Ensure we have indexed models...
-  let index = [crashMeta, timeMeta, nonce, accounts].map(async model => {
-    await model.ensureIndexes();
-  });
-  // It is safe to run these concurrently:
-  await Promise.all(index);
+  // Ensure we have indexed models. It's safe to run these concurrently.
+  await Promise.all([
+    crashMeta,
+    timeMeta,
+    nonce,
+    accounts,
+  ].map(model => model.ensureIndexes()));
 
   // Create the developer account...
   await accounts.ensureDevAccount(devAccount);

@@ -68,7 +68,7 @@ import {
   determineBuildsForEvent,
 } from './build-determinator';
 
-import type { TravisBuildConfig, TravisBuildRequest, TravisBuildResponse } from './travis';
+import type { TravisBuildRequest, TravisBuildResponse } from './travis';
 import type { BuildTriggerEvent } from './build-determinator';
 
 type PullRequestEvent = Object;
@@ -90,13 +90,6 @@ type TravisBuildTriggerEvent = BuildTriggerEvent & {
 };
 
 type ProjectBuildRequest = TravisBuildRequest & {
-  // Duplicated from TravisBuildRequest because of
-  // https://github.com/facebook/flow/issues/1366.
-  // Remove these when resolved.
-  message?: string;
-  branch?: string;
-  config?: TravisBuildConfig;
-
   project: string;
   travis_yml: string;
   cwd?: string;
@@ -241,13 +234,6 @@ export async function triggerBuildsForEvent(
   event: TravisBuildTriggerEvent
 ): Promise<Array<?TravisBuildResponse>> {
   const builds = await determineBuildsForEvent(owner_name, repo_name, event);
-
-  // Broken out to local variables due to
-  // https://github.com/facebook/flow/issues/1366
-  // Inline them again below when resolved.
-  const buildBranch = event.buildBranch;
-  const message = event.message;
-
   let buildRequests = builds.map((build) => {
     return {
       project: build.name,
@@ -255,8 +241,8 @@ export async function triggerBuildsForEvent(
       config: build.travis_config,
       cwd: build.cwd,
       sha: event.sha,
-      branch: buildBranch || event.branch,
-      message: message || build.title,
+      branch: event.buildBranch || event.branch,
+      message: event.message || build.title,
       commitRange: event.commitRange,
       pullRequest: event.pullRequest,
       pullRequestBaseBranch: event.pullRequestBaseBranch,

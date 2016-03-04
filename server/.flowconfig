@@ -23,4 +23,4 @@ esproposal.class_static_fields=ignore
 unsafe.enable_getters_and_setters=true
 
 [version]
-0.21.0
+0.22.1

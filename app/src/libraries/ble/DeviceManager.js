@@ -12,7 +12,7 @@ import SocketSession from './SocketSession';
 
 import type { DeviceRecord } from '../../components/abstract/Devices';
 import type MetricsAgent from 'silk-api/src/metrics_agent';
-import type { Socket, SocketManager } from './SocketManager';
+import type { Socket } from './SocketManager';
 import type { UserState } from '../UserState';
 
 type DeviceStatus = {
@@ -460,14 +460,6 @@ export class DeviceSession extends EventEmitter {
     return this._deviceId;
   }
 
-  get statusMessage(): string {
-    return this._statusMessage;
-  }
-
-  get errorMessage(): string {
-    return this._errorMessage;
-  }
-
   get wifiNetworks(): Array<DeviceWifiNetwork> {
     return this._wifiNetworks;
   }
@@ -611,7 +603,7 @@ export class DeviceSession extends EventEmitter {
 class DeviceManager extends EventEmitter {
 
   _devices: Map<Socket, DeviceSession> = new Map();
-  _socketManager: SocketManager;
+  _socketManager: EventEmitter;
   _privateKey: string = ``;
   _registeredDevicePublicKeys: Array<string> = [ ];
 

@@ -32,15 +32,13 @@ export { overrideImplementation as overrideCryptoSignImplementation } from './cr
 export { default as RssiSmoother } from './rssi_smoother';
 export { default as Metric } from './metric';
 export { default as MetricTypes } from './metric_types';
+export { default as createStreams } from './streams';
 
 export const BTLE_SOCKET_UUIDS = {
   service: '78955692-e50a-4dfd-b1f0-f59303ebf4cb',
   read: '9c333756-62c3-4141-8ee5-fed0d9f84a72',
   write: 'ef4cf114-5d10-4b73-8a5f-214aae42c6f9',
 };
-
-export { default as createStreams } from './streams';
-export { default as RssiSmoother } from './rssi_smoother';
 
 type SocketioConfig = [string, {
   transports: Array<string>;

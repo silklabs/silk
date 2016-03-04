@@ -11,6 +11,7 @@ declare module 'socket.io' {
     once(name: string, fn: (any: any) => void): void;
     off(name: string): void;
     emit(name: string, ...args: any): any;
+    addListener(name: string, fn: (any: any) => void): void;
     removeListener(name: string): void;
   }
 

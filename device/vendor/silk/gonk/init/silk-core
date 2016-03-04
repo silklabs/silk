@@ -4,6 +4,7 @@ export NODE_ENV="production"
 export DEBUG=$(getprop persist.silk.debug "silk-*,-silk-*:debug")
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
 export UV_THREADPOOL_SIZE=32
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib
 
 info() {
   log -p i -t silk-init $@

@@ -28,14 +28,13 @@ fi
 echo "Using patch folder: $PATCH_TREE"
 
 if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
-  echo "Caffe installation is only supported on Darwin"
   exit 0
 fi
 
 UNAMESTR=`uname`
 if [[ "$UNAMESTR" != 'Darwin' ]]; then
   echo "Caffe installation is only supported on Darwin"
-  exit 0
+  exit 1
 fi
 
 # Install node-opencv

@@ -5,8 +5,8 @@
   "main": "lib/caffe.js",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "dependencies": {
-    "browserify": "^10.2.1",
-    "nan": "^2.0.9"
+    "browserify": "10.2.1",
+    "nan": "2.0.9"
   },
   "scripts": {
     "preinstall": "./bin/preinstall",

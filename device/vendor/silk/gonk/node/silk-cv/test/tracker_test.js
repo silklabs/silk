@@ -8,7 +8,8 @@ const silkcv = require('..');
 suite('Tracker', () => {
   // TODO: Add 'CMT' tracker if/when it is made less crashy
   ['MEDIANFLOW'].forEach(trackerName => {
-    test(trackerName, () => new Promise(resolve => {
+
+    test(trackerName + ' sanity', () => new Promise(resolve => {
       cv.readImage(path.join(__dirname, 'fixtures/tracker/t0.jpg'), (err, im) => {
         if (err) {
           throw err;
@@ -30,8 +31,7 @@ suite('Tracker', () => {
                 throw new Error('Test image has no size');
               }
               im_test.convertGrayscale();
-              console.log('here');
-              let r = tracker.update(im_test, (err, found, rect) => {
+              tracker.update(im_test, (err, found, rect) => {
                 assert(!tracker.busy(), 'Tracker not expected to be busy');
                 if (err) {
                   throw err;
@@ -47,6 +47,35 @@ suite('Tracker', () => {
                 resolve();
               });
             });
+          }
+        );
+      });
+    }));
+
+    test(trackerName + ' cancel', () => new Promise(resolve => {
+      cv.readImage(path.join(__dirname, 'fixtures/tracker/t0.jpg'), (err, im) => {
+        if (err) {
+          throw err;
+        }
+        if (im.width() < 1 || im.height() < 1) {
+          throw new Error('Input image has no size');
+        }
+        im.convertGrayscale();
+
+        const tracker = new silkcv.Tracker(
+          trackerName,
+          im,
+          {x:0, y:0, width:80, height:80},
+          err => {
+            assert(!err, 'Tracker init error: ' + err);
+            tracker.update(
+              im,
+              (err, found, rect) => assert(false, 'Tracker not cancelled')
+            );
+            assert(tracker.busy(), 'Tracker should be busy');
+            tracker.cancel();
+            assert(!tracker.busy(), 'Tracker should not be busy');
+            setTimeout(resolve, 250);
           }
         );
       });

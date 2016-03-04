@@ -32,18 +32,21 @@ private:
       frameWidth(frameWidth),
       frameHeight(frameHeight),
       initialized(false),
+      cancelled(false),
       processing(false) {}
   ~Tracker() {}
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Update(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Busy(const Nan::FunctionCallbackInfo<v8::Value>& info);
+  static void Cancel(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
   cv::Ptr<cv::Tracker> tracker;
   int frameWidth;
   int frameHeight;
 
   bool initialized;
+  bool cancelled;
   bool processing;
 };
 
@@ -118,15 +121,25 @@ public:
   }
 
   void HandleErrorCallback() {
+    if (nodeTracker->cancelled) {
+      nodeTracker->cancelled = false;
+      // Don't invoke the callback, we've been cancelled
+      return;
+    }
+
     nodeTracker->processing = false;
     Nan::AsyncWorker::HandleErrorCallback();
   }
 
   void HandleOKCallback() {
+    if (nodeTracker->cancelled) {
+      nodeTracker->cancelled = false;
+      // Don't invoke the callback, we've been cancelled
+      return;
+    }
+
     Nan::HandleScope scope;
-
     nodeTracker->processing = false;
-
     v8::Local<v8::Object> rectObject = Nan::New<v8::Object>();
     rectObject->Set(Nan::New<v8::String>("x").ToLocalChecked(),
                     Nan::New<v8::Number>(rect.x));
@@ -164,6 +177,7 @@ void Tracker::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "update", Update);
   Nan::SetPrototypeMethod(tpl, "busy", Busy);
+  Nan::SetPrototypeMethod(tpl, "cancel", Cancel);
 
   constructor.Reset(tpl->GetFunction());
   exports->Set(Nan::New("Tracker").ToLocalChecked(), tpl->GetFunction());
@@ -233,6 +247,15 @@ NAN_METHOD(Tracker::Busy) {
   Tracker* obj = ObjectWrap::Unwrap<Tracker>(info.Holder());
   info.GetReturnValue().Set(
     Nan::New<v8::Boolean>(!obj->initialized || obj->processing));
+}
+
+NAN_METHOD(Tracker::Cancel) {
+  Tracker* obj = ObjectWrap::Unwrap<Tracker>(info.Holder());
+
+  if (obj->processing) {
+    obj->cancelled = true;
+    obj->processing = false;
+  }
 }
 
 NAN_METHOD(Tracker::Update) {

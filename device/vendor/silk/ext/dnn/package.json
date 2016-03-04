@@ -15,11 +15,11 @@
     "silk-log": "/log"
   },
   "dependencies": {
-    "babel-runtime": "5.8.35"
+    "babel-runtime": "5.8.35",
+    "mz": "2.0.0"
   },
   "devDependencies": {
-    "babel": "5.8.35",
-    "mz": "2.0.0"
+    "babel": "5.8.35"
   },
   "private": true
 }

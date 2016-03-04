@@ -4,12 +4,6 @@ import React from 'react';
 import createAudioAnalyzer from '../libraries/AudioAnalyzer';
 import Scrubber from './Scrubber';
 
-// We assume 16-bit signed samples from the mic stream.
-//
-// TODO: get me from global audio config
-const SAMPLE_MIN = -32768;
-const SAMPLE_MAX = 32767;
-
 // The "real" maximum loudness we see on the linear scale is ~0.1, but
 // that's a very very loud sound.  So we intentonally clip the max
 // here to get a better-colorized graph.
@@ -148,8 +142,8 @@ export default class AudioVisualizer extends React.Component {
       fftSize: this.props.fftSize,
       windowOverlap: this.props.windowOverlap,
       sampleRate: this.props.track.sampleRate,
-      sampleMin: SAMPLE_MIN,
-      sampleMax: SAMPLE_MAX,
+      sampleMin: this.props.sampleMin,
+      sampleMax: this.props.sampleMax,
     });
     this.analyzer.on('timeDomain', this._onTimeDomain);
     this.analyzer.on('fftMagnitudeLinear', this._onFFTMagnitudeLinear);

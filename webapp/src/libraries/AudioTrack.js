@@ -1,4 +1,7 @@
+import createLog from 'silk-log';
 import { EventEmitter } from 'events';
+
+const log = createLog('AudioTrack');
 
 /**
  * Audio track that updates in real time.  The duration of the track
@@ -19,11 +22,11 @@ export class LiveTrack extends EventEmitter {
   }
 
   play() {
-    console.log('play()ing a live track is a no-op');
+    log.debug('play()ing a live track is a no-op');
   }
 
   stop() {
-    console.log('stop()ing a live track is a no-op');
+    log.debug('stop()ing a live track is a no-op');
   }
 
   getSamples(startTime, endTime) {
@@ -105,7 +108,7 @@ export class StaticTrack extends EventEmitter {
 
   play() {
     if (this.timeUpdateInterval) {
-      console.log('Already playing');
+      log.debug('Already playing');
       return;
     }
     setTimeout(this._onTimeUpdate, 1000 * this.chunkBufferSec);

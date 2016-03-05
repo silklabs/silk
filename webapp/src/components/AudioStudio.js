@@ -41,6 +41,10 @@ function isBenchmarkTAR(name) {
   return name === 'benchmark.tar';
 }
 
+function isClapEvent(testName) {
+  return testName.split('-')[0] === 'clap'
+}
+
 function isTARFilename(name) {
   return name.endsWith('.tar');
 }
@@ -589,7 +593,7 @@ export default class AudioStudio extends React.Component {
     // multiple .wav files.ñ
     let clapperTest = require('../libraries/ClapperTester');
     let benchmark = {
-      totalTests: 0,
+      testsRun: 0,
       claps: 0,
       miss: [ ],
       falseAccept: [ ],
@@ -597,9 +601,7 @@ export default class AudioStudio extends React.Component {
 
     // We run through the set of benchmark tests below and extract the
     // first loud sound heard in each test.  From the extracted loud
-    // sound, we compute a feature vector --- 25 consecutive
-    // spectrogram frames concatenated together --- and a vector label
-    // --- 1 for claps and -1 for non-claps.
+    // sound, we compute a feature vector and record the test's label.
     let trainingData = [ ];
     let trainingLabels = [ ];
     let validationData = [ ];
@@ -621,8 +623,8 @@ export default class AudioStudio extends React.Component {
         return forEachFileInTAR(`${dir}-${subsuite}`, fileData,
                                 runTestOrSuite);
       }
-      let event = tag.split('-')[0];
-      let isClap = event === 'clap';
+      let testName = `${tag}-${header.name}`;
+      let isClap = isClapEvent(testName);
       let samples = getAudioDataFromWAV(fileData);
       let detectedEvents = clapperTest(samples);
 
@@ -661,11 +663,11 @@ export default class AudioStudio extends React.Component {
 
           if (forTraining) {
             trainingData.push(featureVector);
-            trainingLabels.push(label);
+            trainingLabels.push(testName);
           }
           if (isValidationData) {
             validationData.push(featureVector);
-            validationLabels.push(label);
+            validationLabels.push(testName);
           }
           // We've extracted all we need from the test case and don't
           // care about the rest of the samples that are going to be
@@ -686,7 +688,7 @@ export default class AudioStudio extends React.Component {
         detectedLoudSound = true;
       }
       if (!detectedLoudSound) {
-        throw `Failed to extract loud sound from clip ${tag}-${header.name}`;
+        throw `Failed to extract loud sound from clip ${testName}`;
       }
       if (!isValidationData) {
         // If this vector wasn't chosen for SVM validation, then we
@@ -696,9 +698,9 @@ export default class AudioStudio extends React.Component {
         return Promise.resolve();
       }
       // Add this test case to the clapper validation results.
-      benchmark.totalTests += 1;
-      if (benchmark.totalTests % 25 === 0) {
-        log.info(`... test ${benchmark.totalTests}`);
+      benchmark.testsRun += 1;
+      if (benchmark.testsRun % 25 === 0) {
+        log.info(`... test ${benchmark.testsRun}`);
       }
       let testId = (tag + '/' + leafName);
       let detectedClap = (detectedEvents.indexOf('clap') >= 0);
@@ -717,30 +719,35 @@ export default class AudioStudio extends React.Component {
     // file.
     forEachFileInTAR(null, benchmarkTAR, runTestOrSuite)
       .then(() => {
-        let nrTests = benchmark.totalTests;
-        let claps = benchmark.claps;
-        let nonClaps = nrTests - claps;
-        let detectRate = (1 - benchmark.miss.length / claps);
-        let faRate = benchmark.falseAccept.length / nonClaps;
+        let nrTests = benchmark.testsRun;
+        let nrClaps = benchmark.claps;
+        let nrNonClaps = nrTests - nrClaps;
+        let nrDetected = nrClaps - benchmark.miss.length;
+        let nrFalseAccepts = benchmark.falseAccept.length;
         let elapsedTimeSec = (Date.now() - benchmarkStartMs) / 1000;
         let msPerTest = 1000.0 * elapsedTimeSec / nrTests;
         log.info(`Ran ${nrTests} tests in ${elapsedTimeSec.toFixed(2)}s (${msPerTest.toFixed(1)}ms per test)`);
-        log.info(`  detected ${(100 * detectRate).toFixed(2)}% of claps and falsely accepted ${(100 * faRate).toFixed(2)}% non-claps`);
+        log.info(`  detected ${nrDetected}/${nrClaps} claps and falsely accepted ${nrFalseAccepts}/${nrNonClaps} non-claps`);
         log.info(`  misses: ${benchmark.miss}`);
         log.info(`  false-accepts: ${benchmark.falseAccept}`);
       })
       .then(() => {
         this._trainSVM(trainingData, trainingLabels,
-                       validationData, validationLabels);
+                       validationData, validationLabels,
+                       (label) => isClapEvent(label) ? 1 : -1);
       });
   }
 
-  _trainSVM(trainingData, trainingLabels, validationData, validationLabels) {
+  _trainSVM(trainingData, trainingLabels, validationData, validationLabels,
+            labelToSVMClass) {
     let svm = new svmjs.SVM();
     let options = {
+      // Default `maxiter` is 1e4.  Raising it to 1e6 seems to produce
+      // slightly better results, but not conclusively and not
+      // formally.
+      maxiter: 1e6,
       // These magic SVM params are the default for svmjs.
       C: 1e0,
-      maxiter: 1e4,
       numpasses: 1e1,
       // Linear kernels are broken in svmjs, which is very concerning.
       //svmjs should not be used in production code, at least not for
@@ -757,7 +764,7 @@ export default class AudioStudio extends React.Component {
 
     log.info(`Beginning training on ${trainingData.length} points ... this will take a while`);
     start = Date.now();
-    svm.train(trainingData, trainingLabels, options);
+    svm.train(trainingData, trainingLabels.map(labelToSVMClass), options);
     let trainSecs = (Date.now() - start) / 1000;
     log.info(`  finished in ${trainSecs} seconds`);
 
@@ -768,35 +775,38 @@ export default class AudioStudio extends React.Component {
     log.info(`  finished in ${predictSecs} seconds`);
 
     let nrTests = predictions.length;
-    let claps = 0;
-    let nonClaps = 0;
-    let miss = 0;
-    let falseAccept = 0;
+    let nrClaps = 0;
+    let nrNonClaps = 0;
+    let miss = [ ];
+    let falseAccept = [ ];
     for (let i = 0; i < validationLabels.length; ++i) {
-      let [ expected, actual ] = [ validationLabels[i], predictions[i] ];
+      let label = validationLabels[i];
+      let [ expected, actual ] = [ labelToSVMClass(label), predictions[i] ];
       if (expected === 1) {
-        claps++;
+        nrClaps++;
         if (actual !== expected) {
-          miss++;
+          miss.push(label);
         }
         continue;
       }
       if (expected === -1) {
-        nonClaps++;
+        nrNonClaps++;
         if (actual !== expected) {
-          falseAccept++;
+          falseAccept.push(label);
         }
         continue;
       }
       console.log('WTF', expected, actual);
       throw 'WTF';
     }
-    let detectRate = (1 - miss / claps);
-    let faRate = falseAccept / nonClaps;
+    let nrDetected = nrClaps - miss.length;
+    let nrFalseAccepts = falseAccept.length;
     let msPerTest = 1000.0 * predictSecs / nrTests;
     log.info(`SVM ran ${nrTests} validations in predictions took ${predictSecs} seconds (${msPerTest.toFixed(1)}ms per test)`);
-    log.info(`  detected ${(100 * detectRate).toFixed(2)}% of claps(${claps}) and falsely accepted ${(100 * faRate).toFixed(2)}% non-claps(${nonClaps})`);
+    log.info(`  detected ${nrDetected}/${nrClaps} claps and falsely accepted ${nrFalseAccepts}/${nrNonClaps} non-claps`);
     log.info(`  params: C:${options.C} maxiter:${options.maxiter} rbfsigma:${options.rbfsigma} numpasses:${options.numpasses}`);
+    log.info(`  misses: ${miss}`);
+    log.info(`  false-accepts: ${falseAccept}`);
 
     let json = svm.toJSON();
     let svm2 = new svmjs.SVM();

@@ -20,6 +20,8 @@ const extDirs = [ 'system/silk/ext', 'data/silk/ext' ];
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 
+let nextObjectId = 0;
+
 /**
  * Class that provides Silk SDK APIs to extensions/behaviors
  *
@@ -345,6 +347,10 @@ class Env extends EventEmitter {
        */
       this.timeline.noMotion = when => {
         timeline.noMotion(when);
+      };
+
+      this.timeline.getNextObjectId = () => {
+        return ++nextObjectId;
       };
     }
 

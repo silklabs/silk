@@ -1,9 +1,7 @@
 import createLog from 'silk-log';
 import { EventEmitter} from 'events';
 
-import { KissFFTR } from '../../external/js-kissfft';
-
-const log = createLog('AudioAnalyzer');
+const log = createLog('audio-AudioAnalyzer');
 
 // Constants used to compute the Blackman windowing function below.
 // See WebAudio specification, section 2.23.3 "FFT Windowing and
@@ -13,7 +11,15 @@ const A0 = 0.5 * (1 - ALPHA);
 const A1 = 0.5;
 const A2 = 0.5 * ALPHA;
 
-let isPowerOfTwo = (x) => (x & (x - 1)) === 0;
+function tryGetFFT() {
+  let fftSync = null;
+  try {
+    fftSync = require('kissfft').fftSync;
+  } catch (e) {
+    log.error(`No FFT implementation available (${e})`);
+  }
+  return fftSync;
+}
 
 /**
  * Modeled on the WebAudio `AnalyserNode` API (except spelled
@@ -42,9 +48,10 @@ let isPowerOfTwo = (x) => (x & (x - 1)) === 0;
  * computed from the same input window.  The defined sequence of
  * events firing is the ordered list above.
  */
-class AudioAnalyzer extends EventEmitter {
-  fft: KissFFTR;
+export default class AudioAnalyzer extends EventEmitter {
+  fft;
   fftInput: Float32Array;
+  fftOutput: Float32Array;
   fftSize: number;
   inputWindow: Float32Array;
   inputWindowStartTime: number;
@@ -64,8 +71,9 @@ class AudioAnalyzer extends EventEmitter {
     this.sampleScale = sampleScale;
     this.sampleOffset = sampleOffset;
 
-    this.fft = new KissFFTR(this.fftSize);
+    this.fft = tryGetFFT(this.fftSize);
     this.fftInput = new Float32Array(this.fftSize);
+    this.fftOutput = new Float32Array(this.fftSize + 2);
     this.inputWindow = new Float32Array(this.fftSize);
     this.inputToFill = this.fftSize;
     this.outputMagnitudes = new Float32Array(this.fftSize / 2);
@@ -162,7 +170,11 @@ class AudioAnalyzer extends EventEmitter {
     }
 
     // Run the forward FFT on the normalized and windowed samples.
-    let output = this.fft.forward(this.fftInput);
+    if (!this.fft) {
+      log.warn('No FFT implementation available, skipping further processing');
+      return;
+    }
+    let output = this.fft(this.fftInput, this.fftOutput);
     this.emit('fft', output, startTime, endTime);
 
     if (!doFFTMagnitudeLinear) {
@@ -210,45 +222,4 @@ class AudioAnalyzer extends EventEmitter {
     // data.
     this.emit('fftMagnitudeDecibel', this.outputMagnitudes, startTime, endTime);
   }
-}
-
-/**
- * Create and return an audio analyzer based on `params`.  The
- * required params are:
- *
- *  - `fftSize`: size of requested FFT, which computed on each window
- *    `fftSize` samples.  It should be a power of 2.
- *
- *  - `windowOverlap`: how many samples each analyzed window overlap
- *    with the previous window
- *
- *  - `sampleMin`: minimum possible value for any sample
- *
- *  - `sampleMax`: maximum possible value for any sample
- *
- * `sampleMin` and `sampleMax` are used to normalize the input
- * samples.  (Yes, they're a leaky abstraction; bad API.)
- *
- * If `params` are invalid, null is returned.
- */
-export default function createAudioAnalyzer(params) {
-  let { fftSize, windowOverlap, sampleRate, sampleMin, sampleMax } = params;
-  if (!(0 <= fftSize
-        && fftSize === (fftSize | 0)
-        && isPowerOfTwo(fftSize))) {
-    console.error(`'fftSize' must be a power of two`);
-    return null;
-  }
-  if (!(0 <= windowOverlap && windowOverlap < fftSize)) {
-    console.error(`'windowOverlap' must be in the range [ 0, fftSize )`);
-    return null;
-  }
-  if (!(sampleMin < sampleMax)) {
-    console.error(`'sampleMin' must be less than 'sampleMax'`);
-    return null;
-  }
-  let range = (sampleMax - sampleMin);
-  let scale = 2.0 / range;
-  let offset = -(sampleMax + sampleMin) / range;
-  return new AudioAnalyzer(fftSize, windowOverlap, sampleRate, scale, offset);
 }

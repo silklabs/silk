@@ -1,7 +1,7 @@
+import { createAudioAnalyzer } from 'silk-audio';
 import invariant from 'assert';
 import React from 'react';
 
-import createAudioAnalyzer from '../libraries/AudioAnalyzer';
 import Scrubber from './Scrubber';
 
 // The "real" maximum loudness we see on the linear scale is ~0.1, but

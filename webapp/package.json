@@ -1,7 +1,9 @@
 {
   "silkDependencies": {
     "eslint-config-silk": "/eslint",
+    "external-js-kissfft": "/external-js-kissfft",
     "silk-api": "/api",
+    "silk-audio": "/audio",
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",
     "silk-core-version": "/version",

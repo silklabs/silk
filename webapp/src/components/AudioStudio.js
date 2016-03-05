@@ -1,4 +1,5 @@
 import config from 'silk-config';
+import { createAudioAnalyzer, createSoundDetectorSVM } from 'silk-audio';
 import createLog from 'silk-log';
 import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Input,
@@ -9,8 +10,6 @@ import tar from 'tar-stream';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
-import ClapDetectorSVM from '../libraries/ClapDetectorSVM';
-import createAudioAnalyzer from '../libraries/AudioAnalyzer';
 import FileDrop from './FileDrop';
 import Files from '../libraries/Files';
 import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
@@ -42,7 +41,7 @@ function isBenchmarkTAR(name) {
 }
 
 function isClapEvent(testName) {
-  return testName.split('-')[0] === 'clap'
+  return testName.split('-')[0] === 'clap';
 }
 
 function isTARFilename(name) {
@@ -85,6 +84,24 @@ function makeWAVFromMicData(samples, params = config.deviceMic) {
   return wav.toArrayBuffer();
 }
 
+/**
+ * Return the value of the maximum element of `array`.
+ *
+ * A naive grasshopper might be tempted to write something like
+ * `Math.max(...array)`, but that would be foolish indeed.  Something
+ * pathological in the spread-operator translation causes that
+ * expression to run ~200x slower than this loop on device.
+ *
+ * TODO: share with silk-audio `max()`.
+ */
+function max(array) {
+  let maxValue = -Infinity;
+  for (let i = 0; i < array.length; ++i) {
+    maxValue = Math.max(array[i], maxValue);
+  }
+  return maxValue;
+}
+
 function readEntireStream(stream) {
   return new Promise((resolve, reject) => {
     let buffer = new Buffer(0);
@@ -118,6 +135,7 @@ const DEFAULT_PREFS = {
 };
 
 const clapSVMConfig = {
+  soundClass: 'clap',
   model: 'clap-svm.json',
   // This defines which FFT result type we'll use for SVM
   // classification.  It's been found empirically that linear magnitudes
@@ -296,7 +314,7 @@ export default class AudioStudio extends React.Component {
     if (track) {
       track.on('timeupdate', this._onTimeUpdate);
 
-      this.clapDetectorSVM = new ClapDetectorSVM(track, clapSVMConfig);
+      this.clapDetectorSVM = createSoundDetectorSVM(clapSVMConfig);
       this.clapDetectorSVM.on('clap', this._onClapSVM);
     }
     this.setState({ track });
@@ -370,7 +388,7 @@ export default class AudioStudio extends React.Component {
   };
 
   _onFFTMagnitudeDecibel = (magnitudes, startTime, endTime) => {
-    let isLoud = Math.max(...magnitudes) > LOUD_SOUND_THRESHOLD_DB;
+    let isLoud = max(magnitudes) > LOUD_SOUND_THRESHOLD_DB;
     if (isLoud && this.loudSoundStartTime === 0.0) {
       // This is the first sample window that we heard the lound
       // sound.  Now we kick off recording, starting from just before
@@ -453,10 +471,12 @@ export default class AudioStudio extends React.Component {
   };
 
   _onTimeUpdate = (currentTime, startTime, endTime, lastTime) => {
+    let samples = this.state.track.getSamples(lastTime, currentTime);
+    this.clapDetectorSVM.appendSamples(samples, lastTime);
+
     if (!(this.state.playing || this.state.recording)) {
       return;
     }
-    let samples = this.state.track.getSamples(lastTime, currentTime);
     let wavData = new Int16Array(samples.length);
     wavData.set(samples);
     if (this.state.playing) {
@@ -645,7 +665,7 @@ export default class AudioStudio extends React.Component {
       let vectorOffset = 0;
       let extractLoudSounds = (magnitudes) => {
         if (vectorOffset === 0) {
-          let isLoud = Math.max(...magnitudes) > clapSVMConfig.loudThreshold;
+          let isLoud = max(magnitudes) > clapSVMConfig.loudThreshold;
           if (!isLoud) {
             return;
           }
@@ -654,7 +674,6 @@ export default class AudioStudio extends React.Component {
         vectorOffset += analyzer.frequencyBinCount;
         if (vectorOffset === featureVector.length) {
           analyzer.removeListener('fftMagnitudeDecibel', extractLoudSounds);
-          let label = isClap ? 1 : -1;
           let forTraining = (Math.random() < 0.5);
           isValidationData = !forTraining;
 

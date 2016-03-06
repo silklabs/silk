@@ -59,7 +59,7 @@
     "yamljs": "0.2.4"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0beta9",
+    "babel-eslint": "5.0.0",
     "babel-register": "6.3.13",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1",

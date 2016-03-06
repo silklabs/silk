@@ -23,7 +23,7 @@
     "silk-log": "/log"
   },
   "dependencies": {
-    "babel-eslint": "5.0.0beta9",
+    "babel-eslint": "5.0.0",
     "eslint": "1.10.3",
     "fs-extra": "0.26.5",
     "mz": "2.0.0",

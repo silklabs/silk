@@ -30,7 +30,7 @@
     "uuid": "2.0.1"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0-beta9",
+    "babel-eslint": "5.0.0",
     "eslint": "1.10.3"
   }
 }

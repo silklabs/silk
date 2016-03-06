@@ -31,7 +31,7 @@
     "socket.io-client": "1.4.4"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0beta9",
+    "babel-eslint": "5.0.0",
     "commander": "2.9.0",
     "eslint": "1.10.3",
     "eslint-plugin-import": "0.7.9",

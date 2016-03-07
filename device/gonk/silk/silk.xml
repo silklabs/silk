@@ -136,7 +136,9 @@
   <project name="silklabs/node-kissfft"
            path="external/node-kissfft"
            remote="github"
-           revision="f59bb22ef33bc5633f2069a6c2a74dfa8292376b"/>
+           revision="7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c"
+           upstream="master"
+           clone-depth="42"/>
   <project name="sandeepmistry/noble"
            path="external/noble"
            remote="github"

@@ -67,6 +67,7 @@
                 '-Wno-sign-compare',
                 '-Wstrict-aliasing',
                 '<!@(pkg-config --cflags opencv)',
+                '-isystem /usr/local/include',
                 '-isystem <!(echo $PWD/caffe/src/)',
                 '-isystem <!(echo $PWD/caffe/include/)',
                 '-isystem <!(echo $PWD/caffe/build/include/)',

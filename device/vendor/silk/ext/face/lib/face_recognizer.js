@@ -130,8 +130,6 @@ export default class FaceRecognizer {
     }
     this._predicting = true;
     const start = Date.now();
-
-
     const previewScale = fullgray.width() / gray.width();
     for (let face of faces) {
       // Initialize recognizer state if this is the first this face has been

@@ -100,6 +100,12 @@ export default class FaceTracker {
     });
   }
 
+  /*
+   * Returns the list of Faces where the associated is not currently busy
+   * performing a tracking update.
+   *
+   * As a side effect it will also try to prune duplicate trackers.
+   */
   _getIdleTrackers(): Array<Face> {
     let idleFaces = [];
     for (let i = 0; i < this.faces.length; i++) {

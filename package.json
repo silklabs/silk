@@ -6,7 +6,7 @@
     "issue793": "find . -name .__silk_npm_lock -exec rm {} \\; -print",
     "preinstall": "./tools/heroku/deploy.sh",
     "reboot": "npm run zest ; npm run warmup",
-    "warmup": "set -ex; for d in cli-plugin-internal sdk server sim webapp; do ( cd $d; npm install ); done",
+    "warmup": "set -ex; source ./setup; for d in cli-plugin-internal sdk server sim webapp; do ( cd $d; npm install ); done",
     "zest": "git reset --hard HEAD; git clean -dffx; echo https://youtu.be/1r_2fNiYkyE"
   },
   "repository": {

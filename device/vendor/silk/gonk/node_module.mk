@@ -90,6 +90,7 @@ endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f \
   ! -regex '.*/node_modules/babel/test/fixtures/.*' \
   ! -regex '.*/node_modules/gulp-match/Rob.*' \
+  ! -regex '.*/dlib/.*' \
 )
 
 LOCAL_32_BIT_ONLY := true

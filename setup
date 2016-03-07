@@ -1,6 +1,11 @@
+#
+# Prepares the Silk command-line environment.
+#
+# |source| this file.
+#
+
 SOURCE="${BASH_SOURCE[0]}"
-if [ -z $SOURCE ];
-then
+if [ -z $SOURCE ]; then
   # zsh support....
   SOURCE=${(%):-%N}
 fi
@@ -14,7 +19,9 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export SILKRC=$ROOT/.silkrc
 export PATH=$ROOT/cli:$PATH
-export DEVICE_PATCH_TREE=$ROOT/device/gonk/silk/patch/external
+
+# silk-caffe hack the find patches
+export SILK_CAFFE_PATCH_TREE=$ROOT/device/gonk/silk/patch/external
 
 for subdir in sdk cli-plugin-internal; do
   if [ ! -d $ROOT/$subdir/node_modules ]; then
@@ -28,14 +35,15 @@ done
 
 if [ $(uname) == "Darwin" ]; then
   # Following packages are needed by caffe module
-  brew install -vd snappy leveldb gflags glog szip lmdb
+  brew install -vd snappy leveldb gflags glog szip lmdb libtool
   brew install hdf5
 
   brew install -vd openblas
   brew link --force --overwrite openblas
 
-  BOOST="$(brew list -1 | grep -i "^boost\$")"
-  if [[ -z BOOST ]]; then
+  BOOST="$(brew list -1 | grep -i "^boost\$" || true)"
+  if [[ -z $BOOST ]]; then
     brew install boost
   fi
 fi
+

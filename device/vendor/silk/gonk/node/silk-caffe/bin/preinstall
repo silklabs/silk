@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+
 usage()
 {
   echo "Usage: $0 [-p|-h]"
@@ -21,13 +22,8 @@ while getopts "hp:" opt; do
   esac
 done
 
-if [[ -z $PATCH_TREE ]]; then
-  PATCH_TREE=$DEVICE_PATCH_TREE
-fi
-
-echo "Using patch folder: $PATCH_TREE"
-
 if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
+  echo Device build detected, no patching required.
   exit 0
 fi
 
@@ -36,6 +32,28 @@ if [[ "$UNAMESTR" != 'Darwin' ]]; then
   echo "Caffe installation is only supported on Darwin"
   exit 1
 fi
+
+if [[ -z $PATCH_TREE ]]; then
+  PATCH_TREE=$SILK_CAFFE_PATCH_TREE
+
+  if [[ -z $PATCH_TREE ]]; then
+    echo "Error: SILK_CAFFE_PATCH_TREE not defined.  |source ./setup|?"
+    exit 1
+  fi
+fi
+
+echo "Using patch folder: $PATCH_TREE"
+
+if [[ ! -d $PATCH_TREE ]]; then
+  echo Not a directory: $PATCH_TREE
+  exit 1
+fi
+
+J="-j2"
+if [[ -z $CI ]]; then
+  J="-j6"
+fi
+
 
 # Install node-opencv
 if [[ ! -d node_modules/opencv ]]; then
@@ -55,7 +73,7 @@ if [[ ! -d protobuf ]]; then
   git checkout tags/v2.6.1 -b v2.6.1
   ./autogen.sh
   ./configure --disable-shared
-  make -j2
+  make $J
   popd
 fi
 
@@ -103,7 +121,7 @@ if [[ ! -f caffe/build/lib/libcaffe.dylib ]]; then
     -DPROTOBUF_INCLUDE_DIR=$PROTOBUF_ROOT/src \
     -DPROTOBUF_LIBRARY=$PROTOBUF_ROOT/src/.libs/libprotobuf.a \
     ..
-  make all -j2
+  make all $J
   popd
   popd
 fi

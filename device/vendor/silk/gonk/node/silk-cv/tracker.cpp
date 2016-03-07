@@ -67,7 +67,7 @@ public:
     bool success;
     try {
       success = nodeTracker->tracker->init(mat, rect);
-    } catch(const std::exception &e) {
+    } catch (const std::exception &e) {
       SetErrorMessage(e.what());
       return;
     }
@@ -115,7 +115,7 @@ public:
     try {
       rect.x = rect.y = rect.width = rect.height = -1;
       found = nodeTracker->tracker->update(mat, rect);
-    } catch(const std::exception &e) {
+    } catch (const std::exception &e) {
       SetErrorMessage(e.what());
     }
   }
@@ -262,11 +262,11 @@ NAN_METHOD(Tracker::Update) {
   Tracker* obj = ObjectWrap::Unwrap<Tracker>(info.Holder());
 
   if (!obj->initialized) {
-    Nan::ThrowTypeError("Not initialized");
+    Nan::ThrowError("Not initialized");
     return;
   }
   if (obj->processing) {
-    Nan::ThrowTypeError("Busy");
+    Nan::ThrowError("Busy");
     return;
   }
 

@@ -35,7 +35,7 @@ done
 
 if [ $(uname) == "Darwin" ]; then
   # Following packages are needed by caffe module
-  brew install -vd snappy leveldb gflags glog szip lmdb
+  brew install -vd snappy leveldb gflags glog szip lmdb libtool
   brew install hdf5
 
   brew install -vd openblas

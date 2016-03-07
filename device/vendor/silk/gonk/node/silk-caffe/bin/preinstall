@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+
 usage()
 {
   echo "Usage: $0 [-p|-h]"
@@ -48,6 +49,12 @@ if [[ ! -d $PATCH_TREE ]]; then
   exit 1
 fi
 
+J="-j2"
+if [[ -z $CI ]]; then
+  J="-j6"
+fi
+
+
 # Install node-opencv
 if [[ ! -d node_modules/opencv ]]; then
  npm install peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c --ignore-scripts
@@ -66,7 +73,7 @@ if [[ ! -d protobuf ]]; then
   git checkout tags/v2.6.1 -b v2.6.1
   ./autogen.sh
   ./configure --disable-shared
-  make -j2
+  make $J
   popd
 fi
 
@@ -114,7 +121,7 @@ if [[ ! -f caffe/build/lib/libcaffe.dylib ]]; then
     -DPROTOBUF_INCLUDE_DIR=$PROTOBUF_ROOT/src \
     -DPROTOBUF_LIBRARY=$PROTOBUF_ROOT/src/.libs/libprotobuf.a \
     ..
-  make all -j2
+  make all $J
   popd
   popd
 fi

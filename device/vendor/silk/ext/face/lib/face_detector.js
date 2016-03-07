@@ -1,23 +1,21 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-// Load the regnerator polyfill manually so we don't need to also load all the
-// core-js polyfills which we don't actually need...
-import regeneratorRuntime from 'babel-runtime/regenerator';
-global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
-
 import cv from 'opencv';
+import {
+  Matrix,
+  FaceRect,
+} from './face';
 
 let log;
 let timeline;
-
 let previewScale = 0;
 
+
 const facecascade = {
-  tag: 'face',
   file: 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
   opts: {
     scale: 1.1,
@@ -55,27 +53,14 @@ const EYE_CASCADE2 = process.platform === 'android' &&
  * Call opencv methods to detect faces as defined by {@code cascades}
  *
  * @param im image representing region of interest
- * @param motionx x-coord of im within the original preview image
- * @param motiony y-coord of im within the original preview image
  */
-function detectFaces(im, motionx, motiony) {
+function detectFaces(im: Matrix): Array<FaceRect> {
   return new Promise(resolve => {
     im.detectObject(facecascade.file, facecascade.opts, (err, rects) => {
       if (err) {
         throw err;
       }
-      if (rects.length > 0) {
-        // Adjust rectangle's position within the original preview image
-        let newRects = rects.map(rect => {
-          let newRect = rect;
-          newRect.x += motionx;
-          newRect.y += motiony;
-          return newRect;
-        });
-        resolve(newRects);
-      } else {
-        resolve([]);
-      }
+      resolve(rects);
     });
   });
 }
@@ -185,32 +170,16 @@ function _detectBothEyes(when, orig, faceRect, eyeCascade1, eyeCascade2) {
   });
 }
 
-/**
- * Detect a face in the camera frame
- */
-class DetectFace {
+export default class FaceDetector {
+  _busy: bool = false;
+
   constructor(env) {
-    this._env = env;
-    this._init();
-  }
-
-  /**
-   *
-   */
-  willUnload() {
-    if (this._onMotion) {
-      timeline.removeListener('motion', this._onMotion);
-    }
-  }
-
-  async _init() {
-    timeline = this._env.timeline;
-    log = this._env.log;
-    let working = false;
+    log = env.log;
+    timeline = env.timeline;
 
     /*
     try {
-      const halFaces = await this._env.camera.getParameterInt('max-num-detected-faces-hw');
+      const halFaces = await env.camera.getParameterInt('max-num-detected-faces-hw');
       log.verbose(`HAL faces: ${halFaces}`);
       if (halFaces > 0) {
         log.info(`Disabling opencv face detection`);
@@ -221,92 +190,59 @@ class DetectFace {
       return;
     }
     */
-
-    this._onMotion = when => {
-      if (working) {
-        log.error(`Still busy, unable to process next preview image`);
-        return;
-      }
-      working = true;
-
-      this._env.camera.getPreviewFrame(when, 'grayeq', (err, im) => {
-        if (err) {
-          log.warn(`Unable to fetch grayeq frame: ${err}`);
-          working = false;
-          return;
-        }
-        this._env.camera.getPreviewFrame(when, 'fullgray', async (err2, orig) => {
-          if (err2) {
-            log.warn(`Unable to fetch full frame: ${err2}`);
-            working = false;
-            return;
-          }
-
-          // Calculate preview scale
-          previewScale = orig.width() / im.width();
-
-          let start = Date.now();
-          let faces = [];
-
-          try {
-            // Find faces
-            let faceRects = await detectFaces(im, 0, 0);
-            log.debug(`faces: ${JSON.stringify(faceRects)}`);
-            for (let i = 0; i < faceRects.length; i++) {
-              let faceRect = faceRects[i];
-
-              let weakface = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-              timeline.addDiagFrame('candidate', when, weakface);
-
-              // Detect both eyes
-              let [leftEye, rightEye] = await _detectBothEyes(when, orig, faceRect,
-                  EYE_CASCADE1, EYE_CASCADE2);
-
-              // Only if both the eyes are visible is when we say it is a face
-              if (leftEye && rightEye) {
-                faceRect.leftEye = [leftEye.x, leftEye.y];
-                faceRect.rightEye = [rightEye.x, rightEye.y];
-                faces.push(faceRect);
-
-                const roi = im.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-                timeline.addDiagFrame('face', when, roi);
-              }
-            }
-
-            let diff = Date.now() - start;
-            let msg = `Cascade ran for ${diff}ms`;
-            if (diff > 500) {
-              log.warn(msg); // Time to optimize?
-            } else {
-              log.verbose(msg);
-            }
-
-            this._notifyObjs({tag: facecascade.tag, when, rects: faces});
-          } catch (e) {
-            log.error(`Error running face detection: ${e}`);
-          }
-          working = false;
-        });
-      });
-    };
-
-    timeline.on('motion', this._onMotion);
   }
 
-  /**
-   * Notify timeline of the new faces detected
-   * @param faces
-   */
-  _notifyObjs(faces) {
-    let what;
-    if (faces.rects.length > 0) {
-      what = `${faces.tag}=${faces.rects.length}`;
-      timeline.addObjects([faces]);
-    } else {
-      what = ' -';
+  async detect(when: number, grayeq: Matrix, fullgray: Matrix): Promise<Array<FaceRect>> {
+    if (this._busy) {
+      log.warn('FaceDetector is busy, skipping detect()');
+      return [];
     }
-    log.info(`Detected faces:${what}`);
+    this._busy = true;
+
+    // Calculate preview scale
+    previewScale = fullgray.width() / grayeq.width();
+
+    let start = Date.now();
+    let faces = [];
+
+    try {
+      // Find faces
+      let faceRects = await detectFaces(grayeq);
+      log.debug(`faces: ${JSON.stringify(faceRects)}`);
+      for (let i = 0; i < faceRects.length; i++) {
+        let faceRect = faceRects[i];
+
+        let weakface = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+        timeline.addDiagFrame('candidate', when, weakface);
+
+        // Detect both eyes
+        let [leftEye, rightEye] = await _detectBothEyes(when, fullgray, faceRect,
+            EYE_CASCADE1, EYE_CASCADE2);
+
+        // Only if both the eyes are visible is when we say it is a face
+        if (leftEye && rightEye) {
+          faceRect.leftEye = [leftEye.x, leftEye.y];
+          faceRect.rightEye = [rightEye.x, rightEye.y];
+          faces.push(faceRect);
+
+          const roi = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+          timeline.addDiagFrame('face', when, roi);
+        }
+      }
+
+      let diff = Date.now() - start;
+      let msg = `Cascade ran for ${diff}ms, ${faces.length} face(s) detected.`;
+      if (diff > 500) {
+        log.warn(msg); // Time to optimize?
+      } else {
+        log.verbose(msg);
+      }
+    } catch (err) {
+      log.error(`Face detection error: ${err}`);
+    }
+
+    this._busy = false;
+    return faces;
   }
 }
 
-module.exports = (env) => new DetectFace(env);

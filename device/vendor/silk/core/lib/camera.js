@@ -40,8 +40,9 @@ export type CameraCallback = (err: boolean, image: any) => void;
  * fullrgb - full resolution rgb
  * gray - downscaled grayscale
  * grayeq - downscaled grayscale equalized
+ * rgb - downscaled resolution rgb
  */
-export type CameraPreviewFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq';
+export type CameraPreviewFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq' | 'rgb';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -814,13 +815,13 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _retrieveNextFrame() {
+  _retrieveNextFrames() {
     if (this._queue.length === 0) {
       return;
     }
 
     // Dequeue the next frame request
-    let [userCb, when, format] = this._queue.shift();
+    let [userCb, when, formats] = this._queue.shift();
 
     // Search the image in the cache
     let index = 0;
@@ -830,30 +831,38 @@ export default class Camera extends EventEmitter {
         continue;
       }
 
-      switch(format) {
-      case 'fullrgb':
-        userCb(false, image.fullrgb);
-        return;
-      case 'fullgray':
-        userCb(false, image.fullgray);
-        return;
-      case 'gray':
-        userCb(false, image.gray);
-        return;
-      case 'grayeq':
-        if (image.grayeq) {
-          userCb(false, image.grayeq);
-        } else {
-          let grayImage = image.gray.copy();
-          grayImage.equalizeHist();
-          image.grayeq = grayImage;
-          userCb(false, image.grayeq);
+      let err = false;
+
+      let frames = formats.map(format => { //eslint-disable-line no-loop-func
+        switch(format) {
+        case 'fullrgb':
+          return image.fullrgb;
+        case 'rgb':
+          if (!image.rgb) {
+            let rgb = image.fullrgb.copy();
+            rgb.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+            image.rgb = rgb;
+          }
+          return image.rgb;
+        case 'fullgray':
+          return image.fullgray;
+        case 'gray':
+          return image.gray;
+        case 'grayeq':
+          if (!image.grayeq) {
+            let grayImage = image.gray.copy();
+            grayImage.equalizeHist();
+            image.grayeq = grayImage;
+          }
+          return image.grayeq;
+        default:
+          err = `unsupported format: ${format}`;
+          return null;
         }
-        return;
-      default:
-        userCb(`unsupported format: ${format}`, null);
-        return;
-      }
+      });
+
+      userCb(err, frames);
+      return;
     }
     userCb('image not available in the cache', null);
   }
@@ -1193,8 +1202,23 @@ export default class Camera extends EventEmitter {
   getPreviewFrame(when: number,
                   format: CameraPreviewFrameFormat,
                   userCb: CameraCallback): void {
-    this._queue.push([userCb, when, format]); // Enqueue the frame request
-    this._retrieveNextFrame();
+    this._queue.push([userCb, when, [format]]);
+    this._retrieveNextFrames();
+  }
+
+  /**
+   * Invoke this function to obtain a list of preview frames
+   *
+   * @param when   - timestamp of the frame to get
+   * @param formats - requested formats
+   * @param userCb - callback that receives an error object and the image
+   *                 as an OpenCV matrix
+   */
+  getPreviewFrames(when: number,
+                  formats: Array<CameraPreviewFrameFormat>,
+                  userCb: CameraCallback): void {
+    this._queue.push([userCb, when, formats]);
+    this._retrieveNextFrames();
   }
 
   _diagEmitState = () => {

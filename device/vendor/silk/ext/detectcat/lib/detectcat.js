@@ -65,24 +65,18 @@ class DetectCat {
     timeline = this._env.timeline;
     let working = false;
 
-    timeline.on('motion', when => {
+    timeline.on('motion', async (when) => {
       if (working) {
         log.error(`Still busy, unable to process next preview image`);
         return;
       }
       working = true;
 
-      this._env.camera.getPreviewFrame(when, 'grayeq', (err, im) => {
-        if (err) {
-          log.warn(`Unable to fetch frame: ${err}`);
-          working = false;
-          return;
-        }
+      let [im] = await this._env.camera.getPreviewFrames(when, ['grayeq']);
 
-        detectCats(im, when, cats => {
-          this._notifyCats(cats);
-          working = false;
-        });
+      detectCats(im, when, cats => {
+        this._notifyCats(cats);
+        working = false;
       });
     });
   }

@@ -1,0 +1,8 @@
+#! /bin/bash -ex
+
+if [ -d ../../locked_node_modules ]; then
+  ../../locked_node_modules/fetch.sh
+fi
+
+echo TODO: ../../gonk/node/silk-cv/bin/preinstall or not?
+#../../gonk/node/silk-cv/bin/preinstall

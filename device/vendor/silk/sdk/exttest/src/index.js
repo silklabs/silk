@@ -22,7 +22,7 @@ const log = createLog('TestFramework');
  *
  */
 class FakeCamera {
-  _imgSrc = null;
+  _previewFrame = null;
   opencv = null;
 
   constructor(opencv) {
@@ -33,18 +33,27 @@ class FakeCamera {
     return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 
-  setPreviewFrame(imgSrc) {
-    this._imgSrc = imgSrc;
+  setPreviewFrame(filename) {
+    this._loadPreviewFrame(filename);
   }
 
-  getPreviewFrame(when, format, userCb) {
+  async _loadPreviewFrame(filename) {
+    await new Promise(resolve => {
+      this.opencv.readImage(filename, (err, im) => {
+        invariant(err === null, err);
+        invariant(im.width() > 0 && im.height() > 0);
+        this._previewFrame = im;
+        resolve();
+      });
+    });
+  }
+
+  getPreviewFrames(when, formats) {
     // TODO: `when` is ignored...
-    log.info(`getPreviewFrame ${this._imgSrc} ${format}`);
-    this.opencv.readImage(this._imgSrc, (err, im) => {
-      if ((im.width() <= 0 ) || (im.height() <= 0 )) {
-        userCb(true, null);
-        return;
-      }
+
+    let frames = formats.map(format => {
+      invariant(this._previewFrame !== null);
+      let im = this._previewFrame.copy();
       switch (format) {
       case 'rgb':
         im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
@@ -58,14 +67,17 @@ class FakeCamera {
         im.convertGrayscale();
         im.equalizeHist();
         break;
-      case 'full':
+      case 'fullgray':
+        im.convertGrayscale();
+        break;
+      case 'fullrgb':
         break;
       default:
         invariant(false);
       }
-
-      userCb(err, im);
+      return im;
     });
+    return Promise.resolve(frames);
   }
 }
 

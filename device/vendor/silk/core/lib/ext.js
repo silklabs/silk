@@ -20,6 +20,8 @@ const extDirs = [ 'system/silk/ext', 'data/silk/ext' ];
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 
+let nextObjectId = 0;
+
 /**
  * Class that provides Silk SDK APIs to extensions/behaviors
  *
@@ -143,18 +145,24 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Get preview frame
+       * Get preview frames.
        *
        * @param {number} when - timestamp of the frame to get
-       * @param {CameraPreviewFrameFormat} format - requested format
-       * @param {CameraCallback} userCb - callback that receives an error
-                                          object and the image as an OpenCV
-                                          matrix
+       * @param {Array<CameraPreviewFrameFormat>} formats - requested formats
+       * @return {Promise<Array<?cv::Matrix>>}
        * @memberof Env.camera
        * @instance
        */
-      this.camera.getPreviewFrame = (when, format, userCb) => {
-        camera.getPreviewFrame(when, format, userCb);
+      this.camera.getPreviewFrames = (when, formats) => {
+        return new Promise((resolve, reject) => {
+          camera.getPreviewFrames(when, formats, (err, frames) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(frames);
+            }
+          });
+        });
       };
 
       /**
@@ -330,6 +338,10 @@ class Env extends EventEmitter {
        */
       this.timeline.noMotion = when => {
         timeline.noMotion(when);
+      };
+
+      this.timeline.getNextObjectId = () => {
+        return ++nextObjectId;
       };
     }
 

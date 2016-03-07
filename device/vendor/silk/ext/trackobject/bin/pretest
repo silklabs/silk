@@ -1,5 +1,14 @@
 #!/bin/bash -ex
 
-npm install node-pre-gyp@0.6.11
-npm install opencv@4.0.0
-npm install ../../gonk/node/silk-cv/
+if [ ! -d node_modules/node-pre-gyp ]; then
+  npm install node-pre-gyp@0.6.11
+fi
+
+if [ ! -d node_modules/opencv ]; then
+  npm install peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c
+fi
+
+if [ ! -d node_modules/silk-cv ]; then
+  npm install ../../gonk/node/silk-cv/
+fi
+

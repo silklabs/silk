@@ -4,21 +4,22 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 #include <nan.h>
+#include <opencv2/opencv.hpp>
 
 #if CV_MAJOR_VERSION < 3
 #warning Building with OpenCV 2.x, please install OpenCV 3.x
 #endif
 
-void Cmt_Init(v8::Local<v8::Object> exports);
+void Capture_Init(v8::Local<v8::Object> exports);
 void Matrix_Init(v8::Local<v8::Object> exports);
 void Mog2_Init(v8::Local<v8::Object> exports);
-void Capture_Init(v8::Local<v8::Object> exports);
+void Tracker_Init(v8::Local<v8::Object> exports);
 
 void Init(v8::Local<v8::Object> exports) {
-  Cmt_Init(exports);
+  Capture_Init(exports);
   Matrix_Init(exports);
   Mog2_Init(exports);
-  Capture_Init(exports);
+  Tracker_Init(exports);
 }
 
 NODE_MODULE(bindings, Init)

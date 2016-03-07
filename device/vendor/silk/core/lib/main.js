@@ -28,6 +28,11 @@ require('source-map-support').install();
   log.verbose('Source maps ready');
 }
 
+if (process.platform !== 'android') {
+  let segfaultHandler = require('segfault-handler');
+  segfaultHandler.registerHandler('crash.log');
+}
+
 import assert from 'assert';
 import api from './api';
 import {MetricTypes} from 'silk-api';

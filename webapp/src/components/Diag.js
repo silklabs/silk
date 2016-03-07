@@ -109,8 +109,16 @@ class DiagImageTable extends React.Component {
   }
 
   onDiagTimelineState = (state) => {
-    log.error('diagState:timeline', JSON.stringify(state));
-    this.setState({imageFilter: state.imageFilter});
+    log.debug('diagState:timeline', JSON.stringify(state));
+    if (state.imageFilter === '' && this.state.imageFilter !== '') {
+      // If the device imageFilter is empty and ours is not, override with ours.
+      // This is useful during debugging sessions when the device continually
+      // restarts and loses its state, as it avoids continually having to
+      // reenter the imageFilter
+      this.onDiagFrameFilterApply();
+    } else {
+      this.setState({imageFilter: state.imageFilter});
+    }
   };
 
 

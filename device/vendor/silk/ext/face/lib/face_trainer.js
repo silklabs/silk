@@ -5,15 +5,20 @@
  */
 
 import cv from 'opencv';
+import { exec } from 'mz/child_process';
 import fs from 'mz/fs';
 import path from 'path';
 import imageSize from 'fast-image-size';
-import assert from 'assert';
+import invariant from 'assert';
+import {
+  Matrix,
+  FaceRect,
+} from './face';
 
-const TRAIN_FACES_PATH = '/data/silk/opencv/faces';
-const TRAIN_FACES_YML = '/data/silk/opencv/face_model.yml';
-const TRAIN_FACES_MAP = '/data/silk/opencv/face_map.json';
-const FACE_COUNT = 100;
+const TRAIN_FACES_PATH = 'data/silk/opencv/faces';
+const TRAIN_FACES_YML = 'data/silk/opencv/face_model.yml';
+const TRAIN_FACES_MAP = 'data/silk/opencv/face_map.json';
+export const FACE_COUNT = 100;
 
 const DESIRED_LEFT_EYE_X = 0.23; // Desired left eye center on a scale of 1.0
 const DESIRED_LEFT_EYE_Y = 0.2;
@@ -22,11 +27,6 @@ const FACE_ELLIPSE_W = 0.50; // Controls the width of the face mask
 const FACE_ELLIPSE_H = 0.80; // Controls the height of the face mask
 const FACE_WIDTH = 75;
 const FACE_HEIGHT = FACE_WIDTH;
-
-// Parameters controlling how often to keep new faces when collecting them
-// Otherwise, the training set could look too similar to each other
-const CHANGE_IN_IMAGE_FOR_COLLECTION = 0.20;
-const CHANGE_IN_SECONDS_FOR_COLLECTION = 1000;
 
 let log;
 
@@ -46,18 +46,36 @@ let isHiddenPath = function (file) {
  */
 export default class Trainer {
   constructor(env) {
-    this._env = env;
     log = env.log;
     this._trainingData = [];
     this._faceMap = {};
   }
 
+  async _loadModel(model) {
+    log.debug(`Loading model`);
+    model.loadSync(TRAIN_FACES_YML);
+    const faceMapJson = await fs.readFile(TRAIN_FACES_MAP);
+    const faceMap = JSON.parse(faceMapJson);
+    return faceMap;
+  }
+
   /**
-   * Start face training
+   * Start face training if necessary, then loads the training get into the
+   * model
    *
    * @param model Face recognizer to be trained
+   * @returns facemap Map of string face names to face Ids.
    */
-  async start(model) {
+  async trainAndLoad(model: any, forceTraining: bool = false) {
+
+    const existsYml = await fs.exists(TRAIN_FACES_YML);
+    const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
+    if (existsYml && existsFaceMap) {
+      if (!forceTraining) {
+        return this._loadModel(model);
+      }
+    }
+
     log.info(`Collecting data for face training`);
 
     // Find everyone for whom we have faces available
@@ -97,6 +115,7 @@ export default class Trainer {
 
     let diff = Date.now() - start;
     log.info(`Face training finished in ${diff}ms`);
+    return this._loadModel(model);
   }
 
   /**
@@ -208,8 +227,13 @@ export default class Trainer {
    *             Chapter8_FaceRecognition/preprocessFace.cpp
    *  @returns a preprocessed face square image
    */
-  preprocessFace(im, face, previewScale) {
-    log.debug(`face: ${JSON.stringify(face)}`);
+  preprocessFace(im: Matrix, face: FaceRect, previewScale: number): ?Matrix {
+    log.debug(`preprocessFace: ${JSON.stringify(face)}`);
+
+    if (!face.leftEye || !face.rightEye) {
+      log.debug(`Unable to process face ${face.id}, missing eye(s)`);
+      return null;
+    }
 
     // Adjust rectangles to scale up to the original size as face rectangles
     // are reported for scaled down image
@@ -227,7 +251,7 @@ export default class Trainer {
     const rightEye = {x: face.rightEye[0] - face.x, y: face.rightEye[1] - face.y};
 
     // Convert to grayscale if not already
-    assert(im.channels() === 1);
+    invariant(im.channels() === 1);
 
     // Sanity checks
     if ((face.x + face.width > im.width()) ||
@@ -306,6 +330,7 @@ export default class Trainer {
 
     // Apply elliptical mask on the face
     gray.copyWithMask(dstImg, mask);
+    mask.release();
 
     // Scale down the face to match the preview size
     face.x = face.x / previewScale;
@@ -372,107 +397,45 @@ export default class Trainer {
     return reconstructedFace;
   }
 
-  /**
-   * Start collecting faces for the specified person and store the resulting
-   * face set to be later used for training for that person
-   *
-   * @param person String name of the person to train
-   */
-  addPerson(person) {
-    log.info(`Adding faces for ${person}`);
-    let faceCount = 1;
-    let facePath = path.join(TRAIN_FACES_PATH, person);
-    let oldPreprocessedFaceImg = null;
-    let oldTime = 0;
+  async addNewFace(poses: Array<Matrix>, name: ?string): bool {
+    if (!name) {
+      // Generate a temporary name that's unlikely to collide
+      name = `Elvis-${(Date.now() / 1000 % 10000).toFixed(0)}`;
 
-    return new Promise((resolve, reject) => {
-      fs.mkdir(facePath)
-      .catch(e => {
-        if (e.code !== 'EEXIST') {
-          log.error(`Failed to create ${facePath}, error: ${e}`);
-          reject();
-        }
-      });
+      // TODO: Probably limit the number of unknown persons...
+    }
+    log.info(`Adding new face: ${name}`);
 
-      this._onFace = (when, faces) => {
-        if (faces.length <= 0) {
-          return;
-        }
+    const facePath = path.join(TRAIN_FACES_PATH, name);
+    if (await fs.exists(facePath)) {
+      let [err] = await exec('rm -r ' + facePath);
+      if (err) {
+        log.warn(`rm -f ${facePath} failed: ${err}`);
+      }
+    }
 
-        // Ignore if there are more than one face as we don't know which of
-        // the face is the person being trained
-        if (faces.length > 1) {
-          log.warn(`More than one face detected while training. Please ask` +
-              `the other person to step aside.`);
-          return;
-        }
+    try {
+      await fs.mkdir(facePath);
+    } catch (err) {
+      if (err.code !== 'EEXIST') {
+        log.error(`Failed to create ${facePath}, error: ${err}`);
+        return false;
+      }
+    }
 
-        if (this._working) {
-          log.error(`Still busy, unable to process next preview image`);
-          return;
-        }
-
-        this._working = true;
-        this._env.camera.getPreviewFrame(when, 'grayeq', (err, image) => {
-          if (err) {
-            log.warn(`Unable to fetch grayeq frame: ${err}`);
-            this._working = false;
-            return;
+    let count = 0;
+    for (let pose of poses) {
+      await new Promise(resolve => {        //eslint-disable-line no-loop-func
+        pose.save(`${facePath}/${count}.png`, (err, result) => {
+          if (result !== 1) {
+            log.warn(`Save failed for ${facePath}/${count}.png: ${result}`);
           }
-          this._env.camera.getPreviewFrame(when, 'fullgray', (err2, orig) => {
-            if (err2) {
-              log.warn(`Unable to fetch full frame: ${err2}`);
-              this._working = false;
-              return;
-            }
-
-            // Calculate preview scale
-            let previewScale = orig.width() / image.width();
-
-            // Save the face
-            let face = faces[0];
-            let faceim = this.preprocessFace(orig, face, previewScale);
-            if (!faceim) {
-              this._working = false;
-              return;
-            }
-
-            // Check if this face looks somewhat different from the previously
-            // collected face
-            let imageDiff = Number.MAX_VALUE;
-            if (oldPreprocessedFaceImg) {
-              imageDiff = this.getSimilarity(faceim, oldPreprocessedFaceImg);
-              log.debug(`Image diff: ${imageDiff}`);
-            }
-
-            // Also record when it happened
-            let currentTime = Date.now();
-            let timeDiff = currentTime - oldTime;
-
-            // Only process the face if it is noticably different from the
-            // previous frame and there has been noticeable time gap
-            if ((imageDiff > CHANGE_IN_IMAGE_FOR_COLLECTION) &&
-                (timeDiff > CHANGE_IN_SECONDS_FOR_COLLECTION)) {
-              log.info(`Saving ${facePath}/${person}_${Date.now()}.png, ` +
-                   `count: ${faceCount}`);
-              faceim.save(`${facePath}/${person}_${Date.now()}.png`);
-              faceCount++;
-              this._env.timeline.addDiagFrame(`face #${faceCount}`, when, faceim);
-
-              oldPreprocessedFaceImg = faceim;
-              oldTime = currentTime;
-            }
-
-            if (faceCount >= FACE_COUNT) {
-              this._env.timeline.removeListener('face', this._onFace);
-              resolve();
-            }
-            this._working = false;
-          });
+          resolve();
         });
-      };
+      });
+      ++count;
+    }
 
-      this._env.timeline.on('face', this._onFace);
-    });
+    return true;
   }
 }

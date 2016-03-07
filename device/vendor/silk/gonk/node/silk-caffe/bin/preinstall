@@ -21,19 +21,30 @@ while getopts "hp:" opt; do
   esac
 done
 
-if [[ -z $PATCH_TREE ]]; then
-  PATCH_TREE=$DEVICE_PATCH_TREE
-fi
-
-echo "Using patch folder: $PATCH_TREE"
-
 if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
+  echo Device build detected, no patching required.
   exit 0
 fi
 
 UNAMESTR=`uname`
 if [[ "$UNAMESTR" != 'Darwin' ]]; then
   echo "Caffe installation is only supported on Darwin"
+  exit 1
+fi
+
+if [[ -z $PATCH_TREE ]]; then
+  PATCH_TREE=$SILK_CAFFE_PATCH_TREE
+
+  if [[ -z $PATCH_TREE ]]; then
+    echo "Error: SILK_CAFFE_PATCH_TREE not defined.  |source ./setup|?"
+    exit 1
+  fi
+fi
+
+echo "Using patch folder: $PATCH_TREE"
+
+if [[ ! -d $PATCH_TREE ]]; then
+  echo Not a directory: $PATCH_TREE
   exit 1
 fi
 

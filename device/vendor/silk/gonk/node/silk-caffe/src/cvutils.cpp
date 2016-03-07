@@ -50,7 +50,12 @@ void NMS(std::vector<CvRectScore> boxes_orig,
   }
 }
 
-vector<dlib::rectangle> getObjectProposals(const cv::Mat& inputImage,
+cv::Rect dlibRectToOpenCVRect(dlib::rectangle dlibrect) {
+  return cv::Rect(dlibrect.left(), dlibrect.top(), dlibrect.width(),
+                  dlibrect.height());
+}
+
+vector<cv::Rect> getObjectProposals(const cv::Mat& inputImage,
     const dlib::matrix_range_exp<double>& kvals, const unsigned long minSize,
     const unsigned long maxMergingIterations) {
   dlib::cv_image <dlib::rgb_pixel> image(inputImage);
@@ -59,5 +64,13 @@ vector<dlib::rectangle> getObjectProposals(const cv::Mat& inputImage,
   vector<dlib::rectangle> rects;
   dlib::find_candidate_object_locations(image, rects, kvals, minSize,
       maxMergingIterations);
-  return rects;
+
+  // Convert dlib rectangle to opencv rectangle
+  vector<cv::Rect> opencvRects;
+  for (int count = 0; count < rects.size(); count++) {
+    dlib::rectangle dlibrect = rects[count];
+    opencvRects.push_back(dlibRectToOpenCVRect(dlibrect));
+  }
+
+  return opencvRects;
 }

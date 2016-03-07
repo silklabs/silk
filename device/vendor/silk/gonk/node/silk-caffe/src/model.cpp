@@ -4,12 +4,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+#define LOG_TAG "silk-caffe"
 #ifdef ANDROID
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-caffe"
 #include <utils/Log.h>
 #else
-#define ALOGV(fmt, args...) printf(fmt, ##args); printf("\n");
+#define ALOGV(fmt, args...) fprintf(stderr, LOG_TAG ": " fmt, ##args); fprintf(stderr, "\n");
 #define ALOGE ALOGV
 #define ALOGD ALOGV
 #endif
@@ -80,6 +80,8 @@ void Model::Init(Local<Object> exports) {
  *
  */
 NAN_METHOD(Model::New) {
+  google::InitGoogleLogging(LOG_TAG);
+
   if (info.IsConstructCall()) {
     // Invoked as constructor: `new Model(...)`
     Model* obj = new Model();
@@ -155,6 +157,7 @@ private:
  * Loads the provided model asynchronously
  */
 NAN_METHOD(Model::Load) {
+  ALOGV("Setting up caffe model.....");
   SETUP_FUNCTION(Model)
 
   if (info.Length() != 3) {
@@ -358,15 +361,13 @@ public:
     // Run selective search to get all the regions of the image and run
     // prediction on each of the regions
     dlib::matrix_range_exp<double> kvals = dlib::linspace(50, 200, 3);
-    vector<dlib::rectangle> rects = getObjectProposals(mat, kvals, mMinSize,
+    vector<cv::Rect> rects = getObjectProposals(mat, kvals, mMinSize,
         mMaxMergingIterations);
     ALOGD("# proposals: %lu", rects.size());
 
     std::vector<CvRectScore> srcRects;
     for (int count = 0; count < rects.size(); count++) {
-      dlib::rectangle dlibrect = rects[count];
-      cv::Rect regionRect(dlibrect.left(), dlibrect.top(), dlibrect.width(),
-          dlibrect.height());
+      cv::Rect regionRect = rects[count];
       cv::Mat region = mat(regionRect);
 
       // Only return the top most prediction for the requested class
@@ -376,19 +377,21 @@ public:
         // Only return the predictions with confidence higher than mConfThreshold
         if (prediction[0].second >= mConfThreshold) {
           srcRects.push_back(rectScore);
+          ALOGV("Prediction for region# %d %s score: %f rect: [%d, %d, %d, %d]",
+              count, prediction[0].first.c_str(), prediction[0].second,
+              regionRect.x, regionRect.y, regionRect.width, regionRect.height);
         }
-
-        ALOGV("Prediction for region# %d score: %f rect: [%d, %d, %d, %d]",
-            count, prediction[0].second, regionRect.x, regionRect.y,
-            regionRect.width, regionRect.height);
       }
     }
-    ALOGV("After NMS:");
-    NMS(srcRects, mRegions, mNmsThreshold);
-    for (std::vector<CvRectScore>::iterator it = mRegions.begin();
-        it != mRegions.end(); ++it) {
-      ALOGV("Rects: [%d, %d, %d, %d] score: %f", it->rect.x, it->rect.y,
-          it->rect.width, it->rect.height, it->score);
+
+    if (srcRects.size() > 0) {
+      NMS(srcRects, mRegions, mNmsThreshold);
+      ALOGV("After NMS: %lu", mRegions.size());
+      for (std::vector<CvRectScore>::iterator it = mRegions.begin();
+          it != mRegions.end(); ++it) {
+        ALOGV("Rects: [%d, %d, %d, %d] score: %f", it->rect.x, it->rect.y,
+              it->rect.width, it->rect.height, it->score);
+      }
     }
   }
 

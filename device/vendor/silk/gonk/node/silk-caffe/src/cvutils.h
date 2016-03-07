@@ -54,6 +54,6 @@ void NMS(std::vector<CvRectScore> boxes_orig,
  *              effect on the number of output rectangles you get, with larger
  *              values of the parameter giving more output rectangles
  */
-vector<dlib::rectangle> getObjectProposals(const cv::Mat& inputImage,
+vector<cv::Rect> getObjectProposals(const cv::Mat& inputImage,
     const dlib::matrix_range_exp<double>& kvals, const unsigned long minSize,
     const unsigned long maxMergingIterations);

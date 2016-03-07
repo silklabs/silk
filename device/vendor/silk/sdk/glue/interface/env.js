@@ -39,8 +39,15 @@ declare export class Camera extends EventEmitter {
   ): Promise<Array<any>>;
 }
 
+type TimelineEventObject = {
+  tag: string;
+  when: number;
+  [arbitraryKeys: string]: any;
+};
+
 declare export class Timeline extends EventEmitter {
   addDiagFrame (id: string, when: number, frame: any): void;
+  addObjects (objects: Array<TimelineEventObject>): void;
 }
 
 declare export class Env extends EventEmitter {

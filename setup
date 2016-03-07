@@ -41,8 +41,9 @@ if [ $(uname) == "Darwin" ]; then
   brew install -vd openblas
   brew link --force --overwrite openblas
 
-  BOOST="$(brew list -1 | grep -i "^boost\$")"
-  if [[ -z BOOST ]]; then
+  BOOST="$(brew list -1 | grep -i "^boost\$" || true)"
+  if [[ -z $BOOST ]]; then
     brew install boost
   fi
 fi
+

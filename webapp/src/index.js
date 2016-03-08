@@ -31,7 +31,6 @@ import 'whatwg-fetch'; // window.fetch() polyfill for iOS
 
 import AudioStudio from './components/AudioStudio';
 import AVPipeline from './components/AVPipeline';
-import CameraVideo from './components/CameraVideo';
 import CameraVideoMSE from './components/CameraVideoMSE';
 import FindCrashById from './components/FindCrashById';
 import Diag from './components/Diag';
@@ -40,18 +39,7 @@ import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 import MissingChunks from './components/MissingChunks';
 
-let videoWidget = CameraVideo;
 let userState;
-
-if (Config.dashSegmenter) {
-  console.log('Attepting to use MSE playback widget ...');
-  if ('MediaSource' in window) {
-    console.log('  OK.');
-    videoWidget = CameraVideoMSE;
-  } else {
-    console.log('  sorry, MSE not found.');
-  }
-}
 
 function loginCheck(nextState, replaceState) {
   if (!userState || !userState.accessToken) {
@@ -77,7 +65,7 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/crashById/:crashId" component={FindCrashById} />
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />
-        <Route onEnter={loginCheck} path="/video/:deviceId" component={videoWidget} />
+        <Route onEnter={loginCheck} path="/video/:deviceId" component={CameraVideoMSE} />
         <Route onEnter={loginCheck} path="/audiostudio/:deviceId" component={AudioStudio} />
         <Route path="/forgot_password" component={ForgotPassword} userState={userState} />
       </Router>

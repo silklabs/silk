@@ -9,7 +9,6 @@ import createLog from 'silk-log';
 
 import config from './config';
 import connectToSocketIO from './socketio';
-import { getInitSegment } from './segment_provider';
 import SegmentProviderSocketIo from './segment_provider_socketio';
 
 const log = createLog('server');
@@ -165,9 +164,6 @@ function main() {
     });
     httpServer.listen(config.port, '0.0.0.0');
   });
-
-  // Prime the init segment.
-  getInitSegment();
 
   process.on('exit', (code) => {
     log.info(`Exiting with code ${code}`);

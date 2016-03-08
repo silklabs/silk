@@ -1,22 +1,18 @@
 /**
+ * A few simple helpers for extracting values from MP4 files
+ *
  * @flow
  */
 
-import assert from 'assert';
-import config from 'silk-config';
+import invariant from 'assert';
 
-export type DashSegmentState = {
-  seqno: number;
-  startTime: number;
+export type SegmentInfo = {
+  videoOffset: number;
+  durationTime: number;
+  mute: boolean;
 };
 
-type Box = {
-  fourcc: string;
-  size: number;
-  offset: number;
-};
-
-type Metadata = {
+type SegmentMetadata = {
   seqnoOffset: number;
   presentationTimeOffset: number;
   videoDecodeTimeOffset: number;
@@ -24,16 +20,11 @@ type Metadata = {
   mute: boolean;
 };
 
-type SegmentInfo = {
-  mute: boolean;
+type Mp4Box = {
+  fourcc: string;
+  size: number;
+  offset: number;
 };
-
-// NB: these values are defined in the init header.  While the init
-// header is hard coded, so are these constants for convenience.  If
-// we ever support multiple init header types with different sample
-// rates, then we'll want to read these constants from the header.
-const AUDIO_TICKS_PER_SEC = config.deviceMic.sampleRate;
-const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 
 // Each MP4 box contains:
 //   - boxSize   (4 bytes)
@@ -43,85 +34,88 @@ const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
 // A box can contain box specific data or more boxes
 const BOX_HDR_SIZE = 8;
 
-function readFourcc(buf: Buffer, offset: number): string {
+function readFourcc(data: DataView, offset: number): string {
   let fourcc = '';
   for (let i = 0; i < 4; ++i) {
-    fourcc += String.fromCharCode(buf[offset + i]);
+    fourcc += String.fromCharCode(data.getUint8(offset + i));
   }
   return fourcc;
 }
 
-function findNextBox(mp4, box: Box = { fourcc: '', size: 0, offset: 0 }): Box {
-  let pos = box.offset = box.offset + box.size;
-  box.size = mp4.readInt32BE(pos);
-  pos += 4;
-  box.fourcc = readFourcc(mp4, pos);
+function findNextBox(data: DataView, box: Mp4Box): Mp4Box {
+  let offset = box.offset + box.size;
+  let size = data.getInt32(offset);
+  let fourcc = readFourcc(data, offset + 4);
+  return {offset, size, fourcc};
+}
+
+function openBox(data: DataView, box: Mp4Box): Mp4Box {
+  return findNextBox(data, {offset: box.offset + BOX_HDR_SIZE, size: 0, fourcc: ''});
+}
+
+function findBoxByFourcc(
+  data: DataView,
+  fourcc: string,
+  box: Mp4Box = {fourcc: '', size: 0, offset: 0}
+): Mp4Box {
+  while (box.fourcc !== fourcc) {
+    box = findNextBox(data, box);
+  }
   return box;
 }
 
-function readMetadataBox(m4s: Buffer): Metadata {
+function readMetadata(data: DataView, freeBox: Mp4Box): SegmentMetadata {
+  let box = openBox(data, freeBox);
+  invariant(box.fourcc === 'Xmta');
+
   let metadata = {};
-  // Find the "free" box where our metadata is stashed in.
-  let box = findNextBox(m4s);
-  while (box.fourcc !== 'free') {
-    box = findNextBox(m4s, box);
-  }
-
-  // Check that we found the right box.
-  box.offset += BOX_HDR_SIZE;
-  box.size = 0;
-  box = findNextBox(m4s, box);
-  assert.equal(box.fourcc, 'Xmta');
-
   let pos = box.offset + BOX_HDR_SIZE;
   pos += 4;               // version and flags (we don't care yet)
-  metadata.seqnoOffset = m4s.readInt32BE(pos);
+  metadata.seqnoOffset = data.getInt32(pos);
   pos += 4;
-  metadata.presentationTimeOffset = m4s.readInt32BE(pos);
+  metadata.presentationTimeOffset = data.getInt32(pos);
   pos += 4;
-  metadata.videoDecodeTimeOffset = m4s.readInt32BE(pos);
+  metadata.videoDecodeTimeOffset = data.getInt32(pos);
   pos += 4;
-  metadata.audioDecodeTimeOffset = m4s.readInt32BE(pos);
+  metadata.audioDecodeTimeOffset = data.getInt32(pos);
   pos += 4;
-  metadata.mute = !!m4s.readInt32BE(pos);
+  metadata.mute = !!data.getInt32(pos);
   pos += 4;
 
   return metadata;
 }
 
-/**
- * Prepare an MPEG-DASH segment for playback e.g. via MSE API in the browser.
- *
- * The buffer is modified in-place.
- */
-export default function prepareSegment(
-  m4s: Buffer,
-  state: DashSegmentState
+export function rewriteSegment(
+  data: DataView,
+  seqno: number,
+  videoStartTime: number,
+  audioStartTime: number
 ): SegmentInfo {
-  let seqno = state.seqno;
-  let startTime = state.startTime;
+  // The 'styp' box indicates the beginning of the actual video
+  // segment, so find the 'free' box after the 'styp' box to read the
+  // segment's metadata.
+  const stypBox = findBoxByFourcc(data, 'styp');
+  const freeBox = findBoxByFourcc(data, 'free', stypBox);
+  const metadata = readMetadata(data, freeBox);
 
-  let metadata = readMetadataBox(m4s);
-  // Duration is 16 bytes after earliest_presentation_time in "sidx".
-  let durationTicks = m4s.readInt32BE(metadata.presentationTimeOffset + 16);
-
-  assert.equal('?seq', readFourcc(m4s, metadata.seqnoOffset));
+  invariant('?seq' === readFourcc(data, metadata.seqnoOffset));
   // XXX doesn't matter in chrome
-  m4s.writeInt32BE(seqno, metadata.seqnoOffset);
+  data.setInt32(metadata.seqnoOffset, seqno);
 
-  let videoDecodeTime = startTime + m4s.readInt32BE(metadata.videoDecodeTimeOffset);
-  assert.equal('?prs', readFourcc(m4s, metadata.presentationTimeOffset));
+  const videoDecodeTime = videoStartTime + data.getInt32(metadata.videoDecodeTimeOffset);
+  const audioDecodeTime = audioStartTime + data.getInt32(metadata.audioDecodeTimeOffset);
+  invariant('?prs' === readFourcc(data, metadata.presentationTimeOffset));
   // XXX maybe doesn't matter in chrome
-  m4s.writeInt32BE(videoDecodeTime, metadata.presentationTimeOffset);
-  m4s.writeInt32BE(videoDecodeTime, metadata.videoDecodeTimeOffset);
+  data.setInt32(metadata.presentationTimeOffset, videoDecodeTime);
+  data.setInt32(metadata.videoDecodeTimeOffset, videoDecodeTime);
+  data.setInt32(metadata.audioDecodeTimeOffset, audioDecodeTime);
 
-  // TODO: get timeScales from init header
-  let startTimeDelta = (startTime * AUDIO_TICKS_PER_SEC / VIDEO_TICKS_PER_SEC) | 0;
-  let audioDecodeTime = startTimeDelta + m4s.readInt32BE(metadata.audioDecodeTimeOffset);
-  m4s.writeInt32BE(audioDecodeTime, metadata.audioDecodeTimeOffset);
+  // Duration is 16 bytes after earliest_presentation_time in "sidx".
+  const durationTime = data.getInt32(metadata.presentationTimeOffset + 16);
 
-  state.seqno += 1;
-  state.startTime += durationTicks;
-
-  return {mute: metadata.mute};
+  return {
+    videoOffset: stypBox.offset,
+    durationTime,
+    mute: metadata.mute,
+  };
 }

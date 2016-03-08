@@ -32,6 +32,9 @@ const PACKAGE_ROOTS = pkgFinder();
   path.join(__dirname, '..', 'cli'),
   path.join(__dirname, '..', 'sdk'),
 
+  // This module contains delicate emscripten'd code that breaks when
+  // babel-ified.  C'est la guerre.
+  path.join(__dirname, '..', 'external-js-kissfft'),
 ].forEach((path) => {
   let idx = PACKAGE_ROOTS.indexOf(path);
   if (idx !== -1) {

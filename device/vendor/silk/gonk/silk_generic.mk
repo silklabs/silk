@@ -65,6 +65,8 @@ SILK_EXT := \
   dnn-imagenet-mean \
   dnn-imagenet-dictionary \
   samsungtv \
+  svmsounds \
+  svmsounds-clap \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "bleno": "0.3.4",
+    "kissfft": "silklabs/node-kissfft#7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c",
     "mic": "2.0.1",
     "noble": "1.3.0",
     "opencv": "peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c",

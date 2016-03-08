@@ -1,0 +1,23 @@
+{
+  "name": "silk-audio",
+  "version": "0.0.1",
+  "description": "Utilities for processing audio",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall"
+  },
+  "silkDependencies": {
+    "silk-log": "/log"
+  },
+  "dependencies": {
+    "babel-runtime": "6.3.19",
+    "svm": "0.1.1"
+  },
+  "devDependencies": {
+    "babel": "5.8.35",
+    "mocha": "2.3.4"
+  },
+  "license": "proprietary",
+  "private": true
+}

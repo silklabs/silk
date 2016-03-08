@@ -166,6 +166,17 @@ class Env extends EventEmitter {
       };
 
       /**
+       * Returns the camera video size
+       *
+       * @return {Size}
+       * @memberof Env.camera
+       * @instance
+       */
+      this.camera.getVideoSize = () => {
+        return camera.videoSize;
+      };
+
+      /**
        * Returns the camera preview size
        *
        * @return {Size}
@@ -296,19 +307,6 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Add an object to timeline
-       *
-       * @param {string} tag Type of the object detected
-       * @param {number} when [] Time when the object was detected
-       * @param {Rect} rect [] Rectangle co-ordinates of the object
-       * @memberof Env.timeline
-       * @instance
-       */
-      this.timeline.addObject = (tag, when, rect) => {
-        timeline.addObject(tag, when, rect, this._name);
-      };
-
-      /**
        * Add objects to timeline
        *
        * @param {Array<TimelineEventObject>} objs List of objects to be
@@ -316,17 +314,24 @@ class Env extends EventEmitter {
        * @memberof Env.timeline
        * @instance
        */
-      this.timeline.addObjects = objs => {
-        let newObjs = null;
-        if (objs && (objs.length > 0)) {
-          newObjs = objs.map(obj => {
-            let newObj = obj;
-            newObj.source = this._name;
-            return newObj;
-          });
-        }
+      this.timeline.addObjects = (objs) => {
+        objs.forEach((obj) => {
+          if (!(`source` in obj)) {
+            obj.source = this._name;
+          }
+          log.error(obj);
+        });
+        timeline.addObjects(objs);
+      };
 
-        timeline.addObjects(newObjs);
+      /**
+       * Get the next object id to use with timeline.
+       *
+       * @memberof Env.timeline
+       * @instance
+       */
+      this.timeline.getNextObjectId = () => {
+        return timeline.getNextObjectId();
       };
 
       /**

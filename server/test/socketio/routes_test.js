@@ -82,6 +82,7 @@ suite('routes', () => {
       diag: false,
       preview: false,
       mic: false,
+      objects: false,
       msg: 'livestream'
     });
 
@@ -101,6 +102,7 @@ suite('routes', () => {
       diag: false,
       preview: false,
       mic: false,
+      objects: false,
       msg: 'livestream'
     });
 

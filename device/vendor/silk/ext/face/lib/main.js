@@ -88,10 +88,12 @@ class Main {
       log.debug(`${tag} added to timeline at`, face.rectWhen);
       timeline.addObjects(
         [{
+          id: face.id,
           tag,
           when: face.rectWhen,
           rects: [face.rect],
-          source: 'face'
+          source: 'face',
+          durationMs: FACE_DETECT_INTERVAL,
         }]
       );
     });
@@ -121,4 +123,3 @@ class Main {
 module.exports = (env) => {
   return new Main(env);
 };
-

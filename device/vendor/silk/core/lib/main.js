@@ -272,6 +272,7 @@ function emitDeviceInfo() {
     server.send('info', {
       logo,
       now: Date.now(),
+      videoSize: camera.videoSize,
       previewSize: camera.previewSize,
     });
   }
@@ -301,7 +302,8 @@ server.on('cmd', cmd => {
 
   switch (cmd.msg) {
   // The 'livestream' command is sent by the server to request live streaming
-  // data from this device.  Supported streams: preview, video, diag, mic
+  // data from this device.
+  // Supported streams: preview, video, diag, mic, object.
   //
   // TODO: once the 'livestream' command is strongly typed between
   // server/device, move this processing into the diag/timeline/camera objects
@@ -310,7 +312,12 @@ server.on('cmd', cmd => {
     log.info('livestream command:', JSON.stringify(cmd));
     let flag = cmd.diag ? 1 : 0;
     diag.setConfig({dash: flag, logcat: flag});
-    timeline.configLiveStream(!!cmd.preview, !!cmd.video, !!cmd.diag);
+    timeline.configLiveStream({
+      preview: !!cmd.preview,
+      video: !!cmd.video,
+      diag: !!cmd.diag,
+      objects: !!cmd.objects,
+    });
     camera.setDiag(!!cmd.diag);
 
     // FIXME/TODO: we want to notify the audio assistant extension

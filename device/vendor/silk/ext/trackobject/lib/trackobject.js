@@ -38,6 +38,8 @@ const MIN_AREA = 5 * 5;
 
 const GAUSSIAN_KERNEL_SIZE = 15;
 
+const MOTION_DURATION_MS = 250;
+
 /**
  * Play a sound when motion is detected
  */
@@ -176,8 +178,13 @@ class TrackObject {
         log.verbose(`Motion detection ran for ${diff}ms`);
 
         if (rects && (rects.length > 0)) {
-          //timeline.addObjects([{tag: 'motion', when, rects}]);
-          timeline.addObject('motion', when);
+          timeline.addObjects([{
+            source: 'trackobject',
+            tag: 'motion',
+            when,
+            rects,
+            durationMs: MOTION_DURATION_MS,
+          }]);
           _playSound();
         } else {
           timeline.noMotion(when);

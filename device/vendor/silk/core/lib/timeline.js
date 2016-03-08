@@ -38,6 +38,9 @@ const PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS = 5 * 60 * 1000; /* 5 minutes */
 // should be uploaded before the event officially started.
 const PRE_EVENT_UPLOAD_MS = 5000;
 
+// The amount of time to collect objects before sending in a batch.
+const OBJECT_SEND_INTERVAL_MS = 250;
+
 import type { Outbox } from './outbox/manager';
 import type Server from './server.js';
 
@@ -88,6 +91,13 @@ type Rect = {
   height: number;
 };
 
+type ConfigLiveStreamArgs = {
+  preview: boolean;
+  video: boolean;
+  diag: boolean;
+  objects: boolean;
+};
+
 /**
  * Class that receives events from various components synchronizes them and send
  * to the server
@@ -98,16 +108,23 @@ export default class Timeline extends EventEmitter {
   outbox: Outbox;
   server: Server;
   _previewSize: Size;
-  previewObjects: Array<TimelineEventObject>;
+
+  // Keep track of all objects that are classified in the video stream.
+  objects: CBuffer<TimelineEventObject> = new CBuffer(100);
+
+  // Timer that sends objects.
+  objectSendTimeout: ?number = null;
+
   diagJpegFrames: Array<DiagJpegFrame>;
-  cachedObjs: Array<TimelineEventObject>;
   eventTracker: EventTracker;
   eventTrackerActive: boolean;
   uploadOpQueue: Array<[number, () => void]>;
 
-  liveDiag: boolean;
-  liveVideo: boolean;
-  livePreview: boolean;
+  liveDiag: boolean = false;
+  liveVideo: boolean = false;
+  livePreview: boolean = false;
+  liveObjects: boolean = false;
+
   diagFrameFilter: string;
   diagFrameFilterSkips: Array<RegExp>;
   diagFrameFilterNames: Array<RegExp>;
@@ -118,6 +135,8 @@ export default class Timeline extends EventEmitter {
   secondsUntilNextPreviewEmit: number;
   videoUploadType: string;
 
+  _nextObjectId: number = 0;
+
   constructor(server: Server, outbox: Outbox) {
     super();
     invariant(server, 'must pass server...');
@@ -127,18 +146,10 @@ export default class Timeline extends EventEmitter {
     this.server = server;
     this._previewSize = {width: 0, height: 0};
 
-    // Keep track of all objects and upload them along with the
-    // metadata for previews (TODO: it would be nice to integrate this into the
-    // event system)
-    this.previewObjects = [];
-
     this.diagJpegFrames = [];
     this.diagFrameFilter = '';
     this.diagFrameFilterNames = [];
     this.diagFrameFilterSkips = [];
-
-    // Keeps a copy of previous objects to be sent when there is no motion detected
-    this.cachedObjs = [];
 
     this.eventTracker = new EventTracker(this.outbox);
     this.eventTracker.on('active', this._onEventTrackerActive);
@@ -150,9 +161,6 @@ export default class Timeline extends EventEmitter {
     this.lastPreviewEmitSeconds = 0;
     this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
     this.uploadOpQueue = new CBuffer(PRE_EVENT_UPLOAD_MS / 250); // Hold up to 4 ops per second
-
-    this.liveVideo = false;
-    this.livePreview = false;
 
     this.videoUploadType = util.getstrprop(VIDEOUPLOADTYPE_PROP,
       DEFAULT_VIDEOUPLOADTYPE);
@@ -169,7 +177,12 @@ export default class Timeline extends EventEmitter {
 
     server.on('disconnect', () => {
       log.info('Turning off any live streaming');
-      this.configLiveStream(false, false, false);
+      this.configLiveStream({
+        preview: false,
+        video: false,
+        diag: false,
+        objects: false,
+      });
     });
   }
 
@@ -200,28 +213,45 @@ export default class Timeline extends EventEmitter {
     this.eventTrackerActive = false;
   };
 
+  getNextObjectId(): number {
+    return ++this._nextObjectId;
+  }
+
   /**
    * Selects if transition of the live preview images and/or video should be
    * enabled or not.
    *
-   * @param preview Should preview be enabled or not
-   * @param video Should video be enabled or not
-   * @param diag Should diagnostics be enabled or not
+   * @param args
    */
-  configLiveStream(preview: boolean, video: boolean, diag: boolean) {
+  configLiveStream(args: ConfigLiveStreamArgs) {
+    const {preview, video, diag, objects} = args;
+    log.info(`configLiveStream: preview=${preview}, video=${video}, ` +
+             `diag=${diag}, objects=${objects}`);
+
     if (this.livePreview !== preview) {
       this.livePreview = preview;
       if (this.livePreview) {
         // Force the last preview image to be transmitted immediately, to provide
         // the client with a preview image as quick as possible when the camera
         // first connects.
-        this._pushPreview(0, null, 0, 0);
+        this._pushPreview(0, null, false);
       }
     }
     this.liveVideo = video;
     this.liveDiag = diag;
     if (this.liveDiag) {
       this.diagEmitState();
+    }
+
+    this.liveObjects = objects;
+    if (objects) {
+      if (!this.objectSendTimeout) {
+        // Send anything we have immediately.
+        this._sendObjects();
+      }
+    } else if (this.objectSendTimeout) {
+      clearTimeout(this.objectSendTimeout);
+      this.objectSendTimeout = null;
     }
   }
 
@@ -254,7 +284,7 @@ export default class Timeline extends EventEmitter {
    * @param previewHeight Suggested preview height
    */
   addPreviewFrame(when: number, preview: any, previewWidth: number, previewHeight: number) {
-    this._pushPreview(when, preview, previewWidth, previewHeight);
+    this._maybePushPreview(when, preview, previewWidth, previewHeight);
     this.emit('preview', when);
   }
 
@@ -373,22 +403,61 @@ export default class Timeline extends EventEmitter {
    *
    * @param objects List of objects to be added to the timeline
    */
-  addObjects(objects: Array<TimelineEventObject>) {
-    if (!objects) {
-      throw new Error('Invalid objects');
-    }
+  addObjects(objects: Array<TimelineEventObject>): void {
+    invariant(objects.length);
 
     objects.forEach((object) => {
-      // Store objects to be used later when there is no motion. Following
-      // objects are agnostic to motion so ignore them
-      if ((object.source !== 'hal') && (object.source !== 'clapper') &&
-          (object.source !== 'trackobject')) {
-        this.cachedObjs.push(object);
+      if (!object.id) {
+        object.id = this.getNextObjectId();
       }
-      this.previewObjects.push(object);
+      invariant(object.source);
+      invariant(object.tag);
+      if (!object.when) {
+        object.when = this.lastPreviewFrameWhen; // best guess
+      }
+      if (!object.durationMs) {
+        object.durationMs = 0;
+      }
+      if (!object.rects) {
+        const borderPad = 20;
+        object.rects = [{
+          x: borderPad,
+          y: borderPad,
+          width: this._previewSize.width - borderPad * 2,
+          height: this._previewSize.height - borderPad * 2,
+        }];
+      }
+
+      if (object.tag === 'car') {
+        this.emit('car', object.when, object.rects);
+      }
+
+      this.objects.push(object);
     });
+
     this._processEvents(objects);
+
+    if (this.liveObjects && !this.objectSendTimeout) {
+      this.objectSendTimeout =
+        setTimeout(this._sendObjects, OBJECT_SEND_INTERVAL_MS);
+    }
   }
+
+  _sendObjects: (() => void) = () => {
+    if (this.objectSendTimeout) {
+      clearTimeout(this.objectSendTimeout);
+      this.objectSendTimeout = null;
+    }
+
+    if (!this.liveObjects) {
+      return;
+    }
+
+    if (this.objects.size) {
+      this.server.send('objects', {objects: this.objects.toArray()});
+      this.objects.empty();
+    }
+  };
 
   /**
    * @private
@@ -399,37 +468,6 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   * Inject an object into the video stream.
-   *
-   * @param tag Type of the object detected
-   * @param [when=last preview timestamp] Time when the object was detected
-   * @param [rect=size of preview rectangle] Rectangle co-ordinates of the object
-   * @param source Which component is responsible for adding this object
-   */
-  addObject(tag: string, when: number, rect: Rect, source: string) {
-    if (!when) {
-      when = this.lastPreviewFrameWhen; // best guess
-    }
-
-    if (!rect) {
-      const borderPad = 20;
-      rect = {
-        x: borderPad,
-        y: borderPad,
-        width: this._previewSize.width - borderPad * 2,
-        height: this._previewSize.height - borderPad * 2,
-      };
-    }
-
-    this.addObjects([{
-      tag,
-      when,
-      rects: [rect],
-      source,
-    }]);
-  }
-
-  /**
    * Notify timeline that there is no motion in the image as compared to the
    * previous image.
    *
@@ -437,36 +475,6 @@ export default class Timeline extends EventEmitter {
    */
   noMotion(when: number) {
     this.emit('no-motion', when);
-  }
-
-  /**
-   * Add the last cached objects to the provided list of objects
-   *
-   * @return original objects + cached objects if any
-   * @private
-   */
-  _addCachedObjects(
-    origObjects: ?Array<TimelineEventObject>,
-    when: number
-  ): ?Array<TimelineEventObject> {
-    // Adjust the timestamp of the last cached objects
-    let objs = null;
-    if (this.cachedObjs.length > 0) {
-      objs = this.cachedObjs.map(obj => {
-        let newObj = obj;
-        newObj.when = when;
-        return newObj;
-      });
-      this._processEvents(objs);
-    }
-
-    if (origObjects && objs) {
-      return origObjects.concat(objs);
-    }
-    if (objs) {
-      return objs;
-    }
-    return origObjects;
   }
 
   /**
@@ -481,11 +489,6 @@ export default class Timeline extends EventEmitter {
         process.nextTick(() => {
           throw err;
         });
-      }
-
-      // Clear the cached object list as new objects would be received
-      if (object.tag === 'motion') {
-        this.cachedObjs = [];
       }
     });
   }
@@ -513,18 +516,7 @@ export default class Timeline extends EventEmitter {
   /**
    * @private
    */
-  _pushPreview(when: number, preview: any, previewWidth: number, previewHeight: number) {
-    // Intentionally delay the preview image by one cycle to ensure
-    // that the previewObjects are transmitted with their corresponding image.
-    //
-    // previewObjects are computed after the preview frame is received, so if
-    // the preview frame is transmitted as quickly as possible and then a naïve
-    // client will end up displaying the previewObjects for last frame.
-    //
-    // However the `when` timestamp is transmitted to the client for both the
-    // preview image and objects so this little workaround can be removed in the
-    // future if desired, once the appropriate client changes are made.
-    //
+  _maybePushPreview(when: number, preview: any, previewWidth: number, previewHeight: number) {
     const now = Date.now();
     const nowSeconds = Math.floor(now / 1000);
     this.secondsUntilNextPreviewEmit -= nowSeconds - this.lastPreviewEmitSeconds;
@@ -532,90 +524,96 @@ export default class Timeline extends EventEmitter {
       return; // Not time to emit a preview yet
     }
 
-    if (this.lastPreviewFrame) {
-      // Live stream
-      for (let obj of this.previewObjects) {
-        if (obj.when < this.lastPreviewFrameWhen) {
-          log.warn(`Preview object mismatch: ` +
-            `object too old by ${this.lastPreviewFrameWhen - obj.when}ms: ` +
-            JSON.stringify(obj));
-        } else if (obj.when >= when) {
-          log.warn(`Preview object mismatch: ` +
-            `object too new by ${obj.when - when}ms: ` +
-            JSON.stringify(obj));
-        }
-      }
-
-      if (this.livePreview) {
-        this.server.send('video', {
-          contents: 'jpeg',
-          when: this.lastPreviewFrameWhen,
-          frame: this.lastPreviewFrame,
-          objects: this._addCachedObjects(this.previewObjects, when),
-          durationMs: PREVIEW_UPLOAD_INTERVAL_MS,
-        });
-      }
-
-      if (this.diagJpegFrames.length > 0) {
-        this.server.send('diag', {
-          type: 'jpegFrames',
-          frames: this.diagJpegFrames,
-        });
-        this.diagJpegFrames = [];
-      }
-
-      // Storage
-      const lastPreviewFrame = this.lastPreviewFrame;
-      const lastPreviewFrameWhen = this.lastPreviewFrameWhen;
-      const previewObjects = this.previewObjects;
-
-      const enqueueOp = () => {
-        invariant(lastPreviewFrame);
-        const op = new PreviewUploadOp({
-          size: lastPreviewFrame.length,
-          metadata: {
-            metaType: 'preview',
-            startUTC: lastPreviewFrameWhen,
-            endUTC: lastPreviewFrameWhen + PREVIEW_UPLOAD_INTERVAL_MS,
-            data: {
-              frameWidth: this._previewSize.width,
-              frameHeight: this._previewSize.height,
-              objects: previewObjects,
-            },
-          },
-        });
-        this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
-          op, new BufferStream(lastPreviewFrame));
-      };
-
-      if (now - this.lastPreviewKeyframeWhen >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
-        // This is a preview keyframe, enqueue it right away
-        enqueueOp();
-        this.lastPreviewKeyframeWhen = now;
-      } else {
-        // This is not a preview keyframe, maybe enqueue it
-        this._addUploadOp(lastPreviewFrameWhen, enqueueOp);
-      }
+    let isKeyFrame = false;
+    if (now - this.lastPreviewKeyframeWhen >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
+      isKeyFrame = true;
+      this.lastPreviewKeyframeWhen = now;
     }
 
-    if (!preview) {
-      return;
-    }
+    log.debug(`Converting matrix to jpg: ${when}`);
 
     // TODO: Consider moving this image resize off the main thread...
     preview.resize(previewWidth, previewHeight);
 
     preview.toBufferAsync((err, frame) => {
+      log.debug(`Finished converting matrix to jpg: ${when}`);
       if (err) {
         this.lastPreviewFrame = null;
         throw err; // TODO: If/when can this actually happen?
       }
-      this.lastPreviewFrame = frame;
+      this._pushPreview(when, frame, isKeyFrame);
     }, {ext: '.jpg', jpegQuality: 100});
-    this.lastPreviewFrameWhen = when;
-    this.previewObjects = [];
+
     this.lastPreviewEmitSeconds = nowSeconds;
     this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
+  }
+
+  _pushPreview(when: number, frame: ?Buffer, isKeyFrame: boolean) {
+    let usingLastFrame = false;
+    if (!frame) {
+      if (!this.lastPreviewFrame) {
+        // Nothing to push.
+        return;
+      }
+      usingLastFrame = true;
+      frame = this.lastPreviewFrame;
+      when = this.lastPreviewFrameWhen;
+    }
+
+    if (this.livePreview) {
+      this.server.send('video', {
+        contents: 'jpeg',
+        when,
+        frame,
+        durationMs: PREVIEW_UPLOAD_INTERVAL_MS,
+      });
+    }
+
+    if (this.diagJpegFrames.length > 0) {
+      this.server.send('diag', {
+        type: 'jpegFrames',
+        frames: this.diagJpegFrames,
+      });
+      this.diagJpegFrames = [];
+    }
+
+    if (usingLastFrame) {
+      return;
+    }
+
+    // Storage
+    const frameWidth = this._previewSize.width;
+    const frameHeight = this._previewSize.height;
+
+    const enqueueOp = () => {
+      invariant(frame);
+      const op = new PreviewUploadOp({
+        size: frame.length,
+        metadata: {
+          metaType: 'preview',
+          startUTC: when,
+          endUTC: when + PREVIEW_UPLOAD_INTERVAL_MS,
+          data: {
+            frameWidth,
+            frameHeight,
+          },
+        },
+      });
+      this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
+                          op,
+                          new BufferStream(frame));
+    };
+
+    if (isKeyFrame) {
+      // This is a preview keyframe, enqueue it right away
+      enqueueOp();
+    } else {
+      // This is not a preview keyframe, maybe enqueue it
+      this._addUploadOp(when, enqueueOp);
+    }
+
+    this.lastPreviewFrame = frame;
+    this.lastPreviewFrameWhen = when;
   }
 
   /**

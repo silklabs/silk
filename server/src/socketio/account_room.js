@@ -23,14 +23,15 @@ import type {Record as DeviceRecord} from '../server/models/devices';
 
 const log = createLog('socketio:account_room');
 
-type DevicePreviewInfo = {
+type Dimensions = {
   width: number;
   height: number;
 }
 
 export type DeviceInfo = {
   id: string;
-  previewSize: ?DevicePreviewInfo;
+  videoSize: ?Dimensions;
+  previewSize: ?Dimensions;
   logo: ?any;
   now: number;
 }
@@ -51,6 +52,7 @@ type DeviceLiveStream = {
   diag: bool;
   preview: bool;
   mic: bool;
+  objects: bool;
 }
 
 // How long a device has to send a livestream message when the server is
@@ -81,6 +83,7 @@ class Device {
     diag: false,
     preview: false,
     mic: false,
+    objects: false,
   };
 
   constructor(socket: Socket, id: string) {
@@ -100,6 +103,10 @@ class Device {
 
     if (typeof info.logo === 'object') {
       this.info.logo = info.logo;
+    }
+
+    if (typeof info.videoSize === 'object') {
+      this.info.videoSize = info.videoSize;
     }
 
     if (typeof info.previewSize === 'object') {
@@ -123,7 +130,11 @@ class Device {
     }
 
     if (this.livestream.diag ||
-        (this.info.previewSize && (this.livestream.preview || this.livestream.video || this.livestream.mic))) {
+        (this.info.previewSize &&
+         (this.livestream.preview ||
+          this.livestream.video ||
+          this.livestream.mic ||
+          this.livestream.objects))) {
       this.timeout = setTimeout(() => {
         log.info(`Device packet timeout. Disconnecting io=${this.socket.id} id=${this.id}`);
         this.socket.disconnect(true);

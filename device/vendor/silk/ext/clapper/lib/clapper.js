@@ -106,7 +106,11 @@ class Clapper {
         if (soundEnabled) {
           util.playSound(TWO_CLAPS_FILENAME);
         }
-        this._env.timeline.addObject(tag);
+        this._env.timeline.addObjects([{
+          tag,
+          when: Date.now(),
+          durationMs: 1000,
+        }]);
       }
       if (count === 2 && type === 'normal') {
         lightsOn = !lightsOn;
@@ -137,7 +141,11 @@ class Clapper {
 
     this._onLoudSound = () => {
       log.info('loud sound detected');
-      this._env.timeline.addObject('loud-sound');
+      this._env.timeline.addObjects([{
+        tag: 'loud-sound',
+        when: Date.now(),
+        durationMs: 1000,
+      }]);
     };
     this._loudSoundDetector.on('loudSound', this._onLoudSound);
   }

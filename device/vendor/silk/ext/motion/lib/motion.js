@@ -34,7 +34,7 @@ const MOTION_SUBTRACTOR_PROP = 'persist.silk.motion.subtractor';
 let soundEnabled = false;
 
 // Minimum rectangle size for motion
-const MIN_AREA = 5 * 5;
+const MIN_AREA = 100;
 
 const GAUSSIAN_KERNEL_SIZE = 15;
 

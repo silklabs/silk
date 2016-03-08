@@ -67,6 +67,8 @@ SILK_EXT := \
   samsungtv \
   svmsounds \
   svmsounds-clap \
+  welcome \
+  welcome-config \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

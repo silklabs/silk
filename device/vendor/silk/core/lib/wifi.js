@@ -23,8 +23,8 @@ type WifiScanResult = {
 };
 
 const log = createLog('wifi');
-const USE_QEMU_WIFI = util.getboolprop(
-  'ro.silk.wifi.qemu',
+const USE_WIFI_STUB = util.getboolprop(
+  'persist.silk.wifi.stub',
   process.platform !== 'android'
 );
 
@@ -585,14 +585,14 @@ export class Wifi extends events.EventEmitter {
 }
 
 
-export class QEmuWifi extends events.EventEmitter {
+export class StubWifi extends events.EventEmitter {
 
   constructor() {
     super();
   }
 
   init() {
-    log.info('QEmu "WiFi" initializing on eth0');
+    log.info('Using stub "WiFi"');
     // Most of the emulator eth0 networking is setup automatically.  The only
     // thing missing is to instruct netd to use the DNS servers for the
     // hardcoded netId == 0
@@ -607,10 +607,11 @@ export class QEmuWifi extends events.EventEmitter {
   }
 
   shutdown() {
-    log.info('QEmu: "WiFi" shutdown');
+    log.info('Stub: "WiFi" shutdown');
   }
 
   isOnline(): bool {
+    // Fingers crossed that somehow the device is online
     return true;
   }
 
@@ -619,11 +620,11 @@ export class QEmuWifi extends events.EventEmitter {
   }
 
   scan() {
-    log.warn('QEmuWifi.scan not implemented');
+    log.warn('StubWifi.scan not implemented');
   }
 
   joinNetwork(ssid: string, psk: string): Promise<void> { //eslint-disable-line
-    return Promise.reject(new Error('QEmuWifi.joinNetwork not implemented'));
+    return Promise.reject(new Error('StubWifi.joinNetwork not implemented'));
   }
 
   networkConfigured(): Promise<void> {
@@ -631,9 +632,9 @@ export class QEmuWifi extends events.EventEmitter {
   }
 
   forgetNetwork(): Promise<void> {
-    log.warn('QEmuWifi.forgetNetwork not implemented');
+    log.warn('StubWifi.forgetNetwork not implemented');
     return Promise.resolve();
   }
 }
 
-export default USE_QEMU_WIFI ? new QEmuWifi() : new Wifi();
+export default USE_WIFI_STUB ? new StubWifi() : new Wifi();

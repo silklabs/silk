@@ -74,11 +74,11 @@ export default class EventTracker extends EventEmitter {
   }
 
   _eventDiscriminator(event: TimelineEventObject): string {
-    // For now we throw all 'motion', 'car', etc. events into one basket.
+    // For now we throw all 'motion', etc. events into one basket.
     // Later one we could use additional info to discriminate one 'face'
     // event from another 'face' event.
     // TODO: We also need to consider deduping generic 'motion' events
-    // when the motion is due to 'car', 'face', etc. events. In that
+    // when the motion is due to 'face', etc. events. In that
     // case the more specific event is the more interesting one.
     return event.tag;
   }

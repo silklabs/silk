@@ -428,10 +428,6 @@ export default class Timeline extends EventEmitter {
         }];
       }
 
-      if (object.tag === 'car') {
-        this.emit('car', object.when, object.rects);
-      }
-
       this.objects.push(object);
     });
 

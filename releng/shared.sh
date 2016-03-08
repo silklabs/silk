@@ -33,6 +33,8 @@ GITS="\
   silk-trainingset \
   cereproc \
   gonk-alto \
+  gonk-msm8956 \
+  vendor-qcom-msm8956 \
   node-webrtc \
   libwebrtc \
   boost \

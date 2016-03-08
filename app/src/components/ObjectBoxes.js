@@ -116,12 +116,12 @@ let ObjectBoxes = React.createClass({
     let boxes = [];
     let count = 0;
     for (let i = 0; i < objects.length; ++i) {
-      let tag = objects[i].tag;
+      let label = objects[i].name || objects[i].tag;
       let rects = objects[i].rects;
       let when = objects[i].when;
 
       for (let j = 0; j < rects.length; ++j) {
-        boxes.push(this.objectBox(count, tag, when, rects[j], ratio));
+        boxes.push(this.objectBox(count, label, when, rects[j], ratio));
         count++;
       }
     }

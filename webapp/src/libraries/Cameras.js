@@ -381,7 +381,7 @@ class Camera extends EventEmitter {
     }
 
     this.objects.push(msg.objects);
-    this.emit('objects', this.objects);
+    this.emit('objects', msg.objects);
   };
 }
 

@@ -1,8 +1,7 @@
 import assert from 'assert';
 import React from 'react';
-import { Button, ButtonGroup, Glyphicon, Label } from 'react-bootstrap';
+import { Input } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
-import { Link } from 'react-router';
 import { prepareDashSegment } from 'silk-cam';
 import createLog from 'silk-log';
 
@@ -12,9 +11,57 @@ const log = createLog('CameraVideoMSE');
 
 const CODEC_DESCRIPTOR = 'video/mp4;codecs=avc1.42c01f,mp4a.40.2';
 
+const colors = {
+  paleBlue: '#EFF3F3',
+  blueGray: '#DCE6E6',
+  gray: '#A0A0A0',
+  darkGray: '#424242',
+  darkBlue: '#267686',
+  green: '#3CC0A5',
+  red: '#ED734C',
+  orange: '#F2A45B',
+  paleWarmGray: '#EEE9DF',
+};
+
 const styles = {
-  container: {
+  global: {
+    fontFamily: 'DINRound',
+    color: 'white',
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.red,
+  },
+  header: {
+    width: '100%',
+    margin: 0,
+    padding: 8,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    fontSize: '36px',
+  },
+  consoleContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '33%',
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  consoleHeader: {
+    margin: 0,
+    padding: 8,
+    fontSize: '20px',
+  },
+  consoleMessages: {
+    margin: 0,
+    padding: '0px 8px 8px 8px',
+    listStyleType: 'none',
+  },
+  videoContainer: {
     position: 'relative',
+    borderStyle: 'solid',
+    borderColor: colors.red,
+    borderWidth: '0px 6px',
   },
   video: {
     display: 'block',
@@ -25,7 +72,21 @@ const styles = {
     top: 0,
     left: 0,
   },
+  form: {
+    backgroundColor: colors.red,
+    padding: '0px 8px',
+    textAlign: 'right',
+    opacity: 0.125,
+  },
 };
+
+function asciiSum(string) {
+  let sum = 0;
+  for (let index = 0; index < string.length; index++) {
+    sum += string.charCodeAt(index);
+  }
+  return sum;
+}
 
 export default class CameraVideo extends React.Component {
   video = null;
@@ -33,6 +94,7 @@ export default class CameraVideo extends React.Component {
   context = null;
   mediaSource = null;
   sourceBuffer = null;
+  pixelRatio = 1;
 
   initHeader = null;
   wroteInitHeader = false;
@@ -47,7 +109,8 @@ export default class CameraVideo extends React.Component {
 
   state = {
     camera: null,
-    videoTime: '',
+    consoleMessages: [],
+    showMotionEvents: false,
   };
 
   get deviceId() {
@@ -74,6 +137,12 @@ export default class CameraVideo extends React.Component {
     Cameras.on('stateChanged', this._onCamerasStateChanged);
     this.mediaSource.addEventListener('sourceopen', this._onSourceOpen);
 
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const backingRatio = this.context.webkitBackingStorePixelRatio || 1;
+    if (devicePixelRatio !== backingRatio) {
+      this.pixelRatio = devicePixelRatio / backingRatio;
+    }
+
     this.video.src = URL.createObjectURL(this.mediaSource);
     this._onCamerasStateChanged(Cameras);
     this._updateCanvasSize();
@@ -87,6 +156,7 @@ export default class CameraVideo extends React.Component {
     const camera = this.state.camera;
     if (camera) {
       camera.removeListener('videoClip', this._onNextVideoClip);
+      camera.removeListener('objects', this._onObjects);
     }
 
     if (this.sourceBuffer) {
@@ -97,10 +167,21 @@ export default class CameraVideo extends React.Component {
   }
 
   _updateCanvasSize = () => {
-    const rect = this.video.getBoundingClientRect();
-    this.canvas.width = Math.floor(rect.width);
-    this.canvas.height = Math.floor(rect.height);
     this._renderCanvas();
+
+    let width = this.video.clientWidth;
+    let height = this.video.clientHeight;
+
+    if (this.pixelRatio !== 1) {
+      this.canvas.style.width = Math.floor(width) + 'px';
+      this.canvas.style.height = Math.floor(height) + 'px';
+
+      width *= this.pixelRatio;
+      height *= this.pixelRatio;
+    }
+
+    this.canvas.width = Math.floor(width);
+    this.canvas.height = Math.floor(height);
   };
 
   _onCamerasStateChanged = state => {
@@ -114,8 +195,11 @@ export default class CameraVideo extends React.Component {
       return;
     }
 
+    this._renderCanvas();
+
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
+      oldCamera.removeListener('objects', this._onObjects);
 
       this.video.pause();
       this.videoStartTime = 0;
@@ -130,14 +214,12 @@ export default class CameraVideo extends React.Component {
 
     if (newCamera) {
       newCamera.addListener('videoClip', this._onNextVideoClip);
+      newCamera.addListener('objects', this._onObjects);
     }
 
     this.setState({
       camera: newCamera,
-      videoTime: '',
     });
-
-    this._renderCanvas();
   };
 
   _onNextVideoClip = (url, when, segment) => {
@@ -147,6 +229,66 @@ export default class CameraVideo extends React.Component {
     let buffer = new Buffer(segment);
     prepareDashSegment(buffer, this.segmentState);
     this._feedPlayer(null, buffer.toArrayBuffer());
+  };
+
+  _onObjects = (objects) => {
+    const oldMessages = this.state.consoleMessages;
+
+    const newMessages = new Map();
+    objects.forEach((object) => {
+      if (object.tag === 'face') {
+        let text;
+        if ('name' in object) {
+          const name = object.name;
+          text = name.charAt(0).toUpperCase() + name.substr(1).toLowerCase();
+        } else {
+          text = 'A face';
+        }
+        text += ' was seen';
+
+        if (oldMessages.length) {
+          for (let index = 0; index < oldMessages.length; index++) {
+            const oldMessage = oldMessages[index];
+            if (oldMessage.id === object.id && oldMessage.text === text) {
+              return;
+            }
+          }
+        }
+        newMessages.set(object.id, text);
+      }
+    });
+
+    if (!newMessages.size) {
+      return;
+    }
+
+    const consoleMessages = oldMessages.slice();
+    newMessages.forEach((text, id) => {
+      consoleMessages.push({
+        id,
+        text,
+      });
+    });
+
+    if (consoleMessages.length > 4) {
+      consoleMessages.splice(0, consoleMessages.length - 4);
+    }
+
+    this.setState({
+      consoleMessages,
+    });
+  };
+
+  _onMotionCheck = () => {
+    const checked = this.refs.checkMotion.getChecked();
+    if (checked === this.state.showMotionEvents) {
+      return;
+    }
+
+    this._renderCanvas();
+    this.setState({
+      showMotionEvents: checked,
+    });
   };
 
   _onSourceOpen = () => {
@@ -223,14 +365,6 @@ export default class CameraVideo extends React.Component {
   };
 
   _onTimeUpdate = () => {
-    if (this.loadedData) {
-      const durationMs = Math.floor(this.video.currentTime * 1000);
-      const time = new Date(this.videoStartTime + durationMs);
-      if (!this.state.videoTime || time.toString() !== this.state.videoTime) {
-        this.setState({videoTime: time.toString()});
-      }
-    }
-
     this._renderCanvas();
   };
 
@@ -240,9 +374,12 @@ export default class CameraVideo extends React.Component {
       const context = this.context;
 
       context.save();
+      context.scale(this.pixelRatio, this.pixelRatio);
 
       try {
-        this._renderCanvasInternal(context, canvas.width, canvas.height);
+        this._renderCanvasInternal(context,
+                                   canvas.width / this.pixelRatio,
+                                   canvas.height / this.pixelRatio);
       } catch(err) {
         log.warn(err);
       }
@@ -251,61 +388,79 @@ export default class CameraVideo extends React.Component {
     });
   }
 
-  _renderCanvasInternal(context, width, height) {
-    context.clearRect(0, 0, width, height);
-
+  _renderCanvasInternal(context, canvasWidth, canvasHeight) {
     const camera = this.state.camera;
     const online = this.renderedOnline = camera ? camera.online : false;
-    const defaultFont = '12px sans-serif';
+    const defaultFont = '16px DINRound';
 
     if (!camera || !online) {
-      context.fillStyle = 'grey';
-      context.fillRect(0, 0, width, height);
+      context.fillStyle = 'gray';
+      context.fillRect(0, 0, canvasWidth, canvasHeight);
 
-      if (!online) {
-        context.font = defaultFont;
+      if (camera && !online) {
         context.fillStyle = 'white';
         context.textAlign = 'end';
         context.textBaseline = 'top';
-        context.fillText('Offline', width - 5, 5);
+        context.font = '16px sans-serif';
+        context.fillText('Offline', canvasWidth - 5, 5);
       }
 
       return;
     }
 
     if (!this.loadedData) {
-      context.fillStyle = 'lightgrey';
-      context.fillRect(0, 0, width, height);
+      context.fillStyle = 'lightgray';
+      context.fillRect(0, 0, canvasWidth, canvasHeight);
 
       // TODO: Add a spinner? Some kind of 'loading' text?
       return;
     }
 
+    context.font = defaultFont;
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw objects.
     const time =
       this.videoStartTime + Math.floor(this.video.currentTime * 1000);
-    const objects = camera.objects.collect(time, time + 50);
+    const objects = camera.objects.collect(time - 50, time + 50);
     if (objects.length) {
       const objectColors = [
-        'red',
-        'lightgreen',
-        'lightblue',
-        'purple',
-        'black',
-        'orange',
+        colors.blueGray,
+        colors.darkBlue,
+        colors.green,
+        colors.red,
+        colors.orange,
       ];
 
-      context.lineWidth = 1;
-      context.font = '10px sans-serif';
-      context.fillStyle = 'black';
+      // There is no way to measure text height with canvas alone... Hardcode!
+      const tagHeight = 20;
+
+      const xTagPadding = 5;
+      const yTagPadding = 2;
+
+      context.lineWidth = 3;
+      context.textAlign = 'start';
+      context.textBaseline = 'top';
 
       // All objects are scaled to the previewSize so we have to expand to fill
       // the window.
-      const xScale = width / camera.previewSize.width;
-      const yScale = height / camera.previewSize.height;
+      const xScale = canvasWidth / camera.previewSize.width;
+      const yScale = canvasHeight / camera.previewSize.height;
 
       objects.forEach((object, index) => {
         const tag = object.tag;
-        context.strokeStyle = objectColors[index % objectColors.length];
+
+        if (tag === 'motion' && !this.state.showMotionEvents) {
+          return;
+        }
+
+        const colorIndex = tag ?
+                           asciiSum(tag) % objectColors.length :
+                           index % objectColors.length;
+        const color = objectColors[colorIndex];
+        const textColor = colorIndex === 0 ? 'black' : 'white';
+
+        context.strokeStyle = color;
 
         object.rects.forEach((rect) => {
           const x = Math.round(rect.x * xScale);
@@ -314,22 +469,69 @@ export default class CameraVideo extends React.Component {
           const h = Math.round(rect.height * yScale);
 
           context.strokeRect(x, y, w, h);
-          context.fillText(tag, x, y + h + 10);
+
+          if (tag) {
+            const wTag =
+              Math.round(context.measureText(tag).width) + 2 * xTagPadding;
+            const hTag = tagHeight + 2 * yTagPadding;
+
+            const xTag = (x + wTag <= canvasWidth) ?
+                         x :
+                         canvasWidth - wTag;
+            const yTag = (y + h + hTag <= canvasHeight) ?
+                         y + h :
+                         y - hTag;
+
+            context.fillStyle = color;
+            context.fillRect(xTag, yTag, wTag, hTag);
+
+            // A simple strokeRect() for the tag looks bad when we have less
+            // than total opacity because it redraws one segment that was
+            // already drawn by the strokeRect() call above and it becomes more
+            // opaque than the other segments... Use a path instead.
+            context.beginPath();
+            if (yTag < y) {
+              context.moveTo(xTag, yTag + hTag);
+              context.lineTo(xTag, yTag);
+              context.lineTo(xTag + wTag, yTag);
+              context.lineTo(xTag + wTag, yTag + hTag);
+            } else {
+              context.moveTo(xTag, yTag);
+              context.lineTo(xTag, yTag + hTag);
+              context.lineTo(xTag + wTag, yTag + hTag);
+              context.lineTo(xTag + wTag, yTag);
+            }
+            context.stroke();
+
+            context.fillStyle = textColor;
+            context.fillText(tag, xTag + xTagPadding, yTag + yTagPadding);
+          }
         });
       });
     }
   }
 
   render() {
+    let console;
+    if (this.state.camera &&
+        this.state.camera.online &&
+        this.state.consoleMessages.length) {
+      const messages = this.state.consoleMessages.map((message) => {
+        return (
+          <li>{message.text}</li>
+        );
+      });
+      console = (
+        <div style={styles.consoleContainer}>
+          <h2 style={styles.consoleHeader}>Events</h2>
+          <ul style={styles.consoleMessages}>{messages}</ul>
+        </div>
+      );
+    }
     return (
-      <div>
-        <ButtonGroup>
-          <Button bsStyle="warning">
-            <Link to="/"><Glyphicon glyph="home" /></Link>
-          </Button>
-        </ButtonGroup>
-        <Label>{this.state.videoTime}</Label>
-        <div style={styles.container}>
+      <div style={styles.global}>
+        <h1 style={styles.header}>Silk Labs</h1>
+        <div style={styles.videoContainer}>
           <video
             autoPlay="true"
             style={styles.video}
@@ -338,8 +540,21 @@ export default class CameraVideo extends React.Component {
             onResize={this._updateCanvasSize}
             onTimeUpdate={this._onTimeUpdate}
           />
-          <canvas style={styles.canvas} ref="canvas"></canvas>
+          <canvas
+            style={styles.canvas}
+            ref="canvas">
+          </canvas>
+          {console}
         </div>
+        <form style={styles.form}>
+          <Input
+            type="checkbox"
+            label="Show Motion Events"
+            ref="checkMotion"
+            checked={this.state.showMotionEvents}
+            onChange={this._onMotionCheck}
+          />
+        </form>
       </div>
     );
   }

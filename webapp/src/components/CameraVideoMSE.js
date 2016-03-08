@@ -1,10 +1,9 @@
-
 import assert from 'assert';
-import config from 'silk-config';
 import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Label } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
+import { prepareDashSegment } from 'silk-cam';
 import createLog from 'silk-log';
 
 import Cameras from '../libraries/Cameras';
@@ -12,21 +11,6 @@ import Cameras from '../libraries/Cameras';
 const log = createLog('CameraVideoMSE');
 
 const CODEC_DESCRIPTOR = 'video/mp4;codecs=avc1.42c01f,mp4a.40.2';
-// NB: these values are defined in the init header.  While the init
-// header is hard coded, so are these constants for convenience.  If
-// we ever support multiple init header types with different sample
-// rates, then we'll want to read these constants from the header.
-const AUDIO_TICKS_PER_SEC = config.deviceMic.sampleRate;
-const VIDEO_TICKS_PER_SEC = 90000; // libstagefright default
-
-// Each MP4 box contains:
-//   - boxSize   (4 bytes)
-//   - fourcc    (4 bytes)
-//   - box specific data (boxSize - 8 bytes)
-//
-// A box can contain box specific data or more boxes
-//
-const BOX_HDR_SIZE = 8;
 
 const styles = {
   container: {
@@ -42,83 +26,6 @@ const styles = {
     left: 0,
   },
 };
-
-function readFourcc(buf, offset) {
-  let fourcc = '';
-  for (let i = 0; i < 4; ++i) {
-    fourcc += String.fromCharCode(buf[offset + i]);
-  }
-  return fourcc;
-}
-
-function findNextBox(mp4, box = { fourcc: '', size: 0, offset: 0 }) {
-  let pos = box.offset = box.offset + box.size;
-  box.size = mp4.readInt32BE(pos);
-  pos += 4;
-  box.fourcc = readFourcc(mp4, pos);
-  return box;
-}
-
-function findMetadataBox(m4s) {
-  let offsets = { };
-  // Find the "free" box where our metadata is stashed in.
-  let box = findNextBox(m4s);
-  while (box.fourcc !== 'free') {
-    box = findNextBox(m4s, box);
-  }
-
-  // Check that we found the right box.
-  box.offset += BOX_HDR_SIZE;
-  box.size = 0;
-  box = findNextBox(m4s, box);
-  assert.equal(box.fourcc, 'Xmta');
-
-  let pos = box.offset + BOX_HDR_SIZE;
-  pos += 4;               // version and flags (we don't care yet)
-  offsets.seqno = m4s.readInt32BE(pos);
-  pos += 4;
-  offsets.presentationTime = m4s.readInt32BE(pos);
-  pos += 4;
-  offsets.videoDecodeTime = m4s.readInt32BE(pos);
-  pos += 4;
-  offsets.audioDecodeTime = m4s.readInt32BE(pos);
-  pos += 4;
-  let mute = m4s.readInt32BE(pos);
-  pos += 4;
-  return {offsets, mute};
-}
-
-function prepareSegment(segment, state) {
-  let m4s = new Buffer(segment);
-  let seqno = state.seqno;
-  let startTime = state.startTime;
-
-  let {offsets, mute} = findMetadataBox(m4s);
-  // Duration is 16 bytes after earliest_presentation_time in "sidx".
-  let durationTicks = m4s.readInt32BE(offsets.presentationTime + 16);
-
-  assert.equal('?seq', readFourcc(m4s, offsets.seqno));
-  // XXX doesn't matter in chrome
-  m4s.writeInt32BE(seqno, offsets.seqno);
-
-  let videoDecodeTime = startTime + m4s.readInt32BE(offsets.videoDecodeTime);
-  assert.equal('?prs', readFourcc(m4s, offsets.presentationTime));
-  // XXX maybe doesn't matter in chrome
-  m4s.writeInt32BE(videoDecodeTime, offsets.presentationTime);
-  m4s.writeInt32BE(videoDecodeTime, offsets.videoDecodeTime);
-
-  // TODO: get timeScales from init header
-  let startTimeDelta =
-        (startTime * AUDIO_TICKS_PER_SEC / VIDEO_TICKS_PER_SEC) | 0;
-  let audioDecodeTime =
-        startTimeDelta + m4s.readInt32BE(offsets.audioDecodeTime);
-  m4s.writeInt32BE(audioDecodeTime, offsets.audioDecodeTime);
-
-  ++state.seqno;
-  state.startTime += durationTicks;
-
-  return { data: m4s.toArrayBuffer(), mute: mute };
-}
 
 export default class CameraVideo extends React.Component {
   video = null;
@@ -237,7 +144,9 @@ export default class CameraVideo extends React.Component {
     if (!this.videoStartTime) {
       this.videoStartTime = when.getTime();
     }
-    this._feedPlayer(null, prepareSegment(segment, this.segmentState));
+    let buffer = new Buffer(segment);
+    prepareDashSegment(buffer, this.segmentState);
+    this._feedPlayer(null, buffer.toArrayBuffer());
   };
 
   _onSourceOpen = () => {
@@ -258,7 +167,7 @@ export default class CameraVideo extends React.Component {
     if (this.initHeader) {
       log.info('Appending initialization header');
       assert(!this.wroteInitHeader);
-      this._appendSegment({data: this.initHeader, mute: true});
+      this._appendSegment(this.initHeader);
       this.initHeader = null;
       this.wroteInitHeader = true;
       if (segment) {
@@ -290,7 +199,7 @@ export default class CameraVideo extends React.Component {
       const seg = this.segmentQ[index];
       try {
         log.debug('Appending segment', seg);
-        this.sourceBuffer.appendBuffer(seg.data);
+        this.sourceBuffer.appendBuffer(seg);
       } catch(err) {
         if (err.name === 'QuotaExceededError' ||
             err.name === 'InvalidStateError') {
@@ -311,7 +220,7 @@ export default class CameraVideo extends React.Component {
   _onLoadedData = () => {
     this.loadedData = true;
     this._updateCanvasSize();
-  }
+  };
 
   _onTimeUpdate = () => {
     if (this.loadedData) {

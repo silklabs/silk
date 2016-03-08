@@ -6,10 +6,9 @@ import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
 import createLog from 'silk-log';
+import { prepareDashSegment } from 'silk-cam';
 
-import prepareSegment from './dash_segment';
-
-import type {SegmentState} from './dash_segment';
+import type {DashSegmentState} from 'silk-cam';
 
 export type Segment = {
   offset: number;
@@ -42,7 +41,7 @@ export default class SegmentProvider extends EventEmitter {
 
   _id: string;
   _segments: Array<Segment>;
-  _segmentState: SegmentState = {
+  _segmentState: DashSegmentState = {
     seqno: 0,
     startTime: 0,
   };
@@ -80,7 +79,7 @@ export default class SegmentProvider extends EventEmitter {
     log.debug(`['${this._id}']: pushFrame(<Buffer ${frame.length}>)`);
 
     try {
-      frame = prepareSegment(frame, this._segmentState);
+      prepareDashSegment(frame, this._segmentState);
     } catch(err) {
       log.error(err);
       throw err;

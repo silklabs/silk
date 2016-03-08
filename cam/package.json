@@ -1,0 +1,26 @@
+{
+  "name": "silk-cam",
+  "version": "0.14.0",
+  "description": "Silk camera tools",
+  "scripts": {
+    "lint": "eslint src",
+    "flow": "flow check",
+    "postinstall": "../npm_postinstall",
+    "preinstall": "../npm_preinstall",
+    "test": "npm run lint && npm run flow"
+  },
+  "silkDependencies": {
+    "eslint-config-silk": "/eslint",
+    "silk-config": "/config",
+    "silk-flow-bin": "/flow-bin",
+    "silk-log": "/log"
+  },
+  "dependencies": {
+    "babel-runtime": "6.3.19"
+  },
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "5.0.0"
+  },
+  "private": true
+}

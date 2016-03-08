@@ -5,6 +5,7 @@
     "silk-api": "/api",
     "silk-audio": "/audio",
     "silk-babeldeps": "/babeldeps",
+    "silk-cam": "/cam",
     "silk-config": "/config",
     "silk-core-version": "/version",
     "silk-docs": "/docs",

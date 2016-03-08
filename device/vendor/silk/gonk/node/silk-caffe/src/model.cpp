@@ -24,10 +24,7 @@
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"
 #include "Matrix.h"
-
-#include <dlib/matrix/matrix_utilities.h>
-#include <dlib/image_transforms/segment_image.h>
-#include <dlib/opencv/cv_image.h>
+#include "cvutils.h"
 
 Nan::Persistent<Function> Model::constructor;
 
@@ -73,7 +70,7 @@ void Model::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "setScale", SetScale);
   Nan::SetPrototypeMethod(ctor, "setLabels", SetLabels);
   Nan::SetPrototypeMethod(ctor, "predictTopK", PredictTopK);
-  Nan::SetPrototypeMethod(ctor, "predictRegions", PredictRegions);
+  Nan::SetPrototypeMethod(ctor, "rcnn", Rcnn);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Model").ToLocalChecked(), ctor->GetFunction());
@@ -284,6 +281,7 @@ public:
   }
 
   void Execute() {
+    topK = min<int>(model->mLabels.size(), topK);
     mPredictions = model->Classify(mat, topK);
   }
 
@@ -339,45 +337,21 @@ NAN_METHOD(Model::PredictTopK) {
 }
 
 /**
- * Get object proposals based on the input image
- *
- * @param inputImage
- * @param kvals The basic segmentation is performed kvals.size() times, each
- *              time with the k parameter (see the Felzenszwalb paper for
- *              details on k)
- * @param minSize When doing the basic segmentations prior to any box merging,
- *              all rectangles that have an area < min_size are discarded.
- *              Therefore, all outputs and subsequent merged rectangles are
- *              built out of rectangles that contain at least min_size pixels
- * @param maxMergingIterations There are maxMergingIterations rounds of
- *              neighboring blob merging. Therefore, this parameter has some
- *              effect on the number of output rectangles you get, with larger
- *              values of the parameter giving more output rectangles
- */
-vector<dlib::rectangle> getObjectProposals(const cv::Mat& inputImage,
-    const dlib::matrix_range_exp<double>& kvals, const unsigned long minSize,
-    const unsigned long maxMergingIterations) {
-  dlib::cv_image <dlib::rgb_pixel> image(inputImage);
-
-  // Find candidate objects
-  vector<dlib::rectangle> rects;
-  dlib::find_candidate_object_locations(image, rects, kvals, minSize,
-      maxMergingIterations);
-  return rects;
-}
-
-/**
  * Async wrapper for predictRegions API
  */
-class PredictRegionsAsyncWorker: public Nan::AsyncWorker {
+class RcnnAsyncWorker: public Nan::AsyncWorker {
 public:
-  PredictRegionsAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
-      int minSize, int maxMergingIterations) :
+  RcnnAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
+      string className, int minSize, int maxMergingIterations,
+      float nmsThreshold, float confThreshold):
     Nan::AsyncWorker(callback),
     model(model),
     mat(mat),
+    mClassName(className),
     mMinSize(minSize),
-    mMaxMergingIterations(maxMergingIterations) {
+    mMaxMergingIterations(maxMergingIterations),
+    mNmsThreshold(nmsThreshold),
+    mConfThreshold(confThreshold) {
   }
 
   void Execute() {
@@ -388,43 +362,55 @@ public:
         mMaxMergingIterations);
     ALOGD("# proposals: %lu", rects.size());
 
+    std::vector<CvRectScore> srcRects;
     for (int count = 0; count < rects.size(); count++) {
       dlib::rectangle dlibrect = rects[count];
       cv::Rect regionRect(dlibrect.left(), dlibrect.top(), dlibrect.width(),
           dlibrect.height());
       cv::Mat region = mat(regionRect);
 
-      // Only return the top most prediction
+      // Only return the top most prediction for the requested class
       vector<Prediction> prediction = model->Classify(region, 1);
-      mPredictions.insert(mPredictions.end(), prediction.begin(),
-          prediction.end());
-      mRegions.push_back(regionRect);
+      if (prediction[0].first == mClassName) {
+        CvRectScore rectScore = {prediction[0].second, regionRect};
+        // Only return the predictions with confidence higher than mConfThreshold
+        if (prediction[0].second >= mConfThreshold) {
+          srcRects.push_back(rectScore);
+        }
 
-      ALOGV("Prediction for region %d %f %s [%d, %d, %d, %d]", count,
-          prediction[0].second, prediction[0].first.c_str(), regionRect.x,
-          regionRect.y, regionRect.width, regionRect.height);
+        ALOGV("Prediction for region# %d score: %f rect: [%d, %d, %d, %d]",
+            count, prediction[0].second, regionRect.x, regionRect.y,
+            regionRect.width, regionRect.height);
+      }
+    }
+    ALOGV("After NMS:");
+    NMS(srcRects, mRegions, mNmsThreshold);
+    for (std::vector<CvRectScore>::iterator it = mRegions.begin();
+        it != mRegions.end(); ++it) {
+      ALOGV("Rects: [%d, %d, %d, %d] score: %f", it->rect.x, it->rect.y,
+          it->rect.width, it->rect.height, it->score);
     }
   }
 
   void HandleOKCallback() {
-    Local<Array> predictions = Nan::New<Array>(mPredictions.size());
-    for (int i = 0; i < mPredictions.size(); ++i) {
+    Local<Array> predictions = Nan::New<Array>(mRegions.size());
+    for (int i = 0; i < mRegions.size(); ++i) {
       Local<Object> prediction = Nan::New<Object>();
       prediction->Set(Nan::New<String>("label").ToLocalChecked(),
-          Nan::New<String>(mPredictions[i].first).ToLocalChecked());
+          Nan::New<String>(mClassName).ToLocalChecked());
       prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
-          Nan::New<Number>(mPredictions[i].second));
+          Nan::New<Number>(mRegions[i].score));
 
       // Add region rectangle
       Local<Object> rect = Nan::New<Object>();
       rect->Set(Nan::New<String>("x").ToLocalChecked(),
-          Nan::New<Number>(mRegions[i].x));
+          Nan::New<Number>(mRegions[i].rect.x));
       rect->Set(Nan::New<String>("y").ToLocalChecked(),
-          Nan::New<Number>(mRegions[i].y));
+          Nan::New<Number>(mRegions[i].rect.y));
       rect->Set(Nan::New<String>("width").ToLocalChecked(),
-          Nan::New<Number>(mRegions[i].width));
+          Nan::New<Number>(mRegions[i].rect.width));
       rect->Set(Nan::New<String>("height").ToLocalChecked(),
-          Nan::New<Number>(mRegions[i].height));
+          Nan::New<Number>(mRegions[i].rect.height));
       prediction->Set(Nan::New<String>("rect").ToLocalChecked(), rect);
 
       predictions->Set(i, prediction);
@@ -444,43 +430,65 @@ public:
 private:
   Model* model;
   cv::Mat mat;
+  string mClassName;
   int mMinSize;
   int mMaxMergingIterations;
-  vector<Prediction> mPredictions;
-  vector<cv::Rect> mRegions;
+  float mNmsThreshold;
+  float mConfThreshold;
+
+  vector<CvRectScore> mRegions;
 };
 
 /**
  * Return top prediction for all the regions with in the input image. This
- * function could be used to classify multiple objects with in an image. Please
- * note that this function first computes the regions with in an image and then
- * run prediction on each one of them and therefore this function is very slow.
+ * function first computes the regions with in an image and then
+ * run prediction on each one of them. It then runs non-maximal suppression
+ * on the predicted results before returning the predicted regions.
+ * This function could be used to classify multiple objects with in an image.
  */
-NAN_METHOD(Model::PredictRegions) {
+NAN_METHOD(Model::Rcnn) {
   SETUP_FUNCTION(Model)
 
-  if (info.Length() < 2) {
-    JSTHROW("Image matrix and callback function must be provided");
+  if (info.Length() < 3) {
+    JSTHROW("Image matrix, class name and callback function must be provided");
   }
 
   cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
       info[0]->ToObject())->mat;
 
-  REQ_FUN_ARG(1, cb);
+  string className;
+  STRING_FROM_ARGS(className, 1);
 
+  REQ_FUN_ARG(2, cb);
+
+  // Minimum size of the selective search regions
   int minSize = 100;
-  if (info.Length() >= 3) {
-    INT_FROM_ARGS(minSize, 2);
+  if (info.Length() >= 4) {
+    INT_FROM_ARGS(minSize, 3);
   }
 
+  // Rounds of neighboring blob merging for selective search regions
   int maxMergingIterations = 1;
-  if (info.Length() >= 4) {
-    INT_FROM_ARGS(maxMergingIterations, 3);
+  if (info.Length() >= 5) {
+    INT_FROM_ARGS(maxMergingIterations, 4);
+  }
+
+  // NMS threshold (area of intersection greater than this value will be ignore
+  // in favor of rectangle with higher score)
+  float nmsThreshold = 0.3f;
+  if (info.Length() >= 6) {
+    FLOAT_FROM_ARGS(nmsThreshold, 5);
+  }
+
+  // Confidence threshold
+  float confThreshold = 0.90f;
+  if (info.Length() >= 7) {
+    FLOAT_FROM_ARGS(confThreshold, 6);
   }
 
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
-  Nan::AsyncQueueWorker(new PredictRegionsAsyncWorker(callback, self, mat,
-      minSize, maxMergingIterations));
+  Nan::AsyncQueueWorker(new RcnnAsyncWorker(callback, self, mat,
+      className, minSize, maxMergingIterations, nmsThreshold, confThreshold));
 }
 
 /**
@@ -489,7 +497,6 @@ NAN_METHOD(Model::PredictRegions) {
 vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
   vector<float> output = Predict(img);
 
-  topK = min<int>(mLabels.size(), topK);
   vector<int> maxK = Argmax(output, topK);
   vector<Prediction> predictions;
   for (int i = 0; i < topK; ++i) {

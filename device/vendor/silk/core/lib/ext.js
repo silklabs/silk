@@ -319,7 +319,7 @@ class Env extends EventEmitter {
           if (!(`source` in obj)) {
             obj.source = this._name;
           }
-          log.error(obj);
+          log.debug(obj);
         });
         timeline.addObjects(objs);
       };

@@ -312,6 +312,9 @@ NAN_METHOD(VideoCapture::Close) {
   }
 
   self->processing = true;
+#ifdef ANDROID
+  self->preview.close();
+#endif
 }
 
 

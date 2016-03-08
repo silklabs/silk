@@ -5,14 +5,14 @@
   "main": "src/index.js",
   "license": "proprietary",
   "silkDependencies": {
+    "api-schema": "/api-schema",
     "eslint-config-silk": "/eslint",
+    "jsonwebtoken": "/jsonwebtoken",
     "silk-core-version": "/version",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
-    "api-schema": "/api-schema",
     "silk-babeldeps": "/babeldeps",
-    "silk-server": "/server",
-    "jsonwebtoken": "/jsonwebtoken"
+    "silk-server": "/server"
   },
   "dependencies": {
     "babel-runtime": "6.3.19",

@@ -79,7 +79,8 @@ export default class SoundDetectorSVM extends EventEmitter {
   _detectSound() {
     let [ prediction ] = this.svm.predict([ this.featureVector ]);
     if (prediction === 1) {
-      this.emit(this.cfg.soundClass, this.loudSoundStartTime);
+      this.emit(this.cfg.soundClass,
+                this.cfg.soundClass, this.loudSoundStartTime);
     }
     this._reset();
   }

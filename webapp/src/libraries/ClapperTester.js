@@ -44,6 +44,9 @@ class WebappLog {
 class WebappTimeline extends EventEmitter {
   addObject(tag) {
   }
+
+  addObjects(tag) {
+  }
 }
 
 class WebappUtil {

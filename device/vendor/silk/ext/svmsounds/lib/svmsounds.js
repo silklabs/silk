@@ -48,8 +48,8 @@ class SoundRecognizer {
     });
   }
 
-  _onClap = (startTime) => {
-    log.info(`clap at ${startTime}`);
+  _onClap = (soundClass, startTime) => {
+    log.info(`${soundClass} at ${startTime}`);
     // TODO: add to timeline
   };
 

@@ -31,7 +31,7 @@ during development.
 ### Iterative development
 
 To start the webpack development server running on
-[http://localhost:8080/](http://localhost:8080/) run
+[http://localhost:8000/](http://localhost:8000/) run
 ```
 npm start
 ```

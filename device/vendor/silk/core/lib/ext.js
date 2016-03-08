@@ -275,7 +275,7 @@ class Env extends EventEmitter {
        * @property {number} when Timestamp of when the face was seen
        */
       this._addEvents('timeline', timeline, this.timeline,
-          ['preview', 'face', 'clap', 'motion', 'no-motion']);
+          ['preview', 'face', 'clap', 'motion', 'no-motion', 'sound']);
 
       /**
        * Add a processed frame

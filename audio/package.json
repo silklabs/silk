@@ -8,6 +8,7 @@
     "postinstall": "../npm_postinstall"
   },
   "silkDependencies": {
+    "silk-config": "/config",
     "silk-log": "/log"
   },
   "dependencies": {

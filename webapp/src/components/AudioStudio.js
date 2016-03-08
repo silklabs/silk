@@ -1,5 +1,7 @@
 import config from 'silk-config';
-import { createAudioAnalyzer, createSoundDetectorSVM } from 'silk-audio';
+import { createAudioAnalyzer, createSoundDetectorSVM,
+         LOUD_SOUND_THRESHOLD_DB,
+         svmFFTConfig, svmSoundsConfigs } from 'silk-audio';
 import createLog from 'silk-log';
 import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Input,
@@ -122,8 +124,6 @@ const FFT_SIZE = 512;
 const WINDOW_OVERLAP = 256;
 const SPECTROGRAM_FRAMES = 64;
 
-const LOUD_SOUND_THRESHOLD_DB = -40;
-const LOUD_SOUND_THRESHOLD_LINEAR = 0.01;
 const LOUD_SOUND_START_PAD = 0.256;
 
 const PREF_FILE = 'prefs.json';
@@ -133,103 +133,17 @@ const DEFAULT_PREFS = {
   graphView: 'spectLinear',
 };
 
-const svmConfigs = {
-  clap: {
-    soundClass: 'clap',
-    model: 'clap-svm.json',
-    // This defines which FFT result type we'll use for SVM
-    // classification.  It's been found empirically that linear
-    // magnitudes are much more discriminative than decibel magnitudes
-    // (which aren't discriminative with basic SVM params).  This is
-    // most likely because linear magnitudes are "more normalized"
-    // than log-decibel, but no effort was spent investigating this.
-    fftType: 'fftMagnitudeLinear',
-    loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
-    loudMinDuration: 0.512,
-    fftSize: 512,
-    windowOverlap: 256,
-    // How many consecutive FFT frames we collect for the loud sound
-    // that we're going to classify.  This is a magic number created
-    // by eyeballing the spectrograms of some recorded clap sounds.
-    // 16 is about a quarter second of (overlapped) spectrogram frames
-    // with 16KHz sampling and the FFT params above, and is short
-    // enough that fairly quick repeated clappings can be reliably
-    // detected (but not /really/ quick ones).  No effort has been
-    // made to optimize this value.
-    featureVectorFrameCount: 16,
-    sampleRate: config.deviceMic.sampleRate,
-    sampleMin: config.deviceMic.sampleMin,
-    sampleMax: config.deviceMic.sampleMax,
+// Currently we use 1/2 cross-validation to check the SVM training
+// settings.  That means we first train the SVM using the
+// even-numbered data and validate on odd-numbered, and then do the
+// opposite (train on odd-numbered data and validate on even).  This
+// flag selects which data set to use to train: 0 is even, 1 is odd.
+const TEST_SET = 0;
+// Set this to true when you're training an SVM for export to
+// "production", in which case we want to train on the entire dataset.
+const TRAINING_FULL_DATASET = false;
 
-    trainingOptions: {
-      // This achieves nearly-optimal results (99% detection, 0.6%
-      // false-accept) across the two training subsets.
-      rbfsigma: 0.1,
-
-      // These magic SVM params are the default for svmjs.
-      C: 1e0,
-      maxiter: 1e4,
-      numpasses: 1e1,
-      // Linear kernels are broken in svmjs, which is very concerning.
-      //svmjs should not be used in production code, at least not for
-      //training.
-      //
-      //kernel: 'linear',
-      kernel: 'rbf',
-      tol: 1e-4,
-      alphatol: 1e-7,
-    },
-  },
-
-  firealarm: {
-    soundClass: 'firealarm',
-    model: 'firealarm-svm.json',
-    // This defines which FFT result type we'll use for SVM
-    // classification.  It's been found empirically that linear magnitudes
-    // are much more discriminative than decibel magnitudes (which aren't
-    // discriminative with basic SVM params).  This is most likely because
-    // linear magnitudes are "more normalized" than log-decibel, but no
-    // effort was spent investigating this.
-    fftType: 'fftMagnitudeLinear',
-    loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
-    loudMinDuration: 0.256,
-    fftSize: 512,
-    windowOverlap: 256,
-    // How many consecutive FFT frames we collect for the loud sound
-    // that we're going to classify.  This is a magic number created by
-    // eyeballing the spectrograms of some recorded clap sounds.  16 is
-    // about a quarter second of (overlapped) spectrogram frames with
-    // 16KHz sampling and the FFT params above, and is short enough that
-    // fairly quick repeated clappings can be reliably detected (but not
-    // /really/ quick ones).  No effort has been made to optimize this
-    // value.
-    featureVectorFrameCount: 16,
-    sampleRate: config.deviceMic.sampleRate,
-    sampleMin: config.deviceMic.sampleMin,
-    sampleMax: config.deviceMic.sampleMax,
-
-    trainingOptions: {
-      // This achieves optimal results (100% detect, 0% false-accept)
-      // on the two training subsets.
-      rbfsigma: 0.1,
-
-      // These magic SVM params are the default for svmjs.
-      C: 1e0,
-      maxiter: 1e4,
-      numpasses: 1e1,
-      // Linear kernels are broken in svmjs, which is very concerning.
-      //svmjs should not be used in production code, at least not for
-      //training.
-      //
-      //kernel: 'linear',
-      kernel: 'rbf',
-      tol: 1e-4,
-      alphatol: 1e-7,
-    },
-  },
-};
-
-const trainingSVMConfig = svmConfigs.clap;
+const trainingSVMConfig = svmSoundsConfigs.glassbreak;
 
 class TrackFile extends React.Component {
   _onClick = (e) => {
@@ -324,7 +238,7 @@ export default class AudioStudio extends React.Component {
   loudSoundEndTime = 0.0;
   recordingSamples = null;
   savedTracks = [ ];
-  svms = [ ];
+  soundDetector = null;
 
   constructor() {
     super();
@@ -378,18 +292,13 @@ export default class AudioStudio extends React.Component {
       this.state.track.stop();
       this.state.track.removeListener('timeupdate', this._onTimeUpdate);
 
-      this.svms.forEach((svm) => svm.destructor());
-      this.svms = [ ];
+      this.soundDetector.destructor();
     }
     if (track) {
       track.on('timeupdate', this._onTimeUpdate);
 
-      Object.keys(svmConfigs).forEach((svmType) => {
-        let config = svmConfigs[svmType];
-        let detector = createSoundDetectorSVM(config);
-        detector.on(config.soundClass, this._onSVMSound);
-        this.svms.push(detector);
-      });
+      this.soundDetector = createSoundDetectorSVM(svmFFTConfig, svmSoundsConfigs);
+      this.soundDetector.on('sound', this._onSoundEvent);
     }
     this.setState({ track });
   }
@@ -457,8 +366,8 @@ export default class AudioStudio extends React.Component {
     this.setState({ camera: newCamera });
   };
 
-  _onSVMSound = (soundClass, startTime) => {
-    log.info(`${soundClass} heard by SVM detector starting at ${startTime}`);
+  _onSoundEvent = (e) => {
+    log.info(`Sound event:`, e);
   };
 
   _onFFTMagnitudeDecibel = (magnitudes, startTime, endTime) => {
@@ -546,7 +455,7 @@ export default class AudioStudio extends React.Component {
 
   _onTimeUpdate = (currentTime, startTime, endTime, lastTime) => {
     let samples = this.state.track.getSamples(lastTime, currentTime);
-    this.svms.forEach((svm) => svm.appendSamples(samples, lastTime));
+    this.soundDetector.appendSamples(samples, lastTime);
 
     if (!(this.state.playing || this.state.recording)) {
       return;
@@ -728,13 +637,7 @@ export default class AudioStudio extends React.Component {
       // (Clapper does its own version of this in the `clapperTest()`
       // call above.)
       let isValidationData;
-      let analyzer = createAudioAnalyzer({
-        fftSize: svmConfig.fftSize,
-        windowOverlap: svmConfig.windowOverlap,
-        sampleRate: config.deviceMic.sampleRate,
-        sampleMin: config.deviceMic.sampleMin,
-        sampleMax: config.deviceMic.sampleMax,
-      });
+      let analyzer = createAudioAnalyzer(svmFFTConfig);
       let featureVector = new Float32Array(analyzer.frequencyBinCount *
                                            svmConfig.featureVectorFrameCount);
       let vectorOffset = 0;
@@ -749,11 +652,12 @@ export default class AudioStudio extends React.Component {
         vectorOffset += analyzer.frequencyBinCount;
         if (vectorOffset === featureVector.length) {
           analyzer.removeListener(svmConfig.fftType, extractLoudSounds);
-          let forTraining = benchmark.totalTests % 2 === 0;
+          let forTraining = benchmark.totalTests % 2 === TEST_SET;
           isValidationData = !forTraining;
 
-          // Uncomment this to train the SVM on the entire data set.
-          forTraining = isValidationData = true;
+          if (TRAINING_FULL_DATASET) {
+            forTraining = isValidationData = true;
+          }
 
           if (forTraining) {
             trainingData.push(featureVector);
@@ -782,7 +686,8 @@ export default class AudioStudio extends React.Component {
         detectedLoudSound = true;
       }
       if (!detectedLoudSound) {
-        throw `Failed to extract loud sound from clip ${testName}`;
+        //throw `Failed to extract loud sound from clip ${testName}`;
+        return Promise.resolve();
       }
       benchmark.totalTests += 1;
       if (!isValidationData) {
@@ -883,6 +788,7 @@ export default class AudioStudio extends React.Component {
     let nrFalseAccepts = falseAccept.length;
     let msPerTest = 1000.0 * predictSecs / nrTests;
     log.info(`SVM ran ${nrTests} validations in predictions took ${predictSecs} seconds (${msPerTest.toFixed(1)}ms per test)`);
+    log.info(`  on test set ${TEST_SET}`);
     log.info(`  detected ${nrDetected}/${nrEvents} events and falsely accepted ${nrFalseAccepts}/${nrNonEvents} non-events`);
     log.info(`  params: C:${options.C} maxiter:${options.maxiter} rbfsigma:${options.rbfsigma} numpasses:${options.numpasses}`);
     log.info(`  misses: ${miss}`);

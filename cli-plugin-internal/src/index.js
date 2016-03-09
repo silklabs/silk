@@ -164,7 +164,7 @@ export let configure = {
 
     console.log(`Configuring device with Wi-Fi network: ${args.ssid} ${args.password} ...`);
 
-    if (args.newDeviceId) {
+    if (args.n) {
       // persist new device ID
       await device.pushDeviceId();
     } else {

@@ -82,7 +82,7 @@ class Clapper extends EventEmitter {
 
     let DeviceClapper = require('../../../device/vendor/silk/ext/clapper/lib/clapper');
     this.clapper = new DeviceClapper(this.env);
-    this.env.timeline.on('clap', () => this.emit('sound-event', 'clap'));
+    this.env.timeline.on('clap', () => this.emit('sound', 'clap'));
   }
 
   addSamples(samples) {
@@ -97,7 +97,7 @@ module.exports = (samples) => {
   let detector = new Clapper();
   let data = new Buffer(samples.buffer);
   let events = [ ];
-  detector.on('sound-event', (what) => events.push(what));
+  detector.on('sound', (what) => events.push(what));
   detector.addSamples(data);
   return events;
 };

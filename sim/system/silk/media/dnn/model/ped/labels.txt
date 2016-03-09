@@ -1,0 +1,1 @@
+../../../../../../../device/vendor/silk/ext/peddetector/model/labels.txt

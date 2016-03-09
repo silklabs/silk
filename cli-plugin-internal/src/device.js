@@ -103,8 +103,8 @@ export default class Device {
       await wpaCliExpectOK(['save_config']);
       await wpaCliExpectOK(['disconnect']);
       let id = await wpaCliExpectInt(['add_network']);
-      await wpaCliExpectOK(['set_network', id, 'ssid', `"${ssid}"`]);
-      await wpaCliExpectOK(['set_network', id, 'psk', `"${password}"`]);
+      await wpaCliExpectOK(['set_network', id, 'ssid', `'"${ssid}"'`]);
+      await wpaCliExpectOK(['set_network', id, 'psk', `'"${password}"'`]);
       await wpaCliExpectOK(['enable_network', id]);
       await wpaCliExpectOK(['save_config']);
       await wpaCliExpectOK(['reconnect']);

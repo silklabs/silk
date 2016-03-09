@@ -2,13 +2,9 @@
  * @flow
  */
 
-import fs from 'fs';
-import path from 'path';
 import { EventEmitter } from 'events';
 import createLog from 'silk-log';
-import { prepareDashSegment } from 'silk-cam';
-
-import type {DashSegmentState} from 'silk-cam';
+import { VideoPlayback } from 'silk-cam';
 
 export type Segment = {
   offset: number;
@@ -20,19 +16,6 @@ export type Segment = {
 const log = createLog('segment-provider');
 const providerMap = new Map();
 
-let initSegment = null;
-
-export function getInitSegment(): Buffer {
-  if (!initSegment) {
-    const initSegmentFilename = path.join(
-      __dirname,
-      '../../../webapp/public/media/default-segment-init.mp4'
-    );
-    initSegment = fs.readFileSync(initSegmentFilename);
-  }
-  return initSegment;
-}
-
 export default class SegmentProvider extends EventEmitter {
 
   static get(id: string): ?SegmentProvider {
@@ -40,32 +23,14 @@ export default class SegmentProvider extends EventEmitter {
   }
 
   _id: string;
-  _segments: Array<Segment>;
-  _segmentState: DashSegmentState = {
-    seqno: 0,
-    startTime: 0,
-  };
+  _segments: Array<Segment> = [];
+  _playback: VideoPlayback = new VideoPlayback();
 
   constructor(id: string) {
     log.debug(`['${id}']: constructor()`);
-
-    const firstSegment: Segment = {
-      offset: 0,
-      seqno: -1,
-      buffer: getInitSegment(),
-      served: false,
-    };
-
     super();
-
-    this._id = id;
-    this._segments = [firstSegment];
-
     providerMap.set(id, this);
-
-    process.nextTick(() => {
-      this.emit('init-segment', firstSegment);
-    });
+    this._id = id;
   }
 
   // TODO use this
@@ -75,21 +40,34 @@ export default class SegmentProvider extends EventEmitter {
     providerMap.delete(this._id);
   }
 
-  pushFrame(frame: Buffer): void {
-    log.debug(`['${this._id}']: pushFrame(<Buffer ${frame.length}>)`);
+  pushFrame(buffer: Buffer): void {
+    log.debug(`['${this._id}']: pushFrame(<Buffer ${buffer.length}>)`);
 
+    // Flow doesn't know that Buffer inherits from Uint8Array, so re-cast
+    // it here to make Flow happy about accessing Uint8Array properties.
+    // See also https://github.com/facebook/flow/issues/1514.
+    let bufferAsUint8Array: Uint8Array = (buffer: any);
+    let arrayBuffer = bufferAsUint8Array.buffer.slice(
+      bufferAsUint8Array.byteOffset,
+      bufferAsUint8Array.byteOffset + bufferAsUint8Array.byteLength
+    );
+    let byteArray;
     try {
-      prepareDashSegment(frame, this._segmentState);
+      byteArray = this._playback.processSegment(arrayBuffer);
     } catch(err) {
       log.error(err);
       throw err;
     }
 
+    let offset = 0;
     const prev = this._segments[this._segments.length - 1];
+    if (prev) {
+      offset = prev.offset + prev.buffer.length;
+    }
     const segment = {
-      offset: prev.offset + prev.buffer.length,
-      seqno: this._segmentState.seqno,
-      buffer: frame,
+      offset,
+      seqno: this._playback.segmentSeqno,
+      buffer: new Buffer((byteArray: any)),
       served: false,
     };
     this._segments.push(segment);

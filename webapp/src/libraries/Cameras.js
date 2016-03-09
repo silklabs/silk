@@ -268,16 +268,10 @@ class Camera extends EventEmitter {
     const enabled = this._requestedRooms.videoClip;
     let videoStream = 'video-' + this.id;
 
-    if (this.videoClip) {
-      URL.revokeObjectURL(this.videoClip);
-      this.videoClip = null;
-    }
-
     if (this.online && enabled) {
       log.info('Joining video stream ' + videoStream);
       this._socket.on(videoStream, this._onVideoStream);
       this._socket.emit('join', videoStream);
-
     } else {
       log.info('Leaving video stream ' + videoStream);
       if (this._socket) {
@@ -299,15 +293,7 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    log.debug('video');
-
-    let view = new Uint8Array(msg.frame);
-    let blob = new Blob([view], { type: 'video/mp4' });
-    if (this.videoClip) {
-      URL.revokeObjectURL(this.videoClip);
-    }
-    this.videoClip = URL.createObjectURL(blob);
-    this.emit('videoClip', this.videoClip, new Date(msg.when), view);
+    this.emit('videoClip', msg.frame, new Date(msg.when));
   };
 
   _updateMicStream() {

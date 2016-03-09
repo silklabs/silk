@@ -1,15 +1,13 @@
-import assert from 'assert';
+import invariant from 'assert';
 import React from 'react';
 import { Input } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
-import { prepareDashSegment } from 'silk-cam';
+import { VideoPlayback } from 'silk-cam';
 import createLog from 'silk-log';
 
 import Cameras from '../libraries/Cameras';
 
 const log = createLog('CameraVideoMSE');
-
-const CODEC_DESCRIPTOR = 'video/mp4;codecs=avc1.42c01f,mp4a.40.2';
 
 const colors = {
   paleBlue: '#EFF3F3',
@@ -99,19 +97,15 @@ function capitalize(string) {
 
 export default class CameraVideo extends React.Component {
   video = null;
+  mediaSource = new MediaSource();
+  sourceBuffer = null;
+  playback = new VideoPlayback();
+  segmentQ = [];
+
   canvas = null;
   context = null;
-  mediaSource = null;
-  sourceBuffer = null;
   pixelRatio = 1;
 
-  initHeader = null;
-  wroteInitHeader = false;
-  segmentQ = [];
-  segmentState = {
-    seqno: 0,
-    startTime: 0,
-  };
   videoStartTime = 0;
   loadedData = false;
   renderedOnline = false;
@@ -127,24 +121,13 @@ export default class CameraVideo extends React.Component {
   }
 
   componentDidMount() {
-    log.info('Fetching initialization header');
-    fetch('media/default-segment-init.mp4')
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => {
-        log.info('Received initialization header');
-        this.initHeader = new Uint8Array(arrayBuffer);
-        this._feedPlayer();
-      });
-
     this.video = ReactDOM.findDOMNode(this.refs.video);
+    this.video.src = URL.createObjectURL(this.mediaSource);
+
     this.canvas = ReactDOM.findDOMNode(this.refs.canvas);
     this.context = this.canvas.getContext('2d');
-    this.mediaSource = new MediaSource();
-
-    // Listeners and timers that need to be removed in componentWillUnmount().
     window.addEventListener('resize', this._updateCanvasSize);
-    Cameras.on('stateChanged', this._onCamerasStateChanged);
-    this.mediaSource.addEventListener('sourceopen', this._onSourceOpen);
+    this._updateCanvasSize();
 
     const devicePixelRatio = window.devicePixelRatio || 1;
     const backingRatio = this.context.webkitBackingStorePixelRatio || 1;
@@ -152,26 +135,24 @@ export default class CameraVideo extends React.Component {
       this.pixelRatio = devicePixelRatio / backingRatio;
     }
 
-    this.video.src = URL.createObjectURL(this.mediaSource);
+    Cameras.on('stateChanged', this._onCamerasStateChanged);
     this._onCamerasStateChanged(Cameras);
-    this._updateCanvasSize();
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this._updateCanvasSize);
     Cameras.removeListener('stateChanged', this._onCamerasStateChanged);
-    this.mediaSource.removeEventListener('sourceopen', this._onSourceOpen);
-
     const camera = this.state.camera;
     if (camera) {
       camera.removeListener('videoClip', this._onNextVideoClip);
       camera.removeListener('objects', this._onObjects);
     }
 
+    window.removeEventListener('resize', this._updateCanvasSize);
+
+    this.mediaSource.removeEventListener('sourceopen', this._feedPlayer);
     if (this.sourceBuffer) {
       this.sourceBuffer.removeEventListener('updateend', this._feedPlayer);
     }
-
     URL.revokeObjectURL(this.video.src);
   }
 
@@ -229,13 +210,12 @@ export default class CameraVideo extends React.Component {
     this._renderCanvas();
   };
 
-  _onNextVideoClip = (url, when, segment) => {
+  _onNextVideoClip = (segment, when) => {
     if (!this.videoStartTime) {
       this.videoStartTime = when.getTime();
     }
-    let buffer = new Buffer(segment);
-    prepareDashSegment(buffer, this.segmentState);
-    this._feedPlayer(null, buffer.toArrayBuffer());
+    this.segmentQ.push(this.playback.processSegment(segment));
+    this._feedPlayer();
   };
 
   _onMotionCheck = () => {
@@ -250,51 +230,35 @@ export default class CameraVideo extends React.Component {
     this._renderCanvas();
   };
 
-  _onSourceOpen = () => {
-    this.sourceBuffer = this.mediaSource.addSourceBuffer(CODEC_DESCRIPTOR);
-    this.sourceBuffer.addEventListener('updateend', this._feedPlayer);
-    this.mediaSource.removeEventListener('sourceopen', this._onSourceOpen);
-    this._feedPlayer();
-  };
+  _feedPlayer = (event = null) => {
+    if (event) {
+      log.debug('_feedPlayer()', event);
+    }
 
-  _feedPlayer = (_, segment = null) => {
     if (!this.sourceBuffer) {
-      log.info('Source buffer not ready');
-      if (segment) {
-        this.segmentQ.push(segment);
+      if (this.mediaSource.readyState !== 'open') {
+        log.debug(`MediaSource is still closed.`);
+        this.mediaSource.addEventListener('sourceopen', this._feedPlayer);
+        return;
       }
-      return;
-    }
-    if (this.initHeader) {
-      log.info('Appending initialization header');
-      assert(!this.wroteInitHeader);
-      this._appendSegment(this.initHeader);
-      this.initHeader = null;
-      this.wroteInitHeader = true;
-      if (segment) {
-        this.segmentQ.push(segment);
-      }
-      return;
-    }
-    if (!this.wroteInitHeader) {
-      log.info('Waiting for initialization header to be written');
-      if (segment) {
-        this.segmentQ.push(segment);
-      }
-      return;
-    }
-    if (segment || this.segmentQ.length) {
-      this._appendSegment(segment);
-    }
-  };
 
-  _appendSegment(segment) {
-    assert(this.sourceBuffer);
-
-    if (segment) {
-      this.segmentQ.push(segment);
+      log.debug(`MediaSource is open.`);
+      this.mediaSource.removeEventListener('sourceopen', this._feedPlayer);
+      const {videoCodec, audioCodec} = this.playback;
+      invariant(videoCodec);
+      invariant(audioCodec);
+      const contentType = `video/mp4;codecs=${videoCodec},${audioCodec}`;
+      log.debug(`Creating SourceBuffer for content type '${contentType}'`);
+      this.sourceBuffer = this.mediaSource.addSourceBuffer(contentType);
+      this.sourceBuffer.addEventListener('updateend', this._feedPlayer);
     }
 
+    if (this.sourceBuffer.updating) {
+      log.debug(`SourceBuffer is still updating.`);
+      return;
+    }
+
+    log.debug(`Processing segment queue. ${this.segmentQ.length} items in queue.`);
     let index = 0;
     for (; index < this.segmentQ.length; index++) {
       const seg = this.segmentQ[index];
@@ -316,7 +280,7 @@ export default class CameraVideo extends React.Component {
     if (index) {
       this.segmentQ.splice(0, index);
     }
-  }
+  };
 
   _onLoadedData = () => {
     this.loadedData = true;
@@ -471,7 +435,7 @@ export default class CameraVideo extends React.Component {
   }
 
   _collectAndProcessObjects(time) {
-    assert(this.state.camera);
+    invariant(this.state.camera);
 
     const objects = [];
 

@@ -23,10 +23,6 @@ export function startConcatenateWriter(
     outFile = 'out.mp4';
   }
   let fileStream = fs.createWriteStream(outFile, { flags: 'w' });
-  provider.on('init-segment', (segment) => {
-    log.info(`Writing initial segment to file.`);
-    fileStream.write(segment.buffer);
-  });
   provider.on('segment', (segment) => {
     log.info(`Writing segment ${segment.seqno} to file.`);
     fileStream.write(segment.buffer);
@@ -47,11 +43,6 @@ export function startSegmentsWriter(
   }
   fs.removeSync(outDir);
   fs.mkdirSync(outDir);
-  provider.on('init-segment', (segment) => {
-    let file = path.join(outDir, 'seg-init.mp4');
-    log.info(`Writing init segment '${path}'.`);
-    fs.writeFile(file, segment.buffer);
-  });
   provider.on('segment', (segment) => {
     let num = segment.seqno >= 10 ? String(segment.seqno) : `0${segment.seqno}`;
     let file = path.join(outDir, `seg-${num}.m4s`);

@@ -37,7 +37,7 @@ export default class SegmentProviderSocketIO extends SegmentProvider {
     this._socket = socket;
 
     const stream = `video-${deviceId}`;
-    socket.addListener(stream, this._onDeviceVideoSegment);
+    socket.on(stream, this._onDeviceVideoSegment);
     socket.emit('join', stream);
   }
 

@@ -1575,7 +1575,6 @@ MPEG4SegmentDASHWriter::MPEG4SegmentDASHWriter()
     , mStartTimeOffsetMs(kInitialDelayTimeMs)
     , mInitCheck(NO_INIT)
     , mUse4ByteNalLength(true)
-    , mSelfContainedMp4(false)
     , mPaused(false)
     , mStarted(false)
     , mIsRealTimeRecording(true)
@@ -1927,9 +1926,8 @@ static void writeSidxBox(AutoBox& parent, const StashedOffsets& offsets,
 
 void MPEG4SegmentDASHWriter::writeSegment() {
     AutoBox box(this);          // top-level pseudo-box
-    if (mSelfContainedMp4) {
-        writeHeader(box);
-    }
+    writeHeader(box);
+
     int32_t segmentStartOffset = box.offset();
     writeStypBox(box);
     // Leave behind an index of the offsets that need to be rewritten

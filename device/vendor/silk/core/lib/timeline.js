@@ -422,13 +422,7 @@ export default class Timeline extends EventEmitter {
         object.durationMs = 0;
       }
       if (!object.rects) {
-        const borderPad = 20;
-        object.rects = [{
-          x: borderPad,
-          y: borderPad,
-          width: this._previewSize.width - borderPad * 2,
-          height: this._previewSize.height - borderPad * 2,
-        }];
+        object.rects = [];
       }
 
       log.debug(`Adding object`, object);

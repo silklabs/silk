@@ -299,7 +299,7 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    log.debug('video', msg);
+    log.debug('video');
 
     let view = new Uint8Array(msg.frame);
     let blob = new Blob([view], { type: 'video/mp4' });

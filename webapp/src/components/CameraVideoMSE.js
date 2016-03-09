@@ -21,6 +21,8 @@ const colors = {
   red: '#ED734C',
   orange: '#F2A45B',
   paleWarmGray: '#EEE9DF',
+  transparentGray: 'rgba(160,160,160,0.75)',
+  transparentDarkGray: 'rgba(66,66,66,0.75)',
 };
 
 const styles = {
@@ -66,17 +68,20 @@ const styles = {
   video: {
     display: 'block',
     width: '100%',
+    pointerEvents: 'none',
+    backgroundColor: colors.darkGray,
   },
   canvas: {
     position: 'absolute',
     top: 0,
     left: 0,
+    pointerEvents: 'none',
   },
   form: {
     backgroundColor: colors.red,
-    padding: '0px 8px',
+    padding: '1px 8px 1px 8px',
+    margin: 0,
     textAlign: 'right',
-    opacity: 0.125,
   },
 };
 
@@ -86,6 +91,10 @@ function asciiSum(string) {
     sum += string.charCodeAt(index);
   }
   return sum;
+}
+
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 
 export default class CameraVideo extends React.Component {
@@ -167,8 +176,6 @@ export default class CameraVideo extends React.Component {
   }
 
   _updateCanvasSize = () => {
-    this._renderCanvas();
-
     let width = this.video.clientWidth;
     let height = this.video.clientHeight;
 
@@ -182,6 +189,8 @@ export default class CameraVideo extends React.Component {
 
     this.canvas.width = Math.floor(width);
     this.canvas.height = Math.floor(height);
+
+    this._renderCanvas();
   };
 
   _onCamerasStateChanged = state => {
@@ -195,11 +204,8 @@ export default class CameraVideo extends React.Component {
       return;
     }
 
-    this._renderCanvas();
-
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
-      oldCamera.removeListener('objects', this._onObjects);
 
       this.video.pause();
       this.videoStartTime = 0;
@@ -214,12 +220,13 @@ export default class CameraVideo extends React.Component {
 
     if (newCamera) {
       newCamera.addListener('videoClip', this._onNextVideoClip);
-      newCamera.addListener('objects', this._onObjects);
     }
 
     this.setState({
       camera: newCamera,
     });
+
+    this._renderCanvas();
   };
 
   _onNextVideoClip = (url, when, segment) => {
@@ -231,64 +238,16 @@ export default class CameraVideo extends React.Component {
     this._feedPlayer(null, buffer.toArrayBuffer());
   };
 
-  _onObjects = (objects) => {
-    const oldMessages = this.state.consoleMessages;
-
-    const newMessages = new Map();
-    objects.forEach((object) => {
-      if (object.tag === 'face') {
-        let text;
-        if ('name' in object) {
-          const name = object.name;
-          text = name.charAt(0).toUpperCase() + name.substr(1).toLowerCase();
-        } else {
-          text = 'A face';
-        }
-        text += ' was seen';
-
-        if (oldMessages.length) {
-          for (let index = 0; index < oldMessages.length; index++) {
-            const oldMessage = oldMessages[index];
-            if (oldMessage.id === object.id && oldMessage.text === text) {
-              return;
-            }
-          }
-        }
-        newMessages.set(object.id, text);
-      }
-    });
-
-    if (!newMessages.size) {
-      return;
-    }
-
-    const consoleMessages = oldMessages.slice();
-    newMessages.forEach((text, id) => {
-      consoleMessages.push({
-        id,
-        text,
-      });
-    });
-
-    if (consoleMessages.length > 4) {
-      consoleMessages.splice(0, consoleMessages.length - 4);
-    }
-
-    this.setState({
-      consoleMessages,
-    });
-  };
-
   _onMotionCheck = () => {
     const checked = this.refs.checkMotion.getChecked();
     if (checked === this.state.showMotionEvents) {
       return;
     }
 
-    this._renderCanvas();
     this.setState({
       showMotionEvents: checked,
     });
+    this._renderCanvas();
   };
 
   _onSourceOpen = () => {
@@ -340,7 +299,7 @@ export default class CameraVideo extends React.Component {
     for (; index < this.segmentQ.length; index++) {
       const seg = this.segmentQ[index];
       try {
-        log.debug('Appending segment', seg);
+        log.debug('Appending segment');
         this.sourceBuffer.appendBuffer(seg);
       } catch(err) {
         if (err.name === 'QuotaExceededError' ||
@@ -361,7 +320,7 @@ export default class CameraVideo extends React.Component {
 
   _onLoadedData = () => {
     this.loadedData = true;
-    this._updateCanvasSize();
+    this._renderCanvas();
   };
 
   _onTimeUpdate = () => {
@@ -393,8 +352,10 @@ export default class CameraVideo extends React.Component {
     const online = this.renderedOnline = camera ? camera.online : false;
     const defaultFont = '16px DINRound';
 
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+
     if (!camera || !online) {
-      context.fillStyle = 'gray';
+      context.fillStyle = colors.transparentDarkGray;
       context.fillRect(0, 0, canvasWidth, canvasHeight);
 
       if (camera && !online) {
@@ -409,7 +370,7 @@ export default class CameraVideo extends React.Component {
     }
 
     if (!this.loadedData) {
-      context.fillStyle = 'lightgray';
+      context.fillStyle = colors.transparentGray;
       context.fillRect(0, 0, canvasWidth, canvasHeight);
 
       // TODO: Add a spinner? Some kind of 'loading' text?
@@ -417,12 +378,11 @@ export default class CameraVideo extends React.Component {
     }
 
     context.font = defaultFont;
-    context.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Draw objects.
     const time =
       this.videoStartTime + Math.floor(this.video.currentTime * 1000);
-    const objects = camera.objects.collect(time - 50, time + 50);
+    const objects = this._collectAndProcessObjects(time);
     if (objects.length) {
       const objectColors = [
         colors.blueGray,
@@ -448,12 +408,11 @@ export default class CameraVideo extends React.Component {
       const yScale = canvasHeight / camera.previewSize.height;
 
       objects.forEach((object, index) => {
-        const label = object.name || object.tag;
-
-        if (object.tag === 'motion' && !this.state.showMotionEvents) {
+        if (!object.rects.length) {
           return;
         }
 
+        const label = object.name || object.tag;
         const colorIndex = label ?
                            asciiSum(label) % objectColors.length :
                            index % objectColors.length;
@@ -511,6 +470,142 @@ export default class CameraVideo extends React.Component {
     }
   }
 
+  _collectAndProcessObjects(time) {
+    assert(this.state.camera);
+
+    const objects = [];
+
+    // Collect all objects that should be present in this time window.
+    const objectMap = this.state.camera.objects.collect(time - 50, time + 50);
+    if (!objectMap.size) {
+      return objects;
+    }
+
+    let consoleMessageObjects;
+
+    objectMap.forEach((objectArray, objectId) => {
+      const tag = objectArray[0].tag;
+
+      // Draw all motion rects if that option is enabled.
+      if (tag === 'motion') {
+        if (this.state.showMotionEvents) {
+          objectArray.forEach((object) => {
+            objects.push(object);
+          });
+        }
+        return;
+      }
+
+      // Collect all the rects for non-motion objects with the same id.
+      const averageObject = objectArray.reduce((result, object) => {
+        if ('name' in object) {
+          result.name = object.name;
+        }
+        if (object.rects.length) {
+          result.rects = result.rects.concat(object.rects);
+        }
+        return result;
+      }, {
+        id: objectId,
+        source: objectArray[0].source,
+        tag,
+        rects: [],
+      });
+
+      const rectCount = averageObject.rects.length;
+      if (!rectCount || tag === 'face') {
+        consoleMessageObjects = consoleMessageObjects || [];
+        consoleMessageObjects.push(averageObject);
+      }
+
+      if (!rectCount) {
+        return;
+      }
+
+      // Average all the rects.
+      if (rectCount > 1) {
+        const averageRect = averageObject.rects.reduce((result, rect) => {
+          result.x += rect.x;
+          result.y += rect.y;
+          result.width += rect.width;
+          result.height += rect.height;
+          return result;
+        }, {
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+        });
+        averageRect.x = Math.round(averageRect.x / rectCount);
+        averageRect.y = Math.round(averageRect.y / rectCount);
+        averageRect.width = Math.round(averageRect.width / rectCount);
+        averageRect.height = Math.round(averageRect.height / rectCount);
+
+        averageObject.rects = [averageRect];
+      }
+
+      // Only push a single object.
+      objects.push(averageObject);
+    });
+
+    // Figure out any text we should display for the console.
+    if (consoleMessageObjects) {
+      this._processConsoleMessageObjects(consoleMessageObjects);
+    }
+
+    return objects;
+  }
+
+  _processConsoleMessageObjects(objects) {
+    const oldMessages = this.state.consoleMessages;
+    let newMessages;
+
+    objects.forEach((object) => {
+      let text;
+      if (object.tag === 'face') {
+        if ('name' in object) {
+          text = capitalize(object.name);
+        } else {
+          text = 'A face';
+        }
+        text += ' was seen';
+      } else if ('text' in object) {
+        text = object.text;
+      } else if ('name' in object) {
+        text = capitalize(object.name) + '!';
+      } else {
+        text = capitalize(object.tag) + '!';
+      }
+      if (oldMessages.some((oldMessage) => {
+        return oldMessage.id === object.id && oldMessage.text === text;
+      })) {
+        // An indentical message for this object id is already displayed.
+        return;
+      }
+      newMessages = newMessages || oldMessages.slice();
+      newMessages.push({
+        id: object.id,
+        text,
+      });
+    });
+
+    if (!newMessages) {
+      return;
+    }
+
+    if (newMessages.length > 4) {
+      newMessages.splice(0, newMessages.length - 4);
+    }
+
+    // Change the state on the next frame to make sure we don't take too
+    // long here.
+    requestAnimationFrame(() => {
+      this.setState({
+        consoleMessages: newMessages,
+      });
+    });
+  }
+
   render() {
     let console;
     if (this.state.camera &&
@@ -536,15 +631,16 @@ export default class CameraVideo extends React.Component {
             autoPlay="true"
             style={styles.video}
             ref="video"
+            onLoadedMetadata={this._updateCanvasSize}
             onLoadedData={this._onLoadedData}
             onResize={this._updateCanvasSize}
             onTimeUpdate={this._onTimeUpdate}
           />
+          {console}
           <canvas
             style={styles.canvas}
             ref="canvas">
           </canvas>
-          {console}
         </div>
         <form style={styles.form}>
           <Input

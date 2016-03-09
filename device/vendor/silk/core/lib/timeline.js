@@ -428,6 +428,7 @@ export default class Timeline extends EventEmitter {
         }];
       }
 
+      log.debug(`Adding object`, object);
       this.objects.push(object);
     });
 

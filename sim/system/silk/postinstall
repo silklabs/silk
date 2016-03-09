@@ -6,6 +6,7 @@ mkdir -p system/node_modules
 cp -f system/silk/node_modules/silk-device/lib/base_version.js system/node_modules/
 
 mkdir -p system/silk/bin
+rm -f system/silk/bin/node
 ln -sf $(which node) system/silk/bin/node
 
 # Default system properties

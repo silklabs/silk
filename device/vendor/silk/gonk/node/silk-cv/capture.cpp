@@ -43,9 +43,11 @@ private:
   static void Close(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
   bool processing;
+  bool closed;
   int scaledWidth;
   int scaledHeight;
 
+  void InternalClose();
 #ifdef ANDROID
   libpreview::vtable preview;
 
@@ -155,7 +157,12 @@ public:
   }
 
   void HandleErrorCallback() {
+    if (videoCapture->closed) {
+      videoCapture->InternalClose();
+      return;
+    }
     videoCapture->processing = false;
+
     Nan::AsyncWorker::HandleErrorCallback();
   }
 
@@ -163,6 +170,10 @@ public:
     Nan::HandleScope scope;
     node_opencv::Matrix *mat;
 
+    if (videoCapture->closed) {
+      videoCapture->InternalClose();
+      return;
+    }
     videoCapture->processing = false;
 
     v8::Local<v8::Object> localRGB = Nan::New(destRGB);
@@ -200,6 +211,7 @@ Nan::Persistent<v8::Function> VideoCapture::constructor;
 
 VideoCapture::VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
     : processing(false),
+      closed(false),
       scaledWidth(scaledWidth),
       scaledHeight(scaledHeight) {
   bool ok;
@@ -222,9 +234,9 @@ VideoCapture::VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
 }
 
 VideoCapture::~VideoCapture() {
+  InternalClose();
 #ifdef ANDROID
   uv_mutex_destroy(&frameDataLock);
-  preview.close();
 #endif
 }
 
@@ -306,17 +318,30 @@ NAN_METHOD(VideoCapture::Read) {
 NAN_METHOD(VideoCapture::Close) {
   VideoCapture* self = ObjectWrap::Unwrap<VideoCapture>(info.Holder());
 
-  if (self->processing) {
-    Nan::ThrowError("Busy");
+  if (self->closed) {
     return;
   }
 
-  self->processing = true;
-#ifdef ANDROID
-  self->preview.close();
-#endif
+  self->closed = true;
+  if (!self->processing) {
+    self->InternalClose();
+    self->processing = true;
+  }
 }
 
+void VideoCapture::InternalClose() {
+#ifdef ANDROID
+  uv_mutex_lock(&frameDataLock);
+  if (frameBuffer != NULL) {
+    preview.releaseFrame(frameBuffer);
+    frameBuffer = NULL;
+  }
+  uv_mutex_unlock(&frameDataLock);
+  preview.close();
+#else
+  cap.release();
+#endif
+}
 
 #ifdef ANDROID
 void VideoCapture::OnFrameCallback(void *userData,
@@ -326,19 +351,20 @@ void VideoCapture::OnFrameCallback(void *userData,
                                    size_t height) {
 
   VideoCapture *that = static_cast<VideoCapture *>(userData);
-  void *lastFrameBuffer;
+  void *lastFrameBuffer = NULL;
 
   uv_mutex_lock(&that->frameDataLock);
-  lastFrameBuffer = that->frameBuffer;
-  that->frameBuffer = buffer;
-  that->frameFormat = format;
-  that->frameWidth = width;
-  that->frameHeight = height;
-  uv_mutex_unlock(&that->frameDataLock);
-
-  if (lastFrameBuffer) {
-    that->preview.releaseFrame(lastFrameBuffer);
+  if (!that->closed) {
+    lastFrameBuffer = that->frameBuffer;
+    that->frameBuffer = buffer;
+    that->frameFormat = format;
+    that->frameWidth = width;
+    that->frameHeight = height;
+    if (lastFrameBuffer) {
+      that->preview.releaseFrame(lastFrameBuffer);
+    }
   }
+  uv_mutex_unlock(&that->frameDataLock);
 }
 #endif
 

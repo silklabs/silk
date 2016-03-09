@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <opencv2/imgproc.hpp>
+#include <chrono>
 
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"
@@ -345,12 +346,13 @@ NAN_METHOD(Model::PredictTopK) {
 class RcnnAsyncWorker: public Nan::AsyncWorker {
 public:
   RcnnAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
-      string className, int minSize, int maxMergingIterations,
-      float nmsThreshold, float confThreshold):
+      string className, vector<cv::Rect> motionRects, int minSize,
+      int maxMergingIterations, float nmsThreshold, float confThreshold):
     Nan::AsyncWorker(callback),
     model(model),
     mat(mat),
     mClassName(className),
+    mMotionRects(motionRects),
     mMinSize(minSize),
     mMaxMergingIterations(maxMergingIterations),
     mNmsThreshold(nmsThreshold),
@@ -358,14 +360,29 @@ public:
   }
 
   void Execute() {
+    chrono::time_point<chrono::system_clock> start, end;
+    chrono::duration<double> elapsed_seconds;
+
     // Run selective search to get all the regions of the image and run
     // prediction on each of the regions
+    start = chrono::system_clock::now();
     dlib::matrix_range_exp<double> kvals = dlib::linspace(50, 200, 3);
-    vector<cv::Rect> rects = getObjectProposals(mat, kvals, mMinSize,
+    vector<cv::Rect> proposedRects = getObjectProposals(mat, kvals, mMinSize,
         mMaxMergingIterations);
-    ALOGD("# proposals: %lu", rects.size());
+    end = chrono::system_clock::now();
+    elapsed_seconds = end - start;
+    ALOGD("# object proposals: %lu in %f secs", proposedRects.size(),
+          elapsed_seconds.count());
 
-    std::vector<CvRectScore> srcRects;
+    // Only keep the proposed rectangles that intersect with motion rectangles
+    start = chrono::system_clock::now();
+    vector<cv::Rect> rects = boxIntersect(proposedRects, mMotionRects);
+    end = chrono::system_clock::now();
+    elapsed_seconds = end - start;
+    ALOGD("# object proposals w/ motion: %lu in %f secs", rects.size(),
+          elapsed_seconds.count());
+
+    vector<CvRectScore> predictions;
     for (int count = 0; count < rects.size(); count++) {
       cv::Rect regionRect = rects[count];
       cv::Mat region = mat(regionRect);
@@ -376,7 +393,7 @@ public:
         CvRectScore rectScore = {prediction[0].second, regionRect};
         // Only return the predictions with confidence higher than mConfThreshold
         if (prediction[0].second >= mConfThreshold) {
-          srcRects.push_back(rectScore);
+          predictions.push_back(rectScore);
           ALOGV("Prediction for region# %d %s score: %f rect: [%d, %d, %d, %d]",
               count, prediction[0].first.c_str(), prediction[0].second,
               regionRect.x, regionRect.y, regionRect.width, regionRect.height);
@@ -384,10 +401,14 @@ public:
       }
     }
 
-    if (srcRects.size() > 0) {
-      NMS(srcRects, mRegions, mNmsThreshold);
-      ALOGV("After NMS: %lu", mRegions.size());
-      for (std::vector<CvRectScore>::iterator it = mRegions.begin();
+    if (predictions.size() > 0) {
+      start = chrono::system_clock::now();
+      NMS(predictions, mRegions, mNmsThreshold);
+      end = chrono::system_clock::now();
+      elapsed_seconds = end - start;
+      ALOGV("After NMS: # rects: %lu in %f secs", mRegions.size(),
+            elapsed_seconds.count());
+      for (vector<CvRectScore>::iterator it = mRegions.begin();
           it != mRegions.end(); ++it) {
         ALOGV("Rects: [%d, %d, %d, %d] score: %f", it->rect.x, it->rect.y,
               it->rect.width, it->rect.height, it->score);
@@ -434,6 +455,7 @@ private:
   Model* model;
   cv::Mat mat;
   string mClassName;
+  vector<cv::Rect> mMotionRects;
   int mMinSize;
   int mMaxMergingIterations;
   float mNmsThreshold;
@@ -452,8 +474,8 @@ private:
 NAN_METHOD(Model::Rcnn) {
   SETUP_FUNCTION(Model)
 
-  if (info.Length() < 3) {
-    JSTHROW("Image matrix, class name and callback function must be provided");
+  if (info.Length() < 4) {
+    JSTHROW("Image matrix, class name, motion rectangles and callback function must be provided");
   }
 
   cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
@@ -462,36 +484,56 @@ NAN_METHOD(Model::Rcnn) {
   string className;
   STRING_FROM_ARGS(className, 1);
 
-  REQ_FUN_ARG(2, cb);
+  // Motion rectangles
+  if (!info[2]->IsArray()) {
+    JSTHROW_TYPE("Argument #3 is not an array");
+  }
+
+  vector<cv::Rect> motionRects;
+  Handle<Array> jsArray = Handle<Array>::Cast(info[2]);
+  for (unsigned int i = 0; i < jsArray->Length(); i++) {
+    Handle<Value> val = jsArray->Get(i);
+    v8::Local<v8::Object> rect = v8::Local<v8::Object>::Cast(val);
+    cv::Rect motionRect(
+      rect->Get(Nan::New<v8::String>("x").ToLocalChecked())->IntegerValue(),
+      rect->Get(Nan::New<v8::String>("y").ToLocalChecked())->IntegerValue(),
+      rect->Get(Nan::New<v8::String>("width").ToLocalChecked())->IntegerValue(),
+      rect->Get(Nan::New<v8::String>("height").ToLocalChecked())->IntegerValue()
+    );
+    motionRects.push_back(motionRect);
+  }
+
+  REQ_FUN_ARG(3, cb);
 
   // Minimum size of the selective search regions
   int minSize = 100;
-  if (info.Length() >= 4) {
-    INT_FROM_ARGS(minSize, 3);
+  if (info.Length() >= 5) {
+    INT_FROM_ARGS(minSize, 4);
   }
 
   // Rounds of neighboring blob merging for selective search regions
   int maxMergingIterations = 1;
-  if (info.Length() >= 5) {
-    INT_FROM_ARGS(maxMergingIterations, 4);
+  if (info.Length() >= 6) {
+    INT_FROM_ARGS(maxMergingIterations, 5);
   }
 
   // NMS threshold (area of intersection greater than this value will be ignore
   // in favor of rectangle with higher score)
   float nmsThreshold = 0.3f;
-  if (info.Length() >= 6) {
-    FLOAT_FROM_ARGS(nmsThreshold, 5);
+  if (info.Length() >= 7) {
+    FLOAT_FROM_ARGS(nmsThreshold, 6);
   }
 
   // Confidence threshold
   float confThreshold = 0.90f;
-  if (info.Length() >= 7) {
-    FLOAT_FROM_ARGS(confThreshold, 6);
+  if (info.Length() >= 8) {
+    FLOAT_FROM_ARGS(confThreshold, 7);
   }
 
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
   Nan::AsyncQueueWorker(new RcnnAsyncWorker(callback, self, mat,
-      className, minSize, maxMergingIterations, nmsThreshold, confThreshold));
+      className, motionRects, minSize, maxMergingIterations, nmsThreshold,
+      confThreshold));
 }
 
 /**

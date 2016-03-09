@@ -32,6 +32,7 @@ class Peddetector {
   _env: Env;
   _netCaffe: caffe.Model;
   _onMotion: Function;
+  working: bool = false;
 
   constructor(env: Env) {
     this._env = env;
@@ -71,9 +72,9 @@ class Peddetector {
    * Make prediction asynchronously
    * @private
    */
-  _rcnnAsync(mat) {
+  _rcnnAsync(mat, motionRects) {
     return new Promise((resolve, reject) => {
-      this._netCaffe.rcnn(mat, 'pedestrian', (err, predictions) => {
+      this._netCaffe.rcnn(mat, 'pedestrian', motionRects, (err, predictions) => {
         if (err) {
           reject(err);
         } else {
@@ -88,8 +89,6 @@ class Peddetector {
    */
   async _init() {
     log = this._env.log;
-    let working = false;
-
     this._netCaffe = new caffe.Model();
 
     // Load the pedestrian model
@@ -128,50 +127,58 @@ class Peddetector {
     }
 
     // Register for motion
-    this._onMotion = async (when) => {
-      if (working) {
-        log.debug(`Still busy, unable to process next preview image`);
-        return;
-      }
-      working = true;
-
-      try {
-        // Fetch camera preview image
-        let [im] = await this._env.camera.getPreviewFrames(when, ['rgb']);
-
-        // By the time prediction finishes camera might have evicted the image
-        // from its cache, so make a local copy of the image
-        let imCopy = im.copy();
-
-        // Run pedestrian prediction
-        log.verbose(`Running predition...`);
-        let start = Date.now();
-        let predictions = await this._rcnnAsync(imCopy);
-        let diff = Date.now() - start;
-
-        let rects = [];
-        for (let i = 0; i < predictions.length; i++) {
-          const label = predictions[i].label;
-          const probability = (predictions[i].confidence * 100).toFixed(2);
-          const rect = predictions[i].rect;
-          rects.push(rect);
-          log.info(`label: ${label} Probability: ${probability}% rect: ${JSON.stringify(rect)}`);
-        }
-
-        log.verbose(`Finished pedestrian predictions in ${diff}ms rects: ${rects}`);
-
-        // Add detected pedestrians to timeline
-        if (rects.length > 0) {
-          this._env.timeline.addObjects([{tag: 'pedestrian', when, rects}]);
-        }
-      } catch (error) {
-        log.error(`Prediction failed err: ${error}`);
-      }
-      working = false;
-    };
-
     this._env.timeline.on('motion', this._onMotion);
   }
+
+  /**
+   * @private
+   */
+  _onMotion = async (when, motionRects) => {
+    if (this.working) {
+      log.debug(`Still busy, unable to process next preview image`);
+      return;
+    }
+    this.working = true;
+    let imCopy = null;
+
+    try {
+      // Fetch camera preview image
+      let [im] = await this._env.camera.getPreviewFrames(when, ['rgb']);
+
+      // By the time prediction finishes camera might have evicted the image
+      // from its cache, so make a local copy of the image
+      imCopy = im.copy();
+
+      // Run pedestrian prediction
+      log.verbose(`Running predition...`);
+      let start = Date.now();
+      let predictions = await this._rcnnAsync(imCopy, motionRects);
+      let diff = Date.now() - start;
+
+      let rects = [];
+      for (let i = 0; i < predictions.length; i++) {
+        const label = predictions[i].label;
+        const probability = (predictions[i].confidence * 100).toFixed(2);
+        const rect = predictions[i].rect;
+        rects.push(rect);
+        imCopy.rectangle([rect.x, rect.y], [rect.width, rect.height],
+            [255, 255, 255], 1);
+        log.info(`label: ${label} Probability: ${probability}% rect: ${JSON.stringify(rect)}`);
+      }
+
+      log.verbose(`Finished pedestrian predictions in ${diff}ms rects: ${rects.length}`);
+
+      // Add detected pedestrians to timeline
+      if (rects.length > 0) {
+        this._env.timeline.addObjects([{tag: 'pedestrian', when, rects}]);
+        this._env.timeline.addDiagFrame('pedestrian', when, imCopy);
+      }
+    } catch (error) {
+      log.error(`Prediction failed err: ${error.stack || error}`);
+    }
+    imCopy.release();
+    this.working = false;
+  };
 }
 
 module.exports = (env: Env): any => new Peddetector(env);

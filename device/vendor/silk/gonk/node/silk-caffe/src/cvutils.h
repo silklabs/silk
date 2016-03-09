@@ -57,3 +57,9 @@ void NMS(std::vector<CvRectScore> boxes_orig,
 vector<cv::Rect> getObjectProposals(const cv::Mat& inputImage,
     const dlib::matrix_range_exp<double>& kvals, const unsigned long minSize,
     const unsigned long maxMergingIterations);
+
+/**
+ * Keep only those proposed rectangles that intersect with motion rectangles
+ */
+vector<cv::Rect> boxIntersect(vector<cv::Rect> proposedRects,
+                              vector<cv::Rect> motionRects);

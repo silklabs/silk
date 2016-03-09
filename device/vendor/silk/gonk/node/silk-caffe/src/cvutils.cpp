@@ -74,3 +74,25 @@ vector<cv::Rect> getObjectProposals(const cv::Mat& inputImage,
 
   return opencvRects;
 }
+
+vector<cv::Rect> boxIntersect(vector<cv::Rect> proposedRects,
+    vector<cv::Rect> motionRects) {
+  // If no motion rectangles provided then run RCNN on all the proposed
+  // rectangles
+  if (motionRects.size() == 0) {
+    return proposedRects;
+  }
+
+  vector<cv::Rect> keep;
+  for (int i = 0; i < proposedRects.size(); i++) {
+    for (int j = 0; j < motionRects.size(); j++) {
+      // Check if a proposed rect intersect with any of the motion rect
+      if ((proposedRects[i] & motionRects[j]).area() > 0) {
+        keep.push_back(proposedRects[i]);
+        break;
+      }
+    }
+  }
+
+  return keep;
+}

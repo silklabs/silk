@@ -88,8 +88,9 @@ class Dnn {
    * @private
    */
   _rcnnAsync(mat) {
+    let rects = [];
     return new Promise((resolve, reject) => {
-      this._netCaffe.rcnn(mat, 'pedestrian', (err, predictions) => {
+      this._netCaffe.rcnn(mat, 'pedestrian', rects, (err, predictions) => {
         if (err) {
           reject(err);
         } else {

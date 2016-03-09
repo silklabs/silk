@@ -21,7 +21,7 @@ export default class ObjectCollector {
 
   _objects: Map<number, Array<TimelineEventObject>> = new Map();
 
-  push(objects: Array<TimelineEventObject>) {
+  push(objects: Array<TimelineEventObject>): void {
     log.debug(`Pushed ${objects.length} objects`);
     invariant(objects.length);
 
@@ -46,11 +46,11 @@ export default class ObjectCollector {
     });
   }
 
-  collect(start: number, end: number) {
+  collect(start: number, end: number): Map<number, Array<TimelineEventObject>> {
     log.debug(`Collecting between ${start} and ${end} (${end - start} ms)`);
     invariant(start <= end);
 
-    let objects = [];
+    let objects = new Map();
     let expiredIds;
 
     this._objects.forEach((array, objectId) => {
@@ -58,10 +58,11 @@ export default class ObjectCollector {
       let expiredObjects;
 
       array.forEach((object) => {
+        let include = false;
         if (object.when <= start) {
           if (!object.durationMs ||
               object.when + object.durationMs >= start) {
-            objects.push(object);
+            include = true;
             expireObjectId = false;
           } else if (object.when + object.durationMs < start) {
             expiredObjects = expiredObjects || [];
@@ -69,9 +70,18 @@ export default class ObjectCollector {
           }
         } else {
           if (object.when <= end) {
-            objects.push(object);
+            include = true;
           }
           expireObjectId = false;
+        }
+
+        if (include) {
+          let existingArray = objects.get(objectId);
+          if (existingArray) {
+            existingArray.push(object);
+          } else {
+            objects.set(objectId, [object]);
+          }
         }
       });
 

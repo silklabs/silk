@@ -41,18 +41,15 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 
 # vendor/silk/ext/...
 SILK_EXT := \
-  detectcar \
-  detectcar-cascade-cars \
   clapper \
   clapper-sound \
   nightlight \
   trackobject \
   trackobject-sound \
-  detectface \
+  face \
   detectface-cascade-frontalface \
   detectface-cascade-eye \
   detectface-cascade-eyeglasses \
-  knockknock \
   detectcat-cascade \
   detectcat \
   oksilk \

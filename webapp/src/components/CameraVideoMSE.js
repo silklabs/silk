@@ -448,14 +448,14 @@ export default class CameraVideo extends React.Component {
       const yScale = canvasHeight / camera.previewSize.height;
 
       objects.forEach((object, index) => {
-        const tag = object.tag;
+        const label = object.name || object.tag;
 
-        if (tag === 'motion' && !this.state.showMotionEvents) {
+        if (object.tag === 'motion' && !this.state.showMotionEvents) {
           return;
         }
 
-        const colorIndex = tag ?
-                           asciiSum(tag) % objectColors.length :
+        const colorIndex = label ?
+                           asciiSum(label) % objectColors.length :
                            index % objectColors.length;
         const color = objectColors[colorIndex];
         const textColor = colorIndex === 0 ? 'black' : 'white';
@@ -470,9 +470,9 @@ export default class CameraVideo extends React.Component {
 
           context.strokeRect(x, y, w, h);
 
-          if (tag) {
+          if (label) {
             const wTag =
-              Math.round(context.measureText(tag).width) + 2 * xTagPadding;
+              Math.round(context.measureText(label).width) + 2 * xTagPadding;
             const hTag = tagHeight + 2 * yTagPadding;
 
             const xTag = (x + wTag <= canvasWidth) ?
@@ -504,7 +504,7 @@ export default class CameraVideo extends React.Component {
             context.stroke();
 
             context.fillStyle = textColor;
-            context.fillText(tag, xTag + xTagPadding, yTag + yTagPadding);
+            context.fillText(label, xTag + xTagPadding, yTag + yTagPadding);
           }
         });
       });

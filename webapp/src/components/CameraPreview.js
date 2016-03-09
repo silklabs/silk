@@ -219,12 +219,12 @@ export default class CameraPreview extends React.Component {
         context.fillStyle = 'black';
 
         objects.forEach((object, index) => {
-          const tag = object.tag;
+          const label = object.name || object.tag;
           context.strokeStyle = objectColors[index % objectColors.length];
 
           object.rects.forEach((rect) => {
             context.strokeRect(rect.x, rect.y, rect.width, rect.height);
-            context.fillText(tag, rect.x, rect.y + rect.height + 10);
+            context.fillText(label, rect.x, rect.y + rect.height + 10);
           });
         });
       }

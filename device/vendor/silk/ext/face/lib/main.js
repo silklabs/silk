@@ -84,16 +84,17 @@ class Main {
 
     // Update timeline with currently tracked faces
     this.faceTracker.faces.forEach(face => {
-      const tag = this.faceRecognizer.faceLabel(face.faceId) || 'face';
-      log.debug(`${tag} added to timeline at`, face.rectWhen);
+      const name = this.faceRecognizer.faceLabel(face.faceId) || 'unknown face';
+      log.debug(`'face' (${name}) added to timeline at`, face.rectWhen);
       timeline.addObjects(
         [{
           id: face.id,
-          tag,
+          tag: 'face',
           when: face.rectWhen,
           rects: [face.rect],
           source: 'face',
           durationMs: FACE_DETECT_INTERVAL,
+          name,
         }]
       );
     });

@@ -1,0 +1,48 @@
+{ 
+  "modes": {
+    "Andrea": {
+      "type": "faceSeen",
+      "faceName": "Andrea",
+      "sonos": {
+        "action": "play",
+        "queryType": "artists",
+        "queryValue": "Beatles"
+      },
+      "lifx": {
+        "scene": "green"
+      }
+    },
+    "Wayne": {
+      "type": "faceSeen",
+      "faceName": "Wayne",
+      "sonos": {
+        "action": "play",
+        "uri": "x-rincon-playlist:RINCON_5CAAFD49B5BC01400#A:ARTIST/Yo-Yo%20Ma"
+      },
+      "lifx": {
+        "scene": "blue"
+      }
+    },
+    "Jro": {
+      "type": "faceSeen",
+      "faceName": "Jro",
+      "sonos": {
+        "action": "play",
+        "uri": "x-rincon-playlist:RINCON_5CAAFD49B5BC01400#A:ARTIST/Led%20Zeppelin"
+      },
+      "lifx": {
+        "scene": "purple"
+      }
+    },
+    "Off": {
+      "type": "noFaceDetected",
+      "durationMs": "7000",
+      "sonos": {
+        "action": "pause"
+      },
+      "lifx": {
+        "scene": "off"
+      }
+    }
+  }
+}

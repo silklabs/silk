@@ -263,6 +263,9 @@ export default class Server extends events.EventEmitter {
           }
           const networkDuration = Date.now() - queued;
           log.info(`ack in ${networkDuration}ms for ${str}`);
+          if (networkDuration < 0) {
+            return; // NTP time change?
+          }
           api.metrics.add(new VideoMetrics.Network(networkDuration));
         }
       );

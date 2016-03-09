@@ -604,6 +604,11 @@ export default class Camera extends EventEmitter {
     }));
     this._ready = false;
 
+    if (this._initTimeout) {
+      clearTimeout(this._initTimeout);
+      this._initTimeout = null;
+    }
+
     if (this._previewFrameTimeout) {
       clearTimeout(this._previewFrameTimeout);
       this._previewFrameTimeout = null;

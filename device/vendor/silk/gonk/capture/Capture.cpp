@@ -8,6 +8,7 @@
 #define LOG_TAG "silk-capture"
 #include <utils/Log.h>
 
+#include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <cutils/properties.h>
 #include <gui/Surface.h>
@@ -603,6 +604,17 @@ int main(int argc, char **argv) {
 
   sp<ProcessState> proc(ProcessState::self());
   ProcessState::self()->startThreadPool();
+
+  // Block until the camera service starts up.  There's nothing useful that can
+  // be done until that happens anyway.
+  sp<IServiceManager> sm = defaultServiceManager();
+  for (;;) {
+    sp<IBinder> binder = sm->getService(String16("media.camera"));
+    if (binder != NULL) {
+      break;
+    }
+  }
+  ALOGI("Found media.camera service");
 
   sOpenCVCameraCapture = new OpenCVCameraCapture();
   err = sOpenCVCameraCapture->publish();

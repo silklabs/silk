@@ -42,6 +42,16 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
 LOCAL_NODE_MODULE_TYPE := file
 
+LOCAL_STATIC_LIBRARIES := \
+ libopenblas \
+ libgflags \
+
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+LOCAL_STATIC_LIBRARIES += libprotobuf-cpp-full-gnustl-rtti
+else
+LOCAL_STATIC_LIBRARIES += libprotobuf-cpp-2.3.0-full-gnustl-rtti
+endif
+
 LOCAL_SHARED_LIBRARIES := \
   liblog \
   libcaffe \

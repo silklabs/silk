@@ -7,9 +7,6 @@
  */
 
 /**
- * This test can only run on device as it has dependency on silk-caffe which
- * currently can not be compiled on the host.
- *
  * Pre-requisites:
  * - Push cat.jpg from
  *   https://github.com/BVLC/caffe/blob/master/examples/images/cat.jpg to data/media

@@ -72,6 +72,7 @@ void Model::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "setLabels", SetLabels);
   Nan::SetPrototypeMethod(ctor, "predictTopK", PredictTopK);
   Nan::SetPrototypeMethod(ctor, "rcnn", Rcnn);
+  Nan::SetPrototypeMethod(ctor, "nms", NonMaximaSuppression);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Model").ToLocalChecked(), ctor->GetFunction());
@@ -81,8 +82,6 @@ void Model::Init(Local<Object> exports) {
  *
  */
 NAN_METHOD(Model::New) {
-  google::InitGoogleLogging(LOG_TAG);
-
   if (info.IsConstructCall()) {
     // Invoked as constructor: `new Model(...)`
     Model* obj = new Model();
@@ -403,7 +402,7 @@ public:
 
     if (predictions.size() > 0) {
       start = chrono::system_clock::now();
-      NMS(predictions, mRegions, mNmsThreshold);
+      mRegions = NMS(predictions, mNmsThreshold);
       end = chrono::system_clock::now();
       elapsed_seconds = end - start;
       ALOGV("After NMS: # rects: %lu in %f secs", mRegions.size(),
@@ -648,3 +647,59 @@ void Model::Preprocess(const cv::Mat& img,
   }
 }
 
+/**
+ *
+ */
+NAN_METHOD(Model::NonMaximaSuppression) {
+  if (info.Length() < 1) {
+    JSTHROW("Boxes to run NMS on must be provided");
+  }
+
+  // Motion rectangles
+  if (!info[0]->IsArray()) {
+    JSTHROW_TYPE("Argument #1 is not an array");
+  }
+
+  vector<CvRectScore> boxesOrig;
+  Handle<Array> jsArray = Handle<Array>::Cast(info[0]);
+  for (unsigned int i = 0; i < jsArray->Length(); i++) {
+    Handle<Value> val = jsArray->Get(i);
+    v8::Local<v8::Object> rectObj = v8::Local<v8::Object>::Cast(val);
+    float score = rectObj->Get(Nan::New<v8::String>("score").ToLocalChecked())->NumberValue();
+    cv::Rect rect(
+        rectObj->Get(Nan::New<v8::String>("x").ToLocalChecked())->IntegerValue(),
+        rectObj->Get(Nan::New<v8::String>("y").ToLocalChecked())->IntegerValue(),
+        rectObj->Get(Nan::New<v8::String>("width").ToLocalChecked())->IntegerValue(),
+        rectObj->Get(Nan::New<v8::String>("height").ToLocalChecked())->IntegerValue()
+    );
+    CvRectScore rectScore = {score, rect};
+    boxesOrig.push_back(rectScore);
+  }
+
+  // NMS threshold (area of intersection greater than this value will be ignore
+  // in favor of rectangle with higher score)
+  float nmsThreshold = 0.3f;
+  if (info.Length() >= 2) {
+    FLOAT_FROM_ARGS(nmsThreshold, 1);
+  }
+
+  vector<CvRectScore> regions = NMS(boxesOrig, nmsThreshold);
+
+  // Send the result back to JS
+  Local<Array> predictions = Nan::New<Array>(regions.size());
+  for (int i = 0; i < regions.size(); ++i) {
+    Local<Object> rect = Nan::New<Object>();
+    rect->Set(Nan::New<String>("score").ToLocalChecked(),
+        Nan::New<Number>(regions[i].score));
+    rect->Set(Nan::New<String>("x").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.x));
+    rect->Set(Nan::New<String>("y").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.y));
+    rect->Set(Nan::New<String>("width").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.width));
+    rect->Set(Nan::New<String>("height").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.height));
+    predictions->Set(i, rect);
+  }
+  info.GetReturnValue().Set(predictions);
+}

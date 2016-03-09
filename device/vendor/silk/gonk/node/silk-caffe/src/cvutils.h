@@ -31,13 +31,14 @@ typedef struct {
  *              This array is overwritten by the array of bounding boxes after
  *              non-max suppresison. Should include one bounding box per pixel
  *              location in the correct order when w and h are defined
- * @param resRects Return the bounding boxes after NMS suppression
  * @param overlap Suppress bounding boxes for which the
  *                percent area of overap with a higher scoring bounding box is
  *                greater than this parameter.
+ * @return Return the bounding boxes after NMS suppression
  */
-void NMS(std::vector<CvRectScore> boxes_orig,
-    std::vector<CvRectScore>& resRects, float overlap = 0.3f);
+std::vector<CvRectScore> NMS(std::vector<CvRectScore> boxes_orig,
+    float overlap);
+
 /**
  * Get object proposals based on the input image
  *

@@ -6,13 +6,13 @@
 
 #include "cvutils.h"
 
-void NMS(std::vector<CvRectScore> boxes_orig,
-    std::vector<CvRectScore>& resRects, float overlap) {
+std::vector<CvRectScore> NMS(std::vector<CvRectScore> boxesOrig,
+    float overlap) {
   int i;
-  int numNMS = 0;
-  CvRectScore *boxes = &boxes_orig.front();
+  CvRectScore *boxes = &boxesOrig.front();
+  std::vector<CvRectScore> resRects;
 
-  int num = boxes_orig.size();
+  int num = boxesOrig.size();
   while (num) {
     // Greedily select the highest scoring bounding box
     int best = -1;
@@ -23,24 +23,26 @@ void NMS(std::vector<CvRectScore> boxes_orig,
         best = i;
       }
     }
-    CvRect b = boxes[best].rect;
     resRects.push_back(boxes[best]);
+    cv::Rect b = boxes[best].rect;
+    CvRectScore tmp = boxes[0];
+    boxes[0] = boxes[best];
+    boxes[best] = tmp;
     boxes++;
-    numNMS++;
+
     float A1 = b.width * b.height, A2, inter, inter_over_union;
 
     // Remove all bounding boxes where the percent area of overlap is greater
-    // than overlap
-    int numGood = 0, x1, x2, y1, y2;
+    // than overlap threshold
+    int numGood = 0;
     for (i = 0; i < num - 1; i++) {
-      x1 = MAX(b.x, boxes[i].rect.x);
-      y1 = MAX(b.y, boxes[i].rect.y);
-      x2 = MIN(b.x + b.width, boxes[i].rect.x + boxes[i].rect.width);
-      y2 = MIN(b.y + b.height, boxes[i].rect.y + boxes[i].rect.height);
       A2 = boxes[i].rect.width * boxes[i].rect.height;
-      inter = (float) ((x2 - x1) * (y2 - y1));
+      inter = (b & boxes[i].rect).area();
       inter_over_union = inter / (A1 + A2 - inter);
-      if (inter_over_union <= overlap) {
+
+      // If two boxes are within each other or the area of intersection is less
+      // than overlap threshold then keep this box
+      if ((inter != A2) && (inter != A1) && (inter_over_union <= overlap)) {
         CvRectScore tmp = boxes[numGood];
         boxes[numGood++] = boxes[i];
         boxes[i] = tmp;
@@ -48,6 +50,7 @@ void NMS(std::vector<CvRectScore> boxes_orig,
     }
     num = numGood;
   }
+  return resRects;
 }
 
 cv::Rect dlibRectToOpenCVRect(dlib::rectangle dlibrect) {

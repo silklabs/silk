@@ -85,6 +85,7 @@ private:
   JSFUNC(SetLabels);
   JSFUNC(PredictTopK);
   JSFUNC(Rcnn);
+  JSFUNC(NonMaximaSuppression);
 
 public:
   boost::shared_ptr<Net<float>> mCaffeNet;

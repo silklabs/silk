@@ -2,9 +2,9 @@ import invariant from 'assert';
 import React from 'react';
 import { Input } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
-import { VideoPlayback } from 'silk-cam';
 import createLog from 'silk-log';
 
+import MSEPlayer from './MSEPlayer';
 import Cameras from '../libraries/Cameras';
 
 const log = createLog('CameraVideoMSE');
@@ -103,12 +103,6 @@ function capitalize(string) {
 }
 
 export default class CameraVideo extends React.Component {
-  video = null;
-  mediaSource = new MediaSource();
-  sourceBuffer = null;
-  playback = new VideoPlayback();
-  segmentQ = [];
-
   canvas = null;
   context = null;
   pixelRatio = 1;
@@ -130,9 +124,6 @@ export default class CameraVideo extends React.Component {
   }
 
   componentDidMount() {
-    this.video = ReactDOM.findDOMNode(this.refs.video);
-    this.video.src = URL.createObjectURL(this.mediaSource);
-
     this.canvas = ReactDOM.findDOMNode(this.refs.canvas);
     this.context = this.canvas.getContext('2d');
     window.addEventListener('resize', this._updateCanvasSize);
@@ -153,21 +144,19 @@ export default class CameraVideo extends React.Component {
     const camera = this.state.camera;
     if (camera) {
       camera.removeListener('videoClip', this._onNextVideoClip);
-      camera.removeListener('objects', this._onObjects);
     }
-
     window.removeEventListener('resize', this._updateCanvasSize);
-
-    this.mediaSource.removeEventListener('sourceopen', this._feedPlayer);
-    if (this.sourceBuffer) {
-      this.sourceBuffer.removeEventListener('updateend', this._feedPlayer);
-    }
-    URL.revokeObjectURL(this.video.src);
   }
 
   _updateCanvasSize = () => {
-    let width = this.video.clientWidth;
-    let height = this.video.clientHeight;
+    if (!this.refs.msePlayer) {
+      this.canvas.style.width = 0;
+      this.canvas.style.height = 0;
+      return;
+    }
+    const video = this.refs.msePlayer.videoElement;
+    let width = video.clientWidth;
+    let height = video.clientHeight;
 
     if (this.pixelRatio !== 1) {
       this.canvas.style.width = Math.floor(width) + 'px';
@@ -197,15 +186,8 @@ export default class CameraVideo extends React.Component {
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
 
-      this.video.pause();
       this.videoStartTime = 0;
       this.loadedData = false;
-
-      if (this.mediaSource.readyState === 'open' && this.sourceBuffer) {
-        this.sourceBuffer.abort();
-      }
-
-      this.video.currentTime = 0;
     }
 
     if (newCamera) {
@@ -223,8 +205,7 @@ export default class CameraVideo extends React.Component {
     if (!this.videoStartTime) {
       this.videoStartTime = when;
     }
-    this.segmentQ.push(this.playback.processSegment(segment));
-    this._feedPlayer();
+    this.refs.msePlayer.feedSegment(segment);
   };
 
   _onMotionEventsCheck = () => {
@@ -244,58 +225,6 @@ export default class CameraVideo extends React.Component {
     this.setState({showVideoLag});
   };
 
-  _feedPlayer = (event = null) => {
-    if (event) {
-      log.debug('_feedPlayer()', event);
-    }
-
-    if (!this.sourceBuffer) {
-      if (this.mediaSource.readyState !== 'open') {
-        log.debug(`MediaSource is still closed.`);
-        this.mediaSource.addEventListener('sourceopen', this._feedPlayer);
-        return;
-      }
-
-      log.debug(`MediaSource is open.`);
-      this.mediaSource.removeEventListener('sourceopen', this._feedPlayer);
-      const {videoCodec, audioCodec} = this.playback;
-      invariant(videoCodec);
-      invariant(audioCodec);
-      const contentType = `video/mp4;codecs=${videoCodec},${audioCodec}`;
-      log.debug(`Creating SourceBuffer for content type '${contentType}'`);
-      this.sourceBuffer = this.mediaSource.addSourceBuffer(contentType);
-      this.sourceBuffer.addEventListener('updateend', this._feedPlayer);
-    }
-
-    if (this.sourceBuffer.updating) {
-      log.debug(`SourceBuffer is still updating.`);
-      return;
-    }
-
-    log.debug(`Processing segment queue. ${this.segmentQ.length} items in queue.`);
-    let index = 0;
-    for (; index < this.segmentQ.length; index++) {
-      const seg = this.segmentQ[index];
-      try {
-        log.debug('Appending segment');
-        this.sourceBuffer.appendBuffer(seg);
-      } catch(err) {
-        if (err.name === 'QuotaExceededError' ||
-            err.name === 'InvalidStateError') {
-          // Full, bail out and save the rest for later.
-          log.warn('SourceBuffer is full, will retry later', err);
-          break;
-        }
-        log.error(err);
-        throw err;
-      }
-    }
-
-    if (index) {
-      this.segmentQ.splice(0, index);
-    }
-  };
-
   _onLoadedData = () => {
     this.loadedData = true;
     this._renderCanvas();
@@ -305,8 +234,9 @@ export default class CameraVideo extends React.Component {
     this._renderCanvas();
     if (this.state.showVideoLag) {
       requestAnimationFrame(() => {
+        const video = this.refs.msePlayer.videoElement;
         this.setState({
-          videoLag: Date.now() - this.videoStartTime - this.video.currentTime * 1000,
+          videoLag: Date.now() - this.videoStartTime - video.currentTime * 1000,
         });
       });
     }
@@ -365,8 +295,8 @@ export default class CameraVideo extends React.Component {
     context.font = defaultFont;
 
     // Draw objects.
-    const time =
-      this.videoStartTime + Math.floor(this.video.currentTime * 1000);
+    const video = this.refs.msePlayer.videoElement;
+    const time = this.videoStartTime + Math.floor(video.currentTime * 1000);
     const objects = this._collectAndProcessObjects(time);
     if (objects.length) {
       const objectColors = [
@@ -616,19 +546,26 @@ export default class CameraVideo extends React.Component {
         </div>
       );
     }
+    let msePlayer = null;
+    if (this.state.camera) {
+      msePlayer = (
+        <MSEPlayer
+          ref="msePlayer"
+          key={this.state.camera.id}
+          autoPlay="true"
+          style={styles.video}
+          onLoadedMetadata={this._updateCanvasSize}
+          onLoadedData={this._onLoadedData}
+          onResize={this._updateCanvasSize}
+          onTimeUpdate={this._onTimeUpdate}
+        />
+      );
+    }
     return (
       <div style={styles.global}>
         <h1 style={styles.header}>Silk Labs</h1>
         <div style={styles.videoContainer}>
-          <video
-            autoPlay="true"
-            style={styles.video}
-            ref="video"
-            onLoadedMetadata={this._updateCanvasSize}
-            onLoadedData={this._onLoadedData}
-            onResize={this._updateCanvasSize}
-            onTimeUpdate={this._onTimeUpdate}
-          />
+          {msePlayer}
           {console}
           {videoLag}
           <canvas

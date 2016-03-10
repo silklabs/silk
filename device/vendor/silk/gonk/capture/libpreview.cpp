@@ -69,6 +69,7 @@ private:
   sp<CpuConsumer> mCpuConsumer;
   sp<IGraphicBufferProducer> mProducer;
   FrameCallback mFrameCallback;
+  mutable Mutex mFrameCallbackMutex; // Acquire before using mFrameCallback
   void *mUserData;
   sp<IOpenCVCameraCapture> mCapture;
   sp<DeathRecipient> mDeathRecipient;
@@ -108,11 +109,20 @@ bool PreviewFrameGrabber::open(FrameCallback frameCallback, void *userData)
 void PreviewFrameGrabber::close()
 {
   if (sPreviewFrameGrabber != NULL) {
+    {
+      Mutex::Autolock autolock(sPreviewFrameGrabber->mFrameCallbackMutex);
+      sPreviewFrameGrabber->mFrameCallback = NULL;
+    }
     sPreviewFrameGrabber = NULL;
   }
 }
 
 void PreviewFrameGrabber::releaseFrame(void *frameBuffer) {
+  if (sPreviewFrameGrabber == NULL) {
+    ALOGE("ENODEV");
+    return;
+  }
+
   CpuConsumer::LockedBuffer img;
   img.data = static_cast<uint8_t*>(frameBuffer);
 
@@ -167,6 +177,11 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
 #endif
 {
   ALOGV("PreviewFrameGrabber::onFrameAvailable");
+  Mutex::Autolock autolock(mFrameCallbackMutex);
+  if (mFrameCallback == NULL) {
+    return;
+  }
+
   status_t err = 0;
   while (!err) {
     CpuConsumer::LockedBuffer img;

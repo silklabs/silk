@@ -978,6 +978,7 @@ status_t Track::threadEntry() {
             lastSample->scaledDuration = currDurationTicks;
         }
         mSamples.push_back(lastSample = new SampleBuffer(copy, meta_data));
+        copy->release();
 
         // if the duration is different for this sample, see if it is close enough to the previous
         // duration that we can fudge it and use the same value, to avoid filling the stts table

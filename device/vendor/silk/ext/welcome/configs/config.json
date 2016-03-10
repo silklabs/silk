@@ -34,6 +34,24 @@
         "scene": "purple"
       }
     },
+    "Smoke": {
+      "type": "sound",
+      "name": "firealarm",
+      "lifx": {
+        "scene": "smoke"
+      }
+    },
+    "Glassbreak": {
+      "type": "sound",
+      "name": "glassbreak",
+      "sonos": {
+        "action": "play",
+        "uri": "x-rincon-playlist:RINCON_5CAAFD49B5BC01400#A:ARTIST/Police%20Siren"
+      },
+      "lifx": {
+        "scene": "police"
+      }
+    },
     "Off": {
       "type": "noFaceDetected",
       "durationMs": "7000",

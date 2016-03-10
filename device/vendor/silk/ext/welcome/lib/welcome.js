@@ -29,12 +29,13 @@ class Welcome {
     log = env.log;
 
     this._faceSeenConfigs = {};
+    this._soundConfigs = {};
     this._noFaceDetectedConfig = {};
     this._modeConfigs = {};
     this.mode = '';
 
-    this.onFace = (when, rects, source, name) => this._onFace(name);
-    this._env.timeline.on('face', this.onFace);
+    this._env.timeline.on('face', this._onFace);
+    this._env.timeline.on('sound', this._onSound);
 
     this.readConfig();
 
@@ -58,6 +59,8 @@ class Welcome {
 
         if (modeConfig.type === 'faceSeen') {
           this._faceSeenConfigs[modeConfig.faceName] = modeConfig;
+        } else if (modeConfig.type === 'sound') {
+          this._soundConfigs[modeConfig.name] = modeConfig;
         }
 
         // TODO: only one noFaceDeteted type is supported, use last one
@@ -73,7 +76,15 @@ class Welcome {
     }
   }
 
-  _onFace(faceName) {
+  _onSound = (when, rects, source, name) => {
+    log.info(`Received ${name} 'sound' event`);
+
+    if (name in this._soundConfigs) {
+      this.changeMode(this._soundConfigs[name].mode);
+    }
+  };
+
+  _onFace = (when, rects, source, faceName) => {
     faceName = faceName || 'unknown face';
     log.info(`Received 'face' event identified as '${faceName}'`);
 
@@ -93,7 +104,7 @@ class Welcome {
 
       this._noFaceDetectedTimer = setTimeout(noFaceTimerExpired, durationMs);
     }
-  }
+  };
 
   changeSonos(sonosConfig) {
     switch (sonosConfig.action) {
@@ -138,7 +149,8 @@ class Welcome {
   }
 
   willUnload() {
-    this._env.timeline.removeListener('face', this.onFace);
+    this._env.timeline.removeListener('face', this._onFace);
+    this._env.timeline.removeListener('sound', this._onSound);
     this._sonos.willUnload();
     this._lifx.willUnload();
   }

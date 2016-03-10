@@ -580,11 +580,14 @@ export default class Stream extends Duplex {
       return;
     }
 
-    api.metrics.add(
-      new Metrics.StreamWrite(Date.now() - startTime,
-                              chunkSize,
-                              this._outgoingLength)
-    );
+    const durationMs = Date.now() - startTime;
+    if (durationMs >= 0) {
+      api.metrics.add(
+        new Metrics.StreamWrite(durationMs,
+                                chunkSize,
+                                this._outgoingLength)
+      );
+    }
 
     if (this._outgoing.length) {
       this._sendOutgoing();

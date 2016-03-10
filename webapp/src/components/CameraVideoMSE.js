@@ -57,6 +57,13 @@ const styles = {
     padding: '0px 8px 8px 8px',
     listStyleType: 'none',
   },
+  videoLag: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   videoContainer: {
     position: 'relative',
     borderStyle: 'solid',
@@ -114,6 +121,8 @@ export default class CameraVideo extends React.Component {
     camera: null,
     consoleMessages: [],
     showMotionEvents: false,
+    showVideoLag: false,
+    videoLag: null,
   };
 
   get deviceId() {
@@ -212,22 +221,27 @@ export default class CameraVideo extends React.Component {
 
   _onNextVideoClip = (segment, when) => {
     if (!this.videoStartTime) {
-      this.videoStartTime = when.getTime();
+      this.videoStartTime = when;
     }
     this.segmentQ.push(this.playback.processSegment(segment));
     this._feedPlayer();
   };
 
-  _onMotionCheck = () => {
-    const checked = this.refs.checkMotion.getChecked();
-    if (checked === this.state.showMotionEvents) {
+  _onMotionEventsCheck = () => {
+    const showMotionEvents = this.refs.checkMotion.getChecked();
+    if (showMotionEvents === this.state.showMotionEvents) {
       return;
     }
-
-    this.setState({
-      showMotionEvents: checked,
-    });
+    this.setState({showMotionEvents});
     this._renderCanvas();
+  };
+
+  _onVideoLagCheck = () => {
+    const showVideoLag = this.refs.checkVideoLag.getChecked();
+    if (showVideoLag === this.state.showVideoLag) {
+      return;
+    }
+    this.setState({showVideoLag});
   };
 
   _feedPlayer = (event = null) => {
@@ -289,6 +303,13 @@ export default class CameraVideo extends React.Component {
 
   _onTimeUpdate = () => {
     this._renderCanvas();
+    if (this.state.showVideoLag) {
+      requestAnimationFrame(() => {
+        this.setState({
+          videoLag: Date.now() - this.videoStartTime - this.video.currentTime * 1000,
+        });
+      });
+    }
   };
 
   _renderCanvas() {
@@ -571,7 +592,7 @@ export default class CameraVideo extends React.Component {
   }
 
   render() {
-    let console;
+    let console = null;
     if (this.state.camera &&
         this.state.camera.online &&
         this.state.consoleMessages.length) {
@@ -584,6 +605,14 @@ export default class CameraVideo extends React.Component {
         <div style={styles.consoleContainer}>
           <h2 style={styles.consoleHeader}>Events</h2>
           <ul style={styles.consoleMessages}>{messages}</ul>
+        </div>
+      );
+    }
+    let videoLag = null;
+    if (this.state.showVideoLag && this.state.videoLag) {
+      videoLag = (
+        <div style={styles.videoLag}>
+          Video lag: {(this.state.videoLag / 1000).toFixed(2)} sec
         </div>
       );
     }
@@ -601,6 +630,7 @@ export default class CameraVideo extends React.Component {
             onTimeUpdate={this._onTimeUpdate}
           />
           {console}
+          {videoLag}
           <canvas
             style={styles.canvas}
             ref="canvas">
@@ -612,7 +642,14 @@ export default class CameraVideo extends React.Component {
             label="Show Motion Events"
             ref="checkMotion"
             checked={this.state.showMotionEvents}
-            onChange={this._onMotionCheck}
+            onChange={this._onMotionEventsCheck}
+          />
+          <Input
+            type="checkbox"
+            label="Show Video Lag"
+            ref="checkVideoLag"
+            checked={this.state.showVideoLag}
+            onChange={this._onVideoLagCheck}
           />
         </form>
       </div>

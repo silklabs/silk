@@ -293,7 +293,7 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    this.emit('videoClip', msg.frame, new Date(msg.when));
+    this.emit('videoClip', msg.frame, msg.when);
   };
 
   _updateMicStream() {

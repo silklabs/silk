@@ -49,13 +49,22 @@ const styles = {
   },
   consoleHeader: {
     margin: 0,
-    padding: 8,
+    padding: 5,
     fontSize: '20px',
   },
   consoleMessages: {
     margin: 0,
-    padding: '0px 8px 8px 8px',
+    padding: 5,
     listStyleType: 'none',
+  },
+  consoleSeparator: {
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    width: '100%',
+    height: 2,
+  },
+  consoleFaceCount: {
+    margin: 0,
+    padding: 5,
   },
   videoContainer: {
     position: 'relative',
@@ -102,11 +111,12 @@ export default class CameraVideo extends React.Component {
 
   videoStartTimestampDevice = null;
   loadedData = false;
-  renderedOnline = false;
 
   state = {
     camera: null,
+    cameraOnline: false,
     consoleMessages: [],
+    faceCount: 0,
     showMotionEvents: false,
     showVideoStats: false,
   };
@@ -169,7 +179,10 @@ export default class CameraVideo extends React.Component {
     const newCamera = state.cameras[this.deviceId];
 
     if (oldCamera === newCamera) {
-      if (this.renderedOnline !== newCamera.online) {
+      if (this.state.cameraOnline !== newCamera.online) {
+        this.setState({
+          cameraOnline: newCamera.online,
+        });
         this._renderCanvas();
       }
       return;
@@ -188,6 +201,7 @@ export default class CameraVideo extends React.Component {
 
     this.setState({
       camera: newCamera,
+      cameraOnline: newCamera ? newCamera.online : false,
     });
 
     this._renderCanvas();
@@ -248,7 +262,7 @@ export default class CameraVideo extends React.Component {
 
   _renderCanvasInternal(context, canvasWidth, canvasHeight) {
     const camera = this.state.camera;
-    const online = this.renderedOnline = camera ? camera.online : false;
+    const online = this.state.cameraOnline;
     const defaultFont = '16px DINRound';
 
     context.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -382,6 +396,7 @@ export default class CameraVideo extends React.Component {
     }
 
     let consoleMessageObjects;
+    let faceCount = 0;
 
     objectMap.forEach((objectArray, objectId) => {
       const tag = objectArray[0].tag;
@@ -416,6 +431,10 @@ export default class CameraVideo extends React.Component {
       if (!rectCount || tag === 'face') {
         consoleMessageObjects = consoleMessageObjects || [];
         consoleMessageObjects.push(averageObject);
+
+        if (tag === 'face') {
+          faceCount++;
+        }
       }
 
       if (!rectCount) {
@@ -451,6 +470,14 @@ export default class CameraVideo extends React.Component {
     // Figure out any text we should display for the console.
     if (consoleMessageObjects) {
       this._processConsoleMessageObjects(consoleMessageObjects);
+    }
+
+    if (this.state.faceCount !== faceCount) {
+      requestAnimationFrame(() => {
+        this.setState({
+          faceCount,
+        });
+      });
     }
 
     return objects;
@@ -509,16 +536,49 @@ export default class CameraVideo extends React.Component {
   render() {
     let console = null;
     if (this.state.camera &&
-        this.state.camera.online &&
-        this.state.consoleMessages.length) {
-      const messages = this.state.consoleMessages.map((message) => <li>{message.text}</li>);
+        this.state.cameraOnline &&
+        (this.state.consoleMessages.length || this.state.faceCount)) {
+      let consoleMessages = null;
+      if (this.state.consoleMessages.length) {
+        const messages =
+          this.state.consoleMessages.map((message) => <li>{message.text}</li>);
+        consoleMessages = (
+          <div>
+            <h2 style={styles.consoleHeader}>Events</h2>
+            <ul style={styles.consoleMessages}>
+              {messages}
+            </ul>
+          </div>
+        );
+      }
+
+      let faceCount = null;
+      if (this.state.faceCount) {
+        const text = `${this.state.faceCount} face` +
+                     `${(this.state.faceCount > 1 ? 's' : '')} detected`;
+        faceCount = (
+          <p style={styles.consoleFaceCount}>
+            {text}
+          </p>
+        );
+      }
+
+      let separator = null;
+      if (consoleMessages && faceCount) {
+        separator = (
+          <div style={styles.consoleSeparator}></div>
+        );
+      }
+
       console = (
         <div style={styles.consoleContainer}>
-          <h2 style={styles.consoleHeader}>Events</h2>
-          <ul style={styles.consoleMessages}>{messages}</ul>
+          {consoleMessages}
+          {separator}
+          {faceCount}
         </div>
       );
     }
+
     let msePlayer = null;
     if (this.state.camera) {
       msePlayer = (
@@ -535,6 +595,7 @@ export default class CameraVideo extends React.Component {
         />
       );
     }
+
     return (
       <div style={styles.global}>
         <h1 style={styles.header}>Silk Labs</h1>

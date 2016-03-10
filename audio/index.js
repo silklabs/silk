@@ -117,6 +117,7 @@ export const svmSoundsConfigs = {
     // detected (but not /really/ quick ones).  No effort has been
     // made to optimize this value.
     featureVectorFrameCount: 16,
+    hasSustain: false,
     quietTimeout: 0.0,
     sonemeGapTimeout: 0.0,
 
@@ -147,6 +148,7 @@ export const svmSoundsConfigs = {
     loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
     loudMinDuration: 0.256,
     featureVectorFrameCount: 16,
+    hasSustain: false,
     quietTimeout: 0.512,
     sonemeGapTimeout: 0.512,
 
@@ -177,6 +179,7 @@ export const svmSoundsConfigs = {
     loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
     loudMinDuration: 0.256,
     featureVectorFrameCount: 16,
+    hasSustain: true,
     quietTimeout: 0.512,
     sonemeGapTimeout: 0.512,
 

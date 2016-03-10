@@ -649,7 +649,7 @@ export default class AudioStudio extends React.Component {
     let failedSounds = [ ];
     let nrSounds = 0;
 
-    log.info('Extracting training and validation sounds ...');
+    log.info(`Extracting training and validation sounds with feature vector frame count ${svmTrainingConfig.svmConfig.featureVectorFrameCount} ...`);
     let extractionStart = Date.now();
     let runTestOrSuite = (tag, header, fileData) => {
       if (header.type !== 'file') {
@@ -738,7 +738,7 @@ export default class AudioStudio extends React.Component {
       .then(() => {
         let extractionTimeMs = (Date.now() - extractionStart);
         log.info(`Extracted ${nrSounds} sounds in ${extractionTimeMs}ms`);
-        log.info(`  failed to get loud sounds from ${failedSounds}`);
+        log.info(`  failed to get loud sounds from ${failedSounds.length} tracks: ${failedSounds}`);
         log.info(`Preparing to start SVM training ...`);
         return trainSVM({ trainingData, trainingLabels,
                           validationData, validationLabels,

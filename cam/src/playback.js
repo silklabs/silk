@@ -20,6 +20,15 @@ import createLog from 'silk-log';
 
 import { rewriteSegment } from './dash_segment';
 
+export type Segment = {
+  seqno: number;
+  byteArray: Uint8Array;
+  mute: boolean;
+  videoStartTime: number;
+  videoDurationTime: number;
+  videoTimescale: number;
+};
+
 const log = createLog('VideoPlayback');
 
 export default class VideoPlayback {
@@ -76,7 +85,7 @@ export default class VideoPlayback {
    * respects that. (Node APIs generally do not and should be
    * converted to `Buffer`s first.)
    */
-  processSegment(buffer: ArrayBuffer): ArrayBufferView {
+  processSegment(buffer: ArrayBuffer): Segment {
     if (this.segmentSeqno === 0) {
       log.debug(`First segment. Processing mp4 header.`);
       this._processHeader(buffer);
@@ -90,15 +99,11 @@ export default class VideoPlayback {
     invariant(this.videoTimescale);
     invariant(this.audioTimescale);
     const audioStartTime = (videoStartTime * this.audioTimescale / this.videoTimescale) | 0;
-    const info = rewriteSegment(
-      data,
-      this.segmentSeqno,
-      videoStartTime,
-      audioStartTime
-    );
+    const seqno = this.segmentSeqno;
+    const info = rewriteSegment(data, seqno, videoStartTime, audioStartTime);
 
     let byteArray;
-    if (this.segmentSeqno === 0) {
+    if (seqno === 0) {
       byteArray = new Uint8Array(buffer);
     } else {
       // Strip the mp4 init header from all subsequent segments.
@@ -108,7 +113,15 @@ export default class VideoPlayback {
     this.segmentSeqno += 1;
     this.segmentStartTime += info.durationTime;
 
-    return byteArray;
+    invariant(this.videoTimescale);
+    return {
+      seqno,
+      byteArray,
+      mute: info.mute,
+      videoStartTime,
+      videoDurationTime: info.durationTime,
+      videoTimescale: this.videoTimescale,
+    };
   }
 
 }

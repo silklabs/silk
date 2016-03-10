@@ -14,6 +14,8 @@ import ReactDOM from 'react-dom';
 import { VideoPlayback } from 'silk-cam';
 import createLog from 'silk-log';
 
+import type { Segment } from 'silk-cam';
+
 const log = createLog('MSEPlayer');
 
 export default class MSEPlayer extends React.Component {
@@ -23,7 +25,11 @@ export default class MSEPlayer extends React.Component {
   sourceBuffer: ?SourceBuffer = null;
 
   playback: VideoPlayback = new VideoPlayback();
-  segmentQ: Array<ArrayBuffer> = [];
+  segmentQ: Array<Segment> = [];
+
+  static propTypes = {
+    onSegmentEnqueued: React.PropTypes.func,
+  };
 
   componentDidMount() {
     this.videoElement = ReactDOM.findDOMNode(this.refs.video);
@@ -78,7 +84,8 @@ export default class MSEPlayer extends React.Component {
       const seg = this.segmentQ[index];
       try {
         log.debug('Appending segment');
-        this.sourceBuffer.appendBuffer(seg);
+        this.sourceBuffer.appendBuffer(seg.byteArray);
+        this.props.onSegmentEnqueued && this.props.onSegmentEnqueued(seg);
       } catch(err) {
         if (err.name === 'QuotaExceededError' ||
             err.name === 'InvalidStateError') {

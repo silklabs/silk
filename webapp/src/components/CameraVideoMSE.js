@@ -57,12 +57,16 @@ const styles = {
     padding: '0px 8px 8px 8px',
     listStyleType: 'none',
   },
-  videoLag: {
+  videoStats: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     padding: 10,
     backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  videoStatsItem: {
+    marginTop: 10,
+    marginBottom: 10,
   },
   videoContainer: {
     position: 'relative',
@@ -102,21 +106,38 @@ function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 
+function formatMs(number) {
+  return `${(number / 1000).toFixed(2)} s`;
+}
+
+function formatDeltaMs(number) {
+  if (number > 0) {
+    return '+' + formatMs(number);
+  }
+  return formatMs(number);
+}
+
 export default class CameraVideo extends React.Component {
   canvas = null;
   context = null;
   pixelRatio = 1;
 
-  videoStartTime = 0;
+  videoStartTimeClientMs = null;
+  videoStartTimeDeviceMs = null;
   loadedData = false;
   renderedOnline = false;
+
+  lastStalledTimestamp = null;
 
   state = {
     camera: null,
     consoleMessages: [],
     showMotionEvents: false,
-    showVideoLag: false,
-    videoLag: null,
+    showVideoStats: false,
+    initialLagMs: null,
+    currentLagMs: null,
+    totalStalledMs: 0,
+    totalBufferedMs: 0,
   };
 
   get deviceId() {
@@ -186,7 +207,8 @@ export default class CameraVideo extends React.Component {
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
 
-      this.videoStartTime = 0;
+      this.videoStartTimeClientMs = null;
+      this.videoStartTimeDeviceMs = null;
       this.loadedData = false;
     }
 
@@ -202,8 +224,8 @@ export default class CameraVideo extends React.Component {
   };
 
   _onNextVideoClip = (segment, when) => {
-    if (!this.videoStartTime) {
-      this.videoStartTime = when;
+    if (this.videoStartTimeDeviceMs === null) {
+      this.videoStartTimeDeviceMs = when;
     }
     this.refs.msePlayer.feedSegment(segment);
   };
@@ -217,12 +239,12 @@ export default class CameraVideo extends React.Component {
     this._renderCanvas();
   };
 
-  _onVideoLagCheck = () => {
-    const showVideoLag = this.refs.checkVideoLag.getChecked();
-    if (showVideoLag === this.state.showVideoLag) {
+  _onVideoStatsCheck = () => {
+    const showVideoStats = this.refs.checkVideoStats.getChecked();
+    if (showVideoStats === this.state.showVideoStats) {
       return;
     }
-    this.setState({showVideoLag});
+    this.setState({showVideoStats});
   };
 
   _onLoadedData = () => {
@@ -232,11 +254,13 @@ export default class CameraVideo extends React.Component {
 
   _onTimeUpdate = () => {
     this._renderCanvas();
-    if (this.state.showVideoLag) {
+    if (this.state.showVideoStats || this.state.initialLagMs === null) {
+      const video = this.refs.msePlayer.videoElement;
+      const currentLagMs = Date.now() - this.videoStartTimeDeviceMs - video.currentTime * 1000;
       requestAnimationFrame(() => {
-        const video = this.refs.msePlayer.videoElement;
         this.setState({
-          videoLag: Date.now() - this.videoStartTime - video.currentTime * 1000,
+          initialLagMs: this.state.initialLagMs || currentLagMs,
+          currentLagMs,
         });
       });
     }
@@ -296,7 +320,7 @@ export default class CameraVideo extends React.Component {
 
     // Draw objects.
     const video = this.refs.msePlayer.videoElement;
-    const time = this.videoStartTime + Math.floor(video.currentTime * 1000);
+    const time = this.videoStartTimeDeviceMs + Math.floor(video.currentTime * 1000);
     const objects = this._collectAndProcessObjects(time);
     if (objects.length) {
       const objectColors = [
@@ -521,16 +545,46 @@ export default class CameraVideo extends React.Component {
     });
   }
 
+  _onVideoStalledOrResumed = (event) => {
+    log.debug(`Video playback ${event.type}`);
+    if (event.type === 'playing') {
+      if (this.videoStartTimeClientMs === null) {
+        this.videoStartTimeClientMs = Date.now();
+      }
+      if (this.lastStalledTimestamp === null) {
+        log.debug(`Video resuming, but no previously recorded stall. Ignoring.`);
+        return;
+      }
+      const delta = Date.now() - this.lastStalledTimestamp;
+      log.debug(`Video resuming after ${delta} ms stall.`);
+
+      this.lastStalledTimestamp = null;
+      requestAnimationFrame(() => this.setState({
+        totalStalledMs: this.state.totalStalledMs + delta,
+      }));
+      return;
+    }
+
+    if (this.lastStalledTimestamp !== null) {
+      log.debug(`Already recorded earlier stalled timestamp. Not overwriting.`);
+      return;
+    }
+    log.debug(`Video stalled.`);
+    this.lastStalledTimestamp = Date.now();
+  };
+
+  _onSegmentEnqueued = (segment) => {
+    requestAnimationFrame(() => this.setState({
+      totalBufferedMs: 1000 * segment.videoStartTime / segment.videoTimescale,
+    }));
+  };
+
   render() {
     let console = null;
     if (this.state.camera &&
         this.state.camera.online &&
         this.state.consoleMessages.length) {
-      const messages = this.state.consoleMessages.map((message) => {
-        return (
-          <li>{message.text}</li>
-        );
-      });
+      const messages = this.state.consoleMessages.map((message) => <li>{message.text}</li>);
       console = (
         <div style={styles.consoleContainer}>
           <h2 style={styles.consoleHeader}>Events</h2>
@@ -538,11 +592,36 @@ export default class CameraVideo extends React.Component {
         </div>
       );
     }
-    let videoLag = null;
-    if (this.state.showVideoLag && this.state.videoLag) {
-      videoLag = (
-        <div style={styles.videoLag}>
-          Video lag: {(this.state.videoLag / 1000).toFixed(2)} sec
+    let videoStats = null;
+    if (this.state.showVideoStats && this.state.currentLagMs) {
+      const video = this.refs.msePlayer.videoElement;
+      const elapsedMs = Date.now() - this.videoStartTimeClientMs;
+      const {initialLagMs, currentLagMs, totalStalledMs, totalBufferedMs} = this.state;
+      videoStats = (
+        <div style={styles.videoStats}>
+          <ul style={styles.consoleMessages}>
+            <li style={styles.videoStatsItem}>
+              Time:<br/>
+              {formatMs(elapsedMs)} elapsed<br/>
+              {formatMs(video.currentTime * 1000)} {' <video> '}
+              ({formatDeltaMs(video.currentTime * 1000 - elapsedMs)})
+            </li>
+            <li style={styles.videoStatsItem}>
+              Buffer:<br/>
+              {formatMs(totalBufferedMs)} buffered<br/>
+              {formatMs(video.currentTime * 1000)} {' <video> '}
+              ({formatDeltaMs(video.currentTime * 1000 - totalBufferedMs)})
+            </li>
+            <li style={styles.videoStatsItem}>
+              Lag:<br/>
+              {formatMs(initialLagMs)} initial<br/>
+              {formatMs(currentLagMs)} current ({formatDeltaMs(currentLagMs - initialLagMs)})
+            </li>
+            <li style={styles.videoStatsItem}>
+              Stalls:<br/>
+              {formatMs(totalStalledMs / 1000)} {' <video>'}
+            </li>
+          </ul>
         </div>
       );
     }
@@ -558,6 +637,10 @@ export default class CameraVideo extends React.Component {
           onLoadedData={this._onLoadedData}
           onResize={this._updateCanvasSize}
           onTimeUpdate={this._onTimeUpdate}
+          onStalled={this._onVideoStalledOrResumed}
+          onWaiting={this._onVideoStalledOrResumed}
+          onPlaying={this._onVideoStalledOrResumed}
+          onSegmentEnqueued={this._onSegmentEnqueued}
         />
       );
     }
@@ -567,7 +650,7 @@ export default class CameraVideo extends React.Component {
         <div style={styles.videoContainer}>
           {msePlayer}
           {console}
-          {videoLag}
+          {videoStats}
           <canvas
             style={styles.canvas}
             ref="canvas">
@@ -583,10 +666,10 @@ export default class CameraVideo extends React.Component {
           />
           <Input
             type="checkbox"
-            label="Show Video Lag"
-            ref="checkVideoLag"
-            checked={this.state.showVideoLag}
-            onChange={this._onVideoLagCheck}
+            label="Show Video Stats"
+            ref="checkVideoStats"
+            checked={this.state.showVideoStats}
+            onChange={this._onVideoStatsCheck}
           />
         </form>
       </div>

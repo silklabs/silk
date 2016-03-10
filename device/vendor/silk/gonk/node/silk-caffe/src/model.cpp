@@ -98,14 +98,14 @@ NAN_METHOD(Model::New) {
  *
  */
 Model::Model() :
-  mScale(0.0) {
+  scale(0.0) {
 }
 
 /**
  *
  */
 Model::~Model() {
-  mCaffeNet.reset();
+  caffeNet.reset();
 }
 
 /**
@@ -124,27 +124,27 @@ public:
   void Execute() {
     Caffe::set_mode(Caffe::CPU);
 
-    model->mCaffeNet.reset(new Net<float>(modelPath, caffe::TEST));
-    model->mCaffeNet->CopyTrainedLayersFrom(weightsPath);
+    model->caffeNet.reset(new Net<float>(modelPath, caffe::TEST));
+    model->caffeNet->CopyTrainedLayersFrom(weightsPath);
 
-    if (model->mCaffeNet->num_inputs() != 1) {
+    if (model->caffeNet->num_inputs() != 1) {
       SetErrorMessage("Network should have exactly one input");
       return;
     }
 
-    if (model->mCaffeNet->num_outputs() != 1) {
+    if (model->caffeNet->num_outputs() != 1) {
       SetErrorMessage("Network should have exactly one output");
       return;
     }
 
-    Blob<float> *inputLayer = model->mCaffeNet->input_blobs()[0];
-    model->mNumChannels = inputLayer->channels();
-    if ((model->mNumChannels != 3) && (model->mNumChannels != 1)) {
+    Blob<float> *inputLayer = model->caffeNet->input_blobs()[0];
+    model->numChannels = inputLayer->channels();
+    if ((model->numChannels != 3) && (model->numChannels != 1)) {
       SetErrorMessage("Input layer should have 1 or 3 channels");
       return;
     }
 
-    model->mInputGeometry = cv::Size(inputLayer->width(), inputLayer->height());
+    model->inputGeometry = cv::Size(inputLayer->width(), inputLayer->height());
   }
 
 private:
@@ -196,14 +196,14 @@ NAN_METHOD(Model::SetMean) {
   // Convert from BlobProto to Blob<float>
   Blob<float> meanBlob;
   meanBlob.FromProto(blobProto);
-  if (meanBlob.channels() != self->mNumChannels) {
+  if (meanBlob.channels() != self->numChannels) {
     JSTHROW("Number of channels of mean file doesn't match input layer");
   }
 
   // The format of the mean file is planar 32-bit float BGR or grayscale
   vector<cv::Mat> channels;
   float *data = meanBlob.mutable_cpu_data();
-  for (int i = 0; i < self->mNumChannels; ++i) {
+  for (int i = 0; i < self->numChannels; ++i) {
     // Extract an individual channel
     cv::Mat channel(meanBlob.height(), meanBlob.width(), CV_32FC1, data);
     channels.push_back(channel);
@@ -217,7 +217,7 @@ NAN_METHOD(Model::SetMean) {
   // Compute the global mean pixel value and create a mean image
   // filled with this value
   cv::Scalar channelMean = cv::mean(mean);
-  self->mMean = cv::Mat(self->mInputGeometry, mean.type(), channelMean);
+  self->mean = cv::Mat(self->inputGeometry, mean.type(), channelMean);
 }
 
 /**
@@ -236,7 +236,7 @@ NAN_METHOD(Model::SetScale) {
     JSTHROW("Scale must be greater than zero");
   }
 
-  self->mScale = scale;
+  self->scale = scale;
 }
 
 /**
@@ -259,12 +259,12 @@ NAN_METHOD(Model::SetLabels) {
 
   string line;
   while (getline(labels, line)) {
-    self->mLabels.push_back(line);
+    self->labels.push_back(line);
   }
 
-  Blob<float>* outputLayer = self->mCaffeNet->output_blobs()[0];
-  if (self->mLabels.size() != outputLayer->channels()) {
-    ALOGD("Labels size: %lu channels: %d", self->mLabels.size(),
+  Blob<float>* outputLayer = self->caffeNet->output_blobs()[0];
+  if (self->labels.size() != outputLayer->channels()) {
+    ALOGD("Labels size: %lu channels: %d", self->labels.size(),
         outputLayer->channels());
     JSTHROW("Number of labels is different from the output layer dimension");
   }
@@ -284,24 +284,24 @@ public:
   }
 
   void Execute() {
-    topK = min<int>(model->mLabels.size(), topK);
-    mPredictions = model->Classify(mat, topK);
+    topK = min<int>(model->labels.size(), topK);
+    predictions = model->Classify(mat, topK);
   }
 
   void HandleOKCallback() {
-    Local<Array> predictions = Nan::New<Array>(topK);
-    for (int i = 0; i < mPredictions.size(); ++i) {
+    Local<Array> result = Nan::New<Array>(topK);
+    for (int i = 0; i < predictions.size(); ++i) {
       Local<Object> prediction = Nan::New<Object>();
       prediction->Set(Nan::New<String>("label").ToLocalChecked(),
-          Nan::New<String>(mPredictions[i].first).ToLocalChecked());
+          Nan::New<String>(predictions[i].first).ToLocalChecked());
       prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
-          Nan::New<Number>(mPredictions[i].second));
-      predictions->Set(i, prediction);
+          Nan::New<Number>(predictions[i].second));
+      result->Set(i, prediction);
     }
 
     Local<Value> argv[2];
     argv[0] = Nan::Null();
-    argv[1] = predictions;
+    argv[1] = result;
 
     Nan::TryCatch try_catch;
     callback->Call(2, argv);
@@ -314,7 +314,7 @@ private:
   Model* model;
   cv::Mat mat;
   int topK;
-  vector<Prediction> mPredictions;
+  vector<Prediction> predictions;
 };
 
 /**
@@ -350,12 +350,12 @@ public:
     Nan::AsyncWorker(callback),
     model(model),
     mat(mat),
-    mClassName(className),
-    mMotionRects(motionRects),
-    mMinSize(minSize),
-    mMaxMergingIterations(maxMergingIterations),
-    mNmsThreshold(nmsThreshold),
-    mConfThreshold(confThreshold) {
+    className(className),
+    motionRects(motionRects),
+    minSize(minSize),
+    maxMergingIterations(maxMergingIterations),
+    nmsThreshold(nmsThreshold),
+    confThreshold(confThreshold) {
   }
 
   void Execute() {
@@ -366,8 +366,8 @@ public:
     // prediction on each of the regions
     start = chrono::system_clock::now();
     dlib::matrix_range_exp<double> kvals = dlib::linspace(50, 200, 3);
-    vector<cv::Rect> proposedRects = getObjectProposals(mat, kvals, mMinSize,
-        mMaxMergingIterations);
+    vector<cv::Rect> proposedRects = getObjectProposals(mat, kvals, minSize,
+        maxMergingIterations);
     end = chrono::system_clock::now();
     elapsed_seconds = end - start;
     ALOGD("# object proposals: %lu in %f secs", proposedRects.size(),
@@ -375,7 +375,7 @@ public:
 
     // Only keep the proposed rectangles that intersect with motion rectangles
     start = chrono::system_clock::now();
-    vector<cv::Rect> rects = boxIntersect(proposedRects, mMotionRects);
+    vector<cv::Rect> rects = boxIntersect(proposedRects, motionRects);
     end = chrono::system_clock::now();
     elapsed_seconds = end - start;
     ALOGD("# object proposals w/ motion: %lu in %f secs", rects.size(),
@@ -388,10 +388,10 @@ public:
 
       // Only return the top most prediction for the requested class
       vector<Prediction> prediction = model->Classify(region, 1);
-      if (prediction[0].first == mClassName) {
+      if (prediction[0].first == className) {
         CvRectScore rectScore = {prediction[0].second, regionRect};
         // Only return the predictions with confidence higher than mConfThreshold
-        if (prediction[0].second >= mConfThreshold) {
+        if (prediction[0].second >= confThreshold) {
           predictions.push_back(rectScore);
           ALOGV("Prediction for region# %d %s score: %f rect: [%d, %d, %d, %d]",
               count, prediction[0].first.c_str(), prediction[0].second,
@@ -402,7 +402,7 @@ public:
 
     if (predictions.size() > 0) {
       start = chrono::system_clock::now();
-      mRegions = NMS(predictions, mNmsThreshold);
+      mRegions = NMS(predictions, nmsThreshold);
       end = chrono::system_clock::now();
       elapsed_seconds = end - start;
       ALOGV("After NMS: # rects: %lu in %f secs", mRegions.size(),
@@ -416,11 +416,11 @@ public:
   }
 
   void HandleOKCallback() {
-    Local<Array> predictions = Nan::New<Array>(mRegions.size());
+    Local<Array> result = Nan::New<Array>(mRegions.size());
     for (int i = 0; i < mRegions.size(); ++i) {
       Local<Object> prediction = Nan::New<Object>();
       prediction->Set(Nan::New<String>("label").ToLocalChecked(),
-          Nan::New<String>(mClassName).ToLocalChecked());
+          Nan::New<String>(className).ToLocalChecked());
       prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
           Nan::New<Number>(mRegions[i].score));
 
@@ -436,12 +436,12 @@ public:
           Nan::New<Number>(mRegions[i].rect.height));
       prediction->Set(Nan::New<String>("rect").ToLocalChecked(), rect);
 
-      predictions->Set(i, prediction);
+      result->Set(i, prediction);
     }
 
     Local<Value> argv[2];
     argv[0] = Nan::Null();
-    argv[1] = predictions;
+    argv[1] = result;
 
     Nan::TryCatch try_catch;
     callback->Call(2, argv);
@@ -453,12 +453,12 @@ public:
 private:
   Model* model;
   cv::Mat mat;
-  string mClassName;
-  vector<cv::Rect> mMotionRects;
-  int mMinSize;
-  int mMaxMergingIterations;
-  float mNmsThreshold;
-  float mConfThreshold;
+  string className;
+  vector<cv::Rect> motionRects;
+  int minSize;
+  int maxMergingIterations;
+  float nmsThreshold;
+  float confThreshold;
 
   vector<CvRectScore> mRegions;
 };
@@ -545,7 +545,7 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
   vector<Prediction> predictions;
   for (int i = 0; i < topK; ++i) {
     int idx = maxK[i];
-    predictions.push_back(make_pair(mLabels[idx], output[idx]));
+    predictions.push_back(make_pair(labels[idx], output[idx]));
   }
 
   return predictions;
@@ -555,22 +555,22 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
  * Runs forward pass for the whole network
  */
 vector<float> Model::Predict(const cv::Mat& img) {
-  Blob<float>* inputLayer = mCaffeNet->input_blobs()[0];
-  inputLayer->Reshape(1, mNumChannels, mInputGeometry.height,
-      mInputGeometry.width);
+  Blob<float>* inputLayer = caffeNet->input_blobs()[0];
+  inputLayer->Reshape(1, numChannels, inputGeometry.height,
+      inputGeometry.width);
 
   // Forward dimension change to all layers
-  mCaffeNet->Reshape();
+  caffeNet->Reshape();
 
   vector<cv::Mat> inputChannels;
   WrapInputLayer(&inputChannels);
 
   Preprocess(img, &inputChannels);
 
-  mCaffeNet->ForwardPrefilled();
+  caffeNet->ForwardPrefilled();
 
   // Copy the output layer to a vector
-  Blob<float>* output_layer = mCaffeNet->output_blobs()[0];
+  Blob<float>* output_layer = caffeNet->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
   return vector<float>(begin, end);
@@ -584,7 +584,7 @@ vector<float> Model::Predict(const cv::Mat& img) {
  * layer
  */
 void Model::WrapInputLayer(vector<cv::Mat>* inputChannels) {
-  Blob<float>* inputLayer = mCaffeNet->input_blobs()[0];
+  Blob<float>* inputLayer = caffeNet->input_blobs()[0];
 
   int width = inputLayer->width();
   int height = inputLayer->height();
@@ -603,37 +603,37 @@ void Model::Preprocess(const cv::Mat& img,
     vector<cv::Mat>* inputChannels) {
   // Convert the input image to the input image format of the network
   cv::Mat sample;
-  if (img.channels() == 3 && mNumChannels == 1) {
+  if (img.channels() == 3 && numChannels == 1) {
     cv::cvtColor(img, sample, cv::COLOR_BGR2GRAY);
-  } else if (img.channels() == 4 && mNumChannels == 1) {
+  } else if (img.channels() == 4 && numChannels == 1) {
     cv::cvtColor(img, sample, cv::COLOR_BGRA2GRAY);
-  } else if (img.channels() == 4 && mNumChannels == 3) {
+  } else if (img.channels() == 4 && numChannels == 3) {
     cv::cvtColor(img, sample, cv::COLOR_BGRA2BGR);
-  } else if (img.channels() == 1 && mNumChannels == 3) {
+  } else if (img.channels() == 1 && numChannels == 3) {
     cv::cvtColor(img, sample, cv::COLOR_GRAY2BGR);
   } else {
     sample = img;
   }
 
   cv::Mat sampleResized;
-  if (sample.size() != mInputGeometry) {
-    cv::resize(sample, sampleResized, mInputGeometry);
+  if (sample.size() != inputGeometry) {
+    cv::resize(sample, sampleResized, inputGeometry);
   } else {
     sampleResized = sample;
   }
 
   cv::Mat sampleFloat;
-  if (mNumChannels == 3) {
+  if (numChannels == 3) {
     sampleResized.convertTo(sampleFloat, CV_32FC3);
   } else {
     sampleResized.convertTo(sampleFloat, CV_32FC1);
   }
 
   cv::Mat sampleNormalized;
-  cv::subtract(sampleFloat, mMean, sampleNormalized);
+  cv::subtract(sampleFloat, mean, sampleNormalized);
 
-  if (mScale > 0.0) {
-    sampleNormalized *= mScale;
+  if (scale > 0.0) {
+    sampleNormalized *= scale;
   }
 
   // This operation will write the separate BGR planes directly to the
@@ -642,7 +642,7 @@ void Model::Preprocess(const cv::Mat& img,
   cv::split(sampleNormalized, *inputChannels);
 
   if (reinterpret_cast<float*>(inputChannels->at(0).data)
-      != mCaffeNet->input_blobs()[0]->cpu_data()) {
+      != caffeNet->input_blobs()[0]->cpu_data()) {
     JSTHROW("Input channels are not wrapping the input layer of the network");
   }
 }

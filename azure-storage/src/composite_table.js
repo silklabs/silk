@@ -173,12 +173,7 @@ export default class CompositeTableClient {
     filter: any,
     limit?: number,
     select?: Array<string>
-  ) => Promise<Array<Entity>> = ensureClients((
-    // XXX: Flow notations here break babel for unknown reasons...
-    filter,
-    limit,
-    select,
-  ): Promise<Array<Entity>> => {
+  ) => Promise<Array<Entity>> = ensureClients((filter, limit, select) => {
     // TODO: Implement get fallback options ...
     // https://github.com/silklabs/silk-core/issues/1009
     return this._clients[0].query(

@@ -64,10 +64,7 @@
 .gulpcache
 /vendor/silk/ext/**/npm-debug.log
 vendor/silk/ext/clapper/clapper.js
-vendor/silk/ext/detectface/detectface.js
-vendor/silk/ext/knockknock/knockknock.js
 vendor/silk/ext/nightlight/nightlight.js
-vendor/silk/ext/trackobject/trackobject.js
 vendor/silk/ext/detectcat/detectcat.js
 vendor/silk/ext/oksilk/oksilk.js
 vendor/silk/ext/dnn/dnn.js

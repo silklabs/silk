@@ -9,7 +9,7 @@ import MotionZone from '../lib/motionzone';
 import opencv from 'opencv';
 import Framework from 'silk-exttest';
 
-const env = new Framework('trackobject', opencv);
+const env = new Framework('motion', opencv);
 
 suite('Motion zone', () => {
   test('group rectangles', () => {

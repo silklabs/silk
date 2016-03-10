@@ -12,11 +12,11 @@ import opencv from 'opencv';
 import Framework from 'silk-exttest';
 
 const log = createLog('TestFramework');
-const env = new Framework('trackobject', opencv);
+const env = new Framework('motion', opencv);
 const timeline = env.timeline;
 const camera = env.camera;
 
-let trackObject = null;
+let motionObject = null;
 
 function failOnTimeout(timeout) {
   return new Promise((resolve, reject) => {
@@ -31,10 +31,10 @@ function addPreviewFrame(image, timestamp) {
   timeline.emit('preview', timestamp);
 }
 
-suite('test trackobject', function () {
+suite('test motion', function () {
   test('detect motion', async () => {
-    trackObject = require('../lib/trackobject')(env);
-    assert.notEqual(trackObject, null);
+    motionObject = require('../lib/motion')(env);
+    assert.notEqual(motionObject, null);
   });
 
   test('detect motion', async () => {

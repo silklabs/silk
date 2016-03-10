@@ -64,6 +64,8 @@ SILK_EXT := \
   samsungtv \
   svmsounds \
   svmsounds-clap \
+  svmsounds-firealarm \
+  svmsounds-glassbreak \
   welcome \
   welcome-config \
 

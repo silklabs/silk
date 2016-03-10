@@ -24,4 +24,4 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 SILK_NODE_PATH="$ROOT/node_modules/.silk-node/bin"
 
 export PATH="$SILK_NODE_PATH:$PATH"
-exec -a silk-cli $ROOT/main.js $@
+exec -a silk-cli $ROOT/main.js "$@"

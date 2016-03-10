@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := trackobject-sound
+LOCAL_MODULE := motion-sound
 LOCAL_INSTALLED_MODULE_STEM := motion_detected.mp3
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC

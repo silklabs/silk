@@ -51,10 +51,10 @@ function _playSound() {
 }
 
 /**
- * This class tracks any motion in the preview image and reports discrete motion
+ * This class detects motion in the preview image and reports discrete motion
  * rectangles
  */
-class TrackObject {
+class Motion {
   constructor(env) {
     this._env = env;
     log = this._env.log;
@@ -179,7 +179,7 @@ class TrackObject {
 
         if (rects && (rects.length > 0)) {
           timeline.addObjects([{
-            source: 'trackobject',
+            source: 'motion',
             tag: 'motion',
             when,
             rects,
@@ -207,4 +207,4 @@ class TrackObject {
   }
 }
 
-module.exports = (env) => new TrackObject(env);
+module.exports = (env) => new Motion(env);

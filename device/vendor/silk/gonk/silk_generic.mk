@@ -44,8 +44,8 @@ SILK_EXT := \
   clapper \
   clapper-sound \
   nightlight \
-  trackobject \
-  trackobject-sound \
+  motion \
+  motion-sound \
   face \
   detectface-cascade-frontalface \
   detectface-cascade-eye \

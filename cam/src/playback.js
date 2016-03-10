@@ -1,18 +1,4 @@
 /**
- * Helper for managing video playback on the client.
- *
- * @flow
- */
-
-import invariant from 'assert';
-import { MP4Box } from 'mp4box';
-import createLog from 'silk-log';
-
-import { rewriteSegment } from './dash_segment';
-
-const log = createLog('VideoPlayback');
-
-/**
  * Stateful machinery to play back video segments provided by device.
  *
  * This provides the following functionality:
@@ -25,7 +11,17 @@ const log = createLog('VideoPlayback');
  *   and ensure incoming segments from the camera are rewritten
  *   accordingly with that information.
  *
+ * @flow
  */
+
+import invariant from 'assert';
+import { MP4Box } from 'mp4box';
+import createLog from 'silk-log';
+
+import { rewriteSegment } from './dash_segment';
+
+const log = createLog('VideoPlayback');
+
 export default class VideoPlayback {
 
   segmentSeqno: number = 0;

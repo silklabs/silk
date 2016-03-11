@@ -68,6 +68,9 @@ SILK_EXT := \
   svmsounds-glassbreak \
   welcome \
   welcome-config \
+  peddetector \
+  dnn-pedestrian-proto \
+  dnn-pedestrian-dictionary \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

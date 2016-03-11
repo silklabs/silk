@@ -4,12 +4,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+#define LOG_TAG "silk-caffe"
 #ifdef ANDROID
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-caffe"
 #include <utils/Log.h>
 #else
-#define ALOGV(fmt, args...) printf(fmt, ##args); printf("\n");
+#define ALOGV(fmt, args...) fprintf(stderr, LOG_TAG ": " fmt, ##args); fprintf(stderr, "\n");
 #define ALOGE ALOGV
 #define ALOGD ALOGV
 #endif
@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <opencv2/imgproc.hpp>
+#include <chrono>
 
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"
@@ -71,6 +72,7 @@ void Model::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "setLabels", SetLabels);
   Nan::SetPrototypeMethod(ctor, "predictTopK", PredictTopK);
   Nan::SetPrototypeMethod(ctor, "rcnn", Rcnn);
+  Nan::SetPrototypeMethod(ctor, "nms", NonMaximaSuppression);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Model").ToLocalChecked(), ctor->GetFunction());
@@ -96,14 +98,14 @@ NAN_METHOD(Model::New) {
  *
  */
 Model::Model() :
-  mScale(0.0) {
+  scale(0.0) {
 }
 
 /**
  *
  */
 Model::~Model() {
-  mCaffeNet.reset();
+  caffeNet.reset();
 }
 
 /**
@@ -122,27 +124,27 @@ public:
   void Execute() {
     Caffe::set_mode(Caffe::CPU);
 
-    model->mCaffeNet.reset(new Net<float>(modelPath, caffe::TEST));
-    model->mCaffeNet->CopyTrainedLayersFrom(weightsPath);
+    model->caffeNet.reset(new Net<float>(modelPath, caffe::TEST));
+    model->caffeNet->CopyTrainedLayersFrom(weightsPath);
 
-    if (model->mCaffeNet->num_inputs() != 1) {
+    if (model->caffeNet->num_inputs() != 1) {
       SetErrorMessage("Network should have exactly one input");
       return;
     }
 
-    if (model->mCaffeNet->num_outputs() != 1) {
+    if (model->caffeNet->num_outputs() != 1) {
       SetErrorMessage("Network should have exactly one output");
       return;
     }
 
-    Blob<float> *inputLayer = model->mCaffeNet->input_blobs()[0];
-    model->mNumChannels = inputLayer->channels();
-    if ((model->mNumChannels != 3) && (model->mNumChannels != 1)) {
+    Blob<float> *inputLayer = model->caffeNet->input_blobs()[0];
+    model->numChannels = inputLayer->channels();
+    if ((model->numChannels != 3) && (model->numChannels != 1)) {
       SetErrorMessage("Input layer should have 1 or 3 channels");
       return;
     }
 
-    model->mInputGeometry = cv::Size(inputLayer->width(), inputLayer->height());
+    model->inputGeometry = cv::Size(inputLayer->width(), inputLayer->height());
   }
 
 private:
@@ -155,6 +157,7 @@ private:
  * Loads the provided model asynchronously
  */
 NAN_METHOD(Model::Load) {
+  ALOGV("Setting up caffe model.....");
   SETUP_FUNCTION(Model)
 
   if (info.Length() != 3) {
@@ -193,14 +196,14 @@ NAN_METHOD(Model::SetMean) {
   // Convert from BlobProto to Blob<float>
   Blob<float> meanBlob;
   meanBlob.FromProto(blobProto);
-  if (meanBlob.channels() != self->mNumChannels) {
+  if (meanBlob.channels() != self->numChannels) {
     JSTHROW("Number of channels of mean file doesn't match input layer");
   }
 
   // The format of the mean file is planar 32-bit float BGR or grayscale
   vector<cv::Mat> channels;
   float *data = meanBlob.mutable_cpu_data();
-  for (int i = 0; i < self->mNumChannels; ++i) {
+  for (int i = 0; i < self->numChannels; ++i) {
     // Extract an individual channel
     cv::Mat channel(meanBlob.height(), meanBlob.width(), CV_32FC1, data);
     channels.push_back(channel);
@@ -214,7 +217,7 @@ NAN_METHOD(Model::SetMean) {
   // Compute the global mean pixel value and create a mean image
   // filled with this value
   cv::Scalar channelMean = cv::mean(mean);
-  self->mMean = cv::Mat(self->mInputGeometry, mean.type(), channelMean);
+  self->mean = cv::Mat(self->inputGeometry, mean.type(), channelMean);
 }
 
 /**
@@ -233,7 +236,7 @@ NAN_METHOD(Model::SetScale) {
     JSTHROW("Scale must be greater than zero");
   }
 
-  self->mScale = scale;
+  self->scale = scale;
 }
 
 /**
@@ -256,12 +259,12 @@ NAN_METHOD(Model::SetLabels) {
 
   string line;
   while (getline(labels, line)) {
-    self->mLabels.push_back(line);
+    self->labels.push_back(line);
   }
 
-  Blob<float>* outputLayer = self->mCaffeNet->output_blobs()[0];
-  if (self->mLabels.size() != outputLayer->channels()) {
-    ALOGD("Labels size: %lu channels: %d", self->mLabels.size(),
+  Blob<float>* outputLayer = self->caffeNet->output_blobs()[0];
+  if (self->labels.size() != outputLayer->channels()) {
+    ALOGD("Labels size: %lu channels: %d", self->labels.size(),
         outputLayer->channels());
     JSTHROW("Number of labels is different from the output layer dimension");
   }
@@ -281,24 +284,24 @@ public:
   }
 
   void Execute() {
-    topK = min<int>(model->mLabels.size(), topK);
-    mPredictions = model->Classify(mat, topK);
+    topK = min<int>(model->labels.size(), topK);
+    predictions = model->Classify(mat, topK);
   }
 
   void HandleOKCallback() {
-    Local<Array> predictions = Nan::New<Array>(topK);
-    for (int i = 0; i < mPredictions.size(); ++i) {
+    Local<Array> result = Nan::New<Array>(topK);
+    for (int i = 0; i < predictions.size(); ++i) {
       Local<Object> prediction = Nan::New<Object>();
       prediction->Set(Nan::New<String>("label").ToLocalChecked(),
-          Nan::New<String>(mPredictions[i].first).ToLocalChecked());
+          Nan::New<String>(predictions[i].first).ToLocalChecked());
       prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
-          Nan::New<Number>(mPredictions[i].second));
-      predictions->Set(i, prediction);
+          Nan::New<Number>(predictions[i].second));
+      result->Set(i, prediction);
     }
 
     Local<Value> argv[2];
     argv[0] = Nan::Null();
-    argv[1] = predictions;
+    argv[1] = result;
 
     Nan::TryCatch try_catch;
     callback->Call(2, argv);
@@ -311,7 +314,7 @@ private:
   Model* model;
   cv::Mat mat;
   int topK;
-  vector<Prediction> mPredictions;
+  vector<Prediction> predictions;
 };
 
 /**
@@ -342,62 +345,82 @@ NAN_METHOD(Model::PredictTopK) {
 class RcnnAsyncWorker: public Nan::AsyncWorker {
 public:
   RcnnAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
-      string className, int minSize, int maxMergingIterations,
-      float nmsThreshold, float confThreshold):
+      string className, vector<cv::Rect> motionRects, int minSize,
+      int maxMergingIterations, float nmsThreshold, float confThreshold):
     Nan::AsyncWorker(callback),
     model(model),
     mat(mat),
-    mClassName(className),
-    mMinSize(minSize),
-    mMaxMergingIterations(maxMergingIterations),
-    mNmsThreshold(nmsThreshold),
-    mConfThreshold(confThreshold) {
+    className(className),
+    motionRects(motionRects),
+    minSize(minSize),
+    maxMergingIterations(maxMergingIterations),
+    nmsThreshold(nmsThreshold),
+    confThreshold(confThreshold) {
   }
 
   void Execute() {
+    chrono::time_point<chrono::system_clock> start, end;
+    chrono::duration<double> elapsed_seconds;
+
     // Run selective search to get all the regions of the image and run
     // prediction on each of the regions
+    start = chrono::system_clock::now();
     dlib::matrix_range_exp<double> kvals = dlib::linspace(50, 200, 3);
-    vector<dlib::rectangle> rects = getObjectProposals(mat, kvals, mMinSize,
-        mMaxMergingIterations);
-    ALOGD("# proposals: %lu", rects.size());
+    vector<cv::Rect> proposedRects = getObjectProposals(mat, kvals, minSize,
+        maxMergingIterations);
+    end = chrono::system_clock::now();
+    elapsed_seconds = end - start;
+    ALOGD("# object proposals: %lu in %f secs", proposedRects.size(),
+          elapsed_seconds.count());
 
-    std::vector<CvRectScore> srcRects;
+    // Only keep the proposed rectangles that intersect with motion rectangles
+    start = chrono::system_clock::now();
+    vector<cv::Rect> rects = boxIntersect(proposedRects, motionRects);
+    end = chrono::system_clock::now();
+    elapsed_seconds = end - start;
+    ALOGD("# object proposals w/ motion: %lu in %f secs", rects.size(),
+          elapsed_seconds.count());
+
+    vector<CvRectScore> predictions;
     for (int count = 0; count < rects.size(); count++) {
-      dlib::rectangle dlibrect = rects[count];
-      cv::Rect regionRect(dlibrect.left(), dlibrect.top(), dlibrect.width(),
-          dlibrect.height());
+      cv::Rect regionRect = rects[count];
       cv::Mat region = mat(regionRect);
 
       // Only return the top most prediction for the requested class
       vector<Prediction> prediction = model->Classify(region, 1);
-      if (prediction[0].first == mClassName) {
+      if (prediction[0].first == className) {
         CvRectScore rectScore = {prediction[0].second, regionRect};
         // Only return the predictions with confidence higher than mConfThreshold
-        if (prediction[0].second >= mConfThreshold) {
-          srcRects.push_back(rectScore);
+        if (prediction[0].second >= confThreshold) {
+          predictions.push_back(rectScore);
+          ALOGV("Prediction for region# %d %s score: %f rect: [%d, %d, %d, %d]",
+              count, prediction[0].first.c_str(), prediction[0].second,
+              regionRect.x, regionRect.y, regionRect.width, regionRect.height);
         }
-
-        ALOGV("Prediction for region# %d score: %f rect: [%d, %d, %d, %d]",
-            count, prediction[0].second, regionRect.x, regionRect.y,
-            regionRect.width, regionRect.height);
       }
     }
-    ALOGV("After NMS:");
-    NMS(srcRects, mRegions, mNmsThreshold);
-    for (std::vector<CvRectScore>::iterator it = mRegions.begin();
-        it != mRegions.end(); ++it) {
-      ALOGV("Rects: [%d, %d, %d, %d] score: %f", it->rect.x, it->rect.y,
-          it->rect.width, it->rect.height, it->score);
+
+    if (predictions.size() > 0) {
+      start = chrono::system_clock::now();
+      mRegions = NMS(predictions, nmsThreshold);
+      end = chrono::system_clock::now();
+      elapsed_seconds = end - start;
+      ALOGV("After NMS: # rects: %lu in %f secs", mRegions.size(),
+            elapsed_seconds.count());
+      for (vector<CvRectScore>::iterator it = mRegions.begin();
+          it != mRegions.end(); ++it) {
+        ALOGV("Rects: [%d, %d, %d, %d] score: %f", it->rect.x, it->rect.y,
+              it->rect.width, it->rect.height, it->score);
+      }
     }
   }
 
   void HandleOKCallback() {
-    Local<Array> predictions = Nan::New<Array>(mRegions.size());
+    Local<Array> result = Nan::New<Array>(mRegions.size());
     for (int i = 0; i < mRegions.size(); ++i) {
       Local<Object> prediction = Nan::New<Object>();
       prediction->Set(Nan::New<String>("label").ToLocalChecked(),
-          Nan::New<String>(mClassName).ToLocalChecked());
+          Nan::New<String>(className).ToLocalChecked());
       prediction->Set(Nan::New<String>("confidence").ToLocalChecked(),
           Nan::New<Number>(mRegions[i].score));
 
@@ -413,12 +436,12 @@ public:
           Nan::New<Number>(mRegions[i].rect.height));
       prediction->Set(Nan::New<String>("rect").ToLocalChecked(), rect);
 
-      predictions->Set(i, prediction);
+      result->Set(i, prediction);
     }
 
     Local<Value> argv[2];
     argv[0] = Nan::Null();
-    argv[1] = predictions;
+    argv[1] = result;
 
     Nan::TryCatch try_catch;
     callback->Call(2, argv);
@@ -430,11 +453,12 @@ public:
 private:
   Model* model;
   cv::Mat mat;
-  string mClassName;
-  int mMinSize;
-  int mMaxMergingIterations;
-  float mNmsThreshold;
-  float mConfThreshold;
+  string className;
+  vector<cv::Rect> motionRects;
+  int minSize;
+  int maxMergingIterations;
+  float nmsThreshold;
+  float confThreshold;
 
   vector<CvRectScore> mRegions;
 };
@@ -449,8 +473,8 @@ private:
 NAN_METHOD(Model::Rcnn) {
   SETUP_FUNCTION(Model)
 
-  if (info.Length() < 3) {
-    JSTHROW("Image matrix, class name and callback function must be provided");
+  if (info.Length() < 4) {
+    JSTHROW("Image matrix, class name, motion rectangles and callback function must be provided");
   }
 
   cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
@@ -459,36 +483,56 @@ NAN_METHOD(Model::Rcnn) {
   string className;
   STRING_FROM_ARGS(className, 1);
 
-  REQ_FUN_ARG(2, cb);
+  // Motion rectangles
+  if (!info[2]->IsArray()) {
+    JSTHROW_TYPE("Argument #3 is not an array");
+  }
+
+  vector<cv::Rect> motionRects;
+  Handle<Array> jsArray = Handle<Array>::Cast(info[2]);
+  for (unsigned int i = 0; i < jsArray->Length(); i++) {
+    Handle<Value> val = jsArray->Get(i);
+    v8::Local<v8::Object> rect = v8::Local<v8::Object>::Cast(val);
+    cv::Rect motionRect(
+      rect->Get(Nan::New<v8::String>("x").ToLocalChecked())->IntegerValue(),
+      rect->Get(Nan::New<v8::String>("y").ToLocalChecked())->IntegerValue(),
+      rect->Get(Nan::New<v8::String>("width").ToLocalChecked())->IntegerValue(),
+      rect->Get(Nan::New<v8::String>("height").ToLocalChecked())->IntegerValue()
+    );
+    motionRects.push_back(motionRect);
+  }
+
+  REQ_FUN_ARG(3, cb);
 
   // Minimum size of the selective search regions
   int minSize = 100;
-  if (info.Length() >= 4) {
-    INT_FROM_ARGS(minSize, 3);
+  if (info.Length() >= 5) {
+    INT_FROM_ARGS(minSize, 4);
   }
 
   // Rounds of neighboring blob merging for selective search regions
   int maxMergingIterations = 1;
-  if (info.Length() >= 5) {
-    INT_FROM_ARGS(maxMergingIterations, 4);
+  if (info.Length() >= 6) {
+    INT_FROM_ARGS(maxMergingIterations, 5);
   }
 
   // NMS threshold (area of intersection greater than this value will be ignore
   // in favor of rectangle with higher score)
   float nmsThreshold = 0.3f;
-  if (info.Length() >= 6) {
-    FLOAT_FROM_ARGS(nmsThreshold, 5);
+  if (info.Length() >= 7) {
+    FLOAT_FROM_ARGS(nmsThreshold, 6);
   }
 
   // Confidence threshold
   float confThreshold = 0.90f;
-  if (info.Length() >= 7) {
-    FLOAT_FROM_ARGS(confThreshold, 6);
+  if (info.Length() >= 8) {
+    FLOAT_FROM_ARGS(confThreshold, 7);
   }
 
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
   Nan::AsyncQueueWorker(new RcnnAsyncWorker(callback, self, mat,
-      className, minSize, maxMergingIterations, nmsThreshold, confThreshold));
+      className, motionRects, minSize, maxMergingIterations, nmsThreshold,
+      confThreshold));
 }
 
 /**
@@ -501,7 +545,7 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
   vector<Prediction> predictions;
   for (int i = 0; i < topK; ++i) {
     int idx = maxK[i];
-    predictions.push_back(make_pair(mLabels[idx], output[idx]));
+    predictions.push_back(make_pair(labels[idx], output[idx]));
   }
 
   return predictions;
@@ -511,22 +555,22 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
  * Runs forward pass for the whole network
  */
 vector<float> Model::Predict(const cv::Mat& img) {
-  Blob<float>* inputLayer = mCaffeNet->input_blobs()[0];
-  inputLayer->Reshape(1, mNumChannels, mInputGeometry.height,
-      mInputGeometry.width);
+  Blob<float>* inputLayer = caffeNet->input_blobs()[0];
+  inputLayer->Reshape(1, numChannels, inputGeometry.height,
+      inputGeometry.width);
 
   // Forward dimension change to all layers
-  mCaffeNet->Reshape();
+  caffeNet->Reshape();
 
   vector<cv::Mat> inputChannels;
   WrapInputLayer(&inputChannels);
 
   Preprocess(img, &inputChannels);
 
-  mCaffeNet->ForwardPrefilled();
+  caffeNet->ForwardPrefilled();
 
   // Copy the output layer to a vector
-  Blob<float>* output_layer = mCaffeNet->output_blobs()[0];
+  Blob<float>* output_layer = caffeNet->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
   return vector<float>(begin, end);
@@ -540,7 +584,7 @@ vector<float> Model::Predict(const cv::Mat& img) {
  * layer
  */
 void Model::WrapInputLayer(vector<cv::Mat>* inputChannels) {
-  Blob<float>* inputLayer = mCaffeNet->input_blobs()[0];
+  Blob<float>* inputLayer = caffeNet->input_blobs()[0];
 
   int width = inputLayer->width();
   int height = inputLayer->height();
@@ -559,37 +603,37 @@ void Model::Preprocess(const cv::Mat& img,
     vector<cv::Mat>* inputChannels) {
   // Convert the input image to the input image format of the network
   cv::Mat sample;
-  if (img.channels() == 3 && mNumChannels == 1) {
+  if (img.channels() == 3 && numChannels == 1) {
     cv::cvtColor(img, sample, cv::COLOR_BGR2GRAY);
-  } else if (img.channels() == 4 && mNumChannels == 1) {
+  } else if (img.channels() == 4 && numChannels == 1) {
     cv::cvtColor(img, sample, cv::COLOR_BGRA2GRAY);
-  } else if (img.channels() == 4 && mNumChannels == 3) {
+  } else if (img.channels() == 4 && numChannels == 3) {
     cv::cvtColor(img, sample, cv::COLOR_BGRA2BGR);
-  } else if (img.channels() == 1 && mNumChannels == 3) {
+  } else if (img.channels() == 1 && numChannels == 3) {
     cv::cvtColor(img, sample, cv::COLOR_GRAY2BGR);
   } else {
     sample = img;
   }
 
   cv::Mat sampleResized;
-  if (sample.size() != mInputGeometry) {
-    cv::resize(sample, sampleResized, mInputGeometry);
+  if (sample.size() != inputGeometry) {
+    cv::resize(sample, sampleResized, inputGeometry);
   } else {
     sampleResized = sample;
   }
 
   cv::Mat sampleFloat;
-  if (mNumChannels == 3) {
+  if (numChannels == 3) {
     sampleResized.convertTo(sampleFloat, CV_32FC3);
   } else {
     sampleResized.convertTo(sampleFloat, CV_32FC1);
   }
 
   cv::Mat sampleNormalized;
-  cv::subtract(sampleFloat, mMean, sampleNormalized);
+  cv::subtract(sampleFloat, mean, sampleNormalized);
 
-  if (mScale > 0.0) {
-    sampleNormalized *= mScale;
+  if (scale > 0.0) {
+    sampleNormalized *= scale;
   }
 
   // This operation will write the separate BGR planes directly to the
@@ -598,8 +642,64 @@ void Model::Preprocess(const cv::Mat& img,
   cv::split(sampleNormalized, *inputChannels);
 
   if (reinterpret_cast<float*>(inputChannels->at(0).data)
-      != mCaffeNet->input_blobs()[0]->cpu_data()) {
+      != caffeNet->input_blobs()[0]->cpu_data()) {
     JSTHROW("Input channels are not wrapping the input layer of the network");
   }
 }
 
+/**
+ *
+ */
+NAN_METHOD(Model::NonMaximaSuppression) {
+  if (info.Length() < 1) {
+    JSTHROW("Boxes to run NMS on must be provided");
+  }
+
+  // Motion rectangles
+  if (!info[0]->IsArray()) {
+    JSTHROW_TYPE("Argument #1 is not an array");
+  }
+
+  vector<CvRectScore> boxesOrig;
+  Handle<Array> jsArray = Handle<Array>::Cast(info[0]);
+  for (unsigned int i = 0; i < jsArray->Length(); i++) {
+    Handle<Value> val = jsArray->Get(i);
+    v8::Local<v8::Object> rectObj = v8::Local<v8::Object>::Cast(val);
+    float score = rectObj->Get(Nan::New<v8::String>("score").ToLocalChecked())->NumberValue();
+    cv::Rect rect(
+        rectObj->Get(Nan::New<v8::String>("x").ToLocalChecked())->IntegerValue(),
+        rectObj->Get(Nan::New<v8::String>("y").ToLocalChecked())->IntegerValue(),
+        rectObj->Get(Nan::New<v8::String>("width").ToLocalChecked())->IntegerValue(),
+        rectObj->Get(Nan::New<v8::String>("height").ToLocalChecked())->IntegerValue()
+    );
+    CvRectScore rectScore = {score, rect};
+    boxesOrig.push_back(rectScore);
+  }
+
+  // NMS threshold (area of intersection greater than this value will be ignore
+  // in favor of rectangle with higher score)
+  float nmsThreshold = 0.3f;
+  if (info.Length() >= 2) {
+    FLOAT_FROM_ARGS(nmsThreshold, 1);
+  }
+
+  vector<CvRectScore> regions = NMS(boxesOrig, nmsThreshold);
+
+  // Send the result back to JS
+  Local<Array> predictions = Nan::New<Array>(regions.size());
+  for (int i = 0; i < regions.size(); ++i) {
+    Local<Object> rect = Nan::New<Object>();
+    rect->Set(Nan::New<String>("score").ToLocalChecked(),
+        Nan::New<Number>(regions[i].score));
+    rect->Set(Nan::New<String>("x").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.x));
+    rect->Set(Nan::New<String>("y").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.y));
+    rect->Set(Nan::New<String>("width").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.width));
+    rect->Set(Nan::New<String>("height").ToLocalChecked(),
+        Nan::New<Number>(regions[i].rect.height));
+    predictions->Set(i, rect);
+  }
+  info.GetReturnValue().Set(predictions);
+}

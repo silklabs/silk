@@ -85,14 +85,15 @@ private:
   JSFUNC(SetLabels);
   JSFUNC(PredictTopK);
   JSFUNC(Rcnn);
+  JSFUNC(NonMaximaSuppression);
 
 public:
-  boost::shared_ptr<Net<float>> mCaffeNet;
-  cv::Size mInputGeometry;
-  int mNumChannels;
-  cv::Mat mMean;
-  float mScale;
-  std::vector<string> mLabels;
+  boost::shared_ptr<Net<float>> caffeNet;
+  cv::Size inputGeometry;
+  int numChannels;
+  cv::Mat mean;
+  float scale;
+  std::vector<string> labels;
 };
 
 #endif

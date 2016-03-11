@@ -31,13 +31,14 @@ typedef struct {
  *              This array is overwritten by the array of bounding boxes after
  *              non-max suppresison. Should include one bounding box per pixel
  *              location in the correct order when w and h are defined
- * @param resRects Return the bounding boxes after NMS suppression
  * @param overlap Suppress bounding boxes for which the
  *                percent area of overap with a higher scoring bounding box is
  *                greater than this parameter.
+ * @return Return the bounding boxes after NMS suppression
  */
-void NMS(std::vector<CvRectScore> boxes_orig,
-    std::vector<CvRectScore>& resRects, float overlap = 0.3f);
+std::vector<CvRectScore> NMS(std::vector<CvRectScore> boxes_orig,
+    float overlap);
+
 /**
  * Get object proposals based on the input image
  *
@@ -54,6 +55,12 @@ void NMS(std::vector<CvRectScore> boxes_orig,
  *              effect on the number of output rectangles you get, with larger
  *              values of the parameter giving more output rectangles
  */
-vector<dlib::rectangle> getObjectProposals(const cv::Mat& inputImage,
+vector<cv::Rect> getObjectProposals(const cv::Mat& inputImage,
     const dlib::matrix_range_exp<double>& kvals, const unsigned long minSize,
     const unsigned long maxMergingIterations);
+
+/**
+ * Keep only those proposed rectangles that intersect with motion rectangles
+ */
+vector<cv::Rect> boxIntersect(vector<cv::Rect> proposedRects,
+                              vector<cv::Rect> motionRects);

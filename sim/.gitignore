@@ -3,3 +3,4 @@
 /system/silk/bin/silk-core
 /data
 /crash.log
+/system/silk/media/dnn/model/ped/caltech10x_warp_finetune_train_iter_100000

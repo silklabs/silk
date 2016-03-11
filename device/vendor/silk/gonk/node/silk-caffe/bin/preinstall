@@ -1,26 +1,11 @@
 #!/bin/bash -e
 
-
-usage()
-{
-  echo "Usage: $0 [-p|-h]"
-  echo
-  echo "Install Caffe and its dependencies"
-  echo
-  echo " -p        Path to patch scripts for dlib and caffe"
-  echo " -h        Display this message"
-  exit 1
-}
-
-while getopts "hp:" opt; do
-  case $opt in
-    h)
-        usage;;
-    p)  PATCH_TREE="$OPTARG"
-        ;;
-   \?) echo "Error: Invalid option -$OPTARG"; exit 1;;
-  esac
-done
+# Install silkDependencies
+if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
+  ../../../../../../npm_postinstall
+else
+  $ANDROID_BUILD_TOP/../npm_postinstall
+fi
 
 if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
   echo Device build detected, no patching required.
@@ -33,13 +18,11 @@ if [[ "$UNAMESTR" != 'Darwin' ]]; then
   exit 1
 fi
 
-if [[ -z $PATCH_TREE ]]; then
-  PATCH_TREE=$SILK_CAFFE_PATCH_TREE
+PATCH_TREE=$SILK_CAFFE_PATCH_TREE
 
-  if [[ -z $PATCH_TREE ]]; then
-    echo "Error: SILK_CAFFE_PATCH_TREE not defined.  |source ./setup|?"
-    exit 1
-  fi
+if [[ -z $PATCH_TREE ]]; then
+  echo "Error: SILK_CAFFE_PATCH_TREE not defined.  |source ./setup|?"
+  exit 1
 fi
 
 echo "Using patch folder: $PATCH_TREE"
@@ -64,39 +47,21 @@ fi
 # Reference https://github.com/BVLC/caffe/issues/1917
 if [[ ! -d protobuf ]]; then
   echo Compiling protobuf
-  git clone https://github.com/google/protobuf
-  pushd protobuf
-
   # Default brew formula for protobuf is v2.6.1
   # We need the same protobuf version for caffe as opencv3 is compiled with
   # default protobuf version v2.6.1 or else there is a run time conflict
-  git checkout tags/v2.6.1 -b v2.6.1
+  git clone --depth 1 https://github.com/google/protobuf -b v2.6.1
+  pushd protobuf
   ./autogen.sh
   ./configure --disable-shared
   make $J
   popd
 fi
 
-# Download dlib
-if [[ ! -d dlib ]]; then
-  echo Downloading dlib
-
-  git clone git@github.com:davisking/dlib.git
-
-  # Patch dlib
-  echo patching dlib
-  pushd dlib
-  PATCHES=$(find $PATCH_TREE/dlib -name \*.patch | sort -fs)
-  for P in ${PATCHES}; do
-    git am --quiet $P
-  done
-  popd
-fi
-
 # Download caffe
 if [[ ! -d caffe ]]; then
   echo Downloading caffe
-  git clone git@github.com:BVLC/caffe.git
+  git clone git@github.com:BVLC/caffe.git -b 813c3c9bb02a7e8b3899e7cfd6db1885228fb914
 
   # Patch caffe
   echo patching caffe

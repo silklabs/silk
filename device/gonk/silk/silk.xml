@@ -116,12 +116,6 @@
            upstream="master"
            clone-depth="42"/>
 
-  <project name="davisking/dlib"
-           path="external/dlib"
-           remote="github"
-           revision="refs/tags/v18.18"
-           clone-depth="1"/>
-
   <!-- node modules -->
   <project name="sandeepmistry/bleno"
            path="external/bleno"

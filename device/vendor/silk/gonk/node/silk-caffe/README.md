@@ -20,5 +20,5 @@ out/host/darwin-x86/bin/aprotoc --proto_path=external/caffe/src/caffe/proto --cp
 ```
 git clone git@github.com:sh1r0/caffe-android-lib.git
 cd caffe-android-lib
-USE_OPENBLAS=1 ANDROID_ABI="armeabi-v7a-hard-softfp with NEON" ./scripts/build_caffe.sh <NDK Location>
+USE_OPENBLAS=1 ANDROID_ABI="armeabi-v7a-hard-softfp with NEON" ./build.sh <NDK Location>
 ```

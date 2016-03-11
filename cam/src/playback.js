@@ -27,6 +27,8 @@ export type Segment = {
   videoStartTime: number;
   videoDurationTime: number;
   videoTimescale: number;
+  videoStartTimeMs: number;
+  videoDurationTimeMs: number;
 };
 
 const log = createLog('VideoPlayback');
@@ -121,6 +123,8 @@ export default class VideoPlayback {
       videoStartTime,
       videoDurationTime: info.durationTime,
       videoTimescale: this.videoTimescale,
+      videoStartTimeMs: 1000 * videoStartTime / this.videoTimescale,
+      videoDurationTimeMs: 1000 * info.durationTime / this.videoTimescale,
     };
   }
 

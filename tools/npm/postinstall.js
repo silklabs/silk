@@ -200,7 +200,13 @@ function installDeps(cwd, nodeModules, dependencies) {
           if (fs.existsSync(binName)) {
             fs.unlinkSync(binName);
           }
-          fs.symlinkSync(binTarget, path.join(nodeModulesBin, binName));
+          try {
+            fs.symlinkSync(binTarget, path.join(nodeModulesBin, binName));
+          } catch (err) {
+            if (err.code !== 'EEXIST') {
+              throw err;
+            }
+          }
           process.chdir(oldCWD);
         }
       }

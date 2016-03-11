@@ -7,18 +7,72 @@ import React from 'react';
 import { Button, ButtonGroup, Glyphicon, Input,
          Modal, OverlayTrigger, Panel, Popover } from 'react-bootstrap';
 import path from 'path';
-import svmjs from 'svm';
 import tar from 'tar-stream';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
 import FileDrop from './FileDrop';
 import Files from '../libraries/Files';
+import { trainSVM } from '../libraries/SVMTrainer';
 import { LiveTrack, StaticTrack } from '../libraries/AudioTrack';
 import GaplessWAVPlayer from './GaplessWAVPlayer';
 import Lightbox from './Lightbox';
 
 const log = createLog('AudioStudio');
+
+function generateGridSearchTrainingOptions(params) {
+  let options = [ { } ];
+  Object.keys(params).forEach((param) => {
+    let values = params[param];
+    let newOptions = [ ];
+    options.forEach((option) => {
+      values.forEach((value) => {
+        let newOption = Object.assign({}, option);
+        newOption[param] = value;
+        newOptions.push(newOption);
+      });
+    });
+    options = newOptions;
+  });
+  return options;
+}
+
+const svmTrainingConfig = {
+  svmConfig: svmSoundsConfigs.glassbreak,
+  mode: 'cross-validate',       // { cross-validate, full }
+  reportFailedTests: true,
+  // For 'cross-validate' training mode --- grid-search the param
+  // space.
+  optionsList: generateGridSearchTrainingOptions({
+    rbfsigma: [ 0.5 ],
+    C: [ 1e1, 5e1 ],
+
+    maxiter: [ 1e4 ],
+    numpasses: [ 1e1 ],
+
+    // These won't vary.
+    kernel: [ 'rbf' ],
+    tol: [ 1e-4 ],
+    alphatol: [ 1e-7 ],
+  }),
+  // For 'full' training mode --- SVM ready to ship.  Options gathered
+  // from a satisfactory cross-validate grid search.
+  //options: {"rbfsigma":0.5,"C":10,"maxiter":10000,"numpasses":10,"kernel":"rbf","tol":0.0001,"alphatol":1e-7},
+};
+const ENABLE_SOUND_DETECTOR = true;
+
+const FFT_SIZE = 512;
+const WINDOW_OVERLAP = 256;
+const SPECTROGRAM_FRAMES = 64;
+
+const LOUD_SOUND_START_PAD = 0.256;
+
+const PREF_FILE = 'prefs.json';
+const DEFAULT_PREFS = {
+  colorModel: 'jet',
+  drawGrid: false,
+  graphView: 'spectLinear',
+};
 
 function forEachFileInTAR(tag, fileData, forEach) {
   return new Promise((resolve, reject) => {
@@ -36,10 +90,6 @@ function forEachFileInTAR(tag, fileData, forEach) {
 function getAudioDataFromWAV(wav) {
   // TODO: validate WAV format etc.
   return new Int16Array(wav.buffer.slice(44));
-}
-
-function getTestLabel(testName) {
-  return testName.split('-')[0];
 }
 
 function isBenchmarkTAR(name) {
@@ -119,31 +169,6 @@ function zeroPad(number, width) {
   }
   return string;
 }
-
-const FFT_SIZE = 512;
-const WINDOW_OVERLAP = 256;
-const SPECTROGRAM_FRAMES = 64;
-
-const LOUD_SOUND_START_PAD = 0.256;
-
-const PREF_FILE = 'prefs.json';
-const DEFAULT_PREFS = {
-  colorModel: 'jet',
-  drawGrid: false,
-  graphView: 'spectLinear',
-};
-
-// Currently we use 1/2 cross-validation to check the SVM training
-// settings.  That means we first train the SVM using the
-// even-numbered data and validate on odd-numbered, and then do the
-// opposite (train on odd-numbered data and validate on even).  This
-// flag selects which data set to use to train: 0 is even, 1 is odd.
-const TEST_SET = 0;
-// Set this to true when you're training an SVM for export to
-// "production", in which case we want to train on the entire dataset.
-const TRAINING_FULL_DATASET = false;
-
-const trainingSVMConfig = svmSoundsConfigs.glassbreak;
 
 class TrackFile extends React.Component {
   _onClick = (e) => {
@@ -261,6 +286,14 @@ export default class AudioStudio extends React.Component {
     // We may still be loading prefs from file, but in that case state
     // will directly be updated when that finishes.
     Object.assign(this.state, this.prefs);
+
+    if (Notification.permission !== 'granted'
+        && Notification.permission !== 'denied') {
+      Notification.requestPermission((result) => (
+        log.info('User chose notification permissions:', result)));
+    } else {
+      log.info(`Notification permission is already ${Notification.permission}`);
+    }
   }
 
   componentDidMount() {
@@ -291,14 +324,18 @@ export default class AudioStudio extends React.Component {
     if (this.state.track) {
       this.state.track.stop();
       this.state.track.removeListener('timeupdate', this._onTimeUpdate);
-
-      this.soundDetector.destructor();
+      if (this.soundDetector) {
+        this.soundDetector.destructor();
+        this.soundDetector = null;
+      }
     }
     if (track) {
       track.on('timeupdate', this._onTimeUpdate);
 
-      this.soundDetector = createSoundDetectorSVM(svmFFTConfig, svmSoundsConfigs);
-      this.soundDetector.on('sound', this._onSoundEvent);
+      if (ENABLE_SOUND_DETECTOR) {
+        this.soundDetector = createSoundDetectorSVM(svmFFTConfig, svmSoundsConfigs);
+        this.soundDetector.on('sound', this._onSoundEvent);
+      }
     }
     this.setState({ track });
   }
@@ -367,7 +404,11 @@ export default class AudioStudio extends React.Component {
   };
 
   _onSoundEvent = (e) => {
-    log.info(`Sound event:`, e);
+    if (!e.endTime) {
+      log.info(`Heard ${e.soundClass} (starting at ${e.startTime.toFixed(3)})`);
+    } else {
+      log.info(` ... end of ${e.soundClass} after ${(e.endTime - e.startTime).toFixed(3)}`);
+    }
   };
 
   _onFFTMagnitudeDecibel = (magnitudes, startTime, endTime) => {
@@ -405,7 +446,7 @@ export default class AudioStudio extends React.Component {
     if (isLoud) {
       this.loudSoundLastDetectTime = endTime;
     }
-    if (endTime - this.loudSoundLastDetectTime > trainingSVMConfig.loudMinDuration) {
+    if (endTime - this.loudSoundLastDetectTime > svmTrainingConfig.svmConfig.loudMinDuration) {
       // Haven't heard a loud sound window for long enough, consider
       // the event as ended.
       log.debug('  loud sound lasted',
@@ -455,7 +496,9 @@ export default class AudioStudio extends React.Component {
 
   _onTimeUpdate = (currentTime, startTime, endTime, lastTime) => {
     let samples = this.state.track.getSamples(lastTime, currentTime);
-    this.soundDetector.appendSamples(samples, lastTime);
+    if (this.soundDetector) {
+      this.soundDetector.appendSamples(samples, lastTime);
+    }
 
     if (!(this.state.playing || this.state.recording)) {
       return;
@@ -593,27 +636,21 @@ export default class AudioStudio extends React.Component {
     //
     // Each folder within the TAR declares a type of sound event.
     // Within each folder can be individual .wav files, or .tar's of
-    // multiple .wav files.ñ
-    let clapperTest = require('../libraries/ClapperTester');
-    let benchmark = {
-      totalTests: 0,
-      testsRun: 0,
-      events: 0,
-      miss: [ ],
-      falseAccept: [ ],
-    };
-
+    // multiple .wav files.
+    //
     // We run through the set of benchmark tests below and extract the
     // first loud sound heard in each test.  From the extracted loud
     // sound, we compute a feature vector and record the test's label.
-    let svmConfig = trainingSVMConfig;
+    let svmConfig = svmTrainingConfig.svmConfig;
     let trainingData = [ ];
     let trainingLabels = [ ];
     let validationData = [ ];
     let validationLabels = [ ];
+    let failedSounds = [ ];
+    let nrSounds = 0;
 
-    let benchmarkStartMs = Date.now();
-    log.info('Running benchmark ...');
+    log.info('Extracting training and validation sounds ...');
+    let extractionStart = Date.now();
     let runTestOrSuite = (tag, header, fileData) => {
       if (header.type !== 'file') {
         return Promise.resolve();
@@ -629,14 +666,9 @@ export default class AudioStudio extends React.Component {
                                 runTestOrSuite);
       }
       let testName = `${tag}-${header.name}`;
-      let isEvent = getTestLabel(testName) === svmConfig.soundClass;
       let samples = getAudioDataFromWAV(fileData);
-      let detectedEvents = clapperTest(samples);
 
-      // Now we run the loud-sound extraction on the test case.
-      // (Clapper does its own version of this in the `clapperTest()`
-      // call above.)
-      let isValidationData;
+      // Run the loud-sound extraction on the test case.
       let analyzer = createAudioAnalyzer(svmFFTConfig);
       let featureVector = new Float32Array(analyzer.frequencyBinCount *
                                            svmConfig.featureVectorFrameCount);
@@ -652,26 +684,31 @@ export default class AudioStudio extends React.Component {
         vectorOffset += analyzer.frequencyBinCount;
         if (vectorOffset === featureVector.length) {
           analyzer.removeListener(svmConfig.fftType, extractLoudSounds);
-          let forTraining = benchmark.totalTests % 2 === TEST_SET;
-          isValidationData = !forTraining;
-
-          if (TRAINING_FULL_DATASET) {
-            forTraining = isValidationData = true;
+          let forTraining, forValidation;
+          if (svmTrainingConfig.mode === 'full') {
+            forTraining = forValidation = true;
+          } else {
+            // Arbitrarily choose the "even-numbered" sounds to be the
+            // first training set.  In cross-validate mode, we'll swap
+            // the training set for validation set in the second run.
+            forTraining = nrSounds % 2 === 0;
+            forValidation = !forTraining;
           }
-
           if (forTraining) {
             trainingData.push(featureVector);
             trainingLabels.push(testName);
           }
-          if (isValidationData) {
+          if (forValidation) {
             validationData.push(featureVector);
             validationLabels.push(testName);
           }
-          // We've extracted all we need from the test case and don't
-          // care about the rest of the samples that are going to be
-          // processed. We don't have a convenient way to stop further
-          // processing, so just throw an exception to pop back out to
-          // `appendSamples()` code below.
+          // We've extracted the first loud-sound feature vector from
+          // the test case.  We'll stop now and ignore the remaining
+          // samples in the recording.  We don't have a convenient way
+          // to stop further processing, so just throw an exception to
+          // pop back out to `appendSamples()` code below.
+          //
+          // TODO extract sounds from the remaining samples too
           throw 'done';
         }
       };
@@ -686,32 +723,12 @@ export default class AudioStudio extends React.Component {
         detectedLoudSound = true;
       }
       if (!detectedLoudSound) {
-        //throw `Failed to extract loud sound from clip ${testName}`;
+        log.error(`Failed to extract loud sound from clip ${testName}`);
+        failedSounds.push(testName);
         return Promise.resolve();
       }
-      benchmark.totalTests += 1;
-      if (!isValidationData) {
-        // If this vector wasn't chosen for SVM validation, then we
-        // won't count its result against the clapper tally either.
-        // This allows the clapper results to be directly compared to
-        // the SVM validation, although the fairness is debatable.
-        return Promise.resolve();
-      }
-      // Add this test case to the clapper validation results.
-      benchmark.testsRun += 1;
-      if (benchmark.testsRun % 25 === 0) {
-        log.info(`... test ${benchmark.testsRun}`);
-      }
-      let testId = (tag + '/' + leafName);
-      let detectedClap = (detectedEvents.indexOf('clap') >= 0);
-      if (isEvent) {
-        benchmark.events += 1;
-      }
-      if (isEvent && !detectedClap) {
-        benchmark.miss.push(testId);
-      }
-      if (!isEvent && detectedClap) {
-        benchmark.falseAccept.push(testId);
+      if (++nrSounds % 50 === 0) {
+        log.info(`... extracted sound ${nrSounds}`);
       }
       return Promise.resolve();
     };
@@ -719,97 +736,28 @@ export default class AudioStudio extends React.Component {
     // file.
     forEachFileInTAR(null, benchmarkTAR, runTestOrSuite)
       .then(() => {
-        let nrTests = benchmark.testsRun;
-        let nrEvents = benchmark.events;
-        let nrNonEvents = nrTests - nrEvents;
-        let nrDetected = nrEvents - benchmark.miss.length;
-        let nrFalseAccepts = benchmark.falseAccept.length;
-        let elapsedTimeSec = (Date.now() - benchmarkStartMs) / 1000;
-        let msPerTest = 1000.0 * elapsedTimeSec / nrTests;
-        log.info(`Ran ${nrTests} tests in ${elapsedTimeSec.toFixed(2)}s (${msPerTest.toFixed(1)}ms per test)`);
-        log.info(`  detected ${nrDetected}/${nrEvents} events and falsely accepted ${nrFalseAccepts}/${nrNonEvents} non-events`);
-        log.info(`  misses: ${benchmark.miss}`);
-        log.info(`  false-accepts: ${benchmark.falseAccept}`);
+        let extractionTimeMs = (Date.now() - extractionStart);
+        log.info(`Extracted ${nrSounds} sounds in ${extractionTimeMs}ms`);
+        log.info(`  failed to get loud sounds from ${failedSounds}`);
+        log.info(`Preparing to start SVM training ...`);
+        return trainSVM({ trainingData, trainingLabels,
+                          validationData, validationLabels,
+                          trainingConfig: svmTrainingConfig });
       })
-      .then(() => {
-        this._trainSVM(trainingData, trainingLabels,
-                       validationData, validationLabels,
-                       svmConfig);
-      });
-  }
-
-  _trainSVM(trainingData, trainingLabels, validationData, validationLabels,
-            config) {
-    let labelToSVMClass = (label) =>
-          getTestLabel(label) === config.soundClass ? 1 : -1;
-
-    let svm = new svmjs.SVM();
-    let options = config.trainingOptions;
-    let start;
-
-    log.info(`Beginning training on ${trainingData.length} points ... this will take a while`);
-    start = Date.now();
-    svm.train(trainingData, trainingLabels.map(labelToSVMClass), options);
-    let trainSecs = (Date.now() - start) / 1000;
-    log.info(`  finished in ${trainSecs} seconds`);
-
-    log.info(`Generating predictions on ${validationData.length} points ...`);
-    start = Date.now();
-    let predictions = svm.predict(validationData);
-    let predictSecs = (Date.now() - start) / 1000;
-    log.info(`  finished in ${predictSecs} seconds`);
-
-    let nrTests = predictions.length;
-    let nrEvents = 0;
-    let nrNonEvents = 0;
-    let miss = [ ];
-    let falseAccept = [ ];
-    for (let i = 0; i < validationLabels.length; ++i) {
-      let label = validationLabels[i];
-      let [ expected, actual ] = [ labelToSVMClass(label), predictions[i] ];
-      if (expected === 1) {
-        nrEvents++;
-        if (actual !== expected) {
-          miss.push(label);
+      .then((result) => {
+        log.info(`Finished with SVMs in ${result.totalSecs}s!`);
+        if (Notification.permission === 'granted') {
+          let notification = new Notification('Finished with SVMs',
+                                              { body: result.report });
+          log.info(`Created notification with title ${notification.title}`);
         }
-        continue;
-      }
-      if (expected === -1) {
-        nrNonEvents++;
-        if (actual !== expected) {
-          falseAccept.push(label);
+        console.log(result.report);
+        if (result.svmJSON) {
+          log.info('Exporting JSON to new window ...');
+          this._sendFileToUser(new Buffer(JSON.stringify(result.svmJSON)));
         }
-        continue;
-      }
-      console.log('WTF', expected, actual);
-      throw 'WTF';
-    }
-    let nrDetected = nrEvents - miss.length;
-    let nrFalseAccepts = falseAccept.length;
-    let msPerTest = 1000.0 * predictSecs / nrTests;
-    log.info(`SVM ran ${nrTests} validations in predictions took ${predictSecs} seconds (${msPerTest.toFixed(1)}ms per test)`);
-    log.info(`  on test set ${TEST_SET}`);
-    log.info(`  detected ${nrDetected}/${nrEvents} events and falsely accepted ${nrFalseAccepts}/${nrNonEvents} non-events`);
-    log.info(`  params: C:${options.C} maxiter:${options.maxiter} rbfsigma:${options.rbfsigma} numpasses:${options.numpasses}`);
-    log.info(`  misses: ${miss}`);
-    log.info(`  false-accepts: ${falseAccept}`);
-
-    let json = svm.toJSON();
-    let svm2 = new svmjs.SVM();
-    svm2.fromJSON(json);
-    let differentPrediction = false;
-    let predictions2 = svm2.predict(validationData);
-    for (let i = 0; i < predictions.length; ++i) {
-      if (predictions[i] !== predictions2[i]) {
-        console.log('FAIL');
-        differentPrediction = true;
-      }
-    }
-    if (differentPrediction) {
-      throw 'JSON exported SVM failed to match original SVM';
-    }
-    log.info(`Exporting trained SVM to new window ...`);
-    this._sendFileToUser(JSON.stringify(json));
+      })
+      .catch((err) => log.error('Problem training SVM:', err));
   }
 
   _saveRecording(name, why) {

@@ -184,7 +184,7 @@ export const svmSoundsConfigs = {
     sonemeGapTimeout: 0.512,
 
     trainingOptions: {
-      // This achieves OK results (6 miss, 0 false-accept) on the two
+      // This achieves OK results (8 miss, 0 false-accept) on the two
       // training subsets.
       rbfsigma: 0.5,
       C: 1e2,

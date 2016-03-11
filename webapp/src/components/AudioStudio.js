@@ -40,15 +40,22 @@ function generateGridSearchTrainingOptions(params) {
   return options;
 }
 
+const svmToTrain = svmSoundsConfigs.firealarm;
 const svmTrainingConfig = {
-  svmConfig: svmSoundsConfigs.glassbreak,
-  mode: 'cross-validate',       // { cross-validate, full }
+  svmConfig: svmToTrain,
+  mode: 'cross-validate',
+  //mode: 'full',
   reportFailedTests: true,
+
+  // For 'full' training mode --- SVM ready to ship.  Options gathered
+  // and updated from a satisfactory cross-validate grid search.
+  options: svmToTrain.trainingOptions,
+
   // For 'cross-validate' training mode --- grid-search the param
   // space.
   optionsList: generateGridSearchTrainingOptions({
-    rbfsigma: [ 0.6 ],
-    C: [ 5e2 ],
+    rbfsigma: [ 0.1 ],
+    C: [ 1e0 ],
 
     maxiter: [ 1e4 ],
     numpasses: [ 1e1 ],
@@ -58,9 +65,6 @@ const svmTrainingConfig = {
     tol: [ 1e-4 ],
     alphatol: [ 1e-7 ],
   }),
-  // For 'full' training mode --- SVM ready to ship.  Options gathered
-  // from a satisfactory cross-validate grid search.
-  //options: {"rbfsigma":0.5,"C":10,"maxiter":10000,"numpasses":10,"kernel":"rbf","tol":0.0001,"alphatol":1e-7},
 };
 const ENABLE_SOUND_DETECTOR = true;
 

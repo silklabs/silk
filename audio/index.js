@@ -122,10 +122,10 @@ export const svmSoundsConfigs = {
     sonemeGapTimeout: 0.0,
 
     trainingOptions: {
-      // This achieves nearly-optimal results (1 miss, 1 false-accept)
-      // across the two training subsets.
-      rbfsigma: 1.0,
-      C: 1e2,
+      // This achieves OK results (4 miss, 0 false-accept) across the
+      // two training subsets.
+      rbfsigma: 0.1,
+      C: 1e1,
 
       // These magic SVM params are the default for svmjs.
       maxiter: 1e4,
@@ -184,10 +184,10 @@ export const svmSoundsConfigs = {
     sonemeGapTimeout: 0.512,
 
     trainingOptions: {
-      // This achieves OK results (3 miss, 1 false-accept) on the two
+      // This achieves OK results (6 miss, 0 false-accept) on the two
       // training subsets.
-      rbfsigma: 0.1,
-      C: 1e1,
+      rbfsigma: 0.5,
+      C: 1e2,
 
       // These magic SVM params are the default for svmjs.
       maxiter: 1e4,

@@ -1,0 +1,21 @@
+{
+  "name": "silk-streams",
+  "scripts": {
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
+    "test": "mocha $(find . -name '*_test.js')"
+  },
+  "silkDependencies": {
+    "silk-log": "/log"
+  },
+  "devDependencies": {
+    "mocha": "^2.4.5",
+    "ws": "^1.0.1"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.6.1",
+    "event-to-promise": "^0.7.0",
+    "msgpack-lite": "^0.1.13",
+    "uuid": "^2.0.1"
+  }
+}

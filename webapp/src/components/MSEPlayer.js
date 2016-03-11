@@ -45,9 +45,11 @@ export default class MSEPlayer extends React.Component {
     URL.revokeObjectURL(this.videoElement.src);
   }
 
-  feedSegment(segment: ArrayBuffer) {
-    this.segmentQ.push(this.playback.processSegment(segment));
+  feedSegmentData(segmentData: ArrayBuffer): Segment {
+    const segment = this.playback.processSegment(segmentData);
+    this.segmentQ.push(segment);
     this._feedPlayer();
+    return segment;
   }
 
   _feedPlayer = (event = null) => {

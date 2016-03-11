@@ -107,7 +107,7 @@ function capitalize(string) {
 }
 
 function formatMs(number) {
-  return `${(number / 1000).toFixed(2)} s`;
+  return `${(number / 1000).toFixed(2)}s`;
 }
 
 function formatDeltaMs(number) {
@@ -122,21 +122,29 @@ export default class CameraVideo extends React.Component {
   context = null;
   pixelRatio = 1;
 
-  videoStartTimeClientMs = null;
-  videoStartTimeDeviceMs = null;
+  videoStartTimestampClient = null;
+  videoStartTimestampDevice = null;
   loadedData = false;
   renderedOnline = false;
 
+  expectNextSegmentTimestamp = null;
   lastStalledTimestamp = null;
+
+  emptyBufferTimestamp = null;
+  emptyBufferVideoStartTimeOffsetMs = 0;
+  outOfBufferTimer = null;
+  outOfBuffer = false;
+  previousSegmentEndTimeMs = null;
 
   state = {
     camera: null,
     consoleMessages: [],
     showMotionEvents: false,
     showVideoStats: false,
-    initialLagMs: null,
-    currentLagMs: null,
+    deviceToClientLagMs: null,
+    totalDroppedMs: 0,
     totalStalledMs: 0,
+    totalOutOfBufferMs: 0,
     totalBufferedMs: 0,
   };
 
@@ -207,8 +215,8 @@ export default class CameraVideo extends React.Component {
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
 
-      this.videoStartTimeClientMs = null;
-      this.videoStartTimeDeviceMs = null;
+      this.videoStartTimestampClient = null;
+      this.videoStartTimestampDevice = null;
       this.loadedData = false;
     }
 
@@ -223,11 +231,27 @@ export default class CameraVideo extends React.Component {
     this._renderCanvas();
   };
 
-  _onNextVideoClip = (segment, when) => {
-    if (this.videoStartTimeDeviceMs === null) {
-      this.videoStartTimeDeviceMs = when;
+  _onNextVideoClip = (segmentData, when) => {
+    if (this.videoStartTimestampDevice === null) {
+      this.videoStartTimestampDevice = when;
     }
-    this.refs.msePlayer.feedSegment(segment);
+
+    // Calculate device-to-client lag. Also figure out if we dropped
+    // any segments. Given the current segment's duration and device
+    // timestamp, we can figure out what timestamp the next segment
+    // segment should have. We record any discrepancies.
+    let delta = 0;
+    if (this.expectNextSegmentTimestamp !== null) {
+      delta = when - this.expectNextSegmentTimestamp;
+    }
+    const deviceToClientLagMs = Date.now() - when;
+    requestAnimationFrame(() => this.setState({
+      deviceToClientLagMs,
+      totalDroppedMs: this.state.totalDroppedMs + delta,
+    }));
+
+    const segment = this.refs.msePlayer.feedSegmentData(segmentData);
+    this.expectNextSegmentTimestamp = when + segment.videoDurationTimeMs;
   };
 
   _onMotionEventsCheck = () => {
@@ -254,16 +278,6 @@ export default class CameraVideo extends React.Component {
 
   _onTimeUpdate = () => {
     this._renderCanvas();
-    if (this.state.showVideoStats || this.state.initialLagMs === null) {
-      const video = this.refs.msePlayer.videoElement;
-      const currentLagMs = Date.now() - this.videoStartTimeDeviceMs - video.currentTime * 1000;
-      requestAnimationFrame(() => {
-        this.setState({
-          initialLagMs: this.state.initialLagMs || currentLagMs,
-          currentLagMs,
-        });
-      });
-    }
   };
 
   _renderCanvas() {
@@ -320,7 +334,8 @@ export default class CameraVideo extends React.Component {
 
     // Draw objects.
     const video = this.refs.msePlayer.videoElement;
-    const time = this.videoStartTimeDeviceMs + Math.floor(video.currentTime * 1000);
+    const currentVideoTimeMs = video.currentTime * 1000;
+    const time = this.videoStartTimestampDevice + Math.floor(currentVideoTimeMs);
     const objects = this._collectAndProcessObjects(time);
     if (objects.length) {
       const objectColors = [
@@ -548,8 +563,8 @@ export default class CameraVideo extends React.Component {
   _onVideoStalledOrResumed = (event) => {
     log.debug(`Video playback ${event.type}`);
     if (event.type === 'playing') {
-      if (this.videoStartTimeClientMs === null) {
-        this.videoStartTimeClientMs = Date.now();
+      if (this.videoStartTimestampClient === null) {
+        this.videoStartTimestampClient = Date.now();
       }
       if (this.lastStalledTimestamp === null) {
         log.debug(`Video resuming, but no previously recorded stall. Ignoring.`);
@@ -574,9 +589,42 @@ export default class CameraVideo extends React.Component {
   };
 
   _onSegmentEnqueued = (segment) => {
+    // Are we getting a segment having been out of buffered data? If
+    // so, record the time we presumably spent without having any
+    // buffered data.
+    const timeSinceLastOutOfBuffer = Date.now() - this.emptyBufferTimestamp;
+    let timeOutOfBuffer = 0;
+    if (this.outOfBuffer) {
+      const timePreviouslyBuffered =
+        this.previousSegmentEndTimeMs - this.emptyBufferVideoStartTimeOffsetMs;
+      timeOutOfBuffer = timeSinceLastOutOfBuffer - timePreviouslyBuffered;
+      log.debug(`We were apparently out of buffered data for ${timeOutOfBuffer} ms.`);
+    }
+
+    if (this.outOfBuffer || this.emptyBufferTimestamp === null) {
+      this.emptyBufferTimestamp = Date.now();
+      this.emptyBufferVideoStartTimeOffsetMs = segment.videoStartTimeMs;
+      this.outOfBuffer = false;
+    }
+    this.previousSegmentEndTimeMs = segment.videoStartTimeMs + segment.videoDurationTimeMs;
+
+    // Calculate the time when we'd expect the <video> element to be
+    // out of buffered data.
+    const video = this.refs.msePlayer.videoElement;
+    const outOfBufferMs = this.previousSegmentEndTimeMs - video.currentTime * 1000;
+    log.debug(`Expecting <video> element to run out of buffered data in ${outOfBufferMs} ms`);
+    clearTimeout(this.outOfBufferTimer);
+    this.outOfBufferTimer = setTimeout(this._onOutOfBuffer, outOfBufferMs);
+
     requestAnimationFrame(() => this.setState({
-      totalBufferedMs: 1000 * segment.videoStartTime / segment.videoTimescale,
+      totalBufferedMs: segment.videoStartTimeMs,
+      totalOutOfBufferMs: this.state.totalOutOfBufferMs + timeOutOfBuffer,
     }));
+  };
+
+  _onOutOfBuffer = () => {
+    log.debug(`Expecting <video> element to be out of buffered data at this point.`);
+    this.outOfBuffer = true;
   };
 
   render() {
@@ -593,33 +641,37 @@ export default class CameraVideo extends React.Component {
       );
     }
     let videoStats = null;
-    if (this.state.showVideoStats && this.state.currentLagMs) {
-      const video = this.refs.msePlayer.videoElement;
-      const elapsedMs = Date.now() - this.videoStartTimeClientMs;
-      const {initialLagMs, currentLagMs, totalStalledMs, totalBufferedMs} = this.state;
+    if (this.state.showVideoStats && this.state.deviceToClientLagMs) {
+      const currentVideoTimeMs = this.refs.msePlayer.videoElement.currentTime * 1000;
+      const elapsedMs = Date.now() - this.videoStartTimestampClient;
+      const {
+        deviceToClientLagMs,
+        totalStalledMs,
+        totalBufferedMs,
+        totalOutOfBufferMs,
+        totalDroppedMs,
+      } = this.state;
       videoStats = (
         <div style={styles.videoStats}>
           <ul style={styles.consoleMessages}>
             <li style={styles.videoStatsItem}>
               Time:<br/>
               {formatMs(elapsedMs)} elapsed<br/>
-              {formatMs(video.currentTime * 1000)} {' <video> '}
-              ({formatDeltaMs(video.currentTime * 1000 - elapsedMs)})
+              {formatMs(currentVideoTimeMs)} {' <video> '}
+              ({formatDeltaMs(currentVideoTimeMs - elapsedMs)})
             </li>
             <li style={styles.videoStatsItem}>
               Buffer:<br/>
               {formatMs(totalBufferedMs)} buffered<br/>
-              {formatMs(video.currentTime * 1000)} {' <video> '}
-              ({formatDeltaMs(video.currentTime * 1000 - totalBufferedMs)})
+              {formatMs(currentVideoTimeMs)} {' <video> '}
+              ({formatDeltaMs(currentVideoTimeMs - totalBufferedMs)})
             </li>
             <li style={styles.videoStatsItem}>
-              Lag:<br/>
-              {formatMs(initialLagMs)} initial<br/>
-              {formatMs(currentLagMs)} current ({formatDeltaMs(currentLagMs - initialLagMs)})
-            </li>
-            <li style={styles.videoStatsItem}>
-              Stalls:<br/>
-              {formatMs(totalStalledMs / 1000)} {' <video>'}
+              Lag/Stalls/Drops:<br/>
+              {formatMs(deviceToClientLagMs)} lag device to client<br/>
+              {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
+              {formatMs(totalOutOfBufferMs)} out of buffer<br/>
+              {formatMs(totalDroppedMs)} in segments dropped
             </li>
           </ul>
         </div>

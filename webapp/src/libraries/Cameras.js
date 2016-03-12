@@ -420,7 +420,7 @@ class Cameras extends EventEmitter {
         this._update();
       });
     } catch (err) {
-      log.error(err.stack);
+      log.error(err);
       this._updateStatus(`Initialization failed: ${err}`);
     }
   }

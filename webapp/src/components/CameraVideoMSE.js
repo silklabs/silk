@@ -4,7 +4,7 @@ import { Input } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
 import createLog from 'silk-log';
 
-import MSEPlayer from './MSEPlayer';
+import MSEPlayerWithStats from './MSEPlayerWithStats';
 import Cameras from '../libraries/Cameras';
 
 const log = createLog('CameraVideoMSE');
@@ -57,17 +57,6 @@ const styles = {
     padding: '0px 8px 8px 8px',
     listStyleType: 'none',
   },
-  videoStats: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  videoStatsItem: {
-    marginTop: 10,
-    marginBottom: 10,
-  },
   videoContainer: {
     position: 'relative',
     borderStyle: 'solid',
@@ -106,46 +95,20 @@ function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 
-function formatMs(number) {
-  return `${(number / 1000).toFixed(2)}s`;
-}
-
-function formatDeltaMs(number) {
-  if (number > 0) {
-    return '+' + formatMs(number);
-  }
-  return formatMs(number);
-}
-
 export default class CameraVideo extends React.Component {
   canvas = null;
   context = null;
   pixelRatio = 1;
 
-  videoStartTimestampClient = null;
   videoStartTimestampDevice = null;
   loadedData = false;
   renderedOnline = false;
-
-  expectNextSegmentTimestamp = null;
-  lastStalledTimestamp = null;
-
-  emptyBufferTimestamp = null;
-  emptyBufferVideoStartTimeOffsetMs = 0;
-  outOfBufferTimer = null;
-  outOfBuffer = false;
-  previousSegmentEndTimeMs = null;
 
   state = {
     camera: null,
     consoleMessages: [],
     showMotionEvents: false,
     showVideoStats: false,
-    deviceToClientLagMs: null,
-    totalDroppedMs: 0,
-    totalStalledMs: 0,
-    totalOutOfBufferMs: 0,
-    totalBufferedMs: 0,
   };
 
   get deviceId() {
@@ -215,7 +178,6 @@ export default class CameraVideo extends React.Component {
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
 
-      this.videoStartTimestampClient = null;
       this.videoStartTimestampDevice = null;
       this.loadedData = false;
     }
@@ -235,23 +197,7 @@ export default class CameraVideo extends React.Component {
     if (this.videoStartTimestampDevice === null) {
       this.videoStartTimestampDevice = when;
     }
-
-    // Calculate device-to-client lag. Also figure out if we dropped
-    // any segments. Given the current segment's duration and device
-    // timestamp, we can figure out what timestamp the next segment
-    // segment should have. We record any discrepancies.
-    let delta = 0;
-    if (this.expectNextSegmentTimestamp !== null) {
-      delta = when - this.expectNextSegmentTimestamp;
-    }
-    const deviceToClientLagMs = Date.now() - when;
-    requestAnimationFrame(() => this.setState({
-      deviceToClientLagMs,
-      totalDroppedMs: this.state.totalDroppedMs + delta,
-    }));
-
-    const segment = this.refs.msePlayer.feedSegmentData(segmentData);
-    this.expectNextSegmentTimestamp = when + segment.videoDurationTimeMs;
+    this.refs.msePlayer.feedSegmentData(segmentData, when);
   };
 
   _onMotionEventsCheck = () => {
@@ -560,73 +506,6 @@ export default class CameraVideo extends React.Component {
     });
   }
 
-  _onVideoStalledOrResumed = (event) => {
-    log.debug(`Video playback ${event.type}`);
-    if (event.type === 'playing') {
-      if (this.videoStartTimestampClient === null) {
-        this.videoStartTimestampClient = Date.now();
-      }
-      if (this.lastStalledTimestamp === null) {
-        log.debug(`Video resuming, but no previously recorded stall. Ignoring.`);
-        return;
-      }
-      const delta = Date.now() - this.lastStalledTimestamp;
-      log.debug(`Video resuming after ${delta} ms stall.`);
-
-      this.lastStalledTimestamp = null;
-      requestAnimationFrame(() => this.setState({
-        totalStalledMs: this.state.totalStalledMs + delta,
-      }));
-      return;
-    }
-
-    if (this.lastStalledTimestamp !== null) {
-      log.debug(`Already recorded earlier stalled timestamp. Not overwriting.`);
-      return;
-    }
-    log.debug(`Video stalled.`);
-    this.lastStalledTimestamp = Date.now();
-  };
-
-  _onSegmentEnqueued = (segment) => {
-    // Are we getting a segment having been out of buffered data? If
-    // so, record the time we presumably spent without having any
-    // buffered data.
-    const timeSinceLastOutOfBuffer = Date.now() - this.emptyBufferTimestamp;
-    let timeOutOfBuffer = 0;
-    if (this.outOfBuffer) {
-      const timePreviouslyBuffered =
-        this.previousSegmentEndTimeMs - this.emptyBufferVideoStartTimeOffsetMs;
-      timeOutOfBuffer = timeSinceLastOutOfBuffer - timePreviouslyBuffered;
-      log.debug(`We were apparently out of buffered data for ${timeOutOfBuffer} ms.`);
-    }
-
-    if (this.outOfBuffer || this.emptyBufferTimestamp === null) {
-      this.emptyBufferTimestamp = Date.now();
-      this.emptyBufferVideoStartTimeOffsetMs = segment.videoStartTimeMs;
-      this.outOfBuffer = false;
-    }
-    this.previousSegmentEndTimeMs = segment.videoStartTimeMs + segment.videoDurationTimeMs;
-
-    // Calculate the time when we'd expect the <video> element to be
-    // out of buffered data.
-    const video = this.refs.msePlayer.videoElement;
-    const outOfBufferMs = this.previousSegmentEndTimeMs - video.currentTime * 1000;
-    log.debug(`Expecting <video> element to run out of buffered data in ${outOfBufferMs} ms`);
-    clearTimeout(this.outOfBufferTimer);
-    this.outOfBufferTimer = setTimeout(this._onOutOfBuffer, outOfBufferMs);
-
-    requestAnimationFrame(() => this.setState({
-      totalBufferedMs: segment.videoStartTimeMs,
-      totalOutOfBufferMs: this.state.totalOutOfBufferMs + timeOutOfBuffer,
-    }));
-  };
-
-  _onOutOfBuffer = () => {
-    log.debug(`Expecting <video> element to be out of buffered data at this point.`);
-    this.outOfBuffer = true;
-  };
-
   render() {
     let console = null;
     if (this.state.camera &&
@@ -640,59 +519,19 @@ export default class CameraVideo extends React.Component {
         </div>
       );
     }
-    let videoStats = null;
-    if (this.state.showVideoStats && this.state.deviceToClientLagMs) {
-      const currentVideoTimeMs = this.refs.msePlayer.videoElement.currentTime * 1000;
-      const elapsedMs = Date.now() - this.videoStartTimestampClient;
-      const {
-        deviceToClientLagMs,
-        totalStalledMs,
-        totalBufferedMs,
-        totalOutOfBufferMs,
-        totalDroppedMs,
-      } = this.state;
-      videoStats = (
-        <div style={styles.videoStats}>
-          <ul style={styles.consoleMessages}>
-            <li style={styles.videoStatsItem}>
-              Time:<br/>
-              {formatMs(elapsedMs)} elapsed<br/>
-              {formatMs(currentVideoTimeMs)} {' <video> '}
-              ({formatDeltaMs(currentVideoTimeMs - elapsedMs)})
-            </li>
-            <li style={styles.videoStatsItem}>
-              Buffer:<br/>
-              {formatMs(totalBufferedMs)} buffered<br/>
-              {formatMs(currentVideoTimeMs)} {' <video> '}
-              ({formatDeltaMs(currentVideoTimeMs - totalBufferedMs)})
-            </li>
-            <li style={styles.videoStatsItem}>
-              Lag/Stalls/Drops:<br/>
-              {formatMs(deviceToClientLagMs)} lag device to client<br/>
-              {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
-              {formatMs(totalOutOfBufferMs)} out of buffer<br/>
-              {formatMs(totalDroppedMs)} in segments dropped
-            </li>
-          </ul>
-        </div>
-      );
-    }
     let msePlayer = null;
     if (this.state.camera) {
       msePlayer = (
-        <MSEPlayer
+        <MSEPlayerWithStats
           ref="msePlayer"
           key={this.state.camera.id}
+          showStats={this.state.showVideoStats}
           autoPlay="true"
           style={styles.video}
           onLoadedMetadata={this._updateCanvasSize}
           onLoadedData={this._onLoadedData}
           onResize={this._updateCanvasSize}
           onTimeUpdate={this._onTimeUpdate}
-          onStalled={this._onVideoStalledOrResumed}
-          onWaiting={this._onVideoStalledOrResumed}
-          onPlaying={this._onVideoStalledOrResumed}
-          onSegmentEnqueued={this._onSegmentEnqueued}
         />
       );
     }
@@ -702,7 +541,6 @@ export default class CameraVideo extends React.Component {
         <div style={styles.videoContainer}>
           {msePlayer}
           {console}
-          {videoStats}
           <canvas
             style={styles.canvas}
             ref="canvas">

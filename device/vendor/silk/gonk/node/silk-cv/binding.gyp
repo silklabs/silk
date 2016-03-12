@@ -5,6 +5,7 @@
       "sources": [
         "capture.cpp",
         "dlib.cpp",
+        "faceDetector.cpp",
         "init.cpp",
         "matrix.cpp",
         "mog2.cpp",

@@ -11,7 +11,8 @@
     "silk-docs": "/docs",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
-    "silk-raygun": "/raygun"
+    "silk-raygun": "/raygun",
+    "silk-svm": "/svm"
   },
   "dependencies": {
     "Chart.StackedBar.js": "git@github.com:Regaddi/Chart.StackedBar.js.git#63eb91092266ac16a20bda28cc9ba5c80415513d",

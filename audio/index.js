@@ -117,13 +117,15 @@ export const svmSoundsConfigs = {
     // detected (but not /really/ quick ones).  No effort has been
     // made to optimize this value.
     featureVectorFrameCount: 16,
-    maxGapTime: 0.0,
+    hasSustain: false,
+    quietTimeout: 0.0,
+    sonemeGapTimeout: 0.0,
 
     trainingOptions: {
-      // This achieves nearly-optimal results (1 miss, 1 false-accept)
-      // across the two training subsets.
-      rbfsigma: 1.0,
-      C: 1e2,
+      // This achieves OK results (4 miss, 0 false-accept) across the
+      // two training subsets.
+      rbfsigma: 0.1,
+      C: 1e1,
 
       // These magic SVM params are the default for svmjs.
       maxiter: 1e4,
@@ -146,7 +148,9 @@ export const svmSoundsConfigs = {
     loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
     loudMinDuration: 0.256,
     featureVectorFrameCount: 16,
-    maxGapTime: 0.512,
+    hasSustain: false,
+    quietTimeout: 0.512,
+    sonemeGapTimeout: 0.512,
 
     trainingOptions: {
       // This achieves optimal results (0 miss, 0 false-accept) on the
@@ -175,13 +179,15 @@ export const svmSoundsConfigs = {
     loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
     loudMinDuration: 0.256,
     featureVectorFrameCount: 16,
-    maxGapTime: 0.512,
+    hasSustain: true,
+    quietTimeout: 0.512,
+    sonemeGapTimeout: 0.512,
 
     trainingOptions: {
-      // This achieves OK results (3 miss, 1 false-accept) on the two
+      // This achieves OK results (8 miss, 0 false-accept) on the two
       // training subsets.
-      rbfsigma: 0.1,
-      C: 1e1,
+      rbfsigma: 0.5,
+      C: 1e2,
 
       // These magic SVM params are the default for svmjs.
       maxiter: 1e4,

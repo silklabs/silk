@@ -22,12 +22,13 @@ function getTestClass(testName) {
 
 class SVMTrainer {
   jobQ = [ ];
+  nrJobs = 0;
   resolve;
   reject;
   runningJobs = { };            // id -> job
+  statusUpdateInterval;
   svmCfg;
   svmJSON = null;
-  nrJobs = 0;
   trainCfg;
   trainingReport = '';
   trainingStart;
@@ -49,6 +50,8 @@ class SVMTrainer {
   }
 
   run(trainingData, trainingLabels, validationData, validationLabels) {
+    this.statusUpdateInterval = setInterval(this.onUpdateStatus, 5000);
+
     this.trainingStart = Date.now();
     let optionsList = this._fullTraining ?
           [ this.trainCfg.options ] : this.trainCfg.optionsList;
@@ -84,16 +87,20 @@ class SVMTrainer {
     });
   }
 
+  finish() {
+    clearInterval(this.statusUpdateInterval);
+    let totalSecs = (Date.now() - this.trainingStart) / 1000.0;
+    log.info('Finished all training/validation jobs');
+    this.resolve({
+      report: this.trainingReport,
+      svmJSON: this.svmJSON,
+      totalSecs,
+    });
+  }
+
   scheduleWork() {
     if (this.jobQ.length === 0 && Object.keys(this.runningJobs).length === 0) {
-      let totalSecs = (Date.now() - this.trainingStart) / 1000.0;
-      log.info('Finished all training/validation jobs');
-      this.resolve({
-        report: this.trainingReport,
-        svmJSON: this.svmJSON,
-        totalSecs,
-      });
-      return undefined;
+      return this.finish();
     }
     let worker = this.findIdleWorker();
     if (!worker) {
@@ -171,6 +178,11 @@ class SVMTrainer {
       delete this.runningJobs[id];
     });
   }
+
+  onUpdateStatus = () => {
+    let elapsed = (Date.now() - this.trainingStart) / 1000;
+    log.info(`Still doing SVM work: ${Object.keys(this.runningJobs).length} running jobs, ${this.jobQ.length} pending, ${elapsed}s elapsed time`);
+  };
 
   onWorkerMessage = (e) => {
     let { cmd, body, workerId } = e.data;

@@ -31,12 +31,3 @@ ifneq ($(ONE_SHOT_MAKEFILE),)
 include $(LOCAL_PATH)/../ext.mk
 $(eval $(call RENDER_EXTENSION_MK,$(LOCAL_PATH)))
 endif
-
-$(LOCAL_PATH)/model/clap-svm.json: ../webapp/public/clap-svm.json | $(ACP)
-	$(copy-file-to-new-target)
-
-$(LOCAL_PATH)/model/firealarm-svm.json: ../webapp/public/firealarm-svm.json | $(ACP)
-	$(copy-file-to-new-target)
-
-$(LOCAL_PATH)/model/glassbreak-svm.json: ../webapp/public/glassbreak-svm.json | $(ACP)
-	$(copy-file-to-new-target)

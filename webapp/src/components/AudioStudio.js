@@ -11,6 +11,9 @@ import tar from 'tar-stream';
 
 import AudioVisualizer from './AudioVisualizer';
 import Cameras from '../libraries/Cameras';
+// This is a private API, but we're "friends" with the sound-event
+// recognition code.
+import FeatureVectorExtractor from '../../../audio/lib/FeatureVectorExtractor';
 import FileDrop from './FileDrop';
 import Files from '../libraries/Files';
 import { trainSVM } from '../libraries/SVMTrainer';
@@ -37,15 +40,22 @@ function generateGridSearchTrainingOptions(params) {
   return options;
 }
 
+const svmToTrain = svmSoundsConfigs.firealarm;
 const svmTrainingConfig = {
-  svmConfig: svmSoundsConfigs.glassbreak,
-  mode: 'cross-validate',       // { cross-validate, full }
+  svmConfig: svmToTrain,
+  mode: 'cross-validate',
+  //mode: 'full',
   reportFailedTests: true,
+
+  // For 'full' training mode --- SVM ready to ship.  Options gathered
+  // and updated from a satisfactory cross-validate grid search.
+  options: svmToTrain.trainingOptions,
+
   // For 'cross-validate' training mode --- grid-search the param
   // space.
   optionsList: generateGridSearchTrainingOptions({
-    rbfsigma: [ 0.5 ],
-    C: [ 1e1, 5e1 ],
+    rbfsigma: [ 0.1 ],
+    C: [ 1e0 ],
 
     maxiter: [ 1e4 ],
     numpasses: [ 1e1 ],
@@ -55,9 +65,6 @@ const svmTrainingConfig = {
     tol: [ 1e-4 ],
     alphatol: [ 1e-7 ],
   }),
-  // For 'full' training mode --- SVM ready to ship.  Options gathered
-  // from a satisfactory cross-validate grid search.
-  //options: {"rbfsigma":0.5,"C":10,"maxiter":10000,"numpasses":10,"kernel":"rbf","tol":0.0001,"alphatol":1e-7},
 };
 const ENABLE_SOUND_DETECTOR = true;
 
@@ -646,10 +653,10 @@ export default class AudioStudio extends React.Component {
     let trainingLabels = [ ];
     let validationData = [ ];
     let validationLabels = [ ];
-    let failedSounds = [ ];
+    let failedClips = [ ];
     let nrSounds = 0;
 
-    log.info('Extracting training and validation sounds ...');
+    log.info(`Extracting training and validation sounds with feature vector frame count ${svmConfig.featureVectorFrameCount} ...`);
     let extractionStart = Date.now();
     let runTestOrSuite = (tag, header, fileData) => {
       if (header.type !== 'file') {
@@ -666,69 +673,60 @@ export default class AudioStudio extends React.Component {
                                 runTestOrSuite);
       }
       let testName = `${tag}-${header.name}`;
+      let featureVectorCount = 0;
       let samples = getAudioDataFromWAV(fileData);
 
-      // Run the loud-sound extraction on the test case.
+      // Run loud-sound extraction on the test case.
       let analyzer = createAudioAnalyzer(svmFFTConfig);
-      let featureVector = new Float32Array(analyzer.frequencyBinCount *
-                                           svmConfig.featureVectorFrameCount);
-      let vectorOffset = 0;
-      let extractLoudSounds = (magnitudes) => {
-        if (vectorOffset === 0) {
-          let isLoud = max(magnitudes) > svmConfig.loudThreshold;
-          if (!isLoud) {
-            return;
-          }
+      let featureVectorExtractor =
+            new FeatureVectorExtractor(analyzer, svmConfig);
+      featureVectorExtractor.on('loud-sound', (featureVector) => {
+        let featureVectorLabel = testName + '-' + featureVectorCount++;
+        let forTraining, forValidation;
+        if (svmTrainingConfig.mode === 'full') {
+          forTraining = forValidation = true;
+        } else {
+          // Arbitrarily choose the "even-numbered" sounds to be the
+          // first training set.  In cross-validate mode, we'll swap
+          // the training set for validation set in the second run.
+          forTraining = nrSounds % 2 === 0;
+          forValidation = !forTraining;
         }
-        featureVector.set(magnitudes, vectorOffset);
-        vectorOffset += analyzer.frequencyBinCount;
-        if (vectorOffset === featureVector.length) {
-          analyzer.removeListener(svmConfig.fftType, extractLoudSounds);
-          let forTraining, forValidation;
-          if (svmTrainingConfig.mode === 'full') {
-            forTraining = forValidation = true;
-          } else {
-            // Arbitrarily choose the "even-numbered" sounds to be the
-            // first training set.  In cross-validate mode, we'll swap
-            // the training set for validation set in the second run.
-            forTraining = nrSounds % 2 === 0;
-            forValidation = !forTraining;
-          }
-          if (forTraining) {
-            trainingData.push(featureVector);
-            trainingLabels.push(testName);
-          }
-          if (forValidation) {
-            validationData.push(featureVector);
-            validationLabels.push(testName);
-          }
-          // We've extracted the first loud-sound feature vector from
-          // the test case.  We'll stop now and ignore the remaining
-          // samples in the recording.  We don't have a convenient way
-          // to stop further processing, so just throw an exception to
-          // pop back out to `appendSamples()` code below.
-          //
-          // TODO extract sounds from the remaining samples too
+        if (forTraining) {
+          trainingData.push(featureVector);
+          trainingLabels.push(featureVectorLabel);
+        }
+        if (forValidation) {
+          validationData.push(featureVector);
+          validationLabels.push(featureVectorLabel);
+        }
+        if (++nrSounds % 50 === 0) {
+          log.info(`... extracted sound ${nrSounds}`);
+        }
+        if (!svmConfig.hasSustain) {
+          // This sound class doesn't have "sustain", meaning it's
+          // just an impulse.  We assume that the feature vector
+          // length is sufficient to capture the impulse
+          // characteristic --- if not, `hasSustain` should be true or
+          // the feature vector should be adjusted! --- so we're done
+          // with this clip.  We don't have a convenient way to stop
+          // audio processing from here, so just hacky hack and throw
+          // an exception.
           throw 'done';
         }
-      };
-      analyzer.on(svmConfig.fftType, extractLoudSounds);
-      let detectedLoudSound = false;
+      });
+      // Feed all the samples into the extractor.
       try {
         analyzer.appendSamples(samples, 0);
       } catch (e) {
         if (e !== 'done') {
           throw e;
         }
-        detectedLoudSound = true;
       }
-      if (!detectedLoudSound) {
-        log.error(`Failed to extract loud sound from clip ${testName}`);
-        failedSounds.push(testName);
+      if (featureVectorCount === 0) {
+        log.error(`Failed to extract loud sounds from clip ${testName}`);
+        failedClips.push(testName);
         return Promise.resolve();
-      }
-      if (++nrSounds % 50 === 0) {
-        log.info(`... extracted sound ${nrSounds}`);
       }
       return Promise.resolve();
     };
@@ -738,7 +736,7 @@ export default class AudioStudio extends React.Component {
       .then(() => {
         let extractionTimeMs = (Date.now() - extractionStart);
         log.info(`Extracted ${nrSounds} sounds in ${extractionTimeMs}ms`);
-        log.info(`  failed to get loud sounds from ${failedSounds}`);
+        log.info(`  failed to get loud sounds from ${failedClips.length} tracks: ${failedClips}`);
         log.info(`Preparing to start SVM training ...`);
         return trainSVM({ trainingData, trainingLabels,
                           validationData, validationLabels,

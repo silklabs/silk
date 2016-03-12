@@ -13,7 +13,7 @@ import {
 } from './face';
 
 const TRACKER_NAME = 'MEDIANFLOW';
-//const TRACKER_NAME = 'CMT';
+//const TRACKER_NAME = 'DLIB';
 
 // Set a reasonable limit of tracked objects
 const MAX_TRACKED_OBJECTS = 10;
@@ -28,19 +28,12 @@ export default class FaceTracker {
     timeline = env.timeline;
   }
 
-  _probablySameFace(r1: FaceRect, r2: FaceRect): bool {
+  // Computes the area and overlap ratios between two face rectangles
+  _faceRectRatio(r1: FaceRect, r2: FaceRect): [/*overlap:*/ number, /*area:*/ number] {
     const area1 = r1.width * r1.height;
     const area2 = r2.width * r2.height;
-
-    // Are the two rectangles close enough in size
     const areaRatio = Math.min(area1, area2) / Math.max(area1, area2);
-    if (areaRatio < 0.5) {
-      // Rectangles that differ in size by more than 50% are probably not
-      // the same
-      return false;
-    }
 
-    // Do both rectangles mostly overlap?
     const xOverlap = Math.max(
       0,
       Math.min(r1.x + r1.width, r2.x + r2.width) - Math.max(r1.x, r2.x)
@@ -52,8 +45,14 @@ export default class FaceTracker {
     const areaOverlap = xOverlap * yOverlap;
     const overlapRatio = areaOverlap / Math.min(area1, area2);
 
-    // Rectangles overlapping by more than 50% probably are the same
-    return overlapRatio > 0.5;
+    return [overlapRatio, areaRatio];
+  }
+
+  _probablySameFace(r1: FaceRect, r2: FaceRect): bool {
+    const [overlapRatio, areaRatio] = this._faceRectRatio(r1, r2);
+    // Faces overlapping by more than 50% and within 50% of the area are
+    // probably the same.
+    return overlapRatio > 0.5 && areaRatio > 0.5;
   }
 
   detectedFaces(when: number, faceRects: Array<FaceRect>, grayeq: Matrix) {
@@ -62,12 +61,14 @@ export default class FaceTracker {
         if (face.i.tracker === null) {
           return false; // Zombie face that hasn't been removed yet by update()
         }
+
+        // Faces overlapping by more than 50% and within 50% of the area
+        // are probably the same, so update the tracking rectangle to the latest
+        // detected location for this face.
         if (this._probablySameFace(rect, face.rect)) {
-          log.info(`Updating location of face ${face.id} to ${JSON.stringify(rect)}`);
+          log.verbose(`Updating location of face ${face.id}`);
           face.setLocation(rect, when);
 
-          // Cancel any existing tracker operation and create a new tracker
-          // starting at the latest confirmed face location.
           // TODO LATER: it would be nice to update the Tracker API to allow
           // reinitializing a tracker as for certain Tracker implementations
           // this could be a win.
@@ -86,8 +87,29 @@ export default class FaceTracker {
           face.setLocation(rect, when);
           face.i.tracker = new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
           this.faces.push(face);
+          log.verbose(`Tracking new face ${face.id}`);
         }
       }
+    });
+
+    // Search for faces that were not updated with the latest detection results
+    this.faces.forEach(face => {
+      if (face.rectWhen === when ||
+          face.i.tracker === null ||
+          face.i.tracker.busy()) {
+        return;
+      }
+      // If the non-updated face overlaps any of the newly detected faces by 50%,
+      // then remove it, as its tracker has likely drifted.
+      faceRects.some(rect => {
+        const [overlapRatio] = this._faceRectRatio(rect, face.rect);
+        if (overlapRatio > 0.5) {
+          face.i.tracker.cancel();
+          face.i.tracker = null;
+          log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
+          return true;
+        }
+      });
     });
   }
 
@@ -117,23 +139,22 @@ export default class FaceTracker {
         log.warn(`Tracker still busy for face ${face.id}`);
         continue;
       }
+      idleFaces.push(face);
 
       // Check if another tracker appears to be also tracking this face
       for (let j = i + 1; j < this.faces.length; j++) {
         let face2 = this.faces[j];
-        if (face2.i.tracker === null) {
+        if (face2.i.tracker === null || face2.i.tracker.busy()) {
           continue;
         }
-        if (!face2.i.tracker.busy() && this._probablySameFace(face.rect, face2.rect)) {
-          // Drop the other tracker.
-          // TODO: Be smarter about which tracker to drop, based on
-          // area/tracker age/...?
+        if (this._probablySameFace(face.rect, face2.rect)) {
+          // Drop face2
+          // TODO: Be smarter about which face to drop, based on area/age/faceId...?
           face2.i.tracker = null;
           log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
           continue;
         }
       }
-      idleFaces.push(face);
     }
     return idleFaces;
   }
@@ -166,6 +187,7 @@ export default class FaceTracker {
       if (!found) {
         face.i.tracker = null;
         lostFaces.push(face);
+        log.verbose(`Lost face ${face.id}`);
         continue;
       }
 
@@ -197,9 +219,6 @@ export default class FaceTracker {
       }
     }
 
-    if (lostFaces.length > 0) {
-      log.info(`Lost ${lostFaces.length} faces`);
-    }
     return lostFaces;
   }
 

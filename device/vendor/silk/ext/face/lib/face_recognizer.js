@@ -187,7 +187,7 @@ export default class FaceRecognizer {
       if (face.faceId === null) {
         if (faceId !== null) {
           // Initial prediction
-          log.verbose(`Face ${face.id} detected: ${faceId}`);
+          log.verbose(`Face ${face.id}: detected faceId ${faceId}`);
           face.faceId = faceId;
           face.i.recognizer.lastWhen = when;
           face.i.recognizer.history.push(faceId);
@@ -204,10 +204,10 @@ export default class FaceRecognizer {
           log.verbose(`Face ${face.id} inconsistent.` +
                       `Expected ${face.faceId}, predicted ${faceId}`);
 
-          const previews = face.i.recognizer.history.toArray();
-          let errorCount = previews.reduce(
+          const predictionHistory = face.i.recognizer.history.toArray();
+          let errorCount = predictionHistory.reduce(
             (errorCount, currentId) => {
-              return errorCount + (currentId !== face.faceId ? 1 : 0);
+              return errorCount + (currentId !== null && currentId !== face.faceId ? 1 : 0);
             },
             0
           );

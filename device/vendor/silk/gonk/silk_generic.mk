@@ -43,6 +43,7 @@ PRODUCT_PACKAGES += $(SILK_CORE)
 SILK_EXT := \
   clapper \
   clapper-sound \
+  devicemotion \
   nightlight \
   motion \
   motion-sound \

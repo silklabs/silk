@@ -135,7 +135,11 @@ export default class Lifx {
   }
 
   willUnload() {
+    clearTimeout(this._sceneStateTimer);
     this._lifx.removeListener('on', this._onLightNew);
+    this._lifx.stopDiscovery();
+    this._lifx.stopSendingProcess();
+    this._lifx.destroy();
     this._lifx = undefined;
   }
 }

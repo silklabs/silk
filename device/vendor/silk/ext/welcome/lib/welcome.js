@@ -149,6 +149,8 @@ class Welcome {
   }
 
   willUnload() {
+    clearTimeout(this._noFaceDetectedTimer);
+    clearTimeout(this._nextModeTimer);
     this._env.timeline.removeListener('face', this._onFace);
     this._env.timeline.removeListener('sound', this._onSound);
     this._sonos.willUnload();

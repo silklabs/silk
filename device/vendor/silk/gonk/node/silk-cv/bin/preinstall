@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Install silkDependencies
+if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
+  ../../../../../../npm_postinstall
+else
+  $ANDROID_BUILD_TOP/../npm_postinstall
+fi
+
 if [[ "$NPM_CONFIG_PLATFORM" != "android" ]]; then
   if [[ ! -d node_modules/opencv ]]; then
     npm install peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c

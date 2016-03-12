@@ -7,7 +7,7 @@ const silkcv = require('..');
 
 suite('Tracker', () => {
   // TODO: Add 'CMT' tracker if/when it is made less crashy
-  ['MEDIANFLOW'].forEach(trackerName => {
+  ['DLIB', 'MEDIANFLOW'].forEach(trackerName => {
 
     test(trackerName + ' sanity', () => new Promise(resolve => {
       cv.readImage(path.join(__dirname, 'fixtures/tracker/t0.jpg'), (err, im) => {
@@ -36,7 +36,7 @@ suite('Tracker', () => {
                 if (err) {
                   throw err;
                 }
-                console.log('patch rect', JSON.stringify(rect));
+                console.log(trackerName, 'patch rect', JSON.stringify(rect));
                 assert(found, 'Target patch not found');
                 assert(Math.abs(rect.x - 30) < 3, 'Unexpected x:' + Math.round(rect.x));
                 assert(Math.abs(rect.y - 30) < 3, 'Unexepected y:' + Math.round(rect.y));

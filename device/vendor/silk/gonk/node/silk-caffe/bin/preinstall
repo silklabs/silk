@@ -59,13 +59,15 @@ if [[ ! -d protobuf ]]; then
 fi
 
 # Download caffe
+CAFFE_SHA1=813c3c9bb02a7e8b3899e7cfd6db1885228fb914
 if [[ ! -d caffe ]]; then
   echo Downloading caffe
-  git clone git@github.com:BVLC/caffe.git -b 813c3c9bb02a7e8b3899e7cfd6db1885228fb914
+  git clone git@github.com:BVLC/caffe.git
 
   # Patch caffe
   echo patching caffe
   pushd caffe
+  git checkout $CAFFE_SHA1
   git am --quiet $PATCH_TREE/caffe/0001-Select-correct-version-of-vecLib.patch
   popd
 fi

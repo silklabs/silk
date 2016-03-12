@@ -17,6 +17,9 @@
     "babel": "5.8.35",
     "mocha": "2.4.2"
   },
+  "silkDependencies": {
+    "silk-external-dlib": "/external-dlib"
+  },
   "gypfile": true,
   "private": true
 }

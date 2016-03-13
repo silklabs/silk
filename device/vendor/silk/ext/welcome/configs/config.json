@@ -1,8 +1,38 @@
 { 
-  "modes": {
+  "triggers": {
     "Andrea": {
       "type": "faceSeen",
       "faceName": "Andrea",
+      "mode": "Upbeat"
+    },
+    "Wayne": {
+      "type": "faceSeen",
+      "faceName": "Wayne",
+      "mode": "Chill"
+    },
+    "Jro": {
+      "type": "faceSeen",
+      "faceName": "Jro",
+      "mode": "Rock"
+    },
+    "NoFace": {
+      "type": "noFaceDetected",
+      "durationMs": "7000",
+      "mode": "Off"
+    },
+    "SmokeAlarm": {
+      "type": "sound",
+      "name": "firealarm",
+      "mode": "Smoke"
+    },
+    "Glassbreak": {
+      "type": "sound",
+      "name": "glassbreak",
+      "mode": "Police"
+    }
+  },
+  "modes": {
+    "Upbeat": {
       "sonos": {
         "action": "play",
         "queryType": "artists",
@@ -12,9 +42,7 @@
         "scene": "green"
       }
     },
-    "Wayne": {
-      "type": "faceSeen",
-      "faceName": "Wayne",
+    "Chill": {
       "sonos": {
         "action": "play",
         "uri": "x-rincon-playlist:RINCON_5CAAFD49B5BC01400#A:ARTIST/Yo-Yo%20Ma"
@@ -23,9 +51,7 @@
         "scene": "blue"
       }
     },
-    "Jro": {
-      "type": "faceSeen",
-      "faceName": "Jro",
+    "Rock": {
       "sonos": {
         "action": "play",
         "uri": "x-rincon-playlist:RINCON_5CAAFD49B5BC01400#A:ARTIST/Led%20Zeppelin"
@@ -35,26 +61,24 @@
       }
     },
     "Smoke": {
-      "type": "sound",
-      "name": "firealarm",
       "lifx": {
         "scene": "smoke"
-      }
+      },
+      "durationMs": "8000",
+      "nextMode": "Off"
     },
-    "Glassbreak": {
-      "type": "sound",
-      "name": "glassbreak",
+    "Police": {
       "sonos": {
         "action": "play",
         "uri": "x-rincon-playlist:RINCON_5CAAFD49B5BC01400#A:ARTIST/Police%20Siren"
       },
       "lifx": {
         "scene": "police"
-      }
+      },
+      "durationMs": "8000",
+      "nextMode": "Off"
     },
     "Off": {
-      "type": "noFaceDetected",
-      "durationMs": "7000",
       "sonos": {
         "action": "pause"
       },

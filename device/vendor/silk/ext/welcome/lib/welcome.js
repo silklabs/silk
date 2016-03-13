@@ -31,6 +31,7 @@ class Welcome {
     this._faceSeenConfigs = {};
     this._soundConfigs = {};
     this._noFaceDetectedConfig = {};
+    this._triggerConfigs = {};
     this._modeConfigs = {};
     this.mode = '';
 
@@ -49,23 +50,28 @@ class Welcome {
     try {
       let data = await fs.readFile(CONFIG_FILE);
       let config = JSON.parse(data);
+
       this._modeConfigs = config.modes;
+      Object.keys(this._modeConfigs).forEach(modeName => {
+        let modeConfig = this._modeConfigs[modeName];
+        log.info(`loading new mode ${modeName} ${modeConfig}`);
+      });
 
-      Object.keys(this._modeConfigs).forEach(mode => {
-        let modeConfig = this._modeConfigs[mode];
-        modeConfig.mode = mode;
+      this._triggerConfigs = config.triggers;
+      Object.keys(this._triggerConfigs).forEach(triggerName => {
+        let triggerConfig = this._triggerConfigs[triggerName];
 
-        log.info(`loading new mode ${mode} ${modeConfig}`);
+        log.info(`loading new trigger ${triggerName} ${triggerConfig}`);
 
-        if (modeConfig.type === 'faceSeen') {
-          this._faceSeenConfigs[modeConfig.faceName] = modeConfig;
-        } else if (modeConfig.type === 'sound') {
-          this._soundConfigs[modeConfig.name] = modeConfig;
+        if (triggerConfig.type === 'faceSeen') {
+          this._faceSeenConfigs[triggerConfig.faceName] = triggerConfig;
+        } else if (triggerConfig.type === 'sound') {
+          this._soundConfigs[triggerConfig.name] = triggerConfig;
         }
 
         // TODO: only one noFaceDeteted type is supported, use last one
-        if (modeConfig.type === 'noFaceDetected') {
-          this._noFaceDetectedConfig = modeConfig;
+        if (triggerConfig.type === 'noFaceDetected') {
+          this._noFaceDetectedConfig = triggerConfig;
 
           // Process fake face detect to kick off no face detection timer
           this._onFace();
@@ -129,13 +135,25 @@ class Welcome {
   }
 
   changeMode(newMode) {
+    if (!(newMode in this._modeConfigs)) {
+      log.error(`'${newMode}' mode not defined`);
+      return;
+    }
+
+    let modeConfig = this._modeConfigs[newMode];
+
+    if ('durationMs' in modeConfig && 'nextMode' in modeConfig) {
+      clearTimeout(this._nextModeTimer);
+      this._nextModeTimer = setTimeout(() => {
+        this.changeMode(modeConfig.nextMode);
+      }, modeConfig.durationMs);
+    }
+
     if (this.mode === newMode) {
       log.debug(`Already in '${newMode}' mode, not changing`);
       return;
     }
     log.info(`Changing to '${newMode}' mode`);
-
-    let modeConfig = this._modeConfigs[newMode];
 
     if (modeConfig.sonos) {
       this.changeSonos(modeConfig.sonos);

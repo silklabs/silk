@@ -73,6 +73,7 @@ void Model::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "predictTopK", PredictTopK);
   Nan::SetPrototypeMethod(ctor, "rcnn", Rcnn);
   Nan::SetPrototypeMethod(ctor, "nms", NonMaximaSuppression);
+  Nan::SetPrototypeMethod(ctor, "time", Time);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Model").ToLocalChecked(), ctor->GetFunction());
@@ -702,4 +703,101 @@ NAN_METHOD(Model::NonMaximaSuppression) {
     predictions->Set(i, rect);
   }
   info.GetReturnValue().Set(predictions);
+}
+
+/**
+ * Benchmark model execution time
+ */
+NAN_METHOD(Model::Time) {
+  SETUP_FUNCTION(Model)
+
+  if (info.Length() < 1) {
+    JSTHROW("Invalid number of arguments provided");
+  }
+
+  string model;
+  STRING_FROM_ARGS(model, 0);
+
+  int iterations = 50;
+  if (info.Length() >= 2) {
+    INT_FROM_ARGS(iterations, 1);
+  }
+
+  ALOGD("Use CPU");
+  Caffe::set_mode(Caffe::CPU);
+
+  // Instantiate caffe net
+  self->caffeNet.reset(new Net<float>(model, caffe::TRAIN));
+
+  // Do a clean forward and backward pass, so that memory allocation are done
+  // and future iterations will be more stable.
+  ALOGD("Performing Forward");
+
+  // Note that for the speed benchmark, we will assume that the network does
+  // not take any input blobs.
+  float initial_loss;
+  self->caffeNet->Forward(&initial_loss);
+  ALOGD("Initial loss: %f", initial_loss);
+  ALOGD("Performing Backward");
+  self->caffeNet->Backward();
+
+  const vector<boost::shared_ptr<Layer<float> > >& layers = self->caffeNet->layers();
+  const vector<vector<Blob<float>*> >& bottom_vecs = self->caffeNet->bottom_vecs();
+  const vector<vector<Blob<float>*> >& top_vecs = self->caffeNet->top_vecs();
+  const vector<vector<bool> >& bottom_need_backward =
+      self->caffeNet->bottom_need_backward();
+
+  ALOGD("*** Benchmark begins ***");
+  ALOGD("Testing for %d iterations", iterations);
+  Timer total_timer;
+  total_timer.Start();
+  Timer forward_timer;
+  Timer backward_timer;
+  Timer timer;
+  std::vector<double> forward_time_per_layer(layers.size(), 0.0);
+  std::vector<double> backward_time_per_layer(layers.size(), 0.0);
+  double forward_time = 0.0;
+  double backward_time = 0.0;
+  for (int j = 0; j < iterations; ++j) {
+    Timer iter_timer;
+    iter_timer.Start();
+    forward_timer.Start();
+    for (int i = 0; i < layers.size(); ++i) {
+      timer.Start();
+      layers[i]->Forward(bottom_vecs[i], top_vecs[i]);
+      forward_time_per_layer[i] += timer.MicroSeconds();
+    }
+    forward_time += forward_timer.MicroSeconds();
+    backward_timer.Start();
+    for (int i = layers.size() - 1; i >= 0; --i) {
+      timer.Start();
+      layers[i]->Backward(top_vecs[i], bottom_need_backward[i],
+                          bottom_vecs[i]);
+      backward_time_per_layer[i] += timer.MicroSeconds();
+    }
+    backward_time += backward_timer.MicroSeconds();
+    ALOGD("Iteration: %d forward-backward time: %.2f ms", j + 1,
+          iter_timer.MilliSeconds());
+  }
+  ALOGD("Average time per layer: ");
+  ALOGD("Layers size %d", layers.size());
+  for (int i = 0; i < layers.size(); ++i) {
+    ALOGD("Layer[%d] \tforward: %f ms", i,
+          (forward_time_per_layer[i] / 1000 / iterations));
+    ALOGD("Layer[%d] \tbackward: %f ms", i,
+          (backward_time_per_layer[i] / 1000 / iterations));
+  }
+  total_timer.Stop();
+  ALOGD("*** Benchmark ends ***");
+
+  Local<Object> result = Nan::New<Object>();
+  result->Set(Nan::New<String>("forward").ToLocalChecked(),
+      Nan::New<Number>(forward_time / 1000 / iterations));
+  result->Set(Nan::New<String>("backward").ToLocalChecked(),
+      Nan::New<Number>(backward_time / 1000 / iterations));
+  result->Set(Nan::New<String>("forwardbackward").ToLocalChecked(),
+      Nan::New<Number>(total_timer.MilliSeconds() / iterations));
+  result->Set(Nan::New<String>("total").ToLocalChecked(),
+      Nan::New<Number>(total_timer.MilliSeconds()));
+  info.GetReturnValue().Set(result);
 }

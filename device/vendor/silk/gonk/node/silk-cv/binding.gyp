@@ -4,6 +4,8 @@
       "target_name": "silk-cv",
       "sources": [
         "capture.cpp",
+        "dlib.cpp",
+        "faceDetector.cpp",
         "init.cpp",
         "matrix.cpp",
         "mog2.cpp",
@@ -22,6 +24,7 @@
       "cflags_cc!": [ "-fno-rtti",  "-fno-exceptions"],
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
+        '<!(node -e "require(\'silk-external-dlib\')")',
       ],
 
       "conditions": [

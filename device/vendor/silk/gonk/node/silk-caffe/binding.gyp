@@ -8,6 +8,7 @@
       ],
       'include_dirs': [
         '<!(node -e "require(\'nan\')")',
+        '<!(node -e "require(\'silk-external-dlib\')")',
       ],
       'cflags_cc': [
         '-fexceptions',
@@ -44,7 +45,6 @@
             '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/external/caffe/include/ceres/internal/miniglog/)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopencv2_core/include/)',
-            '-isystem <!(echo $ANDROID_BUILD_TOP/external/dlib/)',
           ],
         }],
         [ 'OS==\"mac\"', {
@@ -72,7 +72,6 @@
                 '-isystem <!(echo $PWD/caffe/src/)',
                 '-isystem <!(echo $PWD/caffe/include/)',
                 '-isystem <!(echo $PWD/caffe/build/include/)',
-                '-isystem <!(echo $PWD/dlib/)',
                 '-isystem <!(echo $PWD/protobuf/src)',
               ],
               "OTHER_LDFLAGS": [

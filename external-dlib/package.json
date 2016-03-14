@@ -1,0 +1,9 @@
+{
+  "name": "silk-external-dlib",
+  "version": "0.14.0",
+  "description": "dlib wrapper",
+  "main": "include_dirs.js",
+  "scripts": {
+    "preinstall": "./npm_preinstall"
+  }
+}

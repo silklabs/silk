@@ -11,11 +11,13 @@
     "test": "./bin/test"
   },
   "dependencies": {
-    "browserify": "10.2.1",
     "nan": "2.0.9"
   },
   "devDependencies": {
     "mocha": "2.4.2"
+  },
+  "silkDependencies": {
+    "silk-external-dlib": "/external-dlib"
   },
   "keywords": [
     "caffe",

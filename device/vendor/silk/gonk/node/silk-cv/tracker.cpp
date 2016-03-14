@@ -13,9 +13,11 @@ void Tracker_Init(v8::Local<v8::Object> exports) {
 }
 #else
 #include <opencv2/tracking.hpp>
+#undef sign // How rude!  opencv2/tracking/onlineMIL.hpp defines `sign`
 #include <opencv2/imgproc.hpp>
 #include "Matrix.h"
 #include "trackerCMT.hpp"
+#include "trackerDlib.hpp"
 
 /*
  * Implements the 'Tracker' Javascript class
@@ -202,6 +204,8 @@ NAN_METHOD(Tracker::New) {
   cv::Ptr<cv::Tracker> tracker;
   if (0 == strcmp(*trackerName, "CMT")) {
     tracker = new CmtTracker();
+  } else if (0 == strcmp(*trackerName, "DLIB")) {
+    tracker = new DlibTracker();
   } else if (0 == strcmp(*trackerName, "MEDIANFLOW")) {
     tracker = cv::TrackerMedianFlow::createTracker();
   } else {

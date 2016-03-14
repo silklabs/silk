@@ -225,7 +225,7 @@ NAN_METHOD(Tracker::New) {
   int frameWidth = mat.size().width;
   int frameHeight = mat.size().height;
 
-  if (!info[1]->IsObject()) {
+  if (!info[2]->IsObject()) {
     Nan::ThrowTypeError("Argument 2 not an object");
     return;
   }

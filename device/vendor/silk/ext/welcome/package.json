@@ -14,7 +14,7 @@
     "babel-runtime": "5.8.35",
     "mz": "2.2.0",
     "node-lifx": "0.4.0",
-    "sonos": "0.11.1"
+    "sonos": "0.12.0"
   },
   "private": true
 }

@@ -11,39 +11,37 @@ let log;
 // Scenes in this format:
 // {
 //   states: [state, ...],
-//   iterations
+//   iterations (optional)
 // }
 //
-// Scene will cycle through each states for 'interations' number of times.
-// Will not repeat if iterations is 0.
+// Scene will cycle through each states for 'iterations' number of times.
+// Will not repeat if iterations is undefined.
 //
 // state is in this format:
 // {
 //   color: {hue, saturation, brightness, kelvin},
-//   durationMs
+//   durationMs (optional)
 // }
 //
 // Scene will stay at state for durationMs before progressing to the next state
-// state. durationMs of 0 means to stay at current state.
+// state. If durationMs is 0 or undefined, scene will stay current state.
 //
 const scenes = {
-  blue: {states: [{color: [190, 88, 100, 3500], durationMs: 0}], iterations: 0},
-  red: {states: [{color: [329, 44, 57, 3500], durationMs: 0}], iterations: 0},
-  green: {states: [{color: [109, 94, 100, 3500], durationMs: 0}], iterations: 0},
-  purple: {states: [{color: [295, 93, 100, 3500], durationMs: 0}], iterations: 0},
+  blue: {states: [{color: [190, 88, 100, 3500], }], },
+  red: {states: [{color: [329, 44, 57, 3500]}], },
+  green: {states: [{color: [109, 94, 100, 3500], }], },
+  purple: {states: [{color: [295, 93, 100, 3500], }], },
   smoke: {
     states: [
       {color: [16, 100, 89, 3500], durationMs: 500},  /* red */
       {color: [194, 19, 100, 3500], durationMs: 500}, /* white */
     ],
-    iterations: 8
   },
   police: {
     states: [
       {color: [214, 100, 98, 3500], durationMs: 500}, /* blue */
       {color: [16, 100, 89, 3500], durationMs: 500},  /* red */
     ],
-    iterations: 8
   },
 };
 
@@ -96,7 +94,8 @@ export default class Lifx {
       this._sceneStateIndex = 0;
     }
 
-    if (this._sceneIterationCnt === this._scene.iterations) {
+    if ('iterations' in this._scene &&
+        this._sceneIterationCnt === this._scene.iterations) {
       // finished with iterations. Turn eveyrthing off
       this._updateLights(false);
     } else {
@@ -135,7 +134,11 @@ export default class Lifx {
   }
 
   willUnload() {
+    clearTimeout(this._sceneStateTimer);
     this._lifx.removeListener('on', this._onLightNew);
+    this._lifx.stopDiscovery();
+    this._lifx.stopSendingProcess();
+    this._lifx.destroy();
     this._lifx = undefined;
   }
 }

@@ -14,12 +14,25 @@ export default class Sonos {
     log = env.log;
 
     log.info('initializing Sonos');
-
-    SonosApi.search().on('DeviceAvailable', (device /*, model */) => {
-      log.info(`Sonos found: ${device.host}:${device.port}`);
-      this._sonos = new SonosApi.Sonos(device.host, device.port);
-    });
+    this.startSearch();
   }
+
+  startSearch() {
+    log.info('searching for Sonos...');
+    this._sonosSearch = SonosApi.search();
+    this._sonosSearch.on('DeviceAvailable', this._onSonosFound);
+  }
+
+  stopSearch() {
+    this._sonosSearch.removeListener('DeviceAvailable', this._onSonosFound);
+    this._sonosSearch.destroy();
+    this._sonosSearch = undefined;
+  }
+
+  _onSonosFound = (device /*, model */) => {
+    log.info(`Sonos found: ${device.host}:${device.port}`);
+    this._sonos = new SonosApi.Sonos(device.host, device.port);
+  };
 
   pause() {
     if (!this._sonos) {
@@ -90,5 +103,6 @@ export default class Sonos {
   }
 
   willUnload() {
+    this.stopSearch();
   }
 }

@@ -108,7 +108,17 @@ export function sas(options: SasConfig): Sas {
   // will fail horribly. Table names are case insensitive.
   options.table = options.table.toLowerCase();
 
-  options.signedStart = options.signedStart || new Date();
+  options.signedStart = options.signedStart;
+  if (!options.signedStart) {
+    // Signed start is potentially tricky because we do not pass azure the
+    // seconds... To account for any kind of weird drift or ntp problems we
+    // subtract one whole minute from the start time so initial requests work
+    // more reliably.
+    let signedStart = new Date();
+    signedStart.setMinutes(signedStart.getMinutes() - 1);
+    options.signedStart = signedStart;
+  }
+
   invariant(options.expiration);
   for (let key of DATE_SAS_OPTIONS) {
     if (key in options && options[key] instanceof Date) {

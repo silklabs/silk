@@ -6,22 +6,9 @@ import createLog from 'silk-log';
 
 import MSEPlayerWithStats from './MSEPlayerWithStats';
 import Cameras from '../libraries/Cameras';
+import * as CanvasUtils from '../libraries/CanvasUtils';
 
 const log = createLog('CameraVideoMSE');
-
-const colors = {
-  paleBlue: '#EFF3F3',
-  blueGray: '#DCE6E6',
-  gray: '#A0A0A0',
-  darkGray: '#424242',
-  darkBlue: '#267686',
-  green: '#3CC0A5',
-  red: '#ED734C',
-  orange: '#F2A45B',
-  paleWarmGray: '#EEE9DF',
-  transparentGray: 'rgba(160,160,160,0.75)',
-  transparentDarkGray: 'rgba(66,66,66,0.75)',
-};
 
 const styles = {
   global: {
@@ -29,7 +16,7 @@ const styles = {
     color: 'white',
     width: '100%',
     height: '100%',
-    backgroundColor: colors.red,
+    backgroundColor: CanvasUtils.colors.red,
   },
   header: {
     width: '100%',
@@ -60,14 +47,14 @@ const styles = {
   videoContainer: {
     position: 'relative',
     borderStyle: 'solid',
-    borderColor: colors.red,
+    borderColor: CanvasUtils.colors.red,
     borderWidth: '0px 6px',
   },
   video: {
     display: 'block',
     width: '100%',
     pointerEvents: 'none',
-    backgroundColor: colors.darkGray,
+    backgroundColor: CanvasUtils.colors.darkGray,
   },
   canvas: {
     position: 'absolute',
@@ -76,20 +63,12 @@ const styles = {
     pointerEvents: 'none',
   },
   form: {
-    backgroundColor: colors.red,
+    backgroundColor: CanvasUtils.colors.red,
     padding: '1px 8px 1px 8px',
     margin: 0,
     textAlign: 'right',
   },
 };
-
-function asciiSum(string) {
-  let sum = 0;
-  for (let index = 0; index < string.length; index++) {
-    sum += string.charCodeAt(index);
-  }
-  return sum;
-}
 
 function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
@@ -254,7 +233,7 @@ export default class CameraVideo extends React.Component {
     context.clearRect(0, 0, canvasWidth, canvasHeight);
 
     if (!camera || !online) {
-      context.fillStyle = colors.transparentDarkGray;
+      context.fillStyle = CanvasUtils.colors.transparentDarkGray;
       context.fillRect(0, 0, canvasWidth, canvasHeight);
 
       if (camera && !online) {
@@ -269,7 +248,7 @@ export default class CameraVideo extends React.Component {
     }
 
     if (!this.loadedData) {
-      context.fillStyle = colors.transparentGray;
+      context.fillStyle = CanvasUtils.colors.transparentGray;
       context.fillRect(0, 0, canvasWidth, canvasHeight);
 
       // TODO: Add a spinner? Some kind of 'loading' text?
@@ -284,19 +263,17 @@ export default class CameraVideo extends React.Component {
     const time = this.videoStartTimestampDevice + Math.floor(currentVideoTimeMs);
     const objects = this._collectAndProcessObjects(time);
     if (objects.length) {
-      const objectColors = [
-        colors.blueGray,
-        colors.darkBlue,
-        colors.green,
-        colors.red,
-        colors.orange,
-      ];
-
-      // There is no way to measure text height with canvas alone... Hardcode!
-      const tagHeight = 20;
-
-      const xTagPadding = 5;
-      const yTagPadding = 2;
+      const drawArgs = {
+        context,
+        container: {
+          width: canvasWidth,
+          height: canvasHeight,
+        },
+        // There is no way to measure text height with canvas alone... Hardcode!
+        labelHeight: 20,
+        labelPaddingX: 5,
+        labelPaddingY: 2,
+      };
 
       context.lineWidth = 3;
       context.textAlign = 'start';
@@ -312,59 +289,22 @@ export default class CameraVideo extends React.Component {
           return;
         }
 
-        const label = object.name || object.tag;
-        const colorIndex = label ?
-                           asciiSum(label) % objectColors.length :
-                           index % objectColors.length;
-        const color = objectColors[colorIndex];
-        const textColor = colorIndex === 0 ? 'black' : 'white';
+        const label = object.name || object.tag || null;
+        const colors =
+          CanvasUtils.colorsForLabel(label || index.toString());
 
-        context.strokeStyle = color;
+        drawArgs.color = colors.background;
+        drawArgs.label = label;
+        drawArgs.labelColor = colors.label;
 
         object.rects.forEach((rect) => {
-          const x = Math.round(rect.x * xScale);
-          const y = Math.round(rect.y * yScale);
-          const w = Math.round(rect.width * xScale);
-          const h = Math.round(rect.height * yScale);
-
-          context.strokeRect(x, y, w, h);
-
-          if (label) {
-            const wTag =
-              Math.round(context.measureText(label).width) + 2 * xTagPadding;
-            const hTag = tagHeight + 2 * yTagPadding;
-
-            const xTag = (x + wTag <= canvasWidth) ?
-                         x :
-                         canvasWidth - wTag;
-            const yTag = (y + h + hTag <= canvasHeight) ?
-                         y + h :
-                         y - hTag;
-
-            context.fillStyle = color;
-            context.fillRect(xTag, yTag, wTag, hTag);
-
-            // A simple strokeRect() for the tag looks bad when we have less
-            // than total opacity because it redraws one segment that was
-            // already drawn by the strokeRect() call above and it becomes more
-            // opaque than the other segments... Use a path instead.
-            context.beginPath();
-            if (yTag < y) {
-              context.moveTo(xTag, yTag + hTag);
-              context.lineTo(xTag, yTag);
-              context.lineTo(xTag + wTag, yTag);
-              context.lineTo(xTag + wTag, yTag + hTag);
-            } else {
-              context.moveTo(xTag, yTag);
-              context.lineTo(xTag, yTag + hTag);
-              context.lineTo(xTag + wTag, yTag + hTag);
-              context.lineTo(xTag + wTag, yTag);
-            }
-            context.stroke();
-
-            context.fillStyle = textColor;
-            context.fillText(label, xTag + xTagPadding, yTag + yTagPadding);
-          }
+          drawArgs.rect = {
+            x: Math.round(rect.x * xScale),
+            y: Math.round(rect.y * yScale),
+            width: Math.round(rect.width * xScale),
+            height: Math.round(rect.height * yScale),
+          };
+          CanvasUtils.drawObject(drawArgs);
         });
       });
     }

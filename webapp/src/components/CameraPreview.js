@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import createLog from 'silk-log';
 
 import Cameras from '../libraries/Cameras';
+import * as CanvasUtils from '../libraries/CanvasUtils';
 
 const log = createLog('CameraPreview');
 
@@ -35,6 +36,7 @@ export default class CameraPreview extends React.Component {
   _logoImgLoaded = false;
 
   _renderedSize = null;
+  _pixelRatio = 1;
 
   state = {
     camera: null,
@@ -45,6 +47,12 @@ export default class CameraPreview extends React.Component {
   }
 
   componentWillMount() {
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const backingRatio = this.context.webkitBackingStorePixelRatio || 1;
+    if (devicePixelRatio !== backingRatio) {
+      this._pixelRatio = devicePixelRatio / backingRatio;
+    }
+
     Cameras.on('stateChanged', this._onCamerasStateChanged);
     this._onCamerasStateChanged();
   }
@@ -62,7 +70,6 @@ export default class CameraPreview extends React.Component {
     const camera = this.state.camera;
     if (camera) {
       camera.removeListener('previewImage', this._renderImg);
-      camera.removeListener('objects', this._renderCanvas);
     }
     if (this._logoImg.src) {
       URL.revokeObjectURL(this._logoImg.src);
@@ -83,22 +90,41 @@ export default class CameraPreview extends React.Component {
   render() {
     const camera = this.state.camera;
 
-    let width;
-    let height;
+    let canvasWidth, imgWidth;
+    let canvasHeight, imgHeight;
 
     if (camera && camera.previewSize) {
-      width = camera.previewSize.width;
-      height = camera.previewSize.height;
+      canvasWidth = imgWidth = camera.previewSize.width;
+      canvasHeight = imgHeight = camera.previewSize.height;
     } else {
       // XXX Lame but we need some kind of default placeholder.
-      width = 320;
-      height = 180;
+      canvasWidth = imgWidth = 320;
+      canvasHeight = imgHeight = 180;
+    }
+
+    let canvasStyle = Object.assign({}, styles.canvas);
+    if (this._pixelRatio !== 1) {
+      canvasStyle.width = Math.floor(canvasWidth) + 'px';
+      canvasStyle.height = Math.floor(canvasHeight) + 'px';
+
+      canvasWidth *= this._pixelRatio;
+      canvasHeight *= this._pixelRatio;
     }
 
     return (
       <div style={styles.container}>
-        <img width={width} height={height} style={styles.img} ref="img" />
-        <canvas width={width} height={height} style={styles.canvas} ref="canvas" />
+        <img
+          width={imgWidth}
+          height={imgHeight}
+          style={styles.img}
+          ref="img"
+        />
+        <canvas
+          width={canvasWidth}
+          height={canvasHeight}
+          style={canvasStyle}
+          ref="canvas"
+        />
       </div>
     );
   }
@@ -110,11 +136,9 @@ export default class CameraPreview extends React.Component {
     if (oldCamera !== newCamera) {
       if (oldCamera) {
         oldCamera.removeListener('previewImage', this._renderImg);
-        oldCamera.removeListener('objects', this._renderCanvas);
       }
       if (newCamera) {
         newCamera.addListener('previewImage', this._renderImg);
-        newCamera.addListener('objects', this._renderCanvas);
       }
       this._resetLogoImg();
       this.setState({camera: newCamera});
@@ -159,10 +183,9 @@ export default class CameraPreview extends React.Component {
       };
       img.src = src;
     } else {
-      img.src = ``;
       this._previewTimestamp = 0;
+      this._renderCanvas();
     }
-    this._renderCanvas();
   };
 
   _renderCanvas = () => {
@@ -172,8 +195,14 @@ export default class CameraPreview extends React.Component {
 
       context.save();
 
+      if (this._pixelRatio !== 1) {
+        context.scale(this._pixelRatio, this._pixelRatio);
+      }
+
       try {
-        this._renderCanvasInternal(context, canvas.width, canvas.height);
+        this._renderCanvasInternal(context,
+                                   canvas.width / this._pixelRatio,
+                                   canvas.height / this._pixelRatio);
       } catch(err) {
         log.warn(err);
       }
@@ -182,8 +211,8 @@ export default class CameraPreview extends React.Component {
     });
   };
 
-  _renderCanvasInternal(context, width, height) {
-    context.clearRect(0, 0, width, height);
+  _renderCanvasInternal(context, canvasWidth, canvasHeight) {
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
 
     const camera = this.state.camera;
     if (!camera) {
@@ -191,66 +220,88 @@ export default class CameraPreview extends React.Component {
       return;
     }
 
-    const defaultFont = '12px sans-serif';
-
-    context.globalAlpha = 1;
+    const defaultFont = ' DINRound';
 
     if (!camera.online || !this._previewTimestamp) {
-      context.fillStyle = camera.online ? 'lightgrey' : 'grey';
-      context.fillRect(0, 0, width, height);
+      context.fillStyle =
+        camera.online ?
+        CanvasUtils.colors.transparentDarkGray :
+        CanvasUtils.colors.transparentGray;
+      context.fillRect(0, 0, canvasWidth, canvasHeight);
     }
 
     // Objects.
     if (this._previewTimestamp) {
       const time = this._previewTimestamp.getTime();
-      const objects = camera.objects.collect(time - 250, time + 750);
-      if (objects.length) {
-        const objectColors = [
-          'red',
-          'lightgreen',
-          'lightblue',
-          'purple',
-          'black',
-          'orange',
-        ];
-
+      const objects = camera.objects.collect(time - 1000, time);
+      if (objects.size) {
         context.lineWidth = 1;
-        context.font = '10px sans-serif';
-        context.fillStyle = 'black';
+        context.font = '10px' + defaultFont;
+        context.textAlign = 'start';
+        context.textBaseline = 'top';
 
-        objects.forEach((object, index) => {
-          const label = object.name || object.tag;
-          context.strokeStyle = objectColors[index % objectColors.length];
+        const drawArgs = {
+          context,
+          container: {
+            width: canvasWidth,
+            height: canvasHeight,
+          },
+          labelHeight: 11,
+          labelPadding: 1,
+        };
 
-          object.rects.forEach((rect) => {
-            context.strokeRect(rect.x, rect.y, rect.width, rect.height);
-            context.fillText(label, rect.x, rect.y + rect.height + 10);
+        objects.forEach((objectArray, index) => {
+          objectArray.forEach((object) => {
+            let rects = object.rects;
+
+            if (!rects.length) {
+              const offsetX = Math.round(canvasWidth * 100 / 90);
+              const offsetY = Math.round(canvasHeight * 100 / 90);
+              rects = [{
+                x: offsetX,
+                y: offsetY,
+                width: canvasWidth - offsetX,
+                height: canvasHeight - offsetY,
+              }];
+            }
+
+            const label = object.name || object.tag || null;
+            const colors =
+              CanvasUtils.colorsForLabel(label || index.toString());
+
+            drawArgs.color = colors.background;
+            drawArgs.label = label;
+            drawArgs.labelColor = colors.label;
+
+            object.rects.forEach((rect) => {
+              drawArgs.rect = rect;
+              CanvasUtils.drawObject(drawArgs);
+            });
           });
         });
       }
     }
 
     // Camera name
-    context.font = defaultFont;
+    context.font = '12px' + defaultFont;
     context.fillStyle = 'white';
     context.textAlign = 'end';
     context.textBaseline = 'bottom';
-    context.fillText(camera.name, width - 5, height - 5);
+    context.fillText(camera.name, canvasWidth - 5, canvasHeight - 5);
 
+    context.textAlign = 'end';
+    context.textBaseline = 'top';
     if (camera.online) {
       // Timestamp
       if (this._previewTimestamp) {
         const dateString = this._previewTimestamp.toLocaleDateString();
         const timeString = this._previewTimestamp.toLocaleTimeString();
 
-        context.textAlign = 'start';
-        context.fillText(`${dateString} ${timeString}`, 5, height - 5);
+        context.fillText(`${dateString} ${timeString}`, canvasWidth - 5, 5);
       }
     } else {
       // Offline indicator.
-      context.textAlign = 'end';
-      context.textBaseline = 'top';
-      context.fillText('Offline', width - 5, 5);
+      context.fillText('Offline', canvasWidth - 5, 5);
     }
 
     // Logo

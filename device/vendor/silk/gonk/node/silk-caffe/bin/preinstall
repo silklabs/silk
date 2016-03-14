@@ -59,7 +59,7 @@ if [[ ! -d protobuf ]]; then
 fi
 
 # Download caffe
-CAFFE_SHA1=813c3c9bb02a7e8b3899e7cfd6db1885228fb914
+CAFFE_SHA1=be163be0ea5befada208dbf0db29e6fa5811dc86
 if [[ ! -d caffe ]]; then
   echo Downloading caffe
   git clone git@github.com:BVLC/caffe.git

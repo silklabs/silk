@@ -58,12 +58,13 @@ type RawHalFace = {
 
 const log = createLog('camera');
 
-const DURATION_PROP = 'persist.silk.vidduration';
+const DURATION_PROP = 'persist.silk.video.duration';
 
-// Clamp duration to 1..10 seconds. Any longer and the object metadata
+// Clamp duration between 100ms and 10s. Any longer and the object metadata
 // associated with a video clip could easily get too large for the server to
-// handle (silk-device#1054).
-const DURATION = Math.max(1, Math.min(util.getintprop(DURATION_PROP, 1), 10));
+// handle (silk-device#1054). Defaults to 1s.
+const DURATION_MS =
+  Math.max(100, Math.min(util.getintprop(DURATION_PROP, 1000), 10000));
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
@@ -742,7 +743,7 @@ export default class Camera extends EventEmitter {
 
       this._buffer = '';
       const cmdData = {
-        frameInterval: DURATION,
+        frameIntervalMs: DURATION_MS,
         width: WIDTH,
         height: HEIGHT,
         fps: FPS,

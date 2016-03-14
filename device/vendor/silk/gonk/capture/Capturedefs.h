@@ -31,7 +31,7 @@ extern status_t OK;
 extern Size sVideoSize;
 extern int32_t sVideoBitRateInK;
 extern int32_t sFPS;
-extern int32_t sIFrameIntervalSec;
+extern int32_t sIFrameIntervalMs;
 extern int32_t sAudioBitRate;
 extern int32_t sAudioSampleRate;
 extern int32_t sAudioChannels;

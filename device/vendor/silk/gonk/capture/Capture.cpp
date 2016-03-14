@@ -46,7 +46,7 @@ status_t OK = static_cast<status_t>(android::OK);
 Size sVideoSize(1280, 720);
 int32_t sVideoBitRateInK = 1024;
 int32_t sFPS = 24;
-int32_t sIFrameIntervalSec = 15;
+int32_t sIFrameIntervalMs = 1000;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
@@ -243,9 +243,9 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sFPS = cmdData["fps"].asInt();
     ALOGV("sFPS %d", sFPS);
   }
-  if (!cmdData["frameInterval"].isNull()) {
-    sIFrameIntervalSec = cmdData["frameInterval"].asInt();
-    ALOGV("sIFrameIntervalSec %d", sIFrameIntervalSec);
+  if (!cmdData["frameIntervalMs"].isNull()) {
+    sIFrameIntervalMs = cmdData["frameIntervalMs"].asInt();
+    ALOGV("sIFrameIntervalSec %d", sIFrameIntervalMs);
   }
   if (!cmdData["audioBitRate"].isNull()) {
     sAudioBitRate = cmdData["audioBitRate"].asInt();
@@ -377,7 +377,7 @@ sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
   format->setInt32("bitrate", sVideoBitRateInK * 1024);
   format->setInt32("bitrate-mode", OMX_Video_ControlRateVariable);
   format->setFloat("frame-rate", sFPS);
-  format->setInt32("i-frame-interval", sIFrameIntervalSec);
+  format->setInt32("i-frame-interval-ms", sIFrameIntervalMs);
 
   return MediaCodecSource::Create(
     looper,

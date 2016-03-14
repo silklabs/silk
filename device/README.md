@@ -303,7 +303,7 @@ adb shell setprop ctl.restart silk
 To change video duration:
 ```sh
 # 5 second videos
-adb shell setprop persist.silk.vidduration 5
+adb shell setprop persist.silk.video.duration 5000
 adb reboot
 ```
 

@@ -11,4 +11,19 @@ if [[ -z "$DEBUG" ]]; then
   DEBUG="*"
 fi
 
-env PATH=$PATH:$LOCAL_PATH/../node_modules/.bin DEBUG="$DEBUG" mocha $what
+if [[ ! -d $LOCAL_PATH/../test/fixtures ]]; then
+  git clone --depth 1 git@github.com:silklabs/silk-cv-test-fixtures.git $LOCAL_PATH/../test/fixtures
+fi
+
+
+export DYLD_INSERT_LIBRARIES=/usr/lib/libgmalloc.dylib
+export MallocScribble=1
+export MallocPreScribble=1
+export MallocGuardEdges=1
+export MallocCheckHeapAbort=1
+export MallocErrorAbort=1
+export MallocCheckHeapStart=1
+
+export PATH=$PATH:$LOCAL_PATH/../node_modules/.bin
+export DEBUG="$DEBUG"
+mocha $what

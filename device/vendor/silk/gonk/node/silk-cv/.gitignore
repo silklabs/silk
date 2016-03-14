@@ -2,4 +2,5 @@
 /.DS_Store
 *.sw?
 /node_modules
-/test/output.jpg
+/test/output/
+/test/fixtures/

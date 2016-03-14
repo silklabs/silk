@@ -5,45 +5,39 @@
  */
 #include <nan.h>
 #include <opencv2/opencv.hpp>
-
-#if CV_MAJOR_VERSION < 3
-#warning Building with OpenCV 2.x, Tracker disabled
-void Tracker_Init(v8::Local<v8::Object> exports) {
-  (void) exports;
-}
-#else
-#include <opencv2/tracking.hpp>
-#undef sign // How rude!  opencv2/tracking/onlineMIL.hpp defines `sign`
 #include <opencv2/imgproc.hpp>
 #include "Matrix.h"
+#include "TrackerBase.h"
 #include "trackerCMT.hpp"
 #include "trackerDlib.hpp"
 
 /*
  * Implements the 'Tracker' Javascript class
  */
-class Tracker: public Nan::ObjectWrap {
+class NodeTracker: public Nan::ObjectWrap {
 friend class TrackerInitWorker;
 friend class TrackerUpdateWorker;
 public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  explicit Tracker(cv::Ptr<cv::Tracker> tracker, int frameWidth, int frameHeight)
+  explicit NodeTracker(TrackerBase *tracker, int frameWidth, int frameHeight)
     : tracker(tracker),
       frameWidth(frameWidth),
       frameHeight(frameHeight),
       initialized(false),
       cancelled(false),
       processing(false) {}
-  ~Tracker() {}
+  ~NodeTracker() {
+    delete tracker;
+  }
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Update(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Busy(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Cancel(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  cv::Ptr<cv::Tracker> tracker;
+  TrackerBase *tracker;
   int frameWidth;
   int frameHeight;
 
@@ -54,11 +48,11 @@ private:
 
 
 /*
- * Async worker used to initialize a Tracker object
+ * Async worker used to initialize a NodeTracker object
  */
 class TrackerInitWorker : public Nan::AsyncWorker {
 public:
-  explicit TrackerInitWorker(Tracker *nodeTracker, cv::Mat mat, cv::Rect2d rect, Nan::Callback *callback)
+  explicit TrackerInitWorker(NodeTracker *nodeTracker, cv::Mat mat, cv::Rect2d rect, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
       rect(rect),
@@ -94,7 +88,7 @@ public:
 private:
   cv::Mat mat;
   cv::Rect2d rect;
-  Tracker *nodeTracker;
+  NodeTracker *nodeTracker;
 };
 
 
@@ -103,11 +97,12 @@ private:
  */
 class TrackerUpdateWorker : public Nan::AsyncWorker {
 public:
-  explicit TrackerUpdateWorker(Tracker *nodeTracker, cv::Mat mat, Nan::Callback *callback)
+  explicit TrackerUpdateWorker(NodeTracker *nodeTracker, cv::Mat mat, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
       rect(),
       found(false),
+      confidence(0),
       nodeTracker(nodeTracker) {
     nodeTracker->processing = true;
   }
@@ -116,7 +111,7 @@ public:
   void Execute() {
     try {
       rect.x = rect.y = rect.width = rect.height = -1;
-      found = nodeTracker->tracker->update(mat, rect);
+      found = nodeTracker->tracker->update(mat, rect, &confidence);
     } catch (const std::exception &e) {
       SetErrorMessage(e.what());
     }
@@ -156,20 +151,22 @@ public:
       Nan::Null(),
       Nan::New<v8::Boolean>(found),
       rectObject,
+      Nan::New<v8::Number>(confidence),
     };
-    callback->Call(3, argv);
+    callback->Call(4, argv);
   }
 
 private:
   cv::Mat mat;
   cv::Rect2d rect;
   bool found;
-  Tracker *nodeTracker;
+  double confidence;
+  NodeTracker *nodeTracker;
 };
 
-Nan::Persistent<v8::Function> Tracker::constructor;
+Nan::Persistent<v8::Function> NodeTracker::constructor;
 
-void Tracker::Init(v8::Local<v8::Object> exports) {
+void NodeTracker::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
 
   // Prepare constructor template
@@ -185,11 +182,11 @@ void Tracker::Init(v8::Local<v8::Object> exports) {
   exports->Set(Nan::New("Tracker").ToLocalChecked(), tpl->GetFunction());
 }
 
-NAN_METHOD(Tracker::New) {
+NAN_METHOD(NodeTracker::New) {
   if (!info.IsConstructCall()) {
     // Invoked as plain function `Tracker(...)`, turn into construct call.
-    const int argc = 4;
-    v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2], info[3] };
+    const int argc = 5;
+    v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2], info[3], info[4] };
     v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
     info.GetReturnValue().Set(cons->NewInstance(argc, argv));
     return;
@@ -200,35 +197,36 @@ NAN_METHOD(Tracker::New) {
     Nan::ThrowTypeError("Argument 0 not a string");
     return;
   }
+  if (!info[1]->IsObject()) {
+    Nan::ThrowTypeError("Argument 1 not a cv::Matrix");
+    return;
+  }
+  if (!info[2]->IsObject()) {
+    Nan::ThrowTypeError("Argument 2 not an object");
+    return;
+  }
+
+  double confidence = NAN;
+  if (info[4]->IsObject()) {
+    v8::Local<v8::Object> opts = v8::Local<v8::Object>::Cast(info[4]);
+    confidence = opts->Get(Nan::New<v8::String>("confidence").ToLocalChecked())->NumberValue();
+  }
+
   v8::String::Utf8Value trackerName(info[0]->ToString());
-  cv::Ptr<cv::Tracker> tracker;
+  TrackerBase *tracker = NULL;
   if (0 == strcmp(*trackerName, "CMT")) {
-    tracker = new CmtTracker();
+    tracker = new CmtTracker(confidence);
   } else if (0 == strcmp(*trackerName, "DLIB")) {
-    tracker = new DlibTracker();
-  } else if (0 == strcmp(*trackerName, "MEDIANFLOW")) {
-    tracker = cv::TrackerMedianFlow::createTracker();
-  } else {
-    tracker = cv::Tracker::create(*trackerName);
+    tracker = new DlibTracker(confidence);
   }
   if (tracker == NULL) {
     Nan::ThrowError("Unable to create tracker");
     return;
   }
 
-  if (!info[1]->IsObject()) {
-    Nan::ThrowTypeError("Argument 1 not a cv::Matrix");
-    return;
-  }
-
   cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(info[1]->ToObject())->mat;
   int frameWidth = mat.size().width;
   int frameHeight = mat.size().height;
-
-  if (!info[2]->IsObject()) {
-    Nan::ThrowTypeError("Argument 2 not an object");
-    return;
-  }
 
   v8::Local<v8::Object> rect = v8::Local<v8::Object>::Cast(info[2]);
   cv::Rect2d objectRect(
@@ -240,21 +238,21 @@ NAN_METHOD(Tracker::New) {
 
   Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
 
-  Tracker* obj = new Tracker(tracker, frameWidth, frameHeight);
+  NodeTracker* obj = new NodeTracker(tracker, frameWidth, frameHeight);
   Nan::AsyncQueueWorker(new TrackerInitWorker(obj, mat, objectRect, callback));
 
   obj->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
 }
 
-NAN_METHOD(Tracker::Busy) {
-  Tracker* obj = ObjectWrap::Unwrap<Tracker>(info.Holder());
+NAN_METHOD(NodeTracker::Busy) {
+  NodeTracker* obj = ObjectWrap::Unwrap<NodeTracker>(info.Holder());
   info.GetReturnValue().Set(
     Nan::New<v8::Boolean>(!obj->initialized || obj->processing));
 }
 
-NAN_METHOD(Tracker::Cancel) {
-  Tracker* obj = ObjectWrap::Unwrap<Tracker>(info.Holder());
+NAN_METHOD(NodeTracker::Cancel) {
+  NodeTracker* obj = ObjectWrap::Unwrap<NodeTracker>(info.Holder());
 
   if (obj->processing) {
     obj->cancelled = true;
@@ -262,8 +260,8 @@ NAN_METHOD(Tracker::Cancel) {
   }
 }
 
-NAN_METHOD(Tracker::Update) {
-  Tracker* obj = ObjectWrap::Unwrap<Tracker>(info.Holder());
+NAN_METHOD(NodeTracker::Update) {
+  NodeTracker* obj = ObjectWrap::Unwrap<NodeTracker>(info.Holder());
 
   if (!obj->initialized) {
     Nan::ThrowError("Not initialized");
@@ -293,7 +291,6 @@ NAN_METHOD(Tracker::Update) {
 }
 
 void Tracker_Init(v8::Local<v8::Object> exports) {
-  Tracker::Init(exports);
+  NodeTracker::Init(exports);
 }
 
-#endif

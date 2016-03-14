@@ -67,10 +67,10 @@ class Main {
     );
 
     // Look for faces in the scene
-    const faceRects = await this.faceDetector.detect(when, grayeq, fullgray);
+    const [faceRects, weakFaceRects] = await this.faceDetector.detect(when, grayeq, fullgray);
 
     // Inform the tracker about the observed faces
-    this.faceTracker.detectedFaces(when, faceRects, grayeq);
+    this.faceTracker.detectedFaces(when, faceRects, weakFaceRects, grayeq);
 
     // Run face recognizer on the tracked faces
     await this.faceRecognizer.predict(when, this.faceTracker.faces, gray, fullgray);

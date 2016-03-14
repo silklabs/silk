@@ -91,7 +91,7 @@ function _runEyeCascasde(face, cascade) {
  *
  * Reference: http://image2measure.net/files/Mastering_OpenCV.pdf
  */
-function _detectBothEyes(when, orig, faceRect, eyeCascade1, eyeCascade2) {
+function _detectBothEyes(when, orig, faceRect, faceIndex) {
   // Eye detection requires fullsize image for better detection
   // Adjust face rectangle to scale up to the original size as face detection
   // was run on scaled image
@@ -99,7 +99,7 @@ function _detectBothEyes(when, orig, faceRect, eyeCascade1, eyeCascade2) {
       faceRect.width * previewScale, faceRect.height * previewScale);
   face = face.copy();
   face.equalizeHist();
-  timeline.addDiagFrame('fullrescandidate', when, face);
+  timeline.addDiagFrame(`fullrescandidate_${faceIndex}`, when, face);
 
   let cols = face.width();
   let rows = face.height();
@@ -118,22 +118,22 @@ function _detectBothEyes(when, orig, faceRect, eyeCascade1, eyeCascade2) {
   return new Promise(async (resolve, reject) => {
     try {
       // Find left eye. If the eye was not detected, try a different cascade
-      let leftEyeRect = await _runEyeCascasde(topLeftOfFace, eyeCascade1);
-      if (!leftEyeRect && eyeCascade2) {
-        leftEyeRect = await _runEyeCascasde(topLeftOfFace, eyeCascade2);
+      let leftEyeRect = await _runEyeCascasde(topLeftOfFace, EYE_CASCADE1);
+      if (!leftEyeRect && EYE_CASCADE2) {
+        leftEyeRect = await _runEyeCascasde(topLeftOfFace, EYE_CASCADE2);
       }
 
       let rightEyeRect;
       if (leftEyeRect) {
         // Find right eye. If the eye was not detected, try a different cascade
-        rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade1);
-        if (!rightEyeRect && eyeCascade2) {
-          rightEyeRect = await _runEyeCascasde(topRightOfFace, eyeCascade2);
+        rightEyeRect = await _runEyeCascasde(topRightOfFace, EYE_CASCADE1);
+        if (!rightEyeRect && EYE_CASCADE2) {
+          rightEyeRect = await _runEyeCascasde(topRightOfFace, EYE_CASCADE2);
         }
       }
 
-      timeline.addDiagFrame(`lefteye:${!!leftEyeRect}`, when, topLeftOfFace);
-      timeline.addDiagFrame(`righteye:${!!rightEyeRect}`, when, topRightOfFace);
+      timeline.addDiagFrame(`lefteye_${faceIndex}:${!!leftEyeRect}`, when, topLeftOfFace);
+      timeline.addDiagFrame(`righteye_${faceIndex}:${!!rightEyeRect}`, when, topRightOfFace);
 
       if (rightEyeRect) {
         // Adjust the eye rectangles because the face border was removed
@@ -204,6 +204,7 @@ export default class FaceDetector {
 
     let start = Date.now();
     let faces = [];
+    let weakfaces = [];
 
     try {
       // Find faces
@@ -213,11 +214,9 @@ export default class FaceDetector {
         let faceRect = faceRects[i];
 
         let weakface = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-        timeline.addDiagFrame('candidate', when, weakface);
 
         // Detect both eyes
-        let [leftEye, rightEye] = await _detectBothEyes(when, fullgray, faceRect,
-            EYE_CASCADE1, EYE_CASCADE2);
+        let [leftEye, rightEye] = await _detectBothEyes(when, fullgray, faceRect, i);
 
         // Only if both the eyes are visible is when we say it is a face
         if (leftEye && rightEye) {
@@ -226,12 +225,16 @@ export default class FaceDetector {
           faces.push(faceRect);
 
           const roi = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-          timeline.addDiagFrame('face', when, roi);
+          timeline.addDiagFrame(`face_${i}`, when, roi);
+        } else {
+          weakfaces.push(faceRect);
+          timeline.addDiagFrame(`weakface_${i}`, when, weakface);
         }
       }
 
       let diff = Date.now() - start;
-      let msg = `Cascade ran for ${diff}ms, ${faces.length} face(s) detected.`;
+      let msg = `Ran for ${diff}ms - ` +
+        `strong:${faces.length}, weak:${weakfaces.length} faces(s) detected.`;
       if (diff > 500) {
         log.warn(msg); // Time to optimize?
       } else {
@@ -242,7 +245,7 @@ export default class FaceDetector {
     }
 
     this._busy = false;
-    return faces;
+    return [faces, weakfaces];
   }
 }
 

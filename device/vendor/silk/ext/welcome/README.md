@@ -53,9 +53,3 @@ The config file defines two data structures, `triggers` and `modes`
 
 * Trigger event. The connected devices should then respond appropriately
   per the config file.
-
-### Issues
-
-* Sonos is sometimes not discovered. Workaround is to modify the code
-  to hard code the IP address.
-

@@ -18,6 +18,7 @@
     "mocha": "2.4.2"
   },
   "silkDependencies": {
+    "silk-babeldeps": "/babeldeps",
     "silk-external-dlib": "/external-dlib"
   },
   "gypfile": true,

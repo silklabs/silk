@@ -1,9 +1,15 @@
 
 import assert from 'assert';
-import createContext from '../context';
 import createApi from 'silk-api';
 import uuid from 'uuid';
+import SasCompositeTable from 'silk-azure-storage/src/sas_composite_table';
 
+import {
+  TableClient,
+  SharedKeyAuth
+} from 'silk-azure-storage/src/table';
+
+import createContext from '../context';
 import Devices from '../../../src/server/models/devices';
 
 suite('account auth', () => {
@@ -165,5 +171,47 @@ suite('account auth', () => {
     await context.assertThrows(async () => {
       await invalid.api.account.queryMetrics({ query: 'does not matter' });
     }, /Unauthorized/);
+  });
+
+  test('POST /sas_signaling_devices', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const root = new TableClient(
+      new SharedKeyAuth(context.config.azure.regions.uswest)
+    );
+
+    const { accountId } = await api.account.whoami();
+    const client = new SasCompositeTable(async () => {
+      let { sas } = await api.account.getSasForDeviceSignaling();
+      console.log(sas);
+      return sas;
+    });
+
+    // Make a valid query ...
+    let devices = await client.query({
+      // NOTE: It's unfortunate that we need to call this "PartitionKey" but
+      // this is a massively faster query (indexed).
+      PartitionKey: accountId,
+    });
+    assert.ok(Array.isArray(devices));
+
+    // Insert some garbage that we should not be able to query with these
+    // credentials...
+    await root.mergeOrInsert(
+      context.config.azure.tables.sigdevices,
+      {
+        PartitionKey: 'foobar',
+        RowKey: 'bar',
+      }
+    );
+
+    // SAS permissions do not actively prevent queries to ranges outside of the
+    // scope but they instead cause all queries outside of primary key range to
+    // return nothing.
+    let outOfScope = await client.query({
+      // valid but outside of our signed range query.
+      PartitionKey: 'foobar'
+    });
+    assert.equal(outOfScope.length, 0);
   });
 });

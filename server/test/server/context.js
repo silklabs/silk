@@ -1,16 +1,18 @@
 
 import crypto from 'crypto';
-import loadConfig from '../../src/server/config';
-import createServer from '../../src/server/server';
-import createSocketioServer from '../../src/socketio/server';
-import createDb from '../../src/server/db';
 import createApi from 'silk-api';
 import request from 'superagent-promise';
 import merge from 'lodash.merge';
 import pbkdf2 from 'pbkdf2';
 import uuid from 'uuid';
-
 import Id from 'silk-api/src/access_token';
+import { TableClient, SharedKeyAuth } from 'silk-azure-storage/src/table';
+
+import loadConfig from '../../src/server/config';
+import createServer from '../../src/server/server';
+import createSocketioServer from '../../src/socketio/server';
+import createSignalingServer from '../../src/signaling/server';
+import createDb from '../../src/server/db';
 import Accounts from '../../src/server/models/accounts';
 import Devices from '../../src/server/models/devices';
 
@@ -163,16 +165,56 @@ export async function registeredDevice(ctx, accountAccessToken) {
   };
 }
 
+function computeAzureTable(prefix) {
+  // This is a best effort measure tests should still write isolated cases.
+  let uniqueId = uuid.v4({}, new Buffer(16));
+
+  // XXX: Encoded in hex so it's purely alpha numeric but we add a alpha char
+  // first to make azure table happy ...
+  let out = `${prefix}${uniqueId.toString('hex')}`;
+
+  if (out.length > 63) {
+    throw new Error(`Invalid table name: ${out} is too long`);
+  }
+
+  return out;
+}
+
 /**
 Main sets up and configures the test context...
 */
 export default function createContext(overrides = {}) {
   let context = {};
+  let azureTables = [];
+  let tableClients;
+
+  suiteSetup(() => {
+    let config = merge({}, loadConfig('test'), overrides);
+    let clients = [];
+    for (let region in config.azure.regions) {
+      const credentials = config.azure.regions[region];
+      const client = new TableClient(new SharedKeyAuth(credentials));
+      clients.push(client);
+    }
+    tableClients = clients;
+  });
 
   setup(async () => {
     let config = merge({}, loadConfig('test'), overrides);
 
-    // socket.io server launches first so we can grab the url..
+    // to reduce the overall complexity of our testing infrastructure we assign
+    // a unique name to each of our azure tables. This allows us to cleanup
+    // setup new tables for each test suite then we tear them all down in one go
+    // during suiteTeardown ...
+    for (let tableName in config.azure.tables) {
+      let uniqueTableName = computeAzureTable(tableName);
+      config.azure.tables[tableName] = uniqueTableName;
+      azureTables.push(uniqueTableName);
+    }
+
+    // Signaling server has least dependencies so can start sooner...
+    context.signaling = await createSignalingServer(config);
+
     let socketioServer = await createSocketioServer(config);
     config.socketio.port = socketioServer.port;
     config.socketio.publicUrl = `http://localhost:${socketioServer.port}`;
@@ -207,8 +249,24 @@ export default function createContext(overrides = {}) {
   teardown(async () => {
     await context.db.dropDatabase();
     await context.db.close();
-    await context.server.close();
-    await context.socketio.close();
+    await Promise.all([
+      context.server.close(),
+      context.socketio.close(),
+      context.signaling.close(),
+    ]);
+  });
+
+  // Teardown all the azure tables in one go to make running our test suite much
+  // faster ....
+  suiteTeardown(async () => {
+    let ops = [];
+
+    for (let client of tableClients) {
+      for (let tableName of azureTables) {
+        ops.push(client.deleteTable(tableName));
+      }
+    }
+    await Promise.all(ops);
   });
 
   return context;

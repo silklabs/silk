@@ -136,6 +136,22 @@ function socketioConfig(accessToken: Id, url: string): SocketioConfig {
   return [url, options];
 }
 
+function signSignalingUrl(
+  url: string,
+  type: 'account' | 'device',
+  query: {[key: string]: string},
+  accessToken: Id,
+): string {
+  // TODO: remove 'any' type here once
+  // https://github.com/facebook/flow/issues/1173 is resolved.
+  let parsed: any = URL.parse(url, true /* parse query string */);
+  parsed.pathname = '/' + type;
+
+  let jwt = signature(accessToken, 'GET', parsed.pathname);
+  parsed.query = Object.assign({}, query, { jwt });
+  return URL.format(parsed);
+}
+
 export type Config = {
   getRandomBytes?: (
     size: number,
@@ -234,6 +250,15 @@ export class SilkApi {
     });
 
     this.streams = makeStreams(config);
+  }
+
+  signSignalingUrl(
+    type: 'device' | 'account',
+    url: string,
+    query: {[key: string]: string} = {},
+  ): string {
+    invariant(this.accessToken, '.accessToken must be set');
+    return signSignalingUrl(url, type, query, this.accessToken);
   }
 
   /**

@@ -27,6 +27,7 @@ import InfluxDB from '../influxdb_client';
 import Scopes from './scopes';
 import MetricsAgent from '../metrics_agent';
 import StartMetric from '../metrics/start_server';
+import SasSigner from '../sas_signer';
 
 export type RouteContext = {
   app: any;
@@ -42,6 +43,7 @@ export type RouteContext = {
   influxdb: ?InfluxDB,
   scopes: Scopes,
   metricsAgent: MetricsAgent,
+  sasSigner: SasSigner,
 };
 
 export default async function main (config: any): any {
@@ -118,6 +120,7 @@ export default async function main (config: any): any {
   let scopes = new Scopes(config.scopes);
   let metricsAgent =
     new MetricsAgent('server');
+  let sasSigner = new SasSigner(config.azure);
 
   let influxdb = null;
   if (config.metrics.influxdb.connectionString) {
@@ -141,6 +144,7 @@ export default async function main (config: any): any {
     influxdb,
     scopes,
     metricsAgent,
+    sasSigner,
   };
 
   // Install the routes.

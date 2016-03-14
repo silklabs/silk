@@ -1,0 +1,120 @@
+import assert from 'assert';
+import WebSocket from 'ws';
+import eventToPromise from 'event-to-promise';
+import SasCompositeTable from 'silk-azure-storage/src/sas_composite_table';
+
+import Demux from 'silk-streams/src/demux';
+import WebSocketDuplex from 'silk-streams/src/websocket';
+
+import createContext from '../server/context';
+
+suite('connect test', () => {
+  const context = createContext({
+    signaling: {
+      clientTimeout: 3 * 1000
+    }
+  });
+
+  let device, account, devicesTable, serversTable;
+  setup(async () => {
+    const pair = await context.testPair();
+    device = pair.device;
+    account = pair.account;
+
+    devicesTable = new SasCompositeTable(async () => {
+      let { sas } = await account.api.account.getSasForDeviceSignaling();
+      return sas;
+    });
+
+    serversTable = new SasCompositeTable(async () => {
+      let { sas } = await device.api.device.getSasForSignaling();
+      return sas;
+    });
+  });
+
+  test('connect as device', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+
+    let url = device.api.signSignalingUrl('device', servers[0].host);
+    let ws = new WebSocket(url);
+    await eventToPromise(ws, 'open');
+
+    let deviceLocations = await serversTable.query({
+      PartitionKey: device.record.accountId
+    });
+
+    assert.equal(deviceLocations.length, 1);
+    let expectedHost = `http://localhost:${context.signaling.port}`;
+    assert.equal(deviceLocations[0].host, expectedHost);
+  });
+
+  test('connect as account', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+
+    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    let deviceWs = new WebSocket(deviceUrl);
+    let deviceWsDuplex = new WebSocketDuplex(deviceWs);
+    let deviceDemux = new Demux(deviceWsDuplex);
+    deviceWsDuplex.pipe(deviceDemux);
+
+    await eventToPromise(deviceWs, 'open');
+
+    let accountUrl = account.api.signSignalingUrl('account', servers[0].host, {
+      deviceId: device.record.accessToken.publicKey,
+    });
+    let accountWs = new WebSocketDuplex(new WebSocket(accountUrl));
+    accountWs.write('ping');
+
+    const accountPeer = await eventToPromise(deviceDemux, 'data');
+    const ping = await eventToPromise(accountPeer, 'data');
+    assert.equal(ping.toString(), 'ping');
+
+    accountPeer.end('pong');
+    let pong = await eventToPromise(accountWs, 'data');
+    assert.equal(pong.toString(), 'pong');
+    accountWs.end();
+
+    await Promise.all([
+      eventToPromise(accountWs, 'close'),
+      eventToPromise(accountPeer, 'close'),
+    ]);
+  });
+
+  test('terminate accounts on device disconnect', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+
+    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    let deviceWs = new WebSocket(deviceUrl);
+    await eventToPromise(deviceWs, 'open');
+
+    let accountUrl = account.api.signSignalingUrl('account', servers[0].host, {
+      deviceId: device.record.accessToken.publicKey,
+    });
+    let accountWs = new WebSocket(accountUrl);
+    await eventToPromise(accountWs, 'open');
+    deviceWs.close();
+
+    await eventToPromise(accountWs, 'close');
+  });
+
+  test('account idles too long', async function() {
+    this.timeout('10s');
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+
+    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    let deviceWs = new WebSocket(deviceUrl);
+    await eventToPromise(deviceWs, 'open');
+
+    let accountUrl = account.api.signSignalingUrl('account', servers[0].host, {
+      deviceId: device.record.accessToken.publicKey,
+    });
+    let accountWs = new WebSocket(accountUrl);
+    await eventToPromise(accountWs, 'open');
+
+    await eventToPromise(accountWs, 'close');
+  });
+});

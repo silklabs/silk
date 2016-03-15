@@ -16,11 +16,9 @@ LOCAL_SRC_FILES := \
 	Channel.cpp \
 	FaceDetection.cpp \
 	IOpenCVCameraCapture.cpp \
-	MPEG4MemoryWriter.cpp \
 	MPEG4SegmentDASHWriter.cpp \
 	MPEG4SegmenterDASH.cpp \
 	OpenCVCameraCapture.cpp \
-	SlicedMP4Encoder.cpp \
 
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_SRC_FILES += 6.x/MediaCodecSource.cpp

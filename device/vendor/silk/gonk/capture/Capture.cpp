@@ -32,7 +32,6 @@
 #include "FaceDetection.h"
 #include "MPEG4SegmenterDASH.h"
 #include "OpenCVCameraCapture.h"
-#include "SlicedMP4Encoder.h"
 #include "FrameworkListener1.h"
 
 using namespace android;
@@ -141,7 +140,6 @@ private:
   sp<SurfaceControl> mPreviewSurfaceControl;
 
   sp<MPEG4SegmenterDASH> mSegmenter;
-  sp<SlicedMP4Encoder> mMp4;
   sp<MediaSource> mPreview;
   sp<IFrameRequestMonitor> mIframe;
   sp<ALooper> mLooper;
@@ -411,10 +409,6 @@ sp<MediaSource> prepareAudioEncoder(const sp<ALooper>& looper,
   return MediaCodecSource::Create(looper, format, source);
 }
 
-static bool useDASHSegmenter() {
-  return !!property_get_bool("persist.silk.capture.dash", 1);
-}
-
 /**
  * Thread function that initializes the camera
  */
@@ -462,49 +456,34 @@ status_t CaptureCommand::initThread() {
   mLooper->setName("capture-looper");
   mLooper->start();
 
-  if (!useDASHSegmenter()) {
-      ALOGI("Using legacy mp4 slicer");
+  sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
 
-      mMp4 = new SlicedMP4Encoder(mLooper, &mChannel, mCameraSource);
-      mMp4->run();
-
-      mIframe = new IFrameRequestMonitor(mMp4->videoEncoder());
-  } else {
-      ALOGI("Using DASH segmenter");
-
-      sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
-
-      sp<MediaSource> audioSource(
-          new AudioSource(
-            AUDIO_SOURCE_MIC,
+  sp<MediaSource> audioSource(
+    new AudioSource(
+      AUDIO_SOURCE_MIC,
 #ifdef TARGET_GE_MARSHMALLOW
-            String16("silk-capture"),
+      String16("silk-capture"),
 #endif
-            sAudioSampleRate,
-            sAudioChannels
-          )
-      );
-      sp<MediaSource> audioSourceEmitter =
-          new AudioSourceEmitter(&mChannel, audioSource);
-      sp<MediaSource> audioMutter =
-          new AudioMutter(audioSourceEmitter);
-      sp<MediaSource> audioEncoder =
-          prepareAudioEncoder(mLooper, audioMutter);
+      sAudioSampleRate,
+      sAudioChannels
+    )
+  );
+  sp<MediaSource> audioSourceEmitter =
+    new AudioSourceEmitter(&mChannel, audioSource);
+  sp<MediaSource> audioMutter =
+    new AudioMutter(audioSourceEmitter);
+  sp<MediaSource> audioEncoder =
+    prepareAudioEncoder(mLooper, audioMutter);
 
-      mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
-      mSegmenter->run();
-  }
+  mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
+  mSegmenter->run();
 
   // Notify node that camera is initialized
   notifyCameraEvent("initialized");
   mHardwareActive = true;
 
   // Block this thread while camera is running
-  if (mMp4.get()) {
-      mMp4->join();
-  } else {
-      mSegmenter->join();
-  }
+  mSegmenter->join();
 
   sOpenCVCameraCapture->setPreviewProducerListener(NULL);
   return 0;

@@ -12,8 +12,8 @@ import {
   FaceRect,
 } from './face';
 
-const TRACKER_NAME = 'MEDIANFLOW';
-//const TRACKER_NAME = 'DLIB';
+//const TRACKER_NAME = 'CMT';
+const TRACKER_NAME = 'DLIB';
 
 // Set a reasonable limit of tracked objects
 const MAX_TRACKED_OBJECTS = 10;

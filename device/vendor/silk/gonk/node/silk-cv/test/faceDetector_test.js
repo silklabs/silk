@@ -1,16 +1,18 @@
 'use strict';
 
-const path = require('path');
-const assert = require('assert');
-const cv = require('opencv');
-const silkcv = require('..');
+import assert from 'assert';
+import cv from 'opencv';
+import mkdirp from 'mkdirp-promise';
+import path from 'path';
+import silkcv from '..';
 
+const outputDir = path.join(__dirname, 'output', 'faceDetector');
 
 function faceTest(imageFile, numFacesExpected) {
   return new Promise(
     resolve => {
       cv.readImage(
-        path.join(__dirname, 'fixtures/faceDetector/' + imageFile),
+        path.join(__dirname, 'fixtures', 'faceDetector', imageFile),
         (err, im) => {
           if (err) {
             throw err;
@@ -30,6 +32,13 @@ function faceTest(imageFile, numFacesExpected) {
                   console.log('Faces:', JSON.stringify(faces));
                   assert(faces.length === numFacesExpected,
                     'Expecting ' + numFacesExpected + ', got ' + faces.length);
+
+                  let output = im.copy();
+                  faces.forEach(rect => {
+                    output.rectangle([rect.x, rect.y], [rect.width, rect.height], null, 5);
+                  });
+                  output.save(path.join(outputDir, imageFile));
+                  output.release();
                   resolve();
                 }
               );
@@ -43,6 +52,8 @@ function faceTest(imageFile, numFacesExpected) {
 }
 
 suite('FaceDetector', () => {
+  setup(async () => await mkdirp(outputDir));
+
   test('1face', () => faceTest('1face.jpg', 1));
   test('2faces', () => faceTest('2faces.jpg', 2));
   test('5faces', () => faceTest('5faces.jpg', 5));

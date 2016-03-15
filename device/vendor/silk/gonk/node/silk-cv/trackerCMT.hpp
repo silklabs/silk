@@ -1,47 +1,39 @@
 /**
- * cv::Tracker wrapper around the CppMT/CMT class
+ * CppMT/CMT tracker
  *
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+#ifndef TRACKERCMT_HPP
+#define TRACKERCMT_HPP
+
 #include <opencv2/opencv.hpp>
-
-#if CV_MAJOR_VERSION >= 3
-
-#include <opencv2/tracking.hpp>
 #include <opencv2/imgproc.hpp>
+#include "TrackerBase.h"
 #include "CppMT/CMT.h"
 
-class CmtTracker : public virtual cv::Tracker {
+class CmtTracker : public TrackerBase {
 public:
-  CmtTracker()
-    : drawPoints(false), // TODO: Make configurable
-      minConfidence(0.3) {
-    isInit = false;
-  }
-  void read(const cv::FileNode& fn) {}
-  void write(cv::FileStorage& fs) const {}
+  CmtTracker(double minConfidence)
+    : TrackerBase(minConfidence),
+      drawPoints(false) {}
+
 private:
   cmt::CMT cmt;
   bool drawPoints;
-  float minConfidence;
 
-  class CmtTrackerModel : public virtual cv::TrackerModel {
-    // Stub class to make cv::Tracker happy
-    virtual void modelEstimationImpl(const std::vector<cv::Mat>& responses) {}
-    virtual void modelUpdateImpl() {}
-  };
-
-  virtual bool initImpl(const cv::Mat& image, const cv::Rect2d& boundingBox) {
-    this->model = new CmtTrackerModel();
+  virtual bool initImpl(const cv::Mat& image,
+                        const cv::Rect2d& boundingBox,
+                        double& defaultConfidence) {
+    defaultConfidence = 0.2;
     cmt.consensus.estimate_rotation = true;
     cmt.initialize(image, boundingBox);
     return true;
   }
 
-  virtual bool updateImpl(const cv::Mat& image, cv::Rect2d& boundingBox) {
+  virtual double updateImpl(const cv::Mat& image, cv::Rect2d& boundingBox) {
     cmt.processFrame(image);
 
     if (drawPoints) {
@@ -59,7 +51,7 @@ private:
     }
 
     boundingBox = cmt.bb_rot.boundingRect();
-    return cmt.confidence > minConfidence;
+    return cmt.confidence;
   }
 };
 

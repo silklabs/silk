@@ -18,7 +18,7 @@
 /* eslint-disable no-console */
 
 let caffe = null;
-if (process.platform == 'android') {
+if (process.platform === 'android') {
   caffe = require('silk-caffe');
 } else {
   caffe = require('..');

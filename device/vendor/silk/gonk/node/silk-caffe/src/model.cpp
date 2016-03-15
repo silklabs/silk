@@ -21,6 +21,7 @@
 #include <utility>
 #include <opencv2/imgproc.hpp>
 #include <chrono>
+#include <cblas.h>
 
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"
@@ -723,6 +724,19 @@ NAN_METHOD(Model::Time) {
     INT_FROM_ARGS(iterations, 1);
   }
 
+  int numThreads = -1;
+  if (info.Length() >= 3) {
+    INT_FROM_ARGS(numThreads, 2);
+  }
+#ifdef ANDROID
+  if (numThreads != -1) {
+    ALOGD("Setting threads count %d", numThreads);
+    openblas_set_num_threads(numThreads);
+  }
+  ALOGD("openblas using threads: %d num_procs: %d", openblas_get_num_threads(),
+        openblas_get_num_procs());
+#endif
+
   ALOGD("Use CPU");
   Caffe::set_mode(Caffe::CPU);
 
@@ -780,7 +794,6 @@ NAN_METHOD(Model::Time) {
           iter_timer.MilliSeconds());
   }
   ALOGD("Average time per layer: ");
-  ALOGD("Layers size %d", layers.size());
   for (int i = 0; i < layers.size(); ++i) {
     ALOGD("Layer[%d] \tforward: %f ms", i,
           (forward_time_per_layer[i] / 1000 / iterations));

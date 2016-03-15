@@ -17,7 +17,12 @@
 'use strict';
 /* eslint-disable no-console */
 
-const caffe = require('..');
+let caffe = null;
+if (process.platform === 'android') {
+  caffe = require('silk-caffe');
+} else {
+  caffe = require('..');
+}
 const fs = require('fs');
 const opencv = require('opencv');
 

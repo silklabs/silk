@@ -18,6 +18,10 @@ const TRACKER_NAME = 'MEDIANFLOW';
 // Set a reasonable limit of tracked objects
 const MAX_TRACKED_OBJECTS = 10;
 
+// If a face (strong or weak) is not associated with a tracker in this many
+// calls to detectedFaces(), cancel the tracker
+const MAX_NO_FACE_SEEN = 5;
+
 let log;
 let timeline;
 
@@ -45,38 +49,57 @@ export default class FaceTracker {
     const areaOverlap = xOverlap * yOverlap;
     const overlapRatio = areaOverlap / Math.min(area1, area2);
 
+    //log.debug(`_faceRectRatio: or=${overlapRatio} ar=${areaRatio}: ${JSON.stringify(r1)} ${JSON.stringify(r2)}`);
     return [overlapRatio, areaRatio];
   }
 
   _probablySameFace(r1: FaceRect, r2: FaceRect): bool {
-    const [overlapRatio, areaRatio] = this._faceRectRatio(r1, r2);
-    // Faces overlapping by more than 50% and within 50% of the area are
-    // probably the same.
-    return overlapRatio > 0.5 && areaRatio > 0.5;
+    const [overlapRatio] = this._faceRectRatio(r1, r2);
+
+    // Faces overlapping by more than 50% are probably the same face.
+    // TODO: Consider areaRatio?  Need test cases that demonstrate where
+    //       testing overlapRatio alone fails first...
+    return overlapRatio > 0.5;
   }
 
-  detectedFaces(when: number, faceRects: Array<FaceRect>, grayeq: Matrix) {
+  _updateFaceLocation(face: Face, when: number, rect: FaceRect, grayeq: Matrix) {
+    log.verbose(`Updating location of face ${face.id}`);
+    // Update the tracking rectangle to the latest detected location for
+    // this face.
+    face.setLocation(rect, when);
+    face.i.tracker.notSeenCount = 0;
+
+    // TODO LATER: it would be nice to update the Tracker API to allow
+    // reinitializing a tracker as for certain Tracker implementations
+    // this could be a win.
+    face.i.tracker.impl.cancel();
+    face.i.tracker.impl = new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
+  }
+
+  detectedFaces(when: number,
+                faceRects: Array<FaceRect>,
+                weakFaceRects: Array<FaceRect>,
+                grayeq: Matrix) {
+
+    // Filter out lost faces
+    this.faces = this.faces.filter(face => face.i.tracker.impl !== null);
+
+    this.faces.forEach(
+      face => {
+        face.i.tracker.detected = false;
+      }
+    );
+
+    // Update trackers with new (strong) face data, and create new trackers if
+    // necessary
     faceRects.forEach(rect => {
-      const alreadyTracked = this.faces.some(face => {
-        if (face.i.tracker === null) {
-          return false; // Zombie face that hasn't been removed yet by update()
-        }
-
-        // Faces overlapping by more than 50% and within 50% of the area
-        // are probably the same, so update the tracking rectangle to the latest
-        // detected location for this face.
+      let alreadyTracked = false;
+      this.faces.forEach(face => {
         if (this._probablySameFace(rect, face.rect)) {
-          log.verbose(`Updating location of face ${face.id}`);
-          face.setLocation(rect, when);
-
-          // TODO LATER: it would be nice to update the Tracker API to allow
-          // reinitializing a tracker as for certain Tracker implementations
-          // this could be a win.
-          face.i.tracker.cancel();
-          face.i.tracker = new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
-          return true;
+          this._updateFaceLocation(face, when, rect, grayeq);
+          face.i.tracker.detected = true;
+          alreadyTracked = true;
         }
-        return false;
       });
 
       if (!alreadyTracked) {
@@ -85,38 +108,105 @@ export default class FaceTracker {
         } else {
           let face = new Face(timeline.getNextObjectId());
           face.setLocation(rect, when);
-          face.i.tracker = new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
+          face.i.tracker = {
+            detected: true,
+            impl: new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null),
+            notSeenCount: 0,
+          };
           this.faces.push(face);
           log.verbose(`Tracking new face ${face.id}`);
         }
       }
     });
 
-    // Search for faces that were not updated with the latest detection results
+    // Update trackers with new weak face data, only for trackers that didn't
+    // already match a strong face
+    weakFaceRects.forEach(
+      rect => {
+        this.faces.forEach(
+          face => {
+            if (face.i.tracker.detected) {
+              return;
+            }
+            if (this._probablySameFace(rect, face.rect)) {
+              this._updateFaceLocation(face, when, rect, grayeq);
+              face.i.tracker.detected = true;
+            }
+          }
+        );
+      }
+    );
+
+    // Search for faces that were not updated with the latest detection results,
+    // and remove them if they've not been associated with a detected face
+    // recently.
     this.faces.forEach(face => {
-      if (face.rectWhen === when ||
-          face.i.tracker === null ||
-          face.i.tracker.busy()) {
+      if (face.i.tracker.detected) {
         return;
       }
-      // If the non-updated face overlaps any of the newly detected faces by 50%,
-      // then remove it, as its tracker has likely drifted.
-      faceRects.some(rect => {
-        const [overlapRatio] = this._faceRectRatio(rect, face.rect);
-        if (overlapRatio > 0.5) {
-          face.i.tracker.cancel();
-          face.i.tracker = null;
-          log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
-          return true;
-        }
-      });
+
+      // Clear eye locations as this face was not detected, so any existing eye location
+      // is now likely wrong
+      face.rect.leftEye = null;
+      face.rect.rightEye = null;
+
+      if (++face.i.tracker.notSeenCount >= MAX_NO_FACE_SEEN) {
+        log.warn(`No new update seen for a while, dropping face ${face.id}`);
+        face.i.tracker.impl.cancel();
+        face.i.tracker.impl = null;
+      }
     });
+
+    // Search for duplicate trackers and remove them
+    for (let i = 0; i < this.faces.length; i++) {
+      let face = this.faces[i];
+      if (face.i.tracker.impl === null) {
+        continue;
+      }
+
+      // Check if another tracker appears to be also tracking this face
+      for (let j = i + 1; j < this.faces.length; j++) {
+        let face2 = this.faces[j];
+        if (face2.i.tracker.impl === null) {
+          continue;
+        }
+        if (this._probablySameFace(face.rect, face2.rect)) {
+          // Keep the tracker for the face that was observed recently and drop the
+          // other as guess right now.
+          let keepFace1 = null;
+
+          // If one of the faces have eye points, it's a strong face
+          if (face.rect.leftEye) {
+            keepFace1 = true;
+          } if (face2.rect.leftEye) {
+            keepFace1 = false;
+          } else {
+            // Both weak faces.  Select the face that's been seen the most recently.
+            keepFace1 = face.i.tracker.notSeenCount > face2.i.tracker.notSeenCount;
+          }
+
+          if (keepFace1) {
+            log.warn(`Suspected duplicate face tracker, dropping face ${face2.id}`);
+            face2.i.tracker.impl.cancel();
+            face2.i.tracker.impl = null;
+            continue;
+          } else {
+            log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
+            face.i.tracker.impl.cancel();
+            face.i.tracker.impl = null;
+            break;
+          }
+        } else {
+          //log.debug(`Not the same faces - ${face.id}:${face2.id}`);
+        }
+      }
+    }
   }
 
   _promiseTrackerUpdate(face: Face, grayeq: Matrix): Promise<[Face, bool, bool, FaceRect]> {
-    invariant(!face.i.tracker.busy());
+    invariant(!face.i.tracker.impl.busy());
     return new Promise(resolve => {
-      face.i.tracker.update(grayeq, (err, found, rect) => {
+      face.i.tracker.impl.update(grayeq, (err, found, rect) => {
         resolve([face, err, found, rect]);
       });
     });
@@ -125,44 +215,24 @@ export default class FaceTracker {
   /*
    * Returns the list of Faces where the associated is not currently busy
    * performing a tracking update.
-   *
-   * As a side effect it will also try to prune duplicate trackers.
    */
   _getIdleTrackers(): Array<Face> {
     let idleFaces = [];
     for (let i = 0; i < this.faces.length; i++) {
       let face = this.faces[i];
-      if (face.i.tracker === null) {
+      if (face.i.tracker.impl === null) {
         continue;
       }
-      if (face.i.tracker.busy()) {
+      if (face.i.tracker.impl.busy()) {
         log.warn(`Tracker still busy for face ${face.id}`);
         continue;
       }
       idleFaces.push(face);
-
-      // Check if another tracker appears to be also tracking this face
-      for (let j = i + 1; j < this.faces.length; j++) {
-        let face2 = this.faces[j];
-        if (face2.i.tracker === null || face2.i.tracker.busy()) {
-          continue;
-        }
-        if (this._probablySameFace(face.rect, face2.rect)) {
-          // Drop face2
-          // TODO: Be smarter about which face to drop, based on area/age/faceId...?
-          face2.i.tracker = null;
-          log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
-          continue;
-        }
-      }
     }
     return idleFaces;
   }
 
   async update(when: number, grayeq: Matrix): Promise<Array<Face>> {
-    // Filter out lost faces
-    this.faces = this.faces.filter(face => face.i.tracker !== null);
-
     // Collect the list of idle trackers
     const idleFaces = this._getIdleTrackers();
 
@@ -185,7 +255,7 @@ export default class FaceTracker {
       }
 
       if (!found) {
-        face.i.tracker = null;
+        face.i.tracker.impl = null;
         lostFaces.push(face);
         log.verbose(`Lost face ${face.id}`);
         continue;
@@ -193,7 +263,8 @@ export default class FaceTracker {
 
       face.setLocation(rect, when);
 
-      const diagId = `tracked:${face.id}:${elapsedTime}ms`;
+      const diagId = `tracked:${face.id}:${elapsedTime}ms:` +
+        `${face.i.tracker.notSeenCount}/${MAX_NO_FACE_SEEN}`;
       if (timeline.diagFrameEnabled(diagId)) {
         // boundingRect must be fully contained within the grayeq or OpenCV will
         // assert within the |.roi| method.

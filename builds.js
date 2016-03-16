@@ -129,9 +129,10 @@ module.exports = {
     ],
     events: ['push'],
   }),
-  'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
-    files: ['**/package.json']
-  }),
+  // Disabled for now because it is teh broken.
+  //'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
+  //  files: ['**/package.json']
+  //}),
   'mp4dash': npmPackageBuild('tools/mp4dash'),
 
   // Nightly device builds

@@ -34,6 +34,7 @@ class Main {
 
     timeline.on('preview', this.onPreview);
     timeline.on('motion', this.onMotion);
+    timeline.on('no-motion', this.onNoMotion);
     sysutils.propWatcher.on('silk.addperson', this.onPropAddPerson);
 
     this.faceDetector = new FaceDetector(env);
@@ -43,11 +44,12 @@ class Main {
 
   willUnload(): void {
     sysutils.propWatcher.removeListener('silk.addperson', this.onPropAddPerson);
+    timeline.removeListener('no-motion', this.onNoMotion);
     timeline.removeListener('motion', this.onMotion);
     timeline.removeListener('preview', this.onPreview);
   }
 
-  onMotion = async (when: number): Promise<void> => {
+  async detectFaces(when: number): Promise<void> {
     const now = Date.now();
     if (Math.abs(this.lastFaceDetect - now) < FACE_DETECT_INTERVAL) {
       return;
@@ -76,7 +78,20 @@ class Main {
     await this.faceRecognizer.predict(when, this.faceTracker.faces, gray, fullgray);
 
     this.processingMotion = false;
-  };
+  }
+
+  onMotion = (when: number): void => {
+    this.detectFaces(when);
+  }
+
+  onNoMotion = (when: number): void => {
+    // If a face is being tracked, continue to try to detect faces even if
+    // there's no motion.  This is to help ensure that the trackers continue to
+    // be actually tracking faces.
+    if (this.faceTracker.faces.length > 0) {
+      this.detectFaces(when);
+    }
+  }
 
   onPreview = async (when: number): Promise<void> => {
     let [grayeq] = await camera.getPreviewFrames(when, ['grayeq']);

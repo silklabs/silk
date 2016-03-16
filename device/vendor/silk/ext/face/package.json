@@ -19,6 +19,7 @@
     "CBuffer": "1.1.0",
     "babel-runtime": "5.8.35",
     "fast-image-size": "0.1.2",
+    "mkdirp-promise": "1.0.3",
     "mz": "2.2.0"
   },
   "devDependencies": {

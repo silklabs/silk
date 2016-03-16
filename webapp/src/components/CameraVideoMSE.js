@@ -131,10 +131,10 @@ export default class CameraVideo extends React.Component {
 
   _updateCanvasSize = () => {
     if (!this.refs.msePlayer) {
-      this.canvas.style.width = 0;
-      this.canvas.style.height = 0;
+      this.canvas.style.display = 'none';
       return;
     }
+    this.canvas.style.display = 'inherit';
     const video = this.refs.msePlayer.videoElement;
     let width = video.clientWidth;
     let height = video.clientHeight;

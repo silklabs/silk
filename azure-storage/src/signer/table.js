@@ -37,6 +37,7 @@ type SharedKeyConfig = {
   method: string;
   table: string;
   headers: {[key: string]: string};
+  query: {[key: string]: string};
   account?: string;
   accessKey?: string;
 };
@@ -167,6 +168,10 @@ export function sharedKey(options: SharedKeyConfig): string {
   stringToSign += newlineValue(options.headers['Content-Type']);
   stringToSign += newlineValue(options.headers['x-ms-date'] || options.headers['Date']);
   stringToSign += '/' + account + '/' + options.table;
+
+  if (options.query && options.query.comp) {
+    stringToSign += `?comp=${options.query.comp}`;
+  }
 
   const sig = hmac(accessKey, stringToSign);
   return 'SharedKey ' + account + ':' + sig;

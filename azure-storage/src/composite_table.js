@@ -15,6 +15,7 @@ import invariant from 'assert';
 import type {
   TableClient,
   Entity,
+  CorsRule,
 } from './table';
 
 import createLog from 'silk-log';
@@ -107,6 +108,12 @@ export default class CompositeTableClient {
    * HOOK for subclass to use to update the underlying list of clients...
    */
   async _updateClients(): Promise<void> {}
+
+  setCorsRules: (rules: Array<CorsRule>) => Promise<void> =
+    ensureClients((rules: Array<CorsRule>) : Promise<void> => {
+      return runTableMutation('setCorsRules', 'all', this._clients, [rules]);
+    }
+  );
 
   /**
    * Ensure tables are present for writing. This should happen on the server

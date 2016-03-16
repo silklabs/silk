@@ -43,6 +43,14 @@ type TableClientOptions = {
   requestId?: RequestIdFactory;
 };
 
+export type CorsRule = {
+  allowedOrigins: Array<string>;
+  allowedMethods: Array<string>;
+  allowedHeaders: Array<string>;
+  exposedHeaders: Array<string>;
+  maxAgeInSeconds: number;
+};
+
 /**
  * Azure table entities are very flexible but require RowKey and PartitionKey
  * for scalability reasons.. Every entity must have them.
@@ -78,7 +86,7 @@ export class SharedKeyAuth {
     }
 
     let parsed = URL.parse(url);
-    invariant(parsed.path);
+    parsed.path = parsed.path || '';
 
     // Inject any passed query string parameters into the request.
     delete parsed.search;
@@ -92,6 +100,7 @@ export class SharedKeyAuth {
       method: options.method,
       headers: headersToSign,
       table: parsed.path,
+      query: parsed.query,
     });
 
     headers.set('Authorization', auth);
@@ -228,6 +237,43 @@ export class TableClient extends HttpClient {
     this._authProvider = provider;
     // TODO: Figure out more unique name or allow passing it.
     this.name = options.name || 'azure-table-client';
+  }
+
+  setServiceProperties(xml: string): Promise<mixed> {
+    const headers = new Headers();
+    return this.request(['', {
+      method: 'PUT',
+      body: xml,
+      query: {
+        restype: 'service',
+        comp: 'properties',
+      }
+    }]);
+  }
+
+  setCorsRules(rules: Array<CorsRule>): Promise<mixed> {
+    const cors = rules.map((rule) => {
+      return `
+        <CorsRule>
+          <AllowedMethods>${rule.allowedMethods.join(',')}</AllowedMethods>
+          <AllowedOrigins>${rule.allowedOrigins.join(',')}</AllowedOrigins>
+          <AllowedHeaders>${rule.allowedHeaders.join(',')}</AllowedHeaders>
+          <ExposedHeaders>${rule.exposedHeaders.join(',')}</ExposedHeaders>
+          <MaxAgeInSeconds>${rule.maxAgeInSeconds}</MaxAgeInSeconds>
+        </CorsRule>
+      `;
+    }).join('\n');
+
+    const xml = `
+      <?xml version="1.0" encoding="utf-8"?>
+      <StorageServiceProperties>
+        <Cors>
+          ${cors}
+        </Cors>
+      </StorageServiceProperties>
+    `.trim();
+
+    return this.setServiceProperties(xml);
   }
 
   /**

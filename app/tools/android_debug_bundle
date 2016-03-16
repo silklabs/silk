@@ -1,0 +1,12 @@
+#!/bin/bash -ex
+
+echo "Trying to fetch bundle from local development server..."
+curl -fvso $1 "http://localhost:8082/index.android.bundle?platform=android&dev=true&hot=false"
+if [ $? -eq 0 ]; then
+  echo "Success!"
+  exit 0
+fi
+
+echo "No luck. Creating bundle from scratch instead."
+dir=$(dirname $0)
+$dir/rnws bundle --no-ios --androidBundlePath $1 --no-optimize

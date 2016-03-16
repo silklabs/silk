@@ -54,7 +54,7 @@ export default class MSEPlayer extends React.Component {
 
   _feedPlayer = (event = null) => {
     if (event) {
-      log.debug('_feedPlayer()', event);
+      log.debug(`Feeding player after '${event.type}' event.`);
     }
 
     if (!this.sourceBuffer) {

@@ -19,76 +19,7 @@ It is also possible to specify a branch, e.g.:
 npm run update -- next
 ```
 
-## Provisioning an iDevice
-
-Currently the Silk App is optimized for the iPhone 5s / iPod Touch 5th gen screen resolution.  iPod Touch 5 devices are good for development because they're relatively cheap.  To provision a new device:
-
-0. Connect the device to iTunes and ensure it's updated to latest iOS.
-0. Sign in to https://developer.apple.com with an Apple ID that's a member of the Silk Labs development team.
-0. Navigate to "Certificates, Identifiers & Profiles" -> iOS section -> Devices.
-0. Click "+" icon at top-right to add a new device.
-0. Open iTunes and find the "Serial Number" list for your device.  Click this once to switch the disply to "UDID".  Right-click the UDID and copy it.
-0. Paste the UDID you copied into the developer.apple.com add-device UI.  Give your device a memorable name and click "Continue", then "Register".
-
-If you're planning to develop on this device:
-
-0. Open Xcode.  Ensure your Apple ID account has been set up in Xcode.
-0. In the top-left of Xcode UI, choose your iDevice in the drop-down menu to set it as the build/run target.
-0. Press Ctrl-r to run Silk App on your iDevice.  In the 'Failed to code sign "Silk"' dialog box that pops up, press the "Fix Issue" button.
-
-Xcode should then set up your device and launch the Silk App on your device.  You're done!
-
-In order to be able to install builds from Travis on the new device, the provisioning profile called "CI Build Profile" needs to be updated to include the new device. This can be done through [Apple's Developer center](https://developer.apple.com/account/ios/profile/profileList.action). Once updated, download the provisioning profile, place it in `.travis/certs`, and check in the new profile so that Travis builds will include it from there on out.
-
-## Setting up a development environment
-
-**BEFORE OPENING THE PROJECT IN XCODE**, install the module dependencies in your clone dir
-```
-npm install
-```
-
-To develop the app, open `Silk.xcodeproj` in Xcode.  You'll want to do most development in the (excellent!) iOS simulator(s).  Only for Bluetooth development, performance testing, and touch-tap testing, a physical device is required.  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
-
-## Development cycle
-
-React Native supports two development modes:
-
-0. Fetch resources from external server (save-reload mode from host)
-0. Package resources into app package (deploy-to-device mode)
-
-### Packaged JS bundle
-
-By default, the app is configured for deploy-to-device mode.  In this mode, whenever you change a Javascript file, the JS bundle that's packaged with the app needs to be rebuilt. XCode will do this automatically each time the app is (re-)run on device.
-
-### JS bundle loaded from remote packager server
-
-However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you might want to consider loading the JS bundle from a local server rather than packaging it with the app.  To do so, start the JS packaging server with `npm start` and add the following stanza to `config.local.json` in the `app/` directory (you'll have to create the file if it doesn't exist yet) before you run the app:
-
-```js
-{
-  "react-native": {
-    "type": "remote",
-    "url": "http://<your computer's IP address>:8082/index.ios.bundle?platform=ios&dev=true"
-  }
-}
-```
-
-If you're running the app in the simulator, you can use `localhost` for your computer's IP address. Use Cmd+R in the simulator to reload the JS whenever you've made changes without having to re-run in Xcode. If you're running the app on a real device, you'll have to make sure that that device is on the same network as your computer, and you'll have to use your computer's IP address in the URL. Shake the device and pick "Reload JS" from the menu that appears whenever you want to reload the JavaScript code.
-
-### Hybrid approach: packaged JS bundle generated from packager server
-
-It may not always be convenient or possible to have the app load its JS bundle from the packager server on your computer. However, re-generating the entire bundle each time you re-run the app takes a long time, and makes testing changes to the JS code impossible to do rapidly. To solve this problem, you can start the JS packaging server with `npm start` and configure the app to generate a bundle each time you run it, but generate it from that server:
-
-```js
-{
-  "react-native": {
-    "type": "local",
-    "url": "http://localhost:8082/index.ios.bundle?platform=ios&dev=true"
-  }
-}
-```
-
-By leaving an instance of the packager server running and using it to generate updated bundles, subsequent re-runs of the app will be able to generate a packaged bundle much more quickly.
+## General notes
 
 ### Lint and Flow
 
@@ -146,7 +77,80 @@ To avoid having to re-enter WiFi credentials every time the app was restarted (n
 }
 ```
 
-## Producing a release by hand (Avoid at all cost)
+## iOS
+
+### Setting up a development environment
+
+**BEFORE OPENING THE PROJECT IN XCODE**, install the npm module dependencies:
+```
+npm install
+```
+
+To develop the app, open `ios/Silk.xcodeproj` in Xcode.  You'll want to do most development in the (excellent!) iOS simulator(s).  Only for Bluetooth development, performance testing, and touch-tap testing, a physical device is required.  Choose a simulator target at the top-left of the xcode UI.  Currently, silk app targets iPhone 5s.  Press Ctrl-r to build and run the application in the simulator.
+
+### Development cycle
+
+React Native supports two development modes:
+
+0. Fetch resources from external server (save-reload mode from host)
+0. Package resources into app package (deploy-to-device mode)
+
+#### Packaged JS bundle
+
+By default, the app is configured for deploy-to-device mode.  In this mode, whenever you change a Javascript file, the JS bundle that's packaged with the app needs to be rebuilt. XCode will do this automatically each time the app is (re-)run on device.
+
+#### JS bundle loaded from remote packager server
+
+However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you might want to consider loading the JS bundle from a local server rather than packaging it with the app.  To do so, start the JS packaging server with `npm start` and add the following stanza to `config.local.json` in the `app/` directory (you'll have to create the file if it doesn't exist yet) before you run the app:
+
+```js
+{
+  "react-native": {
+    "type": "remote",
+    "url": "http://<your computer's IP address>:8082/index.ios.bundle?platform=ios&dev=true"
+  }
+}
+```
+
+If you're running the app in the simulator, you can use `localhost` for your computer's IP address. Use Cmd+R in the simulator to reload the JS whenever you've made changes without having to re-run in Xcode. If you're running the app on a real device, you'll have to make sure that that device is on the same network as your computer, and you'll have to use your computer's IP address in the URL. Shake the device and pick "Reload JS" from the menu that appears whenever you want to reload the JavaScript code.
+
+#### Hybrid approach: packaged JS bundle generated from packager server
+
+It may not always be convenient or possible to have the app load its JS bundle from the packager server on your computer. However, re-generating the entire bundle each time you re-run the app takes a long time, and makes testing changes to the JS code impossible to do rapidly. To solve this problem, you can start the JS packaging server with `npm start` and configure the app to generate a bundle each time you run it, but generate it from that server:
+
+```js
+{
+  "react-native": {
+    "type": "local",
+    "url": "http://localhost:8082/index.ios.bundle?platform=ios&dev=true"
+  }
+}
+```
+
+By leaving an instance of the packager server running and using it to generate updated bundles, subsequent re-runs of the app will be able to generate a packaged bundle much more quickly.
+
+### Provisioning an iDevice
+
+Currently the Silk App is optimized for the iPhone 5s / iPod Touch 5th gen screen resolution.  iPod Touch 5 devices are good for development because they're relatively cheap.  To provision a new device:
+
+0. Connect the device to iTunes and ensure it's updated to latest iOS.
+0. Sign in to https://developer.apple.com with an Apple ID that's a member of the Silk Labs development team.
+0. Navigate to "Certificates, Identifiers & Profiles" -> iOS section -> Devices.
+0. Click "+" icon at top-right to add a new device.
+0. Open iTunes and find the "Serial Number" list for your device.  Click this once to switch the disply to "UDID".  Right-click the UDID and copy it.
+0. Paste the UDID you copied into the developer.apple.com add-device UI.  Give your device a memorable name and click "Continue", then "Register".
+
+If you're planning to develop on this device:
+
+0. Open Xcode.  Ensure your Apple ID account has been set up in Xcode.
+0. In the top-left of Xcode UI, choose your iDevice in the drop-down menu to set it as the build/run target.
+0. Press Ctrl-r to run Silk App on your iDevice.  In the 'Failed to code sign "Silk"' dialog box that pops up, press the "Fix Issue" button.
+
+Xcode should then set up your device and launch the Silk App on your device.  You're done!
+
+In order to be able to install builds from Travis on the new device, the provisioning profile called "CI Build Profile" needs to be updated to include the new device. This can be done through [Apple's Developer center](https://developer.apple.com/account/ios/profile/profileList.action). Once updated, download the provisioning profile, place it in `.travis/certs`, and check in the new profile so that Travis builds will include it from there on out.
+
+### Producing a release by hand (Avoid at all cost)
 
 0. Close Xcode
 0. Close any react-native package servers that might be running
@@ -180,3 +184,28 @@ To build a democonfig app package set up to run off an OS X local server over so
 ```
 0. Follow the steps above to build, QA, and package the app.
 0. Take special care to verify that the server URL is set correctly and that it can connect to the demo server over softap.
+
+## Android
+
+### Setting up a development environment
+
+Ensure that you have installed everything needed for React Native for Android development, as [outlined by the React Native documentation](https://facebook.github.io/react-native/docs/android-setup.html).
+
+As with iOS, before you can perform any further steps, ensure you have installed the npm module dependencies via:
+```
+npm install
+```
+
+For developing the native Java part of the app, any Android-capable IDE will work well. Android Studio can import the Gradle configuration as a project, just point it at `android/build.gradle`.
+
+### Development cycle
+
+#### Video player webview
+
+Normally 
+
+```json
+{
+  "mseWebviewUrl": "http://192.168.1.13:8000/js/android"
+}
+```

@@ -20,6 +20,7 @@ import Spinner from './Spinner';
 const {
   AppStateIOS,
   PixelRatio,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -100,7 +101,17 @@ class MonitorsView extends AsyncComponent {
   };
 
   startFullscreenVideo = (fullscreenDeviceId, fullscreenStartTime = null) => {
-    this.setStateAsync({fullscreenDeviceId, fullscreenStartTime});
+    if (Platform.OS === 'ios') {
+      this.setStateAsync({fullscreenDeviceId, fullscreenStartTime});
+    } else {
+      this.props.navigator.pushAsync({
+        name: 'CameraLiveVideo',
+        props: {
+          ...this.props,
+          deviceId: fullscreenDeviceId,
+        },
+      });
+    }
   };
 
   stopFullscreenVideo = () => {

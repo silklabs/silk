@@ -11,10 +11,13 @@ var config = {
     publicPath: '/js/',
   },
   devtool: "source-map",
-  entry: './src/index',
+  entry: {
+    bundle: './src/index',
+    android: './src/android/index',
+  },
   output: {
     path: 'public/js',
-    filename: 'bundle.js'
+    filename: '[name].js',
   },
   // Something about how we use relative paths in our modules messes up webpack
   // without a more specific modulesDirectories config.
@@ -54,7 +57,7 @@ var config = {
             require.resolve('babel-preset-react'),
           ],
           plugins: [
-            require.resolve('babel-plugin-transform-runtime')
+            require.resolve('babel-plugin-transform-runtime'),
           ]
         },
       }

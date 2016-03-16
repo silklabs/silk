@@ -230,7 +230,8 @@ export default class Residents {
       this._clients.delete(client);
 
       // send a message to initiate close on the resident side.
-      if (resident.connection.readyState === WebSocket.OPENED) {
+      if (resident.connection.readyState === WebSocket.OPEN) {
+        log.info(`Notify resident (${id}) of stream close ${streamId}`);
         resident.connection.send(header(CLIENT_CLOSE, streamIdBinary));
       }
     };

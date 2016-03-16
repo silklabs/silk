@@ -197,7 +197,7 @@ suite('account auth', () => {
 
     // Insert some garbage that we should not be able to query with these
     // credentials...
-    await root.mergeOrInsert(
+    await root.mergeOrInsertEntity(
       context.config.azure.tables.sigdevices,
       {
         PartitionKey: 'foobar',

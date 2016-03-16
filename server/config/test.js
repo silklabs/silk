@@ -21,6 +21,7 @@ export default {
   },
 
   azure: {
+    setServiceProps: false,
     // We only use a single region in tests for faster runs.
     regions: {
       uswest: azureCreds.uswest,

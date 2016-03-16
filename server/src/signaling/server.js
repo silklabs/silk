@@ -82,13 +82,16 @@ export default async function main (config: any): any {
     regionalClients,
   );
 
-  await Promise.all([
-    // We only need to do this once since both sigdevices and sigservers are
-    // hosted within the same set of azure storage accounts.
-    signalServers.setCorsRules(config.azure.cors),
+  const azureTableSetup = [
     signalServers.ensureTables(),
     signalDevices.ensureTables(),
-  ]);
+  ];
+
+  if (config.azure.setServiceProps) {
+    azureTableSetup.push(signalServers.setCorsRules(config.azure.cors));
+  }
+
+  await Promise.all(azureTableSetup);
 
   server.listen(config.signaling.port);
   await eventToPromise(server, 'listening');
@@ -123,7 +126,7 @@ export default async function main (config: any): any {
   // services drop off for unknown reasons (like in a spot model). This is a
   // close enough stop gap. In the future we can use "start" (and a periodic
   // update for a aliveness check) to purge dead servers.
-  await signalServers.mergeOrInsert(entity);
+  await signalServers.mergeOrInsertEntity(entity);
 
   const residents = new Residents(config.signaling.clientTimeout);
   residents.monitorClients();
@@ -150,7 +153,7 @@ export default async function main (config: any): any {
         lastSeen: Date.now(),
       };
 
-      await ctx.signalDevices.mergeOrInsert(entity);
+      await ctx.signalDevices.mergeOrInsertEntity(entity);
     },
 
     account: async (req, res) => {
@@ -251,19 +254,23 @@ export default async function main (config: any): any {
 
   const wss = new WebSocketServer({
     server,
-    verifyClient: verifyClientHandler,
+    // babel 5 workaround (arity of function is not correct otherwise).
+    verifyClient: (connection, cb) => {
+      verifyClientHandler(connection, cb);
+    },
   });
 
   wss.on('connection', (ws) => {
     try {
       const req = ws.upgradeReq;
       const { type, deviceId, publicKey } = req;
-      invariant(publicKey);
       invariant(type);
 
       if (type === 'device') {
+        invariant(publicKey);
         residents.register(publicKey, ws);
       } else if (type === 'account') {
+        invariant(deviceId);
         residents.bridge(deviceId, ws);
       } else {
         // We check this above as well this is simply to ensure we have a catch

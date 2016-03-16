@@ -75,6 +75,7 @@ suite('connect test', () => {
     let pong = await eventToPromise(accountWs, 'data');
     assert.equal(pong.toString(), 'pong');
     accountWs.end();
+    accountPeer.end();
 
     await Promise.all([
       eventToPromise(accountWs, 'close'),

@@ -12,6 +12,7 @@ const SILK_EMAILS = ['@silk.io', '@silklabs.com'];
 export default {
 
   azure: {
+    setServiceProps: true,
 
     // It's important to note that CORS rules are storage account wide and
     // affect all blobs, queues and tables.

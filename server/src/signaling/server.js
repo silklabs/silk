@@ -83,6 +83,9 @@ export default async function main (config: any): any {
   );
 
   await Promise.all([
+    // We only need to do this once since both sigdevices and sigservers are
+    // hosted within the same set of azure storage accounts.
+    signalServers.setCorsRules(config.azure.cors),
     signalServers.ensureTables(),
     signalDevices.ensureTables(),
   ]);

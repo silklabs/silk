@@ -750,7 +750,7 @@ NAN_METHOD(Model::Time) {
   // Note that for the speed benchmark, we will assume that the network does
   // not take any input blobs.
   float initial_loss;
-  self->caffeNet->Forward(&initial_loss);
+  self->caffeNet->Forward(vector<Blob<float>*>(), &initial_loss);
   ALOGD("Initial loss: %f", initial_loss);
   ALOGD("Performing Backward");
   self->caffeNet->Backward();

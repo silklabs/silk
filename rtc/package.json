@@ -9,6 +9,7 @@
     "silk-log": "/log"
   },
   "dependencies": {
+    "babel-runtime": "^6.6.1",
     "event-to-promise": "^0.7.0",
     "msgpack-lite": "0.1.13"
   },

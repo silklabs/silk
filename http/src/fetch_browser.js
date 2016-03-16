@@ -1,2 +1,2 @@
-export default const fetch = window.fetch;
+export default window.fetch;
 export const Headers = window.Headers;

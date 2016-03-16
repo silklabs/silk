@@ -36,6 +36,7 @@
             '-DUSE_HDF5=OFF',
             '-Wno-sign-compare',
             '-Wstrict-aliasing',
+            '-Wno-sign-promo',
             '-isystem <!(echo $ANDROID_BUILD_TOP/system/core/include/)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libgflags/include/)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libopenblas/include)',

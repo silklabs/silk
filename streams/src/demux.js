@@ -102,6 +102,7 @@ export default class DemuxStream extends Transform {
       }
     });
 
+    log.info(`Pushing new stream: ${id}`);
     this.push(stream);
   }
 

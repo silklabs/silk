@@ -4,6 +4,9 @@ if [[ "$V" == "1" ]]; then
   set -x
 fi
 
+# Disable node modules cache is it is teh broken
+exit 0
+
 if [[ "$DISABLE_NODE_MODULES_CACHE" == "1" ]]; then
   echo Found DISABLE_NODE_MODULES_CACHE=1 in environment. Ignoring cache.
   exit 0

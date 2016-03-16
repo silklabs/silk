@@ -24,6 +24,16 @@ import type {
 const log = createLog('rtc');
 
 /**
+ * For the browser we must supply some configs (for chrome at minimum).
+ */
+const CALLER_PEER_CONFIG = {
+  iceServers: [
+    // TODO: Use our own stun servers.
+    { urls: "stun:stun.l.google.com:19302" }
+  ]
+};
+
+/**
  * Via ICE we can now communicate with our peer ... ICE may still be ongoing but
  * will not impact our ability to talk to the peer.
  */
@@ -61,6 +71,20 @@ type CallOptions = {
 
 type PeerTypes = 'caller' | 'recipient';
 type DataChannels = Map<string, StructuredDataChannel>;
+
+/**
+ * Helper for safely calling the toJSON method if available.
+ *
+ * Mostly for node-webrtc compat which does not have toJSON methods but can be
+ * directly passed to msgpack (unlike the browser variants which need to be
+ * toJSON'ed).
+ */
+function toJSON(obj: any): Object {
+  if (typeof obj.toJSON === 'function') {
+    return obj.toJSON();
+  }
+  return obj;
+}
 
 /**
  * For use with Promise.race ... This function will produce a promise rejection.
@@ -166,7 +190,7 @@ async function waitForIce(
     if (event.candidate) {
       let { candidate } = event;
       log.info(`(${type}) Sending ice candidate`, candidate);
-      transport.write(candidate);
+      transport.write(toJSON(candidate));
     } else {
       log.warn(`Got peer candidate without details...`);
     }
@@ -175,7 +199,7 @@ async function waitForIce(
   // When we receive a candidate to add to our peerConnection from the remote.
   function remoteCandidateListener(candidate) {
     log.info(`(${type}) Adding ice candidate from remote...`, candidate);
-    peerConnection.addIceCandidate(candidate);
+    peerConnection.addIceCandidate(new WebRTC.RTCIceCandidate(candidate));
   }
 
   function cleanupListeners() {
@@ -268,7 +292,7 @@ class Caller extends PeerConnection {
     peerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
       if (event.candidate) {
         log.verbose('caller sending candidate', event.candidate);
-        transport.write(event.candidate);
+        transport.write(toJSON(event.candidate));
       }
     });
 
@@ -283,7 +307,7 @@ class Caller extends PeerConnection {
     // initiate the peer ...
     transport.write({
       // Most important thing is obviously the offer itself...
-      sdp: desc,
+      sdp: toJSON(desc),
       // We also send along the list of expected data channels so we can await
       // them...
       dataChannels: Array.from(this._dataChannels.keys()),
@@ -310,7 +334,7 @@ class Caller extends PeerConnection {
 export function call(
   options?: CallOptions = {}
 ): Caller {
-  let peerConnection = new WebRTC.RTCPeerConnection();
+  let peerConnection = new WebRTC.RTCPeerConnection(CALLER_PEER_CONFIG);
   peerConnectionStateObserver('caller', peerConnection);
 
   let dataChannels = new Map();
@@ -338,7 +362,7 @@ export async function answer(
   transport: Duplex,
   options?: Object
 ): Promise<Recipient> {
-  let peerConnection = new WebRTC.RTCPeerConnection();
+  let peerConnection = new WebRTC.RTCPeerConnection({});
   peerConnectionStateObserver('recipient', peerConnection);
 
   // TODO: Add timeouts ...
@@ -381,7 +405,7 @@ export async function answer(
   );
 
   log.info('answer sent');
-  transport.write(answer);
+  transport.write(toJSON(answer));
 
   await waitForIce('recipient', peerConnection, transport);
 

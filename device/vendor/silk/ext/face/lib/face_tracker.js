@@ -12,11 +12,13 @@ import {
   FaceRect,
 } from './face';
 
-//const TRACKER_NAME = 'CMT';
-const TRACKER_NAME = 'DLIB';
+const TRACKER_NAME = 'CMT';
+//const TRACKER_NAME = 'DLIB';
 
 // Set a reasonable limit of tracked objects
-const MAX_TRACKED_OBJECTS = 10;
+// (3 for device as CMT has not yet been optimized for tracking multiple
+// objects, see #676)
+const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
 
 // If a face (strong or weak) is not associated with a tracker in this many
 // calls to detectedFaces(), cancel the tracker

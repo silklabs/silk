@@ -7,6 +7,7 @@
 import cv from 'opencv';
 import { exec } from 'mz/child_process';
 import fs from 'mz/fs';
+import mkdirp from 'mkdirp-promise';
 import path from 'path';
 import imageSize from 'fast-image-size';
 import invariant from 'assert';
@@ -15,9 +16,10 @@ import {
   FaceRect,
 } from './face';
 
-const TRAIN_FACES_PATH = 'data/silk/opencv/faces';
-const TRAIN_FACES_YML = 'data/silk/opencv/face_model.yml';
-const TRAIN_FACES_MAP = 'data/silk/opencv/face_map.json';
+const TRAIN_ROOTDIR = 'data/silk/opencv';
+const TRAIN_FACES_PATH = `${TRAIN_ROOTDIR}/faces`;
+const TRAIN_FACES_YML = `${TRAIN_ROOTDIR}/face_model.yml`;
+const TRAIN_FACES_MAP = `${TRAIN_ROOTDIR}/face_map.json`;
 export const FACE_COUNT = 100;
 
 const DESIRED_LEFT_EYE_X = 0.23; // Desired left eye center on a scale of 1.0
@@ -415,7 +417,7 @@ export default class Trainer {
     }
 
     try {
-      await fs.mkdir(facePath);
+      await mkdirp(facePath);
     } catch (err) {
       if (err.code !== 'EEXIST') {
         log.error(`Failed to create ${facePath}, error: ${err}`);

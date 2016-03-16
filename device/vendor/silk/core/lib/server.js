@@ -14,6 +14,7 @@ import createLog from './log';
 import * as VideoMetrics from './metrics/video';
 
 import type { Socket } from 'silk-socket.io-client-node';
+import type Connections from './connections';
 
 const log = createLog('server');
 
@@ -25,13 +26,18 @@ type ServerState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
  * Server socket.io connection
  */
 export default class Server extends events.EventEmitter {
+  connections: Connections;
   socket: ?Socket;
   pendingAcks: ServerAcks;
   maxPendingAcks: ServerAcks;
   lastEmittedState: ServerState = 'disconnected';
 
-  constructor() {
+  constructor(connections: Connections) {
     super();
+
+    // For backwards compat we hold the new "connections" interface and use it
+    // to dispatch messages.
+    this.connections = connections;
 
     // Number of acks that can be pending before starting to drop messages
     this.maxPendingAcks = {
@@ -288,5 +294,9 @@ export default class Server extends events.EventEmitter {
         api.metrics.add(new VideoMetrics.Dropped());
       }
     }
+
+    // New connections (webrtc based) send.
+    log.info('pass to connections', event);
+    this.connections.send(event, event, data);
   }
 }

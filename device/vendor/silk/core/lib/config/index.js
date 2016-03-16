@@ -571,8 +571,6 @@ class DeviceConfig extends EventEmitter {
                        () => this._onServerStateChange(`connected`));
     server.addListener(`disconnect`,
                        () => this._onServerStateChange(`disconnected`));
-    server.addListener(`stateChange`,
-                       (state) => this._onServerStateChange(state));
     server.addListener(`error`, (error) => this._onServerError(error));
 
     let [ deviceId, btle ] = await Promise.all([

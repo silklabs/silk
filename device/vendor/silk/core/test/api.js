@@ -2,7 +2,7 @@ import { default as createApi, AccessToken } from 'silk-api';
 import realAPI from '../lib/api';
 
 // Helper will use developer account and register a device...
-export default async function() {
+export default async function(config = {}) {
   let api = createApi({
     metrics: {
       type: 'device',
@@ -27,6 +27,11 @@ export default async function() {
     },
   });
   accountApi.accessToken = accessToken;
+
+  // update local configuration (useful for changing server url).
+  if (config) {
+    [api, realAPI, accountApi].forEach(api => api.loadConfig(config));
+  }
 
   // register the device...
   let token = accountApi.accessToken.sign(api.accessToken.toString());

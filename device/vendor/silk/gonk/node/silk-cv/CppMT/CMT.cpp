@@ -55,14 +55,6 @@ void CMT::initialize(const Mat im_gray, const Rect rect)
 
     }
 
-    //Create foreground classes
-    vector<int> classes_fg;
-    classes_fg.reserve(keypoints_fg.size());
-    for (size_t i = 0; i < keypoints_fg.size(); i++)
-    {
-        classes_fg.push_back(i);
-    }
-
     //Compute foreground/background features
     Mat descs_fg;
     Mat descs_bg;
@@ -92,8 +84,15 @@ void CMT::initialize(const Mat im_gray, const Rect rect)
         points_normalized.push_back(points_fg[i] - center);
     }
 
+    //Create foreground classes
+    classes_active.reserve(keypoints_fg.size());
+    for (size_t i = 0; i < keypoints_fg.size(); i++)
+    {
+        classes_active.push_back(i);
+    }
+
     //Initialize matcher
-    matcher.initialize(points_normalized, descs_fg, classes_fg, descs_bg, center);
+    matcher.initialize(points_normalized, descs_fg, classes_active, descs_bg, center);
 
     //Initialize consensus
     consensus.initialize(points_normalized);
@@ -102,7 +101,6 @@ void CMT::initialize(const Mat im_gray, const Rect rect)
     for (size_t i = 0; i < keypoints_fg.size(); i++)
     {
         points_active.push_back(keypoints_fg[i].pt);
-        classes_active = classes_fg;
     }
 
 	//Store initial set of keypoints for confidence calculation
@@ -124,7 +122,7 @@ void CMT::processFrame(Mat im_gray) {
 
     //keep only successful classes
     vector<int> classes_tracked;
-    for (size_t i = 0; i < classes_active.size(); i++)
+    for (size_t i = 0; i < status.size(); i++)
     {
         if (status[i])
         {

@@ -55,7 +55,7 @@ suite('Tracker', () => {
             async (err) => {
               console.log("New tracker initialized");
 
-              for (let i = 0; i < 50; i++) {
+              for (let i = 0; i < 10; i++) {
                 try {
                   console.log('Loop', i);
                   assert(!tracker.busy(), 'Tracker not expected to be busy');

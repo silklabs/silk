@@ -123,7 +123,8 @@ class FILELOG_DECLSPEC FILELog : public Log<Output2FILE> {};
 //typedef Log<Output2FILE> FILELog;
 
 #ifndef FILELOG_MAX_LEVEL
-#define FILELOG_MAX_LEVEL logDEBUG4
+//#define FILELOG_MAX_LEVEL logDEBUG4
+#define FILELOG_MAX_LEVEL logWARNING
 #endif
 
 #define FILE_LOG(level) \

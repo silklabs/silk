@@ -8,9 +8,14 @@ const log = createLog('stream:demuxplex');
 const STREAM_MESSAGE = 0;
 const STREAM_CLOSE = 1;
 
+const MAX_HEADER_SIZE = 40;
+const MIN_HEADER_SIZE = 2;
+
 type StreamMeta = {
+  id: string;
   stream: Duplex;
-  remoteClosed: false;
+  remoteClosed: bool;
+  localFinished: bool;
 };
 
 /**
@@ -27,18 +32,17 @@ type StreamMeta = {
  *   N (bytes) [opaque data for a further stream to process].
  *
  */
-export class DemuxStream extends Transform {
+export default class DemuxStream extends Transform {
 
-  _currentId: string;
+  _current: ?StreamMeta;
   _streams: Map<string, StreamMeta> = new Map();
-  _source: Duplex;
+  _writeDest: Duplex;
 
   constructor(source: Duplex) {
     super({
-      writableObjectMode: false,
       readableObjectMode: true,
     });
-    this._source = source;
+    this._writeDest = source;
   }
 
   /**
@@ -49,30 +53,40 @@ export class DemuxStream extends Transform {
     return this._streams.has(id);
   }
 
-  _closeStream(id: string) {
-    log.info('close stream', id);
+  _closeStream(id: string, err: ?Error) {
 
     const meta = this._streams.get(id);
-    invariant(meta);
-    const { stream } = meta;
-    stream.emit('close');
     this._streams.delete(id);
+
+    // Ensure that we do not emit close twice..
+    if (!meta) {
+      return;
+    }
+
+    log.info('close stream', id);
+    const { stream } = meta;
+    stream.push(null);
+    if (err) {
+      stream.emit('error', err);
+    }
+    stream.emit('close');
   }
 
   _registerStream(id: string, header: Buffer) {
-    log.verbose('creating stream', id);
+    log.info('creating stream', id);
 
     const stream = new Duplex({
       read: () => {
       }, // no-op we push directly into this stream.
       write: (chunk: Buffer, encoding: string, callback: Function) => {
         log.verbose('write from substream', id);
-        this._source.write(header);
-        this._source.write(chunk, encoding, callback);
+        this._writeDest.write(header);
+        this._writeDest.write(chunk, encoding, callback);
       }
     });
 
     let meta = {
+      id,
       stream,
       localFinished: false,
       remoteClosed: false,
@@ -81,6 +95,7 @@ export class DemuxStream extends Transform {
     this._streams.set(id, meta);
 
     stream.on('finish', () => {
+      log.info(`Stream ${id} has finished`);
       meta.localFinished = true;
       if (meta.remoteClosed) {
         this._closeStream(id);
@@ -91,7 +106,15 @@ export class DemuxStream extends Transform {
   }
 
   _transform(chunk: Buffer, encoding: string, callback: Function) {
-    if (!this._currentId) {
+    if (!this._current) {
+
+      if (chunk.length > MAX_HEADER_SIZE && chunk.length > MIN_HEADER_SIZE) {
+        const msg = `Got header of invalid size: ${chunk.length}`;
+        log.error(msg);
+        callback(new Error(msg));
+        return;
+      }
+
       const type = chunk.readUInt8(0);
       const streamIdBinary = chunk.slice(1);
       const streamId = streamIdBinary.toString('hex');
@@ -101,7 +124,7 @@ export class DemuxStream extends Transform {
         const streamMeta = this._streams.get(streamId);
         if (!streamMeta) {
           callback(
-            new Error(`Attempting to close non-existant stream: ${this.streamId.toString('hex')}`)
+            new Error(`Attempting to close non-existant stream: ${streamId}`)
           );
           return;
         }
@@ -111,8 +134,14 @@ export class DemuxStream extends Transform {
 
         if (streamMeta.localFinished) {
           this._closeStream(streamId);
+        } else {
+          this._closeStream(
+            streamId,
+            new Error(`Connection has closed before stream has finished.`)
+          );
         }
 
+        callback();
         return;
       }
 
@@ -122,30 +151,21 @@ export class DemuxStream extends Transform {
       }
 
       // XXX: This might not be the best option (hex).
-      this._currentId = streamId;
-      if (!this._streams.has(this._currentId)) {
-        this._registerStream(this._currentId, streamIdBinary);
+      if (!this._streams.has(streamId)) {
+        this._registerStream(streamId, streamIdBinary);
       }
+      this._current = this._streams.get(streamId);
 
       callback();
       return;
     }
 
-    const meta = this._streams.get(this._currentId);
-    invariant(meta);
+    invariant(this._current);
+    const current = this._current;
+    this._current = null;
 
-    log.verbose(`Push to substream: ${this._currentId} ${chunk.length}`);
-    this._currentId = null;
-    meta.stream.push(chunk);
+    log.verbose(`Push to substream: ${current.id} ${chunk.length}`);
+    current.stream.push(chunk);
     callback();
   }
-}
-
-export default function (source: Duplex) {
-  // Constructors should not mutate (pipe is a mutation). So we export a top
-  // level function instead.
-  const demux = new DemuxStream(source);
-  source.pipe(demux);
-
-  return demux;
 }

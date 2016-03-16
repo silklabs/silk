@@ -1,9 +1,15 @@
 import assert from 'assert';
+import http from 'http';
 import { Duplex, PassThrough } from 'stream';
 
 import eventToPromise from 'event-to-promise';
+import {
+  default as WebSocket,
+  Server as WebSocketServer,
+} from 'ws';
 
-import demux from '../src/demux';
+import WebSocketDuplex from '../src/websocket';
+import Demux from '../src/demux';
 
 suite('demuxing stream', () => {
 
@@ -25,35 +31,44 @@ suite('demuxing stream', () => {
     });
   }
 
+  let wss, server, url, source, backing;
+  setup(async () => {
+    server = http.createServer();
+    wss = new WebSocketServer({ server });
+    server.listen(0);
+    eventToPromise(server, 'listen');
+
+    url = `http://localhost:${server.address().port}`;
+
+    source = new WebSocketDuplex(new WebSocket(url));
+
+    const serverConnection = await eventToPromise(wss, 'connection');
+    backing = new WebSocketDuplex(serverConnection);
+  });
+
+  teardown(() => {
+    server.close();
+  });
 
   test('2 streams', async () => {
-    // helper for data event to string.
-    // Backing data source mimicing the other end of lets say a WebSocket.
-    const backing = new PassThrough();
+    const demux = new Demux(source);
+    source.pipe(demux);
 
-    const source = new Duplex({
-      // No op we manually push below ...
-      read: () => {},
-      write: (...args) => {
-        backing.write(...args);
-      }
-    });
-    const multi = demux(source);
-
-    const streamPending = eventToPromise(multi, 'data');
-    source.push(header('1'));
-    source.push(new Buffer('foobarz'));
+    const streamPending = eventToPromise(demux, 'data');
+    backing.write(header('1'));
+    backing.write(new Buffer('foobarz'));
 
     const stream = await streamPending;
     assert.equal(await d(stream), 'foobarz');
 
-    source.push(header('1'));
-    source.push(new Buffer('wut'));
+    backing.write(header('1'));
+    backing.write(new Buffer('wut'));
     assert.equal(await d(stream), 'wut');
 
-    const pendingSecondStream = eventToPromise(multi, 'data');
-    source.push(header('2222'));
-    source.push(new Buffer('number2'));
+    // second stream intentionally never writes.
+    const pendingSecondStream = eventToPromise(demux, 'data');
+    backing.write(header('2222'));
+    backing.write(new Buffer('number2'));
     const secondStream = await pendingSecondStream;
     assert.equal(await d(secondStream), 'number2');
 
@@ -63,11 +78,19 @@ suite('demuxing stream', () => {
       eventToPromise(secondStream, 'close'),
     ]);
     secondStream.end('fuxors')
-    source.push(header('2222', 1)); // close frame.
+    backing.write(header('2222', 1)); // close frame.
     assert.equal(await d(backing), '2222');
     assert.equal(await d(backing), 'fuxors');
     await secondDone;
-    assert.ok(!multi.hasStream(new Buffer('2222').toString('hex')));
+    assert.ok(!demux.hasStream(new Buffer('2222').toString('hex')));
+
+    backing.write(header('1', 1)); // close frame.
+    stream.end();
+
+    await Promise.all([
+      eventToPromise(stream, 'end'),
+      eventToPromise(stream, 'close'),
+    ]);
   });
 
 });

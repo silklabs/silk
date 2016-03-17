@@ -205,7 +205,6 @@ function main() {
       say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
-      connections.start();
       timeline = new Timeline(server, outbox);
       camera = new Camera(server, timeline);
 

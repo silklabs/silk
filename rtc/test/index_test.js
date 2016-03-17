@@ -37,6 +37,11 @@ suite('WebRTC connections', () => {
         }
       });
 
+      const streamsFinish = Promise.all([
+        eventToPromise(answerTransport, 'finish'),
+        eventToPromise(callerTransport, 'finish'),
+      ]);
+
       // initiate the caller ...
       caller = call({
         dataChannels: {
@@ -49,6 +54,8 @@ suite('WebRTC connections', () => {
       let callPending = caller.peer(callerTransport);
       await callPending;
       recipient = await answerPending;
+
+      await streamsFinish;
     });
 
     teardown(() => {

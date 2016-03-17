@@ -287,6 +287,19 @@ class PeerConnection extends EventEmitter {
  */
 class Caller extends PeerConnection {
   async peer(transport: Duplex) {
+    try {
+      return await this._peer(transport);
+    } catch (err) {
+      log.error(`Failed to peer connection: ${err.stack}`);
+      throw err;
+    } finally {
+      // Ensure we close our writable side in all cases.
+      log.info('(call) Closing writable side of transport');
+      transport.end()
+    }
+  }
+
+  async _peer(transport: Duplex) {
     let { peerConnection } = this;
 
     peerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
@@ -358,7 +371,7 @@ export function call(
 
 class Recipient extends PeerConnection {}
 
-export async function answer(
+async function _answer(
   transport: Duplex,
   options?: Object
 ): Promise<Recipient> {
@@ -424,7 +437,10 @@ export async function answer(
     peerConnection.close();
     // TODO: Metrics ...
     throw err;
+  } finally {
+    transport.end();
   }
+
 
   return new Recipient({
     peerConnection,
@@ -432,3 +448,16 @@ export async function answer(
   });
 }
 
+export async function answer(
+  transport: Duplex,
+  options?: Object
+): Promise<Recipient> {
+  try {
+    return await _answer(transport, options);
+  } catch (err) {
+    log.error(`Failed to answer rtc call ${err.stack}`);
+    throw err;
+  } finally {
+    log.info(`(answer) Closing writable side of transport`);
+  }
+}

@@ -38,7 +38,7 @@ index e015f1a..ffe4a97 100644
 +        if (tmp <= 0) {
 +            return INVALID_OPERATION;
 +        }
-+        iFrameCount = frameRate * tmp;
++        iFrameCount = frameRate * tmp / 1000;
 +    } else {
 +        if (!msg->findInt32("i-frame-interval", &tmp)) {
 +            return INVALID_OPERATION;

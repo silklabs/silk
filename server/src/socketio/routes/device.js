@@ -89,7 +89,7 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
     // If there are no clients in the room tell the device to stop sending
     // this kind of data
     if (session.room.isEmptyRoom(room)) {
-      log.error(`${deviceRoom} is empty`);
+      log.error(`${room} is empty`);
       device.livestream[roomType] = false;
       device.updateLiveStream();
     } else {

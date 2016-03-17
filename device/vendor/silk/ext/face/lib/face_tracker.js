@@ -12,8 +12,8 @@ import {
   FaceRect,
 } from './face';
 
-const TRACKER_NAME = 'CMT';
-//const TRACKER_NAME = 'DLIB';
+//const TRACKER_NAME = 'CMT';
+const TRACKER_NAME = 'DLIB';
 
 // Set a reasonable limit of tracked objects
 // (3 for device as CMT has not yet been optimized for tracking multiple

@@ -48,6 +48,7 @@ type TimelineEventObject = {
 declare export class Timeline extends EventEmitter {
   addDiagFrame (id: string, when: number, frame: any): void;
   addObjects (objects: Array<TimelineEventObject>): void;
+  getNextObjectId (): number;
 }
 
 declare export class Env extends EventEmitter {

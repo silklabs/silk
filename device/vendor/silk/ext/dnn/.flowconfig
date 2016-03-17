@@ -8,6 +8,7 @@ interface/
 .*/node_modules/gulp.*
 .*/node_modules/browserify.*
 .*/node_modules/watchify.*
+.*/node_modules/babel.*
 
 [libs]
 interface/silk-caffe.js
@@ -19,4 +20,4 @@ esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 
 [version]
-0.20.1
+0.22.1

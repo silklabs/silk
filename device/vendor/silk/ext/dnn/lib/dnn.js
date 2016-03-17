@@ -40,7 +40,7 @@ class Dnn {
   constructor(env: Env) {
     this._env = env;
     this._init();
-    this._lastObjectLabel = null;
+    this._lastObjectLabel = '';
     this._lastObjectId = 0;
   }
 
@@ -157,12 +157,13 @@ class Dnn {
         let diff = Date.now() - start;
         log.verbose(`Top ${TOPK} predictions in ${diff}ms: `);
 
-        let topLabel, topProbability;
+        let topLabel = '';
+        let topProbability = 0;
         for (let i = 0; i < predictions.length; i++) {
           const indexLabel = predictions[i].label.indexOf(' ');
           const id = predictions[i].label.substring(0, indexLabel);
           const label = predictions[i].label.substring(indexLabel + 1);
-          const probability = (predictions[i].confidence * 100).toFixed(2);
+          const probability = parseInt((predictions[i].confidence * 100).toFixed(2));
           log.info(`label: ${label} Probability: ${probability}% id: ${id}`);
 
           if (i === 0) {
@@ -175,7 +176,7 @@ class Dnn {
         timeline.addDiagFrame(`${topLabel}:${topProbability}% in ${diff}ms`, when, imCopy);
 
         // Remove the object if it is no longer detected
-        if ((this._lastObjectLabel !== null) && (this._lastObjectLabel !== topLabel)) {
+        if ((this._lastObjectLabel !== '') && (this._lastObjectLabel !== topLabel)) {
           timeline.addObjects([{
             tag: this._lastObjectLabel + ' no longer detected',
             when,
@@ -183,7 +184,7 @@ class Dnn {
             id: this._lastObjectId,
           }]);
           log.verbose(`Removing object ${this._lastObjectLabel}`);
-          this._lastObjectLabel = null;
+          this._lastObjectLabel = '';
         }
 
         // Add the object to timeline if probability higher than threshold

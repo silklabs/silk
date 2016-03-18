@@ -8,18 +8,165 @@ import invariant from 'assert';
 const log = createLog('ObjectCollector');
 
 // XXX Dedupe from timeline.js
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+// XXX Dedupe from timeline.js
 type TimelineEventObject = {
   id: number;
   source: string;
   tag: string;
   when: number;
   durationMs: number;
+  rects: Array<Rect>;
   [arbitraryKeys: string]: any;
 };
 
 export default class ObjectCollector {
 
   _objects: Map<number, Array<TimelineEventObject>> = new Map();
+  _lastCollectTime: number = 0;
+  _interpolationMs: number;
+  _smoothingAmount: number;
+
+  constructor(
+    interpolationMs?: number = 16,
+    smoothingAmount?: number = 3,
+  ) {
+    this._interpolationMs = Math.round(interpolationMs);
+    this._smoothingAmount = Math.round(smoothingAmount);
+  }
+
+  _areRectsIdenticalAfterSmoothing(
+    first: Rect,
+    second: Rect,
+  ): boolean {
+    const dimensions = ['x', 'y', 'width', 'height'];
+
+    const identicalDimensions = dimensions.reduce((result, dimension) => {
+      const difference = Math.abs(second[dimension] - first[dimension]);
+      if (difference <= this._smoothingAmount) {
+        if (difference !== 0) {
+          second[dimension] = first[dimension];
+        }
+        return result + 1;
+      }
+      return result;
+    }, 0);
+
+    return identicalDimensions === dimensions.length;
+  }
+
+  _maybeInterpolate(
+    array: Array<TimelineEventObject>,
+    first: TimelineEventObject,
+    second: TimelineEventObject
+  ): void {
+    invariant(first.when !== second.when);
+
+    if (first.when > second.when) {
+      log.warn(`Received objects out of order, ignoring`, first, second);
+      return;
+    }
+
+    if (first.rects.length !== 1 || second.rects.length !== 1) {
+      log.debug(`Not interpolating multi-rect objects`, first, second);
+      if (!first.durationMs ||
+          (first.when + first.durationMs) > second.when) {
+        first.durationMs = second.when - first.when;
+      }
+      array.push(second);
+      return;
+    }
+
+    const firstRect = first.rects[0];
+    const secondRect = second.rects[0];
+
+    if (this._areRectsIdenticalAfterSmoothing(firstRect, secondRect)) {
+      log.debug(`Not interpolating because rects are identical after ` +
+                `smoothing`);
+      first.durationMs = second.when - first.when;
+      array.push(second);
+      return;
+    }
+
+    if (this._lastCollectTime >= second.when) {
+      log.debug(`Not interpolating because we've already collected during ` +
+                `the time that we could have interpolated`,
+                first,
+                second,
+                this._lastCollectTime);
+      first.durationMs = second.when - first.when;
+      array.push(second);
+      return;
+    }
+
+    let interpolationStart;
+    let lastCollectTimeOffset;
+
+    if (first.when < this._lastCollectTime) {
+      interpolationStart = this._lastCollectTime;
+      lastCollectTimeOffset = this._lastCollectTime - first.when;
+    } else {
+      interpolationStart = first.when;
+      lastCollectTimeOffset = 0;
+    }
+
+    // Figure out how many objects we need to add.
+
+    const interpolationRange = second.when - interpolationStart;
+    invariant(interpolationRange >= 0);
+    const interpolationCount =
+      Math.floor(interpolationRange / this._interpolationMs);
+
+    let last = first;
+
+    if (interpolationCount > 1) {
+      const {id, tag, name, source} = first;
+
+      const xInc = (secondRect.x - firstRect.x) / interpolationCount;
+      const yInc = (secondRect.y - firstRect.y) / interpolationCount;
+      const wInc = (secondRect.width - firstRect.width) / interpolationCount;
+      const hInc = (secondRect.height - firstRect.height) / interpolationCount;
+      const durationMs = Math.floor(interpolationRange / interpolationCount);
+
+      first.durationMs = lastCollectTimeOffset + durationMs;
+
+      for (let i = 1; i < interpolationCount; i++) {
+        const lastRect = last.rects[0];
+        const interpolatedObject = {
+          id,
+          tag,
+          source,
+          when: last.when + last.durationMs,
+          durationMs,
+          rects: [{
+            x: lastRect.x + xInc,
+            y: lastRect.y + yInc,
+            width: lastRect.width + wInc,
+            height: lastRect.height + hInc,
+          }],
+        };
+        if (name !== undefined) {
+          interpolatedObject.name = name;
+        }
+        array.push(interpolatedObject);
+        last = interpolatedObject;
+      }
+
+      log.debug(`Added ${interpolationCount - 1} objects to cover ` +
+                `${interpolationRange}ms`);
+    } else {
+      log.debug(`Not interpolating because there isn't enough time`);
+    }
+
+    last.durationMs = second.when - last.when;
+    array.push(second);
+  }
 
   push(objects: Array<TimelineEventObject>): void {
     log.debug(`Pushed ${objects.length} objects`);
@@ -34,11 +181,7 @@ export default class ObjectCollector {
         if (lastObject.when === object.when) {
           array[lastObjectIndex] = object;
         } else {
-          if (!lastObject.durationMs ||
-              (lastObject.when + lastObject.durationMs) > object.when) {
-            lastObject.durationMs = object.when - lastObject.when;
-          }
-          array.push(object);
+          this._maybeInterpolate(array, lastObject, object);
         }
       } else {
         this._objects.set(object.id, [object]);
@@ -49,6 +192,9 @@ export default class ObjectCollector {
   collect(start: number, end: number): Map<number, Array<TimelineEventObject>> {
     log.debug(`Collecting between ${start} and ${end} (${end - start} ms)`);
     invariant(start <= end);
+    invariant(end >= this._lastCollectTime);
+
+    this._lastCollectTime = end;
 
     let objects = new Map();
     let expiredIds;
@@ -109,5 +255,6 @@ export default class ObjectCollector {
 
   clear() {
     this._objects.clear();
+    this._lastCollectTime = 0;
   }
 }

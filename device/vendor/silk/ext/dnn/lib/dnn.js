@@ -147,13 +147,13 @@ class Dnn {
         let [im] = await this._env.camera.getFrame(when, ['gray']);
 
         // By the time prediction finishes camera might have evicted the image
-        // from its cache, so make a local copy of the image
-        let imCopy = im.copy();
+        // from its cache, so make a local copy of the image if diag is enabled
+        let imCopy = timeline.diagFrameEnabled('') ? im.copy() : null;
 
         // Run DNN prediction
         log.verbose(`Running predition...`);
         let start = Date.now();
-        let predictions = await this._predictAsync(imCopy);
+        let predictions = await this._predictAsync(im);
         let diff = Date.now() - start;
         log.verbose(`Top ${TOPK} predictions in ${diff}ms: `);
 
@@ -173,7 +173,9 @@ class Dnn {
         }
 
         // Add the top most prediction to diag stream
-        timeline.addDiagFrame(`${topLabel}:${topProbability}% in ${diff}ms`, when, imCopy);
+        if (imCopy) {
+          timeline.addDiagFrame(`${topLabel}:${topProbability}% in ${diff}ms`, when, imCopy);
+        }
 
         // Remove the object if it is no longer detected
         if ((this._lastObjectLabel !== '') && (this._lastObjectLabel !== topLabel)) {

@@ -30,7 +30,8 @@ export default class CameraLiveVideo extends React.Component {
 
     const { socket, deviceId } = this.props;
     const stream = `video-${deviceId}`;
-    socket.leave(stream, this._receiveSegment);
+    socket.off(stream, this._receiveSegment);
+    socket.leave(stream);
   }
 
   _receiveSegment = (message, ack) => {

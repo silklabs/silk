@@ -12,7 +12,7 @@ import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import ErrorBar from './ErrorBar';
 import { PlaceholderText } from './Text';
-import MonitorFullscreen from './MonitorFullscreen';
+import CameraLiveVideo from './CameraLiveVideo';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
@@ -184,7 +184,7 @@ class MonitorsView extends AsyncComponent {
     let fullscreenMonitor = null;
     if (fullscreenDeviceId) {
       fullscreenMonitor = (
-        <MonitorFullscreen
+        <CameraLiveVideo
           {...this.props}
           onClose={this.stopFullscreenVideo}
           deviceId={fullscreenDeviceId}

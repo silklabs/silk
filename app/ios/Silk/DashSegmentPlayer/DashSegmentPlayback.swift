@@ -21,6 +21,11 @@ public final class DashSegmentPlayback {
 
   /**
    * Prepare a video segment from device for playback.
+   *
+   * The data is modified in-place. The NSData that's returned is merely a view onto
+   * that data and will not participate in the underlying data's reference counting.
+   * So consuming code should always retain a reference to the passed in NSMutableData
+   * object for as long as it needs access to the data.
    */
   public func processSegment(data: NSMutableData) throws -> NSData {
     log.debug("processSegment() for segment no. \(self.segmentSeqno)")
@@ -31,8 +36,13 @@ public final class DashSegmentPlayback {
     if (self.segmentSeqno == 0) {
       ret = data
     } else {
+      // Strip the mp4 header from all subsequent segments.
       let bytes = UnsafeMutablePointer<Void>(data.bytes.advancedBy(Int(segment.videoOffset)))
-      ret = NSData(bytesNoCopy: bytes, length: data.length - Int(segment.videoOffset), freeWhenDone: false)
+      ret = NSData(
+        bytesNoCopy: bytes,
+        length: data.length - Int(segment.videoOffset),
+        freeWhenDone: false
+      )
     }
 
     self.segmentSeqno += 1
@@ -192,16 +202,20 @@ public final class DashSegmentPlayback {
     private func readTrackInfo(trakBox: Box) throws -> TrackInfo {
       let trackInfo = TrackInfo()
 
-      guard let tkhdBox = findBoxByFourcc("tkhd", withinBox: trakBox) else {
+      guard
+        let tkhdBox = findBoxByFourcc("tkhd", withinBox: trakBox)
+      else {
         log.debug("Could not find 'tkhd' box")
         throw DashSegmentErrors.UnrecognizedFormat
       }
       let versionFlags = readInt32BEAt(tkhdBox.offset + Box.HEADER_SIZE)
       let version = versionFlags >> 24
       let flags = versionFlags & 0x00ffffff
-      guard version == 0 &&
+      guard
+        version == 0 &&
         (flags & TrackFlags.TrackEnabled.rawValue) != 0 &&
-        (flags & TrackFlags.TrackInMovie.rawValue) != 0 else {
+        (flags & TrackFlags.TrackInMovie.rawValue) != 0
+      else {
         log.debug("Unrecognized track version/flags: \(versionFlags)")
         throw DashSegmentErrors.UnrecognizedFormat
       }
@@ -213,11 +227,13 @@ public final class DashSegmentPlayback {
         4 /* modification time */
       )
 
-      guard let mdiaBox = findBoxByFourcc("mdia", withinBox: trakBox),
+      guard
+        let mdiaBox = findBoxByFourcc("mdia", withinBox: trakBox),
         let mdhdBox = findBoxByFourcc("mdhd", withinBox: mdiaBox),
-        let hdlrBox = findBoxByFourcc("hdlr", withinBox: mdiaBox) else {
-          log.debug("Could not find 'mdia', 'mdhd', or 'hdlr' boxes")
-          throw DashSegmentErrors.UnrecognizedFormat
+        let hdlrBox = findBoxByFourcc("hdlr", withinBox: mdiaBox)
+      else {
+        log.debug("Could not find 'mdia', 'mdhd', or 'hdlr' boxes")
+        throw DashSegmentErrors.UnrecognizedFormat
       }
       trackInfo.timescale = readInt32BEAt(
         mdhdBox.offset +
@@ -264,18 +280,22 @@ public final class DashSegmentPlayback {
     }
 
     private func rewrite(seqno: Int32, startTime: Int32) throws {
-      guard let moovBox = findBoxByFourcc("moov"),
+      guard
+        let moovBox = findBoxByFourcc("moov"),
         let stypBox = findBoxByFourcc("styp"),
-        let freeBox = findBoxByFourcc("free", afterBox: stypBox) else {
+        let freeBox = findBoxByFourcc("free", afterBox: stypBox)
+      else {
         log.debug("Could not find 'moov', 'styp', or 'free' box")
         throw DashSegmentErrors.UnrecognizedFormat
       }
 
       // For now we'll only support 1 video and 1 audio track, in that order.
       let tracks = try readTracks(moovBox)
-      guard tracks.count == 2 &&
+      guard
+        tracks.count == 2 &&
         tracks[0].type == "vide" &&
-        tracks[1].type == "soun" else {
+        tracks[1].type == "soun"
+      else {
           log.debug(
             "Unexpected: track 0 is of type '\(tracks[0].type)', " +
             "track 1 is of type '\(tracks[1].type)'"
@@ -287,7 +307,9 @@ public final class DashSegmentPlayback {
 
       // Rewrite the sequence number and decode times in the segment.
       let metadata = try readStashedMetadata(freeBox)
-      guard "?seq" == readFourccAt(metadata["seqnoOffset"]!) else {
+      guard
+        "?seq" == readFourccAt(metadata["seqnoOffset"]!)
+      else {
         log.debug("Did not find '?seq' placeholder in segment")
         throw DashSegmentErrors.InvalidMetadata
       }
@@ -303,7 +325,9 @@ public final class DashSegmentPlayback {
       writeInt32BEAt(metadata["audioDecodeTimeOffset"]!, value: audioDecodeTime);
 
       // Duration is 16 bytes after earliest_presentation_time in "sidx".
-      guard("?prs" == readFourccAt(metadata["presentationTimeOffset"]!)) else {
+      guard
+        "?prs" == readFourccAt(metadata["presentationTimeOffset"]!)
+      else {
         log.debug("Did not find '?prs' placeholder in segment")
         throw DashSegmentErrors.InvalidMetadata
       }

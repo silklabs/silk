@@ -21,7 +21,7 @@ import WebSocketDuplex from 'silk-streams/src/websocket';
 import { MessagePackDuplexStream } from 'silk-streams/src/msgpack';
 
 import type { Duplex } from 'stream';
-import type { Recipient } from 'silk-rtc';
+import type { Recipient } from 'silk-rtc/src/index';
 
 import api from './api';
 
@@ -53,7 +53,7 @@ export default class Connections extends EventEmitter {
     return this._ws.readyState === WebSocket.OPEN;
   }
 
-  start() {
+  start(): void {
     if (this._running) {
       return;
     }
@@ -85,10 +85,15 @@ export default class Connections extends EventEmitter {
     }
   }
 
-  send(type, event, payload) {
+  send(type: string, event: string, payload: Object) {
     for (let recipient of this._connections) {
       const channel = recipient.channel(type);
-      channel.emit(event, payload);
+      if (channel) {
+        invariant(channel);
+        channel.emit(event, payload);
+      } else {
+        log.warn(`Attempted to send on non-existant channel: ${type}`);
+      }
     }
   }
 
@@ -109,6 +114,7 @@ export default class Connections extends EventEmitter {
     const table = this._serversTable;
     // TODO: Ideally we query something like any signaling server that has
     // pinged the table service in the last 10min.
+    invariant(table);
     const servers = await table.query();
 
     if (servers.length === 0) {
@@ -123,6 +129,8 @@ export default class Connections extends EventEmitter {
 
     // Whichever server has started most recently will be on top.
     servers.sort((a, b) => {
+      invariant(a.start);
+      invariant(b.start);
       return (new Date(b.start)) - (new Date(a.start));
     });
 
@@ -138,7 +146,7 @@ export default class Connections extends EventEmitter {
    * XXX: We could potentially be smarter here by allowing network status to
    * ping us directly ...
    */
-  async _reconnect() {
+  async _reconnect(): Promise<void> {
     this._cleanupListeners();
 
     // If the .stop call has been made do not reconnect.
@@ -170,7 +178,7 @@ export default class Connections extends EventEmitter {
     this._connect();
   }
 
-  async _connect() {
+  async _connect(): Promise<void> {
     this._setState('connecting');
     process.nextTick(() => {
       this.emit('connecting');
@@ -192,7 +200,7 @@ export default class Connections extends EventEmitter {
     ws.on('close', this._onWsClose);
   }
 
-  _onSignaling = async (stream) => {
+  _onSignaling: (stream: Duplex) => Promise<void> = async (stream) => {
     log.info(`Got signaling client ...`);
     let recipient;
     try {
@@ -228,7 +236,7 @@ export default class Connections extends EventEmitter {
     this.emit('connection', recipient);
   };
 
-  _cleanupListeners = () => {
+  _cleanupListeners: () => void = () => {
     // Cleanup any previous websocket listeners ...
     const ws = this._ws;
     const wsDuplex = this._wsDuplex;
@@ -253,7 +261,7 @@ export default class Connections extends EventEmitter {
     }
   };
 
-  _onWsOpen = () => {
+  _onWsOpen: () => void = () => {
     if (!this._running) {
       this._ws.terminate();
       return;
@@ -280,7 +288,7 @@ export default class Connections extends EventEmitter {
     }
   };
 
-  _onWsDuplexError = (err) => {
+  _onWsDuplexError: (err: Error) => void = (err) => {
     // Error after close most likely this was a disconnect which we have handled
     // already ...
     if (this._wsDuplex.readyState > WebSocket.OPEN) {
@@ -289,14 +297,14 @@ export default class Connections extends EventEmitter {
     log.info(`Unexpected websocket duplex error: ${err.stack}`);
   };
 
-  _onWsError = (err) => {
+  _onWsError: (err: Error) => void = (err) => {
     this._setState('disconnected');
     this.emit('disconnect');
     log.error(`Failed to connect to signaling server: ${err.stack}`);
     this._reconnect();
   };
 
-  _onWsClose = (reason) => {
+  _onWsClose: (reason: string) => void = (reason) => {
     this._setState('disconnected');
     this.emit('disconnect');
     log.info(`Signaling server has closed ... (${reason})`);

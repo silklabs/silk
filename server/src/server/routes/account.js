@@ -259,7 +259,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     res.respond({
       sas
-    })
+    });
   });
 
   return api;

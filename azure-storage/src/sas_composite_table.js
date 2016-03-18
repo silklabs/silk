@@ -53,7 +53,8 @@ export default class SasCompositeTableClient extends CompositeTable {
     }
 
     log.info('Issuing sas update ...');
-    return this._pendingSasUpdate = this._fetcher().
+
+    this._pendingSasUpdate = this._fetcher().
       then((result) => {
         invariant(Array.isArray(result));
         this._pendingSasUpdate = null;
@@ -64,6 +65,8 @@ export default class SasCompositeTableClient extends CompositeTable {
         this._pendingSasUpdate = null;
         throw err;
       });
+
+    return this._pendingSasUpdate;
   }
 
   _validateClients(): bool {

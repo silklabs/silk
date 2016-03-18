@@ -21,6 +21,10 @@ import type {
   RTCPeerConnectionIceEvent,
 } from '../interface/webrtc';
 
+import type {
+  Duplex,
+} from 'stream';
+
 const log = createLog('rtc');
 
 /**
@@ -29,8 +33,8 @@ const log = createLog('rtc');
 const CALLER_PEER_CONFIG = {
   iceServers: [
     // TODO: Use our own stun servers.
-    { urls: "stun:stun.l.google.com:19302" }
-  ]
+    { urls: 'stun:stun.l.google.com:19302' },
+  ],
 };
 
 /**
@@ -285,8 +289,8 @@ class PeerConnection extends EventEmitter {
  * Representation of the "caller" of the webrtc call.. The caller defines the
  * data channels.
  */
-class Caller extends PeerConnection {
-  async peer(transport: Duplex) {
+export class Caller extends PeerConnection {
+  async peer(transport: Duplex): Promise<void> {
     try {
       return await this._peer(transport);
     } catch (err) {
@@ -295,11 +299,11 @@ class Caller extends PeerConnection {
     } finally {
       // Ensure we close our writable side in all cases.
       log.info('(call) Closing writable side of transport');
-      transport.end()
+      transport.end();
     }
   }
 
-  async _peer(transport: Duplex) {
+  async _peer(transport: Duplex): Promise<void> {
     let { peerConnection } = this;
 
     peerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
@@ -318,6 +322,7 @@ class Caller extends PeerConnection {
     );
 
     // initiate the peer ...
+    // $FlowFixMe: Hard to express that our specific transport can accept objects.
     transport.write({
       // Most important thing is obviously the offer itself...
       sdp: toJSON(desc),
@@ -369,7 +374,7 @@ export function call(
   });
 }
 
-class Recipient extends PeerConnection {}
+export class Recipient extends PeerConnection {}
 
 async function _answer(
   transport: Duplex,
@@ -442,6 +447,7 @@ async function _answer(
   }
 
 
+  // $FlowFixMe: https://github.com/facebook/flow/issues/545
   return new Recipient({
     peerConnection,
     dataChannels,
@@ -453,6 +459,7 @@ export async function answer(
   options?: Object
 ): Promise<Recipient> {
   try {
+    // $FlowFixMe: https://github.com/facebook/flow/issues/545
     return await _answer(transport, options);
   } catch (err) {
     log.error(`Failed to answer rtc call ${err.stack}`);

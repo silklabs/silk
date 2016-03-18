@@ -154,7 +154,7 @@ suite('express', () => {
     });
 
     test('.name', () => {
-      assert.equal(client.name, 'test');
+      assert.equal(client.name, 'api-test');
     });
 
     test('server response', async () => {

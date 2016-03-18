@@ -1,6 +1,5 @@
 /* @flow */
 import assert from 'assert';
-import assertAyncThrows from 'silk-utils/assert_async_throws';
 
 import { sas } from '../src/signer/table';
 import genTableName from './table_name';
@@ -8,7 +7,6 @@ import * as config from './config';
 import {
   TableClient,
   SharedKeyAuth,
-  SharedAccessTokenAuth,
 } from '../src/table';
 import connectionString from '../src/connection_string';
 import CompositeClient from '../src/composite_table';
@@ -25,7 +23,7 @@ suite('Sas Composite Client', function() {
     table = genTableName();
     sharedComp = new CompositeClient(table, [
       primaryClient,
-      secondaryClient
+      secondaryClient,
     ]);
     await sharedComp.ensureTables();
   });
@@ -33,17 +31,6 @@ suite('Sas Composite Client', function() {
   suiteTeardown(async () => {
     await sharedComp.destroyTables();
   });
-
-  function sasClient(connection, sasConfig) {
-    let parsed = connectionString(connection);
-    let sasInput = sas(Object.assign(
-      {},
-      { account: parsed.account, accessKey: parsed.accessKey },
-      sasConfig,
-    ));
-    let auth = new SharedAccessTokenAuth(parsed.account, sasInput);
-    return new TableClient(auth);
-  }
 
   test('refreshing sas tokens', async () => {
     let attempt = 0;
@@ -71,8 +58,8 @@ suite('Sas Composite Client', function() {
             accessKey: parsed.accessKey,
             table: table,
             expiration,
-            signedPermissions: 'raud'
-          })
+            signedPermissions: 'raud',
+          }),
         ]);
       }
 
@@ -83,7 +70,7 @@ suite('Sas Composite Client', function() {
     let PartitionKey = `part-${rand}`;
     let entity = {
       PartitionKey,
-      RowKey: 'foobar'
+      RowKey: 'foobar',
     };
 
     // XXX: Sorta hacky ... Wait for first update clients to resolve ...
@@ -96,7 +83,7 @@ suite('Sas Composite Client', function() {
     await subject.mergeOrInsertEntity(entity);
 
     let result = await subject.query({
-      PartitionKey: PartitionKey
+      PartitionKey: PartitionKey,
     });
     assert.equal(result[0].PartitionKey, PartitionKey);
 
@@ -105,5 +92,3 @@ suite('Sas Composite Client', function() {
   });
 
 });
-
-

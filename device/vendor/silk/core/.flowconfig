@@ -12,9 +12,12 @@ node_modules/silk-core-version
 .*/node_modules/browserify.*
 .*/node_modules/watchify.*
 
+.*/api/test/.*
+.*/azure-storage/test/.*
 .*/server/test/.*
 .*/server/src/.*
-.*/api/test/.*
+.*/streams/test/.*
+.*/rtc/test/.*
 
 [libs]
 interface/net.js

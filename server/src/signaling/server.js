@@ -9,7 +9,6 @@ import { Server as WebSocketServer } from 'ws';
 import http from 'http';
 import eventToPromise from 'event-to-promise';
 import URL from 'url';
-import {listen as createSocketio} from 'socket.io';
 import createLog from 'silk-log';
 
 import {
@@ -69,7 +68,7 @@ export default async function main (config: any): any {
   const regionalClients = Object.keys(config.azure.regions).map((region) => {
     log.info(`Initializing azure in: ${region}`);
     const auth = new SharedKeyAuth(config.azure.regions[region]);
-    return new TableClient(auth)
+    return new TableClient(auth);
   });
 
   const signalServers = new CompositeTable(
@@ -174,7 +173,7 @@ export default async function main (config: any): any {
       req.deviceId = deviceId;
       log.info(`Connecting client to ${deviceId}`);
     }
-  }
+  };
 
   /**
    * Verifies that the client should be allowed to connect to the websocket
@@ -188,6 +187,8 @@ export default async function main (config: any): any {
     }
 
     let {query} = parsed;
+    invariant(query);
+    invariant(typeof query === 'object');
     invariant(parsed.pathname);
     let type = parsed.pathname.slice(1);
 
@@ -196,7 +197,7 @@ export default async function main (config: any): any {
     }
 
     if (!query.jwt) {
-      new Error('.jwt field in query string is required...');
+      throw new Error('.jwt field in query string is required...');
     }
 
     // Semi-nasty tricks to remove .jwt from the query string and rebuild the path.
@@ -313,4 +314,3 @@ export default async function main (config: any): any {
     }
   };
 }
-

@@ -1,9 +1,13 @@
 [ignore]
 .*/build/.*
 .*/test/rntest/.*
-.*/node_modules/babel.*
-.*babel-eslint.*
-[include]
+.*/node_modules/api-schema/.*
+.*/node_modules/aws-sdk-promise/.*
+.*/node_modules/jsonwebtoken/.*
+.*/node_modules/socket.io/.*
+.*/node_modules/socket.io-client/.*
+.*/node_modules/node-fetch/.*
+.*/node_modules/babel*
 
 [libs]
 ../server/interface/mocha.js
@@ -16,4 +20,4 @@ unsafe.enable_getters_and_setters=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.21.0
+0.22.1

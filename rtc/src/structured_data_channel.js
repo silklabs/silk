@@ -44,6 +44,7 @@ type PendingFrame = {
 
 function isBinary(value: any): bool {
   // Note this will return true for ArrayBuffer, TypedArray (and Buffers).
+  // $FlowFixMe: Flow does not know about ArrayBuffer.isView.
   return ArrayBuffer.isView(value);
 }
 
@@ -136,7 +137,7 @@ export default class StructuredDataChannel extends EventEmitter {
     emit.call(this, frame.type, frame.payload);
   };
 
-  emit(type: string, data: Object): void {
+  emit(type: string, data: Object): bool {
     if (MIRROR_EVENTS.has(type)) {
       throw new Error(`Cannot emit with event name: '${type}' (reserved).`);
     }
@@ -178,6 +179,8 @@ export default class StructuredDataChannel extends EventEmitter {
         this.channel.send(value);
       }
     }
+
+    return true;
   }
 
   close() {

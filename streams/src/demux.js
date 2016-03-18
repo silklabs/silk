@@ -82,7 +82,7 @@ export default class DemuxStream extends Transform {
         log.verbose('write from substream', id);
         this._writeDest.write(header);
         this._writeDest.write(chunk, encoding, callback);
-      }
+      },
     });
 
     let meta = {

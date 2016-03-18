@@ -8,7 +8,6 @@ import {
   TableClient,
   SharedKeyAuth,
 } from '../src/table';
-import connectionString from '../src/connection_string';
 import CompositeClient from '../src/composite_table';
 
 suite('TableClient', function() {
@@ -19,7 +18,7 @@ suite('TableClient', function() {
     let table = genTableName();
     let comp = new CompositeClient(table, [
       primaryClient,
-      secondaryClient
+      secondaryClient,
     ]);
 
     await comp.ensureTables();
@@ -30,7 +29,7 @@ suite('TableClient', function() {
     assert(primaryTables.has(table));
     assert(secondaryTables.has(table));
 
-    let out = await comp.destroyTables();
+    await comp.destroyTables();
 
     let primaryTablesDel = await primaryClient.tables();
     let secondaryTablesDel = await secondaryClient.tables();
@@ -43,7 +42,7 @@ suite('TableClient', function() {
     let table = genTableName();
     let subject = new CompositeClient(table, [
       primaryClient,
-      secondaryClient
+      secondaryClient,
     ]);
 
     suiteSetup(async () => {
@@ -59,7 +58,7 @@ suite('TableClient', function() {
       return {
         PartitionKey: 'xfoo',
         RowKey: String(rand + '-' + Date.now()),
-        Value: 1
+        Value: 1,
       };
     }
 
@@ -89,7 +88,7 @@ suite('TableClient', function() {
 
       // Update the whole thing again ...
       let merge = await subject.mergeOrInsertEntity(Object.assign({}, entity, {
-        Foo: 1
+        Foo: 1,
       }));
       assert(merge.ETag, 'passes ETag');
       assert(insert.ETag !== merge.ETag, 'changes etag');
@@ -97,4 +96,3 @@ suite('TableClient', function() {
   });
 
 });
-

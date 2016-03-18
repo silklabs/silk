@@ -50,7 +50,7 @@ suite('websocket', () => {
 
     let [clientOut, serverOut] = (await Promise.all([
       drain(client),
-      drain(serverClient)
+      drain(serverClient),
     ])).map((buffers) => {
       // We only sent one frame ...
       return buffers[0];

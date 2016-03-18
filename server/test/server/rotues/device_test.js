@@ -39,7 +39,7 @@ suite('device routes', () => {
     assert.ok(Array.isArray(servers));
     let expected = `http://localhost:${context.signaling.port}`;
     assert.ok(servers.some((value) => {
-      return value.host === expected
+      return value.host === expected;
     }));
   });
 

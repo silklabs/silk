@@ -1,1 +1,18 @@
-{ "name": "silk-utils" }
+{
+  "name": "silk-utils",
+  "scripts": {
+    "test": "npm run lint && npm run flow",
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
+    "lint": "eslint test src",
+    "flow": "flow check"
+  },
+  "silkDependencies": {
+    "eslint-config-silk": "/eslint",
+    "silk-flow-bin": "/flow-bin"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3"
+  }
+}

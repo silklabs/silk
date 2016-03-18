@@ -1,3 +1,4 @@
+/*global MessageEvent, WebSocket*/
 /**
  * Wrapper for WebSocket duplex stream. This interface very intentionally sticks
  * to the w3c spec for WebSocket clients rather then the slightly nicer
@@ -28,23 +29,23 @@ function removeListener(target: any, event: string, fn: Function): void {
   throw new Error(`Target is not an event emitter.`);
 }
 
-export default class WebSocket extends Duplex {
+export default class WebSocketDuplex extends Duplex {
 
   _ws: WebSocket;
   _buffers: Array<Buffer> = [];
   _finished: bool = false;
 
-  get readyState() {
+  get readyState(): number {
     return this._ws.readyState;
   }
 
-  _onError = (err) => {
+  _onError: () => void = (err) => {
     log.error(`Error in websocket stream: ${err.stack}`);
     this.emit('error', err);
     this.emit('close');
   };
 
-  _onClose = () => {
+  _onClose: () => void = () => {
     log.info(`Websocket closing`);
     if (!this._finished) {
       const msg = 'WebSocket closed before all writes...';
@@ -69,7 +70,7 @@ export default class WebSocket extends Duplex {
     ws.addEventListener('error', this._onError);
     ws.addEventListener('close', this._onClose);
 
-    ws.addEventListener('message', (event) => {
+    const onMessage = (event: MessageEvent) => {
       // XXX: Should we somehow include flags ???
       let data = event.data;
       if (!Buffer.isBuffer(data)) {
@@ -78,7 +79,9 @@ export default class WebSocket extends Duplex {
 
       log.info(`Got data from websocket ${data.length} bytes`);
       this.push(data);
-    })
+    };
+
+    ws.addEventListener('message', onMessage);
 
     // Because we correctly account for writes (i.e. wait for ws to open) we
     // know that finished means we have called .send for all pending writes.

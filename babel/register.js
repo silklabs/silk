@@ -196,7 +196,12 @@ module.exports =
 	    if (shouldIgnore(filename)) {
 	      old(m, filename);
 	    } else {
-	      loader(m, filename, old);
+        try {
+          loader(m, filename, old);
+        } catch (err) {
+          console.log('load', filename);
+          console.log(err.stack);
+        }
 	    }
 	  };
 	}

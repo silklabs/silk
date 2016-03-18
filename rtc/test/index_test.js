@@ -2,7 +2,7 @@
 import assert from 'assert';
 // ... make flow happy ...
 import invariant from 'assert';
-import { PassThrough, Duplex } from 'stream';
+import { Duplex } from 'stream';
 import eventToPromise from 'event-to-promise';
 
 import { call, answer } from '../';
@@ -22,7 +22,7 @@ suite('WebRTC connections', () => {
             callerTransport.push(json);
             callback();
           });
-        }
+        },
       });
 
       const callerTransport = new Duplex({
@@ -34,7 +34,7 @@ suite('WebRTC connections', () => {
             answerTransport.push(json);
             callback();
           });
-        }
+        },
       });
 
       const streamsFinish = Promise.all([
@@ -64,7 +64,6 @@ suite('WebRTC connections', () => {
     });
 
     test('force close recipient', async () => {
-      let channel = caller.channel('default');
       let closePromise = eventToPromise(caller, 'close');
       recipient.close();
       await closePromise;
@@ -103,6 +102,7 @@ suite('WebRTC connections', () => {
       let callerChannel = caller.channel('default');
       let recipientChannel = recipient.channel('default');
 
+      invariant(recipientChannel);
       recipientChannel.close();
       await eventToPromise(callerChannel, 'close');
     });

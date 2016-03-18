@@ -9,7 +9,11 @@
 .*/server/test/.*
 .*/server/src/server/.*
 .*/server/src/socketio/.*
+.*/server/src/signaling/.*
 .*/api/test/.*
+.*/rtc/test/.*
+.*/streams/test/.*
+.*/azure-storage/test/.*
 
 [include]
 src/

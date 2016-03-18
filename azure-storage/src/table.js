@@ -8,7 +8,6 @@
  */
 import invariant from 'assert';
 import URL from 'url';
-import qs from 'querystring';
 import HttpClient from 'silk-http/src/client';
 import { Headers } from 'silk-http/src/fetch';
 import formatURL from 'silk-utils/url_format';
@@ -18,25 +17,19 @@ import tableFilter from './table_filter';
 import connectionString from './connection_string';
 
 import type {
-  ClientOptions,
   Request,
 } from 'silk-http/src/client';
 
 import type {
-  Sas
+  Sas,
 } from './signer/table';
 
 import type {
-  ConnectionString
+  ConnectionString,
 } from './connection_string';
 
 type AuthProvider = SharedAccessTokenAuth | SharedKeyAuth;
 type RequestIdFactory = (req: Request) => string;
-type AzureQuery = {
-  $filter: string;
-  $top?: number;
-  $select?: string;
-};
 
 type TableClientOptions = {
   name?: string;
@@ -100,7 +93,7 @@ export class SharedKeyAuth {
       method: options.method,
       headers: headersToSign,
       table: parsed.path,
-      query: parsed.query,
+      query: parsed.query || {},
     });
 
     headers.set('Authorization', auth);
@@ -165,7 +158,7 @@ function requestJSON(
     body: JSON.stringify(body),
     method,
     headers: new Headers({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     }),
   }];
 }
@@ -240,14 +233,13 @@ export class TableClient extends HttpClient {
   }
 
   setServiceProperties(xml: string): Promise<mixed> {
-    const headers = new Headers();
     return this.request(['', {
       method: 'PUT',
       body: xml,
       query: {
         restype: 'service',
         comp: 'properties',
-      }
+      },
     }]);
   }
 
@@ -282,7 +274,7 @@ export class TableClient extends HttpClient {
   async createTable(table: string): Promise<void> {
     try {
       await this.request(requestJSON('Tables', 'POST', {
-        TableName: table
+        TableName: table,
       }));
     } catch (err) {
       if (extractErrorCode(err) === 'TableAlreadyExists') {
@@ -298,8 +290,8 @@ export class TableClient extends HttpClient {
     let res = await this.request(['Tables', {
       method: 'GET',
       headers: new Headers({
-        'Accept': 'application/json;odata=nometadata'
-      })
+        'Accept': 'application/json;odata=nometadata',
+      }),
     }]);
 
     return res.json();
@@ -383,7 +375,7 @@ export class TableClient extends HttpClient {
     }
 
     return Object.assign({}, entity, {
-      ETag: res.headers.get('ETag')
+      ETag: res.headers.get('ETag'),
     });
   }
 
@@ -402,7 +394,7 @@ export class TableClient extends HttpClient {
   /**
    * Query a subset of the table by partition key.
    */
-  async query<T>(
+  async query(
     table: string,
     filter?: string | Object,
     limit?: number,

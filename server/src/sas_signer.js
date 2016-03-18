@@ -35,7 +35,7 @@ export default class Signer {
 
   createTableSignatures(
     table: string,
-    options: SigOptions
+    options: TableSigOptions
   ): Array<[string, Sas]> {
     const tableName = this._config.tables[table];
     invariant(tableName);
@@ -54,4 +54,3 @@ export default class Signer {
     return signatures;
   }
 }
-

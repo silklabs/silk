@@ -15,16 +15,11 @@ suite('connect test', () => {
     }
   });
 
-  let device, account, devicesTable, serversTable;
+  let device, account, serversTable;
   setup(async () => {
     const pair = await context.testPair();
     device = pair.device;
     account = pair.account;
-
-    devicesTable = new SasCompositeTable(async () => {
-      let { sas } = await account.api.account.getSasForDeviceSignaling();
-      return sas;
-    });
 
     serversTable = new SasCompositeTable(async () => {
       let { sas } = await device.api.device.getSasForSignaling();

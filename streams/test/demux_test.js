@@ -1,6 +1,5 @@
 import assert from 'assert';
 import http from 'http';
-import { Duplex, PassThrough } from 'stream';
 
 import eventToPromise from 'event-to-promise';
 import {
@@ -16,7 +15,7 @@ suite('demuxing stream', () => {
   function header(id, type = 0) {
     return Buffer.concat([
       new Buffer([type]),
-      new Buffer(id)
+      new Buffer(id),
     ]);
   }
 
@@ -77,7 +76,7 @@ suite('demuxing stream', () => {
       eventToPromise(secondStream, 'finish'),
       eventToPromise(secondStream, 'close'),
     ]);
-    secondStream.end('fuxors')
+    secondStream.end('fuxors');
     backing.write(header('2222', 1)); // close frame.
     assert.equal(await d(backing), '2222');
     assert.equal(await d(backing), 'fuxors');

@@ -37,7 +37,7 @@ suite('api call retries', () => {
         status,
         delayRes,
         delayBody,
-        body
+        body,
       });
     }
 
@@ -80,7 +80,7 @@ suite('api call retries', () => {
       res.set('Content-Type', 'application/json');
       res.writeHead(status, {
         'Content-Length': contentLength,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       });
       await sleep(delayBody);
       res.end(body);
@@ -125,8 +125,9 @@ suite('api call retries', () => {
     testModel.push(500, 0);
     testModel.push(500, 0);
     testModel.push(200, 0, 0, { woot: true });
-    let res = await api.retryMe();
-    assert.equal(res.woot, true);
+    const res = await api.retryMe();
+    const body = await res.json();
+    assert.equal(body.woot, true);
   });
 
 
@@ -137,8 +138,10 @@ suite('api call retries', () => {
       testModel.push(200, 0, 0, { woot: true });
     }, 500);
 
-    let res = await api.retryMe();
-    assert.equal(res.woot, true);
+    const res = await api.retryMe();
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.woot, true);
   });
 
   test('errors with no retries', async () => {
@@ -163,7 +166,7 @@ suite('api call retries', () => {
       retryDelayMinMs: 0,
       retryDelayMaxMs: 0,
       // Very short retry timeout...
-      requestTimeout: 10
+      requestTimeout: 10,
     });
 
     testModel.push(200, 5000, 0);
@@ -189,7 +192,7 @@ suite('api call retries', () => {
       retryDelayMinMs: 0,
       retryDelayMaxMs: 0,
       // Very short retry timeout...
-      requestTimeout: 10
+      requestTimeout: 10,
     });
 
     testModel.push(200, 0, 50000);

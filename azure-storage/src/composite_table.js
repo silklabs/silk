@@ -77,7 +77,7 @@ function ensureClients(fn) {
       await this._updateClients();
     }
     return fn.apply(this, args);
-  }
+  };
 }
 
 export default class CompositeTableClient {
@@ -150,7 +150,7 @@ export default class CompositeTableClient {
         this._clients,
         [this._table, entity],
       );
-  });
+    });
 
   /**
    * NOTE: Entity deletes are done using 'If-Match': * meaning this will delete
@@ -164,7 +164,7 @@ export default class CompositeTableClient {
         this._clients,
         [this._table, entity],
       );
-  });
+    });
 
   /**
    * Get a single entity by RowKey and PartitionKey.
@@ -173,8 +173,8 @@ export default class CompositeTableClient {
     ensureClients((entity: Entity): Promise<Entity> => {
     // TODO: Implement get fallback options ...
     // https://github.com/silklabs/silk-core/issues/1009
-    return this._clients[0].getEntity(this._table, entity);
-  });
+      return this._clients[0].getEntity(this._table, entity);
+    });
 
   query: (
     filter: any,

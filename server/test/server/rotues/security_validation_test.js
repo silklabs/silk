@@ -5,7 +5,6 @@ import express from 'express';
 import eventToPromise from 'event-to-promise';
 import uuid from 'uuid';
 import TestAPI from 'silk-api/src/gen/test';
-import {StateContainer} from 'silk-api/src/http_client';
 
 import createContext from '../context';
 import createIntercept from '../intercept';

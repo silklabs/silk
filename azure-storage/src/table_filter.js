@@ -42,14 +42,14 @@ const PROP_OPERATORS_TO_AZURE = {
 
 function castValue(value: mixed): string | number | bool {
   switch (typeof value) {
-    case 'string':
-      return `'${value}'`;
-    case 'number':
-      return value;
-    case 'boolean':
-      return value;
-    default:
-      throw new Error(`Unhandled JS type: '${typeof value}'`);
+  case 'string':
+    return `'${value}'`;
+  case 'number':
+    return value;
+  case 'boolean':
+    return value;
+  default:
+    throw new Error(`Unhandled JS type: '${typeof value}'`);
   }
 }
 
@@ -142,8 +142,6 @@ export default function parseQuery(
   query: Query,
 ): string {
   // Simple and support .....
-  let queryString = '';
-
   let clause = [];
   for (let prop in query) {
     let result;

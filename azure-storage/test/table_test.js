@@ -30,12 +30,12 @@ suite('TableClient', function() {
   test('query / add / remove tables', async () => {
     // Encode the values to make azure table happy ...
     let table = genTableName();
-    let create = await sharedClient.createTable(table);
+    await sharedClient.createTable(table);
     // Should not throw on a second create ...
     await sharedClient.createTable(table);
     let tables = await sharedClient.tables();
     assert.ok(tables.has(table));
-    let deleter = await sharedClient.deleteTable(table);
+    await sharedClient.deleteTable(table);
     await sharedClient.deleteTable(table);
     let tablesAfterDel = await sharedClient.tables();
     assert.ok(!tablesAfterDel.has(table));
@@ -78,7 +78,7 @@ suite('TableClient', function() {
       return Object.assign({}, {
         PartitionKey,
         RowKey: String(rand + '-' + Date.now()),
-        Value: 1
+        Value: 1,
       }, input || {});
     }
 
@@ -130,8 +130,8 @@ suite('TableClient', function() {
           PartitionKey,
           Value: 1,
           special: {
-            $in: ['yay', 'boo']
-          }
+            $in: ['yay', 'boo'],
+          },
         };
 
         let res = await client.query(table, query);
@@ -148,7 +148,7 @@ suite('TableClient', function() {
         let entity = buildEntity();
         let insert = await client.mergeOrInsertEntity(table, entity);
         let merge = await client.mergeOrInsertEntity(table, Object.assign({}, entity, {
-          Foo: 1
+          Foo: 1,
         }));
 
         assert(merge.ETag, 'passes ETag');
@@ -161,7 +161,7 @@ suite('TableClient', function() {
       let entity = buildEntity();
       let insert = await sharedClient.insertEntity(table, entity);
 
-      let gotEntity = await sasRead.getEntity(table, insert);
+      await sasRead.getEntity(table, insert);
 
       // The SAS client should have no trouble reading but should be unable to
       // update or insert anything ...

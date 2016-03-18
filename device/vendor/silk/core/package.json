@@ -24,6 +24,7 @@
     "silk-raygun": "/raygun",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
     "silk-server": "/server",
+    "silk-streams": "/streams",
     "silk-core-version": "/version",
     "silk-utils": "/utils",
     "eslint-config-silk": "/eslint"

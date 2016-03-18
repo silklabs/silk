@@ -5,7 +5,7 @@
  * @flow
  */
 import hmac from './hmac';
-import invariant from 'assert'
+import invariant from 'assert';
 
 export type Sas = {
   sv: string;
@@ -58,7 +58,7 @@ const OPTION_TO_QUERY_PARAM = {
   startPartitionKey: 'spk',
   startRowKey: 'srk',
   endPartitionKey: 'epk',
-  endRowKey: 'erk'
+  endRowKey: 'erk',
 };
 
 const DATE_SAS_OPTIONS = [
@@ -75,7 +75,9 @@ const DEFAULT_OPTIONS = {
 
 function newlineValue(value: ?string): string {
   // intentional use of == null (null or undefined value)
-  if (value == null) return '\n';
+  if (value === undefined || value === null) {
+    return '\n';
+  }
   return value + '\n';
 }
 
@@ -91,8 +93,12 @@ function formatDate(date: Date): string {
 function buildSasQuery(options: SasConfig): Object {
   let query = {};
   for (let key in options) {
-    if (!options[key]) continue;
-    if (!OPTION_TO_QUERY_PARAM[key]) continue;
+    if (!options[key]) {
+      continue;
+    }
+    if (!OPTION_TO_QUERY_PARAM[key]) {
+      continue;
+    }
     query[OPTION_TO_QUERY_PARAM[key]] = options[key];
   }
   return query;
@@ -166,7 +172,7 @@ export function sharedKey(options: SharedKeyConfig): string {
   stringToSign += newlineValue(options.method);
   stringToSign += newlineValue(options.headers['Content-MD5']);
   stringToSign += newlineValue(options.headers['Content-Type']);
-  stringToSign += newlineValue(options.headers['x-ms-date'] || options.headers['Date']);
+  stringToSign += newlineValue(options.headers['x-ms-date'] || options.headers.Date);
   stringToSign += '/' + account + '/' + options.table;
 
   if (options.query && options.query.comp) {

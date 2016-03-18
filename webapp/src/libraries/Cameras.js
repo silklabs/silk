@@ -70,7 +70,7 @@ class Camera extends EventEmitter {
       });
 
       const devices = await devicesTable.query({
-        PartitionKey: accountId
+        PartitionKey: accountId,
       });
 
       let url = Api.signSignalingUrl('account', devices[0].host, {
@@ -89,7 +89,7 @@ class Camera extends EventEmitter {
         dataChannels: {
           'video': {},
           'preview': {},
-        }
+        },
       });
       await caller.peer(emitter);
 

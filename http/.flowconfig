@@ -9,10 +9,8 @@
 .*/node_modules/node-fetch/.*
 .*/node_modules/babel*
 
-[include]
-
 [libs]
-node_modules/silk-server/interface
+../server/interface/mocha.js
 
 [options]
 module.system=haste
@@ -22,4 +20,4 @@ unsafe.enable_getters_and_setters=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.21.0
+0.22.1

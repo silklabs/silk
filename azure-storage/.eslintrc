@@ -1,0 +1,9 @@
+{
+  "extends": "eslint-config-silk",
+  "env": {
+    "mocha": true
+  },
+  "ecmaFeatures": {
+    "modules": true
+  }
+}

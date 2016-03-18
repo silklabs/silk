@@ -11,11 +11,11 @@ suite('table query', () => {
         LastName: {
           $gte: 'A',
           $lt: 'B',
-        }
+        },
       }],
       expected: `
         LastName ge 'A' and LastName lt 'B'
-      `.trim()
+      `.trim(),
     },
 
     {
@@ -27,11 +27,11 @@ suite('table query', () => {
         $or: [
           { FirstName: 'foo' },
           { Value: 1 },
-        ]
+        ],
       }],
       expected: `
         LastName ge 'A' and ((FirstName eq 'foo') or (Value eq 1))
-      `.trim()
+      `.trim(),
     },
 
     {
@@ -43,11 +43,11 @@ suite('table query', () => {
         $or: [
           { FirstName: 'foo', Value: 2 },
           { FirstName: 'bar', Value: { $gte: 1 } },
-        ]
+        ],
       }],
       expected: `
         LastName ge 'A' and ((FirstName eq 'foo' and Value eq 2) or (FirstName eq 'bar' and Value ge 1))
-      `.trim()
+      `.trim(),
     },
 
     {
@@ -55,11 +55,11 @@ suite('table query', () => {
       input: [{
         LastName: {
           $in: ['a', 'b'],
-        }
+        },
       }],
       expected: `
         (LastName eq 'a' or LastName eq 'b')
-      `.trim()
+      `.trim(),
     },
 
     {
@@ -67,17 +67,17 @@ suite('table query', () => {
       input: [{
         LastName: {
           $nin: ['a', 'b'],
-        }
+        },
       }],
       expected: `
         (LastName ne 'a' and LastName ne 'b')
-      `.trim()
+      `.trim(),
     },
   ];
 
   for (let testCase of validate) {
     let {name, input, expected} = testCase;
-    test(name, () => {
+    test(name, () => { // eslint-disable-line
       let result = tableFilter(...input);
       assert.equal(result, expected);
     });

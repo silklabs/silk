@@ -26,23 +26,22 @@ $ sudo usermod -a -G video $(whoami)  # Ensure you have access to the camera at 
 
 Ensure you have the `silk` cli set up:
 ```
-$ cd cli-plugin-internal && npm install && cd ..
 $ source setup
 ```
 
 And that the cli is authenticated:
 ```
-$ ./cli/silk login -u http://localhost:5000/ e@silk.io raccoon`
+$ silk login -u http://localhost:5000/ e@silk.io raccoon`
 ```
 
 Then call the `silk configure` command from the `sim/` directory:
 ```
 $ cd sim
-$ ../cli/silk configure -s sim -n MySimulator blah blah
-  ^^^^^^^               ^^^^^^                ^^^^^^^^^
-     \                     |                      \
-      \       magic device serial for "sim"        \
-       \                                  wifi ssid/psk ignored
+$ silk configure -s sim -n MySimulator blah blah
+  ^^^^             ^^^^^               ^^^^^^^^^
+     \               |                      \
+      \   magic device serial for "sim"      \
+       \                             wifi ssid/psk ignored
   must be run from sim/
 ```
 

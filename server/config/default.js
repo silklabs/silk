@@ -6,7 +6,6 @@ Every other configuration profile inherits from this (and can override it).
 
 // Provide default connection string...
 const DEFAULT_MONGO = 'mongodb://localhost:27017';
-const PORT = process.env.PORT || 5000;
 const SILK_EMAILS = ['@silk.io', '@silklabs.com'];
 
 export default {
@@ -39,7 +38,7 @@ export default {
 
   socketio: {
     // Used by the server to return the address where socket.io server lives.
-    publicUrl: process.env.SOCKETIO_PUBLIC_URL,
+    publicUrl: process.env.SOCKETIO_PUBLIC_URL || null,
 
     // Where to bind socket.io
     port: 5001
@@ -47,7 +46,7 @@ export default {
 
   signaling: {
     port: process.env.SIGNALING_PORT || 0,
-    host: process.env.SIGNALING_HOST || 'http://localhost',
+    host: process.env.SIGNALING_HOST || null,
     // After client timeout we forcefully disconnect clients.
     clientTimeout: 2 * 60 * 1000,
   },
@@ -60,7 +59,7 @@ export default {
     },
 
     // Will dynamically configure itself if empty...
-    publicUrl: process.env.PUBLIC_URL,
+    publicUrl: process.env.PUBLIC_URL || null,
 
     // location where to start the http server.
     port: 5000,

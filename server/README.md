@@ -52,17 +52,6 @@ npm start
 ```
 Load http://localhost:5000 in your web browser to ensure that the server is running.  Devices and apps can connect to that server instance.
 
-#### `PUBLIC_URL`
-
-Note if your testing from a device the server needs to know how it can be accessed from your network for video uploads. The simplest way of doing this is like this:
-
-```sh
-# 192.168.0.3 would instead be an IP reachable by your device/browser/etc..
-PUBLIC_URL=http://192.168.0.3:5000 npm start
-```
-
-Alternatively you can set this value in configuration (see: https://github.com/silklabs/silk-server/blob/master/config/default.js#L14)
-
 #### Running the InfluxDB tests locally
 
 Docker is recommended. It is the easiest way to pull down the latest version of influxdb.

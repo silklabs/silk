@@ -25,26 +25,39 @@ function formatDeltaMs(number) {
 
 export default class MSEPlayerWithStats extends React.Component {
 
-  videoStartTimestamp = null;
-  expectNextSegmentTimestamp = null;
-  lastStalledTimestamp = null;
+  videoStartTimestamp: ?number;
+  expectNextSegmentTimestamp: ?number;
+  lastStalledTimestamp: ?number;
+  emptyBufferTimestamp: ?number;
+  emptyBufferVideoStartTimeOffsetMs: number = 0;
+  outOfBufferTimer: ?number;
+  outOfBuffer: boolean = false;
+  previousSegmentEndTimeMs: ?number;
+  // XXX Make sure you account for new members in |_init()| below!
 
-  emptyBufferTimestamp = null;
-  emptyBufferVideoStartTimeOffsetMs = 0;
-  outOfBufferTimer = null;
-  outOfBuffer = false;
-  previousSegmentEndTimeMs = null;
-
-  state = {
+  static _initialState = {
     deviceToClientLagMs: null,
     totalDroppedMs: 0,
     totalStalledMs: 0,
     totalOutOfBufferMs: 0,
     totalBufferedMs: 0,
+    reloadCount: 0,
   };
+
+  state = Object.assign({}, MSEPlayerWithStats._initialState);
 
   get videoElement(): ?HTMLVideoElement {
     return this.refs.player && this.refs.player.videoElement;
+  }
+
+  componentDidMount() {
+    this._init();
+  }
+
+  componentWillUnmount() {
+    if (this.outOfBufferTimer) {
+      clearTimeout(this.outOfBufferTimer);
+    }
   }
 
   feedSegmentData(segmentData: ArrayBuffer, deviceTimestamp: number): Segment {
@@ -66,6 +79,21 @@ export default class MSEPlayerWithStats extends React.Component {
 
     this.expectNextSegmentTimestamp = deviceTimestamp + segment.videoDurationTimeMs;
     return segment;
+  }
+
+  _init() {
+    if (this.outOfBufferTimer) {
+      clearTimeout(this.outOfBufferTimer);
+    }
+
+    this.videoStartTimestamp = null;
+    this.expectNextSegmentTimestamp = null;
+    this.lastStalledTimestamp = null;
+    this.emptyBufferTimestamp = null;
+    this.emptyBufferVideoStartTimeOffsetMs = 0;
+    this.outOfBufferTimer = null;
+    this.outOfBuffer = false;
+    this.previousSegmentEndTimeMs = null;
   }
 
   _onVideoStalledOrResumed(event) {
@@ -130,6 +158,21 @@ export default class MSEPlayerWithStats extends React.Component {
     }));
   };
 
+  _onReload = () => {
+    log.debug('Video element reloaded');
+
+    this._init();
+
+    const reloadCount = this.state.reloadCount;
+    requestAnimationFrame(() => this.setState(Object.assign(
+      {},
+      MSEPlayerWithStats._initialState,
+      {
+        reloadCount: reloadCount + 1,
+      },
+    )));
+  };
+
   _onOutOfBuffer = () => {
     log.debug(`Expecting <video> element to be out of buffered data at this point.`);
     this.outOfBuffer = true;
@@ -148,6 +191,7 @@ export default class MSEPlayerWithStats extends React.Component {
       totalBufferedMs,
       totalOutOfBufferMs,
       totalDroppedMs,
+      reloadCount,
     } = this.state;
     return (
       <div style={styles.videoStats}>
@@ -170,6 +214,9 @@ export default class MSEPlayerWithStats extends React.Component {
             {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
             {formatMs(totalOutOfBufferMs)} out of buffer<br/>
             {formatMs(totalDroppedMs)} in segments dropped
+          </li>
+          <li style={styles.videoStatsItem}>
+            Reload Count: {reloadCount}
           </li>
         </ul>
       </div>
@@ -201,6 +248,7 @@ export default class MSEPlayerWithStats extends React.Component {
           onWaiting={this._onWaiting}
           onPlaying={this._onPlaying}
           onSegmentEnqueued={this._onSegmentEnqueued}
+          onReload={this._onReload}
         />
         {this._renderStats()}
       </div>

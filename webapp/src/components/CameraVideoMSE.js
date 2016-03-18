@@ -89,6 +89,11 @@ function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.substr(1).toLowerCase();
 }
 
+function formatTimestamp(when) {
+  let date = new Date(when);
+  return date.toLocaleTimeString();
+}
+
 export default class CameraVideo extends React.Component {
   canvas = null;
   context = null;
@@ -567,7 +572,8 @@ export default class CameraVideo extends React.Component {
       let consoleMessages = null;
       if (this.state.consoleMessages.length) {
         const messages =
-          this.state.consoleMessages.map((message) => <li>{message.text}</li>);
+          this.state.consoleMessages.map((message) =>
+            <li>[{formatTimestamp(message.when)}] {message.text}</li>);
         consoleMessages = (
           <div>
             <h2 style={styles.consoleHeader}>Events</h2>

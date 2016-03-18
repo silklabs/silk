@@ -137,7 +137,9 @@ public class DashSegmentPlayer : UIView, VBPlayerDelegate {
     dispatch_async(self.methodQueue) {
       let blobManager = self.bridge.moduleForClass(BlobManager) as! BlobManager
       let rawData = blobManager.resolveAndReleaseBlob(segment.blob!)
-      guard rawData != nil else {
+      guard
+        rawData != nil
+      else {
         log.error("Could not resolve blob \(segment.blob!)")
         self.dispatchErrorEvent()
         return

@@ -20,7 +20,7 @@ private:
   dlib::correlation_tracker tracker;
 
   virtual bool initImpl(const cv::Mat& image,
-                        const cv::Rect2d& boundingBox,
+                        const cv::Rect& boundingBox,
                         double& defaultConfidence) {
     defaultConfidence = 3; // Default minimum confidence picked by observation
     tracker.start_track(
@@ -35,7 +35,7 @@ private:
     return true;
   }
 
-  virtual double updateImpl(const cv::Mat& image, cv::Rect2d& boundingBox) {
+  virtual double updateImpl(const cv::Mat& image, cv::Rect& boundingBox) {
     double confidence = tracker.update(dlib::cv_image<unsigned char>(image));
 
     const dlib::drectangle rect(tracker.get_position());

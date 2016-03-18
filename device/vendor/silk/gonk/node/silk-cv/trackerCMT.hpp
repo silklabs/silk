@@ -10,7 +10,9 @@
 #define TRACKERCMT_HPP
 
 #include <opencv2/opencv.hpp>
+#if CV_MAJOR_VERSION >= 3
 #include <opencv2/imgproc.hpp>
+#endif
 #include "TrackerBase.h"
 #include "CppMT/CMT.h"
 
@@ -25,7 +27,7 @@ private:
   bool drawPoints;
 
   virtual bool initImpl(const cv::Mat& image,
-                        const cv::Rect2d& boundingBox,
+                        const cv::Rect& boundingBox,
                         double& defaultConfidence) {
     defaultConfidence = 0.2;
     cmt.consensus.estimate_rotation = true;
@@ -33,9 +35,10 @@ private:
     return true;
   }
 
-  virtual double updateImpl(const cv::Mat& image, cv::Rect2d& boundingBox) {
+  virtual double updateImpl(const cv::Mat& image, cv::Rect& boundingBox) {
     cmt.processFrame(image);
 
+#if CV_MAJOR_VERSION >= 3
     if (drawPoints) {
       // Active points
       for (size_t i = 0; i < cmt.points_active.size(); i++) {
@@ -49,7 +52,7 @@ private:
         cv::line(image, vertices[i], vertices[(i+1) % 4], cvScalar(255,0,0));
       }
     }
-
+#endif
     boundingBox = cmt.bb_rot.boundingRect();
     return cmt.confidence;
   }

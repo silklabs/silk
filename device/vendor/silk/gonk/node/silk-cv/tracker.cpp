@@ -5,7 +5,11 @@
  */
 #include <nan.h>
 #include <opencv2/opencv.hpp>
+#if CV_MAJOR_VERSION >= 3
 #include <opencv2/imgproc.hpp>
+#else
+#include <opencv/highgui.h>
+#endif
 #include "Matrix.h"
 #include "TrackerBase.h"
 #include "trackerCMT.hpp"
@@ -52,7 +56,7 @@ private:
  */
 class TrackerInitWorker : public Nan::AsyncWorker {
 public:
-  explicit TrackerInitWorker(NodeTracker *nodeTracker, cv::Mat mat, cv::Rect2d rect, Nan::Callback *callback)
+  explicit TrackerInitWorker(NodeTracker *nodeTracker, cv::Mat mat, cv::Rect rect, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
       rect(rect),
@@ -87,7 +91,7 @@ public:
 
 private:
   cv::Mat mat;
-  cv::Rect2d rect;
+  cv::Rect rect;
   NodeTracker *nodeTracker;
 };
 
@@ -158,7 +162,7 @@ public:
 
 private:
   cv::Mat mat;
-  cv::Rect2d rect;
+  cv::Rect rect;
   bool found;
   double confidence;
   NodeTracker *nodeTracker;
@@ -229,7 +233,7 @@ NAN_METHOD(NodeTracker::New) {
   int frameHeight = mat.size().height;
 
   v8::Local<v8::Object> rect = v8::Local<v8::Object>::Cast(info[2]);
-  cv::Rect2d objectRect(
+  cv::Rect objectRect(
     rect->Get(Nan::New<v8::String>("x").ToLocalChecked())->IntegerValue(),
     rect->Get(Nan::New<v8::String>("y").ToLocalChecked())->IntegerValue(),
     rect->Get(Nan::New<v8::String>("width").ToLocalChecked())->IntegerValue(),

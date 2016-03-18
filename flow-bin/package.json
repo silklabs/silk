@@ -2,10 +2,7 @@
   "name": "silk-flow-bin",
   "version": "0.14.0",
   "bin": {
-    "flow": "node_modules/.bin/flow"
+    "flow": "./flow"
   },
-  "description": "",
-  "dependencies": {
-    "flow-bin": "0.22.1"
-  }
+  "description": ""
 }

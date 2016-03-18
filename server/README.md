@@ -52,6 +52,14 @@ npm start
 ```
 Load http://localhost:5000 in your web browser to ensure that the server is running.  Devices and apps can connect to that server instance.
 
+#### SILK_HOST
+
+By default the server will advertise your private ip as the endpoint for socket.io / signaling server. This can be overriden (for example when you need to frequently change networks) by starting the server with `SILK_HOST`.
+
+```sh
+SILK_HOST=localhost npm start
+```
+
 #### Running the InfluxDB tests locally
 
 Docker is recommended. It is the easiest way to pull down the latest version of influxdb.
@@ -212,4 +220,3 @@ An arguably evil "fix" to clear your MongoDB data.
 ```
 mongo --quiet --eval 'db.getMongo().getDBNames().forEach(function(i){db.getSiblingDB(i).dropDatabase()})'
 ```
-

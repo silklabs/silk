@@ -12,6 +12,7 @@
   "dependencies": {
     "babel-eslint": "5.0.0",
     "event-to-promise": "0.6.0",
+    "mkdirp-promise": "1.0.3",
     "mz": "2.2.0",
     "tmp": "0.0.28"
   },

@@ -6,9 +6,11 @@
 
 import createLog from 'silk-log';
 import childProcess from 'child_process';
-import tmp from 'tmp';
 import fs from 'mz/fs';
 import { statSync } from 'fs';
+import mkdirp from 'mkdirp-promise';
+import path from 'path';
+import tmp from 'tmp';
 
 const log = createLog('adb');
 
@@ -117,6 +119,7 @@ class Adb {
 
   async push(filepath, data) {
     if (this.sim) {
+      await mkdirp(path.dirname(filepath));
       await fs.writeFile(filepath, data);
       return;
     }

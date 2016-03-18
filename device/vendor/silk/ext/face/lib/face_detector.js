@@ -16,7 +16,7 @@ let previewScale = 0;
 
 
 const facecascade = {
-  file: 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml',
+  classifier: new cv.CascadeClassifier('system/silk/media/opencv/haarcascade_frontalface_alt2.xml'),
   opts: {
     scale: 1.1,
     neighbors: 2,
@@ -43,43 +43,41 @@ const EYE_SY = 0.26;
 const EYE_SW = 0.30;
 const EYE_SH = 0.28;
 
-const EYE_CASCADE1 = 'system/silk/media/opencv/haarcascade_eye.xml';
+const EYE_CASCADE1 = {
+  classifier: new cv.CascadeClassifier('system/silk/media/opencv/haarcascade_eye.xml'),
+  opts: eyecascadeOpts,
+};
 
 // #906 - haarcascade_eye_tree_eyeglasses.xml blows up on OS X?!
-const EYE_CASCADE2 = process.platform === 'android' &&
-  'system/silk/media/opencv/haarcascade_eye_tree_eyeglasses.xml';
+const EYE_CASCADE2 = process.platform === 'android' && {
+  classifier: new
+  cv.CascadeClassifier('system/silk/media/opencv/haarcascade_eye_tree_eyeglasses.xml'),
+  opts: eyecascadeOpts,
+};
 
 /**
  * Call opencv methods to detect faces as defined by {@code cascades}
  *
  * @param im image representing region of interest
  */
-function detectFaces(im: Matrix): Array<FaceRect> {
+function runCascade(cascade: any, im: Matrix): Array<FaceRect> {
+  const opts = cascade.opts;
   return new Promise(resolve => {
-    im.detectObject(facecascade.file, facecascade.opts, (err, rects) => {
-      if (err) {
-        throw err;
-      }
-      resolve(rects);
-    });
-  });
-}
-
-/**
- * Run eye cascade to confirm that the image is a face
- */
-function _runEyeCascasde(face, cascade) {
-  return new Promise((resolve, reject) => {
-    face.detectObject(cascade, eyecascadeOpts, (err, rects) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      if (rects.length > 0) {
-        resolve(rects[0]);
-      }
-      resolve(null);
-    });
+    cascade.classifier.detectMultiScale(
+      im,
+      (err, rects) => {
+        if (err) {
+          throw err;
+        }
+        resolve(rects);
+      },
+      opts.scale,
+      opts.neighbors,
+      opts.min && opts.min[0],
+      opts.min && opts.min[1],
+      opts.max && opts.max[0],
+      opts.max && opts.max[1],
+    );
   });
 }
 
@@ -118,17 +116,17 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
   return new Promise(async (resolve, reject) => {
     try {
       // Find left eye. If the eye was not detected, try a different cascade
-      let leftEyeRect = await _runEyeCascasde(topLeftOfFace, EYE_CASCADE1);
+      let leftEyeRect = await runCascade(EYE_CASCADE1, topLeftOfFace);
       if (!leftEyeRect && EYE_CASCADE2) {
-        leftEyeRect = await _runEyeCascasde(topLeftOfFace, EYE_CASCADE2);
+        leftEyeRect = await runCascade(EYE_CASCADE2, topLeftOfFace);
       }
 
       let rightEyeRect;
       if (leftEyeRect) {
         // Find right eye. If the eye was not detected, try a different cascade
-        rightEyeRect = await _runEyeCascasde(topRightOfFace, EYE_CASCADE1);
+        rightEyeRect = await runCascade(EYE_CASCADE1, topRightOfFace);
         if (!rightEyeRect && EYE_CASCADE2) {
-          rightEyeRect = await _runEyeCascasde(topRightOfFace, EYE_CASCADE2);
+          rightEyeRect = await runCascade(EYE_CASCADE2, topRightOfFace);
         }
       }
 
@@ -208,7 +206,7 @@ export default class FaceDetector {
 
     try {
       // Find faces
-      let faceRects = await detectFaces(grayeq);
+      let faceRects = await runCascade(facecascade, grayeq);
       log.debug(`faces: ${JSON.stringify(faceRects)}`);
       for (let i = 0; i < faceRects.length; i++) {
         let faceRect = faceRects[i];

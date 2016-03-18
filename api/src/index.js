@@ -5,7 +5,6 @@ import invariant from 'assert';
 import URL from 'url';
 import createLog from 'silk-log';
 
-import loadConfig from './config';
 import VIP from './vip';
 import Account from './gen/account';
 import Device from './gen/device';
@@ -16,15 +15,18 @@ import MetadataPublisher from './gen/metadata_publisher';
 import Metadata from './gen/metadata';
 import Id from './access_token';
 import RssiSmoother from './rssi_smoother';
-import {StateContainer} from './http_client';
 import MetricsAgent from './metrics_agent';
 
+import loadConfig from './config';
+import {bodySignature} from './jwt_request_signature';
 import devAccount from './dev_account';
 import fetch from './fetch';
 import {signature} from './jwt_request_signature';
 import makeStreams from './streams';
 
 import type {StringToStringDict} from './metric';
+import type {Request} from 'silk-http/src/client';
+import type AccessToken from './access_token';
 
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;
@@ -45,6 +47,66 @@ type SocketioConfig = [string, {
   path: string;
   query: StringToStringDict;
 }]
+
+type AuthConfigOptions = {
+  serverUrl: string;
+  accessToken: ?AccessToken;
+}
+
+/**
+ * We need the ability to "hot reload" the configuration of accessToken and the
+ * serverUrl at will from webapp/app. Using a specific container type allows us
+ * to do this by mutating the container (which can be shared) rather then every
+ * api instance.
+ */
+class AuthConfig {
+  serverUrl: string;
+  accessToken: ?AccessToken;
+
+  /**
+   * Request transformer responsible for signing the request and constructing
+   * the urls...
+   */
+  requestTransformer = (req: Request): Request => {
+    let [url, options] = req;
+
+    // Ensure URL is absolute ...
+    url = URL.resolve(this.serverUrl, url);
+    let parsedUrl = URL.parse(url);
+    invariant(parsedUrl.pathname);
+
+    // Convert the body ... Being careful to not repeat work if given a string.
+    if (options.body && typeof options.body !== 'string') {
+      options.body = JSON.stringify(options.body);
+    }
+
+    let signature = bodySignature(
+      this.accessToken,
+      options.method,
+      parsedUrl.pathname,
+      options.body
+    );
+
+    options.headers = options.headers || {};
+    options.headers = Object.assign({}, options.headers, {
+      // XXX: Important that we always override previous headers ...
+      'content-type': 'application/json',
+      'authorization': `Bearer ${signature}`,
+    });
+
+    return [url, options];
+  };
+
+  constructor(options: AuthConfigOptions) {
+    this.update(options);
+  }
+
+  update(options: AuthConfigOptions) {
+    invariant(options.serverUrl);
+    this.serverUrl = options.serverUrl;
+    this.accessToken = options.accessToken;
+  }
+}
 
 const log = createLog('api');
 
@@ -74,6 +136,22 @@ function socketioConfig(accessToken: Id, url: string): SocketioConfig {
   return [url, options];
 }
 
+function signSignalingUrl(
+  url: string,
+  type: 'account' | 'device',
+  query: {[key: string]: string},
+  accessToken: Id,
+): string {
+  // TODO: remove 'any' type here once
+  // https://github.com/facebook/flow/issues/1173 is resolved.
+  let parsed: any = URL.parse(url, true /* parse query string */);
+  parsed.pathname = '/' + type;
+
+  let jwt = signature(accessToken, 'GET', parsed.pathname);
+  parsed.query = Object.assign({}, query, { jwt });
+  return URL.format(parsed);
+}
+
 export type Config = {
   getRandomBytes?: (
     size: number,
@@ -101,7 +179,7 @@ export class SilkApi {
   metadata: Metadata;
   metrics: MetricsAgent;
 
-  config: StateContainer;
+  config: AuthConfig;
 
   // XXX: Remove me should be re-export.
   RssiSmoother: typeof RssiSmoother = RssiSmoother;
@@ -135,19 +213,23 @@ export class SilkApi {
   constructor(config: Config) {
     config = loadConfig(config);
 
-    let state = this.config = new StateContainer({
+    let authConfig = this.config = new AuthConfig({
       serverUrl: config.serverUrl || 'http://localhost:8081',
       accessToken: config.accessToken || null,
     });
 
-    this.vip = new VIP(state);
-    this.account = new Account(state);
-    this.crash = new Crash(state);
-    this.device = new Device(state);
-    this.blobPublisher = new BlobPublisher(state);
-    this.crashPublisher = new CrashPublisher(state);
-    this.metadataPublisher = new MetadataPublisher(state);
-    this.metadata = new Metadata(state);
+    const httpClientOptions = {
+      requestTransformer: authConfig.requestTransformer
+    };
+
+    this.vip = new VIP(httpClientOptions);
+    this.account = new Account(httpClientOptions);
+    this.crash = new Crash(httpClientOptions);
+    this.device = new Device(httpClientOptions);
+    this.blobPublisher = new BlobPublisher(httpClientOptions);
+    this.crashPublisher = new CrashPublisher(httpClientOptions);
+    this.metadataPublisher = new MetadataPublisher(httpClientOptions);
+    this.metadata = new Metadata(httpClientOptions);
     this.streams = makeStreams(config);
 
 
@@ -168,6 +250,15 @@ export class SilkApi {
     });
 
     this.streams = makeStreams(config);
+  }
+
+  signSignalingUrl(
+    type: 'device' | 'account',
+    url: string,
+    query: {[key: string]: string} = {},
+  ): string {
+    invariant(this.accessToken, '.accessToken must be set');
+    return signSignalingUrl(url, type, query, this.accessToken);
   }
 
   /**

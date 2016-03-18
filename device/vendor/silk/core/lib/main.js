@@ -46,6 +46,7 @@ import config from './config';
 import sensors from './sensors';
 import infrared from './infrared';
 import Server from './server';
+import Connections from './connections';
 import fs from 'mz/fs';
 import Say from './say';
 
@@ -82,6 +83,7 @@ let timeline;
 let camera;
 let logo = null;
 let server = null;
+let connections = null;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
@@ -120,7 +122,8 @@ async function readLogo() {
  * @private
  */
 function main() {
-  server = new Server();
+  connections = new Connections();
+  server = new Server(connections);
 
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
@@ -187,7 +190,7 @@ function main() {
 
   return getDeviceId()
     .then(deviceId => {
-      id = deviceId;
+      api.accessToken = id = deviceId;
       crashreporter.assignDeviceId(deviceId);
       logcat = new Logcat(deviceId.toString(), outbox);
       logcat.start();
@@ -247,6 +250,8 @@ function main() {
     })
     .then(maybeAbortBoot)
     .then(() => {
+      assert(api.accessToken, 'must have access token');
+      connections.start();
       log.info('main completed device has been booted.');
       util.setprop('silk.boot_completed',
                    1 + parseInt(util.getprop('silk.boot_completed', 0)));

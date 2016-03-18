@@ -2,7 +2,11 @@
 Configuration profile used in tests.
 */
 
+import os from 'os';
+import crypto from 'crypto';
+
 import defaultConfig from './default';
+import * as azureCreds from '../../credentials/azure';
 
 // Add @example.com to all scopes so test users can use them.
 let testScopes = {};
@@ -14,6 +18,14 @@ export default {
   scopes: testScopes,
   socketio: {
     port: 0,
+  },
+
+  azure: {
+    setServiceProps: false,
+    // We only use a single region in tests for faster runs.
+    regions: {
+      uswest: azureCreds.uswest,
+    }
   },
 
   server: {

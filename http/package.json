@@ -1,0 +1,32 @@
+{
+  "name": "silk-http",
+  "version": "1.0.0",
+  "main": "client.js",
+  "scripts": {
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
+    "lint": "eslint test src",
+    "flow": "flow check",
+    "mocha": "mocha $(find test -name '*_test.js')",
+    "test": "npm run lint && npm run mocha && npm run flow"
+  },
+  "browser": {
+    "./src/fetch.js": "./src/fetch_browser.js"
+  },
+  "silkDependencies": {
+    "eslint-config-silk": "/eslint",
+    "silk-log": "/log",
+    "silk-flow-bin": "/flow-bin"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "body-parser": "^1.15.0",
+    "express": "^4.13.4",
+    "mocha": "^2.4.5"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.6.1",
+    "node-fetch": "^1.3.3"
+  }
+}

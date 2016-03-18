@@ -12,7 +12,8 @@
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "silk-babeldeps": "/babeldeps",
-    "silk-server": "/server"
+    "silk-server": "/server",
+    "silk-http": "/http"
   },
   "dependencies": {
     "babel-runtime": "6.3.19",

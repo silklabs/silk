@@ -8,6 +8,11 @@ import mklog from 'silk-log';
 import Api from './Api';
 import ObjectCollector from './ObjectCollector';
 import PreviewQueue from './PreviewQueue';
+import { call } from 'silk-rtc';
+import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
+
+import WebSocketDuplex from 'silk-streams/src/websocket';
+import { MessagePackDuplexStream } from 'silk-streams/src/msgpack';
 
 const log = mklog('Cameras');
 
@@ -53,6 +58,49 @@ class Camera extends EventEmitter {
       }
     }
     this._updateStreams();
+    this._webrtcConnect();
+  }
+
+  async _webrtcConnect() {
+    try {
+      const { accountId } = await Api.account.whoami();
+      const devicesTable = new SasCompositeClient(async () => {
+        const { sas } = await Api.account.getSasForDeviceSignaling();
+        return sas;
+      });
+
+      const devices = await devicesTable.query({
+        PartitionKey: accountId,
+      });
+
+      let url = Api.signSignalingUrl('account', devices[0].host, {
+        deviceId: devices[0].RowKey,
+      });
+
+      url = url.
+        replace('https://', 'wss://').
+        replace('http://', 'ws://');
+
+      const ws = new WebSocket(url);
+      const duplex = new WebSocketDuplex(ws);
+      const emitter = new MessagePackDuplexStream(duplex);
+
+      const caller = call({
+        dataChannels: {
+          'video': {},
+          'preview': {},
+        },
+      });
+      await caller.peer(emitter);
+
+      const video = caller.channel('video');
+      video.on('video', (data) => {
+        console.log('got video', data, `duration ${Date.now() - data.deviceEmitMs}`);
+      });
+
+    } catch (err) {
+      console.log('failed to do things', err.stack);
+    }
   }
 
   setOffline() {
@@ -293,7 +341,16 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    this.emit('videoClip', msg.frame, msg.when);
+    log.debug('video');
+
+    let view = new Uint8Array(msg.frame);
+    let blob = new Blob([view], { type: 'video/mp4' });
+    if (this.videoClip) {
+      URL.revokeObjectURL(this.videoClip);
+    }
+    this.videoClip = URL.createObjectURL(blob);
+    console.log('socket.io got video', Date.now() - msg.deviceEmitMs);
+    this.emit('videoClip', this.videoClip, new Date(msg.when), view);
   };
 
   _updateMicStream() {

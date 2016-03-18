@@ -45,6 +45,7 @@ module.exports = {
   // Push and PR builds
   'api': npmPackageBuild('api'),
   'api-schema': npmPackageBuild('api-schema'),
+  'azure-storage': npmPackageBuild('azure-storage'),
   'app-js-lint': npmPackageBuild('app', {
     // Always run lint when JS files change.
     travis_yml: 'app/.travis-lint.yml',
@@ -83,6 +84,7 @@ module.exports = {
   'cam': npmPackageBuild('cam'),
   'cli': npmPackageBuild('cli'),
   'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
+  'http': npmPackageBuild('http'),
   'log': npmPackageBuild('log'),
   'sim': npmPackageBuild('sim', {
     files: [
@@ -116,7 +118,10 @@ module.exports = {
   }),
   'networktest': npmPackageBuild('networktest'),
   'releng': npmPackageBuild('releng'),
+  'rtc': npmPackageBuild('rtc'),
   'server': npmPackageBuild('server'),
+  'streams': npmPackageBuild('streams'),
+  'utils': npmPackageBuild('utils'),
   'webapp-pr': npmPackageBuild('webapp', {
     events: ['pr'],
   }),

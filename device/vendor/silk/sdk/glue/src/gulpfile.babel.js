@@ -21,6 +21,7 @@ gulp.task('build', () => {
   browserifyStream.external('bleno');
   browserifyStream.external('noble');
   browserifyStream.external('opencv');
+  browserifyStream.external('node-webrtc');
 
   return commands.build(browserifyStream);
 });

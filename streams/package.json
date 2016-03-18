@@ -1,0 +1,28 @@
+{
+  "name": "silk-streams",
+  "scripts": {
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
+    "lint": "eslint test src",
+    "flow": "flow check",
+    "mocha": "mocha $(find test -name '*_test.js')",
+    "test": "npm run lint && npm run mocha && npm run flow"
+  },
+  "silkDependencies": {
+    "silk-log": "/log",
+    "eslint-config-silk": "/eslint",
+    "silk-flow-bin": "/flow-bin"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "mocha": "^2.4.5",
+    "ws": "^1.0.1"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.6.1",
+    "event-to-promise": "^0.7.0",
+    "msgpack-lite": "^0.1.13",
+    "uuid": "^2.0.1"
+  }
+}

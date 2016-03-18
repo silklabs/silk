@@ -44,6 +44,24 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   sharedRoutes(api, 'account', ctx);
 
+  // XXX: This method is potentially dangerous but in various situations we need
+  // to refer to an account by it's id rather than individual access token.
+  api.define({
+    path: 'whoami',
+    method: 'post',
+    params: [],
+    name: 'whoami',
+    description: 'Get basic details about the current account',
+    input: Joi.object(),
+    output: Joi.object().keys({
+      accountId: Joi.string().required(),
+    }).required()
+  }, async (req, res) => {
+    res.respond({
+      accountId: req.account._id.toString(),
+    });
+  });
+
   api.define({
     path: 'register_device',
     method: 'post',
@@ -193,6 +211,55 @@ export default function (ctx: RouteContext): ExpressRoutes {
     let {query} = req.body;
     let result = await ctx.influxdb.query(query);
     res.respond(result);
+  });
+
+  api.define({
+    path: 'sas_signaling_devices',
+    method: 'post',
+    params: [],
+    name: 'getSasForDeviceSignaling',
+    description:
+      `Return SAS credentials for querying avaiable devices -> singaling servers`,
+
+    // This has no real input for the time being ...
+    input: Joi.object(),
+    output: Joi.object().keys({
+      /* TODO: Upgrade flow support to allow this ... */
+      /*
+      sas: Joi.array().items(Joi.array().ordered(
+        Joi.string().required(),
+        Joi.object().keys({
+          sv: Joi.string().required(),
+          sp: Joi.string().required(),
+          tn: Joi.string().required(),
+          st: Joi.string().required(),
+          se: Joi.string().required(),
+          sig: Joi.string().required(),
+        }).required()
+      ))*/
+      sas: Joi.array().items(Joi.any()).required(),
+    })
+  }, async (req, res) => {
+    // 6 hours in the future ...
+    const expiration = new Date(Date.now() + 1000 * 60 * 60 * 6);
+    // Account ID is always the partition key... The client itself may not have
+    // this data so we send it over ...
+    const PartitionKey = req.account._id.toString();
+
+    // Permissive sas which allows reading the entire table ...
+    const sas = ctx.sasSigner.createTableSignatures(
+      'sigdevices',
+      {
+        expiration,
+        signedPermissions: 'r',
+        startPartitionKey: PartitionKey,
+        endPartitionKey: PartitionKey,
+      }
+    );
+
+    res.respond({
+      sas
+    });
   });
 
   return api;

@@ -51,6 +51,7 @@ export default class PreviewQueue {
   }
 
   push(msg) {
+    console.log('socket.io preview duration', Date.now() - msg.deviceEmitMs);
     let previewArrival = { now: Date.now(), when: msg.when };
     if (this._lastPreviewArrival) {
       let queueTimeRange = '';

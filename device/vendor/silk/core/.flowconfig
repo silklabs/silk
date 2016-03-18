@@ -12,9 +12,12 @@ node_modules/silk-core-version
 .*/node_modules/browserify.*
 .*/node_modules/watchify.*
 
+.*/api/test/.*
+.*/azure-storage/test/.*
 .*/server/test/.*
 .*/server/src/.*
-.*/api/test/.*
+.*/streams/test/.*
+.*/rtc/test/.*
 
 [libs]
 interface/net.js
@@ -24,6 +27,7 @@ unsafe.enable_getters_and_setters=true
 module.system=haste
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
 0.22.1

@@ -38,6 +38,47 @@ export default function (ctx: RouteContext): ExpressRoutes {
   sharedRoutes(api, 'device', ctx);
 
   api.define({
+    path: 'sas_signaling_servers',
+    method: 'post',
+    params: [],
+    name: 'getSasForSignaling',
+    description:
+      `Return SAS credentials for querying avaiable signaling servers`,
+
+    // This has no real input for the time being ...
+    input: Joi.object(),
+    output: Joi.object().keys({
+      /* TODO: Upgrade flow support to allow this ... */
+      /*
+      sas: Joi.array().items(Joi.array().ordered(
+        Joi.string().required(),
+        Joi.object().keys({
+          sv: Joi.string().required(),
+          sp: Joi.string().required(),
+          tn: Joi.string().required(),
+          st: Joi.string().required(),
+          se: Joi.string().required(),
+          sig: Joi.string().required(),
+        }).required()
+      ))*/
+      sas: Joi.array().items(Joi.any()).required(),
+    })
+  }, async (req, res) => {
+    // 6 hours in the future ...
+    let expiration = new Date(Date.now() + 1000 * 60 * 60 * 6);
+
+    // Permissive sas which allows reading the entire table ...
+    let sas = ctx.sasSigner.createTableSignatures(
+      'sigservers',
+      { expiration, signedPermissions: 'r' }
+    );
+
+    res.respond({
+      sas
+    });
+  });
+
+  api.define({
     path: 'complete_registration',
     method: 'post',
     params: [],

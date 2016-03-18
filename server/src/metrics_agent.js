@@ -14,7 +14,7 @@ import type {default as Metric, StringToStringDict} from 'silk-api/src/metric';
 
 type Point = [string, StringToStringDict, StringToStringDict, string];
 
-export type ServerType = 'server' | 'socketio';
+export type ServerType = 'server' | 'socketio' | 'signaling';
 
 const log = createLog('server:metrics-agent');
 

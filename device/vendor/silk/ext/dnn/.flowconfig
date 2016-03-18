@@ -18,6 +18,7 @@ unsafe.enable_getters_and_setters=true
 module.system=haste
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
 0.22.1

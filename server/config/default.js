@@ -11,12 +11,45 @@ const SILK_EMAILS = ['@silk.io', '@silklabs.com'];
 
 export default {
 
+  azure: {
+    setServiceProps: true,
+
+    // It's important to note that CORS rules are storage account wide and
+    // affect all blobs, queues and tables.
+    cors: [{
+      allowedOrigins: ['*'],
+      allowedHeaders: ['ms-*', '*', 'accept', 'content-type', 'content-length'],
+      allowedMethods: ['DELETE', 'GET', 'HEAD', 'MERGE', 'POST', 'OPTIONS', 'PUT'],
+      exposedHeaders: ['ms-*', '*'],
+      maxAgeInSeconds: 500
+    }],
+
+    regions: {
+      uswest: process.env.AZURE_TABLE_USWEST,
+      useast: process.env.AZURE_TABLE_USEAST,
+    },
+
+    tables: {
+      // Signaling servers (with related metadata such as load).
+      sigservers: 'sigservers',
+      // Device -> Signaling server.
+      sigdevices: 'sigdevices',
+    },
+  },
+
   socketio: {
     // Used by the server to return the address where socket.io server lives.
     publicUrl: process.env.SOCKETIO_PUBLIC_URL,
 
     // Where to bind socket.io
     port: 5001
+  },
+
+  signaling: {
+    port: process.env.SIGNALING_PORT || 0,
+    host: process.env.SIGNALING_HOST || 'http://localhost',
+    // After client timeout we forcefully disconnect clients.
+    clientTimeout: 2 * 60 * 1000,
   },
 
   server: {

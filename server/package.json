@@ -1,6 +1,7 @@
 {
   "silkDependencies": {
     "api-schema": "/api-schema",
+    "silk-azure-storage": "/azure-storage",
     "eslint-config-silk": "/eslint",
     "jsonwebtoken": "/jsonwebtoken",
     "silk-api": "/api",
@@ -8,7 +9,9 @@
     "silk-core-version": "/version",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
-    "silk-raygun": "/raygun"
+    "silk-raygun": "/raygun",
+    "silk-streams": "/streams",
+    "silk-utils": "/utils"
   },
   "dependencies": {
     "aliyun-oss": "1.1.0",
@@ -40,7 +43,8 @@
     "socket.io-client": "socketio/socket.io-client#e787cb2669abf257f113439673bbf4874095a3a7",
     "superagent": "1.6.1",
     "superagent-promise": "0.2.0",
-    "uuid": "2.0.1"
+    "uuid": "2.0.1",
+    "ws": "^1.0.1"
   },
   "optionalDependencies": {
     "scrypt": "5.4.1"

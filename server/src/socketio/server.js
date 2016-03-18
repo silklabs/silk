@@ -13,6 +13,7 @@ import createDb from '../server/db';
 import sha256 from '../server/sha256';
 import authorizeDevice from '../server/authorize_device';
 import authorizeAccount from '../server/authorize_account';
+import runMiddleware from '../run_middleware';
 import Devices from '../server/models/devices';
 import Accounts from '../server/models/accounts';
 import Nonce from '../server/models/nonce';
@@ -103,19 +104,6 @@ export default async function main (config: any): any {
     };
   }
 
-  async function runMiddleware(fn: Function, ...args: Array<any>): Promise<any> {
-    return new Promise((accept, reject) => {
-      args.push((err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        accept();
-      });
-      fn(...args);
-    });
-  }
-
   function promiseWrap(name: string, fn: Function): Function {
     return async function(...args) {
       let ack = () => {};
@@ -150,7 +138,6 @@ export default async function main (config: any): any {
 
     let parsed = URL.parse(req.url, true);
     if (!parsed) {
-      return;
       // throw new Error('Invalid request url');
     }
 

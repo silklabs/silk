@@ -24,7 +24,7 @@ function formatIndent(input, indent) {
 function method(action) {
   let args = [];
   let urlParams = '';
-  let perform = 'this.request(method, url);';
+  let perform = 'this._apiRequest(method, url);';
   let commentParams = '';
 
   action.params.forEach(param => {
@@ -36,7 +36,7 @@ function method(action) {
 
   if (action.input) {
     args.push(`payload: ${action.inputType}`);
-    perform = 'this.requestWithBody(method, url, payload);';
+    perform = 'this._apiRequestWithBody(method, url, payload);';
     commentParams += `  @param Object payload of request`;
   }
 
@@ -104,7 +104,7 @@ ${types.map((type) => {
 }).join('\n')}
 export default class extends BaseClass {
 
-  name: string = '${schema.name}';
+  name: string = 'api-${schema.name}';
   prefix: string = '${schema.prefix}';
 
   ${actions.join('\n')}

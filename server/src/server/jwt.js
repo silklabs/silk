@@ -149,7 +149,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
     if (req.requestHash !== verified.requestHash) {
       log.error(
         'Hash of body does not match signed value',
-        req.path,
+        req.path || req.url,
         req.method,
         req.requestHash,
         verified.requestHash

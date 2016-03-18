@@ -339,7 +339,8 @@ export default class CameraVideo extends React.Component {
     let faceCount = 0;
 
     objectMap.forEach((objectArray, objectId) => {
-      const tag = objectArray[0].tag;
+      const firstObject = objectArray[0];
+      const tag = firstObject.tag;
 
       // Draw all motion rects if that option is enabled.
       if (tag === 'motion') {
@@ -362,8 +363,9 @@ export default class CameraVideo extends React.Component {
         return result;
       }, {
         id: objectId,
-        source: objectArray[0].source,
+        source: firstObject.source,
         tag,
+        when: firstObject.when,
         rects: [],
       });
 
@@ -453,12 +455,17 @@ export default class CameraVideo extends React.Component {
       newMessages.push({
         id: object.id,
         text,
+        when: object.when,
       });
     });
 
     if (!newMessages) {
       return;
     }
+
+    newMessages.sort((a, b) => {
+      return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
+    });
 
     if (newMessages.length > 4) {
       newMessages.splice(0, newMessages.length - 4);

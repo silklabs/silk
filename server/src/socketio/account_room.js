@@ -63,7 +63,7 @@ const VIDEO_IDLE_TIMEOUT_MS = 10000;
 // (preview/video) to each client.
 // Diag events get more leeway because dropping diag packets during a debug
 // session can be very undesirable.
-const MAX_PENDING_ACKS = 3;
+const MAX_PENDING_ACKS = 8;
 const MAX_PENDING_DIAG_MIC_ACKS = 10;
 
 /**

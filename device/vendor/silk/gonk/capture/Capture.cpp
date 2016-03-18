@@ -71,27 +71,6 @@ sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 //
 class CaptureListener;
 
-/**
- *
- */
-class IFrameRequestMonitor: public Thread {
-  sp<MediaCodecSource> mEncoder;
-public:
-  IFrameRequestMonitor(sp<MediaCodecSource> encoder) :
-      mEncoder(encoder) {
-  }
-
-  virtual bool threadLoop() {
-    while (true) {
-      char b;
-      // Any data from the pipe causes us to inject an I-Frame.
-      read(STDIN_FILENO, &b, 1);
-      mEncoder->requestIDRFrame();
-    }
-    return true;
-  }
-};
-
 
 /**
  * This class provided a method that is run each time
@@ -141,7 +120,6 @@ private:
 
   sp<MPEG4SegmenterDASH> mSegmenter;
   sp<MediaSource> mPreview;
-  sp<IFrameRequestMonitor> mIframe;
   sp<ALooper> mLooper;
   sp<ICamera> mRemote;
   sp<CameraSource> mCameraSource;

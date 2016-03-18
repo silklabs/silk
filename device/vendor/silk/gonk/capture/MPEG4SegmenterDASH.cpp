@@ -145,6 +145,7 @@ public:
   VideoSegmenter(const sp<PutBackWrapper2>& source)
     : MediaSourceWrapper(source)
     , mFirstIFrameSent()
+    , mFrameCount()
   { }
 
   virtual status_t stop() {
@@ -160,6 +161,7 @@ private:
   }
   
   bool mFirstIFrameSent;
+  int mFrameCount;
 };
 
 status_t VideoSegmenter::read(MediaBuffer **buffer,
@@ -198,6 +200,7 @@ status_t VideoSegmenter::read(MediaBuffer **buffer,
     }
   }
 
+  mFrameCount++;
   int32_t isIFrame;
   if ((*buffer)->meta_data()->findInt32(kKeyIsSyncFrame, &isIFrame)
       && isIFrame) {
@@ -206,6 +209,17 @@ status_t VideoSegmenter::read(MediaBuffer **buffer,
       notifyListeners(timeUs, PROGRESS_I_FRAME);
       return ::OK;
     }
+#ifdef IGNORE_UNWANTED_IFRAME_AT_FRAME2
+    // The 8956 encoder sends two iframes at the start of a new segment.  This
+    // seems likely to be an encoder bug perhaps fixed in a later release?
+    // For now just pretend the second iframe is a regular frame.
+    if (mFrameCount == 2) {
+      ALOGW("Masking unexpected i-frame at frame #2");
+      notifyListeners(timeUs, PROGRESS_OTHER_FRAME);
+      return ::OK;
+    }
+#endif
+
     // End the stream at this next i-frame
     putbackWrapper()->putBack(buffer);
     notifyListeners(timeUs, PROGRESS_END_OF_STREAM);

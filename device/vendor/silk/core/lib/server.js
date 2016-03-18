@@ -38,7 +38,7 @@ export default class Server extends events.EventEmitter {
       diag: 10,
       info: 1,
       jpeg: 4,
-      mp4: 2,
+      mp4: 8,
       mic: 10,
       objects: 10,
     };

@@ -10,6 +10,7 @@ import http from 'http';
 import eventToPromise from 'event-to-promise';
 import URL from 'url';
 import createLog from 'silk-log';
+import getHostname from '../get_hostname';
 
 import {
   TableClient,
@@ -98,6 +99,12 @@ export default async function main (config: any): any {
   // At this point either we have a host and register it directly or we need
   // to create one ...
   let port = config.signaling.port || server.address().port;
+
+  if (!config.signaling.host) {
+    const hostname = await getHostname();
+    config.signaling.host = `http://${hostname}`;
+  }
+
   let host = `${config.signaling.host}:${port}`;
 
   const ctx: RouteContext = {

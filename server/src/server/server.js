@@ -10,6 +10,7 @@ import path from 'path';
 import url from 'url';
 import devAccount from 'silk-api/src/dev_account';
 import createLog from 'silk-log';
+import getHostname from '../get_hostname';
 
 import createDb from './db';
 import createS3Blob from './blobs/s3';
@@ -151,28 +152,22 @@ export default async function main (config: any): any {
   createRoutes(context);
 
   server.listen(config.server.port);
-  let errorEvent = eventToPromise(server, 'error').then(err => {
-    throw err;
-  });
 
-  let connected = eventToPromise(server, 'listening').then(() => {
-    // XXX: This is sorta a hack and only intended for development/testing...
-    if (!config.server.publicUrl) {
-      config.server.publicUrl = `http://localhost:${server.address().port}`;
-    }
+  await eventToPromise(server, 'listening');
 
-    // Configure socket.io public url for local development.
-    if (!config.socketio.publicUrl) {
-      let basePublicUrl: any = url.parse(config.server.publicUrl);
-      basePublicUrl.port = config.socketio.port;
-      // Delete host so port override will be used.
-      delete basePublicUrl.host;
-      config.socketio.publicUrl = url.format(basePublicUrl);
-    }
-  });
+  if (!config.server.publicUrl) {
+    const hostname = await getHostname();
+    config.server.publicUrl = `http://${hostname}:${server.address().port}`;
+  }
 
-  // await to be connected correctly...
-  await Promise.race([errorEvent, connected]);
+  // Configure socket.io public url for local development.
+  if (!config.socketio.publicUrl) {
+    let basePublicUrl: any = url.parse(config.server.publicUrl);
+    basePublicUrl.port = config.socketio.port;
+    // Delete host so port override will be used.
+    delete basePublicUrl.host;
+    config.socketio.publicUrl = url.format(basePublicUrl);
+  }
 
   // This interface is only ever supposed to be used from tests.
   return {

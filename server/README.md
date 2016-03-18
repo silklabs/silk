@@ -52,16 +52,13 @@ npm start
 ```
 Load http://localhost:5000 in your web browser to ensure that the server is running.  Devices and apps can connect to that server instance.
 
-#### `PUBLIC_URL`
+#### SILK_HOST
 
-Note if your testing from a device the server needs to know how it can be accessed from your network for video uploads. The simplest way of doing this is like this:
+By default the server will advertise your private ip as the endpoint for socket.io / signaling server. This can be overriden (for example when you need to frequently change networks) by starting the server with `SILK_HOST`.
 
 ```sh
-# 192.168.0.3 would instead be an IP reachable by your device/browser/etc..
-PUBLIC_URL=http://192.168.0.3:5000 npm start
+SILK_HOST=localhost npm start
 ```
-
-Alternatively you can set this value in configuration (see: https://github.com/silklabs/silk-server/blob/master/config/default.js#L14)
 
 #### Running the InfluxDB tests locally
 
@@ -223,4 +220,3 @@ An arguably evil "fix" to clear your MongoDB data.
 ```
 mongo --quiet --eval 'db.getMongo().getDBNames().forEach(function(i){db.getSiblingDB(i).dropDatabase()})'
 ```
-

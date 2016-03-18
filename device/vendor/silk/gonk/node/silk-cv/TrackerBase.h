@@ -18,7 +18,7 @@ public:
       minConfidence(minConfidence) {}
   virtual ~TrackerBase() {}
 
-  bool init(const cv::Mat& image, const cv::Rect2d& boundingBox) {
+  bool init(const cv::Mat& image, const cv::Rect& boundingBox) {
     if (initialized || image.empty()) {
       return false;
     }
@@ -30,7 +30,7 @@ public:
     return initialized;
   }
 
-  bool update(const cv::Mat& image, cv::Rect2d& boundingBox, double *confidence) {
+  bool update(const cv::Mat& image, cv::Rect& boundingBox, double *confidence) {
     if (!initialized|| image.empty()) {
       if (confidence != NULL) {
         *confidence = 0;
@@ -47,8 +47,8 @@ public:
 private:
   bool initialized;
   double minConfidence;
-  virtual bool initImpl(const cv::Mat& image, const cv::Rect2d& boundingBox, double& defaultConfidence) = 0;
-  virtual double updateImpl(const cv::Mat& image, cv::Rect2d& boundingBox) = 0;
+  virtual bool initImpl(const cv::Mat& image, const cv::Rect& boundingBox, double& defaultConfidence) = 0;
+  virtual double updateImpl(const cv::Mat& image, cv::Rect& boundingBox) = 0;
 };
 
 #endif

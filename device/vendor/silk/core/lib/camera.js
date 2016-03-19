@@ -945,8 +945,8 @@ export default class Camera extends EventEmitter {
       log.debug(`Grab time: ${Date.now() - when}ms`);
       this._cvVideoCaptureBusy = false;
 
-      // Add frames to the timeline
-      this.timeline.addPreviewFrame(when, imRGB, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+      // Add camera frame to the timeline
+      this.timeline.addCameraFrame(when, imRGB);
 
       // Only emit the latest set of HAL-detected faces
       // (HAL can return multiple faces per preview, but it's not helpful to show

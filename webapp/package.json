@@ -4,8 +4,6 @@
     "external-js-kissfft": "/external-js-kissfft",
     "silk-api": "/api",
     "silk-audio": "/audio",
-    "silk-azure-storage": "/azure-storage",
-    "silk-streams": "/streams",
     "silk-babeldeps": "/babeldeps",
     "silk-cam": "/cam",
     "silk-config": "/config",

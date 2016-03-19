@@ -27,7 +27,6 @@ var config = {
     ],
   },
   resolve: {
-    packageAlias: 'browser',
     alias : {
       'fs': path.resolve(__dirname, 'src/shim/fs.js'),
       'kissfft': path.resolve(__dirname, 'src', 'shim', 'kissfft.js'),

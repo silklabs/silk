@@ -113,6 +113,7 @@ class Main {
           name,
         }]
       );
+      face.name = name; // Add name to the face object
     });
 
     if (lostFaces.length > 0) {

@@ -33,6 +33,7 @@ export default class FaceTracker {
 
   constructor(env, frameSize /*: CameraFrameSize*/) {
     camera = env.camera;
+    this.env = env;
     log = env.log;
     timeline = env.timeline;
     this._frameSize = frameSize;
@@ -135,7 +136,7 @@ export default class FaceTracker {
         if (this.faces.length >= MAX_TRACKED_OBJECTS) {
           log.warn(`Unable to track new face, already tracking ${MAX_TRACKED_OBJECTS}`);
         } else {
-          let face = new Face(timeline.getNextObjectId());
+          let face = new Face(timeline.getNextObjectId(), this.env);
           face.setLocation(rect, when);
           face.i.tracker = {
             detected: true,

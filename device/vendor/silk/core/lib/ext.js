@@ -145,17 +145,17 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Get preview frames.
+       * Obtain a camera frame in one or more formats
        *
        * @param {number} when - timestamp of the frame to get
-       * @param {Array<CameraPreviewFrameFormat>} formats - requested formats
+       * @param {Array<CameraFrameFormat>} formats - requested formats
        * @return {Promise<Array<?cv::Matrix>>}
        * @memberof Env.camera
        * @instance
        */
       this.camera.getPreviewFrames = (when, formats) => {
         return new Promise((resolve, reject) => {
-          camera.getPreviewFrames(when, formats, (err, frames) => {
+          camera.getFrame(when, formats, (err, frames) => {
             if (err) {
               reject(err);
             } else {

@@ -25,24 +25,24 @@ import wrapNoEntity from './fs/wrap_no_entity';
 import { EventEmitter } from 'events';
 
 /**
- * Type representing the camera preview frame callback
+ * Type representing the camera frame callback
  *
  * @property {boolean} err True if the frame is retrieved succesfully, false
  *                         otherwise
  * @property {object} image Requested preivew image as per the specified
- *                          CameraPreviewFrameFormat format
+ *                          CameraFrameFormat format
  */
 export type CameraCallback = (err: boolean, image: any) => void;
 
 /**
- * The available preview frame formats:
+ * The available camera frame formats:
  * fullgray - full resolution grayscale
  * fullrgb - full resolution rgb
  * gray - downscaled grayscale
  * grayeq - downscaled grayscale equalized
  * rgb - downscaled resolution rgb
  */
-export type CameraPreviewFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq' | 'rgb';
+export type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq' | 'rgb';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -71,7 +71,10 @@ const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
-const PREVIEW_DELAY_MS = 250;
+
+// Rate that new camera frames are proceeded.  Ideally this would equal
+// 1000/FPS however is usually longer due to limited compute
+const FRAME_DELAY_MS = 250; // 4 FPS
 
 const PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
 const PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
@@ -110,9 +113,9 @@ const CAPTURE_INIT_TIMEOUT_MS = 10 * 1000;
 // capture process is wedged and restart it.
 const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
 
-// If there is still not a preview frame after this number of attempts assume the
+// If there is still not a camera frame after this number of attempts assume the
 // capture process is wedged and restart it.
-const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 5 * (1000 / PREVIEW_DELAY_MS);
+const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 5 * (1000 / FRAME_DELAY_MS);
 
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
@@ -230,12 +233,17 @@ type CameraClipRecorderState = {
   repeat: bool; // True if the replay should repeat once at the end
 };
 
-type CameraClipPreviewFrame = [
+type CameraClipFrameImages = [
   number, // when
-  any,   // Full rgb matrix for this preview frame
-  any,   // Full grayscale matrix for this preview frame
-  any,   // Scaled grayscale matrix for this preview frame
+  any,   // Full rgb matrix for this camera frame
+  any,   // Full grayscale matrix for this camera frame
+  any,   // Scaled grayscale matrix for this camera frame
 ];
+function CameraClipFrameImagesRelease(item: CameraClipFrameImages): void {
+  item[1].release();
+  item[2].release();
+  item[3].release();
+}
 
 /**
  * Represents the "clip recorder", which enables the recording and replay of
@@ -244,15 +252,15 @@ type CameraClipPreviewFrame = [
 class CameraClipRecorder {
   state: CameraClipRecorderState;
 
-  _previews: CBuffer<CameraClipPreviewFrame>;
-  _previewPosition: number;
+  _frames: CBuffer<CameraClipFrameImages>;
+  _framePosition: number;
   _onStateChange: Function;
 
   constructor(onStateChange: Function) {
     this._onStateChange = onStateChange;
-    this._previewPosition = 0;
-    this._previews = new CBuffer(MAX_CLIP_DURATION * 1000 / PREVIEW_DELAY_MS);
-    this._previews.overflow = this._releasePreviewFrame;
+    this._framePosition = 0;
+    this._frames = new CBuffer(MAX_CLIP_DURATION * 1000 / FRAME_DELAY_MS);
+    this._frames.overflow = CameraClipFrameImagesRelease;
 
     this.state = {
       mode: 'live',
@@ -263,12 +271,6 @@ class CameraClipRecorder {
     this.reset();
     this._loadAvailableClips();
   }
-
-  _releasePreviewFrame: ((item: CameraClipPreviewFrame) => void) = (item) => {
-    item[1].release();
-    item[2].release();
-    item[3].release();
-  };
 
   async _loadAvailableClips(): void {
     this.state.availableClips = [];
@@ -312,11 +314,11 @@ class CameraClipRecorder {
     this._onStateChange();
 
     const metadata = JSON.parse(await fs.readFile(clipMetadataFile, 'utf8'));
-    const previews = metadata.previews;
-    this._previews.empty();
-    this._previewPosition = 0;
+    const frames = metadata.frames;
+    this._frames.empty();
+    this._framePosition = 0;
 
-    await previews.forEach(async (when) => {
+    await frames.forEach(async (when) => {
       let imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
       if (!await fs.exists(imageFile)) {
         log.warn('Clip image does not exist:', imageFile);
@@ -331,7 +333,7 @@ class CameraClipRecorder {
       let imScaledGray = imGray.copy();
       imScaledGray.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
-      this._previews.push([when, imRGB, imGray, imScaledGray]);
+      this._frames.push([when, imRGB, imGray, imScaledGray]);
     });
     this.state.msg = `Loaded ${CAMERA_CLIP_DIRECTORY}/${name}`;
     this.state.mode = 'pause';
@@ -350,16 +352,16 @@ class CameraClipRecorder {
     this.state.msg = `Saving ${name}...`;
     this.state.mode = 'busy';
     this._onStateChange();
-    const previews = this._previews.toArray();
+    const frames = this._frames.toArray();
     let metadata = {
-      previews: previews.map(item => item[0]),
+      frames: frames.map(item => item[0]),
     };
 
     await mkdirp(path.join(CAMERA_CLIP_DIRECTORY, 'img'));
     const clipMetadataFile = path.join(CAMERA_CLIP_DIRECTORY, name + '.json');
     await fs.writeFile(clipMetadataFile, JSON.stringify(metadata, null, '  '));
 
-    await previews.forEach(async (item) => {
+    await frames.forEach(async (item) => {
       let [when, imRGB] = item;
 
       let imageFile = path.join(CAMERA_CLIP_DIRECTORY, 'img', `${when}.png`);
@@ -381,10 +383,10 @@ class CameraClipRecorder {
     this.resumeLive();
   }
 
-  previewFrame(when: number, imRGB: any, imGray: any, imScaledGray: any): CameraClipPreviewFrame {
+  maybeReplaceFrame(when: number, imRGB: any, imGray: any, imScaledGray: any): CameraClipFrameImages {
     switch (this.state.mode) {
     case 'record':
-      this._previews.push([
+      this._frames.push([
         when,
         imRGB.copy(),
         imGray.copy(),
@@ -394,34 +396,34 @@ class CameraClipRecorder {
     case 'live':
       return [when, imRGB, imGray, imScaledGray];
     default:
-      if (this._previewPosition >= this._previews.size) {
-        log.error('Invalid _previewPosition.',
-          `${this._previewPosition} >= ${this._previews.size}`);
+      if (this._framePosition >= this._frames.size) {
+        log.error('Invalid _framePosition.',
+          `${this._framePosition} >= ${this._frames.size}`);
         this.stopPlayback();
         return [when, imRGB, imGray, imScaledGray];
       }
 
-      const preview = this._previews.get(this._previewPosition);
+      const frame = this._frames.get(this._framePosition);
 
-      let nextPreviewPosition = this._previewPosition;
+      let nextPreviewPosition = this._framePosition;
       if (this.state.mode === 'play') {
         nextPreviewPosition++;
-        if (nextPreviewPosition >= this._previews.size) {
+        if (nextPreviewPosition >= this._frames.size) {
           if (this.state.repeat) {
             nextPreviewPosition = 0;
           } else {
-            nextPreviewPosition = this._previews.size - 1;
+            nextPreviewPosition = this._frames.size - 1;
             this.stopPlayback();
           }
         }
       }
-      this._previewPosition = nextPreviewPosition;
+      this._framePosition = nextPreviewPosition;
 
       imRGB.release();
       imGray.release();
       imScaledGray.release();
 
-      [when, imRGB, imGray, imScaledGray] = preview;
+      [when, imRGB, imGray, imScaledGray] = frame;
       return [when, imRGB.copy(), imGray.copy(), imScaledGray.copy()];
     }
   }
@@ -430,7 +432,7 @@ class CameraClipRecorder {
     if (this.state.mode !== 'busy') {
       this.state.mode = 'live';
       this.state.msg = '';
-      this._previews.empty();
+      this._frames.empty();
     }
     this._onStateChange();
   }
@@ -481,31 +483,31 @@ class CameraClipRecorder {
 
   seek(distance: number): void {
     if (this.state.mode === 'pause' || this.state.mode === 'play') {
-      this._previewPosition = this._clamp(this._previewPosition + distance,
-        0, Math.max(0, this._previews.size - 1));
-      this.state.msg = `Seek to ${this._previewPosition}`;
+      this._framePosition = this._clamp(this._framePosition + distance,
+        0, Math.max(0, this._frames.size - 1));
+      this.state.msg = `Seek to ${this._framePosition}`;
     }
     this._onStateChange();
   }
 
   trimBefore(): void {
     if (this.state.mode === 'pause') {
-      for (let i = 0; i < this._previewPosition; i++) {
-        this._previews.shift();
+      for (let i = 0; i < this._framePosition; i++) {
+        this._frames.shift();
       }
-      this.state.msg = `Trimmed before ${this._previewPosition}`;
-      this._previewPosition = 0;
+      this.state.msg = `Trimmed before ${this._framePosition}`;
+      this._framePosition = 0;
     }
     this._onStateChange();
   }
 
   trimAfter(): void {
     if (this.state.mode === 'pause') {
-      while (this._previews.size > this._previewPosition + 1) {
-        this._previews.pop();
+      while (this._frames.size > this._framePosition + 1) {
+        this._frames.pop();
       }
-      this.state.msg = `Trimmed after ${this._previewPosition}`;
-      this._previewPosition = this._previews.size - 1;
+      this.state.msg = `Trimmed after ${this._framePosition}`;
+      this._framePosition = this._frames.size - 1;
     }
     this._onStateChange();
   }
@@ -534,7 +536,7 @@ export default class Camera extends EventEmitter {
     this._cvVideoCaptureBusy = false;
     this._ctlSocket = null;
     this._dataSocket = null;
-    this._queue = []; // Queue of pending preview frame requests
+    this._frameQueue = []; // Queue of pending camera frame requests
     this._motion = true;
 
     this._liveDiag = false;
@@ -542,9 +544,9 @@ export default class Camera extends EventEmitter {
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
-    // frame multiple times. Image cache entry is of type CameraClipPreviewFrame
+    // frame multiple times.
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
-    this._imagecache.overflow = (item) => this._releasePreviewImages(item);
+    this._imagecache.overflow = (item) => this._releaseImageCacheEntry(item);
 
     this.timeline.on('no-motion', () => {
       this._motion = false;
@@ -562,11 +564,10 @@ export default class Camera extends EventEmitter {
   }
 
   /**
-   * Releases cached preview images when the preview object is removed from the
-   * cache
+   * Releases cached images
    * @private
    */
-  _releasePreviewImages(item) {
+  _releaseImageCacheEntry(item) {
     for (let key in item) {
       if (!item.hasOwnProperty(key)) {
         continue;
@@ -610,9 +611,9 @@ export default class Camera extends EventEmitter {
       this._initTimeout = null;
     }
 
-    if (this._previewFrameTimeout) {
-      clearTimeout(this._previewFrameTimeout);
-      this._previewFrameTimeout = null;
+    if (this._frameTimeout) {
+      clearTimeout(this._frameTimeout);
+      this._frameTimeout = null;
     }
     if (this._tagMonitorTimeout) {
       clearTimeout(this._tagMonitorTimeout);
@@ -656,9 +657,9 @@ export default class Camera extends EventEmitter {
     }
   }
 
-  _initStartPreview() {
+  _initFrameCapture() {
     this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
-    this._scheduleNextPreviewFrame();
+    this._scheduleNextFrameCapture();
 
     clearTimeout(this._initTimeout);
     this._initTimeout = null;
@@ -711,7 +712,7 @@ export default class Camera extends EventEmitter {
       // OpenCV video capture.
       process.nextTick(() => {
         this._initCVVideoCapture();
-        this._initStartPreview();
+        this._initFrameCapture();
         this._startSimMicCapture();
       });
       return;
@@ -804,7 +805,7 @@ export default class Camera extends EventEmitter {
         this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
 
-        this._initStartPreview();
+        this._initFrameCapture();
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);
@@ -821,13 +822,13 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _retrieveNextFrames() {
-    if (this._queue.length === 0) {
+  _retrieveNextFrame() {
+    if (this._frameQueue.length === 0) {
       return;
     }
 
     // Dequeue the next frame request
-    let [userCb, when, formats] = this._queue.shift();
+    let [userCb, when, formats] = this._frameQueue.shift();
 
     // Search the image in the cache
     let index = 0;
@@ -876,25 +877,25 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _scheduleNextPreviewFrame() {
-    // Preview frames are scheduled every PREVIEW_DELAY_MS wall clock
-    const spilloverMs = Date.now() % PREVIEW_DELAY_MS;
+  _scheduleNextFrameCapture() {
+    // Preview frames are scheduled every FRAME_DELAY_MS wall clock
+    const spilloverMs = Date.now() % FRAME_DELAY_MS;
 
-    // Reduce PREVIEW_DELAY_MS by the spillover to get the next frame as close
-    // as possible to +PREVIEW_DELAY_MS.
+    // Reduce FRAME_DELAY_MS by the spillover to get the next frame as close
+    // as possible to +FRAME_DELAY_MS.
     // (+5 to ensure the timeout doesn't fire early by ~1ms)
-    const requestedDelayMs = PREVIEW_DELAY_MS - spilloverMs + 5;
+    const requestedDelayMs = FRAME_DELAY_MS - spilloverMs + 5;
 
     const scheduledTime = Date.now();
-    this._previewFrameTimeout = setTimeout(() => {
+    this._frameTimeout = setTimeout(() => {
       const realDelayMs = Date.now() - scheduledTime;
-      if (realDelayMs >= PREVIEW_DELAY_MS * 1.5) {
-        log.warn(`Preview frame was delayed by ${realDelayMs - requestedDelayMs}ms`);
+      if (realDelayMs >= FRAME_DELAY_MS * 1.5) {
+        log.warn(`Camera frame was delayed by ${realDelayMs - requestedDelayMs}ms`);
       }
 
-      this._previewFrameTimeout = null;
-      this._scheduleNextPreviewFrame();
-      this._readPreviewFrame();
+      this._frameTimeout = null;
+      this._scheduleNextFrameCapture();
+      this._captureNextFrame();
     }, requestedDelayMs);
   }
 
@@ -902,16 +903,16 @@ export default class Camera extends EventEmitter {
    * Read the next frame
    * @private
    */
-  _readPreviewFrame() {
+  _captureNextFrame() {
     if (!this._cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
       this._noPreviewCount++;
-      log.warn(`Waiting for preview frame: ` +
+      log.warn(`Waiting for camera frame: ` +
                `${this._noPreviewCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
       if (this._noPreviewCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
-        this._restart(`Preview frame timeout`, true);
+        this._restart(`Camera frame timeout`, true);
       }
       return;
     }
@@ -932,9 +933,9 @@ export default class Camera extends EventEmitter {
         return;
       }
       [when, imRGB, imGray, imScaledGray] =
-        this._clipRecorder.previewFrame(when, imRGB, imGray, imScaledGray);
+        this._clipRecorder.maybeReplaceFrame(when, imRGB, imGray, imScaledGray);
 
-      // Cache preview frames
+      // Cache the camera frame
       this._imagecache.push({
         when,
         fullgray: imGray,
@@ -951,6 +952,8 @@ export default class Camera extends EventEmitter {
       // Only emit the latest set of HAL-detected faces
       // (HAL can return multiple faces per preview, but it's not helpful to show
       //  them all on the preview)
+      //
+      // TODO: This code can probably be removed as we are not using HAL faces
       if (this.faces) {
         // Add faces only if there is motion
         if (this._motion) {
@@ -1206,33 +1209,18 @@ export default class Camera extends EventEmitter {
   }
 
   /**
-   * Invoke this function to obtain the preview frame
-   *
-   * @param when   - timestamp of the frame to get
-   * @param format - requested format
-   * @param userCb - callback that receives an error object and the image
-   *                 as an OpenCV matrix
-   */
-  getPreviewFrame(when: number,
-                  format: CameraPreviewFrameFormat,
-                  userCb: CameraCallback): void {
-    this._queue.push([userCb, when, [format]]);
-    this._retrieveNextFrames();
-  }
-
-  /**
-   * Invoke this function to obtain a list of preview frames
+   * Obtain a camera frame in one or more formats
    *
    * @param when   - timestamp of the frame to get
    * @param formats - requested formats
    * @param userCb - callback that receives an error object and the image
    *                 as an OpenCV matrix
    */
-  getPreviewFrames(when: number,
-                  formats: Array<CameraPreviewFrameFormat>,
-                  userCb: CameraCallback): void {
-    this._queue.push([userCb, when, formats]);
-    this._retrieveNextFrames();
+  getFrame(when: number,
+           formats: Array<CameraFrameFormat>,
+           userCb: CameraCallback): void {
+    this._frameQueue.push([userCb, when, formats]);
+    this._retrieveNextFrame();
   }
 
   _diagEmitState = () => {
@@ -1291,10 +1279,10 @@ export default class Camera extends EventEmitter {
       this._clipRecorder.seek(-Infinity);
       break;
     case 'rewind':
-      this._clipRecorder.seek(-1000 / PREVIEW_DELAY_MS);
+      this._clipRecorder.seek(-1000 / FRAME_DELAY_MS);
       break;
     case 'fastforward':
-      this._clipRecorder.seek(1000 / PREVIEW_DELAY_MS);
+      this._clipRecorder.seek(1000 / FRAME_DELAY_MS);
       break;
     case 'goto end':
       this._clipRecorder.seek(Infinity);

@@ -250,6 +250,10 @@ export default class CameraPreview extends React.Component {
           labelPadding: 1,
         };
 
+        // Scale object rectangles from objectsSize to previewSize
+        const xScale = camera.previewSize.width / camera.objectsSize.width;
+        const yScale = camera.previewSize.height / camera.objectsSize.height;
+
         objects.forEach((objectArray, index) => {
           objectArray.forEach((object) => {
             let rects = object.rects;
@@ -274,7 +278,12 @@ export default class CameraPreview extends React.Component {
             drawArgs.labelColor = colors.label;
 
             object.rects.forEach((rect) => {
-              drawArgs.rect = rect;
+              drawArgs.rect = {
+                x: Math.round(rect.x * xScale),
+                y: Math.round(rect.y * yScale),
+                width: Math.round(rect.width * xScale),
+                height: Math.round(rect.height * yScale),
+              };
               CanvasUtils.drawObject(drawArgs);
             });
           });

@@ -63,7 +63,7 @@ class Main {
     this.lastFaceDetect = now;
 
     // Fetch the current frame in all the different required formats at once
-    let [gray, grayeq, fullgray] = await camera.getPreviewFrames(
+    let [gray, grayeq, fullgray] = await camera.getFrame(
       when,
       ['gray', 'grayeq', 'fullgray']
     );
@@ -94,7 +94,7 @@ class Main {
   }
 
   onPreview = async (when: number): Promise<void> => {
-    let [grayeq] = await camera.getPreviewFrames(when, ['grayeq']);
+    let [grayeq] = await camera.getFrame(when, ['grayeq']);
     let lostFaces = await this.faceTracker.update(when, grayeq);
 
     // Update timeline with currently tracked faces

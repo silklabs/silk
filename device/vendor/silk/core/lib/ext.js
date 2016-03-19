@@ -145,17 +145,17 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Get preview frames.
+       * Obtain a camera frame in one or more formats
        *
        * @param {number} when - timestamp of the frame to get
-       * @param {Array<CameraPreviewFrameFormat>} formats - requested formats
+       * @param {Array<CameraFrameFormat>} formats - requested formats
        * @return {Promise<Array<?cv::Matrix>>}
        * @memberof Env.camera
        * @instance
        */
-      this.camera.getPreviewFrames = (when, formats) => {
+      this.camera.getFrame = (when, formats) => {
         return new Promise((resolve, reject) => {
-          camera.getPreviewFrames(when, formats, (err, frames) => {
+          camera.getFrame(when, formats, (err, frames) => {
             if (err) {
               reject(err);
             } else {
@@ -177,15 +177,14 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Returns the camera preview size
+       * Returns the camera frame size
        *
+       * @param {CameraFrameSize} frameSize Frame size of interest ('default' if null)
        * @return {Size}
        * @memberof Env.camera
        * @instance
        */
-      this.camera.previewSize = () => {
-        return camera.previewSize;
-      };
+      this.camera.getFrameSize = (frameSize) => camera.getFrameSize(frameSize);
 
       /**
        * Get camera parameter as integer. This function returns a Promise that resolves

@@ -14,12 +14,11 @@ let log;
  * This class provides utility functions to implement motion zones
  */
 export default class MotionZone {
-  constructor(env) {
+  constructor(env, size) {
     this._env = env;
     log = this._env.log;
     this._ignoredZones = [];
 
-    const size = env.camera.previewSize();
     this._ignoredZoneMask = new cv.Matrix(size.height, size.width, cv.Constants.CV_8UC1, [255]);
 
     this._parseMotionZones()

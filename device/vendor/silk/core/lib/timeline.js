@@ -34,6 +34,9 @@ const PREVIEW_UPLOAD_INTERVAL_MS = PREVIEW_UPLOAD_INTERVAL_S * 1000;
 // value of VIDEOUPLOADTYPE_PROP.
 const PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS = 5 * 60 * 1000; /* 5 minutes */
 
+const PREVIEW_WIDTH = util.getintprop('ro.silk.preview.width', 320);
+const PREVIEW_HEIGHT = util.getintprop('ro.silk.preview.height', 180);
+
 // When VIDEOUPLOADTYPE_PROP === 'events', this indicates how much video data
 // should be uploaded before the event officially started.
 const PRE_EVENT_UPLOAD_MS = 5000;
@@ -107,7 +110,6 @@ type ConfigLiveStreamArgs = {
 export default class Timeline extends EventEmitter {
   outbox: Outbox;
   server: Server;
-  _previewSize: Size;
 
   // Keep track of all objects that are classified in the video stream.
   objects: CBuffer<TimelineEventObject> = new CBuffer(100);
@@ -147,7 +149,6 @@ export default class Timeline extends EventEmitter {
 
     this.outbox = outbox;
     this.server = server;
-    this._previewSize = {width: 0, height: 0};
 
     this.diagJpegFrames = [];
     this.diagFrameFilter = '';
@@ -270,24 +271,22 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   * Set size of the preview image
+   * Returns the camera preview size.
    *
-   * @param size Size of the preview image
+   * @return {Size}
    */
-  set previewSize(size: Size) {
-    this._previewSize = size;
+  get previewSize(): Size {
+    return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 
   /**
-   * Add a new preview frame
+   * Add a new camera frame
    *
    * @param when    Timestamp of when the preview frame was generated
-   * @param preview OpenCV RGB matrix containing the full resolution preview frame
-   * @param previewWidth Suggested preview width
-   * @param previewHeight Suggested preview height
+   * @param preview OpenCV RGB matrix containing the full resolution camera frame
    */
-  addPreviewFrame(when: number, preview: any, previewWidth: number, previewHeight: number) {
-    this._maybePushPreview(when, preview, previewWidth, previewHeight);
+  addCameraFrame(when: number, imRGB: any) {
+    this._maybePushPreview(when, imRGB);
     this.emit('preview', when);
   }
 
@@ -517,9 +516,10 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
+   * Maybe send a preview frame to live clients and/or storage
    * @private
    */
-  _maybePushPreview(when: number, preview: any, previewWidth: number, previewHeight: number) {
+  _maybePushPreview(when: number, imRGB: any) {
     const now = Date.now();
     const nowSeconds = Math.floor(now / 1000);
     this.secondsUntilNextPreviewEmit -= nowSeconds - this.lastPreviewEmitSeconds;
@@ -536,21 +536,32 @@ export default class Timeline extends EventEmitter {
     log.debug(`Converting matrix to jpg: ${when}`);
 
     // TODO: Consider moving this image resize off the main thread...
-    preview.resize(previewWidth, previewHeight);
+    imRGB.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
-    preview.toBufferAsync((err, frame) => {
-      log.debug(`Finished converting matrix to jpg: ${when}`);
-      if (err) {
-        this.lastPreviewFrame = null;
-        throw err; // TODO: If/when can this actually happen?
+    imRGB.toBufferAsync(
+      (err, frame) => {
+        log.debug(`Finished converting matrix to jpg: ${when}`);
+        if (err) {
+          this.lastPreviewFrame = null;
+          throw err; // TODO: If/when can this actually happen?
+        }
+        this._pushPreview(when, frame, isKeyFrame);
+      },
+      {
+        ext: '.jpg',
+        jpegQuality: 100,
       }
-      this._pushPreview(when, frame, isKeyFrame);
-    }, {ext: '.jpg', jpegQuality: 100});
+    );
 
     this.lastPreviewEmitSeconds = nowSeconds;
     this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
   }
 
+  /**
+   * Send a preview frame to live clients and storage
+   *
+   * @private
+   */
   _pushPreview(when: number, frame: ?Buffer, isKeyFrame: boolean) {
     let usingLastFrame = false;
     if (!frame) {
@@ -585,9 +596,6 @@ export default class Timeline extends EventEmitter {
     }
 
     // Storage
-    const frameWidth = this._previewSize.width;
-    const frameHeight = this._previewSize.height;
-
     const enqueueOp = () => {
       invariant(frame);
       const op = new PreviewUploadOp({
@@ -597,8 +605,8 @@ export default class Timeline extends EventEmitter {
           startUTC: when,
           endUTC: when + PREVIEW_UPLOAD_INTERVAL_MS,
           data: {
-            frameWidth,
-            frameHeight,
+            frameWidth: PREVIEW_WIDTH,
+            frameHeight: PREVIEW_HEIGHT,
           },
         },
       });
@@ -640,10 +648,6 @@ export default class Timeline extends EventEmitter {
             metaType: 'video',
             startUTC: when,
             endUTC: when + durationMs,
-            data: {
-              frameWidth: this._previewSize.width,
-              frameHeight: this._previewSize.height
-            },
           },
         });
 

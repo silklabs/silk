@@ -278,8 +278,8 @@ function emitDeviceInfo() {
       logo,
       now: Date.now(),
       videoSize: camera.videoSize,
-      previewSize: camera.previewSize,
-      objectsSize: camera.previewSize,
+      previewSize: timeline.previewSize,
+      objectsSize: camera.getFrameSize('default'),
     });
   }
 }
@@ -409,13 +409,6 @@ config.on('configured', async () => {
 
   log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
   server.connect();
-
-  // If the camera has not yet initialized, ensure that the socket.io server is
-  // updated with the camera preview size once the camera initialization completes.
-  // (currently it's assumed that the camera preview size is fixed)
-  if (camera.previewSize === null) {
-    camera.once('ready', emitDeviceInfo);
-  }
 
   // Yield a pinch of time since updates don't need to start immediately,
   // |update.start()| is currently a little main thread heavy, and there's lots

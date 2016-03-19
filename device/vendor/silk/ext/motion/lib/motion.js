@@ -63,7 +63,7 @@ class Motion {
     soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 
     this.working = false;
-    this.motionzone = new MotionZone(env);
+    this.motionzone = new MotionZone(env, env.camera.getFrameSize('low'));
 
     const subtractorName = util.getprop(MOTION_SUBTRACTOR_PROP, 'mog2');
     switch (subtractorName) {
@@ -90,7 +90,7 @@ class Motion {
 
     this.working = true;
     try {
-      let [image] = await this._env.camera.getPreviewFrames(when, ['gray']);
+      let [image] = await this._env.camera.getPreviewFrames(when, ['lowgray']);
 
       const start = Date.now();
 

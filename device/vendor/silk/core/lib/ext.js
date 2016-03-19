@@ -177,15 +177,14 @@ class Env extends EventEmitter {
       };
 
       /**
-       * Returns the camera preview size
+       * Returns the camera frame size
        *
+       * @param {CameraFrameSize} frameSize Frame size of interest ('default' if null)
        * @return {Size}
        * @memberof Env.camera
        * @instance
        */
-      this.camera.previewSize = () => {
-        return camera.previewSize;
-      };
+      this.camera.getFrameSize = (frameSize) => camera.getFrameSize(frameSize);
 
       /**
        * Get camera parameter as integer. This function returns a Promise that resolves

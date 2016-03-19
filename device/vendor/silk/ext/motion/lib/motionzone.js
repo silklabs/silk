@@ -19,7 +19,7 @@ export default class MotionZone {
     log = this._env.log;
     this._ignoredZones = [];
 
-    const size = env.camera.previewSize();
+    const size = env.camera.getFrameSize('default');
     this._ignoredZoneMask = new cv.Matrix(size.height, size.width, cv.Constants.CV_8UC1, [255]);
 
     this._parseMotionZones()

@@ -110,7 +110,6 @@ type ConfigLiveStreamArgs = {
 export default class Timeline extends EventEmitter {
   outbox: Outbox;
   server: Server;
-  _previewSize: Size;
 
   // Keep track of all objects that are classified in the video stream.
   objects: CBuffer<TimelineEventObject> = new CBuffer(100);
@@ -150,7 +149,6 @@ export default class Timeline extends EventEmitter {
 
     this.outbox = outbox;
     this.server = server;
-    this._previewSize = {width: 0, height: 0};
 
     this.diagJpegFrames = [];
     this.diagFrameFilter = '';
@@ -273,12 +271,12 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   * Set size of the preview image
+   * Returns the camera preview size.
    *
-   * @param size Size of the preview image
+   * @return {Size}
    */
-  set previewSize(size: Size) {
-    this._previewSize = size;
+  get previewSize(): Size {
+    return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
   }
 
   /**

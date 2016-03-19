@@ -36,13 +36,24 @@ export type CameraCallback = (err: boolean, image: any) => void;
 
 /**
  * The available camera frame formats:
- * fullgray - full resolution grayscale
- * fullrgb - full resolution rgb
- * gray - downscaled grayscale
- * grayeq - downscaled grayscale equalized
- * rgb - downscaled resolution rgb
+ * fullgray - full resolution grayscale   (CameraFrameSize === 'full')
+ * fullrgb  - full resolution rgb         (CameraFrameSize === 'full')
+ * highgray - higher res grayscale        (CameraFrameSize === 'high')
+ * gray     - default grayscale           (CameraFrameSize === 'default')
+ * grayeq   - default grayscale equalized (CameraFrameSize === 'default')
+ * rgb      - default rgb                 (CameraFrameSize === 'default')
+ * lowgray  - lower res grayscale         (CameraFrameSize === 'low')
  */
-export type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'gray' | 'grayeq' | 'rgb';
+export type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | 'grayeq' | 'rgb' | 'lowgray';
+
+/**
+ * The available camera frame sizes:
+ * full - full resolution frame
+ * high - higher resolution frame for image analysis
+ * default - default frame size for image analysis
+ * low - lower resolution frame for image analysis
+ */
+export type CameraFrameSize = 'low' | 'default' | 'high' | 'full';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -70,14 +81,29 @@ const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
-const PREVIEW_SCALE = util.getintprop('ro.silk.camera.preview_scale', 4);
+
+const FRAME_SCALE_LOWRES = util.getintprop('ro.silk.camera.scale.low', 5);
+const FRAME_SCALE_DEFAULT = util.getintprop('ro.silk.camera.scale', 4);
+const FRAME_SCALE_HIGHRES = util.getintprop('ro.silk.camera.scale.high', 2);
+
+const FRAME_SIZE = {
+  low: {
+    width: WIDTH / FRAME_SCALE_LOWRES,
+    height: HEIGHT / FRAME_SCALE_LOWRES,
+  },
+  default: {
+    width: WIDTH / FRAME_SCALE_DEFAULT,
+    height: HEIGHT / FRAME_SCALE_DEFAULT
+  },
+  high: {
+    width: WIDTH / FRAME_SCALE_HIGHRES,
+    height: HEIGHT / FRAME_SCALE_HIGHRES,
+  },
+};
 
 // Rate that new camera frames are proceeded.  Ideally this would equal
 // 1000/FPS however is usually longer due to limited compute
 const FRAME_DELAY_MS = 250; // 4 FPS
-
-const PREVIEW_WIDTH = WIDTH / PREVIEW_SCALE;
-const PREVIEW_HEIGHT = HEIGHT / PREVIEW_SCALE;
 
 const MAX_CLIP_DURATION = Math.max(1, util.getintprop('ro.silk.camera.max_clip_dur', 15 /*seconds*/));
 const CAMERA_CLIP_DIRECTORY = 'data/clips';
@@ -196,15 +222,17 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
 
   // Intentionally discard additional HAL face data such as the
   // mouth/score as they are never used downstream.
+  const DEFAULT_FRAME_WIDTH = FRAME_SIZE.default.width;
+  const DEFAULT_FRAME_HEIGHT = FRAME_SIZE.default.height;
   return {
-    x: normCoord(left, PREVIEW_WIDTH),
-    y: normCoord(top, PREVIEW_HEIGHT),
-    width: normLen(right - left, PREVIEW_WIDTH),
-    height: normLen(bottom - top, PREVIEW_HEIGHT),
-    leftEye: [normCoord(face.leftEye[0], PREVIEW_WIDTH),
-        normCoord(face.leftEye[1], PREVIEW_HEIGHT)],
-    rightEye: [normCoord(face.rightEye[0], PREVIEW_WIDTH),
-        normCoord(face.rightEye[1], PREVIEW_HEIGHT)],
+    x: normCoord(left, DEFAULT_FRAME_WIDTH),
+    y: normCoord(top, DEFAULT_FRAME_HEIGHT),
+    width: normLen(right - left, DEFAULT_FRAME_WIDTH),
+    height: normLen(bottom - top, DEFAULT_FRAME_HEIGHT),
+    leftEye: [normCoord(face.leftEye[0], DEFAULT_FRAME_WIDTH),
+        normCoord(face.leftEye[1], DEFAULT_FRAME_HEIGHT)],
+    rightEye: [normCoord(face.rightEye[0], DEFAULT_FRAME_WIDTH),
+        normCoord(face.rightEye[1], DEFAULT_FRAME_HEIGHT)],
     id: face.id,
   };
 }
@@ -331,7 +359,7 @@ class CameraClipRecorder {
       imGray.cvtColor('CV_BGR2GRAY');
 
       let imScaledGray = imGray.copy();
-      imScaledGray.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+      imScaledGray.resize(FRAME_SIZE.default.width, FRAME_SIZE.default.height);
 
       this._frames.push([when, imRGB, imGray, imScaledGray]);
     });
@@ -405,19 +433,19 @@ class CameraClipRecorder {
 
       const frame = this._frames.get(this._framePosition);
 
-      let nextPreviewPosition = this._framePosition;
+      let nextFramePosition = this._framePosition;
       if (this.state.mode === 'play') {
-        nextPreviewPosition++;
-        if (nextPreviewPosition >= this._frames.size) {
+        nextFramePosition++;
+        if (nextFramePosition >= this._frames.size) {
           if (this.state.repeat) {
-            nextPreviewPosition = 0;
+            nextFramePosition = 0;
           } else {
-            nextPreviewPosition = this._frames.size - 1;
+            nextFramePosition = this._frames.size - 1;
             this.stopPlayback();
           }
         }
       }
-      this._framePosition = nextPreviewPosition;
+      this._framePosition = nextFramePosition;
 
       imRGB.release();
       imGray.release();
@@ -650,7 +678,8 @@ export default class Camera extends EventEmitter {
   _initCVVideoCapture() {
     if (!this._cvVideoCapture) {
       try {
-        this._cvVideoCapture = new silkcv.VideoCapture(0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+        this._cvVideoCapture = new silkcv.VideoCapture(0,
+          FRAME_SIZE.default.width, FRAME_SIZE.default.height);
       } catch (err) {
         throw err;
       }
@@ -658,7 +687,6 @@ export default class Camera extends EventEmitter {
   }
 
   _initFrameCapture() {
-    this.timeline.previewSize = {width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT};
     this._scheduleNextFrameCapture();
 
     clearTimeout(this._initTimeout);
@@ -847,12 +875,19 @@ export default class Camera extends EventEmitter {
         case 'rgb':
           if (!image.rgb) {
             let rgb = image.fullrgb.copy();
-            rgb.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+            rgb.resize(FRAME_SIZE.default.width, FRAME_SIZE.default.height); // Slow!
             image.rgb = rgb;
           }
           return image.rgb;
         case 'fullgray':
           return image.fullgray;
+        case 'highgray':
+          if (!image.highgray) {
+            let highgray = image.fullgray.copy();
+            highgray.resize(FRAME_SIZE.high.width, FRAME_SIZE.high.height);
+            image.highgray = highgray;
+          }
+          return image.highgray;
         case 'gray':
           return image.gray;
         case 'grayeq':
@@ -862,6 +897,15 @@ export default class Camera extends EventEmitter {
             image.grayeq = grayImage;
           }
           return image.grayeq;
+        case 'lowgray':
+          if (!image.lowgray) {
+            // TODO: Resize from fullgray instead?  This will be slower but
+            // likely produce a better image.
+            let lowgray = image.gray.copy();
+            lowgray.resize(FRAME_SIZE.low.width, FRAME_SIZE.low.height);
+            image.lowgray = lowgray;
+          }
+          return image.lowgray;
         default:
           err = `unsupported format: ${format}`;
           return null;
@@ -878,7 +922,7 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _scheduleNextFrameCapture() {
-    // Preview frames are scheduled every FRAME_DELAY_MS wall clock
+    // Camera frames are scheduled every FRAME_DELAY_MS wall clock
     const spilloverMs = Date.now() % FRAME_DELAY_MS;
 
     // Reduce FRAME_DELAY_MS by the spillover to get the next frame as close
@@ -908,15 +952,15 @@ export default class Camera extends EventEmitter {
       return;
     }
     if (this._cvVideoCaptureBusy) {
-      this._noPreviewCount++;
+      this._noFrameCount++;
       log.warn(`Waiting for camera frame: ` +
-               `${this._noPreviewCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
-      if (this._noPreviewCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
+               `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
+      if (this._noFrameCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
         this._restart(`Camera frame timeout`, true);
       }
       return;
     }
-    this._noPreviewCount = 0;
+    this._noFrameCount = 0;
     this._cvVideoCaptureBusy = true;
     let when = Date.now();
 
@@ -1200,12 +1244,19 @@ export default class Camera extends EventEmitter {
   }
 
   /**
-   * Returns the camera preview size.
+   * Returns the camera frame size.
    *
+   * @param {CameraFrameSize} frameSize Frame size of interest ('default' if null)
    * @return {Size}
    */
-  get previewSize() {
-    return { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT };
+  getFrameSize(frameSize: CameraFrameSize) {
+    if (!frameSize || frameSize === '') {
+      frameSize = 'default';
+    }
+    if (typeof FRAME_SIZE[frameSize] !== 'object') {
+      throw new Error(`Invalid frameSize: ${frameSize}`);
+    }
+    return FRAME_SIZE[frameSize];
   }
 
   /**

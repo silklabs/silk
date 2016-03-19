@@ -279,6 +279,7 @@ function emitDeviceInfo() {
       now: Date.now(),
       videoSize: camera.videoSize,
       previewSize: camera.previewSize,
+      objectsSize: camera.previewSize,
     });
   }
 }

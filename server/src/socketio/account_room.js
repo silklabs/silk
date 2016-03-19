@@ -32,6 +32,7 @@ export type DeviceInfo = {
   id: string;
   videoSize: ?Dimensions;
   previewSize: ?Dimensions;
+  objectsSize: ?Dimensions;
   logo: ?any;
   now: number;
 }
@@ -111,6 +112,10 @@ class Device {
 
     if (typeof info.previewSize === 'object') {
       this.info.previewSize = info.previewSize;
+    }
+
+    if (typeof info.objectsSize === 'object') {
+      this.info.objectsSize = info.objectsSize;
     }
   }
 

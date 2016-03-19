@@ -44,6 +44,7 @@ class Camera extends EventEmitter {
     this.online = true;
     this._socket = socket;
     this.previewSize = opts.previewSize;
+    this.objectsSize = opts.objectsSize;
 
     const logo = opts.logo;
     if (logo) {
@@ -409,8 +410,13 @@ class Cameras extends EventEmitter {
 
       this.socket.on('video-stream-new', msg => {
         log.info(`Device online: ${msg.id} ` +
-                 `previewSize:${JSON.stringify(msg.previewSize)}`);
-        this._liveDevices[msg.id] = {logo: msg.logo, previewSize: msg.previewSize};
+                 `previewSize:${JSON.stringify(msg.previewSize)}` +
+                 `objectsSize:${JSON.stringify(msg.objectsSize)}`);
+        this._liveDevices[msg.id] = {
+          logo: msg.logo,
+          previewSize: msg.previewSize,
+          objectsSize: msg.objectsSize,
+        };
         this._update();
       });
 

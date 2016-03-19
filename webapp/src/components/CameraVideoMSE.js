@@ -347,10 +347,10 @@ export default class CameraVideo extends React.Component {
       context.textAlign = 'start';
       context.textBaseline = 'top';
 
-      // All objects are scaled to the previewSize so we have to expand to fill
+      // All objects are scaled to the objectsSize so we have to expand to fill
       // the window.
-      const xScale = canvasWidth / camera.previewSize.width;
-      const yScale = canvasHeight / camera.previewSize.height;
+      const xScale = canvasWidth / camera.objectsSize.width;
+      const yScale = canvasHeight / camera.objectsSize.height;
 
       objects.forEach((object, index) => {
         if (!object.rects.length) {

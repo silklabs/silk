@@ -90,7 +90,7 @@ class Motion {
 
     this.working = true;
     try {
-      let [image] = await this._env.camera.getPreviewFrames(when, ['lowgray']);
+      let [image] = await this._env.camera.getFrame(when, ['lowgray']);
 
       const start = Date.now();
 

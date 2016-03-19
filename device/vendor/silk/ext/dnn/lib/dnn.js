@@ -144,7 +144,7 @@ class Dnn {
 
       try {
         // Fetch camera preview image
-        let [im] = await this._env.camera.getPreviewFrames(when, ['gray']);
+        let [im] = await this._env.camera.getFrame(when, ['gray']);
 
         // By the time prediction finishes camera might have evicted the image
         // from its cache, so make a local copy of the image

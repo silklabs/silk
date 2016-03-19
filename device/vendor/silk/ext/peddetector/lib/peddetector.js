@@ -143,7 +143,7 @@ class Peddetector {
 
     try {
       // Fetch camera preview image
-      let [im] = await this._env.camera.getPreviewFrames(when, ['rgb']);
+      let [im] = await this._env.camera.getFrame(when, ['rgb']);
 
       // By the time prediction finishes camera might have evicted the image
       // from its cache, so make a local copy of the image

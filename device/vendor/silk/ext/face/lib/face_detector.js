@@ -157,9 +157,6 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
         leftEyeRect.width = leftEyeRect.width / previewScale;
         leftEyeRect.height = leftEyeRect.height / previewScale;
 
-        leftEye = new cv.Point(faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
-            faceRect.y + leftEyeRect.y + leftEyeRect.height / 2);
-
         rightEyeRect.x += rightX;
         rightEyeRect.y += topY;
 
@@ -168,8 +165,14 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
         rightEyeRect.width = rightEyeRect.width / previewScale;
         rightEyeRect.height = rightEyeRect.height / previewScale;
 
-        rightEye = new cv.Point(faceRect.x + rightEyeRect.x + rightEyeRect.width / 2,
-            faceRect.y + rightEyeRect.y + rightEyeRect.height / 2);
+        leftEye = [
+          faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
+          faceRect.y + leftEyeRect.y + leftEyeRect.height / 2
+        ];
+        rightEye = [
+          faceRect.x + rightEyeRect.x + rightEyeRect.width / 2,
+          faceRect.y + rightEyeRect.y + rightEyeRect.height / 2
+        ];
       }
 
       resolve([leftEye, rightEye]);
@@ -230,8 +233,8 @@ export default class FaceDetector {
 
         // Only if both the eyes are visible is when we say it is a face
         if (leftEye && rightEye) {
-          faceRect.leftEye = [leftEye.x, leftEye.y];
-          faceRect.rightEye = [rightEye.x, rightEye.y];
+          faceRect.leftEye = leftEye;
+          faceRect.rightEye = rightEye;
           faces.push(faceRect);
 
           const roi = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);

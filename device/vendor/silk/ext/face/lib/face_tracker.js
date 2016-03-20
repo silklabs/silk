@@ -76,7 +76,7 @@ export default class FaceTracker {
     );
   }
 
-  _promiseTrackerUpdate(face: Face, frame: Matrix): Promise<[Face, bool, bool, FaceRect]> {
+  _promiseTrackerUpdate(face: Face, frame: Matrix): Promise<[Face, bool, bool, ?FaceRect]> {
     invariant(!face.i.tracker.impl.busy());
     return new Promise(resolve => {
       face.i.tracker.impl.update(frame, (err, found, rect) => {

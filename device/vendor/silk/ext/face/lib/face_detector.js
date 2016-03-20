@@ -6,8 +6,9 @@
 
 import cv from 'opencv';
 import {
-  Matrix,
+  Eye,
   FaceRect,
+  Matrix,
 } from './face';
 
 let camera;
@@ -99,7 +100,7 @@ function _detectBothEyes(when: number,
                          faceIndex: number,
                          /*inout*/ faceRect: FaceRect,
                          frame: Matrix,
-                         frameSize /*: CameraFrameSize*/): void {
+                         frameSize /*: CameraFrameSize*/): [?Eye, ?Eye] {
 
   // Eye detection requires fullsize image for better detection
   // Adjust face rectangle to scale up to the original size as face detection

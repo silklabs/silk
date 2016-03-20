@@ -10,9 +10,9 @@ import {
   FaceRect,
 } from './face';
 
+let camera;
 let log;
 let timeline;
-let previewScale = 0;
 
 
 const facecascade = {
@@ -95,23 +95,30 @@ async function getCascadeRect(cascade: any, im: Matrix): ?FaceRect {
  *
  * Reference: http://image2measure.net/files/Mastering_OpenCV.pdf
  */
-function _detectBothEyes(when, orig, faceRect, faceIndex) {
+function _detectBothEyes(when: number,
+                         faceIndex: number,
+                         /*inout*/ faceRect: FaceRect,
+                         frame: Matrix,
+                         frameSize /*: CameraFrameSize*/): void {
+
   // Eye detection requires fullsize image for better detection
   // Adjust face rectangle to scale up to the original size as face detection
   // was run on scaled image
-  let face = orig.roi(faceRect.x * previewScale, faceRect.y * previewScale,
-      faceRect.width * previewScale, faceRect.height * previewScale);
+
+  const fullRect = camera.normalRectsTo([faceRect], frameSize)[0];
+
+  let face = frame.roi(fullRect.x, fullRect.y, fullRect.width, fullRect.height);
   face = face.copy();
   face.equalizeHist();
   timeline.addDiagFrame(`fullrescandidate_${faceIndex}`, when, face);
 
-  let cols = face.width();
-  let rows = face.height();
-  let leftX = Math.round(cols * EYE_SX);
-  let topY = Math.round(rows * EYE_SY);
-  let widthX = Math.round(cols * EYE_SW);
-  let heightY = Math.round(rows * EYE_SH);
-  let rightX = Math.round(cols * (1.0 - EYE_SX - EYE_SW));
+  const cols = face.width();
+  const rows = face.height();
+  const leftX = Math.round(cols * EYE_SX);
+  const topY = Math.round(rows * EYE_SY);
+  const widthX = Math.round(cols * EYE_SW);
+  const heightY = Math.round(rows * EYE_SH);
+  const rightX = Math.round(cols * (1.0 - EYE_SX - EYE_SW));
 
   let topLeftOfFace = face.roi(leftX, topY, widthX, heightY);
   let topRightOfFace = face.roi(rightX, topY, widthX, heightY);
@@ -152,26 +159,19 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
         leftEyeRect.x += leftX;
         leftEyeRect.y += topY;
 
-        leftEyeRect.x = leftEyeRect.x / previewScale;
-        leftEyeRect.y = leftEyeRect.y / previewScale;
-        leftEyeRect.width = leftEyeRect.width / previewScale;
-        leftEyeRect.height = leftEyeRect.height / previewScale;
-
         rightEyeRect.x += rightX;
         rightEyeRect.y += topY;
 
-        rightEyeRect.x = rightEyeRect.x / previewScale;
-        rightEyeRect.y = rightEyeRect.y / previewScale;
-        rightEyeRect.width = rightEyeRect.width / previewScale;
-        rightEyeRect.height = rightEyeRect.height / previewScale;
+        const [normalLeftEyeRect, normalRightEyeRect] =
+          camera.normalRectsFrom([leftEyeRect, rightEyeRect], frameSize);
 
         leftEye = [
-          faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
-          faceRect.y + leftEyeRect.y + leftEyeRect.height / 2
+          faceRect.x + normalLeftEyeRect.x + normalLeftEyeRect.width / 2,
+          faceRect.y + normalLeftEyeRect.y + normalLeftEyeRect.height / 2
         ];
         rightEye = [
-          faceRect.x + rightEyeRect.x + rightEyeRect.width / 2,
-          faceRect.y + rightEyeRect.y + rightEyeRect.height / 2
+          faceRect.x + normalRightEyeRect.x + normalRightEyeRect.width / 2,
+          faceRect.y + normalRightEyeRect.y + normalRightEyeRect.height / 2
         ];
       }
 
@@ -187,6 +187,7 @@ export default class FaceDetector {
   _busy: bool = false;
 
   constructor(env) {
+    camera = env.camera;
     log = env.log;
     timeline = env.timeline;
 
@@ -205,15 +206,16 @@ export default class FaceDetector {
     */
   }
 
-  async detect(when: number, grayeq: Matrix, fullgray: Matrix): Promise<Array<FaceRect>> {
+  async detect(when: number,
+               frame: Matrix,
+               frameSize /*: CameraFrameSize*/,
+               grayeq: Matrix,
+               fullgray: Matrix): Promise<Array<FaceRect>> {
     if (this._busy) {
       log.warn('FaceDetector is busy, skipping detect()');
       return [];
     }
     this._busy = true;
-
-    // Calculate preview scale
-    previewScale = fullgray.width() / grayeq.width();
 
     let start = Date.now();
     let faces = [];
@@ -221,27 +223,32 @@ export default class FaceDetector {
 
     try {
       // Find faces
-      let faceRects = await getCascadeRects(facecascade, grayeq);
+      let faceRects = await getCascadeRects(facecascade, frame);
+      faceRects = camera.normalRectsFrom(faceRects, frameSize); // Normalize
       log.debug(`faces: ${JSON.stringify(faceRects)}`);
       for (let i = 0; i < faceRects.length; i++) {
         let faceRect = faceRects[i];
 
-        let weakface = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-
         // Detect both eyes
-        let [leftEye, rightEye] = await _detectBothEyes(when, fullgray, faceRect, i);
+        let [leftEye, rightEye] = await _detectBothEyes(when, i, faceRect, fullgray, 'full');
 
         // Only if both the eyes are visible is when we say it is a face
+        let diagLabel;
         if (leftEye && rightEye) {
           faceRect.leftEye = leftEye;
           faceRect.rightEye = rightEye;
           faces.push(faceRect);
-
-          const roi = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-          timeline.addDiagFrame(`face_${i}`, when, roi);
+          diagLabel = `face_${i}`;
         } else {
           weakfaces.push(faceRect);
-          timeline.addDiagFrame(`weakface_${i}`, when, weakface);
+          diagLabel = `weakface_${i}`;
+        }
+        if (timeline.diagFrameEnabled(diagLabel)) {
+          timeline.addDiagFrame(
+            diagLabel,
+            when,
+            grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height)
+          );
         }
       }
 

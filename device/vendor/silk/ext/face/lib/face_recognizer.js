@@ -130,7 +130,7 @@ export default class FaceRecognizer {
     }
     this._predicting = true;
     const start = Date.now();
-    const previewScale = fullgray.width() / gray.width();
+    const toNormalScale = fullgray.width() / gray.width();
     for (let face of faces) {
       // Initialize recognizer state if this is the first this face has been
       // processed.
@@ -155,7 +155,7 @@ export default class FaceRecognizer {
         continue;
       }
 
-      let faceim = this._trainer.preprocessFace(fullgray, face.rect, previewScale);
+      let faceim = this._trainer.preprocessFace(fullgray, face.rect, toNormalScale);
       if (faceim === null) {
         continue;
       }

@@ -279,7 +279,7 @@ function emitDeviceInfo() {
       now: Date.now(),
       videoSize: camera.videoSize,
       previewSize: timeline.previewSize,
-      objectsSize: camera.getFrameSize('default'),
+      objectsSize: camera.getFrameSize(),
     });
   }
 }

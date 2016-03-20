@@ -60,14 +60,15 @@ const EYE_CASCADE2 = process.platform === 'android' && {
  *
  * @param im image representing region of interest
  */
-function runCascade(cascade: any, im: Matrix): Array<FaceRect> {
+function getCascadeRects(cascade: any, im: Matrix): Promise<Array<FaceRect>> {
   const opts = cascade.opts;
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     cascade.classifier.detectMultiScale(
       im,
       (err, rects) => {
         if (err) {
-          throw err;
+          reject(err);
+          return;
         }
         resolve(rects);
       },
@@ -79,6 +80,11 @@ function runCascade(cascade: any, im: Matrix): Array<FaceRect> {
       opts.max && opts.max[1],
     );
   });
+}
+
+async function getCascadeRect(cascade: any, im: Matrix): ?FaceRect {
+  const rects = await getCascadeRects(cascade, im);
+  return rects.length > 0 ? rects[0] : null;
 }
 
 /**
@@ -116,22 +122,29 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
   return new Promise(async (resolve, reject) => {
     try {
       // Find left eye. If the eye was not detected, try a different cascade
-      let leftEyeRect = await runCascade(EYE_CASCADE1, topLeftOfFace);
+      let leftEyeRect = await getCascadeRect(EYE_CASCADE1, topLeftOfFace);
       if (!leftEyeRect && EYE_CASCADE2) {
-        leftEyeRect = await runCascade(EYE_CASCADE2, topLeftOfFace);
+        leftEyeRect = await getCascadeRect(EYE_CASCADE2, topLeftOfFace);
       }
 
       let rightEyeRect;
       if (leftEyeRect) {
         // Find right eye. If the eye was not detected, try a different cascade
-        rightEyeRect = await runCascade(EYE_CASCADE1, topRightOfFace);
+        rightEyeRect = await getCascadeRect(EYE_CASCADE1, topRightOfFace);
         if (!rightEyeRect && EYE_CASCADE2) {
-          rightEyeRect = await runCascade(EYE_CASCADE2, topRightOfFace);
+          rightEyeRect = await getCascadeRect(EYE_CASCADE2, topRightOfFace);
         }
       }
 
-      timeline.addDiagFrame(`lefteye_${faceIndex}:${!!leftEyeRect}`, when, topLeftOfFace);
-      timeline.addDiagFrame(`righteye_${faceIndex}:${!!rightEyeRect}`, when, topRightOfFace);
+      if (timeline.diagFrameEnabled('')) {
+        if (rightEyeRect) {
+          topLeftOfFace.rectangle([leftEyeRect.x, leftEyeRect.y], [leftEyeRect.width, leftEyeRect.height]);
+          topRightOfFace.rectangle([rightEyeRect.x, rightEyeRect.y], [rightEyeRect.width, rightEyeRect.height]);
+        }
+
+        timeline.addDiagFrame(`lefteye_${faceIndex}:${!!leftEyeRect}`, when, topLeftOfFace);
+        timeline.addDiagFrame(`righteye_${faceIndex}:${!!rightEyeRect}`, when, topRightOfFace);
+      }
 
       if (rightEyeRect) {
         // Adjust the eye rectangles because the face border was removed
@@ -144,9 +157,6 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
         leftEyeRect.width = leftEyeRect.width / previewScale;
         leftEyeRect.height = leftEyeRect.height / previewScale;
 
-        leftEye = new cv.Point(faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
-            faceRect.y + leftEyeRect.y + leftEyeRect.height / 2);
-
         rightEyeRect.x += rightX;
         rightEyeRect.y += topY;
 
@@ -155,11 +165,16 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
         rightEyeRect.width = rightEyeRect.width / previewScale;
         rightEyeRect.height = rightEyeRect.height / previewScale;
 
-        rightEye = new cv.Point(faceRect.x + rightEyeRect.x + rightEyeRect.width / 2,
-            faceRect.y + rightEyeRect.y + rightEyeRect.height / 2);
+        leftEye = [
+          faceRect.x + leftEyeRect.x + leftEyeRect.width / 2,
+          faceRect.y + leftEyeRect.y + leftEyeRect.height / 2
+        ];
+        rightEye = [
+          faceRect.x + rightEyeRect.x + rightEyeRect.width / 2,
+          faceRect.y + rightEyeRect.y + rightEyeRect.height / 2
+        ];
       }
 
-      log.debug(`eyes: ${JSON.stringify(leftEyeRect)} ${JSON.stringify(rightEyeRect)}`);
       resolve([leftEye, rightEye]);
     } catch (e) {
       reject(e);
@@ -206,7 +221,7 @@ export default class FaceDetector {
 
     try {
       // Find faces
-      let faceRects = await runCascade(facecascade, grayeq);
+      let faceRects = await getCascadeRects(facecascade, grayeq);
       log.debug(`faces: ${JSON.stringify(faceRects)}`);
       for (let i = 0; i < faceRects.length; i++) {
         let faceRect = faceRects[i];
@@ -218,8 +233,8 @@ export default class FaceDetector {
 
         // Only if both the eyes are visible is when we say it is a face
         if (leftEye && rightEye) {
-          faceRect.leftEye = [leftEye.x, leftEye.y];
-          faceRect.rightEye = [rightEye.x, rightEye.y];
+          faceRect.leftEye = leftEye;
+          faceRect.rightEye = rightEye;
           faces.push(faceRect);
 
           const roi = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
@@ -239,7 +254,7 @@ export default class FaceDetector {
         log.verbose(msg);
       }
     } catch (err) {
-      log.error(`Face detection error: ${err}`);
+      log.error(`Face detection error: ${err.stack || err}`);
     }
 
     this._busy = false;

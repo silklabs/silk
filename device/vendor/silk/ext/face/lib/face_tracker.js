@@ -24,14 +24,17 @@ const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
 // calls to detectedFaces(), cancel the tracker
 const MAX_NO_FACE_SEEN = 5;
 
+let camera;
 let log;
 let timeline;
 
 export default class FaceTracker {
 
-  constructor(env) {
+  constructor(env, frameSize /*: CameraFrameSize*/) {
+    camera = env.camera;
     log = env.log;
     timeline = env.timeline;
+    this._frameSize = frameSize;
   }
 
   // Computes the area and overlap ratios between two face rectangles
@@ -64,7 +67,30 @@ export default class FaceTracker {
     return overlapRatio > 0.5;
   }
 
-  _updateFaceLocation(face: Face, when: number, rect: FaceRect, grayeq: Matrix) {
+  _newTracker(frame: Matrix, rect: FaceRect) {
+    return new silkcv.Tracker(
+      TRACKER_NAME,
+      frame,
+      camera.normalRectsTo([rect], this._frameSize)[0],
+      () => null
+    );
+  }
+
+  _promiseTrackerUpdate(face: Face, frame: Matrix): Promise<[Face, bool, bool, ?FaceRect]> {
+    invariant(!face.i.tracker.impl.busy());
+    return new Promise(resolve => {
+      face.i.tracker.impl.update(frame, (err, found, rect) => {
+        resolve([
+          face,
+          err,
+          found,
+          rect && camera.normalRectsFrom([rect], this._frameSize)[0]
+        ]);
+      });
+    });
+  }
+
+  _updateFaceLocation(face: Face, when: number, rect: FaceRect, frame: Matrix) {
     log.verbose(`Updating location of face ${face.id}`);
     // Update the tracking rectangle to the latest detected location for
     // this face.
@@ -75,13 +101,13 @@ export default class FaceTracker {
     // reinitializing a tracker as for certain Tracker implementations
     // this could be a win.
     face.i.tracker.impl.cancel();
-    face.i.tracker.impl = new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
+    face.i.tracker.impl = this._newTracker(frame, rect);
   }
 
   detectedFaces(when: number,
                 faceRects: Array<FaceRect>,
                 weakFaceRects: Array<FaceRect>,
-                grayeq: Matrix) {
+                frame: Matrix) {
 
     // Filter out lost faces
     this.faces = this.faces.filter(face => face.i.tracker.impl !== null);
@@ -98,7 +124,7 @@ export default class FaceTracker {
       let alreadyTracked = false;
       this.faces.forEach(face => {
         if (this._probablySameFace(rect, face.rect)) {
-          this._updateFaceLocation(face, when, rect, grayeq);
+          this._updateFaceLocation(face, when, rect, frame);
           face.i.tracker.detected = true;
           alreadyTracked = true;
         }
@@ -112,7 +138,7 @@ export default class FaceTracker {
           face.setLocation(rect, when);
           face.i.tracker = {
             detected: true,
-            impl: new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null),
+            impl: this._newTracker(frame, rect),
             notSeenCount: 0,
           };
           this.faces.push(face);
@@ -131,7 +157,7 @@ export default class FaceTracker {
               return;
             }
             if (this._probablySameFace(rect, face.rect)) {
-              this._updateFaceLocation(face, when, rect, grayeq);
+              this._updateFaceLocation(face, when, rect, frame);
               face.i.tracker.detected = true;
             }
           }
@@ -205,15 +231,6 @@ export default class FaceTracker {
     }
   }
 
-  _promiseTrackerUpdate(face: Face, grayeq: Matrix): Promise<[Face, bool, bool, FaceRect]> {
-    invariant(!face.i.tracker.impl.busy());
-    return new Promise(resolve => {
-      face.i.tracker.impl.update(grayeq, (err, found, rect) => {
-        resolve([face, err, found, rect]);
-      });
-    });
-  }
-
   /*
    * Returns the list of Faces where the associated is not currently busy
    * performing a tracking update.
@@ -234,14 +251,14 @@ export default class FaceTracker {
     return idleFaces;
   }
 
-  async update(when: number, grayeq: Matrix): Promise<Array<Face>> {
+  async update(when: number, frame: Matrix): Promise<Array<Face>> {
     // Collect the list of idle trackers
     const idleFaces = this._getIdleTrackers();
 
     // Run all the trackers in parallel
     const startTime = Date.now();
     let trackingResults = await Promise.all(idleFaces.map(face => {
-      return this._promiseTrackerUpdate(face, grayeq);
+      return this._promiseTrackerUpdate(face, frame);
     }));
     const elapsedTime = Date.now() - startTime;
     log.debug(`Tracking took ${elapsedTime}ms for ${trackingResults.length} faces`);
@@ -268,25 +285,26 @@ export default class FaceTracker {
       const diagId = `tracked:${face.id}:${elapsedTime}ms:` +
         `${face.i.tracker.notSeenCount}/${MAX_NO_FACE_SEEN}`;
       if (timeline.diagFrameEnabled(diagId)) {
-        // boundingRect must be fully contained within the grayeq or OpenCV will
+        let framerect = camera.normalRectsTo([rect], this._frameSize)[0];
+        // boundingRect must be fully contained within the frame or OpenCV will
         // assert within the |.roi| method.
-        if (rect.x < 0) {
-          rect.width += rect.x;
-          rect.x = 0;
+        if (framerect.x < 0) {
+          framerect.width += framerect.x;
+          framerect.x = 0;
         }
-        if (rect.y < 0) {
-          rect.height += rect.y;
-          rect.y = 0;
+        if (framerect.y < 0) {
+          framerect.height += framerect.y;
+          framerect.y = 0;
         }
-        let [ maxHeight, maxWidth ] = grayeq.size();
-        if (rect.x + rect.width >= maxWidth) {
-          rect.width = maxWidth - rect.x;
+        let [maxHeight, maxWidth] = frame.size();
+        if (framerect.x + framerect.width >= maxWidth) {
+          framerect.width = maxWidth - framerect.x;
         }
-        if (rect.y + rect.height >= maxHeight) {
-          rect.height = maxHeight - rect.y;
+        if (framerect.y + framerect.height >= maxHeight) {
+          framerect.height = maxHeight - framerect.y;
         }
 
-        const roi = grayeq.roi(rect.x, rect.y, rect.width, rect.height);
+        const roi = frame.roi(framerect.x, framerect.y, framerect.width, framerect.height);
         timeline.addDiagFrame(diagId, when, roi);
         roi.release();
       }

@@ -22,7 +22,7 @@ private:
   virtual bool initImpl(const cv::Mat& image,
                         const cv::Rect& boundingBox,
                         double& defaultConfidence) {
-    defaultConfidence = 3; // Default minimum confidence picked by observation
+    defaultConfidence = 5; // Default minimum confidence picked by observation
     tracker.start_track(
       dlib::cv_image<unsigned char>(image),
       dlib::drectangle(

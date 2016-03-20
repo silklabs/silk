@@ -104,16 +104,16 @@ const FRAME_SCALE_HIGHRES = util.getintprop('ro.silk.camera.scale.high', 2);
 
 const FRAME_SIZE = {
   low: {
-    width: WIDTH / FRAME_SCALE_LOWRES,
-    height: HEIGHT / FRAME_SCALE_LOWRES,
+    width: Math.round(WIDTH / FRAME_SCALE_LOWRES),
+    height: Math.round(HEIGHT / FRAME_SCALE_LOWRES),
   },
   normal: {
-    width: WIDTH / FRAME_SCALE_DEFAULT,
-    height: HEIGHT / FRAME_SCALE_DEFAULT
+    width: Math.round(WIDTH / FRAME_SCALE_DEFAULT),
+    height: Math.round(HEIGHT / FRAME_SCALE_DEFAULT),
   },
   high: {
-    width: WIDTH / FRAME_SCALE_HIGHRES,
-    height: HEIGHT / FRAME_SCALE_HIGHRES,
+    width: Math.round(WIDTH / FRAME_SCALE_HIGHRES),
+    height: Math.round(HEIGHT / FRAME_SCALE_HIGHRES),
   },
   full: {
     width: WIDTH,

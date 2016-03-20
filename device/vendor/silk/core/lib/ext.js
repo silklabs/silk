@@ -187,6 +187,16 @@ class Env extends EventEmitter {
       this.camera.getFrameSize = (frameSize) => camera.getFrameSize(frameSize);
 
       /**
+       * See camera.normalRectsTo()
+       */
+      this.camera.normalRectsTo = (rects, frameSize) => camera.normalRectsTo(rects, frameSize);
+
+      /**
+       * See camera.normalRectsFrom()
+       */
+      this.camera.normalRectsFrom = (rects, frameSize) => camera.normalRectsFrom(rects, frameSize);
+
+      /**
        * Get camera parameter as integer. This function returns a Promise that resolves
        * when the parameter value is successfully retrieved
        *

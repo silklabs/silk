@@ -24,14 +24,17 @@ const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
 // calls to detectedFaces(), cancel the tracker
 const MAX_NO_FACE_SEEN = 5;
 
+let camera;
 let log;
 let timeline;
 
 export default class FaceTracker {
 
-  constructor(env) {
+  constructor(env, frameSize /*: CameraFrameSize*/) {
+    camera = env.camera;
     log = env.log;
     timeline = env.timeline;
+    this._frameSize = frameSize;
   }
 
   // Computes the area and overlap ratios between two face rectangles
@@ -65,14 +68,24 @@ export default class FaceTracker {
   }
 
   _newTracker(frame: Matrix, rect: FaceRect) {
-    return new silkcv.Tracker(TRACKER_NAME, frame, rect, () => null);
+    return new silkcv.Tracker(
+      TRACKER_NAME,
+      frame,
+      camera.normalRectsTo([rect], this._frameSize)[0],
+      () => null
+    );
   }
 
   _promiseTrackerUpdate(face: Face, frame: Matrix): Promise<[Face, bool, bool, FaceRect]> {
     invariant(!face.i.tracker.impl.busy());
     return new Promise(resolve => {
       face.i.tracker.impl.update(frame, (err, found, rect) => {
-        resolve([face, err, found, rect]);
+        resolve([
+          face,
+          err,
+          found,
+          rect && camera.normalRectsFrom([rect], this._frameSize)[0]
+        ]);
       });
     });
   }
@@ -272,25 +285,26 @@ export default class FaceTracker {
       const diagId = `tracked:${face.id}:${elapsedTime}ms:` +
         `${face.i.tracker.notSeenCount}/${MAX_NO_FACE_SEEN}`;
       if (timeline.diagFrameEnabled(diagId)) {
+        let framerect = camera.normalRectsTo([rect], this._frameSize)[0];
         // boundingRect must be fully contained within the frame or OpenCV will
         // assert within the |.roi| method.
-        if (rect.x < 0) {
-          rect.width += rect.x;
-          rect.x = 0;
+        if (framerect.x < 0) {
+          framerect.width += framerect.x;
+          framerect.x = 0;
         }
-        if (rect.y < 0) {
-          rect.height += rect.y;
-          rect.y = 0;
+        if (framerect.y < 0) {
+          framerect.height += framerect.y;
+          framerect.y = 0;
         }
-        let [ maxHeight, maxWidth ] = frame.size();
-        if (rect.x + rect.width >= maxWidth) {
-          rect.width = maxWidth - rect.x;
+        let [maxHeight, maxWidth] = frame.size();
+        if (framerect.x + framerect.width >= maxWidth) {
+          framerect.width = maxWidth - framerect.x;
         }
-        if (rect.y + rect.height >= maxHeight) {
-          rect.height = maxHeight - rect.y;
+        if (framerect.y + framerect.height >= maxHeight) {
+          framerect.height = maxHeight - framerect.y;
         }
 
-        const roi = frame.roi(rect.x, rect.y, rect.width, rect.height);
+        const roi = frame.roi(framerect.x, framerect.y, framerect.width, framerect.height);
         timeline.addDiagFrame(diagId, when, roi);
         roi.release();
       }

@@ -38,7 +38,7 @@ class Main {
     sysutils.propWatcher.on('silk.addperson', this.onPropAddPerson);
 
     this.faceDetector = new FaceDetector(env);
-    this.faceTracker = new FaceTracker(env);
+    this.faceTracker = new FaceTracker(env, 'low');
     this.faceRecognizer = new FaceRecognizer(env);
   }
 
@@ -63,16 +63,16 @@ class Main {
     this.lastFaceDetect = now;
 
     // Fetch the current frame in all the different required formats at once
-    let [gray, grayeq, fullgray] = await camera.getFrame(
+    let [lowgray, gray, grayeq, fullgray] = await camera.getFrame(
       when,
-      ['gray', 'grayeq', 'fullgray']
+      ['lowgray', 'gray', 'grayeq', 'fullgray']
     );
 
     // Look for faces in the scene
     const [faceRects, weakFaceRects] = await this.faceDetector.detect(when, grayeq, fullgray);
 
     // Inform the tracker about the observed faces
-    this.faceTracker.detectedFaces(when, faceRects, weakFaceRects, grayeq);
+    this.faceTracker.detectedFaces(when, faceRects, weakFaceRects, lowgray);
 
     // Run face recognizer on the tracked faces
     await this.faceRecognizer.predict(when, this.faceTracker.faces, gray, fullgray);
@@ -94,8 +94,8 @@ class Main {
   }
 
   onPreview = async (when: number): Promise<void> => {
-    let [grayeq] = await camera.getFrame(when, ['grayeq']);
-    let lostFaces = await this.faceTracker.update(when, grayeq);
+    let [lowgray] = await camera.getFrame(when, ['lowgray']);
+    let lostFaces = await this.faceTracker.update(when, lowgray);
 
     // Update timeline with currently tracked faces
     this.faceTracker.faces.forEach(face => {

@@ -25,6 +25,22 @@ import wrapNoEntity from './fs/wrap_no_entity';
 import { EventEmitter } from 'events';
 
 /**
+ * Type representing an object rectangle
+ * (TODO: De-dup with timeline.js)
+ *
+ * @property {number} x x co-ordinate of the object rectangle
+ * @property {number} y y co-ordinate of the object rectangle
+ * @property {number} width width of the object rectangle
+ * @property {number} height height of the object rectangle
+ */
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/**
  * Type representing the camera frame callback
  *
  * @property {boolean} err True if the frame is retrieved succesfully, false
@@ -39,9 +55,9 @@ export type CameraCallback = (err: boolean, image: any) => void;
  * fullgray - full resolution grayscale   (CameraFrameSize === 'full')
  * fullrgb  - full resolution rgb         (CameraFrameSize === 'full')
  * highgray - higher res grayscale        (CameraFrameSize === 'high')
- * gray     - default grayscale           (CameraFrameSize === 'default')
- * grayeq   - default grayscale equalized (CameraFrameSize === 'default')
- * rgb      - default rgb                 (CameraFrameSize === 'default')
+ * gray     - normal grayscale            (CameraFrameSize === 'normal')
+ * grayeq   - normal grayscale equalized  (CameraFrameSize === 'normal')
+ * rgb      - normal rgb                  (CameraFrameSize === 'normal')
  * lowgray  - lower res grayscale         (CameraFrameSize === 'low')
  */
 export type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | 'grayeq' | 'rgb' | 'lowgray';
@@ -50,10 +66,10 @@ export type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | '
  * The available camera frame sizes:
  * full - full resolution frame
  * high - higher resolution frame for image analysis
- * default - default frame size for image analysis
+ * normal - normal frame size for image analysis
  * low - lower resolution frame for image analysis
  */
-export type CameraFrameSize = 'low' | 'default' | 'high' | 'full';
+export type CameraFrameSize = 'low' | 'normal' | 'high' | 'full';
 
 type RawHalFace = {
   rect: [number, number, number, number];
@@ -91,13 +107,17 @@ const FRAME_SIZE = {
     width: WIDTH / FRAME_SCALE_LOWRES,
     height: HEIGHT / FRAME_SCALE_LOWRES,
   },
-  default: {
+  normal: {
     width: WIDTH / FRAME_SCALE_DEFAULT,
     height: HEIGHT / FRAME_SCALE_DEFAULT
   },
   high: {
     width: WIDTH / FRAME_SCALE_HIGHRES,
     height: HEIGHT / FRAME_SCALE_HIGHRES,
+  },
+  full: {
+    width: WIDTH,
+    height: HEIGHT,
   },
 };
 
@@ -359,7 +379,7 @@ class CameraClipRecorder {
       imGray.cvtColor('CV_BGR2GRAY');
 
       let imScaledGray = imGray.copy();
-      imScaledGray.resize(FRAME_SIZE.default.width, FRAME_SIZE.default.height);
+      imScaledGray.resize(FRAME_SIZE.normal.width, FRAME_SIZE.normal.height);
 
       this._frames.push([when, imRGB, imGray, imScaledGray]);
     });
@@ -679,7 +699,7 @@ export default class Camera extends EventEmitter {
     if (!this._cvVideoCapture) {
       try {
         this._cvVideoCapture = new silkcv.VideoCapture(0,
-          FRAME_SIZE.default.width, FRAME_SIZE.default.height);
+          FRAME_SIZE.normal.width, FRAME_SIZE.normal.height);
       } catch (err) {
         throw err;
       }
@@ -875,7 +895,7 @@ export default class Camera extends EventEmitter {
         case 'rgb':
           if (!image.rgb) {
             let rgb = image.fullrgb.copy();
-            rgb.resize(FRAME_SIZE.default.width, FRAME_SIZE.default.height); // Slow!
+            rgb.resize(FRAME_SIZE.normal.width, FRAME_SIZE.normal.height); // Slow!
             image.rgb = rgb;
           }
           return image.rgb;
@@ -1246,18 +1266,55 @@ export default class Camera extends EventEmitter {
   /**
    * Returns the camera frame size.
    *
-   * @param {CameraFrameSize} frameSize Frame size of interest ('default' if null)
+   * @param frameSize Frame size of interest ('normal' if null)
    * @return {Size}
    */
   getFrameSize(frameSize: CameraFrameSize) {
     if (!frameSize || frameSize === '') {
-      frameSize = 'default';
+      frameSize = 'normal';
     }
     if (typeof FRAME_SIZE[frameSize] !== 'object') {
       throw new Error(`Invalid frameSize: ${frameSize}`);
     }
     return FRAME_SIZE[frameSize];
   }
+
+  /**
+   * @private
+   */
+  static _scaleRect(rect: Rect, scale: number): Rect {
+    return {
+      x: Math.round(rect.x * scale),
+      y: Math.round(rect.y * scale),
+      width: Math.round(rect.width * scale),
+      height: Math.round(rect.height * scale),
+    };
+  }
+
+  /**
+   * Scales normalized rectangles to the specified CameraFrameSize
+   *
+   * @param rects Array of normalized rectangles to scale
+   * @param frameSize Desired scale
+   * @return Array of rectangles in the desired scale
+   */
+  normalRectsTo(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
+    const scale = this.getFrameSize(frameSize).width / FRAME_SIZE.normal.width;
+    return rects.map(rect => Camera._scaleRect(rect, scale));
+  }
+
+  /**
+   * Scales rectangles of the specified CameraFrameSize to the normal size
+   *
+   * @param rects Array of rectangles to normalize
+   * @param frameSize Desired scale
+   * @return Array of normalized rectangles
+   */
+  normalRectsFrom(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
+    const scale = FRAME_SIZE.normal.width / this.getFrameSize(frameSize).width;
+    return rects.map(rect => Camera._scaleRect(rect, scale));
+  }
+
 
   /**
    * Obtain a camera frame in one or more formats

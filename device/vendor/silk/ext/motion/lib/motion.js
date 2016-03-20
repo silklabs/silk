@@ -15,6 +15,7 @@ import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
 import Mog2Subtractor from './mog2subtractor';
 
+let camera;
 let log;
 let util;
 let timeline;
@@ -57,6 +58,7 @@ function _playSound() {
 class Motion {
   constructor(env) {
     this._env = env;
+    camera = this._env.camera;
     log = this._env.log;
     util = this._env.util;
     timeline = this._env.timeline;
@@ -90,7 +92,7 @@ class Motion {
 
     this.working = true;
     try {
-      let [image] = await this._env.camera.getFrame(when, ['lowgray']);
+      let [image] = await camera.getFrame(when, ['lowgray']);
 
       const start = Date.now();
 
@@ -178,6 +180,7 @@ class Motion {
         log.verbose(`Motion detection ran for ${diff}ms`);
 
         if (rects && (rects.length > 0)) {
+          camera.normalRectsFrom(rects, 'low');
           timeline.addObjects([{
             source: 'motion',
             tag: 'motion',

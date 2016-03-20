@@ -98,22 +98,22 @@ const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 
-const FRAME_SCALE_LOWRES = util.getintprop('ro.silk.camera.scale.low', 5);
+const FRAME_SCALE_LOW = util.getintprop('ro.silk.camera.scale.low', 5);
 const FRAME_SCALE_DEFAULT = util.getintprop('ro.silk.camera.scale', 4);
-const FRAME_SCALE_HIGHRES = util.getintprop('ro.silk.camera.scale.high', 2);
+const FRAME_SCALE_HIGH = util.getintprop('ro.silk.camera.scale.high', 2);
 
 const FRAME_SIZE = {
   low: {
-    width: Math.round(WIDTH / FRAME_SCALE_LOWRES),
-    height: Math.round(HEIGHT / FRAME_SCALE_LOWRES),
+    width: Math.round(WIDTH / FRAME_SCALE_LOW),
+    height: Math.round(HEIGHT / FRAME_SCALE_LOW),
   },
   normal: {
     width: Math.round(WIDTH / FRAME_SCALE_DEFAULT),
     height: Math.round(HEIGHT / FRAME_SCALE_DEFAULT),
   },
   high: {
-    width: Math.round(WIDTH / FRAME_SCALE_HIGHRES),
-    height: Math.round(HEIGHT / FRAME_SCALE_HIGHRES),
+    width: Math.round(WIDTH / FRAME_SCALE_HIGH),
+    height: Math.round(HEIGHT / FRAME_SCALE_HIGH),
   },
   full: {
     width: WIDTH,
@@ -609,6 +609,12 @@ export default class Camera extends EventEmitter {
       audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
       this.setMute(audioMute);
     });
+
+    // Helpful debug output...
+    log.verbose('Active frame sizes:');
+    for (let frameSize in FRAME_SIZE) {
+      log.verbose(`  ${frameSize}: ${JSON.stringify(FRAME_SIZE[frameSize])}`);
+    }
   }
 
   /**

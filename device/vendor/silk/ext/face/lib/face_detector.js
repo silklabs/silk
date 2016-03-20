@@ -5,11 +5,13 @@
  */
 
 import cv from 'opencv';
+import silkcv from 'silk-cv';
 import {
   Eye,
   FaceRect,
   Matrix,
 } from './face';
+import safeRoi from './safe_roi.js';
 
 let camera;
 let log;
@@ -106,9 +108,7 @@ function _detectBothEyes(when: number,
   // Adjust face rectangle to scale up to the original size as face detection
   // was run on scaled image
 
-  const fullRect = camera.normalRectsTo([faceRect], frameSize)[0];
-
-  let face = frame.roi(fullRect.x, fullRect.y, fullRect.width, fullRect.height);
+  let face = safeRoi(frame, camera.normalRectsTo([faceRect], frameSize)[0]);
   face = face.copy();
   face.equalizeHist();
   timeline.addDiagFrame(`fullrescandidate_${faceIndex}`, when, face);
@@ -192,6 +192,14 @@ export default class FaceDetector {
     log = env.log;
     timeline = env.timeline;
 
+    let faceDetector = new silkcv.FaceDetector(
+      err => {
+        if (err) {
+          throw err;
+        }
+        this._faceDetector = faceDetector;
+      }
+    );
     /*
     try {
       const halFaces = await env.camera.getParameterInt('max-num-detected-faces-hw');
@@ -205,6 +213,61 @@ export default class FaceDetector {
       return;
     }
     */
+  }
+
+  /**
+   * Check if the HoG classifier thinks there's a face in the provided rectangle
+   */
+  async _checkHogFace(when: number,
+                      faceIndex: number,
+                      /*inout*/ faceRect: FaceRect,
+                      frame: Matrix,
+                      frameSize /*: CameraFrameSize*/): bool {
+
+    if (!this._faceDetector) {
+      return false;
+    }
+    if (this._faceDetector.busy()) {
+      throw new Error('FaceDetector should not be busy');
+    }
+
+    const start = Date.now();
+    const frameRect = camera.normalRectsTo([faceRect], frameSize)[0];
+
+    // Slightly dilate the candidate rectangle to avoid risk of clipping part of
+    // the face. TODO: Need to further evaluate how effective this dilate is...
+    const DILATE_SIZE = 10;
+    frameRect.x -= DILATE_SIZE;
+    frameRect.y -= DILATE_SIZE;
+    frameRect.width += DILATE_SIZE * 2;
+    frameRect.height += DILATE_SIZE * 2;
+    let faceIm = safeRoi(frame, frameRect);
+
+    // Resize the face to the "optimal" size for the detector.
+    //
+    // TODO: HOG detector was trained on 80x80 dataset, but making that
+    //       "80x80" assumption right here is dirty.
+    faceIm.resize(80 + DILATE_SIZE, 80 + DILATE_SIZE);
+
+    return await new Promise((resolve, reject) => {
+      this._faceDetector.detect(
+        faceIm,
+        (err, faces) => {
+          if (err) {
+            reject(err);
+          }
+          const diff = Date.now() - start;
+          const diagLabel = `hog_${faceIndex}:${faces.length > 0}:${diff}ms`;
+          if (timeline.diagFrameEnabled(diagLabel)) {
+            faces.forEach(rect => {
+              faceIm.rectangle([rect.x, rect.y], [rect.width, rect.height], null, 2);
+            });
+            timeline.addDiagFrame(diagLabel, when, faceIm);
+          }
+          resolve(faces.length > 0);
+        }
+      );
+    });
   }
 
   async detect(when: number,
@@ -230,19 +293,25 @@ export default class FaceDetector {
       for (let i = 0; i < faceRects.length; i++) {
         let faceRect = faceRects[i];
 
-        // Detect both eyes
-        let [leftEye, rightEye] = await _detectBothEyes(when, i, faceRect, fullgray, 'full');
+        const hogFace = await this._checkHogFace(when, i, faceRect, fullgray, 'full');
 
-        // Only if both the eyes are visible is when we say it is a face
         let diagLabel;
-        if (leftEye && rightEye) {
-          faceRect.leftEye = leftEye;
-          faceRect.rightEye = rightEye;
-          faces.push(faceRect);
-          diagLabel = `face_${i}`;
+        if (hogFace) {
+          // Detect both eyes
+          let [leftEye, rightEye] = await _detectBothEyes(when, i, faceRect, fullgray, 'full');
+
+          // Only if both the eyes are visible is when we say it is a face
+          if (leftEye && rightEye) {
+            faceRect.leftEye = leftEye;
+            faceRect.rightEye = rightEye;
+            faces.push(faceRect);
+            diagLabel = `face_${i}`;
+          } else {
+            weakfaces.push(faceRect);
+            diagLabel = `weakface_${i}`;
+          }
         } else {
-          weakfaces.push(faceRect);
-          diagLabel = `weakface_${i}`;
+          diagLabel = `notaface_${i}`;
         }
         if (timeline.diagFrameEnabled(diagLabel)) {
           timeline.addDiagFrame(

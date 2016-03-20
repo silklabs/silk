@@ -10,6 +10,7 @@ import {
   FaceRect,
 } from './face';
 
+let camera;
 let log;
 let timeline;
 let previewScale = 0;
@@ -186,9 +187,11 @@ function _detectBothEyes(when, orig, faceRect, faceIndex) {
 export default class FaceDetector {
   _busy: bool = false;
 
-  constructor(env) {
+  constructor(env, frameSize /*: CameraFrameSize*/) {
+    camera = env.camera;
     log = env.log;
     timeline = env.timeline;
+    this._frameSize = frameSize;
 
     /*
     try {
@@ -205,7 +208,7 @@ export default class FaceDetector {
     */
   }
 
-  async detect(when: number, grayeq: Matrix, fullgray: Matrix): Promise<Array<FaceRect>> {
+  async detect(when: number, frame: Matrix, grayeq: Matrix, fullgray: Matrix): Promise<Array<FaceRect>> {
     if (this._busy) {
       log.warn('FaceDetector is busy, skipping detect()');
       return [];
@@ -221,27 +224,32 @@ export default class FaceDetector {
 
     try {
       // Find faces
-      let faceRects = await getCascadeRects(facecascade, grayeq);
+      let faceRects = await getCascadeRects(facecascade, frame);
+      faceRects = camera.normalRectsFrom(faceRects, this._frameSize); // Normalize
       log.debug(`faces: ${JSON.stringify(faceRects)}`);
       for (let i = 0; i < faceRects.length; i++) {
         let faceRect = faceRects[i];
-
-        let weakface = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
 
         // Detect both eyes
         let [leftEye, rightEye] = await _detectBothEyes(when, fullgray, faceRect, i);
 
         // Only if both the eyes are visible is when we say it is a face
+        let diagLabel;
         if (leftEye && rightEye) {
           faceRect.leftEye = leftEye;
           faceRect.rightEye = rightEye;
           faces.push(faceRect);
-
-          const roi = grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
-          timeline.addDiagFrame(`face_${i}`, when, roi);
+          diagLabel = `face_${i}`;
         } else {
           weakfaces.push(faceRect);
-          timeline.addDiagFrame(`weakface_${i}`, when, weakface);
+          diagLabel = `weakface_${i}`;
+        }
+        if (timeline.diagFrameEnabled(diagLabel)) {
+          timeline.addDiagFrame(
+            diagLabel,
+            when,
+            grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height)
+          );
         }
       }
 

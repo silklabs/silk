@@ -6,6 +6,7 @@
 
 import invariant from 'assert';
 import silkcv from 'silk-cv';
+import safeRoi from './safe_roi.js';
 import {
   Matrix,
   Face,
@@ -283,28 +284,10 @@ export default class FaceTracker {
       face.setLocation(rect, when);
 
       const diagId = `tracked:${face.id}:${elapsedTime}ms:` +
-        `${face.i.tracker.notSeenCount}/${MAX_NO_FACE_SEEN}`;
+                     `${face.i.tracker.notSeenCount}/${MAX_NO_FACE_SEEN}`;
       if (timeline.diagFrameEnabled(diagId)) {
-        let framerect = camera.normalRectsTo([rect], this._frameSize)[0];
-        // boundingRect must be fully contained within the frame or OpenCV will
-        // assert within the |.roi| method.
-        if (framerect.x < 0) {
-          framerect.width += framerect.x;
-          framerect.x = 0;
-        }
-        if (framerect.y < 0) {
-          framerect.height += framerect.y;
-          framerect.y = 0;
-        }
-        let [maxHeight, maxWidth] = frame.size();
-        if (framerect.x + framerect.width >= maxWidth) {
-          framerect.width = maxWidth - framerect.x;
-        }
-        if (framerect.y + framerect.height >= maxHeight) {
-          framerect.height = maxHeight - framerect.y;
-        }
-
-        const roi = frame.roi(framerect.x, framerect.y, framerect.width, framerect.height);
+        const framerect = camera.normalRectsTo([rect], this._frameSize)[0];
+        const roi = safeRoi(frame, framerect);
         timeline.addDiagFrame(diagId, when, roi);
         roi.release();
       }

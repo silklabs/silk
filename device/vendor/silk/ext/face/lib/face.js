@@ -6,6 +6,8 @@
 
 export type Matrix = any;
 
+export type Eye = [number, number]; // center x,y
+
 /**
  * Type representing a face
  *
@@ -19,8 +21,8 @@ export type FaceRect = {
   y: number;
   width: number;
   height: number;
-  leftEye: ?[number, number]; // center x,y
-  rightEye: ?[number, number]; // center x,y
+  leftEye: ?Eye;
+  rightEye: ?Eye;
 };
 
 

@@ -37,7 +37,7 @@ class Main {
     timeline.on('no-motion', this.onNoMotion);
     sysutils.propWatcher.on('silk.addperson', this.onPropAddPerson);
 
-    this.faceDetector = new FaceDetector(env, 'high');
+    this.faceDetector = new FaceDetector(env);
     this.faceTracker = new FaceTracker(env, 'low');
     this.faceRecognizer = new FaceRecognizer(env);
   }
@@ -70,7 +70,7 @@ class Main {
 
     // Look for faces in the scene
     const [faceRects, weakFaceRects] =
-      await this.faceDetector.detect(when, highgray, grayeq, fullgray);
+      await this.faceDetector.detect(when, highgray, 'high', grayeq, fullgray);
 
     // Inform the tracker about the observed faces
     this.faceTracker.detectedFaces(when, faceRects, weakFaceRects, lowgray);

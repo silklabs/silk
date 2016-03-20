@@ -14,14 +14,15 @@ gulp.task('build', () => {
 
   // Make sure browserify doesn't try to slurp up these native modules
   // TODO: generalize this to include our native modules or do something better
+  browserifyStream.external('bleno');
+  browserifyStream.external('noble');
+  browserifyStream.external('node-webrtc');
+  browserifyStream.external('opencv');
+  browserifyStream.external('segfault-handler');
   browserifyStream.external('silk-caffe');
   browserifyStream.external('silk-cv');
   browserifyStream.external('silk-gc1');
   browserifyStream.external('silk-movie');
-  browserifyStream.external('bleno');
-  browserifyStream.external('noble');
-  browserifyStream.external('opencv');
-  browserifyStream.external('node-webrtc');
 
   return commands.build(browserifyStream);
 });

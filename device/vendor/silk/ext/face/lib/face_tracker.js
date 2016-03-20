@@ -64,6 +64,19 @@ export default class FaceTracker {
     return overlapRatio > 0.5;
   }
 
+  _newTracker(grayeq: Matrix, rect: FaceRect) {
+    return new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
+  }
+
+  _promiseTrackerUpdate(face: Face, grayeq: Matrix): Promise<[Face, bool, bool, FaceRect]> {
+    invariant(!face.i.tracker.impl.busy());
+    return new Promise(resolve => {
+      face.i.tracker.impl.update(grayeq, (err, found, rect) => {
+        resolve([face, err, found, rect]);
+      });
+    });
+  }
+
   _updateFaceLocation(face: Face, when: number, rect: FaceRect, grayeq: Matrix) {
     log.verbose(`Updating location of face ${face.id}`);
     // Update the tracking rectangle to the latest detected location for
@@ -75,7 +88,7 @@ export default class FaceTracker {
     // reinitializing a tracker as for certain Tracker implementations
     // this could be a win.
     face.i.tracker.impl.cancel();
-    face.i.tracker.impl = new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null);
+    face.i.tracker.impl = this._newTracker(grayeq, rect);
   }
 
   detectedFaces(when: number,
@@ -112,7 +125,7 @@ export default class FaceTracker {
           face.setLocation(rect, when);
           face.i.tracker = {
             detected: true,
-            impl: new silkcv.Tracker(TRACKER_NAME, grayeq, rect, () => null),
+            impl: this._newTracker(grayeq, rect),
             notSeenCount: 0,
           };
           this.faces.push(face);
@@ -203,15 +216,6 @@ export default class FaceTracker {
         }
       }
     }
-  }
-
-  _promiseTrackerUpdate(face: Face, grayeq: Matrix): Promise<[Face, bool, bool, FaceRect]> {
-    invariant(!face.i.tracker.impl.busy());
-    return new Promise(resolve => {
-      face.i.tracker.impl.update(grayeq, (err, found, rect) => {
-        resolve([face, err, found, rect]);
-      });
-    });
   }
 
   /*

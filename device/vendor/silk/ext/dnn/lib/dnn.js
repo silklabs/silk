@@ -182,7 +182,7 @@ class Dnn {
           timeline.addObjects([{
             tag: this._lastObjectLabel + ' no longer detected',
             when,
-            durationMs: 1,
+            durationMs: 1000,
             id: this._lastObjectId,
           }]);
           log.verbose(`Removing object ${this._lastObjectLabel}`);

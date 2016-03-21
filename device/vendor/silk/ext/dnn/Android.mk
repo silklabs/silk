@@ -5,7 +5,7 @@ LOCAL_MODULE := dnn-googlenet-model
 LOCAL_INSTALLED_MODULE_STEM := bvlc_googlenet.caffemodel
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/dnn/model
+LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/dnn/model/googlenet
 LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/model/bvlc_googlenet.caffemodel
 include $(BUILD_PREBUILT)
 
@@ -14,7 +14,7 @@ LOCAL_MODULE := dnn-googlenet-proto
 LOCAL_INSTALLED_MODULE_STEM := deploy.prototxt
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/dnn/model
+LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/dnn/model/googlenet
 LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/model/deploy.prototxt
 include $(BUILD_PREBUILT)
 

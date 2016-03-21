@@ -169,6 +169,14 @@ export default async function main (config: any): any {
     config.socketio.publicUrl = url.format(basePublicUrl);
   }
 
+  if (!config.signaling.useServiceDiscovery) {
+    let basePublicUrl: any = url.parse(config.server.publicUrl);
+    basePublicUrl.port = config.signaling.port;
+    // Delete host so port override will be used.
+    delete basePublicUrl.host;
+    config.signaling.publicUrl = url.format(basePublicUrl);
+  }
+
   // This interface is only ever supposed to be used from tests.
   return {
     // Useful because tests bind on 0 we don't know which port we are using

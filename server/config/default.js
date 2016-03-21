@@ -45,7 +45,15 @@ export default {
   },
 
   signaling: {
-    port: process.env.SIGNALING_PORT || 0,
+    // Having only one single signaling server is more reliable for local testing
+    // and demos. When this is set to false we will use the "default" signaling.
+    // server url
+    useServiceDiscovery: false,
+
+    // Set / used in server if useServiceDiscovery is false.
+    publicUrl: null,
+
+    port: process.env.SIGNALING_PORT || 5002,
     host: process.env.SIGNALING_HOST || null,
     // After client timeout we forcefully disconnect clients.
     clientTimeout: 2 * 60 * 1000,

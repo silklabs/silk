@@ -194,7 +194,7 @@ class Dnn {
         if ((topProbability >= THRESHOLD) && (this._lastObjectLabel !== topLabel)) {
           let id = timeline.getNextObjectId();
           timeline.addObjects([{
-            tag: topLabel + ` (Probability ${topProbability})`,
+            tag: topLabel,
             when,
             id,
           }]);

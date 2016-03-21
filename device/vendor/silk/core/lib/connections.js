@@ -77,7 +77,11 @@ export default class Connections extends EventEmitter {
   }
 
   stop() {
+    log.info(`Stopping connections ...`);
     this._running = false;
+    for (let connection of this._connections) {
+      connection.close();
+    }
 
     if (this._ws) {
       this._ws.close();
@@ -231,9 +235,17 @@ export default class Connections extends EventEmitter {
 
     recipient.on('error', onError);
     recipient.on('close', onClose);
+
+    // XXX: More ugliness for running...
+    if (!this._running) {
+      recipient.close();
+      return;
+    }
+
     this._connections.add(recipient);
     log.info('Registered a new client.');
     this.emit('connection', recipient);
+
   };
 
   _cleanupListeners: () => void = () => {
@@ -257,7 +269,9 @@ export default class Connections extends EventEmitter {
       // Ensure that we end the writable side of our duplex to avoid close
       // before finish errors.
       wsDuplex.end();
-      wsDuplex.removeListener('error', this._onWsDuplexError);
+      wsDuplex.once('close', () => {
+        wsDuplex.removeListener('error', this._onWsDuplexError);
+      });
     }
   };
 
@@ -291,10 +305,10 @@ export default class Connections extends EventEmitter {
   _onWsDuplexError: (err: Error) => void = (err) => {
     // Error after close most likely this was a disconnect which we have handled
     // already ...
-    if (this._wsDuplex.readyState > WebSocket.OPEN) {
+    if (this._wsDuplex && this._wsDuplex.readyState > WebSocket.OPEN) {
       return;
     }
-    log.info(`Unexpected websocket duplex error: ${err.stack}`);
+    log.info(`(non fatal) Unexpected websocket duplex error: ${err.stack}`);
   };
 
   _onWsError: (err: Error) => void = (err) => {

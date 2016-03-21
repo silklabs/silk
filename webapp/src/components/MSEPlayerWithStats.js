@@ -12,6 +12,9 @@ import type { Segment } from 'silk-cam';
 
 const log = createLog('MSEPlayerStats');
 
+// Ignore when we're not buffered for less than a frame.
+const MIN_OUT_OF_BUFFER_MS = 30;
+
 function formatMs(number) {
   return `${(number / 1000).toFixed(2)}s`;
 }
@@ -151,6 +154,10 @@ export default class MSEPlayerWithStats extends React.Component {
     log.debug(`Expecting <video> element to run out of buffered data in ${outOfBufferMs} ms`);
     clearTimeout(this.outOfBufferTimer);
     this.outOfBufferTimer = setTimeout(this._onOutOfBuffer, outOfBufferMs);
+
+    if (timeOutOfBuffer < MIN_OUT_OF_BUFFER_MS) {
+      timeOutOfBuffer = 0;
+    }
 
     requestAnimationFrame(() => this.setState({
       totalBufferedMs: segment.videoStartTimeMs,

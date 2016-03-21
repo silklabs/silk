@@ -258,6 +258,8 @@ export default class Trainer {
     // Sanity checks
     if ((face.x + face.width > im.width()) ||
         (face.y + face.height > im.height()) ||
+        (face.x < 0) ||
+        (face.y < 0) ||
         (face.width <= 0) ||
         (face.height <= 0)) {
       log.error(`Invalid face rectangle`);

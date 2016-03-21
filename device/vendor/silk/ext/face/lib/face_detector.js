@@ -216,7 +216,7 @@ export default class FaceDetector {
           timeline.addDiagFrame(
             diagLabel,
             when,
-            grayeq.roi(faceRect.x, faceRect.y, faceRect.width, faceRect.height)
+            safeRoi(grayeq, faceRect)
           );
         }
       }

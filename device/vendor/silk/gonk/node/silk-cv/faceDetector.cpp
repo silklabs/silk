@@ -6,6 +6,7 @@
 #include <nan.h>
 #include <opencv2/opencv.hpp>
 #include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing/shape_predictor.h>
 #include <dlib/opencv/cv_image.h>
 #include "Matrix.h"
 
@@ -31,6 +32,7 @@ private:
   static void Cancel(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
   dlib::frontal_face_detector detector;
+  dlib::shape_predictor face_landmark_predictor;
 
   bool initialized;
   bool cancelled;
@@ -50,6 +52,13 @@ public:
 
   void Execute() {
     nodeFaceDetector->detector = dlib::get_frontal_face_detector();
+    try {
+      dlib::deserialize("system/silk/media/shape_predictor_68_face_landmarks.dat") >>
+        nodeFaceDetector->face_landmark_predictor;
+    } catch(const dlib::serialization_error &e) {
+      SetErrorMessage(e.what());
+      return;
+    }
   }
 
   void HandleOKCallback () {
@@ -76,6 +85,12 @@ private:
  */
 class FaceDetectorUpdateWorker : public Nan::AsyncWorker {
 public:
+  struct FaceRect {
+    dlib::rectangle boundingBox;
+    dlib::point leftEye;
+    dlib::point rightEye;
+  };
+
   explicit FaceDetectorUpdateWorker(FaceDetector *nodeFaceDetector, cv::Mat mat, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
@@ -85,8 +100,78 @@ public:
   virtual ~FaceDetectorUpdateWorker() {}
 
   void Execute() {
-    // TODO: is grayscale ok here?!
-    faces = nodeFaceDetector->detector(dlib::cv_image<unsigned char>(mat));
+    auto img = dlib::cv_image<unsigned char>(mat);
+    std::vector<dlib::rectangle> foundFaces = nodeFaceDetector->detector(img);
+
+    for (unsigned i = 0; i < foundFaces.size(); ++i) {
+
+      // Find face landmarks
+      dlib::full_object_detection shape =
+        nodeFaceDetector->face_landmark_predictor(img, foundFaces[i]);
+
+      long left = LONG_MAX;
+      long top = LONG_MAX;
+      long right = LONG_MIN;
+      long bottom = LONG_MIN;
+
+      // See this image for the positions of the 68 landmarks:
+      //   http://ibug.doc.ic.ac.uk/media/uploads/images/300-w/figure_1_68.jpg
+      if (shape.num_parts() != 68) {
+        SetErrorMessage("Expected 68 parts");
+        return;
+      }
+
+      for (unsigned p = 0; p < shape.num_parts(); p++) {
+        dlib::point pt = shape.part(p);
+
+        if (pt.x() < left) {
+          left = pt.x();
+        }
+        if (pt.x() > right) {
+          right = pt.x();
+        }
+        if (pt.y() < top) {
+          top = pt.y();
+        }
+        if (pt.y() > bottom) {
+          bottom = pt.y();
+        }
+
+        // TODO: Only draw on the image when requested!
+        cv::circle(mat, cv::Point2f(pt.x(), pt.y()), 2,
+          cv::Scalar(255, 255, 255));
+      }
+
+      // Adjust the face rectangle to be ~10% larger than the bounding box of
+      // all the facial landmarks.  Empirically this usually produces a very
+      // nice bounding box
+      long xdilate = (right - left) * 0.10;
+      long ydilate = (bottom - top) * 0.10;
+      FaceRect face;
+      face.boundingBox = dlib::rectangle(
+        left - xdilate,
+        top - ydilate,
+        right + xdilate,
+        bottom + ydilate
+      );
+
+      // Estimate the center of the left and right eyes
+      dlib::point lefteye_left = shape.part(37);
+      dlib::point lefteye_right = shape.part(40);
+      dlib::point righteye_left = shape.part(43);
+      dlib::point righteye_right = shape.part(46);
+
+      face.leftEye = dlib::point(
+        (lefteye_left.x() + lefteye_right.x()) / 2,
+        (lefteye_left.y() + lefteye_right.y()) / 2
+      );
+      face.rightEye = dlib::point(
+        (righteye_left.x() + righteye_right.x()) / 2,
+        (righteye_left.y() + righteye_right.y()) / 2
+      );
+
+      faces.push_back(face);
+    }
   }
 
   void HandleErrorCallback() {
@@ -110,10 +195,25 @@ public:
 
     for (unsigned i = 0; i < faces.size(); i++) {
       v8::Local<v8::Object> face = Nan::New<v8::Object>();
-      face->Set(Nan::New("x").ToLocalChecked(), Nan::New<v8::Number>(faces[i].left()));
-      face->Set(Nan::New("y").ToLocalChecked(), Nan::New<v8::Number>(faces[i].top()));
-      face->Set(Nan::New("width").ToLocalChecked(), Nan::New<v8::Number>(faces[i].width()));
-      face->Set(Nan::New("height").ToLocalChecked(), Nan::New<v8::Number>(faces[i].height()));
+      face->Set(Nan::New("x").ToLocalChecked(),
+        Nan::New<v8::Number>(faces[i].boundingBox.left()));
+      face->Set(Nan::New("y").ToLocalChecked(),
+        Nan::New<v8::Number>(faces[i].boundingBox.top()));
+      face->Set(Nan::New("width").ToLocalChecked(),
+        Nan::New<v8::Number>(faces[i].boundingBox.width()));
+      face->Set(Nan::New("height").ToLocalChecked(),
+        Nan::New<v8::Number>(faces[i].boundingBox.height()));
+
+      v8::Local<v8::Array> leftEyeArray = Nan::New<v8::Array>(2);
+      leftEyeArray->Set(0, Nan::New<v8::Number>(faces[i].leftEye.x()));
+      leftEyeArray->Set(1, Nan::New<v8::Number>(faces[i].leftEye.y()));
+      face->Set(Nan::New("leftEye").ToLocalChecked(), leftEyeArray);
+
+      v8::Local<v8::Array> rightEyeArray = Nan::New<v8::Array>(2);
+      rightEyeArray->Set(0, Nan::New<v8::Number>(faces[i].rightEye.x()));
+      rightEyeArray->Set(1, Nan::New<v8::Number>(faces[i].rightEye.y()));
+      face->Set(Nan::New("rightEye").ToLocalChecked(), rightEyeArray);
+
       facesArray->Set(i, face);
     }
 
@@ -126,7 +226,7 @@ public:
 
 private:
   cv::Mat mat;
-  std::vector<dlib::rectangle> faces;
+  std::vector<FaceRect> faces;
   FaceDetector *nodeFaceDetector;
 };
 

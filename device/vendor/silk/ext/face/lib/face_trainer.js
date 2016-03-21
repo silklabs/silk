@@ -273,8 +273,10 @@ export default class Trainer {
     // that eyes will be horizontal, and not too far left or right of the face
 
     // Get the center between the 2 eyes
-    const eyesCenter = new cv.Point((leftEye.x + rightEye.x) * 0.5,
-        (leftEye.y + rightEye.y) * 0.5);
+    const eyesCenter = {
+      x: (leftEye.x + rightEye.x) * 0.5,
+      y: (leftEye.y + rightEye.y) * 0.5,
+    };
 
     // Get the angle between the 2 eyes
     const dy = (rightEye.y - leftEye.y);

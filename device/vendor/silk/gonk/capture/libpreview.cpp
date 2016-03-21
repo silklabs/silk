@@ -31,7 +31,9 @@ using namespace libpreview;
 
 class PreviewFrameGrabber: public ConsumerBase::FrameAvailableListener {
 public:
-  static bool open(FrameCallback frameCallback, void *userData);
+  static bool open(FrameCallback frameCallback,
+                   AbandonedCallback abandonedCallback,
+                   void *userData);
   static void close();
   static void releaseFrame(void *frameBuffer);
 
@@ -46,7 +48,10 @@ public:
 #endif
 
 private:
-  PreviewFrameGrabber(FrameCallback frameCallback, void *userData, sp<IOpenCVCameraCapture> capture);
+  PreviewFrameGrabber(FrameCallback frameCallback,
+                      AbandonedCallback abandonedCallback,
+                      void *userData,
+                      sp<IOpenCVCameraCapture> capture);
   ~PreviewFrameGrabber();
 
   class DeathRecipient: public IBinder::DeathRecipient {
@@ -69,14 +74,17 @@ private:
   sp<CpuConsumer> mCpuConsumer;
   sp<IGraphicBufferProducer> mProducer;
   FrameCallback mFrameCallback;
-  mutable Mutex mFrameCallbackMutex; // Acquire before using mFrameCallback
+  AbandonedCallback mAbandonedCallback;
+  mutable Mutex mFrameCallbackMutex; // Acquire before using mFrameCallback/mAbandonedCallback
   void *mUserData;
   sp<IOpenCVCameraCapture> mCapture;
   sp<DeathRecipient> mDeathRecipient;
   static sp<PreviewFrameGrabber> sPreviewFrameGrabber;
 };
 
-bool PreviewFrameGrabber::open(FrameCallback frameCallback, void *userData)
+bool PreviewFrameGrabber::open(FrameCallback frameCallback,
+                               AbandonedCallback abandonedCallback,
+                               void *userData)
 {
   if (sPreviewFrameGrabber != NULL) {
     ALOGE("EUSERS");
@@ -94,7 +102,12 @@ bool PreviewFrameGrabber::open(FrameCallback frameCallback, void *userData)
   sp<IOpenCVCameraCapture> capture =
     interface_cast<IOpenCVCameraCapture>(binder);
 
-  sp<PreviewFrameGrabber> pfg = new PreviewFrameGrabber(frameCallback, userData, capture);
+  sp<PreviewFrameGrabber> pfg = new PreviewFrameGrabber(
+    frameCallback,
+    abandonedCallback,
+    userData,
+    capture
+  );
 
   status_t err = capture->initCamera(0, pfg->mProducer);
   if (err != OK) {
@@ -112,6 +125,7 @@ void PreviewFrameGrabber::close()
     {
       Mutex::Autolock autolock(sPreviewFrameGrabber->mFrameCallbackMutex);
       sPreviewFrameGrabber->mFrameCallback = NULL;
+      sPreviewFrameGrabber->mAbandonedCallback = NULL;
     }
     sPreviewFrameGrabber = NULL;
   }
@@ -134,9 +148,13 @@ void PreviewFrameGrabber::releaseFrame(void *frameBuffer) {
 
 
 PreviewFrameGrabber::PreviewFrameGrabber(FrameCallback frameCallback,
+                                         AbandonedCallback abandonedCallback,
                                          void *userData,
                                          sp<IOpenCVCameraCapture> capture)
-    : mFrameCallback(frameCallback), mUserData(userData), mCapture(capture)
+    : mFrameCallback(frameCallback),
+      mAbandonedCallback(abandonedCallback),
+      mUserData(userData),
+      mCapture(capture)
 {
   frameformat = FRAMEFORMAT_INVALID;
 
@@ -168,6 +186,14 @@ void PreviewFrameGrabber::binderDied()
 {
   ALOGV("PreviewFrameGrabber::binderDied");
   mCpuConsumer->abandon();
+  {
+    Mutex::Autolock autolock(mFrameCallbackMutex);
+    if (mAbandonedCallback != NULL) {
+      mAbandonedCallback(mUserData);
+      mAbandonedCallback = NULL;
+    }
+    mFrameCallback = NULL;
+  }
 }
 
 #ifdef CAF_CPUCONSUMER
@@ -247,12 +273,14 @@ sp<PreviewFrameGrabber> PreviewFrameGrabber::sPreviewFrameGrabber = NULL;
 
 namespace libpreview {
 
-bool open(FrameCallback frameCallback, void *userData)
+bool open(FrameCallback frameCallback,
+          AbandonedCallback abandonedCallback,
+          void *userData)
 {
   sp<ProcessState> ps = ProcessState::self();
   ps->startThreadPool();
 
-  return PreviewFrameGrabber::open(frameCallback, userData);
+  return PreviewFrameGrabber::open(frameCallback, abandonedCallback, userData);
 }
 
 void close()

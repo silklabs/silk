@@ -220,12 +220,12 @@ export default class FaceDetector {
    */
   async _checkHogFace(when: number,
                       faceIndex: number,
-                      /*inout*/ faceRect: FaceRect,
+                      faceRect: FaceRect,
                       frame: Matrix,
-                      frameSize /*: CameraFrameSize*/): bool {
+                      frameSize /*: CameraFrameSize*/): ?FaceRect {
 
     if (!this._faceDetector) {
-      return false;
+      return null;
     }
     if (this._faceDetector.busy()) {
       throw new Error('FaceDetector should not be busy');
@@ -264,7 +264,23 @@ export default class FaceDetector {
             });
             timeline.addDiagFrame(diagLabel, when, faceIm);
           }
-          resolve(faces.length > 0);
+          if (faces.length > 0) {
+            if (faces.length > 1) {
+              log.warn('More than one hog face detected, selecting first');
+            }
+
+            const xScale = faceRect.width / (80 + DILATE_SIZE);
+            const yScale = faceRect.height / (80 + DILATE_SIZE);
+
+            let hogFaceRect = faces[0];
+            hogFaceRect.x *= xScale;
+            hogFaceRect.y *= yScale;
+            hogFaceRect.width *= xScale;
+            hogFaceRect.height *= yScale;
+            resolve(hogFaceRect);
+          } else {
+            resolve(null);
+          }
         }
       );
     });
@@ -297,6 +313,12 @@ export default class FaceDetector {
 
         let diagLabel;
         if (hogFace) {
+          // Update the face rectangle to what was detected by HOG as it's more
+          // reliable than the Haar rectangle
+          hogFace.x += faceRect.x;
+          hogFace.y += faceRect.y;
+          faceRect = hogFace;
+
           // Detect both eyes
           let [leftEye, rightEye] = await _detectBothEyes(when, i, faceRect, fullgray, 'full');
 

@@ -201,16 +201,11 @@ export default class FaceDetector {
           hogFace.rightEye[1] += faceRect.y;
           faceRect = hogFace;
 
-          // Only if both the eyes are visible is when we say it is a face
-          if (faceRect.leftEye && faceRect.rightEye) {
-            faces.push(faceRect);
-            diagLabel = `face_${i}`;
-          } else {
-            weakfaces.push(faceRect);
-            diagLabel = `weakface_${i}`;
-          }
+          faces.push(faceRect);
+          diagLabel = `face_${i}`;
         } else {
-          diagLabel = `notaface_${i}`;
+          weakfaces.push(faceRect);
+          diagLabel = `weakface_${i}`;
         }
         if (timeline.diagFrameEnabled(diagLabel)) {
           timeline.addDiagFrame(

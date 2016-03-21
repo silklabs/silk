@@ -25,8 +25,8 @@ export const FACE_COUNT = 100;
 const DESIRED_LEFT_EYE_X = 0.23; // Desired left eye center on a scale of 1.0
 const DESIRED_LEFT_EYE_Y = 0.2;
 const FACE_ELLIPSE_CY = 0.40;
-const FACE_ELLIPSE_W = 0.50; // Controls the width of the face mask
-const FACE_ELLIPSE_H = 0.80; // Controls the height of the face mask
+const FACE_ELLIPSE_W = 0.60; // Controls the width of the face mask
+const FACE_ELLIPSE_H = 0.90; // Controls the height of the face mask
 const FACE_WIDTH = 75;
 const FACE_HEIGHT = FACE_WIDTH;
 

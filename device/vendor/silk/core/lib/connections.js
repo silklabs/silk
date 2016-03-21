@@ -21,7 +21,7 @@ import WebSocketDuplex from 'silk-streams/src/websocket';
 import { MessagePackDuplexStream } from 'silk-streams/src/msgpack';
 
 import type { Duplex } from 'stream';
-import type { Recipient } from 'silk-rtc/src/index';
+import type { Recipient } from 'silk-rtc';
 
 import api from './api';
 
@@ -42,6 +42,7 @@ export default class Connections extends EventEmitter {
   _reconnectAttempts: number = 0;
   _running: bool = false;
   _serversTable: ?SasCompositeClient;
+  _serverUrl: ?string;
   _demux: ?Duplex = null;
   _connections: Set<Recipient> = new Set();
 
@@ -59,19 +60,6 @@ export default class Connections extends EventEmitter {
     }
 
     log.info('Connections start');
-
-    // We may need to stop and start this class during reconfigure. Setting up
-    // the table on start allows us to get a different SAS token as needed.
-    this._serversTable = new SasCompositeClient(async () => {
-      try {
-        const { sas } = await api.device.getSasForSignaling();
-        return sas;
-      } catch (err) {
-        log.error(`Failed to get SAS tokens to find signaling servers: ${err.stack}`);
-        throw err;
-      }
-    });
-
     this._running = true;
     this._connect();
   }
@@ -115,6 +103,37 @@ export default class Connections extends EventEmitter {
    * amount of load.
    */
   async _getSignalingServerUrl(): Promise<string> {
+    if (this._serverUrl) {
+      return this._serverUrl;
+    }
+
+    if (!this._serversTable) {
+      let { sas, publicUrl } = await api.device.getSasForSignaling();
+
+      if (publicUrl) {
+        this._serverUrl = publicUrl;
+        return this._serverUrl;
+      }
+
+      // We may need to stop and start this class during reconfigure. Setting up
+      // the table on start allows us to get a different SAS token as needed.
+      this._serversTable = new SasCompositeClient(async () => {
+        if (sas) {
+          const returnSas = sas;
+          sas = null;
+          return returnSas;
+        }
+
+        try {
+          const { sas } = await api.device.getSasForSignaling();
+          return sas;
+        } catch (err) {
+          log.error(`Failed to get SAS tokens to find signaling servers: ${err.stack}`);
+          throw err;
+        }
+      });
+    }
+
     const table = this._serversTable;
     // TODO: Ideally we query something like any signaling server that has
     // pinged the table service in the last 10min.
@@ -173,6 +192,9 @@ export default class Connections extends EventEmitter {
       return;
     }
 
+    // If we are using a hardcoded url reset it if we reconnect to ensure that
+    // it has not changed...
+    this._serverUrl = null;
     this._reconnectAttempts++;
     this._reconnectSleep = Math.min(
       Math.pow(this._reconnectAttempts, 2) * RECONNECT_SLEEP_INTERVAL,
@@ -286,7 +308,9 @@ export default class Connections extends EventEmitter {
     if (this._wsUrl) {
       log.info(`Connected to signaling server: ${this._wsUrl}`);
     }
-    this._wsDuplex = new WebSocketDuplex(this._ws);
+    this._wsDuplex = new WebSocketDuplex(this._ws, {
+      log,
+    });
     this._wsDuplex.on('error', this._onWsDuplexError);
 
     this._demux = new Demux(this._wsDuplex);
@@ -305,9 +329,10 @@ export default class Connections extends EventEmitter {
   _onWsDuplexError: (err: Error) => void = (err) => {
     // Error after close most likely this was a disconnect which we have handled
     // already ...
-    if (this._wsDuplex && this._wsDuplex.readyState > WebSocket.OPEN) {
+    if (!this._wsDuplex || this._wsDuplex.readyState > WebSocket.OPEN) {
       return;
     }
+
     log.info(`(non fatal) Unexpected websocket duplex error: ${err.stack}`);
   };
 

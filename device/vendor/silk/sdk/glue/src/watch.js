@@ -6,10 +6,12 @@ import eventToPromise from 'event-to-promise';
 import AsciiTable from 'ascii-table';
 import { exec } from 'mz/fs';
 import createCommands from './commands';
+import external from './external';
 
 const commands = createCommands(process.env.BASEDIR);
 
 let browserifyStream = commands.createBrowserifyStream(watchify.args);
+external(browserifyStream);
 let bundle = watchify(browserifyStream,
     { poll:true } /* poll needed to work within VMs (not horrible otherwise) */
 );

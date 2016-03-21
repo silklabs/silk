@@ -6,24 +6,13 @@
 
 import gulp from 'gulp';
 import createCommands from './commands';
+import external from './external';
 
 const commands = createCommands(process.env.BASEDIR);
 
 gulp.task('build', () => {
   let browserifyStream = commands.createBrowserifyStream();
-
-  // Make sure browserify doesn't try to slurp up these native modules
-  // TODO: generalize this to include our native modules or do something better
-  browserifyStream.external('bleno');
-  browserifyStream.external('noble');
-  browserifyStream.external('node-webrtc');
-  browserifyStream.external('opencv');
-  browserifyStream.external('segfault-handler');
-  browserifyStream.external('silk-caffe');
-  browserifyStream.external('silk-cv');
-  browserifyStream.external('silk-gc1');
-  browserifyStream.external('silk-movie');
-
+  external(browserifyStream);
   return commands.build(browserifyStream);
 });
 

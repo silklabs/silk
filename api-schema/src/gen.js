@@ -7,6 +7,7 @@
 
 import url from 'url';
 import {convertObject as flowifyObject} from './flow';
+import camelCase from 'camel-case';
 
 const INDENT = /^\s+/gm;
 
@@ -94,22 +95,30 @@ export default function gen(schema, options = {}) {
     return method(action);
   });
 
+  // Giving a reasonable class name helps flow autocomplete.
+  let className = camelCase(schema.name);
+  className = className.charAt(0).toUpperCase() + className.slice(1);
+
   let body = `
-/* @flow */
+/**
+ * ${schema.description.trim()}
+ *
+ * @flow
+ */
 
 import BaseClass from '${options.baseClassPath}';
 
 ${types.map((type) => {
   return `export ${type}`;
 }).join('\n')}
-export default class extends BaseClass {
+export default class ${className} extends BaseClass {
 
   name: string = 'api-${schema.name}';
   prefix: string = '${schema.prefix}';
 
   ${actions.join('\n')}
 }
-  `;
+  `.trim();
 
   return body;
 

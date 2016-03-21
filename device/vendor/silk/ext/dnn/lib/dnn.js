@@ -162,9 +162,20 @@ class Dnn {
         for (let i = 0; i < predictions.length; i++) {
           const indexLabel = predictions[i].label.indexOf(' ');
           const id = predictions[i].label.substring(0, indexLabel);
-          const label = predictions[i].label.substring(indexLabel + 1);
+
+          // Get category and sub-category
+          let label = predictions[i].label.substring(indexLabel + 1);
+          let subcategory = '';
+          const categoryStart = label.indexOf('[');
+          if (categoryStart !== -1) {
+            const categoryEnd = label.indexOf(']');
+            subcategory = label.substring(categoryEnd + 2);
+            label = label.substring(categoryStart + 1, categoryEnd);
+          }
+
           const probability = parseInt((predictions[i].confidence * 100).toFixed(2));
-          log.info(`label: ${label} Probability: ${probability}% id: ${id}`);
+          log.info(`label: \"${label}\" sub-category: \"${subcategory}\" ` +
+              `Probability: ${probability}% id: ${id}`);
 
           if (i === 0) {
             topLabel = label;

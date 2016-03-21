@@ -60,6 +60,22 @@ const styles = {
     margin: 0,
     padding: 5,
   },
+  videoStats: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  videoStatsList: {
+    margin: 0,
+    padding: '0px 8px 8px 8px',
+    listStyleType: 'none',
+  },
+  videoStatsItem: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
   videoContainer: {
     position: 'relative',
     borderStyle: 'solid',
@@ -95,6 +111,17 @@ function formatTimestamp(when) {
   return date.toLocaleTimeString();
 }
 
+function formatMs(number) {
+  return `${(number / 1000).toFixed(2)}s`;
+}
+
+function formatDeltaMs(number) {
+  if (number > 0) {
+    return '+' + formatMs(number);
+  }
+  return formatMs(number);
+}
+
 export default class CameraVideo extends React.Component {
   canvas = null;
   context = null;
@@ -121,6 +148,7 @@ export default class CameraVideo extends React.Component {
     faceCount: 0,
     showMotionEvents: false,
     showVideoStats: false,
+    stats: null,
   };
 
   get deviceId() {
@@ -607,6 +635,58 @@ export default class CameraVideo extends React.Component {
     this.animationToken = null;
   }
 
+  _renderStats() {
+    if (!this.state.showVideoStats || !this.state.stats) {
+      return null;
+    }
+
+    const {
+      elapsedMs,
+      playbackMs,
+      deviceToClientLagMs,
+      totalStalledMs,
+      totalBufferedMs,
+      totalOutOfBufferMs,
+      totalDroppedMs,
+      reloadCount,
+    } = this.state.stats;
+    return (
+      <div style={styles.videoStats}>
+        <ul style={styles.videoStatsList}>
+          <li style={styles.videoStatsItem}>
+            Time:<br/>
+            {formatMs(elapsedMs)} elapsed<br/>
+            {formatMs(playbackMs)} {' <video> '}
+            ({formatDeltaMs(playbackMs - elapsedMs)})
+          </li>
+          <li style={styles.videoStatsItem}>
+            Buffer:<br/>
+            {formatMs(totalBufferedMs)} buffered<br/>
+            {formatMs(playbackMs)} {' <video> '}
+            ({formatDeltaMs(playbackMs - totalBufferedMs)})
+          </li>
+          <li style={styles.videoStatsItem}>
+            Lag/Stalls/Drops:<br/>
+            {formatMs(deviceToClientLagMs)} lag device to client<br/>
+            {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
+            {formatMs(totalOutOfBufferMs)} out of buffer<br/>
+            {formatMs(totalDroppedMs)} in segments dropped
+          </li>
+          <li style={styles.videoStatsItem}>
+            Reload Count: {reloadCount}
+          </li>
+        </ul>
+      </div>
+    );
+  }
+
+  _onStatsUpdate = (stats) => {
+    if (!this.state.showVideoStats) {
+      return;
+    }
+    requestAnimationFrame(() => this.setState({stats}));
+  };
+
   render() {
     let console = null;
     if (this.state.camera &&
@@ -654,15 +734,20 @@ export default class CameraVideo extends React.Component {
       );
     }
 
+    let stats = null;
+    if (this.state.showVideoStats) {
+      stats = this._renderStats();
+    }
+
     let msePlayer = null;
     if (this.state.camera) {
       msePlayer = (
         <MSEPlayerWithStats
           ref="msePlayer"
           key={this.state.camera.id}
-          showStats={this.state.showVideoStats}
           autoPlay="true"
           style={styles.video}
+          onStatsUpdate={this._onStatsUpdate}
           onLoadedMetadata={this._updateCanvasSize}
           onLoadedData={this._onLoadedData}
           onResize={this._updateCanvasSize}
@@ -677,6 +762,7 @@ export default class CameraVideo extends React.Component {
         <div style={styles.videoContainer}>
           {msePlayer}
           {console}
+          {stats}
           <canvas
             style={styles.canvas}
             ref="canvas">

@@ -11,8 +11,12 @@ import { MessagePackDuplexStream } from 'silk-streams/src/msgpack';
 
 import Connections from '../lib/connections';
 import createApi from './api';
+import skipOnTravis from './skip-on-travis';
 
 suite('connections', () => {
+  if (skipOnTravis()) {
+    return;
+  }
   // start a local server ...
   const context = createContext();
 

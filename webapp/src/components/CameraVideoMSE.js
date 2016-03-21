@@ -562,7 +562,7 @@ export default class CameraVideo extends React.Component {
     }
 
     this._stopAnimationLoop();
-  }
+  };
 
   render() {
     let console = null;

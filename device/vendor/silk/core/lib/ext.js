@@ -179,7 +179,7 @@ class Env extends EventEmitter {
       /**
        * Returns the camera frame size
        *
-       * @param {CameraFrameSize} frameSize Frame size of interest ('default' if null)
+       * @param {CameraFrameSize} frameSize Frame size of interest ('normal' if omitted)
        * @return {Size}
        * @memberof Env.camera
        * @instance

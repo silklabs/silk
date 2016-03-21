@@ -1,7 +1,5 @@
-
 import crypto from 'crypto';
 import createApi from 'silk-api';
-import request from 'superagent-promise';
 import merge from 'lodash.merge';
 import pbkdf2 from 'pbkdf2';
 import uuid from 'uuid';
@@ -38,20 +36,6 @@ export async function httpErrCode(context, code, fn) {
     return;
   }
   throw new Error('Expected an http error to be thrown...');
-}
-
-export async function get(context, path) {
-  let req = request.get(`${context.url}${path}`);
-  return await req.end().catch(err => {
-    return err.response;
-  });
-}
-
-export async function post(context, path, json) {
-  let req = request.post(`${context.url}${path}`).send(json);
-  return await req.end().catch(err => {
-    return err.response;
-  });
 }
 
 export async function assertThrows(context, asyncFn, testRegex) {
@@ -214,8 +198,11 @@ export default function createContext(overrides = {}) {
 
     // Signaling server has least dependencies so can start sooner...
     context.signaling = await createSignalingServer(config);
+    // Ensure we have a non zero port set...
+    config.signaling.port = context.signaling.port;
 
     let socketioServer = await createSocketioServer(config);
+    // Ensure we have a non zero port set...
     config.socketio.port = socketioServer.port;
     config.socketio.publicUrl = `http://localhost:${socketioServer.port}`;
 

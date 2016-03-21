@@ -414,6 +414,7 @@ private:
     int32_t mTrackId;
     int32_t mRotation;
     int32_t mDatOffsetOffset;
+    int32_t mTrackDurationTicks;
     volatile bool mDone;
     volatile bool mPaused;
     volatile bool mResumed;
@@ -484,6 +485,7 @@ Track::Track(MPEG4SegmentDASHWriter* owner,
     , mTrackId(trackId)
     , mRotation(0)
     , mDatOffsetOffset()
+    , mTrackDurationTicks()
     , mDone(false)
     , mPaused(false)
     , mResumed(false)
@@ -578,6 +580,7 @@ status_t Track::start(MetaData *params) {
     mDone = false;
     mStarted = true;
     mTrackDurationUs = 0;
+    mTrackDurationTicks = 0;
     mReachedEOS = false;
 
     pthread_create(&mThread, &attr, ThreadWrapper, this);
@@ -624,8 +627,7 @@ int64_t Track::getDurationUs() const {
 }
 
 int32_t Track::getScaledDuration() const {
-    // See note above about where the magic 5e5/1e6 values come from.
-    return (mTrackDurationUs * mTimeScale + 5e5) / 1e6;
+    return mTrackDurationTicks;
 }
 
 void Track::writeTrexBox(AutoBox& parent) {
@@ -957,6 +959,7 @@ status_t Track::threadEntry() {
                 name(), timestampUs, previousPausedDurationUs);
         if (timestampUs > mTrackDurationUs) {
             mTrackDurationUs = timestampUs;
+            mTrackDurationTicks = (timestampUs * mTimeScale + 5E5) / 1E6;
         }
 
         // We need to use the time scale based ticks, rather than the
@@ -965,36 +968,31 @@ status_t Track::threadEntry() {
         // The calculation is intended to reduce the accumulated
         // rounding errors.
         currDurationTicks =
-            ((timestampUs * mTimeScale + 500000LL) / 1000000LL -
-                (lastTimestampUs * mTimeScale + 500000LL) / 1000000LL);
-        if (currDurationTicks < 0ll) {
+            ((timestampUs * mTimeScale + 5E5) / 1E6 -
+                (lastTimestampUs * mTimeScale + 5E5) / 1E6);
+        if (currDurationTicks < 0) {
             ALOGE("timestampUs %" PRId64 " < lastTimestampUs %" PRId64 " for %s track",
                 timestampUs, lastTimestampUs, name());
             copy->release();
             return UNKNOWN_ERROR;
         }
 
+#if !LOG_NDEBUG
+        {
+          double unscaledDuration =
+              (timestampUs - lastTimestampUs) * mTimeScale / 1E6;
+          ALOGV("%s scaled duration %f to %" PRId64,
+                name(),
+                unscaledDuration,
+                currDurationTicks);
+        }
+#endif
+
         if (lastSample) {
             lastSample->scaledDuration = currDurationTicks;
         }
         mSamples.push_back(lastSample = new SampleBuffer(copy, meta_data));
         copy->release();
-
-        // if the duration is different for this sample, see if it is close enough to the previous
-        // duration that we can fudge it and use the same value, to avoid filling the stts table
-        // with lots of near-identical entries.
-        // "close enough" here means that the current duration needs to be adjusted by less
-        // than 0.1 milliseconds
-        if (lastDurationTicks && (currDurationTicks != lastDurationTicks)) {
-            int64_t deltaUs = ((lastDurationTicks - currDurationTicks) * 1000000LL
-                    + (mTimeScale / 2)) / mTimeScale;
-            if (deltaUs > -100 && deltaUs < 100) {
-                // use previous ticks, and adjust timestamp as if it was actually that number
-                // of ticks
-                currDurationTicks = lastDurationTicks;
-                timestampUs += deltaUs;
-            }
-        }
 
         ALOGV("%s timestampUs/lastTimestampUs: %" PRId64 "/%" PRId64,
                 name(), timestampUs, lastTimestampUs);
@@ -1029,6 +1027,7 @@ status_t Track::threadEntry() {
     }
     
     mTrackDurationUs += lastDurationUs;
+    mTrackDurationTicks += lastDurationTicks;
     mReachedEOS = true;
     mOwner->signalEOS();
 

@@ -176,6 +176,11 @@ PRODUCT_PACKAGES += \
   webrtc_webrtc_gyp \
   webrtc_webrtc_common_gyp \
 
+# external/qualcomm-developer-network/...
+PRODUCT_PACKAGES += \
+  libQSML-0.14.0 \
+  libsymphony-cpu-1.0.0 \
+
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PACKAGES += valgrind

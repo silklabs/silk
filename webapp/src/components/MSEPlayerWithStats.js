@@ -25,6 +25,7 @@ function formatDeltaMs(number) {
 
 export default class MSEPlayerWithStats extends React.Component {
 
+  // Note: make sure you account for new members in `_init()` below!
   videoStartTimestamp: ?number;
   expectNextSegmentTimestamp: ?number;
   lastStalledTimestamp: ?number;
@@ -33,7 +34,6 @@ export default class MSEPlayerWithStats extends React.Component {
   outOfBufferTimer: ?number;
   outOfBuffer: boolean = false;
   previousSegmentEndTimeMs: ?number;
-  // XXX Make sure you account for new members in |_init()| below!
 
   static _initialState = {
     deviceToClientLagMs: null,

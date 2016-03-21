@@ -3,13 +3,13 @@ import config from 'silk-config';
 import { EventEmitter } from 'events';
 import io from 'socket.io-client';
 import invariant from 'assert';
-import mklog from 'silk-log';
+import createLog from 'silk-log';
 
 import Api from './Api';
 import ObjectCollector from './ObjectCollector';
 import PreviewQueue from './PreviewQueue';
 
-const log = mklog('Cameras');
+const log = createLog('Cameras');
 
 class Camera extends EventEmitter {
   id = '';
@@ -373,16 +373,13 @@ class Camera extends EventEmitter {
 }
 
 class Cameras extends EventEmitter {
-  constructor() {
-    super();
-    Object.assign(this, {
-      cameras: {}, // indexed by device id
-      status: 'Initializing...',
-      socket: null,
-      _allDevices: [], // unmodified result from Api.account.listDevices()
-      _liveDevices: {}, // indexed by device id
-    });
-  }
+
+  status = 'Initializing...';
+  socket = null;
+
+  cameras = {}; // indexed by device id
+  _allDevices = []; // unmodified result from Api.account.listDevices()
+  _liveDevices = {}; // indexed by device id
 
   async connect() {
     this.status = 'Connecting...';

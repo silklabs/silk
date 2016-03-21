@@ -242,8 +242,8 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
 
   // Intentionally discard additional HAL face data such as the
   // mouth/score as they are never used downstream.
-  const DEFAULT_FRAME_WIDTH = FRAME_SIZE.default.width;
-  const DEFAULT_FRAME_HEIGHT = FRAME_SIZE.default.height;
+  const DEFAULT_FRAME_WIDTH = FRAME_SIZE.normal.width;
+  const DEFAULT_FRAME_HEIGHT = FRAME_SIZE.normal.height;
   return {
     x: normCoord(left, DEFAULT_FRAME_WIDTH),
     y: normCoord(top, DEFAULT_FRAME_HEIGHT),
@@ -1269,10 +1269,8 @@ export default class Camera extends EventEmitter {
    * @param frameSize Frame size of interest ('normal' if null)
    * @return {Size}
    */
-  getFrameSize(frameSize: CameraFrameSize) {
-    if (!frameSize || frameSize === '') {
-      frameSize = 'normal';
-    }
+  getFrameSize(frameSize?: CameraFrameSize) {
+    frameSize = frameSize || 'normal';
     if (typeof FRAME_SIZE[frameSize] !== 'object') {
       throw new Error(`Invalid frameSize: ${frameSize}`);
     }

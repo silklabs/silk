@@ -19,6 +19,7 @@ import eslint from 'gulp-eslint';
 import path from 'path';
 import fs from 'fs';
 import printExec from './print_exec';
+import external from './external';
 
 // Note: this relies on the location of the silk sdk on disk.
 
@@ -32,6 +33,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
 
   // add custom browserify options here
   let browserifyStream = browserify();
+  external(browserifyStream);
 
   // Needed so gulp always operates on the base directory.
   function src(glob) {

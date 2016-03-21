@@ -49,8 +49,6 @@ SILK_EXT := \
   motion-sound \
   face \
   detectface-cascade-frontalface \
-  detectface-cascade-eye \
-  detectface-cascade-eyeglasses \
   detectface-shape_predictor_68_face_landmarks \
   detectcat-cascade \
   detectcat \

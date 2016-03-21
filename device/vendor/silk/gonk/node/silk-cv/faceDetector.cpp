@@ -145,8 +145,8 @@ public:
       // Adjust the face rectangle to be ~10% larger than the bounding box of
       // all the facial landmarks.  Empirically this usually produces a very
       // nice bounding box
-      long xdilate = (right - left) * 0.10;
-      long ydilate = (bottom - top) * 0.10;
+      long xdilate = static_cast<float>(right - left) * 0.10;
+      long ydilate = static_cast<float>(bottom - top) * 0.10;
       FaceRect face;
       face.boundingBox = dlib::rectangle(
         left - xdilate,

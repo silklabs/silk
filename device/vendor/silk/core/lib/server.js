@@ -298,6 +298,6 @@ export default class Server extends events.EventEmitter {
 
     // New connections (webrtc based) send.
     log.info('pass to connections', event);
-    this.connections.send(event, event, data);
+    this.connections.send(event, ackType, data);
   }
 }

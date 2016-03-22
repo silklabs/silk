@@ -16,23 +16,26 @@ const isAndroid = os.platform() === 'android';
 
 const alog = isAndroid ? require('silk-alog') : undefined;
 
-debug.formatArgs = function() {
-  const args = Array.prototype.slice.call(arguments);
-  const diff = debug.humanize(this.diff);
+// If we are on android use a better suited formatArgs.
+if (alog || process.env.SILK_ANDROID_LOGS) {
+  debug.formatArgs = function() {
+    const args = Array.prototype.slice.call(arguments);
+    const diff = debug.humanize(this.diff);
 
-  // Mimic console.* functions by treating additional arguments as
-  // printf-style arguments.
-  let msg = util.format.apply(this, args);
+    // Mimic console.* functions by treating additional arguments as
+    // printf-style arguments.
+    let msg = util.format.apply(this, args);
 
-  const format = `(+${diff}) ${msg}`;
-  if (this.useColors) {
-    msg = `\u001b[3${this.color}m${format}\u001b[0m`;
-  } else {
-    msg = format;
-  }
+    const format = `(+${diff}) ${msg}`;
+    if (this.useColors) {
+      msg = `\u001b[3${this.color}m${format}\u001b[0m`;
+    } else {
+      msg = format;
+    }
 
-  return [ msg ];
-};
+    return [ msg ];
+  };
+}
 
 // Expected use:
 //

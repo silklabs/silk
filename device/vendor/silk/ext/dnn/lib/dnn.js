@@ -19,13 +19,13 @@ import type { Env, Log } from 'silk-sdk-glue/interface/env';
 
 let log: Log;
 
-const MODEL_PROTO = 'system/silk/media/dnn/model/deploy.prototxt';
-const MODEL_BIN = 'system/silk/media/dnn/model/bvlc_googlenet.caffemodel';
+const MODEL_PROTO = 'system/silk/media/dnn/model/googlenet/deploy.prototxt';
+const MODEL_BIN = 'system/silk/media/dnn/model/googlenet/bvlc_googlenet.caffemodel';
 const MODEL_DICTIONARY = 'system/silk/media/dnn/model/imagenet_dictionary.txt';
 const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
 const TOPK = 5; // Return top K predictions for the given image
 
-const THRESHOLD = 20; // Ignore predictions with probability lower than threshold
+const THRESHOLD = 12; // Ignore predictions with probability lower than threshold
 
 /**
  * This class listens for motion events and uses Caffe DNN to classify the image
@@ -162,13 +162,31 @@ class Dnn {
         for (let i = 0; i < predictions.length; i++) {
           const indexLabel = predictions[i].label.indexOf(' ');
           const id = predictions[i].label.substring(0, indexLabel);
-          const label = predictions[i].label.substring(indexLabel + 1);
+
+          // Get category and sub-category
+          let label = predictions[i].label.substring(indexLabel + 1);
+          let subcategory = '';
+          const categoryStart = label.indexOf('[');
+          if (categoryStart !== -1) {
+            const categoryEnd = label.indexOf(']');
+            subcategory = label.substring(categoryEnd + 2);
+            label = label.substring(categoryStart + 1, categoryEnd);
+          }
+
           const probability = parseInt((predictions[i].confidence * 100).toFixed(2));
-          log.info(`label: ${label} Probability: ${probability}% id: ${id}`);
+          log.info(`label: \"${label}\" sub-category: \"${subcategory}\" ` +
+              `Probability: ${probability}% id: ${id}`);
 
           if (i === 0) {
             topLabel = label;
-            topProbability = probability;
+
+            // HACK to not add the objects to timeline if the object category
+            // is not available
+            if (categoryStart !== -1) {
+              topProbability = probability;
+            } else {
+              topProbability = 0;
+            }
           }
         }
 
@@ -182,7 +200,7 @@ class Dnn {
           timeline.addObjects([{
             tag: this._lastObjectLabel + ' no longer detected',
             when,
-            durationMs: 1,
+            durationMs: 1000,
             id: this._lastObjectId,
           }]);
           log.verbose(`Removing object ${this._lastObjectLabel}`);
@@ -194,7 +212,7 @@ class Dnn {
         if ((topProbability >= THRESHOLD) && (this._lastObjectLabel !== topLabel)) {
           let id = timeline.getNextObjectId();
           timeline.addObjects([{
-            tag: topLabel + ` (Probability ${topProbability})`,
+            tag: topLabel,
             when,
             id,
           }]);

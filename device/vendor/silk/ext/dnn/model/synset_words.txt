@@ -149,124 +149,124 @@ n02066245 grey whale, gray whale, devilfish, Eschrichtius gibbosus, Eschrichtius
 n02071294 killer whale, killer, orca, grampus, sea wolf, Orcinus orca
 n02074367 dugong, Dugong dugon
 n02077923 sea lion
-n02085620 Chihuahua
-n02085782 Japanese spaniel
-n02085936 Maltese dog, Maltese terrier, Maltese
-n02086079 Pekinese, Pekingese, Peke
-n02086240 Shih-Tzu
-n02086646 Blenheim spaniel
-n02086910 papillon
-n02087046 toy terrier
-n02087394 Rhodesian ridgeback
-n02088094 Afghan hound, Afghan
-n02088238 basset, basset hound
-n02088364 beagle
-n02088466 bloodhound, sleuthhound
-n02088632 bluetick
-n02089078 black-and-tan coonhound
-n02089867 Walker hound, Walker foxhound
-n02089973 English foxhound
-n02090379 redbone
-n02090622 borzoi, Russian wolfhound
-n02090721 Irish wolfhound
-n02091032 Italian greyhound
-n02091134 whippet
-n02091244 Ibizan hound, Ibizan Podenco
-n02091467 Norwegian elkhound, elkhound
-n02091635 otterhound, otter hound
-n02091831 Saluki, gazelle hound
-n02092002 Scottish deerhound, deerhound
-n02092339 Weimaraner
-n02093256 Staffordshire bullterrier, Staffordshire bull terrier
-n02093428 American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier
-n02093647 Bedlington terrier
-n02093754 Border terrier
-n02093859 Kerry blue terrier
-n02093991 Irish terrier
-n02094114 Norfolk terrier
-n02094258 Norwich terrier
-n02094433 Yorkshire terrier
-n02095314 wire-haired fox terrier
-n02095570 Lakeland terrier
-n02095889 Sealyham terrier, Sealyham
-n02096051 Airedale, Airedale terrier
-n02096177 cairn, cairn terrier
-n02096294 Australian terrier
-n02096437 Dandie Dinmont, Dandie Dinmont terrier
-n02096585 Boston bull, Boston terrier
-n02097047 miniature schnauzer
-n02097130 giant schnauzer
-n02097209 standard schnauzer
-n02097298 Scotch terrier, Scottish terrier, Scottie
-n02097474 Tibetan terrier, chrysanthemum dog
-n02097658 silky terrier, Sydney silky
-n02098105 soft-coated wheaten terrier
-n02098286 West Highland white terrier
-n02098413 Lhasa, Lhasa apso
-n02099267 flat-coated retriever
-n02099429 curly-coated retriever
-n02099601 golden retriever
-n02099712 Labrador retriever
-n02099849 Chesapeake Bay retriever
-n02100236 German short-haired pointer
-n02100583 vizsla, Hungarian pointer
-n02100735 English setter
-n02100877 Irish setter, red setter
-n02101006 Gordon setter
-n02101388 Brittany spaniel
-n02101556 clumber, clumber spaniel
-n02102040 English springer, English springer spaniel
-n02102177 Welsh springer spaniel
-n02102318 cocker spaniel, English cocker spaniel, cocker
-n02102480 Sussex spaniel
-n02102973 Irish water spaniel
-n02104029 kuvasz
-n02104365 schipperke
-n02105056 groenendael
-n02105162 malinois
-n02105251 briard
-n02105412 kelpie
-n02105505 komondor
-n02105641 Old English sheepdog, bobtail
-n02105855 Shetland sheepdog, Shetland sheep dog, Shetland
-n02106030 collie
-n02106166 Border collie
-n02106382 Bouvier des Flandres, Bouviers des Flandres
-n02106550 Rottweiler
-n02106662 German shepherd, German shepherd dog, German police dog, alsatian
-n02107142 Doberman, Doberman pinscher
-n02107312 miniature pinscher
-n02107574 Greater Swiss Mountain dog
-n02107683 Bernese mountain dog
-n02107908 Appenzeller
-n02108000 EntleBucher
-n02108089 boxer
-n02108422 bull mastiff
-n02108551 Tibetan mastiff
-n02108915 French bulldog
-n02109047 Great Dane
-n02109525 Saint Bernard, St Bernard
-n02109961 Eskimo dog, husky
-n02110063 malamute, malemute, Alaskan malamute
-n02110185 Siberian husky
-n02110341 dalmatian, coach dog, carriage dog
-n02110627 affenpinscher, monkey pinscher, monkey dog
-n02110806 basenji
-n02110958 pug, pug-dog
-n02111129 Leonberg
-n02111277 Newfoundland, Newfoundland dog
-n02111500 Great Pyrenees
-n02111889 Samoyed, Samoyede
-n02112018 Pomeranian
-n02112137 chow, chow chow
-n02112350 keeshond
-n02112706 Brabancon griffon
-n02113023 Pembroke, Pembroke Welsh corgi
-n02113186 Cardigan, Cardigan Welsh corgi
-n02113624 toy poodle
-n02113712 miniature poodle
-n02113799 standard poodle
-n02113978 Mexican hairless
+n02085620 [Dog] Chihuahua
+n02085782 [Dog] Japanese spaniel
+n02085936 [Dog] Maltese dog, Maltese terrier, Maltese
+n02086079 [Dog] Pekinese, Pekingese, Peke
+n02086240 [Dog] Shih-Tzu
+n02086646 [Dog] Blenheim spaniel
+n02086910 [Dog] papillon
+n02087046 [Dog] toy terrier
+n02087394 [Dog] Rhodesian ridgeback
+n02088094 [Dog] Afghan hound, Afghan
+n02088238 [Dog] basset, basset hound
+n02088364 [Dog] beagle
+n02088466 [Dog] bloodhound, sleuthhound
+n02088632 [Dog] bluetick
+n02089078 [Dog] black-and-tan coonhound
+n02089867 [Dog] Walker hound, Walker foxhound
+n02089973 [Dog] English foxhound
+n02090379 [Dog] redbone
+n02090622 [Dog] borzoi, Russian wolfhound
+n02090721 [Dog] Irish wolfhound
+n02091032 [Dog] Italian greyhound
+n02091134 [Dog] whippet
+n02091244 [Dog] Ibizan hound, Ibizan Podenco
+n02091467 [Dog] Norwegian elkhound, elkhound
+n02091635 [Dog] otterhound, otter hound
+n02091831 [Dog] Saluki, gazelle hound
+n02092002 [Dog] Scottish deerhound, deerhound
+n02092339 [Dog] Weimaraner
+n02093256 [Dog] Staffordshire bullterrier, Staffordshire bull terrier
+n02093428 [Dog] American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier
+n02093647 [Dog] Bedlington terrier
+n02093754 [Dog] Border terrier
+n02093859 [Dog] Kerry blue terrier
+n02093991 [Dog] Irish terrier
+n02094114 [Dog] Norfolk terrier
+n02094258 [Dog] Norwich terrier
+n02094433 [Dog] Yorkshire terrier
+n02095314 [Dog] wire-haired fox terrier
+n02095570 [Dog] Lakeland terrier
+n02095889 [Dog] Sealyham terrier, Sealyham
+n02096051 [Dog] Airedale, Airedale terrier
+n02096177 [Dog] cairn, cairn terrier
+n02096294 [Dog] Australian terrier
+n02096437 [Dog] Dandie Dinmont, Dandie Dinmont terrier
+n02096585 [Dog] Boston bull, Boston terrier
+n02097047 [Dog] miniature schnauzer
+n02097130 [Dog] giant schnauzer
+n02097209 [Dog] standard schnauzer
+n02097298 [Dog] Scotch terrier, Scottish terrier, Scottie
+n02097474 [Dog] Tibetan terrier, chrysanthemum dog
+n02097658 [Dog] silky terrier, Sydney silky
+n02098105 [Dog] soft-coated wheaten terrier
+n02098286 [Dog] West Highland white terrier
+n02098413 [Dog] Lhasa, Lhasa apso
+n02099267 [Dog] flat-coated retriever
+n02099429 [Dog] curly-coated retriever
+n02099601 [Dog] golden retriever
+n02099712 [Dog] Labrador retriever
+n02099849 [Dog] Chesapeake Bay retriever
+n02100236 [Dog] German short-haired pointer
+n02100583 [Dog] vizsla, Hungarian pointer
+n02100735 [Dog] English setter
+n02100877 [Dog] Irish setter, red setter
+n02101006 [Dog] Gordon setter
+n02101388 [Dog] Brittany spaniel
+n02101556 [Dog] clumber, clumber spaniel
+n02102040 [Dog] English springer, English springer spaniel
+n02102177 [Dog] Welsh springer spaniel
+n02102318 [Dog] cocker spaniel, English cocker spaniel, cocker
+n02102480 [Dog] Sussex spaniel
+n02102973 [Dog] Irish water spaniel
+n02104029 [Dog] kuvasz
+n02104365 [Dog] schipperke
+n02105056 [Dog] groenendael
+n02105162 [Dog] malinois
+n02105251 [Dog] briard
+n02105412 [Dog] kelpie
+n02105505 [Dog] komondor
+n02105641 [Dog] Old English sheepdog, bobtail
+n02105855 [Dog] Shetland sheepdog, Shetland sheep dog, Shetland
+n02106030 [Dog] collie
+n02106166 [Dog] Border collie
+n02106382 [Dog] Bouvier des Flandres, Bouviers des Flandres
+n02106550 [Dog] Rottweiler
+n02106662 [Dog] German shepherd, German shepherd dog, German police dog, alsatian
+n02107142 [Dog] Doberman, Doberman pinscher
+n02107312 [Dog] miniature pinscher
+n02107574 [Dog] Greater Swiss Mountain dog
+n02107683 [Dog] Bernese mountain dog
+n02107908 [Dog] Appenzeller
+n02108000 [Dog] EntleBucher
+n02108089 [Dog] boxer
+n02108422 [Dog] bull mastiff
+n02108551 [Dog] Tibetan mastiff
+n02108915 [Dog] French bulldog
+n02109047 [Dog] Great Dane
+n02109525 [Dog] Saint Bernard, St Bernard
+n02109961 [Dog] Eskimo dog, husky
+n02110063 [Dog] malamute, malemute, Alaskan malamute
+n02110185 [Dog] Siberian husky
+n02110341 [Dog] dalmatian, coach dog, carriage dog
+n02110627 [Dog] affenpinscher, monkey pinscher, monkey dog
+n02110806 [Dog] basenji
+n02110958 [Dog] pug, pug-dog
+n02111129 [Dog] Leonberg
+n02111277 [Dog] Newfoundland, Newfoundland dog
+n02111500 [Dog] Great Pyrenees
+n02111889 [Dog] Samoyed, Samoyede
+n02112018 [Dog] Pomeranian
+n02112137 [Dog] chow, chow chow
+n02112350 [Dog] keeshond
+n02112706 [Dog] Brabancon griffon
+n02113023 [Dog] Pembroke, Pembroke Welsh corgi
+n02113186 [Dog] Cardigan, Cardigan Welsh corgi
+n02113624 [Dog] toy poodle
+n02113712 [Dog] miniature poodle
+n02113799 [Dog] standard poodle
+n02113978 [Dog] Mexican hairless
 n02114367 timber wolf, grey wolf, gray wolf, Canis lupus
 n02114548 white wolf, Arctic wolf, Canis lupus tundrarum
 n02114712 red wolf, maned wolf, Canis rufus, Canis niger
@@ -279,11 +279,11 @@ n02119022 red fox, Vulpes vulpes
 n02119789 kit fox, Vulpes macrotis
 n02120079 Arctic fox, white fox, Alopex lagopus
 n02120505 grey fox, gray fox, Urocyon cinereoargenteus
-n02123045 tabby, tabby cat
-n02123159 tiger cat
-n02123394 Persian cat
-n02123597 Siamese cat, Siamese
-n02124075 Egyptian cat
+n02123045 [Cat] tabby, tabby cat
+n02123159 [Cat] tiger cat
+n02123394 [Cat] Persian cat
+n02123597 [Cat] Siamese cat, Siamese
+n02124075 [Cat] Egyptian cat
 n02125311 cougar, puma, catamount, mountain lion, painter, panther, Felis concolor
 n02127052 lynx, catamount
 n02128385 leopard, Panthera pardus
@@ -292,10 +292,10 @@ n02128925 jaguar, panther, Panthera onca, Felis onca
 n02129165 lion, king of beasts, Panthera leo
 n02129604 tiger, Panthera tigris
 n02130308 cheetah, chetah, Acinonyx jubatus
-n02132136 brown bear, bruin, Ursus arctos
-n02133161 American black bear, black bear, Ursus americanus, Euarctos americanus
-n02134084 ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus
-n02134418 sloth bear, Melursus ursinus, Ursus ursinus
+n02132136 [Bear] brown bear, bruin, Ursus arctos
+n02133161 [Bear] American black bear, black bear, Ursus americanus, Euarctos americanus
+n02134084 [Bear] ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus
+n02134418 [Bear] sloth bear, Melursus ursinus, Ursus ursinus
 n02137549 mongoose
 n02138441 meerkat, mierkat
 n02165105 tiger beetle
@@ -359,7 +359,7 @@ n02442845 mink
 n02443114 polecat, fitch, foulmart, foumart, Mustela putorius
 n02443484 black-footed ferret, ferret, Mustela nigripes
 n02444819 otter
-n02445715 skunk, polecat, wood pussy
+n02445715 [Dog] skunk, polecat, wood pussy
 n02447366 badger
 n02454379 armadillo
 n02457408 three-toed sloth, ai, Bradypus tridactylus
@@ -434,7 +434,7 @@ n02804610 bassoon
 n02807133 bathing cap, swimming cap
 n02808304 bath towel
 n02808440 bathtub, bathing tub, bath, tub
-n02814533 beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon
+n02814533 [Car] beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon
 n02814860 beacon, lighthouse, beacon light, pharos
 n02815834 beaker
 n02817516 bearskin, busby, shako
@@ -442,7 +442,7 @@ n02823428 beer bottle
 n02823750 beer glass
 n02825657 bell cote, bell cot
 n02834397 bib
-n02835271 bicycle-built-for-two, tandem bicycle, tandem
+n02835271 [Bicycle] bicycle-built-for-two, tandem bicycle, tandem
 n02837789 bikini, two-piece
 n02840245 binder, ring-binder
 n02841315 binoculars, field glasses, opera glasses
@@ -477,7 +477,7 @@ n02965783 car mirror
 n02966193 carousel, carrousel, merry-go-round, roundabout, whirligig
 n02966687 carpenter's kit, tool kit
 n02971356 carton
-n02974003 car wheel
+n02974003 [Car] car wheel
 n02977058 cash machine, cash dispenser, automated teller machine, automatic teller machine, automated teller, automatic teller, ATM
 n02978881 cassette
 n02979186 cassette player
@@ -625,7 +625,7 @@ n03658185 letter opener, paper knife, paperknife
 n03661043 library
 n03662601 lifeboat
 n03666591 lighter, light, igniter, ignitor
-n03670208 limousine, limo
+n03670208 [Car] limousine, limo
 n03673027 liner, ocean liner
 n03676483 lipstick, lip rouge
 n03680355 Loafer
@@ -654,7 +654,7 @@ n03763968 military uniform
 n03764736 milk can
 n03769881 minibus
 n03770439 miniskirt, mini
-n03770679 minivan
+n03770679 [Pickup truck] minivan
 n03773504 missile
 n03775071 mitten
 n03775546 mixing bowl
@@ -669,7 +669,7 @@ n03787032 mortarboard
 n03788195 mosque
 n03788365 mosquito net
 n03791053 motor scooter, scooter
-n03792782 mountain bike, all-terrain bike, off-roader
+n03792782 [Bicycle] mountain bike, all-terrain bike, off-roader
 n03792972 mountain tent
 n03793489 mouse, computer mouse
 n03794056 mousetrap
@@ -715,7 +715,7 @@ n03924679 photocopier
 n03929660 pick, plectrum, plectron
 n03929855 pickelhaube
 n03930313 picket fence, paling
-n03930630 pickup, pickup truck
+n03930630 [Pickup truck] pickup, pickup truck
 n03933933 pier
 n03935335 piggy bank, penny bank
 n03937543 pill bottle
@@ -815,7 +815,7 @@ n04270147 spatula
 n04273569 speedboat
 n04275548 spider web, spider's web
 n04277352 spindle
-n04285008 sports car, sport car
+n04285008 [Car] sports car, sport car
 n04286575 spotlight, spot
 n04296562 stage
 n04310018 steam locomotive
@@ -868,7 +868,7 @@ n04465501 tractor
 n04467665 trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi
 n04476259 tray
 n04479046 trench coat
-n04482393 tricycle, trike, velocipede
+n04482393 [Bicycle] tricycle, trike, velocipede
 n04483307 trimaran
 n04485082 tripod
 n04486054 triumphal arch
@@ -878,7 +878,7 @@ n04493381 tub, vat
 n04501370 turnstile
 n04505470 typewriter keyboard
 n04507155 umbrella
-n04509417 unicycle, monocycle
+n04509417 [Bicycle] unicycle, monocycle
 n04515003 upright, upright piano
 n04517823 vacuum, vacuum cleaner
 n04522168 vase

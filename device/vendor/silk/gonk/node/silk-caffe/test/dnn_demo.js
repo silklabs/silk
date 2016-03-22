@@ -26,8 +26,8 @@ if (process.platform === 'android') {
 const fs = require('fs');
 const opencv = require('opencv');
 
-const MODEL_PROTO = 'system/silk/media/dnn/model/deploy.prototxt';
-const MODEL_BIN = 'system/silk/media/dnn/model/bvlc_googlenet.caffemodel';
+const MODEL_PROTO = 'system/silk/media/dnn/model/googlenet/deploy.prototxt';
+const MODEL_BIN = 'system/silk/media/dnn/model/googlenet/bvlc_googlenet.caffemodel';
 const MODEL_DICTIONARY = 'system/silk/media/dnn/model/imagenet_dictionary.txt';
 const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
 const TOPK = 5; // Return top K predictions for the given image

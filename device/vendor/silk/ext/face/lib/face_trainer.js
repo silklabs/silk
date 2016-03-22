@@ -25,8 +25,8 @@ export const FACE_COUNT = 100;
 const DESIRED_LEFT_EYE_X = 0.23; // Desired left eye center on a scale of 1.0
 const DESIRED_LEFT_EYE_Y = 0.2;
 const FACE_ELLIPSE_CY = 0.40;
-const FACE_ELLIPSE_W = 0.50; // Controls the width of the face mask
-const FACE_ELLIPSE_H = 0.80; // Controls the height of the face mask
+const FACE_ELLIPSE_W = 0.60; // Controls the width of the face mask
+const FACE_ELLIPSE_H = 0.90; // Controls the height of the face mask
 const FACE_WIDTH = 75;
 const FACE_HEIGHT = FACE_WIDTH;
 
@@ -258,6 +258,8 @@ export default class Trainer {
     // Sanity checks
     if ((face.x + face.width > im.width()) ||
         (face.y + face.height > im.height()) ||
+        (face.x < 0) ||
+        (face.y < 0) ||
         (face.width <= 0) ||
         (face.height <= 0)) {
       log.error(`Invalid face rectangle`);
@@ -273,8 +275,10 @@ export default class Trainer {
     // that eyes will be horizontal, and not too far left or right of the face
 
     // Get the center between the 2 eyes
-    const eyesCenter = new cv.Point((leftEye.x + rightEye.x) * 0.5,
-        (leftEye.y + rightEye.y) * 0.5);
+    const eyesCenter = {
+      x: (leftEye.x + rightEye.x) * 0.5,
+      y: (leftEye.y + rightEye.y) * 0.5,
+    };
 
     // Get the angle between the 2 eyes
     const dy = (rightEye.y - leftEye.y);

@@ -18,6 +18,7 @@ const desiredFrameDurationCeilingMs = Math.ceil(desiredFrameDurationMs);
 const minimumFrameDurationMs = Math.floor(desiredFrameDurationMs * 0.8);
 
 const maxStatsUpdateIntervalMs = 250;
+const clogDurationMs = 2000;
 
 const styles = {
   global: {
@@ -148,6 +149,7 @@ export default class CameraVideo extends React.Component {
 
   segmentsDroppedMs = 0;
   dropNextSegment = false;
+  clogQueue = null;
 
   state = {
     camera: null,
@@ -286,6 +288,11 @@ export default class CameraVideo extends React.Component {
     if (this.dropNextSegment) {
       log.debug('Dropping this segment.');
       this.dropNextSegment = false;
+      return;
+    }
+    if (this.clogQueue) {
+      log.debug(`Network is "clogged".`);
+      this.clogQueue.push({segmentData, when});
       return;
     }
     this.refs.msePlayer.feedSegmentData(segmentData, when);
@@ -664,6 +671,17 @@ export default class CameraVideo extends React.Component {
     this.segmentsDroppedMs = 0;
   };
 
+  _clogNetwork = () => {
+    this.clogQueue = [];
+    setTimeout(() => {
+      log.debug(`Network is "unclogged". Found ${this.clogQueue.length} segments in queue.`);
+      for (let {segmentData, when} of this.clogQueue) {
+        this.refs.msePlayer.feedSegmentData(segmentData, when);
+      }
+      this.clogQueue = null;
+    }, clogDurationMs);
+  };
+
   _renderStats() {
     if (!this.state.showVideoStats || !this.state.stats) {
       return null;
@@ -738,6 +756,11 @@ export default class CameraVideo extends React.Component {
           style={styles.debugButton}
           onClick={() => this.dropNextSegment = true}>
           Drop next segment
+        </Button>
+        <Button
+          style={styles.debugButton}
+          onClick={this._clogNetwork}>
+            Clog network for {formatMs(clogDurationMs)}
         </Button>
       </form>
     );

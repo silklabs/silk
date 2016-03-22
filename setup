@@ -47,6 +47,10 @@ if [[ "$(uname)" == "Darwin" ]]; then
   fi
 
   # Following packages are needed by protobuf
-  brew install autoconf automake
+  brew install autoconf
+  AUTOMAKE="$(brew list -1 | grep -i "^automake\$" || true)"
+  if [[ -z $AUTOMAKE ]]; then
+    brew install automake
+  fi
 fi
 

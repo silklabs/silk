@@ -17,6 +17,8 @@ const desiredFrameDurationCeilingMs = Math.ceil(desiredFrameDurationMs);
 // Reduce to 80% to avoid accidentally waiting for two frames.
 const minimumFrameDurationMs = Math.floor(desiredFrameDurationMs * 0.8);
 
+const maxStatsUpdateIntervalMs = 250;
+
 const styles = {
   global: {
     fontFamily: 'DINRound',
@@ -799,7 +801,7 @@ export default class CameraVideo extends React.Component {
         <MSEPlayerWithStats
           ref="msePlayer"
           key={this.state.camera.id}
-          maxStatsUpdateIntervalMs={250}
+          maxStatsUpdateIntervalMs={maxStatsUpdateIntervalMs}
           autoPlay="true"
           style={styles.video}
           onStatsUpdate={this._onStatsUpdate}

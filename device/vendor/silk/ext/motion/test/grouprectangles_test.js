@@ -13,7 +13,7 @@ const env = new Framework('motion', opencv);
 
 suite('Motion zone', () => {
   test('group rectangles', () => {
-    let motionzone = new MotionZone(env);
+    let motionzone = new MotionZone(env, env.camera.getFrameSize('low'));
     assert.notEqual(motionzone, null);
 
     let rectangles = [

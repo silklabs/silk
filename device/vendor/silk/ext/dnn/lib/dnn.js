@@ -179,7 +179,14 @@ class Dnn {
 
           if (i === 0) {
             topLabel = label;
-            topProbability = probability;
+
+            // HACK to not add the objects to timeline if the object category
+            // is not available
+            if (categoryStart !== -1) {
+              topProbability = probability;
+            } else {
+              topProbability = 0;
+            }
           }
         }
 

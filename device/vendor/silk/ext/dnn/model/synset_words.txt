@@ -359,7 +359,7 @@ n02442845 mink
 n02443114 polecat, fitch, foulmart, foumart, Mustela putorius
 n02443484 black-footed ferret, ferret, Mustela nigripes
 n02444819 otter
-n02445715 skunk, polecat, wood pussy
+n02445715 [Dog] skunk, polecat, wood pussy
 n02447366 badger
 n02454379 armadillo
 n02457408 three-toed sloth, ai, Bradypus tridactylus

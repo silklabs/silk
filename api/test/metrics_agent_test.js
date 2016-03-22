@@ -1,4 +1,3 @@
-/* @flow */
 import createContext from 'silk-server/test/server/context';
 import {Metric, MetricTypes} from '../src/';
 import uuid from 'uuid';

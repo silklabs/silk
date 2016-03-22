@@ -745,6 +745,7 @@ export default class CameraVideo extends React.Component {
         <MSEPlayerWithStats
           ref="msePlayer"
           key={this.state.camera.id}
+          maxStatsUpdateIntervalMs={250}
           autoPlay="true"
           style={styles.video}
           onStatsUpdate={this._onStatsUpdate}

@@ -40,8 +40,12 @@ export default class MSEPlayerWithStats extends React.Component {
   outOfBuffer: boolean = false;
   previousSegmentEndTimeMs: ?number;
 
+  outOfBufferTimer: ?number;
+  updateTimer: ?number;
+
   static propTypes = {
     onStatsUpdate: React.PropTypes.func,
+    maxStatsUpdateIntervalMs: React.PropTypes.number,
     ...MSEPlayer.propTypes,
   };
 
@@ -54,10 +58,23 @@ export default class MSEPlayerWithStats extends React.Component {
     this._dispatchStatsUpdate();
   }
 
-  _dispatchStatsUpdate() {
+  _dispatchStatsUpdate = () => {
     if (!this.props.onStatsUpdate) {
       return;
     }
+
+    // Consumer can specify that they want to be updated every X ms or more often.
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+      this.updateTimer = null;
+    }
+    if (this.props.maxStatsUpdateIntervalMs) {
+      this.updateTimer = setTimeout(
+        this._dispatchStatsUpdate,
+        this.props.maxStatsUpdateIntervalMs
+      );
+    }
+
     if (this.videoStartTimestamp) {
       this.stats.elapsedMs = Date.now() - this.videoStartTimestamp;
     }
@@ -65,7 +82,7 @@ export default class MSEPlayerWithStats extends React.Component {
       this.stats.playbackMs = this.videoElement.currentTime * 1000;
     }
     this.props.onStatsUpdate(Object.assign({}, this.stats));
-  }
+  };
 
   componentWillUnmount() {
     if (this.outOfBufferTimer) {

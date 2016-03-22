@@ -31,25 +31,34 @@ export default class ObjectCollector {
   _objects: Map<number, Array<TimelineEventObject>> = new Map();
   _lastCollectTime: number = 0;
   _interpolationMs: number;
-  _smoothingAmount: number;
+  _maxArea: number;
+  _maxSmoothingAmount: number;
 
   constructor(
+    maxWidth: number,
+    maxHeight: number,
     interpolationMs?: number = 16,
-    smoothingAmount?: number = 3,
+    maxSmoothingAmount?: number = 10,
   ) {
+    invariant(maxWidth);
+    invariant(maxHeight);
+    this._maxArea = maxWidth * maxHeight;
     this._interpolationMs = Math.round(interpolationMs);
-    this._smoothingAmount = Math.round(smoothingAmount);
+    this._maxSmoothingAmount = maxSmoothingAmount;
   }
 
   _areRectsIdenticalAfterSmoothing(
     first: Rect,
     second: Rect,
   ): boolean {
+    const areaFactor = first.width * first.height / this._maxArea;
+    const smoothingAmount = areaFactor * this._maxSmoothingAmount;
+
     const dimensions = ['x', 'y', 'width', 'height'];
 
     const identicalDimensions = dimensions.reduce((result, dimension) => {
       const difference = Math.abs(second[dimension] - first[dimension]);
-      if (difference <= this._smoothingAmount) {
+      if (difference <= smoothingAmount) {
         if (difference !== 0) {
           second[dimension] = first[dimension];
         }

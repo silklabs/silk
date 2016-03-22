@@ -16,7 +16,7 @@ class Camera extends EventEmitter {
   logoImage = null;
   logs = {};
   name = '';
-  objects = new ObjectCollector();
+  objects = null;
   online = false;
   previewImage = null;
   previewSize = null;
@@ -53,6 +53,10 @@ class Camera extends EventEmitter {
         this.logoImage = new Blob([view], { type: 'image/png' });
       }
     }
+
+    const {width, height} = opts.objectsSize;
+    this.objects = new ObjectCollector(width, height);
+
     this._updateStreams();
   }
 
@@ -67,7 +71,7 @@ class Camera extends EventEmitter {
     }
 
     this.logoImage = null;
-    this.objects.clear();
+    this.objects = null;
     this.previewImage = null;
     this._socket = null;
   }
@@ -361,6 +365,8 @@ class Camera extends EventEmitter {
     if (typeof ack === 'function') {
       ack();
     }
+
+    invariant(this.objects);
 
     if (!msg || !(`objects` in msg) || !Array.isArray(msg.objects)) {
       log.warn(`Bad objects`, msg);

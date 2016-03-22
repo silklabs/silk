@@ -48,7 +48,7 @@ class FakeCamera {
     });
   }
 
-  getPreviewFrames(when, formats) {
+  getFrame(when, formats) {
     // TODO: `when` is ignored...
 
     let frames = formats.map(format => {

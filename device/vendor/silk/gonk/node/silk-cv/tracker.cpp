@@ -14,6 +14,31 @@
 #include "TrackerBase.h"
 #include "trackerCMT.hpp"
 #include "trackerDlib.hpp"
+#include <memory>
+
+//#define LOG_NDEBUG 0
+#define LOG_TAG "silk-cv:tracker"
+#ifdef ANDROID
+#include <utils/Log.h>
+#else
+#ifdef LOG_NDEBUG
+#define ALOGD(LOG_TAG fmt, args...) printf(fmt, ##args)
+#else
+#define ALOGD(fmt, args...)
+#endif
+#endif
+
+
+struct TrackerState {
+  TrackerBase *tracker;
+  bool busy;
+  TrackerState(TrackerBase *tracker)
+    : tracker(tracker), busy(false) {};
+  ~TrackerState() {
+    ALOGD("TrackerState::Dtor %p", this);
+    delete tracker;
+  }
+};
 
 /*
  * Implements the 'Tracker' Javascript class
@@ -26,28 +51,20 @@ public:
 
 private:
   explicit NodeTracker(TrackerBase *tracker, int frameWidth, int frameHeight)
-    : tracker(tracker),
+    : state(new TrackerState(tracker)),
       frameWidth(frameWidth),
-      frameHeight(frameHeight),
-      initialized(false),
-      cancelled(false),
-      processing(false) {}
-  ~NodeTracker() {
-    delete tracker;
+      frameHeight(frameHeight) {
   }
+  ~NodeTracker() {}
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Update(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Busy(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Cancel(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  TrackerBase *tracker;
+  std::shared_ptr<TrackerState> state;
   int frameWidth;
   int frameHeight;
-
-  bool initialized;
-  bool cancelled;
-  bool processing;
 };
 
 
@@ -56,17 +73,20 @@ private:
  */
 class TrackerInitWorker : public Nan::AsyncWorker {
 public:
-  explicit TrackerInitWorker(NodeTracker *nodeTracker, cv::Mat mat, cv::Rect rect, Nan::Callback *callback)
+  explicit TrackerInitWorker(std::weak_ptr<TrackerState> weakState, cv::Mat mat, cv::Rect rect, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
       rect(rect),
-      nodeTracker(nodeTracker) {}
+      weakState(weakState) {}
   virtual ~TrackerInitWorker() {}
 
   void Execute() {
-    bool success;
+    bool success = false;
     try {
-      success = nodeTracker->tracker->init(mat, rect);
+      auto state = weakState.lock();
+      if (state) {
+        success = state->tracker->init(mat, rect);
+      }
     } catch (const std::exception &e) {
       SetErrorMessage(e.what());
       return;
@@ -80,19 +100,21 @@ public:
   void HandleOKCallback () {
     Nan::HandleScope scope;
 
-    nodeTracker->initialized = true;
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
 
-    v8::Local<v8::Value> argv[] = {
-      Nan::Null(),
-    };
-
-    callback->Call(1, argv);
+      v8::Local<v8::Value> argv[] = {
+        Nan::Null(),
+      };
+      callback->Call(1, argv);
+    }
   }
 
 private:
   cv::Mat mat;
   cv::Rect rect;
-  NodeTracker *nodeTracker;
+  std::weak_ptr<TrackerState> weakState;
 };
 
 
@@ -101,63 +123,60 @@ private:
  */
 class TrackerUpdateWorker : public Nan::AsyncWorker {
 public:
-  explicit TrackerUpdateWorker(NodeTracker *nodeTracker, cv::Mat mat, Nan::Callback *callback)
+  explicit TrackerUpdateWorker(std::weak_ptr<TrackerState> weakState, cv::Mat mat, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
-      rect(),
       found(false),
       confidence(0),
-      nodeTracker(nodeTracker) {
-    nodeTracker->processing = true;
+      weakState(weakState) {
+    rect.x = rect.y = rect.width = rect.height = -1;
   }
   virtual ~TrackerUpdateWorker() {}
 
   void Execute() {
     try {
-      rect.x = rect.y = rect.width = rect.height = -1;
-      found = nodeTracker->tracker->update(mat, rect, &confidence);
+      auto state = weakState.lock();
+      if (state) {
+        found = state->tracker->update(mat, rect, &confidence);
+      }
     } catch (const std::exception &e) {
       SetErrorMessage(e.what());
     }
   }
 
   void HandleErrorCallback() {
-    if (nodeTracker->cancelled) {
-      nodeTracker->cancelled = false;
-      // Don't invoke the callback, we've been cancelled
-      return;
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
+      Nan::AsyncWorker::HandleErrorCallback();
     }
-
-    nodeTracker->processing = false;
-    Nan::AsyncWorker::HandleErrorCallback();
   }
 
   void HandleOKCallback() {
-    if (nodeTracker->cancelled) {
-      nodeTracker->cancelled = false;
-      // Don't invoke the callback, we've been cancelled
-      return;
-    }
-
     Nan::HandleScope scope;
-    nodeTracker->processing = false;
-    v8::Local<v8::Object> rectObject = Nan::New<v8::Object>();
-    rectObject->Set(Nan::New<v8::String>("x").ToLocalChecked(),
-                    Nan::New<v8::Number>(rect.x));
-    rectObject->Set(Nan::New<v8::String>("y").ToLocalChecked(),
-                    Nan::New<v8::Number>(rect.y));
-    rectObject->Set (Nan::New<v8::String>("width").ToLocalChecked(),
-                    Nan::New<v8::Number>(rect.width));
-    rectObject->Set(Nan::New<v8::String>("height").ToLocalChecked(),
-                    Nan::New<v8::Number>(rect.height));
 
-    v8::Local<v8::Value> argv[] = {
-      Nan::Null(),
-      Nan::New<v8::Boolean>(found),
-      rectObject,
-      Nan::New<v8::Number>(confidence),
-    };
-    callback->Call(4, argv);
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
+
+      v8::Local<v8::Object> rectObject = Nan::New<v8::Object>();
+      rectObject->Set(Nan::New<v8::String>("x").ToLocalChecked(),
+                      Nan::New<v8::Number>(rect.x));
+      rectObject->Set(Nan::New<v8::String>("y").ToLocalChecked(),
+                      Nan::New<v8::Number>(rect.y));
+      rectObject->Set (Nan::New<v8::String>("width").ToLocalChecked(),
+                      Nan::New<v8::Number>(rect.width));
+      rectObject->Set(Nan::New<v8::String>("height").ToLocalChecked(),
+                      Nan::New<v8::Number>(rect.height));
+
+      v8::Local<v8::Value> argv[] = {
+        Nan::Null(),
+        Nan::New<v8::Boolean>(found),
+        rectObject,
+        Nan::New<v8::Number>(confidence),
+      };
+      callback->Call(4, argv);
+    }
   }
 
 private:
@@ -165,7 +184,7 @@ private:
   cv::Rect rect;
   bool found;
   double confidence;
-  NodeTracker *nodeTracker;
+  std::weak_ptr<TrackerState> weakState;
 };
 
 Nan::Persistent<v8::Function> NodeTracker::constructor;
@@ -243,7 +262,8 @@ NAN_METHOD(NodeTracker::New) {
   Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
 
   NodeTracker* obj = new NodeTracker(tracker, frameWidth, frameHeight);
-  Nan::AsyncQueueWorker(new TrackerInitWorker(obj, mat, objectRect, callback));
+  obj->state->busy = true;
+  Nan::AsyncQueueWorker(new TrackerInitWorker(obj->state, mat, objectRect, callback));
 
   obj->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
@@ -252,26 +272,18 @@ NAN_METHOD(NodeTracker::New) {
 NAN_METHOD(NodeTracker::Busy) {
   NodeTracker* obj = ObjectWrap::Unwrap<NodeTracker>(info.Holder());
   info.GetReturnValue().Set(
-    Nan::New<v8::Boolean>(!obj->initialized || obj->processing));
+    Nan::New<v8::Boolean>(!obj->state || obj->state->busy));
 }
 
 NAN_METHOD(NodeTracker::Cancel) {
   NodeTracker* obj = ObjectWrap::Unwrap<NodeTracker>(info.Holder());
-
-  if (obj->processing) {
-    obj->cancelled = true;
-    obj->processing = false;
-  }
+  obj->state = NULL;
 }
 
 NAN_METHOD(NodeTracker::Update) {
   NodeTracker* obj = ObjectWrap::Unwrap<NodeTracker>(info.Holder());
 
-  if (!obj->initialized) {
-    Nan::ThrowError("Not initialized");
-    return;
-  }
-  if (obj->processing) {
+  if (!obj->state || obj->state->busy) {
     Nan::ThrowError("Busy");
     return;
   }
@@ -289,8 +301,9 @@ NAN_METHOD(NodeTracker::Update) {
     Nan::ThrowTypeError("Argument 1 size mismatch");
     return;
   }
+  obj->state->busy = true;
   Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
-  Nan::AsyncQueueWorker(new TrackerUpdateWorker(obj, mat, callback));
+  Nan::AsyncQueueWorker(new TrackerUpdateWorker(obj->state, mat, callback));
   info.GetReturnValue().Set(Nan::Null());
 }
 

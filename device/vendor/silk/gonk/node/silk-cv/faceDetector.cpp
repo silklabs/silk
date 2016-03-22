@@ -3,12 +3,31 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
+#include <memory>
 #include <nan.h>
 #include <opencv2/opencv.hpp>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/shape_predictor.h>
 #include <dlib/opencv/cv_image.h>
 #include "Matrix.h"
+
+#define LOG_TAG "silk-cv:fd"
+#ifdef ANDROID
+#include <utils/Log.h>
+#else
+#ifdef LOG_NDEBUG
+#define ALOGD(LOG_TAG fmt, args...) printf(fmt, ##args)
+#else
+#define ALOGD(fmt, args...)
+#endif
+#endif
+
+struct State {
+  dlib::frontal_face_detector detector;
+  dlib::shape_predictor face_landmark_predictor;
+  bool busy;
+  State() : busy(false) {};
+};
 
 /*
  * Implements the 'FaceDetector' Javascript class
@@ -21,9 +40,7 @@ public:
 
 private:
   explicit FaceDetector()
-    : initialized(false),
-      cancelled(false),
-      processing(false) {}
+    : state(new State()) {}
   ~FaceDetector() {}
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -31,12 +48,8 @@ private:
   static void Busy(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Cancel(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  dlib::frontal_face_detector detector;
-  dlib::shape_predictor face_landmark_predictor;
 
-  bool initialized;
-  bool cancelled;
-  bool processing;
+  std::shared_ptr<State> state;
 };
 
 
@@ -45,38 +58,40 @@ private:
  */
 class FaceDetectorInitWorker : public Nan::AsyncWorker {
 public:
-  explicit FaceDetectorInitWorker(FaceDetector *nodeFaceDetector, Nan::Callback *callback)
+  explicit FaceDetectorInitWorker(std::weak_ptr<State> weakState, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
-      nodeFaceDetector(nodeFaceDetector) {}
+      weakState(weakState) {}
   virtual ~FaceDetectorInitWorker() {}
 
   void Execute() {
-    nodeFaceDetector->detector = dlib::get_frontal_face_detector();
-    try {
-      dlib::deserialize("system/silk/media/shape_predictor_68_face_landmarks.dat") >>
-        nodeFaceDetector->face_landmark_predictor;
-    } catch(const dlib::serialization_error &e) {
-      SetErrorMessage(e.what());
-      return;
+    auto state = weakState.lock();
+    if (state) {
+      state->detector = dlib::get_frontal_face_detector();
+      try {
+        dlib::deserialize("system/silk/media/shape_predictor_68_face_landmarks.dat") >>
+          state->face_landmark_predictor;
+      } catch(const dlib::serialization_error &e) {
+        SetErrorMessage(e.what());
+      }
     }
   }
 
   void HandleOKCallback () {
-    if (nodeFaceDetector->cancelled) {
-      return;
-    }
-
     Nan::HandleScope scope;
-    nodeFaceDetector->initialized = true;
 
-    v8::Local<v8::Value> argv[] = {
-      Nan::Null(),
-    };
-    callback->Call(1, argv);
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
+
+      v8::Local<v8::Value> argv[] = {
+        Nan::Null(),
+      };
+      callback->Call(1, argv);
+    }
   }
 
 private:
-  FaceDetector *nodeFaceDetector;
+  std::weak_ptr<State> weakState;
 };
 
 
@@ -91,23 +106,26 @@ public:
     dlib::point rightEye;
   };
 
-  explicit FaceDetectorUpdateWorker(FaceDetector *nodeFaceDetector, cv::Mat mat, Nan::Callback *callback)
+  explicit FaceDetectorUpdateWorker(std::weak_ptr<State> weakState, cv::Mat mat, Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       mat(mat),
-      nodeFaceDetector(nodeFaceDetector) {
-    nodeFaceDetector->processing = true;
-  }
+      weakState(weakState) {}
   virtual ~FaceDetectorUpdateWorker() {}
 
   void Execute() {
+    auto state = weakState.lock();
+    if (!state) {
+      return;
+    }
+
     auto img = dlib::cv_image<unsigned char>(mat);
-    std::vector<dlib::rectangle> foundFaces = nodeFaceDetector->detector(img);
+    std::vector<dlib::rectangle> foundFaces = state->detector(img);
 
     for (unsigned i = 0; i < foundFaces.size(); ++i) {
 
       // Find face landmarks
       dlib::full_object_detection shape =
-        nodeFaceDetector->face_landmark_predictor(img, foundFaces[i]);
+        state->face_landmark_predictor(img, foundFaces[i]);
 
       long left = LONG_MAX;
       long top = LONG_MAX;
@@ -175,59 +193,59 @@ public:
   }
 
   void HandleErrorCallback() {
-    if (nodeFaceDetector->cancelled) {
-      return;
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
     }
 
-    nodeFaceDetector->processing = false;
     Nan::AsyncWorker::HandleErrorCallback();
   }
 
   void HandleOKCallback() {
-    if (nodeFaceDetector->cancelled) {
-      return;
-    }
-
     Nan::HandleScope scope;
-    nodeFaceDetector->processing = false;
 
-    v8::Local<v8::Array> facesArray = Nan::New<v8::Array>(faces.size());
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
 
-    for (unsigned i = 0; i < faces.size(); i++) {
-      v8::Local<v8::Object> face = Nan::New<v8::Object>();
-      face->Set(Nan::New("x").ToLocalChecked(),
-        Nan::New<v8::Number>(faces[i].boundingBox.left()));
-      face->Set(Nan::New("y").ToLocalChecked(),
-        Nan::New<v8::Number>(faces[i].boundingBox.top()));
-      face->Set(Nan::New("width").ToLocalChecked(),
-        Nan::New<v8::Number>(faces[i].boundingBox.width()));
-      face->Set(Nan::New("height").ToLocalChecked(),
-        Nan::New<v8::Number>(faces[i].boundingBox.height()));
+      v8::Local<v8::Array> facesArray = Nan::New<v8::Array>(faces.size());
 
-      v8::Local<v8::Array> leftEyeArray = Nan::New<v8::Array>(2);
-      leftEyeArray->Set(0, Nan::New<v8::Number>(faces[i].leftEye.x()));
-      leftEyeArray->Set(1, Nan::New<v8::Number>(faces[i].leftEye.y()));
-      face->Set(Nan::New("leftEye").ToLocalChecked(), leftEyeArray);
+      for (unsigned i = 0; i < faces.size(); i++) {
+        v8::Local<v8::Object> face = Nan::New<v8::Object>();
+        face->Set(Nan::New("x").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].boundingBox.left()));
+        face->Set(Nan::New("y").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].boundingBox.top()));
+        face->Set(Nan::New("width").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].boundingBox.width()));
+        face->Set(Nan::New("height").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].boundingBox.height()));
 
-      v8::Local<v8::Array> rightEyeArray = Nan::New<v8::Array>(2);
-      rightEyeArray->Set(0, Nan::New<v8::Number>(faces[i].rightEye.x()));
-      rightEyeArray->Set(1, Nan::New<v8::Number>(faces[i].rightEye.y()));
-      face->Set(Nan::New("rightEye").ToLocalChecked(), rightEyeArray);
+        v8::Local<v8::Array> leftEyeArray = Nan::New<v8::Array>(2);
+        leftEyeArray->Set(0, Nan::New<v8::Number>(faces[i].leftEye.x()));
+        leftEyeArray->Set(1, Nan::New<v8::Number>(faces[i].leftEye.y()));
+        face->Set(Nan::New("leftEye").ToLocalChecked(), leftEyeArray);
 
-      facesArray->Set(i, face);
+        v8::Local<v8::Array> rightEyeArray = Nan::New<v8::Array>(2);
+        rightEyeArray->Set(0, Nan::New<v8::Number>(faces[i].rightEye.x()));
+        rightEyeArray->Set(1, Nan::New<v8::Number>(faces[i].rightEye.y()));
+        face->Set(Nan::New("rightEye").ToLocalChecked(), rightEyeArray);
+
+        facesArray->Set(i, face);
+      }
+
+      v8::Local<v8::Value> argv[] = {
+        Nan::Null(),
+        facesArray,
+      };
+      callback->Call(2, argv);
     }
-
-    v8::Local<v8::Value> argv[] = {
-      Nan::Null(),
-      facesArray,
-    };
-    callback->Call(2, argv);
   }
 
 private:
   cv::Mat mat;
   std::vector<FaceRect> faces;
-  FaceDetector *nodeFaceDetector;
+  std::weak_ptr<State> weakState;
 };
 
 Nan::Persistent<v8::Function> FaceDetector::constructor;
@@ -262,7 +280,8 @@ NAN_METHOD(FaceDetector::New) {
   Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
 
   FaceDetector* obj = new FaceDetector();
-  Nan::AsyncQueueWorker(new FaceDetectorInitWorker(obj, callback));
+  obj->state->busy = true;
+  Nan::AsyncQueueWorker(new FaceDetectorInitWorker(obj->state, callback));
 
   obj->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
@@ -271,24 +290,18 @@ NAN_METHOD(FaceDetector::New) {
 NAN_METHOD(FaceDetector::Busy) {
   FaceDetector* obj = ObjectWrap::Unwrap<FaceDetector>(info.Holder());
   info.GetReturnValue().Set(
-    Nan::New<v8::Boolean>(!obj->initialized || obj->processing));
+    Nan::New<v8::Boolean>(!obj->state || obj->state->busy));
 }
 
 NAN_METHOD(FaceDetector::Cancel) {
   FaceDetector* obj = ObjectWrap::Unwrap<FaceDetector>(info.Holder());
-
-  obj->cancelled = true;
-  obj->processing = true;
+  obj->state = NULL;
 }
 
 NAN_METHOD(FaceDetector::Detect) {
   FaceDetector* obj = ObjectWrap::Unwrap<FaceDetector>(info.Holder());
 
-  if (!obj->initialized) {
-    Nan::ThrowError("Not initialized");
-    return;
-  }
-  if (obj->processing) {
+  if (!obj->state || obj->state->busy) {
     Nan::ThrowError("Busy");
     return;
   }
@@ -299,8 +312,9 @@ NAN_METHOD(FaceDetector::Detect) {
   }
   cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(info[0]->ToObject())->mat;
 
+  obj->state->busy = true;
   Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
-  Nan::AsyncQueueWorker(new FaceDetectorUpdateWorker(obj, mat, callback));
+  Nan::AsyncQueueWorker(new FaceDetectorUpdateWorker(obj->state, mat, callback));
   info.GetReturnValue().Set(Nan::Null());
 }
 

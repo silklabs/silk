@@ -109,6 +109,10 @@ export default class MSEPlayerWithStats extends React.Component {
     return segment;
   }
 
+  forceReload() {
+    this.refs.player.forceReload();
+  }
+
   _init() {
     if (this.outOfBufferTimer) {
       clearTimeout(this.outOfBufferTimer);

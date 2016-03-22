@@ -1,6 +1,6 @@
 import invariant from 'assert';
 import React from 'react';
-import { Input } from 'react-bootstrap';
+import { Input, Button } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
 import createLog from 'silk-log';
 
@@ -95,10 +95,9 @@ const styles = {
     pointerEvents: 'none',
   },
   form: {
-    backgroundColor: CanvasUtils.colors.red,
-    padding: '1px 8px 1px 8px',
-    margin: 0,
-    textAlign: 'right',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: '10px',
+    margin: '6px',
   },
 };
 
@@ -635,6 +634,13 @@ export default class CameraVideo extends React.Component {
     this.animationToken = null;
   }
 
+  _onStatsUpdate = (stats) => {
+    if (!this.state.showVideoStats) {
+      return;
+    }
+    requestAnimationFrame(() => this.setState({stats}));
+  };
+
   _renderStats() {
     if (!this.state.showVideoStats || !this.state.stats) {
       return null;
@@ -680,12 +686,31 @@ export default class CameraVideo extends React.Component {
     );
   }
 
-  _onStatsUpdate = (stats) => {
-    if (!this.state.showVideoStats) {
-      return;
-    }
-    requestAnimationFrame(() => this.setState({stats}));
-  };
+  _renderDebugMenu() {
+    return (
+      <form style={styles.form}>
+        <h3>Debug Options</h3>
+        <Input
+          type="checkbox"
+          label="Show Motion Events"
+          ref="checkMotion"
+          checked={this.state.showMotionEvents}
+          onChange={this._onMotionEventsCheck}
+        />
+        <Input
+          type="checkbox"
+          label="Show Video Stats"
+          ref="checkVideoStats"
+          checked={this.state.showVideoStats}
+          onChange={this._onVideoStatsCheck}
+        />
+        <Button
+          onClick={() => this.refs.msePlayer.forceReload()}>
+          Reload &lt;video&gt; element
+        </Button>
+      </form>
+    );
+  }
 
   render() {
     let console = null;
@@ -769,22 +794,7 @@ export default class CameraVideo extends React.Component {
             ref="canvas">
           </canvas>
         </div>
-        <form style={styles.form}>
-          <Input
-            type="checkbox"
-            label="Show Motion Events"
-            ref="checkMotion"
-            checked={this.state.showMotionEvents}
-            onChange={this._onMotionEventsCheck}
-          />
-          <Input
-            type="checkbox"
-            label="Show Video Stats"
-            ref="checkVideoStats"
-            checked={this.state.showVideoStats}
-            onChange={this._onVideoStatsCheck}
-          />
-        </form>
+        {this._renderDebugMenu()}
       </div>
     );
   }

@@ -145,6 +145,34 @@ export default class MSEPlayer extends React.Component {
     }
   };
 
+  forceReload() {
+    // Clean everything up immediately.
+    this.cleanUpVideoElementAndSegmentQueue();
+
+    // Set up the playback and queue before we start the re-render to avoid
+    // missing new segments if they come in before the re-render finishes.
+    this.setUpSegmentQueue();
+
+    // Re-render.
+    this.setState({
+      videoKey: Date.now().toString(),
+    }, () => {
+      // Now get the video element loaded again.
+      this.setUpVideoElement();
+
+      // Tell others what happened.
+      if (this.props.onReload) {
+        this.props.onReload();
+      }
+
+      // And finally try to feed any segments that we received during the
+      // re-render.
+      if (this.segmentQueue.length) {
+        this._feedPlayer();
+      }
+    });
+  }
+
   _onError = (event) => {
     log.error(`'${event.target.constructor.name}' received an ` +
               `'${event.type}' event`,
@@ -153,33 +181,8 @@ export default class MSEPlayer extends React.Component {
 
     // Throw the video element away and re-render it.
     if (this.videoElement.error) {
-      // Clean everything up immediately.
-      this.cleanUpVideoElementAndSegmentQueue();
-
-      // Set up the playback and queue before we start the re-render to avoid
-      // missing new segments if they come in before the re-render finishes.
-      this.setUpSegmentQueue();
-
-      // Re-render.
-      this.setState({
-        videoKey: Date.now().toString(),
-      }, () => {
-        // Now get the video element loaded again.
-        this.setUpVideoElement();
-
-        // Tell others what happened.
-        if (this.props.onReload) {
-          this.props.onReload();
-        }
-
-        // And finally try to feed any segments that we received during the
-        // re-render.
-        if (this.segmentQueue.length) {
-          this._feedPlayer();
-        }
-      });
+      this.forceReload();
     }
-
     if (this.props.onError) {
       this.props.onError(event);
     }

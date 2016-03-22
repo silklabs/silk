@@ -143,6 +143,7 @@ export default class CameraVideo extends React.Component {
 
   currentAnimationFrameTimestamp = null;
 
+  segmentsDroppedMs = 0;
   dropNextSegment = false;
 
   state = {
@@ -248,7 +249,7 @@ export default class CameraVideo extends React.Component {
     this.canvas.height = Math.floor(height);
 
     this._redrawCanvas();
-  }
+  };
 
   _onCamerasStateChanged = state => {
     const oldCamera = this.state.camera;
@@ -335,7 +336,10 @@ export default class CameraVideo extends React.Component {
       // Figure out the window of time for which we should draw objects.
       const video = this.refs.msePlayer.videoElement;
       const videoElapsedMs = Math.floor(video.currentTime * 1000);
-      const videoEndTimestamp = this.videoStartTimestampDevice + videoElapsedMs;
+      const videoEndTimestamp =
+        this.videoStartTimestampDevice +
+        videoElapsedMs +
+        this.segmentsDroppedMs;
 
       if (forceRender ||
           videoEndTimestamp !== this.lastRenderedVideoTimestamp) {
@@ -645,6 +649,7 @@ export default class CameraVideo extends React.Component {
   }
 
   _onStatsUpdate = (stats) => {
+    this.segmentsDroppedMs = stats.totalDroppedMs;
     if (!this.state.showVideoStats) {
       return;
     }
@@ -653,6 +658,7 @@ export default class CameraVideo extends React.Component {
 
   _onReload = () => {
     this.videoStartTimestampDevice = null;
+    this.segmentsDroppedMs = 0;
   };
 
   _renderStats() {

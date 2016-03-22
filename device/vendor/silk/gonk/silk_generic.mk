@@ -20,6 +20,13 @@ ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PROPERTY_OVERRIDES += \
   persist.logd.size=16M \
 
+# Add default IP address for eth0 (disabled by default)
+# Add "persist.silk.eth0.static.enable=1" to target gonk to enable static eth0
+PRODUCT_PROPERTY_OVERRIDES += \
+  persist.silk.eth0.static.ip=192.168.1.199 \
+  persist.silk.eth0.basemask=192.168.1.0/24 \
+  persist.silk.eth0.dns.gw.ip=192.168.1.1 \
+
 endif
 
 PRODUCT_PACKAGES += node

@@ -9,7 +9,7 @@ import crypto from 'crypto';
  */
 export default function hmac(accessKey: string, value: Buffer|string): string {
   // start by decoding the access key
-  var decodedKey = new Buffer(accessKey, 'base64');
+  const decodedKey = new Buffer(accessKey, 'base64');
 
   // encrypt the value and encode it with base64
   let hmac = crypto.createHmac('sha256', decodedKey);

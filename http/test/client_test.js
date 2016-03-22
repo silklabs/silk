@@ -147,7 +147,7 @@ suite('api call retries', () => {
   test('errors with no retries', async () => {
     let api = buildTestApi();
     // 400~ range status code should not be retried...
-    for (var code = 400; code < 417; code++) {
+    for (let code = 400; code < 417; code++) {
       testModel.push(code);
       try {
         await api.retryMe();

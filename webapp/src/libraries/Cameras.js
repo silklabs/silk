@@ -335,7 +335,7 @@ class Camera extends EventEmitter {
         && config.deviceMic.endian === 'little') {
       msg.samples = new Int16Array(msg.samples);
     } else {
-      throw `Unhandled deviceMic configuration: ${config.deviceMic}`;
+      throw new Error(`Unhandled deviceMic configuration: ${config.deviceMic}`);
     }
     this.micData = msg;
     this.emit('micData', msg);

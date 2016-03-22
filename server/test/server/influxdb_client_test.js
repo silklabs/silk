@@ -26,7 +26,7 @@ suite('influxdb client', function() {
   test('write point', async () => {
     let series = uuid.v4().replace(/-/g, '');
     let point = [series, { mytag: `'a'` }, { data: '"woot"' }];
-    for (var i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i++) {
       await client.write(point);
     }
 

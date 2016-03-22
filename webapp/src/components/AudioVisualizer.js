@@ -78,7 +78,7 @@ let computeColor = (I, model) => {
   if (mr < I) {
     return R;
   }
-  throw `Intensity ${I} should have been mapped`;
+  throw new Error(`Intensity ${I} should have been mapped`);
 };
 
 let cssColor = (I, model) => {

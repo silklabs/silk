@@ -267,7 +267,7 @@ export default React.createClass({
   },
 });
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   top: {
     paddingBottom: 5,
     backgroundColor: 'gray',

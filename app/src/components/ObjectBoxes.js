@@ -134,7 +134,7 @@ let ObjectBoxes = React.createClass({
   },
 });
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   objectContainerStyle: {
     position: 'absolute',
   },

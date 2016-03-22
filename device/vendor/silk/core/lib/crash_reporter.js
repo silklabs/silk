@@ -369,8 +369,8 @@ export class CrashReporter {
     assert.equal(backtrace.shift(), `backtrace:`);
     assert.equal(backtrace.pop(), ``);
 
-    var fileMethodRegEx = /^([^ ]*) \((.*)\)$/;
-    var methodOffsetRegEx = /^([^+]*)\+(.*)$/;
+    const fileMethodRegEx = /^([^ ]*) \((.*)\)$/;
+    const methodOffsetRegEx = /^([^+]*)\+(.*)$/;
     const stackTrace = backtrace.map(bt => {
       bt = bt.trim();
       bt = bt.replace(/^.* {2}/, ''); // Remove frame number/pc/stack value

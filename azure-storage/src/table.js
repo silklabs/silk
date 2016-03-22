@@ -87,7 +87,7 @@ export class SharedKeyAuth {
       parsed.query = options.query;
     }
 
-    var auth = tableSigner.sharedKey({
+    const auth = tableSigner.sharedKey({
       account: this._auth.account,
       accessKey: this._auth.accessKey,
       method: options.method,
@@ -95,7 +95,6 @@ export class SharedKeyAuth {
       table: parsed.path,
       query: parsed.query || {},
     });
-
     headers.set('Authorization', auth);
 
     let formattedUrl = formatURL(parsed);

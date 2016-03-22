@@ -129,7 +129,7 @@ export default async function main (config: any): any {
    * and when the server has authenticated the client.
    */
   io.use(middleware(async (socket, next) => {
-    var req = socket.request;
+    const req = socket.request;
     let res = {
       sendStatus(code) {
         next(new Error(`Auth error ${code}`));

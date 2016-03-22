@@ -5,12 +5,12 @@ import DeviceID from '../src/access_token';
 suite('device id', () => {
 
   test('.create', () => {
-    var id = DeviceID.create();
+    const id = DeviceID.create();
     assert.equal(typeof id.pub, 'string');
     assert.equal(typeof id.priv, 'string');
 
-    var e = id.export();
-    var i = DeviceID.import(e);
+    const e = id.export();
+    const i = DeviceID.import(e);
     assert.equal(id.pub, i.pub);
     assert.equal(id.priv, i.priv);
 
@@ -19,7 +19,7 @@ suite('device id', () => {
 
     assert(id.isValid());
 
-    var signature = id.sign('foo');
+    const signature = id.sign('foo');
     assert(id.verify('foo', signature));
   });
 

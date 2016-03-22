@@ -724,6 +724,9 @@ export default class AudioStudio extends React.Component {
       let analyzer = createAudioAnalyzer(svmFFTConfig);
       let featureVectorExtractor =
             new FeatureVectorExtractor(analyzer, svmConfig);
+
+      class DoneException extends Error() {}
+
       featureVectorExtractor.on('loud-sound', (featureVector) => {
         let featureVectorLabel = testName + '-' + featureVectorCount++;
         let forTraining, forValidation;
@@ -756,14 +759,14 @@ export default class AudioStudio extends React.Component {
           // with this clip.  We don't have a convenient way to stop
           // audio processing from here, so just hacky hack and throw
           // an exception.
-          throw 'done';
+          throw new DoneException();
         }
       });
       // Feed all the samples into the extractor.
       try {
         analyzer.appendSamples(samples, 0);
       } catch (e) {
-        if (e !== 'done') {
+        if (!(e instanceof DoneException)) {
           throw e;
         }
       }

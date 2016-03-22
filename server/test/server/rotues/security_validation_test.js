@@ -76,7 +76,7 @@ suite('security validation tests', () => {
       },
     });
 
-    for (var userKey in users) {
+    for (let userKey in users) {
       let user = users[userKey];
       user.id = api.id.create();
       api.accessToken = user.id;

@@ -169,8 +169,7 @@ class Sensors extends events.EventEmitter {
     }
 
     // sensors socket expects the command data in the following format
-    var event = JSON.stringify(cmd) + '\0';
-
+    const event = JSON.stringify(cmd) + '\0';
     this._socket.write(event);
     log.verbose(`sensors << ${JSON.stringify(cmd)}`);
   }

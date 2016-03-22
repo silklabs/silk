@@ -60,7 +60,7 @@ export async function attemptUplift(
     return false;
   }
 
-  var label = issue.labels.find(label => {
+  const label = issue.labels.find(label => {
     return label.name === upliftApprovedLabel;
   });
   if (!label) {

@@ -49,7 +49,7 @@ suite('accounts', () => {
     };
 
     // Promise.all could have been used but this is clearer if it fails...
-    for (var key in records) {
+    for (let key in records) {
       let insert = await subject.create(records[key]);
       assert.ok(insert, `failed to insert: ${key}`);
     }

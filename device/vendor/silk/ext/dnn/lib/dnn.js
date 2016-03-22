@@ -25,7 +25,7 @@ const MODEL_DICTIONARY = 'system/silk/media/dnn/model/imagenet_dictionary.txt';
 const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
 const TOPK = 5; // Return top K predictions for the given image
 
-const THRESHOLD = 20; // Ignore predictions with probability lower than threshold
+const THRESHOLD = 12; // Ignore predictions with probability lower than threshold
 
 /**
  * This class listens for motion events and uses Caffe DNN to classify the image

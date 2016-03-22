@@ -66,7 +66,7 @@ class SoundRecognizer {
           id: event.eventId,
           tag: 'sound',
           name: e.soundClass,
-          when: (1000 * e.startTime) | 0
+          when: Math.round(1000 * e.startTime) || 0
         }]);
         event.timeoutId = setTimeout(emitEventPing, EVENT_PING_INTERVAL_MS);
       };
@@ -81,8 +81,8 @@ class SoundRecognizer {
         id: event.eventId,
         tag: 'sound',
         name: e.soundClass,
-        when: (1000 * e.startTime) | 0,
-        durationMs: (1000 * (e.endTime - e.startTime)) | 0,
+        when: Math.round(1000 * e.startTime) || 0,
+        durationMs: Math.round(1000 * (e.endTime - e.startTime)) || 0,
       }]);
     }
   };

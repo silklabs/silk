@@ -22,7 +22,8 @@ const styles = {
     fontFamily: 'DINRound',
     color: 'white',
     width: '100%',
-    height: '100%',
+    paddingBottom: '8px',
+    marginBottom: '-8px',
     backgroundColor: CanvasUtils.colors.red,
   },
   header: {
@@ -683,7 +684,9 @@ export default class CameraVideo extends React.Component {
             Time:<br/>
             {formatMs(elapsedMs)} elapsed<br/>
             {formatMs(playbackMs)} {' <video> '}
-            ({formatDeltaMs(playbackMs - elapsedMs)})
+            ({formatDeltaMs(playbackMs - elapsedMs)})<br/>
+            {formatTimestamp(this.videoStartTimestampDevice + playbackMs + totalDroppedMs)}
+            {' <video> '}
           </li>
           <li style={styles.videoStatsItem}>
             Buffer:<br/>

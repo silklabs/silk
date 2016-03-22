@@ -569,7 +569,12 @@ vector<float> Model::Predict(const cv::Mat& img) {
 
   Preprocess(img, &inputChannels);
 
+  chrono::time_point<chrono::system_clock> startTime = chrono::system_clock::now();
   caffeNet->ForwardPrefilled();
+  chrono::time_point<chrono::system_clock> endTime = chrono::system_clock::now();
+  chrono::duration<double> elapsedSeconds = endTime - startTime;
+  ALOGD("Forward finished in %.2f ms", elapsedSeconds.count() * 1000);
+
 
   // Copy the output layer to a vector
   Blob<float>* output_layer = caffeNet->output_blobs()[0];

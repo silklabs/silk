@@ -2,7 +2,7 @@
 
 # When you change this, remember to update the tag in
 # device/gonk/silk/silk.xml.
-HEAD=v0.0.1
+HEAD=v0.0.2
 
 if [[ ! -d models ]]; then
   git clone --depth 1 git@github.com:silklabs/silk-svm.git -b $HEAD models

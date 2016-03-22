@@ -1,6 +1,7 @@
 import config from 'silk-config';
 import { createAudioAnalyzer, createSoundDetectorSVM,
          LOUD_SOUND_THRESHOLD_DB,
+         parsePackedSVMModel,
          svmFFTConfig, svmSoundsConfigs } from 'silk-audio';
 import createLog from 'silk-log';
 import React from 'react';
@@ -81,6 +82,9 @@ const DEFAULT_PREFS = {
   graphView: 'spectLinear',
 };
 
+let loadedSVMConfigs = null;
+let loadingPromise = null;
+
 function forEachFileInTAR(tag, fileData, forEach) {
   return new Promise((resolve, reject) => {
     let extract = tar.extract();
@@ -109,6 +113,44 @@ function isTARFilename(name) {
 
 function isWAVFilename(name) {
   return name.endsWith('.wav');
+}
+
+function loadModel(cfg) {
+  return fetch(cfg.model)
+    .then((response) => response.arrayBuffer())
+    .then((arrayBuffer) => {
+      cfg.model = parsePackedSVMModel(arrayBuffer);
+    })
+    .catch((err) =>
+           log.error(`Failed to fetch model ${cfg.model}: ${err}`));
+}
+
+function loadSVMModels() {
+  if (loadedSVMConfigs) {
+    return Promise.resolve(loadedSVMConfigs);
+  }
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+  let cfgs = { };
+  Object.assign(cfgs, svmSoundsConfigs);
+  loadingPromise = Promise.all(Object.keys(cfgs).map((key) => {
+    let cfg = cfgs[key];
+    return loadModel(cfg);
+  }))
+    .then(() => {
+      log.info('Loaded all models');
+      loadedSVMConfigs = cfgs;
+      loadingPromise = null;
+      return Promise.resolve(loadedSVMConfigs);
+    })
+    .catch(() => {
+      // There's not much we can do if the models fail to load.  This
+      // catch() will set things up so that when loading a new track,
+      // we'll try again.  (But probably will fail again.)
+      loadingPromise = null;
+    });
+  return loadingPromise;
 }
 
 function makeWAVHeader(params, samplesLength) {
@@ -340,8 +382,10 @@ export default class AudioStudio extends React.Component {
       track.on('timeupdate', this._onTimeUpdate);
 
       if (ENABLE_SOUND_DETECTOR) {
-        this.soundDetector = createSoundDetectorSVM(svmFFTConfig, svmSoundsConfigs);
-        this.soundDetector.on('sound', this._onSoundEvent);
+        loadSVMModels().then((svmCfgs) => {
+          this.soundDetector = createSoundDetectorSVM(svmFFTConfig, svmCfgs);
+          this.soundDetector.on('sound', this._onSoundEvent);
+        });
       }
     }
     this.setState({ track });

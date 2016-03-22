@@ -8,6 +8,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  */
+#include <memory>
 #include <nan.h>
 #include "Matrix.h"
 #include <opencv/highgui.h>
@@ -17,15 +18,106 @@
 #include <opencv2/videoio.hpp>
 #endif
 
-#ifdef ANDROID
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-cv:capture"
+#ifdef ANDROID
 #include <utils/Log.h>
-
 #include <libpreview.h>
 #else
-#define ALOGE(fmt, args...) printf(fmt, ##args)
+#define ALOGE(fmt, args...) printf(LOG_TAG fmt, ##args)
 #endif
+
+
+////
+// Holds the current state of a VideoCapture session
+class State {
+public:
+#ifdef ANDROID
+  libpreview::vtable const *preview;
+  libpreview::FrameFormat frameFormat;
+  uv_mutex_t frameDataLock;
+  int frameWidth;
+  int frameHeight;
+  void *frameBuffer;
+#else
+  cv::VideoCapture cap;
+#endif
+  int scaledWidth;
+  int scaledHeight;
+  bool busy;
+
+  static State *Create(int deviceId, int scaledWidth, int scaledHeight) {
+    bool ok = false;
+    State *newState = new State(scaledWidth, scaledHeight);
+#ifdef ANDROID
+    uv_mutex_init(&newState->frameDataLock);
+    newState->frameWidth = newState->frameHeight = 0;
+    newState->frameBuffer = NULL;
+    newState->preview = libpreview::load();
+    if (newState->preview != NULL) {
+      ok = newState->preview->open( OnFrameCallback, OnAbandonedCallback, newState);
+    }
+#else
+    newState->cap.open(deviceId);
+    ok = newState->cap.isOpened();
+#endif
+    if (!ok) {
+      delete newState;
+      newState = NULL;
+    }
+    return newState;
+  }
+
+  ~State() {
+#ifdef ANDROID
+    if (preview != NULL) {
+      // Null preview while holding frameDataLock, to ensure that another thread
+      // isn't sitting in OnFrameCallback() when libpreview is closed
+      uv_mutex_lock(&frameDataLock);
+      libpreview::vtable const *localpreview = preview;
+      preview = NULL;
+      uv_mutex_unlock(&frameDataLock);
+
+      // Release the current frameBuffer
+      uv_mutex_lock(&frameDataLock);
+      if (frameBuffer != NULL) {
+        localpreview->releaseFrame(frameBuffer);
+      }
+      uv_mutex_unlock(&frameDataLock);
+
+      // Shutdown calls to OnFrameCallback and/or OnAbandonedCallback
+      localpreview->close();
+      localpreview = NULL;
+
+      // Grab then release frameDataLock again, to ensure that a thread didn't
+      // sneak into OnFrameCallback() before preview->close() really executed
+      // above.  Once preview->close() really executes, OnFrameCallback will
+      // never be called again.
+      uv_mutex_lock(&frameDataLock);
+      uv_mutex_unlock(&frameDataLock);
+    }
+    uv_mutex_destroy(&frameDataLock);
+#else
+  cap.release();
+#endif
+  }
+
+private:
+  State(int scaledWidth, int scaledHeight)
+    : scaledWidth(scaledWidth),
+      scaledHeight(scaledHeight),
+      busy(false) {}
+
+#ifdef ANDROID
+  static void OnAbandonedCallback(void *userData);
+  static void OnFrameCallback(void *userData,
+                              void* buffer,
+                              libpreview::FrameFormat format,
+                              size_t width,
+                              size_t height);
+#endif
+};
+
 
 /*
  * Implements the 'VideoCapture' Javascript class
@@ -36,34 +128,14 @@ public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  explicit VideoCapture(int deviceId, int scaledWidth, int scaledHeight);
-  ~VideoCapture();
+  explicit VideoCapture(State *state): state(state) {}
+  ~VideoCapture() {}
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Read(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Close(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  bool processing;
-  bool closed;
-  int scaledWidth;
-  int scaledHeight;
 
-  void InternalClose();
-#ifdef ANDROID
-  libpreview::vtable preview;
-
-  uv_mutex_t frameDataLock;
-  libpreview::FrameFormat frameFormat;
-  int frameWidth;
-  int frameHeight;
-  void *frameBuffer;
-  static void OnFrameCallback(void *userData,
-                              void* buffer,
-                              libpreview::FrameFormat format,
-                              size_t width,
-                              size_t height);
-#else
-  cv::VideoCapture cap;
-#endif
+  std::shared_ptr<State> state;
 };
 
 /*
@@ -71,14 +143,13 @@ private:
  */
 class VideoCaptureFrameWorker : public Nan::AsyncWorker {
 public:
-  explicit VideoCaptureFrameWorker(VideoCapture *videoCapture,
+  explicit VideoCaptureFrameWorker(std::weak_ptr<State> weakState,
                                    v8::Local<v8::Object> imRGB,
                                    v8::Local<v8::Object> imGray,
                                    v8::Local<v8::Object> imScaledGray,
                                    Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
-      videoCapture(videoCapture) {
-    videoCapture->processing = true;
+      weakState(weakState) {
     destRGB.Reset(imRGB);
     destGray.Reset(imGray);
     destScaledGray.Reset(imScaledGray);
@@ -86,26 +157,32 @@ public:
   virtual ~VideoCaptureFrameWorker() {}
 
   void Execute() {
+    auto state = weakState.lock();
+    if (!state) {
+      SetErrorMessage("Camera gone");
+      return;
+    }
+
 #ifdef ANDROID
-    if (videoCapture->frameBuffer == NULL) {
+    if (state->frameBuffer == NULL) {
       SetErrorMessage("no frame yet");
       return;
     }
-    uv_mutex_lock(&videoCapture->frameDataLock);
-    switch (videoCapture->frameFormat) {
+    uv_mutex_lock(&state->frameDataLock);
+    switch (state->frameFormat) {
     default:
       // Porting error.  Nothing to do but soldier on...
-      ALOGE("Warning: Unknown frame format: %d\n", videoCapture->frameFormat);
+      ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
       //fall through
     case libpreview::FRAMEFORMAT_YVU420SP:
       {
         // Setup a Matrix object to store the remote image using the
         // height/width that OpenCV expects for a YVU420 semi-planar format
         cv::Mat remote(
-          videoCapture->frameHeight * 3 / 2,
-          videoCapture->frameWidth,
+          state->frameHeight * 3 / 2,
+          state->frameWidth,
           CV_8UC1,
-          videoCapture->frameBuffer
+          state->frameBuffer
         );
 
         // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
@@ -113,10 +190,10 @@ public:
         cv::cvtColor(remote, rgb, CV_YUV420sp2BGR, 0);
 
         cv::Mat remoteGray(
-          videoCapture->frameHeight,
-          videoCapture->frameWidth,
+          state->frameHeight,
+          state->frameWidth,
           CV_8UC1,
-          videoCapture->frameBuffer
+          state->frameBuffer
         );
         gray = remoteGray.clone();
         break;
@@ -124,23 +201,23 @@ public:
     case libpreview::FRAMEFORMAT_RGB:
       {
         cv::Mat remote(
-          videoCapture->frameHeight,
-          videoCapture->frameWidth,
+          state->frameHeight,
+          state->frameWidth,
           CV_8UC3,
-          videoCapture->frameBuffer
+          state->frameBuffer
         );
         rgb = remote.clone();
         cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
         break;
       }
     }
-    uv_mutex_unlock(&videoCapture->frameDataLock);
+    uv_mutex_unlock(&state->frameDataLock);
 #else
-    if (!videoCapture->cap.grab()) {
+    if (!state->cap.grab()) {
       SetErrorMessage("grab failed");
       return;
     }
-    if (!videoCapture->cap.retrieve(rgb)) {
+    if (!state->cap.retrieve(rgb)) {
       SetErrorMessage("retrieve failed");
       return;
     }
@@ -150,49 +227,46 @@ public:
     cv::resize(
       gray,
       scaledGray,
-      cv::Size(videoCapture->scaledWidth, videoCapture->scaledHeight),
+      cv::Size(state->scaledWidth, state->scaledHeight),
       0, 0,
       cv::INTER_LINEAR
     );
   }
 
   void HandleErrorCallback() {
-    if (videoCapture->closed) {
-      videoCapture->InternalClose();
-      return;
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
+      Nan::AsyncWorker::HandleErrorCallback();
     }
-    videoCapture->processing = false;
-
-    Nan::AsyncWorker::HandleErrorCallback();
   }
 
   void HandleOKCallback() {
-    Nan::HandleScope scope;
-    node_opencv::Matrix *mat;
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
 
-    if (videoCapture->closed) {
-      videoCapture->InternalClose();
-      return;
+      Nan::HandleScope scope;
+      node_opencv::Matrix *mat;
+
+      v8::Local<v8::Object> localRGB = Nan::New(destRGB);
+      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localRGB);
+      mat->mat = rgb;
+
+      v8::Local<v8::Object> localGray = Nan::New(destGray);
+      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localGray);
+      mat->mat = gray;
+
+      v8::Local<v8::Object> localScaledGray = Nan::New(destScaledGray);
+      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localScaledGray);
+      mat->mat = scaledGray;
+
+      destGray.Reset();
+      destScaledGray.Reset();
+      destRGB.Reset();
+
+      Nan::AsyncWorker::HandleOKCallback();
     }
-    videoCapture->processing = false;
-
-    v8::Local<v8::Object> localRGB = Nan::New(destRGB);
-    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localRGB);
-    mat->mat = rgb;
-
-    v8::Local<v8::Object> localGray = Nan::New(destGray);
-    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localGray);
-    mat->mat = gray;
-
-    v8::Local<v8::Object> localScaledGray = Nan::New(destScaledGray);
-    mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localScaledGray);
-    mat->mat = scaledGray;
-
-    destGray.Reset();
-    destScaledGray.Reset();
-    destRGB.Reset();
-
-    Nan::AsyncWorker::HandleOKCallback();
   }
 
 private:
@@ -203,42 +277,11 @@ private:
   Nan::Persistent<v8::Object> destRGB;
   Nan::Persistent<v8::Object> destGray;
   Nan::Persistent<v8::Object> destScaledGray;
-  VideoCapture* videoCapture;
+  std::weak_ptr<State> weakState;
 };
 
 
 Nan::Persistent<v8::Function> VideoCapture::constructor;
-
-VideoCapture::VideoCapture(int deviceId, int scaledWidth, int scaledHeight)
-    : processing(false),
-      closed(false),
-      scaledWidth(scaledWidth),
-      scaledHeight(scaledHeight) {
-  bool ok;
-#ifdef ANDROID
-  uv_mutex_init(&frameDataLock);
-  frameWidth = frameHeight = 0;
-  frameBuffer = NULL;
-  ok = libpreview::load(&preview);
-  if (ok) {
-    ok = preview.open(OnFrameCallback, this);
-  }
-#else
-  cap.open(deviceId);
-  ok = cap.isOpened();
-#endif
-  if (!ok) {
-    processing = true;
-    Nan::ThrowError("Camera could not be opened");
-  }
-}
-
-VideoCapture::~VideoCapture() {
-  InternalClose();
-#ifdef ANDROID
-  uv_mutex_destroy(&frameDataLock);
-#endif
-}
 
 void VideoCapture::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
@@ -277,7 +320,13 @@ NAN_METHOD(VideoCapture::New) {
   int scaledWidth = info[1]->ToInt32()->Value();
   int scaledHeight = info[2]->ToInt32()->Value();
 
-  VideoCapture* self = new VideoCapture(deviceId, scaledWidth, scaledHeight);
+  State *state = State::Create(deviceId, scaledWidth, scaledHeight);
+  if (state == NULL) {
+    Nan::ThrowError("Camera could not be opened");
+    return;
+  }
+
+  VideoCapture* self = new VideoCapture(state);
   self->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
 }
@@ -285,7 +334,7 @@ NAN_METHOD(VideoCapture::New) {
 NAN_METHOD(VideoCapture::Read) {
   VideoCapture* self = ObjectWrap::Unwrap<VideoCapture>(info.Holder());
 
-  if (self->processing) {
+  if (!self->state || self->state->busy) {
     Nan::ThrowError("Busy");
     return;
   }
@@ -303,10 +352,11 @@ NAN_METHOD(VideoCapture::Read) {
     return;
   }
 
+  self->state->busy = true;
   Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
   Nan::AsyncQueueWorker(
     new VideoCaptureFrameWorker(
-      self,
+      self->state,
       info[0]->ToObject(),
       info[1]->ToObject(),
       info[2]->ToObject(),
@@ -317,54 +367,38 @@ NAN_METHOD(VideoCapture::Read) {
 
 NAN_METHOD(VideoCapture::Close) {
   VideoCapture* self = ObjectWrap::Unwrap<VideoCapture>(info.Holder());
-
-  if (self->closed) {
-    return;
-  }
-
-  self->closed = true;
-  if (!self->processing) {
-    self->InternalClose();
-    self->processing = true;
-  }
-}
-
-void VideoCapture::InternalClose() {
-#ifdef ANDROID
-  uv_mutex_lock(&frameDataLock);
-  if (frameBuffer != NULL) {
-    preview.releaseFrame(frameBuffer);
-    frameBuffer = NULL;
-  }
-  uv_mutex_unlock(&frameDataLock);
-  preview.close();
-#else
-  cap.release();
-#endif
+  self->state = NULL;
 }
 
 #ifdef ANDROID
-void VideoCapture::OnFrameCallback(void *userData,
-                                   void* buffer,
-                                   libpreview::FrameFormat format,
-                                   size_t width,
-                                   size_t height) {
+void State::OnAbandonedCallback(void *userData) {
+  State *state = static_cast<State*>(userData);
+  uv_mutex_lock(&state->frameDataLock);
+  state->frameBuffer = NULL;
+  uv_mutex_unlock(&state->frameDataLock);
+}
 
-  VideoCapture *that = static_cast<VideoCapture *>(userData);
+void State::OnFrameCallback(void *userData,
+                            void* buffer,
+                            libpreview::FrameFormat format,
+                            size_t width,
+                            size_t height) {
+
+  State *state = static_cast<State *>(userData);
   void *lastFrameBuffer = NULL;
 
-  uv_mutex_lock(&that->frameDataLock);
-  if (!that->closed) {
-    lastFrameBuffer = that->frameBuffer;
-    that->frameBuffer = buffer;
-    that->frameFormat = format;
-    that->frameWidth = width;
-    that->frameHeight = height;
+  uv_mutex_lock(&state->frameDataLock);
+  if (state->preview) {
+    lastFrameBuffer = state->frameBuffer;
+    state->frameBuffer = buffer;
+    state->frameFormat = format;
+    state->frameWidth = width;
+    state->frameHeight = height;
     if (lastFrameBuffer) {
-      that->preview.releaseFrame(lastFrameBuffer);
+      state->preview->releaseFrame(lastFrameBuffer);
     }
   }
-  uv_mutex_unlock(&that->frameDataLock);
+  uv_mutex_unlock(&state->frameDataLock);
 }
 #endif
 

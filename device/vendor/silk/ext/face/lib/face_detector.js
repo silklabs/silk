@@ -132,6 +132,7 @@ export default class FaceDetector {
             });
             timeline.addDiagFrame(diagLabel, when, faceIm);
           }
+          faceIm.release();
           if (faces.length > 0) {
             if (faces.length > 1) {
               log.warn('More than one hog face detected, selecting first');
@@ -208,11 +209,13 @@ export default class FaceDetector {
           diagLabel = `weakface_${i}`;
         }
         if (timeline.diagFrameEnabled(diagLabel)) {
+          const roi = safeRoi(grayeq, faceRect);
           timeline.addDiagFrame(
             diagLabel,
             when,
-            safeRoi(grayeq, faceRect)
+            roi
           );
+          roi.release();
         }
       }
 

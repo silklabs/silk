@@ -257,6 +257,10 @@ export default class FaceTracker {
     // Collect the list of idle trackers
     const idleFaces = this._getIdleTrackers();
 
+    if (idleFaces.length === 0) {
+      return [];
+    }
+
     // Run all the trackers in parallel
     const startTime = Date.now();
     let trackingResults = await Promise.all(idleFaces.map(face => {

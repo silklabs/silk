@@ -173,6 +173,7 @@ export default class FaceRecognizer {
               const faceName = this.faceLabel(faceId);
               log.debug(`Face detected id:${faceId} ${faceName} confidence:${faceConfidence}`);
 
+              face.name = faceName;
               timeline.addDiagFrame(
                 `detected:${faceId}:${faceName}:${faceConfidence}`,
                 when,

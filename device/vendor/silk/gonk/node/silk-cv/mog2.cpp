@@ -4,8 +4,18 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 #include <nan.h>
+#include <memory>
 #include "Matrix.h"
 #include <opencv2/video/background_segm.hpp>
+
+
+struct State {
+  cv::Ptr<cv::BackgroundSubtractorMOG2> subtractor;
+  bool busy;
+  State(cv::Ptr<cv::BackgroundSubtractorMOG2> subtractor)
+    : subtractor(subtractor), busy(false) {};
+};
+
 
 /*
  * Implements the 'Mog2' Javascript class
@@ -17,19 +27,19 @@ public:
 
 private:
   explicit Mog2(int history, float varThreshold) {
+    state.reset(new State(
 #if CV_MAJOR_VERSION >= 3
-    subtractor = cv::createBackgroundSubtractorMOG2(history, varThreshold, false);
+      cv::createBackgroundSubtractorMOG2(history, varThreshold, false)
 #else
-    subtractor = new cv::BackgroundSubtractorMOG2(history, varThreshold, false);
+      new cv::BackgroundSubtractorMOG2(history, varThreshold, false)
 #endif
-    processing = false;
+    ));
   }
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Apply(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void GetBackground(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  cv::Ptr<cv::BackgroundSubtractorMOG2> subtractor;
-  bool processing;
+  std::shared_ptr<State> state;
 };
 
 
@@ -38,49 +48,54 @@ private:
  */
 class Mog2FrameWorker : public Nan::AsyncWorker {
 public:
-  explicit Mog2FrameWorker(Mog2 *mog2,
+  explicit Mog2FrameWorker(std::weak_ptr<State> weakState,
                            cv::Mat image,
                            v8::Local<v8::Object> outputMat,
                            Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
       image(image),
-      mog2(mog2) {
-    mog2->processing = true;
+      weakState(weakState) {
     destMat.Reset(outputMat);
   }
   virtual ~Mog2FrameWorker() {}
 
   void Execute() {
+    auto state = weakState.lock();
+    if (state) {
 #if CV_MAJOR_VERSION >= 3
-    mog2->subtractor->apply(image, fgMask);
+      state->subtractor->apply(image, fgMask);
 #else
-    mog2->subtractor->operator()(image, fgMask);
+      state->subtractor->operator()(image, fgMask);
 #endif
+    }
   }
 
   void HandleOKCallback() {
     Nan::HandleScope scope;
 
-    mog2->processing = false;
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
 
-    v8::Local<v8::Object> localDestMat = Nan::New(destMat);
-    node_opencv::Matrix *mat =
-      Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localDestMat);
-    mat->mat = fgMask;
-    destMat.Reset();
+      v8::Local<v8::Object> localDestMat = Nan::New(destMat);
+      node_opencv::Matrix *mat =
+        Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localDestMat);
+      mat->mat = fgMask;
+      destMat.Reset();
 
-    v8::Local<v8::Value> argv[] = {
-      localDestMat,
-    };
+      v8::Local<v8::Value> argv[] = {
+        localDestMat,
+      };
 
-    callback->Call(1, argv);
+      callback->Call(1, argv);
+    }
   }
 
 private:
   cv::Mat image;
   cv::Mat fgMask;
   Nan::Persistent<v8::Object> destMat;
-  Mog2 *mog2;
+  std::weak_ptr<State> weakState;
 };
 
 
@@ -130,7 +145,7 @@ NAN_METHOD(Mog2::New) {
 NAN_METHOD(Mog2::Apply) {
   Mog2* self = ObjectWrap::Unwrap<Mog2>(info.Holder());
 
-  if (self->processing) {
+  if (self->state->busy) {
     Nan::ThrowError("Busy");
     return;
   }
@@ -149,8 +164,9 @@ NAN_METHOD(Mog2::Apply) {
     return;
   }
 
+  self->state->busy = true;
   Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
-  Nan::AsyncQueueWorker(new Mog2FrameWorker(self, frame, info[1]->ToObject(), callback));
+  Nan::AsyncQueueWorker(new Mog2FrameWorker(self->state, frame, info[1]->ToObject(), callback));
 }
 
 NAN_METHOD(Mog2::GetBackground) {
@@ -158,7 +174,7 @@ NAN_METHOD(Mog2::GetBackground) {
 
   node_opencv::Matrix *mat =
     Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(info[0]->ToObject());
-  self->subtractor->getBackgroundImage(mat->mat);
+  self->state->subtractor->getBackgroundImage(mat->mat);
 }
 
 

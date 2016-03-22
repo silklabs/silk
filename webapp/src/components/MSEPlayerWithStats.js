@@ -1,6 +1,6 @@
 /**
- * Wrap `MSEPlayer` and display statistics about video streaming and
- * playback.
+ * Like `MSEPlayer`, but provides statistics about video streaming and
+ * playback via the an `onStatsUpdate` callback.
  */
 
 import React from 'react';
@@ -12,18 +12,26 @@ import type { Segment } from 'silk-cam';
 
 const log = createLog('MSEPlayerStats');
 
-function formatMs(number) {
-  return `${(number / 1000).toFixed(2)}s`;
-}
+// Ignore when we're not buffered for less than a frame.
+const MIN_OUT_OF_BUFFER_MS = 30;
 
-function formatDeltaMs(number) {
-  if (number > 0) {
-    return '+' + formatMs(number);
-  }
-  return formatMs(number);
-}
+// The absolute minimum duration we can expect all segments to have.
+const MIN_SEGMENT_DURATION_MS = 100;
+
+const initialStats = {
+  elapsedMs: 0,
+  playbackMs: 0,
+  deviceToClientLagMs: null,
+  totalDroppedMs: 0,
+  totalStalledMs: 0,
+  totalOutOfBufferMs: 0,
+  totalBufferedMs: 0,
+  reloadCount: 0,
+};
 
 export default class MSEPlayerWithStats extends React.Component {
+
+  stats = null;
 
   // Note: make sure you account for new members in `_init()` below!
   videoStartTimestamp: ?number;
@@ -35,16 +43,14 @@ export default class MSEPlayerWithStats extends React.Component {
   outOfBuffer: boolean = false;
   previousSegmentEndTimeMs: ?number;
 
-  static _initialState = {
-    deviceToClientLagMs: null,
-    totalDroppedMs: 0,
-    totalStalledMs: 0,
-    totalOutOfBufferMs: 0,
-    totalBufferedMs: 0,
-    reloadCount: 0,
-  };
+  outOfBufferTimer: ?number;
+  updateTimer: ?number;
 
-  state = Object.assign({}, MSEPlayerWithStats._initialState);
+  static propTypes = {
+    onStatsUpdate: React.PropTypes.func,
+    maxStatsUpdateIntervalMs: React.PropTypes.number,
+    ...MSEPlayer.propTypes,
+  };
 
   get videoElement(): ?HTMLVideoElement {
     return this.refs.player && this.refs.player.videoElement;
@@ -52,7 +58,34 @@ export default class MSEPlayerWithStats extends React.Component {
 
   componentDidMount() {
     this._init();
+    this._dispatchStatsUpdate();
   }
+
+  _dispatchStatsUpdate = () => {
+    if (!this.props.onStatsUpdate) {
+      return;
+    }
+
+    // Consumer can specify that they want to be updated every X ms or more often.
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+      this.updateTimer = null;
+    }
+    if (this.props.maxStatsUpdateIntervalMs) {
+      this.updateTimer = setTimeout(
+        this._dispatchStatsUpdate,
+        this.props.maxStatsUpdateIntervalMs
+      );
+    }
+
+    if (this.videoStartTimestamp) {
+      this.stats.elapsedMs = Date.now() - this.videoStartTimestamp;
+    }
+    if (this.videoElement) {
+      this.stats.playbackMs = this.videoElement.currentTime * 1000;
+    }
+    this.props.onStatsUpdate(Object.assign({}, this.stats));
+  };
 
   componentWillUnmount() {
     if (this.outOfBufferTimer) {
@@ -71,20 +104,26 @@ export default class MSEPlayerWithStats extends React.Component {
     if (this.expectNextSegmentTimestamp !== null) {
       delta = deviceTimestamp - this.expectNextSegmentTimestamp;
     }
-    const deviceToClientLagMs = Date.now() - deviceTimestamp;
-    requestAnimationFrame(() => this.setState({
-      deviceToClientLagMs,
-      totalDroppedMs: this.state.totalDroppedMs + delta,
-    }));
+    this.stats.deviceToClientLagMs = Date.now() - deviceTimestamp;
+    if (delta >= MIN_SEGMENT_DURATION_MS) {
+      this.stats.totalDroppedMs += delta;
+    }
+    this._dispatchStatsUpdate();
 
     this.expectNextSegmentTimestamp = deviceTimestamp + segment.videoDurationTimeMs;
     return segment;
+  }
+
+  forceReload() {
+    this.refs.player.forceReload();
   }
 
   _init() {
     if (this.outOfBufferTimer) {
       clearTimeout(this.outOfBufferTimer);
     }
+
+    this.stats = Object.assign({}, initialStats);
 
     this.videoStartTimestamp = null;
     this.expectNextSegmentTimestamp = null;
@@ -110,9 +149,8 @@ export default class MSEPlayerWithStats extends React.Component {
       log.debug(`Video resuming after ${delta} ms stall.`);
 
       this.lastStalledTimestamp = null;
-      requestAnimationFrame(() => this.setState({
-        totalStalledMs: this.state.totalStalledMs + delta,
-      }));
+      this.stats.totalStalledMs += delta;
+      this._dispatchStatsUpdate();
       return;
     }
 
@@ -152,25 +190,24 @@ export default class MSEPlayerWithStats extends React.Component {
     clearTimeout(this.outOfBufferTimer);
     this.outOfBufferTimer = setTimeout(this._onOutOfBuffer, outOfBufferMs);
 
-    requestAnimationFrame(() => this.setState({
-      totalBufferedMs: segment.videoStartTimeMs,
-      totalOutOfBufferMs: this.state.totalOutOfBufferMs + timeOutOfBuffer,
-    }));
+    if (timeOutOfBuffer < MIN_OUT_OF_BUFFER_MS) {
+      timeOutOfBuffer = 0;
+    }
+
+    this.stats.totalBufferedMs = segment.videoStartTimeMs;
+    this.stats.totalOutOfBufferMs += timeOutOfBuffer;
+    this._dispatchStatsUpdate();
+
+    this.props.onSegmentEnqueued && this.props.onSegmentEnqueued();
   };
 
   _onReload = () => {
     log.debug('Video element reloaded');
-
+    const reloadCount = this.stats.reloadCount;
     this._init();
-
-    const reloadCount = this.state.reloadCount;
-    requestAnimationFrame(() => this.setState(Object.assign(
-      {},
-      MSEPlayerWithStats._initialState,
-      {
-        reloadCount: reloadCount + 1,
-      },
-    )));
+    this.stats.reloadCount = reloadCount + 1;
+    this._dispatchStatsUpdate();
+    this.props.onReload && this.props.onReload();
   };
 
   _onOutOfBuffer = () => {
@@ -178,50 +215,6 @@ export default class MSEPlayerWithStats extends React.Component {
     this.outOfBuffer = true;
   };
 
-  _renderStats() {
-    if (!this.props.showStats) {
-      return null;
-    }
-
-    const currentVideoTimeMs = this.videoElement.currentTime * 1000;
-    const elapsedMs = Date.now() - this.videoStartTimestamp;
-    const {
-      deviceToClientLagMs,
-      totalStalledMs,
-      totalBufferedMs,
-      totalOutOfBufferMs,
-      totalDroppedMs,
-      reloadCount,
-    } = this.state;
-    return (
-      <div style={styles.videoStats}>
-        <ul style={styles.videoStatsList}>
-          <li style={styles.videoStatsItem}>
-            Time:<br/>
-            {formatMs(elapsedMs)} elapsed<br/>
-            {formatMs(currentVideoTimeMs)} {' <video> '}
-            ({formatDeltaMs(currentVideoTimeMs - elapsedMs)})
-          </li>
-          <li style={styles.videoStatsItem}>
-            Buffer:<br/>
-            {formatMs(totalBufferedMs)} buffered<br/>
-            {formatMs(currentVideoTimeMs)} {' <video> '}
-            ({formatDeltaMs(currentVideoTimeMs - totalBufferedMs)})
-          </li>
-          <li style={styles.videoStatsItem}>
-            Lag/Stalls/Drops:<br/>
-            {formatMs(deviceToClientLagMs)} lag device to client<br/>
-            {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
-            {formatMs(totalOutOfBufferMs)} out of buffer<br/>
-            {formatMs(totalDroppedMs)} in segments dropped
-          </li>
-          <li style={styles.videoStatsItem}>
-            Reload Count: {reloadCount}
-          </li>
-        </ul>
-      </div>
-    );
-  }
 
   _onStalled = (event) => {
     this._onVideoStalledOrResumed(event);
@@ -240,37 +233,15 @@ export default class MSEPlayerWithStats extends React.Component {
 
   render() {
     return (
-      <div>
-        <MSEPlayer
-          ref="player"
-          {...this.props}
-          onStalled={this._onStalled}
-          onWaiting={this._onWaiting}
-          onPlaying={this._onPlaying}
-          onSegmentEnqueued={this._onSegmentEnqueued}
-          onReload={this._onReload}
-        />
-        {this._renderStats()}
-      </div>
+      <MSEPlayer
+        ref="player"
+        {...this.props}
+        onStalled={this._onStalled}
+        onWaiting={this._onWaiting}
+        onPlaying={this._onPlaying}
+        onSegmentEnqueued={this._onSegmentEnqueued}
+        onReload={this._onReload}
+      />
     );
   }
 }
-
-const styles = {
-  videoStats: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  videoStatsList: {
-    margin: 0,
-    padding: '0px 8px 8px 8px',
-    listStyleType: 'none',
-  },
-  videoStatsItem: {
-    marginTop: 10,
-    marginBottom: 10,
-  },
-};

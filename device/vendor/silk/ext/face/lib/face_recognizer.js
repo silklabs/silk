@@ -231,6 +231,10 @@ export default class FaceRecognizer {
           when,
           faceim
         );
+        // Run training as soon as enough faces are available
+        if (face.i.recognizer.trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
+          await this.updateTraining(face);
+        }
       } else {
         faceim.release();
       }
@@ -241,22 +245,18 @@ export default class FaceRecognizer {
     this._predicting = false;
   }
 
-  async updateTraining(faces: Array<Face>): Promise<void> {
+  async updateTraining(face: Face): Promise<void> {
     this._training = true;
     let reload = false;
-    for (let face of faces) {
-      if (!face.i.recognizer) {
-        continue; // Never worked on this face, ignore it.
-      }
-      if (face.i.recognizer.trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
-        const trainingImages = face.i.recognizer.trainingImages.toArray();
-        if (await this._trainer.addNewFace(trainingImages, this._nextFaceName)) {
-          reload = true;
-        }
-        this._nextFaceName = null;
-      }
-      face.i.recognizer.trainingImages.forEach(im => im.release());
+    if (!face.i.recognizer) {
+      return; // Never worked on this face, ignore it.
     }
+    const trainingImages = face.i.recognizer.trainingImages.toArray();
+    if (await this._trainer.addNewFace(trainingImages, this._nextFaceName)) {
+      reload = true;
+    }
+    this._nextFaceName = null;
+    face.i.recognizer.trainingImages.forEach(im => im.release());
     this._training = false;
     if (reload) {
       this._init(true);

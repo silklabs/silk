@@ -96,7 +96,7 @@ class Main {
 
   onPreview = async (when: number): Promise<void> => {
     let [lowgray] = await camera.getFrame(when, ['lowgray']);
-    let lostFaces = await this.faceTracker.update(when, lowgray);
+    await this.faceTracker.update(when, lowgray);
 
     // Update timeline with currently tracked faces
     this.faceTracker.faces.forEach(face => {
@@ -115,10 +115,6 @@ class Main {
       );
       face.name = name; // Add name to the face object
     });
-
-    if (lostFaces.length > 0) {
-      this.faceRecognizer.updateTraining(lostFaces);
-    }
   };
 
   onCommand(cmd) {

@@ -10,6 +10,12 @@ export BRANCH
 
 ENVSETUP=source build/envsetup.sh $(1) && test "$$SILK_ENVSETUP" == "1"
 
+ifeq ($(V),1)
+hide_repo :=
+else
+hide_repo := --quiet
+endif
+
 .PHONY: all
 all: | .repo/.repo_fetchtimes.json
 	$(ENVSETUP) && time $(MAKE) -f build/core/main.mk
@@ -49,7 +55,7 @@ zest:
 
 .PHONY: sync
 sync: | .repo/manifest.xml
-	./repo sync -j4 --current-branch --no-tags --quiet
+	./repo sync -j4 --current-branch --no-tags $(hide_repo)
 	date +%s > .repo/.repo_fetchtimes.json
 	rm -rf out/lastpatch.md5sum
 
@@ -173,7 +179,7 @@ update.%:
 REPO_INIT_HOST:=$(shell uname | tr A-Z a-z)
 
 .repo/.repo_fetchtimes.json: .repo/manifest.xml
-	./repo sync -j4 --current-branch --no-tags --quiet
+	./repo sync -j4 --current-branch --no-tags $(hide_repo)
 	date +%s > .repo/.repo_fetchtimes.json
 	rm -rf out/lastpatch.md5sum
 

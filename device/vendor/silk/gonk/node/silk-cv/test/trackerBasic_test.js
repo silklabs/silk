@@ -94,7 +94,7 @@ suite('Tracker', () => {
             );
             assert(tracker.busy(), 'Tracker should be busy');
             tracker.cancel();
-            assert(!tracker.busy(), 'Tracker should not be busy');
+            assert(tracker.busy(), 'Tracker should still be busy');
             setTimeout(resolve, 250);
           }
         );

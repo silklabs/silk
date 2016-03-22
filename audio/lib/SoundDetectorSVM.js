@@ -23,7 +23,7 @@ class SoundClassDetector {
     this.featureVectorExtractor.on('loud-sound', this._onLoudSound);
     this.featureVectorExtractor.on('quiet', this._onQuiet);
     if (typeof cfg.model !== 'object') {
-      throw 'SVM model must be a JSON object';
+      throw new Error('SVM model must be a JSON object');
     }
     this.svm.fromJSON(cfg.model);  
     this._reset();

@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 import invariant from 'assert';
-import { createSoundDetectorSVM,
+import { createSoundDetectorSVM, parsePackedSVMModel,
          svmFFTConfig, svmSoundsConfigs } from 'silk-audio';
 import fs from 'fs';
 import path from 'path';
@@ -18,13 +18,13 @@ function loadModel(svmCfg) {
   return new Promise((resolve, reject) => {
     let modelPath = path.resolve(path.join(MODEL_DIR, svmCfg.model));
     log.info(`Reading model from ${modelPath}`);
-    fs.readFile(modelPath, 'utf8', (err, data) => {
+    fs.readFile(modelPath, (err, model) => {
       if (err) {
         log.error(`Failed to read model: ${err}`);
         return reject(err);
       }
-      log.info(`Fetched model ${modelPath}`);
-      svmCfg.model = JSON.parse(data);
+      log.info(`Fetched model ${modelPath}; ${model.length} bytes`);
+      svmCfg.model = parsePackedSVMModel(model.buffer);
       return resolve();
     });
   });

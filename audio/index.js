@@ -82,6 +82,59 @@ export function createSoundDetectorSVM(fftParams, svmParams) {
   return new SoundDetectorSVM(analyzer, svmCfgs);
 }
 
+/**
+ * Parse the ArrayBuffer `modelArrayBuffer` into a JSON object that
+ * represents an SVM configuration.  The returned JSON object can be
+ * used with `createSoundDetectorSVM()` to create a sound event
+ * detector.
+ */
+export function parsePackedSVMModel(modelArrayBuffer) {
+  let array = new Float64Array(modelArrayBuffer);
+  // The values that we extract from the packed SVM model have been
+  // computed by the training process, and the actual parameters
+  // comprise the "internal" representation used by the svmjs module.
+  // They're briefly described below.
+  //
+  // `N`: the number of "support vectors" that have been selected for
+  // this SVM.
+  //
+  // `D`: dimensionality of the support vectors.
+  //
+  // `b`: learned bias term that's applied to vectors.
+  //
+  // `rbfSigma`: for the Gaussian rational basis function used to
+  // "smooth" the input data, `rbfSigma` approximately describes the
+  // "radius" of the smoothing.  There's an analogy to the radius of a
+  // Gaussian blur.
+  let [ N, D, b, rbfSigma ] = array.subarray(0, 4);
+  array = array.subarray(4);
+  // `alpha`: these are approximately weights on the individual
+  // support vectors.
+  let alpha = array.subarray(0, N);
+  array = array.subarray(N);
+  // `labels`: these are the user-supplied labels on the training
+  // data, which for the trained model here means that they're the
+  // labels assigned to the support vectors.
+  let labels = array.subarray(0, N);
+  array = array.subarray(N);
+  // These are the learned support vectors.
+  let vectors = [ ];
+  for (let i = 0; i < N; ++i) {
+    let vector = array.subarray(0, D);
+    vectors.push(vector);
+    array = array.subarray(D);
+  }
+  if (array.length !== 0) {
+    log.error(`Un-parsed data in packed model`);
+    return null;
+  }
+  // NB: this is the "internal representation" that svmjs wants for
+  // its `fromJSON()` API.  Please don't change the property names.
+  return {
+    N, D, b, kernelType: 'rbf', rbfSigma, alpha, labels, data: vectors
+  };
+}
+
 //--------------------------------------------------
 // Demo SVM sounds and configuration.  This configuration doesn't
 // really belong here, but we want to share it across device / sim /
@@ -98,7 +151,7 @@ export const svmFFTConfig = {
 export const svmSoundsConfigs = {
   clap: {
     soundClass: 'clap',
-    model: 'clap-svm.json',
+    model: 'clap-svm.raw',
     // This defines which FFT result type we'll use for SVM
     // classification.  It's been found empirically that linear
     // magnitudes are much more discriminative than decibel magnitudes
@@ -143,7 +196,7 @@ export const svmSoundsConfigs = {
 
   firealarm: {
     soundClass: 'firealarm',
-    model: 'firealarm-svm.json',
+    model: 'firealarm-svm.raw',
     fftType: 'fftMagnitudeLinear',
     loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
     loudMinDuration: 0.256,
@@ -174,7 +227,7 @@ export const svmSoundsConfigs = {
 
   glassbreak: {
     soundClass: 'glassbreak',
-    model: 'glassbreak-svm.json',
+    model: 'glassbreak-svm.raw',
     fftType: 'fftMagnitudeLinear',
     loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
     loudMinDuration: 0.256,

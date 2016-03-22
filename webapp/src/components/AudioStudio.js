@@ -1,6 +1,7 @@
 import config from 'silk-config';
 import { createAudioAnalyzer, createSoundDetectorSVM,
          LOUD_SOUND_THRESHOLD_DB,
+         parsePackedSVMModel,
          svmFFTConfig, svmSoundsConfigs } from 'silk-audio';
 import createLog from 'silk-log';
 import React from 'react';
@@ -116,9 +117,9 @@ function isWAVFilename(name) {
 
 function loadModel(cfg) {
   return fetch(cfg.model)
-    .then((response) => response.json())
-    .then((json) => {
-      cfg.model = json;
+    .then((response) => response.arrayBuffer())
+    .then((arrayBuffer) => {
+      cfg.model = parsePackedSVMModel(arrayBuffer);
     })
     .catch((err) =>
            log.error(`Failed to fetch model ${cfg.model}: ${err}`));
@@ -133,7 +134,7 @@ function loadSVMModels() {
   }
   let cfgs = { };
   Object.assign(cfgs, svmSoundsConfigs);
-  return loadingPromise = Promise.all(Object.keys(cfgs).map((key) => {
+  loadingPromise = Promise.all(Object.keys(cfgs).map((key) => {
     let cfg = cfgs[key];
     return loadModel(cfg);
   }))
@@ -142,7 +143,14 @@ function loadSVMModels() {
       loadedSVMConfigs = cfgs;
       loadingPromise = null;
       return Promise.resolve(loadedSVMConfigs);
+    })
+    .catch(() => {
+      // There's not much we can do if the models fail to load.  This
+      // catch() will set things up so that when loading a new track,
+      // we'll try again.  (But probably will fail again.)
+      loadingPromise = null;
     });
+  return loadingPromise;
 }
 
 function makeWAVHeader(params, samplesLength) {

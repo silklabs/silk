@@ -94,10 +94,13 @@ const styles = {
     left: 0,
     pointerEvents: 'none',
   },
-  form: {
+  debugMenu: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: '10px',
     margin: '6px',
+  },
+  debugButton: {
+    marginRight: '8px',
   },
 };
 
@@ -139,6 +142,8 @@ export default class CameraVideo extends React.Component {
   lastRenderedOnline = null;
 
   currentAnimationFrameTimestamp = null;
+
+  dropNextSegment = false;
 
   state = {
     camera: null,
@@ -273,6 +278,11 @@ export default class CameraVideo extends React.Component {
   _onNextVideoClip = (segmentData, when) => {
     if (this.videoStartTimestampDevice === null) {
       this.videoStartTimestampDevice = when;
+    }
+    if (this.dropNextSegment) {
+      log.debug('Dropping this segment.');
+      this.dropNextSegment = false;
+      return;
     }
     this.refs.msePlayer.feedSegmentData(segmentData, when);
   };
@@ -692,7 +702,7 @@ export default class CameraVideo extends React.Component {
 
   _renderDebugMenu() {
     return (
-      <form style={styles.form}>
+      <form style={styles.debugMenu}>
         <h3>Debug Options</h3>
         <Input
           type="checkbox"
@@ -709,8 +719,14 @@ export default class CameraVideo extends React.Component {
           onChange={this._onVideoStatsCheck}
         />
         <Button
+          style={styles.debugButton}
           onClick={() => this.refs.msePlayer.forceReload()}>
           Reload &lt;video&gt; element
+        </Button>
+        <Button
+          style={styles.debugButton}
+          onClick={() => this.dropNextSegment = true}>
+          Drop next segment
         </Button>
       </form>
     );

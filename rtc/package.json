@@ -9,7 +9,6 @@
     "silk-azure-storage": "/azure-storage",
     "silk-server": "/server",
     "silk-streams": "/streams",
-    "silk-device": "/device/vendor/silk/core",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "silk-utils": "/utils"
@@ -36,6 +35,7 @@
     "lint": "eslint test src",
     "flow": "flow check",
     "mocha": "mocha $(find ./test -name '*_test.js')",
-    "test": "npm run lint && npm run mocha && npm run flow"
+    "test-setup": "ln -sf ../../device/vendor/silk/core node_modules/silk-device",
+    "test": "npm run lint && npm run test-setup && npm run mocha && npm run flow"
   }
 }

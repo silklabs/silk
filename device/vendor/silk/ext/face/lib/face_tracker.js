@@ -276,6 +276,7 @@ export default class FaceTracker {
       }
 
       if (!found) {
+        face.i.tracker.impl.cancel();
         face.i.tracker.impl = null;
         lostFaces.push(face);
         log.verbose(`Lost face ${face.id}`);

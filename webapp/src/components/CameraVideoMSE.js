@@ -641,6 +641,10 @@ export default class CameraVideo extends React.Component {
     requestAnimationFrame(() => this.setState({stats}));
   };
 
+  _onReload = () => {
+    this.videoStartTimestampDevice = null;
+  };
+
   _renderStats() {
     if (!this.state.showVideoStats || !this.state.stats) {
       return null;
@@ -778,6 +782,7 @@ export default class CameraVideo extends React.Component {
           onLoadedData={this._onLoadedData}
           onResize={this._updateCanvasSize}
           onPlaying={this._startAnimationLoop}
+          onReload={this._onReload}
         />
       );
     }

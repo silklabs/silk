@@ -45,5 +45,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
   if [[ -z $BOOST ]]; then
     brew install boost
   fi
+
+  # Following packages are needed by protobuf
+  brew install autoconf automake
 fi
 

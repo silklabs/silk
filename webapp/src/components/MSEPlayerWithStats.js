@@ -15,6 +15,9 @@ const log = createLog('MSEPlayerStats');
 // Ignore when we're not buffered for less than a frame.
 const MIN_OUT_OF_BUFFER_MS = 30;
 
+// The absolute minimum duration we can expect all segments to have.
+const MIN_SEGMENT_DURATION_MS = 100;
+
 const initialStats = {
   elapsedMs: 0,
   playbackMs: 0,
@@ -102,7 +105,9 @@ export default class MSEPlayerWithStats extends React.Component {
       delta = deviceTimestamp - this.expectNextSegmentTimestamp;
     }
     this.stats.deviceToClientLagMs = Date.now() - deviceTimestamp;
-    this.stats.totalDroppedMs += delta;
+    if (delta >= MIN_SEGMENT_DURATION_MS) {
+      this.stats.totalDroppedMs += delta;
+    }
     this._dispatchStatsUpdate();
 
     this.expectNextSegmentTimestamp = deviceTimestamp + segment.videoDurationTimeMs;

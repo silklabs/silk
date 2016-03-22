@@ -12,6 +12,7 @@ const log = createLog('CameraVideoMSE');
 
 const desiredFramesPerSecond = 60;
 const desiredFrameDurationMs = 1000 / desiredFramesPerSecond;
+const desiredFrameDurationCeilingMs = Math.ceil(desiredFrameDurationMs);
 
 // Reduce to 80% to avoid accidentally waiting for two frames.
 const minimumFrameDurationMs = Math.floor(desiredFrameDurationMs * 0.8);
@@ -102,7 +103,14 @@ export default class CameraVideo extends React.Component {
   videoStartTimestampDevice = null;
   loadedData = false;
   animationToken = null;
+
+  // Used for rate limiting.
   lastAnimationTimestamp = null;
+
+  // Used to prevent redundant drawing and early object expiration.
+  lastRenderedVideoTimestamp = null;
+  lastRenderedCamera = null;
+  lastRenderedOnline = null;
 
   state = {
     camera: null,
@@ -134,9 +142,12 @@ export default class CameraVideo extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (!this.state.camera && prevState.camera) {
+    if (!this.state.camera) {
       this.videoStartTimestampDevice = null;
       this.loadedData = false;
+      this.lastRenderedVideoTimestamp = null;
+      this.lastRenderedCamera = null;
+      this.lastRenderedOnline = null;
     }
     if (!this.state.camera || !this.state.cameraOnline) {
       this._stopAnimationLoop();
@@ -217,11 +228,8 @@ export default class CameraVideo extends React.Component {
     if (showMotionEvents === this.state.showMotionEvents) {
       return;
     }
-    requestAnimationFrame((now) => {
+    requestAnimationFrame(() => {
       this.setState({showMotionEvents});
-      if (!this.animationToken) {
-        this._renderCanvas(now);
-      }
     });
   };
 
@@ -241,54 +249,85 @@ export default class CameraVideo extends React.Component {
   };
 
   _rerenderCanvas() {
-    // Only request an animation frame if that was not scheduled already, and
-    // don't set |animationToken| so that we don't mistakenly think that we
-    // should be running the animation loop.
-    if (!this.animationToken) {
-      requestAnimationFrame(this._renderCanvas);
-    }
+    requestAnimationFrame((now) => {
+      this._renderCanvas(now, /* isAnimationLoop */ false);
+    });
   }
 
-  _renderCanvas = (now) => {
-    const {camera, cameraOnline: online} = this.state;
+  _renderCanvas(now, isAnimationLoop) {
     invariant(now);
 
     // We don't need sub-millisecond precision.
-    now = Math.round(now);
+    now = Math.floor(now);
 
-    const {animationToken, canvas, context, pixelRatio} = this;
+    const {camera, cameraOnline} = this.state;
+    const {animationToken} = this;
 
-    if (!camera ||
-        !online ||
+    const forceRender =
+      !isAnimationLoop ||
+      camera !== this.lastRenderedCamera ||
+      cameraOnline !== this.lastRenderedOnline;
+
+    // Re-render if |camera| or |cameraOnline| have changed, otherwise re-render
+    // if enough time has elapsed to meet our frame rate goal.
+    if (forceRender ||
         !this.lastAnimationTimestamp ||
         (now - this.lastAnimationTimestamp >= minimumFrameDurationMs)) {
-      context.save();
-      context.scale(pixelRatio, pixelRatio);
 
-      try {
-        this._renderCanvasInternal(context,
-                                   canvas.width / pixelRatio,
-                                   canvas.height / pixelRatio,
-                                   now);
-      } catch(err) {
-        log.warn(err);
-      }
+      // Figure out the window of time for which we should draw objects.
+      const video = this.refs.msePlayer.videoElement;
+      const videoElapsedMs = Math.floor(video.currentTime * 1000);
+      const videoEndTimestamp = this.videoStartTimestampDevice + videoElapsedMs;
 
-      context.restore();
+      if (forceRender ||
+          videoEndTimestamp !== this.lastRenderedVideoTimestamp) {
+        let videoStartTimestamp;
+        if (this.lastRenderedVideoTimestamp &&
+            (videoEndTimestamp - this.lastRenderedVideoTimestamp >
+               desiredFrameDurationCeilingMs)) {
+          videoStartTimestamp = this.lastRenderedVideoTimestamp;
+        } else {
+          videoStartTimestamp =
+            videoEndTimestamp - desiredFrameDurationCeilingMs;
+        }
 
-      if (camera && online) {
+        const {canvas, context, pixelRatio} = this;
+
+        context.save();
+        context.scale(pixelRatio, pixelRatio);
+
+        try {
+          this._renderCanvasInternal(context,
+                                     canvas.width / pixelRatio,
+                                     canvas.height / pixelRatio,
+                                     videoStartTimestamp,
+                                     videoEndTimestamp);
+        } catch(err) {
+          log.warn(err);
+        }
+
+        context.restore();
+
+        this.lastRenderedCamera = camera;
+        this.lastRenderedOnline = cameraOnline;
+        this.lastRenderedVideoTimestamp = videoEndTimestamp;
         this.lastAnimationTimestamp = now;
       }
     }
 
     // Request another animation frame if that has not already happened.
-    if (animationToken && animationToken === this.animationToken) {
-      invariant(camera && online);
-      this.animationToken = requestAnimationFrame(this._renderCanvas);
+    if (isAnimationLoop && animationToken === this.animationToken) {
+      this.animationToken = requestAnimationFrame(this._renderAnimationFrame);
     }
-  };
+  }
 
-  _renderCanvasInternal(context, canvasWidth, canvasHeight, now) {
+  _renderCanvasInternal(
+    context,
+    canvasWidth,
+    canvasHeight,
+    videoStartTimestamp,
+    videoEndTimestamp
+  ) {
     const {camera, cameraOnline: online} = this.state;
     const defaultFont = '16px DINRound';
 
@@ -320,16 +359,8 @@ export default class CameraVideo extends React.Component {
     context.font = defaultFont;
 
     // Draw objects.
-    const video = this.refs.msePlayer.videoElement;
-    const currentVideoTimeMs = Math.round(video.currentTime * 1000);
-    const timeEnd =
-      this.videoStartTimestampDevice + currentVideoTimeMs;
-    const timeDiff =
-      this.lastAnimationTimestamp ?
-      (now - this.lastAnimationTimestamp) :
-      (timeEnd - Math.floor(desiredFrameDurationMs));
-
-    const objects = this._collectAndProcessObjects(timeEnd - timeDiff, timeEnd);
+    const objects =
+      this._collectAndProcessObjects(videoStartTimestamp, videoEndTimestamp);
     if (objects.length) {
       const drawArgs = {
         context,
@@ -534,35 +565,26 @@ export default class CameraVideo extends React.Component {
     });
   }
 
-  _startAnimationLoop() {
+  _startAnimationLoop = () => {
     if (this.animationToken) {
       return;
     }
     log.info('Starting animation loop');
-    this.animationToken = requestAnimationFrame(this._renderCanvas);
+    this.animationToken = requestAnimationFrame(this._renderAnimationFrame);
   }
+
+  _renderAnimationFrame = (now) => {
+    this._renderCanvas(now, /* isAnimationLoop */ true);
+  };
 
   _stopAnimationLoop() {
     if (!this.animationToken) {
       return;
     }
-    log.info('Stopping animation loop', this.animationToken);
+    log.info('Stopping animation loop');
     cancelAnimationFrame(this.animationToken);
     this.animationToken = null;
-    this.lastAnimationTimestamp = null;
   }
-
-  _onVideoEvent = (event) => {
-    const {type} = event;
-    log.debug(`Video '${type}' event`);
-
-    if (type === 'playing') {
-      this._startAnimationLoop();
-      return;
-    }
-
-    this._stopAnimationLoop();
-  };
 
   render() {
     let console = null;
@@ -623,12 +645,7 @@ export default class CameraVideo extends React.Component {
           onLoadedMetadata={this._updateCanvasSize}
           onLoadedData={this._onLoadedData}
           onResize={this._updateCanvasSize}
-          onStalled={this._onVideoEvent}
-          onSuspend={this._onVideoEvent}
-          onWaiting={this._onVideoEvent}
-          onPlaying={this._onVideoEvent}
-          onPause={this._onVideoEvent}
-          onEnded={this._onVideoEvent}
+          onPlaying={this._startAnimationLoop}
         />
       );
     }

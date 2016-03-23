@@ -43,11 +43,6 @@
            remote="github"
            revision="refs/tags/3.1.0" clone-depth="100"/>
 
-  <project name="silk-trainingset"
-           path="vendor/silk/trainingset"
-           remote="silk"
-           revision="master"/>
-
   <project name="node-inspector/v8-profiler"
            path="external/v8-profiler"
            remote="github"

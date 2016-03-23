@@ -524,6 +524,9 @@ export default class CameraVideo extends React.Component {
       const firstObject = objectArray[0];
       const tag = firstObject.tag;
       const source = firstObject.source;
+      // TODO: Be more generic about copying `faceId' and other tag-specific
+      // objects into the averageObject...
+      const faceId = firstObject.faceId;
 
       // Draw all motion rects if that option is enabled.
       if (tag === 'motion') {
@@ -540,6 +543,9 @@ export default class CameraVideo extends React.Component {
         if ('name' in object) {
           result.name = object.name;
         }
+        if ('faceId' in object) {
+          result.faceId = object.faceId;
+        }
         if (object.rects.length) {
           result.rects = result.rects.concat(object.rects);
         }
@@ -547,6 +553,7 @@ export default class CameraVideo extends React.Component {
       }, {
         id: objectId,
         source,
+        faceId,
         tag,
         when: firstObject.when,
         rects: [],
@@ -690,15 +697,14 @@ export default class CameraVideo extends React.Component {
   }
 
   _getFaceName(object) {
+    if (!object.faceId) {
+      return 'Unknown';
+    }
+
     let name = this.faceIdNameMap.get(object.faceId);
     if (!name) {
-      if (object.name === `unknown face` ||
-          object.name.substring(0, 6) === `Elvis-`) {
-        name = characters[nextCharacterIndex];
-        nextCharacterIndex = ++nextCharacterIndex % characters.length;
-      } else {
-        name = object.name;
-      }
+      name = characters[nextCharacterIndex];
+      nextCharacterIndex = ++nextCharacterIndex % characters.length;
       this.faceIdNameMap.set(object.faceId, name);
     }
     return name;

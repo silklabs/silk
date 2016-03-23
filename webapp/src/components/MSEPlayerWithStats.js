@@ -209,7 +209,7 @@ export default class MSEPlayerWithStats extends React.Component {
       stats.totalBufferedMs -
       stats.playbackMs -
       segment.videoDurationTimeMs;
-    log.debug(`Have ${extraneousBufferedMs}ms worth of extraneous buffer `+
+    log.debug(`Have ${extraneousBufferedMs}ms worth of extraneous buffer ` +
               `beyond recently enqueued segment.`);
     if (!this.ketchupStartTimestamp &&
         extraneousBufferedMs > KETCHUP_BEHIND_THRESHOLD_MS &&

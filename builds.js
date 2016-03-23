@@ -162,6 +162,11 @@ module.exports = {
       },
     },
   }),
+  // TODO: Enable OS X device build once Travis OS X machines have more disk space,
+  //       or the build is smaller :sadface:
+  //
+  //         > cp: error writing 'Release/opencv.node': No space left on device
+  /*
   'device-osx-nightly': nightlyBuild('device', {
     title: 'OS X base nightly',
     travis_config: {
@@ -171,6 +176,7 @@ module.exports = {
       },
     },
   }),
+  */
   'device-base.msm8956-nightly': nightlyBuild('device', {
     branches: ['master', 'next'],
     title: 'base.msm8956 nightly',

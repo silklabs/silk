@@ -137,6 +137,11 @@ function formatTimestamp(when) {
   return date.toLocaleTimeString();
 }
 
+function formatConsoleTimestamp(when) {
+  let date = new Date(when);
+  return date.toLocaleTimeString('en-US').slice(0, -3); // remove AM/PM
+}
+
 function formatMs(number) {
   return `${(number / 1000).toFixed(2)}s`;
 }
@@ -893,7 +898,7 @@ export default class CameraVideo extends React.Component {
       if (this.state.consoleMessages.length) {
         const messages =
           this.state.consoleMessages.map((message) =>
-            <li>[{formatTimestamp(message.when)}] {message.text}</li>);
+            <li>{formatConsoleTimestamp(message.when)} - {message.text}</li>);
         consoleMessages = (
           <div>
             <h2 style={styles.consoleHeader}>Events</h2>

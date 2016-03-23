@@ -23,7 +23,7 @@ const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
 
 // If a face (strong or weak) is not associated with a tracker in this many
 // calls to detectedFaces(), cancel the tracker
-const MAX_NO_FACE_SEEN = 5;
+const MAX_NO_FACE_SEEN = 3;
 
 let camera;
 let log;

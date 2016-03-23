@@ -6,7 +6,6 @@
 
 import CBuffer from 'CBuffer';
 import cv from 'opencv';
-import invariant from 'assert';
 import {
   Matrix,
   Face,
@@ -87,7 +86,6 @@ export default class FaceRecognizer {
    * If not train for available faces
    */
   async _init(forceTraining: bool = false) {
-    invariant(this._idle());
     this._loading = true;
     this._faceMap = null;
 
@@ -110,10 +108,6 @@ export default class FaceRecognizer {
       return false;
     }
 
-    if (this._training) {
-      log.verbose('FaceRecognizer training');
-      return false;
-    }
     return true;
   }
 
@@ -246,7 +240,6 @@ export default class FaceRecognizer {
   }
 
   async updateTraining(face: Face): Promise<void> {
-    this._training = true;
     let reload = false;
     if (!face.i.recognizer) {
       return; // Never worked on this face, ignore it.
@@ -257,7 +250,6 @@ export default class FaceRecognizer {
     }
     this._nextFaceName = null;
     face.i.recognizer.trainingImages.forEach(im => im.release());
-    this._training = false;
     if (reload) {
       this._init(true);
     }

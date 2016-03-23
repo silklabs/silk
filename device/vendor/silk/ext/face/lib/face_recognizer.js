@@ -184,6 +184,7 @@ export default class FaceRecognizer {
           // Initial prediction
           log.verbose(`Face ${face.id}: detected faceId ${faceId}`);
           face.faceId = faceId;
+          face.percentTrained = 100;
           face.i.recognizer.lastWhen = when;
           face.i.recognizer.history.push(faceId);
         }
@@ -192,7 +193,6 @@ export default class FaceRecognizer {
         if (face.faceId === faceId) {
           // Re-prediction of the same face, good.
           log.debug(`Face ${face.id} re-detected: ${faceId}`);
-          face.faceId = faceId;
           face.i.recognizer.lastWhen = when;
         } else {
           // Oops, predicted a different face (or no face)
@@ -210,6 +210,7 @@ export default class FaceRecognizer {
             // Consistently wrong, revert to unknown face
             log.info(`Face ${face.id}: Too many inconsistent predictions`);
             face.faceId = null;
+            face.percentTrained = 0;
             face.i.recognizer.lastWhen = null;
             face.i.recognizer.trainingImages.empty();
           }
@@ -219,14 +220,20 @@ export default class FaceRecognizer {
       if (face.faceId === null) {
         // Collect training data for the unknown face
         log.debug(`Unknown face at ${JSON.stringify(face.rect)}`);
-        face.i.recognizer.trainingImages.push(faceim);
+
+        const trainingImages = face.i.recognizer.trainingImages;
+        trainingImages.push(faceim);
+        face.percentTrained =
+          Math.min(100,
+            Math.round(trainingImages.size / MIN_IMAGES_FOR_TRAINING * 100));
+
         timeline.addDiagFrame(
-          `training:${face.id}:${face.i.recognizer.trainingImages.size}`,
+          `training:${face.id}:${trainingImages.size}`,
           when,
           faceim
         );
         // Run training as soon as enough faces are available
-        if (face.i.recognizer.trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
+        if (trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
           await this.updateTraining(face);
         }
       } else {
@@ -250,6 +257,7 @@ export default class FaceRecognizer {
     }
     this._nextFaceName = null;
     face.i.recognizer.trainingImages.forEach(im => im.release());
+    face.i.recognizer.trainingImages.empty();
     if (reload) {
       this._init();
     }
@@ -260,4 +268,3 @@ export default class FaceRecognizer {
     this._nextFaceName = name;
   }
 }
-

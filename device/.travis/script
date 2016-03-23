@@ -76,8 +76,7 @@ mako)
   $make otapackage
   $make silkota
   ;;
-base.msm8916)
-base.msm8956)
+base.msm8916|base.msm8956)
   $make
   source build/envsetup.sh
   # No |lock_build_fingerprint| here since base.msm8916 build doesn't generate build.prop

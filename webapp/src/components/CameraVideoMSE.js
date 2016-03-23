@@ -17,6 +17,9 @@ const desiredFrameDurationCeilingMs = Math.ceil(desiredFrameDurationMs);
 // Reduce to 80% to avoid accidentally waiting for two frames.
 const minimumFrameDurationMs = Math.floor(desiredFrameDurationMs * 0.8);
 
+const maxStatsUpdateIntervalMs = 250;
+const clogDurationMs = 2000;
+
 const styles = {
   global: {
     fontFamily: 'DINRound',
@@ -146,6 +149,7 @@ export default class CameraVideo extends React.Component {
 
   segmentsDroppedMs = 0;
   dropNextSegment = false;
+  clogQueue = null;
 
   state = {
     camera: null,
@@ -284,6 +288,11 @@ export default class CameraVideo extends React.Component {
     if (this.dropNextSegment) {
       log.debug('Dropping this segment.');
       this.dropNextSegment = false;
+      return;
+    }
+    if (this.clogQueue) {
+      log.debug(`Network is "clogged".`);
+      this.clogQueue.push({segmentData, when});
       return;
     }
     this.refs.msePlayer.feedSegmentData(segmentData, when);
@@ -662,6 +671,17 @@ export default class CameraVideo extends React.Component {
     this.segmentsDroppedMs = 0;
   };
 
+  _clogNetwork = () => {
+    this.clogQueue = [];
+    setTimeout(() => {
+      log.debug(`Network is "unclogged". Found ${this.clogQueue.length} segments in queue.`);
+      for (let {segmentData, when} of this.clogQueue) {
+        this.refs.msePlayer.feedSegmentData(segmentData, when);
+      }
+      this.clogQueue = null;
+    }, clogDurationMs);
+  };
+
   _renderStats() {
     if (!this.state.showVideoStats || !this.state.stats) {
       return null;
@@ -674,9 +694,12 @@ export default class CameraVideo extends React.Component {
       totalStalledMs,
       totalBufferedMs,
       totalOutOfBufferMs,
+      totalOutOfBufferCompensatedMs,
       totalDroppedMs,
       reloadCount,
     } = this.state.stats;
+    const {playbackRate} = this.refs.msePlayer.videoElement;
+
     return (
       <div style={styles.videoStats}>
         <ul style={styles.videoStatsList}>
@@ -699,10 +722,12 @@ export default class CameraVideo extends React.Component {
             {formatMs(deviceToClientLagMs)} lag device to client<br/>
             {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
             {formatMs(totalOutOfBufferMs)} out of buffer<br/>
+            {formatMs(totalOutOfBufferCompensatedMs)} out of buffer (compensated)<br/>
             {formatMs(totalDroppedMs)} in segments dropped
           </li>
           <li style={styles.videoStatsItem}>
-            Reload Count: {reloadCount}
+            Reload Count: {reloadCount}<br/>
+            Playback Rate: {playbackRate}x
           </li>
         </ul>
       </div>
@@ -736,6 +761,11 @@ export default class CameraVideo extends React.Component {
           style={styles.debugButton}
           onClick={() => this.dropNextSegment = true}>
           Drop next segment
+        </Button>
+        <Button
+          style={styles.debugButton}
+          onClick={this._clogNetwork}>
+            Clog network for {formatMs(clogDurationMs)}
         </Button>
       </form>
     );
@@ -799,7 +829,7 @@ export default class CameraVideo extends React.Component {
         <MSEPlayerWithStats
           ref="msePlayer"
           key={this.state.camera.id}
-          maxStatsUpdateIntervalMs={250}
+          maxStatsUpdateIntervalMs={maxStatsUpdateIntervalMs}
           autoPlay="true"
           style={styles.video}
           onStatsUpdate={this._onStatsUpdate}

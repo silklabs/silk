@@ -18,6 +18,9 @@ const MIN_OUT_OF_BUFFER_MS = 30;
 // The absolute minimum duration we can expect all segments to have.
 const MIN_SEGMENT_DURATION_MS = 100;
 
+const KETCHUP_BEHIND_THRESHOLD_MS = 200;
+const KETCHUP_PLAYBACK_RATE = 2;
+
 const initialStats = {
   elapsedMs: 0,
   playbackMs: 0,
@@ -25,6 +28,7 @@ const initialStats = {
   totalDroppedMs: 0,
   totalStalledMs: 0,
   totalOutOfBufferMs: 0,
+  totalOutOfBufferCompensatedMs: 0,
   totalBufferedMs: 0,
   reloadCount: 0,
 };
@@ -42,6 +46,7 @@ export default class MSEPlayerWithStats extends React.Component {
   outOfBufferTimer: ?number;
   outOfBuffer: boolean = false;
   previousSegmentEndTimeMs: ?number;
+  ketchupStartTimestamp: ?number;
 
   outOfBufferTimer: ?number;
   updateTimer: ?number;
@@ -100,11 +105,11 @@ export default class MSEPlayerWithStats extends React.Component {
     // any segments. Given the current segment's duration and device
     // timestamp, we can figure out what timestamp the next segment
     // segment should have. We record any discrepancies.
+    this.stats.deviceToClientLagMs = Date.now() - deviceTimestamp;
     let delta = 0;
     if (this.expectNextSegmentTimestamp !== null) {
       delta = deviceTimestamp - this.expectNextSegmentTimestamp;
     }
-    this.stats.deviceToClientLagMs = Date.now() - deviceTimestamp;
     if (delta >= MIN_SEGMENT_DURATION_MS) {
       this.stats.totalDroppedMs += delta;
     }
@@ -194,11 +199,42 @@ export default class MSEPlayerWithStats extends React.Component {
       timeOutOfBuffer = 0;
     }
 
-    this.stats.totalBufferedMs = segment.videoStartTimeMs;
-    this.stats.totalOutOfBufferMs += timeOutOfBuffer;
+    const {stats} = this;
+    stats.totalBufferedMs = segment.videoStartTimeMs;
+    stats.totalOutOfBufferMs += timeOutOfBuffer;
+    stats.totalOutOfBufferCompensatedMs += timeOutOfBuffer;
     this._dispatchStatsUpdate();
 
-    this.props.onSegmentEnqueued && this.props.onSegmentEnqueued();
+    const extraneousBufferedMs =
+      stats.totalBufferedMs -
+      stats.playbackMs -
+      segment.videoDurationTimeMs;
+    log.debug(`Have ${extraneousBufferedMs}ms worth of extraneous buffer ` +
+              `beyond recently enqueued segment.`);
+    if (!this.ketchupStartTimestamp &&
+        extraneousBufferedMs > KETCHUP_BEHIND_THRESHOLD_MS &&
+        stats.totalOutOfBufferCompensatedMs > timeOutOfBuffer) {
+      this._playKetchup(extraneousBufferedMs - KETCHUP_BEHIND_THRESHOLD_MS);
+    }
+
+    this.props.onSegmentEnqueued && this.props.onSegmentEnqueued(segment);
+  };
+
+  _playKetchup(durationMs) {
+    log.debug(`Going to catch up ${durationMs}ms.`);
+    this.ketchupStartTimestamp = Date.now();
+    this.videoElement.playbackRate = KETCHUP_PLAYBACK_RATE;
+    setTimeout(this._endKetchup, durationMs / KETCHUP_PLAYBACK_RATE);
+  }
+
+  _endKetchup = () => {
+    this.videoElement.playbackRate = 1.0;
+    const actualKetchupDurationMs = Date.now() - this.ketchupStartTimestamp;
+    this.ketchupStartTimestamp = null;
+    log.debug(`Managed to catch up ${actualKetchupDurationMs}ms`);
+
+    this.stats.totalOutOfBufferCompensatedMs -= actualKetchupDurationMs;
+    this._dispatchStatsUpdate();
   };
 
   _onReload = () => {

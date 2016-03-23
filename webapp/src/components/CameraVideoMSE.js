@@ -38,6 +38,7 @@ const characters = [
   'lifesaver',
   'rockstar',
 ];
+let nextCharacterIndex = Math.floor(Math.random() * 1000 % characters.length);
 
 const styles = {
   global: {
@@ -693,7 +694,8 @@ export default class CameraVideo extends React.Component {
     if (!name) {
       if (object.name === `unknown face` ||
           object.name.substring(0, 6) === `Elvis-`) {
-        name = characters[Date.now() % characters.length];
+        name = characters[nextCharacterIndex];
+        nextCharacterIndex = ++nextCharacterIndex % characters.length;
       } else {
         name = object.name;
       }

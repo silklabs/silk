@@ -486,7 +486,7 @@ export default class CameraVideo extends React.Component {
 
         let label;
         if (object.source === `face`) {
-          label = this._getFaceName(object);
+          label = capitalize(this._getFaceName(object));
         } else {
           label = object.name || object.tag || null;
         }

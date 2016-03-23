@@ -135,7 +135,9 @@ export default class ObjectCollector {
     let last = first;
 
     if (interpolationCount > 1) {
-      const {id, tag, name, source} = first;
+      // TODO: Be more generic about copying `faceId' and other tag-specific
+      // objects into the interpolated objects...
+      const {id, faceId, tag, name, source} = first;
 
       const xInc = (secondRect.x - firstRect.x) / interpolationCount;
       const yInc = (secondRect.y - firstRect.y) / interpolationCount;
@@ -151,6 +153,7 @@ export default class ObjectCollector {
           id,
           tag,
           source,
+          faceId,
           when: last.when + last.durationMs,
           durationMs,
           rects: [{

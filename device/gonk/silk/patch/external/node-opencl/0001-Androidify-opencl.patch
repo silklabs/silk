@@ -1,17 +1,19 @@
-From ba16e2050560e493c1c14c0b591a8e8b82075314 Mon Sep 17 00:00:00 2001
+From a34260b88bbb0e3c5685f6a608190a2087349b20 Mon Sep 17 00:00:00 2001
 From: Anshul Jain <anshul@silklabs.com>
 Date: Wed, 2 Dec 2015 22:39:19 -0800
 Subject: [PATCH] Androidify opencl
 
 ---
- Android.mk     | 21 +++++++++++++++++++++
- binding.gyp    |  8 ++++++++
- fakeopencl.cpp |  0
- lib/opencl.js  |  2 +-
- package.json   | 18 ++++++++++--------
- 5 files changed, 40 insertions(+), 9 deletions(-)
+ Android.mk          | 21 ++++++++++++++
+ binding.gyp         | 10 ++++++-
+ fakeopencl.cpp      |  0
+ lib/opencl.js       |  2 +-
+ package.json        | 16 +++++-----
+ test/opencl_demo.js | 84 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 124 insertions(+), 9 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 fakeopencl.cpp
+ create mode 100644 test/opencl_demo.js
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
@@ -41,9 +43,18 @@ index 0000000..f729dcc
 +LOCAL_SHARED_LIBRARIES := libOpenCL
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp
-index 94bbe82..2058ab6 100644
+index 94bbe82..af47823 100644
 --- a/binding.gyp
 +++ b/binding.gyp
+@@ -1,7 +1,7 @@
+ {
+     'targets': [
+     {
+-      'target_name': 'opencl',
++      'target_name': 'node-opencl',
+       'defines': [
+         'VERSION=0.4.0',
+         'NOCL_REALEASE_DRIVER_ISSUES'
 @@ -54,6 +54,14 @@
            'libraries': ['-lGL', '-lOpenCL','-L<(OPENCL_SDK_LIB) -lOpenCL'],
            'cflags': ['-std=c++11' ' -Wall']
@@ -63,26 +74,25 @@ diff --git a/fakeopencl.cpp b/fakeopencl.cpp
 new file mode 100644
 index 0000000..e69de29
 diff --git a/lib/opencl.js b/lib/opencl.js
-index 0158b78..3cc7643 100644
+index 0158b78..54b0b75 100644
 --- a/lib/opencl.js
 +++ b/lib/opencl.js
 @@ -1,6 +1,6 @@
  "use strict";
  
 -var cl = require('bindings')('opencl.node');
-+var cl = require('build/opencl.node');
++var cl = require('build/node-opencl.node');
  
  module.exports = cl;
  
 diff --git a/package.json b/package.json
-index 2129015..d82a8e9 100644
+index 2129015..642dd34 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,9 +1,12 @@
 -﻿{
--  "name": "node-opencl",
 +{
-+  "name": "opencl",
+   "name": "node-opencl",
    "version": "0.4.0",
    "description": "A binding to OpenCL for Node.JS",
 -  "main": "lib/opencl.js",
@@ -122,6 +132,96 @@ index 2129015..d82a8e9 100644
    }
  }
 +
+diff --git a/test/opencl_demo.js b/test/opencl_demo.js
+new file mode 100644
+index 0000000..4c5a0ac
+--- /dev/null
++++ b/test/opencl_demo.js
+@@ -0,0 +1,84 @@
++/**
++ * Copyright (c) 2016 Silk Labs, Inc.
++ * All Rights Reserved.
++ * Confidential and Proprietary - Silk Labs, Inc.
++ *
++ * @private
++ */
++
++/**
++ * Pre-requisites: Push this file to /system/silk on the device and run
++ * `adb shell node /system/silk/opencl_demo.js`
++ */
++
++'use strict';
++
++let fs = require('fs');
++let cl = require('node-opencl');
++
++function deviceTypeToStr(type) {
++  switch (type) {
++  case cl.DEVICE_TYPE_GPU:
++    return 'GPU';
++  case cl.DEVICE_TYPE_CPU:
++    return 'CPU';
++  case cl.DEVICE_TYPE_DEFAULT:
++    return 'Default';
++  case cl.DEVICE_TYPE_ACCELERATOR:
++    return "Accelerator";
++  }
++}
++
++function getDeviceInfo(device) {
++  let val = cl.getDeviceInfo(device, cl.DEVICE_NAME);
++  console.log(`\tDEVICE_NAME = ${val}`);
++
++  val = cl.getDeviceInfo(device, cl.DEVICE_VENDOR);
++  console.log(`\tDEVICE_VENDOR = ${val}`);
++
++  val = cl.getDeviceInfo(device, cl.DEVICE_VERSION);
++  console.log(`\tDEVICE_VERSION = ${val}`);
++
++  val = cl.getDeviceInfo(device, cl.DEVICE_TYPE);
++  console.log(`\tDEVICE_TYPE = ${deviceTypeToStr(val)}`);
++}
++
++function getPlatformInfo(platform) {
++  console.log(`#getPlatformInfo() for ${cl.getPlatformInfo(platform, cl.PLATFORM_VENDOR)}` +
++      `  ${cl.getPlatformInfo(platform, cl.PLATFORM_NAME)}`);
++
++  let val = cl.getPlatformInfo(platform, cl.PLATFORM_VERSION);
++  console.log(`PLATFORM_VERSION = ${val}`);
++
++  val = cl.getPlatformInfo(platform, cl.PLATFORM_PROFILE);
++  console.log(`PLATFORM_PROFILE = ${val}`);
++
++  val = cl.getPlatformInfo(platform, cl.PLATFORM_NAME);
++  console.log(`PLATFORM_NAME = ${val}`);
++
++  val = cl.getPlatformInfo(platform, cl.PLATFORM_VENDOR);
++  console.log(`PLATFORM_VENDOR = ${val}`);
++
++  val = cl.getPlatformInfo(platform, cl.PLATFORM_EXTENSIONS);
++  console.log(`PLATFORM_EXTENSIONS = ${val}`);
++
++  let devices = cl.getDeviceIDs(platform);
++  for (let i = 0; i < devices.length; i++) {
++    getDeviceInfo(devices[i]);
++  }
++}
++
++function runDemo() {
++  let platforms = cl.getPlatformIDs();
++  for (let i = 0; i < platforms.length; i++) {
++    getPlatformInfo(platforms[i]);
++  }
++}
++
++let exists = fs.existsSync(`/system/vendor/lib/libOpenCL.so`);
++if (exists) {
++  console.log(`Found opencl library; running demo`);
++  runDemo();
++} else {
++  console.log(`Error loading opencl; skipping demo`);
++}
 -- 
-2.5.0
+2.4.5
 

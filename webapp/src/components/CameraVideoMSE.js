@@ -694,9 +694,12 @@ export default class CameraVideo extends React.Component {
       totalStalledMs,
       totalBufferedMs,
       totalOutOfBufferMs,
+      totalOutOfBufferCompensatedMs,
       totalDroppedMs,
       reloadCount,
     } = this.state.stats;
+    const {playbackRate} = this.refs.msePlayer.videoElement;
+
     return (
       <div style={styles.videoStats}>
         <ul style={styles.videoStatsList}>
@@ -719,10 +722,12 @@ export default class CameraVideo extends React.Component {
             {formatMs(deviceToClientLagMs)} lag device to client<br/>
             {formatMs(totalStalledMs)} {' <video> '} stalls (Firefox only)<br/>
             {formatMs(totalOutOfBufferMs)} out of buffer<br/>
+            {formatMs(totalOutOfBufferCompensatedMs)} out of buffer (compensated)<br/>
             {formatMs(totalDroppedMs)} in segments dropped
           </li>
           <li style={styles.videoStatsItem}>
-            Reload Count: {reloadCount}
+            Reload Count: {reloadCount}<br/>
+            Playback Rate: {playbackRate}x
           </li>
         </ul>
       </div>

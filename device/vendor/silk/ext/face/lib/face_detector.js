@@ -235,4 +235,3 @@ export default class FaceDetector {
     return [faces, weakfaces];
   }
 }
-

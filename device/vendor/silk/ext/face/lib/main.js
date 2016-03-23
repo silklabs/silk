@@ -112,6 +112,7 @@ class Main {
           durationMs: FACE_DETECT_INTERVAL,
           name,
           faceId: face.faceId,
+          percentTrained: face.percentTrained,
         }]
       );
       face.name = name; // Add name to the face object

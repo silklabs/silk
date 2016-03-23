@@ -47,6 +47,7 @@ let isHiddenPath = function (file) {
  * trains the face recognizer using the training data
  */
 export default class Trainer {
+
   constructor(env) {
     log = env.log;
     this._trainingData = [];
@@ -80,6 +81,9 @@ export default class Trainer {
 
     log.info(`Collecting data for face training`);
 
+    this._faceMap = {};
+    invariant(!this._trainingData.length);
+
     // Find everyone for whom we have faces available
     let people = null;
     people = await fs.readdir(TRAIN_FACES_PATH);
@@ -105,6 +109,9 @@ export default class Trainer {
     log.info(`Face training in progress`);
     let start = Date.now();
     await this._trainFaces(model);
+
+    // Now that we're done training make sure we don't hang on to old data.
+    this._trainingData.length = 0;
 
     // Save training data in a file
     model.saveSync(TRAIN_FACES_YML);
@@ -146,7 +153,6 @@ export default class Trainer {
       }
     } catch (e) {
       log.warn(`No faces available for ${faceDir}, error: ${e}`);
-      return;
     }
   }
 

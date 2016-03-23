@@ -49,6 +49,7 @@ export class Face {
   name: string; // name identified for the face
   rect: FaceRect; // Last known location
   rectWhen: number; // Time when `rect` was last updated
+  percentTrained: number = 0;
   _origAvgSize: number;
   _curAvgSize: number;
   _faceLocation: FaceLocationType;
@@ -154,4 +155,3 @@ export class Face {
     this.faceLocationEstimation(this.rect);
   }
 }
-

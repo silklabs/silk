@@ -491,8 +491,16 @@ export default class CameraVideo extends React.Component {
         } else {
           label = object.name || object.tag || null;
         }
+
         const colors =
           CanvasUtils.colorsForLabel(label || index.toString());
+
+        if (object.source === `face` &&
+            ((!(`faceId` in object)) || object.faceId === null) &&
+            `percentTrained` in object &&
+            object.percentTrained > 30) {
+          label += ` (${object.percentTrained}%)`;
+        }
 
         drawArgs.color = colors.background;
         drawArgs.label = label;
@@ -548,6 +556,10 @@ export default class CameraVideo extends React.Component {
         }
         if (object.rects.length) {
           result.rects = result.rects.concat(object.rects);
+        }
+        if (`percentTrained` in object) {
+          result.percentTrained =
+            Math.max(result.percentTrained || 0, object.percentTrained);
         }
         return result;
       }, {

@@ -6,7 +6,6 @@
 
 import CBuffer from 'CBuffer';
 import cv from 'opencv';
-import invariant from 'assert';
 import {
   Matrix,
   Face,
@@ -86,8 +85,7 @@ export default class FaceRecognizer {
    * Check if training data and face map is available.
    * If not train for available faces
    */
-  async _init(forceTraining: bool = false) {
-    invariant(this._idle());
+  async _init(forceTraining: bool = true) {
     this._loading = true;
     this._faceMap = null;
 
@@ -110,10 +108,6 @@ export default class FaceRecognizer {
       return false;
     }
 
-    if (this._training) {
-      log.verbose('FaceRecognizer training');
-      return false;
-    }
     return true;
   }
 
@@ -231,6 +225,10 @@ export default class FaceRecognizer {
           when,
           faceim
         );
+        // Run training as soon as enough faces are available
+        if (face.i.recognizer.trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
+          await this.updateTraining(face);
+        }
       } else {
         faceim.release();
       }
@@ -241,25 +239,19 @@ export default class FaceRecognizer {
     this._predicting = false;
   }
 
-  async updateTraining(faces: Array<Face>): Promise<void> {
-    this._training = true;
+  async updateTraining(face: Face): Promise<void> {
     let reload = false;
-    for (let face of faces) {
-      if (!face.i.recognizer) {
-        continue; // Never worked on this face, ignore it.
-      }
-      if (face.i.recognizer.trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
-        const trainingImages = face.i.recognizer.trainingImages.toArray();
-        if (await this._trainer.addNewFace(trainingImages, this._nextFaceName)) {
-          reload = true;
-        }
-        this._nextFaceName = null;
-      }
-      face.i.recognizer.trainingImages.forEach(im => im.release());
+    if (!face.i.recognizer) {
+      return; // Never worked on this face, ignore it.
     }
-    this._training = false;
+    const trainingImages = face.i.recognizer.trainingImages.toArray();
+    if (await this._trainer.addNewFace(trainingImages, this._nextFaceName)) {
+      reload = true;
+    }
+    this._nextFaceName = null;
+    face.i.recognizer.trainingImages.forEach(im => im.release());
     if (reload) {
-      this._init(true);
+      this._init();
     }
   }
 

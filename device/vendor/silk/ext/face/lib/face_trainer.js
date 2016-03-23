@@ -55,9 +55,9 @@ export default class Trainer {
 
   async _loadModel(model) {
     log.debug(`Loading model`);
-    model.loadSync(TRAIN_FACES_YML);
     const faceMapJson = await fs.readFile(TRAIN_FACES_MAP);
     const faceMap = JSON.parse(faceMapJson);
+    model.loadSync(TRAIN_FACES_YML);
     return faceMap;
   }
 

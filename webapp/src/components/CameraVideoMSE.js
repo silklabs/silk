@@ -540,6 +540,7 @@ export default class CameraVideo extends React.Component {
       // TODO: Be more generic about copying `faceId' and other tag-specific
       // objects into the averageObject...
       const faceId = firstObject.faceId;
+      const movement = firstObject.movement;
 
       // Draw all motion rects if that option is enabled.
       if (tag === 'motion') {
@@ -559,6 +560,9 @@ export default class CameraVideo extends React.Component {
         if ('faceId' in object) {
           result.faceId = object.faceId;
         }
+        if ('movement' in object) {
+          result.movement = object.movement;
+        }
         if (object.rects.length) {
           result.rects = result.rects.concat(object.rects);
         }
@@ -571,6 +575,7 @@ export default class CameraVideo extends React.Component {
         id: objectId,
         source,
         faceId,
+        movement,
         tag,
         when: firstObject.when,
         rects: [],
@@ -737,7 +742,13 @@ export default class CameraVideo extends React.Component {
       // Probably a character from our list.
       name = `The ${name}`;
     }
-    return `${name} e${(visible ? 'nter' : 'xit')}ed the room.`;
+    if (!visible) {
+      return `${name} exited the room.`;
+    } else if (object.movement !== 'notchanged') {
+      return `${name} is ${(object.movement === 'closer') ? 'coming closer' : 'going away' }.`;
+    } else {
+      return `${name} entered the room.`;
+    }
   }
 
   _formatConsoleMessageSound(object, visible) {

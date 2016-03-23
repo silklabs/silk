@@ -76,7 +76,9 @@ class Main {
     this.faceTracker.detectedFaces(when, faceRects, weakFaceRects, lowgray);
 
     // Run face recognizer on the tracked faces
-    await this.faceRecognizer.predict(when, this.faceTracker.faces, gray, fullgray);
+    if (this.faceTracker.faces.length > 0) {
+      await this.faceRecognizer.predict(when, this.faceTracker.faces, gray, fullgray);
+    }
 
     this.processingMotion = false;
   }

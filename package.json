@@ -7,7 +7,7 @@
     "preinstall": "./tools/heroku/deploy.sh",
     "reboot": "npm run zest ; npm run warmup",
     "warmup": "set -ex; source ./setup; for d in server sim webapp; do ( cd $d; npm install ); done",
-    "zest": "git reset --hard HEAD; git clean -dffx; echo https://youtu.be/1r_2fNiYkyE"
+    "zest": "./zest.sh"
   },
   "repository": {
     "type": "git",

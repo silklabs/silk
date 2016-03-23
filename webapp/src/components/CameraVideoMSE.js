@@ -702,7 +702,7 @@ export default class CameraVideo extends React.Component {
   }
 
   _getFaceName(object) {
-    if (!object.faceId) {
+    if (object.faceId === null) {
       return 'Unknown';
     }
 

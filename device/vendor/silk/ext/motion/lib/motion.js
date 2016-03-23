@@ -180,12 +180,12 @@ class Motion {
         log.verbose(`Motion detection ran for ${diff}ms`);
 
         if (rects && (rects.length > 0)) {
-          camera.normalRectsFrom(rects, 'low');
+          const normalRects = camera.normalRectsFrom(rects, 'low');
           timeline.addObjects([{
             source: 'motion',
             tag: 'motion',
             when,
-            rects,
+            rects: normalRects,
             durationMs: MOTION_DURATION_MS,
           }]);
           _playSound();

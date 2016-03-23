@@ -58,7 +58,8 @@ fi
 if [ -z $1 ]; then
   info Starting Silk services
 
-  if [ "$(getprop ro.debuggable)" = "1" ]; then
+  if [ "$(getprop persist.silk.debugger)" = "true" ]; then
+    info Debugger enabled
     NODE_ARGS="$NODE_ARGS --debug"
   fi
 

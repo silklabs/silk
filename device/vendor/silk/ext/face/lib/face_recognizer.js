@@ -85,7 +85,7 @@ export default class FaceRecognizer {
    * Check if training data and face map is available.
    * If not train for available faces
    */
-  async _init(forceTraining: bool = false) {
+  async _init(forceTraining: bool = true) {
     this._loading = true;
     this._faceMap = null;
 
@@ -251,7 +251,7 @@ export default class FaceRecognizer {
     this._nextFaceName = null;
     face.i.recognizer.trainingImages.forEach(im => im.release());
     if (reload) {
-      this._init(true);
+      this._init();
     }
   }
 

@@ -38,7 +38,7 @@ export default class ObjectCollector {
     maxWidth: number,
     maxHeight: number,
     interpolationMs?: number = 16,
-    maxSmoothingAmount?: number = 10,
+    maxSmoothingAmount?: number = 50,
   ) {
     invariant(maxWidth);
     invariant(maxHeight);

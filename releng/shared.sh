@@ -30,6 +30,7 @@ fi
 GITS="\
   silk-core \
   silk-device-locked-node-modules \
+  silk-dnn \
   silk-trainingset \
   cereproc \
   gonk-alto \

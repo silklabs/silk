@@ -20,6 +20,25 @@ const minimumFrameDurationMs = Math.floor(desiredFrameDurationMs * 0.8);
 const maxStatsUpdateIntervalMs = 250;
 const clogDurationMs = 2000;
 
+const consoleMessageEntryCount = 4;
+
+const characters = [
+  'wizard',
+  'ninja',
+  'superhero',
+  'moonwalker',
+  'daredevil',
+  'magician',
+  'sorcerer',
+  'rocket scientist',
+  'gladiator',
+  'doctor',
+  'secret agent',
+  'genius',
+  'lifesaver',
+  'rockstar',
+];
+
 const styles = {
   global: {
     fontFamily: 'DINRound',
@@ -150,6 +169,9 @@ export default class CameraVideo extends React.Component {
   segmentsDroppedMs = 0;
   dropNextSegment = false;
   clogQueue = null;
+
+  faceIdNameMap = new Map();
+  trackedObjects = new Map();
 
   state = {
     camera: null,
@@ -462,7 +484,12 @@ export default class CameraVideo extends React.Component {
           return;
         }
 
-        const label = object.name || object.tag || null;
+        let label;
+        if (object.source === `face`) {
+          label = this._getFaceName(object);
+        } else {
+          label = object.name || object.tag || null;
+        }
         const colors =
           CanvasUtils.colorsForLabel(label || index.toString());
 
@@ -490,16 +517,12 @@ export default class CameraVideo extends React.Component {
 
     // Collect all objects that should be present in this time window.
     const objectMap = this.state.camera.objects.collect(timeStart, timeEnd);
-    if (!objectMap.size) {
-      return objects;
-    }
-
-    let consoleMessageObjects;
-    let faceCount = 0;
+    const consoleMessageObjects = [];
 
     objectMap.forEach((objectArray, objectId) => {
       const firstObject = objectArray[0];
       const tag = firstObject.tag;
+      const source = firstObject.source;
 
       // Draw all motion rects if that option is enabled.
       if (tag === 'motion') {
@@ -522,20 +545,22 @@ export default class CameraVideo extends React.Component {
         return result;
       }, {
         id: objectId,
-        source: firstObject.source,
+        source,
         tag,
         when: firstObject.when,
         rects: [],
       });
 
-      const rectCount = averageObject.rects.length;
-      if (!rectCount || tag === 'face') {
-        consoleMessageObjects = consoleMessageObjects || [];
-        consoleMessageObjects.push(averageObject);
+      const lastObject =
+        objectArray.length > 1 ?
+        objectArray[objectArray.length - 1] :
+        firstObject;
+      averageObject.durationMs =
+        lastObject.when + lastObject.durationMs - firstObject.when;
 
-        if (tag === 'face') {
-          faceCount++;
-        }
+      const rectCount = averageObject.rects.length;
+      if (!rectCount || source === 'face') {
+        consoleMessageObjects.push(averageObject);
       }
 
       if (!rectCount) {
@@ -569,17 +594,7 @@ export default class CameraVideo extends React.Component {
     });
 
     // Figure out any text we should display for the console.
-    if (consoleMessageObjects) {
-      this._processConsoleMessageObjects(consoleMessageObjects);
-    }
-
-    if (this.state.faceCount !== faceCount) {
-      requestAnimationFrame(() => {
-        this.setState({
-          faceCount,
-        });
-      });
-    }
+    this._processConsoleMessageObjects(consoleMessageObjects);
 
     return objects;
   }
@@ -588,35 +603,58 @@ export default class CameraVideo extends React.Component {
     const oldMessages = this.state.consoleMessages;
     let newMessages;
 
+    // Make sure we know when previously tracked objects are no longer around.
+    const expiredTrackedObjects =
+      this.trackedObjects.size ? new Set(this.trackedObjects.keys()) : null;
+
     objects.forEach((object) => {
-      let text;
-      if (object.tag === 'face') {
-        if ('name' in object) {
-          text = capitalize(object.name);
-        } else {
-          text = 'A face';
-        }
-        text += ' was seen';
-      } else if ('text' in object) {
-        text = object.text;
-      } else if ('name' in object) {
-        text = capitalize(object.name) + '!';
-      } else {
-        text = capitalize(object.tag) + '!';
+      // Don't expire objects that we're still seeing.
+      if (expiredTrackedObjects) {
+        expiredTrackedObjects.delete(object.id);
       }
-      if (oldMessages.some((oldMessage) => {
-        return oldMessage.id === object.id && oldMessage.text === text;
-      })) {
-        // An indentical message for this object id is already displayed.
+
+      const text = this._formatConsoleMessage(object, /* visible */ true);
+      if (!oldMessages.some((oldMessage) =>
+            oldMessage.id === object.id && oldMessage.text === text)) {
+        // Either there is no message in the console with this id or the text is
+        // not the same.
+        newMessages = newMessages || oldMessages.slice();
+        newMessages.push({
+          id: object.id,
+          text,
+          when: object.when,
+        });
+      }
+
+      // Don't track some kinds of objects.
+      if (object.source === `devicemotion` || object.source === `svmsounds`) {
         return;
       }
-      newMessages = newMessages || oldMessages.slice();
-      newMessages.push({
-        id: object.id,
-        text,
-        when: object.when,
-      });
+
+      if (!this.trackedObjects.get(object.id)) {
+        log.debug(`Starting to track object`, object);
+      }
+      this.trackedObjects.set(object.id, object);
     });
+
+    // Add messages for all expired objects.
+    if (expiredTrackedObjects) {
+      expiredTrackedObjects.forEach((id) => {
+        const object = this.trackedObjects.get(id);
+        log.debug(`No longer tracking object`, object);
+
+        const text = this._formatConsoleMessage(object, /* visible */ false);
+
+        newMessages = newMessages || oldMessages.slice();
+        newMessages.push({
+          id,
+          text,
+          when: object.when + object.durationMs,
+        });
+
+        this.trackedObjects.delete(id);
+      });
+    }
 
     if (!newMessages) {
       return;
@@ -626,11 +664,78 @@ export default class CameraVideo extends React.Component {
       return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
     });
 
-    if (newMessages.length > 4) {
-      newMessages.splice(0, newMessages.length - 4);
+    if (newMessages.length > consoleMessageEntryCount) {
+      newMessages.splice(0, newMessages.length - consoleMessageEntryCount);
     }
 
+    log.debug(`New console messages`, newMessages);
     this._setStateAsync({consoleMessages: newMessages});
+  }
+
+  _formatConsoleMessage(object, visible) {
+    switch (object.source) {
+    case `face`:
+      return this._formatConsoleMessageFace(object, visible);
+    case `svmsounds`:
+      return this._formatConsoleMessageSound(object, visible);
+    case `dnn`:
+      return this._formatConsoleMessageDNN(object, visible);
+    case `devicemotion`:
+      return `Device moved.`;
+    default:
+      log.warn(`Unsupported object from '${object.source}'`, object);
+    }
+    return object.name || object.tag;
+  }
+
+  _getFaceName(object) {
+    let name = this.faceIdNameMap.get(object.faceId);
+    if (!name) {
+      if (object.name === `unknown face` ||
+          object.name.substring(0, 6) === `Elvis-`) {
+        name = characters[Date.now() % characters.length];
+      } else {
+        name = object.name;
+      }
+      this.faceIdNameMap.set(object.faceId, name);
+    }
+    return name;
+  }
+
+  _formatConsoleMessageFace(object, visible) {
+    let name = this._getFaceName(object);
+    if (name === object.name) {
+      // Probably "Wayne" ;)
+      name = capitalize(name);
+    } else {
+      // Probably a character from our list.
+      name = `The ${name}`;
+    }
+    return `${name} e${(visible ? 'nter' : 'xit')}ed the room.`;
+  }
+
+  _formatConsoleMessageSound(object, visible) {
+    let name;
+    switch (object.name) {
+    case `firealarm`:
+      name = `a smoke alarm`;
+      break;
+    case `a clap`:
+      name = object.name;
+      break;
+    case `glassbreak`:
+      name = `glass breaking`;
+      break;
+    default:
+      log.warn(`Unsupported sound type '${object.name}'`);
+      name = object.name;
+    }
+    return `${(visible ? 'Heard' : 'No longer hearing')} ${name}.`;
+  }
+
+  _formatConsoleMessageDNN(object, visible) {
+    const name = object.tag.toLowerCase();
+    return visible ? `A ${name} was seen.` : `The ${name} left.`;
   }
 
   _startAnimationLoop = () => {

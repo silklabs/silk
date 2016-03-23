@@ -198,9 +198,9 @@ class Dnn {
         // Remove the object if it is no longer detected
         if ((this._lastObjectLabel !== '') && (this._lastObjectLabel !== topLabel)) {
           timeline.addObjects([{
-            tag: this._lastObjectLabel + ' no longer detected',
+            tag: this._lastObjectLabel,
             when,
-            durationMs: 1000,
+            durationMs: 1,
             id: this._lastObjectId,
           }]);
           log.verbose(`Removing object ${this._lastObjectLabel}`);

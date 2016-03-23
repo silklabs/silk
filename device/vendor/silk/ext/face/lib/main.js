@@ -111,6 +111,7 @@ class Main {
           source: 'face',
           durationMs: FACE_DETECT_INTERVAL,
           name,
+          faceId: face.faceId,
         }]
       );
       face.name = name; // Add name to the face object

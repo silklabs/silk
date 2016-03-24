@@ -1,6 +1,6 @@
 {
   "name": "external-js-kissfft",
-  "version": "0.0.1",
+  "version": "0.15.0",
   "description": "Pure-JS FFT implementation built on empscriptened kiss-fft",
   "main": "KissFFT.js",
   "scripts": {

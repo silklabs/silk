@@ -1,6 +1,6 @@
 {
   "name": "rtc",
-  "version": "1.0.0",
+  "version": "0.15.0",
   "main": "src/index.js",
   "author": "Silk Labs, Inc",
   "silkDependencies": {

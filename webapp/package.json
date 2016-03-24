@@ -84,5 +84,5 @@
     "start-server": "babel-node --harmony server/main.js production",
     "test": "npm run lint && npm run build"
   },
-  "version": "0.14.0"
+  "version": "0.15.0"
 }

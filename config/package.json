@@ -1,6 +1,6 @@
 {
   "name": "silk-config",
-  "version": "0.0.1",
+  "version": "0.15.0",
   "description": "Cross-project configuration parameters",
   "main": "index.json",
   "license": "proprietary",

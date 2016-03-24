@@ -1,6 +1,6 @@
 {
   "name": "silk-svm",
-  "version": "0.0.1",
+  "version": "0.15.0",
   "description": "Trained sound-event recognition SVMs",
   "main": "index.js",
   "scripts": {

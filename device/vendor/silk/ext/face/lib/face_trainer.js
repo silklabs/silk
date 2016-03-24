@@ -58,9 +58,18 @@ export default class Trainer {
     // Find the number of faces available for training. This is used
     // later to generate the name of a new face to be added to the
     // faces database
-    let people = await fs.readdir(TRAIN_FACES_PATH);
-    log.info(`# of people already available ${people.length}`);
-    this._numFaces = people.length;
+    try {
+      if (await fs.exists(TRAIN_FACES_PATH)) {
+        let people = await fs.readdir(TRAIN_FACES_PATH);
+        log.info(`# of people already available ${people.length}`);
+        this._numFaces = people.length;
+      } else {
+        await mkdirp(TRAIN_FACES_PATH);
+        this._numFaces = 0;
+      }
+    } catch (err) {
+      log.error(`Failed to read ${TRAIN_FACES_PATH}, error: ${err.code}`);
+    }
   }
 
   async _loadModel(model) {

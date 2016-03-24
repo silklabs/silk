@@ -715,7 +715,8 @@ export default class CameraVideo extends React.Component {
 
   _getFaceName(object) {
     if (object.faceId === null) {
-      return 'Unknown';
+      object.name = 'Unknown';
+      return object.name;
     }
 
     let name = this.faceIdNameMap.get(object.faceId);

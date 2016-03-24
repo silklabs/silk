@@ -20,7 +20,6 @@ const TRAIN_ROOTDIR = 'data/silk/opencv';
 const TRAIN_FACES_PATH = `${TRAIN_ROOTDIR}/faces`;
 const TRAIN_FACES_YML = `${TRAIN_ROOTDIR}/face_model.yml`;
 const TRAIN_FACES_MAP = `${TRAIN_ROOTDIR}/face_map.json`;
-export const FACE_COUNT = 100;
 
 const DESIRED_LEFT_EYE_X = 0.23; // Desired left eye center on a scale of 1.0
 const DESIRED_LEFT_EYE_Y = 0.2;
@@ -52,6 +51,25 @@ export default class Trainer {
     log = env.log;
     this._trainingData = [];
     this._faceMap = {};
+    this._init();
+  }
+
+  async _init() {
+    // Find the number of faces available for training. This is used
+    // later to generate the name of a new face to be added to the
+    // faces database
+    try {
+      if (await fs.exists(TRAIN_FACES_PATH)) {
+        let people = await fs.readdir(TRAIN_FACES_PATH);
+        log.info(`# of people already available ${people.length}`);
+        this._numFaces = people.length;
+      } else {
+        await mkdirp(TRAIN_FACES_PATH);
+        this._numFaces = 0;
+      }
+    } catch (err) {
+      log.error(`Failed to read ${TRAIN_FACES_PATH}, error: ${err.code}`);
+    }
   }
 
   async _loadModel(model) {
@@ -88,6 +106,10 @@ export default class Trainer {
     let people = null;
     people = await fs.readdir(TRAIN_FACES_PATH);
     log.debug(`Done reading ${TRAIN_FACES_PATH} and found ${people.length} people`);
+
+    // Sort people to make sure they are always in the same order to retain the
+    // IDs when we re-train for a new face
+    people.sort();
     for (let count = 0; count < people.length; count++) {
       if (isHiddenPath(people[count])) {
         log.info(`Ignoring directory ${people[count]}`);
@@ -409,10 +431,18 @@ export default class Trainer {
     return reconstructedFace;
   }
 
+  /**
+   * Go through the list of faces and return the name for the new face
+   */
+  async _getNewFaceName() {
+    this._numFaces++;
+    return this._numFaces.toString();
+  }
+
   async addNewFace(poses: Array<Matrix>, name: ?string): bool {
     if (!name) {
-      // Generate a temporary name that's unlikely to collide
-      name = `Elvis-${(Date.now() / 1000 % 10000).toFixed(0)}`;
+      // Get the new face name
+      name = await this._getNewFaceName();
 
       // TODO: Probably limit the number of unknown persons...
     }

@@ -270,3 +270,28 @@ export let remove = {
   }
 };
 
+export let removeAll = {
+    help: `
+      Unregister all devices from account.
+      |silk login| must have been ran previously.
+    `,
+    main: async () => {
+      console.log(`Removing all devices from server ...`);
+
+      let account = createAccount();
+      let devices = await account.listDevices();
+
+      if (devices.length === 0) {
+        console.log(`No devices associated with this account`);
+        return;
+      }
+
+      for (let i = 0; i < devices.length; i++) {
+        let deviceToken = devices[i].publicKey.toString();
+        console.log(`Removing ${deviceToken} ...`);
+        let success = await account.unregisterDevice(deviceToken);
+        console.log(`Removal ${success ? 'success' : 'failed'}`);
+      }
+    }
+  };
+

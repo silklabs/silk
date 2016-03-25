@@ -491,7 +491,7 @@ export default class CameraVideo extends React.Component {
         }
 
         let label;
-        if (object.source === `face`) {
+        if (object.tag === `face`) {
           label = capitalize(this._getFaceName(object));
         } else {
           label = object.name || object.tag || null;
@@ -500,7 +500,7 @@ export default class CameraVideo extends React.Component {
         const colors =
           CanvasUtils.colorsForLabel(label || index.toString());
 
-        if (object.source === `face` &&
+        if (object.tag === `face` &&
             ((!(`faceId` in object)) || object.faceId === null) &&
             `percentTrained` in object &&
             object.percentTrained > 30) {
@@ -534,13 +534,8 @@ export default class CameraVideo extends React.Component {
     const consoleMessageObjects = [];
 
     objectMap.forEach((objectArray, objectId) => {
-      const firstObject = objectArray[0];
-      const tag = firstObject.tag;
-      const source = firstObject.source;
-      // TODO: Be more generic about copying `faceId' and other tag-specific
-      // objects into the averageObject...
-      const faceId = firstObject.faceId;
-      const movement = firstObject.movement;
+      const lastObject = objectArray[objectArray.length - 1];
+      const tag = lastObject.tag;
 
       // Draw all motion rects if that option is enabled.
       if (tag === 'motion') {
@@ -552,75 +547,16 @@ export default class CameraVideo extends React.Component {
         return;
       }
 
-      // Collect all the rects for non-motion objects with the same id.
-      const averageObject = objectArray.reduce((result, object) => {
-        if ('name' in object) {
-          result.name = object.name;
-        }
-        if ('faceId' in object) {
-          result.faceId = object.faceId;
-        }
-        if ('movement' in object) {
-          result.movement = object.movement;
-        }
-        if (object.rects.length) {
-          result.rects = result.rects.concat(object.rects);
-        }
-        if (`percentTrained` in object) {
-          result.percentTrained =
-            Math.max(result.percentTrained || 0, object.percentTrained);
-        }
-        return result;
-      }, {
-        id: objectId,
-        source,
-        faceId,
-        movement,
-        tag,
-        when: firstObject.when,
-        rects: [],
-      });
+      const rectCount =
+        objectArray.reduce((result, object) => result + object.rects.length, 0);
 
-      const lastObject =
-        objectArray.length > 1 ?
-        objectArray[objectArray.length - 1] :
-        firstObject;
-      averageObject.durationMs =
-        lastObject.when + lastObject.durationMs - firstObject.when;
-
-      const rectCount = averageObject.rects.length;
-      if (!rectCount || source === 'face') {
-        consoleMessageObjects.push(averageObject);
+      if (!rectCount || tag === 'face') {
+        consoleMessageObjects.push(lastObject);
       }
 
-      if (!rectCount) {
-        return;
+      if (rectCount) {
+        objects.push(lastObject);
       }
-
-      // Average all the rects.
-      if (rectCount > 1) {
-        const averageRect = averageObject.rects.reduce((result, rect) => {
-          result.x += rect.x;
-          result.y += rect.y;
-          result.width += rect.width;
-          result.height += rect.height;
-          return result;
-        }, {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-        });
-        averageRect.x = Math.round(averageRect.x / rectCount);
-        averageRect.y = Math.round(averageRect.y / rectCount);
-        averageRect.width = Math.round(averageRect.width / rectCount);
-        averageRect.height = Math.round(averageRect.height / rectCount);
-
-        averageObject.rects = [averageRect];
-      }
-
-      // Only push a single object.
-      objects.push(averageObject);
     });
 
     // Figure out any text we should display for the console.
@@ -657,7 +593,7 @@ export default class CameraVideo extends React.Component {
       }
 
       // Don't track some kinds of objects.
-      if (object.source === `devicemotion` || object.source === `svmsounds`) {
+      if (object.tag === `devicemotion` || object.tag === `sound`) {
         return;
       }
 
@@ -686,34 +622,53 @@ export default class CameraVideo extends React.Component {
       });
     }
 
-    if (!newMessages) {
-      return;
-    }
-
-    newMessages.sort((a, b) => {
-      return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
+    // Update the face count.
+    let faceCount = 0;
+    this.trackedObjects.forEach((object) => {
+      if (object.tag === `face`) {
+        faceCount++;
+      }
     });
 
-    if (newMessages.length > consoleMessageEntryCount) {
-      newMessages.splice(0, newMessages.length - consoleMessageEntryCount);
+    // Maybe update state if something has changed.
+    let newState;
+
+    if (newMessages) {
+      newMessages.sort((a, b) => {
+        return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
+      });
+
+      if (newMessages.length > consoleMessageEntryCount) {
+        newMessages.splice(0, newMessages.length - consoleMessageEntryCount);
+      }
+
+      log.debug(`New console messages`, newMessages);
+      newState = newState || {};
+      newState.consoleMessages = newMessages;
     }
 
-    log.debug(`New console messages`, newMessages);
-    this._setStateAsync({consoleMessages: newMessages});
+    if (this.state.faceCount !== faceCount) {
+      newState = newState || {};
+      newState.faceCount = faceCount;
+    }
+
+    if (newState) {
+      this._setStateAsync(newState);
+    }
   }
 
   _formatConsoleMessage(object, visible) {
-    switch (object.source) {
+    switch (object.tag) {
     case `face`:
       return this._formatConsoleMessageFace(object, visible);
-    case `svmsounds`:
+    case `sound`:
       return this._formatConsoleMessageSound(object, visible);
     case `dnn`:
       return this._formatConsoleMessageDNN(object, visible);
     case `devicemotion`:
       return `Device moved.`;
     default:
-      log.warn(`Unsupported object from '${object.source}'`, object);
+      log.warn(`Unsupported object from '${object.tag}'`, object);
     }
     return object.name || object.tag;
   }

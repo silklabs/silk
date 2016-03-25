@@ -135,10 +135,6 @@ export default class ObjectCollector {
     let last = first;
 
     if (interpolationCount > 1) {
-      // TODO: Be more generic about copying `faceId' and other tag-specific
-      // objects into the interpolated objects...
-      const {id, faceId, movement, tag, name, source} = first;
-
       const xInc = (secondRect.x - firstRect.x) / interpolationCount;
       const yInc = (secondRect.y - firstRect.y) / interpolationCount;
       const wInc = (secondRect.width - firstRect.width) / interpolationCount;
@@ -149,12 +145,7 @@ export default class ObjectCollector {
 
       for (let i = 1; i < interpolationCount; i++) {
         const lastRect = last.rects[0];
-        const interpolatedObject = {
-          id,
-          tag,
-          source,
-          faceId,
-          movement,
+        const interpolatedObject = Object.assign({}, first, {
           when: last.when + last.durationMs,
           durationMs,
           rects: [{
@@ -163,7 +154,7 @@ export default class ObjectCollector {
             width: lastRect.width + wInc,
             height: lastRect.height + hInc,
           }],
-        };
+        });
         if (name !== undefined) {
           interpolatedObject.name = name;
         }

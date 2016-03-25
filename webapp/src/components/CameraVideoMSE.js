@@ -491,7 +491,7 @@ export default class CameraVideo extends React.Component {
         }
 
         let label;
-        if (object.source === `face`) {
+        if (object.tag === `face`) {
           label = capitalize(this._getFaceName(object));
         } else {
           label = object.name || object.tag || null;
@@ -500,7 +500,7 @@ export default class CameraVideo extends React.Component {
         const colors =
           CanvasUtils.colorsForLabel(label || index.toString());
 
-        if (object.source === `face` &&
+        if (object.tag === `face` &&
             ((!(`faceId` in object)) || object.faceId === null) &&
             `percentTrained` in object &&
             object.percentTrained > 30) {
@@ -593,7 +593,7 @@ export default class CameraVideo extends React.Component {
       }
 
       // Don't track some kinds of objects.
-      if (object.source === `devicemotion` || object.source === `svmsounds`) {
+      if (object.tag === `devicemotion` || object.tag === `sound`) {
         return;
       }
 
@@ -639,17 +639,17 @@ export default class CameraVideo extends React.Component {
   }
 
   _formatConsoleMessage(object, visible) {
-    switch (object.source) {
+    switch (object.tag) {
     case `face`:
       return this._formatConsoleMessageFace(object, visible);
-    case `svmsounds`:
+    case `sound`:
       return this._formatConsoleMessageSound(object, visible);
     case `dnn`:
       return this._formatConsoleMessageDNN(object, visible);
     case `devicemotion`:
       return `Device moved.`;
     default:
-      log.warn(`Unsupported object from '${object.source}'`, object);
+      log.warn(`Unsupported object from '${object.tag}'`, object);
     }
     return object.name || object.tag;
   }

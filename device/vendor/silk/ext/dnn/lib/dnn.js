@@ -144,14 +144,14 @@ class Dnn {
 
       try {
         // Fetch camera preview image
-        let [im] = await this._env.camera.getFrame(when, ['gray']);
+        let [im] = await this._env.camera.getFrame(when, ['rgb']);
 
         // By the time prediction finishes camera might have evicted the image
         // from its cache, so make a local copy of the image if diag is enabled
         let imCopy = timeline.diagFrameEnabled('') ? im.copy() : null;
 
         // Run DNN prediction
-        log.verbose(`Running predition...`);
+        log.verbose(`Running prediction...`);
         let start = Date.now();
         let predictions = await this._predictAsync(im);
         let diff = Date.now() - start;

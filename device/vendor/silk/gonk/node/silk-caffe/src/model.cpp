@@ -557,13 +557,6 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
  * Runs forward pass for the whole network
  */
 vector<float> Model::Predict(const cv::Mat& img) {
-  Blob<float>* inputLayer = caffeNet->input_blobs()[0];
-  inputLayer->Reshape(1, numChannels, inputGeometry.height,
-      inputGeometry.width);
-
-  // Forward dimension change to all layers
-  caffeNet->Reshape();
-
   vector<cv::Mat> inputChannels;
   WrapInputLayer(&inputChannels);
 

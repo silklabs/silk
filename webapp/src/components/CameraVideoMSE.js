@@ -622,20 +622,39 @@ export default class CameraVideo extends React.Component {
       });
     }
 
-    if (!newMessages) {
-      return;
-    }
-
-    newMessages.sort((a, b) => {
-      return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
+    // Update the face count.
+    let faceCount = 0;
+    this.trackedObjects.forEach((object) => {
+      if (object.tag === `face`) {
+        faceCount++;
+      }
     });
 
-    if (newMessages.length > consoleMessageEntryCount) {
-      newMessages.splice(0, newMessages.length - consoleMessageEntryCount);
+    // Maybe update state if something has changed.
+    let newState;
+
+    if (newMessages) {
+      newMessages.sort((a, b) => {
+        return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
+      });
+
+      if (newMessages.length > consoleMessageEntryCount) {
+        newMessages.splice(0, newMessages.length - consoleMessageEntryCount);
+      }
+
+      log.debug(`New console messages`, newMessages);
+      newState = newState || {};
+      newState.consoleMessages = newMessages;
     }
 
-    log.debug(`New console messages`, newMessages);
-    this._setStateAsync({consoleMessages: newMessages});
+    if (this.state.faceCount !== faceCount) {
+      newState = newState || {};
+      newState.faceCount = faceCount;
+    }
+
+    if (newState) {
+      this._setStateAsync(newState);
+    }
   }
 
   _formatConsoleMessage(object, visible) {

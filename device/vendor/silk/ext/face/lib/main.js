@@ -115,6 +115,7 @@ class Main {
           name,
           faceId: face.faceId,
           percentTrained: face.percentTrained,
+          movement: face.movement,
         }]
       );
       face.name = name; // Add name to the face object

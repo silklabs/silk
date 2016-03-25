@@ -5,7 +5,7 @@
  */
 
 import movingAverage from 'moving-average';
-import type { Env, Log, Timeline } from 'silk-sdk-glue/interface/env';
+import type { Env, Log } from 'silk-sdk-glue/interface/env';
 
 export type Matrix = any;
 export type Eye = [number, number]; // center x,y
@@ -33,13 +33,12 @@ const CHANGE_THRESHOLD = 30;
 const FACE_DETECT_INTERVAL = 1000;
 const FACE_AVERAGE_DURATION = 2000;
 
-const FACE_LOCATION_NOT_CHANGED = 'notchanged';
-const FACE_LOCATION_CLOSER = 'coming closer';
-const FACE_LOCATION_AWAY = 'going away';
-let FaceLocationType = FACE_LOCATION_NOT_CHANGED | FACE_LOCATION_CLOSER | FACE_LOCATION_AWAY;
+const FACE_MOVEMENT_NOT_CHANGED = 'notchanged';
+const FACE_MOVEMENT_CLOSER = 'closer';
+const FACE_MOVEMENT_FARTHER = 'farther';
+let FaceMovementType = FACE_MOVEMENT_NOT_CHANGED | FACE_MOVEMENT_CLOSER | FACE_MOVEMENT_FARTHER;
 
 let log: Log;
-let timeline: Timeline;
 
 /**
  *
@@ -50,9 +49,9 @@ export class Face {
   rect: FaceRect; // Last known location
   rectWhen: number; // Time when `rect` was last updated
   percentTrained: number = 0;
+  movement: FaceMovementType;
   _origAvgSize: number;
   _curAvgSize: number;
-  _faceLocation: FaceLocationType;
   _doneCollectingFaces: boolean;
   _exponentialMovingAverage: Function;
 
@@ -67,12 +66,11 @@ export class Face {
   constructor(id: number, env: Env) {
     this.id = id;
     log = env.log;
-    timeline = env.timeline;
     this.name = 'unknown face';
     this._origAvgSize = 0;
     this._curAvgSize = 0;
     this.faceStart = Date.now();
-    this._faceLocation = FACE_LOCATION_NOT_CHANGED;
+    this.movement = FACE_MOVEMENT_NOT_CHANGED;
     this._doneCollectingFaces = false;
 
     // Calculate exponential moving average over FACE_AVERAGE_DURATION
@@ -83,21 +81,16 @@ export class Face {
   /**
    * Notify timeline if face is approaching or moving away from the device
    */
-  notifyFaceLocation(_faceLocation: FaceLocationType) {
-    // Only notify when location type changes
-    if (this._faceLocation !== _faceLocation) {
-      timeline.addObjects([{
-        tag: `${this.name} is ${_faceLocation}`,
-        when: this.rectWhen,
-        source: 'face',
-        durationMs: FACE_DETECT_INTERVAL,
-      }]);
-      this._faceLocation = _faceLocation;
+  setFaceMovement(movement: FaceMovementType) {
+    if (this.movement !== movement) {
+      this.movement = movement;
 
-      log.verbose(`${this.name} is ${_faceLocation} at ${this.rectWhen}`);
+      log.verbose(`**************************************`);
+      log.verbose(`face: ${this.id} is moving ${movement}`);
+      log.verbose(`**************************************`);
     }
 
-    // Set the new comparison point so face location is estimated from this
+    // Set the new comparison point so face movement is estimated from this
     // point onwards
     this._origAvgSize = this._curAvgSize;
     this._curAvgSize = 0;
@@ -105,9 +98,9 @@ export class Face {
 
   /**
    * Compare the new face size with the average size of the face in the previous
-   * frames to estimate the location of the face
+   * frames to estimate the movement of the face
    */
-  faceLocationEstimation(rect: FaceRect) {
+  faceMovementEstimation(rect: FaceRect) {
     let size = Math.round(rect.width * rect.height);
     this._exponentialMovingAverage.push(Date.now(), size);
     this._curAvgSize = this._exponentialMovingAverage.movingAverage();
@@ -115,13 +108,13 @@ export class Face {
         `original average: ${this._origAvgSize}`);
 
     // Keep collecting faces for FACE_AVERAGE_DURATION before running
-    // location estimation
+    // movement estimation
     const now = Date.now();
     if (Math.abs(this.faceStart - now) < FACE_AVERAGE_DURATION) {
       return;
     }
 
-    // Done collecting faces; start location estimation from the next run
+    // Done collecting faces; start movement estimation from the next run
     if (!this._doneCollectingFaces) {
       log.debug(`Done collecting face averages`);
       this._doneCollectingFaces = true;
@@ -141,9 +134,9 @@ export class Face {
     change = Math.round(change);
     log.debug(`Face size change: ${change} %`);
     if ((this._curAvgSize > this._origAvgSize) && (change > CHANGE_THRESHOLD)) {
-      this.notifyFaceLocation(FACE_LOCATION_CLOSER);
+      this.setFaceMovement(FACE_MOVEMENT_CLOSER);
     } else if ((this._curAvgSize < this._origAvgSize) && (change > CHANGE_THRESHOLD)) {
-      this.notifyFaceLocation(FACE_LOCATION_AWAY);
+      this.setFaceMovement(FACE_MOVEMENT_FARTHER);
     }
   }
 
@@ -151,7 +144,7 @@ export class Face {
     this.rect = rect;
     this.rectWhen = rectWhen;
 
-    // Run face location estimation
-    this.faceLocationEstimation(this.rect);
+    // Run face movement estimation
+    this.faceMovementEstimation(this.rect);
   }
 }

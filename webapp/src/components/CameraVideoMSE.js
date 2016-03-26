@@ -185,6 +185,7 @@ export default class CameraVideo extends React.Component {
     consoleMessages: [],
     faceCount: 0,
     showMotionEvents: false,
+    showFaces: true,
     showVideoStats: false,
     stats: null,
   };
@@ -332,6 +333,13 @@ export default class CameraVideo extends React.Component {
       return;
     }
     this._setStateAsync({showMotionEvents});
+  };
+
+  _onFacesCheck = () => {
+    const showFaces = this.refs.checkFaces.getChecked();
+    if (showFaces !== this.state.showFaces) {
+      this._setStateAsync({showFaces});
+    }
   };
 
   _onVideoStatsCheck = () => {
@@ -549,14 +557,14 @@ export default class CameraVideo extends React.Component {
 
       const rectCount =
         objectArray.reduce((result, object) => result + object.rects.length, 0);
-
       if (!rectCount || tag === 'face') {
         consoleMessageObjects.push(lastObject);
+        if (!rectCount || !this.state.showFaces) {
+          return;
+        }
       }
 
-      if (rectCount) {
-        objects.push(lastObject);
-      }
+      objects.push(lastObject);
     });
 
     // Figure out any text we should display for the console.
@@ -841,6 +849,13 @@ export default class CameraVideo extends React.Component {
           ref="checkMotion"
           checked={this.state.showMotionEvents}
           onChange={this._onMotionEventsCheck}
+        />
+        <Input
+          type="checkbox"
+          label="Show Tracked Faces"
+          ref="checkFaces"
+          checked={this.state.showFaces}
+          onChange={this._onFacesCheck}
         />
         <Input
           type="checkbox"

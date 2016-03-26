@@ -76,7 +76,7 @@ async function inlineAssets(baseUrl) {
 }
 
 async function main() {
-  var fileServer = new Static(SRC);
+  const fileServer = new Static(SRC);
   let server = http.createServer((req, res) => {
     req.addListener('end', function () {
       fileServer.serve(req, res);

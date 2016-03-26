@@ -85,7 +85,7 @@ export default class RssiSmoother {
     let totalCountedSamples = 0;
     let rssi;
     for (rssi = histogram.max; rssi > histogram.min; --rssi) {
-      var count = histogram.buckets[rssi - histogram.min];
+      let count = histogram.buckets[rssi - histogram.min];
       if (lastBucketCount <= count) {
         totalCountedSamples += count;
         lastBucketCount = count;

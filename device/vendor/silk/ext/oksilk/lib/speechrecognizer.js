@@ -60,7 +60,7 @@ export default class SpeechRecognizer extends events.EventEmitter {
     let params = ['sampleRate', 'bytesPerSample', 'numChannels'];
     params.forEach(param => {
       if (!(param in cfg)) {
-        throw `Missing ${param} in cfg`;
+        throw new Error(`Missing ${param} in cfg`);
       }
     });
 

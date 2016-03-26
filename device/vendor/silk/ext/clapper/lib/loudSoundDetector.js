@@ -58,7 +58,7 @@ class LoudSoundDetector extends EventEmitter {
 
     params.forEach(param => {
       if (!(param in cfg)) {
-        throw `Missing ${param} in cfg`;
+        throw new Error(`Missing ${param} in cfg`);
       }
     });
 

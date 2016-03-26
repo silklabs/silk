@@ -58,7 +58,7 @@ class InputDevice extends events.EventEmitter
         keyCode: buffer.readUInt16LE(10),
         type: ['up', 'down', 'repeat'][buffer.readUInt32LE(12)]
       };
-      var keys = {
+      const keys = {
         114: 'volumedown',
         115: 'volumeup',
         116: 'power',

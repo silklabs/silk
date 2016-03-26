@@ -270,7 +270,7 @@ class SVMTrainer {
         continue;
       }
       console.log('WTF', expected, actual);
-      throw 'WTF';
+      throw new Error('WTF');
     }
     let msPerTest = 1000.0 * predictSecs / nrTests;
     this.report(`${runId} validation:`);

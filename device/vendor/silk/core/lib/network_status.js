@@ -26,7 +26,7 @@ const log = createLog('network_status');
 const CHECK_INTERVAL_MS = 2000; // 2s
 const MAX_CHECK_INTERVAL_MS = 1000 * 60 * 5; // 5min
 const IS_ONLINE = (): Promise<bool> => {
-  return new Promise((accept, reject)=> {
+  return new Promise((accept, reject) => {
     checkOnline((err, value) => {
       if (err) {
         reject(err);

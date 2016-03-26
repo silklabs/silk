@@ -823,8 +823,8 @@ export default class MonitorFullscreen extends React.Component {
   }
 
   close = () => {
-    var overlay = this.refs.overlay;
-    var duration = Date.now() - this._watchStart;
+    const overlay = this.refs.overlay;
+    const duration = Date.now() - this._watchStart;
     this.props.api.metrics.add(new FullScreenVideoDuration({
       durationMs: new MetricTypes.Integer(duration),
     }));

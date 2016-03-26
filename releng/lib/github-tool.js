@@ -11,7 +11,7 @@ const LOG_PREFIX = 'github-tool';
 function forEachSilkRepo(
   f: ((owner: string, repo: string) => Promise<void>)
 ): Promise<void> {
-  var repos = require('./repos');
+  const repos = require('./repos');
   return repos.reduce(
     (promise, repo) => {
       return promise.then(() => {
@@ -60,7 +60,7 @@ function maybeCreatePullRequest(
     // Yuck, there doesn't seem to be more succinct way to determine that there
     // are no commits to merge...
     if (err && err.status === 422) {
-      var json = err.json;
+      const json = err.json;
       if (json.message === 'Validation Failed' &&
           json.errors.length === 1 &&
           json.errors[0].resource === 'PullRequest' &&
@@ -121,7 +121,7 @@ export async function autoMergePullRequest(
     return;
   }
 
-  var label = result.labels.find((label) => label.name === 'automerge');
+  const label = result.labels.find((label) => label.name === 'automerge');
   if (!label) {
     log.info(`missing the 'automerge' label.`);
     return;

@@ -192,7 +192,7 @@ let FLASH_MODE = {
 function rawFaceArrayToFaces(buf): Array<RawHalFace> {
   const SIZEOF_CAMERA_FACE_T = 12 * 4;
   if (buf.length % SIZEOF_CAMERA_FACE_T) {
-    throw `Raw face array has invalid length ${buf.length}`;
+    throw new Error(`Raw face array has invalid length ${buf.length}`);
   }
   let nrFaces = buf.length / SIZEOF_CAMERA_FACE_T;
   let i32a = new Int32Array(new Uint8Array(buf).buffer);

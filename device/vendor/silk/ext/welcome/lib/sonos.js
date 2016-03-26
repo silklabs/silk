@@ -57,8 +57,16 @@ export default class Sonos {
   }
 
   playQuery(query, value) {
-    var validQueries = ['artists', 'albumArtists', 'albums', 'genres', 'composers',
-        'tracks', 'playlists', 'share'];
+    const validQueries = [
+      'artists',
+      'albumArtists',
+      'albums',
+      'genres',
+      'composers',
+      'tracks',
+      'playlists',
+      'share',
+    ];
 
     if (!validQueries.some(q => q === query)) {
       log.error(`Bad Sonos query ${query}, ${value}`);
@@ -70,7 +78,7 @@ export default class Sonos {
     }
 
     this._sonos.getMusicLibrary(query, {start: 0}, (err, result) => {
-      var uri;
+      let uri;
       if (!err) {
         result.items.forEach(item => {
           if (value === item.title) {

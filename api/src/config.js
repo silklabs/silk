@@ -20,7 +20,7 @@ export default function configure(input) {
 
   let config = Object.assign({}, DEFAULTS, overrides);
 
-  for (var key in input) {
+  for (let key in input) {
     // Do not allow accidental override of defaults if you want to "null" a
     // config property set it to null.
     if (input[key] === undefined) {

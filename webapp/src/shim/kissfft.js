@@ -9,10 +9,10 @@ function fft(input, output, callback) {
 
 function fftSync(input, output) {
   if (input.length + 2 !== output.length) {
-    throw 'Mismatch of array length for input and output';
+    throw new Error('Mismatch of array length for input and output');
   }
   if (output.length & 1) {
-    throw 'Output array must have an even number of elements';
+    throw new Error('Output array must have an even number of elements');
   }
   if (!(input.length in fftCache)) {
     fftCache[input.length] = new KissFFTR(input.length);

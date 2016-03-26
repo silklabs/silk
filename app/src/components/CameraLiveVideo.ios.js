@@ -112,12 +112,10 @@ export default class CameraLiveVideo extends React.Component {
   }
 
   close = () => {
-    var overlay = this.refs.overlay;
     // Signal dismissal of the view (but let it animate closed).
     // After the animation allow any parent views to cleanup.
-    overlay.dismiss().then(() => {
-      this.props.onClose();
-    });
+    const overlay = this.refs.overlay;
+    overlay.dismiss().then(() => this.props.onClose());
   };
 
   toggleControls = () => {

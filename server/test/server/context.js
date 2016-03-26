@@ -23,7 +23,7 @@ export function passwordHash(context, text) {
 }
 
 export function sha256(context, text) {
-  var sha1 = crypto.createHash('sha256');
+  const sha1 = crypto.createHash('sha256');
   sha1.update(text);
   return sha1.digest('hex');
 }

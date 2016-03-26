@@ -51,7 +51,7 @@ export default class DateOverlay extends React.Component {
 
 }
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   text: {
     opacity: 0.8,
     textAlign: 'center',

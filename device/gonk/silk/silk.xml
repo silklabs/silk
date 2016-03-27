@@ -79,6 +79,12 @@
            upstream="master"
            clone-depth="42"/>
 
+  <project name="qualcomm-developer-network"
+           path="external/qualcomm-developer-network"
+           remote="silk"
+           revision="master"
+           clone-depth="1"/>
+
   <!-- Caffe and its dependent modules -->
   <project name="taka-no-me/android-cmake"
            path="external/android-cmake"

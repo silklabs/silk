@@ -12,6 +12,7 @@
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "silk-raygun": "/raygun",
+    "silk-rtc": "/rtc",
     "silk-svm": "/svm"
   },
   "dependencies": {

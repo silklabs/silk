@@ -13,6 +13,8 @@
 import { Duplex } from 'stream';
 import createLog from 'silk-log';
 
+import type { Logger } from 'silk-log';
+
 const log = createLog('streams:websocket');
 
 function removeListener(target: any, event: string, fn: Function): void {
@@ -34,22 +36,24 @@ export default class WebSocketDuplex extends Duplex {
   _ws: WebSocket;
   _buffers: Array<Buffer> = [];
   _finished: bool = false;
+  _autoClose: bool = true;
+  _log: Logger = log;
 
   get readyState(): number {
     return this._ws.readyState;
   }
 
   _onError: () => void = (err) => {
-    log.error(`Error in websocket stream: ${err.stack}`);
+    this._log.error(`Error in websocket stream: ${err.stack}`);
     this.emit('error', err);
     this.emit('close');
   };
 
   _onClose: () => void = () => {
-    log.info(`Websocket closing`);
+    this._log.info(`Websocket closing`);
     if (!this._finished) {
       const msg = 'WebSocket closed before all writes...';
-      log.error(msg);
+      this._log.error(msg);
       removeListener(this._ws, 'error', this._onError);
       this.emit('error', new Error(msg));
       this.emit('close');
@@ -58,11 +62,15 @@ export default class WebSocketDuplex extends Duplex {
 
     this.once('end', () => this.emit('close'));
     this.push(null);
-    log.info(`WebSocket closed`);
+    this._log.info(`WebSocket closed`);
   };
 
   constructor(ws: WebSocket, options: Object = {}) {
     super(options);
+
+    if (options.log) {
+      this._log = options.log;
+    }
 
     this._ws = ws;
     ws.binaryType = 'arraybuffer';
@@ -77,7 +85,7 @@ export default class WebSocketDuplex extends Duplex {
         data = new Buffer(data);
       }
 
-      log.info(`Got data from websocket ${data.length} bytes`);
+      this._log.info(`Got data from websocket ${data.length} bytes`);
       this.push(data);
     };
 
@@ -86,7 +94,7 @@ export default class WebSocketDuplex extends Duplex {
     // Because we correctly account for writes (i.e. wait for ws to open) we
     // know that finished means we have called .send for all pending writes.
     this.once('finish', () => {
-      log.info(`Websocket writing finished`);
+      this._log.info(`Websocket writing finished`);
       this._finished = true;
       ws.close();
     });
@@ -107,17 +115,17 @@ export default class WebSocketDuplex extends Duplex {
 
     // Write during pending connection ...
     if (ws.readyState < ws.constructor.OPEN) {
-      log.verbose(`Buffering write (connecting)`);
+      this._log.verbose(`Buffering write (connecting)`);
       this._buffers.push(buffer);
       this.once('_pushed', callback);
       return;
     }
 
     try {
-      log.verbose(`Sending ${buffer.length} bytes`);
+      this._log.verbose(`Sending ${buffer.length} bytes`);
       ws.send(buffer);
     } catch (err) {
-      log.error(`Error sending in websocket`, err.stack);
+      this._log.error(`Error sending in websocket`, err.stack);
       callback(err);
       return;
     }
@@ -126,7 +134,7 @@ export default class WebSocketDuplex extends Duplex {
 
   _pushBuffers = () => {
     for (let buffer of this._buffers) {
-      log.verbose(`Writing pending buffer: ${buffer.length} bytes`);
+      this._log.verbose(`Writing pending buffer: ${buffer.length} bytes`);
       this._ws.send(buffer);
     }
     this.emit('_pushed');

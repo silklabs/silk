@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import io from 'socket.io-client';
 import invariant from 'assert';
 import createLog from 'silk-log';
+import { signalDevice } from 'silk-rtc';
 
 import Api from './Api';
 import ObjectCollector from './ObjectCollector';
@@ -25,6 +26,7 @@ class Camera extends EventEmitter {
   _requestedRooms = { };
   _socket = null;
   _queue = null;
+  _channel = null;
 
   constructor(name, id) {
     super();
@@ -35,6 +37,16 @@ class Camera extends EventEmitter {
 
   deinit() {
     this.setOffline();
+  }
+
+  setWebRTCChannel(channel) {
+    const previous = this._channel;
+    this._channel = channel;
+
+    if (previous !== channel) {
+      log.info(`Updating webrtc status for ${this.id}`);
+      this._updateStreams();
+    }
   }
 
   setOnline(socket, opts) {
@@ -232,7 +244,13 @@ class Camera extends EventEmitter {
 
     if (this.online && enabled) {
       log.info('Joining preview stream ' + previewStream);
-      this._socket.on(previewStream, this._onPreviewStream);
+
+      if (this._channel) {
+        console.log('using previews from webrtc!');
+        this._channel.on('jpeg', this._onPreviewStream);
+      } else {
+        this._socket.on(previewStream, this._onPreviewStream);
+      }
       this._socket.emit('join', previewStream);
 
       this._queue = new PreviewQueue(this.name, msg => {
@@ -246,10 +264,16 @@ class Camera extends EventEmitter {
 
     } else {
       log.info('Leaving preview stream ' + previewStream);
+
+      if (this._channel) {
+        this._channel.removeListener('jpeg', this._onPreviewStream);
+      }
+
       if (this._socket) {
         this._socket.removeListener(previewStream, this._onPreviewStream);
         this._socket.emit('leave', previewStream);
       }
+
       if (this._queue) {
         this._queue.deinit();
         this._queue = null;
@@ -265,7 +289,7 @@ class Camera extends EventEmitter {
       log.warn('Received bad preview message', msg);
       return;
     }
-    log.debug('Received preview message', msg);
+    log.info(`Received preview message networkLag=${Date.now() - msg.deviceEmitMs} ${msg}`);
     this._queue.push(msg);
   };
 
@@ -275,13 +299,22 @@ class Camera extends EventEmitter {
 
     if (this.online && enabled) {
       log.info('Joining video stream ' + videoStream);
-      this._socket.on(videoStream, this._onVideoStream);
+      if (this._channel) {
+        console.log('using webrtc video stream...');
+        this._channel.on('mp4', this._onVideoStream);
+      } else {
+        this._socket.on(videoStream, this._onVideoStream);
+      }
       this._socket.emit('join', videoStream);
     } else {
       log.info('Leaving video stream ' + videoStream);
       if (this._socket) {
         this._socket.removeListener(videoStream, this._onVideoStream);
         this._socket.emit('leave', videoStream);
+      }
+
+      if (this._channel) {
+        this._channel.removeListener('mp4', this._onVideoStream);
       }
     }
   }
@@ -298,6 +331,7 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
+    log.info(`Received video message networkLag=${Date.now() - msg.deviceEmitMs} ${msg}`);
     this.emit('videoClip', msg.frame, msg.when);
   };
 
@@ -383,9 +417,68 @@ class Cameras extends EventEmitter {
   status = 'Initializing...';
   socket = null;
 
+  _webrtcConnections = new Map();
   cameras = {}; // indexed by device id
   _allDevices = []; // unmodified result from Api.account.listDevices()
   _liveDevices = {}; // indexed by device id
+  // XXX: Sorry temporary code
+  _webrtc = localStorage.webrtc === 'true';
+
+  get webrtc() {
+    return this._webrtc;
+  }
+
+  setWebRTC(enabled) {
+    this._webrtc = enabled;
+    if (!enabled) {
+      log.info(`Disabling webrtc`);
+      for (let deviceId of this._webrtcConnections.keys()) {
+        this._webrtcDisconnect(deviceId);
+      }
+      this._webrtcConnections = new Map();
+      return;
+    }
+    log.info(`Enabling webrtc`);
+
+    for (let id in this.cameras) {
+      const camera = this.cameras[id];
+      if (camera.online && !this._webrtcConnections.has(id)) {
+        this._webrtcConnect(id);
+      }
+    }
+  }
+
+  async _webrtcDisconnect(deviceId) {
+    const devicePeer = this._webrtcConnections.get(deviceId);
+    if (devicePeer) {
+      devicePeer.disconnect();
+      this._webrtcConnections.delete(deviceId);
+    }
+
+    if (this.cameras[deviceId]) {
+      this.cameras[deviceId].setWebRTCChannel(null);
+    }
+  }
+
+  // Connect to given deviceId.
+  async _webrtcConnect(deviceId) {
+    if (!this._webrtc) {
+      return;
+    }
+
+    // TODO: We should not rely on socket.io in the future to detect
+    // connected devices but for now this is very convient.
+    const devicePeer = signalDevice(Api, deviceId, {
+      dataChannels: {
+        video: {},
+      },
+    });
+
+    this._webrtcConnections.set(deviceId, devicePeer);
+    if (this.cameras[deviceId]) {
+      this.cameras[deviceId].setWebRTCChannel(devicePeer.channel('video'));
+    }
+  }
 
   async connect() {
     this.status = 'Connecting...';
@@ -411,7 +504,7 @@ class Cameras extends EventEmitter {
         this._update();
       });
 
-      this.socket.on('video-stream-new', msg => {
+      this.socket.on('video-stream-new', async msg => {
         log.info(`Device online: ${msg.id} ` +
                  `previewSize:${JSON.stringify(msg.previewSize)}` +
                  `objectsSize:${JSON.stringify(msg.objectsSize)}`);
@@ -421,12 +514,14 @@ class Cameras extends EventEmitter {
           objectsSize: msg.objectsSize,
         };
         this._update();
+        this._webrtcConnect(msg.id);
       });
 
       this.socket.on('video-stream-delete', msg => {
         log.info(`Device offline: ${msg.id}`);
         delete this._liveDevices[msg.id];
         this._update();
+        this._webrtcDisconnect(msg.id);
       });
     } catch (err) {
       log.error(err);

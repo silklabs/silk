@@ -208,8 +208,15 @@ export default class Residents {
 
       // Each "send" call maps directly to a frame and we are single threaded
       // which avoids race conditions in the order of our frames.
-      resident.connection.send(header(CLIENT_MESSAGE, streamIdBinary));
-      resident.connection.send(data);
+      try {
+        resident.connection.send(header(CLIENT_MESSAGE, streamIdBinary));
+        resident.connection.send(data);
+      } catch (err) {
+        // Either we are already disconnected or some other error which will get
+        // resolved by the error/close handlers.
+        log.error(`Error writing to resident ${id} ${err.stack}`);
+        return;
+      }
     };
 
     const onClose = () => {

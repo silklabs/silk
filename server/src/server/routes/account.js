@@ -237,6 +237,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
           sig: Joi.string().required(),
         }).required()
       ))*/
+      publicUrl: Joi.string(), // not requried
       sas: Joi.array().items(Joi.any()).required(),
     })
   }, async (req, res) => {
@@ -258,6 +259,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     );
 
     res.respond({
+      publicUrl: ctx.config.signaling.publicUrl,
       sas
     });
   });

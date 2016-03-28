@@ -1,3 +1,6 @@
+[include]
+../api
+
 [ignore]
 .*/build/.*
 .*/test/rntest/.*
@@ -9,8 +12,17 @@
 .*/node_modules/node-fetch/.*
 .*/node_modules/babel*
 
+.*/server/src/.*
+.*/server/test/server/.*
+.*/server/test/socketio/.*
+.*/server/test/signaling/.*
+.*/streams/test/.*
+.*/azure-storage/test/.*
+
 [libs]
 ../server/interface/mocha.js
+../device/vendor/silk/core/interface/net.js
+
 
 [options]
 module.system=haste

@@ -34,6 +34,12 @@ export default {
     port: 0
   },
 
+  signaling: {
+    // Test profiles start the server themselves and can find out which port
+    // it started on so it is both safe and sane to use 0 (find an open port).
+    port: 0
+  },
+
   blobs: {
     s3: {
       video: {

@@ -43,7 +43,15 @@ export default class DemuxStream extends Transform {
       readableObjectMode: true,
     });
     this._writeDest = source;
+
+    source.on('error', this._onSourceError);
   }
+
+  _onSourceError: (err: Error) => void = (err: Error) => {
+    for (let id of this._streams.keys()) {
+      this._closeStream(id, err);
+    }
+  };
 
   /**
    * Generally test only method to ensure that streams get cleaned up on error
@@ -54,7 +62,6 @@ export default class DemuxStream extends Transform {
   }
 
   _closeStream(id: string, err: ?Error) {
-
     const meta = this._streams.get(id);
     this._streams.delete(id);
 

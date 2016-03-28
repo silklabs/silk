@@ -25,11 +25,16 @@ const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
 // calls to detectedFaces(), cancel the tracker
 const MAX_NO_FACE_SEEN = 3;
 
+// Keep the faces around for this long before declaring them as lost to account
+// for a face that may reappear after a brief occlusion
+const FACE_DURATION = 5000;
+
 let camera;
 let log;
 let timeline;
 
 export default class FaceTracker {
+  faces: Array<Face> = [];  // list of currently tracked faces
 
   constructor(env, frameSize /*: CameraFrameSize*/) {
     camera = env.camera;
@@ -37,6 +42,11 @@ export default class FaceTracker {
     log = env.log;
     timeline = env.timeline;
     this._frameSize = frameSize;
+    this._lostFaces = [];
+  }
+
+  static get FACE_DURATION() {
+    return FACE_DURATION;
   }
 
   // Computes the area and overlap ratios between two face rectangles
@@ -102,7 +112,9 @@ export default class FaceTracker {
     // TODO LATER: it would be nice to update the Tracker API to allow
     // reinitializing a tracker as for certain Tracker implementations
     // this could be a win.
-    face.i.tracker.impl.cancel();
+    if (face.i.tracker.impl) {
+      face.i.tracker.impl.cancel();
+    }
     face.i.tracker.impl = this._newTracker(frame, rect);
   }
 
@@ -131,6 +143,15 @@ export default class FaceTracker {
           alreadyTracked = true;
         }
       });
+
+      // Check if this face data matches a just lost face. If yes then reinstate
+      // the lost face
+      let face = this._recoverLostFace(rect);
+      if (face) {
+        this._updateFaceLocation(face, when, rect, frame);
+        face.i.tracker.detected = true;
+        alreadyTracked = true;
+      }
 
       if (!alreadyTracked) {
         if (this.faces.length >= MAX_TRACKED_OBJECTS) {
@@ -182,8 +203,7 @@ export default class FaceTracker {
 
       if (++face.i.tracker.notSeenCount >= MAX_NO_FACE_SEEN) {
         log.warn(`No new update seen for a while, dropping face ${face.id}`);
-        face.i.tracker.impl.cancel();
-        face.i.tracker.impl = null;
+        this._cancelFace(face);
       }
     });
 
@@ -217,13 +237,11 @@ export default class FaceTracker {
 
           if (keepFace1) {
             log.warn(`Suspected duplicate face tracker, dropping face ${face2.id}`);
-            face2.i.tracker.impl.cancel();
-            face2.i.tracker.impl = null;
+            this._cancelFace(face2);
             continue;
           } else {
             log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
-            face.i.tracker.impl.cancel();
-            face.i.tracker.impl = null;
+            this._cancelFace(face);
             break;
           }
         } else {
@@ -270,7 +288,6 @@ export default class FaceTracker {
     log.debug(`Tracking took ${elapsedTime}ms for ${trackingResults.length} faces`);
 
     // Update face objects with tracking results
-    let lostFaces = [];
     for (let idx = 0; idx < trackingResults.length; idx++) {
       let [face, err, found, rect] = trackingResults[idx];
 
@@ -280,9 +297,7 @@ export default class FaceTracker {
       }
 
       if (!found) {
-        face.i.tracker.impl.cancel();
-        face.i.tracker.impl = null;
-        lostFaces.push(face);
+        this._cancelFace(face);
         log.verbose(`Lost face ${face.id}`);
         continue;
       }
@@ -299,10 +314,48 @@ export default class FaceTracker {
       }
     }
 
-    return lostFaces;
+    return this._lostFaces;
   }
 
-  // list of currently tracked faces
-  faces: Array<Face> = [];
+  _cancelFace(face: Face, reason: String) {
+    log.info(`Canceling face id: ${face.id}, faceId: ${face.faceId}`);
+    if (face.i.tracker.impl !== null) {
+      face.i.tracker.impl.cancel();
+      face.i.tracker.impl = null;
+      this._lostFaces.push(face);
+    }
+  }
+
+  /*
+   * Check if the face rectangle matches any of the lost faces with in the past
+   * ${@code FACE_DURATION}. Reinstante the lost face if there is a match
+   */
+  _recoverLostFace(rect) {
+    if (!this._lostFaces.length) {
+      return null;
+    }
+
+    // Remove lost faces that are old
+    let now = Date.now();
+    this._lostFaces = this._lostFaces.filter((face) => {
+      return ((now - face.rectWhen) < FACE_DURATION);
+    });
+
+    let lost = this._lostFaces.reduce((lost, lostFace) => {
+      return lost + `{id: ${lostFace.id}, faceId: ${lostFace.faceId}, when: ${lostFace.rectWhen}}, `;
+    }, '');
+
+    log.info(`Lost faces: [${lost}]`);
+    for (let count = 0; count < this._lostFaces.length; count++) {
+      if (this._probablySameFace(rect, this._lostFaces[count].rect)) {
+        log.info(`Found a matching lost face with id: ${this._lostFaces[count].id}`);
+        let lostFace = this._lostFaces[count];
+        this.faces.push(lostFace);
+        this._lostFaces.splice(count, 1);
+        return lostFace;
+      }
+    }
+    return null;
+  }
 }
 

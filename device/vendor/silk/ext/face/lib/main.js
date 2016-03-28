@@ -112,7 +112,8 @@ class Main {
         return;
       }
       const name = this.faceRecognizer.faceLabel(face.faceId) || 'unknown face';
-      log.debug(`'face' (${name}) added to timeline at`, face.rectWhen);
+      log.debug(`'face' (id: ${face.id} name: ${name}) added to timeline at`,
+          face.rectWhen);
       timeline.addObjects(
         [{
           id: face.id,
@@ -120,7 +121,7 @@ class Main {
           when: face.rectWhen,
           rects: [face.rect],
           source: 'face',
-          durationMs: FACE_DETECT_INTERVAL,
+          durationMs: FaceTracker.FACE_DURATION,
           name,
           faceId: face.faceId,
           percentTrained: face.percentTrained,

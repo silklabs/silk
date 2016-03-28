@@ -2,7 +2,7 @@
 import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import timeout from 'silk-utils/timeout';
-import toJSON from 'silk-utils/tojson';
+import toJSON from 'silk-utils/calltojson';
 import invariant from 'assert';
 
 import WebRTC from './webrtc';

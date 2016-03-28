@@ -5,7 +5,7 @@
  */
 
 import eventToPromise from 'event-to-promise';
-import toJSON from 'silk-utils/tojson';
+import toJSON from 'silk-utils/calltojson';
 
 import StructuredDataChannel from './structured_data_channel';
 import WebRTC from './webrtc';
@@ -73,7 +73,7 @@ export async function waitForDataChannels(
   dataChannels: Array<string>,
 ): Promise<DataChannels> {
   // clone ...
-  let remaining = dataChannels.concat();
+  let remaining = dataChannels.slice();
   let result = new Map();
 
   let event;

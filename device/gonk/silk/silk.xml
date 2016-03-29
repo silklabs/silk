@@ -141,7 +141,7 @@
   <project name="mikeseven/node-opencl"
            path="external/node-opencl"
            remote="github"
-           revision="refs/tags/v0.4"
+           revision="a517a954fb5c6c8c1ef1fe48bc5b3ae8be10c725"
            upstream="master"
            clone-depth="1"/>
   <project name="cereproc"

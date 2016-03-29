@@ -23,20 +23,12 @@ const clogDurationMs = 2000;
 const consoleMessageEntryCount = 4;
 
 const characters = [
-  'wizard',
-  'ninja',
-  'superhero',
-  'moonwalker',
-  'daredevil',
-  'magician',
-  'sorcerer',
-  'rocket scientist',
-  'gladiator',
-  'doctor',
-  'secret agent',
-  'genius',
-  'lifesaver',
-  'rockstar',
+  'casey',
+  'jaime',
+  'riley',
+  'avery',
+  'kerry',
+  'jessie',
 ];
 let nextCharacterIndex = Math.floor(Math.random() * 1000 % characters.length);
 
@@ -689,15 +681,14 @@ export default class CameraVideo extends React.Component {
     case `devicemotion`:
       return `Device moved.`;
     default:
-      log.warn(`Unsupported object from '${object.tag}'`, object);
+      log.warn(`No special console message formatter for object`, object);
     }
     return object.name || object.tag;
   }
 
   _getFaceName(object) {
     if (object.faceId === null) {
-      object.name = 'Unknown';
-      return object.name;
+      return 'unrecognized';
     }
 
     let name = this.faceIdNameMap.get(object.faceId);
@@ -710,21 +701,24 @@ export default class CameraVideo extends React.Component {
   }
 
   _formatConsoleMessageFace(object, visible) {
-    let name = this._getFaceName(object);
-    if (name === object.name) {
-      // Probably "Wayne" ;)
-      name = capitalize(name);
-    } else {
-      // Probably a character from our list.
-      name = `The ${name}`;
-    }
+    const name = capitalize(this._getFaceName(object));
+
     if (!visible) {
-      return `${name} exited the room.`;
-    } else if (object.movement !== 'notchanged') {
-      return `${name} is ${(object.movement === 'closer') ? 'coming closer' : 'going away' }.`;
-    } else {
-      return `${name} entered the room.`;
+      return `${name} is gone.`;
     }
+
+    switch (object.movement) {
+    case 'notchanged':
+      return `${name} is here.`;
+    case 'closer':
+      return `${name} is moving closer`;
+    case 'farther':
+      return `${name} is moving away`;
+    default:
+      log.warn(`Unknown movement: ${object.movement}`);
+    }
+
+    return name;
   }
 
   _formatConsoleMessageSound(object, visible) {
@@ -748,7 +742,7 @@ export default class CameraVideo extends React.Component {
 
   _formatConsoleMessageObject(object, visible) {
     const name = object.name.toLowerCase();
-    return visible ? `A ${name} was seen.` : `The ${name} left.`;
+    return visible ? `Saw a ${name}.` : `The ${name} is gone.`;
   }
 
   _startAnimationLoop = () => {

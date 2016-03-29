@@ -684,8 +684,8 @@ export default class CameraVideo extends React.Component {
       return this._formatConsoleMessageFace(object, visible);
     case `sound`:
       return this._formatConsoleMessageSound(object, visible);
-    case `dnn`:
-      return this._formatConsoleMessageDNN(object, visible);
+    case `object`:
+      return this._formatConsoleMessageObject(object, visible);
     case `devicemotion`:
       return `Device moved.`;
     default:
@@ -746,8 +746,8 @@ export default class CameraVideo extends React.Component {
     return `${(visible ? 'Heard' : 'No longer hearing')} ${name}.`;
   }
 
-  _formatConsoleMessageDNN(object, visible) {
-    const name = object.tag.toLowerCase();
+  _formatConsoleMessageObject(object, visible) {
+    const name = object.name.toLowerCase();
     return visible ? `A ${name} was seen.` : `The ${name} left.`;
   }
 

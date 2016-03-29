@@ -27,6 +27,8 @@ const TOPK = 5; // Return top K predictions for the given image
 
 const THRESHOLD = 12; // Ignore predictions with probability lower than threshold
 
+const OBJECT_TAG = 'object';
+
 /**
  * This class listens for motion events and uses Caffe DNN to classify the image
  */
@@ -198,7 +200,8 @@ class Dnn {
         // Remove the object if it is no longer detected
         if ((this._lastObjectLabel !== '') && (this._lastObjectLabel !== topLabel)) {
           timeline.addObjects([{
-            tag: this._lastObjectLabel,
+            tag: OBJECT_TAG,
+            name: this._lastObjectLabel,
             when,
             durationMs: 1,
             id: this._lastObjectId,
@@ -212,7 +215,8 @@ class Dnn {
         if ((topProbability >= THRESHOLD) && (this._lastObjectLabel !== topLabel)) {
           let id = timeline.getNextObjectId();
           timeline.addObjects([{
-            tag: topLabel,
+            tag: OBJECT_TAG,
+            name: topLabel,
             when,
             id,
           }]);

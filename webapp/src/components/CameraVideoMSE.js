@@ -192,6 +192,7 @@ export default class CameraVideo extends React.Component {
     showFaces: true,
     showVideoStats: false,
     stats: null,
+    muted: false,
   };
 
   get deviceId() {
@@ -352,6 +353,14 @@ export default class CameraVideo extends React.Component {
       return;
     }
     this._setStateAsync({showVideoStats});
+  };
+
+  _onVideoMutedCheck = () => {
+    const muted = this.refs.checkMuted.getChecked();
+    if (muted === this.state.muted) {
+      return;
+    }
+    this._setStateAsync({muted});
   };
 
   _onLoadedData = () => {
@@ -878,6 +887,16 @@ export default class CameraVideo extends React.Component {
               standalone
             />
           </div>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <Input
+              type="checkbox"
+              label=" Mute Video"
+              ref="checkMuted"
+              checked={this.state.muted}
+              onChange={this._onVideoMutedCheck}
+              standalone
+            />
+          </div>
         </form>
         <form className="form-inline" style={styles.debugMenuForm}>
           <div className="form-group" style={styles.debugMenuFormGroup}>
@@ -969,6 +988,7 @@ export default class CameraVideo extends React.Component {
           key={this.state.camera.id}
           maxStatsUpdateIntervalMs={maxStatsUpdateIntervalMs}
           autoPlay="true"
+          muted={(this.state.muted ? 'true' : null)}
           style={styles.video}
           onStatsUpdate={this._onStatsUpdate}
           onLoadedMetadata={this._updateCanvasSize}

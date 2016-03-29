@@ -5,15 +5,18 @@
 let fs = require('fs');
 let path = require('path');
 
+const PATHS = [
+  '../api/node_modules/msgpack-lite/package.json',
+  '../streams/node_modules/msgpack-lite/package.json',
+];
 
-const MSGPACK_PATH = './node_modules/silk-api/node_modules/msgpack-lite/package.json';
-
-let msgpackPkg = path.join(process.cwd(), MSGPACK_PATH);
-
-if (fs.existsSync(msgpackPkg)) {
-  let json = require(msgpackPkg);
-  if (json.browser) {
-    delete json.browser;
-    fs.writeFileSync(msgpackPkg, JSON.stringify(json, null, 2));
+PATHS.forEach((msgpackDir) => {
+  let msgpackPkg = path.join(process.cwd(), msgpackDir);
+  if (fs.existsSync(msgpackPkg)) {
+    let json = require(msgpackPkg);
+    if (json.browser) {
+      delete json.browser;
+      fs.writeFileSync(msgpackPkg, JSON.stringify(json, null, 2));
+    }
   }
-}
+});

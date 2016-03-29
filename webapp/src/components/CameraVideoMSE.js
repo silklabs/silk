@@ -192,7 +192,7 @@ export default class CameraVideo extends React.Component {
     showFaces: true,
     showVideoStats: false,
     stats: null,
-    muted: false,
+    muted: true,
   };
 
   get deviceId() {

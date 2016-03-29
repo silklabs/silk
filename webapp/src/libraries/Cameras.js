@@ -248,6 +248,7 @@ class Camera extends EventEmitter {
       if (this._channel) {
         console.log('using previews from webrtc!');
         this._channel.on('jpeg', this._onPreviewStream);
+        this._socket.removeListener(previewStream, this._onPreviewStream);
       } else {
         this._socket.on(previewStream, this._onPreviewStream);
       }
@@ -302,6 +303,7 @@ class Camera extends EventEmitter {
       if (this._channel) {
         console.log('using webrtc video stream...');
         this._channel.on('mp4', this._onVideoStream);
+        this._socket.removeListener(videoStream, this._onVideoStream);
       } else {
         this._socket.on(videoStream, this._onVideoStream);
       }

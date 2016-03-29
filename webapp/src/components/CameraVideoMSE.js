@@ -1,6 +1,6 @@
 import invariant from 'assert';
 import React from 'react';
-import { Input, Button } from 'react-bootstrap';
+import { Input, ButtonInput } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
 import createLog from 'silk-log';
 
@@ -123,8 +123,12 @@ const styles = {
     padding: '10px',
     margin: '6px',
   },
-  debugButton: {
-    marginRight: '8px',
+  debugMenuForm: {
+    paddingBottom: '10px',
+  },
+  debugMenuFormGroup: {
+    marginBottom: '0px',
+    marginRight: '15px',
   },
 };
 
@@ -188,6 +192,7 @@ export default class CameraVideo extends React.Component {
     showFaces: true,
     showVideoStats: false,
     stats: null,
+    muted: false,
   };
 
   get deviceId() {
@@ -348,6 +353,14 @@ export default class CameraVideo extends React.Component {
       return;
     }
     this._setStateAsync({showVideoStats});
+  };
+
+  _onVideoMutedCheck = () => {
+    const muted = this.refs.checkMuted.getChecked();
+    if (muted === this.state.muted) {
+      return;
+    }
+    this._setStateAsync({muted});
   };
 
   _onLoadedData = () => {
@@ -841,45 +854,77 @@ export default class CameraVideo extends React.Component {
 
   _renderDebugMenu() {
     return (
-      <form style={styles.debugMenu}>
-        <h3>Debug Options</h3>
-        <Input
-          type="checkbox"
-          label="Show Motion Events"
-          ref="checkMotion"
-          checked={this.state.showMotionEvents}
-          onChange={this._onMotionEventsCheck}
-        />
-        <Input
-          type="checkbox"
-          label="Show Tracked Faces"
-          ref="checkFaces"
-          checked={this.state.showFaces}
-          onChange={this._onFacesCheck}
-        />
-        <Input
-          type="checkbox"
-          label="Show Video Stats"
-          ref="checkVideoStats"
-          checked={this.state.showVideoStats}
-          onChange={this._onVideoStatsCheck}
-        />
-        <Button
-          style={styles.debugButton}
-          onClick={() => this.refs.msePlayer.forceReload()}>
-          Reload &lt;video&gt; element
-        </Button>
-        <Button
-          style={styles.debugButton}
-          onClick={() => this.dropNextSegment = true}>
-          Drop next segment
-        </Button>
-        <Button
-          style={styles.debugButton}
-          onClick={this._clogNetwork}>
-            Clog network for {formatMs(clogDurationMs)}
-        </Button>
-      </form>
+      <div style={styles.debugMenu}>
+        <h4>Debug Options</h4>
+        <form className="form-inline" style={styles.debugMenuForm}>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <Input
+              type="checkbox"
+              label=" Show Motion Events"
+              ref="checkMotion"
+              checked={this.state.showMotionEvents}
+              onChange={this._onMotionEventsCheck}
+              standalone
+            />
+          </div>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <Input
+              type="checkbox"
+              label=" Show Tracked Faces"
+              ref="checkFaces"
+              checked={this.state.showFaces}
+              onChange={this._onFacesCheck}
+              standalone
+            />
+          </div>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <Input
+              type="checkbox"
+              label=" Show Video Stats"
+              ref="checkVideoStats"
+              checked={this.state.showVideoStats}
+              onChange={this._onVideoStatsCheck}
+              standalone
+            />
+          </div>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <Input
+              type="checkbox"
+              label=" Mute Video"
+              ref="checkMuted"
+              checked={this.state.muted}
+              onChange={this._onVideoMutedCheck}
+              standalone
+            />
+          </div>
+        </form>
+        <form className="form-inline" style={styles.debugMenuForm}>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <ButtonInput
+              onClick={() => this.refs.msePlayer.forceReload()}
+              bsSize="small"
+              standalone>
+              Reload &lt;video&gt; element
+            </ButtonInput>
+          </div>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <ButtonInput
+              onClick={() => this.dropNextSegment = true}
+              bsSize="small"
+              standalone>
+              Drop next segment
+            </ButtonInput>
+          </div>
+          <div className="form-group" style={styles.debugMenuFormGroup}>
+            <ButtonInput
+              onClick={this._clogNetwork}
+              bsSize="small"
+              standalone>
+              Clog network for {formatMs(clogDurationMs)}
+            </ButtonInput>
+          </div>
+        </form>
+      </div>
     );
   }
 
@@ -943,6 +988,7 @@ export default class CameraVideo extends React.Component {
           key={this.state.camera.id}
           maxStatsUpdateIntervalMs={maxStatsUpdateIntervalMs}
           autoPlay="true"
+          muted={(this.state.muted ? 'true' : null)}
           style={styles.video}
           onStatsUpdate={this._onStatsUpdate}
           onLoadedMetadata={this._updateCanvasSize}

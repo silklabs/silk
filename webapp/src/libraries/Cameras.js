@@ -331,7 +331,7 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    log.info(`Received video message networkLag=${Date.now() - msg.deviceEmitMs} ${msg}`);
+    log.debug(`Received video message networkLag=${Date.now() - msg.deviceEmitMs} ${msg}`);
     this.emit('videoClip', msg.frame, msg.when);
   };
 

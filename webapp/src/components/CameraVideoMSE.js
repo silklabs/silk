@@ -678,7 +678,7 @@ export default class CameraVideo extends React.Component {
       return this._formatConsoleMessageSound(object, visible);
     case `object`:
       return this._formatConsoleMessageObject(object, visible);
-    case `devicemotion`:
+    case `device moved`:
       return `Device moved.`;
     default:
       log.warn(`No special console message formatter for object`, object);

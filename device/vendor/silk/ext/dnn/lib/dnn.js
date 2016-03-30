@@ -160,6 +160,7 @@ class Dnn {
         log.verbose(`Top ${TOPK} predictions in ${diff}ms: `);
 
         let topLabel = '';
+        let topSubcategory = '';
         let topProbability = 0;
         for (let i = 0; i < predictions.length; i++) {
           const indexLabel = predictions[i].label.indexOf(' ');
@@ -179,16 +180,15 @@ class Dnn {
           log.info(`label: \"${label}\" sub-category: \"${subcategory}\" ` +
               `Probability: ${probability}% id: ${id}`);
 
-          if (i === 0) {
+          if (topSubcategory === '' && categoryStart !== -1) {
+            // HACK to only add the top object to the timeline when the object
+            // category is available
             topLabel = label;
-
-            // HACK to not add the objects to timeline if the object category
-            // is not available
-            if (categoryStart !== -1) {
-              topProbability = probability;
-            } else {
-              topProbability = 0;
-            }
+            topProbability = probability;
+            topSubcategory = subcategory;
+          } else if (i === 0) {
+            topLabel = label;
+            topProbability = 0;
           }
         }
 

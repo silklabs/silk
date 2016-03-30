@@ -466,7 +466,7 @@ n02910353 buckle
 n02916936 bulletproof vest
 n02917067 bullet train, bullet
 n02927161 butcher shop, meat market
-n02930766 cab, hack, taxi, taxicab
+n02930766 [Car] cab, hack, taxi, taxicab
 n02939185 caldron, cauldron
 n02948072 candle, taper, wax light
 n02950826 cannon
@@ -477,7 +477,7 @@ n02965783 car mirror
 n02966193 carousel, carrousel, merry-go-round, roundabout, whirligig
 n02966687 carpenter's kit, tool kit
 n02971356 carton
-n02974003 [Car] car wheel
+n02974003 car wheel
 n02977058 cash machine, cash dispenser, automated teller machine, automatic teller machine, automated teller, automatic teller, ATM
 n02978881 cassette
 n02979186 cassette player
@@ -654,7 +654,7 @@ n03763968 military uniform
 n03764736 milk can
 n03769881 minibus
 n03770439 miniskirt, mini
-n03770679 [Pickup truck] minivan
+n03770679 minivan
 n03773504 missile
 n03775071 mitten
 n03775546 mixing bowl
@@ -749,7 +749,7 @@ n04023962 punching bag, punch bag, punching ball, punchball
 n04026417 purse
 n04033901 quill, quill pen
 n04033995 quilt, comforter, comfort, puff
-n04037443 racer, race car, racing car
+n04037443 [Car] racer, race car, racing car
 n04039381 racket, racquet
 n04040759 radiator
 n04041544 radio, wireless

@@ -83,6 +83,7 @@
     "start-debug": "DEBUG=silk-*,-*:verbose npm start",
     "start-server": "../babel-run/babel-node src/server production",
     "start-socketio": "../babel-run/babel-node src/socketio production",
+    "start-signaling": "../babel-run/babel-node src/signaling production",
     "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"

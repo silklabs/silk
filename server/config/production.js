@@ -9,6 +9,8 @@ export default {
   },
 
   signaling: {
+    // TODO: Turn this on when we go to N servers.
+    useServiceDiscovery: false,
     // Where to bind as passed by heroku:
     port: process.env.PORT
   },

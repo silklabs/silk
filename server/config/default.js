@@ -51,7 +51,7 @@ export default {
     useServiceDiscovery: false,
 
     // Set / used in server if useServiceDiscovery is false.
-    publicUrl: null,
+    publicUrl: process.env.SIGNALING_PUBLIC_URL || null,
 
     port: process.env.SIGNALING_PORT || 5002,
     host: process.env.SIGNALING_HOST || null,

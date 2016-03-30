@@ -169,7 +169,7 @@ export default async function main (config: any): any {
     config.socketio.publicUrl = url.format(basePublicUrl);
   }
 
-  if (!config.signaling.useServiceDiscovery) {
+  if (!config.signaling.useServiceDiscovery && !config.signaling.publicUrl) {
     let basePublicUrl: any = url.parse(config.server.publicUrl);
     basePublicUrl.port = config.signaling.port;
     // Delete host so port override will be used.

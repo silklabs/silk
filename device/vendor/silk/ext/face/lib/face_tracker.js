@@ -204,6 +204,11 @@ export default class FaceTracker {
       if (++face.i.tracker.notSeenCount >= MAX_NO_FACE_SEEN) {
         log.warn(`No new update seen for a while, dropping face ${face.id}`);
         this._cancelFace(face);
+      } else {
+        // Adjust the face timestamp as we are keeping the faces around a few
+        // times after they were seen. This is done to match the time when
+        // the face is considered lost
+        face.rectWhen = when;
       }
     });
 

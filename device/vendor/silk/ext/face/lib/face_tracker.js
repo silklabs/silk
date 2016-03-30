@@ -73,10 +73,10 @@ export default class FaceTracker {
   _probablySameFace(r1: FaceRect, r2: FaceRect): bool {
     const [overlapRatio] = this._faceRectRatio(r1, r2);
 
-    // Faces overlapping by more than 50% are probably the same face.
+    // Faces overlapping by more than a given threshold are probably the same face.
     // TODO: Consider areaRatio?  Need test cases that demonstrate where
     //       testing overlapRatio alone fails first...
-    return overlapRatio > 0.5;
+    return overlapRatio > 0.2;
   }
 
   _newTracker(frame: Matrix, rect: FaceRect) {

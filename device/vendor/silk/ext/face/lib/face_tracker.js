@@ -34,7 +34,7 @@ let log;
 let timeline;
 
 export default class FaceTracker {
-  faces: Array<Face> = [];  // list of currently tracked faces
+  _faces: Array<Face> = [];  // list of currently tracked faces
 
   constructor(env, frameSize /*: CameraFrameSize*/) {
     camera = env.camera;
@@ -124,9 +124,9 @@ export default class FaceTracker {
                 frame: Matrix) {
 
     // Filter out lost faces
-    this.faces = this.faces.filter(face => face.i.tracker.impl !== null);
+    this._faces = this._faces.filter(face => face.i.tracker.impl !== null);
 
-    this.faces.forEach(
+    this._faces.forEach(
       face => {
         face.i.tracker.detected = false;
       }
@@ -136,7 +136,7 @@ export default class FaceTracker {
     // necessary
     faceRects.forEach(rect => {
       let alreadyTracked = false;
-      this.faces.forEach(face => {
+      this._faces.forEach(face => {
         if (this._probablySameFace(rect, face.rect)) {
           this._updateFaceLocation(face, when, rect, frame);
           face.i.tracker.detected = true;
@@ -154,7 +154,7 @@ export default class FaceTracker {
       }
 
       if (!alreadyTracked) {
-        if (this.faces.length >= MAX_TRACKED_OBJECTS) {
+        if (this._faces.length >= MAX_TRACKED_OBJECTS) {
           log.warn(`Unable to track new face, already tracking ${MAX_TRACKED_OBJECTS}`);
         } else {
           let face = new Face(timeline.getNextObjectId(), this.env);
@@ -164,7 +164,7 @@ export default class FaceTracker {
             impl: this._newTracker(frame, rect),
             notSeenCount: 0,
           };
-          this.faces.push(face);
+          this._faces.push(face);
           log.verbose(`Tracking new face ${face.id}`);
         }
       }
@@ -174,7 +174,7 @@ export default class FaceTracker {
     // already match a strong face
     weakFaceRects.forEach(
       rect => {
-        this.faces.forEach(
+        this._faces.forEach(
           face => {
             if (face.i.tracker.detected) {
               return;
@@ -191,7 +191,7 @@ export default class FaceTracker {
     // Search for faces that were not updated with the latest detection results,
     // and remove them if they've not been associated with a detected face
     // recently.
-    this.faces.forEach(face => {
+    this._faces.forEach(face => {
       if (face.i.tracker.detected) {
         return;
       }
@@ -208,15 +208,15 @@ export default class FaceTracker {
     });
 
     // Search for duplicate trackers and remove them
-    for (let i = 0; i < this.faces.length; i++) {
-      let face = this.faces[i];
+    for (let i = 0; i < this._faces.length; i++) {
+      let face = this._faces[i];
       if (face.i.tracker.impl === null) {
         continue;
       }
 
       // Check if another tracker appears to be also tracking this face
-      for (let j = i + 1; j < this.faces.length; j++) {
-        let face2 = this.faces[j];
+      for (let j = i + 1; j < this._faces.length; j++) {
+        let face2 = this._faces[j];
         if (face2.i.tracker.impl === null) {
           continue;
         }
@@ -257,8 +257,8 @@ export default class FaceTracker {
    */
   _getIdleTrackers(): Array<Face> {
     let idleFaces = [];
-    for (let i = 0; i < this.faces.length; i++) {
-      let face = this.faces[i];
+    for (let i = 0; i < this._faces.length; i++) {
+      let face = this._faces[i];
       if (face.i.tracker.impl === null) {
         continue;
       }
@@ -317,6 +317,12 @@ export default class FaceTracker {
     return this._lostFaces;
   }
 
+  get faces(): Array<Face> {
+    // Filter out lost faces
+    this._faces = this._faces.filter(face => face.i.tracker.impl !== null);
+    return this._faces;
+  }
+
   _cancelFace(face: Face, reason: String) {
     log.info(`Canceling face id: ${face.id}, faceId: ${face.faceId}`);
     if (face.i.tracker.impl !== null) {
@@ -350,7 +356,7 @@ export default class FaceTracker {
       if (this._probablySameFace(rect, this._lostFaces[count].rect)) {
         log.info(`Found a matching lost face with id: ${this._lostFaces[count].id}`);
         let lostFace = this._lostFaces[count];
-        this.faces.push(lostFace);
+        this._faces.push(lostFace);
         this._lostFaces.splice(count, 1);
         return lostFace;
       }

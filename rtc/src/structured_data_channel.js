@@ -103,6 +103,9 @@ export default class StructuredDataChannel extends EventEmitter {
   }
 
   setChannel(channel: ?RTCDataChannel): void {
+    // Pending frame details are only good for a single connection.
+    this._pendingFrame = null;
+
     // Remove any listeners that may have been setup on the previous listener.
     const previousChannel = this._channel;
     if (previousChannel) {

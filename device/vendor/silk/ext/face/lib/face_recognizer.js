@@ -239,6 +239,7 @@ export default class FaceRecognizer {
       } else {
         faceim.release();
       }
+      face.recognitionCount++;
     }
     const diff = Date.now() - start;
     log.verbose(`Face recognition finished in ${diff}ms`);

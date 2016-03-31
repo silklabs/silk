@@ -17,6 +17,9 @@ import FaceTracker from './face_tracker';
 // preview stream.
 const FACE_DETECT_INTERVAL = 1000;
 
+// Number of times to wait for a successfull identification
+const WAIT_FOR_RECOGNITION_ATTEMPTS = 1;
+
 let camera;
 let log;
 let sysutils;
@@ -102,8 +105,15 @@ class Main {
 
     // Update timeline with currently tracked faces
     this.faceTracker.faces.forEach(face => {
+      // Wait for face to be identified before adding to the timeline
+      if ((face.faceId === null) && (face.recognitionCount < WAIT_FOR_RECOGNITION_ATTEMPTS)) {
+        log.info(`Waiting for face to be identified ` +
+            `(${face.recognitionCount} / ${WAIT_FOR_RECOGNITION_ATTEMPTS})`);
+        return;
+      }
       const name = this.faceRecognizer.faceLabel(face.faceId) || 'unknown face';
-      log.debug(`'face' (${name}) added to timeline at`, face.rectWhen);
+      log.debug(`'face' (id: ${face.id} name: ${name}) added to timeline at`,
+          face.rectWhen);
       timeline.addObjects(
         [{
           id: face.id,
@@ -111,7 +121,7 @@ class Main {
           when: face.rectWhen,
           rects: [face.rect],
           source: 'face',
-          durationMs: FACE_DETECT_INTERVAL,
+          durationMs: FaceTracker.FACE_DURATION,
           name,
           faceId: face.faceId,
           percentTrained: face.percentTrained,

@@ -25,11 +25,16 @@ const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
 // calls to detectedFaces(), cancel the tracker
 const MAX_NO_FACE_SEEN = 3;
 
+// Keep the faces around for this long before declaring them as lost to account
+// for a face that may reappear after a brief occlusion
+const FACE_DURATION = 5000;
+
 let camera;
 let log;
 let timeline;
 
 export default class FaceTracker {
+  _faces: Array<Face> = [];  // list of currently tracked faces
 
   constructor(env, frameSize /*: CameraFrameSize*/) {
     camera = env.camera;
@@ -37,6 +42,11 @@ export default class FaceTracker {
     log = env.log;
     timeline = env.timeline;
     this._frameSize = frameSize;
+    this._lostFaces = [];
+  }
+
+  static get FACE_DURATION() {
+    return FACE_DURATION;
   }
 
   // Computes the area and overlap ratios between two face rectangles
@@ -63,10 +73,10 @@ export default class FaceTracker {
   _probablySameFace(r1: FaceRect, r2: FaceRect): bool {
     const [overlapRatio] = this._faceRectRatio(r1, r2);
 
-    // Faces overlapping by more than 50% are probably the same face.
+    // Faces overlapping by more than a given threshold are probably the same face.
     // TODO: Consider areaRatio?  Need test cases that demonstrate where
     //       testing overlapRatio alone fails first...
-    return overlapRatio > 0.5;
+    return overlapRatio > 0.2;
   }
 
   _newTracker(frame: Matrix, rect: FaceRect) {
@@ -102,7 +112,9 @@ export default class FaceTracker {
     // TODO LATER: it would be nice to update the Tracker API to allow
     // reinitializing a tracker as for certain Tracker implementations
     // this could be a win.
-    face.i.tracker.impl.cancel();
+    if (face.i.tracker.impl) {
+      face.i.tracker.impl.cancel();
+    }
     face.i.tracker.impl = this._newTracker(frame, rect);
   }
 
@@ -112,9 +124,9 @@ export default class FaceTracker {
                 frame: Matrix) {
 
     // Filter out lost faces
-    this.faces = this.faces.filter(face => face.i.tracker.impl !== null);
+    this._faces = this._faces.filter(face => face.i.tracker.impl !== null);
 
-    this.faces.forEach(
+    this._faces.forEach(
       face => {
         face.i.tracker.detected = false;
       }
@@ -124,7 +136,7 @@ export default class FaceTracker {
     // necessary
     faceRects.forEach(rect => {
       let alreadyTracked = false;
-      this.faces.forEach(face => {
+      this._faces.forEach(face => {
         if (this._probablySameFace(rect, face.rect)) {
           this._updateFaceLocation(face, when, rect, frame);
           face.i.tracker.detected = true;
@@ -132,8 +144,17 @@ export default class FaceTracker {
         }
       });
 
+      // Check if this face data matches a just lost face. If yes then reinstate
+      // the lost face
+      let face = this._recoverLostFace(rect);
+      if (face) {
+        this._updateFaceLocation(face, when, rect, frame);
+        face.i.tracker.detected = true;
+        alreadyTracked = true;
+      }
+
       if (!alreadyTracked) {
-        if (this.faces.length >= MAX_TRACKED_OBJECTS) {
+        if (this._faces.length >= MAX_TRACKED_OBJECTS) {
           log.warn(`Unable to track new face, already tracking ${MAX_TRACKED_OBJECTS}`);
         } else {
           let face = new Face(timeline.getNextObjectId(), this.env);
@@ -143,7 +164,7 @@ export default class FaceTracker {
             impl: this._newTracker(frame, rect),
             notSeenCount: 0,
           };
-          this.faces.push(face);
+          this._faces.push(face);
           log.verbose(`Tracking new face ${face.id}`);
         }
       }
@@ -153,7 +174,7 @@ export default class FaceTracker {
     // already match a strong face
     weakFaceRects.forEach(
       rect => {
-        this.faces.forEach(
+        this._faces.forEach(
           face => {
             if (face.i.tracker.detected) {
               return;
@@ -170,7 +191,7 @@ export default class FaceTracker {
     // Search for faces that were not updated with the latest detection results,
     // and remove them if they've not been associated with a detected face
     // recently.
-    this.faces.forEach(face => {
+    this._faces.forEach(face => {
       if (face.i.tracker.detected) {
         return;
       }
@@ -182,21 +203,25 @@ export default class FaceTracker {
 
       if (++face.i.tracker.notSeenCount >= MAX_NO_FACE_SEEN) {
         log.warn(`No new update seen for a while, dropping face ${face.id}`);
-        face.i.tracker.impl.cancel();
-        face.i.tracker.impl = null;
+        this._cancelFace(face);
+      } else {
+        // Adjust the face timestamp as we are keeping the faces around a few
+        // times after they were seen. This is done to match the time when
+        // the face is considered lost
+        face.rectWhen = when;
       }
     });
 
     // Search for duplicate trackers and remove them
-    for (let i = 0; i < this.faces.length; i++) {
-      let face = this.faces[i];
+    for (let i = 0; i < this._faces.length; i++) {
+      let face = this._faces[i];
       if (face.i.tracker.impl === null) {
         continue;
       }
 
       // Check if another tracker appears to be also tracking this face
-      for (let j = i + 1; j < this.faces.length; j++) {
-        let face2 = this.faces[j];
+      for (let j = i + 1; j < this._faces.length; j++) {
+        let face2 = this._faces[j];
         if (face2.i.tracker.impl === null) {
           continue;
         }
@@ -217,13 +242,11 @@ export default class FaceTracker {
 
           if (keepFace1) {
             log.warn(`Suspected duplicate face tracker, dropping face ${face2.id}`);
-            face2.i.tracker.impl.cancel();
-            face2.i.tracker.impl = null;
+            this._cancelFace(face2);
             continue;
           } else {
             log.warn(`Suspected duplicate face tracker, dropping face ${face.id}`);
-            face.i.tracker.impl.cancel();
-            face.i.tracker.impl = null;
+            this._cancelFace(face);
             break;
           }
         } else {
@@ -239,8 +262,8 @@ export default class FaceTracker {
    */
   _getIdleTrackers(): Array<Face> {
     let idleFaces = [];
-    for (let i = 0; i < this.faces.length; i++) {
-      let face = this.faces[i];
+    for (let i = 0; i < this._faces.length; i++) {
+      let face = this._faces[i];
       if (face.i.tracker.impl === null) {
         continue;
       }
@@ -270,7 +293,6 @@ export default class FaceTracker {
     log.debug(`Tracking took ${elapsedTime}ms for ${trackingResults.length} faces`);
 
     // Update face objects with tracking results
-    let lostFaces = [];
     for (let idx = 0; idx < trackingResults.length; idx++) {
       let [face, err, found, rect] = trackingResults[idx];
 
@@ -280,9 +302,7 @@ export default class FaceTracker {
       }
 
       if (!found) {
-        face.i.tracker.impl.cancel();
-        face.i.tracker.impl = null;
-        lostFaces.push(face);
+        this._cancelFace(face);
         log.verbose(`Lost face ${face.id}`);
         continue;
       }
@@ -299,10 +319,54 @@ export default class FaceTracker {
       }
     }
 
-    return lostFaces;
+    return this._lostFaces;
   }
 
-  // list of currently tracked faces
-  faces: Array<Face> = [];
+  get faces(): Array<Face> {
+    // Filter out lost faces
+    this._faces = this._faces.filter(face => face.i.tracker.impl !== null);
+    return this._faces;
+  }
+
+  _cancelFace(face: Face, reason: String) {
+    log.info(`Canceling face id: ${face.id}, faceId: ${face.faceId}`);
+    if (face.i.tracker.impl !== null) {
+      face.i.tracker.impl.cancel();
+      face.i.tracker.impl = null;
+      this._lostFaces.push(face);
+    }
+  }
+
+  /*
+   * Check if the face rectangle matches any of the lost faces with in the past
+   * ${@code FACE_DURATION}. Reinstante the lost face if there is a match
+   */
+  _recoverLostFace(rect) {
+    if (!this._lostFaces.length) {
+      return null;
+    }
+
+    // Remove lost faces that are old
+    let now = Date.now();
+    this._lostFaces = this._lostFaces.filter((face) => {
+      return ((now - face.rectWhen) < FACE_DURATION);
+    });
+
+    let lost = this._lostFaces.reduce((lost, lostFace) => {
+      return lost + `{id: ${lostFace.id}, faceId: ${lostFace.faceId}, when: ${lostFace.rectWhen}}, `;
+    }, '');
+
+    log.info(`Lost faces: [${lost}]`);
+    for (let count = 0; count < this._lostFaces.length; count++) {
+      if (this._probablySameFace(rect, this._lostFaces[count].rect)) {
+        log.info(`Found a matching lost face with id: ${this._lostFaces[count].id}`);
+        let lostFace = this._lostFaces[count];
+        this._faces.push(lostFace);
+        this._lostFaces.splice(count, 1);
+        return lostFace;
+      }
+    }
+    return null;
+  }
 }
 

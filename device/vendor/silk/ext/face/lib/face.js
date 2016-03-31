@@ -29,7 +29,7 @@ export type FaceRect = {
 
 export type FaceId = number; // index into face database
 
-const CHANGE_THRESHOLD = 30;
+const CHANGE_THRESHOLD = 50;
 const FACE_DETECT_INTERVAL = 1000;
 const FACE_AVERAGE_DURATION = 2000;
 
@@ -50,6 +50,7 @@ export class Face {
   rectWhen: number; // Time when `rect` was last updated
   percentTrained: number = 0;
   movement: FaceMovementType;
+  recognitionCount: number = 0; // How many times recognition has run on this face
   _origAvgSize: number;
   _curAvgSize: number;
   _doneCollectingFaces: boolean;

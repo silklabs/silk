@@ -152,6 +152,7 @@ PRODUCT_PACKAGES += \
 # external/libwebrtc/...
 PRODUCT_PACKAGES += \
   libwebrtc \
+  node-webrtc-js \
   chromium_src_third_party_boringssl_boringssl_gyp \
   chromium_src_third_party_expat_expat_gyp \
   chromium_src_third_party_jsoncpp_jsoncpp_gyp \

@@ -705,7 +705,17 @@ export default class CameraVideo extends React.Component {
   }
 
   _formatConsoleMessageFace(object, visible) {
-    const name = capitalize(this._getFaceName(object));
+    let name = this._getFaceName(object);
+
+    if (name === 'unrecognized') {
+      if (visible && object.movement === 'notchanged') {
+        name = `an ${name} person`;
+      } else {
+        name = `the ${name} person`;
+      }
+    }
+
+    name = capitalize(name);
 
     if (!visible) {
       return `${name} is gone.`;

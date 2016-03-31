@@ -139,6 +139,7 @@ PRODUCT_PACKAGES += \
   opencv \
   kissfft \
   v8-profiler \
+  bufferutil \
   libttspico \
   pocketsphinx \
   libttscereproc \

@@ -12,6 +12,7 @@ var path = require('path');
 
 var ROOT = path.join(__dirname, '../..');
 var DEVICE = path.join(ROOT, 'device');
+var CHROMIUM_TOOLS = path.join(ROOT, 'chromiumtools');
 
 // Will not traverse any directories matching these names...
 const RESTRICTED_DIRNAMES = [
@@ -21,6 +22,10 @@ const RESTRICTED_DIRNAMES = [
 
 // Provisional searching only will search the listed portions of these directories.
 const RESTRICTED = {
+  [path.join(ROOT, 'app')]: [],
+  [path.join(ROOT, 'external-dlib')]: [],
+  [path.join(ROOT, 'server')]: [],
+  [CHROMIUM_TOOLS]: [],
   [DEVICE]: [
     `${DEVICE}/vendor`
   ],
@@ -79,7 +84,6 @@ function findModules(rootPath, result) {
 
   return result;
 }
-
 
 if (process.mainModule === module) {
   let paths = findModules();

@@ -20,6 +20,11 @@ const FACE_DETECT_INTERVAL = 1000;
 // Number of times to wait for a successfull identification
 const WAIT_FOR_RECOGNITION_ATTEMPTS = 1;
 
+// Primarily for demoing face training. If enabled, clear trained faces
+// after N seconds of not detecting a face.
+const FACE_AUTOCLEAR_PROP = 'persist.silk.face.autoclear';
+const FACE_AUTOCLEAR_TIMER_SECONDS = 30;
+
 let camera;
 let log;
 let sysutils;
@@ -43,9 +48,16 @@ class Main {
     this.faceDetector = new FaceDetector(env);
     this.faceTracker = new FaceTracker(env, 'low');
     this.faceRecognizer = new FaceRecognizer(env);
+
+    // For demo mode. Kick off autoclear timer to clear faces at init
+    this._autoclearEnabled = sysutils.getprop(FACE_AUTOCLEAR_PROP);
+    log.info(`face autoclear is ${this._autoclearEnabled ? '' : 'NOT '}enabled`);
+    this._resetFaceDetectedTimer();
   }
 
   willUnload(): void {
+    clearTimeout(this._autoclearTimer);
+    this._autoclearTimer = null;
     sysutils.propWatcher.removeListener('silk.addperson', this.onPropAddPerson);
     timeline.removeListener('no-motion', this.onNoMotion);
     timeline.removeListener('motion', this.onMotion);
@@ -74,6 +86,10 @@ class Main {
     // Look for faces in the scene
     const [faceRects, weakFaceRects] =
       await this.faceDetector.detect(when, highgray, 'high', grayeq, fullgray);
+
+    if (faceRects.length) {
+      this._resetFaceDetectedTimer();
+    }
 
     // Inform the tracker about the observed faces
     this.faceTracker.detectedFaces(when, faceRects, weakFaceRects, lowgray);
@@ -146,6 +162,35 @@ class Main {
   onPropAddPerson = () => {
     const person = sysutils.getprop('silk.addperson');
     this.faceRecognizer.addPerson(person);
+  }
+
+  _resetFaceDetectedTimer() {
+    clearTimeout(this._autoclearTimer);
+    this._autoclearTimer = null;
+    if (this._autoclearEnabled) {
+      this._autoclearTimer = setTimeout(() => this._onAutoclearTimeout(),
+        FACE_AUTOCLEAR_TIMER_SECONDS * 1000);
+    }
+  }
+
+  async _onAutoclearTimeout() {
+    log.info(`In autoclear mode, no faces detected for` +
+        `${FACE_AUTOCLEAR_TIMER_SECONDS} secs, removing faces`);
+
+    // We'll be mucking with the face training data, so hold off on processing
+    // motion, preview events until things settle.
+
+    timeline.removeListener('no-motion', this.onNoMotion);
+    timeline.removeListener('motion', this.onMotion);
+    timeline.removeListener('preview', this.onPreview);
+
+    await this.faceRecognizer.removeAllPersons();
+
+    timeline.on('preview', this.onPreview);
+    timeline.on('motion', this.onMotion);
+    timeline.on('no-motion', this.onNoMotion);
+
+    log.info(`Done clearing faces`);
   }
 }
 

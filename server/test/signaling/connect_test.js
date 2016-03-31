@@ -11,8 +11,15 @@ import createContext from '../server/context';
 suite('connect test', () => {
   const context = createContext({
     signaling: {
-      clientTimeout: 3 * 1000
-    }
+      clients: {
+        timeoutMs: 3 * 1000
+      },
+      residents: {
+        checkIntervalMs: 100,
+        pingIntervalMs: 50,
+        pongTimeoutMs: 1000,
+      },
+    },
   });
 
   let device, account, serversTable;
@@ -30,7 +37,6 @@ suite('connect test', () => {
   test('connect as device', async () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
-
     let url = device.api.signSignalingUrl('device', servers[0].host);
     let ws = new WebSocket(url);
     await eventToPromise(ws, 'open');
@@ -76,6 +82,15 @@ suite('connect test', () => {
       eventToPromise(accountWs, 'close'),
       eventToPromise(accountPeer, 'close'),
     ]);
+  });
+
+  test('ping / pong - gets ping', async function() {
+    this.timeout('10s');
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    let deviceWs = new WebSocket(deviceUrl);
+    await eventToPromise(deviceWs, 'ping');
   });
 
   test('terminate accounts on device disconnect', async () => {

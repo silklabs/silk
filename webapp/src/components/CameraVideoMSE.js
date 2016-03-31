@@ -1,5 +1,6 @@
 import invariant from 'assert';
 import React from 'react';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { Input, ButtonInput } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
 import createLog from 'silk-log';
@@ -20,7 +21,7 @@ const minimumFrameDurationMs = Math.floor(desiredFrameDurationMs * 0.8);
 const maxStatsUpdateIntervalMs = 250;
 const clogDurationMs = 2000;
 
-const consoleMessageEntryCount = 4;
+const consoleMessageEntryCount = 6;
 
 const characters = [
   'casey',
@@ -63,9 +64,12 @@ const styles = {
     fontSize: '20px',
   },
   consoleMessages: {
-    margin: 0,
-    padding: 5,
+    height: 20 * consoleMessageEntryCount,
+    marginBottom: 10,
+    paddingLeft: 5,
+    paddingRight: 5,
     listStyleType: 'none',
+    overflow: 'hidden',
   },
   consoleSeparator: {
     backgroundColor: 'rgba(0,0,0,0.25)',
@@ -651,8 +655,8 @@ export default class CameraVideo extends React.Component {
         return (a.when < b.when) ? -1 : ((a.when === b.when) ? 0 : 1);
       });
 
-      if (newMessages.length > consoleMessageEntryCount) {
-        newMessages.splice(0, newMessages.length - consoleMessageEntryCount);
+      if (newMessages.length > consoleMessageEntryCount - 1) {
+        newMessages.splice(0, newMessages.length - consoleMessageEntryCount - 1);
       }
 
       log.debug(`New console messages`, newMessages);
@@ -794,6 +798,75 @@ export default class CameraVideo extends React.Component {
     }, clogDurationMs);
   };
 
+  _renderConsole() {
+    if (!this.state.camera ||
+        !this.state.cameraOnline ||
+        (!this.state.consoleMessages.length && !this.state.faceCount)) {
+      return null;
+    }
+
+    let consoleHeader = null;
+    let consoleMessages = null;
+    if (this.state.consoleMessages.length) {
+      consoleHeader = (
+        <h2 style={styles.consoleHeader}>Events</h2>
+      );
+
+      const scrollAnimation =
+        this.state.consoleMessages.length > consoleMessageEntryCount;
+
+      let messages =
+        this.state.consoleMessages.slice(-consoleMessageEntryCount);
+      messages = messages.map((message, index) =>
+        <li key={(message.when + '-' + message.text)}>
+          {formatConsoleTimestamp(message.when) + ' - ' + message.text}
+        </li>
+      );
+
+      consoleMessages = (
+        <ReactCSSTransitionGroup
+          component="ul"
+          transitionName="video-console-item"
+          transitionAppear={true}
+          transitionAppearTimeout={2000}
+          transitionEnter={true}
+          transitionEnterTimeout={2000}
+          transitionLeave={scrollAnimation}
+          transitionLeaveTimeout={300}
+          style={styles.consoleMessages}>
+          {messages}
+        </ReactCSSTransitionGroup>,
+      );
+    }
+
+    let faceCount = null;
+    if (this.state.faceCount) {
+      const text = `${this.state.faceCount} face` +
+                   `${(this.state.faceCount > 1 ? 's' : '')} detected`;
+      faceCount = (
+        <p style={styles.consoleFaceCount}>
+          {text}
+        </p>
+      );
+    }
+
+    let separator = null;
+    if (consoleMessages && faceCount) {
+      separator = (
+        <div style={styles.consoleSeparator}></div>
+      );
+    }
+
+    return (
+      <div style={styles.consoleContainer}>
+        {consoleHeader}
+        {consoleMessages}
+        {separator}
+        {faceCount}
+      </div>
+    );
+  }
+
   _renderStats() {
     if (!this.state.showVideoStats || !this.state.stats) {
       return null;
@@ -923,52 +996,6 @@ export default class CameraVideo extends React.Component {
   }
 
   render() {
-    let console = null;
-    if (this.state.camera &&
-        this.state.cameraOnline &&
-        (this.state.consoleMessages.length || this.state.faceCount)) {
-      let consoleMessages = null;
-      if (this.state.consoleMessages.length) {
-        const messages =
-          this.state.consoleMessages.map((message) =>
-            <li>{formatConsoleTimestamp(message.when)} - {message.text}</li>);
-        consoleMessages = (
-          <div>
-            <h2 style={styles.consoleHeader}>Events</h2>
-            <ul style={styles.consoleMessages}>
-              {messages}
-            </ul>
-          </div>
-        );
-      }
-
-      let faceCount = null;
-      if (this.state.faceCount) {
-        const text = `${this.state.faceCount} face` +
-                     `${(this.state.faceCount > 1 ? 's' : '')} detected`;
-        faceCount = (
-          <p style={styles.consoleFaceCount}>
-            {text}
-          </p>
-        );
-      }
-
-      let separator = null;
-      if (consoleMessages && faceCount) {
-        separator = (
-          <div style={styles.consoleSeparator}></div>
-        );
-      }
-
-      console = (
-        <div style={styles.consoleContainer}>
-          {consoleMessages}
-          {separator}
-          {faceCount}
-        </div>
-      );
-    }
-
     let stats = null;
     if (this.state.showVideoStats) {
       stats = this._renderStats();
@@ -999,7 +1026,7 @@ export default class CameraVideo extends React.Component {
         <h1 style={styles.header}>Silk Labs</h1>
         <div style={styles.videoContainer}>
           {msePlayer}
-          {console}
+          {this._renderConsole()}
           {stats}
           <canvas
             style={styles.canvas}

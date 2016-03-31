@@ -268,4 +268,10 @@ export default class FaceRecognizer {
     log.verbose(`Next face added will be named ${name}`);
     this._nextFaceName = name;
   }
+
+  async removeAllPersons(): void {
+    log.info(`Removing all faces and reinitializing`);
+    await this._trainer.removeAllFaces();
+    await this._init();
+  }
 }

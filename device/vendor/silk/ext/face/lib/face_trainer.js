@@ -480,4 +480,30 @@ export default class Trainer {
 
     return true;
   }
+
+  async removeAllFaces(): void {
+    log.info(`Removing all faces and training data`);
+
+    try {
+      for (let file of [TRAIN_FACES_YML, TRAIN_FACES_MAP]) {
+        if (await fs.exists(file)) {
+          await fs.unlink(file);
+        }
+      }
+      for (let dir of await fs.readdir(TRAIN_FACES_PATH)) {
+        dir = path.join(TRAIN_FACES_PATH, dir);
+        let stat = await fs.lstat(dir);
+        if (stat.isDirectory()) {
+          for (let file of await fs.readdir(dir)) {
+            file = path.join(dir, file);
+            await fs.unlink(file);
+          }
+          await fs.rmdir(dir);
+        }
+      }
+      await fs.rmdir(TRAIN_FACES_PATH);
+    } catch (err) {
+      log.info(`error: ${err}`);
+    }
+  }
 }

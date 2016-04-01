@@ -12,11 +12,12 @@ html, body, #root {
 .video-console-item-appear,
 .video-console-item-enter {
   text-shadow:
+    0px 0px 5px #ED734C,
     0px 0px 10px white,
     0px 0px 20px white,
     0px 0px 30px #ED734C,
     0px 0px 40px #ED734C,
-    0px 0px 50px #ED734C;
+    0px 0px 50px #F2A45B;
 }
 
 .video-console-item-appear-active,

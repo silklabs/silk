@@ -6,6 +6,7 @@
 
 import movingAverage from 'moving-average';
 import type { Env, Log } from 'silk-sdk-glue/interface/env';
+import * as config from './face_config';
 
 export type Matrix = any;
 export type Eye = [number, number]; // center x,y
@@ -28,10 +29,6 @@ export type FaceRect = {
 };
 
 export type FaceId = number; // index into face database
-
-const CHANGE_THRESHOLD = 50;
-const FACE_DETECT_INTERVAL = 1000;
-const FACE_AVERAGE_DURATION = 2000;
 
 const FACE_MOVEMENT_NOT_CHANGED = 'notchanged';
 const FACE_MOVEMENT_CLOSER = 'closer';
@@ -76,7 +73,7 @@ export class Face {
 
     // Calculate exponential moving average over FACE_AVERAGE_DURATION
     // Reference https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
-    this._exponentialMovingAverage = movingAverage(FACE_AVERAGE_DURATION);
+    this._exponentialMovingAverage = movingAverage(config.FACE_AVERAGE_DURATION);
   }
 
   /**
@@ -111,7 +108,7 @@ export class Face {
     // Keep collecting faces for FACE_AVERAGE_DURATION before running
     // movement estimation
     const now = Date.now();
-    if (Math.abs(this.faceStart - now) < FACE_AVERAGE_DURATION) {
+    if (Math.abs(this.faceStart - now) < config.FACE_AVERAGE_DURATION) {
       return;
     }
 
@@ -124,7 +121,7 @@ export class Face {
       // the new current average for the new faces
       this._origAvgSize = this._curAvgSize;
       this._curAvgSize = 0;
-      this._exponentialMovingAverage = movingAverage(FACE_DETECT_INTERVAL);
+      this._exponentialMovingAverage = movingAverage(config.FACE_DETECT_INTERVAL);
 
       return;
     }
@@ -134,9 +131,9 @@ export class Face {
     let change = Math.abs(this._curAvgSize - this._origAvgSize) / this._origAvgSize * 100;
     change = Math.round(change);
     log.debug(`Face size change: ${change} %`);
-    if ((this._curAvgSize > this._origAvgSize) && (change > CHANGE_THRESHOLD)) {
+    if ((this._curAvgSize > this._origAvgSize) && (change > config.MOVEMENT_CHANGE_THRESHOLD)) {
       this.setFaceMovement(FACE_MOVEMENT_CLOSER);
-    } else if ((this._curAvgSize < this._origAvgSize) && (change > CHANGE_THRESHOLD)) {
+    } else if ((this._curAvgSize < this._origAvgSize) && (change > config.MOVEMENT_CHANGE_THRESHOLD)) {
       this.setFaceMovement(FACE_MOVEMENT_FARTHER);
     }
   }

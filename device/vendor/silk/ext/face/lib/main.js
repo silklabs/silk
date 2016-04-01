@@ -12,13 +12,7 @@ global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 import FaceDetector from './face_detector';
 import FaceRecognizer from './face_recognizer';
 import FaceTracker from './face_tracker';
-
-// Time in milliseconds between successive attempts to locate a face in the
-// preview stream.
-const FACE_DETECT_INTERVAL = 1000;
-
-// Number of times to wait for a successfull identification
-const WAIT_FOR_RECOGNITION_ATTEMPTS = 1;
+import * as config from './face_config';
 
 // Primarily for demoing face training. If enabled, clear trained faces
 // after N seconds of not detecting a face.
@@ -66,7 +60,7 @@ class Main {
 
   async detectFaces(when: number): Promise<void> {
     const now = Date.now();
-    if (Math.abs(this.lastFaceDetect - now) < FACE_DETECT_INTERVAL) {
+    if (Math.abs(this.lastFaceDetect - now) < config.FACE_DETECT_INTERVAL) {
       return;
     }
 
@@ -122,9 +116,9 @@ class Main {
     // Update timeline with currently tracked faces
     this.faceTracker.faces.forEach(face => {
       // Wait for face to be identified before adding to the timeline
-      if ((face.faceId === null) && (face.recognitionCount < WAIT_FOR_RECOGNITION_ATTEMPTS)) {
+      if ((face.faceId === null) && (face.recognitionCount < config.WAIT_FOR_RECOGNITION_ATTEMPTS)) {
         log.info(`Waiting for face to be identified ` +
-            `(${face.recognitionCount} / ${WAIT_FOR_RECOGNITION_ATTEMPTS})`);
+            `(${face.recognitionCount} / ${config.WAIT_FOR_RECOGNITION_ATTEMPTS})`);
         return;
       }
       const name = this.faceRecognizer.faceLabel(face.faceId) || 'unknown face';
@@ -137,7 +131,7 @@ class Main {
           when: face.rectWhen,
           rects: [face.rect],
           source: 'face',
-          durationMs: FaceTracker.FACE_DURATION,
+          durationMs: config.FACE_DURATION,
           name,
           faceId: face.faceId,
           percentTrained: face.percentTrained,

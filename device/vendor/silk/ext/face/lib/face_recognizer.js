@@ -216,7 +216,7 @@ export default class FaceRecognizer {
           faceim
         );
         // Run training as soon as enough faces are available
-        if (trainingImages.size > config.MIN_IMAGES_FOR_TRAINING) {
+        if (trainingImages.size >= config.MIN_IMAGES_FOR_TRAINING) {
           await this.updateTraining(face);
         }
       } else {

@@ -126,6 +126,15 @@ export default class FaceTracker {
         }
       });
 
+      // Skip faces for which tracker hasn't finished yet on that frame
+      this._faces.forEach(face => {
+        if (face.rectWhen < when) {
+          log.info(`Skipping face: ${face.id}`);
+          face.i.tracker.detected = true;
+          alreadyTracked = true;
+        }
+      });
+
       // Check if this face data matches a just lost face. If yes then reinstate
       // the lost face
       let face = this._recoverLostFace(rect);

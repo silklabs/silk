@@ -20,7 +20,9 @@ brew install mongodb
 
 On Linux:
 
-It's usually a mongodb package or mongodb-server package.
+You need at least mongod >= 3.0.3.  The default package included with Ubuntu 14.04 is v2.4.9 and that's too old.
+
+[Follow the instructions here](https://hostpresto.com/community/tutorials/how-to-install-mongo-db-on-ubuntu-14-04/) to install v3.2.0 (at the time of this writing).
 
 ## Usage
 

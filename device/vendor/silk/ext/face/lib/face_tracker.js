@@ -66,7 +66,8 @@ export default class FaceTracker {
       config.TRACKER_NAME,
       frame,
       camera.normalRectsTo([rect], this._frameSize)[0],
-      () => null
+      () => null,
+      {confidence: config.TRACKER_CONFIDENCE}
     );
   }
 

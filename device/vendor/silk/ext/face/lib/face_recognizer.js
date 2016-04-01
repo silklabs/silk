@@ -30,12 +30,6 @@ const LBPH_NEIGHBORS = 3;
 const LBPH_GRID_X = 8;
 const LBPH_GRID_Y = 8;
 
-// Represents the threshold for the confidence value returned by the model. If
-// the confidence is more than the threshold, model returns an unknown person.
-// Higher the threshold more false positives the model returns. Lower the threshold
-// bigger the face rectangle required for successful recognition.
-const LBPH_THRESHOLD = 40;
-
 
 export default class FaceRecognizer {
   _loading: bool = false;
@@ -57,7 +51,7 @@ export default class FaceRecognizer {
       LBPH_NEIGHBORS,
       LBPH_GRID_X,
       LBPH_GRID_Y,
-      LBPH_THRESHOLD
+      config.LBPH_THRESHOLD
     );
 
     this._trainer = new Trainer(env);

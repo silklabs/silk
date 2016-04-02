@@ -64,35 +64,45 @@ void AudioSourceEmitter::getTime(timeval *when) {
   // First time called, use gettimeofday
   if (mNextTime.tv_sec == 0 && mNextTime.tv_usec == 0) {
     gettimeofday(&mNextTime, NULL);
-  }
+  } else {
+    // The time can change on us. Buffers should never be delayed by more than
+    // a few 100s milliseconds. To keep the math simple, if the current time is
+    // roughly off by more than 5 seconds, consider this a time change, and
+    // use the current time instead.
+    timeval now;
+    gettimeofday(&now, NULL);
 
-  // The time can change on us. Buffers should never be delayed by more than
-  // a few 100s milliseconds. To keep the math simple, if the current time is
-  // roughly off by more than 5 seconds, consider this a time change, and
-  // use the current time instead.
-  timeval now;
-  gettimeofday(&now, NULL);
-
-  // We just need a rough delta, ignore tv_usec.
-  int32_t deltaSec = now.tv_sec - mNextTime.tv_sec;
-  if (abs(deltaSec) > 5) {
-    mNextTime = now;
+    // We just need a rough delta, ignore tv_usec.
+    int32_t deltaSec = now.tv_sec - mNextTime.tv_sec;
+    if (abs(deltaSec) > 5) {
+      mNextTime = now;
+    }
   }
 
   *when = mNextTime;
 }
 
 void AudioSourceEmitter::updateNextTime(uint32_t numBytes) {
+  static const uint64_t kMillion = 1E6;
+
   // Update the next time by the number of samples receied.
-  uint32_t numSamples = numBytes / BYTES_PER_SAMPLE / sAudioChannels;
-  uint64_t usec = numSamples * 1000 * 1000 / sAudioSampleRate;
-  uint64_t sec;
+  const uint64_t numSamples = numBytes / BYTES_PER_SAMPLE / sAudioChannels;
+  const uint64_t durationUsec = numSamples * kMillion / sAudioSampleRate;
 
-  usec = mNextTime.tv_usec + usec;
-  sec = mNextTime.tv_sec + (usec / 1000 / 1000);
+  // First add the microseconds.
+  uint64_t usec = mNextTime.tv_usec + durationUsec;
 
-  mNextTime.tv_sec = (time_t) sec;
-  mNextTime.tv_usec = (suseconds_t) usec;
+  // Check to see if we overflowed past a second.
+  uint64_t sec = usec / kMillion;
+  if (sec) {
+    usec = usec % kMillion;
+  }
+
+  // Add the seconds.
+  sec += mNextTime.tv_sec;
+
+  mNextTime.tv_sec = time_t(sec);
+  mNextTime.tv_usec = suseconds_t(usec);
 }
 
 status_t AudioSourceEmitter::read(MediaBuffer **buffer,
@@ -137,4 +147,3 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
 
   return err;
 }
-

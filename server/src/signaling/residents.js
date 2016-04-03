@@ -18,6 +18,17 @@ const log = createLog('signaling:residents');
 const CLIENT_MESSAGE = 0;
 const CLIENT_CLOSE = 1;
 
+
+type ClientConfig = {
+  timeoutMs: number;
+}
+
+type ResidentConfig = {
+  checkIntervalMs: number;
+  pingIntervalMs: number;
+  pongTimeoutMs: number;
+};
+
 type Client = {
   connectedAt: number;
   connection: any; // ws websocket ...
@@ -26,6 +37,8 @@ type Client = {
 type Resident = {
   // Which client we are currently handling.
   currentId: ?string;
+  lastPong: number;
+  lastPing: number;
 
   connection: any;
   // unique id to connection.
@@ -44,20 +57,23 @@ export default class Residents {
   _clients: Set<Client> = new Set();
   _residents: Map<string, Resident> = new Map();
   _clientMonitorTimer: ?number;
+  _residentMonitorTimer: ?number;
+  _clientConfig: ClientConfig;
+  _residentConfig: ResidentConfig;
 
-  clientTimeout: number;
-
-  constructor(clientTimeout: number) {
-    this.clientTimeout = clientTimeout;
+  constructor(options: { residents: ResidentConfig, clients: ClientConfig }) {
+    this._clientConfig = options.clients;
+    this._residentConfig = options.residents;
   }
 
   monitorClients() {
+    const config = this._clientConfig;
     // Begin monitoring clients for expired connections ....
     const check = () => {
       log.info('Checking for expired (idling) clients');
       const now = Date.now();
       for (let client of this._clients) {
-        const expiry = client.connectedAt + this.clientTimeout;
+        const expiry = client.connectedAt + config.timeoutMs;
         if (expiry > now) {
           // TODO: Metrics...
           log.warn('Dropping client which has been connected for longer than timeout');
@@ -70,16 +86,53 @@ export default class Residents {
 
       // We use a single timer to wake up the event loop to prevent huge volumes
       // of timers running.
-      this._clientMonitorTimer = setTimeout(check, this.clientTimeout);
+      this._clientMonitorTimer = setTimeout(check, config.timeoutMs);
     };
 
     check();
   }
 
-  unmonitorClients() {
+  monitorResidents() {
+    const config = this._residentConfig;
+    const check = () => {
+      const now = Date.now();
+      for (let [id, resident] of this._residents.entries()) {
+        const pongDelta = now - resident.lastPong;
+        if (pongDelta > config.pongTimeoutMs) {
+          log.warn(`Dropping resident: ${id} which has failed to respond with a pong`);
+          resident.connection.terminate();
+          continue;
+        }
+
+        const pingDelta = Date.now() - resident.lastPing;
+        if (pingDelta > config.pingIntervalMs) {
+          log.info(`Sending connection ping to resident: ${id}`);
+          resident.lastPing = now;
+          resident.connection.ping();
+        }
+      }
+      this._residentMonitorTimer = setTimeout(check, config.checkIntervalMs);
+    };
+    check();
+  }
+
+
+  start() {
+    log.info(`Monitoring residents and clients...`);
+    this.monitorClients();
+    this.monitorResidents();
+  }
+
+  stop() {
+    log.info(`Monitoring residents and clients...`);
     if (this._clientMonitorTimer) {
       clearTimeout(this._clientMonitorTimer);
       this._clientMonitorTimer = null;
+    }
+
+    if (this._residentMonitorTimer) {
+      clearTimeout(this._residentMonitorTimer);
+      this._residentMonitorTimer = null;
     }
   }
 
@@ -88,7 +141,10 @@ export default class Residents {
    * lived.
    */
   register(id: string, connection: any) {
+    const now = Date.now();
     const resident = {
+      lastPing: now,
+      lastPong: now,
       currentId: null,
       connection,
       clients: new Map(),
@@ -109,6 +165,18 @@ export default class Residents {
       connection.removeListener('close', onClose);
       connection.removeListener('error', onClose);
       connection.removeListener('message', onMessage);
+      connection.removeListener('pong', onPong);
+      connection.removeListener('ping', onPing);
+    };
+
+    const onPong = () => {
+      log.info(`Got pong for resident: ${id}....`);
+      resident.lastPong = Date.now();
+    };
+
+    const onPing = () => {
+      log.info(`Got ping for resident: ${id} sending pong`);
+      connection.pong();
     };
 
     const onMessage = (data, flags) => {
@@ -158,6 +226,11 @@ export default class Residents {
     connection.on('error', onError);
     connection.on('close', onClose);
     connection.on('message', onMessage);
+    connection.on('ping', onPing);
+    connection.on('pong', onPong);
+
+    // Kick off an initial ping.
+    connection.ping();
 
     log.info(`Finished registering resident ${id}`);
   }

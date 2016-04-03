@@ -134,8 +134,11 @@ export default async function main (config: any): any {
   // update for a aliveness check) to purge dead servers.
   await signalServers.mergeOrInsertEntity(entity);
 
-  const residents = new Residents(config.signaling.clientTimeout);
-  residents.monitorClients();
+  const residents = new Residents({
+    clients: config.signaling.clients,
+    residents: config.signaling.residents,
+  });
+  residents.start();
 
   const auth = {
     device: authorizeDevice({ devices, nonce }, { signatureProvider }),

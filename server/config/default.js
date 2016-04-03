@@ -50,13 +50,25 @@ export default {
     // server url
     useServiceDiscovery: false,
 
+    clients: {
+      timeoutMs: 2 * 60 * 1000,
+    },
+
+    residents: {
+      // How often to check if we need to send a ping.
+      checkIntervalMs: 5 * 1000,
+      // How often to send a ping per connection.
+      pingIntervalMs: 30 * 1000,
+      // If we don't get a pong in this amount of time we disconnect.
+      pongTimeoutMs: 60 * 1000,
+    },
+
     // Set / used in server if useServiceDiscovery is false.
     publicUrl: process.env.SIGNALING_PUBLIC_URL || null,
 
     port: process.env.SIGNALING_PORT || 5002,
     host: process.env.SIGNALING_HOST || null,
     // After client timeout we forcefully disconnect clients.
-    clientTimeout: 2 * 60 * 1000,
   },
 
   server: {

@@ -38,6 +38,8 @@ const FACE_MOVEMENT_CLOSER = 'closer';
 const FACE_MOVEMENT_FARTHER = 'farther';
 let FaceMovementType = FACE_MOVEMENT_NOT_CHANGED | FACE_MOVEMENT_CLOSER | FACE_MOVEMENT_FARTHER;
 
+const FACE_MOVEMENT_TRACKING_ENABLED_PROP = 'persist.silk.face.movement';
+
 let log: Log;
 
 /**
@@ -55,6 +57,7 @@ export class Face {
   _curAvgSize: number;
   _doneCollectingFaces: boolean;
   _exponentialMovingAverage: Function;
+  _movementTrackingEnabled: bool = false;
 
   // Who this face has been recognized as
   faceId: ?FaceId = null;
@@ -73,6 +76,8 @@ export class Face {
     this.faceStart = Date.now();
     this.movement = FACE_MOVEMENT_NOT_CHANGED;
     this._doneCollectingFaces = false;
+    this._movementTrackingEnabled = env.util.getboolprop(
+        FACE_MOVEMENT_TRACKING_ENABLED_PROP, false);
 
     // Calculate exponential moving average over FACE_AVERAGE_DURATION
     // Reference https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
@@ -146,6 +151,8 @@ export class Face {
     this.rectWhen = rectWhen;
 
     // Run face movement estimation
-    this.faceMovementEstimation(this.rect);
+    if (this._movementTrackingEnabled) {
+      this.faceMovementEstimation(this.rect);
+    }
   }
 }

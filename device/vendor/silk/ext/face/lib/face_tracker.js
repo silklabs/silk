@@ -13,21 +13,7 @@ import {
   FaceRect,
 } from './face';
 
-//const TRACKER_NAME = 'CMT';
-const TRACKER_NAME = 'DLIB';
-
-// Set a reasonable limit of tracked objects
-// (3 for device as CMT has not yet been optimized for tracking multiple
-// objects, see #676)
-const MAX_TRACKED_OBJECTS = process.platform === 'android' ? 3 : 10;
-
-// If a face (strong or weak) is not associated with a tracker in this many
-// calls to detectedFaces(), cancel the tracker
-const MAX_NO_FACE_SEEN = 3;
-
-// Keep the faces around for this long before declaring them as lost to account
-// for a face that may reappear after a brief occlusion
-const FACE_DURATION = 5000;
+import * as config from './face_config';
 
 let camera;
 let log;
@@ -43,10 +29,6 @@ export default class FaceTracker {
     timeline = env.timeline;
     this._frameSize = frameSize;
     this._lostFaces = [];
-  }
-
-  static get FACE_DURATION() {
-    return FACE_DURATION;
   }
 
   // Computes the area and overlap ratios between two face rectangles
@@ -81,10 +63,11 @@ export default class FaceTracker {
 
   _newTracker(frame: Matrix, rect: FaceRect) {
     return new silkcv.Tracker(
-      TRACKER_NAME,
+      config.TRACKER_NAME,
       frame,
       camera.normalRectsTo([rect], this._frameSize)[0],
-      () => null
+      () => null,
+      {confidence: config.TRACKER_CONFIDENCE}
     );
   }
 
@@ -103,7 +86,7 @@ export default class FaceTracker {
   }
 
   _updateFaceLocation(face: Face, when: number, rect: FaceRect, frame: Matrix) {
-    log.verbose(`Updating location of face ${face.id}`);
+    log.verbose(`Updating location of face ${face.id} [${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]`);
     // Update the tracking rectangle to the latest detected location for
     // this face.
     face.setLocation(rect, when);
@@ -144,6 +127,15 @@ export default class FaceTracker {
         }
       });
 
+      // Skip faces for which tracker hasn't finished yet on that frame
+      this._faces.forEach(face => {
+        if (face.rectWhen < when) {
+          log.info(`Skipping face: ${face.id}`);
+          face.i.tracker.detected = true;
+          alreadyTracked = true;
+        }
+      });
+
       // Check if this face data matches a just lost face. If yes then reinstate
       // the lost face
       let face = this._recoverLostFace(rect);
@@ -154,8 +146,8 @@ export default class FaceTracker {
       }
 
       if (!alreadyTracked) {
-        if (this._faces.length >= MAX_TRACKED_OBJECTS) {
-          log.warn(`Unable to track new face, already tracking ${MAX_TRACKED_OBJECTS}`);
+        if (this._faces.length >= config.MAX_TRACKED_OBJECTS) {
+          log.warn(`Unable to track new face, already tracking ${config.MAX_TRACKED_OBJECTS}`);
         } else {
           let face = new Face(timeline.getNextObjectId(), this.env);
           face.setLocation(rect, when);
@@ -201,13 +193,14 @@ export default class FaceTracker {
       face.rect.leftEye = null;
       face.rect.rightEye = null;
 
-      if (++face.i.tracker.notSeenCount >= MAX_NO_FACE_SEEN) {
+      if (++face.i.tracker.notSeenCount >= config.MAX_NO_FACE_SEEN) {
         log.warn(`No new update seen for a while, dropping face ${face.id}`);
         this._cancelFace(face);
       } else {
         // Adjust the face timestamp as we are keeping the faces around a few
         // times after they were seen. This is done to match the time when
         // the face is considered lost
+        log.warn(`Face not seen count: ${face.i.tracker.notSeenCount}`);
         face.rectWhen = when;
       }
     });
@@ -302,15 +295,15 @@ export default class FaceTracker {
       }
 
       if (!found) {
+        log.verbose(`Tracker lost face ${face.id}`);
         this._cancelFace(face);
-        log.verbose(`Lost face ${face.id}`);
         continue;
       }
 
       face.setLocation(rect, when);
 
       const diagId = `tracked:${face.id}:${elapsedTime}ms:` +
-                     `${face.i.tracker.notSeenCount}/${MAX_NO_FACE_SEEN}`;
+                     `${face.i.tracker.notSeenCount}/${config.MAX_NO_FACE_SEEN}`;
       if (timeline.diagFrameEnabled(diagId)) {
         const framerect = camera.normalRectsTo([rect], this._frameSize)[0];
         const roi = safeRoi(frame, framerect);
@@ -349,7 +342,7 @@ export default class FaceTracker {
     // Remove lost faces that are old
     let now = Date.now();
     this._lostFaces = this._lostFaces.filter((face) => {
-      return ((now - face.rectWhen) < FACE_DURATION);
+      return ((now - face.rectWhen) < config.FACE_DURATION);
     });
 
     let lost = this._lostFaces.reduce((lost, lostFace) => {

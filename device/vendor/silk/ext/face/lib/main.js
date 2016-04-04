@@ -12,13 +12,7 @@ global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 import FaceDetector from './face_detector';
 import FaceRecognizer from './face_recognizer';
 import FaceTracker from './face_tracker';
-
-// Time in milliseconds between successive attempts to locate a face in the
-// preview stream.
-const FACE_DETECT_INTERVAL = 1000;
-
-// Number of times to wait for a successfull identification
-const WAIT_FOR_RECOGNITION_ATTEMPTS = 1;
+import * as config from './face_config';
 
 // Primarily for demoing face training. If enabled, clear trained faces
 // after N seconds of not detecting a face.
@@ -33,6 +27,7 @@ let timeline;
 class Main {
   lastFaceDetect: number = 0;
   processingMotion: bool = false;
+  processingPreview: bool = false;
 
   constructor(env) {
     camera = env.camera;
@@ -40,9 +35,7 @@ class Main {
     sysutils = env.util;
     timeline = env.timeline;
 
-    timeline.on('preview', this.onPreview);
-    timeline.on('motion', this.onMotion);
-    timeline.on('no-motion', this.onNoMotion);
+    this._startFaceProcessing();
     sysutils.propWatcher.on('silk.addperson', this.onPropAddPerson);
 
     this.faceDetector = new FaceDetector(env);
@@ -59,23 +52,26 @@ class Main {
     clearTimeout(this._autoclearTimer);
     this._autoclearTimer = null;
     sysutils.propWatcher.removeListener('silk.addperson', this.onPropAddPerson);
-    timeline.removeListener('no-motion', this.onNoMotion);
-    timeline.removeListener('motion', this.onMotion);
+    this._stopFaceProcessing();
+  }
+
+  _startFaceProcessing(): void {
+    timeline.on('preview', this.onPreview);
+    timeline.on('motion', this.onMotion);
+  }
+
+  _stopFaceProcessing(): void {
     timeline.removeListener('preview', this.onPreview);
+    timeline.removeListener('motion', this.onMotion);
   }
 
   async detectFaces(when: number): Promise<void> {
-    const now = Date.now();
-    if (Math.abs(this.lastFaceDetect - now) < FACE_DETECT_INTERVAL) {
-      return;
-    }
-
     if (this.processingMotion) {
       log.debug(`onMotion busy, skipping update`);
       return;
     }
     this.processingMotion = true;
-    this.lastFaceDetect = now;
+    this.lastFaceDetect = Date.now();
 
     // Fetch the current frame in all the different required formats at once
     let [lowgray, gray, grayeq, highgray, fullgray] = await camera.getFrame(
@@ -103,28 +99,44 @@ class Main {
   }
 
   onMotion = (when: number): void => {
-    this.detectFaces(when);
-  }
-
-  onNoMotion = (when: number): void => {
-    // If a face is being tracked, continue to try to detect faces even if
-    // there's no motion.  This is to help ensure that the trackers continue to
-    // be actually tracking faces.
-    if (this.faceTracker.faces.length > 0) {
+    // Detect faces only if there are no faces currently being tracked
+    if (!this.faceTracker.faces.length) {
       this.detectFaces(when);
     }
   }
 
   onPreview = async (when: number): Promise<void> => {
+    if (this.processingPreview) {
+      log.debug(`onPreview busy, skipping update`);
+      return;
+    }
+    this.processingPreview = true;
+
+    // Don't do anything if no faces are available
+    if (!this.faceTracker.faces.length) {
+      this.processingPreview = false;
+      return;
+    }
+
     let [lowgray] = await camera.getFrame(when, ['lowgray']);
     await this.faceTracker.update(when, lowgray);
+
+    // If a face is being tracked, continue to try to detect faces even if
+    // there's no motion.  This is to help ensure that the trackers continue to
+    // be actually tracking faces.
+    const now = Date.now();
+    if (Math.abs(this.lastFaceDetect - now) >= config.FACE_DETECT_INTERVAL) {
+      this.lastFaceDetect = now;
+      await this.detectFaces(when);
+    }
 
     // Update timeline with currently tracked faces
     this.faceTracker.faces.forEach(face => {
       // Wait for face to be identified before adding to the timeline
-      if ((face.faceId === null) && (face.recognitionCount < WAIT_FOR_RECOGNITION_ATTEMPTS)) {
+      if ((face.faceId === null) && (face.recognitionCount < config.WAIT_FOR_RECOGNITION_ATTEMPTS)) {
         log.info(`Waiting for face to be identified ` +
-            `(${face.recognitionCount} / ${WAIT_FOR_RECOGNITION_ATTEMPTS})`);
+            `(${face.recognitionCount} / ${config.WAIT_FOR_RECOGNITION_ATTEMPTS})`);
+        this.processingPreview = false;
         return;
       }
       const name = this.faceRecognizer.faceLabel(face.faceId) || 'unknown face';
@@ -137,7 +149,7 @@ class Main {
           when: face.rectWhen,
           rects: [face.rect],
           source: 'face',
-          durationMs: FaceTracker.FACE_DURATION,
+          durationMs: config.FACE_DURATION,
           name,
           faceId: face.faceId,
           percentTrained: face.percentTrained,
@@ -146,6 +158,7 @@ class Main {
       );
       face.name = name; // Add name to the face object
     });
+    this.processingPreview = false;
   };
 
   onCommand(cmd) {
@@ -174,21 +187,13 @@ class Main {
   }
 
   async _onAutoclearTimeout() {
-    log.info(`In autoclear mode, no faces detected for` +
+    log.info(`In autoclear mode, no faces detected for ` +
         `${FACE_AUTOCLEAR_TIMER_SECONDS} secs, removing faces`);
 
-    // We'll be mucking with the face training data, so hold off on processing
-    // motion, preview events until things settle.
-
-    timeline.removeListener('no-motion', this.onNoMotion);
-    timeline.removeListener('motion', this.onMotion);
-    timeline.removeListener('preview', this.onPreview);
-
+    // Pause face processing while mucking with training data
+    this._stopFaceProcessing();
     await this.faceRecognizer.removeAllPersons();
-
-    timeline.on('preview', this.onPreview);
-    timeline.on('motion', this.onMotion);
-    timeline.on('no-motion', this.onNoMotion);
+    this._startFaceProcessing();
 
     log.info(`Done clearing faces`);
   }

@@ -12,24 +12,7 @@ import {
   FaceId,
 } from './face';
 
-// Once a face has been recognized, run the face recognizer this often to
-// as a sanity check to confirm the expected face is still being tracked
-const RECOGNIZED_FACE_CHECK_INTERVAL = 3000;
-
-// Once a face has been recognized, this is the max number of incorrect
-// recognitions over the last `INCONSISTENT_FACE_PREDICTION_WINDOW` predictions
-// before dropping the face from active tracking.
-const MAX_INCONSISTENT_FACE_PREDICTION = 2;
-
-// Number of past predictions to maintain to monitor incorrect predictions over
-const INCONSISTENT_FACE_PREDICTION_WINDOW = 5;
-
-// Capture up to this many training images for an unknown face
-const MAX_UNKNOWN_FACE_TRAINING_IMAGES = 100;
-
-// Minimum number of images that must be collected before an unknown face will
-// be trained.
-const MIN_IMAGES_FOR_TRAINING = 10;
+import * as config from './face_config';
 
 let log;
 let timeline;
@@ -46,12 +29,6 @@ const LBPH_NEIGHBORS = 3;
 
 const LBPH_GRID_X = 8;
 const LBPH_GRID_Y = 8;
-
-// Represents the threshold for the confidence value returned by the model. If
-// the confidence is more than the threshold, model returns an unknown person.
-// Higher the threshold more false positives the model returns. Lower the threshold
-// bigger the face rectangle required for successful recognition.
-const LBPH_THRESHOLD = 40;
 
 
 export default class FaceRecognizer {
@@ -74,7 +51,7 @@ export default class FaceRecognizer {
       LBPH_NEIGHBORS,
       LBPH_GRID_X,
       LBPH_GRID_Y,
-      LBPH_THRESHOLD
+      config.LBPH_THRESHOLD
     );
 
     this._trainer = new Trainer(env);
@@ -133,8 +110,8 @@ export default class FaceRecognizer {
           // Time of the last successful face recognition attempt for this face
           lastWhen: null,
           // Recent history of who this face has been recognized as
-          history: new CBuffer(INCONSISTENT_FACE_PREDICTION_WINDOW),
-          trainingImages: new CBuffer(MAX_UNKNOWN_FACE_TRAINING_IMAGES),
+          history: new CBuffer(config.INCONSISTENT_FACE_PREDICTION_WINDOW),
+          trainingImages: new CBuffer(config.MAX_UNKNOWN_FACE_TRAINING_IMAGES),
         };
         face.i.recognizer.trainingImages.overflow =
           faceim => faceim.release();
@@ -143,7 +120,7 @@ export default class FaceRecognizer {
       // Run the recognizer if the face is currently unrecognized, or
       // periodically if the face was recognized previously
       let run = !face.faceId ||
-                (when - face.i.recognizer.lastWhen > RECOGNIZED_FACE_CHECK_INTERVAL);
+                (when - face.i.recognizer.lastWhen > config.RECOGNIZED_FACE_CHECK_INTERVAL);
       if (!run) {
         log.debug(`Face ${face.id} skipping recognizer`);
         continue;
@@ -206,7 +183,7 @@ export default class FaceRecognizer {
             },
             0
           );
-          if (errorCount >= MAX_INCONSISTENT_FACE_PREDICTION) {
+          if (errorCount >= config.MAX_INCONSISTENT_FACE_PREDICTION) {
             // Consistently wrong, revert to unknown face
             log.info(`Face ${face.id}: Too many inconsistent predictions`);
             face.faceId = null;
@@ -225,7 +202,7 @@ export default class FaceRecognizer {
         trainingImages.push(faceim);
         face.percentTrained =
           Math.min(100,
-            Math.round(trainingImages.size / MIN_IMAGES_FOR_TRAINING * 100));
+            Math.round(trainingImages.size / config.MIN_IMAGES_FOR_TRAINING * 100));
 
         timeline.addDiagFrame(
           `training:${face.id}:${trainingImages.size}`,
@@ -233,7 +210,7 @@ export default class FaceRecognizer {
           faceim
         );
         // Run training as soon as enough faces are available
-        if (trainingImages.size > MIN_IMAGES_FOR_TRAINING) {
+        if (trainingImages.size >= config.MIN_IMAGES_FOR_TRAINING) {
           await this.updateTraining(face);
         }
       } else {

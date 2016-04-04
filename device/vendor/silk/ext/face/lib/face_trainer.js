@@ -261,7 +261,7 @@ export default class Trainer {
     log.debug(`preprocessFace: ${JSON.stringify(face)}`);
 
     if (!face.leftEye || !face.rightEye) {
-      log.debug(`Unable to process face ${face.id}, missing eye(s)`);
+      log.warn(`Unable to process face ${face.id}, missing eye(s)`);
       return null;
     }
 

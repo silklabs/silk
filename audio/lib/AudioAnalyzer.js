@@ -100,8 +100,11 @@ export default class AudioAnalyzer extends EventEmitter {
     let inputWindowLength = this.inputWindow.length;
     if (this.inputToFill === inputWindowLength) {
       log.debug('First appendSamples() after reset');
-      this.inputWindowStartTime = startTime;
     }
+    // Time can jump; always derive window start time from latest sample time.
+    this.inputWindowStartTime = Math.max(0, startTime -
+        (inputWindowLength - this.inputToFill) / this.sampleRate);
+
     let samplesIndex = 0;
     while (true) {              //eslint-disable-line no-constant-condition
       let samplesBatch = samples.slice(samplesIndex,

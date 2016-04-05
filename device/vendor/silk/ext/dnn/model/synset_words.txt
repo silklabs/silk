@@ -654,7 +654,7 @@ n03763968 military uniform
 n03764736 milk can
 n03769881 minibus
 n03770439 miniskirt, mini
-n03770679 minivan
+n03770679 [Car] minivan
 n03773504 missile
 n03775071 mitten
 n03775546 mixing bowl

@@ -9,6 +9,14 @@ html, body, #root {
   margin: 0;
 }
 
+body {
+  overflow: hidden;
+}
+
+#root {
+  overflow: auto;
+}
+
 .video-console-item-appear,
 .video-console-item-enter {
   text-shadow:

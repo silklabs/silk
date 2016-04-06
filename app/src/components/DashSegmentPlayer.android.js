@@ -23,7 +23,7 @@ export default class DashSegmentPlayer extends React.Component {
         <MSEPlayer
           style={styles.player}
           ref={NATIVE_REF}
-          url={Config.get().mseWebviewUrl || DEFAULT_WEBVIEW_URL}
+          source={{uri: Config.get().mseWebviewUrl || DEFAULT_WEBVIEW_URL}}
           javaScriptEnabled={true}
           onLoadingStart={this.onLoadingStart}
           onLoadingFinish={this.onLoadingFinish}

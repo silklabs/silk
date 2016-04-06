@@ -12,7 +12,7 @@
   return @"RCTWebSocketModule";
 }
 
-RCT_EXTERN_METHOD(connect:(NSURL *)URL socketID:(nonnull NSNumber *)socketID)
+RCT_EXTERN_METHOD(connect:(NSURL *)URL protocols:(NSArray *)protocols headers:(NSDictionary *)headers socketID:(nonnull NSNumber *)socketID)
 RCT_EXTERN_METHOD(send:(NSString *)message socketID:(nonnull NSNumber *)socketID)
 RCT_EXTERN_METHOD(close:(nonnull NSNumber *)socketID)
 

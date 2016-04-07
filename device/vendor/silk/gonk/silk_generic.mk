@@ -148,35 +148,7 @@ PRODUCT_PACKAGES += \
   aprotoc \
   libboost \
   libopenblas \
-
-# external/libwebrtc/...
-PRODUCT_PACKAGES += \
-  libwebrtc \
-  node-webrtc-js \
-  chromium_src_third_party_boringssl_boringssl_gyp \
-  chromium_src_third_party_expat_expat_gyp \
-  chromium_src_third_party_jsoncpp_jsoncpp_gyp \
-  chromium_src_third_party_libsrtp_libsrtp_gyp \
-  chromium_src_third_party_usrsctp_usrsctplib_gyp \
-  talk_libjingle_gyp \
-  talk_libjingle_media_gyp \
-  talk_libjingle_p2p_gyp \
-  talk_libjingle_peerconnection_gyp \
-  third_party_node_webrtc_node_webrtc_js_gyp \
   lib_third_party_node_webrtc_node_webrtc_gyp \
-  webrtc_base_rtc_base_gyp \
-  webrtc_base_rtc_base_approved_gyp \
-  webrtc_base_webrtc_base_gyp \
-  webrtc_libjingle_xmllite_rtc_xmllite_gyp \
-  webrtc_libjingle_xmpp_rtc_xmpp_gyp \
-  webrtc_p2p_rtc_p2p_gyp \
-  webrtc_system_wrappers_source_cpu_features_android_gyp \
-  webrtc_system_wrappers_source_field_trial_default_gyp \
-  webrtc_system_wrappers_source_metrics_default_gyp \
-  webrtc_system_wrappers_source_system_wrappers_gyp \
-  webrtc_system_wrappers_source_system_wrappers_default_gyp \
-  webrtc_webrtc_gyp \
-  webrtc_webrtc_common_gyp \
 
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \

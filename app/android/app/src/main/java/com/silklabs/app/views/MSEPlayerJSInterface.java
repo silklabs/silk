@@ -32,13 +32,7 @@ public class MSEPlayerJSInterface {
   @JavascriptInterface
   public String resolveBlobURI(String uriString) {
     Uri uri = Uri.parse(uriString);
-    byte[] base64Blob = Base64.encode(mBlobProvider.resolveAndReleaseBlob(uri), Base64.NO_WRAP);
-    try {
-      return new String(base64Blob, "US-ASCII");
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-      return null;
-    }
+    return Base64.encodeToString(mBlobProvider.resolveAndReleaseBlob(uri), Base64.NO_WRAP);
   }
 
 }

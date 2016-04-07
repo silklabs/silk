@@ -16,6 +16,7 @@ package com.silklabs.app.modules;
 
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
+import android.util.Base64;
 
 import java.io.IOException;
 import java.lang.IllegalStateException;
@@ -168,12 +169,17 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
         } else {
           String message;
           try {
-            message = bufferedSource.readUtf8();
+            if (payloadType == WebSocket.PayloadType.BINARY) {
+              message = Base64.encodeToString(bufferedSource.readByteArray(), Base64.NO_WRAP);
+            } else {
+              message = bufferedSource.readUtf8();
+            }
           } catch (IOException e) {
             notifyWebSocketFailed(id, e.getMessage());
             return;
           }
           params.putString("data", message);
+          params.putString("type", payloadType == WebSocket.PayloadType.BINARY ? "binary" : "text");
         }
 
         try {

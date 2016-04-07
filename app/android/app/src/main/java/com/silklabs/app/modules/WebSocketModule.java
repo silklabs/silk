@@ -56,6 +56,7 @@ import okio.BufferedSource;
 public class WebSocketModule extends ReactContextBaseJavaModule {
 
   private Map<Integer, WebSocket> mWebSocketConnections = new HashMap<>();
+  private Map<Integer, Boolean> mBlobsEnabled = new HashMap<>();
   private ReactContext mReactContext;
   private BlobProvider mBlobProvider;
 
@@ -154,7 +155,8 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
         WritableMap params = Arguments.createMap();
         params.putInt("id", id);
 
-        if (payloadType == WebSocket.PayloadType.BINARY) {
+        if (mBlobsEnabled.containsKey(id) && mBlobsEnabled.get(id) &&
+            payloadType == WebSocket.PayloadType.BINARY) {
           byte[] data;
           try {
             data = bufferedSource.readByteArray();
@@ -206,6 +208,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     try {
       client.close(code, reason);
       mWebSocketConnections.remove(id);
+      mBlobsEnabled.remove(id);
     } catch (Exception e) {
       FLog.e(
         ReactConstants.TAG,
@@ -267,6 +270,11 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     } catch(URISyntaxException e) {
         throw new IllegalArgumentException("Unable to set " + uri + " as default origin header.");
     }
+  }
+
+  @ReactMethod
+  public void enableBlobStorage(int id) {
+    mBlobsEnabled.put(id, true);
   }
 
   @Override

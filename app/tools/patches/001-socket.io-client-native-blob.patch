@@ -24,3 +24,13 @@
    return (global.Buffer && global.Buffer.isBuffer(obj)) ||
           (global.ArrayBuffer && obj instanceof ArrayBuffer);
  }
+--- node_modules/socket.io-client/node_modules/engine.io-client/lib/transports/websocket.js.orig	2016-04-07 11:37:27.000000000 -0700
++++ node_modules/socket.io-client/node_modules/engine.io-client/lib/transports/websocket.js	2016-04-07 11:38:02.000000000 -0700
+@@ -93,6 +93,7 @@
+   }
+ 
+   this.ws = BrowserWebSocket ? new WebSocket(uri) : new WebSocket(uri, protocols, opts);
++  this.ws.enableBlobStorage();
+ 
+   if (this.ws.binaryType === undefined) {
+     this.supportsBinary = false;

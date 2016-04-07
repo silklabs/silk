@@ -1,9 +1,14 @@
 #import "RCTWebSocketModule.h"
 #import "RCTSRWebSocket.h"
 
-// See https://github.com/facebook/react-native/pull/5321
-@interface RCTWebSocketModule () <RCTSRWebSocketDelegate>
+@interface RCTSRWebSocket (React)
+- (nullable NSNumber *)reactTag;
 @end
+
+@interface RCTWebSocketModule (Silk)
+- (void) close:(nonnull NSNumber *)socketID;
+@end
+
 
 @interface SLKWebSocketModule : RCTWebSocketModule
 @end

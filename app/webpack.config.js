@@ -51,7 +51,6 @@ var base = {
         },
         include: [
           require('silk-babeldeps'),
-          path.resolve(__dirname, 'node_modules/react-native/Libraries/react-native'),
         ]
       },
     ],

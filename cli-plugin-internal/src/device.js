@@ -78,7 +78,7 @@ export default class Device {
     if (this.adb.sim) {
       return true; // Nothing to update on simulator
     }
-    log.debug(`update wifi with ${ssid} and ${password}`);
+    log.debug(`update wifi with '${ssid}' and '${password}'`);
 
     let stdout = await this.adb.shell(['getprop', 'wifi.interface']);
     let iface = stdout.replace(/\r?\n$/, '');
@@ -104,7 +104,11 @@ export default class Device {
       await wpaCliExpectOK(['disconnect']);
       let id = await wpaCliExpectInt(['add_network']);
       await wpaCliExpectOK(['set_network', id, 'ssid', `'"${ssid}"'`]);
-      await wpaCliExpectOK(['set_network', id, 'psk', `'"${password}"'`]);
+      if (password) {
+        await wpaCliExpectOK(['set_network', id, 'psk', `'"${password}"'`]);
+      } else {
+        await wpaCliExpectOK(['set_network', id, 'key_mgmt', 'NONE']);
+      }
       await wpaCliExpectOK(['enable_network', id]);
       await wpaCliExpectOK(['save_config']);
       await wpaCliExpectOK(['reconnect']);

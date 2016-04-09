@@ -148,7 +148,7 @@ export let configure = {
       help: 'Wi-Fi network ssid to configure to',
     }],
     [['password'], {
-      help: 'Wi-Fi network password credential',
+      help: 'Wi-Fi network password credential (supply empty string for open networks)',
     }],
     COMMON_ARGS.deviceSerialNumber,
     [['-n'], {

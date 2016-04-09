@@ -21,7 +21,12 @@ type GithubIssue = {
 };
 
 export const prdRepo = 'silk-vision-prd';
-export const prdRepoName = 'Silk Sense Product Requirements';
+
+export async function getDescription(octo: any): Promise<string> {
+  const repo = await octo.repos('silklabs', prdRepo).fetch();
+  return repo.description;
+}
+
 
 export const priorityLabels = {
   'must-have': 0,

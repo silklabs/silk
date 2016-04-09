@@ -187,6 +187,7 @@ export default class Prd extends React.Component {
     labels: true,
     progress: false,
     lint: PrdLintOptions[0],
+    prdDescription: '',
     filterBy: {
       priority: {},
       state: {},
@@ -219,12 +220,15 @@ export default class Prd extends React.Component {
     }
 
     try {
+      let prdDescription = await prd.getDescription(this.props.route.userState.octo);
+
       this.setState({itemsByMilestone: null, loadingMessage: 'Loading...'});
       const { itemsByMilestone, milestoneDescriptions } =
         await prd.fetchAllPrdItems(this.props.route.userState.octo);
       this.setState({
         itemsByMilestone,
         milestoneDescriptions,
+        prdDescription,
         loadingMessage: null,
       });
     } catch (err) {
@@ -340,7 +344,7 @@ export default class Prd extends React.Component {
       <div>
         {zen}
         {navBar}
-        <h3>{prd.prdRepoName}{prdRepoLink}</h3>
+        <h3>{this.state.prdDescription}{prdRepoLink}</h3>
         <hr/>
         {prdBody}
       </div>

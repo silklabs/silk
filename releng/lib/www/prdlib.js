@@ -20,7 +20,19 @@ type GithubIssue = {
   labels: Array<GithubIssueLabel>;
 };
 
-export const prdRepo = 'silk-vision-prd';
+const prdRepo = 'silk-vision-prd';
+
+export function getRootUrl(): string {
+  return 'https://github.com/silklabs/' + prdRepo;
+}
+
+export function getIssueUrl(issueNumber: number): string {
+  return getRootUrl() + `/issues/${issueNumber}`;
+}
+
+export function getMilestoneUrl(milestoneName: string): string {
+  return getRootUrl() + `/issues?q=is:open+is:issue+milestone:${encodeURIComponent('"' + milestoneName + '"')}`;
+}
 
 export async function getDescription(octo: any): Promise<string> {
   const repo = await octo.repos('silklabs', prdRepo).fetch();

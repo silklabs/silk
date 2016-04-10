@@ -115,7 +115,7 @@ class PrdItem extends React.Component {
       }
     }
 
-    const issueUrl = `https://github.com/silklabs/${prd.prdRepo}/issues/${issue.number}`;
+    const issueUrl = prd.getIssueUrl(issue.number);
     return (
       <ListGroupItem bsStyle={bsStyle} target="_blank" href={issueUrl}>
         {labels}
@@ -153,8 +153,7 @@ class PrdSection extends React.Component {
         log.info(e.stack);
       }
     }
-    const milestoneUrl = `https://github.com/silklabs/${prd.prdRepo}/issues?q=` +
-      `is:open+is:issue+milestone:${encodeURIComponent('"' + this.props.section + '"')}`;
+    const milestoneUrl = prd.getMilestoneUrl(this.props.section);
 
     let panelHeader = (
         <div>
@@ -320,7 +319,7 @@ export default class Prd extends React.Component {
         prdRepoLink =
           <sup><a
             target="_blank"
-            href={'https://github.com/silklabs/' + prd.prdRepo}>
+            href={prd.getRootUrl()}>
             *
           </a></sup>;
       }

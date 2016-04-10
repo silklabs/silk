@@ -311,9 +311,21 @@ export default class Prd extends React.Component {
     );
 
     let prdBody;
+    let prdTitle;
     if (!this.state.itemsByMilestone) {
       prdBody = <Alert bsStyle="warning">{this.state.loadingMessage}</Alert>;
     } else {
+      let prdRepoLink;
+      if (this.state.labels) {
+        prdRepoLink =
+          <sup><a
+            target="_blank"
+            href={'https://github.com/silklabs/' + prd.prdRepo}>
+            *
+          </a></sup>;
+      }
+      prdTitle = <h3>{this.state.prdDescription}{prdRepoLink}<hr/></h3>;
+
       prdBody = Object.keys(this.state.itemsByMilestone).sort().map(
           section => {
             const description = this.state.milestoneDescriptions[section];
@@ -331,21 +343,11 @@ export default class Prd extends React.Component {
         );
     }
 
-    let prdRepoLink;
-    if (this.state.labels) {
-      prdRepoLink =
-        <sup><a
-          target="_blank"
-          href={'https://github.com/silklabs/' + prd.prdRepo}>
-          *
-        </a></sup>;
-    }
     return (
       <div>
         {zen}
         {navBar}
-        <h3>{this.state.prdDescription}{prdRepoLink}</h3>
-        <hr/>
+        {prdTitle}
         {prdBody}
       </div>
     );

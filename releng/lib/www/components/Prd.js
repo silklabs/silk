@@ -115,7 +115,7 @@ class PrdItem extends React.Component {
       }
     }
 
-    const issueUrl = `https://github.com/silklabs/${prd.prdRepo}/issues/${issue.number}`;
+    const issueUrl = prd.getIssueUrl(issue.number);
     return (
       <ListGroupItem bsStyle={bsStyle} target="_blank" href={issueUrl}>
         {labels}
@@ -153,8 +153,7 @@ class PrdSection extends React.Component {
         log.info(e.stack);
       }
     }
-    const milestoneUrl = `https://github.com/silklabs/${prd.prdRepo}/issues?q=` +
-      `is:open+is:issue+milestone:${encodeURIComponent('"' + this.props.section + '"')}`;
+    const milestoneUrl = prd.getMilestoneUrl(this.props.section);
 
     let panelHeader = (
         <div>
@@ -220,6 +219,7 @@ export default class Prd extends React.Component {
     }
 
     try {
+      await prd.addMissingLabels(this.props.route.userState.octo);
       let prdDescription = await prd.getDescription(this.props.route.userState.octo);
 
       this.setState({itemsByMilestone: null, loadingMessage: 'Loading...'});
@@ -311,9 +311,21 @@ export default class Prd extends React.Component {
     );
 
     let prdBody;
+    let prdTitle;
     if (!this.state.itemsByMilestone) {
       prdBody = <Alert bsStyle="warning">{this.state.loadingMessage}</Alert>;
     } else {
+      let prdRepoLink;
+      if (this.state.labels) {
+        prdRepoLink =
+          <sup><a
+            target="_blank"
+            href={prd.getRootUrl()}>
+            *
+          </a></sup>;
+      }
+      prdTitle = <h3>{this.state.prdDescription}{prdRepoLink}<hr/></h3>;
+
       prdBody = Object.keys(this.state.itemsByMilestone).sort().map(
           section => {
             const description = this.state.milestoneDescriptions[section];
@@ -331,21 +343,11 @@ export default class Prd extends React.Component {
         );
     }
 
-    let prdRepoLink;
-    if (this.state.labels) {
-      prdRepoLink =
-        <sup><a
-          target="_blank"
-          href={'https://github.com/silklabs/' + prd.prdRepo}>
-          *
-        </a></sup>;
-    }
     return (
       <div>
         {zen}
         {navBar}
-        <h3>{this.state.prdDescription}{prdRepoLink}</h3>
-        <hr/>
+        {prdTitle}
         {prdBody}
       </div>
     );

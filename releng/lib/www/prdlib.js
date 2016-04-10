@@ -20,10 +20,25 @@ type GithubIssue = {
   labels: Array<GithubIssueLabel>;
 };
 
-export const prdRepo = 'silk-vision-prd';
+const prdProject = {
+  owner: 'silklabs',
+  repo: 'silk-vision-prd',
+};
+
+export function getRootUrl(): string {
+  return `https://github.com/${prdProject.owner}/${prdProject.repo}`;
+}
+
+export function getIssueUrl(issueNumber: number): string {
+  return getRootUrl() + `/issues/${issueNumber}`;
+}
+
+export function getMilestoneUrl(milestoneName: string): string {
+  return getRootUrl() + `/issues?q=is:open+is:issue+milestone:${encodeURIComponent('"' + milestoneName + '"')}`;
+}
 
 export async function getDescription(octo: any): Promise<string> {
-  const repo = await octo.repos('silklabs', prdRepo).fetch();
+  const repo = await octo.repos(prdProject.owner, prdProject.repo).fetch();
   return repo.description;
 }
 
@@ -55,6 +70,48 @@ export const workflowLabels = [
 
 const ownerLabelPrefix = 'Who:';
 const silkOwnerLabelPrefix = 'Who:Silk';
+
+export async function addMissingLabels(octo: any): Promise<void> {
+  // Build list of expected labels
+  const priorityLabelsColor = 'eb6420';
+  const loeLabelsColor = '009800';
+  const workflowLabelsColor = 'dfdfdf';
+  const ownerLabelsColor = 'a3a383';
+
+  let expectedLabels: {[key: string]: string} = {
+    'Who:SilkEng': ownerLabelsColor,
+    'Who:SilkDesign': ownerLabelsColor,
+    'Who:SilkProduct': ownerLabelsColor,
+    'Who:ODM': ownerLabelsColor,
+    'Who:ExternalDev': ownerLabelsColor,
+  };
+  for (let name in priorityLabels) {
+    expectedLabels[name] = priorityLabelsColor;
+  }
+  for (let name in loeLabels) {
+    expectedLabels[name] = loeLabelsColor;
+  }
+  for (let name of workflowLabels) {
+    expectedLabels[name] = workflowLabelsColor;
+  }
+
+  // Remove expected labels that already exist in the project
+  let repo = octo.repos(prdProject.owner, prdProject.repo);
+  let labels = await repo.labels.fetch();
+  log.info('labels', labels);
+  for (let label of labels) {
+    if (label.name in expectedLabels) {
+      delete expectedLabels[label.name];
+    }
+  }
+
+  // Add any expected labels that do not yet exist
+  for (let name in expectedLabels) {
+    log.info('Creating label:', name);
+    await repo.labels.create({name, color: expectedLabels[name]});
+  }
+}
+
 
 type IssuePriorityResponse = {
   name: ?string;
@@ -138,7 +195,7 @@ type AllPrdItems = {
 };
 
 export async function fetchAllPrdItems(octo: any): Promise<AllPrdItems> {
-  let repo = octo.repos('silklabs', prdRepo);
+  let repo = octo.repos(prdProject.owner, prdProject.repo);
 
   let allIssues = [];
   let issues = await repo.issues.fetch();

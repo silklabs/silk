@@ -20,10 +20,13 @@ type GithubIssue = {
   labels: Array<GithubIssueLabel>;
 };
 
-const prdRepo = 'silk-vision-prd';
+const prdProject = {
+  owner: 'silklabs',
+  repo: 'silk-vision-prd',
+};
 
 export function getRootUrl(): string {
-  return 'https://github.com/silklabs/' + prdRepo;
+  return `https://github.com/${prdProject.owner}/${prdProject.repo}`;
 }
 
 export function getIssueUrl(issueNumber: number): string {
@@ -35,7 +38,7 @@ export function getMilestoneUrl(milestoneName: string): string {
 }
 
 export async function getDescription(octo: any): Promise<string> {
-  const repo = await octo.repos('silklabs', prdRepo).fetch();
+  const repo = await octo.repos(prdProject.owner, prdProject.repo).fetch();
   return repo.description;
 }
 
@@ -150,7 +153,7 @@ type AllPrdItems = {
 };
 
 export async function fetchAllPrdItems(octo: any): Promise<AllPrdItems> {
-  let repo = octo.repos('silklabs', prdRepo);
+  let repo = octo.repos(prdProject.owner, prdProject.repo);
 
   let allIssues = [];
   let issues = await repo.issues.fetch();

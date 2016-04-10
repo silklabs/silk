@@ -219,6 +219,7 @@ export default class Prd extends React.Component {
     }
 
     try {
+      await prd.addMissingLabels(this.props.route.userState.octo);
       let prdDescription = await prd.getDescription(this.props.route.userState.octo);
 
       this.setState({itemsByMilestone: null, loadingMessage: 'Loading...'});

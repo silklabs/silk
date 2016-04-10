@@ -71,6 +71,48 @@ export const workflowLabels = [
 const ownerLabelPrefix = 'Who:';
 const silkOwnerLabelPrefix = 'Who:Silk';
 
+export async function addMissingLabels(octo: any): Promise<void> {
+  // Build list of expected labels
+  const priorityLabelsColor = 'eb6420';
+  const loeLabelsColor = '009800';
+  const workflowLabelsColor = 'dfdfdf';
+  const ownerLabelsColor = 'a3a383';
+
+  let expectedLabels = {
+    'Who:SilkEng': ownerLabelsColor,
+    'Who:SilkDesign': ownerLabelsColor,
+    'Who:SilkProduct': ownerLabelsColor,
+    'Who:ODM': ownerLabelsColor,
+    'Who:ExternalDev': ownerLabelsColor,
+  };
+  for (let name in priorityLabels) {
+    expectedLabels[name] = priorityLabelsColor;
+  }
+  for (let name in loeLabels) {
+    expectedLabels[name] = loeLabelsColor;
+  }
+  for (let name of workflowLabels) {
+    expectedLabels[name] = workflowLabelsColor;
+  }
+
+  // Remove expected labels that already exist in the project
+  let repo = octo.repos(prdProject.owner, prdProject.repo);
+  let labels = await repo.labels.fetch();
+  log.info('labels', labels);
+  for (let label of labels) {
+    if (label.name in expectedLabels) {
+      delete expectedLabels[label.name];
+    }
+  }
+
+  // Add any expected labels that do not yet exist
+  for (let name in expectedLabels) {
+    log.info('Creating label:', name);
+    await repo.labels.create({name, color: expectedLabels[name]});
+  }
+}
+
+
 type IssuePriorityResponse = {
   name: ?string;
   value: number;

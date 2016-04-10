@@ -78,7 +78,7 @@ export async function addMissingLabels(octo: any): Promise<void> {
   const workflowLabelsColor = 'dfdfdf';
   const ownerLabelsColor = 'a3a383';
 
-  let expectedLabels = {
+  let expectedLabels: {[key: string]: string} = {
     'Who:SilkEng': ownerLabelsColor,
     'Who:SilkDesign': ownerLabelsColor,
     'Who:SilkProduct': ownerLabelsColor,

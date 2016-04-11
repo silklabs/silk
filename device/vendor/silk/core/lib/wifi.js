@@ -28,6 +28,51 @@ const USE_WIFI_STUB = util.getboolprop(
   process.platform !== 'android'
 );
 
+/**
+ * Configures the specified network interface based on current system
+ * property values as set by dhcpd
+ *
+ * @param iface Name of the interface to configure
+ */
+async function configureDhcpInterface(iface: string) {
+  const ifacePrefix = `dhcp.${iface}`;
+
+  // dhcpd provides its output in system properties,
+  let dns = [];
+  for (let i = 1; i <= 4; i++) {
+    const dnsN = util.getstrprop(`${ifacePrefix}.dns${i}`);
+    if (dnsN) {
+      dns.push(dnsN);
+    }
+  }
+
+  const ipaddress = util.getstrprop(`${ifacePrefix}.ipaddress`);
+  const mask = util.getstrprop(`${ifacePrefix}.mask`);
+  const gateway = util.getstrprop(`${ifacePrefix}.gateway`);
+  const domain = util.getstrprop(`${ifacePrefix}.domain`, 'localdomain');
+
+  let Netmask = require('netmask').Netmask;
+  const block = new Netmask(ipaddress + '/' + mask);
+  const baseMask = block.base + '/' + block.bitmask;
+
+  log.info(`Network configuration:\n` +
+           `interface: ${iface}\n` +
+           `ipaddress: ${ipaddress}/${mask}\n` +
+           `dns: ${dns}\n` +
+           `gateway: ${gateway}\n` +
+           `domain: ${domain}\n` +
+           `base: ${baseMask}`);
+
+  // Add basic routing table and DNS
+  await util.exec('ndc', ['network', 'destroy', '100']);
+  await util.exec('ndc', ['network', 'create', '100']);
+  await util.exec('ndc', ['network', 'interface', 'add', '100', iface]);
+  await util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]);
+  await util.exec('ndc', ['network', 'route', 'add', '100', iface, baseMask, '0.0.0.0']);
+  await util.exec('ndc', ['network', 'default', 'set', '100']);
+  await util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]);
+}
+
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;
 
@@ -290,7 +335,6 @@ function wpaCliRemoveAllNetworks() {
   return wpaCliRemoveNetwork('all');
 }
 
-
 export class Wifi extends events.EventEmitter {
 
   // Always start as offline until proven otherwise...
@@ -339,40 +383,7 @@ export class Wifi extends events.EventEmitter {
         throw err;
       }
 
-      // dhcpd provides its output in system properties,
-      let dns = [];
-      for (let i = 1; i <= 4; i++) {
-        let dnsN = util.getstrprop(`dhcp.${iface}.dns${i}`);
-        if (dnsN) {
-          dns.push(dnsN);
-        }
-      }
-
-      let ipaddress = util.getstrprop(`dhcp.${iface}.ipaddress`);
-      let mask = util.getstrprop(`dhcp.${iface}.mask`);
-      let gateway = util.getstrprop(`dhcp.${iface}.gateway`);
-      let domain = util.getstrprop(`dhcp.${iface}.domain`);
-      if (domain === '') {
-        domain = 'localdomain';
-      }
-
-      let Netmask = require('netmask').Netmask;
-      let block = new Netmask(ipaddress + '/' + mask);
-      let baseMask = block.base + '/' + block.bitmask;
-
-      log.info(`DHCP configuration:\nipaddress: ${ipaddress}/${mask}\n` +
-               `dns: ${dns}\ngateway: ${gateway}\ndomain: ${domain}\n` +
-               `base: ${baseMask}`);
-
-      // Add basic routing table and DNS
-      return Promise.resolve()
-        .then(() => util.exec('ndc', ['network', 'destroy', '100']))
-        .then(() => util.exec('ndc', ['network', 'create', '100']))
-        .then(() => util.exec('ndc', ['network', 'interface', 'add', '100', iface]))
-        .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]))
-        .then(() => util.exec('ndc', ['network', 'route', 'add', '100', iface, baseMask, '0.0.0.0']))
-        .then(() => util.exec('ndc', ['network', 'default', 'set', '100']))
-        .then(() => util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]))
+      return configureDhcpInterface(iface)
         .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
         .catch(util.processthrow);
     })
@@ -389,7 +400,7 @@ export class Wifi extends events.EventEmitter {
       this.emit('online');
     })
     .catch(err => {
-      log.warn(`Error: DHCP request failed: ${err}, retrying...`);
+      log.warn(`Error: DHCP request failed: ${err.stack || err}, retrying...`);
       this.dhcpRetryTimer = setTimeout(() => {
         this._requestDhcp();
         this.dhcpRetryTimer = null;
@@ -433,7 +444,7 @@ export class Wifi extends events.EventEmitter {
     return Promise.resolve();
   }
 
-  init() {
+  init(): Promise<void> {
     log.info('WiFi initializing');
 
     // Set the device hostname to something that is probably unique
@@ -453,7 +464,7 @@ export class Wifi extends events.EventEmitter {
       });
   }
 
-  shutdown() {
+  shutdown(): Promise<void> {
     // Once Wifi has been shutdown(), there's no recovery beyond restart
     log.info('WiFi shutdown');
     this._shutdown = true;
@@ -593,21 +604,25 @@ export class StubWifi extends events.EventEmitter {
 
   init() {
     log.info('Using stub "WiFi"');
-    // Most of the emulator eth0 networking is setup automatically.  The only
-    // thing missing is to instruct netd to use the DNS servers for the
-    // hardcoded netId == 0
-    let dns = [];
-    for (let i = 1; i <= 4; i++) {
-      let dnsN = util.getstrprop(`net.eth0.dns${i}`);
-      if (dnsN) {
-        dns.push(dnsN);
+    if (util.getboolprop('ro.kernel.qemu')) {
+      // Most of the emulator eth0 networking is setup automatically.  The only
+      // thing missing is to instruct netd to use the DNS servers for the
+      // hardcoded netId == 0
+      let dns = [];
+      for (let i = 1; i <= 4; i++) {
+        let dnsN = util.getstrprop(`net.eth0.dns${i}`);
+        if (dnsN) {
+          dns.push(dnsN);
+        }
       }
+      return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns]);
     }
-    return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns]);
+    return Promise.resolve();
   }
 
-  shutdown() {
+  shutdown(): Promise<void> {
     log.info('Stub: "WiFi" shutdown');
+    return Promise.resolve();
   }
 
   isOnline(): bool {

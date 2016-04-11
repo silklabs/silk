@@ -154,14 +154,6 @@ module.exports = {
     files: ['device/vendor/silk/core/lib/base_version.js'],
     events: ['nightly', 'push'],
   }),
-  'device-hammerhead-nightly': nightlyBuild('device', {
-    title: 'hammerhead nightly',
-    travis_config: {
-      env: {
-        global: ['GONK=hammerhead'],
-      },
-    },
-  }),
   // TODO: Enable OS X device build once Travis OS X machines have more disk space,
   //       or the build is smaller :sadface:
   //
@@ -227,17 +219,6 @@ module.exports = {
     travis_config: {
       env: {
         global: ['GONK=mako'],
-      },
-    },
-    events: ['nightly'],
-    branches: ['master'],
-  },
-  'repocache-hammerhead-nightly': {
-    title: 'Updating repocache for hammerhead gonk',
-    travis_yml: 'device/repocache/travis.yml',
-    travis_config: {
-      env: {
-        global: ['GONK=hammerhead'],
       },
     },
     events: ['nightly'],

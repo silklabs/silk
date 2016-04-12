@@ -143,7 +143,7 @@
            remote="github"
            revision="a517a954fb5c6c8c1ef1fe48bc5b3ae8be10c725"
            upstream="master"
-           clone-depth="1"/>
+           clone-depth="42"/>
   <project name="websockets/bufferutil"
            path="external/bufferutil"
            remote="github"

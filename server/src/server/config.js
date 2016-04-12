@@ -9,7 +9,7 @@ const LOCAL_CONFIG = 'config.local';
 
 export default function loadConfig(profile = 'production', cwd) {
   if (!cwd) {
-    cwd = path.join(__dirname, '..', '..', '..');
+    cwd = path.join(__dirname, '..', '..');
   }
 
   // XXX: Hack to support both babel6 and babel5 ...

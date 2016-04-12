@@ -1,0 +1,26 @@
+{
+  "name": "dbEval",
+  "version": "1.0.0",
+  "description": "Tool to help evaluate the accuracy of a model",
+  "main": "dbEval.js",
+  "author": "Anshul Jain <anshul@silklabs.com>",
+  "scripts": {
+    "lint": "eslint *.js"
+  },
+  "bin": {
+    "dbEval": "./dbEval.js"
+  },
+  "dependencies": {
+    "readdir": "0.0.13",
+    "mkdirp": "0.5.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "eslint-config-silk": "file:../../eslint",
+    "eslint-plugin-react": "3.16.1"
+  },
+  "engines": {
+    "node": "4.2"
+  }
+}

@@ -64,6 +64,12 @@ function dbInfo(name) {
               [1842, 1841, 1841, 1841, 1841, 1841, 1841, 1842, 1842, 1842, 1841,
                1734]];
     break;
+  case 'FDDB': // Caltech Pedestrian Datasets (testing)
+    setIds = [0];
+    skip = 1;
+    vidIds = [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]];
+    nFrame = [[290, 285, 274, 302, 298, 302, 279, 276, 259, 280]];
+    break;
   default:
     break;
   }

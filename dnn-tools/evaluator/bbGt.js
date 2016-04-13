@@ -187,17 +187,17 @@ function loadAnnotations(name, lbls, filterGt) {
     let lbl = bbArray[0];
     let pos = {
       id: frameId,
-      x: parseInt(bbArray[1]),
-      y: parseInt(bbArray[2]),
-      width: parseInt(bbArray[3]),
-      height: parseInt(bbArray[4]),
+      x: parseFloat(bbArray[1]),
+      y: parseFloat(bbArray[2]),
+      width: parseFloat(bbArray[3]),
+      height: parseFloat(bbArray[4]),
       ignore: 0,
     };
     let posv = {
-      x: parseInt(bbArray[6]),
-      y: parseInt(bbArray[7]),
-      width: parseInt(bbArray[8]),
-      height: parseInt(bbArray[9]),
+      x: parseFloat(bbArray[6]),
+      y: parseFloat(bbArray[7]),
+      width: parseFloat(bbArray[8]),
+      height: parseFloat(bbArray[9]),
     };
 
     // Check if object label is not in the lbls list
@@ -213,31 +213,6 @@ function loadAnnotations(name, lbls, filterGt) {
     bbs.push(pos);
   });
   return bbs;
-}
-
-/**
- * Filter ground truth bounding boxes.
- *
- * @return true if the bb satisfies the filter criteria, false otherwise
- */
-function filterGtFun(hr, vr, ar, bnds, aspectRatio, lbl, bb, bbv) {
-  let p = (lbl === 'person');
-  p = p && (bb.height >= hr[0] && bb.height < hr[1]);
-
-  let vf = Infinity;
-  if ((bbv.width !== 0) || (bbv.height !== 0)) {
-    vf = bbv.width * bbv.height / (bb.width * bb.height);
-  }
-  p = p && (vf >= vr[0] && vf <= vr[1]);
-
-  if (ar !== 0) {
-    p = p && (Math.sign(ar) * Math.abs(bb.width / bb.height - aspectRatio) < ar);
-  }
-
-  p = p && (bb.x >= bnds[0]) && (bb.x + bb.width <= bnds[2]);
-  p = p && (bb.y >= bnds[1]) && (bb.y + bb.height <= bnds[3]);
-
-  return p;
 }
 
 /**
@@ -465,7 +440,7 @@ function compRoc(gt, dt, ref) {
     fp.push(fpSum);
   }
 
-  // Compute false positives per image for x-asis and miss rate for y-axis
+  // Compute false positives per image for x-asis and true positive rate for y-axis
   let xs = [], ys = [];
   xs.push(-Infinity);
   ys.push(0);
@@ -474,13 +449,19 @@ function compRoc(gt, dt, ref) {
     ys.push(parseFloat((tp[i] / np).toFixed(4)));
   }
 
+  console.log();
+  console.log(`Total positives: ${np}`);
+  console.log(`True positives: ${tp[tp.length - 1]}`);
+  console.log(`False positives: ${fp[fp.length - 1]}`);
+  console.log(`Miss rate: ${((1 - ys[ys.length - 1]) * 100).toFixed(2)}%`);
+
   for (let i = 0; i < m; i++) {
     let j = 0;
 
-    while (xs[j] <= ref[i]) {
+    while ((j < xs.length) && (xs[j] <= ref[i])) {
       j++;
     }
-    scores.push(ys[j]);
+    scores.push(ys[j - 1]);
   }
   return scores;
 }
@@ -489,7 +470,6 @@ module.exports = {
   resize,
   loadDetections,
   loadAnnotations,
-  filterGtFun,
   evalRes,
   compRoc,
 };

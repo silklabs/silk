@@ -1,9 +1,11 @@
 import React from 'react-native';
 import uuid from 'uuid';
+import createLog from 'silk-log';
 
 import OverlayModal from './OverlayModal';
 import DashSegmentPlayer from './DashSegmentPlayer';
 import VideoControls from './VideoControls';
+import Spinner from './Spinner';
 import * as DateUtil from '../libraries/DateUtil';
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
@@ -12,6 +14,8 @@ const {
   TouchableWithoutFeedback,
   View,
 } = React;
+
+const log = createLog('CameraLiveVideo');
 
 export default class CameraLiveVideo extends React.Component {
 
@@ -25,9 +29,14 @@ export default class CameraLiveVideo extends React.Component {
   // don't want to retrigger a reflow across this entire component
   // every time these values change.
   state = {
+    playing: false,
+    currentTime: null,
     minTime: DateUtil.startOfDay().getTime(),
     maxTime: Date.now(),
   };
+
+  firstSegmentDurationMs = null;
+  videoStartTimestampDevice = null;
 
   mounted = false;
 
@@ -60,6 +69,12 @@ export default class CameraLiveVideo extends React.Component {
     if (message.contents !== 'mp4') {
       return;
     }
+    if (this.videoStartTimestampDevice === null) {
+      this.videoStartTimestampDevice = message.when;
+    }
+    if (this.firstSegmentDurationMs === null) {
+      this.firstSegmentDurationMs = message.durationMs;
+    }
     let segment = {
       type: 'blob',
       blob: message.frame,
@@ -70,10 +85,6 @@ export default class CameraLiveVideo extends React.Component {
     this.refs.video.enqueue(segment);
   };
 
-  componentDidMount() {
-    this.refs.video.play();
-  }
-
   _renderControls() {
     return (
       <VideoControls
@@ -81,48 +92,50 @@ export default class CameraLiveVideo extends React.Component {
         live={true}
         rate={1.0}
         playing={true}
-        onSeekStart={this.onSeekStart}
-        onSeekChange={this.onSeekChange}
-        onSeekEnd={this.onSeekEnd}
-        onPlay={this.onPlay}
-        onPause={this.onPause}
-        onFastForward={this.onFastForward}
-        onRewind={this.onRewind}
         currentTime={this.state.currentTime}
         startTime={this.state.minTime}
         endTime={this.state.maxTime}
-        onDone={this.close}
+        onDone={this._close}
       />
     );
   }
 
-  onSeekStart() {
-  }
-  onSeekChange() {
-  }
-  onSeekEnd() {
-  }
-  onPlay() {
-  }
-  onPause() {
-  }
-  onFastForward() {
-  }
-  onRewind() {
-  }
+  _onCanPlay = (event) => {
+    // Delay playback by half a segment duration so that Viblast's
+    // playhead isn't constantly at the edge of the buffer.
+    const waitMs = this.firstSegmentDurationMs / 2;
+    log.debug(`canPlay now, playing in ${waitMs}ms`);
+    setTimeout(() => this.refs.video.play(), waitMs);
+  };
 
-  close = () => {
+  _onPlay = () => {
+    this.setState({playing: true});
+  };
+
+  _onTimeUpdate = (event) => {
+    log.debug('DashSegmentPlayer onTimeUpdate', event);
+    this.setState({currentTime: this.videoStartTimestampDevice + event.currentTime * 1000});
+  };
+
+  _close = () => {
     // Signal dismissal of the view (but let it animate closed).
     // After the animation allow any parent views to cleanup.
     const overlay = this.refs.overlay;
     overlay.dismiss().then(() => this.props.onClose());
   };
 
-  toggleControls = () => {
+  _toggleControls = () => {
     this.setState({
       showingControls: !this.state.showingControls,
     });
   };
+
+  _renderSpinner() {
+    if (this.state.playing) {
+      return <View />;
+    }
+    return <Spinner color="white" />;
+  }
 
   render() {
     let dimensions = getLandscapeDimensions();
@@ -133,16 +146,17 @@ export default class CameraLiveVideo extends React.Component {
     return (
       <OverlayModal ref="overlay" presented={true}>
         <View style={[styles.container]}>
-          <TouchableWithoutFeedback onPress={this.toggleControls}>
-            <DashSegmentPlayer
-              onTimeChange={this.onTimeChange}
-              onSegmentEnqueued={this.onSegmentEnqueued}
-              onSegmentStart={this.onSegmentStart}
-              onSegmentEnd={this.onSegmentEnd}
-              onSegmentError={this.onSegmentError}
-              style={styles.video}
-              ref="video"
-            />
+          <TouchableWithoutFeedback onPress={this._toggleControls}>
+            <View style={[styles.video, styles.videoContainer]}>
+              <DashSegmentPlayer
+                onCanPlay={this._onCanPlay}
+                onPlay={this._onPlay}
+                onTimeUpdate={this._onTimeUpdate}
+                style={styles.video}
+                ref="video"
+              />
+              {this._renderSpinner()}
+            </View>
           </TouchableWithoutFeedback>
           <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
             {controls}
@@ -154,6 +168,12 @@ export default class CameraLiveVideo extends React.Component {
 }
 
 const styles = StyleSheet.create({
+  videoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   video: {
     position: 'absolute',
     top: 0,

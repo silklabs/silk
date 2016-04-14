@@ -9,7 +9,7 @@
 BUILD_VERSION_TAGS += $(BRANCH)
 
 # Properties that are only read using getprop in sysutils.js
-# should be added to vendor/silk/gonk/init/silk-props.json instead
+# should be added to vgonkendor/silk/core/silk-props.json instead
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.services=bledroid,silk-sensors,capture,silk \
  persist.silk.capture.dash=true \
@@ -95,7 +95,7 @@ SILK_INIT := \
   silk-service \
   silk-dashboard \
   silk-debug-wrapper \
-  silk-props.json \
+  silk-props-json \
 
 SILK_GONK_PROGIES := \
   silk-bledroid \

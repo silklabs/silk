@@ -1,5 +1,6 @@
 /**
- * This module contains a collection of useful assertions these only run in debug builds!
+ * This module contains a collection of useful assertions.
+ * Note: These only run in debug builds!
  */
 
 /**

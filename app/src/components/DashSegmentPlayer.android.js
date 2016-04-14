@@ -37,11 +37,11 @@ export default class DashSegmentPlayer extends React.Component {
     return React.findNodeHandle(this.refs[NATIVE_REF]);
   }
 
-  enqueue(segment) {
+  enqueue(blob) {
     React.UIManager.dispatchViewManagerCommand(
       this.getNativeHandle(),
       React.UIManager.SilkMSEPlayer.Commands.enqueueSegment,
-      [blobURI(segment.blob)]
+      [blobURI(blob)]
     );
   }
 

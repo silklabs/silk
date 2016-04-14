@@ -1,5 +1,4 @@
 import React from 'react-native';
-import uuid from 'uuid';
 import createLog from 'silk-log';
 
 import OverlayModal from './OverlayModal';
@@ -40,7 +39,7 @@ export default class CameraLiveVideo extends React.Component {
 
   mounted = false;
 
-  componentWillMount() {
+  componentDidMount() {
     this.mounted = true;
 
     const { socket, deviceId } = this.props;
@@ -75,14 +74,7 @@ export default class CameraLiveVideo extends React.Component {
     if (this.firstSegmentDurationMs === null) {
       this.firstSegmentDurationMs = message.durationMs;
     }
-    let segment = {
-      type: 'blob',
-      blob: message.frame,
-      id: uuid.v1(), // TODO: this is no longer necessary
-      startUTC: message.when,
-      endUTC: message.when + (message.durationMs || 0),
-    };
-    this.refs.video.enqueue(segment);
+    this.refs.video.enqueue(message.frame);
   };
 
   _renderControls() {

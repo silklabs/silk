@@ -12,7 +12,7 @@
     "silk-caffe": "/device/vendor/silk/gonk/node/silk-caffe",
     "silk-cv": "/device/vendor/silk/gonk/node/silk-cv",
     "silk-core-version": "/version",
-    "silk-device": "/device/vendor/silk/core",
+    "silk-device-main": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/silk/gonk/node/silk-gc1",
     "silk-movie": "/device/vendor/silk/gonk/node/silk-movie",
     "silk-properties": "/device/vendor/silk/gonk/node/silk-properties"

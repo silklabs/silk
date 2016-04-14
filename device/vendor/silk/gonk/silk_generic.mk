@@ -33,7 +33,7 @@ PRODUCT_PACKAGES += node
 
 # vendor/silk/core/...
 SILK_CORE := \
-  core \
+  silk-device-main \
   silk-base-version \
   silk-core-version \
   silk-alog \
@@ -93,6 +93,7 @@ SILK_INIT := \
   init.silk.rc \
   silk-kmsg \
   silk-init \
+  silk-init-js \
   silk-debug-wrapper \
   silk-props-json \
 

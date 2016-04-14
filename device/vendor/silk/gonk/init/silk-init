@@ -56,7 +56,7 @@ if [ "$1" = "--debug-brk" ]; then
 fi
 
 if [ -z $1 ]; then
-  info Starting Silk services
+  info Starting Silk
 
   if [ "$(getprop persist.silk.debugger)" = "true" ]; then
     info Debugger enabled
@@ -78,7 +78,7 @@ if [ -z $1 ]; then
   # listen on it.
   setprop sys.boot_completed 1
 
-  exec system/silk/bin/node $NODE_ARGS system/silk/core.js
+  exec system/silk/bin/node $NODE_ARGS system/silk/silk-init.js
   exit 1
 fi
 

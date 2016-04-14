@@ -15,7 +15,7 @@ If you are only making JavaScript changes to silk core (`silk/core/lib/`), the f
 
 ### Automatic push
 
-Run `./watch`, then edit/save normally. On every save, the new `core.js` will be
+Run `./watch`, then edit/save normally. On every save, the new `silk-device-main.js` will be
 automatically installed on device, and silk core restarted.
 
 `./watch` options:
@@ -27,7 +27,7 @@ automatically installed on device, and silk core restarted.
 ```sh
 .. edit .js files ..
 $ npm install
-$ adb push core.js /system/silk/core.js
+$ adb push silk-device-main.js /system/silk/node_modules/
 $ adb shell setprop ctl.restart silk
 ```
 

@@ -61,12 +61,16 @@ export default function(baseDirectory = process.env.BASEDIR) {
    *
    * This will figure out where to put the JS files for example:
    *
-   *  - vendor/silk/core -> /system/silk/core.js
+   *  - vendor/silk/core -> /system/silk/node_modules/silk-device-main.js
    *  - vendor/silk/profiler -> /system/silk/profiler.js
    *  - vendor/silk/ext/foo -> /system/ext/foo/index.js
    */
   function getDestFile() {
     // XXX: Nasty hack since we don't know where we are in the silk tree...
+
+    if (pkg.main === 'silk-device-main') { // *shudder*
+      return `/system/silk/node_modules/silk-device-main.js`;
+    }
     let search = 'vendor/silk';
     let startingPoint = path.resolve(baseDirectory);
     let vendorStart = startingPoint.lastIndexOf(search);

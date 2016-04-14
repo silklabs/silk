@@ -2,6 +2,7 @@ import React from 'react-native';
 import moment from 'moment';
 
 import Config from '../libraries/Config';
+import * as DateUtil from '../libraries/DateUtil';
 import SystemButton from './SystemButton';
 
 let {
@@ -10,6 +11,19 @@ let {
   View,
   SliderIOS,
 } = React;
+
+function daySeconds(time) {
+  let date = new Date(time);
+  let start = DateUtil.startOfDay();
+  // Number of elapsed seconds in the given day.
+  return Math.ceil((date.valueOf() - start.valueOf()) / 1000);
+}
+
+function formatUTCTime(time) {
+  return moment(new Date(time)).format(
+    'h:mm:ss a'
+  );
+}
 
 export default React.createClass({
 
@@ -36,7 +50,7 @@ export default React.createClass({
       onRewind: noop,
       startTime: 0,
       endTime: 0,
-      currentTime: 0,
+      currentTime: null,
     };
   },
 
@@ -45,7 +59,6 @@ export default React.createClass({
     playing: React.PropTypes.bool,
     seekChangeThreshold: React.PropTypes.number,
     startTime: React.PropTypes.number.isRequired,
-    currentTime: React.PropTypes.number,
     endTime: React.PropTypes.number.isRequired,
     onDone: React.PropTypes.func,
     onSeekStart: React.PropTypes.func,
@@ -64,24 +77,6 @@ export default React.createClass({
 
   componentWillUnmount() {
     clearTimeout(this._seekChangeTimeout);
-  },
-
-  formatUTCTime(time) {
-    return moment(new Date(time)).format(
-      'h:mm:ss a'
-    );
-  },
-
-  dayStart() {
-    let date = new Date();
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  },
-
-  daySeconds(time) {
-    let date = new Date(time);
-    let start = this.dayStart();
-    // Number of elapsed seconds in the given day.
-    return Math.ceil((date.valueOf() - start.valueOf()) / 1000);
   },
 
   onSeekStart(value) {
@@ -128,7 +123,7 @@ export default React.createClass({
     this.props.onSeekEnd(finalValue);
   },
 
-  buildControls() {
+  _renderControls() {
     let playOrPause;
     if (this.props.playing) {
       playOrPause = (
@@ -175,8 +170,12 @@ export default React.createClass({
     );
   },
 
-  buildLiveControls() {
+  _renderLiveControls() {
     if (!Config.get().preferences.showLiveLag) {
+      return null;
+    }
+
+    if (this.props.currentTime === null) {
       return null;
     }
 
@@ -187,7 +186,7 @@ export default React.createClass({
     );
   },
 
-  buildRate() {
+  _renderRate() {
     let content;
     if (!this.props.live && this.props.rate > 1.0) {
       content = (<Text style={styles.rate}>{this.props.rate}X</Text>);
@@ -202,25 +201,26 @@ export default React.createClass({
 
   render() {
     // XXX: This is a hack to ensure width is 100%
-    let currentTime = this.formatUTCTime(
-      this.state.seekTime || this.props.currentTime
-    );
+    let currentTime = null;
+    let progress = null;
+    if (this.state.seekTime !== null) {
+      currentTime = formatUTCTime(this.state.seekTime);
+      progress = daySeconds(this.state.seekTime);
+    } else if (this.props.currentTime !== null) {
+      currentTime = formatUTCTime(this.props.currentTime);
+      progress = daySeconds(this.props.currentTime);
+    }
 
     let endTime;
     if (this.props.live) {
       endTime = (<Text style={styles.seekEnd}>Live</Text>);
     } else {
-      let endTimeValue = this.formatUTCTime(this.props.endTime);
+      let endTimeValue = formatUTCTime(this.props.endTime);
       endTime = (<Text style={styles.seekEnd}>{endTimeValue}</Text>);
     }
 
-    // The status bar value is represented as seconds in a given day.
-    let progress = this.daySeconds(
-      this.state.seekTime || this.props.currentTime
-    );
-
-    let minimumValue = this.daySeconds(this.props.startTime);
-    let maximumTime = this.daySeconds(this.props.endTime);
+    let minimumValue = daySeconds(this.props.startTime);
+    let maximumTime = daySeconds(this.props.endTime);
 
     let top = (
       <View style={[styles.top]}>
@@ -246,15 +246,13 @@ export default React.createClass({
     );
 
     let bottomContent =
-      this.props.live ? this.buildLiveControls() : this.buildControls();
-
-    let rate = this.buildRate();
+      this.props.live ? this._renderLiveControls() : this._renderControls();
 
     let bottom = (
       <View style={[styles.bottom]}>
         <View style={styles.placeholder} />
         {bottomContent}
-        {rate}
+        {this._renderRate()}
       </View>
     );
 

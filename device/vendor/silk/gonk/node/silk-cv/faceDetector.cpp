@@ -58,8 +58,11 @@ private:
  */
 class FaceDetectorInitWorker : public Nan::AsyncWorker {
 public:
-  explicit FaceDetectorInitWorker(std::weak_ptr<State> weakState, Nan::Callback *callback)
+  explicit FaceDetectorInitWorker(std::weak_ptr<State> weakState,
+                                  std::string dlibLandmark,
+                                  Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
+      dlibLandmark(dlibLandmark),
       weakState(weakState) {}
   virtual ~FaceDetectorInitWorker() {}
 
@@ -67,8 +70,9 @@ public:
     auto state = weakState.lock();
     if (state) {
       state->detector = dlib::get_frontal_face_detector();
+      ALOGD("Loading %s", dlibLandmark.c_str());
       try {
-        dlib::deserialize("system/silk/media/shape_predictor_68_face_landmarks.dat") >>
+        dlib::deserialize(dlibLandmark) >>
           state->face_landmark_predictor;
       } catch(const dlib::serialization_error &e) {
         SetErrorMessage(e.what());
@@ -91,6 +95,7 @@ public:
   }
 
 private:
+  std::string dlibLandmark;
   std::weak_ptr<State> weakState;
 };
 
@@ -267,21 +272,27 @@ void FaceDetector::Init(v8::Local<v8::Object> exports) {
 }
 
 NAN_METHOD(FaceDetector::New) {
+  if (info.Length() != 2) {
+    Nan::ThrowError("Invalid number of arguments provided (required two)");
+  }
+
   if (!info.IsConstructCall()) {
     // Invoked as plain function `FaceDetector(...)`, turn into construct call.
-    const int argc = 1;
-    v8::Local<v8::Value> argv[argc] = { info[0] };
+    const int argc = 2;
+    v8::Local<v8::Value> argv[argc] = { info[0], info[1] };
     v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
     info.GetReturnValue().Set(cons->NewInstance(argc, argv));
     return;
   }
 
   // Invoked as constructor: `new FaceDetector(...)`
-  Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
+  std::string dlibLandmark = std::string(*Nan::Utf8String(info[0]->ToString()));
+  Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
 
   FaceDetector* obj = new FaceDetector();
   obj->state->busy = true;
-  Nan::AsyncQueueWorker(new FaceDetectorInitWorker(obj->state, callback));
+  Nan::AsyncQueueWorker(new FaceDetectorInitWorker(obj->state, dlibLandmark,
+                                                   callback));
 
   obj->Wrap(info.This());
   info.GetReturnValue().Set(info.This());

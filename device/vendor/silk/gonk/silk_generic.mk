@@ -93,13 +93,13 @@ SILK_INIT := \
   init.silk.rc \
   silk-kmsg \
   silk-service \
-  silk-dashboard \
   silk-debug-wrapper \
   silk-props-json \
 
 SILK_GONK_PROGIES := \
   silk-bledroid \
   silk-capture \
+  silk-dash \
   libpreview \
   silk-dhcputil \
   silk-ir \

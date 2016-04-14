@@ -14,11 +14,13 @@ system/bin/setprop ro.silk.bt.hw.enabled false
 ln -sf ../device/vendor/silk/gonk/core/silk-props.json system/silk/silk-props.json
 
 # TODO: Move these things out of device/vendor/gonk/init for better sharing
-for cmd in dash silk-core; do
-  simcmd=system/silk/bin/$cmd
-  echo "#!/bin/bash" > $simcmd
-  cat ../device/vendor/silk/gonk/init/$cmd >> $simcmd
-  chmod +x $simcmd
-done
+echo "#!/bin/bash" > system/silk/bin/silk-core
+cat ../device/vendor/silk/gonk/init/silk-core >> system/silk/bin/silk-core
+chmod +x system/silk/bin/silk-core
+
+echo "#!/bin/bash" > system/silk/bin/dash
+cat ../device/vendor/silk/gonk/dash/dash >> system/silk/bin/dash
+chmod +x system/silk/bin/dash
+# END TODO
 
 system/silk/ext/install

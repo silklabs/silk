@@ -111,9 +111,6 @@ module.exports = {
         global: ['GONK=mako'],
       },
     },
-    ignore_files: [
-      'device/repocache/**/*',
-    ],
     events: ['push'],
   }),
   'networktest': npmPackageBuild('networktest'),
@@ -191,7 +188,7 @@ module.exports = {
   // Nightly repocache deploys to S3
   'repocache-base-nightly': {
     title: 'Updating repocache for base gonk',
-    travis_yml: 'device/repocache/travis.yml',
+    travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
       env: {
@@ -203,7 +200,7 @@ module.exports = {
   },
   'repocache-base.msm8956-nightly': {
     title: 'Updating repocache for base.msm8956 gonk',
-    travis_yml: 'device/repocache/travis.yml',
+    travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
       env: {
@@ -215,7 +212,7 @@ module.exports = {
   },
   'repocache-mako-nightly': {
     title: 'Updating repocache for mako gonk',
-    travis_yml: 'device/repocache/travis.yml',
+    travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
         global: ['GONK=mako'],
@@ -226,7 +223,7 @@ module.exports = {
   },
   'repocache-qemu-nightly': {
     title: 'Updating repocache for qemu gonk',
-    travis_yml: 'device/repocache/travis.yml',
+    travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
         global: ['GONK=qemu'],

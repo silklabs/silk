@@ -104,6 +104,7 @@ class FakeCamera {
         im.convertGrayscale();
         break;
       case 'fullrgb':
+        im.resize(FRAME_SIZE.full.width, FRAME_SIZE.full.height);
         break;
       case 'highgray':
         im.resize(FRAME_SIZE.high.width, FRAME_SIZE.high.height);
@@ -154,7 +155,7 @@ class FakeCamera {
    */
   normalRectsTo(rects, frameSize) {
     const scale = this.getFrameSize(frameSize).width / FRAME_SIZE.normal.width;
-    return rects.map(rect => Camera._scaleRect(rect, scale));
+    return rects.map(rect => FakeCamera._scaleRect(rect, scale));
   }
 
   /**

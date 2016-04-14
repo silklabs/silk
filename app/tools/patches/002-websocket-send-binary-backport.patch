@@ -1,0 +1,41 @@
+--- node_modules/react-native/Libraries/WebSocket/WebSocket.js.orig	2016-04-12 17:16:33.000000000 -0700
++++ node_modules/react-native/Libraries/WebSocket/WebSocket.js	2016-04-12 17:21:47.000000000 -0700
+@@ -53,9 +53,9 @@
+     RCTWebSocketModule.send(message, this._socketId);
+   }
+ 
+-  sendArrayBufferImpl(): void {
+-    // TODO
+-    console.warn('Sending ArrayBuffers is not yet supported');
++  sendArrayBufferImpl(data: ArrayBuffer): void {
++    const message = base64.fromByteArray(new Uint8Array(data));
++    RCTWebSocketModule.sendBinary(message, this._socketId);
+   }
+ 
+   _closeWebSocket(id: number, code?: number, reason?: string): void {
+--- node_modules/react-native/Libraries/WebSocket/WebSocketBase.js.orig	2016-04-12 17:16:41.000000000 -0700
++++ node_modules/react-native/Libraries/WebSocket/WebSocketBase.js	2016-04-12 17:20:09.000000000 -0700
+@@ -79,6 +79,8 @@
+ 
+     if (typeof data === 'string') {
+       this.sendStringImpl(data);
++    } else if (ArrayBuffer.isView(data)) {
++      this.sendArrayBufferImpl(data.buffer);
+     } else if (data instanceof ArrayBuffer) {
+       this.sendArrayBufferImpl(data);
+     } else {
+--- node_modules/react-native/Libraries/WebSocket/RCTWebSocketModule.m.orig	2016-04-12 17:16:25.000000000 -0700
++++ node_modules/react-native/Libraries/WebSocket/RCTWebSocketModule.m	2016-04-12 17:18:04.000000000 -0700
+@@ -67,6 +67,12 @@
+   [_sockets[socketID] send:message];
+ }
+ 
++RCT_EXPORT_METHOD(sendBinary:(NSString *)base64String socketID:(nonnull NSNumber *)socketID)
++{
++  NSData *message = [[NSData alloc] initWithBase64EncodedString:base64String options:0];
++  [_sockets[socketID] send:message];
++}
++
+ RCT_EXPORT_METHOD(close:(nonnull NSNumber *)socketID)
+ {
+   [_sockets[socketID] close];

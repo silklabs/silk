@@ -17,6 +17,7 @@
 
 RCT_EXTERN_METHOD(connect:(NSURL *)URL protocols:(NSArray *)protocols headers:(NSDictionary *)headers socketID:(nonnull NSNumber *)socketID)
 RCT_EXTERN_METHOD(send:(NSString *)message socketID:(nonnull NSNumber *)socketID)
+RCT_EXTERN_METHOD(sendBinary:(NSString *)base64String socketID:(nonnull NSNumber *)socketID)
 
 RCT_EXPORT_METHOD(close:(nonnull NSNumber *)socketID)
 {

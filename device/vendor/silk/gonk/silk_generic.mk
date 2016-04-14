@@ -92,7 +92,7 @@ PRODUCT_PACKAGES += $(OPENCV_PACKAGES)
 SILK_INIT := \
   init.silk.rc \
   silk-kmsg \
-  silk-service \
+  silk-init \
   silk-debug-wrapper \
   silk-props-json \
 

@@ -11,7 +11,7 @@ service silk-fakeappops /system/silk/bin/fakeappops
     class late_start
     user root
 
-service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-core
+service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-init
     class late_start
     user root
     # The bledroid and silk-sensors services are useless without the

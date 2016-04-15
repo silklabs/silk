@@ -76,7 +76,7 @@ export default class Stream extends Duplex {
 
   // Tell flow that the |write| method can be hooked.
   write: (
-    chunk?: string | Buffer,
+    chunk: string | Buffer,
     encodingOrCallback?: string | Function,
     callback?: Function
   ) => boolean;
@@ -186,19 +186,20 @@ export default class Stream extends Duplex {
 
   // Part of the stream API.
   _write(
-    data: Buffer,
-    encoding: 'buffer',
+    data: Buffer | string,
+    encoding: string,
     callback: Function
-  ): void {
+  ): boolean {
     log.debug(`Stream._write(<Buffer ${data.length}>)`);
 
     invariant(data.length);
+    invariant(data instanceof Buffer);
     invariant(encoding === `buffer`);
 
     if (this._error) {
       log.debug(`Unable to write due to previous error`);
       callback(this._error);
-      return;
+      return false;
     }
 
     this._outgoing.push(data);
@@ -212,6 +213,7 @@ export default class Stream extends Duplex {
     }
 
     callback(null);
+    return true;
   }
 
   _maybeScheduleClose() {

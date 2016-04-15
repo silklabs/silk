@@ -44,8 +44,7 @@ type PendingFrame = {
 
 function isBinary(value: any): bool {
   // Note this will return true for ArrayBuffer, TypedArray (and Buffers).
-  // $FlowFixMe: Flow does not know about ArrayBuffer.isView.
-  return ArrayBuffer.isView(value);
+  return value instanceof ArrayBuffer || ArrayBuffer.isView(value);
 }
 
 function byteLength(value: ArrayBuffer | Buffer): number {

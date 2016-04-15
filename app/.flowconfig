@@ -5,6 +5,7 @@
 .*/node_modules/fbjs/.*
 .*/node_modules/yargs/.*
 .*/node_modules/bower/.*
+.*/node_modules/webpack.*
 
 .*/server/test/.*
 .*/server/src/server/.*
@@ -30,4 +31,4 @@ esproposal.class_static_fields=ignore
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.22.1
+0.23.0

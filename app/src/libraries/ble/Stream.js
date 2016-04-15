@@ -19,7 +19,7 @@ export default class Stream extends Duplex {
 
   // Tell flow that the |write| method can be hooked.
   write: (
-    chunk?: string | Buffer,
+    chunk: string | Buffer,
     encodingOrCallback?: string | Function,
     callback?: Function
   ) => boolean;
@@ -58,8 +58,13 @@ export default class Stream extends Duplex {
     // Nothing to do here.
   }
 
-  _write(data: Buffer, encoding: 'buffer', callback: ((error: ?Error) => void)) {
+  _write(
+    data: Buffer | string,
+    encoding: string,
+    callback: ((error: ?Error) => void)
+  ): boolean {
     log.debug(`Stream._write(<Buffer ${data.length}>, ${encoding})`);
+    invariant(data instanceof Buffer);
     invariant(encoding === `buffer`);
 
     if (!this._writeError) {
@@ -71,6 +76,8 @@ export default class Stream extends Duplex {
     }
 
     callback(this._writeError);
+
+    return true; // Continue to write.
   }
 
   _setWriteError(error: Error) {

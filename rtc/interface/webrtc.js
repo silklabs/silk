@@ -38,23 +38,41 @@ declare class WebrtcEventTarget {
   removeEventListener(name: string, handler?: Function): void;
 }
 
+type RTCSignalingState =
+  'stable' |
+  'have-local-offer' |
+  'have-remote-offer' |
+  'have-local-pranswer' |
+  'have-remote-pranswer' |
+  'closed';
+
+type RTCIceGatheringState =
+  'new' |
+  'gathering' |
+  'complete';
+
+type RTCIceConnectionState =
+  'new' |
+  'checking' |
+  'connected' |
+  'completed' |
+  'failed' |
+  'disconnected' |
+  'closed';
+
+type RTCPeerConnectionState =
+  'new' |
+  'connecting' |
+  'connected' |
+  'disconnected' |
+  'failed';
+
 declare export class RTCPeerConnection extends WebrtcEventTarget {
-  iceGatheringState: 'new' | 'gathering' | 'complete';
+  signalingState: RTCSignalingState;
+  iceGatheringState: RTCIceGatheringState;
+  iceConnectionState: RTCIceConnectionState;
+  connectionState: RTCPeerConnectionState;
 
-  iceConnectionState: 'new' |
-                      'checking' |
-                      'connected' |
-                      'completed' |
-                      'failed' |
-                      'disconnected' |
-                      'closed';
-
-  signalingState: 'stable' |
-                  'have-local-offer' |
-                  'have-remote-offer' |
-                  'have-local-pranswer' |
-                  'have-remote-panswer' |
-                  'closed';
   close(): void;
   createDataChannel(
     name: string,

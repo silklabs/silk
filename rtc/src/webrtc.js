@@ -1,5 +1,6 @@
-// Small hack so rtc will reference node-webrtc ... node-webrtc itself has a
-// browser field so it will be transformed to re-export browser globals...
-//
-// TODO: Figure out react-native ...
+// Provide package-wide import hook for WebRTC. On device, we use
+// node-webrtc. In the webapp, we use node-webrtc's 'browser' field
+// which means it will be transformed to simply re-export browser
+// globals. The React Native app uses webpack module aliases to
+// rewrite the import to refer to react-native-webrtc.
 module.exports = require('node-webrtc');

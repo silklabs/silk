@@ -1,4 +1,3 @@
-/*global MessageEvent, WebSocket*/
 /**
  * Wrapper for WebSocket duplex stream. This interface very intentionally sticks
  * to the w3c spec for WebSocket clients rather then the slightly nicer
@@ -10,6 +9,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Duplex } from 'stream';
 import createLog from 'silk-log';
 
@@ -44,7 +44,7 @@ export default class WebSocketDuplex extends Duplex {
   }
 
   _onError: () => void = (err) => {
-    this._log.error(`Error in websocket stream: ${err.stack}`);
+    this._log.error('Error in websocket stream', err, err.stack);
     this.emit('error', err);
     this.emit('close');
   };
@@ -78,7 +78,10 @@ export default class WebSocketDuplex extends Duplex {
     ws.addEventListener('error', this._onError);
     ws.addEventListener('close', this._onClose);
 
-    const onMessage = (event: MessageEvent) => {
+    // This should be MessageEvent, but addEventListener() is spec'ed
+    // for an Event listener. Specifying Event here means event.data
+    // below will fail.
+    const onMessage = (event: any) => {
       // XXX: Should we somehow include flags ???
       let data = event.data;
       if (!Buffer.isBuffer(data)) {
@@ -104,13 +107,19 @@ export default class WebSocketDuplex extends Duplex {
     // no op ... The message handler will do pushes.
   }
 
-  _write(buffer: Buffer, encoding: string, callback: Function) {
+  _write(
+    buffer: Buffer | string,
+    encoding: string,
+    callback: (error: ?Error, data?: Buffer | string) => void
+  ): boolean {
+    invariant(buffer instanceof Buffer);
+
     const { _ws: ws } = this;
 
     // Write after close ...
     if (ws.readyState > ws.constructor.OPEN) {
       callback(new Error(`Write on closed or errored websocket connection.`));
-      return;
+      return false;
     }
 
     // Write during pending connection ...
@@ -118,7 +127,7 @@ export default class WebSocketDuplex extends Duplex {
       this._log.verbose(`Buffering write (connecting)`);
       this._buffers.push(buffer);
       this.once('_pushed', callback);
-      return;
+      return true;
     }
 
     try {
@@ -127,12 +136,13 @@ export default class WebSocketDuplex extends Duplex {
     } catch (err) {
       this._log.error(`Error sending in websocket`, err.stack);
       callback(err);
-      return;
+      return false;
     }
     callback();
+    return true;
   }
 
-  _pushBuffers = () => {
+  _pushBuffers: () => void = () => {
     for (let buffer of this._buffers) {
       this._log.verbose(`Writing pending buffer: ${buffer.length} bytes`);
       this._ws.send(buffer);

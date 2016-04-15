@@ -463,7 +463,7 @@ class Cameras extends EventEmitter {
   }
 
   // Connect to given deviceId.
-  async _webrtcConnect(deviceId) {
+  _webrtcConnect(deviceId) {
     if (!this._webrtc) {
       return;
     }
@@ -506,7 +506,7 @@ class Cameras extends EventEmitter {
         this._update();
       });
 
-      this.socket.on('video-stream-new', async msg => {
+      this.socket.on('video-stream-new', (msg) => {
         log.info(`Device online: ${msg.id} ` +
                  `previewSize:${JSON.stringify(msg.previewSize)}` +
                  `objectsSize:${JSON.stringify(msg.objectsSize)}`);

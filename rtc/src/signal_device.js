@@ -6,7 +6,7 @@ import invariant from 'assert';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import { EventEmitter } from 'events';
 import createLog from 'silk-log';
-import eventToPromsie from 'event-to-promise';
+import eventToPromise from 'event-to-promise';
 import WebSocket from 'ws';
 import WebSocketStream from 'silk-streams/src/websocket';
 import timeout from 'silk-utils/timeout';
@@ -165,7 +165,7 @@ export class DevicePeer extends EventEmitter {
         call.peer([peerConnection, dataChannels], transport),
         // Will also ensure error is handled.
         Promise.race([
-          eventToPromsie(websocket, 'open'),
+          eventToPromise(websocket, 'open'),
           timeout(
             WEBSOCKET_CONNECT_TIMEOUT,
             new Error(`Failed to connect to signaling server: ${WEBSOCKET_CONNECT_TIMEOUT}`)

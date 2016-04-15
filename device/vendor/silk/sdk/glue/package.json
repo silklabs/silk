@@ -1,7 +1,7 @@
 {
-  "name": "silk-sdk-glue",
+  "name": "silk-gonk-build-glue",
   "version": "0.0.1",
-  "description": "Glue for Silk development",
+  "description": "Helps build npm packages for gonk",
   "bin": {
     "silk-setup": "./setup"
   },

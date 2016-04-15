@@ -7,7 +7,7 @@
 # current module...
 MOD=$PWD
 # path to the sdk...
-SDK=$MOD/node_modules/silk-sdk-glue
+SDK=$MOD/node_modules/silk-gonk-build-glue
 export BASEDIR=$MOD
 cd $SDK
 exec ./node_modules/.bin/babel-node --harmony $SDK/src/watch.js $@

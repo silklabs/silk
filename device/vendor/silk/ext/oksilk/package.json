@@ -11,6 +11,7 @@
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",
+    "silk-exttest": "/device/vendor/silk/sdk/exttest",
     "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log"

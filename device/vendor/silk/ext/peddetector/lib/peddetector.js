@@ -15,7 +15,7 @@ global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 import caffe from 'silk-caffe';
 import fs from 'mz/fs';
 
-import type { Env, Log } from 'silk-sdk-glue/interface/env';
+import type { Env, Log } from 'silk-exttest/interface/env';
 
 let log: Log;
 

@@ -1,4 +1,4 @@
-From b3c9f26e74ebb05ca0df986190e8838cf83f912c Mon Sep 17 00:00:00 2001
+From 0264ff455606488c4b3b9a04c8813c01a1a6a6cd Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 7 Mar 2016 08:51:20 -0800
 Subject: [PATCH 1/2] Android.mk
@@ -155,7 +155,7 @@ index 0000000..71fef7c
 +
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..05abad7
+index 0000000..c5d29f5
 --- /dev/null
 +++ b/opencv.mk
 @@ -0,0 +1,46 @@
@@ -183,6 +183,7 @@ index 0000000..05abad7
 +  face \
 +  optflow \
 +  tracking \
++  xfeatures2d \
 +  xobjdetect \
 +
 +OPENCV3_3RDPARTY_COMPONENTS := \
@@ -204,7 +205,6 @@ index 0000000..05abad7
 +LOCAL_SHARED_LIBRARIES += liblog libz libdl
 +
 +endif
-+
 -- 
-2.5.4 (Apple Git-61)
+2.8.1
 

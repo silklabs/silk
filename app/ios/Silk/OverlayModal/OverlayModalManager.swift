@@ -6,23 +6,19 @@ class OverlayModalManager: RCTViewManager {
   }
 
   @objc func show(reactTag: NSNumber, callback: RCTResponseSenderBlock) {
-    self.aquireView(reactTag) {
-      view in
-      if let currentView = view as? OverlayModal {
-        currentView.show(callback)
-      } else {
-        print("Warning: Could not get OverlayModal")
+    self.bridge!.uiManager.addUIBlock() {
+      (__unused: RCTUIManager!, viewRegistry: Dictionary<NSNumber, UIView>!) in
+      if let view = viewRegistry?[reactTag] as? OverlayModal {
+        view.show(callback)
       }
     }
   }
 
   @objc func dismiss(reactTag: NSNumber, callback: RCTResponseSenderBlock) {
-    self.aquireView(reactTag) {
-      view in
-      if let currentView = view as? OverlayModal {
-        currentView.dismiss(callback)
-      } else {
-        print("Warning: Could not get OverlayModal")
+    self.bridge!.uiManager.addUIBlock() {
+      (__unused: RCTUIManager!, viewRegistry: Dictionary<NSNumber, UIView>!) in
+      if let view = viewRegistry?[reactTag] as? OverlayModal {
+        view.dismiss(callback)
       }
     }
   }

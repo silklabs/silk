@@ -139,7 +139,7 @@ public class DashSegmentPlayer : UIView, VBPlayerDelegate {
     }
   }
 
-  func enqueue(segment: VideoSegment) {
+  func enqueue(blob: Dictionary<String, AnyObject>) {
     AssertMainThread()
     if (self.player == nil) {
       self.initializePlayer()
@@ -147,11 +147,11 @@ public class DashSegmentPlayer : UIView, VBPlayerDelegate {
 
     dispatch_async(self.methodQueue) {
       let blobManager = self.bridge.moduleForClass(BlobManager) as! BlobManager
-      let rawData = blobManager.resolveAndReleaseBlob(segment.blob!)
+      let rawData = blobManager.resolveAndReleaseBlob(blob)
       guard
         rawData != nil
       else {
-        self.dispatchErrorEvent("Could not resolve blob \(segment.blob)")
+        self.dispatchErrorEvent("Could not resolve blob \(blob)")
         return
       }
       let data: NSData

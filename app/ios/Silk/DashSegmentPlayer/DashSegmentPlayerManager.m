@@ -14,8 +14,8 @@ RCT_EXPORT_VIEW_PROPERTY(onWaiting, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onTimeUpdate, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onError, RCTDirectEventBlock)
 
-RCT_EXTERN_METHOD(play:(nonnull NSNumber*)reactTag)
-RCT_EXTERN_METHOD(pause:(nonnull NSNumber*)reactTag)
-RCT_EXTERN_METHOD(enqueue:(nonnull NSNumber*)reactTag segment:(VideoSegment *)segment)
+RCT_EXTERN_METHOD(play:(nonnull NSNumber *)reactTag)
+RCT_EXTERN_METHOD(pause:(nonnull NSNumber *)reactTag)
+RCT_EXTERN_METHOD(enqueue:(nonnull NSNumber *)reactTag blob:(NSDictionary<NSString *, id> *)blob)
 
 @end

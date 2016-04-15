@@ -11,6 +11,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */; };
 		357D3F601C38AB44005BBEC8 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357D3F5E1C38AB2B005BBEC8 /* libsodium.a */; };
+		35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C03E901CC02577008EF119 /* NotImplemented.swift */; };
 		35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55C1C5042B400551FC6 /* DashSegmentPlayer.swift */; };
 		35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55D1C5042B400551FC6 /* DashSegmentPlayerManager.m */; };
 		35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55E1C5042B400551FC6 /* DashSegmentPlayerManager.swift */; };
@@ -20,25 +21,17 @@
 		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; };
 		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
-		5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0641B734C4A00B0630C /* VideoSegment.swift */; };
-		5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
 		5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714F47C1BA373DC0087A138 /* NSDataExtension.swift */; };
-		571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571B2F801B813641005A4460 /* ConcurrentOperation.swift */; };
-		573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C61B4EF5C900C40871 /* PropertyObserver.swift */; };
-		573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */; };
 		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
 		5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0811B59FC2500F9376C /* OverlayModalManager.m */; };
 		5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0821B59FC2500F9376C /* OverlayModalManager.swift */; };
-		5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */; };
 		5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* LoadConfig.swift */; };
 		5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */; };
 		5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0EB1B5A206F00F9376C /* ViewController.swift */; };
 		574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */; };
 		574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */; };
 		574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB41B7B3043004FBC27 /* SystemButton.swift */; };
-		57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559E8B1B503BD400929697 /* LiveVideo.swift */; };
-		57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */; };
 		5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302C01ABCB91800DB3ED1 /* libRCTImage.a */; };
 		5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 78C398B91ACF4ADC00677621 /* libRCTLinking.a */; };
@@ -50,17 +43,12 @@
 		5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302AC1ABCB8CE00DB3ED1 /* libRCTActionSheet.a */; };
 		5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302BA1ABCB90400DB3ED1 /* libRCTGeolocation.a */; };
 		5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302E41ABCB9EE00DB3ED1 /* libRCTVibration.a */; };
-		5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */; };
-		5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F33E1B61681300C18E5D /* NotImplemented.swift */; };
 		577396151BA2914C00F900C6 /* AppCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 577396141BA2914C00F900C6 /* AppCrypto.m */; };
 		577396171BA2921400F900C6 /* AppCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396161BA2921400F900C6 /* AppCrypto.swift */; };
 		5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396181BA29F8F00F900C6 /* AppCryptoTest.swift */; };
 		5774D7641B90D6710071F187 /* SLKWebSocketModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* SLKWebSocketModule.m */; };
 		5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
-		579422381B963F1B0068569E /* ErrorDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579422371B963F1B0068569E /* ErrorDomain.swift */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
-		57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */; };
-		57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */; };
 		57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE0F91B6962ED0047088B /* BlobManager.swift */; };
 		57BCE10D1B6991520047088B /* SLKBlobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BCE10C1B6991520047088B /* SLKBlobManager.m */; };
 		57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C30C2F1B92CE01003F9EFF /* DebugLog.swift */; };
@@ -331,6 +319,7 @@
 		357D3F5B1C38AB2B005BBEC8 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		357D3F5C1C38AB2B005BBEC8 /* sodium.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sodium.h; sourceTree = "<group>"; };
 		357D3F5E1C38AB2B005BBEC8 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
+		35C03E901CC02577008EF119 /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
 		35C1A55C1C5042B400551FC6 /* DashSegmentPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashSegmentPlayer.swift; sourceTree = "<group>"; };
 		35C1A55D1C5042B400551FC6 /* DashSegmentPlayerManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DashSegmentPlayerManager.m; sourceTree = "<group>"; };
 		35C1A55E1C5042B400551FC6 /* DashSegmentPlayerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashSegmentPlayerManager.swift; sourceTree = "<group>"; };
@@ -342,40 +331,26 @@
 		3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketManager.swift; sourceTree = "<group>"; };
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
-		5714A0641B734C4A00B0630C /* VideoSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoSegment.swift; sourceTree = "<group>"; };
-		5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppRCTConvertVideoSegment.h; sourceTree = "<group>"; };
-		5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppRCTConvertVideoSegment.m; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
 		5714F47C1BA373DC0087A138 /* NSDataExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDataExtension.swift; sourceTree = "<group>"; };
-		571B2F801B813641005A4460 /* ConcurrentOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConcurrentOperation.swift; sourceTree = "<group>"; };
 		57297F6C1B90E55000CBC04D /* SLKWebSocketModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SLKWebSocketModule.h; sourceTree = "<group>"; };
-		573C20C61B4EF5C900C40871 /* PropertyObserver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserver.swift; sourceTree = "<group>"; };
-		573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertyObserverTest.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
 		5741E0811B59FC2500F9376C /* OverlayModalManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OverlayModalManager.m; sourceTree = "<group>"; };
 		5741E0821B59FC2500F9376C /* OverlayModalManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModalManager.swift; sourceTree = "<group>"; };
-		5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RCTViewManagerExtensions.swift; sourceTree = "<group>"; };
 		5741E0BF1B5A108D00F9376C /* LoadConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfig.swift; sourceTree = "<group>"; };
 		5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfigTest.swift; sourceTree = "<group>"; };
 		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SystemButtonManger.m; sourceTree = "<group>"; };
 		574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButtonManager.swift; sourceTree = "<group>"; };
 		574A5DB41B7B3043004FBC27 /* SystemButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButton.swift; sourceTree = "<group>"; };
-		57559E8B1B503BD400929697 /* LiveVideo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideo.swift; sourceTree = "<group>"; };
-		57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketIOAVAssetLoaderDelegate.swift; sourceTree = "<group>"; };
 		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
-		5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CMTimeExtensions.swift; sourceTree = "<group>"; };
-		5758F33E1B61681300C18E5D /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
 		577396141BA2914C00F900C6 /* AppCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCrypto.m; sourceTree = "<group>"; };
 		577396161BA2921400F900C6 /* AppCrypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCrypto.swift; sourceTree = "<group>"; };
 		577396181BA29F8F00F900C6 /* AppCryptoTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCryptoTest.swift; sourceTree = "<group>"; };
 		5774D7631B90D6710071F187 /* SLKWebSocketModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKWebSocketModule.m; sourceTree = "<group>"; };
-		579422371B963F1B0068569E /* ErrorDomain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorDomain.swift; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
-		57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LiveVideoManager.m; sourceTree = "<group>"; };
-		57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveVideoManager.swift; sourceTree = "<group>"; };
 		57BCE0F91B6962ED0047088B /* BlobManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlobManager.swift; sourceTree = "<group>"; };
 		57BCE10C1B6991520047088B /* SLKBlobManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKBlobManager.m; sourceTree = "<group>"; };
 		57C30C2F1B92CE01003F9EFF /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
@@ -601,6 +576,24 @@
 			path = lib;
 			sourceTree = "<group>";
 		};
+		35C03E921CC03307008EF119 /* LoadConfig */ = {
+			isa = PBXGroup;
+			children = (
+				5741E0BF1B5A108D00F9376C /* LoadConfig.swift */,
+				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
+			);
+			path = LoadConfig;
+			sourceTree = "<group>";
+		};
+		35C03E931CC03357008EF119 /* SLKUtil */ = {
+			isa = PBXGroup;
+			children = (
+				F9E92CCC1B38642000C10C24 /* SLKUtil.h */,
+				F9E92CD71B3864A100C10C24 /* SLKUtil.m */,
+			);
+			path = SLKUtil;
+			sourceTree = "<group>";
+		};
 		35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */ = {
 			isa = PBXGroup;
 			children = (
@@ -632,15 +625,6 @@
 				3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */,
 			);
 			path = BLE;
-			sourceTree = "<group>";
-		};
-		573C20C51B4EF5C900C40871 /* PropertyObserver */ = {
-			isa = PBXGroup;
-			children = (
-				573C20C61B4EF5C900C40871 /* PropertyObserver.swift */,
-				573C20C71B4EF5C900C40871 /* PropertyObserverTest.swift */,
-			);
-			path = PropertyObserver;
 			sourceTree = "<group>";
 		};
 		5741E07F1B59FC2500F9376C /* OverlayModal */ = {
@@ -697,57 +681,27 @@
 				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
 				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
+				35C03E921CC03307008EF119 /* LoadConfig */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
 				57BCE10B1B69910C0047088B /* BlobManager */,
-				57BCE0F51B695FB10047088B /* RCTConvert */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
-				573C20C51B4EF5C900C40871 /* PropertyObserver */,
-				57AC68821B4F0DE1009B70A3 /* LiveVideo */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
+				35C03E931CC03357008EF119 /* SLKUtil */,
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
-				5758F33C1B61618A00C18E5D /* CMTimeExtensions.swift */,
-				571B2F801B813641005A4460 /* ConcurrentOperation.swift */,
-				579422371B963F1B0068569E /* ErrorDomain.swift */,
-				5741E0BF1B5A108D00F9376C /* LoadConfig.swift */,
-				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
-				5758F33E1B61681300C18E5D /* NotImplemented.swift */,
+				6C5839001C1D04610004EC78 /* CrashReporter.swift */,
+				35C03E901CC02577008EF119 /* NotImplemented.swift */,
 				5714F47C1BA373DC0087A138 /* NSDataExtension.swift */,
-				5741E0901B59FC3100F9376C /* RCTViewManagerExtensions.swift */,
-				57559ED21B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift */,
 				5758F23A1B5EFE7600C18E5D /* Sync.swift */,
-				5714A0641B734C4A00B0630C /* VideoSegment.swift */,
-				F9E92CCC1B38642000C10C24 /* SLKUtil.h */,
-				F9E92CD71B3864A100C10C24 /* SLKUtil.m */,
 				5741E0EB1B5A206F00F9376C /* ViewController.swift */,
 				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB11A68108700A75B9A /* LaunchScreen.xib */,
-				6C5839001C1D04610004EC78 /* CrashReporter.swift */,
 			);
 			path = Silk;
-			sourceTree = "<group>";
-		};
-		57AC68821B4F0DE1009B70A3 /* LiveVideo */ = {
-			isa = PBXGroup;
-			children = (
-				57AC688C1B4F32A9009B70A3 /* LiveVideoManager.m */,
-				57AC688E1B4F358D009B70A3 /* LiveVideoManager.swift */,
-				57559E8B1B503BD400929697 /* LiveVideo.swift */,
-			);
-			path = LiveVideo;
-			sourceTree = "<group>";
-		};
-		57BCE0F51B695FB10047088B /* RCTConvert */ = {
-			isa = PBXGroup;
-			children = (
-				5714A0661B7351CE00B0630C /* AppRCTConvertVideoSegment.h */,
-				5714A0671B73520C00B0630C /* AppRCTConvertVideoSegment.m */,
-			);
-			path = RCTConvert;
 			sourceTree = "<group>";
 		};
 		57BCE10B1B69910C0047088B /* BlobManager */ = {
@@ -1148,7 +1102,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				573C20CA1B4EF5D000C40871 /* PropertyObserverTest.swift in Sources */,
 				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
 				5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */,
 				5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */,
@@ -1162,20 +1115,13 @@
 				57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */,
 				35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */,
 				5758F23B1B5EFE7600C18E5D /* Sync.swift in Sources */,
-				57AC688D1B4F32A9009B70A3 /* LiveVideoManager.m in Sources */,
 				35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */,
 				5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */,
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
 				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
 				57BCE10D1B6991520047088B /* SLKBlobManager.m in Sources */,
-				5758F33D1B61618A00C18E5D /* CMTimeExtensions.swift in Sources */,
-				5741E0911B59FC3100F9376C /* RCTViewManagerExtensions.swift in Sources */,
-				5714A0681B73520C00B0630C /* AppRCTConvertVideoSegment.m in Sources */,
-				579422381B963F1B0068569E /* ErrorDomain.swift in Sources */,
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
-				5714A0651B734C4A00B0630C /* VideoSegment.swift in Sources */,
 				3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */,
-				5758F33F1B61681300C18E5D /* NotImplemented.swift in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				5774D7641B90D6710071F187 /* SLKWebSocketModule.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
@@ -1183,23 +1129,19 @@
 				35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */,
 				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
+				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
 				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
 				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
-				57AC688F1B4F358D009B70A3 /* LiveVideoManager.swift in Sources */,
 				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
 				5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */,
-				571B2F811B813641005A4460 /* ConcurrentOperation.swift in Sources */,
 				3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */,
 				577396171BA2921400F900C6 /* AppCrypto.swift in Sources */,
 				35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */,
 				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
-				57559E8C1B503BD400929697 /* LiveVideo.swift in Sources */,
-				573C20C81B4EF5C900C40871 /* PropertyObserver.swift in Sources */,
 				574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */,
 				357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */,
-				57559ED31B50BB9000929697 /* SocketIOAVAssetLoaderDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -2,9 +2,9 @@
 #define App_Bridging_Header_h
 
 /**
-This file allows Swift to interface directly with objc all interfaces that you want to
-interface with via swift need to be imported here.
-*/
+ * This file allows Swift to interface directly with objc all interfaces that you want to
+ * interface with via swift need to be imported here.
+ */
 
 #import <CommonCrypto/CommonKeyDerivation.h>
 #import <CommonCrypto/CommonCryptor.h>

@@ -11,9 +11,10 @@
 # 2. The LOCAL_MODULE variable is derived from the package.json "name" attribute
 #    if it is not explicitly defined.
 #
-# 3. If LOCAL_NODE_MODULE_TYPE is defined to "file", the module is assumed to
-#    be a "file module" and only the file (native or script) identified by the
-#    package.json's "main" attribute will be installed.
+# 3. If the file .silkignore exists, it will be used to filter out files
+#    during the device installation.  The format is identical to .gitignore.  If
+#    .silkignore doesn't exist then all module files (including
+#    node_modules/**/*) will be installed on device.
 #
 # 4. LOCAL_MODULE_PATH maybe specified to control the installation location.
 #    If unspecified the module will be installed as a system node module.
@@ -50,6 +51,11 @@ LOCAL_NODE_MODULE_TYPE := $(strip $(LOCAL_NODE_MODULE_TYPE))
 
 ifneq (1,$(words $(filter file folder,$(LOCAL_NODE_MODULE_TYPE))))
 $(error Error: Invalid LOCAL_NODE_MODULE_TYPE: $(LOCAL_NODE_MODULE_TYPE))
+endif
+
+ifneq (folder,$(LOCAL_NODE_MODULE_TYPE))
+# LOCAL_NODE_MODULE_TYPE is deprecated, please don't use it
+$(warning $(LOCAL_MODULE) is using LOCAL_NODE_MODULE_TYPE)
 endif
 
 ifeq ($(strip $(LOCAL_MODULE_PATH)),)
@@ -135,7 +141,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "Mirror module to: $(built_module_path)"
 	@echo "            from: $(LOCAL_PATH)"
 	$(hide) mkdir -p $(built_module_path)
-	$(hide) rsync -qav --exclude='/node_modules' $(LOCAL_PATH)/ $(built_module_path)
+	$(hide) rsync -qa --exclude='/node_modules' --exclude='/.silkslug' $(LOCAL_PATH)/ $(built_module_path)
 	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/build/package_abs_file.js package.json $(LOCAL_PATH)/
 	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
 	@echo "Build: $(built_module_path)"
@@ -246,19 +252,11 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR
 endif # .js module
 
 else # LOCAL_NODE_MODULE_TYPE == folder
-# Assume that all device node_module dependencies are already
-# present somehow, so don't install all of node_modules/ (which likely also
-# contains a bunch of development only tools).
-#
-# TODO: Any binaries within the folder module are not stripped
-#
-# TODO: Maybe a better way would be to use the package.json's "files" section to
-# determine what to install on device?
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
-	$(hide) cp -r $(addprefix $(<D)/,$(filter-out node_modules,$(notdir $(wildcard $(<D)/*)))) $(@D)
-	$(hide) touch $@
+	$(hide) rsync -qa $(firstword $(wildcard $(<D)/.silkslug/ $(<D)/)) $(@D)
+	$(hide) test -f $@
 endif
 
 LOCAL_2ND_ARCH_VAR_PREFIX :=

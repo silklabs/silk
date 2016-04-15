@@ -7,17 +7,21 @@
 import watchify from 'watchify';
 import babelify from 'babelify';
 import browserify from 'browserify';
+import cpr from 'cp-r';
+import mkdirp from 'mkdirp';
 import gulp from 'gulp';
 import source from 'vinyl-source-stream';
 import buffer from 'vinyl-buffer';
 import gutil from 'gulp-util';
 import gulpif from 'gulp-if';
+import gulpgitignore from 'gulp-gitignore';
 import uglify from 'gulp-uglify';
 import sourcemaps from 'gulp-sourcemaps';
 import cache from 'gulp-cache';
 import eslint from 'gulp-eslint';
 import path from 'path';
 import fs from 'fs';
+import vfs from 'vinyl-fs';
 import printExec from './print_exec';
 import external from './external';
 
@@ -183,6 +187,25 @@ export default function(baseDirectory = process.env.BASEDIR) {
       .pipe(gulp.dest(baseDirectory));
   }
 
+  function slug() {
+    const silkignore = path.join(baseDirectory, '.silkignore');
+    try {
+      fs.accessSync(silkignore, fs.R_OK);
+    } catch (err) {
+      // .silkignore doesn't exist.  Don't bother creating a slug since it would
+      // be identical to the full module tree
+      return;
+    }
+    const silkslug = path.join(baseDirectory, '.silkslug');
+    mkdirp(silkslug);
+    fs.createReadStream(path.join(baseDirectory, 'package.json'))
+      .pipe(fs.createWriteStream(path.join(silkslug, 'package.json')));
+
+    return vfs.src(path.join(baseDirectory, '/**/*'))
+      .pipe(gulpgitignore(silkignore))
+      .pipe(gulp.dest(silkslug));
+  }
+
   function lint() {
     let eslintrc = fs.readFileSync(path.join(__dirname, '../.eslintrc'));
     let cacheProps = [pkgSource, eslintrc];
@@ -219,20 +242,17 @@ export default function(baseDirectory = process.env.BASEDIR) {
   }
 
   function push() {
-    // Path on device...
-    let dest = getDestFile();
-    // Path on disk to the source...
-    let src = path.join(baseDirectory, pkg.main);
-
-    // This intentionally assumes you have a device plugged in and working for
-    // speed...
+    // This intentionally assumes you have a device plugged in
     return printExec(`adb remount`).then(() => {
-      return Promise.all([
-        `adb push ${src} ${dest}`,
-        `adb push ${src}.map ${dest}.map`
-      ].map((cmd) => {
-        return printExec(cmd);
-      }));
+
+      // Push only the slug if it exists, otherwise push the entire module
+      try {
+        const slugDir = path.join(baseDirectory, '.silkslug');
+        fs.accessSync(slugDir, fs.R_OK | fs.R_X);
+        return printExec(`adb push ${slugDir} /system/silk/node_modules/${pkg.name}`);
+      } catch (err) {}
+
+      return printExec(`adb push ${baseDirectory} /system/silk/node_modules/${pkg.name}`);
     });
   }
 
@@ -240,8 +260,8 @@ export default function(baseDirectory = process.env.BASEDIR) {
     pkg,
     lint,
     build,
+    slug,
     getCache,
-    getDestFile,
     createBrowserifyStream,
     push,
     restart,

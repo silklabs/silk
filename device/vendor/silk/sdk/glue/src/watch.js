@@ -77,7 +77,10 @@ async function update() {
     // Wait for the build to finish...
     await eventToPromise(browserifyOp, 'finish');
 
-    // Push it to the device...
+    // Create the silk device slug
+    await commands.slug();
+
+    // Push the slug to the device...
     let pushStart = Date.now();
     await commands.push();
     times.push = Date.now() - pushStart;

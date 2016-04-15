@@ -16,6 +16,14 @@ gulp.task('build', () => {
   return commands.build(browserifyStream);
 });
 
+gulp.task('slug', ['build'], () => {
+  return commands.slug();
+});
+
+gulp.task('push', ['slug'], () => {
+  return commands.push();
+});
+
 gulp.task('lint', () => {
   if (process.env.LAX === '1') {
     console.log('Skipping lint...');
@@ -30,8 +38,4 @@ gulp.task('clean', function (done) {
   commands.getCache().clear(null, done);
 });
 
-gulp.task('push', () => {
-  return commands.push();
-});
-
-gulp.task('default', ['lint', 'build']);
+gulp.task('default', ['lint', 'slug']);

@@ -1,8 +1,6 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_NODE_MODULES)
-LOCAL_NODE_MODULE_TYPE := file
 include $(BUILD_NODE_MODULE)
 
 include $(CLEAR_VARS)

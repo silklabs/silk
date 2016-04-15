@@ -51,48 +51,6 @@ export default function(baseDirectory = process.env.BASEDIR) {
     return gulp.src(srcPaths);
   }
 
-  function trimSlash(str) {
-    if (str[str.length - 1] === '/') {
-      return str.slice(0, -1);
-    }
-    return str;
-  }
-
-  /**
-   * It's important to remember that this is not the canonical way to push files
-   * but a convenience wrapper so we need to be careful to match what the
-   * Android build system does.
-   *
-   * This will figure out where to put the JS files for example:
-   *
-   *  - vendor/silk/core -> /system/silk/node_modules/silk-device-main.js
-   *  - vendor/silk/profiler -> /system/silk/profiler.js
-   *  - vendor/silk/ext/foo -> /system/ext/foo/index.js
-   */
-  function getDestFile() {
-    // XXX: Nasty hack since we don't know where we are in the silk tree...
-
-    if (pkg.main === 'silk-device-main') { // *shudder*
-      return `/system/silk/node_modules/silk-device-main.js`;
-    }
-    let search = 'vendor/silk';
-    let startingPoint = path.resolve(baseDirectory);
-    let vendorStart = startingPoint.lastIndexOf(search);
-    let vendorSegment = startingPoint.slice(vendorStart + search.length + 1);
-
-    // Everything before the node_modules directory is the path to the
-    // component.
-    let relativePath = trimSlash(vendorSegment.split('node_modules')[0]);
-    // Pop the first part of the path off (silk/core goes into silk/core.js)
-    let destDir = path.join(relativePath, '..');
-
-    let dest = path.join(destDir, pkg.main);
-    if (!path.extname(dest)) {
-      dest += '.js';
-    }
-    return `/system/silk/${dest}`;
-  }
-
   let _cache;
   function getCache() {
     if (!_cache) {
@@ -237,7 +195,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
 
   function restartExt() {
     return printExec(
-      `adb shell setprop silk.reload-ext ${getDestFile()}`
+      `adb shell setprop silk.reload-ext ${pkg.name}`
     );
   }
 

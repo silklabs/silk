@@ -16,8 +16,8 @@ automatically installed on device and extension reloaded.
 ```sh
 .. edit .js files ..
 $ npm install
-$ adb push index.js /system/silk/ext/<extension-name>.js
-$ adb shell setprop silk.reload-ext "/system/silk/ext/<extension-name>.js"
+$ ./build push
+$ adb shell setprop silk.reload-ext "<extension-name>"
 ```
 
 ### Extensions Reloading

@@ -1,11 +1,9 @@
-
 import React from 'react-native';
 import createLog from 'silk-log';
 import { OrderedMap, OrderedSet } from 'immutable';
 import { SilkApi } from 'silk-api';
 
 import SocketIO from '../libraries/SocketIO';
-import { shouldPureComponentUpdate } from '../libraries/Util';
 
 import Activity from './Activity';
 import AsyncComponent from './abstract/AsyncComponent';
@@ -72,7 +70,7 @@ class MonitorsView extends AsyncComponent {
     this.mounted = false;
   }
 
-  shouldComponentUpdate = shouldPureComponentUpdate;
+  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     let { devices } = this.props;

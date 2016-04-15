@@ -2,7 +2,6 @@ import React from 'react-native';
 import { OrderedMap, OrderedSet } from 'immutable';
 
 import SocketIO from '../libraries/SocketIO';
-import { shouldPureComponentUpdate } from '../libraries/Util';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
@@ -38,7 +37,7 @@ export default class PreviewThumbnails extends AsyncComponent {
     layoutWidth: null,
   };
 
-  shouldComponentUpdate = shouldPureComponentUpdate;
+  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
 
   _renderThumbnails() {
     let { devices, unconfiguredDevices, configuringDevice } = this.props;

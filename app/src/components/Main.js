@@ -6,8 +6,6 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
-import { shouldPureComponentUpdate } from '../libraries/Util';
-
 const {
   StyleSheet,
   View,
@@ -15,7 +13,7 @@ const {
 
 class MainView extends React.Component {
 
-  shouldComponentUpdate = shouldPureComponentUpdate;
+  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
 
   render() {
     return (

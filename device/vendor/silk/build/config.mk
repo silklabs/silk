@@ -2,8 +2,8 @@
 # All Rights Reserved.
 # Confidential and Proprietary - Silk Labs, Inc.
 
-CLEAR_VARS += vendor/silk/gonk/node_module_clear_vars.mk
-BUILD_NODE_MODULE := vendor/silk/gonk/node_module.mk
+CLEAR_VARS += vendor/silk/build/node_module_clear_vars.mk
+BUILD_NODE_MODULE := vendor/silk/build/node_module.mk
 
 BUILD_SILK_EXECUTABLE := vendor/silk/build/silk_executable.mk
 BUILD_SILK_SHARED_LIBRARY := vendor/silk/build/silk_shared_library.mk

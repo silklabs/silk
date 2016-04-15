@@ -12,15 +12,10 @@ import fs from 'fs';
 import path from 'path';
 import eventToPromise from 'event-to-promise';
 import gutil from 'gulp-util';
-import printExec from './src/print_exec';
+import printExec from './print_exec';
 import { spawn, exec } from 'mz/child_process';
 import { ArgumentParser } from 'argparse';
 import { SourceMapConsumer } from 'source-map';
-
-// Run in the cwd of the module which loads silk-sdk-glue...
-if (process.env.BASEDIR) {
-  process.chdir(process.env.BASEDIR);
-}
 
 const DEVICE_PORT = 60024;
 // Only resolve sourcemap for files which start with this.

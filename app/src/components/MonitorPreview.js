@@ -3,7 +3,7 @@ import React from 'react-native';
 import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
-import { shouldPureComponentUpdate, blobURI } from '../libraries/Util';
+import { blobURI } from '../libraries/Util';
 
 import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
@@ -94,7 +94,7 @@ export default class MonitorPreview extends SocketIOComponent {
     this.startTimeoutTimer();
   }
 
-  shouldComponentUpdate = shouldPureComponentUpdate;
+  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     if (!this.props.haveVideoStream && nextProps.haveVideoStream) {

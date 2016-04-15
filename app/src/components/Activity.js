@@ -2,7 +2,6 @@ import React from 'react-native';
 import moment from 'moment';
 
 import AsyncComponent from './abstract/AsyncComponent';
-import { shouldPureComponentUpdate } from '../libraries/Util';
 
 const {
   Image,
@@ -39,7 +38,7 @@ export default class Activity extends AsyncComponent {
     this._loadPreviewImage(this.props);
   }
 
-  shouldComponentUpdate = shouldPureComponentUpdate;
+  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     this._loadPreviewImage(nextProps);

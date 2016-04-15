@@ -7,13 +7,10 @@
  */
 
 import fetch from 'node-fetch';
-import net from 'net';
 import fs from 'fs';
 import path from 'path';
-import eventToPromise from 'event-to-promise';
 import gutil from 'gulp-util';
 import printExec from './print_exec';
-import { spawn, exec } from 'mz/child_process';
 import { ArgumentParser } from 'argparse';
 import { SourceMapConsumer } from 'source-map';
 
@@ -41,8 +38,8 @@ async function loadSourcemap(name) {
     body,
     headers: {
       'Content-Length': Buffer.byteLength(body),
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'application/json',
+    },
   });
   if (!res.ok) {
     let text = await res.text();
@@ -74,7 +71,7 @@ async function updateCPUProfileSample(sample) {
 
   let position = sourcemap.originalPositionFor({
     line: sample.lineNumber,
-    column: 0
+    column: 0,
   });
 
   if (position.source) {
@@ -112,19 +109,19 @@ const parser = new ArgumentParser({});
 const subcommands = parser.addSubparsers({
   title: 'Commands',
   dest: 'command',
-  help: 'Profiler commands...'
+  help: 'Profiler commands...',
 });
 
 subcommands.addParser('cpu-start', {
   help: `
     Start a cpu profiler session
-  `
+  `,
 });
 
 const cpuCollectCmd = subcommands.addParser('cpu-collect', {
   help: `
     Stops and collects currently running cpu profiler
-  `
+  `,
 });
 
 cpuCollectCmd.addArgument(['--out'], {
@@ -134,15 +131,15 @@ cpuCollectCmd.addArgument(['--out'], {
 const expandSourcemapCmd = subcommands.addParser('expand-sourcemap', {
   help: `
     Resolve the sourcemaps of a given capture
-  `
+  `,
 });
 
 expandSourcemapCmd.addArgument(['path'], {
-  help: `Path to the sourcemap to expand`
+  help: `Path to the sourcemap to expand`,
 });
 
 expandSourcemapCmd.addArgument(['destination'], {
-  help: `New path for the expansion`
+  help: `New path for the expansion`,
 });
 
 async function cpuStart() {

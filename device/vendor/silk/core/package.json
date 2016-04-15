@@ -22,7 +22,7 @@
     "silk-api": "/api",
     "silk-azure-storage": "/azure-storage",
     "silk-raygun": "/raygun",
-    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-server": "/server",
     "silk-streams": "/streams",
     "silk-core-version": "/version",

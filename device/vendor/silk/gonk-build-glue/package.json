@@ -6,7 +6,6 @@
     "silk-setup": "./setup"
   },
   "scripts": {
-    "preinstall": "./preinstall",
     "postinstall": "./postinstall"
   },
   "private": true,

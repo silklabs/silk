@@ -7,9 +7,11 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 GLUEDIR=node_modules/silk-gonk-build-glue
-cd $1
+if [[ -n "$1" ]]; then
+  cd $1
+fi
 
-for f in profile watch build .eslintrc
+for f in watch build .eslintrc
 do
   rm -f $f
   ln -fsv $GLUEDIR/$f $f

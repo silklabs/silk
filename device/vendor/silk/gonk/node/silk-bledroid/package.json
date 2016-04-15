@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "preinstall": "if [ -d ../../../locked_node_modules ]; then ../../../locked_node_modules/fetch.sh; fi",
-    "install": "./build"
+    "postinstall": "./bin/postinstall && ./build",
+    "build": "./build"
   },
   "author": {
     "name": "Ben Turner",
@@ -15,8 +16,10 @@
   "dependencies": {
     "babel-runtime": "5.8.35",
     "debug": "2.2.0",
-    "silk-sdk-glue": "0.0.1",
     "uuid": "2.0.1"
+  },
+  "silkDependencies": {
+    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
   "private": true
 }

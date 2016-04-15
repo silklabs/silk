@@ -5,8 +5,9 @@ import {
   InteractionManager,
   NativeModules,
 } from 'react-native';
-import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
+import createLog from 'silk-log';
+import * as rtc from 'silk-rtc';
 
 import getDeviceManager from '../../libraries/ble/DeviceManager';
 import SocketIO from '../../libraries/SocketIO';
@@ -26,6 +27,7 @@ export const DeviceRecord = Record({ /* eslint new-cap: 0 */
   logo: null,
   previewSize: null,
   haveVideoStream: false,
+  rtcConnection: null,
   bleDeviceSession: null,
 });
 
@@ -196,6 +198,9 @@ export default class Devices extends AsyncComponent {
       log.debug('New video stream belongs to currently configuring device.');
       this.configuringDevice.bleDeviceSession.dismiss();
 
+      const rtcConnection = rtc.call(this.props.api, deviceId);
+      this.connectRTC(deviceId, rtcConnection);
+
       // Add the device record to the list of configured devices,
       // remove the corresponding entry from the list of unconfigured
       // devices, and reset the configuring device.
@@ -207,6 +212,7 @@ export default class Devices extends AsyncComponent {
         logo: msg.logo,
         previewSize: msg.previewSize,
         haveVideoStream: true,
+        rtcConnection,
         bleDeviceSession: this.configuringDevice.bleDeviceSession,
       });
       devices = devices.delete(deviceId).set(deviceId, newRecord);
@@ -239,10 +245,28 @@ export default class Devices extends AsyncComponent {
     if (!deviceRecord.logo) {
       devices = devices.setIn([deviceId, 'logo'], msg.logo);
     }
+    if (!deviceRecord.rtcConnection) {
+      const rtcConnection = rtc.call(this.props.api, deviceId);
+      devices = devices.setIn([deviceId, 'rtcConnection'], rtcConnection);
+      this.connectRTC(deviceId, rtcConnection);
+    }
     if (devices !== this.pendingState.devices) {
       this.setStateAsync({devices});
     }
   };
+
+  // TODO: Find a better place for this.
+  connectRTC(deviceId, rtcConnection) {
+    log.debug('Connecting via WebRTC', deviceId);
+    // TODO: This may fail and should be retired.
+    rtcConnection.connect().then(() => {
+      log.debug('Successfully connected via WebRTC', deviceId);
+    }).catch((err) => {
+      log.debug('Could not connect via WebRTC', deviceId);
+    });
+    // TODO: Also sorta hacky... Indicate to the device to start sending video.
+    rtcConnection.createChannel('video', {});
+  }
 
   onVideoStreamDelete = (msg) => {
     if (!this.mounted) {

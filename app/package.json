@@ -9,6 +9,7 @@
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-react-native-blobs": "/pub/react-native-blobs",
+    "silk-rtc": "/rtc",
     "silk-streams": "/streams"
   },
   "dependencies": {

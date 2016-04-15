@@ -18,4 +18,4 @@ esproposal.class_static_fields=ignore
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.22.1
+0.23.0

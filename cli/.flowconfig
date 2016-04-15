@@ -1,6 +1,7 @@
 [ignore]
 .*/node_modules/babel.*
 .*/node_modules/mocha.*
+.*/node_modules/json5.*
 
 [include]
 
@@ -14,4 +15,4 @@ unsafe.enable_getters_and_setters=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.22.1
+0.23.0

@@ -6,7 +6,7 @@ os:
   - linux
 
 before_install:
-  - source .travis_before_install.sh
+  - source releng/.travis_before_install.sh
 
 script:
   - repocache/script

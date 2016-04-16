@@ -13,7 +13,7 @@ global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
 import config from 'silk-config';
 import SpeechRecognizer from './speechrecognizer';
-import type { Env, Util, Say, Log } from 'silk-sdk-glue/interface/env';
+import type { Env, Util, Say, Log } from 'silk-exttest/interface/env';
 
 let log: Log;
 

@@ -1,0 +1,6 @@
+#! /bin/bash -ex
+
+export BASEDIR=$PWD
+
+cd node_modules/silk-gonk-build-glue
+exec ./node_modules/.bin/gulp --gulpfile ./src/gulpfile.babel.js $@

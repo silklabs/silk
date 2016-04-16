@@ -676,20 +676,35 @@ class Extensions {
   /**
    * @private
    */
-  _onReloadRequested = () => {
-    // When reload prop changes to non empty string, reload module file
-    // specified by prop. When done, clear prop to empty string to indicate done
-    let clearReloadProp = () => util.setprop(RELOAD_EXT_PROP, '');
-    let file = util.getprop(RELOAD_EXT_PROP);
-    if (file) {
-      fs.stat(file)
-      .then(() => {
-        log.info(`Reload requsted ${file}`);
-        this._reloadExtension(file);
-      }, () => log.info(`Reload requsted, file does not exist ${file}`))
-      .then(() => clearReloadProp())
-      .catch(() => clearReloadProp());
+  _onReloadRequested = async () => {
+    // When reload prop changes to non empty string, reload specified ext
+    const extName = util.getprop(RELOAD_EXT_PROP);
+    if (!extName) {
+      return;
     }
+    log.info(`Reload requsted: ${extName}`);
+
+    // Ensure the extension is unloaded
+    for (const extDir of extDirs) {
+      const dir = path.join(extDir, extName);
+      await this._unloadExtension(dir);
+    }
+
+    // Try to load the extension again
+    extDirs.some(async (extDir) => {
+      const dir = path.join(extDir, extName);
+      try {
+        await fs.stat(dir);
+        await this._loadExtension(dir);
+        return true;
+      } catch (err) {
+        log.info(err.stack || err);
+      }
+      return false;
+    });
+
+    // Set prop to empty string to indicate done
+    util.setprop(RELOAD_EXT_PROP, '');
   };
 
   /**
@@ -709,28 +724,6 @@ class Extensions {
         }
       }
     }
-  }
-
-  /**
-   * @private
-   */
-  _reloadExtension(file) {
-    fs.stat(file)
-    .then(() => {
-      log.info('Extension changed', file);
-      this._unloadExtension(file)
-      .then(() => this._loadExtension(file))
-      .catch(() => log.warn('Not reloading', file));
-    }, err => {
-      if (err.code === 'ENOENT') {
-        log.info('Extension removed', file);
-        this._unloadExtension(file)
-        .catch(() => log.warn('Error unloading', file));
-      } else {
-        log.warn('Unexpected file error', file, err.code);
-      }
-    })
-    .catch(util.processthrow);
   }
 
   /**

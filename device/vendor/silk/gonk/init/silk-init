@@ -1,0 +1,85 @@
+#!/system/bin/sh
+
+export NODE_ENV="production"
+export DEBUG=$(getprop persist.silk.debug "silk-*,-silk-*:debug")
+export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
+export UV_THREADPOOL_SIZE=32
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib
+
+info() {
+  log -p i -t silk-init $@
+}
+
+maybe_enable_static_eth0() {
+  ETH0_STATIC_ENABLE=$(getprop persist.silk.eth0.static.enable 0)
+  ETH0_STATIC_IP=$(getprop persist.silk.eth0.static.ip)
+  ETH0_BASEMASK=$(getprop persist.silk.eth0.basemask)
+  ETH0_DNS_GW_IP=$(getprop persist.silk.eth0.dns.gw.ip)
+  ETH0_CONFIGURED=$(getprop eth0.static.configured 0)
+
+  if [ $ETH0_STATIC_ENABLE -eq 1 ] && [ $ETH0_CONFIGURED -eq 0 ] ; then
+    info "Wait for some reson (else eth0 no workie), yes this sucks ..."
+    sleep 7
+    info "Enabling static eth0:"
+    info "  ip       : $ETH0_STATIC_IP"
+    info "  basemask : $ETH0_BASEMASK"
+    info "  dns & gw : $ETH0_DNS_GW_IP"
+    info `busybox ifconfig eth0 $ETH0_STATIC_IP up`
+    info `ndc network destroy 101`
+    info `ndc network create 101`
+    info `ndc network interface add 101 eth0`
+    info `ndc network route add 101 eth0 0.0.0.0/0 $ETH0_DNS_GW_IP`
+    info `ndc network route add 101 eth0 $ETH0_BASEMASK 0.0.0.0`
+    info `ndc network default set 101`
+    info `ndc resolver setnetdns 101 localdomain $ETH0_DNS_GW_IP`
+    info `ndc resolver setnetdns 101 localdomain 8.8.8.8`
+
+    info "Enabing ADB port 5555"
+    setprop service.adb.tcp.port 5555
+
+    info "Marking eth0 static as configured"
+    setprop eth0.static.configured 1
+  fi
+}
+
+maybe_enable_static_eth0
+
+if [ -f /init ]; then
+  cd /
+fi
+
+
+NODE_ARGS="--harmony"
+if [ "$1" = "--debug-brk" ]; then
+  NODE_ARGS="$NODE_ARGS $1"
+  shift
+fi
+
+if [ -z $1 ]; then
+  info Starting Silk
+
+  if [ "$(getprop persist.silk.debugger)" = "true" ]; then
+    info Debugger enabled
+    NODE_ARGS="$NODE_ARGS --debug"
+  fi
+
+  # Reduce the size of the v8 heap.  The default values in MBs are:
+  #   --max_semi_space_size=8 --max_old_space_size=700 --max_executable_size=256"
+  #
+  # These values were derived from the kMax*SizeLowMemoryDevice constants in
+  # v8/src/heap.h and observations from --trace_gc_verbose output
+  NODE_ARGS="$NODE_ARGS --max_semi_space_size=4 --max_old_space_size=192 --max_executable_size=64"
+
+  # Emit gc traces for easy runtime monitoring
+  NODE_ARGS="$NODE_ARGS --trace_gc"
+  #NODE_ARGS="$NODE_ARGS --trace_gc_verbose" # Uncomment for more
+
+  # Feign sys.boot_completed for the benefit of other Gonk components that
+  # listen on it.
+  setprop sys.boot_completed 1
+
+  exec system/silk/bin/node $NODE_ARGS system/silk/silk-init.js
+  exit 1
+fi
+
+exec node $NODE_ARGS "$@"

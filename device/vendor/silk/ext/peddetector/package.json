@@ -10,7 +10,8 @@
   },
   "silkDependencies": {
     "silk-babeldeps": "/babeldeps",
-    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-exttest": "/device/vendor/silk/exttest",
+    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log"
   },

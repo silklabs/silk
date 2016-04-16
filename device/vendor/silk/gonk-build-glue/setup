@@ -1,0 +1,18 @@
+#!/bin/bash -ex
+#
+# Prepares a module to use the glue
+#
+# Copyright (c) 2015-2016 Silk Labs, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Silk Labs, Inc.
+
+GLUEDIR=node_modules/silk-gonk-build-glue
+if [[ -n "$1" ]]; then
+  cd $1
+fi
+
+for f in watch build .eslintrc
+do
+  rm -f $f
+  ln -fsv $GLUEDIR/$f $f
+done

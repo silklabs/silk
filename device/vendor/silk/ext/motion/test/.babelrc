@@ -8,6 +8,5 @@
     "node_modules/log/device.js",
     "node_modules/silk-api/src/**",
     "node_modules/silk-sdk-glue/src/**",
-    "node_modules/silk-sdk-glue/profiler.js"
   ]
 }

@@ -22,7 +22,7 @@ let config = {
     traceroute: false,
     iterationCnt: 10,
     maxDuration: 0,
-  }
+  },
 };
 
 program

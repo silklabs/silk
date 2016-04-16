@@ -1,5 +1,5 @@
 {
-  "name": "core",
+  "name": "silk-device-main",
   "version": "0.0.1",
   "description": "The common control software on each silk node",
   "main": "core.js",
@@ -10,7 +10,7 @@
     "lax": "LAX=1 ./build",
     "test": "./bin/test",
     "posttest": "flow check",
-    "clean": "rm -rf node_modules core.js core.js.map"
+    "clean": "rm -rf node_modules silk-device-main.js silk-device-main.js.map"
   },
   "silkDependencies": {
     "silk-audio": "/audio",
@@ -22,7 +22,7 @@
     "silk-api": "/api",
     "silk-azure-storage": "/azure-storage",
     "silk-raygun": "/raygun",
-    "silk-sdk-glue": "/device/vendor/silk/sdk/glue",
+    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-server": "/server",
     "silk-streams": "/streams",
     "silk-core-version": "/version",

@@ -133,12 +133,12 @@ async function setupDevice() {
     devicePublicKey: api.accessToken.toString(),
     name: 'testing',
     type: 'camera',
-    registrationToken: token
+    registrationToken: token,
   });
 
   await api.device.completeRegistration({
     registrarPublicKey: accountApi.accessToken.toString(),
-    registrationToken: token
+    registrationToken: token,
   });
 
   return api.accessToken;

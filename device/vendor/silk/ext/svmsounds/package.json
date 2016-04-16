@@ -9,7 +9,7 @@
   },
   "silkDependencies": {
     "silk-audio": "/audio",
-    "silk-sdk-glue": "/device/vendor/silk/sdk/glue"
+    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
   "dependencies": {
     "babel-runtime": "5.8.35"

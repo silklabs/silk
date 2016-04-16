@@ -2,10 +2,9 @@
   "name": "silk-cv",
   "version": "1.0.0",
   "description": "Silk-specific OpenCV bindings",
-  "main": "index.js",
+  "main": "silk-cv.node",
   "scripts": {
     "install": "node-gyp rebuild",
-    "postinstall": "touch index.js",
     "preinstall": "./bin/preinstall",
     "test": "./bin/test"
   },

@@ -9,9 +9,9 @@
 BUILD_VERSION_TAGS += $(BRANCH)
 
 # Properties that are only read using getprop in sysutils.js
-# should be added to vendor/silk/gonk/init/silk-props.json instead
+# should be added to vendor/silk/core/silk-props.json instead
 PRODUCT_PROPERTY_OVERRIDES += \
- ro.silk.services=bledroid,silk-sensors,capture,silk \
+ ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \
  persist.silk.capture.dash=true \
  persist.silk.capture.mute=true \
 
@@ -33,7 +33,7 @@ PRODUCT_PACKAGES += node
 
 # vendor/silk/core/...
 SILK_CORE := \
-  core \
+  silk-device-main \
   silk-base-version \
   silk-core-version \
   silk-alog \
@@ -92,14 +92,15 @@ PRODUCT_PACKAGES += $(OPENCV_PACKAGES)
 SILK_INIT := \
   init.silk.rc \
   silk-kmsg \
-  silk-service \
-  silk-dashboard \
+  silk-init \
+  silk-init-js \
   silk-debug-wrapper \
-  silk-props.json \
+  silk-props-json \
 
 SILK_GONK_PROGIES := \
   silk-bledroid \
   silk-capture \
+  silk-dash \
   libpreview \
   silk-dhcputil \
   silk-ir \

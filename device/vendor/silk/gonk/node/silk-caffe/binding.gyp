@@ -85,5 +85,16 @@
         }],
       ],
     },
+    {
+      "target_name": "action_after_build",
+      "type": "none",
+      "dependencies": [ "caffe" ],
+      "copies": [
+        {
+          "files": [ "<(PRODUCT_DIR)/caffe.node" ],
+          "destination": ".",
+        },
+      ],
+    },
   ],
 }

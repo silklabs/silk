@@ -2,12 +2,11 @@
   "name": "silk-caffe",
   "version": "1.0.0",
   "description": "Caffe Deep Learning for Node",
-  "main": "lib/caffe.js",
+  "main": "caffe.node",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {
     "preinstall": "./bin/preinstall",
     "install": "node-gyp rebuild",
-    "postinstall": "touch lib/caffe.js",
     "test": "./bin/test"
   },
   "dependencies": {

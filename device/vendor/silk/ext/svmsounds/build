@@ -1,11 +1,1 @@
-#! /bin/bash -ex
-
-# current module...
-MOD=$PWD
-# path to the sdk...
-SDK=$MOD/node_modules/silk-sdk-glue
-
-# Move into the sdk...
-cd $SDK
-export BASEDIR=$MOD
-exec ./node_modules/.bin/gulp --gulpfile ./src/gulpfile.babel.js $@
+node_modules/silk-gonk-build-glue/build

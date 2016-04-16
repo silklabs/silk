@@ -21,8 +21,7 @@
     "silk-babeldeps": "/babeldeps",
     "silk-core": "/device/vendor/silk/core",
     "silk-core-version": "/version",
-    "silk-log": "/log",
-    "silk-sdk-glue": "/device/vendor/silk/sdk/glue"
+    "silk-log": "/log"
   },
   "dependencies": {
     "easy-table": "1.0.0",

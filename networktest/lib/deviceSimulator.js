@@ -35,7 +35,7 @@ export default class DeviceSimulator {
   };
   _previewSize = {
     width: VIDEO_WIDTH / PREVIEW_SCALE,
-    height: VIDEO_HEIGHT / PREVIEW_SCALE
+    height: VIDEO_HEIGHT / PREVIEW_SCALE,
   };
 
   constructor(accessToken) {

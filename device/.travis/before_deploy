@@ -8,7 +8,7 @@ if [[ -n $TRAVIS ]]; then
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
 fi
 
-./gonk/archive.sh $GONK dist
+./.travis/build_device_archive.sh $GONK dist
 
 ls -l $ANDROID_PRODUCT_OUT/*.zip
 
@@ -18,6 +18,6 @@ if [ -f $ANDROID_PRODUCT_OUT/*-ota-*.zip ]; then # [ not [[, due to pathname exp
 fi
 mv -v $ANDROID_PRODUCT_OUT/*-silkota-*.zip dist/
 
-./gonk/ota_manifest.sh ${TRAVIS_BRANCH:-master} $GONK $ANDROID_PRODUCT_OUT/system dist
+./.travis/build_ota_manifest.sh ${TRAVIS_BRANCH:-master} $GONK $ANDROID_PRODUCT_OUT/system dist
 
 exit 0

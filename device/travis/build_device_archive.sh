@@ -10,7 +10,7 @@ usage()
   cat <<EOF
 usage: $0 <buildId> <archiveDir>
 
-Archives gonk build products.
+Builds a device build archive
 
 buildId    - Identifier for this build
 archiveDir - Where to store the archive

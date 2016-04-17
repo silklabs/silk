@@ -106,7 +106,7 @@ emu: qemu
 .PHONY: dist
 dist: | .repo/manifest.xml
 	$(call ENVSETUP,clean) # <-- drop all local patches before archiving
-	$(call ENVSETUP,np) && ./gonk/archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
+	$(call ENVSETUP,np) && ./travis/build_device_archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
 
 # Manipulate the silk service on device:
 #

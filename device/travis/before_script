@@ -30,7 +30,7 @@ java -version
 javac -version
 nvm install 4.2
 
-source .travis/artifacts
+source travis/artifacts
 
 
 function get_http_status() {

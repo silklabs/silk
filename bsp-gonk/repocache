@@ -1,0 +1,85 @@
+#!/bin/bash
+
+LOCAL_PATH=$(dirname $0)
+
+usage () {
+  local exitcode=0
+  if [[ -n ${1:-} ]]; then
+    exitcode=1
+    echo Error: $@
+    echo
+  fi
+  echo "usage: $0 [fetch|build] board product"
+  echo
+  echo The repocache tarball is used to speed up the initial sync of a bsp
+  echo workspace, while improving reliability, by first populating the .repo/
+  echo projects from the tarball. A normal repo sync should then follow to
+  echo retrieve any additional commits that were added since the creation of
+  echo the tarball.
+  echo
+  echo "    fetch - Try to fetch a repocache tarball"
+  echo "    build - Build a new repocache tarball"
+  echo
+  echo The REPOCACHE_URLPREFIX environment variable is used to locate the
+  echo repocache tarballs, and should be defined before running this program.
+  echo "(example: export REPOCACHE_URLPREFIX=http://example.com/repocache-)"
+  echo
+  exit $exitcode
+}
+
+while getopts "h?f" opt; do
+  case $opt in
+  h|\?)
+    usage
+    ;;
+  *)
+    usage Unknown option: $opt
+    ;;
+  esac
+done
+
+[[ $# -ne 3 ]] || usage
+
+command=$1
+board=$2
+product=$3
+repocache_urlsuffix=$(uname | tr A-Z a-z)-$board-$product.tgz
+
+case $command in
+fetch)
+  echo $REPOCACHE_URLPREFIX
+  if [[ ! -d .repo/projects ]] && [[ -n $REPOCACHE_URLPREFIX ]]; then
+    set -ex
+    if curl -L --output /dev/null --head --fail --silent; then
+      curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix | tar zx
+    fi
+  fi
+  ;;
+build)
+  #
+  # Example usage:
+  #   $ make zest
+  #   $ ./repocache build <board> <product>
+  #
+  # Upload the resulting repocache-<gonk>.tgz somewhere
+  #
+  [[ ! -d .repo ]] || usage Please run from completely clean workspace
+  (
+    export REPOCACHE_URLPREFIX=
+    $LOCAL_PATH/sync -n $board $product
+  )
+  if [[ ! -d .repo/project-objects ]] || [[ ! -d .repo/projects ]]; then
+    usage "repo projects don't exist, need to sync?"
+  fi
+
+  tar zcf $repocache_urlsuffix .repo/project-objects .repo/projects/
+  ls -l $repocache_urlsuffix
+  echo Please upload to:
+  echo "  ${REPOCACHE_URLPREFIX:-http://example.com/repocache-}$repocache_urlsuffix"
+  ;;
+*)
+  usage unknown command: $1
+  ;;
+esac
+
+exit 0

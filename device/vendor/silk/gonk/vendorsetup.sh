@@ -19,6 +19,7 @@ poison_their_lunch()
   return 1
 }
 
+source ../setup
 source ../tools/gnu.sh
 
 echo foo > foo
@@ -102,27 +103,60 @@ cmake_version_check
 export NPM_CONFIG_LOGLEVEL=http
 
 #
-#  Prepare the Gonk tree
+#  Prepare the BSP tree
 #
-source vendor/silk/build/gonk.sh # Define GONK
+
+if [[ ! -L .repo/board ]] || [[ ! -L .repo/product ]]; then
+  poison_their_lunch Please run ./sync
+fi
+SILK_BOARD=$(readlink .repo/board)
+SILK_PRODUCT=$(readlink .repo/product)
+
+if [[ ! -d board/$SILK_BOARD ]]; then
+  poison_their_lunch Unknown board: $SILK_BOARD
+  return
+fi
+if [[ ! -f board/$SILK_BOARD/gonk.sh ]]; then
+  poison_their_lunch board/$SILK_BOARD/gonk.sh not found
+  return
+fi
+if [[ ! -f board/$SILK_BOARD/$SILK_BOARD.xml ]]; then
+  poison_their_lunch board/$SILK_BOARD/$SILK_BOARD.xml not found
+  return
+fi
+if [[ ! -d product/$SILK_PRODUCT ]]; then
+  poison_their_lunch Unknown product: $SILK_PRODUCT
+  return
+fi
+if [[ ! -f product/$SILK_PRODUCT/$SILK_PRODUCT.xml ]]; then
+  poison_their_lunch product/$SILK_PRODUCT/$SILK_PRODUCT.xml not found
+  return
+fi
+
+source board/$SILK_BOARD/gonk.sh
 
 # Traverses a manifest, outputting the name of all included manifests
-find_manifest_names()
+find_included_manifests()
 {
-  local name=$1
-  local xml=gonk/$1/$1.xml
-
-  echo $name
-
-  if [[ ! -f $xml ]]; then
-    echo Error: $xml does does not exist >&2
+  local xml=$1
+  echo $xml
+  if [[ ! -r $xml ]]; then
+    echo Error: $xml does not exist >&2
     return
   fi
   # Notice: this "parser" does not support <include> elements spanning multiple
   # lines
   local include_xmls=$(grep '<include .*\/>' $xml | grep -o '[^"]*.xml')
   for i in $include_xmls; do
-    find_manifest_names ${i%.xml}
+    local basename=${i%.xml}
+    if [[ -r board/$basename/$i ]]; then
+      find_included_manifests board/$basename/$i
+    elif [[ -r platform/$basename/$i ]]; then
+      find_included_manifests platform/$basename/$i
+    else
+      echo Error: $xml includes an unknown file: $i >&2
+      return
+    fi
   done
 }
 
@@ -130,39 +164,29 @@ find_manifest_names()
 # listed first will take higher precedence, and its patches will replace
 # patches of the same path/name of manifests lower down the list.
 PATCH_TREE=
-for manifest in $(find_manifest_names $GONK); do
-  tree="gonk/$manifest/patch"
-  if [[ -d $tree ]] && [[ ! $PATCH_TREE =~ $tree ]]; then
-    PATCH_TREE+=" $tree "
+MANIFEST_DEPS="board/$SILK_BOARD/$SILK_BOARD.xml product/$SILK_PRODUCT/$SILK_PRODUCT.xml"
+for manifest in $(find_included_manifests board/$SILK_BOARD/$SILK_BOARD.xml) \
+                $(find_included_manifests product/$SILK_PRODUCT/$SILK_PRODUCT.xml); do
+  MANIFEST_DEPS="$MANIFEST_DEPS $manifest"
+
+  _tree="$(dirname $manifest)/patch"
+  if [[ -d $_tree ]] && [[ ! $PATCH_TREE =~ $_tree ]]; then
+    PATCH_TREE+=" $_tree "
   fi
 done
 
-if [[ ! -d gonk/${GONK} ]]; then
-  poison_their_lunch Unknown gonk: $GONK
-  return
-elif [[ ! -f gonk/${GONK}/gonk.sh ]]; then
-  poison_their_lunch gonk/${GONK} missing gonk.sh
-  return
-else
-  source gonk/${GONK}/gonk.sh
-fi
+# Generate manifest dependency file
+echo .repo/lastsync: $MANIFEST_DEPS > .repo/manifest.deps
+
 
 source $(dirname ${BASH_SOURCE[0]})/patchtree.sh $@
+[[ $? -eq 0 ]] || return
 
-if [[ $? -eq 0 ]]; then
-  # Generate manifest dependency file
-  rm -f out/repo_fetchtimes.P
-  for manifest in $(find_manifest_names $GONK | sort -u); do
-    echo .repo/.repo_fetchtimes.json: gonk/$manifest/$manifest.xml >> out/repo_fetchtimes.P
-  done
+#
+# |lunch| automatically
+#
+STAY_OFF_MY_LAWN=1 # I'm not kidding!  Setting this saves ~400ms on each build
+set_stuff_for_environment
+printconfig
 
-  #
-  # |lunch| automatically
-  #
-  STAY_OFF_MY_LAWN=1 # I'm not kidding!  Setting this saves ~400ms on each build
-  set_stuff_for_environment
-  printconfig
-
-  SILK_ENVSETUP=1
-fi
-
+export SILK_ENVSETUP=1

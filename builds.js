@@ -139,9 +139,9 @@ module.exports = {
 
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently
-  'sos-push': {
+  'pub-push': {
     title: 'Silk open source public push'
-    travis_yml: 'releng/travis.sos-push.yml',
+    travis_yml: 'releng/travis.pub-push.yml',
     events: ['push'],
     branches: ['master'],
     files: [

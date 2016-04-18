@@ -141,7 +141,7 @@ module.exports = {
   // Only master branch is pushed currently
   'sos-push': {
     travis_yml: 'releng/travis.sos-push.yml',
-    cwd: 'pub/',
+    cwd: '',
     events: ['push'],
     branches: ['master'],
     files: [

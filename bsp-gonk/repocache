@@ -38,7 +38,7 @@ while getopts "h?f" opt; do
   esac
 done
 
-[[ $# -ne 3 ]] || usage
+[[ $# -eq 3 ]] || usage
 
 command=$1
 board=$2

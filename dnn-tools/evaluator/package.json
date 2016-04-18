@@ -5,10 +5,14 @@
   "main": "dbEval.js",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {
+    "preinstall": "../../npm_postinstall",
     "lint": "eslint *.js"
   },
   "bin": {
     "dbEval": "./dbEval.js"
+  },
+  "silkDependencies": {
+    "eslint-config-silk": "/eslint"
   },
   "dependencies": {
     "readdir": "0.0.13",
@@ -17,7 +21,6 @@
   "devDependencies": {
     "babel-eslint": "5.0.0",
     "eslint": "1.10.3",
-    "eslint-config-silk": "file:../../eslint",
     "eslint-plugin-react": "3.16.1"
   },
   "engines": {

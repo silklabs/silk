@@ -8,51 +8,48 @@
  */
 
 'use strict';
+const fs = require('fs');
 
 const dbInfo = require('./dbInfo');
 const bbgt = require('./bbGt');
-const utils = require('./utilities');
-
-const path = require('path');
-const fs = require('fs');
-const mkdirp = require('mkdirp');
+const Pedestrian = require('./pedestrian');
+const Faces = require('./faces');
 
 /**
  * List of experiment settings: { name, hr, vr, ar, overlap, filter }
  *  name     - experiment name
  *  hr       - height range to test
+ *  wr       - width range to test
  *  vr       - visibility range to test
  *  ar       - aspect ratio range to test
  *  overlap  - overlap threshold for evaluation
  *  filter   - expanded filtering (see 3.3 in PAMI11)
  */
 const experiments = [
-  { name: 'Reasonable', hr: [50, Infinity], vr: [0.65, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'All', hr: [20, Infinity], vr: [0.2, Infinity], ar: 0, overlap: 0.5, filter: 1.25 },
-  { name: 'Scale=large', hr: [100, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Scale=near', hr: [80, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Scale=medium', hr: [30, 80], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Scale=far', hr: [20, 30], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Occ=none', hr: [50, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Occ=partial', hr: [50, Infinity], vr: [0.65, 1], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Occ=heavy', hr: [50, Infinity], vr: [0.2, 0.65], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Ar=all', hr: [50, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
-  { name: 'Ar=typical', hr: [50, Infinity], vr: [Infinity, Infinity], ar: 0.1, overlap: 0.5, filter: 1.25},
-  { name: 'Ar=atypical', hr: [50, Infinity], vr: [Infinity, Infinity], ar: -0.1, overlap: 0.5, filter: 1.25},
-  { name: 'Overlap=25', hr: [50, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.25, filter: 1.25},
-  { name: 'Overlap=50', hr: [50, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.50, filter: 1.25},
-  { name: 'Overlap=75', hr: [50, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.75, filter: 1.25},
-  { name: 'Expand=100', hr: [50, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.5, filter: 1.00},
-  { name: 'Expand=125', hr: [50, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Reasonable', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [0.65, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'All', hr: [20, Infinity], wr: [20, Infinity], vr: [0.2, Infinity], ar: 0, overlap: 0.5, filter: 1.25 },
+  { name: 'Scale=large', hr: [100, Infinity], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Scale=near', hr: [80, Infinity], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Scale=medium', hr: [30, 80], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Scale=far', hr: [20, 30], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Occ=none', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Occ=partial', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [0.65, 1], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Occ=heavy', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [0.2, 0.65], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Ar=all', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
+  { name: 'Ar=typical', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: 0.1, overlap: 0.5, filter: 1.25},
+  { name: 'Ar=atypical', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [Infinity, Infinity], ar: -0.1, overlap: 0.5, filter: 1.25},
+  { name: 'Overlap=25', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.25, filter: 1.25},
+  { name: 'Overlap=50', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.50, filter: 1.25},
+  { name: 'Overlap=75', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.75, filter: 1.25},
+  { name: 'Expand=100', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.5, filter: 1.00},
+  { name: 'Expand=125', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
 ];
 
 // List of database names
-const dataNames = ['UsaTest', 'UsaTrain', 'InriaTest', 'TudBrussels', 'ETH', 'Daimler', 'Japan'];
+const dataNames = ['UsaTest', 'FDDB'];
 
 // Select databases, experiments and algorithms for evaluation
 let dataName = dataNames[0]; // Select one or more databases for evaluation
-const exps = experiments[0]; // Select one or more experiment for evaluation
-const algs = 'SCF+AlexNet';
 
 // Remaining parameters and constants
 const aspectRatio = 0.41;         // Default aspect ratio for all bbs
@@ -67,8 +64,10 @@ const samples = [Math.pow(10, -2), Math.pow(10, -1.75), Math.pow(10, -1.5),
  *
  */
 class Evaluator {
-  constructor(dbPath) {
-    this.dbPath = dbPath;
+  constructor(gtPath, dtPath) {
+    this.gtPath = gtPath;
+    this.dtPath = dtPath;
+    this.model = null;
   }
 
   /**
@@ -87,20 +86,29 @@ class Evaluator {
     console.log(`nFrame: ${JSON.stringify(nFrame)}`);
     console.log(`skip: ${skip}`);
 
-    // Name for all plots and temp directory for results
-    let plotName = path.resolve(__dirname, `results/${dataName}`);
-    if (!fs.existsSync(plotName)) {
-      mkdirp.sync(plotName);
-    }
+    // Select one or more experiment for evaluation
+    let exps = experiments[0];
 
     // Load detections and ground truth and evaluate
-    let dt = this.loadDt(setIds, vidIds, nFrame, skip, algs, aspectRatio);
-    let gt = this.loadGt(setIds, vidIds, skip, exps, aspectRatio, bnds);
-    res = this.evalAlgs(plotName, algs, exps, gt, dt);
+    switch (dataName) {
+    case 'UsaTest':
+      this.model = new Pedestrian();
+      break;
+    case 'FDDB':
+      this.model = new Faces();
+      exps = experiments[1];
+      break;
+    default:
+      throw new Error(`Unknown dataset ${dataName}`);
+    }
 
-    // Compute score (miss rate at each reference point)
+    let dt = this.loadDt(setIds, vidIds, nFrame, skip);
+    let gt = this.loadGt(setIds, vidIds, skip, exps);
+    res = this.evalAlgs(exps, gt, dt);
+
+    // Compute score (true positive rate at each reference point)
     let scores = bbgt.compRoc(res.gtr, res.dtr, samples);
-    console.log(`scores: ${scores}`);
+    // console.log(`scores: ${scores}`);
 
     // Calculate log-average miss rate
     let logs = scores.map(function (score) {
@@ -111,31 +119,32 @@ class Evaluator {
     });
     mean = mean / logs.length;
     let score = (Math.exp(mean)).toFixed(4);
-    console.log(`**************`);
-    console.log(`score: ${score}`);
-    console.log(`**************`);
+    console.log(`*************`);
+    console.log(`score: ${score}  (Range [0-1], lower the better)`);
+    console.log(`*************`);
   }
 
   /**
-   * Load detections for selected algorithm for all frames
+   * Load detections for all frames
    */
-  loadDt(setIds, vidIds, nFrame, skip, algs, aspectRatio) {
-    let aDir = `${this.dbPath}/res/${algs}`;
-    console.log(`Loading detections from ${aDir}`);
+  loadDt(setIds, vidIds, nFrame, skip) {
+    console.log(`Loading detections from ${this.dtPath}`);
     let dt = [];
     for (let s = 0; s < setIds.length; s++) {
       let s1 = setIds[s];
       for (let v = 0; v < vidIds[s].length; v++) {
         let v1 = vidIds[s][v];
-        let vName = `${aDir}/set${utils.leftPad(s1, 2)}/V${utils.leftPad(v1, 3)}.txt`;
+        let vName = this.model.formatPath(this.dtPath, s1, v1) + '.txt';
         if (!fs.existsSync(vName)) {
           throw new Error(`File ${vName} doesn't exit`);
         }
         let bb = bbgt.loadDetections(vName, nFrame[s][v], skip);
 
         // Adjust aspect ratio
-        for (let i = 0; i < bb.length; i++) {
-          bbgt.resize(bb[i], 1, 0, aspectRatio);
+        if (this.model.resize) {
+          for (let i = 0; i < bb.length; i++) {
+            bbgt.resize(bb[i], 1, 0, aspectRatio);
+          }
         }
 
         dt = dt.concat(bb);
@@ -146,31 +155,35 @@ class Evaluator {
   }
 
   /**
-   * Load ground truth for the selected experiment for all frames
+   * Load ground truth for all frames
    */
-  loadGt(setIds, vidIds, skip, exps, aspectRatio, bnds) {
-    let lbls = ['person', 'person?', 'people', 'ignore'];
+  loadGt(setIds, vidIds, skip, exps) {
+    let lbls = this.model.labels;
 
     let gt = [];
-    let filterGtFun = bbgt.filterGtFun.bind(
-        this, exps.hr, exps.vr, exps.ar, bnds, aspectRatio);
+    let filterGtFun = this.model.filterGtFun.bind(
+        this, exps, bnds, aspectRatio);
+
     for (let s = 0; s < setIds.length; s++) {
       let s1 = setIds[s];
       for (let v = 0; v < vidIds[s].length; v++) {
         let v1 = vidIds[s][v];
-        let vName = `${this.dbPath}/annotations/set${utils.leftPad(s1, 2)}/V${utils.leftPad(v1, 3)}`;
+        let vName = this.model.formatPath(this.gtPath, s1, v1);
         if (!fs.existsSync(vName)) {
           throw new Error(`Directory ${vName} doesn't exit`);
         }
         let files = fs.readdirSync(vName);
 
+        let self = this;
         files.forEach(function (file) { // eslint-disable-line no-loop-func
           let iName = `${vName}/${file}`;
           let bb = bbgt.loadAnnotations(iName, lbls, filterGtFun);
 
           // Adjust aspect ratio
-          for (let i = 0; i < bb.length; i++) {
-            bbgt.resize([bb[i]], 1, 0, aspectRatio);
+          if (self.model.resize) {
+            for (let i = 0; i < bb.length; i++) {
+              bbgt.resize([bb[i]], 1, 0, aspectRatio);
+            }
           }
 
           gt.push(bb);
@@ -189,7 +202,7 @@ class Evaluator {
    *         .dtr    - [n x 1] dt result bbs for each frame [x y w h score match]
    *                   where n is the number of total frames
    */
-  evalAlgs(plotName, algs, exps, gt, dt) {
+  evalAlgs(exps, gt, dt) {
     console.log(`Evaluating detections against ground truth data`);
     let n = gt.length;
     let gtr = [], dtr = [];
@@ -197,14 +210,17 @@ class Evaluator {
       throw new Error(`Length of gt and dt should be the same, ` +
           `dt: ${dt.length} gt: ${gt.length}`);
     }
-    let hr = [(exps.hr[0] * 1 / exps.filter), (exps.hr[1] * exps.filter)];
+    let hr = [(exps.hr[0] / exps.filter), (exps.hr[1] * exps.filter)];
+    let wr = [(exps.wr[0] / exps.filter), (exps.wr[1] * exps.filter)];
 
-    // Expanded filtering (see 3.3 in PAMI11)
     for (let f = 0; f < n; f++) {
       let bb = dt[f];
       let newbb = [];
+
+      // Expanded filtering (see 3.3 in PAMI11)
       for (let i = 0; i < bb.length; i++) {
-        if (bb[i].height >= hr[0] && bb[i].height < hr[1]) {
+        if ((bb[i].height >= hr[0] && bb[i].height < hr[1]) &&
+            (bb[i].width >= wr[0] && bb[i].width < wr[1])) {
           newbb.push(bb[i]);
         }
       }
@@ -223,9 +239,10 @@ class Evaluator {
 
 /*****************************************************************************/
 // Run evaluator
-if (process.argv.length < 3) {
+if (process.argv.length < 4) {
   console.log(`Usage:
-    path: Database path containing annotations and results
+    gtPath: Location of annotation files
+    dtPath: Location of ground truth files
     [databaseName]: Name of the dataset to use. One can specify a subset of a
                     dataset by appending digits to the end of the name
                     (eg. 'UsaTest01' indicates first set of 'UsaTest' and
@@ -233,13 +250,14 @@ if (process.argv.length < 3) {
   process.exit(1); //eslint-disable-line no-process-exit
 }
 
-let dbPath = process.argv[2];
-if (process.argv.length >= 4) {
-  dataName = process.argv[3];
+let gtPath = process.argv[2];
+let dtPath = process.argv[3];
+if (process.argv.length >= 5) {
+  dataName = process.argv[4];
 }
 
 try {
-  let evaluator = new Evaluator(dbPath);
+  let evaluator = new Evaluator(gtPath, dtPath);
   evaluator.run();
 } catch(err) {
   console.error(`Error running evaluator: ${err.stack || err}`);

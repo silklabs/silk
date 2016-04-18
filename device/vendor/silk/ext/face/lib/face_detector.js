@@ -11,13 +11,16 @@ import {
   Matrix,
 } from './face';
 import safeRoi from './safe_roi.js';
+import fs from 'fs';
 
 let camera;
 let log;
 let timeline;
 
+const HAAR = 'system/silk/media/opencv/haarcascade_frontalface_alt2.xml';
+const DLIB_LANDMARK = 'system/silk/media/shape_predictor_68_face_landmarks.dat';
 const facecascade = {
-  classifier: new cv.CascadeClassifier('system/silk/media/opencv/haarcascade_frontalface_alt2.xml'),
+  classifier: null,
   opts: {
     scale: 1.1,
     neighbors: 2,
@@ -55,12 +58,21 @@ function getCascadeRects(cascade: any, im: Matrix): Promise<Array<FaceRect>> {
 export default class FaceDetector {
   _busy: bool = false;
 
-  constructor(env) {
+  constructor(env, haarCascade = HAAR, dlibLandmark = DLIB_LANDMARK) {
     camera = env.camera;
     log = env.log;
     timeline = env.timeline;
 
-    let faceDetector = new silkcv.FaceDetector(
+    if (!fs.existsSync(dlibLandmark)) {
+      throw new Error(`${dlibLandmark} not available`);
+    }
+    if (!fs.existsSync(haarCascade)) {
+      throw new Error(`${haarCascade} not available`);
+    }
+
+    facecascade.classifier = new cv.CascadeClassifier(haarCascade);
+
+    let faceDetector = new silkcv.FaceDetector(dlibLandmark,
       err => {
         if (err) {
           throw err;

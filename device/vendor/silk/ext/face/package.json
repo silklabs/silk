@@ -6,10 +6,14 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "postinstall": "./bin/postinstall",
+    "pretest": "./bin/pretest",
     "test": "./bin/test",
-    "clean": "rm -rf node_modules"
+    "clean": "rm -rf node_modules",
+    "lint": "eslint tools/*.js",
+    "predict": "DEBUG=silk-face:* babel-node -- tools/facePredictor.js"
   },
   "silkDependencies": {
+    "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
@@ -18,14 +22,20 @@
   "dependencies": {
     "CBuffer": "1.1.0",
     "babel-runtime": "5.8.35",
-    "fast-image-size": "0.1.2",
+    "fast-image-size": "silklabs/fast-image-size#339e17a025f9421a8938629e17316a149b340390",
     "mkdirp-promise": "1.0.3",
     "moving-average": "0.1.1",
     "mz": "2.2.0"
   },
   "devDependencies": {
-    "babel": "5.8.23",
+    "babel": "5.8.35",
+    "babel-cli": "6.5.1",
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "eslint-plugin-import": "0.12.0",
+    "eslint-plugin-react": "3.16.1",
     "event-to-promise": "0.4.0",
+    "mkdirp": "0.5.1",
     "mocha": "2.4.2"
   },
   "private": true

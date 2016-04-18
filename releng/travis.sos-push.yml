@@ -1,0 +1,10 @@
+os:
+  - linux
+
+before_install:
+  - source .travis_before_install.sh
+
+script:
+  - git subtree --prefix pub -b pub
+  - git remote add sos git@github.com:silklabs/silk.git
+  - git push -f sos pub:master

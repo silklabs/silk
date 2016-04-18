@@ -137,6 +137,18 @@ module.exports = {
   //}),
   'mp4dash': npmPackageBuild('tools/mp4dash'),
 
+  // Push open source changes immediately on committing to silk-core
+  // Only master branch is pushed currently
+  'sos-push': {
+    travis_yml: 'releng/travis.sos-push.yml',
+    cwd: 'pub/',
+    events: ['push'],
+    branches: ['master'],
+    files: [
+      'pub/**',
+    ]
+  },
+
   // Nightly device builds
   'device-qemu-nightly': nightlyBuild('device', {
     branches: ['master', 'next'],

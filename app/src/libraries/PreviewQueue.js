@@ -64,7 +64,7 @@ export default class PreviewQueue {
   }
 
   push(msg: DeviceVideoMessage) {
-    if (global.__DEV__) {
+    if (__DEV__) {
       let previewArrival = { now: Date.now(), when: msg.when };
       if (this._lastPreviewArrival) {
         // Elapsed time on device since last preview

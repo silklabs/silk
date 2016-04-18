@@ -19,9 +19,10 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export SILKRC=$ROOT/.silkrc
 export PATH=$ROOT/cli:$PATH
+export REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/
 
 # silk-caffe hack the find patches
-export SILK_CAFFE_PATCH_TREE=$ROOT/device/gonk/silk/patch/external
+export SILK_CAFFE_PATCH_TREE=$ROOT/bsp-gonk/product/silk/patch/external
 
 for subdir in sdk cli-plugin-internal; do
   if [ ! -d $ROOT/$subdir/node_modules ]; then

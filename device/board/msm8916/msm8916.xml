@@ -7,9 +7,6 @@
 -->
 
 <manifest>
-
-  <include name="silk.xml"/>
-
   <!--
     Silk port to LA.BR.1.1.2-01610-8x16.0.xml
       <include name="android-5.1.1_r1.xml" />

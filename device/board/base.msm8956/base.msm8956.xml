@@ -7,8 +7,6 @@
 -->
 
 <manifest>
-  <include name="silk.xml"/>
-
   <!--
     Minimum subset of msm8956.xml required to build Silk
    -->

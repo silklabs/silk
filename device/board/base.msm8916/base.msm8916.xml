@@ -7,8 +7,6 @@
 -->
 
 <manifest>
-  <include name="silk.xml"/>
-
   <!--
     Minimum subset of LA.BR.1.1.2-01610-8x16.0.xml required to build Silk
 

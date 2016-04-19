@@ -14,7 +14,7 @@
     "test": "npm run lint && npm run flow && npm run mocha",
     "buildtrigger": "DEBUG=silk-*,-silk-*:debug babel-node lib/build-trigger.js",
     "issuemover": "DEBUG=silk-* babel-node lib/issue-mover.js",
-    "upliftall": "DEBUG=silk-* babel-node lib/uplifter.js"
+    "upliftall": "DEBUG=silk-* babel-node lib/github-uplifter.js"
   },
   "license": "proprietary",
   "silkDependencies": {

@@ -2,10 +2,9 @@
 import makeLog from 'silk-log';
 let log = makeLog('github-event');
 
-import * as githubTool from '../github-tool.js';
+import * as githubPRAutomation from '../github-pr-automation.js';
 import * as githubTravisIntegration from '../github-travis-integration.js';
-import { cancelOldPRBuilds } from '../cancelOldPRs.js';
-import { attemptUplift } from '../uplifter.js';
+import { attemptUplift } from '../github-uplifter.js';
 
 export function pullrequest(json) {
   let owner = json.pull_request.base.repo.owner.login;
@@ -25,14 +24,14 @@ export function pullrequest(json) {
     return;
   }
 
-  githubTool.handlePullRequestAction(owner, repo, pr, json.action)
+  githubPRAutomation.handlePullRequestAction(owner, repo, pr, json.action)
     .catch(err => log.error('Error', err, err.stack));
 
   // Delay for a short while to give Travis enough time to enqueue a build
   setTimeout(
     () => {
       log.info('Checking for older PR builds that should be cancelled');
-      cancelOldPRBuilds(owner, repo)
+      githubTravisIntegration.cancelOldPRBuilds(owner, repo)
         .catch(err => log.error('Error', err, err.stack));
     },
     30 * 1000
@@ -58,7 +57,7 @@ export function status(json) {
   if (json.state === 'success') {
     // Check if any PRs in this repo should be merged, as unfortunately the status
     // API provides no link from commit status and corresponding pull request
-    githubTool.autoMergePullRequests(owner, repo)
+    githubPRAutomation.autoMergePullRequests(owner, repo)
       .catch(err => log.error('Error', err, err.stack));
   }
 }

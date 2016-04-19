@@ -1,28 +1,12 @@
 /**
  * @flow
  */
-import createLog from 'silk-log';
 import { getOctokat, makeGitHubLog } from './github';
+import type { PullRequestInfo } from './github';
 
-type PullRequest = Object;
+const LOG_PREFIX = 'github-pr-automation';
 
-const LOG_PREFIX = 'github-tool';
-
-function forEachSilkRepo(
-  f: ((owner: string, repo: string) => Promise<void>)
-): Promise<void> {
-  const repos = require('./repos');
-  return repos.reduce(
-    (promise, repo) => {
-      return promise.then(() => {
-        return f('silklabs', repo);
-      });
-    },
-    Promise.resolve()
-  );
-}
-
-function maybeCreatePullRequest(
+export function maybeCreatePullRequest(
   destOwner: string,
   destRepo: string,
   destBranch: string,
@@ -77,7 +61,7 @@ function maybeCreatePullRequest(
     return r.issues(result.number).labels.create(['automerge']);
   })
   .then(() => {
-    log.info(`Succesfully added 'automerge' label to pull request.`);
+    log.info(`Successfully added 'automerge' label to pull request.`);
   })
   .catch(err => {
     if (err) {
@@ -85,15 +69,6 @@ function maybeCreatePullRequest(
     }
     return Promise.resolve();
   });
-}
-
-
-function maybeCreateAllRepoPullRequests(
-  destBranch: string,
-  sourceBranch: string
-): Promise<void> {
-  return forEachSilkRepo((owner, repo) =>
-    maybeCreatePullRequest(owner, repo, destBranch, sourceBranch));
 }
 
 
@@ -178,7 +153,7 @@ export async function autoMergePullRequest(
 function forAllOpenPullRequests(
   owner: string,
   repo: string,
-  cb: ((pr: PullRequest) => Promise<void>)
+  cb: ((pr: PullRequestInfo) => Promise<void>)
 ): Promise<void> {
   const r = getOctokat().repos(owner, repo);
   const log = makeGitHubLog(LOG_PREFIX, owner, repo);
@@ -258,18 +233,39 @@ export function handlePullRequestAction(
 }
 
 
-function exitOnError(err) {
-  if (err) {
-    createLog(LOG_PREFIX).error('Error', err, err.stack);
-    process.exit(1); //eslint-disable-line no-process-exit
+export async function checkPullRequestForPublicChanges(
+  pr: PullRequestInfo,
+  filesChanged: Array<string>
+): Promise<void> {
+  const owner_name = pr.base.repo.owner.login;
+  const repo_name = pr.base.repo.name;
+  if (owner_name !== 'silklabs' ||
+      repo_name !== 'silk-core') {
+    return;
   }
-}
 
+  const repo = getOctokat().repos(owner_name, repo_name);
+  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr.number);
 
-// next2master is currently unused and could be removed in the future
-function next2master() {  //eslint-disable-line no-unused-vars
-  Promise.resolve()
-  .then(() => maybeCreateAllRepoPullRequests('master', 'next'))
-  .catch(exitOnError)
-  .then(() => createLog(LOG_PREFIX).info('SUCCESS'));
+  const issue = await repo.issues(pr.number).fetch();
+  const hasPublicLabel = issue.labels.find((label) => label.name === 'PUBLIC');
+
+  if (!filesChanged.some((filename) => filename.startsWith('pub/'))) {
+    log.info(`No changes to public files detected.`);
+    if (hasPublicLabel) {
+      log.info(`Removing PUBLIC label.`);
+      await repo.issues(pr.number).labels('PUBLIC').remove();
+    }
+    return;
+  }
+
+  // Nothing to do if we already added the PUBLIC label.
+  if (hasPublicLabel) {
+    return;
+  }
+
+  await repo.issues(pr.number).comments.create({
+    body: ':earth_americas: This PR contains changes to public files. As soon as it will be merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
+  });
+  await repo.issues(pr.number).labels.create(['PUBLIC']);
 }

@@ -5,18 +5,13 @@
  */
 
 import makeLog from 'silk-log';
-const log = makeLog('main');
-import silkrepos from './repos';
-import Octokat from 'octokat'; // Ref: https://www.npmjs.com/package/octokat
 import child_process from 'child_process';
 
-if (!process.env.GITHUB_TOKEN) {
-  throw new Error('GITHUB_TOKEN environment variable undefined');
-}
+import silkRepos from './repos';
+import { getOctokat, makeGitHubLog } from './github';
 
-let octo = new Octokat({
-  token: process.env.GITHUB_TOKEN,
-});
+const log = makeLog('main');
+const LOG_PREFIX = 'uplifter';
 
 /**
  * Performs an uplift of the given Pull Request.
@@ -48,15 +43,16 @@ export async function attemptUplift(
   pr: number,
   destBranch: string = 'next'
 ): Promise<boolean> {
-  let sharedRepo = octo.repos(owner, repo);
+  const sharedRepo = getOctokat().repos(owner, repo);
+  const log = makeGitHubLog(LOG_PREFIX, owner, repo, pr);
 
-  log.info(`${repo}: Considering PR #${pr} for uplift to ${destBranch}`);
+  log.info(`Considering for uplift to ${destBranch}`);
   const upliftPrBranchName = `${destBranch}-${pr}`;
   const upliftApprovedLabel = destBranch + '+';
 
   let issue = await sharedRepo.issues(pr).fetch();
   if (issue.state !== 'closed') {
-    log.warn(`#${pr} is not closed`);
+    log.warn(`PR is not closed`);
     return false;
   }
 
@@ -64,24 +60,24 @@ export async function attemptUplift(
     return label.name === upliftApprovedLabel;
   });
   if (!label) {
-    log.warn(`#${pr} does not have '${upliftApprovedLabel}' label.`);
+    log.warn(`PR does not have '${upliftApprovedLabel}' label.`);
     return false;
   }
 
-  log.verbose(`Fetching PR #${pr}`);
+  log.verbose(`Fetching PR`);
   let pull = await sharedRepo.pulls(pr).fetch();
 
   if (!pull.merged) {
-    log.warn(`#${pr} is not merged.`);
+    log.warn(`PR is not merged.`);
     return false;
   }
   if (pull.base.ref !== 'master') {
-    log.warn(`#${pr} was not merged to the master branch.`);
+    log.warn(`PR was not merged to the master branch.`);
     return false;
   }
 
   // Generate the uplift command
-  log.verbose(`Fetching commits for PR #${pr}`);
+  log.verbose(`Fetching commits for PR`);
   const commits = await sharedRepo.pulls(pr).commits.fetch();
   const foundMergeCommit = commits.find(commit => commit.parents.length !== 1);
   const upliftCommand = `rm -rf uplift &&
@@ -191,8 +187,9 @@ async function checkRepoForUplifts(
   owner: string,
   repo: string
 ): Promise<void> {
-  log.info(`Checking ${owner}:${repo} for PRs needing an uplift`);
-  let sharedRepo = octo.repos(owner, repo);
+  const log = makeGitHubLog(LOG_PREFIX, owner, repo);
+  const sharedRepo = getOctokat().repos(owner, repo);
+  log.info(`Checking repo for PRs needing an uplift`);
 
   // Fetch recent closed PRs on the master branch
   let pulls = await sharedRepo.pulls.fetch({
@@ -224,7 +221,7 @@ async function checkRepoForUplifts(
 
 if ((require: any).main === module) {
   (async function main() {
-    for (let repo of silkrepos) {
+    for (let repo of silkRepos) {
       try {
         await checkRepoForUplifts('silklabs', repo);
       } catch (err) {

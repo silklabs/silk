@@ -53,12 +53,14 @@ hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 30g -volna
 
 ## Building
 ```
-  $make # <-- downloads (if necessary) and builds the target binaries
-  $make install # <-- installs the build products onto a device
+  $ ./sync                    # <-- Fetches the full bsp tree for the default board/product
+  $ source build/envsetup.sh  # <-- Configures the BSP build environment
+  $ make -j4                  # <-- Builds...
+  $ adb remount ; adb sync    # <-- installs the build products onto a device connected over USB
 ```
 
 If you'd like to use the emulator instead of a real device, start the emulator
-with `make qemu` before running `make install`.
+with `make qemu` before running `adb sync`.
 
 ### Updating your workspace
 

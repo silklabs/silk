@@ -125,54 +125,6 @@ const TRAVIS_TO_GITHUB_BUILD_STATES = {
 
 const TRAVIS_QUERY_BUILD_DELAY_MS = 5000;
 
-/**
- * Add the top level directory of `filename` to the `projects` set.
- * This most useful when applied against every path in a list of paths
- * involved in one or more commits..
- */
-function populateProjectsFromFilename(projects: Set<string>, filename: string) {
-  if (filename.indexOf('/') === -1) {
-    return;
-  }
-  let project = filename.split('/')[0];
-  projects.add(project);
-}
-
-/**
- * Figure out whether we can use the new build determinator by
- * checking for the existence of a top-level builds.js file.
- */
-async function shouldUseBuildDeterminator(
-  owner_name: string,
-  repo_name: string,
-  sha: string
-): Promise<boolean> {
-  let builds_js = await readFileAtCommit(
-    owner_name,
-    repo_name,
-    sha,
-    BUILDS_DEFINITION_FILE
-  );
-  return !!builds_js;
-}
-
-/**
- * Determine which top level directories ("projects") were affected by
- * a given single commit.
- */
-async function determineProjectsToBuildForCommit(
-  owner_name: string,
-  repo_name: string,
-  sha: string
-): Promise<Array<string>> {
-  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, sha);
-  let unique_projects = new Set();
-  let filesChanged = await filenamesTouchedByCommit(owner_name, repo_name, sha);
-  filesChanged.forEach((file) => populateProjectsFromFilename(unique_projects, file));
-  let projects = Array.from(unique_projects);
-  log.info(`Projects touched: ${projects}`);
-  return projects;
-}
 
 /**
  * Given a Pull Request number, return the name of the temporary
@@ -439,66 +391,30 @@ async function triggerBuildsForPullRequest(
   let repo_name = pr.base.repo.name;
   let repo = getOctokat().repos(owner_name, repo_name);
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr.number);
-  let branch = getCIBranchForPR(pr.number);
 
+  const branch = getCIBranchForPR(pr.number);
   await createOrUpdateBranch(owner_name, repo_name, branch, pr.mergeCommitSha);
 
-  let useBuildDeterminator = await shouldUseBuildDeterminator(
+  const filesChanged = await filenamesTouchedByCommit(
     owner_name,
     repo_name,
     pr.mergeCommitSha
   );
-
-  let travisResponses;
-  if (useBuildDeterminator) {
-    log.info(`Found '${BUILDS_DEFINITION_FILE}'! Using build determinator to trigger builds.`);
-    let filesChanged = await filenamesTouchedByCommit(
-      owner_name,
-      repo_name,
-      pr.mergeCommitSha
-    );
-    travisResponses = await triggerBuildsForEvent(
-      owner_name,
-      repo_name,
-      {
-        type: 'pr',
-        sha: pr.mergeCommitSha,
-        branch: pr.base.ref,
-        buildBranch: branch,
-        filesChanged,
-        message: `#${pr.number}: ${pr.title}`,
-        commitRange: `${pr.base.sha}...${pr.head.sha}`,
-        pullRequest: pr.number,
-        pullRequestBaseBranch: pr.base.ref,
-      }
-    );
-  } else {
-    log.info(`Did not find '${BUILDS_DEFINITION_FILE}', not using build determinator.`);
-    let projects = await determineProjectsToBuildForCommit(
-      owner_name,
-      repo_name,
-      pr.mergeCommitSha
-    );
-    travisResponses = await Promise.all(
-      projects.map(
-        (project) => triggerBuildForProject(
-          owner_name,
-          repo_name,
-          {
-            project,
-            travis_yml: `${project}/.travis.yml`,
-            cwd: project,
-            message: `#${pr.number}: ${pr.title}`,
-            branch,
-            sha: pr.mergeCommitSha,
-            commitRange: `${pr.base.sha}...${pr.head.sha}`,
-            pullRequest: pr.number,
-            pullRequestBaseBranch: pr.base.ref,
-          }
-        )
-      )
-    );
-  }
+  const travisResponses = await triggerBuildsForEvent(
+    owner_name,
+    repo_name,
+    {
+      type: 'pr',
+      sha: pr.mergeCommitSha,
+      branch: pr.base.ref,
+      buildBranch: branch,
+      filesChanged,
+      message: `#${pr.number}: ${pr.title}`,
+      commitRange: `${pr.base.sha}...${pr.head.sha}`,
+      pullRequest: pr.number,
+      pullRequestBaseBranch: pr.base.ref,
+    }
+  );
 
   // triggerBuildForProject() will return null if a build couldn't be
   // triggered for a given project. Filter those out to see how many
@@ -569,58 +485,22 @@ export async function handleGitHubPushEvent(
 
   log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, branch);
 
-  let useBuildDeterminator = await shouldUseBuildDeterminator(
+  log.info(`Found '${BUILDS_DEFINITION_FILE}'! Using build determinator to trigger builds.`);
+  const filesChangedGroupedByCommit = event.commits.map(
+    (commit) => commit.added.concat(commit.removed, commit.modified)
+  );
+  const filesChanged = [].concat(...filesChangedGroupedByCommit);
+  await triggerBuildsForEvent(
     owner_name,
     repo_name,
-    event.after
-  );
-
-  if (useBuildDeterminator) {
-    log.info(`Found '${BUILDS_DEFINITION_FILE}'! Using build determinator to trigger builds.`);
-    let filesChangedGroupedByCommit = event.commits.map(
-      (commit) => commit.added.concat(commit.removed, commit.modified)
-    );
-    let filesChanged = [].concat(...filesChangedGroupedByCommit);
-    await triggerBuildsForEvent(
-      owner_name,
-      repo_name,
-      {
-        type: 'push',
-        sha: event.after,
-        branch,
-        filesChanged,
-        message: event.head_commit.message,
-        commitRange: `${event.before}...${event.after}`,
-      }
-    );
-    return;
-  }
-
-  let unique_projects = new Set();
-  event.commits.forEach((commit) => {
-    commit.added.forEach(filename => populateProjectsFromFilename(unique_projects, filename));
-    commit.removed.forEach(filename => populateProjectsFromFilename(unique_projects, filename));
-    commit.modified.forEach(filename => populateProjectsFromFilename(unique_projects, filename));
-  });
-  let projects = Array.from(unique_projects);
-  log.info(`Projects touched by push: ${projects}`);
-
-  await Promise.all(
-    projects.map(
-      (project) => triggerBuildForProject(
-        owner_name,
-        repo_name,
-        {
-          project,
-          travis_yml: `${project}/.travis.yml`,
-          cwd: project,
-          message: event.head_commit.message,
-          branch,
-          sha: event.after,
-          commitRange: `${event.before}...${event.after}`,
-        }
-      )
-    )
+    {
+      type: 'push',
+      sha: event.after,
+      branch,
+      filesChanged,
+      message: event.head_commit.message,
+      commitRange: `${event.before}...${event.after}`,
+    }
   );
 }
 

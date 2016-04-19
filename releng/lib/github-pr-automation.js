@@ -2,8 +2,7 @@
  * @flow
  */
 import { getOctokat, makeGitHubLog } from './github';
-
-type PullRequest = Object;
+import type { PullRequestInfo } from './github';
 
 const LOG_PREFIX = 'github-pr-automation';
 
@@ -154,7 +153,7 @@ export async function autoMergePullRequest(
 function forAllOpenPullRequests(
   owner: string,
   repo: string,
-  cb: ((pr: PullRequest) => Promise<void>)
+  cb: ((pr: PullRequestInfo) => Promise<void>)
 ): Promise<void> {
   const r = getOctokat().repos(owner, repo);
   const log = makeGitHubLog(LOG_PREFIX, owner, repo);

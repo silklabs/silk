@@ -51,6 +51,7 @@ import cb2promise from 'promise-callback';
 import createLog from 'silk-log';
 
 import {
+  timeout,
   getOctokat,
   filenamesTouchedByCommit,
   readFileAtCommit,
@@ -58,6 +59,7 @@ import {
   deleteBranch,
   getBranchHeadCommit,
   makeGitHubLog,
+  getPullRequestInfoWithMergeability,
 } from './github';
 import {
   genTravis,
@@ -70,11 +72,11 @@ import {
 
 import type { TravisBuildRequest, TravisBuildResponse } from './travis';
 import type { BuildTriggerEvent } from './build-determinator';
+import type { PullRequestInfo } from './github';
 
 type PullRequestEvent = Object;
 type PushEvent = Object;
 type TravisWebhookPayload = Object;
-type PullRequest = Object;
 
 /**
  * An extension of BuildTriggerEvent that contains information
@@ -121,19 +123,7 @@ const TRAVIS_TO_GITHUB_BUILD_STATES = {
   canceled: 'error',
 };
 
-const MAX_PR_MERGEABLE_RETRIES = 3;
-const PR_MERGEABLE_TIMEOUT_MS = 250;
-
 const TRAVIS_QUERY_BUILD_DELAY_MS = 5000;
-
-/**
- * Awaitable version of `setTimeout`.
- */
-function timeout(delay_ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delay_ms);
-  });
-}
 
 /**
  * Add the top level directory of `filename` to the `projects` set.
@@ -385,25 +375,12 @@ export async function handleGitHubPullRequestEvent(
     return;
   }
 
-  // Ensure PR is mergeable. GitHub doesn't always tell us
-  // immediately, so keep polling the GitHub API until we know.
-  log.info('Fetching info...');
-  let repo = getOctokat().repos(owner_name, repo_name);
-  let pr = await repo.pulls(event.number).fetch();
-  log.debug('Full PR info:', JSON.stringify(pr, null, 2));
-
-  let tries = 0;
-  while (pr.mergeableState === 'unknown') {
-    if (tries > MAX_PR_MERGEABLE_RETRIES) {
-      log.info('GitHub is taking an awful long time to determine whether the PR is mergeable. Giving up.');
-      break;
-    }
-    log.info('Mergeable state still unknown, refetching PR info.');
-    await timeout(PR_MERGEABLE_TIMEOUT_MS);
-    pr = await repo.pulls(event.number).fetch();
-    tries += 1;
-  }
-  if (!pr.mergeable) {
+  let pr = await getPullRequestInfoWithMergeability(
+    owner_name,
+    repo_name,
+    event.number
+  );
+  if (!pr || !pr.mergeable) {
     log.info('PR is not mergeable, aborting.');
     return;
   }
@@ -411,6 +388,7 @@ export async function handleGitHubPullRequestEvent(
   // Create a pending status on the PR immediately while we figure out
   // what other builds to trigger, and potentially have to wait for
   // Travis to queue and start them.
+  const repo = getOctokat().repos(owner_name, repo_name);
   await repo.statuses(pr.head.sha).create({
     state: 'pending',
     target_url: 'http://git.io/h3KG',
@@ -455,7 +433,7 @@ export async function handleGitHubPullRequestEvent(
  * the number of builds triggered.
  */
 async function triggerBuildsForPullRequest(
-  pr: PullRequest
+  pr: PullRequestInfo
 ): Promise<number> {
   let owner_name = pr.base.repo.owner.login;
   let repo_name = pr.base.repo.name;

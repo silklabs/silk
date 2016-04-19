@@ -7,6 +7,17 @@
 import Octokat from 'octokat';
 import createLog from 'silk-log';
 
+export type PullRequestInfo = Object;
+
+/**
+ * Awaitable version of `setTimeout`.
+ */
+export function timeout(delay_ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay_ms);
+  });
+}
+
 let _octokat = null;
 export function getOctokat(): Octokat {
   if (_octokat) {
@@ -168,4 +179,38 @@ export function createMilestone(
     'title': title,
     'due_on': dueDate.toISOString(),
   });
+}
+
+const MAX_PR_MERGEABLE_RETRIES = 3;
+const PR_MERGEABLE_TIMEOUT_MS = 250;
+
+/**
+ * GitHub doesn't always immediately reply with a mergeable state, so
+ * keep polling the API until we get an answer. Note: this does not
+ * guarantee that the PR is mergeable, it merely guarantees that the
+ * status of mergeability is known.
+ */
+export async function getPullRequestInfoWithMergeability(
+  owner: string,
+  repo: string,
+  pr: number
+): Promise<?PullRequestInfo> {
+  const log = makeGitHubLog('github', owner, repo);
+  const repository = getOctokat().repos(owner, repo);
+  let info = await repository.pulls(pr).fetch();
+  log.debug('Full PR info:', JSON.stringify(info, null, 2));
+
+  let tries = 0;
+  while (info.mergeableState === 'unknown') {
+    if (tries > MAX_PR_MERGEABLE_RETRIES) {
+      log.info('GitHub is taking an awful long time to determine whether ' +
+               'the PR is mergeable. Giving up.');
+      return null;
+    }
+    log.info('Mergeable state still unknown, refetching PR info.');
+    await timeout(PR_MERGEABLE_TIMEOUT_MS);
+    info = await repository.pulls(pr).fetch();
+    tries += 1;
+  }
+  return info;
 }

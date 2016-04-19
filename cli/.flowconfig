@@ -1,7 +1,7 @@
 [ignore]
 .*/node_modules/babel.*
 .*/node_modules/mocha.*
-.*/node_modules/json5.*
+.*/node_modules/json5/test/.*
 
 [include]
 

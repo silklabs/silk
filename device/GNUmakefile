@@ -22,7 +22,7 @@ ifneq (,$(filter $(MAKECMDGOALS),$(LOCALGOALS)))
 .PHONY: update
 update:
 	set -xe; \
-  SILK_BOARD=$$(readlink .repo/board); \
+  [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
   if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
   echo SILK_BOARD=$$SILK_BOARD; \
   rm -rf out/prebuilt/$$SILK_BOARD; \
@@ -30,8 +30,7 @@ update:
   cd out/prebuilt/$$SILK_BOARD; \
   wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$SILK_BOARD.tgz ; \
   tar zxf $$SILK_BOARD.tgz; \
-  pwd; \
-  ./aosp_$$SILK_BOARD/$(or $(FLASH_SCRIPT),flash.sh); \
+  [[ $$SILK_BOARD == qemu ]] || ./aosp_$$SILK_BOARD/$(or $(FLASH_SCRIPT),flash.sh); \
 
 # Update the currently attached Mako device with the latest prebuilt FUT build
 .PHONY: fut

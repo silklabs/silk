@@ -5,7 +5,7 @@ let log = makeLog('github-event');
 import * as githubPRAutomation from '../github-pr-automation.js';
 import * as githubTravisIntegration from '../github-travis-integration.js';
 import { cancelOldPRBuilds } from '../cancelOldPRs.js';
-import { attemptUplift } from '../uplifter.js';
+import { attemptUplift } from '../github-uplifter.js';
 
 export function pullrequest(json) {
   let owner = json.pull_request.base.repo.owner.login;

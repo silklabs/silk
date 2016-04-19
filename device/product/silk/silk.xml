@@ -7,20 +7,13 @@
 -->
 
 <manifest>
-  <remote name="github" fetch="git://github.com/" sync-j="4"/>
+  <include name="gonkjs.xml" />
+
   <remote name="silk"
           fetch="ssh://git@github.com/silklabs/"
           revision="Always invalid.  Contact releng for more details"
           sync-j="4"/>
 
-  <project name="nodejs/node"
-           path="external/node"
-           remote="github"
-           revision="refs/tags/v4.2.4" clone-depth="1"/>
-  <project name="npm/npm"
-           path="external/npm"
-           remote="github"
-           revision="refs/tags/v2.13.1" clone-depth="1"/>
   <project name="mozilla-b2g/librecovery"
            path="external/librecovery"
            remote="github"

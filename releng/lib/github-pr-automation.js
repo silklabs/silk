@@ -231,3 +231,41 @@ export function handlePullRequestAction(
   log.info(`checking if it should be automerged`);
   return autoMergePullRequest(owner, repo, pr);
 }
+
+
+export async function checkPullRequestForPublicChanges(
+  pr: PullRequestInfo,
+  filesChanged: Array<string>
+): Promise<void> {
+  const owner_name = pr.base.repo.owner.login;
+  const repo_name = pr.base.repo.name;
+  if (owner_name !== 'silklabs' ||
+      repo_name !== 'silk-core') {
+    return;
+  }
+
+  const repo = getOctokat().repos(owner_name, repo_name);
+  const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr.number);
+
+  const issue = await repo.issues(pr.number).fetch();
+  const hasPublicLabel = issue.labels.find((label) => label.name === 'PUBLIC');
+
+  if (!filesChanged.some((filename) => filename.startsWith('pub/'))) {
+    log.info(`No changes to public files detected.`);
+    if (hasPublicLabel) {
+      log.info(`Removing PUBLIC label.`);
+      await repo.issues(pr.number).labels('PUBLIC').remove();
+    }
+    return;
+  }
+
+  // Nothing to do if we already added the PUBLIC label.
+  if (hasPublicLabel) {
+    return;
+  }
+
+  await repo.issues(pr.number).comments.create({
+    body: ':earth_americas: This PR contains changes to public files. As soon as it will be merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
+  });
+  await repo.issues(pr.number).labels.create(['PUBLIC']);
+}

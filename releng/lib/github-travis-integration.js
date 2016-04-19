@@ -62,6 +62,9 @@ import {
   getPullRequestInfoWithMergeability,
 } from './github';
 import {
+  checkPullRequestForPublicChanges,
+} from './github-pr-automation';
+import {
   genTravis,
   triggerBuild,
 } from './travis';
@@ -459,6 +462,10 @@ async function triggerBuildsForPullRequest(
       context: `travis-ci/${project}`,
     });
   }
+
+  // While we're at it and have all the information handy, check
+  // whether the commit touches public files.
+  await checkPullRequestForPublicChanges(pr, filesChanged);
 
   return triggeredBuilds.length;
 }

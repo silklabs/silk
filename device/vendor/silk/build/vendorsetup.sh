@@ -151,8 +151,8 @@ find_included_manifests()
     local basename=${i%.xml}
     if [[ -r board/$basename/$i ]]; then
       find_included_manifests board/$basename/$i
-    elif [[ -r platform/$basename/$i ]]; then
-      find_included_manifests platform/$basename/$i
+    elif [[ -r product/$basename/$i ]]; then
+      find_included_manifests product/$basename/$i
     else
       echo Error: $xml includes an unknown file: $i >&2
       return
@@ -177,7 +177,6 @@ done
 
 # Generate manifest dependency file
 echo .repo/lastsync: $MANIFEST_DEPS > .repo/manifest.deps
-
 
 source $(dirname ${BASH_SOURCE[0]})/patchtree.sh $@
 [[ $? -eq 0 ]] || return

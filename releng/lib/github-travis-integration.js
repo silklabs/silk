@@ -678,3 +678,61 @@ export async function handleTravisWebhook(
     context: `travis-ci/${project || ''}`,
   });
 }
+
+export async function cancelOldPRBuilds(
+  owner: string,
+  repo: string
+): Promise<void> {
+  const log = makeGitHubLog(LOG_PREFIX, owner, repo);
+  let activePullRequestBuilds = {};
+
+  log.verbose(`Getting recent Travis builds.`);
+  let travis = await genTravis();
+  const res = await cb2promise(travis.repos(owner, repo).builds.get);
+
+  await Promise.all(res.builds.map(async (build, index) => {
+    if (['passed', 'canceled', 'failed', 'errored'].indexOf(build.state) >= 0) {
+      return; // Ignore terminal build states
+    }
+
+    let commit = res.commits[index];
+    invariant(commit.id === build.commit_id);
+
+    // If Travis didn't provide a PR number, it might still be a build for
+    // a PR triggered by the machinery in github-travis-integration.js.
+    let pull_request_number = build.pull_request_number;
+    let project = null;
+    if (!pull_request_number) {
+      pull_request_number = getPRNumberFromBranch(commit.branch);
+      project = getProjectFromBuildMessage(commit.message);
+    }
+
+    // Ignore any non-PR builds.
+    if (!pull_request_number) {
+      return;
+    }
+
+    log.info(`PR #${pull_request_number}: [${project}] - ${build.id} is ${build.state}`);
+    let existingBuildSha = activePullRequestBuilds[pull_request_number];
+
+    if (!existingBuildSha) {
+      // First build we encounter for this PR. Remember the commit SHA
+      // so we can tell later if another build is for the same SHA
+      // (that's ok) or for a different (that's not ok, we want to
+      // cancel those.)
+      log.info(`PR #${pull_request_number}: this is the most recent build, allowing it to run.`);
+      activePullRequestBuilds[pull_request_number] = commit.sha;
+      return;
+    }
+
+    if (existingBuildSha === commit.sha) {
+      log.info(`PR #${pull_request_number}: this build is running against ` +
+               `same commit as the most recent build(s). Allowing it to run.`);
+      return;
+    }
+
+    log.info(`PR #${pull_request_number}: this build is running against ` +
+             `outdated commit, cancelling it.`);
+    await cb2promise(travis.builds(build.id).cancel.post);
+  }));
+}

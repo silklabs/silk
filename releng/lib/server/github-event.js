@@ -4,7 +4,6 @@ let log = makeLog('github-event');
 
 import * as githubPRAutomation from '../github-pr-automation.js';
 import * as githubTravisIntegration from '../github-travis-integration.js';
-import { cancelOldPRBuilds } from '../cancelOldPRs.js';
 import { attemptUplift } from '../github-uplifter.js';
 
 export function pullrequest(json) {
@@ -32,7 +31,7 @@ export function pullrequest(json) {
   setTimeout(
     () => {
       log.info('Checking for older PR builds that should be cancelled');
-      cancelOldPRBuilds(owner, repo)
+      githubTravisIntegration.cancelOldPRBuilds(owner, repo)
         .catch(err => log.error('Error', err, err.stack));
     },
     30 * 1000

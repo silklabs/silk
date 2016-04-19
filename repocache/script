@@ -24,7 +24,7 @@ if [[ -n "$GONK_REPO" ]]; then
 fi
 
 cd bsp-gonk/
-./repocache build $GONK gonkjs
+./repocache build $GONK
 cd ..
 
 mkdir -p deploy/repocache

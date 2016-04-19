@@ -4,6 +4,7 @@ lib/
 [ignore]
 .*/node_modules/fbjs/.*
 .*/node_modules/babel.*
+.*/node_modules/json5/test.*
 
 [options]
 module.system=node

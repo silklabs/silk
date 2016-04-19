@@ -1,28 +1,13 @@
 /**
  * @flow
  */
-import createLog from 'silk-log';
 import { getOctokat, makeGitHubLog } from './github';
 
 type PullRequest = Object;
 
-const LOG_PREFIX = 'github-tool';
+const LOG_PREFIX = 'github-pr-automation';
 
-function forEachSilkRepo(
-  f: ((owner: string, repo: string) => Promise<void>)
-): Promise<void> {
-  const repos = require('./repos');
-  return repos.reduce(
-    (promise, repo) => {
-      return promise.then(() => {
-        return f('silklabs', repo);
-      });
-    },
-    Promise.resolve()
-  );
-}
-
-function maybeCreatePullRequest(
+export function maybeCreatePullRequest(
   destOwner: string,
   destRepo: string,
   destBranch: string,
@@ -77,7 +62,7 @@ function maybeCreatePullRequest(
     return r.issues(result.number).labels.create(['automerge']);
   })
   .then(() => {
-    log.info(`Succesfully added 'automerge' label to pull request.`);
+    log.info(`Successfully added 'automerge' label to pull request.`);
   })
   .catch(err => {
     if (err) {
@@ -85,15 +70,6 @@ function maybeCreatePullRequest(
     }
     return Promise.resolve();
   });
-}
-
-
-function maybeCreateAllRepoPullRequests(
-  destBranch: string,
-  sourceBranch: string
-): Promise<void> {
-  return forEachSilkRepo((owner, repo) =>
-    maybeCreatePullRequest(owner, repo, destBranch, sourceBranch));
 }
 
 
@@ -255,21 +231,4 @@ export function handlePullRequestAction(
 
   log.info(`checking if it should be automerged`);
   return autoMergePullRequest(owner, repo, pr);
-}
-
-
-function exitOnError(err) {
-  if (err) {
-    createLog(LOG_PREFIX).error('Error', err, err.stack);
-    process.exit(1); //eslint-disable-line no-process-exit
-  }
-}
-
-
-// next2master is currently unused and could be removed in the future
-function next2master() {  //eslint-disable-line no-unused-vars
-  Promise.resolve()
-  .then(() => maybeCreateAllRepoPullRequests('master', 'next'))
-  .catch(exitOnError)
-  .then(() => createLog(LOG_PREFIX).info('SUCCESS'));
 }

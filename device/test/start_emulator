@@ -71,7 +71,8 @@ echo
   adb wait-for-device
   adb shell stop
   adb shell rm -rv /system/silk /data/silk-test
-  make -C $ANDROID_BUILD_TOP install
+  adb sync
+  adb shell sync
 )
 echo
 echo Killing emulator at pid=$EMU_PID

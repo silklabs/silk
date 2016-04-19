@@ -5,11 +5,6 @@
 
 set -e
 
-if [[ $GONK == nop ]]; then
-   echo Nothing to do
-   exit 0
-fi
-
 git --version
 git config --global user.email "engineering@silklabs.com"
 git config --global user.name "Travis CI"
@@ -50,10 +45,9 @@ else
 fi
 
 if [[ -n "$GONK_REPO" ]]; then
-  ( set -x; time git clone $GONK_REPO gonk/$GONK )
+  ( set -x; time git clone $GONK_REPO board/$GONK )
 fi
-time make init.$GONK
-time make sync
+time ./sync $GONK
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
   export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
@@ -69,8 +63,12 @@ $PREBUILT_CCACHE -z
 # Dump info about ccache (how much is in the cache/etc...)
 $PREBUILT_CCACHE -s
 
-
-time CI_PATCHTREE_FORCE=force make nothing # Applies patches as a side effect of doing nothing...
+# Apply patches
+(
+  set -ex
+  CI_PATCHTREE_FORCE=force
+  source build/envsetup.sh
+)
 
 # Reduce the disk space usage to avoid failures later on during full
 # builds

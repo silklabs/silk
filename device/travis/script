@@ -12,10 +12,10 @@ lock_build_fingerprint() {
   echo BUILD_FINGERPRINT=$BUILD_FINGERPRINT
 }
 
+source build/envsetup.sh
 case $GONK in
 qemu)
   $make
-  source build/envsetup.sh
   lock_build_fingerprint
   $make silkota
 
@@ -31,7 +31,6 @@ base)
   export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
 
   $make
-  source build/envsetup.sh
   # No |lock_build_fingerprint| here since base build doesn't generate build.prop
   $make silkota
 
@@ -41,7 +40,7 @@ base)
     echo "******************************************************************"
     echo Emulator tests
     echo "******************************************************************"
-    $make update.qemu # Fetch the emulator
+    SILK_BOARD=qemu $make update # Fetch the emulator
 
     if ! which adb; then
       # Fetch an adb since it's not built as a part of the base build nor
@@ -61,30 +60,20 @@ base)
   else
     echo Warning: Skipping emulator boot check on OS X for now
   fi
-
-  if [[ $TRAVIS_OS_NAME == linux ]]; then  # We only support building Mako on Linux
-    echo "******************************************************************"
-    echo Validating Mako manifest
-    echo "******************************************************************"
-    $make init.mako
-  fi
   ;;
 mako)
   $make
-  source build/envsetup.sh
   lock_build_fingerprint
   $make otapackage
   $make silkota
   ;;
 base.msm8916|base.msm8956)
   $make
-  source build/envsetup.sh
   # No |lock_build_fingerprint| here since base.msm8916 build doesn't generate build.prop
   $make silkota
   ;;
 *)
   $make
-  source build/envsetup.sh
   lock_build_fingerprint
   $make silkota
   ;;

@@ -3,6 +3,9 @@
 # Run from silk-core
 #
 
+GET_OFF_MY_LAWN=1
+source setup
+
 if [[ -n $1 ]]; then
   GONK=$1
 fi
@@ -16,12 +19,14 @@ if [[ -z $GONK ]]; then
 fi
 
 set -x
-npm run zest
 if [[ -n "$GONK_REPO" ]]; then
-  ( set -x; time git clone $GONK_REPO device/gonk/$GONK )
+  ( set -x; time git clone $GONK_REPO bsp-gonk/board/$GONK )
 fi
-make -C device repocache.$GONK
+
+cd bsp-gonk/
+./repocache build $GONK gonkjs
+cd ..
 
 mkdir -p deploy/repocache
-mv device/repocache*tgz deploy/repocache/
+mv bsp-gonk/*tgz deploy/repocache/
 exit 0

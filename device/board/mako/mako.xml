@@ -7,7 +7,6 @@
 -->
 
 <manifest>
-  <include name="silk.xml"/>
   <include name="android-5.1.1_r1.xml"/>
   <project groups="device,mako" name="vendor-broadcom-mako" path="vendor/broadcom/mako" remote="silk" revision="LMY47V"/>
   <project groups="device,mako" name="vendor-lge-mako" path="vendor/lge/mako" remote="silk" revision="LMY47V"/>

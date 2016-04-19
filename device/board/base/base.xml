@@ -7,8 +7,6 @@
 -->
 
 <manifest>
-  <include name="silk.xml"/>
-
   <!--
     Minimum subset of android-5.1.1_r1.xml required to build silk.xml
 

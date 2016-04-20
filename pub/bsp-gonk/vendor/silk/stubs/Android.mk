@@ -28,15 +28,20 @@ include $(BUILD_SILK_EXECUTABLE)
 
 ifneq ($(wildcard frameworks/av/services/audioflinger),)
 include $(CLEAR_VARS)
+
 LOCAL_MODULE       := gonksched
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := gonksched.cpp
-# Inline libscheduling_policy.a as it is not available for the base build
-LOCAL_SRC_FILES += \
-  ../../../../frameworks/av/services/audioflinger/ISchedulingPolicyService.cpp \
-  ../../../../frameworks/av/services/audioflinger/SchedulingPolicyService.cpp
 LOCAL_SHARED_LIBRARIES := libbinder libutils libcutils
 LOCAL_C_INCLUDES := frameworks/av/services/audioflinger
+
+# Inline libscheduling_policy.a as it is not available for the base build
+GONKSCHED_SPS_SRC_FILES := ISchedulingPolicyService.cpp SchedulingPolicyService.cpp
+LOCAL_SRC_FILES    += $(addprefix sps/,$(GONKSCHED_SPS_SRC_FILES))
+$(addprefix $(LOCAL_PATH)/sps/,$(GONKSCHED_SPS_SRC_FILES)): $(LOCAL_PATH)/sps/%.cpp: frameworks/av/services/audioflinger/%.cpp
+	$(hide) mkdir -p $(@D)
+	$(hide) @cp $< $@
+
 include $(BUILD_SILK_EXECUTABLE)
 endif

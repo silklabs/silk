@@ -69,6 +69,7 @@ async function _peer(caller: Caller, transport: Duplex): Promise<void> {
 
   const transportError = eventToPromise(transport, 'error').
     then((err) => {
+      log.debug('Error in stream transport', err, err.stack);
       peerConnection.removeEventListener('icecandidate', onIceCandidate);
       throw err;
     });

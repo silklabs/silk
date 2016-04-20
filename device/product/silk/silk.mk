@@ -162,5 +162,7 @@ ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PACKAGES += valgrind
 endif
 
+ANDROID_TOOLCHAIN_CMAKE := $(ANDROID_BUILD_TOP)/external/android-cmake/android.toolchain.cmake
+
 # include board-specific silk makefile if exists
 -include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk

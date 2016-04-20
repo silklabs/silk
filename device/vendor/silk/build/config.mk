@@ -3,7 +3,6 @@ BUILD_NODE_MODULE := vendor/silk/build/node_module.mk
 
 BUILD_SILK_EXECUTABLE := vendor/silk/build/silk_executable.mk
 BUILD_SILK_SHARED_LIBRARY := vendor/silk/build/silk_shared_library.mk
-ANDROID_TOOLCHAIN_CMAKE := $(ANDROID_BUILD_TOP)/external/android-cmake/android.toolchain.cmake
 
 TARGET_OUT_SILK := $(TARGET_OUT)/silk
 TARGET_OUT_SILK_EXECUTABLES := $(TARGET_OUT_SILK)/bin

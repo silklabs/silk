@@ -1,0 +1,70 @@
+on init
+    # Can't augment existing env vars, so set everything here
+    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin:/system/silk/bin
+    export NODE_PATH /system/silk/node_modules
+
+service silk-gonksched /system/silk/bin/gonksched
+    class late_start
+    user root
+
+service silk-fakeappops /system/silk/bin/fakeappops
+    class late_start
+    user root
+
+service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-init
+    class late_start
+    user root
+    # The bledroid and silk-sensors services are useless without the
+    # silk service, so we don't bother keeping them running reliably
+    # on their own.  The silk-capture service, on the other hand, must be
+    # strictly more stable than silk, so we ensure that either silk or
+    # capture can die and the other can recover gracefully.
+    onrestart restart silk-bledroid
+    onrestart restart silk-sensors
+
+service silk-volume /system/silk/bin/volume
+    class late_start
+    user audio
+    group audio
+    oneshot
+
+service silk-wpad /system/silk/bin/debug-wrapper /system/silk/bin/wpad
+    class late_start
+    user root
+    group root
+    # wpad will switch itself to the wifi user after loading the wifi .ko
+    # driver, which requires root
+    socket wpad stream 0600 root root
+
+service silk-bledroid /system/silk/bin/debug-wrapper /system/silk/bin/bledroid
+    class late_start
+    user root
+    group root
+    # bledroid will switch to the bluetooth user
+    socket bledroid stream 0600 root root
+
+service silk-sensors /system/silk/bin/debug-wrapper /system/silk/bin/silk-sensors
+    class late_start
+    user root
+    group root
+    socket sensors stream 0600 root root
+
+service silk-capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
+    class late_start
+    user graphics
+    group camera
+    socket capturectl stream 0600 root root
+    socket captured stream 0600 root root
+
+
+# Tee kernel logs to logcat main
+service silk-kmsg /system/bin/logwrapper /system/silk/bin/kmsg
+    class late_start
+    user root
+    group system
+
+service silk-tts /system/silk/bin/debug-wrapper /system/silk/bin/tts
+    class late_start
+    user audio
+    group audio
+    socket tts stream 0600 root root

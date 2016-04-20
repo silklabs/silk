@@ -1,0 +1,1 @@
+require('silk-device-main');

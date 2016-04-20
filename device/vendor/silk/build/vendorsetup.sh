@@ -1,7 +1,3 @@
-# Copyright (c) 2015-2016 Silk Labs, Inc.
-# All Rights Reserved.
-# Confidential and Proprietary - Silk Labs, Inc.
-
 export USE_CCACHE=1 # Yes please!
 export CCACHE_HASHDIR=true
 
@@ -160,9 +156,9 @@ find_included_manifests()
   done
 }
 
-# Build the list of patch trees used by $GONK. Order matters here. Manifests
-# listed first will take higher precedence, and its patches will replace
-# patches of the same path/name of manifests lower down the list.
+# Build the list of patch trees used by the board/product. Order matters here.
+# Manifests listed first will take higher precedence, and its patches will
+# replace patches of the same path/name of manifests lower down the list.
 PATCH_TREE=
 MANIFEST_DEPS="board/$SILK_BOARD/$SILK_BOARD.xml product/$SILK_PRODUCT/$SILK_PRODUCT.xml"
 for manifest in $(find_included_manifests board/$SILK_BOARD/$SILK_BOARD.xml) \

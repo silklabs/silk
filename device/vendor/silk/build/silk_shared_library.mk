@@ -1,7 +1,3 @@
-# Copyright (c) 2015-2016 Silk Labs, Inc.
-# All Rights Reserved.
-# Confidential and Proprietary - Silk Labs, Inc.
-
 ifndef LOCAL_32_BIT_ONLY
 LOCAL_32_BIT_ONLY := true
 endif

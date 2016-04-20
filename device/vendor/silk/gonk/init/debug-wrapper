@@ -1,9 +1,5 @@
 #!/system/bin/sh
 #
-# Copyright (c) 2015-2016 Silk Labs, Inc.
-# All Rights Reserved.
-# Confidential and Proprietary - Silk Labs, Inc.
-#
 # Wrapper to run debug tools on services that cannot be launched from
 # adb shell.
 #

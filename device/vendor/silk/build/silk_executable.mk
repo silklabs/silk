@@ -1,7 +1,3 @@
-# Copyright (c) 2015-2016 Silk Labs, Inc.
-# All Rights Reserved.
-# Confidential and Proprietary - Silk Labs, Inc.
-
 ifndef LOCAL_32_BIT_ONLY
 LOCAL_32_BIT_ONLY := true
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE_STEM)

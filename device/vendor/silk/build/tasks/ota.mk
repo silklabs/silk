@@ -11,7 +11,7 @@ SILKOTA_CONTENTS:=$(shell test -d $(TARGET_OUT_SILK) && find $(TARGET_OUT_SILK) 
 # Prefer to use an update-binary built from the tree, but if not possible then
 # fallback to the prebuilt updater
 ifeq ($(wildcard bootable/recovery/updater/Android.mk),)
-SILKOTA_UPDATE_BINARY=prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/updater
+SILKOTA_UPDATE_BINARY=prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/updater
 else
 SILKOTA_UPDATE_BINARY=$(call intermediates-dir-for,EXECUTABLES,updater)/updater
 endif

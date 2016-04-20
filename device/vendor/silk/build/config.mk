@@ -1,7 +1,3 @@
-# Copyright (c) 2015-2016 Silk Labs, Inc.
-# All Rights Reserved.
-# Confidential and Proprietary - Silk Labs, Inc.
-
 CLEAR_VARS += vendor/silk/build/node_module_clear_vars.mk
 BUILD_NODE_MODULE := vendor/silk/build/node_module.mk
 

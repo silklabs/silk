@@ -91,11 +91,6 @@ PRODUCT_PACKAGES += $(OPENCV_PACKAGES)
 
 # vendor/silk/gonk/...
 SILK_INIT := \
-  init.silk.rc \
-  silk-kmsg \
-  silk-init \
-  silk-init-js \
-  silk-debug-wrapper \
   silk-props-json \
 
 SILK_GONK_PROGIES := \
@@ -130,9 +125,6 @@ PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery_test
-
-# gonk stubs
-PRODUCT_PACKAGES += fakeappops gonksched
 
 # external/...
 PRODUCT_PACKAGES += \

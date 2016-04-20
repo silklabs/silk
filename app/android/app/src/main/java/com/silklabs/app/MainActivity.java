@@ -4,6 +4,8 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 
+import com.oney.WebRTCModule.WebRTCModulePackage;
+
 import com.thirdparty.app.ThirdPartyReactPackage;
 
 import java.util.Arrays;
@@ -48,6 +50,7 @@ public class MainActivity extends ReactActivity {
     return Arrays.<ReactPackage>asList(
       new MainReactPackage(),
       new SilkReactPackage(),
+      new WebRTCModulePackage(),
       new ThirdPartyReactPackage());
   }
 

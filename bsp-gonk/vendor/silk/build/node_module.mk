@@ -138,8 +138,7 @@ $(LOCAL_BUILT_MODULE): $(import_includes)
 	@echo "            from: $(LOCAL_PATH)"
 	$(hide) mkdir -p $(built_module_path)
 	$(hide) rsync -qa --exclude='/node_modules' --exclude='/.silkslug' $(LOCAL_PATH)/ $(built_module_path)
-	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/build/package_abs_file.js package.json $(LOCAL_PATH)/
-	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/vendor/silk/locked_node_modules/fetch.sh
+	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/$(SILK_BUILD_FILES)/package_abs_file.js package.json $(LOCAL_PATH)/
 	@echo "Build: $(built_module_path)"
 	$(hide) cd $(built_module_path) &&  \
     C_INCLUDES="\

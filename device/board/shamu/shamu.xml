@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!--
-  Copyright (c) 2015-2016 Silk Labs, Inc.
-  All Rights Reserved.
-  Confidential and Proprietary - Silk Labs, Inc.
--->
-
 <manifest>
   <include name="mako.xml"/>
-  <remove-project name="vendor-broadcom-mako"/>
-  <remove-project name="vendor-lge-mako"/>
-  <remove-project name="vendor-qcom-mako"/>
-  <project groups="device,shamu" name="vendor-broadcom-shamu" path="vendor/broadcom/shamu" remote="silk" revision="LMY47Z"/>
-  <project groups="device,shamu" name="vendor-moto-shamu" path="vendor/moto/shamu" remote="silk" revision="LMY47Z"/>
-  <project groups="device,shamu" name="vendor-qcom-shamu" path="vendor/qcom/shamu" remote="silk" revision="LMY47Z"/>
+  <remove-project name="DonkeyCoyote/proprietary_vendor_lge"/>
+  <project groups="device,shamu" name="DonkeyCoyote/proprietary_vendor_motorola" path="vendor/motorola" remote="github" revision="android-5.1"/>
 
   <!-- Example USB HID stuff -->
 

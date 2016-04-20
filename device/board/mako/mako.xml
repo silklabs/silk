@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!--
-  Copyright (c) 2015-2016 Silk Labs, Inc.
-  All Rights Reserved.
-  Confidential and Proprietary - Silk Labs, Inc.
--->
-
 <manifest>
   <include name="android-5.1.1_r1.xml"/>
-  <project groups="device,mako" name="vendor-broadcom-mako" path="vendor/broadcom/mako" remote="silk" revision="LMY47V"/>
-  <project groups="device,mako" name="vendor-lge-mako" path="vendor/lge/mako" remote="silk" revision="LMY47V"/>
-  <project groups="device,mako" name="vendor-qcom-mako" path="vendor/qcom/mako" remote="silk" revision="LMY47V"/>
+  <project groups="device,mako,hammerhead" name="DonkeyCoyote/proprietary_vendor_lge" path="vendor/lge" remote="github" revision="android-5.1"/>
 
   <!-- Remove Android things -->
   <remove-project name="platform/art" />

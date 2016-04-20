@@ -235,7 +235,11 @@ __patch_tree()
              continue
            fi
            echo -n "  "
-           ( set -x ; git -C $PRJ am --quiet ${ROOT_DIR}/$PATCH )
+           PATCH_FLAGS=""
+           if [[ -f ${ROOT_DIR}/$PATCH.flags ]]; then
+             PATCH_FLAGS=$(cat ${ROOT_DIR}/$PATCH.flags)
+           fi
+           ( set -x ; git -C $PRJ am $PATCH_FLAGS --quiet ${ROOT_DIR}/$PATCH )
          done
 
          echo $(__tree_md5sum ${PATCH_TREE}) > out/lastpatch.md5sum

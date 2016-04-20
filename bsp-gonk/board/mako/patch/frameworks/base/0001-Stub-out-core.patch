@@ -1,0 +1,16 @@
+From 3403f723c020aee75a2ff8a6b8269394485270ce Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 27 Jun 2015 23:30:51 -0700
+Subject: [PATCH] Stub out core/
+
+---
+ core/Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 core/Android.mk
+
+diff --git a/core/Android.mk b/core/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

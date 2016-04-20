@@ -1,0 +1,25 @@
+From 65b1dd1526d167812371b59ef24d41655f49ad78 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Wed, 17 Jun 2015 19:32:37 -0700
+Subject: [PATCH] Turn off SELinux
+
+---
+ init/init.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/init.c b/init/init.c
+index bd1db7a..2755736 100644
+--- a/init/init.c
++++ b/init/init.c
+@@ -904,7 +904,7 @@ static bool selinux_is_disabled(void)
+     }
+ #endif
+ 
+-    return false;
++    return true;
+ }
+ 
+ static bool selinux_is_enforcing(void)
+-- 
+1.9.1
+

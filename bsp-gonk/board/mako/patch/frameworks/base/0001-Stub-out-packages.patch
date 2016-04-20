@@ -1,0 +1,16 @@
+From f98c7d5bf90756c7ee31c42444cc30ef1506d21f Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 27 Jun 2015 23:15:57 -0700
+Subject: [PATCH] Stub out packages/
+
+---
+ packages/Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 packages/Android.mk
+
+diff --git a/packages/Android.mk b/packages/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

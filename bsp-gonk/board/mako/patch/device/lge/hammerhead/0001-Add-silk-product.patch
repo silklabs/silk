@@ -1,0 +1,25 @@
+From 98d7baa69d848ae557d823370183af1c723ffe68 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 5 Oct 2015 22:49:37 -0700
+Subject: [PATCH] Add silk product
+
+---
+ full_hammerhead.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/full_hammerhead.mk b/full_hammerhead.mk
+index a85a109..204e663 100644
+--- a/full_hammerhead.mk
++++ b/full_hammerhead.mk
+@@ -28,7 +28,7 @@ PRODUCT_DEVICE := hammerhead
+ PRODUCT_BRAND := Android
+ PRODUCT_MODEL := AOSP on HammerHead
+ PRODUCT_MANUFACTURER := LGE
+-PRODUCT_RESTRICT_VENDOR_FILES := true
+ 
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
+ $(call inherit-product, device/lge/hammerhead/device.mk)
+ $(call inherit-product-if-exists, vendor/lge/hammerhead/device-vendor.mk)
+-- 
+1.9.1
+

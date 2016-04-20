@@ -1,0 +1,36 @@
+From b87c17a213fca1c7fe5e638a155cb4161c17fd95 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 6 Jul 2015 11:26:48 -0700
+Subject: [PATCH] Disable androidboot.mode=charger
+
+The right way to do this is to modify the LK bootloader to not add
+androidboot.mode=charger to the kernel commandline.  Unfortunately for the Nexus
+devices the boot loader is not provided so the next best option is to reboot
+
+Note that because LK still believes charging mode exists, the "battery charging"
+splash screen will still be displayed for a short time.
+---
+ init/init.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/init/init.c b/init/init.c
+index 2755736..4337082 100644
+--- a/init/init.c
++++ b/init/init.c
+@@ -1069,6 +1069,13 @@ int main(int argc, char **argv)
+     restorecon_recursive("/sys");
+ 
+     is_charger = !strcmp(bootmode, "charger");
++    if (is_charger) {
++      // Charger mode is not desired but cannot be disabled without a bootloader
++      // change, continuing to boot the system normally while in charge mode
++      // does not work on all devices.  The best thing to do is to therefore
++      // reboot and start normally
++      android_reboot(ANDROID_RB_RESTART, 0, 0);
++    }
+ 
+     INFO("property init\n");
+     property_load_boot_defaults();
+-- 
+1.9.1
+

@@ -1,0 +1,37 @@
+From e77a7b4baac6ddf2004bfe48db5a985c9ecbf2ef Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@codeaurora.org>
+Date: Fri, 13 Mar 2015 13:16:52 -0700
+Subject: [PATCH] Reduce severity of missing power manager service logging
+
+The power manager service is expected to not be present in B2G.
+
+Change-Id: I2113cb2affe6b24c8e800d12ded3c5b5dc5e5ba5
+---
+ services/audioflinger/Threads.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.cpp
+index 9fccda1..7abac6a 100644
+--- a/services/audioflinger/Threads.cpp
++++ b/services/audioflinger/Threads.cpp
+@@ -708,7 +708,7 @@ void AudioFlinger::ThreadBase::getPowerManager_l() {
+         sp<IBinder> binder =
+             defaultServiceManager()->checkService(String16("power"));
+         if (binder == 0) {
+-            ALOGW("Thread %s cannot connect to the power manager service", mName);
++            ALOGV("Thread %s cannot connect to the power manager service", mName);
+         } else {
+             mPowerManager = interface_cast<IPowerManager>(binder);
+             binder->linkToDeath(mDeathRecipient);
+@@ -719,7 +719,7 @@ void AudioFlinger::ThreadBase::getPowerManager_l() {
+ void AudioFlinger::ThreadBase::updateWakeLockUids_l(const SortedVector<int> &uids) {
+ 
+     getPowerManager_l();
+-    if (mWakeLockToken == NULL) {
++    if (mPowerManager != 0 && mWakeLockToken == NULL) {
+         ALOGE("no wake lock to update!");
+         return;
+     }
+-- 
+1.9.1
+

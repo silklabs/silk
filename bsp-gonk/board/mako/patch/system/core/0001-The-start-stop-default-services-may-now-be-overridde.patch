@@ -1,0 +1,57 @@
+From 1dc8d3d0a0bf021bc34a907b595ca4ed8b17d5a3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 19 Aug 2015 09:55:40 -0700
+Subject: [PATCH] The start/stop default services may now be overridden
+
+---
+ toolbox/start.c | 11 +++++++++++
+ toolbox/stop.c  | 11 +++++++++++
+ 2 files changed, 22 insertions(+)
+
+diff --git a/toolbox/start.c b/toolbox/start.c
+index 6c8a3f2..86c413b 100644
+--- a/toolbox/start.c
++++ b/toolbox/start.c
+@@ -10,6 +10,17 @@ int start_main(int argc, char *argv[])
+     if(argc > 1) {
+         property_set("ctl.start", argv[1]);
+     } else {
++        char services[PROPERTY_VALUE_MAX];
++        if (property_get("ro.silk.services", services, NULL) > 0) {
++            char *saveptr;
++            char *token = strtok_r(services, ",", &saveptr);
++            while (token != NULL) {
++              printf("Starting %s\n", token);
++              property_set("ctl.start", token);
++              token = strtok_r(NULL, ",", &saveptr);
++            }
++            return 0;
++        }
+         /* defaults to starting the common services stopped by stop.c */
+         property_set("ctl.start", "netd");
+         property_set("ctl.start", "surfaceflinger");
+diff --git a/toolbox/stop.c b/toolbox/stop.c
+index 5e3ce3c..a1ed203 100644
+--- a/toolbox/stop.c
++++ b/toolbox/stop.c
+@@ -8,6 +8,17 @@ int stop_main(int argc, char *argv[])
+     if(argc > 1) {
+         property_set("ctl.stop", argv[1]);
+     } else{
++        char services[PROPERTY_VALUE_MAX];
++        if (property_get("ro.silk.services", services, NULL) > 0) {
++            char *saveptr;
++            char *token = strtok_r(services, ",", &saveptr);
++            while (token != NULL) {
++              printf("Stopping %s\n", token);
++              property_set("ctl.stop", token);
++              token = strtok_r(NULL, ",", &saveptr);
++            }
++            return 0;
++        }
+         /* defaults to stopping the common services */
+         property_set("ctl.stop", "zygote_secondary");
+         property_set("ctl.stop", "zygote");
+-- 
+1.9.1
+

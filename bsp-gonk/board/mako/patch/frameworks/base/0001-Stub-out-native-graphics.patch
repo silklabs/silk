@@ -1,0 +1,16 @@
+From a05c59e306141408ea28daff17689f81d57c1681 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 28 Jun 2015 01:20:15 -0700
+Subject: [PATCH] Stub out native/graphics/
+
+---
+ native/graphics/Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 native/graphics/Android.mk
+
+diff --git a/native/graphics/Android.mk b/native/graphics/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+1.9.1
+

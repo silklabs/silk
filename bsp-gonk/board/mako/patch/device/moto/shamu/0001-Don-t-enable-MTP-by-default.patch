@@ -1,0 +1,26 @@
+From 8ceaac6c602375afd5ad57417027d8f1537d15e5 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 1 Nov 2015 20:19:15 -0800
+Subject: [PATCH] Don't enable MTP by default
+
+---
+ device.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 0dc1d2d..1577585 100644
+--- a/device.mk
++++ b/device.mk
+@@ -288,9 +288,6 @@ PRODUCT_COPY_FILES += \
+     device/moto/shamu/nfc/libnfc-brcm.conf:system/etc/libnfc-brcm.conf \
+     device/moto/shamu/nfc/libnfc-brcm-20795a10.conf:system/etc/libnfc-brcm-20795a10.conf
+ 
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+-    persist.sys.usb.config=mtp
+-
+ # Modem debugger
+ ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+ PRODUCT_PACKAGES += \
+-- 
+1.9.1
+

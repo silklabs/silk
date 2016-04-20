@@ -1,0 +1,25 @@
+From b212fc2f9b83571c70fe7b495dd069df213edb23 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Wed, 17 Jun 2015 20:24:23 -0700
+Subject: [PATCH] Enable /firmware to mount with SELinux disabled
+
+---
+ fstab.shamu | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fstab.shamu b/fstab.shamu
+index 95b0735..df501d8 100644
+--- a/fstab.shamu
++++ b/fstab.shamu
+@@ -6,7 +6,7 @@
+ /dev/block/platform/msm_sdcc.1/by-name/system         /system      ext4    ro,barrier=1                                wait
+ /dev/block/platform/msm_sdcc.1/by-name/userdata    /data        ext4    rw,nosuid,nodev,noatime,nodiratime,noauto_da_alloc,nobarrier    wait,check,forceencrypt=/dev/block/platform/msm_sdcc.1/by-name/metadata
+ /dev/block/platform/msm_sdcc.1/by-name/cache       /cache       ext4    rw,noatime,nosuid,nodev,barrier=1,data=ordered   wait,check
+-/dev/block/platform/msm_sdcc.1/by-name/modem       /firmware    ext4    ro,barrier=1,context=u:object_r:firmware_file:s0    wait
++/dev/block/platform/msm_sdcc.1/by-name/modem       /firmware    ext4    ro,barrier=1    wait
+ /dev/block/platform/msm_sdcc.1/by-name/persist     /persist     ext4    rw,nosuid,nodev,barrier=1                      wait,check
+ /dev/block/platform/msm_sdcc.1/by-name/boot         /boot           emmc    defaults                                                        defaults
+ /dev/block/platform/msm_sdcc.1/by-name/recovery     /recovery       emmc    defaults                                                        defaults
+-- 
+1.9.1
+

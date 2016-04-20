@@ -1,0 +1,25 @@
+From acd8b396dcbb88947a7ce4a17090b0238bdd8f7f Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 5 Oct 2015 22:57:33 -0700
+Subject: [PATCH] sdcard: remove derived permissions
+
+---
+ init.hammerhead.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init.hammerhead.rc b/init.hammerhead.rc
+index 36e1ec3..8ddc864 100644
+--- a/init.hammerhead.rc
++++ b/init.hammerhead.rc
+@@ -412,7 +412,7 @@ service qseecomd /system/bin/qseecomd
+     group root
+ 
+ # virtual sdcard daemon running as media_rw (1023)
+-service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
++service sdcard /system/bin/sdcard -u 1023 -g 1023 /data/media /mnt/shell/emulated
+     class late_start
+ 
+ service charger /sbin/healthd -c
+-- 
+1.9.1
+

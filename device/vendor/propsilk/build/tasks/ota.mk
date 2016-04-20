@@ -5,7 +5,7 @@
 SILKOTA_PACKAGE := \
   $(call intermediates-dir-for,PACKAGING,silkota_files)/$(TARGET_PRODUCT)-silkota_files-$(FILE_NAME_TAG).zip
 
-SILKOTA_UPDATER_SCRIPT=vendor/silk/build/tasks/updater-script
+SILKOTA_UPDATER_SCRIPT=vendor/propsilk/build/tasks/updater-script
 SILKOTA_CONTENTS:=$(shell test -d $(TARGET_OUT_SILK) && find $(TARGET_OUT_SILK) -type f)
 
 # Prefer to use an update-binary built from the tree, but if not possible then

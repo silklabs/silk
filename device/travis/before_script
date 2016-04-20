@@ -37,7 +37,7 @@ fi
 if [[ -n "$GONK_REPO" ]]; then
   ( set -x; time git clone $GONK_REPO board/$GONK )
 fi
-time ./sync $GONK
+( set -x; time ./sync $GONK )
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
   export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache

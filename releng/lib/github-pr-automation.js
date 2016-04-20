@@ -263,7 +263,7 @@ export async function checkPullRequestForPublicChanges(
 
   log.info(`Adding PUBLIC label to the PR.`);
   await repo.issues(pr.number).comments.create({
-    body: ':earth_americas: This PR contains changes to public files. As soon as it will be merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
+    body: ':earth_americas: This PR contains changes to public files. Once it\'s merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
   });
   await repo.issues(pr.number).labels.create(['PUBLIC']);
 }

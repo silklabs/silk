@@ -1,8 +1,10 @@
-CLEAR_VARS += vendor/silk/build/node_module_clear_vars.mk
-BUILD_NODE_MODULE := vendor/silk/build/node_module.mk
+SILK_BUILD_FILES := $(dir $(lastword $(MAKEFILE_LIST)))
 
-BUILD_SILK_EXECUTABLE := vendor/silk/build/silk_executable.mk
-BUILD_SILK_SHARED_LIBRARY := vendor/silk/build/silk_shared_library.mk
+CLEAR_VARS += $(SILK_BUILD_FILES)node_module_clear_vars.mk
+BUILD_NODE_MODULE := $(SILK_BUILD_FILES)node_module.mk
+
+BUILD_SILK_EXECUTABLE := $(SILK_BUILD_FILES)silk_executable.mk
+BUILD_SILK_SHARED_LIBRARY := $(SILK_BUILD_FILES)silk_shared_library.mk
 
 TARGET_OUT_SILK := $(TARGET_OUT)/silk
 TARGET_OUT_SILK_EXECUTABLES := $(TARGET_OUT_SILK)/bin

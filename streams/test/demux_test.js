@@ -13,10 +13,7 @@ import Demux from '../src/demux';
 suite('demuxing stream', () => {
 
   function header(id, type = 0) {
-    return Buffer.concat([
-      new Buffer([type]),
-      new Buffer(id),
-    ]);
+    return JSON.stringify([type, id]);
   }
 
   function d(stream) {

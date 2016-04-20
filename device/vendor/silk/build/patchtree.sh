@@ -38,7 +38,7 @@ __tree_md5sum()
 {
    (
       export LANG=C
-      FILELIST="$(find $@ -type f ! -path "*/.*" 2>/dev/null | sort -fs) ${B2G_HASHED_FILES}"
+      FILELIST="$(find -L $@ -type f ! -path "*/.*" 2>/dev/null | sort -fs) ${B2G_HASHED_FILES}"
       cat ${FILELIST}
    ) | openssl dgst -md5
 }
@@ -207,7 +207,7 @@ __patch_tree()
          PATCH_LIST=
          echo Finding patches...
          for TREE in ${PATCH_TREE}; do
-           PATCHES=$(find $TREE -name \*.patch | sort -fs)
+           PATCHES=$(find -L $TREE -name \*.patch | sort -fs)
            for PATCH in ${PATCHES}; do
              PATCH_WO_TREE=${PATCH#${TREE}}
              if [[ $PATCH_LIST =~ ([^ ]*):$PATCH_WO_TREE ]]; then

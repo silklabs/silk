@@ -1,0 +1,49 @@
+From ec51a96939eb79a885d1ac4d1cf05416b9c7a63e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 18 Sep 2015 14:39:27 -0700
+Subject: [PATCH] The first user-raised SIGSEGV now terminates the process
+
+Userspace-raised SIGSEGV need extra help to terminate the process, as the fault
+will not be re-generated upon return from the custom handler like a
+kernel-raised SIGSEGV.
+---
+ linker/debugger.cpp | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/linker/debugger.cpp b/linker/debugger.cpp
+index ac466a5..95bd8b7 100644
+--- a/linker/debugger.cpp
++++ b/linker/debugger.cpp
+@@ -247,6 +247,12 @@ static void send_debuggerd_packet(siginfo_t* info) {
+   close(s);
+ }
+ 
++static void goodbyecruelworld(int) {
++  __libc_format_log(ANDROID_LOG_FATAL, "libc",
++    "Received SIGCONT from debuggerd, sending SIGKILL to %d", getpid());
++  kill(getpid(), SIGKILL);
++}
++
+ /*
+  * Catches fatal signals so we can ask debuggerd to ptrace us before
+  * we crash.
+@@ -282,6 +288,16 @@ static void debuggerd_signal_handler(int signal_number, siginfo_t* info, void*)
+       tgkill(getpid(), gettid(), signal_number);
+       break;
+     default:    // SIGILL, SIGBUS, SIGSEGV
++      if (info != NULL && info->si_code == SI_USER) {
++        // If the signal was user raised, re-raise it now that the default
++        // signal handler is in place to continue crashing.
++        //
++        // After debuggerd engraves our tombstone it allows the process to die a
++        // natural death by issuing SIGCONT.  For a user-raised signal, this
++        // means the process must voluntarily exit.
++        signal(SIGCONT, goodbyecruelworld);
++        tgkill(getpid(), gettid(), signal_number);
++      }
+       break;
+   }
+ }
+-- 
+1.9.1
+

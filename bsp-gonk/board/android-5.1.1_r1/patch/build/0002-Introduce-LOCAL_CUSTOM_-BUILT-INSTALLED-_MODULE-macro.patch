@@ -1,0 +1,73 @@
+From 2881340b478b73a8dcb4b8a04f362ec6c41da859 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Sun, 7 Jun 2015 10:25:34 -0700
+Subject: [PATCH 2/2] Introduce LOCAL_CUSTOM_{BUILT,INSTALLED}_MODULE macros
+
+These enable a component using BUILD_PREBUILT to avoid a Make complaint when
+intentionally overriding the LOCAL_BUILT and/or LOCAL_INSTALLED targets
+---
+ core/base_rules.mk        | 4 ++++
+ core/clear_vars.mk        | 2 ++
+ core/prebuilt_internal.mk | 4 ++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index f2159f0..020dc49 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -544,6 +544,9 @@ ifneq ($(strip $(HOST_ACP_UNAVAILABLE)),)
+   LOCAL_ACP_UNAVAILABLE := $(strip $(HOST_ACP_UNAVAILABLE))
+ endif
+ 
++ifdef LOCAL_CUSTOM_INSTALLED_MODULE
++# Android.mk is expected to provide the $(LOCAL_INSTALLED_MODULE) target
++else
+ ifndef LOCAL_UNINSTALLABLE_MODULE
+   # Define a copy rule to install the module.
+   # acp and libraries that it uses can't use acp for
+@@ -561,6 +564,7 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
+ endif
+ 
+ endif # !LOCAL_UNINSTALLABLE_MODULE
++endif # !LOCAL_CUSTOM_INSTALLED_MODULE
+ 
+ 
+ ###########################################################
+diff --git a/core/clear_vars.mk b/core/clear_vars.mk
+index bf81ebf..7b6b147 100644
+--- a/core/clear_vars.mk
++++ b/core/clear_vars.mk
+@@ -8,6 +8,8 @@ LOCAL_MODULE_RELATIVE_PATH :=
+ LOCAL_MODULE_STEM:=
+ LOCAL_DONT_CHECK_MODULE:=
+ LOCAL_CHECKED_MODULE:=
++LOCAL_CUSTOM_BUILT_MODULE:=
++LOCAL_CUSTOM_INSTALLED_MODULE:=
+ LOCAL_BUILT_MODULE:=
+ LOCAL_BUILT_MODULE_STEM:=
+ OVERRIDE_BUILT_MODULE_PATH:=
+diff --git a/core/prebuilt_internal.mk b/core/prebuilt_internal.mk
+index bc6088f..251ec2f 100644
+--- a/core/prebuilt_internal.mk
++++ b/core/prebuilt_internal.mk
+@@ -243,6 +243,9 @@ ifneq ($(LOCAL_PREBUILT_STRIP_COMMENTS),)
+ $(built_module) : $(my_prebuilt_src_file)
+ 	$(transform-prebuilt-to-target-strip-comments)
+ else
++ifdef LOCAL_CUSTOM_BUILT_MODULE
++# Android.mk is expected to provide the $(LOCAL_BUILT_MODULE) target
++else
+ $(built_module) : $(my_prebuilt_src_file) | $(ACP)
+ 	$(transform-prebuilt-to-target)
+ ifneq ($(prebuilt_module_is_a_library),)
+@@ -253,6 +256,7 @@ ifneq ($(prebuilt_module_is_a_library),)
+   endif
+ endif
+ endif
++endif # !LOCAL_CUSTOM_BUILT_MODULE
+ endif # LOCAL_MODULE_CLASS != APPS
+ 
+ ifeq ($(LOCAL_IS_HOST_MODULE)$(LOCAL_MODULE_CLASS),JAVA_LIBRARIES)
+-- 
+2.0.1
+

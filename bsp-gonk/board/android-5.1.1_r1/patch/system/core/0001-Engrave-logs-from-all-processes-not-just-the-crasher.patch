@@ -1,0 +1,25 @@
+From 016d6fbba11a75467ba3fbe2d1b311eb68343c2f Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 22 Sep 2015 10:54:45 -0700
+Subject: [PATCH] Engrave logs from all processes, not just the crasher
+
+---
+ debuggerd/tombstone.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/debuggerd/tombstone.cpp b/debuggerd/tombstone.cpp
+index 0c1b80f..c4b2bdb 100644
+--- a/debuggerd/tombstone.cpp
++++ b/debuggerd/tombstone.cpp
+@@ -641,7 +641,7 @@ static bool dump_crash(log_t* log, pid_t pid, pid_t tid, int signal, int si_code
+   }
+ 
+   if (want_logs) {
+-    dump_logs(log, pid, 0);
++    dump_logs(log, 0, 0);
+   }
+ 
+   // send EOD to the Activity Manager, then wait for its ack to avoid racing ahead
+-- 
+1.9.1
+

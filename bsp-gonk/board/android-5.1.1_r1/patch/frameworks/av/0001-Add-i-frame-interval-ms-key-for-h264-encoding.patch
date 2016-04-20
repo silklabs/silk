@@ -1,0 +1,65 @@
+From 096b387b2a66c22bc098eeda35ecfa12e6048c58 Mon Sep 17 00:00:00 2001
+From: Ben Turner <bent.silklabs@gmail.com>
+Date: Mon, 14 Mar 2016 12:15:12 -0700
+Subject: [PATCH] Add 'i-frame-interval-ms' key for h264 encoding
+
+---
+ media/libstagefright/ACodec.cpp | 25 +++++++++++++++++++------
+ 1 file changed, 19 insertions(+), 6 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index e015f1a..ffe4a97 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -2824,14 +2824,11 @@ int /* OMX_VIDEO_AVCLEVELTYPE */ ACodec::getAVCLevelFor(
+ }
+ 
+ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+-    int32_t bitrate, iFrameInterval;
+-    if (!msg->findInt32("bitrate", &bitrate)
+-            || !msg->findInt32("i-frame-interval", &iFrameInterval)) {
++    int32_t bitrate;
++    if (!msg->findInt32("bitrate", &bitrate)) {
+         return INVALID_OPERATION;
+     }
+ 
+-    OMX_VIDEO_CONTROLRATETYPE bitrateMode = getBitrateMode(msg);
+-
+     float frameRate;
+     if (!msg->findFloat("frame-rate", &frameRate)) {
+         int32_t tmp;
+@@ -2841,6 +2838,22 @@ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+         frameRate = (float)tmp;
+     }
+ 
++    uint32_t iFrameCount;
++    int32_t tmp;
++    if (msg->findInt32("i-frame-interval-ms", &tmp)) {
++        if (tmp <= 0) {
++            return INVALID_OPERATION;
++        }
++        iFrameCount = frameRate * tmp / 1000;
++    } else {
++        if (!msg->findInt32("i-frame-interval", &tmp)) {
++            return INVALID_OPERATION;
++        }
++        iFrameCount = setPFramesSpacing(tmp, frameRate);
++    }
++
++    OMX_VIDEO_CONTROLRATETYPE bitrateMode = getBitrateMode(msg);
++
+     status_t err = OK;
+     int32_t intraRefreshMode = 0;
+     if (msg->findInt32("intra-refresh-mode", &intraRefreshMode)) {
+@@ -2895,7 +2908,7 @@ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+         h264type.bUseHadamard = OMX_TRUE;
+         h264type.nRefFrames = 1;
+         h264type.nBFrames = 0;
+-        h264type.nPFrames = setPFramesSpacing(iFrameInterval, frameRate);
++        h264type.nPFrames = iFrameCount;
+         if (h264type.nPFrames == 0) {
+             h264type.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI;
+         }
+-- 
+1.9.1
+

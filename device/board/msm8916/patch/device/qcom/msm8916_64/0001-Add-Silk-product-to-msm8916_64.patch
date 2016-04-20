@@ -17,7 +17,7 @@ index d9af73a..0ce1174 100644
          frameworks/native/data/etc/android.hardware.nfc.hce.xml:system/etc/permissions/android.hardware.nfc.hce.xml
  endif # TARGET_USES_QCA_NFC
 +
-+$(call inherit-product, vendor/silk/gonk/silk_generic.mk)
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
 +
 -- 
 2.5.0

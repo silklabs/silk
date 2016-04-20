@@ -17,7 +17,7 @@ index c887743..79386b4 100644
  libantradio \
  antradio_app
 +
-+$(call inherit-product, vendor/silk/gonk/silk_generic.mk)
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
 +
 -- 
 2.5.0

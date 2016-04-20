@@ -8,6 +8,9 @@
 # Add branch name to ro.build.fingerprint
 BUILD_VERSION_TAGS += $(BRANCH)
 
+# inherit from gonkjs product
+-include product/gonkjs/gonkjs.mk
+
 # Properties that are only read using getprop in sysutils.js
 # should be added to vendor/silk/core/silk-props.json instead
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -28,8 +31,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
   persist.silk.eth0.dns.gw.ip=192.168.1.1 \
 
 endif
-
-PRODUCT_PACKAGES += node
 
 # vendor/silk/core/...
 SILK_CORE := \
@@ -161,5 +162,5 @@ ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PACKAGES += valgrind
 endif
 
-# include platform-specific silk makefile, if exists
+# include board-specific silk makefile if exists
 -include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk

@@ -425,6 +425,10 @@ async function triggerBuildsForPullRequest(
   let triggeredBuilds = travisResponses.filter((result) => !!result);
   log.info(`Triggered ${triggeredBuilds.length} builds.`);
 
+  // While we're at it and have all the information handy, check
+  // whether the commit touches public files.
+  await checkPullRequestForPublicChanges(pr, filesChanged);
+
   if (triggeredBuilds.length === 0) {
     return 0;
   }
@@ -462,10 +466,6 @@ async function triggerBuildsForPullRequest(
       context: `travis-ci/${project}`,
     });
   }
-
-  // While we're at it and have all the information handy, check
-  // whether the commit touches public files.
-  await checkPullRequestForPublicChanges(pr, filesChanged);
 
   return triggeredBuilds.length;
 }

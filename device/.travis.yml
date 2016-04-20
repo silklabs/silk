@@ -9,9 +9,6 @@ os:
 jdk:
   - openjdk7
 
-install:
-  - export CXX="g++-4.8" CC="gcc-4.8"
-
 addons:
   apt:
     sources:
@@ -28,6 +25,10 @@ addons:
       - linux-libc-dev
       - openjdk-7-jdk
       - openjdk-7-jre-headless
+
+install:
+  - source ../releng/.travis_before_install.sh
+  - export CXX="g++-4.8" CC="gcc-4.8"
 
 before_script:
   source travis/before_script

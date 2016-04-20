@@ -239,13 +239,9 @@ export async function checkPullRequestForPublicChanges(
 ): Promise<void> {
   const owner_name = pr.base.repo.owner.login;
   const repo_name = pr.base.repo.name;
-  if (owner_name !== 'silklabs' ||
-      repo_name !== 'silk-core') {
-    return;
-  }
-
   const repo = getOctokat().repos(owner_name, repo_name);
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr.number);
+  log.info(`Checking PR for public changes.`);
 
   const issue = await repo.issues(pr.number).fetch();
   const hasPublicLabel = issue.labels.find((label) => label.name === 'PUBLIC');
@@ -261,9 +257,11 @@ export async function checkPullRequestForPublicChanges(
 
   // Nothing to do if we already added the PUBLIC label.
   if (hasPublicLabel) {
+    log.info(`PR already has PUBLIC label, nothing to be done here.`);
     return;
   }
 
+  log.info(`Adding PUBLIC label to the PR.`);
   await repo.issues(pr.number).comments.create({
     body: ':earth_americas: This PR contains changes to public files. As soon as it will be merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
   });

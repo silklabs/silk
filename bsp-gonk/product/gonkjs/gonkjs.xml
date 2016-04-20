@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<manifest>
+  <remote name="github" fetch="git://github.com/" sync-j="4"/>
+  <project name="nodejs/node"
+           path="external/node"
+           remote="github"
+           revision="refs/tags/v4.2.4" clone-depth="1"/>
+  <project name="npm/npm"
+           path="external/npm"
+           remote="github"
+           revision="refs/tags/v2.13.1" clone-depth="1"/>
+</manifest>

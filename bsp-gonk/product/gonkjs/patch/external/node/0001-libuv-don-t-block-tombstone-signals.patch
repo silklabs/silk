@@ -1,0 +1,147 @@
+From f29161f88497dbec30afe0380e621f2ae9c4cd33 Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Fri, 9 Oct 2015 09:54:08 -0700
+Subject: [PATCH] Don't block tombstone signals
+
+---
+ deps/uv/src/unix/signal.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+ src/node.cc               | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 75 insertions(+)
+
+diff --git a/deps/uv/src/unix/signal.c b/deps/uv/src/unix/signal.c
+index 0b7a405..e306736 100644
+--- a/deps/uv/src/unix/signal.c
++++ b/deps/uv/src/unix/signal.c
+@@ -99,9 +99,26 @@ static void uv__signal_block_and_lock(sigset_t* saved_sigmask) {
+   if (sigfillset(&new_mask))
+     abort();
+ 
++  // Keep the signals that debuggerd_init() cares about unmasked to correctly
++  // generate tombstones if any are set
++  //
++  // Ref: http://androidxref.com/5.1.0_r1/xref/bionic/linker/debugger.cpp#299
++  sigdelset(&new_mask, SIGABRT);
++  sigdelset(&new_mask, SIGBUS);
++  sigdelset(&new_mask, SIGILL);
++  sigdelset(&new_mask, SIGPIPE);
++  sigdelset(&new_mask, SIGSEGV);
++#if defined(SIGSTKFLT)
++  sigdelset(&new_mask, SIGSTKFLT);
++#endif
++  sigdelset(&new_mask, SIGTRAP);
++
+   if (pthread_sigmask(SIG_SETMASK, &new_mask, saved_sigmask))
+     abort();
+ 
++  // TEST CASE: The next line should produce a debuggerd tombstone.
++  //*(char *) 0 = 0;
++
+   if (uv__signal_lock())
+     abort();
+ }
+@@ -146,6 +163,9 @@ static void uv__signal_handler(int signum) {
+     return;
+   }
+ 
++  // TEST CASE: The next line should produce a debuggerd tombstone.
++  // *(char *) 0 = 0;
++
+   for (handle = uv__signal_first_handle(signum);
+        handle != NULL && handle->signum == signum;
+        handle = RB_NEXT(uv__signal_tree_s, &uv__signal_tree, handle)) {
+@@ -178,12 +198,38 @@ static int uv__signal_register_handler(int signum) {
+   /* When this function is called, the signal lock must be held. */
+   struct sigaction sa;
+ 
++  // Never permit registration of "debuggerd managed" signals
++  switch (signum) {
++  case SIGABRT:
++  case SIGBUS:
++  case SIGILL:
++  case SIGPIPE:
++  case SIGSEGV:
++#if defined(SIGSTKFLT)
++  case SIGSTKFLT:
++#endif
++  case SIGTRAP:
++    abort();
++  default:
++    break;
++  }
++
+   /* XXX use a separate signal stack? */
+   memset(&sa, 0, sizeof(sa));
+   if (sigfillset(&sa.sa_mask))
+     abort();
+   sa.sa_handler = uv__signal_handler;
+ 
++  sigdelset(&sa.sa_mask, SIGABRT);
++  sigdelset(&sa.sa_mask, SIGBUS);
++  sigdelset(&sa.sa_mask, SIGILL);
++  sigdelset(&sa.sa_mask, SIGPIPE);
++  sigdelset(&sa.sa_mask, SIGSEGV);
++#if defined(SIGSTKFLT)
++  sigdelset(&sa.sa_mask, SIGSTKFLT);
++#endif
++  sigdelset(&sa.sa_mask, SIGTRAP);
++
+   /* XXX save old action so we can restore it later on? */
+   if (sigaction(signum, &sa, NULL))
+     return -errno;
+diff --git a/src/node.cc b/src/node.cc
+index b6acc9d..f9acae2 100644
+--- a/src/node.cc
++++ b/src/node.cc
+@@ -3348,6 +3348,15 @@ static void RegisterSignalHandler(int signal,
+   sa.sa_flags = reset_handler ? SA_RESETHAND : 0;
+ #endif
+   sigfillset(&sa.sa_mask);
++  sigdelset(&sa.sa_mask, SIGABRT);
++  sigdelset(&sa.sa_mask, SIGBUS);
++  sigdelset(&sa.sa_mask, SIGILL);
++  sigdelset(&sa.sa_mask, SIGPIPE);
++  sigdelset(&sa.sa_mask, SIGSEGV);
++#if defined(SIGSTKFLT)
++  sigdelset(&sa.sa_mask, SIGSTKFLT);
++#endif
++  sigdelset(&sa.sa_mask, SIGTRAP);
+   CHECK_EQ(sigaction(signal, &sa, nullptr), 0);
+ }
+ 
+@@ -3576,6 +3585,23 @@ inline void PlatformInit() {
+   for (unsigned nr = 1; nr < 32; nr += 1) {
+     if (nr == SIGKILL || nr == SIGSTOP)
+       continue;
++
++    // Don't mess with the signals that debuggerd_init() hooks for tombstones
++    // (SIGPIPE excluded)
++    //
++    // Ref: http://androidxref.com/5.1.0_r1/xref/bionic/linker/debugger.cpp#299
++    switch (nr) {
++    case SIGABRT:
++    case SIGBUS:
++    case SIGILL:
++    case SIGSEGV:
++#if defined(SIGSTKFLT)
++    case SIGSTKFLT:
++#endif
++    case SIGTRAP:
++      continue;
++    }
++
+     act.sa_handler = (nr == SIGPIPE) ? SIG_IGN : SIG_DFL;
+     CHECK_EQ(0, sigaction(nr, &act, nullptr));
+   }
+@@ -3930,6 +3956,9 @@ static void StartNodeInstance(void* arg) {
+     if (instance_data->use_debug_agent())
+       EnableDebug(env);
+ 
++    // TEST CASE: The next line should produce a debuggerd tombstone.
++    // *(char *) 0 = 0;
++
+     {
+       SealHandleScope seal(isolate);
+       bool more;
+-- 
+1.9.1
+

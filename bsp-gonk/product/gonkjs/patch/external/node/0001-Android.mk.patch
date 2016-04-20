@@ -1,0 +1,140 @@
+From 39f8e967e3bceea72872659272c240b5b99d7a89 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Sat, 16 May 2015 22:38:54 -0700
+Subject: [PATCH] Android.mk
+
+---
+ Android.mk | 121 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 121 insertions(+)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..3668af0
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,121 @@
++LOCAL_PATH := $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE := node
++LOCAL_MODULE_CLASS := EXECUTABLES
++LOCAL_MODULE_TAGS := optional
++LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_EXECUTABLES)
++LOCAL_32_BIT_ONLY := true
++LOCAL_CFLAGS := -DV8_ANDROID_LOG_STDOUT
++
++# If the 2nd arch exists assume it's 32bit and select it
++ifdef TARGET_2ND_ARCH
++LOCAL_2ND_ARCH_VAR_PREFIX := $(TARGET_2ND_ARCH_VAR_PREFIX)
++endif
++
++ifneq ($(TARGET_GE_MARSHMALLOW),)
++LOCAL_SDK_VERSION := 21
++LOCAL_NDK_STL_VARIANT := stlport_shared
++else
++include external/stlport/libstlport.mk
++endif
++
++include $(BUILD_SYSTEM)/binary.mk
++
++$(LOCAL_BUILT_MODULE): $(import_includes)
++$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
++$(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
++$(LOCAL_BUILT_MODULE): my_cc_wrapper := $(my_cc_wrapper)
++
++# Node's ./out/Makefile assumes builddir_name is a relative path.  Due to the
++# symlink of ./out to the absolute path of $(node_BUILD_DIR), ./configure ends
++# up generating ./out/Makefile with an absolute builddir_name.  An absolute
++# builddir_name trips up the fixup_dep macro in ./out/Makefile producing
++# invalid dependency files in ./out/Release/.deps/
++$(LOCAL_BUILT_MODULE): export builddir_name=.
++$(LOCAL_BUILT_MODULE): export node_BUILD_DIR := $(abspath $(dir $(LOCAL_BUILT_MODULE)))
++
++define __external_node_abs_import_includes
++  $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
++endef
++
++$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk
++ifeq ($(TARGET_GE_MARSHMALLOW),)
++$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(addprefix \
++    $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)/,libc.so libdl.so liblog.so)
++endif
++$(dir $(LOCAL_BUILT_MODULE))/Release/node:
++	@echo Building: $@
++	$(hide) rm -rf $(node_BUILD_DIR) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
++	$(hide) mkdir -p $(node_BUILD_DIR)
++	$(hide) ln -s $(node_BUILD_DIR) $(<D)/out
++	$(hide) cd $(<D) && \
++    _C_INCLUDES="\
++      $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
++      $(call __external_node_abs_import_includes,$(shell cat $(PRIVATE_IMPORT_INCLUDES))) \
++      $(addprefix -isystem ,\
++          $(abspath $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
++              $(filter-out $(PRIVATE_C_INCLUDES), \
++                  $(PRIVATE_TARGET_PROJECT_INCLUDES) \
++                  $(PRIVATE_TARGET_C_INCLUDES)))) \
++          $(ANDROID_BUILD_TOP) \
++        ) \
++      " && \
++    export CFLAGS="\
++      $$_C_INCLUDES \
++      $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
++          $(subst -mcpu=cortex-a15,-march=armv7-a,$(PRIVATE_TARGET_GLOBAL_CFLAGS)) \
++          $(PRIVATE_ARM_CFLAGS) \
++       ) \
++      $(PRIVATE_CFLAGS) \
++      $(PRIVATE_DEBUG_CFLAGS) \
++      "\ && \
++    export CXXFLAGS="\
++      $$_C_INCLUDES \
++      $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
++          $(subst -mcpu=cortex-a15,-march=armv7-a,$(PRIVATE_TARGET_GLOBAL_CFLAGS)) \
++          $(PRIVATE_TARGET_GLOBAL_CPPFLAGS) \
++          $(PRIVATE_ARM_CFLAGS) \
++       ) \
++      $(PRIVATE_RTTI_FLAG) \
++      $(PRIVATE_CFLAGS) \
++      $(PRIVATE_CPPFLAGS) \
++      $(PRIVATE_DEBUG_CFLAGS) \
++      "\ && \
++    export LDFLAGS="\
++      $(PRIVATE_LDFLAGS) \
++      $(PRIVATE_LDLIBS) -pie \
++      $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
++      $(and $(my_ndk_sysroot_lib),-B$(abspath $(my_ndk_sysroot_lib))) \
++      -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
++      -Wl,--start-group $(abspath \
++        $(PRIVATE_ALL_WHOLE_STATIC_LIBRARIES) \
++        $(PRIVATE_ALL_STATIC_LIBRARIES) \
++        $(PRIVATE_ALL_SHARED_LIBRARIES) \
++      ) -Wl,--end-group \
++      "\ && \
++    export V=$(if $(SHOW_COMMANDS),1) && \
++    export CC="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC))" && \
++    export CXX="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX))" && \
++    export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX))" && \
++    export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
++    export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \
++    ./configure --prefix=/ \
++                --without-snapshot \
++                --without-npm \
++                --with-arm-float-abi=softfp \
++                --with-arm-fpu=neon \
++                --dest-cpu=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) \
++                --dest-os=android && \
++    $(MAKE) V=$(if $(SHOW_COMMANDS),1)
++
++$(LOCAL_BUILT_MODULE): PRIVATE_STRIP := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
++$(LOCAL_BUILT_MODULE): PRIVATE_OBJCOPY := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY)
++$(LOCAL_BUILT_MODULE): PRIVATE_UNSTRIPPED_PATH := \
++  $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(dir $(LOCAL_INSTALLED_MODULE)))
++$(LOCAL_BUILT_MODULE): $(dir $(LOCAL_BUILT_MODULE))/Release/node | $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
++	$(transform-to-stripped)
++	mkdir -p $(dir $(PRIVATE_UNSTRIPPED_PATH))
++	cp -fa $< $(PRIVATE_UNSTRIPPED_PATH)
++
++LOCAL_2ND_ARCH_VAR_PREFIX :=
+-- 
+1.9.1
+

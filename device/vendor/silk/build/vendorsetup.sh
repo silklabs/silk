@@ -109,8 +109,8 @@ export NPM_CONFIG_LOGLEVEL=http
 if [[ ! -L .repo/board ]] || [[ ! -L .repo/product ]]; then
   poison_their_lunch Please run ./sync
 fi
-SILK_BOARD=$(readlink .repo/board)
-SILK_PRODUCT=$(readlink .repo/product)
+export SILK_BOARD=$(readlink .repo/board)
+export SILK_PRODUCT=$(readlink .repo/product)
 
 if [[ ! -d board/$SILK_BOARD ]]; then
   poison_their_lunch Unknown board: $SILK_BOARD

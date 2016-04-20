@@ -162,4 +162,4 @@ PRODUCT_PACKAGES += valgrind
 endif
 
 # include platform-specific silk makefile, if exists
--include gonk/${GONK}/silk_${GONK}.mk
+-include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk

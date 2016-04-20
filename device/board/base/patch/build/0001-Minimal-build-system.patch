@@ -218,16 +218,16 @@ index a56cd97..784c9d1 100644
  	@echo Successfully read the makefiles.
 +
 +
-+ifdef GONK
++ifdef SILK_BOARD
 +#
 +# Device shared objects may be used for linking against by placing them
 +# in prebuilts/device/$(TARGET_PRODUCT), alleviating the need to build them from
 +# source.
 +#
-+DEVICE_PREBUILTS := $(notdir $(wildcard prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/*.so))
++DEVICE_PREBUILTS := $(notdir $(wildcard prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/*.so))
 +
 +# Copy the shared object into the expected location
-+$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/%.so | $(ACP)
++$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/%.so | $(ACP)
 +	@echo Gonk Prebuilt: $@
 +	$(hide) mkdir -p $(@D)
 +	$(hide) $(ACP) $< $@

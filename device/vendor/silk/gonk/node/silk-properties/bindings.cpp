@@ -1,8 +1,3 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
 #include <nan.h>
 #ifdef ANDROID
 #include <cutils/properties.h>
@@ -24,6 +19,7 @@ NAN_METHOD(GetProperty) {
   char *property_name = *Nan::Utf8String(info[0]);
   len = property_get(property_name, property_value, default_value);
 #else
+  // Return default value
   strncpy(property_value, default_value, sizeof(property_value) - 1);
   property_value[sizeof(property_value)-1] = '\0';
   len = strlen(property_value);

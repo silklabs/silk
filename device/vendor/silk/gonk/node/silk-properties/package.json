@@ -1,7 +1,7 @@
 {
   "name": "silk-properties",
   "version": "0.0.1",
-  "description": "wrapper for android properties",
+  "description": "wrapper for system properties",
   "main": "build/Release/silk-properties.node",
   "scripts": {
     "install": "node-gyp rebuild"

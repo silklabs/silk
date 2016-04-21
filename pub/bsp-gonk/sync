@@ -157,10 +157,10 @@ $repo init \
 
 if $sync_n; then
   ./repocache fetch $board $product
-  $repo sync -n $repo_sync_j --current-branch --no-tags
+  $repo sync -n $repo_sync_j --quiet --current-branch --no-tags
 fi
 if $sync_l; then
-  $repo sync -l
+  $repo sync -l --quiet
   touch .repo/lastsync
 
   # Force re-patching on next build/envsetup.sh

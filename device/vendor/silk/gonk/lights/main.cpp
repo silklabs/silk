@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
-
 /*
   Shell access to hardware/libhardware/include/hardware/lights.h
 

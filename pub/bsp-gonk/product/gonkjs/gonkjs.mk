@@ -17,6 +17,9 @@ PRODUCT_PACKAGES += \
 # vendor/silk/silk-alog/
 PRODUCT_PACKAGES += silk-alog
 
+# vendor/silk/silk-properties/
+PRODUCT_PACKAGES += silk-properties
+
 # vendor/silk/stubs/
 PRODUCT_PACKAGES += fakeappops gonksched
 

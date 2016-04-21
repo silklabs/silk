@@ -3,6 +3,9 @@ PRODUCT_PACKAGES += node
 # vendor/silk/audio/
 PRODUCT_PACKAGES += silk-player silk-volume
 
+# vendor/silk/bledroid/
+PRODUCT_PACKAGES += silk-bledroid-daemon
+
 # vendor/silk/dhcputil/
 PRODUCT_PACKAGES += silk-dhcputil
 

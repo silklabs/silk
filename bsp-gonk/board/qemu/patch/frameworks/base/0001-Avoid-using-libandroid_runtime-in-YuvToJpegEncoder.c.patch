@@ -1,0 +1,30 @@
+From 52f60880dae023dadefe98a2589db75b89b10cbf Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 24 Aug 2015 21:43:56 -0700
+Subject: [PATCH] Avoid using libandroid_runtime in YuvToJpegEncoder.cpp, for
+ goldfish
+
+---
+ core/jni/android/graphics/YuvToJpegEncoder.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/jni/android/graphics/YuvToJpegEncoder.cpp b/core/jni/android/graphics/YuvToJpegEncoder.cpp
+index 6591d60..2151cee 100644
+--- a/core/jni/android/graphics/YuvToJpegEncoder.cpp
++++ b/core/jni/android/graphics/YuvToJpegEncoder.cpp
+@@ -216,6 +216,7 @@ void Yuv422IToJpegEncoder::configSamplingFactors(jpeg_compress_struct* cinfo) {
+ }
+ ///////////////////////////////////////////////////////////////////////////////
+ 
++#if 0
+ static jboolean YuvImage_compressToJpeg(JNIEnv* env, jobject, jbyteArray inYuv,
+         jint format, jint width, jint height, jintArray offsets,
+         jintArray strides, jint jpegQuality, jobject jstream,
+@@ -254,3 +255,4 @@ int register_android_graphics_YuvImage(JNIEnv* env)
+     return android::AndroidRuntime::registerNativeMethods(env, kClassPathName,
+             gYuvImageMethods, SK_ARRAY_COUNT(gYuvImageMethods));
+ }
++#endif
+-- 
+1.9.1
+

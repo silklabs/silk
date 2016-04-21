@@ -14,9 +14,12 @@ PRODUCT_PACKAGES += \
   silk-init-js \
   silk-debug-wrapper \
 
+# vendor/silk/stubs/
+PRODUCT_PACKAGES += fakeappops gonksched
+
 # vendor/silk/time_genoff/
 PRODUCT_PACKAGES += silk-time_genoff
 
-# vendor/silk/stubs/
-PRODUCT_PACKAGES += fakeappops gonksched
+# vendor/silk/wpad/
+PRODUCT_PACKAGES += silk-wpad
 

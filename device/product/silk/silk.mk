@@ -100,7 +100,6 @@ SILK_GONK_PROGIES := \
   libpreview \
   silk-ir \
   silk-lights \
-  silk-wpad \
   silk-sensors \
   silk-tts \
   tts-cereproc-heather-license \

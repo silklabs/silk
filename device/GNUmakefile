@@ -53,11 +53,7 @@ qemu:
     $(MAKE) --no-print-directory update.qemu; \
     export ANDROID_PRODUCT_OUT=out/prebuilt/qemu/aosp_arm; \
   fi; \
-  if [[ ! -f $$ANDROID_PRODUCT_OUT/system-qemu.img ]]; then \
-    echo "(Without system-qemu.img, changes to /system will not persist)"; \
-    cp -v $$ANDROID_PRODUCT_OUT/system{,-qemu}.img; \
-  fi; \
-  exec $(EMULATOR)
+  exec ./run-emulator
 
 .PHONY: emu
 emu: qemu

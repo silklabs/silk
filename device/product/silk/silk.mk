@@ -37,7 +37,6 @@ SILK_CORE := \
   silk-device-main \
   silk-base-version \
   silk-core-version \
-  silk-alog \
   silk-bledroid \
   silk-cv \
   silk-gc1 \

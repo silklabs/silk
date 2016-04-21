@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [[ -z $ANDROID_PRODUCT_OUT ]]; then
+  echo "Please run |source build/envsetup.sh|"
+  exit 1
+fi
+
+if [[ ! -d $ANDROID_PRODUCT_OUT ]]; then
+  echo "Directory does not exist: $ANDROID_PRODUCT_OUT"
+  exit 1
+fi
+
+# Without system-qemu.img changes to /system will not persist across emulator
+# restarts
+if [[ ! -f $ANDROID_PRODUCT_OUT/system-qemu.img ]]; then
+  cp -v $ANDROID_PRODUCT_OUT/system{,-qemu}.img
+fi
+
+set -x
+exec emulator -verbose -show-kernel -no-skin -no-audio -no-window

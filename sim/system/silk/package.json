@@ -13,8 +13,8 @@
     "silk-cv": "/device/vendor/silk/gonk/node/silk-cv",
     "silk-core-version": "/version",
     "silk-device-main": "/device/vendor/silk/core",
-    "silk-gc1": "/device/vendor/silk/gonk/node/silk-gc1",
-    "silk-movie": "/device/vendor/silk/gonk/node/silk-movie",
+    "silk-gc1": "/device/vendor/propsilk/silk-gc1",
+    "silk-movie": "/device/vendor/propsilk/silk-movie",
     "silk-properties": "/pub/bsp-gonk/vendor/silk/silk-properties"
   },
   "dependencies": {

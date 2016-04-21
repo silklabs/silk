@@ -14,6 +14,9 @@ PRODUCT_PACKAGES += \
   silk-init-js \
   silk-debug-wrapper \
 
+# vendor/silk/sensors/
+PRODUCT_PACKAGES += silk-sensors
+
 # vendor/silk/silk-alog/
 PRODUCT_PACKAGES += silk-alog
 

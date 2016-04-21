@@ -1,0 +1,19 @@
+{
+  "name": "silk-alog",
+  "version": "0.0.1",
+  "description": "logcat wrapper",
+  "main": "build/Release/silk-alog.node",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "author": {
+    "name": "Ben Turner",
+    "email": "bent@silklabs.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "nan": "2.2.0"
+  },
+  "gypfile": true,
+  "private": true
+}

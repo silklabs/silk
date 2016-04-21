@@ -14,6 +14,9 @@ PRODUCT_PACKAGES += \
   silk-init-js \
   silk-debug-wrapper \
 
+# vendor/silk/silk-alog/
+PRODUCT_PACKAGES += silk-alog
+
 # vendor/silk/stubs/
 PRODUCT_PACKAGES += fakeappops gonksched
 

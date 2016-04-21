@@ -98,7 +98,6 @@ SILK_GONK_PROGIES := \
   silk-capture \
   silk-dash \
   libpreview \
-  silk-dhcputil \
   silk-ir \
   silk-lights \
   silk-wpad \

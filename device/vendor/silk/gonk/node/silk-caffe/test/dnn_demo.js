@@ -144,6 +144,8 @@ class Dnn {
 
       this._netCaffe.setMean(modelMean);
       this._netCaffe.setLabels(modelDictionary);
+    }).catch((err) => {
+      throw err;
     });
   }
 
@@ -193,6 +195,8 @@ class Dnn {
         } catch (err) {
           console.error(`JS error ${err}`);
         }
+      }).catch((err) => {
+        throw err;
       });
     })
     .catch(error => {
@@ -228,7 +232,7 @@ dnn.init(modelProto, modelBin, modelMean, modelDictionary)
 .then(() => {
   return dnn.predict(testImage, useRcnn);
 })
-.catch(error => {
+.catch(err => {
   console.error(`Error running test: ${err.stack || err}`);
 });
 

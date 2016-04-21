@@ -45,12 +45,6 @@ const experiments = [
   { name: 'Expand=125', hr: [50, Infinity], wr: [-Infinity, Infinity], vr: [.65, Infinity], ar: 0, overlap: 0.5, filter: 1.25},
 ];
 
-// List of database names
-const dataNames = ['UsaTest', 'FDDB'];
-
-// Select databases, experiments and algorithms for evaluation
-let dataName = dataNames[0]; // Select one or more databases for evaluation
-
 // Remaining parameters and constants
 const aspectRatio = 0.41;         // Default aspect ratio for all bbs
 const bnds = [5, 5, 635, 475];    // Discard bbs outside this pixel range
@@ -64,9 +58,10 @@ const samples = [Math.pow(10, -2), Math.pow(10, -1.75), Math.pow(10, -1.5),
  *
  */
 class Evaluator {
-  constructor(gtPath, dtPath) {
+  constructor(gtPath, dtPath, dataName) {
     this.gtPath = gtPath;
     this.dtPath = dtPath;
+    this.dataName = dataName;
     this.model = null;
   }
 
@@ -75,8 +70,8 @@ class Evaluator {
    */
   run() {
     // Get database info
-    let res = dbInfo(dataName);
-    dataName = res.name;
+    let res = dbInfo(this.dataName);
+    this.dataName = res.name;
     let setIds = res.setIds;
     let vidIds = res.vidIds;
     let nFrame = res.nFrame;
@@ -90,7 +85,7 @@ class Evaluator {
     let exps = experiments[0];
 
     // Load detections and ground truth and evaluate
-    switch (dataName) {
+    switch (this.dataName) {
     case 'UsaTest':
       this.model = new Pedestrian();
       break;
@@ -99,7 +94,7 @@ class Evaluator {
       exps = experiments[1];
       break;
     default:
-      throw new Error(`Unknown dataset ${dataName}`);
+      throw new Error(`Unknown dataset ${this.dataName}`);
     }
 
     let dt = this.loadDt(setIds, vidIds, nFrame, skip);
@@ -239,25 +234,24 @@ class Evaluator {
 
 /*****************************************************************************/
 // Run evaluator
-if (process.argv.length < 4) {
+if (process.argv.length < 5) {
   console.log(`Usage:
-    gtPath: Location of annotation files
-    dtPath: Location of ground truth files
-    [databaseName]: Name of the dataset to use. One can specify a subset of a
-                    dataset by appending digits to the end of the name
-                    (eg. 'UsaTest01' indicates first set of 'UsaTest' and
-                    'UsaTest01005' indicate first set, fifth video)`);
-  process.exit(1); //eslint-disable-line no-process-exit
+    gtPath: Directory containing annotation files
+    dtPath: Directory containing detection files
+    databaseName: Name of the dataset to use. Supported datasets are 'UsaTest' and
+                  'FDDB'. One can specify a subset of a dataset by appending digits
+                  to the end of the name (eg. 'UsaTest01' indicates first set of
+                  'UsaTest' and 'UsaTest01005' indicate first set, fifth video and
+                  'FDDB01001' for first set first fold of FDDB data set.`);
+  process.exit(1);
 }
 
 let gtPath = process.argv[2];
 let dtPath = process.argv[3];
-if (process.argv.length >= 5) {
-  dataName = process.argv[4];
-}
+let dataName = process.argv[4];
 
 try {
-  let evaluator = new Evaluator(gtPath, dtPath);
+  let evaluator = new Evaluator(gtPath, dtPath, dataName);
   evaluator.run();
 } catch(err) {
   console.error(`Error running evaluator: ${err.stack || err}`);

@@ -76,8 +76,9 @@ private:
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
   vector<float> Predict(const cv::Mat& img);
-  void WrapInputLayer(vector<cv::Mat>* inputChannels);
-  void Preprocess(const cv::Mat& img, vector<cv::Mat>* inputChannels);
+  cv::Mat Preprocess(const cv::Mat& img);
+  template<typename Dtype> void cvMatToBlob(const cv::Mat& image,
+      Blob<Dtype>* blob);
 
   JSFUNC(Load);
   JSFUNC(SetMean);

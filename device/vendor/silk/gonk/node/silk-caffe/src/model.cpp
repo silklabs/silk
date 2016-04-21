@@ -557,17 +557,23 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
  * Runs forward pass for the whole network
  */
 vector<float> Model::Predict(const cv::Mat& img) {
-  vector<cv::Mat> inputChannels;
-  WrapInputLayer(&inputChannels);
+  cv::Mat newImg = Preprocess(img);
 
-  Preprocess(img, &inputChannels);
+  // Convert opencv matrix to Blob
+  Blob<float>* blob = new Blob<float>(1, newImg.channels(), newImg.rows,
+      newImg.cols);
+  cvMatToBlob(newImg, blob);
+
+  // Fill the bottom vector
+  vector<Blob<float>*> bottom;
+  bottom.push_back(blob);
+  float type = 0.0;
 
   chrono::time_point<chrono::system_clock> startTime = chrono::system_clock::now();
-  caffeNet->ForwardPrefilled();
+  caffeNet->Forward(bottom, &type);
   chrono::time_point<chrono::system_clock> endTime = chrono::system_clock::now();
   chrono::duration<double> elapsedSeconds = endTime - startTime;
   ALOGD("Forward finished in %.2f ms", elapsedSeconds.count() * 1000);
-
 
   // Copy the output layer to a vector
   Blob<float>* output_layer = caffeNet->output_blobs()[0];
@@ -576,31 +582,10 @@ vector<float> Model::Predict(const cv::Mat& img) {
   return vector<float>(begin, end);
 }
 
-/*
- * Wrap the input layer of the network in separate cv::Mat objects
- * (one per channel). This way we save one memcpy operation and we
- * don't need to rely on cudaMemcpy2D. The last pre-processing
- * operation will write the separate channels directly to the input
- * layer
- */
-void Model::WrapInputLayer(vector<cv::Mat>* inputChannels) {
-  Blob<float>* inputLayer = caffeNet->input_blobs()[0];
-
-  int width = inputLayer->width();
-  int height = inputLayer->height();
-  float* inputData = inputLayer->mutable_cpu_data();
-  for (int i = 0; i < inputLayer->channels(); ++i) {
-    cv::Mat channel(height, width, CV_32FC1, inputData);
-    inputChannels->push_back(channel);
-    inputData += width * height;
-  }
-}
-
 /**
  *
  */
-void Model::Preprocess(const cv::Mat& img,
-    vector<cv::Mat>* inputChannels) {
+cv::Mat Model::Preprocess(const cv::Mat& img) {
   // Convert the input image to the input image format of the network
   cv::Mat sample;
   if (img.channels() == 3 && numChannels == 1) {
@@ -635,15 +620,33 @@ void Model::Preprocess(const cv::Mat& img,
   if (scale > 0.0) {
     sampleNormalized *= scale;
   }
+  return sampleNormalized;
+}
 
-  // This operation will write the separate BGR planes directly to the
-  // input layer of the network because it is wrapped by the cv::Mat
-  // objects in inputChannels
-  cv::split(sampleNormalized, *inputChannels);
+/**
+ * Convert opencv matrix to Blob type
+ */
+template<typename Dtype>
+void Model::cvMatToBlob(const cv::Mat& image, Blob<Dtype>* blob) {
+  if (!image.data) {
+    JSTHROW("Image data must not be NULL");
+  }
+  if (image.rows <= 0) {
+    JSTHROW("Image height must be positive");
+  }
+  if (image.cols <= 0) {
+    JSTHROW("Image width must be positive");
+  }
 
-  if (reinterpret_cast<float*>(inputChannels->at(0).data)
-      != caffeNet->input_blobs()[0]->cpu_data()) {
-    JSTHROW("Input channels are not wrapping the input layer of the network");
+  const int numChannels = image.channels();
+  Dtype* data = blob->mutable_cpu_data();
+
+  for (int c = 0; c < numChannels; ++c) {
+    for (int h = 0; h < image.rows; ++h) {
+      for (int w = 0; w < image.cols; ++w) {
+        data[blob->offset(0, c, h, w)] = static_cast<Dtype>(image.at<cv::Vec3f> (h, w)[c]);
+      }
+    }
   }
 }
 

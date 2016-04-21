@@ -1,5 +1,8 @@
 PRODUCT_PACKAGES += node
 
+# vendor/silk/audio/
+PRODUCT_PACKAGES += silk-player silk-volume
+
 # vendor/silk/init/
 PRODUCT_PACKAGES += \
   init.silk.rc \

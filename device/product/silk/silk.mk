@@ -97,7 +97,6 @@ SILK_GONK_PROGIES := \
   silk-dash \
   libpreview \
   silk-ir \
-  silk-lights \
   silk-tts \
   tts-cereproc-heather-license \
   tts-cereproc-heather-voice \

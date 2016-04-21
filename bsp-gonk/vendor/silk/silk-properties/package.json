@@ -1,0 +1,19 @@
+{
+  "name": "silk-properties",
+  "version": "0.0.1",
+  "description": "wrapper for system properties",
+  "main": "build/Release/silk-properties.node",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "author": {
+    "name": "James Lal",
+    "email": "james@silklabs.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "nan": "2.2.0"
+  },
+  "gypfile": true,
+  "private": true
+}

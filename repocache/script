@@ -30,8 +30,8 @@ cd bsp-gonk/
 # --quiet repo syncing
 function keep_alive {
    while true; do
-      sleep 60
-      echo
+      echo "(Travis keep_alive)"
+      sleep 30s
    done
 }
 

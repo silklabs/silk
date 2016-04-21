@@ -1,0 +1,167 @@
+#!/bin/bash
+#
+# Adapted from https://github.com/mozilla-b2g/B2G/blob/master/run-gdb.sh
+#
+
+#set -x
+
+if [[ -z $ANDROID_PRODUCT_OUT ]] ; then
+  echo "Protip: For less delay run |source build/envsetup.sh| beforehand"
+  echo "----------------------------------------------------------------"
+  . build/envsetup.sh
+fi
+
+if [[ -z $ANDROID_PRODUCT_OUT ]] ; then
+  echo Error: ANDROID_PRODUCT_OUT not defined.  Run lunch?
+  exit 1
+fi
+
+if [[ ! -d $ANDROID_PRODUCT_OUT ]] ; then
+  echo Error: ANDROID_PRODUCT_OUT is not a directory
+  exit 1
+fi
+
+get_pid_by_name() {
+    echo $($ADB shell "toolbox ps '$1' | \
+      ( read header; \
+        while read user pid ppid vsize rrs wchan pc state name _rest; do \
+          if [ \$state != 'Z' ]; then \
+            echo -n \$pid; \
+            return; \
+          fi; \
+        done; \
+      )")
+}
+
+ADB=${ADB:-adb}
+if [ ! -f "`which \"$ADB\"`" ]; then
+	ADB=out/host/`uname -s | tr "[[:upper:]]" "[[:lower:]]"`-x86/bin/adb
+fi
+echo "ADB Location: " $ADB
+
+TARGET_ARCH=arm
+TARGET_TRIPLE=arm-linux-androideabi
+
+HOST_OS=$(uname -s | tr "[[:upper:]]" "[[:lower:]]")-x86
+
+if [ -z "${GDB}" ]; then
+   if [ -d ${ANDROID_BUILD_TOP}/prebuilts ]; then
+      GDB=${ANDROID_TOOLCHAIN}/${TARGET_TRIPLE}-gdb
+      PYTHON_DIR=${ANDROID_BUILD_TOP}/prebuilts/python/${HOST_OS}/2.7.5
+      if [ -d $PYTHON_DIR ]; then
+        export PYTHONHOME=$PYTHON_DIR
+      fi
+   else
+      echo "Not sure where gdb is located. Override using GDB= or fix the script."
+      exit 1
+   fi
+fi
+
+GDBINIT=/tmp/gdbinit.$(whoami).$$
+
+SYMDIR=$ANDROID_PRODUCT_OUT/symbols
+
+GDBSERVER_PID=$(get_pid_by_name gdbserver)
+
+GDB_PORT=$((10000 + $(id -u) % 50000))
+
+CORE_FILE=
+if [ "$1" = "attach" ] ; then
+   DEBUG_PID=$2
+   if [ -z "$DEBUG_PID" ]; then
+      echo Error: No PID to attach to
+      exit 1
+   fi
+
+   if [ -z "$($ADB ls /proc/$DEBUG_PID)" ] ; then
+      ATTACH_TARGET=$DEBUG_PID
+      DEBUG_PID=$(get_pid_by_name "$DEBUG_PID")
+      if [ -z "$DEBUG_PID" ] ; then
+        echo Error: PID $ATTACH_TARGET is invalid
+        exit 1;
+      fi
+      echo "Found $ATTACH_TARGET PID: $DEBUG_PID"
+   fi
+   GDB_PORT=$((10000 + ($DEBUG_PID + $(id -u)) % 50000))
+   # cmdline is null separated
+   DEBUG_BIN=$($ADB shell cat /proc/$DEBUG_PID/cmdline | tr '\0' '\n' | head -1)
+else
+   if [ -z "$1" ]; then
+      echo "Error: Program name to debug not provided"
+      exit 1
+   fi
+   DEBUG_BIN=$1
+   if [ -n "$2" ]; then
+      CORE_FILE=$2
+      if [ ! -f $CORE_FILE ]; then
+        echo "Error: Core file does not exist: $CORE_FILE"
+        exit 1
+      fi
+   fi
+fi
+
+PROG=${SYMDIR}${DEBUG_BIN}
+if [ ! -f $PROG ]; then
+  PROG=${SYMDIR}/system/silk/bin/${DEBUG_BIN}
+  if [ ! -f $PROG ]; then
+    PROG=${SYMDIR}/system/bin/${DEBUG_BIN}
+    if [ ! -f $PROG ]; then
+      PROG=${SYMDIR}/${DEBUG_BIN}
+      if [ ! -f $PROG ]; then
+        # TODO: Make this search smarter
+        echo Error: Unable to find symbols for $DEBUG_BIN
+        exit 1
+      fi
+    fi
+  fi
+fi
+
+
+for p in $GDBSERVER_PID ; do
+   $ADB shell cat /proc/$p/cmdline | grep -q :$GDB_PORT && ( \
+      echo ..killing gdbserver pid $p
+      $ADB shell kill $p
+   ) || echo ..ignoring gdbserver pid $p
+
+done
+
+$ADB forward tcp:$GDB_PORT tcp:$GDB_PORT
+
+if [ "$1" = "attach" ]; then
+   $ADB shell gdbserver :$GDB_PORT --attach $DEBUG_PID &
+else
+
+   [ -n "$DEBUG_PID" ] && $ADB shell kill $DEBUG_PID
+
+   $ADB shell $GDBSERVER_ENV gdbserver --multi :$GDB_PORT $DEBUG_BIN $@ &
+fi
+
+
+NODE_SEARCH_PATH=$SYMDIR/system/silk/node_modules:$SYMDIR/system/silk/node_modules/build
+NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/system/silk/lib
+
+sleep 1
+echo "set solib-absolute-prefix $SYMDIR" > $GDBINIT
+echo "handle SIGPIPE nostop" >> $GDBINIT
+echo "set solib-search-path $SYMDIR/system/lib/:$ANDROID_PRODUCT_OUT/system/lib/:$SYMDIR/system/vendor/lib/:$ANDROID_PRODUCT_OUT/system/vendor/lib/:$SYMDIR/system/lib/hw:$ANDROID_PRODUCT_OUT/system/lib/hw:$NODE_SEARCH_PATH" >> $GDBINIT
+echo "target extended-remote :$GDB_PORT" >> $GDBINIT
+
+
+if [[ "$-" == *x* ]]; then
+    # Since we got here, set -x was enabled near the top of the file. print
+    # out the contents of of the gdbinit file.
+    echo "----- Start of $GDBINIT -----"
+    cat $GDBINIT
+    echo "----- End of $GDBINIT -----"
+fi
+
+
+# HACK: relocate to root workspace directory to ensure that GDB can find source
+# files, as they are all (mostly) relative to the build root.  This should be
+# replaced with the proper incantation in $GDBINIT eventually
+cd $ANDROID_BUILD_TOP
+
+#    echo "ddd --debugger \"$GDB -x $GDBINIT\" $PROG"
+#    ddd --debugger "$GDB -x $GDBINIT" $PROG
+echo $GDB -x $GDBINIT $PROG $CORE_FILE
+$GDB -x $GDBINIT $PROG $CORE_FILE

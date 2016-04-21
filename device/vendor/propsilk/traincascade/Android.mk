@@ -7,5 +7,5 @@ LOCAL_MODULE_CLASS := ETC
 # as the training data set
 LOCAL_MODULE_PATH  := $(TARGET_OUT_DATA)/silk/opencv
 
-LOCAL_PREBUILT_MODULE_FILE := vendor/silk/traincascade/traincascade
+LOCAL_PREBUILT_MODULE_FILE := vendor/propsilk/traincascade/traincascade
 include $(BUILD_PREBUILT)

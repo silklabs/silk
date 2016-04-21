@@ -9,8 +9,8 @@
   },
   "author": "Silk Labs Inc.",
   "silkDependencies": {
-    "silk-caffe": "/device/vendor/silk/gonk/node/silk-caffe",
-    "silk-cv": "/device/vendor/silk/gonk/node/silk-cv",
+    "silk-caffe": "/device/vendor/propsilk/silk-caffe",
+    "silk-cv": "/device/vendor/propsilk/silk-cv",
     "silk-core-version": "/version",
     "silk-device-main": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",

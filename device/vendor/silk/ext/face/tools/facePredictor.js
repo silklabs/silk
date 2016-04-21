@@ -6,19 +6,13 @@
 
 'use strict';
 
-require('babel/register')({
-  stage: '1',
-  optional: ['regenerator', 'asyncToGenerator', 'es7.classProperties'],
-  only: require('silk-babeldeps'),
-});
-
-let FaceDetector = require('../lib/face_detector');
-let Framework = require('silk-exttest');
-let cv = require('opencv');
-let path = require('path');
-let fs = require('fs');
-let mkdirp = require('mkdirp');
-let imageSize = require('fast-image-size');
+import FaceDetector from '../lib/face_detector';
+import Framework from 'silk-exttest';
+import cv from 'opencv';
+import path from 'path';
+import fs from 'fs';
+import mkdirp from 'mkdirp';
+import imageSize from 'fast-image-size';
 
 const env = new Framework('face', cv);
 const camera = env.camera;

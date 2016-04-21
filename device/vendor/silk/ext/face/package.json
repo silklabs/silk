@@ -10,7 +10,7 @@
     "test": "./bin/test",
     "clean": "rm -rf node_modules",
     "lint": "eslint tools/*.js",
-    "predict": "DEBUG=silk-face:* babel-node -- tools/facePredictor.js"
+    "predict": "DEBUG=silk-face:* ../../../../../babel-run/babel-node tools/facePredictor.js"
   },
   "silkDependencies": {
     "eslint-config-silk": "/eslint",
@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "babel": "5.8.35",
-    "babel-cli": "6.5.1",
     "babel-eslint": "5.0.0",
     "eslint": "1.10.3",
     "eslint-plugin-import": "0.12.0",

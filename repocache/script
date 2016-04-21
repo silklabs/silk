@@ -24,7 +24,6 @@ if [[ -n "$GONK_REPO" ]]; then
 fi
 
 cd bsp-gonk/
-./repocache build $GONK silk
 
 # Helper to make a noise to avoid Travis from killing the job after 10 minutes of
 # --quiet repo syncing

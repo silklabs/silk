@@ -2,7 +2,7 @@
 
 # Install silkDependencies
 if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
-  ../../../../../../npm_postinstall
+  ../../../../npm_postinstall
 else
   $ANDROID_BUILD_TOP/../npm_postinstall
 fi

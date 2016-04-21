@@ -1,0 +1,27 @@
+From 657bbc8fdf9031caff335ba7494b7908b33c3799 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 9 Jun 2015 20:34:32 -0700
+Subject: [PATCH] Add silk product
+
+---
+ full_mako.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/full_mako.mk b/full_mako.mk
+index 3b40137..a6276c4 100644
+--- a/full_mako.mk
++++ b/full_mako.mk
+@@ -35,7 +35,9 @@ PRODUCT_DEVICE := mako
+ PRODUCT_BRAND := Android
+ PRODUCT_MODEL := AOSP on Mako
+ PRODUCT_MANUFACTURER := LGE
+-PRODUCT_RESTRICT_VENDOR_FILES := true
++
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
++$(call inherit-product, vendor/lge/mako/mako-vendor-blobs.mk)
+ 
+ # Inherit from hardware-specific part of the product configuration
+ $(call inherit-product, device/lge/mako/device.mk)
+-- 
+1.9.1
+

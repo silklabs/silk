@@ -1,0 +1,52 @@
+#!/system/bin/sh
+#
+# Wrapper to run debug tools on services that cannot be launched from
+# adb shell.
+#
+
+# Get the service executable name
+SERVICE=${1/*\//}
+
+info() {
+  log -p i -t silk-debug-wrapper $@
+}
+
+if [ "$(getprop ro.debuggable)" == "1" ]; then
+  if [ "$(getprop persist.silk.coredump)" == "1" ]; then
+    if [ ! -d /data/core ]; then
+      mkdir /data/core
+      chmod 0733 /data/core
+      chown root:root /data/core
+    fi
+    echo "/data/core/%e.%p.%t.core" > /proc/sys/kernel/core_pattern
+    echo "1" > /proc/sys/fs/suid_dumpable
+
+    prlimit $BASHPID 4 -1 -1 # RLIMIT_CORE = 4
+    info Core dump enabled
+  fi
+fi
+
+VALGRIND=
+VALGRIND_ARGS=
+VALGRIND_SERVICES=$(getprop persist.silk.valgrind)
+if [ "$VALGRIND_SERVICES" != "" ]; then
+  # Replace ',' with ' ' to iterate more easily around list
+  SERVICES=${VALGRIND_SERVICES/,/ }
+
+  for name in $SERVICES; do
+    if [ "$name" == "$SERVICE" ]; then
+      info "Enabling valgrind for $name"
+      VALGRIND=valgrind
+      VALGRIND_ARGS=$(getprop persist.silk.valgrind.args)
+      break;
+    fi
+  done
+fi
+
+export LOGWRAPPER=
+if [ $PPID -eq 1 ]; then
+  LOGWRAPPER="logwrapper"
+fi
+
+$LOGWRAPPER $VALGRIND $VALGRIND_ARGS $@
+exit 1

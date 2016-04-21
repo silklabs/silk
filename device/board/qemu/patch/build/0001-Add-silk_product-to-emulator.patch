@@ -1,0 +1,24 @@
+From 435520bbfc858f66f45ce0973ff9e4856c272f55 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 24 Aug 2015 21:38:29 -0700
+Subject: [PATCH] Add silk_product to emulator
+
+---
+ target/product/emulator.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/target/product/emulator.mk b/target/product/emulator.mk
+index 62099df..cef8e33 100644
+--- a/target/product/emulator.mk
++++ b/target/product/emulator.mk
+@@ -43,6 +43,7 @@ PRODUCT_PACKAGES += \
+     sensors.goldfish \
+     e2fsck
+ 
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
+
+ PRODUCT_COPY_FILES += \
+     device/generic/goldfish/fstab.goldfish:root/fstab.goldfish \
+-- 
+1.9.1
+

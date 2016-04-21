@@ -9,7 +9,6 @@
  * @flow
  */
 
-import invariant from 'assert';
 import { Duplex } from 'stream';
 import createLog from 'silk-log';
 
@@ -34,7 +33,7 @@ function removeListener(target: any, event: string, fn: Function): void {
 export default class WebSocketDuplex extends Duplex {
 
   _ws: WebSocket;
-  _buffers: Array<Buffer> = [];
+  _buffers: Array<Buffer | string> = [];
   _finished: bool = false;
   _autoClose: bool = true;
   _log: Logger = log;
@@ -112,8 +111,6 @@ export default class WebSocketDuplex extends Duplex {
     encoding: string,
     callback: (error: ?Error, data?: Buffer | string) => void
   ): boolean {
-    invariant(buffer instanceof Buffer);
-
     const { _ws: ws } = this;
 
     // Write after close ...

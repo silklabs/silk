@@ -51,8 +51,8 @@ export type CallOptions = {
 
 type Caller = [RTCPeerConnection, Map<string, RTCDataChannel>];
 
-async function _peer(caller: Caller, transport: Duplex): Promise<void> {
-  const [peerConnection, dataChannels] = caller;
+function _peer(caller: Caller, transport: Duplex): Promise<void> {
+  const [peerConnection] = caller;
 
   const onIceCandidate = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
@@ -64,15 +64,23 @@ async function _peer(caller: Caller, transport: Duplex): Promise<void> {
       }
     }
   };
-
   peerConnection.addEventListener('icecandidate', onIceCandidate);
 
-  const transportError = eventToPromise(transport, 'error').
-    then((err) => {
+  const transportError = eventToPromise(transport, 'error')
+    .then((err) => {
       log.debug('Error in stream transport', err, err.stack);
       peerConnection.removeEventListener('icecandidate', onIceCandidate);
       throw err;
     });
+
+  return Promise.race([
+    _call(caller, transport),
+    transportError,
+  ]);
+}
+
+async function _call(caller: Caller, transport: Duplex): Promise<void> {
+  const [peerConnection, dataChannels] = caller;
 
   log.info('creating offer...');
   let desc = await webrtcPromise(peerConnection, 'createOffer');
@@ -95,7 +103,6 @@ async function _peer(caller: Caller, transport: Duplex): Promise<void> {
   let answer = await Promise.race([
     eventToPromise(transport, 'data'),
     timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for answer')),
-    transportError,
   ]);
 
   log.info('caller got answer');
@@ -105,10 +112,7 @@ async function _peer(caller: Caller, transport: Duplex): Promise<void> {
     new WebRTC.RTCSessionDescription(answer)
   );
 
-  await Promise.race([
-    waitForIce(log, 'caller', peerConnection, transport),
-    transportError,
-  ]);
+  await waitForIce(log, 'caller', peerConnection, transport);
   transport.end();
 }
 

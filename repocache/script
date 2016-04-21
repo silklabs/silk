@@ -1,8 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash
 #
 # Run from silk-core
 #
 
+set -e
 GET_OFF_MY_LAWN=1
 source setup
 
@@ -37,9 +38,10 @@ function keep_alive {
 keep_alive &
 keep_alive_pid=$!
 ./repocache build $GONK silk
-
+set +e
 kill $keep_alive_pid
 wait $keep_alive_pid 2>/dev/null
+set -e
 
 cd ..
 

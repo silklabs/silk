@@ -25,6 +25,23 @@ fi
 
 cd bsp-gonk/
 ./repocache build $GONK silk
+
+# Helper to make a noise to avoid Travis from killing the job after 10 minutes of
+# --quiet repo syncing
+function keep_alive {
+   while true; do
+      sleep 60
+      echo
+   done
+}
+
+keep_alive &
+keep_alive_pid=$!
+./repocache build $GONK silk
+
+kill $keep_alive_pid
+wait $keep_alive_pid 2>/dev/null
+
 cd ..
 
 mkdir -p deploy/repocache

@@ -105,7 +105,6 @@ SILK_GONK_PROGIES := \
   silk-volume \
   silk-wpad \
   silk-sensors \
-  silk-time_genoff \
   silk-tts \
   tts-cereproc-heather-license \
   tts-cereproc-heather-voice \

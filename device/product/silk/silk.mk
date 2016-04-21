@@ -101,8 +101,6 @@ SILK_GONK_PROGIES := \
   silk-dhcputil \
   silk-ir \
   silk-lights \
-  silk-player \
-  silk-volume \
   silk-wpad \
   silk-sensors \
   silk-tts \

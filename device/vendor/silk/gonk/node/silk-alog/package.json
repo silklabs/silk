@@ -1,7 +1,7 @@
 {
   "name": "silk-alog",
   "version": "0.0.1",
-  "description": "wrapper for android log",
+  "description": "logcat wrapper",
   "main": "build/Release/silk-alog.node",
   "scripts": {
     "install": "node-gyp rebuild"
@@ -10,7 +10,7 @@
     "name": "Ben Turner",
     "email": "bent@silklabs.com"
   },
-  "license": "Proprietary",
+  "license": "MIT",
   "dependencies": {
     "nan": "2.2.0"
   },

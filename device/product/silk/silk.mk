@@ -108,7 +108,6 @@ PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 
 # external/...
 PRODUCT_PACKAGES += \
-  opencv \
   kissfft \
   v8-profiler \
   bufferutil \

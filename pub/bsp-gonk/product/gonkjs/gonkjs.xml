@@ -29,6 +29,12 @@
            path="external/opencv3_contrib"
            remote="github"
            revision="refs/tags/3.1.0" clone-depth="100"/>
+  <project name="peterbraden/node-opencv"
+           path="external/node-opencv"
+           remote="github"
+           revision="13a1de4f9259b5e745021f3198a8339ac99edecd"
+           upstream="master"
+           clone-depth="42"/>
 
   <project name="sandeepmistry/noble"
            path="external/noble"

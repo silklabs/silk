@@ -34,8 +34,8 @@ LOCAL_C_INCLUDES := \
   frameworks/av/media/libstagefright \
   frameworks/av/media/libstagefright/include \
   frameworks/native/include/media/openmax \
-  vendor/silk/gonk/jsoncpp \
-  vendor/silk/gonk/SocketListener \
+  vendor/silk/jsoncpp \
+  vendor/silk/SocketListener \
 
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/6.x

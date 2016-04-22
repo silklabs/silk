@@ -13,4 +13,4 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.bt.socket.scan_dur_sec=5 \
   ro.silk.bt.socket.max_simul=1 \
 
-PRODUCT_COPY_FILES += gonk/mako/media/logo.png:system/silk/media/logo.png
+PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png

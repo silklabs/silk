@@ -18,5 +18,5 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.audio.hw.enabled=false \
 
 # Use the logo from Mako
-PRODUCT_COPY_FILES += gonk/mako/media/logo.png:system/silk/media/logo.png
+PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png
 

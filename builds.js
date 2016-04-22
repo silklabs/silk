@@ -103,6 +103,7 @@ module.exports = {
     },
     events: ['pr'],
     files: [
+      'device/**',
       'pub/bsp-gonk/**',
     ],
   }),
@@ -117,6 +118,7 @@ module.exports = {
     },
     events: ['push'],
     files: [
+      'device/**',
       'pub/bsp-gonk/**',
     ],
   }),

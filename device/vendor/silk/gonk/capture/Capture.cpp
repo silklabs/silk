@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
-
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture"
 #include <utils/Log.h>

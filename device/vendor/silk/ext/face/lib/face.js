@@ -5,6 +5,7 @@
  */
 
 import movingAverage from 'moving-average';
+import HeartRate from './heartrate';
 import type { Env, Log } from 'silk-sdk-glue/interface/env';
 import * as config from './face_config';
 
@@ -61,6 +62,7 @@ export class Face {
   _doneCollectingFaces: boolean;
   _exponentialMovingAverage: Function;
   _movementTrackingEnabled: bool = false;
+  _heartrate: HeartRate;
 
   // Who this face has been recognized as
   faceId: ?FaceId = null;
@@ -86,6 +88,10 @@ export class Face {
     // Calculate exponential moving average over FACE_AVERAGE_DURATION
     // Reference https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
     this._exponentialMovingAverage = movingAverage(config.FACE_AVERAGE_DURATION);
+
+    // Start heart rate estimation on the face
+    this._heartrate = new HeartRate(env, this);
+    this._heartrate.start();
   }
 
   /**
@@ -163,5 +169,9 @@ export class Face {
     if (this._movementTrackingEnabled) {
       this.faceMovementEstimation(this.rect);
     }
+  }
+
+  cancel() {
+    this._heartrate.cancel();
   }
 }

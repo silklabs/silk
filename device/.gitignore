@@ -62,11 +62,6 @@
 /vendor/silk/**/*.js.map
 .gulpcache
 /vendor/silk/ext/**/npm-debug.log
-vendor/silk/ext/clapper/clapper.js
-vendor/silk/ext/nightlight/nightlight.js
-vendor/silk/ext/detectcat/detectcat.js
-vendor/silk/ext/oksilk/oksilk.js
-vendor/silk/ext/dnn/dnn.js
 
 # repo projects from msm8916 gonk
 /build.sh

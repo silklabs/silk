@@ -9,4 +9,8 @@
            path="external/npm"
            remote="github"
            revision="refs/tags/v2.13.1" clone-depth="1"/>
+  <project name="mozilla-b2g/librecovery"
+           path="external/librecovery"
+           remote="github"
+           revision="v2.2" clone-depth="1"/>
 </manifest>

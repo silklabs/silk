@@ -1,0 +1,25 @@
+From 374d1f64cfc984d230023e03a703766fb0d20c6c Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Fri, 21 Aug 2015 13:00:55 -0700
+Subject: [PATCH] Put librecovery_test in /system/silk/bin
+
+---
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 926b910..b62b6ac 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -60,7 +60,7 @@ LOCAL_SRC_FILES := librecovery_test.c $(LIBRECOVERY_SRC_FILES)
+ LOCAL_STATIC_LIBRARIES := libcutils libc liblog
+ LOCAL_CFLAGS := $(LIBRECOVERY_CFLAGS)
+ LOCAL_MODULE_TAGS := tests
+-include $(BUILD_EXECUTABLE)
++include $(BUILD_SILK_EXECUTABLE)
+ 
+ # librecovery test data -- this uses a local make target instead of an AOSP
+ # module to avoid being built by default (signing an update zip requires java)
+-- 
+2.5.0
+

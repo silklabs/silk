@@ -1,0 +1,18 @@
+{
+  "name": "silk-log",
+  "version": "0.15.0",
+  "description": "Logger conventions built around debug",
+  "main": "index.js",
+  "scripts": {
+    "test": "DEBUG=silk-log* mocha --harmony --ui tdd --compilers js:babel/register --timeout 45000 --require test/setup.js test/index_test.js test/device_test.js"
+  },
+  "author": "Ben Turner",
+  "dependencies": {
+    "debug": "2.2.0"
+  },
+  "devDependencies": {
+    "babel": "5.8.35",
+    "mocha": "2.3.4"
+  },
+  "private": true
+}

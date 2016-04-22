@@ -22,7 +22,7 @@
     "kissfft": "silklabs/node-kissfft#7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c",
     "mic": "2.0.1",
     "noble": "1.3.0",
-    "opencv": "peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c",
+    "opencv": "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd",
     "node-webrtc": "git+ssh://git@github.com/silklabs/node-webrtc#master",
     "segfault-handler": "1.0.0"
   },

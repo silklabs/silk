@@ -1,0 +1,12 @@
+{
+  "name": "eslint-config-silk",
+  "version": "0.15.0",
+  "description": "Silk eslint rules",
+  "main": "index.js",
+  "dependencies": {},
+  "peerDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "eslint-plugin-react": "3.16.1"
+  }
+}

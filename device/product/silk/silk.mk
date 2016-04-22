@@ -80,13 +80,6 @@ SILK_EXT := \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 
-# external/opencv2
-OPENCV_PACKAGES := \
-  opencv_createsamples \
-  opencv_traincascade
-
-PRODUCT_PACKAGES += $(OPENCV_PACKAGES)
-
 # vendor/silk/gonk/...
 SILK_INIT := \
   silk-props-json \

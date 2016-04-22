@@ -9,8 +9,25 @@
            path="external/npm"
            remote="github"
            revision="refs/tags/v2.13.1" clone-depth="1"/>
+
   <project name="mozilla-b2g/librecovery"
            path="external/librecovery"
            remote="github"
            revision="v2.2" clone-depth="1"/>
+
+  <project name="intel-tbb/intel-tbb"
+           path="external/intel-tbb"
+           remote="github"
+           revision="3260c82d3b9382939f53e6398135962ccf8adb03"
+           upstream="master"
+           clone-depth="42"/>
+  <project name="Itseez/opencv"
+           path="external/opencv3"
+           remote="github"
+           revision="refs/tags/3.1.0" clone-depth="100"/>
+  <project name="Itseez/opencv_contrib"
+           path="external/opencv3_contrib"
+           remote="github"
+           revision="refs/tags/3.1.0" clone-depth="100"/>
+
 </manifest>

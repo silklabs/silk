@@ -1,9 +1,7 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * This is the device version of ./index.js
+ *
+ * TODO: Unify with index.js
  */
 
 'use strict';

@@ -1,12 +1,3 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=2 et :
- */
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
-
 #ifndef MPEG4_SEGMENTER_DASH_H_
 #define MPEG4_SEGMENTER_DASH_H_
 

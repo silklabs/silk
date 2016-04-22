@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
-
 #ifndef AUDIO_SOURCE_EMITTER_H_
 #define AUDIO_SOURCE_EMITTER_H_
 

@@ -16,7 +16,6 @@ SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/mo
 # should be added to vendor/silk/core/silk-props.json instead
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \
- persist.silk.capture.dash=true \
  persist.silk.capture.mute=true \
 
 # Properties only for debug builds
@@ -81,20 +80,12 @@ SILK_EXT := \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 
-# external/opencv2
-OPENCV_PACKAGES := \
-  opencv_createsamples \
-  opencv_traincascade
-
-PRODUCT_PACKAGES += $(OPENCV_PACKAGES)
-
 # vendor/silk/gonk/...
 SILK_INIT := \
   silk-props-json \
 
 SILK_GONK_PROGIES := \
   silk-bledroid \
-  silk-capture \
   silk-dash \
   libpreview \
   silk-ir \
@@ -114,9 +105,6 @@ SILK_UI_PACKAGES := \
 PRODUCT_PACKAGES += $(SILK_INIT)
 PRODUCT_PACKAGES += $(SILK_GONK_PROGIES)
 PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
-
-ENABLE_LIBRECOVERY := true
-PRODUCT_PACKAGES += librecovery_test
 
 # external/...
 PRODUCT_PACKAGES += \

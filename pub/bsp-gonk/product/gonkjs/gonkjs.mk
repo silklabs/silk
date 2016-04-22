@@ -11,6 +11,9 @@ PRODUCT_PACKAGES += silk-player silk-volume
 # vendor/silk/bledroid/
 PRODUCT_PACKAGES += silk-bledroid-daemon
 
+# vendor/silk/capture/
+PRODUCT_PACKAGES += silk-capture
+
 # vendor/silk/dhcputil/
 PRODUCT_PACKAGES += silk-dhcputil
 
@@ -42,4 +45,8 @@ PRODUCT_PACKAGES += silk-time_genoff
 
 # vendor/silk/wpad/
 PRODUCT_PACKAGES += silk-wpad
+
+# external/librecovery/
+ENABLE_LIBRECOVERY := true
+PRODUCT_PACKAGES += librecovery_test
 

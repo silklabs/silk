@@ -1,12 +1,3 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
- * vim: sw=4 ts=4 et :
- */
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
-
 #ifndef MPEG4_SEGMENT_DASH_WRITER_H_
 #define MPEG4_SEGMENT_DASH_WRITER_H_
 

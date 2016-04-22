@@ -50,3 +50,6 @@ PRODUCT_PACKAGES += silk-wpad
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery_test
 
+# external/{bleno,noble}/...
+PRODUCT_PACKAGES += bleno noble
+

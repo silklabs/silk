@@ -30,4 +30,13 @@
            remote="github"
            revision="refs/tags/3.1.0" clone-depth="100"/>
 
+  <project name="sandeepmistry/noble"
+           path="external/noble"
+           remote="github"
+           revision="refs/tags/v1.1.0" clone-depth="1"/>
+  <project name="sandeepmistry/bleno"
+           path="external/bleno"
+           remote="github"
+           revision="refs/tags/0.1.13" clone-depth="1"/>
+
 </manifest>

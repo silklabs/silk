@@ -89,10 +89,6 @@
            clone-depth="42"/>
 
   <!-- node modules -->
-  <project name="sandeepmistry/bleno"
-           path="external/bleno"
-           remote="github"
-           revision="refs/tags/0.1.13" clone-depth="1"/>
   <project name="peterbraden/node-opencv"
            path="external/node-opencv"
            remote="github"
@@ -105,10 +101,6 @@
            revision="7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c"
            upstream="master"
            clone-depth="42"/>
-  <project name="sandeepmistry/noble"
-           path="external/noble"
-           remote="github"
-           revision="refs/tags/v1.1.0" clone-depth="1"/>
   <project name="mikeseven/node-opencl"
            path="external/node-opencl"
            remote="github"

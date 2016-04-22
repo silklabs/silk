@@ -46,3 +46,7 @@ PRODUCT_PACKAGES += silk-time_genoff
 # vendor/silk/wpad/
 PRODUCT_PACKAGES += silk-wpad
 
+# external/librecovery/
+ENABLE_LIBRECOVERY := true
+PRODUCT_PACKAGES += librecovery_test
+

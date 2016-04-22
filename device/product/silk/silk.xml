@@ -14,11 +14,6 @@
           revision="Always invalid.  Contact releng for more details"
           sync-j="4"/>
 
-  <project name="mozilla-b2g/librecovery"
-           path="external/librecovery"
-           remote="github"
-           revision="v2.2" clone-depth="1"/>
-
   <project name="intel-tbb/intel-tbb"
            path="external/intel-tbb"
            remote="github"

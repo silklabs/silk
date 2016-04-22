@@ -1,4 +1,9 @@
+
 PRODUCT_PACKAGES += node
+
+# Select the device main program
+SILK_DEVICE_MAIN_PATH=$(abspath $(ANDROID_BUILD_TOP)/../device-main)
+PRODUCT_PACKAGES += silk-device-main
 
 # vendor/silk/audio/
 PRODUCT_PACKAGES += silk-player silk-volume

@@ -9,7 +9,8 @@
 BUILD_VERSION_TAGS += $(BRANCH)
 
 # inherit from gonkjs product
--include product/gonkjs/gonkjs.mk
+include product/gonkjs/gonkjs.mk
+SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/
 
 # Properties that are only read using getprop in sysutils.js
 # should be added to vendor/silk/core/silk-props.json instead

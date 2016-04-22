@@ -1,0 +1,2945 @@
+From 7af361c50d8d1b8b21149df92eacb73c9d819798 Mon Sep 17 00:00:00 2001
+From: Ben Turner <bent@silklabs.com>
+Date: Wed, 12 Aug 2015 12:54:57 -0700
+Subject: [PATCH] Add noble bindings for bledroid
+
+---
+ Android.mk              |    6 +
+ lib/android/bindings.js | 2848 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/noble.js            |    2 +
+ package.json            |   13 +-
+ 4 files changed, 2865 insertions(+), 4 deletions(-)
+ create mode 100644 Android.mk
+ create mode 100644 lib/android/bindings.js
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..f8275e2
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,6 @@
++LOCAL_PATH := $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_NODE_MODULE_TYPE := file
++include $(BUILD_NODE_MODULE)
+diff --git a/lib/android/bindings.js b/lib/android/bindings.js
+new file mode 100644
+index 0000000..fd9a05c
+--- /dev/null
++++ b/lib/android/bindings.js
+@@ -0,0 +1,2848 @@
++'use strict';
++
++const assert = require('assert');
++const events = require('events');
++const util = require('util');
++const uuid = require('uuid');
++
++const makeBledroidConnection = require('silk-bledroid');
++
++const debug = require('debug');
++
++const log = {
++  debug: debug('silk-noble:debug'),
++  info: debug('silk-noble:info'),
++  warn: debug('silk-noble:warn')
++};
++
++const BLUETOOTH_UUID_SUFFIX = '-0000-1000-8000-00805f9b34fb';
++const SANITIZE_UUID_REGEX = /[^\da-f]/g;
++
++// From http://androidxref.com/5.1.0_r1/xref/frameworks/base/core/java/android/bluetooth/BluetoothGatt.java#39
++const AUTHENTICATION_NONE = 0;
++const AUTHENTICATION_NO_MITM = 1;
++const AUTHENTICATION_MITM = 2;
++
++const INSUFFICIENT_AUTHENTICATION = 0x5;
++const INSUFFICIENT_ENCRYPTION = 0xf;
++
++const WRITE_TYPE_DEFAULT = 0x02;
++const WRITE_TYPE_NO_RESPONSE = 0x01;
++const WRITE_TYPE_SIGNED = 0x04;
++
++// Largest possible size for characteristic values.
++const MAX_DATA_LENGTH = 600;
++
++const NOTIFICATION_DISABLED = 0;
++const NOTIFICATION_WITH_NOTIFY = 1;
++const NOTIFICATION_WITH_INDICATE = 2;
++
++const BROADCAST_ENABLED = 1 << 0;
++
++const DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION = '2902';
++const DESCRIPTOR_SERVER_CHARACTERISTIC_CONFIGURATION = '2903';
++
++// Property flags for characteristics. Specified by Bluetooth.
++const PROPERTY_BROADCAST = 1 << 0;
++const PROPERTY_READ = 1 << 1;
++const PROPERTY_WRITE_WITHOUT_RESPONSE = 1 << 2;
++const PROPERTY_WRITE = 1 << 3;
++const PROPERTY_NOTIFY = 1 << 4;
++const PROPERTY_INDICATE = 1 << 5;
++const PROPERTY_SIGNED_WRITES = 1 << 6;
++const PROPERTY_EXTENDED_PROPERTIES = 1 << 7;
++
++/**
++ * Metadata types to hold extra data that bledroid needs.
++ */
++function PeripheralInfo(address, deviceUuid) {
++  // These properties may never change.
++  this.address = address;
++  this.uuid = deviceUuid;
++
++  this.interfaceId = null;
++  this.connectionId = null;
++
++  this.services = new Map();
++}
++
++function ServiceInfo(uuid, instanceId, isPrimary) {
++  // This property may never change.
++  this.uuid = uuid;
++
++  this.instanceId = instanceId;
++  this.isPrimary = isPrimary;
++
++  this.characteristics = new Map();
++}
++
++function CharacteristicInfo(uuid, instanceId, propertyBits) {
++  // This property may never change.
++  this.uuid = uuid;
++
++  this.instanceId = instanceId;
++  this.propertyBits = propertyBits;
++
++  this.notifying = false;
++
++  this.descriptors = new Map();
++}
++
++function DescriptorInfo(uuid, instanceId) {
++  // This property may never change.
++  this.uuid = uuid;
++
++  this.instanceId = instanceId;
++}
++
++/**
++ * Helper functions.
++ */
++function expandUuid(serviceUuid) {
++  switch (serviceUuid.length) {
++    case 4:
++    case 8:
++      return serviceUuid;
++    case 32:
++      return serviceUuid.substr(0, 8) + '-' +
++             serviceUuid.substr(8, 4) + '-' +
++             serviceUuid.substr(12, 4) + '-' +
++             serviceUuid.substr(16, 4) + '-' +
++             serviceUuid.substr(20);
++
++    default:
++      throw new Error('serivceUuid is invalid: \'' + serviceUuid + '\'');
++  }
++}
++
++function sanitizeDeviceUuid(deviceUuid) {
++  return deviceUuid.toString().toLowerCase();
++}
++
++function sanitizeAndValidateUuid(uuid) {
++  const sanitized =
++    uuid.toString().toLowerCase().replace(SANITIZE_UUID_REGEX, '');
++
++  if (sanitized.length !== 4 &&
++      sanitized.length !== 8 &&
++      sanitized.length !== 32) {
++    throw new Error('Invalid uuid: \'' + uuid + '\'');
++  }
++
++  return sanitized;
++}
++
++function packUuids(uuids) {
++  var packed = [ ];
++
++  if (typeof uuids !== 'undefined') {
++    if (!Array.isArray(uuids)) {
++      uuids = [ uuids ];
++    }
++
++    for (var uuid of uuids) {
++      packed.push(sanitizeAndValidateUuid(uuid));
++    }
++  }
++
++  return packed;
++}
++
++/**
++ * Bindings.
++ */
++function NobleBindings() {
++  log.debug('Created NobleBindings');
++
++  // A connection to the bledroid executable.
++  this.bledroid = makeBledroidConnection();
++
++  // State needed during a scan.
++  this.scanState = null;
++
++  // Maps device address, uuid, and connectionId to PeripheralInfo.
++  this.peripheralMap = new Map();
++
++  // Bledroid is not capable of handling more than one command at a time so we
++  // have to serialize everything. Ugh.
++  //
++  // All commands are thus split into two parts. The first part will verify
++  // arguments and then queue the second part. The second part is guaranteed to
++  // run when no other commands are running, but it will run at some time after
++  // the first part was called, so arguments must be rechecked.
++  //
++  // So, for example, |readValue()| will check arguments, queue the
++  // |_readValue()| function, and return immediately. Eventually |_readValue()|
++  // will run and recheck current state before issuing a direct command to
++  // bledroid.
++  //
++  // Commands that do not require a callback before they can be considered
++  // 'complete' must return |true| to indicate that they are complete. Commands
++  // that do require callbacks must return |false|. Once the callback has
++  // occurred |scheduleNextCommand()| must be called to move on to the next
++  // command in the queue.
++  this.commandQueue = [ ];
++
++  // Extra data needed by the currently executing command. Reset before the next
++  // command runs.
++  this.currentCommandInfo = null;
++
++  // These events will trigger callbacks here instead of simply being forwarded
++  // to the main noble objects.
++  const hookedEvents = [
++    'stateChange',
++    'discover',
++    'clientConnect',
++    'clientDisconnect',
++    'rssiUpdate',
++    'serviceDiscover',
++    'serviceDiscoverComplete',
++    'includedServiceDiscover',
++    'includedServiceDiscoverComplete',
++    'characteristicDiscover',
++    'characteristicDiscoverComplete',
++    'descriptorDiscover',
++    'descriptorDiscoverComplete',
++    'readCharacteristic',
++    'writeCharacteristic',
++    'notifyEnable',
++    'notify',
++    'readDescriptor',
++    'writeDescriptor',
++  ];
++
++  // Connect listeners directly to bledroid unless the events must be hooked.
++  this.on('newListener', function(event, listener) {
++    if (hookedEvents.indexOf(event) === -1) {
++      this.bledroid.addListener(event, listener);
++    }
++  }.bind(this));
++
++  this.on('removeListener', function(event, listener) {
++    this.bledroid.removeListener(event, listener);
++  }.bind(this));
++
++  // Automatically hook all events in the list above.
++  hookedEvents.forEach(function(event) {
++    var methodName = 'on' + event.charAt(0).toUpperCase() + event.substring(1);
++    if (methodName in this) {
++      this.bledroid.addListener(event, this[methodName].bind(this));
++    }
++  }.bind(this));
++};
++
++util.inherits(NobleBindings, events.EventEmitter);
++
++/**
++ * Queue a command to run later.
++ */
++NobleBindings.prototype.queueCommand = function(command) {
++  log.debug('queueCommand()');
++  this.commandQueue.push(command);
++  if (this.commandQueue.length === 1) {
++    log.debug('First command, queuing runCurrentCommand()');
++    process.nextTick(this.runCurrentCommand.bind(this));
++  }
++};
++
++/**
++ * Run the command at the head of the queue.
++ */
++NobleBindings.prototype.runCurrentCommand = function() {
++  log.debug('runCurrentCommand()');
++
++  const command = this.commandQueue[0];
++  if (!command) {
++    log.debug('Command queue empty');
++    return;
++  }
++
++  log.debug('Running next command');
++
++  this.currentCommandInfo = null;
++
++  const finished = command();
++  assert(finished === true || finished === false);
++
++  if (!finished) {
++    log.debug('Previous command requires callback');
++    return;
++  }
++
++  this.scheduleNextCommand();
++};
++
++/**
++ * Schedule the next command in the queue to run.
++ */
++NobleBindings.prototype.scheduleNextCommand = function() {
++  log.debug('scheduleNextCommand()');
++  assert(this.commandQueue.length);
++
++  process.nextTick(function() {
++    assert(this.commandQueue.length);
++    this.commandQueue.shift();
++    this.runCurrentCommand();
++  }.bind(this));
++};
++
++/**
++ * Makes a new PeripheralInfo object and inserts it into the map.
++ */
++NobleBindings.prototype.createNewPeripheralInfo = function(address) {
++  assert(!this.peripheralMap.has(address));
++
++  var peripheralInfo = new PeripheralInfo(address, uuid.v4());
++  this.peripheralMap.set(address, peripheralInfo);
++  this.peripheralMap.set(peripheralInfo.uuid, peripheralInfo);
++
++  log.info('Mapped peripheral address ' + address + ' to uuid ' +
++           peripheralInfo.uuid);
++
++  return peripheralInfo;
++};
++
++/**
++ * Updates instance data for services.
++ */
++NobleBindings.prototype.updateServiceInfo = function(connectionId,
++                                                     serviceUuid,
++                                                     instanceId,
++                                                     isPrimary) {
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot update services for unknown connection %d', connectionId);
++    return;
++  }
++
++  var serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (serviceInfo) {
++    serviceInfo.instanceId = instanceId;
++    serviceInfo.isPrimary = isPrimary;
++    return;
++  }
++
++  serviceInfo = new ServiceInfo(serviceUuid, instanceId, isPrimary);
++  peripheralInfo.services.set(serviceUuid, serviceInfo);
++}
++
++/**
++ * Updates instance data for characteristics.
++ */
++NobleBindings.prototype.updateCharacteristicInfo = function(connectionId,
++                                                            serviceUuid,
++                                                            characteristicUuid,
++                                                            instanceId,
++                                                            propertyBits) {
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot update characteristics for unknown connection %d',
++             connectionId);
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('No serviceInfo for service \'%s\'', serviceUuid);
++    return;
++  }
++
++  var characteristicInfo = serviceInfo.characteristics.get(characteristicUuid);
++  if (characteristicInfo) {
++    characteristicInfo.instanceId = instanceId;
++    characteristicInfo.propertyBits = propertyBits;
++    return;
++  }
++
++  characteristicInfo = new CharacteristicInfo(characteristicUuid,
++                                              instanceId,
++                                              propertyBits);
++  serviceInfo.characteristics.set(characteristicUuid, characteristicInfo);
++}
++
++/**
++ * Updates instance data for descriptors.
++ */
++NobleBindings.prototype.updateDescriptorInfo = function(connectionId,
++                                                        serviceUuid,
++                                                        characteristicUuid,
++                                                        descriptorUuid,
++                                                        instanceId) {
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot update descriptors for unknown connection %d',
++             connectionId);
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('No serviceInfo for service \'%s\'', serviceUuid);
++    return;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('No characteristicInfo for characteristic \'%s\'',
++             characteristicUuid);
++    return;
++  }
++
++  var descriptorInfo = characteristicInfo.descriptors.get(descriptorUuid);
++  if (descriptorInfo) {
++    characteristicInfo.instanceId = instanceId;
++    return;
++  }
++
++  descriptorInfo = new DescriptorInfo(descriptorUuid, instanceId);
++  characteristicInfo.descriptors.set(descriptorUuid, descriptorInfo);
++}
++
++NobleBindings.prototype.onStateChange = function(state) {
++  log.debug('onStateChange(\'%s\')', state);
++
++  if (state !== 'poweredOn') {
++    var message = 'Adapter state changed to \'' + state + '\'';
++    log.warn(message);
++
++    if (this.commandQueue.length) {
++      log.warn('Clearing command queue');
++      this.commandQueue = [ ];
++    }
++
++    if (this.peripheralMap.size) {
++      log.warn('Disconnecting existing connections');
++
++      // |peripheralMap| stores several different mappings to the same
++      // PeripheralInfo object so we need to de-duplicate them before
++      // disconnecting each of them.
++      var uniquePeripheralInfos = new Set();
++      for (var peripheralInfo of this.peripheralMap.values()) {
++        uniquePeripheralInfos.add(peripheralInfo);
++      }
++
++      for (var peripheralInfo of uniquePeripheralInfos) {
++        this.onClientDisconnect(peripheralInfo.address,
++                                message,
++                                peripheralInfo.connectionId);
++      }
++
++      this.peripheralMap.clear();
++    }
++  }
++
++  this.emit('stateChange', state);
++}
++
++/**
++ * Start scanning.
++ */
++NobleBindings.prototype.startScanning = function(serviceUuids,
++                                                 allowDuplicates) {
++  log.debug('startScanning(%j, %s)',
++            serviceUuids,
++            allowDuplicates ? 'true' : 'false');
++
++  var filter;
++  const packedUuids = packUuids(serviceUuids);
++  if (packedUuids.length) {
++    filter = packedUuids;
++  }
++
++  this.queueCommand(this._startScanning.bind(this, filter, allowDuplicates));
++};
++
++NobleBindings.prototype._startScanning = function(filter, allowDuplicates) {
++  log.debug('_startScanning(%j, %s)',
++            filter,
++            allowDuplicates ? 'true' : 'false');
++
++  if (this.scanState) {
++    log.warn('Stopping previous scan');
++    this._stopScanning();
++  }
++
++  const filterString = filter ? filter.length + ' ' + filter.join(' ') : '0';
++  this.bledroid.command('startScanning ' +
++                        (allowDuplicates ? '1' : '0') + ' ' +
++                        filterString);
++  this.scanState = {
++    stopRequested: false
++  };
++  if (filter) {
++    this.scanState.filter = filter.map(expandUuid);
++  }
++
++  this.emit('scanStart');
++
++  return true;
++};
++
++/**
++ * Called when peripherals are discovered during scan.
++ */
++NobleBindings.prototype.onDiscover = function(address, rssi, advertisingData) {
++  log.debug('onDiscover(%s, %d, %j)', address, rssi, advertisingData);
++
++  if (!this.scanState || this.scanState.stopRequested) {
++    log.info('Scanning canceled, ignoring peripheral \'%s\'', address);
++    return;
++  }
++
++  var peripheralInfo = this.peripheralMap.get(address);
++  if (!peripheralInfo) {
++    peripheralInfo = this.createNewPeripheralInfo(address);
++  }
++
++  // TODO: Android doesn't offer an API to get this information.
++  const addressType = 'unknown';
++
++  var localName;
++  var txPowerLevel;
++  var manufacturerData;
++  var serviceUuidSet = new Set();
++  var serviceData = [ ];
++
++  advertisingData.forEach(function(packet) {
++    switch (packet.type) {
++      case 'full-name':
++        localName = packet.data;
++        break;
++      case 'short-name':
++        // Favor full-name.
++        localName = localName || packet.data;
++        break;
++      case 'tx-power':
++        txPowerLevel = packet.data;
++        break;
++      case 'manufacturer-data':
++        manufacturerData = packet.data.buffer;
++        break;
++      case 'service-uuids':
++        packet.data.forEach(function(serviceUuid) {
++          if (!serviceUuidSet.has(serviceUuid)) {
++            serviceUuidSet.add(serviceUuid);
++          }
++        });
++        break;
++      case 'service-data':
++        serviceData.push({
++          uuid: packet.data.uuid,
++          data: packet.data.data
++        });
++        if (!serviceUuidSet.has(packet.data.uuid)) {
++          serviceUuidSet.add(packet.data.uuid);
++        }
++        break;
++
++      default:
++        log.debug('Ignoring advertisement packet: \'' + packet.description +
++                  '\'');
++    }
++  });
++
++  if (this.scanState.filter) {
++    var found = false;
++
++    for (var serviceUuid of this.scanState.filter) {
++      if (serviceUuidSet.has(serviceUuid)) {
++        found = true;
++        break;
++      }
++    }
++
++    if (!found) {
++      log.info('No matching services found, ignoring this peripheral');
++      return;
++    }
++  }
++
++  var serviceUuids = new Array(serviceUuidSet.size);
++  serviceUuidSet.forEach(function(closure, serviceUuid) {
++    serviceUuids[closure.index++] = serviceUuid;
++  }.bind(null, { index: 0 }));
++
++  const advertisement = {
++    localName: localName,
++    txPowerLevel: txPowerLevel,
++    manufacturerData: manufacturerData,
++    serviceData: serviceData,
++    serviceUuids: serviceUuids
++  };
++
++  this.emit('discover',
++            peripheralInfo.uuid,
++            address,
++            addressType,
++            advertisement,
++            rssi);
++};
++
++/**
++ * Stop scanning.
++ */
++NobleBindings.prototype.stopScanning = function() {
++  log.debug('stopScanning()');
++
++  if (this.scanState) {
++    this.scanState.stopRequested = true;
++  }
++
++  this.queueCommand(this._stopScanning.bind(this));
++};
++
++NobleBindings.prototype._stopScanning = function() {
++  log.debug('_stopScanning()');
++
++  if (this.scanState) {
++    this.bledroid.command('stopScanning');
++    this.scanState = null;
++    this.emit('scanStop');
++  } else {
++    log.info('Not scanning');
++  }
++
++  return true;
++};
++
++/**
++ * Connect to peripheral.
++ */
++NobleBindings.prototype.connect = function(deviceUuid) {
++  log.debug('connect(%s)', deviceUuid);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  this.queueCommand(this._connect.bind(this, deviceUuid));
++};
++
++NobleBindings.prototype._connect = function(deviceUuid) {
++  log.debug('_connect(%s)', deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot connect to unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (peripheralInfo.connectionId !== null) {
++    log.info('Already connected to \'%s\'', deviceUuid);
++    return true;
++  }
++
++  this.bledroid.noteNobleConnectionRequest(peripheralInfo.address);
++  this.bledroid.command('connect ' + peripheralInfo.address.replace(/:/g, ''));
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'connect',
++    address: peripheralInfo.address
++  };
++
++  return false;
++};
++
++/**
++ * Called when a peripheral connects.
++ */
++NobleBindings.prototype.onClientConnect = function(interfaceId,
++                                                   address,
++                                                   status,
++                                                   connectionId) {
++  log.debug('onClientConnect(%d, %s, %d, %d)',
++            interfaceId,
++            address,
++            status,
++            connectionId);
++
++  // This event can happen any time, even when we're not waiting for it, so we
++  // have to make sure that we were actually waiting for this event before
++  // running the next command.
++  if (this.currentCommandInfo &&
++      this.currentCommandInfo.type === 'connect' &&
++      this.currentCommandInfo.address === address) {
++    this.scheduleNextCommand();
++  }
++
++  var peripheralInfo = this.peripheralMap.get(address);
++  if (!peripheralInfo) {
++    log.debug('Unknown peripheral \'%s\', ignoring', address);
++    assert(!this.peripheralMap.has(connectionId));
++    return;
++  }
++
++  var error;
++  if (status) {
++    if (peripheralInfo.connectionId !== null) {
++      this.peripheralMap.delete(peripheralInfo.connectionId);
++    }
++    assert(!this.peripheralMap.has(connectionId));
++
++    peripheralInfo.interfaceId = null;
++    peripheralInfo.connectionId = null;
++
++    error = new Error('Connection error: ' + status);
++  } else {
++    if (peripheralInfo.connectionId !== null) {
++      assert(peripheralInfo.interfaceId === interfaceId);
++      assert(peripheralInfo.connectionId === connectionId);
++      assert(this.peripheralMap.get(connectionId) === peripheralInfo);
++
++      log.debug('Already connected to peripheral \'%s\', skipping duplicate ' +
++                'notification',
++                address);
++      return;
++    }
++
++    assert(!this.peripheralMap.has(connectionId));
++    this.peripheralMap.set(connectionId, peripheralInfo);
++
++    peripheralInfo.interfaceId = interfaceId;
++    peripheralInfo.connectionId = connectionId;
++  }
++
++  this.emit('connect', peripheralInfo.uuid, error);
++};
++
++/**
++ * Disconnect a peripheral.
++ */
++NobleBindings.prototype.disconnect = function(deviceUuid) {
++  log.debug('disconnect(%s)', deviceUuid);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  this.queueCommand(this._disconnect.bind(this, deviceUuid));
++};
++
++NobleBindings.prototype._disconnect = function(deviceUuid) {
++  log.debug('_disconnect(%s)', deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot disconnect from unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (peripheralInfo.connectionId === null) {
++    log.info('Already disconnected from \'%s\'', deviceUuid);
++    process.nextTick(function() {
++      this.emit('disconnect', peripheralInfo.uuid, null);
++    }.bind(this));
++    return true;
++  }
++
++  this.bledroid.command('disconnect ' +
++                        peripheralInfo.interfaceId + ' ' +
++                        peripheralInfo.address.replace(/:/g, '') + ' ' +
++                        peripheralInfo.connectionId);
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'disconnect',
++    address: peripheralInfo.address
++  };
++
++  return false;
++};
++
++/**
++ * Called when a peripheral is disconnected.
++ */
++NobleBindings.prototype.onClientDisconnect = function(address,
++                                                      status,
++                                                      connectionId) {
++  log.debug('onClientDisconnect(%s, %d, %d)', address, status, connectionId);
++
++  // This event can happen any time, even when we're not waiting for it, so we
++  // have to make sure that we were actually waiting for this event before
++  // running the next command.
++  if (this.currentCommandInfo &&
++      this.currentCommandInfo.type === 'disconnect' &&
++      this.currentCommandInfo.address === address) {
++    this.scheduleNextCommand();
++  }
++
++  var peripheralInfo = this.peripheralMap.get(address);
++  if (!peripheralInfo) {
++    log.debug('Unknown peripheral \'%s\', ignoring', address);
++    assert(!this.peripheralMap.has(connectionId));
++    return;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.debug('Peripheral \'%s\' is not currently connected',
++              peripheralInfo.uuid);
++    assert(!this.peripheralMap.has(connectionId));
++    return;
++  }
++
++  assert(connectionId === peripheralInfo.connectionId,
++         'ConnectionId does not match, got ' + connectionId + ' but expected ' +
++         peripheralInfo.connectionId);
++
++  this.peripheralMap.delete(peripheralInfo.connectionId);
++
++  peripheralInfo.interfaceId = null;
++  peripheralInfo.connectionId = null;
++  peripheralInfo.services.clear();
++
++  var error;
++  if (status) {
++    error = new Error('Disconnection error: ' + status);
++  }
++
++  this.emit('disconnect', peripheralInfo.uuid, error);
++};
++
++/**
++ * Request an updated rssi value from a peripheral.
++ */
++NobleBindings.prototype.updateRssi = function(deviceUuid) {
++  log.debug('updateRssi(%s)', deviceUuid);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  if (!peripheralInfo.connectionId) {
++    throw new Error('Cannot update rssi for peripheral uuid \'' + deviceUuid +
++                    '\' because it is not connected');
++  }
++
++  this.queueCommand(this._updateRssi.bind(this, deviceUuid));
++};
++
++NobleBindings.prototype._updateRssi = function(deviceUuid) {
++  log.debug('_updateRssi(%s)', deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot connect to unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot update rssi for peripheral uuid \'%s\' because it is' +
++             'no longer connected',
++             peripheralInfo.uuid);
++    return true;
++  }
++
++  this.bledroid.command('updateRssi ' +
++                        peripheralInfo.interfaceId + ' ' +
++                        peripheralInfo.address.replace(/:/g, ''));
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'updateRssi',
++    address: peripheralInfo.address
++  };
++
++  return true;
++};
++
++/**
++ * Called when an updated rssi value is available.
++ */
++NobleBindings.prototype.onRssiUpdate = function(address, rssi, status) {
++  log.debug('onRssiUpdate(%s, %d, %d)', address, rssi, status);
++
++  const peripheralInfo = this.peripheralMap.get(address);
++  if (!peripheralInfo) {
++    log.debug('Unknown peripheral \'%s\', ignoring', address);
++    return;
++  }
++
++  if (status) {
++    log.warn('Failed to update rssi: %d', status);
++
++    // XXX Total hack but we have to emit something or else API consumer
++    //     callbacks won't be called properly.
++    rssi = -80;
++  }
++
++  this.emit('rssiUpdate', peripheralInfo.uuid, rssi);
++};
++
++/**
++ * Discover services for a peripheral.
++ */
++NobleBindings.prototype.discoverServices = function(deviceUuid,
++                                                    serviceUuids) {
++  log.debug('discoverServices(%s, %j)', deviceUuid, serviceUuids);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  var packedUuids = packUuids(serviceUuids);
++  if (!packedUuids.length) {
++    packedUuids = null;
++  }
++
++  this.queueCommand(this._discoverServices.bind(this, deviceUuid, packedUuids));
++};
++
++NobleBindings.prototype._discoverServices = function(deviceUuid, packedUuids) {
++  log.debug('_discoverServices(%s, %j)', deviceUuid, packedUuids);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover services for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot discover services for peripheral \'%s\' because it is ' +
++             'no longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  this.bledroid.command('discoverServices ' +
++                        peripheralInfo.connectionId + ' ' +
++                        (packedUuids ?
++                           packedUuids.length + ' ' + packedUuids.join(' ') :
++                           '0'));
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'discoverServices',
++    filter: packedUuids,
++    found: new Set()
++  };
++
++  return false;
++};
++
++/**
++ * Called when a single service has been discovered. May be called many times.
++ */
++NobleBindings.prototype.onServiceDiscover = function(connectionId,
++                                                     serviceUuid,
++                                                     instanceId,
++                                                     isPrimary) {
++  log.debug('onServiceDiscover(%d, %s, %d, %s)',
++            connectionId,
++            serviceUuid,
++            instanceId,
++            isPrimary ? 'true' : 'false');
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  this.updateServiceInfo(connectionId, serviceUuid, instanceId, isPrimary);
++
++  if (this.currentCommandInfo.found.has(serviceUuid)) {
++    log.warn('Discovered service \'%s\' more than once',
++             expandUuid(serviceUuid));
++    return;
++  }
++
++  if (this.currentCommandInfo.filter &&
++      this.currentCommandInfo.filter.indexOf(serviceUuid) === -1) {
++    log.info('The service \'%s\' does not match search filter, ignoring',
++             expandUuid(serviceUuid));
++    return;
++  }
++
++  this.currentCommandInfo.found.add(serviceUuid);
++};
++
++/**
++ * Called when all services have been discovered.
++ */
++NobleBindings.prototype.onServiceDiscoverComplete = function(connectionId,
++                                                             status) {
++  log.debug('onServiceDiscoverComplete(%d, %d)', connectionId, status);
++
++  this.scheduleNextCommand();
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover services for unknown connection %d',
++             connectionId);
++    return;
++  }
++
++  var serviceUuids;
++  if (status) {
++    log.warn('Service discovery failed: %d', status);
++    serviceUuids = [ ];
++  } else {
++    serviceUuids = new Array(this.currentCommandInfo.found.size);
++    this.currentCommandInfo.found.forEach(function(closure, serviceUuid) {
++      serviceUuids[closure.index++] = expandUuid(serviceUuid);
++    }.bind(null, { index: 0 }));
++  }
++
++  this.emit('servicesDiscover', peripheralInfo.uuid, serviceUuids);
++};
++
++/**
++ * Discover included services.
++ */
++NobleBindings.prototype.discoverIncludedServices = function(deviceUuid,
++                                                            parentServiceUuid,
++                                                            serviceUuids) {
++  log.debug('discoverIncludedServices(%s, %s, %j)',
++            deviceUuid,
++            parentServiceUuid,
++            serviceUuids);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  parentServiceUuid = sanitizeAndValidateUuid(parentServiceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(parentServiceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(parentServiceUuid) + '\'');
++  }
++
++  var filter;
++  const packedUuids = packUuids(serviceUuids);
++  if (packedUuids.length) {
++    filter = packedUuids;
++  }
++
++  this.queueCommand(this._discoverIncludedServices.bind(this,
++                                                        deviceUuid,
++                                                        parentServiceUuid,
++                                                        filter));
++};
++
++NobleBindings.prototype._discoverIncludedServices = function(deviceUuid,
++                                                             parentServiceUuid,
++                                                             filter) {
++  log.debug('_discoverIncludedServices(%s, %s, %j)',
++            deviceUuid,
++            parentServiceUuid,
++            filter);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover included services for unknown peripheral uuid ' +
++             '\'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot discover included services for peripheral \'%s\' ' +
++             'because it is no longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(parentServiceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot discover included services for parent service \'%s\' ' +
++             'because it no longer exists',
++             parentServiceUuid);
++    return true;
++  }
++
++  this.bledroid.command('discoverIncludedServices ' +
++                        peripheralInfo.connectionId + ' ' +
++                        serviceInfo.uuid + ' ' +
++                        serviceInfo.instanceId + ' ' +
++                        (serviceInfo.isPrimary ? '1' : '0'));
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'discoverIncludedServices',
++    filter: filter,
++    found: new Set()
++  };
++
++  return false;
++};
++
++/**
++ * Called when a single included service has been discovered. May be called
++ * many times.
++ */
++ NobleBindings.prototype.onIncludedServiceDiscover = function(connectionId,
++                                                              parentServiceUuid,
++                                                              serviceUuid,
++                                                              isPrimary) {
++  log.debug('onIncludedServiceDiscover(%d, %s, %s, %s)',
++            connectionId,
++            parentServiceUuid,
++            serviceUuid,
++            isPrimary ? 'true' : 'false');
++
++  parentServiceUuid = sanitizeAndValidateUuid(parentServiceUuid);
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  if (this.currentCommandInfo.found.has(serviceUuid)) {
++    log.warn('Discovered service \'%s\' more than once',
++             expandUuid(serviceUuid));
++    return;
++  }
++
++  if (this.currentCommandInfo.filter &&
++      this.currentCommandInfo.filter.indexOf(serviceUuid) === -1) {
++    log.info('The service \'%s\' does not match search filter, ignoring',
++             expandUuid(serviceUuid));
++    return;
++  }
++
++  this.currentCommandInfo.found.add(serviceUuid);
++};
++
++/**
++ * Called when all included services have been discovered.
++ */
++NobleBindings.prototype.onIncludedServiceDiscoverComplete = function(connectionId,
++                                                                     parentServiceUuid) {
++  log.debug('onIncludedServiceDiscoverComplete(%d, %s)',
++            connectionId,
++            parentServiceUuid);
++
++  this.scheduleNextCommand();
++
++  parentServiceUuid = sanitizeAndValidateUuid(parentServiceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover included services for unknown connection %d',
++             connectionId);
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(parentServiceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot discover included services for parent service \'%s\' ' +
++             'because it no longer exists',
++             parentServiceUuid);
++    return;
++  }
++
++  var serviceUuids = new Array(this.currentCommandInfo.found.size);
++  this.currentCommandInfo.found.forEach(function(closure, serviceUuid) {
++    serviceUuids[closure.index++] = expandUuid(serviceUuid);
++  }.bind(null, { index: 0 }));
++
++  this.emit('includedServicesDiscover',
++            peripheralInfo.uuid,
++            expandUuid(parentServiceUuid),
++            serviceUuids);
++};
++
++/**
++ * Discover characteristics.
++ */
++NobleBindings.prototype.discoverCharacteristics = function(deviceUuid,
++                                                           serviceUuid,
++                                                           characteristicUuids) {
++  log.debug('discoverCharacteristics(%s, %s, %j)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuids);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  var filter;
++  const packedUuids = packUuids(characteristicUuids);
++  if (packedUuids.length) {
++    filter = packedUuids;
++  }
++
++  this.queueCommand(this._discoverCharacteristics.bind(this,
++                                                       deviceUuid,
++                                                       serviceUuid,
++                                                       filter));
++};
++
++NobleBindings.prototype._discoverCharacteristics = function(deviceUuid,
++                                                            serviceUuid,
++                                                            filter) {
++  log.debug('_discoverCharacteristics(%s, %s, %j)',
++            deviceUuid,
++            serviceUuid,
++            filter);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover characteristics for unknown peripheral uuid ' +
++             '\'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot discover characteristics for peripheral \'%s\' because ' +
++             'it is no longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot discover characteristics for service \'%s\' because it ' +
++             'no longer exists',
++             serviceUuid);
++    return true;
++  }
++
++  this.bledroid.command('discoverCharacteristics ' +
++                        peripheralInfo.connectionId + ' ' +
++                        serviceInfo.uuid + ' ' +
++                        serviceInfo.instanceId + ' ' +
++                        (serviceInfo.isPrimary ? '1' : '0'));
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'discoverCharacteristics',
++    filter: filter,
++    found: new Map()
++  };
++
++  return false;
++};
++
++/**
++ * Called when a single characteristic has been discovered. May be called many
++ * times.
++ */
++ NobleBindings.prototype.onCharacteristicDiscover = function(connectionId,
++                                                             serviceUuid,
++                                                             characteristicUuid,
++                                                             instanceId,
++                                                             propertyBits) {
++  log.debug('onCharacteristicDiscover(%d, %s, %s, %d, %d)',
++            connectionId,
++            serviceUuid,
++            characteristicUuid,
++            instanceId,
++            propertyBits);
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  this.updateCharacteristicInfo(connectionId,
++                                serviceUuid,
++                                characteristicUuid,
++                                instanceId,
++                                propertyBits);
++
++  if (this.currentCommandInfo.found.has(characteristicUuid)) {
++    log.warn('Discovered characteristic \'%s\' more than once',
++             expandUuid(characteristicUuid));
++    return;
++  }
++
++  if (this.currentCommandInfo.filter &&
++      this.currentCommandInfo.filter.indexOf(characteristicUuid) === -1) {
++    log.info('The characteristic \'%s\' does not match search filter, ignoring',
++             expandUuid(characteristicUuid));
++    return;
++  }
++
++  var properties = [ ];
++
++  if (propertyBits & PROPERTY_BROADCAST) {
++    properties.push('broadcast');
++  }
++
++  if (propertyBits & PROPERTY_READ) {
++    properties.push('read');
++  }
++
++  if (propertyBits & PROPERTY_WRITE_WITHOUT_RESPONSE) {
++    properties.push('writeWithoutResponse');
++  }
++
++  if (propertyBits & PROPERTY_WRITE) {
++    properties.push('write');
++  }
++
++  if (propertyBits & PROPERTY_NOTIFY) {
++    properties.push('notify');
++  }
++
++  if (propertyBits & PROPERTY_INDICATE) {
++    properties.push('indicate');
++  }
++
++  if (propertyBits & PROPERTY_SIGNED_WRITES) {
++    properties.push('authenticatedSignedWrites');
++  }
++
++  if (propertyBits & PROPERTY_EXTENDED_PROPERTIES) {
++    properties.push('extendedProperties');
++  }
++
++  this.currentCommandInfo.found.set(characteristicUuid, properties);
++};
++
++/**
++ * Called when all characteristics have been discovered.
++ */
++NobleBindings.prototype.onCharacteristicDiscoverComplete = function(connectionId,
++                                                                    serviceUuid) {
++  log.debug('onCharacteristicDiscoverComplete(%d, %s)',
++            connectionId,
++            serviceUuid);
++
++  this.scheduleNextCommand();
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover characteristics for unknown connection%d',
++             connectionId);
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot discover characteristics for service \'%s\' because it ' +
++             'no longer exists',
++             serviceUuid);
++    return;
++  }
++
++  var characteristics = new Array(this.currentCommandInfo.found.size);
++  this.currentCommandInfo.found.forEach(function(closure,
++                                                 properties,
++                                                 characteristicUuid) {
++    characteristics[closure.index++] = {
++      uuid: expandUuid(characteristicUuid),
++      properties: properties
++    };
++  }.bind(null, { index: 0 }));
++
++  this.emit('characteristicsDiscover',
++            peripheralInfo.uuid,
++            expandUuid(serviceUuid),
++            characteristics);
++};
++
++/**
++ * Discover descriptors.
++ */
++NobleBindings.prototype.discoverDescriptors = function(deviceUuid,
++                                                       serviceUuid,
++                                                       characteristicUuid) {
++  log.debug('discoverDescriptors(%s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  this.queueCommand(this._discoverDescriptors.bind(this,
++                                                   deviceUuid,
++                                                   serviceUuid,
++                                                   characteristicUuid));
++};
++
++NobleBindings.prototype._discoverDescriptors = function(deviceUuid,
++                                                        serviceUuid,
++                                                        characteristicUuid) {
++  log.debug('_discoverDescriptors(%s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover descriptors for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot discover descriptors for peripheral \'%s\' because it is' +
++             'no longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot discover descriptors for service \'%s\' because it no ' +
++             'longer exists',
++             serviceUuid);
++    return true;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot discover descriptors for characteristic \'%s\' because ' +
++             'it no longer exists',
++             characteristicUuid);
++    return true;
++  }
++
++  this.bledroid.command('discoverDescriptors ' +
++                        peripheralInfo.connectionId + ' ' +
++                        serviceInfo.uuid + ' ' +
++                        serviceInfo.instanceId + ' ' +
++                        (serviceInfo.isPrimary ? '1' : '0') + ' ' +
++                        characteristicInfo.uuid + ' ' +
++                        characteristicInfo.instanceId);
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'discoverDescriptors',
++    found: new Set()
++  };
++
++  return false;
++};
++
++/**
++ * Called when a single descriptor has been discovered. May be called many
++ * times.
++ */
++ NobleBindings.prototype.onDescriptorDiscover = function(connectionId,
++                                                         serviceUuid,
++                                                         characteristicUuid,
++                                                         descriptorUuid,
++                                                         instanceId) {
++  log.debug('onDescriptorDiscover(%d, %s, %s, %s, %d)',
++            connectionId,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            instanceId);
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++  descriptorUuid = sanitizeAndValidateUuid(descriptorUuid);
++
++  this.updateDescriptorInfo(connectionId,
++                            serviceUuid,
++                            characteristicUuid,
++                            descriptorUuid,
++                            instanceId);
++
++  if (this.currentCommandInfo.found.has(descriptorUuid)) {
++    log.warn('Discovered descriptor \'%s\' more than once',
++             expandUuid(descriptorUuid));
++    return;
++  }
++
++  this.currentCommandInfo.found.add(descriptorUuid);
++};
++
++/**
++ * Called when all descriptors have been discovered.
++ */
++NobleBindings.prototype.onDescriptorDiscoverComplete = function(connectionId,
++                                                                serviceUuid,
++                                                                characteristicUuid) {
++  log.debug('onDescriptorDiscoverComplete(%d, %s, %s)',
++            connectionId,
++            serviceUuid,
++            characteristicUuid);
++
++  this.scheduleNextCommand();
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot discover descriptors for unknown connection %d',
++             connectionId);
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot discover descriptors for service \'%s\' because it no ' +
++             'longer exists',
++             serviceUuid);
++    return;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot discover descriptors for characteristic \'%s\' because ' +
++             'it no longer exists',
++             characteristicUuid);
++    return;
++  }
++
++  var descriptors = new Array(this.currentCommandInfo.found.size);
++  this.currentCommandInfo.found.forEach(function(closure, descriptorUuid) {
++    descriptors[closure.index++] = expandUuid(descriptorUuid);
++  }.bind(null, { index: 0 }));
++
++  this.emit('descriptorsDiscover',
++            peripheralInfo.uuid,
++            expandUuid(serviceUuid),
++            expandUuid(characteristicUuid),
++            descriptors);
++};
++
++/**
++ * Read the value of a characteristic.
++ */
++NobleBindings.prototype.read = function(deviceUuid,
++                                        serviceUuid,
++                                        characteristicUuid) {
++  log.debug('read(%s, %s, %s)', deviceUuid, serviceUuid, characteristicUuid);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  this.queueCommand(this._read.bind(this,
++                                    deviceUuid,
++                                    serviceUuid,
++                                    characteristicUuid));
++};
++
++NobleBindings.prototype._read = function(deviceUuid,
++                                         serviceUuid,
++                                         characteristicUuid) {
++  log.debug('_read(%s, %s, %s)', deviceUuid, serviceUuid, characteristicUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot read characteristic for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot read characteristic for peripheral \'%s\' because it is ' +
++             'no longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot read characteristic for service \'%s\' because it no ' +
++             'longer exists',
++             serviceUuid);
++    return true;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot read characteristic \'%s\' because it no longer exists',
++             characteristicUuid);
++    return true;
++  }
++
++  const commandStringPrefix = 'readCharacteristic ' +
++                              peripheralInfo.connectionId + ' ' +
++                              serviceInfo.uuid + ' ' +
++                              serviceInfo.instanceId + ' ' +
++                              (serviceInfo.isPrimary ? '1' : '0') + ' ' +
++                              characteristicInfo.uuid + ' ' +
++                              characteristicInfo.instanceId + ' ';
++  this.bledroid.command(commandStringPrefix + AUTHENTICATION_NONE);
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'readCharacteristic',
++    commandStringPrefix: commandStringPrefix,
++    authentication: AUTHENTICATION_NONE
++  };
++
++  return false;
++};
++
++/**
++ * Called when the value of a characteristic has been read. If the value could
++ * not be read due to insufficient authentication/encryption then this function
++ * may be called multiple times with successively increased authentication
++ * levels.
++ */
++NobleBindings.prototype.onReadCharacteristic = function(connectionId,
++                                                        status,
++                                                        serviceUuid,
++                                                        characteristicUuid,
++                                                        dataLength,
++                                                        data) {
++  log.debug('onReadCharacteristic(%d, %d, %s, %s, %d, %s)',
++            connectionId,
++            status,
++            serviceUuid,
++            characteristicUuid,
++            dataLength,
++            '<Buffer[' + data.length + ']>');
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  if ((status === INSUFFICIENT_AUTHENTICATION ||
++       status == INSUFFICIENT_ENCRYPTION) &&
++      this.currentCommandInfo.authentication < AUTHENTICATION_MITM) {
++    // Increase authentication and retry, just like Android does...
++    this.currentCommandInfo.authentication++;
++    this.bledroid.command(this.currentCommandInfo.commandStringPrefix +
++                          this.currentCommandInfo.authentication);
++    return;
++  }
++
++  this.scheduleNextCommand();
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot read data for unknown connection %d', connectionId);
++    return;
++  }
++
++  // There's no good way to throw an error here...
++  if (data.length !== dataLength) {
++    log.error('Buffer size (%d) does not match dataLength (%d)',
++              data.length,
++              dataLength);
++  }
++
++  if (status) {
++    log.warn('Failed to read characteristic: %d', status);
++    assert(data.length === 0);
++  }
++
++  this.emit('read',
++            peripheralInfo.uuid,
++            expandUuid(serviceUuid),
++            expandUuid(characteristicUuid),
++            data,
++            false);
++};
++
++/**
++ * Write the value of a characteristic.
++ */
++NobleBindings.prototype.write = function(deviceUuid,
++                                         serviceUuid,
++                                         characteristicUuid,
++                                         data,
++                                         withoutResponse) {
++  if (!data || !(data instanceof Buffer)) {
++    throw new Error('Expected a Buffer object!');
++  }
++
++  log.debug('write(%s, %s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            '<Buffer[' + data.length + ']>',
++            withoutResponse ? 'true' : 'false');
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  if (data.length >= MAX_DATA_LENGTH) {
++    throw new Error('Data too large (' + data.length + ')');
++  }
++
++  this.queueCommand(this._write.bind(this,
++                                     deviceUuid,
++                                     serviceUuid,
++                                     characteristicUuid,
++                                     data,
++                                     withoutResponse));
++};
++
++NobleBindings.prototype._write = function(deviceUuid,
++                                          serviceUuid,
++                                          characteristicUuid,
++                                          data,
++                                          withoutResponse) {
++  log.debug('_write(%s, %s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            '<Buffer[' + data.length + ']>',
++            withoutResponse ? 'true' : 'false');
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot write characteristic for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot write characteristic for peripheral \'%s\' because it ' +
++             'is no longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot write characteristic for service \'%s\' because it no ' +
++             'longer exists',
++             serviceUuid);
++    return true;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot write characteristic \'%s\' because it no longer exists',
++             characteristicUuid);
++    return true;
++  }
++
++  const commandStringPrefix = 'writeCharacteristic ' +
++                              peripheralInfo.connectionId + ' ' +
++                              serviceInfo.uuid + ' ' +
++                              serviceInfo.instanceId + ' ' +
++                              (serviceInfo.isPrimary ? '1' : '0') + ' ' +
++                              characteristicInfo.uuid + ' ' +
++                              characteristicInfo.instanceId + ' ';
++  const commandStringSuffix = ' ' +
++                              (withoutResponse ?
++                                 WRITE_TYPE_NO_RESPONSE :
++                                 WRITE_TYPE_DEFAULT) + ' ' +
++                              data.length +
++                              (data.length ? ' ' + data.toString('hex') : '');
++
++  this.bledroid.command(commandStringPrefix +
++                        AUTHENTICATION_NONE +
++                        commandStringSuffix);
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'writeCharacteristic',
++    commandStringPrefix: commandStringPrefix,
++    commandStringSuffix: commandStringSuffix,
++    authentication: AUTHENTICATION_NONE
++  };
++
++  return false;
++};
++
++/**
++ * Called when the value of a characteristic has been written. If the value
++ * could not be written due to insufficient authentication/encryption then this
++ * function may be called multiple times with successively increased
++ * authentication levels.
++ */
++NobleBindings.prototype.onWriteCharacteristic = function(connectionId,
++                                                         status,
++                                                         serviceUuid,
++                                                         characteristicUuid) {
++  log.debug('onWriteCharacteristic(%d, %d, %s, %s)',
++            connectionId,
++            status,
++            serviceUuid,
++            characteristicUuid);
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  if ((status === INSUFFICIENT_AUTHENTICATION ||
++       status == INSUFFICIENT_ENCRYPTION) &&
++      this.currentCommandInfo.authentication < AUTHENTICATION_MITM) {
++    // Increase authentication and retry, just like Android does...
++    this.currentCommandInfo.authentication++;
++    this.bledroid.command(this.currentCommandInfo.commandStringPrefix +
++                          this.currentCommandInfo.authentication +
++                          this.currentCommandInfo.commandStringSuffix);
++    return;
++  }
++
++  this.scheduleNextCommand();
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot write data for unknown connection %d', connectionId);
++    return;
++  }
++
++  if (status) {
++    // There's no good way to throw an error here...
++    log.warn('Failed to write characteristic: %d', status);
++  }
++
++  this.emit('write',
++            peripheralInfo.uuid,
++            expandUuid(serviceUuid),
++            expandUuid(characteristicUuid));
++};
++
++/**
++ * Enable or disable broadcasting for a characteristic.
++ */
++NobleBindings.prototype.broadcast = function(deviceUuid,
++                                             serviceUuid,
++                                             characteristicUuid,
++                                             broadcast,
++                                             callback) {
++  log.debug('broadcast(%s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            broadcast ? 'true' : 'false');
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  if (!(characteristicInfo.propertyBits & PROPERTY_BROADCAST)) {
++    throw new Error('Cannot set broadcast for characteristic \'' +
++                    characteristicUuid + '\' because it does not support ' +
++                    'broadcasting');
++  }
++
++  const descriptorInfo =
++    characteristicInfo.descriptors.get(
++      DESCRIPTOR_SERVER_CHARACTERISTIC_CONFIGURATION);
++  if (!descriptorInfo) {
++    throw new Error('No descriptorInfo info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', characteristic \'' +
++                    expandUuid(characteristicUuid) + '\', and descriptor \'' +
++                    DESCRIPTOR_SERVER_CHARACTERISTIC_CONFIGURATION + '\'');
++  }
++
++  this.queueCommand(this._broadcastRead.bind(this,
++                                             deviceUuid,
++                                             serviceUuid,
++                                             characteristicUuid,
++                                             descriptorInfo.uuid,
++                                             broadcast));
++};
++
++NobleBindings.prototype._broadcastRead = function(deviceUuid,
++                                                  serviceUuid,
++                                                  characteristicUuid,
++                                                  descriptorUuid,
++                                                  broadcast) {
++  log.debug('_broadcastRead(%s, %s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            broadcast ? 'true' : 'false');
++
++  // This is a multi-part command:
++  //
++  //   1. Read the value of DESCRIPTOR_SERVER_CHARACTERISTIC_CONFIGURATION.
++  //   2. Write the first bit of DESCRIPTOR_SERVER_CHARACTERISTIC_CONFIGURATION.
++  //   3. Emit.
++
++  // Step 1.
++  if (this._readValue(deviceUuid,
++                      serviceUuid,
++                      characteristicUuid,
++                      descriptorUuid)) {
++    return true;
++  }
++
++  // Hijack the currentCommandInfo set by _readValue().
++  this.currentCommandInfo.type = 'broadcast';
++
++  // Step 2.
++  this.currentCommandInfo.callback =
++    this._broadcastWrite.bind(this,
++                              deviceUuid,
++                              serviceUuid,
++                              characteristicUuid,
++                              descriptorUuid,
++                              broadcast);
++
++  return false;
++};
++
++NobleBindings.prototype._broadcastWrite = function(deviceUuid,
++                                                   serviceUuid,
++                                                   characteristicUuid,
++                                                   descriptorUuid,
++                                                   broadcast,
++                                                   status,
++                                                   data) {
++  log.debug('_broadcastWrite(%s, %s, %s, %s, %s, %d, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            broadcast ? 'true' : 'false',
++            status,
++            data ? '<Buffer[' + data.length + ']>' : 'null');
++
++  assert(this.currentCommandInfo.type === 'broadcast');
++  this.currentCommandInfo = null;
++
++  if (status || !data) {
++    // Something failed, no need to continue. Let the next command run.
++    this.scheduleNextCommand();
++    return;
++  }
++
++  if (data.length !== 2) {
++    log.warn('Descriptor \'%s\' should be of length 2, instead is of length %d',
++             data.length);
++    this.scheduleNextCommand();
++    return;
++  }
++
++  var broadcastEnabled = (data[0] & BROADCAST_ENABLED) ? true : false;
++  if (broadcast === broadcastEnabled) {
++    log.info('Broadcasting already %', broadcast ? 'enabled' : 'disabled');
++    this.scheduleNextCommand();
++    return;
++  }
++
++  if (broadcast) {
++    data[0] |= BROADCAST_ENABLED;
++  } else {
++    data[0] &= ~BROADCAST_ENABLED;
++  }
++
++  if (this._writeValue(deviceUuid,
++                       serviceUuid,
++                       characteristicUuid,
++                       descriptorUuid,
++                       data)) {
++    this.scheduleNextCommand();
++    return;
++  }
++
++  // Hijack the currentCommandInfo set by _writeValue().
++  this.currentCommandInfo.type = 'broadcast';
++
++  // Step 3.
++  this.currentCommandInfo.callback =
++    this._broadcastEmit.bind(this,
++                             deviceUuid,
++                             serviceUuid,
++                             characteristicUuid,
++                             descriptorUuid,
++                             broadcast);
++};
++
++NobleBindings.prototype._broadcastEmit = function(deviceUuid,
++                                                  serviceUuid,
++                                                  characteristicUuid,
++                                                  descriptorUuid,
++                                                  broadcast,
++                                                  status) {
++  log.debug('_broadcastEmit(%s, %s, %s, %s, %s, %d)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            broadcast ? 'true' : 'false',
++            status);
++
++  assert(this.currentCommandInfo.type === 'broadcast');
++
++  this.scheduleNextCommand();
++
++  if (!status) {
++    this.emit('broadcast',
++              deviceUuid,
++              expandUuid(serviceUuid),
++              expandUuid(characteristicUuid),
++              expandUuid(descriptorUuid));
++  }
++};
++
++/**
++ * Enable or disable notifications for a characteristic.
++ */
++NobleBindings.prototype.notify = function(deviceUuid,
++                                          serviceUuid,
++                                          characteristicUuid,
++                                          notify) {
++  log.debug('notify(%s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            notify ? 'true' : 'false');
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  if (notify) {
++    if (!(characteristicInfo.propertyBits & PROPERTY_NOTIFY) &&
++        !(characteristicInfo.propertyBits & PROPERTY_INDICATE)) {
++      throw new Error('Cannot be notified for characteristic \'' +
++                      characteristicUuid + '\' because it does not support ' +
++                      'any notification method');
++    }
++  }
++
++  const descriptorInfo =
++    characteristicInfo.descriptors.get(
++      DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION);
++  if (!descriptorInfo) {
++    throw new Error('No descriptorInfo info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', characteristic \'' +
++                    expandUuid(characteristicUuid) + '\', and descriptor \'' +
++                    DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION + '\'');
++  }
++
++  this.queueCommand(this._notifyEnable.bind(this,
++                                            deviceUuid,
++                                            serviceUuid,
++                                            characteristicUuid,
++                                            descriptorInfo.uuid,
++                                            notify));
++};
++
++NobleBindings.prototype._notifyEnable = function(deviceUuid,
++                                                 serviceUuid,
++                                                 characteristicUuid,
++                                                 descriptorUuid,
++                                                 notify) {
++ log.debug('_notifyEnable(%s, %s, %s, %s, %s)',
++           deviceUuid,
++           serviceUuid,
++           characteristicUuid,
++           descriptorUuid,
++           notify ? 'true' : 'false');
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot write set notify for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot set notify for peripheral \'%s\' because it is no ' +
++             'longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot set notify for service \'%s\' because it no longer exists',
++             serviceUuid);
++    return true;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot set notify for characteristic \'%s\' because it no ' +
++             'longer exists',
++             characteristicUuid);
++    return true;
++  }
++
++  // This is a multi-part command:
++  //
++  //   1. Enable/disable notification for the characteristic.
++  //   2. Write the proper enable/disable value to the
++  //      DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION descriptor.
++  //   3. Emit.
++
++  // Step 1.
++  this.bledroid.command('enableNotify ' +
++                        peripheralInfo.interfaceId + ' ' +
++                        peripheralInfo.connectionId + ' ' +
++                        peripheralInfo.address.replace(/:/g, '') + ' ' +
++                        serviceInfo.uuid + ' ' +
++                        serviceInfo.instanceId + ' ' +
++                        (serviceInfo.isPrimary ? '1' : '0') + ' ' +
++                        characteristicInfo.uuid + ' ' +
++                        characteristicInfo.instanceId + ' ' +
++                        (notify ? '1' : '0'));
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'notify',
++    notify: notify
++  };
++
++  return false;
++};
++
++/**
++ * Response to enable/disable notification
++ */
++NobleBindings.prototype.onNotifyEnable = function(connectionId,
++                                                  enabled,
++                                                  status,
++                                                  serviceUuid,
++                                                  characteristicUuid) {
++  log.debug('onNotifyEnable(%d, %s, %d, %s, %s)',
++            connectionId,
++            enabled ? 'true' : 'false',
++            status,
++            serviceUuid,
++            characteristicUuid);
++
++  const currentCommandInfo = this.currentCommandInfo;
++  assert(currentCommandInfo.type === 'notify');
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  if (status) {
++    // There's no good way to throw an error here...
++    log.warn('Failed to %s notification: %d',
++             currentCommandInfo.notify ? 'enable' : 'disable',
++             status);
++    this.scheduleNextCommand();
++    return;
++  }
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot write set notify for unknown connection %d', connectionId);
++    this.scheduleNextCommand();
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot set notify for service \'%s\' because it no longer ' +
++             'exists',
++             serviceUuid);
++    this.scheduleNextCommand();
++    return;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot set notify for characteristic \'%s\' because it no ' +
++             'longer exists',
++             characteristicUuid);
++    this.scheduleNextCommand();
++    return;
++  }
++
++  if (characteristicInfo.notifying === currentCommandInfo.notify) {
++    log.info('Notifications already %',
++             currentCommandInfo.notify ? 'enabled' : 'disabled');
++    this.scheduleNextCommand();
++    return;
++  }
++
++  var data = new Buffer(2);
++  if (currentCommandInfo.notify) {
++    if (characteristicInfo.propertyBits & PROPERTY_NOTIFY) {
++      data[0] = NOTIFICATION_WITH_NOTIFY;
++    } else if (characteristicInfo.propertyBits & PROPERTY_INDICATE) {
++      data[0] = NOTIFICATION_WITH_INDICATE;
++    } else {
++      log.warn('Cannot be notified for characteristic \'%s\' because it does ' +
++               'not support any notification method',
++               characteristicUuid);
++      this.scheduleNextCommand();
++      return;
++    }
++  } else {
++    data[0] = NOTIFICATION_DISABLED;
++  }
++  data[1] = 0;
++
++  this.currentCommandInfo = null;
++
++  // Step 2.
++  if (this._writeValue(peripheralInfo.uuid,
++                       serviceUuid,
++                       characteristicUuid,
++                       DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION,
++                       data)) {
++    this.scheduleNextCommand();
++    return;
++  }
++
++  // Hijack the currentCommandInfo set by _readValue().
++  this.currentCommandInfo.type = 'notify';
++
++  // Step 3.
++  this.currentCommandInfo.callback =
++    this._notifyEmit.bind(this,
++                          peripheralInfo.uuid,
++                          serviceUuid,
++                          characteristicUuid,
++                          currentCommandInfo.notify);
++};
++
++NobleBindings.prototype._notifyEmit = function(deviceUuid,
++                                               serviceUuid,
++                                               characteristicUuid,
++                                               notify,
++                                               status) {
++  log.debug('_notifyEmit(%s, %s, %s, %s, %d)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            notify ? 'true' : 'false',
++            status);
++
++  assert(this.currentCommandInfo.type === 'notify');
++
++  this.scheduleNextCommand();
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot set notify for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot set notify for service \'%s\' because it no longer ' +
++             'exists',
++             serviceUuid);
++    return;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot set notify for characteristic \'%s\' because it no ' +
++             'longer exists',
++             characteristicUuid);
++    return;
++  }
++
++  if (status) {
++    // There's no good way to throw an error here... All we can do is not update
++    // the |notifying| flag on the |characteristicInfo|.
++    log.warn('Failed to %sable notifications: %d',
++             notify ? 'en' : 'dis',
++             status);
++  } else {
++    characteristicInfo.notifying = notify;
++  }
++
++  this.emit('notify',
++            deviceUuid,
++            expandUuid(serviceUuid),
++            expandUuid(characteristicUuid),
++            characteristicInfo.notifying);
++};
++
++/**
++ * Called when a characteristic's value changes if notifications are enabled.
++ */
++NobleBindings.prototype.onNotify = function(connectionId,
++                                            serviceUuid,
++                                            characteristicUuid,
++                                            dataLength,
++                                            data) {
++  log.debug('onNotify(%d, %s, %s, %d, %s)',
++            connectionId,
++            serviceUuid,
++            characteristicUuid,
++            dataLength,
++            '<Buffer[' + data.length + ']>');
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (!peripheralInfo) {
++    log.warn('Cannot notify for unknown connection %d', connectionId);
++    return;
++  }
++
++  if (data.length !== dataLength) {
++    log.warn('Buffer size (%d) does not match dataLength (%d)',
++             data.length,
++             dataLength);
++    return;
++  }
++
++  this.emit('read',
++            peripheralInfo.uuid,
++            expandUuid(serviceUuid),
++            expandUuid(characteristicUuid),
++            data,
++            true);
++};
++
++/**
++ * Read the value of a descriptor.
++ */
++NobleBindings.prototype.readValue = function(deviceUuid,
++                                             serviceUuid,
++                                             characteristicUuid,
++                                             descriptorUuid) {
++  log.debug('readValue(%s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid);
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  descriptorUuid = sanitizeAndValidateUuid(descriptorUuid);
++
++  const descriptorInfo = characteristicInfo.descriptors.get(descriptorUuid);
++  if (!descriptorInfo) {
++    throw new Error('No descriptorInfo info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', characteristic \'' +
++                    expandUuid(characteristicUuid) + '\', and descriptor \'' +
++                    expandUuid(descriptorUuid) + '\'');
++  }
++
++  this.queueCommand(this._readValue.bind(this,
++                                         deviceUuid,
++                                         serviceUuid,
++                                         characteristicUuid,
++                                         descriptorUuid));
++};
++
++NobleBindings.prototype._readValue = function(deviceUuid,
++                                              serviceUuid,
++                                              characteristicUuid,
++                                              descriptorUuid) {
++  log.debug('_readValue(%s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot read descriptor for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot read descriptor for peripheral \'%s\' because it is no ' +
++             'longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot read descriptor for service \'%s\' because it no longer ' +
++             'exists',
++             serviceUuid);
++    return true;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot read descriptor for characteristic \'%s\' because it no ' +
++             'longer exists',
++             characteristicUuid);
++    return true;
++  }
++
++  const descriptorInfo = characteristicInfo.descriptors.get(descriptorUuid);
++  if (!descriptorInfo) {
++    log.warn('Cannot read descriptor \'%s\' because it no longer exists',
++             descriptorUuid);
++    return true;
++  }
++
++  const commandStringPrefix = 'readDescriptor ' +
++                              peripheralInfo.connectionId + ' ' +
++                              serviceInfo.uuid + ' ' +
++                              serviceInfo.instanceId + ' ' +
++                              (serviceInfo.isPrimary ? '1' : '0') + ' ' +
++                              characteristicInfo.uuid + ' ' +
++                              characteristicInfo.instanceId + ' ' +
++                              descriptorInfo.uuid + ' ' +
++                              descriptorInfo.instanceId + ' ';
++
++  this.bledroid.command(commandStringPrefix + AUTHENTICATION_NONE);
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'readDescriptor',
++    commandStringPrefix: commandStringPrefix,
++    authentication: AUTHENTICATION_NONE
++  };
++
++  return false;
++};
++
++/**
++ * Called when the value of a descriptor has been read. If the value could not
++ * be read due to insufficient authentication/encryption then this function may
++ * be called multiple times with successively increased authentication levels.
++ */
++NobleBindings.prototype.onReadDescriptor = function(connectionId,
++                                                    status,
++                                                    serviceUuid,
++                                                    characteristicUuid,
++                                                    descriptorUuid,
++                                                    dataLength,
++                                                    data) {
++  log.debug('onReadDescriptor(%d, %d, %s, %s, %s, %d, %s)',
++            connectionId,
++            status,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            dataLength,
++            '<Buffer[' + data.length + ']>');
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++  descriptorUuid = sanitizeAndValidateUuid(descriptorUuid);
++
++  if ((status === INSUFFICIENT_AUTHENTICATION ||
++       status == INSUFFICIENT_ENCRYPTION) &&
++      this.currentCommandInfo.authentication < AUTHENTICATION_MITM) {
++    // Increase authentication and retry, just like Android does...
++    this.currentCommandInfo.authentication++;
++    this.bledroid.command(this.currentCommandInfo.commandStringPrefix +
++                          this.currentCommandInfo.authentication);
++    return;
++  }
++
++  // There's no good way to throw an error here...
++  if (data.length !== dataLength) {
++    log.warn('Buffer size (%d) does not match dataLength (%d)',
++             data.length,
++             dataLength);
++    data = null;
++  }
++
++  if (status) {
++    log.warn('Failed to read descriptor: %d', status);
++    data = null;
++  }
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (peripheralInfo) {
++    this.emit('valueRead',
++              peripheralInfo.uuid,
++              expandUuid(serviceUuid),
++              expandUuid(characteristicUuid),
++              expandUuid(descriptorUuid),
++              data);
++  } else {
++    log.warn('Cannot read descriptor for unknown connection %d', connectionId);
++  }
++
++  // Compound commands (e.g. notify, broadcast) may capture this data without
++  // proceeding to the next command.
++  if (this.currentCommandInfo.callback) {
++    this.currentCommandInfo.callback(status, data);
++  } else {
++    this.scheduleNextCommand();
++  }
++};
++
++/**
++ * Write the value of a descriptor.
++ */
++NobleBindings.prototype.writeValue = function(deviceUuid,
++                                              serviceUuid,
++                                              characteristicUuid,
++                                              descriptorUuid,
++                                              data) {
++  if (!data || !(data instanceof Buffer)) {
++    throw new Error('Expected a Buffer object!');
++  }
++
++  log.debug('writeValue(%s, %s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            '<Buffer[' + data.length + ']>');
++
++  deviceUuid = sanitizeDeviceUuid(deviceUuid);
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    throw new Error('Unknown peripheral uuid \'' + deviceUuid + '\'');
++  }
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    throw new Error('No service info for connection ' +
++                    peripheralInfo.connectionId + ' and service \'' +
++                    expandUuid(serviceUuid) + '\'');
++  }
++
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    throw new Error('No characteristic info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', and characteristic ' +
++                    '\'' + expandUuid(characteristicUuid) + '\'');
++  }
++
++  descriptorUuid = sanitizeAndValidateUuid(descriptorUuid);
++
++  const descriptorInfo = characteristicInfo.descriptors.get(descriptorUuid);
++  if (!descriptorInfo) {
++    throw new Error('No descriptorInfo info for connection ' +
++                    peripheralInfo.connectionId + ', service \'' +
++                    expandUuid(serviceUuid) + '\', characteristic \'' +
++                    expandUuid(characteristicUuid) + '\', and descriptor \'' +
++                    expandUuid(descriptorUuid) + '\'');
++  }
++
++
++  if (data.length >= MAX_DATA_LENGTH) {
++    throw new Error('Data too large (' + data.length + ')');
++  }
++
++  this.queueCommand(this._writeValue.bind(this,
++                                          deviceUuid,
++                                          serviceUuid,
++                                          characteristicUuid,
++                                          descriptorUuid,
++                                          data));
++};
++
++NobleBindings.prototype._writeValue = function(deviceUuid,
++                                               serviceUuid,
++                                               characteristicUuid,
++                                               descriptorUuid,
++                                               data) {
++  log.debug('_writeValue(%s, %s, %s, %s, %s)',
++            deviceUuid,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid,
++            '<Buffer[' + data.length + ']>');
++
++  const peripheralInfo = this.peripheralMap.get(deviceUuid);
++  if (!peripheralInfo) {
++    log.warn('Cannot write descriptor for unknown peripheral uuid \'%s\'',
++             deviceUuid);
++    return true;
++  }
++
++  if (!peripheralInfo.connectionId) {
++    log.warn('Cannot write descriptor for peripheral \'%s\' because it is no ' +
++             'longer connected',
++             deviceUuid);
++    return true;
++  }
++
++  const serviceInfo = peripheralInfo.services.get(serviceUuid);
++  if (!serviceInfo) {
++    log.warn('Cannot write descriptor for service \'%s\' because it no ' +
++             'longer exists',
++             serviceUuid);
++    return true;
++  }
++
++  const characteristicInfo =
++    serviceInfo.characteristics.get(characteristicUuid);
++  if (!characteristicInfo) {
++    log.warn('Cannot write descriptor for characteristic \'%s\' because it ' +
++             'no longer exists',
++             characteristicUuid);
++    return true;
++  }
++
++  const descriptorInfo = characteristicInfo.descriptors.get(descriptorUuid);
++  if (!descriptorInfo) {
++    log.warn('Cannot write descriptor \'%s\' because it no longer exists',
++             descriptorUuid);
++    return true;
++  }
++
++  const commandStringPrefix = 'writeDescriptor ' +
++                              peripheralInfo.connectionId + ' ' +
++                              serviceInfo.uuid + ' ' +
++                              serviceInfo.instanceId + ' ' +
++                              (serviceInfo.isPrimary ? '1' : '0') + ' ' +
++                              characteristicInfo.uuid + ' ' +
++                              characteristicInfo.instanceId + ' ' +
++                              descriptorInfo.uuid + ' ' +
++                              descriptorInfo.instanceId + ' ';
++  const commandStringSuffix = ' ' +
++                              data.length +
++                              (data.length ? ' ' + data.toString('hex') : '');
++
++  this.bledroid.command(commandStringPrefix +
++                        AUTHENTICATION_NONE +
++                        commandStringSuffix);
++
++  assert(!this.currentCommandInfo);
++  this.currentCommandInfo = {
++    type: 'writeDescriptor',
++    commandStringPrefix: commandStringPrefix,
++    commandStringSuffix: commandStringSuffix,
++    authentication: AUTHENTICATION_NONE
++  };
++
++  return false;
++};
++
++/**
++ * Called when the value of a descriptor has been written. If the value could
++ * not be written due to insufficient authentication/encryption then this
++ * function may be called multiple times with successively increased
++ * authentication levels.
++ */
++NobleBindings.prototype.onWriteDescriptor = function(connectionId,
++                                                     status,
++                                                     serviceUuid,
++                                                     characteristicUuid,
++                                                     descriptorUuid) {
++  log.debug('onWriteDescriptor(%d, %d, %s, %s, %s)',
++            connectionId,
++            status,
++            serviceUuid,
++            characteristicUuid,
++            descriptorUuid);
++
++  serviceUuid = sanitizeAndValidateUuid(serviceUuid);
++  characteristicUuid = sanitizeAndValidateUuid(characteristicUuid);
++  descriptorUuid = sanitizeAndValidateUuid(descriptorUuid);
++
++  if ((status === INSUFFICIENT_AUTHENTICATION ||
++       status == INSUFFICIENT_ENCRYPTION) &&
++      this.currentCommandInfo.authentication < AUTHENTICATION_MITM) {
++    // Increase authentication and retry, just like Android does...
++    this.currentCommandInfo.authentication++;
++    this.bledroid.command(this.currentCommandInfo.commandStringPrefix +
++                          this.currentCommandInfo.authentication +
++                          this.currentCommandInfo.commandStringSuffix);
++    return;
++  }
++
++  if (status) {
++    // There's no good way to throw an error here...
++    log.warn('Failed to write descriptor: %d', status);
++  }
++
++  const peripheralInfo = this.peripheralMap.get(connectionId);
++  if (peripheralInfo) {
++    this.emit('valueWrite',
++              peripheralInfo.uuid,
++              expandUuid(serviceUuid),
++              expandUuid(characteristicUuid),
++              expandUuid(descriptorUuid));
++  } else {
++    log.warn('Cannot write descriptor for unknown connection %d', connectionId);
++  }
++
++  // Compound commands (e.g. notify, broadcast) may capture this data without
++  // proceeding to the next command.
++  if (this.currentCommandInfo.callback) {
++    this.currentCommandInfo.callback(status);
++  } else {
++    this.scheduleNextCommand();
++  }
++};
++
++/**
++ * Reade a value directly using a handle. Not supported on Android.
++ */
++NobleBindings.prototype.readHandle = function(deviceUuid, handle) {
++  throw new Error('Not supported');
++};
++
++/**
++ * Write a value directly using a handle. Not supported on Android.
++ */
++NobleBindings.prototype.writeHandle = function(deviceUuid,
++                                               handle,
++                                               data,
++                                               withoutResponse) {
++  throw new Error('Not supported');
++};
++
++// Exports
++module.exports = new NobleBindings();
+diff --git a/lib/noble.js b/lib/noble.js
+index 9f04778..9bbc179 100644
+--- a/lib/noble.js
++++ b/lib/noble.js
+@@ -21,6 +21,8 @@ if (process.env.NOBLE_WEBSOCKET || process.title === 'browser') {
+   bindings = require('./mac/bindings');
+ } else if (platform === 'linux' || platform === 'win32') {
+   bindings = require('./hci-socket/bindings');
++} else if (platform === 'android') {
++  bindings = require('./android/bindings');
+ } else {
+   throw new Error('Unsupported platform');
+ }
+diff --git a/package.json b/package.json
+index 42cfdb6..9cdbc67 100644
+--- a/package.json
++++ b/package.json
+@@ -18,24 +18,27 @@
+     "bluetooth smart",
+     "central"
+   ],
+-  "main": "./index.js",
++  "main": "dist/index.js",
+   "engines": {
+     "node": ">=0.8"
+   },
+   "os": [
++    "android",
+     "darwin",
+     "linux",
+     "win32"
+   ],
+   "dependencies": {
+-    "debug": "~2.2.0"
++    "browserify": "^10.2.1",
++    "debug": "~2.2.0",
++    "uuid": "2.0.1"
+   },
+-  "optionalDependencies": {
++  "__optionalDependencies": {
+     "bluetooth-hci-socket": "~0.3.1",
+     "bplist-parser": "0.0.6",
+     "xpc-connection": "~0.1.3"
+   },
+-  "devDependencies": {
++ "__devDependencies": {
+     "jshint": "latest",
+     "mocha": "~1.8.2",
+     "should": "~1.2.2",
+@@ -44,10 +47,12 @@
+     "ws": "~0.4.31"
+   },
+   "scripts": {
++    "postinstall": "mkdir -p dist/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile dist/index.js",
+     "pretest": "jshint *.js lib/. test/.",
+     "test": "mocha -R spec test/*.js"
+   },
+   "browser": {
++    "./android/bindings": false,
+     "./distributed/bindings": false,
+     "./mac/bindings": false,
+     "./hci-socket/bindings": false
+-- 
+2.7.0
+

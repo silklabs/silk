@@ -1,0 +1,525 @@
+From 7d554267879405b3bbbc0f2d723a1c6b9f7dda2b Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Sun, 21 Jun 2015 22:14:38 -0700
+Subject: [PATCH] Android Bluedroid bindings
+
+---
+ Android.mk              |   7 +
+ binding.gyp             |  38 -----
+ lib/android/bindings.js | 371 ++++++++++++++++++++++++++++++++++++++++++++++++
+ lib/bleno.js            |   2 +
+ package.json            |  13 +-
+ test.js                 |   3 +-
+ 6 files changed, 388 insertions(+), 46 deletions(-)
+ create mode 100644 Android.mk
+ delete mode 100644 binding.gyp
+ create mode 100644 lib/android/bindings.js
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..cb2d54e
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,7 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_NODE_MODULE_TYPE := file
++LOCAL_MODULE_PATH := $(TARGET_OUT)/silk/node_modules
++include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+deleted file mode 100644
+index 99c8e32..0000000
+--- a/binding.gyp
++++ /dev/null
+@@ -1,38 +0,0 @@
+-{
+-  'targets': [
+-    {
+-      'target_name': 'hci-ble',
+-      'type': 'executable',
+-      'conditions': [
+-        ['OS=="linux"', {
+-          'sources': [
+-            'src/hci-ble.c',
+-            'src/utility.c'
+-          ],
+-          'link_settings': {
+-            'libraries': [
+-              '-lbluetooth'
+-            ]
+-          }
+-        }]
+-      ]
+-    },
+-    {
+-      'target_name': 'l2cap-ble',
+-      'type': 'executable',
+-      'conditions': [
+-        ['OS=="linux"', {
+-          'sources': [
+-            'src/l2cap-ble.c',
+-            'src/utility.c'
+-          ],
+-          'link_settings': {
+-            'libraries': [
+-              '-lbluetooth'
+-            ]
+-          }
+-        }]
+-      ]
+-    }
+-  ]
+-}
+diff --git a/lib/android/bindings.js b/lib/android/bindings.js
+new file mode 100644
+index 0000000..79fa377
+--- /dev/null
++++ b/lib/android/bindings.js
+@@ -0,0 +1,371 @@
++/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
++/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
++
++var debug = require('debug')('silk-bleno');
++var events = require('events');
++var util = require('util');
++
++var makeBledroidConnection = require('silk-bledroid');
++
++var BlenoBindings = function() {};
++util.inherits(BlenoBindings, events.EventEmitter);
++
++var blenoBindings = new BlenoBindings();
++
++blenoBindings.init = function() {
++  this._bledroid = makeBledroidConnection();
++  this._bledroid.on('stateChange', this.onStateChange.bind(this));
++  this._bledroid.on('addressChange', this.onAddressChange.bind(this));
++  this._bledroid.on('advertisingStart', this.onAdvertisingStart.bind(this));
++  this._bledroid.on('advertisingStop', this.onAdvertisingStop.bind(this));
++  this._bledroid.on('rssiUpdate', this.onRssiUpdate.bind(this));
++  this._bledroid.on('serverConnect', this.onAccept.bind(this));
++  this._bledroid.on('serverDisconnect', this.onDisconnect.bind(this));
++  this._bledroid.on('mtuChange', this.onMtuChange.bind(this));
++  this._bledroid.on('primaryServiceHandle', this.onPrimaryServiceHandle.bind(this));
++  this._bledroid.on('attributeHandle', this.onAttributeHandle.bind(this));
++  this._bledroid.on('servicesSet', this.onServicesSet.bind(this));
++  this._bledroid.on('servicesDelete', this.onServicesDelete.bind(this));
++  this._bledroid.on('readAttribute', this.onReadAttribute.bind(this));
++  this._bledroid.on('writeAttribute', this.onWriteAttribute.bind(this));
++
++  this.acceptedAddress = null;
++};
++
++blenoBindings.reset = function() {
++  this.acceptedAddress = null;
++  this._attributes = null;
++  this._attributeMap = null;
++  this._newAttributes = null;
++  this._pendingSetServices = null;
++  this._pendingServiceAttributes = null;
++  this._currentAttribute = null;
++  this._serviceHandle = null;
++};
++
++blenoBindings.startAdvertising = function(name, serviceUuids) {
++  var services = '';
++  if (serviceUuids) {
++    services = ' ' + serviceUuids.join(' ');
++  }
++
++  var command = 'advertisingData ' +
++                '0 ' + // set_scan_rsp
++                '0 ' + // include_name
++                '0 ' + // include_txpower
++                '0 ' + // min_interval
++                '0 ' + // max_interval
++                '0 ' + // appearance
++                '0 ' + // manufacturer_len
++                ''   + // manufacturer_data
++                '0 ' + // service_data_len
++                ''   + // service_data
++                serviceUuids.length +
++                services;
++
++  this._bledroid.command(command);
++  this._bledroid.command('setListen 1');
++};
++
++blenoBindings.startAdvertisingIBeacon = function(data) {
++  var header = new Buffer([
++    0x4c,               // Apple identifier (least significant byte)
++    0x00,               // Apple identifier (most significant byte)
++    0x02,               // iBeacon tag
++    data.length         // Size of the iBeacon data
++  ]);
++
++  var manufacturerLength = header.length + data.length;
++  var manufacturerData = header.toString('hex') + data.toString('hex');
++
++  var command = 'advertisingData ' +
++                '0 ' + // set_scan_rsp
++                '0 ' + // include_name
++                '0 ' + // include_txpower
++                '0 ' + // min_interval
++                '0 ' + // max_interval
++                '0 ' + // appearance
++                manufacturerLength + ' ' +
++                manufacturerData + ' ' +
++                '0 ' + // service_data_len
++                ''   + // service_data
++                '0 ' + // service_uuid_len
++                '';    // service_uuid
++
++  this._bledroid.command(command);
++  this._bledroid.command('setListen 1');
++};
++
++blenoBindings.stopAdvertising = function() {
++  this._bledroid.command('setListen 0');
++};
++
++blenoBindings.updateRssi = function() {
++  if (!this.acceptedAddress) {
++    throw new Error("Not currently connected")
++  }
++  this._bledroid.command('updateRssi ' +
++                         this.acceptedAddress.replace(/:/g, ''));
++};
++
++blenoBindings.setServices = function(services) {
++  if (this._pendingSetServices) {
++    throw 'setServices() ongoing';
++  }
++  services = services || [];
++  this._attributes = [];
++  this._newAttributes = [];
++  this._pendingSetServices = services;
++
++  if (services.length > 1) {
++    throw "TODO: support more than one service";
++  }
++
++  if (this._serviceHandle) {
++    this._bledroid.command('deleteService ' + this._serviceHandle);
++  } else {
++    this._processSetServices();
++  }
++}
++
++blenoBindings.onServicesDelete = function(error) {
++  if (error) {
++    this.emit('servicesSet', error);
++  }
++  this._serviceHandle = null;
++  this._processSetServices();
++};
++
++blenoBindings._processSetServices = function() {
++  var services = this._pendingSetServices;
++  this._pendingSetServices = null;
++  if (services.length <= 0) {
++    this.emit('servicesSet');
++    return;
++  }
++  var service = services[0];
++  var attributes = []
++
++  for (var j = 0; j < service.characteristics.length; j++) {
++    var characteristic = service.characteristics[j];
++    attributes.push(['characteristic', characteristic]);
++    for (var k = 0; k < characteristic.descriptors.length; k++) {
++      var descriptor = characteristic.descriptors[k];
++      attributes.push(['descriptor', descriptor]);
++    }
++  }
++  this._pendingServiceAttributes = attributes;
++  this._bledroid.command('primaryService ' + (attributes.length*2 + 1) + ' ' + service.uuid);
++
++  console.log('setServices: ' + this._newAttributes);
++};
++
++blenoBindings.onStateChange = function(state) {
++  if (state !== 'poweredOn') {
++    debug('Adapter state changed to \'%s\'', state);
++    if (this.acceptedAddress) {
++      debug('Disconnecting existing connection');
++      this.onDisconnect(this.acceptedAddress);
++    }
++    this.reset();
++  }
++  this.emit('stateChange', state);
++};
++
++blenoBindings.onAddressChange = function(address) {
++  this.emit('addressChange', address);
++};
++
++blenoBindings.onAdvertisingStart = function(error) {
++  this.emit('advertisingStart', error);
++};
++
++blenoBindings.onAdvertisingStop = function() {
++  this.emit('advertisingStop');
++};
++
++blenoBindings.onAccept = function(clientAddress) {
++  debug('accept ' + clientAddress);
++  if (this.acceptedAddress) {
++    debug('Already accepted another connection, ignoring');
++    return;
++  }
++  this.acceptedAddress = clientAddress;
++  this.emit('accept', clientAddress);
++};
++
++blenoBindings.onDisconnect = function(clientAddress) {
++  debug('disconnected ' + clientAddress);
++  if (this.acceptedAddress !== clientAddress) {
++    return;
++  }
++  this.acceptedAddress = null;
++  this.emit('disconnect', clientAddress);
++};
++
++blenoBindings.onRssiUpdate = function(address, rssi, status) {
++  this.emit('rssiUpdate', rssi);
++};
++
++blenoBindings.onMtuChange = function(mtu) {
++  this.emit('mtuChange', mtu);
++};
++
++blenoBindings._addNextServiceAttribute = function() {
++  this._currentAttribute = null;
++
++  if (this._pendingServiceAttributes.length == 0) {
++    this._bledroid.command('startService ' + this._serviceHandle);
++    return;
++  }
++  var attr = this._pendingServiceAttributes.shift();
++
++  switch (attr[0]) {
++  case 'characteristic':
++    var characteristic = attr[1];
++    debug('characteristic ' + characteristic);
++
++    // Ref: http://androidxref.com/5.1.0_r1/xref/frameworks/base/core/java/android/bluetooth/BluetoothGattCharacteristic.java#31
++    var properties = 0;
++    var permissions = 0;
++
++    if (characteristic.properties.indexOf('read') !== -1) {
++      properties |= 0x02;
++
++      if (characteristic.secure.indexOf('read') !== -1) {
++        permissions |= 0x04;
++      } else {
++        permissions |= 0x01;
++      }
++    }
++
++    if (characteristic.properties.indexOf('writeWithoutResponse') !== -1) {
++      properties |= 0x04;
++
++      if (characteristic.secure.indexOf('writeWithoutResponse') !== -1) {
++        permissions |= 0x08;
++      } else {
++        permissions |= 0x02;
++      }
++    }
++
++    if (characteristic.properties.indexOf('write') !== -1) {
++      properties |= 0x08;
++
++      if (characteristic.secure.indexOf('write') !== -1) {
++        permissions |= 0x80;
++      } else {
++        permissions |= 0x10;
++      }
++    }
++
++    if (characteristic.properties.indexOf('notify') !== -1) {
++      if (characteristic.secure.indexOf('notify') !== -1) {
++        console.log("Warning: secure notify not supported");
++      } else {
++        properties |= 0x10;
++      }
++    }
++
++    if (characteristic.properties.indexOf('indicate') !== -1) {
++      if (characteristic.secure.indexOf('indicate') !== -1) {
++        console.log("Warning: secure indicate not supported");
++      } else {
++        properties |= 0x20;
++      }
++    }
++    this._currentAttribute = characteristic;
++    this._bledroid.command('addCharacteristic ' + this._serviceHandle + ' ' +
++      characteristic.uuid + ' ' + properties + ' ' + permissions);
++    break;
++
++  case 'descriptor':
++    var descriptor = attr[1];
++    debug('descriptor: ' + descriptor);
++    this._currentAttribute = descriptor;
++    this._bledroid.command('addDescriptor ' + this._serviceHandle + ' ' +
++      descriptor.uuid + ' 1');
++    break;
++
++  default:
++    debug("Error: Invalid service attribute: " + attr);
++    break;
++  }
++};
++
++blenoBindings.onAttributeHandle = function(handle) {
++  debug("onAttributeHandle: " + handle);
++  if (!handle) {
++    console.log('Error: failed to add attribute: ' + this._currentAttribute);
++  } else {
++    this._attributeMap[handle] = this._currentAttribute;
++  }
++  this._addNextServiceAttribute();
++};
++
++blenoBindings.onPrimaryServiceHandle = function(handle) {
++  this._serviceHandle = handle;
++  this._attributeMap = {};
++  this._addNextServiceAttribute();
++};
++
++blenoBindings.onServicesSet = function(error) {
++  this.emit('servicesSet', error);
++};
++
++blenoBindings.onReadAttribute = function(handle, connId, transId, offset) {
++
++  var attr = this._attributeMap[handle];
++  if (!attr) {
++    console.log('Error: read from unknown attribute ' + handle);
++    return;
++  }
++
++  var callback = (function(handle, connId, transId, offset) {
++    return function(result, data) {
++      var hexdata = '';
++      if (result == 0) {
++        if (!Buffer.isBuffer(data)) {
++          data = new Buffer(data);
++        }
++        hexdata = data.toString('hex');
++      }
++      this._bledroid.command('sendAttributeResponse ' + handle + ' ' + connId +
++        ' ' + transId + ' ' + result + ' ' + offset + ' ' + hexdata);
++    }.bind(this);
++  }.bind(this))(handle, connId, transId, offset);
++
++  if (typeof(attr.emit) != 'function') {
++    callback(0, attr.value);
++  } else {
++    attr.emit('readRequest', offset, callback);
++  }
++};
++
++blenoBindings.onWriteAttribute = function(handle, connId, transId, needResponse, offset, data) {
++
++  var attr = this._attributeMap[handle];
++  if (!attr) {
++    console.log('Error: write to unknown attribute ' + handle);
++    return;
++  }
++
++  var callback = (function(handle, connId, transId) {
++    return function(result) {
++      if (needResponse) {
++        this._bledroid.command('sendAttributeResponse ' + handle + ' ' + connId +
++          ' ' + transId + ' ' + result);
++      }
++    }.bind(this);
++  }.bind(this))(handle, connId, transId);
++
++  if (typeof(attr.emit) != 'function') {
++    callback(0x0E /* RESULT_UNLIKELY_ERROR */);
++  } else {
++    attr.emit('writeRequest', data, offset, needResponse ? false : true, callback);
++  }
++};
++
++
++blenoBindings.init();
++module.exports = blenoBindings;
+diff --git a/lib/bleno.js b/lib/bleno.js
+index bf8dd6c..61454e8 100644
+--- a/lib/bleno.js
++++ b/lib/bleno.js
+@@ -18,6 +18,8 @@ if (platform === 'darwin') {
+   bindings = require('./mac/bindings');
+ } else if (platform === 'linux') {
+   bindings = require('./linux/bindings');
++} else if (platform === 'android') {
++  bindings = require('./android/bindings');
+ } else {
+   throw new Error('Unsupported platform');
+ }
+diff --git a/package.json b/package.json
+index d951f35..29e594f 100644
+--- a/package.json
++++ b/package.json
+@@ -2,15 +2,17 @@
+   "name": "bleno",
+   "version": "0.1.13",
+   "description": "A node.js module for implementing BLE (Bluetooth low energy) peripherals",
+-  "main": "index.js",
++  "main": "dist/index.js",
+   "engines": {
+     "node": ">=0.8"
+   },
+   "os": [
++    "android",
+     "darwin",
+     "linux"
+   ],
+   "scripts": {
++    "postinstall": "mkdir -p dist/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile dist/index.js",
+     "pretest": "jshint *.js lib/. test/. examples/.",
+     "test": "mocha -R spec test/*.js"
+   },
+@@ -28,17 +30,14 @@
+   "author": "Sandeep Mistry",
+   "license": "MIT",
+   "readmeFilename": "README.md",
+-  "devDependencies": {
++  "__devDependencies": {
+     "jshint": "~2.3.0",
+     "should": "~2.0.2",
+     "mocha": "~1.14.0",
+     "node-blink1": "~0.1.1"
+   },
+   "dependencies": {
+-    "debug": "~0.7.2"
+-  },
+-  "optionalDependencies": {
+-    "xpc-connection": "~0.1.3",
+-    "bplist-parser": "0.0.6"
++    "browserify": "^10.2.1",
++    "debug": "2.2.0"
+   }
+ }
+diff --git a/test.js b/test.js
+index d1c8ea1..9b3284f 100644
+--- a/test.js
++++ b/test.js
+@@ -181,7 +181,8 @@ bleno.on('stateChange', function(state) {
+   console.log('on -> stateChange: ' + state + ', address = ' + bleno.address);
+ 
+   if (state === 'poweredOn') {
+-    bleno.startAdvertising('test', ['fffffffffffffffffffffffffffffff0']);
++    bleno.startAdvertising('test', ['fb349b5f800000800010000003000000']);
++
+   } else {
+     bleno.stopAdvertising();
+   }
+-- 
+2.7.0
+

@@ -12,7 +12,7 @@
     "name": "Ben Turner",
     "email": "bent@silklabs.com"
   },
-  "license": "Proprietary",
+  "license": "MIT",
   "dependencies": {
     "babel-runtime": "5.8.35",
     "debug": "2.2.0",

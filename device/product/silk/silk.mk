@@ -9,7 +9,8 @@
 BUILD_VERSION_TAGS += $(BRANCH)
 
 # inherit from gonkjs product
--include product/gonkjs/gonkjs.mk
+include product/gonkjs/gonkjs.mk
+SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/
 
 # Properties that are only read using getprop in sysutils.js
 # should be added to vendor/silk/core/silk-props.json instead
@@ -37,12 +38,10 @@ SILK_CORE := \
   silk-device-main \
   silk-base-version \
   silk-core-version \
-  silk-alog \
   silk-bledroid \
   silk-cv \
   silk-gc1 \
   silk-movie \
-  silk-properties \
   silk-caffe \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
@@ -98,14 +97,7 @@ SILK_GONK_PROGIES := \
   silk-capture \
   silk-dash \
   libpreview \
-  silk-dhcputil \
   silk-ir \
-  silk-lights \
-  silk-player \
-  silk-volume \
-  silk-wpad \
-  silk-sensors \
-  silk-time_genoff \
   silk-tts \
   tts-cereproc-heather-license \
   tts-cereproc-heather-voice \

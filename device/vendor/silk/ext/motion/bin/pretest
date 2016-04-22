@@ -9,6 +9,6 @@ if [ ! -d node_modules/opencv ]; then
 fi
 
 if [ ! -d node_modules/silk-cv ]; then
-  npm install ../../gonk/node/silk-cv/
+  npm install ../../../propsilk/silk-cv/
 fi
 

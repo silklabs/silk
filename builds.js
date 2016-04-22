@@ -89,6 +89,7 @@ module.exports = {
   'sim': npmPackageBuild('sim', {
     files: [
       'device/**',
+      'pub/bsp-gonk/**',
       'sim/**',
     ],
   }),
@@ -101,6 +102,9 @@ module.exports = {
       },
     },
     events: ['pr'],
+    files: [
+      'pub/bsp-gonk/**',
+    ],
   }),
   'device-push': npmPackageBuild('device', {
     // Build the primary development device on a branch push.
@@ -112,6 +116,9 @@ module.exports = {
       },
     },
     events: ['push'],
+    files: [
+      'pub/bsp-gonk/**',
+    ],
   }),
   'networktest': npmPackageBuild('networktest'),
   'releng': npmPackageBuild('releng'),

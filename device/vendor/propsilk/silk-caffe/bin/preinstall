@@ -1,0 +1,94 @@
+#!/bin/bash -e
+
+# Install silkDependencies
+if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
+  ../../../../npm_postinstall
+else
+  $ANDROID_BUILD_TOP/../npm_postinstall
+fi
+
+if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
+  echo Device build detected, no patching required.
+  exit 0
+fi
+
+UNAMESTR=`uname`
+if [[ "$UNAMESTR" != 'Darwin' ]]; then
+  echo "Caffe installation is only supported on Darwin"
+  exit 1
+fi
+
+PATCH_TREE=$SILK_CAFFE_PATCH_TREE
+
+if [[ -z $PATCH_TREE ]]; then
+  echo "Error: SILK_CAFFE_PATCH_TREE not defined.  |source ./setup|?"
+  exit 1
+fi
+
+echo "Using patch folder: $PATCH_TREE"
+
+if [[ ! -d $PATCH_TREE ]]; then
+  echo Not a directory: $PATCH_TREE
+  exit 1
+fi
+
+J="-j2"
+if [[ -z $CI ]]; then
+  J="-j6"
+fi
+
+
+# Install node-opencv
+if [[ ! -d node_modules/opencv ]]; then
+ npm install peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c --ignore-scripts
+fi
+
+# Install protobuf and compile as static library
+# Reference https://github.com/BVLC/caffe/issues/1917
+if [[ ! -d protobuf ]]; then
+  echo Compiling protobuf
+  # Default brew formula for protobuf is v2.6.1
+  # We need the same protobuf version for caffe as opencv3 is compiled with
+  # default protobuf version v2.6.1 or else there is a run time conflict
+  git clone --depth 1 https://github.com/google/protobuf -b v2.6.1
+  pushd protobuf
+  ./autogen.sh
+  ./configure --disable-shared
+  make $J
+  popd
+fi
+
+# Download caffe
+CAFFE_SHA1=813c3c9bb02a7e8b3899e7cfd6db1885228fb914
+if [[ ! -d caffe ]]; then
+  echo Downloading caffe
+  git clone git@github.com:BVLC/caffe.git
+
+  # Patch caffe
+  echo patching caffe
+  pushd caffe
+  git checkout $CAFFE_SHA1
+  git am --quiet $PATCH_TREE/caffe/0001-Select-correct-version-of-vecLib.patch
+  popd
+fi
+
+# Install caffe
+PROTOBUF_ROOT=$(pwd)/protobuf
+echo "protobuf root $PROTOBUF_ROOT"
+if [[ ! -f caffe/build/lib/libcaffe.dylib ]]; then
+  echo "Compiling caffe"
+  pushd caffe
+  mkdir -p build
+  pushd build
+  cmake \
+    -DCPU_ONLY=ON \
+    -DBUILD_python=OFF \
+    -DBUILD_matlab=OFF \
+    -DPROTOBUF_PROTOC_EXECUTABLE=$PROTOBUF_ROOT/src/protoc \
+    -DPROTOBUF_INCLUDE_DIR=$PROTOBUF_ROOT/src \
+    -DPROTOBUF_LIBRARY=$PROTOBUF_ROOT/src/.libs/libprotobuf.a \
+    ..
+  make all $J
+  popd
+  popd
+fi

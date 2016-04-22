@@ -89,13 +89,13 @@ server (`persist.silk.server.url` is now obsolete)
 
 ### C/C++
 
-The `./rungdb` script will setup a gdb session to the program or process of your
+The `./run-gdb` script will setup a gdb session to the program or process of your
 choice. Some examples:
 
 ```
-$ ./rungdb program_name
-$ ./rungdb attach <pid>
-$ ./rungdb attach program_name
+$ ./run-gdb program_name
+$ ./run-gdb attach <pid>
+$ ./run-gdb attach program_name
 ```
 
 ### Javascript
@@ -221,7 +221,7 @@ The dumps will be placed in /data/core.
 ```
 $ adb pull /data/core/
 $ . build/envsetup.sh
-$ ./rungdb node node.12205.1443030071.core #<-- "12205.1443030071" will vary
+$ ./run-gdb node node.12205.1443030071.core #<-- "12205.1443030071" will vary
 ```
 
 ## Appendix

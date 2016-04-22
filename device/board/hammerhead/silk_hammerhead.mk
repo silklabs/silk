@@ -12,5 +12,5 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += persist.silk.update.hardware=qemu
 
 # Use the logo from Mako
-PRODUCT_COPY_FILES += gonk/mako/media/logo.png:system/silk/media/logo.png
+PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png
 

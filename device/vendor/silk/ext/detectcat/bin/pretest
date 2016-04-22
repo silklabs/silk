@@ -5,7 +5,7 @@ if [ ! -d node_modules/node-pre-gyp ]; then
 fi
 
 if [ ! -d node_modules/opencv ]; then
-  npm install peterbraden/node-opencv#ead733ba3410ed6112ba6e19552c99db2d21359c
+  npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd
 fi
 
 exit 0

@@ -34,7 +34,7 @@ for subdir in sdk cli-plugin-internal; do
   fi
 done
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [ "$(uname)" == "Darwin" ] && [ -z $GET_OFF_MY_LAWN ]; then
   # Following packages are needed by caffe module
   brew install -vd snappy leveldb gflags glog szip lmdb libtool
   brew install hdf5

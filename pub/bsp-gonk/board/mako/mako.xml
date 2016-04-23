@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <include name="android-5.1.1_r1.xml"/>
-  <project groups="device,mako,hammerhead" name="DonkeyCoyote/proprietary_vendor_lge" path="vendor/lge" remote="github" revision="android-5.1"/>
+  <project name="DonkeyCoyote/proprietary_vendor_lge"
+           path="vendor/lge"
+           clone-depth="1"
+           groups="device,mako,hammerhead"
+           remote="github"
+           revision="android-5.1"/>
 
   <!-- Remove Android things -->
   <remove-project name="platform/art" />

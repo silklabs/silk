@@ -108,9 +108,6 @@ PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
 
 # external/...
 PRODUCT_PACKAGES += \
-  bleno \
-  noble \
-  opencv \
   kissfft \
   v8-profiler \
   bufferutil \

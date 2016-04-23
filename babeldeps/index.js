@@ -25,6 +25,7 @@ const PACKAGE_ROOTS = pkgFinder();
   // it requires relative plugins for in tree stuff (yay babel6).
   path.join(__dirname, '..', 'raygun'),
   path.join(__dirname, '..', 'log'),
+  path.join(__dirname, '..', 'pub', 'log'),
   path.join(__dirname, '..', 'jsonwebtoken'),
 
   // Do not accidentally assume CLI is babelified it should be doing this

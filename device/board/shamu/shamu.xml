@@ -2,7 +2,12 @@
 <manifest>
   <include name="mako.xml"/>
   <remove-project name="DonkeyCoyote/proprietary_vendor_lge"/>
-  <project groups="device,shamu" name="DonkeyCoyote/proprietary_vendor_motorola" path="vendor/motorola" remote="github" revision="android-5.1"/>
+  <project name="DonkeyCoyote/proprietary_vendor_motorola"
+           path="vendor/motorola"
+           groups="device,shamu" 
+           clone-depth="1"
+           remote="github"
+           revision="android-5.1"/>
 
   <!-- Example USB HID stuff -->
 

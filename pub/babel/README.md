@@ -1,4 +1,4 @@
-# Babel 6 Tooling for Silk Core
+# Babel 6 Tooling for Silk
 
 Babel has many moving pieces this module is designed to build our
 commonly used babel components (such as babel-register) once and then
@@ -6,7 +6,7 @@ check them into the tree...
 
 This has a number of benefits:
 
- - less npm dependencies for babel-register (register is roughly 11mb)
+ - fewer npm dependencies for babel-register (register is roughly 11mb)
 
  - no moving pieces for our common silk-cli setup (since we use a
    prebuilt preset).

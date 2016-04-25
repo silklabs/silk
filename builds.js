@@ -85,7 +85,7 @@ module.exports = {
   'cli': npmPackageBuild('pub/cli'),
   'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
   'http': npmPackageBuild('http'),
-  'log': npmPackageBuild('log'),
+  'log': npmPackageBuild('pub/log'),
   'sim': npmPackageBuild('sim', {
     files: [
       'device/**',

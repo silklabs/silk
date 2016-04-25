@@ -30,7 +30,9 @@ B2G_HASHED_FILES="${BASH_SOURCE[0]}"
 # Include .repo_fetchtimes.json in the hash.  The contents of this file changes
 # when the user runs |repo sync|.  Patches usually need to be reapplied on a
 # |repo sync| as repo likes to remove all non-upstreamed commits.
-B2G_HASHED_FILES="$B2G_HASHED_FILES .repo/.repo_fetchtimes.json"
+if [[ -r .repo/.repo_fetchtimes.json ]]; then
+  B2G_HASHED_FILES="$B2G_HASHED_FILES .repo/.repo_fetchtimes.json"
+fi
 
 REPO=${PWD}/.repo/repo/repo
 

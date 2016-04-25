@@ -50,6 +50,7 @@
         var timeout = setTimeout(function () {
             client.close();
             callback("Timeout waiting for NTP response.", null);
+            errorFired = true;
         }, exports.ntpReplyTimeout);
 
         // Some errors can happen before/after send() or cause send() to was impossible.

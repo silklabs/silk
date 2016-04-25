@@ -8,7 +8,7 @@
  */
 
 import * as util from './sysutils';
-import ntpClient from 'ntp-client';
+import ntpClient from 'silk-ntp-client';
 import { EventEmitter } from 'events';
 import wifi from './wifi';
 import createLog from './log';

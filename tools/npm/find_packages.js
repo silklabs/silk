@@ -8,10 +8,13 @@
 'use strict';
 
 var fs = require('fs');
-var path = require('path');
+const path = require('path');
 
-var ROOT = path.join(__dirname, '../..');
-var DEVICE = path.join(ROOT, 'device');
+const ROOT = path.join(__dirname, '../..');
+const DEVICE = path.join(ROOT, 'device');
+const CHROMIUM_TOOLS = path.join(ROOT, 'chromiumtools');
+const NODE_WEBRTC = path.join(ROOT, 'node-webrtc');
+const SERVER = path.join(ROOT, 'server');
 
 // Will not traverse any directories matching these names...
 const RESTRICTED_DIRNAMES = [
@@ -21,6 +24,16 @@ const RESTRICTED_DIRNAMES = [
 
 // Provisional searching only will search the listed portions of these directories.
 const RESTRICTED = {
+  [path.join(ROOT, 'external-dlib')]: [],
+  [SERVER]: [
+    path.join(SERVER, 'package.json'),
+  ],
+  [CHROMIUM_TOOLS]: [
+    path.join(CHROMIUM_TOOLS, 'package.json')
+  ],
+  [NODE_WEBRTC]: [
+    path.join(NODE_WEBRTC, 'package.json')
+  ],
   [DEVICE]: [
     `${DEVICE}/vendor`
   ],

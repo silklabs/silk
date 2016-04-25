@@ -8,7 +8,7 @@ const log = createLog('stream:demuxplex');
 const STREAM_MESSAGE = 0;
 const STREAM_CLOSE = 1;
 
-const MAX_HEADER_SIZE = 40;
+const MAX_HEADER_SIZE = 60;
 const MIN_HEADER_SIZE = 2;
 
 type StreamMeta = {
@@ -79,7 +79,7 @@ export default class DemuxStream extends Transform {
     stream.emit('close');
   }
 
-  _registerStream(id: string, header: Buffer) {
+  _registerStream(id: string) {
     log.info('creating stream', id);
 
     const stream = new Duplex({
@@ -87,7 +87,7 @@ export default class DemuxStream extends Transform {
       }, // no-op we push directly into this stream.
       write: (chunk: Buffer, encoding: string, callback: Function) => {
         log.verbose('write from substream', id);
-        this._writeDest.write(header);
+        this._writeDest.write(id);
         this._writeDest.write(chunk, encoding, callback);
       },
     });
@@ -115,7 +115,6 @@ export default class DemuxStream extends Transform {
 
   _transform(chunk: Buffer, encoding: string, callback: Function) {
     if (!this._current) {
-
       if (chunk.length > MAX_HEADER_SIZE && chunk.length > MIN_HEADER_SIZE) {
         const msg = `Got header of invalid size: ${chunk.length}`;
         log.error(msg);
@@ -123,9 +122,7 @@ export default class DemuxStream extends Transform {
         return;
       }
 
-      const type = chunk.readUInt8(0);
-      const streamIdBinary = chunk.slice(1);
-      const streamId = streamIdBinary.toString('hex');
+      const [type, streamId] = JSON.parse(chunk);
 
       if (type === STREAM_CLOSE) {
         log.info('close stream header', streamId);
@@ -160,7 +157,7 @@ export default class DemuxStream extends Transform {
 
       // XXX: This might not be the best option (hex).
       if (!this._streams.has(streamId)) {
-        this._registerStream(streamId, streamIdBinary);
+        this._registerStream(streamId);
       }
       this._current = this._streams.get(streamId);
 

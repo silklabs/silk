@@ -18,7 +18,7 @@ import WebSocket from 'ws';
 
 import Demux from 'silk-streams/src/demux';
 import WebSocketDuplex from 'silk-streams/src/websocket';
-import { MessagePackDuplexStream } from 'silk-streams/src/msgpack';
+import { JSONDuplexStream } from 'silk-streams/src/json';
 
 import type { Duplex } from 'stream';
 import type { Recipient } from 'silk-rtc';
@@ -230,7 +230,7 @@ export default class Connections extends EventEmitter {
     log.info(`Got signaling client ...`);
     let recipient;
     try {
-      recipient = await answer(new MessagePackDuplexStream(stream));
+      recipient = await answer(new JSONDuplexStream(stream));
     } catch (err) {
       log.error(`Failed to signal in webrtc connection: ${err.stack}`);
       return;

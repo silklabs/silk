@@ -17,7 +17,7 @@ const log = createLog('signaling:residents');
 
 const CLIENT_MESSAGE = 0;
 const CLIENT_CLOSE = 1;
-
+const STREAM_ID_LENGTH = 36;
 
 type ClientConfig = {
   timeoutMs: number;
@@ -46,10 +46,8 @@ type Resident = {
 };
 
 function header(type = CLIENT_CLOSE | CLIENT_MESSAGE, data: Buffer): Buffer {
-  return Buffer.concat([
-    new Buffer([type]),
-    data
-  ]);
+  // This is far from efficent but the data rate and volume for signaling is low.
+  return JSON.stringify([type, data]);
 }
 
 export default class Residents {
@@ -180,20 +178,13 @@ export default class Residents {
     };
 
     const onMessage = (data, flags) => {
-      if (!flags.binary) {
-        log.error(`Resident ${id} attempted to send non-binary data...`);
-        connection.terminate();
-        cleanup();
-        return;
-      }
-
       if (!resident.currentId) {
-        if (data.length !== 16) {
+        if (data.length !== STREAM_ID_LENGTH) {
           log.error(`Resident sent invalid id length: ${data.length}`);
           connection.terminate();
           return;
         }
-        resident.currentId = data.toString('hex');
+        resident.currentId = data.toString();
         return;
       }
 
@@ -244,8 +235,7 @@ export default class Residents {
    * client. These communications are designed to be short.
    */
   bridge(id: string, connection: any) {
-    const streamIdBinary = uuid.v4({}, new Buffer(16));
-    const streamId = streamIdBinary.toString('hex');
+    const streamId = uuid.v4();
     const resident = this._residents.get(id);
 
     if (!resident) {
@@ -257,21 +247,12 @@ export default class Residents {
       throw new Error('uuid collision (should never happen)');
     }
 
-    log.info(`Connect client (${streamId}) to ${id}`);
-
     const client = {
       connectedAt: Date.now(),
       connection,
     };
 
     const onMessage = (data, flags) => {
-      if (!flags.binary) {
-        log.warn(`Client attempted to send non-binary data...`);
-        connection.terminate();
-        cleanup();
-        return;
-      }
-
       log.info(`(client) Sending data to ${id} from ${streamId}`);
 
       if (resident.connection.readyState > WebSocket.OPENED) {
@@ -282,7 +263,7 @@ export default class Residents {
       // Each "send" call maps directly to a frame and we are single threaded
       // which avoids race conditions in the order of our frames.
       try {
-        resident.connection.send(header(CLIENT_MESSAGE, streamIdBinary));
+        resident.connection.send(header(CLIENT_MESSAGE, streamId));
         resident.connection.send(data);
       } catch (err) {
         // Either we are already disconnected or some other error which will get
@@ -312,10 +293,11 @@ export default class Residents {
       // send a message to initiate close on the resident side.
       if (resident.connection.readyState === WebSocket.OPEN) {
         log.info(`Notify resident (${id}) of stream close ${streamId}`);
-        resident.connection.send(header(CLIENT_CLOSE, streamIdBinary));
+        resident.connection.send(header(CLIENT_CLOSE, streamId));
       }
     };
 
+    log.info(`Client stream ${streamId} setup for ${id}`);
     this._clients.add(client);
     resident.clients.set(streamId, client);
     connection.on('message', onMessage);

@@ -10,7 +10,7 @@ import eventToPromise from 'event-to-promise';
 import WebSocket from 'ws';
 import WebSocketStream from 'silk-streams/src/websocket';
 import timeout from 'silk-utils/timeout';
-import { MessagePackDuplexStream } from 'silk-streams/src/msgpack';
+import { JSONDuplexStream } from 'silk-streams/src/json';
 import StructuredDataChannel from './structured_data_channel';
 import Peer from './peer';
 import * as call from './call';
@@ -155,7 +155,7 @@ export class DevicePeer extends EventEmitter {
       const websocketStream = new WebSocketStream(websocket, {
         log,
       });
-      const transport = new MessagePackDuplexStream(websocketStream);
+      const transport = new JSONDuplexStream(websocketStream);
 
       // Build the connection ...
       const [peerConnection, dataChannels] = call.createCaller(this._callOptions);

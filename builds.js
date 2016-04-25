@@ -82,7 +82,7 @@ module.exports = {
     events: ['push'],
   }),
   'cam': npmPackageBuild('cam'),
-  'cli': npmPackageBuild('cli'),
+  'cli': npmPackageBuild('pub/cli'),
   'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
   'http': npmPackageBuild('http'),
   'log': npmPackageBuild('log'),

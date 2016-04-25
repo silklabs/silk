@@ -4,7 +4,16 @@
   "description": "Device main program",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint *.js",
+    "test": "npm run lint"
+  },
+  "dependencies": {
+    "silk-log": "file:../log"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "eslint-config-silk": "file:../eslint-config"
   },
   "author": "",
   "license": "MIT"

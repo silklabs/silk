@@ -17,9 +17,9 @@ dependency and declare the necessary peer dependencies as well, e.g.:
 {
   "name": "silk-frobnicator",
   "devDependencies": {
-    "babel-eslint": "^4.1.6",
-    "eslint": "^1.10.3",
-    "eslint-config-silk": "file:../eslint",
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "eslint-config-silk": "file:../eslint-config",
     "eslint-plugin-react": "3.16.1"
   },
   "scripts": {

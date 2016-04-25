@@ -35,6 +35,12 @@ if (alog || process.env.SILK_ANDROID_LOGS) {
   };
 }
 
+// Normally the DEBUG environment variable should be set already on device.
+// However if this is not the case select a sensible default.
+if (!process.env.DEBUG) {
+  debug.enable('silk-*');
+}
+
 // Expected use:
 //
 //   import createLog from './log';

@@ -7,8 +7,8 @@ var fs = require('fs');
 
 function main() {
   return {
-    preset: path.join(__dirname, '..', 'pub', 'babel-preset-silk-node4'),
-    register: path.join(__dirname, '..', 'pub', 'babel', 'register'),
+    preset: path.join(__dirname, '..', 'babel-preset-silk-node4'),
+    register: path.join(__dirname, '..', 'babel', 'register'),
   };
 }
 

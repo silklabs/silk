@@ -1,0 +1,27 @@
+{
+  "name": "silk",
+  "version": "0.15.0",
+  "description": "Silk SDK",
+  "repository": "silklabs/node-silk",
+  "bugs": {
+    "url": "https://github.com/silklabs/node-silk/issues"
+  },
+  "scripts": {
+    "prepublish": "babel --presets $(./babelconfig.js preset) -d build src"
+  },
+  "author": "Silk Labs Inc.",
+  "license": "MIT",
+  "keywords": [
+    "silk",
+    "iot"
+  ],
+  "dependencies": {
+    "node-inspector": "0.12.5"
+  },
+  "devDependencies": {
+    "babel-eslint": "4.1.8",
+    "babel-register": "6.4.3",
+    "babel-cli": "6.4.5",
+    "eslint": "1.10.3"
+  }
+}

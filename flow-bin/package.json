@@ -1,0 +1,8 @@
+{
+  "name": "silk-flow-bin",
+  "version": "0.15.0",
+  "bin": {
+    "flow": "./flow"
+  },
+  "description": ""
+}

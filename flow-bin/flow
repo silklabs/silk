@@ -1,0 +1,24 @@
+#! /bin/bash -e
+SOURCE="${BASH_SOURCE[0]}"
+if [ -z $SOURCE ]; then
+  # zsh support....
+  SOURCE=${(%):-%N}
+fi
+
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+platform=$(uname | tr '[:upper:]' '[:lower:]')
+target="$ROOT/$platform"
+
+if [ ! -d $target ];
+then
+  echo "Unknown flow platform $platform"
+  exit 1
+fi
+
+exec $target/flow/flow "$@"

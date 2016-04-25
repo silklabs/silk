@@ -1,0 +1,12 @@
+{
+    "folders": [
+        {
+            "path": ".",
+            "file_exclude_patterns": ["*.sublime-workspace", "*.project"],
+            "folder_exclude_patterns": ["*.*"]
+        }
+    ],
+    "ternjs": {
+        "exclude": ["node_modules/**"]
+    }
+}

@@ -4,6 +4,9 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# TODO: Remove this |if| when vendor/silk/core is refactored/moved
+ifeq ($(strip $(SILK_DEVICE_MAIN_PATH)),)
+
 EXT_ANDROID_MKS := $(call all-makefiles-under,$(LOCAL_PATH))
 include $(LOCAL_PATH)/ext.mk
 
@@ -16,4 +19,8 @@ $(foreach ext,$(dir $(wildcard $(LOCAL_PATH)/*/package.json)), \
 ifeq ($(ONE_SHOT_MAKEFILE),)
 # Permit extensions to include an optional Android.mk (not needed normally)
 include $(EXT_ANDROID_MKS)
+endif
+
+else
+$(warning Not using vendor/silk/ext)
 endif

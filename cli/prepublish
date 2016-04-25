@@ -1,0 +1,5 @@
+#!/bin/bash -ex
+
+PATH=$PWD/node_modules/.silk-node/bin:$PATH babel --presets $(./babelconfig.js preset) -d build src
+
+exit 0

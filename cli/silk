@@ -1,0 +1,27 @@
+#! /bin/bash -e
+
+# This script should only ever be run after a successful npm install... It
+# serves as the entrypoint for the silk-cli ensuring our version of node comes
+# first in the install path if present.
+
+# XXX: Alternatively we could do this via node but that would involve keeping
+# around an extra node process ...
+
+SOURCE="${BASH_SOURCE[0]}"
+if [ -z $SOURCE ];
+then
+  # zsh support....
+  SOURCE=${(%):-%N}
+fi
+
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+SILK_NODE_PATH="$ROOT/node_modules/.silk-node/bin"
+
+export PATH="$SILK_NODE_PATH:$PATH"
+exec -a silk-cli $ROOT/main.js "$@"

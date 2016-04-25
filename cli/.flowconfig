@@ -1,0 +1,18 @@
+[ignore]
+.*/node_modules/babel.*
+.*/node_modules/mocha.*
+.*/node_modules/json5/test/.*
+
+[include]
+
+[libs]
+
+[options]
+module.system=haste
+esproposal.class_instance_fields=ignore
+esproposal.class_static_fields=ignore
+unsafe.enable_getters_and_setters=true
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
+
+[version]
+0.23.0

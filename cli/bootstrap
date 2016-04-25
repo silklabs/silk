@@ -1,0 +1,210 @@
+#! /usr/bin/env node
+/*eslint no-console:0,no-process-exit:0*/
+
+/**
+ * This script will be run on postinstall to ensure a minimum version of node is
+ * available... The workflow looks something like this:
+ *
+ *   - Check current node major version < MIN_NODE_MAJOR_VER.
+ *     - Compute os string (darwin-x64 for example).
+ *     - Download node binary to package root.
+ *     - Validate checksum for package (in this file).
+ *     - Expand node to node_modules/.silk-node.
+ *     - Validate version of installed node for sanity check..
+ *     - Global "silk" will insert node_modules/.silk-node into first item on
+ *       path and exec the "main.js" (see silk)
+ */
+
+var crypto = require('crypto');
+var exec = require('child_process').exec;
+var os = require('os');
+var https = require('https');
+var fs = require('fs');
+var path = require('path');
+var util = require('util');
+
+// 4.x LTS.
+var RELEASE_PATH = 'v4.3.0';
+var RELEASE_BASE_URL = 'https://nodejs.org/download/release/';
+var RELEASE_VERSION = 'v4.3.0';
+
+var MIN_NODE_MAJOR_VER = 4;
+
+// We do not support an unlimited number of nodes so we only store a few common
+// checksums. See: https://nodejs.org/download/release/latest-argon/SHASUMS256.txt
+var CHECKSUMS = {
+  'darwin-x64': '72858adf7bc84b632f5635dd4a8030226048af5ad5cb166c7ee169dfcb4645ef',
+  'linux-x64': '90ce6e23ad9748813742e1cf09e86fa4c0f3d53972d5dbe920a38bcc842e2d09',
+  'linux-x86': '6972ed77c36f026498a0fde6b237fbc554325fa3a7426ee17ce563bdc08caa69',
+};
+
+// Node very happily will run from any location on almost all modern linux and
+// OSX installs... We place our node here so it can easily be blown away and
+// easily referenced.
+var LOCAL_NODE_INSTALL_PATH = path.join(__dirname, 'node_modules/.silk-node');
+
+function warnFailedUpgrade() {
+  console.error(
+    'Your node version %s is too old .. Please upgrade to %s or greater',
+    process.version,
+    RELEASE_VERSION
+  );
+  process.exit(1);
+}
+
+function computeVersion() {
+  var platform = os.platform();
+  switch (platform) {
+  case 'darwin':
+    return 'darwin-x64';
+  case 'linux':
+    return 'linux-' + os.arch();
+  default:
+    console.error('Cannot perform local node install for platform: %s', platform);
+    warnFailedUpgrade();
+  }
+}
+
+function validateLocalNodeInstall() {
+  var cmd = util.format('%s/bin/node --version', LOCAL_NODE_INSTALL_PATH);
+  exec(cmd, function(error, stdout, stderr) {
+    if (error) {
+      console.error('Failed to execute local node install in %s', LOCAL_NODE_INSTALL_PATH);
+      process.stdout.write(stdout);
+      process.stderr.write(stderr);
+      warnFailedUpgrade();
+    }
+
+    var localVersion = stdout.trim();
+    if (RELEASE_VERSION !== localVersion) {
+      console.error(
+        'Expected node version %s got node version %s please report an issue...',
+        RELEASE_VERSION,
+        localVersion
+      );
+      warnFailedUpgrade();
+    }
+  });
+}
+
+
+function extractNodeTarGz(filePath) {
+  function doExtract() {
+    fs.mkdirSync(LOCAL_NODE_INSTALL_PATH);
+    var cmd = util.format(
+      "tar -xz --strip-components=1 -f '%s' -C '%s'",
+      filePath,
+      LOCAL_NODE_INSTALL_PATH
+    );
+
+    exec(cmd, function(err, stdout, stderr) {
+      if (err) {
+        console.error('Failed to extract local node install please file an issue:');
+        process.stdout.write(stdout);
+        process.stderr.write(stderr);
+        warnFailedUpgrade();
+      }
+
+      validateLocalNodeInstall();
+    });
+  }
+
+  if (fs.existsSync(LOCAL_NODE_INSTALL_PATH)) {
+    var cmd = util.format("rm -Rf '%s'", LOCAL_NODE_INSTALL_PATH);
+    exec(cmd, function(err, stdout, stderr) {
+      doExtract();
+    });
+    return;
+  }
+
+  doExtract();
+}
+
+function validateUpgrade(filePath, checksum) {
+  var sha256 = crypto.createHash('sha256');
+  var reader = fs.createReadStream(filePath);
+  sha256.once('error', function(err) {
+    console.error('Error validating checksum', err);
+    warnFailedUpgrade();
+  });
+
+  reader.on('data', function(buffer) {
+    sha256.update(buffer);
+  });
+
+  reader.on('end', function() {
+    var fileChecksum = sha256.digest('hex');
+
+    if (fileChecksum !== checksum) {
+      console.error('Checksum mismatch expected %s got %s', checksum, fileChecksum);
+      warnFailedUpgrade();
+    }
+    extractNodeTarGz(filePath);
+  });
+}
+
+function performUpgrade() {
+  var osString = computeVersion();
+  if (!osString) {
+    warnFailedUpgrade();
+  }
+
+  var checksum = CHECKSUMS[osString];
+  if (!checksum) {
+    console.error('No checksum found for %s please report an issue...', osString);
+    warnFailedUpgrade();
+  }
+
+  console.log('Your global node version %s is too old ...', process.version);
+  console.log('Downloading a local node version %s for silk-cli to use', RELEASE_VERSION);
+  console.log('This will not effect your global node installs :)');
+
+  var downloadPath = 'node-' + RELEASE_VERSION + '-' + osString + '.tar.gz';
+  var downloadUrl = RELEASE_BASE_URL + RELEASE_PATH + '/' + downloadPath;
+
+  // perform the http download....
+  var destPath = path.join(__dirname, downloadPath);
+  var dest = fs.createWriteStream(destPath);
+
+  var req = https.get(downloadUrl, function(res) {
+    if (res.statusCode === 404) {
+      console.error('Downloading %s failed with a 404 response ... Please report an issue.', downloadUrl);
+      warnFailedUpgrade();
+    }
+
+    if (res.statusCode !== 200) {
+      console.error('Unexpected status code %d from %s', res.statusCode, downloadUrl);
+      warnFailedUpgrade();
+    }
+
+    res.pipe(dest);
+    dest.on('error', function() {
+      console.error('Failed during download of %s', downloadUrl);
+      console.error('Please retry silk-cli install...');
+      process.exit(1);
+    });
+
+    dest.on('finish', function() {
+      validateUpgrade(destPath, checksum);
+    });
+  });
+
+  req.once('error', function(err) {
+    console.error('There was a network error while trying to download a local node version', err.stack);
+    warnFailedUpgrade();
+  });
+}
+
+// calculate if we are on a new enough version of node...
+function main() {
+  var major = parseInt(process.versions.node.split('.').shift(), 10);
+  if (isNaN(major)) {
+    warnFailedUpgrade();
+  }
+
+  if (major < MIN_NODE_MAJOR_VER) {
+    performUpgrade();
+  }
+}
+
+main();

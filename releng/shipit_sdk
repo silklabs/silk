@@ -23,7 +23,7 @@ fi
 
 
 shopt -s nullglob
-cd $(dirname $(readlink -f $0))/..
+cd $(dirname $(readlink -f $0))/../pub
 
 set -x
 for dir in sdk cli; do
@@ -42,23 +42,7 @@ for dir in sdk cli; do
 
   rm -rf package/ repo/ $tarball
 
-  # To npmjs
   npm publish .
-
-  # To github
-  # (TODO: this goes away once we start getting external interest/contributors)
-  npm pack
-  tar zxvf $tarball
-  git clone $repo repo
-  cd repo
-  [ -z * ] || git rm -r *
-  cp -ra ../package/* .
-  git add *
-  git commit -m "v${version}"
-  git tag "v${version}"
-  git push
-  git push --tags
-  cd ..
 
   popd
 done

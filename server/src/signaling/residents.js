@@ -189,13 +189,16 @@ export default class Residents {
       }
 
       const streamId = resident.currentId;
+      // currentId is reset early in this process to avoid potential errors
+      // where we do not reset it.
+      resident.currentId = null;
+
       let client = resident.clients.get(streamId);
       if (!client) {
         log.warn(`Attempting to send data to unknown dest: ${streamId}`);
         return;
       }
       log.info(`(resident) Sending data from ${id} to ${streamId}`);
-      resident.currentId = null;
 
       if (client.connection.readyState !== WebSocket.OPEN) {
         log.error(`Resident ${id} sending messgaes to closed client: ${streamId}`);
@@ -237,6 +240,7 @@ export default class Residents {
   bridge(id: string, connection: any) {
     const streamId = uuid.v4();
     const resident = this._residents.get(id);
+    log.info(`Bridge(id=${id} streamId=${streamId})`);
 
     if (!resident) {
       throw new Error(`Attempted to bridge to unknown resident`);

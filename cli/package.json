@@ -2,9 +2,9 @@
   "name": "silk-cli",
   "version": "0.15.0",
   "description": "Silk Developer CLI",
-  "repository": "silklabs/node-silk-cli",
+  "repository": "silklabs/silk",
   "bugs": {
-    "url": "https://github.com/silklabs/node-silk-cli/issues"
+    "url": "https://github.com/silklabs/silk/issues"
   },
   "engines": {
     "node": ">=0.10"

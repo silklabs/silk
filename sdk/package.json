@@ -2,9 +2,9 @@
   "name": "silk",
   "version": "0.15.0",
   "description": "Silk SDK",
-  "repository": "silklabs/node-silk",
+  "repository": "silklabs/silk",
   "bugs": {
-    "url": "https://github.com/silklabs/node-silk/issues"
+    "url": "https://github.com/silklabs/silk/issues"
   },
   "scripts": {
     "prepublish": "babel --presets $(./babelconfig.js preset) -d build src"

@@ -149,6 +149,7 @@ cd ../..
 pwd
 # Re-init the real manifest
 $repo init \
+  --depth=1 \
   --quiet \
   -u $PWD/.repo/manifest_upstream \
   $repo_init_version \

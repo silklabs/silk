@@ -1,0 +1,8 @@
+[include]
+src/
+
+[ignore]
+.*/node_modules/babel.*
+
+[version]
+0.23.0

@@ -4,8 +4,9 @@
   "description": "Device main program",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint *.js",
-    "test": "npm run lint"
+    "flow": "flow check",
+    "lint": "eslint src",
+    "test": "npm run lint && npm run flow"
   },
   "dependencies": {
     "silk-log": "file:../log"
@@ -13,7 +14,8 @@
   "devDependencies": {
     "babel-eslint": "5.0.0",
     "eslint": "1.10.3",
-    "eslint-config-silk": "file:../eslint-config"
+    "eslint-config-silk": "file:../eslint-config",
+    "silk-flow-bin": "file:../flow-bin"
   },
   "author": "",
   "license": "MIT"

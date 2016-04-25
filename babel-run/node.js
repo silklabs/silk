@@ -7,11 +7,13 @@
 const path = require('path');
 
 const DEFAULT_OPTIONS = {
-  presets: [require(path.join(__dirname, '..', 'babel-preset-silk-node4'))],
+  presets: [
+    require(path.join(__dirname, '..', 'pub', 'babel-preset-silk-node4'))
+  ],
   only: require(path.join(__dirname, '..', 'babeldeps')),
 };
 
-const REGISTER_PATH = path.join(__dirname, '..', 'babel/register');
+const REGISTER_PATH = path.join(__dirname, '..', 'pub', 'babel', 'register');
 
 module.exports = (options) => {
   options = options || {};

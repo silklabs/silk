@@ -7,10 +7,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const REGISTER_PATH = path.join(__dirname, 'node_modules', 'babel-register');
+const CONFIG_PATH = path.join(__dirname, 'babelconfig.js');
 const COMPILE_ROOT = path.join(__dirname, 'src');
 
-if (fs.existsSync(REGISTER_PATH)) {
+if (fs.existsSync(CONFIG_PATH)) {
   var config = require('./babelconfig')();
   var preset = require(config.preset);
   require(config.register)({

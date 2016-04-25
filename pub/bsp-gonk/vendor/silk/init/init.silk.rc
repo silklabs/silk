@@ -68,3 +68,4 @@ service silk-tts /system/silk/bin/debug-wrapper /system/silk/bin/tts
     user audio
     group audio
     socket tts stream 0600 root root
+    disabled

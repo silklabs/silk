@@ -21,6 +21,7 @@ const TTS_SOCKET_NAME = '/dev/socket/tts';
 export default class Say extends events.EventEmitter {
   constructor() {
     super();
+    util.setprop('ctl.start', 'silk-tts');
     this._ready = false;
     this._initConfig = {
       cmdName: 'init',

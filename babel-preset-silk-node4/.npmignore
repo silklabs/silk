@@ -1,0 +1,7 @@
+# Ignore everything except LICENSE, README, package.json, index.js
+/staging
+/build
+/webpack.config.js
+/.babelrc
+/test
+*.tgz

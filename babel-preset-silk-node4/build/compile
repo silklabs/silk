@@ -1,0 +1,22 @@
+#! /bin/bash -e
+
+
+check_npm_version() {
+  local ver=$(npm --version)
+  local major=${ver:0:1}
+
+  if [[ "$major" != "3" ]];
+  then
+    >&2 echo "Babel does not install well on npm2 please use npm3"
+    exit 1
+  fi
+}
+
+main() {
+  ./build/stage
+  check_npm_version
+  npm install
+  ./node_modules/.bin/webpack
+}
+
+main

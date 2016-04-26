@@ -1,0 +1,17 @@
+#!/bin/bash -ex
+
+if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
+  APIDOC_SOURCE_FILES=" \
+    ../log/device.js \
+  "
+fi
+
+cd $(dirname $0)/..
+./node_modules/.bin/documentation \
+  $APIDOC_SOURCE_FILES \
+  --project-version `node -p "require('./package.json').version"` \
+  -f html \
+  -o dist/api/device \
+  --name silk-device-api
+
+du -hs dist/api/device

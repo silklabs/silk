@@ -1,0 +1,14 @@
+{
+  "name": "silk-docs",
+  "version": "0.15.0",
+  "description": "Silk documentation",
+  "scripts": {
+    "build": "bin/build",
+    "install": "npm run build"
+  },
+  "dependencies": {
+    "documentation": "3.0.4"
+  },
+  "license": "MIT",
+  "private": true
+}

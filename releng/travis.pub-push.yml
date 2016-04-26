@@ -9,3 +9,10 @@ script:
   - git subtree split --prefix pub -b pub
   - git remote add sos git@github.com:silklabs/silk.git
   - git push sos pub:master
+  - cd pub/docs ; npm install ; cd ../..
+  - mkdir gh-pages
+  - cp -ra pub/docs/dist gh-pages/master
+  - git add gh-pages
+  - git commit -m "Automated doc update"
+  - git subtree split --prefix gh-pages -b gh-pages
+  - git push -f sos gh-pages:gh-pages

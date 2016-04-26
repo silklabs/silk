@@ -26,6 +26,12 @@ export type FaceRect = {
   height: number;
   leftEye: ?Eye;
   rightEye: ?Eye;
+  forehead: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
 };
 
 export type FaceId = number; // index into face database
@@ -68,6 +74,7 @@ export class Face {
     this.id = id;
     log = env.log;
     this.name = 'unknown face';
+    this.rect = {};
     this._origAvgSize = 0;
     this._curAvgSize = 0;
     this.faceStart = Date.now();
@@ -144,7 +151,12 @@ export class Face {
   }
 
   setLocation(rect: FaceRect, rectWhen: number) {
-    this.rect = rect;
+    // Tracker rect doesn't have forehead so don't overwrite the existing
+    // forehead if not available. This means that we would be using the old
+    // forehead rectangle until we get a new one
+    for (let k in rect) {
+      this.rect[k] = rect[k];
+    }
     this.rectWhen = rectWhen;
 
     // Run face movement estimation

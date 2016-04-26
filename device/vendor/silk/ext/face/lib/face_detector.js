@@ -171,6 +171,12 @@ export default class FaceDetector extends EventEmitter {
                 hogFaceRect.rightEye[0] * xScale,
                 hogFaceRect.rightEye[1] * yScale,
               ],
+              forehead: {
+                x: hogFaceRect.forehead.x * xScale,
+                y: hogFaceRect.forehead.y * yScale,
+                width: hogFaceRect.forehead.width * xScale,
+                height: hogFaceRect.forehead.height * yScale,
+              }
             });
           } else {
             resolve(null);
@@ -215,6 +221,8 @@ export default class FaceDetector extends EventEmitter {
           hogFace.leftEye[1] += faceRect.y;
           hogFace.rightEye[0] += faceRect.x;
           hogFace.rightEye[1] += faceRect.y;
+          hogFace.forehead.x += faceRect.x;
+          hogFace.forehead.y += faceRect.y;
           faceRect = hogFace;
 
           faces.push(faceRect);

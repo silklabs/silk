@@ -109,6 +109,7 @@ public:
     dlib::rectangle boundingBox;
     dlib::point leftEye;
     dlib::point rightEye;
+    dlib::rectangle forhead;
   };
 
   explicit FaceDetectorUpdateWorker(std::weak_ptr<State> weakState, cv::Mat mat, Nan::Callback *callback)
@@ -193,6 +194,30 @@ public:
         (righteye_left.y() + righteye_right.y()) / 2
       );
 
+      // Estimate the forehead
+      // Area between the top of the face (head) and the eyebrows
+      dlib::point lefteyebrowstart = shape.part(17);
+      dlib::point righteyebrowend = shape.part(26);
+      dlib::point lefteyebrowtop = shape.part(19);
+      dlib::point righteyebrowtop = shape.part(24);
+
+      // Choose the eyebrow which is higher (lower y-axis)
+      long bottomforehead;
+      if (lefteyebrowtop.y() < righteyebrowtop.y()) {
+        bottomforehead = lefteyebrowtop.y();
+      } else {
+        bottomforehead = righteyebrowtop.y();
+      }
+
+      // Dilate a bit more to capture more of the forehead
+      long ydilateForehead = static_cast<float>(bottom - top) * 0.20;
+      face.forhead = dlib::rectangle(
+        lefteyebrowstart.x(),
+        top - ydilateForehead,
+        righteyebrowend.x(),
+        bottomforehead
+      );
+
       faces.push_back(face);
     }
   }
@@ -235,6 +260,17 @@ public:
         rightEyeArray->Set(0, Nan::New<v8::Number>(faces[i].rightEye.x()));
         rightEyeArray->Set(1, Nan::New<v8::Number>(faces[i].rightEye.y()));
         face->Set(Nan::New("rightEye").ToLocalChecked(), rightEyeArray);
+
+        v8::Local<v8::Object> forhead = Nan::New<v8::Object>();
+        forhead->Set(Nan::New("x").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].forhead.left()));
+        forhead->Set(Nan::New("y").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].forhead.top()));
+        forhead->Set(Nan::New("width").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].forhead.width()));
+        forhead->Set(Nan::New("height").ToLocalChecked(),
+          Nan::New<v8::Number>(faces[i].forhead.height()));
+        face->Set(Nan::New("forehead").ToLocalChecked(), forhead);
 
         facesArray->Set(i, face);
       }

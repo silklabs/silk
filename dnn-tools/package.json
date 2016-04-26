@@ -7,7 +7,7 @@
     "preinstall": "../npm_postinstall",
     "lint": "eslint *.js"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint"
   },
   "dependencies": {

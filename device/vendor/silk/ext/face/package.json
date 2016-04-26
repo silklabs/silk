@@ -12,7 +12,7 @@
     "lint": "eslint tools/*.js",
     "predict": "DEBUG=silk-face:* ../../../../../babel-run/babel-node tools/facePredictor.js"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",

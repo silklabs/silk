@@ -16,7 +16,7 @@
     "mz": "2.2.0",
     "tmp": "0.0.28"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "cli": "/pub/cli",
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",

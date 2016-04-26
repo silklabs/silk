@@ -9,7 +9,7 @@
     "preinstall": "../npm_preinstall",
     "test": "npm run lint && npm run flow"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log"

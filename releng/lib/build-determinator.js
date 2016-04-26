@@ -75,7 +75,7 @@ async function resolveAdditionalFileDependencies(
   }
 
   // An npm project's package.json is an implicit file dependency. Any
-  // local silkDependencies that are listed within are added to this
+  // local symlinkDependencies that are listed within are added to this
   // build's files as well.
   // TODO: we don't do this recursively yet
   let package_json = build.package_json;
@@ -92,9 +92,9 @@ async function resolveAdditionalFileDependencies(
   buildFiles.push(package_json);
 
   let packageConfig = JSON.parse(packageJSON);
-  let localDeps = packageConfig.silkDependencies;
+  let localDeps = packageConfig.symlinkDependencies;
   if (!localDeps) {
-    log.info(`${package_json} does not define any silkDependencies.`);
+    log.info(`${package_json} does not define any symlinkDependencies.`);
     return;
   }
 

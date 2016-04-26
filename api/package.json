@@ -4,7 +4,7 @@
   "description": "Silk client API for node js",
   "main": "src/index.js",
   "license": "proprietary",
-  "silkDependencies": {
+  "symlinkDependencies": {
     "api-schema": "/api-schema",
     "eslint-config-silk": "/eslint",
     "jsonwebtoken": "/jsonwebtoken",

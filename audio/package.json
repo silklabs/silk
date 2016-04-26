@@ -7,7 +7,7 @@
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-config": "/config",
     "silk-log": "/log"
   },

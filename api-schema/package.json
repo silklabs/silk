@@ -12,7 +12,7 @@
   },
   "author": "James Lal [:lightsofapollo]",
   "license": "",
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-flow-bin": "/flow-bin"
   },

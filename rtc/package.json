@@ -3,7 +3,7 @@
   "version": "0.15.0",
   "main": "src/index.js",
   "author": "Silk Labs, Inc",
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-azure-storage": "/azure-storage",

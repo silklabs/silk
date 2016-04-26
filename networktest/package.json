@@ -15,7 +15,7 @@
     "lint": "eslint lib",
     "test": "./networktest"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",

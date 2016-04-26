@@ -19,8 +19,6 @@ let crypto = require('crypto');
 let path = require('path');
 let fs = require('fs');
 
-let submitMetrics = require('../../cli-metrics/submit');
-
 const HASH_FILE = '.silk_npm_hash';
 const CORE = path.join(__dirname, '..', '..');
 
@@ -142,11 +140,7 @@ class ConditionalInstall {
       hash === fs.readFileSync(hashFile, 'utf8')
     ) {
       debug(`Hash matches in ${installModulePath} skipping...`);
-      let corePath = installModulePath.replace(CORE, '');
-      return submitMetrics(`npm_install_silk_dependencies_cache_hit`,
-        'count=1i',
-        `corePath=${corePath}`
-      );
+      return Promise.resolve();
     }
 
     debug(`Installing ${installModulePath}`);

@@ -8,7 +8,7 @@
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules oksilk.js oksilk.js.map"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",
     "silk-exttest": "/device/vendor/silk/exttest",

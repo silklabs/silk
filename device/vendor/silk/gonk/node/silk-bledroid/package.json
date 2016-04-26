@@ -18,7 +18,7 @@
     "debug": "2.2.0",
     "uuid": "2.0.1"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
   "private": true

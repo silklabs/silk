@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "license": "proprietary",
   "scripts": {
-    "postinstall": "../npm/postinstall.js",
+    "postinstall": "../../npm_postinstall",
     "flow": "flow check",
     "lint": "eslint src",
     "test": "npm run lint && npm run flow",
@@ -14,7 +14,7 @@
     "segments": "DEBUG=silk-* ../../babel-run/babel-node ./src/file_writer.js segments",
     "combine": "DEBUG=silk-* ../../babel-run/babel-node ./src/m4s_combinator.js"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",

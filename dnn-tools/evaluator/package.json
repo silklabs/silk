@@ -11,7 +11,7 @@
   "bin": {
     "dbEval": "./dbEval.js"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint"
   },
   "dependencies": {

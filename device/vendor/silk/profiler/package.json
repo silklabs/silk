@@ -7,7 +7,7 @@
     "postinstall": "../../../../npm_postinstall",
     "lint": "eslint ."
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps"
   },

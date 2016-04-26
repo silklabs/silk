@@ -12,7 +12,6 @@ import { EventEmitter } from 'events';
 
 import { answer } from 'silk-rtc';
 import createLog from 'silk-log';
-import sleep from 'silk-utils/sleep';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
 
@@ -38,6 +37,7 @@ export default class Connections extends EventEmitter {
   _ws: ?WebSocket = null;
   _wsDuplex: ?WebSocketDuplex = null;
   _wsUrl: ?string = null;
+  _reconnectTimer: ?number = null;
   _reconnectSleep: number = 0;
   _reconnectAttempts: number = 0;
   _running: bool = false;
@@ -54,6 +54,27 @@ export default class Connections extends EventEmitter {
     return this._ws.readyState === WebSocket.OPEN;
   }
 
+  /**
+   * When running reset the reconnect timers and attempt a retry.
+   */
+  reconnect() {
+    if (!this._running) {
+      return;
+    }
+
+    log.info(`Scheduling reconnect`);
+
+    // Ensure we try ASAP.
+    this._resetReconnects();
+
+    // Reset any current reconnect timer.
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer);
+    }
+
+    this._scheduleReconnect();
+  }
+
   start(): void {
     if (this._running) {
       return;
@@ -67,6 +88,11 @@ export default class Connections extends EventEmitter {
   stop() {
     log.info(`Stopping connections ...`);
     this._running = false;
+
+    if (this._reconnectTimer !== null) {
+      clearTimeout(this._reconnectTimer);
+    }
+
     for (let connection of this._connections) {
       connection.close();
     }
@@ -94,6 +120,11 @@ export default class Connections extends EventEmitter {
     this.state = newState;
     this.emit('stateChange', newState, previousState);
     log.info(`state change - new ${newState}, old ${previousState}`);
+  }
+
+  _resetReconnects() {
+    this._reconnectAttempts = 0;
+    this._reconnectSleep = 0;
   }
 
   /**
@@ -169,11 +200,15 @@ export default class Connections extends EventEmitter {
    * XXX: We could potentially be smarter here by allowing network status to
    * ping us directly ...
    */
-  async _reconnect(): Promise<void> {
+  _scheduleReconnect(): void {
     this._cleanupListeners();
-
     // If the .stop call has been made do not reconnect.
     if (!this._running) {
+      return;
+    }
+
+    // Only schedule a reconnect if one is not pending!.
+    if (this._reconnectTimer !== null) {
       return;
     }
 
@@ -183,14 +218,12 @@ export default class Connections extends EventEmitter {
     );
 
     this._setState('reconnecting');
-    this.emit('reconnecting');
+    this._reconnectTimer = setTimeout(this._reconnect, this._reconnectSleep);
+  }
 
-    await sleep(this._reconnectSleep);
-
-    // Ugly but handles the case where we stopped during the above sleep.
-    if (!this._running) {
-      return;
-    }
+  _reconnect: () => Promise<void> = async (): Promise<void> => {
+    // Important that this is reset as early as possible in this function.
+    this._reconnectTimer = null;
 
     // If we are using a hardcoded url reset it if we reconnect to ensure that
     // it has not changed...
@@ -202,7 +235,7 @@ export default class Connections extends EventEmitter {
     );
 
     this._connect();
-  }
+  };
 
   async _connect(): Promise<void> {
     this._setState('connecting');
@@ -320,9 +353,7 @@ export default class Connections extends EventEmitter {
 
     if (this._reconnectAttempts) {
       log.info(`Reconnected after ${this._reconnectAttempts} attempts`);
-      // reset reconnect details ...
-      this._reconnectAttempts = 0;
-      this._reconnectSleep = 0;
+      this._resetReconnects();
     }
   };
 
@@ -340,14 +371,14 @@ export default class Connections extends EventEmitter {
     this._setState('disconnected');
     this.emit('disconnect');
     log.error(`Failed to connect to signaling server: ${err.stack}`);
-    this._reconnect();
+    this._scheduleReconnect();
   };
 
   _onWsClose: (reason: string) => void = (reason) => {
     this._setState('disconnected');
     this.emit('disconnect');
     log.info(`Signaling server has closed ... (${reason})`);
-    this._reconnect();
+    this._scheduleReconnect();
   };
 
 

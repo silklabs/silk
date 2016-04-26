@@ -120,6 +120,7 @@ PRODUCT_PACKAGES += \
   libboost \
   libopenblas \
   lib_third_party_node_webrtc_node_webrtc_gyp \
+  lib_______node_webrtc_gyp \
 
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \

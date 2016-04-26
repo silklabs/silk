@@ -276,6 +276,7 @@ export default async function main (config: any): any {
       const req = ws.upgradeReq;
       const { type, deviceId, publicKey } = req;
       invariant(type);
+      log.info(`Incoming connection (${type})`);
 
       if (type === 'device') {
         invariant(publicKey);

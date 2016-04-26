@@ -122,7 +122,7 @@ async function readLogo() {
  * @private
  */
 function main() {
-  connections = new Connections();
+  connections = new Connections(networkStatus);
   server = new Server(connections);
 
   // Start these ASAP so that unhandled exceptions in the boot sequence will
@@ -155,6 +155,7 @@ function main() {
     }
   );
   networkStatus.hintSocket = server;
+  networkStatus.on('online', () => connections.reconnect());
   outbox = initOutbox(networkStatus);
 
   crashreporter = makeCrashReporter(outbox);

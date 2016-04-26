@@ -2,7 +2,7 @@
   "name": "silk-device-main",
   "version": "0.0.1",
   "description": "Device main program",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "flow": "flow check",
     "lint": "eslint src",

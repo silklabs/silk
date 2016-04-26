@@ -32,10 +32,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 endif
 
+# Only install silk-base-version in full device builds
+ifneq ($(DEFAULT_GOAL),gonk_modules)
+PRODUCT_PACKAGES += silk-base-version
+endif
+
 # vendor/silk/core/...
 SILK_CORE := \
   silk-device-main \
-  silk-base-version \
   silk-core-version \
   silk-bledroid \
   silk-cv \
@@ -120,6 +124,7 @@ PRODUCT_PACKAGES += \
   libboost \
   libopenblas \
   lib_third_party_node_webrtc_node_webrtc_gyp \
+  lib_______node_webrtc_gyp \
 
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \

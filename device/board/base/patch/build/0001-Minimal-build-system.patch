@@ -212,7 +212,7 @@ index a56cd97..784c9d1 100644
  endif
  
  
-@@ -1071,3 +1081,72 @@ showcommands:
+@@ -1071,3 +1081,73 @@ showcommands:
  .PHONY: nothing
  nothing:
  	@echo Successfully read the makefiles.
@@ -275,6 +275,7 @@ index a56cd97..784c9d1 100644
 +  ub-uiautomator verity_key zipalign tst_str_parms liblog-benchmarks
 +
 +GONK_MODULES:=$(filter-out $(ALL_MODULES_BASE),$(ALL_MODULES))
++GONK_MODULES:=$(filter $(product_MODULES),$(GONK_MODULES))
 +
 +ifneq (,$(strip $(GONK_MODULES)))
 +gonk_modules: $(GONK_MODULES)

@@ -120,9 +120,9 @@ endif
 
 include $(BUILD_SYSTEM)/binary.mk
 
-$(LOCAL_BUILT_MODULE): built_module_path := $(built_module_path)
-$(LOCAL_BUILT_MODULE): $(LOCAL_ADDITIONAL_DEPENDENCIES)
-$(LOCAL_BUILT_MODULE): $(all_libraries)
+my_inplace_build_module := $(LOCAL_PATH)/$(LOCAL_BUILT_MODULE_STEM)
+$(my_inplace_build_module): $(filter-out $(my_inplace_build_module),$(LOCAL_ADDITIONAL_DEPENDENCIES))
+$(my_inplace_build_module): $(all_libraries)
 
 npm_cli = $(abspath external/npm/cli.js)
 npm_node_dir = $(abspath external/node)
@@ -130,17 +130,13 @@ npm_node_dir = $(abspath external/node)
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef
-$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
-$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
-$(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
-$(LOCAL_BUILT_MODULE): $(import_includes)
-	@echo "Mirror module to: $(built_module_path)"
-	@echo "            from: $(LOCAL_PATH)"
-	$(hide) mkdir -p $(built_module_path)
-	$(hide) rsync -qa --exclude='/node_modules' --exclude='/.silkslug' $(LOCAL_PATH)/ $(built_module_path)
-	$(hide) cd $(built_module_path) && $(ANDROID_BUILD_TOP)/$(SILK_BUILD_FILES)/package_abs_file.js package.json $(LOCAL_PATH)/
-	@echo "Build: $(built_module_path)"
-	$(hide) cd $(built_module_path) &&  \
+$(my_inplace_build_module): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
+$(my_inplace_build_module): LOCAL_PATH := $(LOCAL_PATH)
+$(my_inplace_build_module): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
+$(my_inplace_build_module): $(import_includes)
+$(my_inplace_build_module):
+	@echo "NPM Install: $(LOCAL_PATH)"
+	$(hide) cd $(LOCAL_PATH) &&  \
     C_INCLUDES="\
       $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
       $(call abs_import_includes,$(shell cat $(PRIVATE_IMPORT_INCLUDES))) \
@@ -202,11 +198,16 @@ ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
 	$(hide) touch $@
 endif
 
+$(LOCAL_BUILT_MODULE): $(my_inplace_build_module)
+	$(hide) mkdir -p $(@D)
+	$(hide) ln -f $< $@
+
+$(LOCAL_INSTALLED_MODULE): LOCAL_PATH := $(LOCAL_PATH)
+
 ifeq (file,$(LOCAL_NODE_MODULE_TYPE))
 
 $(LOCAL_INSTALLED_MODULE): PRIVATE_STRIP := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
 $(LOCAL_INSTALLED_MODULE): PRIVATE_OBJCOPY := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY)
-$(LOCAL_INSTALLED_MODULE): built_module_path := $(built_module_path)
 
 # Binary file module
 ifeq ($(suffix $(LOCAL_NODE_MODULE_MAIN)),.node)
@@ -234,9 +235,9 @@ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR
 # Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
 # so they can be resolved correctly from the browserify-ed module
 	$(hide) \
-  for binding in `cd $(built_module_path)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
+  for binding in `cd $(LOCAL_PATH)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
     mkdir -p $(@D)/build; \
-    SRC=$(built_module_path)/$$binding ; \
+    SRC=$(LOCAL_PATH)/$$binding ; \
     DST=$(@D)/build/`basename $$binding` ; \
     $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST ; \
     $(and $(TARGET_STRIP_EXTRA), $(PRIVATE_OBJCOPY) --add-gnu-debuglink=$$SRC $$DST ; ) \
@@ -250,7 +251,7 @@ else # LOCAL_NODE_MODULE_TYPE == folder
 $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
 	@echo "Install: $@"
 	$(hide) mkdir -p $(@D)
-	$(hide) rsync -qa $(firstword $(wildcard $(<D)/.silkslug/ $(<D)/)) $(@D)
+	$(hide) rsync -qa $(firstword $(wildcard $(LOCAL_PATH)/.silkslug/ $(LOCAL_PATH)/)) $(@D)
 	$(hide) test -f $@
 endif
 

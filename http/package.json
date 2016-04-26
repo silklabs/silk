@@ -13,7 +13,7 @@
   "browser": {
     "./src/fetch.js": "./src/fetch_browser.js"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",
     "silk-flow-bin": "/flow-bin"

@@ -14,7 +14,7 @@
     "segments": "DEBUG=silk-* ../../babel-run/babel-node ./src/file_writer.js segments",
     "combine": "DEBUG=silk-* ../../babel-run/babel-node ./src/m4s_combinator.js"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",

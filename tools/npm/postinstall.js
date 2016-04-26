@@ -136,7 +136,7 @@ function waitForLocks(lock) {
 }
 
 /**
- * silkDependencies when given an absolute path are relative to the root of silk
+ * symlinkDependencies when given an absolute path are relative to the root of silk
  * core otherwise relative to their package root.
  */
 function depPathToAbsolute(nodeModules, dependencyPath) {
@@ -290,11 +290,11 @@ function findPackageJSON(cwd) {
   }
 
   let pkg = require(pkgPath);
-  if (!pkg.silkDependencies) {
+  if (!pkg.symlinkDependencies) {
     return Promise.resolve();
   }
 
-  return installDeps(cwd, nodeModules, pkg.silkDependencies).then(() => {
+  return installDeps(cwd, nodeModules, pkg.symlinkDependencies).then(() => {
     try {
       fs.unlinkSync(selfLock);
     } catch (err) {}

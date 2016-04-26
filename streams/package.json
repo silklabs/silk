@@ -8,7 +8,7 @@
     "mocha": "mocha $(find test -name '*_test.js')",
     "test": "npm run lint && npm run mocha && npm run flow"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-log": "/log",
     "eslint-config-silk": "/eslint",
     "silk-flow-bin": "/flow-bin"

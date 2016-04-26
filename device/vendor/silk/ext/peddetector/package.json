@@ -8,7 +8,7 @@
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules peddetector.js peddetector.js.map"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",

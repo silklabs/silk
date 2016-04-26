@@ -15,7 +15,7 @@
   "devDependencies": {
     "mocha": "2.4.2"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-external-dlib": "/external-dlib"
   },
   "keywords": [

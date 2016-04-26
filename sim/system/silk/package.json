@@ -8,7 +8,7 @@
     "postinstall": "../../../npm_postinstall && ./postinstall"
   },
   "author": "Silk Labs Inc.",
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-caffe": "/device/vendor/propsilk/silk-caffe",
     "silk-cv": "/device/vendor/propsilk/silk-cv",
     "silk-core-version": "/version",

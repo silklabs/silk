@@ -12,7 +12,7 @@
     "posttest": "flow check",
     "clean": "rm -rf node_modules silk-device-main.js silk-device-main.js.map"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-audio": "/audio",
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",

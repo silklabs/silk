@@ -1,5 +1,5 @@
 {
-  "silkDependencies": {
+  "symlinkDependencies": {
     "api-schema": "/api-schema",
     "silk-azure-storage": "/azure-storage",
     "eslint-config-silk": "/eslint",

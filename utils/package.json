@@ -7,7 +7,7 @@
     "lint": "eslint test src",
     "flow": "flow check"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-flow-bin": "/flow-bin"
   },

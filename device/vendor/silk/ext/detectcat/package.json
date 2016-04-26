@@ -10,7 +10,7 @@
     "test": "DEBUG=* mocha $(find test -name '*_test.js')",
     "clean": "rm -rf node_modules"
   },
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",

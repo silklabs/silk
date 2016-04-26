@@ -23,7 +23,7 @@
     "azure",
     "browser"
   ],
-  "silkDependencies": {
+  "symlinkDependencies": {
     "silk-log": "/log",
     "silk-utils": "/utils",
     "silk-http": "/http",

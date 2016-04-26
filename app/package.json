@@ -1,5 +1,5 @@
 {
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",

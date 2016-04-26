@@ -17,7 +17,7 @@
     "upliftall": "DEBUG=silk-* babel-node lib/github-uplifter.js"
   },
   "license": "proprietary",
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/version",

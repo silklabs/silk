@@ -9,7 +9,7 @@
     "postinstall": "./postinstall"
   },
   "private": true,
-  "silkDependencies": {
+  "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
     "silk-log": "/log"

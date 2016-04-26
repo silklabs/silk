@@ -45,7 +45,7 @@ type Resident = {
   clients: Map<string, Client>;
 };
 
-function header(type = CLIENT_CLOSE | CLIENT_MESSAGE, data: Buffer): Buffer {
+function header(type = CLIENT_CLOSE | CLIENT_MESSAGE, data: string): string {
   // This is far from efficent but the data rate and volume for signaling is low.
   return JSON.stringify([type, data]);
 }

@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "license": "proprietary",
   "scripts": {
-    "postinstall": "../npm/postinstall.js",
+    "postinstall": "../../npm_postinstall",
     "flow": "flow check",
     "lint": "eslint src",
     "test": "npm run lint && npm run flow",

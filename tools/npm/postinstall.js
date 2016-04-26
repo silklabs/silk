@@ -12,25 +12,23 @@
  */
 'use strict';
 
-let fs = require('fs');
-let path = require('path');
+const fs = require('fs');
+const path = require('path');
 
-let submitMetrics = require('../../cli-metrics/submit');
-let ConditionalInstall = require('./conditional_install');
+const config = require('./find_config')();
+const ConditionalInstall = require('./conditional_install');
 
 /**
  * This is an ugly hack to break circular references up ...
  */
-const CORE = path.join(__dirname, '..', '..');
+const CORE = config.root;
 const LOCK_FILE = 'node_modules/.__silk_npm_lock';
 const LOCK_POLL_MS = 500;
 const NPM_CONFIG = path.join(__dirname, '.npmrc');
 
 // Yet another nasty hack to ensure we don't run dependant install for these
 // modules...
-const NEVER_RUN_NPM_INSTALL = new Set([
-  path.join(CORE, 'babel-preset-silk-node4')
-]);
+const NEVER_RUN_NPM_INSTALL = new Set([config.ignored]);
 
 let currentModule;
 let selfLock;
@@ -308,10 +306,6 @@ let start = Date.now();
 findPackageJSON(process.cwd()).then(() => {
   let corePath = path.resolve(process.cwd()).replace(CORE, '');
   let duration = Date.now() - start;
-  return submitMetrics('npm_install_silk_dependencies',
-    `durationMs=${duration}i`,
-    `corePath=${corePath}`
-  );
 }).catch((err) => {
   log(`Preinstall has failed ${err.stack || err}`);
   destroyUnownedLocks();

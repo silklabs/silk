@@ -1,0 +1,12 @@
+{
+  "ignored": [],
+  "restrict": {
+    "app": ["package.json"],
+    "external-dlib": [],
+    "server": ["package.json"],
+    "chromiumtools": ["package.json"],
+    "node-webrtc": ["package.json"],
+    "device": ["vendor"],
+    "device/vendor": ["silk"]
+  }
+}

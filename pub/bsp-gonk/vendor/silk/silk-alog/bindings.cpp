@@ -1,5 +1,23 @@
 #include <nan.h>
+#ifdef ANDROID
 #include <android/log.h>
+#else
+typedef enum android_LogPriority {
+    ANDROID_LOG_UNKNOWN = 0,
+    ANDROID_LOG_DEFAULT,    /* only for SetMinPriority() */
+    ANDROID_LOG_VERBOSE,
+    ANDROID_LOG_DEBUG,
+    ANDROID_LOG_INFO,
+    ANDROID_LOG_WARN,
+    ANDROID_LOG_ERROR,
+    ANDROID_LOG_FATAL,
+    ANDROID_LOG_SILENT,     /* only for SetMinPriority(); must be last */
+} android_LogPriority;
+
+void __android_log_write(android_LogPriority priority, char const *tag, char const *message) {
+  printf("<%d> %s: %s\n", priority, tag, message);
+}
+#endif
 
 namespace {
 

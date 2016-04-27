@@ -6,16 +6,17 @@
   "scripts": {
     "flow": "flow check",
     "lint": "eslint src",
+    "postinstall": "../npm_postinstall",
     "test": "npm run lint && npm run flow"
   },
-  "dependencies": {
-    "silk-log": "file:../log"
+  "symlinkDependencies": {
+    "eslint-config-silk": "/eslint-config",
+    "silk-flow-bin": "/flow-bin",
+    "silk-log": "/log"
   },
   "devDependencies": {
     "babel-eslint": "5.0.0",
-    "eslint": "1.10.3",
-    "eslint-config-silk": "file:../eslint-config",
-    "silk-flow-bin": "file:../flow-bin"
+    "eslint": "1.10.3"
   },
   "author": "",
   "license": "MIT"

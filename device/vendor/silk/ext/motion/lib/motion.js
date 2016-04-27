@@ -10,6 +10,7 @@ import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
 import cv from 'opencv';
+import path from 'path';
 import silkcv from 'silk-cv';
 import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
@@ -41,13 +42,14 @@ const GAUSSIAN_KERNEL_SIZE = 15;
 
 const MOTION_DURATION_MS = 250;
 
+const SOUND_FILE = path.join(__dirname, 'motion_detected.mp3');
+
 /**
  * Play a sound when motion is detected
  */
 function _playSound() {
-  const FILE_NAME = 'motion_detected.mp3';
   if (soundEnabled) {
-    util.playSound(FILE_NAME);
+    util.playSound(SOUND_FILE);
   }
 }
 

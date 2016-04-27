@@ -9,6 +9,7 @@
 import regeneratorRuntime from 'babel-runtime/regenerator';
 global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
 
+import path from 'path';
 import config from 'silk-config';
 
 let log;
@@ -26,7 +27,7 @@ const CLAPPER_LOUDSOUND_ADJUST_PROP = 'persist.silk.loudsound.adjust';
 const CLAPPER_CLAP_ADJUST_PROP = 'persist.silk.clap.adjust';
 
 const CLAPPER_PLAY_SOUND_PROP = 'persist.silk.clapper.sound';
-const TWO_CLAPS_FILENAME = 'two_claps_detected.mp3';
+const TWO_CLAPS_FILENAME = path.join(__dirname, 'media', 'two_claps_detected.mp3');
 
 const RISE_ENERGY_DELTA_PROP = 'ro.silk.clapper.rise.delta';
 const MIN_ENERGY_THRESH_PROP = 'ro.silk.clapper.min.thresh';

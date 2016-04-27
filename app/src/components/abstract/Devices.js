@@ -333,6 +333,9 @@ export default class Devices extends AsyncComponent {
       this.setStateAsync({devices});
     });
 
+    let bleSessionError;
+    bleDeviceSession.on('error', (error) => bleSessionError = error);
+
     bleDeviceSession.on('disconnect', () => {
       log.debug('BLE socket disconnected. Cleaning up.');
       bleDeviceSession.removeAllListeners();
@@ -364,7 +367,8 @@ export default class Devices extends AsyncComponent {
       }
 
       if (isCurrentConfiguringDevice) {
-        this._abortConfig(bleDeviceSession, new Error('BLE socket disconnected.'));
+        let error = bleSessionError || new Error('BLE socket disconnected.');
+        this._abortConfig(bleDeviceSession, error);
       }
     });
   };
@@ -455,14 +459,14 @@ export default class Devices extends AsyncComponent {
       log.debug('User cancelled. Aborting.');
     } else {
       log.warn('Could not configure device due to error:', error);
-      this._showConfigError();
+      this._showConfigError(error);
     }
   }
 
-  _showConfigError() {
+  _showConfigError(error) {
     Alert.alert(
       'Error Configuring Device',
-      'The device could not be configured. Ensure that it is turned on and nearby.'
+      error.message
     );
   }
 

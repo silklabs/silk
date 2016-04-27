@@ -248,6 +248,7 @@ export class DeviceSession extends EventEmitter {
 
     log.warn(`Session error, disconnecting`, error);
     this._forceDisconnect();
+    this.emit(`error`, error);
   };
 
   _onData: ((data: MessageData) => void) = (data) => {

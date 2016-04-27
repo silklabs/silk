@@ -141,7 +141,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onError: ((error: Error) => void) = (error) => {
-    log.debug(`SocketSession._onEnd()`);
+    log.debug(`SocketSession._onError()`);
 
     if (!this._errorMessage) {
       this._errorMessage = error.toString();

@@ -1,7 +1,5 @@
 // @flow
 'use strict';
 
-let createLog = require('silk-log/device');
-let log = createLog('device-main');
-
+const log = require('silk-alog');
 setInterval(() => log.verbose('Hello world'), 1000);

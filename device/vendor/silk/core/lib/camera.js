@@ -124,6 +124,9 @@ const FRAME_SIZE = {
 // Rate that new camera frames are proceeded.  Ideally this would equal
 // 1000/FPS however is usually longer due to limited compute
 const FRAME_DELAY_MS = 250; // 4 FPS
+const FAST_FRAME_DELAY_MS = 83; // 12 FPS
+// After how many fast frames should we grab a preview frame
+const GRAB_PREVIEW_FRAME_AFTER = FRAME_DELAY_MS / FAST_FRAME_DELAY_MS;
 
 const MAX_CLIP_DURATION = Math.max(1, util.getintprop('ro.silk.camera.max_clip_dur', 15 /*seconds*/));
 const CAMERA_CLIP_DIRECTORY = 'data/clips';
@@ -586,6 +589,8 @@ export default class Camera extends EventEmitter {
     this._dataSocket = null;
     this._frameQueue = []; // Queue of pending camera frame requests
     this._motion = true;
+    this._noFrameCount = 0;
+    this.fastFrameCount = 0;
 
     this._liveDiag = false;
     this._clipRecorder = new CameraClipRecorder(this._diagEmitState);
@@ -957,95 +962,137 @@ export default class Camera extends EventEmitter {
   }
 
   /**
+   * Fast preview frames are scheduled every FAST_FRAME_DELAY_MS and preview
+   * frames are scheduled every GRAB_PREVIEW_FRAME_AFTER many fast frames
+   *
    * @private
    */
   _scheduleNextFrameCapture() {
-    // Camera frames are scheduled every FRAME_DELAY_MS wall clock
-    const spilloverMs = Date.now() % FRAME_DELAY_MS;
+    // Fast camera frames are scheduled every FAST_FRAME_DELAY_MS wall clock
+    const spilloverMs = Date.now() % FAST_FRAME_DELAY_MS;
 
-    // Reduce FRAME_DELAY_MS by the spillover to get the next frame as close
-    // as possible to +FRAME_DELAY_MS.
+    // Reduce FAST_FRAME_DELAY_MS by the spillover to get the next frame as close
+    // as possible to +FAST_FRAME_DELAY_MS.
     // (+5 to ensure the timeout doesn't fire early by ~1ms)
-    const requestedDelayMs = FRAME_DELAY_MS - spilloverMs + 5;
+    const requestedDelayMs = FAST_FRAME_DELAY_MS - spilloverMs + 5;
 
-    const scheduledTime = Date.now();
-    this._frameTimeout = setTimeout(() => {
-      const realDelayMs = Date.now() - scheduledTime;
-      if (realDelayMs >= FRAME_DELAY_MS * 1.5) {
-        log.warn(`Camera frame was delayed by ${realDelayMs - requestedDelayMs}ms`);
+    this.__frameTimeout = setTimeout(async () => {
+      this.__frameTimeout = null;
+      this.fastFrameCount++;
+      let grabPreview = false;
+
+      // Grab preview frame if it's time to do so
+      if (this.fastFrameCount >= GRAB_PREVIEW_FRAME_AFTER) {
+        this.fastFrameCount = 0;
+        grabPreview = true;
       }
-
-      this._frameTimeout = null;
+      this._captureFrame(grabPreview);
       this._scheduleNextFrameCapture();
-      this._captureNextFrame();
     }, requestedDelayMs);
   }
 
   /**
    * Read the next frame
+   *
+   * @param grabPreview: If true grab the preview frame else only grab the raw
+   *                     frame
    * @private
    */
-  _captureNextFrame() {
+  _captureFrame(grabPreview) {
     if (!this._cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
-      this._noFrameCount++;
-      log.warn(`Waiting for camera frame: ` +
-               `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
-      if (this._noFrameCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
-        this._restart(`Camera frame timeout`, true);
+      if (grabPreview) {
+        this._noFrameCount++;
+        log.warn(`Waiting for camera frame: ` +
+                 `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
+        if (this._noFrameCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
+          this._restart(`Camera frame timeout`, true);
+        }
       }
       return;
     }
-    this._noFrameCount = 0;
+    if (grabPreview) {
+      this._noFrameCount = 0;
+    }
     this._cvVideoCaptureBusy = true;
     let when = Date.now();
 
     // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
     // image
+    let im = new cv.Matrix();
     let imRGB = new cv.Matrix();
     let imGray = new cv.Matrix();
     let imScaledGray = new cv.Matrix();
 
-    this._cvVideoCapture.read(imRGB, imGray, imScaledGray, (err) => {
-      if (err) {
-        log.error(`Unable to fetch frame: err=${err}`);
-        this._cvVideoCaptureBusy = false;
-        return;
-      }
-      [when, imRGB, imGray, imScaledGray] =
-        this._clipRecorder.maybeReplaceFrame(when, imRGB, imGray, imScaledGray);
-
-      // Cache the camera frame
-      this._imagecache.push({
-        when,
-        fullgray: imGray,
-        fullrgb: imRGB,
-        gray: imScaledGray,
-      });
-
-      log.debug(`Grab time: ${Date.now() - when}ms`);
-      this._cvVideoCaptureBusy = false;
-
-      // Add camera frame to the timeline
-      this.timeline.addCameraFrame(when, imRGB);
-
-      // Only emit the latest set of HAL-detected faces
-      // (HAL can return multiple faces per preview, but it's not helpful to show
-      //  them all on the preview)
-      //
-      // TODO: This code can probably be removed as we are not using HAL faces
-      if (this.faces) {
-        // Add faces only if there is motion
-        if (this._motion) {
-          if (this.faces.length > 0) {
-            log.info(`Detected face=${this.faces.length}`);
-          }
-          this.timeline.addFace(when, this.faces, 'hal');
+    if (grabPreview) {
+      this._cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
+        if (err) {
+          log.error(`Unable to fetch frame: err=${err}`);
+          this._cvVideoCaptureBusy = false;
+        } else {
+          this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
         }
-      }
+      });
+    } else {
+      this._cvVideoCapture.read(im, (err) => {
+        if (err) {
+          log.error(`Unable to fetch frame: err=${err}`);
+          this._cvVideoCaptureBusy = false;
+        } else {
+          this._handleNextFastFrame(when, im);
+        }
+      });
+    }
+  }
+
+  /**
+   * Handle the next preview frame
+   * @private
+   */
+  _handleNextPreviewFrame(when, imRGB, imGray, imScaledGray) {
+    [when, imRGB, imGray, imScaledGray] =
+      this._clipRecorder.maybeReplaceFrame(when, imRGB, imGray, imScaledGray);
+
+    // Cache the camera frame
+    this._imagecache.push({
+      when,
+      fullgray: imGray,
+      fullrgb: imRGB,
+      gray: imScaledGray,
     });
+
+    log.debug(`Grab time: ${Date.now() - when}ms`);
+    this._cvVideoCaptureBusy = false;
+
+    // Add camera frame to the timeline
+    this.timeline.addCameraFrame(when, imRGB);
+
+    // Only emit the latest set of HAL-detected faces
+    // (HAL can return multiple faces per preview, but it's not helpful to show
+    //  them all on the preview)
+    //
+    // TODO: This code can probably be removed as we are not using HAL faces
+    if (this.faces) {
+      // Add faces only if there is motion
+      if (this._motion) {
+        if (this.faces.length > 0) {
+          log.info(`Detected face=${this.faces.length}`);
+        }
+        this.timeline.addFace(when, this.faces, 'hal');
+      }
+    }
+  }
+
+  /**
+   * Handle the next fast frame
+   * @private
+   */
+  _handleNextFastFrame(when, im) {
+    // Add fast camera frame to the timeline
+    this.timeline.addCameraFastFrame(when, im);
+    this._cvVideoCaptureBusy = false;
   }
 
   /**

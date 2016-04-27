@@ -1,8 +1,11 @@
 [include]
 src/
 
+[libs]
+node_modules/silk-sdk/interface/
+
 [ignore]
-.*/node_modules/babel.*
+.*/node_modules/.*
 
 [version]
 0.23.0

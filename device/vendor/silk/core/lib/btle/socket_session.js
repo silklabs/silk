@@ -8,11 +8,14 @@
  */
 
 import assert from 'assert';
-import Stream from './stream';
+import path from 'path';
 import { createStreams, RssiSmoother } from 'silk-api';
+
+import Stream from './stream';
 import makeLog from '../log';
 import api from '../api';
 import * as Metrics from '../metrics/btle';
+import { getboolprop, playSound } from '../sysutils';
 
 import type { Peripheral } from 'noble';
 import type SocketScanner from './socket_scanner';
@@ -25,6 +28,10 @@ const {
 } = createStreams();
 
 const log = makeLog(`btle-socketsession`);
+
+const HEARTBEAT_SOUNDS_ENABLED = getboolprop('persist.silk.heartbeatSounds');
+const HEARTBEAT_SOUND_FILE = path.join(__dirname, 'media', 'heartbeat.mp3');
+const FLATLINE_SOUND_FILE = path.join(__dirname, 'media', 'flatline.mp3');
 
 export default class SocketSession extends AuthenticateDuplexStream {
 
@@ -105,7 +112,10 @@ export default class SocketSession extends AuthenticateDuplexStream {
     heartbeatStream.once(`data`, () => {
       log.debug(`Heartbeat stream received first data event, starting monitoring`);
 
-      heartbeatStream.addListener(`flatline`, this._onFlatline);
+      heartbeatStream.on(`flatline`, this._onFlatline);
+      if (HEARTBEAT_SOUNDS_ENABLED) {
+        heartbeatStream.on(`heartbeat`, () => playSound(HEARTBEAT_SOUND_FILE));
+      }
       heartbeatStream.monitorHeartbeats = true;
 
       // Waiting to unpack entire messages can take longer than we would like
@@ -155,10 +165,15 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this._flatlined = true;
 
-    const error = new Error(`Failed to receive heartbeat message in expected ` +
-                            `time`);
+    const error = new Error(
+      `Failed to receive heartbeat message in expected time`
+    );
     log.warn(error);
     this.emit(`error`, error);
+
+    if (HEARTBEAT_SOUNDS_ENABLED) {
+      playSound(FLATLINE_SOUND_FILE);
+    }
   };
 
   _onEnd: (() => void) = () => {

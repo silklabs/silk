@@ -10,7 +10,19 @@
       ],
       "libraries": [
         "<!(echo $Android_mk__LIBRARIES)",
-      ]
+      ],
+      "conditions": [
+        [
+          "OS=='android'", {
+            "libraries" : [
+              "<!(echo $Android_mk__LIBRARIES)",
+            ],
+            "cflags" : [
+              "-DANDROID",
+            ],
+          },
+        ],
+      ],
     }
   ]
 }

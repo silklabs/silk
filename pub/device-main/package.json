@@ -12,7 +12,7 @@
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint-config",
     "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log"
+    "silk-sdk": "/sdk"
   },
   "devDependencies": {
     "babel-eslint": "5.0.0",

@@ -1,0 +1,55 @@
+language: generic
+sudo: required
+dist: trusty
+
+os:
+  - linux
+
+jdk:
+  - openjdk7
+
+# Pay close attention here ideally this should match prerequisites-linux.md
+
+# There is no nodejs package that is suitable sadly.
+before_install:
+  # Supress ./sync promops by setting up basic git configuration.
+  - git config --global user.name "SilkLabs"
+  - git config --global user.email you@example.com
+  - git config --global color.ui false
+  # Ensure we have the right version of node.
+  - nvm install 4.2.6
+  - node -v && npm -v
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - kubuntu-backports
+    packages:
+      - openjdk-7-jdk
+      - m4
+      - libxml2-utils
+      - ccache
+      - cmake
+      - android-tools-adb
+      - lib32z1
+      - lib32stdc++6
+      - libc6-dev-i386
+      - linux-libc-dev
+      - g++
+      - g++-4.8
+      - g++-4.8-multilib
+      - libcv-dev
+      - libcvaux-dev
+      - libhighgui-dev
+      - libopencv-dev
+
+install:
+  - export CXX="g++-4.8" CC="gcc-4.8"
+
+script:
+  # TODO: This ideally is passed as env variable or something.
+  - cd pub/bsp-gonk
+  - ./sync qemu
+  - source build/envsetup.sh
+  - make -j4

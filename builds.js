@@ -6,6 +6,7 @@
  * a number of similar builds, and to allow commentary, this file is a
  * JS module.
  */
+'use strict';
 
 const path = require('path');
 
@@ -41,7 +42,24 @@ function nightlyBuild(dir, overrides) {
   }, overrides);
 }
 
-module.exports = {
+// TODO: This should live in pub/builds.js when releng can handle it.
+const oss = {
+  'sos-bsp-gonk-pr': {
+    'title': 'pub/bsp-gonk build and test',
+    'travis_yml': 'pub/bsp-gonk/travis.yml',
+    'branches': ['master'],
+    travis_config: {
+
+    },
+    events: ['pr'],
+    files: [
+      'pub/bsp-gonk/**',
+      'pub/device-main/**',
+    ]
+  }
+}
+
+const builds = {
   // Push and PR builds
   'api': npmPackageBuild('api'),
   'api-schema': npmPackageBuild('api-schema'),
@@ -254,3 +272,14 @@ module.exports = {
     branches: ['master'],
   },
 };
+
+// Copy over the builds definition from SOS.
+for (let key in oss) {
+  if (!(key in builds)) {
+    builds[key] = oss[key];
+  } else {
+    console.error(`OSS build attempting to override: ${key}`);
+  }
+}
+
+module.exports = builds;

@@ -9,6 +9,8 @@
            revision="android-5.1"/>
 
   <!-- Remove Android things -->
+  <remove-project name="device/sample" />
+
   <remove-project name="platform/art" />
   <remove-project name="platform/cts" />
   <remove-project name="platform/dalvik" />
@@ -74,6 +76,7 @@
   <remove-project name="platform/external/eigen" />
   <remove-project name="platform/external/fio" />
   <remove-project name="platform/external/glide" />
+  <remove-project name="platform/external/google-diff-match-patch" />
   <remove-project name="platform/external/google-fonts/carrois-gothic-sc" />
   <remove-project name="platform/external/google-fonts/coming-soon" />
   <remove-project name="platform/external/google-fonts/cutive-mono" />
@@ -92,6 +95,7 @@
   <remove-project name="platform/external/libhevc" />
   <remove-project name="platform/external/libnfc-nci" />
   <remove-project name="platform/external/libnfc-nxp" />
+  <remove-project name="platform/external/libyuv" />
   <remove-project name="platform/external/libphonenumber" />
   <remove-project name="platform/external/lldb" />
   <remove-project name="platform/external/llvm" />
@@ -124,9 +128,12 @@
   <remove-project name="platform/external/smali" />
   <remove-project name="platform/external/srec" />
   <remove-project name="platform/external/srtp" />
+  <remove-project name="platform/external/sqlite" />
+  <remove-project name="platform/external/svox" />
   <remove-project name="platform/external/stressapptest" />
   <remove-project name="platform/external/tagsoup" />
   <remove-project name="platform/external/vixl" />
+  <remove-project name="platform/external/valgrind" />
   <remove-project name="platform/external/xmp_toolkit" />
   <remove-project name="platform/frameworks/compile/libbcc" />
   <remove-project name="platform/frameworks/compile/mclinker" />

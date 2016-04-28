@@ -50,7 +50,7 @@ fetch)
   echo $REPOCACHE_URLPREFIX
   if [[ ! -d .repo/projects ]] && [[ -n $REPOCACHE_URLPREFIX ]]; then
     set -ex
-    if curl -L --output /dev/null --head --fail --silent; then
+    if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then
       curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix | tar zx
     fi
   fi

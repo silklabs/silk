@@ -1,6 +1,15 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := svmsounds-babycry
+LOCAL_INSTALLED_MODULE_STEM := babycry-svm.raw
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)/svmsounds/model
+LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/model/babycry-svm.raw
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := svmsounds-clap
 LOCAL_INSTALLED_MODULE_STEM := clap-svm.raw
 LOCAL_MODULE_TAGS  := optional

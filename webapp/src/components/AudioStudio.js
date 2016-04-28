@@ -725,7 +725,7 @@ export default class AudioStudio extends React.Component {
       let featureVectorExtractor =
             new FeatureVectorExtractor(analyzer, svmConfig);
 
-      class DoneException extends Error() {}
+      class DoneException extends Error {}
 
       featureVectorExtractor.on('loud-sound', (featureVector) => {
         let featureVectorLabel = testName + '-' + featureVectorCount++;
@@ -840,7 +840,13 @@ export default class AudioStudio extends React.Component {
     let blob = new Blob([ data ]);
     let url = URL.createObjectURL(blob);
     window.open(url);
-    URL.revokeObjectURL(url);
+    // By *not* revoking the object URL, we allow it to be directly
+    // saved (File -> Save As) in the results window that pops up.  We
+    // don't make any attempt to track the lifetime of that window, so
+    // we don't know of a good time to revoke that object URL.  So
+    // don't even bother.
+    //
+    //URL.revokeObjectURL(url);
   }
 
   _setPrefs(newPrefs) {

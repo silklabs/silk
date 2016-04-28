@@ -69,6 +69,7 @@ SILK_EXT := \
   dnn-imagenet-dictionary \
   samsungtv \
   svmsounds \
+  svmsounds-babycry \
   svmsounds-clap \
   svmsounds-firealarm \
   svmsounds-glassbreak \

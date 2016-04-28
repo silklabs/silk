@@ -4,7 +4,7 @@ import svmjs from 'svm';
 
 const log = createLog('SVMTrainer');
 
-const NUM_WORKERS = 6;
+const NUM_WORKERS = 8;
 
 function checkProps(obj, props) {
   for (let prop of props) {
@@ -140,7 +140,31 @@ class SVMTrainer {
     let jobRunId = { job: job.id, run: runId };
     let { trainingData, trainingLabels } = run;
 
-    log.info(`Starting ${job.id}:${runId} on ${trainingData.length} points at ${new Date()} ... this will take a while`);
+    // The amount of time to train the complicated SVMs (babycry,
+    // glassbreak) seems to grow nonlinearly with the number of input
+    // training samples.  Once a certain threshold has been crossed,
+    // around 800 samples or so, the amount of training time makes it
+    // difficult to work with the datasets.  One "fix" is to use a
+    // native library like libsvm that should be, in theory, much
+    // faster.  The band-aid here just subsamples the negative SVM
+    // examples to cut down the size of the dataset.  This has not
+    // been observed to qualititatively degrade the performance of the
+    // models.
+    let keep = true;
+    let filterFunc = (vector, idx) => {
+      if (this.labelToSVMClass(trainingLabels[idx]) > 0) {
+        return true;
+      }
+      let ret = keep;
+      keep = !keep;
+      return ret;
+    };
+    keep = true;
+    let filteredData = trainingData.filter(filterFunc);
+    keep = true;
+    let filteredLabels = trainingLabels.filter(filterFunc);
+
+    log.info(`Starting ${job.id}:${runId} on ${filteredData.length} points (out of ${trainingData.length} originally) at ${new Date()} ... this will take a while`);
 
     run.state = 'running';
     worker.state = 'training';
@@ -148,8 +172,8 @@ class SVMTrainer {
       cmd: 'svm-train',
       body: {
         jobId: jobRunId,
-        data: trainingData,
-        labels: trainingLabels.map(this.labelToSVMClass),
+        data: filteredData,
+        labels: filteredLabels.map(this.labelToSVMClass),
         options,
       },
     });
@@ -312,6 +336,13 @@ export function trainSVM(params) {
   }
   let { svmConfig } = trainingConfig;
   let trainer = new SVMTrainer(svmConfig, trainingConfig);
+
+  // In case the results window is accidentally closed before it's
+  // been saved to disk, the user can open the developer console and
+  // read this global to access the training results.  Yes, this is a
+  // gross hack.
+  window.LAST_SVM_TRAINER = trainer;
+
   return trainer.run(trainingData, trainingLabels,
                      validationData, validationLabels);
 }

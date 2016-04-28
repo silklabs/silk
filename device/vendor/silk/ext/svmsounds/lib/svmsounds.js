@@ -24,6 +24,7 @@ function loadModel(svmCfg) {
         return reject(err);
       }
       log.info(`Fetched model ${modelPath}; ${model.length} bytes`);
+      log.info(`  ${svmCfg.soundClass} is ${svmCfg.enabled ? 'enabled' : 'disabled'}`);
       svmCfg.model = parsePackedSVMModel(model.buffer);
       return resolve();
     });

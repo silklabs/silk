@@ -353,7 +353,7 @@ export async function handleGitHubPullRequestEvent(
 
   let numberOfBuilds = 0;
   try {
-    numberOfBuilds = await triggerBuildsForPullRequest(pr);
+    numberOfBuilds = await triggerBuildsForPullRequest(pr, event.sender);
   } catch (error) {
     log.error('Error', error, error.stack);
     // Uh-oh. We failed to trigger some or all builds. Let's mark the
@@ -388,7 +388,10 @@ export async function handleGitHubPullRequestEvent(
  * the number of builds triggered.
  */
 async function triggerBuildsForPullRequest(
-  pr: PullRequestInfo
+  pr: PullRequestInfo,
+  githubUser: {
+    login: string
+  },
 ): Promise<number> {
   let owner_name = pr.base.repo.owner.login;
   let repo_name = pr.base.repo.name;
@@ -416,6 +419,7 @@ async function triggerBuildsForPullRequest(
       commitRange: `${pr.base.sha}...${pr.head.sha}`,
       pullRequest: pr.number,
       pullRequestBaseBranch: pr.base.ref,
+      githubUser,
     }
   );
 
@@ -507,6 +511,7 @@ export async function handleGitHubPushEvent(
       filesChanged,
       message: event.head_commit.message,
       commitRange: `${event.before}...${event.after}`,
+      githubUser: event.sender,
     }
   );
 }

@@ -11,3 +11,7 @@ github.readFileAtCommit = async function(owner, repo, sha, filename) {
     return null;
   }
 };
+
+github.hasOrgMembership = function(org, name) {
+  return Promise.resolve(name === 'silk-stooge');
+};

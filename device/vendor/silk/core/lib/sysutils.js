@@ -51,8 +51,6 @@ try {
   log.error('Invalid ${SILK_PROPS} file');
 }
 
-const SOUND_DIR = '/system/silk/media/sound/';
-
 /**
  * Throws an exception to the top level process exception handler, escaping any
  * Promises that might otherwise consume the exception.
@@ -283,7 +281,7 @@ export function timeout(ms: number): Promise<void> {
 export function playSound(fileName: string): Promise<void> {
   const BINARY = 'player';
 
-  return exec(BINARY, [SOUND_DIR + fileName])
+  return exec(BINARY, [fileName])
   .catch(err => {
     let msg = `Failed to exec '${BINARY}': ${err}`;
     log.error(msg);

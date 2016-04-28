@@ -84,6 +84,14 @@ class ConditionalInstall {
       cwd: installModulePath
     };
 
+    // npm2 has a bug where it can sometimes enter an infinite loop. We must
+    // have an .npmrc setup to turn this behavior off...
+    if (!fs.existsSync(path.join(installModulePath, '.npmrc'))) {
+      return Promise.reject(new Error(
+        `${installModulePath} must have an .npmrc. Run node tools/npm/add_npmrc.js`
+      ));
+    }
+
     return new Promise((accept, reject) => {
       run(opts, '/bin/bash', [
         '-c',

@@ -50,7 +50,7 @@ var base = {
           ]
         },
         include: [
-          require('silk-babeldeps'),
+          require('../babeldeps'),
         ]
       },
     ],

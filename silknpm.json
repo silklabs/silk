@@ -2,7 +2,7 @@
   "ignored": [],
   "restrict": {
     "app": ["package.json"],
-    "external-dlib": [],
+    "external-dlib": ["package.json"],
     "server": ["package.json"],
     "chromiumtools": ["package.json"],
     "node-webrtc": ["package.json"],

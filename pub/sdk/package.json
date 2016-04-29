@@ -15,9 +15,6 @@
     "silk",
     "iot"
   ],
-  "dependencies": {
-    "node-inspector": "0.12.5"
-  },
   "devDependencies": {
     "babel-eslint": "4.1.8",
     "babel-cli": "6.4.5",

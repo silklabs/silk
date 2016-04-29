@@ -2,6 +2,7 @@
 lib/
 interface/
 node_modules/silk-core-version
+node_modules/silk-sdk/interface/
 
 [ignore]
 .*/dist/.*

@@ -1,7 +1,0 @@
-#!/bin/bash -x
-
-shopt -s nullglob
-for patchfile in patch/*.patch; do
-  patch -b -N -p1 -i $patchfile
-  test $? -le 1 || exit 1
-done

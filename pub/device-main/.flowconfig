@@ -7,5 +7,8 @@ node_modules/silk-sdk/interface/
 [ignore]
 .*/node_modules/.*
 
+[options]
+module.system=haste
+
 [version]
 0.23.0

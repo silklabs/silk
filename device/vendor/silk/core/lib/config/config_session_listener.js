@@ -10,9 +10,12 @@ import assert from 'assert';
 import createLog from '../log';
 import * as Joi from 'joi';
 import SessionListenerBase from './session_listener_base';
+import { getboolprop } from '../sysutils';
 import sensors from '../sensors';
 
 const log = createLog('config-session-listener');
+
+const ACCELEROMETER_GATE_DISABLED = getboolprop('persist.silk.accelgate.disabled');
 
 const SCHEMA = {
   decline: Joi.object().keys({
@@ -66,7 +69,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
   _wifiErrorCount = 0;
-  _wifiScanResults = null;
 
   constructor(deviceConfig, socketSession) {
     log.debug(`ConfigSessionListener()`);
@@ -86,20 +88,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
     }
     super.sendStatus(status);
-  }
-
-  sendWifiScanResults(scanResults) {
-    // Hang on to these results but don't send them until we have passed the
-    // proximity gate.
-    this._wifiScanResults = scanResults;
-
-    if (this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
-      return;
-    }
-
-    // XXX We should try to not send results if the previous results haven't
-    //     been received by the app yet.
-    super.sendWifiScanResults(scanResults);
   }
 
   _clearDismissTimeout() {
@@ -328,6 +316,10 @@ export default class ConfigSessionListener extends SessionListenerBase {
     log.info(`Passed proximity gate`);
     this._socketSession.rssiUpdatesEnabled = false;
 
+    if (ACCELEROMETER_GATE_DISABLED) {
+      this._registeredProximity();
+      return;
+    }
     this.lastx = this.lasty = this.lastz = NaN;
     sensors.on('data', this._onAccelerometer);
   }
@@ -348,18 +340,18 @@ export default class ConfigSessionListener extends SessionListenerBase {
     if (motion > ConfigSessionListener.MOTION_THRESHOLD) {
       log.info(`Passed motion gate.  Device moved ~${motion} m/s^2`);
       sensors.removeListener('data', this._onAccelerometer);
-      this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
-
-      this._send({
-        name: `secret`,
-        deviceId: this._deviceConfig._deviceId,
-      });
-
-      if (this._wifiScanResults) {
-        this.sendWifiScanResults(this._wifiScanResults);
-      }
+      this._registeredProximity();
     }
   };
+
+  _registeredProximity() {
+    this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+
+    this._send({
+      name: `secret`,
+      deviceId: this._deviceConfig._deviceId,
+    });
+  }
 
   _onDismissTimeout() {
     log.debug(`ConfigSessionListener._onDismissTimeout()`);

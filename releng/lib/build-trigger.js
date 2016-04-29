@@ -34,6 +34,9 @@ export async function triggerBuilds(
       sha,
       branch,
       message,
+      // XXX: This is a massive hack to allow anyone who can run the CLI to run
+      // whatever builds they like ...
+      githubUser: { login: 'silk-stooge' },
     }
   );
   return responses.filter((response) => !!response).length;

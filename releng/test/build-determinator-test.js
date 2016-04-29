@@ -5,12 +5,21 @@ import { determineBuildsForEvent } from '../lib/build-determinator';
 
 suite('build determinator', () => {
 
+  const validGithubUser = {
+    login: 'silk-stooge',
+  };
+
+  const invalidGithubUser = {
+    login: 'istealallthepasswords',
+  };
+
   test('simple push to one project', async () => {
     let event = {
       type: 'push',
       sha: 'abcdef',
       branch: 'master',
       filesChanged: ['webapp/index.js'],
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.strictEqual(builds.length, 1);
@@ -23,6 +32,7 @@ suite('build determinator', () => {
       sha: 'abcdef',
       branch: 'master',
       filesChanged: ['webapp/index.js', 'server/index.js'],
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.strictEqual(builds.length, 2);
@@ -36,6 +46,7 @@ suite('build determinator', () => {
       sha: 'abcdef',
       branch: 'master',
       filesChanged: ['api/index.js'],
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.equal(builds.length, 4);
@@ -49,6 +60,7 @@ suite('build determinator', () => {
       sha: 'abcdef',
       branch: 'master',
       filesChanged: ['app/src/libraries/crypto.js'],
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.equal(builds.length, 1);
@@ -68,6 +80,7 @@ suite('build determinator', () => {
       sha: 'abcdef',
       branch: 'test',
       filesChanged: ['webapp/index.js'],
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.strictEqual(builds.length, 0);
@@ -79,6 +92,7 @@ suite('build determinator', () => {
       sha: 'abcdef',
       branch: 'master',
       filesChanged: ['webapp/.travis.yml'],
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.strictEqual(builds.length, 1);
@@ -95,6 +109,7 @@ suite('build determinator', () => {
       type: 'nightly',
       sha: 'abcdef',
       branch: 'master',
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     assert.strictEqual(builds.length, 1);
@@ -106,10 +121,30 @@ suite('build determinator', () => {
       name: 'app-*',
       sha: 'abcdef',
       branch: 'master',
+      githubUser: validGithubUser,
     };
     let builds = await determineBuildsForEvent('silklabs', 'repo', event);
     let buildNames = builds.map((build) => build.name).sort();
     assert.deepEqual(buildNames, ['app-build-pr', 'app-build-push', 'app-lint']);
+  });
+
+  test('non member edit builds.js send', async () => {
+    let event = {
+      type: 'push',
+      sha: 'abcdef',
+      branch: 'master',
+      filesChanged: ['webapp/index.js', 'builds.js'],
+      githubUser: invalidGithubUser,
+    };
+    try {
+      await determineBuildsForEvent('silklabs', 'repo', event);
+    } catch (err) {
+      if (err.message.indexOf('silklabs') === -1) {
+        throw new Error(`Error message must contain repo owner: ${err.stack}`);
+      }
+      return;
+    }
+    throw new Error(`non member edit of builds.js should throw`);
   });
 
 });

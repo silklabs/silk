@@ -214,3 +214,7 @@ export async function getPullRequestInfoWithMergeability(
   }
   return info;
 }
+
+export function hasOrgMembership(org: string, login: string): Promise<bool> {
+  return getOctokat().orgs(org).members.contains(login);
+}

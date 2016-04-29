@@ -1,1 +1,1 @@
-web: cd releng && INVOKE_TYPE=symlink npm run postinstall && npm start
+web: cd releng && npm start

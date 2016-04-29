@@ -11,6 +11,7 @@ import requireFromString from 'require-from-string';
 import {
   readFileAtCommit,
   makeGitHubLog,
+  hasOrgMembership,
 } from './github';
 
 import type { TravisBuildConfig } from './travis';
@@ -34,6 +35,9 @@ export type BuildTriggerEvent = {
   sha: string;
   branch: string;
   filesChanged?: Array<string>;
+  githubUser: {
+    login: string;
+  };
 };
 
 const LOG_PREFIX = 'build-determinator';
@@ -126,12 +130,28 @@ export async function determineBuildsForEvent(
   event: BuildTriggerEvent
 ): Promise<Array<BuildConfig>> {
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, event.sha);
+
+  if (
+    event.filesChanged &&
+    event.filesChanged.indexOf(BUILDS_DEFINITION_FILE) !== -1
+  ) {
+    const login = event.githubUser.login;
+    log.info(`Checking if ${login} is a member of ${owner_name}`);
+    const isMember = await hasOrgMembership(owner_name, login);
+    if (!isMember) {
+      throw new Error(
+        `Only members of the ${owner_name} can submit pull requests which alter ${BUILDS_DEFINITION_FILE}`
+      );
+    }
+  }
+
   let builds_js = await readFileAtCommit(
     owner_name,
     repo_name,
     event.sha,
     BUILDS_DEFINITION_FILE
   );
+
   if (!builds_js) {
     log.info(`Could not read '${BUILDS_DEFINITION_FILE}' file, aborting.`);
     return [];

@@ -1,0 +1,43 @@
+#! /bin/bash -e
+
+if [[ -z $ANDROID_PRODUCT_OUT ]]; then
+  echo "Please run |source build/envsetup.sh|"
+  exit 1
+fi
+
+if [[ ! -d $ANDROID_PRODUCT_OUT ]]; then
+  echo "Directory does not exist: $ANDROID_PRODUCT_OUT"
+  exit 1
+fi
+
+if [[ ! -d $ANDROID_HOST_OUT ]]; then
+  echo "Directory does not exist: $ANDROID_HOST_OUT"
+  exit 1
+fi
+
+dest=${1:-out}
+host_prefix=$(basename $ANDROID_HOST_OUT)
+archive_script=$ANDROID_BUILD_TOP/board/$SILK_BOARD/archive.sh
+
+usage() {
+  echo "Usage: ./archive [dest]"
+  echo "  Will build an archive of build result suitable for uploading/sharing."
+}
+
+ensure_dest() {
+  if [[ ! -d $dest ]];
+  then
+    mkdir -p $dest
+  else
+    echo "Destination $dest already exists refusing to override."
+    exit 1
+  fi
+}
+
+if [[ ! -x "$archive_script" ]]; then
+  echo "Unsupported board: $SILK_BOARD"
+  exit 1;
+fi
+
+ensure_dest
+$archive_script $dest

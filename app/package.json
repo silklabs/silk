@@ -2,7 +2,6 @@
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-api": "/api",
-    "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/version",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",

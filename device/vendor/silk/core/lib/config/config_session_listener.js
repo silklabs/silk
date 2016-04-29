@@ -69,7 +69,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _state = ConfigSessionListener.STATE_IDLE;
   _dismissTimeout = null;
   _wifiErrorCount = 0;
-  _wifiScanResults = null;
 
   constructor(deviceConfig, socketSession) {
     log.debug(`ConfigSessionListener()`);
@@ -89,20 +88,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
     }
     super.sendStatus(status);
-  }
-
-  sendWifiScanResults(scanResults) {
-    // Hang on to these results but don't send them until we have passed the
-    // proximity gate.
-    this._wifiScanResults = scanResults;
-
-    if (this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
-      return;
-    }
-
-    // XXX We should try to not send results if the previous results haven't
-    //     been received by the app yet.
-    super.sendWifiScanResults(scanResults);
   }
 
   _clearDismissTimeout() {
@@ -366,10 +351,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
       name: `secret`,
       deviceId: this._deviceConfig._deviceId,
     });
-
-    if (this._wifiScanResults) {
-      this.sendWifiScanResults(this._wifiScanResults);
-    }
   }
 
   _onDismissTimeout() {

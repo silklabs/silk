@@ -5,9 +5,6 @@
 # Generic Silk platform
 #
 
-# Add branch name to ro.build.fingerprint
-BUILD_VERSION_TAGS += $(BRANCH)
-
 # inherit from gonkjs product
 include product/gonkjs/gonkjs.mk
 SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/
@@ -15,7 +12,6 @@ SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/mo
 # Properties that are only read using getprop in sysutils.js
 # should be added to vendor/silk/core/silk-props.json instead
 PRODUCT_PROPERTY_OVERRIDES += \
- ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \
  persist.silk.capture.mute=true \
 
 # Properties only for debug builds

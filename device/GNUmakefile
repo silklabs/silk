@@ -2,10 +2,6 @@
 # All Rights Reserved.
 # Confidential and Proprietary - Silk Labs, Inc.
 
--include ../version/branch
-BRANCH ?= unknown
-export BRANCH
-
 LOCALGOALS += \
   update \
   fut \

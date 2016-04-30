@@ -1,5 +1,9 @@
 SHELL=/bin/bash
 
+-include ../version/branch
+BRANCH ?= unknown
+export BRANCH
+
 LOCALGOALS += \
   clean \
   purell \

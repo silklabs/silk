@@ -1,0 +1,58 @@
+From ee9a409b569939c0a9eaf244d475f1dab5f5b125 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 29 Apr 2016 17:33:52 -0700
+Subject: [PATCH] BoardConfig adjustments
+
+Change-Id: I6b8299e79c280590472df39a79128552cc12c91c
+---
+ BoardConfig.mk | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 5d49783..12c202d 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -39,7 +39,7 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
+ 
+ TARGET_CPU_CORTEX_A53 := true
+ 
+-TARGET_NO_BOOTLOADER := false
++TARGET_NO_BOOTLOADER := true
+ TARGET_NO_KERNEL := false
+ 
+ MALLOC_IMPL := dlmalloc
+@@ -68,7 +68,7 @@ TARGET_USES_NEW_ION_API :=true
+ TARGET_USES_QCOM_BSP := true
+ TARGET_NO_RPC := true
+ 
+-BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 earlyprintk
++BOARD_KERNEL_CMDLINE := androidboot.selinux=permissive console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 earlyprintk
+ BOARD_KERNEL_SEPARATED_DT := true
+ 
+ BOARD_KERNEL_BASE        := 0x80000000
+@@ -126,3 +126,22 @@ ifneq ($(TARGET_USES_AOSP),true)
+     endif
+   endif
+ endif
++
++# Wifi settings
++WIFI_DRIVER_MODULE_PATH := "/system/lib/modules/wlan.ko"
++WIFI_DRIVER_MODULE_NAME := "wlan"
++WIFI_DRIVER_MODULE_ARG := ""
++WIFI_DRIVER_FW_PATH_STA := "sta"
++WIFI_DRIVER_FW_PATH_AP  := "ap"
++WIFI_DRIVER_FW_PATH_P2P := "p2p"
++
++TARGET_USES_QCOM_WCNSS_QMI := true
++BOARD_WLAN_DEVICE := qcwcn
++
++WPA_SUPPLICANT_VERSION := VER_0_8_X
++BOARD_WPA_SUPPLICANT_DRIVER := NL80211
++BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
++
++HOSTAPD_VERSION := VER_0_8_X
++BOARD_HOSTAPD_DRIVER := NL80211
++BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
+-- 
+1.9.1
+

@@ -69,3 +69,5 @@ PRODUCT_PACKAGES += bleno noble
 # external/node-opencv/
 PRODUCT_PACKAGES += opencv
 
+# include board-specific makefile if it exists
+-include board/$(SILK_BOARD)/$(SILK_BOARD).mk

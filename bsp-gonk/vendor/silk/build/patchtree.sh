@@ -167,7 +167,7 @@ __patch_tree()
          {
            (
              for TREE in ${PATCH_TREE}; do
-               PATCHES=$(find $TREE -name \*.patch | sort -fs)
+               PATCHES=$(find -L $TREE -name \*.patch | sort -fs)
                for P in ${PATCHES}; do
                  PRJ=$(dirname ${P#${TREE}})
                  PRJ=`echo $PRJ | sed -e 's%^/%%'`

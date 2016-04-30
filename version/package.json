@@ -1,0 +1,11 @@
+{
+  "name": "silk-core-version",
+  "version": "0.15.0",
+  "description": "Holds the silk-core version number",
+  "main": "dist/index.json",
+  "scripts": {
+    "preinstall": "./preinstall"
+  },
+  "license": "proprietary",
+  "private": true
+}

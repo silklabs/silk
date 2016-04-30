@@ -1,0 +1,5 @@
+# Notice: This file is processed by branch management scripts.
+#
+# All instances of the string "master" are taken to mean the name of the
+# current branch.
+BRANCH=master

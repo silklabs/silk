@@ -1,0 +1,37 @@
+From f8b07bd71eb2ccf0ed2968a3df2695be56fe2335 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 29 Apr 2016 20:18:43 -0700
+Subject: [PATCH] Disable androidboot.mode=charger
+
+The right way to do this is to modify the LK bootloader to not add
+androidboot.mode=charger to the kernel commandline.
+
+Note that because LK still believes charging mode exists, the "battery charging"
+splash screen will still be displayed for a short time.
+
+Change-Id: I88b2e9978a6f12401ca2bfe1f2884dfce795f09b
+---
+ init/init.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/init/init.c b/init/init.c
+index c07a7be..88f37e0 100644
+--- a/init/init.c
++++ b/init/init.c
+@@ -1073,6 +1073,13 @@ int main(int argc, char **argv)
+     is_ffbm = !strncmp(bootmode, "ffbm", 4);
+     if (!is_ffbm)
+         is_charger = !strcmp(bootmode, "charger");
++    if (is_charger) {
++      // Charger mode is not desired but cannot be disabled without a bootloader
++      // change, continuing to boot the system normally while in charge mode
++      // does not work on all devices.  The best thing to do is to therefore
++      // reboot and start normally
++      android_reboot(ANDROID_RB_RESTART, 0, 0);
++    }
+ 
+     INFO("property init\n");
+     property_load_boot_defaults();
+-- 
+1.9.1
+

@@ -1,12 +1,12 @@
-From 9a231ff47933c098f675239876aa1968032a5fa3 Mon Sep 17 00:00:00 2001
+From 6d7d3816a5e2d96e4d882f51057d4ca603e48904 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Wed, 20 Jan 2016 21:50:51 -0800
 Subject: [PATCH] Androidif gflags
 
 ---
  .gitignore |  1 +
- Android.mk | 35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 36 insertions(+)
+ Android.mk | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 43 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/.gitignore b/.gitignore
@@ -23,10 +23,10 @@ index 39cb957..59743f7 100644
  /test/gflags_unittest-main.cc
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..8fd41e2
+index 0000000..59baacc
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,42 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -40,8 +40,14 @@ index 0000000..8fd41e2
 +
 +include $(BUILD_PREBUILT)
 +
++
 +GFLAGS_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(GFLAGS_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++ifneq ($(TARGET_GE_MARSHMALLOW),)
++$(GFLAGS_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.9,arm-linux-androideabi-4.9)
++else
++$(GFLAGS_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8)
++endif
 +$(GFLAGS_MAKEFILE): $(LOCAL_PATH)/Android.mk
 +	@echo Configure: $@
 +	$(hide) mkdir -p $(@D)
@@ -49,6 +55,7 @@ index 0000000..8fd41e2
 +	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_TOOLCHAIN_CMAKE) \
 +	-DANDROID_NDK=$(abspath prebuilts/ndk/current) \
 +	-DCMAKE_BUILD_TYPE=Release \
++	-DANDROID_TOOLCHAIN_NAME=$(ANDROID_TOOLCHAIN_NAME) \
 +	-DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
 +	-DANDROID_NATIVE_API_LEVEL=19 \
 +	-DTHREADS_PTHREAD_ARG=OFF \
@@ -63,5 +70,5 @@ index 0000000..8fd41e2
 +	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 -- 
-2.7.0
+1.9.1
 

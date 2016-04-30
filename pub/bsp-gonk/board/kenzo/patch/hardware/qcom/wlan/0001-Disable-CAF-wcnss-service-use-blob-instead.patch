@@ -1,0 +1,23 @@
+From feff8e50b19c37d4199f4e9e287fd03117fcc59d Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 1 May 2016 16:54:19 -0700
+Subject: [PATCH] Disable CAF wcnss-service, use blob instead
+
+Change-Id: Ia8736412d971f9b443b910f467699e006b72b5c9
+---
+ wcnss-service/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/wcnss-service/Android.mk b/wcnss-service/Android.mk
+index 747195b..f8b7a50 100644
+--- a/wcnss-service/Android.mk
++++ b/wcnss-service/Android.mk
+@@ -1,4 +1,4 @@
+-ifneq (,$(filter arm aarch64 arm64, $(TARGET_ARCH)))
++ifneq (,)
+ LOCAL_PATH := $(call my-dir)
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := wcnss_service
+-- 
+1.9.1
+

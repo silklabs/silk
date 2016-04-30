@@ -1,3 +1,16 @@
+#
+# Base device environment
+#
+
+# Add branch name to ro.build.fingerprint
+BUILD_VERSION_TAGS += $(BRANCH)
+
+# Add product name to ro.build.fingerprint
+BUILD_VERSION_TAGS += $(SILK_PRODUCT)
+
+# Services to start/stop with |adb shell start| and |adb shell stop|
+PRODUCT_PROPERTY_OVERRIDES += \
+ ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk
 
 PRODUCT_PACKAGES += node
 

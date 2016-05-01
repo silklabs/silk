@@ -197,4 +197,5 @@
   <project name="platform/vendor/qcom-opensource/wlan/prima" path="vendor/qcom/opensource/wlan/prima" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom/tellurium_32" path="device/qcom/msm8952_32" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom/tellurium_64" path="device/qcom/msm8952_64" revision="LA.BR.1.3.2_rb3.14"/>
+  <project remote="github" name="silklabs/kenzo-blobs" path="vendor/kenzo" revision="master"/>
 </manifest>

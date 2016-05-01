@@ -1,0 +1,25 @@
+From 96f5ab39e01acf103198f54597f3a1cee41465f0 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 30 Apr 2016 17:52:15 -0700
+Subject: [PATCH] Add kenzo blobs
+
+Change-Id: I7c4d959c6a1b8188ed65dc534a646159c805bf19
+---
+ msm8952_64.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/msm8952_64.mk b/msm8952_64.mk
+index 99d0830..75a5909 100644
+--- a/msm8952_64.mk
++++ b/msm8952_64.mk
+@@ -26,6 +26,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
+            dalvik.vm.heapminfree=4m \
+            dalvik.vm.heapstartsize=16m
+ $(call inherit-product, device/qcom/common/common64.mk)
++$(call inherit-product, vendor/kenzo/blobs.mk)
+ 
+ PRODUCT_NAME := msm8952_64
+ PRODUCT_DEVICE := msm8952_64
+-- 
+1.9.1
+

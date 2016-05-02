@@ -149,7 +149,54 @@ export const svmFFTConfig = {
 };
 
 export const svmSoundsConfigs = {
+  babycry: {
+    enabled: true,
+    soundClass: 'babycry',
+    model: 'babycry-svm.raw',
+    // This defines which FFT result type we'll use for SVM
+    // classification.  It's been found empirically that linear
+    // magnitudes are much more discriminative than decibel magnitudes
+    // (which aren't discriminative with basic SVM params).  This is
+    // most likely because linear magnitudes are "more normalized"
+    // than log-decibel, but no effort was spent investigating this.
+    fftType: 'fftMagnitudeLinear',
+    loudThreshold: LOUD_SOUND_THRESHOLD_LINEAR,
+    loudMinDuration: 0.256,
+    // How many consecutive FFT frames we collect for the loud sound
+    // that we're going to classify.  This is a magic number created
+    // by eyeballing the spectrograms of some recorded clap sounds.
+    // 16 is about a quarter second of (overlapped) spectrogram frames
+    // with 16KHz sampling and the FFT params above, and is short
+    // enough that fairly quick repeated clappings can be reliably
+    // detected (but not /really/ quick ones).  No effort has been
+    // made to optimize this value.
+    featureVectorFrameCount: 16,
+    hasSustain: true,
+    quietTimeout: 0.512,
+    sonemeGapTimeout: 0.512,
+
+    trainingOptions: {
+      // Achieves good results on subsampled training dataset (0
+      // misses, 2 false-accepts).
+      rbfsigma: 0.3,
+      C: 1e2,
+
+      // These magic SVM params are the default for svmjs.
+      maxiter: 1e4,
+      numpasses: 1e1,
+      // Linear kernels are broken in svmjs, which is very concerning.
+      //svmjs should not be used in production code, at least not for
+      //training.
+      //
+      //kernel: 'linear',
+      kernel: 'rbf',
+      tol: 1e-4,
+      alphatol: 1e-7,
+    },
+  },
+
   clap: {
+    enabled: false,
     soundClass: 'clap',
     model: 'clap-svm.raw',
     // This defines which FFT result type we'll use for SVM
@@ -195,6 +242,7 @@ export const svmSoundsConfigs = {
   },
 
   firealarm: {
+    enabled: false,
     soundClass: 'firealarm',
     model: 'firealarm-svm.raw',
     fftType: 'fftMagnitudeLinear',
@@ -226,6 +274,7 @@ export const svmSoundsConfigs = {
   },
 
   glassbreak: {
+    enabled: false,
     soundClass: 'glassbreak',
     model: 'glassbreak-svm.raw',
     fftType: 'fftMagnitudeLinear',

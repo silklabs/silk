@@ -123,6 +123,6 @@
   <project name="silk-svm"
            path="vendor/silk/ext/svmsounds/model"
            remote="silk"
-           revision="refs/tags/v0.0.2"/>
+           revision="refs/tags/v0.0.3"/>
 
 </manifest>

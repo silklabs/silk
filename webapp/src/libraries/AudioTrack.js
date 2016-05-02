@@ -13,7 +13,7 @@ export class LiveTrack extends EventEmitter {
   buffer = null;
   sampleRate = 0;
   nrSamples = 0;
-  bufferStartTime = 0;
+  bufferStartSample = 0;
 
   constructor(sampleBufferSize, sampleRate) {
     super();
@@ -52,7 +52,7 @@ export class LiveTrack extends EventEmitter {
       }
       bufferStart -= shift;
       bufferEnd -= shift;
-      this.bufferStartTime += shift / this.sampleRate;
+      this.bufferStartSample += shift;
     }
     this.buffer.set(samples, bufferStart);
     this.nrSamples = Math.min(bufferLength, this.nrSamples + samples.length);
@@ -69,15 +69,15 @@ export class LiveTrack extends EventEmitter {
   }
 
   get startTime() {
-    return this.bufferStartTime;
+    return this.bufferStartSample / this.sampleRate;
   }
 
   get endTime() {
-    return this.startTime + this.nrSamples / this.sampleRate;
+    return (this.bufferStartSample + this.nrSamples) / this.sampleRate;
   }
 
   _timeToBufferIndex(time) {
-    return (this.sampleRate * (time - this.bufferStartTime)) | 0;
+    return Math.round(time * this.sampleRate) - this.bufferStartSample;
   }
 }
 
@@ -157,6 +157,6 @@ export class StaticTrack extends EventEmitter {
   }
 
   _timeToBufferIndex(time) {
-    return (this.sampleRate * time) | 0;
+    return Math.round(this.sampleRate * time);
   }
 }

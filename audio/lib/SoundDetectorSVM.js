@@ -91,10 +91,10 @@ export default class SoundDetectorSVM extends EventEmitter {
     super();
 
     this.analyzer = analyzer;
-    this.detectors = Object.keys(cfgs).map((key) => {
-      let cfg = cfgs[key];
-      return new SoundClassDetector(this, analyzer, cfg);
-    });
+    this.detectors = Object.keys(cfgs)
+      .map((key) => cfgs[key])
+      .filter((cfg) => cfg.enabled)
+      .map((cfg) => new SoundClassDetector(this, analyzer, cfg));
   }
 
   destructor() {

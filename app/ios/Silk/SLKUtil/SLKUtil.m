@@ -10,25 +10,20 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(getWifiInfo:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getWifiInfo:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
   NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
   NSLog(@"%s: Supported interfaces: %@", __func__, interfaceNames);
-  
-  NSDictionary *SSIDInfo;
+
   for (NSString *interfaceName in interfaceNames) {
-    SSIDInfo = CFBridgingRelease(CNCopyCurrentNetworkInfo((__bridge CFStringRef)interfaceName));
-    NSLog(@"%s: %@ => %@", __func__, interfaceName, SSIDInfo);
-    
-    BOOL isNotEmpty = (SSIDInfo.count > 0);
-    if (isNotEmpty) {
-      break;
+    NSDictionary *wifiInfo = CFBridgingRelease(CNCopyCurrentNetworkInfo((__bridge CFStringRef)interfaceName));
+    NSLog(@"%s: %@ => %@", __func__, interfaceName, wifiInfo);
+    if (wifiInfo.count > 0) {
+      resolve(@{@"SSID": wifiInfo[@"SSID"],
+                @"BSSID": wifiInfo[@"BSSID"]});
+      return;
     }
   }
-  NSString* ssid = @"";
-  if (SSIDInfo) {
-    ssid = SSIDInfo[@"SSID"];
-  }
-  callback(@[[NSNull null], @{ @"SSID": ssid }]);
+  resolve(nil);
 }
 
 RCT_EXPORT_METHOD(exitApp) {
@@ -37,16 +32,12 @@ RCT_EXPORT_METHOD(exitApp) {
 }
 
 - (NSDictionary *)constantsToExport {
-  NSString *model = [[UIDevice currentDevice] model];
-  NSString *name = [[UIDevice currentDevice] name];
-  NSString *systemName = [[UIDevice currentDevice] systemName];
-  NSString *systemVersion = [[UIDevice currentDevice] systemVersion];
 
   return @{
-    @"model" : (model),
-    @"name" : (name),
-    @"systemName" : (systemName),
-    @"systemVersion" : (systemVersion)
+    @"model": [[UIDevice currentDevice] model],
+    @"name": [[UIDevice currentDevice] name],
+    @"systemName": [[UIDevice currentDevice] systemName],
+    @"systemVersion": [[UIDevice currentDevice] systemVersion]
   };
 }
 

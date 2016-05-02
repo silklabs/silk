@@ -5,7 +5,6 @@ if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
     ../sdk/interface/silk-alog.js \
     ../sdk/interface/silk-properties.js \
   "
-  "
 fi
 
 cd $(dirname $0)/..

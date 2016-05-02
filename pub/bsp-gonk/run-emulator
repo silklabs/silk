@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/bash -e
+
+current_pid=$$
 
 if [[ -z $ANDROID_PRODUCT_OUT ]]; then
   echo "Please run |source build/envsetup.sh|"
@@ -16,5 +18,24 @@ if [[ ! -f $ANDROID_PRODUCT_OUT/system-qemu.img ]]; then
   cp -v $ANDROID_PRODUCT_OUT/system{,-qemu}.img
 fi
 
-set -x
-exec emulator -verbose -show-kernel -no-skin -no-audio -no-window
+get_children() {
+  pgrep -P $current_pid
+}
+
+# failsafe to ensure emulator closes cleanly.
+cleanly_close_emulator() {
+  echo "Interrupt! Killing emulators."
+  # contains currently running emulator wrapper but not the underlying emulator
+  for pid in $(get_children $current_pid); do
+    # second level children this contains the real emulator.
+    for child_pid in $(get_children $pid); do
+      pids_to_kill+=($child_pid)
+    done
+  done
+  if [[ ! -z "$pids_to_kill" ]]; then
+    kill $pids_to_kill
+  fi
+}
+
+trap cleanly_close_emulator INT
+emulator -verbose -show-kernel -no-skin -no-audio -no-window

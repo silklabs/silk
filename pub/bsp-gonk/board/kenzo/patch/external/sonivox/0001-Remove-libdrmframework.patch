@@ -1,0 +1,39 @@
+From 0db0a885e80ba9689ad80efda0a3856430d5e42a Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 29 Apr 2016 20:39:27 -0700
+Subject: [PATCH] Remove libdrmframework
+
+Change-Id: I8d89ce2a0e5eede974b68e28caf2c0229b4dd9d2
+---
+ arm-wt-22k/Android.mk              | 2 +-
+ arm-wt-22k/host_src/eas_hostmm.cpp | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arm-wt-22k/Android.mk b/arm-wt-22k/Android.mk
+index 5bed55b..cae26bb 100644
+--- a/arm-wt-22k/Android.mk
++++ b/arm-wt-22k/Android.mk
+@@ -100,6 +100,6 @@ LOCAL_COPY_HEADERS += lib_src/ARM_synth_constants_gnu.inc
+ endif
+ 
+ LOCAL_SHARED_LIBRARIES := \
+-	libutils libcutils libdrmframework
++	libutils libcutils
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/arm-wt-22k/host_src/eas_hostmm.cpp b/arm-wt-22k/host_src/eas_hostmm.cpp
+index 80ac33e..e67a552 100644
+--- a/arm-wt-22k/host_src/eas_hostmm.cpp
++++ b/arm-wt-22k/host_src/eas_hostmm.cpp
+@@ -291,7 +291,7 @@ EAS_RESULT EAS_HWOpenFile (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_LOCATOR locat
+                 fd = dup(locator->fd);
+             }
+ 
+-            DrmManagerClient* drmManagerClient = new DrmManagerClient();
++            DrmManagerClient* drmManagerClient = NULL; // new DrmManagerClient();
+             sp<DecryptHandle> decryptHandle = NULL;
+ 
+             if(drmManagerClient != NULL) {
+-- 
+1.9.1
+

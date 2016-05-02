@@ -1,0 +1,77 @@
+From 1ea497e05af48d194f9a0045b78d5ed5a40640ec Mon Sep 17 00:00:00 2001
+From: Ben Turner <bent.silklabs@gmail.com>
+Date: Mon, 14 Mar 2016 12:15:12 -0700
+Subject: [PATCH] Add 'i-frame-interval-ms' key for h264 encoding
+
+Change-Id: I2ee295fbf681b4cee6c73a9de7946b8fe05cbe5b
+---
+ media/libstagefright/ACodec.cpp | 29 +++++++++++++++++++++--------
+ 1 file changed, 21 insertions(+), 8 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index e66b745..75276ce 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -2977,14 +2977,11 @@ int /* OMX_VIDEO_AVCLEVELTYPE */ ACodec::getAVCLevelFor(
+ }
+ 
+ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+-    int32_t bitrate, iFrameInterval;
+-    if (!msg->findInt32("bitrate", &bitrate)
+-            || !msg->findInt32("i-frame-interval", &iFrameInterval)) {
++    int32_t bitrate;
++    if (!msg->findInt32("bitrate", &bitrate)) {
+         return INVALID_OPERATION;
+     }
+ 
+-    OMX_VIDEO_CONTROLRATETYPE bitrateMode = getBitrateMode(msg);
+-
+     float frameRate;
+     if (!msg->findFloat("frame-rate", &frameRate)) {
+         int32_t tmp;
+@@ -2994,6 +2991,22 @@ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+         frameRate = (float)tmp;
+     }
+ 
++    uint32_t iFrameCount;
++    int32_t tmp;
++    if (msg->findInt32("i-frame-interval-ms", &tmp)) {
++        if (tmp <= 0) {
++            return INVALID_OPERATION;
++        }
++        iFrameCount = frameRate * tmp / 1000;
++    } else {
++        if (!msg->findInt32("i-frame-interval", &tmp)) {
++            return INVALID_OPERATION;
++        }
++        iFrameCount = setPFramesSpacing(tmp, frameRate);
++    }
++
++    OMX_VIDEO_CONTROLRATETYPE bitrateMode = getBitrateMode(msg);
++
+     status_t err = OK;
+     int32_t intraRefreshMode = 0;
+     if (msg->findInt32("intra-refresh-mode", &intraRefreshMode)) {
+@@ -3053,7 +3066,7 @@ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+         h264type.bUseHadamard = OMX_TRUE;
+         h264type.nRefFrames = 1;
+         h264type.nBFrames = 0;
+-        h264type.nPFrames = setPFramesSpacing(iFrameInterval, frameRate);
++        h264type.nPFrames = iFrameCount;
+         if (h264type.nPFrames == 0) {
+             h264type.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI;
+         }
+@@ -3066,8 +3079,8 @@ status_t ACodec::setupAVCEncoderParameters(const sp<AMessage> &msg) {
+         h264type.bDirectSpatialTemporal = OMX_FALSE;
+         h264type.nCabacInitIdc = 0;
+     }
+-    ExtendedUtils::setBFrames(h264type, iFrameInterval,
+-            frameRate, mComponentName.c_str());
++    //ExtendedUtils::setBFrames(h264type, iFrameInterval,
++    //        frameRate, mComponentName.c_str());
+ 
+     if (h264type.nBFrames != 0) {
+         h264type.nAllowedPictureTypes |= OMX_VIDEO_PictureTypeB;
+-- 
+1.9.1
+

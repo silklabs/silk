@@ -140,6 +140,7 @@
   <project groups="pdk" name="platform/frameworks/av" path="frameworks/av" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk-cw-fs" name="platform/frameworks/base" path="frameworks/base" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/frameworks/native" path="frameworks/native" revision="LA.BR.1.3.2_rb3.14"/>
+  <project groups="pdk" name="platform/frameworks/wilhelm" path="frameworks/wilhelm" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/hardware/broadcom/libbt" path="hardware/broadcom/libbt" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/hardware/broadcom/wlan" path="hardware/broadcom/wlan" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/hardware/libhardware" path="hardware/libhardware" revision="LA.BR.1.3.2_rb3.14"/>
@@ -161,12 +162,14 @@
   <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.9" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>
+  <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.9" path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.9" revision="refs/tags/android-6.0.0_r2"/>
   <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/headers" path="prebuilts/gcc/darwin-x86/host/headers" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" path="prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9" revision="refs/tags/android-6.0.0_r2"/>
   <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" revision="LA.BR.1.3.2_rb3.14"/>

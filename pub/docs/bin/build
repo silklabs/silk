@@ -2,7 +2,9 @@
 
 if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
   APIDOC_SOURCE_FILES=" \
-    ../sdk/interface/* \
+    ../sdk/interface/silk-alog.js \
+    ../sdk/interface/silk-properties.js \
+  "
   "
 fi
 

@@ -47,8 +47,6 @@ export default class PreviewThumbnails extends AsyncComponent {
         logo={device.logo}
         previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
         width={thumbnailWidth}
-        configurable={false}
-        configuring={false}
         haveVideoStream={device.haveVideoStream}
         onPress={() => this.props.startFullscreenVideo(deviceId)}
         socket={this.props.socket}

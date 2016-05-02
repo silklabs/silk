@@ -19,24 +19,8 @@ import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 import Spinner from './Spinner';
 
-const CONNECTION_STATUS_LABELS = {
-  'server_disconnected': 'server disconnected',
-  'server_connecting': 'connecting to server',
-  'server_connected': 'connected to server',
-  'wifi_offline': 'not connected to WiFi',
-  'wifi_disconnected': 'not connected to WiFi',
-  'wifi_scanning': 'scanning for WiFi networks',
-  'wifi_associating': 'connecting to WiFI',
-  'wifi_associated': 'connecting to WiFi',
-  'wifi_authenticating': 'authenticating with WiFi',
-  'wifi_connected': 'connected to WiFi',
-  'wifi_dhcping': 'configuring WiFi',
-  'wifi_online': 'connected to WiFi',
-};
-
 const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
 const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
-const DEVICE_CONFIGURING_TIMEOUT_MS = 60000;
 
 export default class MonitorPreview extends SocketIOComponent {
   static propTypes = {
@@ -49,7 +33,6 @@ export default class MonitorPreview extends SocketIOComponent {
       height: React.PropTypes.number.isRequired,
     }),
     width: React.PropTypes.number.isRequired,
-    configuring: React.PropTypes.bool,
     haveVideoStream: React.PropTypes.bool,
     onPress: React.PropTypes.func,
 
@@ -64,8 +47,6 @@ export default class MonitorPreview extends SocketIOComponent {
 
   state = {
     blob: null,
-    registered: false,
-    serverConnectionStatus: null, // see CONNECTION_STATUS_LABELS
     timedOut: false,
   };
 
@@ -87,9 +68,6 @@ export default class MonitorPreview extends SocketIOComponent {
     if (this.props.haveVideoStream) {
       this.subscribeToSocket();
     }
-    if (this.props.bleDeviceSession) {
-      this.subscribeToBLEStatus(this.props.bleDeviceSession);
-    }
     this.startTimeoutTimer();
   }
 
@@ -110,17 +88,6 @@ export default class MonitorPreview extends SocketIOComponent {
       setTimeout(() => {
         this.subscribeToSocket(this.props.socket);
       }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
-    }
-    if (!this.props.bleDeviceSession && nextProps.bleDeviceSession) {
-      this.subscribeToBLEStatus(nextProps.bleDeviceSession);
-    }
-    if (this.props.bleDeviceSession && !nextProps.bleDeviceSession) {
-      // There's no need to explicitly unsubscribe from `bleDeviceSession`
-      // here. If we lose the session, it means it disconnected, which
-      // causes us to remove all listeners anyway. But now that we no longer
-      // are talking to the device, we don't know what its status is, so
-      // let's reset that.
-      this.setState({serverConnectionStatus: null});
     }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
@@ -151,14 +118,8 @@ export default class MonitorPreview extends SocketIOComponent {
   }
 
   startTimeoutTimer() {
-    if (this.props.configuring && !this.state.registered) {
-      return;
-    }
     this.clearTimeoutTimer();
     let timeOut = DEVICE_PREVIEW_TIMEOUT_MS;
-    if (this.props.configuring) {
-      timeOut = DEVICE_CONFIGURING_TIMEOUT_MS;
-    }
     this._timeoutTimer = setTimeout(
       () => {
         if (!this.props.hasNetwork) {
@@ -191,38 +152,13 @@ export default class MonitorPreview extends SocketIOComponent {
       this._queue.deinit();
       this._queue = null;
     }
-    let { bleDeviceSession } = this.props;
-    if (bleDeviceSession) {
-      bleDeviceSession.removeListener('status', this.onBLEDeviceStatusChange);
-      bleDeviceSession.removeListener('registered', this.onBLEDeviceRegistered);
-    }
     this.clearTimeoutTimer();
   }
 
-  subscribeToBLEStatus(bleDeviceSession) {
-    bleDeviceSession.on('registered', this.onBLEDeviceRegistered);
-    bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
-  }
-
-  onBLEDeviceStatusChange = (status) => {
-    this.startTimeoutTimer();
-    if (!this.state.serverConnectionStatus !== status.message) {
-      this.setStateAsync({serverConnectionStatus: status.message});
-    }
-  };
-
-  onBLEDeviceRegistered = () => {
-    this.startTimeoutTimer();
-    this.setStateAsync({registered: true});
-  };
 
   _renderLabel() {
     let { label, bleDeviceSession } = this.props;
-    let { serverConnectionStatus } = this.state;
-    if (serverConnectionStatus) {
-      let statusLabel = CONNECTION_STATUS_LABELS[serverConnectionStatus] || serverConnectionStatus;
-      label = `${label} (${statusLabel})`;
-    } else if (bleDeviceSession) {
+    if (bleDeviceSession) {
       label = `${label} (BLE)`;
     }
     return (
@@ -289,9 +225,6 @@ export default class MonitorPreview extends SocketIOComponent {
   }
 
   _onPress = () => {
-    if (this.props.configuring) {
-      return;
-    }
     if (this.state.timedOut && this.props.deviceId) {
       this._showRemoveDeviceSheet();
       return;

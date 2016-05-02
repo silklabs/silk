@@ -121,9 +121,29 @@ export const Colors = {
 };
 
 export const SetupStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.SilkLabsGreen,
+    paddingHorizontal: 32,
+    paddingTop: Navigator.NavigationBar.Styles.General.StatusBarHeight + 24,
+    paddingBottom: 24,
+  },
   title: {
     fontFamily: 'DIN Round Pro',
     fontSize: 24,
     color: 'white',
+  },
+  subtitle: {
+    fontFamily: 'DIN Round Pro',
+    fontWeight: '600',
+    fontSize: 14,
+    color: Colors.SilkLabsBlack,
+    marginVertical: 10,
+  },
+  formInput: {
+    height: 44,
+    fontFamily: 'Open Sans',
+    fontSize: 18,
+    flex: 1,
   },
 });

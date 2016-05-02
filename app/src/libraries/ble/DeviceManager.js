@@ -135,7 +135,7 @@ export class DeviceSession extends EventEmitter {
   _isRegistered: boolean = false;
   _deviceId: ?string = null;
   _status: ?DeviceStatus = null;
-  _wifiNetworks: Array<DeviceWifiNetwork> = [];
+  _wifiNetworks: ?Array<DeviceWifiNetwork> = null;
 
   _connectEmitted: boolean = false;
   _registeredEmitted: boolean = false;
@@ -463,7 +463,7 @@ export class DeviceSession extends EventEmitter {
     return this._deviceId;
   }
 
-  get wifiNetworks(): Array<DeviceWifiNetwork> {
+  get wifiNetworks(): ?Array<DeviceWifiNetwork> {
     return this._wifiNetworks;
   }
 
@@ -649,7 +649,7 @@ class DeviceManager extends EventEmitter {
 
     let device = this._devices.get(socket);
     if (device) {
-      device.emit(`disconnect`);
+      device.emit(`disconnect`, this);
     }
     this._devices.delete(socket);
   };

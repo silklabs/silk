@@ -49,7 +49,6 @@ export default class MonitorPreview extends SocketIOComponent {
       height: React.PropTypes.number.isRequired,
     }),
     width: React.PropTypes.number.isRequired,
-    configurable: React.PropTypes.bool,
     configuring: React.PropTypes.bool,
     haveVideoStream: React.PropTypes.bool,
     onPress: React.PropTypes.func,
@@ -152,9 +151,6 @@ export default class MonitorPreview extends SocketIOComponent {
   }
 
   startTimeoutTimer() {
-    if (this.props.configurable) {
-      return;
-    }
     if (this.props.configuring && !this.state.registered) {
       return;
     }
@@ -247,11 +243,6 @@ export default class MonitorPreview extends SocketIOComponent {
         />
       );
     }
-    if (this.props.configurable) {
-      return (
-        <Text style={styles.newDevicePlus}>+</Text>
-      );
-    }
     if (this.state.timedOut) {
       return (
         <Text style={styles.timedOutLabel}>
@@ -299,10 +290,6 @@ export default class MonitorPreview extends SocketIOComponent {
 
   _onPress = () => {
     if (this.props.configuring) {
-      return;
-    }
-    if (this.props.configurable) {
-      this.context.silkDevices.configureDevice(this.props.bleDeviceSession);
       return;
     }
     if (this.state.timedOut && this.props.deviceId) {

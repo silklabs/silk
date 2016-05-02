@@ -1,4 +1,4 @@
-import { OrderedMap, OrderedSet } from 'immutable';
+import { OrderedMap } from 'immutable';
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import { StyleSheet, View } from 'react-native';
@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 import SocketIO from '../libraries/SocketIO';
 
 import AsyncComponent from './abstract/AsyncComponent';
-import { ConfiguringDeviceRecord } from './abstract/Devices';
 import MonitorPreview from './MonitorPreview';
 import { ThumbnailStyles } from './CommonStyles';
 
@@ -25,8 +24,6 @@ export default class PreviewThumbnails extends AsyncComponent {
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     devices: React.PropTypes.instanceOf(OrderedMap),
-    unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
-    configuringDevice: React.PropTypes.instanceOf(ConfiguringDeviceRecord),
     startFullscreenVideo: React.PropTypes.func,
   };
 
@@ -37,56 +34,12 @@ export default class PreviewThumbnails extends AsyncComponent {
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   _renderThumbnails() {
-    let { devices, unconfiguredDevices, configuringDevice } = this.props;
-
+    let { devices } = this.props;
     let thumbnailWidth = this.state.layoutWidth;
-    if (devices.size + unconfiguredDevices.size > 1) {
+    if (devices.size > 1) {
       thumbnailWidth = thumbnailWidth / 2;
     }
-
-    let unconfiguredDeviceThumbnails = unconfiguredDevices.toArray().reverse()
-    .map((bleDeviceSession, index) => {
-      if (configuringDevice && configuringDevice.bleDeviceSession === bleDeviceSession) {
-        return null;
-      }
-      return (
-        <MonitorPreview
-          key={'unconfiguredDevice-' + index}
-          label={`${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          width={thumbnailWidth}
-          configurable={true}
-          configuring={false}
-          haveVideoStream={false}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-          bleDeviceSession={bleDeviceSession}
-        />
-      );
-    });
-
-    let configuringDeviceThumbnail = null;
-    if (configuringDevice) {
-      let { bleDeviceSession } = configuringDevice;
-      configuringDeviceThumbnail = (
-        <MonitorPreview
-          key={configuringDevice.deviceId}
-          deviceId={configuringDevice.deviceId}
-          logo={null}
-          label={configuringDevice.name || `${bleDeviceSession.manufacturer} ${bleDeviceSession.model}`}
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          width={thumbnailWidth}
-          configurable={false}
-          configuring={true}
-          haveVideoStream={false}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-          bleDeviceSession={configuringDevice.bleDeviceSession}
-        />
-      );
-    }
-
-    let deviceThumbnails = devices.map((device, deviceId) => (
+    return devices.map((device, deviceId) => (
       <MonitorPreview
         key={deviceId}
         deviceId={deviceId}
@@ -103,11 +56,6 @@ export default class PreviewThumbnails extends AsyncComponent {
         bleDeviceSession={device.bleDeviceSession}
       />
     )).toArray().reverse();
-
-    return unconfiguredDeviceThumbnails
-      .concat(configuringDeviceThumbnail)
-      .concat(deviceThumbnails)
-      .filter((element) => !!element);
   }
 
   render() {

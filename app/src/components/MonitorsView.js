@@ -24,6 +24,7 @@ import { Colors } from './CommonStyles';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
+import UnconfiguredDevice from './UnconfiguredDevice';
 
 const log = createLog('MonitorsView');
 
@@ -203,6 +204,7 @@ class MonitorsView extends AsyncComponent {
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
             {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
+            {this._renderUnconfiguredDevices()}
             <PreviewThumbnails
               {...this.props}
               startFullscreenVideo={this.startFullscreenVideo}
@@ -250,6 +252,21 @@ class MonitorsView extends AsyncComponent {
         </Text>
       </View>
     );
+  }
+
+  _renderUnconfiguredDevices() {
+    const { unconfiguredDevices } = this.props;
+    if (!unconfiguredDevices.size) {
+      return null;
+    }
+
+    return unconfiguredDevices.toArray().map((bleDeviceSession, index) => (
+      <UnconfiguredDevice
+        key={'unconfiguredDevice-' + index}
+        style={styles.unconfiguredDevice}
+        bleDeviceSession={bleDeviceSession}
+      />
+    ));
   }
 
   // Activity feed management
@@ -413,7 +430,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  placeholder: {
+  placeholderLabel: {
     margin: 8,
     fontFamily: 'DIN Round Pro',
     fontSize: 14,
@@ -437,6 +454,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: -SCROLLVIEW_PTR_THRESHOLD,
+  },
+
+  unconfiguredDevice: {
+    margin: 16,
   },
 
   eventRow: {

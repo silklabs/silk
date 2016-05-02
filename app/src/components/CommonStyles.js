@@ -119,3 +119,11 @@ export const Colors = {
   WarningRed: 'rgb(229, 77, 66)',
   ConfirmGreen: 'rgb(57, 202, 116)',
 };
+
+export const SetupStyles = StyleSheet.create({
+  title: {
+    fontFamily: 'DIN Round Pro',
+    fontSize: 24,
+    color: 'white',
+  },
+});

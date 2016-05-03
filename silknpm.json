@@ -7,6 +7,7 @@
     "chromiumtools": ["package.json"],
     "node-webrtc": ["package.json"],
     "device": ["vendor"],
-    "device/vendor": ["silk"]
+    "device/vendor": ["silk"],
+    "pub/bsp-gonk": []
   }
 }

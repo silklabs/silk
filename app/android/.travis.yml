@@ -1,6 +1,4 @@
 language: android
-sudo: required
-dist: trusty
 
 android:
   components:
@@ -19,7 +17,9 @@ addons:
       - g++-4.8
 
 env:
-  - CXX=g++-4.8
+  global:
+    - JAVA_OPTS=-Xmx512m
+    - CXX=g++-4.8
 
 install:
   - android/.travis/install

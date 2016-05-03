@@ -34,12 +34,18 @@ LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := gonksched.cpp
 LOCAL_SHARED_LIBRARIES := libbinder libutils libcutils
-LOCAL_C_INCLUDES := frameworks/av/services/audioflinger
+ifneq ($(wildcard frameworks/av/media/utils/SchedulingPolicyService.cpp),)
+SPS_DIR := frameworks/av/media/utils
+LOCAL_C_INCLUDES := $(SPS_DIR) $(SPS_DIR)/include
+else
+SPS_DIR := frameworks/av/services/audioflinger
+LOCAL_C_INCLUDES := $(SPS_DIR)
+endif
 
 # Inline libscheduling_policy.a as it is not available for the base build
 GONKSCHED_SPS_SRC_FILES := ISchedulingPolicyService.cpp SchedulingPolicyService.cpp
 LOCAL_SRC_FILES    += $(addprefix sps/,$(GONKSCHED_SPS_SRC_FILES))
-$(addprefix $(LOCAL_PATH)/sps/,$(GONKSCHED_SPS_SRC_FILES)): $(LOCAL_PATH)/sps/%.cpp: frameworks/av/services/audioflinger/%.cpp
+$(addprefix $(LOCAL_PATH)/sps/,$(GONKSCHED_SPS_SRC_FILES)): $(LOCAL_PATH)/sps/%.cpp: $(SPS_DIR)/%.cpp
 	$(hide) mkdir -p $(@D)
 	$(hide) @cp $< $@
 

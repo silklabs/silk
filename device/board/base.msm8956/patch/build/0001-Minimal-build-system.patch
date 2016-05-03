@@ -220,16 +220,16 @@ index 5b6e1e9..48291d1 100644
  	@echo Successfully read the makefiles.
 +
 +
-+ifdef GONK
++ifdef SILK_BOARD
 +#
 +# Device shared objects may be used for linking against by placing them
 +# in prebuilts/device/$(TARGET_PRODUCT), alleviating the need to build them from
 +# source.
 +#
-+DEVICE_PREBUILTS := $(notdir $(wildcard prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/*.so))
++DEVICE_PREBUILTS := $(notdir $(wildcard prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/*.so))
 +
 +# Copy the shared object into the expected location
-+$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(GONK)/$(TARGET_PRODUCT)/%.so | $(ACP)
++$(addprefix $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/,$(DEVICE_PREBUILTS)): $(TARGET_OUT_INTERMEDIATE_LIBRARIES)/%.so: prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/%.so | $(ACP)
 +	@echo Gonk Prebuilt: $@
 +	$(hide) mkdir -p $(@D)
 +	$(hide) $(ACP) $< $@
@@ -276,10 +276,10 @@ index 5b6e1e9..48291d1 100644
 +  sdk-common tools-common-prebuilt tradefed-prebuilt tzdata ub-janktesthelper \
 +  ub-uiautomator verity_key zipalign tst_str_parms liblog-benchmarks
 +
-+GONK_MODULES:=$(filter-out $(ALL_MODULES_BASE),$(ALL_MODULES))
++SILK_BOARD_MODULES:=$(filter-out $(ALL_MODULES_BASE),$(ALL_MODULES))
 +
-+ifneq (,$(strip $(GONK_MODULES)))
-+gonk_modules: $(GONK_MODULES)
++ifneq (,$(strip $(SILK_BOARD_MODULES)))
++gonk_modules: $(SILK_BOARD_MODULES)
 +endif
 +
 +# Ensure system/ and data/ always exist to avoid |adb sync| complaints

@@ -7,5 +7,10 @@ while [ -h "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+cd $ROOT/..
 
-exec $ROOT/../../babel-run/babel-node $ROOT/upload.js "$@"
+if [[ ! -d ../node_modules ]]; then
+  npm install
+fi
+
+exec ../babel-run/babel-node ./bin/upload.js "$@"

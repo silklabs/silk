@@ -1,0 +1,51 @@
+#! /bin/bash -ex
+
+# Do not upload on pull requests...
+if [[ $TRAVIS_PULL_REQUEST != "false" ]]; then
+  echo "TRAVIS_PULL_REQUEST is not equal to false.. aborting"
+  exit 0
+fi
+
+if [[ -z $SILK_BOARD ]]; then
+  echo "Must be run after : source build/envsetup.sh"
+  exit 1
+fi
+
+ensure_version() {
+  pushd ../version
+  npm install
+  popd
+}
+
+get_version() {
+  pushd ../version>/dev/null
+  node -p "require('.').semver"
+  popd>/dev/null
+}
+
+ensure_version
+
+branch=$TRAVIS_BRANCH
+os=$(uname | tr '[:upper:]' '[:lower:]')
+artifact_path=$os/$branch
+version=$(get_version)
+
+upload_path=$SILK_BOARD/$os/$branch
+
+if [[ $branch == "release" ]]; then
+  upload_path=$upload_path/$version
+fi
+
+rm -rf artifacts
+mkdir -p artifacts
+
+./archive dist
+tar -czf artifacts/target.tar.gz dist
+
+if [[ -d ../../s3-artifacts ]]; then
+  ../../s3-artifacts/bin/upload \
+    silk-sos-release \
+    $upload_path \
+    $PWD/artifacts \
+    --credentials sos_release
+fi

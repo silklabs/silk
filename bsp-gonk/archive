@@ -15,7 +15,7 @@ if [[ ! -d $ANDROID_HOST_OUT ]]; then
   exit 1
 fi
 
-dest=${1:-out}
+dest=${1:-dist}
 host_prefix=$(basename $ANDROID_HOST_OUT)
 archive_script=$ANDROID_BUILD_TOP/board/$SILK_BOARD/archive.sh
 

@@ -17,9 +17,10 @@ import createLog from './log';
 import type { Socket } from 'net';
 
 type WifiScanResult = {
+  bssid: string;
+  ssid: string;
   level: number;
   psk: boolean;
-  ssid: string;
 };
 
 const log = createLog('wifi');
@@ -515,7 +516,7 @@ export class Wifi extends events.EventEmitter {
         log.warning(`Unexpected wpa_cli scan result: "${line}"`);
         continue;
       }
-      let [ /*bssid*/, /*freq*/, level, flags, ssid ] = info;
+      let [bssid, /*freq*/, level, flags, ssid ] = info;
       ssid = unescapeSSID(ssid);
 
       if (ssid.length === 0 || CTRL_CHARS_REGEX.test(ssid)) {
@@ -539,6 +540,7 @@ export class Wifi extends events.EventEmitter {
       }
       scanResults.push({
         ssid,
+        bssid,
         level: parseInt(level, 10),
         psk,
       });

@@ -192,7 +192,6 @@
   <project name="platform/vendor/qcom-opensource/data-ipa-cfg-mgr" path="vendor/qcom/opensource/data-ipa-cfg-mgr" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/dataservices" path="vendor/qcom/opensource/dataservices" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/dpm" path="vendor/qcom/opensource/dpm" revision="LA.BR.1.3.2_rb3.14"/>
-  <project name="platform/vendor/qcom-opensource/fm" path="vendor/qcom/opensource/fm" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/kernel/kernel-tests" path="vendor/qcom/opensource/kernel-tests" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/location" path="vendor/qcom/opensource/location" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/rcs-service" path="vendor/qcom/opensource/rcs-service" revision="LA.BR.1.3.2_rb3.14"/>

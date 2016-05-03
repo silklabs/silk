@@ -14,6 +14,10 @@ import * as util from './sysutils';
 
 const log = createLog('battery');
 
+// Some boards have no battery but /sys/class/power_supply/battery/present is
+// still 1.  Set persist.silk.battery.present to false to override
+const BATTERY_PRESENT = util.getboolprop('persist.silk.battery.present', true);
+
 // Hold off boot when the battery is below this level
 const BATTERY_OK_TO_BOOT_LEVEL = 10;
 
@@ -50,6 +54,10 @@ export default class Battery extends events.EventEmitter {
   }
 
   init(): Promise<void> {
+    if (!BATTERY_PRESENT) {
+      log.info('Skipping battery presence test and assuming no battery');
+      return Promise.resolve();
+    }
     return new Promise((resolve) => {
       fs.readFile('/sys/class/power_supply/battery/present').then((data) => {
         let present = data.toString();
@@ -60,6 +68,7 @@ export default class Battery extends events.EventEmitter {
         this._peroidicBatteryCapacityCheck(resolve);
       }).catch((err) => {
         if (err.code === 'ENOENT') {
+          log.info('Battery not present');
           resolve();
           return;
         }

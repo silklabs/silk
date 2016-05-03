@@ -33,6 +33,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
   frameworks/av/media/libstagefright \
   frameworks/av/media/libstagefright/include \
+  frameworks/av/media/libstagefright/mpeg2ts \
   frameworks/native/include/media/openmax \
   vendor/silk/jsoncpp \
   vendor/silk/SocketListener \

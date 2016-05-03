@@ -100,7 +100,6 @@ function createIndex(dest, tree) {
 }
 
 async function main() {
-  console.log(process.argv)
   let { directory, bucket, prefix } = parser.parseArgs();
   assert(await fs.exists(directory), 'directory must exist...');
 

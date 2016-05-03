@@ -1,6 +1,11 @@
-#! /usr/bin/env node
-require('babel/register')({
-  ignore: false,
-  only: /\_upload/
-});
-require('./_upload');
+#! /bin/bash -e
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+exec $ROOT/../../babel-run/babel-node $ROOT/upload.js "$@"

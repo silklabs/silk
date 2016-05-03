@@ -1,4 +1,4 @@
-From bedaca62ce21a1e884fd809418bcbed1d93e0e8a Mon Sep 17 00:00:00 2001
+From 7117e28993046d0d1656d23ca7419f9fed961245 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Tue, 16 Jun 2015 17:42:56 -0700
 Subject: [PATCH] Minimal build/ system
@@ -8,10 +8,10 @@ Subject: [PATCH] Minimal build/ system
  core/binary.mk                      | 22 +++++++++
  core/config.mk                      | 22 ++++-----
  core/empty.mk                       |  0
- core/main.mk                        | 93 ++++++++++++++++++++++++++++++++++---
+ core/main.mk                        | 94 ++++++++++++++++++++++++++++++++++---
  core/notice_files.mk                |  2 +-
  target/board/generic/BoardConfig.mk |  4 +-
- 7 files changed, 127 insertions(+), 20 deletions(-)
+ 7 files changed, 128 insertions(+), 20 deletions(-)
  create mode 100644 core/empty.mk
 
 diff --git a/core/base_rules.mk b/core/base_rules.mk
@@ -132,7 +132,7 @@ diff --git a/core/empty.mk b/core/empty.mk
 new file mode 100644
 index 0000000..e69de29
 diff --git a/core/main.mk b/core/main.mk
-index 5b6e1e9..48291d1 100644
+index 5b6e1e9..3563ae3 100644
 --- a/core/main.mk
 +++ b/core/main.mk
 @@ -9,6 +9,9 @@ else
@@ -214,7 +214,7 @@ index 5b6e1e9..48291d1 100644
  endif
  
  
-@@ -1052,3 +1062,72 @@ showcommands:
+@@ -1052,3 +1062,73 @@ showcommands:
  .PHONY: nothing
  nothing:
  	@echo Successfully read the makefiles.
@@ -277,6 +277,7 @@ index 5b6e1e9..48291d1 100644
 +  ub-uiautomator verity_key zipalign tst_str_parms liblog-benchmarks
 +
 +SILK_BOARD_MODULES:=$(filter-out $(ALL_MODULES_BASE),$(ALL_MODULES))
++SILK_BOARD_MODULES:=$(filter $(product_MODULES),$(SILK_BOARD_MODULES))
 +
 +ifneq (,$(strip $(SILK_BOARD_MODULES)))
 +gonk_modules: $(SILK_BOARD_MODULES)
@@ -320,5 +321,5 @@ index 4e5504e..c382bba 100644
 +
 +MALLOC_IMPL := dlmalloc
 -- 
-1.9.1
+2.6.4 (Apple Git-63)
 

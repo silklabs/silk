@@ -45,6 +45,26 @@ parser.addArgument(
 );
 
 parser.addArgument(
+  ['--credentials'],
+  {
+    type: (type) => {
+      const fullPath = path.join(__dirname, `../../credentials/aws/${type}.json`);
+      if (!fs.existsSync(fullPath)) {
+        throw new Error(`Unknown credentials file : ${fullPath}`);
+      }
+
+      const creds = require(fullPath);
+      // XXX: Probably nasty hack. Will ensure the environment variables for
+      // aws-sdk are set prior to creating the objects.
+      for (let name in creds) {
+        process.env[name] = creds[name];
+      }
+    },
+    help: `Path to AWS credentials to use (see ../credentials/aws)`
+  }
+)
+
+parser.addArgument(
   ['--lossy'],
   {
     action: 'storeTrue',

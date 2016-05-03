@@ -8,17 +8,14 @@ const { SLKUtil } = NativeModules;
 
 type WifiInfo = {
   SSID: string;
+  BSSID: string;
 };
 
 /**
  * Get information about the WiFi network we're currently connected to.
  */
-export function getWifiInfo(): Promise<WifiInfo> {
-  return new Promise((resolve, reject) => {
-    return SLKUtil.getWifiInfo((err, info) => {
-      return err ? reject(err) : resolve(info);
-    });
-  });
+export function getWifiInfo(): Promise<?WifiInfo> {
+  return SLKUtil.getWifiInfo();
 }
 
 /**

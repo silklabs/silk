@@ -6,9 +6,6 @@
 
 @interface SLKUtil : NSObject <RCTBridgeModule>
 
-- (void)getWifiInfo:(RCTResponseSenderBlock)callback;
-- (void)exitApp;
-
 @end
 
 #endif

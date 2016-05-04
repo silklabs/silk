@@ -1,16 +1,16 @@
-import React from 'react-native';
 import moment from 'moment';
-
-import AsyncComponent from './abstract/AsyncComponent';
-
-const {
+import React from 'react';
+import {
   Image,
   PixelRatio,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} = React;
+  addons,
+} from 'react-native';
+
+import AsyncComponent from './abstract/AsyncComponent';
 
 const VIDEO_REWIND_MS = 2000;
 
@@ -38,7 +38,7 @@ export default class Activity extends AsyncComponent {
     this._loadPreviewImage(this.props);
   }
 
-  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     this._loadPreviewImage(nextProps);

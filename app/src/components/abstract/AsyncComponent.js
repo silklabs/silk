@@ -1,4 +1,4 @@
-import React from 'react-native';
+import React from 'react';
 
 /**
  * Make React component APIs play nicely within async functions.

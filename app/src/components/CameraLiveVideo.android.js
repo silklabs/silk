@@ -1,12 +1,11 @@
-import React from 'react-native';
 import DashSegmentPlayer from './DashSegmentPlayer';
-
-const {
+import React from 'react';
+import {
   Text,
   TouchableWithoutFeedback,
   StyleSheet,
   View,
-} = React;
+} from 'react-native';
 
 export default class CameraLiveVideo extends React.Component {
 

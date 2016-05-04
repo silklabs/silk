@@ -1,4 +1,9 @@
-import React from 'react-native';
+import React from 'react';
+import {
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import createLog from 'silk-log';
 
 import OverlayModal from './OverlayModal';
@@ -7,12 +12,6 @@ import VideoControls from './VideoControls';
 import Spinner from './Spinner';
 import * as DateUtil from '../libraries/DateUtil';
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
-
-const {
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} = React;
 
 const log = createLog('CameraLiveVideo');
 

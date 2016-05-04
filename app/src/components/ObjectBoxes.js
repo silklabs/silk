@@ -1,13 +1,12 @@
-import React from 'react-native';
-
-import SocketIO from '../libraries/SocketIO';
-
-const {
+import React from 'react';
+import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-} = React;
+} from 'react-native';
+
+import SocketIO from '../libraries/SocketIO';
 
 let Square = React.createClass({
   render: function() {

@@ -1,8 +1,8 @@
-import React from 'react-native';
-const { NativeModules } = React;
-const { SystemButtonManager } = NativeModules;
+import React from 'react';
+import { NativeModules, requireNativeComponent } from 'react-native';
 
-const SystemButtonNative = React.requireNativeComponent('SystemButton');
+const { SystemButtonManager } = NativeModules;
+const SystemButtonNative = requireNativeComponent('SystemButton');
 
 export default class SystemButton extends React.Component {
 

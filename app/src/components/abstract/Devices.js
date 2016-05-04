@@ -1,5 +1,10 @@
-import React from 'react-native';
 import { OrderedMap, OrderedSet, Record } from 'immutable';
+import React from 'react';
+import {
+  Alert,
+  InteractionManager,
+  NativeModules,
+} from 'react-native';
 import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
 
@@ -10,11 +15,6 @@ import { UserState } from '../../libraries/UserState';
 import AsyncComponent from './AsyncComponent';
 
 const log = createLog('Devices');
-const {
-  Alert,
-  InteractionManager,
-  NativeModules,
-} = React;
 const { BLESocketManager } = NativeModules;
 
 

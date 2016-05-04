@@ -1,13 +1,6 @@
 import moment from 'moment';
-import React from 'react-native';
-import silkVersion from 'silk-core-version';
-
-import { UserState } from '../libraries/UserState';
-
-import AsyncComponent from './abstract/AsyncComponent';
-import { FormStyles, LayoutStyles, TitleBarStyles } from './CommonStyles';
-
-let {
+import React from 'react';
+import {
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -15,7 +8,13 @@ let {
   TouchableHighlight,
   TouchableOpacity,
   View,
-} = React;
+} from 'react-native';
+import silkVersion from 'silk-core-version';
+
+import { UserState } from '../libraries/UserState';
+
+import AsyncComponent from './abstract/AsyncComponent';
+import { FormStyles, LayoutStyles, TitleBarStyles } from './CommonStyles';
 
 const MIN_CONTENT_INSET_BOTTOM = 20;
 

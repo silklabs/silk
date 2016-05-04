@@ -1,14 +1,11 @@
-import React from 'react-native';
+import React from 'react';
+import { StyleSheet, View, requireNativeComponent } from 'react-native';
 import createLog from 'silk-log';
 
 import Config from '../libraries/Config';
 import { blobURI } from '../libraries/Util';
 
-const {
-  StyleSheet,
-  View,
-} = React;
-const MSEPlayer = React.requireNativeComponent('SilkMSEPlayer');
+const MSEPlayer = requireNativeComponent('SilkMSEPlayer');
 
 const log = createLog('DashSegmentPlayer');
 

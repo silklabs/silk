@@ -1,12 +1,11 @@
-import React from 'react-native';
 import moment from 'moment';
-
-let {
+import React from 'react';
+import {
   Animated,
   StyleSheet,
   Text,
   View,
-} = React;
+} from 'react-native';
 
 export default class DateOverlay extends React.Component {
 

@@ -1,14 +1,7 @@
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-'use strict';
-
-let React = require('react-native');
-let {
-  StyleSheet,
-  Text,
-  View,
-} = React;
-
-class CameraMarkText extends React.Component {
+export class CameraMarkText extends React.Component {
   render() {
     return (
       <View style={styles.camMarkContainer}>
@@ -19,7 +12,7 @@ class CameraMarkText extends React.Component {
   }
 }
 
-class DefaultText extends React.Component {
+export class DefaultText extends React.Component {
   render() {
     return (
         <Text style={styles.default}>{this.props.children}</Text>
@@ -27,7 +20,7 @@ class DefaultText extends React.Component {
   }
 }
 
-class LabelText extends React.Component {
+export class LabelText extends React.Component {
   render() {
     return (
         <Text style={styles.label}>{this.props.children}</Text>
@@ -35,7 +28,7 @@ class LabelText extends React.Component {
   }
 }
 
-class PlaceholderText extends React.Component {
+export class PlaceholderText extends React.Component {
   render() {
     return (
         <Text style={styles.placeholder}>{this.props.children}</Text>
@@ -43,7 +36,7 @@ class PlaceholderText extends React.Component {
   }
 }
 
-class WordMarkText extends React.Component {
+export class WordMarkText extends React.Component {
   render() {
     return (
         <View style={styles.markContainer}>
@@ -54,7 +47,7 @@ class WordMarkText extends React.Component {
   }
 }
 
-let styles = StyleSheet.create({
+const styles = StyleSheet.create({
 
   camMarkContainer: {
     flexDirection: 'row',
@@ -102,11 +95,3 @@ let styles = StyleSheet.create({
   },
 
 });
-
-module.exports = {
-  CameraMarkText: CameraMarkText,
-  Text: DefaultText,
-  LabelText: LabelText,
-  PlaceholderText: PlaceholderText,
-  WordMarkText: WordMarkText,
-};

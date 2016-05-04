@@ -1,11 +1,11 @@
-import React from 'react-native';
-let {
+import React from 'react';
+import {
   Image,
   Navigator,
   StyleSheet,
   TouchableOpacity,
   View,
-} = React;
+} from 'react-native';
 import { CameraMarkText } from './Text';
 
 const CONNECTION_STATES = ['connecting', 'connected', 'offline'];

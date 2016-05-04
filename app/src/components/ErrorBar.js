@@ -1,9 +1,5 @@
-import React from 'react-native';
-let {
-  View,
-  StyleSheet,
-  Text,
-} = React;
+import React from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 
 export default class ErrorBar extends React.Component {
 

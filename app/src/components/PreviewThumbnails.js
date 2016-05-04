@@ -1,5 +1,6 @@
-import React from 'react-native';
 import { OrderedMap, OrderedSet } from 'immutable';
+import React from 'react';
+import { StyleSheet, View, addons } from 'react-native';
 
 import SocketIO from '../libraries/SocketIO';
 
@@ -7,11 +8,6 @@ import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import MonitorPreview from './MonitorPreview';
 import { ThumbnailStyles } from './CommonStyles';
-
-const {
-  StyleSheet,
-  View,
-} = React;
 
 // This is mostly a guestimate based on FUT hardware. Absolute values
 // not important here, the ratio is what matters.
@@ -37,7 +33,7 @@ export default class PreviewThumbnails extends AsyncComponent {
     layoutWidth: null,
   };
 
-  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
 
   _renderThumbnails() {
     let { devices, unconfiguredDevices, configuringDevice } = this.props;

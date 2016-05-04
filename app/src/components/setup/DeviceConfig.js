@@ -1,5 +1,5 @@
-import React from 'react-native';
-let {
+import React from 'react';
+import {
   InteractionManager,
   ScrollView,
   StyleSheet,
@@ -9,7 +9,7 @@ let {
   TextInput,
   TouchableOpacity,
   View,
-} = React;
+} from 'react-native';
 
 import { DeviceSession, DeviceWifiNetworks } from '../../libraries/ble/DeviceManager';
 

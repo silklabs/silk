@@ -1,10 +1,5 @@
-import React from 'react-native';
-
-import Config from '../../libraries/Config';
-
-import { FormStyles, LayoutStyles, TitleBarStyles } from '../CommonStyles';
-
-let {
+import React from 'react';
+import {
   Image,
   NativeModules,
   PixelRatio,
@@ -14,7 +9,11 @@ let {
   TouchableHighlight,
   TouchableOpacity,
   View,
-} = React;
+} from 'react-native';
+
+import Config from '../../libraries/Config';
+
+import { FormStyles, LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
 export default class ServerPicker extends React.Component {
 

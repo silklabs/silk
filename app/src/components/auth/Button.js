@@ -1,10 +1,10 @@
-import React from 'react-native';
-let {
+import React from 'react';
+import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} = React;
+} from 'react-native';
 
 import Spinner from '../Spinner';
 

@@ -1,0 +1,27 @@
+#! /usr/bin/env node
+
+var path = require('path');
+
+var Download = require('download');
+
+// TODO: Get a real cloudfront hostname.
+var BASE = 'https://d2xr8z98rg6hpy.cloudfront.net/qemu/';
+var VERSION = require('../package.json').version;
+var OS = require('os').platform();
+
+var download = new Download({
+  mode: 755,
+  extract: true,
+});
+
+var assetUrl = BASE + path.join(OS, 'release', VERSION, '/target.tar.gz');
+
+download.use(require('download-status')());
+download.get(assetUrl);
+download.dest(path.join(__dirname, '../vendor'));
+
+download.run(function(err) {
+  if (err) {
+    throw err;
+  }
+});

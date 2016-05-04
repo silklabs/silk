@@ -1,0 +1,17 @@
+#!/bin/bash -ex
+
+LOCAL_PATH=$(dirname $0)
+
+what="$@"
+if [[ -z $what ]]; then
+  what="$(find test -name '*_test.js')"
+fi
+
+if [[ -z "$DEBUG" ]]; then
+  DEBUG="*"
+fi
+
+# camera.js uses propWatcher to read an android property
+WATCHPROPS_PATHS=$LOCAL_PATH/../../../../../../../sim/system/bin/
+
+NODE_PATH=$LOCAL_PATH/.. env PATH=$PATH:$WATCHPROPS_PATHS DEBUG="$DEBUG" mocha $what

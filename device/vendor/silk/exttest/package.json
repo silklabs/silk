@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "private": true,
+  "bin": {
+    "runtest": "./bin/runtest",
+    "pretest": "./bin/pretest"
+  },
   "scripts": {
     "postinstall": "../../../../npm_postinstall"
   },

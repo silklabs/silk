@@ -1,9 +1,7 @@
 #! /bin/bash -ex
 
 LOCAL_PATH=$(dirname $0)
-WATCHPROPS_PATHS=$LOCAL_PATH/../../../../../../sim/system/bin/
 
 DEBUG=silk-face:* \
-  env PATH=$PATH:$WATCHPROPS_PATHS \
   NODE_PATH=$LOCAL_PATH/../node_modules \
   ../../../../../babel-run/babel-node tools/facePredictor.js $*

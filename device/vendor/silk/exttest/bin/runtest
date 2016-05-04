@@ -11,7 +11,4 @@ if [[ -z "$DEBUG" ]]; then
   DEBUG="*"
 fi
 
-# camera.js uses propWatcher to read an android property
-WATCHPROPS_PATHS=$LOCAL_PATH/../../../../../../../sim/system/bin/
-
-NODE_PATH=$LOCAL_PATH/.. env PATH=$PATH:$WATCHPROPS_PATHS DEBUG="$DEBUG" mocha $what
+NODE_PATH=$LOCAL_PATH/.. DEBUG="$DEBUG" mocha $what

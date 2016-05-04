@@ -3,6 +3,7 @@
   "version": "0.15.0",
   "description": "Silk SDK",
   "repository": "silklabs/silk",
+  "main": "cli.js",
   "bugs": {
     "url": "https://github.com/silklabs/silk/issues"
   },
@@ -19,5 +20,10 @@
     "babel-eslint": "4.1.8",
     "babel-cli": "6.4.5",
     "eslint": "1.10.3"
+  },
+  "dependencies": {
+    "event-to-promise": "^0.7.0",
+    "mz": "^2.4.0",
+    "which": "^1.2.4"
   }
 }

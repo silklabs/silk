@@ -135,6 +135,7 @@ const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
 let audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
 
 const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
+const CAMERA_HW_ENABLED = util.getboolprop('ro.silk.camera.hw.enabled', true);
 
 //
 // Constants
@@ -688,7 +689,7 @@ export default class Camera extends EventEmitter {
     }
 
     if (restartCaptureProcess) {
-      util.setprop('ctl.restart', 'capture');
+      util.setprop('ctl.restart', 'silk-capture');
     }
 
     this._restartTimeout = setTimeout(() => {
@@ -712,9 +713,7 @@ export default class Camera extends EventEmitter {
     }
   }
 
-  _initFrameCapture() {
-    this._scheduleNextFrameCapture();
-
+  _initComplete() {
     clearTimeout(this._initTimeout);
     this._initTimeout = null;
 
@@ -765,9 +764,12 @@ export default class Camera extends EventEmitter {
       // The capture process is currently gonk only.  For other platforms only initialize
       // OpenCV video capture.
       process.nextTick(() => {
-        this._initCVVideoCapture();
-        this._initFrameCapture();
+        if (CAMERA_HW_ENABLED) {
+          this._initCVVideoCapture();
+          this._scheduleNextFrameCapture();
+        }
         this._startSimMicCapture();
+        this._initComplete();
       });
       return;
     }
@@ -794,10 +796,14 @@ export default class Camera extends EventEmitter {
     this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
 
-      this._initCVVideoCapture();
+      if (CAMERA_HW_ENABLED) {
+        this._initCVVideoCapture();
+      }
 
       this._buffer = '';
       const cmdData = {
+        camera: CAMERA_HW_ENABLED,
+        audio: AUDIO_HW_ENABLED,
         frameIntervalMs: DURATION_MS,
         width: WIDTH,
         height: HEIGHT,
@@ -825,7 +831,8 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _tagMonitor = () => {
-    if (this._videoTagReceived && (this._micTagReceived || !AUDIO_HW_ENABLED)) {
+    if ( (this._videoTagReceived || !CAMERA_HW_ENABLED) &&
+         (this._micTagReceived || !AUDIO_HW_ENABLED) ) {
       this._videoTagReceived = this._micTagReceived = null;
       this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
       return;
@@ -856,10 +863,13 @@ export default class Camera extends EventEmitter {
       if (captureEvent.eventName === 'error') {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
-        this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+        if (CAMERA_HW_ENABLED) {
+          this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+          this._scheduleNextFrameCapture();
+        }
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
+        this._initComplete();
 
-        this._initFrameCapture();
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);

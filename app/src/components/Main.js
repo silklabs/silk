@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, addons } from 'react-native';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import { StyleSheet, View } from 'react-native';
 
 import Devices from './abstract/Devices';
 import ServerConnectivity from './abstract/ServerConnectivity';
@@ -9,7 +10,7 @@ import TopBar from './TopBar';
 
 class MainView extends React.Component {
 
-  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   render() {
     return (

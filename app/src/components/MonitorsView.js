@@ -1,5 +1,6 @@
 import { OrderedMap, OrderedSet } from 'immutable';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   AppStateIOS,
   PixelRatio,
@@ -8,7 +9,6 @@ import {
   StyleSheet,
   Text,
   View,
-  addons,
 } from 'react-native';
 import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
@@ -70,7 +70,7 @@ class MonitorsView extends AsyncComponent {
     this.mounted = false;
   }
 
-  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     let { devices } = this.props;

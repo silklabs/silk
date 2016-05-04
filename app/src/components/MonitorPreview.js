@@ -1,4 +1,5 @@
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   ActionSheetIOS,
   Alert,
@@ -7,7 +8,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  addons,
 } from 'react-native';
 
 import { DeviceSession } from '../libraries/ble/DeviceManager';
@@ -94,7 +94,7 @@ export default class MonitorPreview extends SocketIOComponent {
     this.startTimeoutTimer();
   }
 
-  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     if (!this.props.haveVideoStream && nextProps.haveVideoStream) {

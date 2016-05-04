@@ -1,5 +1,6 @@
 import moment from 'moment';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   Image,
   PixelRatio,
@@ -7,7 +8,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  addons,
 } from 'react-native';
 
 import AsyncComponent from './abstract/AsyncComponent';
@@ -38,7 +38,7 @@ export default class Activity extends AsyncComponent {
     this._loadPreviewImage(this.props);
   }
 
-  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     this._loadPreviewImage(nextProps);

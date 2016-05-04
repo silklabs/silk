@@ -1,6 +1,7 @@
 import { OrderedMap, OrderedSet } from 'immutable';
 import React from 'react';
-import { StyleSheet, View, addons } from 'react-native';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import { StyleSheet, View } from 'react-native';
 
 import SocketIO from '../libraries/SocketIO';
 
@@ -33,7 +34,7 @@ export default class PreviewThumbnails extends AsyncComponent {
     layoutWidth: null,
   };
 
-  shouldComponentUpdate = addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   _renderThumbnails() {
     let { devices, unconfiguredDevices, configuringDevice } = this.props;

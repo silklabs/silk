@@ -1,5 +1,7 @@
 # Silk
 
+Silk is a free (as in free beer) firmware for a number of smartphones based on the open-source Android operating system with a nodejs layer on top of it that makes it possible to write programs and get access to hardware aspects using only simple JavaScript. We offer a wide range of APIs that make developing for the Internet of Things world using web technologies a present reality.
+
 ## Latest news
 
 **14/May/2016**: Silk goes open source. [Read full story](#)<br>
@@ -33,7 +35,7 @@ Head out to [Building instructions for Linux and OS X](development/build-instruc
 
 ## Resources for newcomers
 
-- [Writing your first app for Silk](#)
+- [Quick Start: Writing your first app for Silk](quick-start.md)
 - [Emit an iBeacon from the device](#)
 
 ## Feedback

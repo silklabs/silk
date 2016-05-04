@@ -255,6 +255,10 @@ class PropWatcher extends events.EventEmitter {
       }
     });
 
+    cmd.on('error', (err) => {
+      log.error('Failed to start watchprops');
+    });
+
     // respawn if dies for some reason
     cmd.on('close', this._spawnWatchprops);
   };

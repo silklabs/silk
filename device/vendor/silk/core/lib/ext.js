@@ -154,15 +154,7 @@ class Env extends EventEmitter {
        * @instance
        */
       this.camera.getFrame = (when, formats) => {
-        return new Promise((resolve, reject) => {
-          camera.getFrame(when, formats, (err, frames) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(frames);
-            }
-          });
-        });
+        return camera.getFrame(when, formats);
       };
 
       /**

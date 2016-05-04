@@ -6,11 +6,11 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "postinstall": "./bin/postinstall",
-    "pretest": "./bin/pretest",
-    "test": "./bin/test",
+    "pretest": "pretest",
+    "test": "runtest",
     "clean": "rm -rf node_modules",
     "lint": "eslint tools/*.js",
-    "predict": "DEBUG=silk-face:* ../../../../../babel-run/babel-node tools/facePredictor.js"
+    "predict": "./bin/predict"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",

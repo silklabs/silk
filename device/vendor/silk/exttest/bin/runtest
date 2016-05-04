@@ -11,4 +11,4 @@ if [[ -z "$DEBUG" ]]; then
   DEBUG="*"
 fi
 
-env PATH=$PATH:$LOCAL_PATH/../node_modules/.bin DEBUG="$DEBUG" mocha $what
+NODE_PATH=$LOCAL_PATH/.. DEBUG="$DEBUG" mocha $what

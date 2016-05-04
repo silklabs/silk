@@ -8,11 +8,10 @@ import assert from 'assert';
 import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
-import opencv from 'opencv';
 import Framework from 'silk-exttest';
 
 const log = createLog('TestFramework');
-const env = new Framework('motion', opencv);
+const env = new Framework('motion');
 const timeline = env.timeline;
 const camera = env.camera;
 
@@ -26,8 +25,8 @@ function failOnTimeout(timeout) {
   });
 }
 
-function addPreviewFrame(image, timestamp) {
-  camera.setPreviewFrame(path.resolve(__dirname, 'files', image));
+async function addPreviewFrame(timestamp, image) {
+  await camera.setPreviewFrame(timestamp, path.resolve(__dirname, 'files', image));
   timeline.emit('preview', timestamp);
 }
 
@@ -41,13 +40,13 @@ suite('test motion', function () {
     log.info(`Running motion test`);
 
     let timestamp = Date.now();
-    process.nextTick(() => addPreviewFrame('motion_1.png', timestamp));
+    process.nextTick(() => addPreviewFrame(timestamp, 'motion_1.png'));
 
     timestamp = Date.now();
-    process.nextTick(() => addPreviewFrame('motion_2.png', timestamp));
+    process.nextTick(() => addPreviewFrame(timestamp, 'motion_2.png'));
 
     timestamp = Date.now();
-    process.nextTick(() => addPreviewFrame('motion_3.png', timestamp));
+    process.nextTick(() => addPreviewFrame(timestamp, 'motion_3.png'));
 
     try {
       log.info(`Waiting for motion event`);

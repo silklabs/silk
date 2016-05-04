@@ -1,0 +1,13 @@
+{
+  "name": "silk-sdk-emulator",
+  "version": "0.15.0",
+  "description": "Silk Emulator",
+  "main": "package.json",
+  "scripts": {},
+  "author": "Silk Labs",
+  "license": "MIT",
+  "dependencies": {
+    "download": "^4.4.3",
+    "download-status": "^2.2.1"
+  }
+}

@@ -44,6 +44,36 @@ parser.addArgument(
   }
 );
 
+parser.addArgument(
+  ['--credentials'],
+  {
+    type: (type) => {
+      const fullPath = path.join(__dirname, `../../credentials/aws/${type}.json`);
+      if (!fs.existsSync(fullPath)) {
+        throw new Error(`Unknown credentials file : ${fullPath}`);
+      }
+
+      const creds = require(fullPath);
+      // XXX: Probably nasty hack. Will ensure the environment variables for
+      // aws-sdk are set prior to creating the objects.
+      for (let name in creds) {
+        process.env[name] = creds[name];
+      }
+    },
+    help: `Path to AWS credentials to use (see ../credentials/aws)`
+  }
+)
+
+parser.addArgument(
+  ['--lossy'],
+  {
+    action: 'storeTrue',
+    help: `
+      Use reduced redundancy for cost savings.
+    `
+  }
+);
+
 /**
  * Builds the tree to be uploaded...
  */
@@ -71,7 +101,7 @@ async function buildTree(dest, directory) {
 /**
  * Create an index.html page so we can actually find the artifacts...
  */
-function createIndex(dest, tree) {
+function createHTMLIndex(dest, tree) {
   let links = tree.map((item) => {
     return `
       <li><a href="${item.relative}">${item.relative} [size: ${item.contentSize}]</a></li>
@@ -99,14 +129,34 @@ function createIndex(dest, tree) {
   };
 }
 
+function createJSONIndex(dest, tree) {
+  const json = {};
+  for (const item of tree) {
+    json[item.name] = {
+      name: item.name,
+      path: item.relative
+    };
+  }
+
+  const content = JSON.stringify(json);
+
+  return {
+    target: path.join(dest, 'index.json'),
+    name: 'index',
+    content,
+    contentType: 'application/json',
+    contentSize: Buffer.byteLength(content)
+  };
+}
+
 async function main() {
-  console.log(process.argv)
-  let { directory, bucket, prefix } = parser.parseArgs();
+  let { directory, bucket, prefix, lossy } = parser.parseArgs();
   assert(await fs.exists(directory), 'directory must exist...');
 
   let s3 = new S3({ bucket, logger: process.stdout });
   let tree = await buildTree(prefix, directory);
-  tree.push(createIndex(prefix, tree));
+  tree.push(createHTMLIndex(prefix, tree));
+  tree.push(createJSONIndex(prefix, tree));
 
   log(`Uploading files from ${directory} to s3 bucket ${bucket}/${prefix}`);
 
@@ -120,10 +170,12 @@ async function main() {
       Body: item.content || fs.createReadStream(item.src),
       ContentType: item.contentType,
       ContentLength: item.contentSize,
-      // This data is for development if we lose it somehow in the > 99.9% case 
-      // we will live...
-      StorageClass: 'REDUCED_REDUNDANCY'
     };
+
+    if (lossy) {
+      uploadParams.StorageClass = 'REDUCED_REDUNDANCY';
+    }
+
     await new Promise((accept, reject) => {
       s3.upload(uploadParams, (err, value) => {
         if (err) return reject(err);

@@ -2,7 +2,7 @@
 export ARTIFACT_BUCKET=silk-travis-artifacts-us-east-1
 export ARTIFACT_WEBHOST="http://silk-travis-artifacts-us-east-1.s3-website-us-east-1.amazonaws.com"
 export ARTIFACT_REMOTE_PATH="$TRAVIS_REPO_SLUG/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
-export ARTIFACT_DIR=.artifacts/
+export ARTIFACT_DIR=$PWD/.artifacts/
 
 # XXX: These credentials can only upload to the $ARTIFACT_BUCKET bucket but
 # this is still potentially sketchy!

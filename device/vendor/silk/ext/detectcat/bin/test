@@ -1,0 +1,16 @@
+#!/bin/bash -ex
+
+LOCAL_PATH=$(dirname $0)
+
+what="$@"
+if [[ -z $what ]]; then
+  what="$(find test -name '*_test.js')"
+fi
+
+if [[ -z "$DEBUG" ]]; then
+  DEBUG="*"
+fi
+
+NODE_PATH=$LOCAL_PATH/../node_modules \
+  env PATH=$PATH:$LOCAL_PATH/../node_modules/.bin:$LOCAL_PATH/../../../../../../sim/system/bin/ \
+  DEBUG="$DEBUG" mocha $what

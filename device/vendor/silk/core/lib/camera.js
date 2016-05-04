@@ -617,6 +617,14 @@ export default class Camera extends EventEmitter {
     }
   }
 
+  get FRAME_SIZE() {
+    return FRAME_SIZE;
+  }
+
+  get FLASH_MODE() {
+    return FLASH_MODE;
+  }
+
   /**
    * Releases cached images
    * @private
@@ -1328,11 +1336,30 @@ export default class Camera extends EventEmitter {
    * @param userCb - callback that receives an error object and the image
    *                 as an OpenCV matrix
    */
-  getFrame(when: number,
+  _getFrame(when: number,
            formats: Array<CameraFrameFormat>,
            userCb: CameraCallback): void {
     this._frameQueue.push([userCb, when, formats]);
     this._retrieveNextFrame();
+  }
+
+  /**
+   * Promise version of _getFrame above
+   *
+   * @return {Promise<Array<?cv::Matrix>>}
+   */
+  getFrame(when: number,
+           formats: Array<CameraFrameFormat>,
+           userCb: CameraCallback): Promise<Array<?any>> {
+    return new Promise((resolve, reject) => {
+      this._getFrame(when, formats, (err, frames) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(frames);
+        }
+      });
+    });
   }
 
   _diagEmitState = () => {
@@ -1427,5 +1454,3 @@ export default class Camera extends EventEmitter {
     }
   }
 }
-
-Camera.prototype.FLASH_MODE = FLASH_MODE;

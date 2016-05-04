@@ -14,7 +14,7 @@ import fs from 'fs';
 import mkdirp from 'mkdirp';
 import imageSize from 'fast-image-size';
 
-const env = new Framework('face', cv);
+const env = new Framework('face');
 const camera = env.camera;
 
 const HAAR = '../../../../../../sim/system/silk/media/opencv/haarcascade_frontalface_alt2.xml';
@@ -82,11 +82,12 @@ class FacePredictor {
     if (!fs.existsSync(filePath)) {
       throw new Error(`${filePath} doesn't exit`);
     }
-    await camera.setPreviewFrame(filePath);
+    let when = Date.now();
+    await camera.setPreviewFrame(when, filePath);
 
     // Fetch the current frame in all the different required formats at once
     let [grayeq, highgray, fullgray] = await camera.getFrame(
-        Date.now(),
+        when,
         ['grayeq', 'highgray', 'fullgray']
     );
 

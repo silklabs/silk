@@ -7,7 +7,7 @@
     "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall",
     "pretest": "./bin/pretest",
-    "test": "DEBUG=* mocha $(find test -name '*_test.js')",
+    "test": "./bin/test",
     "clean": "rm -rf node_modules"
   },
   "symlinkDependencies": {

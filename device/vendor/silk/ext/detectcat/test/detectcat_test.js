@@ -9,11 +9,10 @@ import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 import fs from 'mz/fs';
-import opencv from 'opencv';
 import Framework from 'silk-exttest';
 
 const log = createLog('TestFramework');
-const env = new Framework('detectcat', opencv);
+const env = new Framework('detectcat');
 const timeline = env.timeline;
 const camera = env.camera;
 
@@ -39,9 +38,10 @@ function failOnTimeout(timeout) {
   });
 }
 
-function addPreviewFrame(image, timestamp) {
+async function addPreviewFrame(timestamp, image) {
+  await camera.setPreviewFrame(timestamp,
+      path.resolve(__dirname, 'files', image));
   process.nextTick(() => {
-    camera.setPreviewFrame(path.resolve(__dirname, 'files', image));
     timeline.emit('motion', timestamp);
   });
 }
@@ -61,16 +61,15 @@ suite('test detectcat', function () {
         continue;
       }
 
-      let timestamp = Date.now();
-      addPreviewFrame(files[count], timestamp);
-
       try {
+        let timestamp = Date.now();
+        await addPreviewFrame(timestamp, files[count]);
         let [when, rects] = await Promise.race([
           eventToPromise(timeline, 'cat'),
           failOnTimeout(1000),
         ]);
         log.info(`when: ${when} rects: ${JSON.stringify(rects)}`);
-        assert.notEqual(rects, null);
+        assert.notEqual(rects, null, 'cat rectangles');
       } catch (err) {
         log.error(`Error: ${err}`);
         assert(false, 'no error expected');

@@ -56,6 +56,20 @@ const oss = {
       'pub/bsp-gonk/**',
       'pub/device-main/**',
     ]
+  },
+
+  // TODO: This will evolve over time to do different things than the pr.
+  'sos-bsp-gonk-push': {
+    'title': 'pub/bsp-gonk build and test',
+    'travis_yml': 'pub/bsp-gonk/travis.yml',
+    events: ['push'],
+    branches: ['master', 'next', 'release'],
+    travis_config: {
+    },
+    files: [
+      'pub/bsp-gonk/**',
+      'pub/device-main/**',
+    ]
   }
 }
 

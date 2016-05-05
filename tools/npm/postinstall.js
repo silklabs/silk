@@ -28,15 +28,13 @@ const NPM_CONFIG = path.join(__dirname, '.npmrc');
 
 // Yet another nasty hack to ensure we don't run dependant install for these
 // modules...
-const NEVER_RUN_NPM_INSTALL = new Set([config.ignored]);
+const NEVER_RUN_NPM_INSTALL = new Set(config.ignored);
 
 let currentModule;
 let selfLock;
 let pendingLocks = [];
 let createdLocks = [];
 let runningInstalls = new Set();
-
-let INVOKE_TYPE = process.env.INVOKE_TYPE;
 
 function unlink(path) {
   if (!fs.existsSync(path)) {
@@ -210,7 +208,7 @@ function installDeps(cwd, nodeModules, dependencies) {
       }
     }
 
-    if (INVOKE_TYPE === 'symlink' || NEVER_RUN_NPM_INSTALL.has(pkgSource)) {
+    if (NEVER_RUN_NPM_INSTALL.has(pkgSource)) {
       continue;
     }
 

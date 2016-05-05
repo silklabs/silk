@@ -1,8 +1,5 @@
-import React from 'react-native';
-let {
-  StyleSheet,
-  View,
-} = React;
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 export default class ProximityMeter extends React.Component {
 

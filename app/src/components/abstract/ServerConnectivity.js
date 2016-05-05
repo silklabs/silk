@@ -1,14 +1,11 @@
-import React from 'react-native';
+import React from 'react';
+import { NetInfo } from 'react-native';
 import { SilkApi } from 'silk-api';
-import socketIOClient from 'socket.io-client';
 import createLog from 'silk-log';
+import socketIOClient from 'socket.io-client';
 
 import SocketIO from '../../libraries/SocketIO';
 import AsyncComponent from './AsyncComponent';
-
-const {
-  NetInfo,
-} = React;
 
 const log = createLog('ServerConnectivity');
 

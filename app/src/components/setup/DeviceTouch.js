@@ -1,10 +1,10 @@
-import React from 'react-native';
-let {
+import React from 'react';
+import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} = React;
+} from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import ProximityMeter from './ProximityMeter';

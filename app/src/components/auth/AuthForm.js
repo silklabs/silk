@@ -2,19 +2,18 @@
  * Handles user email/password input dialogs.
  */
 
-import React from 'react-native';
+import React from 'react';
+import {
+  Alert,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import Config from '../../libraries/Config';
 
 import AsyncComponent from '../abstract/AsyncComponent';
 import Button from './Button';
-
-const {
-  Alert,
-  StyleSheet,
-  TextInput,
-  View,
-} = React;
 
 const inputStyles = StyleSheet.create({
   text: {

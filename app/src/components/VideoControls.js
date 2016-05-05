@@ -1,16 +1,15 @@
-import React from 'react-native';
 import moment from 'moment';
-
-import Config from '../libraries/Config';
-import * as DateUtil from '../libraries/DateUtil';
-import SystemButton from './SystemButton';
-
-let {
+import React from 'react';
+import {
   StyleSheet,
   Text,
   View,
   SliderIOS,
-} = React;
+} from 'react-native';
+
+import Config from '../libraries/Config';
+import * as DateUtil from '../libraries/DateUtil';
+import SystemButton from './SystemButton';
 
 function daySeconds(time) {
   let date = new Date(time);

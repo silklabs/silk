@@ -1,4 +1,14 @@
-import React from 'react-native';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {
+  ActionSheetIOS,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
@@ -8,16 +18,6 @@ import { blobURI } from '../libraries/Util';
 import SocketIOComponent from './abstract/SocketIOComponent';
 import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 import Spinner from './Spinner';
-
-const {
-  ActionSheetIOS,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} = React;
 
 const CONNECTION_STATUS_LABELS = {
   'server_disconnected': 'server disconnected',
@@ -94,7 +94,7 @@ export default class MonitorPreview extends SocketIOComponent {
     this.startTimeoutTimer();
   }
 
-  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     if (!this.props.haveVideoStream && nextProps.haveVideoStream) {

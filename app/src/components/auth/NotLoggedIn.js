@@ -1,6 +1,15 @@
-import React from 'react-native';
-import createLog from 'silk-log';
+import React from 'react';
+import {
+  Alert,
+  DeviceEventEmitter,
+  LayoutAnimation,
+  Navigator,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SilkApi } from 'silk-api';
+import createLog from 'silk-log';
 
 import Config from '../../libraries/Config';
 import { UserState } from '../../libraries/UserState';
@@ -14,16 +23,6 @@ import { WordMarkText } from '../Text';
 import LoginMetric from '../../metrics/Login';
 
 const log = createLog('NotLoggedIn');
-
-const {
-  Alert,
-  DeviceEventEmitter,
-  LayoutAnimation,
-  Navigator,
-  ScrollView,
-  StyleSheet,
-  View,
-} = React;
 
 export default class NotLoggedIn extends AsyncComponent {
 

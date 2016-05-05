@@ -1,7 +1,8 @@
-import React from 'react-native';
+import React from 'react';
+import { NativeModules, requireNativeComponent } from 'react-native';
 
-const DashSegmentPlayerNative = React.requireNativeComponent('DashSegmentPlayer');
-const { DashSegmentPlayerManager } = React.NativeModules;
+const DashSegmentPlayerNative = requireNativeComponent('DashSegmentPlayer');
+const { DashSegmentPlayerManager } = NativeModules;
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'player';

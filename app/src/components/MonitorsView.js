@@ -1,6 +1,16 @@
-import React from 'react-native';
-import createLog from 'silk-log';
 import { OrderedMap, OrderedSet } from 'immutable';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {
+  AppStateIOS,
+  PixelRatio,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
 
 import SocketIO from '../libraries/SocketIO';
@@ -14,16 +24,6 @@ import CameraLiveVideo from './CameraLiveVideo';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
-
-const {
-  AppStateIOS,
-  PixelRatio,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} = React;
 
 const log = createLog('MonitorsView');
 
@@ -70,7 +70,7 @@ class MonitorsView extends AsyncComponent {
     this.mounted = false;
   }
 
-  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillReceiveProps(nextProps) {
     let { devices } = this.props;

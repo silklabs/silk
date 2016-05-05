@@ -1,12 +1,12 @@
-import React from 'react-native';
+import React from 'react';
+import { NativeModules, requireNativeComponent } from 'react-native';
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 // There are two parts to the native wrapper:
 // 1.Public interface exposed for method calls:
-let { NativeModules } = React;
-let { OverlayModalManager } = NativeModules;
+const { OverlayModalManager } = NativeModules;
 // 2: Component interface exposed for UI:
-let OverlayModal = React.requireNativeComponent('OverlayModal');
+const OverlayModal = requireNativeComponent('OverlayModal');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'overlaymodal';

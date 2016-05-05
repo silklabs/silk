@@ -1,8 +1,5 @@
-import React from 'react-native';
-const {
-  StyleSheet,
-  View,
-} = React;
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 /**
  * Based on React Native's internal UnimplementeView

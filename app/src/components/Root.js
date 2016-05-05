@@ -1,15 +1,14 @@
 import CrashReporter from '../libraries/CrashReporter';
 CrashReporter.start();
 
-import React from 'react-native';
-let {
+import React from 'react';
+import {
   NativeModules,
   NetInfo,
   StyleSheet,
   Text,
   View,
-} = React;
-let { SLKUtil } = NativeModules;
+} from 'react-native';
 
 // Include our own browser shim goop but after react-native has loaded for the
 // first time and created it's own shims.
@@ -33,6 +32,8 @@ import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
 import Settings from './Settings';
+
+const { SLKUtil } = NativeModules;
 
 const log = createLog('Root');
 

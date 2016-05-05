@@ -1,5 +1,5 @@
-import React from 'react-native';
-const { ProgressBarAndroid } = React;
+import React from 'react';
+import { ProgressBarAndroid } from 'react-native';
 
 const SIZE_TO_ANDROID_STYLE_ATTR = {
   small: 'Small',

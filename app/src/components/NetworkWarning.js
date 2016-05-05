@@ -1,13 +1,9 @@
-import React from 'react-native';
+import React from 'react';
+import { NetInfo, View } from 'react-native';
 import { SilkApi } from 'silk-api';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import ErrorBar from './ErrorBar';
-
-const {
-  NetInfo,
-  View,
-} = React;
 
 /**
  * Autonomous component that detects when there's no network availability and

@@ -1,4 +1,6 @@
-import React from 'react-native';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import { StyleSheet, View } from 'react-native';
 
 import Devices from './abstract/Devices';
 import ServerConnectivity from './abstract/ServerConnectivity';
@@ -6,14 +8,9 @@ import MonitorsView from './MonitorsView';
 import NetworkWarning from './NetworkWarning';
 import TopBar from './TopBar';
 
-const {
-  StyleSheet,
-  View,
-} = React;
-
 class MainView extends React.Component {
 
-  shouldComponentUpdate = React.addons.PureRenderMixin.shouldComponentUpdate;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   render() {
     return (

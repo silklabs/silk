@@ -1,5 +1,5 @@
-import React from 'react-native';
-const { ActivityIndicatorIOS } = React;
+import React from 'react';
+import { ActivityIndicatorIOS } from 'react-native';
 
 export default class Spinner extends React.Component {
 

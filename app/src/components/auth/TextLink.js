@@ -1,12 +1,5 @@
-
-import React from 'react-native';
-
-let {
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} = React;
-
+import React from 'react';
+import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export default class TextLink extends React.Component {
   static propTypes = {

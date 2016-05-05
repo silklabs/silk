@@ -12,6 +12,7 @@ import {
 } from './face';
 import safeRoi from './safe_roi.js';
 import fs from 'fs';
+import { EventEmitter } from 'events';
 
 let camera;
 let log;
@@ -55,10 +56,11 @@ function getCascadeRects(cascade: any, im: Matrix): Promise<Array<FaceRect>> {
   });
 }
 
-export default class FaceDetector {
+export default class FaceDetector extends EventEmitter {
   _busy: bool = false;
 
   constructor(env, haarCascade = HAAR, dlibLandmark = DLIB_LANDMARK) {
+    super();
     camera = env.camera;
     log = env.log;
     timeline = env.timeline;
@@ -78,6 +80,7 @@ export default class FaceDetector {
           throw err;
         }
         this._faceDetector = faceDetector;
+        this.emit('ready');
       }
     );
     /*

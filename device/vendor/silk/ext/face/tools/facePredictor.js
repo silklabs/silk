@@ -13,6 +13,7 @@ import path from 'path';
 import fs from 'fs';
 import mkdirp from 'mkdirp';
 import imageSize from 'fast-image-size';
+import eventToPromise from 'event-to-promise';
 
 const env = new Framework('face');
 const camera = env.camera;
@@ -67,9 +68,6 @@ class FacePredictor {
     if (!fs.existsSync(this.destPath)) {
       throw new Error(`${this.destPath} doesn't exit`);
     }
-
-    this.faceDetector = new FaceDetector(env, path.resolve(__dirname, HAAR),
-        path.resolve(__dirname, DLIB_LANDMARK));
   }
 
   /**
@@ -176,6 +174,10 @@ class FacePredictor {
    *
    */
   async run() {
+    this.faceDetector = new FaceDetector(env, path.resolve(__dirname, HAAR),
+        path.resolve(__dirname, DLIB_LANDMARK));
+    await eventToPromise(this.faceDetector, 'ready');
+
     if (showAnnotations) {
       mkdirp.sync('./tmp');
     }

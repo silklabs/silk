@@ -625,6 +625,10 @@ export default class Camera extends EventEmitter {
     return FLASH_MODE;
   }
 
+  get FRAME_DELAY_MS() {
+    return FRAME_DELAY_MS;
+  }
+
   /**
    * Releases cached images
    * @private

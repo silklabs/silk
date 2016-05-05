@@ -8,10 +8,18 @@
     "pretest": "./bin/pretest"
   },
   "scripts": {
+    "lint": "eslint src/*.js",
     "postinstall": "../../../../npm_postinstall"
   },
   "symlinkDependencies": {
+    "eslint-config-silk": "/eslint",
     "silk-log": "/log",
     "silk-core": "/device/vendor/silk/core"
+  },
+  "devDependencies": {
+    "babel-eslint": "5.0.0",
+    "eslint": "1.10.3",
+    "eslint-plugin-import": "0.12.0",
+    "eslint-plugin-react": "3.16.1"
   }
 }

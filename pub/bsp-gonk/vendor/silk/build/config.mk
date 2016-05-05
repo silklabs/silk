@@ -1,3 +1,7 @@
+$(info SILK_PRODUCT: $(SILK_PRODUCT))
+$(info SILK_BOARD: $(SILK_BOARD))
+$(info ============================================)
+
 SILK_BUILD_FILES := $(dir $(lastword $(MAKEFILE_LIST)))
 
 CLEAR_VARS += $(SILK_BUILD_FILES)node_module_clear_vars.mk

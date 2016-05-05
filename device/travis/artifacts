@@ -17,5 +17,3 @@ fi
 # Must not contain leading or trailing slashes...
 export CCACHE_ARTIFACT_PATH="silk-device/$TRAVIS_OS_NAME/$GONK/$CACHE_TYPE/ccache"
 mkdir -p $ARTIFACT_DIR
-
-npm install -g ../s3-artifacts

@@ -7,4 +7,4 @@ du -hs * .repo
 du -hs .
 
 # Deploy our per build artifacts...
-silk-artifacts $ARTIFACT_BUCKET $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR --lossy
+../s3-artifacts/bin/upload $ARTIFACT_BUCKET $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR --lossy

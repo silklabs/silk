@@ -50,7 +50,7 @@ install:
 script:
   # TODO: This ideally is passed as env variable or something.
   - cd pub/bsp-gonk
-  - ./sync qemu
+  - ./sync $GONK
   - source build/envsetup.sh
   - make -j4
   # We place this in script to ensure that when it fails it turns the build red.

@@ -536,9 +536,10 @@ export default class Timeline extends EventEmitter {
     log.debug(`Converting matrix to jpg: ${when}`);
 
     // TODO: Consider moving this image resize off the main thread...
-    imRGB.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+    let im = imRGB.copy();
+    im.resize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
-    imRGB.toBufferAsync(
+    im.toBufferAsync(
       (err, frame) => {
         log.debug(`Finished converting matrix to jpg: ${when}`);
         if (err) {

@@ -15,8 +15,6 @@ import Camera from 'silk-core/lib/camera';
 import invariant from 'assert';
 import opencv from 'opencv';
 
-const log = createLog('TestFramework');
-
 /**
  * Dummy environment class
  */

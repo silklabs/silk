@@ -12,15 +12,14 @@
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-babeldeps": "/babeldeps",
-    "silk-log": "/log"
+    "silk-log": "/log",
+    "babel-preset-silk-node4": "/pub/babel-preset-silk-node4"
   },
   "dependencies": {
     "argparse": "1.0.3",
     "ascii-table": "0.0.8",
-    "babel": "5.8.35",
-    "babel-core": "5.8.35",
     "babel-eslint": "5.0.0",
-    "babelify": "6.4.0",
+    "babelify": "7.3.0",
     "browserify": "11.2.0",
     "cp-r": "^0.1.2",
     "eslint": "1.10.3",

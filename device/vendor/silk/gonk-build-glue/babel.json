@@ -1,5 +1,0 @@
-{
-  "stage": 1,
-  "optional": ["regenerator", "es7.classProperties"],
-  "blacklist": "asyncToGenerator"
-}

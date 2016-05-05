@@ -64,15 +64,6 @@ export default function(baseDirectory = process.env.BASEDIR) {
     return _cache;
   }
 
-  let _babelrc;
-  function getBabelrc() {
-    if (!_babelrc) {
-      _babelrc = fs.readFileSync(path.join(__dirname, '../babel.json'));
-      _babelrc.only = require('silk-babeldeps');
-    }
-    return _babelrc;
-  }
-
   function createBrowserifyStream(options = {}) {
     let main = pkg.main;
     if (!path.extname(main)) {
@@ -96,9 +87,9 @@ export default function(baseDirectory = process.env.BASEDIR) {
       ignoreMissing: true,
       debug: true,
       exclude: '**/*.node',
-      transform: [babelify.configure(
-        JSON.parse(getBabelrc())
-      )]
+      transform: babelify.configure({
+        presets: [require('babel-preset-silk-node4')]
+      })
     };
 
     for (let key in options) {
@@ -111,8 +102,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
   function build(browserifyStream) {
     // We heavily cache our assets we cache bust not only by their content but also
     // these values...
-    let babelrc = getBabelrc();
-    let cacheProps = [pkgSource, babelrc]
+    let cacheProps = [pkgSource];
 
     let uglifyCfg = {
       compress: {keep_fnames: true},
@@ -133,7 +123,9 @@ export default function(baseDirectory = process.env.BASEDIR) {
       .pipe(source(pkg.main))
       .pipe(buffer())
       .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-      .pipe(gulpif(!(process.env.NO_UGLY === '1' || process.env.LAX === '1'), uglify(uglifyCfg)))
+      // TODO: Re-enable uglify once we upgrade uglify to support generators or
+      // add a babel plugin which produces code without generators.
+      //.pipe(gulpif(!(process.env.NO_UGLY === '1' || process.env.LAX === '1'), uglify(uglifyCfg)))
       .on('error', err => {
         gutil.log('(uglify)', gutil.colors.red('Uglify Error'));
         gutil.log('(uglify)', err.message);

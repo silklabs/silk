@@ -25,11 +25,6 @@ function failOnTimeout(timeout) {
   });
 }
 
-async function addPreviewFrame(timestamp, image) {
-  await camera.setPreviewFrame(timestamp, path.resolve(__dirname, 'files', image));
-  timeline.emit('preview', timestamp);
-}
-
 suite('test motion', function () {
   test('detect motion', async () => {
     motionObject = require('../lib/motion')(env);
@@ -39,24 +34,17 @@ suite('test motion', function () {
   test('detect motion', async () => {
     log.info(`Running motion test`);
 
-    let timestamp = Date.now();
-    process.nextTick(() => addPreviewFrame(timestamp, 'motion_1.png'));
-
-    timestamp = Date.now();
-    process.nextTick(() => addPreviewFrame(timestamp, 'motion_2.png'));
-
-    timestamp = Date.now();
-    process.nextTick(() => addPreviewFrame(timestamp, 'motion_3.png'));
+    camera.startPlayback(path.resolve(__dirname, 'files'));
 
     try {
       log.info(`Waiting for motion event`);
       let [when, rects] = await Promise.race([eventToPromise(timeline, 'motion'),
                           failOnTimeout(1000)]);
       log.info(`Received motion at ${when} rects: ${JSON.stringify(rects)}`);
-      assert.equal(when, timestamp, 'motion timestamp');
       assert.notEqual(rects, null);
     } catch (err) {
       assert.ok(false, `error: ${JSON.stringify(err)}`);
     }
+    camera.stopPlayback();
   });
 });

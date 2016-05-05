@@ -17,7 +17,12 @@ fi
 
 dest=${1:-dist}
 host_prefix=$(basename $ANDROID_HOST_OUT)
-archive_script=$ANDROID_BUILD_TOP/board/$SILK_BOARD/archive.sh
+
+if [[ -x $ANDROID_BUILD_TOP/board/$SILK_BOARD/archive.sh ]]; then
+  archive_script=$ANDROID_BUILD_TOP/board/$SILK_BOARD/archive.sh
+else
+  archive_script=$ANDROID_BUILD_TOP/archive_generic.sh
+fi
 
 usage() {
   echo "Usage: ./archive [dest]"

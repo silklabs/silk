@@ -7,11 +7,6 @@
  * @flow
  */
 
-// Load the regnerator polyfill manually so we don't need to also load all the
-// core-js polyfills which we don't actually need...
-import regeneratorRuntime from 'babel-runtime/regenerator';
-global.regeneratorRuntime = global.regeneratorRuntime || regeneratorRuntime;
-
 import caffe from 'silk-caffe';
 import fs from 'mz/fs';
 

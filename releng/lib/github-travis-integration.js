@@ -228,8 +228,7 @@ export async function triggerBuildForProject(
     request.travis_yml
   );
   if (!travis_yml) {
-    log.info(`Travis configuration not found at ${request.travis_yml}/, skipping.`);
-    return null;
+    throw new Error(`Travis configuration not found at ${request.travis_yml} !`);
   }
   let config = YAML.parse(travis_yml);
   if (request.config) {

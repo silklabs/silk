@@ -44,12 +44,15 @@ function nightlyBuild(dir, overrides) {
 
 // TODO: This should live in pub/builds.js when releng can handle it.
 const oss = {
-  'sos-bsp-gonk-pr': {
-    'title': 'pub/bsp-gonk build and test',
-    'travis_yml': 'pub/bsp-gonk/travis.yml',
-    'branches': ['master'],
+  'sos-bsp-gonk-linux-qemu-pr': {
+    title: '(qemu) pub/bsp-gonk build and test',
+    travis_yml: 'pub/bsp-gonk/travis/travis_linux.yml',
+    branches: ['master'],
+    cwd: 'pub/bsp-gonk',
     travis_config: {
-
+      env: {
+        global: ['GONK=qemu'],
+      },
     },
     events: ['pr'],
     files: [
@@ -59,18 +62,52 @@ const oss = {
   },
 
   // TODO: This will evolve over time to do different things than the pr.
-  'sos-bsp-gonk-push': {
-    'title': 'pub/bsp-gonk build and test',
-    'travis_yml': 'pub/bsp-gonk/travis.yml',
+  'sos-bsp-gonk-linux-qemu-push': {
+    'title': '(push) pub/bsp-gonk build and test',
+    'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
     events: ['push'],
     branches: ['master', 'next', 'release'],
+    cwd: 'pub/bsp-gonk',
     travis_config: {
+      env: {
+        global: ['GONK=qemu'],
+      },
     },
     files: [
       'pub/bsp-gonk/**',
       'pub/device-main/**',
     ]
-  }
+  },
+
+  'sos-bsp-gonk-linux-mako-qemu': nightlyBuild('pub/bsp-gonk', {
+    'title': 'Nightly build for QEMU SoS',
+    'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
+    travis_config: {
+      env: {
+        global: ['GONK=qemu'],
+      },
+    }
+  }),
+
+  'sos-bsp-gonk-linux-mako-nightly': nightlyBuild('pub/bsp-gonk', {
+    'title': 'Nightly build for Mako SoS',
+    'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
+    travis_config: {
+      env: {
+        global: ['GONK=mako'],
+      },
+    }
+  }),
+
+  'sos-bsp-gonk-kenzo-nightly': nightlyBuild('pub/bsp-gonk', {
+    'title': 'Kenzo nightly for silk open source',
+    'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
+    travis_config: {
+      env: {
+        global: ['GONK=kenzo'],
+      },
+    },
+  }),
 }
 
 const builds = {

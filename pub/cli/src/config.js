@@ -15,7 +15,6 @@ import createDebug from 'debug';
 
 import * as log from './logs';
 
-
 // Internal type for config files loaded from disk.
 type InputConfig = {
   // name to path for plugins...
@@ -110,16 +109,26 @@ export default function config(
     globalConfig = loadAndResolveConfig(globalConfigPath);
   }
 
+  const silkSDKPath = path.join(cwd, 'node_modules/silk/');
+
   // If a SILKRC is given we use this as the project config.
   let projectConfigPath;
   if (process.env.SILKRC) {
+    // Check for the environment variable override.
     projectConfigPath = process.env.SILKRC;
   } else {
     projectConfigPath = lookup(SILKRC, { cwd });
   }
 
-  debug('resolved project config', projectConfigPath);
   let projectConfig = { plugins: [] };
+
+  // Fallback to checking if there is a silk sdk installed.
+  if (!projectConfigPath && fs.existsSync(silkSDKPath)) {
+    // If the user has no .sillkrc but has silk installed load it's config.
+    projectConfig.plugins.push(silkSDKPath);
+  }
+
+  debug('resolved project config', projectConfigPath);
   if (projectConfigPath) {
     projectConfig = loadAndResolveConfig(path.resolve(projectConfigPath));
   }

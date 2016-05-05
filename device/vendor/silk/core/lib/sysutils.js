@@ -256,7 +256,13 @@ class PropWatcher extends events.EventEmitter {
     });
 
     cmd.on('error', (err) => {
-      log.error('Failed to start watchprops');
+      log.error(`Failed to start watchprops ${err}`);
+      // If watchprops isn't available ENOENT error is
+      // received as well as close error below causing
+      // us to go in an endless loop of restarting watchprops
+      if (err.code === 'ENOENT') {
+        cmd.removeListener('close', this._spawnWatchprops);
+      }
     });
 
     // respawn if dies for some reason

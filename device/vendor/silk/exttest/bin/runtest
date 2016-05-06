@@ -11,4 +11,5 @@ if [[ -z "$DEBUG" ]]; then
   DEBUG="*"
 fi
 
-NODE_PATH=$LOCAL_PATH/.. DEBUG="$DEBUG" mocha $what
+MOCHA_OPTS_PATH=$LOCAL_PATH/../silk-exttest/test/mocha.opts
+NODE_PATH=$LOCAL_PATH/.. DEBUG="$DEBUG" mocha --opts $MOCHA_OPTS_PATH $what

@@ -21,7 +21,6 @@
     "mz": "2.2.0"
   },
   "devDependencies": {
-    "babel": "5.8.23",
     "event-to-promise": "0.4.0",
     "mocha": "2.4.2"
   },

@@ -28,7 +28,6 @@
     "mz": "2.2.0"
   },
   "devDependencies": {
-    "babel": "5.8.35",
     "babel-eslint": "5.0.0",
     "eslint": "1.10.3",
     "eslint-plugin-import": "0.12.0",

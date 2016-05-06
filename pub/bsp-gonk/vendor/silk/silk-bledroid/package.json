@@ -4,9 +4,8 @@
   "description": "wrapper for bledroid",
   "main": "index.js",
   "scripts": {
-    "preinstall": "if [ -d ../../../locked_node_modules ]; then ../../../locked_node_modules/fetch.sh; fi",
-    "postinstall": "./bin/postinstall && ./build",
-    "build": "./build"
+    "postinstall": "./bin/postinstall && silk-buildjs",
+    "build": "silk-buildjs"
   },
   "author": {
     "name": "Ben Turner",
@@ -19,7 +18,7 @@
     "uuid": "2.0.1"
   },
   "symlinkDependencies": {
-    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
+    "silk-buildjs": "../../../../buildjs/"
   },
   "private": true
 }

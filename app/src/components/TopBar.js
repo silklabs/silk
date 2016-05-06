@@ -55,10 +55,10 @@ export default class TopBar extends React.Component {
 const styles = StyleSheet.create({
   statusBarUnderlay: {
     height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
-    backgroundColor: '#404e55',
+    backgroundColor: Colors.SilkLabsRed,
   },
   titleContainer: {
-    backgroundColor: '#2b3a42',
+    backgroundColor: Colors.SilkLabsRed,
     justifyContent: 'center',
     flexDirection: 'row',
     padding: 10,

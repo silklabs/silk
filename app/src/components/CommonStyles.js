@@ -106,3 +106,16 @@ export const ThumbnailStyles = StyleSheet.create({
     margin: THUMBNAIL_MARGIN,
   },
 });
+
+export const Colors = {
+  SilkLabsBlack: 'rgb(66, 66, 66)',
+  SilkLabsBlack50: 'rgba(66, 66, 66, 0.5)',
+  SilkLabsBlue: 'rgb(44, 114, 185)',
+  SilkLabsGreen: 'rgb(141, 202, 200)',
+  SilkLabsLightBlue: 'rgb(241, 246, 246)',
+  SilkLabsRed: 'rgb(238, 75, 48)',
+  SilkLabsTan: 'rgb(239, 234, 223)',
+  SilkLabsYellow: 'rgb(253, 214, 123)',
+  WarningRed: 'rgb(229, 77, 66)',
+  ConfirmGreen: 'rgb(57, 202, 116)',
+};

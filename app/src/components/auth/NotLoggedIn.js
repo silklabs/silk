@@ -17,6 +17,7 @@ import { UserState } from '../../libraries/UserState';
 import AsyncComponent from '../abstract/AsyncComponent';
 import AuthForm from './AuthForm';
 import Button from './Button';
+import { Colors } from '../CommonStyles';
 import NetworkWarning from '../NetworkWarning';
 import TextLink from './TextLink';
 import { Wordmark } from '../Wordmark';
@@ -315,12 +316,11 @@ export default class NotLoggedIn extends AsyncComponent {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#dfdfdf',
+    backgroundColor: Colors.SilkLabsTan,
   },
 
   statusBar: {
     height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
-    backgroundColor: '#dfdfdf',
   },
 
   logoContainer: {

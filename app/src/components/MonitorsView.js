@@ -20,6 +20,7 @@ import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import ErrorBar from './ErrorBar';
 import CameraLiveVideo from './CameraLiveVideo';
+import { Colors } from './CommonStyles';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
@@ -406,9 +407,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    backgroundColor: Colors.SilkLabsTan,
     borderColor: '#c8c7cc',
     borderTopWidth: 1 / PixelRatio.get(),
-    backgroundColor: 'white',
     flex: 1,
   },
 
@@ -422,7 +423,6 @@ const styles = StyleSheet.create({
 
   scrollView: {
     paddingTop: 5,
-    backgroundColor: '#efefef',
     flex: 1,
   },
 

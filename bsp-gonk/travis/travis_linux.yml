@@ -49,7 +49,6 @@ install:
 
 script:
   # TODO: This ideally is passed as env variable or something.
-  - cd pub/bsp-gonk
   - ./sync $GONK
   - source build/envsetup.sh
   - make -j4

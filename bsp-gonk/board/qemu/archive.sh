@@ -43,6 +43,6 @@ export ANDROID_BUILD_TOP=$ROOT
 PATH=$ROOT/bin:$PATH
 EOF
 
-tail +2 $ANDROID_BUILD_TOP/run-emulator >> $dest/bin/run-emulator
+tail -n +2 $ANDROID_BUILD_TOP/run-emulator >> $dest/bin/run-emulator
 chmod u+x $dest/bin/run-emulator
 

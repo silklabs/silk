@@ -16,7 +16,6 @@
   <project groups="pdk" name="device/generic/goldfish" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="device/qcom/common" revision="LA.BR.1.3.2_rb3.14">
     <copyfile dest="build.sh" src="build.sh"/>
-    <copyfile dest="vendor/qcom/build/tasks/generate_extra_images.mk" src="generate_extra_images.mk"/>
   </project>
   <project name="device/qcom/sepolicy" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="device/sample" revision="LA.BR.1.3.2_rb3.14"/>

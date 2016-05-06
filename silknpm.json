@@ -1,5 +1,8 @@
 {
-  "ignored": [],
+  "ignored": [
+    "pub/babel-preset-silk-node4",
+    "pub/babel"
+  ],
   "restrict": {
     "app": ["package.json"],
     "external-dlib": ["package.json"],

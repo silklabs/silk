@@ -23,11 +23,18 @@ const log = createLog('sysutils');
 const SILK_PROPS = 'system/silk/silk-props.json';
 
 // Hack for flow...
-let _require = require;
+const moduleRequire = (function() {
+  try {
+    // $FlowFixMe: flow doesn't know what this garbage is.
+    return __non_webpack_require__;                        //eslint-disable-line
+  } catch(err) {
+    return require;
+  }
+}());
 
 let props;
 if (process.platform === 'android') {
-  props = _require('silk-properties'); //eslint-disable-line
+  props = moduleRequire('silk-properties');
 } else {
   // TODO: Ideally silk-properties as is would work on the host
   props = {

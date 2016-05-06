@@ -1,0 +1,39 @@
+From 6022a98b4f026ce4faf2dcf0b420c5df65dd1a58 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 5 May 2016 20:26:50 -0700
+Subject: [PATCH] Don't bother building persist.img
+
+Change-Id: I26ab386a5a6dfa4105b33cf1aced28ffed4e1dd9
+---
+ generate_extra_images.mk | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/generate_extra_images.mk b/generate_extra_images.mk
+index 8b16f55..a5e4ee5 100644
+--- a/generate_extra_images.mk
++++ b/generate_extra_images.mk
+@@ -12,8 +12,10 @@ INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/boot.img
+ INSTALLED_RAMDISK_TARGET := $(PRODUCT_OUT)/ramdisk.img
+ INSTALLED_SYSTEMIMAGE := $(PRODUCT_OUT)/system.img
+ INSTALLED_USERDATAIMAGE_TARGET := $(PRODUCT_OUT)/userdata.img
++ifneq ($(strip $(TARGET_NO_RECOVERY)),true)
+ INSTALLED_RECOVERYIMAGE_TARGET := $(PRODUCT_OUT)/recovery.img
+ recovery_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.img
++endif
+ INSTALLED_USBIMAGE_TARGET := $(PRODUCT_OUT)/usbdisk.img
+ endif
+ 
+@@ -85,8 +87,8 @@ endef
+ $(INSTALLED_PERSISTIMAGE_TARGET): $(MKEXTUSERIMG) $(MAKE_EXT4FS) $(INTERNAL_PERSISTIMAGE_FILES)
+ 	$(build-persistimage-target)
+ 
+-ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_PERSISTIMAGE_TARGET)
+-ALL_MODULES.$(LOCAL_MODULE).INSTALLED += $(INSTALLED_PERSISTIMAGE_TARGET)
++#ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_PERSISTIMAGE_TARGET)
++#ALL_MODULES.$(LOCAL_MODULE).INSTALLED += $(INSTALLED_PERSISTIMAGE_TARGET)
+ 
+ endif
+ 
+-- 
+1.9.1
+

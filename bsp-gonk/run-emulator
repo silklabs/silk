@@ -24,7 +24,7 @@ get_children() {
 
 # failsafe to ensure emulator closes cleanly.
 cleanly_close_emulator() {
-  echo "Interrupt! Killing emulators."
+  echo "Interrupt! Killing emulator."
   # contains currently running emulator wrapper but not the underlying emulator
   for pid in $(get_children $current_pid); do
     # second level children this contains the real emulator.
@@ -33,9 +33,11 @@ cleanly_close_emulator() {
     done
   done
   if [[ ! -z "$pids_to_kill" ]]; then
-    kill $pids_to_kill
+    ( set -x; kill $pids_to_kill )
   fi
 }
 
-trap cleanly_close_emulator INT
-emulator -verbose -show-kernel -no-skin -no-audio -no-window
+trap cleanly_close_emulator HUP INT QUIT KILL TERM
+emulator -verbose -show-kernel -no-skin -no-audio -no-window &
+wait
+exit 0

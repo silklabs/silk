@@ -22,7 +22,7 @@ type GithubIssue = {
 
 const prdProject = {
   owner: 'silklabs',
-  repo: 'silk-vision-prd',
+  repo: 'silk-pando-prd',
 };
 
 export function getRootUrl(): string {

@@ -1,0 +1,119 @@
+From 6c313f17f8bcfd640926b3ebf9c0801c24c08a84 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 11 May 2016 20:18:23 -0700
+Subject: [PATCH] OSX Patches
+
+Various changes to build on a modern OSX host toolchain
+
+---
+ adb/usb_osx.c            | 2 +-
+ fastboot/fastboot.c      | 2 +-
+ fastboot/usb_osx.c       | 2 ++
+ include/cutils/jstring.h | 5 ++++-
+ include/utils/Unicode.h  | 5 +++++
+ libutils/Threads.cpp     | 2 ++
+ 6 files changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/adb/usb_osx.c b/adb/usb_osx.c
+index ca4f2af..754950d 100644
+--- a/adb/usb_osx.c
++++ b/adb/usb_osx.c
+@@ -70,7 +70,7 @@ InitUSB()
+     runLoopSource = IONotificationPortGetRunLoopSource(notificationPort);
+     CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopDefaultMode);
+ 
+-    memset(notificationIterators, 0, sizeof(notificationIterators));
++    memset(notificationIterators, 0, sizeof(*notificationIterators));
+ 
+     //* loop through all supported vendors
+     for (i = 0; i < vendorIdCount; i++) {
+diff --git a/fastboot/fastboot.c b/fastboot/fastboot.c
+index 43d05aa..95707c7 100644
+--- a/fastboot/fastboot.c
++++ b/fastboot/fastboot.c
+@@ -244,7 +244,7 @@ int list_devices_callback(usb_ifc_info *info)
+         // output compatible with "adb devices"
+         if (!long_listing) {
+             printf("%s\tfastboot\n", serial);
+-        } else if (!info->device_path) {
++        } else if (strcmp("", info->device_path) == 0) {
+             printf("%-22s fastboot\n", serial);
+         } else {
+             printf("%-22s fastboot %s\n", serial, info->device_path);
+diff --git a/fastboot/usb_osx.c b/fastboot/usb_osx.c
+index 0f55e0d..a4a2f7f 100644
+--- a/fastboot/usb_osx.c
++++ b/fastboot/usb_osx.c
+@@ -464,11 +464,13 @@ usb_handle *usb_open(ifc_match_func callback) {
+ 
+ int usb_close(usb_handle *h) {
+     /* TODO: Something better here? */
++    (void) h;
+     return 0;
+ }
+ 
+ int usb_wait_for_disconnect(usb_handle *usb) {
+     /* TODO: Punt for now */
++    (void) usb;
+     return 0;
+ }
+ 
+diff --git a/include/cutils/jstring.h b/include/cutils/jstring.h
+index a342608..fc1806e 100644
+--- a/include/cutils/jstring.h
++++ b/include/cutils/jstring.h
+@@ -20,10 +20,13 @@
+ #include <stdint.h>
+ #include <stddef.h>
+ 
++#if defined __APPLE__
++typedef uint16_t char16_t;
++#endif
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+-
+ #if __STDC_VERSION__ < 201112L && __cplusplus < 201103L
+   typedef uint16_t char16_t;
+ #endif
+diff --git a/include/utils/Unicode.h b/include/utils/Unicode.h
+index 5b98de2..9d581da 100644
+--- a/include/utils/Unicode.h
++++ b/include/utils/Unicode.h
+@@ -19,14 +19,19 @@
+ 
+ #include <sys/types.h>
+ #include <stdint.h>
++#ifdef __APPLE__
++#include <new>
++#endif
+ 
+ extern "C" {
+ 
+ // Definitions exist in C++11
+ #if defined __cplusplus && __cplusplus < 201103L
++#ifndef __APPLE__
+ typedef uint32_t char32_t;
+ typedef uint16_t char16_t;
+ #endif
++#endif
+ 
+ // Standard string functions on char16_t strings.
+ int strcmp16(const char16_t *, const char16_t *);
+diff --git a/libutils/Threads.cpp b/libutils/Threads.cpp
+index b09d510..ecffb5e 100644
+--- a/libutils/Threads.cpp
++++ b/libutils/Threads.cpp
+@@ -120,6 +120,8 @@ void androidSetThreadName(const char* name) {
+         s = name + len - 15;
+     }
+     prctl(PR_SET_NAME, (unsigned long) s, 0, 0, 0);
++#else
++    (void) name;
+ #endif
+ }
+ 
+-- 
+2.4.2
+

@@ -2,4 +2,7 @@
 <manifest>
   <include name="mako.xml"/>
   <remove-project name="DonkeyCoyote/proprietary_vendor_lge"/>
+  <remove-project name="platform/prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1"/>
+  <remove-project name="platform/prebuilts/gcc/darwin-x86/host/headers" />
+  <remove-project name="platform/external/linux-tools-perf" />
 </manifest>

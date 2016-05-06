@@ -1,0 +1,24 @@
+{
+  "name": "silk-bledroid",
+  "version": "0.0.1",
+  "description": "wrapper for bledroid",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "./bin/postinstall && silk-buildjs",
+    "build": "silk-buildjs"
+  },
+  "author": {
+    "name": "Ben Turner",
+    "email": "bent@silklabs.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "babel-runtime": "5.8.35",
+    "debug": "2.2.0",
+    "uuid": "2.0.1"
+  },
+  "symlinkDependencies": {
+    "silk-buildjs": "../../../../buildjs/"
+  },
+  "private": true
+}

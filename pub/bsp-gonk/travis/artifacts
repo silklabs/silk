@@ -1,11 +1,5 @@
 #! /bin/bash -ex
 
-# Do not upload on pull requests...
-if [[ $TRAVIS_PULL_REQUEST != "false" ]]; then
-  echo "TRAVIS_PULL_REQUEST is not equal to false.. aborting"
-  exit 0
-fi
-
 if [[ -z $SILK_BOARD ]]; then
   echo "Must be run after : source build/envsetup.sh"
   exit 1
@@ -42,6 +36,12 @@ mkdir -p artifacts
 
 ./archive dist
 tar -czf artifacts/target.tar.gz dist
+
+# Do not upload on pull requests...
+if [[ $TRAVIS_PULL_REQUEST != "false" ]]; then
+  echo "TRAVIS_PULL_REQUEST is not equal to false.. aborting"
+  exit 0
+fi
 
 if [[ -d ../../s3-artifacts ]]; then
   ../../s3-artifacts/bin/upload \

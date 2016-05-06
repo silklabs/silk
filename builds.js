@@ -79,7 +79,7 @@ const oss = {
     ]
   },
 
-  'sos-bsp-gonk-linux-mako-qemu': nightlyBuild('pub/bsp-gonk', {
+  'sos-bsp-gonk-linux-qemu-nightly': nightlyBuild('pub/bsp-gonk', {
     'title': 'Nightly build for QEMU SoS',
     'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
     travis_config: {

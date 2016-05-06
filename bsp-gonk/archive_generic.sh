@@ -12,7 +12,6 @@ ensure_img() {
 }
 
 ensure_img boot.img
-ensure_img recovery.img
 ensure_img system.img
 
 cp -r $ANDROID_PRODUCT_OUT/{*.img,system/build.prop} $dest
@@ -28,8 +27,10 @@ adb reboot-bootloader
 fastboot oem unlock
 set -e
 fastboot flash boot boot.img
-fastboot flash recovery recovery.img
 fastboot flash system system.img
+if [ -f recovery.img ]; then
+  fastboot flash recovery recovery.img
+fi
 
 if [ "$1" = "-w" ]; then
   echo wipe user data/cache partitions

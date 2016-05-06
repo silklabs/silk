@@ -5,10 +5,10 @@
     "compile": "./build/compile"
   },
   "devDependencies": {
-    "babel-cli": "6.5.1",
-    "babel-core": "6.5.1",
-    "babel-loader": "6.2.2",
-    "babel-register": "6.4.3",
+    "babel-cli": "6.8.0",
+    "babel-core": "6.8.0",
+    "babel-loader": "6.2.4",
+    "babel-register": "6.8.0",
     "json-loader": "0.5.4",
     "webpack": "1.12.13"
   }

@@ -13,7 +13,7 @@ const DEFAULT_OPTIONS = {
   only: require(path.join(__dirname, '..', 'babeldeps')),
 };
 
-const REGISTER_PATH = path.join(__dirname, '..', 'pub', 'babel', 'register');
+const REGISTER_PATH = path.join(__dirname, '..', 'pub', 'babel-register');
 
 module.exports = (options) => {
   options = options || {};

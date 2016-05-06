@@ -6,11 +6,12 @@
   "scripts": {
     "preinstall": "./bin/preinstall",
     "postinstall": "./bin/postinstall",
-    "pretest": "pretest",
+    "pretest": "pretest && ./bin/pretest",
     "test": "runtest",
     "clean": "rm -rf node_modules",
     "lint": "eslint tools/*.js",
-    "predict": "./bin/predict"
+    "predict": "./bin/predict",
+    "heartrate": "./bin/heartrate"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",

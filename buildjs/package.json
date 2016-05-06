@@ -1,0 +1,19 @@
+{
+  "name": "buildjs",
+  "version": "1.0.0",
+  "bin": {
+    "silk-buildjs": "./bin/build"
+  },
+  "scripts": {
+    "postinstall": "../npm_postinstall"
+  },
+  "symlinkDependencies": {
+    "babel-core": "../babel-core"
+  },
+  "dependencies": {
+    "babel-loader": "6.2.4",
+    "copy-webpack-plugin": "2.1.5",
+    "json-loader": "0.5.4",
+    "webpack": "1.13.0"
+  }
+}

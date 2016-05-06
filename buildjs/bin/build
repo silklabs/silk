@@ -1,0 +1,12 @@
+#! /bin/bash -e
+
+# Resolve to realpath....
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+exec $ROOT/../node_modules/.bin/webpack --config $ROOT/../webpack.config.js

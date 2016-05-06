@@ -19,7 +19,7 @@ import AuthForm from './AuthForm';
 import Button from './Button';
 import NetworkWarning from '../NetworkWarning';
 import TextLink from './TextLink';
-import { WordMarkText } from '../Text';
+import { Wordmark } from '../Wordmark';
 import LoginMetric from '../../metrics/Login';
 
 const log = createLog('NotLoggedIn');
@@ -95,7 +95,7 @@ export default class NotLoggedIn extends AsyncComponent {
       <View style={styles.logoContainer}>
         <View style={styles.logoEltsContainer}>
           <View style={styles.logo}/>
-          <WordMarkText />
+          <Wordmark />
         </View>
       </View>
    );
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   logoEltsContainer: {
     flex: 1,
-    alignSelf: 'center',
+    alignItems: 'center',
     justifyContent: 'flex-end',
   },
   logo: {
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     borderColor: '#979797',
     backgroundColor: '#d8d8d8',
-    padding: 20,
+    margin: 10,
   },
 
   controlsContainer: {

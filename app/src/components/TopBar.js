@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { CameraMarkText } from './Text';
+import { Colors } from './CommonStyles';
+import { Wordmark } from './Wordmark';
 
 const CONNECTION_STATES = ['connecting', 'connected', 'offline'];
 
@@ -32,7 +33,7 @@ export default class TopBar extends React.Component {
               </View>
             </TouchableOpacity>
           </View>
-          <CameraMarkText />
+          <Wordmark />
           <View style={styles.spacer}>
             <View style={styles.indicatorContainer}>
               <View style={[styles.connectionStateMarker, connectionStyle]} />

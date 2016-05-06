@@ -19,7 +19,6 @@ import Activity from './Activity';
 import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import ErrorBar from './ErrorBar';
-import { PlaceholderText } from './Text';
 import CameraLiveVideo from './CameraLiveVideo';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
@@ -218,11 +217,9 @@ class MonitorsView extends AsyncComponent {
   _renderOffline() {
     return (
       <View style={styles.content}>
-        <View style={styles.placeholderContainer}>
-          <PlaceholderText>
-            Not connected.
-          </PlaceholderText>
-        </View>
+        <Text style={styles.placeholderLabel}>
+          Not connected.
+        </Text>
       </View>
     );
   }
@@ -247,11 +244,9 @@ class MonitorsView extends AsyncComponent {
   _renderNoDevices() {
     return (
       <View style={styles.content}>
-        <View style={styles.placeholderContainer}>
-          <PlaceholderText>
-            Turn on a Silk device to get started
-          </PlaceholderText>
-        </View>
+        <Text style={styles.placeholderLabel}>
+          Turn on a Silk device to get started
+        </Text>
       </View>
     );
   }
@@ -417,8 +412,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  placeholderContainer: {
+  placeholder: {
     margin: 8,
+    fontFamily: 'DIN Round Pro',
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.SilkLabsBlack,
   },
 
   scrollView: {

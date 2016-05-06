@@ -38,8 +38,7 @@ fut: update
 demo: FLASH_SCRIPT=flash_demo.sh
 demo: update
 
-# Run the emulator
-EMULATOR=emulator -verbose -show-kernel $(EXTRA_EMULATOR_OPTS)
+# Download and run the emulator
 .PHONY: qemu
 qemu:
 # The 'qemu' gonk represents a full emulator build and it usable directly. \

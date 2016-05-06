@@ -1,5 +1,9 @@
 import React from 'react';
-import { NativeModules, requireNativeComponent } from 'react-native';
+import {
+  NativeModules,
+  findNodeHandle,
+  requireNativeComponent,
+} from 'react-native';
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 // There are two parts to the native wrapper:
@@ -36,7 +40,7 @@ export default React.createClass({
   },
 
   getNativeHandle() {
-    return React.findNodeHandle(this.refs[RCT_NATIVE_REF]);
+    return findNodeHandle(this.refs[RCT_NATIVE_REF]);
   },
 
   show() {

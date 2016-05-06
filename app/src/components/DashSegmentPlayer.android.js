@@ -1,5 +1,10 @@
 import React from 'react';
-import { StyleSheet, View, requireNativeComponent } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  findNodeHandle,
+  requireNativeComponent,
+} from 'react-native';
 import createLog from 'silk-log';
 
 import Config from '../libraries/Config';
@@ -31,7 +36,7 @@ export default class DashSegmentPlayer extends React.Component {
   }
 
   getNativeHandle() {
-    return React.findNodeHandle(this.refs[NATIVE_REF]);
+    return findNodeHandle(this.refs[NATIVE_REF]);
   }
 
   enqueue(blob) {

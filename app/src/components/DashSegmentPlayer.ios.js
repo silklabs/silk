@@ -1,5 +1,9 @@
 import React from 'react';
-import { NativeModules, requireNativeComponent } from 'react-native';
+import {
+  NativeModules,
+  findNodeHandle,
+  requireNativeComponent,
+} from 'react-native';
 
 const DashSegmentPlayerNative = requireNativeComponent('DashSegmentPlayer');
 const { DashSegmentPlayerManager } = NativeModules;
@@ -50,7 +54,7 @@ export default class DashSegmentPlayer extends React.Component {
   }
 
   getNativeHandle() {
-    return React.findNodeHandle(this.refs[RCT_NATIVE_REF]);
+    return findNodeHandle(this.refs[RCT_NATIVE_REF]);
   }
 
   play() {

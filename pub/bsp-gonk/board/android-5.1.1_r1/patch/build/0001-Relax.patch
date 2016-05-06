@@ -1,0 +1,53 @@
+From b7130cd57286e3a0c0bfdbac120226a764646a89 Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Tue, 16 Jun 2015 17:42:56 -0700
+Subject: [PATCH] Relax system checks
+
+
+diff --git a/core/main.mk b/core/main.mk
+index a56cd97..784c9d1 100644
+@@ -117,7 +127,7 @@ $(warning ************************************************************)
+ $(warning You are building on a case-insensitive filesystem.)
+ $(warning Please move your source tree to a case-sensitive filesystem.)
+ $(warning ************************************************************)
+-$(error Case-insensitive filesystems not supported)
++$(warning Case-insensitive filesystems not supported)
+ endif
+ endif
+ 
+@@ -164,7 +174,7 @@ $(info $(space))
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/initializing.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif
+ 
+ # Check for the current JDK.
+@@ -188,7 +198,7 @@ $(info ************************************************************)
+ $(info You asked for an OpenJDK 7 build but your version is)
+ $(info $(java_version_str).)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif # java version is not OpenJdk
+ else # if requires_openjdk
+ ifneq ($(shell echo '$(java_version_str)' | grep -i openjdk),)
+@@ -199,7 +209,7 @@ $(info You use OpenJDK but only Sun/Oracle JDK is supported.)
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif # java version is not Sun Oracle JDK
+ endif # if requires_openjdk
+ 
+@@ -215,7 +225,7 @@ $(info $(space))
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif
+ 
+ 

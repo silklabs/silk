@@ -1,0 +1,16 @@
+From c4055035dd00fcdc2608f1b55c67baccb4311d13 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 6 May 2016 08:50:11 -0700
+Subject: [PATCH] Avoid copyfile in the kenzo manifest
+
+diff --git a/tasks/generate_extra_images.mk b/tasks/generate_extra_images.mk
+new file mode 120000
+index 0000000..a3308ef
+--- /dev/null
++++ b/tasks/generate_extra_images.mk
+@@ -0,0 +1 @@
++../generate_extra_images.mk
+\ No newline at end of file
+-- 
+1.9.1
+

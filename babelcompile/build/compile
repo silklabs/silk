@@ -42,4 +42,5 @@ patch_modules
 ./node_modules/.bin/webpack
 
 # Verify it actually works...
-node -e 'require("./register")'
+node -e 'require("../babel-register")'
+node -e 'require("../babel-core")'

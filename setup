@@ -19,6 +19,7 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export SILKRC=$ROOT/.silkrc
 export PATH=$ROOT/pub/cli:$PATH
+# WARNING: REPOCACHE_URLPREFIX is duplicated in builds.js
 export REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/
 
 # silk-caffe hack the find patches

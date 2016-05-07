@@ -43,6 +43,8 @@ function nightlyBuild(dir, overrides) {
 }
 
 // TODO: This should live in pub/builds.js when releng can handle it.
+//       However REPOCACHE_URLPREFIX should not be exposed, we'll need an
+//       SOS URL version when this moves into pub/builds.js.
 const oss = {
   'sos-bsp-gonk-linux-qemu-pr': {
     title: '(qemu) pub/bsp-gonk build and test',
@@ -51,7 +53,10 @@ const oss = {
     cwd: 'pub/bsp-gonk',
     travis_config: {
       env: {
-        global: ['GONK=qemu'],
+        global: [
+          'GONK=qemu',
+          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
+        ],
       },
     },
     events: ['pr'],
@@ -70,7 +75,10 @@ const oss = {
     cwd: 'pub/bsp-gonk',
     travis_config: {
       env: {
-        global: ['GONK=qemu'],
+        global: [
+          'GONK=qemu',
+          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
+        ],
       },
     },
     files: [
@@ -84,7 +92,10 @@ const oss = {
     'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
     travis_config: {
       env: {
-        global: ['GONK=qemu'],
+        global: [
+          'GONK=qemu',
+          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
+        ],
       },
     }
   }),
@@ -94,7 +105,10 @@ const oss = {
     'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
     travis_config: {
       env: {
-        global: ['GONK=mako'],
+        global: [
+          'GONK=mako',
+          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
+        ],
       },
     }
   }),
@@ -104,7 +118,10 @@ const oss = {
     'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
     travis_config: {
       env: {
-        global: ['GONK=kenzo'],
+        global: [
+          'GONK=kenzo',
+          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
+        ],
       },
     },
   }),
@@ -276,47 +293,61 @@ const builds = {
   }),
 
   // Nightly repocache deploys to S3
-  'repocache-base-nightly': {
-    title: 'Updating repocache for base gonk',
+  'repocache-base': {
+    title: 'Updating repocache for base',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
       env: {
-        global: ['GONK=base'],
+        global: ['BOARD=base'],
       },
     },
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-base.msm8956-nightly': {
-    title: 'Updating repocache for base.msm8956 gonk',
+  'repocache-base.kenzo': {
+    title: 'Updating repocache for base.kenzo',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
       env: {
-        global: ['GONK=base.msm8956'],
+        global: ['BOARD=base.kenzo'],
       },
     },
     events: ['nightly'],
     branches: ['master'],
   },
   'repocache-mako-nightly': {
-    title: 'Updating repocache for mako gonk',
+    title: 'Updating repocache for mako',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
-        global: ['GONK=mako'],
+        global: ['BOARD=mako'],
       },
     },
     events: ['nightly'],
     branches: ['master'],
   },
   'repocache-qemu-nightly': {
-    title: 'Updating repocache for qemu gonk',
+    title: 'Updating repocache for qemu',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
-        global: ['GONK=qemu'],
+        global: ['BOARD=qemu'],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
+  'repocache-kenzo-gonkjs': {
+    title: 'Updating repocache for kenzo/gonkjs',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=kenzo',
+          'PRODUCT=gonkjs'
+        ],
       },
     },
     events: ['nightly'],

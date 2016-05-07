@@ -51,7 +51,7 @@ trap cleanup SIGINT SIGTERM SIGHUP EXIT
 
 runqemu() {
   echo "Starting emulator"
-  EXTRA_EMULATOR_OPTS="-no-skin -no-audio -no-window" make -C $ANDROID_BUILD_TOP qemu &
+  make -C $ANDROID_BUILD_TOP qemu &
   EMU_PID=$!
 }
 
@@ -79,6 +79,8 @@ echo Killing emulator at pid=$EMU_PID
 kill $EMU_PID
 wait $EMU_PID || true
 
+# Give slow CI systems a chance to breath...
+sleep 2s
 
 # Restart the emulator, does it still boot?
 runqemu

@@ -9,7 +9,7 @@ before_install:
   - source releng/.travis_before_install.sh
 
 script:
-  - repocache/script
+  - repocache/script $BOARD $PRODUCT
 
 before_deploy:
   - mkdir -p deploy/

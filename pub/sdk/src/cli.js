@@ -218,3 +218,18 @@ export let log = ensureSetup({
     logcat.stderr.pipe(process.stdout);
   }
 });
+
+export let setupwifi = ensureSetup({
+  help: `Configure wifi on the device or emulator`,
+  arguments: [
+    [['ssid'], {
+      help: 'Wi-Fi network ssid to configure to',
+    }],
+    [['password'], {
+      help: 'Wi-Fi network password credential (supply empty string for open networks)',
+    }],
+  ],
+  main: async (api, args) => {
+    await api.setupWifi(args.ssid, args.password);
+  }
+});

@@ -33,7 +33,8 @@ export default class Framework {
 
     this.camera = new Camera(this.server, this.timeline);
     this.camera.setPreviewFrame = (when, file) => this._loadPreviewFrame(when, file);
-    this.camera.startPlayback = clipDirectory => this._startPlayback(clipDirectory);
+    this.camera.startPlayback = (clipDirectory, rate, callback) =>
+      this._startPlayback(clipDirectory, rate, callback);
     this.camera.stopPlayback = () => {
       if (this._previewTimeout) {
         clearInterval(this._previewTimeout);
@@ -68,18 +69,22 @@ export default class Framework {
           gray,
         });
 
-        resolve();
+        resolve(im);
       });
     });
   }
 
   /**
    * Emit images as previews from the specified directory at the
-   * interval specified by camera preview.
+   * interval specified by camera preview for slow or fast previews
    *
    * @param clipDirectory: Directory containing list of preview images to emit
+   * @param rate: Emit previews at a regular preview rate if 'slow'
+   *              or else emit previews at a fast preview rate
+   * @param callback: This callback is called when done emiting all the
+   *                  previews images
    */
-  _startPlayback(clipDirectory) {
+  _startPlayback(clipDirectory, rate, callback) {
     if (!fs.existsSync(clipDirectory)) {
       log.error(`${clipDirectory} does not exist`);
       return;
@@ -88,29 +93,41 @@ export default class Framework {
     this._previewCount = 0;
 
     let delayMs = this.camera.FRAME_DELAY_MS;
-    this._playback(clipDirectory, delayMs, previews);
+    if (rate === 'fast') {
+      delayMs = this.camera.FAST_FRAME_DELAY_MS;
+    }
+    this._playback(clipDirectory, rate, delayMs, previews, callback);
   }
 
   /**
    *
    */
-  _playback(clipDirectory, delayMs, previews) {
+  _playback(clipDirectory, rate, delayMs, previews, callback) {
     const spilloverMs = Date.now() % delayMs;
     const requestedDelayMs = delayMs - spilloverMs + 5;
 
     this._previewTimeout = setTimeout(async () => {
       try {
         let when = Date.now();
-        await this._loadPreviewFrame(when,
+        let im = await this._loadPreviewFrame(when,
             path.join(clipDirectory, previews[this._previewCount++]));
-        this.timeline.emit('preview', when);
+        if (rate === 'slow') {
+          this.timeline.emit('preview', when);
+        } else {
+          this.timeline.emit('preview-fast', when, im);
+        }
       } catch (err) {
-        log.error(`Failed to emit preview ${err}`);
+        log.error(`Failed to emit preview ${err.stack || err}`);
       }
 
       if (this._previewCount < previews.length) {
-        process.nextTick(() => this._playback(clipDirectory, delayMs,
-            previews));
+        process.nextTick(() => this._playback(clipDirectory, rate, delayMs,
+            previews, callback));
+      } else {
+        log.info('Finished feeding preview images');
+        if (callback) {
+          callback();
+        }
       }
     }, requestedDelayMs);
   }

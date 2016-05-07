@@ -1,0 +1,5 @@
+#!/bin/bash -ex
+
+if [ ! -d node_modules/kissfft ]; then
+  npm install silklabs/node-kissfft#7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c
+fi

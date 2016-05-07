@@ -17,6 +17,7 @@
         "CppMT/Tracker.cpp",
         "CppMT/common.cpp",
         "CppMT/fastcluster/fastcluster.cpp",
+        "ica.cpp"
       ],
 
       "cflags!" : [ "-fno-exceptions"],
@@ -24,6 +25,7 @@
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
         '<!(node -e "require(\'silk-external-dlib\')")',
+        '<!(node -e "require(\'silk-external-jade\')")',
       ],
 
       "conditions": [

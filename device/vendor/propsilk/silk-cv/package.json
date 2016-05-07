@@ -19,7 +19,8 @@
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
-    "silk-external-dlib": "/external-dlib"
+    "silk-external-dlib": "/external-dlib",
+    "silk-external-jade": "/external-jade"
   },
   "gypfile": true,
   "private": true

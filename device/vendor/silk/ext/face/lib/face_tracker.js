@@ -105,7 +105,6 @@ export default class FaceTracker {
                 faceRects: Array<FaceRect>,
                 weakFaceRects: Array<FaceRect>,
                 frame: Matrix) {
-
     // Filter out lost faces
     this._faces = this._faces.filter(face => face.i.tracker.impl !== null);
 
@@ -318,6 +317,17 @@ export default class FaceTracker {
   get faces(): Array<Face> {
     // Filter out lost faces
     this._faces = this._faces.filter(face => face.i.tracker.impl !== null);
+
+    // Clear lost faces that are old
+    let now = Date.now();
+    this._lostFaces = this._lostFaces.filter((face) => {
+      let keep = ((now - face.rectWhen) < config.FACE_DURATION);
+      if (!keep) {
+        face.cancel();
+      }
+      return keep;
+    });
+
     return this._faces;
   }
 
@@ -338,12 +348,6 @@ export default class FaceTracker {
     if (!this._lostFaces.length) {
       return null;
     }
-
-    // Remove lost faces that are old
-    let now = Date.now();
-    this._lostFaces = this._lostFaces.filter((face) => {
-      return ((now - face.rectWhen) < config.FACE_DURATION);
-    });
 
     let lost = this._lostFaces.reduce((lost, lostFace) => {
       return lost + `{id: ${lostFace.id}, faceId: ${lostFace.faceId}, when: ${lostFace.rectWhen}}, `;

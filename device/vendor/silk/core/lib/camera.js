@@ -634,6 +634,10 @@ export default class Camera extends EventEmitter {
     return FRAME_DELAY_MS;
   }
 
+  get FAST_FRAME_DELAY_MS() {
+    return FAST_FRAME_DELAY_MS;
+  }
+
   /**
    * Releases cached images
    * @private

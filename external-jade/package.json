@@ -1,0 +1,6 @@
+{
+  "name": "silk-external-jade",
+  "version": "1.0.0",
+  "description": "Jade ICA algorithm",
+  "main": "include_dirs.js"
+}

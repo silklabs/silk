@@ -5,6 +5,7 @@
  */
 
 import movingAverage from 'moving-average';
+import HeartRate from './heartrate';
 import type { Env, Log } from 'silk-sdk-glue/interface/env';
 import * as config from './face_config';
 
@@ -26,6 +27,12 @@ export type FaceRect = {
   height: number;
   leftEye: ?Eye;
   rightEye: ?Eye;
+  forehead: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
 };
 
 export type FaceId = number; // index into face database
@@ -55,6 +62,7 @@ export class Face {
   _doneCollectingFaces: boolean;
   _exponentialMovingAverage: Function;
   _movementTrackingEnabled: bool = false;
+  _heartrate: HeartRate;
 
   // Who this face has been recognized as
   faceId: ?FaceId = null;
@@ -68,6 +76,7 @@ export class Face {
     this.id = id;
     log = env.log;
     this.name = 'unknown face';
+    this.rect = {};
     this._origAvgSize = 0;
     this._curAvgSize = 0;
     this.faceStart = Date.now();
@@ -79,6 +88,10 @@ export class Face {
     // Calculate exponential moving average over FACE_AVERAGE_DURATION
     // Reference https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
     this._exponentialMovingAverage = movingAverage(config.FACE_AVERAGE_DURATION);
+
+    // Start heart rate estimation on the face
+    this._heartrate = new HeartRate(env, this);
+    this._heartrate.start();
   }
 
   /**
@@ -144,12 +157,21 @@ export class Face {
   }
 
   setLocation(rect: FaceRect, rectWhen: number) {
-    this.rect = rect;
+    // Tracker rect doesn't have forehead so don't overwrite the existing
+    // forehead if not available. This means that we would be using the old
+    // forehead rectangle until we get a new one
+    for (let k in rect) {
+      this.rect[k] = rect[k];
+    }
     this.rectWhen = rectWhen;
 
     // Run face movement estimation
     if (this._movementTrackingEnabled) {
       this.faceMovementEstimation(this.rect);
     }
+  }
+
+  cancel() {
+    this._heartrate.cancel();
   }
 }

@@ -12,11 +12,12 @@ if [[ -n $1 ]]; then
 fi
 
 if [[ -n $2 ]]; then
-  PRODUCT=$1
-else
-  PRODUCT=silk
+  PRODUCT=$2
 fi
 
+if [[ -z $PRODUCT ]]; then
+  PRODUCT=silk
+fi
 
 if [[ -z $BOARD ]]; then
   echo Error: BOARD not specified

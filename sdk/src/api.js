@@ -9,9 +9,11 @@ import path from 'path';
 import { exec } from 'mz/child_process';
 import { spawn } from 'child_process';
 import which from 'which';
+import fs from 'mz/fs';
 
 const SILK_MODULE_ROOT = '/system/silk/node_modules';
 const ACTIVATE_PROP = 'persist.silk.main';
+const WIFI_SETUP_SCRIPT = 'wifi_setup.sh';
 
 async function execWithPaths(
   cmd,
@@ -132,5 +134,72 @@ export default class API {
       devices.push({ serial, state, extra });
     }
     return devices;
+  }
+
+  async setupWifi(ssid, password) {
+    if (this.device === 'sim') {
+      return true; // Nothing to update on simulator
+    }
+
+    console.log(`Setup Wi-Fi network: ${ssid} ${password} ...`);
+    let [stdout] = await this.adb(`shell getprop wifi.interface`);
+    let iface = stdout.replace(/\r?\n$/, '');
+    let result = false;
+
+    if (iface) {
+      // Generate wifi setup script
+      try {
+        let data = `#!/system/bin/sh
+        run() {
+          result=$(wpa_cli -i${iface} IFNAME=${iface} $@)
+          if [[ ! $result = @(OK) ]] && [[ ! $result = @([0-9]) ]]; then
+            echo "Error: '$result' received for '$@'"
+            exit 1
+          fi
+        }\n`;
+        data += `run remove_network all\n`;
+        data += `run save_config\n`;
+        data += `run disconnect\n`;
+        data += `run add_network\n`;
+        data += `id=$result\n`;
+        data += `run set_network $id ssid '"${ssid}"'\n`;
+        if (password) {
+          data += `run set_network $id psk '"${password}"'\n`;
+        } else {
+          data += `run set_network $id key_mgmt NONE\n`;
+        }
+        data += `run enable_network $id\n`;
+        data += `run save_config\n`;
+        data += `run reconnect\n`;
+        await fs.writeFile(WIFI_SETUP_SCRIPT, data);
+        await fs.chmod(WIFI_SETUP_SCRIPT, '400');
+
+        // Push the script on the device
+        await this.adb(`push ${WIFI_SETUP_SCRIPT} /data/`);
+
+        // Run the script on the device or simulator
+        let [error] = await this.adb(`shell source /data/${WIFI_SETUP_SCRIPT}`);
+        if (error) {
+          console.log(`error: ${stdout}`);
+        } else {
+          console.log('Wifi setup successful');
+          result = true;
+        }
+      } catch (err) {
+        console.log(`Failed to configure wifi ${err}`);
+      }
+    } else {
+      console.log('No wifi interface, skipping Wi-Fi configuration');
+    }
+
+    // Delete the script
+    try {
+      await fs.unlink(WIFI_SETUP_SCRIPT);
+      await this.adb(`shell rm /data/${WIFI_SETUP_SCRIPT}`);
+    } catch (err) {
+      console.log(`Failed to cleanup ${err}`);
+    }
+
+    return result;
   }
 }

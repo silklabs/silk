@@ -3,6 +3,11 @@ if [ $(uname) = "Darwin" ]; then
   PACKAGES="gnu-sed coreutils gnu-tar"
   for package in $PACKAGES; do
     if [ ! -d /usr/local/opt/$package/libexec/gnubin ]; then
+      if [ -z $FULL_SERVICE ]; then
+        echo Please install $package to continue.
+        echo "Hint: |brew install $package|"
+        exit 1
+      fi
       echo
       echo Notice: /usr/local/opt/$package/libexec/gnubin does not exist.  Installing $package...
       echo

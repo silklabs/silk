@@ -27,6 +27,12 @@
 #define ALOGE(fmt, args...) printf(LOG_TAG fmt, ##args)
 #endif
 
+#define OBJECT_FROM_ARGS(NAME, IND) \
+  if (info[IND]->IsObject()) { \
+    NAME = info[IND]->ToObject(); \
+  } else { \
+    Nan::ThrowTypeError("Argument not of expected format"); \
+  } \
 
 ////
 // Holds the current state of a VideoCapture session
@@ -144,12 +150,16 @@ private:
 class VideoCaptureFrameWorker : public Nan::AsyncWorker {
 public:
   explicit VideoCaptureFrameWorker(std::weak_ptr<State> weakState,
+                                   bool grabAll,
+                                   v8::Local<v8::Object> im,
                                    v8::Local<v8::Object> imRGB,
                                    v8::Local<v8::Object> imGray,
                                    v8::Local<v8::Object> imScaledGray,
                                    Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
-      weakState(weakState) {
+      weakState(weakState),
+      grabAll(grabAll) {
+    destIm.Reset(im);
     destRGB.Reset(imRGB);
     destGray.Reset(imGray);
     destScaledGray.Reset(imScaledGray);
@@ -170,44 +180,48 @@ public:
     }
     uv_mutex_lock(&state->frameDataLock);
     switch (state->frameFormat) {
-    default:
-      // Porting error.  Nothing to do but soldier on...
-      ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
-      //fall through
-    case libpreview::FRAMEFORMAT_YVU420SP:
-      {
+      default:
+        // Porting error.  Nothing to do but soldier on...
+        ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
+        //fall through
+      case libpreview::FRAMEFORMAT_YVU420SP: {
         // Setup a Matrix object to store the remote image using the
         // height/width that OpenCV expects for a YVU420 semi-planar format
         cv::Mat remote(
-          state->frameHeight * 3 / 2,
-          state->frameWidth,
-          CV_8UC1,
-          state->frameBuffer
+            state->frameHeight * 3 / 2,
+            state->frameWidth,
+            CV_8UC1,
+            state->frameBuffer
         );
 
-        // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
-        //                 ^^      ^ ^             ^^      ^ ^
-        cv::cvtColor(remote, rgb, CV_YUV420sp2BGR, 0);
+        im = remote.clone();
+        if (grabAll) {
+          // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
+          //                 ^^      ^ ^             ^^      ^ ^
+          cv::cvtColor(remote, rgb, CV_YUV420sp2BGR, 0);
 
-        cv::Mat remoteGray(
-          state->frameHeight,
-          state->frameWidth,
-          CV_8UC1,
-          state->frameBuffer
-        );
-        gray = remoteGray.clone();
+          cv::Mat remoteGray(
+              state->frameHeight,
+              state->frameWidth,
+              CV_8UC1,
+              state->frameBuffer
+          );
+          gray = remoteGray.clone();
+        }
         break;
       }
-    case libpreview::FRAMEFORMAT_RGB:
-      {
+      case libpreview::FRAMEFORMAT_RGB: {
         cv::Mat remote(
-          state->frameHeight,
-          state->frameWidth,
-          CV_8UC3,
-          state->frameBuffer
+            state->frameHeight,
+            state->frameWidth,
+            CV_8UC3,
+            state->frameBuffer
         );
-        rgb = remote.clone();
-        cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
+        im = remote.clone();
+        if (grabAll) {
+          rgb = remote.clone();
+          cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
+        }
         break;
       }
     }
@@ -217,20 +231,25 @@ public:
       SetErrorMessage("grab failed");
       return;
     }
-    if (!state->cap.retrieve(rgb)) {
+    if (!state->cap.retrieve(im)) {
       SetErrorMessage("retrieve failed");
       return;
     }
-    cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
+    if (grabAll) {
+      rgb = im.clone();
+      cv::cvtColor(im, gray, CV_RGB2GRAY, 0);
+    }
 #endif
 
-    cv::resize(
-      gray,
-      scaledGray,
-      cv::Size(state->scaledWidth, state->scaledHeight),
-      0, 0,
-      cv::INTER_LINEAR
-    );
+    if (grabAll) {
+      cv::resize(
+          gray,
+          scaledGray,
+          cv::Size(state->scaledWidth, state->scaledHeight),
+          0, 0,
+          cv::INTER_LINEAR
+      );
+    }
   }
 
   void HandleErrorCallback() {
@@ -249,37 +268,45 @@ public:
       Nan::HandleScope scope;
       node_opencv::Matrix *mat;
 
-      v8::Local<v8::Object> localRGB = Nan::New(destRGB);
-      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localRGB);
-      mat->mat = rgb;
+      v8::Local<v8::Object> localIm = Nan::New(destIm);
+      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localIm);
+      mat->mat = im;
+      destIm.Reset();
 
-      v8::Local<v8::Object> localGray = Nan::New(destGray);
-      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localGray);
-      mat->mat = gray;
+      if (grabAll) {
+        v8::Local<v8::Object> localRGB = Nan::New(destRGB);
+        mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localRGB);
+        mat->mat = rgb;
+        destRGB.Reset();
 
-      v8::Local<v8::Object> localScaledGray = Nan::New(destScaledGray);
-      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localScaledGray);
-      mat->mat = scaledGray;
+        v8::Local<v8::Object> localGray = Nan::New(destGray);
+        mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localGray);
+        mat->mat = gray;
+        destGray.Reset();
 
-      destGray.Reset();
-      destScaledGray.Reset();
-      destRGB.Reset();
+        v8::Local<v8::Object> localScaledGray = Nan::New(destScaledGray);
+        mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localScaledGray);
+        mat->mat = scaledGray;
+        destScaledGray.Reset();
+      }
 
       Nan::AsyncWorker::HandleOKCallback();
     }
   }
 
 private:
+  cv::Mat im;
   cv::Mat rgb;
   cv::Mat gray;
   cv::Mat scaledGray;
 
+  Nan::Persistent<v8::Object> destIm;
   Nan::Persistent<v8::Object> destRGB;
   Nan::Persistent<v8::Object> destGray;
   Nan::Persistent<v8::Object> destScaledGray;
   std::weak_ptr<State> weakState;
+  bool grabAll;
 };
-
 
 Nan::Persistent<v8::Function> VideoCapture::constructor;
 
@@ -339,27 +366,38 @@ NAN_METHOD(VideoCapture::Read) {
     return;
   }
 
-  if (!info[0]->IsObject()) {
-    Nan::ThrowTypeError("Argument 1 not a cv::Matrix");
-    return;
+  if ((info.Length() != 2) && (info.Length() != 5)) {
+    Nan::ThrowError("Insufficient number of arguments provided");
   }
-  if (!info[1]->IsObject()) {
-    Nan::ThrowTypeError("Argument 2 not a cv::Matrix");
-    return;
-  }
-  if (!info[2]->IsObject()) {
-    Nan::ThrowTypeError("Argument 2 not a cv::Matrix");
-    return;
+
+  v8::Local<v8::Object> im;
+  v8::Local<v8::Object> imRGB;
+  v8::Local<v8::Object> imGray;
+  v8::Local<v8::Object> imScaledGray;
+  Nan::Callback *callback = NULL;
+  bool grabAll = false;
+
+  if (info.Length() == 2) { // Only raw frame is requested
+    OBJECT_FROM_ARGS(im, 0);
+    callback = new Nan::Callback(info[1].As<v8::Function>());
+  } else {
+    OBJECT_FROM_ARGS(im, 0);
+    OBJECT_FROM_ARGS(imRGB, 1);
+    OBJECT_FROM_ARGS(imGray, 2);
+    OBJECT_FROM_ARGS(imScaledGray, 3);
+    callback = new Nan::Callback(info[4].As<v8::Function>());
+    grabAll = true;
   }
 
   self->state->busy = true;
-  Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
   Nan::AsyncQueueWorker(
     new VideoCaptureFrameWorker(
       self->state,
-      info[0]->ToObject(),
-      info[1]->ToObject(),
-      info[2]->ToObject(),
+      grabAll,
+      im,
+      imRGB,
+      imGray,
+      imScaledGray,
       callback
     )
   );

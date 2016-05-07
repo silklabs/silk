@@ -15,7 +15,9 @@ poison_their_lunch()
   return 1
 }
 
-source ../setup
+if [ -f ../setup ]; then
+  source ../setup
+fi
 source ../tools/gnu.sh
 
 echo foo > foo

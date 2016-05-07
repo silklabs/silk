@@ -273,21 +273,21 @@ const builds = {
     },
   }),
   */
-  'device-base.msm8956-nightly': nightlyBuild('device', {
-    branches: ['master', 'next'],
-    title: 'base.msm8956 nightly',
+  'device-base.kenzo-nightly': nightlyBuild('device', {
+    branches: ['master'],
+    title: 'base.kenzo nightly',
     travis_config: {
       env: {
-        global: ['GONK=base.msm8956'],
+        global: ['GONK=base.kenzo'],
       },
     },
   }),
-  'device-base.msm8916-nightly': nightlyBuild('device', {
-    branches: ['master', 'next'],
-    title: 'base.msm8916 nightly',
+  'device-base.msm8909-nightly': nightlyBuild('device', {
+    branches: ['master'],
+    title: 'base.msm8909 nightly',
     travis_config: {
       env: {
-        global: ['GONK=base.msm8916'],
+        global: ['GONK=base.msm8909'],
       },
     },
   }),

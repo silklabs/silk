@@ -44,6 +44,8 @@ int32_t sIFrameIntervalMs = 1000;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
+bool sInitCamera = true;
+bool sInitAudio = true;
 bool sAudioMute = false;
 bool sUseMetaDataMode = true;
 sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
@@ -98,7 +100,8 @@ private:
   static void* initThreadWrapper(void* me);
   status_t setPreviewTarget();
 
-  status_t initThread();
+  status_t initThreadCamera();
+  status_t initThreadAudioOnly();
   void notifyCameraEvent(const char* eventName);
 
   CaptureListener* mCaptureListener;
@@ -193,11 +196,22 @@ int CaptureCommand::capture_init(Value& cmdData) {
 
   // Check if hardware is already initialized
   if (mHardwareActive) {
+    ALOGW("Hardware already initialized, ignoring request");
     notifyCameraEvent("initialized");
     return 0;
   }
 
   LOG_ERROR((cmdData.isNull()), "init command data is null");
+
+  if (!cmdData["audio"].isNull()) {
+    sInitCamera = cmdData["audio"].asBool();
+    ALOGV("sInitAudio %d", sInitAudio);
+  }
+
+  if (!cmdData["camera"].isNull()) {
+    sInitCamera = cmdData["camera"].asBool();
+    ALOGV("sInitCamera %d", sInitCamera);
+  }
 
   if (!cmdData["width"].isNull()) {
     sVideoSize.width = cmdData["width"].asInt();
@@ -272,7 +286,17 @@ int CaptureCommand::capture_update(Value& cmdData) {
  */
 void* CaptureCommand::initThreadWrapper(void* me) {
   CaptureCommand* command = static_cast<CaptureCommand *>(me);
-  command->initThread();
+
+  if (sInitCamera) {
+    command->initThreadCamera();
+  } else if (sInitAudio) {
+    command->initThreadAudioOnly();
+  } else {
+    ALOGW("Neither camera nor audio requested, initialized nothing.");
+    command->notifyCameraEvent("initialized");
+    command->mHardwareActive = true;
+  }
+
   return NULL;
 }
 
@@ -382,9 +406,50 @@ sp<MediaSource> prepareAudioEncoder(const sp<ALooper>& looper,
 }
 
 /**
+ * Thread function that initializes audio output only
+ */
+status_t CaptureCommand::initThreadAudioOnly() {
+
+  sp<MediaSource> audioSource(
+    new AudioSource(
+      AUDIO_SOURCE_MIC,
+#ifdef TARGET_GE_MARSHMALLOW
+      String16("silk-capture"),
+#endif
+      sAudioSampleRate,
+      sAudioChannels
+    )
+  );
+  sp<MediaSource> audioSourceEmitter =
+    new AudioSourceEmitter(&mChannel, audioSource);
+  sp<MediaSource> audioMutter =
+    new AudioMutter(audioSourceEmitter);
+
+  // Notify that audio is initialized
+  notifyCameraEvent("initialized");
+  mHardwareActive = true;
+
+  // Start the audio source and pull out buffers as fast as they come.  The
+  // TAG_MIC data will will sent as a side effect
+  CHECK_EQ(audioMutter->start(), ::OK);
+  for (;;) {
+    MediaBuffer *buffer;
+    status_t err = audioMutter->read(&buffer);
+    LOG_ERROR(err != ::OK, "Error reading from audio source: %d", err);
+    LOG_ERROR(buffer == NULL, "Failed to get buffer from audio source");
+    buffer->release();
+  }
+  return 0;
+}
+
+/**
  * Thread function that initializes the camera
  */
-status_t CaptureCommand::initThread() {
+status_t CaptureCommand::initThreadCamera() {
+  if (!sInitAudio) {
+    ALOGW("Initializing camera without audio not currently supported");
+    // Audio will get initialized below regardless for now...
+  }
 
   // Setup the camera
   int cameraId = 0;

@@ -45,9 +45,9 @@ const SCAN_INTERVAL_MS =
   getintprop(`persist.silk.bt.socket.scanint`, 500);
 
 const MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE =
-  getintprop(`persist.silk.bt.socket.max`, -1);
+  getintprop(`persist.silk.bt.socket.max`, 0);
 const MAX_SIMULTANEOUS_CONNECTIONS =
-  MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE > 1 ?
+  MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE > 0 ?
   MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE :
   getintprop(`ro.silk.bt.socket.max_simul`, 4);
 

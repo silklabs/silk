@@ -14,20 +14,21 @@ Silk's key components are open source and we :heart: to receive contributions fr
 
 The repository generally consists of those parts:
 
-- `babel-preset-silk-node4`: ...
-- `babel`: ...
-- `bsp-gonk`: The Android layer part, low level, where to go if you want to build Silk yourself.
-- `cli`: Silk Developer CLI source code
-- `device-main`: ..
+- `babel`: Babel utilities
+- `babel-preset-silk-node4`:  Standardized babel configuration
+- `bsp-gonk`: Board support package for various Android-like devices
+- `cli`: Commandline tool
+- `device-main`: Device javascript entry point
 - `docs`: Hub of all the documentation around Silk
-- `eslint-config`: ...
-- `external-node-ntp-client`: ...
-- `flow-bin`: ...
-- `log`: ...
-- `sdk`: ...
-- `tools/npm`: ...
+- `eslint-config`: Lint configuration
+- `external-node-ntp-client`:
+- `flow-bin`: Flow binary
+- `log`: Simple standardized logger
+- `sdk`: Tools for developing device-main, and other JS modules
+- `tools/npm`: Utilities for working with NPM in a large source tree
+`version`: Build version information
 
-And for detailed information on the structure and layout of our code, please see [structure](structure.md).
+And for more in-depth information, each folder has its own README to explain more the technical aspect of the repo.
 
 ## Git Commits Naming
 
@@ -49,7 +50,7 @@ Following these guidelines helps communicating that you respect the time of the 
 
 ## Code Of Conduct
 
-Check out our [Code Of Conduct](code-of-conduct.md) that will hopefully keep the conversation civilized.
+Check out our [Code Of Conduct](docs/code-of-conduct.md) that will hopefully keep the conversation civilized.
 
 # Your First Contribution
 

@@ -210,7 +210,6 @@ const builds = {
   }),
   'networktest': npmPackageBuild('networktest'),
   'releng': npmPackageBuild('releng'),
-  'rtc': npmPackageBuild('rtc'),
   'server': npmPackageBuild('server'),
   'streams': npmPackageBuild('streams'),
   'utils': npmPackageBuild('utils'),

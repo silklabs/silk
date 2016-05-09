@@ -127,6 +127,15 @@ $(my_inplace_build_module): $(all_libraries)
 npm_cli = $(abspath external/npm/cli.js)
 npm_node_dir = $(abspath external/node)
 
+ifdef LOCAL_SDK_VERSION
+my_target_crtbegin_so_o := $(wildcard $(my_ndk_sysroot_lib)/crtbegin_so.o)
+my_target_crtend_so_o := $(wildcard $(my_ndk_sysroot_lib)/crtend_so.o)
+else
+my_target_crtbegin_so_o := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTBEGIN_SO_O)
+my_target_crtend_so_o := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTEND_SO_O)
+endif
+$(my_inplace_build_module): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
+
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef

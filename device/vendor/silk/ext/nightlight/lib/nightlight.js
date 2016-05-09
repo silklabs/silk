@@ -12,7 +12,7 @@
 //    Turn off the Hue lights if a face is then not observed for an amount of
 //    time.
 //
-export default function init(env) {
+module.exports = function init(env) {
   const log = env.log;
 
   const NIGHT_LIGHT_SI_LUX = 3; // light sensor value in SI lux units
@@ -79,4 +79,4 @@ export default function init(env) {
     }, LIGHTS_OFF_TIMEOUT_MS);
   });
   log.info(`initialized`);
-}
+};

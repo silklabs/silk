@@ -601,7 +601,7 @@ class BledroidConnection extends EventEmitter {
   }
 }
 
-export default function() {
+module.exports = function() {
   // Create our single instance if it has not yet been created.
   bledroid = bledroid || new Bledroid();
 
@@ -612,4 +612,4 @@ export default function() {
     bledroid.noteNobleConnectionRequest.bind(bledroid);
 
   return connection;
-}
+};

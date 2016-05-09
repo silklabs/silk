@@ -35,6 +35,7 @@ export default class Server extends events.EventEmitter {
   constructor(connections: Connections) {
     super();
 
+    this.setMaxListeners(20);
     // For backwards compat we hold the new "connections" interface and use it
     // to dispatch messages.
     this.connections = connections;

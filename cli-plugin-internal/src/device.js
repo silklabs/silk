@@ -74,51 +74,6 @@ export default class Device {
     return success;
   }
 
-  async updateWifi(ssid, password) {
-    if (this.adb.sim) {
-      return true; // Nothing to update on simulator
-    }
-    log.debug(`update wifi with '${ssid}' and '${password}'`);
-
-    let stdout = await this.adb.shell(['getprop', 'wifi.interface']);
-    let iface = stdout.replace(/\r?\n$/, '');
-
-    let wpaCli = async (args, expectRegex) => {
-      invariant(expectRegex);
-      args = ['wpa_cli', `-i${iface}`, `IFNAME=${iface}`].concat(args);
-
-      let stdout = await this.adb.shell(args);
-      let match = stdout.match(expectRegex);
-      if (!stdout.match(expectRegex)) {
-        throw new Error(`Error configuring Wi-Fi: ${stdout}`);
-      }
-      return match[0];
-    };
-
-    let wpaCliExpectOK = async args => await wpaCli(args, /^(OK)/);
-    let wpaCliExpectInt = async args => await wpaCli(args, /^(\d+)/);
-
-    if (iface) {
-      await wpaCliExpectOK(['remove_network', 'all']);
-      await wpaCliExpectOK(['save_config']);
-      await wpaCliExpectOK(['disconnect']);
-      let id = await wpaCliExpectInt(['add_network']);
-      await wpaCliExpectOK(['set_network', id, 'ssid', `'"${ssid}"'`]);
-      if (password) {
-        await wpaCliExpectOK(['set_network', id, 'psk', `'"${password}"'`]);
-      } else {
-        await wpaCliExpectOK(['set_network', id, 'key_mgmt', 'NONE']);
-      }
-      await wpaCliExpectOK(['enable_network', id]);
-      await wpaCliExpectOK(['save_config']);
-      await wpaCliExpectOK(['reconnect']);
-    } else {
-      console.log('No wifi interface, skipping Wi-Fi configuration');
-    }
-
-    return true;
-  }
-
   async removeConfig() {
     await this.adb.shell(['rm', SILK_CONFIG_FILEPATH]);
     return true;

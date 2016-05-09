@@ -16,6 +16,7 @@ import createAdb from './adb';
 import DotConfig from './dot_config';
 import Account from './account';
 import Device from './device';
+import API from 'silk-sdk/src/api';
 
 const DEFAULT_SERVER_URL = 'https://silk-server-master.herokuapp.com';
 const OLD_CONFIG_FILEPATH = path.join(os.homedir(), '/.silk');
@@ -162,7 +163,7 @@ export let configure = {
     let account = createAccount(args);
     let device = new Device({serverUrl: dotConfig.serverUrl}, adb);
 
-    console.log(`Configuring device with Wi-Fi network: ${args.ssid} ${args.password} ...`);
+    console.log(`Configuring device ...`);
 
     if (args.n) {
       // persist new device ID
@@ -172,8 +173,13 @@ export let configure = {
       await device.pullDeviceId();
     }
 
+    const {deviceSerialNumber} = args;
+    const api = new API({
+      device: deviceSerialNumber
+    });
+
     let success = await device.setupDevice(account, args.deviceName) &&
-        await device.updateWifi(args.ssid, args.password);
+        await api.setupWifi(args.ssid, args.password);
 
     console.log(`Configure ${success ? 'success' : 'failed'}`);
   },

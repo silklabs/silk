@@ -1,4 +1,4 @@
-From 325c6c096e0a46b3bc8074d0795c103070b1bef7 Mon Sep 17 00:00:00 2001
+From 11046491e850550dd1ae78428e839b7e467d0987 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Thu, 21 Jan 2016 16:48:52 -0800
 Subject: [PATCH] Androidify OpenBLAS
@@ -10,7 +10,7 @@ Subject: [PATCH] Androidify OpenBLAS
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..421cbc4
+index 0000000..d69af41
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,34 @@
@@ -44,10 +44,10 @@ index 0000000..421cbc4
 +	NUM_THREADS=8 \
 +	USE_OPENMP=0
 +	$(hide) cd $(LOCAL_PATH) && $(MAKE) PREFIX="$(ANDROID_BUILD_TOP)/$(dir $@)" \
-+	  NO_LAPACK=1 install && $(MAKE) clean
++	  NO_LAPACK=1 TARGET=ARMV5 USE_OPENMP=0 install && $(MAKE) clean
 +	$(hide) cp $(dir $@)lib/$(notdir $@) $@
 +	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 -- 
-2.5.4 (Apple Git-61)
+2.8.2
 

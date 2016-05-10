@@ -8,7 +8,7 @@
     "postinstall": "./bin/postinstall && ./build",
     "build": "./build",
     "lax": "LAX=1 ./build",
-    "test": "./bin/test",
+    "test": "mocha $(find test -name '*_test.js')",
     "posttest": "flow check",
     "clean": "rm -rf node_modules silk-device-main.js silk-device-main.js.map"
   },

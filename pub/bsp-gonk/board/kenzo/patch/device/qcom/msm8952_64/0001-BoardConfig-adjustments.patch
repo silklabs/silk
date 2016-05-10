@@ -18,7 +18,7 @@ index 5d49783..381ceb6 100644
  
 -TARGET_NO_BOOTLOADER := false
 +TARGET_NO_BOOTLOADER := true
-+TARGET_NO_RECOVERY := true
++#TARGET_NO_RECOVERY := true
  TARGET_NO_KERNEL := false
  
  MALLOC_IMPL := dlmalloc

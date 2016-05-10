@@ -1,0 +1,109 @@
+#!/bin/bash -e
+#
+# Ships parts of silk-core to Fuhu for the Pando project
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# DANGER ZONE - DANGER ZONE - DANGER ZONE - DANGER ZONE - DANGER ZONE
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# List of silk-core top-level directories to ship
+#
+# BE MINDFUL ABOUT ADDING NEW DIRECTORIES TO THIS LIST
+#
+WHITELIST=$(cat <<-EOF
+  api
+  api-schema
+  app
+  audio
+  azure-storage
+  babeldeps
+  cam
+  config
+  docs
+  eslint
+  external-js-kissfft
+  flow-bin
+  http
+  jsonwebtoken
+  log
+  pub
+  raygun
+  rtc
+  server
+  streams
+  svm
+  utils
+  version
+  webapp
+EOF
+)
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo You have a dirty tree.
+  exit 1
+fi
+
+if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
+  echo "You don't know what you're doing."
+  exit 1
+fi
+
+if [[ $(uname -s) != "Darwin" ]]; then
+  echo Please run this script on OS X instead of $(uname -s)
+  exit 1
+fi
+
+if [[ -z $TRAVIS_BRANCH ]]; then
+  echo TRAVIS_BRANCH is not set
+  exit 1
+fi
+
+COMMIT=$(git rev-parse HEAD)
+echo Shipping $COMMIT from $TRAVIS_BRANCH
+
+shopt -s nullglob
+set -x
+cd $(dirname $(readlink -f $0))/../../
+
+#
+# Copy the latest code into the shipping git project.
+# Git commit history is currently not preserved. :-/
+#
+rm -rf ship
+git clone git@github.com:silklabs/release-fuhu-app.git ship
+cd ship
+git checkout $TRAVIS_BRANCH
+git rm -rf *
+cd ..
+for dir in $WHITELIST; do
+  rsync -ra $dir ship/
+done
+cd ship
+git add *
+git commit -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
+
+
+#
+# Smoke test the release before shipping
+#
+# TODO: Reduce the duplication with app/ios/.travis* here...
+#
+
+app/ios/.travis/install
+node --version
+npm --version
+source app/ios/.travis/env.sh  # TODO: REMOVE THIS FROM release-fuhu-app
+app/ios/.travis/objc-test.sh
+
+
+#
+# Looks good, :shipit:
+#
+git push origin $TRAVIS_BRANCH
+
+exit 0

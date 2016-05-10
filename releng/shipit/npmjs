@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Ships cli/ and sdk/ to npmjs and github
+# Ships pub/cli/ and pub/sdk/ to npmjs
 #
 # NOTE: Run this script mindfully.  It'll ship whatever you have in your
 # current workspace to the world...
@@ -23,9 +23,9 @@ fi
 
 
 shopt -s nullglob
-cd $(dirname $(readlink -f $0))/../pub
-
 set -x
+cd $(dirname $(readlink -f $0))/../../pub
+
 for dir in sdk cli; do
   pushd $dir
   npm install .
@@ -37,11 +37,6 @@ for dir in sdk cli; do
 
   name=$(node -p "require('./package.json').name")
   version=$(node -p "require('./package.json').version")
-  tarball=${name}-${version}.tgz
-  repo=git@github.com:silklabs/node-${name}.git
-
-  rm -rf package/ repo/ $tarball
-
   npm publish .
 
   popd

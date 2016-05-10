@@ -49,7 +49,7 @@ function signatureProvider(req: any): ?string {
   return query && query.jwt;
 }
 
-export default async function main (config: any): any {
+async function main (config: any): any {
   const server = http.createServer(() => {} /* make flow happy */);
   const db = await createDb(config);
   const nonce = new Nonce(db);
@@ -321,7 +321,14 @@ export default async function main (config: any): any {
       server.close();
       await Promise.all([serverClose, wsClose]);
 
-      return main(config);
+      try {
+        return await main(config);
+      } catch (err) {
+        console.log(`Failed to restart: ${err.stack}`);
+        throw err;
+      }
     }
   };
 }
+
+export default main;

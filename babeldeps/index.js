@@ -6,7 +6,7 @@
 
 let fs = require('fs');
 let path = require('path');
-let pkgFinder = require('../tools/npm/find_packages');
+let pkgFinder = require('../pub/tools/npm/find_packages');
 
 const PACKAGE_ROOTS = pkgFinder();
 

@@ -8,7 +8,7 @@ if [[ -z $what ]]; then
 fi
 
 if [[ -z "$DEBUG" ]]; then
-  DEBUG="*"
+  DEBUG="silk-*"
 fi
 
 MOCHA_OPTS_PATH=$LOCAL_PATH/../silk-exttest/test/mocha.opts

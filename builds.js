@@ -233,14 +233,22 @@ const builds = {
 
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently
-  'pub-push': {
-    title: 'Silk open source public push',
-    travis_yml: 'releng/travis.pub-push.yml',
+  'releng-shipit-pub-push': {
+    title: 'Open Source /pub push',
+    travis_yml: 'releng/shipit/travis.pub-push.yml',
     events: ['push'],
     branches: ['master'],
     files: [
       'pub/**',
     ]
+  },
+
+  // Fuhu app release runs nightly on master/next/release branches
+  'releng-shipit-fuhu-app': {
+    title: 'Fuhu app release',
+    travis_yml: 'releng/shipit/travis.release-fuhu-app.yml',
+    events: ['nightly'],
+    branches: ['master', 'next', 'release'],
   },
 
   // Nightly device builds

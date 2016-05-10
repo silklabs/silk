@@ -1,0 +1,35 @@
+#!/bin/bash -e
+#
+# Ships the Open Source code in silklabs/silk-core:/pub to silklabs/silk
+#
+# NOTE: Run this script mindfully.  It'll ship whatever you have in your
+# current workspace to the world...
+#
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo You have a dirty tree.
+  exit 1
+fi
+
+if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
+  echo "You don't know what you're doing."
+  exit 1
+fi
+
+
+shopt -s nullglob
+set -x
+cd $(dirname $(readlink -f $0))/../../
+
+git fetch --unshallow
+git subtree split --prefix pub -b pub
+git remote add sos git@github.com:silklabs/silk.git
+git push sos pub:master
+cd pub/docs ; npm install ; cd ../..
+mkdir gh-pages
+cp -ra pub/docs/dist gh-pages/master
+git add gh-pages
+git commit -m "Automated doc update"
+git subtree split --prefix gh-pages -b gh-pages
+git push -f sos gh-pages:gh-pages
+

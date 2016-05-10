@@ -3,8 +3,6 @@ language: objective-c
 osx_image: xcode7.1
 
 before_install:
-  # Update brew twice because the first run can fail: https://github.com/Homebrew/homebrew/issues/42553
-  - brew update; brew update
   - source releng/.travis_before_install.sh
   - export I_KNOW_WHAT_IM_DOING=1
 

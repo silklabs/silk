@@ -43,6 +43,9 @@ EOF
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
+cd $(dirname $(readlink -f $0))/../../
+pwd
+
 if [[ -n "$(git status --porcelain)" ]]; then
   echo You have a dirty tree:
   git status --porcelain
@@ -69,7 +72,6 @@ echo Shipping $COMMIT from $TRAVIS_BRANCH
 
 shopt -s nullglob
 set -x
-cd $(dirname $(readlink -f $0))/../../
 
 #
 # Copy the latest code into the shipping git project.

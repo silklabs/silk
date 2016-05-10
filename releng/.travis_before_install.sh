@@ -3,10 +3,14 @@ git config --global user.email "stooge@silklabs.com"
 git config --global user.name "Stooge"
 git config --global color.ui false
 if [ $TRAVIS_OS_NAME == osx ]; then
-  mkdir ~/.nvm
-  export NVM_DIR="~/.nvm"
+  echo HOME: $HOME # log.debug
+  echo PWD: $PWD   # log.debug
 
-  brew update
+  mkdir $HOME/.nvm
+  export NVM_DIR="$HOME/.nvm"
+
+  # Update brew twice because the first run can fail: https://github.com/Homebrew/homebrew/issues/42553
+  brew update; brew update
   brew reinstall cmake coreutils libtool nvm xz
 
   source $(brew --prefix nvm)/nvm.sh

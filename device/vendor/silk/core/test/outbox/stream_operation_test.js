@@ -67,7 +67,7 @@ suite('outbox stream', () => {
 
   class ImmediateFail extends StreamOperation {
     static NAME = 'failable';
-    static StreamClass = () => {
+    static StreamClass = function () {
       let stream = new streams.PassThrough();
       process.nextTick(() => {
         stream.emit('error', new Error('throw!'));
@@ -79,7 +79,7 @@ suite('outbox stream', () => {
   class TimeoutOp extends StreamOperation {
     static NAME = 'failable';
     static MAX_UPLOAD_TIME = 0;
-    static StreamClass = () => {
+    static StreamClass = function () {
       let stream = new streams.PassThrough();
       setTimeout(() => {
         stream.emit('close');

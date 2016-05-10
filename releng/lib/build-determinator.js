@@ -118,7 +118,7 @@ async function resolveAdditionalFileDependencies(
  * Return true if `file` matches any of the `patterns` specified.
  */
 function fileMatchesAnyPattern(file: string, patterns: Array<string>): boolean {
-  return patterns.some((pattern) => minimatch(file, pattern));
+  return patterns.some((pattern) => minimatch(file, pattern, {dot: true}));
 }
 
 /**

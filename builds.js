@@ -243,12 +243,14 @@ const builds = {
     ]
   },
 
-  // Fuhu app release runs nightly on master/next/release branches
-  'releng-shipit-fuhu-app': {
-    title: 'Fuhu app release',
-    travis_yml: 'releng/shipit/travis.release-fuhu-app.yml',
+  // Pando app release runs nightly on master/next/release branches
+  'releng-shipit-pando-app': {
+    title: 'Pando app release',
+    travis_yml: 'releng/shipit/travis.release-pando-app.yml',
     events: ['nightly'],
-    branches: ['master', 'next', 'release'],
+    //branches: ['master', 'next', 'release'],
+    //branches: ['master', 'next'],
+    branches: ['master' ],
   },
 
   // Nightly device builds

@@ -2,19 +2,14 @@ import React from 'react';
 import {
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
-import ProximityMeter from './ProximityMeter';
-import { LayoutStyles, TitleBarStyles } from '../CommonStyles';
+import Button from './Button';
+import { SetupStyles } from '../CommonStyles';
 
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
-
-const RSSI_CLOSE = -50;
-const RSSI_NEAR = -60;
-const RSSI_FAR = -70;
 
 const AFTER_TOUCH_WAIT_MS = 250;
 
@@ -27,7 +22,6 @@ export default class DeviceTouch extends AsyncComponent {
   };
 
   state = {
-    proximity: 0,
     touched: false,
     deviceSecret: null,
   };
@@ -37,20 +31,17 @@ export default class DeviceTouch extends AsyncComponent {
   componentWillMount() {
     this.mounted = true;
     let { bleDeviceSession } = this.props;
-    bleDeviceSession.on('rssiUpdate', this._onRSSI);
     bleDeviceSession.on('secret', this._onDeviceTouch);
   }
 
   componentWillUnmount() {
     this.mounted = false;
     let { bleDeviceSession } = this.props;
-    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
     bleDeviceSession.removeListener('secret', this._onDeviceTouch);
   }
 
   _onDeviceTouch = (deviceSecret) => {
     let { bleDeviceSession } = this.props;
-    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
     bleDeviceSession.removeListener('secret', this._onDeviceTouch);
     if (!this.mounted) {
       return;
@@ -59,14 +50,13 @@ export default class DeviceTouch extends AsyncComponent {
     this.setStateAsync({
       deviceSecret,
       touched: true,
-      proximity: 3,
     });
     setTimeout(() => {
       if (!this.mounted) {
         return;
       }
       this.props.navigator.pushAsync({
-        name: 'DevicePadlock',
+        name: 'DeviceConfig',
         props: {
           ...this.props,
           deviceSecret: this.state.deviceSecret,
@@ -75,37 +65,22 @@ export default class DeviceTouch extends AsyncComponent {
     }, AFTER_TOUCH_WAIT_MS);
   };
 
-  _onRSSI = (rssi) => {
-    let proximity = 0;
-    if (rssi > RSSI_CLOSE) {
-      proximity = 3;
-    } else if (rssi > RSSI_NEAR) {
-      proximity = 2;
-    } else if (rssi > RSSI_FAR) {
-      proximity = 1;
-    }
-    if (proximity !== this.state.proximity) {
-      this.setStateAsync({proximity});
-    }
-  };
-
   render() {
     return (
-      <View style={styles.container}>
-        <View style={LayoutStyles.statusBarPlaceholder} />
-        <View style={TitleBarStyles.titleBar}>
-          <TouchableOpacity
+      <View style={SetupStyles.container}>
+        <Text style={SetupStyles.title}>
+          Tap your device with your phone to begin setup
+        </Text>
+        <Text style={SetupStyles.subtitle}>
+          Just like using a bus pass!
+        </Text>
+        <View style={{flex: 1}} />
+        <View style={styles.buttonRow}>
+          <Button
+            type="secondary"
             onPress={this.props.onCancel}
-            style={TitleBarStyles.titleBarLeftButton}>
-            <Text style={TitleBarStyles.titleBarButtonLabel}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={TitleBarStyles.titleBarLabel}>Device Setup</Text>
-        </View>
-        <View style={styles.contentContainer}>
-          <Text style={styles.label}>
-            Touch the device with your phone.
-          </Text>
-          <ProximityMeter proximity={this.state.proximity} />
+            label="Cancel"
+          />
         </View>
       </View>
     );
@@ -114,20 +89,11 @@ export default class DeviceTouch extends AsyncComponent {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  contentContainer: {
-    flex: 1,
-    alignItems: 'center',
+  buttonRow: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    marginTop: 16,
   },
-  label: {
-    color: '#424242',
-    fontSize: 20,
-    marginHorizontal: 50,
-    marginBottom: 50,
-    textAlign: 'center',
+  cancelButton: {
   },
 });

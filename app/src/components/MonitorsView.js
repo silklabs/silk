@@ -19,11 +19,12 @@ import Activity from './Activity';
 import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import ErrorBar from './ErrorBar';
-import { PlaceholderText } from './Text';
 import CameraLiveVideo from './CameraLiveVideo';
+import { Colors } from './CommonStyles';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
+import UnconfiguredDevice from './UnconfiguredDevice';
 
 const log = createLog('MonitorsView');
 
@@ -203,6 +204,7 @@ class MonitorsView extends AsyncComponent {
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
             {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
+            {this._renderUnconfiguredDevices()}
             <PreviewThumbnails
               {...this.props}
               startFullscreenVideo={this.startFullscreenVideo}
@@ -218,11 +220,9 @@ class MonitorsView extends AsyncComponent {
   _renderOffline() {
     return (
       <View style={styles.content}>
-        <View style={styles.placeholderContainer}>
-          <PlaceholderText>
-            Not connected.
-          </PlaceholderText>
-        </View>
+        <Text style={styles.placeholderLabel}>
+          Not connected.
+        </Text>
       </View>
     );
   }
@@ -247,13 +247,26 @@ class MonitorsView extends AsyncComponent {
   _renderNoDevices() {
     return (
       <View style={styles.content}>
-        <View style={styles.placeholderContainer}>
-          <PlaceholderText>
-            Turn on a Silk device to get started
-          </PlaceholderText>
-        </View>
+        <Text style={styles.placeholderLabel}>
+          Turn on a Silk device to get started
+        </Text>
       </View>
     );
+  }
+
+  _renderUnconfiguredDevices() {
+    const { unconfiguredDevices } = this.props;
+    if (!unconfiguredDevices.size) {
+      return null;
+    }
+
+    return unconfiguredDevices.toArray().map((bleDeviceSession, index) => (
+      <UnconfiguredDevice
+        key={'unconfiguredDevice-' + index}
+        style={styles.unconfiguredDevice}
+        bleDeviceSession={bleDeviceSession}
+      />
+    ));
   }
 
   // Activity feed management
@@ -411,19 +424,22 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    backgroundColor: Colors.SilkLabsTan,
     borderColor: '#c8c7cc',
     borderTopWidth: 1 / PixelRatio.get(),
-    backgroundColor: 'white',
     flex: 1,
   },
 
-  placeholderContainer: {
+  placeholderLabel: {
     margin: 8,
+    fontFamily: 'DIN Round Pro',
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.SilkLabsBlack,
   },
 
   scrollView: {
     paddingTop: 5,
-    backgroundColor: '#efefef',
     flex: 1,
   },
 
@@ -438,6 +454,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: -SCROLLVIEW_PTR_THRESHOLD,
+  },
+
+  unconfiguredDevice: {
+    margin: 16,
   },
 
   eventRow: {

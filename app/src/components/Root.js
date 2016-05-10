@@ -1,6 +1,8 @@
 import CrashReporter from '../libraries/CrashReporter';
 CrashReporter.start();
 
+console.reportErrorsAsExceptions = false; // eslint-disable-line no-console
+
 import React from 'react';
 import {
   NativeModules,
@@ -26,8 +28,8 @@ import AsyncComponent from './abstract/AsyncComponent';
 import AsyncNavigator from './abstract/AsyncNavigator';
 import CameraLiveVideo from './CameraLiveVideo';
 import DeviceConfig from './setup/DeviceConfig';
-import DevicePadlock from './setup/DevicePadlock';
 import DeviceTouch from './setup/DeviceTouch';
+import DeviceStatus from './setup/DeviceStatus';
 import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
@@ -44,8 +46,8 @@ const routeToComponentMap = {
   Settings,
   CameraLiveVideo,
   DeviceTouch,
-  DevicePadlock,
   DeviceConfig,
+  DeviceStatus,
 };
 
 export default class Root extends AsyncComponent {

@@ -9,6 +9,11 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		351329471CDD1C2300805844 /* DINRoundPro-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329421CDD1C2300805844 /* DINRoundPro-Black.otf */; };
+		351329481CDD1C2300805844 /* DINRoundPro-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329431CDD1C2300805844 /* DINRoundPro-Medium.otf */; };
+		351329491CDD1C2300805844 /* DINRoundPro-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */; };
+		3513294A1CDD1C2300805844 /* DINRoundPro-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329451CDD1C2300805844 /* DINRoundPro-Light.otf */; };
+		3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */; };
 		357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */; };
 		357D3F601C38AB44005BBEC8 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357D3F5E1C38AB2B005BBEC8 /* libsodium.a */; };
 		35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C03E901CC02577008EF119 /* NotImplemented.swift */; };
@@ -263,6 +268,11 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		351329421CDD1C2300805844 /* DINRoundPro-Black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Black.otf"; sourceTree = "<group>"; };
+		351329431CDD1C2300805844 /* DINRoundPro-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Medium.otf"; sourceTree = "<group>"; };
+		351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Regular.otf"; sourceTree = "<group>"; };
+		351329451CDD1C2300805844 /* DINRoundPro-Light.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Light.otf"; sourceTree = "<group>"; };
+		351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.otf"; sourceTree = "<group>"; };
 		357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCryptoSync.m; sourceTree = "<group>"; };
 		357D3F271C38AB2B005BBEC8 /* core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core.h; sourceTree = "<group>"; };
 		357D3F281C38AB2B005BBEC8 /* crypto_aead_aes256gcm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_aead_aes256gcm.h; sourceTree = "<group>"; };
@@ -785,6 +795,11 @@
 		F91A54EA1B8B9D48009C75C9 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				351329421CDD1C2300805844 /* DINRoundPro-Black.otf */,
+				351329431CDD1C2300805844 /* DINRoundPro-Medium.otf */,
+				351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */,
+				351329451CDD1C2300805844 /* DINRoundPro-Light.otf */,
+				351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */,
 				F91A54EB1B8B9D48009C75C9 /* OpenSans-Bold.ttf */,
 				F91A54EC1B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf */,
 				F91A54ED1B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf */,
@@ -1034,15 +1049,20 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3513294A1CDD1C2300805844 /* DINRoundPro-Light.otf in Resources */,
 				F91A54FB1B8B9D48009C75C9 /* OpenSans-LightItalic.ttf in Resources */,
+				351329491CDD1C2300805844 /* DINRoundPro-Regular.otf in Resources */,
 				F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */,
+				351329471CDD1C2300805844 /* DINRoundPro-Black.otf in Resources */,
 				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				F91A54F91B8B9D48009C75C9 /* OpenSans-Italic.ttf in Resources */,
 				F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */,
 				F91A54F81B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf in Resources */,
+				351329481CDD1C2300805844 /* DINRoundPro-Medium.otf in Resources */,
 				F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */,
 				F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */,
+				3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */,
 				F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,
 				F91A54FA1B8B9D48009C75C9 /* OpenSans-Light.ttf in Resources */,

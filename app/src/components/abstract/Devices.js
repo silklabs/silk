@@ -228,6 +228,7 @@ export default class Devices extends AsyncComponent {
         configuringDevice: null,
       });
       this.props.userState.updateRegisteredDevices(devices.toArray());
+      this.props.navigator.popToTopAsync();
       return;
     }
 
@@ -399,8 +400,7 @@ export default class Devices extends AsyncComponent {
           },
         });
       });
-      log.debug('Device setup UI complete, received configuration', config);
-      this.props.navigator.popToTop();
+      log.debug('Received device configuration:', config);
 
       // Update the name of the new device in the UI after the
       // previous navigation animation has finished.

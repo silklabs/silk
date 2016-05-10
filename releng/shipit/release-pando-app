@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Ships parts of silk-core to Fuhu for the Pando project
+# Ships app parts of silk-core for the Pando project
 
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -74,7 +74,7 @@ pushd .
 mkdir -p 1/2/3/4/5
 cd 1/2/3/4/5       # Try to break anybody looking up relative paths
 rm -rf ship
-git clone git@github.com:silklabs/release-fuhu-app.git ship
+git clone git@github.com:silklabs/release-pando-app.git ship
 cd ship
 git checkout $BRANCH
 git rm -rf *
@@ -96,7 +96,7 @@ git commit -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 
 cd app
 ios/.travis/install
-source ios/.travis/env.sh  # TODO: REMOVE THIS FROM release-fuhu-app
+source ios/.travis/env.sh  # TODO: REMOVE THIS FROM release-pando-app
 ios/.travis/objc-test.sh
 cd ..
 

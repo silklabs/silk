@@ -40,6 +40,7 @@ WHITELIST=$(cat <<-EOF
   webapp
 EOF
 )
+WHITELIST="$WHITELIST npm_preinstall npm_postinstall" # TODO: Remove when we can
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -55,23 +56,14 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
-if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
-  echo "You don't know what you're doing."
-  exit 1
-fi
-
 if [[ $(uname -s) != "Darwin" ]]; then
   echo Please run this script on OS X instead of $(uname -s)
   exit 1
 fi
 
-if [[ -z $TRAVIS_BRANCH ]]; then
-  echo TRAVIS_BRANCH is not set
-  exit 1
-fi
-
+source version/branch
 COMMIT=$(git rev-parse HEAD)
-echo Shipping $COMMIT from $TRAVIS_BRANCH
+echo Shipping $COMMIT from $BRANCH
 
 shopt -s nullglob
 set -x
@@ -83,7 +75,7 @@ set -x
 rm -rf ship
 git clone git@github.com:silklabs/release-fuhu-app.git ship
 cd ship
-git checkout $TRAVIS_BRANCH
+git checkout $BRANCH
 git rm -rf *
 cd ..
 for dir in $WHITELIST; do
@@ -109,6 +101,10 @@ cd ..
 #
 # Looks good, :shipit:
 #
-git push origin $TRAVIS_BRANCH
+if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
+  echo "You don't know what you're doing."
+  exit 1
+fi
 
+git push origin $BRANCH
 exit 0

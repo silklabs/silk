@@ -72,6 +72,8 @@ set -x
 # Copy the latest code into the shipping git project.
 # Git commit history is currently not preserved. :-/
 #
+
+pushd .
 mkdir -p 1/2/3/4/5
 cd 1/2/3/4/5       # Try to break anybody looking up relative paths
 rm -rf ship
@@ -79,11 +81,12 @@ git clone git@github.com:silklabs/release-fuhu-app.git ship
 cd ship
 git checkout $BRANCH
 git rm -rf *
-cd ..
+popd
+
 for dir in $WHITELIST; do
-  rsync -ra $dir ship/
+  rsync -ra $dir 1/2/3/4/5/ship/
 done
-cd ship
+cd 1/2/3/4/5/ship
 git add *
 git commit -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 

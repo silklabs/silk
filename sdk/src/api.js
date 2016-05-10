@@ -1,7 +1,5 @@
 /**
  * API used by the cli to push and manage files.
- *
- * @flow
  */
 
 import path from 'path';

@@ -1,6 +1,8 @@
 import CrashReporter from '../libraries/CrashReporter';
 CrashReporter.start();
 
+console.reportErrorsAsExceptions = false; // eslint-disable-line no-console
+
 import React from 'react';
 import {
   NativeModules,

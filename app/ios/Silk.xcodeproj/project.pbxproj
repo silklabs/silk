@@ -34,9 +34,6 @@
 		5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* LoadConfig.swift */; };
 		5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */; };
 		5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0EB1B5A206F00F9376C /* ViewController.swift */; };
-		574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */; };
-		574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */; };
-		574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 574A5DB41B7B3043004FBC27 /* SystemButton.swift */; };
 		5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302C01ABCB91800DB3ED1 /* libRCTImage.a */; };
 		5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 78C398B91ACF4ADC00677621 /* libRCTLinking.a */; };
@@ -350,9 +347,6 @@
 		5741E0BF1B5A108D00F9376C /* LoadConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfig.swift; sourceTree = "<group>"; };
 		5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfigTest.swift; sourceTree = "<group>"; };
 		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SystemButtonManger.m; sourceTree = "<group>"; };
-		574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButtonManager.swift; sourceTree = "<group>"; };
-		574A5DB41B7B3043004FBC27 /* SystemButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemButton.swift; sourceTree = "<group>"; };
 		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		577396141BA2914C00F900C6 /* AppCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCrypto.m; sourceTree = "<group>"; };
@@ -647,16 +641,6 @@
 			path = OverlayModal;
 			sourceTree = "<group>";
 		};
-		574A5DAF1B7B2F66004FBC27 /* SystemButton */ = {
-			isa = PBXGroup;
-			children = (
-				574A5DB01B7B2F7B004FBC27 /* SystemButtonManger.m */,
-				574A5DB21B7B2F8C004FBC27 /* SystemButtonManager.swift */,
-				574A5DB41B7B3043004FBC27 /* SystemButton.swift */,
-			);
-			path = SystemButton;
-			sourceTree = "<group>";
-		};
 		5758F32E1B60989C00C18E5D /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -693,7 +677,6 @@
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				35C03E921CC03307008EF119 /* LoadConfig */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
-				574A5DAF1B7B2F66004FBC27 /* SystemButton */,
 				57BCE10B1B69910C0047088B /* BlobManager */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
@@ -1145,13 +1128,11 @@
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				5774D7641B90D6710071F187 /* SLKWebSocketModule.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
-				574A5DB51B7B3043004FBC27 /* SystemButton.swift in Sources */,
 				35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */,
 				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
-				574A5DB11B7B2F7B004FBC27 /* SystemButtonManger.m in Sources */,
 				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
 				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
@@ -1160,7 +1141,6 @@
 				577396171BA2921400F900C6 /* AppCrypto.swift in Sources */,
 				35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */,
 				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
-				574A5DB31B7B2F8C004FBC27 /* SystemButtonManager.swift in Sources */,
 				357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

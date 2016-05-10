@@ -62,6 +62,8 @@ class SoundRecognizer {
         eventId: this.timeline.getNextObjectId(),
         timeoutId: null,
       };
+      // We emit the event ping to keep the event active within the
+      // timeline tracker.
       let emitEventPing = () => {
         this.timeline.addObjects([{
           id: event.eventId,

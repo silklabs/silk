@@ -280,6 +280,15 @@ const builds = {
     },
   }),
   */
+  'device-kenzo-nightly': nightlyBuild('device', {
+    branches: ['master'],
+    title: 'kenzo nightly',
+    travis_config: {
+      env: {
+        global: ['GONK=kenzo'],
+      },
+    },
+  }),
   'device-base.kenzo-nightly': nightlyBuild('device', {
     branches: ['master'],
     title: 'base.kenzo nightly',

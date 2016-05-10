@@ -14,9 +14,9 @@ fi
 cmake -version
 java -version
 javac -version
+source ../setup
 
 source travis/artifacts
-
 
 function get_http_status() {
   local url=$1

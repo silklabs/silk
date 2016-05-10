@@ -128,7 +128,6 @@
   <remove-project name="platform/external/smali" />
   <remove-project name="platform/external/srec" />
   <remove-project name="platform/external/srtp" />
-  <remove-project name="platform/external/sqlite" />
   <remove-project name="platform/external/svox" />
   <remove-project name="platform/external/stressapptest" />
   <remove-project name="platform/external/tagsoup" />

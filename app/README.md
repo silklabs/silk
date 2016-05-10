@@ -196,9 +196,25 @@ As with iOS, before you can perform any further steps, ensure you have installed
 npm install
 ```
 
+The Android app also pulls in some code from the webapp, so before proceeding, you'll want to build the webapp as well:
+```
+cd ../webapp
+npm install
+```
+
 For developing the native Java part of the app, any Android-capable IDE will work well. Android Studio can import the Gradle configuration as a project, just point it at `android/build.gradle`.
 
 ### Development cycle
+
+Start the packaging server like on iOS, optionally telling webpack not to build iOS bundles for quicker startup:
+```
+npm start -- --no-ios
+```
+
+Build, install, and run the Android app on a connected Android phone or emulator:
+```
+react-native run-android
+```
 
 #### Video player webview
 

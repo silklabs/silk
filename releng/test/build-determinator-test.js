@@ -147,4 +147,17 @@ suite('build determinator', () => {
     throw new Error(`non member edit of builds.js should throw`);
   });
 
+  test('simple push to dotfile', async () => {
+    let event = {
+      type: 'push',
+      sha: 'abcdef',
+      branch: 'master',
+      filesChanged: ['webapp/.travis/script'],
+      githubUser: validGithubUser,
+    };
+    let builds = await determineBuildsForEvent('silklabs', 'repo', event);
+    assert.strictEqual(builds.length, 1);
+    assert.strictEqual(builds[0].name, 'webapp');
+  });
+
 });

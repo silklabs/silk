@@ -13,7 +13,6 @@ const DEFAULT = {
   'react-native': {},
   'server': {
     choices: [
-      {name: 'China', value: 'http://120.25.204.154'},
       {name: 'US East', value: '' /* use API default server */ },
     ],
     // The following are only visible when showDevServers is true

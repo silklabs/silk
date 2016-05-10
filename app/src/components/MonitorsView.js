@@ -2,7 +2,6 @@ import { OrderedMap, OrderedSet } from 'immutable';
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
-  AppStateIOS,
   PixelRatio,
   Platform,
   ScrollView,
@@ -10,31 +9,18 @@ import {
   Text,
   View,
 } from 'react-native';
-import createLog from 'silk-log';
 import { SilkApi } from 'silk-api';
 
 import SocketIO from '../libraries/SocketIO';
 
-import Activity from './Activity';
 import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
-import ErrorBar from './ErrorBar';
 import CameraLiveVideo from './CameraLiveVideo';
 import { Colors } from './CommonStyles';
 import PreviewThumbnails from './PreviewThumbnails';
 import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
 import UnconfiguredDevice from './UnconfiguredDevice';
-
-const log = createLog('MonitorsView');
-
-const EVENTS_PAGE_SIZE = 10;
-const SCROLLVIEW_PTR_THRESHOLD = -50;
-// This value is purposely larger than the length of initial list of
-// events. That way, the moment the user start scrolling down, we load
-// more events. Adjust this value if the rendering of the events list
-// changes in some drastic way.
-const SCROLLVIEW_INFINITE_THRESHOLD = 3500;
 
 class MonitorsView extends AsyncComponent {
 
@@ -50,58 +36,13 @@ class MonitorsView extends AsyncComponent {
 
   state = {
     fullscreenDeviceId: null,
-    fullscreenStartTime: null,
-
-    eventsLoading: null, // 'newer', 'older', or null
-    events: null,
-    eventsLatest: null,
-    eventsEarliest: null,
-    eventsError: null,
   };
-
-  mounted = false;
-
-  componentWillMount() {
-    AppStateIOS.addEventListener('change', this.onAppStateChange);
-    this.mounted = true;
-  }
-
-  componentWillUnmount() {
-    AppStateIOS.removeEventListener('change', this.onAppStateChange);
-    this.mounted = false;
-  }
 
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
-  componentWillReceiveProps(nextProps) {
-    let { devices } = this.props;
-    if (devices === nextProps.devices) {
-      return;
-    }
-    if (!devices || !nextProps.devices.keySeq().isSubset(devices.keySeq())) {
-      // This is pretty crude. We could probably do something smarter
-      // here and only load activities for the extra devices that got
-      // added. But for now throw everything away and refetch all
-      // activities every time we see a new device.
-      this.setState({
-        events: null,
-        eventsLatest: null,
-        eventsEarliest: null,
-        eventsLoading: 'older',
-      }).then(() => this._fetchActivity(null, Date.now()));
-    }
-  }
-
-  onAppStateChange = (appState) => {
-    if (appState === 'active' && this.state.eventsLatest) {
-      // Refresh feed: fetch more recent events if there are any.
-      this._fetchActivity(this.state.eventsLatest, Date.now());
-    }
-  };
-
-  startFullscreenVideo = (fullscreenDeviceId, fullscreenStartTime = null) => {
+  startFullscreenVideo = (fullscreenDeviceId) => {
     if (Platform.OS === 'ios') {
-      this.setStateAsync({fullscreenDeviceId, fullscreenStartTime});
+      this.setStateAsync({fullscreenDeviceId});
     } else {
       this.props.navigator.pushAsync({
         name: 'CameraLiveVideo',
@@ -114,7 +55,7 @@ class MonitorsView extends AsyncComponent {
   };
 
   stopFullscreenVideo = () => {
-    this.setStateAsync({fullscreenDeviceId: null, fullscreenStartTime: null});
+    this.setStateAsync({fullscreenDeviceId: null});
   };
 
   _getPreviewSize(deviceId) {
@@ -158,28 +99,7 @@ class MonitorsView extends AsyncComponent {
       return this._renderNoDevices();
     }
 
-    let { fullscreenDeviceId, eventsLoading, eventsError } = this.state;
-
-    let errorBar = null;
-    if (this.props.hasNetwork && eventsError) {
-      // Show an error bar if we couldn't fetch activity despite
-      // having a network connection.
-      let description = 'Could not fetch recent activity.';
-      if (__DEV__) {
-        if (eventsError.status) {
-          description = `Server responded with HTTP status ${eventsError.status}`;
-        } else if (eventsError.message) {
-          description = eventsError.message;
-        }
-      }
-      errorBar = (
-        <ErrorBar
-          heading="Something Went Wrong"
-          description={description}
-        />
-      );
-    }
-
+    let { fullscreenDeviceId } = this.state;
     let fullscreenMonitor = null;
     if (fullscreenDeviceId) {
       fullscreenMonitor = (
@@ -196,21 +116,17 @@ class MonitorsView extends AsyncComponent {
     return (
       <View style={styles.wrapper}>
         {fullscreenMonitor}
-        {errorBar}
         <View style={styles.content}>
           <ScrollView
             style={styles.scrollView}
             automaticallyAdjustContentInsets={true}
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
-            {eventsLoading === 'newer' ? this._renderPTRSpinner() : null}
             {this._renderUnconfiguredDevices()}
             <PreviewThumbnails
               {...this.props}
               startFullscreenVideo={this.startFullscreenVideo}
             />
-            {devices.size ? this._renderActivity() : null}
-            {eventsLoading === 'older' ? this._renderSpinner() : null}
           </ScrollView>
         </View>
       </View>
@@ -233,14 +149,6 @@ class MonitorsView extends AsyncComponent {
         size="large"
         style={styles.loadingSpinner}
       />
-    );
-  }
-
-  _renderPTRSpinner() {
-    return (
-      <View style={styles.ptrSpinnerContainer}>
-        {this._renderSpinner()}
-      </View>
     );
   }
 
@@ -268,154 +176,6 @@ class MonitorsView extends AsyncComponent {
       />
     ));
   }
-
-  // Activity feed management
-
-  // Only fire pull-to-refresh action once per pull. That way we don't
-  // keep continuously firing the action.
-  _pullToRefreshActive = false;
-
-  onScroll = (event) => {
-    let { eventsLoading, eventsLatest, eventsEarliest } = this.pendingState;
-    if (eventsLoading || eventsLatest === null || eventsEarliest === null) {
-      return;
-    }
-
-    let { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-
-    // Pull to refresh: fetch more recent events.
-    if (!this._pullToRefreshActive && contentOffset.y < SCROLLVIEW_PTR_THRESHOLD) {
-      this._pullToRefreshActive = true;
-      this._fetchActivity(eventsLatest, Date.now());
-      return;
-    }
-
-    if (this._pullToRefreshActive && contentOffset.y === 0) {
-      this._pullToRefreshActive = false;
-    }
-
-    // Infinite scroll: fetch more older events.
-    // Ensure that the treshold isn't bigger than the length of off-screen
-    // content. Otherwise we'd be triggering infinite-scrolling when pulling up!
-    let infiniteThreshold = Math.min(
-      SCROLLVIEW_INFINITE_THRESHOLD,
-      contentSize.height - layoutMeasurement.height
-    );
-    let leftToScroll = contentSize.height - layoutMeasurement.height - contentOffset.y;
-    if (leftToScroll < infiniteThreshold) {
-      this._fetchActivity(null, eventsEarliest);
-      return;
-    }
-  };
-
-  _noMoreOlderEvents = false;
-
-  _fetchActivity = async (startTime, endTime) => {
-    let { eventsLoading } = this.pendingState;
-    if (!this.props.hasNetwork || !this.props.devices.size) {
-      // No point in trying anything when there's no network connectivity
-      // or no devices.
-      if (eventsLoading) {
-        this.setStateAsync({eventsLoading: null});
-      }
-      return;
-    }
-
-    let addlEvents;
-    try {
-      if (startTime === null) {
-        if (this._noMoreOlderEvents) {
-          return;
-        }
-        if (eventsLoading !== 'older') {
-          this.setStateAsync({eventsLoading: 'older'});
-        }
-        addlEvents = await this.props.api.metadata.findAllBeforeTime({
-          deviceIds: [...this.props.devices.keys()],
-          time: endTime,
-          metaType: 'event',
-          maxCount: EVENTS_PAGE_SIZE,
-        });
-      } else {
-        if (eventsLoading !== 'newer') {
-          this.setStateAsync({eventsLoading: 'newer'});
-        }
-        addlEvents = await this.props.api.metadata.findAllInTimeInterval({
-          deviceIds: [...this.props.devices.keys()],
-          startTime,
-          endTime,
-          metaType: 'event',
-          maxCount: EVENTS_PAGE_SIZE,
-        });
-      }
-    } catch (ex) {
-      log.warn('Failed to load events', ex);
-      if (this.mounted) {
-        this.setStateAsync({eventsLoading: null, eventsError: ex});
-      }
-      return;
-    }
-
-    if (!this.mounted) {
-      return;
-    }
-
-    if (!addlEvents.length) {
-      if (startTime === null) {
-        log.info(`No more events before ${endTime}. Disabling infinite scrolling.`);
-        this._noMoreOlderEvents = true;
-      }
-      this.setStateAsync({eventsLoading: null, eventsError: null});
-      return;
-    }
-
-    let events = this.state.events;
-    if (!events || !events.length) {
-      events = addlEvents;
-    } else if (events[0].startUTC > addlEvents[0].startUTC) {
-      // We're adding older events (e.g. from infinite scrolling), so
-      // add them to the bottom.
-      events = events.concat(addlEvents);
-    } else {
-      // We're adding newer events (e.g. from pull-to-refresh), so add
-      // them to the top.
-      events = addlEvents.concat(events);
-    }
-    let newState = {
-      eventsLoading: null,
-      eventsError: null,
-      events,
-    };
-    if (!this.state.eventsLatest || endTime > this.state.eventsLatest) {
-      newState.eventsLatest = endTime;
-    }
-    if (!this.state.eventsEarliest || startTime < this.state.eventsEarliest) {
-      newState.eventsEarliest = addlEvents[addlEvents.length - 1].startUTC - 1;
-    }
-    await this.setStateAsync(newState);
-  };
-
-  _renderActivity() {
-    let { events } = this.state;
-    if (!events) {
-      return null;
-    }
-    if (!events.length) {
-      return <Text>No activity registered yet.</Text>;
-    }
-    return events.map((event) => (
-      <Activity
-        api={this.props.api}
-        hasNetwork={this.props.hasNetwork}
-        key={event.id || event._id}
-        actor={this._getDeviceName(event.deviceId)}
-        event={event}
-        previewSize={this._getPreviewSize(event.deviceId)}
-        startFullscreenVideo={this.startFullscreenVideo}
-      />
-    ));
-  }
-
 }
 
 const styles = StyleSheet.create({
@@ -441,19 +201,6 @@ const styles = StyleSheet.create({
   scrollView: {
     paddingTop: 5,
     flex: 1,
-  },
-
-  loadingSpinner: {
-    alignSelf: 'center',
-    marginVertical: 16,
-  },
-
-  ptrSpinnerContainer: {
-    position: 'absolute',
-    top: SCROLLVIEW_PTR_THRESHOLD - 10,
-    left: 0,
-    right: 0,
-    height: -SCROLLVIEW_PTR_THRESHOLD,
   },
 
   unconfiguredDevice: {

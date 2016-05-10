@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   StyleSheet,
+  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -8,9 +9,7 @@ import createLog from 'silk-log';
 
 import OverlayModal from './OverlayModal';
 import DashSegmentPlayer from './DashSegmentPlayer';
-import VideoControls from './VideoControls';
 import Spinner from './Spinner';
-import * as DateUtil from '../libraries/DateUtil';
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 const log = createLog('CameraLiveVideo');
@@ -22,19 +21,11 @@ export default class CameraLiveVideo extends React.Component {
     onClose: React.PropTypes.func,
   };
 
-  // TODO: This should live in a separate component,
-  // e.g. VideoControls, or VideoOverlay or something like that. We
-  // don't want to retrigger a reflow across this entire component
-  // every time these values change.
   state = {
     playing: false,
-    currentTime: null,
-    minTime: DateUtil.startOfDay().getTime(),
-    maxTime: Date.now(),
   };
 
   firstSegmentDurationMs = null;
-  videoStartTimestampDevice = null;
 
   mounted = false;
 
@@ -77,17 +68,17 @@ export default class CameraLiveVideo extends React.Component {
   };
 
   _renderControls() {
+    if (!this.state.showingControls) {
+      return null;
+    }
     return (
-      <VideoControls
-        style={styles.videoControls}
-        live={true}
-        rate={1.0}
-        playing={true}
-        currentTime={this.state.currentTime}
-        startTime={this.state.minTime}
-        endTime={this.state.maxTime}
-        onDone={this._close}
-      />
+      <View style={styles.controls}>
+        <Text
+          onPress={this._close}
+          style={styles.doneButton}>
+          Done
+        </Text>
+      </View>
     );
   }
 
@@ -101,11 +92,6 @@ export default class CameraLiveVideo extends React.Component {
 
   _onPlay = () => {
     this.setState({playing: true});
-  };
-
-  _onTimeUpdate = (event) => {
-    log.debug('DashSegmentPlayer onTimeUpdate', event);
-    this.setState({currentTime: this.videoStartTimestampDevice + event.currentTime * 1000});
   };
 
   _close = () => {
@@ -130,10 +116,6 @@ export default class CameraLiveVideo extends React.Component {
 
   render() {
     let dimensions = getLandscapeDimensions();
-    let controls = null;
-    if (this.state.showingControls) {
-      controls = this._renderControls();
-    }
     return (
       <OverlayModal ref="overlay" presented={true}>
         <View style={[styles.container]}>
@@ -142,7 +124,6 @@ export default class CameraLiveVideo extends React.Component {
               <DashSegmentPlayer
                 onCanPlay={this._onCanPlay}
                 onPlay={this._onPlay}
-                onTimeUpdate={this._onTimeUpdate}
                 style={styles.video}
                 ref="video"
               />
@@ -150,7 +131,7 @@ export default class CameraLiveVideo extends React.Component {
             </View>
           </TouchableWithoutFeedback>
           <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
-            {controls}
+            {this._renderControls()}
           </View>
         </View>
       </OverlayModal>
@@ -163,6 +144,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  controls: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
   },
 
   video: {
@@ -185,14 +174,11 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
 
-  dateOverlay: {
-    position: 'absolute',
-    top: 45,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 20,
-    flex: 1,
+  doneButton: {
+    padding: 10,
+    fontSize: 14,
+    color: 'black',
+    backgroundColor: 'rgba(128, 128, 128, 0.5)',
   },
 
   container: {

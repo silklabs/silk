@@ -43,8 +43,11 @@ EOF
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-cd $(dirname $(readlink -f $0))/../../
-pwd
+
+if [[ ! -d .git ]]; then
+  echo "Run from the root of the tree"
+  exit 1
+fi
 
 if [[ -n "$(git status --porcelain)" ]]; then
   echo You have a dirty tree:

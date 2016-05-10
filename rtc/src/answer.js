@@ -87,6 +87,9 @@ async function _answer(
     transportError,
   ]);
 
+  log.info('ICE done, sending "done" ack');
+  transport.write(toJSON({ done: true }));
+
   let dataChannels;
   try {
     // $FlowFixMe: Cannot handle mixed promise return types.

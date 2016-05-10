@@ -113,6 +113,17 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
   );
 
   await waitForIce(log, 'caller', peerConnection, transport);
+  log.info('ICE done, waiting for peer ack ...');
+  while (true) {
+    let message = await Promise.race([
+      eventToPromise(transport, 'data'),
+      timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for "done" ack'))
+    ]);
+    if (message.done) {
+      log.info('  received "done" ack, closing transport');
+      break;
+    }
+  }
   transport.end();
 }
 

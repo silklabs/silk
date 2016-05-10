@@ -22,7 +22,7 @@ suite('outbox manager', () => {
 
   class HttpOp extends StreamOperation {
     static NAME = 'http';
-    static StreamClass = (url) => {
+    static StreamClass = function (url) {
       return httpStream(url, { method: 'post' });
     };
   }

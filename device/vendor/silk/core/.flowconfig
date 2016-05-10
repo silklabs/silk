@@ -16,6 +16,7 @@ node_modules/silk-sdk/interface/
 .*/api/test/.*
 .*/azure-storage/test/.*
 .*/server/test/.*
+.*/server/tmp/.*
 .*/server/src/.*
 .*/streams/test/.*
 .*/rtc/test/.*

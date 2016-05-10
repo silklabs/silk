@@ -72,6 +72,8 @@ set -x
 # Copy the latest code into the shipping git project.
 # Git commit history is currently not preserved. :-/
 #
+mkdir -p 1/2/3/4/5
+cd 1/2/3/4/5       # Try to break anybody looking up relative paths
 rm -rf ship
 git clone git@github.com:silklabs/release-fuhu-app.git ship
 cd ship

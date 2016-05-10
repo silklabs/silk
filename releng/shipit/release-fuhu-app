@@ -100,12 +100,11 @@ git commit -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 # TODO: Reduce the duplication with app/ios/.travis* here...
 #
 
-app/ios/.travis/install
-node --version
-npm --version
-source app/ios/.travis/env.sh  # TODO: REMOVE THIS FROM release-fuhu-app
-app/ios/.travis/objc-test.sh
-
+cd app
+ios/.travis/install
+source ios/.travis/env.sh  # TODO: REMOVE THIS FROM release-fuhu-app
+ios/.travis/objc-test.sh
+cd ..
 
 #
 # Looks good, :shipit:

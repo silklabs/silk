@@ -52,7 +52,7 @@
     "localbundle": "./tools/local_bundle",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall && ./tools/postinstall",
-    "start": "./tools/rnws start",
+    "start": "./tools/rnws start --no-optimize",
     "test": "npm run lint && npm run flow",
     "update": "./tools/update"
   },

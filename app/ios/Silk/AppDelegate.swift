@@ -143,7 +143,11 @@ class AppDelegate : UIResponder,
 
   func extraModulesForBridge(bridge: RCTBridge!) -> [AnyObject]! {
     return [
-      SLKWebSocketModule()
+      // We're overriding React Native's WebSocket module by the same name.
+      SLKWebSocketModule(),
+      // Explicitly init this here rather than letting React Native init it
+      // lazily later, which would almost certainly be too late.
+      BLESocketManager(),
     ]
   }
 }

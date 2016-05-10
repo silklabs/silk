@@ -3,11 +3,11 @@ import {
   Image,
   Navigator,
   StyleSheet,
+  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Colors } from './CommonStyles';
-import { Wordmark } from './Wordmark';
 
 const CONNECTION_STATES = ['connecting', 'connected', 'offline'];
 
@@ -20,20 +20,23 @@ export default class TopBar extends React.Component {
   render() {
     let connectionStyle = styles[this.props.socketConnectionState];
     return (
-      <View>
-        <View style={styles.statusBarUnderlay} />
+      <View style={styles.navBar}>
+        <Image
+          source={require('image!menu_pattern')}
+          style={styles.pattern}
+        />
         <View style={styles.titleContainer}>
           <View style={styles.spacer}>
             <TouchableOpacity onPress={this._openSettings}>
               <View style={styles.settings}>
                 <Image
-                  source={require('image!menu')}
-                  style={styles.icon}
+                  source={require('image!gear')}
+                  style={styles.gear}
                 />
               </View>
             </TouchableOpacity>
           </View>
-          <Wordmark />
+          <Text style={styles.wordmark}>SILK</Text>
           <View style={styles.spacer}>
             <View style={styles.indicatorContainer}>
               <View style={[styles.connectionStateMarker, connectionStyle]} />
@@ -53,54 +56,70 @@ export default class TopBar extends React.Component {
 }
 
 const styles = StyleSheet.create({
-  statusBarUnderlay: {
-    height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
+  navBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: Navigator.NavigationBar.Styles.General.TotalNavHeight,
     backgroundColor: Colors.SilkLabsRed,
+  },
+  pattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.2,
   },
   titleContainer: {
-    backgroundColor: Colors.SilkLabsRed,
-    justifyContent: 'center',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: Navigator.NavigationBar.Styles.General.StatusBarHeight,
+    height: Navigator.NavigationBar.Styles.General.NavBarHeight,
+    alignItems: 'center',
     flexDirection: 'row',
-    padding: 10,
+    paddingHorizontal: 10,
   },
+
+  wordmark: {
+    fontFamily: 'DIN Round Pro',
+    fontSize: 18,
+    color: Colors.SilkLabsYellow,
+    backgroundColor: 'transparent',
+  },
+
   indicatorContainer: {
-    // For some reason cjones was unable to make this `flex` fill
-    // available vertical space inside the title container (when
-    // changing the flex direction back to col).  So hack around that
-    // by hard-coding a fixed height.
-    //
-    //flex: 1,
-    height: 25,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
 
   connectionStateMarker: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#c8c7cc',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 
   offline: {
-    backgroundColor: '#ce0000',
+    backgroundColor: Colors.WarningRed,
   },
   connecting: {
-    backgroundColor: '#f7d708',
+    backgroundColor: Colors.SilkLabsYellow,
   },
   connected: {
-    backgroundColor: '#9ccf31',
+    backgroundColor: Colors.ConfirmGreen,
   },
 
   settings: {
     flex: 1,
     paddingLeft: 4,
   },
-  icon: {
-    // TODO: shouldn't have to specify this?
-    width: 25,
-    height: 25,
+  gear: {
+    width: 32,
+    height: 32,
   },
   spacer: {
     flex: 1,

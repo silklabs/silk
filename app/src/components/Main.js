@@ -1,6 +1,6 @@
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
-import { StyleSheet, View } from 'react-native';
+import { Navigator, StyleSheet, View } from 'react-native';
 
 import Devices from './abstract/Devices';
 import ServerConnectivity from './abstract/ServerConnectivity';
@@ -16,8 +16,10 @@ class MainView extends React.Component {
     return (
       <View style={styles.container}>
         <TopBar {...this.props} />
-        <NetworkWarning api={this.props.api} />
-        <MonitorsView {...this.props} />
+        <View style={styles.content}>
+          <NetworkWarning api={this.props.api} />
+          <MonitorsView {...this.props} />
+        </View>
       </View>
     );
   }
@@ -44,6 +46,17 @@ export default class Main extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  content: {
+    position: 'absolute',
+    top: Navigator.NavigationBar.Styles.General.TotalNavHeight,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });

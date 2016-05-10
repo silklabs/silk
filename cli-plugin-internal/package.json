@@ -18,6 +18,7 @@
   },
   "symlinkDependencies": {
     "cli": "/pub/cli",
+    "silk-sdk": "/pub/sdk",
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",
     "silk-flow-bin": "/flow-bin",

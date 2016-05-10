@@ -24,7 +24,6 @@ WHITELIST=$(cat <<-EOF
   config
   docs
   eslint
-  external-js-kissfft
   flow-bin
   http
   jsonwebtoken
@@ -36,8 +35,6 @@ WHITELIST=$(cat <<-EOF
   streams
   svm
   utils
-  version
-  webapp
 EOF
 )
 WHITELIST="$WHITELIST npm_preinstall npm_postinstall" # TODO: Remove when we can

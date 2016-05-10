@@ -11,8 +11,8 @@ import invariant from 'assert';
 import events from 'events';
 import net from 'net';
 
-import * as util from './sysutils';
-import createLog from './log';
+import * as util from 'silk-sysutils';
+import createLog from 'silk-log/device';
 
 import type { Socket } from 'net';
 

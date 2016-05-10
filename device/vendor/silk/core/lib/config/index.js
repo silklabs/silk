@@ -19,7 +19,7 @@ import * as Joi from 'joi';
 import makeDeferred from '../deferred';
 import NormalSessionListener from './normal_session_listener';
 import * as util from '../sysutils';
-import wifi from '../wifi';
+import wifi from 'silk-wifi';
 
 import type Server from '../server';
 

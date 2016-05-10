@@ -18,7 +18,7 @@ import createLog from './log';
 import checkOnline from 'is-online';
 import { EventEmitter } from 'events';
 
-import type { Wifi } from './wifi';
+import type { Wifi } from 'silk-wifi';
 import type Server from './server';
 
 const log = createLog('network_status');

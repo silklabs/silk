@@ -10,7 +10,7 @@ import NetworkStatus from 'silk-core/lib/network_status';
 import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
 import * as util from 'silk-core/lib/sysutils';
-import wifi from 'silk-core/lib/wifi';
+import wifi from 'silk-wifi';
 import Camera from 'silk-core/lib/camera';
 import invariant from 'assert';
 import opencv from 'opencv';

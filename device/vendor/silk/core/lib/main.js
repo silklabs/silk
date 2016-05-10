@@ -38,7 +38,7 @@ import api from './api';
 import {MetricTypes} from 'silk-api';
 import Battery from './battery';
 
-import wifi from './wifi';
+import wifi from 'silk-wifi';
 import ntp from './ntp';
 import * as util from './sysutils';
 import update from './update';

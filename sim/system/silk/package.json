@@ -16,7 +16,8 @@
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",
     "silk-movie": "/device/vendor/propsilk/silk-movie",
     "silk-properties": "/pub/bsp-gonk/vendor/silk/silk-properties",
-    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils"
+    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
+    "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi"
   },
   "dependencies": {
     "bleno": "0.3.4",

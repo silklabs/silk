@@ -14,7 +14,8 @@
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",
-    "silk-core": "/device/vendor/silk/core"
+    "silk-core": "/device/vendor/silk/core",
+    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils"
   },
   "devDependencies": {
     "babel-eslint": "5.0.0",

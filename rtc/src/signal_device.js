@@ -16,7 +16,7 @@ import Peer from './peer';
 import * as call from './call';
 
 import type { SilkApi } from 'silk-api';
-import type { CallOptions } from './call';
+import type { CallOptions, MediaStreamsPair } from './call';
 
 const WEBSOCKET_CONNECT_TIMEOUT = 30 * 1000;
 const MAX_RECONNECT_SLEEP = 30 * 1000;
@@ -55,6 +55,7 @@ export class DevicePeer extends EventEmitter {
   _reconnectAttempts: number = 0;
   _reconnectTimer: ?number;
   _channels: Map<string, StructuredDataChannel> = new Map();
+  _streams: MediaStreamsPair = {};
 
   constructor(api: SilkApi, deviceId: string, options: CallOptions) {
     super();
@@ -67,6 +68,11 @@ export class DevicePeer extends EventEmitter {
         // The underlying data channel is set later ...
         this._channels.set(label, new StructuredDataChannel());
       }
+    }
+    if (options.mediaStreams) {
+      // If the caller is expecting a remote stream, it will be set
+      // later.
+      Object.assign(this._streams, options.mediaStreams);
     }
   }
 
@@ -82,6 +88,9 @@ export class DevicePeer extends EventEmitter {
 
     for (let structuredChannel of this._channels.values()) {
       structuredChannel.setChannel(null);
+    }
+    if ('remote' in this._streams) {
+      this._streams.remote = null;
     }
 
     caller.removeListener('close', this._onClose);
@@ -158,11 +167,12 @@ export class DevicePeer extends EventEmitter {
       const transport = new JSONDuplexStream(websocketStream);
 
       // Build the connection ...
-      const [peerConnection, dataChannels] = call.createCaller(this._callOptions);
+      const [peerConnection, dataChannels, mediaStreams] =
+              call.createCaller(this._callOptions);
 
       // Immediately start to signal we will handle errors in parallel.
       await Promise.all([
-        call.peer([peerConnection, dataChannels], transport),
+        call.peer([peerConnection, dataChannels, mediaStreams], transport),
         // Will also ensure error is handled.
         Promise.race([
           eventToPromise(websocket, 'open'),
@@ -184,7 +194,8 @@ export class DevicePeer extends EventEmitter {
       // close method and handle disconnects.
       this._caller = new Peer(log, {
         peerConnection,
-        dataChannels: this._dataChannels,
+        dataChannels: this._channels,
+        mediaStreams: this._streams,
       });
 
       this._caller.on('close', this._onClose);

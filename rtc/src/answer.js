@@ -1,5 +1,5 @@
 /* @flow */
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import eventToPromise from 'event-to-promise';
 import timeout from 'silk-utils/timeout';
 import toJSON from 'silk-utils/calltojson';
@@ -59,6 +59,14 @@ async function _answer(
   invariant(offer && typeof offer === 'object');
   invariant(offer.sdp && typeof offer.sdp === 'object');
   invariant(Array.isArray(offer.dataChannels));
+  invariant('mediaStream' in offer);
+
+  if (offer.mediaStream) {
+    log.info('expecting a remote media stream');
+    // TODO: the remote side added a media stream to this connection.
+    // Start listening to the RTCPeerConnection.onaddstream event and
+    // ensure that we start playing the resulting stream.
+  }
 
   log.info('got offer setting remote description');
   await webrtcPromise(

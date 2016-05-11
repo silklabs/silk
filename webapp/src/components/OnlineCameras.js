@@ -2,12 +2,16 @@
 import React from 'react';
 import { Alert, Button, Glyphicon, DropdownButton, MenuItem } from 'react-bootstrap';
 import { Link } from 'react-router';
+import createLog from 'silk-log';
+import { signalDevice } from 'silk-rtc';
 
 import Api from '../libraries/Api';
 import Cameras from '../libraries/Cameras';
 import CameraPreview from './CameraPreview';
 
 import version from 'silk-core-version';
+
+const log = createLog('OnlineCameras');
 
 const styles = {
   center: {
@@ -37,7 +41,32 @@ const styles = {
   },
 };
 
+let micStreamPromise = null;
+let micStream = null;
+
+function tryGetMicStream() {
+  if (micStream) {
+    return Promise.resolve(micStream);
+  }
+  if (micStreamPromise) {
+    return micStreamPromise;
+  }
+  micStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => {
+      micStream = stream;
+      micStreamPromise = null;
+      return micStream;
+    })
+    .catch((err) => log.error(`Failed to get mic stream: ${err.stack}`));
+  return micStreamPromise;
+}
+
 export class OnlineCamera extends React.Component {
+  intercomPeer = null;
+  state = {
+    intercomOn: false,
+  };
+
   constructor() {
     super();
     this.speakText = '';
@@ -55,13 +84,55 @@ export class OnlineCamera extends React.Component {
     this.props.camera.speak(ttsEngine, this.speakText);
   };
 
+  onToggleIntercom = (e) => {
+    let intercomOn = !this.state.intercomOn;
+    this.setState({ intercomOn });
+    if (intercomOn) {
+      log.info('Turning on webapp->device audio stream');
+      tryGetMicStream()
+        .then((micStream) => {
+          log.info('Got mic stream, connecting RTC channel and praying ...');
+          this.intercomPeer = signalDevice(Api, this.deviceId, {
+            mediaStreams: {
+              local: micStream,
+            },
+          });
+          // TODO: error handling here?
+        })
+        .catch((err) => log.error(`Failed to get mic stream: ${err}`));
+    } else {
+      log.info('Turning off webapp->device audio stream');
+      this.reset();
+    }
+  };
+
+  reset() {
+    if (this.intercomPeer) {
+      this.intercomPeer.disconnect();
+      this.intercomPeer = null;
+    }
+  }
+
+  componentWillUnmount() {
+    this.reset();
+    this.setState({ intercomOn: false });
+  }
+
   render() {
+    let intercomStyle = this.state.intercomOn ? 'warning' : '';
     return (
       <div style={styles.onlineCamera}>
         <Link to={`/video/${this.deviceId}`}>
           <CameraPreview deviceId={this.deviceId} />
         </Link>
         <div style={{...styles.toolbar, ...styles.toolbarCenter}}>
+          <Button
+            bsSize="large"
+            bsStyle={intercomStyle}
+            active={this.state.intercomOn}
+            onClick={this.onToggleIntercom}>
+            <Glyphicon glyph="bullhorn" style={styles.glyphicon} />
+          </Button>
           <Link to={`/diag/${this.deviceId}`}>
             <Button bsSize="large" bsStyle="info">
               <Glyphicon glyph="info-sign" style={styles.glyphicon} />

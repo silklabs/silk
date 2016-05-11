@@ -2,7 +2,6 @@ import { OrderedMap, OrderedSet } from 'immutable';
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
-  PixelRatio,
   Platform,
   ScrollView,
   StyleSheet,
@@ -16,13 +15,21 @@ import SocketIO from '../libraries/SocketIO';
 import AsyncComponent from './abstract/AsyncComponent';
 import { ConfiguringDeviceRecord } from './abstract/Devices';
 import CameraLiveVideo from './CameraLiveVideo';
+import CameraPreview from './CameraPreview';
 import { Colors } from './CommonStyles';
-import PreviewThumbnails from './PreviewThumbnails';
-import { DEFAULT_PREVIEW_SIZE } from './PreviewThumbnails';
 import Spinner from './Spinner';
 import UnconfiguredDevice from './UnconfiguredDevice';
 
-class MonitorsView extends AsyncComponent {
+// This is mostly a guestimate based on FUT hardware. Absolute values
+// not important here, the ratio is what matters.
+const DEFAULT_PREVIEW_WIDTH = 16;
+const DEFAULT_PREVIEW_HEIGHT = 9;
+export const DEFAULT_PREVIEW_SIZE = {
+  width: DEFAULT_PREVIEW_WIDTH,
+  height: DEFAULT_PREVIEW_HEIGHT,
+};
+
+export default class DeviceList extends AsyncComponent {
 
   static propTypes = {
     api: React.PropTypes.instanceOf(SilkApi).isRequired,
@@ -36,6 +43,7 @@ class MonitorsView extends AsyncComponent {
 
   state = {
     fullscreenDeviceId: null,
+    cameraPreviewWidth: null,
   };
 
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
@@ -123,10 +131,7 @@ class MonitorsView extends AsyncComponent {
             scrollEventThrottle={5}
             onScroll={this.onScroll}>
             {this._renderUnconfiguredDevices()}
-            <PreviewThumbnails
-              {...this.props}
-              startFullscreenVideo={this.startFullscreenVideo}
-            />
+            {this._renderThumbnails()}
           </ScrollView>
         </View>
       </View>
@@ -176,20 +181,49 @@ class MonitorsView extends AsyncComponent {
       />
     ));
   }
+
+  _renderThumbnails() {
+    if (this.state.cameraPreviewWidth === null) {
+      return (
+        <View
+          style={styles.cameraPreview}
+          onLayout={(event) => this.setStateAsync({cameraPreviewWidth: event.nativeEvent.layout.width})}
+        />
+      );
+    }
+    return this.props.devices.map((device, deviceId) => (
+      <View
+        style={styles.cameraPreview}
+        key={deviceId}>
+        <Text style={styles.cameraPreviewLabel}>
+          {device.name}
+        </Text>
+        <CameraPreview
+          deviceId={deviceId}
+          previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
+          width={this.state.cameraPreviewWidth}
+          haveVideoStream={device.haveVideoStream}
+          onPress={() => this.startFullscreenVideo(deviceId)}
+          socket={this.props.socket}
+          hasNetwork={this.props.hasNetwork}
+        />
+      </View>
+    )).toArray().reverse();
+  }
+
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
   },
-
   content: {
     backgroundColor: Colors.SilkLabsTan,
-    borderColor: '#c8c7cc',
-    borderTopWidth: 1 / PixelRatio.get(),
     flex: 1,
   },
-
+  loadingSpinner: {
+    marginVertical: 12,
+  },
   placeholderLabel: {
     margin: 8,
     fontFamily: 'DIN Round Pro',
@@ -197,19 +231,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.SilkLabsBlack,
   },
-
   scrollView: {
     paddingTop: 5,
     flex: 1,
   },
-
   unconfiguredDevice: {
     margin: 16,
   },
-
-  eventRow: {
-    padding: 10,
+  cameraPreview: {
+    marginHorizontal: 24,
+    marginVertical: 12,
+  },
+  cameraPreviewLabel: {
+    fontFamily: 'DIN Round Pro',
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.SilkLabsBlack,
+    marginBottom: 4,
   },
 });
-
-module.exports = MonitorsView;

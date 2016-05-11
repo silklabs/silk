@@ -95,18 +95,6 @@ export const TitleBarStyles = StyleSheet.create({
   },
 });
 
-export const THUMBNAIL_MARGIN = 4;
-
-export const ThumbnailStyles = StyleSheet.create({
-  // This style gets applied to each individual thumbnail container as
-  // well as the container of all thumbnails. That way the overall
-  // margins between thumbnails and screen edge as well as between
-  // thumbnails themselves will be twice the value specified below.
-  thumbnailContainer: {
-    margin: THUMBNAIL_MARGIN,
-  },
-});
-
 export const Colors = {
   SilkLabsBlack: 'rgb(66, 66, 66)',
   SilkLabsBlack50: 'rgba(66, 66, 66, 0.5)',

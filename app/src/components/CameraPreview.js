@@ -7,27 +7,21 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
 } from 'react-native';
 
-import { DeviceSession } from '../libraries/ble/DeviceManager';
 import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
 import { blobURI } from '../libraries/Util';
 
 import SocketIOComponent from './abstract/SocketIOComponent';
-import { ThumbnailStyles, THUMBNAIL_MARGIN } from './CommonStyles';
 import Spinner from './Spinner';
 
 const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
 const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
 
-export default class MonitorPreview extends SocketIOComponent {
+export default class CameraPreview extends SocketIOComponent {
   static propTypes = {
     deviceId: React.PropTypes.string,
-    peripheralId: React.PropTypes.string,
-    label: React.PropTypes.string.isRequired,
-    logo: React.PropTypes.object,
     previewSize: React.PropTypes.shape({
       width: React.PropTypes.number.isRequired,
       height: React.PropTypes.number.isRequired,
@@ -38,7 +32,6 @@ export default class MonitorPreview extends SocketIOComponent {
 
     hasNetwork: React.PropTypes.bool.isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
-    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession),
   };
 
   static contextTypes = {
@@ -156,18 +149,6 @@ export default class MonitorPreview extends SocketIOComponent {
   }
 
 
-  _renderLabel() {
-    let { label, bleDeviceSession } = this.props;
-    if (bleDeviceSession) {
-      label = `${label} (BLE)`;
-    }
-    return (
-      <View style={styles.monitorLabelContainer}>
-        <Text style={styles.monitorLabel}>{label}</Text>
-      </View>
-    );
-  }
-
   _renderPreview() {
     // TODO: display this.props.haveVideoStream visually in some way.
     // See https://github.com/silklabs/silk-app/issues/526
@@ -191,36 +172,17 @@ export default class MonitorPreview extends SocketIOComponent {
 
   render() {
     let { width, previewSize } = this.props;
-    width -= 2 * THUMBNAIL_MARGIN;
     let previewStyle = {
       width,
       height: previewSize.height * width / previewSize.width,
     };
 
-    let logo = null;
-    if (this.props.logo) {
-      logo = (
-        <Image
-          style={styles.logo}
-          source={{uri: blobURI(this.props.logo)}}
-        />
-      );
-    }
-
     return (
-      <View style={[
-        styles.monitorContainer,
-        ThumbnailStyles.thumbnailContainer,
-        previewStyle,
-      ]}>
-        <TouchableOpacity
-          onPress={this._onPress}
-          style={styles.monitorPreviewContainer}>
-          {this._renderPreview()}
-          {logo}
-          {this._renderLabel()}
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        onPress={this._onPress}
+        style={[styles.previewContainer, previewStyle]}>
+        {this._renderPreview()}
+      </TouchableOpacity>
     );
   }
 
@@ -262,37 +224,13 @@ export default class MonitorPreview extends SocketIOComponent {
 }
 
 const styles = StyleSheet.create({
-  monitorContainer: {
-    shadowColor: 'black',
-    shadowRadius: 2,
-    shadowOpacity: 0.5,
-    shadowOffset: {
-      height: 1,
-      width: 0,
-    },
-  },
-
-  monitorLabelContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: 'black',
-    opacity: 0.5,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  monitorLabel: {
-    fontFamily: 'Open Sans',
-    fontSize: 10,
-    color: 'white',
-    textAlign: 'right',
-  },
-
-  monitorPreviewContainer: {
+  previewContainer: {
     backgroundColor: '#99a0a4',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    borderColor: 'white',
+    borderWidth: 2,
   },
 
   preview: {
@@ -313,16 +251,6 @@ const styles = StyleSheet.create({
   placeholderPreview: {
     flex: 1,
     backgroundColor: 'gray',
-  },
-
-  logo: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 30,
-    height: 15,
-    opacity: 0.5,
-    resizeMode: 'stretch',
   },
 
   timedOutLabel: {

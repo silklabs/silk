@@ -3,9 +3,9 @@ import PureRenderMixin from 'react-addons-pure-render-mixin';
 import { Navigator, StyleSheet, View } from 'react-native';
 
 import Devices from './abstract/Devices';
-import ServerConnectivity from './abstract/ServerConnectivity';
-import MonitorsView from './MonitorsView';
+import DeviceList from './DeviceList';
 import NetworkWarning from './NetworkWarning';
+import ServerConnectivity from './abstract/ServerConnectivity';
 import TopBar from './TopBar';
 
 class MainView extends React.Component {
@@ -18,7 +18,7 @@ class MainView extends React.Component {
         <TopBar {...this.props} />
         <View style={styles.content}>
           <NetworkWarning api={this.props.api} />
-          <MonitorsView {...this.props} />
+          <DeviceList {...this.props} />
         </View>
       </View>
     );

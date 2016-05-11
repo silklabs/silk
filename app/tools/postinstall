@@ -12,5 +12,10 @@ patches=( tools/patches/*.patch )
 for patch in ${patches[@]};
 do
   echo $patch
+  if [[ -f node_modules/.${patch}.applied ]]; then
+    echo SKIPPED
+    continue
+  fi
   patch -N -p0 -i $patch || echo
+  touch node_modules/.${patch}.applied
 done

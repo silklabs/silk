@@ -55,7 +55,7 @@ $PREBUILT_CCACHE -s
 
 # Apply patches
 (
-  set -ex
+  set -e
   CI_PATCHTREE_FORCE=force
   source build/envsetup.sh
 )

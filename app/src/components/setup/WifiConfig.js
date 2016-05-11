@@ -21,11 +21,11 @@ import { DeviceSession } from '../../libraries/ble/DeviceManager';
 import type { DeviceWifiNetwork } from '../../libraries/ble/DeviceManager';
 import type { WifiInfo } from '../../libraries/Util.js';
 
-const log = createLog('DeviceConfig');
+const log = createLog('WifiConfig');
 
 const SENTINEL = {};
 
-export default class DeviceConfig extends React.Component {
+export default class WifiConfig extends React.Component {
 
   static propTypes = {
     bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
@@ -37,7 +37,6 @@ export default class DeviceConfig extends React.Component {
   };
 
   state = {
-    name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
     /**
      * Possible values:
      * - SENTINEL: we don't have that info yet
@@ -277,7 +276,7 @@ export default class DeviceConfig extends React.Component {
   _handleSave = () => {
     this.props.onSave({
       deviceId: this.props.deviceSecret.deviceId,
-      name: this.state.name,
+      name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
       ssid: this.state.ssid,
       secret: this.state.psk ? this.state.secret : null,
     });

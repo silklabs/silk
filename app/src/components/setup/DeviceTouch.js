@@ -56,7 +56,7 @@ export default class DeviceTouch extends AsyncComponent {
         return;
       }
       this.props.navigator.pushAsync({
-        name: 'DeviceConfig',
+        name: 'WifiConfig',
         props: {
           ...this.props,
           deviceSecret: this.state.deviceSecret,

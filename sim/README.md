@@ -16,8 +16,28 @@ $ pkg-config --modversion opencv
 ```
 
 Linux:
-For Linux it's necessary to compile OpenCV3 from source to build
-opencv_contrib, these steps are TDB.
+For Linux it's necessary to compile OpenCV3 from source
+```
+$ git clone --branch '3.1.0' git@github.com:Itseez/opencv.git
+$ cd opencv
+$ mkdir build && cd build
+$ cmake -Wno-dev \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DBUILD_TESTS=false \
+  -DWITH_TIFF=false \
+  -DWITH_CUDA=false \
+  -DBUILD_ANDROID_EXAMPLES=false \
+  -DWITH_OPENEXR=false \
+  -DBUILD_PERF_TESTS=false \
+  -DBUILD_opencv_java=false \
+  -DWITH_IPP=OFF \
+  -DCMAKE_INSTALL_PREFIX=/usr/ \
+  ..
+$ make -j4
+$ sudo make install
+```
+
+Also, 
 ```
 $ sudo usermod -a -G video $(whoami)  # Ensure you have access to the camera at /dev/video0
 ```

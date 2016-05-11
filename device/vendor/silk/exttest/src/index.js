@@ -33,7 +33,7 @@ export default class Framework {
 
     this.camera = new Camera(this.server, this.timeline);
     this.camera.setPreviewFrame = (when, file) => this._loadPreviewFrame(when, file);
-    this.camera.startPlayback = (clipDirectory, rate, callback) =>
+    this.camera.startPlayback = (clipDirectory, rate = 'slow', callback) =>
       this._startPlayback(clipDirectory, rate, callback);
     this.camera.stopPlayback = () => {
       if (this._previewTimeout) {

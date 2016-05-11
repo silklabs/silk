@@ -67,7 +67,7 @@ class DetectCat {
       }
       working = true;
 
-      let [im] = await this._env.camera.getFrame(when, ['grayeq']);
+      let [im] = await this._env.camera.getFrame(when, ['gray']);
 
       detectCats(im, when, (rects) => {
         let what;

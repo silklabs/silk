@@ -9,7 +9,7 @@ $ brew update
 $ brew install pkg-config
 $ brew install sox
 $ brew tap homebrew/science
-$ brew install opencv3 --with-contrib
+$ brew install opencv3
 $ cp /usr/local/Cellar/opencv3/3.1.0_1/share/OpenCV/3rdparty/lib/libippicv.a /usr/local/Cellar/opencv3/3.1.0_1/lib/
 $ brew link --force --overwrite opencv3
 $ pkg-config --modversion opencv

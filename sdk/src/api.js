@@ -31,6 +31,7 @@ async function execWithPaths(
   try {
     return await exec(cmd, {
       env: cmdEnv,
+      maxBuffer: 1024 * 1024 * 10, // 10MB - |adb push| can be verbose
       timeout
     });
   } catch (err) {
@@ -49,12 +50,12 @@ export default class API {
     }
   }
 
-  async adb(adbCmd) {
+  async adb(adbCmd, timeout = 10000) {
     let cmd = `adb`;
     if (this.device) {
       cmd += ` -s ${this.device}`;
     }
-    return execWithPaths(`${cmd} ${adbCmd}`, this.additionalPaths);
+    return execWithPaths(`${cmd} ${adbCmd}`, this.additionalPaths, timeout);
   }
 
   async restart() {
@@ -93,7 +94,7 @@ export default class API {
     // XXX: This potentially makes things slower but ensures we don't leave
     // around files between pushes which is a common source of bugs.
     await this.adb(`shell rm -rf ${dest}`);
-    await this.adb(`push ${directory} ${dest}`);
+    await this.adb(`push ${directory} ${dest}`, /*timeout = */ 60 * 1000);
   }
 
   async setprop(key, value) {
@@ -101,7 +102,7 @@ export default class API {
   }
 
   async listDevices() {
-    const [stdout] = await execWithPaths(`adb devices -l`, this.additionalPaths);
+    const [stdout] = await this.adb(`devices -l`, this.additionalPaths);
     const devices = [];
 
     // first newline marks the start of the device list.

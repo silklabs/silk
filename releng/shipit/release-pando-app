@@ -91,13 +91,14 @@ git commit -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 #
 # Smoke test the release before shipping
 #
-# TODO: Reduce the duplication with app/ios/.travis* here...
+# TODO: Reduce the duplication with app/ios/travis* here...
 #
 
 cd app
-ios/.travis/install
-source ios/.travis/env.sh  # TODO: REMOVE THIS FROM release-pando-app
-ios/.travis/objc-test.sh
+ios/travis/install
+export CONFIGURATION=Debug
+source ios/travis/env.sh  # TODO: REMOVE THIS FROM release-pando-app
+ios/travis/objc-test.sh
 cd ..
 
 #

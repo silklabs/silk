@@ -1,7 +1,12 @@
 #!/bin/bash -x
 
 if [[ -z $PROJECT ]]; then
-  echo PROJECT not defined
+  echo PROJECT is not defined
+  exit 1
+fi
+
+if [[ -z $CONFIGURATION ]]; then
+  echo CONFIGURATION is not defined
   exit 1
 fi
 
@@ -23,6 +28,6 @@ mkdir -p dist
 xcodebuild \
   -exportArchive \
   -archivePath build/$PROJECT.xcarchive \
-  -exportPath dist/$PROJECT.ipa \
+  -exportPath dist/$PROJECT-$CONFIGURATION.ipa \
   -exportFormat ipa \
   -exportProvisioningProfile "$PROFILE_NAME"

@@ -1,0 +1,45 @@
+language: objective-c
+
+osx_image: xcode7.1
+
+before_install:
+  # Update brew twice because the first run can fail:
+  # https://github.com/Homebrew/homebrew/issues/42553
+  - brew update; brew update
+
+install:
+  - ios/travis/install
+
+env:
+  matrix:
+    - TEST_TYPE=objc-test
+    - TEST_TYPE=build-dist
+  global:
+    - CONFIGURATION=Debug
+
+before_script:
+  - node --version
+  - npm --version
+  - source ios/travis/env.sh
+  - ios/travis/add-key.sh
+
+script:
+  - ios/travis/script
+
+after_script:
+  - ios/travis/remove-key.sh
+  - ios/travis/raygun-dsym.sh
+
+deploy:
+  provider: s3
+  access_key_id: "AKIAIASNJWAY2EBXDKRA"
+  secret_access_key: "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"
+  bucket: "silk-app"
+  region: us-west-2
+  skip_cleanup: true
+  acl: public_read
+  local-dir: dist/
+  upload-dir: $TRAVIS_BRANCH/latest
+  on:
+    all_branches: true
+    condition: "$TRAVIS_PULL_REQUEST/$TEST_TYPE = false/build-dist"

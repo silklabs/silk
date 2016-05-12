@@ -8,6 +8,7 @@
 .*/node_modules/socket.io-client/.*
 .*/node_modules/node-fetch/.*
 .*/node_modules/babel*
+.*/server/tmp/.*
 
 [include]
 

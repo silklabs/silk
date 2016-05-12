@@ -4,7 +4,10 @@
 # functionality it provides for the BLE socket encryption.
 # See also https://github.com/webpack/webpack/issues/1568.
 pushd node_modules/webpack/node_modules/node-libs-browser/
-npm install --save crypto-browserify@~3.10.0
+if [[ ! -f .updated.crypto-browserify ]]; then
+  npm install --save crypto-browserify@~3.10.0
+  touch .updated.crypto-browserify
+fi
 popd
 
 # Apply patches to react-native and other dependencies.
@@ -12,10 +15,12 @@ patches=( tools/patches/*.patch )
 for patch in ${patches[@]};
 do
   echo $patch
-  if [[ -f node_modules/.${patch}.applied ]]; then
+  appliedFile=node_modules/.applied.$(basename $patch)
+  echo "-$appliedFile-"
+  if [[ -f $appliedFile ]]; then
     echo SKIPPED
     continue
   fi
   patch -N -p0 -i $patch || echo
-  touch node_modules/.${patch}.applied
+  touch $appliedFile
 done

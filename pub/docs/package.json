@@ -7,7 +7,7 @@
     "install": "npm run build"
   },
   "dependencies": {
-    "documentation": "3.0.4"
+    "documentation": "documentationjs/documentation#bb41619c734e59ef3fbc3648610032efcfdaaace"
   },
   "license": "MIT",
   "private": true

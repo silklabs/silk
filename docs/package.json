@@ -7,7 +7,8 @@
     "install": "npm run build"
   },
   "dependencies": {
-    "documentation": "documentationjs/documentation#bb41619c734e59ef3fbc3648610032efcfdaaace"
+    "documentation": "documentationjs/documentation#bb41619c734e59ef3fbc3648610032efcfdaaace",
+    "documentation-theme-default": "./theme/documentation-theme-default/"
   },
   "license": "MIT",
   "private": true

@@ -12,6 +12,7 @@ import {
 import createLog from 'silk-log';
 
 import Button from './Button';
+import WifiNetworkIcon from './WifiNetworkIcon';
 import WifiNetworkSelector from './WifiNetworkSelector';
 import Spinner from '../Spinner';
 import { SetupStyles } from '../CommonStyles';
@@ -197,8 +198,14 @@ export default class WifiConfig extends React.Component {
     return (
       <TouchableWithoutFeedback onPress={this._showWifiModal}>
         <View style={styles.ssidRow}>
-          <Text numberOfLines={1} style={styles.ssidLabel}>{ssid}</Text>
-          <Text style={styles.ssidLabel}>({level})</Text>
+          <Text numberOfLines={1} style={styles.ssidLabel}>
+            {ssid}
+          </Text>
+          <WifiNetworkIcon
+            level={level}
+            size="large"
+            tint="light"
+          />
         </View>
       </TouchableWithoutFeedback>
     );

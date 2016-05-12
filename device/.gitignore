@@ -71,8 +71,3 @@
 # |adb sync| generates this
 /filelist
 
-# eclipse droppings
-.cproject
-.project
-/.settings/
-

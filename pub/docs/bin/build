@@ -14,6 +14,7 @@ cd $(dirname $0)/..
   --project-version master \
   -f html \
   -o dist/api/device \
+  -t node_modules/documentation-theme-default \
   --name silk-device-api
 
 du -hs dist/api/device

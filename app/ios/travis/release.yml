@@ -13,7 +13,7 @@ install:
 env:
   global:
     - TEST_TYPE=build-dist
-    - CONFIGURATION=Debug
+    - CONFIGURATION=Release
 
 before_script:
   - node --version

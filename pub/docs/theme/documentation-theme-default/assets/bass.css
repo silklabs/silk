@@ -541,3 +541,13 @@
 
 .display-none{ display:none !important }
 
+.overflow-auto   { overflow: auto }
+
+/* Color */
+.bg-silkblack    { background: #424242 }
+.bg-silkgray     { background: #EEE9DE }
+.bg-silkgold     { background: #ECA555 }
+.bg-silknavy     { background: #357687 }
+.bg-silkgreen    { background: #58BFA3 }
+.bg-silkorange   { background: #E4754A }
+.bg-silkblue     { background: #DDE6E6 }

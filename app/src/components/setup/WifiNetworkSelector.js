@@ -7,7 +7,7 @@ export default class WifiNetworkSelector extends React.Component {
 
   static propTypes = {
     deviceNetworks: React.PropTypes.arrayOf(WifiNetworkIcon.propTypes.network),
-    currentBSSID: React.PropTypes.string,
+    selectedNetwork: WifiNetworkIcon.propTypes.network,
     style: View.propTypes.style,
     onSelectNetwork: React.PropTypes.func.isRequired,
     onSelectManually: React.PropTypes.func.isRequired,
@@ -18,7 +18,8 @@ export default class WifiNetworkSelector extends React.Component {
   }
 
   _renderRow = (network) => {
-    const selected = network.bssid === this.props.currentBSSID;
+    const { selectedNetwork } = this.props;
+    const selected = !!selectedNetwork && network.bssid === selectedNetwork.bssid;
     return (
       <Selector.Item
         key={network.bssid}

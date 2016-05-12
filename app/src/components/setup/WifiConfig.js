@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import createLog from 'silk-log';
 import Button from './Button';
 import WifiNetworkIcon from './WifiNetworkIcon';
 import WifiNetworkSelector from './WifiNetworkSelector';
+import Selector from './Selector';
 import Spinner from '../Spinner';
 import { SetupStyles } from '../CommonStyles';
 import { getWifiInfo } from '../../libraries/Util';
@@ -58,16 +60,30 @@ export default class WifiConfig extends React.Component {
     attemptedWifiMatch: false,
 
     /**
-     * Current user inputs
+     * Whether the user is picking the network from the
+     * device-generated list or entering it manually.
      */
-    bssid: null,
-    ssid: null,
-    psk: true,
-    level: null,
-    secret: '',
+    manualEntry: false,
+
+    /**
+     * DeviceWifiNetwork network that's been automatically matched or
+     * picked by the user from the `deviceNetworks` list.
+     */
+    selectedDeviceNetwork: null,
+
+    /**
+     * Network info manually entered by the user.
+     */
+    manualNetwork: null,
+
+    /**
+     * Wi-Fi passphrase, and whether it's visible or not.
+     */
+    secret: null,
     secretShown: false,
 
     wifiModalShown: false,
+    authTypeModalShown: false,
   };
 
   mounted = false;
@@ -111,7 +127,7 @@ export default class WifiConfig extends React.Component {
     // don't have all info yet, don't try to do any matching. But do
     // set newer values for either device or local WiFi info.
     if (this.state.attemptedWifiMatch ||
-        this.state.ssid !== null ||
+        this.state.selectedDeviceNetwork !== null ||
         localWifiInfo === SENTINEL ||
         deviceNetworks === null) {
       if (this.state.localWifiInfo !== localWifiInfo ||
@@ -138,10 +154,7 @@ export default class WifiConfig extends React.Component {
       deviceNetworks,
       localWifiInfo,
       attemptedWifiMatch: true,
-      bssid: match.bssid,
-      ssid: match.ssid,
-      psk: match.psk,
-      level: match.level,
+      selectedDeviceNetwork: match,
     });
   }
 
@@ -160,23 +173,23 @@ export default class WifiConfig extends React.Component {
       return deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
     }
 
-    let matchedNetwork =
+    let selectedDeviceNetwork =
       deviceNetworks.find((network) => network.bssid === localWifiInfo.BSSID);
-    if (matchedNetwork) {
-      log.debug('Found match based on BSSID:', matchedNetwork);
-      return matchedNetwork;
+    if (selectedDeviceNetwork) {
+      log.debug('Found match based on BSSID:', selectedDeviceNetwork);
+      return selectedDeviceNetwork;
     }
 
-    matchedNetwork =
+    selectedDeviceNetwork =
       deviceNetworks.find((network) => network.ssid === localWifiInfo.SSID);
-    if (matchedNetwork) {
-      log.debug('Found match based on SSID:', matchedNetwork);
-      return matchedNetwork;
+    if (selectedDeviceNetwork) {
+      log.debug('Found match based on SSID:', selectedDeviceNetwork);
+      return selectedDeviceNetwork;
     }
 
-    matchedNetwork = deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
-    log.debug('Resorting to WiFi with strongest RSSI:', matchedNetwork);
-    return matchedNetwork;
+    selectedDeviceNetwork = deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
+    log.debug('Resorting to WiFi with strongest RSSI:', selectedDeviceNetwork);
+    return selectedDeviceNetwork;
   }
 
   componentWillUnmount() {
@@ -186,8 +199,30 @@ export default class WifiConfig extends React.Component {
   }
 
   _renderSSIDControls() {
-    const { attemptedWifiMatch, ssid, level } = this.state;
-    if (!attemptedWifiMatch) {
+    if (this.state.manualEntry) {
+      const { manualNetwork } = this.state;
+      return (
+        <View style={styles.ssidRow}>
+          <TextInput
+            ref="ssid"
+            placeholder="Enter Wi-Fi name"
+            autoCorrect={false}
+            autoCapitalize={false}
+            value={manualNetwork.ssid}
+            style={SetupStyles.formInput}
+            onChangeText={(ssid) => this.setState({manualNetwork: {...manualNetwork, ssid}})}
+          />
+          <TouchableWithoutFeedback onPress={this._chooseFromList}>
+            <Image
+              source={require('image!wifi_return_to_list')}
+              style={styles.icon}
+            />
+          </TouchableWithoutFeedback>
+        </View>
+      );
+    }
+
+    if (!this.state.attemptedWifiMatch) {
       return (
         <View style={styles.ssidRow}>
           <Text style={styles.ssidLabel}>Scanning...</Text>
@@ -195,33 +230,46 @@ export default class WifiConfig extends React.Component {
         </View>
       );
     }
-    return (
-      <TouchableWithoutFeedback onPress={this._showWifiModal}>
+    let ssidRow = (
+      <View style={styles.ssidRow}>
+        <Text style={styles.ssidLabel}>
+          Tap to select...
+        </Text>
+      </View>
+    );
+    const { selectedDeviceNetwork } = this.state;
+    if (selectedDeviceNetwork) {
+      ssidRow = (
         <View style={styles.ssidRow}>
           <Text numberOfLines={1} style={styles.ssidLabel}>
-            {ssid}
+            {selectedDeviceNetwork.ssid}
           </Text>
           <WifiNetworkIcon
-            level={level}
+            level={selectedDeviceNetwork.level}
             size="large"
             tint="light"
           />
         </View>
+      );
+    }
+    return (
+      <TouchableWithoutFeedback onPress={this._showWifiModal}>
+        {ssidRow}
       </TouchableWithoutFeedback>
     );
   }
 
-  _renderSecretControls() {
-    const { psk, secretShown } = this.state;
+  _renderSecretInputRow() {
+    const { secretShown } = this.state;
     return (
       <View style={styles.secretRow}>
         <TextInput
           ref="secret"
           secureTextEntry={!secretShown}
-          placeholder={psk ? 'Enter WiFi password' : 'None'}
-          editable={psk}
-          clearButtonMode="always"
-          value={psk ? this.state.secret : ''}
+          autoCorrect={false}
+          autoCapitalize={false}
+          placeholder="Enter Wi-Fi password"
+          value={this.state.secret}
           style={SetupStyles.formInput}
           onChangeText={secret => this.setState({secret})}
         />
@@ -229,6 +277,39 @@ export default class WifiConfig extends React.Component {
           value={secretShown}
           onValueChange={secretShown => this.setState({secretShown})}
         />
+      </View>
+    );
+  }
+
+  _renderSecretControls() {
+    if (this.state.manualEntry) {
+      const { manualNetwork } = this.state;
+      return (
+        <View>
+          <View style={styles.secretRow}>
+            <TouchableWithoutFeedback onPress={this._showAuthTypeModal}>
+              <Text style={styles.ssidLabel}>
+                {manualNetwork && manualNetwork.psk ? 'WPA' : 'Open'}
+              </Text>
+            </TouchableWithoutFeedback>
+          </View>
+          {manualNetwork && manualNetwork.psk ? this._renderSecretInputRow() : null}
+        </View>
+      );
+    }
+
+    const { selectedDeviceNetwork } = this.state;
+    if (!selectedDeviceNetwork) {
+      return null;
+    }
+    if (selectedDeviceNetwork && selectedDeviceNetwork.psk) {
+      return this._renderSecretInputRow();
+    }
+    return (
+      <View style={styles.secretRow}>
+        <Text>
+          None
+        </Text>
       </View>
     );
   }
@@ -243,9 +324,9 @@ export default class WifiConfig extends React.Component {
 
   _selectNetwork = (network) => {
     this.setState({
-      ssid: network.ssid,
-      psk: network.psk,
+      selectedDeviceNetwork: network,
       wifiModalShown: false,
+      secret: null,
     });
   };
 
@@ -254,8 +335,27 @@ export default class WifiConfig extends React.Component {
   };
 
   _enterManually = () => {
-    // TODO
+    log.debug('Entering Wi-Fi information manually.');
+    this.setState({
+      wifiModalShown: false,
+      manualEntry: true,
+      manualNetwork: {
+        ssid: null,
+        psk: true,
+      },
+      secret: null,
+    });
   };
+
+  _chooseFromList = () => {
+    log.debug('Going back to choosing from a list.');
+    this.setState({
+      wifiModalShown: true,
+      manualEntry: false,
+      manualNetwork: null,
+      secret: null,
+    });
+  }
 
   _renderWifiModal() {
     return (
@@ -271,7 +371,7 @@ export default class WifiConfig extends React.Component {
         <WifiNetworkSelector
           ref="wifiNetworkSelector"
           deviceNetworks={this.state.deviceNetworks}
-          currentBSSID={this.state.bssid}
+          selectedNetwork={this.state.selectedDeviceNetwork}
           onSelectNetwork={this._selectNetwork}
           onSelectManually={this._enterManually}
           style={styles.wifiSelector}
@@ -280,12 +380,63 @@ export default class WifiConfig extends React.Component {
     );
   }
 
+  _showAuthTypeModal = () => {
+    this.setState({authTypeModalShown: true});
+  };
+
+  _dismissAuthTypeModal = () => {
+    this.setState({authTypeModalShown: false});
+  };
+
+  _onSelectAuthType = (psk) => {
+    this.setState({
+      manualNetwork: {
+        ...this.state.manualNetwork,
+        psk,
+      },
+      authTypeModalShown: false,
+    });
+  };
+
+  _renderAuthTypeModal() {
+    const { manualNetwork } = this.state;
+    return (
+      <Modal
+        animated={false}
+        transparent={true}
+        onRequestClose={this._dismissAuthTypeModal}
+        visible={this.state.authTypeModalShown}>
+        <TouchableWithoutFeedback onPress={this._dismissAuthTypeModal}>
+          <View style={styles.unfocusView} />
+        </TouchableWithoutFeedback>
+        <Selector
+          ref="authTypeSelector"
+          style={styles.authTypeSelector}
+          headerLabel="Wi-Fi Security Type">
+          <Selector.Item
+            label="WPA"
+            selected={manualNetwork && manualNetwork.psk}
+            onSelect={() => this._onSelectAuthType(true)}
+          />
+          <Selector.Item
+            label="Open"
+            selected={manualNetwork && !manualNetwork.psk}
+            onSelect={() => this._onSelectAuthType(false)}
+          />
+        </Selector>
+      </Modal>
+    );
+  }
+
   _handleSave = () => {
+    const network = this.state.manualEntry ?
+      this.state.manualNetork :
+      this.state.selectedDeviceNetwork;
     this.props.onSave({
       deviceId: this.props.deviceSecret.deviceId,
       name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
-      ssid: this.state.ssid,
-      secret: this.state.psk ? this.state.secret : null,
+      ssid: network.ssid,
+      secret: network.psk ? this.state.secret : null,
     });
     this.props.navigator.pushAsync({
       name: 'DeviceStatus',
@@ -294,8 +445,14 @@ export default class WifiConfig extends React.Component {
   };
 
   render() {
+    const network = this.state.manualEntry ?
+      this.state.manualNetwork :
+      this.state.selectedDeviceNetwork;
     const saveButtonDisabled =
-      !this.state.ssid || (this.state.psk && this.state.secret.length < 8);
+      !network ||
+      !network.ssid ||
+      (network.psk && !this.state.secret) ||
+      (network.psk && this.state.secret.length < 8);
 
     return (
       <ScrollView
@@ -312,6 +469,7 @@ export default class WifiConfig extends React.Component {
         {this._renderSSIDControls()}
         {this._renderSecretControls()}
         {this._renderWifiModal()}
+        {this._renderAuthTypeModal()}
         <View style={{flex: 1}} />
         <View style={styles.buttonRow}>
           <Button
@@ -346,7 +504,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignSelf: 'stretch',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginVertical: 8,
     paddingVertical: 8,
     borderBottomWidth: 3,
@@ -356,6 +513,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Open Sans',
     fontSize: 18,
     color: 'white',
+    flex: 1,
   },
   secretRow: {
     flexDirection: 'row',
@@ -376,6 +534,21 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     bottom: 100,
+  },
+  authTypeSelector: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(66, 66, 66, 0.05)',
+    borderRadius: 4,
+    shadowColor: 'black',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    marginHorizontal: 10,
+    marginTop: 96,
+  },
+  icon: {
+    width: 32,
+    height: 32,
   },
   buttonRow: {
     flexDirection: 'row',

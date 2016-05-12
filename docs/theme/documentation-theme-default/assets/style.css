@@ -89,6 +89,10 @@ h4:hover .anchorjs-link {
 .fill-light {
   background: #F9F9F9;
 }
+.dark-link a { color: #052E52; }
+.font-smaller {
+  font-size:80%;
+}
 
 .width2 {
   width: 1rem;
@@ -114,3 +118,6 @@ ul {
   border-radius: 3px;
   box-sizing: border-box;
 }
+
+.quiet { color:#7D7D7D; }
+.small { font-size: 0.9rem; }

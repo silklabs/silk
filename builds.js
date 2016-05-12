@@ -141,17 +141,17 @@ const builds = {
       'app/**/*.js',
     ],
   }),
-  'app-ios-pr': npmPackageBuild('app', {
-    // On PRs only build the entire iOS app if relevant files changed.
-    travis_yml: 'app/ios/.travis.yml',
+  'app-ios-debug': npmPackageBuild('app', {
+    // Only build the iOS app if relevant files changed.
+    travis_yml: 'app/ios/travis/debug.yml',
     files: [
       'app/ios/**',
     ],
-    events: ['pr'],
   }),
-  'app-ios-push': npmPackageBuild('app', {
-    // Always build the app on a branch push, no matter what changed.
-    travis_yml: 'app/ios/.travis.yml',
+  'app-ios-release': npmPackageBuild('app', {
+    // Always build and upload a release version of app on a branch
+    // push, no matter what changed.
+    travis_yml: 'app/ios/travis/release.yml',
     events: ['push'],
   }),
   'app-android-pr': npmPackageBuild('app', {

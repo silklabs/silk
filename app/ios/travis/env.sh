@@ -5,7 +5,6 @@
 #
 
 export  PROJECT=Silk
-export  CONFIGURATION=Release
 # Single quotes needed so that YAML doesn't escape the colon
 export  'DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"'
 # These values are all related and could even be extracted from the .mobileprovision file:

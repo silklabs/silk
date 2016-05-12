@@ -134,7 +134,8 @@ else
 my_target_crtbegin_so_o := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTBEGIN_SO_O)
 my_target_crtend_so_o := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CRTEND_SO_O)
 endif
-$(my_inplace_build_module): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
+my_target_libatomic := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_LIBATOMIC)
+my_target_libgcc := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_LIBGCC)
 
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
@@ -143,6 +144,11 @@ $(my_inplace_build_module): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PR
 $(my_inplace_build_module): LOCAL_PATH := $(LOCAL_PATH)
 $(my_inplace_build_module): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
 $(my_inplace_build_module): $(import_includes)
+$(my_inplace_build_module): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
+$(my_inplace_build_module): PRIVATE_TARGET_CRTBEGIN_SO_O := $(abspath $(my_target_crtbegin_so_o))
+$(my_inplace_build_module): PRIVATE_TARGET_CRTEND_SO_O := $(abspath $(my_target_crtend_so_o))
+$(my_inplace_build_module): PRIVATE_TARGET_LIBATOMIC := $(my_target_libatomic)
+$(my_inplace_build_module): PRIVATE_TARGET_LIBGCC := $(my_target_libgcc)
 $(my_inplace_build_module):
 	@echo "NPM Install: $(LOCAL_PATH)"
 	$(hide) cd $(LOCAL_PATH) &&  \
@@ -177,11 +183,13 @@ $(my_inplace_build_module):
       $(PRIVATE_DEBUG_CFLAGS) \
       "\ && \
     LD_FLAGS="\
+      -nostdlib \
       $(PRIVATE_LDFLAGS) \
       $(PRIVATE_LDLIBS) \
       $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
       -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       $(and $(my_ndk_sysroot_lib),-L$(abspath $(my_ndk_sysroot_lib))) \
+      $(PRIVATE_TARGET_CRTBEGIN_SO_O) \
       -L$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       "\ && \
 		export SILK_ALLOW_REBUILD_FAIL=1 \
@@ -200,6 +208,9 @@ $(my_inplace_build_module):
         $(PRIVATE_ALL_WHOLE_STATIC_LIBRARIES) \
         $(PRIVATE_ALL_STATIC_LIBRARIES) \
         $(PRIVATE_ALL_SHARED_LIBRARIES) \
+        $(PRIVATE_TARGET_LIBATOMIC) \
+        $(PRIVATE_TARGET_LIBGCC) \
+        $(PRIVATE_TARGET_CRTEND_SO_O) \
       ) \
       -Wl,--end-group" && \
     node $(npm_cli) install --production --nodedir=$(npm_node_dir) #--loglevel silly

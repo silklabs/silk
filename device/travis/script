@@ -70,9 +70,9 @@ mako)
   $make otapackage
   $make silkota
   ;;
-base.msm8916|base.msm8956)
+base.*)
   $make
-  # No |lock_build_fingerprint| here since base.msm8916 build doesn't generate build.prop
+  # No |lock_build_fingerprint| here since base build doesn't generate build.prop
   $make silkota
   ;;
 *)

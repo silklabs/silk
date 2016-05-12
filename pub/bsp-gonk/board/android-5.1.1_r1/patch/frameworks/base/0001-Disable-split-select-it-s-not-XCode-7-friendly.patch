@@ -1,0 +1,25 @@
+From 3ade94222e7997170e360e11a95831e33a71df79 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 11 May 2016 20:51:57 -0700
+Subject: [PATCH] Disable split-select, it's not XCode 7 friendly
+
+---
+ tools/split-select/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/split-select/Android.mk b/tools/split-select/Android.mk
+index 013e570..9f89bbf 100644
+--- a/tools/split-select/Android.mk
++++ b/tools/split-select/Android.mk
+@@ -15,7 +15,7 @@
+ #
+ 
+ # This tool is prebuilt if we're doing an app-only build.
+-ifeq ($(TARGET_BUILD_APPS)$(filter true,$(TARGET_BUILD_PDK)),)
++ifeq (true,false)
+ 
+ # ==========================================================
+ # Setup some common variables for the different build
+-- 
+2.4.2
+

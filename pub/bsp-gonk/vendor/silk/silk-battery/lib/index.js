@@ -9,8 +9,8 @@
 
 import events from 'events';
 import fs from 'mz/fs';
-import createLog from './log';
-import * as util from './sysutils';
+import createLog from 'silk-log/device';
+import * as util from 'silk-sysutils';
 
 const log = createLog('battery');
 

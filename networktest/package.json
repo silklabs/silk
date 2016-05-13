@@ -23,7 +23,8 @@
     "silk-core-version": "/version",
     "silk-log": "/log",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
-    "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi"
+    "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi",
+    "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery"
   },
   "dependencies": {
     "easy-table": "1.0.0",

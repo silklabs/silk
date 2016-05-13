@@ -1,0 +1,20 @@
+{
+  "name": "silk-battery",
+  "version": "0.0.1",
+  "description": "Silk battery module",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "../../../../npm_postinstall && silk-buildjs",
+    "build": "silk-buildjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "babel-runtime": "5.8.35",
+    "mz": "2.0.0"
+  },
+  "symlinkDependencies": {
+    "silk-buildjs": "../../../../buildjs/",
+    "silk-log": "/log"
+  },
+  "private": true
+}

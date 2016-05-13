@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     paddingLeft: 12,
-    paddingRight: 30,
+    paddingRight: 24,
     justifyContent: 'space-between',
     borderBottomWidth: 1 / PixelRatio.get(),
     borderBottomColor: Colors.SilkLabsBlack50,

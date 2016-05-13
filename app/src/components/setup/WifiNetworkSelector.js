@@ -29,6 +29,7 @@ export default class WifiNetworkSelector extends React.Component {
         icon={
           <WifiNetworkIcon
             level={network.level}
+            secured={network.psk}
             size="small"
             tint="dark"
           />

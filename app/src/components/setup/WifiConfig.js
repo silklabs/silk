@@ -245,6 +245,7 @@ export default class WifiConfig extends React.Component {
           </Text>
           <WifiNetworkIcon
             level={selectedDeviceNetwork.level}
+            secured={selectedDeviceNetwork.psk}
             size="large"
             tint="light"
           />

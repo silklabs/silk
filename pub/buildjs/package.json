@@ -8,7 +8,8 @@
     "postinstall": "../npm_postinstall"
   },
   "symlinkDependencies": {
-    "babel-core": "../babel-core"
+    "babel-core": "../babel-core",
+    "babel-preset-silk-node4": "../babel-preset-silk-node4"
   },
   "dependencies": {
     "babel-loader": "6.2.4",

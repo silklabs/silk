@@ -3,7 +3,12 @@
   "version": "0.15.0",
   "description": "Silk Emulator",
   "main": "package.json",
-  "scripts": {},
+  "scripts": {
+    "postinstall": "./bin/postinstall"
+  },
+  "bin": {
+    "silk-emulator": "./bin/silk-emulator"
+  },
   "author": "Silk Labs",
   "license": "MIT",
   "dependencies": {

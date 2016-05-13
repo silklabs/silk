@@ -10,7 +10,6 @@ var VERSION = require('../package.json').version;
 var OS = require('os').platform();
 
 var download = new Download({
-  mode: 755,
   extract: true,
 });
 

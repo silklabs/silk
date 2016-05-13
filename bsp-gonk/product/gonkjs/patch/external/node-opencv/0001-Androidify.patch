@@ -177,7 +177,7 @@ index 0c3e7d4..a93ad0c 100644
 -    "build": "node-gyp build",
 -    "test": "node test/unit.js",
 -    "install": "node-pre-gyp install --fallback-to-build"
-+    "postinstall": "mkdir -p dist/ ; browserify lib/opencv.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
++    "postinstall": "mkdir -p build/ ; browserify lib/opencv.js --node --ignore-missing --standalone __ignored --outfile build/index.js"
    },
    "keywords": [
      "opencv",
@@ -186,7 +186,7 @@ index 0c3e7d4..a93ad0c 100644
      "quadrocopter"
    ],
 -  "main": "./lib/opencv",
-+  "main": "dist/index.js",
++  "main": "build/index.js",
    "repository": {
      "type": "git",
      "url": "https://github.com/peterbraden/node-opencv.git"

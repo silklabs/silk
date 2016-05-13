@@ -89,6 +89,7 @@ declare export class RTCSessionDescription {
 declare export class RTCDataChannel extends WebrtcEventTarget {
   readyState: string;
   close: () => void;
+  binaryType: string;
   send: (data: string | Buffer | ArrayBuffer) => void;
 }
 

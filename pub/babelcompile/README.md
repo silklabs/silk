@@ -20,7 +20,7 @@ This has a number of benefits:
 Directly reference it from an absolute path in your package:
 
 ```js
-require(__dirname + '/../babel/register')({
+require(__dirname + '/../babel-register')({
   // options ...
 })
 ```
@@ -29,5 +29,7 @@ require(__dirname + '/../babel/register')({
 
 ```sh
 npm run compile
-# Check in register.js
+# Check in ../babel-core ../babel-register
+# Update the package.json's in those files to match the verison
+# of babel used.
 ```

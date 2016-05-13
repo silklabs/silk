@@ -2900,7 +2900,7 @@ index 42cfdb6..9cdbc67 100644
      "central"
    ],
 -  "main": "./index.js",
-+  "main": "dist/index.js",
++  "main": "build/index.js",
    "engines": {
      "node": ">=0.8"
    },
@@ -2931,7 +2931,7 @@ index 42cfdb6..9cdbc67 100644
      "ws": "~0.4.31"
    },
    "scripts": {
-+    "postinstall": "mkdir -p dist/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile dist/index.js",
++    "postinstall": "mkdir -p build/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile build/index.js",
      "pretest": "jshint *.js lib/. test/.",
      "test": "mocha -R spec test/*.js"
    },

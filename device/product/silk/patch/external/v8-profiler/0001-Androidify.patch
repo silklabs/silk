@@ -80,7 +80,7 @@ index acdedb5..afc573a 100644
      "node": ">=0.10"
    },
 -  "main": "v8-profiler",
-+  "main": "dist/index.js",
++  "main": "build/index.js",
    "dependencies": {
 -    "node-pre-gyp": "^0.6.5",
 +    "browserify": "^10.2.1",
@@ -96,7 +96,7 @@ index acdedb5..afc573a 100644
 -    "preinstall": " ",
 -    "install": "node-pre-gyp install --fallback-to-build",
 -    "test": "mocha"
-+    "postinstall": "mkdir -p dist/ ; browserify v8-profiler.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
++    "postinstall": "mkdir -p build/ ; browserify v8-profiler.js --node --ignore-missing --standalone __ignored --outfile build/index.js"
    }
  }
 diff --git a/v8-profiler.js b/v8-profiler.js

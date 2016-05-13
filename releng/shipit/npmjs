@@ -32,7 +32,7 @@ for dir in sdk cli; do
   popd
 done
 
-for dir in sdk cli; do
+for dir in sdk cli sdk-emulator; do
   pushd $dir
 
   name=$(node -p "require('./package.json').name")

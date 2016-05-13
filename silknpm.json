@@ -11,6 +11,6 @@
     "node-webrtc": ["package.json"],
     "device": ["vendor"],
     "device/vendor": ["silk"],
-    "pub/bsp-gonk": []
+    "pub/bsp-gonk": ["vendor"]
   }
 }

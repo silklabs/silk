@@ -45,11 +45,18 @@ const CALLER_PEER_CONFIG = {
 
 const ANSWER_TIMEOUT = 2 * 60 * 1000; // 2min.
 
-export type CallOptions = {
-  dataChannels?: {[key: string]: RTCDataChannelInit};
+export type MediaStreamsPair = {
+  local?: ?MediaStream;
+  remote?: ?MediaStream;
 };
 
-type Caller = [RTCPeerConnection, Map<string, RTCDataChannel>];
+export type CallOptions = {
+  dataChannels?: {[key: string]: RTCDataChannelInit};
+  mediaStreams?: MediaStreamsPair;
+};
+
+type Caller = [RTCPeerConnection, Map<string, RTCDataChannel>,
+               MediaStreamsPair];
 
 function _peer(caller: Caller, transport: Duplex): Promise<void> {
   const [peerConnection] = caller;
@@ -80,7 +87,7 @@ function _peer(caller: Caller, transport: Duplex): Promise<void> {
 }
 
 async function _call(caller: Caller, transport: Duplex): Promise<void> {
-  const [peerConnection, dataChannels] = caller;
+  const [peerConnection, dataChannels, mediaStreams] = caller;
 
   log.info('creating offer...');
   let desc = await webrtcPromise(peerConnection, 'createOffer');
@@ -98,12 +105,22 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
     // We also send along the list of expected data channels so we can await
     // them...
     dataChannels: Array.from(dataChannels.keys()),
+    // Should the remote side wait for a media stream to be offered?
+    mediaStream: mediaStreams && ('local' in mediaStreams),
   });
 
   let answer = await Promise.race([
     eventToPromise(transport, 'data'),
     timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for answer')),
   ]);
+
+  if ('remote' in mediaStreams) {
+    log.info('expecting a remote media stream');
+    // TODO: the caller expects the answerer to send back a remote
+    // media stream.  Start listening to the
+    // RTCPeerConnection.onaddstream event and update
+    // `mediaStreams.remote` when it arrives.
+  }
 
   log.info('caller got answer');
   await webrtcPromise(
@@ -113,6 +130,17 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
   );
 
   await waitForIce(log, 'caller', peerConnection, transport);
+  log.info('ICE done, waiting for peer ack ...');
+  while (true) {
+    let message = await Promise.race([
+      eventToPromise(transport, 'data'),
+      timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for "done" ack'))
+    ]);
+    if (message.done) {
+      log.info('  received "done" ack, closing transport');
+      break;
+    }
+  }
   transport.end();
 }
 
@@ -150,5 +178,11 @@ export function createCaller(options?: CallOptions = {}): Caller {
     }
   }
 
-  return [peerConnection, dataChannels];
+  let mediaStreams = Object.assign({}, options.mediaStreams);
+  if ('local' in mediaStreams) {
+    log.info('Added local MediaStream', mediaStreams.local);
+    peerConnection.addStream(mediaStreams.local);
+  }
+
+  return [peerConnection, dataChannels, mediaStreams];
 }

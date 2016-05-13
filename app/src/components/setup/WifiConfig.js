@@ -4,7 +4,6 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableWithoutFeedback,
@@ -273,10 +272,13 @@ export default class WifiConfig extends React.Component {
           style={SetupStyles.formInput}
           onChangeText={secret => this.setState({secret})}
         />
-        <Switch
-          value={secretShown}
-          onValueChange={secretShown => this.setState({secretShown})}
-        />
+        <TouchableWithoutFeedback
+          onPress={() => this.setState({secretShown: !this.state.secretShown})}>
+          <Image
+            source={require('image!visible')}
+            style={[styles.icon, secretShown ? null : styles.disabledIcon]}
+          />
+        </TouchableWithoutFeedback>
       </View>
     );
   }
@@ -549,6 +551,9 @@ const styles = StyleSheet.create({
   icon: {
     width: 32,
     height: 32,
+  },
+  disabledIcon: {
+    opacity: 0.5,
   },
   buttonRow: {
     flexDirection: 'row',

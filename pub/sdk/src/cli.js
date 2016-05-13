@@ -31,10 +31,11 @@ function findPackageRoot() {
 }
 
 function sourceArg() {
-  return [['source'], {
-   help: `Source of the files `,
-   type: (value) => path.resolve(value),
- }];
+  return [['--source'], {
+    help: `Source of the files `,
+    defaultValue: findPackageRoot(),
+    type: (value) => path.resolve(value),
+  }];
 }
 
 function printDevices(devices) {

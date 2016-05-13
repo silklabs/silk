@@ -2,7 +2,7 @@
   "name": "silk-bledroid",
   "version": "0.0.1",
   "description": "wrapper for bledroid",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "postinstall": "./bin/postinstall && silk-buildjs",
     "build": "silk-buildjs"

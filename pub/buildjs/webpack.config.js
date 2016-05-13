@@ -16,8 +16,6 @@ const pkg = require(path.join(context, 'package.json'));
 const localWebpack = path.join(context, 'webpack.config.js');
 
 const name = pkg.name;
-
-// XXX: The way we deal with main should be considered legacy.
 const main = pkg.main;
 
 if (!main) {
@@ -28,7 +26,7 @@ const config = {
   context,
   target: 'node',
   devtool: 'source-map',
-  entry: `./lib/${main}`,
+  entry: `./${main}`,
   output: {
     path: path.join(context, destination),
     libraryTarget: 'commonjs2',

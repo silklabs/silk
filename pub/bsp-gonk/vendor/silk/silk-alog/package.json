@@ -4,7 +4,8 @@
   "description": "logcat wrapper",
   "main": "build/Release/silk-alog.node",
   "scripts": {
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild",
+    "test": "node -e 'require(`.`).info(`pass`)'"
   },
   "author": {
     "name": "Ben Turner",

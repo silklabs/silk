@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Ships pub/cli/ and pub/sdk/ to npmjs
+# Ships packages to npmjs
 #
 # NOTE: Run this script mindfully.  It'll ship whatever you have in your
 # current workspace to the world...
@@ -26,13 +26,15 @@ shopt -s nullglob
 set -x
 cd $(dirname $(readlink -f $0))/../../pub
 
-for dir in sdk cli; do
+PACKAGES="sdk cli sdk-emulator"
+
+for dir in $PACKAGES; do
   pushd $dir
   npm install .
   popd
 done
 
-for dir in sdk cli sdk-emulator; do
+for dir in $PACKAGES; do
   pushd $dir
 
   name=$(node -p "require('./package.json').name")

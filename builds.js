@@ -357,6 +357,20 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  'repocache-qemu-gonkjs': {
+    title: 'Updating repocache for qemu/gonkjs',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=qemu',
+          'PRODUCT=gonkjs',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
   'repocache-kenzo-gonkjs': {
     title: 'Updating repocache for kenzo/gonkjs',
     travis_yml: 'repocache/travis.yml',
@@ -364,7 +378,7 @@ const builds = {
       env: {
         global: [
           'BOARD=kenzo',
-          'PRODUCT=gonkjs'
+          'PRODUCT=gonkjs',
         ],
       },
     },

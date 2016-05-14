@@ -20,6 +20,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DIN Round Pro',
     fontSize: 24,
     color: Colors.SilkLabsYellow,
-    backgrondColor: 'transparent',
+    backgroundColor: 'transparent',
   },
 });

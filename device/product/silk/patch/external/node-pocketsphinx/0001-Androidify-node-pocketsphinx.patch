@@ -1,4 +1,4 @@
-From 6e6830f10509f71e138dc38204dc44454934a0d2 Mon Sep 17 00:00:00 2001
+From a4da1b95b6aa78e1dc736fea548ef2a0866b54dc Mon Sep 17 00:00:00 2001
 From: Anshul Jain <anshul@silklabs.com>
 Date: Thu, 7 Jan 2016 20:29:14 -0800
 Subject: [PATCH] Androidify node-pocketsphinx
@@ -8,26 +8,27 @@ under node-pocketsphinx on the host OS such as Linux or OSX. The
 resulting file are copied over with the slight modification to add
 extern "C" declartion.
 ---
- .gitignore   |    2 -
+ .gitignore   |    3 +-
  Android.mk   |   13 +
  binding.gyp  |   67 +-
  index.js     |    4 +-
  package.json |    8 +-
  ps.cpp       | 5806 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  sb.cpp       | 5674 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 7 files changed, 11513 insertions(+), 61 deletions(-)
+ 7 files changed, 11514 insertions(+), 61 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 ps.cpp
  create mode 100644 sb.cpp
 
 diff --git a/.gitignore b/.gitignore
-index bcd5de2..378eac2 100644
+index bcd5de2..228d73d 100644
 --- a/.gitignore
 +++ b/.gitignore
-@@ -1,3 +1 @@
+@@ -1,3 +1,2 @@
  build
 -ps.cpp
 -sb.cpp
++/node_modules
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
 index 0000000..d623e7b
@@ -144,7 +145,7 @@ index 007564a..4db38eb 100644
  module.exports = {
      "ps" : PocketSphinx,
 diff --git a/package.json b/package.json
-index e75f568..a840bc1 100644
+index e75f568..ccc5d5c 100644
 --- a/package.json
 +++ b/package.json
 @@ -6,7 +6,10 @@
@@ -152,9 +153,9 @@ index e75f568..a840bc1 100644
      "url": "git://github.com/cmusphinx/node-pocketsphinx.git"
    },
 -  "main": "index.js",
-+  "main": "dist/index.js",
++  "main": "build/index.js",
 +  "scripts": {
-+    "postinstall": "mkdir -p dist/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
++    "postinstall": "mkdir -p build/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile build/index.js"
 +  },
    "keywords": [
      "pocketsphinx",
@@ -11662,5 +11663,5 @@ index 0000000..1de5e53
 +NODE_MODULE(SphinxBase, SphinxBase_initialize)
 +#endif
 -- 
-2.4.5
+1.9.1
 

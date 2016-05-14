@@ -471,7 +471,7 @@ index d951f35..29e594f 100644
    "version": "0.1.13",
    "description": "A node.js module for implementing BLE (Bluetooth low energy) peripherals",
 -  "main": "index.js",
-+  "main": "dist/index.js",
++  "main": "build/index.js",
    "engines": {
      "node": ">=0.8"
    },
@@ -481,7 +481,7 @@ index d951f35..29e594f 100644
      "linux"
    ],
    "scripts": {
-+    "postinstall": "mkdir -p dist/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile dist/index.js",
++    "postinstall": "mkdir -p build/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile build/index.js",
      "pretest": "jshint *.js lib/. test/. examples/.",
      "test": "mocha -R spec test/*.js"
    },

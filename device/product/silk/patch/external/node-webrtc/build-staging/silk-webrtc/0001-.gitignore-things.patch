@@ -1,0 +1,34 @@
+From 0cd9892014f429cbf1bb7387f4cee84aeadd7bf0 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 13 May 2016 17:10:15 -0700
+Subject: [PATCH] .gitignore things
+
+---
+ .gitignore | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+ create mode 100644 .gitignore
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..df60532
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,15 @@
++/GypAndroid.mk
++/chromium/src/build/android/cpu_features.target.mk
++/chromium/src/third_party/boringssl/boringssl.target.mk
++/chromium/src/third_party/boringssl/boringssl_asm.target.mk
++/chromium/src/third_party/expat/expat.target.mk
++/chromium/src/third_party/jsoncpp/jsoncpp.target.mk
++/chromium/src/third_party/libjpeg_turbo/libjpeg.target.mk
++/chromium/src/third_party/libvpx_new/libvpx_new.target.mk
++/chromium/src/third_party/libyuv/libyuv.target.mk
++/chromium/src/third_party/openmax_dl/dl/openmax_dl.target.mk
++/chromium/src/third_party/openmax_dl/dl/openmax_dl_armv7.target.mk
++/chromium/src/third_party/openmax_dl/dl/openmax_dl_neon.target.mk
++/chromium/src/third_party/opus/opus.target.mk
++/chromium/src/third_party/usrsctp/usrsctplib.target.mk
++/third_party/node-webrtc
+-- 
+1.9.1
+

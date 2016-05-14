@@ -21,6 +21,15 @@ if [ $(uname) = "Darwin" ]; then
     unset __TOOLPATH
   done
 
+  if ! which -s wget; then
+    if [ -z $FULL_SERVICE ]; then
+      echo Please install wget to continue.
+      echo "Hint: |brew install wget|"
+      exit 1
+    fi
+    ( set -x; brew install wget )
+  fi
+
   if ! cp --version | grep -q GNU; then
     echo "Error: GNU cp not found at $(which cp)"
     exit 1

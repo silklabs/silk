@@ -54,7 +54,7 @@ const oss = {
     travis_config: {
       env: {
         global: [
-          'GONK=qemu',
+          'BOARD=qemu',
           'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
         ],
       },
@@ -76,7 +76,7 @@ const oss = {
     travis_config: {
       env: {
         global: [
-          'GONK=qemu',
+          'BOARD=qemu',
           'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
         ],
       },
@@ -93,7 +93,7 @@ const oss = {
     travis_config: {
       env: {
         global: [
-          'GONK=qemu',
+          'BOARD=qemu',
           'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
         ],
       },
@@ -106,7 +106,7 @@ const oss = {
     travis_config: {
       env: {
         global: [
-          'GONK=mako',
+          'BOARD=mako',
           'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
         ],
       },
@@ -119,7 +119,7 @@ const oss = {
     travis_config: {
       env: {
         global: [
-          'GONK=kenzo',
+          'BOARD=kenzo',
           'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
         ],
       },
@@ -357,6 +357,20 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  'repocache-qemu-gonkjs': {
+    title: 'Updating repocache for qemu/gonkjs',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=qemu',
+          'PRODUCT=gonkjs',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
   'repocache-kenzo-gonkjs': {
     title: 'Updating repocache for kenzo/gonkjs',
     travis_yml: 'repocache/travis.yml',
@@ -364,7 +378,7 @@ const builds = {
       env: {
         global: [
           'BOARD=kenzo',
-          'PRODUCT=gonkjs'
+          'PRODUCT=gonkjs',
         ],
       },
     },

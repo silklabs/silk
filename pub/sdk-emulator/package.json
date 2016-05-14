@@ -1,5 +1,5 @@
 {
-  "name": "silk-sdk-emulator",
+  "name": "silk-emulator",
   "version": "0.15.0",
   "description": "Silk Emulator",
   "main": "package.json",

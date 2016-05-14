@@ -4,9 +4,14 @@
  */
 
 /**
- * This module provides utility functions
- * @name sysutils
- * @namespace
+ * This module provides system utility functions
+ * @module silk-sysutils
+ *
+ * @example
+ * import * as util from 'silk-sysutils';
+ *
+ * util.getprop('ro.product.name', 'unknown');
+ * util.playSound('/data/hello.mp3');
  */
 
 import { execFile, spawnSync } from 'child_process';
@@ -46,8 +51,8 @@ try {
 /**
  * Throws an exception to the top level process exception handler, escaping any
  * Promises that might otherwise consume the exception.
- * @param e Error string
- * @memberof sysutils
+ * @param {string} e Error string
+ * @memberof silk-sysutils
  */
 export function processthrow(e: string) {
   process.emit('uncaughtException', e);
@@ -59,7 +64,7 @@ export function processthrow(e: string) {
  * @property {number} code result code
  * @property {string} stdout standard out stream
  * @property {string} stderr standard error stream
- * @memberof sysutils
+ * @private
  */
 type ExecOutput = {
   code: number;
@@ -70,9 +75,13 @@ type ExecOutput = {
 /**
  * Execute a command
  *
- * @param cmd Command to execute
- * @param args Arguments for the command
- * @memberof sysutils
+ * @param {string} cmd Command to execute
+ * @param {Array<string>} args Arguments for the command
+ * @returns {Promise<Object>} result - Object representing output of exec command
+ * @returns {number} result.code result code
+ * @returns {string} result.stdout standard out stream
+ * @returns {string} result.stderr standard error stream
+ * @memberof silk-sysutils
  */
 export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
   return new Promise((resolve, reject) => {
@@ -91,11 +100,12 @@ export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
 /**
  * Execute a command. Retry if it fails
  *
- * @param cmd Command to execute
- * @param args Arguments for the command
- * @param retries Number of retries
- * @param delayMs Delay in ms between each retry
- * @memberof sysutils
+ * @param {string} cmd Command to execute
+ * @param {Array<string>} args Arguments for the command
+ * @param {number} retries Number of retries
+ * @param {number} delayMs Delay in ms between each retry
+ * @return {Promise<ExecOutput>} Result of the command
+ * @memberof silk-sysutils
  */
 export function execRetry(
     cmd: string,
@@ -115,25 +125,27 @@ export function execRetry(
 
 
 /**
- * Type of Android scalar property
+ * Type of system scalar property
  * @property {(number|string|boolean)} ScalarPropTypes
- * @memberof sysutils
+ * @private
  */
 type ScalarPropTypes = string | bool | number;
 
 /**
- * Type of Android property
+ * Type of system property
  * @property {(Array<PropTypes> | ScalarPropTypes)} PropTypes
+ * @private
  */
 type PropTypes = Array<PropTypes> | ScalarPropTypes;
 
 /**
- * Get value of an android property. Check to see if android property
+ * Get value of a system property. Check to see if system property
  * is available. If property is not available check silk.prop file instead.
  *
- * @param prop Name of the property to fetch
- * @param [defaultValue=null] Default value to use if property is not available
- * @memberof sysutils
+ * @param {string} prop Name of the property to fetch
+ * @param {string | boolean | number} [defaultValue=null] Default value to use if property is not available
+ * @return {string | boolean | number} Value of the property
+ * @memberof silk-sysutils
  */
 export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   let value = props.get(prop);
@@ -149,22 +161,24 @@ export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
 }
 
 /**
- * Get value of an android property as string
+ * Get value of a system property as string
  *
- * @param prop Name of the property to fetch
- * @param [defaultValue=null] Default value to use if property is not available
- * @memberof sysutils
+ * @param {string} prop Name of the property to fetch
+ * @param {string} [defaultValue=null] Default value to use if property is not available
+ * @return {string} Value of the property
+ * @memberof silk-sysutils
  */
 export function getstrprop(prop: string, defaultValue?: string): string {
   return String(getprop(prop, defaultValue));
 }
 
 /**
- * Get value of an android property as boolean
+ * Get value of a system property as boolean
  *
- * @param prop Name of the property to fetch
- * @param [defaultValue=false] Default value to use if property is not available
- * @memberof sysutils
+ * @param {string} prop Name of the property to fetch
+ * @param {boolean} [defaultValue=false] Default value to use if property is not available
+ * @return {boolean} Value of the property
+ * @memberof silk-sysutils
  */
 export function getboolprop(prop: string, defaultValue: bool = false): bool {
   let value = getprop(prop, defaultValue);
@@ -177,11 +191,12 @@ export function getboolprop(prop: string, defaultValue: bool = false): bool {
 }
 
 /**
- * Get value of an android property as integer
+ * Get value of a system property as integer
  *
- * @param prop Name of the property to fetch
- * @param [defaultValue=0] Default value to use if property is not available
- * @memberof sysutils
+ * @param {string} prop Name of the property to fetch
+ * @param {number} [defaultValue=0] Default value to use if property is not available
+ * @return {number} Value of the property
+ * @memberof silk-sysutils
  */
 export function getintprop(prop: string, defaultValue: number = 0): number {
   let value = parseInt(String(getprop(prop, defaultValue)), 10);
@@ -192,11 +207,12 @@ export function getintprop(prop: string, defaultValue: number = 0): number {
 }
 
 /**
- * Get value of an android property as string array
+ * Get value of a system property as string array
  *
- * @param prop Name of the property to fetch
- * @param [defaultValue=[]] Default value to use if property is not available
- * @memberof sysutils
+ * @param {string} prop Name of the property to fetch
+ * @param {Array<string>} [defaultValue=[]] Default value to use if property is not available
+ * @return {Array<string>} Value of the property
+ * @memberof silk-sysutils
  */
 export function getlistprop(
   prop: string,
@@ -206,11 +222,12 @@ export function getlistprop(
 }
 
 /**
- * Set value of an android property as boolean
+ * Set value of a system property as boolean
  *
- * @param prop Name of the property to set
- * @param value Property value
- * @memberof sysutils
+ * @param {string} prop Name of the property to set
+ * @param {string | boolean | number} value Property value
+ * @return {Error} [] Result
+ * @memberof silk-sysutils
  */
 export function setprop(prop: string, value: PropTypes): ?Error {
   const result = spawnSync('setprop', [prop, value.toString()]);
@@ -220,8 +237,9 @@ export function setprop(prop: string, value: PropTypes): ?Error {
 /**
  * Returns a promise that expires after the specified interval
  *
- * @param ms Expiry interval
- * @memberof sysutils
+ * @param {number} ms Expiry interval
+ * @return {Promise}
+ * @memberof silk-sysutils
  */
 export function timeout(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -230,8 +248,11 @@ export function timeout(ms: number): Promise<void> {
 /**
  * Play a sound file
  *
- * @param fileName Name of the audio file to play
- * @memberof sysutils
+ * @param {string} fileName Name of the audio file to play
+ * @return {Promise} Return a promise that is fulfilled when the sound
+ *                         is done playing. Reject the promise if there is an
+ *                         error.
+ * @memberof silk-sysutils
  */
 export function playSound(fileName: string): Promise<void> {
   const BINARY = 'player';

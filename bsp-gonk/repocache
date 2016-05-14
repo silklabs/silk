@@ -47,11 +47,10 @@ repocache_urlsuffix=$(uname | tr A-Z a-z)-$board-$product.tgz
 
 case $command in
 fetch)
-  echo $REPOCACHE_URLPREFIX
   if [[ ! -d .repo/projects ]] && [[ -n $REPOCACHE_URLPREFIX ]]; then
     set -ex
     if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then
-      curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix | tar zx
+      wget --continue --retry-connrefused --read-timeout=60 $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - | tar zx
     fi
   fi
   ;;

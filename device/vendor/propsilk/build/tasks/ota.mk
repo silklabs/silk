@@ -3,7 +3,7 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 SILKOTA_PACKAGE := \
-  $(call intermediates-dir-for,PACKAGING,silkota_files)/$(TARGET_PRODUCT)-silkota_files-$(FILE_NAME_TAG).zip
+  $(call intermediates-dir-for,PACKAGING,silkota_files)/$(SILK_BOARD)-$(SILK_PRODUCT)-silkota_files-$(FILE_NAME_TAG).zip
 
 SILKOTA_UPDATER_SCRIPT=vendor/propsilk/build/tasks/updater-script
 SILKOTA_CONTENTS:=$(shell test -d $(TARGET_OUT_SILK) && find $(TARGET_OUT_SILK) -type f)
@@ -11,7 +11,7 @@ SILKOTA_CONTENTS:=$(shell test -d $(TARGET_OUT_SILK) && find $(TARGET_OUT_SILK) 
 # Prefer to use an update-binary built from the tree, but if not possible then
 # fallback to the prebuilt updater
 ifeq ($(wildcard bootable/recovery/updater/Android.mk),)
-SILKOTA_UPDATE_BINARY=prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/updater
+SILKOTA_UPDATE_BINARY=prebuilts/device/$(SILK_BOARD)/$(SILK_BOARD)-$(SILK_PRODUCT)/updater
 else
 SILKOTA_UPDATE_BINARY=$(call intermediates-dir-for,EXECUTABLES,updater)/updater
 endif
@@ -29,7 +29,7 @@ $(SILKOTA_PACKAGE): $(SILKOTA_UPDATER_SCRIPT) $(SILKOTA_UPDATE_BINARY) $(SILKOTA
 silkota-package: $(SILKOTA_PACKAGE)
 
 
-SILKOTA_ZIP := $(PRODUCT_OUT)/$(TARGET_PRODUCT)-silkota-$(FILE_NAME_TAG).zip
+SILKOTA_ZIP := $(PRODUCT_OUT)/$(SILK_BOARD)-$(SILK_PRODUCT)-silkota-$(FILE_NAME_TAG).zip
 
 $(SILKOTA_ZIP): KEY_CERT_PAIR := $(DEFAULT_KEY_CERT_PAIR)
 $(SILKOTA_ZIP): SIGNAPK=external/librecovery/tools/signapk.jar

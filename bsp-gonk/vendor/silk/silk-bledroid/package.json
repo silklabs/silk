@@ -4,7 +4,7 @@
   "description": "wrapper for bledroid",
   "main": "lib/index.js",
   "scripts": {
-    "postinstall": "./bin/postinstall && silk-buildjs",
+    "postinstall": "../../../../npm_postinstall && silk-buildjs",
     "build": "silk-buildjs"
   },
   "author": {

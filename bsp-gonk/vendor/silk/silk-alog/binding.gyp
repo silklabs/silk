@@ -8,9 +8,6 @@
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
       ],
-      "libraries": [
-        "<!(echo $Android_mk__LIBRARIES)",
-      ],
       "conditions": [
         [
           "OS=='android'", {

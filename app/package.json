@@ -56,5 +56,5 @@
     "test": "npm run lint && npm run flow",
     "update": "./tools/update"
   },
-  "version": "0.15.0"
+  "version": "0.15.2"
 }

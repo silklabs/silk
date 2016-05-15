@@ -1,6 +1,6 @@
 {
   "name": "silk-device-main",
-  "version": "0.0.1",
+  "version": "0.15.2",
   "description": "Device main program",
   "main": "src/index.js",
   "scripts": {

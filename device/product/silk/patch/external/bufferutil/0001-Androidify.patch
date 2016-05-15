@@ -1,13 +1,14 @@
-From 352a5ced5f43ddbb4ed3c07c1f89fd492754087a Mon Sep 17 00:00:00 2001
+From ac8557db8b07a20c585949e9388a3576fa3392c4 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Thu, 31 Mar 2016 12:14:24 -0700
 Subject: [PATCH] Androidify
 
 ---
- Android.mk   | 6 ++++++
- index.js     | 8 +-------
- package.json | 6 +++++-
- 3 files changed, 12 insertions(+), 8 deletions(-)
+ Android.mk   |  6 ++++++
+ binding.gyp  | 11 ++++++++++-
+ index.js     |  8 +-------
+ package.json |  6 +++++-
+ 4 files changed, 22 insertions(+), 9 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
@@ -22,6 +23,28 @@ index 0000000..40174ba
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_NODE_MODULE_TYPE := file
 +include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+index 636f324..5b9794d 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -5,7 +5,16 @@
+       'include_dirs': ["<!(node -e \"require('nan')\")"],
+       'cflags!': [ '-O3' ],
+       'cflags': [ '-O2' ],
+-      'sources': [ 'src/bufferutil.cc' ]
++      'sources': [ 'src/bufferutil.cc' ],
++      "conditions": [
++        [
++          "OS=='android'", {
++            "libraries" : [
++              "<!(echo $Android_mk__LIBRARIES)",
++            ],
++          },
++        ],
++      ],
+     }
+   ]
+ }
 diff --git a/index.js b/index.js
 index 00c607c..f994329 100644
 --- a/index.js
@@ -58,5 +81,5 @@ index e879957..8a9c20a 100644
 +  "gypfile": true
  }
 -- 
-2.4.5
+2.7.4 (Apple Git-66)
 

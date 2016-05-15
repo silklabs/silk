@@ -9,8 +9,16 @@
   "bin": {
     "silk-emulator": "./bin/silk-emulator"
   },
+  "repository": "silklabs/silk",
+  "bugs": {
+    "url": "https://github.com/silklabs/silk/issues"
+  },
   "author": "Silk Labs",
   "license": "MIT",
+  "keywords": [
+    "silk",
+    "iot"
+  ],
   "dependencies": {
     "download": "^4.4.3",
     "download-status": "^2.2.1"

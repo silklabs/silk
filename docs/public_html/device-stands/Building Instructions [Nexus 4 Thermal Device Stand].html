@@ -1,0 +1,666 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0014)about:internet -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Lego Digital Designer</title>
+		
+		<style type="text/css">
+			
+			div
+			{
+			    font-family:arial,sans-serif; 
+			    font-size: 11px;
+			    color:#000000;
+			}
+			
+			.header 
+			{
+			    width:1024px;
+			    background-image:url('Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Header.png');
+			    background-repeat:repeat-x;
+			    background-color: #000000;
+			    height:40px;
+			    padding-left:10px;
+			}
+            
+            .headerPrint
+			{
+			    display:none;
+			}
+			
+			.footer
+			{
+			    font-size:10px;
+			    text-align:center;
+			    width:1024px;
+			}
+			
+			.nav
+			{
+			    text-align:center;
+			    width:1024px;
+			}
+			
+			.step
+			{
+			    display:none;
+			}
+
+			.stepdisplay
+			{
+			    display:block;
+			    width:1024px;
+			    height:620px;
+			}
+			
+			.modelParts 
+			{ 
+			    list-style-type:none; 
+			    padding:4px 0px 0px 0px; 
+			    margin:0px; 
+			}
+			.modelParts ul 
+			{ 
+			    list-style-type:none; 
+			    float:left; 
+			    padding:5px 0px 0px 5px; 
+			    width:140px; 
+			    border:1px dotted gray; 
+			    margin:0px 
+			 }
+			.modelParts ul li 
+			{ 
+			    padding:0px; 
+			    margin:0px 
+			}
+			.modelParts ul li img 
+			{ 
+			    padding:0px; 
+			    height:64px; 
+			    width:64px; 
+			    margin-left:15px 
+			}
+			
+			.stepTextTop p 
+			{ 
+			    margin:0px; 
+			    padding:10px 0px 0px 0px;  
+			 }
+			.stepText p
+			{ 
+			    margin:0px; 
+			    width:30px; 
+			    padding:25px 0px 0px 10px;
+			}
+            
+            .biElement
+            {
+                float:left;
+                margin:20px;
+                width:280px;
+                
+            }
+            
+            .stepelements
+            {
+                width:1024px;
+			    height:620px;
+                overflow:auto;
+            }
+            
+			
+		</style>
+
+        <style type="text/css" media="print">
+            .nav
+			{
+			    display:none;
+			}
+			
+			.stepdisplay
+			{
+			    display:none;
+			}
+            
+            .stepelements
+			{
+			    display:none;
+			}
+            
+            .header
+			{
+			    display:none;
+			}
+            
+            .headerPrint
+			{
+			    display:block;
+			}
+			
+			.step
+			{
+			    display:block;
+			    width:1024px;
+			    height:620px;
+			    page-break-after:always;
+			}
+            
+            .biElement
+            {
+                width:280px;                
+            }
+            
+        </style>
+
+        <script language="javascript" type="text/javascript">
+            
+            var biCurStep=0;
+            
+            function returnTest(e) {
+                var keynum = 0;
+                if (window.event) {
+                    keynum = e.keyCode
+                }
+                else if (e.which) {
+                    keynum = e.which
+                }
+                if (keynum == 13) 
+                {
+                    try {
+                        biStep(parseInt(window.document.getElementById('stepNumber').value,10));
+                    } 
+                    catch(err) {
+                        biStep(0);
+                    }
+                }
+            }
+
+            function biStep(step) {
+
+                if (step>12+1) step=12+1;
+                if (step<0) step=0;
+
+                for (var i=0;i<12+2;i++) {
+                    var id='step_' + i.toString();
+                    var cn='stepdisplay';
+                    if (i==12+1) {
+                        cn='stepelements';
+                        id='step_elements';
+                    }
+                    
+                    if (i==step) {
+                        window.document.getElementById('step_display').innerHTML=window.document.getElementById(id).innerHTML;
+						   window.document.getElementById('step_display').className=cn;
+                    }
+                }
+                window.document.getElementById('stepNumber').value=step.toString();
+                biCurStep=step;
+            }
+        </script>
+	</head>
+	<body onload="biStep(0)">
+        <div class="header"><img src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Logo.png" /></div>
+        <div class="headerPrint"><img src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Header_print.png" /></div>
+		
+        <div class="stepdisplay" id="step_display"></div>
+
+        <div class="step" id="step_0">
+            <div style="float:left;width:150px"><p>Model Name:<br /><span style="font-weight:bold">Nexus 4 Thermal Device Stand</span><br /><br />Number of Bricks: <span style="font-weight:bold">45</span></p></div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step12.png" /></div>
+            <div style="clear:both"></div>
+        </div>
+
+			
+        <div class="step" id="step_1">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 1 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick0.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step1.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_2">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 2 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick1.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick2.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick3.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick4.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step2.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_3">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 3 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick5.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick6.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick7.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick8.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step3.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_4">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 4 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>2 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick9.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick10.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick11.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step4.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_5">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 5 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>2 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick9.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick12.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick7.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step5.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_6">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 6 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>3 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick9.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick12.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step6.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_7">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 7 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>2 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick9.png" /></li>
+							<li class="stepText"><p>2 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick12.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step7.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_8">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 8 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>3 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick9.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick13.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step8.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_9">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 9 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick14.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick15.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick16.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick17.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step9.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_10">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 10 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick18.png" /></li>
+							<li class="stepText"><p>2 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick14.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick13.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step10.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_11">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 11 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>4 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick18.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step11.png" /></div>
+            <div style="clear:both"></div>
+        </div>			
+        <div class="step" id="step_12">
+            <div style="float:left">
+                <div class="stepTextTop"><p><span style="font-weight:bold">Step 12 of 12</span></p></div>
+				<div class="modelParts">
+					<ul>
+							<li class="stepText"><p>2 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick18.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick19.png" /></li>
+							<li class="stepText"><p>1 x</p></li>
+							<li><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick13.png" /></li>
+
+					</ul>
+				</div>
+            </div>
+            <div style="float:left"><img height="600" width="800" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Step12.png" /></div>
+            <div style="clear:both"></div>
+        </div>
+
+        <div class="step" id="step_elements">
+            				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick1.png" /></td>
+					        <td>300528</td>
+					        <td>BRICK 1X1 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>12&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick9.png" /></td>
+					        <td>300523</td>
+					        <td>BRICK 1X1 - Bright Blue</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>7&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick18.png" /></td>
+					        <td>300428</td>
+					        <td>BRICK 1X2 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>4&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick12.png" /></td>
+					        <td>300423</td>
+					        <td>BRICK 1X2 - Bright Blue</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick5.png" /></td>
+					        <td>362228</td>
+					        <td>BRICK 1X3 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick6.png" /></td>
+					        <td>301028</td>
+					        <td>BRICK 1X4 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick10.png" /></td>
+					        <td>301023</td>
+					        <td>BRICK 1X4 - Bright Blue</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick2.png" /></td>
+					        <td>300928</td>
+					        <td>BRICK 1X6 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>2&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick7.png" /></td>
+					        <td>300128</td>
+					        <td>BRICK 2X4 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick3.png" /></td>
+					        <td>302328</td>
+					        <td>PLATE 1X2 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick19.png" /></td>
+					        <td>302228</td>
+					        <td>PLATE 2X2 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>3&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick14.png" /></td>
+					        <td>371028</td>
+					        <td>PLATE 1X4 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick8.png" /></td>
+					        <td>302128</td>
+					        <td>PLATE 2X3 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick15.png" /></td>
+					        <td>366628</td>
+					        <td>PLATE 1X6 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>3&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick13.png" /></td>
+					        <td>302028</td>
+					        <td>PLATE 2X4 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick16.png" /></td>
+					        <td>346028</td>
+					        <td>PLATE 1X8 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick11.png" /></td>
+					        <td>346023</td>
+					        <td>PLATE 1X8 - Bright Blue</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick0.png" /></td>
+					        <td>447728</td>
+					        <td>PLATE 1X10 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick17.png" /></td>
+					        <td>303428</td>
+					        <td>PLATE 2X8 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+				<div class="biElement">
+                    <table border="0">
+                        <tr style="vertical-align:middle">
+					        <td>1&nbsp;x</td>
+					        <td><img height="64" width="64" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Brick4.png" /></td>
+					        <td>4112519</td>
+					        <td>PLATE 6X6 - Dark Green</td>
+				        </tr>
+                    </table>
+                </div>
+                
+
+            <div style="clear:both"></div>
+        </div>
+
+        <div id="nav"  class="nav">
+            <table style="margin:0 auto" border="0">
+                <tr>
+                    <td><a onclick="biStep(0);" href="#"><img border="0" alt="First" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Arrow_First.png" /></a></td>
+                    <td><a onclick="biStep(biCurStep-1);" href="#"><img border="0" alt="First" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Arrow_Backward.png" /></a></td>
+                    <td><input id="stepNumber" onkeydown="returnTest(window.event)" type="text" style="text-align:center;width:56px;height:28px;border:1px solid #cccccc;font-size:14px;font-weight:bold" /></td>
+                    <td><a onclick="biStep(biCurStep+1);" href="#"><img border="0" alt="First" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Arrow_Forward.png" /></a></td>
+                    <td><a onclick="biStep(12+1);" href="#"><img border="0" alt="First" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/Arrow_Last.png" /></a></td>
+                    <td style="width:40px">&nbsp;</td>
+                    <td><a onclick="window.print();return false;" href="#"><img border="0" alt="Print" src="Building Instructions [Nexus 4 Thermal Device Stand]-images/Images/PrintIcon.png" /></a></td>
+                </tr>
+            </table>
+        </div> 
+		<div style="clear:both;">&nbsp;</div>
+		<div class="footer">© 2012 The LEGO Group. All rights reserved.<br />
+Use of the LEGO Digital Designer html print tool, signifies your agreement to the terms of use.</div>
+	</body>
+</html>

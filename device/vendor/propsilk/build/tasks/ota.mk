@@ -13,7 +13,7 @@ SILKOTA_CONTENTS:=$(shell test -d $(TARGET_OUT_SILK) && find $(TARGET_OUT_SILK) 
 ifeq ($(wildcard bootable/recovery/updater/Android.mk),)
 SILKOTA_UPDATE_BINARY=prebuilts/device/$(SILK_BOARD)/$(TARGET_PRODUCT)/updater
 else
-SILKOTA_UPDATE_BINARY=$(call intermediates-dir-for,EXECUTABLES,updater)/updater
+SILKOTA_UPDATE_BINARY=$(call intermediates-dir-for,EXECUTABLES,updater,,,$(TARGET_2ND_ARCH))/updater
 endif
 
 $(SILKOTA_PACKAGE): $(SILKOTA_UPDATER_SCRIPT) $(SILKOTA_UPDATE_BINARY) $(SILKOTA_CONTENTS)

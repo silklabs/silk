@@ -22,12 +22,19 @@ set -x
 cd $(dirname $(readlink -f $0))/../../
 
 git fetch --unshallow
+
+# Push latest pub/ commits to master branch
 git subtree split --prefix pub -b pub
 git remote add sos git@github.com:silklabs/silk.git
 git push sos pub:master
+
+# Rebuild API documentation
 cd pub/docs ; npm install ; cd ../..
+
+# Recreate gh-pages branch and publish it
 mkdir gh-pages
 cp -ra pub/docs/dist gh-pages/master
+cp -ra pub/docs/public_html gh-pages/master
 git add gh-pages
 git commit -m "Automated doc update"
 git subtree split --prefix gh-pages -b gh-pages

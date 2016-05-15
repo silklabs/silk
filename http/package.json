@@ -1,6 +1,6 @@
 {
   "name": "silk-http",
-  "version": "0.15.0",
+  "version": "0.15.2",
   "main": "client.js",
   "scripts": {
     "preinstall": "../npm_preinstall",

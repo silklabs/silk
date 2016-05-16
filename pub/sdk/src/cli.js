@@ -140,10 +140,10 @@ export let devices = ensureSetup({
 });
 
 /**
- * Run and tail the extension.
+ * Run and tail the program.
  */
 export let run = ensureSetup({
-  help: 'Run the extension on device.',
+  help: 'Run package on device as the main module.',
   arguments: [
     sourceArg(),
   ],
@@ -172,7 +172,7 @@ export let build = ensureSetup({
 });
 
 export let push = ensureSetup({
-  help: `Push files without restarting the process`,
+  help: `Push files without restarting the main module`,
   arguments: [
     sourceArg(),
   ],
@@ -184,19 +184,47 @@ export let push = ensureSetup({
 });
 
 export let activate = ensureSetup({
-  help: `Activate given (mark it as main module)`,
+  help: `Activate the current package as main module`,
+  arguments: [
+    [['--clear', '-c'], {
+      action: 'storeTrue',
+      help: `Activate the default main module instead of the current package`
+    }]
+  ],
   main: async (api, args) => {
     await checkDevices(api);
-    const pkg = require(path.join(findPackageRoot(), 'package.json'));
-    await api.activate(pkg.name);
+    let main = null;
+    if (!args.clear) {
+      const pkg = require(path.join(findPackageRoot(), 'package.json'));
+      main = pkg.name;
+    }
+    await api.activate(main);
+    if (!main) {
+      main = '(device default)';
+    }
+    console.log(`Activated main program: ${main}`);
   }
 });
 
 
 export let restart = ensureSetup({
-  help: `Restart silk device or emulator`,
+  help: `Restart the main module`,
   main: async (api, args) => {
     await api.restart();
+  }
+});
+
+export let start = ensureSetup({
+  help: `Start the main module (only useful after using stop)`,
+  main: async (api, args) => {
+    await api.start();
+  }
+});
+
+export let stop = ensureSetup({
+  help: `Stop the main module (until the device reboots)`,
+  main: async (api, args) => {
+    await api.stop();
   }
 });
 

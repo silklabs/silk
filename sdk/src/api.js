@@ -59,12 +59,24 @@ export default class API {
   }
 
   async restart() {
-    await this.adb(`shell stop`);
+    await this.stop();
+    await this.start();
+  }
+
+  async start() {
     await this.adb(`shell start`);
   }
 
+  async stop() {
+    await this.adb(`shell stop`);
+  }
+
   async activate(name) {
-    this.setprop(ACTIVATE_PROP, name);
+    if (!name) {
+      this.setprop(ACTIVATE_PROP, '\\"\\"');
+    } else {
+      this.setprop(ACTIVATE_PROP, name);
+    }
   }
 
   logcat(logcatArgs) {

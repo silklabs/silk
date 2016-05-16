@@ -18,7 +18,7 @@
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",
     "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log",
+    "silk-log": "/pub/log",
     "silk-ntp-client": "/pub/external-node-ntp-client",
     "silk-rtc": "/rtc",
     "silk-api": "/api",
@@ -28,9 +28,9 @@
     "silk-sdk": "/pub/sdk",
     "silk-server": "/server",
     "silk-streams": "/streams",
-    "silk-core-version": "/version",
+    "silk-core-version": "/pub/version",
     "silk-utils": "/utils",
-    "eslint-config-silk": "/eslint"
+    "eslint-config-silk": "/pub/eslint-config"
   },
   "dependencies": {
     "CBuffer": "1.1.0",

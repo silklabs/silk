@@ -26,7 +26,7 @@ const config = {
   context,
   target: 'node',
   devtool: 'source-map',
-  entry: `./${main}`,
+  entry: `./lib/${main}`,
   output: {
     path: path.join(context, destination),
     libraryTarget: 'commonjs2',
@@ -55,6 +55,15 @@ const config = {
 if (fs.existsSync(localWebpack)) {
   console.log(`${localWebpack} found agumenting buildjs ...`);
   Object.assign(config, require(localWebpack));
+}
+
+// Create symlink into package root dir for simulator to work
+if (!fs.existsSync(path.join(context, main))) {
+  fs.symlinkSync(path.join(destination, main), path.join(context, main));
+}
+
+if (!fs.existsSync(path.join(context, `${main}.map`))) {
+  fs.symlinkSync(path.join(destination, `${main}.map`), path.join(context, `${main}.map`));
 }
 
 module.exports = config;

@@ -30,6 +30,7 @@ const USE_WIFI_STUB = util.getboolprop(
  * property values as set by dhcpd
  *
  * @param iface Name of the interface to configure
+ * @private
  */
 async function configureDhcpInterface(iface: string) {
   const ifacePrefix = `dhcp.${iface}`;
@@ -136,6 +137,7 @@ let monitor;
 
 /**
  * Unescape SSID strings as spat out by wpa_cli
+ * @private
  */
 function unescapeSSID(ssid: string): string {
   // To unescape sequences like \xAB, we convert them to \u00AB and
@@ -152,6 +154,7 @@ function unescapeSSID(ssid: string): string {
 
 /**
  * Wrapper around Gonk's WiFi daemons.
+ * @private
  */
 class WpaMonitor extends events.EventEmitter {
 
@@ -332,6 +335,24 @@ function wpaCliRemoveAllNetworks() {
   return wpaCliRemoveNetwork('all');
 }
 
+/**
+ *  Silk wifi module
+ *  @module silk-wifi
+ *
+ * @example
+ * import wifi from 'silk-wifi';
+ *
+ * wifi.init()
+ * .then(function() {
+ *   return wifi.online();
+ * })
+ * .then(function() {
+ *   log.info('Wifi initialized successfully');
+ * })
+ * .catch(function(err) {
+ *   log.error('Failed to initialize wifi', err);
+ * });
+ */
 export class Wifi extends events.EventEmitter {
 
   // Always start as offline until proven otherwise...
@@ -441,6 +462,11 @@ export class Wifi extends events.EventEmitter {
     return Promise.resolve();
   }
 
+  /**
+   * Initlialize wifi module
+   * @memberof silk-wifi
+   * @instance
+   */
   init(): Promise<void> {
     log.info('WiFi initializing');
 
@@ -461,6 +487,12 @@ export class Wifi extends events.EventEmitter {
       });
   }
 
+  /**
+   * Shutdown wifi subsystem on the device
+   *
+   * @memberof silk-wifi
+   * @instance
+   */
   shutdown(): Promise<void> {
     // Once Wifi has been shutdown(), there's no recovery beyond restart
     log.info('WiFi shutdown');
@@ -468,10 +500,22 @@ export class Wifi extends events.EventEmitter {
     return this._networkCleanup();
   }
 
+  /**
+   * Check if device is online
+   *
+   * @memberof silk-wifi
+   * @instance
+   */
   isOnline(): bool {
     return this._online;
   }
 
+  /**
+   * Bring-up wifi subsystem online
+   *
+   * @memberof silk-wifi
+   * @instance
+   */
   /* async */ online(): Promise<void> {
     if (this._online) {
       return Promise.resolve();
@@ -481,6 +525,28 @@ export class Wifi extends events.EventEmitter {
     });
   }
 
+  /**
+   * Initiate a wifi scan request. Result of the scan is available via event
+   * `scanResults`.
+   *
+   * @type {Object}
+   * @property {string} ssid
+   * @property {string} bssid
+   * @property {number} level
+   * @property {boolean} psk True if network requires WPA or PSK
+   *
+   * @memberof silk-wifi
+   * @instance
+   *
+   * @example
+   * wifi.scan();
+   * wifi.on('scanResults', (result) => {
+   *   log.info(`ssid: ${result.ssid}`);
+   *   log.info(`bssid: ${result.bssid}`);
+   *   log.info(`bssid: ${result.level}`);
+   *   log.info(`bssid: ${result.psk}`);
+   * });
+   */
   scan() {
     log.info('Issuing scan request');
     wpaCli('scan')
@@ -542,9 +608,18 @@ export class Wifi extends events.EventEmitter {
       });
     }
     log.debug('scanResults', JSON.stringify(scanResults));
+
     this.emit('scanResults', scanResults);
   }
 
+  /**
+   * Issue a request to join the specified network
+   *
+   * @param ssid Name of the network to connect to
+   * @param psk Secret code of the network to connect to
+   * @memberof silk-wifi
+   * @instance
+   */
   joinNetwork(ssid: string, psk: ?string) {
     if (ssid.length === 0) {
       throw new Error('Empty SSID');
@@ -585,6 +660,12 @@ export class Wifi extends events.EventEmitter {
       );
   }
 
+  /**
+   * Issue a request to forget all previously known networks
+   *
+   * @memberof silk-wifi
+   * @instance
+   */
   forgetNetwork() {
     log.info('forget networks...');
     return wpaCliRemoveAllNetworks()

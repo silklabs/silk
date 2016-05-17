@@ -35,7 +35,6 @@ declare module "silk-alog" {
  * Print verbose log message
  *
  * @name verbose
- * @instance
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -45,7 +44,6 @@ declare module "silk-alog" {
  * Print debug log message
  *
  * @name debug
- * @instance
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -55,7 +53,6 @@ declare module "silk-alog" {
  * Print info log message
  *
  * @name info
- * @instance
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -65,7 +62,6 @@ declare module "silk-alog" {
  * Print warn log message
  *
  * @name warn
- * @instance
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -75,7 +71,6 @@ declare module "silk-alog" {
  * Print error log message
  *
  * @name error
- * @instance
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -85,7 +80,6 @@ declare module "silk-alog" {
  * Print fatal log message
  *
  * @name fatal
- * @instance
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log

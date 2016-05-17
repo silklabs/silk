@@ -13,7 +13,7 @@
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall",
     "lint": "eslint lib",
-    "test": "./networktest"
+    "test": "NODE_PATH=./node_modules/ ./networktest"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
@@ -21,7 +21,8 @@
     "silk-babeldeps": "/babeldeps",
     "silk-core": "/device/vendor/silk/core",
     "silk-core-version": "/version",
-    "silk-log": "/log"
+    "silk-log": "/log",
+    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils"
   },
   "dependencies": {
     "easy-table": "1.0.0",

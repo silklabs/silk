@@ -1,0 +1,15 @@
+#!/bin/bash -ex
+
+LOCAL_PATH=$(dirname $0)
+
+what="$@"
+if [[ -z $what ]]; then
+  what="$(find test -name '*_test.js')"
+fi
+
+if [[ -z "$DEBUG" ]]; then
+  DEBUG="silk-*"
+fi
+
+DEPENDENCIES=$LOCAL_PATH/../../../../../pub/bsp-gonk/vendor/silk/
+NODE_PATH=$DEPENDENCIES DEBUG="$DEBUG" mocha $what

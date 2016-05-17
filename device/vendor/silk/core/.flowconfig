@@ -23,6 +23,7 @@ node_modules/silk-sdk/interface/
 
 [libs]
 interface/net.js
+node_modules/silk-sdk/interface/silk-sysutils.js
 
 [options]
 unsafe.enable_getters_and_setters=true

@@ -1,0 +1,4 @@
+# travis removes this from OSX host environment somehow which breaks stuff...
+shell_session_update() {
+  :
+}

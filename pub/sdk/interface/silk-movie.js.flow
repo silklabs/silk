@@ -25,7 +25,7 @@ export class Movie {
   constructor() {
     debugger;
   }
-  /** 
+  /**
    * Starts a new animation sequence using the provided file
    *
    * @memberof silk-movie.Movie
@@ -34,7 +34,7 @@ export class Movie {
   run (animationFile: string): void {
     debugger;
   }
-  /** 
+  /**
    * Stops the movie, leaving it visible
    *
    * @memberof silk-movie.Movie
@@ -43,7 +43,7 @@ export class Movie {
   stop(): void {
     debugger;
   }
-  /** 
+  /**
    * Stops the movie and hides it
    *
    * @memberof silk-movie.Movie

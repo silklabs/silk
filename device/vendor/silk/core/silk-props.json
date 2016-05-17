@@ -1,4 +1,5 @@
 {
+  "persist.silk.main": "silk-device-core",
   "persist.silk.ranger.enabled": false,
   "persist.silk.eventtrk.enabled": true,
   "ro.silk.update.manifest_url": "https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json",

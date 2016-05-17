@@ -1,5 +1,5 @@
 {
-  "name": "silk-sim",
+  "name": "silk-simulator",
   "version": "0.16.0",
   "description": "Silk Device Simulator",
   "scripts": {

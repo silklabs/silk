@@ -12,7 +12,7 @@ declare export class Wifi extends EventEmitter {
   scan(): void;
   online(): Promise<void>;
   joinNetwork(ssid: string, psk?: string): void;
-  forgetNetwork(): void;    
+  forgetNetwork(): void;
 }
 
 declare var wifi: Wifi;

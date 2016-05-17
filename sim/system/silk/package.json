@@ -17,7 +17,7 @@
     "silk-cv": "/device/vendor/propsilk/silk-cv",
     "silk-core-version": "/pub/version",
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
-    "silk-device-main": "/device/vendor/silk/core",
+    "silk-device-core": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
     "silk-lights": "/pub/bsp-gonk/vendor/silk/silk-lights",

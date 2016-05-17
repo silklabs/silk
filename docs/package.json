@@ -1,5 +1,5 @@
 {
-  "name": "silk-docs",
+  "name": "silk-docs-internal",
   "version": "0.16.0",
   "description": "Generates documentation for silk modules",
   "scripts": {

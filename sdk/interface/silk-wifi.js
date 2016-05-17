@@ -1,0 +1,19 @@
+/**
+ * @providesModule silk-wifi
+ * @flow
+ */
+
+import { EventEmitter } from 'events';
+
+declare export class Wifi extends EventEmitter {
+  init(): Promise<void>;
+  shutdown(): Promise<void>;
+  isOnline(): bool;
+  scan(): void;
+  online(): Promise<void>;
+  joinNetwork(ssid: string, psk?: string): void;
+  forgetNetwork(): void;    
+}
+
+declare var wifi: Wifi;
+declare export default typeof wifi;

@@ -26,34 +26,3 @@ export FULL_SERVICE=1
 # silk-caffe hack the find patches
 export SILK_CAFFE_PATCH_TREE=$ROOT/bsp-gonk/product/silk/patch/external
 
-for subdir in pub/sdk cli-plugin-internal; do
-  if [ ! -d $ROOT/$subdir/node_modules ]; then
-    if [ -z $GET_OFF_MY_LAWN ]; then
-      ( cd $ROOT/$subdir; npm install )
-    else
-      echo "Please run npm install inside of $subdir/ for full CLI"
-    fi
-  fi
-done
-
-if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
-  # Following packages are needed by caffe module
-  brew install -vd snappy leveldb gflags glog szip lmdb libtool
-  brew install hdf5
-
-  brew install -vd openblas
-  brew link --force --overwrite openblas
-
-  BOOST="$(brew list -1 | grep -i "^boost\$" || true)"
-  if [[ -z $BOOST ]]; then
-    brew install boost
-  fi
-
-  # Following packages are needed by protobuf
-  brew install autoconf
-  AUTOMAKE="$(brew list -1 | grep -i "^automake\$" || true)"
-  if [[ -z $AUTOMAKE ]]; then
-    brew install automake
-  fi
-fi
-

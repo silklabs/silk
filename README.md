@@ -28,6 +28,19 @@ prevent loading plugins from other trees or extensions.
 
 [/docs]
 
+### NPM Tools
+
+We are in the process of moving `npm` modules into the tree. Not all
+modules are ready for this treatment (any modules which have native
+dependencies).
+
+#### Checking in module dependencies into the tree:
+
+For a new module with new dependencies.
+
+1. Add dependencies to the package.json
+2. Run `silk npm-install <path>`
+
 ### Metrics:
 
 https://hilldale-delorean-43.c.influxdb.com:3000

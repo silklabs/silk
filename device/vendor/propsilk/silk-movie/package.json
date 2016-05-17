@@ -11,7 +11,7 @@
     "name": "Chris Jones",
     "email": "chris@silklabs.com"
   },
-  "license": "Proprietary",
+  "license": "MIT",
   "dependencies": {
     "nan": "2.2.0"
   },

@@ -1,14 +1,8 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- */
-
 #include <nan.h>
 
 #ifdef ANDROID
-#define LOG_NDEBUG 0
-#define LOG_TAG "gonkmovie"
+//#define LOG_NDEBUG 0
+#define LOG_TAG "silk-movie"
 #include <utils/Log.h>
 
 #include <binder/ProcessState.h>

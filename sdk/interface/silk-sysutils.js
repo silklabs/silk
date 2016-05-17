@@ -1,0 +1,27 @@
+/**
+ * @providesModule silk-sysutils
+ * @flow
+ */
+
+
+type ScalarPropTypes = string | bool | number;
+type PropTypes = Array<PropTypes> | ScalarPropTypes;
+type ExecOutput = {
+  code: number;
+  stdout: string;
+  stderr: string;
+};
+
+declare module 'silk-sysutils' {
+  declare function processthrow(e: string): void;
+  declare function exec(cmd: string, args: Array<string>): Promise<Object>;
+  declare function execRetry(cmd: string, args: Array<string>, retries: number, delayMs: number): Promise<ExecOutput>;
+  declare function getprop(prop: string, defaultValue?: PropTypes): PropTypes;
+  declare function getstrprop(prop: string, defaultValue?: string): string;
+  declare function getboolprop(prop: string, defaultValue?: boolean): boolean;
+  declare function getintprop(prop: string, defaultValue?: number): number;
+  declare function getlistprop(prop: string, defaultValue?: Array<string>): Array<string>;
+  declare function setprop(prop: string, value: PropTypes): ?Error;
+  declare function timeout(ms: number): Promise;
+  declare function playSound(fileName: string): void;
+}

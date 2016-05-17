@@ -9,17 +9,6 @@ jdk:
   - openjdk7
 
 # Pay close attention here ideally this should match prerequisites-linux.md
-
-# There is no nodejs package that is suitable sadly.
-before_install:
-  # Supress ./sync promops by setting up basic git configuration.
-  - git config --global user.name "SilkLabs"
-  - git config --global user.email you@example.com
-  - git config --global color.ui false
-  # Ensure we have the right version of node.
-  - nvm install 4.2.6
-  - node -v && npm -v
-
 addons:
   apt:
     sources:
@@ -44,7 +33,8 @@ addons:
       - libhighgui-dev
       - libopencv-dev
 
-install:
+before_install:
+  - source ../travis/common_before_install.sh
   - export CXX="g++-4.8" CC="gcc-4.8"
 
 script:

@@ -1,3 +1,7 @@
+#
+# Travis before_install things that most builds should run
+#
+
 git --version
 git config --global user.email "stooge@silklabs.com"
 git config --global user.name "Stooge"

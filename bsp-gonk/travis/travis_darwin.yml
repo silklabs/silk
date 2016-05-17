@@ -1,0 +1,34 @@
+language: objective-c
+osx_image: xcode7.3
+os:
+  - osx
+env:
+  global:
+    # By default we refuse to build on case insensitive system.
+    - CI_IGNORE_CASE_INSENSITIVE_FS=please
+    - NODE_VERSION=4.2.6
+    # This allows us to target sos and private silk.
+    - SILK_ROOT=pub
+
+before_install:
+  - source $SILK_ROOT/bsp-gonk/travis/osx_setup
+  # Supress ./sync promops by setting up basic git configuration.
+  - git config --global user.name "SilkLabs"
+  - git config --global user.email you@example.com
+  - git config --global color.ui false
+  # Ensure we have the right node version
+  - brew unlink node
+  - brew install node4-lts
+  - node --version
+  - npm --version
+
+script:
+  # TODO: This ideally is passed as env variable or something.
+  - sysctl -n hw.ncpu
+  - node -p 'require("os").cpus()'
+  - df -h
+  - cd $SILK_ROOT/bsp-gonk
+  - ./sync qemu
+  - du -h -d 2
+  - source build/envsetup.sh force
+  - m -j2

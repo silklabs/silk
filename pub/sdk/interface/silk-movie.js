@@ -1,4 +1,5 @@
 /**
+ * @providesModule silk-movie
  * @private
  * @flow
  */
@@ -8,10 +9,10 @@
  *
  * @module silk-movie
  * @example
- * import SilkMovie from 'silk-movie';
+ * let Movie = require('silk-movie').Movie;
  *
- * let movie = new SilkMovie();
- * movie.start(`...`);
+ * let movie = new Movie();
+ * movie.run(path.join(__dirname, 'splash.zip'));
  */
 
 /**
@@ -26,7 +27,7 @@ export class Movie {
     debugger;
   }
   /** 
-   * Starts a new animation sequence.
+   * Starts a new animation sequence using the provided file
    *
    * @memberof silk-movie.Movie
    * @instance

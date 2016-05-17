@@ -1,5 +1,4 @@
 [include]
-src/
 
 [libs]
 node_modules/silk-sdk/interface/

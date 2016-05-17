@@ -22,7 +22,7 @@
               "-DEGL_EGLEXT_PROTOTYPES",
               "-isystem <!(echo $ANDROID_BUILD_TOP/external/skia/include/core)",
               "-isystem <!(echo $ANDROID_BUILD_TOP/frameworks/av/include)",
-              "-isystem <!(echo $ANDROID_BUILD_TOP/vendor/propsilk/silk-movie/frameworks/base/include)",
+              "-isystem <!(echo $ANDROID_BUILD_TOP/vendor/silk/silk-movie/frameworks/base/include)",
               "-isystem <!(echo $ANDROID_BUILD_TOP/frameworks/native/include)",
               "-isystem <!(echo $ANDROID_BUILD_TOP/frameworks/native/opengl/include)",
               "-isystem <!(echo $ANDROID_BUILD_TOP/hardware/libhardware/include)",

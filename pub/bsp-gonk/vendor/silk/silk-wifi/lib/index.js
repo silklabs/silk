@@ -463,7 +463,7 @@ export class Wifi extends events.EventEmitter {
   }
 
   /**
-   * Initlialize wifi module
+   * Initialize wifi module
    * @memberof silk-wifi
    * @instance
    */

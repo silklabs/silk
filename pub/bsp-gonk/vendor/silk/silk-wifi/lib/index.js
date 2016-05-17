@@ -340,7 +340,7 @@ function wpaCliRemoveAllNetworks() {
  *  @module silk-wifi
  *
  * @example
- * import wifi from 'silk-wifi';
+ * const wifi = require('silk-wifi').default;
  *
  * wifi.init()
  * .then(function() {

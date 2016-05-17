@@ -8,7 +8,7 @@
  * @module silk-sysutils
  *
  * @example
- * import * as util from 'silk-sysutils';
+ * const util = require('silk-sysutils').default;
  *
  * util.getprop('ro.product.name', 'unknown');
  * util.playSound('/data/hello.mp3');

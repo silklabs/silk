@@ -3,8 +3,22 @@
 
 const log = require('silk-alog');
 const properties = require('silk-properties');
+const wifi = require('silk-wifi').default;
 
 const productName = properties.get('ro.product.name') || '(unknown?)';
 
 log.info('Running on a ' + productName);
-setInterval(() => log.verbose('Hello world'), 1000);
+
+log.info('Initializing wifi');
+wifi.init()
+.then(function() {
+  return wifi.online();
+})
+.then(function() {
+  log.info('Wifi initialized successfully');
+  setInterval(() => log.verbose('Hello world'), 1000);
+})
+.catch(function(err) {
+  log.error('Failed to initialize', err.stack || err);
+});
+

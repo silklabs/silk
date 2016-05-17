@@ -59,6 +59,12 @@ PRODUCT_PACKAGES += silk-time_genoff
 # vendor/silk/wpad/
 PRODUCT_PACKAGES += silk-wpad
 
+# vendor/silk/silk-sysutils
+PRODUCT_PACKAGES += silk-sysutils
+
+# vendor/silk/silk-wifi
+PRODUCT_PACKAGES += silk-wifi
+
 # external/librecovery/
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery_test

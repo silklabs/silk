@@ -10,7 +10,7 @@
 import * as util from './sysutils';
 import ntpClient from 'silk-ntp-client';
 import { EventEmitter } from 'events';
-import wifi from './wifi';
+import wifi from 'silk-wifi';
 import createLog from './log';
 import version from 'silk-core-version';
 

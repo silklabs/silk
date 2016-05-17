@@ -15,7 +15,8 @@
     "eslint-config-silk": "/eslint",
     "silk-log": "/log",
     "silk-core": "/device/vendor/silk/core",
-    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils"
+    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
+    "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi"
   },
   "devDependencies": {
     "babel-eslint": "5.0.0",

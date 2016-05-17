@@ -34,12 +34,22 @@ function npmPackageBuild(dir, overrides) {
  * default.
  */
 function nightlyBuild(dir, overrides) {
-  return Object.assign({
+  const result = Object.assign({
     travis_yml: path.join(dir, '.travis.yml'),
     cwd: dir,
     events: ['nightly'],
     branches: ['master'],
   }, overrides);
+
+  // ensure that travis_config has a basic setup.
+  result.travis_config = result.travis_config || {};
+  result.travis_config.env = result.travis_config.env || {};
+  result.travis_config.env.global = result.travis_config.env.global || [];
+
+  // Set the SILK_CHANNEL so nightlies are on a different path than normal
+  // pushes.
+  result.travis_config.env.global.push('SILK_CHANNEL=nightly');
+  return result;
 }
 
 // TODO: This should live in pub/builds.js when releng can handle it.

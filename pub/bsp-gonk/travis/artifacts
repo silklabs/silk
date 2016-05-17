@@ -25,11 +25,7 @@ os=$(uname | tr '[:upper:]' '[:lower:]')
 artifact_path=$os/$branch
 version=$(get_version)
 
-upload_path=$channel/$SILK_BOARD/$os/$branch
-
-if [[ $branch == "release" ]]; then
-  upload_path=$upload_path/$version
-fi
+upload_path=$channel/$SILK_BOARD/$os/$branch/$version
 
 rm -rf artifacts
 mkdir -p artifacts

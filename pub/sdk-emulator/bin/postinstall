@@ -5,7 +5,7 @@ var path = require('path');
 var Download = require('download');
 
 // TODO: Get a real cloudfront hostname.
-var BASE = 'https://d2xr8z98rg6hpy.cloudfront.net/qemu/';
+var BASE = 'https://d2xr8z98rg6hpy.cloudfront.net/nightly/qemu/';
 var VERSION = require('../package.json').version;
 var OS = require('os').platform();
 
@@ -13,7 +13,7 @@ var download = new Download({
   extract: true,
 });
 
-var assetUrl = BASE + path.join(OS, 'release', VERSION, '/target.tar.gz');
+var assetUrl = BASE + path.join(OS, 'master', VERSION, '/target.tar.gz');
 
 download.use(require('download-status')());
 download.get(assetUrl);
@@ -24,3 +24,4 @@ download.run(function(err) {
     throw err;
   }
 });
+

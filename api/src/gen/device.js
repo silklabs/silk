@@ -1,0 +1,101 @@
+/**
+ * API calls for devices...
+ *
+ * @flow
+ */
+
+import BaseClass from '../http_client';
+
+export type SocketioUrlInput = {
+};
+
+export type SocketioUrlOutput = {
+ url: string;
+};
+
+export type WriteMetricsInput = {
+ firstPointTimestamp: ?number;
+ submissionTimestamp: ?number;
+ droppedCount: ?number;
+ points: Array<any>;
+};
+
+export type WriteMetricsOutput = {
+};
+
+export type GetSasForSignalingInput = {
+};
+
+export type GetSasForSignalingOutput = {
+ publicUrl: ?string;
+ sas: Array<any>;
+};
+
+export type CompleteRegistrationInput = {
+ registrarPublicKey: string;
+ registrationToken: ?string;
+};
+
+export type CompleteRegistrationOutput = {
+ success: bool;
+ beaconUUID: ?string;
+};
+
+export default class Device extends BaseClass {
+
+  name: string = 'api-device';
+  prefix: string = '/v1/device/';
+
+  
+  /**
+  Get socket.io url for device...
+
+  @param Object payload of request
+  */
+  socketioURL(payload: SocketioUrlInput): Promise<SocketioUrlOutput> {
+    let method = 'post';
+    let url = '/v1/device/socketio/url';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  
+
+  @param Object payload of request
+  */
+  writeMetrics(payload: WriteMetricsInput): Promise<WriteMetricsOutput> {
+    let method = 'post';
+    let url = '/v1/device/metrics/point';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Return SAS credentials for querying avaiable signaling servers
+
+  @param Object payload of request
+  */
+  getSasForSignaling(payload: GetSasForSignalingInput): Promise<GetSasForSignalingOutput> {
+    let method = 'post';
+    let url = '/v1/device/sas_signaling_servers';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Complete registration of the deivce
+
+  @param Object payload of request
+  */
+  completeRegistration(payload: CompleteRegistrationInput): Promise<CompleteRegistrationOutput> {
+    let method = 'post';
+    let url = '/v1/device/complete_registration';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+}

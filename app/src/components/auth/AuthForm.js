@@ -6,6 +6,7 @@ import React from 'react';
 import {
   Alert,
   StyleSheet,
+  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -13,26 +14,15 @@ import {
 import Config from '../../libraries/Config';
 
 import AsyncComponent from '../abstract/AsyncComponent';
-import Button from './Button';
-
-const inputStyles = StyleSheet.create({
-  text: {
-    fontFamily: 'Open Sans',
-    fontSize: 12,
-    backgroundColor: 'white',
-    borderRadius: 2,
-    height: 40,
-    marginBottom: 15,
-    paddingLeft: 20,
-  },
-});
+import Button from '../Button';
+import { Colors } from '../CommonStyles';
 
 class StyledTextInput extends React.Component {
   render() {
     return (
       <TextInput
         ref="input"
-        style={inputStyles.text}
+        style={styles.textInput}
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="always"
@@ -56,12 +46,16 @@ export default class AuthForm extends AsyncComponent {
 
   static propTypes = {
     style: View.propTypes.style,
-    submitText: React.PropTypes.string.isRequired,
     password: React.PropTypes.bool.isRequired,
     verifyPassword: React.PropTypes.bool.isRequired,
-    onChangeTextInputFocus: React.PropTypes.func.isRequired,
-    onSubmit: React.PropTypes.func.isRequired,
     inProgress: React.PropTypes.bool.isRequired,
+    primaryLabel: React.PropTypes.string.isRequired,
+    secondaryLabel: React.PropTypes.string.isRequired,
+    textLinkLabel: React.PropTypes.string,
+    onPrimary: React.PropTypes.func.isRequired,
+    onSecondary: React.PropTypes.func.isRequired,
+    onTextLink: React.PropTypes.func,
+    onChangeTextInputFocus: React.PropTypes.func.isRequired,
   };
 
   state = {
@@ -109,7 +103,7 @@ export default class AuthForm extends AsyncComponent {
       });
       return;
     }
-    this.props.onSubmit({
+    this.props.onPrimary({
       email: this.state.email,
       password: this.state.password,
     });
@@ -129,27 +123,7 @@ export default class AuthForm extends AsyncComponent {
   }
 
   render() {
-    let { password, verifyPassword } = this.props;
-
-    let button = (
-      <Button
-        label={this.props.submitText}
-        onPress={this.handleSubmit}
-        inProgress={this.props.inProgress}
-        disabled={this.haveInvalidInputs()}
-      />
-    );
-
-    let emailInput = (
-      <StyledTextInput
-        placeholder="Email Address"
-        value={this.state.email}
-        keyboardType="email-address"
-        returnKeyType={password ? 'next' : 'done'}
-        onSubmitEditing={password ? () => this.focusInput('password') : this.handleSubmit}
-        onChangeText={(email) => this.setState({email})}
-      />
-    );
+    let { password, verifyPassword, textLinkLabel } = this.props;
 
     let passwordInput = null;
     if (password) {
@@ -181,14 +155,90 @@ export default class AuthForm extends AsyncComponent {
       );
     }
 
+    let textLink = null;
+    if (textLinkLabel) {
+      textLink = (
+        <View style={styles.textLinkRow}>
+          <View style={styles.textLinkWrapper}>
+            <Text
+              onPress={this.props.onTextLink}
+              style={styles.textLinkLabel}>
+              {textLinkLabel}
+            </Text>
+          </View>
+          <View style={styles.textLinkFiller} />
+        </View>
+      );
+    }
+
     return (
       <View style={this.props.style}>
-        {emailInput}
+        <StyledTextInput
+          placeholder="Email Address"
+          value={this.state.email}
+          keyboardType="email-address"
+          returnKeyType={password ? 'next' : 'done'}
+          onSubmitEditing={password ? () => this.focusInput('password') : this.handleSubmit}
+          onChangeText={(email) => this.setState({email})}
+        />
         {passwordInput}
         {passwordVerificationInput}
-        {button}
+        {textLink}
+        <View style={styles.buttonRow}>
+          <Button
+            label={this.props.secondaryLabel}
+            type="secondary"
+            onPress={this.props.onSecondary}
+          />
+          <Button
+            label={this.props.primaryLabel}
+            style={styles.primaryButton}
+            type="primary"
+            onPress={this.handleSubmit}
+            disabled={this.haveInvalidInputs() || this.props.inProgress}
+          />
+        </View>
       </View>
     );
   }
 
 }
+
+const styles = StyleSheet.create({
+  textInput: {
+    fontFamily: 'Open Sans',
+    fontSize: 12,
+    backgroundColor: 'white',
+    borderRadius: 2,
+    height: 40,
+    marginBottom: 15,
+    paddingLeft: 20,
+  },
+  textLinkRow: {
+    paddingBottom: 2,
+    marginBottom: 10,
+    flexDirection: 'row',
+  },
+  textLinkWrapper: {
+    borderBottomColor: Colors.SilkLabsBlack,
+    borderBottomWidth: 2,
+  },
+  textLinkLabel: {
+    fontFamily: 'DIN Round Pro',
+    fontWeight: '600',
+    color: Colors.SilkLabsBlack,
+    backgroundColor: 'transparent',
+  },
+  textLinkFiller: {
+    flex: 1,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    flex: 1,
+  },
+  primaryButton: {
+    marginLeft: 16,
+  },
+});

@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
-import Button from './Button';
+import Button from '../Button';
 import { SetupStyles } from '../CommonStyles';
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 

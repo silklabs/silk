@@ -2,7 +2,7 @@ import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import { StyleSheet, Text, View } from 'react-native';
 
-import Button from './setup/Button';
+import Button from './Button';
 import { Colors, SetupStyles } from './CommonStyles';
 import { DeviceSession } from '../libraries/ble/DeviceManager';
 

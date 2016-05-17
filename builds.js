@@ -153,7 +153,9 @@ const oss = {
 
 const builds = {
   // Push and PR builds
-  'api': npmPackageBuild('api'),
+  // TODO: bring back api CI tests once we workaround issues related to
+  // interdeps with the server.
+  //'api': npmPackageBuild('api'),
   'api-schema': npmPackageBuild('api-schema'),
   'azure-storage': npmPackageBuild('azure-storage'),
   'app-js-lint': npmPackageBuild('app', {

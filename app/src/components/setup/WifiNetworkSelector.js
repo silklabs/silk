@@ -1,84 +1,40 @@
 import React from 'react';
-import {
-  PixelRatio,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableHighlight,
-  View,
-} from 'react-native';
-import { Colors } from '../CommonStyles';
+import { View } from 'react-native';
+import Selector from './Selector';
+import WifiNetworkIcon from './WifiNetworkIcon';
 
 export default class WifiNetworkSelector extends React.Component {
 
   static propTypes = {
-    deviceNetworks: React.PropTypes.arrayOf(React.PropTypes.shape({
-      bssid: React.PropTypes.string.isRequired,
-      ssid: React.PropTypes.string.isRequired,
-      psk: React.PropTypes.bool.isRequired,
-      level: React.PropTypes.number.isRequired,
-    })),
-    currentBSSID: React.PropTypes.string,
+    deviceNetworks: React.PropTypes.arrayOf(WifiNetworkIcon.propTypes.network),
+    selectedNetwork: WifiNetworkIcon.propTypes.network,
     style: View.propTypes.style,
     onSelectNetwork: React.PropTypes.func.isRequired,
     onSelectManually: React.PropTypes.func.isRequired,
   };
 
-  _scrollViewHeight = null;
-  _contentsHeight = null;
-  _selectedRowY = null;
-
-  _onScrollViewLayout = (event) => {
-    this._scrollViewHeight = event.nativeEvent.layout.height;
-  };
-
-  _onContentSizeChange = (width, height) => {
-    this._contentsHeight = height;
-  };
-
-  _onLayoutSelectedRow = (event) => {
-    this._selectedRowY = event.nativeEvent.layout.y;
-  };
-
   scrollToSelectedRow() {
-    if (this._scrollViewHeight === null ||
-        this._contentsHeight === null ||
-        this._selectedRowY === null) {
-      return;
-    }
-    // Scroll to the selected WiFi row so that it's displaced in the
-    // center of the screen. Though if it's near the bottom of the
-    // list, don't scroll past the end of the list. Similar, if it's
-    // at the start of the list, don't scroll negatively.
-    this.refs.scrollView.scrollTo({
-      y: Math.max(
-        0,
-        Math.min(
-          this._selectedRowY - this._scrollViewHeight / 2,
-          this._contentsHeight - this._scrollViewHeight
-        )
-      ),
-    });
+    this.refs.selector.scrollToSelectedRow();
   }
 
   _renderRow = (network) => {
-    const selected = network.bssid === this.props.currentBSSID;
+    const { selectedNetwork } = this.props;
+    const selected = !!selectedNetwork && network.bssid === selectedNetwork.bssid;
     return (
-      <TouchableHighlight
+      <Selector.Item
         key={network.bssid}
-        underlayColor="white"
-        onLayout={selected ? this._onLayoutSelectedRow : null}
-        onPress={() => this.props.onSelectNetwork(network)}>
-        <View
-          style={[styles.row, selected ? styles.selectedRow : null]}>
-          <Text style={[styles.rowLabel, selected ? styles.selectedRowLabel : null]}>
-            {network.ssid}
-          </Text>
-          <Text style={[styles.rowLabel, selected ? styles.selectedRowLabel : null]}>
-            ({network.level})
-          </Text>
-        </View>
-      </TouchableHighlight>
+        label={network.ssid}
+        selected={selected}
+        onSelect={() => this.props.onSelectNetwork(network)}
+        icon={
+          <WifiNetworkIcon
+            level={network.level}
+            secured={network.psk}
+            size="small"
+            tint="dark"
+          />
+        }
+      />
     );
   };
 
@@ -87,83 +43,31 @@ export default class WifiNetworkSelector extends React.Component {
     let deviceNetworkList;
     if (!deviceNetworks) {
       deviceNetworkList = (
-        <Text>Scanning...</Text>
+        <Selector.Item
+          label="Scanning..."
+          disabled={true}
+        />
       );
     } else if (deviceNetworks.length === 0) {
       deviceNetworkList = (
-        <Text>No Wi-Fi networks found.</Text>
+        <Selector.Item
+          label="No Wi-Fi networks found."
+          disabled={true}
+        />
       );
     } else {
       deviceNetworkList = deviceNetworks.map(this._renderRow);
     }
     return (
-      <ScrollView
+      <Selector
+        ref="selector"
         style={this.props.style}
-        ref="scrollView"
-        onLayout={this._onScrollViewLayout}
-        onContentSizeChange={this._onContentSizeChange}>
-        <View style={[styles.row, styles.header]}>
-          <Text style={styles.headerLabel}>
-            Networks
-          </Text>
-        </View>
+        headerLabel="Networks"
+        footerLabel="Enter manually..."
+        onFooterPress={this.props.onSelectManually}>
         {deviceNetworkList}
-        <TouchableHighlight
-          underlayColor="white"
-          onPress={this.props.onSelectManually}>
-          <View style={[styles.row, styles.enterManually]}>
-            <Text style={styles.enterManuallyLabel}>
-              Enter manually...
-            </Text>
-          </View>
-        </TouchableHighlight>
-      </ScrollView>
+      </Selector>
     );
   }
 
 }
-
-const styles = StyleSheet.create({
-  header: {
-    borderBottomColor: Colors.SilkLabsBlack,
-  },
-  headerLabel: {
-    color: Colors.SilkLabsBlack50,
-    fontFamily: 'DIN Round Pro',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  row: {
-    flexDirection: 'row',
-    height: 40,
-    alignItems: 'center',
-    paddingLeft: 12,
-    paddingRight: 30,
-    justifyContent: 'space-between',
-    borderBottomWidth: 1 / PixelRatio.get(),
-    borderBottomColor: Colors.SilkLabsBlack50,
-  },
-  rowLabel: {
-    color: Colors.SilkLabsBlack,
-    fontFamily: 'DIN Round Pro',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  selectedRow: {
-    backgroundColor: 'white',
-  },
-  selectedRowLabel: {
-    color: Colors.SilkLabsBlue,
-  },
-  enterManually: {
-    height: 50,
-    borderBottomWidth: 0,
-    borderTopWidth: 1,
-    borderTopColor: Colors.SilkLabsBlack,
-  },
-  enterManuallyLabel: {
-    color: Colors.SilkLabsBlack50,
-    fontFamily: 'DIN Round Pro',
-    fontSize: 14,
-  },
-});

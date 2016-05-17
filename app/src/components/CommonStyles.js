@@ -129,7 +129,8 @@ export const SetupStyles = StyleSheet.create({
     marginVertical: 10,
   },
   formInput: {
-    height: 44,
+    color: 'white',
+    height: 32,
     fontFamily: 'Open Sans',
     fontSize: 18,
     flex: 1,

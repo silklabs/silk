@@ -98,7 +98,8 @@ NAN_METHOD(Model::New) {
 /**
  *
  */
-Model::Model() {
+Model::Model() :
+  meanAvailable(false) {
 }
 
 /**
@@ -218,6 +219,7 @@ NAN_METHOD(Model::SetMean) {
   // filled with this value
   cv::Scalar channelMean = cv::mean(mean);
   self->mean = cv::Mat(self->inputGeometry, mean.type(), channelMean);
+  self->meanAvailable = true;
 }
 
 /**
@@ -593,10 +595,13 @@ cv::Mat Model::Preprocess(const cv::Mat& img) {
     sampleResized.convertTo(sampleFloat, CV_32FC1);
   }
 
-  cv::Mat sampleNormalized;
-  cv::subtract(sampleFloat, mean, sampleNormalized);
-
-  return sampleNormalized;
+  if (meanAvailable) {
+    cv::Mat sampleNormalized;
+    cv::subtract(sampleFloat, mean, sampleNormalized);
+    return sampleNormalized;
+  } else {
+    return sampleFloat;
+  }
 }
 
 /**

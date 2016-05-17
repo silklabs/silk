@@ -93,6 +93,7 @@ public:
   cv::Size inputGeometry;
   int numChannels;
   cv::Mat mean;
+  bool meanAvailable;
   std::vector<string> labels;
 };
 

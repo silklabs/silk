@@ -53,7 +53,7 @@ done
 for package in $(find . -maxdepth 2 -name package.json) \
                $(find pub -maxdepth 2 -name package.json); do
   case $package in
-  *external-*|*babel-core*|*babelcompile*|*babel-register*)
+  *external-*|*babel-core*|*babelcompile*|*babel-register*|pub/sdk/*|pub/cli/*|pub/sdk-emulator/*)
     echo "skipped $package"
     ;;
   *)

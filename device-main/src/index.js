@@ -2,10 +2,10 @@
 'use strict';
 
 const log = require('silk-alog');
-const properties = require('silk-properties');
 const wifi = require('silk-wifi').default;
+const util = require('silk-sysutils').default;
 
-const productName = properties.get('ro.product.name') || '(unknown?)';
+const productName = util.getstrprop('ro.product.name', '(unknown?)');
 
 log.info('Running on a ' + productName);
 

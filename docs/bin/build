@@ -3,6 +3,7 @@
 if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
   APIDOC_SOURCE_FILES=" \
     ../sdk/interface/silk-alog.js \
+    ../sdk/interface/silk-movie.js \
     ../sdk/interface/silk-properties.js \
     ../bsp-gonk/vendor/silk/silk-sysutils/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-wifi/lib/index.js \

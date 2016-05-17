@@ -1,0 +1,23 @@
+{
+  "name": "silk-movie",
+  "version": "0.0.1",
+  "description": "Plays movies",
+  "main": "build/Release/silk-movie.node",
+  "scripts": {
+    "test": "./node_modules/nodeunit/bin/nodeunit test.js",
+    "install": "node-gyp rebuild"
+  },
+  "author": {
+    "name": "Chris Jones",
+    "email": "chris@silklabs.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "nan": "2.2.0"
+  },
+  "devDependencies": {
+    "nodeunit": "0.9.1"
+  },
+  "gypfile": true,
+  "private": true
+}

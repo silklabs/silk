@@ -40,7 +40,7 @@ fi
 
 # Install node-opencv
 if [[ ! -d node_modules/opencv ]]; then
- npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd --ignore-scripts
+ npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd
 fi
 
 # Install protobuf and compile as static library

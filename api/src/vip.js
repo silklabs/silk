@@ -6,7 +6,7 @@
  */
 
 import VIPBase from './gen/vip';
-import pbkdf2 from 'pbkdf2';
+import crypto from 'crypto';
 
 export default class Auth extends VIPBase {
 
@@ -16,7 +16,7 @@ export default class Auth extends VIPBase {
     // Domain names are case insensitive!
     email = email.toLowerCase().trim();
 
-    return pbkdf2.pbkdf2Sync(
+    return crypto.pbkdf2Sync(
       password, // key
       email, // salt
       this.PBKDF2_ROUNDS, // rounds

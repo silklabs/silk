@@ -12,7 +12,6 @@
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
     "silk-babeldeps": "/babeldeps",
-    "silk-server": "/server",
     "silk-http": "/http"
   },
   "dependencies": {
@@ -43,7 +42,7 @@
   },
   "scripts": {
     "preinstall": "../npm_preinstall",
-    "postinstall": "../npm_postinstall && npm run gen",
+    "postinstall": "../npm_postinstall",
     "mocha": "mocha $(find ./test -name '*_test.js')",
     "gen": "./bin/generate",
     "lint": "eslint test src",

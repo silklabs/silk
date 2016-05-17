@@ -25,8 +25,8 @@ if (!('userAgent' in navigator)) {  //eslint-disable-line
 }
 
 // XXX: Hack to make debug module happy.
-if (typeof GLOBAL.document === 'undefined') {
-  GLOBAL.document = {
+if (typeof global.document === 'undefined') {
+  global.document = {
     documentElement: {
       style: {},
     },

@@ -8,6 +8,7 @@ const util = require('silk-sysutils');
 const Battery = require('silk-battery').default;
 const Movie = require('silk-movie').Movie;
 const Vibrator = require('silk-vibrator').default;
+const ntp = require('silk-ntp').default;
 
 const productName = util.getstrprop('ro.product.name', '(unknown?)');
 log.info('Running on a ' + productName);
@@ -25,6 +26,8 @@ splash.run(path.join(__dirname, 'splash.zip'));
 
 let vib = new Vibrator();
 vib.pattern(500);
+
+ntp.on('time', () => log.verbose('NTP time acquired'));
 
 log.info('Initializing wifi');
 wifi.init()

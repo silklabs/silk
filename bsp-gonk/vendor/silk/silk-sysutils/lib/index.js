@@ -19,7 +19,7 @@ import fs from 'fs';
 
 import createLog from 'silk-log/device';
 
-const log = createLog('silk-utils');
+const log = createLog('sysutils');
 const SILK_PROPS = 'system/silk/silk-props.json';
 
 let props;
@@ -45,7 +45,7 @@ try {
   silkProps = JSON.parse(silkPropsJson);
   log.debug(`silkProps: ${JSON.stringify(silkProps)}`);
 } catch (err) {
-  log.error('Invalid ${SILK_PROPS} file');
+  log.error(`Invalid ${SILK_PROPS} file`);
 }
 
 /**

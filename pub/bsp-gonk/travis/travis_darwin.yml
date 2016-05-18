@@ -5,6 +5,7 @@ os:
 
 before_install:
   - export FULL_SERVICE=1
+  - export CI_IGNORE_CASE_INSENSITIVE_FS=please
   - source ../travis/common_before_install.sh
   - source ./travis/osx_setup
 

@@ -27,8 +27,6 @@ WHITELIST=$(cat <<-EOF
   log
   pub
   raygun
-  streams
-  utils
 EOF
 )
 WHITELIST="$WHITELIST npm_preinstall npm_postinstall" # TODO: Remove when we can

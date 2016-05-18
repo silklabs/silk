@@ -1,0 +1,20 @@
+{
+  "name": "silk-vibrator",
+  "version": "0.0.1",
+  "description": "vibrator",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "../../../../npm_postinstall && silk-buildjs",
+    "build": "silk-buildjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "babel-runtime": "5.8.35",
+    "netmask": "1.0.5"
+  },
+  "symlinkDependencies": {
+    "silk-buildjs": "../../../../buildjs/",
+    "silk-sysutils": "../silk-sysutils"
+  },
+  "private": true
+}

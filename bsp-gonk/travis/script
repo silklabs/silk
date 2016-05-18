@@ -20,7 +20,7 @@ df -h
 
 ./sync $BOARD $PRODUCT
 du -h -d 2
-source build/envsetup.sh
+source build/envsetup.sh force
 make -j${J}
 
 # We place this in script to ensure that when it fails it turns the build red.

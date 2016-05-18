@@ -2,17 +2,10 @@ language: objective-c
 osx_image: xcode7.3
 os:
   - osx
-env:
-  global:
-    # By default we refuse to build on case insensitive system.
-    - CI_IGNORE_CASE_INSENSITIVE_FS=please
-    - NODE_VERSION=4.2.6
-    # This allows us to target sos and private silk.
-    - SILK_ROOT=pub
 
 before_install:
-  - source $SILK_ROOT/travis/common_before_install.sh
-  - source $SILK_ROOT/bsp-gonk/travis/osx_setup
+  - source ../travis/common_before_install.sh
+  - source ../travis/osx_setup
 
 script:
   - ./travis/script $BOARD $PRODUCT

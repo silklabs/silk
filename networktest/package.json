@@ -22,9 +22,13 @@
     "silk-core": "/device/vendor/silk/core",
     "silk-core-version": "/version",
     "silk-log": "/log",
+    "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
+    "silk-movie": "/pub/bsp-gonk/vendor/silk/silk-movie",
+    "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
-    "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi",
-    "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery"
+    "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
+    "silk-vibrator": "/pub/bsp-gonk/vendor/silk/silk-vibrator",
+    "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi"
   },
   "dependencies": {
     "easy-table": "1.0.0",

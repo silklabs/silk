@@ -15,4 +15,4 @@ unsafe.enable_getters_and_setters=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.23.0
+0.25.0

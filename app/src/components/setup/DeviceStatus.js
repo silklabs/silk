@@ -74,7 +74,7 @@ export default class DeviceStatus extends AsyncComponent {
         }>
         <View style={styles.content}>
           <Image
-            source={require('image!hub_large')}
+            source={require('../../assets/hub_large.png')}
             style={styles.hubImage}
           />
         </View>

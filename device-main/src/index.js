@@ -3,7 +3,7 @@
 
 const log = require('silk-alog');
 const wifi = require('silk-wifi').default;
-const util = require('silk-sysutils').default;
+const util = require('silk-sysutils');
 
 const productName = util.getstrprop('ro.product.name', '(unknown?)');
 

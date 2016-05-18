@@ -65,6 +65,9 @@ PRODUCT_PACKAGES += silk-wpad
 # vendor/silk/silk-sysutils
 PRODUCT_PACKAGES += silk-sysutils
 
+# vendor/silk/silk-vibrator
+PRODUCT_PACKAGES += silk-vibrator
+
 # vendor/silk/silk-wifi
 PRODUCT_PACKAGES += silk-wifi
 

@@ -7,6 +7,7 @@ const wifi = require('silk-wifi').default;
 const util = require('silk-sysutils');
 const Battery = require('silk-battery').default;
 const Movie = require('silk-movie').Movie;
+const Vibrator = require('silk-vibrator').default;
 
 const productName = util.getstrprop('ro.product.name', '(unknown?)');
 log.info('Running on a ' + productName);
@@ -22,6 +23,9 @@ battery.init()
 let splash = new Movie();
 splash.run(path.join(__dirname, 'splash.zip'));
 
+let vib = new Vibrator();
+vib.pattern(500);
+
 log.info('Initializing wifi');
 wifi.init()
 .then(() => {
@@ -29,6 +33,7 @@ wifi.init()
 })
 .then(() => {
   log.info('Wifi initialized successfully');
+  vib.pattern(500, 250, 500);
   setInterval(() => log.verbose('Hello world'), 1000);
 })
 .catch((err) => {

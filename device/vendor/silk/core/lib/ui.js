@@ -11,7 +11,7 @@ import fs from 'fs';
 import lights from './lights';
 import createLog from './log';
 import * as util from './sysutils';
-import Vibrator from './vibrator';
+import Vibrator from 'silk-vibrator';
 
 const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');

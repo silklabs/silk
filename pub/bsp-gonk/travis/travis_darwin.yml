@@ -5,7 +5,7 @@ os:
 
 before_install:
   - source ../travis/common_before_install.sh
-  - source ../travis/osx_setup
+  - source ./travis/osx_setup
 
 script:
   - ./travis/script $BOARD $PRODUCT

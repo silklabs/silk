@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Image,
   Modal,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,8 +14,8 @@ import Button from '../Button';
 import WifiNetworkIcon from './WifiNetworkIcon';
 import WifiNetworkSelector from './WifiNetworkSelector';
 import Selector from './Selector';
+import SetupScreen from './SetupScreen';
 import Spinner from '../Spinner';
-import { SetupStyles } from '../CommonStyles';
 import { getWifiInfo } from '../../libraries/Util';
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
@@ -206,9 +205,9 @@ export default class WifiConfig extends React.Component {
             ref="ssid"
             placeholder="Enter Wi-Fi name"
             autoCorrect={false}
-            autoCapitalize={false}
+            autoCapitalize="none"
             value={manualNetwork.ssid}
-            style={SetupStyles.formInput}
+            style={styles.textInput}
             onChangeText={(ssid) => this.setState({manualNetwork: {...manualNetwork, ssid}})}
           />
           <TouchableWithoutFeedback onPress={this._chooseFromList}>
@@ -267,10 +266,10 @@ export default class WifiConfig extends React.Component {
           ref="secret"
           secureTextEntry={!secretShown}
           autoCorrect={false}
-          autoCapitalize={false}
+          autoCapitalize="none"
           placeholder="Enter Wi-Fi password"
           value={this.state.secret}
-          style={SetupStyles.formInput}
+          style={styles.textInput}
           onChangeText={secret => this.setState({secret})}
         />
         <TouchableWithoutFeedback
@@ -458,29 +457,18 @@ export default class WifiConfig extends React.Component {
       (network.psk && this.state.secret.length < 8);
 
     return (
-      <ScrollView
-        style={SetupStyles.container}
-        keyboardShouldPersistTaps={false}
-        alwaysBounceVertical={false}
-        scrollable={false}>
-        <Text style={SetupStyles.title}>
-          Which Wi-Fi network should your device connect to?
-        </Text>
-        <Text style={SetupStyles.subtitle}>
-          Your Wi-Fi password won{"'"}t leave your house.
-        </Text>
-        {this._renderSSIDControls()}
-        {this._renderSecretControls()}
-        {this._renderWifiModal()}
-        {this._renderAuthTypeModal()}
-        <View style={{flex: 1}} />
-        <View style={styles.buttonRow}>
+      <SetupScreen
+        title="Which Wi-Fi network should your device connect to?"
+        subtitle="Your Wi-Fi password won't leave your house."
+        secondaryButton={
           <Button
             type="secondary"
             onPress={this.props.onCancel}
             label="Cancel"
             style={styles.cancelButton}
           />
+        }
+        primaryButton={
           <Button
             type="primary"
             onPress={this._handleSave}
@@ -488,8 +476,12 @@ export default class WifiConfig extends React.Component {
             style={styles.saveButton}
             disabled={saveButtonDisabled}
           />
-        </View>
-      </ScrollView>
+        }>
+        {this._renderSSIDControls()}
+        {this._renderSecretControls()}
+        {this._renderWifiModal()}
+        {this._renderAuthTypeModal()}
+      </SetupScreen>
     );
   }
 
@@ -517,6 +509,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'white',
     flex: 1,
+    backgroundColor: 'transparent',
   },
   secretRow: {
     flexDirection: 'row',
@@ -555,6 +548,13 @@ const styles = StyleSheet.create({
   },
   disabledIcon: {
     opacity: 0.5,
+  },
+  textInput: {
+    color: 'white',
+    height: 32,
+    fontFamily: 'Open Sans',
+    fontSize: 18,
+    flex: 1,
   },
   buttonRow: {
     flexDirection: 'row',

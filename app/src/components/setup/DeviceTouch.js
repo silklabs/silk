@@ -1,13 +1,9 @@
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
-import { SetupStyles } from '../CommonStyles';
+import SetupScreen from './SetupScreen';
 
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
@@ -66,34 +62,73 @@ export default class DeviceTouch extends AsyncComponent {
   };
 
   render() {
+    let phone;
+    if (this.state.touched) {
+      phone = (
+        <Image
+          key="phone_green"
+          source={require('image!phone_green')}
+          style={[styles.phoneImage, styles.phoneImageTouched]}
+        />
+      );
+    } else {
+      phone = (
+        <Image
+          key="phone_red"
+          source={require('image!phone_red')}
+          style={[styles.phoneImage, styles.phoneImageTooFar]}
+        />
+      );
+    }
     return (
-      <View style={SetupStyles.container}>
-        <Text style={SetupStyles.title}>
-          Tap your device with your phone to begin setup
-        </Text>
-        <Text style={SetupStyles.subtitle}>
-          Just like using a bus pass!
-        </Text>
-        <View style={{flex: 1}} />
-        <View style={styles.buttonRow}>
+      <SetupScreen
+        title="Tap your device with your phone to begin setup"
+        subtitle="Just like using a bus pass!"
+        secondaryButton={
           <Button
             type="secondary"
             onPress={this.props.onCancel}
             label="Cancel"
           />
+        }>
+        <View style={styles.graphic}>
+          <Image
+            source={require('image!hub_large')}
+            style={styles.hubImage}
+          />
+          {phone}
         </View>
-      </View>
+      </SetupScreen>
     );
   }
 
 }
 
 const styles = StyleSheet.create({
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
+  graphic: {
+    flex: 1,
+    marginVertical: 24,
   },
-  cancelButton: {
+  phoneImage: {
+    width: 72,
+    height: 136,
+  },
+  phoneImageTooFar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  phoneImageTouched: {
+    position: 'absolute',
+    top: 0,
+    right: 50,
+    transform: [{rotate: '20deg'}],
+  },
+  hubImage: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 95,
+    height: 230,
   },
 });

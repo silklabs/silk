@@ -107,32 +107,3 @@ export const Colors = {
   WarningRed: 'rgb(229, 77, 66)',
   ConfirmGreen: 'rgb(57, 202, 116)',
 };
-
-export const SetupStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.SilkLabsGreen,
-    paddingHorizontal: 32,
-    paddingTop: Navigator.NavigationBar.Styles.General.StatusBarHeight + 24,
-    paddingBottom: 24,
-  },
-  title: {
-    fontFamily: 'DIN Round Pro',
-    fontSize: 24,
-    color: 'white',
-  },
-  subtitle: {
-    fontFamily: 'DIN Round Pro',
-    fontWeight: '600',
-    fontSize: 14,
-    color: Colors.SilkLabsBlack,
-    marginVertical: 10,
-  },
-  formInput: {
-    color: 'white',
-    height: 32,
-    fontFamily: 'Open Sans',
-    fontSize: 18,
-    flex: 1,
-  },
-});

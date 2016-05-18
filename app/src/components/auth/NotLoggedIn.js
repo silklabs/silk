@@ -273,6 +273,8 @@ export default class NotLoggedIn extends AsyncComponent {
         paddingBottom: this.state.contentInsetBottom,
       };
     }
+    // This is a ScrollView not because we need scrolling, but we need
+    // to play well with the native keyboard.
     return (
       <ScrollView
         contentContainerStyle={[styles.container, extraStyle]}

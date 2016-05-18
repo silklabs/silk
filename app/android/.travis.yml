@@ -29,8 +29,8 @@ script:
 
 deploy:
   provider: s3
-  access_key_id: "AKIAIASNJWAY2EBXDKRA"
-  secret_access_key: "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"
+  access_key_id: $S3_ACCESS_KEY_ID
+  secret_access_key: $S3_SECRET_ACCESS_KEY
   bucket: "silk-app"
   region: us-west-2
   skip_cleanup: true

@@ -2,10 +2,12 @@ import React from 'react';
 import {
   Alert,
   DeviceEventEmitter,
+  Image,
   LayoutAnimation,
   Navigator,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { SilkApi } from 'silk-api';
@@ -16,11 +18,9 @@ import { UserState } from '../../libraries/UserState';
 
 import AsyncComponent from '../abstract/AsyncComponent';
 import AuthForm from './AuthForm';
-import Button from './Button';
+import Button from '../Button';
 import { Colors } from '../CommonStyles';
 import NetworkWarning from '../NetworkWarning';
-import TextLink from './TextLink';
-import { Wordmark } from '../Wordmark';
 import LoginMetric from '../../metrics/Login';
 
 const log = createLog('NotLoggedIn');
@@ -77,7 +77,7 @@ export default class NotLoggedIn extends AsyncComponent {
     });
   };
 
-  goBack = () => {
+  _goBack = () => {
     this.setState({
       controls: null,
       // Pre-emptively expand ScrollView again to avoid two
@@ -88,18 +88,12 @@ export default class NotLoggedIn extends AsyncComponent {
     });
   };
 
-  _renderLogo() {
-    if (this.state.keyboardShown) {
-      return null;
-    }
+  _renderWordmark() {
     return (
-      <View style={styles.logoContainer}>
-        <View style={styles.logoEltsContainer}>
-          <View style={styles.logo}/>
-          <Wordmark />
-        </View>
+        <View style={[styles.wordmark, this.state.keyboardShown ? null : styles.wordmarkStretch]}>
+        <Text style={styles.wordmarkLabel}>SILK</Text>
       </View>
-   );
+    );
   }
 
   _renderFirstScreen() {
@@ -108,8 +102,9 @@ export default class NotLoggedIn extends AsyncComponent {
     if (showServerPicker) {
       serverPickerButton = (
         <Button
+          style={styles.button}
           label="Change Server"
-          secondary={true}
+          type="secondary"
           onPress={() => this.props.navigator.push({name: 'ServerPicker'})}
         />
       );
@@ -117,24 +112,18 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <Button
+          style={styles.button}
           label="Create An Account"
+          type="primary"
           onPress={() => this.setState({controls: 'signup'})}
         />
         <Button
+          style={styles.button}
           label="I Already Have An Account"
+          type="primary"
           onPress={() => this.setState({controls: 'signin'})}
         />
         {serverPickerButton}
-        <View style={styles.bottomLinks}>
-          <TextLink
-            label="LEARN MORE"
-            onPress={undefined} // TODO
-          />
-          <TextLink
-            label="TERMS & CONDITIONS"
-            onPress={undefined} // TODO
-          />
-        </View>
       </View>
     );
   }
@@ -143,19 +132,16 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
-          onChangeTextInputFocus={this._disableKeyboardAnimation}
-          onSubmit={this._signUp}
+          style={styles.authForm}
           inProgress={this.state.inProgress}
           password={true}
           verifyPassword={true}
-          submitText="Sign Up"
+          primaryLabel="Sign Up"
+          secondaryLabel="Cancel"
+          onPrimary={this._signUp}
+          onSecondary={this._goBack}
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
         />
-        <View style={styles.bottomLinks}>
-          <TextLink
-            label="BACK"
-            onPress={this.goBack}
-          />
-        </View>
       </View>
     );
   }
@@ -182,23 +168,18 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
-          onChangeTextInputFocus={this._disableKeyboardAnimation}
-          onSubmit={this._signIn}
+          style={styles.authForm}
           inProgress={this.state.inProgress}
           password={true}
           verifyPassword={false}
-          submitText="Sign In"
+          primaryLabel="Sign In"
+          secondaryLabel="Back"
+          textLinkLabel="Forgot your password?"
+          onPrimary={this._signIn}
+          onSecondary={this._goBack}
+          onTextLink={() => this.setState({controls: 'forgot_password'})}
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
         />
-        <View style={styles.bottomLinks}>
-          <TextLink
-            label="BACK"
-            onPress={this.goBack}
-          />
-          <TextLink
-            label="FORGOT PASSWORD?"
-            onPress={() => this.setState({controls: 'forgot_password'})}
-          />
-        </View>
       </View>
     );
   }
@@ -207,19 +188,16 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
-          onChangeTextInputFocus={this._disableKeyboardAnimation}
-          onSubmit={this._forgotPassword}
+          style={styles.authForm}
           inProgress={this.state.inProgress}
-          submitText="Reset Password"
           password={false}
           verifyPassword={false}
+          primaryLabel="Reset Password"
+          secondaryLabel="Cancel"
+          onPrimary={this._forgotPassword}
+          onSecondary={this._goBack}
+          onChangeTextInputFocus={this._disableKeyboardAnimation}
         />
-        <View style={styles.bottomLinks}>
-          <TextLink
-            label="BACK"
-            onPress={this.goBack}
-          />
-        </View>
       </View>
     );
   }
@@ -301,10 +279,14 @@ export default class NotLoggedIn extends AsyncComponent {
         keyboardShouldPersistTaps={true}
         alwaysBounceVertical={false}
         scrollable={false}>
+        <Image
+          source={require('image!background_pattern')}
+          style={styles.pattern}
+        />
         <View style={styles.statusBar} />
         <NetworkWarning api={this.props.api} />
-        <View style={styles.container}>
-          {this._renderLogo()}
+        <View style={styles.content}>
+          {this._renderWordmark()}
           {this._renderControls()}
         </View>
       </ScrollView>
@@ -316,45 +298,70 @@ export default class NotLoggedIn extends AsyncComponent {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.SilkLabsTan,
+    backgroundColor: Colors.SilkLabsRed,
+  },
+  pattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.2,
   },
 
   statusBar: {
     height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
   },
 
-  logoContainer: {
+  content: {
     flex: 1,
   },
-  logoEltsContainer: {
-    flex: 1,
+
+  wordmark: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    marginVertical: 24,
   },
-  logo: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 0.75,
-    borderColor: '#979797',
-    backgroundColor: '#d8d8d8',
+  wordmarkStretch: {
+    flex: 1,
+  },
+  wordmarkLabel: {
+    fontFamily: 'DIN Round Pro',
+    fontSize: 48,
+    color: Colors.SilkLabsYellow,
+    backgroundColor: 'transparent',
+  },
+
+  title: {
+    fontFamily: 'DIN Round Pro',
+    fontSize: 24,
+    color: 'white',
+    backgroundColor: 'transparent',
+  },
+
+  authForm: {
+    flex: 1,
+  },
+
+  forgotPasswordLabel: {
+    fontFamily: 'DIN Round Pro',
+    fontWeight: '600',
+    color: Colors.SilkLabsBlack,
+    backgroundColor: 'transparent',
+    borderBottomColor: Colors.SilkLabsBlack,
+    borderBottomWidth: 2,
+  },
+
+  button: {
+    width: 200,
     margin: 10,
   },
 
   controlsContainer: {
     flex: 1,
     paddingHorizontal: 32,
-    paddingBottom: 16,
-    justifyContent: 'flex-end',
-  },
-
-  controls: {
-  },
-
-  bottomLinks: {
-    paddingTop: 8,
+    paddingBottom: 24,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
   },
 });

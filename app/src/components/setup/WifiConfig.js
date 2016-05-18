@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import createLog from 'silk-log';
 
-import Button from './Button';
+import Button from '../Button';
 import WifiNetworkIcon from './WifiNetworkIcon';
 import WifiNetworkSelector from './WifiNetworkSelector';
 import Selector from './Selector';

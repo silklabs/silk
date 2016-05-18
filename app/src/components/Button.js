@@ -6,13 +6,13 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { Colors } from '../CommonStyles';
+import { Colors } from './CommonStyles';
 
 export default class Button extends React.Component {
 
   static propTypes = {
     label: React.PropTypes.string.isRequired,
-    type: React.PropTypes.oneOf(['primary', 'secondary']),
+    type: React.PropTypes.oneOf(['primary', 'secondary']).isRequired,
     disabled: React.PropTypes.bool,
     onPress: React.PropTypes.func,
     style: View.propTypes.style,
@@ -87,6 +87,7 @@ const stylesByType = {
     },
     label: {
       ...commonStyles.label,
+      backgroundColor: 'transparent',
       color: 'white',
     },
   }),

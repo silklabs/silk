@@ -20,6 +20,36 @@ const BATTERY_OK_TO_BOOT_LEVEL = 10;
 // Suggest a shutdown when the battery is below this level
 const BATTERY_OUT_OF_POWER_LEVEL = 5;
 
+/**
+ * Silk battery module. Following events are supported by this module.
+ *
+ * `needs-to-charge` event. This event is emitted when battery capacity
+ * is too low to boot.
+ * 
+ * `out-of-power` event. This event is emitted when battery capacity
+ * is too low to continue normal operation.
+ *
+ * @module silk-battery
+ * @example
+ * const Battery = require('silk-battery').default;
+ *
+ * let battery = new Battery();
+ * battery.init()
+ * .then(function() {
+ *   battery.on('out-of-power', function() {
+ *     log.info('Device running out of battery; shutting down...');
+ *   });
+ * })
+ * .catch(function(err) {
+ *   log.error('Failed to initialize battery', err);
+ * });
+ */
+
+/**
+ * Silk Battery class
+ * @memberof silk-battery
+ * @class
+ */
 export default class Battery extends events.EventEmitter {
 
   _readCapacity(): Promise<number> {
@@ -49,6 +79,11 @@ export default class Battery extends events.EventEmitter {
     }).catch(util.processthrow);
   }
 
+  /**
+   * Initialize battery module
+   * @memberof silk-battery.Battery
+   * @instance
+   */
   init(): Promise<void> {
     if (!BATTERY_PRESENT) {
       log.info('Skipping battery presence test and assuming no battery');

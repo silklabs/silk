@@ -42,8 +42,6 @@ SILK_CORE := \
   silk-gc1 \
   silk-movie \
   silk-caffe \
-  silk-sysutils \
-  silk-wifi \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
 

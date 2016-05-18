@@ -12,6 +12,7 @@
     "silk-caffe": "/device/vendor/propsilk/silk-caffe",
     "silk-cv": "/device/vendor/propsilk/silk-cv",
     "silk-core-version": "/version",
+    "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
     "silk-device-main": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",
     "silk-movie": "/device/vendor/propsilk/silk-movie",

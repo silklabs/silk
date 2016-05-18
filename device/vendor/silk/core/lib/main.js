@@ -36,7 +36,7 @@ if (process.platform !== 'android') {
 import assert from 'assert';
 import api from './api';
 import {MetricTypes} from 'silk-api';
-import Battery from './battery';
+import Battery from 'silk-battery';
 
 import wifi from 'silk-wifi';
 import ntp from './ntp';

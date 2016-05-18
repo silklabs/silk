@@ -82,7 +82,6 @@ private:
 
   JSFUNC(Load);
   JSFUNC(SetMean);
-  JSFUNC(SetScale);
   JSFUNC(SetLabels);
   JSFUNC(PredictTopK);
   JSFUNC(Rcnn);
@@ -94,7 +93,7 @@ public:
   cv::Size inputGeometry;
   int numChannels;
   cv::Mat mean;
-  float scale;
+  bool meanAvailable;
   std::vector<string> labels;
 };
 

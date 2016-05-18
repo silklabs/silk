@@ -69,7 +69,6 @@ void Model::Init(Local<Object> exports) {
   // Prototype
   Nan::SetPrototypeMethod(ctor, "load", Load);
   Nan::SetPrototypeMethod(ctor, "setMean", SetMean);
-  Nan::SetPrototypeMethod(ctor, "setScale", SetScale);
   Nan::SetPrototypeMethod(ctor, "setLabels", SetLabels);
   Nan::SetPrototypeMethod(ctor, "predictTopK", PredictTopK);
   Nan::SetPrototypeMethod(ctor, "rcnn", Rcnn);
@@ -100,7 +99,7 @@ NAN_METHOD(Model::New) {
  *
  */
 Model::Model() :
-  scale(0.0) {
+  meanAvailable(false) {
 }
 
 /**
@@ -220,25 +219,7 @@ NAN_METHOD(Model::SetMean) {
   // filled with this value
   cv::Scalar channelMean = cv::mean(mean);
   self->mean = cv::Mat(self->inputGeometry, mean.type(), channelMean);
-}
-
-/**
- *
- */
-NAN_METHOD(Model::SetScale) {
-  SETUP_FUNCTION(Model)
-
-  if (info.Length() == 0) {
-    JSTHROW("Scale must be provided");
-  }
-
-  int scale = 0;
-  INT_FROM_ARGS(scale, 0);
-  if (scale <= 0) {
-    JSTHROW("Scale must be greater than zero");
-  }
-
-  self->scale = scale;
+  self->meanAvailable = true;
 }
 
 /**
@@ -614,13 +595,13 @@ cv::Mat Model::Preprocess(const cv::Mat& img) {
     sampleResized.convertTo(sampleFloat, CV_32FC1);
   }
 
-  cv::Mat sampleNormalized;
-  cv::subtract(sampleFloat, mean, sampleNormalized);
-
-  if (scale > 0.0) {
-    sampleNormalized *= scale;
+  if (meanAvailable) {
+    cv::Mat sampleNormalized;
+    cv::subtract(sampleFloat, mean, sampleNormalized);
+    return sampleNormalized;
+  } else {
+    return sampleFloat;
   }
-  return sampleNormalized;
 }
 
 /**

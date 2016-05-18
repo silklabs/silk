@@ -6,7 +6,7 @@ Thank you for considering contributing to Silk. Together with the community, we 
 
 ## What are we looking for
 
-Silk's key components are open source and we :heart: to receive contributions from our community -- you! There are many ways to contribute, from writing tutorials, "how-to" aritcles or blog posts, improving the documentation, submitting bug reports and feature requests or writing code which can be incorporated into Silk itself and redistributed to all of our users.
+Silk's key components are open source and we :heart: to receive contributions from our community -- you! There are many ways to contribute, from writing tutorials, "how-to" articles or blog posts, improving the documentation, submitting bug reports and feature requests or writing code which can be incorporated into Silk itself and redistributed to all of our users.
 
 # Getting started
 
@@ -15,7 +15,7 @@ Silk's key components are open source and we :heart: to receive contributions fr
 The repository generally consists of those parts:
 
 - `babel`: Babel utilities
-- `babel-preset-silk-node4`:  Standardized babel configuration
+- `babel-preset-silk-node4`: Standardized babel configuration
 - `bsp-gonk`: Board support package for various Android-like devices
 - `cli`: Commandline tool
 - `device-main`: Device javascript entry point
@@ -26,7 +26,7 @@ The repository generally consists of those parts:
 - `log`: Simple standardized logger
 - `sdk`: Tools for developing device-main, and other JS modules
 - `tools/npm`: Utilities for working with NPM in a large source tree
-`version`: Build version information
+- `version`: Build version information
 
 And for more in-depth information, each folder has its own README to explain more the technical aspect of the repo.
 
@@ -81,7 +81,7 @@ When filing an issue, make sure to answer these five questions:
 2. What did you do?
 3. What did you expect to see?
 4. What did you see instead?
-5. General questions should go to the silklabs mailing list/forum instead of the issue tracker. The devs there will answer or ask you to file an issue if you've tripped over a bug.
+5. General questions should go to the silklabs [forum](https://community.silklabs.com) instead of the issue tracker. The devs there will answer or ask you to file an issue if you've tripped over a bug.
 
 # How to suggest a feature or enhancement
 
@@ -89,7 +89,7 @@ Features and enhancements requests are always welcome, here's a little bit of in
 
 ## Silk's philosophy
 
-Silk's mission is to make the IoT field accessible through JavaScript, we want our developers to do pretty much anything and everything with just the web, with just JavaScript.
+Silk's mission is to make the IoT field more secure and accessible through JavaScript, we want our developers to do pretty much anything and everything with just the web, with just JavaScript.
 
 We also try to expand our devices support so more developers have access to all the features we are providing them with.
 

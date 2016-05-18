@@ -1,6 +1,6 @@
 # Release Notes
 
-## Silk v 0.5.1
+## Silk v 0.15.2
 
 ### APIs introduced
 

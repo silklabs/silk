@@ -23,6 +23,7 @@ let enabled = !util.getprop('persist.silk.quiet', version.official);
 /**
  * Silk vibrator class
  *
+ * @class
  * @memberof silk-vibrator
  */
 export default class Vibrator {

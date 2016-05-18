@@ -72,6 +72,8 @@ function makeConfig(platform) {
     config.module.loaders[1].query.plugins.push('./src/transforms/remove-logging');
     config.plugins.push(new webpack.optimize.DedupePlugin());
     config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+  } else {
+    config.module.loaders[1].query.plugins.push('./src/transforms/assert-messages');
   }
   return config;
 }

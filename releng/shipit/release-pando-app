@@ -75,7 +75,7 @@ git rm -rf *
 popd
 
 for dir in $WHITELIST; do
-  rsync -ra $dir 1/2/3/4/5/ship/
+  rsync -ra --exclude "*.internal.*" $dir 1/2/3/4/5/ship/
 done
 cd 1/2/3/4/5/ship
 git add *

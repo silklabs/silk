@@ -9,7 +9,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "babel-runtime": "5.8.35",
     "netmask": "1.0.5"
   },
   "symlinkDependencies": {

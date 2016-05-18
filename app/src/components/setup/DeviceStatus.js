@@ -1,13 +1,9 @@
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
-import { SetupStyles } from '../CommonStyles';
+import SetupScreen from './SetupScreen';
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 const CONNECTION_STATUS_LABELS = {
@@ -52,31 +48,37 @@ export default class DeviceStatus extends AsyncComponent {
 
   render() {
     return (
-      <View style={SetupStyles.container}>
-        <Text style={SetupStyles.title}>
-          Setting up your device...
-        </Text>
-        <Text style={SetupStyles.subtitle}>
-          {CONNECTION_STATUS_LABELS[this.state.status] || this.state.status}
-        </Text>
-        <View style={{flex: 1}} />
-        <View style={styles.buttonRow}>
+      <SetupScreen
+        title="Setting up your device..."
+        subtitle={CONNECTION_STATUS_LABELS[this.state.status] || this.state.status}
+        secondaryButton={
           <Button
             type="secondary"
             onPress={this.props.onCancel}
             label="Cancel"
           />
+        }>
+        <View style={styles.content}>
+          <Image
+            source={require('image!hub_large')}
+            style={styles.hubImage}
+          />
         </View>
-      </View>
+      </SetupScreen>
     );
   }
 
 }
 
 const styles = StyleSheet.create({
-  buttonRow: {
-    flexDirection: 'row',
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    marginTop: 16,
+    alignItems: 'center',
+  },
+  hubImage: {
+    width: 95,
+    height: 230,
+    marginVertical: 24,
   },
 });

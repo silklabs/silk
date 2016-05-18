@@ -83,7 +83,7 @@ export default class DeviceList extends AsyncComponent {
   }
 
   render() {
-    let {
+    const {
       hasNetwork,
       devices,
       unconfiguredDevices,
@@ -92,7 +92,7 @@ export default class DeviceList extends AsyncComponent {
 
     // this.props.devices === null means we haven't fetched a list of devices yet,
     // so we're still loading from network.
-    if (!devices) {
+    if (!devices && !unconfiguredDevices.size) {
       if (!hasNetwork) {
         return this._renderOffline();
       }
@@ -103,7 +103,7 @@ export default class DeviceList extends AsyncComponent {
       );
     }
 
-    if (!devices.size && !unconfiguredDevices.size && !configuringDevice) {
+    if (devices && !devices.size && !unconfiguredDevices.size && !configuringDevice) {
       return this._renderNoDevices();
     }
 
@@ -191,7 +191,11 @@ export default class DeviceList extends AsyncComponent {
         />
       );
     }
-    return this.props.devices.map((device, deviceId) => (
+    const { devices } = this.props;
+    if (!devices) {
+      return null;
+    }
+    return devices.map((device, deviceId) => (
       <View
         style={styles.cameraPreview}
         key={deviceId}>

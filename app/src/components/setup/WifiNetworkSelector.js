@@ -3,11 +3,18 @@ import { View } from 'react-native';
 import Selector from './Selector';
 import WifiNetworkIcon from './WifiNetworkIcon';
 
+const deviceNetworkPropType = React.PropTypes.shape({
+  bssid: React.PropTypes.string.isRequired,
+  ssid: React.PropTypes.string.isRequired,
+  psk: React.PropTypes.bool.isRequired,
+  level: React.PropTypes.number.isRequired,
+});
+
 export default class WifiNetworkSelector extends React.Component {
 
   static propTypes = {
-    deviceNetworks: React.PropTypes.arrayOf(WifiNetworkIcon.propTypes.network),
-    selectedNetwork: WifiNetworkIcon.propTypes.network,
+    deviceNetworks: React.PropTypes.arrayOf(deviceNetworkPropType),
+    selectedNetwork: deviceNetworkPropType,
     style: View.propTypes.style,
     onSelectNetwork: React.PropTypes.func.isRequired,
     onSelectManually: React.PropTypes.func.isRequired,

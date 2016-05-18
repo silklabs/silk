@@ -3,7 +3,7 @@ os:
   - osx
 
 before_install:
-  - source ../releng/.travis_before_install.sh
+  - source ../pub/travis/common_before_install.sh
   - brew tap homebrew/science
   - brew install --verbose opencv3
   - cp /usr/local/Cellar/opencv3/3.1.0_*/share/OpenCV/3rdparty/lib/libippicv.a /usr/local/Cellar/opencv3/3.1.0_*/lib/

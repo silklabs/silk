@@ -15,9 +15,12 @@
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
     "silk-device-main": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",
-    "silk-movie": "/device/vendor/propsilk/silk-movie",
+    "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
+    "silk-movie": "/pub/bsp-gonk/vendor/silk/silk-movie",
+    "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-properties": "/pub/bsp-gonk/vendor/silk/silk-properties",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
+    "silk-vibrator": "/pub/bsp-gonk/vendor/silk/silk-vibrator",
     "silk-wifi": "/pub/bsp-gonk/vendor/silk/silk-wifi"
   },
   "dependencies": {

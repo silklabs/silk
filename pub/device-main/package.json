@@ -2,11 +2,12 @@
   "name": "silk-device-main",
   "version": "0.15.2",
   "description": "Device main program",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
     "flow": "flow check",
     "lint": "eslint src",
-    "postinstall": "../npm_postinstall",
+    "build-splash": "cd splash && zip -0 -r ../splash.zip *",
+    "postinstall": "../npm_postinstall && npm run build-splash",
     "test": "npm run lint && npm run flow"
   },
   "symlinkDependencies": {

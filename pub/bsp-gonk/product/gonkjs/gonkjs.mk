@@ -47,6 +47,15 @@ PRODUCT_PACKAGES += silk-sensors
 # vendor/silk/silk-alog/
 PRODUCT_PACKAGES += silk-alog
 
+# vendor/silk/silk-input/
+PRODUCT_PACKAGES += silk-input
+
+# vendor/silk/silk-movie/
+PRODUCT_PACKAGES += silk-movie
+
+# vendor/silk/silk-ntp/
+PRODUCT_PACKAGES += silk-ntp
+
 # vendor/silk/silk-properties/
 PRODUCT_PACKAGES += silk-properties
 
@@ -61,6 +70,9 @@ PRODUCT_PACKAGES += silk-wpad
 
 # vendor/silk/silk-sysutils
 PRODUCT_PACKAGES += silk-sysutils
+
+# vendor/silk/silk-vibrator
+PRODUCT_PACKAGES += silk-vibrator
 
 # vendor/silk/silk-wifi
 PRODUCT_PACKAGES += silk-wifi

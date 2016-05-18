@@ -1,21 +1,25 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * @private
  * @flow
  */
 
-import * as util from './sysutils';
-import ntpClient from 'silk-ntp-client';
+import * as util from 'silk-sysutils';
+import ntpClient from 'external-node-ntp-client';
 import { EventEmitter } from 'events';
 import wifi from 'silk-wifi';
-import createLog from './log';
+import createLog from 'silk-log/device';
 import version from 'silk-core-version';
 
 const log = createLog('ntp');
 
+/**
+ * Silk NTP time service
+ *
+ * @module silk-ntp
+ * @example
+ * const ntp = require('silk-ntp').default;
+ * ntp.on('time', () => console.log('NTP time acquired'));
+ */
 let emitter = new EventEmitter();
 export default emitter;
 
@@ -38,14 +42,11 @@ function getNetworkTime() {
   function ntpCallback(err, date: Date) {
     if (err) {
       log.warn(`Error: NTP failed: ${err}`);
-      util.timeout(NTP_RETRY_DELAY)
-      .then(getNetworkTime)
-      .catch(util.processthrow);
+      util.timeout(NTP_RETRY_DELAY).then(getNetworkTime);
+
     } else {
       setSystemDate(date);
-      util.timeout(NTP_REFRESH_DELAY)
-      .then(getNetworkTime)
-      .catch(util.processthrow);
+      util.timeout(NTP_REFRESH_DELAY).then(getNetworkTime);
     }
   }
 

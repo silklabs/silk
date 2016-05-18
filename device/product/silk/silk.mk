@@ -40,7 +40,6 @@ SILK_CORE := \
   silk-bledroid \
   silk-cv \
   silk-gc1 \
-  silk-movie \
   silk-caffe \
 
 PRODUCT_PACKAGES += $(SILK_CORE)

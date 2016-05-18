@@ -1,19 +1,31 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * @private
  * @flow
  */
 
-import * as util from './sysutils';
 import fs from 'fs';
+import * as util from 'silk-sysutils';
 import version from 'silk-core-version';
 
 // Vibrate by default only on developer builds
 let enabled = !util.getprop('persist.silk.quiet', version.official);
 
+/**
+ * Silk vibrator module
+ *
+ * @module silk-vibrator
+ * @example
+ * const Vibrator = require('silk-vibrator').default;
+ * let vibrator = new Vibrator();
+ * vibrator.pattern(100, 50, 100);
+ */
+
+/**
+ * Silk vibrator class
+ *
+ * @class
+ * @memberof silk-vibrator
+ */
 export default class Vibrator {
 
   _active: boolean = false;
@@ -32,21 +44,44 @@ export default class Vibrator {
     }
   }
 
+  /**
+   * Test if the vibrator is active
+   *
+   * @memberof silk-vibrator.Vibrator
+   * @instance
+   */
   get active(): boolean {
     return this._active;
   }
 
+  /**
+   * Run the vibrator for the specified duration
+   *
+   * @memberof silk-vibrator.Vibrator
+   * @instance
+   */
   on(duration: number) {
     this._active = true;
     this._vib(duration);
   }
 
+  /**
+   * Turn off the vibrator
+   *
+   * @memberof silk-vibrator.Vibrator
+   * @instance
+   */
   off() {
     this._active = false;
     this._vib(0);
   }
 
-  // pattern(on1_ms, off1_ms, on2_ms, off2_ms, ... , onN_ms)
+  /**
+   * Play a vibrator pattern
+   *
+   * @memberof silk-vibrator.Vibrator
+   * @instance
+   */
   pattern(onDuration: number, offDuration: number, ...more: Array<number>) {
     if (onDuration) {
       this.on(onDuration);

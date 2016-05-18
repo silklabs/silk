@@ -23,7 +23,6 @@ declare module "silk-properties" {
  * Get system property
  *
  * @name get
- * @instance
  * @memberof silk-properties
  * @param {string} key The name of the system property to fetch
  * @return {string} Returns the value of a system property or null if no such property exists

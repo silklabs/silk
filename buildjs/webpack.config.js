@@ -58,12 +58,20 @@ if (fs.existsSync(localWebpack)) {
 }
 
 // Create symlink into package root dir for simulator to work
-if (!fs.existsSync(path.join(context, main))) {
+try {
   fs.symlinkSync(path.join(destination, main), path.join(context, main));
+} catch(err) {
+  if (err.code !== 'EEXIST') {
+    console.log(err);
+  }
 }
 
-if (!fs.existsSync(path.join(context, `${main}.map`))) {
+try {
   fs.symlinkSync(path.join(destination, `${main}.map`), path.join(context, `${main}.map`));
+} catch(err) {
+  if (err.code !== 'EEXIST') {
+    console.log(err);
+  }
 }
 
 module.exports = config;

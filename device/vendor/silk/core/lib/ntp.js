@@ -3,11 +3,11 @@
  * @flow
  */
 
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import ntpClient from 'silk-ntp-client';
 import { EventEmitter } from 'events';
 import wifi from 'silk-wifi';
-import createLog from './log';
+import createLog from 'silk-log/device';
 import version from 'silk-core-version';
 
 const log = createLog('ntp');
@@ -34,14 +34,11 @@ function getNetworkTime() {
   function ntpCallback(err, date: Date) {
     if (err) {
       log.warn(`Error: NTP failed: ${err}`);
-      util.timeout(NTP_RETRY_DELAY)
-      .then(getNetworkTime)
-      .catch(util.processthrow);
+      util.timeout(NTP_RETRY_DELAY).then(getNetworkTime);
+
     } else {
       setSystemDate(date);
-      util.timeout(NTP_REFRESH_DELAY)
-      .then(getNetworkTime)
-      .catch(util.processthrow);
+      util.timeout(NTP_REFRESH_DELAY).then(getNetworkTime);
     }
   }
 

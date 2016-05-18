@@ -50,6 +50,9 @@ PRODUCT_PACKAGES += silk-alog
 # vendor/silk/silk-movie/
 PRODUCT_PACKAGES += silk-movie
 
+# vendor/silk/silk-ntp/
+PRODUCT_PACKAGES += silk-ntp
+
 # vendor/silk/silk-properties/
 PRODUCT_PACKAGES += silk-properties
 

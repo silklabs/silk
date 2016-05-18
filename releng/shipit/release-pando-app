@@ -17,12 +17,9 @@ WHITELIST=$(cat <<-EOF
   api
   api-schema
   app
-  audio
-  azure-storage
   babeldeps
   cam
   config
-  docs
   eslint
   flow-bin
   http
@@ -30,10 +27,7 @@ WHITELIST=$(cat <<-EOF
   log
   pub
   raygun
-  rtc
-  server
   streams
-  svm
   utils
 EOF
 )

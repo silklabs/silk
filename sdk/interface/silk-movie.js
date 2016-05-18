@@ -18,9 +18,8 @@
 /**
  * Silk Movie class
  *
+ * @class
  * @memberof silk-movie
- * @example
- * @flow
  */
 export class Movie {
   constructor() {

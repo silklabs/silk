@@ -8,11 +8,11 @@ For now we provide nightly builds that are generated daily and contain the very 
 
 ### Nexus 4 (mako)
 
-- Latest nightly build: [download](#)
+- Latest nightly build: [download](https://d2xr8z98rg6hpy.cloudfront.net/commit/mako/linux/master/target.tar.gz)
 
 ### Xiaomi Redmi Note 3 PRO (kenzo)
 
-- Latest nightly build: [download](#)
+- Latest nightly build: [download](https://d2xr8z98rg6hpy.cloudfront.net/commit/kenzo/linux/master/target.tar.gz)
 
 ## Flashing and Installing Silk
 
@@ -33,11 +33,11 @@ List of devices attached
 
 Which means you are ready to flash Silk into your device.
 
-So after downloading the compressed file that ends with `.tgz` enter respectively the following commands in your terminal from the folder you downloaded the file to:
+So after downloading the compressed file that ends with `.tar.gz` enter respectively the following commands in your terminal from the folder you downloaded the file to:
 
 ```bash
-silk-mako-nightly-20160504150933.tgz
-cd silk-mako-nightly-20160504150933
+target.tar.gz
+cd target
 ./flash-all.sh
 ```
 
@@ -48,7 +48,7 @@ And `silk-mako-nightly-20160504150933` can be something else depending on your d
 If you've got Silk already installed in your phone, make sure the device is up and running (which will expose ADB to your computer) AND plugged to your computer then repeat the same steps from the previous section of right after downloading the compressed binaries. Which means typing once more:
 
 ```bash
-silk-mako-nightly-20160504150933.tgz
-cd silk-mako-nightly-20160504150933
+target.tar.gz
+cd target
 ./flash-all.sh
 ```

@@ -30,7 +30,7 @@ silk build
 
 ### push
 
-Push files without restarting the process.
+Push files without restarting the main module.
 
 ```bash
 silk push
@@ -44,12 +44,32 @@ Activate given (mark it as main module).
 silk activate
 ```
 
+#### Arguments
+
+`--clear`, `-c`: Activate the default main module instead of the current package.
+
 ### restart
 
-Restart silk device or emulator.
+Restart the main module.
 
 ```bash
 silk restart
+```
+
+### start
+
+Start the main module (only useful after using stop).
+
+```bash
+silk start
+```
+
+### stop
+
+Stop the main module (until the device reboots).
+
+```bash
+silk stop
 ```
 
 ### log

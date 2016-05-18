@@ -47,6 +47,9 @@ PRODUCT_PACKAGES += silk-sensors
 # vendor/silk/silk-alog/
 PRODUCT_PACKAGES += silk-alog
 
+# vendor/silk/silk-input/
+PRODUCT_PACKAGES += silk-input
+
 # vendor/silk/silk-movie/
 PRODUCT_PACKAGES += silk-movie
 

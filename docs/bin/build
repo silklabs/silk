@@ -5,6 +5,7 @@ if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
     ../sdk/interface/silk-alog.js \
     ../sdk/interface/silk-movie.js \
     ../sdk/interface/silk-properties.js \
+    ../bsp-gonk/vendor/silk/silk-input/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-ntp/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-sysutils/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-vibrator/lib/index.js \

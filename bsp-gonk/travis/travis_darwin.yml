@@ -4,6 +4,7 @@ os:
   - osx
 
 before_install:
+  - export FULL_SERVICE=1
   - source ../travis/common_before_install.sh
   - source ./travis/osx_setup
 

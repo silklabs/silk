@@ -1,3 +1,12 @@
+'use strict';
+
+let device = require('./device');
+
 /**
- * TODO: Put stuff here...
+ * Initializing all the necessary modules.
+ */
+device.init();
+
+/**
+ * TODO: Put your stuff here...
  */

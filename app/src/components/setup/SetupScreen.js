@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Image,
-  Navigator,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +8,7 @@ import {
 } from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent';
-import { Colors } from '../CommonStyles';
+import { Colors, LayoutStyles } from '../CommonStyles';
 
 export default class SetupScreen extends AsyncComponent {
 
@@ -44,7 +43,7 @@ export default class SetupScreen extends AsyncComponent {
           source={require('image!setup_background_pattern')}
           style={styles.pattern}
         />
-        <View style={styles.statusBar} />
+        <View style={LayoutStyles.statusBarPlaceholder} />
         <View style={styles.content}>
           <Text style={styles.title}>
             {this.props.title}
@@ -81,9 +80,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingVertical: 24,
-  },
-  statusBar: {
-    height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
   },
   title: {
     fontFamily: 'DIN Round Pro',

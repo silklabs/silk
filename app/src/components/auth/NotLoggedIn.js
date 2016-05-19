@@ -4,7 +4,6 @@ import {
   DeviceEventEmitter,
   Image,
   LayoutAnimation,
-  Navigator,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,7 +18,7 @@ import { UserState } from '../../libraries/UserState';
 import AsyncComponent from '../abstract/AsyncComponent';
 import AuthForm from './AuthForm';
 import Button from '../Button';
-import { Colors } from '../CommonStyles';
+import { Colors, LayoutStyles } from '../CommonStyles';
 import NetworkWarning from '../NetworkWarning';
 import LoginMetric from '../../metrics/Login';
 
@@ -285,7 +284,7 @@ export default class NotLoggedIn extends AsyncComponent {
           source={require('image!background_pattern')}
           style={styles.pattern}
         />
-        <View style={styles.statusBar} />
+        <View style={LayoutStyles.statusBarPlaceholder} />
         <NetworkWarning api={this.props.api} />
         <View style={styles.content}>
           {this._renderWordmark()}
@@ -309,10 +308,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     opacity: 0.2,
-  },
-
-  statusBar: {
-    height: Navigator.NavigationBar.Styles.General.StatusBarHeight,
   },
 
   content: {

@@ -1,0 +1,4 @@
+/build/
+*.sw?
+/node_modules
+/silk-capture.node

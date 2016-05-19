@@ -14,7 +14,7 @@ import config from 'silk-config';
 import api from './api';
 import createLog from './log';
 import cv from 'opencv';
-import silkcv from 'silk-cv';
+import silkcapture from 'silk-capture';
 import fs from 'mz/fs';
 import invariant from 'assert';
 import mkdirp from 'mkdirp-promise';
@@ -726,7 +726,7 @@ export default class Camera extends EventEmitter {
   _initCVVideoCapture() {
     if (!this._cvVideoCapture) {
       try {
-        this._cvVideoCapture = new silkcv.VideoCapture(0,
+        this._cvVideoCapture = new silkcapture.VideoCapture(0,
           FRAME_SIZE.normal.width, FRAME_SIZE.normal.height);
       } catch (err) {
         throw err;

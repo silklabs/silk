@@ -5,9 +5,17 @@
 
 import { EventEmitter } from 'events';
 
+export type AdapterState =
+  'unknown' |
+  'resetting' |
+  'unsupported' |
+  'unauthorized' |
+  'poweredOff' |
+  'poweredOn';
+
 declare export class Bleno extends EventEmitter {
   platform: string;
-  state: string;
+  state: AdapterState;
   address: string;
   rssi: number;
   mtu: number;

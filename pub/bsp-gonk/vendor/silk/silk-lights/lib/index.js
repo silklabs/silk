@@ -8,14 +8,67 @@ import createLog from 'silk-log/device';
 
 const log = createLog('lights');
 
+/**
+ * Silk lights module to provide controls for the backlight and
+ * other LEDs on the board
+ * @module silk-lights
+ *   
+ * @example
+ * const lights = require('silk-lights');
+ * 
+ * // Keep the backlight on
+ * let backlight = lights.backlight;
+ * backlight.set(backlight.WHITE); 
+ */
+
 // From hardware/libhardware/include/hardware/lights.h
+/**
+ * @name backlight
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_BACKLIGHT = 'backlight';
+/**
+ * @name keyboard
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_KEYBOARD = 'keyboard';
+/**
+ * @name buttons
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_BUTTONS = 'buttons';
+/**
+ * @name battery
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_BATTERY = 'battery';
+/**
+ * @name notifications
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_NOTIFICATIONS = 'notifications';
+/**
+ * @name attention
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_ATTENTION = 'attention';
+/**
+ * @name bluetooth
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_BLUETOOTH = 'bluetooth';
+/**
+ * @name wifi
+ * @property
+ * @memberof silk-lights 
+ */
 const LIGHT_ID_WIFI = 'wifi';
 const LIGHT_FLASH_NONE = 0;
 const LIGHT_FLASH_TIMED = 1;

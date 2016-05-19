@@ -7,8 +7,8 @@
  */
 
 import events from 'events';
-import { exec } from './sysutils';
-import createLog from './log';
+import { exec } from 'silk-sysutils';
+import createLog from 'silk-log/device';
 
 const log = createLog('lights');
 

@@ -7,7 +7,7 @@
  */
 
 import events from 'events';
-import lights from './lights';
+import lights from 'silk-lights';
 import createLog from './log';
 import * as util from './sysutils';
 import Vibrator from 'silk-vibrator';

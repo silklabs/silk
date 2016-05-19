@@ -54,7 +54,7 @@
     "postinstall": "../npm_postinstall && ./tools/postinstall",
     "start": "./tools/rnws start",
     "test": "npm run lint && npm run flow",
-    "update": "./tools/update"
+    "update": "./tools/update.internal.sh"
   },
   "version": "0.15.2"
 }

@@ -209,6 +209,15 @@ function main() {
       camera = new Camera(server);
       timeline = new Timeline(server, outbox, camera);
 
+      // Camera mute control
+      const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
+      let updateCameraMute = () => {
+        const audioMute = util.getboolprop(AUDIO_MUTE_PROP, false);
+        camera.setMute(audioMute);
+      };
+      updateCameraMute();
+      util.propWatcher.on(AUDIO_MUTE_PROP, updateCameraMute);
+
       let hw = [
         camera.init(),
         wifi.init(),

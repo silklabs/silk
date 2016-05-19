@@ -2,10 +2,10 @@
  * @private
  */
 
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import CBuffer from 'CBuffer';
 import config from 'silk-config';
-import createLog from './log';
+import createLog from 'silk-log/devive';
 import cv from 'opencv';
 import silkcapture from 'silk-capture';
 import fs from 'mz/fs';
@@ -125,9 +125,6 @@ const CAMERA_CLIP_DIRECTORY = 'data/clips';
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
-
-const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
-let audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
 
 const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
 const CAMERA_HW_ENABLED = util.getboolprop('ro.silk.camera.hw.enabled', true);
@@ -562,9 +559,11 @@ class CameraClipRecorder {
  * Class that talks to capture service to receive camera frames
  */
 export default class Camera extends EventEmitter {
+
   _clipRecorder: CameraClipRecorder;
   server: Server;
   _liveDiag: bool;
+  _audioMute: bool;
 
   constructor(server) {
     super();
@@ -582,6 +581,7 @@ export default class Camera extends EventEmitter {
     this.fastFrameCount = 0;
 
     this._liveDiag = false;
+    this._audioMute = false;
     this._clipRecorder = new CameraClipRecorder(this._diagEmitState);
 
     // Cache last few images to guarantee the consumers get the image they are
@@ -589,12 +589,6 @@ export default class Camera extends EventEmitter {
     // frame multiple times.
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releaseImageCacheEntry(item);
-
-    // TODO Remove watch when this setting gets moved to the UI
-    util.propWatcher.on(AUDIO_MUTE_PROP, () => {
-      audioMute = util.getboolprop(AUDIO_MUTE_PROP, true);
-      this.setMute(audioMute);
-    });
 
     // Helpful debug output...
     log.verbose('Active frame sizes:');
@@ -807,7 +801,7 @@ export default class Camera extends EventEmitter {
         height: HEIGHT,
         fps: FPS,
         vbr: VBR,
-        audioMute,
+        audioMute: this._audioMute,
         audioSampleRate: config.deviceMic.sampleRate,
         audioChannels: config.deviceMic.numChannels
       };
@@ -1235,16 +1229,14 @@ export default class Camera extends EventEmitter {
    */
   setMute(mute) {
     // Persist mute setting if changed
-    if (audioMute !== mute) {
-      audioMute = mute;
-      util.setprop(AUDIO_MUTE_PROP, audioMute);
+    if (this._audioMute !== mute) {
+      this._audioMute = mute;
     }
 
     if (!this._ready) {
-      log.error(`camera not ready, ignoring setMute command`);
       return;
     }
-    this._command({cmdName: 'update', cmdData: {audioMute}});
+    this._command({cmdName: 'update', cmdData: {audioMute: this._audioMute}});
   }
 
   /**

@@ -11,6 +11,7 @@ if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
     ../bsp-gonk/vendor/silk/silk-vibrator/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-wifi/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-battery/lib/index.js \
+    ../bsp-gonk/vendor/silk/silk-lights/lib/index.js \
   "
 fi
 

@@ -1,13 +1,10 @@
 /**
- * Provides a simple video capture class tailored to the needs of camera.js
+ * Provides a simple video capture class tailored to the needs of silk-capture.js
  *
- * On device libpreview is used as the backend, while on simulator the OpenCV
- * VideoCapture API is used.
- *
- * Copyright (c) 2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
+ * libpreview is used as the backend for bsp-gonk, while the OpenCV
+ * VideoCapture API is used for other targets.
  */
+
 #include <memory>
 #include <nan.h>
 #include "Matrix.h"
@@ -19,7 +16,7 @@
 #endif
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-cv:capture"
+#define LOG_TAG "silk-capture"
 #ifdef ANDROID
 #include <utils/Log.h>
 #include <libpreview.h>

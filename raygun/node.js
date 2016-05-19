@@ -10,7 +10,7 @@
 
 var raygun = require('raygun');
 var api = require('./api.js');
-var config = require('./config.raygun.json');
+var config = require('./config');
 var https = require('https');
 var MessageBuilder = require('raygun/lib/raygun.messageBuilder');
 
@@ -23,6 +23,9 @@ var customData;
 module.exports = {
   enable: function enable(appName, appVersion, options) {
     console.log('Initializing Raygun');
+    if (!config.apiKey) {
+      return;
+    }
     tags = [appName];
     version = appVersion;
 

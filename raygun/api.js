@@ -8,7 +8,7 @@
 
 'use strict'
 
-var config = require('./config.raygun.json');
+var config = require('./config');
 var https = require('https');
 
 module.exports = {
@@ -19,6 +19,9 @@ module.exports = {
   //
   // Returns a Promise
   create: function create(message) {
+    if (!config.apiKey) {
+      return Promise.resolve();
+    }
     return new Promise(function(resolve, reject) {
       var data = new Buffer(JSON.stringify(message), 'utf8');
       var httpOptions = {

@@ -2,13 +2,13 @@
  * @flow
  */
 
-import {
-  NativeModules,
-  DeviceEventEmitter,
-} from 'react-native';
 import invariant from 'assert';
-import { EventEmitter } from 'events';
+import { NativeModules, DeviceEventEmitter } from 'react-native';
 import makeLog from 'silk-log';
+
+import RobustEventEmitter from './RobustEventEmitter';
+
+import type { EventEmitter } from 'events';
 
 type ConnectMessage = {
   id: number;
@@ -41,7 +41,7 @@ let singletonInstance = null;
  *
  * Data can be sent to the other side using the send() method.
  */
-class Socket extends EventEmitter {
+class Socket extends RobustEventEmitter {
   _id: number;
 
   constructor(id: number) {
@@ -74,7 +74,7 @@ class Socket extends EventEmitter {
  *
  * Only one instance of this class will ever be created.
  */
-class SocketManager extends EventEmitter {
+class SocketManager extends RobustEventEmitter {
   _sockets: Map<number, Socket> = new Map();
 
   constructor() {
@@ -169,7 +169,7 @@ export default function getSocketManager(): EventEmitter {
     singletonInstance = new SocketManager();
   }
 
-  let emitter = new EventEmitter();
+  let emitter = new RobustEventEmitter();
   emitter.on('newListener', (event, listener) => {
     invariant(singletonInstance);
     singletonInstance.addListener(event, listener);

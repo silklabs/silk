@@ -1,8 +1,9 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
+import { Colors } from '../CommonStyles';
 import SetupScreen from './SetupScreen';
 
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
@@ -20,6 +21,7 @@ export default class DeviceTouch extends AsyncComponent {
   state = {
     touched: false,
     deviceSecret: null,
+    rssi: null,
   };
 
   mounted = false;
@@ -28,17 +30,27 @@ export default class DeviceTouch extends AsyncComponent {
     this.mounted = true;
     let { bleDeviceSession } = this.props;
     bleDeviceSession.on('secret', this._onDeviceTouch);
+    bleDeviceSession.on('rssiUpdate', this._onRSSI);
   }
 
   componentWillUnmount() {
     this.mounted = false;
     let { bleDeviceSession } = this.props;
     bleDeviceSession.removeListener('secret', this._onDeviceTouch);
+    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
   }
+
+  _onRSSI = (rssi) => {
+    if (!this.mounted || !__DEV__) {
+      return;
+    }
+    this.setState({rssi});
+  };
 
   _onDeviceTouch = (deviceSecret) => {
     let { bleDeviceSession } = this.props;
     bleDeviceSession.removeListener('secret', this._onDeviceTouch);
+    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
     if (!this.mounted) {
       return;
     }
@@ -80,6 +92,16 @@ export default class DeviceTouch extends AsyncComponent {
         />
       );
     }
+    let rssi = null;
+    if (__DEV__) {
+      rssi = (
+        <View style={styles.rssi}>
+          <Text style={styles.rssiLabel}>
+            RSSI: {this.state.rssi}
+          </Text>
+        </View>
+      );
+    }
     return (
       <SetupScreen
         title="Tap your device with your phone to begin setup"
@@ -98,6 +120,7 @@ export default class DeviceTouch extends AsyncComponent {
           />
           {phone}
         </View>
+        {rssi}
       </SetupScreen>
     );
   }
@@ -130,5 +153,17 @@ const styles = StyleSheet.create({
     right: 0,
     width: 95,
     height: 230,
+  },
+  rssi: {
+    flex: 2,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  rssiLabel: {
+    fontFamily: 'DIN Round Pro',
+    fontWeight: '600',
+    fontSize: 14,
+    color: Colors.SilkLabsBlack,
+    backgroundColor: 'transparent',
   },
 });

@@ -3,15 +3,18 @@
  */
 
 import invariant from 'assert';
-import { EventEmitter } from 'events';
 import getSocketManager from './SocketManager';
 import * as Joi from 'joi';
 import mklog from 'silk-log';
+
 import * as Metrics from '../../metrics/BTLE';
+import RobustEventEmitter from './RobustEventEmitter';
 import SocketSession from './SocketSession';
 
-import type { DeviceRecord } from '../../components/abstract/Devices';
+import type { EventEmitter } from 'events';
 import type MetricsAgent from 'silk-api/src/metrics_agent';
+
+import type { DeviceRecord } from '../../components/abstract/Devices';
 import type { Socket } from './SocketManager';
 import type { UserState } from '../UserState';
 
@@ -107,7 +110,7 @@ const SCHEMA = {
 
 let singletonInstance = null;
 
-export class DeviceSession extends EventEmitter {
+export class DeviceSession extends RobustEventEmitter {
   static STATE_UNKNOWN = 0;
   static STATE_ID_RECEIVED = 1;
   static STATE_REGISTER_REQUESTED = 2;
@@ -603,7 +606,7 @@ export class DeviceSession extends EventEmitter {
   };
 }
 
-class DeviceManager extends EventEmitter {
+class DeviceManager extends RobustEventEmitter {
 
   _devices: Map<Socket, DeviceSession> = new Map();
   _socketManager: EventEmitter;
@@ -670,7 +673,7 @@ export default function getDeviceManager(userState: UserState,
     singletonInstance = new DeviceManager(userState, metrics);
   }
 
-  let emitter = new EventEmitter();
+  let emitter = new RobustEventEmitter();
   emitter.on('newListener', (event, listener) => {
     singletonInstance && singletonInstance.addListener(event, listener);
   });

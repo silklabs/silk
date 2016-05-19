@@ -22,12 +22,12 @@ node_modules/silk-sdk/interface/
 .*/rtc/test/.*
 
 [libs]
-interface/net.js
 node_modules/silk-sdk/interface/silk-sysutils.js
 
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=haste
+module.use_strict=true
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe

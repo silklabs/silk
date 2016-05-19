@@ -6,10 +6,13 @@
  * @private
  */
 
+import {spawn} from 'child_process';
+
 import createLog from './log';
-const log = createLog('diag');
+
 import type Server from './server.js';
 
+const log = createLog('diag');
 
 class DiagLogger {
   // respawnDelay specifies amount of time to wait after process dies before
@@ -27,7 +30,6 @@ class DiagLogger {
 
   _launch() {
     log.info('Spawning', this.cmd);
-    let spawn = require('child_process').spawn;
     let helper = spawn(this.cmd, this.params);
 
     this.data = '';

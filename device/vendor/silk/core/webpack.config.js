@@ -1,6 +1,11 @@
 'use strict';
 
+const CopyWebpack = require('copy-webpack-plugin');
 const path = require('path');
+
+// We must place our files in a special folder for integration /w the android
+// build system.
+const destinationPath = path.resolve(__dirname, '.silkslug');
 
 // TODO: Dynamically build this list from actual externals in build system.
 const external = [
@@ -12,11 +17,20 @@ const external = [
   'opencv',
   'segfault-handler',
   'silk-alog',
+  'silk-battery',
+  'silk-camera',
   'silk-core-version',
   'silk-cv',
   'silk-gc1',
+  'silk-input',
+  'silk-lights',
   'silk-movie',
+  'silk-ntp',
   'silk-properties',
+  'silk-sensors',
+  'silk-sysutils',
+  'silk-vibrator',
+  'silk-wifi',
   'v8-profiler',
 ].reduce((result, value) => {
   result[value] = true;
@@ -32,11 +46,12 @@ const config = {
   devtool: 'source-map',
   entry: {
     'core': './lib/core.js',
+    'btle/child': './lib/btle/child.js',
   },
   output: {
     libraryTarget: 'commonjs2',
-    path: path.resolve(__dirname, 'dist'),
-    filename: './lib/[name].js'
+    path: destinationPath,
+    filename: '[name].js'
   },
   // Something about how we use relative paths in our modules messes up webpack
   // without a more specific modulesDirectories config.
@@ -55,6 +70,11 @@ const config = {
   externals: [
     external,
   ],
+  babel: {
+    presets: [
+      require('babel-preset-silk-node4'),
+    ],
+  },
   module: {
     loaders: [
       {
@@ -66,9 +86,6 @@ const config = {
         loader: require.resolve('babel-loader'),
         query: {
           babelrc: false,
-          presets: [
-            require.resolve('babel-preset-silk-node4'),
-          ],
         },
         only: [
           require.resolve('silk-babeldeps'),
@@ -77,6 +94,7 @@ const config = {
     ],
   },
   plugins: [
+    new CopyWebpack([{ from:'package.json'}]),
   ],
 };
 

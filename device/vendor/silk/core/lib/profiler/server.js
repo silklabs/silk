@@ -22,7 +22,7 @@ const log = createLog('profiler');
 let _lazyV8Prof;
 function v8Profiler() {
   if (!_lazyV8Prof) {
-    _lazyV8Prof = require('v8-profiler');
+    _lazyV8Prof = require('v8-profiler'); // eslint-disable-line import/no-require
   }
   return _lazyV8Prof;
 }
@@ -178,4 +178,3 @@ export default async function start() {
   let profiler = new ProfileServer();
   http.createServer(profiler.handle).listen(PORT);
 }
-

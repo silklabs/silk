@@ -13,7 +13,7 @@ import events from 'events';
 import createLog from './log';
 import * as VideoMetrics from './metrics/video';
 
-import type { Socket } from 'silk-socket.io-client-node';
+import type { Socket } from 'socket.io-client';
 import type Connections from './connections';
 
 const log = createLog('server');
@@ -94,7 +94,7 @@ export default class Server extends events.EventEmitter {
    */
   _connect() {
     let socket = this.socket = api.socketioClient(
-      require('silk-socket.io-client-node'),
+      require('socket.io-client'), // eslint-disable-line import/no-require
       'device',
       { forceNew: true }
     );

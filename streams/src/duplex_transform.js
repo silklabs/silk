@@ -35,6 +35,7 @@ export class DuplexTransform extends Duplex {
   __writableTransformClosed = false;
 
   __error = null;
+  __errorEmitted = false;
 
   __endEventAllowed = true;
   __finishEventAllowed = false;
@@ -48,6 +49,8 @@ export class DuplexTransform extends Duplex {
               options = { }) {
     log.debug(`DuplexTransform()`);
 
+    options = Object.assign({}, options);
+
     super(options);
 
     this.__name = this.constructor.name;
@@ -58,8 +61,10 @@ export class DuplexTransform extends Duplex {
 
     this.__readable = readable;
     this.__writable = writable || readable;
-    this.__readableTransform = readableTransform || new ClosingPassThrough();
-    this.__writableTransform = writableTransform || new ClosingPassThrough();
+    this.__readableTransform = readableTransform ||
+                               new ClosingPassThrough(options);
+    this.__writableTransform = writableTransform ||
+                               new ClosingPassThrough(options);
 
     DuplexTransform.__ensureCloseEvent(this.__name,
                                        this.__readable,
@@ -185,12 +190,14 @@ export class DuplexTransform extends Duplex {
   }
 
   emit(eventName, ...args) {
+    const ret = this.listenerCount(eventName) !== 0;
+
     switch (eventName) {
     case EVENT_NAME_END:
       if (!this.__endEventAllowed) {
         // Don't allow the 'end' event until later.
         log.debug(`[${this.__name}] Blocked the '${eventName}' event`);
-        return false;
+        return ret;
       }
       assert(!this.__error);
       log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
@@ -206,10 +213,19 @@ export class DuplexTransform extends Duplex {
                     `${this.__writableTransform.constructor.name} stream`);
           this.__writableTransform.end();
         }
-        return false;
+        return ret;
       }
       assert(!this.__error);
       log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
+      break;
+
+    case EVENT_NAME_ERROR:
+      if (this.__errorEmitted) {
+        log.warn(`[${this.__name}] Blocked multiple '${eventName}' events`,
+                 args[0]);
+        return ret;
+      }
+      this.__errorEmitted = true;
       break;
 
     default:

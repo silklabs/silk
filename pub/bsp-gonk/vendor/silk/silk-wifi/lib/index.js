@@ -5,7 +5,8 @@
 
 import invariant from 'assert';
 import events from 'events';
-import net from 'net';
+import * as net from 'net';
+import {Netmask} from 'netmask';
 
 import * as util from 'silk-sysutils';
 import createLog from 'silk-log/device';
@@ -49,7 +50,6 @@ async function configureDhcpInterface(iface: string) {
   const gateway = util.getstrprop(`${ifacePrefix}.gateway`);
   const domain = util.getstrprop(`${ifacePrefix}.domain`, 'localdomain');
 
-  let Netmask = require('netmask').Netmask;
   const block = new Netmask(ipaddress + '/' + mask);
   const baseMask = block.base + '/' + block.bitmask;
 
@@ -436,7 +436,7 @@ export class Wifi extends events.EventEmitter {
     monitor.on('disconnected', (reason) => {
       // Send error unless leaving under normal circumstances
       if (reason !== 'deauth_leaving') {
-        this.emit('error', reason);
+        this.emit('error', new Error(reason));
       }
       this._networkCleanup();
       log.info(`==> Wifi offline (${reason})`);

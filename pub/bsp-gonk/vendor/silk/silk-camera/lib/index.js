@@ -432,7 +432,7 @@ export default class Camera extends EventEmitter {
   }
 
   _startMicCapture() {
-    const mic = require('mic');
+    const mic = require('mic');         // eslint-disable-line import/no-require
     let simMic = mic({
       bitwidth: 8 * this._config.deviceMic.bytesPerSample,
       channels: this._config.deviceMic.numChannels,

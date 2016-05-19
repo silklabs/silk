@@ -8,16 +8,16 @@
  */
 
 import assert from 'assert';
+import {createStreams, RssiSmoother} from 'silk-api';
 import path from 'path';
-import { createStreams, RssiSmoother } from 'silk-api';
 
-import Stream from './stream';
-import makeLog from '../log';
+import BluetoothStream from './bluetooth_stream';
+import createLog from '../log';
 import api from '../api';
 import * as Metrics from '../metrics/btle';
-import { getboolprop, playSound } from '../sysutils';
+import {getboolprop, playSound} from '../sysutils';
 
-import type { Peripheral } from 'noble';
+import type {Peripheral} from 'noble';
 import type SocketScanner from './socket_scanner';
 
 const {
@@ -27,13 +27,13 @@ const {
   MessagePackDuplexStream,
 } = createStreams();
 
-const log = makeLog(`btle-socketsession`);
+const log = createLog(`btle-child-socketsession`);
 
 const HEARTBEAT_SOUNDS_ENABLED = getboolprop('persist.silk.heartbeatSounds');
 const HEARTBEAT_SOUND_FILE = path.join(__dirname, 'media', 'heartbeat.mp3');
 const FLATLINE_SOUND_FILE = path.join(__dirname, 'media', 'flatline.mp3');
 
-export default class SocketSession extends AuthenticateDuplexStream {
+export default class ChildSocketSession extends AuthenticateDuplexStream {
 
   static RSSI_UPDATE_TIMEOUT = 50;
 
@@ -63,10 +63,11 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _errorMessage: string = ``;
 
   constructor(scanner: SocketScanner, peripheral: Peripheral) {
-    log.debug(`SocketSession()`);
+    log.debug(`constructor`);
 
-    const socketStream = new Stream(peripheral, scanner._serviceUuid);
-    const cryptoStream = new CryptoDuplexStream(socketStream, api.metrics);
+    const bluetoothStream =
+      new BluetoothStream(peripheral, scanner._serviceUuid);
+    const cryptoStream = new CryptoDuplexStream(bluetoothStream, api.metrics);
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
@@ -98,19 +99,20 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this.once(`error`, this._onError);
     this.once(`close`, this._onClose);
 
-    socketStream.on(`data`, (data) => {
+    bluetoothStream.on(`data`, (data) => {
       this._receivedBytes += data.length;
     });
-    const socketOldWrite = socketStream.write;
-    socketStream.write = (data, encoding, callback) => {
+    const socketOldWrite = bluetoothStream.write;
+    bluetoothStream.write = (data, encoding, callback) => {
       if (data) {
         this._sentBytes += data.length;
       }
-      return socketOldWrite.call(socketStream, data, encoding, callback);
+      return socketOldWrite.call(bluetoothStream, data, encoding, callback);
     };
 
     heartbeatStream.once(`data`, () => {
-      log.debug(`Heartbeat stream received first data event, starting monitoring`);
+      log.debug(`Heartbeat stream received first data event, starting ` +
+                `monitoring`);
 
       heartbeatStream.on(`flatline`, this._onFlatline);
       if (HEARTBEAT_SOUNDS_ENABLED) {
@@ -121,12 +123,12 @@ export default class SocketSession extends AuthenticateDuplexStream {
       // Waiting to unpack entire messages can take longer than we would like
       // sometimes so reset the monitor whenever the bluetooth stream receives
       // data.
-      socketStream.addListener(`data`, () => heartbeatStream.resetMonitor());
+      bluetoothStream.addListener(`data`, () => heartbeatStream.resetMonitor());
     });
   }
 
   _onPeripheralRssiUpdate: ((rssi: number) => void) = (rssi) => {
-    log.debug(`SocketSession._onPeripheralRssiUpdate(${rssi})`);
+    log.debug(`_onPeripheralRssiUpdate`, rssi);
 
     this._rssiSmoother.update(rssi);
 
@@ -149,7 +151,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onPeripheralDisconnect: (() => void) = () => {
-    log.debug(`SocketSession._onPeripheralDisconnect()`);
+    log.debug(`_onPeripheralDisconnect`);
 
     assert(!this._peripheralDisconnected);
 
@@ -161,7 +163,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onFlatline: (() => void) = () => {
-    log.debug(`SocketSession._onFlatline()`);
+    log.debug(`_onFlatline`);
 
     this._flatlined = true;
 
@@ -177,7 +179,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onEnd: (() => void) = () => {
-    log.debug(`SocketSession._onEnd()`);
+    log.debug(`_onEnd`);
 
     this._ended = true;
 
@@ -185,10 +187,10 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onError: ((error: Error) => void) = (error) => {
-    log.debug(`SocketSession._onError('${error.toString()}')`);
+    log.debug(`_onError`, error);
 
     if (!this._errorMessage) {
-      this._errorMessage = error.toString();
+      this._errorMessage = error.message;
     }
 
     this._ended = true;
@@ -201,10 +203,16 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onClose: (() => void) = () => {
-    log.debug(`SocketSession._onClose()`);
+    log.debug(`_onClose`);
+
+    let duration = Date.now() - this._startTime;
+    if (duration < 0) {
+      log.warn(`Time changed, unknown session duration`);
+      duration = 0;
+    }
 
     const commonArgs = [
-      Date.now() - this._startTime,
+      duration,
       this._receivedBytes,
       this._sentBytes,
       this.authenticated,
@@ -223,15 +231,26 @@ export default class SocketSession extends AuthenticateDuplexStream {
     api.metrics.add(metric);
   };
 
+  _onTime: (() => void) = () => {
+    log.debug(`_onTime`);
+
+    // Avoid negative session durations if the time changed and it is somehow
+    // before our start time.
+    const now = Date.now();
+    if (this._startTime > now) {
+      this._startTime = now;
+    }
+  };
+
   _killRssiUpdates() {
-    log.debug(`SocketSession._killRssiUpdates()`);
+    log.debug(`_killRssiUpdates`);
 
     this.rssiUpdatesEnabled = false;
     this._peripheral.removeListener(`rssiUpdate`, this._onPeripheralRssiUpdate);
   }
 
   _updateRssiAfterDelay() {
-    log.debug(`SocketSession._updateRssiAfterDelay()`);
+    log.debug(`_updateRssiAfterDelay`);
     if (!this._rssiUpdatesEnabled ||
         this._rssiTimeout ||
         this._rssiUpdatePending) {
@@ -246,7 +265,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
       this._rssiUpdatePending = true;
 
       this._peripheral.updateRssi();
-    }, SocketSession.RSSI_UPDATE_TIMEOUT);
+    }, ChildSocketSession.RSSI_UPDATE_TIMEOUT);
   }
 
   emit(eventName: string, ...args: Array<any>): boolean {
@@ -268,7 +287,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     encodingOrCallback?: string | Function,
     callback?: Function
   ): void {
-    log.debug(`SocketSession.end()`);
+    log.debug(`end`);
 
     if (!this._ending) {
       this._killRssiUpdates();
@@ -276,10 +295,6 @@ export default class SocketSession extends AuthenticateDuplexStream {
     }
 
     return super.end(chunkOrEncodingOrCallback, encodingOrCallback, callback);
-  }
-
-  get scanner(): SocketScanner {
-    return this._scanner;
   }
 
   get connected(): boolean {
@@ -316,14 +331,26 @@ export default class SocketSession extends AuthenticateDuplexStream {
     }
   }
 
+  startScanning(): void {
+    log.debug(`startScanning`);
+
+    this._scanner.start();
+  }
+
+  stopScanning(): void {
+    log.debug(`stopScanning`);
+
+    this._scanner.stop();
+  }
+
   skip() {
-    log.debug(`SocketSession.skip()`);
+    log.debug(`skip`);
 
     this._scanner.addToSkipList(this._peripheral);
   }
 
   unskip() {
-    log.debug(`SocketSession.unskip()`);
+    log.debug(`unskip`);
 
     this._scanner.removeFromSkipList(this._peripheral);
   }

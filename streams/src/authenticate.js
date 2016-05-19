@@ -115,20 +115,24 @@ class AuthenticateStreamBase extends ClosingTransform {
     super.end(callback);
   }
 
-  allowUnauthenticated() {
-    log.debug(`AuthenticateStreamBase.allowUnauthenticated()`);
+  allowUnauthenticated(allow) {
+    log.debug(`AuthenticateStreamBase.allowUnauthenticated(${allow})`);
 
     assert(!this._authenticated);
 
-    if (this._allowUnauthenticated) {
-      log.warn(`allowUnauthenticated() called more than once`);
-      assert(!this._queue);
-      return;
+    if (allow) {
+      if (this._allowUnauthenticated) {
+        log.warn(`allowUnauthenticated() called more than once`);
+        assert(!this._queue);
+        return;
+      }
+
+      this._allowUnauthenticated = true;
+
+      this._releaseQueue();
+    } else {
+      this._discardQueue();
     }
-
-    this._allowUnauthenticated = true;
-
-    this._releaseQueue();
   }
 
   get authenticated() {
@@ -143,6 +147,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
   _authData = null;
   _authError = null;
   _metrics = null;
+  _emittedUnauthenticated = false;
 
   constructor(cryptoStream, publicKeys, metrics, options) {
     log.debug(`AuthenticateReadStream()`);
@@ -187,14 +192,12 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
       log.info(`Receiving unauthenticated data`);
 
       if (!this._allowUnauthenticated) {
-        // Emit an event and see if unauthenticated access is allowed.
-        this.emit(`unauthenticated`);
-        if (!this._allowUnauthenticated) {
-          this._authError =
-            new Error(`Unauthenticated data was not explicitly allowed`);
-          log.warn(this._authError);
-
-          this._discardQueue();
+        if (this._emittedUnauthenticated) {
+          log.warn(`Received multiple auth messages`);
+        } else {
+          // Emit an event and see if unauthenticated access is allowed.
+          this._emittedUnauthenticated = true;
+          this.emit(`unauthenticated`);
         }
       }
 
@@ -277,10 +280,10 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     this._sessionKey = sharedSecret.toString(`hex`);
   }
 
-  allowUnauthenticated() {
-    log.debug(`AuthenticateReadStream.allowUnauthenticated()`);
+  allowUnauthenticated(allow) {
+    log.debug(`AuthenticateReadStream.allowUnauthenticated(${allow})`);
 
-    super.allowUnauthenticated();
+    super.allowUnauthenticated(allow);
 
     this._publicKeys = null;
   }
@@ -337,17 +340,19 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
     this.push(message);
   }
 
-  allowUnauthenticated() {
-    log.debug(`AuthenticateWriteStream.allowUnauthenticated()`);
+  allowUnauthenticated(allow) {
+    log.debug(`AuthenticateWriteStream.allowUnauthenticated(${allow})`);
 
     assert(!this._authenticated);
 
-    if (this._privateKey) {
-      log.info(`Sending unauthenticated data`);
-      this._sendAuthData(null);
+    if (allow) {
+      if (this._privateKey) {
+        log.info(`Sending unauthenticated data`);
+        this._sendAuthData(null);
+      }
     }
 
-    super.allowUnauthenticated();
+    super.allowUnauthenticated(allow);
   }
 }
 
@@ -382,14 +387,16 @@ export class AuthenticateDuplexStream extends DuplexTransform {
     reader.once(`authenticated`, () => writer._setAuthenticated());
     reader.once(`unauthenticated`, () => this.emit(`unauthenticated`));
 
+    writer.once(`authenticated`, () => this.emit(`authenticated`));
+
     this.__reader = reader;
     this.__writer = writer;
   }
 
-  allowUnauthenticated() {
-    log.info(`Allowing unauthenticated data`);
-    this.__reader.allowUnauthenticated();
-    this.__writer.allowUnauthenticated();
+  allowUnauthenticated(allow = false) {
+    log.info(`Allowing unauthenticated data: ${allow}`);
+    this.__reader.allowUnauthenticated(allow);
+    this.__writer.allowUnauthenticated(allow);
   }
 
   get authenticated() {

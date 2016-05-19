@@ -19,6 +19,14 @@ type ServicesAndCharacteristicsCallback = (
   characteristics?: Array<Characteristic>
 ) => void;
 
+export type AdapterState =
+  'unknown' |
+  'resetting' |
+  'unsupported' |
+  'unauthorized' |
+  'poweredOff' |
+  'poweredOn';
+
 type Advertisement = {
   localName: string;
   txPowerLevel: number;
@@ -80,7 +88,7 @@ declare export class Peripheral extends EventEmitter {
   advertisement: Advertisement;
   rssi: number;
   services: Array<Service>;
-  state: string;
+  state: AdapterState;
 
   connect(callback?: ConnectCallback): void;
   disconnect(callback?: ConnectCallback): void;
@@ -102,7 +110,7 @@ declare export class Peripheral extends EventEmitter {
 }
 
 declare export class Noble extends EventEmitter {
-  state: string;
+  state: AdapterState;
 
   startScanning(
     serviceUuids: Array<string>,

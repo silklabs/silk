@@ -1,5 +1,5 @@
 /**
- * @providesModule silk-socket.io-client-node
+ * @providesModule socket.io-client
  * @flow
  */
 

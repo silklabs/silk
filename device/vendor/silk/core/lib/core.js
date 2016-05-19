@@ -11,10 +11,10 @@
  */
 let baseversion = {
   actual: 'unknown',
-  expected: require('./base_version')
+  expected: require('./base_version'),  // eslint-disable-line import/no-require
 };
 try {
-  baseversion.actual = require('base_version');
+  baseversion.actual = require('base_version'); // eslint-disable-line import/no-require
 } catch(e) {
   console.error(`Unable to load base_version: ${e}`); // eslint-disable-line
 }
@@ -33,4 +33,4 @@ if (baseversion.actual !== baseversion.expected) { // TODO: use semver
  * the first callback is invoked for an unknown reason. This issue is avoided by
  * using a setTimeout() to launch the main program
  */
-setTimeout(() => require('./main'), 0);
+setTimeout(() => require('./main'), 0); // eslint-disable-line import/no-require

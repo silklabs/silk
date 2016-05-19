@@ -15,7 +15,8 @@ import sensors from 'silk-sensors';
 
 const log = createLog('config-session-listener');
 
-const ACCELEROMETER_GATE_DISABLED = getboolprop('persist.silk.accelgate.disabled');
+const ACCELEROMETER_GATE_DISABLED =
+  getboolprop('persist.silk.accelgate.disabled', true);
 
 const SCHEMA = {
   decline: Joi.object().keys({
@@ -390,7 +391,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     // Disable the scanner now that we're properly configured. If the connection
     // dies after this we don't really care and we don't want to start scanning
     // again.
-    this._socketSession.scanner.stop();
+    this._socketSession.stopScanning();
 
     this._state = ConfigSessionListener.STATE_COMPLETE;
     this._wifiErrorCount = 0;

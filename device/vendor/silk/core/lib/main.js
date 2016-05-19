@@ -6,18 +6,21 @@
  * @private
  */
 
-import ui from './ui';
-ui.goto('bootanimation');
+import gc1 from 'silk-gc1';
+import {install as installSourceMapSupport} from 'source-map-support';
+import version from 'silk-core-version';
 
+import ui from './ui';
 import createLog from './log';
+
 const log = createLog('main');
 
-import version from 'silk-core-version';
 log.info(`silk-core ${version.branch} ${version.semver} (${version.sha})`);
+ui.goto('bootanimation');
 
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
-require('source-map-support').install();
+installSourceMapSupport();
 { // eslint-disable-line no-lone-blocks
   // Force the source maps into memory right away. It typically takes ~5
   // seconds to load the source maps and unfortunately asynchronous loading is
@@ -29,7 +32,7 @@ require('source-map-support').install();
 }
 
 if (process.platform !== 'android') {
-  let segfaultHandler = require('segfault-handler');
+  let segfaultHandler = require('segfault-handler'); // eslint-disable-line import/no-require
   segfaultHandler.registerHandler('crash.log');
 }
 
@@ -51,7 +54,7 @@ import Connections from './connections';
 import fs from 'mz/fs';
 import Say from './say';
 
-import getBTLE from './btle';
+import getBTLE from './btle/parent';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crash_reporter';
 import Diag from './diag';
@@ -277,7 +280,7 @@ function main() {
         // Shutdown is in progress, not an error.
         return;
       }
-      log.fatal(`Initialization error: ${err}`);
+      log.fatal(`Initialization error:`, err);
       util.processthrow(err);
       //
       // TODO: We may want to eventually reboot-and-pray in this situation as the
@@ -574,7 +577,6 @@ watchdog();
 // intuition and *some* observation, and as such will likely need to be tuned in
 // the future.
 const GC_MAX_RUN_TIME = 100;
-const gc1 = require('silk-gc1');
 function runGC() {
   // Try to run the gc for less than this number of milliseconds
 

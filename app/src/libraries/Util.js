@@ -6,7 +6,7 @@ import { NativeModules, Platform } from 'react-native';
 
 const { SLKUtil } = NativeModules;
 
-type WifiInfo = {
+export type WifiInfo = {
   SSID: string;
   BSSID: string;
 };

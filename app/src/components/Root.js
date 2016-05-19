@@ -26,7 +26,7 @@ import AsyncNavigator from './abstract/AsyncNavigator';
 import CameraLiveVideo from './CameraLiveVideo';
 import DeviceStatus from './setup/DeviceStatus';
 import DeviceTouch from './setup/DeviceTouch';
-import WifiConfig from './setup/WifiConfig';
+import WifiConfig from './setup/WifiConfigWithState';
 import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';

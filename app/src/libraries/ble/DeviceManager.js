@@ -24,7 +24,7 @@ type DeviceStatus = {
   isError: boolean;
 };
 
-type DeviceWifiNetwork = {
+export type DeviceWifiNetwork = {
   ssid: string;
   level: number;
   psk: boolean;

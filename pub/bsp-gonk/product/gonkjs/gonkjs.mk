@@ -27,6 +27,9 @@ PRODUCT_PACKAGES += silk-bledroid-daemon
 # vendor/silk/capture/
 PRODUCT_PACKAGES += silk-capture
 
+# vendor/silk/silk-core-version
+PRODUCT_PACKAGES += silk-core-version
+
 # vendor/silk/dhcputil/
 PRODUCT_PACKAGES += silk-dhcputil
 

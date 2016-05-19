@@ -10,6 +10,9 @@
 import invariant from 'assert';
 import { EventEmitter } from 'events';
 
+import api from './api';
+import * as VideoMetrics from './metrics/video';
+import CameraRestart from './metrics/camera_restart';
 import BufferStream from './streams/buffer';
 import CBuffer from 'CBuffer';
 import EventTracker from './eventtracker';
@@ -141,11 +144,13 @@ export default class Timeline extends EventEmitter {
 
   constructor(
     server: Server,
-    outbox: Outbox
+    outbox: Outbox,
+    camera: any /*TODO: Camera*/
   ) {
     super();
     invariant(server, 'must pass server...');
     invariant(outbox, 'must pass outbox...');
+    invariant(camera, 'must pass camera...');
 
     this.outbox = outbox;
     this.server = server;
@@ -187,6 +192,27 @@ export default class Timeline extends EventEmitter {
         diag: false,
         objects: false,
       });
+    });
+
+    camera.on('frame', (when, imRGB) => {
+      this.addCameraFrame(when, imRGB);
+    });
+    camera.on('fast-frame', (when, imRGB) => {
+      this.addCameraFastFrame(when, imRGB);
+    });
+    camera.on('face', (when, faces) => {
+      this.addFace(when, faces, 'hal');
+    });
+    camera.on('video-segment', (when, durationMs, pkt) => {
+      api.metrics.add(new VideoMetrics.Record(durationMs));
+      //api.metrics.add(new VideoMetrics.CaptureToNode(socketDuration));
+      this.addVideo(when, durationMs, pkt);
+    });
+    camera.on('restart', (why, restartCaptureProcess) => {
+      api.metrics.add(new CameraRestart({
+        reason: why,
+        captureRestart: restartCaptureProcess
+      }));
     });
   }
 

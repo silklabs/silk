@@ -1,17 +1,10 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * @private
  */
 
-import * as VideoMetrics from './metrics/video';
 import * as util from './sysutils';
 import CBuffer from 'CBuffer';
-import CameraRestart from './metrics/camera_restart';
 import config from 'silk-config';
-import api from './api';
 import createLog from './log';
 import cv from 'opencv';
 import silkcapture from 'silk-capture';
@@ -26,7 +19,6 @@ import { EventEmitter } from 'events';
 
 /**
  * Type representing an object rectangle
- * (TODO: De-dup with timeline.js)
  *
  * @property {number} x x co-ordinate of the object rectangle
  * @property {number} y y co-ordinate of the object rectangle
@@ -568,19 +560,16 @@ class CameraClipRecorder {
 
 /**
  * Class that talks to capture service to receive camera frames
- * @param {Timeline} timeline instance of Timeline class
  */
 export default class Camera extends EventEmitter {
   _clipRecorder: CameraClipRecorder;
   server: Server;
   _liveDiag: bool;
 
-  constructor(server, timeline) {
+  constructor(server) {
     super();
     invariant(server, 'must pass server...');
-    invariant(timeline, 'must pass timeline...');
     this.server = server;
-    this.timeline = timeline;
 
     this._ready = false;
     this._recording = false;
@@ -589,7 +578,6 @@ export default class Camera extends EventEmitter {
     this._ctlSocket = null;
     this._dataSocket = null;
     this._frameQueue = []; // Queue of pending camera frame requests
-    this._motion = true;
     this._noFrameCount = 0;
     this.fastFrameCount = 0;
 
@@ -601,14 +589,6 @@ export default class Camera extends EventEmitter {
     // frame multiple times.
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releaseImageCacheEntry(item);
-
-    this.timeline.on('no-motion', () => {
-      this._motion = false;
-    });
-
-    this.timeline.on('motion', () => {
-      this._motion = true;
-    });
 
     // TODO Remove watch when this setting gets moved to the UI
     util.propWatcher.on(AUDIO_MUTE_PROP, () => {
@@ -676,10 +656,7 @@ export default class Camera extends EventEmitter {
     }
 
     log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
-    api.metrics.add(new CameraRestart({
-      reason: why,
-      captureRestart: restartCaptureProcess
-    }));
+    this.emit('restart', why, restartCaptureProcess);
     this._ready = false;
 
     if (this._initTimeout) {
@@ -1080,22 +1057,16 @@ export default class Camera extends EventEmitter {
     log.debug(`Grab time: ${Date.now() - when}ms`);
     this._cvVideoCaptureBusy = false;
 
-    // Add camera frame to the timeline
-    this.timeline.addCameraFrame(when, imRGB);
+    this.emit('frame', when, imRGB);
 
     // Only emit the latest set of HAL-detected faces
     // (HAL can return multiple faces per preview, but it's not helpful to show
     //  them all on the preview)
-    //
-    // TODO: This code can probably be removed as we are not using HAL faces
     if (this.faces) {
-      // Add faces only if there is motion
-      if (this._motion) {
-        if (this.faces.length > 0) {
-          log.info(`Detected face=${this.faces.length}`);
-        }
-        this.timeline.addFace(when, this.faces, 'hal');
+      if (this.faces.length > 0) {
+        log.info(`Detected face=${this.faces.length}`);
       }
+      this.emit('faces', when, this.faces);
     }
   }
 
@@ -1104,8 +1075,7 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _handleNextFastFrame(when, im) {
-    // Add fast camera frame to the timeline
-    this.timeline.addCameraFastFrame(when, im);
+    this.emit('fast-frame', when, im);
     this._cvVideoCaptureBusy = false;
   }
 
@@ -1141,21 +1111,18 @@ export default class Camera extends EventEmitter {
       case TAG_VIDEO:
         log.debug(`TAG_VIDEO ${when}`, tagInfo);
         this._videoTagReceived = true;
-        if (this._recording) {
-          this.timeline.addVideo(when, durationMs, pkt);
-        }
-
         invariant(now);
         let socketDuration = now - when - durationMs;
 
-        // This seems really unlikely but if the clock isn't perfect...
         if (socketDuration < 0) {
-          log.warn(`Bad socketDuration: ${socketDuration}`);
+          log.debug(`Bad socketDuration: ${socketDuration}`);
           socketDuration = 0;
         }
+        log.debug(`socketDuration: ${socketDuration}`);
 
-        api.metrics.add(new VideoMetrics.Record(durationMs));
-        api.metrics.add(new VideoMetrics.CaptureToNode(socketDuration));
+        if (this._recording) {
+          this.emit('video-segment', when, durationMs, pkt);
+        }
         break;
       case TAG_FACES:
         log.debug(`TAG_FACES ${when}`, tagInfo);

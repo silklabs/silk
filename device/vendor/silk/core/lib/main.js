@@ -206,8 +206,8 @@ function main() {
       say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
-      timeline = new Timeline(server, outbox);
-      camera = new Camera(server, timeline);
+      camera = new Camera(server);
+      timeline = new Timeline(server, outbox, camera);
 
       let hw = [
         camera.init(),

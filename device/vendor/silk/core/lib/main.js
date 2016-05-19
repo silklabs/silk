@@ -62,6 +62,7 @@ import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
 import Camera from './camera';
+import CameraClipRecorder from './camera_clip_recorder';
 import makeExtensions from './ext';
 import JSStartup from './metrics/js_startup';
 import startCollectingProcessMetrics from './process_metrics';
@@ -81,6 +82,7 @@ let id = null;
 let btle = null;
 let timeline;
 let camera;
+let cameraClipRecorder;
 let logo = null;
 let server = null;
 let connections = null;
@@ -206,7 +208,9 @@ function main() {
       say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
-      camera = new Camera(server);
+      camera = new Camera();
+      cameraClipRecorder = new CameraClipRecorder(camera, server);
+      camera.attachFrameReplacer(cameraClipRecorder);
       timeline = new Timeline(server, outbox, camera);
 
       // Camera mute control
@@ -334,7 +338,7 @@ server.on('cmd', cmd => {
       diag: !!cmd.diag,
       objects: !!cmd.objects,
     });
-    camera.setDiag(!!cmd.diag);
+    cameraClipRecorder.setDiag(!!cmd.diag);
 
     // FIXME/TODO: we want to notify the audio assistant extension
     // that livestream state has changed, but we don't want to notify
@@ -365,7 +369,7 @@ server.on('cmd', cmd => {
       timeline.diagCommand(cmd.name, cmd.arg);
       break;
     case 'camera':
-      camera.diagCommand(cmd.name, cmd.arg);
+      cameraClipRecorder.diagCommand(cmd.name, cmd.arg);
       break;
     case 'speak':
       log.info('speak command:', JSON.stringify(cmd));

@@ -91,7 +91,7 @@ git commit -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 cd app
 ios/travis/install
 export CONFIGURATION=Debug
-source ios/travis/env.sh  # TODO: REMOVE THIS FROM release-pando-app
+source ios/travis/env.sh
 ios/travis/objc-test.sh
 cd ..
 

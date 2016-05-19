@@ -15,8 +15,8 @@ fi
 test -f dsym.zip
 
 set -x
-EAT=$(node -p "require('silk-raygun/config.raygun.json').externalAccessToken")
-APPID=$(node -p "require('silk-raygun/config.raygun.json').appId")
+EAT=$(node -p "require('silk-raygun/config').externalAccessToken")
+APPID=$(node -p "require('silk-raygun/config').appId")
 
 curl --verbose \
   --header "Host: app.raygun.io"  \

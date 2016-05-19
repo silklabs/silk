@@ -4,12 +4,15 @@
 'use strict'
 
 require('raygun4js'); // defines |window.Raygun|
-var config = require('./config.raygun.json');
+var config = require('./config');
 
 var enabled = false;
 
 module.exports = {
   enable: function enable(appName, appVersion, options) {
+    if (!config.apiKey) {
+      return;
+    }
     window.Raygun.init(config.apiKey,
       {
         debugMode: true,

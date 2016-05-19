@@ -69,6 +69,7 @@ export let init = {
     prompt.start();
 
     let indexPath = path.join(argv.destination, 'index.js');
+    let deviceFilePath = path.join(argv.destination, 'device.js');
     let questions: {
       properties: {[key: string]: Object}
     } = {
@@ -105,8 +106,10 @@ export let init = {
     }
 
     if (!result.overrideIndex || result.overrideIndex[0] === 'y') {
-      let content = await fs.readFile(path.join(INIT_TEMPLATES, 'index.js'));
-      await fs.writeFile(indexPath, content);
+      let indexFile = await fs.readFile(path.join(INIT_TEMPLATES, 'index.js'));
+      let deviceFile = await fs.readFile(path.join(INIT_TEMPLATES, 'device.js'));
+      await fs.writeFile(indexPath, indexFile);
+      await fs.writeFile(deviceFilePath, deviceFile);
     }
 
     pkg.name = result.name;

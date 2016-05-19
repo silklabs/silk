@@ -1,0 +1,17 @@
+{
+  "name": "silk-capture",
+  "version": "1.0.0",
+  "description": "VideoCapture",
+  "main": "silk-capture.node",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "preinstall": "./bin/preinstall",
+    "test": "./bin/test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "nan": "2.2.0"
+  },
+  "gypfile": true,
+  "private": true
+}

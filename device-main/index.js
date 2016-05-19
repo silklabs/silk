@@ -10,6 +10,7 @@ const Movie = require('silk-movie').Movie;
 const Vibrator = require('silk-vibrator').default;
 const ntp = require('silk-ntp').default;
 const Input = require('silk-input').default;
+const lights = require('silk-lights');
 
 const productName = util.getstrprop('ro.product.name', '(unknown?)');
 log.info('Running on a ' + productName);
@@ -62,6 +63,10 @@ input.on('down', e => {
     break;
   }
 });
+
+// Keep the backlight on
+let backlight = lights.backlight;
+backlight.set(backlight.WHITE);
 
 // Shutdown the device
 function shutdown() {

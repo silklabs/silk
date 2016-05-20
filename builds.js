@@ -275,8 +275,7 @@ const builds = {
     travis_yml: 'releng/shipit/travis.release-pando-app.yml',
     events: ['nightly'],
     //branches: ['master', 'next', 'release'],
-    //branches: ['master', 'next'],
-    branches: ['master' ],
+    branches: ['master', 'next'],
   },
 
   // Nightly device builds

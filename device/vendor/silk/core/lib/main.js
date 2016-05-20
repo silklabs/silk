@@ -62,7 +62,7 @@ import NetworkStatus from './network_status';
 import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
-import Camera from './camera';
+import Camera from 'silk-camera';
 import CameraClipRecorder from './camera_clip_recorder';
 import makeExtensions from './ext';
 import JSStartup from './metrics/js_startup';

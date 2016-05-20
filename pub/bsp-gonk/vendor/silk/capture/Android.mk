@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE      := silk-capture
+LOCAL_MODULE      := silk-capture-daemon
 LOCAL_MODULE_STEM := capture
 LOCAL_MODULE_TAGS := optional
 

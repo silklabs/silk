@@ -16,6 +16,7 @@
     "silk-log": "/log",
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
     "silk-core": "/device/vendor/silk/core",
+    "silk-camera": "/pub/bsp-gonk/vendor/silk/silk-camera",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
     "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",

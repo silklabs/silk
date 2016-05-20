@@ -10,8 +10,7 @@
   "license": "MIT",
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs/",
-    "silk-log": "../../../../log/",
-    "silk-sysutils": "../silk-sysutils"
+    "silk-log": "../../../../log/"
   },
   "private": true
 }

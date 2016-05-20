@@ -4,14 +4,14 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import createLog from 'silk-log/device';
 import createOutbox from 'silk-core/lib/outbox';
 import NetworkStatus from 'silk-core/lib/network_status';
 import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
-import * as util from 'silk-core/lib/sysutils';
+import createLog from 'silk-log/device';
+import * as util from 'silk-sysutils';
 import wifi from 'silk-wifi';
-import Camera from 'silk-core/lib/camera';
+import Camera from 'silk-camera';
 import invariant from 'assert';
 import opencv from 'opencv';
 import fs from 'fs';
@@ -26,12 +26,12 @@ export default class Framework {
   constructor(name) {
     this._name = name;
     this.networkStatus = new NetworkStatus(wifi);
+    this.camera = new Camera();
     this.server = new Server(wifi);
     this.outbox = createOutbox(this.networkStatus);
-    this.timeline = new Timeline(this.server, this.outbox);
+    this.timeline = new Timeline(this.server, this.outbox, this.camera);
     this.util = util;
 
-    this.camera = new Camera(this.server, this.timeline);
     this.camera.setPreviewFrame = (when, file) => this._loadPreviewFrame(when, file);
     this.camera.startPlayback = (clipDirectory, rate = 'slow', callback) =>
       this._startPlayback(clipDirectory, rate, callback);

@@ -14,6 +14,7 @@
 # BE MINDFUL ABOUT ADDING NEW DIRECTORIES TO THIS LIST
 #
 WHITELIST=$(cat <<-EOF
+  LICENSE
   api
   api-schema
   app
@@ -25,11 +26,12 @@ WHITELIST=$(cat <<-EOF
   http
   jsonwebtoken
   log
+  npm_postinstall
+  npm_preinstall
   pub
   raygun
-  LICENSE
-  npm_preinstall
-  npm_postinstall
+  silknpm.json
+  version
 EOF
 )
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

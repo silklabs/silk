@@ -16,6 +16,7 @@
     "silk-device-main": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
+    "silk-lights": "/pub/bsp-gonk/vendor/silk/silk-lights",
     "silk-movie": "/pub/bsp-gonk/vendor/silk/silk-movie",
     "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-properties": "/pub/bsp-gonk/vendor/silk/silk-properties",

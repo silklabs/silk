@@ -1,0 +1,16 @@
+{
+  "name": "silk-lights",
+  "version": "0.0.1",
+  "description": "Module to control backlight and other LEDs on the board ",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "../../../../npm_postinstall && silk-buildjs",
+    "build": "silk-buildjs"
+  },
+  "license": "MIT",
+  "symlinkDependencies": {
+    "silk-buildjs": "../../../../buildjs/",
+    "silk-log": "/log"
+  },
+  "private": true
+}

@@ -12,7 +12,11 @@ const log = createLog('sensors');
 const SENSORS_SOCKET_NAME = '/dev/socket/sensors';
 
 /**
- * Sensor types as defined in <hardware/sensors.h>
+ * Type of sensors to interact with. For a full list of
+ * sensor types please refer to the source code.
+ *
+ * @property {(ACCELEROMETER|LIGHT|PROXIMITY)} SENSOR_TYPE
+ * @memberof silk-sensors
  */
 let SENSOR_TYPE = {
   ACCELEROMETER: 1,
@@ -45,12 +49,18 @@ let SENSOR_TYPE = {
 /**
  * This module exposes functionality to activate/deactivate and read sensors
  * data from various sensors available on the device.
+ * @module silk-sensors
+ * @example
+ * const sensors = require('silk-sensors');
  *
- * The sensor data is returned as a JSON object in the following format
- *   sensorType: One of the SENSOR_TYPE.* constants
- *   values: Sensor data as returned by the hardware sensor. The length and
- *           contents of the values array depends on which sensor type is being
- *           monitored.
+ * sensors.init();
+ * sensors.on('initialize', () => {
+ *  sensors.activate(sensors.SENSOR_TYPE.LIGHT, 250);
+ * });
+ * sesnors.on('data', (sensorEvent) => {
+ *  log.info('Sensor type: ', + sensorEvent.sensorType);
+ *  log.info('Sensor values: + sensorEvent.values');
+ * });
  */
 class Sensors extends events.EventEmitter {
   constructor() {
@@ -61,6 +71,7 @@ class Sensors extends events.EventEmitter {
 
   /**
    * Initialize the Sensors module
+   * @memberof silk-sensors
    */
   init() {
     log.verbose(`connecting to ${SENSORS_SOCKET_NAME} socket`);
@@ -86,6 +97,7 @@ class Sensors extends events.EventEmitter {
    *
    * @param {number} sensorType SENSOR_TYPE.* constant
    * @param {number} rate Sensor polling rate in milliseconds
+   * @memberof silk-sensors
    */
   activate(sensorType, rate) {
     this._active = true;
@@ -96,6 +108,7 @@ class Sensors extends events.EventEmitter {
    * Dectivate a given sensor
    *
    * @param {number} sensorType SENSOR_TYPE.* constant
+   * @memberof silk-sensors
    */
   deactivate(sensorType) {
     this._active = false;
@@ -138,6 +151,13 @@ class Sensors extends events.EventEmitter {
 
       let sensorEvent = JSON.parse(line);
       if (sensorEvent.eventName === 'initialized') {
+        /**
+         * `initialize` event. This event is emitted when sensor class is initialized
+         * and is ready to activate/decativate a sensor.
+         *
+         * @event initialize
+         * @memberof silk-sensors
+         */ 
         this.emit('initialize');
       } else if (sensorEvent.eventName === 'activated') {
         this.emit('activate');
@@ -146,8 +166,17 @@ class Sensors extends events.EventEmitter {
         this.emit('deactivate');
       } else if (sensorEvent.eventName === 'error') {
         log.warn('Received "error" from sensor service');
-        //this.emit('error');
       } else if (sensorEvent.eventName === 'data') {
+        /**
+         * `data` event. This event is emitted when sensor data is available.
+         *
+         * @event data
+         * @property {number} sensorType One of the SENSOR_TYPE.* constants
+         * @property {*[]} values: Sensor data as returned by the hardware sensor. The length and
+         *           contents of the values array depends on which sensor type is being
+         *           monitored. Please refer to `hardware/sensors.h` for details.
+         * @memberof silk-sensors
+         */
         this.emit('data', sensorEvent);
       } else {
         log.warn(`Error: Unknown sensors command ${line}`);

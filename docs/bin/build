@@ -5,14 +5,15 @@ if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
     ../sdk/interface/silk-alog.js \
     ../sdk/interface/silk-movie.js \
     ../sdk/interface/silk-properties.js \
+    ../bsp-gonk/vendor/silk/silk-battery/lib/index.js \
+    ../bsp-gonk/vendor/silk/silk-camera/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-input/lib/index.js \
+    ../bsp-gonk/vendor/silk/silk-lights/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-ntp/lib/index.js \
+    ../bsp-gonk/vendor/silk/silk-sensors/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-sysutils/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-vibrator/lib/index.js \
     ../bsp-gonk/vendor/silk/silk-wifi/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-battery/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-lights/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-sensors/lib/index.js \
   "
 fi
 

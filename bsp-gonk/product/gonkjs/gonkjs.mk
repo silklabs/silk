@@ -86,6 +86,9 @@ PRODUCT_PACKAGES += silk-battery
 # vendor/silk/silk-lights
 PRODUCT_PACKAGES += silk-lights
 
+# vendor/silk/silk-sensors
+PRODUCT_PACKAGES += silk-sensors
+
 # external/librecovery/
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery_test

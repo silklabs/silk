@@ -53,7 +53,7 @@ done
 for package in $(find . -maxdepth 2 -name package.json) \
                $(find pub -maxdepth 2 -name package.json); do
   case $package in
-  *external-*|*babel-core*|*babelcompile*|*babel-register*|pub/sdk/*|pub/cli/*|pub/sdk-emulator/*)
+  *external-*|*babel-core*|*babelcompile*|*babel-register*|pub/sdk/*|pub/cli/*)
     echo "skipped $package"
     ;;
   *)
@@ -63,3 +63,5 @@ for package in $(find . -maxdepth 2 -name package.json) \
 done
 
 git commit --all -m "$SILK_CORE_VERSION"
+
+echo TODO: npm publish new silk-emulator package once automation builds a new emulator image for $SILK_CORE_VERSION

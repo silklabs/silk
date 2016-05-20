@@ -43,7 +43,7 @@ import ntp from 'silk-ntp';
 import * as util from './sysutils';
 import update from './update';
 import config from './config';
-import sensors from './sensors';
+import sensors from 'silk-sensors';
 import infrared from './infrared';
 import Server from './server';
 import Connections from './connections';

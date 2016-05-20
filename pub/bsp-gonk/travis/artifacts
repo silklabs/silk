@@ -5,6 +5,11 @@ if [[ -z $SILK_BOARD ]]; then
   exit 1
 fi
 
+if [[ -z $TRAVIS_BRANCH ]]; then
+  echo "Please set TRAVIS_BRANCH"
+  exit 1
+fi
+
 ensure_version() {
   pushd ../version
   npm install

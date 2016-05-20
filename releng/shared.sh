@@ -29,16 +29,17 @@ fi
 
 GITS="\
   silk-core \
-  silk-device-locked-node-modules \
-  silk-dnn \
-  silk-trainingset \
+  boost \
   cereproc \
   gonk-alto \
   gonk-msm8956 \
-  vendor-qcom-msm8956 \
-  node-webrtc \
   libwebrtc \
-  boost \
+  node-webrtc \
+  qualcomm-developer-network \
+  silk-device-locked-node-modules \
+  silk-dnn \
+  silk-trainingset \
+  vendor-qcom-msm8956 \
 "
 
 # Fetch all the silk projects
@@ -115,7 +116,7 @@ updatebranch__silk_device() {
 
     # Update the revision attribute for the all silk.xml projects on the $from
     # branch
-    local silk_xml=gonk/silk/silk.xml
+    local silk_xml=product/silk/silk.xml
     if [[ ! -f $silk_xml ]]; then
       echo Error: $silk_xml does not exist.
       exit 1

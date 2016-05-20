@@ -4,7 +4,6 @@
 
 import * as util from 'silk-sysutils';
 import CBuffer from 'CBuffer';
-import config from 'silk-config';
 import createLog from 'silk-log/device';
 import cv from 'opencv';
 import silkcapture from 'silk-capture';
@@ -250,9 +249,10 @@ export default class Camera extends EventEmitter {
   _liveDiag: bool;
   _audioMute: bool;
 
-  constructor(clipRecorder) {
+  constructor(config) {
     super();
 
+    this._config = Object.assign({deviceMic: null}, config);
     this._ready = false;
     this._recording = false;
     this._cvVideoCapture = null;
@@ -403,11 +403,11 @@ export default class Camera extends EventEmitter {
   _startMicCapture() {
     const mic = require('mic');
     let simMic = mic({
-      bitwidth: 8 * config.deviceMic.bytesPerSample,
-      channels: config.deviceMic.numChannels,
-      encoding: config.deviceMic.encoding,
-      endian: config.deviceMic.endian,
-      rate: config.deviceMic.sampleRate,
+      bitwidth: 8 * this._config.deviceMic.bytesPerSample,
+      channels: this._config.deviceMic.numChannels,
+      encoding: this._config.deviceMic.encoding,
+      endian: this._config.deviceMic.endian,
+      rate: this._config.deviceMic.sampleRate,
     });
     let micInput = simMic.getAudioStream();
     micInput.on('data', (data) => {
@@ -491,8 +491,8 @@ export default class Camera extends EventEmitter {
         fps: FPS,
         vbr: VBR,
         audioMute: this._audioMute,
-        audioSampleRate: config.deviceMic.sampleRate,
-        audioChannels: config.deviceMic.numChannels
+        audioSampleRate: this._config.deviceMic.sampleRate,
+        audioChannels: this._config.deviceMic.numChannels
       };
 
       this._command({cmdName: 'init', cmdData});

@@ -43,6 +43,7 @@ import ntp from 'silk-ntp';
 import * as util from './sysutils';
 import update from './update';
 import config from './config';
+import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';
 import infrared from './infrared';
 import Server from './server';
@@ -208,7 +209,7 @@ function main() {
       say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
-      camera = new Camera();
+      camera = new Camera(silkconfig);
       cameraClipRecorder = new CameraClipRecorder(camera, server);
       camera.attachFrameReplacer(cameraClipRecorder);
       timeline = new Timeline(server, outbox, camera);

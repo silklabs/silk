@@ -120,9 +120,6 @@ endif
 
 include $(BUILD_SYSTEM)/binary.mk
 
-my_inplace_build_module := $(LOCAL_PATH)/$(LOCAL_BUILT_MODULE_STEM)
-$(my_inplace_build_module): $(filter-out $(my_inplace_build_module),$(LOCAL_ADDITIONAL_DEPENDENCIES))
-$(my_inplace_build_module): $(all_libraries)
 
 npm_cli = $(abspath external/npm/cli.js)
 npm_node_dir = $(abspath external/node)
@@ -140,16 +137,19 @@ my_target_libgcc := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_LIBGCC)
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef
-$(my_inplace_build_module): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
-$(my_inplace_build_module): LOCAL_PATH := $(LOCAL_PATH)
-$(my_inplace_build_module): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
-$(my_inplace_build_module): $(import_includes)
-$(my_inplace_build_module): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
-$(my_inplace_build_module): PRIVATE_TARGET_CRTBEGIN_SO_O := $(abspath $(my_target_crtbegin_so_o))
-$(my_inplace_build_module): PRIVATE_TARGET_CRTEND_SO_O := $(abspath $(my_target_crtend_so_o))
-$(my_inplace_build_module): PRIVATE_TARGET_LIBATOMIC := $(my_target_libatomic)
-$(my_inplace_build_module): PRIVATE_TARGET_LIBGCC := $(my_target_libgcc)
-$(my_inplace_build_module):
+$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
+$(LOCAL_BUILT_MODULE): LOCAL_NODE_MODULE_MAIN := $(LOCAL_NODE_MODULE_MAIN)
+$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
+$(LOCAL_BUILT_MODULE): $(import_includes)
+$(LOCAL_BUILT_MODULE): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
+$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_CRTBEGIN_SO_O := $(abspath $(my_target_crtbegin_so_o))
+$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_CRTEND_SO_O := $(abspath $(my_target_crtend_so_o))
+$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_LIBATOMIC := $(my_target_libatomic)
+$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_LIBGCC := $(my_target_libgcc)
+$(LOCAL_BUILT_MODULE): $(LOCAL_ADDITIONAL_DEPENDENCIES)
+$(LOCAL_BUILT_MODULE): $(all_libraries)
+$(LOCAL_BUILT_MODULE):
 	@echo "NPM Install: $(LOCAL_PATH)"
 	$(hide) cd $(LOCAL_PATH) &&  \
     C_INCLUDES="\
@@ -214,13 +214,8 @@ $(my_inplace_build_module):
       ) \
       -Wl,--end-group" && \
     node $(npm_cli) install --production --nodedir=$(npm_node_dir) #--loglevel silly
-ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
-	$(hide) touch $@
-endif
-
-$(LOCAL_BUILT_MODULE): $(my_inplace_build_module)
 	$(hide) mkdir -p $(@D)
-	$(hide) ln -f $< $@
+	$(hide) cp -f $(LOCAL_PATH)/$(LOCAL_NODE_MODULE_MAIN) $@
 
 $(LOCAL_INSTALLED_MODULE): LOCAL_PATH := $(LOCAL_PATH)
 

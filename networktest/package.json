@@ -23,7 +23,6 @@
     "silk-core-version": "/version",
     "silk-log": "/log",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
-    "silk-movie": "/pub/bsp-gonk/vendor/silk/silk-movie",
     "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",

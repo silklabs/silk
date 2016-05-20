@@ -17,7 +17,6 @@
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
     "silk-core": "/device/vendor/silk/core",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
-    "silk-movie": "/pub/bsp-gonk/vendor/silk/silk-movie",
     "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
     "silk-vibrator": "/pub/bsp-gonk/vendor/silk/silk-vibrator",

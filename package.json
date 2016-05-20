@@ -1,6 +1,6 @@
 {
   "name": "silk-core",
-  "version": "0.15.2",
+  "version": "0.16.0",
   "description": "Heroku shim and nothing more",
   "scripts": {
     "issue793": "find . -name .__silk_npm_lock -exec rm {} \\; -print",

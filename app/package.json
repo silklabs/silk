@@ -56,5 +56,5 @@
     "test": "npm run lint && npm run flow",
     "update": "./tools/update.internal.sh"
   },
-  "version": "0.15.2"
+  "version": "0.16.0"
 }

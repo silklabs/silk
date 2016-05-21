@@ -234,7 +234,9 @@ const builds = {
       'pub/bsp-gonk/**',
     ],
   }),
-  'networktest': npmPackageBuild('networktest'),
+  'networktest': npmPackageBuild('networktest', {
+    events: ['nightly'],
+  }),
   'releng': npmPackageBuild('releng'),
   'server': npmPackageBuild('server'),
   'streams': npmPackageBuild('streams'),

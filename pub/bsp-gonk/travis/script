@@ -1,27 +1,9 @@
 #!/bin/bash -e
 
-BOARD=$1
-PRODUCT=$2
-
-if [[ -z $BOARD ]]; then
-  echo "Usage: $0 board [product]"
-  exit 1
-fi
-
-set -x
-
-node -p 'require("os").cpus()'
-if [ $(uname) = "Darwin" ]; then
-  sysctl -n hw.ncpu
-fi
-J=2
-df -h
-
-
-./sync $BOARD $PRODUCT
-du -h -d 2
 source build/envsetup.sh force
-make -j${J}
+make -j2
 
 # We place this in script to ensure that when it fails it turns the build red.
 ./travis/artifacts
+
+exit 0

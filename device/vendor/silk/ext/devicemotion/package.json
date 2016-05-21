@@ -4,7 +4,6 @@
   "description": "Detects device motion using the accelerometer",
   "main": "devicemotion.js",
   "scripts": {
-    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules"
   },
@@ -13,15 +12,6 @@
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/log"
-  },
-  "dependencies": {
-    "babel-runtime": "5.8.35",
-    "mz": "2.2.0"
-  },
-  "devDependencies": {
-    "babel": "5.8.23",
-    "event-to-promise": "0.4.0",
-    "mocha": "2.4.2"
   },
   "private": true
 }

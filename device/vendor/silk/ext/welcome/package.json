@@ -4,14 +4,12 @@
   "description": "Welcome. Personalized home setting when person seen",
   "main": "welcome.js",
   "scripts": {
-    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall"
   },
   "symlinkDependencies": {
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
   "dependencies": {
-    "babel-runtime": "5.8.35",
     "mz": "2.2.0",
     "node-lifx": "0.4.0",
     "sonos": "0.12.0"

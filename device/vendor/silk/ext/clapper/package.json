@@ -4,7 +4,6 @@
   "description": "Clap sample extension",
   "main": "clapper.js",
   "scripts": {
-    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall"
   },
   "symlinkDependencies": {
@@ -12,7 +11,6 @@
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
   "dependencies": {
-    "babel-runtime": "5.8.35",
     "socket.io-client": "1.4.5"
   },
   "private": true

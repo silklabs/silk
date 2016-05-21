@@ -4,14 +4,10 @@
   "description": "Example nightlight extension",
   "main": "nightlight.js",
   "scripts": {
-    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall"
   },
   "symlinkDependencies": {
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
-  },
-  "dependencies": {
-    "babel-runtime": "5.8.35"
   },
   "private": true
 }

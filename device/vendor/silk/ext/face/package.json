@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "CBuffer": "1.1.0",
-    "babel-runtime": "5.8.35",
     "fast-image-size": "silklabs/fast-image-size#339e17a025f9421a8938629e17316a149b340390",
     "mkdirp-promise": "1.0.3",
     "moving-average": "0.1.1",

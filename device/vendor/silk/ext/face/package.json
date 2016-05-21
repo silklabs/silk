@@ -15,6 +15,7 @@
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/eslint",
+    "fast-image-size": "/external-fast-image-size",
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
@@ -22,7 +23,6 @@
   },
   "dependencies": {
     "CBuffer": "1.1.0",
-    "fast-image-size": "silklabs/fast-image-size#339e17a025f9421a8938629e17316a149b340390",
     "mkdirp-promise": "1.0.3",
     "moving-average": "0.1.1",
     "mz": "2.2.0",

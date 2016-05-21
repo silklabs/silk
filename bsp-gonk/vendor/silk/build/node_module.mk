@@ -138,7 +138,7 @@ define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef
 $(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
-$(LOCAL_BUILT_MODULE): LOCAL_NODE_MODULE_MAIN := $(LOCAL_NODE_MODULE_MAIN)
+$(LOCAL_BUILT_MODULE): LOCAL_BUILT_MODULE_STEM := $(LOCAL_BUILT_MODULE_STEM)
 $(LOCAL_BUILT_MODULE): LOCAL_PATH := $(LOCAL_PATH)
 $(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
 $(LOCAL_BUILT_MODULE): $(import_includes)
@@ -215,7 +215,11 @@ $(LOCAL_BUILT_MODULE):
       -Wl,--end-group" && \
     node $(npm_cli) install --production --nodedir=$(npm_node_dir) #--loglevel silly
 	$(hide) mkdir -p $(@D)
-	$(hide) cp -f $(LOCAL_PATH)/$(LOCAL_NODE_MODULE_MAIN) $@
+	$(hide) if [[ -f $(LOCAL_PATH)/.silkslug/$(LOCAL_BUILT_MODULE_STEM) ]]; then \
+      cp -f $(LOCAL_PATH)/.silkslug/$(LOCAL_BUILT_MODULE_STEM) $@; \
+    else \
+      cp -f $(LOCAL_PATH)/$(LOCAL_BUILT_MODULE_STEM) $@; \
+    fi
 
 $(LOCAL_INSTALLED_MODULE): LOCAL_PATH := $(LOCAL_PATH)
 

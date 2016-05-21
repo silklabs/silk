@@ -1,0 +1,19 @@
+#!/bin/bash -e
+
+BOARD=$1
+PRODUCT=$2
+
+if [[ -z $BOARD ]]; then
+  echo "Usage: $0 board [product]"
+  exit 1
+fi
+
+node -p 'require("os").cpus()'
+if [ $(uname) = "Darwin" ]; then
+  sysctl -n hw.ncpu
+fi
+df -h
+./sync $BOARD $PRODUCT
+du -h -d 2
+
+exit 0

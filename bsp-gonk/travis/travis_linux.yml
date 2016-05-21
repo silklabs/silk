@@ -33,9 +33,10 @@ addons:
       - libhighgui-dev
       - libopencv-dev
 
-before_install:
-  - source ../travis/common_before_install.sh
+install:
   - export CXX="g++-4.8" CC="gcc-4.8"
+  - source ../travis/common_before_install.sh
+  - ./travis/install $BOARD $PRODUCT
 
 script:
-  - ./travis/script $BOARD $PRODUCT
+  - ./travis/script

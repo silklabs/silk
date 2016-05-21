@@ -15,6 +15,9 @@
     "babel-loader": "6.2.0",
     "copy-webpack-plugin": "2.1.5",
     "json-loader": "0.5.4",
-    "webpack": "1.13.0"
+    "webpack": "1.13.0",
+    "node-gyp": "3.3.1",
+    "resolve": "1.1.7",
+    "mkdirp": "0.5.1"
   }
 }

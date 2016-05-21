@@ -1,4 +1,4 @@
-#! /bin/bash -e
+#! /bin/bash -ex
 
 # Resolve to realpath....
 SOURCE="${BASH_SOURCE[0]}"
@@ -9,4 +9,40 @@ while [ -h "$SOURCE" ]; do
 done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-exec $ROOT/../node_modules/.bin/webpack --config $ROOT/../webpack.config.js
+help() {
+  echo 'silk-buildjs <source directory> [target directory]'
+  echo
+  echo 'This program is a helper to build a JS module into a single file and'
+  echo 'potentially compile additional native modules if a binding.gyp is present.'
+  echo 'Generally this only needs to be invoked by the android build system.'
+}
+
+if [[ ! -d $1 ]]; then
+  help
+  exit 1
+fi
+
+PATH=$ROOT/../../node_modules/.bin:$PATH
+
+export SILK_BUILDJS_SOURCE=$1
+export SILK_BUILDJS_DEST=${2:-$1/.silkslug}
+
+if [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
+  ## Exports for the node-gyp build system ...
+  export builddir_name=$SILK_BUILDJS_DEST/build
+  export srcdir=$SILK_BUILDJS_SOURCE
+  node_gyp_flags=${SILK_NODE_GYP_FLAGS:-}
+  gyp_flags=${SILK_GYP_FLAGS:-}
+
+  pushd $SILK_BUILDJS_SOURCE
+  $ROOT/../node_modules/.bin/node-gyp configure $node_gyp_flags -- $gyp_flags
+  $ROOT/../node_modules/.bin/node-gyp build
+  popd
+fi
+
+mkdir -p $SILK_BUILDJS_DEST
+rm -f $SILK_BUILDJS_DEST/package.json
+cp $SILK_BUILDJS_SOURCE/package.json $SILK_BUILDJS_DEST
+
+
+exec webpack --config $ROOT/../webpack.config.js

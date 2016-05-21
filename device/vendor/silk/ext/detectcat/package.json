@@ -4,7 +4,6 @@
   "description": "Cat detector",
   "main": "detectcat.js",
   "scripts": {
-    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall",
     "pretest": "pretest",
     "test": "runtest",
@@ -15,9 +14,6 @@
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/log"
-  },
-  "dependencies": {
-    "babel-runtime": "5.8.35"
   },
   "devDependencies": {
     "event-to-promise": "0.4.0",

@@ -4,21 +4,19 @@
   "description": "OpenCV extension to track objects",
   "main": "motion.js",
   "scripts": {
-    "preinstall": "if [ -d ../../locked_node_modules ]; then ../../locked_node_modules/fetch.sh; fi",
     "postinstall": "./bin/postinstall",
     "pretest": "pretest",
     "test": "runtest",
     "clean": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "mz": "2.2.0"
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/log"
-  },
-  "dependencies": {
-    "babel-runtime": "5.8.35",
-    "mz": "2.2.0"
   },
   "devDependencies": {
     "event-to-promise": "0.4.0",

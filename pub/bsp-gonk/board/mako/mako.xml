@@ -131,12 +131,14 @@
   <remove-project name="platform/external/svox" />
   <remove-project name="platform/external/stressapptest" />
   <remove-project name="platform/external/tagsoup" />
+  <remove-project name="platform/external/timezonepicker-support" />
   <remove-project name="platform/external/vixl" />
   <remove-project name="platform/external/valgrind" />
   <remove-project name="platform/external/xmp_toolkit" />
   <remove-project name="platform/frameworks/compile/libbcc" />
   <remove-project name="platform/frameworks/compile/mclinker" />
   <remove-project name="platform/frameworks/compile/slang" />
+  <remove-project name="platform/frameworks/mff" />
   <remove-project name="platform/frameworks/minikin" />
   <remove-project name="platform/frameworks/opt/bitmap" />
   <remove-project name="platform/frameworks/opt/bluetooth" />

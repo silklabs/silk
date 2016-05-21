@@ -219,6 +219,17 @@ const builds = {
       'pub/bsp-gonk/**',
     ],
   }),
+  'device-vendor-silk-pr': npmPackageBuild('device', {
+    package_json: 'device/vendor/silk/core/package.json',
+    travis_yml: 'device/vendor/silk/travis/travis.yml',
+    cwd: 'device/vendor/silk',
+    events: ['pr'],
+    files: [
+      'device/vendor/silk/**',
+      'device/vendor/propsilk/**',
+      'pub/bsp-gonk/vendor/silk/**',
+    ],
+  }),
   'device-push': npmPackageBuild('device', {
     // Build the primary development device on a branch push.
     // Secondary devices are built nightly (see below.)

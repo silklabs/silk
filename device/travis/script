@@ -12,8 +12,6 @@ lock_build_fingerprint() {
   echo BUILD_FINGERPRINT=$BUILD_FINGERPRINT
 }
 
-RUN_UNIT_TESTS=true
-
 source build/envsetup.sh
 case $GONK in
 qemu)
@@ -64,7 +62,6 @@ base)
   fi
   ;;
 mako)
-  RUN_UNIT_TESTS=false
   $make
   lock_build_fingerprint
   $make otapackage
@@ -76,19 +73,11 @@ base.*)
   $make silkota
   ;;
 *)
-  RUN_UNIT_TESTS=false
   $make
   lock_build_fingerprint
   $make silkota
   ;;
 esac
-
-if $RUN_UNIT_TESTS; then
-  echo "******************************************************************"
-  echo Unit tests
-  echo "******************************************************************"
-  test/unit
-fi
 
 # Clear more space for Travis builds
 rm -rf vendor/silk/locked_node_modules/node_modules/modules

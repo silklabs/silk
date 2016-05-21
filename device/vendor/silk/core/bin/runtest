@@ -12,4 +12,8 @@ if [[ -z "$DEBUG" ]]; then
 fi
 
 DEPENDENCIES=$LOCAL_PATH/../../../../../pub/bsp-gonk/vendor/silk/
+for p in silk-sysutils; do
+  ( set -ex; cd $DEPENDENCIES/$p; test -d node_modules || npm install )
+done
+
 NODE_PATH=$DEPENDENCIES DEBUG="$DEBUG" mocha $what

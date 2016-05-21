@@ -1,0 +1,28 @@
+#!/bin/bash -e
+
+echo PWD=$PWD
+if [ ! -d core ]; then
+  echo core/ not found
+  exit 0
+fi
+
+for dir in core ext/*/; do
+  if [ -d "$dir/test" ]; then
+    echo "### Installing $dir"
+    pushd "$dir/test"
+    npm install
+    popd
+  fi
+done
+
+echo "## Running unit tests ##"
+for dir in core ext/*/; do
+  if [ -d "$dir/test" ]; then
+    echo "### Testing $dir"
+    pushd "$dir"
+    NPM_CONFIG_REGISTRY="" npm test
+    popd
+  fi
+done
+
+exit 0

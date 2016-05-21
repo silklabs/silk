@@ -16,7 +16,7 @@ usage () {
   fi
   echo "usage: $0 [board] [product]"
   echo
-  echo Prepares the workspace for building the specified board/product
+  echo Prepares the workspace for building the specified board and product
   echo
   if [[ -d board ]]; then
     cd board
@@ -86,8 +86,22 @@ done
 
 [[ $# -le 2 ]] || usage
 
-arg_board=${1:-}
-arg_product=${2:-}
+arg_board=
+arg_product=
+if [[ $# -eq 1 ]]; then
+  if [[ -d product/$1 ]]; then
+    arg_product=$1
+    if [[ -d board/$1 ]]; then
+      echo Cannot have a board and product with the same name: $1
+      exit 1
+    fi
+  else
+    arg_board=$1
+  fi
+elif [[ $# -eq 2 ]]; then
+  arg_board=$1
+  arg_product=$2
+fi
 
 board=${arg_board:-$board}
 board=${board:-$default_board}

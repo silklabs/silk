@@ -337,6 +337,7 @@ const builds = {
         global: ['GONK=base.kenzo'],
       },
     },
+    branches: ['master', 'next'],
   }),
   'device-base.msm8909-nightly': nightlyBuild('device', {
     branches: ['master'],

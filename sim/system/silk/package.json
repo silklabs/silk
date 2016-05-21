@@ -10,6 +10,8 @@
   "author": "Silk Labs Inc.",
   "symlinkDependencies": {
     "silk-caffe": "/device/vendor/propsilk/silk-caffe",
+    "silk-camera": "/pub/bsp-gonk/vendor/silk/silk-camera",
+    "silk-capture": "/pub/bsp-gonk/vendor/silk/silk-capture",
     "silk-cv": "/device/vendor/propsilk/silk-cv",
     "silk-core-version": "/version",
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",

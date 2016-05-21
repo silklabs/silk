@@ -7,6 +7,20 @@ if [ ! -d node_modules/opencv ]; then
   npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd
 fi
 
+# Terrible hacks to install native things for exttext-ing while avoiding
+# conflicting with device binaries (ie, can't use symlinkDependencies...)
+if [ ! -d node_modules/silk-external-dlib ]; then
+  npm install ../../../../external-dlib
+fi
+
+if [ ! -d node_modules/silk-external-jade ]; then
+  npm install ../../../../external-jade
+fi
+
+if [ ! -d node_modules/silk-capture ]; then
+  npm install ../../opensilk/silk-capture
+fi
+
 if [ ! -d node_modules/silk-cv ]; then
   npm install ../../propsilk/silk-cv/
 fi

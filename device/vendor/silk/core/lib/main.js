@@ -43,6 +43,7 @@ import ntp from 'silk-ntp';
 import * as util from './sysutils';
 import update from './update';
 import config from './config';
+import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';
 import infrared from './infrared';
 import Server from './server';
@@ -61,7 +62,8 @@ import NetworkStatus from './network_status';
 import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
-import Camera from './camera';
+import Camera from 'silk-camera';
+import CameraClipRecorder from './camera_clip_recorder';
 import makeExtensions from './ext';
 import JSStartup from './metrics/js_startup';
 import startCollectingProcessMetrics from './process_metrics';
@@ -81,6 +83,7 @@ let id = null;
 let btle = null;
 let timeline;
 let camera;
+let cameraClipRecorder;
 let logo = null;
 let server = null;
 let connections = null;
@@ -206,8 +209,19 @@ function main() {
       say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
-      timeline = new Timeline(server, outbox);
-      camera = new Camera(server, timeline);
+      camera = new Camera(silkconfig);
+      cameraClipRecorder = new CameraClipRecorder(camera, server);
+      camera.attachFrameReplacer(cameraClipRecorder);
+      timeline = new Timeline(server, outbox, camera);
+
+      // Camera mute control
+      const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
+      let updateCameraMute = () => {
+        const audioMute = util.getboolprop(AUDIO_MUTE_PROP, false);
+        camera.setMute(audioMute);
+      };
+      updateCameraMute();
+      util.propWatcher.on(AUDIO_MUTE_PROP, updateCameraMute);
 
       let hw = [
         camera.init(),
@@ -325,7 +339,7 @@ server.on('cmd', cmd => {
       diag: !!cmd.diag,
       objects: !!cmd.objects,
     });
-    camera.setDiag(!!cmd.diag);
+    cameraClipRecorder.setDiag(!!cmd.diag);
 
     // FIXME/TODO: we want to notify the audio assistant extension
     // that livestream state has changed, but we don't want to notify
@@ -356,7 +370,7 @@ server.on('cmd', cmd => {
       timeline.diagCommand(cmd.name, cmd.arg);
       break;
     case 'camera':
-      camera.diagCommand(cmd.name, cmd.arg);
+      cameraClipRecorder.diagCommand(cmd.name, cmd.arg);
       break;
     case 'speak':
       log.info('speak command:', JSON.stringify(cmd));

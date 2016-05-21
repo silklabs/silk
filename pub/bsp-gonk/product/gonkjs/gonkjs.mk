@@ -25,10 +25,7 @@ PRODUCT_PACKAGES += silk-player silk-volume
 PRODUCT_PACKAGES += silk-bledroid-daemon
 
 # vendor/silk/capture/
-PRODUCT_PACKAGES += silk-capture
-
-# vendor/silk/silk-core-version
-PRODUCT_PACKAGES += silk-core-version
+PRODUCT_PACKAGES += silk-capture-daemon
 
 # vendor/silk/dhcputil/
 PRODUCT_PACKAGES += silk-dhcputil
@@ -49,6 +46,15 @@ PRODUCT_PACKAGES += silk-sensors
 
 # vendor/silk/silk-alog/
 PRODUCT_PACKAGES += silk-alog
+
+# vendor/silk/silk-camera
+PRODUCT_PACKAGES += silk-camera
+
+# vendor/silk/silk-capture
+PRODUCT_PACKAGES += silk-capture
+
+# vendor/silk/silk-core-version
+PRODUCT_PACKAGES += silk-core-version
 
 # vendor/silk/silk-input/
 PRODUCT_PACKAGES += silk-input

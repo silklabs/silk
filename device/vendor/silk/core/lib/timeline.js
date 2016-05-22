@@ -27,7 +27,7 @@ const log = createLog('timeline');
 // * "all"    -- upload all video
 // * "none"   -- never upload video
 const VIDEOUPLOADTYPE_PROP = 'persist.silk.vidupload.type';
-const DEFAULT_VIDEOUPLOADTYPE = 'events';
+const DEFAULT_VIDEOUPLOADTYPE = 'none';
 
 // Default to uploading 1 preview image per second.
 const PREVIEW_UPLOAD_INTERVAL_S = util.getintprop('persist.silk.prvupload.interval', 1);
@@ -35,6 +35,7 @@ const PREVIEW_UPLOAD_INTERVAL_MS = PREVIEW_UPLOAD_INTERVAL_S * 1000;
 
 // Time between preview image "keyframes".  These are uploaded regardless of the
 // value of VIDEOUPLOADTYPE_PROP.
+const PREVIEW_KEYFRAME_ENABLED = util.getboolprop('persist.silk.keyframe.enabled', false);
 const PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS = 5 * 60 * 1000; /* 5 minutes */
 
 const PREVIEW_WIDTH = util.getintprop('ro.silk.preview.width', 320);
@@ -566,7 +567,7 @@ export default class Timeline extends EventEmitter {
 
     let isKeyFrame = false;
     if (now - this.lastPreviewKeyframeWhen >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
-      isKeyFrame = true;
+      isKeyFrame = PREVIEW_KEYFRAME_ENABLED;
       this.lastPreviewKeyframeWhen = now;
     }
 

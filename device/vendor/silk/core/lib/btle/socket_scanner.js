@@ -35,11 +35,11 @@ const DEFAULT_LOCALNAME = `Silk-app`;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
 
 const SCAN_DURATION_OVERRIDE =
-  getintprop(`persist.silk.bt.socket.scandur`, -1);
+  getintprop(`persist.silk.bt.socket.scandur`, 0);
 const SCAN_DURATION_MS =
   SCAN_DURATION_OVERRIDE > 0 ?
   SCAN_DURATION_OVERRIDE :
-  getintprop(`ro.silk.bt.socket.scan_dur_sec`, 5) * 1000;
+  getintprop(`ro.silk.bt.socket.scan_dur_sec`, 10) * 1000;
 
 const SCAN_INTERVAL_MS =
   getintprop(`persist.silk.bt.socket.scanint`, 500);
@@ -84,7 +84,8 @@ export default class SocketScanner extends EventEmitter {
       this._publicKeys = options.publicKeys;
     }
     if (options.serviceUuid) {
-      this._serviceUuid = options.serviceUuid;
+      this._serviceUuid =
+        options.serviceUuid.toLowerCase().replace(/[^\da-f]/g, '');
     }
     if (options.localName) {
       this._localName = options.localName;
@@ -498,7 +499,7 @@ export default class SocketScanner extends EventEmitter {
                   this._enabled &&
                   !closure.disconnected;
     } catch(error) {
-      log.warn(error.toString());
+      log.warn(error);
       connected = false;
     }
 

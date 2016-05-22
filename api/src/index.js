@@ -37,9 +37,9 @@ export { default as MetricTypes } from './metric_types';
 export { default as createStreams } from './streams';
 
 export const BTLE_SOCKET_UUIDS = {
-  service: '78955692-e50a-4dfd-b1f0-f59303ebf4cb',
-  read: '9c333756-62c3-4141-8ee5-fed0d9f84a72',
-  write: 'ef4cf114-5d10-4b73-8a5f-214aae42c6f9',
+  service: '78955692e50a4dfdb1f0f59303ebf4cb',
+  read: '9c33375662c341418ee5fed0d9f84a72',
+  write: 'ef4cf1145d104b738a5f214aae42c6f9',
 };
 
 type SocketioConfig = [string, {

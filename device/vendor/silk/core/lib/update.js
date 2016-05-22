@@ -7,20 +7,20 @@
  */
 
 import crypto from 'crypto';
+import {EventEmitter} from 'events';
 import fs from 'fs';
-import * as util from './sysutils';
-import createLog from './log';
 import request from 'request';
+import silkCoreVersion from 'silk-core-version';
+import {spawnSync} from 'child_process';
 import validator from 'validator';
 
-import baseversion from './base_version'; // Base device image version
-import silkCoreVersion from 'silk-core-version'; // silk-core version information
-
-import { EventEmitter } from 'events';
+import baseversion from './base_version';
+import createLog from './log';
+import * as util from './sysutils';
 
 const log = createLog('update');
 
-let emitter = new EventEmitter();
+const emitter = new EventEmitter();
 
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
 const CHANNEL_PROP = 'persist.silk.update.channel';
@@ -688,7 +688,6 @@ function stop() {
 }
 
 function apply() {
-  let spawnSync = require('child_process').spawnSync;
   spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
 
   // This is paranoid, but if spawnSync() returns before we reboot then we don't

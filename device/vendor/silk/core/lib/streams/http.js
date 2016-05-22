@@ -23,8 +23,8 @@ export default function(url, overrides = {}) {
   Object.assign(params, overrides);
 
   let module = (params.protocol === 'https:') ?
-    require('https') :
-    require('http');
+    require('https') :                  // eslint-disable-line import/no-require
+    require('http');                    // eslint-disable-line import/no-require
 
   return module.request(params);
 }

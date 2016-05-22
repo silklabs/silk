@@ -20,6 +20,20 @@ const extDirs = [ 'system/silk/ext', 'data/silk/ext' ];
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 
+/**
+ * Webpack works by replacing require with a specialized version which loads
+ * from the bundle. For extensions (at least for now) we rely on nodes require
+ * implementation to load the files. We use the below evaluation to get the correct
+ * require regardless of browserify/webpack.
+ */
+const moduleRequire = ((() => {
+  try {
+    return __non_webpack_require__;  //eslint-disable-line
+  } catch (err) {
+    return require;
+  }
+})());
+
 let nextObjectId = 0;
 
 /**
@@ -744,7 +758,7 @@ class Extensions {
       } else {
         log.info(`Loading ${modulePath}`);
         let env = new Env(path.basename(modulePath), this._deviceObjects);
-        this._loaded[modulePath] = { env: env, mod: require(modulePath)(env) };
+        this._loaded[modulePath] = { env: env, mod: moduleRequire(modulePath)(env) };
       }
     } catch (e) {
       // Failed to load, delete from cache to force next load from disk
@@ -759,11 +773,11 @@ class Extensions {
    * @private
    */
   _removeExtensionFromCache(file) {
-    if (require.cache === undefined) {
+    if (moduleRequire.cache === undefined) {
       // require.cache alias not present for some reason, let's add it
-      require.cache = require('module')._cache;
+      moduleRequire.cache = require('module')._cache; // eslint-disable-line import/no-require
     }
-    delete require.cache[file];
+    delete moduleRequire.cache[file];
   }
 
   /**

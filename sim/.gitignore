@@ -1,7 +1,6 @@
 /system/silk/bin/dash
 /system/silk/bin/node
 /system/silk/bin/silk-init
-/system/silk/silk-init.js
 /system/silk/silk-props.json
 /data
 /crash.log

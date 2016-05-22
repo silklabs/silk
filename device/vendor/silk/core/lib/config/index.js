@@ -13,7 +13,7 @@ import ConfigSessionListener from './config_session_listener';
 import createLog from '../log';
 import { EventEmitter } from 'events';
 import fs from 'mz/fs';
-import getBTLE from '../btle';
+import getBTLE from '../btle/parent';
 import getDeviceId from '../deviceid';
 import * as Joi from 'joi';
 import makeDeferred from '../deferred';
@@ -306,7 +306,7 @@ class DeviceConfig extends EventEmitter {
 
       // If we're still connected then we can try again.
       if (this._configuringSocketSessionListener) {
-        const reason = error.toString();
+        const reason = error.message;
         this._configuringSocketSessionListener.maybeSendRestart(reason);
       }
       return;
@@ -315,6 +315,7 @@ class DeviceConfig extends EventEmitter {
     assert(!this._wifiAbortConnection);
     assert(this._configuringSocketSessionListener);
 
+    this._btle.publicKeys = [this._config.registrarPublicKey];
     this._configuringSocketSessionListener.sendComplete();
 
     log.info('Configured');
@@ -322,8 +323,7 @@ class DeviceConfig extends EventEmitter {
   };
 
   _stopRetryingWifiConnection(error) {
-    log.debug(`DeviceConfig._stopRetryingWifiConnection(` +
-              `'${error.toString()}')`);
+    log.debug(`DeviceConfig._stopRetryingWifiConnection()`, error);
 
     if (this._wifiAbortConnection) {
       log.debug(`Rejecting wifi connection promise`);
@@ -463,10 +463,9 @@ class DeviceConfig extends EventEmitter {
   }
 
   _onWifiError(error) {
-    error = error.toString();
-    log.debug(`DeviceConfig._onWifiError('${error}')`);
+    log.debug(`DeviceConfig._onWifiError()`, error);
 
-    let status = WIFI_ERROR_MAP.get(error);
+    let status = WIFI_ERROR_MAP.get(error.message);
     if (!status) {
       log.error(`No error message mapping for wifi error '${status}'`);
       status = error;
@@ -497,11 +496,10 @@ class DeviceConfig extends EventEmitter {
   }
 
   _onServerError(error) {
-    error = error.toString();
-    log.debug(`DeviceConfig._onServerError('${error}')`);
+    log.debug(`DeviceConfig._onServerError()`, error);
 
     // XXX Need some mappings here someday.
-    const status = error;
+    const status = error.message;
 
     this._nofityListenersOfStatus(status);
   }
@@ -543,6 +541,7 @@ class DeviceConfig extends EventEmitter {
   }
 
   async init(server: Server) {
+    log.debug(`init`);
     assert(server);
 
     if (this._initialized) {
@@ -588,13 +587,12 @@ class DeviceConfig extends EventEmitter {
     this._btle = btle;
     this._server = server;
 
-    log.info('Device configuration', this._config);
-
     this._btle.on(`socketSession`,
                   (socketSession) => this._onSocketSession(socketSession));
     this._btle.beaconInfo = this._getBeaconInfo();
 
     if (this._config && this._config.success) {
+      log.info(`Already configured`, this._config);
       this._btle.publicKeys = [ this._config.registrarPublicKey ];
 
       this._setApiServerUrl();
@@ -605,6 +603,7 @@ class DeviceConfig extends EventEmitter {
       server.addListener(`connect`, this._onConfiguredServerConnect);
       server.addListener(`disconnect`, this._onConfiguredServerDisconnect);
     } else {
+      log.info(`Not yet configured`);
       this._config = null;
 
       // Ensure we don't have any stale state lying around...

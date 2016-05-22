@@ -10,6 +10,29 @@
 import invariant from 'assert';
 import {Metric, MetricTypes} from 'silk-api';
 
+export class ChildProcessCrash extends Metric {
+
+  static NAME = `btle_child_crash`;
+  static DESC = `A counter for btle child process crashes`;
+  static INDEX = new Set([`code`, `signal`]);
+
+  constructor(code: ?number, signal: ?string) {
+    if (code === null) {
+      invariant(signal);
+    } else {
+      invariant(code);
+      invariant(code !== 0);
+      invariant(signal === null);
+    }
+    super({
+      count: new MetricTypes.Integer(1),
+      code: String(code || 0),
+      signal: signal || ``,
+    });
+  }
+
+}
+
 export class BledroidCrash extends Metric {
 
   static NAME = `btle_bledroid_crash`;

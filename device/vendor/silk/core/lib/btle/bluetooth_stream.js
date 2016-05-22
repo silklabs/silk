@@ -444,7 +444,7 @@ export default class Stream extends Duplex {
   }
 
   _emitError(error: Error) {
-    log.debug(`Stream._emitError('${error.toString()}')`);
+    log.debug(`Stream._emitError()`, error);
 
     if (this._error) {
       log.warn(`Received more than one error`, error);
@@ -503,6 +503,7 @@ export default class Stream extends Duplex {
   };
 
   _onData: ((data: Buffer, isNotification: boolean) => void) = (data, isNotification) => {
+    data = data || new Buffer();
     log.debug(`Stream._onData(<Buffer ${data.length}>, ${isNotification})`);
 
     invariant(Buffer.isBuffer(data));
@@ -541,7 +542,7 @@ export default class Stream extends Duplex {
   };
 
   _onDataAcknowledged: ((error?: Error) => void) = (error) => {
-    log.debug(`Stream._onDataAcknowledged(%s)`, error ? `'${error.toString()}'` : ``);
+    log.debug(`Stream._onDataAcknowledged(%s)`, error || ``);
 
     invariant(this._readAckTimeout);
     clearTimeout(this._readAckTimeout);
@@ -559,7 +560,7 @@ export default class Stream extends Duplex {
   };
 
   _onWrite: ((error?: Error) => void) = (error) => {
-    log.debug(`Stream._onWrite(%s)`, error ? `'${error.toString()}'` : ``);
+    log.debug(`Stream._onWrite(%s)`, error || ``);
 
     invariant(this._writeTimeout);
     clearTimeout(this._writeTimeout);

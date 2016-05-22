@@ -7,11 +7,13 @@
  */
 
 import events from 'events';
+import Input from 'silk-input';
 import lights from 'silk-lights';
+import {Movie} from 'silk-movie';
+import Vibrator from 'silk-vibrator';
+
 import createLog from './log';
 import * as util from './sysutils';
-import Vibrator from 'silk-vibrator';
-import Input from 'silk-input';
 
 const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
@@ -22,7 +24,7 @@ class Ui extends events.EventEmitter {
   constructor() {
     super();
 
-    this.movie = new (require('silk-movie').Movie)();
+    this.movie = new Movie();
     this.vib = new Vibrator();
 
     // Only monitor the input devices used for the power and volume keys for these

@@ -1,8 +1,8 @@
 {
   "name": "silk-lights",
-  "version": "0.0.1",
+  "version": ".0.1",
   "description": "Module to control backlight and other LEDs on the board ",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "postinstall": "../../../../npm_postinstall && silk-buildjs",
     "build": "silk-buildjs"

@@ -12,7 +12,7 @@
     "babel-preset-silk-node4": "../babel-preset-silk-node4"
   },
   "dependencies": {
-    "babel-loader": "6.2.4",
+    "babel-loader": "6.2.0",
     "copy-webpack-plugin": "2.1.5",
     "json-loader": "0.5.4",
     "webpack": "1.13.0"

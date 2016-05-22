@@ -32,6 +32,11 @@ const config = {
     libraryTarget: 'commonjs2',
     filename: `./${main}`,
   },
+  babel: {
+    presets: [
+      require('babel-preset-silk-node4'),
+    ],
+  },
   module : {
     loaders: [
       { test: /\.json$/, loader: require.resolve('json-loader') },
@@ -40,9 +45,6 @@ const config = {
         loader: require.resolve('babel-loader'),
         query: {
           babelrc: false,
-          presets: [
-            require.resolve('babel-preset-silk-node4'),
-          ],
         }
       }
     ]

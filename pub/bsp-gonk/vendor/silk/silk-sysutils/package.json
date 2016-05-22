@@ -4,8 +4,7 @@
   "description": "System utilities for Silk",
   "main": "lib/index.js",
   "scripts": {
-    "postinstall": "../../../../npm_postinstall && silk-buildjs",
-    "silk-build-aosp": "silk-buildjs"
+    "postinstall": "../../../../npm_postinstall && silk-buildjs"
   },
   "license": "MIT",
   "symlinkDependencies": {

@@ -35,7 +35,7 @@ Initially, after creating the project, you will find in ins repo a `index.js` fi
 You will also notice that there is a `device.js` file. Essentially it initializes the two main modules you will need in your program: Wi-Fi and the power button.
 Since you will be doing everything in the device using JavaScript, even hardware buttons are controlled that way. So instead of you writing those modules' initialization code, we've made it easy for you and included them in the `device.js` file.
 
-If you're looking for a head start try following one of the tutorials we've prepared for you that include real-life examples of the Silk APIs. [Check them out here](https://github.com/silklabs/silk/tree/master/docs/tutorial).
+If you're looking for a head start try following one of the tutorials we've prepared for you that include real-life examples of the Silk APIs that we're building over time. [Check them out here](https://github.com/silklabs/silk/tree/master/docs/tutorial).
 
 ## Running your program on a device
 

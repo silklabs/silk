@@ -3,16 +3,7 @@
 Whether you're an experienced Android developer/user or you're just getting started with how flashing works. Here's a tutorial that makes it easy to get Silk running on a phone so you can start writing JavaScript on top of it right away.
 
 ## Downloads
-
-For now we provide nightly builds that are generated daily and contain the very latest code we push.
-
-### Nexus 4 (mako)
-
-- Latest nightly build: [download](https://d2xr8z98rg6hpy.cloudfront.net/commit/mako/linux/master/target.tar.gz)
-
-### Xiaomi Redmi Note 3 PRO (kenzo)
-
-- Latest nightly build: [download](https://d2xr8z98rg6hpy.cloudfront.net/commit/kenzo/linux/master/target.tar.gz)
+Our builds are constantly being updated so the new links will always be in [Downloads](../downloads.md) document.
 
 ## Flashing and Installing Silk
 

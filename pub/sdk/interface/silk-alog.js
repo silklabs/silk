@@ -8,8 +8,8 @@
 type SilkALogFunc = (tagOrMessage: string, maybeMessage: ?string) => void;
 
 declare module "silk-alog" {
-  declare var verbose: SilkALogFunc;
   declare var debug: SilkALogFunc;
+  declare var verbose: SilkALogFunc;
   declare var info: SilkALogFunc;
   declare var warn: SilkALogFunc;
   declare var error: SilkALogFunc;
@@ -23,27 +23,29 @@ declare module "silk-alog" {
  * @example
  * import log from 'silk-alog';
  *
- * log.verbose('tag', 'hello there');
- * log.debug('default log tag is node');
- * log.info('hi');
- * log.warn('tsktsk');
- * log.error('ono');
  * log.fatal('sos');
- */
-
-/**
- * Print verbose log message
+ * log.error('ono');
+ * log.warn('tsktsk');
+ * log.info('hi');
+ * log.verbose('useless');
+ * log.debug('assert(1 + 1 == 3)');
  *
- * @name verbose
- * @memberof silk-alog
- * @param {string} [tag='node'] Source of the log message
- * @param {string} message The message to log
+ * log.info('tag', 'The default tag is "node"');
  */
 
 /**
  * Print debug log message
  *
  * @name debug
+ * @memberof silk-alog
+ * @param {string} [tag='node'] Source of the log message
+ * @param {string} message The message to log
+ */
+
+/**
+ * Print verbose log message
+ *
+ * @name verbose
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log

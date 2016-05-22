@@ -77,8 +77,8 @@ module.exports = function createLog(libraryName) {
   }
 
   return {
-    verbose: makeLogFunction('log', 'verbose'),
     debug: makeLogFunction('log', 'debug'),
+    verbose: makeLogFunction('log', 'verbose'),
     info: makeLogFunction('info'),
     warn: makeLogFunction('warn'),
     error: makeLogFunction('error'),

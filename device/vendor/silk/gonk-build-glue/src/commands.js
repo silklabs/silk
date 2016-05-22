@@ -147,9 +147,16 @@ export default function(baseDirectory = process.env.BASEDIR) {
       return;
     }
     const silkslug = path.join(baseDirectory, '.silkslug');
-    mkdirp(silkslug);
+    mkdirp.sync(silkslug);
     fs.createReadStream(path.join(baseDirectory, 'package.json'))
-      .pipe(fs.createWriteStream(path.join(silkslug, 'package.json')));
+      .pipe(fs.createWriteStream(path.join(silkslug, 'package.json')))
+      .on('error', err => {
+        gutil.log('(slug)', gutil.colors.red('Slug Error'));
+        gutil.log('(slug)', err.message);
+        gutil.log('(slug)', err.fileName);
+        gutil.log('(slug)', err.lineNumber);
+        process.exit(1);
+      })
 
     return vfs.src(path.join(baseDirectory, '/**/*'))
       .pipe(gulpgitignore(silkignore))

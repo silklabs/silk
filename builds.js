@@ -321,7 +321,7 @@ const builds = {
   }),
   */
   'device-kenzo-nightly': nightlyBuild('device', {
-    branches: ['master'],
+    branches: ['master', 'next'],
     title: 'kenzo nightly',
     travis_config: {
       env: {
@@ -330,17 +330,16 @@ const builds = {
     },
   }),
   'device-base.kenzo-nightly': nightlyBuild('device', {
-    branches: ['master'],
+    branches: ['master', 'next'],
     title: 'base.kenzo nightly',
     travis_config: {
       env: {
         global: ['GONK=base.kenzo'],
       },
     },
-    branches: ['master', 'next'],
   }),
   'device-base.msm8909-nightly': nightlyBuild('device', {
-    branches: ['master'],
+    branches: ['master', 'next'],
     title: 'base.msm8909 nightly',
     travis_config: {
       env: {

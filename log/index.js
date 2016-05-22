@@ -6,8 +6,8 @@
  *   import createLog from 'silk-log';
  *   const log = createLog('coolfeature');
  *
- *   log.verbose('useless');
  *   log.debug('assert(1+1=3)');
+ *   log.verbose('useless');
  *   log.info('hi');
  *   log.warn('tsktsk');
  *   log.error('ono');
@@ -37,8 +37,8 @@ function createLogger(libraryName, level) {
 
 module.exports = function createLog(libraryName) {
   return {
-    verbose: createLogger(libraryName, 'verbose'),
     debug: createLogger(libraryName, 'debug'),
+    verbose: createLogger(libraryName, 'verbose'),
     info: createLogger(libraryName, 'info'),
     warn: createLogger(libraryName, 'warn'),
     error: createLogger(libraryName, 'error'),

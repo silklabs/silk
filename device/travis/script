@@ -61,12 +61,6 @@ base)
     echo Warning: Skipping emulator boot check on OS X for now
   fi
   ;;
-mako)
-  $make
-  lock_build_fingerprint
-  $make otapackage
-  $make silkota
-  ;;
 base.*)
   $make
   # No |lock_build_fingerprint| here since base build doesn't generate build.prop
@@ -76,6 +70,7 @@ base.*)
   $make
   lock_build_fingerprint
   $make silkota
+  $make otapackage
   ;;
 esac
 

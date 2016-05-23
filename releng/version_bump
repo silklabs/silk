@@ -50,6 +50,9 @@ for info_plist in ./app/ios/Silk/Info.plist; do
   echo "  ✓ $info_plist"
 done
 
+# Update the links in pub/docs/downloads.md to match the new silk-core version
+sed -e "s/\/[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\//\/$SILK_CORE_VERSION\//" -i pub/docs/downloads.md
+
 for package in $(find . -maxdepth 2 -name package.json) \
                $(find pub -maxdepth 2 -name package.json); do
   case $package in

@@ -2,6 +2,10 @@
 
 Let's get started by building a simple program for Silk and push it to the device.
 
+## Available APIs
+
+You should look at the set of APIs we have made available for you, check them out here [APIs reference: understanding what kind of superpower Silk gives you](http://silklabs.github.io/silk/master/api/device/index.html).
+
 ## Installing Silk
 
 By now you should have installed Silk Cli on your computer (instructions are in the main Readme file). But if you haven't, just run:
@@ -32,8 +36,7 @@ This will initialize a new node project with the repo name same as project_name 
 
 Initially, after creating the project, you will find in ins repo a `index.js` file that you could immediately start working on and deploying to either the emulator or a device that has Silk flashed into it.
 
-You will also notice that there is a `device.js` file. Essentially it initializes the two main modules you will need in your program: Wi-Fi and the power button.
-Since you will be doing everything in the device using JavaScript, even hardware buttons are controlled that way. So instead of you writing those modules' initialization code, we've made it easy for you and included them in the `device.js` file.
+You will also notice that there is a `device.js` file. Essentially it initializes the two main modules you will need in your program: Wi-Fi and the power button. Since you will be doing everything in the device using JavaScript, even hardware buttons are controlled that way. So instead of you writing those modules' initialization code, we've made it easy for you and included them in the `device.js` file.
 
 If you're looking for a head start try following one of the tutorials we've prepared for you that include real-life examples of the Silk APIs that we're building over time. [Check them out here](https://github.com/silklabs/silk/tree/master/docs/tutorial).
 

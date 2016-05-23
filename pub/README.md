@@ -31,7 +31,7 @@ For detailed instructions and download links see [Installation](docs/tutorial/in
 
 ## Building
 
-Head out to [Building instructions for Linux and OS X](docs/development/build-instructions-linux-osx.md), or for [Windows](docs/development/build-instructions-vm-on-windows.md)
+Head out to [Building instructions for Linux and OS X](docs/development/build-instructions-linux-osx.md), or for [Windows](docs/development/build-instructions-vm-on-windows.md) (using a Virtual Machine).
 
 ## Resources for newcomers
 

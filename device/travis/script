@@ -69,7 +69,14 @@ base.*)
 kenzo)
   $make
   lock_build_fingerprint
-  $make silkota
+  $make otatools
+
+  # Make room on Travis before OTA package generation
+  export DISABLE_OTAPACKAGE_DEPS=1
+  rm -rf out/target/product/*/obj/
+  rm -rf out/target/product/*/obj_arm/
+
+  $make silkota otapackage
   ;;
 *)
   $make
@@ -78,8 +85,5 @@ kenzo)
   $make otapackage
   ;;
 esac
-
-# Clear more space for Travis builds
-rm -rf vendor/silk/locked_node_modules/node_modules/modules
 
 exit 0

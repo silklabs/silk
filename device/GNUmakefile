@@ -26,7 +26,7 @@ update:
   cd out/prebuilt/$$SILK_BOARD; \
   wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$SILK_BOARD.tgz ; \
   tar zxf $$SILK_BOARD.tgz; \
-  [[ $$SILK_BOARD == qemu ]] || ./aosp_$$SILK_BOARD/$(or $(FLASH_SCRIPT),flash.sh); \
+  [[ $$SILK_BOARD == qemu ]] || ./*/$(or $(FLASH_SCRIPT),flash.sh); \
 
 # Update the currently attached Mako device with the latest prebuilt FUT build
 .PHONY: fut

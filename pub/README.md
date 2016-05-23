@@ -5,7 +5,7 @@ Silk is a free (as in free beer) firmware for a number of smartphones based on t
 ## Latest news
 
 **18/May/2016**: The Silk open-source platform brings a new age of IoT through meaningful experiences. [Read full story](http://www.silklabs.com/silk-open-source-platform-announced)<br>
-**20/May/2016**: Silk 0.5.1 [Release notes](#)
+**23/May/2016**: Silk 0.16.0 [Release notes](docs/release-notes.md)
 
 ## What is Silk
 
@@ -27,21 +27,21 @@ For the latest version:<br>
 1. Download a ROM for your device or the emulator.
 2. Write JavaScript.
 
-For detailed instructions and download links see [Installation](#).
+For detailed instructions and download links see [Installation](docs/tutorial/installing-silk.md).
 
 ## Building
 
-Head out to [Building instructions for Linux and OS X](development/build-instructions-linux-osx.md).
+Head out to [Building instructions for Linux and OS X](docs/development/build-instructions-linux-osx.md), or for [Windows](docs/development/build-instructions-vm-on-windows.md)
 
 ## Resources for newcomers
 
-- [Quick Start: Writing your first app for Silk](tutorial/quick-start.md)
-- [Emit an iBeacon from the device](tutorial/ble-example.md)
+- [Quick Start: Writing your first app for Silk](docs/tutorial/quick-start.md)
+- [Emit an iBeacon from the device](docs/tutorial/ble-example.md)
 
 ## Feedback
 
 - Ask a question or request a feature in [our forums](https://community.silklabs.com)
-- File a bug in [GitHub Issues]()
+- File a bug in [GitHub Issues](https://github.com/silklabs/silk/issues)
 
 ## Disclaimer
 

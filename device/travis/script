@@ -66,6 +66,11 @@ base.*)
   # No |lock_build_fingerprint| here since base build doesn't generate build.prop
   $make silkota
   ;;
+kenzo)
+  $make
+  lock_build_fingerprint
+  $make silkota
+  ;;
 *)
   $make
   lock_build_fingerprint

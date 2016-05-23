@@ -5,7 +5,7 @@ $PREBUILT_CCACHE -s
 df -h
 du -h -d 1 * .repo
 du -h -d 2 out/target/product/
-du -h ../*
+du -h -d 1 ..
 du -hs .
 
 # Deploy our per build artifacts...

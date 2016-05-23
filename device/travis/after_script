@@ -3,7 +3,8 @@
 set -ex
 $PREBUILT_CCACHE -s
 df -h
-du -hs * .repo
+du -h -d 1 * .repo
+du -h -d 2 bsp-gonk/out/target/product/
 du -hs .
 
 # Deploy our per build artifacts...

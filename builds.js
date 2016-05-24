@@ -269,6 +269,7 @@ const builds = {
   //  files: ['**/package.json']
   //}),
   'mp4dash': npmPackageBuild('tools/mp4dash'),
+  'silk-core-version': npmPackageBuild('pub/version'),
 
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently

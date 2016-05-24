@@ -3,6 +3,11 @@ Production configuration profile.
 */
 export default {
 
+  azure: {
+    init: true,
+    setServiceProps: true,
+  },
+
   socketio: {
     // Where to bind as passed by heroku:
     port: process.env.PORT

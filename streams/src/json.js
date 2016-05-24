@@ -5,10 +5,10 @@
  */
 
 import ClosingTransform from './closing_transform';
-import { DuplexTransform } from './duplex_transform';
+import DuplexTransform from './duplex_transform';
 import makeLog from 'silk-log';
 
-const log = makeLog(`api-streams-json`);
+const log = makeLog(`streams:json`);
 
 export class JSONDecodeStream extends ClosingTransform {
   constructor() {

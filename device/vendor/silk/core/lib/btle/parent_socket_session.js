@@ -8,9 +8,11 @@
  */
 
 import invariant from 'assert';
-import {DuplexTransform} from 'silk-streams/src/duplex_transform';
-import {MessagePackDuplexStream} from 'silk-streams/src/msgpack';
-import {SocketStream} from 'silk-streams/src/socket';
+import {
+  DuplexTransform,
+  MessagePackDuplexStream,
+  SocketDuplexStream,
+} from 'silk-streams';
 
 import api from '../api';
 import createLog from '../log';
@@ -49,7 +51,7 @@ export default class ParentSocketSession extends DuplexTransform {
   constructor(socket: Socket) {
     log.debug(`constructor`);
 
-    const socketStream = new SocketStream(socket);
+    const socketStream = new SocketDuplexStream(socket);
     const msgpackStream = new MessagePackDuplexStream(socketStream);
     const internalStream = new InternalMessageFilterStream(msgpackStream);
 

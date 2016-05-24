@@ -3,25 +3,24 @@
  */
 
 import invariant from 'assert';
-import { createStreams, RssiSmoother } from 'silk-api';
-import { getRandomBytes } from '../Crypto';
+import { RssiSmoother } from 'silk-api';
 import makeLog from 'silk-log';
+import {
+  AuthenticateDuplexStream,
+  CryptoDuplexStream,
+  HeartbeatDuplexStream,
+  MessagePackDuplexStream,
+  setRandomBytesFunction,
+} from 'silk-streams';
+
+import { getRandomBytes } from '../Crypto';
 import * as Metrics from '../../metrics/BTLE';
 import Stream from './Stream';
 
 import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type { Socket } from './SocketManager';
 
-const streams = createStreams({
-  getRandomBytes,
-});
-
-const {
-  AuthenticateDuplexStream,
-  CryptoDuplexStream,
-  HeartbeatDuplexStream,
-  MessagePackDuplexStream,
-} = streams;
+setRandomBytesFunction(getRandomBytes);
 
 const log = makeLog(`btle-SocketSession`);
 

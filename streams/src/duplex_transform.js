@@ -9,7 +9,7 @@ import ClosingPassThrough from './closing_passthrough';
 import { Duplex } from 'stream';
 import makeLog from 'silk-log';
 
-const log = makeLog(`api-streams-duplex-transform`);
+const log = makeLog(`streams:duplex-transform`);
 
 const EVENT_NAME_CLOSE = `close`;
 const EVENT_NAME_DATA = `data`;
@@ -18,7 +18,7 @@ const EVENT_NAME_ERROR = `error`;
 const EVENT_NAME_FINISH = `finish`;
 
 // Applies transforms to both directions of a Duplex stream.
-export class DuplexTransform extends Duplex {
+export default class DuplexTransform extends Duplex {
 
   // This class can be subclassed, so all members are prefixed with double
   // underscores to make it less likely that subclasses will use the same names.

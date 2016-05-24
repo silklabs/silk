@@ -9,6 +9,7 @@
     "test": "npm run lint && npm run mocha && npm run flow"
   },
   "symlinkDependencies": {
+    "silk-api": "/api",
     "silk-log": "/pub/log",
     "eslint-config-silk": "/pub/eslint-config",
     "silk-flow-bin": "/pub/flow-bin"

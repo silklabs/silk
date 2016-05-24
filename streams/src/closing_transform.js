@@ -11,7 +11,7 @@ const EVENT_NAME_CLOSE = `close`;
 const EVENT_NAME_END = `end`;
 const EVENT_NAME_ERROR = `error`;
 
-const log = makeLog(`api-streams-closing_transform`);
+const log = makeLog(`streams:closing_transform`);
 
 export default class ClosingTransform extends Transform {
 

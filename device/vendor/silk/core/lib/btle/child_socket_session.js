@@ -8,7 +8,13 @@
  */
 
 import assert from 'assert';
-import {createStreams, RssiSmoother} from 'silk-api';
+import {RssiSmoother} from 'silk-api';
+import {
+  AuthenticateDuplexStream,
+  CryptoDuplexStream,
+  HeartbeatDuplexStream,
+  MessagePackDuplexStream,
+} from 'silk-streams';
 import path from 'path';
 
 import BluetoothStream from './bluetooth_stream';
@@ -19,13 +25,6 @@ import {getboolprop, playSound} from '../sysutils';
 
 import type {Peripheral} from 'noble';
 import type SocketScanner from './socket_scanner';
-
-const {
-  AuthenticateDuplexStream,
-  CryptoDuplexStream,
-  HeartbeatDuplexStream,
-  MessagePackDuplexStream,
-} = createStreams();
 
 const log = createLog(`btle-child-socketsession`);
 

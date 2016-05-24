@@ -13,8 +13,7 @@ import BlobPublisher from './gen/blob_publisher';
 import CrashPublisher from './gen/crash_publisher';
 import MetadataPublisher from './gen/metadata_publisher';
 import Metadata from './gen/metadata';
-import Id from './access_token';
-import RssiSmoother from './rssi_smoother';
+import AccessToken from './access_token';
 import MetricsAgent from './metrics_agent';
 
 import loadConfig from './config';
@@ -22,19 +21,19 @@ import {bodySignature} from './jwt_request_signature';
 import devAccount from './dev_account';
 import fetch from './fetch';
 import {signature} from './jwt_request_signature';
-import makeStreams from './streams';
 
 import type {StringToStringDict} from './metric';
 import type {Request} from 'silk-http/src/client';
-import type AccessToken from './access_token';
 
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;
-export { overrideImplementation as overrideCryptoSignImplementation } from './crypto_sign';
+export {
+  default as CryptoSign,
+  overrideImplementation as overrideCryptoSignImplementation,
+} from './crypto_sign';
 export { default as RssiSmoother } from './rssi_smoother';
 export { default as Metric } from './metric';
 export { default as MetricTypes } from './metric_types';
-export { default as createStreams } from './streams';
 
 export const BTLE_SOCKET_UUIDS = {
   service: '78955692e50a4dfdb1f0f59303ebf4cb',
@@ -110,7 +109,7 @@ class AuthConfig {
 
 const log = createLog('api');
 
-function socketioConfig(accessToken: Id, url: string): SocketioConfig {
+function socketioConfig(accessToken: AccessToken, url: string): SocketioConfig {
   // TODO: remove 'any' type here once
   // https://github.com/facebook/flow/issues/1173 is resolved.
   let parsed: any = URL.parse(url, true /* parse query string */);
@@ -140,7 +139,7 @@ function signSignalingUrl(
   url: string,
   type: 'account' | 'device',
   query: {[key: string]: string},
-  accessToken: Id,
+  accessToken: AccessToken,
 ): string {
   // TODO: remove 'any' type here once
   // https://github.com/facebook/flow/issues/1173 is resolved.
@@ -167,7 +166,6 @@ export type Config = {
 export class SilkApi {
 
   config: Config;
-  streams: any; // TODO: Streams should be moved out of silk-api.
 
   vip: VIP;
   account: Account;
@@ -180,9 +178,6 @@ export class SilkApi {
   metrics: MetricsAgent;
 
   config: AuthConfig;
-
-  // XXX: Remove me should be re-export.
-  RssiSmoother: typeof RssiSmoother = RssiSmoother;
 
   socketioDeviceConfig: (() => Promise<SocketioConfig>) = async () => {
     let {url} = await this.device.socketioURL();
@@ -197,16 +192,16 @@ export class SilkApi {
   /** Deprecated exports */
 
   // Deprecated use the re-export.
-  id: Function = Id;
+  id: Function = AccessToken;
   // Export the developer account
   // TODO: Remove prior to production!
   devAccount: Object = devAccount;
 
-  set accessToken(accessToken: ?Id) {
+  set accessToken(accessToken: ?AccessToken) {
     this.config.accessToken = accessToken;
   }
 
-  get accessToken(): ?Id {
+  get accessToken(): ?AccessToken {
     return this.config.accessToken;
   }
 
@@ -230,7 +225,6 @@ export class SilkApi {
     this.crashPublisher = new CrashPublisher(httpClientOptions);
     this.metadataPublisher = new MetadataPublisher(httpClientOptions);
     this.metadata = new Metadata(httpClientOptions);
-    this.streams = makeStreams(config);
 
 
     const metricsApi =
@@ -248,8 +242,6 @@ export class SilkApi {
       serverUrl: config.serverUrl || this.config.serverUrl,
       accessToken: config.accessToken || this.config.accessToken,
     });
-
-    this.streams = makeStreams(config);
   }
 
   signSignalingUrl(

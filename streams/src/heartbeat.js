@@ -5,11 +5,12 @@
  */
 
 import assert from 'assert';
-import ClosingPassThrough from './closing_passthrough';
-import { DuplexTransform } from './duplex_transform';
 import makeLog from 'silk-log';
 
-const log = makeLog(`api-streams-heartbeat`);
+import ClosingPassThrough from './closing_passthrough';
+import DuplexTransform from './duplex_transform';
+
+const log = makeLog(`streams:heartbeat`);
 
 const PROPERTY_NAME = `_<3_<3_<3_`;
 

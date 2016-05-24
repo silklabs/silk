@@ -5,7 +5,8 @@
     "silk-core-version": "/pub/version",
     "silk-flow-bin": "/flow-bin",
     "silk-log": "/log",
-    "silk-raygun": "/raygun"
+    "silk-raygun": "/raygun",
+    "silk-streams": "/streams"
   },
   "dependencies": {
     "babel-plugin-transform-runtime": "6.4.3",

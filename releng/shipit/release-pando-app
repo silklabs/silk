@@ -31,6 +31,7 @@ WHITELIST=$(cat <<-EOF
   pub
   raygun
   silknpm.json
+  streams
   version
 EOF
 )

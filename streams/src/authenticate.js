@@ -5,14 +5,15 @@
  */
 
 import assert from 'assert';
+import { AccessToken } from 'silk-api';
+import makeLog from 'silk-log';
+
 import ClosingTransform from './closing_transform';
 import { CryptoDuplexStream } from './crypto';
-import { DuplexTransform } from './duplex_transform';
-import Id from '../access_token';
-import makeLog from 'silk-log';
-import * as Metrics from '../metrics/streams';
+import DuplexTransform from './duplex_transform';
+import * as Metrics from './metrics';
 
-const log = makeLog(`api-streams-authenticate`);
+const log = makeLog(`streams:authenticate`);
 
 const PROPERTY_NAME = `_0--"_`;
 
@@ -21,7 +22,7 @@ class AuthenticateStreamBase extends ClosingTransform {
   _authenticated = false;
   _allowUnauthenticated = false;
   _ending = false;
-  _queue = [ ];
+  _queue = [];
 
   constructor(cryptoStream, options = { }) {
     log.debug(`AuthenticateStreamBase()`);
@@ -254,7 +255,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     for (let publicKey of this._publicKeys) {
       log.debug(`Attempting to verify signature with '${publicKey}'`);
 
-      let id = Id.importPub(publicKey);
+      let id = AccessToken.importPub(publicKey);
       if (id.verify(this._sessionKey, authData)) {
         log.debug(`Signature verified`);
         verified = true;
@@ -301,7 +302,7 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
 
     super(cryptoStream, options);
 
-    this._privateKey = new Id(null, privateKey);
+    this._privateKey = new AccessToken(null, privateKey);
   }
 
   _transform(chunk, encoding, callback) {

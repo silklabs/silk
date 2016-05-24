@@ -11,9 +11,24 @@ import { spawn } from 'child_process';
 import events from 'events';
 import createLog from './log';
 
-const log = createLog('sysutils');
+// Workaround https://phabricator.babeljs.io/T2877.
+// Replace this with `export *` once we're on a sufficiently high
+// version of babel-plugin-transform-runtime.
+export {
+  processthrow,
+  exec,
+  execRetry,
+  getprop,
+  getstrprop,
+  getboolprop,
+  getintprop,
+  getlistprop,
+  setprop,
+  timeout,
+  playSound,
+} from 'silk-sysutils';
 
-export * from 'silk-sysutils'; // eslint-disable-line
+const log = createLog('sysutils');
 
 /**
  * This class provides helper utility to watch an android property and notify

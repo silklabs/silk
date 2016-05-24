@@ -30,7 +30,7 @@ function removeListener(target: any, event: string, fn: Function): void {
   throw new Error(`Target is not an event emitter.`);
 }
 
-export default class WebSocketDuplex extends Duplex {
+export default class WebSocketDuplexStream extends Duplex {
 
   _ws: WebSocket;
   _buffers: Array<Buffer | string> = [];

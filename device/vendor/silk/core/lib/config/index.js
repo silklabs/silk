@@ -127,6 +127,7 @@ class DeviceConfig extends EventEmitter {
   _configuringSocketSessionListener = null;
   _sessionStatus = ``;
   _sessionErrorCode = ``;
+  _lastWifiScanResults = null;
 
   async _writeConfig(config) {
     fs.writeFile(CONFIG_PATH, JSON.stringify(config));
@@ -186,6 +187,11 @@ class DeviceConfig extends EventEmitter {
       }
     } else {
       assert(this._socketSessionListeners[0] === sessionListener);
+    }
+
+    // Send wifi scan results now if we have them.
+    if (this._lastWifiScanResults) {
+      sessionListener.sendWifiScanResults(this._lastWifiScanResults);
     }
   }
 
@@ -451,6 +457,8 @@ class DeviceConfig extends EventEmitter {
 
   _onWifiScanResults(scanResults) {
     log.debug(`DeviceConfig._onWifiScanResults()`);
+
+    this._lastWifiScanResults = scanResults;
 
     if (this._configuringSocketSessionListener) {
       assert(this._socketSessionListeners.length === 1);

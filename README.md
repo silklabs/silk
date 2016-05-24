@@ -40,6 +40,27 @@ For a new module with new dependencies.
 
 1. Add dependencies to the package.json
 2. Run `silk npm-install <path>`
+3. Check in (`git add`) <path>/node_modules/
+4. Check in (`git add`) <silk core>/node_modules
+
+NOTE: `pub/` has a node_modules folder but no tooling. You will need to manually edit `pub/package.json` and run `npm install` and check in the results of `pub/node_modules/`.
+
+#### Upgrading a package across the entire tree:
+
+First it's often useful to see who is using the module:
+
+```
+silk npm-pkg-search <module>
+```
+
+Then upgrade it (Only one version of a given module may exist in the tree at once)
+
+```
+silk npm-pkg-upgrade <module> <version>
+```
+
+This will globally update every package.json referencing the package and update the root `node_modules` folder.
+
 
 ### Metrics:
 

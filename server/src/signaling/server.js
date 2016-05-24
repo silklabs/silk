@@ -82,16 +82,18 @@ async function main (config: any): any {
     regionalClients,
   );
 
-  const azureTableSetup = [
-    signalServers.ensureTables(),
-    signalDevices.ensureTables(),
-  ];
+  if (config.azure.init) {
+    const azureTableSetup = [
+      signalServers.ensureTables(),
+      signalDevices.ensureTables(),
+    ];
 
-  if (config.azure.setServiceProps) {
-    azureTableSetup.push(signalServers.setCorsRules(config.azure.cors));
+    if (config.azure.setServiceProps) {
+      azureTableSetup.push(signalServers.setCorsRules(config.azure.cors));
+    }
+    await Promise.all(azureTableSetup);
   }
 
-  await Promise.all(azureTableSetup);
 
   server.listen(config.signaling.port);
   await eventToPromise(server, 'listening');
@@ -118,21 +120,23 @@ async function main (config: any): any {
     host,
   };
 
-  const entity = {
-    // TODO: In a "real" (not heroku) cloud deployment with many signaling
-    // servers in production these values should be something like hashed region
-    // or something ...
-    PartitionKey: sha256(host),
-    RowKey: sha256(host),
-    host,
-    start: Date.now(),
-  };
+  if (config.azure.init) {
+    const entity = {
+      // TODO: In a "real" (not heroku) cloud deployment with many signaling
+      // servers in production these values should be something like hashed region
+      // or something ...
+      PartitionKey: sha256(host),
+      RowKey: sha256(host),
+      host,
+      start: Date.now(),
+    };
 
-  // TODO: This logic is insufficient to handle more complicated cases where our
-  // services drop off for unknown reasons (like in a spot model). This is a
-  // close enough stop gap. In the future we can use "start" (and a periodic
-  // update for a aliveness check) to purge dead servers.
-  await signalServers.mergeOrInsertEntity(entity);
+    // TODO: This logic is insufficient to handle more complicated cases where our
+    // services drop off for unknown reasons (like in a spot model). This is a
+    // close enough stop gap. In the future we can use "start" (and a periodic
+    // update for a aliveness check) to purge dead servers.
+    await signalServers.mergeOrInsertEntity(entity);
+  }
 
   const residents = new Residents({
     clients: config.signaling.clients,
@@ -151,18 +155,20 @@ async function main (config: any): any {
       const { accountId } = device;
       log.info(`Registering resident device for ${accountId} ${device.accessToken.publicKey}`);
 
-      // Register this particular device with this particular server.
-      // NOTE: This operation should clobber any previous references to the
-      // device (which is kept unique by accountId/accessToken pair.
-      const entity = {
-        PartitionKey: accountId,
-        RowKey: device.accessToken.publicKey,
-        host: ctx.host,
-        // TODO: Update this periodically ...
-        lastSeen: Date.now(),
-      };
+      if (config.azure.init) {
+        // Register this particular device with this particular server.
+        // NOTE: This operation should clobber any previous references to the
+        // device (which is kept unique by accountId/accessToken pair.
+        const entity = {
+          PartitionKey: accountId,
+          RowKey: device.accessToken.publicKey,
+          host: ctx.host,
+          // TODO: Update this periodically ...
+          lastSeen: Date.now(),
+        };
 
-      await ctx.signalDevices.mergeOrInsertEntity(entity);
+        await ctx.signalDevices.mergeOrInsertEntity(entity);
+      }
     },
 
     account: async (req, res) => {

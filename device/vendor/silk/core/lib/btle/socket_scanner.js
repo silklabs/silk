@@ -34,22 +34,26 @@ const log = makeLog(`btle-socketscanner`);
 const DEFAULT_LOCALNAME = `Silk-app`;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
 
-const SCAN_DURATION_OVERRIDE =
+const SCAN_DURATION_OVERRIDE_MS =
   getintprop(`persist.silk.bt.socket.scandur`, 0);
 const SCAN_DURATION_MS =
-  SCAN_DURATION_OVERRIDE > 0 ?
-  SCAN_DURATION_OVERRIDE :
-  getintprop(`ro.silk.bt.socket.scan_dur_sec`, 10) * 1000;
+  SCAN_DURATION_OVERRIDE_MS > 0 ?
+  SCAN_DURATION_OVERRIDE_MS :
+  getintprop(`ro.silk.bt.socket.scan_dur_ms`, 2000);
 
+const SCAN_INTERVAL_OVERRIDE_MS =
+  getintprop(`persist.silk.bt.socket.scanint`, 0);
 const SCAN_INTERVAL_MS =
-  getintprop(`persist.silk.bt.socket.scanint`, 500);
+  SCAN_INTERVAL_OVERRIDE_MS > 0 ?
+  SCAN_INTERVAL_OVERRIDE_MS :
+  getintprop(`ro.silk.bt.socket.scan_int_ms`, 500);
 
 const MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE =
   getintprop(`persist.silk.bt.socket.max`, 0);
 const MAX_SIMULTANEOUS_CONNECTIONS =
   MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE > 0 ?
   MAX_SIMULTANEOUS_CONNECTIONS_OVERRIDE :
-  getintprop(`ro.silk.bt.socket.max_simul`, 4);
+  getintprop(`ro.silk.bt.socket.max_simul`, 1);
 
 export default class SocketScanner extends EventEmitter {
 

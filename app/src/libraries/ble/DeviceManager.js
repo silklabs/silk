@@ -123,7 +123,7 @@ export class DeviceSession extends RobustEventEmitter {
 
   static STATE_ERROR = 10;
 
-  static RSSI_THRESHOLD = -40;
+  static RSSI_THRESHOLD = -45;
 
   _socketSession: SocketSession;
 

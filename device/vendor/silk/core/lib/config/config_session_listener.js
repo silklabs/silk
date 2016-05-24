@@ -60,7 +60,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
   static DISMISS_TIMEOUT_MS = 15000;
   static MAX_WIFI_ERRORS = 3;
-  static RSSI_THRESHOLD = -40;
+  static RSSI_THRESHOLD = -45;
 
   // Minimum acceleration for "device motion" threshold (units are m/s^2).
   // This threshold was obtained by nudging a device IRL and may need to be

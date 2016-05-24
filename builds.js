@@ -205,12 +205,24 @@ const builds = {
       'sim/**',
     ],
   }),
-  'device-pr': npmPackageBuild('device', {
-    // Build a quick "base" device build on PRs.
+  'device-base-mako-pr': npmPackageBuild('device', {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
         global: ['GONK=base'],
+      },
+    },
+    events: ['pr'],
+    files: [
+      'device/**',
+      'pub/bsp-gonk/**',
+    ],
+  }),
+  'device-base-kenzo-pr': npmPackageBuild('device', {
+    package_json: 'device/vendor/silk/core/package.json',
+    travis_config: {
+      env: {
+        global: ['GONK=base.kenzo'],
       },
     },
     events: ['pr'],

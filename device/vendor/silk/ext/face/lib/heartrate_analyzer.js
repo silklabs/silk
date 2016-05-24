@@ -22,7 +22,7 @@ let log: Log;
 function tryGetFFT() {
   let fftSync = null;
   try {
-    fftSync = require('kissfft').fftSync;
+    fftSync = require('kissfft').fftSync; // eslint-disable-line import/no-require
   } catch (e) {
     log.error(`No FFT implementation available (${e})`);
   }

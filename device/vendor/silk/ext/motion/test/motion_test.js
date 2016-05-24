@@ -27,7 +27,7 @@ function failOnTimeout(timeout) {
 
 suite('test motion', function () {
   test('detect motion', async () => {
-    motionObject = require('../lib/motion')(env);
+    motionObject = require('../lib/motion')(env); // eslint-disable-line import/no-require
     assert.notEqual(motionObject, null);
   });
 
@@ -38,7 +38,7 @@ suite('test motion', function () {
 
     try {
       log.info(`Waiting for motion event`);
-      let [when, rects] = await Promise.race([eventToPromise(timeline, 'motion'),
+      let [when, rects] = await Promise.race([eventToPromise(timeline, 'motion', { array: true }),
                           failOnTimeout(1000)]);
       log.info(`Received motion at ${when} rects: ${JSON.stringify(rects)}`);
       assert.notEqual(rects, null);

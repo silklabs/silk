@@ -25,6 +25,7 @@ addons:
       - linux-libc-dev
       - openjdk-7-jdk
       - openjdk-7-jre-headless
+      - realpath
 
 before_install:
   - source ../pub/travis/common_before_install.sh

@@ -32,7 +32,8 @@ class ClapDetector extends EventEmitter {
     // max time in ms between 2 claps to be 'repeated'
     this._maxClapIntervalMs = 550;
 
-    let LoudSoundDetector = require('./loudSoundDetector')(env);
+    let LoudSoundDetector = require('./loudSoundDetector')(env); // eslint-disable-line import/no-require
+
     this._loudSoundDetector = new LoudSoundDetector(loudCfg);
     this._loudSoundDetector.on('loudSound', () => this._onLoudSound());
   }

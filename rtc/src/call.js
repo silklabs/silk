@@ -46,8 +46,8 @@ const CALLER_PEER_CONFIG = {
 const ANSWER_TIMEOUT = 2 * 60 * 1000; // 2min.
 
 export type MediaStreamsPair = {
-  local?: ?MediaStream;
-  remote?: ?MediaStream;
+  local?: any;
+  remote?: any;
 };
 
 export type CallOptions = {
@@ -131,10 +131,10 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
 
   await waitForIce(log, 'caller', peerConnection, transport);
   log.info('ICE done, waiting for peer ack ...');
-  while (true) {
+  while (true) {  // eslint-disable-line no-constant-condition
     let message = await Promise.race([
       eventToPromise(transport, 'data'),
-      timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for "done" ack'))
+      timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for "done" ack')),
     ]);
     if (message.done) {
       log.info('  received "done" ack, closing transport');

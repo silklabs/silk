@@ -3,17 +3,19 @@
 .*/test/rntest/.*
 .*/node_modules/api-schema/.*
 .*/node_modules/aws-sdk-promise/.*
-.*/node_modules/jsonwebtoken/.*
 .*/node_modules/socket.io/.*
 .*/node_modules/socket.io-client/.*
 .*/node_modules/node-fetch/.*
 .*/node_modules/babel*
 .*/server/tmp/.*
+.*/node_modules/npm/.*
+.*/node_modules/json5/.*
 
 [include]
+../node_modules/
 
 [libs]
-node_modules/silk-server/interface
+../server/interface
 
 [options]
 module.system=haste

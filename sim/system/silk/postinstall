@@ -2,8 +2,16 @@
 
 cd $(dirname $0)/../..
 
+node_resolve() {
+  local pkg=$1
+  pkg=$(node -p "require.resolve('$pkg/package.json');")
+  dirname $pkg
+}
+
+node_resolve silk-device-main
+
 mkdir -p system/node_modules
-cp -f system/silk/node_modules/silk-device-main/lib/base_version.js system/node_modules/
+cp -f $(node_resolve silk-device-main)/lib/base_version.js system/node_modules/
 
 mkdir -p system/silk/bin
 rm -f system/silk/bin/node
@@ -24,6 +32,3 @@ chmod +x system/silk/bin/silk-init
 echo "#!/bin/bash" > system/silk/bin/dash
 cat ../bsp-gonk/vendor/propsilk/dash/dash >> system/silk/bin/dash
 chmod +x system/silk/bin/dash
-# END TODO
-
-system/silk/ext/install

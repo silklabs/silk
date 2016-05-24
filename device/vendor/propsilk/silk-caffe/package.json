@@ -2,7 +2,7 @@
   "name": "silk-caffe",
   "version": "1.0.0",
   "description": "Caffe Deep Learning for Node",
-  "main": "caffe.node",
+  "main": "build/Release/caffe.node",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {
     "preinstall": "./bin/preinstall",

@@ -1,13 +1,13 @@
 import loadConfig from '../src/server/config';
 import mongo from 'promised-mongo';
-import gen from 'silk-api/src/_generate';
 import emailGen from '../src/email_generate';
 
 process.env.SILK_HOST = 'localhost';
 
 // Ensure we have recently auto-generated files. Must happen before mocha runs
 // otherwise we may have required old versions of the files.
-gen();
+// TODO: Bring back api gen ...
+//gen();
 
 const DB_TIMEOUT = 1500;
 

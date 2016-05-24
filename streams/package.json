@@ -9,20 +9,20 @@
     "test": "npm run lint && npm run mocha && npm run flow"
   },
   "symlinkDependencies": {
-    "silk-log": "/log",
-    "eslint-config-silk": "/eslint",
-    "silk-flow-bin": "/flow-bin"
+    "silk-log": "/pub/log",
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-flow-bin": "/pub/flow-bin"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
-    "mocha": "^2.4.5",
-    "ws": "^1.0.1"
+    "mocha": "2.4.5",
+    "ws": "1.0.1"
   },
   "dependencies": {
-    "babel-runtime": "^6.6.1",
-    "event-to-promise": "^0.7.0",
-    "msgpack-lite": "^0.1.13",
-    "uuid": "^2.0.1"
+    "babel-runtime": "6.9.0",
+    "event-to-promise": "0.5.0",
+    "msgpack-lite": "0.1.13",
+    "uuid": "2.0.1"
   }
 }

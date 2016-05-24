@@ -1,3 +1,5 @@
 /core.js
 /core.js.map
 /.silkslug
+
+!/node_modules

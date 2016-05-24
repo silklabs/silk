@@ -16,12 +16,12 @@
     "test": "NODE_PATH=./node_modules/ ./networktest"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
+    "eslint-config-silk": "/pub/eslint-config",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
     "silk-core": "/device/vendor/silk/core",
-    "silk-core-version": "/version",
-    "silk-log": "/log",
+    "silk-core-version": "/pub/version",
+    "silk-log": "/pub/log",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
     "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
@@ -32,14 +32,14 @@
   "dependencies": {
     "easy-table": "1.0.0",
     "debug": "2.2.0",
-    "event-to-promise": "0.6.0",
-    "socket.io-client": "1.4.4"
+    "event-to-promise": "0.5.0",
+    "socket.io-client": "1.4.6"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "commander": "2.9.0",
     "eslint": "1.10.3",
-    "eslint-plugin-import": "0.7.9",
+    "eslint-plugin-import": "0.12.0",
     "eslint-plugin-react": "3.16.1"
   },
   "engines": {

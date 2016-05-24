@@ -16,11 +16,7 @@ gulp.task('build', () => {
   return commands.build(browserifyStream);
 });
 
-gulp.task('slug', ['build'], () => {
-  return commands.slug();
-});
-
-gulp.task('push', ['slug'], () => {
+gulp.task('push', ['build'], () => {
   return commands.push();
 });
 
@@ -38,5 +34,5 @@ gulp.task('clean', function (done) {
   commands.getCache().clear(null, done);
 });
 
-gulp.task('default', ['lint', 'slug']);
+gulp.task('default', ['lint', 'build']);
 

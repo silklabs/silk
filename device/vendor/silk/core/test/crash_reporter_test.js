@@ -47,11 +47,11 @@ suite('crash report', () => {
     test('.scan - many files including some junk', async () => {
       await mkdirp(tombstonePath(''));
       await Promise.all([
-        fs.writeFile(tombstonePath('tombstone_1')),
-        fs.writeFile(tombstonePath('tombstone_39')),
-        fs.writeFile(tombstonePath('tombstone_2')),
-        fs.writeFile(tombstonePath('junk')),
-        fs.writeFile(tombstonePath('junk')),
+        fs.writeFile(tombstonePath('tombstone_1'), ''),
+        fs.writeFile(tombstonePath('tombstone_39'), ''),
+        fs.writeFile(tombstonePath('tombstone_2'), ''),
+        fs.writeFile(tombstonePath('junk'), ''),
+        fs.writeFile(tombstonePath('junk'), ''),
       ]);
 
       assert.deepEqual(await subject.scan(), [
@@ -69,12 +69,12 @@ suite('crash report', () => {
     test('.findFreeTombstoneId - full tombstones', async () => {
       // write this one first so it's the oldest...
       await mkdirp(tombstonePath(''));
-      await fs.writeFile(tombstonePath('tombstone_20'));
+      await fs.writeFile(tombstonePath('tombstone_20'), '');
 
       // write the test of them out ...
       let ops = [];
       for (let i = 21; i < 40; i++) {
-        ops.push(fs.writeFile(tombstonePath(`tombstone_${i}`)));
+        ops.push(fs.writeFile(tombstonePath(`tombstone_${i}`, '')));
       }
       await ops;
 
@@ -85,8 +85,8 @@ suite('crash report', () => {
     test('.update', async () => {
       // write this one first so it's the oldest...
       await mkdirp(tombstonePath(''));
-      await fs.writeFile(tombstonePath('tombstone_1'));
-      await fs.writeFile(tombstonePath('tombstone_4'));
+      await fs.writeFile(tombstonePath('tombstone_1'), '');
+      await fs.writeFile(tombstonePath('tombstone_4'), '');
       await subject.update();
 
       assert.deepEqual(subject.fileQueue, [

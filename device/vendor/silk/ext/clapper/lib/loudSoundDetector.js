@@ -88,7 +88,7 @@ class LoudSoundDetector extends EventEmitter {
     this._highEnergyCnt = 0;
     this._highEnergyStart = null;
 
-    let audioTools = require('./audioTools')({log});
+    let audioTools = require('./audioTools')({log}); // eslint-disable-line import/no-require
 
     // calculates the fft for each window
     this._fftProcessor = cfg.fftProcessor;

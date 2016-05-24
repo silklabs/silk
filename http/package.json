@@ -14,19 +14,19 @@
     "./src/fetch.js": "./src/fetch_browser.js"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
-    "silk-log": "/log",
-    "silk-flow-bin": "/flow-bin"
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-log": "/pub/log",
+    "silk-flow-bin": "/pub/flow-bin"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
-    "body-parser": "^1.15.0",
-    "express": "^4.13.4",
-    "mocha": "^2.4.5"
+    "body-parser": "1.14.2",
+    "express": "4.13.3",
+    "mocha": "2.4.5"
   },
   "dependencies": {
-    "babel-runtime": "^6.6.1",
-    "node-fetch": "^1.3.3"
+    "babel-runtime": "6.9.0",
+    "node-fetch": "1.3.3"
   }
 }

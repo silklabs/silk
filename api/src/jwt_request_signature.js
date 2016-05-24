@@ -4,14 +4,14 @@
  * @flow
  */
 
-import {sign} from 'jsonwebtoken';
+import {sign} from 'silk-jsonwebtoken';
 import uuid from 'uuid';
 
 import jwa from './jwa';
 import cryptoSign from './crypto_sign';
 
 import type AccessToken from './access_token';
-import type {SignPayload} from 'jsonwebtoken';
+import type {SignPayload} from 'silk-jsonwebtoken';
 
 function jwtPayload(canonicalReq: string): SignPayload {
   return {

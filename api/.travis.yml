@@ -11,4 +11,5 @@ before_script:
   - sudo apt-get install -y mongodb-org=3.0.6 mongodb-org-server=3.0.6 mongodb-org-shell=3.0.6 mongodb-org-mongos=3.0.6 mongodb-org-tools=3.0.6
   - mongo --version
 
+install: echo ""
 script: npm test

@@ -296,7 +296,7 @@ class WavFileSaver extends EventEmitter {
 
       let wavData = Buffer.concat([hdr, this._pcmSamples]);
 
-      let fs = require('fs');
+      let fs = require('fs'); // eslint-disable-line import/no-require
       fs.writeFile(this._filename, wavData, err => {
         this.emit('fileSaved', err ? err : '');
       });
@@ -317,7 +317,7 @@ class AudioDiag extends EventEmitter {
       forceNew: true,
       transports: ['websocket']
     };
-    this.socket = require('socket.io-client')(serverUrl, opts);
+    this.socket = require('socket.io-client')(serverUrl, opts); // eslint-disable-line import/no-require
 
     this._onConnect = () => {
       log.info('connected to server');

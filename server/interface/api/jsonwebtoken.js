@@ -2,7 +2,7 @@
  * @flow
  */
 
-declare module 'jsonwebtoken' {
+declare module 'silk-jsonwebtoken' {
 
   declare type SignPayload = {
     jti: string;

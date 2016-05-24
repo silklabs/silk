@@ -31,6 +31,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
   // Base directory which we are operating on ... All assets should be loaded and
   // stored there.
   baseDirectory = path.resolve(baseDirectory);
+  const destDirectory = path.join(baseDirectory, '.silkslug');
   let pkgSource = fs.readFileSync(path.join(baseDirectory, 'package.json'));
   // package.json from the basedir.
   let pkg = JSON.parse(pkgSource);
@@ -71,7 +72,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
     }
 
     let base = {
-      entries: path.join(baseDirectory, `lib/${main}`), // start "--node"
+      entries: path.join(baseDirectory, `${main}`), // start "--node"
       bare: true,
       browserField: false,
       builtins: false,
@@ -109,6 +110,14 @@ export default function(baseDirectory = process.env.BASEDIR) {
       mangle: false
     };
 
+    const mainDestPath = path.join(
+      destDirectory,
+      path.dirname(pkg.main)
+    );
+
+    mkdirp.sync(destDirectory);
+    fs.writeFileSync(path.join(destDirectory, 'package.json'), pkgSource);
+
     return browserifyStream.bundle()
       .on('error', (err) => {
         if (err.codeFrame) {
@@ -134,33 +143,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
         process.exit(1);
       })
       .pipe(sourcemaps.write('.', {includeContent: true})) // writes .map file
-      .pipe(gulp.dest(baseDirectory));
-  }
-
-  function slug() {
-    const silkignore = path.join(baseDirectory, '.silkignore');
-    try {
-      fs.accessSync(silkignore, fs.R_OK);
-    } catch (err) {
-      // .silkignore doesn't exist.  Don't bother creating a slug since it would
-      // be identical to the full module tree
-      return;
-    }
-    const silkslug = path.join(baseDirectory, '.silkslug');
-    mkdirp.sync(silkslug);
-    fs.createReadStream(path.join(baseDirectory, 'package.json'))
-      .pipe(fs.createWriteStream(path.join(silkslug, 'package.json')))
-      .on('error', err => {
-        gutil.log('(slug)', gutil.colors.red('Slug Error'));
-        gutil.log('(slug)', err.message);
-        gutil.log('(slug)', err.fileName);
-        gutil.log('(slug)', err.lineNumber);
-        process.exit(1);
-      })
-
-    return vfs.src(path.join(baseDirectory, '/**/*'))
-      .pipe(gulpgitignore(silkignore))
-      .pipe(gulp.dest(silkslug));
+      .pipe(gulp.dest(destDirectory));
   }
 
   function lint() {
@@ -217,7 +200,6 @@ export default function(baseDirectory = process.env.BASEDIR) {
     pkg,
     lint,
     build,
-    slug,
     getCache,
     createBrowserifyStream,
     push,

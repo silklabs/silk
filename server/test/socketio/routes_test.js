@@ -116,7 +116,9 @@ suite('routes', () => {
     await emit(deviceSocket, 'info', {});
     let roomName = `video-${device.record.accessToken.publicKey}`;
     await emit(accountSocket, 'join', roomName);
-    let videoEvent = eventToPromise(accountSocket, roomName);
+    let videoEvent = eventToPromise(accountSocket, roomName, {
+      array: true,
+    });
     let event = {
       id: device.record.accessToken.publicKey,
       contents: 'mp4',
@@ -171,7 +173,9 @@ suite('routes', () => {
 
     let roomName = `diag-${device.record.accessToken.publicKey}`;
     await emit(accountSocket, 'join', roomName);
-    let event = eventToPromise(accountSocket, roomName);
+    let event = eventToPromise(accountSocket, roomName, {
+      array: true,
+    });
     let cmd = {
       when: Date.now(),
       hi: 'hi',

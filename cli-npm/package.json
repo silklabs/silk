@@ -11,6 +11,8 @@
     "mkdirp": "0.5.1"
   },
   "symlinkDependencies": {
-    "silk-log": "/pub/log"
+    "silk-log": "/pub/log",
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-flow-bin": "/pub/flow-bin"
   }
 }

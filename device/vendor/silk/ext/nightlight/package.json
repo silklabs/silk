@@ -2,12 +2,21 @@
   "name": "nightlight",
   "version": "0.0.1",
   "description": "Example nightlight extension",
-  "main": "nightlight.js",
+  "main": "./lib/nightlight.js",
   "scripts": {
-    "postinstall": "./bin/postinstall"
+    "postinstall": "./bin/postinstall",
+    "posttest": "eslint test lib",
+    "test": "echo \"\""
   },
   "symlinkDependencies": {
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
-  "private": true
+  "dependencies": {
+    "babel-runtime": "6.9.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  }
 }

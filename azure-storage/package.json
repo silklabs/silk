@@ -24,20 +24,20 @@
     "browser"
   ],
   "symlinkDependencies": {
-    "silk-log": "/log",
+    "silk-log": "/pub/log",
     "silk-utils": "/utils",
     "silk-http": "/http",
-    "eslint-config-silk": "/eslint",
-    "silk-flow-bin": "/flow-bin"
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-flow-bin": "/pub/flow-bin"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
-    "mocha": "^2.4.5",
-    "uuid": "^2.0.1"
+    "mocha": "2.4.5",
+    "uuid": "2.0.1"
   },
   "dependencies": {
-    "babel-runtime": "^6.6.1",
-    "node-fetch": "^1.3.3"
+    "babel-runtime": "6.9.0",
+    "node-fetch": "1.3.3"
   }
 }

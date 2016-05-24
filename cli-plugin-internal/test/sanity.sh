@@ -1,8 +1,8 @@
 #! /bin/bash -e
 
 # Ensure we run in same environment as humans ...
-source ../setup
-help=$(./node_modules/cli/silk -h)
+#source ../setup
+help=$(../pub/cli/silk -h)
 
 function assert_contains {
   echo $help | grep -q $1

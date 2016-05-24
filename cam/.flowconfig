@@ -1,20 +1,31 @@
 [include]
 src/
+../node_modules/
+../pub/node_modules/
 
 [ignore]
 .*/node_modules/react.*
 .*/node_modules/babel.*
 
 .*/server/test/.*
-.*/server/src/server/.*
-.*/server/src/socketio/.*
+.*/server/src/.*
+.*/server/tmp/.*
 .*/api/test/.*
+.*/node_modules/npm/.*
+.*/node_modules/json5/.*
+.*/node_modules/read-package-tree/.*
+.*/node_modules/config-chain/.*
+.*/device/vendor/propsilk/.*
+
+[libs]
+../server/interface
 
 [version]
 0.25.0
 
 [options]
-module.system=node
-unsafe.enable_getters_and_setters=true
+module.system=haste
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
+unsafe.enable_getters_and_setters=true
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe

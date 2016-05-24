@@ -10,17 +10,17 @@
     "test": "npm run lint && npm run flow"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
-    "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log"
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-flow-bin": "/pub/flow-bin",
+    "silk-log": "/pub/log"
   },
   "dependencies": {
-    "babel-runtime": "6.3.19",
+    "babel-runtime": "6.9.0",
     "mp4box": "0.3.8"
   },
   "devDependencies": {
     "eslint": "1.10.3",
-    "babel-eslint": "5.0.0"
+    "babel-eslint": "6.0.4"
   },
   "private": true
 }

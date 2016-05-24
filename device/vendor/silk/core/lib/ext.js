@@ -19,6 +19,7 @@ const extDirs = [ 'system/silk/ext', 'data/silk/ext' ];
 
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
+const IGNORED_NAMES = new Set(['.gitignore']);
 
 /**
  * Webpack works by replacing require with a specialized version which loads
@@ -748,7 +749,8 @@ class Extensions {
       return false;
     }
     let modulePath = this._getModulePath(file);
-    if (!this._isEnabled(path.basename(modulePath))) {
+    const moduleBasename = path.basename(modulePath);
+    if (IGNORED_NAMES.has(moduleBasename) || !this._isEnabled(moduleBasename)) {
       log.verbose(`Module ${file} is disabled`);
       return false;
     }
@@ -757,7 +759,7 @@ class Extensions {
         log.warn(`Already loaded, skipping ${modulePath}`);
       } else {
         log.info(`Loading ${modulePath}`);
-        let env = new Env(path.basename(modulePath), this._deviceObjects);
+        let env = new Env(moduleBasename, this._deviceObjects);
         this._loaded[modulePath] = { env: env, mod: moduleRequire(modulePath)(env) };
       }
     } catch (e) {

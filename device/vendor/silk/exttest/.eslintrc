@@ -1,5 +1,1 @@
-{
-  "extends": "eslint-config-silk",
-  "rules": {
-  }
-}
+../gonk-build-glue/.eslintrc

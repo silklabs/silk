@@ -2,18 +2,27 @@
   "name": "oksilk",
   "version": "0.0.1",
   "description": "Continous voice recognition using PocketSphinx",
-  "main": "oksilk.js",
+  "main": "./lib/oksilk.js",
   "scripts": {
     "postinstall": "./bin/postinstall",
-    "clean": "rm -rf node_modules oksilk.js oksilk.js.map"
+    "clean": "rm -rf node_modules oksilk.js oksilk.js.map",
+    "posttest": "eslint test lib",
+    "test": "echo \"\""
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
-    "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log"
+    "silk-flow-bin": "/pub/flow-bin",
+    "silk-log": "/pub/log"
   },
-  "private": true
+  "dependencies": {
+    "babel-runtime": "6.9.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  }
 }

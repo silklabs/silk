@@ -221,7 +221,7 @@ export default class SocketScanner extends EventEmitter {
       noble,
       `scanStart`,
       () => noble.startScanning([], true),
-      () => noble.stopScanning(),
+      () => undefined,
       `starting scan`
     );
   }
@@ -233,7 +233,7 @@ export default class SocketScanner extends EventEmitter {
       noble,
       `scanStop`,
       () => noble.stopScanning(),
-      () => {},
+      () => undefined,
       `stopping scan`
     );
   }
@@ -311,7 +311,16 @@ export default class SocketScanner extends EventEmitter {
     this._toggled = true;
 
     log.debug(`Toggling scan off`);
-    await this._nobleStopScan();
+    try {
+      await this._nobleStopScan();
+    } catch(error) {
+      if (this._timeout !== timeoutOff &&
+          error.message.startsWith(`Timed out`)) {
+        log.debug(`Other timeout activity while toggling scan off`);
+        return;
+      }
+      throw error;
+    }
 
     log.debug(`Scan toggled off`);
 
@@ -344,7 +353,16 @@ export default class SocketScanner extends EventEmitter {
       this._toggled = false;
 
       log.debug(`Toggling scan on`);
-      await this._nobleStartScan();
+      try {
+        await this._nobleStartScan();
+      } catch(error) {
+        if (this._timeout !== timeoutOff &&
+            error.message.startsWith(`Timed out`)) {
+          log.debug(`Other timeout activity while toggling scan on`);
+          return;
+        }
+        throw error;
+      }
 
       log.debug(`Scan toggled on`);
 

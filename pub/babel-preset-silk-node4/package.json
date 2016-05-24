@@ -5,7 +5,7 @@
   "repository": "silklabs/silk",
   "main": "index.js",
   "devDependencies": {
-    "babel-cli": "^6.5.1",
+    "babel-cli": "6.9.0",
     "babel-features": "^2.0.0-beta",
     "babel-plugin-syntax-flow": "6.5.0",
     "babel-plugin-syntax-trailing-function-commas": "6.5.0",
@@ -21,7 +21,7 @@
     "babel-plugin-transform-export-extensions": "6.5.0",
     "babel-plugin-transform-flow-strip-types": "6.5.0",
     "json-loader": "^0.5.4",
-    "mocha": "^2.4.5",
+    "mocha": "2.4.5",
     "webpack": "^1.12.13",
     "babel-plugin-transform-es2015-spread": "6.5.0",
     "babel-plugin-transform-object-rest-spread": "6.5.0",

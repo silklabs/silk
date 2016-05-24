@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "../../../../npm_postinstall && silk-buildjs",
-    "build": "silk-buildjs"
+    "build": "silk-buildjs",
+    "silk-build-aosp": "silk-buildjs"
   },
   "license": "MIT",
   "symlinkDependencies": {

@@ -44,7 +44,7 @@ const TIMEOUT_MS = 15000;
 // See app/iOS/BLE/BLESocketPeripheral.swift for explanation of this constant.
 const WRITE_MAX_BYTES = 132;
 
-export default class Stream extends Duplex {
+export default class BluetoothStream extends Duplex {
 
   _peripheral: Peripheral;
   _serviceUuid: string;
@@ -86,7 +86,7 @@ export default class Stream extends Duplex {
     serviceUuid: string,
     options?: DuplexStreamOptions
   ) {
-    log.debug(`Stream('${serviceUuid}')`);
+    log.debug(`constructor`, serviceUuid);
 
     invariant(peripheral);
     invariant(peripheral.state === `connected`);
@@ -177,8 +177,8 @@ export default class Stream extends Duplex {
     return super.emit(eventName, ...args);
   }
 
-  _read(/* size */) {
-    log.debug(`Stream._read()`);
+  _read(size?: number) {
+    log.debug(`_read`, size);
 
     // Nothing to do here. Data will be pushed as it arrives from the connected
     // device in |_onData()|.
@@ -190,7 +190,7 @@ export default class Stream extends Duplex {
     encoding: string,
     callback: Function
   ): boolean {
-    log.debug(`Stream._write(<Buffer ${data.length}>)`);
+    log.debug(`_write <Buffer ${data.length}>`);
 
     invariant(data.length);
     invariant(data instanceof Buffer);
@@ -217,7 +217,7 @@ export default class Stream extends Duplex {
   }
 
   _maybeScheduleClose() {
-    log.debug(`Stream._maybeScheduleClose()`);
+    log.debug(`_maybeScheduleClose`);
 
     if (this._ended && this._finished && !this._closed) {
       log.debug(`Scheduling 'close' event`);
@@ -230,7 +230,7 @@ export default class Stream extends Duplex {
   }
 
   _enableNotifications() {
-    log.debug(`Stream._enableNotifications()`);
+    log.debug(`_enableNotifications`);
 
     invariant(!this._subscribed);
     invariant(!this._subscribedChanging);
@@ -296,7 +296,7 @@ export default class Stream extends Duplex {
   }
 
   _disableNotifications() {
-    log.debug(`Stream._disableNotifications()`);
+    log.debug(`_disableNotifications`);
 
     invariant(!this._disconnected);
 
@@ -364,7 +364,7 @@ export default class Stream extends Duplex {
   }
 
   _requestData() {
-    log.debug(`Stream._requestData()`);
+    log.debug(`_requestData`);
 
     invariant(!this._readTimeout);
     invariant(!this._readAckTimeout);
@@ -380,7 +380,7 @@ export default class Stream extends Duplex {
   }
 
   _sendOutgoing() {
-    log.debug(`Stream._sendOutgoing()`);
+    log.debug(`_sendOutgoing`);
 
     if (!this._subscribed || this._error) {
       return;
@@ -444,7 +444,7 @@ export default class Stream extends Duplex {
   }
 
   _cleanup() {
-    log.debug(`Stream._cleanup()`);
+    log.debug(`_cleanup`);
 
     this._readCharacteristic.removeListener(`data`, this._onData);
     this._readCharacteristic.removeListener(`write`, this._onDataAcknowledged);
@@ -461,7 +461,7 @@ export default class Stream extends Duplex {
   }
 
   _emitError(error: Error) {
-    log.debug(`Stream._emitError()`, error);
+    log.debug(`_emitError`, error);
 
     if (this._error) {
       log.warn(`Received more than one error`, error);
@@ -488,7 +488,7 @@ export default class Stream extends Duplex {
   }
 
   _onDisconnect: (() => void) = () => {
-    log.debug(`Stream._onDisconnect()`);
+    log.debug(`_onDisconnect`);
 
     this._peripheral.removeListener(`disconnect`, this._onDisconnect);
 
@@ -514,7 +514,7 @@ export default class Stream extends Duplex {
 
   _onData: ((data: Buffer, isNotification: boolean) => void) = (data, isNotification) => {
     data = data || new Buffer();
-    log.debug(`Stream._onData(<Buffer ${data.length}>, ${isNotification})`);
+    log.debug(`_onData <Buffer ${data.length}>`, isNotification);
 
     invariant(Buffer.isBuffer(data));
 
@@ -552,7 +552,7 @@ export default class Stream extends Duplex {
   };
 
   _onDataAcknowledged: ((error?: Error) => void) = (error) => {
-    log.debug(`Stream._onDataAcknowledged(%s)`, error || ``);
+    log.debug(`_onDataAcknowledged`, error);
 
     invariant(this._readAckTimeout);
     clearTimeout(this._readAckTimeout);
@@ -570,7 +570,7 @@ export default class Stream extends Duplex {
   };
 
   _onWrite: ((error?: Error) => void) = (error) => {
-    log.debug(`Stream._onWrite(%s)`, error || ``);
+    log.debug(`_onWrite`, error);
 
     invariant(this._writeTimeout);
     clearTimeout(this._writeTimeout);

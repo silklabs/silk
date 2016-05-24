@@ -5,6 +5,7 @@ lib/
 .*/node_modules/fbjs/.*
 .*/node_modules/babel.*
 .*/node_modules/json5/test.*
+.*/node_modules/assert/.*
 
 [options]
 module.system=node

@@ -394,13 +394,17 @@ export default class BluetoothStream extends Duplex {
     let chunksToSendLength = 0;
 
     let outgoingIndex = 0;
-    for ( ; outgoingIndex < this._outgoing.length; outgoingIndex++) {
-      let chunk = this._outgoing[outgoingIndex];
+    for (;
+         outgoingIndex < this._outgoing.length &&
+           chunksToSendLength < WRITE_MAX_BYTES;
+         outgoingIndex++) {
+      const chunk = this._outgoing[outgoingIndex];
 
       invariant(Buffer.isBuffer(chunk));
       invariant(chunk.length);
 
-      let availableLength = WRITE_MAX_BYTES - chunksToSendLength;
+      const availableLength = WRITE_MAX_BYTES - chunksToSendLength;
+      invariant(availableLength > 0);
 
       if (chunk.length > availableLength) {
         // Slice the buffer and send as much as possible, leaving the rest for
@@ -413,10 +417,6 @@ export default class BluetoothStream extends Duplex {
 
       chunksToSend.push(chunk);
       chunksToSendLength += chunk.length;
-
-      if (chunksToSendLength === WRITE_MAX_BYTES) {
-        break;
-      }
     }
 
     invariant(chunksToSend.length);

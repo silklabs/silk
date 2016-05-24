@@ -256,7 +256,7 @@ export default class Stream extends Duplex {
 
       cleanup();
 
-      if (this._disconnected) {
+      if (this._disconnected || this._error) {
         return;
       }
 
@@ -443,6 +443,23 @@ export default class Stream extends Duplex {
     }, TIMEOUT_MS);
   }
 
+  _cleanup() {
+    log.debug(`Stream._cleanup()`);
+
+    this._readCharacteristic.removeListener(`data`, this._onData);
+    this._readCharacteristic.removeListener(`write`, this._onDataAcknowledged);
+    this._writeCharacteristic.removeListener(`write`, this._onWrite);
+
+    clearTimeout(this._readTimeout);
+    this._readTimeout = null;
+
+    clearTimeout(this._readAckTimeout);
+    this._readAckTimeout = null;
+
+    clearTimeout(this._writeTimeout);
+    this._writeTimeout = null;
+  }
+
   _emitError(error: Error) {
     log.debug(`Stream._emitError()`, error);
 
@@ -455,6 +472,8 @@ export default class Stream extends Duplex {
 
     // Make all future writes fail with this error.
     this._error = error;
+
+    this._cleanup();
 
     // End the read stream.
     this.push(null);
@@ -472,20 +491,11 @@ export default class Stream extends Duplex {
     log.debug(`Stream._onDisconnect()`);
 
     this._peripheral.removeListener(`disconnect`, this._onDisconnect);
-    this._readCharacteristic.removeListener(`data`, this._onData);
-    this._writeCharacteristic.removeListener(`write`, this._onWrite);
+
+    this._cleanup();
 
     invariant(!this._disconnected);
     this._disconnected = true;
-
-    clearTimeout(this._readTimeout);
-    this._readTimeout = null;
-
-    clearTimeout(this._readAckTimeout);
-    this._readAckTimeout = null;
-
-    clearTimeout(this._writeTimeout);
-    this._writeTimeout = null;
 
     if (this._disconnectHandler) {
       this._disconnectHandler();

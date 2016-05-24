@@ -92,7 +92,7 @@ export default class SocketScanner extends EventEmitter {
     }
   }
 
-  async _waitForEventWithTimeout(
+  _waitForEventWithTimeout(
     peripheral: ?Peripheral,
     emitter: EventEmitter,
     eventName: string,
@@ -100,7 +100,7 @@ export default class SocketScanner extends EventEmitter {
     stop: () => void,
     errorString: string
   ): Promise<any> {
-    return await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let disconnectListener;
       let eventListener;
       let timeout;
@@ -214,26 +214,26 @@ export default class SocketScanner extends EventEmitter {
     }
   };
 
-  async _nobleStartScan(): Promise<void> {
+  _nobleStartScan(): Promise<void> {
     const noble = this._noble;
     return this._waitForEventWithTimeout(
       null,
       noble,
       `scanStart`,
       () => noble.startScanning([], true),
-      () => noble.stopScanning(),
+      () => undefined,
       `starting scan`
     );
   }
 
-  async _nobleStopScan(): Promise<void> {
+  _nobleStopScan(): Promise<void> {
     const noble = this._noble;
     return this._waitForEventWithTimeout(
       null,
       noble,
       `scanStop`,
       () => noble.stopScanning(),
-      () => {},
+      () => undefined,
       `stopping scan`
     );
   }
@@ -311,7 +311,16 @@ export default class SocketScanner extends EventEmitter {
     this._toggled = true;
 
     log.debug(`Toggling scan off`);
-    await this._nobleStopScan();
+    try {
+      await this._nobleStopScan();
+    } catch(error) {
+      if (this._timeout !== timeoutOff &&
+          error.message.startsWith(`Timed out`)) {
+        log.debug(`Other timeout activity while toggling scan off`);
+        return;
+      }
+      throw error;
+    }
 
     log.debug(`Scan toggled off`);
 
@@ -344,7 +353,16 @@ export default class SocketScanner extends EventEmitter {
       this._toggled = false;
 
       log.debug(`Toggling scan on`);
-      await this._nobleStartScan();
+      try {
+        await this._nobleStartScan();
+      } catch(error) {
+        if (this._timeout !== timeoutOff &&
+            error.message.startsWith(`Timed out`)) {
+          log.debug(`Other timeout activity while toggling scan on`);
+          return;
+        }
+        throw error;
+      }
 
       log.debug(`Scan toggled on`);
 
@@ -379,10 +397,10 @@ export default class SocketScanner extends EventEmitter {
     }
   }
 
-  async _discoverServices(peripheral: Peripheral): Promise<Array<Service>> {
+  _discoverServices(peripheral: Peripheral): Promise<Array<Service>> {
     log.debug(`_discoverServices('${peripheral.uuid}'`);
 
-    return await this._waitForEventWithTimeout(
+    return this._waitForEventWithTimeout(
       peripheral,
       peripheral,
       `servicesDiscover`,
@@ -392,14 +410,14 @@ export default class SocketScanner extends EventEmitter {
     );
   }
 
-  async _discoverCharacteristics(
+  _discoverCharacteristics(
     peripheral: Peripheral,
     service: Service
   ): Promise<Array<Characteristic>> {
     log.debug(`_discoverCharacteristics('${peripheral.uuid}', ` +
               `'${service.uuid}')`);
 
-    return await this._waitForEventWithTimeout(
+    return this._waitForEventWithTimeout(
       peripheral,
       service,
       `characteristicsDiscover`,
@@ -412,14 +430,14 @@ export default class SocketScanner extends EventEmitter {
     );
   }
 
-  async _discoverDescriptors(
+  _discoverDescriptors(
     peripheral: Peripheral,
     characteristic: Characteristic
   ): Promise<void> {
     log.debug(`_discoverDescriptors('${peripheral.uuid}', ` +
               `'${characteristic.uuid}')`);
 
-    return await this._waitForEventWithTimeout(
+    return this._waitForEventWithTimeout(
       peripheral,
       characteristic,
       `descriptorsDiscover`,

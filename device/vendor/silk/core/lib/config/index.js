@@ -127,6 +127,7 @@ class DeviceConfig extends EventEmitter {
   _configuringSocketSessionListener = null;
   _sessionStatus = ``;
   _sessionErrorCode = ``;
+  _lastWifiScanResults = null;
 
   async _writeConfig(config) {
     fs.writeFile(CONFIG_PATH, JSON.stringify(config));
@@ -187,9 +188,14 @@ class DeviceConfig extends EventEmitter {
     } else {
       assert(this._socketSessionListeners[0] === sessionListener);
     }
+
+    // Send wifi scan results now if we have them.
+    if (this._lastWifiScanResults) {
+      sessionListener.sendWifiScanResults(this._lastWifiScanResults);
+    }
   }
 
-  _cancelConfigure(s) {
+  _cancelConfigure() {
     log.debug(`DeviceConfig._cancelConfigure()`);
 
     assert(this._configuringSocketSessionListener);
@@ -452,6 +458,8 @@ class DeviceConfig extends EventEmitter {
   _onWifiScanResults(scanResults) {
     log.debug(`DeviceConfig._onWifiScanResults()`);
 
+    this._lastWifiScanResults = scanResults;
+
     if (this._configuringSocketSessionListener) {
       assert(this._socketSessionListeners.length === 1);
       this._configuringSocketSessionListener.sendWifiScanResults(scanResults);
@@ -517,27 +525,38 @@ class DeviceConfig extends EventEmitter {
     const listener = (this._config && this._config.success) ?
                      new NormalSessionListener(this, socketSession) :
                      new ConfigSessionListener(this, socketSession);
-    this._socketSessionListeners.push(listener);
 
-    socketSession.once(`close`,
-                       () => this._onSocketSessionClosed(socketSession,
-                                                         listener));
-  }
+    let errorHandler;
+    let closeHandler;
 
-  _onSocketSessionClosed(socketSession, listener) {
-    if (this._socketSessionListeners.length > 1) {
-      const index = this._socketSessionListeners.indexOf(listener);
-      if (index > -1) {
-        this._socketSessionListeners.splice(index, 1);
+    const cleanup = (event) => {
+      log.debug(`Cleaning up after '${event}' event`);
+
+      socketSession.removeListener(`error`, errorHandler);
+      socketSession.removeListener(`close`, closeHandler);
+
+      if (this._socketSessionListeners.length > 1) {
+        const index = this._socketSessionListeners.indexOf(listener);
+        if (index > -1) {
+          this._socketSessionListeners.splice(index, 1);
+        }
+      } else if (this._socketSessionListeners.length &&
+                 this._socketSessionListeners[0] === listener) {
+        this._socketSessionListeners = [];
       }
-    } else if (this._socketSessionListeners.length &&
-               this._socketSessionListeners[0] === listener) {
-      this._socketSessionListeners = [ ];
-    }
 
-    if (this._configuringSocketSessionListener === listener) {
-      this._cancelConfigure();
-    }
+      if (this._configuringSocketSessionListener === listener) {
+        this._cancelConfigure();
+      }
+    };
+
+    errorHandler = () => cleanup(`error`);
+    closeHandler = () => cleanup(`close`);
+
+    socketSession.addListener(`error`, errorHandler);
+    socketSession.addListener(`close`, closeHandler);
+
+    this._socketSessionListeners.push(listener);
   }
 
   async init(server: Server) {

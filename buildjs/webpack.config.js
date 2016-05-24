@@ -26,7 +26,7 @@ const config = {
   context,
   target: 'node',
   devtool: 'source-map',
-  entry: `./lib/${main}`,
+  entry: `./${main}`,
   output: {
     path: path.join(context, destination),
     libraryTarget: 'commonjs2',

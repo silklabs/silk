@@ -16,7 +16,7 @@
     "silk-sdk": "/sdk"
   },
   "devDependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "eslint": "1.10.3"
   },
   "author": "",

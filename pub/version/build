@@ -32,6 +32,7 @@ cat > $DEST/dist/index.json <<-EOF
 EOF
 cat $DEST/dist/index.json
 
-if [[ ! -f $DEST/package.json ]]; then
-  cp package.json $DEST/package.json
+if [[ "$DEST" != "." ]]; then
+  cp -f package.json $DEST/package.json
+  cp -f index.js $DEST/index.js
 fi

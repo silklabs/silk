@@ -8,6 +8,8 @@ while [ -h "$SOURCE" ]; do
 done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+# silk-svm contains models which get dynamically pulled down ... 
 npm build $ROOT/../node_modules/silk-svm
+# we cannot use the runtime version of silk-core-version so rebuild it ...
 npm build $ROOT/../node_modules/silk-core-version
 

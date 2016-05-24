@@ -475,11 +475,12 @@ export default class BluetoothStream extends Duplex {
 
     this._cleanup();
 
+    // Don't hang on to data that we will never send.
+    this._outgoing.length = 0;
+    this._outgoingLength = 0;
+
     // End the read stream.
     this.push(null);
-
-    // Don't hang on to data that we will never send.
-    this._outgoing = [];
 
     // End the write stream.
     this.end();

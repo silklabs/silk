@@ -7,7 +7,6 @@
     "email": "mvines@silklabs.com"
   },
   "scripts": {
-    "preinstall": "../../../locked_node_modules/fetch.sh",
     "prepublish": "node_modules/grunt-cli/bin/grunt",
     "start": "node --harmony dist/lib/btle/scanner.js"
   },

@@ -19,11 +19,14 @@ var config = {
     path: 'public/js',
     filename: '[name].js',
   },
+  externals: {
+    'silk-alog': true,
+  },
   // Something about how we use relative paths in our modules messes up webpack
   // without a more specific modulesDirectories config.
   resolveLoader: {
     modulesDirectories: [
-      path.join(__dirname, 'node_modules'),
+      path.join(__dirname, '../node_modules'),
     ],
   },
   resolve: {
@@ -34,9 +37,24 @@ var config = {
       'NativeModules': path.resolve(__dirname, 'src', 'shim', 'NativeModules.js'),
     },
   },
+  babel: {
+    cacheDirectory: process.env.BABEL_CACHE ? true : false,
+    babelrc: false,
+    // NOTE: require.resolve will return an absolute path to our babel
+    // modules. If we use shorthand or relative path here every module we
+    // include must also provide their own version of these presets.
+    presets: [
+      require('babel-preset-es2015'),
+      require('babel-preset-stage-0'),
+      require('babel-preset-react'),
+    ],
+    plugins: [
+      require('babel-plugin-transform-runtime'),
+    ]
+  },
   module : {
     loaders: [
-      { test: /\.json$/, loader: 'json' },
+      { test: /\.json$/, loader: require.resolve('json-loader') },
       {
         test: /\.js$/,
         include: (filename) => {
@@ -45,21 +63,7 @@ var config = {
           }
           return require('silk-babeldeps')(filename);
         },
-        loader: 'babel',
-        query: {
-          babelrc: false,
-          // NOTE: require.resolve will return an absolute path to our babel
-          // modules. If we use shorthand or relative path here every module we
-          // include must also provide their own version of these presets.
-          presets: [
-            require.resolve('babel-preset-es2015'),
-            require.resolve('babel-preset-stage-0'),
-            require.resolve('babel-preset-react'),
-          ],
-          plugins: [
-            require.resolve('babel-plugin-transform-runtime'),
-          ]
-        },
+        loader: require.resolve('babel-loader'),
       }
     ]
   },

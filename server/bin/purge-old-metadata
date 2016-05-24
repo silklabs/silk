@@ -1,4 +1,4 @@
-#! ./node_modules/.bin/babel-node --harmony
+#! /usr/bin/env ../babel-run/babel-node
 
 import loadConfig from '../src/server/config';
 import createDb from '../src/server/db';

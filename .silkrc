@@ -1,3 +1,7 @@
 {
-  plugins: ["./cli-plugin-internal", "./pub/sdk/cli"]
+  plugins: [
+    "./cli-plugin-internal",
+    "./pub/sdk/cli",
+    "./cli-npm",
+  ]
 }

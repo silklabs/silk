@@ -7,6 +7,9 @@
 .*/node_modules/yargs/.*
 .*/node_modules/bower/.*
 .*/node_modules/webpack.*
+.*/node_modules/read-package-tree/.*
+.*/node_modules/npm/.*
+.*/node_modules/config-chain/.*
 
 .*/server/test/.*
 .*/server/src/server/.*
@@ -16,9 +19,14 @@
 .*/rtc/test/.*
 .*/streams/test/.*
 .*/azure-storage/test/.*
+.*/device/vendor/propsilk/silk-cv/.*
+.*/pub/bsp-gonk/vendor/silk/.*
+.*/device/vendor/silk/core/.*
 
 [include]
 src/
+../node_modules/
+../pub/node_modules/
 
 [libs]
 interface/

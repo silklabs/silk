@@ -10,6 +10,7 @@ before_install:
   - brew link --force --overwrite opencv3
   - pkg-config --modversion opencv
   - source ../setup
+  - ../install.sh
 
-install: npm install
+install:
 script: npm test

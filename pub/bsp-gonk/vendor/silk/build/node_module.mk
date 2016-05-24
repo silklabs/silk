@@ -32,8 +32,16 @@ my_prefix := TARGET_
 define GET_PACKAGE_NAME_MAIN_JS
 var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
 console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
-console.log('LOCAL_NODE_MODULE_MAIN=' + (pkg.main || ''));
+var main = pkg.main || 'index.js';
+main += (!require('path').extname(main)) ? '.js' : '';
+console.log('LOCAL_NODE_MODULE_MAIN=' + main);
 endef
+
+define CHECK_FOR_SILK_BUILD
+var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
+console.log(!!(pkg.scripts && pkg.scripts['silk-build-gonk']) ? 1 : 0);
+endef
+
 $(foreach stmt,$(shell node -e "$(GET_PACKAGE_NAME_MAIN_JS)"),$(eval $(stmt)))
 
 ifeq (,$(strip $(LOCAL_MODULE_TAGS)))
@@ -59,12 +67,8 @@ ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)
 endif
 
-ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
-LOCAL_MODULE_PATH := $(LOCAL_MODULE_PATH)/$(LOCAL_MODULE)
-else
 ifeq (,$(strip $(LOCAL_NODE_MODULE_MAIN)))
 $(error $(LOCAL_PATH)/package.json is missing a "main" attribute)
-endif
 endif
 
 ifneq ($(TARGET_GE_MARSHMALLOW),)
@@ -99,13 +103,8 @@ LOCAL_32_BIT_ONLY := true
 LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_CUSTOM_BUILT_MODULE := true
 LOCAL_CUSTOM_INSTALLED_MODULE := true
-ifeq (folder,$(LOCAL_NODE_MODULE_TYPE))
-LOCAL_BUILT_MODULE_STEM := package.json
-LOCAL_INSTALLED_MODULE_STEM := package.json
-else
-LOCAL_BUILT_MODULE_STEM := $(LOCAL_NODE_MODULE_MAIN)
-LOCAL_INSTALLED_MODULE_STEM := $(notdir $(LOCAL_MODULE))$(suffix $(LOCAL_NODE_MODULE_MAIN))
-endif
+LOCAL_BUILT_MODULE_STEM := dist
+LOCAL_INSTALLED_MODULE_STEM :=
 
 # LOCAL_ALLOW_UNDEFINED_SYMBOLS is needed to avoid unresolved v8/libuv/node
 # symbols during node-gyp link
@@ -121,8 +120,15 @@ endif
 include $(BUILD_SYSTEM)/binary.mk
 
 
-npm_cli = $(abspath external/npm/cli.js)
 npm_node_dir = $(abspath external/node)
+buildjs_dir = $(abspath ../buildjs)
+
+npm_has_silk_build := $(shell node -e "$(CHECK_FOR_SILK_BUILD)")
+ifeq (1,$(npm_has_silk_build))
+node_module_build_cmd = npm run silk-build-gonk
+else
+node_module_build_cmd = $(buildjs_dir)/bin/build
+endif
 
 ifdef LOCAL_SDK_VERSION
 my_target_crtbegin_so_o := $(wildcard $(my_ndk_sysroot_lib)/crtbegin_so.o)
@@ -137,19 +143,42 @@ my_target_libgcc := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_LIBGCC)
 define abs_import_includes
   $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 endef
-$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
-$(LOCAL_BUILT_MODULE): LOCAL_BUILT_MODULE_STEM := $(LOCAL_BUILT_MODULE_STEM)
-$(LOCAL_BUILT_MODULE): LOCAL_PATH := $(LOCAL_PATH)
-$(LOCAL_BUILT_MODULE): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
-$(LOCAL_BUILT_MODULE): $(import_includes)
-$(LOCAL_BUILT_MODULE): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
-$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_CRTBEGIN_SO_O := $(abspath $(my_target_crtbegin_so_o))
-$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_CRTEND_SO_O := $(abspath $(my_target_crtend_so_o))
-$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_LIBATOMIC := $(my_target_libatomic)
-$(LOCAL_BUILT_MODULE): PRIVATE_TARGET_LIBGCC := $(my_target_libgcc)
-$(LOCAL_BUILT_MODULE): $(LOCAL_ADDITIONAL_DEPENDENCIES)
-$(LOCAL_BUILT_MODULE): $(all_libraries)
-$(LOCAL_BUILT_MODULE):
+
+
+LOCAL_BUILT_MODULE_MAIN_PATH := $(LOCAL_BUILT_MODULE)/$(LOCAL_NODE_MODULE_MAIN)
+
+$(LOCAL_BUILT_MODULE_MAIN_PATH): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): LOCAL_NODE_MODULE_MAIN := $(LOCAL_NODE_MODULE_MAIN)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): LOCAL_PATH := $(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): LOCAL_BUILT_MODULE := $(LOCAL_BUILT_MODULE)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): my_ndk_sysroot_lib := $(my_ndk_sysroot_lib)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): $(import_includes)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_IMPORT_INCLUDES := $(import_includes)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): $(my_target_crtbegin_so_o) $(my_target_crtend_so_o)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): node_module_build_cmd := $(node_module_build_cmd)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_CRTBEGIN_SO_O := $(abspath $(my_target_crtbegin_so_o))
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_CRTEND_SO_O := $(abspath $(my_target_crtend_so_o))
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_LIBATOMIC := $(my_target_libatomic)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_LIBGCC := $(my_target_libgcc)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_C_INCLUDES := $(my_c_includes)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_CFLAGS := $(my_cflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_CPPFLAGS := $(my_cppflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_DEBUG_CFLAGS := $(debug_cflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_RTTI_FLAG := $(LOCAL_RTTI_FLAG)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_LDFLAGS := $(my_ldflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_LDLIBS := $(LOCAL_LDLIBS)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): $(LOCAL_ADDITIONAL_DEPENDENCIES)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): $(all_libraries)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_NO_DEFAULT_COMPILER_FLAGS := \
+    $(strip $(LOCAL_NO_DEFAULT_COMPILER_FLAGS))
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_PROJECT_INCLUDES := $(my_target_project_includes)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_C_INCLUDES := $(my_target_c_includes)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_CFLAGS := $(my_target_global_cflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_CPPFLAGS := $(my_target_global_cppflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_SHARED_LIBRARIES := $(built_shared_libraries)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_STATIC_LIBRARIES := $(built_static_libraries)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_WHOLE_STATIC_LIBRARIES := $(built_whole_libraries)
+$(LOCAL_BUILT_MODULE_MAIN_PATH):
 	@echo "NPM Install: $(LOCAL_PATH)"
 	$(hide) cd $(LOCAL_PATH) &&  \
     C_INCLUDES="\
@@ -194,10 +223,11 @@ $(LOCAL_BUILT_MODULE):
       "\ && \
 		export SILK_ALLOW_REBUILD_FAIL=1 \
     export V=$(if $(SHOW_COMMANDS),1) \
-    export BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" &&  \
+    export BUILD_FINGERPRINT="$(BUILD_FIRGERPRINT)" &&  \
     export TARGET_OUT_HEADERS="$(TARGET_OUT_HEADERS)" &&  \
-    export NPM_CONFIG_ARCH=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) &&  \
-    export NPM_CONFIG_PLATFORM=android && \
+    export SILK_GYP_FLAGS='-f make-android -DOS=android -Darch=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH))' && \
+    export SILK_NODE_GYP_FLAGS='--arch=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH))' && \
+    export npm_config_nodedir=$(npm_node_dir) && \
     export CC="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
     export CXX="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
     export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$LD_FLAGS" && \
@@ -213,65 +243,35 @@ $(LOCAL_BUILT_MODULE):
         $(PRIVATE_TARGET_CRTEND_SO_O) \
       ) \
       -Wl,--end-group" && \
-    node $(npm_cli) install --production --nodedir=$(npm_node_dir) #--loglevel silly
-	$(hide) mkdir -p $(@D)
-	$(hide) if [[ -f $(LOCAL_PATH)/.silkslug/$(LOCAL_BUILT_MODULE_STEM) ]]; then \
-      cp -f $(LOCAL_PATH)/.silkslug/$(LOCAL_BUILT_MODULE_STEM) $@; \
-    else \
-      cp -f $(LOCAL_PATH)/$(LOCAL_BUILT_MODULE_STEM) $@; \
-    fi
+     $(node_module_build_cmd) $(abspath $(LOCAL_PATH)) $(abspath $(LOCAL_BUILT_MODULE))
 
-$(LOCAL_INSTALLED_MODULE): LOCAL_PATH := $(LOCAL_PATH)
+$(LOCAL_BUILT_MODULE): $(LOCAL_BUILT_MODULE_MAIN_PATH)
 
-ifeq (file,$(LOCAL_NODE_MODULE_TYPE))
+LOCAL_INSTALLED_MODULE_MAIN := $(LOCAL_INSTALLED_MODULE)/$(LOCAL_NODE_MODULE_MAIN)
 
-$(LOCAL_INSTALLED_MODULE): PRIVATE_STRIP := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
-$(LOCAL_INSTALLED_MODULE): PRIVATE_OBJCOPY := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY)
+$(LOCAL_INSTALLED_MODULE): $(LOCAL_INSTALLED_MODULE_MAIN)
 
-# Binary file module
-ifeq ($(suffix $(LOCAL_NODE_MODULE_MAIN)),.node)
-
-$(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_MODULE := \
-  $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(LOCAL_INSTALLED_MODULE))
-
-$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
-	$(transform-to-stripped)
-	@echo target Symbolic: $(PRIVATE_UNSTRIPPED_MODULE)
-	$(hide) mkdir -p $(dir $(PRIVATE_UNSTRIPPED_MODULE))
-	$(hide) cp $< $(PRIVATE_UNSTRIPPED_MODULE)
-
-
-# Javascript file module (that may include binary submodules)
-else
-
-$(LOCAL_INSTALLED_MODULE): PRIVATE_UNSTRIPPED_PATH := \
+$(LOCAL_INSTALLED_MODULE_MAIN): LOCAL_PATH := $(LOCAL_PATH)
+$(LOCAL_INSTALLED_MODULE_MAIN): PRIVATE_STRIP := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
+$(LOCAL_INSTALLED_MODULE_MAIN): PRIVATE_OBJCOPY := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY)
+$(LOCAL_INSTALLED_MODULE_MAIN): PRIVATE_UNSTRIPPED_PATH := \
   $(TARGET_OUT_UNSTRIPPED)/$(patsubst $(PRODUCT_OUT)/%,%,$(dir $(LOCAL_INSTALLED_MODULE)))
-
-$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
-	$(copy-file-to-target)
-# Install source maps if they where generated...
-	$(hide) test $(TARGET_BUILD_VARIANT) != user -a -f $<.map && $(ACP) $<.map $@.map || echo "Skip sourcemap $@.map"
-# Locate and copy all native modules to <LOCAL_MODULE_PATH>/build/<foo>.node
-# so they can be resolved correctly from the browserify-ed module
+$(LOCAL_INSTALLED_MODULE_MAIN): LOCAL_NODE_MODULE_MAIN := $(LOCAL_NODE_MODULE_MAIN)
+$(LOCAL_INSTALLED_MODULE_MAIN): LOCAL_BUILT_MODULE := $(LOCAL_BUILT_MODULE)
+$(LOCAL_INSTALLED_MODULE_MAIN): LOCAL_INSTALLED_MODULE := $(LOCAL_INSTALLED_MODULE)
+$(LOCAL_INSTALLED_MODULE_MAIN): LOCAL_INSTALLED_MODULE_MAIN := $(LOCAL_INSTALLED_MODULE_MAIN)
+$(LOCAL_INSTALLED_MODULE_MAIN): $(LOCAL_BUILT_MODULE_MAIN_PATH)
 	$(hide) \
-  for binding in `cd $(LOCAL_PATH)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
-    mkdir -p $(@D)/build; \
-    SRC=$(LOCAL_PATH)/$$binding ; \
-    DST=$(@D)/build/`basename $$binding` ; \
-    $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST ; \
+  for binding in `cd $(LOCAL_BUILT_MODULE)/ && find -L . -type f -name *.node -not -path "*/obj.target/*"`; do \
+    mkdir -p $(LOCAL_INSTALLED_MODULE)/build/Release && \
+    SRC=$(LOCAL_BUILT_MODULE)/$$binding && \
+    DST=$(LOCAL_INSTALLED_MODULE)/build/Release/`basename $$binding` && \
+    $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST && \
     $(and $(TARGET_STRIP_EXTRA), $(PRIVATE_OBJCOPY) --add-gnu-debuglink=$$SRC $$DST ; ) \
-    mkdir -p $(PRIVATE_UNSTRIPPED_PATH)/build ; \
-    cp -v $$SRC $(PRIVATE_UNSTRIPPED_PATH)/build/`basename $$binding` ; \
   done
-
-endif # .js module
-
-else # LOCAL_NODE_MODULE_TYPE == folder
-$(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
-	@echo "Install: $@"
-	$(hide) mkdir -p $(@D)
-	$(hide) rsync -qa $(firstword $(wildcard $(LOCAL_PATH)/.silkslug/ $(LOCAL_PATH)/)) $(@D)
-	$(hide) test -f $@
-endif
+	@echo "Install: $(LOCAL_INSTALLED_MODULE)"
+	$(hide) mkdir -p $(LOCAL_INSTALLED_MODULE)
+	$(hide) rsync --exclude build/Release --exclude build/Debug -qa $(LOCAL_BUILT_MODULE)/* $(LOCAL_INSTALLED_MODULE)
+	$(hide) test -f $(LOCAL_INSTALLED_MODULE_MAIN)
 
 LOCAL_2ND_ARCH_VAR_PREFIX :=

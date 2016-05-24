@@ -6,15 +6,6 @@ if [ ! -d core ]; then
   exit 0
 fi
 
-for dir in core ext/*/; do
-  if [ -d "$dir/test" ]; then
-    echo "### Installing $dir"
-    pushd "$dir/test"
-    npm install
-    popd
-  fi
-done
-
 echo "## Running unit tests ##"
 for dir in core ext/*/; do
   if [ -d "$dir/test" ]; then

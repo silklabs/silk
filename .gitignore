@@ -4,7 +4,6 @@
 # Heroku
 /Procfile
 
-node_modules
 npm-debug.log
 /server/tmp/
 
@@ -14,3 +13,4 @@ npm-debug.log
 # eclipse droppings
 .cproject
 .project
+!/node_modules

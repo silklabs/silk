@@ -4,9 +4,7 @@
   "description": "Tool to build, load and compile native node modules on linux and OSX.",
   "main": "index.js",
   "scripts": {
-    "test": "./test.sh",
-    "build": "babel --preset silk-node4 -d build src/",
-    "prepublish": "npm run build"
+    "test": "./test.sh"
   },
   "repository": {
     "type": "git",
@@ -28,15 +26,10 @@
   },
   "homepage": "https://github.com/silklabs/node-module-builder",
   "dependencies": {
+    "dockerode": "^2.2.9",
     "dockerode-promise-es6": "1.0.0",
-    "event-to-promise": "^0.7.0",
-    "mocha": "^2.4.5",
-    "tar-fs": "^1.11.1"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.6.4",
-    "babel-preset-silk-node4": "^1.0.0",
-    "babel-register": "^6.6.0",
-    "dockerode": "^2.2.9"
+    "event-to-promise": "0.5.0",
+    "mocha": "2.4.5",
+    "tar-fs": "1.11.1"
   }
 }

@@ -1,7 +1,23 @@
 {
   "ignored": [
     "pub/babel-preset-silk-node4",
-    "pub/babel"
+    "pub/babel",
+
+    "pub/cli",
+    "cli-plugin-internal",
+    "cli-npm",
+    "api",
+    "api-schema",
+    "http",
+    "azure-storage",
+    "http",
+    "azure-storage",
+    "streams",
+    "s3-artifacts",
+    "server",
+    "tools/mp4dash",
+    "utils",
+    "cam"
   ],
   "restrict": {
     "app": ["package.json"],

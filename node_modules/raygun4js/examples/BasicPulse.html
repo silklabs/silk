@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Raygun Crash Reporting - Basic Example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+
+    <script type="text/javascript">
+        !function (a, b, c, d, e, f, g, h) {
+            a.RaygunObject = e, a[e] = a[e] || function () {
+                        (a[e].o = a[e].o || []).push(arguments)
+                    }, f = b.createElement(c), g = b.getElementsByTagName(c)[0],
+                    f.async = 1, f.src = d, g.parentNode.insertBefore(f, g), h = a.onerror, a.onerror = function (b, c, d, f, g) {
+                h && h(b, c, d, f, g), g || (g = new Error(b)), a[e].q = a[e].q || [], a[e].q.push({
+                    e: g
+                })
+            }
+        }(window, document, "script", "http://cdn.raygun.io/raygun4js/raygun.min.js", "rg4js");
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <div class="header clearfix">
+        <br>
+    </div>
+
+    <div class="jumbotron">
+        <h1 class="text-center">Raygun4JS - Basic Example</h1>
+
+
+        <p class="text-center">
+            <a class="btn btn-lg btn-success" href="#" id="ErrorButton" role="button">
+                Throw an error
+            </a>
+        </p>
+    </div>
+</div>
+
+<script type="text/javascript">
+    rg4js('apiKey', 'paste_your_api_key_here');
+    rg4js('enableCrashReporting', true);
+    rg4js('enablePulse', true);
+</script>
+
+
+<script type="text/javascript">
+    $(function () {
+        $('#ErrorButton').click(function () {
+            bob.GetMessage();
+        });
+    });
+</script>
+
+</body>
+</html>

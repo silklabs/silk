@@ -1,0 +1,18 @@
+{
+  "main": "index.js",
+  "scripts": {
+    "flow": "flow check",
+    "lint": "eslint src",
+    "test": "npm run lint && npm run flow"
+  },
+  "dependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4",
+    "mkdirp": "0.5.1"
+  },
+  "symlinkDependencies": {
+    "silk-log": "/pub/log",
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-flow-bin": "/pub/flow-bin"
+  }
+}

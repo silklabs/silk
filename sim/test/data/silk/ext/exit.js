@@ -1,7 +1,7 @@
 /**
  * Test extension that forces the device process to exit after a fixed time
  */
-const timeout = 30;
+const timeout = 5;
 
 module.exports = (env) => {
   env.log.info('Exit scheduled for', timeout, 'seconds');

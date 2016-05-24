@@ -2,20 +2,27 @@
   "name": "peddetector",
   "version": "0.0.1",
   "description": "Pedestrian detector using RCNN",
-  "main": "peddetector.js",
+  "main": "./lib/peddetector.js",
   "scripts": {
     "postinstall": "./bin/postinstall",
-    "clean": "rm -rf node_modules peddetector.js peddetector.js.map"
+    "clean": "rm -rf node_modules peddetector.js peddetector.js.map",
+    "posttest": "eslint test lib",
+    "test": "echo \"\""
   },
   "dependencies": {
-    "mz": "2.2.0"
+    "babel-runtime": "6.9.0",
+    "mz": "2.4.0"
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
-    "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log"
+    "silk-flow-bin": "/pub/flow-bin",
+    "silk-log": "/pub/log"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  }
 }

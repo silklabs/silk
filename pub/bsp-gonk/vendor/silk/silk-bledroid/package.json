@@ -2,7 +2,7 @@
   "name": "silk-bledroid",
   "version": "0.0.1",
   "description": "wrapper for bledroid",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "postinstall": "../../../../npm_postinstall && silk-buildjs",
     "build": "silk-buildjs"
@@ -13,6 +13,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "babel-runtime": "6.9.0",
     "debug": "2.2.0",
     "uuid": "2.0.1"
   },

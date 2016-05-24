@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PATH: public/index.html</title>
+  <link rel="stylesheet" href="/msg.min.css">
+  <style>
+
+    .test-box { margin: 20px; }
+    .msg { background-color: #ccc; }
+
+    #img-msg {
+      position: relative;
+    }
+    #img-msg:after {
+      content: url('/msg.png');
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <p><b>This file: public/index.html</b> (Compare this to the browser's path)</p>
+
+  <div class="test-box">
+    Message from CSS (Request: [public/msg.min.css]) (Compare this to the path in message)
+    <div id="css-msg" class="msg">NO message.</div>
+  </div>
+
+  <div class="test-box">
+    Message from JS (Request: [public/msg.min.js]) (Compare this to the path in message)
+    <div id="js-msg" class="msg">NO message.</div>
+    <script src="/msg.min.js"></script>
+  </div>
+
+  <div class="test-box">
+    Message from IMG (Request: [public/msg.png]) (Compare this to the path in message)
+    <div id="img-msg" class="msg">NO message.</div>
+  </div>
+
+  <p><a href="dir/">To [dir/]</a></p>
+
+</body>
+</html>

@@ -58,7 +58,6 @@
 /vendor/silk/core/local_node_modules/silk-api/
 /vendor/silk/core/local_node_modules/silk-socket.io-client-node/
 /vendor/silk/core/npm-debug.log
-/vendor/silk/**/node_modules/
 /vendor/silk/trainingset/
 /vendor/silk/**/*.js.map
 .gulpcache

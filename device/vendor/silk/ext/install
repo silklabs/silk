@@ -1,6 +1,10 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 cd $(dirname $0)
 for mod in */package.json; do
-  ( set -ex; cd $(dirname $mod); npm install )
+  pushd $(dirname $mod)
+  echo $mod
+  #silk npm-install .
+  npm test
+  popd
 done

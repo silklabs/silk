@@ -2,16 +2,23 @@
   "name": "clapper",
   "version": "0.0.1",
   "description": "Clap sample extension",
-  "main": "clapper.js",
+  "main": "./lib/clapper.js",
   "scripts": {
-    "postinstall": "./bin/postinstall"
+    "postinstall": "./bin/postinstall",
+    "posttest": "eslint test lib",
+    "test": "echo \"\""
   },
   "symlinkDependencies": {
     "silk-config": "/config",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
   "dependencies": {
-    "socket.io-client": "1.4.5"
+    "babel-runtime": "6.9.0",
+    "socket.io-client": "1.4.6"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  }
 }

@@ -1,0 +1,10 @@
+
+#css-msg {
+  font-size: 0;
+}
+
+#css-msg:before {
+  content: 'Hello world! from [public/msg.css]';
+  font-size: 16px;
+}
+

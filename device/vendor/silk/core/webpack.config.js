@@ -1,11 +1,7 @@
 'use strict';
 
-const CopyWebpack = require('copy-webpack-plugin');
 const path = require('path');
-
-// We must place our files in a special folder for integration /w the android
-// build system.
-const destinationPath = path.resolve(__dirname, '.silkslug');
+const CopyWebpack = require('copy-webpack-plugin');
 
 // TODO: Dynamically build this list from actual externals in build system.
 const external = [
@@ -45,13 +41,8 @@ const config = {
   },
   devtool: 'source-map',
   entry: {
-    'core': './lib/core.js',
-    'btle/child': './lib/btle/child.js',
-  },
-  output: {
-    libraryTarget: 'commonjs2',
-    path: destinationPath,
-    filename: '[name].js'
+    'lib/core.js': './lib/core.js',
+    'lib/btle/child.js': './lib/btle/child.js',
   },
   // Something about how we use relative paths in our modules messes up webpack
   // without a more specific modulesDirectories config.
@@ -64,17 +55,13 @@ const config = {
     extensions: ['', '.js', '.json'],
     alias: {
       'any-promise': require.resolve('./lib/shims/any-promise.js'),
+      'json3': require.resolve('./lib/shims/json3.js'),
     },
   },
   // Mark modules installed globally as external.
   externals: [
     external,
   ],
-  babel: {
-    presets: [
-      require('babel-preset-silk-node4'),
-    ],
-  },
   module: {
     loaders: [
       {
@@ -94,7 +81,7 @@ const config = {
     ],
   },
   plugins: [
-    new CopyWebpack([{ from:'package.json'}]),
+    new CopyWebpack([{ from: 'media', 'to': 'media' }]),
   ],
 };
 

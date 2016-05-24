@@ -9,11 +9,13 @@
   },
   "author": "Silk Labs Inc.",
   "symlinkDependencies": {
+    "silk-babel-run": "/babel-run",
+    "silk-init": "/pub/bsp-gonk/vendor/silk/init",
     "silk-caffe": "/device/vendor/propsilk/silk-caffe",
     "silk-camera": "/pub/bsp-gonk/vendor/silk/silk-camera",
     "silk-capture": "/pub/bsp-gonk/vendor/silk/silk-capture",
     "silk-cv": "/device/vendor/propsilk/silk-cv",
-    "silk-core-version": "/version",
+    "silk-core-version": "/pub/version",
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
     "silk-device-main": "/device/vendor/silk/core",
     "silk-gc1": "/device/vendor/propsilk/silk-gc1",
@@ -29,7 +31,6 @@
   },
   "dependencies": {
     "bleno": "0.3.4",
-    "kissfft": "silklabs/node-kissfft#7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c",
     "mic": "2.0.1",
     "noble": "1.3.0",
     "opencv": "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd",

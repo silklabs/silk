@@ -1,30 +1,39 @@
 #!/bin/bash -ex
 
-LOCAL_PATH=$(dirname $0)
-pushd $LOCAL_PATH/../silk-exttest/ > /dev/null
+# Resolve to realpath....
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-if [ ! -d node_modules/opencv ]; then
-  npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd
-fi
+cd $ROOT/../../../../../
 
-# Terrible hacks to install native things for exttext-ing while avoiding
-# conflicting with device binaries (ie, can't use symlinkDependencies...)
-if [ ! -d node_modules/silk-external-dlib ]; then
-  npm install ../../../../external-dlib
-fi
+ensure_native_built() {
+  local module=$1
+  local module_path=node_modules/$1
+  pwd
 
-if [ ! -d node_modules/silk-external-jade ]; then
-  npm install ../../../../external-jade
-fi
+  if [[ -f $module_path/binding.gyp ]]; then
+    local build_dir=$module_path/build
+    if [[ ! -d $build_dir  || -z $(find $build_dir -name '*.node') ]]; then
+      # JOBS=MAX causes -j<cores> in node-gyp.
+      JOBS=MAX npm build $module_path
+    fi
+  fi
+}
 
-if [ ! -d node_modules/silk-capture ]; then
-  npm install ../../opensilk/silk-capture
-fi
+modules=(
+  kissfft
+  opencv
+  silk-external-dlib
+  silk-external-jade
+  silk-capture
+  silk-cv
+)
 
-if [ ! -d node_modules/silk-cv ]; then
-  npm install ../../propsilk/silk-cv/
-fi
-
-popd
-
-exit 0
+for module in "${modules[@]}"; do
+  ensure_native_built $module
+done

@@ -26,10 +26,14 @@ addons:
       - libcvaux-dev
       - libhighgui-dev
       - libopencv-dev
+      - realpath
 
 install:
-  - pwd
   - source ../../../pub/travis/common_before_install.sh
+  - source ../../../setup
+# nasty hack to make node-kissfft always present in the tree ...
+  - git clone git@github.com:silklabs/node-kissfft.git ../../external/node-kissfft
+  - core/install.sh
 
 script:
   - ./travis/script

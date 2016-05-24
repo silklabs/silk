@@ -48,7 +48,7 @@ async function addPreviewFrame(timestamp, image) {
 
 suite('test detectcat', function () {
   test('test detect cat init', async () => {
-    detectCat = require('../lib/detectcat')(env, cascade);
+    detectCat = require('../lib/detectcat')(env, cascade);  // eslint-disable-line import/no-require
     assert.notEqual(detectCat, null);
   });
 
@@ -65,7 +65,7 @@ suite('test detectcat', function () {
         let timestamp = Date.now();
         await addPreviewFrame(timestamp, files[count]);
         let [when, rects] = await Promise.race([
-          eventToPromise(timeline, 'cat'),
+          eventToPromise(timeline, 'cat', { array: true }),
           failOnTimeout(1000),
         ]);
         log.info(`when: ${when} rects: ${JSON.stringify(rects)}`);

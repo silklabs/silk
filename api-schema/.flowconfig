@@ -1,11 +1,20 @@
 [ignore]
 .*/build/.*
 .*/node_modules/babel*
+.*/node_modules/npm/.*
+.*/node_modules/json5/.*
+
+[libs]
+../server/interface/
+
+[include]
+../node_modules/
 
 [options]
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
+unsafe.enable_getters_and_setters=true
 
 [version]
 0.25.0

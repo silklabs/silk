@@ -2,12 +2,17 @@
 .*/build/.*
 .*/test/rntest/.*
 .*/node_modules/api-schema/.*
-.*/node_modules/aws-sdk-promise/.*
 .*/node_modules/jsonwebtoken/.*
-.*/node_modules/socket.io/.*
 .*/node_modules/socket.io-client/.*
 .*/node_modules/node-fetch/.*
 .*/node_modules/babel*
+.*/node_modules/npm/.*
+.*/node_modules/json5/.*
+.*/node_modules/config-chain/.*
+.*/node_modules/read-package-tree/.*
+
+[include]
+../node_modules
 
 [libs]
 ../server/interface/mocha.js

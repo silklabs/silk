@@ -1,6 +1,6 @@
-From ab7a34369e0ff67bafb49fbd1566cf3a5f22b4d6 Mon Sep 17 00:00:00 2001
-From: Michael Vines <mvines@silklabs.com>
-Date: Wed, 24 Feb 2016 13:58:05 -0800
+From f262b9f8666d9776f190a3a4a6dc4840b10f42f5 Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Sun, 22 May 2016 17:21:13 -0700
 Subject: [PATCH] Androidify
 
 ---
@@ -9,8 +9,8 @@ Subject: [PATCH] Androidify
  examples/car-detection.js  | 12 +++++-------
  examples/face-detection.js | 10 +++++-----
  lib/opencv.js              |  2 +-
- package.json               | 20 ++++++++------------
- 6 files changed, 28 insertions(+), 40 deletions(-)
+ package.json               |  3 +++
+ 6 files changed, 23 insertions(+), 28 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
@@ -136,7 +136,7 @@ index 0cc5fee..2d73b48 100755
    });
  });
 diff --git a/lib/opencv.js b/lib/opencv.js
-index dc043a0..f746093 100755
+index dc043a0..7af0a86 100755
 --- a/lib/opencv.js
 +++ b/lib/opencv.js
 @@ -3,7 +3,7 @@ var Stream = require('stream').Stream
@@ -144,15 +144,15 @@ index dc043a0..f746093 100755
    , path = require('path');
  
 -var cv = module.exports = require('./bindings');
-+var cv = module.exports = require('build/opencv.node');
++var cv = module.exports = require('../build/Release/opencv.node');
  
  var Matrix = cv.Matrix
    , VideoCapture = cv.VideoCapture
 diff --git a/package.json b/package.json
-index 0c3e7d4..a93ad0c 100644
+index 0c3e7d4..e039669 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,12 +3,16 @@
+@@ -3,6 +3,9 @@
    "version": "5.0.0",
    "description": "Node Bindings to OpenCV",
    "author": "Peter Braden <peterbraden@peterbraden.co.uk>",
@@ -160,49 +160,8 @@ index 0c3e7d4..a93ad0c 100644
 +    "android"
 +  ],
    "dependencies": {
-+    "browserify": "^10.2.1",
      "buffers": "^0.1.1",
      "nan": "^2.0.9",
-     "node-pre-gyp": "^0.6.11"
-   },
--  "devDependencies": {
-+  "__devDependencies": {
-     "tape": "^3.0.0",
-     "aws-sdk": "~2.1.20",
-     "glob": "^5.0.3",
-@@ -19,9 +23,7 @@
-   ],
-   "license": "MIT",
-   "scripts": {
--    "build": "node-gyp build",
--    "test": "node test/unit.js",
--    "install": "node-pre-gyp install --fallback-to-build"
-+    "postinstall": "mkdir -p build/ ; browserify lib/opencv.js --node --ignore-missing --standalone __ignored --outfile build/index.js"
-   },
-   "keywords": [
-     "opencv",
-@@ -29,7 +31,7 @@
-     "vision",
-     "quadrocopter"
-   ],
--  "main": "./lib/opencv",
-+  "main": "build/index.js",
-   "repository": {
-     "type": "git",
-     "url": "https://github.com/peterbraden/node-opencv.git"
-@@ -37,11 +39,5 @@
-   "engines": {
-     "node": ">=0.12"
-   },
--  "binary": {
--    "module_name": "opencv",
--    "module_path": "./build/{module_name}/v{version}/{configuration}/{node_abi}-{platform}-{arch}/",
--    "remote_path": "./{module_name}/v{version}/{configuration}/",
--    "package_name": "{node_abi}-{platform}-{arch}.tar.gz",
--    "host": "https://node-opencv.s3.amazonaws.com"
--  }
-+  "gypfile": true
- }
 -- 
-1.9.1
+2.7.3
 

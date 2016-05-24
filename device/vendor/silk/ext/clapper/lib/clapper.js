@@ -48,7 +48,7 @@ class Clapper {
       fftWindowStep: 128, // 8ms - units of samples @ 16KHz
     };
 
-    let audioTools = require('./audioTools')(env);
+    let audioTools = require('./audioTools')(env); // eslint-disable-line import/no-require
     this._fftProcessor = new audioTools.FftProcessor(fftCfg);
 
     this._initClapDetector();
@@ -84,7 +84,7 @@ class Clapper {
       maxEnergyDurationMs: maxEnergyDurationMs,
     };
 
-    let ClapDetector = require('./clapDetector')(this._env);
+    let ClapDetector = require('./clapDetector')(this._env); // eslint-disable-line import/no-require
     this._clapDetector = new ClapDetector(cfg);
 
     this._onClap = clap => {
@@ -132,7 +132,7 @@ class Clapper {
       maxEnergyDurationMs: 5000,
     };
 
-    let LoudSoundDetector = require('./loudSoundDetector')(this._env);
+    let LoudSoundDetector = require('./loudSoundDetector')(this._env); // eslint-disable-line import/no-require
     this._loudSoundDetector = new LoudSoundDetector(cfg);
 
     this._onLoudSound = () => {

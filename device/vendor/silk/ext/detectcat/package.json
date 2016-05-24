@@ -2,23 +2,29 @@
   "name": "detectcat",
   "version": "0.0.1",
   "description": "Cat detector",
-  "main": "detectcat.js",
+  "main": "./lib/detectcat.js",
   "scripts": {
     "postinstall": "./bin/postinstall",
     "pretest": "pretest",
     "test": "runtest",
-    "clean": "rm -rf node_modules"
+    "clean": "rm -rf node_modules",
+    "posttest": "eslint test lib"
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
-    "silk-log": "/log"
+    "silk-log": "/pub/log"
+  },
+  "dependencies": {
+    "babel-runtime": "6.9.0"
   },
   "devDependencies": {
-    "event-to-promise": "0.4.0",
-    "mocha": "2.4.2",
-    "mz": "2.2.0"
+    "event-to-promise": "0.5.0",
+    "mocha": "2.4.5",
+    "mz": "2.4.0",
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
   },
   "private": true
 }

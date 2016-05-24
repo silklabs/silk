@@ -3,7 +3,7 @@ import id from '../src/access_token';
 import base64url from 'base64url';
 
 import jwa from '../src/jwa';
-import jwt from 'jsonwebtoken';
+import jwt from 'silk-jsonwebtoken';
 
 suite('jwa via jwt', () => {
   test('valid', () => {

@@ -1,7 +1,7 @@
 /* @flow */
 
 import jwa from 'silk-api/src/jwa';
-import jwt from 'jsonwebtoken';
+import jwt from 'silk-jsonwebtoken';
 import * as Joi from 'joi';
 import createLog from 'silk-log';
 

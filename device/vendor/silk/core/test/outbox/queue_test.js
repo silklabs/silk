@@ -17,7 +17,6 @@ suite('Queue', () => {
   async function cleanup() {
     await exec(`rm -rf ${FIXTURE_DIR}`);
   }
-
   setup(cleanup);
   teardown(cleanup);
 
@@ -36,7 +35,7 @@ suite('Queue', () => {
       fs.writeFile(path.join(storagePath, '3'), ''),
 
       // Not number junk wtf is this stuff
-      fs.writeFile(path.join(storagePath, '.imessyouup')),
+      fs.writeFile(path.join(storagePath, '.imessyouup'), ''),
       mkdirp(path.join(storagePath, '.imessyouupdir')),
     ]);
 

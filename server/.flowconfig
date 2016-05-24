@@ -9,10 +9,15 @@
 .*/node_modules/node-fetch/.*
 .*/node_modules/silk-api/node_modules/babel.*
 .*/node_modules/babel.*
+.*/node_modules/npm/.*
+.*/node_modules/json5/.*
+.*/node_modules/config-chain/.*
+.*/node_modules/read-package-tree/.*
 .*babel-eslint.*
 .*api-schema.*
 
 [include]
+../node_modules
 
 [libs]
 interface

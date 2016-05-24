@@ -24,6 +24,7 @@ const SILK_PROPS = 'system/silk/silk-props.json';
 
 let props;
 if (process.platform === 'android') {
+  // $FlowFixMe: Require to file flow cannot find ...
   props = require('silk-properties'); //eslint-disable-line
 } else {
   // TODO: Ideally silk-properties as is would work on the host

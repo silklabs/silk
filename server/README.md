@@ -4,6 +4,12 @@ This is the main silk server.
 
 ## Install
 
+First run:
+
+```sh
+./install.sh
+```
+
 You need the following:
 
   - node 0.12
@@ -25,11 +31,6 @@ You need at least mongod >= 3.0.3.  The default package included with Ubuntu 14.
 [Follow the instructions here](https://hostpresto.com/community/tutorials/how-to-install-mongo-db-on-ubuntu-14-04/) to install v3.2.0 (at the time of this writing).
 
 ## Usage
-
-To translate the source files:
-```bash
-npm install
-```
 
 To run the test suite:
 ```bash

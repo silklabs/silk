@@ -2,7 +2,7 @@
   "name": "silk-capture",
   "version": "1.0.0",
   "description": "VideoCapture",
-  "main": "silk-capture.node",
+  "main": "build/Release/silk-capture.node",
   "scripts": {
     "install": "node-gyp rebuild",
     "preinstall": "./bin/preinstall",

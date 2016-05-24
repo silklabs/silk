@@ -6,17 +6,17 @@
   "license": "proprietary",
   "symlinkDependencies": {
     "api-schema": "/api-schema",
-    "eslint-config-silk": "/eslint",
-    "jsonwebtoken": "/jsonwebtoken",
-    "silk-core-version": "/version",
-    "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log",
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-jsonwebtoken": "/jsonwebtoken",
+    "silk-core-version": "/pub/version",
+    "silk-flow-bin": "/pub/flow-bin",
+    "silk-log": "/pub/log",
     "silk-babeldeps": "/babeldeps",
     "silk-http": "/http"
   },
   "dependencies": {
-    "babel-runtime": "6.3.19",
-    "babel-eslint": "5.0.0",
+    "babel-runtime": "6.9.0",
+    "babel-eslint": "6.0.4",
     "base64url": "1.0.5",
     "elliptic": "5.2.1",
     "hash.js": "1.0.3",
@@ -31,7 +31,7 @@
   "devDependencies": {
     "eslint": "1.10.3",
     "express": "4.13.3",
-    "mocha": "2.3.4"
+    "mocha": "2.4.5"
   },
   "engines": {
     "node": "0.12.x || >=4.0.0"

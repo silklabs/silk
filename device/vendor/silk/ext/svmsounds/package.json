@@ -2,13 +2,22 @@
   "name": "svmsounds",
   "version": "0.0.1",
   "description": "Demo of sound recognition with SVMs",
-  "main": "svmsounds.js",
+  "main": "./lib/svmsounds.js",
   "scripts": {
-    "postinstall": "./bin/postinstall"
+    "postinstall": "./bin/postinstall",
+    "posttest": "eslint test lib",
+    "test": "echo \"\""
   },
   "symlinkDependencies": {
     "silk-audio": "/audio",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
   },
-  "private": true
+  "dependencies": {
+    "babel-runtime": "6.9.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  }
 }

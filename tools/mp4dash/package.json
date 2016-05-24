@@ -15,19 +15,19 @@
     "combine": "DEBUG=silk-* ../../babel-run/babel-node ./src/m4s_combinator.js"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
+    "eslint-config-silk": "/pub/eslint-config",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
     "silk-cam": "/cam",
-    "silk-flow-bin": "/flow-bin",
-    "silk-log": "/log"
+    "silk-flow-bin": "/pub/flow-bin",
+    "silk-log": "/pub/log"
   },
   "dependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
     "fs-extra": "0.26.5",
-    "mz": "2.0.0",
-    "socket.io-client": "1.4.5"
+    "mz": "2.4.0",
+    "socket.io-client": "1.4.6"
   },
   "eslintConfig": {
     "extends": "eslint-config-silk"

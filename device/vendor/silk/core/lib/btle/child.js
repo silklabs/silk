@@ -236,12 +236,13 @@ class BluetoothLEChild {
     this._onPublicKeys(message.publicKeys);
     this._onBeaconInfo(message.beaconInfo);
 
+    this._desiredMode = message.mode;
+
     // Wait for the adapter to start.
     await this._adapterStateDeferred.promise;
 
-    if (this._mode !== message.mode) {
-      await this._changeMode(message.mode);
-    }
+    // Switch to the proper mode.
+    await this._changeMode(message.mode);
 
     this._sendMessage({
       name: `initialized`,

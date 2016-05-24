@@ -1,14 +1,14 @@
-From 96cf2bd2681eefdea49554f30cb0b3bb3d54d195 Mon Sep 17 00:00:00 2001
+From f6536113ddf07f0f8e0d5379ccf2e3eb83c5ac39 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
-Date: Tue, 29 Sep 2015 15:57:34 -0700
+Date: Sun, 22 May 2016 22:56:50 -0700
 Subject: [PATCH] Androidify
 
 ---
  Android.mk     |  7 +++++++
  binding.gyp    | 22 ++++++++++------------
- package.json   | 21 ++++++++-------------
+ package.json   | 11 ++++-------
  v8-profiler.js |  4 +---
- 4 files changed, 26 insertions(+), 28 deletions(-)
+ 4 files changed, 22 insertions(+), 22 deletions(-)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
@@ -58,7 +58,7 @@ index ba0425b..02edd73 100644
    ]
  }
 diff --git a/package.json b/package.json
-index acdedb5..681da78 100644
+index acdedb5..31708c0 100644
 --- a/package.json
 +++ b/package.json
 @@ -4,6 +4,9 @@
@@ -86,32 +86,8 @@ index acdedb5..681da78 100644
    "keywords": [
      "profiler",
      "inspector"
-@@ -32,19 +29,17 @@
-   "engines": {
-     "node": ">=0.10"
-   },
--  "main": "v8-profiler",
-+  "main": "build/index.js",
-   "dependencies": {
--    "node-pre-gyp": "^0.6.5",
-+    "browserify": "^10.2.1",
-     "nan": "~2.0.5"
-   },
--  "devDependencies": {
-+  "__devDependencies": {
-     "aws-sdk": "^2.0.0",
-     "mocha": "^1.20.1",
-     "chai": "^1.9.1"
-   },
-   "scripts": {
--    "preinstall": " ",
--    "install": "node-pre-gyp install --fallback-to-build",
--    "test": "mocha"
-+    "postinstall": "mkdir -p build/ ; browserify v8-profiler.js --node --ignore-missing --standalone __ignored --outfile build/index.js"
-   }
- }
 diff --git a/v8-profiler.js b/v8-profiler.js
-index 9f00a05..f5fb951 100644
+index 9f00a05..d7fbcd5 100644
 --- a/v8-profiler.js
 +++ b/v8-profiler.js
 @@ -1,7 +1,5 @@
@@ -119,10 +95,10 @@ index 9f00a05..f5fb951 100644
  var path = require('path');
 -var binding_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
 -var binding = require(binding_path);
-+var binding = require('build/profiler.node');
++var binding = require('build/Release/profiler.node');
  
  var Stream = require('stream').Stream,
      inherits = require('util').inherits;
 -- 
-2.7.4 (Apple Git-66)
+2.7.3
 

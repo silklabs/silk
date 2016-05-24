@@ -1,0 +1,10 @@
+node_modules
+lib-cov
+coverage.html
+npm-debug.log
+*.tgz
+*.patch
+*.diff
+test
+Makefile
+.travis.yml

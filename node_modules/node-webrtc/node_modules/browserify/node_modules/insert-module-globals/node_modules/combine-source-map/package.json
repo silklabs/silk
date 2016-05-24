@@ -1,0 +1,76 @@
+{
+  "name": "combine-source-map",
+  "version": "0.7.2",
+  "description": "Add source maps of multiple files, offset them and then combine them into one source map",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/thlorenz/combine-source-map.git"
+  },
+  "homepage": "https://github.com/thlorenz/combine-source-map",
+  "dependencies": {
+    "convert-source-map": "~1.1.0",
+    "inline-source-map": "~0.6.0",
+    "lodash.memoize": "~3.0.3",
+    "source-map": "~0.5.3"
+  },
+  "devDependencies": {
+    "tap": "~0.4.3"
+  },
+  "keywords": [
+    "source",
+    "map",
+    "sourcemap",
+    "bundle",
+    "combine",
+    "cat",
+    "sourceMappingUrl",
+    "browserify"
+  ],
+  "author": {
+    "name": "Thorsten Lorenz",
+    "email": "thlorenz@gmx.de",
+    "url": "http://thlorenz.com"
+  },
+  "license": "MIT",
+  "engine": {
+    "node": ">=0.6"
+  },
+  "gitHead": "5a748c8677e48fbf17c7e23f2eabd0cbf67f787e",
+  "bugs": {
+    "url": "https://github.com/thlorenz/combine-source-map/issues"
+  },
+  "_id": "combine-source-map@0.7.2",
+  "_shasum": "0870312856b307a87cc4ac486f3a9a62aeccc09e",
+  "_from": "combine-source-map@>=0.7.1 <0.8.0",
+  "_npmVersion": "3.8.3",
+  "_nodeVersion": "5.10.1",
+  "_npmUser": {
+    "name": "zertosh",
+    "email": "zertosh@gmail.com"
+  },
+  "dist": {
+    "shasum": "0870312856b307a87cc4ac486f3a9a62aeccc09e",
+    "tarball": "https://registry.npmjs.org/combine-source-map/-/combine-source-map-0.7.2.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "thlorenz",
+      "email": "thlorenz@gmx.de"
+    },
+    {
+      "name": "zertosh",
+      "email": "zertosh@gmail.com"
+    }
+  ],
+  "_npmOperationalInternal": {
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/combine-source-map-0.7.2.tgz_1460525548276_0.7049165181815624"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/combine-source-map/-/combine-source-map-0.7.2.tgz",
+  "readme": "ERROR: No README data found!"
+}

@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {},
   "peerDependencies": {
-    "babel-eslint": "5.0.0",
+    "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1"
   }

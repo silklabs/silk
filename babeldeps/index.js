@@ -18,8 +18,9 @@ const PACKAGE_ROOTS = pkgFinder();
   path.join(__dirname, '..'),
 
   // babel bootstrapping ...
-  path.join(__dirname, '..', 'babel'),
-  path.join(__dirname, '..', 'babel-preset-silk-node4'),
+  path.join(__dirname, '..', 'pub', 'babel-core'),
+  path.join(__dirname, '..', 'pub', 'babel-preset-silk-node4'),
+  path.join(__dirname, '..', 'pub', 'babel-register'),
 
   // Created when babel was harder to use and makes supporting app harder since
   // it requires relative plugins for in tree stuff (yay babel6).
@@ -30,8 +31,8 @@ const PACKAGE_ROOTS = pkgFinder();
 
   // Do not accidentally assume CLI is babelified it should be doing this
   // internally so it works the same under OSS environments...
-  path.join(__dirname, '..', 'cli'),
-  path.join(__dirname, '..', 'sdk'),
+  path.join(__dirname, '..', 'pub', 'cli'),
+  path.join(__dirname, '..', 'pub', 'sdk'),
 
   // This module contains delicate emscripten'd code that breaks when
   // babel-ified.  C'est la guerre.

@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# ( The android build system will pass us source, dest)
+DEST=${2:-.}
+
 # Heroku defines SOURCE_VERSION because the .git/ is not available, so use it if
 # present and otherwise consult git
 if [[ -z "$SOURCE_VERSION" ]]; then
@@ -16,8 +19,8 @@ elif [[ -n $CI ]]; then  # CI environment?
   fi
 fi
 
-mkdir -p dist
-cat > dist/index.json <<-EOF
+mkdir -p $DEST/dist
+cat > $DEST/dist/index.json <<-EOF
 	{
 	  "branch": "$(source branch; echo $BRANCH)",
 	  "buildtime": "$(node -p "Date.now()")",
@@ -27,4 +30,8 @@ cat > dist/index.json <<-EOF
 	  "sha": "$SOURCE_VERSION"
 	}
 EOF
-cat dist/index.json
+cat $DEST/dist/index.json
+
+if [[ ! -f $DEST/package.json ]]; then
+  cp package.json $DEST/package.json
+fi

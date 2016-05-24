@@ -1,16 +1,16 @@
-From 7d554267879405b3bbbc0f2d723a1c6b9f7dda2b Mon Sep 17 00:00:00 2001
-From: Chris Jones <chris@silklabs.com>
-Date: Sun, 21 Jun 2015 22:14:38 -0700
-Subject: [PATCH] Android Bluedroid bindings
+From 2e1b0a073bc0faa244c6493d41f82d554d6b5e5b Mon Sep 17 00:00:00 2001
+From: James Lal <james@silklabs.com>
+Date: Sun, 22 May 2016 18:58:52 -0700
+Subject: [PATCH] Androidify
 
 ---
  Android.mk              |   7 +
  binding.gyp             |  38 -----
  lib/android/bindings.js | 371 ++++++++++++++++++++++++++++++++++++++++++++++++
  lib/bleno.js            |   2 +
- package.json            |  13 +-
+ package.json            |   6 +-
  test.js                 |   3 +-
- 6 files changed, 388 insertions(+), 46 deletions(-)
+ 6 files changed, 383 insertions(+), 44 deletions(-)
  create mode 100644 Android.mk
  delete mode 100644 binding.gyp
  create mode 100644 lib/android/bindings.js
@@ -463,37 +463,10 @@ index bf8dd6c..61454e8 100644
    throw new Error('Unsupported platform');
  }
 diff --git a/package.json b/package.json
-index d951f35..29e594f 100644
+index d951f35..2321596 100644
 --- a/package.json
 +++ b/package.json
-@@ -2,15 +2,17 @@
-   "name": "bleno",
-   "version": "0.1.13",
-   "description": "A node.js module for implementing BLE (Bluetooth low energy) peripherals",
--  "main": "index.js",
-+  "main": "build/index.js",
-   "engines": {
-     "node": ">=0.8"
-   },
-   "os": [
-+    "android",
-     "darwin",
-     "linux"
-   ],
-   "scripts": {
-+    "postinstall": "mkdir -p build/ ; browserify index.js --node --ignore-missing --standalone __ignored --outfile build/index.js",
-     "pretest": "jshint *.js lib/. test/. examples/.",
-     "test": "mocha -R spec test/*.js"
-   },
-@@ -28,17 +30,14 @@
-   "author": "Sandeep Mistry",
-   "license": "MIT",
-   "readmeFilename": "README.md",
--  "devDependencies": {
-+  "__devDependencies": {
-     "jshint": "~2.3.0",
-     "should": "~2.0.2",
-     "mocha": "~1.14.0",
+@@ -35,10 +35,6 @@
      "node-blink1": "~0.1.1"
    },
    "dependencies": {
@@ -502,7 +475,6 @@ index d951f35..29e594f 100644
 -  "optionalDependencies": {
 -    "xpc-connection": "~0.1.3",
 -    "bplist-parser": "0.0.6"
-+    "browserify": "^10.2.1",
 +    "debug": "2.2.0"
    }
  }
@@ -521,5 +493,5 @@ index d1c8ea1..9b3284f 100644
      bleno.stopAdvertising();
    }
 -- 
-2.7.0
+2.7.3
 

@@ -4,8 +4,9 @@
   "description": "Holds the silk-core version number",
   "main": "dist/index.json",
   "scripts": {
-    "preinstall": "./preinstall"
+    "preinstall": "./preinstall",
+    "silk-build-gonk": "./preinstall $@"
   },
-  "license": "proprietary",
+  "license": "proprietary-z",
   "private": true
 }

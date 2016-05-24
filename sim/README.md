@@ -47,7 +47,6 @@ $ sudo usermod -a -G video $(whoami)  # Ensure you have access to the camera at 
 Ensure you have the `silk` cli set up:
 ```
 $ source setup
-$ pushd cli-plugin-internal; npm install; popd
 ```
 
 And that the cli is authenticated:
@@ -71,24 +70,10 @@ $ silk configure -s sim -n MySimulator blah blah
 You're now ready to install and run the simulator:
 
 ```
-$ npm install
+# Run ../install.sh if you get warnings about missing modules...
+# This will recompile any native modules needed.
+$ ../install.sh
 $ ./start
 ```
 
-# Rebuilding only device-core or extensions
-
-After installing for the first time:
-```
-$ pushd sim/system/silk/node_modules/silk-device/
-$ npm install
-$ popd
-$ ./start
-```
-
-or:
-```
-$ pushd sim/system/silk/ext/trackobject/
-$ npm install
-$ popd
-$ ./start
-```
+Any changes made in core, extensions, etc.. will automatically be picked up on the next `./start`

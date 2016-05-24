@@ -3,8 +3,12 @@
   "version": "0.16.0",
   "description": "Holds the silk-core version number",
   "main": "index.js",
+  "browser": {
+    "index.js": "./dist/index.json"
+  },
   "scripts": {
     "silk-build-gonk": "./build $@",
+    "postinstall": "./build",
     "test": "./test.sh"
   },
   "license": "proprietary-z",

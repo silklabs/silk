@@ -2,8 +2,10 @@
   "ignored": [
     "pub/babel-preset-silk-node4",
     "pub/babel",
+    "pub/log",
 
     "pub/cli",
+    "audio",
     "cli-plugin-internal",
     "cli-npm",
     "api",
@@ -17,7 +19,12 @@
     "server",
     "tools/mp4dash",
     "utils",
-    "cam"
+    "cam",
+    "webapp",
+    "docs",
+    "raygun",
+    "rtc",
+    "svm"
   ],
   "restrict": {
     "app": ["package.json"],

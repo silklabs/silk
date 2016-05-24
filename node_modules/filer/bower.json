@@ -1,0 +1,15 @@
+{
+  "name": "filer",
+  "version": "0.0.44",
+  "main": "dist/filer.js",
+  "ignore": [
+    "build",
+    "examples",
+    "package.json",
+    "tests",
+    "gruntfile.js",
+    "node_modules",
+    "src",
+    "tools"
+  ]
+}

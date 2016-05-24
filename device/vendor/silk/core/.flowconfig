@@ -16,6 +16,9 @@ interface/
 .*/node_modules/read-package-tree/.*
 .*/node_modules/config-chain/.*
 .*/node_modules/watchify.*
+.*/node_modules/bower-json/.*
+.*/node_modules/registry-url/.*
+
 .*/cam/.*
 .*/propsilk/silk-cv/interface/.*
 

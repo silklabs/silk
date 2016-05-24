@@ -56,4 +56,8 @@ fi
 set -x
 cp -fL $serverConfigDir/Procfile .
 cd $serverConfigDir/rootdir/
-npm install
+
+ls $serverConfigDir/rootdir/
+if [[ -x $serverConfigDir/rootdir/herokuinstall.sh ]]; then
+  $serverConfigDir/rootdir/herokuinstall.sh
+fi

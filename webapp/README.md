@@ -12,8 +12,8 @@ express HTTP server.
 
 ### Setup
 
-```
-npm install
+```sh
+./install.sh
 ```
 
 If working with a local server create the file `config.local.json` at the root
@@ -33,7 +33,7 @@ during development.
 To start the webpack development server running on
 [http://localhost:8000/](http://localhost:8000/) run
 ```
-npm start
+BABEL_CACHE=1 npm start
 ```
 Any edits to `src/` should then be picked up automatically and rebuilt.  The
 static content in `public/` maybe edited in place.

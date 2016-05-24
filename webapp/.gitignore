@@ -2,7 +2,6 @@
 *~
 .DS_Store
 /config.local.json
-/node_modules/
 /npm-debug.log
 /public/js/android.js
 /public/js/android.js.map

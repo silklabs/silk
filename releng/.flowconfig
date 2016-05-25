@@ -1,11 +1,27 @@
 [include]
 lib/
+../node_modules
+../pub/node_modules
 
 [ignore]
 .*/node_modules/fbjs/.*
 .*/node_modules/babel.*
 .*/node_modules/json5/test.*
 .*/node_modules/assert/.*
+.*/node_modules/npm.*
+.*/node_modules/read-package-tree/.*
+.*/node_modules/config-chain/.*
+.*/node_modules/registry-url/.*
+.*/node_modules/bower-json/.*
+
+.*/device/vendor/propsilk/.*
+.*/device/vendor/silk/core/.*
+.*/server/.*
+.*/rtc/.*
+.*/api/test/.*
+.*/api-schema/.*
+.*/azure-storage/.*
+.*/pub/bsp-gonk/vendor/silk/.*
 
 [options]
 module.system=node

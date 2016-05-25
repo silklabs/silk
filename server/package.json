@@ -11,7 +11,8 @@
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-streams": "/streams",
-    "silk-utils": "/utils"
+    "silk-utils": "/utils",
+    "silk-babel-run": "/babel-run"
   },
   "dependencies": {
     "aliyun-oss": "1.1.0",

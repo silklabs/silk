@@ -258,7 +258,11 @@ const builds = {
     ],
   }),
   'networktest': npmPackageBuild('networktest', {
-    events: ['nightly'],
+    files: [
+      'networktest/**',
+      'server/**',
+    ],
+    events: ['pr', 'push', 'nightly'],
   }),
   'releng': npmPackageBuild('releng'),
   'server': npmPackageBuild('server'),

@@ -36,7 +36,6 @@ GITS="\
   libwebrtc \
   node-webrtc \
   qualcomm-developer-network \
-  silk-device-locked-node-modules \
   silk-dnn \
   silk-trainingset \
   vendor-qcom-msm8956 \

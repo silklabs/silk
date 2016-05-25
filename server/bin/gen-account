@@ -1,4 +1,4 @@
-#! ./node_modules/.bin/babel-node --harmony
+#! ./node_modules/.bin/babel-node
 /**
  * This is a CLI helper for generating account details such as
  * public/private key, email and password. This is intended to be used to create

@@ -1,4 +1,4 @@
-#! ./node_modules/.bin/babel-node --harmony
+#! ./node_modules/.bin/babel-node
 /**
 Helper utility for sending emails because of the #! above this may only work on
 OSX and some more common versions of linux.

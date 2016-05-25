@@ -50,6 +50,7 @@
     "ws": "1.0.1"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "2.1.5",
     "babel-loader": "6.2.0",
     "json-loader": "0.5.4",
     "mocha": "2.4.5",

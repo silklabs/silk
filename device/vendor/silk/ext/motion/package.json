@@ -21,6 +21,7 @@
     "silk-log": "/pub/log"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "2.1.5",
     "event-to-promise": "0.5.0",
     "mocha": "2.4.5",
     "eslint": "1.10.3",

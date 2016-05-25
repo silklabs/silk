@@ -165,6 +165,7 @@ const builds = {
       'app/.flowconfig',
       'app/.eslintrc',
       'app/**/*.js',
+      'webapp/install.sh',
     ],
   }),
   'app-ios-debug': npmPackageBuild('app', {
@@ -172,6 +173,7 @@ const builds = {
     travis_yml: 'app/ios/travis/debug.yml',
     files: [
       'app/ios/**',
+      'webapp/install.sh',
     ],
   }),
   'app-ios-release': npmPackageBuild('app', {
@@ -185,6 +187,8 @@ const builds = {
     travis_yml: 'app/android/.travis.yml',
     files: [
       'app/android/**',
+      'webapp/src/android/**',
+      'webapp/install.sh',
     ],
     events: ['pr'],
   }),

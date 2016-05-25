@@ -9,15 +9,16 @@
 
 import caffe from 'silk-caffe';
 import fs from 'mz/fs';
+import path from 'path';
 
 import type { Env, Log } from 'silk-exttest/interface/env';
 
 let log: Log;
 
-const MODEL_PROTO = 'system/silk/media/dnn/model/googlenet/deploy.prototxt';
-const MODEL_BIN = 'system/silk/media/dnn/model/googlenet/bvlc_googlenet.caffemodel';
-const MODEL_DICTIONARY = 'system/silk/media/dnn/model/imagenet_dictionary.txt';
-const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
+const MODEL_PROTO = path.join(__dirname, '../model', 'deploy.prototxt');
+const MODEL_BIN = path.join(__dirname, '../model', 'bvlc_googlenet.caffemodel');
+const MODEL_DICTIONARY = path.join(__dirname, '../model', 'synset_words.txt');
+const MODEL_MEAN = path.join(__dirname, '../model', 'imagenet_mean.binaryproto');
 const TOPK = 5; // Return top K predictions for the given image
 
 const THRESHOLD = 12; // Ignore predictions with probability lower than threshold

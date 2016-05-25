@@ -10,7 +10,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.ui.inputevents=event0,event1 \
   ro.silk.clapper.rise.delta=25000 \
   ro.silk.clapper.min.thresh=30000 \
-  ro.silk.bt.socket.scan_dur_sec=5 \
+  ro.silk.bt.socket.scan_dur_ms=5000 \
   ro.silk.bt.socket.max_simul=1 \
 
 # Keep the default mako build slim by excluding all extensions.  Currently

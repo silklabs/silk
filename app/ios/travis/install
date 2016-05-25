@@ -8,4 +8,4 @@ source $(brew --prefix nvm)/nvm.sh
 nvm install 4.2
 
 npm config set spin=false
-npm install
+./install.internal.sh

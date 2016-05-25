@@ -1,3 +1,9 @@
+# Setting up
+
+In the normal README.md we reference using `npm install` this should
+still work but the preferred method is to use run
+`./install.internal.sh`.
+
 # Installing a CI build
 
 With a provisioned device (see below) connected to the computer via USB, you can download and install the latest build of the app via the following command:
@@ -74,4 +80,5 @@ To build a democonfig app package set up to run off an OS X local server over so
 3. Create a new package.json with only react-native /
    react-native-webpack-server
 4. Run `tools/npm_dedupe`
-5. Check in app/node_modules and node_modules
+5. Run `tools/postinstall`
+6. Check in app/node_modules and node_modules

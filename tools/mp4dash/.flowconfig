@@ -4,12 +4,15 @@
 ../../pub/node_modules/
 
 [ignore]
-.*/api/test/.*
 .*/node_modules/babel.*
 .*/node_modules/eslint.*
 .*/node_modules/config-chain/.*
 .*/node_modules/read-package-tree/.*
 .*/node_modules/npm/.*
+.*/node_modules/registry-url/.*
+.*/node_modules/bower-json/.*
+
+.*/api/test/.*
 .*/server/test/.*
 .*/server/src/.*
 .*/device/vendor/propsilk/silk-cv/interface/.*

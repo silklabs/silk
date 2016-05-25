@@ -35,7 +35,7 @@ SERVER_PATH="https://silk-device.s3.amazonaws.com/$BRANCH/latest/"
 BUILD_PROP=$SYSTEM_DIR/build.prop
 
 BASE_VERSION_JS=$(readlink -f $LOCAL_PATH/../vendor/silk/core/lib/base_version.js)
-SILK_CORE_VERSION_JSON=$(readlink -f $SYSTEM_DIR/silk/node_modules/silk-core-version.json)
+SILK_CORE_VERSION_JSON=$(readlink -f $SYSTEM_DIR/silk/node_modules/silk-core-version/)
 BASE_VERSION=$(node -p "require('$BASE_VERSION_JS')")
 CORE_VERSION=$(node -p "require('$SILK_CORE_VERSION_JSON').fingerprint")
 

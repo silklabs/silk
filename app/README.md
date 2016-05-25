@@ -54,6 +54,21 @@ For example to enable all logs possible (socket.io, etc..):
 }
 ```
 
+### Profiling
+
+The app can be profiled using the systrace integration available from React Native. You'll need the latest version of the `trace2html` command line tool as a prerequisite, installed in the normal search paths for the packager (e.g. `/usr/local/bin`). On OS X, you can use Homebrew to install it.
+
+First run
+```sh
+$ brew edit trace2html
+```
+Replace the entire formula with [this updated formula](https://gist.github.com/ndfred/ffef3b31b8d9034a160e6eff6b4b37ea), save and close, and then run
+```sh
+$ brew install trace2html
+```
+
+Then start the packager normally and run a Debug build on your device. Invoke the developer menu (shaking on iOS, menu button on Android) and start systrace profiling from there. Once you've performed the actions you want to profile, stop systrace profiling from the same menu. React Native will automatically upload the profiling data to the packager, which will run `trace2html` on the data and open the resulting HTML file in a browser (currently only Chrome is supported.)
+
 ## iOS
 
 ### Setting up a development environment

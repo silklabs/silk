@@ -5,6 +5,7 @@
 import invariant from 'assert';
 import getSocketManager from './SocketManager';
 import * as Joi from 'joi';
+import { Systrace } from 'react-native';
 import mklog from 'silk-log';
 
 import * as Metrics from '../../metrics/BTLE';
@@ -34,7 +35,7 @@ type MessageData = {
   name: string;
   // TODO: even better: do union `name`:
   // type MessageData = {...} | {...} | {...};
-  [arbitraryKey: string]: string;
+  [arbitraryKey: string]: any;
 };
 
 type RegistrationInformation = {
@@ -171,7 +172,7 @@ export class DeviceSession extends RobustEventEmitter {
   }
 
   _validateData(data: MessageData): boolean {
-    log.debug(`DeviceSession._validateData(%j)`, data);
+    log.debug(`DeviceSession._validateData()`, data.name);
 
     if (!data || (typeof data !== `object`)) {
       return false;
@@ -257,7 +258,17 @@ export class DeviceSession extends RobustEventEmitter {
   };
 
   _onData: ((data: MessageData) => void) = (data) => {
-    log.debug(`DeviceSession._onData()`, data);
+    if (__DEV__) {
+      Systrace.beginEvent(`ble.DeviceManager._onData('${data.name}')`);
+    }
+    this._onDataImpl(data);
+    if (__DEV__) {
+      Systrace.endEvent();
+    }
+  };
+
+  _onDataImpl(data: MessageData) {
+    log.debug(`DeviceSession._onData()`, data.name);
 
     if (!this._validateData(data)) {
       this._forceDisconnect();
@@ -415,9 +426,7 @@ export class DeviceSession extends RobustEventEmitter {
     default:
       throw new Error(`Unhandled message: '${data.name}'`);
     }
-
-    this._forceDisconnect();
-  };
+  }
 
   _onRssiUpdate: ((rssi: number) => void) = (rssi) => {
     log.debug(`DeviceSession._onRssiUpdate(${rssi})`);
@@ -606,7 +615,7 @@ export class DeviceSession extends RobustEventEmitter {
   };
 }
 
-class DeviceManager extends RobustEventEmitter {
+export class DeviceManager extends RobustEventEmitter {
 
   _devices: Map<Socket, DeviceSession> = new Map();
   _socketManager: EventEmitter;

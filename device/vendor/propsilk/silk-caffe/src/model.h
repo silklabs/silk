@@ -69,15 +69,18 @@ class Model : public Nan::ObjectWrap {
 public:
   static void Init(v8::Local<v8::Object> exports);
   vector<Prediction> Classify(const cv::Mat& img, int topK);
+  vector<Prediction> Classify(vector<vector<float>> &array, int topK);
 
 private:
   explicit Model();
   ~Model();
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  vector<float> Predict(const cv::Mat& img);
+  template<typename Dtype> vector<Prediction> Predict(Blob<Dtype>* blob, int topK);
   cv::Mat Preprocess(const cv::Mat& img);
   template<typename Dtype> void cvMatToBlob(const cv::Mat& image,
+      Blob<Dtype>* blob);
+  template<typename Dtype> void arrayToBlob(vector<vector<float>> &array,
       Blob<Dtype>* blob);
 
   JSFUNC(Load);

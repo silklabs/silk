@@ -259,9 +259,10 @@ NAN_METHOD(Model::SetLabels) {
 /**
  * Async wrapper for predictTopK API
  */
+template <class T>
 class PredictAsyncWorker: public Nan::AsyncWorker {
 public:
-  PredictAsyncWorker(Nan::Callback *callback, Model* model, cv::Mat mat,
+  PredictAsyncWorker(Nan::Callback *callback, Model* model, T mat,
       int topK):
     Nan::AsyncWorker(callback),
     model(model),
@@ -298,7 +299,7 @@ public:
 
 private:
   Model* model;
-  cv::Mat mat;
+  T mat;
   int topK;
   vector<Prediction> predictions;
 };
@@ -313,16 +314,32 @@ NAN_METHOD(Model::PredictTopK) {
     JSTHROW("Image matrix, topK and callback function must be provided");
   }
 
-  cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
-      info[0]->ToObject())->mat;
-
   int topK = 0;
   INT_FROM_ARGS(topK, 1);
 
   REQ_FUN_ARG(2, cb);
 
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
-  Nan::AsyncQueueWorker(new PredictAsyncWorker(callback, self, mat, topK));
+
+  if (info[0]->IsArray()) {
+    vector<vector<float>> array;
+    Handle<Array> rows = Handle<Array>::Cast(info[0]);
+    for (int h = 0; h < rows->Length(); ++h) {
+      Handle<Array> cols = Handle<Array>::Cast(rows->Get(h));
+      vector<float> column;
+      for (int w = 0; w < cols->Length(); ++w) {
+        float val = cols->Get(w)->NumberValue();
+        column.push_back(val);
+      }
+      array.push_back(column);
+    }
+    Nan::AsyncQueueWorker(new PredictAsyncWorker<vector<vector<float>>>(callback,
+        self, array, topK));
+  } else {
+    cv::Mat mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(
+        info[0]->ToObject())->mat;
+    Nan::AsyncQueueWorker(new PredictAsyncWorker<cv::Mat>(callback, self, mat, topK));
+  }
 }
 
 /**
@@ -522,25 +539,9 @@ NAN_METHOD(Model::Rcnn) {
 }
 
 /**
- * Return the top K predictions
+ * Return the top K predictions on a cv::Mat
  */
 vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
-  vector<float> output = Predict(img);
-
-  vector<int> maxK = Argmax(output, topK);
-  vector<Prediction> predictions;
-  for (int i = 0; i < topK; ++i) {
-    int idx = maxK[i];
-    predictions.push_back(make_pair(labels[idx], output[idx]));
-  }
-
-  return predictions;
-}
-
-/**
- * Runs forward pass for the whole network
- */
-vector<float> Model::Predict(const cv::Mat& img) {
   cv::Mat newImg = Preprocess(img);
 
   // Convert opencv matrix to Blob
@@ -548,6 +549,28 @@ vector<float> Model::Predict(const cv::Mat& img) {
       newImg.cols);
   cvMatToBlob(newImg, blob);
 
+  return Predict(blob, topK);
+}
+
+/**
+ * Return the top K predictions on array representing a 2D array
+ */
+vector<Prediction> Model::Classify(vector<vector<float>> &array, int topK) {
+  int numRows = array.size();
+  int numColumns = array[0].size();
+
+  // Convert vector to Blob
+  Blob<float>* blob = new Blob<float>(1, 1, numRows, numColumns);
+  arrayToBlob(array, blob);
+
+  return Predict(blob, topK);
+}
+
+/**
+ * Runs forward pass for the whole network
+ */
+template<typename Dtype>
+vector<Prediction> Model::Predict(Blob<Dtype>* blob, int topK) {
   // Fill the bottom vector
   vector<Blob<float>*> bottom;
   bottom.push_back(blob);
@@ -563,7 +586,16 @@ vector<float> Model::Predict(const cv::Mat& img) {
   Blob<float>* output_layer = caffeNet->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
-  return vector<float>(begin, end);
+  vector<float> output  = vector<float>(begin, end);
+
+  vector<int> maxK = Argmax(output, topK);
+  vector<Prediction> predictions;
+  for (int i = 0; i < topK; ++i) {
+    int idx = maxK[i];
+    predictions.push_back(make_pair(labels[idx], output[idx]));
+  }
+
+  return predictions;
 }
 
 /**
@@ -629,6 +661,20 @@ void Model::cvMatToBlob(const cv::Mat& image, Blob<Dtype>* blob) {
     for (int h = 0; h < image.rows; ++h) {
       for (int w = 0; w < image.cols; ++w) {
         data[blob->offset(0, c, h, w)] = static_cast<Dtype>(image.at<cv::Vec3f> (h, w)[c]);
+      }
+    }
+  }
+}
+
+template<typename Dtype> void Model::arrayToBlob(vector<vector<float>> &array,
+    Blob<Dtype>* blob) {
+  const int numChannels = 1;
+  float* data = blob->mutable_cpu_data();
+
+  for (int c = 0; c < numChannels; ++c) {
+    for (int h = 0; h < array.size(); ++h) {
+      for (int w = 0; w < array[h].size(); ++w) {
+        data[blob->offset(0, c, h, w)] = array[h][w];
       }
     }
   }

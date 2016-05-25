@@ -40,8 +40,8 @@ For a new module with new dependencies.
 
 1. Add dependencies to the package.json
 2. Run `silk npm-install <path>`
-3. Check in (`git add`) <path>/node_modules/
-4. Check in (`git add`) <silk core>/node_modules
+3. Check in (`git add`) `<path>`/node_modules/
+4. Check in (`git add`) `<silk core>`/node_modules
 
 NOTE: `pub/` has a node_modules folder but no tooling. You will need to manually edit `pub/package.json` and run `npm install` and check in the results of `pub/node_modules/`.
 

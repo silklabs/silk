@@ -5,18 +5,18 @@
  */
 
 import assert from 'assert';
-import ClosingTransform from './closing_transform';
 import crypto from 'crypto';
-import { DuplexTransform } from './duplex_transform';
 import { ec as ECDH } from 'elliptic';
 import makeLog from 'silk-log';
-import * as Metrics from '../metrics/streams';
 
-const log = makeLog(`api-streams-crypto`);
+import ClosingTransform from './closing_transform';
+import DuplexTransform from './duplex_transform';
+import * as Metrics from './metrics';
 
-// By default we'll try to use whatever is on |crypto| for our source of entropy
-// but Browserify/ReactNative don't provide that so we need to pass this in
-// sometimes.
+const log = makeLog(`streams:crypto`);
+
+// Pluggable random bytes generator for different environments (node,
+// browser, React Native).
 let getRandomBytes = crypto.randomBytes;
 
 export function setRandomBytesFunction(func) {

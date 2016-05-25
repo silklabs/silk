@@ -46,10 +46,9 @@ installSourceMapSupport();
 
 import bleno from 'bleno';
 import invariant from 'assert';
-import {MessagePackDuplexStream} from 'silk-streams/src/msgpack';
 import * as net from 'net';
 import noble from 'noble';
-import {SocketStream} from 'silk-streams/src/socket';
+import {MessagePackDuplexStream, SocketDuplexStream} from 'silk-streams';
 
 import {BluetoothLE} from './parent';
 import createDeferred from '../deferred';
@@ -641,7 +640,7 @@ class BluetoothLEChild {
       socket.removeListener(`error`, errorListener);
       socket.removeListener(`connect`, connectListener);
 
-      const socketStream = new SocketStream(socket);
+      const socketStream = new SocketDuplexStream(socket);
       const msgpackStream = new MessagePackDuplexStream(socketStream);
       const internalMessageFilterStream =
         new InternalMessageFilterStream(msgpackStream);

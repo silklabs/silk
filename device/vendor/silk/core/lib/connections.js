@@ -15,9 +15,11 @@ import createLog from 'silk-log';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
 
-import Demux from 'silk-streams/src/demux';
-import WebSocketDuplex from 'silk-streams/src/websocket';
-import { JSONDuplexStream } from 'silk-streams/src/json';
+import {
+  DemuxStream,
+  JSONDuplexStream,
+  WebSocketDuplexStream,
+} from 'silk-streams';
 
 import type { Duplex } from 'stream';
 import type { Recipient } from 'silk-rtc';
@@ -35,7 +37,7 @@ export default class Connections extends EventEmitter {
   state: States = 'disconnected';
 
   _ws: ?WebSocket = null;
-  _wsDuplex: ?WebSocketDuplex = null;
+  _wsDuplex: ?WebSocketDuplexStream = null;
   _wsUrl: ?string = null;
   _reconnectTimer: ?number = null;
   _reconnectSleep: number = 0;
@@ -341,12 +343,12 @@ export default class Connections extends EventEmitter {
     if (this._wsUrl) {
       log.info(`Connected to signaling server: ${this._wsUrl}`);
     }
-    this._wsDuplex = new WebSocketDuplex(this._ws, {
+    this._wsDuplex = new WebSocketDuplexStream(this._ws, {
       log,
     });
     this._wsDuplex.on('error', this._onWsDuplexError);
 
-    this._demux = new Demux(this._wsDuplex);
+    this._demux = new DemuxStream(this._wsDuplex);
     this._wsDuplex.pipe(this._demux);
 
     this._demux.on('data', this._onSignaling);

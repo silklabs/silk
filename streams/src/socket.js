@@ -12,7 +12,7 @@ import {Duplex} from 'stream';
 
 import type {Socket} from 'net';
 
-const log = createLog(`streams-socket`);
+const log = createLog(`streams:socket`);
 
 const EVENT_NAME_CLOSE = `close`;
 const EVENT_NAME_DATA = `data`;
@@ -21,7 +21,7 @@ const EVENT_NAME_END = `end`;
 const EVENT_NAME_ERROR = `error`;
 const EVENT_NAME_FINISH = `finish`;
 
-export class SocketStream extends Duplex {
+export default class SocketDuplexStream extends Duplex {
 
   __socket: Socket;
 

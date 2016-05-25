@@ -7,8 +7,8 @@ import {
   Server as WebSocketServer,
 } from 'ws';
 
-import WebSocketDuplex from '../src/websocket';
-import Demux from '../src/demux';
+import WebSocketDuplexStream from '../src/websocket';
+import DemuxStream from '../src/demux';
 
 suite('demuxing stream', () => {
 
@@ -36,10 +36,10 @@ suite('demuxing stream', () => {
 
     url = `http://localhost:${server.address().port}`;
 
-    source = new WebSocketDuplex(new WebSocket(url));
+    source = new WebSocketDuplexStream(new WebSocket(url));
 
     const serverConnection = await eventToPromise(wss, 'connection');
-    backing = new WebSocketDuplex(serverConnection);
+    backing = new WebSocketDuplexStream(serverConnection);
   });
 
   teardown(() => {
@@ -47,7 +47,7 @@ suite('demuxing stream', () => {
   });
 
   test('2 streams', async () => {
-    const demux = new Demux(source);
+    const demux = new DemuxStream(source);
     source.pipe(demux);
 
     const streamPending = eventToPromise(demux, 'data');

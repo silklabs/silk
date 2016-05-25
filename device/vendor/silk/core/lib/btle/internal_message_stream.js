@@ -6,10 +6,12 @@
  * @flow
  */
 
-import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
-import ClosingTransform from 'silk-streams/src/closing_transform';
 import createLog from 'silk-log';
-import {DuplexTransform} from 'silk-streams/src/duplex_transform';
+import {
+  ClosingPassThrough,
+  ClosingTransform,
+  DuplexTransform,
+} from 'silk-streams';
 
 import {
   isMessage as isInternalMessage,

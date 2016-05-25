@@ -8,8 +8,7 @@
  */
 
 import invariant from 'assert';
-import Metric from '../metric';
-import MetricTypes from '../metric_types';
+import { Metric, MetricTypes } from 'silk-api';
 
 export class Encrypt extends Metric {
 

@@ -3,14 +3,14 @@
  */
 
 import invariant from 'assert';
-import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import { EventEmitter } from 'events';
-import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import WebSocket from 'ws';
-import WebSocketStream from 'silk-streams/src/websocket';
+import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
+import createLog from 'silk-log';
+import { JSONDuplexStream, WebSocketDuplexStream } from 'silk-streams';
 import timeout from 'silk-utils/timeout';
-import { JSONDuplexStream } from 'silk-streams/src/json';
+
 import StructuredDataChannel from './structured_data_channel';
 import Peer from './peer';
 import * as call from './call';
@@ -161,7 +161,7 @@ export class DevicePeer extends EventEmitter {
       });
 
       const websocket = new WebSocket(signedUrl);
-      const websocketStream = new WebSocketStream(websocket, {
+      const websocketStream = new WebSocketDuplexStream(websocket, {
         log,
       });
       const transport = new JSONDuplexStream(websocketStream);

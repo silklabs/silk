@@ -4,16 +4,17 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import ClosingTransform from './closing_transform';
-import { DuplexTransform } from './duplex_transform';
-import makeLog from 'silk-log';
 import msgpack from 'msgpack-lite';
+import makeLog from 'silk-log';
+
+import ClosingTransform from './closing_transform';
+import DuplexTransform from './duplex_transform';
 
 const EVENT_NAME_CLOSE = `close`;
 const EVENT_NAME_END = `end`;
 const EVENT_NAME_ERROR = `error`;
 
-const log = makeLog(`api-streams-msgpack`);
+const log = makeLog(`streams:msgpack`);
 
 // Hook the 'end' event so that we can emit 'close'.
 export class MessagePackDecodeStream extends msgpack.createDecodeStream {

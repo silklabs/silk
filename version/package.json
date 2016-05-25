@@ -11,6 +11,6 @@
     "postinstall": "./build",
     "test": "./test.sh"
   },
-  "license": "proprietary-z",
+  "license": "MIT",
   "private": true
 }

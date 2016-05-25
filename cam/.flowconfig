@@ -11,10 +11,12 @@ src/
 .*/server/src/.*
 .*/server/tmp/.*
 .*/api/test/.*
-.*/node_modules/npm/.*
 .*/node_modules/json5/.*
 .*/node_modules/read-package-tree/.*
+.*/node_modules/npm/.*
 .*/node_modules/config-chain/.*
+.*/node_modules/registry-url/.*
+.*/node_modules/bower-json/.*
 .*/device/vendor/propsilk/.*
 
 [libs]

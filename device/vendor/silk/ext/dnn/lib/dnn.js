@@ -10,6 +10,7 @@
 import caffe from 'silk-caffe';
 import fs from 'mz/fs';
 import path from 'path';
+import {EventEmitter} from 'events';
 
 import type { Env, Log } from 'silk-exttest/interface/env';
 
@@ -28,7 +29,7 @@ const OBJECT_TAG = 'object';
 /**
  * This class listens for motion events and uses Caffe DNN to classify the image
  */
-class Dnn {
+class Dnn extends EventEmitter {
   _env: Env;
   _netCaffe: caffe.Model;
   _onMotion: Function;
@@ -36,6 +37,7 @@ class Dnn {
   _lastObjectId: number;
 
   constructor(env: Env) {
+    super();
     this._env = env;
     this._init();
     this._lastObjectLabel = '';
@@ -130,6 +132,7 @@ class Dnn {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
     }
+    this.emit('ready');
 
     // Register for motion
     this._onMotion = async (when) => {
@@ -196,6 +199,7 @@ class Dnn {
         // Remove the object if it is no longer detected
         if ((this._lastObjectLabel !== '') && (this._lastObjectLabel !== topLabel)) {
           timeline.addObjects([{
+            source: 'dnn',
             tag: OBJECT_TAG,
             name: this._lastObjectLabel,
             when,
@@ -211,6 +215,7 @@ class Dnn {
         if ((topProbability >= THRESHOLD) && (this._lastObjectLabel !== topLabel)) {
           let id = timeline.getNextObjectId();
           timeline.addObjects([{
+            source: 'dnn',
             tag: OBJECT_TAG,
             name: topLabel,
             when,
@@ -221,7 +226,7 @@ class Dnn {
           log.verbose(`Adding object ${topLabel}`);
         }
       } catch (error) {
-        log.error(`Prediction failed err: ${error}`);
+        log.error(`Prediction failed err: ${error.stack}||${error}`);
       }
       working = false;
     };

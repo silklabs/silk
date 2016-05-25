@@ -1,0 +1,45 @@
+From 6b74dba481f079fd5e3713979b45c3f1df7db5b3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 23 May 2016 22:29:16 -0700
+Subject: [PATCH] Add mechanism to disable dependencies for the otapackage
+ target
+
+This can be useful for mitigating disk space limitations in some CI environments
+
+Change-Id: I43690d30d46cddb913a8cc9f96b3215283c65c14
+---
+ core/Makefile | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index d2f63e4..3b0cac2 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1398,13 +1398,13 @@ endif
+ # Depending on the various images guarantees that the underlying
+ # directories are up-to-date.
+ $(BUILT_TARGET_FILES_PACKAGE): \
+-		$(INSTALLED_BOOTIMAGE_TARGET) \
+ 		$(INSTALLED_RADIOIMAGE_TARGET) \
++		$(if $(DISABLE_OTAPACKAGE_DEPS),,$(INSTALLED_BOOTIMAGE_TARGET) \
+ 		$(INSTALLED_RECOVERYIMAGE_TARGET) \
+ 		$(INSTALLED_SYSTEMIMAGE) \
+ 		$(INSTALLED_USERDATAIMAGE_TARGET) \
+ 		$(INSTALLED_CACHEIMAGE_TARGET) \
+-		$(INSTALLED_VENDORIMAGE_TARGET) \
++		$(INSTALLED_VENDORIMAGE_TARGET)) \
+ 		$(INSTALLED_ANDROID_INFO_TXT_TARGET) \
+ 		$(SELINUX_FC) \
+ 		$(built_ota_tools) \
+@@ -1566,7 +1566,7 @@ INTERNAL_OTA_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name).zip
+ 
+ $(INTERNAL_OTA_PACKAGE_TARGET): KEY_CERT_PAIR := $(DEFAULT_KEY_CERT_PAIR)
+ 
+-$(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
++$(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(if $(DISABLE_OTAPACKAGE_DEPS),,$(DISTTOOLS))
+ 	@echo "Package OTA: $@"
+ 	$(hide) MKBOOTIMG=$(MKBOOTIMG) \
+ 	   ./build/tools/releasetools/ota_from_target_files -v \
+-- 
+2.7.0
+

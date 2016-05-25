@@ -4,4 +4,4 @@ caffe/
 protobuf/
 build/
 /caffe.node
-
+node_modules/

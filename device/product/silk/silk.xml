@@ -111,13 +111,6 @@
            remote="silk"
            revision="master"/>
 
-  <!-- Locked npm dependencies -->
-  <project name="silk-device-locked-node-modules"
-           path="vendor/silk/locked_node_modules/node_modules"
-           clone-depth="1"
-           remote="silk"
-           revision="master" />
-
   <!-- This doesn't belong here.  Remove me when
        https://github.com/silklabs/silk-core/issues/795 is fixed. -->
   <project name="silk-svm"

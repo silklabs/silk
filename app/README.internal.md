@@ -65,3 +65,13 @@ To build a democonfig app package set up to run off an OS X local server over so
 ```
 0. Follow the steps above to build, QA, and package the app.
 0. Take special care to verify that the server URL is set correctly and that it can connect to the demo server over softap.
+
+# Updating internal node_module folders ...
+
+0. `rm -rf app/node_modules` (can drop app if inside this folder)
+1. Remove react-native / react-native-webpack-server from package.json
+2. Run `silk npm-install`
+3. Create a new package.json with only react-native /
+   react-native-webpack-server
+4. Run `tools/npm_dedupe`
+5. Check in app/node_modules and node_modules

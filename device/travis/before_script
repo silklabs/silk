@@ -63,10 +63,6 @@ $PREBUILT_CCACHE -s
 # Reduce the disk space usage to avoid failures later on during full
 # builds
 if [[ $GONK != base ]]; then
-  # Save silk-device-locked-node-modules before other .repo git projects are removed
-  mv .repo/project-objects/silk-device-locked-node-modules.git .repo/
-  mv .repo/projects/vendor/silk/locked_node_modules/node_modules.git .repo/
-
   rm -rf \
     .repo/project-objects \
     .repo/projects \
@@ -98,11 +94,6 @@ if [[ $GONK != base ]]; then
       mkdir -p prebuilts/qemu-kernel/arm
       touch prebuilts/qemu-kernel/arm/LINUX_KERNEL_COPYING
   fi
-
-  # Restore silk-device-locked-node-modules
-  mkdir -p .repo/project-objects .repo/projects/vendor/silk/locked_node_modules
-  mv .repo/silk-device-locked-node-modules.git .repo/project-objects/
-  mv .repo/node_modules.git .repo/projects/vendor/silk/locked_node_modules/
 fi
 
 df -h

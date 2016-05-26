@@ -11,7 +11,7 @@
     "postinstall": "../npm_postinstall && webpack --progress",
     "start": "DEBUG=*,-babel babel-node lib/server/main.js production",
     "dev": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
-    "test": "npm run lint && npm run flow && npm run mocha",
+    "test": "./test/sanity.sh && npm run lint && npm run flow && npm run mocha",
     "buildtrigger": "DEBUG=silk-*,-silk-*:debug babel-node lib/build-trigger.js",
     "issuemover": "DEBUG=silk-* babel-node lib/issue-mover.js",
     "upliftall": "DEBUG=silk-* babel-node lib/github-uplifter.js"

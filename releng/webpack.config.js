@@ -12,15 +12,22 @@ var config = {
     path: 'public/js',
     filename: 'bundle.js'
   },
+  babel: {
+    presets: [
+      require('babel-preset-es2015'),
+      require('babel-preset-stage-0'),
+      require('babel-preset-react'),
+    ],
+  },
   module : {
     loaders: [
-      { test: /\.json$/, loader: 'json' },
+      {
+        test: /\.json$/,
+        loader: require.resolve('json-loader'),
+      },
       {
         test: /\.js$/,
-        loader: 'babel',
-        query: {
-          presets: ['es2015', 'stage-0', 'react'],
-        },
+        loader: require.resolve('babel-loader'),
         include: require('silk-babeldeps'),
       }
     ]

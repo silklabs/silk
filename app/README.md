@@ -6,7 +6,7 @@ The Silk app is written with React Native.  To install the React Native toolchai
 
 First install the module dependencies:
 ```
-npm install
+./install.sh
 ```
 
 ## General notes
@@ -60,7 +60,7 @@ For example to enable all logs possible (socket.io, etc..):
 
 **BEFORE OPENING THE PROJECT IN XCODE**, install the npm module dependencies:
 ```
-npm install
+./install.sh
 ```
 
 To develop the app, open `ios/Silk.xcodeproj` in Xcode.  You can do most development in the iOS simulators.  A physical device is only required for Bluetooth development, performance testing, and touch-tap testing.
@@ -114,13 +114,13 @@ Ensure that you have installed everything needed for React Native for Android de
 
 As with iOS, before you can perform any further steps, ensure you have installed the npm module dependencies via:
 ```
-npm install
+./install.sh
 ```
 
 The Android app also pulls in some code from the webapp, so before proceeding, you'll want to build the webapp as well:
 ```
 cd ../webapp
-npm install
+./install.sh
 ```
 
 For developing the native Java part of the app, any Android-capable IDE will work well. Android Studio can import the Gradle configuration as a project, just point it at `android/build.gradle`.
@@ -146,3 +146,16 @@ Normally
   "mseWebviewUrl": "http://192.168.1.13:8000/js/android"
 }
 ```
+
+### Updating internal node_module folders ...
+
+NOTE: `npm dedupe` will result in a wildy different tree that is roughly
+the same size (when using npm3 which is required). Avoid it.
+
+1. Update package.json and run `../node_modules/.bin/npm install`
+   May also do something like `../node_modules/.bin/npm install <x> --save`.
+   This will use the in-tree npm.
+2. Run npm postinstall to ensure patches are applied
+3. Verify that no new native modules where added by running `find node_modules -name 'binding.gyp'`
+   then ensuring that modules with binding.gyp have a statement in the git ignore for the `build` directory (sometimes also lib)
+4. Check in `node_modules.`

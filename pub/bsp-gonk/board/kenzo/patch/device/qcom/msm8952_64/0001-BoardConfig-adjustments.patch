@@ -1,15 +1,16 @@
-From 0fa0e1c2da588747842e801e21bfe3d851f28f9a Mon Sep 17 00:00:00 2001
+From ef57ee6f41fc66c40a246c39b549243457619b1b Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 29 Apr 2016 17:33:52 -0700
 Subject: [PATCH] BoardConfig adjustments
 
 Change-Id: I6b8299e79c280590472df39a79128552cc12c91c
 ---
- BoardConfig.mk | 31 ++++++++++++++++++++++++++++---
- 1 file changed, 28 insertions(+), 3 deletions(-)
+ BoardConfig.mk | 41 ++++++++++++++++++++++++++++++++++++++---
+ msm8952_64.mk  |  1 -
+ 2 files changed, 38 insertions(+), 4 deletions(-)
 
 diff --git a/BoardConfig.mk b/BoardConfig.mk
-index 5d49783..cd3a8fd 100644
+index 5d49783..bb8e593 100644
 --- a/BoardConfig.mk
 +++ b/BoardConfig.mk
 @@ -39,13 +39,13 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
@@ -37,10 +38,20 @@ index 5d49783..cd3a8fd 100644
  BOARD_KERNEL_SEPARATED_DT := true
  
  BOARD_KERNEL_BASE        := 0x80000000
-@@ -126,3 +126,28 @@ ifneq ($(TARGET_USES_AOSP),true)
+@@ -126,3 +126,38 @@ ifneq ($(TARGET_USES_AOSP),true)
      endif
    endif
  endif
++
++# Audio settings
++BOARD_USES_ALSA_AUDIO := true
++#USE_CUSTOM_AUDIO_POLICY := 1
++AUDIO_USE_LL_AS_PRIMARY_OUTPUT := true
++AUDIO_FEATURE_ENABLED_VBAT_MONITOR := true
++AUDIO_FEATURE_ENABLED_FLUENCE := true
++AUDIO_FEATURE_ENABLED_SOURCE_TRACKING := true
++AUDIO_FEATURE_ENABLED_AUDIOSPHERE := true
++TARGET_USES_QCOM_MM_AUDIO := true
 +
 +# Wifi settings
 +WIFI_DRIVER_MODULE_PATH := "/system/lib/modules/wlan.ko"
@@ -66,6 +77,18 @@ index 5d49783..cd3a8fd 100644
 +BOARD_HAVE_BLUETOOTH_QCOM := true
 +QCOM_BT_USE_SMD_TTY := true
 +BLUETOOTH_HCI_USE_MCT := true
+diff --git a/msm8952_64.mk b/msm8952_64.mk
+index db728b2..49d2d26 100644
+--- a/msm8952_64.mk
++++ b/msm8952_64.mk
+@@ -74,7 +74,6 @@ PRODUCT_COPY_FILES += \
+     device/qcom/msm8952_32/mixer_paths_wcd9330.xml:system/etc/mixer_paths_wcd9330.xml \
+     device/qcom/msm8952_32/mixer_paths_wcd9306.xml:system/etc/mixer_paths_wcd9306.xml \
+     device/qcom/msm8952_32/mixer_paths_wcd9335.xml:system/etc/mixer_paths_wcd9335.xml \
+-    device/qcom/msm8952_32/mixer_paths_wcd9326.xml:system/etc/mixer_paths_wcd9326.xml \
+     device/qcom/msm8952_32/mixer_paths_qrd_skun.xml:system/etc/mixer_paths_qrd_skun.xml \
+     device/qcom/msm8952_32/mixer_paths_skuk.xml:system/etc/mixer_paths_skuk.xml \
+     device/qcom/msm8952_32/mixer_paths.xml:system/etc/mixer_paths.xml \
 -- 
 2.7.0
 

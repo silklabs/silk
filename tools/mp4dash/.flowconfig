@@ -8,7 +8,7 @@
 .*/node_modules/eslint.*
 .*/node_modules/config-chain/.*
 .*/node_modules/read-package-tree/.*
-.*/node_modules/npm/.*
+.*/node_modules/npm.*
 .*/node_modules/registry-url/.*
 .*/node_modules/bower-json/.*
 

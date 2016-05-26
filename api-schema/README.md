@@ -14,6 +14,5 @@ Docs/etc...
 ## Developing
 
 ```sh
-npm install
 npm test
 ```

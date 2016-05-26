@@ -5,24 +5,27 @@ of many files into a single `.js` file.
 
 ## Usage
 
-1. If adding to a new project in silk tree add buildjs as a symlink
-   dependency.
+By default this module will be used to build js modules used within the
+android build system... This may be overriden by specifying an
+additional npm script:
 
-   ```js
-   // (abbreviated and in js format for comments)
-   {
-      "scripts": {
-        "postinstall": "./bin/postinstall && silk-buildjs",
-        "build": "silk-buildjs"
-      },
-      "symlinkDependencies": {
-        "silk-buildjs": "<relative path to buildjs>"
-      },
-   }
-   ```
+```json
+{
+  "scripts": {
+    "silk-build-gonk": "<your override script>"
+  }
+}
+```
 
-2. Run `npm run build` or `npm install`. The package can now also be
-   invoked via the android build system (`m`, `mm`, etc...).
+Scripts will be given two arguments via the shell:
+
+ - Absolute path to source of module
+ - Absolute path to destination of module
+
+
+Modules may also customize the use of webpack by adding an additional
+`webpack.config.js` file to the root of the module. This file will be
+mixed into the webpack.config.js within buildjs.
 
 ### Customization
 

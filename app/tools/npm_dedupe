@@ -1,0 +1,59 @@
+#! /usr/bin/env node
+'use strict';
+
+/**
+ * The goal of this script is to remove any duplicate node modules between
+ * app/node_modules and the root node_modules folder.
+ *
+ * This shaves about 80mb off the dependencies in node_modules/
+ */
+
+const fs = require('fs');
+const path = require('path');
+const execSync = require('child_process').execSync;
+
+const NO_DEDUPE = new Set([
+  // Sadly we need to use our own copy of webpack so it picks up the patched
+  // version of node-libs-browser ...
+  'webpack',
+  // For patching ...
+  'socket.io-client',
+  // To ensure right crypto package is used ...
+  'node-libs-browser',
+]);
+
+const appModules = path.join(__dirname, '../node_modules');
+const globalModules = path.join(__dirname, '../../node_modules');
+
+const appModuleList = fs.readdirSync(appModules);
+
+for (let moduleName of appModuleList) {
+  if (moduleName.indexOf('.') === 0) {
+    continue;
+  }
+
+  // We need to patch node-libs-browser :/
+  if (NO_DEDUPE.has(moduleName)) {
+    continue;
+  }
+
+  const globalModulePath = path.join(globalModules, moduleName);
+  if (!fs.existsSync(globalModulePath)) {
+    console.log(`${moduleName} does not exist in ${globalModulePath}`);
+    continue;
+  }
+
+  const sourcePath = path.join(appModules, moduleName);
+  const sourcePkg = require(path.join(sourcePath, 'package.json'));
+  const globalPkg = require(path.join(globalModulePath, 'package.json'));
+
+  const desiredVer = sourcePkg.version;
+  const actualVer = globalPkg.version;
+
+  if (desiredVer !== actualVer) {
+    console.log(`Dependency version mismatch ${moduleName} wanted: ${desiredVer} has: ${actualVer}`);
+  } else {
+    console.log(`${moduleName} version matches removing from app`);
+    execSync(`rm -rf ${sourcePath}`);
+  }
+}

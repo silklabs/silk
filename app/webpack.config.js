@@ -27,28 +27,29 @@ var base = {
       net: require.resolve('./src/shims/net.js'),
     },
   },
+  babel: {
+    cacheDirectory: process.env.BABEL_CACHE ? true : false,
+    babelrc: false,
+    // NOTE: require.resolve will return an absolute path to our babel
+    // modules. If we use shorthand or relative path here every module we
+    // include must also provide their own version of these presets.
+    presets: [
+      require('babel-preset-es2015'),
+      require('babel-preset-stage-0'),
+      require('babel-preset-react'),
+    ],
+    plugins: [
+      require('babel-plugin-transform-runtime')
+    ]
+  },
   module: {
     loaders: [
       {
         test: /\.json$/,
-        loader: 'json',
+        loader: require.resolve('json-loader'),
       }, {
         test: /\.js$/,
-        loader: 'babel',
-        query: {
-          babelrc: false,
-          // NOTE: require.resolve will return an absolute path to our babel
-          // modules. If we use shorthand or relative path here every module we
-          // include must also provide their own version of these presets.
-          presets: [
-            require.resolve('babel-preset-es2015'),
-            require.resolve('babel-preset-stage-0'),
-            require.resolve('babel-preset-react'),
-          ],
-          plugins: [
-            require.resolve('babel-plugin-transform-runtime')
-          ]
-        },
+        loader: require.resolve('babel-loader'),
         include: [
           require('../babeldeps'),
         ]
@@ -68,12 +69,12 @@ function makeConfig(platform) {
     // bundles, so we should do the same (by replacing the `__DEV__` identifier
     // with the `false` literal and then having uglify eliminate the resulting
     // dead code.)
-    config.module.loaders[1].query.plugins.push('./src/transforms/__DEV__-to-false');
-    config.module.loaders[1].query.plugins.push('./src/transforms/remove-logging');
+    config.babel.plugins.push(require('./src/transforms/__DEV__-to-false'));
+    config.babel.plugins.push(require('./src/transforms/remove-logging'));
     config.plugins.push(new webpack.optimize.DedupePlugin());
     config.plugins.push(new webpack.optimize.UglifyJsPlugin());
   } else {
-    config.module.loaders[1].query.plugins.push('./src/transforms/assert-messages');
+    config.babel.plugins.push(require('./src/transforms/assert-messages'));
   }
   return config;
 }

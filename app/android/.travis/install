@@ -8,11 +8,11 @@ node --version
 npm --version
 
 npm config set spin=false
-npm install
+./install.internal.sh
 
 # We need the webapp for the Android webview, but we can't list it as
 # a symlinkDependecy in package.json because it trips up Flow on Linux
 # somehow. Plus, that would mean longer iOS build times for no good reason.
 pushd ../webapp
-npm install
+./install.sh
 popd

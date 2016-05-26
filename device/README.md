@@ -427,7 +427,7 @@ $ adb shell start silk
 
 ### Profiling
 
-(See [/device/vendor/silk/profiler](profiler) for full details)
+(See [profiler](./vendor/silk/profiler) for full details)
 
 To enable:
 

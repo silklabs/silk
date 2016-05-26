@@ -37,7 +37,7 @@ const GAUSSIAN_KERNEL_SIZE = 15;
 
 const MOTION_DURATION_MS = 250;
 
-const SOUND_FILE = path.join(__dirname, 'motion_detected.mp3');
+const SOUND_FILE = path.join(__dirname, '../motion_detected.mp3');
 
 /**
  * Play a sound when motion is detected

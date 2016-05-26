@@ -212,7 +212,7 @@ class OkSilk {
    * Play a sound when hot keyword is detected
    */
   _playHotKeywordSound() {
-    this._util.playSound(path.join(__dirname, 'hotkeyword_detected.mp3'));
+    this._util.playSound(path.join(__dirname, '../hotkeyword_detected.mp3'));
   }
 }
 

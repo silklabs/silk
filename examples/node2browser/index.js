@@ -55,10 +55,6 @@ var constraints = {
       DtlsSrtpKeyAgreement: true,
     },
   ],
-  mandatory: {
-    OfferToReceiveAudio: true,
-    OfferToReceiveVideo: true,
-  },
 };
 
 io.on('connection', function(socket) {

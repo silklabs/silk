@@ -58,12 +58,16 @@ function P2P(alice, bob) {
   
   alice.onicecandidate = function(event) {
     var candidate = event.candidate || event;
-    bob.addIceCandidate(candidate);
+    if (candidate.candidate) {
+      bob.addIceCandidate(candidate);
+    }
   };
 
   bob.onicecandidate = function(event) {
     var candidate = event.candidate || event;
-    alice.addIceCandidate(candidate);
+    if (candidate.candidate) {
+      alice.addIceCandidate(candidate);
+    }
   };
 
   alice.onnegotiationneeded = function() {
@@ -135,7 +139,7 @@ function P2P(alice, bob) {
   };
 }
 
-WEBRTC.setDebug(true);
+//WEBRTC.setDebug(true);
 
 var alice = new WEBRTC.RTCPeerConnection(config, constraints);
 var bob = new WEBRTC.RTCPeerConnection(config, constraints);

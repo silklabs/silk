@@ -63,11 +63,11 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
-      log.verbose(`Received`, data);
+      log.verbose(`Received`, data.name);
     });
     const msgpackOldWrite = msgpackStream._write;
     msgpackStream._write = (data, encoding, callback) => {
-      log.verbose(`Sending`, data);
+      log.verbose(`Sending`, data.name);
       msgpackOldWrite.call(msgpackStream, data, encoding, callback);
     };
 

@@ -22,4 +22,5 @@ declare module 'react-native' {
   declare var DeviceEventEmitter: any;
   declare var NativeModules: any;
   declare var Platform: any;
+  declare var Systrace: any;
 }

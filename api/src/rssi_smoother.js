@@ -39,6 +39,10 @@ export default class RssiSmoother {
   }
 
   get value() {
+    return this._computeValue();
+  }
+
+  _computeValue() {
     let histogram = this._histogram(Date.now());
     if (!histogram) {
       return RssiSmoother.DEFAULT_RSSI;

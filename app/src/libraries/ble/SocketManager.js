@@ -41,7 +41,7 @@ let singletonInstance = null;
  *
  * Data can be sent to the other side using the send() method.
  */
-class Socket extends RobustEventEmitter {
+export class Socket extends RobustEventEmitter {
   _id: number;
 
   constructor(id: number) {
@@ -74,7 +74,7 @@ class Socket extends RobustEventEmitter {
  *
  * Only one instance of this class will ever be created.
  */
-class SocketManager extends RobustEventEmitter {
+export class SocketManager extends RobustEventEmitter {
   _sockets: Map<number, Socket> = new Map();
 
   constructor() {
@@ -161,8 +161,6 @@ class SocketManager extends RobustEventEmitter {
     BLESocketManager.updateRssi(id);
   }
 }
-
-export type { Socket, SocketManager };
 
 export default function getSocketManager(): EventEmitter {
   if (!singletonInstance) {

@@ -12,17 +12,19 @@ import {
   View,
 } from 'react-native';
 
-// Include our own browser shim goop but after react-native has loaded for the
-// first time and created it's own shims.
+// Inject global shims, native cryptographic signature
+// implementations, and profiler hooks.
 import '../libraries/BrowserShims';
 import '../libraries/CryptoSign';
+import '../libraries/profiling';
+
 import Config from '../libraries/Config';
 import { getRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
-import createLog from 'silk-log';
 import createAPI from 'silk-api';
 import version from 'silk-core-version';
+import createLog from 'silk-log';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import AsyncNavigator from './abstract/AsyncNavigator';

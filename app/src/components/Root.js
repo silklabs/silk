@@ -19,7 +19,7 @@ import '../libraries/CryptoSign';
 import '../libraries/profiling';
 
 import Config from '../libraries/Config';
-import { getRandomBytes } from '../libraries/Crypto';
+import { genRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 
 import createAPI from 'silk-api';
@@ -86,7 +86,7 @@ export default class Root extends AsyncComponent {
     }
 
     let apiOptions = {
-      getRandomBytes,
+      getRandomBytes: genRandomBytes,
       metrics: {
         type: `account`,
         tags: {

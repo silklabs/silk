@@ -223,12 +223,9 @@ export class BluetoothLE extends EventEmitter {
     const mainModule = getstrprop(`persist.silk.main`, `silk-device-main`);
 
     const childPath = path.join(
-      `system`,
-      `silk`,
-      `node_modules`,
+      'system/silk/node_modules',
       mainModule,
-      `btle`,
-      `child`,
+      'lib/btle/child',
     );
 
     const child = fork(childPath, {

@@ -7,20 +7,15 @@
 # 2. The LOCAL_MODULE variable is derived from the package.json "name" attribute
 #    if it is not explicitly defined.
 #
-# 3. If the file .silkignore exists, it will be used to filter out files
-#    during the device installation.  The format is identical to .gitignore.  If
-#    .silkignore doesn't exist then all module files (including
-#    node_modules/**/*) will be installed on device.
-#
-# 4. LOCAL_MODULE_PATH maybe specified to control the installation location.
+# 3. LOCAL_MODULE_PATH maybe specified to control the installation location.
 #    If unspecified the module will be installed as a system node module.
 #
-# 5. Any external static/shared objects required by node-gyp-based bindings
+# 4. Any external static/shared objects required by node-gyp-based bindings
 #    should be listed in LOCAL_STATIC_LIBRARIES/LOCAL_SHARED_LIBRARIES to ensure
 #    Make can manage dependencies properly.  These libraries will be passed to
 #    bindings.gyp via the environment variable Android_mk__LIBRARIES.
 #
-# 6. stlport_shared is the default STL if an alternate STL is not
+# 5. stlport_shared is the default STL if an alternate STL is not
 #    selected via Android.mk:
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static

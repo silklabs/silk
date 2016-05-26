@@ -28,12 +28,6 @@ export const DeviceRecord = Record({ /* eslint new-cap: 0 */
   bleDeviceSession: null,
 });
 
-export const ConfiguringDeviceRecord = Record({ /* eslint new-cap: 0 */
-  deviceId: null,
-  name: null,
-  bleDeviceSession: null,
-});
-
 // Obsolete once https://github.com/facebook/react-native/pull/3788
 // gets upstreamed.
 function uiInteractions() {
@@ -64,11 +58,9 @@ export default class Devices extends AsyncComponent {
     // OrderedSet of DeviceSession objects rerpresenting BLE sockets
     // to unconfigured devices.
     unconfiguredDevices: new OrderedSet(),
-
-    // Device record of the device that we're configuring right now.
-    configuringDevice: null,
   };
 
+  configuringDevice: null;
   bleDeviceManager = null;
   mounted = false;
   _fetchDevicesPromise = Promise.resolve();
@@ -96,10 +88,10 @@ export default class Devices extends AsyncComponent {
     BLESocketManager.stop();
     this.bleDeviceManager.removeAllListeners();
 
-    let { unconfiguredDevices, configuringDevice } = this.state;
+    let { unconfiguredDevices } = this.state;
     unconfiguredDevices.forEach(device => device.removeAllListeners());
-    if (configuringDevice && configuringDevice.bleDeviceSession) {
-      configuringDevice.bleDeviceSession.removeAllListeners();
+    if (this.configuringDevice && this.configuringDevice.bleDeviceSession) {
+      this.configuringDevice.bleDeviceSession.removeAllListeners();
     }
   }
 
@@ -191,16 +183,17 @@ export default class Devices extends AsyncComponent {
     let deviceId = msg.id;
     log.info('New video stream', msg.name, deviceId);
     log.debug('Full device message', msg);
-    let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
+    let { devices, unconfiguredDevices } = this.pendingState;
     if (!devices) {
       devices = new OrderedMap();
     }
 
-    if (configuringDevice && configuringDevice.deviceId === deviceId) {
+    if (this.configuringDevice &&
+        this.configuringDevice.deviceId === deviceId) {
       // We must've successfully configured this new device. Let's
       // close the loop on the BLE socket.
       log.debug('New video stream belongs to currently configuring device.');
-      configuringDevice.bleDeviceSession.dismiss();
+      this.configuringDevice.bleDeviceSession.dismiss();
 
       // Add the device record to the list of configured devices,
       // remove the corresponding entry from the list of unconfigured
@@ -209,11 +202,11 @@ export default class Devices extends AsyncComponent {
         deviceId,
         publicKey: deviceId,
         // Explicitly use the name we gave it locally.
-        name: configuringDevice.name,
+        name: this.configuringDevice.name,
         logo: msg.logo,
         previewSize: msg.previewSize,
         haveVideoStream: true,
-        bleDeviceSession: configuringDevice.bleDeviceSession,
+        bleDeviceSession: this.configuringDevice.bleDeviceSession,
       });
       devices = devices.delete(deviceId).set(deviceId, newRecord);
       this.setStateAsync({
@@ -224,9 +217,9 @@ export default class Devices extends AsyncComponent {
         // In this case we just want to bump it to the right place, so we
         // explicitly remove it from the ordered map before re-adding it.
         devices,
-        unconfiguredDevices: unconfiguredDevices.delete(configuringDevice.bleDeviceSession),
-        configuringDevice: null,
+        unconfiguredDevices: unconfiguredDevices.delete(this.configuringDevice.bleDeviceSession),
       });
+      this.configuringDevice = null;
       this.props.userState.updateRegisteredDevices(devices.toArray());
       return;
     }
@@ -287,9 +280,8 @@ export default class Devices extends AsyncComponent {
       log.debug(`Device on BLE socket is registered: ${bleDeviceSession.deviceId}`);
 
       // Is it because we are actually in the process of registering the device?
-      let { configuringDevice } = this.pendingState;
-      let isCurrentConfiguringDevice = configuringDevice &&
-        configuringDevice.bleDeviceSession === bleDeviceSession;
+      let isCurrentConfiguringDevice = this.configuringDevice &&
+        this.configuringDevice.bleDeviceSession === bleDeviceSession;
       if (isCurrentConfiguringDevice) {
         log.debug(`We're currently configuring it. Avoid changing state just yet.`);
         return;
@@ -340,7 +332,7 @@ export default class Devices extends AsyncComponent {
       log.debug('BLE socket disconnected. Cleaning up.');
       bleDeviceSession.removeAllListeners();
 
-      let { devices, configuringDevice, unconfiguredDevices } = this.pendingState;
+      let { devices, unconfiguredDevices } = this.pendingState;
 
       let { deviceId } = bleDeviceSession;
       if (deviceId && devices.get(bleDeviceSession.deviceId)) {
@@ -348,8 +340,8 @@ export default class Devices extends AsyncComponent {
         devices = devices.setIn([deviceId, 'bleDeviceSession'], null);
       }
 
-      let isCurrentConfiguringDevice = configuringDevice &&
-        configuringDevice.bleDeviceSession === bleDeviceSession;
+      let isCurrentConfiguringDevice = this.configuringDevice &&
+        this.configuringDevice.bleDeviceSession === bleDeviceSession;
 
       if (unconfiguredDevices.contains(bleDeviceSession)) {
         log.debug(`The disconnected BLE device belonged to an unconfigured device.`);
@@ -361,9 +353,9 @@ export default class Devices extends AsyncComponent {
           unconfiguredDevices !== this.pendingState.unconfiguredDevices) {
         this.setStateAsync({
           devices,
-          configuringDevice: null,
           unconfiguredDevices,
         });
+        this.configuringDevice = null;
       }
 
       if (isCurrentConfiguringDevice) {
@@ -385,12 +377,11 @@ export default class Devices extends AsyncComponent {
     bleDeviceSession.once('secret', (deviceSecret) => {
       let { deviceId } = deviceSecret;
       log.debug('And now kiththth! Received device ID', deviceId);
-      let configuringDevice = new ConfiguringDeviceRecord({
+      this.configuringDevice = {
         bleDeviceSession,
         deviceId,
         name: null,
-      });
-      this.setStateAsync({configuringDevice});
+      };
     });
 
     log.debug('Launching device setup UI.');
@@ -406,9 +397,7 @@ export default class Devices extends AsyncComponent {
 
   async _saveDeviceConfig(bleDeviceSession, config) {
     log.debug('Received device configuration:', config);
-    let { configuringDevice } = this.pendingState;
-    configuringDevice = configuringDevice.set('name', config.name);
-    this.setStateAsync({configuringDevice});
+    this.configuringDevice.name = config.name;
 
     try {
       log.debug('Going to register the device with the server.');
@@ -454,9 +443,7 @@ export default class Devices extends AsyncComponent {
       // We'll just have to wait for it to be re-established.
     }
 
-    if (this.pendingState.configuringDevice) {
-      await this.setStateAsync({configuringDevice: null});
-    }
+    this.configuringDevice = null;
     if (!error) {
       log.debug('User cancelled. Aborting.');
       return;

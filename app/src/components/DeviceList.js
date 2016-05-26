@@ -13,7 +13,6 @@ import { SilkApi } from 'silk-api';
 import SocketIO from '../libraries/SocketIO';
 
 import AsyncComponent from './abstract/AsyncComponent';
-import { ConfiguringDeviceRecord } from './abstract/Devices';
 import CameraLiveVideo from './CameraLiveVideo';
 import CameraPreview from './CameraPreview';
 import { Colors } from './CommonStyles';
@@ -38,7 +37,6 @@ export default class DeviceList extends AsyncComponent {
 
     devices: React.PropTypes.instanceOf(OrderedMap),
     unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
-    configuringDevice: React.PropTypes.instanceOf(ConfiguringDeviceRecord),
   };
 
   state = {
@@ -87,7 +85,6 @@ export default class DeviceList extends AsyncComponent {
       hasNetwork,
       devices,
       unconfiguredDevices,
-      configuringDevice,
     } = this.props;
 
     // this.props.devices === null means we haven't fetched a list of devices yet,
@@ -103,7 +100,7 @@ export default class DeviceList extends AsyncComponent {
       );
     }
 
-    if (devices && !devices.size && !unconfiguredDevices.size && !configuringDevice) {
+    if (devices && !devices.size && !unconfiguredDevices.size) {
       return this._renderNoDevices();
     }
 

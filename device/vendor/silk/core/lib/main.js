@@ -415,6 +415,7 @@ config.on('configured', async () => {
       sensors: sensors,
       infrared: infrared,
       timeline: timeline,
+      ui: ui,
       say: say,
       server: server,
     });

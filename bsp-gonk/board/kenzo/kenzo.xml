@@ -191,10 +191,8 @@
   <project groups="pdk" name="platform/system/security" path="system/security" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/system/vold" path="system/vold" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/bluetooth" path="vendor/qcom/opensource/bluetooth" revision="LA.BR.1.3.2_rb3.14"/>
-  <project name="platform/vendor/qcom-opensource/data-ipa-cfg-mgr" path="vendor/qcom/opensource/data-ipa-cfg-mgr" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/dataservices" path="vendor/qcom/opensource/dataservices" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/dpm" path="vendor/qcom/opensource/dpm" revision="LA.BR.1.3.2_rb3.14"/>
-  <project name="platform/vendor/qcom-opensource/kernel/kernel-tests" path="vendor/qcom/opensource/kernel-tests" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/location" path="vendor/qcom/opensource/location" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/rcs-service" path="vendor/qcom/opensource/rcs-service" revision="LA.BR.1.3.2_rb3.14"/>
   <project name="platform/vendor/qcom-opensource/time-services" path="vendor/qcom/opensource/time-services" revision="LA.BR.1.3.2_rb3.14"/>

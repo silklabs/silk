@@ -228,7 +228,6 @@ export default class Devices extends AsyncComponent {
         configuringDevice: null,
       });
       this.props.userState.updateRegisteredDevices(devices.toArray());
-      this.props.navigator.popToTopAsync();
       return;
     }
 
@@ -378,37 +377,40 @@ export default class Devices extends AsyncComponent {
     log.debug('Going to configure a device.');
     try {
       bleDeviceSession.acceptRegistrationRequest();
-      bleDeviceSession.once('secret', (deviceSecret) => {
-        let { deviceId } = deviceSecret;
-        log.debug('And now kiththth! Received device ID', deviceId);
-        let configuringDevice = new ConfiguringDeviceRecord({
-          bleDeviceSession,
-          deviceId,
-          name: null,
-        });
-        this.setStateAsync({configuringDevice});
-      });
+    } catch(ex) {
+      this._abortConfig(bleDeviceSession, ex);
+      return;
+    }
 
-      log.debug('Launching device setup UI.');
-      let config = await new Promise((resolve, reject) => {
-        this.props.navigator.pushAsync({
-          name: 'DeviceTouch',
-          props: {
-            bleDeviceSession,
-            onCancel: () => reject({canceled: true}),
-            onSave: resolve,
-          },
-        });
+    bleDeviceSession.once('secret', (deviceSecret) => {
+      let { deviceId } = deviceSecret;
+      log.debug('And now kiththth! Received device ID', deviceId);
+      let configuringDevice = new ConfiguringDeviceRecord({
+        bleDeviceSession,
+        deviceId,
+        name: null,
       });
-      log.debug('Received device configuration:', config);
-
-      // Update the name of the new device in the UI after the
-      // previous navigation animation has finished.
-      await uiInteractions();
-      let { configuringDevice } = this.pendingState;
-      configuringDevice = configuringDevice.set('name', config.name);
       this.setStateAsync({configuringDevice});
+    });
 
+    log.debug('Launching device setup UI.');
+    this.props.navigator.pushAsync({
+      name: 'DeviceTouch',
+      props: {
+        bleDeviceSession,
+        onCancel: () => this._abortConfig(bleDeviceSession),
+        onSave: (config) => this._saveDeviceConfig(bleDeviceSession, config),
+      },
+    });
+  };
+
+  async _saveDeviceConfig(bleDeviceSession, config) {
+    log.debug('Received device configuration:', config);
+    let { configuringDevice } = this.pendingState;
+    configuringDevice = configuringDevice.set('name', config.name);
+    this.setStateAsync({configuringDevice});
+
+    try {
       log.debug('Going to register the device with the server.');
       let {
         success,
@@ -435,7 +437,7 @@ export default class Devices extends AsyncComponent {
     } catch(ex) {
       await this._abortConfig(bleDeviceSession, ex);
     }
-  };
+  }
 
   async _abortConfig(bleDeviceSession, error) {
     await this.props.navigator.popToTopAsync();
@@ -455,12 +457,12 @@ export default class Devices extends AsyncComponent {
     if (this.pendingState.configuringDevice) {
       await this.setStateAsync({configuringDevice: null});
     }
-    if (error && error.canceled) {
+    if (!error) {
       log.debug('User cancelled. Aborting.');
-    } else {
-      log.warn('Could not configure device due to error:', error);
-      this._showConfigError(error);
+      return;
     }
+    log.warn('Could not configure device due to error:', error);
+    this._showConfigError(error);
   }
 
   _showConfigError(error) {

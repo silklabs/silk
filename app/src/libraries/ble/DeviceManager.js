@@ -597,6 +597,8 @@ export class DeviceSession extends RobustEventEmitter {
    * can be closed.
    */
   dismiss: (() => void) = () => {
+    this.emit(`dismissed`);
+
     // The server connection and BLE sockets can race each other. If
     // we happen to be able to confirm a socket.io connection to the
     // device and want to dismiss the socket before we've confirmed a

@@ -6,9 +6,7 @@ Tests network connectivity and performance to Silk server
 Install
 -------
 
-```
-npm install
-```
+(no additional dependencies need to be installed).
 
 Run
 ---

@@ -6,29 +6,6 @@
 Set up the environment first by running a local install before anything else discussed below:
 ```
 cd vendor/silk/core
-npm install
-```
-
-## Javascript Rapid Development Cycle
-
-If you are only making JavaScript changes to silk core (`silk/core/lib/`), the following may be used to reduce your build time significantly.
-
-### Automatic push
-
-Run `./watch`, then edit/save normally. On every save, the new `silk-device-main.js` will be
-automatically installed on device, and silk core restarted.
-
-`./watch` options:
-  * `LAX=1 ./watch` - to skip running ESLint
-  * `NO_UGLY=1 LAX=1 ./watch` - also don't uglify
-  * `./watch --no-restart` - to skip restarting silk core.
-
-### Manual push of silk core
-```sh
-.. edit .js files ..
-$ npm install
-$ adb push silk-device-main.js /system/silk/node_modules/
-$ adb shell setprop ctl.restart silk
 ```
 
 ## JavaScript Debugging

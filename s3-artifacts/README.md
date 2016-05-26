@@ -16,6 +16,7 @@ uploaded.
 ## Usage
 
 ```sh
+# (for global install not needed within silk-core).
 npm install -g s3-artifacts
 silk-artifacts -h
 ```

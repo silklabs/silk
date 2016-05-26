@@ -6,7 +6,7 @@
 
 import assert from 'assert';
 import crypto from 'crypto';
-import { ec as ECDH } from 'elliptic';
+import { ec as ECDH, curves as Curves } from 'elliptic';
 import makeLog from 'silk-log';
 
 import ClosingTransform from './closing_transform';
@@ -15,23 +15,91 @@ import * as Metrics from './metrics';
 
 const log = makeLog(`streams:crypto`);
 
-// Pluggable random bytes generator for different environments (node,
-// browser, React Native).
-let getRandomBytes = crypto.randomBytes;
+function genRandomBytesNode(length: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(length, (error, bytes) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(bytes);
+    });
+  });
+}
 
-export function setRandomBytesFunction(func) {
-  assert(func);
-  assert(typeof func === `function`);
+/**
+ * Abstract class that represents a Diffie-Hellman key pair for the
+ * purpose of our crypto stream.
+ */
+export class ECDHKeyPair {
+  static PUBLIC_KEY_LENGTH = 32;
+  static CURVE_NAME = `curve25519`;
+  static CURVE_HMAC_STRENGTH = Curves[ECDHKeyPair.CURVE_NAME].hash.hmacStrength;
+  static HASH_NAME = `sha256`;
 
-  getRandomBytes = func;
+  constructor() {
+    if (this.constructor === ECDHKeyPair) {
+      throw new Error('NOT_IMPLEMENTED');
+    }
+  }
+
+  getPublicKey(): Buffer {
+    throw new Error('NOT_IMPLEMENTED');
+  }
+
+  genSharedSecret(otherPublicKey: Buffer): Promise<Buffer> {
+    throw new Error('NOT_IMPLEMENTED');
+  }
+}
+
+type RandomBytesGenerator = (length: number) => Promise<Buffer>;
+type KeyPairGenerator = () => Promise<ECDHKeyPair>;
+
+/**
+ * Implementation of ECDHKeyPair using elliptic.js.
+ */
+export class EllipticJSKeyPair extends ECDHKeyPair {
+
+  static gen(
+    // TODO: remove this and default to genRandomBytesNode once
+    // `EllipticJSKeyPair` is exclusively used on node and the app has
+    // its own implementation.
+    genRandomBytes: ?RandomBytesGenerator
+  ): Promise<EllipticJSKeyPair> {
+    genRandomBytes = genRandomBytes || genRandomBytesNode;
+    return genRandomBytes(ECDHKeyPair.CURVE_HMAC_STRENGTH)
+      .then((bytes) => new EllipticJSKeyPair(bytes));
+  }
+
+  constructor(randomBytes: Buffer) {
+    super();
+    this._ecdh = new ECDH(ECDHKeyPair.CURVE_NAME);
+    this._ecKeyPair = this._ecdh.genKeyPair({ entropy: randomBytes });
+  }
+
+  getPublicKey(): Buffer {
+    // elliptic always returns an array if anything other than 'hex' is passed.
+    const publicKeyArray = this._ecKeyPair.getPublic(true, 'binary');
+    assert(Array.isArray(publicKeyArray));
+    assert(publicKeyArray.length === ECDHKeyPair.PUBLIC_KEY_LENGTH);
+    return new Buffer(publicKeyArray);
+  }
+
+  genSharedSecret(otherPublicKey: Buffer): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const otherKeyPair = this._ecdh.keyFromPublic(otherPublicKey);
+      const derived = this._ecKeyPair.derive(otherKeyPair.getPublic()).toArray(`le`);
+      const hasher = crypto.createHash(ECDHKeyPair.HASH_NAME);
+      hasher.update(new Buffer(derived));
+      resolve(hasher.digest());
+    });
+  }
+
 }
 
 class CryptoStreamBase extends ClosingTransform {
 
-  static CURVE_NAME = `curve25519`;
   static CIPHER_NAME = `aes-256-cbc`;
-  static HASH_NAME = `sha256`;
-  static PUBLIC_KEY_LENGTH = 32;
   static IV_LENGTH = 16;
 
   _ec = null;
@@ -39,12 +107,11 @@ class CryptoStreamBase extends ClosingTransform {
   _sharedSecret = null;
   _error = null;
 
-  constructor(ec, metrics, options) {
+  constructor(metrics, options) {
     log.debug(`CryptoStreamBase()`);
 
     super(options);
 
-    this._ec = ec;
     this._metrics = metrics;
   }
 
@@ -83,10 +150,12 @@ export class EncryptStream extends CryptoStreamBase {
   _randomBytes = [ ];
   _pushedPublicKey = false;
 
-  constructor(ec, metrics, options) {
+  constructor(genRandomBytes, metrics, options) {
     log.debug(`EncryptStream()`);
 
-    super(ec, metrics, options);
+    super(metrics, options);
+
+    this._genRandomBytes = genRandomBytes;
 
     // Our sequence counter is just a single byte.
     this._sequenceBuffer = new Buffer([this._insecureRandomInt(0, 0xff)]);
@@ -94,7 +163,7 @@ export class EncryptStream extends CryptoStreamBase {
     // Queue up several chunks of random bytes so that we are less likely to
     // block when sending data later.
     for (let index = 0; index < 5; index++) {
-      getRandomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
+      this._feedRandomBytes();
     }
   }
 
@@ -102,10 +171,8 @@ export class EncryptStream extends CryptoStreamBase {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  _onRandomBytes = (error, random) => {
-    if (error) {
-      this._endWithError(error);
-    } else {
+  _feedRandomBytes() {
+    this._genRandomBytes(CryptoStreamBase.IV_LENGTH).then((random) => {
       this._randomBytes.push(random);
 
       if (this._pushedPublicKey &&
@@ -114,8 +181,10 @@ export class EncryptStream extends CryptoStreamBase {
         const { data, encoding, callback } = this._bufferedWrites.shift();
         this._processChunk(data, encoding, callback);
       }
-    }
-  };
+    }).catch((error) => {
+      this._endWithError(error);
+    });
+  }
 
   _encodeInteger(int) {
     // Each byte can hold 7 bits, and the high bit is used to indicate that the
@@ -154,7 +223,7 @@ export class EncryptStream extends CryptoStreamBase {
 
     // Grab random bytes out of our cache, and refill it asynchronously.
     const random = this._randomBytes.pop();
-    getRandomBytes(CryptoStreamBase.IV_LENGTH, this._onRandomBytes);
+    this._feedRandomBytes();
 
     const cipher =
       crypto.createCipheriv(CryptoStreamBase.CIPHER_NAME,
@@ -250,34 +319,20 @@ export class EncryptStream extends CryptoStreamBase {
     this._processChunk(chunk, encoding, callback);
   }
 
-  setKeyPair(keyPair) {
+  setKeyPair(keyPair: ECDHKeyPair) {
     assert(!this._pushedPublicKey);
     assert(!this._sharedSecret);
     assert(this._bufferedWrites);
 
-    // Elliptic always returns an array if anything other than 'hex' is passed.
-    const publicKeyArray = keyPair.getPublic(true, 'binary');
-    assert(Array.isArray(publicKeyArray));
-
-    // For now this will always be a constant length.
-    assert(publicKeyArray.length === CryptoStreamBase.PUBLIC_KEY_LENGTH);
+    const publicKey = keyPair.getPublicKey();
+    log.debug(`This public key: '${publicKey.toString('hex')}'`);
 
     // We currently only send one byte for the length of the public key. If we
     // ever need more than 255 bytes for the key we will need to change this to
     // take a multi-byte encoded length.
-    assert(publicKeyArray.length <= 0xff);
-
-    // The first data sent contains the public key length followed by the public
-    // key.
-    let outgoing = new Buffer(publicKeyArray.length + 1);
-    outgoing[0] = publicKeyArray.length;
-
-    // Copy the public key into the buffer.
-    for (let i = 0; i < publicKeyArray.length; i++) {
-      outgoing[i + 1] = publicKeyArray[i];
-    }
-
-    log.debug(`This public key: '${outgoing.slice(1).toString('hex')}'`);
+    assert(publicKey.length <= 0xff);
+    const publicKeyLength = new Buffer([publicKey.length]);
+    const outgoing = Buffer.concat([publicKeyLength, publicKey]);
     this.push(outgoing);
 
     this._pushedPublicKey = true;
@@ -326,10 +381,10 @@ export class DecryptStream extends CryptoStreamBase {
   _otherPublicKeyBuffer = null;
   _otherPublicKeyBufferIndex = 0;
 
-  constructor(ec, metrics, options) {
+  constructor(metrics, options) {
     log.debug(`DecryptStream()`);
 
-    super(ec, metrics, options);
+    super(metrics, options);
   }
 
   _deriveKey(chunk) {
@@ -343,7 +398,7 @@ export class DecryptStream extends CryptoStreamBase {
       log.debug(`Other public key length is ${chunk[0]}`);
 
       // This should always be true for now...
-      if (chunk[0] !== CryptoStreamBase.PUBLIC_KEY_LENGTH) {
+      if (chunk[0] !== ECDHKeyPair.PUBLIC_KEY_LENGTH) {
         const error = new Error(`Invalid public key length (${chunk[0]})`);
         this._endWithError(error);
         return null;
@@ -393,25 +448,16 @@ export class DecryptStream extends CryptoStreamBase {
                 `the public key: ` +
                 `'${this._otherPublicKeyBuffer.toString('hex')}'`);
 
-      // Do the shared secret derivation.
-      const otherKeyPair = this._ec.keyFromPublic(this._otherPublicKeyBuffer);
+      this._keyPair.genSharedSecret(this._otherPublicKeyBuffer)
+        .then((sharedSecret) => {
+          this._sharedSecret = sharedSecret;
 
-      // We don't need this any more.
-      this._otherPublicKeyBuffer = null;
-      this._otherPublicKeyBufferIndex = 0;
+          // We don't need this any more.
+          this._keyPair = null;
 
-      const otherPublicKey = otherKeyPair.getPublic();
-      const derived = this._keyPair.derive(otherPublicKey).toArray(`le`);
-
-      // We don't need this any more.
-      this._keyPair = null;
-
-      const hasher = crypto.createHash(CryptoStreamBase.HASH_NAME);
-      hasher.update(new Buffer(derived));
-      this._sharedSecret = hasher.digest();
-
-      log.debug(`Got shared secret '${this._sharedSecret.toString('hex')}'`);
-      this.emit(`sharedSecret`, this._sharedSecret);
+          log.debug(`Got shared secret '${sharedSecret.toString('hex')}'`);
+          this.emit(`sharedSecret`, sharedSecret);
+        });
     }
 
     return chunk;
@@ -705,7 +751,7 @@ export class DecryptStream extends CryptoStreamBase {
     this._processChunk(chunk, encoding, callback);
   }
 
-  setKeyPair(keyPair) {
+  setKeyPair(keyPair: ECDHKeyPair) {
     assert(keyPair);
     assert(!this._keyPair);
     assert(this._bufferedWrites);
@@ -731,39 +777,30 @@ export class DecryptStream extends CryptoStreamBase {
   }
 }
 
+
 export class CryptoDuplexStream extends DuplexTransform {
 
   _sharedSecret = null;
 
-  constructor(stream, metrics, options = { }) {
+  constructor(
+    genKeyPair: KeyPairGenerator,
+    genRandomBytes: RandomBytesGenerator,
+    stream,
+    metrics,
+    options = {}
+  ) {
     log.debug(`CryptoDuplexStream()`);
 
-    const ecdh = new ECDH(CryptoStreamBase.CURVE_NAME);
+    const decrypt = new DecryptStream(metrics);
+    const encrypt = new EncryptStream(genRandomBytes, metrics);
 
-    const decrypt = new DecryptStream(ecdh, metrics);
-    const encrypt = new EncryptStream(ecdh, metrics);
-
-    const randomByteCountNeeded = ecdh.hash.hmacStrength;
-    assert(randomByteCountNeeded);
-    log.debug(`hmac requires ${randomByteCountNeeded} random bytes`);
-
-    getRandomBytes(randomByteCountNeeded, (error, bytes) => {
-      if (error) {
-        log.error(error);
-        this.push(null);
-        return;
-      }
-
-      const start = Date.now();
-
-      const keyPair = ecdh.genKeyPair({ entropy: bytes });
-
-      const stop = Date.now();
-
+    genKeyPair().then((keyPair) => {
       encrypt.setKeyPair(keyPair);
       decrypt.setKeyPair(keyPair);
-
-      metrics.add(new Metrics.CryptoKeyPair(stop - start));
+    }).catch((error) => {
+      log.error(error);
+      this.emit(`error`, error);
+      this.push(null);
     });
 
     decrypt.once(`sharedSecret`, sharedSecret => {

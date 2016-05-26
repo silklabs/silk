@@ -5,11 +5,11 @@
 /* eslint-disable consistent-return */
 
 import crypto from 'crypto';
-import Crypto from './Crypto';
+import { genRandomBytes } from './Crypto';
 
 crypto.randomBytes = function(size, callback) {
   if (callback) {
-    Crypto.getRandomBytes(size, callback);
+    genRandomBytes(size, callback);
     return;
   }
   // TODO: this is a terrible temporary hack, we should not ship this!

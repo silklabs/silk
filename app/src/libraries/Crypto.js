@@ -14,7 +14,7 @@ const { AppCrypto } = NativeModules;
  * Also supports node-style callback argument. The callback function should be
  * of the form |function callback(error, result) { ... }|.
  */
-export function getRandomBytes(
+export function genRandomBytes(
   numberOfBytes: number,
   callback: ?((error: ?Error, result: ?Buffer) => void) = null
 ): Promise<Buffer> {

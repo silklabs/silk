@@ -8,21 +8,23 @@ import makeLog from 'silk-log';
 import {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
+  EllipticJSKeyPair,
   HeartbeatDuplexStream,
   MessagePackDuplexStream,
-  setRandomBytesFunction,
 } from 'silk-streams';
 
-import { getRandomBytes } from '../Crypto';
+import { genRandomBytes } from '../Crypto';
 import * as Metrics from '../../metrics/BTLE';
 import Stream from './Stream';
 
 import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type { Socket } from './SocketManager';
 
-setRandomBytesFunction(getRandomBytes);
-
 const log = makeLog(`btle-SocketSession`);
+
+function genKeyPair() {
+  return EllipticJSKeyPair.gen(genRandomBytes);
+}
 
 export default class SocketSession extends AuthenticateDuplexStream {
   static RSSI_UPDATE_TIMEOUT = 50;
@@ -59,7 +61,12 @@ export default class SocketSession extends AuthenticateDuplexStream {
     invariant(metrics);
 
     const socketStream = new Stream(socket);
-    const cryptoStream = new CryptoDuplexStream(socketStream, metrics);
+    const cryptoStream = new CryptoDuplexStream(
+      genKeyPair,
+      genRandomBytes,
+      socketStream,
+      metrics
+    );
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
@@ -73,12 +80,14 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
 
-    super(heartbeatStream,
-          cryptoStream,
-          privateKey,
-          publicKeys,
-          metrics,
-          { autoClose: false });
+    super(
+      heartbeatStream,
+      cryptoStream,
+      privateKey,
+      publicKeys,
+      metrics,
+      { autoClose: false }
+    );
 
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
     socket.addListener(`disconnect`, this._onSocketDisconnect);

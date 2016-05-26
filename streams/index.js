@@ -15,7 +15,8 @@ export {
   AuthenticateDuplexStream,
 } from './src/authenticate';
 export {
-  setRandomBytesFunction,
+  ECDHKeyPair,
+  EllipticJSKeyPair,
   EncryptStream,
   DecryptStream,
   CryptoDuplexStream,

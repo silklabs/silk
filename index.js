@@ -1,2 +1,2 @@
-
-module.exports = require('./build/Release/webrtc.node');
+'use strict';
+module.exports = require('./build/Release/node-webrtc.node');

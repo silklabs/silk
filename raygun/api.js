@@ -8,8 +8,8 @@
 
 'use strict';
 
-const config = require('./config');
-const https = require('https');
+var config = require('./config');
+var https = require('https');
 
 module.exports = {
 
@@ -25,8 +25,8 @@ module.exports = {
       return Promise.resolve();
     }
     return new Promise(function(resolve, reject) {
-      const data = new Buffer(JSON.stringify(message), 'utf8');
-      const httpOptions = {
+      var data = new Buffer(JSON.stringify(message), 'utf8');
+      var httpOptions = {
         host: 'api.raygun.io',
         port: 443,
         path: '/entries',
@@ -38,7 +38,7 @@ module.exports = {
         }
       };
 
-      const request = https.request(
+      var request = https.request(
         httpOptions,
         function (response) {
           console.log('Raygun response:', response.statusCode, response.statusMessage);

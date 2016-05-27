@@ -37,7 +37,7 @@
     "tmp": "0.0.28",
     "express": "4.13.3",
     "base64url": "1.0.5",
-    "elliptic": "5.2.1",
+    "elliptic": "6.2.7",
     "hash.js": "1.0.3",
     "localStorage": "1.0.3",
     "msgpack-lite": "0.1.13",

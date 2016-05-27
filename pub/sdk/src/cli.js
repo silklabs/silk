@@ -192,7 +192,7 @@ export let activate = ensureSetup({
     }]
   ],
   main: async (api, args) => {
-    await checkDevices(api);
+    await checkDevices(api, args.device);
     let main = null;
     if (!args.clear) {
       const pkg = require(path.join(findPackageRoot(), 'package.json'));

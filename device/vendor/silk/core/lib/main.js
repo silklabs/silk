@@ -75,7 +75,7 @@ import startCollectingProcessMetrics from './process_metrics';
 initProfiler();
 
 api.metrics.add(new JSStartup({
-  startupMS: new MetricTypes.Integer(process.uptime() * 1000)
+  startupMS: new MetricTypes.Integer(Math.floor(process.uptime() * 1000))
 }));
 
 // Amount of time to wait for async shutdown before forcing power status change.

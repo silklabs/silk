@@ -30,7 +30,7 @@ type FrameResults = {
   size: {
     width: number;
     height: number;
-  }
+  };
   boundingRect: Rect;
 };
 
@@ -48,8 +48,4 @@ declare class Cmt {
   ): void;
 
   busy(): bool;
-};
-
-declare export default class {
-  Cmt: Cmt;
 };

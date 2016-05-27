@@ -101,6 +101,7 @@ const DURATION_MS =
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
+const FOCUS_MODE = util.getprop('ro.silk.camera.focus_mode', 'continuous-video');
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 
@@ -576,7 +577,7 @@ export default class Camera extends EventEmitter {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
         if (CAMERA_HW_ENABLED) {
-          this._command({cmdName: 'setParameter', name: 'focus-mode', value: 'continuous-video'});
+          this._command({cmdName: 'setParameter', name: 'focus-mode', value: FOCUS_MODE});
           this._scheduleNextFrameCapture();
         }
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);

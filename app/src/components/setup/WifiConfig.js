@@ -434,9 +434,10 @@ export default class WifiConfig extends React.Component {
     const network = this.state.manualEntry ?
       this.state.manualNetork :
       this.state.selectedDeviceNetwork;
+    const {manufacturer, model} = this.props.bleDeviceSession;
     this.props.onSave({
       deviceId: this.props.deviceSecret.deviceId,
-      name: `${this.props.bleDeviceSession.manufacturer} ${this.props.bleDeviceSession.model}`,
+      name: `${manufacturer} ${model}`,
       ssid: network.ssid,
       secret: network.psk ? this.state.secret : null,
     });

@@ -1,5 +1,6 @@
 import invariant from 'assert';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   StyleSheet,
   Text,
@@ -18,6 +19,8 @@ export default class Button extends React.Component {
     style: View.propTypes.style,
     labelStyle: Text.propTypes.style,
   };
+
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   render() {
     const { label, type, disabled, onPress, style, labelStyle } = this.props;

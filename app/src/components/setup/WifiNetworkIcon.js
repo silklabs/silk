@@ -1,5 +1,6 @@
 import invariant from 'assert';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   StyleSheet,
   Image,
@@ -41,6 +42,8 @@ export default class WifiNetworkIcon extends React.Component {
     size: React.PropTypes.oneOf(['small', 'large']).isRequired,
     tint: React.PropTypes.oneOf(['dark', 'light']).isRequired,
   };
+
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   _renderLevel() {
     const { level, size, tint } = this.props;

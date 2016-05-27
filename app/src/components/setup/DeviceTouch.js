@@ -113,7 +113,7 @@ export default class DeviceTouch extends AsyncComponent {
             label="Cancel"
           />
         }>
-        <View style={styles.graphic}>
+        <View style={styles.content}>
           <Image
             source={require('image!hub_large')}
             style={styles.hubImage}
@@ -128,7 +128,7 @@ export default class DeviceTouch extends AsyncComponent {
 }
 
 const styles = StyleSheet.create({
-  graphic: {
+  content: {
     flex: 1,
     marginVertical: 24,
   },

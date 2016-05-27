@@ -16,24 +16,9 @@ export default class UnconfiguredDevice extends React.Component {
     silkDevices: React.PropTypes.object.isRequired,
   };
 
-  state = {
-    ignored: false,
-  };
-
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.bleDeviceSession !== this.props.bleDeviceSession) {
-      this.setState({ignored: false});
-    }
-  }
-
   render() {
-    // Crude way of "ignoring" a device for now. If we reconnect,
-    // it'll come back.
-    if (this.state.ignored) {
-      return <View />;
-    }
     return (
       <View style={[styles.container, this.props.style]}>
         <Text style={styles.label}>
@@ -62,7 +47,7 @@ export default class UnconfiguredDevice extends React.Component {
   }
 
   _doIgnore = () => {
-    this.setState({ignored: true});
+    this.props.bleDeviceSession.declineRegistrationRequest();
   };
 
   _doConfigure = () => {

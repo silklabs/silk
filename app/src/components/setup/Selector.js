@@ -1,4 +1,5 @@
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   PixelRatio,
   ScrollView,
@@ -18,6 +19,8 @@ class Item extends React.Component {
     icon: React.PropTypes.element,
     onSelect: React.PropTypes.func,
   };
+
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   render() {
     const { selected } = this.props;

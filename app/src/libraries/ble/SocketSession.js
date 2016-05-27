@@ -27,7 +27,6 @@ function genKeyPair() {
 }
 
 export default class SocketSession extends AuthenticateDuplexStream {
-  static RSSI_UPDATE_TIMEOUT = 50;
 
   _socket: Socket;
   _privateKey: string;
@@ -40,9 +39,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
   _rssiSmoother: RssiSmoother = new RssiSmoother();
   _rssiUpdatesEnabled: boolean = false;
-  _rssiUpdatePending: boolean = false;
-  _rssiValue: number = 0;
-  _rssiTimeout: ?number = null;
+  _rssiValue: number = -80;
 
   _metrics: MetricsAgent;
 
@@ -103,7 +100,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this.once(`unauthenticated`, () => {
       log.info(`Receiving unauthenticated data`);
-      this.allowUnauthenticated();
+      this.allowUnauthenticated(true);
     });
 
     socketStream.on(`data`, (data) => {
@@ -121,18 +118,17 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _onSocketRssiUpdate: ((rssi: number) => void) = (rssi) => {
     log.debug(`SocketSession._onSocketRssiUpdate(${rssi})`);
 
-    this._rssiSmoother.update(rssi);
+    if (!this._rssiUpdatesEnabled) {
+      return;
+    }
 
-    this._rssiUpdatePending = false;
+    this._rssiSmoother.update(rssi);
 
     const lastRssiValue = this._rssiValue;
     this._rssiValue = this._rssiSmoother.value;
 
-    if (this._rssiUpdatesEnabled) {
-      if (this._rssiValue !== lastRssiValue) {
-        this.emit(`rssiUpdate`, this._rssiValue);
-      }
-      this._updateRssiAfterDelay();
+    if (this._rssiValue !== lastRssiValue) {
+      this.emit(`rssiUpdate`, this._rssiValue);
     }
   };
 
@@ -192,25 +188,6 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this._socket.removeListener(`disconnect`, this._onSocketDisconnect);
   }
 
-  _updateRssiAfterDelay() {
-    log.debug(`SocketSession._updateRssiAfterDelay()`);
-    if (!this._rssiUpdatesEnabled ||
-        this._rssiTimeout ||
-        this._rssiUpdatePending) {
-      return;
-    }
-
-    this._rssiTimeout = setTimeout(() => {
-      invariant(this._rssiUpdatesEnabled);
-      invariant(!this._rssiUpdatePending);
-
-      this._rssiTimeout = null;
-      this._rssiUpdatePending = true;
-
-      this._socket.updateRssi();
-    }, SocketSession.RSSI_UPDATE_TIMEOUT);
-  }
-
   _sendDisconnect() {
     log.debug(`SocketSession._sendDisconnect()`);
     invariant(!this._sentDisconnect);
@@ -240,19 +217,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
     }
 
     this._rssiUpdatesEnabled = val;
-
-    if (this.rssiUpdatesEnabled) {
-      invariant(this._socket);
-      invariant(!this._rssiTimeout);
-      if (!this._rssiUpdatePending) {
-        this._updateRssiAfterDelay();
-      }
-    } else {
-      if (this._rssiTimeout) {
-        clearTimeout(this._rssiTimeout);
-        this._rssiTimeout = null;
-      }
-    }
+    this._socket.enableRssiUpdates(val);
   }
 
   disconnect() {

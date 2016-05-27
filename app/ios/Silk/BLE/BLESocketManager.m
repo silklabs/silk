@@ -11,5 +11,5 @@
   RCT_EXTERN_METHOD(removeAllBeaconUuids)
 
   RCT_EXTERN_METHOD(send:(NSInteger)id dataBase64:(NSString *)dataBase64)
-  RCT_EXTERN_METHOD(updateRssi:(NSInteger)id)
+  RCT_EXTERN_METHOD(enableRssiUpdates:(NSInteger)id enable:(BOOL)enable)
 @end

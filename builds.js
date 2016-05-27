@@ -172,6 +172,7 @@ const builds = {
     // Only build the iOS app if relevant files changed.
     travis_yml: 'app/ios/travis/debug.yml',
     files: [
+      'app/node_modules/**',
       'app/ios/**',
       'webapp/install.sh',
     ],
@@ -186,6 +187,7 @@ const builds = {
     // On PRs only build the entire Android app if relevant files changed.
     travis_yml: 'app/android/.travis.yml',
     files: [
+      'app/node_modules/**',
       'app/android/**',
       'webapp/src/android/**',
       'webapp/install.sh',

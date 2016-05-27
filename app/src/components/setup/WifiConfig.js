@@ -362,7 +362,7 @@ export default class WifiConfig extends React.Component {
   _renderWifiModal() {
     return (
       <Modal
-        animated={false}
+        animationType="none"
         transparent={true}
         onShow={this._scrollToSelectedWifiRow}
         onRequestClose={this._dismissWifiModal}
@@ -404,7 +404,7 @@ export default class WifiConfig extends React.Component {
     const { manualNetwork } = this.state;
     return (
       <Modal
-        animated={false}
+        animationType="none"
         transparent={true}
         onRequestClose={this._dismissAuthTypeModal}
         visible={this.state.authTypeModalShown}>

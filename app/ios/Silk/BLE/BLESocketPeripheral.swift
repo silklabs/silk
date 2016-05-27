@@ -86,6 +86,7 @@ internal class BLESocketPeripheral: NSObject,
     let readCharacteristic: CBMutableCharacteristic
     let writeCharacteristic: CBMutableCharacteristic
 
+    var rssiUpdatesEnabled: Bool = false
     var rssiUpdatePending: Bool = false
     var outgoingQueue: [NSData] = [NSData]()
     var outgoingLength: Int = 0
@@ -339,12 +340,27 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func updateRssi(id: Int) {
+  func enableRssiUpdates(id: Int, enable: Bool) {
+    log.debug("enableRssiUpdates(\(id), \(enable))")
+
     if let connection = self.connectionsById[id] {
+      if connection.rssiUpdatesEnabled == enable {
+        return
+      }
+
+      connection.rssiUpdatesEnabled = enable
+
+      if !enable {
+        connection.rssiUpdatePending = false
+        return
+      }
+
       if connection.peripheral.delegate == nil {
         log.info("Peripheral not yet connected, queueing rssi update")
         connection.rssiUpdatePending = true
+        return
       }
+
       connection.peripheral.readRSSI()
     } else {
       log.error("Invalid connection id \(id), ignoring")
@@ -685,6 +701,7 @@ internal class BLESocketPeripheral: NSObject,
     if let connection = self.connectionsByPeripheral[peripheral] {
       peripheral.delegate = self
       if connection.rssiUpdatePending {
+        assert(connection.rssiUpdatesEnabled)
         connection.rssiUpdatePending = false
         peripheral.readRSSI()
       }
@@ -947,14 +964,25 @@ internal class BLESocketPeripheral: NSObject,
   func peripheral(peripheral: CBPeripheral,
                   didReadRSSI RSSI: NSNumber,
                   error: NSError?) {
+    log.debug("peripheral:didReadRSSI(\(peripheral), \(RSSI), \(error))")
+
     if error != nil {
       log.error("Failed to update rssi for peripheral \(peripheral): " +
                 "\(error)")
-      return
     }
 
     if let connection = self.connectionsByPeripheral[peripheral] {
-      self.socketManager.rssiUpdate(connection.id, rssi: RSSI.integerValue)
+      if !connection.rssiUpdatesEnabled {
+        return
+      }
+
+      if error == nil {
+        self.socketManager.rssiUpdate(connection.id, rssi: RSSI.integerValue)
+      }
+
+      peripheral.readRSSI()
+    } else {
+      log.debug("Peripheral already disconnected")
     }
   }
 }

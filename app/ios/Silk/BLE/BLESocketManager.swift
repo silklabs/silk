@@ -187,9 +187,10 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     BLESocketManager.bleSocketPeripheral!.send(id, data: data)
   }
 
-  func updateRssi(id: NSInteger) {
-    log.debug("updateRssi(\(id))")
+  func enableRssiUpdates(id: NSInteger, enable: Bool) {
+    log.debug("enableRssiUpdates(\(id), \(enable))")
 
-    BLESocketManager.bleSocketPeripheral!.updateRssi(id)
+    BLESocketManager.bleSocketPeripheral!.enableRssiUpdates(id,
+                                                            enable:enable)
   }
 }

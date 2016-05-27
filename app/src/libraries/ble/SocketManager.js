@@ -42,6 +42,7 @@ let singletonInstance = null;
  * Data can be sent to the other side using the send() method.
  */
 export class Socket extends RobustEventEmitter {
+
   _id: number;
 
   constructor(id: number) {
@@ -58,10 +59,10 @@ export class Socket extends RobustEventEmitter {
     singletonInstance.send(this._id, data);
   }
 
-  updateRssi() {
-    log.debug(`Socket.updateRssi()`);
+  enableRssiUpdates(enable: boolean) {
+    log.debug(`Socket.updateRssi(${enable})`);
     invariant(singletonInstance);
-    singletonInstance.updateRssi(this._id);
+    singletonInstance.enableRssiUpdates(this._id, enable);
   }
 }
 
@@ -153,12 +154,12 @@ export class SocketManager extends RobustEventEmitter {
     BLESocketManager.send(id, data.toString('base64'));
   }
 
-  updateRssi(id: number) {
-    log.debug(`SocketManager.updateRssi(${id})`);
+  enableRssiUpdates(id: number, enable: boolean) {
+    log.debug(`SocketManager.updateRssi(${id}, ${enable})`);
 
     invariant(this._sockets.has(id));
 
-    BLESocketManager.updateRssi(id);
+    BLESocketManager.enableRssiUpdates(id, enable);
   }
 }
 

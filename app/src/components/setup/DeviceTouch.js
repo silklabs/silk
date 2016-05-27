@@ -44,7 +44,7 @@ export default class DeviceTouch extends AsyncComponent {
     if (!this.mounted || !__DEV__) {
       return;
     }
-    this.setState({rssi});
+    this.setStateAsync({rssi});
   };
 
   _onDeviceTouch = (deviceSecret) => {

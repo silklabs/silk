@@ -24,8 +24,20 @@
 */
 /*jslint vars:false, bitwise:true*/
 /*jshint indent:4*/
-/*global exports:true*/
-(function clone(exports) {
+/*global exports:true, define:true*/
+(function (root, factory) {
+    'use strict';
+
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
+    // and plain browser loading,
+    if (typeof define === 'function' && define.amd) {
+        define(['exports'], factory);
+    } else if (typeof exports !== 'undefined') {
+        factory(exports);
+    } else {
+        factory((root.estraverse = {}));
+    }
+}(this, function clone(exports) {
     'use strict';
 
     var Syntax,
@@ -143,7 +155,6 @@
 
     Syntax = {
         AssignmentExpression: 'AssignmentExpression',
-        AssignmentPattern: 'AssignmentPattern',
         ArrayExpression: 'ArrayExpression',
         ArrayPattern: 'ArrayPattern',
         ArrowFunctionExpression: 'ArrowFunctionExpression',
@@ -164,9 +175,8 @@
         DirectiveStatement: 'DirectiveStatement',
         DoWhileStatement: 'DoWhileStatement',
         EmptyStatement: 'EmptyStatement',
-        ExportAllDeclaration: 'ExportAllDeclaration',
-        ExportDefaultDeclaration: 'ExportDefaultDeclaration',
-        ExportNamedDeclaration: 'ExportNamedDeclaration',
+        ExportBatchSpecifier: 'ExportBatchSpecifier',
+        ExportDeclaration: 'ExportDeclaration',
         ExportSpecifier: 'ExportSpecifier',
         ExpressionStatement: 'ExpressionStatement',
         ForStatement: 'ForStatement',
@@ -185,7 +195,6 @@
         LabeledStatement: 'LabeledStatement',
         LogicalExpression: 'LogicalExpression',
         MemberExpression: 'MemberExpression',
-        MetaProperty: 'MetaProperty',
         MethodDefinition: 'MethodDefinition',
         ModuleSpecifier: 'ModuleSpecifier',
         NewExpression: 'NewExpression',
@@ -193,11 +202,9 @@
         ObjectPattern: 'ObjectPattern',
         Program: 'Program',
         Property: 'Property',
-        RestElement: 'RestElement',
         ReturnStatement: 'ReturnStatement',
         SequenceExpression: 'SequenceExpression',
         SpreadElement: 'SpreadElement',
-        Super: 'Super',
         SwitchStatement: 'SwitchStatement',
         SwitchCase: 'SwitchCase',
         TaggedTemplateExpression: 'TaggedTemplateExpression',
@@ -217,10 +224,9 @@
 
     VisitorKeys = {
         AssignmentExpression: ['left', 'right'],
-        AssignmentPattern: ['left', 'right'],
         ArrayExpression: ['elements'],
         ArrayPattern: ['elements'],
-        ArrowFunctionExpression: ['params', 'body'],
+        ArrowFunctionExpression: ['params', 'defaults', 'rest', 'body'],
         AwaitExpression: ['argument'], // CAUTION: It's deferred to ES7.
         BlockStatement: ['body'],
         BinaryExpression: ['left', 'right'],
@@ -228,8 +234,8 @@
         CallExpression: ['callee', 'arguments'],
         CatchClause: ['param', 'body'],
         ClassBody: ['body'],
-        ClassDeclaration: ['id', 'superClass', 'body'],
-        ClassExpression: ['id', 'superClass', 'body'],
+        ClassDeclaration: ['id', 'body', 'superClass'],
+        ClassExpression: ['id', 'body', 'superClass'],
         ComprehensionBlock: ['left', 'right'],  // CAUTION: It's deferred to ES7.
         ComprehensionExpression: ['blocks', 'filter', 'body'],  // CAUTION: It's deferred to ES7.
         ConditionalExpression: ['test', 'consequent', 'alternate'],
@@ -238,28 +244,26 @@
         DirectiveStatement: [],
         DoWhileStatement: ['body', 'test'],
         EmptyStatement: [],
-        ExportAllDeclaration: ['source'],
-        ExportDefaultDeclaration: ['declaration'],
-        ExportNamedDeclaration: ['declaration', 'specifiers', 'source'],
-        ExportSpecifier: ['exported', 'local'],
+        ExportBatchSpecifier: [],
+        ExportDeclaration: ['declaration', 'specifiers', 'source'],
+        ExportSpecifier: ['id', 'name'],
         ExpressionStatement: ['expression'],
         ForStatement: ['init', 'test', 'update', 'body'],
         ForInStatement: ['left', 'right', 'body'],
         ForOfStatement: ['left', 'right', 'body'],
-        FunctionDeclaration: ['id', 'params', 'body'],
-        FunctionExpression: ['id', 'params', 'body'],
+        FunctionDeclaration: ['id', 'params', 'defaults', 'rest', 'body'],
+        FunctionExpression: ['id', 'params', 'defaults', 'rest', 'body'],
         GeneratorExpression: ['blocks', 'filter', 'body'],  // CAUTION: It's deferred to ES7.
         Identifier: [],
         IfStatement: ['test', 'consequent', 'alternate'],
         ImportDeclaration: ['specifiers', 'source'],
-        ImportDefaultSpecifier: ['local'],
-        ImportNamespaceSpecifier: ['local'],
-        ImportSpecifier: ['imported', 'local'],
+        ImportDefaultSpecifier: ['id'],
+        ImportNamespaceSpecifier: ['id'],
+        ImportSpecifier: ['id', 'name'],
         Literal: [],
         LabeledStatement: ['label', 'body'],
         LogicalExpression: ['left', 'right'],
         MemberExpression: ['object', 'property'],
-        MetaProperty: ['meta', 'property'],
         MethodDefinition: ['key', 'value'],
         ModuleSpecifier: [],
         NewExpression: ['callee', 'arguments'],
@@ -267,11 +271,9 @@
         ObjectPattern: ['properties'],
         Program: ['body'],
         Property: ['key', 'value'],
-        RestElement: [ 'argument' ],
         ReturnStatement: ['argument'],
         SequenceExpression: ['expressions'],
         SpreadElement: ['argument'],
-        Super: [],
         SwitchStatement: ['discriminant', 'cases'],
         SwitchCase: ['test', 'consequent'],
         TaggedTemplateExpression: ['tag', 'quasi'],
@@ -279,7 +281,7 @@
         TemplateLiteral: ['quasis', 'expressions'],
         ThisExpression: [],
         ThrowStatement: ['argument'],
-        TryStatement: ['block', 'handler', 'finalizer'],
+        TryStatement: ['block', 'handlers', 'handler', 'guardedHandlers', 'finalizer'],
         UnaryExpression: ['argument'],
         UpdateExpression: ['argument'],
         VariableDeclaration: ['declarations'],
@@ -432,13 +434,7 @@
         this.__leavelist = [];
         this.__current = null;
         this.__state = null;
-        this.__fallback = null;
-        if (visitor.fallback === 'iteration') {
-            this.__fallback = objectKeys;
-        } else if (typeof visitor.fallback === 'function') {
-            this.__fallback = visitor.fallback;
-        }
-
+        this.__fallback = visitor.fallback === 'iteration';
         this.__keys = VisitorKeys;
         if (visitor.keys) {
             this.__keys = extend(objectCreate(this.__keys), visitor.keys);
@@ -512,11 +508,11 @@
                 }
 
                 node = element.node;
-                nodeType = node.type || element.wrap;
+                nodeType = element.wrap || node.type;
                 candidates = this.__keys[nodeType];
                 if (!candidates) {
                     if (this.__fallback) {
-                        candidates = this.__fallback(node);
+                        candidates = objectKeys(node);
                     } else {
                         throw new Error('Unknown node type ' + nodeType + '.');
                     }
@@ -554,20 +550,6 @@
     };
 
     Controller.prototype.replace = function replace(root, visitor) {
-        var worklist,
-            leavelist,
-            node,
-            nodeType,
-            target,
-            element,
-            current,
-            current2,
-            candidates,
-            candidate,
-            sentinel,
-            outer,
-            key;
-
         function removeElem(element) {
             var i,
                 key,
@@ -592,6 +574,20 @@
                 }
             }
         }
+
+        var worklist,
+            leavelist,
+            node,
+            nodeType,
+            target,
+            element,
+            current,
+            current2,
+            candidates,
+            candidate,
+            sentinel,
+            outer,
+            key;
 
         this.__initialize(root, visitor);
 
@@ -666,11 +662,11 @@
                 continue;
             }
 
-            nodeType = node.type || element.wrap;
+            nodeType = element.wrap || node.type;
             candidates = this.__keys[nodeType];
             if (!candidates) {
                 if (this.__fallback) {
-                    candidates = this.__fallback(node);
+                    candidates = objectKeys(node);
                 } else {
                     throw new Error('Unknown node type ' + nodeType + '.');
                 }
@@ -834,7 +830,7 @@
         return tree;
     }
 
-    exports.version = require('./package.json').version;
+    exports.version = '1.8.1-dev';
     exports.Syntax = Syntax;
     exports.traverse = traverse;
     exports.replace = replace;
@@ -845,5 +841,5 @@
     exports.cloneEnvironment = function () { return clone({}); };
 
     return exports;
-}(exports));
+}));
 /* vim: set sw=4 ts=4 et tw=80 : */

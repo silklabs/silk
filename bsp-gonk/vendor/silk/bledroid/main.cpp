@@ -1,10 +1,15 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "bledroid"
+// Uncomment to use systrace
+//#define ATRACE_TAG ATRACE_TAG_ALWAYS
 #include <utils/Log.h>
+#include <cutils/trace.h>
 
 #include <fcntl.h>
 #include <sys/prctl.h>
 #include <sys/capability.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -145,6 +150,22 @@ static const bt_uuid_t kClientListenScanUuid = {{
 // try to block or accidentally recurse. It will never be reset to false.
 bool cleaning_up_after_error = false;
 
+class Tracer {
+public:
+  static void init() {
+    atrace_set_tracing_enabled(true);
+    ATRACE_INIT();
+  }
+
+  Tracer(const char *name) {
+    ATRACE_BEGIN(name);
+  }
+
+  ~Tracer() {
+    ATRACE_END();
+  }
+};
+
 void bt_cleanup();
 
 void cleanup_and_abort() {
@@ -165,6 +186,7 @@ void cleanup_and_abort() {
 //
 #define CALL_AND_WAIT_HELPER(_expression, _waitType, _return) \
   do { \
+    Tracer _trc("wait:" #_waitType); \
     auto _lock = mainThreadWaiter.autoLock(); \
     int _err = (_expression); \
     if (_err != BT_STATUS_SUCCESS) { \
@@ -667,6 +689,7 @@ static bt_os_callouts_t os_callouts = {
 //
 
 void bt_adapter_state_changed_callback(bt_state_t state) {
+  Tracer trc("bt_adapter_state_changed_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitEnableDisable,
                                             !cleaning_up_after_error);
 
@@ -677,6 +700,7 @@ void bt_adapter_state_changed_callback(bt_state_t state) {
 
 void bt_adapter_properties_callback(bt_status_t status, int num_properties,
     bt_property_t *properties) {
+  Tracer trc("bt_adapter_properties_callback");
   for (int i = 0; i < num_properties; i++) {
     bt_property_t *prop = &properties[i];
     if (prop->type == BT_PROPERTY_BDADDR) {
@@ -696,14 +720,17 @@ void bt_adapter_properties_callback(bt_status_t status, int num_properties,
 /** GET/SET Remote Device Properties callback */
 void bt_remote_device_properties_callback(bt_status_t status,
     bt_bdaddr_t *bd_addr, int num_properties, bt_property_t *properties) {
+  Tracer trc("bt_remote_device_properties_callback");
   ALOGE("bt_remote_device_properties_callback");
 }
 
 void bt_device_found_callback(int num_properties, bt_property_t *properties) {
+  Tracer trc("bt_device_found_callback");
   ALOGE("bt_device_found_callback. num_properties=%d", num_properties);
 }
 
 void bt_discovery_state_changed_cb(bt_discovery_state_t state) {
+  Tracer trc("bt_discovery_state_changed_cb");
   ALOGE("bt_discovery_state_changed_cb. state=%d", state);
 }
 
@@ -720,6 +747,7 @@ void bt_pin_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
     , bool min_16_digit
 #endif
   ) {
+  Tracer trc("bt_pin_request_callback");
   ALOGE("bt_pin_request_callback");
 }
 
@@ -728,6 +756,7 @@ void bt_pin_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
  */
 void bt_ssp_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
     uint32_t cod, bt_ssp_variant_t pairing_variant, uint32_t pass_key) {
+  Tracer trc("bt_ssp_request_callback");
   ALOGE("bt_ssp_request_callback");
 }
 
@@ -737,6 +766,7 @@ void bt_ssp_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
  */
 void bt_bond_state_changed_callback(bt_status_t status,
     bt_bdaddr_t *remote_bd_addr, bt_bond_state_t state) {
+  Tracer trc("bt_bond_state_changed_callback");
   ALOGE("bt_bond_state_changed_callback: state=%d", state);
 }
 
@@ -745,6 +775,7 @@ void bt_bond_state_changed_callback(bt_status_t status,
  */
 void bt_acl_state_changed_callback(bt_status_t status,
     bt_bdaddr_t *remote_bd_addr, bt_acl_state_t state) {
+  Tracer trc("bt_acl_state_changed_callback");
   bt_bdaddr_t *bda = remote_bd_addr;
   ALOGV("bt_acl_state_changed_callback. status=%d state=%d remote=%02X:%02X:%02X:%02X:%02X:%02X",
     status, state,
@@ -756,8 +787,8 @@ void bt_acl_state_changed_callback(bt_status_t status,
     bda->address[5]);
 }
 
-void bt_callback_thread_event(bt_cb_thread_evt evt) {
-  (void) evt;
+void bt_callback_thread_event(bt_cb_thread_evt /* evt */) {
+  Tracer trc("bt_callback_thread_event");
 }
 
 /**
@@ -766,6 +797,7 @@ void bt_callback_thread_event(bt_cb_thread_evt evt) {
  * to be received
  */
 void bt_dut_mode_recv_callback(uint16_t opcode, uint8_t *buf, uint8_t len) {
+  Tracer trc("bt_dut_mode_recv_callback");
   ALOGE("bt_dut_mode_recv_callback");
 }
 
@@ -776,6 +808,7 @@ void bt_dut_mode_recv_callback(uint16_t opcode, uint8_t *buf, uint8_t len) {
  * The num_packets is valid only for le_test_end command
  */
 void bt_le_test_mode_callback(bt_status_t status, uint16_t num_packets) {
+  Tracer trc("bt_le_test_mode_callback");
   ALOGE("bt_le_test_mode_callback");
 }
 
@@ -797,6 +830,7 @@ void bt_energy_info_callback(bt_activity_energy_info *energy_info) {
  *  Callback invoked when write rssi threshold command complete
  */
 void bt_le_lpp_write_rssi_thresh_callback(bt_bdaddr_t *bda, int status) {
+  Tracer trc("bt_le_lpp_write_rssi_thresh_callback");
   ALOGE("bt_le_lpp_write_rssi_thresh_callback");
 }
 
@@ -805,6 +839,7 @@ void bt_le_lpp_write_rssi_thresh_callback(bt_bdaddr_t *bda, int status) {
  */
 void bt_le_lpp_read_rssi_thresh_callback(bt_bdaddr_t *bda, int low, int upper,
     int alert, int status) {
+  Tracer trc("bt_le_lpp_read_rssi_thresh_callback");
   ALOGE("bt_le_lpp_read_rssi_thresh_callback");
 }
 
@@ -813,6 +848,7 @@ void bt_le_lpp_read_rssi_thresh_callback(bt_bdaddr_t *bda, int low, int upper,
  */
 void bt_le_lpp_enable_rssi_monitor_callback(bt_bdaddr_t *bda,
     int enable, int status) {
+  Tracer trc("bt_le_lpp_enable_rssi_monitor_callback");
   ALOGE("bt_le_lpp_enable_rssi_monitor_callback");
 }
 
@@ -821,6 +857,7 @@ void bt_le_lpp_enable_rssi_monitor_callback(bt_bdaddr_t *bda,
  */
 void bt_le_lpp_rssi_threshold_evt_callback(bt_bdaddr_t *bda,
     int evt_type, int rssi) {
+  Tracer trc("bt_le_lpp_rssi_threshold_evt_callback");
   ALOGE("bt_le_lpp_rssi_threshold_evt_callback");
 }
 #endif
@@ -830,6 +867,7 @@ void bt_le_lpp_rssi_threshold_evt_callback(bt_bdaddr_t *bda,
 /* Receive any HCI event from controller for raw commands */
 void bt_hci_event_recv_callback(uint8_t event_code, uint8_t *buf, uint8_t len)
 {
+  Tracer trc("bt_hci_event_recv_callback");
   ALOGE("bt_hci_event_recv_callback");
 }
 #endif
@@ -867,6 +905,7 @@ bt_callbacks_t bt_callbacks = {
 void gatt_register_client_callback(int status,
                                    int client_if,
                                    bt_uuid_t *app_uuid) {
+  Tracer trc("gatt_register_client_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitRegisterClient);
 
   char uuid[33] = { 0 };
@@ -895,6 +934,8 @@ void gatt_register_client_callback(int status,
 
 void gatt_client_scan_result_callback(bt_bdaddr_t* bda, int rssi,
     uint8_t* adv_data) {
+  Tracer trc("gatt_client_scan_result_callback");
+
   char address[18];
   addr_to_str(*bda, address);
 
@@ -956,6 +997,8 @@ void gatt_client_connect_callback(int conn_id,
                                   int status,
                                   int client_if,
                                   bt_bdaddr_t* bda) {
+  Tracer trc("gatt_client_connect_callback");
+
   {
     auto lock = mainThreadWaiter.autoLock();
 
@@ -999,6 +1042,8 @@ void gatt_client_disconnect_callback(int conn_id,
                                      int status,
                                      int client_if,
                                      bt_bdaddr_t* bda) {
+  Tracer trc("gatt_client_disconnect_callback");
+
   bool mismatch = false;
   bool scheduledUnregister = false;
   {
@@ -1045,6 +1090,7 @@ void gatt_client_disconnect_callback(int conn_id,
 }
 
 void gatt_client_search_complete_callback(int conn_id, int status) {
+  Tracer trc("gatt_client_search_complete_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitSearchService);
 
   ALOGV("gatt_client_search_complete_callback: conn_id=%d status=%d",
@@ -1056,6 +1102,8 @@ void gatt_client_search_complete_callback(int conn_id, int status) {
 
 void gatt_client_search_result_callback(int conn_id,
                                         btgatt_srvc_id_t *srvc_id) {
+  Tracer trc("gatt_client_search_result_callback");
+
   char uuid[33];
   if (!uuid_to_str(srvc_id->id.uuid, uuid, sizeof(uuid))) {
     ALOGE("Failed to convert!");
@@ -1081,6 +1129,8 @@ void gatt_client_get_characteristic_callback(int conn_id,
                                              btgatt_srvc_id_t *srvc_id,
                                              btgatt_gatt_id_t *char_id,
                                              int char_prop) {
+  Tracer trc("gatt_client_get_characteristic_callback");
+
   auto signal = mainThreadWaiter.autoSignal(WaitGetCharacteristic, status);
 
   char serviceUuid[33];
@@ -1139,6 +1189,8 @@ void gatt_client_get_descriptor_callback(int conn_id,
                                          btgatt_srvc_id_t *srvc_id,
                                          btgatt_gatt_id_t *char_id,
                                          btgatt_gatt_id_t *descr_id) {
+  Tracer trc("gatt_client_get_descriptor_callback");
+
   auto signal = mainThreadWaiter.autoSignal(WaitGetDescriptor, status);
 
   char serviceUuid[33];
@@ -1206,6 +1258,7 @@ void gatt_client_get_included_service_callback(int conn_id,
                                                int status,
                                                btgatt_srvc_id_t *srvc_id,
                                                btgatt_srvc_id_t *incl_srvc_id) {
+  Tracer trc("gatt_client_get_included_service_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitGetIncludedService, status);
 
   char parentUuid[33];
@@ -1258,6 +1311,7 @@ void gatt_client_register_for_notification_callback(int /* conn_id */,
                                                     int status,
                                                     btgatt_srvc_id_t *srvc_id,
                                                     btgatt_gatt_id_t *char_id) {
+  Tracer trc("gatt_client_register_for_notification_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitRegisterForNotification);
 
   char serviceUuid[33];
@@ -1316,6 +1370,8 @@ bool bt_convert_value(const uint8_t *value,
 }
 
 void gatt_client_notify_callback(int conn_id, btgatt_notify_params_t *p_data) {
+  Tracer trc("gatt_client_notify_callback");
+
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
     ALOGE("Failed to convert serviceUuid!");
@@ -1362,6 +1418,7 @@ void gatt_client_notify_callback(int conn_id, btgatt_notify_params_t *p_data) {
 void gatt_client_read_characteristic_callback(int conn_id,
                                               int status,
                                               btgatt_read_params_t *p_data) {
+  Tracer trc("gatt_client_read_characteristic_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitReadCharacteristic);
 
   char serviceUuid[33];
@@ -1415,6 +1472,7 @@ void gatt_client_read_characteristic_callback(int conn_id,
 void gatt_client_write_characteristic_callback(int conn_id,
                                                int status,
                                                btgatt_write_params_t *p_data) {
+  Tracer trc("gatt_client_write_characteristic_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitWriteCharacteristic);
 
   char serviceUuid[33];
@@ -1449,6 +1507,7 @@ void gatt_client_write_characteristic_callback(int conn_id,
 void gatt_client_read_descriptor_callback(int conn_id,
                                           int status,
                                           btgatt_read_params_t *p_data) {
+  Tracer trc("gatt_client_read_descriptor_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitReadDescriptor);
 
   char serviceUuid[33];
@@ -1513,6 +1572,7 @@ void gatt_client_read_descriptor_callback(int conn_id,
 void gatt_client_write_descriptor_callback(int conn_id,
                                            int status,
                                            btgatt_write_params_t *p_data) {
+  Tracer trc("gatt_client_write_descriptor_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitWriteDescriptor);
 
   char serviceUuid[33];
@@ -1557,6 +1617,7 @@ void gatt_client_read_remote_rssi_callback(int client_if,
                                            bt_bdaddr_t* bda,
                                            int rssi,
                                            int status) {
+  Tracer trc("gatt_client_read_remote_rssi_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitReadRemoteRssi);
 
   char address[18];
@@ -1574,6 +1635,7 @@ void gatt_client_read_remote_rssi_callback(int client_if,
 }
 
 void gatt_client_listen_callback(int status, int server_if) {
+  Tracer trc("gatt_client_listen_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitListen);
 
   ALOGV("gatt_client_listen_callback: status=%d server_if=%d",
@@ -1582,6 +1644,7 @@ void gatt_client_listen_callback(int status, int server_if) {
 }
 
 void gatt_client_configure_mtu_callback(int conn_id, int status, int mtu) {
+  Tracer trc("gatt_client_configure_mtu_callback");
   ALOGV("gatt_client_configure_mtu_callback: conn_id=%d status=%d mtu=%d",
         conn_id,
         status,
@@ -1596,6 +1659,7 @@ void gatt_client_scan_filter_cfg_callback(int action,
                                           int status,
                                           int filt_type,
                                           int avbl_space) {
+  Tracer trc("gatt_client_scan_filter_cfg_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitScanFilterConfig);
 
   ALOGV("gatt_client_scan_filter_cfg_callback: action=%d client_if=%d "
@@ -1610,6 +1674,7 @@ void gatt_client_scan_filter_param_callback(int action,
                                             int client_if,
                                             int status,
                                             int avbl_space) {
+  Tracer trc("gatt_client_scan_filter_param_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitScanFilterParamSetup);
 
   ALOGV("gatt_client_scan_filter_param_callback: action=%d client_if=%d "
@@ -1623,6 +1688,7 @@ void gatt_client_scan_filter_param_callback(int action,
 void gatt_client_scan_filter_status_callback(int enable,
                                              int client_if,
                                              int status) {
+  Tracer trc("gatt_client_scan_filter_status_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitScanFilterEnable);
 
   ALOGV("gatt_client_scan_filter_status_callback: enable=%d client_if=%d "
@@ -1631,6 +1697,7 @@ void gatt_client_scan_filter_status_callback(int enable,
 }
 
 void gatt_client_congestion_callback(int conn_id, bool congested) {
+  Tracer trc("gatt_client_congestion_callback");
   ALOGV("gatt_client_congestion_callback: conn_id=%d congested=%s",
         conn_id,
         congested ? "true" : "false");
@@ -1639,6 +1706,7 @@ void gatt_client_congestion_callback(int conn_id, bool congested) {
 #ifdef TARGET_GE_MARSHMALLOW
 void gatt_scan_parameter_setup_completed_callback(int client_if,
                                                   btgattc_error_t status) {
+  Tracer trc("gatt_scan_parameter_setup_completed_callback");
   ALOGV("gatt_scan_parameter_setup_completed_callback: client_if=%d status=%d",
         client_if, status);
 }
@@ -1690,6 +1758,7 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
 
 void gatt_server_register_server_callback(int status, int server_if,
     bt_uuid_t *app_uuid) {
+  Tracer trc("gatt_server_register_server_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitRegisterServer);
 
   (void) app_uuid;
@@ -1705,6 +1774,8 @@ void gatt_server_register_server_callback(int status, int server_if,
  */
 void gatt_server_connection_callback(int conn_id, int server_if, int connected,
     bt_bdaddr_t *bda) {
+  Tracer trc("gatt_server_connection_callback");
+
   if (!bda) {
     ALOGE("gatt_server_connection_callback. NULL bda?\n");
     return;
@@ -1728,6 +1799,7 @@ void gatt_server_connection_callback(int conn_id, int server_if, int connected,
  */
 void gatt_server_service_added_callback(int status, int server_if,
     btgatt_srvc_id_t *srvc_id, int service_handle) {
+  Tracer trc("gatt_server_service_added_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitAddService);
 
   ALOGV("gatt_server_service_added_callback: status=%d server_if=%d srvc_handle=%d",
@@ -1742,6 +1814,7 @@ void gatt_server_service_added_callback(int status, int server_if,
  */
 void gatt_server_included_service_added_callback(int status, int server_if,
     int srvc_handle, int incl_srvc_handle) {
+  Tracer trc("gatt_server_included_service_added_callback");
   ALOGE("gatt_server_included_service_added_callback");
 }
 
@@ -1750,6 +1823,7 @@ void gatt_server_included_service_added_callback(int status, int server_if,
  */
 void gatt_server_characteristic_added_callback(int status, int server_if,
     bt_uuid_t *uuid, int srvc_handle, int char_handle) {
+  Tracer trc("gatt_server_characteristic_added_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitAddCharacteristic);
 
   ALOGV("gatt_server_characteristic_added_callback. status=%d server_if=%d "
@@ -1765,6 +1839,7 @@ void gatt_server_characteristic_added_callback(int status, int server_if,
  */
 void gatt_server_descriptor_added_callback(int status, int server_if,
     bt_uuid_t *uuid, int srvc_handle, int descr_handle) {
+  Tracer trc("gatt_server_descriptor_added_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitAddDescriptor);
 
   ALOGV("gatt_server_descriptor_added_callback. status=%d server_if=%d "
@@ -1780,6 +1855,7 @@ void gatt_server_descriptor_added_callback(int status, int server_if,
  */
 void gatt_server_service_started_callback(int status, int server_if,
     int srvc_handle) {
+  Tracer trc("gatt_server_service_started_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitStartService);
 
   ALOGV("gatt_server_service_started_callback: status=%d server_if=%d "
@@ -1793,6 +1869,7 @@ void gatt_server_service_started_callback(int status, int server_if,
  */
 void gatt_server_service_stopped_callback(int status, int server_if,
     int srvc_handle) {
+  Tracer trc("gatt_server_service_stopped_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitStopService);
 
   ALOGV("gatt_server_service_stopped_callback: status=%d server_if=%d "
@@ -1806,6 +1883,7 @@ void gatt_server_service_stopped_callback(int status, int server_if,
  */
 void gatt_server_service_deleted_callback(int status, int server_if,
     int srvc_handle) {
+  Tracer trc("gatt_server_service_deleted_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitDeleteService);
 
   ALOGV("gatt_server_service_deleted_callback: status=%d server_if=%d "
@@ -1820,6 +1898,7 @@ void gatt_server_service_deleted_callback(int status, int server_if,
  */
 void gatt_server_request_read_callback(int conn_id, int trans_id,
     bt_bdaddr_t *bda, int attr_handle, int offset, bool is_long) {
+  Tracer trc("gatt_server_request_read_callback");
   ALOGV("gatt_server_request_read_callback: conn_id=%d trans_id=%d "
       "attr_handle=%d offset=%d is_long=%d\n",
     conn_id, trans_id, attr_handle, offset, is_long);
@@ -1834,6 +1913,8 @@ void gatt_server_request_read_callback(int conn_id, int trans_id,
 void gatt_server_request_write_callback(int conn_id, int trans_id,
     bt_bdaddr_t *bda, int attr_handle, int offset, int length,
     bool need_rsp, bool is_prep, uint8_t* value) {
+  Tracer trc("gatt_server_request_write_callback");
+
   ALOGV("gatt_server_request_write_callback conn_id=%d trans_id=%d "
       "attr_handle=%d offset=%d length=%d need_rsp=%d is_prep=%d value[0]=%d",
       conn_id, trans_id, attr_handle, offset, length, need_rsp, is_prep,
@@ -1868,6 +1949,7 @@ void gatt_server_request_write_callback(int conn_id, int trans_id,
  */
 void gatt_server_request_exec_write_callback(int conn_id, int trans_id,
     bt_bdaddr_t *bda, int exec_write) {
+  Tracer trc("gatt_server_request_exec_write_callback");
   ALOGE("gatt_server_request_exec_write_callback");
 }
 
@@ -1876,6 +1958,7 @@ void gatt_server_request_exec_write_callback(int conn_id, int trans_id,
  * sends a confirmation.
  */
 void gatt_server_response_confirmation_callback(int status, int handle) {
+  Tracer trc("gatt_server_response_confirmation_callback");
   ALOGD("gatt_server_response_confirmation_callback: status=%d handle=%d",
       status, handle);
 }
@@ -1885,6 +1968,7 @@ void gatt_server_response_confirmation_callback(int status, int handle) {
  * to a remote device.
  */
 void gatt_server_indication_sent_callback(int conn_id, int status) {
+  Tracer trc("gatt_server_indication_sent_callback");
   ALOGE("gatt_server_indication_sent_callback");
 }
 
@@ -1895,6 +1979,7 @@ void gatt_server_indication_sent_callback(int conn_id, int status) {
  * congestion status has been cleared.
  */
 void gatt_server_congestion_callback(int conn_id, bool congested) {
+  Tracer trc("gatt_server_congestion_callback");
   ALOGE("gatt_server_congestion_callback");
 }
 
@@ -1902,6 +1987,7 @@ void gatt_server_congestion_callback(int conn_id, bool congested) {
  * Callback invoked when the MTU for a given connection changes
  */
 void gatt_server_mtu_changed_callback(int conn_id, int mtu) {
+  Tracer trc("gatt_server_mtu_changed_callback");
   bledroid.sendEvent("!mtuChange %d", mtu);
 }
 
@@ -2050,6 +2136,7 @@ int bt_convert_args(char *&saveptr,
  *
  */
 void bt_cleanup() {
+  Tracer trc("bt_cleanup");
   ALOGV("bt cleanup");
 
   if (gatt) {
@@ -2110,6 +2197,8 @@ void bt_cleanup() {
  * Initialize bluetooth subsystem
  */
 int bt_init() {
+  Tracer trc("bt_init");
+
   // Cleanup BT if we're part-way initialized already
   bt_cleanup();
 
@@ -2758,6 +2847,16 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   char *saveptr;
   int err;
 
+
+  char *cmd = strtok_r(argv[1], " \n", &saveptr);
+  LOG_ERROR(!cmd, "Empty command string");
+
+  ALOGD("Received command %s", cmd);
+
+  static char buf[256];
+  snprintf(buf, sizeof(buf), "runCommand:%s", cmd);
+  Tracer trc(buf);
+
   // See if there are any disconnected interfaces that we need to unregister.
   int interfacesToUnregister[disconnected_if_list_count];
   bool unregister = false;
@@ -2783,10 +2882,6 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     }
   }
 
-  char *cmd = strtok_r(argv[1], " \n", &saveptr);
-  LOG_ERROR(!cmd, "Empty command string");
-
-  ALOGD("Received command %s", cmd);
   if (0 == strcmp(argv[1], "initialize")) {
     err = bt_init();
     if (err != BT_STATUS_SUCCESS) {
@@ -3006,6 +3101,10 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
 int main(int argc, char *argv[]) {
   (void) argc;
   (void) argv;
+
+  Tracer::init();
+
+  Tracer trc("main");
 
   // Switch to the bluetooth user:group, and additionally keep CAP_NET_ADMIN
   // as the rfkill kernel module, used to enable the bluetooth radio, requires

@@ -23,6 +23,7 @@ LOCAL_MODULE_STEM := bledroid
 LOCAL_SRC_FILES := main.cpp
 LOCAL_CFLAGS += -Wall -Wextra -Werror -Wno-unused-parameter
 LOCAL_SHARED_LIBRARIES := \
+  libcutils \
   liblog \
   libhardware \
   libhardware_legacy \

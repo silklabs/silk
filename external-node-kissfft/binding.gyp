@@ -10,7 +10,16 @@
         "<!(node -e \"require('nan')\")"
       ],
       "dependencies" : [
-      ]
+      ],
+      "conditions": [
+        [
+          "OS=='android'", {
+            "libraries" : [
+              "<!(echo $Android_mk__LIBRARIES)",
+            ],
+          },
+        ],
+      ],
     }
   ]
 }

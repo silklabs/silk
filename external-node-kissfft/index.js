@@ -1,1 +1,1 @@
-module.exports = require('bindings')('kissfft');
+module.exports = require('./build/Release/kissfft.node');

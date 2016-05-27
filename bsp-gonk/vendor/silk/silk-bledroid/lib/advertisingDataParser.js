@@ -414,8 +414,8 @@ const MAPS = Object.defineProperties({ }, {
 
   manufacturers: {
     get() {
-      delete this.MANUFACTURER_MAP;
-      this.MANUFACTURER_MAP = new Map([
+      delete this.manufacturers;
+      this.manufacturers = new Map([
         [ 0x0000, 'Ericsson Technology Licensing' ],
         [ 0x0001, 'Nokia Mobile Phones' ],
         [ 0x0002, 'Intel Corp.' ],
@@ -1041,7 +1041,7 @@ const MAPS = Object.defineProperties({ }, {
         [ 0x026f, 'Aptcode Solutions​' ],
         [ 0x0270, 'LSI ADL Technology​' ],
       ]);
-      return this.MANUFACTURER_MAP;
+      return this.manufacturers;
     },
     configurable: true,
     enumerable: true

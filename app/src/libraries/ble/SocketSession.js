@@ -100,7 +100,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this.once(`unauthenticated`, () => {
       log.info(`Receiving unauthenticated data`);
-      this.allowUnauthenticated();
+      this.allowUnauthenticated(true);
     });
 
     socketStream.on(`data`, (data) => {

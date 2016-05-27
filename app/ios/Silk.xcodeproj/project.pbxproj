@@ -822,6 +822,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Silk" */;
 			buildPhases = (
+				6CF876E31CF8E556002110FB /* ./install.sh */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json / raygun.json) */,
@@ -1097,6 +1098,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "# Yuck. Is there a better way to find the symbol directory from outside XCode?\nset -ex\n\nif [ -n \"$EXFILTRATED_DSYM_ZIP\" ]; then\n  cd $DWARF_DSYM_FOLDER_PATH\n  rm -rf $EXFILTRATED_DSYM_ZIP\n  zip -r $EXFILTRATED_DSYM_ZIP $DWARF_DSYM_FILE_NAME\nfi";
+		};
+		6CF876E31CF8E556002110FB /* ./install.sh */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = ./install.sh;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -x\ncd $SRCROOT/..\n./install.sh";
 		};
 /* End PBXShellScriptBuildPhase section */
 

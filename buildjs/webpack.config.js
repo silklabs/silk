@@ -69,6 +69,7 @@ const externals = [
   'silk-vibrator',
   'silk-wifi',
   'v8-profiler',
+  'kissfft',
   /\.node$/,
   (context, request, callback) => {
     if (resolve.isCore(request)) {

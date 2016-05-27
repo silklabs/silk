@@ -25,7 +25,6 @@ type DeviceStatus = {
 };
 
 type DeviceWifiNetwork = {
-  bssid: string;
   ssid: string;
   level: number;
   psk: boolean;
@@ -78,7 +77,6 @@ const SCHEMA = {
     name: Joi.string().equal(`wifiscan`).required(),
     networks: Joi.array().items(
       Joi.object().keys({
-        bssid: Joi.string().required(),
         ssid: Joi.string().required(),
         level: Joi.number().integer().min(-100).max(-10).required(),
         psk: Joi.boolean().required(),

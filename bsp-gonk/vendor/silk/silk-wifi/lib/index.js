@@ -13,7 +13,6 @@ import createLog from 'silk-log/device';
 import type { Socket } from 'net';
 
 type WifiScanResult = {
-  bssid: string;
   ssid: string;
   level: number;
   psk: boolean;
@@ -325,9 +324,9 @@ function wpaCliAddNetwork() {
   );
 }
 
-function wpaCliRemoveNetwork(id) {
-  return wpaCliExpectOk('remove_network', id)
-    .then(() => wpaCliExpectOk('save_config'));
+async function wpaCliRemoveNetwork(id) {
+  await wpaCliExpectOk('remove_network', id);
+  await wpaCliExpectOk('save_config');
 }
 
 function wpaCliRemoveAllNetworks() {
@@ -466,7 +465,7 @@ export class Wifi extends EventEmitter {
    * @memberof silk-wifi
    * @instance
    */
-  init(): Promise<void> {
+  async init(): Promise<void> {
     log.info('WiFi initializing');
 
     // Set the device hostname to something that is probably unique
@@ -475,15 +474,12 @@ export class Wifi extends EventEmitter {
     // add 'error' listener in case no one else is, else node throws exception
     this.on('error', () => {});
 
-    return this._networkCleanup()
-      .then(() => this._startWpaMonitor())
-      .then(() => wpaCli('scan'))
-      .then(() => wpaCli('status'))
-      .then(() => wpaCliExpectOk('log_level', 'excessive'))
-      .then(() => {
-        log.info('WiFi initialization complete');
-        return Promise.resolve();
-      });
+    await this._networkCleanup();
+    await this._startWpaMonitor();
+    await wpaCli('scan');
+    await wpaCli('status');
+    await wpaCliExpectOk('log_level', 'excessive');
+    log.info('WiFi initialization complete');
   }
 
   /**
@@ -570,14 +566,14 @@ export class Wifi extends EventEmitter {
     lines.pop();
 
     // Parse each discovered network line
-    let scanResults: Array<WifiScanResult> = [];
+    let bestNetworks = {};
     for (const line of lines) {
       let info = line.split('\t');
       if (info.length !== 5) {
         log.warning(`Unexpected wpa_cli scan result: "${line}"`);
         continue;
       }
-      let [bssid, /*freq*/, level, flags, ssid ] = info;
+      let [/*bssid*/, /*freq*/, level, flags, ssid ] = info;
       ssid = unescapeSSID(ssid);
 
       if (ssid.length === 0 || CTRL_CHARS_REGEX.test(ssid)) {
@@ -599,15 +595,24 @@ export class Wifi extends EventEmitter {
         }
         psk = true;
       }
-      scanResults.push({
-        ssid,
-        bssid,
-        level: parseInt(level, 10),
-        psk,
-      });
-    }
-    log.debug('scanResults', JSON.stringify(scanResults));
 
+      const key = `${ssid}\0${psk}`;
+      level = parseInt(level, 10);
+      const existingNetwork = bestNetworks[key];
+      if (existingNetwork && existingNetwork.level < level) {
+        existingNetwork.level = level;
+      } else {
+        bestNetworks[key] = {ssid, level, psk};
+      }
+    }
+
+    // Rebuild scanResults with just the strongest ssids
+    let scanResults = [];
+    for (let key in bestNetworks) {
+      scanResults.push(bestNetworks[key]);
+    }
+
+    log.debug('scanResults', scanResults);
     this.emit('scanResults', scanResults);
   }
 
@@ -615,35 +620,32 @@ export class Wifi extends EventEmitter {
    * Issue a request to join the specified network
    *
    * @param ssid Name of the network to connect to
-   * @param psk Secret code of the network to connect to
+   * @param psk WPA2 PSK of the network to connect (null for Open)
    * @memberof silk-wifi
    * @instance
    */
-  joinNetwork(ssid: string, psk: ?string) {
+  async joinNetwork(ssid: string, psk: ?string): Promise<void> {
     if (ssid.length === 0) {
       throw new Error('Empty SSID');
     }
     if (psk) {
-      // |wpa_cli| refuses a PSK outside the range 8..63 so don't even try
+      // |wpa_cli| refuses a WPA/WPA2 PSK outside the range 8..63 so don't even try
       if (psk.length < 8 || psk.length > 63) {
-        throw new Error('Invalid PSK length');
+        throw new Error('Invalid WPA/WPA2 PSK length');
       }
     }
-    return wpaCliRemoveAllNetworks()
-      .then(wpaCliAddNetwork)
-      .then(id => {
-        return wpaCliExpectOk('set_network', id, 'ssid', `"${ssid}"`)
-          .then(() => wpaCliExpectOk('set_network', id, 'scan_ssid', '1'))
-          .then(() => {
-            if (psk) {
-              return wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`);
-            }
-            return wpaCliExpectOk('set_network', id, 'key_mgmt', 'NONE');
-          })
-          .then(() => wpaCliExpectOk('enable_network', id))
-          .then(() => wpaCliExpectOk('save_config'))
-          .then(() => wpaCliExpectOk('reconnect'));
-      });
+    await wpaCliRemoveAllNetworks();
+    const id = await wpaCliAddNetwork();
+    await wpaCliExpectOk('set_network', id, 'ssid', `"${ssid}"`);
+    await wpaCliExpectOk('set_network', id, 'scan_ssid', '1');
+    if (psk) {
+      await wpaCliExpectOk('set_network', id, 'psk', `"${psk}"`);
+    } else {
+      await wpaCliExpectOk('set_network', id, 'key_mgmt', 'NONE');
+    }
+    await wpaCliExpectOk('enable_network', id);
+    await wpaCliExpectOk('save_config');
+    await wpaCliExpectOk('reconnect');
   }
 
   networkConfigured() {

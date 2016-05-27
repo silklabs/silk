@@ -137,8 +137,7 @@ export default class Timeline extends EventEmitter {
   lastPreviewFrame: ?Buffer;
   lastPreviewFrameWhen: number;
   lastPreviewKeyframeWhen: number;
-  lastPreviewEmitSeconds: number;
-  secondsUntilNextPreviewEmit: number;
+  lastPreviewEmitMs: number;
   videoUploadType: string;
 
   _nextObjectId: number = 0;
@@ -168,8 +167,7 @@ export default class Timeline extends EventEmitter {
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
     this.lastPreviewKeyframeWhen = 0;
-    this.lastPreviewEmitSeconds = 0;
-    this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
+    this.lastPreviewEmitMs = 0;
     this.uploadOpQueue = new CBuffer(PRE_EVENT_UPLOAD_MS / 250); // Hold up to 4 ops per second
 
     this.videoUploadType = util.getstrprop(VIDEOUPLOADTYPE_PROP,
@@ -558,17 +556,15 @@ export default class Timeline extends EventEmitter {
    * @private
    */
   _maybePushPreview(when: number, imRGB: any) {
-    const now = Date.now();
-    const nowSeconds = Math.floor(now / 1000);
-    this.secondsUntilNextPreviewEmit -= nowSeconds - this.lastPreviewEmitSeconds;
-    if (this.secondsUntilNextPreviewEmit > 0) {
+    let diffs = util.uptime(this.lastPreviewEmitMs) / 1000;
+    if (diffs < PREVIEW_UPLOAD_INTERVAL_S) {
       return; // Not time to emit a preview yet
     }
 
     let isKeyFrame = false;
-    if (now - this.lastPreviewKeyframeWhen >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
+    if (util.uptime(this.lastPreviewKeyframeWhen) >= PREVIEW_KEYFRAME_UPLOAD_INTERVAL_MS) {
       isKeyFrame = PREVIEW_KEYFRAME_ENABLED;
-      this.lastPreviewKeyframeWhen = now;
+      this.lastPreviewKeyframeWhen = util.uptime();
     }
 
     log.debug(`Converting matrix to jpg: ${when}`);
@@ -592,8 +588,7 @@ export default class Timeline extends EventEmitter {
       }
     );
 
-    this.lastPreviewEmitSeconds = nowSeconds;
-    this.secondsUntilNextPreviewEmit = PREVIEW_UPLOAD_INTERVAL_S;
+    this.lastPreviewEmitMs = util.uptime();
   }
 
   /**

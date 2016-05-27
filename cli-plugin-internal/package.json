@@ -1,5 +1,5 @@
 {
-  "name": "silk",
+  "name": "silk-cli-plugin-internal",
   "version": "0.16.0",
   "description": "Silk command line tool",
   "scripts": {

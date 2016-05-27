@@ -1,6 +1,6 @@
 {
-  "name": "silk-webapp",
+  "name": "mock-webapp",
   "symlinkDependencies": {
-    "silk-api": "/api"
+    "mock-api": "/api"
   }
 }

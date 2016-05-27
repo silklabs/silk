@@ -35,7 +35,7 @@ endif
 
 # vendor/silk/core/...
 SILK_CORE := \
-  silk-device-main \
+  silk-device-core \
   silk-cv \
   silk-gc1 \
   silk-caffe \

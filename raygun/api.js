@@ -6,25 +6,27 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-'use strict'
+'use strict';
 
-var config = require('./config');
-var https = require('https');
+const config = require('./config');
+const https = require('https');
 
 module.exports = {
 
-  // POST a new crash.
-  //
-  // message: object confirming to the raygun REST API
-  //
-  // Returns a Promise
+  /**
+   * POST a new crash.
+   *
+   * message: object confirming to the raygun REST API
+   *
+   * Returns a Promise
+   */
   create: function create(message) {
     if (!config.apiKey) {
       return Promise.resolve();
     }
     return new Promise(function(resolve, reject) {
-      var data = new Buffer(JSON.stringify(message), 'utf8');
-      var httpOptions = {
+      const data = new Buffer(JSON.stringify(message), 'utf8');
+      const httpOptions = {
         host: 'api.raygun.io',
         port: 443,
         path: '/entries',
@@ -36,7 +38,8 @@ module.exports = {
         }
       };
 
-      var request = https.request(httpOptions,
+      const request = https.request(
+        httpOptions,
         function (response) {
           console.log('Raygun response:', response.statusCode, response.statusMessage);
           if (response.statusCode === 202) {

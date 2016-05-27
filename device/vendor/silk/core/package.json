@@ -1,5 +1,5 @@
 {
-  "name": "silk-device-main",
+  "name": "silk-device-core",
   "version": "0.0.1",
   "description": "The common control software on each silk node",
   "main": "lib/core.js",

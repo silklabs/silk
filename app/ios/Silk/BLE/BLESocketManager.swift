@@ -89,7 +89,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
 
     let name = "silk-blesocketmanager-connect"
     let body = ["id": id]
-    self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
   internal func receive(id: Int, data: NSData!) {
@@ -100,7 +100,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
 
     let name = "silk-blesocketmanager-data"
     let body = ["id": id, "data": dataBase64]
-    self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
   
   internal func rssiUpdate(id: Int, rssi: Int) {
@@ -108,7 +108,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
 
     let name = "silk-blesocketmanager-rssi"
     let body = ["id": id, "rssi": rssi]
-    self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
   internal func disconnect(id: Int) {
@@ -116,7 +116,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
 
     let name = "silk-blesocketmanager-disconnect"
     let body = ["id": id]
-    self.bridge!.eventDispatcher.sendDeviceEventWithName(name, body: body)
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
   func start() {

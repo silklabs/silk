@@ -49,12 +49,17 @@ declare export class Timeline extends EventEmitter {
   getNextObjectId (): number;
 }
 
+declare export class Sensors extends EventEmitter {
+  light (pollInterval: number): void;
+}
+
 declare export class Env extends EventEmitter {
   util: Util;
   say: Say;
   log: Log;
   camera: Camera;
   timeline: Timeline;
+  sensors: Sensors;
 }
 
 declare var env: Env;

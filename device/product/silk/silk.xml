@@ -89,12 +89,6 @@
            clone-depth="42"/>
 
   <!-- node modules -->
-  <project name="silklabs/node-kissfft"
-           path="external/node-kissfft"
-           remote="github"
-           revision="7f1aed99dfc3bb58f97e8aa1545bd89dc71eac4c"
-           upstream="master"
-           clone-depth="42"/>
   <project name="mikeseven/node-opencl"
            path="external/node-opencl"
            remote="github"

@@ -73,16 +73,5 @@
         }],
       ],
     },
-    {
-      "target_name": "action_after_build",
-      "type": "none",
-      "dependencies": [ "silk-cv" ],
-      "copies": [
-        {
-          "files": [ "<(PRODUCT_DIR)/silk-cv.node" ],
-          "destination": ".",
-        },
-      ],
-    },
   ],
 }

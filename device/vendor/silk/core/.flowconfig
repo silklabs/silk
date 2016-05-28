@@ -32,7 +32,7 @@ interface/
 .*/rtc/test/.*
 
 [libs]
-../../../../node_modules/silk-sdk/interface/silk-sysutils.js
+../../../../node_modules/silk-sdk/interface/silk-sysutils.js.flow
 
 [options]
 unsafe.enable_getters_and_setters=true

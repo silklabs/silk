@@ -1,9 +1,9 @@
 import assert from 'assert';
-import createContext from 'silk-server/test/server/context';
-import deviceApi from 'silk-device/lib/api';
-import eventToPromise from 'event-to-promise';
-import Connections from 'silk-device/lib/connections';
 import crypto from 'crypto';
+import eventToPromise from 'event-to-promise';
+import deviceApi from 'silk-device-core/lib/api';
+import Connections from 'silk-device-core/lib/connections';
+import createContext from 'silk-server/test/server/context';
 import sha256 from 'silk-utils/sha256';
 
 import signalDevice from '../src/signal_device';

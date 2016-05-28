@@ -5,13 +5,13 @@
   "author": "Silk Labs, Inc",
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
-    "silk-device": "/device/vendor/silk/core",
     "silk-api": "/api",
     "silk-azure-storage": "/azure-storage",
+    "silk-flow-bin": "/pub/flow-bin",
+    "silk-device-core": "/device/vendor/silk/core",
+    "silk-log": "/pub/log",
     "silk-server": "/server",
     "silk-streams": "/streams",
-    "silk-flow-bin": "/pub/flow-bin",
-    "silk-log": "/pub/log",
     "silk-utils": "/utils"
   },
   "dependencies": {

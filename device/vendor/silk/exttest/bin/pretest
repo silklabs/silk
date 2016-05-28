@@ -25,11 +25,11 @@ ensure_native_built() {
   fi
 }
 
+# TODO: Kill this eventually
 modules=(
   kissfft
   opencv
   silk-external-dlib
-  silk-external-jade
   silk-capture
   silk-cv
 )

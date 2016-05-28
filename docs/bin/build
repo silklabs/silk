@@ -1,23 +1,31 @@
 #!/bin/bash -ex
 
-if [[ -z "$APIDOC_SOURCE_FILES" ]]; then
-  APIDOC_SOURCE_FILES=" \
-    ../sdk/interface/silk-alog.js \
-    ../sdk/interface/silk-movie.js \
-    ../sdk/interface/silk-properties.js \
-    ../bsp-gonk/vendor/silk/silk-battery/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-camera/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-input/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-lights/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-ntp/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-sensors/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-sysutils/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-vibrator/lib/index.js \
-    ../bsp-gonk/vendor/silk/silk-wifi/lib/index.js \
-  "
-fi
-
 cd $(dirname $0)/..
+
+APIDOC_SOURCE_FILES=" \
+  ../bsp-gonk/vendor/silk/silk-battery/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-camera/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-input/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-lights/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-ntp/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-sensors/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-sysutils/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-vibrator/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-wifi/lib/index.js \
+"
+
+# HACK: documentation.js barfs on .js.flow files, so rename them to .js files
+#       for now.
+mkdir -p build
+for f in ../sdk/interface/*.js.flow; do
+  cp -f $f build/$(basename $f .flow)
+done
+APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
+  build/silk-alog.js \
+  build/silk-movie.js \
+  build/silk-properties.js \
+"
+
 ./node_modules/.bin/documentation \
   build \
   $APIDOC_SOURCE_FILES \

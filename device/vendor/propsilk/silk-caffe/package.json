@@ -5,8 +5,7 @@
   "main": "build/Release/caffe.node",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {
-    "preinstall": "./bin/preinstall",
-    "postinstall": "../../../../npm_postinstall",
+    "preinstall": "./bin/preinstall && node-gyp rebuild",
     "test": "./bin/test"
   },
   "dependencies": {

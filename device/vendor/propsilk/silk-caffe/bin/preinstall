@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-../../../../npm_postinstall
-
 if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
   echo npm install in Android not required
   exit 1

@@ -29,14 +29,12 @@ declare export class Log {
   info(log: string): void;
 }
 
-type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
+type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | 'grayeq' | 'rgb' | 'lowgray';
 type CameraCallback = (err: boolean, image: any) => void;
 
 declare export class Camera extends EventEmitter {
-  getPreviewFrames(
-    when: number,
-    formats: Array<CameraPreviewFrameFormat>
-  ): Promise<Array<any>>;
+  getFrame(when: number,
+      formats: Array<CameraFrameFormat>): Promise<Array<any>>;
 }
 
 type TimelineEventObject = {

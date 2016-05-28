@@ -37,6 +37,5 @@ export MallocCheckHeapAbort=1
 export MallocErrorAbort=1
 export MallocCheckHeapStart=1
 
-export PATH=$PATH:$LOCAL_PATH/../node_modules/.bin
 export DEBUG="$DEBUG"
-mocha $what
+$LOCAL_PATH/../node_modules/.bin/mocha $what

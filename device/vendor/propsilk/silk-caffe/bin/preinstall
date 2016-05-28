@@ -1,15 +1,10 @@
 #!/bin/bash -e
 
-# Install silkDependencies
-if [[ "$ANDROID_BUILD_TOP" == "" ]]; then
-  ../../../../npm_postinstall
-else
-  $ANDROID_BUILD_TOP/../npm_postinstall
-fi
+../../../../npm_postinstall
 
 if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
-  echo Device build detected, no patching required.
-  exit 0
+  echo npm install in Android not required
+  exit 1
 fi
 
 UNAMESTR=`uname`
@@ -35,12 +30,6 @@ fi
 J="-j2"
 if [[ -z $CI ]]; then
   J="-j6"
-fi
-
-
-# Install node-opencv
-if [[ ! -d node_modules/opencv ]]; then
- npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd
 fi
 
 # Install protobuf and compile as static library

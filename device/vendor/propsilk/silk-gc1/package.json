@@ -5,7 +5,7 @@
   "main": "build/Release/silk-gc1.node",
   "scripts": {
     "install": "node-gyp rebuild",
-    "test": "node -e \"require('assert').equal(typeof require('./silk-gc1').idleNotification, 'function')\""
+    "test": "node -e \"require('assert').equal(typeof require('.').idleNotification, 'function')\""
   },
   "author": {
     "name": "Michael Vines",

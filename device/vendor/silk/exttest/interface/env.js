@@ -29,14 +29,12 @@ declare export class Log {
   info(log: string): void;
 }
 
-type CameraPreviewFrameFormat = 'rgb' | 'gray' | 'grayeq' | 'full';
+type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | 'grayeq' | 'rgb' | 'lowgray';
 type CameraCallback = (err: boolean, image: any) => void;
 
 declare export class Camera extends EventEmitter {
-  getPreviewFrames(
-    when: number,
-    formats: Array<CameraPreviewFrameFormat>
-  ): Promise<Array<any>>;
+  getFrame(when: number,
+      formats: Array<CameraFrameFormat>): Promise<Array<any>>;
 }
 
 type TimelineEventObject = {
@@ -49,6 +47,11 @@ declare export class Timeline extends EventEmitter {
   addDiagFrame (id: string, when: number, frame: any): void;
   addObjects (objects: Array<TimelineEventObject>): void;
   getNextObjectId (): number;
+  diagFrameEnabled (id: string): bool;
+}
+
+declare export class Sensors extends EventEmitter {
+  light (pollInterval: number): void;
 }
 
 declare export class Env extends EventEmitter {
@@ -57,6 +60,7 @@ declare export class Env extends EventEmitter {
   log: Log;
   camera: Camera;
   timeline: Timeline;
+  sensors: Sensors;
 }
 
 declare var env: Env;

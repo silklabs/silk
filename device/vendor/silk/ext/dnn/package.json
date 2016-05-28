@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules dnn.js dnn.js.map",
-    "posttest": "eslint test lib",
+    "posttest": "eslint test lib && flow check",
     "test": "echo \"\""
   },
   "dependencies": {

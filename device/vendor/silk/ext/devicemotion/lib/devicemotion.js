@@ -2,11 +2,16 @@
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-let log;
-let timeline;
-let sensors;
+import type { Env, Log, Timeline, Sensors } from 'silk-exttest/interface/env';
+type AccelerometerType = (x: number, y: number, z: number) => void;
+
+let log: Log;
+let timeline: Timeline;
+let sensors: Sensors;
 
 // Minimum acceleration to trigger a "device movement" event in any direction.
 // (units are m/s^2).
@@ -17,7 +22,7 @@ class DeviceMotion {
     sensors.on('accel', this.onAccelerometer);
   }
 
-  onAccelerometer = (x, y, z) => {
+  onAccelerometer: AccelerometerType = (x, y, z) => {
     const motion = Math.abs(x - this.lastx) +
                    Math.abs(y - this.lasty) +
                    Math.abs(z - this.lastz);
@@ -40,7 +45,7 @@ class DeviceMotion {
   }
 }
 
-module.exports = (env) => {
+module.exports = (env: Env) => {
   log = env.log;
   sensors = env.sensors;
   timeline = env.timeline;

@@ -2,10 +2,15 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-let log;
-let timeline;
+import type { Env, Log, Timeline } from 'silk-exttest/interface/env';
+type DetectCatsCallback = (rects: Array<number>) => void;
+
+let log: Log;
+let timeline: Timeline;
 
 const cascade = {
   tag: 'cat',
@@ -23,7 +28,7 @@ const cascade = {
  * @param when timestamp of the preview image
  * @param cb user callback
  */
-function detectCats(im, when, cb) {
+function detectCats(im: any, when: number, cb: DetectCatsCallback) {
   let start = Date.now();
 
   im.detectObject(cascade.file, cascade.opts, (err, rects) => {
@@ -47,7 +52,9 @@ function detectCats(im, when, cb) {
 }
 
 class DetectCat {
-  constructor(env, cascadeFile) {
+  _env: Env;
+
+  constructor(env: Env, cascadeFile: string) {
     // Override cascade file if explicitly provided
     cascade.file = cascadeFile || cascade.file;
 
@@ -67,26 +74,30 @@ class DetectCat {
       }
       working = true;
 
-      let [im] = await this._env.camera.getFrame(when, ['gray']);
-
-      detectCats(im, when, (rects) => {
-        let what;
-        if (rects.length > 0) {
-          what = `${rects.length}`;
-          timeline.addObjects([{
-            source: 'detectcat',
-            tag: cascade.tag,
-            when,
-            rects,
-          }]);
-        } else {
-          what = ' -';
-        }
-        log.info(`Detected cats: ${what}`);
+      try {
+        let [im] = await this._env.camera.getFrame(when, ['gray']);
+        detectCats(im, when, (rects) => {
+          let what;
+          if (rects.length > 0) {
+            what = `${rects.length}`;
+            timeline.addObjects([{
+              source: 'detectcat',
+              tag: cascade.tag,
+              when,
+              rects,
+            }]);
+          } else {
+            what = ' -';
+          }
+          log.info(`Detected cats: ${what}`);
+          working = false;
+        });
+      } catch (err) {
+        log.error(`${err.stack} || ${err}`);
         working = false;
-      });
+      }
     });
   }
 }
 
-module.exports = (env, cascadeFile) => new DetectCat(env, cascadeFile);
+module.exports = (env: Env, cascadeFile: string) => new DetectCat(env, cascadeFile);

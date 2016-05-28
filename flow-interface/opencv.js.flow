@@ -1,0 +1,8 @@
+/**
+ * @providesModule opencv
+ * @flow
+ */
+
+// TODO: Provide the Matrix interface
+declare export class Matrix {
+}

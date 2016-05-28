@@ -2,19 +2,24 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import cv from 'opencv';
 import path from 'path';
-import silkcv from 'silk-cv';
+import * as silkcv from 'silk-cv';
 import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
-import Mog2Subtractor from './mog2subtractor';
+import MogSubtractor from './mogsubtractor';
 
-let camera;
-let log;
-let util;
-let timeline;
+import type { Env, Log, Util, Camera, Timeline } from 'silk-exttest/interface/env';
+type PreviewType = (when: number) => void;
+
+let camera: Camera;
+let log: Log;
+let util: Util;
+let timeline: Timeline;
 
 /**
  * Following constants could be tweaked to improve motion detection
@@ -53,7 +58,12 @@ function _playSound() {
  * rectangles
  */
 class Motion {
-  constructor(env) {
+  _env: Env;
+  working: boolean;
+  motionzone: MotionZone;
+  subtractor: DiffSubtractor | MogSubtractor;
+
+  constructor(env: Env) {
     this._env = env;
     camera = this._env.camera;
     log = this._env.log;
@@ -70,7 +80,7 @@ class Motion {
       log.warn('Unknown', MOTION_SUBTRACTOR_PROP, 'value:', subtractorName);
       //fall through
     case 'mog2':
-      this.subtractor = new Mog2Subtractor(env);
+      this.subtractor = new MogSubtractor(env);
       break;
     case 'diff':
       this.subtractor = new DiffSubtractor(env);
@@ -80,7 +90,7 @@ class Motion {
     timeline.on('preview', this._onPreview);
   }
 
-  _onPreview = async (when) => {
+  _onPreview:PreviewType = async (when) => {
     log.debug(`Retrieving frame ${when}`);
     if (this.working) {
       log.error('Still busy, unable to process next preview image');
@@ -207,4 +217,4 @@ class Motion {
   }
 }
 
-module.exports = (env) => new Motion(env);
+module.exports = (env: Env) => new Motion(env);

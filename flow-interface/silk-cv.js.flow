@@ -3,6 +3,8 @@
  * @flow
  */
 
+import type { Matrix } from 'opencv';
+
 /**
  * Type representing a rectangle
  *
@@ -22,8 +24,6 @@ type Options = {
   drawPoints?: bool;
 };
 
-type Matrix = any; // OpenCV grayscale matrix
-
 type FrameResults = {
   confidence: number;
   angle: number;
@@ -34,13 +34,13 @@ type FrameResults = {
   boundingRect: Rect;
 };
 
-declare class Cmt {
+declare export class Cmt {
   constructor(
     trainingFrame: Matrix,
     objectRect: Rect,
     initializedCallback: Function,
     options?: Options
-  ): any;
+  ): void;
 
   nextFrame(
     frame: Matrix,
@@ -49,3 +49,11 @@ declare class Cmt {
 
   busy(): bool;
 };
+
+export type SubtractorCallbackType = (motion: Matrix) => void;
+
+declare export class Mog2Subtractor {
+  constructor(history: number, varThreshold: number): void;
+  getBackground(mat: Matrix): void;
+  apply(image: Matrix, mat: Matrix, cb: SubtractorCallbackType): void;
+}

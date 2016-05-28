@@ -218,6 +218,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
       "\ && \
 		export SILK_ALLOW_REBUILD_FAIL=1 \
     export V=$(if $(SHOW_COMMANDS),1) \
+    export JOBS=max \
     export BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" &&  \
     export TARGET_OUT_HEADERS="$(TARGET_OUT_HEADERS)" &&  \
     export SILK_GYP_FLAGS='-f make-android -DOS=android -Darch=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH))' && \

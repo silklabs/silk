@@ -4,13 +4,12 @@
   "description": "VideoCapture",
   "main": "build/Release/silk-capture.node",
   "scripts": {
-    "install": "node-gyp rebuild",
-    "preinstall": "./bin/preinstall",
-    "test": "./bin/test"
+    "postinstall": "../../../../npm_postinstall"
   },
   "license": "MIT",
   "dependencies": {
-    "nan": "2.2.0"
+    "nan": "2.2.0",
+    "opencv", "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd"
   },
   "gypfile": true,
   "private": true

@@ -1,8 +1,0 @@
-#!/bin/bash
-
-../../../../npm_postinstall
-if [[ "$NPM_CONFIG_PLATFORM" != "android" ]]; then
-  if [[ ! -d node_modules/opencv ]]; then
-    npm install peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd
-  fi
-fi

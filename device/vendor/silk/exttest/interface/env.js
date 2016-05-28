@@ -47,6 +47,7 @@ declare export class Timeline extends EventEmitter {
   addDiagFrame (id: string, when: number, frame: any): void;
   addObjects (objects: Array<TimelineEventObject>): void;
   getNextObjectId (): number;
+  diagFrameEnabled (id: string): bool;
 }
 
 declare export class Sensors extends EventEmitter {

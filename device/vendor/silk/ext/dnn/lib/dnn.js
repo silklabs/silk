@@ -75,7 +75,7 @@ class Dnn {
    * Make prediction asynchronously
    * @private
    */
-  _predictAsync(mat) {
+  _predictAsync(mat: any) {
     return new Promise((resolve, reject) => {
       this._netCaffe.predictTopK(mat, TOPK, (err, predictions) => {
         if (err) {

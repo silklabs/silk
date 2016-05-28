@@ -44,8 +44,9 @@ int32_t sIFrameIntervalMs = 1000;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
-bool sInitCamera = true;
 bool sInitAudio = true;
+bool sInitCameraFrames = true;
+bool sInitCameraVideo = true;
 bool sAudioMute = false;
 bool sUseMetaDataMode = true;
 sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
@@ -97,7 +98,8 @@ private:
   int capture_setParameter(Value& name, Value& value);
   int capture_getParameterInt(Value& name);
   int capture_getParameterStr(Value& name);
-  static void* initThreadWrapper(void* me);
+  static void* initThreadCameraWrapper(void* me);
+  static void* initThreadAudioOnlyWrapper(void* me);
   status_t setPreviewTarget();
 
   status_t initThreadCamera();
@@ -106,7 +108,8 @@ private:
 
   CaptureListener* mCaptureListener;
   Reader mJsonReader;
-  pthread_t mThread;
+  pthread_t mCameraThread;
+  pthread_t mAudioThread;
 
   // Camera related
   bool mHardwareActive;
@@ -204,13 +207,21 @@ int CaptureCommand::capture_init(Value& cmdData) {
   LOG_ERROR((cmdData.isNull()), "init command data is null");
 
   if (!cmdData["audio"].isNull()) {
-    sInitCamera = cmdData["audio"].asBool();
+    sInitAudio = cmdData["audio"].asBool();
     ALOGV("sInitAudio %d", sInitAudio);
   }
 
-  if (!cmdData["camera"].isNull()) {
-    sInitCamera = cmdData["camera"].asBool();
-    ALOGV("sInitCamera %d", sInitCamera);
+  if (!cmdData["frames"].isNull()) {
+    sInitCameraFrames = cmdData["frames"].asBool();
+    ALOGV("sInitCameraFrames %d", sInitCameraFrames);
+    LOG_ERROR(!sInitAudio, "Must init audio for camera frames"); // TODO: Relax this
+  }
+
+  if (!cmdData["video"].isNull()) {
+    sInitCameraVideo = cmdData["video"].asBool();
+    ALOGV("sInitCameraVideo %d", sInitCameraVideo);
+    LOG_ERROR(!sInitCameraFrames,
+      "Must init camera frames for camera video"); // TODO: Relax this
   }
 
   if (!cmdData["width"].isNull()) {
@@ -259,8 +270,16 @@ int CaptureCommand::capture_init(Value& cmdData) {
     }
   }
 
-  // Start camera in a separate thread
-  pthread_create(&mThread, NULL, initThreadWrapper, this);
+  if (sInitCameraFrames) {
+    pthread_create(&mCameraThread, NULL, initThreadCameraWrapper, this);
+  } else if (sInitAudio) {
+    pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
+  } else {
+    ALOGW("Neither camera nor audio requested, initialized nothing.");
+    mHardwareActive = true;
+    notifyCameraEvent("initialized");
+  }
+
   return 0;
 }
 
@@ -280,23 +299,15 @@ int CaptureCommand::capture_update(Value& cmdData) {
   return 0;
 }
 
-
-/**
- * Helper function
- */
-void* CaptureCommand::initThreadWrapper(void* me) {
+void* CaptureCommand::initThreadCameraWrapper(void* me) {
   CaptureCommand* command = static_cast<CaptureCommand *>(me);
+  command->initThreadCamera();
+  return NULL;
+}
 
-  if (sInitCamera) {
-    command->initThreadCamera();
-  } else if (sInitAudio) {
-    command->initThreadAudioOnly();
-  } else {
-    ALOGW("Neither camera nor audio requested, initialized nothing.");
-    command->notifyCameraEvent("initialized");
-    command->mHardwareActive = true;
-  }
-
+void* CaptureCommand::initThreadAudioOnlyWrapper(void* me) {
+  CaptureCommand* command = static_cast<CaptureCommand *>(me);
+  command->initThreadAudioOnly();
   return NULL;
 }
 
@@ -405,6 +416,36 @@ sp<MediaSource> prepareAudioEncoder(const sp<ALooper>& looper,
   return MediaCodecSource::Create(looper, format, source);
 }
 
+
+class MediaSourceNullPuller {
+public:
+  MediaSourceNullPuller(sp<MediaSource> source, const char *name) :
+    mMediaSource(source), mName(name) {};
+
+  bool loop() {
+    for (;;) {
+      MediaBuffer *buffer;
+      status_t err = mMediaSource->read(&buffer);
+      if (err != ::OK) {
+        ALOGE("Error reading from %s source: %d", mName, err);
+        return false;
+      }
+
+      if (buffer == NULL) {
+        ALOGE("Failed to get buffer from %d source", mName);
+        return false;
+      }
+      buffer->release();
+    }
+    return true;
+  };
+
+private:
+  sp<MediaSource> mMediaSource;
+  const char *mName;
+};
+
+
 /**
  * Thread function that initializes audio output only
  */
@@ -432,12 +473,9 @@ status_t CaptureCommand::initThreadAudioOnly() {
   // Start the audio source and pull out buffers as fast as they come.  The
   // TAG_MIC data will will sent as a side effect
   CHECK_EQ(audioMutter->start(), ::OK);
-  for (;;) {
-    MediaBuffer *buffer;
-    status_t err = audioMutter->read(&buffer);
-    LOG_ERROR(err != ::OK, "Error reading from audio source: %d", err);
-    LOG_ERROR(buffer == NULL, "Failed to get buffer from audio source");
-    buffer->release();
+  MediaSourceNullPuller audioPuller(audioMutter, "audio");
+  if (!audioPuller.loop()) {
+    notifyCameraEvent("error");
   }
   return 0;
 }
@@ -446,11 +484,6 @@ status_t CaptureCommand::initThreadAudioOnly() {
  * Thread function that initializes the camera
  */
 status_t CaptureCommand::initThreadCamera() {
-  if (!sInitAudio) {
-    ALOGW("Initializing camera without audio not currently supported");
-    // Audio will get initialized below regardless for now...
-  }
-
   // Setup the camera
   int cameraId = 0;
   mCamera = Camera::connect(cameraId, String16(CAMERA_NAME),
@@ -482,45 +515,53 @@ status_t CaptureCommand::initThreadCamera() {
   //CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
   CHECK(mCamera->sendCommand(CAMERA_CMD_ENABLE_FOCUS_MOVE_MSG, 1, 0) == 0);
 
-  // Start recording stream
   mCameraSource = CameraSource::CreateFromCamera(mRemote, mCamera->getRecordingProxy(), cameraId,
       String16(CAMERA_NAME, strlen(CAMERA_NAME)), Camera::USE_CALLING_UID,
       sVideoSize, sFPS,
       NULL, sUseMetaDataMode);
   CHECK_EQ(mCameraSource->initCheck(), ::OK);
 
-  mLooper = new ALooper;
-  mLooper->setName("capture-looper");
-  mLooper->start();
+  if (sInitCameraVideo) {
+    mLooper = new ALooper;
+    mLooper->setName("capture-looper");
+    mLooper->start();
 
-  sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
+    sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
 
-  sp<MediaSource> audioSource(
-    new AudioSource(
-      AUDIO_SOURCE_MIC,
+    sp<MediaSource> audioSource(
+      new AudioSource(
+        AUDIO_SOURCE_MIC,
 #ifdef TARGET_GE_MARSHMALLOW
-      String16("silk-capture"),
+        String16("silk-capture"),
 #endif
-      sAudioSampleRate,
-      sAudioChannels
-    )
-  );
-  sp<MediaSource> audioSourceEmitter =
-    new AudioSourceEmitter(&mChannel, audioSource);
-  sp<MediaSource> audioMutter =
-    new AudioMutter(audioSourceEmitter);
-  sp<MediaSource> audioEncoder =
-    prepareAudioEncoder(mLooper, audioMutter);
+        sAudioSampleRate,
+        sAudioChannels
+      )
+    );
+    sp<MediaSource> audioSourceEmitter =
+      new AudioSourceEmitter(&mChannel, audioSource);
+    sp<MediaSource> audioMutter =
+      new AudioMutter(audioSourceEmitter);
+    sp<MediaSource> audioEncoder =
+      prepareAudioEncoder(mLooper, audioMutter);
 
-  mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
-  mSegmenter->run();
+    mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
+    mSegmenter->run();
 
-  // Notify node that camera is initialized
-  notifyCameraEvent("initialized");
-  mHardwareActive = true;
+    mHardwareActive = true;
+    notifyCameraEvent("initialized");
 
-  // Block this thread while camera is running
-  mSegmenter->join();
+    // Block this thread while camera is running
+    mSegmenter->join();
+  } else {
+    pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
+
+    CHECK_EQ(mCameraSource->start(), ::OK);
+    MediaSourceNullPuller cameraPuller(mCameraSource, "camera");
+    if (!cameraPuller.loop()) {
+      notifyCameraEvent("error");
+    }
+  }
 
   sOpenCVCameraCapture->setPreviewProducerListener(NULL);
   return 0;

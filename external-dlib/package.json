@@ -4,6 +4,9 @@
   "description": "dlib wrapper",
   "main": "include_dirs.js",
   "scripts": {
-    "preinstall": "./npm_preinstall"
+    "preinstall": "npm run dlib && npm run shape_predictor_68_face_landmarks",
+    "dlib": "bin/dlib",
+    "shape_predictor_68_face_landmarks": "bin/shape_predictor_68_face_landmarks"
+
   }
 }

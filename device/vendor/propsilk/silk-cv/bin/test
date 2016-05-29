@@ -2,6 +2,8 @@
 
 LOCAL_PATH=$(dirname $0)
 
+$LOCAL_PATH/../../../silk/exttest/bin/pretest
+
 what="$@"
 if [[ -z $what ]]; then
   what="$(find test -name '*_test.js')"
@@ -18,7 +20,7 @@ fi
 # Lame hack to allow faceDetector.cpp to find the face landmark model from tests
 if [[ ! -f system/silk/media/shape_predictor_68_face_landmarks.dat ]]; then
   if [[ ! -f node_modules/silk-external-dlib/shape_predictor_68_face_landmarks.dat ]]; then
-    echo "npm install failed?"
+    echo "Forgot to run <silk-core>/install.sh?"
     exit 1
   fi
 
@@ -35,6 +37,5 @@ export MallocCheckHeapAbort=1
 export MallocErrorAbort=1
 export MallocCheckHeapStart=1
 
-export PATH=$PATH:$LOCAL_PATH/../node_modules/.bin
 export DEBUG="$DEBUG"
-mocha $what
+$LOCAL_PATH/../node_modules/.bin/mocha $what

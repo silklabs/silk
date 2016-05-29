@@ -5,12 +5,12 @@
   "main": "build/Release/caffe.node",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {
-    "preinstall": "./bin/preinstall",
-    "install": "node-gyp rebuild",
+    "preinstall": "./bin/preinstall && node-gyp rebuild",
     "test": "./bin/test"
   },
   "dependencies": {
-    "nan": "2.3.3"
+    "nan": "2.2.0",
+    "opencv": "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd"
   },
   "devDependencies": {
     "mocha": "2.4.5"

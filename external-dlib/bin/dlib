@@ -1,0 +1,19 @@
+#!/bin/bash -e
+
+if [[ ! -f dlib/.patched ]]; then
+  set -x
+
+  if [[ ! -d dlib ]]; then
+    git clone --depth 1 git@github.com:davisking/dlib.git -b v18.18 dlib
+  fi
+
+  cd dlib/
+  git am --abort || true
+  git reset --hard $HEAD
+  git clean -dfx
+  for p in ../patch/*; do
+    git am $p
+  done
+  cd ..
+  touch dlib/.patched
+fi

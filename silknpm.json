@@ -33,7 +33,7 @@
     "chromiumtools": ["package.json"],
     "node-webrtc": ["package.json"],
     "device": ["vendor"],
-    "device/vendor": ["silk"],
+    "device/vendor": ["silk", "propsilk"],
     "pub/bsp-gonk": ["vendor"]
   }
 }

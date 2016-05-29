@@ -5,7 +5,9 @@
   "main": "lib/core.js",
   "scripts": {
     "test": "mocha $(find test -name '*_test.js')",
-    "posttest": "flow check",
+    "lint": "eslint lib test",
+    "flow": "flow check",
+    "pretest": "npm run lint && npm run flow",
     "clean": "rm -rf node_modules silk-device-main.js silk-device-main.js.map"
   },
   "symlinkDependencies": {

@@ -5,3 +5,6 @@ TARGET_NO_FAKE_LIBOPENCL=true
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.camera.focus_mode=auto
 
+PRODUCT_COPY_FILES += \
+  board/kenzo/splash/splash.img:splash.img \
+

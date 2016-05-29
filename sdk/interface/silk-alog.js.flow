@@ -1,20 +1,19 @@
 /**
- * silk-alog module interface
+ * silk-alog module interface definition
  *
+ * @providesModule silk-alog
  * @private
  * @flow
  */
 
 type SilkALogFunc = (tagOrMessage: string, maybeMessage: ?string) => void;
 
-declare module "silk-alog" {
-  declare var debug: SilkALogFunc;
-  declare var verbose: SilkALogFunc;
-  declare var info: SilkALogFunc;
-  declare var warn: SilkALogFunc;
-  declare var error: SilkALogFunc;
-  declare var fatal: SilkALogFunc;
-}
+declare export var debug: SilkALogFunc;
+declare export var verbose: SilkALogFunc;
+declare export var info: SilkALogFunc;
+declare export var warn: SilkALogFunc;
+declare export var error: SilkALogFunc;
+declare export var fatal: SilkALogFunc;
 
 /**
  * Silk logging helper

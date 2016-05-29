@@ -1,12 +1,12 @@
 /**
- * silk-properties
+ * silk-properties module interface definition
+ *
+ * @providesModule silk-properties
  * @private
  * @flow
  */
 
-declare module "silk-properties" {
-  declare function get(name: string): string;
-}
+declare export function get(name: string): string;
 
 /**
  * Silk system properties helper

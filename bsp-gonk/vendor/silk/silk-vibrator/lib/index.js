@@ -82,10 +82,12 @@ export default class Vibrator {
    * @memberof silk-vibrator.Vibrator
    * @instance
    */
-  pattern(onDuration: number, offDuration: number, ...more: Array<number>) {
+  pattern(onDuration: number, offDuration?: number, ...more: Array<number>) {
     if (onDuration) {
       this.on(onDuration);
-      util.timeout(onDuration + offDuration).then(() => this.pattern(...more));
+      if (typeof offDuration === 'number' && more.length) {
+        util.timeout(onDuration + offDuration).then(() => this.pattern(...more));
+      }
     } else {
       this.off();
     }

@@ -5,7 +5,7 @@
  */
 import invariant from 'assert';
 import path from 'path';
-import childProcess from 'child_process';
+import * as childProcess from 'child_process';
 
 import * as prompt from 'prompt';
 import mkdirp from 'mkdirp-promise';

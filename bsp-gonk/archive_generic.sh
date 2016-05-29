@@ -28,8 +28,11 @@ fastboot oem unlock
 set -e
 fastboot flash boot boot.img
 fastboot flash system system.img
-if [ -f recovery.img ]; then
+if [ -r recovery.img ]; then
   fastboot flash recovery recovery.img
+fi
+if [ -r splash.img ]; then
+  fastboot flash splash splash.img
 fi
 
 if [ "$1" = "-w" ]; then

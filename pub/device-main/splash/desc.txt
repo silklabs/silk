@@ -1,2 +1,2 @@
 267 826 1
-p 1 0 logo #ffffff
+p 1 0 logo #58bfa3

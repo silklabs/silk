@@ -84,6 +84,12 @@ set -e
 fastboot flash boot boot.img
 fastboot flash recovery recovery.img
 fastboot flash system system.img
+if [ -r recovery.img ]; then
+  fastboot flash recovery recovery.img
+fi
+if [ -r splash.img ]; then
+  fastboot flash splash splash.img
+fi
 
 if [ "$1" = "-w" ]; then
   echo wipe user data/cache partitions

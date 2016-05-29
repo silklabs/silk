@@ -201,6 +201,7 @@ const builds = {
   }),
   'cam': npmPackageBuild('cam'),
   'cli': npmPackageBuild('pub/cli'),
+  'cli-npm': npmPackageBuild('cli-npm'),
   'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
   'http': npmPackageBuild('http'),
   'log': npmPackageBuild('pub/log'),

@@ -23,7 +23,6 @@ lib/
 .*/api/test/.*
 .*/azure-storage/test/.*
 .*/server/test/.*
-.*/server/src/.*
 .*/streams/test/.*
 .*/rtc/test/.*
 .*/bsp-gonk/.*

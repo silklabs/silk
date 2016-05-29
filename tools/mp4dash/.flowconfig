@@ -1,5 +1,5 @@
 [include]
-./src/
+src/
 ../../node_modules/
 ../../pub/node_modules/
 
@@ -15,11 +15,10 @@
 
 .*/api/test/.*
 .*/server/test/.*
-.*/server/src/.*
 .*/device/vendor/propsilk/silk-cv/interface/.*
 
 [libs]
-../../server/interface
+../../flow-interface
 
 [options]
 unsafe.enable_getters_and_setters=true
@@ -27,6 +26,7 @@ module.system=haste
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
+suppress_comment= \\(.\\|\n\\)*\\$FlowWTF
 
 [version]
 0.26.0

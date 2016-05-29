@@ -14,9 +14,6 @@
 .*/node_modules/bower-json/.*
 
 .*/server/test/.*
-.*/server/src/server/.*
-.*/server/src/socketio/.*
-.*/server/src/signaling/.*
 .*/api/test/.*
 .*/rtc/test/.*
 .*/streams/test/.*
@@ -40,6 +37,7 @@ unsafe.enable_getters_and_setters=true
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
+suppress_comment= \\(.\\|\n\\)*\\$FlowWTF
 
 [version]
 0.26.0

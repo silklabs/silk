@@ -186,7 +186,7 @@ class WpaMonitor extends events.EventEmitter {
   }
 
   _init() {
-    let socket = this._socket = net.createConnection('/dev/socket/wpad', () => {
+    let socket = this._socket = net.connect({path: '/dev/socket/wpad'}, () => {
       this._buffer = '';
       this._ready = true;
     });

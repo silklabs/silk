@@ -155,9 +155,6 @@ export default class ObjectCollector {
             height: lastRect.height + hInc,
           }],
         });
-        if (name !== undefined) {
-          interpolatedObject.name = name;
-        }
         array.push(interpolatedObject);
         last = interpolatedObject;
       }

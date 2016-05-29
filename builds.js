@@ -153,6 +153,12 @@ const oss = {
 
 const builds = {
   // Push and PR builds
+  'flow': {
+    travis_yml: '.flowtravis.yml',
+    files: ['**/*.js', '**/*.json'],
+    events: ['push', 'pr'],
+    branches: ['master', 'next', 'release'],
+  },
   // TODO: bring back api CI tests once we workaround issues related to
   // interdeps with the server.
   //'api': npmPackageBuild('api'),

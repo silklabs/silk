@@ -6,17 +6,15 @@
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall",
     "lint": "eslint test src",
-    "flow": "flow check",
     "mocha": "mocha $(find test -name '*_test.js')",
-    "test": "npm run lint && npm run mocha && npm run flow"
+    "test": "npm run lint && npm run mocha"
   },
   "browser": {
     "./src/fetch.js": "./src/fetch_browser.js"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
-    "silk-log": "/pub/log",
-    "silk-flow-bin": "/pub/flow-bin"
+    "silk-log": "/pub/log"
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",

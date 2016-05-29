@@ -1,4 +1,9 @@
 /**
+ * Override Flow's definition for node's child_process module to fix the
+ * return type of ChildProcess.prototype.send.
+ *
+ * See https://github.com/facebook/flow/pull/1867 for the upstream fix.
+ *
  * @flow
  * @providesModule child_process
  */
@@ -86,6 +91,8 @@ declare export class ChildProcess extends EventEmitter {
 
   disconnect(): void;
   kill(signal?: string): void;
+
+  // Flow defined the return type as `void` here.
   send(message: Object, sendHandle?: Handle): boolean;
 }
 

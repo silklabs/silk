@@ -8,8 +8,9 @@
  */
 
 import invariant from 'assert';
+import { EventEmitter } from 'events';
+
 import api from './api';
-import events from 'events';
 import createLog from './log';
 import * as VideoMetrics from './metrics/video';
 
@@ -25,7 +26,7 @@ type ServerState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 /**
  * Server socket.io connection
  */
-export default class Server extends events.EventEmitter {
+export default class Server extends EventEmitter {
   connections: Connections;
   socket: ?Socket;
   pendingAcks: ServerAcks;

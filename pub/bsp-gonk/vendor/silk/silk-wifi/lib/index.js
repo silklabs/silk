@@ -4,10 +4,9 @@
  */
 
 import invariant from 'assert';
-import events from 'events';
+import { EventEmitter } from 'events';
 import * as net from 'net';
 import {Netmask} from 'netmask';
-
 import * as util from 'silk-sysutils';
 import createLog from 'silk-log/device';
 
@@ -156,7 +155,7 @@ function unescapeSSID(ssid: string): string {
  * Wrapper around Gonk's WiFi daemons.
  * @private
  */
-class WpaMonitor extends events.EventEmitter {
+class WpaMonitor extends EventEmitter {
 
   _ready: bool = false;
   _socket: ?Socket;
@@ -353,7 +352,7 @@ function wpaCliRemoveAllNetworks() {
  *   log.error('Failed to initialize wifi', err);
  * });
  */
-export class Wifi extends events.EventEmitter {
+export class Wifi extends EventEmitter {
 
   // Always start as offline until proven otherwise...
   _online: bool = false;
@@ -675,13 +674,13 @@ export class Wifi extends events.EventEmitter {
 }
 
 
-export class StubWifi extends events.EventEmitter {
+export class StubWifi extends EventEmitter {
 
   constructor() {
     super();
   }
 
-  init() {
+  init(): Promise<void> {
     log.info('Using stub "WiFi"');
     if (util.getboolprop('ro.kernel.qemu')) {
       // Most of the emulator eth0 networking is setup automatically.  The only
@@ -694,7 +693,8 @@ export class StubWifi extends events.EventEmitter {
           dns.push(dnsN);
         }
       }
-      return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns]);
+      return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns])
+        .then(() => { return; });
     }
     return Promise.resolve();
   }

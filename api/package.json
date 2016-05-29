@@ -9,7 +9,6 @@
     "eslint-config-silk": "/pub/eslint-config",
     "silk-jsonwebtoken": "/jsonwebtoken",
     "silk-core-version": "/pub/version",
-    "silk-flow-bin": "/pub/flow-bin",
     "silk-log": "/pub/log",
     "silk-babeldeps": "/babeldeps",
     "silk-http": "/http"
@@ -45,8 +44,7 @@
     "mocha": "mocha $(find ./test -name '*_test.js')",
     "gen": "./bin/generate",
     "lint": "eslint test src",
-    "flow": "flow check",
-    "test": "npm run lint && npm run mocha && npm run flow"
+    "test": "npm run lint && npm run mocha"
   },
   "keywords": [
     "iot"

@@ -7,7 +7,6 @@
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/pub/version",
-    "silk-flow-bin": "/pub/flow-bin",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-streams": "/streams",
@@ -75,7 +74,6 @@
   },
   "scripts": {
     "build": "./build.sh",
-    "flow": "flow check",
     "lint": "eslint test src",
     "mocha": "DEBUG=silk-* mocha --timeout 10000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
     "preinstall": "../npm_preinstall",
@@ -86,7 +84,7 @@
     "start-server": "../babel-run/babel-node src/server production",
     "start-socketio": "../babel-run/babel-node src/socketio production",
     "start-signaling": "../babel-run/babel-node src/signaling production",
-    "test": "npm run-script lint && npm run-script flow && npm run-script mocha",
+    "test": "npm run lint && npm run mocha",
     "test-react-native-api": "./bin/test-react-native-api",
     "wwwdev": "./build/browser/build.sh -w"
   },

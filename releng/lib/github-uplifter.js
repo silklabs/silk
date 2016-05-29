@@ -5,7 +5,7 @@
  */
 
 import makeLog from 'silk-log';
-import child_process from 'child_process';
+import * as child_process from 'child_process';
 
 import silkRepos from './repos';
 import { getOctokat, makeGitHubLog } from './github';

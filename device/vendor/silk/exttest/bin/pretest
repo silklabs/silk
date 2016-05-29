@@ -26,10 +26,11 @@ ensure_native_built() {
 }
 
 # TODO: Kill this eventually
+npm build node_modules/silk-external-dlib
+
 modules=(
   kissfft
   opencv
-  silk-external-dlib
   silk-capture
   silk-cv
 )
@@ -37,3 +38,4 @@ modules=(
 for module in "${modules[@]}"; do
   ensure_native_built $module
 done
+

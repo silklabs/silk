@@ -11,9 +11,8 @@ extensions. This repository contains a number of "internal" plugins
 which can be loaded from the silk-cli.
 
 ```sh
+./install.sh
 source setup
-cd cli-plugin-internal
-npm install
 silk --help
 ```
 
@@ -22,19 +21,35 @@ particular checkout of silk-core. This means you can use `silk` from
 anywhere (including outside of the tree from that terminal) but will
 prevent loading plugins from other trees or extensions.
 
-## Useful Links:
+## Flow
 
-### Documentation:
+We use [Flow](http://flowtype.org) as a static type checker for
+JavaScript code. We have a single `.flowconfig` file at the root to
+govern the entire Silk source. A flow check can be performed via
+```
+npm run flow
+```
+from the top level directory.
 
-[/docs]
+Since this run may take on the order of 1 minute or more, it's
+advisable to start a Flow server during development:
+```
+./pub/flow-bin/flow
+```
+Subsequent runs of this command will benefit from the server's
+incremental state and take only a fraction of the time.
 
-### NPM Tools
+## NPM package dependencies
 
-We are in the process of moving `npm` modules into the tree. Not all
-modules are ready for this treatment (any modules which have native
-dependencies).
+All npm package dependencies are checked into the tree, either at
+`/node_modules`, `/pub/node_modules`, or `/app/node_modules`. No
+project within this repository should require a manual `npm install`
+process. However, some `npm` modules contain native code that will
+need to be compiled, or need to produce other generated output, before
+being importable. To accomplish that, some projects have an
+`install.sh` script that needs to be invoked.
 
-#### Checking in module dependencies into the tree:
+### Checking in module dependencies into the tree:
 
 For a new module with new dependencies.
 
@@ -45,7 +60,7 @@ For a new module with new dependencies.
 
 NOTE: `pub/` has a node_modules folder but no tooling. You will need to manually edit `pub/package.json` and run `npm install` and check in the results of `pub/node_modules/`.
 
-#### Upgrading a package across the entire tree:
+### Upgrading a package across the entire tree:
 
 First it's often useful to see who is using the module:
 
@@ -61,6 +76,12 @@ silk npm-pkg-upgrade <module> <version>
 
 This will globally update every package.json referencing the package and update the root `node_modules` folder.
 
+
+## Useful Links:
+
+### Documentation:
+
+[/docs]
 
 ### Metrics:
 

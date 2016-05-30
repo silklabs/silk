@@ -1,19 +1,56 @@
-#!/bin/bash -e
-
-BOARD=$1
-PRODUCT=$2
+# |source| me
 
 if [[ -z $BOARD ]]; then
-  echo "Usage: $0 board [product]"
+  echo "BOARD not defined"
   exit 1
 fi
+
+echo BOARD: $BOARD
+echo PRODUCT: $PRODUCT
+
+if [[ $TRAVIS_OS_NAME == osx ]]; then
+  export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
+  export FULL_SERVICE=1
+  export CI_IGNORE_CASE_INSENSITIVE_FS=please
+  source ./travis/osx_setup
+else
+  export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
+  export CXX="g++-4.8" CC="gcc-4.8"
+fi
+
+export CCACHE_PATH="ccache/$BOARD-$PRODUCT-$TRAVIS_OS_NAME-$TRAVIS_BRANCH"
+export CCACHE_WEBHOST=https://s3.amazonaws.com/silk-sos-release
+export CCACHE_URL=$CCACHE_WEBHOST/$CCACHE_PATH/ccache.tar.gz
+export CCACHE_COMPRESS=true
+
+source ../travis/common_before_install.sh
 
 node -p 'require("os").cpus()'
 if [ $(uname) = "Darwin" ]; then
   sysctl -n hw.ncpu
 fi
-df -h
-./sync $BOARD $PRODUCT
-du -h -d 2
 
-exit 0
+# Fetch ccache from last build
+function get_http_status() {
+  local url=$1
+  curl -X HEAD -Is -w "%{http_code}" $1 -o /dev/null
+}
+
+if [[ "$(get_http_status $CCACHE_URL)" == "200" ]]; then
+  mkdir -p $HOME/.ccache
+  ( set -x; cd $HOME/.ccache; curl $CCACHE_URL | tar xz )
+else
+  echo "Failed to find ccache bundle at $CCACHE_URL"
+fi
+
+# Sync the tree
+./sync $BOARD $PRODUCT
+df -h
+
+
+$PREBUILT_CCACHE -M 1G
+
+# Clear the stats before this build...
+$PREBUILT_CCACHE -z
+# Dump info about ccache (how much is in the cache/etc...)
+$PREBUILT_CCACHE -s

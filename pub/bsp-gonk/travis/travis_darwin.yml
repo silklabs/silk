@@ -4,11 +4,7 @@ os:
   - osx
 
 install:
-  - export FULL_SERVICE=1
-  - export CI_IGNORE_CASE_INSENSITIVE_FS=please
-  - source ./travis/osx_setup
-  - source ../travis/common_before_install.sh
-  - ./travis/install $BOARD $PRODUCT
+  - source ./travis/install
 
 script:
   - ./travis/script

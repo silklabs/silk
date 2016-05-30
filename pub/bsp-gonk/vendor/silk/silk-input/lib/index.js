@@ -48,6 +48,7 @@ class InputDevice extends events.EventEmitter {
         114: 'volumedown',
         115: 'volumeup',
         116: 'power',
+        330: 'touch',
       };
       event.keyId = keys[event.keyCode];
     }

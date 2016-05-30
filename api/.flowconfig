@@ -1,21 +1,25 @@
 [ignore]
 .*/build/.*
 .*/test/rntest/.*
-.*/node_modules/api-schema/.*
 .*/node_modules/aws-sdk-promise/.*
 .*/node_modules/socket.io/.*
 .*/node_modules/socket.io-client/.*
 .*/node_modules/node-fetch/.*
 .*/node_modules/babel*
 .*/server/tmp/.*
-.*/node_modules/npm/.*
+.*/node_modules/npm.*
 .*/node_modules/json5/.*
+.*/node_modules/config-chain/.*
+.*/node_modules/read-package-tree/.*
+.*/node_modules/bower-json/.*
+.*/node_modules/fbjs/.*
 
 [include]
 ../node_modules/
+../pub/node_modules/
 
 [libs]
-../server/interface
+../flow-interface
 
 [options]
 module.system=haste
@@ -23,6 +27,7 @@ esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 unsafe.enable_getters_and_setters=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
+suppress_comment= \\(.\\|\n\\)*\\$FlowWTF
 
 [version]
 0.26.0

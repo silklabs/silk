@@ -198,7 +198,6 @@ export class Packages {
 
       if (readlink) {
         const absPath = path.join(this.nodeModulesPath, readlink);
-        const realpath = fs.realpathSync(absPath);
         if (absPath !== version) {
           throw new Error(`Tried to re-symlink ${dest} (currently: ${absPath}) to ${version}`);
         }

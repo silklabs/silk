@@ -27,7 +27,6 @@ interface/
 .*/azure-storage/test/.*
 .*/server/test/.*
 .*/server/tmp/.*
-.*/server/src/.*
 .*/streams/test/.*
 .*/rtc/test/.*
 

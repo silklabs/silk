@@ -5,7 +5,7 @@
  */
 
 import os from 'os';
-import net from 'net';
+import * as net from 'net';
 
 import eventToPromise from 'event-to-promise';
 import createLog from 'silk-log';
